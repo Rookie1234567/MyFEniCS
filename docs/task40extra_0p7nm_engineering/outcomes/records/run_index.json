@@ -2,7 +2,7 @@
   "schema": "task40extra.run_index.v1",
   "branch": "task40extra_0p7nm_engineering",
   "repair_base_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
-  "current_code_sha": "71042327e5f3a77cd39a1be7b5dfa46afe52db6b",
+  "current_code_sha": "c319719433e99fe652754f2844c5d79669b111cb",
   "input": {
     "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat",
     "sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
@@ -1255,6 +1255,704 @@
       "log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/review_v17_doc_closeout_pytest_confirmation.log",
       "log_sha256": "0f1e075ab6e4aa7b4b60b144e5fefc91e43200f3fcaacd85bf0c4c8360ac958e",
       "scope": "documentation/model-registry/retrospective tests only; no FE/PDE"
+    },
+    {
+      "run_id": "myfenics-case-20261009T153002-2141395",
+      "case_run_id": "task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
+      "stage": "V20_TARGET_PREFLIGHT",
+      "attempt": 1,
+      "kind": "user_service_workflow",
+      "source_sha": "776b0d9c990faca42d5669dcb170f35ad2f35849",
+      "stage_input_path": "input/task40extra_0p7nm_engineering/target_original_ny8_resource_pilot_v20.dat",
+      "stage_input_sha256": "f6726d005713b586f1bccfbf6904dd64f3f1f31dd3b069607b55e9b430d294c7",
+      "canonical_input_path": "input/task40extra_0p7nm_engineering/target_original_ny8_resource_pilot_v20.dat",
+      "canonical_input_sha256": "f6726d005713b586f1bccfbf6904dd64f3f1f31dd3b069607b55e9b430d294c7",
+      "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T153003.130200Z",
+      "status": "WORKFLOW_OR_CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "worker_classification": "worker_exit0",
+      "worker_exit_status": 0,
+      "official_result": null,
+      "workflow_complete": false,
+      "stop_stage": "preflight",
+      "partial_stage_status": null,
+      "first_failure": {
+        "kind": "workflow_exception",
+        "message": "run manifest has no Task40 campaign accounting identity",
+        "returncode": null
+      },
+      "run_case_returncode": 0,
+      "required_checker": {
+        "kind": null,
+        "returncode": null,
+        "passed": null,
+        "recorded_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T153002-2141395/partial_checker_result.json",
+        "receipt_exists": false,
+        "receipt_sha256": null,
+        "status": null
+      },
+      "actual_commands": {
+        "activation": "/usr/bin/bash -lc set -euo pipefail; cd -- \"$1\"; source scripts/task40_fresh_c1/activate_local_wsl_complex.sh \"$2\" \"$3\" \"$4\"; env -0 task40-v20-activation /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit",
+        "abi_preflight": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "-c",
+          "\nimport json, pathlib, sys\nimport numpy as np\nfrom petsc4py import PETSc\nfrom mpi4py import MPI\nimport petsc4py, slepc4py, dolfinx, mpi4py\nprefix = pathlib.Path(sys.argv[1]).resolve()\nassert pathlib.Path(sys.executable).resolve().is_relative_to(prefix)\nassert np.dtype(PETSc.ScalarType) == np.dtype(np.complex128)\nassert np.dtype(PETSc.IntType) == np.dtype(np.int32)\nassert MPI.COMM_WORLD.Get_size() == 1\nmodules = (petsc4py, slepc4py, dolfinx, mpi4py)\nfor module in modules:\n    assert pathlib.Path(module.__file__).resolve().is_relative_to(prefix)\nprint(json.dumps({\n    \"python\": sys.executable,\n    \"scalar_type\": str(np.dtype(PETSc.ScalarType)),\n    \"int_type\": str(np.dtype(PETSc.IntType)),\n    \"mpi_size\": MPI.COMM_WORLD.Get_size(),\n    \"abi_module_paths\": {m.__name__: m.__file__ for m in modules},\n}))\n",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
+        ],
+        "run_case_argv": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "scripts/run_case.py",
+          "input/task40extra_0p7nm_engineering/target_original_ny8_resource_pilot_v20.dat",
+          "--task40-v10-campaign-window",
+          "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json"
+        ],
+        "required_checker": null
+      },
+      "abi_receipt": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+        "sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426"
+      },
+      "campaign_window": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json",
+        "sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0"
+      },
+      "raw_evidence": {
+        "outer_workflow_record": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T153002-2141395/outer_workflow_record.json",
+          "sha256": "1e8904d2b4cc4cc8f24d3359355ee5703f7d24efd8d33b08231bddc41f8e56c0"
+        },
+        "run_manifest": {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T153003.130200Z/run_manifest.json",
+          "exists": true,
+          "sha256": "61e615c558e8d5ea79aabfe661869422e56a75785476ea6dd4a6a3de585b2c0d"
+        },
+        "run_summary": {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T153003.130200Z/run_summary.json",
+          "exists": true,
+          "sha256": "c0894d8bb53e2f365d4a622badc25a2263296c24b021982c619f73c759fa4776",
+          "classification": "worker_exit0"
+        },
+        "stdout": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T153002-2141395/run_case_stdout.raw.txt",
+          "sha256": "7f99a3faadb22eb0aa48a387ca0363415cb440b48db0faf7df99eba32b06cb97",
+          "stderr_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T153002-2141395/run_case_stderr.raw.txt",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "run_id": "myfenics-case-20261009T155523-2143233",
+      "case_run_id": "task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
+      "stage": "V20_TARGET_GEOMETRY_AND_LOCAL_PORT_ENTRY",
+      "attempt": 2,
+      "kind": "user_service_workflow",
+      "source_sha": "4b5ed041b69f8f91e283ae1b251ba76e6070de95",
+      "stage_input_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/local_port_components/target_original_ny8_resource_pilot_v20.dat",
+      "stage_input_sha256": "e5e0986920a71d8e9d5224c6c7be8e9060ba5791391db2037a9128741061bf38",
+      "canonical_input_path": "input/task40extra_0p7nm_engineering/target_original_ny8_resource_pilot_v20.dat",
+      "canonical_input_sha256": "f6726d005713b586f1bccfbf6904dd64f3f1f31dd3b069607b55e9b430d294c7",
+      "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z",
+      "status": "WORKFLOW_OR_CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "worker_classification": "WORKER_FAILED",
+      "worker_exit_status": 4,
+      "official_result": null,
+      "workflow_complete": false,
+      "stop_stage": "local_port_components",
+      "partial_stage_status": null,
+      "first_failure": {
+        "kind": "run_case_failed",
+        "message": "run_case returned 3",
+        "returncode": 3
+      },
+      "run_case_returncode": 3,
+      "required_checker": {
+        "kind": null,
+        "returncode": null,
+        "passed": null,
+        "recorded_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T155523-2143233/partial_checker_result.json",
+        "receipt_exists": false,
+        "receipt_sha256": null,
+        "status": null
+      },
+      "actual_commands": {
+        "activation": "/usr/bin/bash -lc set -euo pipefail; cd -- \"$1\"; source scripts/task40_fresh_c1/activate_local_wsl_complex.sh \"$2\" \"$3\" \"$4\"; env -0 task40-v20-activation /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit",
+        "abi_preflight": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "-c",
+          "\nimport json, pathlib, sys\nimport numpy as np\nfrom petsc4py import PETSc\nfrom mpi4py import MPI\nimport petsc4py, slepc4py, dolfinx, mpi4py\nprefix = pathlib.Path(sys.argv[1]).resolve()\nassert pathlib.Path(sys.executable).resolve().is_relative_to(prefix)\nassert np.dtype(PETSc.ScalarType) == np.dtype(np.complex128)\nassert np.dtype(PETSc.IntType) == np.dtype(np.int32)\nassert MPI.COMM_WORLD.Get_size() == 1\nmodules = (petsc4py, slepc4py, dolfinx, mpi4py)\nfor module in modules:\n    assert pathlib.Path(module.__file__).resolve().is_relative_to(prefix)\nprint(json.dumps({\n    \"python\": sys.executable,\n    \"scalar_type\": str(np.dtype(PETSc.ScalarType)),\n    \"int_type\": str(np.dtype(PETSc.IntType)),\n    \"mpi_size\": MPI.COMM_WORLD.Get_size(),\n    \"abi_module_paths\": {m.__name__: m.__file__ for m in modules},\n}))\n",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
+        ],
+        "run_case_argv": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "scripts/run_case.py",
+          "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/local_port_components/target_original_ny8_resource_pilot_v20.dat",
+          "--task40-v10-campaign-window",
+          "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json"
+        ],
+        "required_checker": null
+      },
+      "abi_receipt": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+        "sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426"
+      },
+      "campaign_window": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json",
+        "sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0"
+      },
+      "raw_evidence": {
+        "outer_workflow_record": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T155523-2143233/outer_workflow_record.json",
+          "sha256": "3b8e5fb2c7e6b95c91a84fc33885a3ca6360c9ddb894810f7d254fdaad9a29b4"
+        },
+        "run_manifest": {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/run_manifest.json",
+          "exists": true,
+          "sha256": "a5ed2a1a390f7f7bea05547faedfa81736c6f3778e65a6a3ad59a10ecae6be15"
+        },
+        "run_summary": {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/run_summary.json",
+          "exists": true,
+          "sha256": "09c3faaa80453b4e05000c73fa6ef4853d0eadb797f9ff30fa3ea073ba3fa997",
+          "classification": "WORKER_FAILED"
+        },
+        "stdout": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T155523-2143233/run_case_stdout.raw.txt",
+          "sha256": "573112922a3ae62d9f3a7ada1f3bed7ac18daeb584c1b623a3b3ea3d9b1a60e4",
+          "stderr_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T155523-2143233/run_case_stderr.raw.txt",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "run_id": "myfenics-case-20261009T171008-2147695",
+      "case_run_id": "task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
+      "stage": "V20_TARGET_LOCAL_PORT_COMPONENTS",
+      "attempt": 3,
+      "kind": "user_service_workflow",
+      "source_sha": "5ab94ec97a5f03f0cb2e5455b4583eed76f25447",
+      "stage_input_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/local_port_components_resume/target_original_ny8_resource_pilot_v20.dat",
+      "stage_input_sha256": "3945b58e05feaa32801e8f550dcc995fee6dc18a8841a0ea676e543053a2e9ff",
+      "canonical_input_path": "input/task40extra_0p7nm_engineering/target_original_ny8_resource_pilot_v20.dat",
+      "canonical_input_sha256": "f6726d005713b586f1bccfbf6904dd64f3f1f31dd3b069607b55e9b430d294c7",
+      "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T171009.169165Z",
+      "status": "PARTIAL_RECEIPT_RECHECKED",
+      "worker_classification": "WORKER_FAILED",
+      "worker_exit_status": 4,
+      "official_result": false,
+      "workflow_complete": false,
+      "stop_stage": "local_port_components",
+      "partial_stage_status": "failed",
+      "first_failure": {
+        "kind": "run_case_failed",
+        "message": "run_case returned 3",
+        "returncode": 3
+      },
+      "run_case_returncode": 3,
+      "required_checker": {
+        "kind": "task40_v20_partial_receipt_checker",
+        "returncode": 0,
+        "passed": true,
+        "recorded_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T171008-2147695/partial_checker_result.json",
+        "receipt_exists": true,
+        "receipt_sha256": "d125b9355d1139e36c5b1036f13d931bda6713af7d3a1f812618b7ccf20ba086",
+        "status": "PARTIAL_RECEIPT_CHECKED"
+      },
+      "actual_commands": {
+        "activation": "/usr/bin/bash -lc set -euo pipefail; cd -- \"$1\"; source scripts/task40_fresh_c1/activate_local_wsl_complex.sh \"$2\" \"$3\" \"$4\"; env -0 task40-v20-activation /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit",
+        "abi_preflight": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "-c",
+          "\nimport json, pathlib, sys\nimport numpy as np\nfrom petsc4py import PETSc\nfrom mpi4py import MPI\nimport petsc4py, slepc4py, dolfinx, mpi4py\nprefix = pathlib.Path(sys.argv[1]).resolve()\nassert pathlib.Path(sys.executable).resolve().is_relative_to(prefix)\nassert np.dtype(PETSc.ScalarType) == np.dtype(np.complex128)\nassert np.dtype(PETSc.IntType) == np.dtype(np.int32)\nassert MPI.COMM_WORLD.Get_size() == 1\nmodules = (petsc4py, slepc4py, dolfinx, mpi4py)\nfor module in modules:\n    assert pathlib.Path(module.__file__).resolve().is_relative_to(prefix)\nprint(json.dumps({\n    \"python\": sys.executable,\n    \"scalar_type\": str(np.dtype(PETSc.ScalarType)),\n    \"int_type\": str(np.dtype(PETSc.IntType)),\n    \"mpi_size\": MPI.COMM_WORLD.Get_size(),\n    \"abi_module_paths\": {m.__name__: m.__file__ for m in modules},\n}))\n",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
+        ],
+        "run_case_argv": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "scripts/run_case.py",
+          "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/local_port_components_resume/target_original_ny8_resource_pilot_v20.dat",
+          "--task40-v10-campaign-window",
+          "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json"
+        ],
+        "required_checker": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "scripts/task40_v20_service_workflow.py",
+          "check-partial",
+          "--input",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/local_port_components_resume/target_original_ny8_resource_pilot_v20.dat",
+          "--summary",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T171009.169165Z/run_summary.json",
+          "--manifest",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T171009.169165Z/run_manifest.json",
+          "--numerical-output",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T171009.169165Z",
+          "--stop-stage",
+          "local_port_components",
+          "--output",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T171008-2147695/partial_checker_result.json"
+        ]
+      },
+      "abi_receipt": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+        "sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426"
+      },
+      "campaign_window": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json",
+        "sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0"
+      },
+      "raw_evidence": {
+        "outer_workflow_record": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T171008-2147695/outer_workflow_record.json",
+          "sha256": "76ff2aaaa41dbef1a74ba1456f1abb028938a19394151531e4bcb1e83144d4b9"
+        },
+        "run_manifest": {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T171009.169165Z/run_manifest.json",
+          "exists": true,
+          "sha256": "a2f718c5399b32c3a0610d775f68a21507cdb2f0e1c0669cf2289a2a823150d3"
+        },
+        "run_summary": {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T171009.169165Z/run_summary.json",
+          "exists": true,
+          "sha256": "468548e2809fcbc37121b46629ef9365a05ab8cca74816abae9f0c362016b8cd",
+          "classification": "WORKER_FAILED"
+        },
+        "stdout": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T171008-2147695/run_case_stdout.raw.txt",
+          "sha256": "0485099e51c9af10279e6f5110a337cefd6f888227817ca55335422fe94e4824",
+          "stderr_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T171008-2147695/run_case_stderr.raw.txt",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "run_id": "myfenics-case-20261009T175921-2150999",
+      "case_run_id": "task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
+      "stage": "V20_TARGET_LOCAL_PORT_COMPONENTS",
+      "attempt": 4,
+      "kind": "user_service_workflow",
+      "source_sha": "f88d0606a8c351e7185afd9e839e8c8ddfd9bb81",
+      "stage_input_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/local_port_components_resume_full_prefix_v2/target_original_ny8_resource_pilot_v20.dat",
+      "stage_input_sha256": "9bee80bb269b2c25c8020c83626fa75b4812f854869514a1f8f7a31147bb809f",
+      "canonical_input_path": "input/task40extra_0p7nm_engineering/target_original_ny8_resource_pilot_v20.dat",
+      "canonical_input_sha256": "f6726d005713b586f1bccfbf6904dd64f3f1f31dd3b069607b55e9b430d294c7",
+      "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T175922.461391Z",
+      "status": "PARTIAL_RECEIPT_RECHECKED",
+      "worker_classification": "worker_exit0",
+      "worker_exit_status": 0,
+      "official_result": false,
+      "workflow_complete": true,
+      "stop_stage": "local_port_components",
+      "partial_stage_status": "controlled_stop",
+      "first_failure": null,
+      "run_case_returncode": 0,
+      "required_checker": {
+        "kind": "task40_v20_partial_receipt_checker",
+        "returncode": 0,
+        "passed": true,
+        "recorded_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T175921-2150999/partial_checker_result.json",
+        "receipt_exists": true,
+        "receipt_sha256": "dd5f2eb5cbd1120ce913f6e0f68453b6d53fbb9c025522b964a239e70aff87f2",
+        "status": "PARTIAL_RECEIPT_CHECKED"
+      },
+      "actual_commands": {
+        "activation": "/usr/bin/bash -lc set -euo pipefail; cd -- \"$1\"; source scripts/task40_fresh_c1/activate_local_wsl_complex.sh \"$2\" \"$3\" \"$4\"; env -0 task40-v20-activation /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit",
+        "abi_preflight": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "-c",
+          "\nimport json, pathlib, sys\nimport numpy as np\nfrom petsc4py import PETSc\nfrom mpi4py import MPI\nimport petsc4py, slepc4py, dolfinx, mpi4py\nprefix = pathlib.Path(sys.argv[1]).resolve()\nassert pathlib.Path(sys.executable).resolve().is_relative_to(prefix)\nassert np.dtype(PETSc.ScalarType) == np.dtype(np.complex128)\nassert np.dtype(PETSc.IntType) == np.dtype(np.int32)\nassert MPI.COMM_WORLD.Get_size() == 1\nmodules = (petsc4py, slepc4py, dolfinx, mpi4py)\nfor module in modules:\n    assert pathlib.Path(module.__file__).resolve().is_relative_to(prefix)\nprint(json.dumps({\n    \"python\": sys.executable,\n    \"scalar_type\": str(np.dtype(PETSc.ScalarType)),\n    \"int_type\": str(np.dtype(PETSc.IntType)),\n    \"mpi_size\": MPI.COMM_WORLD.Get_size(),\n    \"abi_module_paths\": {m.__name__: m.__file__ for m in modules},\n}))\n",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
+        ],
+        "run_case_argv": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "scripts/run_case.py",
+          "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/local_port_components_resume_full_prefix_v2/target_original_ny8_resource_pilot_v20.dat",
+          "--task40-v10-campaign-window",
+          "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json"
+        ],
+        "required_checker": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "scripts/task40_v20_service_workflow.py",
+          "check-partial",
+          "--input",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/local_port_components_resume_full_prefix_v2/target_original_ny8_resource_pilot_v20.dat",
+          "--summary",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T175922.461391Z/run_summary.json",
+          "--manifest",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T175922.461391Z/run_manifest.json",
+          "--numerical-output",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T175922.461391Z",
+          "--stop-stage",
+          "local_port_components",
+          "--output",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T175921-2150999/partial_checker_result.json"
+        ]
+      },
+      "abi_receipt": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+        "sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426"
+      },
+      "campaign_window": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json",
+        "sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0"
+      },
+      "raw_evidence": {
+        "outer_workflow_record": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T175921-2150999/outer_workflow_record.json",
+          "sha256": "f05ebba391cde7c39b47c17a1ef7d3e81c6cd5ab8919cac040ead865abfe7827"
+        },
+        "run_manifest": {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T175922.461391Z/run_manifest.json",
+          "exists": true,
+          "sha256": "c7d080053895d49aee471fbbb94a5cc60e2cd4e52863471a29bbbcb8899e8621"
+        },
+        "run_summary": {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T175922.461391Z/run_summary.json",
+          "exists": true,
+          "sha256": "51ab1fed655b980b0d90ab85476b2af216f62f94202cae381371150048a3d94a",
+          "classification": "worker_exit0"
+        },
+        "stdout": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T175921-2150999/run_case_stdout.raw.txt",
+          "sha256": "20a8ab3f91755fecd9962cb3241223cb7bb411a9f6a176aaa7a9dacac11848b4",
+          "stderr_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T175921-2150999/run_case_stderr.raw.txt",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "run_id": "myfenics-case-20261009T181935-2153230",
+      "case_run_id": "task40extra_0p7nm_nonseparable_e2_p6_reference_v20",
+      "stage": "V20_E2_FULL",
+      "attempt": 5,
+      "kind": "user_service_workflow",
+      "source_sha": "f88d0606a8c351e7185afd9e839e8c8ddfd9bb81",
+      "stage_input_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/full/nonseparable_e2_p6_reference_v20.dat",
+      "stage_input_sha256": "9e5fd3bf5a0a37fe80ce0bbb56a4274bb5077ced4b17f3f4e2a722a3c948c14f",
+      "canonical_input_path": "input/task40extra_0p7nm_engineering/nonseparable_e2_p6_reference_v20.dat",
+      "canonical_input_sha256": "a693197de34410202d28f7ab0077904bda46685d1ac87b6667f383c92468d621",
+      "physical_model_sha256": "48814d5fe34ab0e73de345c2d98661a96ef93ebb9690be738d040edac7cd84a7",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T181935.895805Z",
+      "status": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "worker_classification": "WORKER_FAILED",
+      "worker_exit_status": 4,
+      "official_result": false,
+      "workflow_complete": false,
+      "stop_stage": "full",
+      "partial_stage_status": null,
+      "first_failure": {
+        "kind": "run_case_failed",
+        "message": "run_case returned 3",
+        "returncode": 3
+      },
+      "run_case_returncode": 3,
+      "required_checker": {
+        "kind": "task40_v20_partial_receipt_checker",
+        "returncode": 2,
+        "passed": false,
+        "recorded_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T181935-2153230/partial_checker_result.json",
+        "receipt_exists": true,
+        "receipt_sha256": "9c3ac1a9a74b7caa7a099b4de4daf9bfd94679c3ef8bf17bb7e1f312cc4504fd",
+        "status": "NO_PARTIAL_FOOTER"
+      },
+      "actual_commands": {
+        "activation": "/usr/bin/bash -lc set -euo pipefail; cd -- \"$1\"; source scripts/task40_fresh_c1/activate_local_wsl_complex.sh \"$2\" \"$3\" \"$4\"; env -0 task40-v20-activation /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit",
+        "abi_preflight": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "-c",
+          "\nimport json, pathlib, sys\nimport numpy as np\nfrom petsc4py import PETSc\nfrom mpi4py import MPI\nimport petsc4py, slepc4py, dolfinx, mpi4py\nprefix = pathlib.Path(sys.argv[1]).resolve()\nassert pathlib.Path(sys.executable).resolve().is_relative_to(prefix)\nassert np.dtype(PETSc.ScalarType) == np.dtype(np.complex128)\nassert np.dtype(PETSc.IntType) == np.dtype(np.int32)\nassert MPI.COMM_WORLD.Get_size() == 1\nmodules = (petsc4py, slepc4py, dolfinx, mpi4py)\nfor module in modules:\n    assert pathlib.Path(module.__file__).resolve().is_relative_to(prefix)\nprint(json.dumps({\n    \"python\": sys.executable,\n    \"scalar_type\": str(np.dtype(PETSc.ScalarType)),\n    \"int_type\": str(np.dtype(PETSc.IntType)),\n    \"mpi_size\": MPI.COMM_WORLD.Get_size(),\n    \"abi_module_paths\": {m.__name__: m.__file__ for m in modules},\n}))\n",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
+        ],
+        "run_case_argv": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "scripts/run_case.py",
+          "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/full/nonseparable_e2_p6_reference_v20.dat",
+          "--task40-v10-campaign-window",
+          "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json"
+        ],
+        "required_checker": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "scripts/task40_v20_service_workflow.py",
+          "check-partial",
+          "--input",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/full/nonseparable_e2_p6_reference_v20.dat",
+          "--summary",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T181935.895805Z/run_summary.json",
+          "--manifest",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T181935.895805Z/run_manifest.json",
+          "--numerical-output",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T181935.895805Z/numerical_output",
+          "--stop-stage",
+          "full",
+          "--output",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T181935-2153230/partial_checker_result.json"
+        ]
+      },
+      "abi_receipt": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+        "sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426"
+      },
+      "campaign_window": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json",
+        "sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0"
+      },
+      "raw_evidence": {
+        "outer_workflow_record": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T181935-2153230/outer_workflow_record.json",
+          "sha256": "67d4b2a72e2c51ceff0fd5a7a4cb2ef653cd2a5a46d8b0fc3412957229847802"
+        },
+        "run_manifest": {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T181935.895805Z/run_manifest.json",
+          "exists": true,
+          "sha256": "36ea43035e1988ae19eceffbf78eeb63d8c87d58a196babd6fe2aa98dd258cae"
+        },
+        "run_summary": {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T181935.895805Z/run_summary.json",
+          "exists": true,
+          "sha256": "b203a9d37d294445506fedf27a88f42fbaf27c5a478527fad25f87c90bd465ab",
+          "classification": "WORKER_FAILED"
+        },
+        "stdout": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T181935-2153230/run_case_stdout.raw.txt",
+          "sha256": "333ee07f412eb3024782955fd211323c17fb27047f416c8770b6089abcfc50dd",
+          "stderr_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T181935-2153230/run_case_stderr.raw.txt",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "run_id": "myfenics-case-20261009T182846-2154131",
+      "case_run_id": "task40extra_0p7nm_nonseparable_e2_p6_reference_v20",
+      "stage": "V20_E2_FULL",
+      "attempt": 6,
+      "kind": "user_service_workflow",
+      "source_sha": "9dad3ab4f48f62e1522437f7560111a364064e40",
+      "stage_input_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/full/nonseparable_e2_p6_reference_v20.dat",
+      "stage_input_sha256": "9e5fd3bf5a0a37fe80ce0bbb56a4274bb5077ced4b17f3f4e2a722a3c948c14f",
+      "canonical_input_path": "input/task40extra_0p7nm_engineering/nonseparable_e2_p6_reference_v20.dat",
+      "canonical_input_sha256": "a693197de34410202d28f7ab0077904bda46685d1ac87b6667f383c92468d621",
+      "physical_model_sha256": "48814d5fe34ab0e73de345c2d98661a96ef93ebb9690be738d040edac7cd84a7",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T182847.399955Z",
+      "status": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "worker_classification": "WORKER_FAILED",
+      "worker_exit_status": 4,
+      "official_result": false,
+      "workflow_complete": false,
+      "stop_stage": "full",
+      "partial_stage_status": null,
+      "first_failure": {
+        "kind": "run_case_failed",
+        "message": "run_case returned 3",
+        "returncode": 3
+      },
+      "run_case_returncode": 3,
+      "required_checker": {
+        "kind": "task40_v20_partial_receipt_checker",
+        "returncode": 2,
+        "passed": false,
+        "recorded_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T182846-2154131/partial_checker_result.json",
+        "receipt_exists": true,
+        "receipt_sha256": "5459433607d89642a04c55488803e32e5ec75301eef3a6867814d14eaa2ce424",
+        "status": "NO_PARTIAL_FOOTER"
+      },
+      "actual_commands": {
+        "activation": "/usr/bin/bash -lc set -euo pipefail; cd -- \"$1\"; source scripts/task40_fresh_c1/activate_local_wsl_complex.sh \"$2\" \"$3\" \"$4\"; env -0 task40-v20-activation /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit",
+        "abi_preflight": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "-c",
+          "\nimport json, pathlib, sys\nimport numpy as np\nfrom petsc4py import PETSc\nfrom mpi4py import MPI\nimport petsc4py, slepc4py, dolfinx, mpi4py\nprefix = pathlib.Path(sys.argv[1]).resolve()\nassert pathlib.Path(sys.executable).resolve().is_relative_to(prefix)\nassert np.dtype(PETSc.ScalarType) == np.dtype(np.complex128)\nassert np.dtype(PETSc.IntType) == np.dtype(np.int32)\nassert MPI.COMM_WORLD.Get_size() == 1\nmodules = (petsc4py, slepc4py, dolfinx, mpi4py)\nfor module in modules:\n    assert pathlib.Path(module.__file__).resolve().is_relative_to(prefix)\nprint(json.dumps({\n    \"python\": sys.executable,\n    \"scalar_type\": str(np.dtype(PETSc.ScalarType)),\n    \"int_type\": str(np.dtype(PETSc.IntType)),\n    \"mpi_size\": MPI.COMM_WORLD.Get_size(),\n    \"abi_module_paths\": {m.__name__: m.__file__ for m in modules},\n}))\n",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
+        ],
+        "run_case_argv": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "scripts/run_case.py",
+          "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/full/nonseparable_e2_p6_reference_v20.dat",
+          "--task40-v10-campaign-window",
+          "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json"
+        ],
+        "required_checker": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "scripts/task40_v20_service_workflow.py",
+          "check-partial",
+          "--input",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/full/nonseparable_e2_p6_reference_v20.dat",
+          "--summary",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T182847.399955Z/run_summary.json",
+          "--manifest",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T182847.399955Z/run_manifest.json",
+          "--numerical-output",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T182847.399955Z/numerical_output",
+          "--stop-stage",
+          "full",
+          "--output",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T182846-2154131/partial_checker_result.json"
+        ]
+      },
+      "abi_receipt": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+        "sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426"
+      },
+      "campaign_window": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json",
+        "sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0"
+      },
+      "raw_evidence": {
+        "outer_workflow_record": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T182846-2154131/outer_workflow_record.json",
+          "sha256": "4bb312a34e837d61151be2840a3a78c169a44d1f04b92fbcfedcec7ef626bb54"
+        },
+        "run_manifest": {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T182847.399955Z/run_manifest.json",
+          "exists": true,
+          "sha256": "7c013c34a1ac5719e120947555504aa0be1ea2b8016d59a5309aadcb4862d26c"
+        },
+        "run_summary": {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T182847.399955Z/run_summary.json",
+          "exists": true,
+          "sha256": "2b973758061b9d23a7ebed3d8442e88d45e1746a04a60c627eb561fd04dd0f7e",
+          "classification": "WORKER_FAILED"
+        },
+        "stdout": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T182846-2154131/run_case_stdout.raw.txt",
+          "sha256": "8eae765f1dde0592f73c977df6194c03a120742bc4c0c4f222bd36be8f2a646f",
+          "stderr_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T182846-2154131/run_case_stderr.raw.txt",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "run_id": "myfenics-case-20261009T183628-2155245",
+      "case_run_id": "task40extra_0p7nm_nonseparable_e2_p6_reference_v20",
+      "stage": "V20_E2_FULL",
+      "attempt": 7,
+      "kind": "user_service_workflow",
+      "source_sha": "4b004d09b17d07a1f19f4c9d8443e76153e69a4b",
+      "stage_input_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/full/nonseparable_e2_p6_reference_v20.dat",
+      "stage_input_sha256": "9e5fd3bf5a0a37fe80ce0bbb56a4274bb5077ced4b17f3f4e2a722a3c948c14f",
+      "canonical_input_path": "input/task40extra_0p7nm_engineering/nonseparable_e2_p6_reference_v20.dat",
+      "canonical_input_sha256": "a693197de34410202d28f7ab0077904bda46685d1ac87b6667f383c92468d621",
+      "physical_model_sha256": "48814d5fe34ab0e73de345c2d98661a96ef93ebb9690be738d040edac7cd84a7",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T183628.811418Z",
+      "status": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "worker_classification": "WORKER_FAILED",
+      "worker_exit_status": 4,
+      "official_result": false,
+      "workflow_complete": false,
+      "stop_stage": "full",
+      "partial_stage_status": null,
+      "first_failure": {
+        "kind": "run_case_failed",
+        "message": "run_case returned 3",
+        "returncode": 3
+      },
+      "run_case_returncode": 3,
+      "required_checker": {
+        "kind": "task40_v20_partial_receipt_checker",
+        "returncode": 2,
+        "passed": false,
+        "recorded_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T183628-2155245/partial_checker_result.json",
+        "receipt_exists": true,
+        "receipt_sha256": "7b5f04739dbe1ddee3025a28b77a9fddccd2e298847cab3e6fa24e1e40b31582",
+        "status": "NO_PARTIAL_FOOTER"
+      },
+      "actual_commands": {
+        "activation": "/usr/bin/bash -lc set -euo pipefail; cd -- \"$1\"; source scripts/task40_fresh_c1/activate_local_wsl_complex.sh \"$2\" \"$3\" \"$4\"; env -0 task40-v20-activation /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit",
+        "abi_preflight": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "-c",
+          "\nimport json, pathlib, sys\nimport numpy as np\nfrom petsc4py import PETSc\nfrom mpi4py import MPI\nimport petsc4py, slepc4py, dolfinx, mpi4py\nprefix = pathlib.Path(sys.argv[1]).resolve()\nassert pathlib.Path(sys.executable).resolve().is_relative_to(prefix)\nassert np.dtype(PETSc.ScalarType) == np.dtype(np.complex128)\nassert np.dtype(PETSc.IntType) == np.dtype(np.int32)\nassert MPI.COMM_WORLD.Get_size() == 1\nmodules = (petsc4py, slepc4py, dolfinx, mpi4py)\nfor module in modules:\n    assert pathlib.Path(module.__file__).resolve().is_relative_to(prefix)\nprint(json.dumps({\n    \"python\": sys.executable,\n    \"scalar_type\": str(np.dtype(PETSc.ScalarType)),\n    \"int_type\": str(np.dtype(PETSc.IntType)),\n    \"mpi_size\": MPI.COMM_WORLD.Get_size(),\n    \"abi_module_paths\": {m.__name__: m.__file__ for m in modules},\n}))\n",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
+        ],
+        "run_case_argv": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "scripts/run_case.py",
+          "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/full/nonseparable_e2_p6_reference_v20.dat",
+          "--task40-v10-campaign-window",
+          "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json"
+        ],
+        "required_checker": [
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "scripts/task40_v20_service_workflow.py",
+          "check-partial",
+          "--input",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/full/nonseparable_e2_p6_reference_v20.dat",
+          "--summary",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T183628.811418Z/run_summary.json",
+          "--manifest",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T183628.811418Z/run_manifest.json",
+          "--numerical-output",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T183628.811418Z/numerical_output",
+          "--stop-stage",
+          "full",
+          "--output",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T183628-2155245/partial_checker_result.json"
+        ]
+      },
+      "abi_receipt": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+        "sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426"
+      },
+      "campaign_window": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json",
+        "sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0"
+      },
+      "raw_evidence": {
+        "outer_workflow_record": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T183628-2155245/outer_workflow_record.json",
+          "sha256": "a85d2fa7593e666c407c07dc26c686a838483893b078de9eb8b6426ab57756f0"
+        },
+        "run_manifest": {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T183628.811418Z/run_manifest.json",
+          "exists": true,
+          "sha256": "cfb8e64bc66fff0d1f5e1c87dc0b590c428be2d261adac96b37e65eee85a4743"
+        },
+        "run_summary": {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T183628.811418Z/run_summary.json",
+          "exists": true,
+          "sha256": "ffeff3121dfb35af4ce195790717aa6280aa451c0f95c54ed95c931b934fab6a",
+          "classification": "WORKER_FAILED"
+        },
+        "stdout": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T183628-2155245/run_case_stdout.raw.txt",
+          "sha256": "d322d64dcf467a0e7fe1de12d8588322806b5eda7629339c6628d160567cd42c",
+          "stderr_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/service_runs/myfenics-case-20261009T183628-2155245/run_case_stderr.raw.txt",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "run_id": "task40extra_review_v20_doc_closeout_attempt02",
+      "stage": "V20_DOCUMENTATION_CLOSEOUT",
+      "attempt": 1,
+      "kind": "documentation_contract_suite",
+      "source_head": "c319719433e99fe652754f2844c5d79669b111cb",
+      "status": "PASS",
+      "passed": 29,
+      "subtests_passed": 134,
+      "pytest_reported_seconds": 0.26,
+      "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py",
+      "log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/doc_closeout/v20_docs_contract_attempt02.log",
+      "log_sha256": "14104cd9cd29e0661324d98d6b2347203f15630934cb0ed90ab2a3ffe660c1c2",
+      "abi_preflight_receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/doc_closeout/v20_doc_abi_preflight_final.json",
+      "abi_preflight_receipt_sha256": "69711e67e26d422c9d0eb5845cfec90e693e1740fddc2b5f09031d28b50490c2",
+      "scope": "documentation/model-registry/retrospective contracts only; no FE/PDE"
+    },
+    {
+      "run_id": "task40extra_review_v20_doc_closeout_attempt03_final",
+      "stage": "V20_DOCUMENTATION_CLOSEOUT",
+      "attempt": 3,
+      "kind": "documentation_contract_suite",
+      "source_head": "c319719433e99fe652754f2844c5d79669b111cb",
+      "status": "PASS",
+      "passed": 29,
+      "subtests_passed": 134,
+      "pytest_reported_seconds": 0.22,
+      "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py",
+      "log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/doc_closeout/v20_docs_contract_attempt03_final.log",
+      "log_sha256": "2a425959bc06825a8407ae228134b042a84070e43d4879e35a58ae354a9c2a4d",
+      "abi_preflight_receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/doc_closeout/v20_doc_abi_preflight_final.json",
+      "abi_preflight_receipt_sha256": "69711e67e26d422c9d0eb5845cfec90e693e1740fddc2b5f09031d28b50490c2",
+      "scope": "documentation/model-registry/retrospective contracts only; no FE/PDE"
     }
   ],
   "ledger": {
@@ -1293,9 +1991,16 @@
     {
       "sha": "fea2b6c01b34940a6393bd47a4f545d6d53d61b4",
       "fix": "allow the authorized V6 postprocess continuation after preserved POSTPROCESS_PARENT_FAILED when postprocess source is newer"
+    },
+    {
+      "sha": "c319719433e99fe652754f2844c5d79669b111cb",
+      "fix": "allow the exact authorized V20 original-size target tuple through the read-only V10 campaign projection; keep heavy target authorization false and do not change equations, discretization, solver policy, or ordinary defaults",
+      "validation": "42 passed, 1 skipped in 0.58 s; targeted compileall and git diff check PASS; actual target pre-mesh receipt PASS with FE mesh, q CSR, and factor calls all zero",
+      "test_log_sha256": "2370b6fe9b939c78e3e60afd252e19f41a767470f32873b3564195fdcb0960a5",
+      "scientific_replay_required": false
     }
   ],
-  "last_formal_run_source_sha": "71042327e5f3a77cd39a1be7b5dfa46afe52db6b",
+  "last_formal_run_source_sha": "4b004d09b17d07a1f19f4c9d8443e76153e69a4b",
   "review_v1_continuation": {
     "review": "docs/task40extra_0p7nm_engineering/review_report_v1.md",
     "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
@@ -4297,6 +5002,332 @@
       "no_additional_pde_at_closeout": true,
       "target_2tb_48h": "NOT_QUALIFIED",
       "phase": "P0-P5 completed; ready for central delivery and ChatGPT review"
+    }
+  },
+  "review_v20_evidence_index": {
+    "schema": "task40extra.review_v20_evidence_index.v1",
+    "review": "Task40extra Review V20",
+    "branch": "task40extra_0p7nm_engineering",
+    "source_identity": {
+      "current_code_sha": "c319719433e99fe652754f2844c5d79669b111cb",
+      "last_formal_run_source_sha": "4b004d09b17d07a1f19f4c9d8443e76153e69a4b",
+      "source_freeze_parent_sha": "4b004d09b17d07a1f19f4c9d8443e76153e69a4b",
+      "numerical_source_changed_by_route_repair": false
+    },
+    "source_freeze_and_pre_mesh": {
+      "freeze": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/controller_v20_target_runtime_source_freeze.json",
+        "sha256": "df5ba8626186bb2ee6ba68ded57b59a8e84d73232e04067bcb3d875102fb2cff",
+        "source_sha": "c319719433e99fe652754f2844c5d79669b111cb"
+      },
+      "route_test_log": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/patch_validation/v20_target_runtime_and_abi_final_tests.log",
+        "sha256": "2370b6fe9b939c78e3e60afd252e19f41a767470f32873b3564195fdcb0960a5"
+      },
+      "route_test_result": ".....s.....................................                              [100%]\n42 passed, 1 skipped in 0.58s",
+      "target_pre_mesh": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/controller_target_actual_pre_mesh_chain.json",
+        "sha256": "8ed9ce90941e697bf773a5cf71c1fee05db0594b67481898e4eb1132f82feebd"
+      },
+      "target_pre_mesh_calls": {
+        "FE_mesh": 0,
+        "q_CSR": 0,
+        "factor": 0
+      },
+      "e2_pre_mesh": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/controller_e2_actual_pre_mesh_chain.json",
+        "sha256": "d500e9286d4988b69ee40a4c440284d9c8a9efad4b34f7f51c6da9b84b172f4e"
+      },
+      "heavy_target_authorized": false
+    },
+    "qualified_runtime": {
+      "abi_receipt": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+        "sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426"
+      },
+      "scalar_type": "complex128",
+      "integer_type": "int32",
+      "MPI_size": 1,
+      "final_doc_preflight": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/doc_closeout/v20_doc_abi_preflight_final.json",
+        "sha256": "69711e67e26d422c9d0eb5845cfec90e693e1740fddc2b5f09031d28b50490c2"
+      },
+      "final_doc_preflight_log": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/doc_closeout/v20_doc_abi_preflight_final.log",
+        "sha256": "8b05ab51d999bc1e86fce659e8b0b875c14b5b4193de90e555b2d83aea9191bc"
+      },
+      "FE_action_for_doc_preflight": "NOT_RUN"
+    },
+    "stage_input_manifest": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/stage_input_manifest.json",
+      "sha256": "0b57a37331f356d90cec15c6535faf6fbdf5efe80d9ffc77162c8dacbf3820ac"
+    },
+    "fixed_campaign_window": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json",
+      "sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0",
+      "t0_utc": "2026-10-09T01:45:00.727771902Z",
+      "deadline_utc": "2026-10-10T01:45:00.727771902Z",
+      "closeout_reserve_seconds": 600,
+      "refreshed": false
+    },
+    "campaign_snapshot_as_of": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/controller_closeout_campaign_snapshot.json",
+      "sha256": "0dcd4752f762ac66516b954e64914fc09816a3a9ed92f37a2099507268c79de4",
+      "read_only": true,
+      "tail_sequence": 83031,
+      "tail_cumulative_charged_seconds": 66919.72841801553,
+      "projected_cumulative_charged_seconds": 69920.85694392852,
+      "numerical_remaining_after_reserve_seconds": 15879.14305607148,
+      "ledger_sha256_as_of": "7ea9e880520accf2fd87d8ee63b894c7e3e1ec366308dd0c8bb4492abd705a11",
+      "final_settlement": false
+    },
+    "original_size_mode_identity": {
+      "manifest": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+        "sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+        "mode_count": 32060
+      },
+      "ordered_mode_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+      "bottom_unique_modes": 16030,
+      "top_unique_modes": 16030,
+      "regenerated": false
+    },
+    "service_runs": [
+      {
+        "run_id": "myfenics-case-20261009T153002-2141395",
+        "source_sha": "776b0d9c990faca42d5669dcb170f35ad2f35849",
+        "stage": "V20_TARGET_PREFLIGHT",
+        "status": "WORKFLOW_OR_CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+        "outer_sha256": "1e8904d2b4cc4cc8f24d3359355ee5703f7d24efd8d33b08231bddc41f8e56c0"
+      },
+      {
+        "run_id": "myfenics-case-20261009T155523-2143233",
+        "source_sha": "4b5ed041b69f8f91e283ae1b251ba76e6070de95",
+        "stage": "V20_TARGET_GEOMETRY_AND_LOCAL_PORT_ENTRY",
+        "status": "WORKFLOW_OR_CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+        "outer_sha256": "3b8e5fb2c7e6b95c91a84fc33885a3ca6360c9ddb894810f7d254fdaad9a29b4"
+      },
+      {
+        "run_id": "myfenics-case-20261009T171008-2147695",
+        "source_sha": "5ab94ec97a5f03f0cb2e5455b4583eed76f25447",
+        "stage": "V20_TARGET_LOCAL_PORT_COMPONENTS",
+        "status": "PARTIAL_RECEIPT_RECHECKED",
+        "outer_sha256": "76ff2aaaa41dbef1a74ba1456f1abb028938a19394151531e4bcb1e83144d4b9"
+      },
+      {
+        "run_id": "myfenics-case-20261009T175921-2150999",
+        "source_sha": "f88d0606a8c351e7185afd9e839e8c8ddfd9bb81",
+        "stage": "V20_TARGET_LOCAL_PORT_COMPONENTS",
+        "status": "PARTIAL_RECEIPT_RECHECKED",
+        "outer_sha256": "f05ebba391cde7c39b47c17a1ef7d3e81c6cd5ab8919cac040ead865abfe7827"
+      },
+      {
+        "run_id": "myfenics-case-20261009T181935-2153230",
+        "source_sha": "f88d0606a8c351e7185afd9e839e8c8ddfd9bb81",
+        "stage": "V20_E2_FULL",
+        "status": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+        "outer_sha256": "67d4b2a72e2c51ceff0fd5a7a4cb2ef653cd2a5a46d8b0fc3412957229847802"
+      },
+      {
+        "run_id": "myfenics-case-20261009T182846-2154131",
+        "source_sha": "9dad3ab4f48f62e1522437f7560111a364064e40",
+        "stage": "V20_E2_FULL",
+        "status": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+        "outer_sha256": "4bb312a34e837d61151be2840a3a78c169a44d1f04b92fbcfedcec7ef626bb54"
+      },
+      {
+        "run_id": "myfenics-case-20261009T183628-2155245",
+        "source_sha": "4b004d09b17d07a1f19f4c9d8443e76153e69a4b",
+        "stage": "V20_E2_FULL",
+        "status": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+        "outer_sha256": "a85d2fa7593e666c407c07dc26c686a838483893b078de9eb8b6426ab57756f0"
+      }
+    ],
+    "target_component_closure": {
+      "compact": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v20_component_closure.json",
+        "sha256": "bf607b2de0ad80b7170c0c85996d55c0ad02bd5d964d19067bd3c8d300d1962d"
+      },
+      "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T175922.461391Z",
+      "status": "PARTIAL_CANONICAL_LOCAL_COMPONENTS",
+      "combined_process_tree_rss_peak_bytes": 665841664,
+      "dedicated_cgroup_memory_peak_bytes": 700948480,
+      "task_tree_and_cgroup_swap_peak_bytes": 0,
+      "pss_bytes": null,
+      "pss_status": "DISABLED_BY_PROFILE",
+      "descendants_cleared": true,
+      "matched_directions": 17,
+      "unqualified_directions": 43,
+      "global_FE_MPC_q_CSR_factor_field_created": false
+    },
+    "e2_resource_stop": {
+      "compact": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v20_formal_results.json",
+        "sha256": "03c936c4824185a1e97c1971d9ce432163bdae443d5cd8f261d950c2075f3b99"
+      },
+      "run_id": "task40extra_0p7nm_nonseparable_e2_p6_reference_v20",
+      "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T183628.811418Z",
+      "source_sha": "4b004d09b17d07a1f19f4c9d8443e76153e69a4b",
+      "candidate_classification": "RESOURCE_CONTROLLED_STOP",
+      "first_stop_stage": "one_q_symbolic_admission_v19",
+      "official_result": false,
+      "numeric_factor_KSP_field_R_T_A": "NOT_RUN",
+      "run_manifest_sha256": "cfb8e64bc66fff0d1f5e1c87dc0b590c428be2d261adac96b37e65eee85a4743",
+      "run_summary_sha256": "ffeff3121dfb35af4ce195790717aa6280aa451c0f95c54ed95c931b934fab6a",
+      "partial_checker_sha256": "7b5f04739dbe1ddee3025a28b77a9fddccd2e298847cab3e6fa24e1e40b31582",
+      "swap_peak_bytes": 0
+    },
+    "v19_factor_cost_scope": {
+      "source_record": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v19_cost_and_readiness.json",
+        "sha256": "40890472fa55a8166a8314fe9948af50589feb52c667e0f188b2962064a308cc"
+      },
+      "numeric_factor_elapsed_seconds_sum": 223.13437832868658,
+      "numeric_factor_build_count": 28,
+      "scope": "numeric factor sub-time only; not complete build/probe or cold path",
+      "conversion_cache_miss_eviction_and_complete_cold_path": "UNKNOWN",
+      "summed_into_v20_parent_runtime": false
+    },
+    "existing_source_freeze_test_logs": [
+      {
+        "name": "V20 probe source freeze",
+        "freeze": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/controller_v20_probe_source_freeze.json",
+          "sha256": "55e938025958f7c8ff75faed2895fc89610fdc2cb92a68a8a7a13a8b683bd59b",
+          "source_sha": "44858149c918bb038515c2d083938e70ccc9e1fe"
+        },
+        "command": "python -m pytest -q src/test/test_task40_v10_p6_mumps.py",
+        "result": "13 passed in 1.19 s; compileall and diff check PASS",
+        "log": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/controller_v20_probe_targeted.log",
+          "sha256": "562c7a9b0ad21f5e91d2c7524821a623ebee23ac0c05e25894dc309fa91b2919"
+        },
+        "scope": "probe Vec allocation and independent cleanup only; no formal FE/PDE"
+      },
+      {
+        "name": "V20 component-resume source freeze",
+        "freeze": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/controller_v20_component_resume_source_freeze.json",
+          "sha256": "71f3c4cd5de4736530d85eac39d9f6649a74f46eb5c0cfccca6d4ab0c28aada9",
+          "source_sha": "ba80bc02111a33861305dc4cfcde59b141f703b0"
+        },
+        "command": "TASK40_V20_REAL_RESUME_FIXTURE=1 python -m pytest -q src/test/test_task40_v20_local_components.py src/test/test_task40_v20_routes.py",
+        "result": "33 passed in 2.80 s (reported by source-freeze receipt; raw log not located)",
+        "log": {
+          "path": null,
+          "status": "NOT_LOCATED_IN_CLOSEOUT",
+          "expected_sha256_from_freeze": "2cf8dafec130a3a221cf5c6cb67f2046fae706a5e79967fb293f6f22ffff0283"
+        },
+        "scope": "saved geometry/c00 software fixture; no official result"
+      },
+      {
+        "name": "V20 route and ABI final suite",
+        "source_sha": "c319719433e99fe652754f2844c5d79669b111cb",
+        "freeze": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/controller_v20_target_runtime_source_freeze.json",
+          "sha256": "df5ba8626186bb2ee6ba68ded57b59a8e84d73232e04067bcb3d875102fb2cff"
+        },
+        "result": ".....s.....................................                              [100%]\n42 passed, 1 skipped in 0.58s",
+        "log": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/patch_validation/v20_target_runtime_and_abi_final_tests.log",
+          "sha256": "2370b6fe9b939c78e3e60afd252e19f41a767470f32873b3564195fdcb0960a5"
+        },
+        "scope": "route/profile/ABI contract only; no FE/PDE replay",
+        "command_scope": "targeted route and ABI suites; exact combined command is not preserved in the freeze receipt"
+      },
+      {
+        "name": "V20 latest component-resume targeted validation",
+        "receipt": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/patch_validation/v20_local_port_resume_targeted_pytest_20261010_v2.json",
+          "sha256": "730b0846efc2a3d8e5ddfd9f2f95492abe330b5ca7a4cb7564b5538607fd44b9"
+        },
+        "command": "python -m pytest -q src/test/test_task40_v20_local_components.py src/test/test_task40_v20_routes.py",
+        "result": "35 passed, 1 skipped; targeted compileall and diff check PASS",
+        "log": {
+          "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/patch_validation/v20_local_port_resume_targeted_pytest_20261010_v2.log",
+          "sha256": "300377b7ca47518f8e58601f2223af547757cb8cd3136653f8d74266ebc028ff"
+        },
+        "scope": "software/record validation only; no new service run"
+      }
+    ],
+    "compact_records": [
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v20_component_closure.json",
+        "sha256": "bf607b2de0ad80b7170c0c85996d55c0ad02bd5d964d19067bd3c8d300d1962d"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v20_cost_and_readiness.json",
+        "sha256": "acd0c3ecb6a3cf2a3acb0b0c33fd53f8969e6b4380f855a9352525c0b13a11c8"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v20_formal_results.json",
+        "sha256": "03c936c4824185a1e97c1971d9ce432163bdae443d5cd8f261d950c2075f3b99"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v20_sparse_capacity.json",
+        "sha256": "197bd9cdfd6ea32e7c131333ca378b0f865bf61b6937211ea03168786be3cd23"
+      }
+    ],
+    "documentation_hashes": [
+      {
+        "path": "docs/README.md",
+        "sha256": "747b8ab9331cc231b3e59ddd71c6f91eeb1daa17d30c19b47effca88158972c9"
+      },
+      {
+        "path": "docs/development_model_registry.md",
+        "sha256": "e58d406cb212edb1353d406a6abd600b4869d5460283c286d1f298e088c2deac"
+      },
+      {
+        "path": "docs/development_progress.md",
+        "sha256": "0f2da719af5c227c348dddadbe3a04a2a8ef5043cccde6635ffcc74cf67e20fb"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/README.md",
+        "sha256": "c44fa67feda0bf2d18ba768f4c7e801f23f7f341635bdd6741995923e2e0ff5c"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/response_v20.md",
+        "sha256": "f12b7bd8df5ad9b4d3952822910f0ae66e921b07a088a776e67d1cc50bfbf455"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+        "sha256": "b9a23966e0b78136b43bd934cb7797aa783a79f032a61e28773eb733bdcff18f"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/target_stage_handoff_v20.md",
+        "sha256": "24a89874504ed518fadbdca86ceda81cae97873d99eef5ec8c8fad58113f3a8a"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md",
+        "sha256": "7c0ee49b9f8f057676f0a7fe2efeec7fa2eaebd8b532d1e1d12aec334229d375"
+      }
+    ],
+    "fixture_accounting_boundary": {
+      "stop_receipt": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/component_resume/full_component_fixture_v2/fixture_stop_record_v2.json",
+        "sha256": "4811b3a90767ced2df774bdf06bbe881010ff07791e95d962e695521f2d7e2a0"
+      },
+      "raw_charged_flag_is_not_authority": true,
+      "exact_interval_or_fee": "UNKNOWN",
+      "accounting": "retain existing shared-ledger charge once; do not zero or duplicate"
+    },
+    "commit_push_owner": "controller",
+    "executor_commit_or_push": false,
+    "documentation_contract_suite": {
+      "run_id": "task40extra_review_v20_doc_closeout_attempt03_final",
+      "attempt": 3,
+      "source_head": "c319719433e99fe652754f2844c5d79669b111cb",
+      "status": "PASS",
+      "preflight": "qualified runtime, complex128/int32, MPI size 1",
+      "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py",
+      "passed": 29,
+      "subtests_passed": 134,
+      "pytest_reported_seconds": 0.22,
+      "log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/doc_closeout/v20_docs_contract_attempt03_final.log",
+      "log_sha256": "2a425959bc06825a8407ae228134b042a84070e43d4879e35a58ae354a9c2a4d",
+      "abi_receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/doc_closeout/v20_doc_abi_preflight_final.json",
+      "abi_receipt_sha256": "69711e67e26d422c9d0eb5845cfec90e693e1740fddc2b5f09031d28b50490c2",
+      "scope": "documentation/model-registry/retrospective contracts only; no FE/PDE"
     }
   }
 }

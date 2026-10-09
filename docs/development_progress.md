@@ -1,3 +1,19 @@
+# Task40extra Review V20 项目进展：原尺寸几何/局部组件实测，E2 资源停点保留
+
+| 对象 | 方法为何需要、改变了哪一步 | 结果 | 结论边界 |
+|---|---|---|---|
+| 原尺寸入口 | 为真实 `50×25×140 nm` case 增加精确 profile/campaign route，避免把 E2 或缩小几何当作原尺寸 | 源冻结于 `c319719433e99fe652754f2844c5d79669b111cb`；route/ABI 42 passed、1 skipped | 仅路由修复；ordinary solver default 与方程不变，heavy target authorization 仍 false |
+| target geometry | 先核对实际标签、周期配对和局部类别，避免把拓扑推算冒充 FE readback | `272×8×14=30,464` cells；60/60 类与 filled reference 共享；材料和配对通过 | 未构造全局 FE/MPC/C-D/q CSR/factor |
+| local/port | 通过有限局部基元真实装配、因子化、恢复和方程检查，估量局部误差及方向覆盖 | 两个端口侧前向误差 `4.39e-14/4.46e-14`，原方程残差 `6.37e-16/5.74e-16`；限值 `1e-11/1e-10` | 仅 17/60 方向匹配；43 类未资格化，状态 PARTIAL |
+| E2 p6 880 cells | 作为唯一增长 case 实测四 q CSR、transform bank 和一槽 symbolic 资源 Gate | 投影 RSS `13.669 GB` 超动态 cap `13.520 GB` 共 `149,505,816 B`；安全停止 | RESOURCE_CONTROLLED_STOP；numeric factor、KSP、场和 R/T/A NOT_RUN |
+| 最终原尺寸 | 必须通过目标 FE/映射、全 q、operator/recovery、A6、物理输出、资源与精度门 | 目前 full field NOT_RUN | 2 TB/48 h 与最终精度均 NOT_QUALIFIED |
+
+原尺寸 mesh 由有限元将真实几何划分为 p6 单元；每个 q 表示 y 周期边界上的一个相位子问题。V20 的几何和局部组件证明运行入口与所测组件可用，不能据此宣称完整 Maxwell 方程或官方功率结果已通过。E2 的 future reserve、错层失败及不重叠父时钟见 [V20 summary](task40extra_0p7nm_engineering/outcomes/summary.md) 与 [run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。
+
+后续计算应由主控先核对固定 window、source/input/ABI 和剩余资源授权，再决定是否开放 build/symbolic。one-q 数值 pilot 不能替代 all-q symbolic；目标 full 必须先关闭全目标映射、算子与恢复见证、full explicit A6 和物理/输出 Gate。V20 固定窗口不刷新，历史费用与 unknown 保留；执行者不 commit/push。
+
+---
+
 # Task40extra Review V19 项目进展：B0、E1小模型及保存场门通过，目标规模仍未资格化
 
 ## 背景与基线

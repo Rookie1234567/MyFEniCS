@@ -1,0 +1,196 @@
+{
+  "schema": "task40extra.review_v20_component_closure.v1",
+  "review": "Task40extra Review V20",
+  "branch": "task40extra_0p7nm_engineering",
+  "source_identities": {
+    "e2_resource_attempt": "4b004d09b17d07a1f19f4c9d8443e76153e69a4b",
+    "target_geometry_and_local_port_components": "f88d0606a8c351e7185afd9e839e8c8ddfd9bb81",
+    "target_route_freeze": "c319719433e99fe652754f2844c5d79669b111cb"
+  },
+  "target_geometry": {
+    "status": "PASS",
+    "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T175922.461391Z",
+    "canonical_input_sha256": "f6726d005713b586f1bccfbf6904dd64f3f1f31dd3b069607b55e9b430d294c7",
+    "axes": [
+      272,
+      8,
+      14
+    ],
+    "cell_count": 30464,
+    "mesh_degree": 6,
+    "target_cell_class_count": 60,
+    "filled_reference_cell_class_count": 60,
+    "shared_cell_class_count": 60,
+    "target_only_cell_class_count": 0,
+    "filled_reference_only_cell_class_count": 0,
+    "material_cell_counts": {
+      "air": 18080,
+      "substrate": 2176,
+      "grating": 10208
+    },
+    "periodic_face_inventory": {
+      "x_pairs_per_side": 112,
+      "y_pairs_per_side": 3808,
+      "z_port_faces_per_side": 2176,
+      "x_pairing_pass": true,
+      "y_pairing_pass": true,
+      "top_bottom_coordinate_pairing_pass": true
+    },
+    "elapsed_seconds": 0.48784481384791434,
+    "elapsed_scope": "geometry inventory/readback phase; not a complete mesh-construction duration",
+    "created": {
+      "global_p6_space": false,
+      "global_mpc": false,
+      "global_C_D": false,
+      "q_csr": false,
+      "factor": false
+    }
+  },
+  "target_local_port_components": {
+    "status": "PARTIAL_CANONICAL_LOCAL_COMPONENTS",
+    "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T175922.461391Z",
+    "resume_input_sha256": "9bee80bb269b2c25c8020c83626fa75b4812f854869514a1f8f7a31147bb809f",
+    "resume_manifest_sha256": "c0a22a6aaefd4062b2d4d3c3553dcfa8029845840f32eb1c1bc76a83836c9255",
+    "elapsed_seconds": 66.72772517800331,
+    "run_resource_summary": {
+      "scope": "combined preflight, geometry inventory, and local/port user-service run; bottom/top are not separately sampled",
+      "sampled_process_tree_rss_peak_bytes": 665841664,
+      "dedicated_job_cgroup_memory_peak_bytes": 700948480,
+      "task_process_tree_swap_peak_bytes": 0,
+      "task_cgroup_swap_peak_bytes": 0,
+      "pss_bytes": null,
+      "pss_status": "DISABLED_BY_PROFILE",
+      "descendants_cleared": true,
+      "dynamic_launch_cap_bytes": 13294874624,
+      "explicit_process_tree_cap_bytes": 17179869184,
+      "cap_policy": "min(dynamic_memory_envelope, explicit_tree_cap)",
+      "run_summary_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T175922.461391Z/run_summary.json",
+      "run_summary_sha256": "51ab1fed655b980b0d90ab85476b2af216f62f94202cae381371150048a3d94a",
+      "watchdog_summary_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T175922.461391Z/watchdog/summary.json",
+      "watchdog_summary_sha256": "8f926b6eff56bc53d750fbb6dc71d43eecf195733117aa775695900fe6775b75"
+    },
+    "local_memory_inventory": {
+      "maximum_single_class_unique_backing_bytes": 34260316,
+      "maximum_single_class_named_array_payload_bytes_with_aliases": 34260316,
+      "largest_single_owner_bytes": null,
+      "largest_single_owner_status": "NOT_SEPARATELY_SUMMARIZED_AS_SCALAR",
+      "scope": "per-class local component inventory; not a full-target live-object inventory"
+    },
+    "local_cell_class_count": 60,
+    "new_local_class_measurement_count": 0,
+    "reused_local_class_lu_factor_count": 60,
+    "new_port_local_vii_factorization_count": 2,
+    "new_port_factorization_observed_side_count": 2,
+    "new_port_factorization_unknown_side_count": 0,
+    "directional_qualification": {
+      "representative_geometry_and_permutation_match_count": 17,
+      "class_count_without_matching_target_orientation": 43,
+      "status": "PARTIAL_CANONICAL_LOCAL_COMPONENTS"
+    },
+    "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "ordered_mode_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+    "mode_count_full_ordered": 32060,
+    "manifest_side_counts": {
+      "bottom": 16030,
+      "top": 16030
+    },
+    "boundary_components": [
+      {
+        "side": "bottom",
+        "status": "PASS",
+        "recorded_full_ordered_mode_rows": 32060,
+        "recorded_batches": 2004,
+        "trace_rows": 432,
+        "elapsed_seconds": 32.871305572101846
+      },
+      {
+        "side": "top",
+        "status": "PASS",
+        "recorded_full_ordered_mode_rows": 32060,
+        "recorded_batches": 2004,
+        "trace_rows": 432,
+        "elapsed_seconds": 32.90396950300783
+      }
+    ],
+    "qualification_flags": {
+      "all_q_csr_created": false,
+      "global_p6_space_created": false,
+      "global_MPC_created": false,
+      "global_C_D_created": false,
+      "global_mumps_factor_created": false,
+      "full_target_operator_qualified": false,
+      "full_target_field_qualified": false
+    },
+    "interpretation": "Local algebra uses canonical one-cell meshes; only 17 representative geometry/permutation matches qualify target orientation. Boundary receipts retain their recorded full-table counts; manifest unique side counts are listed separately.",
+    "boundary_accuracy": {
+      "gate_limits": {
+        "original_local_equation_relative": 1E-10,
+        "manufactured_forward_error_relative": 1E-11,
+        "direct_trace_carrier_relative": 1E-14
+      },
+      "sides": [
+        {
+          "side": "bottom",
+          "manufactured_forward_error_relative": 4.38956601568474E-14,
+          "original_local_trace_equation_relative": 6.369701138645506E-16,
+          "local_port_equation_relative": 3.0975794244638386E-17,
+          "local_recovery_equation_relative": 4.495120381497924E-16
+        },
+        {
+          "side": "top",
+          "manufactured_forward_error_relative": 4.456757248975752E-14,
+          "original_local_trace_equation_relative": 5.735468421207556E-16,
+          "local_port_equation_relative": 6.41111060274916E-17,
+          "local_recovery_equation_relative": 4.81676182886157E-16
+        }
+      ],
+      "qualification": "PASS within the two measured boundary components; 17/60 target orientations matched, 43 remain unqualified"
+    }
+  },
+  "preserved_failed_attempt": {
+    "run_id": "task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
+    "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T171009.169165Z",
+    "classification": "WORKER_FAILED",
+    "partial_classification": "LOCAL_COMPONENT_GATE_FAILED",
+    "completed_stages": [
+      "preflight",
+      "geometry_inventory",
+      "local_port_components"
+    ],
+    "not_run": [
+      "all-q CSR/symbolic",
+      "one-q numeric",
+      "full field"
+    ],
+    "watchdog_monotonic_seconds": 1199.5501666569617,
+    "watchdog_conservative_budget_seconds": 1332.9249393413713,
+    "process_tree_rss_peak_bytes": 695955456,
+    "task_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "superseded_by_later_component_receipt": false,
+    "source_sha": "5ab94ec97a5f03f0cb2e5455b4583eed76f25447",
+    "input_sha256": "3945b58e05feaa32801e8f550dcc995fee6dc18a8841a0ea676e543053a2e9ff",
+    "run_manifest_sha256": "a2f718c5399b32c3a0610d775f68a21507cdb2f0e1c0669cf2289a2a823150d3",
+    "run_summary_sha256": "468548e2809fcbc37121b46629ef9365a05ab8cca74816abae9f0c362016b8cd"
+  },
+  "qualification_boundary": "Target geometry is measured. Local/port evidence is partial. No target global FE/MPC, full operator, all-q CSR, factor, KSP, full field, precision, 2 TB, or 48 h qualification is claimed.",
+  "preserved_engineering_fixture_stop": {
+    "status": "INTERRUPTED_BY_CONTROLLER_SCOPE_CHANGE",
+    "classification": "ENGINEERING_ONLY_NO_FORMAL_GATES",
+    "source_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/component_resume/full_component_fixture_v2/fixture_stop_record_v2.json",
+    "source_sha256": "4811b3a90767ced2df774bdf06bbe881010ff07791e95d962e695521f2d7e2a0",
+    "direct_nonformal_invocation": {
+      "receipt_field_campaign_window_charged": false,
+      "observed_runtime_before_stop": "approximately 2 minutes; not an accounting interval",
+      "termination": "SIGTERM after controller instruction not to compute full fixture",
+      "formal_gate_completed": false
+    },
+    "additional_stopped_attempt": {
+      "observed_runtime_before_stop": "approximately 14 seconds",
+      "result": "no test result; stopped before result",
+      "termination": "SIGTERM under controller instruction not to calculate c01 again",
+      "exact_independent_elapsed_and_fee": "UNKNOWN_NOT_SEPARATELY_ATTRIBUTED"
+    },
+    "accounting_note": "The raw stop receipt campaign_window_charged=false field is not the accounting authority. Controller accounting confirms the fixed campaign window includes this interval; the exact independent fixture duration/fee is UNKNOWN. Preserve the existing fee once, do not set it to zero, and do not add a second estimate."
+  }
+}

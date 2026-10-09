@@ -1,0 +1,139 @@
+{
+  "schema": "task40extra.review_v20_sparse_capacity.v1",
+  "review": "Task40extra Review V20",
+  "branch": "task40extra_0p7nm_engineering",
+  "e2_q_csr_inventory": {
+    "source_sha": "4b004d09b17d07a1f19f4c9d8443e76153e69a4b",
+    "event": "task40_v17_q_csr_all_ready",
+    "all_four_canonical": true,
+    "blocks": [
+      {
+        "q": 0,
+        "shape": [
+          44380,
+          44380
+        ],
+        "numeric_nnz": 24321244,
+        "stored_slots": 24331316,
+        "exact_zero_slots_retained": 10072,
+        "visible_csr_payload_bytes": 486803844
+      },
+      {
+        "q": 1,
+        "shape": [
+          44480,
+          44480
+        ],
+        "numeric_nnz": 24667953,
+        "stored_slots": 24699794,
+        "exact_zero_slots_retained": 31841,
+        "visible_csr_payload_bytes": 494173804
+      },
+      {
+        "q": 2,
+        "shape": [
+          44480,
+          44480
+        ],
+        "numeric_nnz": 24680813,
+        "stored_slots": 24712876,
+        "exact_zero_slots_retained": 32063,
+        "visible_csr_payload_bytes": 494435444
+      },
+      {
+        "q": 3,
+        "shape": [
+          44480,
+          44480
+        ],
+        "numeric_nnz": 24664625,
+        "stored_slots": 24696626,
+        "exact_zero_slots_retained": 32001,
+        "visible_csr_payload_bytes": 494110444
+      }
+    ],
+    "visible_payload_sum_bytes": 1969523536,
+    "unique_backing_bytes": 1969523536,
+    "unique_backing_buffer_count": 12,
+    "alias_group_count": 0,
+    "alias_reference_count": 0,
+    "content_hashes": "NOT_RECORDED",
+    "zero_cleanup": "not applied; no array-owner copy or RSS reduction claimed"
+  },
+  "e2_target_owner_inventory": {
+    "model": "E2 p6 880-cell case; inventory is from the v17 target owner event emitted on V20 source",
+    "cells": 880,
+    "classes": 231,
+    "Hhat_materialized": false,
+    "per_cell_transformed_arrays_resident": true,
+    "all_port_payload_bytes_sum_with_aliases": 976188160,
+    "unique_port_payload_owner_bytes": 801132800,
+    "unique_port_payload_owner_count": 13520,
+    "direct_trace_payload_bytes_sum": 142836480,
+    "local_carrier_cell_payload_bytes": 658247680,
+    "raw_port_payload_bytes_sum": 402595840,
+    "transformed_port_payload_bytes_sum": 255651840,
+    "staging_port_payload_bytes_sum": 175104000,
+    "unique_local_lu_factor_buffers": 231,
+    "unique_S_V_buffers": 231,
+    "unique_recovery_buffers": 231,
+    "unique_trace_rhs_projection_buffers": 231,
+    "retained_local_schur_bytes": 689762304,
+    "read_only_identity_cache_bytes": 1620000,
+    "interpretation": "Named payload totals with aliases and unique backing totals are distinct accounting views; they are not all added as a simultaneous RSS peak."
+  },
+  "generic_inventory_record": {
+    "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T183628.811418Z/v20_one_q_row_tile_p6_reference_inventory.json",
+    "entries": {},
+    "inventory_used_bytes": 0,
+    "inventory_peak_bytes": 0,
+    "workspace_live_bytes": 0,
+    "workspace_peak_bytes": 0,
+    "classification": "EMPTY_GENERIC_LEDGER_NOT_A_ZERO_LIVE_OBJECT_PROOF"
+  },
+  "e2_memory_and_admission": {
+    "gate_label": "one_q_symbolic_admission_v19",
+    "requested_additional_bytes": 486803844,
+    "future_all_q_and_transform_reserve_bytes": 2481665040,
+    "current_process_tree_rss_at_gate_bytes": 10079617024,
+    "dynamic_launch_cap_bytes": 13519601664,
+    "projected_process_tree_rss_bytes": 13669107480,
+    "projected_over_cap_bytes": 149505816,
+    "total_rss_inequality_passed": false,
+    "incremental_headroom_inequality_passed": false,
+    "measured_run_process_tree_rss_peak_bytes": 10929668096,
+    "measured_run_dedicated_cgroup_memory_peak_bytes": 11908415488,
+    "task_process_tree_swap_peak_bytes": 0,
+    "task_cgroup_swap_peak_bytes": 0,
+    "pss_bytes": null,
+    "pss_status": "DISABLED_BY_PROFILE",
+    "memory_scopes_are_separate": true,
+    "requested_workspace_bytes": 486803844,
+    "fixed_future_workspace_headroom_bytes": 134217728,
+    "future_reserve_components": {
+      "persistent_pending_transform_inverse_payload_bytes": 315109440,
+      "selected_maximum_co_resident_phase_bytes": 219340224,
+      "one_q_symbolic_guard_bytes": 1947215376,
+      "one_q_numeric_factor_reserve_bytes": 0
+    },
+    "projection_reconstruction": {
+      "current_process_tree_rss_bytes": 10079617024,
+      "requested_additional_bytes": 486803844,
+      "requested_workspace_bytes": 486803844,
+      "future_all_q_and_transform_reserve_bytes": 2481665040,
+      "fixed_future_workspace_headroom_bytes": 134217728,
+      "projected_process_tree_rss_bytes": 13669107480,
+      "dynamic_launch_cap_bytes": 13519601664,
+      "projected_over_cap_bytes": 149505816,
+      "projected_incremental_capacity_bytes": 3589490456,
+      "incremental_headroom_bytes": 3439984640,
+      "arithmetic_verified_from_saved_gate_record": true
+    }
+  },
+  "host_global_swap_diagnostic": {
+    "scope": "WSL-global, not attributable to this task",
+    "pswpin_delta_pages": 56,
+    "pswpout_delta_pages": 562,
+    "task_zero_swap_does_not_imply_host_zero_swap": true
+  }
+}

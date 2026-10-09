@@ -1,19 +1,24 @@
-# Task40extra：0.7 nm工程方法（笔记本起步）
+# Task40extra：0.7 nm 工程方法（笔记本起步）
 
-## Review V19 当前交付
+## Review V20 当前交付
 
-V19 在 B0 Ny=8 与 E1 p6 两个缩小模型完成 Full3D 正式解、full explicit A6 residual 和独立输出检查；B0 Ny4/Ny8 保存场的532个有序模式按新 mixed gate 通过。Ny=8 原尺寸 support 经有界真实 FE/MPC 校准收紧，但原尺寸 target FE、CSR、factor 和 PDE 未构造；50×25×140 nm、十进制2 TB与172800 s仍为 NOT_QUALIFIED。ordinary solver default未变。
+V20 将原尺寸 `50×25×140 nm`、Ny=8、p6 的分阶段入口接通，取得 30,464-cell 实际几何与部分局部/端口实测，并运行唯一获准的 E2 p6 增长场至资源 Gate。E2 在符号因子准入前受控停止；原尺寸目标没有全局 FE/算子/场，2 TB/48 h 仍 `NOT_QUALIFIED`。源码 route 修复不改数值方法或 ordinary solver default。
 
 | 文件 | 内容 |
 |---|---|
-| [Review V19](review_report_v19.md) | 当前执行合同、P4/P5交付与数值/资源边界 |
-| [Response V19](response_v19.md) | B0/E1、PC与启动诊断、P4支持校准、全模式保存场门和下一精度设计 |
-| [V19 outcomes summary](outcomes/summary.md) 与 [test summary](outcomes/test_summary.md) | 正式结果、负结果、收口测试和未运行范围；V18历史保留在后半部分 |
-| [V19 run index](outcomes/records/run_index.json) | 正式运行、P4 support/projection、mode gate、失败与文档测试身份 |
-| [V19 component closure](outcomes/records/review_v19_component_closure.json) | ONE_Q_REFACTOR_V19、PC/启动见证、q覆盖、factor probes和资格范围 |
-| [V19 sparse capacity](outcomes/records/review_v19_sparse_capacity.json) | P4原生support、结构投影、owner部分账、资源峰和下一精度设计 |
-| [V19 formal results](outcomes/records/review_v19_formal_results.json) | B0/E1残差、官方物理量、checker、mode gate和保留失败 |
-| [V19 cost and readiness](outcomes/records/review_v19_cost_and_readiness.json) | 固定窗口as-of账、阶段时间、重复factor成本、目标readiness |
+| [Review V20](review_report_v20.md) 与 [Response V20](response_v20.md) | 本轮执行合同、E2 资源停点、目标组件实测与证据边界 |
+| [V20 outcomes summary](outcomes/summary.md) 与 [test summary](outcomes/test_summary.md) | 表格优先的模型总账、失败/未运行项、资源时钟与测试边界 |
+| [目标阶段交接 V20](outcomes/target_stage_handoff_v20.md) | 固定输入/模式/ABI 身份、阶段状态和可复制命令 |
+| [V20 run index](outcomes/records/run_index.json) | 每次运行命令、ABI、原始 manifest/footer/summary/checker/outer record 及 hashes |
+| [V20 component closure](outcomes/records/review_v20_component_closure.json) | 原尺寸几何、local/port 实际误差/限值、方向覆盖与中断 fixture |
+| [V20 sparse capacity](outcomes/records/review_v20_sparse_capacity.json) | E2 q CSR/owner 账与 symbolic admission 逐项内存复算 |
+| [V20 formal results](outcomes/records/review_v20_formal_results.json) | B0/E1 锚点、E2 资源停点与两次入口失败 |
+| [V20 cost and readiness](outcomes/records/review_v20_cost_and_readiness.json) | outer parent 与 watchdog 分层时钟、固定窗口和资格矩阵 |
+| [Response V19](response_v19.md) 与 [V19结果历史](outcomes/summary.md) | V19 B0/E1 正式小模型结果与此前证据 |
+
+## Review V19 历史交付
+
+V19 完成 B0 Ny=8、E1 p6 两个缩小模型的完整离散求解和输出检查，并完成 B0 Ny4/Ny8 的 532 模式保存场观察门。该证据只适用于对应小模型；原尺寸目标当时也未建全局 FE/CSR/factor/PDE。
 
 ## Review V18 历史交付
 

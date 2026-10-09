@@ -1,0 +1,135 @@
+{
+  "schema": "task40extra.review_v20_cost_and_readiness.v1",
+  "review": "Task40extra Review V20",
+  "fixed_window": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json",
+    "sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0",
+    "t0_utc": "2026-10-09T01:45:00.727771902Z",
+    "deadline_utc": "2026-10-10T01:45:00.727771902Z",
+    "closeout_reserve_seconds": 600,
+    "refreshed_or_replaced": false
+  },
+  "campaign_accounting_snapshot": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/controller_closeout_campaign_snapshot.json",
+    "sha256": "0dcd4752f762ac66516b954e64914fc09816a3a9ed92f37a2099507268c79de4",
+    "read_only": true,
+    "tail_sequence": 83031,
+    "tail_cumulative_charged_seconds": 66919.72841801553,
+    "current_read_only_projected_cumulative_seconds": 69920.85694392852,
+    "numerical_remaining_after_600s_reserve": 15879.14305607148,
+    "ledger_sha256_as_of": "7ea9e880520accf2fd87d8ee63b894c7e3e1ec366308dd0c8bb4492abd705a11",
+    "window_sha256_unchanged": true,
+    "ledger_modified": false,
+    "settlement_status": "AS_OF_PROJECTION_NOT_FINAL_FROZEN; submission and later waiting remain inside the fixed window"
+  },
+  "qualified_resource_policy": {
+    "explicit_process_tree_cap_bytes": 17179869184,
+    "dynamic_admission_rule": "min(dynamic_memory_envelope, explicit_tree_cap)",
+    "task_process_tree_and_dedicated_cgroup_swap_required_bytes": 0,
+    "independent_watchdog": true,
+    "full_descendant_cleanup_required": true,
+    "pss_bytes_when_profile_disabled": null,
+    "pss_status_when_profile_disabled": "DISABLED_BY_PROFILE",
+    "cap_increase_authorized": false
+  },
+  "e2_run_clock": {
+    "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T183628.811418Z",
+    "watchdog_monotonic_seconds": 5605.714946079068,
+    "watchdog_utc_interval_seconds": 6229.415445759,
+    "watchdog_conservative_budget_seconds": 6229.419340132554,
+    "watchdog_utc_monotonic_discrepancy_seconds": 623.7003065580893,
+    "discrepancy_cause": "UNKNOWN_NOT_INFERRED",
+    "outer_run_case_monotonic_seconds": 5606.231872484088,
+    "outer_run_case_utc_budget_seconds": 6229.932660372,
+    "activation_seconds": 0.16300927009433508,
+    "abi_preflight_seconds": 0.20034023793414235,
+    "required_checker_seconds": 1.7897538559045643,
+    "clock_intervals_are_not_added_across_parent_and_child": true,
+    "outer_parent_nonoverlapping_total": {
+      "monotonic_seconds": 5608.418476050021,
+      "boottime_seconds": 5608.418475199025,
+      "utc_seconds": 6232.11878125,
+      "conservative_budget_seconds": 6232.119266074,
+      "includes_activation_abi_run_case_and_required_checker": true
+    },
+    "watchdog_is_nested_and_reported_separately": true
+  },
+  "target_geometry_and_component_cost": {
+    "geometry_inventory_seconds": 0.48784481384791434,
+    "local_port_components_parent_seconds": 66.72772517800331,
+    "bottom_port_component_seconds": 32.871305572101846,
+    "top_port_component_seconds": 32.90396950300783,
+    "per_side_times_are_children_of_component_interval": true,
+    "geometry_inventory_timing_scope": "inventory/readback phase, not complete mesh construction",
+    "local_port_run_process_tree_rss_peak_bytes": 665841664,
+    "local_port_run_dedicated_cgroup_memory_peak_bytes": 700948480,
+    "local_port_run_task_tree_and_cgroup_swap_peak_bytes": 0,
+    "local_port_run_pss_bytes": null,
+    "local_port_run_pss_status": "DISABLED_BY_PROFILE",
+    "local_port_run_descendants_cleared": true,
+    "local_port_run_dynamic_launch_cap_bytes": 13294874624,
+    "local_port_run_explicit_tree_cap_bytes": 17179869184,
+    "local_port_run_cap_policy": "min(dynamic_memory_envelope, explicit_tree_cap)",
+    "per_side_memory_peaks": "NOT_SEPARATELY_SAMPLED_RUN_WIDE_PEAK_ONLY",
+    "maximum_single_class_unique_backing_bytes": 34260316,
+    "maximum_single_class_named_array_payload_bytes_with_aliases": 34260316,
+    "largest_single_owner_bytes": null,
+    "largest_single_owner_status": "NOT_SEPARATELY_SUMMARIZED_AS_SCALAR"
+  },
+  "prior_v19_factor_cost_scope": {
+    "source_record": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v19_cost_and_readiness.json",
+    "source_record_sha256": "40890472fa55a8166a8314fe9948af50589feb52c667e0f188b2962064a308cc",
+    "numeric_factor_elapsed_seconds_sum": 223.13437832868658,
+    "scope": "V19 E1 numeric-factor sub-time only; the existing record reports 28 numeric builds.",
+    "not_a_complete_build_probe_or_cold_path_total": true,
+    "conversion_cache_miss_eviction_and_complete_cold_path": "UNKNOWN",
+    "added_to_v20_parent_runtime": false
+  },
+  "route_freeze_and_pre_mesh_validation": {
+    "frozen_source_sha": "c319719433e99fe652754f2844c5d79669b111cb",
+    "parent_source_sha": "4b004d09b17d07a1f19f4c9d8443e76153e69a4b",
+    "freeze_receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/controller_v20_target_runtime_source_freeze.json",
+    "freeze_receipt_sha256": "df5ba8626186bb2ee6ba68ded57b59a8e84d73232e04067bcb3d875102fb2cff",
+    "actual_pre_mesh_receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/controller_target_actual_pre_mesh_chain.json",
+    "actual_pre_mesh_receipt_sha256": "8ed9ce90941e697bf773a5cf71c1fee05db0594b67481898e4eb1132f82feebd",
+    "actual_fixed_window_and_accounting_unchanged": true,
+    "target_candidate_contract_pass": true,
+    "FE_mesh_calls": 0,
+    "q_csr_calls": 0,
+    "factor_calls": 0,
+    "target_full_remains_no_go": true
+  },
+  "qualification_matrix": {
+    "target_input_and_stage_route_ready": "PASS",
+    "target_geometry_only_complete": "PASS",
+    "target_local_port_components": "PARTIAL_CANONICAL_LOCAL_COMPONENTS",
+    "target_build_and_symbolic": "NOT_RUN; target heavy authorization remains false",
+    "target_one_q_numeric": "NOT_RUN",
+    "target_full_field": "NOT_RUN_AND_RELEASE_FORBIDDEN",
+    "e2_full": "RESOURCE_CONTROLLED_STOP",
+    "target_solver_qualified": false,
+    "target_2tb_48h": "NOT_QUALIFIED"
+  },
+  "route_repair_test": {
+    "source_sha": "c319719433e99fe652754f2844c5d79669b111cb",
+    "result": "42 passed, 1 skipped in 0.58 s",
+    "log_sha256": "2370b6fe9b939c78e3e60afd252e19f41a767470f32873b3564195fdcb0960a5",
+    "targeted_compileall": "PASS",
+    "git_diff_check": "PASS",
+    "scientific_replay_required": false
+  },
+  "preserved_cost_unknowns_and_accounting": {
+    "fixed_window_sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0",
+    "accounting_ledger": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_accounting_v10.jsonl",
+    "prior_sequence_55985_is_as_of_only": true,
+    "prior_unknowns_or_fees_rewritten": false,
+    "v20_service_attempt_charges_remain_in_shared_ledger": true,
+    "controller_owns_final_settlement": true,
+    "engineering_fixture_interruption": {
+      "raw_stop_receipt_field": "campaign_window_charged=false",
+      "accounting_authority": "fixed campaign window includes the interval",
+      "exact_independent_elapsed_or_fee": "UNKNOWN",
+      "fee_handling": "retain existing shared-ledger charge once; do not set to zero or duplicate"
+    }
+  }
+}

@@ -1,3 +1,56 @@
+# Task40extra Review V20 结果总账：原尺寸阶段入口接通，E2 资源受控停止
+
+Task40 研究 0.7 nm 波长下的三维 Maxwell 散射。p6 是六阶有限元基函数；q 是 y 周期边界的不同相位子问题。V20 把已有 V19 小模型基线接到原尺寸 `50×25×140 nm` 的分阶段入口：先实测几何与有限局部/端口组件，同时运行唯一获准的 E2 p6 增长案例。局部和几何证据只覆盖所测部分，不能代替全局方程、残差、官方功率量或 2 TB/48 h 资格。
+
+| 模型 / 阶段 | 模型与方法 | 实测结果 | 资源与结论 |
+|---|---|---|---|
+| B0 Ny=8 p6 | 160 cells；532 modes；8 q；V19 one-q reference | A6 `1.2189184363e-8`；R/T/A_balance/A_volume `0.9842736081 / 0.0142405181 / 0.001485873797 / 0.001485873844` | V19 正式结果与 checker PASS；V20 未重跑 |
+| E1 p6 | 760 cells；588 modes；4 q；V19 one-q reference | A6 `1.40358436565e-8`；R/T/A_balance/A_volume `0.06235654127 / 0.91592650550 / 0.02171695323 / 0.02171695270` | V19 正式结果与 checker PASS；V20 未重跑 |
+| E2 p6 reference | 880 cells；700 modes；4 q；row-tile CSR + one-q lifecycle | 四个 canonical q CSR 与变换表完成；首个 symbolic admission 未获准 | `RESOURCE_CONTROLLED_STOP`；numeric factor/KSP/field/R/T/A 都 `NOT_RUN`；无 official result |
+| 原尺寸 Ny=8 geometry | 30,464 cells；p6；32,060 ordered modes | air/substrate/grating `18,080/2,176/10,208`；60 个类别；周期面配对通过 | `geometry_inventory PASS`；未建全局 FE/MPC/C-D/q CSR/factor |
+| 原尺寸局部/端口 | 两侧边界局部方程与恢复检查；60 类 | bottom/top 前向误差 `4.3895660e-14 / 4.4567572e-14`，原局部方程残差 `6.3697011e-16 / 5.7354684e-16`；门限分别 `1e-11 / 1e-10` | 两个已测侧组件过门，但方向覆盖 `17/60`；状态 `PARTIAL_CANONICAL_LOCAL_COMPONENTS` |
+| 原尺寸 full-field | 完整目标离散、所有 q、恢复、A6 与官方 R/T/A | `NOT_RUN` | `full_target_release_allowed=false`；最终目标 `NOT_QUALIFIED`，并非数学不可计算 |
+
+原尺寸几何库存/读回阶段计时为 `0.48784481384791434 s`，不代表完整 mesh 构建耗时。包含 preflight、几何库存和 local/port 的同一 user-service run 记录同时进程树 RSS 峰值 `665,841,664 B`、专用 cgroup memory peak `700,948,480 B`、进程树/cgroup swap peak 均为 `0 B`，watchdog 已清理全部后代；PSS=null，状态为 `DISABLED_BY_PROFILE`。bottom/top 的子阶段 RSS 与 cgroup 峰值没有分开采样，不能按侧拆分。local-port receipt 记录单个局部类别的最大 unique backing 合计 `34,260,316 B`；单独最大 owner 未在现有 compact 中汇总，记为 unknown。详见 [component compact](records/review_v20_component_closure.json) 与 [run index](records/run_index.json)。
+
+主控只读 campaign snapshot `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/controller_closeout_campaign_snapshot.json` 的 SHA-256 为 `0dcd4752f762ac66516b954e64914fc09816a3a9ed92f37a2099507268c79de4`：tail sequence `83031`，tail cumulative `66,919.728418 s`，只读投影 `69,920.856944 s`，扣除 600 s closeout reserve 后暂余 `15,879.143056 s`。该快照未改 window 或 ledger，是 as-of 投影而非最终冻结余额；后续提交与等待仍占用固定窗口，需由主控最终结算。
+
+## E2 首个符号因子准入的资源账
+
+RSS 是进程树当前占用的实测值，未来 reserve 是按下一阶段对象预留的容量；两者不应和旧 factor 估计混为一谈。复算式为：
+
+`10,079,617,024 + 486,803,844 (requested additional) + 486,803,844 (requested workspace) + 315,109,440 (pending transform inverse) + 219,340,224 (largest co-resident phase) + 1,947,215,376 (one-q symbolic guard) + 0 (numeric factor reserve) + 134,217,728 (fixed headroom) = 13,669,107,480 B`。
+
+| 比较 | 投影 / 限值 | 结果 |
+|---|---:|---|
+| 总 RSS 动态上限 | 13,669,107,480 / 13,519,601,664 B | 超出 149,505,816 B |
+| 增量 headroom | 3,589,490,456 / 3,439,984,640 B | 同样超出 149,505,816 B |
+| 后续实测峰值（分别记账） | process-tree RSS 10,929,668,096 B；dedicated cgroup 11,908,415,488 B | task tree/cgroup swap 均 0；PSS=null，状态为 `DISABLED_BY_PROFILE` |
+
+这不是 OOM，也不是 PDE 数值失败。worker、外层 runner 和 checker 各自的原始状态见 [formal compact](records/review_v20_formal_results.json)。WSL 全局 swap 有变化，但不能归因给本任务；空 generic inventory ledger 不能证明实时对象均为零。
+
+## 失败、局部正结果与时钟边界
+
+18:19 的 E2 campaign-window 入口失败（source `f88d0606a8c351e7185afd9e839e8c8ddfd9bb81`）和 18:28 的 E2 ABI 入口失败（source `9dad3ab4f48f62e1522437f7560111a364064e40`）分别保留为 `WORKER_FAILED`、run_case 3、checker 2/`NO_PARTIAL_FOOTER`，均未进入 PDE。此前 target `LOCAL_COMPONENT_GATE_FAILED` 和控制器中断的 engineering fixture 也独立保留；中断 fixture 的原 `campaign_window_charged=false` 字段不是计费依据；固定 window 包含该段，精确独立时长/费用仍 UNKNOWN，保留共享账本且不重复加账。
+
+原尺寸局部端口侧使用 complex128 原算子、complex256 残差累加；bottom/top 原局部 trace 方程分别为 `6.369701138645506e-16 / 5.735468421207556e-16`，端口方程分别为 `3.0975794244638386e-17 / 6.41111060274916e-17`，恢复方程分别为 `4.495120381497924e-16 / 4.81676182886157e-16`。它们低于原局部方程门限 `1e-10`；已知解前向误差低于 `1e-11`。但 43/60 个方向类缺少目标匹配，不能写成全类别通过。
+
+E2 outer service 不重叠父时钟合计 monotonic `5,608.418476 s`、UTC `6,232.118781 s`、保守预算 `6,232.119266 s`。内部 worker watchdog monotonic `5,605.714946 s`、UTC interval `6,229.415446 s`；它被 outer run_case 区间包含，不再相加。623.700307 s 时钟差的原因仍为 UNKNOWN。旧费用、旧 unknown 与固定 window 原样保留，最终结算由主控负责。
+
+| 当前 V20 资格 | 状态 | 范围 |
+|---|---|---|
+| target input/profile/campaign route | PASS | exact tuple 路由；源冻结 `c319719433e99fe652754f2844c5d79669b111cb` |
+| geometry inventory | PASS | 30,464 个原尺寸网格单元及标签/周期配对 |
+| local/port components | PARTIAL | 17 个方向匹配，43 个仍未资格化 |
+| build and all-q symbolic | NOT_RUN | heavy authorization false |
+| one-q numeric | NOT_RUN | heavy authorization false；无因子/KSP |
+| target full field | NO-GO / NOT_RUN | 需要实际目标映射、全 q、算子/恢复见证、A6 与物理/输出检查 |
+| final 2 TB / 48 h / precision | NOT_QUALIFIED | 目标 numeric NNZ、factor、并发 owner、最终网格和倏逝截断精度未知 |
+
+源、输入、原始 summary/checker/outer receipt hashes 及运行命令索引见 [V20 run index](records/run_index.json)。完整回应见 [Response V20](../response_v20.md)，阶段命令和继续条件见 [target handoff](target_stage_handoff_v20.md)。
+
+---
+
 # Task40extra Review V19 结果总账：B0 Ny=8、E1 p6 与全模式保存场门通过，原尺寸目标仍未资格化
 
 Task40 研究 0.7 nm 波长下的三维 Maxwell 散射。有限元把空间拆成小单元并用基函数近似电磁场；p6 表示六阶基函数。q 是 y 周期边界上的不同相位子问题。V19 每次只保留一个 q 的 PETSc 输入矩阵和数值因子，完成后释放并重建下一个；全部 q 的 CSR 和 RHS 仍保留。因此同时因子数下降，但代价是重复 symbolic/numeric factor build。方程、精度、右端项与 full residual 门不变。

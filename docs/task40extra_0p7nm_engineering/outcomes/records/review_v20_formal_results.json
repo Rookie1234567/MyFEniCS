@@ -1,0 +1,118 @@
+{
+  "schema": "task40extra.review_v20_formal_results.v1",
+  "review": "Task40extra Review V20",
+  "classification": "target geometry PASS; local/port components PARTIAL; E2 RESOURCE_CONTROLLED_STOP; target full NOT_RUN/NO_GO",
+  "current_formal_baseline": {
+    "b0_y8_p6": {
+      "source_sha": "14f5ee6943458b80b582b723c61cc84afd0efc24",
+      "cells": 160,
+      "ordered_modes": 532,
+      "a6_full_explicit": 1.2189184363208502E-8,
+      "R_T_A_balance_A_volume": [
+        0.98427360809,
+        0.01424051811,
+        0.001485873797,
+        0.001485873844
+      ],
+      "classification": "PASS_SMALL_MODEL_FORMAL_RESULT"
+    },
+    "e1_p6": {
+      "source_sha": "71042327e5f3a77cd39a1be7b5dfa46afe52db6b",
+      "cells": 760,
+      "ordered_modes": 588,
+      "a6_full_explicit": 1.4035843656500764E-8,
+      "R_T_A_balance_A_volume": [
+        0.06235654127,
+        0.91592650550,
+        0.02171695323,
+        0.02171695270
+      ],
+      "classification": "PASS_SMALL_MODEL_FORMAL_RESULT"
+    }
+  },
+  "e2_v20": {
+    "source_sha": "4b004d09b17d07a1f19f4c9d8443e76153e69a4b",
+    "run_id": "task40extra_0p7nm_nonseparable_e2_p6_reference_v20",
+    "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_p6_reference_v20__full3d_iterative__mpi1__Mna/20261009T183628.811418Z",
+    "canonical_preflight_input_sha256": "a693197de34410202d28f7ab0077904bda46685d1ac87b6667f383c92468d621",
+    "full_stage_input_sha256": "9e5fd3bf5a0a37fe80ce0bbb56a4274bb5077ced4b17f3f4e2a722a3c948c14f",
+    "physical_model_sha256": "48814d5fe34ab0e73de345c2d98661a96ef93ebb9690be738d040edac7cd84a7",
+    "geometry": {
+      "axes": [
+        10,
+        4,
+        22
+      ],
+      "cells": 880,
+      "degree": 6,
+      "ordered_modes": 700
+    },
+    "completed_before_stop": [
+      "geometry/local/port",
+      "all_four_q_csr",
+      "transform_bank"
+    ],
+    "first_stop_stage": "one_q_symbolic_admission_v19",
+    "candidate_classification": "RESOURCE_CONTROLLED_STOP",
+    "official_result": false,
+    "numeric_factor_KSP_field_R_T_A": "NOT_RUN",
+    "saved_old_130_mode_comparison": "NOT_RUN",
+    "no_pde_failure_or_oom_claim": true
+  },
+  "target_original_ny8": {
+    "source_sha": "f88d0606a8c351e7185afd9e839e8c8ddfd9bb81",
+    "canonical_input_sha256": "f6726d005713b586f1bccfbf6904dd64f3f1f31dd3b069607b55e9b430d294c7",
+    "geometry_inventory": "PASS",
+    "local_port_components": "PARTIAL_CANONICAL_LOCAL_COMPONENTS",
+    "target_full_field": "NOT_RUN",
+    "full_target_release_allowed": false,
+    "target_solver_qualified": false
+  },
+  "preserved_external_classifications": {
+    "candidate_worker_summary": {
+      "classification": "RESOURCE_CONTROLLED_STOP",
+      "worker_run_summary": "WORKER_FAILED",
+      "worker_exit_status": 4
+    },
+    "outer_service": {
+      "run_case_returncode": 3,
+      "workflow_classification": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "required_checker_returncode": 2,
+      "required_checker_status": "NO_PARTIAL_FOOTER",
+      "service_manager_exec_status": 2
+    },
+    "meaning": "These are separate layer-specific raw classifications. The controlled resource decision does not overwrite wrapper/worker/checker status, and wrapper failure does not recast the candidate gate as a PDE numerical failure."
+  },
+  "preserved_prior_negative_evidence": [
+    "The first target local/port attempt remains WORKER_FAILED / LOCAL_COMPONENT_GATE_FAILED with its own approximately 1,199.55 s monotonic watchdog interval.",
+    "Older E2 p4 worker failure and saved-field recovery remain separate historical evidence; V20 does not rewrite either result.",
+    "No result in this record upgrades the 50x25x140 nm target to a full-field PASS."
+  ],
+  "preserved_v20_entry_failures": [
+    {
+      "time_utc": "2026-10-09T18:19Z (service attempt)",
+      "source_sha": "f88d0606a8c351e7185afd9e839e8c8ddfd9bb81",
+      "failure_layer": "campaign-window admission at the E2 full input entry",
+      "run_case_result_classification": "WORKER_FAILED",
+      "run_case_returncode": 3,
+      "workflow_classification": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "required_checker_returncode": 2,
+      "required_checker_status": "NO_PARTIAL_FOOTER",
+      "official_result": false,
+      "pde_stage": "NOT_STARTED"
+    },
+    {
+      "time_utc": "2026-10-09T18:28Z (service attempt)",
+      "source_sha": "9dad3ab4f48f62e1522437f7560111a364064e40",
+      "failure_layer": "ABI entry gate on the E2 full input route",
+      "run_case_result_classification": "WORKER_FAILED",
+      "run_case_returncode": 3,
+      "workflow_classification": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "required_checker_returncode": 2,
+      "required_checker_status": "NO_PARTIAL_FOOTER",
+      "official_result": false,
+      "pde_stage": "NOT_STARTED"
+    }
+  ],
+  "qualification_note": " V20 also preserves two pre-PDE E2 entry failures from source f88d0606 and 9dad3ab4 and the controller-interrupted engineering fixture; these do not replace the later E2 resource-controlled stop."
+}

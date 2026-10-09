@@ -1,3 +1,22 @@
+# Task40extra 当前模型登记：Review V20 原尺寸入口、局部实测与 E2 资源停止
+
+有限元将真实结构切成网格，再用 p6 基函数近似电磁场；q 是 y 周期边界的不同相位分支。V20 将几何和局部/端口组件落到原尺寸 Ny=8 recipe，并执行 E2 p6 唯一增长 case。登记区分“某个组件通过”与“完整目标离散/场通过”。
+
+| 模型 / 阶段 | source、输入与方法 | 实测结果 | 状态与资格范围 |
+|---|---|---|---|
+| B0 Ny=8 p6（V19 锚点） | source `14f5ee6943458b80b582b723c61cc84afd0efc24`；160 cells、532 modes、8 q | A6 `1.2189184363e-8`；R/T/A_balance/A_volume `0.9842736081/0.0142405181/0.001485873797/0.001485873844` | 正式小模型通过；V20 未重跑 |
+| E1 p6（V19 锚点） | source `71042327e5f3a77cd39a1be7b5dfa46afe52db6b`；760 cells、588 modes、4 q | A6 `1.40358436565e-8`；R/T/A_balance/A_volume `0.06235654127/0.91592650550/0.02171695323/0.02171695270` | 正式小模型通过；V20 未重跑 |
+| E2 p6 reference | source `4b004d09b17d07a1f19f4c9d8443e76153e69a4b`；880 cells、700 modes、4 q；row-tile + one-q | 四 q CSR 可见 payload 总计 `1,969,523,536 B`；symbolic Gate 请求 486,803,844 B，未来 reserve 2,481,665,040 B | `RESOURCE_CONTROLLED_STOP`；投影 13,669,107,480 B 超 cap 149,505,816 B；factor/KSP/field/R/T/A NOT_RUN |
+| 原尺寸 geometry | source `f88d0606a8c351e7185afd9e839e8c8ddfd9bb81`；输入 SHA `f6726d005713b586f1bccfbf6904dd64f3f1f31dd3b069607b55e9b430d294c7`；272×8×14、p6 | 30,464 cells；60 个类别；air/substrate/grating `18,080/2,176/10,208`；周期配对通过 | `geometry_inventory PASS`；没有全局 FE/MPC/C-D/q CSR/factor |
+| 原尺寸 local/port | 同目标组件运行；bottom/top 局部验证 | forward `4.3895660e-14/4.4567572e-14`（限值 `1e-11`）；原局部 trace residual `6.3697011e-16/5.7354684e-16`（限值 `1e-10`） | 两个已测端口侧过门，方向覆盖 17/60；43 个方向未资格化 |
+| 原尺寸 full field | 50×25×140 nm、Ny=8、32060 ordered modes | 无全局 operator、因子、场或官方 R/T/A | `NOT_RUN / NO_GO`；2 TB/48 h 与最终 h/p/倏逝截断精度仍 `NOT_QUALIFIED` |
+
+外层 service 的完整不重叠父时钟 monotonic/UTC 为 `5608.418476/6232.118781 s`；worker watchdog monotonic/UTC interval 为 `5605.714946/6229.415446 s`，属于嵌套范围，不能相加。详细命令、ABI 和轻量原始收据 hash 见 [Review V20 run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)；局部误差、资源分解与失败身份见四份 V20 compact。
+
+V18 与 V19 的模型登记保留为历史，以下不因 V20 结果覆盖旧的成功、失败或未资格项。
+
+---
+
 # Task40extra 当前模型登记：Review V18 Ny=8 小模型正式解通过，E1 受控资源停止
 
 Ny=8 是沿器件 y 方向使用八层网格的小模型；它用于验证实际八个 Floquet 相位子问题、端口耦合和物理输出。E1 是 760-cell 的更大候选，用于测量当前 p6 reference route 能否安全进入数值因子阶段。两者都不是原尺寸全目标模型。

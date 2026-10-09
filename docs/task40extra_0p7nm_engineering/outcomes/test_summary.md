@@ -1,3 +1,20 @@
+# Task40extra Review V20 收口测试摘要
+
+| 阶段 / source | 命令、身份或收据 | 结果 | 证据边界 |
+|---|---|---|---|
+| E1 V19 startup-scope repair (controller coordination evidence) | failure source `f23d907bbb60249cbd2844921ca86cfd43f84658` had no V18 Ny8 witness for q_count=4; repair only skips the V18 startup comparison unless q_count=8; receipt `benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/e1_startup_scope_repair_v1.json`, SHA-256 `a0cb71fd4926445de73bbd39b460ddbe1fbecae17d0a29a86e1df76c2e7966e7` | 54 passed in 3.33 s | repair source file SHA `029e85c2e1de2655ca1b2897a901075d73aa240a8d6c4c0add223cdb030ba0b1`; test file SHA `0357846488d17129b13db563f991edbc211a21f43cb345507d1d415f2a7deb4a`; software validation only, not an E1 PDE pass; original worker failure remains preserved |
+| V20 route + ABI repair | 冻结源码 `c319719433e99fe652754f2844c5d79669b111cb`；定向 route 与 ABI suites | 42 passed、1 skipped in 0.58 s；compileall 与 diffcheck PASS | 只验证精确 V20 route/profile/ABI 合同，不建 FE、不运行 PDE；receipt `controller_v20_target_runtime_source_freeze.json` |
+| target actual pre-mesh route | 同一 frozen source；`controller_target_actual_pre_mesh_chain.json` | `FE mesh=0, q CSR=0, factor=0`；target contract PASS | 只验证路由和轻量拒绝，不是 geometry/PDE 结果；receipt SHA-256 `8ed9ce90941e697bf773a5cf71c1fee05db0594b67481898e4eb1132f82feebd` |
+| V20 component-resume targeted tests | Earlier patch-validation receipt; latest receipt `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/patch_validation/v20_local_port_resume_targeted_pytest_20261010_v2.json` (SHA-256 `730b0846efc2a3d8e5ddfd9f2f95492abe330b5ca7a4cb7564b5538607fd44b9`), log SHA-256 `300377b7ca47518f8e58601f2223af547757cb8cd3136653f8d74266ebc028ff` | Earlier run: 32 passed, 1 skipped in 0.32 s; latest recorded run: 35 passed, 1 skipped | Software/record fixtures only; no full-size FE/PDE or new service run |
+| final ABI preflight + documentation contracts | HEAD `c319719433e99fe652754f2844c5d79669b111cb`；ABI receipt `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/doc_closeout/v20_doc_abi_preflight_final.json` SHA-256 `69711e67e26d422c9d0eb5845cfec90e693e1740fddc2b5f09031d28b50490c2`；`python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py` | 29 passed、134 subtests passed in 0.26 s；日志 `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/doc_closeout/v20_docs_contract_attempt02.log` SHA-256 `14104cd9cd29e0661324d98d6b2347203f15630934cb0ed90ab2a3ffe660c1c2` | 文档、模型登记和回顾合同；只做 qualified complex128/int32、MPI1/runtime provenance 预检，不含 FE/PDE |
+| V20 E2 full case | source `4b004d09b17d07a1f19f4c9d8443e76153e69a4b`；input and physical hashes in formal compact | `RESOURCE_CONTROLLED_STOP` before numeric factor; checker `NO_PARTIAL_FOOTER` | 这是资源/PDE evidence，不是 pytest pass；完整分层身份见 run index |
+| target geometry/local-port | source `f88d0606a8c351e7185afd9e839e8c8ddfd9bb81` | geometry PASS; local/port PARTIAL, 17/60 direction classes matched | bounded component evidence only; no global FE/MPC/q CSR/factor/field |
+| full repository pytest / MPI4 / Ruff / CI | 本轮 | NOT_RUN | 不声称全仓、MPI4、Ruff 或 CI 通过 |
+
+V20 前两次 E2 full-input 入口失败（campaign-window 与 ABI）、早期 target local-component failure、控制器中断的 engineering fixture 均保留为独立记录；它们不计为数值 Gate 或 pytest pass。最终合同测试结果及日志 hash 见上表和 [run index](records/run_index.json)。V19 与更早的测试记录原文保留在下方。
+
+---
+
 # Task40extra Review V19 收口测试摘要
 
 | 阶段 | 命令/身份 | 结果 | 边界 |
