@@ -113,5 +113,10 @@
     "path": "tmp/task042/v65/scientific_queue_frozen.json",
     "sha256": "461d84d80c214ef7ff0ddadaa164026729d43346439ea0d08837a343da4d8c2d"
   },
-  "historical_window_not_reopened": true
+  "historical_window_not_reopened": true,
+  "final_canonical_registration": {
+    "cwd": "/home/fenics/Projects/NN-Lab",
+    "git_common_dir": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+    "branch": "task42_neural_coarse_inverse"
+  }
 }

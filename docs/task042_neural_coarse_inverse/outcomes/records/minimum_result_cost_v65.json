@@ -1,0 +1,19 @@
+{
+  "status": "SETTLED_CLOSED",
+  "full_finite_P6_returned": true,
+  "formal_equation_pass": true,
+  "direct_internal_target_pass": false,
+  "p5_p6_full_increment_pass": false,
+  "current_charged_seconds": 15976.931142242394,
+  "historical_known_lower_seconds": 245130.14639971292,
+  "success_chain_seconds": 14748.453747829888,
+  "prepared_start_seconds": 2508.0290188849904,
+  "research_known_cumulative_seconds": 261107.0775419553,
+  "peak_sampled_tree_bytes": 95051673600,
+  "max_actual_sample_gap_seconds": 1.3698356049135327,
+  "old_V64_failures_and_fees_retained": true,
+  "NN20": false,
+  "target_2TB_48h": false,
+  "closed": true,
+  "active": null
+}

@@ -209,6 +209,96 @@
       "descendants_cleared": true,
       "peak_bytes": 5903306752,
       "swap_bytes": 0
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v65/aux_post_01",
+      "source_sha": "5212ae051c72ff264a7108faecfcbbb4e8e8aedd",
+      "before_clock": {
+        "start_utc": "2026-10-08T23:31:45.023823726Z",
+        "start_monotonic": 1427299.88,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 46800,
+        "total_limit_seconds": 50400,
+        "scientific_loaded_limit_seconds": 39600,
+        "review_commit": "1cc254583559969b3fdeb9385104011d5f479a50",
+        "contract_HEAD": "1cc254583559969b3fdeb9385104011d5f479a50",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "observed_utc": "2026-10-09T04:17:50.969748+00:00",
+        "observed_monotonic": 1444465.83061521,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 17165.950615210226,
+        "heavy_remaining_seconds": 29634.049384789774,
+        "total_remaining_seconds": 33234.049384789774
+      },
+      "elapsed_seconds": 12.012082688044757,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 326635520,
+      "swap_bytes": 0
+    },
+    {
+      "role": "docs",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v65/aux_docs_03",
+      "source_sha": "904cadf0347e717f14e21828333cd08ff20a4f9e",
+      "before_clock": {
+        "start_utc": "2026-10-08T23:31:45.023823726Z",
+        "start_monotonic": 1427299.88,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 46800,
+        "total_limit_seconds": 50400,
+        "scientific_loaded_limit_seconds": 39600,
+        "review_commit": "1cc254583559969b3fdeb9385104011d5f479a50",
+        "contract_HEAD": "1cc254583559969b3fdeb9385104011d5f479a50",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "observed_utc": "2026-10-09T04:28:42.128590+00:00",
+        "observed_monotonic": 1445116.9894569,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 17817.10945690004,
+        "heavy_remaining_seconds": 28982.89054309996,
+        "total_remaining_seconds": 32582.89054309996
+      },
+      "elapsed_seconds": 2.959164220839739,
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "descendants_cleared": true,
+      "peak_bytes": 125935616,
+      "swap_bytes": 0
+    },
+    {
+      "role": "docs",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v65/aux_docs_04",
+      "source_sha": "5fa14b3152e37bc10e2ebfb17e8c856e448d1033",
+      "before_clock": {
+        "start_utc": "2026-10-08T23:31:45.023823726Z",
+        "start_monotonic": 1427299.88,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 46800,
+        "total_limit_seconds": 50400,
+        "scientific_loaded_limit_seconds": 39600,
+        "review_commit": "1cc254583559969b3fdeb9385104011d5f479a50",
+        "contract_HEAD": "1cc254583559969b3fdeb9385104011d5f479a50",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "observed_utc": "2026-10-09T04:31:35.987187+00:00",
+        "observed_monotonic": 1445290.848053452,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 17990.968053452205,
+        "heavy_remaining_seconds": 28809.031946547795,
+        "total_remaining_seconds": 32409.031946547795
+      },
+      "elapsed_seconds": 3.0003946470096707,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 127426560,
+      "swap_bytes": 0
     }
   ],
   "pointers": {
@@ -228,5 +318,8 @@
       "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v65/task042_v65_compare_verify_cost_20261009T041214506016Z/result.json",
       "sha256": "86b29de84c45155fe612d9e4048695ce8b10b52693d17894226e91ce3ce0d94f"
     }
-  }
+  },
+  "closed": true,
+  "active": null,
+  "late_failed_and_completed_docs_included": true
 }

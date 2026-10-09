@@ -1,0 +1,49 @@
+{
+  "files": [
+    {
+      "path": "tmp/task042/v65/collect_wrapper.py",
+      "bytes": 1269,
+      "sha256": "a2c27fad5a807b11973f410646c12deb7feb5100c27b9b1e7456e2594d890577",
+      "archived": "benchmarks/artifacts/task042/v65/raw_final_tail_v65/a2c27fad5a807b11973f410646c12deb7feb5100c27b9b1e7456e2594d890577",
+      "byte_snapshot": true,
+      "identity": "ignored control-source bytes, not a tracked numerical HEAD"
+    },
+    {
+      "path": "tmp/task042/v65/monitor.py",
+      "bytes": 1344,
+      "sha256": "013459b4e9e8a6e1e2a75de154fd1b16419489631b430218c4b2aa889feca6d1",
+      "archived": "benchmarks/artifacts/task042/v65/raw_final_tail_v65/013459b4e9e8a6e1e2a75de154fd1b16419489631b430218c4b2aa889feca6d1",
+      "byte_snapshot": true,
+      "identity": "ignored control-source bytes, not a tracked numerical HEAD"
+    },
+    {
+      "path": "tmp/task042/v65/run_once.py",
+      "bytes": 1326,
+      "sha256": "ccb8742e60e73bb94f37d3e9c0ed10b8cb814c42b70aea12ad6bc0d4249c721f",
+      "archived": "benchmarks/artifacts/task042/v65/raw_final_tail_v65/ccb8742e60e73bb94f37d3e9c0ed10b8cb814c42b70aea12ad6bc0d4249c721f",
+      "byte_snapshot": true,
+      "identity": "ignored control-source bytes, not a tracked numerical HEAD"
+    },
+    {
+      "path": "tmp/task042/v65/seal_delivery.py",
+      "bytes": 9868,
+      "sha256": "1bebf46a3791c2492849e648e4f6c5baa7106177b1e841c22520e91ac348c14f",
+      "archived": "benchmarks/artifacts/task042/v65/raw_final_tail_v65/1bebf46a3791c2492849e648e4f6c5baa7106177b1e841c22520e91ac348c14f",
+      "byte_snapshot": true,
+      "identity": "ignored control-source bytes, not a tracked numerical HEAD"
+    },
+    {
+      "path": "tmp/task042/v65/write_delivery.py",
+      "bytes": 35929,
+      "sha256": "f8f6c9a5d9d43d75faf13c560b0bfd231041bada51f607ebce3fa9d3221eabfa",
+      "archived": "benchmarks/artifacts/task042/v65/raw_final_tail_v65/f8f6c9a5d9d43d75faf13c560b0bfd231041bada51f607ebce3fa9d3221eabfa",
+      "byte_snapshot": true,
+      "identity": "ignored control-source bytes, not a tracked numerical HEAD"
+    }
+  ],
+  "actual_PREPARE_source": "7686f2fa9653adf5d95bdadea34ae7708e214cd9",
+  "actual_P6_source": "2679c96f1eecfcb5c8a61a61397f75ef8b4c0280",
+  "actual_independent_consumer_source": "5212ae051c72ff264a7108faecfcbbb4e8e8aedd",
+  "document_check_source": "5fa14b3152e37bc10e2ebfb17e8c856e448d1033",
+  "no_numerical_replay_after_lifecycle_fix": true
+}

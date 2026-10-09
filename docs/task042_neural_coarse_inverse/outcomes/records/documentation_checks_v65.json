@@ -1,6 +1,192 @@
 {
-  "status": "PENDING_ACTUAL_DOCUMENT_CHECK",
-  "tests_passed": false,
-  "prior_failed_parser_receipt": "tmp/task042/v65/documentation_launch_receipt03.json",
-  "GitHub_visual": "NOT_VERIFIED"
+  "status": "PASSED_LOCAL",
+  "final_bytes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "34fb7a102213e3d38715b392029c302ff377f66bbc0c3afc126a31ff17143530",
+      "tables": [],
+      "links": [
+        "response_v65.md",
+        "outcomes/coefficient_first_p6_completion_v65.md",
+        "review_report_v63.md",
+        "outcomes/records/complete_physics_v65.json",
+        "outcomes/records/paired_comparison_v65.json",
+        "outcomes/records/resource_costs_final_v65.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "caa9d8523ae3df7ab0be968518f2b1250858650004d2dc7a32a272f36433234b",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 5
+        }
+      ],
+      "links": [
+        "../response_v65.md",
+        "coefficient_first_p6_completion_v65.md",
+        "records/paired_comparison_v65.json",
+        "records/resource_costs_final_v65.json",
+        "records/selective_manifest_v65.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "2945bb314386eabec6b32abba6cd14808b57dfceaf6461718dbf4683ddb2a1e3",
+      "tables": [],
+      "links": [
+        "records/kernel_qualification_v65.json",
+        "records/complete_physics_v65.json",
+        "records/documentation_checks_v65.json",
+        "records/repair_journal_v65.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "f5c806319f685f9db761c9ceda5546f15e28e7075f2b62ba03dbdff94e6c1ea9",
+      "tables": [],
+      "links": [
+        "records/selective_manifest_v65.json",
+        "records/source_bindings_v65.json",
+        "records/raw_archive_index_v65.json"
+      ]
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "6bbd8b90dd3989b91f587130c71cd283c734824ac6aa6e77a6e3dd9904c23a24",
+      "tables": [],
+      "links": [
+        "task042_neural_coarse_inverse/response_v65.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v65.json"
+      ]
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "560516b8053f6ff23ca6fb280622eea68d5a3a2d8ae959c830c88817f149161c",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 4
+        }
+      ],
+      "links": [
+        "task042_neural_coarse_inverse/outcomes/records/complete_physics_v65.json",
+        "task042_neural_coarse_inverse/outcomes/records/selective_manifest_v65.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v63.md",
+      "sha256": "11297b97131b61da489dc42ee27625e209452179839827004cef8324bf0279f1",
+      "tables": [
+        {
+          "line": 39,
+          "columns": 3
+        },
+        {
+          "line": 148,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "response_v64.md",
+        "outcomes/summary.md",
+        "outcomes/records/deployment_failure_v64.json",
+        "outcomes/records/array_inventory_v64.json",
+        "outcomes/records/resource_costs_final_v64.json",
+        "outcomes/records/decision_and_not_run_v64.json",
+        "outcomes/records/capacity_and_marking_v64.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v65.md",
+      "sha256": "5e3ea4196ba0977ca563ab483a6eef420189e6a50f0302575e62c71f0732dcc8",
+      "tables": [
+        {
+          "line": 19,
+          "columns": 3
+        },
+        {
+          "line": 36,
+          "columns": 5
+        },
+        {
+          "line": 59,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "outcomes/records/report_identity_v65.json",
+        "outcomes/records/complete_physics_v65.json",
+        "outcomes/records/paired_comparison_v65.json",
+        "outcomes/records/paired_regions_v65.json",
+        "outcomes/records/kernel_qualification_v65.json",
+        "outcomes/records/body_checkpoint_v65.json",
+        "outcomes/records/capacity_and_lifetimes_v65.json",
+        "outcomes/records/deployment_cost_v65.json",
+        "outcomes/records/resource_costs_final_v65.json",
+        "outcomes/records/repair_journal_v65.json",
+        "outcomes/coefficient_first_p6_completion_v65.md",
+        "outcomes/records/run_index_v65.json",
+        "outcomes/records/delivery_index_v65.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/coefficient_first_p6_completion_v65.md",
+      "sha256": "27695458905a7a0c8d41f5b25b418c52c0326940cba23e0d8757a8c814dfc202",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 3
+        },
+        {
+          "line": 18,
+          "columns": 2
+        },
+        {
+          "line": 44,
+          "columns": 5
+        }
+      ],
+      "links": [
+        "../response_v65.md",
+        "records/complete_physics_v65.json",
+        "records/paired_comparison_v65.json",
+        "records/paired_regions_v65.json",
+        "records/body_checkpoint_v65.json",
+        "records/resource_costs_final_v65.json",
+        "records/source_bindings_v65.json",
+        "records/delivery_index_v65.json"
+      ]
+    }
+  ],
+  "history": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "c2807f254e97587675f6c6b691531c643b982f6f04446b8f80b78b4a9b2a85cb"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "49d0092d2dd476d91ea6da1ca0354ff9076de645bdb3c6e1e7ed750dc3f391e7"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "46846299b87099fb0417bbec79f2166104c6facd9f272cda493c4cff9d2ca797"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "f347cc3e92ddc67b191430f0876219376d1a102309679bd0785d2427cd8932d3"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "09c3b171d4b18034b848ba22275fb72142fb283beadff0b085b3d08a0208413f"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "9bed4557bfcc5193e7a6b431baf2fe7b40b64adf7e4e08e6ac421760e23b6062"
+    }
+  ],
+  "test_seconds": 0.22850080905482173,
+  "GitHub_visual": "NOT_VERIFIED",
+  "CI": "NOT_RUN"
 }
