@@ -1,6 +1,23 @@
 # Review V10-r2：W0.7现场证据
 
-## 2026-10-08 当前唯一Invocation：compact-transfer warm场终态
+## 2026-10-09：W0.7 identity-sharing warm场终态与payload更正
+
+本场是唯一Invocation `a598ab0a491649eda4060eef6a102b56`，source HEAD `6e072bd640b5c140ba64745c350ddf9916a566dc`，W0.7 reduced-p6/M400/MPI8，matched L20/N29/h20/29，复用producer、QEP=0。程序把多几何类共用的内部identity矩阵改为只读共享以避免重复数组；这些数组payload不等于RSS收益。
+
+| 阶段/门 | 记录 | 结论 |
+|---|---|---|
+| bottom P4 | 64966²，NNZ 27,929,686；cleanup后fresh B 28,704,886,784 B；INFOG17 18,865,000,000 B；W 5,322,116,301 B | 合计52,891,003,085 B，比cap低330,159,923 B；bottom numeric完成，INFOG18/19=2,879/18,865 million bytes |
+| top P4 | 64966²，NNZ 39,242,250；cleanup后fresh B 45,211,955,200 B；INFOG17 19,299,000,000 B；W 5,322,116,301 B | 屏查69,833,071,501 B，超过cap16,611,908,493 B；top numeric未调用，所需fresh B≤28,600,046,707 B |
+| 终态与唯一wall | consumer IMPLEMENTATION_FAILURE；public rc3；finalizer failed/service_boundary_failure；controlled_stop.active=false；finalizer 8/10 | false仅public_result_completed/service_terminal_normal；bottom因子完成后清场，top pending因子销毁；feedback/outer/真残差/recovery/physics未到达；service wall 1860.62936514 s |
+| V5 | 186项，SHA `d344166517fbbaa6f66c29a9687828f5e74c78b6dcba303c142c47e7f99477dd` | runroot唯一匹配一项；账目本身不带Invocation ID，由launch/finalizer/runroot绑定 |
+
+转录更正：先前执行消息将P4 identity audit误标为P6。原消息和raw没有改写。consumer markers P6字段`detail.object_inventory.p6_assembly_time_condensation_build_audit`在wall 1572.1085634171031/1690.8518208200112分别记录nᵢ=450、rank-sum class数475/423、节省payload 756,540,000/672,300,000 B，合计1,428,840,000 B；同两侧P6 retained Schur payload为1,418,342,400/1,263,071,232 B。P4的独立字段`identity_projection_*`是nᵢ=108、class数475/423、节省43,576,704/38,724,480 B，合计82,301,184 B。所有payload均不是RSS。
+
+只读对象审计按源码形状推得P6局部LU/两个恢复映射/Schur的可见rank-sum payload为11,177,212,032 B；该数组payload数值比top门差额小5,434,696,461 B，但不是RSS减量或可回收量上界，不能据此证明可释放量足够或不足；这些数组在后续P6作用、P4右端处理/求解与恢复中仍有用途。P4 `port_audit.cells_with_port_terms`的bottom 0/top 15来自`resource_scope=rank_local`的本rank循环，不是全局side cell数。源码计数遍历按本rank owned cells构造的`cell_recovery_maps`；本run未保存全rank计数、逐rankBi/Di/xiB字节及ghost/cache别名总量。`720×108×646×16=803,727,360 B`仅是一侧720个owned cells假设下的条件尺寸示例，不是全局或两侧上界。top fresh B采样时bottom因子仍存活，其驻留贡献已计入B，不另加bottom INFOG(19)；INFOG(19)不是RSS的一一对应值。top INFOG(17)与已驻留symbolic字节没有可审拆分，不能相减。现有证据尚未确认足量可释放量，也未证明全局潜在释放总量不足。对象用途、last-use位置和证据缺口见[Response V12](../response_v12.md)。
+
+原始证据SHA：consumer markers `e5f4644f9ad70fbbd2f785f317b3e3773fd6aacb11dc57348d910e449ede1bd4`；factor inventory `3284fe583c56e51effe76191d3f424a9d3528711ac5c1135693480c0d1112084`；service summary `1b8d4a573de76cf9f19bf23dcaa908a126971973f29b3e6bca3b85f990ac60c2`；finalizer `92e4aa4fbb7b19587b7544ff273f5dd66c3f58c77a910588a6b75837929ca847`。派生terminal compact：[terminal compact](../../../results/task041_w0p7_identity_sharing_warm_run_20261008T233316Z/terminal_compact_20261009.json)，SHA `bead944a1d4bd4f5f35097c8bf8cb43ee9478c0721f663e722634896a17235b3`。raw分类、ledger、source与stash均未改；没有新测试、ABI、QEP或FE。
+
+## 历史快照：2026-10-08 W0.7 compact-transfer warm场终态
 
 本场Invocation a6a67fc93a1d45cfa69cce0469cb0672，unit task041-v10r2-w0p7-compact-transfer-numeric-cleanup-warm-cpu10-11-14-15-16-17-18-19-20261008T142600Z.service，runroot results/task041_w0p7_compact_transfer_warm_run_20261008T142600Z，运行source 47b8b655ee9a9cc72dc1f89928b770f7061b22ea。模型为W0.7 reduced 10×5 nm、接口2/22 nm、p6/h0.70/M400/MPI8、matched L20/N29/h20/29、fixed-H6；复用既有producer，QEP=0。
 

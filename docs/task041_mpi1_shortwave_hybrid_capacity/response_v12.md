@@ -1,6 +1,54 @@
 # Task041 Response V12：Review V10-r2现场进度
 
-## 2026-10-08：W0.7 compact-transfer warm场终态（Invocation a6a67fc93a1d45cfa69cce0469cb0672）
+## 2026-10-09：W0.7 identity-sharing warm场终态、转录更正与top预算审计（Invocation a598ab0a491649eda4060eef6a102b56）
+
+本节是新一场独立warm consumer的终态记录。模型为W0.7缩减pilot：10×5 nm、接口z=2/22 nm、p6/h0.70、M400、MPI8，matched传播L=20 nm、N=29、h=20/29 nm，fixed-H6；复用已有producer packet，本Invocation没有重跑QEP。把同一内部单位矩阵在多个局部几何类之间改为只读共享，目的是减少重复数组；这不改变方程、因子或RTA计算。
+
+| 项目 | 本场记录 | 口径 |
+|---|---|---|
+| 身份 | source HEAD `6e072bd640b5c140ba64745c350ddf9916a566dc`；Invocation `a598ab0a491649eda4060eef6a102b56`；unit `task041-v10r2-w0p7-identity-sharing-numeric-cleanup-warm-cpu10-11-14-15-16-17-18-19-20261008T233316Z.service` | 唯一dispatch；rank map `[10,11,14,15,16,17,18,19]`；MPI8；QEP=0 |
+| 封套 | config SHA `d53a8b8cf0d7845f4e7a776c2e968fbf569686ccaf4b3a7646eb163129aff107`；systemd argv SHA `53f3b753de63857d72d525f318e96ea6b82f75e82ac7e3308e0cca9fcafda117` | 与已核执行包绑定 |
+| 固定资源政策 | cap/warning/W/node0 floor = `53,221,163,008 / 47,899,046,707 / 5,322,116,301 / 412,316,860,416 B` | swap仅观察；W是政策预留，不是MUMPS误差界 |
+| 终态 | consumer `IMPLEMENTATION_FAILURE`；public rc=3、`task041_public_command_nonzero`；finalizer `failed/service_boundary_failure`；`controlled_stop.active=false` | finalizer 8/10；只有`public_result_completed`和`service_terminal_normal`为false；不是controlled stop，也不是数值方法失败结论 |
+| 唯一账目 | service wall `1860.62936514 s`；V5 ledger `186`项，SHA `d344166517fbbaa6f66c29a9687828f5e74c78b6dcba303c142c47e7f99477dd`；runroot匹配唯一一项 | ledger row无Invocation字段；由launch/finalizer与runroot绑定，不说row本身保存Invocation |
+
+| 阶段/对象 | 实测或派生结果 | 判定 |
+|---|---|---|
+| one-cell | source矩阵`15,120×15,120`、八rank NNZ一次求和`7,123,680`；numeric完成后销毁 | 不是失败点 |
+| bottom P4 | `64,966×64,966`、NNZ `27,929,686`；analysis INFOG(16/17)=`2,879/18,865`百万十进制字节 | symbolic与numeric均完成；bottom实际INFOG(18/19)=`2,879/18,865`百万字节 |
+| bottom numeric gate | cleanup前B `29,373,919,232`；cleanup后fresh B `28,704,886,784`；加单份INFOG(17) `18,865,000,000`与W后为`52,891,003,085 B` | 低于cap `330,159,923 B`，门通过；bottom因子之后仍live |
+| top P4 | `64,966×64,966`、NNZ `39,242,250`；post-symbolic记录ICNTL(7)=0、ICNTL(28)=1；INFOG(17)=`19,299`百万字节 | top symbolic完成；INFOG(17)是分析阶段的MUMPS内部数据估计，不是RSS上界 |
+| top numeric gate | cleanup前B `47,043,870,720`，cleanup后fresh B `45,211,955,200`；加单份INFOG(17) `19,299,000,000`与W后为`69,833,071,501 B` | 超cap `16,611,908,493 B`；top numeric未调用，top INFOG(18/19)=not_run。按同一公式，fresh B须≤`28,600,046,707 B` |
+| 清理与求解范围 | top pending factor destroy一次；bottom numeric factor在最终cleanup销毁。没有fixed-H6反馈、outer、五真残差、recovery、physics或official结果 | 失败发生在top numeric之前的预算拒绝；整场无数值资格 |
+
+### P6/P4标量审计更正
+
+前一条执行消息把P4 identity-projection payload误记为P6。现在按consumer markers原字段作派生更正；旧通知、raw与ledger均保留未改。`wall_seconds`是consumer运行内marker时刻，不是该构造的独立耗时。
+
+| 原始marker字段 | nᵢ / rank-sum class数 | identity共享减少的数组payload | retained P6 Schur payload |
+|---|---:|---:|---:|
+| P6 bottom，wall `1572.1085634171031`，`detail.object_inventory.p6_assembly_time_condensation_build_audit` | `450 / 475` | `756,540,000 B` | `1,418,342,400 B` |
+| P6 top，wall `1690.8518208200112`，同字段 | `450 / 423` | `672,300,000 B` | `1,263,071,232 B` |
+| P4 bottom，wall `1585.9632914850954`，`detail.object_inventory.identity_projection_*` | `108 / 475` | `43,576,704 B` | 不适用 |
+| P4 top，wall `1704.0842770701274`，同字段 | `108 / 423` | `38,724,480 B` | 不适用 |
+
+P6两侧identity payload合计`1,428,840,000 B`；P4独立合计`82,301,184 B`。它们是跨rank求和的暴露数组字节，表示已经避免了旧式重复identity数组，不是RSS下降。当前compact transfer的rank-sum unique array payload为bottom `145,735,392 B`、top `131,566,816 B`，也不等于RSS节省。
+
+### top门的存活对象与预算限制
+
+P6 raw显示bottom/top分别475/423个rank-sum class实例，nᵢ=450、trace维度432。由源码数组形状和complex128推得两侧可见payload：LU主数组`2,909,520,000 B`，`interior_from_trace`与`trace_from_interior_rhs`各`2,793,139,200 B`，加上markers实测的retained Schur `2,681,413,632 B`，合计`11,177,212,032 B`。前三项按形状和class数派生；合计不包括pivot、Python/native分配器开销，也不代表RSS。该payload数值比top筛查缺口小`5,434,696,461 B`，但数组payload不是RSS减量或可回收量上界；这些数组仍被P6动作、P4右端处理/求解与恢复使用，不能据此证明可释放量足够或不足。
+
+P4 markers的`detail.port_audit.cells_with_port_terms`在`detail.resource_scope=rank_local`下记录bottom 0、top 15；源码中的计数遍历本rank的`cell_recovery_maps`，它们按本rank owned cells构造，因此该数是写出marker的rank局部owned-cell循环计数，不是两侧全局cell总数。本run未保存全rank计数、各rank Bi/Di/xiB数组字节、ghost与缓存别名/重复总量；全局总量unknown。历史算式`720×108×646×16=803,727,360 B`仅是一侧在假设720个owned cells及每cell尺寸为108×646个complex128值时的条件式尺寸示例，不是实测或全局上界，也不能代表两侧总量。源码中Bi在`P4CellCondensedInverse`构造时用于预热xiB；Di参与每次右端处理，xiB用于局部恢复。xiB预热后释放Bi-only buffers可作为最窄候选，但当前没有足量可释放证据；该条件式示例不能作为排除完整全局节省的证明。
+
+top fresh B采样时bottom numeric因子仍存活，其驻留贡献已计入该次B，因此不另加bottom INFOG(19)；INFOG(19)是MUMPS内部allocated-data统计，不与RSS一一对应。MUMPS 5.6.2手册将INFOG(16/17)定义为分析后对in-core full-rank数值阶段全部MUMPS内部数据的估计（max/sum，百万十进制字节）；INFOG(18/19)是数值因子完成后已分配的MUMPS内部数据（max/sum），用户WK_USER除外。bottom INFOG(19)=18,865百万字节；top尚无INFOG(18/19)。手册和raw没有把top symbolic已占字节从INFOG(17)中拆开，所以不能从top估计中扣除符号阶段内存。现有数据尚未确认足量可安全释放的对象；P6数组仍在使用，Bi条件式单侧尺寸示例不代表全局上界。
+
+**保留的证据与来源：**当前runroot `results/task041_w0p7_identity_sharing_warm_run_20261008T233316Z`；consumer markers SHA `e5f4644f9ad70fbbd2f785f317b3e3773fd6aacb11dc57348d910e449ede1bd4`，factor inventory SHA `3284fe583c56e51effe76191d3f424a9d3528711ac5c1135693480c0d1112084`，consumer summary SHA `16830a9f2c4905245e9742610166db90485c5bb04a9430a76cbe2e6d9651c980`，service summary SHA `1b8d4a573de76cf9f19bf23dcaa908a126971973f29b3e6bca3b85f990ac60c2`，finalizer SHA `92e4aa4fbb7b19587b7544ff273f5dd66c3f58c77a910588a6b75837929ca847`。MUMPS手册文字见`results/task041_petsc_lu_stage_bridge_retry_20261008T000705Z/mumps_5.6.2_reference/userguide_5.6.2.txt`，原包SHA `13a2c1aff2bd1aa92fe84b7b35d88f43434019963ca09ef7e8c90821a8f1d59a`，PDF SHA `32acdd3e09fb69f9fab16c94ae67768d15c61ac9c27abf66eb1e0e6ecd904050`。新增ignored terminal compact：[terminal compact](../../results/task041_w0p7_identity_sharing_warm_run_20261008T233316Z/terminal_compact_20261009.json)，SHA `bead944a1d4bd4f5f35097c8bf8cb43ee9478c0721f663e722634896a17235b3`。
+
+#### 当前阶段决定
+
+本场不是W0.7 reduced数值通过，也不资格化50×25 nm、2 TB或48 h。没有足量且已证实可在top numeric前释放的对象，故不建议原样重建试运行。若主控继续考虑代码，最窄候选是xiB预热后的Bi-only生命周期缩短，但先补本run逐rank Bi/Di/xiB nbytes以及保持P4 solve/recovery结果的定向证据；即使该项上界也不足以解除当前top门。更大范围需先明确P6 class-cache重算与MUMPS分配重叠的证据，不能靠预测节省启动。
+
+## 历史快照：W0.7 compact-transfer warm场终态（Invocation a6a67fc93a1d45cfa69cce0469cb0672）
 
 本场是W0.7缩减pilot：10×5 nm，Hybrid接口z=2/22 nm，p6/h0.70、M400、MPI8，matched全段L=20 nm/N=29/h=20/29 nm，fixed-H6，P4目标5e-13且最多2次同因子修正。复用既有合格producer packet，本Invocation的QEP=0。compact orientation把每个方向重复保存的整幅插值矩阵改为共享canonical矩阵并保存方向实体块；它减少了数组payload，但payload不是RSS，也不能单独解释跨场RSS变化。
 

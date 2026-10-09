@@ -1,6 +1,26 @@
 # Task041 outcomes summary
 
-## 2026-10-08：W0.7 compact-transfer warm场终态——numeric前预算拒绝
+## 2026-10-09：W0.7 identity-sharing warm场终态（top numeric前预算拒绝）
+
+同一identity矩阵由多个几何类复用只读数组，减少数组重复；它不改变方程。该payload节省与RSS分别记录。本场继续使用既有W0.7缩减pilot与MUMPS分阶段门，没有启动第二次计算。
+
+| 模型/阶段 | 实测或派生结果 | 状态、原因与证据 |
+|---|---|---|
+| 身份 | Invocation `a598ab0a491649eda4060eef6a102b56`；HEAD `6e072bd640b5c140ba64745c350ddf9916a566dc`；M400/MPI8/p6/h0.70，接口2/22 nm，matched L20/N29/h20/29；producer复用，QEP=0 | unit `task041-v10r2-w0p7-identity-sharing-numeric-cleanup-warm-cpu10-11-14-15-16-17-18-19-20261008T233316Z.service` |
+| bottom P4 numeric | 64966²、NNZ27,929,686；fresh B cleanup后28,704,886,784 B + INFOG17 18,865,000,000 B + W 5,322,116,301 B =52,891,003,085 B | 比cap 53,221,163,008 B低330,159,923 B；bottom numeric完成，INFOG18/19=2,879/18,865 million decimal bytes |
+| top P4 numeric门 | 64966²、NNZ39,242,250；fresh B cleanup后45,211,955,200 B + INFOG17 19,299,000,000 B + W 5,322,116,301 B =69,833,071,501 B | 比cap高16,611,908,493 B，门拒绝；top numeric未调用，INFOG18/19 not_run；bottom numeric之后的top所需fresh B上限28,600,046,707 B |
+| 资源范围 | process-tree authority峰47,043,870,720 B；dedicated job-cgroup峰44,224,434,176 B；cap/warning/W/floor为53,221,163,008/47,899,046,707/5,322,116,301/412,316,860,416 B | 峰值口径分列；swap observe-only；W只是政策预留 |
+| 服务终态 | consumer IMPLEMENTATION_FAILURE；public rc3 `task041_public_command_nonzero`；finalizer `failed/service_boundary_failure`；controlled_stop.active=false；finalizer 8/10 | false为`public_result_completed`、`service_terminal_normal`；这是top数值前预算拒绝，不是controlled_stop |
+| 唯一计费 | service wall1,860.62936514 s；V5共186项、SHA `d344166517fbbaa6f66c29a9687828f5e74c78b6dcba303c142c47e7f99477dd` | runroot一条匹配；通过launch/finalizer绑定Invocation，不称账目行包含Invocation |
+| 数值结果/资格 | bottom factor完成；top numeric=0；无fixed-H6反馈、outer五真残差、recovery、physics及official R/T/A | W0.7 reduced场无数值pass；不资格化50×25 nm、2 TB或48 h |
+
+**payload转录更正。** 前一执行消息把P4 identity字段误称为P6；现保留原通知/raw，只更正派生说明。P6原始build audit记录两侧nᵢ=450，rank-sum class数475/423，identity数组payload节省756,540,000/672,300,000 B，合计1,428,840,000 B；P6 retained local Schur payload为1,418,342,400/1,263,071,232 B。P4单独nᵢ=108，identity payload节省43,576,704/38,724,480 B，合计82,301,184 B。均为数组payload，不是RSS差值。
+
+**驻留与下一步。** P6按真实class数和源码矩阵形状推得LU、两类恢复映射及Schur可见数组payload合计11,177,212,032 B。它比筛查缺口的字节数少5,434,696,461 B，但payload不是RSS减量或可回收量上界；这些对象仍服务于P6作用及P4右端处理/求解/恢复，不能据此判断总体释放能否跨门。P4 `port_audit.cells_with_port_terms`的bottom 0/top 15是`resource_scope=rank_local`本rank owned-cell循环计数，不是全局side cell数。逐rankBi/Di/xiB字节、全rankport项计数、ghost/cache alias总量均未持久化。历史算式`720×108×646×16=803,727,360 B`仅是一侧720个owned cells假设下的条件式尺寸示例，不是两侧或全局上界。top fresh B采样时bottom numeric因子仍存活，其驻留贡献已计入B，因此不另加bottom INFOG(19)；INFOG(19)是MUMPS allocated-data统计，不与RSS一一对应。top symbolic驻留与INFOG(17)无可审拆分，不能相减。当前尚无足量可释放证据，也没有证明全局潜在释放一定不足；不建议原样重建试跑。最窄候选是后续审查xiB预热后释放Bi-only buffers，但其全局收益未知。详见[Response V12驻留审计](../response_v12.md)。
+
+证据：service summary SHA `1b8d4a573de76cf9f19bf23dcaa908a126971973f29b3e6bca3b85f990ac60c2`；finalizer SHA `92e4aa4fbb7b19587b7544ff273f5dd66c3f58c77a910588a6b75837929ca847`；consumer markers SHA `e5f4644f9ad70fbbd2f785f317b3e3773fd6aacb11dc57348d910e449ede1bd4`；factor inventory SHA `3284fe583c56e51effe76191d3f424a9d3528711ac5c1135693480c0d1112084`；[ignored terminal compact](../../../results/task041_w0p7_identity_sharing_warm_run_20261008T233316Z/terminal_compact_20261009.json)，SHA `bead944a1d4bd4f5f35097c8bf8cb43ee9478c0721f663e722634896a17235b3`。无新测试、ABI、QEP、FE或dispatch；raw、ledger与stash未修改。
+
+## 历史快照：2026-10-08 W0.7 compact-transfer warm场终态——numeric前预算拒绝
 
 compact方向缓存把每个单元重复的整幅方向矩阵换成共享canonical插值矩阵和方向实体块，减少数组重复存储；它不保证同等数量的RSS下降。本场在bottom numeric前由预算门拒绝，数值求解、物理验收尚未开始。
 

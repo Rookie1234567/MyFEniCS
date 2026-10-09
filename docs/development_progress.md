@@ -1,6 +1,20 @@
 # 项目开发进度：Task000–Task041
 
-## 2026-10-08：Task041 W0.7 compact-transfer warm场终态（Invocation a6a67fc93a1d45cfa69cce0469cb0672）
+## 2026-10-09：Task041 W0.7 identity-sharing warm场终态
+
+**对象和方法。** 本场是W0.7缩减pilot（10×5 nm、接口2/22 nm、p6/h0.70/M400/MPI8、matched L20/N29/h20/29），复用既有producer packet，当前QEP=0。identity-sharing让同一个局部单位矩阵由多个几何类只读共用，从而减少重复数组；它不更改离散或方程，数组字节也不能等同进程RSS下降。
+
+**结果。** bottom P4的MUMPS numeric完成。其after-cleanup fresh B为28,704,886,784 B，单份INFOG17为18,865,000,000 B，政策W为5,322,116,301 B，总筛查52,891,003,085 B，低于cap 330,159,923 B。top symbolic之后另行cleanup，fresh B为45,211,955,200 B，单份INFOG17为19,299,000,000 B，再加W后为69,833,071,501 B，比cap高16,611,908,493 B。top numeric没有调用；它需要fresh B≤28,600,046,707 B。MUMPS 5.6.2记录bottom numeric实际INFOG18/19为2,879/18,865百万十进制字节，top INFOG18/19未运行。full run process-tree peak 47,043,870,720 B、专属job cgroup peak 44,224,434,176 B分列。
+
+**身份和负结果。** Invocation `a598ab0a491649eda4060eef6a102b56`，source HEAD `6e072bd640b5c140ba64745c350ddf9916a566dc`，rank map `[10,11,14,15,16,17,18,19]`。原始终态为consumer IMPLEMENTATION_FAILURE、public rc3 `task041_public_command_nonzero`、finalizer `failed/service_boundary_failure`，`controlled_stop.active=false`。finalizer 8/10，仅`public_result_completed`与`service_terminal_normal`为false；bottom numeric factor完成后与top pending因子均按记录清理。fixed-H6反馈、outer、五真残差、恢复、physics与official result均未到达。这是top numeric前的预算拒绝，不是controlled stop，也不是已证明算法无法数值求解。
+
+**转录更正与存量。** 前一执行消息将P4 identity audit误写成P6，原通知和raw均保留。当前P6 markers真实记录nᵢ=450、rank-sum class数475/423，identity payload节省756,540,000/672,300,000 B，两侧1,428,840,000 B；P6 retained Schur payload为1,418,342,400/1,263,071,232 B。P4另为nᵢ=108、class数475/423、payload节省43,576,704/38,724,480 B，两侧82,301,184 B。它们都是暴露数组payload，不是RSS节省。V5 ledger现在186项，SHA `d344166517fbbaa6f66c29a9687828f5e74c78b6dcba303c142c47e7f99477dd`；runroot只有唯一匹配的1,860.62936514 s记录，Invocation经launch/finalizer/runroot关联而非账目行字段。
+
+**解释与决定。** P6局部LU、两个恢复映射及Schur按真实class计数推得的可见rank-sum数组payload为11,177,212,032 B。它与top筛查差额的纯字节差为5,434,696,461 B，但payload不是RSS减量或可回收量上界，且这些数组仍有后续用途。P4 `port_audit.cells_with_port_terms`的bottom 0/top 15是rank-local owned-cell循环计数，不是全局端口cell数；本run没有全rank计数或逐rankBi/Di/xiB字节，也没有ghost/cache alias总量。`720×108×646×16=803,727,360 B`只是某一侧假设720个owned cells时的条件式尺寸示例，不是两侧或全局上界。top fresh B采样时bottom因子仍存活，其驻留贡献已计入B，不另加bottom INFOG(19)；INFOG(19)的allocated-data统计与RSS不一一对应。top symbolic驻留与INFOG(17)无法拆分。当前尚无足量可释放证据，也不能据此证明全局潜在释放总量不足；不建议同包重建试运气。下一候选仅为xiB预热后审查Bi-only缓冲区释放，其总收益仍未知。50×25 nm、2 TB、48 h仍未资格化。
+
+[Response V12](task041_mpi1_shortwave_hybrid_capacity/response_v12.md)、[Task041 outcomes](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)与[terminal compact](../results/task041_w0p7_identity_sharing_warm_run_20261008T233316Z/terminal_compact_20261009.json)保留证据；compact SHA `bead944a1d4bd4f5f35097c8bf8cb43ee9478c0721f663e722634896a17235b3`。无新计算、源码改动或ledger/raw更写。
+
+## 历史快照：2026-10-08 Task041 W0.7 compact-transfer warm场终态（Invocation a6a67fc93a1d45cfa69cce0469cb0672）
 
 本场在bottom P4 numeric前由预算门拒绝：fresh B从31,398,424,576 B经既有collective cleanup实测降至30,729,564,160 B，再加单份INFOG(17) 18,004,000,000 B及政策W 5,322,116,301 B，筛查总额54,055,680,461 B，超过cap 53,221,163,008 B共834,517,453 B。清理降低668,860,416 B是本次观测，不是未来可保证收益。bottom/top numeric均未调用，pending句柄各销毁一次。top后续门需fresh B≤32,298,046,707 B，但bottom numeric后的B/INFOG(19)未知。
 

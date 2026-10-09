@@ -1,6 +1,20 @@
 # 开发阶段研究对象与计算结果总账
 
-## Task041 Review V10-r2：W0.7 compact-transfer warm场终态（2026-10-08）
+## Task041 Review V10-r2：W0.7 identity-sharing warm场终态（2026-10-09）
+
+| 模型/阶段 | 当前实测 | 资格边界与证据 |
+|---|---|---|
+| W0.7 reduced p6/h0.70/M400/MPI8，matched L20/N29/h20/29 | Invocation `a598ab0a491649eda4060eef6a102b56`；HEAD `6e072bd640b5c140ba64745c350ddf9916a566dc`；复用producer、QEP=0 | 唯一warm run；不是50×25 nm或冷启动48 h资格 |
+| P6/P4 identity payload更正 | P6 nᵢ=450、rank-sum class 475/423，保存数组payload 756,540,000/672,300,000 B；P4 nᵢ=108、class 475/423，保存43,576,704/38,724,480 B | P6与P4字段分列；两者是rank-sum数组payload，不是RSS收益；前一执行消息的标签错误由本节与compact更正 |
+| bottom P4 numeric | 64966²/NNZ27,929,686；cleanup后B28,704,886,784 B + INFOG17 18,865,000,000 B + W5,322,116,301 B =52,891,003,085 B | 低于cap330,159,923 B；numeric完成，INFOG18/19=2,879/18,865 million bytes |
+| top P4 numeric gate | 64966²/NNZ39,242,250；cleanup后B45,211,955,200 B + INFOG17 19,299,000,000 B + W5,322,116,301 B =69,833,071,501 B | 超cap16,611,908,493 B；top numeric未调用；所需fresh B≤28,600,046,707 B |
+| 生命周期/对象 | P6 Schur audit两侧1,418,342,400/1,263,071,232 B；源码形状推得LU+两恢复映射+Schur可见payload合计11,177,212,032 B | 派生数组字节不是RSS，且外层动作/求解/恢复前仍有用途；不足以覆盖top筛查差额 |
+| 服务终态与账目 | consumer IMPLEMENTATION_FAILURE/public rc3；finalizer failed/service_boundary_failure；wall1,860.62936514 s；V5 186项、SHA `d344166517fbbaa6f66c29a9687828f5e74c78b6dcba303c142c47e7f99477dd` | controlled_stop.active=false；finalizer 8/10，仅public_result_completed/service_terminal_normal为false；唯一runroot匹配记录，ledger row无Invocation字段 |
+| 正式数值与目标资格 | top numeric未运行，故无H6 feedback/outer residual/recovery/physics/RTA | 未形成W0.7缩减pilot数值通过，不资格化50×25 nm、2 TB或48 h |
+
+对象与MUMPS 5.6.2 INFOG重叠说明、最后使用点及未解决字段见[Response V12](task041_mpi1_shortwave_hybrid_capacity/response_v12.md)。`720×108×646×16=803,727,360 B`仅是一侧720个owned cells假设下的条件式尺寸示例，不是两侧或全局上界；本场Bi/Di/xiB全rank唯一payload总量unknown，不能用示例排除或确认足量释放。top fresh B采样时bottom factor仍存活，其resident贡献计入B，不另加INFOG(19)，但INFOG(19)不与RSS一一对应。top symbolic/INFOG17 overlap拆分仍缺。派生[terminal compact](../results/task041_w0p7_identity_sharing_warm_run_20261008T233316Z/terminal_compact_20261009.json) SHA `bead944a1d4bd4f5f35097c8bf8cb43ee9478c0721f663e722634896a17235b3`；raw与V5 ledger没有修改。
+
+## 历史快照：Task041 Review V10-r2 W0.7 compact-transfer warm场终态（2026-10-08）
 
 | 模型/阶段 | 当前实测 | 资格边界与证据 |
 |---|---|---|
