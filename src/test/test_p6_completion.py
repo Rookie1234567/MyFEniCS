@@ -9,6 +9,25 @@ from src.io.independent_tetra_reference import load_tetra_reference
 
 
 class CompletionTests(unittest.TestCase):
+    def test_prepared_body_owner_references_are_released_before_output(self):
+        import gc
+        import weakref
+        import numpy as np
+        from scipy import sparse
+        from src.solvers.independent_tetra_study import release_prepared_body
+        data=np.ones(3,dtype=np.complex128)
+        K=sparse.csr_matrix((data,np.arange(3),np.arange(4)),shape=(3,3))
+        refs=[weakref.ref(data),weakref.ref(K)]
+        prepared=dict(K=K,owners={'data':data},checkpoint={'sha256':'immutable'},boundary={'q':47})
+        del data
+        release_prepared_body(prepared)
+        # The caller owns K until its explicit del; provider ownership is gone.
+        self.assertIsNotNone(refs[1]())
+        del K;gc.collect()
+        self.assertTrue(all(r() is None for r in refs))
+        self.assertEqual(prepared,dict(checkpoint={'sha256':'immutable'},boundary={'q':47}))
+        release_prepared_body(prepared);release_prepared_body(None)
+
     def test_real_entries_and_end_to_end_memory_scope(self):
         from src.runners.port_preparation import context,storage_limits,preparation_memory_envelope
         for role in scope.STAGES:

@@ -51,6 +51,17 @@ def petsc_matrix(A):
     A=A.tocsr();return PETSc.Mat().createAIJ(size=A.shape,csr=(A.indptr.astype(PETSc.IntType),A.indices.astype(PETSc.IntType),A.data),comm=PETSc.COMM_SELF)
 
 
+def release_prepared_body(prepared):
+    """Drop provider-owned matrix/mmap references after the original audit.
+
+    Metadata and boundary receipts remain available for field output. Do not
+    close a mmap explicitly: another live array view may still own it.
+    """
+    if prepared is not None:
+        for name in ('K','owners'):
+            prepared.pop(name,None)
+
+
 def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,action_factory=None):
     scope=scope_module
     budget=scope.memory_budget(role) if hasattr(scope,"memory_budget") else scope.plan_record()["memory_budget"]
@@ -155,6 +166,7 @@ def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,
     finally:
         if factor is not None:factor.destroy()
         matrix.destroy()
+    release_prepared_body(prepared)
     del A,K,scaled,C,D;gc.collect();journal.event('global_body_augmented_and_factor_released')
     output,accuracy=complete_output(s,b,x,folder,journal)
     result=dict(pending,status='COMPLETED',output=output,accuracy=accuracy,
