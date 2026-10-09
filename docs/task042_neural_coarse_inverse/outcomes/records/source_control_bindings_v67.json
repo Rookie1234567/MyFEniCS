@@ -1,0 +1,140 @@
+{
+  "files": [
+    {
+      "path": "tmp/task042/v67/aux_once.py",
+      "bytes": 1506,
+      "sha256": "f666c92fc7ad8c651b67c137ef46f8cd8bdf15b5910a9b0493602f63ebabd23f",
+      "archived": "benchmarks/artifacts/task042/v67/raw_final_tail_v67/f666c92fc7ad8c651b67c137ef46f8cd8bdf15b5910a9b0493602f63ebabd23f",
+      "byte_snapshot": true,
+      "identity": "ignored control bytes, separately bound from tracked numerical source"
+    },
+    {
+      "path": "tmp/task042/v67/collect_wrapper.py",
+      "bytes": 3901,
+      "sha256": "b51adb63b65b388bf4a6b4adea1f5e60b9318666b3a95ae5e917fe5f437d716f",
+      "archived": "benchmarks/artifacts/task042/v67/raw_final_tail_v67/b51adb63b65b388bf4a6b4adea1f5e60b9318666b3a95ae5e917fe5f437d716f",
+      "byte_snapshot": true,
+      "identity": "ignored control bytes, separately bound from tracked numerical source"
+    },
+    {
+      "path": "tmp/task042/v67/docs_once.py",
+      "bytes": 347,
+      "sha256": "57d491b0bb942569b6f2fd439bfdd2ef70ad58091eb50988abf2f75b9d602cd1",
+      "archived": "benchmarks/artifacts/task042/v67/raw_final_tail_v67/57d491b0bb942569b6f2fd439bfdd2ef70ad58091eb50988abf2f75b9d602cd1",
+      "byte_snapshot": true,
+      "identity": "ignored control bytes, separately bound from tracked numerical source"
+    },
+    {
+      "path": "tmp/task042/v67/freeze_receipt.py",
+      "bytes": 1627,
+      "sha256": "1681781f9fa17bc8ce69c5939be33b957f218fc8a975e815ae4ac33d7e212c63",
+      "archived": "benchmarks/artifacts/task042/v67/raw_final_tail_v67/1681781f9fa17bc8ce69c5939be33b957f218fc8a975e815ae4ac33d7e212c63",
+      "byte_snapshot": true,
+      "identity": "ignored control bytes, separately bound from tracked numerical source"
+    },
+    {
+      "path": "tmp/task042/v67/monitor.py",
+      "bytes": 1343,
+      "sha256": "dc8ed0dd3927dd2f7b9712fd2feb2f74a1748411629d3d58005bae7d4e4e1a66",
+      "archived": "benchmarks/artifacts/task042/v67/raw_final_tail_v67/dc8ed0dd3927dd2f7b9712fd2feb2f74a1748411629d3d58005bae7d4e4e1a66",
+      "byte_snapshot": true,
+      "identity": "ignored control bytes, separately bound from tracked numerical source"
+    },
+    {
+      "path": "tmp/task042/v67/reconcile_once.py",
+      "bytes": 5446,
+      "sha256": "9d50c4dc239d18d69ab2413642bbeec35b33ee15bbfb80782e664bf1f0a2119c",
+      "archived": "benchmarks/artifacts/task042/v67/raw_final_tail_v67/9d50c4dc239d18d69ab2413642bbeec35b33ee15bbfb80782e664bf1f0a2119c",
+      "byte_snapshot": true,
+      "identity": "ignored control bytes, separately bound from tracked numerical source"
+    },
+    {
+      "path": "tmp/task042/v67/run_once.py",
+      "bytes": 1791,
+      "sha256": "56db7e396853ea306d04d098e54d54730ea5e29fc11a50fd94ae619306036389",
+      "archived": "benchmarks/artifacts/task042/v67/raw_final_tail_v67/56db7e396853ea306d04d098e54d54730ea5e29fc11a50fd94ae619306036389",
+      "byte_snapshot": true,
+      "identity": "ignored control bytes, separately bound from tracked numerical source"
+    },
+    {
+      "path": "tmp/task042/v67/seal_delivery.py",
+      "bytes": 13213,
+      "sha256": "1676836e1848f3551d52cbe6860013f6da4eb36fbfa3552eafa3a784b0f6a22b",
+      "archived": "benchmarks/artifacts/task042/v67/raw_final_tail_v67/1676836e1848f3551d52cbe6860013f6da4eb36fbfa3552eafa3a784b0f6a22b",
+      "byte_snapshot": true,
+      "identity": "ignored control bytes, separately bound from tracked numerical source"
+    },
+    {
+      "path": "tmp/task042/v67/write_delivery.py",
+      "bytes": 23076,
+      "sha256": "2ce0f3dfb48eb93d4f63b5de9d71a3abee3cfe9c0b641c5337314a8cb4db49d2",
+      "archived": "benchmarks/artifacts/task042/v67/raw_final_tail_v67/2ce0f3dfb48eb93d4f63b5de9d71a3abee3cfe9c0b641c5337314a8cb4db49d2",
+      "byte_snapshot": true,
+      "identity": "ignored control bytes, separately bound from tracked numerical source"
+    }
+  ],
+  "document_source": "df09635a71917afbdf593d35bb9e9fb345724f89",
+  "actual_run_sources_by_run": [
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v67/aux_pre_06",
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "PREFLIGHT",
+      "folder": "results/task042/task042_v67_local_p5_mode_preflight_20261009T093656387404Z",
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "PREPARE",
+      "folder": "results/task042/task042_v67_local_p5_prepare_20261009T094017059090Z",
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "SOLVE_COMPLETE",
+      "folder": "results/task042/task042_v67_local_p5_solve_complete_20261009T130237983420Z",
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "classification": "INTERRUPTED_NO_RETURN_UNKNOWN_CAUSE"
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v67/aux_pre_07",
+      "source_sha": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+      "classification": "MONITORING_FAILED"
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v67/aux_pre_08",
+      "source_sha": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "M4",
+      "folder": "results/task042/task042_v67_local_p4_m1188_20261009T134236751115Z",
+      "source_sha": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "VERIFY_COST",
+      "folder": "results/task042/task042_v67_compare_verify_cost_20261009T141945547981Z",
+      "source_sha": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v67/aux_post_01",
+      "source_sha": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "docs",
+      "folder": "tmp/task042/v67/aux_docs_01",
+      "source_sha": "df09635a71917afbdf593d35bb9e9fb345724f89",
+      "classification": "COMPLETED"
+    }
+  ],
+  "old_source_not_relabelled": true
+}

@@ -1,0 +1,54 @@
+{
+  "status": "SETTLED_CLOSED",
+  "returned_full_finite_fields": [
+    "M4"
+  ],
+  "formal_equation_pass": {
+    "M4": true
+  },
+  "direct_target_pass": {
+    "M4": false
+  },
+  "current_charged_conservative_seconds": 17558.32172377257,
+  "current_known_lower_seconds": 16932.513495125568,
+  "historical_known_lower_seconds": 267980.3403159173,
+  "research_known_cumulative_lower_seconds": 284912.85381104285,
+  "research_historical_lower_plus_current_conservative_seconds": 285538.66203968984,
+  "deployment": {
+    "L5": {
+      "necessary_new_prepare_and_complete_solve_seconds": null,
+      "prepared_start_complete_seconds": null,
+      "new_prepare_seconds": 12095.119183719857,
+      "process_boundaries": "PREPARE and SOLVE_COMPLETE separate; sum of measured necessary chain, not one continuous process",
+      "numerical_cache": "new L5 K and q47/q63; OS/JIT cache not cleared",
+      "interrupted_solve_elapsed_bounds_seconds": [
+        1432.0739093529992,
+        2057.882138
+      ],
+      "spent_prepare_plus_failed_solve_bounds_seconds": [
+        13527.193093072856,
+        14153.001321719858
+      ],
+      "interrupted_classification": "INTERRUPTED_NO_RETURN_UNKNOWN_CAUSE",
+      "missing_complete_N1": "numeric did not return; full field and remaining deployment cost unknown"
+    },
+    "M4": {
+      "prepared_start_complete_seconds": 2118.5302728288807,
+      "body_parent_namespace": "v66",
+      "body_parent_role": "PREPARE",
+      "old_body_generation_required": true,
+      "inherited_body_producer_launch_seconds": 2784.742088963976,
+      "inherited_body_launch_contains_shared_setup_and_old_boundary_costs": true,
+      "whole_parent_not_added_as_exact_fresh_M4_cost": true,
+      "matched_fresh_N1_seconds": null,
+      "missing_fresh_N1_components": "matched p4 body-only rebuild with present modes; unknown, not zero"
+    }
+  },
+  "peak_sampled_tree_bytes": 95875411968,
+  "max_gap_seconds": 1.6242432869039476,
+  "old_failures_NOT_RUN_and_closed_windows_preserved": true,
+  "NN20": false,
+  "target_2TB_48h": false,
+  "closed": true,
+  "active": null
+}
