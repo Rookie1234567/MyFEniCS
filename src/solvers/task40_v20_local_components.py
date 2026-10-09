@@ -67,45 +67,57 @@ def _array_sha256(value: np.ndarray) -> str:
     return digest.hexdigest()
 
 
-def _save_component_packet(
-    directory: Path, name: str, facts: Mapping[str, Any], arrays: Mapping[str, Any]
+def _readback_component_packet(
+    directory: Path, name: str, expected_array_hashes: Mapping[str, str]
 ) -> dict[str, Any]:
-    from src.runners.physical_diagnosis_worker import _sha256_file, save_packet
+    from src.runners.physical_diagnosis_worker import _sha256_file
 
     stem = directory / name
-    if stem.with_suffix(".json").exists() or stem.with_suffix(".npz").exists():
-        raise FileExistsError(f"V20 evidence packet already exists: {name}")
-    array_hashes = {
-        key: _array_sha256(np.asarray(value)) for key, value in arrays.items()
-    }
-    save_packet(directory, name, {"facts": dict(facts), "raw_arrays": dict(arrays)})
     json_path = stem.with_suffix(".json")
     record = json.loads(json_path.read_text(encoding="utf-8"))
     manifest = record.get("arrays")
-    descriptors = record.get("facts", {}).get("raw_arrays", {})
+    descriptors = record.get("raw_arrays", {})
     if not isinstance(manifest, Mapping) or not isinstance(descriptors, Mapping):
         raise RuntimeError(f"V20 packet {name} omitted its NPZ array inventory")
+    if set(descriptors) != set(expected_array_hashes):
+        raise RuntimeError(f"V20 packet {name} scientific array descriptor inventory differs")
+    array_key_to_name: dict[str, str] = {}
+    for scientific_name in sorted(expected_array_hashes):
+        descriptor = descriptors.get(scientific_name)
+        array_key = descriptor.get("array_key") if isinstance(descriptor, Mapping) else None
+        if not isinstance(array_key, str) or not array_key or array_key in array_key_to_name:
+            raise RuntimeError(
+                f"V20 packet {name} has a missing or repeated NPZ array key"
+            )
+        array_key_to_name[array_key] = scientific_name
     npz_path = Path(str(manifest.get("path", ""))).resolve()
     actual_sha256 = _sha256_file(npz_path)
     if actual_sha256 != manifest.get("sha256"):
         raise RuntimeError(f"V20 packet {name} failed its archive hash check")
     readback = {}
     with np.load(npz_path, allow_pickle=False) as archive:
-        if set(archive.files) != set(array_hashes):
+        if (
+            len(archive.files) != len(array_key_to_name)
+            or set(archive.files) != set(array_key_to_name)
+        ):
             raise RuntimeError(f"V20 packet {name} readback key inventory differs")
-        for key in sorted(archive.files):
-            array = archive[key]
-            descriptor = descriptors.get(key)
+        for array_key in sorted(archive.files):
+            scientific_name = array_key_to_name[array_key]
+            array = archive[array_key]
+            descriptor = descriptors[scientific_name]
             content_sha256 = _array_sha256(array)
             if (
                 not isinstance(descriptor, Mapping)
-                or descriptor.get("array_key") != key
+                or descriptor.get("array_key") != array_key
                 or descriptor.get("shape") != list(array.shape)
                 or descriptor.get("dtype") != str(array.dtype)
-                or content_sha256 != array_hashes[key]
+                or content_sha256 != expected_array_hashes[scientific_name]
             ):
-                raise RuntimeError(f"V20 packet {name} failed readback for array {key}")
-            readback[key] = {
+                raise RuntimeError(
+                    f"V20 packet {name} failed readback for array {scientific_name}"
+                )
+            readback[scientific_name] = {
+                "array_key": array_key,
                 "shape": list(array.shape),
                 "dtype": str(array.dtype),
                 "sha256": content_sha256,
@@ -118,6 +130,21 @@ def _save_component_packet(
         "arrays": readback,
         "write_and_readback_hash_passed": True,
     }
+
+
+def _save_component_packet(
+    directory: Path, name: str, facts: Mapping[str, Any], arrays: Mapping[str, Any]
+) -> dict[str, Any]:
+    from src.runners.physical_diagnosis_worker import save_packet
+
+    stem = directory / name
+    if stem.with_suffix(".json").exists() or stem.with_suffix(".npz").exists():
+        raise FileExistsError(f"V20 evidence packet already exists: {name}")
+    array_hashes = {
+        key: _array_sha256(np.asarray(value)) for key, value in arrays.items()
+    }
+    save_packet(directory, name, {"facts": dict(facts), "raw_arrays": dict(arrays)})
+    return _readback_component_packet(directory, name, array_hashes)
 
 
 def _local_class_measurement(

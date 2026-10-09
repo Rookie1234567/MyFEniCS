@@ -87,6 +87,18 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _unified_cgroup_membership(pid: int | str = "self") -> str | None:
+    try:
+        lines = Path(f"/proc/{pid}/cgroup").read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    for line in lines:
+        fields = line.split(":", 2)
+        if len(fields) == 3 and fields[0] == "0":
+            return fields[2]
+    return None
+
+
 def _read_case(path: Path) -> tuple[str, dict[str, Any]]:
     raw = path.read_text(encoding="utf-8")
     return raw, tomllib.loads(raw)
@@ -405,28 +417,48 @@ def _run_case_output_checker(packet_path: Path, runtime_prefix: Path) -> list[st
     ]
 
 
-def _supervise_required_checker(
-    *,
-    command: list[str],
-    checker_kind: str,
-    evidence_directory: Path,
-    runtime_prefix: Path,
-    environment: dict[str, str],
-    repo_root: Path,
-    campaign_window: Path,
-    campaign_sha256: str,
-    campaign_accounting: Path,
-    source_state: dict[str, Any],
-    profile: str,
-    events: list[dict[str, Any]],
-    event_log: Path,
-    event_identity: dict[str, Any],
-) -> tuple[int, dict[str, Any] | None, dict[str, Any]]:
-    """Run the independent checker under the existing Task40 subreaper gates."""
+def _run_required_checker_supervision(request: dict[str, Any]) -> dict[str, Any]:
+    """Run the checker under the fixed Task40 watchdog gates in a qualified child."""
 
     from benchmarks.subreaper_watchdog import PHYSICAL_MEMORY_PRESSURE_POLICY, supervise
     from src.io.physical_intermediate_profile import profile_facts
     from src.runners.physical_v14_budget import V14_TIME_POLICY_ENFORCE
+
+    command = [str(value) for value in request["command"]]
+    checker_kind = str(request["checker_kind"])
+    evidence_directory = Path(request["evidence_directory"])
+    runtime_prefix = Path(request["runtime_prefix"])
+    environment = dict(os.environ)
+    activation_marker = environment.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION")
+    if request.get("activation_marker") != activation_marker:
+        raise RuntimeError("required checker supervisor activation identity differs")
+    numeric_environment = request.get("numeric_environment", {})
+    if not isinstance(numeric_environment, dict):
+        raise RuntimeError("required checker supervisor numeric environment is malformed")
+    allowed_numeric_settings = {
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+    }
+    if not set(numeric_environment) <= allowed_numeric_settings:
+        raise RuntimeError("required checker supervisor request has unsupported environment fields")
+    for key, value in numeric_environment.items():
+        if environment.get(key) != value:
+            raise RuntimeError(f"required checker supervisor setting differs: {key}")
+    tree_accounting_root_pid = int(request["service_parent_pid"])
+    service_cgroup_membership = str(request["service_cgroup_membership"])
+    repo_root = Path(request["repo_root"])
+    campaign_window = Path(request["campaign_window"])
+    campaign_sha256 = str(request["campaign_sha256"])
+    campaign_accounting = Path(request["campaign_accounting"])
+    source_state = dict(request["source_state"])
+    profile = str(request["profile"])
+
+    if environment.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1":
+        raise RuntimeError("required checker supervisor lacks qualified activation")
+    if not os.path.samefile(sys.executable, runtime_prefix / "bin/python"):
+        raise RuntimeError("required checker supervisor is not using the qualified interpreter")
 
     resources = profile_facts(profile)["resources"]
     if resources.get("watchdog_memory_policy") != PHYSICAL_MEMORY_PRESSURE_POLICY:
@@ -467,14 +499,10 @@ def _supervise_required_checker(
         campaign_accounting_path=campaign_accounting,
         worker_environment=worker_environment,
         source_state=source_state,
+        tree_accounting_root_pid=tree_accounting_root_pid,
     )
-    _append_clock_event(
-        events, "required_checker_finished", event_log, event_identity
-    )
-    _write_json_fsync(
-        evidence_directory / "required_checker_watchdog_summary.json",
-        watchdog_summary,
-    )
+    summary_path = evidence_directory / "required_checker_watchdog_summary.json"
+    _write_json_fsync(summary_path, watchdog_summary)
     raw_output = watchdog_directory / "worker.log"
     if raw_output.is_file():
         raw_path = evidence_directory / "required_checker_output.raw.txt"
@@ -503,9 +531,7 @@ def _supervise_required_checker(
         "kind": checker_kind,
         "command": command,
         "watchdog_directory": str(watchdog_directory),
-        "watchdog_summary_path": str(
-            evidence_directory / "required_checker_watchdog_summary.json"
-        ),
+        "watchdog_summary_path": str(summary_path),
         "raw_output_path": None if raw_path is None else str(raw_path),
         "raw_output_sha256": None if raw_path is None else _sha256_file(raw_path),
         "watchdog_classification": watchdog_summary.get("classification"),
@@ -523,10 +549,145 @@ def _supervise_required_checker(
             "pss_sampling_policy": resources["pss_sampling_policy"],
             "process_tree_rss_cap_bytes": resources["process_tree_rss_cap_bytes"],
             "zero_swap_required": True,
+            "service_cgroup_membership": service_cgroup_membership,
+            "process_tree_root_pid": tree_accounting_root_pid,
+            "process_tree_scope_includes_user_service_parent": True,
             "process_tree_cleanup_required": True,
         },
     }
-    return return_code, details["payload"], details
+    return {
+        "return_code": return_code,
+        "payload": details["payload"],
+        "details": details,
+    }
+
+
+def _supervise_required_checker(
+    *,
+    command: list[str],
+    checker_kind: str,
+    evidence_directory: Path,
+    runtime_prefix: Path,
+    environment: dict[str, str],
+    repo_root: Path,
+    campaign_window: Path,
+    campaign_sha256: str,
+    campaign_accounting: Path,
+    source_state: dict[str, Any],
+    profile: str,
+    events: list[dict[str, Any]],
+    event_log: Path,
+    event_identity: dict[str, Any],
+) -> tuple[int, dict[str, Any] | None, dict[str, Any]]:
+    """Launch the watchdog from the qualified interpreter, away from the -S parent."""
+
+    if environment.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1":
+        raise RuntimeError("V20 user-service did not receive the qualified activation marker")
+    request_path = evidence_directory / "required_checker_supervision_request.json"
+    response_path = evidence_directory / "required_checker_supervision_response.json"
+    stdout_path = evidence_directory / "required_checker_supervisor_stdout.raw.txt"
+    stderr_path = evidence_directory / "required_checker_supervisor_stderr.raw.txt"
+    service_parent_pid = os.getpid()
+    service_cgroup_membership = _unified_cgroup_membership(service_parent_pid)
+    if service_cgroup_membership is None:
+        raise RuntimeError("V20 service parent has no readable unified-cgroup identity")
+    numeric_setting_names = (
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+    )
+    request = {
+        "command": command,
+        "checker_kind": checker_kind,
+        "evidence_directory": str(evidence_directory),
+        "runtime_prefix": str(runtime_prefix),
+        "activation_marker": environment.get(
+            "_MYFENICS_WSL_QUALIFIED_ACTIVATION"
+        ),
+        "numeric_environment": {
+            key: environment[key]
+            for key in numeric_setting_names
+            if key in environment
+        },
+        "service_parent_pid": service_parent_pid,
+        "service_cgroup_membership": service_cgroup_membership,
+        "repo_root": str(repo_root),
+        "campaign_window": str(campaign_window),
+        "campaign_sha256": campaign_sha256,
+        "campaign_accounting": str(campaign_accounting),
+        "source_state": source_state,
+        "profile": profile,
+        "response_path": str(response_path),
+    }
+    _write_json_fsync(request_path, request)
+    supervisor_command = [
+        str(runtime_prefix / "bin/python"),
+        str(Path(__file__).resolve()),
+        "supervise-required-checker",
+        "--request",
+        str(request_path),
+    ]
+    child = subprocess.run(
+        supervisor_command,
+        cwd=repo_root,
+        env=environment,
+        capture_output=True,
+        text=True,
+    )
+    for path, content in ((stdout_path, child.stdout), (stderr_path, child.stderr)):
+        with path.open("xb") as stream:
+            stream.write(content.encode("utf-8"))
+            stream.flush()
+            os.fsync(stream.fileno())
+    if child.returncode != 0 or not response_path.is_file():
+        raise RuntimeError(
+            "qualified required-checker supervisor failed "
+            f"(returncode={child.returncode}): "
+            f"{child.stderr[-4000:] or child.stdout[-4000:]}"
+        )
+    response = json.loads(response_path.read_text(encoding="utf-8"))
+    if not isinstance(response, dict) or not isinstance(response.get("details"), dict):
+        raise RuntimeError("qualified required-checker supervisor returned an invalid receipt")
+    _append_clock_event(
+        events, "required_checker_finished", event_log, event_identity
+    )
+    details = dict(response["details"])
+    details["qualified_supervisor"] = {
+        "command": supervisor_command,
+        "returncode": int(child.returncode),
+        "activation_marker": environment.get(
+            "_MYFENICS_WSL_QUALIFIED_ACTIVATION"
+        ),
+        "request_path": str(request_path),
+        "request_sha256": _sha256_file(request_path),
+        "response_path": str(response_path),
+        "response_sha256": _sha256_file(response_path),
+        "stdout_path": str(stdout_path),
+        "stdout_sha256": _sha256_file(stdout_path),
+        "stderr_path": str(stderr_path),
+        "stderr_sha256": _sha256_file(stderr_path),
+    }
+    payload = response.get("payload")
+    return int(response["return_code"]), (
+        payload if isinstance(payload, dict) else None
+    ), details
+
+
+def _run_required_checker_supervision_request(request_path: Path) -> int:
+    request = json.loads(request_path.read_text(encoding="utf-8"))
+    runtime_prefix = Path(request["runtime_prefix"])
+    if os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1":
+        raise RuntimeError("required checker supervisor child lacks qualified activation")
+    if not os.path.samefile(sys.executable, runtime_prefix / "bin/python"):
+        raise RuntimeError("required checker supervisor child interpreter identity differs")
+    if int(request["service_parent_pid"]) != os.getppid():
+        raise RuntimeError("required checker supervisor lost its user-service parent identity")
+    if request["service_cgroup_membership"] != _unified_cgroup_membership():
+        raise RuntimeError("required checker supervisor moved out of the user-service cgroup")
+    response = _run_required_checker_supervision(request)
+    _write_json_fsync(Path(request["response_path"]), response)
+    return 0
 
 
 def _campaign_accounting_path_from_manifest(
@@ -1009,7 +1170,13 @@ def main(argv: list[str] | None = None) -> int:
     partial_parser.add_argument("--numerical-output", type=Path, required=True)
     partial_parser.add_argument("--stop-stage", required=True)
     partial_parser.add_argument("--output", type=Path, required=True)
+    supervisor_parser = subparsers.add_parser(
+        "supervise-required-checker", help=argparse.SUPPRESS
+    )
+    supervisor_parser.add_argument("--request", type=Path, required=True)
     args = parser.parse_args(argv)
+    if args.command == "supervise-required-checker":
+        return _run_required_checker_supervision_request(args.request)
     if args.command == "prepare-inputs":
         print(json.dumps(prepare_stage_inputs(), ensure_ascii=False, indent=2))
         return 0

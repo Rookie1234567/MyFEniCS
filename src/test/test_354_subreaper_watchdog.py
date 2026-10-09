@@ -1,6 +1,7 @@
 """Real subprocess lifecycle checks, including setsid after leader exit."""
 
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -66,6 +67,61 @@ def test_cli_forwards_physical_memory_and_profile_sampling_policies(
     assert captured['memory_policy'] == watchdog.PHYSICAL_MEMORY_PRESSURE_POLICY
     assert captured['pss_sampling_policy'] == 'disabled_by_profile'
     assert json.loads(capsys.readouterr().out)['classification'] == 'COMPLETED'
+
+
+
+def test_explicit_accounting_root_includes_service_wrapper_rss_and_clears_children(
+    tmp_path,
+):
+    directory = tmp_path / "run"
+    monitor_pid_path = tmp_path / "monitor.pid"
+    monitor = f"""
+import json,os,sys
+from pathlib import Path
+from benchmarks.subreaper_watchdog import supervise
+root_pid = int(os.environ["TASK40_TEST_TREE_ROOT_PID"])
+Path({str(monitor_pid_path)!r}).write_text(str(os.getpid()))
+summary = supervise(
+    [sys.executable, "-c", "print('checker complete')"],
+    Path({str(directory)!r}),
+    wall_seconds=10,
+    interval=.05,
+    grace_seconds=.2,
+    tree_accounting_root_pid=root_pid,
+)
+print(json.dumps(summary))
+"""
+    root_pid = os.getpid()
+    process = subprocess.run(
+        [sys.executable, "-c", monitor],
+        env={**os.environ, "TASK40_TEST_TREE_ROOT_PID": str(root_pid)},
+        capture_output=True,
+        text=True,
+    )
+    assert process.returncode == 0, process.stdout + process.stderr
+    summary = json.loads((directory / "summary.json").read_text())
+    monitor_pid = int(monitor_pid_path.read_text())
+    rows = [
+        json.loads(line)
+        for line in (directory / "resources.jsonl").read_text().splitlines()
+    ]
+
+    assert summary["descendants_cleared"] is True
+    assert summary["sampled_process_tree_rss_peak_bytes"] > 0
+    assert Path(f"/proc/{root_pid}").exists()
+    assert rows
+    assert all(row["root_pid"] == root_pid for row in rows)
+    assert any(
+        member["pid"] == root_pid
+        for row in rows
+        for member in row["members"]
+    )
+    assert any(
+        member["pid"] == monitor_pid
+        for row in rows
+        for member in row["members"]
+    )
+    assert rows[-1]["live_or_unreaped_children"] == []
 
 
 @pytest.mark.parametrize('terminate', [False, True])

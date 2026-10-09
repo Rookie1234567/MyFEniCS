@@ -240,7 +240,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               campaign_window_path: Path | None = None,
               campaign_window_sha256: str | None = None,
               campaign_accounting_path: Path | None = None,
-              require_job_cgroup_zero_swap: bool = False) -> dict:
+              require_job_cgroup_zero_swap: bool = False,
+              tree_accounting_root_pid: int | None = None) -> dict:
     """Supervise one command, with an explicit workflow wall budget."""
     try:
         time_policy = normalize_v14_time_policy(time_policy)
@@ -266,6 +267,16 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
         raise ValueError('solve_seconds must be finite and positive when supplied')
     if tree_cap_bytes is not None and int(tree_cap_bytes) <= 0:
         raise ValueError('tree_cap_bytes must be positive when supplied')
+    if tree_accounting_root_pid is not None:
+        if (
+            type(tree_accounting_root_pid) is not int
+            or tree_accounting_root_pid <= 0
+        ):
+            raise ValueError('tree_accounting_root_pid must be a positive PID')
+        if tree_accounting_root_pid != os.getppid():
+            raise RuntimeError(
+                'tree_accounting_root_pid must be the current user-service parent'
+            )
     if (
         memory_policy == PHYSICAL_MEMORY_PRESSURE_POLICY
         and tree_cap_bytes is not None
@@ -473,7 +484,13 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 )
                 stage = 'resource_sample'
                 sample = process_tree_snapshot(
-                    os.getpid(), 'workflow', exit_code,
+                    (
+                        tree_accounting_root_pid
+                        if tree_accounting_root_pid is not None
+                        else os.getpid()
+                    ),
+                    'workflow',
+                    exit_code,
                     pss_sampling_policy=pss_sampling_policy,
                 )
                 job_cgroup = (
@@ -503,7 +520,11 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 sampled_child_identities.update(
                     (int(member['pid']), int(member['start_ticks']))
                     for member in sample.get('members', [])
-                    if member.get('pid') != os.getpid()
+                    if (
+                        member.get('pid') in children
+                        if tree_accounting_root_pid is not None
+                        else member.get('pid') != os.getpid()
+                    )
                     and isinstance(member.get('pid'), int)
                     and isinstance(member.get('start_ticks'), int)
                 )

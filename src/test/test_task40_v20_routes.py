@@ -582,13 +582,18 @@ def test_v20_service_reads_the_actual_run_case_launcher_result_object():
     assert _parse_run_case_result(stdout) == launcher_result
 
 
-def test_v20_required_checker_reuses_campaign_subreaper_limits(
+def test_v20_required_checker_runtime_reuses_campaign_subreaper_limits(
     monkeypatch, tmp_path
 ):
     import json
+    import os
+    import sys
 
     from benchmarks import subreaper_watchdog
-    from scripts.task40_v20_service_workflow import _supervise_required_checker
+    from scripts.task40_v20_service_workflow import (
+        _run_required_checker_supervision,
+        _unified_cgroup_membership,
+    )
 
     observed = {}
     output = {"status": "PASS"}
@@ -606,28 +611,30 @@ def test_v20_required_checker_reuses_campaign_subreaper_limits(
     monkeypatch.setattr(subreaper_watchdog, "supervise", fake_supervise)
     evidence = tmp_path / "evidence"
     evidence.mkdir()
-    event_log = evidence / "clock.jsonl"
-    event_log.touch()
-    events = []
-    return_code, payload, details = _supervise_required_checker(
-        command=["python", "-m", "checker"],
-        checker_kind="task40_v10_independent_output_checker",
-        evidence_directory=evidence,
-        runtime_prefix=ROOT / "qualified-python",
-        environment={"_MYFENICS_WSL_QUALIFIED_ACTIVATION": "1"},
-        repo_root=ROOT,
-        campaign_window=ROOT / "fixed-window.json",
-        campaign_sha256="a" * 64,
-        campaign_accounting=ROOT / "campaign-accounting.jsonl",
-        source_state={"branch": "task40extra_0p7nm_engineering", "clean": True},
-        profile="task40extra_v20_p6_y_orbit_target_original_ny8_v1",
-        events=events,
-        event_log=event_log,
-        event_identity={"source_sha": "b" * 40},
-    )
+    request = {
+        "command": ["python", "-m", "checker"],
+        "checker_kind": "task40_v10_independent_output_checker",
+        "evidence_directory": str(evidence),
+        "runtime_prefix": str(Path(sys.prefix)),
+        "activation_marker": "1",
+        "numeric_environment": {},
+        "service_parent_pid": os.getpid(),
+        "service_cgroup_membership": _unified_cgroup_membership(),
+        "repo_root": str(ROOT),
+        "campaign_window": str(ROOT / "fixed-window.json"),
+        "campaign_sha256": "a" * 64,
+        "campaign_accounting": str(ROOT / "campaign-accounting.jsonl"),
+        "source_state": {
+            "branch": "task40extra_0p7nm_engineering",
+            "clean": True,
+        },
+        "profile": "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+    }
 
-    assert return_code == 0
-    assert payload == output
+    result = _run_required_checker_supervision(request)
+
+    assert result["return_code"] == 0
+    assert result["payload"] == output
     assert observed["kwargs"]["wall_seconds"] == 86400.0
     assert observed["kwargs"]["campaign_window_sha256"] == "a" * 64
     assert observed["kwargs"]["require_job_cgroup_zero_swap"] is True
@@ -635,10 +642,129 @@ def test_v20_required_checker_reuses_campaign_subreaper_limits(
     assert observed["kwargs"]["tree_cap_bytes"] == 16 * 1024**3
     assert observed["kwargs"]["campaign_window_path"] == ROOT / "fixed-window.json"
     assert observed["kwargs"]["campaign_accounting_path"] == ROOT / "campaign-accounting.jsonl"
-    assert details["supervision"]["campaign_closeout_reserve_seconds"] == 600
-    assert details["supervision"]["process_tree_cleanup_required"] is True
-    assert events[-1]["label"] == "required_checker_finished"
-    assert event_log.read_text(encoding="utf-8").count("required_checker_finished") == 1
+    assert observed["kwargs"]["tree_accounting_root_pid"] == os.getpid()
+    assert result["details"]["supervision"]["process_tree_root_pid"] == os.getpid()
+    assert result["details"]["supervision"]["service_cgroup_membership"] == _unified_cgroup_membership()
+    assert result["details"]["supervision"]["campaign_closeout_reserve_seconds"] == 600
+    assert result["details"]["supervision"]["process_tree_cleanup_required"] is True
+
+
+def test_v20_service_minus_s_parent_launches_qualified_checker_child(
+    tmp_path,
+):
+    import json
+    import os
+    import subprocess
+    import sys
+
+    harness = r"""
+import json
+import os
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+
+root = Path.cwd()
+sys.path.insert(0, str(root))
+import scripts.task40_v20_service_workflow as workflow
+
+assert "numpy" not in sys.modules
+evidence = Path(sys.argv[1])
+evidence.mkdir(parents=True)
+event_log = evidence / "clock.jsonl"
+event_log.touch()
+captured = {}
+real_run = workflow.subprocess.run
+child_response = {
+    "return_code": 0,
+    "payload": {"status": "PASS"},
+    "details": {"kind": "test-checker", "returncode": 0},
+}
+
+def fake_run(argv, *, cwd, env, capture_output, text):
+    captured.update(argv=argv, cwd=str(cwd), env=env)
+    assert argv[0] == "/qualified/runtime/bin/python"
+    assert "-S" not in argv
+    assert env["_MYFENICS_WSL_QUALIFIED_ACTIVATION"] == "1"
+    request = json.loads(Path(argv[-1]).read_text(encoding="utf-8"))
+    assert "environment" not in request
+    assert request["activation_marker"] == "1"
+    assert request["service_parent_pid"] == os.getpid()
+    probe = real_run(
+        [
+            sys.executable,
+            "-c",
+            "import json,os; from benchmarks.task038_full3d_jit_staging import process_tree_snapshot; root=os.getppid(); sample=process_tree_snapshot(root,'workflow',0,pss_sampling_policy='disabled_by_profile'); print(json.dumps({'parent_pid':root,'child_pid':os.getpid(),'cgroup':next(x.split(':',2)[2].strip() for x in open('/proc/self/cgroup') if x.startswith('0::')),'root_pid':sample['root_pid'],'member_pids':[member['pid'] for member in sample['members']],'rss_bytes':sample['rss_bytes']}))",
+        ],
+        cwd=cwd,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    child_identity = json.loads(probe.stdout)
+    assert child_identity["parent_pid"] == os.getpid()
+    assert child_identity["cgroup"] == request["service_cgroup_membership"]
+    assert child_identity["root_pid"] == request["service_parent_pid"]
+    assert child_identity["parent_pid"] in child_identity["member_pids"]
+    assert child_identity["child_pid"] in child_identity["member_pids"]
+    assert child_identity["rss_bytes"] > 0
+    captured["child_cgroup"] = child_identity["cgroup"]
+    Path(request["response_path"]).write_text(
+        json.dumps(child_response), encoding="utf-8"
+    )
+    return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+workflow.subprocess.run = fake_run
+events = []
+result = workflow._supervise_required_checker(
+    command=["/qualified/runtime/bin/python", "-m", "checker"],
+    checker_kind="test-checker",
+    evidence_directory=evidence,
+    runtime_prefix=Path("/qualified/runtime"),
+    environment={
+        **os.environ,
+        "_MYFENICS_WSL_QUALIFIED_ACTIVATION": "1",
+    },
+    repo_root=root,
+    campaign_window=root / "fixed-window.json",
+    campaign_sha256="a" * 64,
+    campaign_accounting=root / "campaign-accounting.jsonl",
+    source_state={"branch": "test", "clean": True},
+    profile="task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+    events=events,
+    event_log=event_log,
+    event_identity={"source_sha": "b" * 40},
+)
+assert "numpy" not in sys.modules
+print(json.dumps({
+    "argv": captured["argv"],
+    "activation": captured["env"]["_MYFENICS_WSL_QUALIFIED_ACTIVATION"],
+    "child_cgroup": captured["child_cgroup"],
+    "numpy_loaded": "numpy" in sys.modules,
+    "return_code": result[0],
+    "checker_payload": result[1],
+    "clock_event": events[-1]["label"],
+}))
+"""
+    completed = subprocess.run(
+        [sys.executable, "-S", "-c", harness, str(tmp_path / "minus-s-evidence")],
+        cwd=ROOT,
+        env=os.environ.copy(),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    result = json.loads(completed.stdout)
+
+    assert result["numpy_loaded"] is False
+    assert result["activation"] == "1"
+    assert result["child_cgroup"]
+    assert result["argv"][0] == "/qualified/runtime/bin/python"
+    assert "-S" not in result["argv"]
+    assert result["return_code"] == 0
+    assert result["checker_payload"] == {"status": "PASS"}
+    assert result["clock_event"] == "required_checker_finished"
 
 
 @pytest.mark.parametrize("filename", V20_INPUTS)
