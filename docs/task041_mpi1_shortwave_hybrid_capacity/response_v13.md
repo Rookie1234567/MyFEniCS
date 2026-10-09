@@ -2,7 +2,23 @@
 
 本文件回应 Task041 Review V11 的当前执行批次。任务目录未提供单独 `README.md`；本轮依照仓库规则读取 `task.md`、Review V11、此前 Response V12、outcomes、仓库文档规则及开发总账。W5 的弱显著衍射通道按用户决定延期处理；保留其原失败与比较工件，不写成通过，也不作为本轮 W0.7 的前置。W2 本批未推进，避免延误 W0.7 主线。
 
-## P1：唯一 W0.7 reduced warm 场终态
+## 2026-10-09 后续事故：candidate setup 漏传反馈方法 selector
+
+这次 Invocation 72f92a0cae6f4066a455bea0dba8561c 与下节 797ae38854d546898a895c81d803a5ec 是两次不同运行。前一场确实进入 outer iteration 1，fixed-H6 modal 第二次 solve 的显式残差未过门；本次事故则在 P4 侧构造前因方法身份接线失败，没有运行 fixed physical BAL_H 数值动作，也不是资源停止。
+
+| 项目 | 实际证据 |
+|---|---|
+| 身份 | unit task041-v11-w0p7-fixed-physical-balh-once-warm-cpu10-11-14-15-16-17-18-19-20261009T142126Z.service；runroot results/task041_v11_w0p7_fixed_physical_balh_once_warm_run_20261009T142126Z；runtime source HEAD 3cbee8de6917b71a606830eedbf100331339172d。config SHA e4030ebff434225d502b3099f27a30cef5bee19f2f2c15e2aaac5aa31003e882，systemd argv SHA 9cef9825a74dc52dc37fbb6505304af3ebca82e59e0ba5a3ec6de5ead174d4b5 |
+| 根因与阶段 | config/public 命令及 consumer sealed summary 请求 fixed_physical_balh_once；但 _run_task041_balh_candidate_setup 重建 task041_fixed_h6_modal_gmres_binding 时漏传 modal_feedback_method。binder 因而按纯 fixed-H6 处理，并在 factor_setup 被注册 W0.7 scope 检查拒绝。consumer 记录的 requested binding 存在，但 candidate/solve actual method 为 null、未建立 |
+| 终态 | consumer IMPLEMENTATION_FAILURE / TASK041_CONSUMER_STAGE_FAILURE，错误 Task041ModePrepError、stage factor_setup；public task041_public_command_nonzero、rc3；finalizer failed/service_boundary_failure。11项检查为9 true/2 false，false仅 public_result_completed、service_terminal_normal；modal_feedback_method_matches_request=true，controlled_stop.active=false。supervisor actual-null 是上游 binding 拒绝的结果，不另列为根因 |
+| 数值与资源边界 | QEP=0；one-cell 原排序因子完成后清理；bottom/top P4 inventory均为空，P4 numeric、outer、physics/RTA均 not_run。process-tree authority峰 33,847,504,896 B、专属job cgroup历史峰 31,681,507,328 B、job swap峰0，均未触80 GiB hard cap；本次不是资源停止 |
+| 唯一服务计费 | public phase 1410.2277620248497 s、parent 1410.392929981 s 是嵌套区间；finalizer service wall 1410.90943187 s 保留为原V5唯一服务账目，没有再次追加 |
+| 定向回归 | selector test_task041_w0p7_interfaces_reach_frozen_setup_boundary 真实通过 _run_task041_balh_candidate_setup 与 binder/expected-binding 比较，并在 global operator/P4 build 前截停。最终生产文件 SHA 06f59398dda6df6d7ce20148bfbdafce3d4f9442c1b169e706cbd2cb37210262；test351 SHA c169028e662c8c7fa9c0f7bbf9dfa16bee10bcc1155159a48017bb1eca941f09。首个预启动因 BLIS_NUM_THREADS 未设置而未启动pytest；实际 retry1 因测试spy未接收位置参数失败（5.374333790037781 s）；修正测试spy后 retry2 1 passed（5.382091078907251 s）。两实际pytest父wall合计 10.756424868945032 s，V5仅追加这两项，ledger 206项、SHA e1da804cd152958875b965fc94efaf22823c40dd8f60bfa79f40a820868bd21c；服务1410.909秒未重复计费 |
+
+事故与回归的hash-bound终态 compact：results/task041_v11_w0p7_fixed_physical_balh_once_warm_run_20261009T142126Z/terminal_compact_modal_feedback_candidate_helper_v11.json，SHA b3444f82a70ff2f840b208f87f67f1c1316d6ef71cf8cd1c97c6446da29e533a。本阶段的一行生产修复已提交；本回归不是修复后的正式FE重跑或数值资格。
+
+
+## 历史 P1：前一 W0.7 reduced warm 场终态（Invocation 797ae388）
 
 本次是复用既有 producer packet 的一次 warm consumer。它真实构造并数值分解了两侧 P4，但在 fixed-H6 模态内层第二次求解中未通过残差门；因此只能说计算到达 outer iteration 1，不能说得到完整电磁场或通过数值验收。
 
@@ -95,6 +111,6 @@ PORD source-counted Δ（bottom `3,962,155,812 B`、top `5,500,664,516 B`）仅�
 | fresh MPI8 native ABI | rc0，父wall `1.9973516720347106 s`；rank0–7分别落CPU `[10,11,14,15,16,17,18,19]`，各rank精确单核affinity、membind0；native marker、词法venv、complex128、Int32、六线程变量全为1；OpenMPI4.1.6、PETSc3.19.6、MUMPS5.6.2 | stdout SHA `e723181be00270fadf619e8f3903a05260495bfd9735ca44e6544ac34ab07099`；attempt SHA `7e7894e6c22ee229628fa3861247e187dbb2f772534b98cca52103817fe02be5`；精确桥SHA如上。ABI不计FE wall/V5 |
 | post-ABI身份 | raw SHA `0e0525eef02cc6bcbe1cb9806f28f649061975299b1a7990733f04a8aeef7180`；identity receipt SHA `669e1cee445e1b94d99c30311d41c6afedb03f70ca0b922b2de662ed5f20aff7` | 同user-manager复核unit仍未加载、无活动Task041，runroot/log/dispatch marker仍不存在；39条源码绑定、HEAD/config/argv/.so未漂移。post-ABI receipt是身份复核，不冒称第二次资源双样本 |
 
-最终合约测试是分批完成：serial与MPI2均通过各自最后获准节点，但初始fixture错误、数值平衡fixture错配和监督记录断言错误等首失败均留档；详见[test summary](outcomes/test_summary.md)。V5账本包含203项、SHA `a4514aa3499fe1df305317b65de91039214b178dd288c3f9e90ac903278c3fa8`；此次阶段没有新增pytest wall。源文件在 `fcae364...` 提交后未改；文档草稿是另行未提交状态。
+最终合约测试是分批完成：serial与MPI2均通过各自最后获准节点，但初始fixture错误、数值平衡fixture错配和监督记录断言错误等首失败均留档；详见[test summary](outcomes/test_summary.md)。V5账本包含203项、SHA `a4514aa3499fe1df305317b65de91039214b178dd288c3f9e90ac903278c3fa8`；此次阶段没有新增pytest wall。源文件在 `fcae364...` 提交后未改；当时的文档草稿尚未提交。
 
 **当前边界：**上述准入和ABI只说明本包身份、宿主和MPI栈可用，不是RAM容量预测、producer全shard验证、QEP、FE、数值结果或模型资格。当前没有service Invocation，也没有dispatch。下一步只有主控批准后，才用本包封存argv启动一次。W5弱显著衍射通道按用户决定延期处理，旧失败保留且不作本pilot前置；W2不延误W0.7主线。

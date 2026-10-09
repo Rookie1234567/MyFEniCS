@@ -1,6 +1,13 @@
 # 项目开发进度：Task000–Task041
 
-## 2026-10-09：Task041 Review V11 W0.7 P1 唯一 warm 场终态
+## 2026-10-09：W0.7 fixed physical BAL_H candidate binding 接线事故
+
+后续 warm Invocation 72f92a0cae6f4066a455bea0dba8561c 与此前实际到达 outer iteration 1 的 797ae... 分开记录。本次 sealed request 为 fixed_physical_balh_once，但 candidate setup 重建 fixed-H6 binding 时漏传 selector；注册检查在 factor_setup 拒绝，actual method未建立。consumer IMPLEMENTATION_FAILURE、public rc3、finalizer failed/service_boundary_failure；finalizer 11项为9 true/2 false，仅public结果完成与service正常终止为false，controlled_stop.active=false。这是P4前的接线实现失败，不是BAL_H残差或资源失败。
+
+QEP=0；one-cell完成后清理，bottom/top P4均未构造，P4 numeric、outer、physics/RTA未运行。process-tree peak 33,847,504,896 B、job cgroup history peak 31,681,507,328 B，低于80 GiB cap；唯一service wall 1410.90943187 s沿用原V5服务行，不重复收费。测试最终生产/test SHA 06f59398...10262 / c169028e...41f09；一条真实candidate-helper边界回归通过，前一次fixture参数签名失败与随后通过的两个pytest父wall共 10.756424868945032 s单独入账。V5 206项，SHA e1da804cd152958875b965fc94efaf22823c40dd8f60bfa79f40a820868bd21c。详见response_v13及runroot compact results/task041_v11_w0p7_fixed_physical_balh_once_warm_run_20261009T142126Z/terminal_compact_modal_feedback_candidate_helper_v11.json（SHA b3444f82...e533a）。
+
+
+## 历史：2026-10-09 Task041 Review V11 W0.7 P1 warm场终态（Invocation 797ae388）
 
 **模型与阶段。** 本场为复用既有producer packet的W0.7缩减pilot：10×5 nm、接口2/22 nm、p6/h0.70、M400/MPI8、matched L20/N29/h20/29；运行源码HEAD `47fc621a478adf26ebe9ca41d54563e188bab1d1`，Invocation `797ae38854d546898a895c81d803a5ec`，当前QEP=0。one-cell及bottom/top P4 numeric完成，fixed-H6 setup repeat/linearity gate通过，outer有iteration 1进度，但后续fixed-H6 modal内层第二次solve未通过显式残差门。
 

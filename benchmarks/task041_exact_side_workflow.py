@@ -7968,6 +7968,7 @@ def _run_task041_balh_candidate_setup(
                 p4_inverse_backend=p4_inverse_backend,
                 p4_refinement_target_tolerance=p4_refinement_target_tolerance,
                 task041_resource_policy=task041_resource_policy,
+                modal_feedback_method=modal_feedback_method,
                 expected_rank_cpus=expected_rank_cpus,
             )
         except (TypeError, ValueError) as exc:

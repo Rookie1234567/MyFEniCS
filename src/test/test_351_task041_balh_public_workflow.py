@@ -1892,7 +1892,10 @@ def test_task041_w0p7_numeric_gates_cleanup_and_use_post_cleanup_authority():
 def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypatch):
     from benchmarks import run_task037b_hybrid_iterative as recovery
     from benchmarks import task041_exact_side_workflow as worker
+    from src.solvers import hybrid_fem_modal_augmented_direct as layout_module
+    from src.solvers import hybrid_fem_modal_iterative as iterative_module
     from src.solvers import petsc_lu_stage
+    from src.solvers import physical_balanced_side_inverse as side_inverse_module
     from src.solvers.petsc_lu_stage import StagedFactorRejected
 
     real_stage_factory_builder = worker._build_task041_w0p7_stage_factory
@@ -1936,6 +1939,10 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
     stage_binding_calls = []
     consumer_summaries = []
     modal_feedback_bindings = []
+    fixed_h6_binding_calls = []
+    candidate_setup_calls = []
+    operator_boundary_calls = []
+    forbidden_side_build_calls = []
     supervisor_binding = {
         "schema": "task041.w0p7.supervisor_memory_binding.v1",
         "invocation_id": "fixture-invocation",
@@ -1964,14 +1971,27 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
     real_modal_feedback_binding_builder = (
         worker._task041_w0p7_fixed_physical_balh_binding
     )
+    real_fixed_h6_binding_builder = (
+        task041_balh_workflow.task041_fixed_h6_modal_gmres_binding
+    )
+    real_candidate_setup = worker._run_task041_balh_candidate_setup
+
+    class CandidateOperatorBoundaryReached(Exception):
+        pass
 
     def capture_modal_feedback_binding(**kwargs):
         binding = real_modal_feedback_binding_builder(**kwargs)
         modal_feedback_bindings.append(binding)
         return binding
 
-    class SetupBoundaryReached(Exception):
-        pass
+    def capture_fixed_h6_binding(*args, **kwargs):
+        binding = real_fixed_h6_binding_builder(*args, **kwargs)
+        fixed_h6_binding_calls.append((dict(kwargs), binding))
+        return binding
+
+    def run_real_candidate_setup(*args, **kwargs):
+        candidate_setup_calls.append((args, dict(kwargs)))
+        return real_candidate_setup(*args, **kwargs)
 
     class FakeComm:
         rank = 0
@@ -1990,9 +2010,30 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
             self.allgather_results.append(records)
             return records
 
-    def capture_setup_boundary(**kwargs):
+    fake_setup = SimpleNamespace(
+        qep_release={"qep_calls": 0, "consumer_qep_required": False},
+        coupling=SimpleNamespace(
+            internal_unknown_count=1,
+            propagation_axial_target_h_nm=1.0,
+            propagation_axial_h_nm=1.0,
+            propagation_axial_cell_count=1,
+            exact_one_cell_audit=None,
+        ),
+        bottom=object(),
+        top=object(),
+    )
+
+    def return_frozen_setup(**kwargs):
         captured.update(kwargs)
-        raise SetupBoundaryReached
+        return fake_setup
+
+    def intercept_global_operator_build(bottom, top, coupling):
+        operator_boundary_calls.append((bottom, top, coupling))
+        raise CandidateOperatorBoundaryReached
+
+    def reject_side_build(*_args, **_kwargs):
+        forbidden_side_build_calls.append(True)
+        raise AssertionError("P4 side construction crossed the test boundary")
 
     def fresh_root(path, _comm):
         root = Path(path)
@@ -2038,6 +2079,14 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
         "_task041_w0p7_fixed_physical_balh_binding",
         capture_modal_feedback_binding,
     )
+    monkeypatch.setattr(
+        task041_balh_workflow,
+        "task041_fixed_h6_modal_gmres_binding",
+        capture_fixed_h6_binding,
+    )
+    monkeypatch.setattr(
+        worker, "_run_task041_balh_candidate_setup", run_real_candidate_setup
+    )
     monkeypatch.setattr(worker, "_environment_snapshot", lambda: {"test": True})
     monkeypatch.setattr(worker, "_write_rank_pid_affinity", lambda *_a, **_k: None)
     monkeypatch.setattr(worker, "_memavailable_bytes", lambda: 10**15)
@@ -2060,13 +2109,33 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
             "sha256": "e" * 64,
         },
     )
-    monkeypatch.setattr(recovery, "build_frozen_m10_setup", capture_setup_boundary)
+    monkeypatch.setattr(recovery, "build_frozen_m10_setup", return_frozen_setup)
     monkeypatch.setattr(
         recovery, "release_frozen_m10_objects", lambda *_a, **_k: {"pass": True}
     )
+    monkeypatch.setattr(
+        recovery,
+        "collective_heap_cleanup",
+        lambda _comm: {"collective_call_completed": True},
+    )
+    monkeypatch.setattr(
+        layout_module.HybridAugmentedLayout,
+        "build",
+        staticmethod(lambda *_a, **_k: SimpleNamespace()),
+    )
+    monkeypatch.setattr(
+        iterative_module,
+        "create_hybrid_assembled_block_action",
+        intercept_global_operator_build,
+    )
+    monkeypatch.setattr(
+        side_inverse_module,
+        "build_side_balanced_inverse",
+        reject_side_build,
+    )
 
     comm = FakeComm()
-    with pytest.raises(SetupBoundaryReached):
+    with pytest.raises(CandidateOperatorBoundaryReached):
         worker.run_task041_consumer(
             input_path=pilot_path,
             packet_manifest=manifest_path,
@@ -2090,12 +2159,27 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
     assert profile.top_interface_nm - profile.bottom_interface_nm == 20.0
     assert captured["factor_stage_factory"] is stage_factory
     assert captured["exact_one_cell_strategy"] == "matched_uniform_axial_cell"
-    assert len(modal_feedback_bindings) == 1
-    assert modal_feedback_bindings[0]["method"] == "fixed_physical_balh_once"
-    assert modal_feedback_bindings[0]["selection_source"] == (
+    assert len(candidate_setup_calls) == 1
+    helper_args, helper_kwargs = candidate_setup_calls[0]
+    sealed_modal_feedback_binding = modal_feedback_bindings[0]
+    assert helper_kwargs["modal_feedback_method"] == "fixed_physical_balh_once"
+    assert helper_kwargs["modal_feedback_binding"] == sealed_modal_feedback_binding
+    assert modal_feedback_bindings[1] == sealed_modal_feedback_binding
+    assert sealed_modal_feedback_binding["method"] == "fixed_physical_balh_once"
+    assert sealed_modal_feedback_binding["selection_source"] == (
         "registered_w0p7_matched_cell_fixed_h6_consumer"
     )
-    assert modal_feedback_bindings[0]["fallback"] is False
+    assert sealed_modal_feedback_binding["fallback"] is False
+    assert len(fixed_h6_binding_calls) == 2
+    assert all(
+        call[0].get("modal_feedback_method") == "fixed_physical_balh_once"
+        and call[1].get("modal_feedback_method") == "fixed_physical_balh_once"
+        for call in fixed_h6_binding_calls
+    )
+    assert operator_boundary_calls == [
+        (fake_setup.bottom, fake_setup.top, fake_setup.coupling)
+    ]
+    assert forbidden_side_build_calls == []
     assert stage_binding_calls[0] == ("fixture-invocation", source_sha)
     assert stage_binding_calls[1][0] == Path(
         worker.os.environ[worker.TASK041_W0P7_STAGE_BRIDGE_PATH_ENV]
@@ -2128,6 +2212,43 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
         17.0,
         22.0,
     )
+
+    # The ordinary fixed-H6 helper remains pure when the selector is absent.
+    pure_helper_kwargs = dict(helper_kwargs)
+    pure_helper_kwargs["modal_feedback_method"] = None
+    pure_helper_kwargs["modal_feedback_binding"] = None
+    with pytest.raises(CandidateOperatorBoundaryReached):
+        real_candidate_setup(*helper_args, **pure_helper_kwargs)
+    assert pure_helper_kwargs["modal_feedback_method"] is None
+    assert pure_helper_kwargs["modal_feedback_binding"] is None
+    assert modal_feedback_bindings[2] is None
+    assert fixed_h6_binding_calls[2][0].get("modal_feedback_method") is None
+    assert fixed_h6_binding_calls[2][1].get("modal_feedback_method") is None
+    assert len(operator_boundary_calls) == 2
+    assert forbidden_side_build_calls == []
+
+    # The helper reruns the registered binding check itself. A missing
+    # selector with a stale sealed binding, or a tampered sealed binding,
+    # is rejected before the global action/P4 construction boundary.
+    missing_request = dict(helper_kwargs)
+    missing_request["modal_feedback_method"] = None
+    with pytest.raises(
+        Task041ModePrepError,
+        match="candidate modal-feedback selection differs",
+    ):
+        real_candidate_setup(*helper_args, **missing_request)
+
+    altered_binding = dict(sealed_modal_feedback_binding)
+    altered_binding["selection_source"] = "tampered_fixture_binding"
+    tampered_request = dict(helper_kwargs)
+    tampered_request["modal_feedback_binding"] = altered_binding
+    with pytest.raises(
+        Task041ModePrepError,
+        match="candidate modal-feedback selection differs",
+    ):
+        real_candidate_setup(*helper_args, **tampered_request)
+    assert len(operator_boundary_calls) == 2
+    assert forbidden_side_build_calls == []
 
     # Drive an actual StagedFactorRejected through the production exact-side
     # factory wrapper and worker catch/summary path, without creating a factor.
@@ -2187,8 +2308,8 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
             p4_refinement_target_tolerance=5.0e-13,
             expected_rank_cpus=tuple(range(10, 18)),
         )
-    assert len(modal_feedback_bindings) == 2
-    assert modal_feedback_bindings[1]["method"] == "fixed_physical_balh_once"
+    assert len(modal_feedback_bindings) == 6
+    assert modal_feedback_bindings[5]["method"] == "fixed_physical_balh_once"
     assert exc.value.failure_classification == (
         "TASK041_STAGED_FACTOR_BUDGET_REJECTED"
     )

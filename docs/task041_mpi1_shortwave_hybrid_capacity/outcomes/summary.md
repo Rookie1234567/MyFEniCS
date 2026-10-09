@@ -1,6 +1,21 @@
 # Task041 outcomes summary
 
-## 2026-10-09：Review V11 W0.7 P1 唯一 warm 场终态
+## 2026-10-09 后续事故：candidate method selector 漏传（非数值失败）
+
+Invocation 72f92a0cae6f4066a455bea0dba8561c 不同于下方先前进入 outer iteration 1 的 797ae...。本次 requested fixed_physical_balh_once 在 consumer summary 中存在，但 _run_task041_balh_candidate_setup 重建 fixed-H6 binding 时漏传 selector；registered scope 在 factor_setup 拒绝，actual candidate method为null。P4侧构造前退出，不是BAL_H数值残差失败，也不是资源停止。
+
+| 终态项 | 实际记录 |
+|---|---|
+| 分类 | consumer IMPLEMENTATION_FAILURE/TASK041_CONSUMER_STAGE_FAILURE；public task041_public_command_nonzero rc3；finalizer failed/service_boundary_failure。11 checks：9 true、2 false（public_result_completed、service_terminal_normal）；controlled_stop.active=false，sealed method request匹配为true |
+| 未运行 | QEP=0；one-cell使用旧排序完成并清理；bottom/top P4 inventory为空；P4 numeric、outer、physics/RTA not_run |
+| 资源 | process-tree authority峰 33,847,504,896 B；job cgroup历史峰 31,681,507,328 B；swap0，未达80 GiB cap |
+| 服务计费 | finalizer唯一wall 1410.90943187 s；public/parent为嵌套计时；原服务V5行保持不变 |
+| 接线回归 | 最终生产/test SHA 06f59398...10262 / c169028e...41f09。真实candidate helper与binder边界 selector最终1 passed；retry1因测试spy漏接收位置参数失败，retry2修fixture通过。两个实际pytest父wall合计 10.756424868945032 s，V5 204→206、SHA e1da804cd152958875b965fc94efaf22823c40dd8f60bfa79f40a820868bd21c |
+
+raw分类不改，supervisor actual-null仅是上游candidate binding失败结果。终态 compact：results/task041_v11_w0p7_fixed_physical_balh_once_warm_run_20261009T142126Z/terminal_compact_modal_feedback_candidate_helper_v11.json（SHA b3444f82a70ff2f840b208f87f67f1c1316d6ef71cf8cd1c97c6446da29e533a）。前一 Invocation 797ae... 的残差失败继续留在下方历史记录，不与本次合并。
+
+
+## 历史：2026-10-09 Review V11 W0.7 P1 warm场终态（Invocation 797ae388）
 
 本轮真实计算使用已验证 producer packet，当前 QEP=0。缩减模型为 W 材料10×5 nm、p6/h0.70、M400/MPI8、接口2/22 nm、matched L20/N29/h20/29。one-cell、两侧P4 numeric及fixed-H6 setup repeat/linearity gate完成；outer记录到iteration 1，但fixed-H6 modal内层第二次solve未通过残差门，未生成完整场或物理结果。
 

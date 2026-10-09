@@ -1857,6 +1857,17 @@ relative=`0` 仅是独立 action/transfer Gate。R2 分侧的 peak/lifecycle 不
 S1f 的双侧超 cap 受控停止仍保留。本条不修改 ordinary/default，未推动
 `task041_schur_speed_v2` 或 A1/A2 进入 production；negative evidence/docs 可保留，
 incident-specific orphan sampler 与大型 raw artifact 仍不合入。
+## Task041 V11：W0.7 fixed physical BAL_H candidate binding 事故（2026-10-09）
+
+| 模型 / 阶段 | 结果 | 资格边界 |
+|---|---|---|
+| W0.7 reduced p6/h0.70/M400/MPI8；Invocation 72f92a0cae6f4066a455bea0dba8561c | sealed selector fixed_physical_balh_once 已请求；candidate helper漏传selector，fixed-H6 binder在factor_setup拒绝，actual method为null；consumer IMPLEMENTATION_FAILURE，public rc3，finalizer failed/service_boundary_failure | P4构造前实现接线失败；非数值/资源失败，P4 numeric、outer、physics not_run |
+| 资源与计时 | process-tree peak 33,847,504,896 B，job cgroup peak 31,681,507,328 B，未触80 GiB cap；唯一service wall 1410.90943187 s | service行不重复计账；finalizer 11项9 true/2 false，controlled_stop.active=false |
+| 回归 | production/test SHA 06f59398...10262 / c169028e...41f09；真实candidate setup与binder边界selector 1 passed；两实际pytest父wall 10.756424868945032 s | V5 206项、SHA e1da804cd152958875b965fc94efaf22823c40dd8f60bfa79f40a820868bd21c；合同回归不是FE或方法资格 |
+
+该事故与下方之前的Invocation 797ae...残差失败分开；此前真实outer进展及modal residual负结果不被本次错误覆盖。raw、唯一finalizer与终态compact保留于results/task041_v11_w0p7_fixed_physical_balh_once_warm_run_20261009T142126Z/，compact SHA b3444f82a70ff2f840b208f87f67f1c1316d6ef71cf8cd1c97c6446da29e533a。
+
+
 ## Task041 W0.7 fixed physical BAL_H warm候选（2026-10-09，未dispatch）
 
 | Model / method | 配置与证据 | status / qualification | 下一步边界 |

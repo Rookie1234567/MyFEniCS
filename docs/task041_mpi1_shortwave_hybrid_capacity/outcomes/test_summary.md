@@ -1,5 +1,18 @@
 # Test and evidence summary
 
+## 2026-10-09：W0.7 candidate setup method-binding 回归
+
+该节点验证 _run_task041_balh_candidate_setup 到真实 task041_fixed_h6_modal_gmres_binding 的 selector 透传，以及 expected/sealed binding 对比；global operator/P4 side 构造被截停，未运行FE或factor。默认无selector保留 pure fixed-H6/None，缺失请求或篡改binding在相同边界拒绝。
+
+| Attempt | 实际结果 | 父 CLOCK_MONOTONIC wall | 源码与证据 |
+|---|---|---:|---|
+| 初始预启动 task041_modal_feedback_candidate_helper_serial_20261009T153120Z | BLIS_NUM_THREADS 未设置；gate拒绝，ABI/pytest均未启动，不计pytest wall | not_run | results/task041_modal_feedback_candidate_helper_serial_20261009T153120Z/serial/prelaunch_gate.json |
+| retry1 | rc1；spy fixture未接收production binder的位置参数，在目标candidate helper前失败；test SHA 2583fbfa...6be08f | 5.374333790037781 s | stdout SHA e653166c931fe236b524ebd16f15e52349470a10b1218f4a455d3fc797e23230；fixture随后改为转发 *args, **kwargs |
+| retry2 | rc0，1 passed；真实candidate setup、binder及method identity比较通过；未进入global operator/P4 build。CPU14/node0、membind0、native complex128/Int32、六线程变量含BLIS=1 | 5.382091078907251 s | test SHA c169028e...41f09；stdout SHA e6f548b217b1680eae3656df7ac898dbc45257ef66f4762f5c574b499d883cc3；native ABI stdout SHA 2b8f91b763a24d9f3b12415c55a38a7667d003737aac5fd83d66dc416493a0d9 |
+
+retry2的ABI通过，加载桥SHA 7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b；ABI/static/prelaunch不计费。两个实际pytest父wall共 10.756424868945032 s，V5由204增至206，SHA e1da804cd152958875b965fc94efaf22823c40dd8f60bfa79f40a820868bd21c。唯一service wall 1410.90943187 s属于原Invocation账目，未重复加入。attempt及finalizer raw保留；见runroot compact results/task041_v11_w0p7_fixed_physical_balh_once_warm_run_20261009T142126Z/terminal_compact_modal_feedback_candidate_helper_v11.json，SHA b3444f82a70ff2f840b208f87f67f1c1316d6ef71cf8cd1c97c6446da29e533a。
+
+
 ## 2026-10-09：Review V11 P0 W0.7 资源合同与 public-route serial attempts
 
 七个批准 selector 验证了 pilot 独立资源常量、lower parent/headroom 拒绝、旧 producer resource identity 的兼容、DAT/public route、frozen setup 接线及清理后的预算来源。它们是输入/路由/预算合同测试，不运行 QEP、factorization 或 FE。

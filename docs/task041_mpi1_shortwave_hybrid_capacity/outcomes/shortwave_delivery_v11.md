@@ -1,8 +1,23 @@
 # Review V11 执行交付进度
 
-**状态：P0/P1 本轮已执行并终态。** 唯一 W0.7 reduced warm consumer 到达 outer iteration 1，随后 fixed-H6 modal 内层第二次 solve 未通过显式残差门；没有完整场、恢复、最终物理量或数值资格。实际资源峰低于本 pilot 的 80 GiB cap，本次不是资源停止。W5 弱显著衍射通道按用户决定延期处理，保留原失败工件，不写 PASS、不作 W0.7 前置；W2 本阶段未推进。
+## 后续事故更正：候选方法 binding 在 P4 前拒绝（Invocation 72f92a0c）
 
-| 本轮终态 | 实际结果与边界 |
+下方 outer iteration 1 的残差失败属于先前 Invocation 797ae38854d546898a895c81d803a5ec。之后的 Invocation 72f92a0cae6f4066a455bea0dba8561c 是独立事故：_run_task041_balh_candidate_setup 没把显式 modal_feedback_method=fixed_physical_balh_once 传给固定-H6 binding 重建；注册 scope 因实际 candidate method 为 null 而在 factor_setup 拒绝，P4 side construction 前退出。这不是 BAL_H 残差或资源失败。
+
+| 当前事故 | 实际结果 |
+|---|---|
+| 原始分类 | consumer IMPLEMENTATION_FAILURE/TASK041_CONSUMER_STAGE_FAILURE，public rc3 task041_public_command_nonzero，finalizer failed/service_boundary_failure；finalizer 11 checks 中9 true、2 false（public_result_completed、service_terminal_normal），controlled_stop.active=false。sealed request匹配检查为true；actual method未建立，supervisor actual-null是上游拒绝的结果 |
+| 本场未到达 | QEP=0，one-cell完成并清理；bottom/top P4 inventory为空，P4 numeric、outer及physics/RTA均 not_run |
+| 资源 | process-tree authority峰 33,847,504,896 B，job cgroup历史峰 31,681,507,328 B，job swap 0；低于80 GiB cap，本次非资源停止 |
+| 服务账目 | 唯一finalizer service wall 1410.90943187 s；public与parent wall为嵌套值，不相加；既有service ledger行未重复收费 |
+| 最小回归 | 一个test351 selector在真实candidate helper/binder/expected-binding边界通过，P4构造前截停。最终生产/test SHA为06f59398...10262 / c169028e...41f09；首次BLIS预启动未启动pytest，retry1为fixture spy位置参数错误，retry2 1 passed。两实际pytest墙钟合计 10.756424868945032 s，V5由204增至206，SHA e1da804cd152958875b965fc94efaf22823c40dd8f60bfa79f40a820868bd21c |
+
+当前事故raw与compact见repo-root results/task041_v11_w0p7_fixed_physical_balh_once_warm_run_20261009T142126Z/，compact SHA b3444f82a70ff2f840b208f87f67f1c1316d6ef71cf8cd1c97c6446da29e533a。本阶段的单行生产修复已提交；本回归不是FE重跑，尚不能说明固定物理BAL_H实际方法或场已通过。
+
+
+**前一次数值场（Invocation 797ae38854d546898a895c81d803a5ec）。** 该场到达 outer iteration 1，随后 fixed-H6 modal 内层第二次 solve 未通过显式残差门；没有完整场、恢复、最终物理量或数值资格。资源峰低于80 GiB cap，本场不是资源停止。W5弱显著衍射通道按用户决定延期处理，保留原失败工件、不写PASS、不作W0.7前置；W2本阶段未推进。
+
+| 前一次数值场终态 | 实际结果与边界 |
 |---|---|
 | Invocation / 模型 | `797ae38854d546898a895c81d803a5ec`；W0.7 reduced，10×5 nm、p6/h0.70、M400/MPI8、接口2/22 nm、matched L20/N29/h20/29；复用 producer，QEP=0 |
 | 实际启动绑定 | post-docs config SHA `9798da6cf29498ab20975e306674c95d80ac62b8abc636bf9ea76b97bb201291`，systemd argv SHA `0cbd2c1f6a72608c5bc418ceef324a70f42eaa645ece072e1a49b5894415cc80`；launch manifest指向post-docs封存config。下方`b4bf…/363dbb…`只是更早pre-docs准备快照 |
