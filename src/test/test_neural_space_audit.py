@@ -157,3 +157,89 @@ def test_full_rank_triangular_reader_preserves_fixed_rank_rule():
     assert stats["SVD_rcond"] == 1e-12
     if stats["full_column_rank"]:
         assert stats["amplitude_solver"] == "SVD_RANK_QUALIFIED_QR_BACK_SUBSTITUTION"
+
+
+def test_actual_budget_record_writer_creates_empty_space_directory(monkeypatch, tmp_path):
+    import json
+    from scipy import sparse
+    from types import SimpleNamespace
+    from src.runners import neural_space_worker as worker
+    from src.solvers.feinn_gqr import ReadoutStop
+    from src.solvers.neural_wave_greedy import atomic_json
+
+    A = tmp_path / "v35_unlabelled_readout_audit/result.json"
+    A.parent.mkdir()
+    atomic_json(A, dict(records={"learned": {"model": {}}, "control": {"model": {}}}))
+    reference = tmp_path / "fixture_reference.npz"
+    np.savez(reference, c=np.ones(3, complex), alpha=np.ones(1, complex))
+    gram = tmp_path / "fixture_G.npz"
+    sparse.save_npz(gram, sparse.eye(3, dtype=complex, format="csr"))
+    monkeypatch.setattr(worker, "profile_paths", lambda _: dict(artifacts=tmp_path))
+    monkeypatch.setattr(worker, "bound_path", lambda e: reference if e["path"] == "ref" else gram)
+    monkeypatch.setattr(worker, "monotonic", lambda: 0)
+    monkeypatch.setattr(worker, "load_space", lambda *a, **k: (np.ones((3, 2), complex), None, {}, {}))
+    def stop(*args, **kwargs):
+        raise ReadoutStop("READOUT_SAVE_WINDOW_REACHED")
+    monkeypatch.setattr(worker, "field_oracle", stop)
+    artifact = tmp_path / "oracle"
+    artifact.mkdir()
+    result = worker.oracle(
+        SimpleNamespace(size=3, alpha=lambda _: np.ones(1, complex)),
+        dict(reference=dict(path="ref", sha256="0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"),
+             gram=dict(path="G"), spaces=dict(learned={}, control={})),
+        artifact, lambda *_: None, dict(spec={}, worker_stop_monotonic=1),
+    )
+    for name in ("learned", "control"):
+        loaded = json.loads((artifact / name / "space_record.json").read_text())
+        assert loaded == result["records"][name]
+        assert loaded["status"] == "CONTROLLED_STOP_NUMERICAL_BUDGET"
+        assert loaded["official_candidate_results"] is False
+
+
+@pytest.mark.parametrize("damage", [None, "wrong_failure", "changed_A", "healthy_model"])
+def test_metadata_only_budget_failure_recovery(monkeypatch, tmp_path, damage):
+    import json
+    from src.runners import neural_space_verification as verification
+    from src.io.neural_wave_campaign import digest
+    from src.solvers.neural_wave_greedy import atomic_json
+
+    monkeypatch.setattr(verification, "ROOT", tmp_path)
+    profile = dict(root=tmp_path / "tmp", artifacts=tmp_path / "artifacts")
+    original = profile["root"] / "durable/v35_labelled_field_oracle_attempt1"
+    (original / "supervised").mkdir(parents=True)
+    target = profile["artifacts"] / "v35_labelled_field_oracle"
+    target.mkdir(parents=True)
+    source = "a" * 40
+    design_hash = "b" * 64
+    atomic_json(original / "run_manifest.json", dict(source_sha=source, design_sha256=design_hash,
+        spec=dict(role="space_oracle"), input_sha256="c" * 64, worker_stop_monotonic=-1))
+    atomic_json(original / "run_summary.json", dict(classification="WORKER_FAILED", leader_exit_code=1,
+        descendants_cleared=True, source_state=dict(source_sha=source)))
+    log = "ReadoutStop: READOUT_SAVE_WINDOW_REACHED\nFileNotFoundError: " + str(target / "learned/space_record.json.tmp")
+    if damage == "wrong_failure":
+        log = "Some other error"
+    (original / "supervised/worker.log").write_text(log)
+    (original / "events.jsonl").write_text(json.dumps(dict(stage="G_QR", values=dict(rank=930, G_columns=4167))) + "\n")
+    A = profile["artifacts"] / "v35_unlabelled_readout_audit/result.json"
+    A.parent.mkdir()
+    atomic_json(A, dict(records={}))
+    A_events = profile["root"] / "durable/v35_unlabelled_readout_audit_attempt2/events.jsonl"
+    A_events.parent.mkdir()
+    A_events.write_text(json.dumps(dict(stage="stage_frozen", values=dict(result_sha256=digest(A)))) + "\n")
+    if damage == "changed_A":
+        atomic_json(A, dict(records={}, damaged=True))
+    if damage == "healthy_model":
+        (target / "committed.json").write_text("{}")
+    args = (profile, dict(spaces=dict(learned={}, control={})), dict(design_sha256=design_hash, source_sha="d" * 40))
+    if damage:
+        with pytest.raises(ValueError):
+            verification.recover_budget_record(*args)
+        assert not (target / "result.json").exists()
+    else:
+        value = verification.recover_budget_record(*args)
+        assert json.loads((target / "result.json").read_text()) == value
+        assert value["original_worker_classification"] == "WORKER_FAILED"
+        assert value["new_projection_count"] == 0
+        assert value["reference_coefficients_read_count_during_recovery"] == 0
+        assert value["records"]["control"]["status"] == "NOT_RUN_NUMERICAL_BUDGET"
+        assert value["records"]["learned"]["final_rank"] == "UNKNOWN"

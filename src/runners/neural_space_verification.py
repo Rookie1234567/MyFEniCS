@@ -10,6 +10,89 @@ from src.io.neural_space_campaign import field_policy
 from src.solvers.neural_wave_greedy import atomic_json
 
 
+def recover_budget_record(profile, design, current_manifest):
+    """Only seal a proven budget-stop/writer failure, never replay projection.
+
+    Both the original failure and the lack of a committed oracle remain part
+    of the record. No reference coefficients, native action or G are used.
+    """
+    directory = profile["artifacts"] / "v35_labelled_field_oracle"
+    target = directory / "result.json"
+    if target.exists():
+        return json.loads(target.read_text())
+    actual = profile["root"] / "durable" / "v35_labelled_field_oracle_attempt1"
+    summary_file = actual / "run_summary.json"
+    manifest_file = actual / "run_manifest.json"
+    log_file = actual / "supervised/worker.log"
+    event_file = actual / "events.jsonl"
+    previous = json.loads(manifest_file.read_text())
+    summary = json.loads(summary_file.read_text())
+    log = log_file.read_text()
+    names = list(design["spaces"])
+    if (
+        summary["classification"] != "WORKER_FAILED"
+        or summary["leader_exit_code"] != 1
+        or summary["descendants_cleared"] is not True
+        or previous["design_sha256"] != current_manifest["design_sha256"]
+        or previous["spec"]["role"] != "space_oracle"
+        or previous["source_sha"] != summary["source_state"]["source_sha"]
+        or "ReadoutStop: READOUT_SAVE_WINDOW_REACHED" not in log
+        or "FileNotFoundError:" not in log
+        or str(directory / names[0] / "space_record.json.tmp") not in log
+        or monotonic() < previous["worker_stop_monotonic"]
+        or any(directory.rglob("committed.json"))
+        or any(directory.rglob("projection_arrays.npz"))
+    ):
+        raise ValueError("ORACLE_BUDGET_FAILURE_RECOVERY_NOT_PROVEN")
+    events = [json.loads(line) for line in event_file.read_text().splitlines() if line]
+    if any(e["stage"] == "fixed_space_oracle_frozen" for e in events):
+        raise ValueError("HEALTHY_ORACLE_MUST_NOT_BE_REPLACED_BY_RECOVERY")
+    progress = [e["values"] for e in events if e["stage"] == "G_QR"]
+    if not progress:
+        raise ValueError("NO_RETAINED_ORACLE_PROGRESS")
+    from src.io.neural_space_campaign import POLICY
+
+    records = {
+        name: dict(
+            status="CONTROLLED_STOP_NUMERICAL_BUDGET" if i == 0 else "NOT_RUN_NUMERICAL_BUDGET",
+            reason="READOUT_SAVE_WINDOW_REACHED",
+            oracle_field="NOT_RETAINED_NO_COMMITTED_STATE",
+            final_rank="UNKNOWN",
+            **POLICY,
+        )
+        for i, name in enumerate(names)
+    }
+    A_file = profile["artifacts"] / "v35_unlabelled_readout_audit/result.json"
+    A_events = profile["root"] / "durable/v35_unlabelled_readout_audit_attempt2/events.jsonl"
+    sealed_A = [json.loads(line) for line in A_events.read_text().splitlines() if line]
+    if not any(e.get("stage") == "stage_frozen" and e["values"].get("result_sha256") == digest(A_file) for e in sealed_A):
+        raise ValueError("PRE_REFERENCE_A_FROZEN_RESULT_CHANGED")
+    result = dict(
+        records=records,
+        bound_unlabelled_result_sha256=digest(A_file),
+        source_sha=previous["source_sha"],
+        input_sha256=previous["input_sha256"],
+        design_sha256=previous["design_sha256"],
+        metadata_recovery_source_sha=current_manifest["source_sha"],
+        original_worker_classification="WORKER_FAILED",
+        original_failure="Budget stop followed by missing per-space directory during record write",
+        last_logged_progress_not_final_rank=progress[-1],
+        partial_basis_and_weights="NOT_RETAINED",
+        new_projection_count=0,
+        reference_coefficients_read_count_during_recovery=0,
+        original_failure_bindings={
+            key: dict(path=str(p.relative_to(ROOT)), sha256=digest(p))
+            for key,p in (("summary",summary_file),("manifest",manifest_file),("log",log_file),("events",event_file))
+        },
+        **POLICY,
+    )
+    for name, record in records.items():
+        (directory / name).mkdir(parents=True, exist_ok=True)
+        atomic_json(directory / name / "space_record.json", record)
+    atomic_json(target, result)
+    return result
+
+
 def compare(action, packet, design, artifact, marker, manifest):
     from src.runners.neural_wave_worker import verify
     from benchmarks.subreaper_watchdog import supervise
@@ -18,9 +101,7 @@ def compare(action, packet, design, artifact, marker, manifest):
     A = json.loads(
         (profile["artifacts"] / "v35_unlabelled_readout_audit/result.json").read_text()
     )
-    B = json.loads(
-        (profile["artifacts"] / "v35_labelled_field_oracle/result.json").read_text()
-    )
+    B = recover_budget_record(profile, design, manifest)
     reused, routes = {}, []
     old_path = ROOT / design["old_checker"]["path"]
     if digest(old_path) != design["old_checker"]["sha256"]:

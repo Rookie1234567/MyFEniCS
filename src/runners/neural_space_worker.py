@@ -286,6 +286,7 @@ def oracle(action, design, artifact, marker, manifest):
         raise ValueError("ORIGINAL_MPC_GRAM_ORDER")
     records = {}
     for name, entry in design["spaces"].items():
+        (artifact / name).mkdir(parents=True, exist_ok=True)
         if monotonic() >= manifest["worker_stop_monotonic"]:
             records[name] = dict(status="NOT_RUN_NUMERICAL_BUDGET")
             continue
