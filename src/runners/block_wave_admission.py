@@ -12,6 +12,8 @@ POOL = ROOT / "tmp/task42extra/v31/resource_rejected_wait.jsonl"
 
 
 def pool(directory=None):
+    if directory is not None and Path(directory).resolve().is_relative_to(ROOT / "tmp/task42extra/v38"):
+        return ROOT / "tmp/task42extra/v38/resource_rejected_wait.jsonl"
     if directory is not None and Path(directory).resolve().is_relative_to(
         ROOT / "tmp/task42extra/v36"
     ):
@@ -44,7 +46,7 @@ def rejected_wait_seconds(directory=None):
 
 
 def wait_limit(directory):
-    return 900 if pool(directory).parent.name in ("v35", "v36") else 1800
+    return 900 if pool(directory).parent.name in ("v35", "v36", "v38") else 1800
 
 
 def charge_rejected_wait(start, reason, directory):

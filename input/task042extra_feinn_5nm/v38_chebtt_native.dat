@@ -1,0 +1,4 @@
+schema_version = 8
+[neural_wave]
+stage = "v38_chebtt_native"
+design_sha256 = "d3cff19e78ea032753fa7fac63f5a2c06ead026e6768a11ab93be2f917c5b43a"
