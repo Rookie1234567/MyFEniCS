@@ -101,6 +101,7 @@ class LocalModeTests(unittest.TestCase):
         self.assertEqual((r['elapsed_lower_seconds'],r['elapsed_seconds'],r['unobserved_tail_seconds']),(5.,7.,2.))
         self.assertIsNone(r['leader_exit_code']);self.assertFalse(r['replay_authorized'])
         self.assertEqual(r['source_sha'],'old-source')
+        self.assertEqual(interrupted_summary(active,samples,json.loads(json.dumps(observation)),outer_exit_code=143)['elapsed_seconds'],7.)
         for bad in (dict(observation,live_matching_actors=[7]),dict(observation,absent_recorded_pids={}),dict(observation,boot_id='other')):
             with self.assertRaises(ValueError):interrupted_summary(active,samples,bad,outer_exit_code=143)
 

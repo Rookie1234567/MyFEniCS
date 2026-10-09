@@ -11,8 +11,9 @@ def interrupted_summary(active, samples, observation, *, outer_exit_code):
     if not samples or observation['live_matching_actors']:
         raise ValueError('interrupted process inventory incomplete or still live')
     pids = {m['pid'] for s in samples for m in s['members']}
-    absent = observation['absent_recorded_pids']
-    if set(absent) != pids or not all(absent.values()):
+    encoded = observation['absent_recorded_pids']
+    absent = {int(k):v for k,v in encoded.items()}
+    if len(absent) != len(encoded) or set(absent) != pids or not all(v is True for v in absent.values()):
         raise ValueError('every recorded descendant must be absent')
     before = active['before_clock']
     if observation['boot_id'] != before['boot_id']:
