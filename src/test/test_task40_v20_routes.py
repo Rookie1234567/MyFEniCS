@@ -141,7 +141,9 @@ def test_user_service_prevalidation_accepts_only_exact_target_resume_variant(tmp
     canonical_path.parent.mkdir(parents=True)
     canonical_path.write_text(canonical_text, encoding="utf-8")
     stage_root = tmp_path / ARTIFACT_ROOT / "stage_inputs"
-    resume_path = stage_root / "local_port_components_resume" / canonical_source.name
+    resume_path = (
+        stage_root / "local_port_components_resume_full_prefix_v2" / canonical_source.name
+    )
     resume_path.parent.mkdir(parents=True)
     manifest_path = (
         "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/"
@@ -296,7 +298,7 @@ def test_real_target_resume_path_reaches_minimal_component_fixture(tmp_path, mon
         },
     )
 
-    geometry, cfg, classes, axes, c00_row, resume_receipt = (
+    geometry, cfg, classes, axes, completed_rows, resume_receipt = (
         _load_target_component_resume(
             resolved,
             tmp_path,
@@ -306,7 +308,7 @@ def test_real_target_resume_path_reaches_minimal_component_fixture(tmp_path, mon
     )
     assert len(classes) == 60
     assert [len(axis) - 1 for axis in axes] == [272, 8, 14]
-    assert c00_row["class_id"] == "c00"
+    assert completed_rows[0]["class_id"] == "c00"
     assert resume_receipt["original_run"]["source_sha"] != source_sha
 
     # Keep the fixture narrow: stub the next class kernel and port algebra, while
@@ -393,8 +395,8 @@ def test_real_target_resume_path_reaches_minimal_component_fixture(tmp_path, mon
         classes=classes[:2],
         mode_rows=mode_rows,
         resource_sample=lambda: {"sample_scope": "minimal resume fixture"},
-        completed_local_rows=[c00_row],
-        reused_packet_validation=c00_row["saved_packet_independent_readback"],
+        completed_local_rows=completed_rows[:1],
+        reused_packet_validation=completed_rows[0]["saved_packet_independent_readback"],
     )
     _write_json(tmp_path / "v20_local_port_components.json", report)
 

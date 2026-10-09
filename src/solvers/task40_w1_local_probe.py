@@ -1041,6 +1041,10 @@ def stream_boundary_correction(
         "full_local_rows": local["local_full_dimension"],
         "internal_rows": ni,
         "trace_rows": nt,
+        "local_vii_factorization_count": int(local["factor"] is not None),
+        "local_vii_factorization_scope": (
+            "factor object created for this stream_boundary_correction call and reused by its local solves"
+        ),
         "interior_factor_identity_relative": local["interior_factor_identity_relative"],
         "local_Hhat_materialized": False,
         "native_face_mapping": native_face,

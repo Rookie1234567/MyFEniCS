@@ -282,6 +282,7 @@ def _validate_reused_local_prefix(
         raise ValueError("V20 reused local rows exceed the geometry class inventory")
     for index, row in enumerate(completed_rows):
         expected = classes[index]
+        readback = row.get("saved_packet_independent_readback")
         if (
             row.get("class_id") != expected.get("class_id")
             or row.get("metric_identity") != expected.get("metric_identity")
@@ -290,10 +291,200 @@ def _validate_reused_local_prefix(
             or row.get("filled_reference_cell_count")
             != expected.get("filled_reference_cell_count")
             or row.get("passed") is not True
+            or row.get("status") != "PASS"
+            or not isinstance(row.get("gates"), Mapping)
+            or not all(row["gates"].values())
+            or not isinstance(readback, Mapping)
+            or readback.get("passed") is not True
+            or int(row.get("interior_rows", 0)) <= 0
+            or int(row.get("trace_rows", 0)) <= 0
         ):
             raise ValueError(
                 f"V20 reused local class prefix differs from geometry inventory at index {index}"
             )
+
+
+def verify_v20_saved_local_component_packet(
+    run_directory: str | Path,
+    expected_row: Mapping[str, Any],
+    *,
+    expected_json_sha256: str,
+    expected_npz_sha256: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Read back and replay one saved non-c00 local-class packet."""
+
+    from src.runners.physical_diagnosis_worker import _sha256_file
+
+    run_directory = Path(run_directory).resolve()
+    class_id = expected_row.get("class_id")
+    if not isinstance(class_id, str) or not class_id.startswith("c") or not class_id[1:].isdigit():
+        raise ValueError("V20 saved local packet requires a canonical class id")
+    if class_id == "c00":
+        raise ValueError("V20 c00 must use its separately reviewed saved-packet verifier")
+    packet_name = f"v20_local_{class_id}"
+    packet_json = run_directory / f"{packet_name}.json"
+    packet_npz = run_directory / f"{packet_name}.npz"
+    for path, expected, label in (
+        (packet_json, expected_json_sha256, "JSON"),
+        (packet_npz, expected_npz_sha256, "NPZ"),
+    ):
+        if not path.is_file() or _sha256_file(path) != expected:
+            raise RuntimeError(f"V20 saved {class_id} packet {label} hash differs")
+
+    packet_record = json.loads(packet_json.read_text(encoding="utf-8"))
+    if Path(str(packet_record.get("arrays", {}).get("path", ""))).resolve() != packet_npz:
+        raise RuntimeError(f"V20 saved {class_id} packet NPZ path differs")
+    if packet_record.get("arrays", {}).get("sha256") != expected_npz_sha256:
+        raise RuntimeError(f"V20 saved {class_id} packet JSON/NPZ hash binding differs")
+
+    facts = packet_record.get("facts")
+    expected_facts = dict(expected_row)
+    for key in ("raw_packet", "resource_sample_after_release", "saved_packet_independent_readback"):
+        expected_facts.pop(key, None)
+    if not isinstance(facts, Mapping) or dict(facts) != expected_facts:
+        raise RuntimeError(f"V20 saved {class_id} packet facts differ from the completed prefix")
+    if (
+        facts.get("class_id") != class_id
+        or facts.get("status") != "PASS"
+        or facts.get("passed") is not True
+        or not isinstance(facts.get("gates"), Mapping)
+        or not all(facts["gates"].values())
+    ):
+        raise RuntimeError(f"V20 saved {class_id} packet facts did not pass their original gates")
+
+    packet_receipt = expected_row.get("raw_packet")
+    expected_arrays = packet_receipt.get("arrays") if isinstance(packet_receipt, Mapping) else None
+    required_arrays = {
+        "Vii", "Vit", "Vti", "Vtt", "Schur", "known_xi", "known_xt",
+        "interior_rhs", "recovered_xi", "solved_Vit", "solved_Vit_xt",
+    }
+    if (
+        not isinstance(packet_receipt, Mapping)
+        or packet_receipt.get("write_and_readback_hash_passed") is not True
+        or packet_receipt.get("json_path") != str(packet_json)
+        or packet_receipt.get("npz_path") != str(packet_npz)
+        or packet_receipt.get("npz_sha256") != expected_npz_sha256
+        or not isinstance(expected_arrays, Mapping)
+        or set(expected_arrays) != required_arrays
+    ):
+        raise RuntimeError(f"V20 saved {class_id} packet readback receipt is incomplete")
+    expected_array_hashes = {
+        name: str(descriptor.get("sha256", ""))
+        for name, descriptor in expected_arrays.items()
+        if isinstance(descriptor, Mapping)
+    }
+    if set(expected_array_hashes) != required_arrays or any(
+        len(value) != 64 for value in expected_array_hashes.values()
+    ):
+        raise RuntimeError(f"V20 saved {class_id} packet array-hash inventory differs")
+    packet_readback = _readback_component_packet(
+        run_directory, packet_name, expected_array_hashes
+    )
+    if packet_readback["npz_sha256"] != expected_npz_sha256:
+        raise RuntimeError(f"V20 saved {class_id} packet readback hash differs")
+    for name, expected in expected_arrays.items():
+        if packet_readback["arrays"].get(name) != {
+            key: expected[key] for key in ("array_key", "shape", "dtype", "sha256")
+        }:
+            raise RuntimeError(f"V20 saved {class_id} packet readback differs for {name}")
+
+    descriptors = packet_record.get("raw_arrays", {})
+    with np.load(packet_npz, allow_pickle=False) as archive:
+        arrays = {
+            name: np.asarray(archive[descriptors[name]["array_key"]], dtype=np.complex128)
+            for name in sorted(required_arrays)
+        }
+    Vii, Vit, Vti, Vtt = (arrays[name] for name in ("Vii", "Vit", "Vti", "Vtt"))
+    Schur = arrays["Schur"]
+    xi, xt = arrays["known_xi"], arrays["known_xt"]
+    recorded_reduced_rhs = arrays["interior_rhs"]
+    recovered = arrays["recovered_xi"]
+    solved_vit, solved_vit_xt = arrays["solved_Vit"], arrays["solved_Vit_xt"]
+    ni, nt = len(xi), len(xt)
+    if (
+        Vii.shape != (ni, ni)
+        or Vit.shape != (ni, nt)
+        or Vti.shape != (nt, ni)
+        or Vtt.shape != (nt, nt)
+        or Schur.shape != (nt, nt)
+        or recorded_reduced_rhs.shape != (ni,)
+        or recovered.shape != (ni,)
+        or solved_vit.shape != (ni, nt)
+        or solved_vit_xt.shape != (ni,)
+        or int(facts.get("interior_rows", -1)) != ni
+        or int(facts.get("trace_rows", -1)) != nt
+        or not all(np.isfinite(value).all() for value in arrays.values())
+    ):
+        raise RuntimeError(f"V20 saved {class_id} packet array shapes or values differ")
+
+    def relative(actual: np.ndarray, expected: np.ndarray) -> float:
+        return float(
+            np.linalg.norm(actual - expected)
+            / max(float(np.linalg.norm(expected)), np.finfo(float).tiny)
+        )
+
+    # Recreate the full manufactured RHS, then remove the trace coupling exactly
+    # as the local recovery solve did; c00 remains on its separately reviewed path.
+    full_rhs = Vii @ xi + Vit @ xt
+    reduced_rhs = full_rhs - Vit @ xt
+    replay = {
+        "Vii_inverse_Vit_original_equation_relative": relative(Vii @ solved_vit, Vit),
+        "Vii_inverse_Vit_xt_original_equation_relative": relative(
+            Vii @ solved_vit_xt, Vit @ xt
+        ),
+        "recorded_reduced_rhs_relative": relative(recorded_reduced_rhs, reduced_rhs),
+        "recovery_reduced_original_equation_relative": relative(
+            Vii @ recovered, reduced_rhs
+        ),
+        "recovery_full_original_equation_relative": relative(
+            Vii @ recovered + Vit @ xt, full_rhs
+        ),
+        "manufactured_solution_forward_relative": relative(recovered, xi),
+        "Schur_definition_relative": relative(Schur, Vtt - Vti @ solved_vit),
+        "Schur_action_relative": relative(
+            Vtt @ xt - Vti @ solved_vit_xt, Schur @ xt
+        ),
+    }
+    equation_checks = {
+        key: bool(np.isfinite(value) and value <= LOCAL_EQUATION_LIMIT)
+        for key, value in replay.items()
+        if key != "manufactured_solution_forward_relative"
+    }
+    forward_passed = bool(
+        np.isfinite(replay["manufactured_solution_forward_relative"])
+        and replay["manufactured_solution_forward_relative"] <= LOCAL_FORWARD_LIMIT
+    )
+    identity = float(facts.get("interior_factor_identity_relative", np.inf))
+    identity_passed = bool(np.isfinite(identity) and identity <= LOCAL_EQUATION_LIMIT)
+    validation = {
+        "schema": "task40extra.review_v20_saved_local_component_readback.v1",
+        "status": "PASS" if all(equation_checks.values()) and forward_passed and identity_passed else "FAILED",
+        "class_id": class_id,
+        "packet_json_sha256": expected_json_sha256,
+        "packet_npz_sha256": expected_npz_sha256,
+        "array_readback_integrity_passed": packet_readback["write_and_readback_hash_passed"],
+        "independent_matrix_and_recovery_replay": replay,
+        "interior_factor_identity_relative": identity,
+        "equation_limit": LOCAL_EQUATION_LIMIT,
+        "forward_limit": LOCAL_FORWARD_LIMIT,
+        "checks": {
+            **equation_checks,
+            "manufactured_solution_forward": forward_passed,
+            "interior_factor_identity": identity_passed,
+        },
+        "passed": all(equation_checks.values()) and forward_passed and identity_passed,
+        "scope": (
+            "saved non-c00 local matrices and recovery were independently read back and replayed; "
+            "full RHS was reconstructed as Vii@known_xi + Vit@known_xt, then the saved reduced "
+            "RHS was checked against full_rhs - Vit@known_xt"
+        ),
+    }
+    if not validation["passed"]:
+        raise RuntimeError(f"V20 saved {class_id} local matrix/recovery replay failed")
+    row = dict(expected_row)
+    row["raw_packet"] = packet_readback
+    row["saved_packet_independent_readback"] = validation
+    return row, validation
 
 
 def _save_component_packet(
@@ -535,6 +726,14 @@ def _port_gate(result: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _build_p6_basix_element_metadata() -> Any:
+    """Create only the element metadata needed by the boundary trace map."""
+
+    import basix.ufl
+
+    return basix.ufl.element("N1curl", "hexahedron", 6).basix_element
+
+
 def run_v20_local_port_components(
     resolved: Mapping[str, Any],
     output_directory: str | Path,
@@ -600,7 +799,17 @@ def run_v20_local_port_components(
         )
         max_class_backing = max(max_class_backing, int(row["array_inventory"]["unique_backing_bytes"]))
     if basix_element is None:
-        raise RuntimeError("V20 geometry has no exact local metric classes")
+        if not local_rows:
+            raise RuntimeError("V20 geometry has no exact local metric classes")
+        basix_element = _build_p6_basix_element_metadata()
+    local_dimensions = {
+        (int(row["interior_rows"]), int(row["trace_rows"])) for row in local_rows
+    }
+    if len(local_dimensions) != 1:
+        raise ValueError("V20 reused local classes disagree on their native p6 partition dimensions")
+    local_interior_rows, local_trace_rows = next(iter(local_dimensions))
+    if local_interior_rows <= 0 or local_trace_rows <= 0:
+        raise ValueError("V20 local p6 partition dimensions must be positive")
 
     mode0 = mode_rows[0]
     from src.solvers.task40_v20_mode_inventory import _complex
@@ -622,14 +831,15 @@ def run_v20_local_port_components(
             [np.exp(1j * (index % 997) / 37.0) / np.sqrt(index + 1.0) for index in range(nmode)],
             dtype=np.complex128,
         )
-        local_layout_rows = int(layout.rows)
         rng = np.random.default_rng(4100 + int(boundary["cell_id"]))
         trace_values = np.asarray(
-            rng.standard_normal(local_layout_rows) + 1j * rng.standard_normal(local_layout_rows),
+            rng.standard_normal(local_trace_rows) + 1j * rng.standard_normal(local_trace_rows),
             dtype=np.complex128,
         )
         known_interior = np.asarray(
-            rng.standard_normal(450) + 1j * rng.standard_normal(450), dtype=np.complex128
+            rng.standard_normal(local_interior_rows)
+            + 1j * rng.standard_normal(local_interior_rows),
+            dtype=np.complex128,
         )
         sample_before = dict(resource_sample())
         witness_started = perf_counter()
@@ -741,6 +951,14 @@ def run_v20_local_port_components(
     passed = all(row["passed"] for row in local_rows) and all(
         row.get("status") == "PASS" for row in boundary_witnesses
     )
+    reused_lu_count = sum(
+        int(row.get("local_lu_factor_count", 0)) for row in local_rows[: len(completed_local_rows)]
+    )
+    new_local_rows = local_rows[len(completed_local_rows) :]
+    new_local_lu_count = sum(int(row.get("local_lu_factor_count", 0)) for row in new_local_rows)
+    port_factor_count_known_rows = [
+        row for row in boundary_witnesses if "local_vii_factorization_count" in row
+    ]
     report = {
         "schema": "task40extra.review_v20_original_local_port_components.v1",
         "status": "PASS" if passed else "PARTIAL_OR_FAILED",
@@ -785,10 +1003,29 @@ def run_v20_local_port_components(
         "global_C_D_created": False,
         "all_q_csr_created": False,
         "global_mumps_factor_created": False,
+        "reused_local_class_count": len(completed_local_rows),
+        "new_local_class_measurement_count": len(new_local_rows),
         "local_lu_factor_count": int(
             sum(int(row["local_lu_factor_count"]) for row in local_rows)
         ),
-        "local_lu_factor_count_scope": "one local dense LU per measured exact metric class; no global MUMPS factor",
+        "local_lu_factor_count_scope": (
+            "sum of one local Vii LU per class row; reused class factors were created in their source "
+            "runs and are historical counts, not factors rebuilt by this continuation; port-action "
+            "factors are counted separately"
+        ),
+        "reused_local_class_lu_factor_count": int(reused_lu_count),
+        "new_local_class_lu_factor_count": int(new_local_lu_count),
+        "new_port_local_vii_factorization_count": int(
+            sum(int(row["local_vii_factorization_count"]) for row in port_factor_count_known_rows)
+        ),
+        "new_port_factorization_observed_side_count": len(port_factor_count_known_rows),
+        "new_port_factorization_unknown_side_count": (
+            len(boundary_witnesses) - len(port_factor_count_known_rows)
+        ),
+        "new_port_local_vii_factorization_count_scope": (
+            "sum only the factor-object counts returned by successful stream_boundary_correction calls; "
+            "failed calls without a returned result remain unknown"
+        ),
         "full_target_operator_qualified": False,
         "full_target_field_qualified": False,
         "elapsed_seconds": perf_counter() - started,
@@ -802,4 +1039,8 @@ def run_v20_local_port_components(
     return report
 
 
-__all__ = ["run_v20_local_port_components", "verify_v20_saved_c00_packet"]
+__all__ = [
+    "run_v20_local_port_components",
+    "verify_v20_saved_c00_packet",
+    "verify_v20_saved_local_component_packet",
+]

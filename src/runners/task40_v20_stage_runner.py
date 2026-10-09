@@ -27,6 +27,11 @@ V20_TARGET_Q0 = 0
 V20_TARGET_FULL_FIELD_QUALIFIED = False
 _V20_TARGET_RUN_ID = "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
 _V20_TARGET_PROFILE = "task40extra_v20_p6_y_orbit_target_original_ny8_v1"
+_V20_COMPLETED_PREFIX_SCOPE = (
+    "reuse the separately verified original c00 packet and all c01-c59 packets from the hash-bound "
+    "failed original-size TARGET_ORIGINAL_NY8 local/port run; replay every saved local packet, "
+    "then measure only the top/bottom port witnesses"
+)
 
 
 def _json_default(value: Any) -> Any:
@@ -117,14 +122,282 @@ def _validate_component_resume_input_identity(
         )
 
 
+def _load_completed_local_prefix(
+    root: Path,
+    spec: Mapping[str, Any],
+    classes: list[dict[str, Any]],
+    c00_row: dict[str, Any],
+    *,
+    base_run_directory: Path,
+    base_geometry_sha256: str,
+    original_campaign_sha256: str,
+    expected_campaign_window_path: Path,
+    expected_physical_model_sha256: str,
+    mode_manifest_sha256: str,
+    ordered_mode_key_sha256: str,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Verify the exact saved all-class prefix without rebuilding its local tensors."""
+
+    if (
+        spec.get("schema") != "task40extra.review_v20_completed_local_prefix.v1"
+        or spec.get("scope") != _V20_COMPLETED_PREFIX_SCOPE
+        or len(classes) != 60
+        or spec.get("run_id") != _V20_TARGET_RUN_ID
+        or spec.get("profile") != _V20_TARGET_PROFILE
+        or spec.get("physical_model_sha256") == ""
+        or spec.get("physical_model_sha256") != expected_physical_model_sha256
+        or spec.get("campaign_window_sha256") != original_campaign_sha256
+        or spec.get("exit_status") != 4
+        or spec.get("result_classification") != "WORKER_FAILED"
+    ):
+        raise ValueError("V20 completed prefix is outside the reviewed failed target run")
+    prefix_run = _repo_path(root, spec.get("run_directory"), "completed-prefix run")
+    if prefix_run == base_run_directory or prefix_run.parent != base_run_directory.parent:
+        raise ValueError("V20 completed prefix must be the paired target run in the same case directory")
+    artifact_specs = spec.get("artifacts")
+    required_artifacts = (
+        "run_manifest",
+        "run_summary",
+        "input_original",
+        "source_sha_file",
+        "physical_model_sha_file",
+        "geometry_inventory",
+        "service_record",
+        "component_summary",
+        "partial_result",
+        "partial_checker_result",
+    )
+    if not isinstance(artifact_specs, Mapping) or set(artifact_specs) != set(required_artifacts):
+        raise ValueError("V20 completed prefix omitted a required run or failure-footer hash")
+    artifact_paths: dict[str, Path] = {}
+    for name in required_artifacts:
+        item = artifact_specs.get(name)
+        if not isinstance(item, Mapping) or not isinstance(item.get("sha256"), str):
+            raise ValueError(f"V20 completed prefix omitted the {name} artifact hash")
+        path = _repo_path(root, item.get("path"), f"completed-prefix {name}")
+        if not path.is_file() or _sha256_file(path) != item["sha256"]:
+            raise ValueError(f"V20 completed-prefix {name} artifact hash differs")
+        artifact_paths[name] = path
+    expected_run_files = {
+        "run_manifest": prefix_run / "run_manifest.json",
+        "run_summary": prefix_run / "run_summary.json",
+        "input_original": prefix_run / "input_original.dat",
+        "source_sha_file": prefix_run / "source_sha.txt",
+        "physical_model_sha_file": prefix_run / "physical_model_sha256.txt",
+        "geometry_inventory": prefix_run / "v20_geometry_inventory.json",
+        "component_summary": prefix_run / "v20_local_port_components.json",
+        "partial_result": prefix_run / "v20_partial_result.json",
+    }
+    if any(artifact_paths[name] != path.resolve() for name, path in expected_run_files.items()):
+        raise ValueError("V20 completed-prefix run artifact paths do not match its run directory")
+    if _sha256_file(artifact_paths["geometry_inventory"]) != base_geometry_sha256:
+        raise ValueError("V20 completed-prefix geometry differs from the c00 source geometry")
+
+    prefix_manifest = json.loads(artifact_paths["run_manifest"].read_text(encoding="utf-8"))
+    prefix_summary = json.loads(artifact_paths["run_summary"].read_text(encoding="utf-8"))
+    service_record = json.loads(artifact_paths["service_record"].read_text(encoding="utf-8"))
+    checker = json.loads(artifact_paths["partial_checker_result"].read_text(encoding="utf-8"))
+    input_path = _repo_path(root, spec.get("input_path"), "completed-prefix input")
+    stage_input_root = (
+        root
+        / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs"
+    ).resolve()
+    if (
+        not input_path.is_relative_to(stage_input_root)
+        or input_path.name != "target_original_ny8_resource_pilot_v20.dat"
+    ):
+        raise ValueError("V20 completed-prefix input is outside the exact ignored stage-input tree")
+    prefix_campaign = prefix_manifest.get("task40_v20_campaign", {})
+    prefix_service_checker = _repo_path(
+        root, service_record.get("partial_checker_result_path"), "completed-prefix partial checker"
+    )
+    input_sha256 = spec.get("input_sha256")
+    source_sha = spec.get("source_sha")
+    physical_sha256 = spec.get("physical_model_sha256")
+    if (
+        not isinstance(source_sha, str)
+        or len(source_sha) != 40
+        or not isinstance(input_sha256, str)
+        or len(input_sha256) != 64
+        or not isinstance(physical_sha256, str)
+        or len(physical_sha256) != 64
+        or _sha256_file(input_path) != input_sha256
+        or _sha256_file(artifact_paths["input_original"]) != input_sha256
+        or artifact_paths["source_sha_file"].read_text(encoding="utf-8").strip() != source_sha
+        or artifact_paths["physical_model_sha_file"].read_text(encoding="utf-8").strip()
+        != physical_sha256
+        or prefix_manifest.get("run_id") != _V20_TARGET_RUN_ID
+        or prefix_manifest.get("source_sha") != source_sha
+        or prefix_manifest.get("input_path") != str(input_path)
+        or prefix_manifest.get("input_sha256") != input_sha256
+        or prefix_manifest.get("physical_model_sha256") != physical_sha256
+        or physical_sha256 != expected_physical_model_sha256
+        or prefix_manifest.get("task40_v20_campaign", {}).get("window_sha256")
+        != original_campaign_sha256
+        or prefix_campaign.get("window_path")
+        != str(expected_campaign_window_path)
+        or prefix_summary.get("run_id") != _V20_TARGET_RUN_ID
+        or prefix_summary.get("exit_status") != 4
+        or prefix_summary.get("result_classification") != "WORKER_FAILED"
+        or prefix_summary.get("task40_v20_campaign", {}).get("window_sha256")
+        != original_campaign_sha256
+        or prefix_summary.get("task40_v20_campaign", {}).get("window_path")
+        != str(expected_campaign_window_path)
+        or prefix_service_checker != artifact_paths["partial_checker_result"]
+        or artifact_paths["service_record"].parent
+        != artifact_paths["partial_checker_result"].parent
+        or service_record.get("run_directory") != str(prefix_run)
+        or service_record.get("run_manifest_path") != str(artifact_paths["run_manifest"])
+        or service_record.get("input_path") != str(input_path)
+        or service_record.get("input_sha256") != input_sha256
+        or service_record.get("source_sha") != source_sha
+        or service_record.get("physical_model_sha256") != physical_sha256
+        or service_record.get("campaign_window_sha256") != original_campaign_sha256
+        or service_record.get("campaign_window_path")
+        != str(expected_campaign_window_path)
+        or service_record.get("run_case_result_classification") != "WORKER_FAILED"
+        or service_record.get("run_case_returncode") != 3
+        or service_record.get("required_checker_passed") is not True
+        or service_record.get("partial_footer_cannot_promote_to_full_pass") is not True
+        or service_record.get("reported_partial_stage_status") != "failed"
+        or service_record.get("workflow_classification") != "PARTIAL_RECEIPT_RECHECKED"
+        or service_record.get("workflow_complete") is not False
+        or checker.get("status") != "PARTIAL_RECEIPT_CHECKED"
+        or checker.get("checker_passed") is not True
+        or checker.get("scientific_partial_status") != "failed"
+        or checker.get("official_result") is not False
+        or checker.get("partial_result_sha256") != artifact_specs["partial_result"]["sha256"]
+    ):
+        raise ValueError("V20 completed-prefix source, input, service, or failed-footer identity differs")
+
+    component_summary = json.loads(artifact_paths["component_summary"].read_text(encoding="utf-8"))
+    class_rows = component_summary.get("local_cell_classes")
+    if (
+        component_summary.get("schema")
+        != "task40extra.review_v20_original_local_port_components.v1"
+        or component_summary.get("status") != "PARTIAL_OR_FAILED"
+        or component_summary.get("local_cell_class_count") != len(classes)
+        or not isinstance(class_rows, list)
+        or len(class_rows) != len(classes)
+        or [row.get("class_id") for row in class_rows]
+        != [row.get("class_id") for row in classes]
+        or component_summary.get("mode_count_full_ordered") != 32060
+        or component_summary.get("mode_manifest_sha256") != mode_manifest_sha256
+        or component_summary.get("ordered_mode_key_sha256") != ordered_mode_key_sha256
+        or component_summary.get("all_q_csr_created") is not False
+        or component_summary.get("global_p6_space_created") is not False
+        or component_summary.get("global_MPC_created") is not False
+        or component_summary.get("global_mumps_factor_created") is not False
+        or component_summary.get("directional_mpc_qualification", {}).get("status")
+        != "PARTIAL_CANONICAL_LOCAL_COMPONENTS"
+        or not all(
+            row.get("status") == "PASS"
+            and row.get("passed") is True
+            and isinstance(row.get("gates"), Mapping)
+            and all(row["gates"].values())
+            for row in class_rows
+        )
+    ):
+        raise ValueError("V20 completed-prefix class or mode inventory is incomplete")
+    partial_rows = json.loads(
+        artifact_paths["partial_result"].read_text(encoding="utf-8")
+    )
+    boundary_rows = component_summary.get("boundary_components")
+    if (
+        partial_rows.get("classification") != "LOCAL_COMPONENT_GATE_FAILED"
+        or partial_rows.get("status") != "failed"
+        or partial_rows.get("completed_stages")
+        != ["preflight", "geometry_inventory", "local_port_components"]
+        or not isinstance(boundary_rows, list)
+        or {row.get("side") for row in boundary_rows} != {"top", "bottom"}
+        or len(boundary_rows) != 2
+        or any(
+            row.get("status") != "FAILED_LOCAL_PORT_GATE"
+            or row.get("error", {}).get("message")
+            != "known local trace/interior solution shapes differ"
+            for row in boundary_rows
+        )
+    ):
+        raise ValueError("V20 completed-prefix footer is not the reviewed port-shape failure")
+
+    if (
+        not isinstance(class_rows[0].get("raw_packet"), Mapping)
+        or class_rows[0].get("raw_packet") != c00_row.get("raw_packet")
+    ):
+        raise ValueError("V20 completed-prefix c00 row omitted its saved packet reference")
+    c00_checks = (
+        "class_id", "metric_identity", "material_tag", "target_cell_count",
+        "filled_reference_cell_count", "interior_rows", "trace_rows", "status", "passed", "gates",
+    )
+    if any(class_rows[0].get(key) != c00_row.get(key) for key in c00_checks):
+        raise ValueError("V20 completed-prefix c00 differs from its separately verified source packet")
+
+    packet_specs = spec.get("class_packets")
+    expected_class_ids = [row["class_id"] for row in classes[1:]]
+    if (
+        not isinstance(packet_specs, list)
+        or [row.get("class_id") for row in packet_specs] != expected_class_ids
+    ):
+        raise ValueError("V20 completed-prefix packet inventory is not the c01-c59 class prefix")
+    from src.solvers.task40_v20_local_components import (
+        _validate_reused_local_prefix,
+        verify_v20_saved_local_component_packet,
+    )
+
+    completed_rows = [c00_row]
+    for expected_row, packet_spec in zip(class_rows[1:], packet_specs, strict=True):
+        class_id = expected_row["class_id"]
+        packet_json = _repo_path(root, packet_spec.get("json_path"), f"{class_id} JSON")
+        packet_npz = _repo_path(root, packet_spec.get("npz_path"), f"{class_id} NPZ")
+        if (
+            packet_json != (prefix_run / f"v20_local_{class_id}.json").resolve()
+            or packet_npz != (prefix_run / f"v20_local_{class_id}.npz").resolve()
+        ):
+            raise ValueError(f"V20 completed-prefix {class_id} packet path differs from its run")
+        row, _validation = verify_v20_saved_local_component_packet(
+            prefix_run,
+            expected_row,
+            expected_json_sha256=str(packet_spec.get("json_sha256", "")),
+            expected_npz_sha256=str(packet_spec.get("npz_sha256", "")),
+        )
+        completed_rows.append(row)
+    _validate_reused_local_prefix(classes, completed_rows)
+    validation = {
+        "schema": "task40extra.review_v20_completed_local_prefix_readback.v1",
+        "status": "PASS",
+        "source_run_directory": str(prefix_run),
+        "source_sha": source_sha,
+        "input_sha256": input_sha256,
+        "physical_model_sha256": physical_sha256,
+        "campaign_window_sha256": original_campaign_sha256,
+        "class_count": len(completed_rows),
+        "new_packet_count": len(packet_specs),
+        "new_local_class_measurement_count": 0,
+        "reused_local_class_count": len(completed_rows),
+        "class_ids": [row["class_id"] for row in completed_rows],
+        "all_packet_matrix_schur_recovery_replays_passed": True,
+        "component_summary_sha256": artifact_specs["component_summary"]["sha256"],
+        "partial_result_sha256": artifact_specs["partial_result"]["sha256"],
+        "service_record_sha256": artifact_specs["service_record"]["sha256"],
+        "partial_checker_result_sha256": artifact_specs["partial_checker_result"]["sha256"],
+        "scope": (
+            _V20_COMPLETED_PREFIX_SCOPE
+            + "; c00 used its existing independent verifier; c01-c59 were read back one packet at a "
+            "time and their original matrix, Schur, reduced recovery, and full recovery equations "
+            "were independently replayed"
+        ),
+    }
+    return completed_rows, validation
+
+
 def _load_target_component_resume(
     resolved: Mapping[str, Any],
     output_directory: Path,
     *,
     source_sha: str,
     preflight: Mapping[str, Any],
-) -> tuple[dict[str, Any], Any, list[dict[str, Any]], tuple[np.ndarray, ...], dict[str, Any], dict[str, Any]]:
-    """Load only the bound V20 inventory, mesh axes, and passed c00 packet."""
+) -> tuple[dict[str, Any], Any, list[dict[str, Any]], tuple[np.ndarray, ...], list[dict[str, Any]], dict[str, Any]]:
+    """Load the bound V20 inventory, mesh axes, and verified saved local prefix."""
 
     execution = resolved.get("execution", {})
     root = Path(__file__).resolve().parents[2]
@@ -136,8 +409,17 @@ def _load_target_component_resume(
     if not manifest_path.is_file() or _sha256_file(manifest_path) != manifest_sha256:
         raise ValueError("V20 component resume manifest hash differs")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if manifest.get("schema") != "task40extra.review_v20_target_local_component_resume_manifest.v1":
+    manifest_schema = manifest.get("schema")
+    if manifest_schema not in {
+        "task40extra.review_v20_target_local_component_resume_manifest.v1",
+        "task40extra.review_v20_target_local_component_resume_manifest.v2",
+    }:
         raise ValueError("V20 component resume manifest schema is not recognized")
+    completed_prefix_spec = manifest.get("completed_prefix")
+    if (manifest_schema.endswith(".v1") and completed_prefix_spec is not None) or (
+        manifest_schema.endswith(".v2") and not isinstance(completed_prefix_spec, Mapping)
+    ):
+        raise ValueError("V20 component resume manifest schema and saved prefix do not match")
     if (
         resolved.get("run_id") != _V20_TARGET_RUN_ID
         or resolved.get("solver", {}).get("preconditioner") != _V20_TARGET_PROFILE
@@ -333,9 +615,32 @@ def _load_target_component_resume(
         raise ValueError("V20 c00 readback receipt does not identify the original run/source")
     from src.solvers.task40_v20_local_components import _validate_reused_local_prefix
 
-    _validate_reused_local_prefix(classes, [c00_row])
+    completed_local_rows = [c00_row]
+    prefix_validation = None
+    if completed_prefix_spec is not None:
+        mode_identity = preflight.get("target_mode_inventory")
+        if not isinstance(mode_identity, Mapping):
+            raise ValueError("V20 completed prefix requires the frozen target mode inventory")
+        completed_local_rows, prefix_validation = _load_completed_local_prefix(
+            root,
+            completed_prefix_spec,
+            classes,
+            c00_row,
+            base_run_directory=original_run,
+            base_geometry_sha256=str(artifacts["geometry_inventory_sha256"]),
+            original_campaign_sha256=original_campaign_sha,
+            expected_campaign_window_path=current_window_path,
+            expected_physical_model_sha256=str(preflight["physical_model_sha256"]),
+            mode_manifest_sha256=str(mode_identity["mode_manifest_sha256"]),
+            ordered_mode_key_sha256=str(mode_identity["ordered_mode_key_sha256"]),
+        )
+    _validate_reused_local_prefix(classes, completed_local_rows)
     receipt = {
-        "schema": "task40extra.review_v20_target_component_resume_receipt.v1",
+        "schema": (
+            "task40extra.review_v20_target_component_resume_receipt.v2"
+            if prefix_validation is not None
+            else "task40extra.review_v20_target_component_resume_receipt.v1"
+        ),
         "status": "BOUND_AND_VERIFIED",
         "resume_manifest_path": str(manifest_path.relative_to(root)),
         "resume_manifest_sha256": manifest_sha256,
@@ -350,6 +655,8 @@ def _load_target_component_resume(
         "artifact_hashes": dict(artifacts),
         "restored_axis_coordinate_sha256": axis_hashes,
         "c00_independent_readback": c00_validation,
+        "completed_prefix_independent_readback": prefix_validation,
+        "completed_local_class_ids": [row["class_id"] for row in completed_local_rows],
         "original_attempt_preserved": True,
         "global_fe_mpc_q_csr_factor_or_pde_created": False,
     }
@@ -357,7 +664,7 @@ def _load_target_component_resume(
     if output_geometry.exists():
         raise FileExistsError("V20 continuation output already contains a geometry inventory")
     output_geometry.write_bytes(geometry_path.read_bytes())
-    return geometry_facts, cfg, classes, axis_coordinates, c00_row, receipt
+    return geometry_facts, cfg, classes, axis_coordinates, completed_local_rows, receipt
 
 
 def _resource_snapshot() -> dict[str, Any]:
@@ -632,7 +939,7 @@ def run_task40_v20_stage(
                 cfg,
                 classes,
                 axis_coordinates,
-                c00_row,
+                completed_local_rows,
                 resume_receipt,
             ) = _load_target_component_resume(
                 resolved_payload,
@@ -640,8 +947,11 @@ def run_task40_v20_stage(
                 source_sha=source_sha,
                 preflight=preflight,
             )
-            reused_local_rows = [c00_row]
-            reused_packet_validation = c00_row["saved_packet_independent_readback"]
+            reused_local_rows = completed_local_rows
+            reused_packet_validation = (
+                resume_receipt.get("completed_prefix_independent_readback")
+                or completed_local_rows[0]["saved_packet_independent_readback"]
+            )
             _write_json(output_directory / "v20_component_resume_receipt.json", resume_receipt)
         else:
             from src.geometry.task40_v20_geometry import build_v20_geometry_inventory
