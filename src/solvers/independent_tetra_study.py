@@ -126,7 +126,9 @@ def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,
         remaining=[scope.window.snapshot()['heavy_remaining_seconds'],scope.window.total-scope.window.charged_wall()]
         if hasattr(scope.window,'case_remaining'):remaining.append(scope.window.case_remaining(active=True))
         if min(remaining)<reserve:raise RuntimeError('full tetra cumulative audit/output/compare reserve before numeric')
-        factor=AnalyzedDirectFactor(matrix,journal,folder,planning_limit_bytes=budget['planning_gib']*2**30)
+        factor_options=dict(planning_limit_bytes=budget['planning_gib']*2**30)
+        if hasattr(scope,'numeric_guard'):factor_options['numeric_guard']=lambda:scope.numeric_guard(role,journal)
+        factor=AnalyzedDirectFactor(matrix,journal,folder,**factor_options)
         r=PETSc.Vec().createSeq(len(rhs),comm=PETSc.COMM_SELF);sol=r.duplicate();r.array[:]=left*rhs
         try:
             with journal.measured('full_uncondensed_tetra_direct_solve'):

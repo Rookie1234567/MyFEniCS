@@ -15,6 +15,7 @@ def main():
     if PETSc.ScalarType!=np.complex128 or PETSc.IntType!=np.int64 or os.environ.get('_MYFENICS_NATIVE_QUALIFIED_ACTIVATION')!='1':raise RuntimeError('V65 qualified ABI')
     paths=['src/solvers/tetra_coefficient_action.py','src/solvers/tetra_body_checkpoint.py','src/solvers/p6_completion_scope.py',
         'src/solvers/p6_completion_study.py','src/solvers/independent_tetra_reference.py','src/solvers/independent_tetra_study.py',
+        'src/solvers/phase_explicit_accuracy_capacity.py',
         'src/solvers/local_h_pilot_scope.py','src/runners/port_preparation.py','scripts/run_case.py',
         'src/test/test_tetra_coefficient_action.py','src/test/test_p6_completion.py','benchmarks/collect_p6_completion.py']
     for p in paths:compile((ROOT/p).read_bytes(),p,'exec')

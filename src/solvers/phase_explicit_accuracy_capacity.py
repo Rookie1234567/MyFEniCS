@@ -50,7 +50,7 @@ def numeric_plan(rss_bytes,info,limit=16*2**30):
 
 class AnalyzedDirectFactor:
     """Existing ABI-qualified MUMPS lifecycle, bounded before numeric."""
-    def __init__(self,matrix,journal,folder,*,planning_limit_bytes=16*2**30):
+    def __init__(self,matrix,journal,folder,*,planning_limit_bytes=16*2**30,numeric_guard=None):
         from .fullspace_v17_p3_oracle import _MumpsFactor
         from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
         from src.runners.task042_shared import write_json
@@ -65,6 +65,7 @@ class AnalyzedDirectFactor:
                 write_json(folder/'h_symbolic_capacity.json',dict(info=info,plan=plan,tree=sample,controls=factor.symbolic_memory_settings(),ordering=factor.preferred_ordering))
                 if not plan['admitted']:raise MemoryError('h numeric capacity not admitted')
                 factor.set_memory_limit_mb(plan['numeric_memory_allocation_cap_mb'])
+            if numeric_guard is not None:numeric_guard()
             with journal.measured('h_bounded_numeric_factor'):
                 factor.numeric(matrix)
             write_json(folder/'h_numeric_factor_info.json',dict(info=factor.info(),controls=factor.symbolic_memory_settings(),icntl23_explicitly_bounded=True))

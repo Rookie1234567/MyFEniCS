@@ -13,6 +13,7 @@ PLAN=ROOT/'input/task042_neural_coarse_inverse/coefficient_first_p6_v65.json'
 ARTIFACT=ROOT/'benchmarks/artifacts/task042/v65'
 STAGES=('PREFLIGHT','PREPARE','SOLVE_COMPLETE','VERIFY_COST')
 SOLVES=('SOLVE_COMPLETE',);P6_ROLES=('PREPARE','SOLVE_COMPLETE')
+CASE_CHARGE_ROLES=(*P6_ROLES,'VERIFY_COST')
 
 
 class CompletionWindow(TetraWindow):
@@ -23,26 +24,26 @@ class CompletionWindow(TetraWindow):
     def case_used(self,*,active=False):
         book=self.ledger();used=0.
         for r in book['runs']:
-            if r['role'] not in P6_ROLES:continue
+            if r['role'] not in CASE_CHARGE_ROLES:continue
             p=Path(r['folder'])/'run_summary.json'
             used+=json.loads(p.read_text())['launch_wall_seconds'] if p.exists() else r['elapsed_seconds']
         # Include failed entry calls; already-covered supervised calls are not
         # charged again. The scope-wide paid ledger also includes every probe.
-        used+=one_run_overhead(self.TMP,book['runs'],roles=P6_ROLES)
-        if active and book['active'] is not None and book['active']['role'] in P6_ROLES:
+        used+=one_run_overhead(self.TMP,book['runs'],roles=CASE_CHARGE_ROLES)
+        if active and book['active'] is not None and book['active']['role'] in CASE_CHARGE_ROLES:
             used+=max(0.,time.monotonic()-book['active']['before_clock']['observed_monotonic'])
         return used
 
     def case_remaining(self,*,active=False):return 36000-self.case_used(active=active)
 
     def available_at_boundary(self,role):
-        allowed=self.case_remaining() if role in P6_ROLES else plan_record()['case_wall_seconds'].get(role,900)
+        allowed=min(self.case_remaining(),plan_record()['case_wall_seconds'][role]) if role in CASE_CHARGE_ROLES else plan_record()['case_wall_seconds'].get(role,900)
         return min(allowed,self.total-self.charged_wall()-180,self.snapshot()['heavy_remaining_seconds']-180)
 
     def require_live(self,*,heavy=True,margin=0):
         value=super().require_live(heavy=heavy,margin=margin)
         book=self.ledger()
-        if heavy and book['active'] is not None and book['active']['role'] in P6_ROLES and self.case_remaining(active=True)<=margin:
+        if heavy and book['active'] is not None and book['active']['role'] in CASE_CHARGE_ROLES and self.case_remaining(active=True)<=margin:
             raise RuntimeError('V65 cumulative P6 36000s case boundary')
         return value
 
@@ -53,6 +54,17 @@ window=CompletionWindow(ROOT/'tmp/task042/v65',label='V65',total=39600,component
 def memory_budget(role,p=None):
     p=json.loads(PLAN.read_text()) if p is None else p
     return dict(p['memory_profiles']['P6' if role in P6_ROLES else 'default'])
+
+
+def numeric_guard(role,journal):
+    """Recheck the shared time reserve after symbolic, immediately before numeric."""
+    if role!='SOLVE_COMPLETE':raise ValueError('V65 unique numeric role')
+    remaining=min(window.snapshot()['heavy_remaining_seconds'],window.total-window.charged_wall(),
+        window.case_remaining(active=True))
+    reserve=plan_record()['numeric_audit_output_reserve_seconds']
+    journal.event('p6_after_symbolic_numeric_time_admission',remaining_seconds=remaining,
+        required_reserve_seconds=reserve,admitted=remaining>=reserve)
+    if remaining<reserve:raise RuntimeError('V65 post-symbolic cumulative audit/output reserve')
 
 
 def plan_record():

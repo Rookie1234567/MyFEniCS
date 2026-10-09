@@ -31,15 +31,63 @@ class CompletionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             p=Path(td);w=scope.CompletionWindow(p,label='fixture',total=39600,component=39600,auxiliary=39600)
             rows=[]
-            for role,seconds in [('PREFLIGHT',300),('PREPARE',12200),('SOLVE_COMPLETE',2500),('SOLVE_COMPLETE',600)]:
+            for role,seconds in [('PREFLIGHT',300),('PREPARE',12200),('SOLVE_COMPLETE',2500),('SOLVE_COMPLETE',600),('VERIFY_COST',700)]:
                 rows.append(dict(role=role,elapsed_seconds=seconds,folder=str(p/role)))
             with patch.object(w,'ledger',return_value=dict(runs=rows,active=None)):
-                self.assertEqual(w.case_used(),15300)
-                self.assertEqual(w.case_remaining(),20700)
+                self.assertEqual(w.case_used(),16000)
+                self.assertEqual(w.case_remaining(),20000)
             # Entry-only preflight failures must not consume the P6 group.
             a=p/'PREFLIGHT_one_run01';a.mkdir();(a/'receipt.json').write_text(json.dumps(dict(start_utc='2026-10-08T00:00:00+00:00',end_utc='2026-10-08T00:01:00+00:00',elapsed_seconds=60,source_sha='fixture')))
             with patch.object(w,'ledger',return_value=dict(runs=rows,active=None)):
-                self.assertEqual(w.case_used(),15300)
+                self.assertEqual(w.case_used(),16000)
+
+    def test_numeric_reserve_is_rechecked_after_symbolic(self):
+        from types import SimpleNamespace
+        events=[];j=SimpleNamespace(event=lambda name,**data:events.append((name,data)))
+        with patch.object(scope.window,'snapshot',return_value=dict(heavy_remaining_seconds=10000)),\
+            patch.object(scope.window,'charged_wall',return_value=0),\
+            patch.object(scope.window,'case_remaining',return_value=4500):
+            scope.numeric_guard('SOLVE_COMPLETE',j)
+        self.assertTrue(events[-1][1]['admitted'])
+        with patch.object(scope.window,'snapshot',return_value=dict(heavy_remaining_seconds=10000)),\
+            patch.object(scope.window,'charged_wall',return_value=0),\
+            patch.object(scope.window,'case_remaining',return_value=4499):
+            with self.assertRaisesRegex(RuntimeError,'post-symbolic'):scope.numeric_guard('SOLVE_COMPLETE',j)
+        self.assertFalse(events[-1][1]['admitted'])
+
+    def test_actual_factor_chain_guard_precedes_numeric_and_rolls_back(self):
+        from contextlib import contextmanager
+        from types import SimpleNamespace
+        from src.solvers.phase_explicit_accuracy_capacity import AnalyzedDirectFactor
+        import os
+        for reject in (False,True):
+            calls=[]
+            class Factor:
+                preferred_ordering='unchanged'
+                def symbolic(self,matrix):calls.append('symbolic')
+                def info(self):return dict(infog={'16':10,'17':10})
+                def symbolic_memory_settings(self):return dict(icntl={'22':0})
+                def set_memory_limit_mb(self,value):calls.append('bounded')
+                def numeric(self,matrix):calls.append('numeric')
+                def destroy(self):calls.append('destroy')
+            @contextmanager
+            def measured(name):yield
+            def guard():
+                calls.append('guard')
+                if reject:raise RuntimeError('reserve rejected')
+            journal=SimpleNamespace(measured=measured,event=lambda *args,**kwargs:None)
+            with tempfile.TemporaryDirectory() as td,\
+                patch.dict(os.environ,{'TASK042_WATCHDOG_PARENT_PID':'12345'}),\
+                patch('src.solvers.fullspace_v17_p3_oracle._MumpsFactor',return_value=Factor()),\
+                patch('benchmarks.task038_full3d_jit_staging.process_tree_snapshot',return_value=dict(rss_bytes=2**30,swap_bytes=0)):
+                if reject:
+                    with self.assertRaisesRegex(RuntimeError,'reserve rejected'):
+                        AnalyzedDirectFactor(object(),journal,Path(td),numeric_guard=guard)
+                    self.assertNotIn('numeric',calls);self.assertEqual(calls[-1],'destroy')
+                else:
+                    f=AnalyzedDirectFactor(object(),journal,Path(td),numeric_guard=guard);f.destroy()
+                    self.assertLess(calls.index('symbolic'),calls.index('guard'))
+                    self.assertLess(calls.index('guard'),calls.index('numeric'))
 
     def test_old16_and192_symbolic_capacity_have_distinct_outcomes(self):
         from src.solvers.phase_explicit_accuracy_capacity import numeric_plan
