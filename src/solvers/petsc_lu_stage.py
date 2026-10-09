@@ -27,6 +27,14 @@ NumericCompletionCallback = Callable[[Any], Mapping[str, Any]]
 _W0P7_P4_STAGE_IDENTITIES = frozenset(
     {"task041.w0p7.p4.bottom", "task041.w0p7.p4.top"}
 )
+W0P7_PORD_SOURCE_MODEL_ID = "task041.w0p7.p4.pord_preanalysis_source_model.v2"
+W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256 = (
+    "32dcc5712e7ae306a6ffa24e6dded44a6140d67d2631fce47ee258bac41b2c1a"
+)
+W0P7_PORD_SOURCE_MODEL_AUDIT_PATH = (
+    "results/task041_w0p7_mumps_amd_descriptor_probe_20261008/"
+    "pord_gbisect_scratch_correction_20261009.md"
+)
 
 
 def _source_matrix_inventory(matrix: Any) -> dict[str, Any]:
@@ -321,6 +329,9 @@ class StagedMumpsLUFactory:
         stage_event_callback: ReleaseCallback | None = None,
         deferred_numeric_stage_identities: tuple[str, ...] = (),
         sequential_amd_stage_identities: tuple[str, ...] = (),
+        sequential_pord_stage_identities: tuple[str, ...] = (),
+        pord_source_model_identity: str | None = None,
+        pord_source_model_audit_sha256: str | None = None,
     ) -> None:
         if not callable(getattr(bridge, "create_lu_stage", None)):
             raise TypeError("bridge must expose create_lu_stage")
@@ -362,6 +373,33 @@ class StagedMumpsLUFactory:
             raise ValueError(
                 "sequential AMD controls are limited to deferred registered W0.7 P4 sides"
             )
+        if not isinstance(sequential_pord_stage_identities, tuple) or any(
+            not isinstance(identity, str)
+            or identity not in _W0P7_P4_STAGE_IDENTITIES
+            or identity not in deferred_numeric_stage_identities
+            for identity in sequential_pord_stage_identities
+        ) or len(set(sequential_pord_stage_identities)) != len(
+            sequential_pord_stage_identities
+        ):
+            raise ValueError(
+                "sequential PORD controls are limited to deferred registered W0.7 P4 sides"
+            )
+        if set(sequential_amd_stage_identities) & set(sequential_pord_stage_identities):
+            raise ValueError("a deferred W0.7 P4 side cannot select AMD and PORD together")
+        if sequential_pord_stage_identities:
+            if (
+                pord_source_model_identity != W0P7_PORD_SOURCE_MODEL_ID
+                or pord_source_model_audit_sha256
+                != W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256
+            ):
+                raise ValueError(
+                    "PORD stages require the exact registered W0.7 source-model identity and audit SHA"
+                )
+        elif (
+            pord_source_model_identity is not None
+            or pord_source_model_audit_sha256 is not None
+        ):
+            raise ValueError("PORD source-model binding was supplied without PORD stages")
         self._bridge = bridge
         self._pre_symbolic_gate = pre_symbolic_gate
         self._pre_numeric_gate = pre_numeric_gate
@@ -373,6 +411,18 @@ class StagedMumpsLUFactory:
         )
         self._sequential_amd_stage_identities = frozenset(
             sequential_amd_stage_identities
+        )
+        self._sequential_pord_stage_identities = frozenset(
+            sequential_pord_stage_identities
+        )
+        self._pord_source_model_binding = (
+            {
+                "identity": W0P7_PORD_SOURCE_MODEL_ID,
+                "audit_path": W0P7_PORD_SOURCE_MODEL_AUDIT_PATH,
+                "audit_sha256": W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256,
+            }
+            if sequential_pord_stage_identities
+            else None
         )
         self._live_factors: dict[str, StagedMumpsFactor] = {}
         self._released_factors: list[dict[str, Any]] = []
@@ -451,6 +501,13 @@ class StagedMumpsLUFactory:
             raise ValueError(
                 "sequential AMD controls are reserved for deferred W0.7 P4 handles"
             )
+        if (
+            stage_identity in self._sequential_pord_stage_identities
+            and not defer_numeric
+        ):
+            raise ValueError(
+                "sequential PORD controls are reserved for deferred W0.7 P4 handles"
+            )
         if stage_identity is not None and stage_identity in self._live_factors:
             raise RuntimeError(
                 f"staged factor identity is already live: {stage_identity}"
@@ -463,10 +520,19 @@ class StagedMumpsLUFactory:
                 self._configure_factor(raw_factor)
 
             public_control_readback = None
+            ordering_profile = None
+            ordering_icntl7 = None
             if stage_identity in self._sequential_amd_stage_identities:
-                requested_controls = {28: 1, 7: 0}
+                ordering_profile = "sequential_amd_deferred_p4"
+                ordering_icntl7 = 0
+            elif stage_identity in self._sequential_pord_stage_identities:
+                ordering_profile = "sequential_pord_deferred_p4"
+                ordering_icntl7 = 4
+            if ordering_profile is not None:
+                set_call_values = {28: 1, 7: ordering_icntl7}
+                requested_controls = dict(set_call_values)
                 control_errors: list[dict[str, Any]] = []
-                for index, value in requested_controls.items():
+                for index, value in set_call_values.items():
                     try:
                         raw_factor.set_mumps_icntl(index, value)
                     except Exception as exc:  # noqa: BLE001 - reject at collective gate
@@ -505,11 +571,19 @@ class StagedMumpsLUFactory:
                             "runtime_petsc_version": list(
                                 map(int, PETSc.Sys.getVersion()[:3])
                             ),
+                            "runtime_petsc_scalar_dtype": str(
+                                np.dtype(PETSc.ScalarType)
+                            ),
+                            "runtime_petsc_int_dtype": str(np.dtype(PETSc.IntType)),
+                            "runtime_petsc_int_sizeof": np.dtype(PETSc.IntType).itemsize,
                             "bridge_compile_petsc_version": [
                                 int(self._bridge.petsc_version_major),
                                 int(self._bridge.petsc_version_minor),
                                 int(self._bridge.petsc_version_subminor),
                             ],
+                            "bridge_compile_petsc_int_sizeof": getattr(
+                                self._bridge, "petsc_int_sizeof", None
+                            ),
                             "bridge_compile_mumps_version": [
                                 int(self._bridge.mumps_package_version_major),
                                 int(self._bridge.mumps_package_version_minor),
@@ -529,13 +603,40 @@ class StagedMumpsLUFactory:
                             "error": factor_profile["error"],
                         }
                     )
+                effective_inputs = {
+                    "ICNTL5": 0,
+                    "ICNTL6": 7,
+                    "ICNTL7": ordering_icntl7,
+                    "ICNTL8": 77,
+                    "ICNTL14": icntl14,
+                    "ICNTL18": 3,
+                    "ICNTL19": 0,
+                    "ICNTL28": 1,
+                    "ICNTL35": 0,
+                }
+                if ordering_profile == "sequential_amd_deferred_p4":
+                    effective_input_basis = (
+                        "PETSc 3.19.6 first MUMPS JOB_INIT: MPI>1 supplies "
+                        "ICNTL18=3 and its MUMPS constructor initializes "
+                        "ICNTL19=0; MUMPS 5.6.2 zini_defaults supplies the "
+                        "other listed defaults; ICNTL7/28 and ICNTL14 are "
+                        "explicit PETSc API requests"
+                    )
+                else:
+                    effective_input_basis = (
+                        "PETSc 3.19.6 assembled distributed MPI>1 route and "
+                        "MUMPS 5.6.2 zini_defaults are source-derived; ICNTL7=4, "
+                        "ICNTL28=1 and ICNTL14=40 are explicit API requests. "
+                        "PORD internal compile options are separately bound to "
+                        "the source audit and are not proven by these controls"
+                    )
                 public_control_readback = {
                     "schema": "task041.w0p7.public_mumps_controls.v2",
-                    "profile": "sequential_amd_deferred_p4",
+                    "profile": ordering_profile,
                     "status": "explicit_requests_and_JOB_NULL_cache_readback",
                     "set_calls": {
                         f"ICNTL{index}": value
-                        for index, value in {28: 1, 7: 0}.items()
+                        for index, value in set_call_values.items()
                     },
                     "requested_controls": {
                         f"ICNTL{index}": value
@@ -548,28 +649,16 @@ class StagedMumpsLUFactory:
                     },
                     "source_derived_effective_inputs": {
                         "status": "source_derived_not_measured",
-                        "controls": {
-                            "ICNTL5": 0,
-                            "ICNTL6": 7,
-                            "ICNTL7": 0,
-                            "ICNTL8": 77,
-                            "ICNTL14": icntl14,
-                            "ICNTL18": 3,
-                            "ICNTL19": 0,
-                            "ICNTL28": 1,
-                            "ICNTL35": 0,
-                        },
-                        "basis": (
-                            "PETSc 3.19.6 first MUMPS JOB_INIT: MPI>1 supplies "
-                                "ICNTL18=3 and its MUMPS constructor initializes "
-                                "ICNTL19=0; MUMPS 5.6.2 zini_defaults supplies the "
-                                "other listed defaults; ICNTL7/28 and ICNTL14 are "
-                                "explicit PETSc API requests"
-                        ),
+                        "controls": effective_inputs,
+                        "basis": effective_input_basis,
                     },
                     "factor_profile": factor_profile,
                     "errors": control_errors,
                 }
+                if ordering_profile == "sequential_pord_deferred_p4":
+                    public_control_readback["source_model_binding"] = dict(
+                        self._pord_source_model_binding or {}
+                    )
 
             pre_symbolic_layout = raw_factor.layout_raw()
             self._require_gate(

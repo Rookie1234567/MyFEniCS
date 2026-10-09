@@ -22,9 +22,12 @@ from petsc_lu_stage_bridge import create_lu_stage, numeric_event_count_raw
 from benchmarks.task041_exact_side_workflow import (
     _task041_w0p7_amd_control_errors,
     _task041_w0p7_analysis_ordering_errors,
+    _task041_w0p7_pord_control_errors,
 )
 from src.solvers.hybrid_local_dtn_woodbury import ResearchExactFactorInverse
 from src.solvers.petsc_lu_stage import (
+    W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256,
+    W0P7_PORD_SOURCE_MODEL_ID,
     StagedFactorRejected,
     StagedMumpsLUFactory,
     load_lu_stage_bridge,
@@ -118,8 +121,11 @@ def _count(event_snapshot: dict[str, Any]) -> int | None:
     return value if isinstance(value, int) and not isinstance(value, bool) else None
 
 
-def _w0p7_amd_context_check(
-    context: dict[str, Any], *, after_symbolic: bool
+def _w0p7_ordering_context_check(
+    context: dict[str, Any],
+    *,
+    after_symbolic: bool,
+    ordering_profile: str = "sequential_amd_deferred_p4",
 ) -> tuple[bool, str | None]:
     """Check the registered side controls and, after analysis, its strategy."""
     comm_size = int(PETSc.COMM_WORLD.getSize())
@@ -127,7 +133,13 @@ def _w0p7_amd_context_check(
     readback = context.get("public_mumps_control_readback")
     if readback is None and isinstance(analysis, dict):
         readback = analysis.get("public_mumps_control_readback")
-    errors = _task041_w0p7_amd_control_errors(
+    control_check = {
+        "sequential_amd_deferred_p4": _task041_w0p7_amd_control_errors,
+        "sequential_pord_deferred_p4": _task041_w0p7_pord_control_errors,
+    }.get(ordering_profile)
+    if control_check is None:
+        return False, None
+    errors = control_check(
         readback,
         expected_comm_size=comm_size,
         expected_comm_rank=int(PETSc.COMM_WORLD.tompi4py().rank),
@@ -145,6 +157,7 @@ def _w0p7_amd_context_check(
         errors.extend(
             _task041_w0p7_analysis_ordering_errors(
                 analysis,
+                ordering_profile=ordering_profile,
                 expected_comm_size=comm_size,
                 expected_comm_rank=int(PETSc.COMM_WORLD.tompi4py().rank),
             )
@@ -172,6 +185,16 @@ def _w0p7_amd_context_check(
     except (TypeError, ValueError):
         return False, None
     return True, signature
+
+
+def _w0p7_amd_context_check(
+    context: dict[str, Any], *, after_symbolic: bool
+) -> tuple[bool, str | None]:
+    return _w0p7_ordering_context_check(
+        context,
+        after_symbolic=after_symbolic,
+        ordering_profile="sequential_amd_deferred_p4",
+    )
 
 
 def _destroy_owned(owned: list[Any]) -> list[dict[str, Any]]:
@@ -866,12 +889,23 @@ def test_lu_stage_numeric_is_explicit_and_checks_original_matrix_residual() -> N
 
 
 
-def test_w0p7_pending_p4_handles_reject_solves_until_same_handle_numeric() -> None:
-    """Exercise pending side handles on the existing distributed 8x8 matrix."""
+@pytest.mark.parametrize(
+    "ordering_profile",
+    ("sequential_amd_deferred_p4", "sequential_pord_deferred_p4"),
+)
+def test_w0p7_pending_p4_handles_reject_solves_until_same_handle_numeric(
+    ordering_profile: str,
+) -> None:
+    """Exercise AMD/PORD stage controls on the existing distributed 8x8 matrix."""
     comm = PETSc.COMM_WORLD.tompi4py()
     owned: list[Any] = []
     factors: dict[str, ResearchExactFactorInverse] = {}
-    local: dict[str, Any] = {"rank": comm.rank, "local_pass": True, "cleanup": []}
+    local: dict[str, Any] = {
+        "rank": comm.rank,
+        "ordering_profile": ordering_profile,
+        "local_pass": True,
+        "cleanup": [],
+    }
     event_deltas: dict[str, int | None] = {}
     matrix = None
 
@@ -881,8 +915,10 @@ def test_w0p7_pending_p4_handles_reject_solves_until_same_handle_numeric() -> No
     def gate(context: Any) -> bool:
         identity = context.get("stage_identity")
         after_symbolic = context.get("stage") == "after_symbolic_before_numeric"
-        amd_ok, signature = _w0p7_amd_context_check(
-            context, after_symbolic=after_symbolic
+        ordering_ok, signature = _w0p7_ordering_context_check(
+            context,
+            after_symbolic=after_symbolic,
+            ordering_profile=ordering_profile,
         )
         live = {
             row.get("stage_identity"): row.get("factor_state")
@@ -898,7 +934,7 @@ def test_w0p7_pending_p4_handles_reject_solves_until_same_handle_numeric() -> No
             valid = (
                 context.get("icntl14_requested") == 40
                 and live == expected
-                and amd_ok
+                and ordering_ok
             )
         else:
             expected = (
@@ -916,7 +952,7 @@ def test_w0p7_pending_p4_handles_reject_solves_until_same_handle_numeric() -> No
                 context.get("stage") == "after_symbolic_before_numeric"
                 and context.get("lifecycle", {}).get("numeric_attempts") == 0
                 and live == expected
-                and amd_ok
+                and ordering_ok
             )
         rank_checks = comm.allgather((bool(valid), signature))
         return bool(
@@ -927,19 +963,33 @@ def test_w0p7_pending_p4_handles_reject_solves_until_same_handle_numeric() -> No
 
     try:
         matrix = _tiny_complex_matrix(owned)
-        factory = StagedMumpsLUFactory(
-            petsc_lu_stage_bridge,
-            pre_symbolic_gate=gate,
-            pre_numeric_gate=gate,
-            deferred_numeric_stage_identities=(
+        factory_options = {
+            "pre_symbolic_gate": gate,
+            "pre_numeric_gate": gate,
+            "deferred_numeric_stage_identities": (
                 "task041.w0p7.p4.bottom",
                 "task041.w0p7.p4.top",
             ),
-            sequential_amd_stage_identities=(
+        }
+        if ordering_profile == "sequential_amd_deferred_p4":
+            factory_options["sequential_amd_stage_identities"] = (
                 "task041.w0p7.p4.bottom",
                 "task041.w0p7.p4.top",
-            ),
-        )
+            )
+        else:
+            factory_options.update(
+                {
+                    "sequential_pord_stage_identities": (
+                        "task041.w0p7.p4.bottom",
+                        "task041.w0p7.p4.top",
+                    ),
+                    "pord_source_model_identity": W0P7_PORD_SOURCE_MODEL_ID,
+                    "pord_source_model_audit_sha256": (
+                        W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256
+                    ),
+                }
+            )
+        factory = StagedMumpsLUFactory(petsc_lu_stage_bridge, **factory_options)
         event_before = numeric_event_count_raw()
 
         for side in ("bottom", "top"):

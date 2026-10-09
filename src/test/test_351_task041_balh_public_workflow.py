@@ -65,6 +65,9 @@ from benchmarks.task041_exact_side_workflow import (
     _task041_w0p7_amd_control_errors,
     _task041_w0p7_amd_symbolic_source_model,
     _task041_w0p7_analysis_ordering_errors,
+    _task041_w0p7_pord_control_errors,
+    _task041_w0p7_pord_post_symbolic_control_errors,
+    _task041_w0p7_pord_symbolic_source_model,
     _task041_w0p7_stage_budget_projection,
     _task041_worker_time_stop_enforced,
     _Task041TopCausalPacketCapture,
@@ -107,6 +110,11 @@ from src.runners.task041_supervisor import (
     run_task041_public_supervisor,
 )
 from src.solvers.full3d_lifecycle_packet import load_packet
+from src.solvers.petsc_lu_stage import (
+    W0P7_PORD_SOURCE_MODEL_AUDIT_PATH,
+    W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256,
+    W0P7_PORD_SOURCE_MODEL_ID,
+)
 from src.solvers.physical_balanced_coupling import BalancedConstraintRejected
 from src.solvers.physical_balanced_physical_operator import (
     P4CondensedExactFactor,
@@ -711,7 +719,7 @@ def test_task041_w0p7_stage_sampler_binds_service_invocation_and_live_rank_tree(
 
 
 def test_task041_w0p7_stage_budget_uses_source_model_without_numeric_cycle():
-    """Check source-counted AMD phases and the no-double-count policy screen."""
+    """Check ordering-specific source models and numeric budget boundaries."""
     cap = TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES
     warning = TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES
     one_cell_history = _TASK041_W0P7_STAGE_HISTORY[
@@ -738,6 +746,8 @@ def test_task041_w0p7_stage_budget_uses_source_model_without_numeric_cycle():
     )
     assert one_cell["pass"] is True
     assert one_cell["projected_peak_bytes"] == one_cell_history["peak"]
+    assert one_cell["ordering_profile"] == "existing_one_cell_default"
+    assert one_cell["source_derived_symbolic_model"] is None
 
     bottom_model = _task041_w0p7_amd_symbolic_source_model(
         rows=n, nnz=bottom_history["nnz"], mpi_size=p
@@ -936,6 +946,28 @@ def test_task041_w0p7_stage_budget_uses_source_model_without_numeric_cycle():
     assert "INFOG(19) is recorded only after numeric" in top_numeric[
         "stage_delta_basis"
     ]
+    pord_top_numeric = _task041_w0p7_stage_budget_projection(
+        stage="after_symbolic_before_numeric",
+        identity="task041.w0p7.p4.top",
+        history=top_history,
+        global_rows=n,
+        b_live_bytes=40_000_000_000,
+        fresh_numeric_b_bytes=40_000_000_000,
+        info17_sum_ranks_raw=7_000,
+        bottom_calibration=None,
+        cap_bytes=cap,
+        warning_bytes=warning,
+        workspace_audit_complete=True,
+        global_nnz=top_history["nnz"],
+        mpi_size=p,
+        ordering_profile="sequential_pord_deferred_p4",
+        source_model_identity=W0P7_PORD_SOURCE_MODEL_ID,
+    )
+    assert pord_top_numeric["pass"] is True
+    assert pord_top_numeric["ordering_profile"] == "sequential_pord_deferred_p4"
+    assert pord_top_numeric["stage_delta_bytes"] == 7_000_000_000
+    assert pord_top_numeric["source_derived_symbolic_model"] is None
+    assert pord_top_numeric["INFOG17_sum_ranks_bytes_one_copy"] == 7_000_000_000
     numeric_b_mismatch = _task041_w0p7_stage_budget_projection(
         stage="after_symbolic_before_numeric",
         identity="task041.w0p7.p4.top",
@@ -967,6 +999,172 @@ def test_task041_w0p7_stage_budget_uses_source_model_without_numeric_cycle():
         with pytest.raises(Task041ModePrepError):
             _task041_w0p7_amd_symbolic_source_model(**values)
 
+    bottom_pord_model = _task041_w0p7_pord_symbolic_source_model(
+        identity="task041.w0p7.p4.bottom",
+        rows=n,
+        nnz=bottom_history["nnz"],
+        mpi_size=p,
+        source_model_identity=W0P7_PORD_SOURCE_MODEL_ID,
+    )
+    top_pord_model = _task041_w0p7_pord_symbolic_source_model(
+        identity="task041.w0p7.p4.top",
+        rows=n,
+        nnz=top_history["nnz"],
+        mpi_size=p,
+        source_model_identity=W0P7_PORD_SOURCE_MODEL_ID,
+    )
+    assert bottom_pord_model["component_bytes"] == {
+        "PETSc_triplets": 24 * 27_929_686,
+        "PORD_separator_graphs": 112 * 27_929_686,
+        "PORD_separator_linear_scratch": (595 * 64_966 + 20) * 4,
+        "MUMPS_root_arrays": 76 * 64_966 + 28,
+        "all_rank_block_maps": 64 * 64_966,
+        "priority_queue": 511 * 8,
+    }
+    assert bottom_pord_model["gbisect_improveDDSep_scratch_elements"] == (
+        12 * 64_966 + 8
+    )
+    assert bottom_pord_model["linear_scratch_breakdown_bytes"] == {
+        "prior_583N_plus_12_audit_envelope": (583 * 64_966 + 12) * 4,
+        "gbisect_improveDDSep_additional_arrays": 3_118_400,
+        "corrected_595N_plus_20_envelope": (595 * 64_966 + 20) * 4,
+    }
+    assert bottom_pord_model["predicted_increment_bytes"] == 3_962_155_812
+    assert top_pord_model["predicted_increment_bytes"] == 5_500_664_516
+    assert bottom_pord_model["source_model_audit_sha256"] == (
+        W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256
+    )
+    assert bottom_pord_model["source_model_audit_path"] == (
+        W0P7_PORD_SOURCE_MODEL_AUDIT_PATH
+    )
+    for invalid_pord in (
+        {
+            "identity": "task041.w0p7.p4.bottom",
+            "rows": n + 1,
+            "nnz": bottom_history["nnz"],
+            "mpi_size": p,
+            "source_model_identity": W0P7_PORD_SOURCE_MODEL_ID,
+        },
+        {
+            "identity": "task041.w0p7.p4.bottom",
+            "rows": n,
+            "nnz": bottom_history["nnz"] + 1,
+            "mpi_size": p,
+            "source_model_identity": W0P7_PORD_SOURCE_MODEL_ID,
+        },
+        {
+            "identity": "task041.w0p7.p4.top",
+            "rows": n,
+            "nnz": top_history["nnz"],
+            "mpi_size": 7,
+            "source_model_identity": W0P7_PORD_SOURCE_MODEL_ID,
+        },
+        {
+            "identity": "task041.w0p7.p4.bottom",
+            "rows": n,
+            "nnz": bottom_history["nnz"],
+            "mpi_size": p,
+            "source_model_identity": "unreviewed-model",
+        },
+        {
+            "identity": "task041.w0p7.p4.other",
+            "rows": n,
+            "nnz": bottom_history["nnz"],
+            "mpi_size": p,
+            "source_model_identity": W0P7_PORD_SOURCE_MODEL_ID,
+        },
+        {
+            "identity": "task041.w0p7.one_cell_traction",
+            "rows": n,
+            "nnz": bottom_history["nnz"],
+            "mpi_size": p,
+            "source_model_identity": W0P7_PORD_SOURCE_MODEL_ID,
+        },
+    ):
+        with pytest.raises(Task041ModePrepError):
+            _task041_w0p7_pord_symbolic_source_model(**invalid_pord)
+
+    pord_pre_symbolic = _task041_w0p7_stage_budget_projection(
+        stage="before_symbolic",
+        identity="task041.w0p7.p4.bottom",
+        history=bottom_history,
+        global_rows=n,
+        b_live_bytes=30_000_000_000,
+        fresh_numeric_b_bytes=None,
+        info17_sum_ranks_raw=None,
+        bottom_calibration=None,
+        cap_bytes=cap,
+        warning_bytes=warning,
+        workspace_audit_complete=True,
+        global_nnz=bottom_history["nnz"],
+        mpi_size=p,
+        ordering_profile="sequential_pord_deferred_p4",
+        source_model_identity=W0P7_PORD_SOURCE_MODEL_ID,
+    )
+    assert pord_pre_symbolic["pass"] is True
+    assert pord_pre_symbolic["stage_delta_bytes"] == 3_962_155_812
+    assert pord_pre_symbolic["ordering_profile"] == "sequential_pord_deferred_p4"
+    assert pord_pre_symbolic["source_derived_symbolic_model"] == bottom_pord_model
+    pord_wrong_scope = _task041_w0p7_stage_budget_projection(
+        stage="before_symbolic",
+        identity="task041.w0p7.p4.top",
+        history=top_history,
+        global_rows=n,
+        b_live_bytes=30_000_000_000,
+        fresh_numeric_b_bytes=None,
+        info17_sum_ranks_raw=None,
+        bottom_calibration=None,
+        cap_bytes=cap,
+        warning_bytes=warning,
+        workspace_audit_complete=True,
+        global_nnz=top_history["nnz"] - 1,
+        mpi_size=p,
+        ordering_profile="sequential_pord_deferred_p4",
+        source_model_identity=W0P7_PORD_SOURCE_MODEL_ID,
+    )
+    assert pord_wrong_scope["pass"] is False
+    assert pord_wrong_scope["stage_delta_bytes"] is None
+    assert pord_wrong_scope["source_derived_symbolic_model"] is None
+    pord_missing_identity = _task041_w0p7_stage_budget_projection(
+        stage="before_symbolic",
+        identity="task041.w0p7.p4.bottom",
+        history=bottom_history,
+        global_rows=n,
+        b_live_bytes=30_000_000_000,
+        fresh_numeric_b_bytes=None,
+        info17_sum_ranks_raw=None,
+        bottom_calibration=None,
+        cap_bytes=cap,
+        warning_bytes=warning,
+        workspace_audit_complete=True,
+        global_nnz=bottom_history["nnz"],
+        mpi_size=p,
+        ordering_profile="sequential_pord_deferred_p4",
+    )
+    assert pord_missing_identity["pass"] is False
+    assert "PORD source-model identity is absent or mismatched" in (
+        pord_missing_identity["reasons"]
+    )
+    default_bottom_projection = _task041_w0p7_stage_budget_projection(
+        stage="before_symbolic",
+        identity="task041.w0p7.p4.bottom",
+        history=bottom_history,
+        global_rows=n,
+        b_live_bytes=30_000_000_000,
+        fresh_numeric_b_bytes=None,
+        info17_sum_ranks_raw=None,
+        bottom_calibration=None,
+        cap_bytes=cap,
+        warning_bytes=warning,
+        workspace_audit_complete=True,
+        global_nnz=bottom_history["nnz"],
+        mpi_size=p,
+    )
+    assert default_bottom_projection["ordering_profile"] == (
+        "sequential_amd_deferred_p4"
+    )
+    assert default_bottom_projection["stage_delta_bytes"] == 1_382_983_004
+
     factor_profile = {
         "schema": "task041.w0p7.factor_mumps_options.v1",
         "status": "queried",
@@ -987,7 +1185,11 @@ def test_task041_w0p7_stage_budget_uses_source_model_without_numeric_cycle():
         "checked_option_count": 56,
         "options": [],
         "runtime_petsc_version": [3, 19, 6],
+        "runtime_petsc_scalar_dtype": "complex128",
+        "runtime_petsc_int_dtype": "int32",
+        "runtime_petsc_int_sizeof": 4,
         "bridge_compile_petsc_version": [3, 19, 6],
+        "bridge_compile_petsc_int_sizeof": 4,
         "bridge_compile_mumps_version": [5, 6, 2],
     }
     derived_controls = {
@@ -1084,6 +1286,80 @@ def test_task041_w0p7_stage_budget_uses_source_model_without_numeric_cycle():
         "ICNTL7"
     ]["actual"] = 7
     assert _task041_w0p7_analysis_ordering_errors(wrong_actual)
+
+    pord_controls = copy.deepcopy(controls)
+    pord_controls["profile"] = "sequential_pord_deferred_p4"
+    pord_controls["set_calls"] = {"ICNTL28": 1, "ICNTL7": 4}
+    pord_controls["requested_controls"] = {
+        "ICNTL7": 4,
+        "ICNTL14": 40,
+        "ICNTL28": 1,
+    }
+    pord_controls["cached_readback"]["ICNTL7"]["value"] = 4
+    pord_controls["source_derived_effective_inputs"]["controls"][
+        "ICNTL7"
+    ] = 4
+    pord_controls["source_model_binding"] = {
+        "identity": W0P7_PORD_SOURCE_MODEL_ID,
+        "audit_path": W0P7_PORD_SOURCE_MODEL_AUDIT_PATH,
+        "audit_sha256": W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256,
+    }
+    assert _task041_w0p7_pord_control_errors(pord_controls) == []
+    wrong_pord_profile = copy.deepcopy(pord_controls)
+    wrong_pord_profile["profile"] = "sequential_amd_deferred_p4"
+    assert _task041_w0p7_pord_control_errors(wrong_pord_profile)
+    wrong_pord_cache = copy.deepcopy(pord_controls)
+    wrong_pord_cache["cached_readback"]["ICNTL7"]["value"] = 0
+    assert _task041_w0p7_pord_control_errors(wrong_pord_cache)
+    wrong_pord_model_binding = copy.deepcopy(pord_controls)
+    wrong_pord_model_binding["source_model_binding"]["audit_sha256"] = "0" * 64
+    assert _task041_w0p7_pord_control_errors(wrong_pord_model_binding)
+    pord_option_conflict = copy.deepcopy(pord_controls)
+    pord_option_conflict["factor_profile"]["options"] = [
+        {
+            "name": "-mat_mumps_icntl_7",
+            "kind": "icntl",
+            "index": 7,
+            "factor_prefix_present": False,
+            "factor_prefix_query_error_code": 0,
+            "factor_prefix_value": None,
+            "global_present": True,
+            "global_query_error_code": 0,
+            "global_value": 0,
+        }
+    ]
+    assert _task041_w0p7_pord_control_errors(pord_option_conflict)
+    pord_post = copy.deepcopy(post)
+    pord_post["controls"]["ICNTL7"]["actual"] = 4
+    pord_analysis = {
+        "public_mumps_control_readback": pord_controls,
+        "post_symbolic_mumps_control_readback": pord_post,
+        "INFOG_api_raw_by_rank": [
+            {"index": 7, "query_error_code": 0, "raw_value": 4},
+            {"index": 32, "query_error_code": 0, "raw_value": 1},
+        ],
+    }
+    assert _task041_w0p7_analysis_ordering_errors(
+        pord_analysis, ordering_profile="sequential_pord_deferred_p4"
+    ) == []
+    assert _task041_w0p7_pord_post_symbolic_control_errors(pord_post) == []
+    wrong_pord_actual = copy.deepcopy(pord_analysis)
+    wrong_pord_actual["post_symbolic_mumps_control_readback"]["controls"][
+        "ICNTL7"
+    ]["actual"] = 0
+    assert _task041_w0p7_analysis_ordering_errors(
+        wrong_pord_actual, ordering_profile="sequential_pord_deferred_p4"
+    )
+    wrong_pord_infog = copy.deepcopy(pord_analysis)
+    wrong_pord_infog["INFOG_api_raw_by_rank"][0]["raw_value"] = 0
+    assert _task041_w0p7_analysis_ordering_errors(
+        wrong_pord_infog, ordering_profile="sequential_pord_deferred_p4"
+    )
+    wrong_pord_info32 = copy.deepcopy(pord_analysis)
+    wrong_pord_info32["INFOG_api_raw_by_rank"][1]["raw_value"] = 2
+    assert _task041_w0p7_analysis_ordering_errors(
+        wrong_pord_info32, ordering_profile="sequential_pord_deferred_p4"
+    )
 
     unknown_source_path = _task041_w0p7_stage_budget_projection(
         stage="before_symbolic",

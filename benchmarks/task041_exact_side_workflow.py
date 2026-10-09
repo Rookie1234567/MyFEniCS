@@ -57,6 +57,11 @@ from src.io.input_validation import (
 from src.io.resolved_config import resolved_config_sha256
 from src.solvers.full3d_lifecycle_packet import load_packet, write_packet
 from src.solvers.hybrid_interface_basis import canonical_mode_keys_sha256
+from src.solvers.petsc_lu_stage import (
+    W0P7_PORD_SOURCE_MODEL_AUDIT_PATH,
+    W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256,
+    W0P7_PORD_SOURCE_MODEL_ID,
+)
 
 TASK041_MODE_PREP_SCHEMA = "task041.exact_side.mode_prep.v1"
 TASK041_MODE_PREP_PROFILE = "task041_5nm_exact_side_hybrid_iterative"
@@ -1741,6 +1746,19 @@ _TASK041_W0P7_AMD_ICNTL_EXPECTED = {
     "ICNTL28": 1,
     "ICNTL35": 0,
 }
+_TASK041_W0P7_PORD_ICNTL_EXPECTED = {
+    **_TASK041_W0P7_AMD_ICNTL_EXPECTED,
+    "ICNTL7": 4,
+}
+_TASK041_W0P7_PORD_NNZ_BY_STAGE = {
+    "task041.w0p7.p4.bottom": 27_929_686,
+    "task041.w0p7.p4.top": 39_242_250,
+}
+_TASK041_W0P7_PORD_DELTA_BY_STAGE = {
+    "task041.w0p7.p4.bottom": 3_962_155_812,
+    "task041.w0p7.p4.top": 5_500_664_516,
+}
+_TASK041_W0P7_PORD_ORDERING_PROFILE = "sequential_pord_deferred_p4"
 _TASK041_W0P7_DESCRIPTOR_BYTES = 72
 
 
@@ -1749,12 +1767,23 @@ def _task041_w0p7_mumps_factor_profile_errors(
     *,
     expected_comm_size: int = 8,
     expected_comm_rank: int | None = None,
+    expected_icntl_controls: Mapping[str, int] | None = None,
 ) -> list[str]:
     if not isinstance(factor_profile, Mapping) or factor_profile.get("schema") != (
         "task041.w0p7.factor_mumps_options.v1"
     ):
         return ["public factor/options profile is absent or has unknown schema"]
     errors: list[str] = []
+    expected_controls = (
+        _TASK041_W0P7_AMD_ICNTL_EXPECTED
+        if expected_icntl_controls is None
+        else expected_icntl_controls
+    )
+    require_pord_abi = (
+        expected_controls.get("ICNTL7") == 4
+        and expected_controls.get("ICNTL28") == 1
+        and expected_controls.get("ICNTL14") == 40
+    )
     if factor_profile.get("status") != "queried":
         errors.append("public factor/options query did not complete")
     for field in (
@@ -1782,7 +1811,7 @@ def _task041_w0p7_mumps_factor_profile_errors(
         or expected_comm_size <= 1
         or factor_profile.get("comm_size") != expected_comm_size
     ):
-        errors.append("sequential AMD source model requires the bound MPI communicator")
+        errors.append("ordering source model requires the bound MPI communicator")
     if factor_profile.get("source_matrix_type") != "mpiaij":
         errors.append("source matrix is not PETSc MPIAIJ")
     if not isinstance(factor_profile.get("factor_matrix_type"), str) or not factor_profile.get(
@@ -1801,6 +1830,13 @@ def _task041_w0p7_mumps_factor_profile_errors(
     for name, expected in expected_versions.items():
         if factor_profile.get(name) != expected:
             errors.append(f"{name} does not match the audited PETSc/MUMPS source")
+    if require_pord_abi and (
+        factor_profile.get("runtime_petsc_scalar_dtype") != "complex128"
+        or factor_profile.get("runtime_petsc_int_dtype") != "int32"
+        or factor_profile.get("runtime_petsc_int_sizeof") != 4
+        or factor_profile.get("bridge_compile_petsc_int_sizeof") != 4
+    ):
+        errors.append("PORD candidate requires the audited complex128/Int32 PETSc bridge ABI")
 
     options = factor_profile.get("options")
     if (
@@ -1837,9 +1873,7 @@ def _task041_w0p7_mumps_factor_profile_errors(
         if kind == "icntl":
             index = row.get("index")
             if type(index) is int:
-                expected = _TASK041_W0P7_AMD_ICNTL_EXPECTED.get(
-                    f"ICNTL{index}"
-                )
+                expected = expected_controls.get(f"ICNTL{index}")
         if expected is None:
             errors.append(f"unmodeled MUMPS override is not allowed: {name}")
             continue
@@ -1851,9 +1885,10 @@ def _task041_w0p7_mumps_factor_profile_errors(
     return errors
 
 
-def _task041_w0p7_amd_control_errors(
+def _task041_w0p7_ordering_control_errors(
     readback: Mapping[str, Any] | None,
     *,
+    ordering_profile: str,
     expected_comm_size: int = 8,
     expected_comm_rank: int | None = None,
 ) -> list[str]:
@@ -1861,15 +1896,35 @@ def _task041_w0p7_amd_control_errors(
         "task041.w0p7.public_mumps_controls.v2"
     ):
         return ["public MUMPS control readback is absent or has unknown schema"]
-    if readback.get("profile") != "sequential_amd_deferred_p4":
-        return ["public MUMPS control profile is not registered deferred P4 AMD"]
+    contracts = {
+        "sequential_amd_deferred_p4": {
+            "controls": _TASK041_W0P7_AMD_ICNTL_EXPECTED,
+            "set_calls": {"ICNTL28": 1, "ICNTL7": 0},
+            "source_model_binding": None,
+        },
+        "sequential_pord_deferred_p4": {
+            "controls": _TASK041_W0P7_PORD_ICNTL_EXPECTED,
+            "set_calls": {"ICNTL28": 1, "ICNTL7": 4},
+            "source_model_binding": {
+                "identity": W0P7_PORD_SOURCE_MODEL_ID,
+                "audit_path": W0P7_PORD_SOURCE_MODEL_AUDIT_PATH,
+                "audit_sha256": W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256,
+            },
+        },
+    }
+    contract = contracts.get(ordering_profile)
+    if contract is None or readback.get("profile") != ordering_profile:
+        return ["public MUMPS controls do not match the requested registered ordering"]
     if readback.get("status") != "explicit_requests_and_JOB_NULL_cache_readback":
         return ["explicit controls/cache record has an unknown initialization stage"]
     errors = ["public MUMPS control API reported an error"] if readback.get("errors") else []
-    set_calls = readback.get("set_calls")
-    if set_calls != {"ICNTL28": 1, "ICNTL7": 0}:
-        errors.append("sequential AMD must explicitly set ICNTL(28)=1 and ICNTL(7)=0")
-    requested = {"ICNTL7": 0, "ICNTL14": 40, "ICNTL28": 1}
+    if readback.get("set_calls") != contract["set_calls"]:
+        errors.append("explicit ICNTL(7)/(28) calls do not match the ordering profile")
+    expected_controls = contract["controls"]
+    requested = {
+        name: expected_controls[name]
+        for name in ("ICNTL7", "ICNTL14", "ICNTL28")
+    }
     if readback.get("requested_controls") != requested:
         errors.append("explicit MUMPS API requests do not match the registered W0.7 values")
     constructor_request = readback.get("requested_via_factor_constructor")
@@ -1899,22 +1954,53 @@ def _task041_w0p7_amd_control_errors(
     if (
         not isinstance(derived, Mapping)
         or derived.get("status") != "source_derived_not_measured"
-        or derived.get("controls") != _TASK041_W0P7_AMD_ICNTL_EXPECTED
+        or derived.get("controls") != expected_controls
         or not isinstance(derived.get("basis"), str)
     ):
-        errors.append("backend effective inputs lack the bound PETSc/MUMPS source derivation")
+        errors.append("backend effective inputs lack the bound source derivation")
+    if readback.get("source_model_binding") != contract["source_model_binding"]:
+        errors.append("ordering source-model identity/audit binding is absent or mismatched")
     errors.extend(
         _task041_w0p7_mumps_factor_profile_errors(
             readback.get("factor_profile"),
             expected_comm_size=expected_comm_size,
             expected_comm_rank=expected_comm_rank,
+            expected_icntl_controls=expected_controls,
         )
     )
     return errors
 
 
-def _task041_w0p7_post_symbolic_control_errors(
+def _task041_w0p7_amd_control_errors(
     readback: Mapping[str, Any] | None,
+    *,
+    expected_comm_size: int = 8,
+    expected_comm_rank: int | None = None,
+) -> list[str]:
+    return _task041_w0p7_ordering_control_errors(
+        readback,
+        ordering_profile="sequential_amd_deferred_p4",
+        expected_comm_size=expected_comm_size,
+        expected_comm_rank=expected_comm_rank,
+    )
+
+
+def _task041_w0p7_pord_control_errors(
+    readback: Mapping[str, Any] | None,
+    *,
+    expected_comm_size: int = 8,
+    expected_comm_rank: int | None = None,
+) -> list[str]:
+    return _task041_w0p7_ordering_control_errors(
+        readback,
+        ordering_profile="sequential_pord_deferred_p4",
+        expected_comm_size=expected_comm_size,
+        expected_comm_rank=expected_comm_rank,
+    )
+
+
+def _task041_w0p7_post_symbolic_controls_errors_for_ordering(
+    readback: Mapping[str, Any] | None, *, ordering_profile: str
 ) -> list[str]:
     if not isinstance(readback, Mapping) or readback.get("schema") != (
         "task041.w0p7.post_symbolic_mumps_controls.v1"
@@ -1926,7 +2012,13 @@ def _task041_w0p7_post_symbolic_control_errors(
     controls = readback.get("controls")
     if not isinstance(controls, Mapping):
         return errors + ["post-symbolic MUMPS control values are absent"]
-    for name, expected in _TASK041_W0P7_AMD_ICNTL_EXPECTED.items():
+    expected_controls = {
+        "sequential_amd_deferred_p4": _TASK041_W0P7_AMD_ICNTL_EXPECTED,
+        "sequential_pord_deferred_p4": _TASK041_W0P7_PORD_ICNTL_EXPECTED,
+    }.get(ordering_profile)
+    if expected_controls is None:
+        return errors + ["post-symbolic ordering profile is unregistered"]
+    for name, expected in expected_controls.items():
         row = controls.get(name)
         if (
             not isinstance(row, Mapping)
@@ -1938,28 +2030,59 @@ def _task041_w0p7_post_symbolic_control_errors(
     return errors
 
 
+def _task041_w0p7_post_symbolic_control_errors(
+    readback: Mapping[str, Any] | None,
+) -> list[str]:
+    return _task041_w0p7_post_symbolic_controls_errors_for_ordering(
+        readback, ordering_profile="sequential_amd_deferred_p4"
+    )
+
+
+def _task041_w0p7_pord_post_symbolic_control_errors(
+    readback: Mapping[str, Any] | None,
+) -> list[str]:
+    return _task041_w0p7_post_symbolic_controls_errors_for_ordering(
+        readback, ordering_profile="sequential_pord_deferred_p4"
+    )
+
+
 def _task041_w0p7_analysis_ordering_errors(
     analysis: Mapping[str, Any] | None,
     *,
+    ordering_profile: str = "sequential_amd_deferred_p4",
     expected_comm_size: int = 8,
     expected_comm_rank: int | None = None,
 ) -> list[str]:
     if not isinstance(analysis, Mapping):
         return ["post-analysis MUMPS record is absent"]
-    errors = _task041_w0p7_amd_control_errors(
+    control_errors = {
+        "sequential_amd_deferred_p4": _task041_w0p7_amd_control_errors,
+        "sequential_pord_deferred_p4": _task041_w0p7_pord_control_errors,
+    }
+    post_control_errors = {
+        "sequential_amd_deferred_p4": _task041_w0p7_post_symbolic_control_errors,
+        "sequential_pord_deferred_p4": _task041_w0p7_pord_post_symbolic_control_errors,
+    }
+    info_order = {
+        "sequential_amd_deferred_p4": 0,
+        "sequential_pord_deferred_p4": 4,
+    }.get(ordering_profile)
+    if info_order is None:
+        return ["post-analysis ordering profile is unregistered"]
+    errors = control_errors[ordering_profile](
         analysis.get("public_mumps_control_readback"),
         expected_comm_size=expected_comm_size,
         expected_comm_rank=expected_comm_rank,
     )
     errors.extend(
-        _task041_w0p7_post_symbolic_control_errors(
+        post_control_errors[ordering_profile](
             analysis.get("post_symbolic_mumps_control_readback")
         )
     )
     entries = analysis.get("INFOG_api_raw_by_rank")
     if not isinstance(entries, list):
         return errors + ["post-analysis INFOG records are absent"]
-    for index, expected in ((7, 0), (32, 1)):
+    for index, expected in ((7, info_order), (32, 1)):
         rows = [
             row
             for row in entries
@@ -1973,7 +2096,9 @@ def _task041_w0p7_analysis_ordering_errors(
             or type(rows[0].get("raw_value")) is not int
             or rows[0].get("raw_value") != expected
         ):
-            errors.append(f"post-analysis INFOG({index}) does not confirm sequential AMD")
+            errors.append(
+                f"post-analysis INFOG({index}) does not confirm {ordering_profile}"
+            )
     return errors
 
 
@@ -2048,6 +2173,156 @@ def _task041_w0p7_amd_symbolic_source_model(
     }
 
 
+def _task041_w0p7_pord_symbolic_source_model(
+    *,
+    identity: str,
+    rows: int,
+    nnz: int,
+    mpi_size: int,
+    source_model_identity: str,
+) -> dict[str, Any]:
+    """Return the reviewed PORD source-counted screen for one registered side."""
+
+    expected_nnz = _TASK041_W0P7_PORD_NNZ_BY_STAGE.get(identity)
+    expected_delta = _TASK041_W0P7_PORD_DELTA_BY_STAGE.get(identity)
+    if expected_nnz is None or expected_delta is None:
+        raise Task041ModePrepError("PORD source model is limited to registered W0.7 P4 sides")
+    if source_model_identity != W0P7_PORD_SOURCE_MODEL_ID:
+        raise Task041ModePrepError("PORD source-model identity is not the reviewed model")
+    if any(type(value) is not int for value in (rows, nnz, mpi_size)):
+        raise Task041ModePrepError("PORD source model requires integer N, Z, and P")
+    if rows != 64_966 or nnz != expected_nnz or mpi_size != 8:
+        raise Task041ModePrepError(
+            "PORD source-count constants apply only to the registered W0.7 N/Z/MPI8 matrix"
+        )
+
+    # This reviewed model counts the simultaneous PORD separator phase. The
+    # 112*Z term is the 14E-capacity graph envelope with E<=2Z. The base
+    # 583*N+12 audit omitted improveDDSep's four vectors and two live buckets;
+    # this correction adds 12*N+8 Int32 elements.
+    triplet_bytes = 24 * nnz  # two Int32 indices plus one complex128 value
+    separator_graph_bytes = 112 * nnz  # fourteen E-capacity Int32 adjacency arrays
+    prior_separator_linear_scratch_bytes = (583 * rows + 12) * 4
+    improve_dd_sep_scratch_elements = 12 * rows + 8
+    improve_dd_sep_scratch_bytes = improve_dd_sep_scratch_elements * 4
+    separator_linear_scratch_bytes = (
+        prior_separator_linear_scratch_bytes + improve_dd_sep_scratch_bytes
+    )
+    mumps_root_arrays_bytes = 76 * rows + 28
+    all_rank_block_map_bytes = 64 * rows
+    priority_queue_bytes = 511 * 8
+    predicted = sum(
+        (
+            triplet_bytes,
+            separator_graph_bytes,
+            separator_linear_scratch_bytes,
+            mumps_root_arrays_bytes,
+            all_rank_block_map_bytes,
+            priority_queue_bytes,
+        )
+    )
+    if predicted != expected_delta:
+        raise Task041ModePrepError(
+            "PORD source-model arithmetic no longer matches the reviewed N/Z/P record"
+        )
+    return {
+        "status": "source_counted_prediction",
+        "ordering_profile": "sequential_pord_deferred_p4",
+        "identity": identity,
+        "source_model_identity": W0P7_PORD_SOURCE_MODEL_ID,
+        "source_model_audit_path": W0P7_PORD_SOURCE_MODEL_AUDIT_PATH,
+        "source_model_audit_sha256": W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256,
+        "source_model_base_audit_path": (
+            "results/task041_w0p7_mumps_amd_descriptor_probe_20261008/"
+            "pord_preanalysis_capacity_derived_20261009.md"
+        ),
+        "source_model_base_audit_sha256": (
+            "a26670209dd892cb4172daf85be1cdfdf49ba4c15ef887c8c1d12892060bc9f1"
+        ),
+        "source_archive_sha256": (
+            "13a2c1aff2bd1aa92fe84b7b35d88f43434019963ca09ef7e8c90821a8f1d59a"
+        ),
+        "source_model_lifecycle_notes": {
+            "initialDDSep": (
+                "findPseudoPeripheralDomain uses 2*N Int32 then frees them before "
+                "constructLevelSep uses 4*N Int32; maximum 4*N"
+            ),
+            "improveDDSep": (
+                "four N vectors and two 4*(N+1)-array buckets coexist; included "
+                "as (12*N+8) Int32"
+            ),
+            "domain_decomposition_overlap": (
+                "the first improve call occurs with the current DD chain live; each "
+                "later coarser DD is freed before improving dd2"
+            ),
+            "smoothSeparator": (
+                "runs after constructSeparator returns and releases the DD chain/map; "
+                "uses the base audit's separate later-phase accounting"
+            ),
+        },
+        "rows_N": rows,
+        "aggregated_nnz_Z": nnz,
+        "mpi_size_P": mpi_size,
+        "registered_N_Z_P": {"N": rows, "Z": expected_nnz, "P": mpi_size},
+        "component_formulas": {
+            "PETSc_triplets": "24*Z = 8*Z Int32 indices + 16*Z complex128 values",
+            "PORD_separator_graphs": "112*Z = 14*E-capacity arrays * 4 B, E<=2*Z",
+            "PORD_separator_linear_scratch_base_audit": "(583*N+12)*4 B Int32",
+            "gbisect_initialDDSep_helper_scratch": (
+                "max(2*N findPseudoPeripheralDomain, 4*N constructLevelSep)*4 B; "
+                "not simultaneous and dominated by the counted improveDDSep term"
+            ),
+            "gbisect_improveDDSep_simultaneous_scratch": (
+                "(4*N+2*(4*(N+1)))*4 = (12*N+8)*4 B Int32: four vectors "
+                "plus two buckets each with four N+1 arrays"
+            ),
+            "PORD_separator_linear_scratch_corrected": (
+                "((583*N+12)+(12*N+8))*4 = (595*N+20)*4 B Int32"
+            ),
+            "MUMPS_root_arrays": "76*N+28 B, source-derived Int32 arrays",
+            "all_rank_block_maps": "64*N B, 2*Int32*N on each of P ranks",
+            "priority_queue": "511*8 B on rank 0",
+        },
+        "component_bytes": {
+            "PETSc_triplets": triplet_bytes,
+            "PORD_separator_graphs": separator_graph_bytes,
+            "PORD_separator_linear_scratch": separator_linear_scratch_bytes,
+            "MUMPS_root_arrays": mumps_root_arrays_bytes,
+            "all_rank_block_maps": all_rank_block_map_bytes,
+            "priority_queue": priority_queue_bytes,
+        },
+        "linear_scratch_breakdown_bytes": {
+            "prior_583N_plus_12_audit_envelope": prior_separator_linear_scratch_bytes,
+            "gbisect_improveDDSep_additional_arrays": improve_dd_sep_scratch_bytes,
+            "corrected_595N_plus_20_envelope": separator_linear_scratch_bytes,
+        },
+        "gbisect_improveDDSep_scratch_elements": improve_dd_sep_scratch_elements,
+        "predicted_increment_bytes": predicted,
+        "delta_scope": (
+            "source-counted separator-phase arrays with rank sums counted once; "
+            "not RSS, not a hard upper bound, and not a numeric-fill estimate"
+        ),
+        "source_model_assumptions": {
+            "PORD_public_int_width_bytes": 4,
+            "PORD_width_basis": "installed PORD bridge/source audit; no 64-bit PORD indices",
+            "installed_compile_flags": "unknown; INFOG(7/32) do not prove internal compile constants",
+            "source_derived_options": (
+                "MULTISECTION/AMMF/AMMF/QMRDV/domain_size=200/msglvl=0 are source-derived "
+                "from the bound MUMPS 5.6.2 package, not runtime readback"
+            ),
+            "other_runtime_allocation_uncertainty": "covered only by policy W, not a proven bound",
+        },
+        "policy_screen_values": {
+            "bottom_registered_delta_bytes": _TASK041_W0P7_PORD_DELTA_BY_STAGE[
+                "task041.w0p7.p4.bottom"
+            ],
+            "top_registered_delta_bytes": _TASK041_W0P7_PORD_DELTA_BY_STAGE[
+                "task041.w0p7.p4.top"
+            ],
+        },
+    }
+
+
 def _task041_w0p7_stage_budget_projection(
     *,
     stage: str,
@@ -2063,9 +2338,17 @@ def _task041_w0p7_stage_budget_projection(
     workspace_audit_complete: bool,
     global_nnz: int | None = None,
     mpi_size: int = 8,
+    ordering_profile: str | None = None,
+    source_model_identity: str | None = None,
 ) -> dict[str, Any]:
     """Screen the next stage from fresh B plus one source-derived increment."""
 
+    if ordering_profile is None:
+        ordering_profile = (
+            "sequential_amd_deferred_p4"
+            if identity in _TASK041_W0P7_P4_STAGE_IDENTITIES
+            else "existing_one_cell_default"
+        )
     reasons: list[str] = []
     source_model: dict[str, Any] | None = None
     stage_delta_bytes = None
@@ -2083,6 +2366,22 @@ def _task041_w0p7_stage_budget_projection(
         reasons.append("stage lacks registered matrix identity")
     if workspace_audit_complete is not True:
         reasons.append("source path or caller-workspace audit is not complete")
+    if ordering_profile not in {
+        "sequential_amd_deferred_p4",
+        "sequential_pord_deferred_p4",
+        "existing_one_cell_default",
+    }:
+        reasons.append("factor ordering profile is not registered")
+    elif ordering_profile == "sequential_pord_deferred_p4":
+        if source_model_identity != W0P7_PORD_SOURCE_MODEL_ID:
+            reasons.append("PORD source-model identity is absent or mismatched")
+        if identity not in _TASK041_W0P7_P4_STAGE_IDENTITIES:
+            reasons.append("PORD source model is limited to deferred W0.7 P4 sides")
+    elif ordering_profile == "existing_one_cell_default":
+        if identity != "task041.w0p7.one_cell_traction" or source_model_identity is not None:
+            reasons.append("existing one-cell ordering cannot use the PORD source model")
+    elif source_model_identity is not None:
+        reasons.append("PORD source-model identity cannot be attached to AMD mode")
     if (
         type(cap_bytes) is not int
         or type(warning_bytes) is not int
@@ -2112,21 +2411,42 @@ def _task041_w0p7_stage_budget_projection(
                     raise Task041ModePrepError(
                         "live matrix row count differs from the registered P4 identity"
                     )
-                source_model = _task041_w0p7_amd_symbolic_source_model(
-                    rows=global_rows,
-                    nnz=global_nnz,
-                    mpi_size=mpi_size,
-                )
+                if ordering_profile == "sequential_amd_deferred_p4":
+                    source_model = _task041_w0p7_amd_symbolic_source_model(
+                        rows=global_rows,
+                        nnz=global_nnz,
+                        mpi_size=mpi_size,
+                    )
+                elif ordering_profile == "sequential_pord_deferred_p4":
+                    source_model = _task041_w0p7_pord_symbolic_source_model(
+                        identity=identity,
+                        rows=global_rows,
+                        nnz=global_nnz,
+                        mpi_size=mpi_size,
+                        source_model_identity=source_model_identity,
+                    )
+                else:
+                    raise Task041ModePrepError(
+                        "P4 symbolic model requires a registered ordering profile"
+                    )
             except (Task041ModePrepError, TypeError) as exc:
-                reasons.append(f"AMD source-counted symbolic model unavailable: {exc}")
+                reasons.append(
+                    f"{ordering_profile} source-counted symbolic model unavailable: {exc}"
+                )
             if source_model is not None:
                 stage_delta_bytes = source_model["predicted_increment_bytes"]
                 projected_bytes = b_live_bytes + stage_delta_bytes
                 basis = (
-                    "max source-counted phase for this matrix using actual N, one "
-                    "rank-summed Z, P, measured COL_LMATRIX_T descriptor size, and "
-                    "DETERMINISTIC_PARALLEL_GRAPH included conservatively; no prior "
-                    "numeric factor calibration is required"
+                    "PORD separator-phase source-counted arrays for this exact registered "
+                    "N/Z/P, including triplets, PORD graph/scratch, MUMPS root arrays, "
+                    "rank maps, and queue. This is not an RSS bound or numeric estimate"
+                    if ordering_profile == "sequential_pord_deferred_p4"
+                    else (
+                        "max AMD source-counted phase for this matrix using actual N, one "
+                        "rank-summed Z, P, measured COL_LMATRIX_T descriptor size, and "
+                        "DETERMINISTIC_PARALLEL_GRAPH included conservatively; no prior "
+                        "numeric factor calibration is required"
+                    )
                 )
         else:
             reasons.append("unrecognized pre-symbolic stage")
@@ -2178,6 +2498,8 @@ def _task041_w0p7_stage_budget_projection(
         "projected_peak_bytes": projected_bytes,
         "stage_delta_bytes": stage_delta_bytes,
         "source_derived_symbolic_model": source_model,
+        "ordering_profile": ordering_profile,
+        "source_model_identity": source_model_identity,
         "INFOG17_sum_ranks_raw_one_copy": info17_sum_ranks_raw,
         "INFOG17_sum_ranks_bytes_one_copy": info17_bytes,
         "bottom_INFOG19_sum_ranks_bytes_one_copy": None,
@@ -2284,6 +2606,22 @@ def _build_task041_w0p7_stage_factory(
     bridge_path = Path(extension_path).expanduser().resolve(strict=True)
     bridge_sha = hashlib.sha256(bridge_path.read_bytes()).hexdigest()
     bridge = load_lu_stage_bridge(bridge_path)
+    if (
+        np.dtype(PETSc.ScalarType) != np.dtype(np.complex128)
+        or np.dtype(PETSc.IntType).name != "int32"
+        or np.dtype(PETSc.IntType).itemsize != 4
+        or getattr(bridge, "petsc_int_sizeof", None) != 4
+        or list(map(int, PETSc.Sys.getVersion()[:3])) != [3, 19, 6]
+        or [
+            int(getattr(bridge, "mumps_package_version_major", -1)),
+            int(getattr(bridge, "mumps_package_version_minor", -1)),
+            int(getattr(bridge, "mumps_package_version_subminor", -1)),
+        ]
+        != [5, 6, 2]
+    ):
+        raise Task041ModePrepError(
+            "W0.7 PORD candidate requires PETSc 3.19.6/MUMPS 5.6.2 complex128/Int32"
+        )
     if (
         not isinstance(supervisor_memory_binding, Mapping)
         or supervisor_memory_binding.get("schema")
@@ -2412,8 +2750,16 @@ def _build_task041_w0p7_stage_factory(
                 "post_symbolic_mumps_control_readback"
             )
         is_p4_stage = identity in _TASK041_W0P7_P4_STAGE_IDENTITIES
+        stage_ordering_profile = (
+            _TASK041_W0P7_PORD_ORDERING_PROFILE
+            if is_p4_stage
+            else "existing_one_cell_default"
+        )
+        stage_source_model_identity = (
+            W0P7_PORD_SOURCE_MODEL_ID if is_p4_stage else None
+        )
         control_errors = (
-            _task041_w0p7_amd_control_errors(
+            _task041_w0p7_pord_control_errors(
                 control_readback,
                 expected_comm_rank=int(comm.rank),
             )
@@ -2422,11 +2768,14 @@ def _build_task041_w0p7_stage_factory(
         )
         if is_p4_stage and stage == "after_symbolic_before_numeric":
             control_errors.extend(
-                _task041_w0p7_post_symbolic_control_errors(post_control_readback)
+                _task041_w0p7_pord_post_symbolic_control_errors(
+                    post_control_readback
+                )
             )
         ordering_errors = (
             _task041_w0p7_analysis_ordering_errors(
                 analysis_info,
+                ordering_profile=_TASK041_W0P7_PORD_ORDERING_PROFILE,
                 expected_comm_rank=int(comm.rank),
             )
             if is_p4_stage and stage == "after_symbolic_before_numeric"
@@ -2445,6 +2794,12 @@ def _build_task041_w0p7_stage_factory(
             "expected_cpu": expected_rank_cpus[int(comm.rank)],
             "stage": stage,
             "identity": identity,
+            "ordering_profile": stage_ordering_profile,
+            "source_model_binding": (
+                control_readback.get("source_model_binding")
+                if isinstance(control_readback, Mapping)
+                else None
+            ),
             "icntl14": context.get("icntl14_requested"),
             "global_size": global_size,
             "row_ownership": row_range,
@@ -2732,6 +3087,8 @@ def _build_task041_w0p7_stage_factory(
                     key: value for key, value in profile.items() if key != "comm_rank"
                 }
             signature_record: dict[str, Any] = {
+                "ordering_profile": readback.get("profile"),
+                "source_model_binding": readback.get("source_model_binding"),
                 "requested_controls": readback.get("requested_controls"),
                 "cached_readback": readback.get("cached_readback"),
                 "source_derived_effective_inputs": readback.get(
@@ -2792,6 +3149,8 @@ def _build_task041_w0p7_stage_factory(
             workspace_audit_complete=workspace_audit_complete,
             global_nnz=global_nnz,
             mpi_size=int(comm.size),
+            ordering_profile=stage_ordering_profile,
+            source_model_identity=stage_source_model_identity,
         )
         estimate_bytes = budget.get("stage_delta_bytes")
         basis = budget.get("stage_delta_basis")
@@ -2813,13 +3172,13 @@ def _build_task041_w0p7_stage_factory(
         if context.get("icntl14_requested") != icntl14_by_stage.get(str(identity)):
             reasons.append("ICNTL14_mismatch")
         if is_p4_stage and not source_control_pass:
-            reasons.append("public_MUMPS_inputs_do_not_match_source_derived_AMD_path")
+            reasons.append("public_MUMPS_inputs_do_not_match_source_derived_PORD_path")
         if (
             is_p4_stage
             and analysis_ordering_required
             and analysis_ordering_pass is not True
         ):
-            reasons.append("INFOG7_or_INFOG32_did_not_confirm_sequential_AMD")
+            reasons.append("INFOG7_or_INFOG32_did_not_confirm_sequential_PORD")
         if not matrix_pass:
             reasons.append("matrix_rows_ownership_or_NNZ_mismatch")
         if not live_pass or not release_pass:
@@ -2845,6 +3204,38 @@ def _build_task041_w0p7_stage_factory(
         if not cgroup_room:
             reasons.append("cgroup ancestor headroom is insufficient or unknown")
         passed = not reasons
+        source_derived_internal_keeps = dict(
+            _TASK041_W0P7_MUMPS_MEMORY_AUDIT["source_derived_internal_keeps"]
+        )
+        if is_p4_stage:
+            source_derived_internal_keeps["public_input_derivation"] = (
+                "ICNTL(5)=0, ICNTL(18)=3, ICNTL(28)=1 and ICNTL(7)=4 select "
+                "the assembled distributed input with the sequential in-package "
+                "PORD path. The actual public ICNTL(6) value is retained per rank; "
+                "this exact distributed source route normalizes maximum transversal "
+                "to zero. For this exact source/version, sequential distributed input "
+                "derives KEEP(13)=-1/NBLK=N; KEEP(487)=1 retains LUMAT through graph "
+                "gathering; NSLAVES=8<=16 follows source default KEEP(39)=160000; "
+                "ICNTL(35)=0 derives KEEP(494)=0; ICNTL(19)=0 derives no Schur "
+                "allocation/KEEP(60)=0; sequential distributed input with P>1 derives "
+                "GCOMP_PROVIDED=true. These values are source-derived assumptions, "
+                "not runtime reads."
+            )
+        else:
+            source_derived_internal_keeps["public_input_derivation"] = (
+                "PORD-specific deferred-P4 source model is not applied to the "
+                "one-cell factor; its existing ordering and public controls remain "
+                "unchanged."
+            )
+        stage_source_model_binding = (
+            {
+                "identity": W0P7_PORD_SOURCE_MODEL_ID,
+                "audit_path": W0P7_PORD_SOURCE_MODEL_AUDIT_PATH,
+                "audit_sha256": W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256,
+            }
+            if is_p4_stage
+            else None
+        )
         rank_records = [
             {
                 key: row.get(key)
@@ -2855,6 +3246,8 @@ def _build_task041_w0p7_stage_factory(
                     "stage",
                     "identity",
                     "icntl14",
+                    "ordering_profile",
+                    "source_model_binding",
                     "global_size",
                     "row_ownership",
                     "column_ownership",
@@ -2878,6 +3271,8 @@ def _build_task041_w0p7_stage_factory(
             "schema": "task041.w0p7.factor_budget_gate.v2",
             "stage": stage,
             "stage_identity": identity,
+            "ordering_profile": stage_ordering_profile,
+            "source_model_binding": stage_source_model_binding,
             "pass": bool(passed),
             "reasons": reasons,
             "matrix": {
@@ -2909,6 +3304,9 @@ def _build_task041_w0p7_stage_factory(
             "bottom_factor_calibration": bottom_calibration,
             "workspace_audit": {
                 **_TASK041_W0P7_MUMPS_MEMORY_AUDIT,
+                "ordering_profile": stage_ordering_profile,
+                "source_model_binding": stage_source_model_binding,
+                "source_derived_internal_keeps": source_derived_internal_keeps,
                 "complete_for_registered_stage": workspace_audit_complete,
                 "analysis_ordering_runtime_status": (
                     "confirmed_before_numeric"
@@ -3031,10 +3429,12 @@ def _build_task041_w0p7_stage_factory(
             "task041.w0p7.p4.bottom",
             "task041.w0p7.p4.top",
         ),
-        sequential_amd_stage_identities=(
+        sequential_pord_stage_identities=(
             "task041.w0p7.p4.bottom",
             "task041.w0p7.p4.top",
         ),
+        pord_source_model_identity=W0P7_PORD_SOURCE_MODEL_ID,
+        pord_source_model_audit_sha256=W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256,
     )
 
     def gated_stage_factory(
@@ -3065,6 +3465,12 @@ def _build_task041_w0p7_stage_factory(
             "task041.w0p7.p4.bottom",
             "task041.w0p7.p4.top",
         ],
+        "ordering_profile": _TASK041_W0P7_PORD_ORDERING_PROFILE,
+        "source_model_binding": {
+            "identity": W0P7_PORD_SOURCE_MODEL_ID,
+            "audit_path": W0P7_PORD_SOURCE_MODEL_AUDIT_PATH,
+            "audit_sha256": W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256,
+        },
         "supervisor_memory_binding": dict(supervisor_memory_binding),
         "history_source": dict(_TASK041_W0P7_STAGE_EVIDENCE),
     }
