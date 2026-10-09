@@ -1,0 +1,19 @@
+{
+  "status": "SETTLED_CLOSED",
+  "returned_full_finite_fields": 1,
+  "formal_equation_pass": true,
+  "direct_target_pass": false,
+  "finite_joint_dual_normalization_pass": false,
+  "current_charged_seconds": 6873.262773961993,
+  "historical_known_lower_seconds": 261107.0775419553,
+  "research_known_cumulative_seconds": 267980.3403159173,
+  "success_chain_seconds": 4843.293469483964,
+  "prepared_start_seconds": 2058.551380519988,
+  "peak_sampled_tree_bytes": 58477637632,
+  "max_actual_sample_gap_seconds": 2.047918574186042,
+  "old_admitted_false_NOT_RUN_and_failed_costs_preserved": true,
+  "NN20": false,
+  "target_2TB_48h": false,
+  "closed": true,
+  "active": null
+}
