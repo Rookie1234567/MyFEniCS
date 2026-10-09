@@ -23,8 +23,13 @@ from src.solvers.hybrid_fem_modal_augmented_direct import (
 )
 from src.solvers.hybrid_fem_modal_iterative import create_hybrid_assembled_block_action
 from src.solvers.physical_balanced_h6 import H6_DEGREE, FixedH6
+from src.solvers.physical_balanced_physical_operator import (
+    P4PhysicalResidualGateError,
+)
 from src.solvers.physical_balanced_side_inverse import (
+    FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD,
     FixedH6ActiveTraceAction,
+    FixedPhysicalBalancedActiveTraceAction,
     SideBalancedInverse,
 )
 from src.test.test_241_task037b_hybrid_action_modal_schur import (
@@ -1640,6 +1645,14 @@ def test_side_balh_fixed_h6_modal_gmres_factory_keeps_true_outer_gates() -> None
         assert initial["preconditioner_identity"] == (
             "fixed_h6_modal_gmres_research"
         )
+        assert initial["modal_block_name"] == (
+            "fixed_h6_surrogate_on_demand_modal_gmres"
+        )
+        assert "modal_feedback_method" not in initial
+        assert "fixed_physical_balh_modal_solver" not in initial
+        assert initial["fixed_h6_modal_solver"]["method"] == (
+            "fixed_h6_modal_gmres_research"
+        )
         assert initial["modal_schur_materialized"] is False
         assert initial["modal_schur_column_count"] == 0
         assert initial["modal_schur"] is None
@@ -1814,6 +1827,264 @@ def test_side_balh_fixed_h6_modal_gmres_factory_keeps_true_outer_gates() -> None
             original_action.destroy()
         if original_context is not None:
             original_context.destroy()
+        _destroy_side_block_fixture(fixture)
+
+
+def test_side_balh_fixed_physical_action_matches_dense_and_borrows_factors() -> None:
+    fixture = _fixed_h6_side_block_fixture()
+    context = None
+    vectors: list[PETSc.Vec] = []
+    try:
+        side_inverses = (
+            fixture["bottom_inverse"],
+            fixture["top_inverse"],
+        )
+        for inverse in side_inverses:
+            inverse.configure_diagnostic_p4_corrections(
+                0, None, refinement_target_tolerance=5.0e-13
+            )
+            transfer = inverse._owner_transfer
+            assert transfer is not None
+
+            def project(source: PETSc.Vec, *, timing=None) -> PETSc.Vec:
+                del timing
+                result = source.duplicate()
+                source.copy(result)
+                first, last = map(int, result.getOwnershipRange())
+                local_rows = np.arange(first, last, dtype=np.int64)
+                retained = np.isin(local_rows, np.asarray([0, 1, 4, 5]))
+                result.getArray()[~retained] = PETSc.ScalarType(0.0)
+                result.assemble()
+                return result
+
+            transfer.apply_adjoint = project
+            transfer.apply_primal = project
+
+        p4_solve_calls: dict[str, list[dict[str, object]]] = {}
+        for side, inverse in zip(("bottom", "top"), side_inverses, strict=True):
+            factor = inverse._p4_factor
+            calls: list[dict[str, object]] = []
+            p4_solve_calls[side] = calls
+            original_solve = factor.solve_with_refinement
+
+            def capture_solve(
+                rhs: PETSc.Vec,
+                solution: PETSc.Vec,
+                *,
+                residual_tolerance: float,
+                _calls=calls,
+                _original_solve=original_solve,
+                **kwargs,
+            ):
+                _calls.append(
+                    {
+                        "residual_tolerance": residual_tolerance,
+                        **kwargs,
+                    }
+                )
+                return _original_solve(
+                    rhs,
+                    solution,
+                    residual_tolerance=residual_tolerance,
+                    **kwargs,
+                )
+
+            factor.solve_with_refinement = capture_solve
+
+        side_apply_counts_before = {
+            side: inverse.diagnostics["apply_count"]
+            for side, inverse in zip(("bottom", "top"), side_inverses, strict=True)
+        }
+        context = block_ldu.create_side_balh_block_ldu_preconditioner(
+            fixture["layout"],
+            fixture["bottom"],
+            fixture["top"],
+            fixture["coupling"],
+            side_inverses[0],
+            side_inverses[1],
+            sampled_columns=None,
+            sampled_column_roles=None,
+            sampled_column_contract_sha256=None,
+            fixed_h6_modal_gmres_research=True,
+            fixed_h6_modal_feedback_method=FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD,
+        )
+        inventory = context.inventory
+        assert inventory["preconditioner_identity"] == (
+            "fixed_physical_balh_once_modal_gmres_research"
+        )
+        assert inventory["modal_feedback_method"] == (
+            FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD
+        )
+        assert "fixed_h6_modal_solver" not in inventory
+        assert "fixed_h6_actions" not in inventory
+        gate = inventory["early_sample_gate"]
+        assert gate["pass"] is True
+        assert gate["mode"] == (
+            "fixed_physical_balh_modal_feedback_complex_repeat_linearity"
+        )
+        assert gate["rank_results"][MPI.COMM_WORLD.rank][
+            "operator_action_completions"
+        ] == 8
+        assert gate["rank_results"][MPI.COMM_WORLD.rank][
+            "modal_feedback_side_counts"
+        ]
+        for side, calls in p4_solve_calls.items():
+            assert calls
+            assert all(row["residual_tolerance"] == 1.0e-10 for row in calls)
+            assert all(row["diagnostic_correction_steps"] == 1 for row in calls)
+            assert all("refinement_target_tolerance" not in row for row in calls)
+            inverse = side_inverses[0 if side == "bottom" else 1]
+            assert inverse._p4_refinement_target_tolerance == 5.0e-13
+
+        modal_bundle = context.action_modal_schur_system
+        action = modal_bundle._side_actions[0]
+        assert type(action) is FixedPhysicalBalancedActiveTraceAction
+        dense_h6 = _tiny_h6_dense_action(side_inverses[0]._h6)
+        selected = np.asarray([0, 2, 4, 6], dtype=np.int64)
+        selector = np.zeros((len(selected), 8), dtype=np.complex128)
+        selector[np.arange(len(selected)), selected] = 1.0
+        q = np.diag(
+            np.asarray([row in {0, 1, 4, 5} for row in range(8)], dtype=np.float64)
+        ).astype(np.complex128)
+        identity = np.eye(8, dtype=np.complex128)
+        expected_matrix = (
+            selector
+            @ (q + (identity - q) @ dense_h6 @ (identity - q))
+            @ selector.conj().T
+        )
+        assert np.linalg.norm(expected_matrix) > 0.0
+
+        x = np.asarray(
+            [0.2 + 0.3j, -0.4 + 0.1j, 0.7 - 0.2j, -0.1 - 0.5j],
+            dtype=np.complex128,
+        )
+        y = np.asarray(
+            [-0.3 + 0.2j, 0.5 + 0.4j, -0.6 + 0.1j, 0.8 - 0.3j],
+            dtype=np.complex128,
+        )
+        alpha = -0.25 + 0.75j
+
+        def apply_active(values: np.ndarray) -> np.ndarray:
+            source = fixture["bottom"].A.createVecRight()
+            target = fixture["bottom"].A.createVecLeft()
+            vectors.extend((source, target))
+            _set_vector(source, values)
+            before = _gather_vector(source)
+            action.apply(source, target)
+            np.testing.assert_array_equal(_gather_vector(source), before)
+            return _gather_vector(target)
+
+        factor_counts_before = {
+            side: inverse._p4_factor.solve_count
+            for side, inverse in zip(("bottom", "top"), side_inverses, strict=True)
+        }
+        fx = apply_active(x)
+        fy = apply_active(y)
+        fxy = apply_active(x + y)
+        falpha = apply_active(alpha * x)
+        np.testing.assert_allclose(
+            fx, expected_matrix @ x, rtol=1.0e-11, atol=1.0e-12
+        )
+        np.testing.assert_allclose(
+            fy, expected_matrix @ y, rtol=1.0e-11, atol=1.0e-12
+        )
+        np.testing.assert_allclose(
+            fxy, expected_matrix @ (x + y), rtol=1.0e-11, atol=1.0e-12
+        )
+        np.testing.assert_allclose(
+            falpha, expected_matrix @ (alpha * x), rtol=1.0e-11, atol=1.0e-12
+        )
+        np.testing.assert_allclose(fxy, fx + fy, rtol=1.0e-11, atol=1.0e-12)
+        np.testing.assert_allclose(falpha, alpha * fx, rtol=1.0e-11, atol=1.0e-12)
+        for side, inverse in zip(("bottom", "top"), side_inverses, strict=True):
+            if side == "bottom":
+                assert inverse._p4_factor.solve_count - factor_counts_before[side] == 16
+            else:
+                assert inverse._p4_factor.solve_count == factor_counts_before[side]
+            assert inverse.diagnostics["apply_count"] == side_apply_counts_before[side]
+        assert action.audit["last_q_factor_solve_deltas"] == [2, 2]
+        assert action.audit["p4_refinement_target_tolerance_used"] is None
+        assert action.audit["ordinary_side_refinement_target_tolerance"] == 5.0e-13
+        assert action.audit["physical_residual_gate"] == 1.0e-10
+        assert action.audit["augmented_residual_gate"] == 1.0e-10
+        assert modal_bundle.diagnostics["method"] == (
+            "fixed_physical_balh_once_modal_gmres_research"
+        )
+        assert modal_bundle.diagnostics["feedback_method"] == (
+            FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD
+        )
+
+        failed_p4 = side_inverses[0]._p4_factor
+
+        def reject_residual(*_args, **_kwargs):
+            raise P4PhysicalResidualGateError(
+                {
+                    "relative_residual": 2.0e-10,
+                    "residual_tolerance": 1.0e-10,
+                    "physical_gate_passed": False,
+                    "augmented_gate_passed": False,
+                }
+            )
+
+        failed_p4.solve_with_refinement = reject_residual
+        source = fixture["bottom"].A.createVecRight()
+        target = fixture["bottom"].A.createVecLeft()
+        vectors.extend((source, target))
+        _set_vector(source, x)
+        source_before = _gather_vector(source)
+        with pytest.raises(P4PhysicalResidualGateError) as residual_error:
+            action.apply(source, target)
+        np.testing.assert_array_equal(_gather_vector(source), source_before)
+        assert residual_error.value.audit["relative_residual"] > 1.0e-10
+        assert failed_p4.destroy_count == 0
+        assert side_inverses[0]._h6._destroyed is False
+        assert action.audit["last_balh_coupling"]["status"] == "ACTION_FAILED"
+        assert action.audit["last_balh_coupling"]["live_after_cleanup"] == 0
+
+        context.destroy()
+        assert context.inventory["fixed_physical_balh_modal_solver"]["destroyed"] is True
+        for inverse in side_inverses:
+            assert inverse.diagnostics["destroyed"] is False
+            assert inverse._p4_factor.destroy_count == 0
+            assert inverse._h6._destroyed is False
+    finally:
+        if context is not None and not context._destroyed:
+            context.destroy()
+        for vector in vectors:
+            vector.destroy()
+        _destroy_side_block_fixture(fixture)
+
+
+def test_fixed_physical_action_is_rejected_by_unselected_or_mixed_modal_method() -> None:
+    fixture = _fixed_h6_side_block_fixture()
+    bottom_physical = fixture["bottom_inverse"].create_fixed_physical_balh_active_trace_action()
+    top_h6 = fixture["top_inverse"].create_fixed_h6_active_trace_action()
+    try:
+        with pytest.raises(
+            RuntimeError,
+            match="Fixed-H6 modal input preflight failed.*modal feedback actions do not match",
+        ):
+            block_ldu._FixedH6ModalKrylovSystem(
+                fixture["coupling"],
+                bottom_physical,
+                top_h6,
+                modal_owner=fixture["layout"].modal_owner,
+                feedback_method=None,
+            )
+        with pytest.raises(
+            RuntimeError,
+            match="Fixed-H6 modal input preflight failed.*modal feedback actions do not match",
+        ):
+            block_ldu._FixedH6ModalKrylovSystem(
+                fixture["coupling"],
+                bottom_physical,
+                top_h6,
+                modal_owner=fixture["layout"].modal_owner,
+                feedback_method=FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD,
+            )
+    finally:
+        for action in (top_h6, bottom_physical):
+            action.destroy()
         _destroy_side_block_fixture(fixture)
 
 

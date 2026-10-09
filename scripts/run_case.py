@@ -107,6 +107,12 @@ def _parser() -> argparse.ArgumentParser:
         help="opt into the registered Task041 fixed-H6 modal research candidate",
     )
     parser.add_argument(
+        "--task041-modal-feedback-method",
+        choices=("fixed_physical_balh_once",),
+        default=None,
+        help="select the explicitly registered W0.7 fixed physical BAL_H feedback",
+    )
+    parser.add_argument(
         "--task041-expected-rank-cpus",
         help="comma-separated frozen Task041 rank-to-CPU map (fixed-H6 only)",
     )
@@ -152,7 +158,11 @@ def main(argv: list[str] | None = None) -> int:
                 )
             except (TypeError, ValueError) as exc:
                 raise InputError(str(exc)) from exc
-        if args.task041_fixed_h6_modal_gmres_research or expected_rank_cpus is not None:
+        if (
+            args.task041_fixed_h6_modal_gmres_research
+            or expected_rank_cpus is not None
+            or args.task041_modal_feedback_method is not None
+        ):
             from benchmarks.task041_balh_workflow import (
                 task041_fixed_h6_modal_gmres_binding,
                 task041_fixed_h6_packet_source_binding,
@@ -180,6 +190,7 @@ def main(argv: list[str] | None = None) -> int:
                     p4_refinement_target_tolerance=target_tolerance,
                     task041_resource_policy=args.task041_resource_policy,
                     expected_rank_cpus=expected_rank_cpus,
+                    modal_feedback_method=args.task041_modal_feedback_method,
                 )
             except (TypeError, ValueError) as exc:
                 raise InputError(str(exc)) from exc
@@ -436,6 +447,7 @@ def main(argv: list[str] | None = None) -> int:
             fixed_h6_modal_gmres_research=(
                 args.task041_fixed_h6_modal_gmres_research
             ),
+            modal_feedback_method=args.task041_modal_feedback_method,
             expected_rank_cpus=expected_rank_cpus,
         )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))

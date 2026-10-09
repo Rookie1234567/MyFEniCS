@@ -3664,6 +3664,7 @@ def launch_specification(
     task041_p4_backend_pair_side: str | None = None,
     task041_resource_policy: str | None = None,
     fixed_h6_modal_gmres_research: bool = False,
+    modal_feedback_method: str | None = None,
     expected_rank_cpus: Sequence[int] | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
@@ -3700,7 +3701,11 @@ def launch_specification(
     fixed_h6_binding = None
     packet_source_binding = None
     model_id = str(specification.identity.get("model_id", ""))
-    if fixed_h6_modal_gmres_research or expected_rank_cpus is not None:
+    if (
+        fixed_h6_modal_gmres_research
+        or expected_rank_cpus is not None
+        or modal_feedback_method is not None
+    ):
         try:
             from benchmarks.task041_balh_workflow import (
                 task041_fixed_h6_modal_gmres_binding,
@@ -3726,6 +3731,7 @@ def launch_specification(
                 ),
                 task041_resource_policy=task041_resource_policy,
                 expected_rank_cpus=expected_rank_cpus,
+                modal_feedback_method=modal_feedback_method,
             )
         except (TypeError, ValueError) as exc:
             raise InputError(str(exc)) from exc
@@ -4109,6 +4115,15 @@ def launch_specification(
             TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
         )
         _write_json(run_directory / "run_manifest.json", manifest)
+    if modal_feedback_method is not None:
+        if fixed_h6_binding is None or fixed_h6_binding.get(
+            "modal_feedback_method"
+        ) != modal_feedback_method:
+            raise InputError(
+                "modal feedback request does not match the registered fixed-H6 binding"
+        )
+        manifest["modal_feedback_method"] = modal_feedback_method
+        _write_json(run_directory / "run_manifest.json", manifest)
     if packet_source_binding is not None:
         manifest["packet_source_binding"] = packet_source_binding
         _write_json(run_directory / "run_manifest.json", manifest)
@@ -4197,6 +4212,7 @@ def launch_specification(
                 fixed_h6_modal_gmres_research=(
                     fixed_h6_modal_gmres_research
                 ),
+                modal_feedback_method=modal_feedback_method,
                 expected_rank_cpus=expected_rank_cpus,
             )
         except OSError as exc:

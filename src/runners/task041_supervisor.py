@@ -239,6 +239,7 @@ def _load_task041_supervision_record(
     scope: str,
     representative_rhs_probe: Mapping[str, Any] | None,
     expected_fixed_h6_binding: Mapping[str, Any] | None = None,
+    expected_modal_feedback_method: str | None = None,
     expected_packet_source_binding: Mapping[str, Any] | None = None,
     expected_producer_execution: Mapping[str, Any] | None = None,
     side_setup_schedule: str | None = None,
@@ -292,6 +293,25 @@ def _load_task041_supervision_record(
     ):
         raise Task041SupervisorError(
             "default Task041 supervision record must not declare fixed-H6 identity",
+            classification="task041_identity_failure",
+            stage="supervision_record",
+        )
+    if expected_modal_feedback_method is not None:
+        if (
+            expected_fixed_h6_binding is None
+            or expected_modal_feedback_method != "fixed_physical_balh_once"
+            or expected_fixed_h6_binding.get("modal_feedback_method")
+            != expected_modal_feedback_method
+        ):
+            raise Task041SupervisorError(
+                "supervision method request is outside its fixed-H6 binding",
+                classification="task041_identity_failure",
+                stage="supervision_record",
+            )
+        expected["modal_feedback_method"] = expected_modal_feedback_method
+    elif "modal_feedback_method" in payload:
+        raise Task041SupervisorError(
+            "supervision record has an unexpected modal feedback method",
             classification="task041_identity_failure",
             stage="supervision_record",
         )
@@ -359,6 +379,7 @@ def _load_task041_supervision_record(
             if expected_fixed_h6_binding is not None
             else None
         ),
+        "modal_feedback_method": expected_modal_feedback_method,
         "packet_source_binding": (
             dict(expected_packet_source_binding)
             if expected_packet_source_binding is not None
@@ -1587,6 +1608,29 @@ def run_task041_supervised_public_command(
             classification="task041_identity_failure",
             stage="supervised_public_profile",
         )
+    expected_modal_feedback_method = profile_contract.get(
+        "modal_feedback_method"
+    )
+    if expected_modal_feedback_method is not None:
+        if (
+            expected_modal_feedback_method != "fixed_physical_balh_once"
+            or not isinstance(launch_manifest, Mapping)
+            or launch_manifest.get("modal_feedback_method")
+            != expected_modal_feedback_method
+        ):
+            raise Task041SupervisorError(
+                "supervised public method request differs from service launch binding",
+                classification="task041_identity_failure",
+                stage="supervised_public_profile",
+            )
+    elif isinstance(launch_manifest, Mapping) and (
+        "modal_feedback_method" in launch_manifest
+    ):
+        raise Task041SupervisorError(
+            "supervised public launch contains an unrequested modal feedback method",
+            classification="task041_identity_failure",
+            stage="supervised_public_profile",
+        )
     active_phase = profile_contract["active_consumer_phase"]
     if is_case_runtime:
         phase_budget = profile_contract["phase_budgets_seconds"][active_phase]
@@ -1666,6 +1710,11 @@ def run_task041_supervised_public_command(
             dict(resource_policy_binding)
             if isinstance(resource_policy_binding, Mapping)
             else None
+        ),
+        **(
+            {"modal_feedback_method": expected_modal_feedback_method}
+            if expected_modal_feedback_method is not None
+            else {}
         ),
         "budget": {
             "phase_group": active_phase,
@@ -8102,6 +8151,8 @@ def _consumer_result(
     expected_diagnostic_output: bool = False,
     expected_diagnostic_model_id: str | None = None,
     expected_fixed_h6_modal_gmres_research: bool = False,
+    expected_modal_feedback_method: str | None = None,
+    expected_fixed_h6_binding: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     summary_path = consumer_root / "consumer_summary.json"
     if not summary_path.is_file():
@@ -8131,8 +8182,13 @@ def _consumer_result(
         solve_inventory = (
             solve.get("inventory") if isinstance(solve, Mapping) else None
         )
+        solver_key = (
+            "fixed_physical_balh_modal_solver"
+            if expected_modal_feedback_method is not None
+            else "fixed_h6_modal_solver"
+        )
         fixed_solver = (
-            solve_inventory.get("fixed_h6_modal_solver")
+            solve_inventory.get(solver_key)
             if isinstance(solve_inventory, Mapping)
             else None
         )
@@ -8144,21 +8200,316 @@ def _consumer_result(
         solve_method = (
             fixed_solver.get("method") if isinstance(fixed_solver, Mapping) else None
         )
+        candidate_request = (
+            candidate_inventory.get("modal_feedback_method")
+            if isinstance(candidate_inventory, Mapping)
+            else None
+        )
+        solve_request = (
+            fixed_solver.get("modal_feedback_method")
+            if isinstance(fixed_solver, Mapping)
+            else None
+        )
+        summary_request = summary.get("modal_feedback_method")
+        expected_action_method = (
+            "fixed_physical_balh_once_modal_gmres_research"
+            if expected_modal_feedback_method is not None
+            else "fixed_h6_modal_gmres_research"
+        )
+        expected_qualification_method = (
+            "fixed_physical_balh_once_modal_gmres_research_with_original_outer_fgmres"
+            if expected_modal_feedback_method is not None
+            else "fixed_h6_modal_gmres_research_with_original_outer_fgmres"
+        )
+        expected_operator = (
+            "C-PbJb[Qb+(I-QbA6b)H6b(I-A6bQb)]Jb^H Tb-"
+            "PtJt[Qt+(I-QtA6t)H6t(I-A6tQt)]Jt^H Tt"
+            if expected_modal_feedback_method is not None
+            else "C-PbJbH6bJb^H Tb-PtJtH6tJt^H Tt"
+        )
+        expected_side_action_method = (
+            expected_modal_feedback_method
+            if expected_modal_feedback_method is not None
+            else "fixed_h6_active_trace"
+        )
+        expected_side_operator_identity = (
+            "borrowed_fixed_physical_balh_active_trace"
+            if expected_modal_feedback_method is not None
+            else "borrowed_fixed_h6_active_trace_J_H6_JH"
+        )
+        summary_binding = summary.get("modal_feedback_binding")
+        candidate_binding = (
+            candidate_inventory.get("modal_feedback_binding")
+            if isinstance(candidate_inventory, Mapping)
+            else None
+        )
+        registered_binding_matches = (
+            summary.get("fixed_h6_modal_gmres_research")
+            == dict(expected_fixed_h6_binding)
+            if isinstance(expected_fixed_h6_binding, Mapping)
+            else expected_modal_feedback_method is None
+        )
+        solver_inventory_exclusive = bool(
+            isinstance(solve_inventory, Mapping)
+            and (
+                "fixed_h6_modal_solver" not in solve_inventory
+                if expected_modal_feedback_method is not None
+                else "fixed_physical_balh_modal_solver" not in solve_inventory
+            )
+        )
+        qualification_method_valid = True
+        if expected_modal_feedback_method is None:
+            pure_qualification_method = summary.get("qualification_method")
+            pure_solver_operator = (
+                fixed_solver.get("operator")
+                if isinstance(fixed_solver, Mapping)
+                else None
+            )
+            feedback_binding_valid = (
+                summary_binding in (None, {})
+                and candidate_binding in (None, {})
+                and summary_request in (None,)
+                and candidate_request in (None,)
+                and solve_request in (None,)
+                and summary.get("qualification_method")
+                != "fixed_physical_balh_once_modal_gmres_research_with_original_outer_fgmres"
+            )
+            side_actions_valid = bool(
+                not isinstance(fixed_solver, Mapping)
+                or (
+                    "fixed_physical_balh_actions" not in fixed_solver
+                    and fixed_solver.get("method")
+                    == "fixed_h6_modal_gmres_research"
+                    and fixed_solver.get("feedback_method") in (None,)
+                    and pure_solver_operator
+                    in (
+                        None,
+                        "C-PbJbH6bJb^H Tb-PtJtH6tJt^H Tt",
+                    )
+                )
+            )
+            if pure_qualification_method is None:
+                qualification_method_valid = True
+            else:
+                qualification_method_valid = (
+                    pure_qualification_method
+                    == "fixed_h6_modal_gmres_research_with_original_outer_fgmres"
+                )
+        else:
+            from src.solvers.petsc_lu_stage import (
+                W0P7_PORD_SOURCE_MODEL_AUDIT_PATH,
+                W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256,
+                W0P7_PORD_SOURCE_MODEL_ID,
+            )
+
+            def valid_feedback_binding(value: Any) -> bool:
+                if not isinstance(value, Mapping):
+                    return False
+                factor_stage = value.get("factor_stage_binding")
+                source_model = (
+                    factor_stage.get("source_model_binding")
+                    if isinstance(factor_stage, Mapping)
+                    else None
+                )
+                return bool(
+                    value.get("schema")
+                    == "task041.w0p7.fixed_physical_balh_modal_feedback_binding.v1"
+                    and value.get("method") == expected_modal_feedback_method
+                    and value.get("modal_feedback_method")
+                    == expected_modal_feedback_method
+                    and value.get("model_id")
+                    == (expected_fixed_h6_binding or {}).get("model_id")
+                    and value.get("operator")
+                    == "J[Q+(I-QA6)H6(I-A6Q)]J^H"
+                    and value.get("registered_fixed_h6_binding")
+                    == dict(expected_fixed_h6_binding or {})
+                    and isinstance(factor_stage, Mapping)
+                    and _valid_sha(factor_stage.get("bridge_sha256"), 64)
+                    and factor_stage.get("ordering_profile")
+                    == "sequential_pord_deferred_p4"
+                    and isinstance(source_model, Mapping)
+                    and source_model.get("identity")
+                    == W0P7_PORD_SOURCE_MODEL_ID
+                    and source_model.get("audit_path")
+                    == W0P7_PORD_SOURCE_MODEL_AUDIT_PATH
+                    and source_model.get("audit_sha256")
+                    == W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256
+                    and factor_stage.get("expected_rank_cpus")
+                    == (expected_fixed_h6_binding or {}).get(
+                        "expected_rank_cpus"
+                    )
+                    and factor_stage.get("deferred_numeric_stage_identities")
+                    == ["task041.w0p7.p4.bottom", "task041.w0p7.p4.top"]
+                )
+
+            side_actions = (
+                fixed_solver.get("fixed_physical_balh_actions")
+                if isinstance(fixed_solver, Mapping)
+                else None
+            )
+            side_actions_valid = bool(
+                isinstance(side_actions, Mapping)
+                and set(side_actions) == {"bottom", "top"}
+                and "fixed_h6_actions" not in fixed_solver
+                and all(
+                    isinstance(side_actions.get(side), Mapping)
+                    and side_actions[side].get("method")
+                    == expected_side_action_method
+                    and side_actions[side].get("operator_identity")
+                    == expected_side_operator_identity
+                    for side in ("bottom", "top")
+                )
+            )
+
+            feedback_binding_valid = bool(
+                summary_request == expected_modal_feedback_method
+                and candidate_request == expected_modal_feedback_method
+                and solve_request == expected_modal_feedback_method
+                and valid_feedback_binding(summary_binding)
+                and valid_feedback_binding(candidate_binding)
+                and dict(summary_binding) == dict(candidate_binding)
+            )
         fixed_h6_method_validation = {
             "pass": bool(
-                candidate_method == "fixed_h6_modal_gmres_research"
-                and solve_method == "fixed_h6_modal_gmres_research"
+                candidate_method == expected_action_method
+                and solve_method == expected_action_method
+                and isinstance(fixed_solver, Mapping)
+                and (
+                    fixed_solver.get("operator") == expected_operator
+                    if expected_modal_feedback_method is not None
+                    else fixed_solver.get("operator")
+                    in (None, expected_operator)
+                )
+                and fixed_solver.get("feedback_method")
+                == expected_modal_feedback_method
+                and (
+                    summary.get("qualification_method")
+                    == expected_qualification_method
+                    if expected_modal_feedback_method is not None
+                    else qualification_method_valid
+                )
+                and registered_binding_matches
+                and solver_inventory_exclusive
+                and feedback_binding_valid
+                and side_actions_valid
             ),
             "candidate_inventory_method": candidate_method,
             "solve_inventory_method": solve_method,
+            "expected_modal_feedback_method": expected_modal_feedback_method,
+            "summary_modal_feedback_method": summary_request,
+            "candidate_modal_feedback_method": candidate_request,
+            "solve_modal_feedback_method": solve_request,
+            "registered_fixed_h6_binding_match": registered_binding_matches,
+            "solver_inventory_exclusive": solver_inventory_exclusive,
+            "feedback_binding_match": feedback_binding_valid,
+            "side_actions_match": side_actions_valid,
+            "operator_match": (
+                isinstance(fixed_solver, Mapping)
+                and (
+                    fixed_solver.get("operator") == expected_operator
+                    if expected_modal_feedback_method is not None
+                    else fixed_solver.get("operator")
+                    in (None, expected_operator)
+                )
+            ),
             "candidate_inventory_pointer": (
                 "/setup/candidate_inventory/modal_inner_method"
             ),
             "solve_inventory_pointer": (
-                "/setup/full_formal/solve/inventory/"
-                "fixed_h6_modal_solver/method"
+                "/setup/full_formal/solve/inventory/modal_inner_solver/method"
             ),
         }
+    modal_feedback_request_valid = True
+    if expected_modal_feedback_method is not None and not (
+        expected_fixed_h6_modal_gmres_research
+    ):
+        modal_feedback_request_valid = False
+    elif (
+        expected_modal_feedback_method is None
+        and not expected_fixed_h6_modal_gmres_research
+    ):
+        setup_for_unrequested_method = summary.get("setup")
+        candidate_for_unrequested_method = (
+            setup_for_unrequested_method.get("candidate_inventory")
+            if isinstance(setup_for_unrequested_method, Mapping)
+            else None
+        )
+        formal_for_unrequested_method = (
+            setup_for_unrequested_method.get("full_formal")
+            if isinstance(setup_for_unrequested_method, Mapping)
+            else None
+        )
+        solve_for_unrequested_method = (
+            formal_for_unrequested_method.get("solve")
+            if isinstance(formal_for_unrequested_method, Mapping)
+            else None
+        )
+        inventory_for_unrequested_method = (
+            solve_for_unrequested_method.get("inventory")
+            if isinstance(solve_for_unrequested_method, Mapping)
+            else None
+        )
+        solver_for_unrequested_method = (
+            inventory_for_unrequested_method.get("fixed_h6_modal_solver")
+            if isinstance(inventory_for_unrequested_method, Mapping)
+            else None
+        )
+        modal_feedback_request_valid = bool(
+            summary.get("modal_feedback_method") is None
+            and summary.get("modal_feedback_binding") in (None, {})
+            and summary.get("qualification_method")
+            != "fixed_physical_balh_once_modal_gmres_research_with_original_outer_fgmres"
+            and not (
+                isinstance(candidate_for_unrequested_method, Mapping)
+                and (
+                    candidate_for_unrequested_method.get(
+                        "modal_feedback_method"
+                    )
+                    is not None
+                    or candidate_for_unrequested_method.get(
+                        "modal_feedback_binding"
+                    )
+                    not in (None, {})
+                    or candidate_for_unrequested_method.get("modal_inner_method")
+                    == "fixed_physical_balh_once_modal_gmres_research"
+                )
+            )
+            and not (
+                isinstance(inventory_for_unrequested_method, Mapping)
+                and "fixed_physical_balh_modal_solver"
+                in inventory_for_unrequested_method
+            )
+            and not (
+                isinstance(solver_for_unrequested_method, Mapping)
+                and (
+                    solver_for_unrequested_method.get("modal_feedback_method")
+                    is not None
+                    or solver_for_unrequested_method.get("feedback_method")
+                    is not None
+                    or "fixed_physical_balh_actions" in solver_for_unrequested_method
+                    or solver_for_unrequested_method.get("method")
+                    == "fixed_physical_balh_once_modal_gmres_research"
+                )
+            )
+            and not (
+                isinstance(solver_for_unrequested_method, Mapping)
+                and solver_for_unrequested_method.get("operator")
+                == "C-PbJb[Qb+(I-QbA6b)H6b(I-A6bQb)]Jb^H Tb-"
+                "PtJt[Qt+(I-QtA6t)H6t(I-A6tQt)]Jt^H Tt"
+            )
+            and not (
+                isinstance(candidate_for_unrequested_method, Mapping)
+                and candidate_for_unrequested_method.get("modal_inner_method")
+                == "fixed_physical_balh_once_modal_gmres_research"
+            )
+            and not (
+                isinstance(solve_for_unrequested_method, Mapping)
+                and solve_for_unrequested_method.get("method")
+                == "fixed_physical_balh_once_modal_gmres_research"
+            )
+            and summary.get("qualification_method")
+            != "fixed_physical_balh_once_modal_gmres_research_with_original_outer_fgmres"
+        )
     markers = summary.get("markers")
     observed = markers.get("observed", []) if isinstance(markers, Mapping) else []
     lifecycle = summary.get("lifecycle")
@@ -8618,6 +8969,7 @@ def _consumer_result(
         and isinstance(gates, Mapping)
         and gates.get("pass") is True
         and regular_lifecycle_gate
+        and modal_feedback_request_valid
         and (
             not expected_fixed_h6_modal_gmres_research
             or (
@@ -8723,6 +9075,7 @@ def _consumer_result(
         "p4_refinement_target": refinement_target_record,
         "p4_refinement_target_validation": p4_refinement_target_validation,
         "fixed_h6_method_validation": fixed_h6_method_validation,
+        "modal_feedback_request_valid": modal_feedback_request_valid,
         "common_validation": common_validation,
         "completion_scope": (
             "p4_correction_replay"
@@ -9146,6 +9499,7 @@ def run_task041_public_supervisor(
     task041_p4_backend_pair_side: str | None = None,
     task041_resource_policy: str | None = None,
     fixed_h6_modal_gmres_research: bool = False,
+    modal_feedback_method: str | None = None,
     expected_rank_cpus: Sequence[int] | None = None,
 ) -> dict[str, Any]:
     """Run one Task041 consumer, optionally reusing a completed BAL_H producer."""
@@ -9172,6 +9526,8 @@ def run_task041_public_supervisor(
         "phase_results": {},
         "resource_authority": {"status": "not_sampled"},
     }
+    if modal_feedback_method is not None:
+        result["modal_feedback_method"] = modal_feedback_method
     git_identity: dict[str, Any] | None = None
     environment_snapshot: dict[str, Any] | None = None
     packet: dict[str, Any] | None = None
@@ -9226,7 +9582,11 @@ def run_task041_public_supervisor(
                 stage="fixed_h6_research",
             )
         fixed_h6_binding = None
-        if fixed_h6_modal_gmres_research or expected_rank_cpus is not None:
+        if (
+            fixed_h6_modal_gmres_research
+            or expected_rank_cpus is not None
+            or modal_feedback_method is not None
+        ):
             from benchmarks.task041_balh_workflow import (
                 task041_fixed_h6_modal_gmres_binding,
             )
@@ -9252,6 +9612,7 @@ def run_task041_public_supervisor(
                     ),
                     task041_resource_policy=task041_resource_policy,
                     expected_rank_cpus=expected_rank_cpus,
+                    modal_feedback_method=modal_feedback_method,
                 )
             except (TypeError, ValueError) as exc:
                 raise Task041SupervisorError(
@@ -9383,6 +9744,27 @@ def run_task041_public_supervisor(
                     classification="task041_identity_failure",
                     stage="fixed_h6_research",
                 )
+            if modal_feedback_method is not None:
+                if (
+                    fixed_h6_binding.get("modal_feedback_method")
+                    != modal_feedback_method
+                    or run_manifest.get("modal_feedback_method")
+                    != modal_feedback_method
+                ):
+                    raise Task041SupervisorError(
+                        "run manifest does not bind the requested W0.7 modal feedback method",
+                        classification="task041_identity_failure",
+                        stage="fixed_h6_research",
+                    )
+            elif (
+                "modal_feedback_method" in run_manifest
+                or "modal_feedback_method" in fixed_h6_binding
+            ):
+                raise Task041SupervisorError(
+                    "pure fixed-H6 run contains an unrequested modal feedback method",
+                    classification="task041_identity_failure",
+                    stage="fixed_h6_research",
+                )
             if packet_source_binding is not None:
                 if run_manifest.get("packet_source_binding") != packet_source_binding:
                     raise Task041SupervisorError(
@@ -9409,13 +9791,23 @@ def run_task041_public_supervisor(
                     stage="fixed_h6_research",
                 )
             result["fixed_h6_modal_gmres_research"] = fixed_h6_binding
+            if modal_feedback_method is not None:
+                result["modal_feedback_method"] = modal_feedback_method
             result["post_start_document_allowlist"] = expected_document_allowlist
-        elif expected_rank_cpus is not None:
+        elif expected_rank_cpus is not None or modal_feedback_method is not None:
             raise Task041SupervisorError(
-                "an explicit rank CPU map is limited to fixed-H6 research",
+                "modal feedback and explicit rank maps require fixed-H6 research",
                 classification="task041_identity_failure",
                 stage="fixed_h6_research",
             )
+        else:
+            default_run_manifest = _read_json(root / "run_manifest.json")
+            if "modal_feedback_method" in default_run_manifest:
+                raise Task041SupervisorError(
+                    "default route run manifest contains an unrequested modal feedback method",
+                    classification="task041_identity_failure",
+                    stage="fixed_h6_research",
+                )
         if task041_resource_policy is not None:
             from benchmarks.task041_balh_workflow import (
                 task041_v8_resource_policy_binding,
@@ -9844,6 +10236,7 @@ def run_task041_public_supervisor(
                     else None
                 ),
                 expected_fixed_h6_binding=fixed_h6_binding,
+                expected_modal_feedback_method=modal_feedback_method,
                 expected_packet_source_binding=packet_source_binding,
                 expected_producer_execution=(
                     case_runtime_contract.get("producer")
@@ -10645,6 +11038,7 @@ def run_task041_public_supervisor(
                     fixed_h6_modal_gmres_research=(
                         fixed_h6_binding is not None
                     ),
+                    modal_feedback_method=modal_feedback_method,
                     expected_rank_cpus=expected_rank_cpus,
                     packet_source_binding=(
                         packet_source_binding
@@ -10842,6 +11236,8 @@ def run_task041_public_supervisor(
                     expected_fixed_h6_modal_gmres_research=(
                         fixed_h6_binding is not None
                     ),
+                    expected_modal_feedback_method=modal_feedback_method,
+                    expected_fixed_h6_binding=fixed_h6_binding,
                 )
             except Task041SupervisorError as exc:
                 consumer_status = {
@@ -10926,6 +11322,8 @@ def run_task041_public_supervisor(
                 expected_fixed_h6_modal_gmres_research=(
                     fixed_h6_binding is not None
                 ),
+                expected_modal_feedback_method=modal_feedback_method,
+                expected_fixed_h6_binding=fixed_h6_binding,
             )
         except Task041SupervisorError as exc:
             consumer_status = {

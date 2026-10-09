@@ -796,11 +796,18 @@ def task041_fixed_h6_modal_gmres_binding(
     p4_refinement_target_tolerance: float | None,
     task041_resource_policy: str | None,
     expected_rank_cpus: Sequence[int] | None = None,
+    modal_feedback_method: str | None = None,
 ) -> dict[str, Any] | None:
     """Bind the default-off fixed-H6 route to registered V9 cases."""
 
     if not isinstance(enabled, bool):
         raise TypeError("fixed_h6_modal_gmres_research must be a boolean")
+    if modal_feedback_method not in (None, "fixed_physical_balh_once"):
+        raise ValueError("unsupported Task041 modal feedback method")
+    if modal_feedback_method is not None and not enabled:
+        raise ValueError(
+            "modal_feedback_method requires explicit fixed-H6 research opt-in"
+        )
     if not enabled:
         if model_id == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID:
             raise ValueError("the W0.7 reduced pilot requires fixed-H6 research")
@@ -825,6 +832,12 @@ def task041_fixed_h6_modal_gmres_binding(
         raise ValueError(
             "fixed-H6 research is limited to registered Task041 "
             "cell-condensed cases"
+        )
+    if modal_feedback_method is not None and (
+        model_id != TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+    ):
+        raise ValueError(
+            "fixed_physical_balh_once is limited to the registered W0.7 pilot"
         )
     case = task041_balh_case(model_id)
     service_contract = task041_balh_service_contract(model_id)
@@ -865,7 +878,7 @@ def task041_fixed_h6_modal_gmres_binding(
         raise ValueError(
             "fixed-H6 research requires an explicit frozen expected_rank_cpus map"
         )
-    return {
+    binding = {
         "method": "fixed_h6_modal_gmres_research",
         "model_id": model_id,
         "wavelength_nm": float(case["wavelength_nm"]),
@@ -881,6 +894,9 @@ def task041_fixed_h6_modal_gmres_binding(
         "expected_rank_cpus": list(supplied_cpus),
         "rank_cpu_map_source": "explicit_frozen_expected_rank_cpus",
     }
+    if modal_feedback_method is not None:
+        binding["modal_feedback_method"] = modal_feedback_method
+    return binding
 
 
 def task041_fixed_h6_packet_source_binding(
@@ -1420,6 +1436,7 @@ def build_task041_balh_candidate_consumer_command(
     p4_backend_pair_side: str | None = None,
     task041_resource_policy: str | None = None,
     fixed_h6_modal_gmres_research: bool = False,
+    modal_feedback_method: str | None = None,
     expected_rank_cpus: Sequence[int] | None = None,
     packet_source_binding: Mapping[str, Any] | None = None,
 ) -> list[str]:
@@ -1469,6 +1486,7 @@ def build_task041_balh_candidate_consumer_command(
         p4_refinement_target_tolerance=p4_refinement_target_tolerance,
         task041_resource_policy=task041_resource_policy,
         expected_rank_cpus=expected_rank_cpus,
+        modal_feedback_method=modal_feedback_method,
     )
     if packet_source_binding is not None:
         if (
@@ -1671,6 +1689,10 @@ def build_task041_balh_candidate_consumer_command(
                 ),
             ]
         )
+        if modal_feedback_method is not None:
+            command.extend(
+                ("--task041-modal-feedback-method", modal_feedback_method)
+            )
     if packet_source_binding is not None:
         command.extend(
             [
@@ -2183,6 +2205,11 @@ def _parser() -> argparse.ArgumentParser:
         "--task041-fixed-h6-modal-gmres-research",
         action="store_true",
     )
+    parser.add_argument(
+        "--task041-modal-feedback-method",
+        choices=("fixed_physical_balh_once",),
+        default=None,
+    )
     parser.add_argument("--task041-expected-rank-cpus")
     time_control = parser.add_mutually_exclusive_group()
     time_control.add_argument(
@@ -2236,6 +2263,7 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
         fixed_h6_modal_gmres_research=(
             args.task041_fixed_h6_modal_gmres_research
         ),
+        modal_feedback_method=args.task041_modal_feedback_method,
         expected_rank_cpus=task041_parse_expected_rank_cpus(
             args.task041_expected_rank_cpus
         ),

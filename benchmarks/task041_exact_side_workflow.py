@@ -1080,6 +1080,186 @@ def _task041_case_contract(
     }
 
 
+def _task041_w0p7_fixed_physical_balh_binding(
+    *,
+    model_id: str,
+    candidate: bool,
+    fixed_h6_binding: Mapping[str, Any] | None,
+    exact_one_cell_strategy: str | None,
+    factor_stage_factory: Callable[..., Any] | None,
+    factor_stage_binding: Mapping[str, Any] | None,
+    p4_inverse_backend: str,
+    p4_refinement_target_tolerance: float | None,
+    task041_resource_policy: str | None,
+    modal_feedback_method: str | None = None,
+    reuse_primal_route_plan: bool,
+    reuse_leading_ph_dual: bool,
+    use_anderson_modal_inner: bool,
+    complex_qr_research: bool,
+    capture_modal_solve_trace: bool,
+    p4_response_correction_steps: int,
+    p4_backend_pair_side: str | None,
+    representative_rhs_contract: Mapping[str, Any] | None,
+    performance_profile: str | None,
+    side_setup_schedule: str | None,
+    comparison_mode: str | None,
+    top_causal_replay: bool,
+    p4_correction_replay_from: str | Path | None,
+    a6_response_pair: bool,
+    same_g_modal_metric_pair: Mapping[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Select the fixed physical BAL_H action only for the staged W0.7 route."""
+
+    from benchmarks.task041_balh_workflow import TASK041_V8_SWAP_OBSERVE_CONTINUE
+    from src.io.input_validation import TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+    from src.solvers.petsc_lu_stage import (
+        W0P7_PORD_SOURCE_MODEL_AUDIT_PATH,
+        W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256,
+        W0P7_PORD_SOURCE_MODEL_ID,
+    )
+    from src.solvers.physical_balanced_side_inverse import (
+        FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD,
+    )
+
+    if modal_feedback_method is None:
+        if isinstance(fixed_h6_binding, Mapping) and (
+            "modal_feedback_method" in fixed_h6_binding
+        ):
+            raise Task041ModePrepError(
+                "fixed-H6 binding declares a modal feedback method that was not requested"
+            )
+        return None
+    if modal_feedback_method != FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD:
+        raise Task041ModePrepError("unsupported modal feedback method")
+    if model_id != TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID:
+        raise Task041ModePrepError(
+            "fixed_physical_balh_once is limited to the registered W0.7 pilot"
+        )
+    cpus = (
+        fixed_h6_binding.get("expected_rank_cpus")
+        if isinstance(fixed_h6_binding, Mapping)
+        else None
+    )
+    source_model = (
+        factor_stage_binding.get("source_model_binding")
+        if isinstance(factor_stage_binding, Mapping)
+        else None
+    )
+    service_binding = (
+        factor_stage_binding.get("supervisor_memory_binding")
+        if isinstance(factor_stage_binding, Mapping)
+        else None
+    )
+    expected_deferred_stages = [
+        "task041.w0p7.p4.bottom",
+        "task041.w0p7.p4.top",
+    ]
+    expected_source_model = {
+        "identity": W0P7_PORD_SOURCE_MODEL_ID,
+        "audit_path": W0P7_PORD_SOURCE_MODEL_AUDIT_PATH,
+        "audit_sha256": W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256,
+    }
+    valid = bool(
+        candidate is True
+        and isinstance(fixed_h6_binding, Mapping)
+        and fixed_h6_binding.get("method") == "fixed_h6_modal_gmres_research"
+        and fixed_h6_binding.get("modal_feedback_method")
+        == modal_feedback_method
+        and fixed_h6_binding.get("model_id") == model_id
+        and fixed_h6_binding.get("mpi_size") == TASK041_BALH_MPI_SIZE
+        and fixed_h6_binding.get("mode_count") == 400
+        and fixed_h6_binding.get("p4_inverse_backend") == "cell_condensed"
+        and fixed_h6_binding.get("p4_refinement_target_tolerance") == 5.0e-13
+        and fixed_h6_binding.get("task041_resource_policy")
+        == TASK041_V8_SWAP_OBSERVE_CONTINUE
+        and isinstance(cpus, list)
+        and len(cpus) == TASK041_BALH_MPI_SIZE
+        and all(type(cpu) is int for cpu in cpus)
+        and len(set(cpus)) == TASK041_BALH_MPI_SIZE
+        and fixed_h6_binding.get("expected_rank_cpus") == cpus
+        and exact_one_cell_strategy == "matched_uniform_axial_cell"
+        and callable(factor_stage_factory)
+        and isinstance(factor_stage_binding, Mapping)
+        and factor_stage_binding.get("expected_rank_cpus") == cpus
+        and _valid_sha(factor_stage_binding.get("bridge_sha256"), 64)
+        and factor_stage_binding.get("ordering_profile")
+        == "sequential_pord_deferred_p4"
+        and factor_stage_binding.get("deferred_numeric_stage_identities")
+        == expected_deferred_stages
+        and isinstance(source_model, Mapping)
+        and dict(source_model) == expected_source_model
+        and isinstance(service_binding, Mapping)
+        and isinstance(service_binding.get("invocation_id"), str)
+        and bool(service_binding.get("invocation_id"))
+        and _valid_sha(service_binding.get("source_sha"), 40)
+        and isinstance(service_binding.get("unit"), str)
+        and bool(service_binding.get("unit"))
+        and type(service_binding.get("supervisor_root_pid")) is int
+        and service_binding.get("supervisor_root_pid", 0) > 0
+        and p4_inverse_backend == "cell_condensed"
+        and p4_refinement_target_tolerance == 5.0e-13
+        and task041_resource_policy == TASK041_V8_SWAP_OBSERVE_CONTINUE
+        and reuse_primal_route_plan is False
+        and reuse_leading_ph_dual is False
+        and use_anderson_modal_inner is False
+        and complex_qr_research is False
+        and capture_modal_solve_trace is False
+        and p4_response_correction_steps == 0
+        and p4_backend_pair_side is None
+        and representative_rhs_contract is None
+        and performance_profile is None
+        and side_setup_schedule is None
+        and comparison_mode is None
+        and top_causal_replay is False
+        and p4_correction_replay_from is None
+        and a6_response_pair is False
+        and same_g_modal_metric_pair is None
+    )
+    if not valid:
+        raise Task041ModePrepError(
+            "fixed physical BAL_H feedback requires the registered W0.7 matched-cell, "
+            "cell-condensed, staged fixed-H6 consumer with no route reuse or "
+            "conflicting diagnostic mode"
+        )
+    return {
+        "schema": "task041.w0p7.fixed_physical_balh_modal_feedback_binding.v1",
+        "method": FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD,
+        "modal_feedback_method": modal_feedback_method,
+        "selection_source": "registered_w0p7_matched_cell_fixed_h6_consumer",
+        "model_id": model_id,
+        "operator": "J[Q+(I-QA6)H6(I-A6Q)]J^H",
+        "exact_one_cell_strategy": exact_one_cell_strategy,
+        "registered_fixed_h6_binding": dict(fixed_h6_binding),
+        "factor_stage_binding": {
+            "bridge_sha256": factor_stage_binding["bridge_sha256"],
+            "expected_rank_cpus": list(cpus),
+            "ordering_profile": factor_stage_binding["ordering_profile"],
+            "source_model_binding": dict(source_model),
+            "deferred_numeric_stage_identities": list(
+                factor_stage_binding.get("deferred_numeric_stage_identities", ())
+            ),
+            "invocation_id": service_binding["invocation_id"],
+            "source_sha": service_binding["source_sha"],
+            "unit": service_binding["unit"],
+            "supervisor_root_pid": service_binding["supervisor_root_pid"],
+        },
+        "p4_q_policy": {
+            "same_live_factor": True,
+            "same_factor_corrections_per_q": 1,
+            "configured_side_target_tolerance": 5.0e-13,
+            "effective_target_tolerance_per_q": None,
+            "physical_and_augmented_residual_gate": 1.0e-10,
+        },
+        "inner_solver_contract": {
+            "rtol": 1.0e-3,
+            "max_it": 8,
+            "solver_matmult_limit": 9,
+            "total_matmult_limit_including_final": 10,
+        },
+        "fallback": False,
+    }
+
+
 def _task041_mesh_identity() -> dict[str, Any]:
     return {
         "cell_type": "hexahedron",
@@ -7656,6 +7836,10 @@ def _run_task041_balh_candidate_setup(
     a6_response_pair: bool = False,
     use_anderson_modal_inner: bool = False,
     fixed_h6_modal_gmres_research: bool = False,
+    modal_feedback_method: str | None = None,
+    modal_feedback_binding: Mapping[str, Any] | None = None,
+    exact_one_cell_strategy: str | None = None,
+    factor_stage_binding: Mapping[str, Any] | None = None,
     reuse_primal_route_plan: bool = False,
     reuse_leading_ph_dual: bool = False,
     factor_stage_factory: Callable[..., Any] | None = None,
@@ -7814,6 +7998,42 @@ def _run_task041_balh_candidate_setup(
                 "Task041 MPI8 V8 candidates with their registered P4 target and "
                 "no conflicting diagnostic mode"
             )
+    expected_modal_feedback_binding = _task041_w0p7_fixed_physical_balh_binding(
+        model_id=(
+            str(identity.get("model_id", ""))
+            if isinstance(identity, Mapping)
+            else ""
+        ),
+        candidate=True,
+        fixed_h6_binding=fixed_h6_binding,
+        exact_one_cell_strategy=exact_one_cell_strategy,
+        factor_stage_factory=factor_stage_factory,
+        factor_stage_binding=factor_stage_binding,
+        p4_inverse_backend=p4_inverse_backend,
+        p4_refinement_target_tolerance=p4_refinement_target_tolerance,
+        task041_resource_policy=task041_resource_policy,
+        modal_feedback_method=modal_feedback_method,
+        reuse_primal_route_plan=reuse_primal_route_plan,
+        reuse_leading_ph_dual=reuse_leading_ph_dual,
+        use_anderson_modal_inner=use_anderson_modal_inner,
+        complex_qr_research=complex_qr_research,
+        capture_modal_solve_trace=capture_modal_solve_trace,
+        p4_response_correction_steps=p4_response_correction_steps,
+        p4_backend_pair_side=p4_backend_pair_side,
+        representative_rhs_contract=representative_rhs_contract,
+        performance_profile=performance_profile,
+        side_setup_schedule=side_setup_schedule,
+        comparison_mode=comparison_mode,
+        top_causal_replay=top_causal_replay,
+        p4_correction_replay_from=p4_correction_replay_from,
+        a6_response_pair=a6_response_pair,
+        same_g_modal_metric_pair=same_g_modal_metric_pair,
+    )
+    if expected_modal_feedback_binding != modal_feedback_binding:
+        raise Task041ModePrepError(
+            "candidate modal-feedback selection differs from the registered W0.7 binding"
+        )
+    fixed_physical_balh_selected = expected_modal_feedback_binding is not None
     if use_anderson_modal_inner and (
         not isinstance(identity, Mapping)
         or str(identity.get("model_id"))
@@ -15753,10 +15973,21 @@ def _run_task041_balh_candidate_setup(
                 **(
                     {
                         "modal_action_mode": (
-                            "fixed_h6_surrogate_on_demand_modal_gmres"
+                            "fixed_physical_balh_once_on_demand_modal_gmres"
+                            if fixed_physical_balh_selected
+                            else "fixed_h6_surrogate_on_demand_modal_gmres"
                         ),
                         "modal_schur_materialized": False,
                         "modal_schur_column_count": 0,
+                        **(
+                            {
+                                "modal_feedback_binding": dict(
+                                    expected_modal_feedback_binding
+                                )
+                            }
+                            if fixed_physical_balh_selected
+                            else {}
+                        ),
                     }
                     if fixed_h6_modal_gmres_research
                     else {
@@ -15783,14 +16014,21 @@ def _run_task041_balh_candidate_setup(
             fixed_h6_modal_gmres_research=(
                 fixed_h6_modal_gmres_research
             ),
+            fixed_h6_modal_feedback_method=(
+                expected_modal_feedback_binding["method"]
+                if fixed_physical_balh_selected
+                else None
+            ),
             complex_qr_research=complex_qr_research,
             capture_modal_solve_trace=capture_modal_solve_trace,
         )
         context_inventory_before = dict(context.inventory)
         if fixed_h6_modal_gmres_research:
-            cost_probe["fixed_h6_feedback_gate"] = context_inventory_before.get(
-                "early_sample_gate"
-            )
+            cost_probe[
+                "fixed_physical_balh_feedback_gate"
+                if fixed_physical_balh_selected
+                else "fixed_h6_feedback_gate"
+            ] = context_inventory_before.get("early_sample_gate")
         marker_callback(
             "modal_schur_ready",
             {
@@ -15930,9 +16168,16 @@ def _run_task041_balh_candidate_setup(
             "status": str(formal_result.get("status")),
             "qualification_scope": qualification_scope,
             "qualification_method": (
-                "fixed_h6_modal_gmres_research_with_original_outer_fgmres"
+                "fixed_physical_balh_once_modal_gmres_research_with_original_outer_fgmres"
+                if fixed_physical_balh_selected
+                else "fixed_h6_modal_gmres_research_with_original_outer_fgmres"
                 if fixed_h6_modal_gmres_research
                 else "task041_balh_side_inverse_response_fgmres32"
+            ),
+            "modal_feedback_binding": (
+                None
+                if expected_modal_feedback_binding is None
+                else dict(expected_modal_feedback_binding)
             ),
             "qualification": "research_only_approximate_candidate",
             "admission_audit": admission_payload,
@@ -16000,11 +16245,28 @@ def _run_task041_balh_candidate_setup(
                 }
             )
         if fixed_h6_modal_gmres_research:
+            modal_solver_inventory_key = (
+                "fixed_physical_balh_modal_solver"
+                if fixed_physical_balh_selected
+                else "fixed_h6_modal_solver"
+            )
             fixed_h6_solver_inventory = context_inventory_before.get(
-                "fixed_h6_modal_solver"
+                modal_solver_inventory_key
             )
             result["candidate_inventory"].update(
                 {
+                    "modal_feedback_method": (
+                        None
+                        if not fixed_physical_balh_selected
+                        else expected_modal_feedback_binding[
+                            "modal_feedback_method"
+                        ]
+                    ),
+                    "modal_feedback_binding": (
+                        None
+                        if expected_modal_feedback_binding is None
+                        else dict(expected_modal_feedback_binding)
+                    ),
                     "reuse_leading_ph_dual_requested": reuse_leading_ph_dual,
                     "modal_schur_materialized": context_inventory_before.get(
                         "modal_schur_materialized"
@@ -16024,7 +16286,7 @@ def _run_task041_balh_candidate_setup(
                         else None
                     ),
                     "modal_inner_method_source": (
-                        "factory_inventory.fixed_h6_modal_solver.method"
+                        f"factory_inventory.{modal_solver_inventory_key}.method"
                     ),
                 }
             )
@@ -16160,6 +16422,7 @@ def run_task041_consumer(
     a6_response_pair: bool = False,
     use_anderson_modal_inner: bool = False,
     fixed_h6_modal_gmres_research: bool = False,
+    modal_feedback_method: str | None = None,
     reuse_primal_route_plan: bool = False,
     reuse_leading_ph_dual: bool = False,
     complex_qr_research: bool = False,
@@ -16206,6 +16469,12 @@ def run_task041_consumer(
         raise Task041ModePrepError(
             "fixed_h6_modal_gmres_research must be a boolean"
         )
+    if modal_feedback_method not in (None, "fixed_physical_balh_once"):
+        raise Task041ModePrepError("unsupported modal feedback method")
+    if modal_feedback_method is not None and not fixed_h6_modal_gmres_research:
+        raise Task041ModePrepError(
+            "modal_feedback_method requires explicit fixed-H6 research"
+        )
     if expected_rank_cpus is not None and not fixed_h6_modal_gmres_research:
         raise Task041ModePrepError(
             "an explicit expected_rank_cpus map is limited to the fixed-H6 modal research path"
@@ -16221,6 +16490,7 @@ def run_task041_consumer(
             p4_refinement_target_tolerance=p4_refinement_target_tolerance,
             task041_resource_policy=task041_resource_policy,
             expected_rank_cpus=expected_rank_cpus,
+            modal_feedback_method=modal_feedback_method,
         )
     except (TypeError, ValueError) as exc:
         raise Task041ModePrepError(str(exc)) from exc
@@ -16746,6 +17016,11 @@ def run_task041_consumer(
         "run_directory": str(root),
         "source_sha": source_sha,
         "task041_resource_policy": resource_policy_binding,
+        **(
+            {"modal_feedback_method": modal_feedback_method}
+            if modal_feedback_method is not None
+            else {}
+        ),
         **(
             {"fixed_h6_modal_gmres_research": fixed_h6_binding}
             if fixed_h6_binding is not None
@@ -17440,6 +17715,33 @@ def run_task041_consumer(
             raise Task041ModePrepError(
                 "the W0.7 staged-factor bridge path is outside its registered pilot scope"
             )
+        modal_feedback_binding = _task041_w0p7_fixed_physical_balh_binding(
+            model_id=str(normalized.get("model_id", "")),
+            candidate=candidate,
+            fixed_h6_binding=fixed_h6_binding,
+            exact_one_cell_strategy=exact_one_cell_strategy,
+            factor_stage_factory=factor_stage_factory,
+            factor_stage_binding=factor_stage_binding,
+            p4_inverse_backend=str(contract.get("p4_inverse_backend", "full")),
+            p4_refinement_target_tolerance=p4_refinement_target_tolerance,
+            task041_resource_policy=task041_resource_policy,
+            modal_feedback_method=modal_feedback_method,
+            reuse_primal_route_plan=reuse_primal_route_plan,
+            reuse_leading_ph_dual=reuse_leading_ph_dual,
+            use_anderson_modal_inner=use_anderson_modal_inner,
+            complex_qr_research=complex_qr_research,
+            capture_modal_solve_trace=capture_modal_solve_trace,
+            p4_response_correction_steps=p4_response_correction_steps,
+            p4_backend_pair_side=p4_backend_pair_side,
+            representative_rhs_contract=representative_rhs_contract,
+            performance_profile=performance_profile,
+            side_setup_schedule=side_setup_schedule,
+            comparison_mode=comparison_mode,
+            top_causal_replay=top_causal_replay,
+            p4_correction_replay_from=p4_correction_replay_from,
+            a6_response_pair=a6_response_pair,
+            same_g_modal_metric_pair=same_g_modal_metric_pair,
+        )
         producer = {
             "producer_source_sha": packet_source_sha,
             "consumer_source_sha": source_sha,
@@ -17450,11 +17752,23 @@ def run_task041_consumer(
             "task041_scope": recomputed_identity["scope"],
             "qualification_scope": recomputed_identity["scope"],
             "qualification_method": (
-                "fixed_h6_modal_gmres_research_with_original_outer_fgmres"
+                "fixed_physical_balh_once_modal_gmres_research_with_original_outer_fgmres"
+                if modal_feedback_binding is not None
+                else "fixed_h6_modal_gmres_research_with_original_outer_fgmres"
                 if fixed_h6_binding is not None
                 else "task041_balh_side_inverse_response_fgmres32"
                 if candidate
                 else "task041_exact_side_full_formal"
+            ),
+            **(
+                {"modal_feedback_method": modal_feedback_method}
+                if modal_feedback_method is not None
+                else {}
+            ),
+            "modal_feedback_binding": (
+                None
+                if modal_feedback_binding is None
+                else dict(modal_feedback_binding)
             ),
             "canonical_authority": True,
             "consumer_route": "balh_candidate" if candidate else "balh_exact",
@@ -17469,6 +17783,9 @@ def run_task041_consumer(
             "task041_balh_candidate" if candidate else "task041_balh_exact"
         ) if contract["balh"] else "task041_legacy"
         result["qualification_method"] = producer["qualification_method"]
+        result["modal_feedback_binding"] = producer[
+            "modal_feedback_binding"
+        ]
         if exact_one_cell_strategy is not None:
             result["exact_one_cell_strategy"] = exact_one_cell_strategy
         result["qualification_status"] = (
@@ -17728,8 +18045,13 @@ def run_task041_consumer(
                     if not isinstance(context_inventory, Mapping):
                         return None
                     if fixed_h6_modal_gmres_research:
+                        modal_solver_key = (
+                            "fixed_physical_balh_modal_solver"
+                            if modal_feedback_binding is not None
+                            else "fixed_h6_modal_solver"
+                        )
                         modal_inner = context_inventory.get(
-                            "fixed_h6_modal_solver"
+                            modal_solver_key
                         )
                         if not isinstance(modal_inner, Mapping):
                             return None
@@ -17759,6 +18081,8 @@ def run_task041_consumer(
                             "owner_constraint_lu_solve_successes",
                             "fixed_h6_modal_apply_calls",
                             "fixed_h6_modal_matrix_mult_calls",
+                            "modal_feedback_apply_calls",
+                            "modal_feedback_matrix_mult_calls",
                             "blocked_matmult_attempts",
                             "pc_failure",
                             "mat_preflight_failure",
@@ -17766,7 +18090,11 @@ def run_task041_consumer(
                         )
                         return _jsonable(
                             {
-                                "scope": "fixed_h6_modal_solver_snapshot_before_side_release",
+                                "scope": (
+                                    "fixed_physical_balh_modal_solver_snapshot_before_side_release"
+                                    if modal_feedback_binding is not None
+                                    else "fixed_h6_modal_solver_snapshot_before_side_release"
+                                ),
                                 "diagnostics_source": "retained_bundle_diagnostics",
                                 "read_point": (
                                     "retained_context_bundle_diagnostics_before_"
@@ -17784,6 +18112,8 @@ def run_task041_consumer(
                                         "fixed_h6_pc_side_apply_counts",
                                         "fixed_h6_pc_side_apply_count_scope",
                                         "side_h6_callback_counts",
+                                        "modal_feedback_pc_side_apply_counts",
+                                        "modal_feedback_pc_side_apply_count_scope",
                                     )
                                     if key in context_inventory
                                 },
@@ -17838,9 +18168,11 @@ def run_task041_consumer(
                     fixed_h6_modal_gmres_research
                     and modal_inner_snapshot is not None
                 ):
-                    release["fixed_h6_modal_solver"] = (
-                        modal_inner_snapshot
-                    )
+                    release[
+                        "fixed_physical_balh_modal_solver"
+                        if modal_feedback_binding is not None
+                        else "fixed_h6_modal_solver"
+                    ] = modal_inner_snapshot
                 if modal_inner_snapshot_error is not None:
                     release["modal_inner_snapshot_error"] = (
                         modal_inner_snapshot_error
@@ -18010,6 +18342,10 @@ def run_task041_consumer(
                 fixed_h6_modal_gmres_research=(
                     fixed_h6_modal_gmres_research
                 ),
+                modal_feedback_method=modal_feedback_method,
+                modal_feedback_binding=modal_feedback_binding,
+                exact_one_cell_strategy=exact_one_cell_strategy,
+                factor_stage_binding=factor_stage_binding,
                 factor_stage_factory=factor_stage_factory,
                 reuse_primal_route_plan=reuse_primal_route_plan,
                 reuse_leading_ph_dual=reuse_leading_ph_dual,

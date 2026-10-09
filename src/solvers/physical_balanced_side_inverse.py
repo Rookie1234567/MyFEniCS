@@ -46,7 +46,9 @@ from .physical_balanced_trace_bridge import (
 )
 
 __all__ = (
+    "FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD",
     "FixedH6ActiveTraceAction",
+    "FixedPhysicalBalancedActiveTraceAction",
     "SideBalancedInverse",
     "build_side_balanced_inverse",
 )
@@ -130,6 +132,7 @@ _DETAIL_TIMING_SEMANTICS = {
 # Native PETSc names the task's DIVERGED_ITS budget result DIVERGED_MAX_IT.
 _DIVERGED_ITS = int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
 _P4_INVERSE_BACKENDS = frozenset({"full", "cell_condensed"})
+FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD = "fixed_physical_balh_once"
 
 
 def _p4_solve_count(p4_factor: Any) -> int:
@@ -612,6 +615,7 @@ class FixedH6ActiveTraceAction:
     """
 
     operator_identity = "borrowed_fixed_h6_active_trace_J_H6_JH"
+    method = "fixed_h6_active_trace"
 
     def __init__(self, operator: PETSc.Mat, condensed: Any, h6: FixedH6) -> None:
         self._operator: PETSc.Mat | None = operator
@@ -804,9 +808,8 @@ class FixedH6ActiveTraceAction:
         self._raise_layout_errors(local_error, "apply arguments")
 
         condensed = self._condensed
-        h6 = self._h6
         inject_active_residual_to_full_p6(condensed, source, self._full_rhs)
-        facts = h6.apply_into(self._full_rhs, self._full_solution)
+        facts = self._apply_full_action(self._full_rhs, self._full_solution)
         active_solution = extract_full_p6_to_active_trace(
             condensed, self._full_solution
         )
@@ -816,6 +819,13 @@ class FixedH6ActiveTraceAction:
             active_solution.destroy()
         self._apply_count += 1
         self._matrix_mult_count += int(facts["matrix_mult_count"])
+
+    def _apply_full_action(
+        self, source: PETSc.Vec, target: PETSc.Vec
+    ) -> Mapping[str, Any]:
+        if self._h6 is None:
+            raise RuntimeError("FixedH6 active-trace adapter has been destroyed")
+        return self._h6.apply_into(source, target)
 
     def destroy(self) -> None:
         """Release work vectors only; all three operator inputs are borrowed."""
@@ -831,6 +841,218 @@ class FixedH6ActiveTraceAction:
         self._operator = None
         self._condensed = None
         self._h6 = None
+
+
+class FixedPhysicalBalancedActiveTraceAction(FixedH6ActiveTraceAction):
+    """Apply one fixed physical BAL_H correction through active trace maps.
+
+    The P4 factor, A6 action, H6 action, owner transfer, and condensed layout
+    are borrowed from a live ``SideBalancedInverse``.  Each Q call requests
+    exactly one same-factor P4 correction and deliberately suppresses that
+    inverse's ordinary residual-target mode for this call only.  No solver
+    tolerance or factor state is changed.
+    """
+
+    operator_identity = "borrowed_fixed_physical_balh_active_trace"
+    method = FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD
+
+    def __init__(self, side_inverse: SideBalancedInverse) -> None:
+        if not isinstance(side_inverse, SideBalancedInverse):
+            raise TypeError("fixed physical BAL_H action requires a side inverse")
+        if (
+            side_inverse._destroyed
+            or side_inverse._operator is None
+            or side_inverse._condensed is None
+            or side_inverse._h6 is None
+            or side_inverse._p4_factor is None
+            or side_inverse._full_action is None
+            or side_inverse._owner_transfer is None
+        ):
+            raise RuntimeError(
+                "Cannot create fixed physical BAL_H action from a destroyed side inverse"
+            )
+        if not isinstance(side_inverse._h6, FixedH6):
+            raise TypeError("fixed physical BAL_H action requires FixedH6")
+        if side_inverse._reuse_leading_ph_dual:
+            raise ValueError(
+                "fixed physical BAL_H feedback requires the registered ordinary PH path"
+            )
+        super().__init__(
+            side_inverse._operator,
+            side_inverse._condensed,
+            side_inverse._h6,
+        )
+        self._side_inverse: SideBalancedInverse | None = side_inverse
+        self._physical_balh: PhysicalBalancedCoupling | None = None
+        self._last_q_factor_solve_deltas: tuple[int, ...] = ()
+        self._a6_apply_count = 0
+        self._h6_apply_count = 0
+        self._h6_matrix_mult_count = 0
+        try:
+            self._physical_balh = PhysicalBalancedCoupling(
+                self._apply_a6,
+                self._apply_q_once,
+                self._apply_h6,
+                self._apply_ph,
+                checkpoint=side_inverse._checkpoint,
+                reuse_leading_ph=side_inverse._reuse_leading_ph_dual,
+            )
+        except BaseException:
+            self.destroy()
+            raise
+
+    def _owner(self) -> SideBalancedInverse:
+        owner = self._side_inverse
+        if owner is None or owner._destroyed:
+            raise RuntimeError("fixed physical BAL_H side inverse was destroyed")
+        return owner
+
+    def _apply_a6(self, source: PETSc.Vec) -> PETSc.Vec:
+        result = self._owner()._apply_a6_callback(source)
+        self._a6_apply_count += 1
+        return result
+
+    def _apply_q_once(
+        self,
+        source: PETSc.Vec,
+        *,
+        return_leading_dual: bool = False,
+    ) -> PETSc.Vec | tuple[PETSc.Vec, PETSc.Vec]:
+        owner = self._owner()
+        factor = owner._p4_factor
+        if factor is None:
+            raise RuntimeError("fixed physical BAL_H P4 factor was destroyed")
+        before = _p4_solve_count(factor)
+        result = owner._apply_q_callback(
+            source,
+            return_leading_dual=return_leading_dual,
+            fixed_p4_correction_steps=1,
+        )
+        delta = max(_p4_solve_count(factor) - before, 0)
+        if delta != 2:
+            vectors = result if isinstance(result, tuple) else (result,)
+            released: set[int] = set()
+            for vector in vectors:
+                if isinstance(vector, PETSc.Vec) and id(vector) not in released:
+                    released.add(id(vector))
+                    try:
+                        vector.destroy()
+                    except BaseException:  # noqa: BLE001, S110 - preserve solve-count failure
+                        pass
+            raise RuntimeError(
+                "fixed physical BAL_H Q changed its same P4 factor by "
+                f"{delta} solves; expected one initial solve plus one correction"
+            )
+        self._last_q_factor_solve_deltas = (
+            *self._last_q_factor_solve_deltas,
+            delta,
+        )[-2:]
+        return result
+
+    def _apply_h6(self, source: PETSc.Vec) -> PETSc.Vec:
+        result = self._owner()._apply_h6_callback(source)
+        self._h6_apply_count += 1
+        return result
+
+    def _apply_ph(self, source: PETSc.Vec) -> PETSc.Vec:
+        return self._owner()._apply_ph_callback(source)
+
+    def _apply_full_action(
+        self, source: PETSc.Vec, target: PETSc.Vec
+    ) -> Mapping[str, Any]:
+        owner = self._owner()
+        coupling = self._physical_balh
+        h6 = self._h6
+        if coupling is None or h6 is None:
+            raise RuntimeError("fixed physical BAL_H action has been destroyed")
+        h6_mults_before = int(h6.matrix_mult_count)
+        self._last_q_factor_solve_deltas = ()
+        result = coupling.apply(source)
+        try:
+            result.copy(target)
+        finally:
+            result.destroy()
+        facts = coupling.last_apply_facts
+        self._h6_matrix_mult_count += int(h6.matrix_mult_count) - h6_mults_before
+        counts = facts.get("counts")
+        if not isinstance(counts, Mapping):
+            raise TypeError("fixed physical BAL_H action lost operation counts")
+        a6_calls = counts.get("A6")
+        if type(a6_calls) is not int or a6_calls != 2:
+            raise RuntimeError("fixed physical BAL_H action did not apply A6 twice")
+        if counts.get("Q") != 2 or counts.get("H6") != 1:
+            raise RuntimeError(
+                "fixed physical BAL_H action changed its Q/H6 operation sequence"
+            )
+        if self._last_q_factor_solve_deltas != (2, 2):
+            raise RuntimeError(
+                "fixed physical BAL_H action did not use exactly one same-factor "
+                "P4 correction in each Q call"
+            )
+        if owner._p4_factor is None:
+            raise RuntimeError("fixed physical BAL_H P4 factor was destroyed")
+        return {
+            "matrix_mult_count": a6_calls
+            + int(h6.matrix_mult_count)
+            - h6_mults_before
+        }
+
+    @property
+    def audit(self) -> dict[str, Any]:
+        result = super().audit
+        owner = self._side_inverse
+        coupling = self._physical_balh
+        result.update(
+            {
+                "operator_identity": self.operator_identity,
+                "method": FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD,
+                "action": "J[Q+(I-QA6)H6(I-A6Q)]J^H",
+                "p4_q_correction_policy": "exactly_one_same_factor_correction_per_Q",
+                "p4_refinement_target_tolerance_used": None,
+                "ordinary_side_refinement_target_tolerance": (
+                    None
+                    if owner is None
+                    else owner._p4_refinement_target_tolerance
+                ),
+                "physical_residual_gate": 1.0e-10,
+                "augmented_residual_gate": 1.0e-10,
+                "matrix_mult_count_scope": "explicit_A6_plus_H6_inner_mults; P4 work excluded",
+                "borrowed_objects": (
+                    "operator",
+                    "condensed",
+                    "FixedH6",
+                    "SideBalancedInverse",
+                    "P4 factor",
+                    "A6 action",
+                    "owner transfer",
+                ),
+                "exact_p4_or_dtn_feedback": True,
+                "last_q_factor_solve_deltas": list(
+                    self._last_q_factor_solve_deltas
+                ),
+                "last_q_factor_solve_count_scope": (
+                    "local side factor counter; one initial solve plus one "
+                    "same-factor correction per Q call"
+                ),
+                "a6_apply_count": self._a6_apply_count,
+                "h6_apply_count": self._h6_apply_count,
+                "h6_matrix_mult_count": self._h6_matrix_mult_count,
+                "last_balh_coupling": (
+                    {}
+                    if coupling is None
+                    else dict(coupling.last_apply_facts)
+                ),
+                "destroyed": self._destroyed,
+            }
+        )
+        return result
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._physical_balh = None
+        self._side_inverse = None
+        super().destroy()
 
 
 class _SidePythonPcContext:
@@ -1092,6 +1314,13 @@ class SideBalancedInverse:
             self._condensed,
             self._h6,
         )
+
+    def create_fixed_physical_balh_active_trace_action(
+        self,
+    ) -> FixedPhysicalBalancedActiveTraceAction:
+        """Borrow this live side's factors/actions for one fixed BAL_H Q policy."""
+
+        return FixedPhysicalBalancedActiveTraceAction(self)
 
     @contextmanager
     def variant_context(self, variant: str):
@@ -1842,11 +2071,23 @@ class SideBalancedInverse:
         source: PETSc.Vec,
         *,
         return_leading_dual: bool = False,
+        fixed_p4_correction_steps: int | None = None,
     ) -> PETSc.Vec | tuple[PETSc.Vec, PETSc.Vec]:
         if not isinstance(return_leading_dual, bool):
             raise TypeError("return_leading_dual must be a boolean")
+        if fixed_p4_correction_steps is not None and (
+            isinstance(fixed_p4_correction_steps, bool)
+            or not isinstance(fixed_p4_correction_steps, int)
+            or fixed_p4_correction_steps != 1
+        ):
+            raise ValueError(
+                "the fixed physical BAL_H Q policy supports exactly one P4 correction"
+            )
         if not return_leading_dual:
-            return self._apply_q_callback_impl(source)
+            return self._apply_q_callback_impl(
+                source,
+                fixed_p4_correction_steps=fixed_p4_correction_steps,
+            )
         if not self._reuse_leading_ph_dual:
             raise RuntimeError("leading PH handoff was not enabled for this side")
 
@@ -1855,6 +2096,7 @@ class SideBalancedInverse:
             result = self._apply_q_callback_impl(
                 source,
                 handoff_state=handoff,
+                fixed_p4_correction_steps=fixed_p4_correction_steps,
             )
             leading_dual = handoff.get("leading_dual")
             if (
@@ -1881,6 +2123,7 @@ class SideBalancedInverse:
         source: PETSc.Vec,
         *,
         handoff_state: dict[str, PETSc.Vec | None] | None = None,
+        fixed_p4_correction_steps: int | None = None,
     ) -> PETSc.Vec:
         if self._owner_transfer is None or self._p4_factor is None:
             raise RuntimeError("BAL_H coarse components have been destroyed")
@@ -1890,7 +2133,8 @@ class SideBalancedInverse:
             else self._direct_p4_call_records
         )
         if (
-            self._diagnostic_callback is not None
+            fixed_p4_correction_steps is None
+            and self._diagnostic_callback is not None
             and call_history is not None
             and len(call_history) >= 2 * (self._max_it + 1)
         ):
@@ -1901,9 +2145,15 @@ class SideBalancedInverse:
         if self._active_pc_index is not None:
             self._active_pc_q_count += 1
             q_call_index = self._active_pc_q_count
+        elif fixed_p4_correction_steps is not None:
+            q_call_index = int(self._q_count)
         else:
             q_call_index = len(self._direct_p4_call_records) + 1
-        correction_steps = int(self._diagnostic_p4_correction_steps)
+        correction_steps = (
+            int(self._diagnostic_p4_correction_steps)
+            if fixed_p4_correction_steps is None
+            else fixed_p4_correction_steps
+        )
 
         def observe_p4_correction(
             audit: Mapping[str, Any], vectors: Mapping[str, Any]
@@ -2010,10 +2260,17 @@ class SideBalancedInverse:
         capture_port_values = False
         p4_timing: dict[str, float] = {}
         factor_solve_before = _p4_solve_count(self._p4_factor)
-        refinement_target_tolerance = self._p4_refinement_target_tolerance
-        record_p4_refinement = (
-            self._diagnostic_callback is not None
-            or refinement_target_tolerance is not None
+        refinement_target_tolerance = (
+            None
+            if fixed_p4_correction_steps is not None
+            else self._p4_refinement_target_tolerance
+        )
+        record_p4_refinement = bool(
+            fixed_p4_correction_steps is None
+            and (
+                self._diagnostic_callback is not None
+                or refinement_target_tolerance is not None
+            )
         )
         try:
             self._emit_diagnostic(
@@ -2091,6 +2348,17 @@ class SideBalancedInverse:
                     self._add_rhs_detail_seconds(
                         "q_augmented_rhs_extract_seconds",
                         perf_counter() - extract_started,
+                    )
+            if fixed_p4_correction_steps is not None:
+                actual_q_backsolves = max(
+                    _p4_solve_count(self._p4_factor) - factor_solve_before,
+                    0,
+                )
+                if actual_q_backsolves != fixed_p4_correction_steps + 1:
+                    raise RuntimeError(
+                        "fixed physical BAL_H Q did not perform exactly one "
+                        "same-factor P4 correction: "
+                        f"backsolves={actual_q_backsolves}"
                     )
             if self._diagnostic_callback is not None and coarse_solution is not None:
                 solution_norm = float(coarse_solution.norm())
@@ -2271,6 +2539,15 @@ class SideBalancedInverse:
                         "physical_rhs_norm": physical_rhs_norm,
                         "solution_norm": solution_norm,
                         "solution_norm_status": solution_norm_status,
+                        "fixed_p4_correction_steps": (
+                            fixed_p4_correction_steps
+                        ),
+                        "configured_refinement_target_tolerance": (
+                            self._p4_refinement_target_tolerance
+                        ),
+                        "effective_refinement_target_tolerance": (
+                            refinement_target_tolerance
+                        ),
                     }
                 )
                 if correction_steps or refinement_target_tolerance is not None:

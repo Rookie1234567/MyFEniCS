@@ -602,11 +602,30 @@ class _FixedH6ModalKrylovSystem:
         top_action: Any,
         *,
         modal_owner: int,
+        feedback_method: str | None = None,
     ) -> None:
-        from .physical_balanced_side_inverse import FixedH6ActiveTraceAction
+        from .physical_balanced_side_inverse import (
+            FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD,
+            FixedH6ActiveTraceAction,
+            FixedPhysicalBalancedActiveTraceAction,
+        )
 
         self._bottom_action = bottom_action
         self._top_action = top_action
+        self.feedback_method = feedback_method
+        self.method = (
+            "fixed_h6_modal_gmres_research"
+            if feedback_method is None
+            else "fixed_physical_balh_once_modal_gmres_research"
+        )
+        self._action_operator = (
+            "C-PbJbH6bJb^H Tb-PtJtH6tJt^H Tt"
+            if feedback_method is None
+            else (
+                "C-PbJb[Qb+(I-QbA6b)H6b(I-A6bQb)]Jb^H Tb"
+                "-PtJt[Qt+(I-QtA6t)H6t(I-A6tQt)]Jt^H Tt"
+            )
+        )
         self._modal_action: HybridActionModalSchurApply | None = None
         # The coupling projection is the shared communicator anchor.  No PETSc
         # solver object or modal action is allocated before the first collective
@@ -652,6 +671,11 @@ class _FixedH6ModalKrylovSystem:
         mode_count = 0
         constraint = None
         try:
+            if feedback_method not in (
+                None,
+                FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD,
+            ):
+                raise ValueError("unsupported fixed modal feedback method")
             requested_owner = int(modal_owner)
             mode_count = int(coupling.mode_count_per_direction)
             modal_count = 2 * mode_count
@@ -659,11 +683,30 @@ class _FixedH6ModalKrylovSystem:
                 raise ValueError("Modal ownership must be on the final MPI rank")
             if mode_count <= 0:
                 raise ValueError("Fixed-H6 modal system requires nonempty modes")
-            if not all(
-                isinstance(action, FixedH6ActiveTraceAction)
-                for action in (bottom_action, top_action)
-            ):
-                raise TypeError("S_H requires two FixedH6ActiveTraceAction inputs")
+            if feedback_method is None:
+                actions_match_method = all(
+                    isinstance(action, FixedH6ActiveTraceAction)
+                    and not isinstance(
+                        action, FixedPhysicalBalancedActiveTraceAction
+                    )
+                    and action.method == "fixed_h6_active_trace"
+                    and action.operator_identity
+                    == "borrowed_fixed_h6_active_trace_J_H6_JH"
+                    for action in (bottom_action, top_action)
+                )
+            else:
+                actions_match_method = all(
+                    type(action) is FixedPhysicalBalancedActiveTraceAction
+                    and action.method
+                    == FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD
+                    and action.operator_identity
+                    == "borrowed_fixed_physical_balh_active_trace"
+                    for action in (bottom_action, top_action)
+                )
+            if not actions_match_method:
+                raise TypeError(
+                    "modal feedback actions do not match the explicitly selected method"
+                )
             constraint = np.asarray(
                 internal_modal_constraint_matrix(coupling), dtype=np.complex128
             )
@@ -701,6 +744,7 @@ class _FixedH6ModalKrylovSystem:
                 modal_count,
                 hashlib.sha256(np.ascontiguousarray(constraint).tobytes()).hexdigest(),
                 tuple(side_shapes),
+                feedback_method,
             )
         except Exception as exc:  # noqa: BLE001 - synchronize rank-local setup errors
             local_error = f"{type(exc).__name__}: {exc}"
@@ -865,11 +909,21 @@ class _FixedH6ModalKrylovSystem:
                     else "owner_authoritative_per_solve_broadcasts"
                 )
             if self._last_solve is not None:
-                self._last_solve["fixed_h6_side_action_apply_calls"] = {
+                side_action_count_key = (
+                    "fixed_h6_side_action_apply_calls"
+                    if self.feedback_method is None
+                    else "modal_feedback_side_action_apply_calls"
+                )
+                self._last_solve[side_action_count_key] = {
                     side: int(action.audit["apply_count"]) - before[side]
                     for side, action in actions
                 }
-                self._last_solve["fixed_h6_side_action_count_scope"] = (
+                side_action_scope_key = (
+                    "fixed_h6_side_action_count_scope"
+                    if self.feedback_method is None
+                    else "modal_feedback_side_action_count_scope"
+                )
+                self._last_solve[side_action_scope_key] = (
                     "per_rank_replicated; do_not_sum_across_ranks"
                 )
                 self._last_solve["cumulative_solve_count"] = self._solve_count
@@ -1387,9 +1441,9 @@ class _FixedH6ModalKrylovSystem:
         owner_lu_cumulative_complete = bool(
             self._cumulative_owner_constraint_lu_solve_counts_complete
         )
-        return {
-            "method": "fixed_h6_modal_gmres_research",
-            "operator": "C-PbJbH6bJb^H Tb-PtJtH6tJt^H Tt",
+        result = {
+            "method": self.method,
+            "operator": self._action_operator,
             "operator_fixed_condition": (
                 "side adapters, H6 runtime matrices, condensed maps, and modal "
                 "coupling remain frozen for the modal solver lifetime"
@@ -1480,6 +1534,10 @@ class _FixedH6ModalKrylovSystem:
             "last_solve": None if last_solve is None else dict(last_solve),
             "destroyed": self._destroyed,
         }
+        if self.feedback_method is not None:
+            result["feedback_method"] = self.feedback_method
+            result["modal_feedback_method"] = self.feedback_method
+        return result
 
     def destroy(self) -> None:
         if self._destroyed:
@@ -1548,21 +1606,41 @@ class _FixedH6ModalGmresResearchBundle:
                 ("bottom", "top"), self._side_actions, strict=True
             )
         }
+        method = solver.get("method", "fixed_h6_modal_gmres_research")
+        if method == "fixed_h6_modal_gmres_research":
+            action_fields = {
+                "fixed_h6_actions": actions,
+                "fixed_h6_action_count_scope": (
+                    "per-rank replicated; do_not_sum_across_ranks"
+                ),
+                "fixed_h6_modal_apply_calls": {
+                    side: int(action["apply_count"])
+                    for side, action in actions.items()
+                },
+                "fixed_h6_modal_matrix_mult_calls": {
+                    side: int(action["matrix_mult_count"])
+                    for side, action in actions.items()
+                },
+            }
+        else:
+            action_fields = {
+                "fixed_physical_balh_actions": actions,
+                "modal_feedback_action_count_scope": (
+                    "per-rank replicated; do_not_sum_across_ranks"
+                ),
+                "modal_feedback_apply_calls": {
+                    side: int(action["apply_count"])
+                    for side, action in actions.items()
+                },
+                "modal_feedback_matrix_mult_calls": {
+                    side: int(action["matrix_mult_count"])
+                    for side, action in actions.items()
+                },
+            }
         return {
             **solver,
-            "method": "fixed_h6_modal_gmres_research",
-            "fixed_h6_actions": actions,
-            "fixed_h6_action_count_scope": (
-                "per-rank replicated; do_not_sum_across_ranks"
-            ),
-            "fixed_h6_modal_apply_calls": {
-                side: int(action["apply_count"])
-                for side, action in actions.items()
-            },
-            "fixed_h6_modal_matrix_mult_calls": {
-                side: int(action["matrix_mult_count"])
-                for side, action in actions.items()
-            },
+            "method": method,
+            **action_fields,
             "modal_schur_materialized": False,
             "modal_schur_column_count": 0,
             "modal_schur_condition": "not_measured",
@@ -3904,7 +3982,12 @@ class HybridBlockLduPreconditioner:
             "modal_block_name": (
                 "on_demand_nonlinear_modal_inner"
                 if on_demand_modal
-                else "fixed_h6_surrogate_on_demand_modal_gmres"
+                else (
+                    "fixed_h6_surrogate_on_demand_modal_gmres"
+                    if system_diagnostics.get("method")
+                    == "fixed_h6_modal_gmres_research"
+                    else "fixed_physical_balh_once_on_demand_modal_gmres"
+                )
                 if fixed_h6_modal
                 else "approximate_action_schur"
             ),
@@ -3936,35 +4019,61 @@ class HybridBlockLduPreconditioner:
                 }
             )
         if fixed_h6_modal:
-            result.update(
-                {
-                    "modal_count": int(self.modal_count),
-                    "modal_schur_scope": "not_materialized",
-                    "modal_schur_materialized": False,
-                    "modal_schur_column_count": 0,
-                    "modal_schur_storage_bytes": 0,
-                    "modal_schur_condition": "not_measured",
-                    "modal_inner_solver": system_diagnostics,
-                    "fixed_h6_modal_solver": system_diagnostics,
-                    "modal_constraint_condition": float(
-                        self.action_modal_schur_system.constraint_condition
-                    ),
-                    "modal_constraint_local_bytes": int(
-                        self.action_modal_schur_system.modal_constraint_local_bytes
-                    ),
-                    "fixed_h6_pc_side_apply_counts": {
-                        side: dict(counts)
-                        for side, counts in self._fixed_h6_pc_side_apply_counts.items()
-                    },
-                    "fixed_h6_pc_side_apply_count_scope": (
-                        "successful direct side apply calls; per-rank replicated"
-                    ),
-                    "side_h6_callback_counts": {
-                        "bottom": int(bottom.get("counts", {}).get("H6", 0)),
-                        "top": int(top.get("counts", {}).get("H6", 0)),
-                    },
-                }
+            selected_method = system_diagnostics.get(
+                "method", "fixed_h6_modal_gmres_research"
             )
+            common_modal_fields = {
+                "modal_count": int(self.modal_count),
+                "modal_schur_scope": "not_materialized",
+                "modal_schur_materialized": False,
+                "modal_schur_column_count": 0,
+                "modal_schur_storage_bytes": 0,
+                "modal_schur_condition": "not_measured",
+                "modal_inner_solver": system_diagnostics,
+                "modal_constraint_condition": float(
+                    self.action_modal_schur_system.constraint_condition
+                ),
+                "modal_constraint_local_bytes": int(
+                    self.action_modal_schur_system.modal_constraint_local_bytes
+                ),
+            }
+            side_apply_counts = {
+                side: dict(counts)
+                for side, counts in self._fixed_h6_pc_side_apply_counts.items()
+            }
+            if selected_method == "fixed_h6_modal_gmres_research":
+                common_modal_fields.update(
+                    {
+                        "fixed_h6_modal_solver": system_diagnostics,
+                        "fixed_h6_pc_side_apply_counts": side_apply_counts,
+                        "fixed_h6_pc_side_apply_count_scope": (
+                            "successful direct side apply calls; per-rank replicated"
+                        ),
+                        "side_h6_callback_counts": {
+                            "bottom": int(bottom.get("counts", {}).get("H6", 0)),
+                            "top": int(top.get("counts", {}).get("H6", 0)),
+                        },
+                    }
+                )
+                apply_call_key = "fixed_h6_modal_apply_calls"
+                matrix_call_key = "fixed_h6_modal_matrix_mult_calls"
+                setup_side_count_key = "fixed_h6_side_counts"
+                whole_run_key = "fixed_h6_whole_run_work"
+            else:
+                common_modal_fields.update(
+                    {
+                        "fixed_physical_balh_modal_solver": system_diagnostics,
+                        "modal_feedback_pc_side_apply_counts": side_apply_counts,
+                        "modal_feedback_pc_side_apply_count_scope": (
+                            "successful direct side apply calls; per-rank replicated"
+                        ),
+                    }
+                )
+                apply_call_key = "modal_feedback_apply_calls"
+                matrix_call_key = "modal_feedback_matrix_mult_calls"
+                setup_side_count_key = "modal_feedback_side_counts"
+                whole_run_key = "modal_feedback_whole_run_work"
+            result.update(common_modal_fields)
             local_rank = system_diagnostics.get("rank")
             if not isinstance(local_rank, int) or isinstance(local_rank, bool):
                 local_rank = int(
@@ -4003,7 +4112,7 @@ class HybridBlockLduPreconditioner:
                 if setup_s_h is None or solver_s_h is None
                 else setup_s_h + solver_s_h
             )
-            result["fixed_h6_whole_run_work"] = {
+            whole_run_work = {
                 "rank": local_rank,
                 "count_scope": "rank-local; do_not_sum_across_ranks",
                 "setup_gate_s_h_actions": setup_s_h,
@@ -4022,13 +4131,7 @@ class HybridBlockLduPreconditioner:
                 "setup_gate_h6_calls_by_side": (
                     None
                     if gate_row is None
-                    else gate_row.get("fixed_h6_side_counts")
-                ),
-                "total_h6_apply_calls_by_side": system_diagnostics.get(
-                    "fixed_h6_modal_apply_calls"
-                ),
-                "total_h6_matrix_mult_calls_by_side": system_diagnostics.get(
-                    "fixed_h6_modal_matrix_mult_calls"
+                    else gate_row.get(setup_side_count_key)
                 ),
                 "owner_c_lu_factorizations": system_diagnostics.get(
                     "constraint_lu_factorizations"
@@ -4052,6 +4155,29 @@ class HybridBlockLduPreconditioner:
                     "cumulative_owner_constraint_lu_solve_count_scope"
                 ),
             }
+            if selected_method == "fixed_h6_modal_gmres_research":
+                whole_run_work.update(
+                    {
+                        "total_h6_apply_calls_by_side": system_diagnostics.get(
+                            apply_call_key
+                        ),
+                        "total_h6_matrix_mult_calls_by_side": system_diagnostics.get(
+                            matrix_call_key
+                        ),
+                    }
+                )
+            else:
+                whole_run_work.update(
+                    {
+                        "total_side_feedback_apply_calls_by_side": (
+                            system_diagnostics.get(apply_call_key)
+                        ),
+                        "total_side_feedback_matrix_mult_calls_by_side": (
+                            system_diagnostics.get(matrix_call_key)
+                        ),
+                    }
+                )
+            result[whole_run_key] = whole_run_work
         if self._research_inventory is not None:
             result.update(self._research_inventory)
         if self._dynamic_side_inventory:
@@ -4493,6 +4619,22 @@ def _check_fixed_h6_modal_feedback_repeat_linearity(
 ) -> dict[str, Any]:
     """Check the same fixed H6 feedback on bounded complex mixed vectors."""
 
+    physical_balh_method = modal_solver.feedback_method is not None
+    gate_stage = (
+        "fixed_physical_balh_modal_feedback_repeat_linearity"
+        if physical_balh_method
+        else "fixed_h6_modal_feedback_repeat_linearity"
+    )
+    gate_mode = (
+        "fixed_physical_balh_modal_feedback_complex_repeat_linearity"
+        if physical_balh_method
+        else "fixed_h6_modal_feedback_complex_repeat_linearity"
+    )
+    side_counts_key = (
+        "modal_feedback_side_counts"
+        if physical_balh_method
+        else "fixed_h6_side_counts"
+    )
     modal_action = modal_solver._modal_action
     if modal_action is None:
         raise RuntimeError("Fixed-H6 modal action is unavailable for its gate")
@@ -4567,7 +4709,7 @@ def _check_fixed_h6_modal_feedback_repeat_linearity(
             "modal_sample_begin",
             {
                 "side": "both",
-                "stage": "fixed_h6_modal_feedback_repeat_linearity",
+                "stage": gate_stage,
                 "mode": "complex_repeat_homogeneity_additivity_and_near_zero",
                 "input_definition": input_definition,
                 "maximum_s_h_actions": len(inputs),
@@ -4600,7 +4742,7 @@ def _check_fixed_h6_modal_feedback_repeat_linearity(
                 "operator_action_completions": 0,
                 "modal_constraint_matvec_calls": 0,
                 "constraint_lu_solve_attempts": 0,
-                "fixed_h6_side_counts": None,
+                side_counts_key: None,
                 "input_unchanged_by_action": {},
                 "original_side_apply_count_delta": None,
                 "setup_wall_seconds": elapsed,
@@ -4611,7 +4753,7 @@ def _check_fixed_h6_modal_feedback_repeat_linearity(
         failed_gate = {
             "status": "failed",
             "pass": False,
-            "mode": "fixed_h6_modal_feedback_complex_repeat_linearity",
+            "mode": gate_mode,
             "requested_s_h_actions": len(inputs),
             "input_definition": input_definition,
             "rank_results": rank_results,
@@ -4622,12 +4764,20 @@ def _check_fixed_h6_modal_feedback_repeat_linearity(
             "full_schur_materialized": False,
             "fallback_used": False,
         }
+        if physical_balh_method:
+            failed_gate.update(
+                {
+                    "method": modal_solver.method,
+                    "feedback_method": modal_solver.feedback_method,
+                    "operator": modal_solver._action_operator,
+                }
+            )
         if marker_callback is not None:
             marker_callback(
                 "modal_sample_ready",
                 {
                     "side": "both",
-                    "stage": "fixed_h6_modal_feedback_repeat_linearity",
+                    "stage": gate_stage,
                     "status": "failed",
                     "pass": False,
                     "early_sample_gate": failed_gate,
@@ -4723,19 +4873,55 @@ def _check_fixed_h6_modal_feedback_repeat_linearity(
             and not isinstance(h6_degree, bool)
             and h6_degree > 1
         )
-        expected_matrix_mult_calls = (
+        expected_h6_matrix_mult_calls = (
             (h6_degree - 1) * apply_calls if degree_valid else None
         )
-        side_counts[side] = {
-            "fixed_h6_apply_calls": apply_calls,
-            "fixed_h6_h6_degree": h6_degree if degree_valid else None,
-            "fixed_h6_matrix_mult_calls": matrix_mult_calls,
-            "expected_matrix_mult_calls_from_degree": expected_matrix_mult_calls,
-            "matrix_mult_matches_h6_degree": bool(
-                expected_matrix_mult_calls is not None
-                and matrix_mult_calls == expected_matrix_mult_calls
-            ),
-        }
+        if physical_balh_method:
+            a6_apply_calls = int(audit["a6_apply_count"]) - int(
+                side_before[side]["a6_apply_count"]
+            )
+            h6_apply_calls = int(audit["h6_apply_count"]) - int(
+                side_before[side]["h6_apply_count"]
+            )
+            h6_matrix_mult_calls = int(audit["h6_matrix_mult_count"]) - int(
+                side_before[side]["h6_matrix_mult_count"]
+            )
+            expected_total_matrix_mult_calls = (
+                None
+                if expected_h6_matrix_mult_calls is None
+                else 2 * apply_calls + expected_h6_matrix_mult_calls
+            )
+            side_counts[side] = {
+                "modal_feedback_apply_calls": apply_calls,
+                "a6_apply_calls": a6_apply_calls,
+                "expected_a6_apply_calls": 2 * apply_calls,
+                "h6_apply_calls": h6_apply_calls,
+                "expected_h6_apply_calls": apply_calls,
+                "h6_degree": h6_degree if degree_valid else None,
+                "h6_matrix_mult_calls": h6_matrix_mult_calls,
+                "expected_h6_matrix_mult_calls": expected_h6_matrix_mult_calls,
+                "total_matrix_mult_calls": matrix_mult_calls,
+                "expected_total_matrix_mult_calls": expected_total_matrix_mult_calls,
+                "operation_sequence_matches": bool(
+                    a6_apply_calls == 2 * apply_calls
+                    and h6_apply_calls == apply_calls
+                    and expected_h6_matrix_mult_calls is not None
+                    and h6_matrix_mult_calls == expected_h6_matrix_mult_calls
+                    and expected_total_matrix_mult_calls is not None
+                    and matrix_mult_calls == expected_total_matrix_mult_calls
+                ),
+            }
+        else:
+            side_counts[side] = {
+                "fixed_h6_apply_calls": apply_calls,
+                "fixed_h6_h6_degree": h6_degree if degree_valid else None,
+                "fixed_h6_matrix_mult_calls": matrix_mult_calls,
+                "expected_matrix_mult_calls_from_degree": expected_h6_matrix_mult_calls,
+                "matrix_mult_matches_h6_degree": bool(
+                    expected_h6_matrix_mult_calls is not None
+                    and matrix_mult_calls == expected_h6_matrix_mult_calls
+                ),
+            }
     original_after = {
         side: _action_apply_count(action) for side, action in original_side_actions.items()
     }
@@ -4761,10 +4947,21 @@ def _check_fixed_h6_modal_feedback_repeat_linearity(
         and c_matvecs == completions
         and c_lu_attempts == 0
         and all(
-            row["fixed_h6_apply_calls"] == completions
-            and row["matrix_mult_matches_h6_degree"]
+            (
+                row.get("operation_sequence_matches") is True
+                if physical_balh_method
+                else (
+                    row.get("fixed_h6_apply_calls") == completions
+                    and row.get("matrix_mult_matches_h6_degree") is True
+                )
+            )
             for row in side_counts.values()
         )
+    )
+    local_count_key = (
+        "modal_feedback_side_counts"
+        if physical_balh_method
+        else "fixed_h6_side_counts"
     )
     local_result = {
         "rank": int(comm.rank),
@@ -4774,7 +4971,7 @@ def _check_fixed_h6_modal_feedback_repeat_linearity(
         "operator_action_completions": completions,
         "modal_constraint_matvec_calls": c_matvecs,
         "constraint_lu_solve_attempts": c_lu_attempts,
-        "fixed_h6_side_counts": side_counts,
+        local_count_key: side_counts,
         "input_unchanged_by_action": input_unchanged_by_action,
         "original_side_apply_count_delta": original_delta,
         "output_norms": output_norms,
@@ -4813,8 +5010,12 @@ def _check_fixed_h6_modal_feedback_repeat_linearity(
     diagnostics = {
         "status": "passed" if global_pass else "failed",
         "pass": global_pass,
-        "mode": "fixed_h6_modal_feedback_complex_repeat_linearity",
-        "operator": "S_H=C-PbJbH6bJb^H Tb-PtJtH6tJt^H Tt",
+        "mode": gate_mode,
+        "operator": (
+            modal_solver._action_operator
+            if physical_balh_method
+            else "S_H=C-PbJbH6bJb^H Tb-PtJtH6tJt^H Tt"
+        ),
         "requested_s_h_actions": len(inputs),
         "operator_actions_maximum": len(inputs),
         "relative_limit": _FIXED_H6_FEEDBACK_GATE_TOLERANCE,
@@ -4844,17 +5045,29 @@ def _check_fixed_h6_modal_feedback_repeat_linearity(
             "total_matmult_limit_including_final": int(modal_solver.total_matmult_limit),
         },
         "original_side_apply_count_scope": (
-            "per-side rank-local SideBalancedInverse; fixed-H6 gate must not call it"
+            "per-side rank-local SideBalancedInverse; "
+            + (
+                "modal feedback gate must not call it"
+                if physical_balh_method
+                else "fixed-H6 gate must not call it"
+            )
         ),
         "full_schur_materialized": False,
         "fallback_used": False,
     }
+    if physical_balh_method:
+        diagnostics.update(
+            {
+                "method": modal_solver.method,
+                "feedback_method": modal_solver.feedback_method,
+            }
+        )
     if marker_callback is not None:
         marker_callback(
             "modal_sample_ready",
             {
                 "side": "both",
-                "stage": "fixed_h6_modal_feedback_repeat_linearity",
+                "stage": gate_stage,
                 "status": diagnostics["status"],
                 "pass": global_pass,
                 "early_sample_gate": diagnostics,
@@ -4868,9 +5081,13 @@ def _check_fixed_h6_modal_feedback_repeat_linearity(
             for row in rank_results
             if row.get("pass") is not True
         ]
+        label = (
+            "fixed physical BAL_H modal feedback"
+            if physical_balh_method
+            else "Fixed-H6 modal feedback"
+        )
         raise ValueError(
-            "Fixed-H6 modal feedback repeat/linearity Gate failed; "
-            + "; ".join(failures)
+            f"{label} repeat/linearity Gate failed; " + "; ".join(failures)
         )
     return diagnostics
 
@@ -4891,6 +5108,7 @@ def create_side_balh_block_ldu_preconditioner(
     raw_metric_mixing: bool = False,
     capture_modal_solve_trace: bool = False,
     fixed_h6_modal_gmres_research: bool = False,
+    fixed_h6_modal_feedback_method: str | None = None,
 ) -> HybridBlockLduPreconditioner:
     """Build the sampled Schur or one explicitly selected BAL_H research path.
 
@@ -4901,7 +5119,10 @@ def create_side_balh_block_ldu_preconditioner(
     owns both side inverses and all side systems.
     """
 
-    from .physical_balanced_side_inverse import SideBalancedInverse
+    from .physical_balanced_side_inverse import (
+        FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD,
+        SideBalancedInverse,
+    )
 
     side_entries = (
         ("bottom", bottom_system, bottom_side_inverse),
@@ -4944,6 +5165,18 @@ def create_side_balh_block_ldu_preconditioner(
     if not isinstance(fixed_h6_modal_gmres_research, (bool, np.bool_)):
         raise TypeError("Fixed-H6 modal GMRES research must be an explicit boolean.")
     fixed_h6_modal_gmres_research = bool(fixed_h6_modal_gmres_research)
+    if fixed_h6_modal_feedback_method not in (
+        None,
+        FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD,
+    ):
+        raise ValueError("unsupported fixed modal feedback method")
+    if (
+        fixed_h6_modal_feedback_method is not None
+        and not fixed_h6_modal_gmres_research
+    ):
+        raise ValueError(
+            "fixed physical BAL_H feedback requires the fixed-H6 modal research binding"
+        )
     if fixed_h6_modal_gmres_research and any(
         (
             use_anderson_modal_inner,
@@ -5036,17 +5269,19 @@ def create_side_balh_block_ldu_preconditioner(
                 side: _action_diagnostics(action).get("apply_count")
                 for side, action in original_side_actions.items()
             }
-            fixed_h6_adapters.append(
-                bottom_side_inverse.create_fixed_h6_active_trace_action()
+            make_action = (
+                SideBalancedInverse.create_fixed_h6_active_trace_action
+                if fixed_h6_modal_feedback_method is None
+                else SideBalancedInverse.create_fixed_physical_balh_active_trace_action
             )
-            fixed_h6_adapters.append(
-                top_side_inverse.create_fixed_h6_active_trace_action()
-            )
+            fixed_h6_adapters.append(make_action(bottom_side_inverse))
+            fixed_h6_adapters.append(make_action(top_side_inverse))
             fixed_h6_solver = _FixedH6ModalKrylovSystem(
                 coupling,
                 fixed_h6_adapters[0],
                 fixed_h6_adapters[1],
                 modal_owner=layout.modal_owner,
+                feedback_method=fixed_h6_modal_feedback_method,
             )
             early_sample_gate = _check_fixed_h6_modal_feedback_repeat_linearity(
                 fixed_h6_solver,
@@ -5059,10 +5294,32 @@ def create_side_balh_block_ldu_preconditioner(
                 fixed_h6_adapters[0],
                 fixed_h6_adapters[1],
             )
+            fixed_balh_selected = (
+                fixed_h6_modal_feedback_method
+                == FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD
+            )
             research_inventory = {
                 "research_only": True,
-                "preconditioner_identity": "fixed_h6_modal_gmres_research",
-                "modal_block_name": "fixed_h6_surrogate_on_demand_modal_gmres",
+                "preconditioner_identity": (
+                    "fixed_physical_balh_once_modal_gmres_research"
+                    if fixed_balh_selected
+                    else "fixed_h6_modal_gmres_research"
+                ),
+                **(
+                    {
+                        "modal_feedback_method": fixed_h6_modal_feedback_method,
+                        "modal_feedback_selection_source": (
+                            "registered_w0p7_fixed_h6_consumer_scope"
+                        ),
+                    }
+                    if fixed_balh_selected
+                    else {}
+                ),
+                "modal_block_name": (
+                    "fixed_physical_balh_once_on_demand_modal_gmres"
+                    if fixed_balh_selected
+                    else "fixed_h6_surrogate_on_demand_modal_gmres"
+                ),
                 "modal_schur_scope": "not_materialized",
                 "modal_block_condition_status": "not_measured",
                 "not_original_global_operator": True,

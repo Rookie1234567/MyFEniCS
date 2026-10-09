@@ -88,16 +88,48 @@ def _fixed_h6_service_binding(
             "fixed_h6_modal_gmres_research service config must be a boolean"
         )
     configured_rank_cpus = config.get("expected_rank_cpus")
+    configured_modal_feedback_method = config.get("modal_feedback_method")
     research_flag = "--task041-fixed-h6-modal-gmres-research"
     cpu_flag = "--task041-expected-rank-cpus"
+    modal_feedback_flag = "--task041-modal-feedback-method"
     research_positions = [i for i, value in enumerate(command) if value == research_flag]
     cpu_positions = [i for i, value in enumerate(command) if value == cpu_flag]
+    modal_feedback_positions = [
+        i for i, value in enumerate(command) if value == modal_feedback_flag
+    ]
     if not enabled:
-        if research_positions or cpu_positions or configured_rank_cpus is not None:
+        if (
+            research_positions
+            or cpu_positions
+            or configured_rank_cpus is not None
+            or configured_modal_feedback_method is not None
+            or modal_feedback_positions
+        ):
             raise Task041ServiceError(
-                "fixed-H6 command options require the matching service config opt-in"
+                "fixed-H6/modal-feedback command options require the matching service config opt-in"
             )
         return None
+    if configured_modal_feedback_method is not None:
+        if (
+            not isinstance(configured_modal_feedback_method, str)
+            or configured_modal_feedback_method != "fixed_physical_balh_once"
+            or len(modal_feedback_positions) != 1
+        ):
+            raise Task041ServiceError(
+                "service modal_feedback_method and public command must bind the same supported method once"
+            )
+        method_position = modal_feedback_positions[0]
+        if (
+            method_position + 1 >= len(command)
+            or command[method_position + 1] != configured_modal_feedback_method
+        ):
+            raise Task041ServiceError(
+                "service modal_feedback_method differs from the public command"
+            )
+    elif modal_feedback_positions:
+        raise Task041ServiceError(
+            "public command requests modal feedback absent from service config"
+        )
     if len(research_positions) != 1 or len(cpu_positions) != 1:
         raise Task041ServiceError(
             "fixed-H6 service command must bind its opt-in and frozen rank CPU map once"
@@ -135,6 +167,7 @@ def _fixed_h6_service_binding(
             p4_refinement_target_tolerance=p4_refinement_target_tolerance,
             task041_resource_policy=task041_resource_policy,
             expected_rank_cpus=configured_cpus,
+            modal_feedback_method=configured_modal_feedback_method,
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise Task041ServiceError(str(exc)) from exc
@@ -247,6 +280,7 @@ def _service_contract(
 
     model_id = str(config["model_id"])
     command = list(config.get("public_command", []))
+    configured_modal_feedback_method = config.get("modal_feedback_method")
     bound_profile = (
         _performance_profile_binding(
             command,
@@ -367,6 +401,10 @@ def _service_contract(
             resolved_contract["task041_resource_policy"] = resource_policy_binding
         if fixed_h6_binding is not None:
             resolved_contract["fixed_h6_modal_gmres_research"] = fixed_h6_binding
+            if configured_modal_feedback_method is not None:
+                resolved_contract["modal_feedback_method"] = (
+                    configured_modal_feedback_method
+                )
             resolved_contract["post_start_document_allowlist"] = sorted(
                 supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
             )
@@ -546,6 +584,18 @@ def _representative_rhs_probe_binding(
             "formal service command must not bind a representative RHS probe"
         )
     return None
+
+
+def _modal_feedback_method_matches_request(
+    contract: Mapping[str, Any], public_result: Any
+) -> bool:
+    """Compare the observed result method with the sealed service request."""
+
+    return bool(
+        isinstance(public_result, Mapping)
+        and public_result.get("modal_feedback_method")
+        == contract.get("modal_feedback_method")
+    )
 
 
 def _side_setup_schedule_binding(
@@ -967,6 +1017,11 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
         **(
             {"fixed_h6_modal_gmres_research": fixed_h6_binding}
             if isinstance(fixed_h6_binding, Mapping)
+            else {}
+        ),
+        **(
+            {"modal_feedback_method": contract["modal_feedback_method"]}
+            if isinstance(contract.get("modal_feedback_method"), str)
             else {}
         ),
         **(
@@ -1393,12 +1448,20 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             expected["fixed_h6_modal_gmres_research"] = dict(
                 fixed_h6_binding
             )
+            expected_method = contract.get("modal_feedback_method")
+            if expected_method is not None:
+                expected["modal_feedback_method"] = expected_method
+            elif "modal_feedback_method" in launch:
+                raise Task041ServiceError(
+                    "service launch declares an unrequested modal feedback method"
+                )
             expected["post_start_document_allowlist"] = sorted(
                 supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
             )
         elif (
             "fixed_h6_modal_gmres_research" in launch
             or "post_start_document_allowlist" in launch
+            or "modal_feedback_method" in launch
         ):
             raise Task041ServiceError(
                 "default service launch must not declare fixed-H6 identity"
@@ -1535,6 +1598,9 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
     public_result_classification = (
         public.get("result_classification") if isinstance(public, Mapping) else None
     )
+    modal_feedback_method_match = _modal_feedback_method_matches_request(
+        contract, public
+    )
     public_ok = bool(
         isinstance(public, Mapping)
         and public.get("status") == "completed"
@@ -1560,6 +1626,7 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
         "pre_exit_membership_record": pre_membership_record_valid,
         "pre_exit_members_clean": pre_clean,
         "public_result_completed": public_ok,
+        "modal_feedback_method_matches_request": modal_feedback_method_match,
         "post_cgroup_finalizer_only": post_members == [os.getpid()],
         "post_hash_phase_completed": post_ok,
         "closed_artifacts_hashed": artifact_ok,
@@ -1568,6 +1635,7 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
     normal_reasons = [name for name, passed in checks.items() if not passed]
     controlled_checks = {
         "service_terminal_captured": terminal["available"],
+        "modal_feedback_method_matches_request": modal_feedback_method_match,
         "service_terminal_exit3": (
             terminal["SERVICE_RESULT"] == "exit-code"
             and terminal["EXIT_CODE"] == "exited"

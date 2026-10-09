@@ -15,6 +15,7 @@ from petsc4py import PETSc
 
 from src.solvers import physical_balanced_side_inverse as side_inverse_module
 from src.solvers.hybrid_local_dtn_action import HybridLocalDtnActionSystem
+from src.solvers.physical_balanced_h6 import FixedH6
 from src.solvers.physical_balanced_physical_operator import (
     P4CondensedExactFactor,
     P4ExactFactor,
@@ -60,10 +61,32 @@ class _ScaleContext:
         self.destroyed = True
 
 
-def _scale_matrix(size: int, scale: complex) -> tuple[PETSc.Mat, _ScaleContext]:
+def _local_rows_for_test_matrix(
+    size: int,
+    local_row_counts: tuple[int, ...] | None,
+) -> int:
     comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    local_rows = size // comm.Get_size()
+    if local_row_counts is None:
+        quotient, remainder = divmod(size, comm.size)
+        return quotient + int(comm.rank < remainder)
+    counts = tuple(int(value) for value in local_row_counts)
+    if (
+        len(counts) != comm.size
+        or any(value < 0 for value in counts)
+        or sum(counts) != size
+    ):
+        raise ValueError("test matrix local row counts must partition its rows")
+    return counts[comm.rank]
+
+
+def _scale_matrix(
+    size: int,
+    scale: complex,
+    *,
+    local_row_counts: tuple[int, ...] | None = None,
+) -> tuple[PETSc.Mat, _ScaleContext]:
+    comm = MPI.COMM_WORLD
+    local_rows = _local_rows_for_test_matrix(size, local_row_counts)
     context = _ScaleContext(scale)
     matrix = PETSc.Mat().createPython(
         ((local_rows, size), (local_rows, size)),
@@ -71,18 +94,35 @@ def _scale_matrix(size: int, scale: complex) -> tuple[PETSc.Mat, _ScaleContext]:
         comm=comm,
     )
     matrix.setUp()
-    del rank
     return matrix, context
 
 
 class _IdentityCondensed:
-    def __init__(self, size: int) -> None:
+    def __init__(
+        self,
+        size: int,
+        *,
+        local_row_counts: tuple[int, ...] | None = None,
+    ) -> None:
         comm = MPI.COMM_WORLD
         self.comm = comm
         self.active_rows = size
         self.full_rows = size
-        self.owned_active_rows = size // comm.Get_size()
-        first = self.owned_active_rows * comm.Get_rank()
+        if local_row_counts is None:
+            quotient, remainder = divmod(size, comm.size)
+            counts = tuple(
+                quotient + int(rank < remainder) for rank in range(comm.size)
+            )
+        else:
+            counts = tuple(int(value) for value in local_row_counts)
+        if (
+            len(counts) != comm.size
+            or any(value < 0 for value in counts)
+            or sum(counts) != size
+        ):
+            raise ValueError("test condensed ownership must partition active rows")
+        self.owned_active_rows = counts[comm.rank]
+        first = sum(counts[: comm.rank])
         self.trace_constraints = SimpleNamespace(
             owned_active_original_dofs=np.arange(
                 first,
@@ -556,7 +596,11 @@ class _DenseBlockSolve:
 
     @staticmethod
     def _prepare_port_rhs(port_rhs) -> np.ndarray:
-        values = np.asarray(port_rhs, dtype=np.complex128)
+        values = (
+            np.zeros(1, dtype=np.complex128)
+            if port_rhs is None
+            else np.asarray(port_rhs, dtype=np.complex128)
+        )
         if values.shape != (1,):
             raise ValueError("dense block fixture expects one port RHS")
         return values.copy()
@@ -636,11 +680,12 @@ def _dense_python_matrix(
     base_rows: int,
     appended_rows: int = 0,
     purpose: str,
+    local_row_counts: tuple[int, ...] | None = None,
 ) -> tuple[PETSc.Mat, _DensePythonMatrix]:
     global _G2A_MATRIX_SEQUENCE
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
-    local_base = base_rows // comm.size + int(rank < base_rows % comm.size)
+    local_base = _local_rows_for_test_matrix(base_rows, local_row_counts)
     local_rows = local_base + (appended_rows if rank == comm.size - 1 else 0)
     context = _DensePythonMatrix(values)
     matrix_metadata = None
@@ -680,6 +725,7 @@ def _g2a_p4_fixture(
     perturb_initial_fe: complex = 0.0 + 0.0j,
     nonfinite_first_fe: bool = False,
     correction_scales: tuple[float, ...] = (),
+    local_row_counts: tuple[int, ...] | None = None,
 ):
     A0 = np.asarray(
         [[3.2 + 0.4j, 0.7 - 0.2j], [-0.3 + 0.5j, 2.4 - 0.6j]],
@@ -695,6 +741,7 @@ def _g2a_p4_fixture(
         physical_matrix_values,
         base_rows=2,
         purpose="physical",
+        local_row_counts=local_row_counts,
     )
     first, last = (int(value) for value in physical_matrix.getOwnershipRange())
     rows = np.arange(first, last, dtype=PETSc.IntType)
@@ -734,6 +781,7 @@ def _g2a_p4_fixture(
         base_rows=2,
         appended_rows=1,
         purpose="augmented",
+        local_row_counts=local_row_counts,
     )
     factor_matrix_metadata = getattr(factor_context, "_g2a_matrix_metadata", None)
     if backend == "full":
@@ -921,6 +969,57 @@ class _IdentityH6:
         self.destroy_count += 1
 
 
+class _TinyFixedH6WindowAction:
+    def __init__(
+        self,
+        size: int,
+        local_row_counts: tuple[int, ...] | None,
+    ) -> None:
+        self.matrix, self.context = _scale_matrix(
+            size, 2.0, local_row_counts=local_row_counts
+        )
+        self.audit = {"apply_count": 0}
+
+    def apply_into(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        self.matrix.mult(source, target)
+        self.audit["apply_count"] += 1
+
+    def destroy(self) -> None:
+        self.matrix.destroy()
+
+
+def _tiny_fixed_h6(
+    size: int = 2,
+    *,
+    local_row_counts: tuple[int, ...] | None = None,
+) -> FixedH6:
+    window_action = _TinyFixedH6WindowAction(size, local_row_counts)
+    diagonal = window_action.matrix.createVecRight()
+    diagonal.set(PETSc.ScalarType(2.0))
+    diagonal.assemble()
+    seed = window_action.matrix.createVecRight()
+    first, last = (int(value) for value in seed.getOwnershipRange())
+    seed.getArray()[:] = np.asarray(
+        [1.0 + 0.5j + index * (0.2 - 0.1j) for index in range(first, last)],
+        dtype=PETSc.ScalarType,
+    )
+    seed.assemble()
+    try:
+        return FixedH6(
+            window_action,
+            diagonal,
+            seed,
+            {"fixture": "tiny-positive-window"},
+            {"fixture": "fixed-nonzero-seed"},
+        )
+    except BaseException:
+        window_action.destroy()
+        diagonal.destroy()
+        raise
+    finally:
+        seed.destroy()
+
+
 class _FailingH6(_IdentityH6):
     def apply(self, _source: PETSc.Vec) -> PETSc.Vec:
         raise RuntimeError("focused H1e H6 failure")
@@ -994,8 +1093,15 @@ class _RepeatedPcKsp:
 
 
 class _FullAction:
-    def __init__(self, size: int) -> None:
-        self.matrix, self.context = _scale_matrix(size, 1.0)
+    def __init__(
+        self,
+        size: int,
+        *,
+        local_row_counts: tuple[int, ...] | None = None,
+    ) -> None:
+        self.matrix, self.context = _scale_matrix(
+            size, 1.0, local_row_counts=local_row_counts
+        )
         self.full_rows = size
         self.destroy_count = 0
 
@@ -1035,19 +1141,23 @@ def _build_fixture(
     p4_inverse_backend: str = "full",
     diagnostic_callback=None,
     reuse_leading_ph_dual: bool = False,
+    h6_action=None,
+    local_row_counts: tuple[int, ...] | None = None,
 ) -> tuple[SideBalancedInverse, dict[str, object]]:
-    operator, operator_context = _scale_matrix(size, 2.0)
-    condensed = _IdentityCondensed(size)
+    operator, operator_context = _scale_matrix(
+        size, 2.0, local_row_counts=local_row_counts
+    )
+    condensed = _IdentityCondensed(size, local_row_counts=local_row_counts)
     side_system = SimpleNamespace(
         A=operator,
         cfg=SimpleNamespace(nedelec_degree=6),
         static_condensation=SimpleNamespace(condensed=condensed),
         side="bottom",
     )
-    full_action = _FullAction(size)
+    full_action = _FullAction(size, local_row_counts=local_row_counts)
     p4_factor = _IdentityP4(size) if p4_factor is None else p4_factor
     transfer = _IdentityTransfer()
-    h6 = _IdentityH6()
+    h6 = _IdentityH6() if h6_action is None else h6_action
     inverse = SideBalancedInverse(
         side_system,
         full_action,
@@ -3909,6 +4019,294 @@ def test_p4_diagnostic_exact_zero_rhs_records_one_requested_correction(
         if result is not None:
             result.destroy()
         _destroy_g2a_p4_fixture(fixture)
+
+
+def _fixed_physical_balh_cell_fixture(
+    *,
+    zero_rhs: bool = False,
+    correction_scales: tuple[float, ...] = (),
+    local_row_counts: tuple[int, ...] | None = None,
+    align_a6_with_p4: bool = True,
+):
+    p4_fixture = _g2a_p4_fixture(
+        backend="cell_condensed",
+        zero_rhs=zero_rhs,
+        perturb_initial_port=not zero_rhs,
+        correction_scales=correction_scales,
+        local_row_counts=local_row_counts,
+    )
+    h6 = _tiny_fixed_h6(2, local_row_counts=local_row_counts)
+    inverse = None
+    owned = None
+    try:
+        inverse, owned = _build_fixture(
+            size=2,
+            p4_factor=p4_fixture["p4"],
+            p4_inverse_backend="cell_condensed",
+            h6_action=h6,
+            local_row_counts=local_row_counts,
+        )
+        if align_a6_with_p4:
+            old_a6 = owned["full_action"].matrix
+            a6_values = np.array(
+                p4_fixture["physical_context"].dense,
+                dtype=np.complex128,
+                copy=True,
+            )
+            new_a6, new_a6_context = _dense_python_matrix(
+                a6_values,
+                base_rows=2,
+                purpose="a6-aligned-to-independent-p4-physical-matrix",
+                local_row_counts=local_row_counts,
+            )
+            owned["full_action"].matrix = new_a6
+            owned["full_action"].context = new_a6_context
+            old_a6.destroy()
+        inverse.configure_diagnostic_p4_corrections(
+            0, None, refinement_target_tolerance=5.0e-13
+        )
+    except BaseException:
+        if inverse is None:
+            h6.destroy()
+        else:
+            inverse.destroy()
+            owned["operator"].destroy()
+        _destroy_g2a_p4_fixture(p4_fixture)
+        raise
+    return inverse, owned, p4_fixture
+
+
+def _sample_galerkin_a6(
+    inverse: SideBalancedInverse,
+    action,
+    p4_fixture: dict[str, object],
+) -> tuple[np.ndarray, np.ndarray]:
+    """Measure P^H A6 P through the fixture's actual transfer/action callbacks."""
+
+    size = int(inverse._operator.getSize()[0])
+    sampled = np.empty((size, size), dtype=np.complex128)
+    p4_action = np.empty((size, size), dtype=np.complex128)
+    p4_matrix = p4_fixture["physical_matrix"]
+    for column in range(size):
+        basis_values = np.zeros(size, dtype=np.complex128)
+        basis_values[column] = 1.0
+        basis = _new_vector(inverse._operator, basis_values)
+        primal = a6_image = dual_image = p4_image = None
+        try:
+            primal = inverse._owner_transfer.apply_primal(basis)
+            a6_image = action._apply_a6(primal)
+            dual_image = action._apply_ph(a6_image)
+            p4_image = p4_matrix.createVecLeft()
+            p4_matrix.mult(basis, p4_image)
+            sampled[:, column] = _gather_dense_vector(dual_image)
+            p4_action[:, column] = _gather_dense_vector(p4_image)
+        finally:
+            for vector in (p4_image, dual_image, a6_image, primal, basis):
+                if vector is not None:
+                    vector.destroy()
+    return sampled, p4_action
+
+
+def _sample_fixed_h6_matrix(inverse: SideBalancedInverse) -> np.ndarray:
+    size = int(inverse._operator.getSize()[0])
+    sampled = np.empty((size, size), dtype=np.complex128)
+    for column in range(size):
+        basis_values = np.zeros(size, dtype=np.complex128)
+        basis_values[column] = 1.0
+        basis = _new_vector(inverse._operator, basis_values)
+        response = None
+        try:
+            response = inverse._h6.apply(basis)
+            sampled[:, column] = _gather_dense_vector(response)
+        finally:
+            if response is not None:
+                response.destroy()
+            basis.destroy()
+    return sampled
+
+
+def test_side_inverse_fixed_physical_balh_cell_condensed_q_uses_one_correction_per_input() -> None:
+    local_row_counts = (2, 0) if MPI.COMM_WORLD.size == 2 else None
+    # Preserve the former synthetic mismatch as a negative control: A4 is
+    # non-Hermitian while the old full-action A6 is identity, so the real
+    # BAL_H initial balance gate must reject before H6 is called.
+    wrong_inverse, wrong_owned, wrong_p4_fixture = (
+        _fixed_physical_balh_cell_fixture(
+            local_row_counts=local_row_counts,
+            align_a6_with_p4=False,
+        )
+    )
+    wrong_action = None
+    wrong_source = None
+    wrong_target = None
+    try:
+        wrong_action = wrong_inverse.create_fixed_physical_balh_active_trace_action()
+        wrong_source = wrong_p4_fixture["rhs"].duplicate()
+        wrong_p4_fixture["rhs"].copy(wrong_source)
+        wrong_target = wrong_owned["operator"].createVecLeft()
+        wrong_galerkin_a6, wrong_p4_action = _sample_galerkin_a6(
+            wrong_inverse, wrong_action, wrong_p4_fixture
+        )
+        assert np.linalg.norm(
+            wrong_galerkin_a6 - wrong_p4_action
+        ) > 1.0e-8
+        with pytest.raises(
+            side_inverse_module.BalancedConstraintRejected
+        ) as caught:
+            wrong_action.apply(wrong_source, wrong_target)
+        assert caught.value.facts["relative"] > 1.0e-8
+        assert wrong_inverse._h6.apply_count == 0
+    finally:
+        for vector in (wrong_target, wrong_source):
+            if vector is not None:
+                vector.destroy()
+        if wrong_action is not None:
+            wrong_action.destroy()
+        wrong_inverse.destroy()
+        wrong_owned["operator"].destroy()
+        _destroy_g2a_p4_fixture(wrong_p4_fixture)
+
+    inverse, owned, p4_fixture = _fixed_physical_balh_cell_fixture(
+        local_row_counts=local_row_counts
+    )
+    p4 = p4_fixture["p4"]
+    assert isinstance(p4, P4CondensedExactFactor)
+    action = inverse.create_fixed_physical_balh_active_trace_action()
+    solve_records: list[dict[str, object]] = []
+    original_apply = p4.apply
+
+    def capture_apply(rhs: PETSc.Vec, **kwargs):
+        result = original_apply(rhs, **kwargs)
+        last = dict(p4.diagnostics["last_solve"])
+        solve_records.append({"kwargs": dict(kwargs), "audit": last})
+        return result
+
+    p4.apply = capture_apply
+    source = p4_fixture["rhs"].duplicate()
+    p4_fixture["rhs"].copy(source)
+    source_before = _gather_dense_vector(source)
+    target = owned["operator"].createVecLeft()
+    zero_source = source.duplicate()
+    zero_source.set(PETSc.ScalarType(0.0))
+    zero_source.assemble()
+    zero_target = owned["operator"].createVecLeft()
+    try:
+        assert inverse._p4_refinement_target_tolerance == 5.0e-13
+        assert float(source.norm()) > 0.0
+        galerkin_a6, p4_action = _sample_galerkin_a6(
+            inverse, action, p4_fixture
+        )
+        physical_matrix = np.asarray(
+            p4_fixture["physical_context"].dense, dtype=np.complex128
+        )
+        np.testing.assert_allclose(
+            galerkin_a6,
+            p4_action,
+            rtol=1.0e-13,
+            atol=1.0e-13,
+        )
+        np.testing.assert_allclose(
+            p4_action, physical_matrix, rtol=1.0e-13, atol=1.0e-13
+        )
+        h6_matrix = _sample_fixed_h6_matrix(inverse)
+        q_matrix = np.linalg.inv(physical_matrix)
+        identity = np.eye(physical_matrix.shape[0], dtype=np.complex128)
+        dense_balh = q_matrix + (identity - q_matrix @ galerkin_a6) @ h6_matrix @ (
+            identity - galerkin_a6 @ q_matrix
+        )
+        expected = dense_balh @ source_before
+        action.apply(source, target)
+        assert np.isfinite(float(target.norm()))
+        assert float(target.norm()) > 0.0
+        actual = _gather_dense_vector(target)
+        response_relative = float(
+            np.linalg.norm(actual - expected)
+            / max(float(np.linalg.norm(expected)), np.finfo(float).tiny)
+        )
+        assert response_relative <= 1.0e-10
+        np.testing.assert_array_equal(_gather_dense_vector(source), source_before)
+        assert len(solve_records) == 2
+        assert all(
+            row["kwargs"].get("diagnostic_correction_steps") == 1
+            and "refinement_target_tolerance" not in row["kwargs"]
+            for row in solve_records
+        )
+        for row in solve_records:
+            audit = row["audit"]
+            assert audit["status"] == "passed"
+            assert audit["residual_tolerance"] == pytest.approx(1.0e-10)
+            assert audit["physical_gate_passed"] is True
+            assert audit["augmented_gate_passed"] is True
+            assert audit["relative_residual"] <= 1.0e-10
+            assert audit["backsolve_count"] == 2
+            assert audit["diagnostic_correction_limit"] == 1
+            assert len(audit["diagnostic_correction_history"]) == 2
+        assert p4.inverse.solve_count == 4
+        assert action.audit["last_q_factor_solve_deltas"] == [2, 2]
+        assert action.audit["p4_refinement_target_tolerance_used"] is None
+        assert action.audit["ordinary_side_refinement_target_tolerance"] == (
+            5.0e-13
+        )
+        assert inverse._p4_refinement_target_tolerance == 5.0e-13
+
+        action.apply(zero_source, zero_target)
+        assert float(zero_source.norm()) == 0.0
+        assert float(zero_target.norm()) == 0.0
+        assert p4.inverse.solve_count == 8
+        assert action.audit["last_q_factor_solve_deltas"] == [2, 2]
+        assert len(solve_records) == 4
+        assert inverse._p4_refinement_target_tolerance == 5.0e-13
+        if local_row_counts is not None:
+            assert owned["side_system"].static_condensation.condensed.owned_active_rows == (
+                2 if MPI.COMM_WORLD.rank == 0 else 0
+            )
+            assert source.getLocalSize() == (
+                2 if MPI.COMM_WORLD.rank == 0 else 0
+            )
+    finally:
+        zero_target.destroy()
+        zero_source.destroy()
+        target.destroy()
+        source.destroy()
+        action.destroy()
+        assert p4._destroyed is False
+        inverse.destroy()
+        owned["operator"].destroy()
+        _destroy_g2a_p4_fixture(p4_fixture)
+
+
+def test_side_inverse_fixed_physical_balh_cell_condensed_q_rejects_actual_residual() -> None:
+    inverse, owned, p4_fixture = _fixed_physical_balh_cell_fixture(
+        correction_scales=(0.0,)
+    )
+    p4 = p4_fixture["p4"]
+    assert isinstance(p4, P4CondensedExactFactor)
+    action = inverse.create_fixed_physical_balh_active_trace_action()
+    source = p4_fixture["rhs"].duplicate()
+    p4_fixture["rhs"].copy(source)
+    source_before = _gather_dense_vector(source)
+    target = owned["operator"].createVecLeft()
+    try:
+        with pytest.raises(P4PhysicalResidualGateError) as caught:
+            action.apply(source, target)
+        residual = float(caught.value.audit["relative_residual"])
+        assert np.isfinite(residual)
+        assert residual > 1.0e-10
+        assert caught.value.audit["status"] == "gate_failed"
+        assert caught.value.audit["physical_gate_passed"] is False or (
+            caught.value.audit["augmented_gate_passed"] is False
+        )
+        np.testing.assert_array_equal(_gather_dense_vector(source), source_before)
+        assert p4._destroyed is False
+        assert inverse._destroyed is False
+    finally:
+        target.destroy()
+        source.destroy()
+        action.destroy()
+        assert p4._destroyed is False
+        inverse.destroy()
+        owned["operator"].destroy()
+        _destroy_g2a_p4_fixture(p4_fixture)
 
 
 def test_p4_condensed_diagnostic_rejects_nonfinite_before_next_backsolve() -> None:
