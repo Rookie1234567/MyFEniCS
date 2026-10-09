@@ -132,3 +132,28 @@ def test_v35_admission_dispatch_and_shared_clock(monkeypatch, tmp_path):
         dict(deadline_monotonic=15000),
     )
     assert next_deadline == 7300
+
+
+def test_actual_small_qualification_with_repaired_reader(tmp_path):
+    from src.solvers.neural_space_qualification import qualify
+
+    result = qualify(tmp_path, dict(source_sha="0" * 40, design_sha256="0" * 64))
+    assert result["implementation_qualified"]
+    assert result["actual_writer_seal_reopen"]
+
+
+def test_full_rank_triangular_reader_preserves_fixed_rank_rule():
+    rng = np.random.default_rng(4213505)
+    Q, _ = linalg.qr(
+        rng.normal(size=(25, 8)) + 1j * rng.normal(size=(25, 8)), mode="economic"
+    )
+    R = np.triu(rng.normal(size=(8, 8)) + 1j * rng.normal(size=(8, 8)))
+    R[np.diag_indices(8)] = np.geomspace(1, 1e-6, 8)
+    U = Q @ R
+    _, stats = original_readout(
+        U, Q, R, rng.normal(size=25) + 1j * rng.normal(size=25), lambda x: x
+    )
+    # Very correlated synthetic columns may still be truncated by 1e-12.
+    assert stats["SVD_rcond"] == 1e-12
+    if stats["full_column_rank"]:
+        assert stats["amplitude_solver"] == "SVD_RANK_QUALIFIED_QR_BACK_SUBSTITUTION"

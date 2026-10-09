@@ -5,7 +5,7 @@ import gc
 import json
 from pathlib import Path
 import sys
-from time import monotonic
+from time import monotonic, monotonic_ns
 
 import numpy as np
 from scipy import linalg, sparse
@@ -84,7 +84,7 @@ def load_space(entry, n, *, qr):
 def write_model(directory, original, arrays, manifest, *, oracle):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
-    state = directory / "state.npz"
+    state = directory / f"state_{monotonic_ns()}.npz"
     atomic_npz(state, **arrays)
     value = deepcopy(original)
     value.update(
@@ -110,7 +110,12 @@ def write_model(directory, original, arrays, manifest, *, oracle):
             pde_only_solver_qualified=False,
             official_candidate_results=False,
         )
-    atomic_json(directory / "committed.json", value)
+    pointer = directory / "committed.json"
+    if pointer.exists():
+        previous = directory / f"previous_{digest(pointer)}.json"
+        if not previous.exists():
+            atomic_json(previous, json.loads(pointer.read_text()))
+    atomic_json(pointer, value)
     reread = check_boundary(directory / "committed.json")
     if oracle:
         require_oracle_policy(reread)
@@ -124,6 +129,12 @@ def unlabelled(action, packet, design, artifact, marker, manifest):
     from src.solvers.neural_wave_block_reconstruction import rebuild_stable
 
     records = {}
+    previous = artifact / "initial_SVD_result.json"
+    prior = json.loads(previous.read_text()) if previous.exists() else None
+    if prior is not None and prior["bound_numerical_chain"][
+        "src/solvers/neural_wave_block_reconstruction.py"
+    ] != digest(ROOT / "src/solvers/neural_wave_block_reconstruction.py"):
+        raise ValueError("PRIOR_COMBINATION_RECONSTRUCTION_SOURCE_CHANGED")
     for space_index, (name, entry) in enumerate(design["spaces"].items()):
         rng = np.random.default_rng(4213501 + space_index)
         if monotonic() >= manifest["worker_stop_monotonic"]:
@@ -132,6 +143,33 @@ def unlabelled(action, packet, design, artifact, marker, manifest):
         U, Q, saved, boundary = load_space(entry, action.size, qr=True)
         rows = []
         for i in range(3):
+            if prior is not None:
+                previous_record = prior["records"][name]
+                row = previous_record["nonzero_combinations"][i]
+                if (
+                    previous_record["source_identity"] != entry
+                    or row["index"] != i
+                    or max(
+                        row["complete_network_moment_relative"],
+                        row["original_A_QR_relative"],
+                    )
+                    > 1e-10
+                ):
+                    raise ValueError("PRIOR_COMPLETE_COMBINATION_IDENTITY_FAILED")
+                check_boundary(
+                    artifact / name / f"witness_{i}" / "basis" / "committed.json"
+                )
+                rows.append(row)
+                marker(
+                    "healthy_nonzero_combination_reused",
+                    dict(
+                        space=name,
+                        index=i,
+                        original_source_sha=prior["source_sha"],
+                        new_forward=0,
+                    ),
+                )
+                continue
             a = (rng.standard_normal(1377) + 1j * rng.standard_normal(1377)) / np.sqrt(
                 1377
             )
@@ -206,6 +244,9 @@ def unlabelled(action, packet, design, artifact, marker, manifest):
             model=model,
             reference_used_for_training=False,
             pde_only_solve=True,
+            combination_evidence_source_sha=prior["source_sha"]
+            if prior is not None
+            else manifest["source_sha"],
         )
         records[name] = stats
         atomic_json(artifact / name / "space_record.json", stats)

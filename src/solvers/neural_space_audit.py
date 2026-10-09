@@ -37,7 +37,19 @@ def original_readout(U, Q, R, f, apply):
     if U.shape != Q.shape or R.shape != (U.shape[1], U.shape[1]):
         raise ValueError("FROZEN_COLUMN_QR_SHAPE")
     solver = SmallSVDSolve(R, 1e-12)
-    a = solver.solve(Q.conj().T @ f)
+    rhs = Q.conj().T @ f
+    triangular_defect = float(
+        np.linalg.norm(np.tril(R, -1)) / max(np.linalg.norm(R), 1e-300)
+    )
+    # Rank is still determined by the fixed SVD rule. For a qualified full
+    # triangular QR, back substitution avoids a needless, less accurate SVD
+    # amplitude reconstruction (the original wave-space reader uses this too).
+    if solver.rank == U.shape[1] and triangular_defect <= 1e-12:
+        a = linalg.solve_triangular(R, rhs)
+        method = "SVD_RANK_QUALIFIED_QR_BACK_SUBSTITUTION"
+    else:
+        a = solver.solve(rhs)
+        method = "TRUNCATED_SMALL_R_SVD"
     c = compensated_columns(U, a)
     r = f - apply(c)
     predicted = f - Q @ (R @ a)
@@ -55,6 +67,8 @@ def original_readout(U, Q, R, f, apply):
         retained_rank=solver.rank,
         full_column_rank=solver.rank == U.shape[1],
         SVD_rcond=1e-12,
+        amplitude_solver=method,
+        small_R_triangular_relative=triangular_defect,
         singular_values=singular.tolist(),
         column_scales=scales.tolist(),
         QR_orthogonality_F=orth,

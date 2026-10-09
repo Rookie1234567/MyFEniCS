@@ -56,6 +56,8 @@ def compare(action, packet, design, artifact, marker, manifest):
             candidate_decision="NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE",
         )
     # Only new fields are evaluated. The old unlabelled fields remain untouched.
+    for stage, _ in routes:
+        (artifact / (stage + "_rebuild.npz")).parent.mkdir(parents=True, exist_ok=True)
     result = verify(
         design,
         action,
