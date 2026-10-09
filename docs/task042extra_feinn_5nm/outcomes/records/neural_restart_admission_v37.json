@@ -414,7 +414,7 @@
     "new_training_or_PDE_authorized": false
   },
   "rendered_view": {
-    "status": "PARTIAL_ACTUAL_GITHUB_VIEW_WITH_RETAINED_FAILURE",
+    "status": "PARTIAL_VISIBLE_SCOPE_PASS_AFTER_LOCAL_REPAIR",
     "publication_sha": "fb110439798c8fdb0b0455f7bd0a9e133344913e",
     "review_publication_sha": "e5e282d830f377c86e119db56d5d84f6daed0b9c",
     "inspection_method": "Human-visible view_image of three actual Firefox GitHub screenshots; finite viewports only",
@@ -427,7 +427,9 @@
       "scope": "Two visible tables and first core-shape equation render; gradient equation rejected",
       "failure": "GitHub: The following macros are not allowed: operatorname",
       "fix": "Equivalent replacement with mathrm{Re}; no mathematical/algorithmic change",
-      "fixed_actual_visual_recheck": "PENDING"
+      "fixed_actual_visual_recheck": "PASS_VISIBLE_SCOPE",
+      "fixed_publication_sha": "dc258748416e1a658ff157cd3b22c5767f02ade5",
+      "fixed_scope": "Same two tables and TT shape; gradient equation now visually renders with Re; remaining lower page not visually checked"
     },
     "response": {
       "status": "PASS_VISIBLE_BODY_AT_PUBLICATION",
@@ -438,8 +440,8 @@
     "old_visual_failures_preserved": true,
     "decision_binding": {
       "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/visual_decision.json",
-      "bytes": 1204,
-      "sha256": "a9f658fa5f85c8a0b0feac42132d16f5d13a21251f92454efa5d69ad497ce392"
+      "bytes": 1427,
+      "sha256": "7a179651968e95687cccd3a82f3e518fd6a54734504aedc80b252ee76bd0afc6"
     },
     "first_actual_capture_binding": {
       "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/render_views/attempts.json",
@@ -476,6 +478,23 @@
         "elapsed_seconds": 5.279481925070286,
         "screenshot": "tmp/task42extra/v37/render_views/response/page.png",
         "sha256": "e47b6ea160ed66051dd2c117572115d98fb6d029bca5cf44a922bcca3b7dd9e1"
+      }
+    ],
+    "fixed_actual_capture_binding": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/render_fixed/attempts.json",
+      "bytes": 834,
+      "sha256": "c4487d71805e527b50b4a35e70ffae30dbd5196e6a36bfb8288558b8ac511316"
+    },
+    "fixed_captures": [
+      {
+        "name": "admission_fixed",
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/dc258748416e1a658ff157cd3b22c5767f02ade5/docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md",
+        "published_sha": "dc258748416e1a658ff157cd3b22c5767f02ade5",
+        "returncode": 0,
+        "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+        "elapsed_seconds": 7.172960869036615,
+        "screenshot": "tmp/task42extra/v37/render_fixed/admission_fixed/page.png",
+        "sha256": "fac0b7409bbcabfbb3c1dd2cd20754d240b9fd8a115d0366dd20995c8bbc06f9"
       }
     ]
   },
@@ -564,6 +583,48 @@
           "sha256": "ae28c8ab3327ca11cbfdeffc3791a6ced8a21504b9adaf7189d7bc53bb31f72f"
         },
         "startup_system_and_neighbor_reserve_bytes": 628626898944
+      },
+      {
+        "name": "checks_after_render_resource",
+        "summary_binding": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/checks_after_render_resource/summary.json",
+          "bytes": 2016,
+          "sha256": "7a53e7dcc9f964ef4b2d3f414632af75f58364ce226827bc8560b2c255496c3f"
+        },
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "elapsed_worker_and_supervision_seconds": 1.5442310909274966,
+        "sampled_simultaneous_tree_peak_bytes": 44617728,
+        "sampled_tree_swap_peak_bytes": 0,
+        "cpu": 12,
+        "PSI60_binding": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/checks_after_render_resource/pressure_stable_window.json",
+          "bytes": 11429,
+          "sha256": "3702c71988ed4132a1166d4eeab7e368d942a8af19757e1a4a47c7a913f0e722"
+        },
+        "startup_system_and_neighbor_reserve_bytes": 628626898944
+      },
+      {
+        "name": "render_fixed_resource",
+        "summary_binding": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/render_fixed_resource/summary.json",
+          "bytes": 2218,
+          "sha256": "6f1f70a133d8641894947b57d9e885e7a527f2a438b187e9cb76820721ff4383"
+        },
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "elapsed_worker_and_supervision_seconds": 9.192527110222727,
+        "sampled_simultaneous_tree_peak_bytes": 1152438272,
+        "sampled_tree_swap_peak_bytes": 0,
+        "cpu": 9,
+        "PSI60_binding": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/render_fixed_resource/pressure_stable_window.json",
+          "bytes": 11427,
+          "sha256": "7b3b2c1d137390635f050aad5ffa3b687ba55396113d060dc47226fb2f8a14eb"
+        },
+        "startup_system_and_neighbor_reserve_bytes": 628626898944
       }
     ],
     "sampled_simultaneous_peak_of_these_sequential_stages_bytes": 1160990720,
@@ -602,7 +663,7 @@
   },
   "local_checks": {
     "status": "PASS",
-    "assertion_count": 132,
+    "assertion_count": 135,
     "document_count": 6,
     "links_checked": 39,
     "table_count": 10,
@@ -610,8 +671,8 @@
     "original_numerical_tests_replayed": 0,
     "detailed_checks_binding": {
       "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/checks_detail.json",
-      "bytes": 11710,
-      "sha256": "74bddb370672d157d1d4195079ddf8a229bc57897bc11533320c86024ff26aaf"
+      "bytes": 11859,
+      "sha256": "3b9f4d753ba9a5bd8f6331d4cf625d050e2e7ad4d7f6fab3ecff657cc84cee96"
     },
     "check_groups": [
       "exact integer parameters and bytes",
@@ -660,21 +721,34 @@
   ],
   "pure_check_tool_binding": {
     "path": "tmp/task42extra/v37/assemble_record.py",
-    "bytes": 18243,
-    "sha256": "438f6ccc80f952fe7592808a76b6d9fe086e2d0d014d9a7e737d9b6974cf5e38"
+    "bytes": 19893,
+    "sha256": "013df25d221222fa37d63fc3d3d8a126d7ba7ad883aef1db5c2328cf1db16ac3"
   },
   "pure_environment": {
     "python": "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
     "activation": "scripts/activate_task42extra.sh pure",
     "cpu_affinity": [
-      12
+      0
     ],
     "math_threads": 1,
     "numpy_Torch_FE_imported": false
   },
+  "publication_receipt": {
+    "admission_initial_publication_sha": "fb110439798c8fdb0b0455f7bd0a9e133344913e",
+    "math_repair_publication_sha": "dc258748416e1a658ff157cd3b22c5767f02ade5",
+    "final_git_delivery": "tmp/task42extra/v37/delivery_receipt.json",
+    "additional_metadata_seal_reason": "Actual first GitHub view exposed a macro rejection; preserve failure, equivalent repair, independent actual recheck and final compact seal",
+    "original_numerical_source_is_not_document_HEAD": true,
+    "shared_Git_fetch_config_changed": false,
+    "literal_upstream": {
+      "remote": "origin",
+      "merge": "refs/heads/task42extra_feinn_5nm"
+    },
+    "upstream_expression_resolution": "HISTORICAL_128_RETAINED; explicit tracking ref is authority"
+  },
   "calendar_snapshot": {
-    "monotonic_s": 1482797.234095434,
-    "elapsed_from_conservative_origin_s": 2767.2340963990428,
+    "monotonic_s": 1483139.713750935,
+    "elapsed_from_conservative_origin_s": 3109.713751395,
     "not_final": true,
     "final_receipt": "tmp/task42extra/v37/delivery_receipt.json"
   }
