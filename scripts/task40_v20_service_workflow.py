@@ -529,6 +529,25 @@ def _supervise_required_checker(
     return return_code, details["payload"], details
 
 
+def _campaign_accounting_path_from_manifest(
+    run_manifest: dict[str, Any], expected_window_sha256: str
+) -> Path:
+    """Read the fixed campaign identity emitted by the V20 run_case wrapper."""
+
+    campaign_evidence = run_manifest.get("task40_v20_campaign")
+    if not isinstance(campaign_evidence, dict):
+        raise ValueError("run manifest has no Task40 V20 campaign accounting identity")
+    accounting_path = Path(str(campaign_evidence.get("accounting_path", ""))).resolve()
+    if (
+        campaign_evidence.get("window_sha256") != expected_window_sha256
+        or not accounting_path.is_file()
+    ):
+        raise ValueError(
+            "run manifest Task40 V20 campaign identity or accounting file is invalid"
+        )
+    return accounting_path
+
+
 def _official_checker_passed(returncode: int, payload: Any) -> bool:
     """The checker CLI's authoritative success marker is status=PASS."""
 
@@ -819,15 +838,9 @@ def run_service(
                 str(checker_output),
             ]
             record["partial_checker_result_path"] = str(checker_output)
-        campaign_evidence = run_manifest.get("task40_v10_campaign")
-        if not isinstance(campaign_evidence, dict):
-            raise ValueError("run manifest has no Task40 campaign accounting identity")
-        campaign_accounting = Path(str(campaign_evidence.get("accounting_path", ""))).resolve()
-        if (
-            campaign_evidence.get("window_sha256") != CAMPAIGN_SHA256
-            or not campaign_accounting.is_file()
-        ):
-            raise ValueError("run manifest campaign identity or accounting file is invalid")
+        campaign_accounting = _campaign_accounting_path_from_manifest(
+            run_manifest, CAMPAIGN_SHA256
+        )
         checker_code, checker_payload, checker_details = _supervise_required_checker(
             command=checker_command,
             checker_kind=checker_kind,

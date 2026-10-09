@@ -456,6 +456,34 @@ def test_v20_service_accepts_only_the_official_checker_pass_marker():
     assert _official_checker_passed(1, {"status": "PASS"}) is False
 
 
+def test_v20_service_reads_campaign_identity_from_v20_run_manifest(tmp_path):
+    from scripts.task40_v20_service_workflow import (
+        _campaign_accounting_path_from_manifest,
+    )
+
+    accounting = tmp_path / "campaign_accounting.jsonl"
+    accounting.write_text("{}\n", encoding="utf-8")
+    manifest = {
+        "task40_v20_campaign": {
+            "accounting_path": str(accounting),
+            "window_sha256": "a" * 64,
+        }
+    }
+
+    assert _campaign_accounting_path_from_manifest(manifest, "a" * 64) == accounting
+
+
+def test_v20_service_rejects_legacy_campaign_field_for_v20_run():
+    from scripts.task40_v20_service_workflow import (
+        _campaign_accounting_path_from_manifest,
+    )
+
+    with pytest.raises(ValueError, match="Task40 V20 campaign accounting identity"):
+        _campaign_accounting_path_from_manifest(
+            {"task40_v10_campaign": {"accounting_path": "ignored"}}, "a" * 64
+        )
+
+
 def test_v20_service_reads_the_actual_run_case_launcher_result_object():
     import json
 
