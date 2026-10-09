@@ -1,0 +1,64 @@
+{
+  "raw": {
+    "path": "tmp/task42extra/v36/repair_journal.jsonl",
+    "bytes": 1601,
+    "sha256": "1a9d21f55923b4bdb218eed87c5ba41938b9f34b2ed1ceda7d506f426b4f7ddd"
+  },
+  "entries": [
+    {
+      "phase": "preparation",
+      "failure": "initial lock probe used /tmp/task42extra instead of canonical tmp/task42extra; no lock or artifact modified",
+      "hypothesis": "incorrect local path",
+      "change": "use source-declared ROOT/tmp/task42extra/numerical.lock",
+      "test": "nonblocking flock FREE, native process tree empty",
+      "retry": "exact fetch/ff performed only after corrected gate",
+      "recorded_monotonic": 1473133.723637305
+    },
+    {
+      "phase": "targeted_2",
+      "failure": "Ruff F401 unused ReadoutStop import",
+      "hypothesis": "new module unused symbol",
+      "change": "remove import; qualify complete real panel recovery and writer at formal stage",
+      "test": "targeted_3 eight tests, Ruff, compileall passed",
+      "retry": "no healthy U or reference recomputation",
+      "recorded_monotonic": 1473133.723809825
+    },
+    {
+      "failure": "Dedicated subreaper parent already has FE MPI child",
+      "hypothesis": "FE worker is not a zero-child parent",
+      "change": "Fresh pure guarded subprocess owns checker subreaper; complete physical result hash-bound and reused",
+      "test": "2 targeted tests plus Ruff/compile passed",
+      "resume": "v36_learned_oracle_verify_attempt2; no FE/rebuild/projection rerun",
+      "monotonic_s": 1474632.930487829
+    },
+    {
+      "failure": "targeted_4: measured_tree_rss_only_v3 requires startup_headroom_bytes",
+      "hypothesis": "New dedicated parent omitted required memory envelope contract",
+      "change": "Pass original system plus 384GiB neighbor reserve and dynamic envelope to nested checker watchdog",
+      "test": "targeted_5: 2 passed; Ruff and compile passed; own swap0; tree cleared",
+      "resume": "Original field result reused; no numerical producer rerun"
+    }
+  ],
+  "ordinary_bugs_repaired_in_same_batch": true,
+  "healthy_oracle_and_physics_not_rerun": true,
+  "preserved_failed_runs": [
+    {
+      "name": "v36_learned_oracle_verify_attempt1",
+      "summary": {
+        "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt1/run_summary.json",
+        "bytes": 13178,
+        "sha256": "f6dc30c9f67c27ddd79e57074fcf9c3efa6372aafe3ecc9b09701dba468183f4"
+      },
+      "failure": {
+        "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt1/failure.json",
+        "bytes": 1241,
+        "sha256": "59cce72fd1cda639dfd3b5e21a87298e6a8725bacd7f4b1c5d2748b47267887d"
+      },
+      "log": {
+        "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt1/supervised/worker.log",
+        "bytes": 55658,
+        "sha256": "b46562963c43e111543069948078cb1281729442ba4745f8b8ff1c06c109fe2d"
+      }
+    }
+  ]
+}

@@ -1,3 +1,9 @@
+# 当前V36：分块投影核、保全和checker恢复资格
+
+正式S0新核资格完成；本地targeted_3为8项通过，checker补丁targeted_5为2项通过。各批有重复case，不能相加宣称唯一测试总数；targeted_2未用导入Ruff失败、targeted_4监督内存契约漏项测试失败及费用保留。源文件最终受影响测试/Ruff/compile均通过，未full pytest、重装或声称CI。两份真实1377列投影及独立保存物理checker完成，联合数值门FAIL，不能用测试数替代物理成功。
+
+[实际JUnit/source/峰值](records/tests_v36.json)、[保全/后备资格](records/fallback_recovery_v36.json)、[完整物理Gate](records/joint_gates_v36.json)。
+
 # 当前V35测试与验收
 
 最小相关fixture、复数/秩亏/不同尺度独立白化配对、标签隔离、实际writer/seal/reopen及用途损坏测试完成。初次mock/API/脚本路径/lint失败保留，最小修复后affected targeted suite 51 passed、Ruff/compileall通过；随后预算writer/元数据恢复的5项最小测试、损坏反例和Ruff/compileall另行通过；无full pytest、环境重装或CI声明。A六个真实完整矩/A复组合健康见证复用，B无保存新场，C只核对旧场身份/绑定并复用原完整Gate；新FE/q15-q30/保存数组数值checker NOT_RUN。

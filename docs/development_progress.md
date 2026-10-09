@@ -1,3 +1,15 @@
+# 当前V36：冻结神经空间的最佳场数值闭环完成
+
+本轮补完V35未完成的科学问题：已经学出的1377个波形，即使由准确答案指导组合，究竟能表示多准。先把互相接近的函数换成稳定坐标，再用原电场与curl内积选择幅值；只改变组合，不训练波矢/衰减，不增加容量。参考只在完整基冻结后读取，因此这是参考暴露的表示诊断，永远不是无标签前向求解。
+
+两份空间均完整保留1377方向，分块主路径、幅值还原、实际点值完整矩及独立物理积分全部通过数值资格，最佳G误差仍显著超过1e-4。由此只数值排除这两份冻结空间同时满足原E/curl门；不是严格区间证明，也不排除所有神经网络。V35 A原方程最小残差仍约0.143/0.144，当前空间内继续幅值或loss扫描均停止。
+
+CURRENT_DENSE_WAVE_SOLVER_FAMILY_CLOSED / FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED。没有证据支持新的神经生产候选：NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE。没有注册或运行0.7nm、p/h、端口扩展或新架构。原50×25×140nm、Si17/120nm、lambda0.7完整三维FE、十进制2e12B整机、自身swap/OOC0、172800s完整冷流程及原精度目标仍未达到。
+
+学习/控制最佳G相对误差分别0.00317624280631/0.00310153077713，完整秩各1377，实际点值重建及独立G/FE配对通过，但原方程/场/通道/功率联合FAIL。
+
+[回执](task042extra_feinn_5nm/response_v36.md)、[完整证据](task042extra_feinn_5nm/outcomes/records/joint_gates_v36.json)、[费用](task042extra_feinn_5nm/outcomes/records/cost_capacity_v36.json)。下方全部旧原文保留。
+
 # 当前V35：神经固定空间审计与当前稠密波库关闭
 
 本轮不再训练，而是把固定波形的幅值读出和最佳场表示分开测。两份V34最终1377列/246块的无标签全秩原残差数值最小值为0.143187704283/0.14440693779，各高于1e-6；旧c/r逐位未变，复用健康原Gate。B参考暴露只诊断固定空间，不授PDE-only或生产初值。

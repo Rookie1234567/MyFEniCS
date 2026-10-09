@@ -1,0 +1,881 @@
+{
+  "files": [
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/complete_FE_field_samples_q15.npz",
+      "bytes": 80659678,
+      "sha256": "1e276f5aba5d16e10fff415af8d78bc1bb0ea101cbfdf7883998195aedcdd537"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/completed_verifier_receipt.json",
+      "bytes": 1380,
+      "sha256": "a32aef01ab78971ba64efb22f5978d005af13e814bdd93b531dbe45b1454c9d2"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/diagnostic_deterministic_complex_wave_backfit_oracle/volume_absorption.json",
+      "bytes": 2293,
+      "sha256": "cdc42a9858a42a7fe8ca5e649409a4d4564a2da1476035697874a0f9bba00056"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/diagnostic_deterministic_complex_wave_backfit_oracle_producer/volume_absorption.json",
+      "bytes": 2291,
+      "sha256": "5432c839cc8803f760c15f801370ac159fe39bf28291cdd91e208fe1a43b0f9f"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/diagnostic_reference/volume_absorption.json",
+      "bytes": 2289,
+      "sha256": "a3448ef2bf6efea81e6b36835d1c000ff4d6990cce9067a41caf47f47314f7c1"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/independent_pure_checker/contract.json",
+      "bytes": 437,
+      "sha256": "59ea6635a6cd1b00a8028429b29c2c6a68cc4d1e8538264c412af4f444cc5635"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/independent_pure_checker/supervised/resources.jsonl",
+      "bytes": 23099,
+      "sha256": "bf91306d06ad6d89ac227fdb219368e3ce22d972bda83c42eac456aa29c63580"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/independent_pure_checker/supervised/summary.json",
+      "bytes": 2001,
+      "sha256": "b178f6eabe032830c2c14eb44268802a7258bf8a1cccf1fbdfac32d9d4826327"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/independent_pure_checker/supervised/worker.log",
+      "bytes": 562,
+      "sha256": "d317ec532287b186d892d3fc28b3a31aad8dd9fc4cac204cbaac45b44dddbdca"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/norm_q30/diagnostic_deterministic_complex_wave_backfit_oracle/volume_absorption.json",
+      "bytes": 2293,
+      "sha256": "cdc42a9858a42a7fe8ca5e649409a4d4564a2da1476035697874a0f9bba00056"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/norm_q30/diagnostic_deterministic_complex_wave_backfit_oracle_producer/volume_absorption.json",
+      "bytes": 2291,
+      "sha256": "5432c839cc8803f760c15f801370ac159fe39bf28291cdd91e208fe1a43b0f9f"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/norm_q30/diagnostic_reference/volume_absorption.json",
+      "bytes": 2289,
+      "sha256": "a3448ef2bf6efea81e6b36835d1c000ff4d6990cce9067a41caf47f47314f7c1"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/result.json",
+      "bytes": 25816,
+      "sha256": "550c3d4151842472614532f49e7f9ebb048f0f47161ae1e71e197d2b07bd1b1b"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/run_manifest_v36_control_oracle_verify_attempt1.json",
+      "bytes": 8903,
+      "sha256": "4ce4f378729743b3831cb5310a770167756ba6e4b50e06fb977808657746fad4"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/saved_checker.json",
+      "bytes": 18908,
+      "sha256": "e53d0c258b94535074cbe68ab63313300601682968c9f1963076c825da43288e"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT_rebuild.npz",
+      "bytes": 1535204,
+      "sha256": "ef9a49b082c8bf3d8bc7e933e987d48ac324c4d29385ed26bb4058539eb20c54"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/verifier_result.json",
+      "bytes": 282875,
+      "sha256": "b5caf6c8fe4b5fa55321d4dfcf3d40c60b5c1ff6dbd7c7d4e768ff980e7de723"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/basis/committed.json",
+      "bytes": 283857,
+      "sha256": "2e53a6d6575cec9ab41c78a8887993c4608696f2ffa3d18b4a09198a61c5d9b7"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/basis/state_1475002927613807.npz",
+      "bytes": 31384030,
+      "sha256": "bef9fcc37951015e5ac0a8e5b23eb8c91b7a4474a4ad550632b974e142f8f7bb"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/prefix_basis/EUCLIDEAN_QR_0001.npz",
+      "bytes": 65734366,
+      "sha256": "d2e150264519bf5fa3f556a69cb03d4b774454dffe493c29eee3425e884b9c84"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/prefix_basis/GRAM_REDUCED_0002.npz",
+      "bytes": 65996744,
+      "sha256": "916ab4a638453ceae919e82ae984dfd0b5e9229659c20781dfb229be62970746"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/prefix_basis/G_BASIS_QUALIFIED_0003.npz",
+      "bytes": 66521502,
+      "sha256": "53d78ce127ceda8b06f2d161b1dbe5577b4561bd3a2d24280293b6d7384e9db7"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/prefix_basis/LOADED_0000.npz",
+      "bytes": 22,
+      "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/prefix_basis/boundary_EUCLIDEAN_QR_0001.json",
+      "bytes": 899,
+      "sha256": "92a1259e4028e4d5cb994615c23c1c24037042f78733d39d4c1d2191030e7f75"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/prefix_basis/boundary_GRAM_REDUCED_0002.json",
+      "bytes": 959,
+      "sha256": "17ea6cce67ba409456306e3c0c0da773779cd2cd81311da395743f97c70a74bb"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/prefix_basis/boundary_G_BASIS_QUALIFIED_0003.json",
+      "bytes": 8733,
+      "sha256": "752dda4cb1cdc9aa830d651b0556419da778f7b6bbe3983b9ab98ecd44072def"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/prefix_basis/boundary_LOADED_0000.json",
+      "bytes": 912,
+      "sha256": "6862edc889bf0db3a2e822d163ea28eb0980debcc559bf02c52c60eb236513f4"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/prefix_basis/latest.json",
+      "bytes": 8733,
+      "sha256": "752dda4cb1cdc9aa830d651b0556419da778f7b6bbe3983b9ab98ecd44072def"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/prefix_profile.json",
+      "bytes": 7983,
+      "sha256": "4176c57988cdd37a8d349cbeaf1441a51524bdae14d119e953f860caae531cbd"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_arrays.npz",
+      "bytes": 1602024,
+      "sha256": "6ca9e0d541857b5f83fde5f1abf8008bc0b0480e1ff8f38dab2f8c50bc85627b"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/EUCLIDEAN_QR_0001.npz",
+      "bytes": 734668790,
+      "sha256": "f9d8e0559d08d342db25e165b1e3dc2c8a1a9989608bce6809b889f29b92af2b"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/GRAM_REDUCED_0002.npz",
+      "bytes": 765007088,
+      "sha256": "b817e7779b923445adf3c06395f1cd943daad0b23a7752cc2a7f1562469bab8d"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/G_BASIS_QUALIFIED_0003.npz",
+      "bytes": 825683686,
+      "sha256": "39f657acd1fed382243d0852c8efa4964836b53a47209a8a42deea5bb0507cbb"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/LOADED_0000.npz",
+      "bytes": 22,
+      "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/ORACLE_FIELD_FROZEN_0004.npz",
+      "bytes": 1602024,
+      "sha256": "6ca9e0d541857b5f83fde5f1abf8008bc0b0480e1ff8f38dab2f8c50bc85627b"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_EUCLIDEAN_QR_0001.json",
+      "bytes": 873,
+      "sha256": "223108e8bf382d7f32dfad1a897167c8f62c7036429899a253410f986f6070ff"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_GRAM_REDUCED_0002.json",
+      "bytes": 935,
+      "sha256": "11ff7243bbb0e53780395fc860a28aa4b2884b47df66e462101a91bb10b2b1a8"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_G_BASIS_QUALIFIED_0003.json",
+      "bytes": 74328,
+      "sha256": "5d3f32d6e54ab4ee27d860bc2faf5f8e5ac092240a05503116e624194dabf988"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_LOADED_0000.json",
+      "bytes": 886,
+      "sha256": "5b0984eeb14f8eb3cd05fa1c95b4895c99095bb93131949a70ee0380c843a650"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_ORACLE_FIELD_FROZEN_0004.json",
+      "bytes": 1378,
+      "sha256": "3ee0b0c4c9785963e9b649cf6474c90f3cd7f84c12addc3f1d9c0682bd2f6609"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/latest.json",
+      "bytes": 1378,
+      "sha256": "3ee0b0c4c9785963e9b649cf6474c90f3cd7f84c12addc3f1d9c0682bd2f6609"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/space_record.json",
+      "bytes": 70940,
+      "sha256": "368a959167aaf9dfcf831fe68b429e1074194a0205256d7118886768a2e48ca3"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/result.json",
+      "bytes": 84233,
+      "sha256": "1559ed10d710e79e15b29ea2fbfa01115b5b8aebcdce4210e7d607327939ebbc"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/run_manifest_v36_control_space_oracle_attempt1.json",
+      "bytes": 7613,
+      "sha256": "77e179f80d1977bfc3e57e9ca2d1e0dc11cb2b03d9d184207112ed9e7359f213"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/complete_FE_field_samples_q15.npz",
+      "bytes": 80659582,
+      "sha256": "70853568e0bb0ca913c994ac96b7ecfae98d7a0d279e46ba067e6add7b7a3d84"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/completed_verifier_receipt.json",
+      "bytes": 1368,
+      "sha256": "d045bf9fa2160eb294153340db3ea79774bf129763185b5dcbe0697d3312f42e"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/diagnostic_learned_complex_wave_backfit_oracle/volume_absorption.json",
+      "bytes": 2293,
+      "sha256": "a878a3689dc68f85fc1be2696a97c12c1322950147a5b72b9f1e1e89201f61dd"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/diagnostic_learned_complex_wave_backfit_oracle_producer/volume_absorption.json",
+      "bytes": 2287,
+      "sha256": "dbb68db6319d70e5de363ff5627acc9e4fe97c7727fbc2e3b0b34b710c8d60e4"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/diagnostic_reference/volume_absorption.json",
+      "bytes": 2289,
+      "sha256": "a3448ef2bf6efea81e6b36835d1c000ff4d6990cce9067a41caf47f47314f7c1"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/independent_pure_checker/contract.json",
+      "bytes": 437,
+      "sha256": "b4118994cf51aecd638406a66de0855013f3303232e0b0b0cb2bf66d0589422f"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/independent_pure_checker/supervised/resources.jsonl",
+      "bytes": 25435,
+      "sha256": "d06cbda08923142305a58404d81bd9e3d91b4231ce860d6ddc726c41904b72b2"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/independent_pure_checker/supervised/summary.json",
+      "bytes": 2002,
+      "sha256": "e644801e07387017023337a1b0128493f7ad62464d6c0a2b478f1a034c8b811e"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/independent_pure_checker/supervised/worker.log",
+      "bytes": 557,
+      "sha256": "10826564f659ef17c855ea1da2c2776ac3636bca07677a5305029192fb84f6c9"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/norm_q30/diagnostic_learned_complex_wave_backfit_oracle/volume_absorption.json",
+      "bytes": 2293,
+      "sha256": "a878a3689dc68f85fc1be2696a97c12c1322950147a5b72b9f1e1e89201f61dd"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/norm_q30/diagnostic_learned_complex_wave_backfit_oracle_producer/volume_absorption.json",
+      "bytes": 2287,
+      "sha256": "dbb68db6319d70e5de363ff5627acc9e4fe97c7727fbc2e3b0b34b710c8d60e4"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/norm_q30/diagnostic_reference/volume_absorption.json",
+      "bytes": 2289,
+      "sha256": "a3448ef2bf6efea81e6b36835d1c000ff4d6990cce9067a41caf47f47314f7c1"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/result.json",
+      "bytes": 25787,
+      "sha256": "c4cf6fabc2608ba2e95ab8ed7a636d0417b4bfc5c2f3168a838b845d5ee2679e"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/run_manifest_v36_learned_oracle_verify_attempt1.json",
+      "bytes": 8789,
+      "sha256": "305c0ebc1436755207a112f4be84f4f53824481a18b6f5739570eef909990547"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/run_manifest_v36_learned_oracle_verify_attempt2.json",
+      "bytes": 8903,
+      "sha256": "777eac177f19d3b68c6e3b8ea99b08c39a54fa950d9ae8122fef6425d7848dcd"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/saved_checker.json",
+      "bytes": 18890,
+      "sha256": "58000109f5e62968dde320ad237c0231fbb52cdae1ba3dbb7d5dff6b3799ee5e"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT_rebuild.npz",
+      "bytes": 1535204,
+      "sha256": "56f393299f9ade208518fcdddbd8f1c78cc4809cb589331045768b44b723730f"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/verifier_result.json",
+      "bytes": 282827,
+      "sha256": "875203aa4876cbd65f928295d2c3d914b73b946327a60bf9f62e63cb9e67ac4c"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/basis/committed.json",
+      "bytes": 283993,
+      "sha256": "c650c944059e7d459076e169c70009866976e3e33327e23a678ac36e3da1df7e"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/basis/state_1473441316772347.npz",
+      "bytes": 31384030,
+      "sha256": "22692abbf584b065e03b0c59c3a40404b221da00e9049955a6e14567eaa95ccc"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/prefix_basis/EUCLIDEAN_QR_0001.npz",
+      "bytes": 65734366,
+      "sha256": "9f7520ae2263fa531b767c5a83ee77be3536d434dbbc3064a6116ef75582d1d5"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/prefix_basis/GRAM_REDUCED_0002.npz",
+      "bytes": 65996744,
+      "sha256": "c2e403c082427cb81a34ab44b60aea8de5e076a9a38dff01d12c1cb6d001fe22"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/prefix_basis/G_BASIS_QUALIFIED_0003.npz",
+      "bytes": 66521502,
+      "sha256": "a861f8daccda01be10e6ad8774200bb59a106711c266c14506485071194c45d5"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/prefix_basis/LOADED_0000.npz",
+      "bytes": 22,
+      "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/prefix_basis/boundary_EUCLIDEAN_QR_0001.json",
+      "bytes": 893,
+      "sha256": "1fda7d3226ef48d3d9d27750f6c1050e3a39b80a3f36a4e8c11ab7c8dab3424a"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/prefix_basis/boundary_GRAM_REDUCED_0002.json",
+      "bytes": 953,
+      "sha256": "db96033f322e4f3c31fd81450c2ef44a2232cfd2299810bdcd5b4557a14a7794"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/prefix_basis/boundary_G_BASIS_QUALIFIED_0003.json",
+      "bytes": 8746,
+      "sha256": "67d518b9b600ac574b4aa0807e9edf826cba6550e7c2237b89dc9db2891bc4bb"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/prefix_basis/boundary_LOADED_0000.json",
+      "bytes": 906,
+      "sha256": "4dd5da1f05259ba52c601c6c5cf785197b4dbdfb85bede2adc258d48ad148eef"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/prefix_basis/latest.json",
+      "bytes": 8746,
+      "sha256": "67d518b9b600ac574b4aa0807e9edf826cba6550e7c2237b89dc9db2891bc4bb"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/prefix_profile.json",
+      "bytes": 7999,
+      "sha256": "e436c275b2f889f86fd22ee1ba9e68af4102411765b62fc768fdaab010147690"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_arrays.npz",
+      "bytes": 1602024,
+      "sha256": "691d068a4eb31982c34a4c27f5935d21e3bc45919bd3f1cf274f7fd48625f478"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/EUCLIDEAN_QR_0001.npz",
+      "bytes": 734668790,
+      "sha256": "cdec9d8d9ed6178524ff621db6eb9b9e7576cb5c8fb69f5b7c95f6fc67bf3146"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/GRAM_REDUCED_0002.npz",
+      "bytes": 765007088,
+      "sha256": "21e68c30690402c02ffba2b55ae6883a22efa3f72a16c2289612e40308e83c88"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/G_BASIS_QUALIFIED_0003.npz",
+      "bytes": 825683686,
+      "sha256": "1e519ed458165be1dd46f9a34fb8db8400a5837ad1a4fd4e3ddaa17ccc526cda"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/LOADED_0000.npz",
+      "bytes": 22,
+      "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/ORACLE_FIELD_FROZEN_0004.npz",
+      "bytes": 1602024,
+      "sha256": "691d068a4eb31982c34a4c27f5935d21e3bc45919bd3f1cf274f7fd48625f478"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_EUCLIDEAN_QR_0001.json",
+      "bytes": 867,
+      "sha256": "591378e207bad3d934e54ce3fcaf84b06b773d0b6531c9130ed2b24f73e01817"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_GRAM_REDUCED_0002.json",
+      "bytes": 928,
+      "sha256": "5238cc7c34cbabbe194b6b6744dd51d69ea4f10a1f1f89825827b197744e485d"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_G_BASIS_QUALIFIED_0003.json",
+      "bytes": 74364,
+      "sha256": "c466466e382afbdc12a6d6ccbd05cd92636500da7b7200e8dc128f053c3e0c6a"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_LOADED_0000.json",
+      "bytes": 880,
+      "sha256": "508a1a29ae652da60c0e7f520c70adbfa2d1fb0f3c0d6cab083969fed1d05804"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_ORACLE_FIELD_FROZEN_0004.json",
+      "bytes": 1368,
+      "sha256": "3d9232251516b97866e7a333e654a61559dc94403510e52d8d00142b715ad17d"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/latest.json",
+      "bytes": 1368,
+      "sha256": "3d9232251516b97866e7a333e654a61559dc94403510e52d8d00142b715ad17d"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/space_record.json",
+      "bytes": 70968,
+      "sha256": "68aba2bdcffe9faf62205d7d4ce3ea41950ffea30f9a2bc3cec07f1eab7791cb"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/result.json",
+      "bytes": 84141,
+      "sha256": "cde016970de2b42dc956f428c3b3718d6253538102ce034ad31bf3b972ed26d1"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/run_manifest_v36_learned_space_oracle_attempt1.json",
+      "bytes": 7500,
+      "sha256": "489bb397daea8a0a054fe04765b1fed63075e6c0df1618abd3db7d0ba98f7d2b"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_neural_route_decision/result.json",
+      "bytes": 3112,
+      "sha256": "1ec7d0f1af921a6a1f9c6b037e7e67fed63a93fd3cd86cd44bde6b3e72f950a3"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_neural_route_decision/run_manifest_v36_neural_route_decision_attempt1.json",
+      "bytes": 7616,
+      "sha256": "a801080d4f92d2b88cdfa73b5ab2d9208ad4125de4351bd94b258fc4405fbe33"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/complex_SPD/EUCLIDEAN_QR_0001.npz",
+      "bytes": 5046,
+      "sha256": "9fa5256b29aff4ef1214c36e094b347e5ed6596e0ff75f28ea36392273c18a97"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/complex_SPD/GRAM_REDUCED_0002.npz",
+      "bytes": 6064,
+      "sha256": "b8d57588fd860b462e0c478ebe2a457d42b7c9f95a5a96b6ba4b6a3fc242472b"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/complex_SPD/G_BASIS_QUALIFIED_0003.npz",
+      "bytes": 8102,
+      "sha256": "b4ecc12edbe835b1b353158bed45f8f2ead93bb8be226a204e5999ca1687c4f0"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/complex_SPD/LOADED_0000.npz",
+      "bytes": 22,
+      "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/complex_SPD/boundary_EUCLIDEAN_QR_0001.json",
+      "bytes": 340,
+      "sha256": "d6a66005e98235cd36afea331a4a6eed5a2bd34a9d27e072864361b7191ca598"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/complex_SPD/boundary_GRAM_REDUCED_0002.json",
+      "bytes": 400,
+      "sha256": "2db9d9ef8925b06df3391523918ac0a3faed2bfafd678e78ae5d9acc3f096922"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/complex_SPD/boundary_G_BASIS_QUALIFIED_0003.json",
+      "bytes": 1948,
+      "sha256": "dbba94dc8a7c1169fcde24cc07bc9f154c37618b9b1cfa19c4629af44137f8f2"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/complex_SPD/boundary_LOADED_0000.json",
+      "bytes": 350,
+      "sha256": "0440cc63722b17734f3599d68ab55b188c739cd3f8726f784b618472b0897046"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/complex_SPD/latest.json",
+      "bytes": 1948,
+      "sha256": "dbba94dc8a7c1169fcde24cc07bc9f154c37618b9b1cfa19c4629af44137f8f2"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/different_scales/EUCLIDEAN_QR_0001.npz",
+      "bytes": 5046,
+      "sha256": "7780300a282aee33e9aad8a2b11935d2ce3e27a7b3e7ba9fda0f62e30337ba98"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/different_scales/GRAM_REDUCED_0002.npz",
+      "bytes": 6064,
+      "sha256": "43676ffe014f3e36dab5cc6cdce06799a3c20434c070d0665d5848664a64540c"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/different_scales/G_BASIS_QUALIFIED_0003.npz",
+      "bytes": 8102,
+      "sha256": "b6957f954d4c262810b6364e60603278bf9d25339758c49cf98151ee7985fc0a"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/different_scales/LOADED_0000.npz",
+      "bytes": 22,
+      "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/different_scales/boundary_EUCLIDEAN_QR_0001.json",
+      "bytes": 345,
+      "sha256": "3b90566c7f88966bd75cbade0ccd251c72fc3a8468475a27e4fa48b0e8823378"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/different_scales/boundary_GRAM_REDUCED_0002.json",
+      "bytes": 404,
+      "sha256": "5f6d5d82f4101fbc002b6325838db65611dc5fde3fad5d67871464d53fd6d6b9"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/different_scales/boundary_G_BASIS_QUALIFIED_0003.json",
+      "bytes": 1956,
+      "sha256": "3a7c021d8d43a9d6ea25f1ee72c98f58250ca8c12a4d7d646d70c03ee1ee560e"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/different_scales/boundary_LOADED_0000.json",
+      "bytes": 355,
+      "sha256": "5e2eb850cbe9a9c56fae6f6b15fbee640a336a9102e51da3d8209c7312793b7c"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/different_scales/latest.json",
+      "bytes": 1956,
+      "sha256": "3a7c021d8d43a9d6ea25f1ee72c98f58250ca8c12a4d7d646d70c03ee1ee560e"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/duplicate/EUCLIDEAN_QR_0001.npz",
+      "bytes": 5046,
+      "sha256": "a99fc19094190eb61f5fb71adc12f404473483628fe5b66f2d58809ff32160f6"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/duplicate/GRAM_REDUCED_0002.npz",
+      "bytes": 6064,
+      "sha256": "7aca94ca9fcaa9b9d5a90f03cc27dac32fc6ea488f3575da8d2bb82dd6db84cd"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/duplicate/G_BASIS_QUALIFIED_0004.npz",
+      "bytes": 5248,
+      "sha256": "d19d897ce3a0979473d11abe848ce1b2c74ff693fce458ca6cf04d59668cf912"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/duplicate/G_PANEL_COMPLETE_0003.npz",
+      "bytes": 4438,
+      "sha256": "97d13ccca23788be7caea5fd2abdbde37bdcd83feb8a9ba2bd55bc1006366cb9"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/duplicate/LOADED_0000.npz",
+      "bytes": 22,
+      "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/duplicate/boundary_EUCLIDEAN_QR_0001.json",
+      "bytes": 338,
+      "sha256": "744def15e927d08115619d10dc9330499f05633f3eaf81a3a108706f8229f4c0"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/duplicate/boundary_GRAM_REDUCED_0002.json",
+      "bytes": 398,
+      "sha256": "85c8383d34a31b474a6ce698181d2fe279b0bfc3bdf2fdc664b7e2de9ae65503"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/duplicate/boundary_G_BASIS_QUALIFIED_0004.json",
+      "bytes": 1771,
+      "sha256": "48d6ba6df2320daca435aef904e6dcb95cb031bb1af8f44f0b4e5c09bcebf4d8"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/duplicate/boundary_G_PANEL_COMPLETE_0003.json",
+      "bytes": 897,
+      "sha256": "3dd61a7fb5e6286761f1c1aabd59109aa54ef7d0a8e3009eda886eacc3aba129"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/duplicate/boundary_LOADED_0000.json",
+      "bytes": 348,
+      "sha256": "3c185a352bcd484c44d60a79c9f42b3f55a80f4f3d68d17d7272db919269b4f1"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/duplicate/latest.json",
+      "bytes": 1771,
+      "sha256": "48d6ba6df2320daca435aef904e6dcb95cb031bb1af8f44f0b4e5c09bcebf4d8"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/empty/LOADED_0000.npz",
+      "bytes": 22,
+      "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/empty/boundary_LOADED_0000.json",
+      "bytes": 347,
+      "sha256": "d124ec8bacdaf1c9110119dc4ddfaea4baeb9bc19c6e30e6965413c40a215905"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/empty/latest.json",
+      "bytes": 347,
+      "sha256": "d124ec8bacdaf1c9110119dc4ddfaea4baeb9bc19c6e30e6965413c40a215905"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/half_panel/G_PANEL_COMPLETE_0000.npz",
+      "bytes": 886,
+      "sha256": "52cab05ea0ea33d34869b9330c533cd1708bc8c47e2ffc08f23091da035cb4d0"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/half_panel/boundary_G_PANEL_COMPLETE_0000.json",
+      "bytes": 364,
+      "sha256": "3634ba69a9a22e72538243aaec11a6b3c7a280ceab329435dddc9c056efebd6d"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/half_panel/latest.json",
+      "bytes": 364,
+      "sha256": "3634ba69a9a22e72538243aaec11a6b3c7a280ceab329435dddc9c056efebd6d"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/half_panel/latest.json.tmp",
+      "bytes": 10,
+      "sha256": "cbdf3b1f91ae32fe1ea292ac6cccf19222f97929f531523f0d15d885052c00c4"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/near_duplicate/EUCLIDEAN_QR_0001.npz",
+      "bytes": 5046,
+      "sha256": "b070dc75e4b78052a370dbfe1e2fcfcf5a69bddf5532d7c9eeed7d1bcda2081b"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/near_duplicate/GRAM_REDUCED_0002.npz",
+      "bytes": 6064,
+      "sha256": "1669d861a7d468bb49dd4c648e91c9c0aa6f31fdce45f0dfd93fc7c273075443"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/near_duplicate/G_BASIS_QUALIFIED_0004.npz",
+      "bytes": 5248,
+      "sha256": "d7d0c644c7dff122ac34a7959749bb96e7d96e1b5fbc3d75711e65e75cb5cbec"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/near_duplicate/G_PANEL_COMPLETE_0003.npz",
+      "bytes": 4438,
+      "sha256": "a25556774ec62b0ceb310be7bfe4c3385d3f8f22e0bea15e02dfaa752e39e4db"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/near_duplicate/LOADED_0000.npz",
+      "bytes": 22,
+      "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/near_duplicate/boundary_EUCLIDEAN_QR_0001.json",
+      "bytes": 343,
+      "sha256": "b4d8806c005b1f1bf25f6873a0482330b354a3a949f749f583aebbf79d1ee3c0"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/near_duplicate/boundary_GRAM_REDUCED_0002.json",
+      "bytes": 402,
+      "sha256": "4ade97a514984f3accfc87fd99bd03cc4dd490a2729efbe205cf979d670cf68e"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/near_duplicate/boundary_G_BASIS_QUALIFIED_0004.json",
+      "bytes": 1779,
+      "sha256": "65e74edab1832b5475543796b609d2c182e3bfe87a8c9fb89d7cce87fb10181d"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/near_duplicate/boundary_G_PANEL_COMPLETE_0003.json",
+      "bytes": 901,
+      "sha256": "f659197a0267f7ac821e46ff3259ed150947490ded99396e5ccfca7dc4c96e91"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/near_duplicate/boundary_LOADED_0000.json",
+      "bytes": 353,
+      "sha256": "002d8d825afd5b80a9b89fbf20a24d8d65736a176775d79a551dfaebbf709424"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/near_duplicate/latest.json",
+      "bytes": 1779,
+      "sha256": "65e74edab1832b5475543796b609d2c182e3bfe87a8c9fb89d7cce87fb10181d"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/negatives/EUCLIDEAN_QR_0001.npz",
+      "bytes": 3566,
+      "sha256": "8cd040661f5b59d8341b0c4bcf4de9f70d43ca058ba933af175d75b33cb6a5dc"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/negatives/GRAM_REDUCED_0002.npz",
+      "bytes": 4376,
+      "sha256": "9d80300e7e502e7895e36593424816eb8b81a5e474fc611075e01b7e60e81a68"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/negatives/G_BASIS_QUALIFIED_0003.npz",
+      "bytes": 5998,
+      "sha256": "5d7702081f1a0191345ca3195a72ef97eb88366613b85bd3b7eb13b987d940f8"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/negatives/LOADED_0000.npz",
+      "bytes": 22,
+      "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/negatives/boundary_EUCLIDEAN_QR_0001.json",
+      "bytes": 336,
+      "sha256": "2cbe8f38ae22ede3080becd72659c49b08a80cb082be714f05238bca0c501622"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/negatives/boundary_GRAM_REDUCED_0002.json",
+      "bytes": 393,
+      "sha256": "728c78b4b4177fa6b7fc2c32d134fe55fa06c401fc913a047544d8d626a6c4ba"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/negatives/boundary_G_BASIS_QUALIFIED_0003.json",
+      "bytes": 1892,
+      "sha256": "ac66c6578d0b1d639f3f792dac267e6e921b3aae5f5885c132f002c27237ba6d"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/negatives/boundary_LOADED_0000.json",
+      "bytes": 346,
+      "sha256": "62bfb561627eb425a0e028fa6ce1062d531f5540258c76596ef6cfa8df3701bf"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/negatives/latest.json",
+      "bytes": 1892,
+      "sha256": "ac66c6578d0b1d639f3f792dac267e6e921b3aae5f5885c132f002c27237ba6d"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/real_panel/G_PANEL_COMPLETE_0001.npz",
+      "bytes": 157926,
+      "sha256": "a17b825e5acb68dec5c8de44932805b067bb3b414f1507738743db088077d148"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/real_panel/G_PANEL_COMPLETE_0002.npz",
+      "bytes": 161414,
+      "sha256": "c24fddef54b6d173dee552f6ee253d2942ec5ce9b2dd68ef4ca141b72782d6b7"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/real_panel/boundary_G_PANEL_COMPLETE_0000.json",
+      "bytes": 582,
+      "sha256": "aced4a1d5c1bb32fde030775aff37648920479f751c902d88b54c980b0773caa"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/real_panel/boundary_G_PANEL_COMPLETE_0001.json",
+      "bytes": 614,
+      "sha256": "6a4a0e339acb8703d2ef8f17738644dfeb7c017ef47719d7e92e99c7978865bb"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/real_panel/boundary_G_PANEL_COMPLETE_0002.json",
+      "bytes": 614,
+      "sha256": "129208d35ac5321b57b5626dff6ed2f1a891f7ee69f21b1a32d551a8661347dc"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/real_panel/latest.json",
+      "bytes": 614,
+      "sha256": "129208d35ac5321b57b5626dff6ed2f1a891f7ee69f21b1a32d551a8661347dc"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/result.json",
+      "bytes": 21271,
+      "sha256": "3ef4042d431d822ad076bb154c7110961751534fb23903d241387a0198bca99e"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/run_manifest_v36_oracle_kernel_checks_attempt1.json",
+      "bytes": 7498,
+      "sha256": "4124ed1789e1b5f45998398494ed28101ebcb3316647426390e7a095d3ac45e7"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/strong_correlation/EUCLIDEAN_QR_0001.npz",
+      "bytes": 5046,
+      "sha256": "5e39b0116ef9fa9831595e2b048ff53fa9e647f8a009fc351cf4e4f7ff972290"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/strong_correlation/GRAM_REDUCED_0002.npz",
+      "bytes": 6064,
+      "sha256": "965dc7402069b5c2235b5ed51533c892ffec6770e5f7be1dc66510773baa3593"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/strong_correlation/G_BASIS_QUALIFIED_0003.npz",
+      "bytes": 8102,
+      "sha256": "766050e5bace029fda65afd0f7d2d074e0e9f4023cf882d5083b3abd87651da7"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/strong_correlation/LOADED_0000.npz",
+      "bytes": 22,
+      "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/strong_correlation/boundary_EUCLIDEAN_QR_0001.json",
+      "bytes": 347,
+      "sha256": "bb9a6b5cffecfde844c1a3c1d7092426ebcc7d122b7e943a87bbd5dbe7ce4134"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/strong_correlation/boundary_GRAM_REDUCED_0002.json",
+      "bytes": 407,
+      "sha256": "d658b08ba27b84610a5c292f8f511e0eb44be8f808153dbbdd63a1dfb3b3c0bc"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/strong_correlation/boundary_G_BASIS_QUALIFIED_0003.json",
+      "bytes": 1963,
+      "sha256": "06dc4f9c7b23a3b34e6a6c43dc6b77523db5b12112eb35f3a412c0c27a73de66"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/strong_correlation/boundary_LOADED_0000.json",
+      "bytes": 357,
+      "sha256": "bca0520c67a7cc55fe7e9db061bc04f42beed2c9c75031e411141541f10b34c8"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/strong_correlation/latest.json",
+      "bytes": 1963,
+      "sha256": "06dc4f9c7b23a3b34e6a6c43dc6b77523db5b12112eb35f3a412c0c27a73de66"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/writer_fixture/fixture/chunk.npz",
+      "bytes": 3386,
+      "sha256": "e742d6be3f87ba5e407b7c0fa29efd746886bdb8dc5b9e471bd92ea8b50b03a6"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/writer_fixture/fixture/corrupt.json",
+      "bytes": 1629,
+      "sha256": "386dc7c1baaac802b5f710863bc4332f657d89667048acbcd4b9913f45945e80"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/writer_fixture/fixture/model/committed.json",
+      "bytes": 1662,
+      "sha256": "27edd1ee86316b61904e8038bfcfb66b6adecf18fef77cf7e3c51604529d6d40"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/writer_fixture/fixture/model/state_1473201243856902.npz",
+      "bytes": 1758,
+      "sha256": "5ee96fb11e8f11bd901ca97d27116948e856fd06aad1855a813f9a68b8d1dbd8"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/zero_timeout/LOADED_0000.npz",
+      "bytes": 22,
+      "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/zero_timeout/boundary_LOADED_0000.json",
+      "bytes": 346,
+      "sha256": "52611d18e27e41a32e8ebffa8c1fed06f14545c7fea51a6223f29300ab89afb8"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/zero_timeout/latest.json",
+      "bytes": 346,
+      "sha256": "52611d18e27e41a32e8ebffa8c1fed06f14545c7fea51a6223f29300ab89afb8"
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v36/v36_oracle_kernel_checks/zero_timeout/stop.json",
+      "bytes": 55,
+      "sha256": "810dc6920e535d3cfe603c3812e5f88b6aa62bd197c0a54c1f64b11a8f650880"
+    }
+  ],
+  "large_arrays_ignored": true,
+  "original_chunks_not_rehashed_or_rebuilt": true,
+  "original_chunk_bindings": {
+    "LEARNED_COMPLEX_WAVE_BACKFIT": {
+      "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/committed.json",
+      "sha256": "bae90dbfbf9a6c0ac53e62eb125c130a5792b3618c4ac49ecb64cce39acbf134"
+    },
+    "DETERMINISTIC_COMPLEX_WAVE_BACKFIT": {
+      "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/committed.json",
+      "sha256": "555b64c8207e0ac8db23bf099856800626f6438e808f0c7813facdd26e475e6e"
+    }
+  },
+  "exporter": {
+    "path": "tmp/task42extra/v36/collect_v36.py",
+    "bytes": 10842,
+    "sha256": "4f9d3d67dd671e5f4f2561eac88b96966287f9ffc84e3a748524fe01b033c18e"
+  }
+}

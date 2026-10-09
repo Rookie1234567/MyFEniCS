@@ -1,0 +1,167 @@
+{
+  "spaces": {
+    "LEARNED_COMPLEX_WAVE_BACKFIT": {
+      "prefix": {
+        "G_orthogonality_F": 6.728265361095967e-14,
+        "G_orthogonality_numerator": 6.728265361095967e-14,
+        "G_orthogonality_denominator": 1.0,
+        "transform_reconstruction_relative": 9.310990310885202e-16,
+        "transform_reconstruction_numerator": 1.0534183021422646e-14,
+        "transform_reconstruction_denominator": 11.313708498984736,
+        "singular_values": {
+          "count": 128,
+          "storage": "HASH_BOUND_ORIGINAL_NOT_DUPLICATED"
+        },
+        "retained_rank": 128,
+        "original_columns": 128,
+        "SVD_rcond": 1e-12,
+        "full_column_space_retained": true,
+        "exact_interval_certificate": false,
+        "method": "HOUSEHOLDER_SMALL_GRAM",
+        "reduced_Gram": {
+          "Hermitian_relative": 3.792874141462676e-16,
+          "lambda_min": 0.10896779390559848,
+          "lambda_max": 539.779504900444,
+          "cond2": 4953.569174466985,
+          "machine_epsilon_condition": 1.0999133103133351e-12,
+          "roundoff_symmetrization": true
+        },
+        "first_whitening_G_orthogonality_F": 6.728265361095967e-14,
+        "second_whitening": null,
+        "Householder_R_singular_values": {
+          "count": 128,
+          "storage": "HASH_BOUND_ORIGINAL_NOT_DUPLICATED"
+        },
+        "triangle_order": "L1 R",
+        "primary_stability_failure": null,
+        "G_columns": 384,
+        "G_by_role": {
+          "Householder_reduced_Gram": 128,
+          "first_whitening_orthogonality": 128,
+          "basis_final_original_G": 128
+        },
+        "primary_or_fallback_selected_without_reference": true,
+        "fixed_prefix_columns": 128,
+        "label_selected": false,
+        "nonzero_complex_transform_numerator": 2.0969656371255407e-13,
+        "nonzero_complex_transform_denominator": 377.6067717582235,
+        "nonzero_complex_transform_relative": 5.553305168129239e-16,
+        "phase_seconds_exclusive": {
+          "column_normalization_and_QR": 2.075531880138442,
+          "save": 0.9250838200096041,
+          "G_action": 4.064563260180876,
+          "reduced_Gram_BLAS3": 0.0986108819488436,
+          "small_factor_and_whitening": 0.33290627016685903,
+          "independent_basis_qualification": 0.42058311006985605
+        },
+        "wall_seconds": 7.96464995900169,
+        "kernel_sha256": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5"
+      },
+      "phase_seconds_exclusive": {
+        "load_frozen_U_and_original_G": 5.894531233003363,
+        "column_normalization_and_QR": 29.45147236296907,
+        "save": 9.631155138835311,
+        "G_action": 44.37757486989722,
+        "reduced_Gram_BLAS3": 7.319181475089863,
+        "small_factor_and_whitening": 16.623867869144306,
+        "independent_basis_qualification": 25.74261088599451,
+        "load_reference_after_basis_frozen": 0.0026977129746228456,
+        "amplitude_backtransform_and_actual_field": 0.9285689957905561,
+        "independent_projection_qualification": 0.6790633539203554,
+        "save_model_and_actual_oracle_field": 4.809076678007841
+      },
+      "full_G_columns": 4133,
+      "G_by_role": {
+        "Householder_reduced_Gram": 1377,
+        "first_whitening_orthogonality": 1377,
+        "basis_final_original_G": 1377,
+        "reference_rhs_and_denominator": 1,
+        "actual_error_original_G": 1
+      }
+    },
+    "DETERMINISTIC_COMPLEX_WAVE_BACKFIT": {
+      "prefix": {
+        "G_orthogonality_F": 6.019743418700688e-14,
+        "G_orthogonality_numerator": 6.019743418700688e-14,
+        "G_orthogonality_denominator": 1.0,
+        "transform_reconstruction_relative": 8.6499081324431e-16,
+        "transform_reconstruction_numerator": 9.786253915345892e-15,
+        "transform_reconstruction_denominator": 11.313708498984763,
+        "singular_values": {
+          "count": 128,
+          "storage": "HASH_BOUND_ORIGINAL_NOT_DUPLICATED"
+        },
+        "retained_rank": 128,
+        "original_columns": 128,
+        "SVD_rcond": 1e-12,
+        "full_column_space_retained": true,
+        "exact_interval_certificate": false,
+        "method": "HOUSEHOLDER_SMALL_GRAM",
+        "reduced_Gram": {
+          "Hermitian_relative": 3.994825426451723e-16,
+          "lambda_min": 0.12714923604379688,
+          "lambda_max": 539.5949520648333,
+          "cond2": 4243.79232509874,
+          "machine_epsilon_condition": 9.423111902104297e-13,
+          "roundoff_symmetrization": true
+        },
+        "first_whitening_G_orthogonality_F": 6.019743418700688e-14,
+        "second_whitening": null,
+        "Householder_R_singular_values": {
+          "count": 128,
+          "storage": "HASH_BOUND_ORIGINAL_NOT_DUPLICATED"
+        },
+        "triangle_order": "L1 R",
+        "primary_stability_failure": null,
+        "G_columns": 384,
+        "G_by_role": {
+          "Householder_reduced_Gram": 128,
+          "first_whitening_orthogonality": 128,
+          "basis_final_original_G": 128
+        },
+        "primary_or_fallback_selected_without_reference": true,
+        "fixed_prefix_columns": 128,
+        "label_selected": false,
+        "nonzero_complex_transform_numerator": 1.735220546550806e-13,
+        "nonzero_complex_transform_denominator": 291.46601916718686,
+        "nonzero_complex_transform_relative": 5.953423152067247e-16,
+        "phase_seconds_exclusive": {
+          "column_normalization_and_QR": 2.0435079261660576,
+          "save": 0.7466617971658707,
+          "G_action": 4.1052981812972575,
+          "reduced_Gram_BLAS3": 0.13629306107759476,
+          "small_factor_and_whitening": 0.4257041912060231,
+          "independent_basis_qualification": 0.42349786194972694
+        },
+        "wall_seconds": 7.954858141951263,
+        "kernel_sha256": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5"
+      },
+      "phase_seconds_exclusive": {
+        "load_frozen_U_and_original_G": 5.956824321998283,
+        "column_normalization_and_QR": 29.29180300887674,
+        "save": 9.59349222178571,
+        "G_action": 44.26402223156765,
+        "reduced_Gram_BLAS3": 7.341914528049529,
+        "small_factor_and_whitening": 16.84504560707137,
+        "independent_basis_qualification": 25.572147116996348,
+        "load_reference_after_basis_frozen": 0.006661326857283711,
+        "amplitude_backtransform_and_actual_field": 0.935821542982012,
+        "independent_projection_qualification": 0.6057086610235274,
+        "save_model_and_actual_oracle_field": 4.784812128171325
+      },
+      "full_G_columns": 4133,
+      "G_by_role": {
+        "Householder_reduced_Gram": 1377,
+        "first_whitening_orthogonality": 1377,
+        "basis_final_original_G": 1377,
+        "reference_rhs_and_denominator": 1,
+        "actual_error_original_G": 1
+      }
+    }
+  },
+  "original_scalar_GQR_replayed": false,
+  "old_bottleneck_percent": "NOT_RETAINED_NOT_INVENTED",
+  "same_precision_speedup": "NOT_QUALIFIED_NO_COMPLETED_OLD_B_BASELINE",
+  "primary_qualified": true,
+  "fallback_needed": false
+}

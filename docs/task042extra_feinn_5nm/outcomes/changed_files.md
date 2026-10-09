@@ -1,3 +1,16 @@
+# 当前V36：同目标分块审计，普通production默认不变
+
+|依赖组|变化/资格|合入边界|
+|---|---|---|
+|research-only数值|neural_space_blocked/blocked_checks：Householder＋受控小G白化、32列后备/真实原幅值映射|仅冻结神经空间oracle审计，不授前向solver|
+|reusable runner/watchdog接线|显式schema7/six dat/薄blocked worker、独立pure checker父进程、原窗/角色/现代准入|原durable/身份监督复用，不改其他任务|
+|checker/benchmark|原保存数组checker及G/FE恒等式；恢复receipt/定向测试|oracle永久参考暴露/非official，完整原门不变|
+|compact evidence/docs|本轮专题/回执/CSV/秩/计数/费用/当前导航|全部旧负态保留，大数组唯一ignored索引|
+|production numerical/core|没有新合格生产候选|NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE|
+|do-not-merge|oracle幅值/基/参考场、未资格化研究路线及历史负态|禁生产初始化、无master merge许可|
+
+[依赖/source](records/run_index_v36.json)、[测试](records/tests_v36.json)、[实际新场](records/joint_gates_v36.json)。以下历史全文保留。
+
 # 当前V35变更边界
 
 | 依赖组 | 变更和行为 | 合入边界 |

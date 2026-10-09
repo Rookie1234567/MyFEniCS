@@ -1,0 +1,50 @@
+{
+  "authority": "2d7a44f12e00dd39d7a438311e00a0e53c34862a",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "design": {
+    "path": "input/task042extra_feinn_5nm/design_v36.json",
+    "bytes": 79263,
+    "sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11"
+  },
+  "continuous_window": {
+    "campaign": 36,
+    "origin_monotonic_s": 1471990.0,
+    "deadline_monotonic_s": 1493590.0,
+    "total_budget_s": 21600,
+    "final_reserve_s": 1800,
+    "origin_basis": "conservative origin before first preparation uptime 1472020.81",
+    "created_monotonic_s": 1472255.108493727,
+    "historical_windows_reused": false
+  },
+  "budget_transfer": {
+    "from_unspent_soft_stage": "learning-space projection",
+    "recipient": "v36_learned_oracle_verify",
+    "seconds": 1200,
+    "original_allocation": {
+      "origin_monotonic": 1473499.001860326,
+      "deadline_monotonic": 1475299.001860326,
+      "max_seconds": 1800,
+      "stage": "v36_learned_oracle_verify",
+      "input_sha256": "b9e70b81f2c3dca6c728b587aeeef8d1715f8f33abab234cf583cc84b84a8cd9"
+    },
+    "original_allocation_sha256": "a530f6c4c7d2eb7d74b453d48ad33c71a8936bf1f86b8a65f557800ae4cfcd18",
+    "new_allocation": {
+      "origin_monotonic": 1473499.001860326,
+      "deadline_monotonic": 1476499.001860326,
+      "max_seconds": 3000,
+      "stage": "v36_learned_oracle_verify",
+      "input_sha256": "b9e70b81f2c3dca6c728b587aeeef8d1715f8f33abab234cf583cc84b84a8cd9"
+    },
+    "original_total_budget_s": 21600,
+    "final_reserve_s": 1800,
+    "reason": "Dedicated checker parent fix; all healthy field results reused",
+    "monotonic_s": 1474628.332524589
+  },
+  "reference_read_only_after_basis_frozen": true,
+  "new_training": 0,
+  "new_reference_solve": 0,
+  "global_Maxwell_factor": 0,
+  "global_G_factor": 0,
+  "Gsolve": 0,
+  "old_7200s_window_used": false
+}

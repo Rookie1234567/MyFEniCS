@@ -1,0 +1,92 @@
+{
+  "records": {
+    "LEARNED_COMPLEX_WAVE_BACKFIT": {
+      "model": {
+        "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/basis/committed.json",
+        "sha256": "c650c944059e7d459076e169c70009866976e3e33327e23a678ac36e3da1df7e"
+      },
+      "source_identity": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/committed.json",
+        "sha256": "bae90dbfbf9a6c0ac53e62eb125c130a5792b3618c4ac49ecb64cce39acbf134"
+      },
+      "reconstruction": {
+        "LEARNED_COMPLEX_WAVE_BACKFIT_ORACLE": {
+          "complete_model_mapping_relative": 2.007251279597836e-13,
+          "coefficient_q30_q60_relative": 1.3872382376304436e-14,
+          "original_action_q30_q60_load_relative": 1.8851875014027934e-11,
+          "quadrature_pass": true,
+          "model_reconstruction_pass": true,
+          "candidate_source_sha": "a4e14e889861ea7b3a4725e0f2bfe07490b34baa",
+          "committed_boundary_sha256": "c650c944059e7d459076e169c70009866976e3e33327e23a678ac36e3da1df7e",
+          "FE_norm_q15_q30_relative": 1.583500710278299e-14
+        },
+        "LEARNED_COMPLEX_WAVE_BACKFIT_ORACLE_PRODUCER": {
+          "complete_model_mapping_relative": 2.007251279597836e-13,
+          "coefficient_q30_q60_relative": 1.3872382376304436e-14,
+          "original_action_q30_q60_load_relative": 1.8851875014027934e-11,
+          "quadrature_pass": true,
+          "model_reconstruction_pass": true,
+          "candidate_source_sha": "a4e14e889861ea7b3a4725e0f2bfe07490b34baa",
+          "committed_boundary_sha256": "c650c944059e7d459076e169c70009866976e3e33327e23a678ac36e3da1df7e",
+          "FE_norm_q15_q30_relative": 1.6503886398794393e-14
+        }
+      },
+      "independent_G_FE_norm_qualification": {
+        "error_energy_original_G": 0.009933264039950497,
+        "error_energy_independent_FE": 0.009933264039980001,
+        "reference_energy_original_G": 984.610790300809,
+        "reference_energy_independent_FE": 984.6107903008673,
+        "error_energy_relative_pair": 2.9702398688551256e-12,
+        "reference_energy_relative_pair": 5.9232895196454e-14,
+        "epsilon_G_independent": 0.0031762428063117445,
+        "original_ell_nm": 5,
+        "identity_pass": true
+      }
+    },
+    "DETERMINISTIC_COMPLEX_WAVE_BACKFIT": {
+      "model": {
+        "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/basis/committed.json",
+        "sha256": "2e53a6d6575cec9ab41c78a8887993c4608696f2ffa3d18b4a09198a61c5d9b7"
+      },
+      "source_identity": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/committed.json",
+        "sha256": "555b64c8207e0ac8db23bf099856800626f6438e808f0c7813facdd26e475e6e"
+      },
+      "reconstruction": {
+        "DETERMINISTIC_COMPLEX_WAVE_BACKFIT_ORACLE": {
+          "complete_model_mapping_relative": 1.2395116765059523e-14,
+          "coefficient_q30_q60_relative": 4.7979744580065676e-15,
+          "original_action_q30_q60_load_relative": 7.657303735813321e-12,
+          "quadrature_pass": true,
+          "model_reconstruction_pass": true,
+          "candidate_source_sha": "67cca36b3b344afb61943378582483f8f88e7e97",
+          "committed_boundary_sha256": "2e53a6d6575cec9ab41c78a8887993c4608696f2ffa3d18b4a09198a61c5d9b7",
+          "FE_norm_q15_q30_relative": 9.974587537792628e-15
+        },
+        "DETERMINISTIC_COMPLEX_WAVE_BACKFIT_ORACLE_PRODUCER": {
+          "complete_model_mapping_relative": 1.2395116765059523e-14,
+          "coefficient_q30_q60_relative": 4.7979744580065676e-15,
+          "original_action_q30_q60_load_relative": 7.657303735813321e-12,
+          "quadrature_pass": true,
+          "model_reconstruction_pass": true,
+          "candidate_source_sha": "67cca36b3b344afb61943378582483f8f88e7e97",
+          "committed_boundary_sha256": "2e53a6d6575cec9ab41c78a8887993c4608696f2ffa3d18b4a09198a61c5d9b7",
+          "FE_norm_q15_q30_relative": 1.0212361720195701e-14
+        }
+      },
+      "independent_G_FE_norm_qualification": {
+        "error_energy_original_G": 0.009471456763999936,
+        "error_energy_independent_FE": 0.00947145676399947,
+        "reference_energy_original_G": 984.610790300809,
+        "reference_energy_independent_FE": 984.6107903008673,
+        "error_energy_relative_pair": 4.9268093247433554e-14,
+        "reference_energy_relative_pair": 5.9232895196454e-14,
+        "epsilon_G_independent": 0.0031015307771261207,
+        "original_ell_nm": 5,
+        "identity_pass": true
+      }
+    }
+  },
+  "pointwise_full_moments_not_ref_copy": true,
+  "original_Nedelec_edge_face_interior_and_MPC": true
+}

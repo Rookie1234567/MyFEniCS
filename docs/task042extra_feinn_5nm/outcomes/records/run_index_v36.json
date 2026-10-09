@@ -1,0 +1,950 @@
+{
+  "authority": "2d7a44f12e00dd39d7a438311e00a0e53c34862a",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "runs": [
+    {
+      "name": "v36_control_oracle_verify_attempt1",
+      "stage": "v36_control_oracle_verify",
+      "summary": {
+        "path": "tmp/task42extra/v36/durable/v36_control_oracle_verify_attempt1/run_summary.json",
+        "bytes": 13314,
+        "sha256": "7055d7390d1e637a8e0760b6255e306b95c89251fe1448fdd8247eda24cab240"
+      },
+      "source_sha": "67cca36b3b344afb61943378582483f8f88e7e97",
+      "input_sha256": "2f014222c106681f367f56e8a639d83931d413358a15fde1855ef2eb06543878",
+      "design_sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "fe",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/build-tools",
+        "LD_LIBRARY_PATH": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-int64/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/scotch-int64/lib",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "cpu": 0,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "actual_attempt_seconds": 482.7740289180074,
+      "supervised_nested_seconds": 418.8699920079671,
+      "sampled_simultaneous_tree_peak_bytes": 749432832,
+      "own_sampled_swap_peak_bytes": 0,
+      "stage_deadline_monotonic": 1476847.161395558,
+      "worker_stop_monotonic": 1476697.161395558,
+      "bound_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "5d63b729b41e049a20d5b2ce25d7f6f2d11a911a558c30bcd6088127cf5573a1",
+        "src/runners/neural_wave_dependencies.py": "e4611e079a0a064a3923fabd1f28a64f22e037b7c4cc78731916701e2b761c49",
+        "src/runners/neural_wave_worker.py": "54b4805f3090b47b613bc7c8da35a46321070a95ccb6b034d07d3d6762f2578a",
+        "src/io/neural_wave_campaign.py": "c1fccc8356ba091a4762caac0ce3e30a0149a9e6051df086416aad86eff304a0",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "c70f8f1ef1956470141ea2426425af3393159652ddb4b13f504a62c9dcc6ee31",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/blocked_oracle_campaign.py": "10243f0eefc1be1bce04d3c74b99a3e59893ee13e18b8a9e672ca2d990361cd8",
+        "src/runners/blocked_oracle_worker.py": "a2696cdb79208ca55a59a134cf9bc4a77355288864c841a58c0077cdd144ad1a",
+        "src/solvers/neural_space_blocked.py": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5",
+        "src/solvers/neural_space_blocked_checks.py": "aa90eff1174633ebb1748e3620ba17a21bd756bb48fb2f38bd3a66f5e975b482",
+        "src/runners/neural_space_worker.py": "fe1570f4bb5530d5257f4e9841357281f3e913d15a32944a79a799475ef0b018",
+        "src/runners/neural_space_verification.py": "ec259dab0e29ca8d1dc5bec9e98bd0eb5bd123c194cd6fb72d1c67e838386a2b",
+        "src/runners/saved_field_supervision.py": "4546c67abba236c8772d6f29cf64e46eb83eddf5064877720ac75dfa735f1b54",
+        "src/postprocessing/neural_space_saved.py": "6f591fad6f9c93dc2a971a0d02ee671ea113c19cc6591f159c7e63ab7a926866"
+      },
+      "identities": {
+        "input_original.dat": {
+          "path": "tmp/task42extra/v36/durable/v36_control_oracle_verify_attempt1/input_original.dat",
+          "bytes": 153,
+          "sha256": "2f014222c106681f367f56e8a639d83931d413358a15fde1855ef2eb06543878"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_oracle_verify_attempt1/resolved_config.json",
+          "bytes": 79263,
+          "sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_oracle_verify_attempt1/run_manifest.json",
+          "bytes": 8903,
+          "sha256": "4ce4f378729743b3831cb5310a770167756ba6e4b50e06fb977808657746fad4"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_oracle_verify_attempt1/abi.json",
+          "bytes": 462,
+          "sha256": "6cfd8318171bc81f1f77669ca305cfc1b6ae89532a1c604c478e1c83ad1ea1f2"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_oracle_verify_attempt1/pressure_stable_window.json",
+          "bytes": 11453,
+          "sha256": "0ba4542019d349f0d3511f83b894e48a4c5dcc2c8079d88935bbaac0b0b8192a"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_oracle_verify_attempt1/admission.json",
+          "bytes": 225099,
+          "sha256": "30dc9139a13abc36ad472606d69c96c8a10b83d4159baa48f43cf6acbbf11729"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_oracle_verify_attempt1/outer_admission.json",
+          "bytes": 219874,
+          "sha256": "540e34b4d1fa17be903e2c9a489941b0f9223588fcd8a02ec3d6533666bc8ca9"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_oracle_verify_attempt1/attempt_identity.json",
+          "bytes": 303,
+          "sha256": "d1a70b80b8a83ab3b3e155998bf05860d8cab7c1967767986a403effcf9d096f"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_oracle_verify_attempt1/terminal_identity.json",
+          "bytes": 11433,
+          "sha256": "64be2e48d90f332fcc709c261780e10c4a0b922046af5bbfd451041026507fca"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v36/durable/v36_control_oracle_verify_attempt1/events.jsonl",
+          "bytes": 54881,
+          "sha256": "0a7cbf4a7288db755a322ce2723493e8ef519aca39834ba0356ae11efbe9b0e9"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_oracle_verify_attempt1/payload_summary.json",
+          "bytes": 13314,
+          "sha256": "7055d7390d1e637a8e0760b6255e306b95c89251fe1448fdd8247eda24cab240"
+        }
+      }
+    },
+    {
+      "name": "v36_control_space_oracle_attempt1",
+      "stage": "v36_control_space_oracle",
+      "summary": {
+        "path": "tmp/task42extra/v36/durable/v36_control_space_oracle_attempt1/run_summary.json",
+        "bytes": 11989,
+        "sha256": "9de95027045cfb674cd2e88d26e10711cc82a1d1187fcf369c0b146dc13e7319"
+      },
+      "source_sha": "67cca36b3b344afb61943378582483f8f88e7e97",
+      "input_sha256": "2334f2685288f12e9eb6b371ae4e272bc843621182e20aef07a96d492fdf3cba",
+      "design_sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "ml",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "cpu": 2,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "actual_attempt_seconds": 221.25840789685026,
+      "supervised_nested_seconds": 157.41267676604912,
+      "sampled_simultaneous_tree_peak_bytes": 4301037568,
+      "own_sampled_swap_peak_bytes": 0,
+      "stage_deadline_monotonic": 1480188.572373772,
+      "worker_stop_monotonic": 1480038.572373772,
+      "bound_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "5d63b729b41e049a20d5b2ce25d7f6f2d11a911a558c30bcd6088127cf5573a1",
+        "src/runners/neural_wave_dependencies.py": "e4611e079a0a064a3923fabd1f28a64f22e037b7c4cc78731916701e2b761c49",
+        "src/runners/neural_wave_worker.py": "54b4805f3090b47b613bc7c8da35a46321070a95ccb6b034d07d3d6762f2578a",
+        "src/io/neural_wave_campaign.py": "c1fccc8356ba091a4762caac0ce3e30a0149a9e6051df086416aad86eff304a0",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "c70f8f1ef1956470141ea2426425af3393159652ddb4b13f504a62c9dcc6ee31",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/blocked_oracle_campaign.py": "10243f0eefc1be1bce04d3c74b99a3e59893ee13e18b8a9e672ca2d990361cd8",
+        "src/runners/blocked_oracle_worker.py": "a2696cdb79208ca55a59a134cf9bc4a77355288864c841a58c0077cdd144ad1a",
+        "src/solvers/neural_space_blocked.py": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5",
+        "src/solvers/neural_space_blocked_checks.py": "aa90eff1174633ebb1748e3620ba17a21bd756bb48fb2f38bd3a66f5e975b482",
+        "src/runners/neural_space_worker.py": "fe1570f4bb5530d5257f4e9841357281f3e913d15a32944a79a799475ef0b018",
+        "src/runners/neural_space_verification.py": "ec259dab0e29ca8d1dc5bec9e98bd0eb5bd123c194cd6fb72d1c67e838386a2b",
+        "src/runners/saved_field_supervision.py": "4546c67abba236c8772d6f29cf64e46eb83eddf5064877720ac75dfa735f1b54",
+        "src/postprocessing/neural_space_saved.py": "6f591fad6f9c93dc2a971a0d02ee671ea113c19cc6591f159c7e63ab7a926866"
+      },
+      "identities": {
+        "input_original.dat": {
+          "path": "tmp/task42extra/v36/durable/v36_control_space_oracle_attempt1/input_original.dat",
+          "bytes": 152,
+          "sha256": "2334f2685288f12e9eb6b371ae4e272bc843621182e20aef07a96d492fdf3cba"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_space_oracle_attempt1/resolved_config.json",
+          "bytes": 79263,
+          "sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_space_oracle_attempt1/run_manifest.json",
+          "bytes": 7613,
+          "sha256": "77e179f80d1977bfc3e57e9ca2d1e0dc11cb2b03d9d184207112ed9e7359f213"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_space_oracle_attempt1/abi.json",
+          "bytes": 490,
+          "sha256": "10c5e51b6deb0987c084076781a468a0c3f19f66e6312da32a87a76385aef4d2"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_space_oracle_attempt1/pressure_stable_window.json",
+          "bytes": 11454,
+          "sha256": "c3b10c78e7d7aff993e39ded9a0cc0867aac47a8fbb2f265de97e18eceb39a92"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_space_oracle_attempt1/admission.json",
+          "bytes": 313518,
+          "sha256": "20f61fff362de57ba6309bae60a0eaa35b41aeffe0fa9eb4bffb231ad31bdb1e"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_space_oracle_attempt1/outer_admission.json",
+          "bytes": 303902,
+          "sha256": "96d1e840d206098c615a57b3a2be651a7edac4f36e756e3c0e1a73df392bc91e"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_space_oracle_attempt1/attempt_identity.json",
+          "bytes": 302,
+          "sha256": "4cd06c1f73e9b20d779d5e6c2adeddffec195fc2aad868b1b3fadc4c4d916ff3"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_space_oracle_attempt1/terminal_identity.json",
+          "bytes": 11430,
+          "sha256": "ae34725cf5e3e063d5ec85d04949e98d9a2cdf99b80be11ae426115863ffbd4f"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v36/durable/v36_control_space_oracle_attempt1/events.jsonl",
+          "bytes": 66171,
+          "sha256": "1c1cac24c3136aca9da3b4237514f6f22fa5a4c4f4745e31ffd9f7f36336e89d"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v36/durable/v36_control_space_oracle_attempt1/payload_summary.json",
+          "bytes": 11989,
+          "sha256": "9de95027045cfb674cd2e88d26e10711cc82a1d1187fcf369c0b146dc13e7319"
+        }
+      }
+    },
+    {
+      "name": "v36_learned_oracle_verify_attempt1",
+      "stage": "v36_learned_oracle_verify",
+      "summary": {
+        "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt1/run_summary.json",
+        "bytes": 13178,
+        "sha256": "f6dc30c9f67c27ddd79e57074fcf9c3efa6372aafe3ecc9b09701dba468183f4"
+      },
+      "source_sha": "a4e14e889861ea7b3a4725e0f2bfe07490b34baa",
+      "input_sha256": "b9e70b81f2c3dca6c728b587aeeef8d1715f8f33abab234cf583cc84b84a8cd9",
+      "design_sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "fe",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/build-tools",
+        "LD_LIBRARY_PATH": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-int64/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/scotch-int64/lib",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "cpu": 4,
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "descendants_cleared": true,
+      "actual_attempt_seconds": 468.57484503719024,
+      "supervised_nested_seconds": 404.8172169930767,
+      "sampled_simultaneous_tree_peak_bytes": 604782592,
+      "own_sampled_swap_peak_bytes": 0,
+      "stage_deadline_monotonic": 1475299.001860326,
+      "worker_stop_monotonic": 1475149.001860326,
+      "bound_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "5d63b729b41e049a20d5b2ce25d7f6f2d11a911a558c30bcd6088127cf5573a1",
+        "src/runners/neural_wave_dependencies.py": "e4611e079a0a064a3923fabd1f28a64f22e037b7c4cc78731916701e2b761c49",
+        "src/runners/neural_wave_worker.py": "54b4805f3090b47b613bc7c8da35a46321070a95ccb6b034d07d3d6762f2578a",
+        "src/io/neural_wave_campaign.py": "c1fccc8356ba091a4762caac0ce3e30a0149a9e6051df086416aad86eff304a0",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "c70f8f1ef1956470141ea2426425af3393159652ddb4b13f504a62c9dcc6ee31",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/blocked_oracle_campaign.py": "10243f0eefc1be1bce04d3c74b99a3e59893ee13e18b8a9e672ca2d990361cd8",
+        "src/runners/blocked_oracle_worker.py": "328072c0dd686a7decf059b61b85090b735d6c122e3667ec8b563b50ff73a593",
+        "src/solvers/neural_space_blocked.py": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5",
+        "src/solvers/neural_space_blocked_checks.py": "aa90eff1174633ebb1748e3620ba17a21bd756bb48fb2f38bd3a66f5e975b482",
+        "src/runners/neural_space_worker.py": "fe1570f4bb5530d5257f4e9841357281f3e913d15a32944a79a799475ef0b018",
+        "src/runners/neural_space_verification.py": "3e85b001affdd7c2efb2b51e21f1e47b86be969ea3496c32ead99856d7db3f2f",
+        "src/postprocessing/neural_space_saved.py": "6f591fad6f9c93dc2a971a0d02ee671ea113c19cc6591f159c7e63ab7a926866"
+      },
+      "identities": {
+        "input_original.dat": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt1/input_original.dat",
+          "bytes": 153,
+          "sha256": "b9e70b81f2c3dca6c728b587aeeef8d1715f8f33abab234cf583cc84b84a8cd9"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt1/resolved_config.json",
+          "bytes": 79263,
+          "sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt1/run_manifest.json",
+          "bytes": 8789,
+          "sha256": "305c0ebc1436755207a112f4be84f4f53824481a18b6f5739570eef909990547"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt1/abi.json",
+          "bytes": 462,
+          "sha256": "b810f4d3d1b74ff1af94fcb4f3757579e99282ef8305a97c00782c05940bad18"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt1/pressure_stable_window.json",
+          "bytes": 11453,
+          "sha256": "360b37c9384e6ebd84777e09a709bf6abf6d43489f84c234838b99af2c187c5d"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt1/admission.json",
+          "bytes": 227494,
+          "sha256": "2b4ce4f4ed9a6e62fad06447cd3d2e75eb08420926ce9be7bec0f916b808667c"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt1/outer_admission.json",
+          "bytes": 305716,
+          "sha256": "0684418a411ff9f3c2e73fca59b526bc3fe795a0b31732a5f0b0aae3cdfc6f0e"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt1/attempt_identity.json",
+          "bytes": 303,
+          "sha256": "ad36613648d5bc29c94f12c020b0593d4fddb2d0142a17ee63f20fdb1e902df0"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt1/terminal_identity.json",
+          "bytes": 11431,
+          "sha256": "3e5659e27a400371951df39627c273f20104eea163f1e3b1b2547ad3073f8464"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt1/events.jsonl",
+          "bytes": 54441,
+          "sha256": "415d170ae69987a29726964c678554f8509b51d891c0ed92484b6b73d5c484a5"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt1/payload_summary.json",
+          "bytes": 13178,
+          "sha256": "f6dc30c9f67c27ddd79e57074fcf9c3efa6372aafe3ecc9b09701dba468183f4"
+        }
+      }
+    },
+    {
+      "name": "v36_learned_oracle_verify_attempt2",
+      "stage": "v36_learned_oracle_verify",
+      "summary": {
+        "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt2/run_summary.json",
+        "bytes": 13316,
+        "sha256": "7e3699697a2f21a19aa0b71251e59d3fa8d0d44affb917d8e08ad24cc76ba73e"
+      },
+      "source_sha": "67cca36b3b344afb61943378582483f8f88e7e97",
+      "input_sha256": "b9e70b81f2c3dca6c728b587aeeef8d1715f8f33abab234cf583cc84b84a8cd9",
+      "design_sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "fe",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/build-tools",
+        "LD_LIBRARY_PATH": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-int64/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/scotch-int64/lib",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "cpu": 0,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "actual_attempt_seconds": 76.31006000796333,
+      "supervised_nested_seconds": 12.387189079076052,
+      "sampled_simultaneous_tree_peak_bytes": 534216704,
+      "own_sampled_swap_peak_bytes": 0,
+      "stage_deadline_monotonic": 1476499.001860326,
+      "worker_stop_monotonic": 1476349.001860326,
+      "bound_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "5d63b729b41e049a20d5b2ce25d7f6f2d11a911a558c30bcd6088127cf5573a1",
+        "src/runners/neural_wave_dependencies.py": "e4611e079a0a064a3923fabd1f28a64f22e037b7c4cc78731916701e2b761c49",
+        "src/runners/neural_wave_worker.py": "54b4805f3090b47b613bc7c8da35a46321070a95ccb6b034d07d3d6762f2578a",
+        "src/io/neural_wave_campaign.py": "c1fccc8356ba091a4762caac0ce3e30a0149a9e6051df086416aad86eff304a0",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "c70f8f1ef1956470141ea2426425af3393159652ddb4b13f504a62c9dcc6ee31",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/blocked_oracle_campaign.py": "10243f0eefc1be1bce04d3c74b99a3e59893ee13e18b8a9e672ca2d990361cd8",
+        "src/runners/blocked_oracle_worker.py": "a2696cdb79208ca55a59a134cf9bc4a77355288864c841a58c0077cdd144ad1a",
+        "src/solvers/neural_space_blocked.py": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5",
+        "src/solvers/neural_space_blocked_checks.py": "aa90eff1174633ebb1748e3620ba17a21bd756bb48fb2f38bd3a66f5e975b482",
+        "src/runners/neural_space_worker.py": "fe1570f4bb5530d5257f4e9841357281f3e913d15a32944a79a799475ef0b018",
+        "src/runners/neural_space_verification.py": "ec259dab0e29ca8d1dc5bec9e98bd0eb5bd123c194cd6fb72d1c67e838386a2b",
+        "src/runners/saved_field_supervision.py": "4546c67abba236c8772d6f29cf64e46eb83eddf5064877720ac75dfa735f1b54",
+        "src/postprocessing/neural_space_saved.py": "6f591fad6f9c93dc2a971a0d02ee671ea113c19cc6591f159c7e63ab7a926866"
+      },
+      "identities": {
+        "input_original.dat": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt2/input_original.dat",
+          "bytes": 153,
+          "sha256": "b9e70b81f2c3dca6c728b587aeeef8d1715f8f33abab234cf583cc84b84a8cd9"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt2/resolved_config.json",
+          "bytes": 79263,
+          "sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt2/run_manifest.json",
+          "bytes": 8903,
+          "sha256": "777eac177f19d3b68c6e3b8ea99b08c39a54fa950d9ae8122fef6425d7848dcd"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt2/abi.json",
+          "bytes": 462,
+          "sha256": "6cfd8318171bc81f1f77669ca305cfc1b6ae89532a1c604c478e1c83ad1ea1f2"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt2/pressure_stable_window.json",
+          "bytes": 11457,
+          "sha256": "50405c0cc95fe3c4e57f6eb6fa5ba67394b224a3538b1aed3043b050b8ffbe45"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt2/admission.json",
+          "bytes": 224630,
+          "sha256": "4a061bfd79399537109e3aa1ef1e61557f2a3f883b602057696d2d30f83ce648"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt2/outer_admission.json",
+          "bytes": 304090,
+          "sha256": "e69982d62125ca2c5ee8dd8c9bb71c399d76990b42263319764c048a5efbbce5"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt2/attempt_identity.json",
+          "bytes": 303,
+          "sha256": "b370f2f501f08d245efaf43b077124804f46fdd9a0ecec6e453e51acaae7e1bf"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt2/terminal_identity.json",
+          "bytes": 11432,
+          "sha256": "c573da8fed9040aaa1b197f208e0419afa35fdedd64ac5512da2c5e6fc4a1db1"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt2/events.jsonl",
+          "bytes": 483,
+          "sha256": "2ed3517b75cc1ee55c13edc206250b9852ade5aac3dbf95d683a01e5cb2a8685"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_oracle_verify_attempt2/payload_summary.json",
+          "bytes": 13316,
+          "sha256": "7e3699697a2f21a19aa0b71251e59d3fa8d0d44affb917d8e08ad24cc76ba73e"
+        }
+      }
+    },
+    {
+      "name": "v36_learned_space_oracle_attempt1",
+      "stage": "v36_learned_space_oracle",
+      "summary": {
+        "path": "tmp/task42extra/v36/durable/v36_learned_space_oracle_attempt1/run_summary.json",
+        "bytes": 11872,
+        "sha256": "15c1b9d581fd60a52e5994a854920a0657e9a3494e6e6f79ed86660e39377680"
+      },
+      "source_sha": "a4e14e889861ea7b3a4725e0f2bfe07490b34baa",
+      "input_sha256": "a66e9d006ba31df89005169eb2ebca25a70bb1a71a6206918ea63fd586e19eb1",
+      "design_sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "ml",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "cpu": 12,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "actual_attempt_seconds": 221.42820638697594,
+      "supervised_nested_seconds": 157.53169292211533,
+      "sampled_simultaneous_tree_peak_bytes": 4301893632,
+      "own_sampled_swap_peak_bytes": 0,
+      "stage_deadline_monotonic": 1478626.652135693,
+      "worker_stop_monotonic": 1478476.652135693,
+      "bound_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "5d63b729b41e049a20d5b2ce25d7f6f2d11a911a558c30bcd6088127cf5573a1",
+        "src/runners/neural_wave_dependencies.py": "e4611e079a0a064a3923fabd1f28a64f22e037b7c4cc78731916701e2b761c49",
+        "src/runners/neural_wave_worker.py": "54b4805f3090b47b613bc7c8da35a46321070a95ccb6b034d07d3d6762f2578a",
+        "src/io/neural_wave_campaign.py": "c1fccc8356ba091a4762caac0ce3e30a0149a9e6051df086416aad86eff304a0",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "c70f8f1ef1956470141ea2426425af3393159652ddb4b13f504a62c9dcc6ee31",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/blocked_oracle_campaign.py": "10243f0eefc1be1bce04d3c74b99a3e59893ee13e18b8a9e672ca2d990361cd8",
+        "src/runners/blocked_oracle_worker.py": "328072c0dd686a7decf059b61b85090b735d6c122e3667ec8b563b50ff73a593",
+        "src/solvers/neural_space_blocked.py": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5",
+        "src/solvers/neural_space_blocked_checks.py": "aa90eff1174633ebb1748e3620ba17a21bd756bb48fb2f38bd3a66f5e975b482",
+        "src/runners/neural_space_worker.py": "fe1570f4bb5530d5257f4e9841357281f3e913d15a32944a79a799475ef0b018",
+        "src/runners/neural_space_verification.py": "3e85b001affdd7c2efb2b51e21f1e47b86be969ea3496c32ead99856d7db3f2f",
+        "src/postprocessing/neural_space_saved.py": "6f591fad6f9c93dc2a971a0d02ee671ea113c19cc6591f159c7e63ab7a926866"
+      },
+      "identities": {
+        "input_original.dat": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_space_oracle_attempt1/input_original.dat",
+          "bytes": 152,
+          "sha256": "a66e9d006ba31df89005169eb2ebca25a70bb1a71a6206918ea63fd586e19eb1"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_space_oracle_attempt1/resolved_config.json",
+          "bytes": 79263,
+          "sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_space_oracle_attempt1/run_manifest.json",
+          "bytes": 7500,
+          "sha256": "489bb397daea8a0a054fe04765b1fed63075e6c0df1618abd3db7d0ba98f7d2b"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_space_oracle_attempt1/abi.json",
+          "bytes": 491,
+          "sha256": "d2b31b828ef96cddbfcebea152d57e6db7d392d9558fca72572e851812994d45"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_space_oracle_attempt1/pressure_stable_window.json",
+          "bytes": 11456,
+          "sha256": "f3fb9ad56dddbc3060d24c9a86f19961f298b1ffe9d97770f8e46df735f32d9d"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_space_oracle_attempt1/admission.json",
+          "bytes": 224966,
+          "sha256": "3c73b7ff1dbea02377cd6447355eb3dcd245dfee2b9211e9db5064dca9dca4b9"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_space_oracle_attempt1/outer_admission.json",
+          "bytes": 221360,
+          "sha256": "91ffb7fb5f8ea24c5992aff47e09ac532f9c8b1e24eb5601ca6f114647ffc5f0"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_space_oracle_attempt1/attempt_identity.json",
+          "bytes": 302,
+          "sha256": "40392bf1d72683bbd57292a5ea192bb33608c273561de87ab1d71684db2e044f"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_space_oracle_attempt1/terminal_identity.json",
+          "bytes": 11430,
+          "sha256": "f62d7c765afa366a0927e7d9c11cdea5d5e5a341dbe3bb8955e093078e9e2642"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_space_oracle_attempt1/events.jsonl",
+          "bytes": 66215,
+          "sha256": "64432f6d0f241b81bf0a99b3842e31269962b315fbfa8cec13c607135588e474"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v36/durable/v36_learned_space_oracle_attempt1/payload_summary.json",
+          "bytes": 11872,
+          "sha256": "15c1b9d581fd60a52e5994a854920a0657e9a3494e6e6f79ed86660e39377680"
+        }
+      }
+    },
+    {
+      "name": "v36_neural_route_decision_attempt1",
+      "stage": "v36_neural_route_decision",
+      "summary": {
+        "path": "tmp/task42extra/v36/durable/v36_neural_route_decision_attempt1/run_summary.json",
+        "bytes": 11980,
+        "sha256": "e77b66ab243bde9b0049196ecb200e3f7a11e77330a09601f21827e206b46d47"
+      },
+      "source_sha": "67cca36b3b344afb61943378582483f8f88e7e97",
+      "input_sha256": "3b66ee1976bfc11119451553c3d6ed9e29425febb751ada6e528c2e0e7bef2cf",
+      "design_sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "pure",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "cpu": 0,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "actual_attempt_seconds": 65.67581515805796,
+      "supervised_nested_seconds": 1.8061678991653025,
+      "sampled_simultaneous_tree_peak_bytes": 92884992,
+      "own_sampled_swap_peak_bytes": 0,
+      "stage_deadline_monotonic": 1476443.554741055,
+      "worker_stop_monotonic": 1476293.554741055,
+      "bound_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "5d63b729b41e049a20d5b2ce25d7f6f2d11a911a558c30bcd6088127cf5573a1",
+        "src/runners/neural_wave_dependencies.py": "e4611e079a0a064a3923fabd1f28a64f22e037b7c4cc78731916701e2b761c49",
+        "src/runners/neural_wave_worker.py": "54b4805f3090b47b613bc7c8da35a46321070a95ccb6b034d07d3d6762f2578a",
+        "src/io/neural_wave_campaign.py": "c1fccc8356ba091a4762caac0ce3e30a0149a9e6051df086416aad86eff304a0",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "c70f8f1ef1956470141ea2426425af3393159652ddb4b13f504a62c9dcc6ee31",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/blocked_oracle_campaign.py": "10243f0eefc1be1bce04d3c74b99a3e59893ee13e18b8a9e672ca2d990361cd8",
+        "src/runners/blocked_oracle_worker.py": "a2696cdb79208ca55a59a134cf9bc4a77355288864c841a58c0077cdd144ad1a",
+        "src/solvers/neural_space_blocked.py": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5",
+        "src/solvers/neural_space_blocked_checks.py": "aa90eff1174633ebb1748e3620ba17a21bd756bb48fb2f38bd3a66f5e975b482",
+        "src/runners/neural_space_worker.py": "fe1570f4bb5530d5257f4e9841357281f3e913d15a32944a79a799475ef0b018",
+        "src/runners/neural_space_verification.py": "ec259dab0e29ca8d1dc5bec9e98bd0eb5bd123c194cd6fb72d1c67e838386a2b",
+        "src/runners/saved_field_supervision.py": "4546c67abba236c8772d6f29cf64e46eb83eddf5064877720ac75dfa735f1b54",
+        "src/postprocessing/neural_space_saved.py": "6f591fad6f9c93dc2a971a0d02ee671ea113c19cc6591f159c7e63ab7a926866"
+      },
+      "identities": {
+        "input_original.dat": {
+          "path": "tmp/task42extra/v36/durable/v36_neural_route_decision_attempt1/input_original.dat",
+          "bytes": 153,
+          "sha256": "3b66ee1976bfc11119451553c3d6ed9e29425febb751ada6e528c2e0e7bef2cf"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v36/durable/v36_neural_route_decision_attempt1/resolved_config.json",
+          "bytes": 79263,
+          "sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v36/durable/v36_neural_route_decision_attempt1/run_manifest.json",
+          "bytes": 7616,
+          "sha256": "a801080d4f92d2b88cdfa73b5ab2d9208ad4125de4351bd94b258fc4405fbe33"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v36/durable/v36_neural_route_decision_attempt1/abi.json",
+          "bytes": 288,
+          "sha256": "3f04b240b1a3d2f62f8f55f8e887d4bbbb0391af3421c5fd851d339d52501f73"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v36/durable/v36_neural_route_decision_attempt1/pressure_stable_window.json",
+          "bytes": 11428,
+          "sha256": "6e4d53272ecc924736be78e5ee13cb32b895e7fcb056611b51e31a99bc6e80b9"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v36/durable/v36_neural_route_decision_attempt1/admission.json",
+          "bytes": 227591,
+          "sha256": "34501b93386676d20d914aade3c65cef7b566c17051d5afb23932f42e8f5b8f0"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v36/durable/v36_neural_route_decision_attempt1/outer_admission.json",
+          "bytes": 217918,
+          "sha256": "527e8ab265f479e59c22a2152a8e1e41e455e5e681540a81097ed9ca68212dae"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v36/durable/v36_neural_route_decision_attempt1/attempt_identity.json",
+          "bytes": 303,
+          "sha256": "f54314c60a2e687e3120e3ac2e8818a133ccaea5a4390c5b0514279116138f10"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v36/durable/v36_neural_route_decision_attempt1/terminal_identity.json",
+          "bytes": 11432,
+          "sha256": "0d4175f438e7c6e194394be9066a78032387c88f3b395c412002cab8a9374145"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v36/durable/v36_neural_route_decision_attempt1/events.jsonl",
+          "bytes": 1089,
+          "sha256": "81e0c2138daebf51673e5e3d2ce4638e875b9c980980f08b485f66962f6a9440"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v36/durable/v36_neural_route_decision_attempt1/payload_summary.json",
+          "bytes": 11980,
+          "sha256": "e77b66ab243bde9b0049196ecb200e3f7a11e77330a09601f21827e206b46d47"
+        }
+      }
+    },
+    {
+      "name": "v36_oracle_kernel_checks_attempt1",
+      "stage": "v36_oracle_kernel_checks",
+      "summary": {
+        "path": "tmp/task42extra/v36/durable/v36_oracle_kernel_checks_attempt1/run_summary.json",
+        "bytes": 11863,
+        "sha256": "d91303e0a704287f7e92505ea3eeafcf01a858de6ef25968dcaa7b8386b4b645"
+      },
+      "source_sha": "a4e14e889861ea7b3a4725e0f2bfe07490b34baa",
+      "input_sha256": "337e327aef53dd5e2bb873ff8d91622fb5b6904322001da924430b947e5db640",
+      "design_sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "pure",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "cpu": 0,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "actual_attempt_seconds": 66.09694392210804,
+      "supervised_nested_seconds": 2.1825422309339046,
+      "sampled_simultaneous_tree_peak_bytes": 141266944,
+      "own_sampled_swap_peak_bytes": 0,
+      "stage_deadline_monotonic": 1474336.821350605,
+      "worker_stop_monotonic": 1474186.821350605,
+      "bound_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "5d63b729b41e049a20d5b2ce25d7f6f2d11a911a558c30bcd6088127cf5573a1",
+        "src/runners/neural_wave_dependencies.py": "e4611e079a0a064a3923fabd1f28a64f22e037b7c4cc78731916701e2b761c49",
+        "src/runners/neural_wave_worker.py": "54b4805f3090b47b613bc7c8da35a46321070a95ccb6b034d07d3d6762f2578a",
+        "src/io/neural_wave_campaign.py": "c1fccc8356ba091a4762caac0ce3e30a0149a9e6051df086416aad86eff304a0",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "c70f8f1ef1956470141ea2426425af3393159652ddb4b13f504a62c9dcc6ee31",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/blocked_oracle_campaign.py": "10243f0eefc1be1bce04d3c74b99a3e59893ee13e18b8a9e672ca2d990361cd8",
+        "src/runners/blocked_oracle_worker.py": "328072c0dd686a7decf059b61b85090b735d6c122e3667ec8b563b50ff73a593",
+        "src/solvers/neural_space_blocked.py": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5",
+        "src/solvers/neural_space_blocked_checks.py": "aa90eff1174633ebb1748e3620ba17a21bd756bb48fb2f38bd3a66f5e975b482",
+        "src/runners/neural_space_worker.py": "fe1570f4bb5530d5257f4e9841357281f3e913d15a32944a79a799475ef0b018",
+        "src/runners/neural_space_verification.py": "3e85b001affdd7c2efb2b51e21f1e47b86be969ea3496c32ead99856d7db3f2f",
+        "src/postprocessing/neural_space_saved.py": "6f591fad6f9c93dc2a971a0d02ee671ea113c19cc6591f159c7e63ab7a926866"
+      },
+      "identities": {
+        "input_original.dat": {
+          "path": "tmp/task42extra/v36/durable/v36_oracle_kernel_checks_attempt1/input_original.dat",
+          "bytes": 152,
+          "sha256": "337e327aef53dd5e2bb873ff8d91622fb5b6904322001da924430b947e5db640"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v36/durable/v36_oracle_kernel_checks_attempt1/resolved_config.json",
+          "bytes": 79263,
+          "sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v36/durable/v36_oracle_kernel_checks_attempt1/run_manifest.json",
+          "bytes": 7498,
+          "sha256": "4124ed1789e1b5f45998398494ed28101ebcb3316647426390e7a095d3ac45e7"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v36/durable/v36_oracle_kernel_checks_attempt1/abi.json",
+          "bytes": 288,
+          "sha256": "3f04b240b1a3d2f62f8f55f8e887d4bbbb0391af3421c5fd851d339d52501f73"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v36/durable/v36_oracle_kernel_checks_attempt1/pressure_stable_window.json",
+          "bytes": 11431,
+          "sha256": "8b999f5527efec793d335327392e6ce64d30fdda6ebd8a726e202501c526bafa"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v36/durable/v36_oracle_kernel_checks_attempt1/admission.json",
+          "bytes": 231025,
+          "sha256": "777fe77ec991ae8115a5be4788d8e6a2478137f66e827ec10ceb0b2d1ce08944"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v36/durable/v36_oracle_kernel_checks_attempt1/outer_admission.json",
+          "bytes": 223952,
+          "sha256": "7fd50437ce4f26141e9f20152a940517c371ab53fd20c475986a8e897f37d8e9"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v36/durable/v36_oracle_kernel_checks_attempt1/attempt_identity.json",
+          "bytes": 302,
+          "sha256": "57ca9455a83681fa8f04bdbb291fd66fef44429261149ddb20ada940631815aa"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v36/durable/v36_oracle_kernel_checks_attempt1/terminal_identity.json",
+          "bytes": 11431,
+          "sha256": "c0f6761127fdf714cc335201b8de0b8397382e18538410ebcd3ac8244251ccdd"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v36/durable/v36_oracle_kernel_checks_attempt1/events.jsonl",
+          "bytes": 160,
+          "sha256": "a91556efbd8093ab71a67ecbc036e50a08b0574a5a45e6fa8a6663e71131ec39"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v36/durable/v36_oracle_kernel_checks_attempt1/payload_summary.json",
+          "bytes": 11863,
+          "sha256": "d91303e0a704287f7e92505ea3eeafcf01a858de6ef25968dcaa7b8386b4b645"
+        }
+      }
+    }
+  ],
+  "window": {
+    "campaign": 36,
+    "origin_monotonic_s": 1471990.0,
+    "deadline_monotonic_s": 1493590.0,
+    "total_budget_s": 21600,
+    "final_reserve_s": 1800,
+    "origin_basis": "conservative origin before first preparation uptime 1472020.81",
+    "created_monotonic_s": 1472255.108493727,
+    "historical_windows_reused": false
+  },
+  "implementation_sources": [
+    "a4e14e889861ea7b3a4725e0f2bfe07490b34baa",
+    "67cca36b3b344afb61943378582483f8f88e7e97"
+  ],
+  "later_document_HEAD_not_source": true,
+  "old_A_source_sha": "520cb681dc7c6b69f13caeaa11af98d3d90a7b4b"
+}

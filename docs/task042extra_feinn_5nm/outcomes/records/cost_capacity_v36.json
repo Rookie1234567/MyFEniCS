@@ -1,0 +1,73 @@
+{
+  "continuous_window": {
+    "campaign": 36,
+    "origin_monotonic_s": 1471990.0,
+    "deadline_monotonic_s": 1493590.0,
+    "total_budget_s": 21600,
+    "final_reserve_s": 1800,
+    "origin_basis": "conservative origin before first preparation uptime 1472020.81",
+    "created_monotonic_s": 1472255.108493727,
+    "historical_windows_reused": false
+  },
+  "snapshot_monotonic_s": 1475744.793942103,
+  "total_calendar_seconds_at_snapshot": 3754.793942526914,
+  "formal_attempt_sum_seconds": 1602.1183073271532,
+  "actual_formal_tree_peak_bytes": 4301893632,
+  "peak_scope": "Sampled simultaneous terminal/launcher/watchdog/worker tree, not continuous kernel maximum",
+  "sampled_own_swap_zero": true,
+  "light_supervised_nested_seconds": 36.17077347985469,
+  "successful_PSI60_and_preparation_in_calendar": true,
+  "nested_children_not_double_charged": true,
+  "planning_bytes": 8971763456,
+  "planning_limit_bytes": 12884901888,
+  "numeric_warn_bytes": 12884901888,
+  "numeric_hard_bytes": 17179869184,
+  "pure_hard_bytes": 2147483648,
+  "neighbor_growth_reserve_bytes": 412316860416,
+  "G_not_factored": true,
+  "Gsolve_count": 0,
+  "small_projected_H_Cholesky_reported": true,
+  "historical_required_prefix_attributed_seconds": 10186.178641493432,
+  "historical_prefix_not_double_charged": true,
+  "historical_V34_learned_loaded_packet_seconds": 20728.120829955675,
+  "historical_V35_B_failed_seconds": 5110.947981953854,
+  "historical_V35_calendar_seconds": 11282.676698175957,
+  "complete_cold_N1": "UNKNOWN",
+  "project_exact_cumulative_seconds": "UNKNOWN",
+  "neural_resource_gain_qualified": false,
+  "U_Q_shape_examples": [
+    {
+      "N": 10000000,
+      "m": 1377,
+      "bytes": 440640000000
+    },
+    {
+      "N": 100000000,
+      "m": 1377,
+      "bytes": 4406400000000
+    }
+  ],
+  "target_actual_DoF_and_RSS": "UNKNOWN",
+  "target": {
+    "geometry_nm": [
+      50,
+      25,
+      140
+    ],
+    "wavelength_nm": 0.7,
+    "whole_machine_bytes": 2000000000000,
+    "complete_cold_seconds": 172800,
+    "qualified": false
+  },
+  "publication_snapshot_monotonic_s": 1476178.047285191,
+  "publication_calendar_seconds": 4188.047285344917,
+  "formal_G_columns": 8266,
+  "formal_fixed_prefix_G_columns": 768,
+  "formal_G_total_columns": 9034,
+  "fixed_prefix_cost_separate_from_full_timers": true,
+  "original_refactor_count": 0,
+  "new_global_Gram_factor_count": 0,
+  "new_Maxwell_factor_count": 0,
+  "original_project_exact_cumulative": "UNKNOWN",
+  "publication_and_final_tail": "Final ignored delivery receipt; never a second campaign window"
+}

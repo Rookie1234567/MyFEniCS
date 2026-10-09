@@ -1,0 +1,643 @@
+{
+  "spaces": {
+    "LEARNED_COMPLEX_WAVE_BACKFIT": {
+      "complete_boundaries": [
+        {
+          "record": {
+            "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_EUCLIDEAN_QR_0001.json",
+            "bytes": 867,
+            "sha256": "591378e207bad3d934e54ce3fcaf84b06b773d0b6531c9130ed2b24f73e01817"
+          },
+          "values": {
+            "stage": "EUCLIDEAN_QR",
+            "binding": {
+              "original_space": {
+                "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/committed.json",
+                "sha256": "bae90dbfbf9a6c0ac53e62eb125c130a5792b3618c4ac49ecb64cce39acbf134"
+              },
+              "gram": {
+                "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+                "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+              },
+              "columns": 1377,
+              "rcond": 1e-12,
+              "kernel_sha256": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5"
+            },
+            "arrays": {
+              "path": "EUCLIDEAN_QR_0001.npz",
+              "sha256": "cdec9d8d9ed6178524ff621db6eb9b9e7576cb5c8fb69f5b7c95f6fc67bf3146"
+            },
+            "record": {
+              "columns": 1377,
+              "G_columns": 0,
+              "G_by_role": {},
+              "G_seconds_nested": 0.0
+            },
+            "committed": true
+          }
+        },
+        {
+          "record": {
+            "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_GRAM_REDUCED_0002.json",
+            "bytes": 928,
+            "sha256": "5238cc7c34cbabbe194b6b6744dd51d69ea4f10a1f1f89825827b197744e485d"
+          },
+          "values": {
+            "stage": "GRAM_REDUCED",
+            "binding": {
+              "original_space": {
+                "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/committed.json",
+                "sha256": "bae90dbfbf9a6c0ac53e62eb125c130a5792b3618c4ac49ecb64cce39acbf134"
+              },
+              "gram": {
+                "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+                "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+              },
+              "columns": 1377,
+              "rcond": 1e-12,
+              "kernel_sha256": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5"
+            },
+            "arrays": {
+              "path": "GRAM_REDUCED_0002.npz",
+              "sha256": "21e68c30690402c02ffba2b55ae6883a22efa3f72a16c2289612e40308e83c88"
+            },
+            "record": {
+              "columns": 1377,
+              "G_columns": 1377,
+              "G_by_role": {
+                "Householder_reduced_Gram": 1377
+              },
+              "G_seconds_nested": 13.68965810444206
+            },
+            "committed": true
+          }
+        },
+        {
+          "record": {
+            "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_G_BASIS_QUALIFIED_0003.json",
+            "bytes": 74364,
+            "sha256": "c466466e382afbdc12a6d6ccbd05cd92636500da7b7200e8dc128f053c3e0c6a"
+          },
+          "values": {
+            "stage": "G_BASIS_QUALIFIED",
+            "binding": {
+              "original_space": {
+                "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/committed.json",
+                "sha256": "bae90dbfbf9a6c0ac53e62eb125c130a5792b3618c4ac49ecb64cce39acbf134"
+              },
+              "gram": {
+                "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+                "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+              },
+              "columns": 1377,
+              "rcond": 1e-12,
+              "kernel_sha256": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5"
+            },
+            "arrays": {
+              "path": "G_BASIS_QUALIFIED_0003.npz",
+              "sha256": "1e519ed458165be1dd46f9a34fb8db8400a5837ad1a4fd4e3ddaa17ccc526cda"
+            },
+            "record": {
+              "G_orthogonality_F": 1.7385571996067255e-12,
+              "G_orthogonality_numerator": 1.7385571996067255e-12,
+              "G_orthogonality_denominator": 1.0,
+              "transform_reconstruction_relative": 1.3074166564783954e-15,
+              "transform_reconstruction_numerator": 4.851555274217031e-14,
+              "transform_reconstruction_denominator": 37.10795063055861,
+              "singular_values": {
+                "count": 1377,
+                "storage": "HASH_BOUND_ORIGINAL_NOT_DUPLICATED"
+              },
+              "retained_rank": 1377,
+              "original_columns": 1377,
+              "SVD_rcond": 1e-12,
+              "full_column_space_retained": true,
+              "exact_interval_certificate": false,
+              "method": "HOUSEHOLDER_SMALL_GRAM",
+              "reduced_Gram": {
+                "Hermitian_relative": 7.491958881501475e-16,
+                "lambda_min": 0.03868389590190537,
+                "lambda_max": 14974.978137720795,
+                "cond2": 387111.42682459764,
+                "machine_epsilon_condition": 8.595600383123295e-11,
+                "roundoff_symmetrization": true
+              },
+              "first_whitening_G_orthogonality_F": 1.7385571996067255e-12,
+              "second_whitening": null,
+              "Householder_R_singular_values": {
+                "count": 1377,
+                "storage": "HASH_BOUND_ORIGINAL_NOT_DUPLICATED"
+              },
+              "triangle_order": "L1 R",
+              "primary_stability_failure": null,
+              "G_columns": 4131,
+              "G_by_role": {
+                "Householder_reduced_Gram": 1377,
+                "first_whitening_orthogonality": 1377,
+                "basis_final_original_G": 1377
+              },
+              "primary_or_fallback_selected_without_reference": true,
+              "G_seconds_nested": 41.43135732249357
+            },
+            "committed": true
+          }
+        },
+        {
+          "record": {
+            "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_LOADED_0000.json",
+            "bytes": 880,
+            "sha256": "508a1a29ae652da60c0e7f520c70adbfa2d1fb0f3c0d6cab083969fed1d05804"
+          },
+          "values": {
+            "stage": "LOADED",
+            "binding": {
+              "original_space": {
+                "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/committed.json",
+                "sha256": "bae90dbfbf9a6c0ac53e62eb125c130a5792b3618c4ac49ecb64cce39acbf134"
+              },
+              "gram": {
+                "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+                "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+              },
+              "columns": 1377,
+              "rcond": 1e-12,
+              "kernel_sha256": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5"
+            },
+            "arrays": {
+              "path": "LOADED_0000.npz",
+              "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85"
+            },
+            "record": {
+              "shape": [
+                31968,
+                1377
+              ],
+              "G_columns": 0,
+              "G_by_role": {},
+              "G_seconds_nested": 0.0
+            },
+            "committed": true
+          }
+        },
+        {
+          "record": {
+            "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_ORACLE_FIELD_FROZEN_0004.json",
+            "bytes": 1368,
+            "sha256": "3d9232251516b97866e7a333e654a61559dc94403510e52d8d00142b715ad17d"
+          },
+          "values": {
+            "stage": "ORACLE_FIELD_FROZEN",
+            "binding": {
+              "original_space": {
+                "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/committed.json",
+                "sha256": "bae90dbfbf9a6c0ac53e62eb125c130a5792b3618c4ac49ecb64cce39acbf134"
+              },
+              "gram": {
+                "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+                "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+              },
+              "columns": 1377,
+              "rcond": 1e-12,
+              "kernel_sha256": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5"
+            },
+            "arrays": {
+              "path": "ORACLE_FIELD_FROZEN_0004.npz",
+              "sha256": "691d068a4eb31982c34a4c27f5935d21e3bc45919bd3f1cf274f7fd48625f478"
+            },
+            "record": {
+              "model": {
+                "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/basis/committed.json",
+                "sha256": "c650c944059e7d459076e169c70009866976e3e33327e23a678ac36e3da1df7e"
+              },
+              "E_G": 0.0031762428063071215,
+              "rank": 1377,
+              "G_columns": 4133,
+              "G_by_role": {
+                "Householder_reduced_Gram": 1377,
+                "first_whitening_orthogonality": 1377,
+                "basis_final_original_G": 1377,
+                "reference_rhs_and_denominator": 1,
+                "actual_error_original_G": 1
+              },
+              "G_seconds_nested": 41.47473392239772
+            },
+            "committed": true
+          }
+        },
+        {
+          "record": {
+            "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_boundaries/latest.json",
+            "bytes": 1368,
+            "sha256": "3d9232251516b97866e7a333e654a61559dc94403510e52d8d00142b715ad17d"
+          },
+          "values": {
+            "stage": "ORACLE_FIELD_FROZEN",
+            "binding": {
+              "original_space": {
+                "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/committed.json",
+                "sha256": "bae90dbfbf9a6c0ac53e62eb125c130a5792b3618c4ac49ecb64cce39acbf134"
+              },
+              "gram": {
+                "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+                "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+              },
+              "columns": 1377,
+              "rcond": 1e-12,
+              "kernel_sha256": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5"
+            },
+            "arrays": {
+              "path": "ORACLE_FIELD_FROZEN_0004.npz",
+              "sha256": "691d068a4eb31982c34a4c27f5935d21e3bc45919bd3f1cf274f7fd48625f478"
+            },
+            "record": {
+              "model": {
+                "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/basis/committed.json",
+                "sha256": "c650c944059e7d459076e169c70009866976e3e33327e23a678ac36e3da1df7e"
+              },
+              "E_G": 0.0031762428063071215,
+              "rank": 1377,
+              "G_columns": 4133,
+              "G_by_role": {
+                "Householder_reduced_Gram": 1377,
+                "first_whitening_orthogonality": 1377,
+                "basis_final_original_G": 1377,
+                "reference_rhs_and_denominator": 1,
+                "actual_error_original_G": 1
+              },
+              "G_seconds_nested": 41.47473392239772
+            },
+            "committed": true
+          }
+        }
+      ],
+      "model": {
+        "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/basis/committed.json",
+        "bytes": 283993,
+        "sha256": "c650c944059e7d459076e169c70009866976e3e33327e23a678ac36e3da1df7e"
+      },
+      "projection_arrays": {
+        "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/projection_arrays.npz",
+        "bytes": 1602024,
+        "sha256": "691d068a4eb31982c34a4c27f5935d21e3bc45919bd3f1cf274f7fd48625f478"
+      },
+      "original_space_unchanged": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/committed.json",
+        "sha256": "bae90dbfbf9a6c0ac53e62eb125c130a5792b3618c4ac49ecb64cce39acbf134"
+      },
+      "actual_verifier_receipt": {
+        "schema": "neural-space.completed-verifier.v1",
+        "physical_source_sha": "a4e14e889861ea7b3a4725e0f2bfe07490b34baa",
+        "verifier": {
+          "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/verifier_result.json",
+          "sha256": "875203aa4876cbd65f928295d2c3d914b73b946327a60bf9f62e63cb9e67ac4c"
+        },
+        "model": {
+          "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT/basis/committed.json",
+          "sha256": "c650c944059e7d459076e169c70009866976e3e33327e23a678ac36e3da1df7e"
+        },
+        "raw_complete_fields": {
+          "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/complete_FE_field_samples_q15.npz",
+          "sha256": "70853568e0bb0ca913c994ac96b7ecfae98d7a0d279e46ba067e6add7b7a3d84"
+        },
+        "rebuild": {
+          "path": "benchmarks/artifacts/task42extra/v36/v36_learned_oracle_verify/v36_learned_space_oracle/LEARNED_COMPLEX_WAVE_BACKFIT_rebuild.npz",
+          "sha256": "56f393299f9ade208518fcdddbd8f1c78cc4809cb589331045768b44b723730f"
+        },
+        "oracle": {
+          "path": "benchmarks/artifacts/task42extra/v36/v36_learned_space_oracle/result.json",
+          "sha256": "cde016970de2b42dc956f428c3b3718d6253538102ce034ad31bf3b972ed26d1"
+        },
+        "design": {
+          "path": "input/task042extra_feinn_5nm/design_v36.json",
+          "sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11"
+        }
+      },
+      "healthy_verifier_reused": true
+    },
+    "DETERMINISTIC_COMPLEX_WAVE_BACKFIT": {
+      "complete_boundaries": [
+        {
+          "record": {
+            "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_EUCLIDEAN_QR_0001.json",
+            "bytes": 873,
+            "sha256": "223108e8bf382d7f32dfad1a897167c8f62c7036429899a253410f986f6070ff"
+          },
+          "values": {
+            "stage": "EUCLIDEAN_QR",
+            "binding": {
+              "original_space": {
+                "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/committed.json",
+                "sha256": "555b64c8207e0ac8db23bf099856800626f6438e808f0c7813facdd26e475e6e"
+              },
+              "gram": {
+                "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+                "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+              },
+              "columns": 1377,
+              "rcond": 1e-12,
+              "kernel_sha256": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5"
+            },
+            "arrays": {
+              "path": "EUCLIDEAN_QR_0001.npz",
+              "sha256": "f9d8e0559d08d342db25e165b1e3dc2c8a1a9989608bce6809b889f29b92af2b"
+            },
+            "record": {
+              "columns": 1377,
+              "G_columns": 0,
+              "G_by_role": {},
+              "G_seconds_nested": 0.0
+            },
+            "committed": true
+          }
+        },
+        {
+          "record": {
+            "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_GRAM_REDUCED_0002.json",
+            "bytes": 935,
+            "sha256": "11ff7243bbb0e53780395fc860a28aa4b2884b47df66e462101a91bb10b2b1a8"
+          },
+          "values": {
+            "stage": "GRAM_REDUCED",
+            "binding": {
+              "original_space": {
+                "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/committed.json",
+                "sha256": "555b64c8207e0ac8db23bf099856800626f6438e808f0c7813facdd26e475e6e"
+              },
+              "gram": {
+                "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+                "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+              },
+              "columns": 1377,
+              "rcond": 1e-12,
+              "kernel_sha256": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5"
+            },
+            "arrays": {
+              "path": "GRAM_REDUCED_0002.npz",
+              "sha256": "b817e7779b923445adf3c06395f1cd943daad0b23a7752cc2a7f1562469bab8d"
+            },
+            "record": {
+              "columns": 1377,
+              "G_columns": 1377,
+              "G_by_role": {
+                "Householder_reduced_Gram": 1377
+              },
+              "G_seconds_nested": 13.806606863159686
+            },
+            "committed": true
+          }
+        },
+        {
+          "record": {
+            "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_G_BASIS_QUALIFIED_0003.json",
+            "bytes": 74328,
+            "sha256": "5d3f32d6e54ab4ee27d860bc2faf5f8e5ac092240a05503116e624194dabf988"
+          },
+          "values": {
+            "stage": "G_BASIS_QUALIFIED",
+            "binding": {
+              "original_space": {
+                "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/committed.json",
+                "sha256": "555b64c8207e0ac8db23bf099856800626f6438e808f0c7813facdd26e475e6e"
+              },
+              "gram": {
+                "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+                "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+              },
+              "columns": 1377,
+              "rcond": 1e-12,
+              "kernel_sha256": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5"
+            },
+            "arrays": {
+              "path": "G_BASIS_QUALIFIED_0003.npz",
+              "sha256": "39f657acd1fed382243d0852c8efa4964836b53a47209a8a42deea5bb0507cbb"
+            },
+            "record": {
+              "G_orthogonality_F": 1.898814876037591e-12,
+              "G_orthogonality_numerator": 1.898814876037591e-12,
+              "G_orthogonality_denominator": 1.0,
+              "transform_reconstruction_relative": 1.2723888372645909e-15,
+              "transform_reconstruction_numerator": 4.72157421560884e-14,
+              "transform_reconstruction_denominator": 37.10795063055868,
+              "singular_values": {
+                "count": 1377,
+                "storage": "HASH_BOUND_ORIGINAL_NOT_DUPLICATED"
+              },
+              "retained_rank": 1377,
+              "original_columns": 1377,
+              "SVD_rcond": 1e-12,
+              "full_column_space_retained": true,
+              "exact_interval_certificate": false,
+              "method": "HOUSEHOLDER_SMALL_GRAM",
+              "reduced_Gram": {
+                "Hermitian_relative": 7.476623794327526e-16,
+                "lambda_min": 0.038687432262283675,
+                "lambda_max": 14975.024001198604,
+                "cond2": 387077.22703524405,
+                "machine_epsilon_condition": 8.594840995251741e-11,
+                "roundoff_symmetrization": true
+              },
+              "first_whitening_G_orthogonality_F": 1.898814876037591e-12,
+              "second_whitening": null,
+              "Householder_R_singular_values": {
+                "count": 1377,
+                "storage": "HASH_BOUND_ORIGINAL_NOT_DUPLICATED"
+              },
+              "triangle_order": "L1 R",
+              "primary_stability_failure": null,
+              "G_columns": 4131,
+              "G_by_role": {
+                "Householder_reduced_Gram": 1377,
+                "first_whitening_orthogonality": 1377,
+                "basis_final_original_G": 1377
+              },
+              "primary_or_fallback_selected_without_reference": true,
+              "G_seconds_nested": 41.370779275428504
+            },
+            "committed": true
+          }
+        },
+        {
+          "record": {
+            "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_LOADED_0000.json",
+            "bytes": 886,
+            "sha256": "5b0984eeb14f8eb3cd05fa1c95b4895c99095bb93131949a70ee0380c843a650"
+          },
+          "values": {
+            "stage": "LOADED",
+            "binding": {
+              "original_space": {
+                "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/committed.json",
+                "sha256": "555b64c8207e0ac8db23bf099856800626f6438e808f0c7813facdd26e475e6e"
+              },
+              "gram": {
+                "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+                "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+              },
+              "columns": 1377,
+              "rcond": 1e-12,
+              "kernel_sha256": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5"
+            },
+            "arrays": {
+              "path": "LOADED_0000.npz",
+              "sha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85"
+            },
+            "record": {
+              "shape": [
+                31968,
+                1377
+              ],
+              "G_columns": 0,
+              "G_by_role": {},
+              "G_seconds_nested": 0.0
+            },
+            "committed": true
+          }
+        },
+        {
+          "record": {
+            "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/boundary_ORACLE_FIELD_FROZEN_0004.json",
+            "bytes": 1378,
+            "sha256": "3ee0b0c4c9785963e9b649cf6474c90f3cd7f84c12addc3f1d9c0682bd2f6609"
+          },
+          "values": {
+            "stage": "ORACLE_FIELD_FROZEN",
+            "binding": {
+              "original_space": {
+                "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/committed.json",
+                "sha256": "555b64c8207e0ac8db23bf099856800626f6438e808f0c7813facdd26e475e6e"
+              },
+              "gram": {
+                "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+                "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+              },
+              "columns": 1377,
+              "rcond": 1e-12,
+              "kernel_sha256": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5"
+            },
+            "arrays": {
+              "path": "ORACLE_FIELD_FROZEN_0004.npz",
+              "sha256": "6ca9e0d541857b5f83fde5f1abf8008bc0b0480e1ff8f38dab2f8c50bc85627b"
+            },
+            "record": {
+              "model": {
+                "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/basis/committed.json",
+                "sha256": "2e53a6d6575cec9ab41c78a8887993c4608696f2ffa3d18b4a09198a61c5d9b7"
+              },
+              "E_G": 0.003101530777126289,
+              "rank": 1377,
+              "G_columns": 4133,
+              "G_by_role": {
+                "Householder_reduced_Gram": 1377,
+                "first_whitening_orthogonality": 1377,
+                "basis_final_original_G": 1377,
+                "reference_rhs_and_denominator": 1,
+                "actual_error_original_G": 1
+              },
+              "G_seconds_nested": 41.4594510383904
+            },
+            "committed": true
+          }
+        },
+        {
+          "record": {
+            "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_boundaries/latest.json",
+            "bytes": 1378,
+            "sha256": "3ee0b0c4c9785963e9b649cf6474c90f3cd7f84c12addc3f1d9c0682bd2f6609"
+          },
+          "values": {
+            "stage": "ORACLE_FIELD_FROZEN",
+            "binding": {
+              "original_space": {
+                "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/committed.json",
+                "sha256": "555b64c8207e0ac8db23bf099856800626f6438e808f0c7813facdd26e475e6e"
+              },
+              "gram": {
+                "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+                "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+              },
+              "columns": 1377,
+              "rcond": 1e-12,
+              "kernel_sha256": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5"
+            },
+            "arrays": {
+              "path": "ORACLE_FIELD_FROZEN_0004.npz",
+              "sha256": "6ca9e0d541857b5f83fde5f1abf8008bc0b0480e1ff8f38dab2f8c50bc85627b"
+            },
+            "record": {
+              "model": {
+                "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/basis/committed.json",
+                "sha256": "2e53a6d6575cec9ab41c78a8887993c4608696f2ffa3d18b4a09198a61c5d9b7"
+              },
+              "E_G": 0.003101530777126289,
+              "rank": 1377,
+              "G_columns": 4133,
+              "G_by_role": {
+                "Householder_reduced_Gram": 1377,
+                "first_whitening_orthogonality": 1377,
+                "basis_final_original_G": 1377,
+                "reference_rhs_and_denominator": 1,
+                "actual_error_original_G": 1
+              },
+              "G_seconds_nested": 41.4594510383904
+            },
+            "committed": true
+          }
+        }
+      ],
+      "model": {
+        "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/basis/committed.json",
+        "bytes": 283857,
+        "sha256": "2e53a6d6575cec9ab41c78a8887993c4608696f2ffa3d18b4a09198a61c5d9b7"
+      },
+      "projection_arrays": {
+        "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/projection_arrays.npz",
+        "bytes": 1602024,
+        "sha256": "6ca9e0d541857b5f83fde5f1abf8008bc0b0480e1ff8f38dab2f8c50bc85627b"
+      },
+      "original_space_unchanged": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/committed.json",
+        "sha256": "555b64c8207e0ac8db23bf099856800626f6438e808f0c7813facdd26e475e6e"
+      },
+      "actual_verifier_receipt": {
+        "schema": "neural-space.completed-verifier.v1",
+        "physical_source_sha": "67cca36b3b344afb61943378582483f8f88e7e97",
+        "verifier": {
+          "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/verifier_result.json",
+          "sha256": "b5caf6c8fe4b5fa55321d4dfcf3d40c60b5c1ff6dbd7c7d4e768ff980e7de723"
+        },
+        "model": {
+          "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/basis/committed.json",
+          "sha256": "2e53a6d6575cec9ab41c78a8887993c4608696f2ffa3d18b4a09198a61c5d9b7"
+        },
+        "raw_complete_fields": {
+          "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/complete_FE_field_samples_q15.npz",
+          "sha256": "1e276f5aba5d16e10fff415af8d78bc1bb0ea101cbfdf7883998195aedcdd537"
+        },
+        "rebuild": {
+          "path": "benchmarks/artifacts/task42extra/v36/v36_control_oracle_verify/v36_control_space_oracle/DETERMINISTIC_COMPLEX_WAVE_BACKFIT_rebuild.npz",
+          "sha256": "ef9a49b082c8bf3d8bc7e933e987d48ac324c4d29385ed26bb4058539eb20c54"
+        },
+        "oracle": {
+          "path": "benchmarks/artifacts/task42extra/v36/v36_control_space_oracle/result.json",
+          "sha256": "1559ed10d710e79e15b29ea2fbfa01115b5b8aebcdce4210e7d607327939ebbc"
+        },
+        "design": {
+          "path": "input/task042extra_feinn_5nm/design_v36.json",
+          "sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11"
+        }
+      },
+      "healthy_verifier_reused": false
+    }
+  },
+  "real_panel_interruption_test": {
+    "next_column_before_resume": 32,
+    "final_rank": 65,
+    "complete_panel_resumed": true,
+    "inherited_G_columns_preserved": true
+  },
+  "actual_formal_fallback_count": 0,
+  "scalar_restart_count": 0,
+  "original_U_A_reference_rebuilt": 0,
+  "original_failure_not_overwritten": true,
+  "complete_boundary_guarantee": "Only successfully fsync/atomic-replaced states survive; no promise of SIGKILL finally"
+}

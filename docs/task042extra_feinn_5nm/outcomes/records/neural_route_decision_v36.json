@@ -1,0 +1,17 @@
+{
+  "raw": {
+    "path": "benchmarks/artifacts/task42extra/v36/v36_neural_route_decision/result.json",
+    "bytes": 3112,
+    "sha256": "1ec7d0f1af921a6a1f9c6b037e7e67fed63a93fd3cd86cd44bde6b3e72f950a3"
+  },
+  "complete_full_space_G_numeric_exclusion": true,
+  "new_training_authorized": false,
+  "candidate_decision": "NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE",
+  "CURRENT_DENSE_WAVE_SOLVER_FAMILY_CLOSED": true,
+  "FEINN_MAIN_SOLVER_ON_HOLD": true,
+  "NO_VERIFIED_NN_INCREMENT": true,
+  "FULL_TARGET_NOT_QUALIFIED": true,
+  "new_0p7_registration_or_run": 0,
+  "new_architecture": 0,
+  "floating_not_interval": true
+}

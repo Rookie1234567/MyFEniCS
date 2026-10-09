@@ -1,0 +1,526 @@
+{
+  "groups": {
+    "production numerical/core": [],
+    "research-only": [
+      {
+        "file": {
+          "path": "input/task042extra_feinn_5nm/design_v36.json",
+          "bytes": 79263,
+          "sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "input/task042extra_feinn_5nm/v36_control_oracle_verify.dat",
+          "bytes": 153,
+          "sha256": "2f014222c106681f367f56e8a639d83931d413358a15fde1855ef2eb06543878"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "input/task042extra_feinn_5nm/v36_control_space_oracle.dat",
+          "bytes": 152,
+          "sha256": "2334f2685288f12e9eb6b371ae4e272bc843621182e20aef07a96d492fdf3cba"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "input/task042extra_feinn_5nm/v36_learned_oracle_verify.dat",
+          "bytes": 153,
+          "sha256": "b9e70b81f2c3dca6c728b587aeeef8d1715f8f33abab234cf583cc84b84a8cd9"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "input/task042extra_feinn_5nm/v36_learned_space_oracle.dat",
+          "bytes": 152,
+          "sha256": "a66e9d006ba31df89005169eb2ebca25a70bb1a71a6206918ea63fd586e19eb1"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "input/task042extra_feinn_5nm/v36_neural_route_decision.dat",
+          "bytes": 153,
+          "sha256": "3b66ee1976bfc11119451553c3d6ed9e29425febb751ada6e528c2e0e7bef2cf"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "input/task042extra_feinn_5nm/v36_oracle_kernel_checks.dat",
+          "bytes": 152,
+          "sha256": "337e327aef53dd5e2bb873ff8d91622fb5b6904322001da924430b947e5db640"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "src/solvers/neural_space_blocked.py",
+          "bytes": 19564,
+          "sha256": "afe77b49dcd38fcaf77e709bb897904ce2bb10dd02781e2984709413e405aeb5"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "src/solvers/neural_space_blocked_checks.py",
+          "bytes": 7852,
+          "sha256": "aa90eff1174633ebb1748e3620ba17a21bd756bb48fb2f38bd3a66f5e975b482"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      }
+    ],
+    "reusable runner/watchdog": [
+      {
+        "file": {
+          "path": "src/io/blocked_oracle_campaign.py",
+          "bytes": 1869,
+          "sha256": "10243f0eefc1be1bce04d3c74b99a3e59893ee13e18b8a9e672ca2d990361cd8"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "src/io/neural_wave_campaign.py",
+          "bytes": 7853,
+          "sha256": "c1fccc8356ba091a4762caac0ce3e30a0149a9e6051df086416aad86eff304a0"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "src/runners/block_wave_admission.py",
+          "bytes": 4394,
+          "sha256": "c70f8f1ef1956470141ea2426425af3393159652ddb4b13f504a62c9dcc6ee31"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "src/runners/blocked_oracle_worker.py",
+          "bytes": 13522,
+          "sha256": "a2696cdb79208ca55a59a134cf9bc4a77355288864c841a58c0077cdd144ad1a"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "src/runners/neural_space_verification.py",
+          "bytes": 15109,
+          "sha256": "ec259dab0e29ca8d1dc5bec9e98bd0eb5bd123c194cd6fb72d1c67e838386a2b"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "src/runners/neural_wave_campaign.py",
+          "bytes": 27656,
+          "sha256": "5d63b729b41e049a20d5b2ce25d7f6f2d11a911a558c30bcd6088127cf5573a1"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "src/runners/neural_wave_dependencies.py",
+          "bytes": 11145,
+          "sha256": "e4611e079a0a064a3923fabd1f28a64f22e037b7c4cc78731916701e2b761c49"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "src/runners/neural_wave_worker.py",
+          "bytes": 27995,
+          "sha256": "54b4805f3090b47b613bc7c8da35a46321070a95ccb6b034d07d3d6762f2578a"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "src/runners/saved_field_supervision.py",
+          "bytes": 2700,
+          "sha256": "4546c67abba236c8772d6f29cf64e46eb83eddf5064877720ac75dfa735f1b54"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      }
+    ],
+    "checker/benchmark": [
+      {
+        "file": {
+          "path": "src/postprocessing/neural_space_saved.py",
+          "bytes": 3570,
+          "sha256": "6f591fad6f9c93dc2a971a0d02ee671ea113c19cc6591f159c7e63ab7a926866"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "src/test/test_neural_space_blocked.py",
+          "bytes": 5290,
+          "sha256": "1224648309c8258a39a25f02597bfa159aa0c00afccd7aef51dfc9152224e8c1"
+        },
+        "numerical_behavior": "opt_in_research_only",
+        "production_default_changed": false
+      }
+    ],
+    "compact evidence/docs": [
+      {
+        "file": {
+          "path": "docs/development_model_registry.md",
+          "bytes": 295604,
+          "sha256": "156ac32c1f6e26cb3f3c3bdc0acc128a29fd92ee3a1023894acf0c0c1a3d1010"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/development_progress.md",
+          "bytes": 252981,
+          "sha256": "951003e99419e6e7856e48dec359bef669fc2e454a059588044b481098cde173"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/README.md",
+          "bytes": 43279,
+          "sha256": "6d974e45e05c32a8a7453af90ff26087608a76463ea5a31e3e4efda4e22f958e"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+          "bytes": 59295,
+          "sha256": "d13c5087f2d7a0d93d1700b250031fc483db4b903687620c8030121dc69b2846"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/neural_route_decision_v36.md",
+          "bytes": 6698,
+          "sha256": "326194efd5367d93047f743f233b5dc0aabbba2be5e39b293fbaeeeecbd573a0"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/oracle_completion_v36.md",
+          "bytes": 8607,
+          "sha256": "83d908321d1f90b8ad59df805d0ae01f1398434d5287493384da4821eb104ef6"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/actual_model_pair_v36.json",
+          "bytes": 4709,
+          "sha256": "5b4805d84c635e3075745ce9117d7f29c0d3cbd5716d22c7d9ce945b620b4036"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/complex_channels_control_v36.csv",
+          "bytes": 104176,
+          "sha256": "ec6f699601c27ff867aacd834ce208d15d44000815b8574cae41b59f44fb785f"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/complex_channels_learned_v36.csv",
+          "bytes": 102332,
+          "sha256": "e67095963c38b108269ea1c65a0711aa3bf7c4a97a2c1e7087b625da4c6a8ab2"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/cost_capacity_v36.json",
+          "bytes": 2564,
+          "sha256": "d7a52a7c0f04126318240a89b954623d17283354ea74b0d6071453ae816140e4"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/design_v36.json",
+          "bytes": 1865,
+          "sha256": "a7d74a41af8b5d15cc0008b80c34755d4f1c8b67b620b97392cb70f1a9853f37"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/fallback_recovery_v36.json",
+          "bytes": 29584,
+          "sha256": "6dc579859fe144c5064427004e0d81d11604de3ec239dffb977ef6dea5573b02"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/field_oracle_v36.json",
+          "bytes": 11831,
+          "sha256": "89106e26bbdb149aecfdc6e5f28d6c1a80e92ed4caf4d6910df1f5f31a9ccaea"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/full_metric_index_control_v36.csv",
+          "bytes": 9858,
+          "sha256": "66becab74900cc89f35cb9bac439b7d8b05735ef4a7c49439d99f7f6c55bddb9"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/full_metric_index_learned_v36.csv",
+          "bytes": 9448,
+          "sha256": "de76177ef594ca82274ff3d6e05ff79294493976bc5d80026cb1258a3e1e73de"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/joint_gates_v36.json",
+          "bytes": 132966,
+          "sha256": "e304c0fcf7b344e14bbd38790c379029705811bd86a90d9cb4ab28a5dfcbe32e"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/kernel_checks_v36.json",
+          "bytes": 27305,
+          "sha256": "c6edd753a7f9a9f21247359bff8dcd265dc2ad9a8987514e15c3b92c2500c827"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/kernel_profile_v36.json",
+          "bytes": 7039,
+          "sha256": "cf490556879113046f080acb8a834e0c9307d11ee4abdb37acfc4915c3ee8b47"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/material_interface_regions_control_v36.csv",
+          "bytes": 13386,
+          "sha256": "89f630b561abdac5870d0eddd49e6f1139d8eab74eb53677263517d8e47b0288"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/material_interface_regions_learned_v36.csv",
+          "bytes": 12960,
+          "sha256": "a4d513aa8c835b240245201ac36cf2f78537905517ba2c74710ff73a0bae9a28"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/neural_route_decision_v36.json",
+          "bytes": 624,
+          "sha256": "b831eb6470deaffe924157348e7b66e80aac4b4ba014209aa2a5a6784e9b3503"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/per_mode_power_control_v36.csv",
+          "bytes": 14738,
+          "sha256": "0035c874024c6e9a6d94867d04f17ceb276e90c1e918dbf314aea0602771e850"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/per_mode_power_learned_v36.csv",
+          "bytes": 14244,
+          "sha256": "76c3f8011612b65d213227bc942d41bc8e6f8ee14adb1ef90d2b57f8f828f701"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/publication_checks_v36.json",
+          "bytes": 50691,
+          "sha256": "ebf2c2bd67a27a7ab140016c7d47ddb92bc5ecd94eeb4b4724e5105bcf19ef3e"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/rank_spectra_v36.csv",
+          "bytes": 464987,
+          "sha256": "2dfd12b0e73e26e3c05a8d332cde394bd7c6a8208cb0aec71e8bb3aef1ad4d59"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/raw_artifact_index_v36.json",
+          "bytes": 43177,
+          "sha256": "8b5f2523ccf1b09f82f56fc7c02cd610f6a2cdbc61e531c81f1af2531b1e222e"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v36.json",
+          "bytes": 2094,
+          "sha256": "6984165ea859bed4edac38ec51513e899b5ed9f3ae63040a8f629ddab87196ea"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/run_index_v36.json",
+          "bytes": 69231,
+          "sha256": "cf0847a2078ac89fbf42a9bbe615e87760e0c76a7483e225b1f35ea4b409cdf0"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/six_complex_field_points_control_v36.csv",
+          "bytes": 31826,
+          "sha256": "6039f774037f4193eb75737013664163c393c63d5275839f52ec4dc6a11ac75b"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/six_complex_field_points_learned_v36.csv",
+          "bytes": 30930,
+          "sha256": "8c4d2dae708c18bdb9655a15d2e807d494e46e8093349487773ef7533b3a5733"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/snapshot_identity_v36.json",
+          "bytes": 2253,
+          "sha256": "c924998ec50c4161b55244d3efc26ccf8d7a527eb78faa170e586ca12371742b"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/tests_v36.json",
+          "bytes": 8652,
+          "sha256": "e6d85db1cb69ab2d1c29ab7a9e9d204444b55c6d8b1b20cb4b2e8edb28d84b83"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+          "bytes": 137955,
+          "sha256": "2e1dce972df11f224046c7c7008b82902beb5a7884f1e293476fa9b998475db2"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+          "bytes": 58784,
+          "sha256": "f796a30293a8a99dcdf75dd71d3800b2f0c68de27df7957f73b94ec010c11482"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/response_v36.md",
+          "bytes": 8434,
+          "sha256": "1272058b030a96bb7b852872db451a18ec31139ad7b72853ee6a7c0bc0a99549"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      }
+    ],
+    "do-not-merge": [
+      {
+        "scope": "ignored basis/field/oracle amplitude/reference/large arrays",
+        "index": "raw_artifact_index_v36.json",
+        "production_initialization_allowed": false
+      }
+    ]
+  },
+  "merge_approved": false,
+  "dependency_order": [
+    "research-only numerical kernel",
+    "opt-in schema/thin runner/watchdog",
+    "checker/targeted qualification",
+    "compact evidence/docs"
+  ],
+  "tests": "tests_v36.json",
+  "fresh_FE_evidence": "joint_gates_v36.json: compare-only; no new PDE solve",
+  "no_production_candidate": true,
+  "original_defaults_unchanged": true
+}

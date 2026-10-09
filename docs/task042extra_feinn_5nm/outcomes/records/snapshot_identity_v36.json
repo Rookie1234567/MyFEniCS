@@ -1,0 +1,46 @@
+{
+  "frozen_spaces": {
+    "LEARNED_COMPLEX_WAVE_BACKFIT": {
+      "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/committed.json",
+      "sha256": "bae90dbfbf9a6c0ac53e62eb125c130a5792b3618c4ac49ecb64cce39acbf134"
+    },
+    "DETERMINISTIC_COMPLEX_WAVE_BACKFIT": {
+      "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/committed.json",
+      "sha256": "555b64c8207e0ac8db23bf099856800626f6438e808f0c7813facdd26e475e6e"
+    }
+  },
+  "native": {
+    "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/native.npz",
+    "sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215"
+  },
+  "moments_q30": {
+    "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/moments_q30.npz",
+    "sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5"
+  },
+  "moments_q60": {
+    "path": "benchmarks/artifacts/task42extra/v30/v30_wave_checks/moments_q60.npz",
+    "bytes": 127047854,
+    "sha256": "849f5bdebb5767dfdbedb005360196b1fddb1aa45db3bd3a3f121c2d1a6f9a56"
+  },
+  "Gram": {
+    "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+    "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+  },
+  "reference": {
+    "path": "benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+    "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+  },
+  "unchanged_native_identity": {
+    "mesh_coordinates_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+    "cell_tags_sha256": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+    "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e"
+  },
+  "accepted_A": {
+    "path": "benchmarks/artifacts/task42extra/v35/v35_unlabelled_readout_audit/result.json",
+    "sha256": "f9a1381ebff9fde3186a0331e4175b043b77acd5235025123be2dff6a31150a4"
+  },
+  "accepted_A_recomputed": false,
+  "original_six_combination_witnesses_recomputed": false,
+  "selection": "ONLY_V34_FINAL_COMMITTED",
+  "historical_B_930": "LOG_ONLY_NOT_RETAINED_NO_RESUME"
+}
