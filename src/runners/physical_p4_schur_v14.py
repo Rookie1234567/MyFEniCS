@@ -485,6 +485,12 @@ class _V14Runtime:
                 "review_v20_row_tile_one_q_e2_v20_full_p6_y_orbit_reference_inverse",
                 "task40extra_v20_p6_y_orbit_e2_reference_v1",
             )
+            v20_target_campaign_worker = (
+                "V20_TARGET_NY8_RESOURCE_PILOT",
+                "review_v20_row_tile_one_q_target_original_ny8_full_p6_y_orbit_reference_inverse",
+                "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+            )
+            allowed_campaign_worker.add(v20_target_campaign_worker)
             worker_identity = (
                 self.stage,
                 str(contract.get("scope", "")),
@@ -526,7 +532,10 @@ class _V14Runtime:
             is_v17_campaign = campaign_scope.startswith("review_v17_row_tile_")
             is_v10_campaign = campaign_scope.startswith(
                 ("review_v10_", "task40_review_v10_")
-            ) or worker_identity == v20_e2_campaign_worker
+            ) or worker_identity in {
+                v20_e2_campaign_worker,
+                v20_target_campaign_worker,
+            }
             campaign_version = (
                 "v17" if is_v17_campaign else "v10" if is_v10_campaign else "v11"
             )
