@@ -88,3 +88,6 @@ CPU-only/MPI1/math及Torch线程1、一个当场合格物理核；正式同时�
 [固定设计](outcomes/design_complex_wave_v34.md)、[初态](outcomes/records/anchor_identity_v34.json)、[完整矩/梯度](outcomes/records/complex_moment_gradient_checks_v34.json)、[局部校准](outcomes/records/decay_calibration_v34.json)、[实际波参数](outcomes/records/accepted_wave_parameters_v34.json)、[逐次替换](outcomes/records/complex_replacement_visits_v34.json)、[全部Gate](outcomes/records/full_numerical_gates_v34.json)、[分子/分母](outcomes/records/full_metric_index_v34.csv)、[40复通道](outcomes/records/complex_channels_v34.csv)、[逐级功率](outcomes/records/per_mode_power_v34.csv)、[六点](outcomes/records/six_complex_field_points_v34.csv)、[原区域](outcomes/records/material_interface_regions_v34.csv)、[成本](outcomes/records/cost_and_capacity_v34.json)、[run/source](outcomes/records/run_index_v34.json)、[资源](outcomes/records/resource_costs_v34.json)、[修复](outcomes/records/repair_journal_v34.json)、[测试](outcomes/records/tests_v34.json)、[大数组索引](outcomes/records/raw_artifact_index_v34.json)、[provenance](outcomes/records/provenance_v34.json)。
 
 完整交付HEAD、显式tracking/ahead-behind、clean、锁FREE及自身清场在最终收据与最终消息给出。只推本分支后暂停，不amend/强推/merge，不通知隔壁或给其他支线安排任务。网页失败不触发健康数值重做，视觉只授实际看到的范围。
+
+
+实际GitHub有限目视结果：Review页为504超时，Response页为GitHub服务错误，专题页首屏为空白，三页均未取得文档视觉PASS；浏览器正常退出只证明监督清場，不能升级为渲染通过。源码/本地Markdown及证据绑定检查通过，旧渲染失败保留。截图、发布SHA与费用见[渲染收据](outcomes/records/rendered_checks_v34.json)。未因网页错误重做数值。

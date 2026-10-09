@@ -396,6 +396,66 @@
     },
     {
       "binding": {
+        "path": "tmp/task42extra/v34/publication_close_04/watchdog/summary.json",
+        "bytes": 2052,
+        "sha256": "d2fd0e32eb674935418ab3e6ccd0b2230d3584e7e2cd24b83a844ddb43d5c0bf"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.9329420290887356,
+      "tree_rss_peak_bytes": 85716992,
+      "swap_peak_bytes": 0,
+      "cleared": true
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v34/publication_final_05/watchdog/summary.json",
+        "bytes": 2052,
+        "sha256": "61282eca1e0c45a2ac107551770ccdddaa31ebde7506edb9324dec5a55dfdff4"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.9852924239821732,
+      "tree_rss_peak_bytes": 85241856,
+      "swap_peak_bytes": 0,
+      "cleared": true
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v34/render_check/response/watchdog/summary.json",
+        "bytes": 2357,
+        "sha256": "8b04ca610bdec83ca35032367e54c0dca1424dfed236b9620b0c5e89e53f782f"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 14.041969161015004,
+      "tree_rss_peak_bytes": 894377984,
+      "swap_peak_bytes": 0,
+      "cleared": true
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v34/render_check/review/watchdog/summary.json",
+        "bytes": 2360,
+        "sha256": "cf9af3b7b86de045fde5e97ab32b42ba2a3ac990bcaf332f419af0fd9c2bb65a"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 17.4717168379575,
+      "tree_rss_peak_bytes": 833789952,
+      "swap_peak_bytes": 0,
+      "cleared": true
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v34/render_check/topic/watchdog/summary.json",
+        "bytes": 2376,
+        "sha256": "055016cd8712d15874bc045a52e3e14e988c332c929e6eff5b361370ba0f733d"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 9.493049761047587,
+      "tree_rss_peak_bytes": 892977152,
+      "swap_peak_bytes": 0,
+      "cleared": true
+    },
+    {
+      "binding": {
         "path": "tmp/task42extra/v34/targeted_01/watchdog/summary.json",
         "bytes": 2057,
         "sha256": "d579a000c9fa77b4e0c2b88cae76603c1c465d42d19b6e345b6c8609f406edbc"
@@ -455,11 +515,11 @@
       "cleared": true
     }
   ],
-  "unique_auxiliary_supervised_seconds": 36.039265516912565,
+  "unique_auxiliary_supervised_seconds": 80.96423573000357,
   "all_retained_auxiliary_descendants_cleared": true,
   "all_retained_auxiliary_sampled_swap_zero": true,
-  "metadata_tail_calendar_seconds": 23897.477082395926,
-  "metadata_tail_monotonic": 1451072.549498812,
+  "metadata_tail_calendar_seconds": 24912.999835958937,
+  "metadata_tail_monotonic": 1452088.072256225,
   "failed_extra_wait_seconds": 100.14470183453523,
   "failed_extra_wait_binding": {
     "path": "tmp/task42extra/v34/resource_rejected_wait.jsonl",

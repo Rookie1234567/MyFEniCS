@@ -1,0 +1,73 @@
+{
+  "schema": "v34.finite-rendered-view.v1",
+  "attempts": [
+    {
+      "name": "review",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/3733eb71183da58317f1fb471ee8fc08c5700f42/docs/task042extra_feinn_5nm/review_report_v33.md",
+      "published_source_sha": "3733eb71183da58317f1fb471ee8fc08c5700f42",
+      "screenshot": {
+        "path": "tmp/task42extra/v34/render_check/review/page.png",
+        "bytes": 20754,
+        "sha256": "c91025246b72189d464c78d5bc073c3eca555d8afafa437181819d14e54c067a"
+      },
+      "browser_process_completed": true,
+      "actual_visual_pass": false,
+      "actual_visual_status": "NOT_VERIFIED_SERVER_ERROR",
+      "observed_first_viewport": "504 Gateway Time-out; no task document content",
+      "http_response_status": "NOT_RETAINED_AS_NETWORK_HEADER",
+      "elapsed_supervised_seconds": 17.4717168379575,
+      "sampled_tree_peak_bytes": 833789952,
+      "sampled_ownswap_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "response",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/bf9e7fb0b8b1676c5f55040c5a8ef1a6033db221/docs/task042extra_feinn_5nm/response_v34.md",
+      "published_source_sha": "bf9e7fb0b8b1676c5f55040c5a8ef1a6033db221",
+      "screenshot": {
+        "path": "tmp/task42extra/v34/render_check/response/page.png",
+        "bytes": 88913,
+        "sha256": "26b2b3670956cdc86ddf28565fdac972b7be7f2bf23416c537362fd2068a7ab3"
+      },
+      "browser_process_completed": true,
+      "actual_visual_pass": false,
+      "actual_visual_status": "NOT_VERIFIED_GITHUB_SERVICE_ERROR",
+      "observed_first_viewport": "GitHub unicorn service error: We're having a really bad day; no response document content",
+      "http_response_status": "NOT_RETAINED_AS_NETWORK_HEADER",
+      "elapsed_supervised_seconds": 14.041969161015004,
+      "sampled_tree_peak_bytes": 894377984,
+      "sampled_ownswap_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "topic",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/bf9e7fb0b8b1676c5f55040c5a8ef1a6033db221/docs/task042extra_feinn_5nm/outcomes/complex_wave_neural_v34.md",
+      "published_source_sha": "bf9e7fb0b8b1676c5f55040c5a8ef1a6033db221",
+      "screenshot": {
+        "path": "tmp/task42extra/v34/render_check/topic/page.png",
+        "bytes": 88913,
+        "sha256": "26b2b3670956cdc86ddf28565fdac972b7be7f2bf23416c537362fd2068a7ab3"
+      },
+      "browser_process_completed": true,
+      "actual_visual_pass": false,
+      "actual_visual_status": "NOT_VERIFIED_BLANK_FIRST_VIEWPORT",
+      "observed_first_viewport": "Blank light background; no topic document content",
+      "http_response_status": "NOT_RETAINED_AS_NETWORK_HEADER",
+      "elapsed_supervised_seconds": 9.493049761047587,
+      "sampled_tree_peak_bytes": 892977152,
+      "sampled_ownswap_bytes": 0,
+      "descendants_cleared": true
+    }
+  ],
+  "all_actual_document_visual_passed": false,
+  "full_page_visual_status": "NOT_VERIFIED",
+  "scope": "Three finite real Firefox first viewport attempts; browser completion never implies task Markdown rendering success",
+  "original_attempts_binding": {
+    "path": "tmp/task42extra/v34/render_check/attempts.json",
+    "bytes": 9481,
+    "sha256": "baff435b86cf54cfeca0901ba164ffe5bf64ca118832bc3ba2139b5d0e915cca"
+  },
+  "historical_render_failures_retained": true,
+  "numerical_records_replayed_for_web_errors": false,
+  "no_further_browser_retry": true
+}

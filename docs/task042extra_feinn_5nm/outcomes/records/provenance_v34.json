@@ -1,7 +1,7 @@
 {
   "source_sha": "b035eea4c6fb6d697743569ecc158be356c0abc5",
   "source_not_document_HEAD": true,
-  "ledger_recording_HEAD": "b035eea4c6fb6d697743569ecc158be356c0abc5",
+  "ledger_recording_HEAD": "bf9e7fb0b8b1676c5f55040c5a8ef1a6033db221",
   "checker_source_sha": "b035eea4c6fb6d697743569ecc158be356c0abc5",
   "records": [
     {
@@ -66,13 +66,18 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/publication_checks_v34.json",
-      "bytes": 707,
-      "sha256": "377161fb120cd9fb286880cad97b925c9b660848d1ba68f0bf9efd21399bea9b"
+      "bytes": 772,
+      "sha256": "683c6c80883d4e904ae6ac35ba0b0e9d502521fad2332730634989d96a1cd5a4"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/raw_artifact_index_v34.json",
       "bytes": 52632,
       "sha256": "8a45815b838e65f9f1228a8d2a625a8e26b98644e0f0cfea17f1eded6f1bb248"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/rendered_checks_v34.json",
+      "bytes": 3461,
+      "sha256": "c1f57ad44cbc62f60381c77bfb7ddce3632ea30bca2c5fcb64e56c9fba03605e"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v34.json",
@@ -81,8 +86,8 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v34.json",
-      "bytes": 17952,
-      "sha256": "d37e52a1b04fd8b29eb0508792be9829f691ae981e95cfcd5e0eba20181beced"
+      "bytes": 19959,
+      "sha256": "f3a58f57e56e9c05efb0e505ced791ee91f5bcd5d58845872a8ae63069dcec25"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/route_comparison_v34.json",
@@ -96,8 +101,8 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v34.json",
-      "bytes": 7429,
-      "sha256": "c66993a4a3c455bf87bbc9c88634ff990b1497dc89943a777a37a6272143bebc"
+      "bytes": 7510,
+      "sha256": "648aa5c96d9418d53ed3a02803accd20afc2c2aa9d7e2f569eb903bf3ffa8103"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/six_complex_field_points_v34.csv",

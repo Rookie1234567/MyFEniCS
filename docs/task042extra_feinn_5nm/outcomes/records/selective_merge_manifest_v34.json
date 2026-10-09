@@ -1,5 +1,5 @@
 {
-  "manifest_recording_HEAD": "b035eea4c6fb6d697743569ecc158be356c0abc5",
+  "manifest_recording_HEAD": "bf9e7fb0b8b1676c5f55040c5a8ef1a6033db221",
   "checker_source_sha": "b035eea4c6fb6d697743569ecc158be356c0abc5",
   "groups": {
     "production numerical/core": {
@@ -61,6 +61,7 @@
         "docs/task042extra_feinn_5nm/outcomes/records/provenance_v34.json",
         "docs/task042extra_feinn_5nm/outcomes/records/publication_checks_v34.json",
         "docs/task042extra_feinn_5nm/outcomes/records/raw_artifact_index_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/rendered_checks_v34.json",
         "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v34.json",
         "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v34.json",
         "docs/task042extra_feinn_5nm/outcomes/records/route_comparison_v34.json",
