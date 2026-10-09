@@ -28,6 +28,8 @@ V35 B 的未完成及旧 UNKNOWN 保留，当前最佳场答案更新为 V36 数
 
 本批连续总窗7200s，本地轻一致性/形状最多1800s、单核/math1/整树2GiB/ownswap0，沿原系统及384GiB邻增长保护。首次轻工具的artifact_root不符合原Health契约，修正为本任务专属ignored范围后完成；没有改资源保护或src，失败和费用保留。完整进程树采样、未测启动部分、发布尾段及清场范围均在记录/本地delivery receipt分列，不把快照当最终墙钟。
 
+首次轻检查通过129项一致性断言，涉及6个当前页面/导航、39本地链接、10表和3公式围栏；它们不是神经数值资格。首次有限浏览树峰1160990720B、自身swap0、子树清场；此前纯检查树峰45551616B，整批未采样部分仍不授峰值结论。实际发布fb110439798c8fdb0b0455f7bd0a9e133344913e的准入页发现一处不受支持的公式宏，已换为等价的 `\mathrm{Re}`；原FAIL截图保留，修后有限复查与最终发布封存分开记录。Review V36可见原表/公式及Response初版可见正文正常呈现，不宣称所有历史页视觉通过。
+
 CURRENT_DENSE_WAVE_SOLVER_FAMILY_CLOSED / FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED / NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE 保持。M3600较好态、最终退化、D0成本否决/D1未运行和全部旧失败/UNKNOWN原样保留。原50×25×140nm、Si17/120nm、λ0.7完整3D FE、十进制2e12B整机、ownswap/OOC0、172800s完整冷流程及原门尚未达成。
 
 只更新本分支准入文档与README/summary/progress/模型总账当前决定，不改src/input、旧task/review、其他分支或工作树，不发其他任务指令。冻结base fbac3d8777fcfd897d93b898cb9f460f79ddd6ff。最终完整HEAD、显式tracking/ahead-behind、clean与自身清场由最终消息及 `tmp/task42extra/v37/delivery_receipt.json`报告；交付后保持空闲等待新机制明确授权。

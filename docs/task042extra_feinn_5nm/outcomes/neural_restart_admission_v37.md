@@ -58,7 +58,7 @@ Maxwell 张量网络论文只读原摘要：常材料、空间—时间谱配置
  c_\theta=I_h^{\mathrm{curl}}E_\theta,\quad
  r=A c_\theta-f,\quad J=\frac{r^*r}{2f^*f},\quad
  g_c=\frac{A^*r}{f^*f},\quad
- g_{\theta,j}=\operatorname{Re}\big((\partial_jc_\theta)^*g_c\big).
+ g_{\theta,j}=\mathrm{Re}\big((\partial_jc_\theta)^*g_c\big).
 ```
 
 选择 EUC 是此设计的明示假设，既不是继续原 DUAL 训练，也不是论文 loss 的复刻。旧 EUC/DUAL 优化负结果保持，EUC 与场误差的关系仍可能困难。G 只留给隔离验收的场范数乘法；不在训练中隐含 Gsolve/全局 Gram 因子。若将来改成 Riesz loss，必须另算该因子/求解成本并重新授权，不能保持“无全局因子”声明。

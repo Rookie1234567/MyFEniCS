@@ -386,6 +386,12 @@
       "failure": "Readonly compact schema probe treated records dict as list; AttributeError",
       "change": "Use actual dict.items schema",
       "test_resume": "Metadata fields read; no artifact/numerical change"
+    },
+    {
+      "failure": "Actual GitHub gradient equation rejected operatorname macro",
+      "hypothesis": "GitHub Markdown math macro restriction, no numerical defect",
+      "change": "Equivalent mathrm{Re}; src/input and mathematical objective unchanged",
+      "test_resume": "Targeted supported-macro check; finite actual recheck bound separately; original FAIL PNG retained"
     }
   ],
   "resource_policy": {
@@ -408,217 +414,70 @@
     "new_training_or_PDE_authorized": false
   },
   "rendered_view": {
-    "status": "PENDING_FINITE_ACTUAL_GITHUB_CHECK",
-    "local_structure_is_visual_PASS": false
-  },
-  "history_preservation": {
-    "docs/task042extra_feinn_5nm/README.md": {
-      "original_bytes": 43279,
-      "original_sha256": "6d974e45e05c32a8a7453af90ff26087608a76463ea5a31e3e4efda4e22f958e",
-      "entire_byte_suffix_unchanged": true
+    "status": "PARTIAL_ACTUAL_GITHUB_VIEW_WITH_RETAINED_FAILURE",
+    "publication_sha": "fb110439798c8fdb0b0455f7bd0a9e133344913e",
+    "review_publication_sha": "e5e282d830f377c86e119db56d5d84f6daed0b9c",
+    "inspection_method": "Human-visible view_image of three actual Firefox GitHub screenshots; finite viewports only",
+    "review": {
+      "status": "PASS_VISIBLE_SCOPE",
+      "scope": "Title, contract, first complete table and two displayed equations; remainder not visually inspected"
     },
-    "docs/task042extra_feinn_5nm/outcomes/summary.md": {
-      "original_bytes": 137955,
-      "original_sha256": "2e1dce972df11f224046c7c7008b82902beb5a7884f1e293476fa9b998475db2",
-      "entire_byte_suffix_unchanged": true
+    "admission": {
+      "status": "FAIL_RETAINED_MATH_MACRO",
+      "scope": "Two visible tables and first core-shape equation render; gradient equation rejected",
+      "failure": "GitHub: The following macros are not allowed: operatorname",
+      "fix": "Equivalent replacement with mathrm{Re}; no mathematical/algorithmic change",
+      "fixed_actual_visual_recheck": "PENDING"
     },
-    "docs/development_progress.md": {
-      "original_bytes": 252981,
-      "original_sha256": "951003e99419e6e7856e48dec359bef669fc2e454a059588044b481098cde173",
-      "entire_byte_suffix_unchanged": true
+    "response": {
+      "status": "PASS_VISIBLE_BODY_AT_PUBLICATION",
+      "scope": "Initial published body and both tables visible; later resource/repair paragraph not part of that capture"
     },
-    "docs/development_model_registry.md": {
-      "original_bytes": 295604,
-      "original_sha256": "156ac32c1f6e26cb3f3c3bdc0acc128a29fd92ee3a1023894acf0c0c1a3d1010",
-      "entire_byte_suffix_unchanged": true
-    }
-  },
-  "local_checks": {
-    "status": "PASS",
-    "assertion_count": 129,
-    "document_count": 6,
-    "links_checked": 39,
-    "table_count": 10,
-    "math_fence_count": 3,
-    "original_numerical_tests_replayed": 0,
-    "checked_names": [
-      "actual_layer_parameter_sum",
-      "parameter_bytes_and_control_coefficients",
-      "no_hidden_UQ_shape_claim",
-      "cold_cost_inequality_has_negative_and_positive_examples",
-      "rank_and_full_target_not_fabricated",
-      "all_new_numerical_and_array_counts_zero",
-      "decision_does_not_authorize_training",
-      "old_identity_rank_gate_LEARNED_COMPLEX_WAVE_BACKFIT",
-      "old_identity_rank_gate_DETERMINISTIC_COMPLEX_WAVE_BACKFIT",
-      "historical_entire_byte_suffix_docs/task042extra_feinn_5nm/README.md",
-      "historical_entire_byte_suffix_docs/task042extra_feinn_5nm/outcomes/summary.md",
-      "historical_entire_byte_suffix_docs/development_progress.md",
-      "historical_entire_byte_suffix_docs/development_model_registry.md",
-      "exact_change_allowlist_src_input_review_unchanged",
-      "closed_fences_docs/task042extra_feinn_5nm/README.md",
-      "local_link_docs/task042extra_feinn_5nm/README.md:review_report_v36.md",
-      "local_link_docs/task042extra_feinn_5nm/README.md:outcomes/records/joint_gates_v36.json",
-      "local_link_docs/task042extra_feinn_5nm/README.md:outcomes/neural_restart_admission_v37.md",
-      "local_link_docs/task042extra_feinn_5nm/README.md:response_v37.md",
-      "local_link_docs/task042extra_feinn_5nm/README.md:outcomes/records/neural_restart_admission_v37.json",
-      "local_link_docs/task042extra_feinn_5nm/README.md:outcomes/summary.md",
-      "table_row_arity_docs/task042extra_feinn_5nm/README.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/README.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/README.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/README.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/README.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/README.md:None",
-      "closed_fences_docs/task042extra_feinn_5nm/outcomes/summary.md",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/summary.md:records/field_oracle_v36.json",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/summary.md:records/joint_gates_v36.json",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/summary.md:../review_report_v36.md",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/summary.md:neural_restart_admission_v37.md",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/summary.md:records/neural_restart_admission_v37.json",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/summary.md:../response_v37.md",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/summary.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/summary.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/summary.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/summary.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/summary.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/summary.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/summary.md:None",
-      "closed_fences_docs/development_progress.md",
-      "local_link_docs/development_progress.md:task042extra_feinn_5nm/response_v37.md",
-      "local_link_docs/development_progress.md:task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md",
-      "local_link_docs/development_progress.md:task042extra_feinn_5nm/outcomes/records/neural_restart_admission_v37.json",
-      "closed_fences_docs/development_model_registry.md",
-      "local_link_docs/development_model_registry.md:task042extra_feinn_5nm/response_v37.md",
-      "local_link_docs/development_model_registry.md:task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md",
-      "local_link_docs/development_model_registry.md:task042extra_feinn_5nm/outcomes/records/neural_restart_admission_v37.json",
-      "table_row_arity_docs/development_model_registry.md:None",
-      "table_row_arity_docs/development_model_registry.md:None",
-      "table_row_arity_docs/development_model_registry.md:None",
-      "table_row_arity_docs/development_model_registry.md:None",
-      "table_row_arity_docs/development_model_registry.md:None",
-      "closed_fences_docs/task042extra_feinn_5nm/response_v37.md",
-      "local_link_docs/task042extra_feinn_5nm/response_v37.md:review_report_v36.md",
-      "local_link_docs/task042extra_feinn_5nm/response_v37.md:outcomes/records/joint_gates_v36.json",
-      "local_link_docs/task042extra_feinn_5nm/response_v37.md:outcomes/records/field_oracle_v36.json",
-      "local_link_docs/task042extra_feinn_5nm/response_v37.md:outcomes/records/unlabelled_optimality_v35.json",
-      "local_link_docs/task042extra_feinn_5nm/response_v37.md:outcomes/records/cost_capacity_v36.json",
-      "local_link_docs/task042extra_feinn_5nm/response_v37.md:outcomes/neural_restart_admission_v37.md",
-      "local_link_docs/task042extra_feinn_5nm/response_v37.md:outcomes/records/neural_restart_admission_v37.json",
-      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
-      "closed_fences_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../review_report_v36.md",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:records/neural_restart_admission_v37.json",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:records/joint_gates_v36.json",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:records/field_oracle_v36.json",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../response_v36.md",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:records/unlabelled_optimality_v35.json",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../../../src/solvers/feinn_interpolation.py",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../../../src/solvers/feinn_torch.py",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../../../src/solvers/feinn_native.py",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../../../src/solvers/feinn_optimization.py",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../../../src/runners/neural_space_verification.py",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../../../src/postprocessing/neural_space_saved.py",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:records/cost_capacity_v36.json",
-      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:records/neural_restart_admission_v37.json",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
-      "planned_shapes_and_scope_appear_in_proposal"
-    ],
-    "scope": "Current navigation prefixes and both complete new pages; old historical rendering/negative records preserved"
-  },
-  "document_bindings": [
-    {
-      "path": "docs/task042extra_feinn_5nm/README.md",
-      "bytes": 45079,
-      "sha256": "669e77b6c9ce2084438e44da138fbe9d4eeca5873d029a0afd4a657cd5d22b0f"
+    "local_markdown_structure_is_visual_PASS": false,
+    "all_history_or_full_admission_visual_PASS": false,
+    "old_visual_failures_preserved": true,
+    "decision_binding": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/visual_decision.json",
+      "bytes": 1204,
+      "sha256": "a9f658fa5f85c8a0b0feac42132d16f5d13a21251f92454efa5d69ad497ce392"
     },
-    {
-      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
-      "bytes": 140131,
-      "sha256": "f3f32c24446b3833a61d17d2197d05998c3fc864d3def749785a3763d87507ba"
+    "first_actual_capture_binding": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/render_views/attempts.json",
+      "bytes": 1849,
+      "sha256": "c43b33e313f6ba622696cb89617ae53582c4475f1f68f01f222543291906d723"
     },
-    {
-      "path": "docs/development_progress.md",
-      "bytes": 254511,
-      "sha256": "d7b0aca7be6c5bcafd8459a7e0a7bdbea240e476320a194f2e6fdb96d16781dd"
-    },
-    {
-      "path": "docs/development_model_registry.md",
-      "bytes": 297273,
-      "sha256": "c9a9709aaf62edbe6397be4dbfb48db599c64b40adf7762817fced9a27aa8e3c"
-    },
-    {
-      "path": "docs/task042extra_feinn_5nm/response_v37.md",
-      "bytes": 5178,
-      "sha256": "c829aae639009d3b4a2c36dd021069021a1efba775108ab7fc4dd7a152a4be1d"
-    },
-    {
-      "path": "docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md",
-      "bytes": 18476,
-      "sha256": "56c64419f287fc26d6cbb211469acdf9783e9ccf7a55ce4dff4cebeb59f7124d"
-    }
-  ],
-  "pure_check_tool_binding": {
-    "path": "tmp/task42extra/v37/assemble_record.py",
-    "bytes": 16265,
-    "sha256": "71bc24b0d561909fb60795803267fa15c4321cd8d9490dc4d492bb73d1a8c49c"
-  },
-  "pure_environment": {
-    "python": "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
-    "activation": "scripts/activate_task42extra.sh pure",
-    "cpu_affinity": [
-      12
-    ],
-    "math_threads": 1,
-    "numpy_Torch_FE_imported": false
+    "first_captures": [
+      {
+        "name": "review",
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/e5e282d830f377c86e119db56d5d84f6daed0b9c/docs/task042extra_feinn_5nm/review_report_v36.md",
+        "published_sha": "e5e282d830f377c86e119db56d5d84f6daed0b9c",
+        "returncode": 0,
+        "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+        "elapsed_seconds": 9.114129358902574,
+        "screenshot": "tmp/task42extra/v37/render_views/review/page.png",
+        "sha256": "bf41d1d0ab9e3700af3bdaaa1a96d7a66d8c26b6fd80ca0a83a791c35aace9db"
+      },
+      {
+        "name": "admission",
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/fb110439798c8fdb0b0455f7bd0a9e133344913e/docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md",
+        "published_sha": "fb110439798c8fdb0b0455f7bd0a9e133344913e",
+        "returncode": 0,
+        "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+        "elapsed_seconds": 6.285030058817938,
+        "screenshot": "tmp/task42extra/v37/render_views/admission/page.png",
+        "sha256": "e92e3ef09df486cea509ba9b368fbb6ef1bb0271a64dec15f0894a5459702251"
+      },
+      {
+        "name": "response",
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/fb110439798c8fdb0b0455f7bd0a9e133344913e/docs/task042extra_feinn_5nm/response_v37.md",
+        "published_sha": "fb110439798c8fdb0b0455f7bd0a9e133344913e",
+        "returncode": 0,
+        "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+        "elapsed_seconds": 5.279481925070286,
+        "screenshot": "tmp/task42extra/v37/render_views/response/page.png",
+        "sha256": "e47b6ea160ed66051dd2c117572115d98fb6d029bca5cf44a922bcca3b7dd9e1"
+      }
+    ]
   },
   "measured_light_resources": {
     "stages": [
@@ -663,9 +522,51 @@
           "sha256": "63b3ccb804b51bb0d4040e1bda50f89d56abfaa3c73af1ebab7077ebc43a86bb"
         },
         "startup_system_and_neighbor_reserve_bytes": 628626898944
+      },
+      {
+        "name": "render_resource",
+        "summary_binding": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/render_resource/summary.json",
+          "bytes": 2556,
+          "sha256": "a8c90b8a9decdb6ebb17099556059df289e26510dace5855b5b9f0f601616bf6"
+        },
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "elapsed_worker_and_supervision_seconds": 22.59352945489809,
+        "sampled_simultaneous_tree_peak_bytes": 1160990720,
+        "sampled_tree_swap_peak_bytes": 0,
+        "cpu": 1,
+        "PSI60_binding": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/render_resource/pressure_stable_window.json",
+          "bytes": 11430,
+          "sha256": "d26d201d852b95d41968af54e6b4eac6000d167bcef41c80951778ee08a553e7"
+        },
+        "startup_system_and_neighbor_reserve_bytes": 628626898944
+      },
+      {
+        "name": "checks_final_resource",
+        "summary_binding": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/checks_final_resource/summary.json",
+          "bytes": 2016,
+          "sha256": "d8c89c70490cce18d4b8cd2e88e678f7de1794be36966fba03e7c600030802fb"
+        },
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "elapsed_worker_and_supervision_seconds": 1.5349175019655377,
+        "sampled_simultaneous_tree_peak_bytes": 44601344,
+        "sampled_tree_swap_peak_bytes": 0,
+        "cpu": 12,
+        "PSI60_binding": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/checks_final_resource/pressure_stable_window.json",
+          "bytes": 11428,
+          "sha256": "ae28c8ab3327ca11cbfdeffc3791a6ced8a21504b9adaf7189d7bc53bb31f72f"
+        },
+        "startup_system_and_neighbor_reserve_bytes": 628626898944
       }
     ],
-    "sampled_simultaneous_peak_of_these_sequential_stages_bytes": 45551616,
+    "sampled_simultaneous_peak_of_these_sequential_stages_bytes": 1160990720,
     "every_measured_tree_swap_zero": true,
     "every_finished_tree_cleared": true,
     "whole_calendar_tree_peak": "NOT_FULLY_SAMPLED",
@@ -677,9 +578,103 @@
       "sha256": "7377526fab3565935e97ca5eb99b8b8b71db850f28c28560ffa8d2ab208ea5f5"
     }
   },
+  "history_preservation": {
+    "docs/task042extra_feinn_5nm/README.md": {
+      "original_bytes": 43279,
+      "original_sha256": "6d974e45e05c32a8a7453af90ff26087608a76463ea5a31e3e4efda4e22f958e",
+      "entire_byte_suffix_unchanged": true
+    },
+    "docs/task042extra_feinn_5nm/outcomes/summary.md": {
+      "original_bytes": 137955,
+      "original_sha256": "2e1dce972df11f224046c7c7008b82902beb5a7884f1e293476fa9b998475db2",
+      "entire_byte_suffix_unchanged": true
+    },
+    "docs/development_progress.md": {
+      "original_bytes": 252981,
+      "original_sha256": "951003e99419e6e7856e48dec359bef669fc2e454a059588044b481098cde173",
+      "entire_byte_suffix_unchanged": true
+    },
+    "docs/development_model_registry.md": {
+      "original_bytes": 295604,
+      "original_sha256": "156ac32c1f6e26cb3f3c3bdc0acc128a29fd92ee3a1023894acf0c0c1a3d1010",
+      "entire_byte_suffix_unchanged": true
+    }
+  },
+  "local_checks": {
+    "status": "PASS",
+    "assertion_count": 132,
+    "document_count": 6,
+    "links_checked": 39,
+    "table_count": 10,
+    "math_fence_count": 3,
+    "original_numerical_tests_replayed": 0,
+    "detailed_checks_binding": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/checks_detail.json",
+      "bytes": 11710,
+      "sha256": "74bddb370672d157d1d4195079ddf8a229bc57897bc11533320c86024ff26aaf"
+    },
+    "check_groups": [
+      "exact integer parameters and bytes",
+      "cold N1 cost inequality and denial examples",
+      "unknown rank and strict authorization boundary",
+      "zero new numeric/array actions",
+      "accepted old identity/rank/negative metrics reused",
+      "entire four historic bodies preserved byte for byte",
+      "exact seven-file allowlist",
+      "closed math fences, table arity and local links",
+      "JSON atomic write and reopen equality"
+    ],
+    "scope": "Current navigation prefixes and both complete new pages; old historical rendering/negative records preserved"
+  },
+  "document_bindings": [
+    {
+      "path": "docs/task042extra_feinn_5nm/README.md",
+      "bytes": 45079,
+      "sha256": "669e77b6c9ce2084438e44da138fbe9d4eeca5873d029a0afd4a657cd5d22b0f"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "bytes": 140131,
+      "sha256": "f3f32c24446b3833a61d17d2197d05998c3fc864d3def749785a3763d87507ba"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "bytes": 254511,
+      "sha256": "d7b0aca7be6c5bcafd8459a7e0a7bdbea240e476320a194f2e6fdb96d16781dd"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "bytes": 297273,
+      "sha256": "c9a9709aaf62edbe6397be4dbfb48db599c64b40adf7762817fced9a27aa8e3c"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/response_v37.md",
+      "bytes": 5802,
+      "sha256": "4d15c6b93df61ca013a7acf4a5aeb3c7540e1513fd12c493dc0f365129616981"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md",
+      "bytes": 18470,
+      "sha256": "26c21101f39c25cfc2c11c8b599d08e932be3166d87888c1609cc77b9c495cd6"
+    }
+  ],
+  "pure_check_tool_binding": {
+    "path": "tmp/task42extra/v37/assemble_record.py",
+    "bytes": 18243,
+    "sha256": "438f6ccc80f952fe7592808a76b6d9fe086e2d0d014d9a7e737d9b6974cf5e38"
+  },
+  "pure_environment": {
+    "python": "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+    "activation": "scripts/activate_task42extra.sh pure",
+    "cpu_affinity": [
+      12
+    ],
+    "math_threads": 1,
+    "numpy_Torch_FE_imported": false
+  },
   "calendar_snapshot": {
-    "monotonic_s": 1482344.338904624,
-    "elapsed_from_conservative_origin_s": 2314.3389050539117,
+    "monotonic_s": 1482797.234095434,
+    "elapsed_from_conservative_origin_s": 2767.2340963990428,
     "not_final": true,
     "final_receipt": "tmp/task42extra/v37/delivery_receipt.json"
   }
