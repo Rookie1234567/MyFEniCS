@@ -40,6 +40,25 @@ MATHEMATICS_CHAIN = tuple(
 )
 
 
+def learned_pair_joint_pass(result):
+    """Require both independently scored representations of the learned field."""
+    if not isinstance(result, dict):
+        return False
+    if (
+        result.get("reference_pass") is not True
+        or result.get("statuses_trusted") is not False
+    ):
+        return False
+    records = result.get("records")
+    if not isinstance(records, dict):
+        return False
+    return all(
+        isinstance(records.get(name), dict)
+        and records[name].get("m5_full_discrete_numerical_gate") is True
+        for name in (ROUTES[1][1], ROUTES[1][1] + "_PRODUCER")
+    )
+
+
 def run_stage(manifest, artifact, marker):
     spec = manifest["spec"]
     profile = profile_paths(spec)
@@ -49,8 +68,8 @@ def run_stage(manifest, artifact, marker):
     role = spec["role"]
     if role.startswith("complex_pilot_"):
         gates = profile["artifacts"] / "v34_complex_compare/result.json"
-        if not gates.exists() or not json.loads(gates.read_text()).get(
-            "learned_joint_pass", False
+        if not gates.exists() or not learned_pair_joint_pass(
+            json.loads(gates.read_text())
         ):
             raise ValueError("CONDITIONAL_0P7_M5_JOINT_GATE_NOT_PASSED")
         if manifest["campaign"]["deadline_monotonic"] - monotonic() < 7200:
@@ -176,10 +195,9 @@ def run_stage(manifest, artifact, marker):
             design,
             marker,
         )
-        learned = result["records"][ROUTES[1][1]]
-        # Exact joint decision is retained by the independent checker; the
-        # consumer never upgrades partial records or a low native loss.
-        result["learned_joint_pass"] = bool(learned["m5_full_discrete_numerical_gate"])
+        # Neither the saved producer nor its independently regenerated network
+        # can substitute for the other; both use the full saved-array checker.
+        result["learned_joint_pass"] = learned_pair_joint_pass(result)
         return result
     if role == "complex_early_validate":
         from src.runners.backfit_wave_worker import early_validate

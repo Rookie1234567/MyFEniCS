@@ -400,3 +400,42 @@ def test_v34_stage_role_budget_and_actual_label_firewall():
         )
         == 2 * 2**30
     )
+
+
+def test_independent_actual_and_producer_joint_consumer_writer_reopen(tmp_path):
+    from src.runners.complex_wave_worker import ROUTES, learned_pair_joint_pass
+    from src.solvers.neural_wave_greedy import atomic_json
+
+    name = ROUTES[1][1]
+    healthy = dict(
+        reference_pass=True,
+        statuses_trusted=False,
+        records={
+            name: dict(m5_full_discrete_numerical_gate=True),
+            name + "_PRODUCER": dict(m5_full_discrete_numerical_gate=True),
+        },
+    )
+    output = tmp_path / "paired-gate.json"
+    atomic_json(output, healthy)
+    assert learned_pair_joint_pass(json.loads(output.read_text()))
+    for key in (name, name + "_PRODUCER"):
+        for value in (False, "false", "UNKNOWN", "PARTIAL", 1, None):
+            broken = copy.deepcopy(healthy)
+            broken["records"][key]["m5_full_discrete_numerical_gate"] = value
+            atomic_json(output, broken)
+            assert not learned_pair_joint_pass(json.loads(output.read_text()))
+        broken = copy.deepcopy(healthy)
+        del broken["records"][key]
+        assert not learned_pair_joint_pass(broken)
+    for key, value in (
+        ("reference_pass", False),
+        ("statuses_trusted", True),
+        ("reference_pass", "true"),
+        ("statuses_trusted", "false"),
+        ("records", []),
+    ):
+        broken = copy.deepcopy(healthy)
+        broken[key] = value
+        assert not learned_pair_joint_pass(broken)
+    assert not learned_pair_joint_pass({})
+    assert not learned_pair_joint_pass(None)
