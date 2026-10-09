@@ -54,7 +54,9 @@ def recover_budget_record(profile, design, current_manifest):
 
     records = {
         name: dict(
-            status="CONTROLLED_STOP_NUMERICAL_BUDGET" if i == 0 else "NOT_RUN_NUMERICAL_BUDGET",
+            status="CONTROLLED_STOP_NUMERICAL_BUDGET"
+            if i == 0
+            else "NOT_RUN_NUMERICAL_BUDGET",
             reason="READOUT_SAVE_WINDOW_REACHED",
             oracle_field="NOT_RETAINED_NO_COMMITTED_STATE",
             final_rank="UNKNOWN",
@@ -63,9 +65,15 @@ def recover_budget_record(profile, design, current_manifest):
         for i, name in enumerate(names)
     }
     A_file = profile["artifacts"] / "v35_unlabelled_readout_audit/result.json"
-    A_events = profile["root"] / "durable/v35_unlabelled_readout_audit_attempt2/events.jsonl"
+    A_events = (
+        profile["root"] / "durable/v35_unlabelled_readout_audit_attempt2/events.jsonl"
+    )
     sealed_A = [json.loads(line) for line in A_events.read_text().splitlines() if line]
-    if not any(e.get("stage") == "stage_frozen" and e["values"].get("result_sha256") == digest(A_file) for e in sealed_A):
+    if not any(
+        e.get("stage") == "stage_frozen"
+        and e["values"].get("result_sha256") == digest(A_file)
+        for e in sealed_A
+    ):
         raise ValueError("PRE_REFERENCE_A_FROZEN_RESULT_CHANGED")
     result = dict(
         records=records,
@@ -82,7 +90,12 @@ def recover_budget_record(profile, design, current_manifest):
         reference_coefficients_read_count_during_recovery=0,
         original_failure_bindings={
             key: dict(path=str(p.relative_to(ROOT)), sha256=digest(p))
-            for key,p in (("summary",summary_file),("manifest",manifest_file),("log",log_file),("events",event_file))
+            for key, p in (
+                ("summary", summary_file),
+                ("manifest", manifest_file),
+                ("log", log_file),
+                ("events", event_file),
+            )
         },
         **POLICY,
     )
@@ -207,7 +220,7 @@ def compare_blocked(action, packet, design, artifact, marker, manifest):
     from src.runners.neural_wave_worker import verify
     from src.runners.blocked_oracle_worker import space_name, bound_path
     from src.io.neural_space_campaign import POLICY, require_oracle_policy
-    from benchmarks.subreaper_watchdog import supervise
+    from src.runners.saved_field_supervision import run_checker
 
     profile = profile_paths(manifest["spec"])
     name = space_name(manifest["spec"]["stage"])
@@ -220,31 +233,144 @@ def compare_blocked(action, packet, design, artifact, marker, manifest):
     bound_path(record["model"])
     route = stage + "/" + name
     (artifact / (route + "_rebuild.npz")).parent.mkdir(parents=True, exist_ok=True)
-    result = verify(design, action, packet, artifact, marker,
-                    include_producer=True, routes=[(route,name+"_ORACLE")],
-                    route_root=profile["artifacts"],stable_rebuild=True,
-                    reference_exposed=True)
-    for comp in result["comparisons"].values():
-        comp.update(POLICY)
-        comp["qualified"] = False
-    for key, rec in result["physics"]["records"].items():
-        if key != "REFERENCE":
-            rec.update(POLICY)
-    atomic_json(artifact/"verifier_result.json",result)
-    del result
+    verifier_file = artifact / "verifier_result.json"
+    reused = verifier_file.exists()
+    if not reused:
+        result = verify(
+            design,
+            action,
+            packet,
+            artifact,
+            marker,
+            include_producer=True,
+            routes=[(route, name + "_ORACLE")],
+            route_root=profile["artifacts"],
+            stable_rebuild=True,
+            reference_exposed=True,
+        )
+        for comp in result["comparisons"].values():
+            comp.update(POLICY)
+            comp["qualified"] = False
+        for key, rec in result["physics"]["records"].items():
+            if key != "REFERENCE":
+                rec.update(POLICY)
+        atomic_json(verifier_file, result)
+        del result
+    receipt = freeze_blocked_verifier(
+        artifact, oracle_file, profile["design"], record, name, route, design
+    )
+    marker(
+        "healthy_verifier_bound",
+        dict(
+            reused=reused,
+            receipt_sha256=digest(artifact / "completed_verifier_receipt.json"),
+            new_network_forward=0 if reused else "already_completed",
+            new_FE_postprocessing=0 if reused else "already_completed",
+        ),
+    )
     gc.collect()
-    command=["bash","-lc", "source scripts/activate_task42extra.sh pure && exec python -m src.postprocessing.neural_space_saved "
-             +str(artifact.relative_to(ROOT))+" "+str(profile["design"].relative_to(ROOT))
-             +" "+str(oracle_file.relative_to(ROOT))]
-    summary=supervise(command,artifact/"independent_pure_checker",
-        wall_seconds=max(1,manifest["worker_stop_monotonic"]-monotonic()),
-        rss_hard_limit_bytes=2*2**30,rss_warning_bytes=int(1.875*2**30),
-        hard_stop_immediate=True,resource_stop_policy="measured_tree_rss_only_v3",
-        source_state=dict(source_sha=manifest["source_sha"],role="independent_saved_field_checker"))
-    if summary["classification"]!="COMPLETED" or summary["leader_exit_code"]!=0 or not summary["descendants_cleared"]:
-        raise ValueError("INDEPENDENT_BLOCKED_ORACLE_CHECKER_FAILED")
-    checked=json.loads((artifact/"saved_checker.json").read_text())
-    return dict(new_fields=checked,independent_checker_summary=summary,
-        oracle_result=dict(path=str(oracle_file.relative_to(ROOT)),sha256=digest(oracle_file)),
-        verifier_result=dict(path=str((artifact/"verifier_result.json").relative_to(ROOT)),sha256=digest(artifact/"verifier_result.json")),
-        candidate_decision="NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE",**POLICY)
+    command = [
+        "bash",
+        "-lc",
+        "source scripts/activate_task42extra.sh pure && exec python -m src.postprocessing.neural_space_saved "
+        + str(artifact.relative_to(ROOT))
+        + " "
+        + str(profile["design"].relative_to(ROOT))
+        + " "
+        + str(oracle_file.relative_to(ROOT)),
+    ]
+    summary = run_checker(
+        command,
+        artifact / "independent_pure_checker",
+        manifest["worker_stop_monotonic"],
+        manifest["source_sha"],
+    )
+    checked = json.loads((artifact / "saved_checker.json").read_text())
+    return dict(
+        new_fields=checked,
+        independent_checker_summary=summary,
+        completed_verifier_receipt=receipt,
+        healthy_verifier_reused=reused,
+        oracle_result=dict(
+            path=str(oracle_file.relative_to(ROOT)), sha256=digest(oracle_file)
+        ),
+        verifier_result=dict(
+            path=str((artifact / "verifier_result.json").relative_to(ROOT)),
+            sha256=digest(artifact / "verifier_result.json"),
+        ),
+        candidate_decision="NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE",
+        **POLICY,
+    )
+
+
+def freeze_blocked_verifier(
+    artifact, oracle_file, design_file, record, name, route, design
+):
+    """Bind a complete saved verifier to its model before retrying only scoring."""
+    import numpy as np
+    from src.io.neural_wave_backfit_store import check_boundary
+
+    frozen_file = artifact / "verifier_result.json"
+    frozen = json.loads(frozen_file.read_text())
+    boundary = check_boundary(ROOT / record["model"]["path"])
+    expected = {name + "_ORACLE", name + "_ORACLE_PRODUCER"}
+    if (
+        frozen["verification_complete"] is not True
+        or frozen["same_p3_reference_sha256"] != design["reference"]["sha256"]
+        or any(
+            frozen[k] != 0
+            for k in (
+                "reference_solve_count",
+                "global_Maxwell_factor_count",
+                "global_Gram_factor_count",
+            )
+        )
+        or set(frozen["reconstruction"]) != expected
+        or any(
+            v["committed_boundary_sha256"] != record["model"]["sha256"]
+            or v["candidate_source_sha"] != boundary["binding"]["source_sha"]
+            for v in frozen["reconstruction"].values()
+        )
+    ):
+        raise ValueError("COMPLETED_VERIFIER_MODEL_REFERENCE_IDENTITY_FAILED")
+    raw = frozen["raw_complete_fields"]
+    if digest(ROOT / raw["path"]) != raw["sha256"]:
+        raise ValueError("COMPLETED_VERIFIER_RAW_FIELDS_HASH_FAILED")
+    rebuild = artifact / (route + "_rebuild.npz")
+    with (
+        np.load(rebuild, allow_pickle=False) as arrays,
+        np.load(boundary["state"]["path"], allow_pickle=False) as saved,
+    ):
+        if (
+            set(arrays.files) != {"c30", "c60", "saved"}
+            or not np.array_equal(arrays["saved"], saved["c"])
+            or any(
+                arrays[k].shape != (31968,)
+                or arrays[k].dtype != np.complex128
+                or not np.isfinite(arrays[k]).all()
+                for k in arrays.files
+            )
+        ):
+            raise ValueError("COMPLETED_VERIFIER_REBUILD_STATE_MISMATCH")
+    receipt = dict(
+        schema="neural-space.completed-verifier.v1",
+        physical_source_sha=boundary["binding"]["source_sha"],
+        verifier=dict(
+            path=str(frozen_file.relative_to(ROOT)), sha256=digest(frozen_file)
+        ),
+        model=record["model"],
+        raw_complete_fields=raw,
+        rebuild=dict(path=str(rebuild.relative_to(ROOT)), sha256=digest(rebuild)),
+        oracle=dict(
+            path=str(oracle_file.relative_to(ROOT)), sha256=digest(oracle_file)
+        ),
+        design=dict(
+            path=str(design_file.relative_to(ROOT)), sha256=digest(design_file)
+        ),
+    )
+    target = artifact / "completed_verifier_receipt.json"
+    if target.exists() and json.loads(target.read_text()) != receipt:
+        raise ValueError("COMPLETED_VERIFIER_RECEIPT_IDENTITY_CHANGED")
+    if not target.exists():
+        atomic_json(target, receipt)
+    return receipt

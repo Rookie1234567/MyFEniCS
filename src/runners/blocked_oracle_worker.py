@@ -26,6 +26,7 @@ CHAIN = (
     "src/solvers/neural_space_blocked_checks.py",
     "src/runners/neural_space_worker.py",
     "src/runners/neural_space_verification.py",
+    "src/runners/saved_field_supervision.py",
     "src/postprocessing/neural_space_saved.py",
     "src/solvers/neural_wave_block_reconstruction.py",
 )
