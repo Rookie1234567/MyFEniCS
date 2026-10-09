@@ -1,0 +1,166 @@
+{
+  "P6_L4F": {
+    "regions": {
+      "air_excluding_notch": {
+        "cells": 14364,
+        "error_squared": {
+          "E_total": 4.9131901143315716e-08,
+          "H_total": 5.387492091616058e-08,
+          "curl_total": 4.340605359856983e-06,
+          "E_scattered": 4.9131901143315716e-08,
+          "H_scattered": 5.387492091616058e-08,
+          "curl_scattered": 4.340605359856983e-06
+        },
+        "fraction_of_global_error_squared": {
+          "E_total": 0.5271391979902142,
+          "H_total": 0.5471007274795612,
+          "curl_total": 0.5471007274795606,
+          "E_scattered": 0.5271391979902142,
+          "H_scattered": 0.5471007274795612,
+          "curl_scattered": 0.5471007274795606
+        }
+      },
+      "substrate": {
+        "cells": 1536,
+        "error_squared": {
+          "E_total": 1.8544424073387626e-08,
+          "H_total": 1.898369627360674e-08,
+          "curl_total": 1.52948222278313e-06,
+          "E_scattered": 1.8544424073387626e-08,
+          "H_scattered": 1.898369627360674e-08,
+          "curl_scattered": 1.52948222278313e-06
+        },
+        "fraction_of_global_error_squared": {
+          "E_total": 0.19896426976683168,
+          "H_total": 0.1927797547527508,
+          "curl_total": 0.19277975475275105,
+          "E_scattered": 0.19896426976683168,
+          "H_scattered": 0.1927797547527508,
+          "curl_scattered": 0.19277975475275105
+        }
+      },
+      "Si_block": {
+        "cells": 8676,
+        "error_squared": {
+          "E_total": 2.408939237522038e-08,
+          "H_total": 2.4189171563847817e-08,
+          "curl_total": 1.9488779928592437e-06,
+          "E_scattered": 2.408939237522038e-08,
+          "H_scattered": 2.4189171563847817e-08,
+          "curl_scattered": 1.9488779928592437e-06
+        },
+        "fraction_of_global_error_squared": {
+          "E_total": 0.2584565767097911,
+          "H_total": 0.24564144382324926,
+          "curl_total": 0.24564144382324798,
+          "E_scattered": 0.2584565767097911,
+          "H_scattered": 0.24564144382324926,
+          "curl_scattered": 0.24564144382324798
+        }
+      },
+      "notch_air": {
+        "cells": 1000,
+        "error_squared": {
+          "E_total": 1.4390778978394306e-09,
+          "H_total": 1.4257065465228882e-09,
+          "curl_total": 1.1486660903040113e-07,
+          "E_scattered": 1.4390778978394306e-09,
+          "H_scattered": 1.4257065465228882e-09,
+          "curl_scattered": 1.1486660903040113e-07
+        },
+        "fraction_of_global_error_squared": {
+          "E_total": 0.015439955533162304,
+          "H_total": 0.014478073944440277,
+          "curl_total": 0.01447807394444017,
+          "E_scattered": 0.015439955533162304,
+          "H_scattered": 0.014478073944440277,
+          "curl_scattered": 0.01447807394444017
+        }
+      }
+    },
+    "physical_reference_cell_sha256": "91d6dbc5fd875aee088e768e8086591409a60a9181277336d9b11502d05208a3",
+    "classification": "post-frozen locality diagnosis, not an error bound or solver input"
+  },
+  "A_L4F": {
+    "regions": {
+      "air_excluding_notch": {
+        "cells": 14364,
+        "error_squared": {
+          "E_total": 2.2029351360923857e-07,
+          "H_total": 2.3569874665778448e-07,
+          "curl_total": 1.8989823570162477e-05,
+          "E_scattered": 2.2029351360923857e-07,
+          "H_scattered": 2.3569874665778448e-07,
+          "curl_scattered": 1.8989823570162477e-05
+        },
+        "fraction_of_global_error_squared": {
+          "E_total": 0.5928268321525461,
+          "H_total": 0.6089634959821161,
+          "curl_total": 0.6089634959821114,
+          "E_scattered": 0.5928268321525461,
+          "H_scattered": 0.6089634959821161,
+          "curl_scattered": 0.6089634959821114
+        }
+      },
+      "substrate": {
+        "cells": 1536,
+        "error_squared": {
+          "E_total": 1.847516470558693e-08,
+          "H_total": 1.8510080816239644e-08,
+          "curl_total": 1.4913238782732973e-06,
+          "E_scattered": 1.847516470558693e-08,
+          "H_scattered": 1.8510080816239644e-08,
+          "curl_scattered": 1.4913238782732973e-06
+        },
+        "fraction_of_global_error_squared": {
+          "E_total": 0.04971809285922752,
+          "H_total": 0.04782360400556043,
+          "curl_total": 0.04782360400556042,
+          "E_scattered": 0.04971809285922752,
+          "H_scattered": 0.04782360400556043,
+          "curl_scattered": 0.04782360400556042
+        }
+      },
+      "Si_block": {
+        "cells": 8676,
+        "error_squared": {
+          "E_total": 1.1841365828140598e-07,
+          "H_total": 1.1813824700093997e-07,
+          "curl_total": 9.518185816632335e-06,
+          "E_scattered": 1.1841365828140598e-07,
+          "H_scattered": 1.1813824700093997e-07,
+          "curl_scattered": 9.518185816632335e-06
+        },
+        "fraction_of_global_error_squared": {
+          "E_total": 0.31866028541848107,
+          "H_total": 0.3052280969798492,
+          "curl_total": 0.305228096979849,
+          "E_scattered": 0.31866028541848107,
+          "H_scattered": 0.3052280969798492,
+          "curl_scattered": 0.305228096979849
+        }
+      },
+      "notch_air": {
+        "cells": 1000,
+        "error_squared": {
+          "E_total": 1.441608247220913e-08,
+          "H_total": 1.4701982180981997e-08,
+          "curl_total": 1.1845122288829157e-06,
+          "E_scattered": 1.441608247220913e-08,
+          "H_scattered": 1.4701982180981997e-08,
+          "curl_scattered": 1.1845122288829157e-06
+        },
+        "fraction_of_global_error_squared": {
+          "E_total": 0.03879478956974235,
+          "H_total": 0.03798480303247671,
+          "curl_total": 0.0379848030324766,
+          "E_scattered": 0.03879478956974235,
+          "H_scattered": 0.03798480303247671,
+          "curl_scattered": 0.0379848030324766
+        }
+      }
+    },
+    "physical_reference_cell_sha256": "91d6dbc5fd875aee088e768e8086591409a60a9181277336d9b11502d05208a3",
+    "classification": "post-frozen locality diagnosis, not an error bound or solver input"
+  }
+}

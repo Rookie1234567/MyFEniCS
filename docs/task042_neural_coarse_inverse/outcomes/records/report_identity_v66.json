@@ -1,0 +1,90 @@
+{
+  "authority": "5a6689d321b74233b104c8b0ce5bab7d7bd8e39e",
+  "blob": "798dcc32b4496e646809554c34e9b90b0449390e",
+  "report": {
+    "path": "docs/task042_neural_coarse_inverse/review_report_v64.md",
+    "sha256": "bd9bdd437c45db2495e8bd8cc731a00fd9604743e2aa5528e1546e7402cf6f18"
+  },
+  "canonical": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "reviewed_HEAD": "23118c3c26ecbd8eceb6902548e51c02546182b7",
+  "actual_sources": {
+    "PREFLIGHT": "d87a08478db6a6ccaf665eda3132818533e291f3",
+    "PREPARE": "d87a08478db6a6ccaf665eda3132818533e291f3",
+    "SOLVE_COMPLETE": "d87a08478db6a6ccaf665eda3132818533e291f3",
+    "COMPARE_GATE": "d87a08478db6a6ccaf665eda3132818533e291f3",
+    "VERIFY_COST": "d87a08478db6a6ccaf665eda3132818533e291f3"
+  },
+  "first_work_clock": {
+    "schema": "Task042-first-work-clock-v1",
+    "namespace": "v66",
+    "first_utc": "2026-10-09T06:07:22.581808+00:00",
+    "first_monotonic": 1451037.442696116,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_deadline_utc": "2026-10-09T18:07:22.581808+00:00",
+    "heavy_stop_utc": "2026-10-09T17:07:22.581808+00:00",
+    "source": "first actual read-only identity check; intake/fetch/implementation included"
+  },
+  "immutable_window": {
+    "start_utc": "2026-10-09T06:07:22.581808+00:00",
+    "start_monotonic": 1451037.442696116,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 39600,
+    "total_limit_seconds": 43200,
+    "scientific_loaded_limit_seconds": 36000,
+    "review_commit": "5a6689d321b74233b104c8b0ce5bab7d7bd8e39e",
+    "contract_HEAD": "5a6689d321b74233b104c8b0ce5bab7d7bd8e39e",
+    "closed": false,
+    "first_work_start_never_refreshed": true
+  },
+  "final_queue": {
+    "path": "tmp/task042/v66/scientific_queue_frozen.json",
+    "sha256": "20f2d19675b2493bf7c7d715725a191ce1d3a78c711c84eb730b66d7dd419622"
+  },
+  "frozen_mesh": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v64/task042_v64_resolution_preflight_20261008T134653003445Z/mesh_mate.npz",
+    "sha256": "c470274ab6c64cee0b8eef09dbcdadadfac4c6ca229d7fc2b6e608ded62f540c",
+    "members": {
+      "geometry_x": {
+        "shape": [
+          5168,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "b9ea4991759723ee9dd8d60911210d10970a1cba97022e882bbfff9a0e341922"
+      },
+      "geometry_dofmap": {
+        "shape": [
+          25576,
+          4
+        ],
+        "dtype": "int32",
+        "sha256": "15636635cd32d6044a23a1f0cfc1fb4fa705499d616f779883bf8ff53fe92161"
+      },
+      "cell_tags": {
+        "shape": [
+          25576
+        ],
+        "dtype": "int32",
+        "sha256": "3735ebf585ff18f52f473dab1dfded80f8b551246152f7b3f054baf70a95c6a5"
+      },
+      "regular_tags": {
+        "shape": [
+          25576
+        ],
+        "dtype": "int32",
+        "sha256": "c66232ef0de0c2ead460034ab774e2760978741ac0335c7e7b46e7c7a31a2f5c"
+      },
+      "original_parent_cell": {
+        "shape": [
+          25576
+        ],
+        "dtype": "int64",
+        "sha256": "700a08daf6ff3c8b91139a8d2533a909c57268a7fa06f9a34dc6e0035a839a24"
+      }
+    }
+  },
+  "old_admitted_false_and_NOT_RUN_preserved": true,
+  "marking_refinement_or_P6_replay": 0
+}

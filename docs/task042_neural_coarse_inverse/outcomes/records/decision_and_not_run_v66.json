@@ -1,0 +1,65 @@
+{
+  "decision": {
+    "status": "L4M_NOT_RUN_SPACE_INCREMENT_FAIL",
+    "reason": "两固定分母下散射E/H/curl和240点仍超过1e-4；formal、物理通道、功率及能量通过不替代全场。",
+    "joint_space_pass": false,
+    "complete_physical_pass": true,
+    "actual_global_scattered": {
+      "E_scattered": {
+        "L4F_denominator": 0.0003404235638671718,
+        "P6_denominator": 0.0003404239759764617
+      },
+      "H_scattered": {
+        "L4F_denominator": 0.0003499496433864426,
+        "P6_denominator": 0.00034995006638889955
+      },
+      "curl_scattered": {
+        "L4F_denominator": 0.00034994964338644254,
+        "P6_denominator": 0.00034995006638890107
+      }
+    },
+    "selected_max_L4F_denominator": 0.0018607177826326692,
+    "selected_max_P6_denominator": 0.0018610308860225254,
+    "mode_physical_amplitude": 7.258316971276792e-05,
+    "mode_power_max": 2.0686907837217338e-07,
+    "saved_parent": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v66/saved_parent_check.json",
+      "sha256": "9521e91592a986ac66e66a3ca1807b67f48d60b49b611182a496ab621a454793"
+    },
+    "numeric_attempts": 1,
+    "L4M_numeric_attempts": 0,
+    "scientific_failure_is_not_software_bug": true,
+    "unique_next_pilot": "在同一冻结L4网格、同0.7nm/真实NOTCH/828下做一个统一p5完整场对照，先以实际图及symbolic评估新增空间/因子容量，再与保存L4F/P6核对全场；它只用于区分固定局部分辨中的阶数限制，需新合同，不改theta/网格或模式。",
+    "actual_clock": {
+      "start_utc": "2026-10-09T06:07:22.581808+00:00",
+      "start_monotonic": 1451037.442696116,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "heavy_limit_seconds": 39600,
+      "total_limit_seconds": 43200,
+      "scientific_loaded_limit_seconds": 36000,
+      "review_commit": "5a6689d321b74233b104c8b0ce5bab7d7bd8e39e",
+      "contract_HEAD": "5a6689d321b74233b104c8b0ce5bab7d7bd8e39e",
+      "closed": false,
+      "first_work_start_never_refreshed": true,
+      "observed_utc": "2026-10-09T08:03:57.047564+00:00",
+      "observed_monotonic": 1458031.908431436,
+      "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "monotonic_same_boot": true,
+      "elapsed_seconds": 6994.465755939484,
+      "heavy_remaining_seconds": 32605.534244060516,
+      "total_remaining_seconds": 36205.534244060516
+    },
+    "no_new_scheme_or_automatic_window": true
+  },
+  "joint_space_pass": false,
+  "formal_pass": true,
+  "direct_target_pass": false,
+  "M_actual": false,
+  "continuum_accuracy": false,
+  "original_size_qualified": false,
+  "NN20": false,
+  "comparison_failure_does_not_mean_a_software_bug": true,
+  "old_failures_preserved": true,
+  "unique_next_pilot": "在同一冻结L4网格、同0.7nm/真实NOTCH/828下做一个统一p5完整场对照，先以实际图及symbolic评估新增空间/因子容量，再与保存L4F/P6核对全场；它只用于区分固定局部分辨中的阶数限制，需新合同，不改theta/网格或模式。",
+  "no_automatic_new_window": true
+}

@@ -1,0 +1,21 @@
+{
+  "rows": [
+    {
+      "role": "L4F",
+      "parent_array_sha256": "91d6dbc5fd875aee088e768e8086591409a60a9181277336d9b11502d05208a3",
+      "mode_json_sha256": "c4b60dbbc3184e8c6ad9c87ec2ca3fee00e51e666a29f71796932efc907d6015",
+      "count": 828,
+      "expected_mode_count": 828,
+      "max_operation_scaled_coordinate_and_power_defect": 7.105427357601002e-15,
+      "totals_defect": 7.66053886991358e-15,
+      "incident_power_defect": 2.255140518769849e-16,
+      "energy_from_all_actual_modes_and_volume": 1.7248771855271627e-12,
+      "recomputed_R": 0.07621847326852622,
+      "recomputed_T": 0.9056652132104632,
+      "pass_gate": true
+    }
+  ],
+  "new_FE_calls": 0,
+  "original_power_function_calls": 0,
+  "complete_inventory_checked": true
+}

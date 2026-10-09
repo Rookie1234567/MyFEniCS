@@ -1,3 +1,13 @@
+# 新模型：Task042 V66 L4F
+
+| 身份 | 方法/空间 | 结论 | 成本口径 |
+|---|---|---|---|
+| 0.7nm/s7/135/真实NOTCH/828 | 冻结25576tet/p4完整UFL、全部内部及周期MPC/MUMPS | formal2.27244591e-10；P6/L4F双分母SPACE_INCREMENT_FAIL | PREPARE+SOLVE4843.293469s；非连续真值、非配平生产速度比 |
+
+[完整物理](task042_neural_coarse_inverse/outcomes/records/complete_physics_v66.json) · [费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v66.json)。
+
+---
+
 # 新登记：Task042 V65完整P6有限参考
 
 | 身份 | 实测空间/方法 | 结果 | 成本/边界 |

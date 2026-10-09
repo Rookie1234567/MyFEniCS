@@ -1,3 +1,11 @@
+# Task042 V66
+
+已实际完成冻结25576tet/p4/828局部h完整场，formal2.27244591e-10；P6/L4F联合SPACE_INCREMENT_FAIL，成功链4843.293469s。保留旧负结果、成本和未配平限制，无原尺寸/2TB48h/NN20授予。
+
+[完整回应](task042_neural_coarse_inverse/response_v66.md) · [最终账](task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v66.json)。推送清场后暂停，不通知邻支。
+
+---
+
 # Task042 V65进展
 
 同一7680tet/p6/828完整场已完成：新系数先收缩独立积分和K原子checkpoint接入，formal 2.32584924e-10通过，成功链14748.453748s、sampled 88.523769GiB。B/P6散射E/H仍0.000405047017/0.000410694274超1e−4，240点/严格direct负结果保留。确定性有限参考未授原尺寸/2TB48h/NN20。

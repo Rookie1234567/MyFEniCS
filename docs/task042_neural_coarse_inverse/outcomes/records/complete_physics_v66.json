@@ -1,0 +1,709 @@
+{
+  "source": "d87a08478db6a6ccaf665eda3132818533e291f3",
+  "physical": {
+    "geometry": {
+      "scale_fraction": "7/135",
+      "cells": 25576,
+      "axes_nm": {
+        "x": [
+          0.0,
+          0.42777777777777776,
+          0.8555555555555555,
+          1.075925925925926,
+          1.2962962962962963,
+          1.5166666666666666,
+          1.737037037037037,
+          2.1648148148148145,
+          2.5925925925925926
+        ],
+        "y": [
+          0.0,
+          0.16203703703703703,
+          0.32407407407407407,
+          0.4861111111111111,
+          0.6481481481481481,
+          0.8101851851851851,
+          0.9722222222222222,
+          1.1342592592592593,
+          1.2962962962962963
+        ],
+        "z": [
+          -0.5185185185185185,
+          -0.38888888888888884,
+          -0.25925925925925924,
+          -0.12962962962962965,
+          0.0,
+          0.5185185185185185,
+          1.037037037037037,
+          1.5555555555555554,
+          2.074074074074074,
+          2.5925925925925926,
+          3.1111111111111107,
+          3.6296296296296293,
+          4.148148148148148,
+          4.666666666666666,
+          5.185185185185185,
+          5.703703703703704,
+          6.222222222222222,
+          6.351851851851852,
+          6.481481481481481,
+          6.611111111111111,
+          6.7407407407407405
+        ]
+      },
+      "notch_box_nm": [
+        1.2962962962962963,
+        1.737037037037037,
+        0.32407407407407407,
+        0.9722222222222222,
+        2.074074074074074,
+        4.148148148148148
+      ],
+      "notch_rule": "actual center in box and original Si grating; do not repeat along y",
+      "case": "NOTCH",
+      "mesh": "actual saved compatible tetra",
+      "grid": "V64_FROZEN_LOCAL_H",
+      "source80_macro_notch_cells": 2,
+      "actual_mesh_expected_notch_tetrahedra": 1000,
+      "mesh_override": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v64/task042_v64_resolution_preflight_20261008T134653003445Z/mesh_mate.npz",
+        "sha256": "c470274ab6c64cee0b8eef09dbcdadadfac4c6ca229d7fc2b6e608ded62f540c",
+        "members": {
+          "geometry_x": {
+            "shape": [
+              5168,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "b9ea4991759723ee9dd8d60911210d10970a1cba97022e882bbfff9a0e341922"
+          },
+          "geometry_dofmap": {
+            "shape": [
+              25576,
+              4
+            ],
+            "dtype": "int32",
+            "sha256": "15636635cd32d6044a23a1f0cfc1fb4fa705499d616f779883bf8ff53fe92161"
+          },
+          "cell_tags": {
+            "shape": [
+              25576
+            ],
+            "dtype": "int32",
+            "sha256": "3735ebf585ff18f52f473dab1dfded80f8b551246152f7b3f054baf70a95c6a5"
+          },
+          "regular_tags": {
+            "shape": [
+              25576
+            ],
+            "dtype": "int32",
+            "sha256": "c66232ef0de0c2ead460034ab774e2760978741ac0335c7e7b46e7c7a31a2f5c"
+          },
+          "original_parent_cell": {
+            "shape": [
+              25576
+            ],
+            "dtype": "int64",
+            "sha256": "700a08daf6ff3c8b91139a8d2533a909c57268a7fa06f9a34dc6e0035a839a24"
+          }
+        }
+      }
+    },
+    "materials": {
+      "canonical_table": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "Si_n": [
+        0.999885140474,
+        4.32477054e-06
+      ],
+      "epsilon": "n*n",
+      "mu_r": [
+        1.0,
+        0.0
+      ]
+    },
+    "incidence": {
+      "wavelength_nm": 0.7,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 5.0,
+      "polarization": "s",
+      "amplitude": [
+        1.0,
+        0.0
+      ]
+    },
+    "discretization": {
+      "degree": 4,
+      "volume_form": "complete Ckappa trial/test",
+      "surface_quadrature_degree": 47,
+      "independent_surface_reference_q": 63,
+      "family": "N1curl",
+      "cell_type": "tetrahedron",
+      "FE": 1042964,
+      "rows": 1043792,
+      "representation": "gVh complete uncondensed",
+      "static_condensation": false,
+      "production_body_q": 11,
+      "oracle_body_q": 13
+    },
+    "boundary": {
+      "Floquet": "xy complex high order canonical moments",
+      "manual_m": [
+        -11,
+        11
+      ],
+      "manual_n": [
+        -4,
+        4
+      ],
+      "sides": [
+        "top",
+        "bottom"
+      ],
+      "polarizations": [
+        "s",
+        "p"
+      ],
+      "complete_modes": 828,
+      "all_q": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "spec": {
+    "case": "NOTCH",
+    "degree": 4,
+    "h_ratio": 2,
+    "cells": 25576,
+    "independent": 1042964,
+    "rows": 1043792,
+    "complete_modes": 828,
+    "triangle_backend": "reachable_owner_support",
+    "assembly_row_cap": 1050000,
+    "memory_budget": {
+      "planning_gib": 192,
+      "warning_gib": 224,
+      "sampled_stop_gib": 256,
+      "neighbor_growth_gib": 384,
+      "extra_cache_workspace_gib": 2
+    },
+    "mesh_override": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v64/task042_v64_resolution_preflight_20261008T134653003445Z/mesh_mate.npz",
+      "sha256": "c470274ab6c64cee0b8eef09dbcdadadfac4c6ca229d7fc2b6e608ded62f540c",
+      "members": {
+        "geometry_x": {
+          "shape": [
+            5168,
+            3
+          ],
+          "dtype": "float64",
+          "sha256": "b9ea4991759723ee9dd8d60911210d10970a1cba97022e882bbfff9a0e341922"
+        },
+        "geometry_dofmap": {
+          "shape": [
+            25576,
+            4
+          ],
+          "dtype": "int32",
+          "sha256": "15636635cd32d6044a23a1f0cfc1fb4fa705499d616f779883bf8ff53fe92161"
+        },
+        "cell_tags": {
+          "shape": [
+            25576
+          ],
+          "dtype": "int32",
+          "sha256": "3735ebf585ff18f52f473dab1dfded80f8b551246152f7b3f054baf70a95c6a5"
+        },
+        "regular_tags": {
+          "shape": [
+            25576
+          ],
+          "dtype": "int32",
+          "sha256": "c66232ef0de0c2ead460034ab774e2760978741ac0335c7e7b46e7c7a31a2f5c"
+        },
+        "original_parent_cell": {
+          "shape": [
+            25576
+          ],
+          "dtype": "int64",
+          "sha256": "700a08daf6ff3c8b91139a8d2533a909c57268a7fa06f9a34dc6e0035a839a24"
+        }
+      }
+    },
+    "notch_tetrahedra": 1000
+  },
+  "arrays": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v66/task042_v66_local_p4_solve_complete_20261009T071858612995Z/solution.npz",
+    "sha256": "91d6dbc5fd875aee088e768e8086591409a60a9181277336d9b11502d05208a3",
+    "members": {
+      "x": {
+        "shape": [
+          1043792
+        ],
+        "dtype": "complex128",
+        "sha256": "1d228cb359e4a65570d56e88965595964aa535fea0104c67f9fb76ed2596191f"
+      },
+      "u_independent": {
+        "shape": [
+          1042964
+        ],
+        "dtype": "complex128",
+        "sha256": "96c6ccad65a4c4f605b8ec289a122c89bc71b9ea1b7d1c7c46a84401d45f202c"
+      },
+      "u_native": {
+        "shape": [
+          1066716
+        ],
+        "dtype": "complex128",
+        "sha256": "211fb203fa5bca697adb793015bb9b5749f375b6c4ed3a3a7061f70d31258a25"
+      },
+      "port": {
+        "shape": [
+          828
+        ],
+        "dtype": "complex128",
+        "sha256": "526737735a399061d52d46a316878ef240d7336b6fd1f6c3e19fab57e69d97a2"
+      },
+      "rhs": {
+        "shape": [
+          1043792
+        ],
+        "dtype": "complex128",
+        "sha256": "bb455a43f04077adb6895bacca96ef0d0c66afa7528f4600c5cf4356f122f360"
+      },
+      "residual": {
+        "shape": [
+          1043792
+        ],
+        "dtype": "complex128",
+        "sha256": "f60308881914127efac03153973c0ab7c274808675bc35f85c2b73e872cdd6ca"
+      },
+      "kappa": {
+        "shape": [
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+      },
+      "masters": {
+        "shape": [
+          1042964
+        ],
+        "dtype": "int64",
+        "sha256": "469c9caefd81d92d1a17e893999d7acc6df64119e895078fb5f6f0a00c17a315"
+      },
+      "slaves": {
+        "shape": [
+          23752
+        ],
+        "dtype": "int32",
+        "sha256": "7f8f28e536b4d391b87f881d66bbac07ddb7c59e83529a7c3d8550f90d50207b"
+      },
+      "P_data": {
+        "shape": [
+          1073230
+        ],
+        "dtype": "complex128",
+        "sha256": "947a96575ff70d92bcb6c46658d2f2937c8600e7fff3ca382587e69d18fe4b71"
+      },
+      "P_indices": {
+        "shape": [
+          1073230
+        ],
+        "dtype": "int32",
+        "sha256": "31b3d1ee835e798e559f1be14ec22d6a76b54995cba54f4eb0cdd710e4d4d501"
+      },
+      "P_indptr": {
+        "shape": [
+          1066717
+        ],
+        "dtype": "int32",
+        "sha256": "d094ee6e29515e90113ac7bc0441da70b5a2de7e5b196579aba1d873c677ed31"
+      },
+      "geometry_x": {
+        "shape": [
+          5168,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "a1141b5cfb0b81242f9cd06769e97637e76254c2463b3c25bafcc751c4fa0a7a"
+      },
+      "geometry_dofmap": {
+        "shape": [
+          25576,
+          4
+        ],
+        "dtype": "int32",
+        "sha256": "53a287c3f9d69775ed1a346ac1019bda1ffbf3d25387d15dd3a873d9f47b0316"
+      },
+      "cell_centers": {
+        "shape": [
+          25576,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "b924a6b83a358f5990bcb6682704640e741bbb82d8c33551eba0fcba0f07a50f"
+      },
+      "cell_tags": {
+        "shape": [
+          25576
+        ],
+        "dtype": "int32",
+        "sha256": "8b26a15d2ee2b01601122e69d55c0a824dd92a34247164c0d3b4d56947fbbf81"
+      },
+      "regular_tags": {
+        "shape": [
+          25576
+        ],
+        "dtype": "int32",
+        "sha256": "8fd01f0da93d54006443497cb8d494ff90f08105264073f3449dc16dba5a87a4"
+      },
+      "original_parent_cell": {
+        "shape": [
+          25576
+        ],
+        "dtype": "int64",
+        "sha256": "57e9a93373660b69e9da776f60baa2d2d0910e49bd316499b1e67e2a87d5d887"
+      }
+    }
+  },
+  "mode_sha256": "bf05010061b89678fb14b493e5baff737108f3f36cce6f4c88fe6ef182ab153d",
+  "original": {
+    "true": 2.2724459075471595e-10,
+    "native": 2.2724459075471595e-10,
+    "augmented": 2.2724451960849235e-10,
+    "port": 6.993340231023879e-16,
+    "full_augmented": 2.2724451963955306e-10,
+    "direct_target": false,
+    "rhs_q47_q63": 8.427228914020606e-16,
+    "MPC_identity": 3.2089459313907574e-18,
+    "absolute_residual": 2.428327172634898e-10,
+    "original_rhs_norm": 1.0685965833133302,
+    "backend": "PUBLIC_BASIX_COEFFICIENT_FIRST_Q13_TRIANGLE63",
+    "body_consumption": {
+      "seconds": 17.04292742605321,
+      "q": 13,
+      "cells": 25576,
+      "columns": 1,
+      "reference_table_bytes": 1767184,
+      "full_vector_workspace_bytes": 50822336,
+      "algorithm": "COEFFICIENT_FIRST_PUBLIC_BASIX_VECTOR",
+      "production_matrix_reads": 0
+    },
+    "closed_physical_residual_norm": 2.428327932569101e-10,
+    "projected_port_norm": 5.741118798099271,
+    "pass_gate": true,
+    "arrays": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v66/task042_v66_local_p4_solve_complete_20261009T071858612995Z/independent_original.npz",
+      "sha256": "5a296fd583d875c38deb625ab44e0e0ce6159afaf66b53b5cc8571fb4348485c",
+      "members": {
+        "residual": {
+          "shape": [
+            1043792
+          ],
+          "dtype": "complex128",
+          "sha256": "b22dc2b6cd058e013b02aa9f315abeb9554ef4a4e1de3187d6d32a83fdfe72f6"
+        },
+        "rhs": {
+          "shape": [
+            1043792
+          ],
+          "dtype": "complex128",
+          "sha256": "de6fda81bbe2de230ade6981f23b74cb9a9b837b1a22c89cb984ce28237d5f83"
+        },
+        "action": {
+          "shape": [
+            1043792
+          ],
+          "dtype": "complex128",
+          "sha256": "7578dfb530a0495a89ace5a239c8379ade35b940980c34018012d1bc5d1b7ad6"
+        },
+        "x": {
+          "shape": [
+            1043792
+          ],
+          "dtype": "complex128",
+          "sha256": "1d228cb359e4a65570d56e88965595964aa535fea0104c67f9fb76ed2596191f"
+        }
+      }
+    }
+  },
+  "production_true": 1.2766263655181416e-11,
+  "formal_equation_pass": true,
+  "direct_target_pass": false,
+  "fields": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v66/task042_v66_local_p4_solve_complete_20261009T071858612995Z/fields.npz",
+    "sha256": "51e0e207eabff834f1ad8544eacaf09d279e0caf2dfb4812b50318eaa572e78b",
+    "members": {
+      "envelope_native_full": {
+        "shape": [
+          1066716
+        ],
+        "dtype": "complex128",
+        "sha256": "211fb203fa5bca697adb793015bb9b5749f375b6c4ed3a3a7061f70d31258a25"
+      },
+      "kappa": {
+        "shape": [
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+      },
+      "selected_points": {
+        "shape": [
+          240,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "9a43247ceca2a3758e1a11194793ccf8774d682dc877e670796b0ef21992e044"
+      },
+      "selected_parent": {
+        "shape": [
+          240
+        ],
+        "dtype": "int32",
+        "sha256": "8c7a18097adc501e7629f1a1abc52c10c3530828dcb3647e9e892d21417e863a"
+      },
+      "selected_E_total": {
+        "shape": [
+          240,
+          3
+        ],
+        "dtype": "complex128",
+        "sha256": "3948e641fbbe1d354b98d12fb7a684d46ab822b6c6366511ef4bb295b8106339"
+      },
+      "selected_E_scattered": {
+        "shape": [
+          240,
+          3
+        ],
+        "dtype": "complex128",
+        "sha256": "9310c418c288eba4fa964c0ca4c5975d9e6979240a66f7cf780d6375a1514186"
+      },
+      "selected_H_total": {
+        "shape": [
+          240,
+          3
+        ],
+        "dtype": "complex128",
+        "sha256": "dcb84635772f83f1a1b36e1540878913ba09e83d8ba2c4352f94520fac2bbfb7"
+      },
+      "selected_H_scattered": {
+        "shape": [
+          240,
+          3
+        ],
+        "dtype": "complex128",
+        "sha256": "8765329baba4c14b8097761d17f3522f1f2c3aa9e4b62a003b9e6ada0ea0e703"
+      },
+      "selected_curl_total": {
+        "shape": [
+          240,
+          3
+        ],
+        "dtype": "complex128",
+        "sha256": "9cfa989d875d02d601351a63764876da1ace8ef552f41fdd66a6652ec498b7bb"
+      },
+      "selected_curl_scattered": {
+        "shape": [
+          240,
+          3
+        ],
+        "dtype": "complex128",
+        "sha256": "14f3eb9c8c39882c69493f83a9a23d120544a8d4cc755ceed99a72f9c9f90824"
+      }
+    }
+  },
+  "integrals": [
+    {
+      "q": 23,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v66/task042_v66_local_p4_solve_complete_20261009T071858612995Z/volume_q23.npz",
+        "sha256": "42f7b017f0515ba29621984deece9504f732b6daa5e1ed439e253a04197860d8",
+        "members": {
+          "per_cell_volume_absorption": {
+            "shape": [
+              25576,
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "567df4c2ca9e173a5358ac0ae69826cd6d12e7c9f74b69e308231f046dfe5291"
+          },
+          "per_cell_analytic_squared": {
+            "shape": [
+              25576,
+              3,
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "3207c605e4d2f9f39873dbc2509c8557191414921120501a415a0587825769b2"
+          },
+          "per_cell_total_squared": {
+            "shape": [
+              25576,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "ca643e493faccd802aa6c71b5d5b12ceaf6339faa3a6933e124cdbe5d35c5be9"
+          }
+        }
+      },
+      "sums": [
+        24.396687496825518,
+        0.00011838096453091856
+      ]
+    },
+    {
+      "q": 31,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v66/task042_v66_local_p4_solve_complete_20261009T071858612995Z/volume_q31.npz",
+        "sha256": "637721c79a358bc29eeac6cbd7353dfc6cb7cb25aed463aeac918b9f5e848e0f",
+        "members": {
+          "per_cell_volume_absorption": {
+            "shape": [
+              25576,
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "5f72d3eb7f8699d430242ba0665fd322c5860cef92d76bdea3f495eb0f46ff03"
+          },
+          "per_cell_analytic_squared": {
+            "shape": [
+              25576,
+              3,
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "7a42c59e8ab8b0cd86ee7a9d39799074dd88ca6478b69ff4012f6db0875aa7ef"
+          },
+          "per_cell_total_squared": {
+            "shape": [
+              25576,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "9ba1ed1127a599692cf1b4bcade8a9c26e2992231d4c865da2b7d17d2ecb51b4"
+          }
+        }
+      },
+      "sums": [
+        24.396687496825518,
+        0.00011838096453091862
+      ]
+    }
+  ],
+  "H_units": "Hcode=curl(E)/(i*k0*mu); physical H=Hcode/eta0",
+  "complete_modes": 828,
+  "port_metrics": {
+    "R_total": 0.0762184732685268,
+    "R00_s": 0.0762180546624914,
+    "R00_p": 6.268076382380733e-17,
+    "R00_total": 0.07621805466249147,
+    "T_total": 0.9056652132104703,
+    "A_balance": 0.018116313521002847,
+    "incident_power_code_units": 0.029326746070880844
+  },
+  "volume_metrics": {
+    "A_volume_total": 0.018116313522735385,
+    "energy_closure_error": 1.7326140522300193e-12,
+    "quadrature_relative": 5.724115870220491e-16
+  },
+  "independent": {
+    "original": {
+      "true": 2.2724459075471595e-10,
+      "native": 2.2724459075471595e-10,
+      "augmented": 2.2724451960849235e-10,
+      "port": 6.993340231023879e-16,
+      "full_augmented": 2.2724451963955306e-10,
+      "direct_target": false,
+      "rhs_q47_q63": 8.427228914020606e-16,
+      "MPC_identity": 3.2089459313907574e-18,
+      "absolute_residual": 2.428327172634898e-10,
+      "original_rhs_norm": 1.0685965833133302,
+      "backend": "PUBLIC_BASIX_COEFFICIENT_FIRST_Q13_TRIANGLE63",
+      "body_consumption": {
+        "seconds": 16.795741423033178,
+        "q": 13,
+        "cells": 25576,
+        "columns": 1,
+        "reference_table_bytes": 1767184,
+        "full_vector_workspace_bytes": 50822336,
+        "algorithm": "COEFFICIENT_FIRST_PUBLIC_BASIX_VECTOR",
+        "production_matrix_reads": 0
+      },
+      "closed_physical_residual_norm": 2.428327932569101e-10,
+      "projected_port_norm": 5.741118798099271,
+      "pass_gate": true
+    },
+    "arrays": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v66/task042_v66_space_comparison_gate_20261009T075349212582Z/independent_original.npz",
+      "sha256": "f112a7ab2f468c9d3558f043dfac9211f546fb73b861bcefd0455d79f4e7a561",
+      "members": {
+        "x": {
+          "shape": [
+            1043792
+          ],
+          "dtype": "complex128",
+          "sha256": "1d228cb359e4a65570d56e88965595964aa535fea0104c67f9fb76ed2596191f"
+        },
+        "residual": {
+          "shape": [
+            1043792
+          ],
+          "dtype": "complex128",
+          "sha256": "b22dc2b6cd058e013b02aa9f315abeb9554ef4a4e1de3187d6d32a83fdfe72f6"
+        },
+        "rhs": {
+          "shape": [
+            1043792
+          ],
+          "dtype": "complex128",
+          "sha256": "de6fda81bbe2de230ade6981f23b74cb9a9b837b1a22c89cb984ce28237d5f83"
+        },
+        "action": {
+          "shape": [
+            1043792
+          ],
+          "dtype": "complex128",
+          "sha256": "7578dfb530a0495a89ace5a239c8379ade35b940980c34018012d1bc5d1b7ad6"
+        }
+      }
+    },
+    "producer_consumer_operation": 0.0,
+    "tangential": {
+      "maximum": 1.2561716897847905e-14,
+      "face_count": 51024,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v66/task042_v66_space_comparison_gate_20261009T075349212582Z/physical_tangential_faces.npz",
+        "sha256": "1bcb71b05217ce0e7bbc47768e636f911319d5fc76d5bf919da8caff07a96b5c",
+        "members": {
+          "per_face": {
+            "shape": [
+              51024,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "6132324dd06d23100566108462d3327d5b6251cfdd02047b5ce9d1e272f5c35f"
+          }
+        }
+      },
+      "pass_gate": true,
+      "tested": "tangential physical E only; actual shared and translated periodic triangles"
+    },
+    "output": {
+      "A_volume": 0.018116313522735385,
+      "energy": 1.7326140522300193e-12,
+      "operation_difference": 0.0,
+      "q23_q31_relative": 5.724115870220491e-16,
+      "pass_gate": true
+    },
+    "pass_gate": true
+  },
+  "modal_recalculation_record": "modal_recalculation_v66.json",
+  "continuum_accuracy": false,
+  "target_2TB_48h": false,
+  "NN20": false
+}

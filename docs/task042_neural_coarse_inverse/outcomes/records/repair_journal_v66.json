@@ -1,0 +1,51 @@
+{
+  "entries": [
+    {
+      "id": "C0",
+      "classification": "control_shell_missing_activation",
+      "error": "python: command not found",
+      "numeric_consumption": 0,
+      "correction": "qualified pure activation; no files or process were created by the failed command"
+    },
+    {
+      "id": "C1",
+      "classification": "control_search_path_after_pure_activation",
+      "error": "rg command not found after completed edit script",
+      "correction": "search without activation; no edit replay",
+      "numeric_consumption": 0,
+      "ordinary_control_error_preserved": true
+    },
+    {
+      "id": "C2",
+      "utc": "2026-10-09T08:09:49.821830+00:00",
+      "classification": "CONTROL_PATCH_CONTEXT_NOT_FOUND",
+      "evidence": "tmp/task042/v66/control_patch_failure_C2.json",
+      "root_cause": "draft paragraph context shortened incorrectly before metadata delivery; patch made no changes",
+      "error": "apply_patch verification failed: Failed to find expected lines: 模式整体通过仍不能覆盖全场FAIL。",
+      "fix": "exact existing line context used; ignored draft only",
+      "new_matrix": 0,
+      "new_numeric": 0,
+      "new_solve": 0,
+      "affected_scientific_source": false,
+      "science_replay": 0,
+      "reported_tool_elapsed_seconds": 0.0,
+      "CPU_seconds": "unknown"
+    },
+    {
+      "id": "C3",
+      "utc": "2026-10-09T08:13:51.324992+00:00",
+      "classification": "METADATA_WRITER_OWN_PREFIX_REENTRY",
+      "root_cause": "writer permitted only unchanged current prefix; this round revised its own prefix after changing explanation wording",
+      "failed_source_sha256": "69fd87d4b044ca7871e2cd5871265bd423166a90c5b6ae5518c602a28a2cf8ef",
+      "evidence": "tmp/task042/v66/write_delivery_attempt02.stderr",
+      "failed_source": "tmp/task042/v66/write_delivery_attempt02.py",
+      "fix": "accept only the exact previously generated V66 prefix, while requiring immutable old suffix unchanged",
+      "affected_scientific_source": false,
+      "new_numeric": 0,
+      "new_solve": 0,
+      "science_replay": 0,
+      "failed_metadata_CPU_and_elapsed_seconds": "unknown; full current elapsed window retains the interval"
+    }
+  ],
+  "historical_failures_preserved": true
+}

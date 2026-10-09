@@ -1,0 +1,129 @@
+{
+  "success_chain_seconds": 4843.293469483964,
+  "prepared_start_T_N1_seconds": 2058.551380519988,
+  "observed_two_process_lifecycle_span_seconds": 4867.932854,
+  "between_process_control_wall_seconds": 24.639384516035534,
+  "chain_definition": "PREPARE and SOLVE complete independent processes summed; no nested phase addition",
+  "all_outer_receipts": {
+    "PREFLIGHT": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v66_frozen_local_mesh_preflight.dat"
+      ],
+      "source_sha": "d87a08478db6a6ccaf665eda3132818533e291f3",
+      "start_utc": "2026-10-09T06:25:39.821805+00:00",
+      "end_utc": "2026-10-09T06:28:05.231089+00:00",
+      "elapsed_seconds": 145.4092999647837,
+      "exit_code": 0,
+      "input_sha256": "103c4c8bba414402c6382ce17a078b87f2b46d4f613106606cb207ff6e8ab3bf",
+      "wrapper_sha256": "c1c1d383e868dac65e0a3ab2ad82276efdd42400a86c3b61fa8233b177764e50",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects"
+    },
+    "PREPARE": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v66_local_p4_prepare.dat"
+      ],
+      "source_sha": "d87a08478db6a6ccaf665eda3132818533e291f3",
+      "start_utc": "2026-10-09T06:32:09.020001+00:00",
+      "end_utc": "2026-10-09T07:18:33.762089+00:00",
+      "elapsed_seconds": 2784.742088963976,
+      "exit_code": 0,
+      "input_sha256": "439f916304e2eb07f79e251ab8d610e2f57d76b384d2b19329681cacdf879831",
+      "wrapper_sha256": "c1c1d383e868dac65e0a3ab2ad82276efdd42400a86c3b61fa8233b177764e50",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects"
+    },
+    "SOLVE_COMPLETE": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v66_local_p4_solve_complete.dat"
+      ],
+      "source_sha": "d87a08478db6a6ccaf665eda3132818533e291f3",
+      "start_utc": "2026-10-09T07:18:58.401490+00:00",
+      "end_utc": "2026-10-09T07:53:16.952855+00:00",
+      "elapsed_seconds": 2058.551380519988,
+      "exit_code": 0,
+      "input_sha256": "7dbe73ba65f68a550130d827146d71a730549b7f82037edb5ffc60e21d8b9a50",
+      "wrapper_sha256": "c1c1d383e868dac65e0a3ab2ad82276efdd42400a86c3b61fa8233b177764e50",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects"
+    },
+    "COMPARE_GATE": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v66_space_comparison_gate.dat"
+      ],
+      "source_sha": "d87a08478db6a6ccaf665eda3132818533e291f3",
+      "start_utc": "2026-10-09T07:53:48.955075+00:00",
+      "end_utc": "2026-10-09T08:01:23.418384+00:00",
+      "elapsed_seconds": 454.4633161239326,
+      "exit_code": 0,
+      "input_sha256": "c958736512872de6b280bc2747299e33cbc13603a642e1d18ab5bbb6aa3f75dd",
+      "wrapper_sha256": "c1c1d383e868dac65e0a3ab2ad82276efdd42400a86c3b61fa8233b177764e50",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects"
+    },
+    "VERIFY_COST": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v66_compare_verify_cost.dat"
+      ],
+      "source_sha": "d87a08478db6a6ccaf665eda3132818533e291f3",
+      "start_utc": "2026-10-09T08:04:11.067977+00:00",
+      "end_utc": "2026-10-09T08:05:35.158010+00:00",
+      "elapsed_seconds": 84.09003788302653,
+      "exit_code": 0,
+      "input_sha256": "9ef2be42ae162b19eaaf9e6340e580e85cf439402b29ccb723ed43bdc12e4a3d",
+      "wrapper_sha256": "c1c1d383e868dac65e0a3ab2ad82276efdd42400a86c3b61fa8233b177764e50",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects"
+    }
+  },
+  "actual_PREPARE_timings": {
+    "tetra_mesh_materials_full_periodic_space": 29.955836757086217,
+    "fresh_triangle_all828_q47": 19.587108419043943,
+    "fresh_triangle_all828_q63": 21.290310295065865,
+    "body_JIT_form": 0.004413372138515115,
+    "body_PETSc_assembly": 2582.446590084117,
+    "standard_UFL_FFCx_full_uncondensed_body": 2582.454430476064,
+    "body_native_CSR_copy": 4.318585310829803,
+    "body_MPC_Hermitian_pullback": 14.9767181139905,
+    "atomic_unscaled_body_CSR_checkpoint_IO": 18.27296340186149
+  },
+  "actual_SOLVE_timings": {
+    "tetra_mesh_materials_full_periodic_space": 30.4668919169344,
+    "readonly_body_K_identity_and_reopen": 15.587337519973516,
+    "checked_readonly_this_case_q47_q63": 8.874447393929586,
+    "two_standard_UFL_PUBLIC_BASIX_operator_pairs": 27.558930185856298,
+    "h_sparse_symbolic_capacity": 10.649424316128716,
+    "h_bounded_numeric_factor": 918.787057908019,
+    "full_uncondensed_tetra_direct_solve": 31.16064648819156,
+    "independent_COEFFICIENT_FIRST_PUBLIC_BASIX_body_q13_triangle63": 17.210997762857005,
+    "full_physical_E_H_curl_240_points": 1.7333464049734175,
+    "complete_tetra_volume_and_analytic_q23_q31": 852.4044371719938,
+    "all828_complex_channel_powers_and_output": 0.27151940297335386
+  },
+  "new_L4_q47_q63_created": true,
+  "comparison_and_documents_are_research_overhead": true,
+  "OS_and_JIT_not_flushed": true,
+  "compiler_cache_status": {
+    "q": 11,
+    "embedded_superdegree": 4,
+    "form": "inner(Ckappa(u),Ckappa(v))/mu-k0^2*eps*inner(u,v)",
+    "native_nnz": 152274864,
+    "independent_nnz": 151551034
+  },
+  "parents_and_marking_costs": "included once in historical known ledger; no free oracle claim",
+  "inherited_known_lower_seconds": 261107.0775419553,
+  "P6_success_uses_prior_boundary_packages": true,
+  "matched_cold_speed_ratio": null,
+  "unknowns": "controller/Git CPU, historical unknown fees, exact fill, unsampled transients",
+  "production_speed_memory_ratio_qualified": false
+}

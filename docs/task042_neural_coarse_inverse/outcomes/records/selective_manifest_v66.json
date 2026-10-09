@@ -1,0 +1,114 @@
+{
+  "merge_approved": false,
+  "groups": {
+    "production numerical/core": {
+      "files": [
+        "src/postprocessing/paired_field_norms.py",
+        "src/solvers/p6_completion_study.py",
+        "src/solvers/tetra_body_checkpoint.py"
+      ],
+      "behavior": "explicit opt-in exact p4 parameterization, fingerprint and pure saved scoring; defaults unchanged",
+      "tests": "10 targeted plus true L4 two-action/original evidence",
+      "qualification": "finite case only",
+      "depends_on_groups": [],
+      "fresh_PDE_evidence": "complete_physics_v66.json, kernel_qualification_v66.json, paired_comparison_v66.json",
+      "recommended_order_after_explicit_approval": 1,
+      "default_promotion_authorized": false
+    },
+    "reusable runner/watchdog": {
+      "files": [
+        "scripts/run_case.py",
+        "src/runners/port_preparation.py"
+      ],
+      "behavior": "one-run routing, actual profile and cumulative campaign counters",
+      "tests": "six dat real validate; live supervised runs",
+      "depends_on_groups": [
+        "production numerical/core"
+      ],
+      "fresh_PDE_evidence": "complete_physics_v66.json, kernel_qualification_v66.json, paired_comparison_v66.json",
+      "recommended_order_after_explicit_approval": 2,
+      "default_promotion_authorized": false
+    },
+    "checker/benchmark": {
+      "files": [
+        "benchmarks/collect_frozen_local_h.py",
+        "benchmarks/qualify_frozen_local_h.py",
+        "src/test/test_frozen_local_h.py"
+      ],
+      "behavior": "saved-array consumers, no solve inside checker",
+      "depends_on_groups": [
+        "production numerical/core",
+        "reusable runner/watchdog"
+      ],
+      "fresh_PDE_evidence": "complete_physics_v66.json, kernel_qualification_v66.json, paired_comparison_v66.json",
+      "recommended_order_after_explicit_approval": 3,
+      "default_promotion_authorized": false
+    },
+    "compact evidence/docs": {
+      "files": [
+        "response_v66.md",
+        "outcomes/frozen_local_h_field_cost_v66.md",
+        "outcomes/records/*_v66.json"
+      ],
+      "behavior": "new increment; protected historical suffix retained",
+      "depends_on_groups": [
+        "production numerical/core",
+        "reusable runner/watchdog",
+        "checker/benchmark"
+      ],
+      "fresh_PDE_evidence": "complete_physics_v66.json, kernel_qualification_v66.json, paired_comparison_v66.json",
+      "recommended_order_after_explicit_approval": 4,
+      "default_promotion_authorized": false
+    },
+    "research-only": {
+      "files": [
+        "benchmarks/collect_frozen_local_h.py",
+        "benchmarks/qualify_frozen_local_h.py",
+        "input/task042_neural_coarse_inverse/frozen_local_h_v66.json",
+        "input/task042_neural_coarse_inverse/v66_compare_verify_cost.dat",
+        "input/task042_neural_coarse_inverse/v66_frozen_local_mesh_preflight.dat",
+        "input/task042_neural_coarse_inverse/v66_local_p4_m1188.dat",
+        "input/task042_neural_coarse_inverse/v66_local_p4_prepare.dat",
+        "input/task042_neural_coarse_inverse/v66_local_p4_solve_complete.dat",
+        "input/task042_neural_coarse_inverse/v66_space_comparison_gate.dat",
+        "src/solvers/frozen_local_h_scope.py",
+        "src/solvers/frozen_local_h_study.py",
+        "src/test/test_frozen_local_h.py"
+      ],
+      "behavior": "fixed finite complete reference, no production default promotion",
+      "depends_on_groups": [
+        "production numerical/core",
+        "reusable runner/watchdog",
+        "checker/benchmark"
+      ],
+      "fresh_PDE_evidence": "complete_physics_v66.json, kernel_qualification_v66.json, paired_comparison_v66.json",
+      "recommended_order_after_explicit_approval": 5,
+      "default_promotion_authorized": false
+    },
+    "do-not-merge": {
+      "files": [
+        "tmp/task042/v66/**",
+        "benchmarks/artifacts/task042/v66/**",
+        "results/task042/task042_v66_*"
+      ],
+      "behavior": "ignored large K/fields/raw; no saved global factor",
+      "depends_on_groups": [
+        "production numerical/core",
+        "reusable runner/watchdog",
+        "checker/benchmark"
+      ],
+      "fresh_PDE_evidence": "complete_physics_v66.json, kernel_qualification_v66.json, paired_comparison_v66.json",
+      "recommended_order_after_explicit_approval": 6,
+      "default_promotion_authorized": false
+    }
+  },
+  "recommended_sequence": [
+    "production numerical/core",
+    "reusable runner/watchdog",
+    "checker/benchmark",
+    "compact evidence/docs",
+    "research-only",
+    "do-not-merge"
+  ],
+  "production_defaults_unchanged": true
+}

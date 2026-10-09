@@ -1,0 +1,324 @@
+{
+  "receipt": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v66/body_K/manifest.json",
+    "sha256": "b9f2b2b90d2369ba0cd1ca0fecd434fdc6301fab9c020ef968ac9cf3d4aa19b3",
+    "status": "ASSEMBLED_NOT_YET_ORACLE_VERIFIED",
+    "bytes": 3071094072,
+    "nnz": 151551034
+  },
+  "manifest": {
+    "path": "benchmarks/artifacts/task042/v66/body_K/manifest.json",
+    "sha256": "b9f2b2b90d2369ba0cd1ca0fecd434fdc6301fab9c020ef968ac9cf3d4aa19b3"
+  },
+  "commit": {
+    "path": "benchmarks/artifacts/task042/v66/body_K/COMMIT",
+    "sha256": "d71b303bf21aee05bbd5a9a953d7049f8deef5e6fcff328806bf415804de29b1"
+  },
+  "members": {
+    "data": {
+      "file": "data.npy",
+      "sha256": "69b6db91d864eaec27d30eec6c0fa372999d5deeabc8d81e53befb62b1f3c7dc",
+      "array_sha256": "57bf195ce84c52bb479d209963402bc3a79ece75e5980ca4825cdcdcf0cd02d2",
+      "shape": [
+        151551034
+      ],
+      "dtype": "complex128",
+      "bytes": 2424816672
+    },
+    "indices": {
+      "file": "indices.npy",
+      "sha256": "a373b18046104c8d07f3ac374331fc00345397046b4785098af7cc9546b6dc04",
+      "array_sha256": "627f4e487a62ee5ef5b94b02a7e9b80f49d185ecc994fd539cf30bade8d03141",
+      "shape": [
+        151551034
+      ],
+      "dtype": "int32",
+      "bytes": 606204264
+    },
+    "indptr": {
+      "file": "indptr.npy",
+      "sha256": "0f8be8b0af6480ca63ee107b54a3da69cd0556ff3fb376bfc5e0d07167548ac5",
+      "array_sha256": "9b8d091150a2d0fef11c992cb96735bc9c4aad4c232d044f7e0bef80730c9d21",
+      "shape": [
+        1042965
+      ],
+      "dtype": "int32",
+      "bytes": 4171988
+    },
+    "shape": {
+      "file": "shape.npy",
+      "sha256": "4f69a7f07e41a5fe4d5efc35a4df73b27fd2c7bc5ad3de48e39bb1ac596d9dd9",
+      "array_sha256": "f37147f53fcfad34f8561268ee53dcaf518242bbbd132c29a97fd7999050d151",
+      "shape": [
+        2
+      ],
+      "dtype": "int64",
+      "bytes": 144
+    },
+    "geometry_x": {
+      "file": "geometry_x.npy",
+      "sha256": "cf6a93edf393138ad19d980478148498bcf85505b77f8d1136138fabf75cb32b",
+      "array_sha256": "a1141b5cfb0b81242f9cd06769e97637e76254c2463b3c25bafcc751c4fa0a7a",
+      "shape": [
+        5168,
+        3
+      ],
+      "dtype": "float64",
+      "bytes": 124160
+    },
+    "geometry_dofmap": {
+      "file": "geometry_dofmap.npy",
+      "sha256": "6ab46701b9001c845a397acbe8962230abfd27a13e96410504099e5285172627",
+      "array_sha256": "53a287c3f9d69775ed1a346ac1019bda1ffbf3d25387d15dd3a873d9f47b0316",
+      "shape": [
+        25576,
+        4
+      ],
+      "dtype": "int32",
+      "bytes": 409344
+    },
+    "cell_centers": {
+      "file": "cell_centers.npy",
+      "sha256": "ab6c432036ea834703be501df6ec047aab6cc69b3f130fb77bcd399fc67d464f",
+      "array_sha256": "b924a6b83a358f5990bcb6682704640e741bbb82d8c33551eba0fcba0f07a50f",
+      "shape": [
+        25576,
+        3
+      ],
+      "dtype": "float64",
+      "bytes": 613952
+    },
+    "cell_tags": {
+      "file": "cell_tags.npy",
+      "sha256": "36ac4e6178abc3f7c7c72c7784a544a11c38d42ac2c8bc102882a0143b40b328",
+      "array_sha256": "8b26a15d2ee2b01601122e69d55c0a824dd92a34247164c0d3b4d56947fbbf81",
+      "shape": [
+        25576
+      ],
+      "dtype": "int32",
+      "bytes": 102432
+    },
+    "regular_tags": {
+      "file": "regular_tags.npy",
+      "sha256": "14cacb61e78f56cf3c407cb558ab2ecd1a5fcaa5d1e57539a1f0f761c98ff8f7",
+      "array_sha256": "8fd01f0da93d54006443497cb8d494ff90f08105264073f3449dc16dba5a87a4",
+      "shape": [
+        25576
+      ],
+      "dtype": "int32",
+      "bytes": 102432
+    },
+    "original_parent_cell": {
+      "file": "original_parent_cell.npy",
+      "sha256": "015934f9f38e7b6fad2b5f058aebecc858b91c4146fbe52ae955f3658e4c5f8a",
+      "array_sha256": "57e9a93373660b69e9da776f60baa2d2d0910e49bd316499b1e67e2a87d5d887",
+      "shape": [
+        25576
+      ],
+      "dtype": "int64",
+      "bytes": 204736
+    },
+    "P_data": {
+      "file": "P_data.npy",
+      "sha256": "1071204d8cdc73f142eb01e3d8331171c4317ccd4f9c512992edf2b645f6d7f2",
+      "array_sha256": "947a96575ff70d92bcb6c46658d2f2937c8600e7fff3ca382587e69d18fe4b71",
+      "shape": [
+        1073230
+      ],
+      "dtype": "complex128",
+      "bytes": 17171808
+    },
+    "P_indices": {
+      "file": "P_indices.npy",
+      "sha256": "90143fff81e30d2444c0f1004f1b6f8b25eaf7e7b6cabd8da5852a64ca4a9f6a",
+      "array_sha256": "31b3d1ee835e798e559f1be14ec22d6a76b54995cba54f4eb0cdd710e4d4d501",
+      "shape": [
+        1073230
+      ],
+      "dtype": "int32",
+      "bytes": 4293048
+    },
+    "P_indptr": {
+      "file": "P_indptr.npy",
+      "sha256": "e2a0eb71bcce32eb8a65e176e3bc9cea344af9390dd6a03d3aed3fea53296b14",
+      "array_sha256": "d094ee6e29515e90113ac7bc0441da70b5a2de7e5b196579aba1d873c677ed31",
+      "shape": [
+        1066717
+      ],
+      "dtype": "int32",
+      "bytes": 4266996
+    },
+    "masters": {
+      "file": "masters.npy",
+      "sha256": "c3a70673615284c44b2024c177303f9c642db1187f777ce8f51c61643cacd8f0",
+      "array_sha256": "469c9caefd81d92d1a17e893999d7acc6df64119e895078fb5f6f0a00c17a315",
+      "shape": [
+        1042964
+      ],
+      "dtype": "int64",
+      "bytes": 8343840
+    },
+    "slaves": {
+      "file": "slaves.npy",
+      "sha256": "747a1958891e626109bb7ed73017a4998f56468aa380f183a3baf569cfe2df57",
+      "array_sha256": "7f8f28e536b4d391b87f881d66bbac07ddb7c59e83529a7c3d8550f90d50207b",
+      "shape": [
+        23752
+      ],
+      "dtype": "int32",
+      "bytes": 95136
+    },
+    "cell_permutations": {
+      "file": "cell_permutations.npy",
+      "sha256": "a41ba724b2ed9cd65bbe794b037387530c277d1fafc340892e8d32fa0b3d60a9",
+      "array_sha256": "a994b0a69c5c5eb3508876671fe119cb62759df9521130cbe331551631b091e2",
+      "shape": [
+        25576
+      ],
+      "dtype": "uint32",
+      "bytes": 102432
+    },
+    "basis_coefficients": {
+      "file": "basis_coefficients.npy",
+      "sha256": "057610411e66b7505e13f5c7fa43448b59c3a23d93dad1f4c5ba78d664927ab6",
+      "array_sha256": "3a1886d70866cef917713eee2c0e7f61152c92ab3a6c2d684ef34458a5d2f1ef",
+      "shape": [
+        84,
+        105
+      ],
+      "dtype": "float64",
+      "bytes": 70688
+    }
+  },
+  "bytes": 3071094072,
+  "shape": [
+    1042964,
+    1042964
+  ],
+  "nnz": 151551034,
+  "initial_status": "ASSEMBLED_NOT_YET_ORACLE_VERIFIED",
+  "original_manifest_not_rewritten": true,
+  "qualification": {
+    "path": "benchmarks/artifacts/task042/v66/task042_v66_local_p4_solve_complete_20261009T071858612995Z/body_original_action_qualification.json",
+    "sha256": "c4598c54ecea97f6115fd6ec0c4748b6fa869b9eb8dfdee8f7e40244f2cffebe"
+  },
+  "form": {
+    "q": 11,
+    "embedded_superdegree": 4,
+    "form": "inner(Ckappa(u),Ckappa(v))/mu-k0^2*eps*inner(u,v)",
+    "native_nnz": 152274864,
+    "independent_nnz": 151551034
+  },
+  "prepare_timings": {
+    "tetra_mesh_materials_full_periodic_space": 29.955836757086217,
+    "fresh_triangle_all828_q47": 19.587108419043943,
+    "fresh_triangle_all828_q63": 21.290310295065865,
+    "body_JIT_form": 0.004413372138515115,
+    "body_PETSc_assembly": 2582.446590084117,
+    "standard_UFL_FFCx_full_uncondensed_body": 2582.454430476064,
+    "body_native_CSR_copy": 4.318585310829803,
+    "body_MPC_Hermitian_pullback": 14.9767181139905,
+    "atomic_unscaled_body_CSR_checkpoint_IO": 18.27296340186149
+  },
+  "actual_new_triangle_packages": {
+    "q47": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v66/task042_v66_local_p4_prepare_20261009T063209261300Z/triangle_q47.npz",
+      "sha256": "bb552e59d292fe8eed14ab95283f4a6249526cc36fc54ef759ea1f84432b76a0",
+      "members": {
+        "offsets": {
+          "shape": [
+            829
+          ],
+          "dtype": "int64",
+          "sha256": "4a51d459f575990051d4f25dfde6f2347d969493fa44ad28af3a5a42f67326ea"
+        },
+        "rows": {
+          "shape": [
+            7206912
+          ],
+          "dtype": "int64",
+          "sha256": "88ca0d05cfe51d7980e23d0b9910ef2ea361803e5a937b0b2cb8e5b4f5d0d889"
+        },
+        "C": {
+          "shape": [
+            7206912
+          ],
+          "dtype": "complex128",
+          "sha256": "03d2c69156254ae3d869d0f94d0c664fa1989c133eed273bcb02004737ff63d0"
+        },
+        "D": {
+          "shape": [
+            7206912
+          ],
+          "dtype": "complex128",
+          "sha256": "09562474634873889bce86854538569fd79fb4421ffc1ce3d6eb3bb6d64398da"
+        },
+        "H": {
+          "shape": [
+            828
+          ],
+          "dtype": "float64",
+          "sha256": "fc8bf271da287cb70f0728bd59eef9dee008b9b716fd0f236ad1a362dc5a0f7b"
+        },
+        "incident_traction": {
+          "shape": [
+            1066716
+          ],
+          "dtype": "complex128",
+          "sha256": "91277a08514dc7a122dedf3a5743f48c223eaa2862b032ff162f148ce441696c"
+        }
+      }
+    },
+    "q63": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v66/task042_v66_local_p4_prepare_20261009T063209261300Z/triangle_q63.npz",
+      "sha256": "4c2ceb91a2e07f10ab919c9a243df6b2696bf79bdf0f973a48a98bc0f16f339f",
+      "members": {
+        "offsets": {
+          "shape": [
+            829
+          ],
+          "dtype": "int64",
+          "sha256": "4a51d459f575990051d4f25dfde6f2347d969493fa44ad28af3a5a42f67326ea"
+        },
+        "rows": {
+          "shape": [
+            7206912
+          ],
+          "dtype": "int64",
+          "sha256": "88ca0d05cfe51d7980e23d0b9910ef2ea361803e5a937b0b2cb8e5b4f5d0d889"
+        },
+        "C": {
+          "shape": [
+            7206912
+          ],
+          "dtype": "complex128",
+          "sha256": "75fc0fa02d258bf8ef1ebc6dac2d29232808470fefffcd5b714ba0acadeea307"
+        },
+        "D": {
+          "shape": [
+            7206912
+          ],
+          "dtype": "complex128",
+          "sha256": "d76982c6e5ad82c4181355c61855683bb8c3c7eb3ddf640d95de2ce27ae7f759"
+        },
+        "H": {
+          "shape": [
+            828
+          ],
+          "dtype": "float64",
+          "sha256": "fc8bf271da287cb70f0728bd59eef9dee008b9b716fd0f236ad1a362dc5a0f7b"
+        },
+        "incident_traction": {
+          "shape": [
+            1066716
+          ],
+          "dtype": "complex128",
+          "sha256": "60fbb36f492b020925c505c02bf22079e372bb25359419bb52bed1dbe341451d"
+        }
+      }
+    }
+  },
+  "one_main_body_build": true,
+  "static_condensation": false,
+  "prior_P6_K_or_boundary_substitution": false
+}

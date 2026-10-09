@@ -1,0 +1,122 @@
+{
+  "pass_gate": true,
+  "source": "d87a08478db6a6ccaf665eda3132818533e291f3",
+  "actual": {
+    "cells": 25576,
+    "native": 1066716,
+    "independent": 1042964,
+    "rows": 1043792,
+    "degree": 4,
+    "local_dim": 84,
+    "superdegree": 4,
+    "notch_tetrahedra": 1000
+  },
+  "production_body_q": 11,
+  "independent_body_q": 13,
+  "complex_dual": 2.1573490238739285e-18,
+  "one_saved_p4_action": {
+    "relative": 2.6842007266162938e-12,
+    "arrays": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v66/task042_v66_frozen_local_mesh_preflight_20261009T062540069918Z/saved_p4_action_pair.npz",
+      "sha256": "3ed12ee035d64a198d64bf810a08777841427e92688e838808801d6ecd15bd52",
+      "members": {
+        "x": {
+          "shape": [
+            315452
+          ],
+          "dtype": "complex128",
+          "sha256": "8c97416c317b8967ecd0b38add4b3294de756fb6ef13f531ed997e753f562d35"
+        },
+        "original": {
+          "shape": [
+            315452
+          ],
+          "dtype": "complex128",
+          "sha256": "48728aebd8a77a916e192b35975cd020adb22e6b4b39f7029c19296ab4697502"
+        },
+        "coefficient_first": {
+          "shape": [
+            315452
+          ],
+          "dtype": "complex128",
+          "sha256": "8bd67a7b75138c02c3b08e4df69a3f9d2ce5d3b047a311c6f20e5f5538a5b19e"
+        },
+        "delta": {
+          "shape": [
+            315452
+          ],
+          "dtype": "complex128",
+          "sha256": "be44b1c76a5d9f273832de8beff4d32d0304324104ac2bb61a6a892ff8cb3b7f"
+        }
+      }
+    },
+    "parent": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v63/task042_v63_tetra_notch_h2_p4_20261008T091024797027Z/independent_original.npz",
+      "sha256": "b82759bac8330e100697ff80a57994453c0e5d8039b8b668a7d72c357fd12cb0",
+      "members": {
+        "residual": {
+          "shape": [
+            315452
+          ],
+          "dtype": "complex128",
+          "sha256": "d351b9c5c50cb0e6a6938ade361c751e20dacd6041171a90f918423f96e97285"
+        },
+        "rhs": {
+          "shape": [
+            315452
+          ],
+          "dtype": "complex128",
+          "sha256": "aa5a779b55efc9ffecf58648979f902981bc284c44d3e7c5cb10b4fcbcad1691"
+        },
+        "action": {
+          "shape": [
+            315452
+          ],
+          "dtype": "complex128",
+          "sha256": "48728aebd8a77a916e192b35975cd020adb22e6b4b39f7029c19296ab4697502"
+        },
+        "x": {
+          "shape": [
+            315452
+          ],
+          "dtype": "complex128",
+          "sha256": "8c97416c317b8967ecd0b38add4b3294de756fb6ef13f531ed997e753f562d35"
+        }
+      }
+    },
+    "consumption": {
+      "seconds": 4.609455971978605,
+      "q": 13,
+      "cells": 7680,
+      "columns": 1,
+      "reference_table_bytes": 1767184,
+      "full_vector_workspace_bytes": 15475200,
+      "algorithm": "COEFFICIENT_FIRST_PUBLIC_BASIX_VECTOR",
+      "production_matrix_reads": 0
+    }
+  },
+  "new_two_full_action": {
+    "path": "benchmarks/artifacts/task042/v66/task042_v66_local_p4_solve_complete_20261009T071858612995Z/original_operator_pairs.json",
+    "sha256": "856f212a01bac77bd1743f35f8789dd55bf9248777955ece39ec2483bd24ea07"
+  },
+  "body_original_qualification": {
+    "path": "benchmarks/artifacts/task042/v66/task042_v66_local_p4_solve_complete_20261009T071858612995Z/body_original_action_qualification.json",
+    "sha256": "c4598c54ecea97f6115fd6ec0c4748b6fa869b9eb8dfdee8f7e40244f2cffebe"
+  },
+  "body_consumption": {
+    "seconds": 17.04292742605321,
+    "q": 13,
+    "cells": 25576,
+    "columns": 1,
+    "reference_table_bytes": 1767184,
+    "full_vector_workspace_bytes": 50822336,
+    "algorithm": "COEFFICIENT_FIRST_PUBLIC_BASIX_VECTOR",
+    "production_matrix_reads": 0
+  },
+  "tests": {
+    "path": "tmp/task042/v66/qualification.json",
+    "sha256": "8a74c7ca3bdb6893f61db8ea2149e335e638ad7522211cf292476be83f48d74d"
+  },
+  "no_production_matrix_in_oracle": true,
+  "global_old_P6_replay": 0
+}

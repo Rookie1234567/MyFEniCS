@@ -1,3 +1,11 @@
+# V66薄接入与依赖
+
+复用完整tetra装配、系数收缩独立作用、atomic K、MUMPS、监督及输出；新增固定网格scope、参数化p4准备身份、同分子双分母纯数组评分、条件M消费与six dat。没有复制大型runner或改变数学默认。
+
+[依赖分组](records/selective_manifest_v66.json) · [真实运行源码](records/source_bindings_v66.json)。旧报告/结果/raw保持，不merge。
+
+---
+
 # V65变更与依赖
 
 新数学核心为src/solvers/tetra_coefficient_action.py；新体checkpoint和累计预算/薄case接入仍放src/solvers。复用完整tetra runner/监督/恢复/无JIT输出/原式，增加四个one-run dat、相关资格与增量checker。阶段计时拆分不改物理；生命周期修复只移除prepared K/owners引用，实际producer的旧驻留事实保留，没有PDE重放。所有opt-in默认不提升为生产，未merge。

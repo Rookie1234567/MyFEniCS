@@ -1,0 +1,70 @@
+{
+  "models": [
+    {
+      "model": "A",
+      "source": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "cells": 7680,
+      "degree": 4,
+      "FE": 314624,
+      "rows": 315452,
+      "nnz": 59971384,
+      "formal": 2.1565882761091694e-10,
+      "factor_nnz": 618044456,
+      "T_success_seconds": 2270.285875603091,
+      "T_with_failure_seconds": 2361.520471057156,
+      "sampled_peak_bytes": 19456561152,
+      "field_status": "historical coarse candidate; prior FAIL retained",
+      "new_execution": false
+    },
+    {
+      "model": "B",
+      "source": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "cells": 7680,
+      "degree": 5,
+      "FE": 585920,
+      "rows": 586748,
+      "nnz": 156995068,
+      "formal": 2.1627589440189979e-10,
+      "factor_nnz": 1342855542,
+      "T_success_seconds": 5645.946988187963,
+      "T_with_failure_seconds": 5645.946988187963,
+      "sampled_peak_bytes": 43228483584,
+      "field_status": "historical coarse candidate; prior FAIL retained",
+      "new_execution": false
+    },
+    {
+      "model": "P6",
+      "source": "2679c96f1eecfcb5c8a61a61397f75ef8b4c0280",
+      "cells": 7680,
+      "degree": 6,
+      "FE": 980352,
+      "rows": 981180,
+      "nnz": 362966076,
+      "formal": 2.3258492433475254e-10,
+      "factor_nnz": "unknown: negative encoded INFOG9 retained without an unverified exact decoder",
+      "T_success_seconds": 14748.453747829888,
+      "sampled_peak_bytes": 95051673600,
+      "field_status": "B/P6 scattered and selected FAIL; not truth",
+      "new_execution": false
+    },
+    {
+      "model": "L4F",
+      "source": "d87a08478db6a6ccaf665eda3132818533e291f3",
+      "cells": 25576,
+      "degree": 4,
+      "FE": 1042964,
+      "rows": 1043792,
+      "nnz": 165965686,
+      "formal": 2.2724459075471595e-10,
+      "factor_nnz": 2143620280,
+      "T_success_seconds": 4843.293469483964,
+      "sampled_peak_bytes": 58477637632,
+      "field_status": "SPACE_INCREMENT_FAIL",
+      "new_execution": true
+    }
+  ],
+  "hash_bound_historical_controls": true,
+  "new_old_field_solves": 0,
+  "budgets_and_cache_conditions_not_matched": true,
+  "no_qualified_production_speed_or_memory_ratio": true
+}

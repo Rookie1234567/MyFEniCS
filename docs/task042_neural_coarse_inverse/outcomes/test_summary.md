@@ -1,3 +1,11 @@
+# V66必要定点验证
+
+10项相关测试、Ruff/compile、六one-run dat真实validate；新p4身份、复MPC、checkpoint/body fingerprint、live预算与双分母库存回归通过。保存p4一次作用、新L4两列全域独立作用及完整原式/场/828功率消费实际执行。完整准确性结论另列，不用测试数替代物理资格。一次15文档合同、无full pytest/CI/历史扫描。
+
+[资格](records/kernel_qualification_v66.json) · [文档](records/documentation_checks_v66.json) · [修复](records/repair_journal_v66.json)。
+
+---
+
 # V65相关验证
 
 新核代数含复非正交T、正负detJ、非零κ和有损材料；24实际p6单元与保存p5向量配对通过，正式两列完整P6原作用通过。最终10个targeted测试、相关Ruff/compile和四个dat真实schema validate通过；预算post-symbolic/累计账、原子checkpoint中断/错hash、prepared引用释放均覆盖。真实一次完整P6和新进程独立审核已完成，B/P6完整精度FAIL保留。一次15文档合同另列；无full pytest/CI/历史扫描。
