@@ -1868,6 +1868,15 @@ incident-specific orphan sampler 与大型 raw artifact 仍不合入。
 该事故与下方之前的Invocation 797ae...残差失败分开；此前真实outer进展及modal residual负结果不被本次错误覆盖。raw、唯一finalizer与终态compact保留于results/task041_v11_w0p7_fixed_physical_balh_once_warm_run_20261009T142126Z/，compact SHA b3444f82a70ff2f840b208f87f67f1c1316d6ef71cf8cd1c97c6446da29e533a。
 
 
+## Task041 V11：W0.7 fixed-Q zero-count终态（2026-10-10）
+
+| 模型 / 方法 | 实测结果 | 资格边界 |
+|---|---|---|
+| W0.7 reduced p6/h0.70/M400/MPI8；Invocation `3cc1884481474e5ba390e757eeb482c0`；source `f4718519d8a244eae9ea87148422ade14771e534` | 两侧P4 numeric完成；fixed physical BAL_H modal sample在固定Q计数门遇到`backsolves=0`并拒绝。consumer `IMPLEMENTATION_FAILURE`、public rc1、service exit3；finalizer `failed/service_boundary_failure` 9/11，`controlled_stop.active=false` | 失败Q的RHS/PH与逐调用exact-zero证据未持久化，故底层零值原因unknown；全局零仅source-derived。没有outer、最终残差、recovery或完整物理输出，不是数值资格 |
+| 服务与小测试 | 唯一service wall `1771.020854749 s`；V5 211项，SHA `00b34a553294f5b230c0572b174cc4af09ec7c0186f8422af4a85a4854cf0e15`。tiny真实P4 fixture serial分attempt及MPI2通过，首次缺FixedH6 fixture失败保留 | 数学修正次数与实际LU solve次数分开；0次仅可由逐调用exact direct-zero证据支持。小矩阵合同不资格化production场；事故重试待审核 |
+
+终态raw与test attempts的hash-bound索引见[Response V13](task041_mpi1_shortwave_hybrid_capacity/response_v13.md)、[交付进度](task041_mpi1_shortwave_hybrid_capacity/outcomes/shortwave_delivery_v11.md)、[test summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)和[terminal compact](../results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261009T160948.696125Z/terminal_compact_fixed_q_zero_audit_v11.json)，SHA `914696b024ac26b03aa3e818f238b9ca7d033ad7898e326d6206b2630f73ee79`。W5依用户决定延期，W2不延误W0.7主线。
+
 ## Task041 W0.7 fixed physical BAL_H warm候选（2026-10-09，未dispatch）
 
 | Model / method | 配置与证据 | status / qualification | 下一步边界 |

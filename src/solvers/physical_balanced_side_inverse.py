@@ -21,6 +21,7 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from .hybrid_local_dtn_action import HybridLocalDtnActionSystem
+from .p4_cell_condensed_inverse import P4CellCondensedInverse
 from .physical_balanced_coupling import (
     BalancedConstraintRejected,
     PhysicalBalancedCoupling,
@@ -143,6 +144,129 @@ def _p4_solve_count(p4_factor: Any) -> int:
     if isinstance(research_factor, Mapping):
         return int(research_factor["solve_count"])
     return int(diagnostics["factor_solve_count"])
+
+
+def _fixed_q_cell_solve_audit(
+    p4_factor: Any,
+    *,
+    solve_count_before: int,
+    solve_count_after: int,
+) -> tuple[int, int]:
+    """Validate both audited inverse calls that implement one fixed Q correction."""
+
+    delta_total = int(solve_count_after) - int(solve_count_before)
+    if delta_total < 0:
+        raise RuntimeError("fixed-Q P4 solve counter moved backwards")
+    inverse = getattr(p4_factor, "inverse", None)
+    if not isinstance(inverse, P4CellCondensedInverse):
+        raise TypeError("cell-condensed fixed-Q factor has no P4CellCondensedInverse")
+    diagnostics = p4_factor.diagnostics
+    last_solve = diagnostics.get("last_solve")
+    if not isinstance(last_solve, Mapping):
+        raise TypeError("fixed-Q P4 factor has no current solve audit")
+    if (
+        type(last_solve.get("mathematical_correction_steps")) is not int
+        or last_solve["mathematical_correction_steps"] != 1
+    ):
+        raise RuntimeError("fixed-Q P4 audit lost its one mathematical correction")
+    if (
+        type(last_solve.get("factor_solve_count_start")) is not int
+        or last_solve["factor_solve_count_start"] != int(solve_count_before)
+    ):
+        raise RuntimeError("fixed-Q P4 audit has a stale starting solve count")
+    if (
+        type(last_solve.get("factor_solve_count_after")) is not int
+        or last_solve["factor_solve_count_after"] != int(solve_count_after)
+    ):
+        raise RuntimeError("fixed-Q P4 audit has a stale ending solve count")
+    history = last_solve.get("inverse_apply_history")
+    if not isinstance(history, (list, tuple)) or len(history) != 2:
+        raise RuntimeError("fixed-Q P4 audit must contain initial and correction calls")
+    if any(not isinstance(entry, Mapping) for entry in history):
+        raise RuntimeError("fixed-Q P4 inverse-call audit is malformed")
+    if tuple(entry.get("step") for entry in history) != (
+        "initial",
+        "correction_1",
+    ):
+        raise RuntimeError("fixed-Q P4 inverse-call order changed")
+    identities = [entry.get("factor_identity_local") for entry in history]
+    matrices = [entry.get("matrix_identity") for entry in history]
+    if (
+        any(type(identity) is not int for identity in identities)
+        or any(identity != id(inverse.factor) for identity in identities)
+        or any(matrix != matrices[0] for matrix in matrices[1:])
+        or not isinstance(matrices[0], Mapping)
+    ):
+        raise RuntimeError("fixed-Q P4 calls did not retain one factor/matrix identity")
+
+    expected_before = int(solve_count_before)
+    deltas: list[int] = []
+    for entry in history:
+        raw = entry.get("inverse_audit")
+        if not isinstance(raw, Mapping):
+            raise TypeError("fixed-Q P4 inverse-call audit payload is missing")
+        status = entry.get("status")
+        delta = entry.get("factor_solve_delta")
+        count_before = entry.get("factor_solve_count_before")
+        count_after = entry.get("factor_solve_count_after")
+        if (
+            type(delta) is not int
+            or delta not in (0, 1)
+            or type(count_before) is not int
+            or type(count_after) is not int
+            or count_before != expected_before
+            or count_after - count_before != delta
+            or type(raw.get("factor_solve_call_delta")) is not int
+            or raw.get("factor_solve_call_delta") != delta
+            or type(raw.get("factor_solve_count")) is not int
+            or raw.get("factor_solve_count") != count_after
+            or raw.get("status") != status
+        ):
+            raise RuntimeError("fixed-Q per-call audit and counter chain disagree")
+        global_zero = entry.get("global_rhs_exact_zero") is True
+        port_zero = entry.get("port_rhs_exact_zero") is True
+        rhs_norm = entry.get("global_rhs_norm")
+        if (
+            type(rhs_norm) is not float
+            or not np.isfinite(rhs_norm)
+            or rhs_norm < 0.0
+            or (rhs_norm == 0.0) != global_zero
+            or type(entry.get("global_rhs_exact_zero")) is not bool
+            or type(entry.get("port_rhs_exact_zero")) is not bool
+        ):
+            raise RuntimeError("fixed-Q global exact-zero evidence is inconsistent")
+        if status == "ZERO_RHS_DIRECT_ZERO":
+            if (
+                delta != 0
+                or not global_zero
+                or not port_zero
+                or raw.get("slave_zero") is not True
+                or raw.get("port_rhs_zero") is not True
+            ):
+                raise RuntimeError("fixed-Q zero solve lacks direct-zero evidence")
+        elif status == "SOLVE_COMPLETED":
+            if delta != 1 or (global_zero and port_zero):
+                raise RuntimeError("fixed-Q nonzero solve has inconsistent zero evidence")
+            if raw.get("matrix_identity") != entry.get("matrix_identity"):
+                raise RuntimeError("fixed-Q solve audit changed source matrix identity")
+        else:
+            raise RuntimeError(f"fixed-Q call has unsupported status {status!r}")
+        deltas.append(delta)
+        expected_before = count_after
+
+    if expected_before != int(solve_count_after) or sum(deltas) != delta_total:
+        raise RuntimeError("fixed-Q per-call deltas do not sum to the live counter")
+    if (
+        type(last_solve.get("factor_solve_delta_sum")) is not int
+        or last_solve["factor_solve_delta_sum"] != delta_total
+    ):
+        raise RuntimeError("fixed-Q P4 audit total solve delta is inconsistent")
+    if (
+        type(last_solve.get("backsolve_count")) is not int
+        or last_solve["backsolve_count"] != delta_total
+    ):
+        raise RuntimeError("fixed-Q residual audit solve count is inconsistent")
+    return deltas[0], deltas[1]
 
 _GMRES_RESTART_LIBRARY: Any | None = None
 _GMRES_RESTART_FUNCTION: Any | None = None
@@ -885,6 +1009,8 @@ class FixedPhysicalBalancedActiveTraceAction(FixedH6ActiveTraceAction):
         self._side_inverse: SideBalancedInverse | None = side_inverse
         self._physical_balh: PhysicalBalancedCoupling | None = None
         self._last_q_factor_solve_deltas: tuple[int, ...] = ()
+        self._last_q_factor_step_solve_deltas: tuple[tuple[int, int], ...] = ()
+        self._last_q_solve_audits: tuple[dict[str, Any], ...] = ()
         self._a6_apply_count = 0
         self._h6_apply_count = 0
         self._h6_matrix_mult_count = 0
@@ -923,13 +1049,61 @@ class FixedPhysicalBalancedActiveTraceAction(FixedH6ActiveTraceAction):
         if factor is None:
             raise RuntimeError("fixed physical BAL_H P4 factor was destroyed")
         before = _p4_solve_count(factor)
-        result = owner._apply_q_callback(
-            source,
-            return_leading_dual=return_leading_dual,
-            fixed_p4_correction_steps=1,
-        )
-        delta = max(_p4_solve_count(factor) - before, 0)
-        if delta != 2:
+        owner._last_fixed_q_solve_audit = None
+        result = None
+        try:
+            result = owner._apply_q_callback(
+                source,
+                return_leading_dual=return_leading_dual,
+                fixed_p4_correction_steps=1,
+            )
+            after = _p4_solve_count(factor)
+            delta = after - before
+            if delta < 0:
+                raise RuntimeError("fixed physical BAL_H P4 solve counter moved backwards")
+            if isinstance(getattr(factor, "inverse", None), P4CellCondensedInverse):
+                q_audit = owner._last_fixed_q_solve_audit
+                if not isinstance(q_audit, Mapping):
+                    raise TypeError("fixed physical BAL_H lost per-call P4 audit")
+                step_deltas = tuple(q_audit.get("factor_solve_deltas_by_step", ()))
+                q_input_norm = q_audit.get("q_input_global_norm")
+                if (
+                    q_audit.get("factor_solve_count_before") != before
+                    or q_audit.get("factor_solve_count_after") != after
+                    or not isinstance(q_input_norm, (int, float))
+                    or not np.isfinite(q_input_norm)
+                    or q_input_norm < 0.0
+                    or type(q_audit.get("q_input_global_exact_zero")) is not bool
+                    or (q_input_norm == 0.0)
+                    != q_audit.get("q_input_global_exact_zero")
+                    or len(step_deltas) != 2
+                    or any(type(value) is not int or value not in (0, 1) for value in step_deltas)
+                    or sum(step_deltas) != delta
+                ):
+                    raise RuntimeError(
+                        "fixed physical BAL_H per-call audit disagrees with factor count"
+                    )
+            else:
+                # The full augmented backend has no direct-zero shortcut; each
+                # of its two requested solves must therefore reach the factor.
+                if delta != 2:
+                    raise RuntimeError(
+                        "fixed physical BAL_H full P4 backend did not execute both solves"
+                    )
+                step_deltas = (1, 1)
+            q_audit = owner._last_fixed_q_solve_audit
+            if not isinstance(q_audit, Mapping):
+                raise TypeError("fixed physical BAL_H lost per-Q solve audit")
+            if (
+                type(q_audit.get("mathematical_correction_steps")) is not int
+                or q_audit.get("mathematical_correction_steps") != 1
+                or type(q_audit.get("factor_solve_call_delta")) is not int
+                or q_audit.get("factor_solve_call_delta") != delta
+                or tuple(q_audit.get("factor_solve_deltas_by_step", ()))
+                != tuple(step_deltas)
+            ):
+                raise RuntimeError("fixed physical BAL_H per-Q audit is inconsistent")
+        except BaseException:
             vectors = result if isinstance(result, tuple) else (result,)
             released: set[int] = set()
             for vector in vectors:
@@ -939,13 +1113,18 @@ class FixedPhysicalBalancedActiveTraceAction(FixedH6ActiveTraceAction):
                         vector.destroy()
                     except BaseException:  # noqa: BLE001, S110 - preserve solve-count failure
                         pass
-            raise RuntimeError(
-                "fixed physical BAL_H Q changed its same P4 factor by "
-                f"{delta} solves; expected one initial solve plus one correction"
-            )
+            raise
         self._last_q_factor_solve_deltas = (
             *self._last_q_factor_solve_deltas,
             delta,
+        )[-2:]
+        self._last_q_factor_step_solve_deltas = (
+            *self._last_q_factor_step_solve_deltas,
+            step_deltas,
+        )[-2:]
+        self._last_q_solve_audits = (
+            *self._last_q_solve_audits,
+            dict(q_audit),
         )[-2:]
         return result
 
@@ -967,6 +1146,8 @@ class FixedPhysicalBalancedActiveTraceAction(FixedH6ActiveTraceAction):
             raise RuntimeError("fixed physical BAL_H action has been destroyed")
         h6_mults_before = int(h6.matrix_mult_count)
         self._last_q_factor_solve_deltas = ()
+        self._last_q_factor_step_solve_deltas = ()
+        self._last_q_solve_audits = ()
         result = coupling.apply(source)
         try:
             result.copy(target)
@@ -984,10 +1165,40 @@ class FixedPhysicalBalancedActiveTraceAction(FixedH6ActiveTraceAction):
             raise RuntimeError(
                 "fixed physical BAL_H action changed its Q/H6 operation sequence"
             )
-        if self._last_q_factor_solve_deltas != (2, 2):
+        if (
+            len(self._last_q_factor_solve_deltas) != 2
+            or len(self._last_q_factor_step_solve_deltas) != 2
+            or len(self._last_q_solve_audits) != 2
+            or any(
+                len(step_deltas) != 2
+                or any(
+                    type(value) is not int or value not in (0, 1)
+                    for value in step_deltas
+                )
+                or sum(step_deltas) != total_delta
+                for step_deltas, total_delta in zip(
+                    self._last_q_factor_step_solve_deltas,
+                    self._last_q_factor_solve_deltas,
+                    strict=True,
+                )
+            )
+            or any(
+                type(q_audit.get("mathematical_correction_steps")) is not int
+                or q_audit.get("mathematical_correction_steps") != 1
+                or type(q_audit.get("factor_solve_call_delta")) is not int
+                or q_audit.get("factor_solve_call_delta") != total_delta
+                or tuple(q_audit.get("factor_solve_deltas_by_step", ()))
+                != step_deltas
+                for q_audit, step_deltas, total_delta in zip(
+                    self._last_q_solve_audits,
+                    self._last_q_factor_step_solve_deltas,
+                    self._last_q_factor_solve_deltas,
+                    strict=True,
+                )
+            )
+        ):
             raise RuntimeError(
-                "fixed physical BAL_H action did not use exactly one same-factor "
-                "P4 correction in each Q call"
+                "fixed physical BAL_H action lost per-step same-factor P4 solve evidence"
             )
         if owner._p4_factor is None:
             raise RuntimeError("fixed physical BAL_H P4 factor was destroyed")
@@ -1030,9 +1241,35 @@ class FixedPhysicalBalancedActiveTraceAction(FixedH6ActiveTraceAction):
                 "last_q_factor_solve_deltas": list(
                     self._last_q_factor_solve_deltas
                 ),
+                "last_q_factor_step_solve_deltas": [
+                    list(values)
+                    for values in self._last_q_factor_step_solve_deltas
+                ],
+                "last_q_solve_audits": [
+                    {
+                        **dict(q_audit),
+                        "inverse_apply_history": (
+                            None
+                            if q_audit.get("inverse_apply_history") is None
+                            else [
+                                {
+                                    **dict(inverse_audit),
+                                    "inverse_audit": dict(
+                                        inverse_audit["inverse_audit"]
+                                    ),
+                                }
+                                for inverse_audit in q_audit[
+                                    "inverse_apply_history"
+                                ]
+                            ]
+                        ),
+                    }
+                    for q_audit in self._last_q_solve_audits
+                ],
+                "mathematical_p4_correction_steps_per_q": 1,
                 "last_q_factor_solve_count_scope": (
-                    "local side factor counter; one initial solve plus one "
-                    "same-factor correction per Q call"
+                    "local side factor counter; each initial/correction inverse "
+                    "call records its status and exact solve delta"
                 ),
                 "a6_apply_count": self._a6_apply_count,
                 "h6_apply_count": self._h6_apply_count,
@@ -1175,6 +1412,7 @@ class SideBalancedInverse:
         self._active_p4_call_records: list[dict[str, Any]] | None = None
         self._active_true_residual_samples: list[dict[str, Any]] | None = None
         self._direct_p4_call_records: list[dict[str, Any]] = []
+        self._last_fixed_q_solve_audit: dict[str, Any] | None = None
         self._iteration_history: list[dict[str, Any]] | None = (
             [] if self._record_iteration_history else None
         )
@@ -2127,6 +2365,22 @@ class SideBalancedInverse:
     ) -> PETSc.Vec:
         if self._owner_transfer is None or self._p4_factor is None:
             raise RuntimeError("BAL_H coarse components have been destroyed")
+        if fixed_p4_correction_steps is not None and (
+            type(fixed_p4_correction_steps) is not int
+            or fixed_p4_correction_steps != 1
+        ):
+            raise ValueError("fixed physical BAL_H requests exactly one correction")
+        self._last_fixed_q_solve_audit = None
+        fixed_q_input_global_norm = (
+            float(source.norm())
+            if fixed_p4_correction_steps is not None
+            else None
+        )
+        if fixed_p4_correction_steps is not None and (
+            not np.isfinite(fixed_q_input_global_norm)
+            or fixed_q_input_global_norm < 0.0
+        ):
+            raise FloatingPointError("fixed-Q input norm is non-finite or negative")
         call_history = (
             self._active_p4_call_records
             if self._apply_in_progress
@@ -2350,16 +2604,52 @@ class SideBalancedInverse:
                         perf_counter() - extract_started,
                     )
             if fixed_p4_correction_steps is not None:
-                actual_q_backsolves = max(
-                    _p4_solve_count(self._p4_factor) - factor_solve_before,
-                    0,
-                )
-                if actual_q_backsolves != fixed_p4_correction_steps + 1:
-                    raise RuntimeError(
-                        "fixed physical BAL_H Q did not perform exactly one "
-                        "same-factor P4 correction: "
-                        f"backsolves={actual_q_backsolves}"
+                factor_solve_after = _p4_solve_count(self._p4_factor)
+                actual_q_backsolves = factor_solve_after - factor_solve_before
+                if actual_q_backsolves < 0:
+                    raise RuntimeError("fixed physical BAL_H P4 solve counter moved backwards")
+                if (
+                    self._p4_inverse_backend == "cell_condensed"
+                    and isinstance(
+                        getattr(self._p4_factor, "inverse", None),
+                        P4CellCondensedInverse,
                     )
+                ):
+                    step_deltas = _fixed_q_cell_solve_audit(
+                        self._p4_factor,
+                        solve_count_before=factor_solve_before,
+                        solve_count_after=factor_solve_after,
+                    )
+                    last_solve = self._p4_factor.diagnostics["last_solve"]
+                    inverse_history = tuple(
+                        dict(entry)
+                        for entry in last_solve["inverse_apply_history"]
+                    )
+                    audit_source = "P4CellCondensedInverse.last_audit_per_apply"
+                else:
+                    # The full augmented backend and legacy dense test doubles
+                    # have no direct-zero inverse path; both calls must solve.
+                    if actual_q_backsolves != 2:
+                        raise RuntimeError(
+                            "fixed physical BAL_H non-shortcut P4 backend did not "
+                            "execute both inverse calls"
+                        )
+                    step_deltas = (1, 1)
+                    inverse_history = None
+                    audit_source = "backend_counter_no_direct_zero_path"
+                self._last_fixed_q_solve_audit = {
+                    "mathematical_correction_steps": 1,
+                    "q_input_global_norm": float(fixed_q_input_global_norm),
+                    "q_input_global_exact_zero": (
+                        float(fixed_q_input_global_norm) == 0.0
+                    ),
+                    "factor_solve_count_before": factor_solve_before,
+                    "factor_solve_count_after": factor_solve_after,
+                    "factor_solve_call_delta": actual_q_backsolves,
+                    "factor_solve_deltas_by_step": tuple(step_deltas),
+                    "inverse_apply_history": inverse_history,
+                    "audit_source": audit_source,
+                }
             if self._diagnostic_callback is not None and coarse_solution is not None:
                 solution_norm = float(coarse_solution.norm())
                 solution_norm_status = "measured"
@@ -2486,7 +2776,9 @@ class SideBalancedInverse:
                         p4_timing["solution_recovery_seconds"],
                     )
             factor_solve_after = _p4_solve_count(self._p4_factor)
-            actual_backsolves = max(factor_solve_after - factor_solve_before, 0)
+            actual_backsolves = factor_solve_after - factor_solve_before
+            if actual_backsolves < 0:
+                raise RuntimeError("BAL_H P4 solve counter moved backwards")
             self._p4_backsolve_count += actual_backsolves
             self._p4_refinement_count += max(actual_backsolves - 1, 0)
             if record_p4_refinement:
@@ -2635,6 +2927,21 @@ class SideBalancedInverse:
                         else None
                     ),
                 }
+                if fixed_p4_correction_steps is not None:
+                    q_solve_audit = self._last_fixed_q_solve_audit
+                    if isinstance(q_solve_audit, Mapping):
+                        scalar_summary.update(
+                            {
+                                "mathematical_correction_steps": 1,
+                                "factor_solve_delta_sum": int(actual_backsolves),
+                                "factor_solve_deltas_by_step": list(
+                                    q_solve_audit["factor_solve_deltas_by_step"]
+                                ),
+                            }
+                        )
+                        call_record["fixed_q_solve_audit"] = dict(q_solve_audit)
+                    elif active_error is None:
+                        raise RuntimeError("fixed-Q P4 solve audit was not retained")
                 if refinement_target_tolerance is not None:
                     call_record.update(
                         {

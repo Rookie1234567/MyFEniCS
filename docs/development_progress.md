@@ -1,5 +1,11 @@
 # 项目开发进度：Task000–Task041
 
+## 2026-10-10：W0.7 fixed-Q 计数门事故与tiny合同收口
+
+Invocation `3cc1884481474e5ba390e757eeb482c0`复用producer、QEP=0，bottom/top P4 numeric均完成；随后fixed physical BAL_H modal sample的固定Q计数门因一次调用实际记录`backsolves=0`而报`IMPLEMENTATION_FAILURE`。public rc1、service exit3，finalizer `failed/service_boundary_failure`、9/11，false为`public_result_completed`与`service_terminal_normal`，`controlled_stop.active=false`。唯一service wall `1771.020854749 s`按runroot在V5仅计一次；ledger 211项、SHA `00b34a553294f5b230c0572b174cc4af09ec7c0186f8422af4a85a4854cf0e15`。没有outer、五项最终残差、recovery或完整物理输出。
+
+raw未持久化失败Q的RHS、PH结果和逐调用exact-zero证据；全局零只是source-derived，不能作为该次0 solve的实测解释。一次数学修正要求与因子实际solve次数分开：只有明确exact direct-zero审计才允许0次LU；其余非零分支按实际solve计数。四个serial/MPI2 pytest attempt总父wall `10.834975661942735 s`，含首次test-only缺FixedH6 fixture失败、后续serial分attempt通过和MPI2两rank各6 passed；V5已按attempt唯一入账，不是单次整组通过。tiny真实P4 inverse/MPI2合同不等于production资格。详见[Response V13](task041_mpi1_shortwave_hybrid_capacity/response_v13.md)、[outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/shortwave_delivery_v11.md)、[test summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)和[terminal compact](../results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261009T160948.696125Z/terminal_compact_fixed_q_zero_audit_v11.json)。下一步按审核后的最小修复与一次事故重试继续W0.7主线；W5按用户决定延期，W2不阻0.7。
+
 ## 2026-10-09：W0.7 fixed physical BAL_H candidate binding 接线事故
 
 后续 warm Invocation 72f92a0cae6f4066a455bea0dba8561c 与此前实际到达 outer iteration 1 的 797ae... 分开记录。本次 sealed request 为 fixed_physical_balh_once，但 candidate setup 重建 fixed-H6 binding 时漏传 selector；注册检查在 factor_setup 拒绝，actual method未建立。consumer IMPLEMENTATION_FAILURE、public rc3、finalizer failed/service_boundary_failure；finalizer 11项为9 true/2 false，仅public结果完成与service正常终止为false，controlled_stop.active=false。这是P4前的接线实现失败，不是BAL_H残差或资源失败。

@@ -12,9 +12,16 @@ import numpy as np
 import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
+from scipy.linalg import lu_factor
 
 from src.solvers import physical_balanced_side_inverse as side_inverse_module
+from src.solvers.hcurl_assembly_time_condensation import (
+    AssemblyTimeCondensedSystem,
+    CellRecoveryMap,
+    TraceConstraintMap,
+)
 from src.solvers.hybrid_local_dtn_action import HybridLocalDtnActionSystem
+from src.solvers.p4_cell_condensed_inverse import P4CellCondensedInverse
 from src.solvers.physical_balanced_h6 import FixedH6
 from src.solvers.physical_balanced_physical_operator import (
     P4CondensedExactFactor,
@@ -4021,6 +4028,272 @@ def test_p4_diagnostic_exact_zero_rhs_records_one_requested_correction(
         _destroy_g2a_p4_fixture(fixture)
 
 
+class _TinyCellCondensedLuFactor:
+    """Real PETSc LU handle used by the focused P4Cell inverse fixture."""
+
+    def __init__(self, matrix: PETSc.Mat) -> None:
+        self.ksp = PETSc.KSP().create(matrix.getComm())
+        self.solve_count = 0
+        self.destroyed = False
+        try:
+            self.ksp.setOperators(matrix)
+            self.ksp.setType("preonly")
+            pc = self.ksp.getPC()
+            pc.setType("lu")
+            if matrix.getComm().tompi4py().size > 1:
+                pc.setFactorSolverType("mumps")
+            self.ksp.setUp()
+        except BaseException:
+            self.ksp.destroy()
+            self.destroyed = True
+            raise
+
+    @property
+    def diagnostics(self) -> dict[str, object]:
+        return {
+            "factor_state": "numeric_ready",
+            "factor_solve_count": int(self.solve_count),
+        }
+
+    def solve_repeated(self, rhs: PETSc.Vec, solution: PETSc.Vec) -> None:
+        if self.destroyed:
+            raise RuntimeError("tiny cell-condensed LU factor is destroyed")
+        self.ksp.solve(rhs, solution)
+        reason = int(self.ksp.getConvergedReason())
+        if reason <= 0:
+            raise RuntimeError(f"tiny cell-condensed LU did not converge: {reason}")
+        self.solve_count += 1
+
+    def destroy(self) -> None:
+        if not self.destroyed:
+            self.ksp.destroy()
+            self.destroyed = True
+
+
+def _fixed_q_real_cell_condensed_fixture(
+    *,
+    physical_trace_scale: float = 1.0,
+    empty_owner: bool = False,
+):
+    """Build a one-cell real P4Cell inverse and the fixed-Q side callback."""
+
+    comm = MPI.COMM_WORLD
+    if comm.size not in (1, 2):
+        pytest.skip("the real fixed-Q fixture is serial/MPI2 only")
+    if empty_owner and comm.size != 2:
+        pytest.skip("the empty-owner fixed-Q case requires MPI2")
+    if not np.isfinite(physical_trace_scale) or physical_trace_scale <= 0.0:
+        raise ValueError("tiny physical trace scale must be finite and positive")
+
+    cell_ranks = (1,) if empty_owner else tuple(range(comm.size))
+    slot_by_rank = {rank: slot for slot, rank in enumerate(cell_ranks)}
+    cell_count = len(cell_ranks)
+    full_rows = 2 * cell_count
+    full_local_rows = (
+        (0, 2) if empty_owner else (2,) * comm.size
+    )
+    active_local_rows = (
+        (0, cell_count) if empty_owner else (1,) * comm.size
+    )
+    local_active_rows = active_local_rows[comm.rank]
+
+    condensed_matrix = None
+    condensed_factor = None
+    condensed_system = None
+    cell_inverse = None
+    physical_matrix = None
+    p4 = None
+    h6 = _tiny_fixed_h6(full_rows, local_row_counts=full_local_rows)
+    side_inverse = None
+    side_owned = None
+    try:
+        condensed_matrix = PETSc.Mat().createAIJ(
+            size=((local_active_rows, cell_count), (local_active_rows, cell_count)),
+            nnz=1,
+            comm=comm,
+        )
+        active_start, active_end = map(int, condensed_matrix.getOwnershipRange())
+        for row in range(active_start, active_end):
+            condensed_matrix.setValues(
+                np.asarray([row], dtype=PETSc.IntType),
+                np.asarray([row], dtype=PETSc.IntType),
+                np.asarray([[1.0 + 0.0j]], dtype=PETSc.ScalarType),
+            )
+        condensed_matrix.assemble()
+        condensed_factor = _TinyCellCondensedLuFactor(condensed_matrix)
+
+        original_to_trace = {
+            2 * slot + 1: slot for slot in range(cell_count)
+        }
+        expansion_by_original = {
+            2 * slot + 1: (
+                np.asarray([slot], dtype=PETSc.IntType),
+                np.asarray([1.0 + 0.0j], dtype=np.complex128),
+            )
+            for slot in range(cell_count)
+        }
+        owned_active_originals = np.asarray(
+            [
+                2 * slot_by_rank[comm.rank] + 1
+            ]
+            if comm.rank in slot_by_rank
+            else [],
+            dtype=PETSc.IntType,
+        )
+        trace_constraints = TraceConstraintMap(
+            owned_active_original_dofs=owned_active_originals.copy(),
+            original_to_active=dict(original_to_trace),
+            expansion_by_original=expansion_by_original,
+            full_trace_rows=cell_count,
+            active_rows=cell_count,
+            slave_rows=0,
+            build_audit={"fixture": "one-cell-identity-trace-expansion"},
+        )
+        local_cells = ()
+        interior_from_trace: dict[tuple[int, ...], np.ndarray] = {}
+        interior_lu: dict[tuple[int, ...], tuple[np.ndarray, np.ndarray]] = {}
+        interior_rhs_projection: dict[tuple[int, ...], np.ndarray] = {}
+        interior_solution_embedding: dict[tuple[int, ...], np.ndarray] = {}
+        trace_from_interior_rhs: dict[tuple[int, ...], np.ndarray] = {}
+        interior_residual_projection: dict[tuple[int, ...], np.ndarray] = {}
+        if comm.rank in slot_by_rank:
+            slot = slot_by_rank[comm.rank]
+            class_key = (slot,)
+            local_cells = (
+                CellRecoveryMap(
+                    interior_original_dofs=np.asarray(
+                        [2 * slot], dtype=PETSc.IntType
+                    ),
+                    trace_original_dofs=np.asarray(
+                        [2 * slot + 1], dtype=PETSc.IntType
+                    ),
+                    class_key=class_key,
+                ),
+            )
+            interior_from_trace[class_key] = np.zeros(
+                (1, 1), dtype=np.complex128
+            )
+            interior_lu[class_key] = lu_factor(
+                np.asarray([[2.0 + 0.0j]], dtype=np.complex128)
+            )
+            interior_rhs_projection[class_key] = np.eye(
+                1, dtype=np.complex128
+            )
+            interior_solution_embedding[class_key] = np.eye(
+                1, dtype=np.complex128
+            )
+            trace_from_interior_rhs[class_key] = np.zeros(
+                (1, 1), dtype=np.complex128
+            )
+            interior_residual_projection[class_key] = np.eye(
+                1, dtype=np.complex128
+            )
+        condensed_system = AssemblyTimeCondensedSystem(
+            matrix=condensed_matrix,
+            owned_trace_original_dofs=owned_active_originals.copy(),
+            original_to_trace=dict(original_to_trace),
+            trace_constraints=trace_constraints,
+            cell_recovery_maps=local_cells,
+            interior_from_trace_by_class=interior_from_trace,
+            interior_lu_by_class=interior_lu,
+            interior_rhs_projection_by_class=interior_rhs_projection,
+            interior_solution_embedding_by_class=interior_solution_embedding,
+            trace_from_interior_rhs_by_class=trace_from_interior_rhs,
+            interior_residual_projection_by_class=interior_residual_projection,
+            full_rows=full_rows,
+            trace_rows=cell_count,
+            active_rows=cell_count,
+            appended_rows=0,
+            interior_rows=cell_count,
+            active_interior_rows=cell_count,
+            build_audit={"fixture": "actual-P4CellCondensedInverse-one-cell"},
+            comm=comm,
+            owned_active_rows=local_active_rows,
+            owned_appended_rows=0,
+            retained_local_schur_by_class=None,
+        )
+        cell_inverse = P4CellCondensedInverse(
+            condensed_system,
+            condensed_factor,
+            owns_condensed=True,
+            owns_factor=True,
+        )
+        condensed_matrix = None
+        condensed_system = None
+        condensed_factor = None
+
+        physical_values = np.zeros((full_rows, full_rows), dtype=np.complex128)
+        for slot in range(cell_count):
+            physical_values[2 * slot, 2 * slot] = 2.0
+            physical_values[2 * slot + 1, 2 * slot + 1] = (
+                physical_trace_scale
+            )
+        physical_matrix, physical_context = _dense_python_matrix(
+            physical_values,
+            base_rows=full_rows,
+            purpose="real-cell-condensed-fixed-q-A4",
+            local_row_counts=full_local_rows,
+        )
+        physical_action = SimpleNamespace(
+            matrix=physical_matrix,
+            full_rows=full_rows,
+            modes=(),
+            action=SimpleNamespace(modes=()),
+            audit={"fixture": "diagonal-original-A4"},
+        )
+        p4 = P4CondensedExactFactor(
+            physical_action=physical_action,
+            inverse=cell_inverse,
+            factor_events=["actual-P4CellCondensedInverse"],
+            residual_tolerance=1.0e-10,
+            owns_physical_action=False,
+        )
+        cell_inverse = None
+
+        side_inverse, side_owned = _build_fixture(
+            size=full_rows,
+            p4_factor=p4,
+            p4_inverse_backend="cell_condensed",
+            h6_action=h6,
+            local_row_counts=full_local_rows,
+        )
+        p4 = None
+        old_full_action = side_owned["full_action"].matrix
+        old_full_action.destroy()
+        side_owned["full_action"].matrix = physical_matrix
+        side_owned["full_action"].context = physical_context
+        physical_matrix = None
+        side_inverse.configure_diagnostic_p4_corrections(
+            0, None, refinement_target_tolerance=5.0e-13
+        )
+        return side_inverse, side_owned
+    except BaseException:
+        if side_inverse is not None:
+            side_inverse.destroy()
+            if side_owned is not None:
+                side_owned["operator"].destroy()
+        else:
+            h6.destroy()
+        if side_inverse is None and p4 is not None:
+            p4.destroy()
+            if physical_matrix is not None:
+                physical_matrix.destroy()
+        elif side_inverse is None and cell_inverse is not None:
+            cell_inverse.destroy()
+            if physical_matrix is not None:
+                physical_matrix.destroy()
+        elif side_inverse is None:
+            if condensed_factor is not None:
+                condensed_factor.destroy()
+            if condensed_system is not None:
+                condensed_system.destroy()
+            elif condensed_matrix is not None:
+                condensed_matrix.destroy()
+            if physical_matrix is not None:
+                physical_matrix.destroy()
+        raise
+
+
 def _fixed_physical_balh_cell_fixture(
     *,
     zero_rhs: bool = False,
@@ -4074,6 +4347,336 @@ def _fixed_physical_balh_cell_fixture(
         _destroy_g2a_p4_fixture(p4_fixture)
         raise
     return inverse, owned, p4_fixture
+
+
+def _assert_fixed_q_original_a_residual(
+    matrix: PETSc.Mat,
+    rhs: PETSc.Vec,
+    solution: PETSc.Vec,
+) -> float:
+    applied = matrix.createVecLeft()
+    residual = rhs.duplicate()
+    try:
+        matrix.mult(solution, applied)
+        rhs.copy(residual)
+        residual.axpy(PETSc.ScalarType(-1.0), applied)
+        residual_norm = float(residual.norm())
+        rhs_norm = float(rhs.norm())
+        relative = residual_norm / rhs_norm if rhs_norm > 0.0 else residual_norm
+        assert np.isfinite(relative)
+        assert relative <= 1.0e-10
+        return relative
+    finally:
+        residual.destroy()
+        applied.destroy()
+
+
+@pytest.mark.parametrize(
+    "case,trace_scale,expected_statuses,expected_deltas",
+    [
+        (
+            "global_exact_zero",
+            1.0,
+            ("ZERO_RHS_DIRECT_ZERO", "ZERO_RHS_DIRECT_ZERO"),
+            (0, 0),
+        ),
+        (
+            "nonzero_q_input_ph_zero",
+            1.0,
+            ("ZERO_RHS_DIRECT_ZERO", "ZERO_RHS_DIRECT_ZERO"),
+            (0, 0),
+        ),
+        (
+            "nonzero_initial_exact_zero_correction",
+            1.0,
+            ("SOLVE_COMPLETED", "ZERO_RHS_DIRECT_ZERO"),
+            (1, 0),
+        ),
+        (
+            "nonzero_initial_and_correction",
+            1.0 + 1.0e-6,
+            ("SOLVE_COMPLETED", "SOLVE_COMPLETED"),
+            (1, 1),
+        ),
+        (
+            "mpi2_empty_owner_global_nonzero",
+            1.0,
+            ("SOLVE_COMPLETED", "ZERO_RHS_DIRECT_ZERO"),
+            (1, 0),
+        ),
+    ],
+)
+def test_fixed_physical_q_real_cell_inverse_audits_exact_solve_branches(
+    case: str,
+    trace_scale: float,
+    expected_statuses: tuple[str, str],
+    expected_deltas: tuple[int, int],
+) -> None:
+    empty_owner = case == "mpi2_empty_owner_global_nonzero"
+    if empty_owner and MPI.COMM_WORLD.size != 2:
+        pytest.skip("the empty-owner fixed-Q branch is MPI2-only")
+    inverse, owned = _fixed_q_real_cell_condensed_fixture(
+        physical_trace_scale=trace_scale,
+        empty_owner=empty_owner,
+    )
+    p4 = owned["p4_factor"]
+    assert isinstance(p4, P4CondensedExactFactor)
+    assert isinstance(p4.inverse, P4CellCondensedInverse)
+    action = inverse.create_fixed_physical_balh_active_trace_action()
+    source_values = np.asarray(
+        [0.5 + 0.25j + 0.1j * index for index in range(p4.full_rows)],
+        dtype=np.complex128,
+    )
+    if case == "global_exact_zero":
+        source_values.fill(0.0)
+    source = _new_vector(p4.physical_action.matrix, source_values)
+    source_before = _gather_dense_vector(source)
+    target = None
+    expected_rhs = None
+    apply_kwargs: list[dict[str, object]] = []
+    original_p4_apply = p4.apply
+
+    def capture_p4_apply(rhs: PETSc.Vec, **kwargs):
+        apply_kwargs.append(dict(kwargs))
+        return original_p4_apply(rhs, **kwargs)
+
+    p4.apply = capture_p4_apply
+    if case == "nonzero_q_input_ph_zero":
+        def zero_adjoint(rhs: PETSc.Vec, *, timing=None) -> PETSc.Vec:
+            del timing
+            zero = rhs.duplicate()
+            zero.set(PETSc.ScalarType(0.0))
+            zero.assemble()
+            return zero
+
+        owned["transfer"].apply_adjoint = zero_adjoint
+    try:
+        assert inverse._p4_refinement_target_tolerance == 5.0e-13
+        if case == "global_exact_zero":
+            assert float(source.norm()) == 0.0
+        else:
+            assert float(source.norm()) > 0.0
+        if empty_owner:
+            assert source.getLocalSize() == (0 if MPI.COMM_WORLD.rank == 0 else 2)
+            assert float(source.norm()) > 0.0
+        target = action._apply_q_once(source)
+        q_audit = inverse._last_fixed_q_solve_audit
+        assert isinstance(q_audit, dict)
+        assert q_audit["mathematical_correction_steps"] == 1
+        assert q_audit["q_input_global_exact_zero"] is (
+            case == "global_exact_zero"
+        )
+        assert q_audit["factor_solve_deltas_by_step"] == expected_deltas
+        history = q_audit["inverse_apply_history"]
+        assert len(history) == 2
+        assert tuple(entry["step"] for entry in history) == (
+            "initial",
+            "correction_1",
+        )
+        assert tuple(entry["status"] for entry in history) == expected_statuses
+        assert tuple(entry["factor_solve_delta"] for entry in history) == expected_deltas
+        assert all(
+            entry["factor_identity_local"] == id(p4.inverse.factor)
+            for entry in history
+        )
+        assert q_audit["factor_solve_call_delta"] == sum(expected_deltas)
+        assert p4.inverse.solve_count == sum(expected_deltas)
+        assert apply_kwargs == [
+            {"diagnostic_correction_steps": 1, "timing": None}
+        ]
+        assert "refinement_target_tolerance" not in apply_kwargs[0]
+        assert inverse._p4_refinement_target_tolerance == 5.0e-13
+
+        if case == "nonzero_q_input_ph_zero":
+            assert q_audit["q_input_global_norm"] > 0.0
+            assert all(
+                entry["global_rhs_exact_zero"]
+                and entry["port_rhs_exact_zero"]
+                for entry in history
+            )
+            expected_rhs = source.duplicate()
+            expected_rhs.set(PETSc.ScalarType(0.0))
+            expected_rhs.assemble()
+        else:
+            expected_rhs = source
+        residual_relative = _assert_fixed_q_original_a_residual(
+            p4.physical_action.matrix,
+            expected_rhs,
+            target,
+        )
+        assert residual_relative <= 1.0e-10
+        last_solve = p4.diagnostics["last_solve"]
+        assert last_solve["physical_gate_passed"] is True
+        assert last_solve["augmented_gate_passed"] is True
+        assert last_solve["residual_tolerance"] == 1.0e-10
+        assert last_solve["backsolve_count"] == sum(expected_deltas)
+        np.testing.assert_array_equal(_gather_dense_vector(source), source_before)
+    finally:
+        if expected_rhs is not None and expected_rhs is not source:
+            expected_rhs.destroy()
+        if target is not None:
+            target.destroy()
+        source.destroy()
+        action.destroy()
+        inverse.destroy()
+        owned["operator"].destroy()
+
+
+def test_fixed_physical_q_real_cell_inverse_full_action_global_zero_records_all_direct_zero_steps() -> None:
+    inverse, owned = _fixed_q_real_cell_condensed_fixture()
+    p4 = owned["p4_factor"]
+    assert isinstance(p4, P4CondensedExactFactor)
+    assert isinstance(p4.inverse, P4CellCondensedInverse)
+    action = inverse.create_fixed_physical_balh_active_trace_action()
+    source = _new_vector(
+        p4.physical_action.matrix,
+        np.zeros(int(p4.full_rows), dtype=np.complex128),
+    )
+    source_before = _gather_dense_vector(source)
+    target = owned["operator"].createVecLeft()
+    try:
+        action.apply(source, target)
+        assert float(source.norm()) == 0.0
+        assert float(target.norm()) == 0.0
+        np.testing.assert_array_equal(_gather_dense_vector(source), source_before)
+        assert _assert_fixed_q_original_a_residual(
+            p4.physical_action.matrix,
+            source,
+            target,
+        ) == 0.0
+        assert p4.inverse.solve_count == 0
+        audit = action.audit
+        assert audit["last_q_factor_solve_deltas"] == [0, 0]
+        assert audit["last_q_factor_step_solve_deltas"] == [[0, 0], [0, 0]]
+        assert audit["mathematical_p4_correction_steps_per_q"] == 1
+        q_audits = audit["last_q_solve_audits"]
+        assert len(q_audits) == 2
+        assert all(
+            q_audit["mathematical_correction_steps"] == 1
+            and q_audit["q_input_global_exact_zero"] is True
+            and q_audit["factor_solve_call_delta"] == 0
+            and q_audit["factor_solve_deltas_by_step"] == (0, 0)
+            and q_audit["factor_solve_count_before"] == 0
+            and q_audit["factor_solve_count_after"] == 0
+            for q_audit in q_audits
+        )
+        for q_audit in q_audits:
+            inverse_history = q_audit["inverse_apply_history"]
+            assert len(inverse_history) == 2
+            assert tuple(entry["step"] for entry in inverse_history) == (
+                "initial",
+                "correction_1",
+            )
+            assert all(
+                entry["status"] == "ZERO_RHS_DIRECT_ZERO"
+                and entry["global_rhs_exact_zero"] is True
+                and entry["port_rhs_exact_zero"] is True
+                and entry["factor_solve_delta"] == 0
+                and entry["factor_solve_count_before"] == 0
+                and entry["factor_solve_count_after"] == 0
+                and entry["inverse_audit"]["slave_zero"] is True
+                and entry["inverse_audit"]["port_rhs_zero"] is True
+                for entry in inverse_history
+            )
+        coupling_counts = audit["last_balh_coupling"]["counts"]
+        assert coupling_counts["Q"] == 2
+        assert coupling_counts["A6"] == 2
+        assert coupling_counts["H6"] == 1
+        assert audit["a6_apply_count"] == 2
+        assert audit["h6_apply_count"] == 1
+    finally:
+        target.destroy()
+        source.destroy()
+        action.destroy()
+        inverse.destroy()
+        owned["operator"].destroy()
+
+
+def test_fixed_physical_q_real_cell_inverse_rejects_audit_counter_mismatch() -> None:
+    inverse, owned = _fixed_q_real_cell_condensed_fixture()
+    p4 = owned["p4_factor"]
+    action = inverse.create_fixed_physical_balh_active_trace_action()
+    source_values = np.asarray([0.25 + 0.5j, -0.125 + 0.375j], dtype=np.complex128)
+    source = _new_vector(p4.physical_action.matrix, source_values)
+    cell_inverse = p4.inverse
+    original_apply = cell_inverse.apply
+
+    def mismatch_solve_counter_audit(rhs: PETSc.Vec, *, port_rhs=None):
+        result = original_apply(rhs, port_rhs=port_rhs)
+        if cell_inverse.last_audit.get("status") == "SOLVE_COMPLETED":
+            cell_inverse.last_audit = {
+                **cell_inverse.last_audit,
+                "factor_solve_call_delta": 0,
+            }
+        return result
+
+    cell_inverse.apply = mismatch_solve_counter_audit
+    try:
+        with pytest.raises(
+            RuntimeError,
+            match="fixed P4 inverse audit validation failed",
+        ):
+            action._apply_q_once(source)
+        assert cell_inverse.solve_count == 1
+        assert p4.diagnostics["last_solve"]["error_type"] == "RuntimeError"
+    finally:
+        source.destroy()
+        action.destroy()
+        inverse.destroy()
+        owned["operator"].destroy()
+
+
+def test_fixed_physical_q_real_cell_inverse_is_complex_linear_with_original_a_residual() -> None:
+    inverse, owned = _fixed_q_real_cell_condensed_fixture()
+    p4 = owned["p4_factor"]
+    action = inverse.create_fixed_physical_balh_active_trace_action()
+    row_count = int(p4.full_rows)
+    x_values = np.asarray(
+        [0.3 + 0.2j * index for index in range(row_count)], dtype=np.complex128
+    )
+    y_values = np.asarray(
+        [-0.15 + 0.25j * (index + 1) for index in range(row_count)],
+        dtype=np.complex128,
+    )
+    alpha = 0.25 + 0.375j
+    beta = -0.125 + 0.2j
+    combined_values = alpha * x_values + beta * y_values
+    vectors = [
+        _new_vector(p4.physical_action.matrix, values)
+        for values in (x_values, y_values, combined_values)
+    ]
+    outputs: list[PETSc.Vec] = []
+    try:
+        for source in vectors:
+            output = action._apply_q_once(source)
+            outputs.append(output)
+            assert _assert_fixed_q_original_a_residual(
+                p4.physical_action.matrix,
+                source,
+                output,
+            ) <= 1.0e-10
+        actual = _gather_dense_vector(outputs[2])
+        expected = (
+            alpha * _gather_dense_vector(outputs[0])
+            + beta * _gather_dense_vector(outputs[1])
+        )
+        assert np.linalg.norm(actual - expected) <= 1.0e-12 * max(
+            float(np.linalg.norm(expected)), 1.0
+        )
+        assert p4.inverse.solve_count == 3
+        assert inverse._p4_refinement_target_tolerance == 5.0e-13
+        assert action.audit["last_q_factor_step_solve_deltas"] == [
+            [1, 0],
+            [1, 0],
+        ]
+    finally:
+        for output in outputs:
+            output.destroy()
+        for source in vectors:
+            source.destroy()
+        action.destroy()
+        inverse.destroy()
+        owned["operator"].destroy()
 
 
 def _sample_galerkin_a6(

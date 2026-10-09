@@ -1,5 +1,18 @@
 # Test and evidence summary
 
+## 2026-10-10：fixed-Q exact-zero 分支与MPI2合同验证
+
+这组小测试检查固定Q中的一次数学修正如何与P4因子的实际solve次数分别记账。它在真实小型`P4CellCondensedInverse` fixture上验证direct exact-zero证据、非零分支调用数、计数不匹配拒绝、复数线性和原矩阵残差；MPI2再检查empty-owner本地零不被当成全局零。测试通过只证明这些tiny组件合同，不证明W0.7 production场已通过。
+
+| attempt | 实际结果 | pytest父`CLOCK_MONOTONIC` wall | source / stdout SHA |
+|---|---|---:|---|
+| `task041_fixed_q_zero_audit_20261009T2258Z:serial:pytest` | 1项执行、1失败；test-only fixture缺少FixedH6，在数学断言前停止。保留原失败 | 3.251639037858695 s | test349 `df54080b15aeee108b30e493b20948df912ad1ab288dca0bb8634fc922eb8b0d`；stdout `94b41a59ab23c80030bf8cc29f5b73788e2548ae9d6e4e151a9e46d0436bdf11` |
+| `task041_fixed_q_zero_audit_20261009T230520Z_fixture_retry_blis:serial:pytest` | 4 passed、1 MPI2-only skip；仅受影响参数组 | 3.2557253290433437 s | test349 `6f6bde9d033ed106fd183aae219010d0d6d492843f6f333285f344c303756562`；stdout `0beaa2af50333a5e553f3c15c9fa268b24fc6e0e6320a2e43521ce978964f866` |
+| `task041_fixed_q_zero_audit_20261009T230700Z_serial_remaining:serial:pytest` | 4 passed | 2.134472551057115 s | 同test349 SHA；stdout `6d62afba1eb706b18d45b1313b882563af19d88a6e7e159ef581635c001bc546` |
+| `task041_fixed_q_zero_audit_20261009T231000Z_mpi2:mpi2:pytest` | 两rank各6 passed；含分布式分支和empty-owner合同 | 2.1931387439835817 s | 同test349 SHA；stdout `1f4651035fec98b9e33275949bc76a01f69c6fa1de8ccd22707439544e96b936` |
+
+四个真实pytest父wall合计`10.834975661942735 s`，V5从207项增至211项，当前SHA `00b34a553294f5b230c0572b174cc4af09ec7c0186f8422af4a85a4854cf0e15`；每attempt唯一计一次，ABI/static不计。serial分两次通过，首次fixture失败保留；不能称最终源码在一次完整组中通过。与该小测试阶段不同，本场production Invocation `3cc1884481474e5ba390e757eeb482c0`的真实fixed-Q计数门仍以`backsolves=0`拒绝；其service wall `1771.020854749 s`是另一条既有服务账目，未与pytest wall混加或重复收费。原始失败Q的RHS/PH及exact-zero证据未保存，见[终态compact](../../../results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261009T160948.696125Z/terminal_compact_fixed_q_zero_audit_v11.json)，SHA `914696b024ac26b03aa3e818f238b9ca7d033ad7898e326d6206b2630f73ee79`。
+
 ## 2026-10-09：W0.7 candidate setup method-binding 回归
 
 该节点验证 _run_task041_balh_candidate_setup 到真实 task041_fixed_h6_modal_gmres_binding 的 selector 透传，以及 expected/sealed binding 对比；global operator/P4 side 构造被截停，未运行FE或factor。默认无selector保留 pure fixed-H6/None，缺失请求或篡改binding在相同边界拒绝。

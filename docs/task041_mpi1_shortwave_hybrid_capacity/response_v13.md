@@ -2,6 +2,24 @@
 
 本文件回应 Task041 Review V11 的当前执行批次。任务目录未提供单独 `README.md`；本轮依照仓库规则读取 `task.md`、Review V11、此前 Response V12、outcomes、仓库文档规则及开发总账。W5 的弱显著衍射通道按用户决定延期处理；保留其原失败与比较工件，不写成通过，也不作为本轮 W0.7 的前置。W2 本批未推进，避免延误 W0.7 主线。
 
+## 2026-10-10：fixed-Q 精确零分支计数合同事故与定向测试
+
+本场复用了既有合格 producer packet，QEP=0。bottom、top 两个 P4 因子均完成 numeric；随后 fixed physical BAL_H 的 modal sample 固定-Q计数门拒绝。raw异常为 `fixed physical BAL_H Q did not perform exactly one same-factor P4 correction: backsolves=0`。原始 `failure_stage=top_construction_cleanup` 字段照录；marker顺序显示 modal sample 在两侧 P4 numeric 完成后开始，因此该标签不改写成资源/清理失败，也不据它说top numeric失败。
+
+| 项目 | 实际证据与边界 |
+|---|---|
+| 身份 | Invocation `3cc1884481474e5ba390e757eeb482c0`；source `f4718519d8a244eae9ea87148422ade14771e534`；unit `task041-v11-w0p7-fixed-physical-balh-once-warm-retry-cpu10-11-14-15-16-17-18-19-20261009T155100Z.service`；runroot `results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261009T160948.696125Z` |
+| 终态 | consumer `IMPLEMENTATION_FAILURE`；public rc1；service exit3；finalizer `failed/service_boundary_failure`，11项中9项true、2项false（`public_result_completed`、`service_terminal_normal`）；`controlled_stop.active=false`。这不是资源停止。 |
+| 数值阶段 | 两侧 P4 numeric均完成；事故版本的旧检查一律要求每个Q有两次实际回代，而本场raw报告0次backsolve，因此fixed-Q modal sample计数门拒绝。未进入 outer迭代、五项最终残差、recovery或完整E/H、R/T/A、A_volume、衍射及physics输出。 |
+| 零值根因边界 | 当前raw未持久化失败Q的输入/RHS、PH输出/port RHS和逐调用exact-zero证据。故无法确认该0次backsolve来自全局exact-zero、PH为零还是修正RHS精确为零；“全局零”仍是source-derived情况，不是本场实测根因。小测试也不能回填这些缺失字段。 |
+| 服务计费 | V5条目按runroot唯一匹配一次，service wall `1771.020854749 s`；ledger共211项，SHA `00b34a553294f5b230c0572b174cc4af09ec7c0186f8422af4a85a4854cf0e15`。账目行没有Invocation字段，Invocation由runroot/launch/finalizer绑定。未把嵌套public/consumer wall重复收费。 |
+
+固定Q中的“数学修正次数”与P4因子实际solve次数是两个量：每次Q仍请求恰好一次同因子数学修正；只有该次调用有明确的exact direct-zero审计证据时，实际solve次数才可为0。接近零的残差不能代替exact-zero证据；非零分支必须按真实回代计数。原A4物理/增广残差、复数线性、输入不变、普通P4 `5e-13/max2`及既有modal/outer门均未放宽。
+
+四个pytest父wall按独立attempt保留：首次serial因test fixture缺少FixedH6对象而在数学断言前失败（`3.251639037858695 s`）；修复fixture后受影响serial selector为4 passed、1个MPI2-only skip（`3.2557253290433437 s`）；剩余serial selectors为4 passed（`2.134472551057115 s`）；MPI2两rank各6 passed（父wall `2.1931387439835817 s`）。总父wall `10.834975661942735 s`，V5从207到211项，每个attempt各计一次；不能写成同一源码SHA的一次完整serial组通过。当前tiny `P4CellCondensedInverse` fixture覆盖direct-zero分支、计数不匹配拒绝、复数线性和原矩阵残差；MPI2覆盖本地empty-owner与全局零判断边界。这些是小矩阵组件合同，不是W0.7 production数值资格。
+
+原始文件未改。派生终态记录为 [terminal compact](../../results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261009T160948.696125Z/terminal_compact_fixed_q_zero_audit_v11.json)，SHA `914696b024ac26b03aa3e818f238b9ca7d033ad7898e326d6206b2630f73ee79`。其绑定的consumer summary SHA `6448de7ad2723792e3b36fa7df4ec9cd55d87d1c9d9e710dd52d31e5d4257325`、markers、run manifest及finalizer原件均保持不变。固定Q计数合同修复与定向serial/MPI2验证已完成；下一步提交并准备一次正式warm事故重试。本次仍未产生完整W0.7数值结果，任务继续。
+
 ## 2026-10-09 后续事故：candidate setup 漏传反馈方法 selector
 
 这次 Invocation 72f92a0cae6f4066a455bea0dba8561c 与下节 797ae38854d546898a895c81d803a5ec 是两次不同运行。前一场确实进入 outer iteration 1，fixed-H6 modal 第二次 solve 的显式残差未过门；本次事故则在 P4 侧构造前因方法身份接线失败，没有运行 fixed physical BAL_H 数值动作，也不是资源停止。

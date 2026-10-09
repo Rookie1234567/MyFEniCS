@@ -1311,6 +1311,11 @@ class P4CondensedExactFactor:
             or diagnostic_callback is not None
             or target_mode
         )
+        fixed_step_accounting = (
+            diagnostic_correction_steps == 1
+            and not target_mode
+            and isinstance(self.inverse, P4CellCondensedInverse)
+        )
         self._last_solve_audit = (
             {
                 "status": "started",
@@ -1324,22 +1329,207 @@ class P4CondensedExactFactor:
                 "diagnostic_correction_history": (),
             }
             if target_mode
-            else {}
+            else (
+                {
+                    "status": "started",
+                    "mathematical_correction_steps": 1,
+                    "inverse_apply_history": (),
+                    "factor_solve_delta_sum": 0,
+                }
+                if fixed_step_accounting
+                else {}
+            )
         )
         values = self.inverse._prepare_port_rhs(port_rhs)
         solve_count_start = int(self.inverse.solve_count)
+        factor_handle = (
+            self.inverse.factor if fixed_step_accounting else None
+        )
         total_started = time.perf_counter()
         solution = None
         keep_solution = False
         history: list[dict[str, Any]] = []
+        inverse_apply_history: list[dict[str, Any]] = []
         correction_history: list[dict[str, Any]] = []
         correction: PETSc.Vec | None = None
         correction_seconds: float | None = None
         correction_norm: float | None = None
         port_correction: np.ndarray | None = None
+
+        def capture_inverse_apply(
+            step: str,
+            *,
+            rhs_global_norm: float,
+            step_port_rhs: np.ndarray,
+            solve_count_before: int,
+            audit_before: Mapping[str, Any],
+        ) -> None:
+            """Copy and validate the audit produced by this exact inverse call."""
+
+            local_error = None
+            record: dict[str, Any] | None = None
+            summary: tuple[Any, ...] | None = None
+            try:
+                if self.inverse.factor is not factor_handle:
+                    raise RuntimeError("P4 factor handle changed during fixed correction")
+                if not np.isfinite(rhs_global_norm) or rhs_global_norm < 0.0:
+                    raise RuntimeError("P4 inverse RHS norm is missing or non-finite")
+                port_values = np.asarray(step_port_rhs, dtype=np.complex128)
+                if not np.isfinite(port_values).all():
+                    raise RuntimeError("P4 inverse port RHS is non-finite")
+                port_rhs_zero = not bool(np.any(port_values != 0.0))
+                global_rhs_zero = rhs_global_norm == 0.0
+                raw_audit = self.inverse.last_audit
+                if raw_audit is audit_before:
+                    raise RuntimeError("P4 inverse returned a stale last_audit object")
+                if not isinstance(raw_audit, Mapping):
+                    raise TypeError("P4 inverse last_audit is missing")
+                copied_audit = dict(raw_audit)
+                required = (
+                    "schema_version",
+                    "status",
+                    "factor_solve_call_delta",
+                    "factor_solve_count",
+                    "input_finite",
+                    "solution_finite",
+                    "output_finite",
+                )
+                if any(key not in copied_audit for key in required):
+                    raise RuntimeError("P4 inverse last_audit is incomplete")
+                if copied_audit["schema_version"] != (
+                    "task041.p4-cell-condensed-inverse.v1"
+                ):
+                    raise RuntimeError("P4 inverse last_audit schema changed")
+                if any(
+                    copied_audit[key] is not True
+                    for key in ("input_finite", "solution_finite", "output_finite")
+                ):
+                    raise RuntimeError("P4 inverse audit lacks finite input/output proof")
+                reported_delta = copied_audit["factor_solve_call_delta"]
+                reported_count = copied_audit["factor_solve_count"]
+                if type(reported_delta) is not int or type(reported_count) is not int:
+                    raise RuntimeError("P4 inverse solve counters are not integers")
+                count_after = int(self.inverse.solve_count)
+                actual_delta = count_after - int(solve_count_before)
+                if actual_delta < 0:
+                    raise RuntimeError("P4 inverse solve counter moved backwards")
+                if reported_count != count_after or reported_delta != actual_delta:
+                    raise RuntimeError(
+                        "P4 inverse audit and live solve counter disagree"
+                    )
+                status = copied_audit["status"]
+                if status == "ZERO_RHS_DIRECT_ZERO":
+                    if (
+                        not global_rhs_zero
+                        or not port_rhs_zero
+                        or copied_audit.get("slave_zero") is not True
+                        or copied_audit.get("port_rhs_zero") is not True
+                        or reported_delta != 0
+                        or actual_delta != 0
+                    ):
+                        raise RuntimeError(
+                            "P4 direct-zero status lacks exact global/port zero evidence"
+                        )
+                elif status == "SOLVE_COMPLETED":
+                    if global_rhs_zero and port_rhs_zero:
+                        raise RuntimeError(
+                            "exact-zero P4 inputs did not take the audited direct-zero path"
+                        )
+                    if reported_delta != 1 or actual_delta != 1:
+                        raise RuntimeError(
+                            "nonzero P4 inverse call did not record exactly one solve"
+                        )
+                    if copied_audit.get("matrix_identity") != self.inverse.matrix_identity:
+                        raise RuntimeError("P4 inverse solve changed matrix identity")
+                else:
+                    raise RuntimeError(
+                        f"unsupported P4 inverse status for fixed correction: {status!r}"
+                    )
+                record = {
+                    "step": str(step),
+                    "status": status,
+                    "global_rhs_norm": float(rhs_global_norm),
+                    "global_rhs_exact_zero": bool(global_rhs_zero),
+                    "port_rhs_exact_zero": bool(port_rhs_zero),
+                    "factor_solve_count_before": int(solve_count_before),
+                    "factor_solve_count_after": count_after,
+                    "factor_solve_delta": actual_delta,
+                    "factor_identity_local": id(factor_handle),
+                    "matrix_identity": self.inverse.matrix_identity,
+                    "inverse_audit": copied_audit,
+                }
+                summary = (
+                    step,
+                    status,
+                    float(rhs_global_norm),
+                    bool(port_rhs_zero),
+                    int(solve_count_before),
+                    count_after,
+                    actual_delta,
+                    self.inverse.matrix_identity,
+                )
+            except Exception as error:  # noqa: BLE001 - synchronize rank-local audit failures
+                local_error = f"{type(error).__name__}: {error}"
+            gathered = self.inverse.condensed.comm.allgather(
+                (local_error, summary)
+            )
+            failures = [
+                f"rank {rank}: {error}"
+                for rank, (error, _summary) in enumerate(gathered)
+                if error is not None
+            ]
+            if failures:
+                raise RuntimeError(
+                    "fixed P4 inverse audit validation failed; "
+                    + "; ".join(failures)
+                )
+            summaries = [value for _error, value in gathered]
+            if any(value != summaries[0] for value in summaries[1:]):
+                raise RuntimeError(
+                    "fixed P4 inverse audit differs between MPI ranks"
+                )
+            if record is None:
+                raise RuntimeError("fixed P4 inverse audit produced no record")
+            inverse_apply_history.append(record)
+            solve_delta_sum = sum(
+                int(entry["factor_solve_delta"])
+                for entry in inverse_apply_history
+            )
+            live_delta = int(self.inverse.solve_count) - solve_count_start
+            if live_delta < 0 or live_delta != solve_delta_sum:
+                raise RuntimeError(
+                    "fixed P4 per-call solve deltas do not match the live counter"
+                )
+            self._last_solve_audit.update(
+                {
+                    "mathematical_correction_steps": 1,
+                    "factor_solve_count_start": solve_count_start,
+                    "inverse_apply_history": tuple(
+                        dict(entry) for entry in inverse_apply_history
+                    ),
+                    "factor_solve_delta_sum": solve_delta_sum,
+                    "factor_solve_count_after": int(self.inverse.solve_count),
+                }
+            )
+
         try:
+            initial_rhs_global_norm = (
+                float(rhs.norm()) if fixed_step_accounting else None
+            )
+            initial_audit_before = (
+                self.inverse.last_audit if fixed_step_accounting else None
+            )
+            initial_solve_count_before = int(self.inverse.solve_count)
             try:
                 solution = self.inverse.apply(rhs, port_rhs=values)
+                if fixed_step_accounting:
+                    capture_inverse_apply(
+                        "initial",
+                        rhs_global_norm=float(initial_rhs_global_norm),
+                        step_port_rhs=values,
+                        solve_count_before=initial_solve_count_before,
+                        audit_before=initial_audit_before,
+                    )
             finally:
                 _accumulate_optional_timing(timing, self.inverse.last_timing)
             initial_inverse_seconds = self.inverse.last_timing[
@@ -1481,6 +1671,24 @@ class P4CondensedExactFactor:
                         audit["diagnostic_correction_history"] = tuple(
                             correction_history
                         )
+                    if fixed_step_accounting:
+                        audit.update(
+                            {
+                                "mathematical_correction_steps": 1,
+                                "factor_solve_count_start": solve_count_start,
+                                "inverse_apply_history": tuple(
+                                    dict(entry)
+                                    for entry in inverse_apply_history
+                                ),
+                                "factor_solve_delta_sum": sum(
+                                    int(entry["factor_solve_delta"])
+                                    for entry in inverse_apply_history
+                                ),
+                                "factor_solve_count_after": int(
+                                    self.inverse.solve_count
+                                ),
+                            }
+                        )
                     history.append(dict(audit))
                     self._last_solve_audit = dict(audit)
                     if diagnostic_callback is not None:
@@ -1540,10 +1748,33 @@ class P4CondensedExactFactor:
                         correction_started = (
                             time.perf_counter() if diagnostic_mode else 0.0
                         )
+                        correction_rhs_global_norm = (
+                            float(audit["augmented_fe_residual_norm"])
+                            if fixed_step_accounting
+                            else None
+                        )
+                        correction_solve_count_before = int(
+                            self.inverse.solve_count
+                        )
+                        correction_audit_before = (
+                            self.inverse.last_audit
+                            if fixed_step_accounting
+                            else None
+                        )
                         correction = self.inverse.apply(
                             augmented_residual,
                             port_rhs=port_residual,
                         )
+                        if fixed_step_accounting:
+                            capture_inverse_apply(
+                                "correction_1",
+                                rhs_global_norm=float(
+                                    correction_rhs_global_norm
+                                ),
+                                step_port_rhs=port_residual,
+                                solve_count_before=correction_solve_count_before,
+                                audit_before=correction_audit_before,
+                            )
                         solution.axpy(PETSc.ScalarType(1.0), correction)
                         if diagnostic_mode:
                             if not target_mode:

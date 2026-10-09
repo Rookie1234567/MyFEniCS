@@ -1,5 +1,19 @@
 # Task041 outcomes summary
 
+## 2026-10-10：W0.7 fixed-Q 计数门终态
+
+| 范围 | 实测结果 | 说明 |
+|---|---|---|
+| Invocation / 方法 | `3cc1884481474e5ba390e757eeb482c0`，source `f4718519d8a244eae9ea87148422ade14771e534`；W0.7 reduced fixed physical BAL_H，复用producer、QEP=0 | bottom/top P4 numeric均完成，随后在modal sample固定Q计数门退出 |
+| 失败值 | 固定Q异常记录`backsolves=0`，而动作请求一次同因子修正；consumer `IMPLEMENTATION_FAILURE`，public rc1、service exit3 | raw `failure_stage=top_construction_cleanup`照录；marker确认modal sample发生在两侧P4 numeric之后，不按该标签称资源/清理失败 |
+| Finalizer | `failed/service_boundary_failure`；11项9 true/2 false，false为`public_result_completed`、`service_terminal_normal`；`controlled_stop.active=false` | 原始终态不改写 |
+| 唯一账目 | service wall `1771.020854749 s`，V5 211项、SHA `00b34a553294f5b230c0572b174cc4af09ec7c0186f8422af4a85a4854cf0e15` | 该runroot只有一条精确匹配；ledger entry本身不含Invocation字段 |
+| 未到达 | outer、五项最终残差、recovery、完整E/H、R/T/A、A_volume、衍射与physics均未完成 | 无完整场或W0.7数值资格 |
+
+raw未保存失败Q的RHS、PH结果与逐调用exact-zero证据；因此“全局零”只能列为source-derived解释，不能冒充实测根因。每个Q要求的一次数学修正与P4 LU实际solve次数分开计数；只有该调用有exact direct-zero审计时才允许0次solve，不能以容差内残差推断exact zero。原A4检查、普通P4目标及所有数值/物理门保持。
+
+本轮真实tiny P4 inverse合同的四个pytest父attempt为3.251639037858695 s（首次fixture缺FixedH6失败）、3.2557253290433437 s（4 passed/1 MPI2-only skip）、2.134472551057115 s（4 passed）和2.1931387439835817 s（MPI2两rank各6 passed），总计10.834975661942735 s，已各自唯一记入上述V5。失败attempt保留；结果分批，不表述为同一轮全组通过，也不升格为pilot资格。见[Response V13](../response_v13.md)、[交付进度](shortwave_delivery_v11.md)与[终态compact](../../../results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261009T160948.696125Z/terminal_compact_fixed_q_zero_audit_v11.json)。W5按用户决定延期；W2本阶段未推进以免延误0.7。
+
 ## 2026-10-09 后续事故：candidate method selector 漏传（非数值失败）
 
 Invocation 72f92a0cae6f4066a455bea0dba8561c 不同于下方先前进入 outer iteration 1 的 797ae...。本次 requested fixed_physical_balh_once 在 consumer summary 中存在，但 _run_task041_balh_candidate_setup 重建 fixed-H6 binding 时漏传 selector；registered scope 在 factor_setup 拒绝，actual candidate method为null。P4侧构造前退出，不是BAL_H数值残差失败，也不是资源停止。

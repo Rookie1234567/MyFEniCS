@@ -1,5 +1,13 @@
 # Review V11 执行交付进度
 
+## 2026-10-10：fixed-Q zero-count 事故收口
+
+Invocation `3cc1884481474e5ba390e757eeb482c0`（source `f4718519d8a244eae9ea87148422ade14771e534`）复用既有producer、QEP=0；bottom/top P4 numeric都完成。随后 fixed physical BAL_H modal sample 固定Q门报 `backsolves=0`，而当前动作要求一次同因子数学修正；consumer为`IMPLEMENTATION_FAILURE`，public rc1、service exit3，finalizer `failed/service_boundary_failure`、9/11，false为`public_result_completed`和`service_terminal_normal`，`controlled_stop.active=false`。raw `failure_stage=top_construction_cleanup`保持原值；它不改变marker显示的modal sample失败位置。
+
+原始失败Q的RHS/PH输出及逐调用exact-zero证据没有持久化，因此不能把0次backsolve解释为全局零、PH零或精确零修正中的任一种。全局零路径仍是source-derived。数学修正次数（每个Q一次）和因子实际LU次数分开记；仅逐调用exact direct-zero证据允许0次LU，容差内残差不够。原A4残差、精度、普通side target和全部外层数值门未改变。
+
+服务finalizer wall `1771.020854749 s`在V5按runroot唯一计一次；ledger 211项，SHA `00b34a553294f5b230c0572b174cc4af09ec7c0186f8422af4a85a4854cf0e15`。pytest四attempt分别为：初次fixture缺FixedH6失败（3.251639037858695 s）；修正后serial 4 passed/1 MPI2-only skip（3.2557253290433437 s）；其余serial 4 passed（2.134472551057115 s）；MPI2两rank各6 passed（2.1931387439835817 s）。总pytest父wall `10.834975661942735 s`，ledger各attempt仅追加一次；分批结果不是单次整组通过。tiny真实P4 inverse与MPI2测试只核组件分支/残差合同，不资格化production pilot。终态compact：`results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261009T160948.696125Z/terminal_compact_fixed_q_zero_audit_v11.json`，SHA `914696b024ac26b03aa3e818f238b9ca7d033ad7898e326d6206b2630f73ee79`。原raw与账本不改；W5继续按用户决定延期，W2不阻0.7主线。
+
 ## 后续事故更正：候选方法 binding 在 P4 前拒绝（Invocation 72f92a0c）
 
 下方 outer iteration 1 的残差失败属于先前 Invocation 797ae38854d546898a895c81d803a5ec。之后的 Invocation 72f92a0cae6f4066a455bea0dba8561c 是独立事故：_run_task041_balh_candidate_setup 没把显式 modal_feedback_method=fixed_physical_balh_once 传给固定-H6 binding 重建；注册 scope 因实际 candidate method 为 null 而在 factor_setup 拒绝，P4 side construction 前退出。这不是 BAL_H 残差或资源失败。
