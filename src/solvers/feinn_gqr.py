@@ -45,7 +45,7 @@ def squared_norm(x, Gx):
     return float(dot.real)
 
 
-def project(Phi, d, reference, action, heartbeat=lambda *_: None):
+def project(Phi, d, reference, action, heartbeat=lambda *_: None, *, block_columns=None):
     """Column normalization, deterministic pivoted MGS2, small-R SVD.
 
     Cached G residuals select pivots; each selected residual is re-evaluated
@@ -61,16 +61,26 @@ def project(Phi, d, reference, action, heartbeat=lambda *_: None):
     zero = np.flatnonzero(scales == 0)
     nz = np.flatnonzero(scales > 0)
     U, GU = np.zeros_like(Phi), np.zeros_like(Phi)
-    U[:, nz] = Phi[:, nz] / scales[nz]
-    GU[:, nz] = GPhi[:, nz] / scales[nz]
+    width = m if block_columns is None else block_columns
+    if width < 1:
+        raise ValueError("READOUT_POSITIVE_STREAM_WIDTH_REQUIRED")
+    for first in range(0, len(nz), width):
+        ids = nz[first:first+width]
+        U[:, ids] = Phi[:, ids] / scales[ids]
+        GU[:, ids] = GPhi[:, ids] / scales[ids]
     del GPhi
-    V, GV = U.copy(), GU.copy()
-    Q, GQ = np.empty((n, len(nz)), complex), np.empty((n, len(nz)), complex)
+    order = "K" if block_columns is not None else "C"
+    V, GV = U.copy(order=order), GU.copy(order=order)
+    bank_order = "F" if block_columns is not None else "C"
+    Q, GQ = np.empty((n, len(nz)), complex, order=bank_order), np.empty((n, len(nz)), complex, order=bank_order)
     remaining, pivots = list(nz), []
     rank = 0
     while remaining:
         action.check()
-        norms = np.einsum("ij,ij->j", V[:, remaining].conj(), GV[:, remaining]).real
+        norms = np.empty(len(remaining))
+        for first in range(0, len(remaining), width):
+            ids = remaining[first:first+width]
+            norms[first:first+len(ids)] = np.einsum("ij,ij->j", V[:, ids].conj(), GV[:, ids]).real
         # Cached tiny negative values receive a fresh action, never abs/epsilon.
         for pos in np.flatnonzero(norms < 0):
             j = remaining[pos]
@@ -82,20 +92,21 @@ def project(Phi, d, reference, action, heartbeat=lambda *_: None):
         gv = action(v, "selected_residual")
         for _ in range(2):
             if rank:
-                h = Q[:, :rank].conj().T @ gv
-                v -= Q[:, :rank] @ h
+                for first in range(0, rank, width):
+                    part = Q[:, first:min(first+width, rank)]
+                    h = part.conj().T @ gv
+                    v -= part @ h
             gv = action(v, "reorthogonalized_residual")
         norm = np.sqrt(squared_norm(v, gv))
         if norm <= QR_TOL:
             # Verify all unresolved columns with actual G before declaring rank.
-            actual = action(V[:, remaining], "rank_tail_recheck")
-            tail = np.array(
-                [
-                    np.sqrt(squared_norm(V[:, k], actual[:, p]))
-                    for p, k in enumerate(remaining)
-                ]
-            )
-            GV[:, remaining] = actual
+            tail = np.empty(len(remaining))
+            for first in range(0, len(remaining), width):
+                ids = remaining[first:first+width]
+                actual = action(V[:, ids], "rank_tail_recheck")
+                for pos,k in enumerate(ids):
+                    tail[first+pos] = np.sqrt(squared_norm(V[:, k], actual[:, pos]))
+                GV[:, ids] = actual
             if np.max(tail) <= QR_TOL:
                 break
             # A different pivot can only follow this measured norm correction.
@@ -108,9 +119,11 @@ def project(Phi, d, reference, action, heartbeat=lambda *_: None):
         remaining.remove(j)
         for _ in range(2):
             if remaining:
-                h = q.conj() @ GV[:, remaining]
-                V[:, remaining] -= q[:, None] * h
-                GV[:, remaining] -= gq[:, None] * h
+                for first in range(0, len(remaining), width):
+                    ids = remaining[first:first+width]
+                    h = q.conj() @ GV[:, ids]
+                    V[:, ids] -= q[:, None] * h
+                    GV[:, ids] -= gq[:, None] * h
         rank += 1
         if rank % 10 == 0 or not remaining:
             heartbeat("G_QR", dict(rank=rank, G_columns=action.count))

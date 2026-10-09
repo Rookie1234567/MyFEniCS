@@ -152,7 +152,8 @@ def recover_rebuild(artifact, source, name, directory, action, packet):
 
 
 def verify(design, action, packet, artifact, marker, *, reuse_completed=False,
-           include_producer=False, routes=None, route_root=None, stable_rebuild=False):
+           include_producer=False, routes=None, route_root=None, stable_rebuild=False,
+           reference_exposed=False):
     from src.solvers.neural_wave_reconstruction import rebuild
     from src.solvers.feinn_fem import build_model
     from src.solvers.feinn_reference import field_physics, _region_field_errors
@@ -226,7 +227,8 @@ def verify(design, action, packet, artifact, marker, *, reuse_completed=False,
             if model["record"][key] != expected:
                 raise ValueError("INDEPENDENT_FE_PHYSICAL_IDENTITY_CHANGED: " + key)
         physics, comparisons = field_physics(
-            model, action, reference, states, artifact, marker
+            model, action, reference, states, artifact, marker,
+            diagnostic_only=reference_exposed,
         )
         from src.postprocessing.neural_wave_audit import save_complete_field_samples
 
@@ -257,6 +259,7 @@ def verify(design, action, packet, artifact, marker, *, reuse_completed=False,
             artifact / "norm_q30",
             marker,
             norm_quadrature_degree=30,
+            diagnostic_only=reference_exposed,
         )
         regions = {
             name: _region_field_errors(model, action, reference, c)
@@ -340,8 +343,10 @@ def main():
 
     try:
         atomic_json(directory / "abi.json", abi(spec["mode"]))
-        if spec.get("campaign_version") in (31,32,33,34):
-            if spec.get("campaign_version")==34:
+        if spec.get("campaign_version") in (31,32,33,34,35):
+            if spec.get("campaign_version")==35:
+                from src.runners.neural_space_worker import run_stage
+            elif spec.get("campaign_version")==34:
                 from src.runners.complex_wave_worker import run_stage
             elif spec.get("campaign_version")==33:
                 from src.runners.backfit_wave_worker import run_stage

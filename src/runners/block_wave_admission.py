@@ -13,6 +13,10 @@ POOL = ROOT / "tmp/task42extra/v31/resource_rejected_wait.jsonl"
 
 def pool(directory=None):
     if directory is not None and Path(directory).resolve().is_relative_to(
+        ROOT / "tmp/task42extra/v35"
+    ):
+        return ROOT / "tmp/task42extra/v35/resource_rejected_wait.jsonl"
+    if directory is not None and Path(directory).resolve().is_relative_to(
         ROOT / "tmp/task42extra/v34"
     ):
         return ROOT / "tmp/task42extra/v34/resource_rejected_wait.jsonl"
@@ -33,6 +37,10 @@ def rejected_wait_seconds(directory=None):
     if not POOL.exists():
         return 0.0
     return sum(json.loads(line)["seconds"] for line in POOL.read_text().splitlines())
+
+
+def wait_limit(directory):
+    return 900 if pool(directory).parent.name == "v35" else 1800
 
 
 def charge_rejected_wait(start, reason, directory):
@@ -62,7 +70,7 @@ def fresh_admission(directory, hard, *, scope=None, prefix="admission", **_):
             if (
                 rejected_wait_seconds(directory)
                 + (monotonic() - rejected_start if rejected_start else 0)
-                >= 1800
+                >= wait_limit(directory)
             ):
                 raise RuntimeError("V31_FAILED_RESOURCE_WAIT_LIMIT_REACHED")
             if monotonic() - start >= 20:
@@ -101,7 +109,7 @@ def fresh_admission(directory, hard, *, scope=None, prefix="admission", **_):
 def stable_window(directory, hard, seconds=60):
     from src.runners.feinn_resources import stable_window as original
 
-    if rejected_wait_seconds(directory) >= 1800:
+    if rejected_wait_seconds(directory) >= wait_limit(directory):
         raise RuntimeError("V31_FAILED_RESOURCE_WAIT_LIMIT_REACHED")
     start = monotonic()
     try:

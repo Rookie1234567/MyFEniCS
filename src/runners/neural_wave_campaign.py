@@ -30,7 +30,7 @@ def source_gate():
 def window(spec=None):
     profile = profile_paths(spec or {})
     data = json.loads(profile["window"].read_text())
-    budget = {31: 86400, 32: 57600, 33: 43200, 34: 57600}.get((spec or {}).get("campaign_version"), 172800)
+    budget = {31: 86400, 32: 57600, 33: 43200, 34: 57600, 35: 14400}.get((spec or {}).get("campaign_version"), 172800)
     if data["budget_s"] != budget or not data["single_window"]:
         raise ValueError("V30_SINGLE_48H_WINDOW_IDENTITY_FAILED")
     if abs(data["deadline_monotonic"] - data["origin_monotonic"] - budget) > 1e-5:
@@ -40,6 +40,20 @@ def window(spec=None):
 
 def stage_deadline(spec, allocation, campaign):
     """Preserve the original window and leave time for full frozen-field gates."""
+    if spec.get("campaign_version") == 35:
+        deadline = min(allocation["deadline_monotonic"], campaign["deadline_monotonic"]-1800)
+        if spec["role"] in ("space_unlabelled", "space_oracle"):
+            root = profile_paths(spec)["root"]
+            path = root / "numeric_window.json"
+            if not path.exists():
+                if spec["role"] != "space_unlabelled":
+                    raise ValueError("UNLABELLED_NUMERIC_WINDOW_MUST_PRECEDE_ORACLE")
+                atomic_json(path, dict(origin_monotonic=allocation["origin_monotonic"],
+                                       deadline_monotonic=allocation["origin_monotonic"]+7200,
+                                       shared_formal_limit_seconds=7200, never_reset=True))
+            numeric = json.loads(path.read_text())
+            deadline = min(deadline,numeric["deadline_monotonic"])
+        return deadline, 1800
     if spec.get("campaign_version") == 34:
         reserve = 7200 if spec["role"] in (
             "DETERMINISTIC_COMPLEX_WAVE_BACKFIT", "LEARNED_COMPLEX_WAVE_BACKFIT"
@@ -243,7 +257,7 @@ def durable(spec, *, origin, attempt=1):
         management_supervised=True,
         allowed_scope=scope,
         socket_directory=root / "sockets"
-        if spec.get("campaign_version") in (32,33,34)
+        if spec.get("campaign_version") in (32,33,34,35)
         else None,
     )
 
@@ -312,6 +326,9 @@ def launch(spec):
             "complex_pilot_compare",
             "DETERMINISTIC_COMPLEX_WAVE_BACKFIT",
             "LEARNED_COMPLEX_WAVE_BACKFIT",
+            "space_unlabelled",
+            "space_oracle",
+            "space_compare",
         )
         else 2
     ) * 2**30
@@ -329,7 +346,7 @@ def launch(spec):
                 resource_observation_cost,
             )
 
-            if spec.get("campaign_version") in (31, 32, 33, 34):
+            if spec.get("campaign_version") in (31, 32, 33, 34, 35):
                 from src.runners.block_wave_admission import (
                     stable_window as qualified_stability,
                 )
@@ -395,7 +412,7 @@ def launch(spec):
                             "src/solvers/neural_wave_block_qualification.py",
                             "src/postprocessing/neural_wave_roundoff.py",
                         )
-                        if spec.get("campaign_version") in (31, 32, 33, 34)
+                        if spec.get("campaign_version") in (31, 32, 33, 34, 35)
                         else ()
                     )
                 },
@@ -499,6 +516,17 @@ def launch(spec):
                     continuation_uses_validation_scalars=True,
                     pde_only_solve=spec["role"] in (
                         "DETERMINISTIC_COMPLEX_WAVE_BACKFIT", "LEARNED_COMPLEX_WAVE_BACKFIT"))
+            if spec.get("campaign_version") == 35:
+                from src.runners.neural_space_worker import CHAIN
+                from src.io.neural_space_campaign import POLICY
+                manifest["binding_source_files"].update({p:digest(ROOT/p) for p in CHAIN})
+                if spec["role"] == "space_oracle":
+                    manifest.update(POLICY)
+                else:
+                    manifest.update(reference_used_for_training=False,
+                                    pde_only_solve=spec["role"] == "space_unlabelled",
+                                    pde_only_solver_qualified=False,
+                                    official_candidate_results=False)
             atomic_json(directory / "run_manifest.json", manifest)
             atomic_json(artifact / f"run_manifest_{directory.name}.json", manifest)
             shutil.copyfile(ROOT / spec["input"], directory / "input_original.dat")
@@ -527,7 +555,8 @@ def launch(spec):
                 source_state=manifest,
                 memory_envelope_provider=lambda: envelope(hard),
                 health_check=Health(
-                    directory, hard, [], artifact_root=profile["artifacts"]
+                    directory, hard, [], artifact_root=profile["artifacts"],
+                    artifact_cap_bytes=(8 if spec.get("campaign_version") == 35 else 20)*2**30
                 ),
                 sampled_root_identity=terminal["server"],
             )

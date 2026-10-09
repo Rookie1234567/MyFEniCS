@@ -31,7 +31,7 @@ STAGES = {
 
 
 def profile_paths(spec):
-    if spec.get("campaign_version") in (31, 32, 33, 34):
+    if spec.get("campaign_version") in (31, 32, 33, 34, 35):
         version = spec["campaign_version"]
         root = ROOT / f"tmp/task42extra/v{version}"
         return dict(
@@ -39,7 +39,7 @@ def profile_paths(spec):
             window=root / "batch_window.json",
             design=ROOT / f"input/task042extra_feinn_5nm/design_v{version}.json",
             artifacts=ROOT / f"benchmarks/artifacts/task42extra/v{version}",
-            reserve=1800 if version in (33, 34) else 3600,
+            reserve=1800 if version in (33, 34, 35) else 3600,
         )
     return dict(
         root=ROOT / "tmp/task42extra/v30",
@@ -67,6 +67,10 @@ def load_wave(path):
         data = tomllib.loads(raw.decode())
     except (UnicodeError, tomllib.TOMLDecodeError) as error:
         raise InputError(str(error)) from error
+    if data.get("schema_version") == 6:
+        from src.io.neural_space_campaign import load_space
+
+        return load_space(path, data, raw)
     if data.get("schema_version") == 5:
         from src.io.complex_wave_campaign import load_complex
 

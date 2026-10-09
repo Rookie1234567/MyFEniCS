@@ -232,7 +232,9 @@ def test_outer_rejection_is_saved_before_any_terminal(monkeypatch, tmp_path):
     monkeypatch.setattr(neural_wave_campaign, "ROOT", tmp_path)
     monkeypatch.setattr(neural_wave_campaign, "source_gate", lambda: "s")
     monkeypatch.setattr(neural_wave_campaign, "monotonic", lambda: 100.0)
-    monkeypatch.setattr(neural_wave_campaign, "window", lambda: dict(deadline_monotonic=20000))
+    monkeypatch.setattr(neural_wave_campaign, "window", lambda spec=None: dict(deadline_monotonic=20000))
+    monkeypatch.setattr(neural_wave_campaign, "profile_paths", lambda spec: dict(
+        root=tmp_path / "tmp/task42extra/v30", reserve=1800))
     called = []
     monkeypatch.setattr(durable_terminal, "launch_tmux", lambda *a, **kw: called.append(True))
     def fail(*a, **kw):

@@ -1,0 +1,5 @@
+schema_version = 6
+
+[neural_wave]
+stage = "v35_labelled_field_oracle"
+design_sha256 = "bfee2c3d17ed9d6971f46e991028bdcd494a1d5f1b8cfbbe423592aa254552f1"
