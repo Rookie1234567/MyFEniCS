@@ -1,3 +1,11 @@
+# 当前V65：P6完整场完成，跨阶精度仍FAIL
+
+7680tet/p6/828完整物理解及独立原式完成，全部内部保留、无静态凝聚；formal 2.32584924e-10通过，direct1e−10失败。B/P6散射E/H=0.000405047017/0.000410694274、240点最大0.00117438869超1e−4，功率稳定不等于完整场准确。新K已原子保存，成功链14748.453748s、prepared-start 2508.029019s；没有NN/原尺寸/2TB48h资格。
+
+[回应](response_v65.md) · [专题](outcomes/coefficient_first_p6_completion_v65.md) · [Review V63](review_report_v63.md) · [物理](outcomes/records/complete_physics_v65.json) · [增量](outcomes/records/paired_comparison_v65.json) · [费用](outcomes/records/resource_costs_final_v65.json)。清场closed、仅本分支推送后暂停，旧历史逐字保留。
+
+---
+
 # 当前V64：两个新场未取得，准备和停止证据已交付
 
 Review V62授权的固定局部标记真实生成25576tet/1043792行，超L4上限而不求解；P6完整体/828边界准备后，在独立原式核对阶段达到单例审核输出预留边界，未factor/solve。没有新准确性、2TB48h或NN20资格。唯一下一pilot建议先降低独立原式向量积分的几何变换开销，再在新合同下完成同空间P6；当前不自动执行。

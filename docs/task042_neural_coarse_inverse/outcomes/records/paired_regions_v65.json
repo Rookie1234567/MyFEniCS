@@ -1,0 +1,82 @@
+{
+  "regions": {
+    "air_excluding_notch": {
+      "cells": 3840,
+      "error_squared": {
+        "E_total": 8.45500045397587e-08,
+        "H_total": 8.816410921947536e-08,
+        "curl_total": 7.103223513229878e-06,
+        "E_scattered": 8.45500045397587e-08,
+        "H_scattered": 8.816410921947536e-08,
+        "curl_scattered": 7.103223513229878e-06
+      },
+      "fraction_of_global_error_squared": {
+        "E_total": 0.64077385039117,
+        "H_total": 0.6500508584414905,
+        "curl_total": 0.6500508584414931,
+        "E_scattered": 0.64077385039117,
+        "H_scattered": 0.6500508584414905,
+        "curl_scattered": 0.6500508584414931
+      }
+    },
+    "substrate": {
+      "cells": 1536,
+      "error_squared": {
+        "E_total": 4.5264879672576365e-09,
+        "H_total": 4.586091241668757e-09,
+        "curl_total": 3.694931126740508e-07,
+        "E_scattered": 4.5264879672576365e-09,
+        "H_scattered": 4.586091241668757e-09,
+        "curl_scattered": 3.694931126740508e-07
+      },
+      "fraction_of_global_error_squared": {
+        "E_total": 0.0343046122743266,
+        "H_total": 0.0338141288437045,
+        "curl_total": 0.033814128843704445,
+        "E_scattered": 0.0343046122743266,
+        "H_scattered": 0.0338141288437045,
+        "curl_scattered": 0.033814128843704445
+      }
+    },
+    "Si_block": {
+      "cells": 2112,
+      "error_squared": {
+        "E_total": 3.6756314669012214e-08,
+        "H_total": 3.680334776359048e-08,
+        "curl_total": 2.965179453570237e-06,
+        "E_scattered": 3.6756314669012214e-08,
+        "H_scattered": 3.680334776359048e-08,
+        "curl_scattered": 2.965179453570237e-06
+      },
+      "fraction_of_global_error_squared": {
+        "E_total": 0.27856279139023704,
+        "H_total": 0.2713581299583743,
+        "curl_total": 0.27135812995837383,
+        "E_scattered": 0.27856279139023704,
+        "H_scattered": 0.2713581299583743,
+        "curl_scattered": 0.27135812995837383
+      }
+    },
+    "notch_air": {
+      "cells": 192,
+      "error_squared": {
+        "E_total": 6.117028929399477e-09,
+        "H_total": 6.0729309569874e-09,
+        "curl_total": 4.892851110252658e-07,
+        "E_scattered": 6.117028929399477e-09,
+        "H_scattered": 6.0729309569874e-09,
+        "curl_scattered": 4.892851110252658e-07
+      },
+      "fraction_of_global_error_squared": {
+        "E_total": 0.04635874594426918,
+        "H_total": 0.04477688275643027,
+        "curl_total": 0.0447768827564306,
+        "E_scattered": 0.04635874594426918,
+        "H_scattered": 0.04477688275643027,
+        "curl_scattered": 0.0447768827564306
+      }
+    }
+  },
+  "physical_reference_cell_sha256": "409f90c0ad75e92ce157d223406bf61cd58a57049d5799c6706164b7442c4993",
+  "classification": "post-frozen locality diagnosis, not an error bound or solver input"
+}

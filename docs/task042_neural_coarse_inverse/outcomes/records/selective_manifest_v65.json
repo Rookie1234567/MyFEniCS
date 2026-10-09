@@ -1,0 +1,110 @@
+{
+  "groups": {
+    "production numerical/core": {
+      "files": [
+        "src/solvers/independent_tetra_reference.py",
+        "src/solvers/independent_tetra_study.py",
+        "src/solvers/phase_explicit_accuracy_capacity.py",
+        "src/solvers/tetra_body_checkpoint.py",
+        "src/solvers/tetra_coefficient_action.py"
+      ],
+      "numerical_behavior": "explicit opt-in equivalent original vector integration; unchanged production weak form; matrix checkpoint and post-symbolic/lifetime guards",
+      "depends_on": [
+        "Basix existing qualified ABI",
+        "fixed_phase_fem.py",
+        "original full tetra/MPC/DtN interfaces"
+      ],
+      "tests": "final 10 targeted plus Q and full P6 witnesses",
+      "fresh_PDE_source": "2679c96f1eecfcb5c8a61a61397f75ef8b4c0280",
+      "recommendation": "qualified finite opt-in only; no default promotion or merge approval"
+    },
+    "reusable runner/watchdog": {
+      "files": [
+        "scripts/run_case.py",
+        "src/runners/port_preparation.py",
+        "src/solvers/local_h_pilot_scope.py"
+      ],
+      "numerical_behavior": "none; V65 scope/resources and cumulative accounting only",
+      "depends_on": [
+        "original process-tree supervision/CPU/PSI gates"
+      ],
+      "tests": "real schema/scope/live budgets; inherited watchdog actual samples",
+      "recommendation": "review separately after core"
+    },
+    "checker/benchmark": {
+      "files": [
+        "benchmarks/collect_p6_completion.py",
+        "benchmarks/qualify_p6_completion.py",
+        "src/test/test_p6_completion.py",
+        "src/test/test_tetra_coefficient_action.py"
+      ],
+      "numerical_behavior": "no solve in checker",
+      "depends_on": [
+        "hash-bound saved arrays",
+        "original common integral and physical mode keys"
+      ],
+      "tests": "targeted and independent frozen P6/B checker",
+      "recommendation": "retain evidence-facing opt-in"
+    },
+    "compact evidence/docs": {
+      "files": [
+        "docs/task042_neural_coarse_inverse/response_v65.md",
+        "docs/task042_neural_coarse_inverse/outcomes/coefficient_first_p6_completion_v65.md",
+        "outcomes/records/*_v65.json"
+      ],
+      "numerical_behavior": "none",
+      "tests": "15 local documentation contracts plus final byte attestation",
+      "recommendation": "historical acceptance with explicit negative/unknowns"
+    },
+    "research-only": {
+      "files": [
+        "input/task042_neural_coarse_inverse/coefficient_first_p6_v65.json",
+        "input/task042_neural_coarse_inverse/v65_compare_verify_cost.dat",
+        "input/task042_neural_coarse_inverse/v65_oracle_preflight.dat",
+        "input/task042_neural_coarse_inverse/v65_p6_prepare.dat",
+        "input/task042_neural_coarse_inverse/v65_p6_solve_complete.dat",
+        "src/solvers/p6_completion_scope.py",
+        "src/solvers/p6_completion_study.py"
+      ],
+      "numerical_behavior": "fixed finite reference campaign; original physical model",
+      "tests": "four actual one-run inputs; complete success/negative pair",
+      "recommendation": "not a production default"
+    },
+    "do-not-merge": {
+      "files": [
+        "benchmarks/artifacts/task042/v65/**",
+        "tmp/task042/v65/**",
+        "results/task042/task042_v65_*"
+      ],
+      "numerical_behavior": "large CSR/fields/raw remain ignored; no global factor persisted",
+      "recommendation": "do not commit/merge large artifacts or elevate target-scale/direct/NN qualification"
+    }
+  },
+  "merge_approved": false,
+  "changed_tracked_source_and_inputs": [
+    "benchmarks/collect_p6_completion.py",
+    "benchmarks/qualify_p6_completion.py",
+    "input/task042_neural_coarse_inverse/coefficient_first_p6_v65.json",
+    "input/task042_neural_coarse_inverse/v65_compare_verify_cost.dat",
+    "input/task042_neural_coarse_inverse/v65_oracle_preflight.dat",
+    "input/task042_neural_coarse_inverse/v65_p6_prepare.dat",
+    "input/task042_neural_coarse_inverse/v65_p6_solve_complete.dat",
+    "scripts/run_case.py",
+    "src/runners/port_preparation.py",
+    "src/solvers/independent_tetra_reference.py",
+    "src/solvers/independent_tetra_study.py",
+    "src/solvers/local_h_pilot_scope.py",
+    "src/solvers/p6_completion_scope.py",
+    "src/solvers/p6_completion_study.py",
+    "src/solvers/phase_explicit_accuracy_capacity.py",
+    "src/solvers/tetra_body_checkpoint.py",
+    "src/solvers/tetra_coefficient_action.py",
+    "src/test/test_p6_completion.py",
+    "src/test/test_tetra_coefficient_action.py"
+  ],
+  "actual_sources": {
+    "prepare": "7686f2fa9653adf5d95bdadea34ae7708e214cd9",
+    "solve": "2679c96f1eecfcb5c8a61a61397f75ef8b4c0280",
+    "consumer": "5212ae051c72ff264a7108faecfcbbb4e8e8aedd"
+  }
+}

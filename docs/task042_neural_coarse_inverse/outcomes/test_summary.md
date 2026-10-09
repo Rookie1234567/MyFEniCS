@@ -1,3 +1,11 @@
+# V65相关验证
+
+新核代数含复非正交T、正负detJ、非零κ和有损材料；24实际p6单元与保存p5向量配对通过，正式两列完整P6原作用通过。最终10个targeted测试、相关Ruff/compile和四个dat真实schema validate通过；预算post-symbolic/累计账、原子checkpoint中断/错hash、prepared引用释放均覆盖。真实一次完整P6和新进程独立审核已完成，B/P6完整精度FAIL保留。一次15文档合同另列；无full pytest/CI/历史扫描。
+
+[核资格](records/kernel_qualification_v65.json) · [正式物理](records/complete_physics_v65.json) · [文档最终字节](records/documentation_checks_v65.json) · [修复](records/repair_journal_v65.json)。GitHub视觉NOT_VERIFIED。
+
+---
+
 # V64相关验证
 
 最终source687663e2f7210c62808dfc54b7951369469ba520的6项targeted测试、改动路径Ruff/compile和4dat validate通过。覆盖真实父映射/材料、最小固定标记、周期失败才准True同步、角色容量贯通、拒绝入口计费及精确几何cache库存。失败fixture/API/计费记录保留，同轮最小修复；未重跑旧FE或full pytest/CI。

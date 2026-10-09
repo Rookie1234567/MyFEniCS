@@ -1,3 +1,11 @@
+# Task042 V65进展
+
+同一7680tet/p6/828完整场已完成：新系数先收缩独立积分和K原子checkpoint接入，formal 2.32584924e-10通过，成功链14748.453748s、sampled 88.523769GiB。B/P6散射E/H仍0.000405047017/0.000410694274超1e−4，240点/严格direct负结果保留。确定性有限参考未授原尺寸/2TB48h/NN20。
+
+[Task042回应](task042_neural_coarse_inverse/response_v65.md) · [费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v65.json)。当前授权队列完成后closed/清场/仅本支push并暂停，无邻支通知。
+
+---
+
 # Task042 V64：完整参照尚未取得
 
 固定θ=.5局部四面体细化的实际周期相容网格超19200tet/800000行；统一p6完整体及828边界准备后，独立原式核对耗尽单例输出预留，未factor/solve。失败完整进程15056.335s、采样峰33.351GiB；新场/准确性NOT_RUN，原尺寸/2TB48h/NN20未资格。后续仅建议先资格化系数先变换的独立原式积分，再完成同空间p6参照，不自动开新窗口。

@@ -1,0 +1,117 @@
+{
+  "authority": "1cc254583559969b3fdeb9385104011d5f479a50",
+  "review_blob": "2a1b13df965ddf17cf7518bee30e7518399aa2a4",
+  "report": {
+    "path": "docs/task042_neural_coarse_inverse/review_report_v63.md",
+    "sha256": "11297b97131b61da489dc42ee27625e209452179839827004cef8324bf0279f1"
+  },
+  "reviewed_HEAD": "63141f0d4de7b74f6a22414edfedb43c9d458271",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "canonical": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "origin": "git@github-myfenics:Rookie1234567/MyFEniCS.git",
+  "actual_sources": {
+    "prepare": "7686f2fa9653adf5d95bdadea34ae7708e214cd9",
+    "solve": "2679c96f1eecfcb5c8a61a61397f75ef8b4c0280",
+    "consumer": "5212ae051c72ff264a7108faecfcbbb4e8e8aedd"
+  },
+  "first_work_clock": {
+    "schema": "Task042-first-work-clock-v1",
+    "namespace": "v65",
+    "first_utc": "2026-10-08T23:31:45.023823726Z",
+    "first_monotonic": 1427299.88,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_deadline_utc": "2026-10-09T13:31:45.023823726Z",
+    "heavy_stop_utc": "2026-10-09T12:31:45.023823726Z",
+    "source": "first actual read-only identity check; all subsequent reading/fetch/implementation included"
+  },
+  "immutable_window": {
+    "start_utc": "2026-10-08T23:31:45.023823726Z",
+    "start_monotonic": 1427299.88,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 46800,
+    "total_limit_seconds": 50400,
+    "scientific_loaded_limit_seconds": 39600,
+    "review_commit": "1cc254583559969b3fdeb9385104011d5f479a50",
+    "contract_HEAD": "1cc254583559969b3fdeb9385104011d5f479a50",
+    "closed": false,
+    "first_work_start_never_refreshed": true
+  },
+  "identity_conflict_not_reopened": true,
+  "report_not_rewritten": true,
+  "carried_dependencies": {
+    "clock": {
+      "start_utc": "2026-10-08T23:31:45.023823726Z",
+      "start_monotonic": 1427299.88,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "heavy_limit_seconds": 46800,
+      "total_limit_seconds": 50400,
+      "scientific_loaded_limit_seconds": 39600,
+      "review_commit": "1cc254583559969b3fdeb9385104011d5f479a50",
+      "contract_HEAD": "1cc254583559969b3fdeb9385104011d5f479a50",
+      "closed": false,
+      "first_work_start_never_refreshed": true,
+      "observed_utc": "2026-10-09T03:23:27.892441+00:00",
+      "observed_monotonic": 1441202.753308427,
+      "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "monotonic_same_boot": true,
+      "elapsed_seconds": 13902.873308427166,
+      "heavy_remaining_seconds": 32897.126691572834,
+      "total_remaining_seconds": 36497.126691572834
+    },
+    "before_source": "7686f2fa9653adf5d95bdadea34ae7708e214cd9",
+    "current_source": "2679c96f1eecfcb5c8a61a61397f75ef8b4c0280",
+    "unchanged_dependencies": [
+      {
+        "path": "src/solvers/tetra_coefficient_action.py",
+        "sha256": "f75bb50a5d7df8e5662b86bf201639221c828e5786fa88d365a37fb927679d5d",
+        "unchanged": true
+      },
+      {
+        "path": "src/solvers/tetra_body_checkpoint.py",
+        "sha256": "5590877bf41662fd8a33bb6e7fe9523d0936ca9f201905e4f985e1711b32abfb",
+        "unchanged": true
+      },
+      {
+        "path": "src/solvers/p6_completion_study.py",
+        "sha256": "dbc562517a5768ed88bc301a93b948023dd04621d4995f4a7439749cfbb109d3",
+        "unchanged": true
+      },
+      {
+        "path": "src/solvers/independent_tetra_reference.py",
+        "sha256": "f88cc484d0b922ce55eb5876dcd16c4a724b7a1aff86a0bcd06f05b53358f321",
+        "unchanged": true
+      },
+      {
+        "path": "src/solvers/fixed_phase_fem.py",
+        "sha256": "e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5",
+        "unchanged": true
+      },
+      {
+        "path": "src/solvers/tetra_boundary_support.py",
+        "sha256": "7eef6c325bc22f41a284383c17ab18cc0fd457494efa99ce87d5880c29d3687d",
+        "unchanged": true
+      },
+      {
+        "path": "input/task042_neural_coarse_inverse/coefficient_first_p6_v65.json",
+        "sha256": "fc6f37b9c83cdda0bad8a206c4762e5442a6e733cf13fac07deaee5007613ff7",
+        "unchanged": true
+      }
+    ],
+    "prior_q_pass": true,
+    "prior_prepared_checkpoint": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v65/body_K/manifest.json",
+      "sha256": "e12a930840dcf0cff8d3e27a04439a0b7f888c41c7c34e0e5acb3a32b619bbb5",
+      "status": "ASSEMBLED_NOT_YET_ORACLE_VERIFIED",
+      "bytes": 6507698292,
+      "nnz": 323539200
+    },
+    "reuse": "Only cost/timing guard changed; no repeated local/saved-p5 scientific qualification",
+    "two_complete_P6_actions": "still required from the reopened CSR before numeric"
+  },
+  "frozen_inventory": {
+    "path": "tmp/task042/v65/scientific_queue_frozen.json",
+    "sha256": "461d84d80c214ef7ff0ddadaa164026729d43346439ea0d08837a343da4d8c2d"
+  },
+  "historical_window_not_reopened": true
+}

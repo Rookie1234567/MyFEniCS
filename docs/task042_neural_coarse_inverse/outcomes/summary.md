@@ -1,3 +1,15 @@
+# V65最新完整模型汇总
+
+| 完整模型/方法 | DoF/行/nnz | 原式/物理 | 完整费用与资源 | 精度边界 |
+|---|---|---|---|---|
+| 同NOTCH tetra p6，完整UFL+MUMPS，无凝聚 | FE980352/native1005528/981180；aug nnz362966076 | formal 2.32584924e-10；R/T/Av=0.0762185598/0.905665158/0.0181162824；828模式 | 成功链14748.453748s；prepared 2508.029019s；sampled 88.523769GiB | direct1e−10 FAIL；B/P6散射E/H=0.000405047017/0.000410694274 FAIL1e−4 |
+
+新系数积分避免反复生成整张几何基表，K落盘用于恢复；不是新求解方程或NN收益。B/P6的全分子分母、240点、全部复模式/单mode功率和能量已独立核对。旧V64失败费用和L4否决保持。目标/连续精度/NN20仍未资格。
+
+[回应](../response_v65.md) · [专题](coefficient_first_p6_completion_v65.md) · [增量](records/paired_comparison_v65.json) · [最终费用](records/resource_costs_final_v65.json) · [selective依赖](records/selective_manifest_v65.json)。唯一下一步为新的有界相容局部h参照规划，当前不执行。
+
+---
+
 # V64最新：准备完成部分，完整场未运行
 
 | 本批模型/阶段 | 实际规模/费用 | 资格与缺项 |

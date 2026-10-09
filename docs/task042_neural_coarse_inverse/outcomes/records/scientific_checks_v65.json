@@ -1,0 +1,54 @@
+{
+  "status": "COMPLETED",
+  "stages": {
+    "PREFLIGHT": {
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v65/task042_v65_oracle_preflight_20261008T234715232260Z/result.json",
+        "sha256": "c24dad87b3a534be52595c37c5bf0a38e7ae23122168de04e81a346edccff9ee"
+      },
+      "status": "COMPLETED",
+      "source_sha": "7686f2fa9653adf5d95bdadea34ae7708e214cd9"
+    },
+    "PREPARE": {
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v65/task042_v65_p6_prepare_20261008T235028775310Z/result.json",
+        "sha256": "52fe7013aa2a5f3ea3f5457d7fb4d47aeac8719c1d2f5bc7a1634cd4fa5f782a"
+      },
+      "status": "COMPLETED",
+      "source_sha": "7686f2fa9653adf5d95bdadea34ae7708e214cd9"
+    },
+    "SOLVE_COMPLETE": {
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v65/task042_v65_p6_solve_complete_20261009T032422086276Z/result.json",
+        "sha256": "f27ba4f5848da8766e03b6084291be6a3f09263cb24e9e159107fc927a9c642e"
+      },
+      "status": "COMPLETED",
+      "source_sha": "2679c96f1eecfcb5c8a61a61397f75ef8b4c0280"
+    },
+    "VERIFY_COST": {
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v65/task042_v65_compare_verify_cost_20261009T041214506016Z/result.json",
+        "sha256": "86b29de84c45155fe612d9e4048695ce8b10b52693d17894226e91ce3ce0d94f"
+      },
+      "status": "COMPLETED",
+      "source_sha": "5212ae051c72ff264a7108faecfcbbb4e8e8aedd"
+    }
+  },
+  "complete_physics_record": "complete_physics_v65.json",
+  "pair_record": "paired_comparison_v65.json",
+  "body_record": "body_checkpoint_v65.json",
+  "kernel_record": "kernel_qualification_v65.json",
+  "original_collector_inventory": {
+    "path": "tmp/task042/v65/aux_post_01/records/scientific_checks_v65.json",
+    "sha256": "b1c3eba9de348330401add4a9d1599f4372df49ea72f1a366f6b1e7686531e21"
+  },
+  "new_body_builds": 1,
+  "new_numeric_factors": 1,
+  "new_complete_solves": 1,
+  "full_saved_field_check": true,
+  "finite_p5_p6_increment_pass": false,
+  "continuum_accuracy": false,
+  "target_qualified": false,
+  "NN20": false,
+  "note": "Full source manifests are referenced by hash; raw collector version retained, not nested again"
+}

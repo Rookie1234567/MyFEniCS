@@ -1,0 +1,48 @@
+{
+  "status": "ONE_COMPLETE_P6_FIELD_AND_CONTROLLED_SPATIAL_NEGATIVE",
+  "formal_original_pass": true,
+  "direct_internal_1e_10": false,
+  "full_saved_field_check": true,
+  "finite_p5_p6_increment_pass": false,
+  "failed_metrics": {
+    "E_scattered": 0.00040504701723157073,
+    "H_scattered": 0.0004106942735858186,
+    "curl_scattered": 0.0004106942735858198,
+    "selected_H_total": 0.00016989614057115522,
+    "selected_curl_total": 0.00016989614057115723,
+    "selected_E_scattered": 0.000432840745613561,
+    "selected_H_scattered": 0.0011743886868716925,
+    "selected_curl_scattered": 0.0011743886868717055
+  },
+  "completed": [
+    "Q_24_actual_cells",
+    "Q_saved_p5_action",
+    "PREPARE_atomic_K",
+    "two_full_P6_actions",
+    "symbolic",
+    "one_numeric",
+    "full_P6",
+    "independent_original",
+    "six_fields_240points",
+    "828mode_powers",
+    "A_volume_energy",
+    "frozen_VERIFY",
+    "B_P6_saved_checker"
+  ],
+  "not_run": {
+    "old_slow_global_P6_oracle": "new qualified coefficient-first oracle used; no duplicate global comparison",
+    "second_body_build_or_numeric": "not needed/authorized after legal return",
+    "L4": "fixed old shape rejection preserved; not authorized in V65",
+    "p7_more_modes_or_new_geometry": "not authorized",
+    "NN_training_PC": "not authorized",
+    "target_scale_PDE": "not authorized"
+  },
+  "no_matched_accurate_fastest_baseline": true,
+  "no_production_speedup_ratio": true,
+  "no_continuum_or_original_size_qualification": true,
+  "target_2TB_48h": false,
+  "NN20": false,
+  "unique_next_step": "以冻结B/P6逐cell差分为唯一新依据，设计并先核算一次有界相容局部h参照的实际闭合网格；在新的完整合同下判断未闭合的散射场分辨与跨阶差异，当前不启动新求解。",
+  "pre_prepare_forecast_gap": "separate conservative timing forecast was first sealed while PREPARE was already running; actual numeric reserve was rechecked after symbolic",
+  "historical_negative_results_and_fees_preserved": true
+}

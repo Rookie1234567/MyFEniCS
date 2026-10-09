@@ -1,0 +1,467 @@
+{
+  "source": "7686f2fa9653adf5d95bdadea34ae7708e214cd9",
+  "pass_gate": true,
+  "actual_p6_cell_count": 24,
+  "cell_pairs": [
+    {
+      "cell": 367,
+      "relative": 9.903340348480355e-16,
+      "absolute": 9.404597124565378e-11,
+      "reference_norm": 94963.88888632403,
+      "operation_scaled": 4.951670174240176e-16
+    },
+    {
+      "cell": 0,
+      "relative": 9.618453312345919e-16,
+      "absolute": 1.93609254340395e-10,
+      "reference_norm": 201289.38411738692,
+      "operation_scaled": 4.809226656172959e-16
+    },
+    {
+      "cell": 2036,
+      "relative": 7.806714141536158e-16,
+      "absolute": 9.974772418102414e-11,
+      "reference_norm": 127771.71339002866,
+      "operation_scaled": 3.9033570707680786e-16
+    },
+    {
+      "cell": 6905,
+      "relative": 8.102589802289642e-16,
+      "absolute": 1.4204184874464992e-10,
+      "reference_norm": 175304.2572937748,
+      "operation_scaled": 4.051294901144821e-16
+    },
+    {
+      "cell": 124,
+      "relative": 8.565660271576806e-16,
+      "absolute": 1.689849930308065e-10,
+      "reference_norm": 197281.92301946032,
+      "operation_scaled": 4.282830135788404e-16
+    },
+    {
+      "cell": 6044,
+      "relative": 1.1062608170908346e-15,
+      "absolute": 1.0818769006235509e-10,
+      "reference_norm": 97795.82571392097,
+      "operation_scaled": 5.531304085454174e-16
+    },
+    {
+      "cell": 431,
+      "relative": 9.777971043510948e-16,
+      "absolute": 9.8069063731027e-11,
+      "reference_norm": 100295.9236580165,
+      "operation_scaled": 4.888985521755475e-16
+    },
+    {
+      "cell": 1683,
+      "relative": 8.027417114655785e-16,
+      "absolute": 1.1264220864269433e-10,
+      "reference_norm": 140321.85824384485,
+      "operation_scaled": 4.013708557327893e-16
+    },
+    {
+      "cell": 1894,
+      "relative": 8.376915301857502e-16,
+      "absolute": 1.067373827266231e-10,
+      "reference_norm": 127418.48148202605,
+      "operation_scaled": 4.1884576509287517e-16
+    },
+    {
+      "cell": 5696,
+      "relative": 1.1134583994958461e-15,
+      "absolute": 2.0868410022246869e-10,
+      "reference_norm": 187419.75480804412,
+      "operation_scaled": 5.567291997479231e-16
+    },
+    {
+      "cell": 1,
+      "relative": 1.219849098121708e-15,
+      "absolute": 2.3292718524925704e-10,
+      "reference_norm": 190947.54064901333,
+      "operation_scaled": 6.099245490608537e-16
+    },
+    {
+      "cell": 5065,
+      "relative": 9.440987186742892e-16,
+      "absolute": 1.7566913802784213e-10,
+      "reference_norm": 186070.7302669768,
+      "operation_scaled": 4.720493593371447e-16
+    },
+    {
+      "cell": 2687,
+      "relative": 8.157185140035192e-16,
+      "absolute": 7.34911282060762e-11,
+      "reference_norm": 90093.7356998117,
+      "operation_scaled": 4.078592570017595e-16
+    },
+    {
+      "cell": 1800,
+      "relative": 1.0930293542418343e-15,
+      "absolute": 1.5678603108273577e-10,
+      "reference_norm": 143441.73875502948,
+      "operation_scaled": 5.465146771209172e-16
+    },
+    {
+      "cell": 2025,
+      "relative": 1.1575999233988864e-15,
+      "absolute": 2.0218663422355265e-10,
+      "reference_norm": 174660.2000714569,
+      "operation_scaled": 5.787999616994431e-16
+    },
+    {
+      "cell": 6199,
+      "relative": 9.817521987798917e-16,
+      "absolute": 1.3650514655740137e-10,
+      "reference_norm": 139042.36397641696,
+      "operation_scaled": 4.90876099389946e-16
+    },
+    {
+      "cell": 305,
+      "relative": 8.50889725772331e-16,
+      "absolute": 1.4856057525743161e-10,
+      "reference_norm": 174594.3930896415,
+      "operation_scaled": 4.254448628861655e-16
+    },
+    {
+      "cell": 4935,
+      "relative": 9.017102000507805e-16,
+      "absolute": 1.3601568076820134e-10,
+      "reference_norm": 150841.9010459697,
+      "operation_scaled": 4.508551000253902e-16
+    },
+    {
+      "cell": 366,
+      "relative": 1.0267427102631984e-15,
+      "absolute": 9.532482005729416e-11,
+      "reference_norm": 92841.97404514156,
+      "operation_scaled": 5.133713551315991e-16
+    },
+    {
+      "cell": 1300,
+      "relative": 8.660215788640909e-16,
+      "absolute": 1.6165127922522735e-10,
+      "reference_norm": 186659.643559062,
+      "operation_scaled": 4.3301078943204555e-16
+    },
+    {
+      "cell": 1904,
+      "relative": 7.65958990301102e-16,
+      "absolute": 6.44366389168652e-11,
+      "reference_norm": 84125.44239677227,
+      "operation_scaled": 3.8297949515055095e-16
+    },
+    {
+      "cell": 5568,
+      "relative": 1.0620927978653443e-15,
+      "absolute": 1.8603935700629394e-10,
+      "reference_norm": 175162.99647281916,
+      "operation_scaled": 5.310463989326723e-16
+    },
+    {
+      "cell": 629,
+      "relative": 1.0025165741931363e-15,
+      "absolute": 1.905983408849066e-10,
+      "reference_norm": 190119.8900759396,
+      "operation_scaled": 5.012582870965681e-16
+    },
+    {
+      "cell": 4810,
+      "relative": 7.19325072013294e-16,
+      "absolute": 7.877548958740075e-11,
+      "reference_norm": 109513.05974490612,
+      "operation_scaled": 3.5966253600664696e-16
+    }
+  ],
+  "cell_selection": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v65/task042_v65_oracle_preflight_20261008T234715232260Z/frozen_cell_selection.npz",
+    "sha256": "61608d92a9f1d381d10c9beb9f7cd510a822485d478d08c97b9e115aeb146bc9",
+    "members": {
+      "cells": {
+        "shape": [
+          24
+        ],
+        "dtype": "int32",
+        "sha256": "d652ba84b8917bfac0a26f4be87b72b39a73b4fc94e3d9ba0c399e63c597c366"
+      },
+      "permutations": {
+        "shape": [
+          24
+        ],
+        "dtype": "uint32",
+        "sha256": "24a5f703744c24296719062ffbc067259998643e58956385dcba652a025247ab"
+      },
+      "tags": {
+        "shape": [
+          24
+        ],
+        "dtype": "int32",
+        "sha256": "0be2ee0b4be726818cf5da8d5a4bba3ee91f732934884435e45cea75b79404a5"
+      },
+      "centers": {
+        "shape": [
+          24,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "5bb96baa8f916b91d7b46568f272efadd4f22d3bc0251b4f89f8624f7495e798"
+      },
+      "Jacobians": {
+        "shape": [
+          24,
+          3,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "4047d028f096c8327b3b56480873df02031641ad3a046c8f7a3e3b0c397e4881"
+      }
+    }
+  },
+  "local_timing": {
+    "old_transformed_tables_seconds": 17.506522222189233,
+    "coefficient_first_seconds": 0.18886360269971192,
+    "single_small_pairing_only": true,
+    "whole_case_speedup": "NOT_MEASURED"
+  },
+  "saved_p5": {
+    "relative": 6.234201975397063e-12,
+    "absolute": 6.577688992236678e-12,
+    "operation_scaled": 3.1171009876985483e-12,
+    "arrays": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v65/task042_v65_oracle_preflight_20261008T234715232260Z/saved_p5_original_pair.npz",
+      "sha256": "6f1678cd96fdf4926ec7adf19eeb36a89c96575a1decfd6d3bfc52d6ee3aa576",
+      "members": {
+        "input": {
+          "shape": [
+            586748
+          ],
+          "dtype": "complex128",
+          "sha256": "48634fb1dd6715a059470d93e29a3081289f294236067c7214bb14321e465950"
+        },
+        "original": {
+          "shape": [
+            586748
+          ],
+          "dtype": "complex128",
+          "sha256": "5faa81a4fc8ad71623c20c6b4bd75ecd008047aac92de5bb597cf1f2f32178c3"
+        },
+        "coefficient_first": {
+          "shape": [
+            586748
+          ],
+          "dtype": "complex128",
+          "sha256": "3715f4239b8fb3e891d45c15a4994ec57a6aa6f606d3ada77049676175e2d8a6"
+        },
+        "delta": {
+          "shape": [
+            586748
+          ],
+          "dtype": "complex128",
+          "sha256": "66e3dc148893fc951e418f160829641e04ea5ea8a74c42eb7860939aea3808f5"
+        },
+        "physical_rhs": {
+          "shape": [
+            586748
+          ],
+          "dtype": "complex128",
+          "sha256": "bfdf875cb89289a0b8200d14e332beed0fe24549c69f4590b581df1ced88de2e"
+        }
+      }
+    },
+    "parent_original": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v63/task042_v63_tetra_notch_h2_p5_20261008T095857061986Z/independent_original.npz",
+      "sha256": "b486d46ab02b936186df917dfadad34e5b2e304998954da88894862fa27055ef",
+      "members": {
+        "residual": {
+          "shape": [
+            586748
+          ],
+          "dtype": "complex128",
+          "sha256": "e41a788324f47eeaec996ecc8e659de0cd95bd94fa4eb47cac28d0b5537ccb4d"
+        },
+        "rhs": {
+          "shape": [
+            586748
+          ],
+          "dtype": "complex128",
+          "sha256": "bfdf875cb89289a0b8200d14e332beed0fe24549c69f4590b581df1ced88de2e"
+        },
+        "action": {
+          "shape": [
+            586748
+          ],
+          "dtype": "complex128",
+          "sha256": "5faa81a4fc8ad71623c20c6b4bd75ecd008047aac92de5bb597cf1f2f32178c3"
+        },
+        "x": {
+          "shape": [
+            586748
+          ],
+          "dtype": "complex128",
+          "sha256": "48634fb1dd6715a059470d93e29a3081289f294236067c7214bb14321e465950"
+        }
+      }
+    },
+    "parent_solution": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v63/task042_v63_tetra_notch_h2_p5_20261008T095857061986Z/solution.npz",
+      "sha256": "68933f0bee9cc1382be2a7c3bf45321bb1ce2d7fac5d0a444ef1659793862862",
+      "members": {
+        "x": {
+          "shape": [
+            586748
+          ],
+          "dtype": "complex128",
+          "sha256": "48634fb1dd6715a059470d93e29a3081289f294236067c7214bb14321e465950"
+        },
+        "u_independent": {
+          "shape": [
+            585920
+          ],
+          "dtype": "complex128",
+          "sha256": "f6806055ecacf0c6fcbb6175b9571fef14d88105bf050bc5111b345af2c78044"
+        },
+        "u_native": {
+          "shape": [
+            603700
+          ],
+          "dtype": "complex128",
+          "sha256": "67be5065f602329134e48ad5ce55de2489aeded02658d290d8a60ea13e01ccaa"
+        },
+        "port": {
+          "shape": [
+            828
+          ],
+          "dtype": "complex128",
+          "sha256": "7f66c2f7c4afe861aa32ba38e456d7cf4ef790b707cf1a5e29d7ab081c9f3904"
+        },
+        "rhs": {
+          "shape": [
+            586748
+          ],
+          "dtype": "complex128",
+          "sha256": "9fa91f5114d468b5a085e6bc4213c48cda512034fe6caee7f0fb91d77719d657"
+        },
+        "residual": {
+          "shape": [
+            586748
+          ],
+          "dtype": "complex128",
+          "sha256": "a273cfb8aab6fbc39078e67ae0bed01a04397fd18c38b7e9b79efa064d2d3c40"
+        },
+        "kappa": {
+          "shape": [
+            3
+          ],
+          "dtype": "float64",
+          "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+        },
+        "masters": {
+          "shape": [
+            585920
+          ],
+          "dtype": "int64",
+          "sha256": "85aa6ccd109d541c7ad0dcaee8db27a3b0d6bbdb52bb6cb7789f998747bfd247"
+        },
+        "slaves": {
+          "shape": [
+            17780
+          ],
+          "dtype": "int32",
+          "sha256": "9ffebfce70fbaa9f84961a23a20b5fcb6598052d9429f7da554509b964fbb8a8"
+        },
+        "P_data": {
+          "shape": [
+            604770
+          ],
+          "dtype": "complex128",
+          "sha256": "347de4d5c96bdce16b53ff6fe1e9a09ca10be0e8863febccfa479a90ecbe33a2"
+        },
+        "P_indices": {
+          "shape": [
+            604770
+          ],
+          "dtype": "int32",
+          "sha256": "25c1d9d59dab3ef616e4b3fce407f175fc07b4fa17479635b817c0c36e75b5c0"
+        },
+        "P_indptr": {
+          "shape": [
+            603701
+          ],
+          "dtype": "int32",
+          "sha256": "3b2f7217ff88487c86452af5400e902038dbd80d6fbb43fc11c9ba70718bbfe9"
+        },
+        "geometry_x": {
+          "shape": [
+            1701,
+            3
+          ],
+          "dtype": "float64",
+          "sha256": "39008022f6cf54892209d198d180c95baa82905dded06216f39027b2715f3026"
+        },
+        "geometry_dofmap": {
+          "shape": [
+            7680,
+            4
+          ],
+          "dtype": "int32",
+          "sha256": "e0449ff09f3362c561a888eafbb33c0b25198cb524392aeeee1d005bcd123c14"
+        },
+        "cell_centers": {
+          "shape": [
+            7680,
+            3
+          ],
+          "dtype": "float64",
+          "sha256": "ac9267670d7922f25e75d4d17b0985676f05e06ca619437f9d2deef3b0ff855c"
+        },
+        "cell_tags": {
+          "shape": [
+            7680
+          ],
+          "dtype": "int32",
+          "sha256": "b8d08e479645ca1c9a2f11c72e5a8565029b68973df33f383f8312fd7705ff2a"
+        },
+        "regular_tags": {
+          "shape": [
+            7680
+          ],
+          "dtype": "int32",
+          "sha256": "7930a6fa147e277d4a3e500bf8c264a45d28c58ad9aab754cef60bdbc5af99f1"
+        }
+      }
+    },
+    "consumption": {
+      "seconds": 9.009357250062749,
+      "q": 15,
+      "cells": 7680,
+      "columns": 1,
+      "reference_table_bytes": 4315952,
+      "full_vector_workspace_bytes": 28693120,
+      "algorithm": "COEFFICIENT_FIRST_PUBLIC_BASIX_VECTOR",
+      "production_matrix_reads": 0
+    }
+  },
+  "new_p6_two_vector_qualification": {
+    "path": "benchmarks/artifacts/task042/v65/task042_v65_p6_solve_complete_20261009T032422086276Z/original_operator_pairs.json",
+    "sha256": "705ad89cdf2881efed0f3f56988de7575b727c3d25fba9f1544a04037b6eba4a"
+  },
+  "independent_new_P6_body_consumption": {
+    "seconds": 49.780704356962815,
+    "q": 17,
+    "cells": 7680,
+    "columns": 1,
+    "reference_table_bytes": 22680648,
+    "full_vector_workspace_bytes": 47862528,
+    "algorithm": "COEFFICIENT_FIRST_PUBLIC_BASIX_VECTOR",
+    "production_matrix_reads": 0
+  },
+  "preflight_timings": {
+    "tetra_mesh_materials_full_periodic_space": 29.86972614005208,
+    "maximum24_actual_p6_local_pairs": 17.745768472086638,
+    "one_saved_p5_original_vector_consumption": 9.193705747136846
+  },
+  "new_kernel": "COEFFICIENT_FIRST_PUBLIC_BASIX_VECTOR",
+  "whole_case_speed_ratio": "NOT_QUALIFIED",
+  "no_production_matrix_reads": true,
+  "no_15_Gram_reads": true,
+  "no_full_11p81GiB_geometry_table_cache": true
+}

@@ -1,0 +1,9 @@
+{
+  "status": "PENDING_DOCUMENT_AND_FINAL_METADATA_SETTLEMENT",
+  "actual_sources": {
+    "prepare": "7686f2fa9653adf5d95bdadea34ae7708e214cd9",
+    "solve": "2679c96f1eecfcb5c8a61a61397f75ef8b4c0280",
+    "consumer": "5212ae051c72ff264a7108faecfcbbb4e8e8aedd"
+  },
+  "final_commit_is_not_run_source": true
+}

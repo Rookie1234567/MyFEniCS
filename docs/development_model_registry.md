@@ -1,3 +1,13 @@
+# 新登记：Task042 V65完整P6有限参考
+
+| 身份 | 实测空间/方法 | 结果 | 成本/边界 |
+|---|---|---|---|
+| 0.7nm/s7/135真实NOTCH/828 | 7680tet/p6，FE980352/native1005528/981180；UFL完整MUMPS，无静态凝聚 | formal 2.32584924e-10 PASS；direct1e−10 FAIL；B/P6全域散射E/H 0.000405047017/0.000410694274 FAIL | 成功链14748.453748s，sampled 88.523769GiB；未知原尺寸/NN20不授 |
+
+[完整记录](task042_neural_coarse_inverse/outcomes/records/complete_physics_v65.json) · [依赖manifest](task042_neural_coarse_inverse/outcomes/records/selective_manifest_v65.json)。原有模型与负结果保持。
+
+---
+
 # Task042 V64模型账增量
 
 | 模型/方法 | 实际物理/空间 | 实做与费用 | 完整资格 |

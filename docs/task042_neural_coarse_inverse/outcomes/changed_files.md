@@ -1,3 +1,11 @@
+# V65变更与依赖
+
+新数学核心为src/solvers/tetra_coefficient_action.py；新体checkpoint和累计预算/薄case接入仍放src/solvers。复用完整tetra runner/监督/恢复/无JIT输出/原式，增加四个one-run dat、相关资格与增量checker。阶段计时拆分不改物理；生命周期修复只移除prepared K/owners引用，实际producer的旧驻留事实保留，没有PDE重放。所有opt-in默认不提升为生产，未merge。
+
+[按依赖分组的manifest](records/selective_manifest_v65.json) · [运行source](records/source_bindings_v65.json) · [raw索引](records/raw_archive_index_v65.json)。旧task/review/response/raw逐字保持。
+
+---
+
 # V64变更范围
 
 新增local_h_pilot scope/薄队列、固定差分标记、真实mesh_override保存/重载、partial checker/collector与4dat。周期refinement仅增加可选parent返回，原默认保持；完整tetra核使用显式mesh_override与actual counts，数学弱式未改。新增PUBLIC_BASIX cache库存只做已停准备的静态消费，没有优化原数值核。
