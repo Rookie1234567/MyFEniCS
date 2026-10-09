@@ -65,6 +65,7 @@ from benchmarks.task041_exact_side_workflow import (
     _task041_w0p7_amd_control_errors,
     _task041_w0p7_amd_symbolic_source_model,
     _task041_w0p7_analysis_ordering_errors,
+    _task041_w0p7_external_headroom_check,
     _task041_w0p7_pord_control_errors,
     _task041_w0p7_pord_post_symbolic_control_errors,
     _task041_w0p7_pord_symbolic_source_model,
@@ -91,8 +92,12 @@ from src.io.input_validation import (
     TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
     TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES,
     TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES,
+    TASK041_BALH_MEMAVAILABLE_BASELINE_BYTES,
+    TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
     TASK041_BALH_W0P7NM_P6_PILOT_MATERIAL_RECORD_SHA256,
     TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+    TASK041_BALH_W0P7NM_P6_PILOT_POLICY_RESERVE_BYTES,
+    TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES,
     load_and_resolve,
     task041_balh_diagnostic_output_enabled,
     task041_balh_phase_limits_for_model,
@@ -225,6 +230,31 @@ def test_task041_w0p7_reduced_p6_pilot_has_frozen_material_and_fixed_h6_route():
         "gates_unchanged": True,
     }
     assert payload["solver"]["side_residual_correction_steps"] == 1
+
+    pilot_service = task041_balh_service_contract(
+        TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+    )
+    assert TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES == 80 * 2**30
+    assert TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES == 72 * 2**30
+    assert TASK041_BALH_W0P7NM_P6_PILOT_POLICY_RESERVE_BYTES == 8 * 2**30
+    assert (
+        TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES
+        - TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES
+        == TASK041_BALH_W0P7NM_P6_PILOT_POLICY_RESERVE_BYTES
+    )
+    assert TASK041_BALH_MEMAVAILABLE_BASELINE_BYTES == 384 * 2**30
+    assert pilot_service["memory_cap_bytes"] == 80 * 2**30
+    assert pilot_service["warning_memory_bytes"] == 72 * 2**30
+    assert pilot_service["planning_ceiling_bytes"] == 80 * 2**30
+    assert pilot_service["runtime_reserve_bytes"] == 384 * 2**30
+    assert TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES == 53_221_163_008
+    assert TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES == 47_899_046_707
+    assert task041_balh_service_contract(TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID)[
+        "memory_cap_bytes"
+    ] == 53_221_163_008
+    assert task041_balh_service_contract(TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID)[
+        "memory_cap_bytes"
+    ] == 53_221_163_008
 
     expected_cpus = tuple(range(10, 18))
     policy = task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
@@ -720,8 +750,8 @@ def test_task041_w0p7_stage_sampler_binds_service_invocation_and_live_rank_tree(
 
 def test_task041_w0p7_stage_budget_uses_source_model_without_numeric_cycle():
     """Check ordering-specific source models and numeric budget boundaries."""
-    cap = TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES
-    warning = TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES
+    cap = TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES
+    warning = TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES
     one_cell_history = _TASK041_W0P7_STAGE_HISTORY[
         "task041.w0p7.one_cell_traction"
     ]
@@ -833,7 +863,7 @@ def test_task041_w0p7_stage_budget_uses_source_model_without_numeric_cycle():
         + top_pending_bottom["W_policy_reserve_bytes"]
         <= cap
     )
-    assert top_pending_bottom["W_policy_reserve_bytes"] == 5_322_116_301
+    assert top_pending_bottom["W_policy_reserve_bytes"] == 8 * 2**30
     assert top_pending_bottom["W_is_mumps_error_bound"] is False
     assert top_pending_bottom["projected_peak_is_upper_bound"] is False
 
@@ -874,8 +904,8 @@ def test_task041_w0p7_stage_budget_uses_source_model_without_numeric_cycle():
     assert top_one_byte_over["pass"] is False
     assert top_one_byte_over["screened_peak_plus_W_bytes"] == cap + 1
 
-    # Historical top B is not substituted for fresh B and is currently too
-    # high for this predicted delta plus W; it must be rejected.
+    # Historical top B is not substituted for fresh B; its projection is
+    # evaluated under the new pilot policy without claiming a new measurement.
     top_historical_b = _task041_w0p7_stage_budget_projection(
         stage="before_symbolic",
         identity="task041.w0p7.p4.top",
@@ -891,13 +921,20 @@ def test_task041_w0p7_stage_budget_uses_source_model_without_numeric_cycle():
         global_nnz=top_history["nnz"],
         mpi_size=p,
     )
-    assert top_historical_b["pass"] is False
+    assert top_historical_b["pass"] is (
+        top_historical_b["screened_peak_plus_W_bytes"] <= cap
+    )
     assert top_historical_b["projected_peak_bytes"] == (
         top_history["before"] + top_model["predicted_increment_bytes"]
     )
-    assert top_historical_b["screened_peak_plus_W_bytes"] > cap
+    assert top_historical_b["screened_peak_plus_W_bytes"] < cap
 
-    top_pending_too_large_b = 46_000_000_000
+    top_pending_too_large_b = (
+        cap
+        - (cap - warning)
+        - top_model["predicted_increment_bytes"]
+        + 1
+    )
     top_pending_rejected = _task041_w0p7_stage_budget_projection(
         stage="before_symbolic",
         identity="task041.w0p7.p4.top",
@@ -919,8 +956,79 @@ def test_task041_w0p7_stage_budget_uses_source_model_without_numeric_cycle():
         is False
     )
     assert top_pending_rejected["pass"] is False
-    assert top_pending_rejected["screened_peak_plus_W_bytes"] > cap
+    assert top_pending_rejected["screened_peak_plus_W_bytes"] == cap + 1
 
+    # The latest top symbolic screen is above the old 53 GiB cap/W, but is
+    # payable under the registered 80/72 GiB pilot envelope.
+    latest_top_b = 38_544_203_776
+    latest_top_info17 = 9_647
+
+    def latest_top_projection(*, selected_cap, selected_warning, b_live=latest_top_b,
+                              info17=latest_top_info17):
+        return _task041_w0p7_stage_budget_projection(
+            stage="after_symbolic_before_numeric",
+            identity="task041.w0p7.p4.top",
+            history=top_history,
+            global_rows=n,
+            b_live_bytes=b_live,
+            fresh_numeric_b_bytes=b_live,
+            info17_sum_ranks_raw=info17,
+            bottom_calibration=None,
+            cap_bytes=selected_cap,
+            warning_bytes=selected_warning,
+            workspace_audit_complete=True,
+            global_nnz=top_history["nnz"],
+            mpi_size=p,
+            ordering_profile="sequential_pord_deferred_p4",
+            source_model_identity=W0P7_PORD_SOURCE_MODEL_ID,
+        )
+
+    old_cap_projection = latest_top_projection(
+        selected_cap=TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES,
+        selected_warning=TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES,
+    )
+    new_cap_projection = latest_top_projection(
+        selected_cap=cap, selected_warning=warning
+    )
+    assert old_cap_projection["pass"] is False
+    assert old_cap_projection["screened_peak_plus_W_bytes"] == 53_513_320_077
+    assert (
+        old_cap_projection["screened_peak_plus_W_bytes"]
+        - TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES
+        == 292_157_069
+    )
+    assert new_cap_projection["pass"] is True
+    assert new_cap_projection["projected_peak_bytes"] == 48_191_203_776
+    assert new_cap_projection["screened_peak_plus_W_bytes"] == 56_781_138_368
+    assert (
+        cap - new_cap_projection["fresh_numeric_B_bytes"]
+        == 47_355_142_144
+    )
+    assert (
+        cap - new_cap_projection["screened_peak_plus_W_bytes"]
+        == 29_118_207_552
+    )
+
+    over_80gib = latest_top_projection(
+        selected_cap=cap,
+        selected_warning=warning,
+        b_live=cap + 1,
+    )
+    unknown_live = latest_top_projection(
+        selected_cap=cap,
+        selected_warning=warning,
+        b_live=math.nan,
+    )
+    unknown_info17 = latest_top_projection(
+        selected_cap=cap,
+        selected_warning=warning,
+        info17=math.nan,
+    )
+    assert over_80gib["pass"] is False
+    assert unknown_live["pass"] is False
+    assert "current whole-job B is unknown" in unknown_live["reasons"]
+    assert unknown_info17["pass"] is False
+    assert "sum-ranks INFOG(17) is unknown" in unknown_info17["reasons"]
     # Numeric admission is fresh B plus this factor's INFOG(17) once and W;
     # completed-bottom INFOG(19) is not a precondition or a second addition.
     top_numeric = _task041_w0p7_stage_budget_projection(
@@ -1381,6 +1489,69 @@ def test_task041_w0p7_stage_budget_uses_source_model_without_numeric_cycle():
         unknown_source_path["reasons"]
     )
 
+
+def test_task041_w0p7_external_headroom_rejects_lower_parent_limits():
+    floor = TASK041_BALH_MEMAVAILABLE_BASELINE_BYTES
+    required = 12 * 2**30
+    accepted = _task041_w0p7_external_headroom_check(
+        required_bytes=required,
+        node0_free_bytes=floor + required,
+        host_available_bytes=floor + required,
+        floor_bytes=floor,
+        cgroup_limit_state="finite",
+        cgroup_headroom_bytes=required,
+    )
+    assert accepted == (required, required, True, [])
+
+    node0_short = _task041_w0p7_external_headroom_check(
+        required_bytes=required,
+        node0_free_bytes=floor + required - 1,
+        host_available_bytes=floor + required,
+        floor_bytes=floor,
+        cgroup_limit_state="finite",
+        cgroup_headroom_bytes=required,
+    )
+    assert node0_short[2] is True
+    assert node0_short[3] == ["host/node0 reserve headroom is insufficient"]
+
+    parent_cgroup_short = _task041_w0p7_external_headroom_check(
+        required_bytes=required,
+        node0_free_bytes=floor + required,
+        host_available_bytes=floor + required,
+        floor_bytes=floor,
+        cgroup_limit_state="finite",
+        cgroup_headroom_bytes=required - 1,
+    )
+    assert parent_cgroup_short[2] is False
+    assert parent_cgroup_short[3] == [
+        "cgroup ancestor headroom is insufficient or unknown"
+    ]
+
+    unknown_parent_cgroup = _task041_w0p7_external_headroom_check(
+        required_bytes=required,
+        node0_free_bytes=floor + required,
+        host_available_bytes=floor + required,
+        floor_bytes=floor,
+        cgroup_limit_state="unknown",
+        cgroup_headroom_bytes=None,
+    )
+    assert unknown_parent_cgroup[2] is False
+    assert unknown_parent_cgroup[3] == [
+        "cgroup ancestor headroom is insufficient or unknown"
+    ]
+
+    nonfinite_host = _task041_w0p7_external_headroom_check(
+        required_bytes=required,
+        node0_free_bytes=floor + required,
+        host_available_bytes=math.inf,
+        floor_bytes=floor,
+        cgroup_limit_state="max_or_unlimited",
+        cgroup_headroom_bytes=None,
+    )
+    assert nonfinite_host[1] is None
+    assert nonfinite_host[3] == ["host/node0 reserve headroom is insufficient"]
+
+
 def test_task041_w0p7_pending_p4_factors_complete_bottom_top_before_admission():
     """Check ordering with small stateful adapters, not real side operators."""
     order = []
@@ -1461,10 +1632,10 @@ def test_task041_w0p7_numeric_gates_cleanup_and_use_post_cleanup_authority():
             28_000_000_000,
             28_200_000_000,
             29_000_000_000,
-            29_000_000_000,
-            27_500_000_000,
-            31_000_000_000,
-            32_300_000_000,
+            60_000_000_000,
+            50_500_000_000,
+            61_000_000_000,
+            62_000_000_000,
         )
     )
     cleanup_calls = []
@@ -1513,15 +1684,15 @@ def test_task041_w0p7_numeric_gates_cleanup_and_use_post_cleanup_authority():
     bottom = observe("after_symbolic_before_numeric", "task041.w0p7.p4.bottom")
     top = observe("after_symbolic_before_numeric", "task041.w0p7.p4.top")
     assert bottom["numeric_p4_cleanup"] is True
-    assert bottom["numeric_cleanup_before"]["B_bytes"] == 29_000_000_000
-    assert bottom["resource"]["B_bytes"] == 27_500_000_000
+    assert bottom["numeric_cleanup_before"]["B_bytes"] == 60_000_000_000
+    assert bottom["resource"]["B_bytes"] == 50_500_000_000
     assert top["numeric_p4_cleanup"] is True
-    assert top["numeric_cleanup_before"]["B_bytes"] == 31_000_000_000
-    assert top["resource"]["B_bytes"] == 32_300_000_000
+    assert top["numeric_cleanup_before"]["B_bytes"] == 61_000_000_000
+    assert top["resource"]["B_bytes"] == 62_000_000_000
 
     # The existing projection uses the post-cleanup B, not the pre-cleanup one.
-    cap = worker.TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES
-    warning = worker.TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES
+    cap = worker.TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES
+    warning = worker.TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES
 
     def numeric_projection(identity, b_live):
         history = worker._TASK041_W0P7_STAGE_HISTORY[identity]
@@ -1583,6 +1754,10 @@ def test_task041_w0p7_numeric_gates_cleanup_and_use_post_cleanup_authority():
 def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypatch):
     from benchmarks import run_task037b_hybrid_iterative as recovery
     from benchmarks import task041_exact_side_workflow as worker
+    from src.solvers import petsc_lu_stage
+    from src.solvers.petsc_lu_stage import StagedFactorRejected
+
+    real_stage_factory_builder = worker._build_task041_w0p7_stage_factory
 
     legacy_paths = (
         "13p5nm_p6h10_m120_mpi8_cell_condensed.dat",
@@ -1621,6 +1796,7 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
     manifest_path.write_text("{}\n")
     captured = {}
     stage_binding_calls = []
+    consumer_summaries = []
     supervisor_binding = {
         "schema": "task041.w0p7.supervisor_memory_binding.v1",
         "invocation_id": "fixture-invocation",
@@ -1690,13 +1866,17 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
         stage_binding_calls.append((Path(path), kwargs))
         return stage_factory, stage_factory_binding
 
+    def capture_rank0_json(path, payload, _comm):
+        if Path(path).name == "consumer_summary.json":
+            consumer_summaries.append(dict(payload))
+
     monkeypatch.setattr(
         worker, "_build_task041_w0p7_stage_factory", fake_stage_factory
     )
     monkeypatch.setattr(worker, "_environment_snapshot", lambda: {"test": True})
     monkeypatch.setattr(worker, "_write_rank_pid_affinity", lambda *_a, **_k: None)
     monkeypatch.setattr(worker, "_memavailable_bytes", lambda: 10**15)
-    monkeypatch.setattr(worker, "_write_rank0_json", lambda *_a, **_k: None)
+    monkeypatch.setattr(worker, "_write_rank0_json", capture_rank0_json)
     monkeypatch.setattr(
         worker,
         "_write_marker",
@@ -1751,6 +1931,15 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
     assert stage_binding_calls[1][1]["supervisor_memory_binding"] is supervisor_binding
     assert stage_binding_calls[1][1]["expected_rank_cpus"] == tuple(range(10, 18))
     assert stage_binding_calls[1][1]["comm"] is comm
+    stage_limits = stage_binding_calls[1][1]["limits"]
+    assert stage_limits["hard_memory_bytes"] == 80 * 2**30
+    assert stage_limits["process_tree_rss_cap_bytes"] == 80 * 2**30
+    assert stage_limits["process_tree_rss_warning_bytes"] == 72 * 2**30
+    assert (
+        stage_limits["process_tree_rss_cap_bytes"]
+        - stage_limits["process_tree_rss_warning_bytes"]
+        == 8 * 2**30
+    )
     assert comm.allgather_inputs == [
         {"rank": 0, "error": None, "binding": stage_factory_binding}
     ]
@@ -1767,6 +1956,75 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
         17.0,
         22.0,
     )
+
+    # Drive an actual StagedFactorRejected through the production exact-side
+    # factory wrapper and worker catch/summary path, without creating a factor.
+    bridge_path = Path(worker.os.environ[worker.TASK041_W0P7_STAGE_BRIDGE_PATH_ENV])
+    bridge_path.write_bytes(b"synthetic-stage-bridge-load-boundary")
+    fake_bridge = SimpleNamespace(
+        __file__=str(bridge_path),
+        petsc_int_sizeof=4,
+        mumps_package_version_major=5,
+        mumps_package_version_minor=6,
+        mumps_package_version_subminor=2,
+    )
+
+    class RejectingStagedFactory:
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        def __call__(self, *_args, **_kwargs):
+            raise StagedFactorRejected("synthetic stage budget refusal")
+
+    monkeypatch.setattr(
+        petsc_lu_stage, "load_lu_stage_bridge", lambda _path: fake_bridge
+    )
+    monkeypatch.setattr(
+        petsc_lu_stage, "StagedMumpsLUFactory", RejectingStagedFactory
+    )
+    monkeypatch.setattr(
+        worker, "_build_task041_w0p7_stage_factory", real_stage_factory_builder
+    )
+
+    def reject_at_setup(**kwargs):
+        kwargs["factor_stage_factory"](
+            object(),
+            icntl14=40,
+            stage_identity="task041.w0p7.p4.bottom",
+            defer_numeric=True,
+        )
+        raise AssertionError("synthetic stage rejection did not propagate")
+
+    monkeypatch.setattr(recovery, "build_frozen_m10_setup", reject_at_setup)
+    consumer_summaries.clear()
+    with pytest.raises(StagedFactorRejected, match="synthetic stage budget refusal") as exc:
+        worker.run_task041_consumer(
+            input_path=pilot_path,
+            packet_manifest=manifest_path,
+            packet_identity=identity_path,
+            packet_manifest_sha256="d" * 64,
+            run_directory=tmp_path / "pilot_stage_rejection",
+            source_sha=source_sha,
+            candidate=True,
+            comm=comm,
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            fixed_h6_modal_gmres_research=True,
+            p4_refinement_target_tolerance=5.0e-13,
+            expected_rank_cpus=tuple(range(10, 18)),
+        )
+    assert exc.value.failure_classification == (
+        "TASK041_STAGED_FACTOR_BUDGET_REJECTED"
+    )
+    assert consumer_summaries
+    assert consumer_summaries[-1]["status"] == (
+        "task041_staged_factor_budget_rejected"
+    )
+    assert consumer_summaries[-1]["classification"] == (
+        "TASK041_STAGED_FACTOR_BUDGET_REJECTED"
+    )
+    assert consumer_summaries[-1]["error"]["type"] == "StagedFactorRejected"
 
 
 def test_task041_w0p7_recovery_uses_profile_interfaces_and_plane_count(
@@ -2537,7 +2795,7 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
     ),
 )
 def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
-    input_name, model_id, p4_target, packet_source, tmp_path: Path, monkeypatch
+    input_name, model_id, p4_target, packet_source, tmp_path: Path, monkeypatch, capsys
 ):
     from benchmarks.task041_balh_workflow import (
         TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
@@ -2680,6 +2938,18 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     monkeypatch.setattr(
         "src.runners.task038_launcher.launch_specification", fake_launch
     )
+    if model_id == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID:
+        # Public validate-only checks the DAT/profile and fixed-H6 route/source
+        # binding, then returns before launcher, packet-reader/hydration, or math.
+        assert run_case.main([*public_args, "--validate-only"]) == 0
+        validate_only = json.loads(capsys.readouterr().out)
+        assert validate_only == {
+            "status": "valid",
+            "model_id": model_id,
+            "run_id": specification.identity["run_id"],
+            "method": "hybrid_iterative",
+        }
+        assert captured == {}
     assert run_case.main(public_args) == 0
     assert captured["model_id"] == model_id
     assert captured["fixed_h6_modal_gmres_research"] is True
@@ -3124,6 +3394,10 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
             )
 
     service_contract = resolve_service_contract()
+    if model_id == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID:
+        assert service_contract["memory_cap_bytes"] == 80 * 2**30
+        assert service_contract["warning_memory_bytes"] == 72 * 2**30
+        assert service_contract["runtime_reserve_bytes"] == 384 * 2**30
     fixed_binding = service_contract["fixed_h6_modal_gmres_research"]
     assert fixed_binding["method"] == "fixed_h6_modal_gmres_research"
     assert fixed_binding["expected_rank_cpus"] == list(rank_cpus)
@@ -8174,6 +8448,77 @@ def test_task041_balh_identity_keeps_producer_and_consumer_distinct():
 
     with pytest.raises(ValueError, match="source SHA"):
         task041_balh_consumer_identity_binding(producer_identity, candidate, "bad")
+
+
+def test_task041_w0p7_old_producer_resource_identity_reuses_for_new_consumer():
+    old_run_root = (
+        REPOSITORY_ROOT
+        / "results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/"
+        "task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/"
+        "20261007T054118.409515Z"
+    )
+    identity_path = old_run_root / "producer/packet_identity.json"
+    resolved_path = old_run_root / "resolved_config.json"
+    assert identity_path.is_file()
+    assert resolved_path.is_file()
+    producer_identity = json.loads(identity_path.read_text(encoding="utf-8"))
+    old_resolved = json.loads(resolved_path.read_text(encoding="utf-8"))
+
+    assert hashlib.sha256(identity_path.read_bytes()).hexdigest() == (
+        "73111acd2d48344e4ef36a0d838371f8ccc0efcddc1b7d9d3a46173f4ad2fbc6"
+    )
+    assert hashlib.sha256(resolved_path.read_bytes()).hexdigest() == (
+        "d7c91610e6e2ec3ae93427b80f914e896eb4ad7b6fc79187c711b6f54009eafc"
+    )
+    assert producer_identity["source_sha"] == (
+        "2708214386d38bd69f73e6b196c8ed843bb53d81"
+    )
+    assert producer_identity["input_sha256"] == (
+        "c667f56a5fce72f66159df0b5bd76abc65ad6e37a0d6af0ebb0acfb241d604b8"
+    )
+    assert producer_identity["resolved_sha256"] == (
+        "d7c91610e6e2ec3ae93427b80f914e896eb4ad7b6fc79187c711b6f54009eafc"
+    )
+    assert old_resolved["provenance"]["input_sha256"] == producer_identity[
+        "input_sha256"
+    ]
+    assert old_resolved["execution"]["absolute_terminate_memory_bytes"] == (
+        TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES
+    )
+    assert old_resolved["execution"]["warning_memory_gib"] == 44.6094635007903
+
+    consumer = _specification(
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/"
+        "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat"
+    )
+    binding = task041_balh_consumer_identity_binding(
+        producer_identity, consumer, "b" * 40
+    )
+    assert binding["pass"] is True
+    assert binding["producer_identity"]["source_sha"] == (
+        "2708214386d38bd69f73e6b196c8ed843bb53d81"
+    )
+    assert binding["producer_identity"]["input_sha256"] == (
+        "c667f56a5fce72f66159df0b5bd76abc65ad6e37a0d6af0ebb0acfb241d604b8"
+    )
+    assert binding["producer_identity"]["resolved_sha256"] == (
+        "d7c91610e6e2ec3ae93427b80f914e896eb4ad7b6fc79187c711b6f54009eafc"
+    )
+    consumer_identity = binding["consumer_identity"]
+    assert consumer_identity["input_sha256"] == consumer.input_sha256
+    assert consumer_identity["input_sha256"] != producer_identity["input_sha256"]
+    assert consumer_identity["resolved_sha256"] == resolved_config_sha256(consumer)
+    assert consumer_identity["resolved_sha256"] != producer_identity["resolved_sha256"]
+    assert consumer_identity["physical_contract"] == producer_identity[
+        "physical_contract"
+    ]
+    assert consumer_identity["external_keys"] == producer_identity["external_keys"]
+
+    changed_material = copy.deepcopy(producer_identity)
+    changed_material["physical_contract"]["materials"]["n_grating"][0] += 1.0e-9
+    with pytest.raises(ValueError, match="physical_contract"):
+        task041_balh_consumer_identity_binding(changed_material, consumer, "b" * 40)
 
 
 def test_task041_balh_ordinary_hybrid_cannot_opt_into_balh_pc(tmp_path: Path):

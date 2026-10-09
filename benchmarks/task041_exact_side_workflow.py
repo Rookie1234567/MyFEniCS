@@ -35,10 +35,11 @@ from benchmarks.task039_v4_selected_mode_packet import (
     task041_shortwave_selected_mode_scope,
 )
 from src.io.input_validation import (
-    TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES,
     TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
-    TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES,
     TASK041_BALH_MPI_SIZE,
+    TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
+    TASK041_BALH_W0P7NM_P6_PILOT_POLICY_RESERVE_BYTES,
+    TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES,
     TASK041_MODEL_ID,
     TASK041_SHORTWAVE_MPI_SIZE,
     load_and_resolve,
@@ -2585,6 +2586,52 @@ def _task041_w0p7_gate_resource_cleanup(
     }
 
 
+def _task041_w0p7_external_headroom_check(
+    *,
+    required_bytes: int | None,
+    node0_free_bytes: int | None,
+    host_available_bytes: int | None,
+    floor_bytes: int,
+    cgroup_limit_state: str | None,
+    cgroup_headroom_bytes: int | None,
+) -> tuple[int | None, int | None, bool, list[str]]:
+    """Keep lower host, node0, and ancestor-cgroup limits independent of case cap."""
+
+    required_known = type(required_bytes) is int and required_bytes >= 0
+    floor_known = type(floor_bytes) is int and floor_bytes >= 0
+
+    def after_floor(value: int | None) -> int | None:
+        if not floor_known or type(value) is not int or value < 0:
+            return None
+        return value - floor_bytes
+
+    node0_headroom = after_floor(node0_free_bytes)
+    host_headroom = after_floor(host_available_bytes)
+    external_errors: list[str] = []
+    if (
+        not required_known
+        or node0_headroom is None
+        or node0_headroom < required_bytes
+        or host_headroom is None
+        or host_headroom < required_bytes
+    ):
+        external_errors.append("host/node0 reserve headroom is insufficient")
+
+    if cgroup_limit_state == "max_or_unlimited":
+        cgroup_room = required_known
+    elif (
+        cgroup_limit_state == "finite"
+        and type(cgroup_headroom_bytes) is int
+        and cgroup_headroom_bytes >= 0
+    ):
+        cgroup_room = required_known and cgroup_headroom_bytes >= required_bytes
+    else:
+        cgroup_room = False
+    if not cgroup_room:
+        external_errors.append("cgroup ancestor headroom is insufficient or unknown")
+    return node0_headroom, host_headroom, bool(cgroup_room), external_errors
+
+
 def _build_task041_w0p7_stage_factory(
     extension_path: str | Path,
     *,
@@ -2640,11 +2687,18 @@ def _build_task041_w0p7_stage_factory(
         limits.get("process_tree_rss_warning_bytes"),
         limits.get("min_memavailable_bytes"),
     )
-    if (cap, warning, floor, limits.get("process_tree_rss_cap_bytes")) != (
-        TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES,
-        TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES,
+    if (
+        cap,
+        warning,
+        floor,
+        limits.get("process_tree_rss_cap_bytes"),
+        cap - warning if type(cap) is int and type(warning) is int else None,
+    ) != (
+        TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
+        TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES,
         TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
-        TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES,
+        TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
+        TASK041_BALH_W0P7NM_P6_PILOT_POLICY_RESERVE_BYTES,
     ):
         raise Task041ModePrepError(
             "W0.7 stage limits differ from registered cap/warning/floor"
@@ -3161,10 +3215,18 @@ def _build_task041_w0p7_stage_factory(
             if type(screened_peak) is not int or type(b_live) is not int
             else max(0, screened_peak - b_live)
         )
-        node0_headroom = None if node0_free is None else node0_free - int(floor)
-        host_headroom = None if host_available is None else host_available - int(floor)
-        cgroup_room = required is not None and cgroup_known and (
-            cgroup_state == "max_or_unlimited" or cgroup_headroom >= required
+        (
+            node0_headroom,
+            host_headroom,
+            _,
+            external_headroom_errors,
+        ) = _task041_w0p7_external_headroom_check(
+            required_bytes=required,
+            node0_free_bytes=node0_free,
+            host_available_bytes=host_available,
+            floor_bytes=int(floor),
+            cgroup_limit_state=cgroup_state if cgroup_known else None,
+            cgroup_headroom_bytes=cgroup_headroom,
         )
         reasons = []
         if not rank_pass or not stage_pass:
@@ -3193,16 +3255,7 @@ def _build_task041_w0p7_stage_factory(
             )
         if budget.get("pass") is not True:
             reasons.extend(budget.get("reasons", ["stage budget is unknown or rejected"]))
-        if (
-            required is None
-            or node0_headroom is None
-            or node0_headroom < required
-            or host_headroom is None
-            or host_headroom < required
-        ):
-            reasons.append("host/node0 reserve headroom is insufficient")
-        if not cgroup_room:
-            reasons.append("cgroup ancestor headroom is insufficient or unknown")
+        reasons.extend(external_headroom_errors)
         passed = not reasons
         source_derived_internal_keeps = dict(
             _TASK041_W0P7_MUMPS_MEMORY_AUDIT["source_derived_internal_keeps"]
