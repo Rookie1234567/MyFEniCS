@@ -87,6 +87,62 @@ def run_stage(manifest, artifact, marker):
         result = calibrate_decay(marker)
         result["bound_numerical_chain"] = {p: digest(ROOT / p) for p in CHAIN}
         return result
+    if (
+        role == "complex_wave_checks"
+        and (artifact / "qualification_reuse.json").exists()
+    ):
+        # A denominator-only checker fix reuses all 32 healthy full witnesses.
+        # Preserve and hash-bind the original negative classification, and
+        # forbid reuse across any changed numerical kernel or input.
+        from src.solvers.neural_wave_decay_qualification import saved_witness_gate
+        from src.io.neural_wave_backfit_store import check_boundary
+
+        recovery = json.loads((artifact / "qualification_reuse.json").read_text())
+        old_file = artifact / recovery["original_result_file"]
+        old = json.loads(old_file.read_text())
+        checker_path = "src/solvers/neural_wave_decay_qualification.py"
+        if (
+            old_file.parent != artifact
+            or digest(old_file) != recovery["original_result_sha256"]
+            or old["source_sha"] != "7c0dcc1985af1be6d5b0c919e982ba778d857537"
+            or old["bound_numerical_chain"][checker_path]
+            != "c1bbb48ca3ee0a33fd8d3df9bf4c0bbd4ea01adaadb51ffe13fd5292496efaac"
+            or old["design_sha256"] != manifest["design_sha256"]
+            or not all(
+                old["bound_numerical_chain"][p] == digest(ROOT / p)
+                for p in CHAIN
+                if p not in (checker_path, "src/runners/complex_wave_worker.py")
+            )
+            or old["actual_complete_trials"] != 32
+        ):
+            raise ValueError("SAVED_COMPLEX_QUALIFICATION_NUMERICAL_CHAIN_CHANGED")
+        check_boundary(artifact / "complex_short_block/committed.json")
+        result = dict(old)
+        result["implementation_qualified"] = saved_witness_gate(
+            old["rows"], old["actual_saved_loop"], old["anchor_restored_bitwise"]
+        )
+        result.update(
+            original_result_file=recovery["original_result_file"],
+            original_result_sha256=recovery["original_result_sha256"],
+            qualification_producer_source_sha=old["source_sha"],
+            qualification_checker_source_sha=manifest["source_sha"],
+            original_implementation_qualified=old["implementation_qualified"],
+            residual_gate_denominator="original ||f||; saved-residual denominator retained diagnostic only",
+            newly_executed_complete_trials=0,
+            reused_complete_trials=32,
+            newly_executed_original_action_calls=0,
+            bound_numerical_chain={p: digest(ROOT / p) for p in CHAIN},
+        )
+        marker(
+            "saved_complex_witness_gate_recomputed",
+            dict(
+                qualified=result["implementation_qualified"],
+                new_trials=0,
+                reused_trials=32,
+                original_result_sha256=recovery["original_result_sha256"],
+            ),
+        )
+        return result
     files = load_training_files(design)
     from src.solvers.feinn_native import load_native
 

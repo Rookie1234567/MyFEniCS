@@ -19,6 +19,76 @@ def relative(a, b):
     return float(np.linalg.norm(a - b) / max(np.linalg.norm(b), 1e-30))
 
 
+def saved_witness_gate(rows, saved_loop, restored):
+    """Recompute gates; the original residual always uses the original RHS.
+
+    ``zero_pairs.r`` is an additional diagnostic normalized by the nonzero
+    saved residual, not the contracted original-equation denominator. Keep it
+    in the raw record, but do not substitute it for ``r_original``.
+    """
+
+    def bounded(values, tolerance):
+        return all(np.isfinite(v) and 0 <= v <= tolerance for v in values)
+
+    if len(rows) != 4 or len({r["block_id"] for r in rows}) != 4:
+        return False
+    if {(-1 if r["kind"] == "global" else r["level"]) for r in rows} != {-1, 0, 1, 2}:
+        return False
+    for row in rows:
+        z = row["zero_pairs"]
+        fd = row["finite_differences"]
+        probes = row["decay_probes"]
+        if not (
+            row["actual_complete_trials"] == 8
+            and bounded(row["kappa_zero_regression"].values(), 1e-10)
+            and bounded(
+                (z[k] for k in ("columns", "c", "r_original", "inserted_A")), 1e-10
+            )
+            and {r["kind"] for r in fd} == {"q_only", "kappa_only", "mixed"}
+            and len(fd) == 3
+            and bounded((r["relative_error"] for r in fd), 1e-5)
+            and len(probes) == 2
+            and {p["sign"] for p in probes} == {-1, 1}
+        ):
+            return False
+        for p in probes:
+            if not (
+                bounded(
+                    (
+                        p[k]
+                        for k in (
+                            "independent_map",
+                            "batch1_8",
+                            "A_AH",
+                            "original_MPC_expand_pullback",
+                        )
+                    ),
+                    1e-10,
+                )
+                and p["nonunit_original_Floquet_entries"] > 0
+                and bounded(
+                    (p[k] for k in ("quadrature_q30_q60", "original_A_quadrature")),
+                    1e-8,
+                )
+                and bounded((p["full_VJP_FD_relative"],), 1e-5)
+                and set(p["families"]) == {"edge", "face", "interior"}
+                and all(
+                    v["count"] > 0
+                    and v["norm"] > 0
+                    and bounded((v["full_map"],), 1e-10)
+                    for v in p["families"].values()
+                )
+            ):
+                return False
+    return bool(
+        restored
+        and saved_loop["complete_trial_budget_not_exceeded"]
+        and bounded(
+            (saved_loop["model_pair"], saved_loop["pair"]["pair_relative"]), 1e-10
+        )
+    )
+
+
 def qualify_decay(
     action, packet, high, space, blocks, k0, beta, artifact, anchor, binding, marker
 ):
@@ -256,7 +326,8 @@ def qualify_decay(
                 space.U[:, first:last] = u
         passed = (
             max(regressions.values()) <= 1e-10
-            and max(zero_pairs.values()) <= 1e-10
+            and max(zero_pairs[k] for k in ("columns", "c", "r_original", "inserted_A"))
+            <= 1e-10
             and all(r["relative_error"] <= 1e-5 for r in fdrows)
             and all(
                 max(
@@ -292,11 +363,7 @@ def qualify_decay(
         del F, zero, seed, best, plus, minus, qrq, qrr
     restored = np.array_equal(space.c, anchor_c) and np.array_equal(space.r, anchor_r)
     return dict(
-        implementation_qualified=bool(
-            all(x["pass_all"] for x in rows)
-            and saved_loop["model_pair"] <= 1e-10
-            and restored
-        ),
+        implementation_qualified=saved_witness_gate(rows, saved_loop, restored),
         rows=rows,
         actual_saved_loop=saved_loop,
         anchor_restored_bitwise=restored,

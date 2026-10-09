@@ -1,6 +1,7 @@
 """Independent decay maps/real adjoints, limits and actual atomic consumers."""
 
 import ast
+import copy
 import json
 from types import SimpleNamespace
 
@@ -19,6 +20,65 @@ from src.solvers.neural_wave_decay import (
 from src.solvers.neural_wave_moments import Patch, WaveMoments
 from src.test.test_neural_wave import tensor_fixture
 from src.test.test_neural_wave_backfit import fixture
+
+
+def test_saved_witness_gate_preserves_original_residual_denominator_and_rejects_damage():
+    from src.solvers.neural_wave_decay_qualification import saved_witness_gate
+
+    probe = dict(
+        sign=1,
+        independent_map=0.0,
+        batch1_8=0.0,
+        A_AH=0.0,
+        original_MPC_expand_pullback=0.0,
+        nonunit_original_Floquet_entries=3,
+        quadrature_q30_q60=0.0,
+        original_A_quadrature=0.0,
+        full_VJP_FD_relative=0.0,
+        families={
+            k: dict(count=1, norm=1.0, full_map=0.0)
+            for k in ("edge", "face", "interior")
+        },
+    )
+    rows = [
+        dict(
+            block_id=i,
+            kind="global" if i == 0 else "local",
+            level=i - 1,
+            actual_complete_trials=8,
+            kappa_zero_regression=dict(columns=0.0),
+            zero_pairs=dict(
+                columns=0.0, c=2e-11, r=4.5e-10, r_original=7.1e-11, inserted_A=9.4e-11
+            ),
+            finite_differences=[
+                dict(kind=k, relative_error=0.0)
+                for k in ("q_only", "kappa_only", "mixed")
+            ],
+            decay_probes=[copy.deepcopy(probe), {**copy.deepcopy(probe), "sign": -1}],
+            pass_all=False,  # a stored producer status does not decide the gate
+        )
+        for i in range(4)
+    ]
+    loop = dict(
+        complete_trial_budget_not_exceeded=True,
+        model_pair=1e-12,
+        pair=dict(pair_relative=9e-11),
+    )
+    assert saved_witness_gate(rows, loop, True)
+    for damage in ("original_residual", "nan", "interior", "duplicate", "gradient"):
+        bad = copy.deepcopy(rows)
+        if damage == "original_residual":
+            bad[0]["zero_pairs"]["r_original"] = 1.01e-10
+        elif damage == "nan":
+            bad[0]["decay_probes"][0]["A_AH"] = float("nan")
+        elif damage == "interior":
+            bad[0]["decay_probes"][0]["families"]["interior"]["full_map"] = 1e-8
+        elif damage == "duplicate":
+            bad[1]["block_id"] = bad[0]["block_id"]
+        else:
+            bad[0]["finite_differences"][0]["relative_error"] = 1e-4
+        assert not saved_witness_gate(bad, loop, True)
+    assert not saved_witness_gate(rows, loop, False)
 
 
 def independent(packet, patch, q, kappa, p):

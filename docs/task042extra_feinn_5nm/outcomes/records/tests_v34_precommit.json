@@ -26,6 +26,15 @@
       "errors": 0,
       "scope": "targeted only, pure single-core2GiB watchdog",
       "uncommitted_source_diff_sha256": "206636d6b4850bc71187769c6d99608143f0fa53c106c0665ab1bb77f27ead32"
+    },
+    {
+      "path": "tmp/task42extra/v34/targeted_04/junit.xml",
+      "sha256": "2b3b2a6b1b3d8ffba87e8f50daa63a82211f93a442dc8502df75963f8fd9f35e",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "scope": "decay + saved denominator/corruption checks only; pure single-core2GiB watchdog",
+      "uncommitted_source_diff_sha256": "fe0c09f7d1af1f6ef2ab7810c80373f3c8f41c0daab1b67dea1e20493b0b1a10"
     }
   ],
   "old_failure_retained": true,
