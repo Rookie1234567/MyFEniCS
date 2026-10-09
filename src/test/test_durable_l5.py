@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import signal
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -96,6 +97,15 @@ class DurableProcessControls(unittest.TestCase):
                 receive=next(i for i,r in enumerate(rows) if r['event']=='received_signal')
                 send=next(i for i,r in enumerate(rows) if r['event']=='before_send')
                 self.assertLess(receive,send);self.assertEqual(rows[receive]['original_sender'],'unknown')
+                if os.environ.get('TASK042_V36_AUX_DIRECTORY'):
+                    destination=Path(os.environ['TASK042_V36_AUX_DIRECTORY'])/'control_fixtures'
+                    destination.mkdir(exist_ok=False)
+                    for source in (folder,stopped):
+                        shutil.copytree(source,destination/source.name)
+                    (destination/'control_receipt.json').write_text(json.dumps(dict(
+                        elapsed_seconds=time.monotonic()-started,normal_pid=summary.get('leader_pid'),
+                        normal_poll_timeout_seconds=.05,explicit_sender_pid=os.getpid(),
+                        event_before_send=True,descendants_cleared=True,raw_preserved=True))+'\n')
             finally:
                 if p.poll() is None:p.kill();p.communicate()
         self.assertLess(time.monotonic()-started,90)
