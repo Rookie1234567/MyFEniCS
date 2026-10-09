@@ -234,6 +234,34 @@
         "heavy_remaining_seconds": 29034.771801523864,
         "total_remaining_seconds": 32634.771801523864
       }
+    },
+    {
+      "id": "R8",
+      "root_cause": "Documentation linked its check evidence before the first actual check record existed",
+      "stderr": "missing evidence link records/documentation_checks_v65.json",
+      "minimal_change": "Create an honestly PENDING bootstrap record; replace only after actual checker succeeds",
+      "new_PDE": 0,
+      "actor_failed_and_paid": true,
+      "affected_replay": "link/parser phase only; 15 unit document contracts had not started",
+      "clock": {
+        "start_utc": "2026-10-08T23:31:45.023823726Z",
+        "start_monotonic": 1427299.88,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 46800,
+        "total_limit_seconds": 50400,
+        "scientific_loaded_limit_seconds": 39600,
+        "review_commit": "1cc254583559969b3fdeb9385104011d5f479a50",
+        "contract_HEAD": "1cc254583559969b3fdeb9385104011d5f479a50",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "observed_utc": "2026-10-09T04:30:42.054214+00:00",
+        "observed_monotonic": 1445236.915081341,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 17937.035081341164,
+        "heavy_remaining_seconds": 28862.964918658836,
+        "total_remaining_seconds": 32462.964918658836
+      }
     }
   ],
   "failures_preserved": true
