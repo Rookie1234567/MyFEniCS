@@ -23,7 +23,7 @@ def setup_identity(s):
         basis_coefficients=b.coefficient_matrix)
     return dict(physical=s['physical'],degree=s['spec']['degree'],local_dim=s['V'].element.space_dimension,
         superdegree=b.embedded_superdegree,basis_entity_dofs=b.entity_dofs,basis_map=str(b.map_type),
-        dtype='complex128',integer_dtype='int64',kappa=s['kappa'].tolist(),k0=s['cfg'].k0,body_q=15,
+        dtype='complex128',integer_dtype='int64',kappa=s['kappa'].tolist(),k0=s['cfg'].k0,body_q=2*s['spec']['degree']+3,
         arrays={k:array_hash(np.asarray(v)) for k,v in arrays.items()}),arrays
 
 
@@ -122,14 +122,16 @@ def preflight(folder,journal):
     write_json(folder/'oracle_qualification.json',result);return result
 
 
-def prepare(folder,journal):
+def prepare(folder,journal,*,scope_module=scope,boundary_provider=readonly_boundaries,identity_key='p6_identity'):
+    scope=scope_module
     scope.require_stage('PREPARE')
     s=core.make_setup(scope.case_spec('PREPARE'),scope.physical_for('PREPARE'),journal)
     identity,arrays=setup_identity(s)
-    if identity!=scope.stage('PREFLIGHT')['p6_identity']:raise ValueError('P6 actual identity changed after oracle qualification')
+    if identity!=scope.stage('PREFLIGHT')[identity_key]:raise ValueError('actual body identity changed after oracle qualification')
     cap=core.assembly_capacity(s,journal)
     if not cap['admitted']:return dict(status='CAPACITY_BLOCKED',capacity=cap)
-    b,oracle=readonly_boundaries(s,journal)
+    b,oracle=(boundary_provider(s,journal) if boundary_provider is readonly_boundaries
+        else boundary_provider(s,folder,journal))
     checkpoint_pointer=scope.ARTIFACT/'body_checkpoint.json'
     if checkpoint_pointer.exists():
         receipt=json.loads(checkpoint_pointer.read_text())

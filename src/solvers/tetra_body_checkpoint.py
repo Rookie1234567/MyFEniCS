@@ -54,13 +54,28 @@ def save_checkpoint(path,K,identity,arrays,*,form,source,boundary):
     return dict(path=str(path/'manifest.json'),sha256=digest,status=manifest['status'],bytes=manifest['bytes'],nnz=K.nnz)
 
 
-def load_checkpoint(receipt,identity):
+def body_fingerprint(identity):
+    """Exact body identity; mode inventory and its augmented row count are separate.
+
+    Actual geometry/tags/MPC/basis arrays, material, carrier, degree and body
+    quadrature remain bound. This is not permission to skip a manifest check.
+    """
+    body=dict(identity)
+    physical=identity['physical']
+    body['physical']={k:physical[k] for k in ('geometry','materials','incidence')}
+    return hashlib.sha256(json.dumps(body,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+
+
+def load_checkpoint(receipt,identity,*,allow_mode_change=False):
     p=Path(receipt['path']);root=p.parent
     if root.name.endswith('.partial') or not (root/'COMMIT').is_file():raise ValueError('uncommitted body checkpoint')
     sha=file_digest(p)
     if sha!=receipt['sha256'] or (root/'COMMIT').read_text().strip()!=sha:raise ValueError('body checkpoint manifest hash')
     m=json.loads(p.read_text())
-    if m['identity']!=identity or m.get('unscaled') is not True or m.get('static_condensation') is not False:
+    same=m['identity']==identity
+    if not same and allow_mode_change:
+        same=body_fingerprint(m['identity'])==body_fingerprint(identity)
+    if not same or m.get('unscaled') is not True or m.get('static_condensation') is not False:
         raise ValueError('body checkpoint mathematical identity')
     arrays={}
     for name,item in m['members'].items():
