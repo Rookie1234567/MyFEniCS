@@ -1857,3 +1857,12 @@ relative=`0` 仅是独立 action/transfer Gate。R2 分侧的 peak/lifecycle 不
 S1f 的双侧超 cap 受控停止仍保留。本条不修改 ordinary/default，未推动
 `task041_schur_speed_v2` 或 A1/A2 进入 production；negative evidence/docs 可保留，
 incident-specific orphan sampler 与大型 raw artifact 仍不合入。
+## Task041 W0.7 fixed physical BAL_H warm候选（2026-10-09，未dispatch）
+
+| Model / method | 配置与证据 | status / qualification | 下一步边界 |
+|---|---|---|---|
+| `task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot` / requested `fixed_physical_balh_once`，actual label `fixed_physical_balh_once_modal_gmres_research` | 10×5 nm、W、p6/h0.70、M400/MPI8、matched L20/N29/h20/29；明确命令选择；source commit `fcae36494e65751ed918a8b591f4639d27b493c0`。复用旧validated producer，QEP=0。host与MPI8 ABI门通过 | `prepared_waiting_dispatch_review`；无consumer Invocation、无本方法FE、无物理结果。不得把method selection或ABI通过登记为数值PASS | 只在主控审核该精确config/argv后允许唯一启动；沿原producer validator/hydration、PORD与同生命周期预算/数值门继续 |
+
+该显式动作每次P4的Q采用固定一次同因子修正，并保留原A4残差检查；普通pure fixed-H6、默认P4 target `5e-13/max2` 与其他已注册case的路由不变。资源运行上限为80 GiB、warning72 GiB、政策W8 GiB，node0 floor384 GiB；这些是保护合同，不是factor峰值预测。MPI2 tiny合同测试、MPI8 ABI与small envelope核对不构成大因子容量、consumer数值或目标模型资格。
+
+前一真实W0.7场 `IMPLEMENTATION_FAILURE`/physics not reached仍保留，不被新候选洗白；W5弱显著衍射通道按用户决定延期处理，不作为当前0.7前置；W2不延误0.7主线。历史与当前准备证据入口见[Task041 Response V13](task041_mpi1_shortwave_hybrid_capacity/response_v13.md)、[V11 delivery](task041_mpi1_shortwave_hybrid_capacity/outcomes/shortwave_delivery_v11.md)和[summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)。

@@ -28,3 +28,21 @@
 post-ABI host raw 的两次采样为 `07:54:18.523917Z`、`07:54:23.603283Z`。候选 map 上未见固定数值邻任务；Task039 固定 CPU24、Task042 观测在 CPU26/6，未干预它们。Task042 宽 affinity 使 `performance_not_isolated` 继续成立。node0 MemFree 扣 floor 后 `306,780,303,360 B`，再扣 80 GiB cap 后余 `220,880,957,440 B`；host/cgroup/disk 与目标 unit 事实见 hash-bound post-ABI 收据。此段只记录 dispatch 前的准备状态，实际运行及终态见上表。
 
 W5 的弱显著衍射通道按用户决定延期处理，保留既有失败/比较工件，不写 PASS，不作为 0.7 前置。W2 本阶段未推进，避免延误 0.7 主线。MPI8 ABI 和资源门只说明运行环境/资源准入；不等同 FE、数值或模型资格通过。
+# 2026-10-09 后续：fixed physical BAL_H 候选包已准入，等待最后启动裁定
+
+在原先V11 W0.7 warm consumer终态之后，已提交一条严格显式选择的 fixed physical BAL_H feedback 路径，并准备好一个独立 warm package。该动作把固定的一次P4修正用于modal反馈；它与普通动态P4目标路径区分，且不会自动更改纯fixed-H6默认路由。本阶段只验证source/配置/原生MPI身份与宿主门，方法本身尚未进入consumer。
+
+| 项目 | 结果 |
+|---|---|
+| 代码 | `fcae36494e65751ed918a8b591f4639d27b493c0`，parent `92914c5759281da51d7312040c30768ca0a00e07`，upstream `0/0`；只含已审11路径 |
+| 显式方法链 | config 与 public argv 同时请求 `fixed_physical_balh_once`；期望实际标签 `fixed_physical_balh_once_modal_gmres_research`。config SHA `06524840f62964436e0ac736b8fc9904f103f139786eec46c55d51afeab63231`，argv SHA `b41a6e6d017620ccf56fce8528092a7c2dbb2e549ea6356f7100483509e02e31` |
+| ignored包 / service目标 | [execution contract](../../../results/task041_v11_w0p7_fixed_physical_balh_once_warm_preparation_20261009T142126Z/execution_contract.json)；unit `task041-v11-w0p7-fixed-physical-balh-once-warm-cpu10-11-14-15-16-17-18-19-20261009T142126Z.service`；runroot `results/task041_v11_w0p7_fixed_physical_balh_once_warm_run_20261009T142126Z` |
+| source与桥 | 39个HEAD/worktree源绑定（34 runtime + 5 test），source_bindings SHA `e2057884f3412674a18526b07c5caf77857db81eb416899968cf5561a3d19fe4`；复用已构建bridge SHA `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b` |
+| 宿主门 | 两个真实宿主样本；unit未加载，无active Task041；root/log/dispatch marker不存在；CPU map `[10,11,14,15,16,17,18,19]`为socket0/node0独立核。node0扣384 GiB floor及80 GiB cap后余 `276,339,585,024 B`；host MemAvailable `2,139,694,497,792 B` |
+| MPI8 ABI | rc0，父wall `1.9973516720347106 s`；8 rank精确映射上述tuple、membind0、complex128/Int32、六线程1，精确加载上述bridge；stdout SHA `e723181be00270fadf619e8f3903a05260495bfd9735ca44e6544ac34ab07099` |
+| post-ABI核对 | receipt SHA `669e1cee445e1b94d99c30311d41c6afedb03f70ca0b922b2de662ed5f20aff7`；同manager unit和所有输出root仍不存在、39项源码/config/argv/bridge身份不变 |
+| 数值边界 | producer沿用旧合格小封套，QEP=0；尚未在此包运行完整validator/shard hydration、PORD数值factor、fixed physical方法、FE、physics或finalizer。当前无Invocation，需主控对精确argv作最终一次dispatch裁定 |
+
+资源合同仍为hard/warning/W=`85,899,345,920 / 77,309,411,328 / 8,589,934,592 B`，node0 floor `412,316,860,416 B`；V8 swap仅观察，无elapsed强停。PORD、matched L20/N29、P4 `5e-13/max2`、固定Q一次修正与 `1e-10` 门、八次SH setup、9+1 inner、outer五门和完整恢复物理合同不变。该包不构成内存容量预测或数值资格。
+
+前一唯一W0.7场的 `IMPLEMENTATION_FAILURE` 和未完成physics分类继续保留。W5弱显著衍射通道按用户决定延期处理，不写PASS、不作为本pilot前置；W2不延误W0.7主线。合约测试的分批attempt与SHA见[test summary](test_summary.md)；未把任何分批通过说成最终源码一次整组通过。

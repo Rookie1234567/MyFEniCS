@@ -600,3 +600,17 @@ research-only、do-not-merge 依赖组说明，负结果文档/compact 保留，
 修复后的 native serial targeted test 为 3 passed，MPI2 为每 rank 3 passed；Ruff check、compileall、diff check 通过，format check 未通过且本轮未扩大 format-only 改动。源码/测试身份和重建复现脚本均记录在 D1e evidence index；旧 D1d 记录保留且不宣称 solver pass。D1e 继续使用 fresh QEP、2nm/p6/h1.5/M1200/MPI8/CPU1--8/math threads1、旧 D1c ledger continuity 和新的实测内存/swap 门。
 
 截至该版，D1e 未 dispatch，fresh QEP 未启动；文档提交后需以最终 source SHA 更新配置、重新做一次 fresh preflight，再按条件批准的精确 argv 单次启动。CPU23 邻项目的真实 worker `402163`/父 `402153` 仅允许在 CPU23、`VmSwap=0`，属于受保护独立作业。
+## V11后续：fixed physical BAL_H W0.7 warm包（未dispatch）
+
+当前候选仍是缩减W0.7模型，不是50×25 nm目标，也不是已通过的FE结果。新增的 `fixed_physical_balh_once` 是显式opt-in：模态反馈每次使用固定一次P4同因子修正和现有H6/物理侧作用，保持普通P4 `5e-13/max2` 状态和pure fixed-H6默认路由。该实现已提交，但本包尚未执行真实consumer。
+
+| 对象 | 已有证据 | 当前状态和限制 |
+|---|---|---|
+| 源码/测试 | commit `fcae36494e65751ed918a8b591f4639d27b493c0`；parent `92914c5759281da51d7312040c30768ca0a00e07`；仅11个获审路径；39条source binding SHA `e2057884f3412674a18526b07c5caf77857db81eb416899968cf5561a3d19fe4` | serial/MPI2合同验证按attempt分批，初始fixture/监督记录错误均保留；V5 ledger 203项/SHA `a4514aa3499fe1df305317b65de91039214b178dd288c3f9e90ac903278c3fa8`。不声称全组同SHA单次通过 |
+| 选择身份 | requested `fixed_physical_balh_once`；expected actual `fixed_physical_balh_once_modal_gmres_research`；config SHA `06524840f62964436e0ac736b8fc9904f103f139786eec46c55d51afeab63231`；systemd argv SHA `b41a6e6d017620ccf56fce8528092a7c2dbb2e549ea6356f7100483509e02e31` | public/config/launch链核为同一显式请求；实际求解方法not_run |
+| Producer和桥 | producer source `2708214386d38bd69f73e6b196c8ed843bb53d81`，validated producer-root；manifest `63b7635e99dd476a94c97a07aa469be8c5087ef55fadeb7e8f908b1ded0d84e2`、identity `73111acd2d48344e4ef36a0d838371f8ccc0efcddc1b7d9d3a46173f4ad2fbc6`；bridge `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b` | QEP=0；准备时未读全shards或运行完整validator；正式consumer路径保留其原验证和hydration |
+| Host/MPI8 | fresh host raw `8424b0d22e28e63b917b7808d1fe30003893517ba3ca0ccbeb43489168af18d3`；MPI8 ABI stdout `e723181be00270fadf619e8f3903a05260495bfd9735ca44e6544ac34ab07099`；post-ABI receipt `669e1cee445e1b94d99c30311d41c6afedb03f70ca0b922b2de662ed5f20aff7` | CPU `[10,11,14,15,16,17,18,19]`，8 rank一一绑定、membind0、complex128/Int32、六线程1。node0/host资源门通过；`performance_not_isolated=true` |
+| service目标 | unit `task041-v11-w0p7-fixed-physical-balh-once-warm-cpu10-11-14-15-16-17-18-19-20261009T142126Z.service`；runroot `results/task041_v11_w0p7_fixed_physical_balh_once_warm_run_20261009T142126Z` | unit未加载，root/log/dispatch marker不存在；等待唯一dispatch最终审核 |
+| resource/numerical scope | cap/warning/W=`85,899,345,920 / 77,309,411,328 / 8,589,934,592 B`；node0 floor=`412,316,860,416 B` | cap不是峰值预测；PORD Delta不是RSS上界；无FE/physics/outer/RTA/衍射结果 |
+
+此包尚未启动，故不能更新W0.7数值结果、容量资格或模型登记为成功。前一真实场的负分类不变；W5弱显著衍射通道按用户决定延期处理，W2不延误0.7主线。包摘要见[交付进度](shortwave_delivery_v11.md)，逐attempt合同测试和SHA见[test summary](test_summary.md)。

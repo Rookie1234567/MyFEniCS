@@ -2993,3 +2993,14 @@ Task041 H0/H1详细记录见[outcomes summary](task041_mpi1_shortwave_hybrid_cap
 | 数值包身份 | W0.7 p6/h0.70/M400/MPI8、接口2/22、matched L20/N29/h20/29、fixed-H6；复用 producer source `2708214386d38bd69f73e6b196c8ed843bb53d81`，本次QEP=0 | manifest SHA `63b7635e99dd476a94c97a07aa469be8c5087ef55fadeb7e8f908b1ded0d84e2`；packet identity SHA `73111acd2d48344e4ef36a0d838371f8ccc0efcddc1b7d9d3a46173f4ad2fbc6`。只复核11份小封套，不读全shards、不声称完整validator已运行 |
 
 **准备阶段结论（历史）。** PORD source-counted bottom/top Δ为`3,962,155,812/5,500,664,516 B`，仅是symbolic预算筛查量，不是RSS上界；numeric门仍按当场fresh B + 单份INFOG(17)×1,000,000 + W判定，不能预扣历史收益。本表原先记录准备和准入；实际dispatch后完成的阶段、残差失败与终态以本文件顶部为准。W5弱显著衍射通道按用户决定延期处理，保留原失败且不作0.7前置；W2本阶段不推进以免延误0.7。
+## 2026-10-09：V11 fixed physical BAL_H 选择路径的准备门
+
+在保留普通pure fixed-H6默认行为的前提下，提交了一个只有显式 `modal_feedback_method=fixed_physical_balh_once` 才可请求的W0.7研究反馈动作；实际方法身份单独标为 `fixed_physical_balh_once_modal_gmres_research`。它使用固定一次P4同因子修正，避免把按RHS残差动态决定修正次数的普通P4设置混入每次模态矩阵作用。本次尚未运行该FE方法。
+
+代码/测试普通提交为 `fcae36494e65751ed918a8b591f4639d27b493c0`（parent `92914c5759281da51d7312040c30768ca0a00e07`，upstream 0/0），包含11条获审路径。其 serial/MPI2合同证据按10个原始attempt分别绑定；V5账本203条、SHA `a4514aa3499fe1df305317b65de91039214b178dd288c3f9e90ac903278c3fa8`。分批结果及fixture失败见[test summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)，不能合称最终SHA一次整组通过。
+
+W0.7独立 warm package 已完成实际host双样本与MPI8 native ABI门，当前仍未dispatch。CPU map `[10,11,14,15,16,17,18,19]`；8 rank对应落核、membind0、complex128/Int32、六线程1；原生桥SHA `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b`。node0 floor/cap与host/cgroup/disk、精确unit未加载/无活动Task041、root/log/dispatch marker缺席均已核验；宽affinity桌面活动保留 `performance_not_isolated`。
+
+包入口为[Response V13](task041_mpi1_shortwave_hybrid_capacity/response_v13.md)及[delivery V11](task041_mpi1_shortwave_hybrid_capacity/outcomes/shortwave_delivery_v11.md)；机器执行契约为 `results/task041_v11_w0p7_fixed_physical_balh_once_warm_preparation_20261009T142126Z/execution_contract.json`，post-ABI identity receipt为同目录`post_abi_identity_final.json`。producer packet仍复用原manifest/identity，当前QEP=0；正式链的validator/hydration尚未执行。
+
+仍保持PORD、matched L20/N29、P4 target `5e-13/max2`、fixed-Q单修正与 `1e-10` 门、8次SH/9+1、outer五门和完整恢复物理合同。资源cap/warning/W=`85,899,345,920/77,309,411,328/8,589,934,592 B`，node0 floor `412,316,860,416 B`，swap observe-only，不设elapsed强停。以上不是容量或FE资格。本候选等待主控对这一精确sealed argv作最后一次dispatch决定。W5通道问题按用户决定延期处理；W2不得延误0.7主线。

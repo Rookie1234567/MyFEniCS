@@ -73,3 +73,28 @@ post-ABI 两点真实 host 样本为 `2026-10-09T07:54:18.523917Z` 和 `07:54:23
 PORD source-counted Δ（bottom `3,962,155,812 B`、top `5,500,664,516 B`）仅供 symbolic 筛查，须与对应阶段 fresh B 和 W 一起判定，不能解释为 RSS 上界。numeric 门使用当场 fresh B + 单份当前 INFOG(17)×1,000,000 + W。bottom 因子在 top 取样时仍计入 fresh B，不重复相加；两侧预算尚未在真实矩阵上评估。
 
 准备快照之后没有重求 QEP；本次实际 consumer 完成 packet 读取、one-cell 与两侧 P4 因子，并到达 outer iteration 1，随后 fixed-H6 modal 内层未通过残差门。没有最终五项残差、recovery、R/T/A 或完整 physics，所以不能称 pilot 通过或登记 W0.7 数值资格。50×25 nm、2 TB 和 48 h 仍未资格化；W5 弱显著衍射通道按用户决定延期处理，保留原失败工件。运行期文档仍只走本次 launch manifest 的既有 allowlist。
+## 2026-10-09：fixed physical BAL_H method 的提交、准入与待启动包
+
+本节记录 V11 后续的一条显式可选反馈路径。它在固定-H6 模态迭代中调用物理侧平衡动作，并对每次 Q 使用固定一次同因子修正；普通的纯 fixed-H6 路径仍是默认。固定修正避免把普通侧求解器按 RHS 残差决定的动态修正策略塞进每次 MatMult。该方法只改变本候选 consumer 的反馈动作选择，不改变输入、网格、QEP、P4 原始目标、外层求解器或物理方程。本次只是准备和环境准入，尚未执行该动作。
+
+| 项目 | 本阶段实值 | 边界 |
+|---|---|---|
+| 代码提交 | `fcae36494e65751ed918a8b591f4639d27b493c0`，parent `92914c5759281da51d7312040c30768ca0a00e07`，原分支 upstream 同步 `0/0`；提交仅含11个获审代码/测试路径 | stash `90e50393831cf8a9da6fe223ef8cae4d3cfa3976` 未 apply/drop；提交后 source/test bytes 绑定到该 HEAD |
+| 选择请求 | config 与 public argv 显式请求 `modal_feedback_method=fixed_physical_balh_once` / `--task041-modal-feedback-method fixed_physical_balh_once`；预期实际方法标签 `fixed_physical_balh_once_modal_gmres_research` | config 与 service argv 的public command逐项相同；请求方法未在 FE 中运行，当前只核其身份链 |
+| 唯一准备包 | `results/task041_v11_w0p7_fixed_physical_balh_once_warm_preparation_20261009T142126Z/`；unit `task041-v11-w0p7-fixed-physical-balh-once-warm-cpu10-11-14-15-16-17-18-19-20261009T142126Z.service`；runroot `results/task041_v11_w0p7_fixed_physical_balh_once_warm_run_20261009T142126Z/` | 当前 unit 未加载；runroot、服务日志和dispatch marker不存在。等待主控对本包作最后启动裁定 |
+| 配置与argv | config SHA `06524840f62964436e0ac736b8fc9904f103f139786eec46c55d51afeab63231`；systemd argv SHA `b41a6e6d017620ccf56fce8528092a7c2dbb2e549ea6356f7100483509e02e31` | argv必须作为封存JSON数组执行；本阶段未执行 |
+| source和原生桥 | 34 runtime + 5 test 共39条逐项绑定commit HEAD blob与工作树；source_bindings SHA `e2057884f3412674a18526b07c5caf77857db81eb416899968cf5561a3d19fe4`。原生桥路径 `/home/fenics/Projects/MyFEniCS/results/task041_petsc_lu_stage_bridge_jobnull_retry_20261008T081704Z/lib/petsc_lu_stage_bridge.cpython-312-x86_64-linux-gnu.so`，SHA `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b` | 未重建桥；ABI加载的是上述精确路径和字节 |
+| producer | 复用source `2708214386d38bd69f73e6b196c8ed843bb53d81` 的 `validated_producer_root`；manifest `63b7635e99dd476a94c97a07aa469be8c5087ef55fadeb7e8f908b1ded0d84e2`，identity `73111acd2d48344e4ef36a0d838371f8ccc0efcddc1b7d9d3a46173f4ad2fbc6` | 本次QEP计划0；准备阶段仅复核小封套，不读全shards、不提前运行完整validator。正式服务链仍将按原位置做封套检查和packet reader/hydration |
+
+注册模型仍为 W 材料、10×5 nm、p6/h0.70、M400、MPI8、cell-condensed，Hybrid接口2/22 nm、matched L20/N29/h20/29。PORD两侧仍用已绑定source model v2；ICNTL14=40、ICNTL28=1、ICNTL7=4；one-cell原排序不变。P4普通target `5e-13`、最多两次同因子修正；新方法每次固定Q恰一次修正、动态target关闭，原物理与增广残差 `<=1e-10` 门保留。fixed-H6 setup八次、inner 9+1、outer五项残差与完整恢复/物理合同都未改。route-plan、leading-PH和其他诊断关闭。
+
+| 准入项目 | 实测 | 口径 |
+|---|---|---|
+| fresh宿主双样本 | `2026-10-09T14:26:35.842375Z` 与 `14:26:40.921032Z`；raw SHA `8424b0d22e28e63b917b7808d1fe30003893517ba3ca0ccbeb43489168af18d3` | 两点均核验目标user-manager unit未加载、无活动Task041、runroot/log/dispatch marker缺席；CPU10,11,14,15,16,17,18,19均在线且属于socket0/node0不同物理核。未见固定数值邻任务；GNOME宽affinity和轻量Task042 helper被观察但未干预，保留 `performance_not_isolated=true` |
+| 内存、cgroup与磁盘 | node0 MemFree `774,555,791,360 B`；扣384 GiB floor后 `362,238,930,944 B`；再扣80 GiB case cap后余 `276,339,585,024 B`。host MemAvailable `2,139,694,497,792 B`；磁盘可用 `3,129,317,482,496 B` | hard cap `85,899,345,920 B`、warning `77,309,411,328 B`、政策W `8,589,934,592 B`、node0 floor `412,316,860,416 B`；swap仅观察，不设elapsed强停。case cap是运行上限，不是峰值预测 |
+| fresh MPI8 native ABI | rc0，父wall `1.9973516720347106 s`；rank0–7分别落CPU `[10,11,14,15,16,17,18,19]`，各rank精确单核affinity、membind0；native marker、词法venv、complex128、Int32、六线程变量全为1；OpenMPI4.1.6、PETSc3.19.6、MUMPS5.6.2 | stdout SHA `e723181be00270fadf619e8f3903a05260495bfd9735ca44e6544ac34ab07099`；attempt SHA `7e7894e6c22ee229628fa3861247e187dbb2f772534b98cca52103817fe02be5`；精确桥SHA如上。ABI不计FE wall/V5 |
+| post-ABI身份 | raw SHA `0e0525eef02cc6bcbe1cb9806f28f649061975299b1a7990733f04a8aeef7180`；identity receipt SHA `669e1cee445e1b94d99c30311d41c6afedb03f70ca0b922b2de662ed5f20aff7` | 同user-manager复核unit仍未加载、无活动Task041，runroot/log/dispatch marker仍不存在；39条源码绑定、HEAD/config/argv/.so未漂移。post-ABI receipt是身份复核，不冒称第二次资源双样本 |
+
+最终合约测试是分批完成：serial与MPI2均通过各自最后获准节点，但初始fixture错误、数值平衡fixture错配和监督记录断言错误等首失败均留档；详见[test summary](outcomes/test_summary.md)。V5账本包含203项、SHA `a4514aa3499fe1df305317b65de91039214b178dd288c3f9e90ac903278c3fa8`；此次阶段没有新增pytest wall。源文件在 `fcae364...` 提交后未改；文档草稿是另行未提交状态。
+
+**当前边界：**上述准入和ABI只说明本包身份、宿主和MPI栈可用，不是RAM容量预测、producer全shard验证、QEP、FE、数值结果或模型资格。当前没有service Invocation，也没有dispatch。下一步只有主控批准后，才用本包封存argv启动一次。W5弱显著衍射通道按用户决定延期处理，旧失败保留且不作本pilot前置；W2不延误W0.7主线。
