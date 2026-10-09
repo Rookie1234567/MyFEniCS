@@ -1,3 +1,4 @@
+import ast
 import hashlib
 import json
 from pathlib import Path
@@ -365,6 +366,7 @@ def _v19_certificate_fixture(tmp_path, monkeypatch, *, result_status):
         )
         + b"\ndef _verify_v19_one_q_factor_lifecycle(audit):\n    return {'passed': True}\n"
         + b"\ndef _verify_v19_run_lifecycle_binding(manifest):\n    return {'passed': True}\n"
+        + b"\ndef _verify_v19_saved_v18_startup_comparison(summary):\n    return {'passed': True}\n"
     )
     checker_path.write_bytes(old_checker_source)
     subprocess.run(["git", "-C", str(root), "init", "--quiet"], check=True)
@@ -679,3 +681,39 @@ def test_v19_certificate_rejects_checker_changes_beyond_lifecycle_route(tmp_path
 
     with pytest.raises(ValueError, match="exceed the factor-lifecycle route"):
         _validate_v19(fixture)
+
+
+def test_checker_lifecycle_delta_accepts_exact_v19_startup_checker_only():
+    root = Path(__file__).resolve().parents[2]
+    checker_path = "src/runners/task40_v10_output_checker.py"
+    qualified_source = reuse._git_source_blob(
+        root, "168a727add276633e20000b718a4aa7eaa5f1e61", checker_path
+    )
+    current_source = (root / checker_path).read_bytes()
+
+    assert reuse._operator_checker_ast(qualified_source) == reuse._operator_checker_ast(
+        current_source
+    )
+    assert reuse._checker_lifecycle_only_delta(qualified_source, current_source)
+
+    modified_operator_tree = ast.parse(current_source.decode("utf-8"))
+    operator_check = next(
+        node
+        for node in modified_operator_tree.body
+        if isinstance(node, ast.FunctionDef)
+        and node.name == "_verify_v18_ny8_operator_qualification"
+    )
+    operator_check.body.append(ast.Pass())
+    modified_operator_source = ast.unparse(modified_operator_tree).encode("utf-8")
+    assert not reuse._checker_lifecycle_only_delta(
+        qualified_source, modified_operator_source
+    )
+
+    unexpected_helper_tree = ast.parse(current_source.decode("utf-8"))
+    unexpected_helper_tree.body.extend(
+        ast.parse("def _unreviewed_v19_checker_helper():\n    return None\n").body
+    )
+    unexpected_helper_source = ast.unparse(unexpected_helper_tree).encode("utf-8")
+    assert not reuse._checker_lifecycle_only_delta(
+        qualified_source, unexpected_helper_source
+    )

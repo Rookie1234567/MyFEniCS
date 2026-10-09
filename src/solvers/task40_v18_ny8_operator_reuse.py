@@ -98,6 +98,7 @@ def _checker_lifecycle_only_delta(base_source: bytes, current_source: bytes) -> 
     allowed_added = {
         "_verify_v19_one_q_factor_lifecycle",
         "_verify_v19_run_lifecycle_binding",
+        "_verify_v19_saved_v18_startup_comparison",
     }
     if set(current_nodes) - set(base_nodes) != allowed_added:
         return False
