@@ -1,3 +1,18 @@
+# Task40extra Review V19 收口测试摘要
+
+| 阶段 | 命令/身份 | 结果 | 边界 |
+|---|---|---|---|
+| ABI轻量 preflight | Task40 local_w0_wsl qualified activation；Python、MPI、PETSc/SLEPc、DOLFINx、Basix位于同一Linux runtime prefix；PETSc complex128/int32 | PASS；activation flag=1 | 仅核验环境，无FE/PDE |
+| E1启动scope修复 | frozen source 71042327e5f3a77cd39a1be7b5dfa46afe52db6b 的独立定向收据 | 57 passed in 3.48 s | 修复前失败 attempt 保留；不是本轮文档合同套件 |
+| V19 focused suite 初次通过 | Task40 V19启动scope、输出checker、Ny8 operator reuse、p6 support/MUMPS/y-orbit、FE component、文档/模型登记/回顾合同；日志 benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_closeout_targeted_pytest_02.log，SHA-256 deb35beccbae3e690f163eb6c977b156fabe748e047a9a13fc0cc988391040c9 | 132 passed、134 subtests passed in 5.40 s | 无新PDE；其后只补本文件与run index并进行末次复跑 |
+| compileall / Ruff / MPI4 / CI | 本轮只有文档、JSON和索引修改 | not_run | 未改Python源码；不声称MPI4或CI通过 |
+| full repository pytest | 未运行 | not_run | 本轮执行Task40定向套件，不扩展全仓 |
+
+收口定向 suite 最近一次复跑（早于最终口径 copyedit）：132 passed、134 subtests passed in 4.85 s；日志 benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_closeout_targeted_pytest_05.log，SHA-256 7993e3292d60561522108e46193f2d8cc836cf485111069aeffb856262dbe644。前次04日志及其5.59秒结果保留。所有正式数值、失败证据和P4材料均来自此前已完成的运行/离线检查，本轮没有重跑FE/PDE。
+
+主控在最终口径修订后检查四份文档合同与p6支持计数器：36 passed、134 subtests passed in 0.46 s；日志 benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/controller_v19_final_docs_and_counter_tests.log，SHA-256 2d532dd68c57f002425d24ea6dd58b3541224bd498ac44647f747fafea8f7d1b。最终JSON/hash与whitespace核验通过；无新FE/PDE。
+
+---
 # Task40extra Review V18 测试摘要
 
 本节只登记 V18 新增或本轮重新检查的内容。正式 Ny8 PDE、E1 resource stop 与旧 Ny4 recovery 按各自原始 run/receipt 分类；它们不折算为 pytest 数。完整 historical tests 保留在下方 V17 及更早章节。

@@ -1,4 +1,39 @@
-# Task40extra Review V18 项目进展：Ny=8 小模型完整求解通过，E1 资源停止，原尺寸目标未资格化
+# Task40extra Review V19 项目进展：B0、E1小模型及保存场门通过，目标规模仍未资格化
+
+## 背景与基线
+
+任务研究0.7 nm波长的三维非可分Maxwell散射，并以50×25×140 nm、十进制2 TB内存、单场48 h为远期工程目标。V18已有B0 Ny=8完整解，但E1在四q symbolic后受资源门停止。V19按review合同改变q矩阵和因子的驻留生命周期，同时保留全部q的稀疏结构和RHS；本轮还完成了E1小模型、Ny=8 support校准及B0保存场all-mode门。
+
+## 方法与结果
+
+| 工作对象 | 方法为何需要/改了哪一步 | 结果 | 性质与边界 |
+|---|---|---|---|
+| one-q因子生命周期 | q表示不同y周期相位子问题。逐q装入一个PETSc矩阵、建因子、完成检查后释放并重建下一个，降低同时因子内存 | B0八q与E1四q均覆盖全部输入/probe/solve，最多同时一个因子和一个PETSc输入矩阵；方程和RHS不变 | measured；以重复symbolic/numeric build换取较低并发驻留 |
+| B0 Ny=8 p6 | 完整Full3D正式解与独立输出核验 | 160 cells、532 modes；A6=1.2189184363e-8；R/T/A_balance/A_volume=0.9842736081/0.0142405181/0.001485873797/0.001485873844；checker PASS | 小模型，不是原尺寸精度 |
+| E1 p6 | 完整Full3D正式解与独立输出核验 | 760 cells、588 modes；A6=1.40358436565e-8；R/T/A_balance/A_volume=0.06235654127/0.91592650550/0.02171695323/0.02171695270；checker PASS | 该当前p6参考模型通过，不构成全尺寸资格 |
+| Ny=8 target support | 真实p6 FE/Floquet MPC小校准，覆盖五种目标cell排列 | 4×8×14=448 cells；304,860 full rows；support上界348/cell、78,336/边界面 | measured bounded calibration；无target FE、CSR、factor或PDE |
+| Ny=8 target结构投影 | 完整32,060 mode manifest加support界推导 | 30,464 target cells；八q CSR结构payload上界和176.839 GB，最大单q 22.331 GB；比旧432 fallback少90.149 GB | derived结构上界；不是RSS或真实numeric NNZ |
+| B0 Ny4/Ny8所有模式 | V19冻结的mixed amplitude gate，在saved arrays上比较全部532 keys | 532/532 PASS；near-zero通道最大传统相对比4.766，但绝对差6.6124e-16 | saved-array agreement；不是连续收敛 |
+| E1 original strict regular-RHS receipt | 原始strict负诊断原样保留；full/local分母与V15 selected/native候选相同，为1.5151129763459958/1.5151129763459956 | original equation 1.11323e-10>1e-10；sector consistency 1.33299e-11>1e-11；two local equations 1.10291e-10>1e-10 | V15预冻结的native FE/budget 1e-8、alpha 1e-9准入合同仍为4/4 PASS；同尺度下适用不同门限，V19未改阈值/分母；PASS不表示strict三项通过 |
+
+## 解释、失败和成本
+
+第一份E1启动尝试因q=4 profile误要求B0 Ny=8专用receipt，在numeric/KSP前失败；scope修正按q_count限定后，定向测试57项通过，冻结source上的第二次E1正式运行完成。失败目录、源身份和原因仍保留。E1三次PC apply通过原bounded门，但其中第二次q=0 residual=1.09234e-10高于strict 1e-10，准确分类为bounded-inexact-only；其他PC门数值及每次冻结分母见component compact。
+
+B0同离散V18→V19整场RSS峰减少856,444,928 B，cgroup峰减少747,388,928 B；源码版本有差别，不能将整个差值归因于one-q单一变化。E1树/cgroup峰为12,093,280,256/12,555,325,440 B，task swap为0、OOM=0，PSS未启用。阶段时钟分别保留parent、watchdog、solver、KSP child和事件尾；checker、activation/JIT及完整cold path仍UNKNOWN，不补造总时长。
+
+## 决策与下一步
+
+当前两种小模型的正式离散方程、A6残差与输出检查通过；B0 Ny4/Ny8全模式saved-field门也通过。V18的旧显著模式集合未冻结状态保留在V18记录中，V19新mixed gate单独登记。
+
+下一精度工作只保留设计：E1 p6 Ny=4对Ny=8，Nx=10、Nz=19及物理配置固定，y细化，760→1520 cells，比较共同体积E/H/scaled-curl、全部588个入射归一化模式、逐通道功率及R/T/A。拟用相对场门1%、R/T/A绝对差1e-3、全模式mixed振幅门；功率是否设置阈值须事前冻结。设计未运行；先对E1 Ny8新模型完成operator qualification与资源admission；已资格化runtime无需重装。
+
+target FE/CSR/factor/PDE、最终网格、真实numeric NNZ、factor/owner并发与完整48 h单场时间仍UNKNOWN，2 TB/48 h为NOT_QUALIFIED，不表示数学上不可计算。ordinary default未变。主控负责最后campaign结算、源码冻结、commit/push；本执行者不commit/push。
+
+结果入口：[Task40 Response V19](task40extra_0p7nm_engineering/response_v19.md)、[V19 outcomes summary](task40extra_0p7nm_engineering/outcomes/summary.md)、[test summary](task40extra_0p7nm_engineering/outcomes/test_summary.md)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)、[model registry](development_model_registry.md)。
+
+---
+# Task40extra Review V18 历史进展 项目进展：Ny=8 小模型完整求解通过，E1 资源停止，原尺寸目标未资格化
 
 Review V18 在固定 campaign 窗口中完成了 Ny=8 B0 p6 小模型的完整八 q 参考算子、正式 Full3D 解和独立官方输出检查。此处的 Ny=8 是沿 y 方向使用八层网格；结果只说明这个小模型的离散方程和物理输出通过，不代表原尺寸精度或连续极限。E1 在四个 q 的 symbolic 阶段后，被当前可用内存 Gate 受控停止。
 

@@ -1,14 +1,29 @@
 # Task40extra：0.7 nm工程方法（笔记本起步）
 
-## Review V18 当前交付
+## Review V19 当前交付
 
-V18 的 Ny=8 B0 p6 小模型正式解与独立输出检查通过；E1 在四 q symbolic 后受资源门控制停止，原尺寸目标仍未资格化。
+V19 在 B0 Ny=8 与 E1 p6 两个缩小模型完成 Full3D 正式解、full explicit A6 residual 和独立输出检查；B0 Ny4/Ny8 保存场的532个有序模式按新 mixed gate 通过。Ny=8 原尺寸 support 经有界真实 FE/MPC 校准收紧，但原尺寸 target FE、CSR、factor 和 PDE 未构造；50×25×140 nm、十进制2 TB与172800 s仍为 NOT_QUALIFIED。ordinary solver default未变。
 
 | 文件 | 内容 |
 |---|---|
-| [Response V18](response_v18.md) | 正式结果、q=4 解释、E1 资源停止与资格边界 |
-| [V18 outcomes summary](outcomes/summary.md) 与 [test summary](outcomes/test_summary.md) | 统一结果、source-bound 测试与未运行范围 |
-| [V18 run index](outcomes/records/run_index.json) | 六次失败、正式成功、E1、研究入口和收口证据 |
+| [Review V19](review_report_v19.md) | 当前执行合同、P4/P5交付与数值/资源边界 |
+| [Response V19](response_v19.md) | B0/E1、PC与启动诊断、P4支持校准、全模式保存场门和下一精度设计 |
+| [V19 outcomes summary](outcomes/summary.md) 与 [test summary](outcomes/test_summary.md) | 正式结果、负结果、收口测试和未运行范围；V18历史保留在后半部分 |
+| [V19 run index](outcomes/records/run_index.json) | 正式运行、P4 support/projection、mode gate、失败与文档测试身份 |
+| [V19 component closure](outcomes/records/review_v19_component_closure.json) | ONE_Q_REFACTOR_V19、PC/启动见证、q覆盖、factor probes和资格范围 |
+| [V19 sparse capacity](outcomes/records/review_v19_sparse_capacity.json) | P4原生support、结构投影、owner部分账、资源峰和下一精度设计 |
+| [V19 formal results](outcomes/records/review_v19_formal_results.json) | B0/E1残差、官方物理量、checker、mode gate和保留失败 |
+| [V19 cost and readiness](outcomes/records/review_v19_cost_and_readiness.json) | 固定窗口as-of账、阶段时间、重复factor成本、目标readiness |
+
+## Review V18 历史交付
+
+V18 的 Ny=8 B0 p6 小模型正式解与独立输出检查通过；E1 在四 q symbolic 后受资源门控制停止，原尺寸目标仍未资格化。V18 的原始归档证据仍可从 run index 的 review_v18_evidence_index 和本页后续历史入口查阅；总账与测试摘要保留 V18 历史章节。
+
+| 文件 | 内容 |
+|---|---|
+| [Response V18](response_v18.md) | 正式结果、q=4 解释、E1资源停止与资格边界 |
+| [V18 outcomes summary](outcomes/summary.md#task40extra-review-v18-历史结果总账ny8-小模型通过e1-资源受控停止原尺寸未资格化) 与 [test summary](outcomes/test_summary.md#task40extra-review-v18-历史测试摘要) | 保留的V18结果和测试历史，不代表V19当前状态 |
+| [V18 run index](outcomes/records/run_index.json) | V18证据位于 review_v18_evidence_index；V19在同一索引中追加 |
 | [V18 evidence records](outcomes/records/review_v18_component_closure.json) | [sparse capacity](outcomes/records/review_v18_sparse_capacity.json)、[formal results](outcomes/records/review_v18_formal_results.json)、[cost/readiness](outcomes/records/review_v18_cost_and_readiness.json) |
 
 ## Review V17 历史交付

@@ -1,0 +1,237 @@
+{
+  "schema": "task40extra.review_v19_formal_results.v1",
+  "classification": "B0_Y8_AND_E1_P6_FULL_FIELD_PASS_WITH_QUALIFICATIONS",
+  "e1": {
+    "run_id": "task40extra_0p7nm_nonseparable_e1_p6_reference_v19",
+    "attempt": 2,
+    "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v19__full3d_iterative__mpi1__Mna/20261009T065008.007716Z",
+    "source_sha": "71042327e5f3a77cd39a1be7b5dfa46afe52db6b",
+    "input_sha256": "f34f8bf11bf4ed0715178ca0edc3ead361f50e25f04741f94ae9e50c2301995a",
+    "physical_model_sha256": "6ea7e95a9b415b3bcc97c67e3c4d3580c7a6999211fbfb3f15bc42fad2ce821d",
+    "profile": "task40extra_v17_p6_y_orbit_e1_reference_v1",
+    "model": {
+      "axes": [
+        10,
+        4,
+        19
+      ],
+      "cells": 760,
+      "degree": 6,
+      "ordered_modes": 588,
+      "q_count": 4,
+      "actual_route": "ROW_TILE_BOUNDED_CSR_V17 plus ONE_Q_REFACTOR_V19"
+    },
+    "solver": {
+      "status": "TRUE_RESIDUAL_PASS",
+      "ksp_reason": 2,
+      "iterations": 3,
+      "primary_stop": "TRUE_RESIDUAL_PASS",
+      "all_four_q_used": true,
+      "full_explicit_a6_relative_residual": 1.4035843656500764e-08,
+      "native_full_a6_witness_relative_residual": 1.4035835978415286e-08,
+      "a6_limit": 1e-06,
+      "internal_residual_relative": 4.194779918351532e-18,
+      "port_closure_relative": 3.17126960378726e-16
+    },
+    "official_physical_metrics": {
+      "R_total": 0.062356541266734324,
+      "T_total": 0.9159265055048301,
+      "A_balance": 0.021716953228435587,
+      "A_volume": 0.02171695269501911,
+      "R00_s": 0.06235610892320111,
+      "R00_p": 1.163750254047193e-23,
+      "R_plus_T_plus_A_volume_absolute_closure": 5.334164221437732e-10,
+      "A_balance_minus_A_volume_absolute": 5.334164776549244e-10
+    },
+    "checker": {
+      "status": "PASS",
+      "receipt": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v19__full3d_iterative__mpi1__Mna/20261009T065008.007716Z/task40_v10_output_checker_v19_recheck.json",
+      "receipt_sha256": "1a92ae14fae3637711cb214d2d339e63388ce39d87f22da31f95efb497037490",
+      "candidate_summary_sha256": "fa042ca4620da0ff1825f48bf46538c3956c21591f3a3c28185ad156f75f0cdf",
+      "run_summary_sha256": "837b18fa657e17edc05f1155c11a1763b607541d201b9ef1768f27564f91e651",
+      "q_coverage": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "mode_rows": 588,
+      "top_and_bottom_rows": [
+        294,
+        294
+      ],
+      "malformed_or_duplicate_modes": 0,
+      "output_file_hash_checks_passed": 27,
+      "full_a6_and_native_witness_reconstructed": true,
+      "checker_reapplied_operator": false
+    },
+    "result": "PASS_OFFICIAL_CURRENT_E1_REFERENCE_FIELD"
+  },
+  "b0_y8": {
+    "run_id": "task40extra_0p7nm_b0_p6_reference_v19_ny8",
+    "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v19_ny8__full3d_iterative__mpi1__Mna/20261009T033616.757334Z",
+    "source_sha": "14f5ee6943458b80b582b723c61cc84afd0efc24",
+    "input_sha256": "1c9c907da734e14a583d92ae1ae6aa216b296bddbe710701758b5571387dd0e8",
+    "physical_model_sha256": "e8002d20258fa5c1e4f8f0888bca68f621b1006492f3f1b8aaff6b0d82099903",
+    "model": {
+      "axes": [
+        4,
+        8,
+        5
+      ],
+      "cells": 160,
+      "degree": 6,
+      "ordered_modes": 532,
+      "q_count": 8
+    },
+    "solver": {
+      "status": "TRUE_RESIDUAL_PASS",
+      "ksp_reason": 2,
+      "iterations": 3,
+      "full_explicit_a6_relative_residual": 1.2189184363208502e-08,
+      "native_full_a6_witness_relative_residual": 1.218918601504642e-08,
+      "a6_limit": 1e-06
+    },
+    "official_physical_metrics": {
+      "R_total": 0.9842736080921147,
+      "T_total": 0.014240518110484091,
+      "A_balance": 0.001485873797401182,
+      "A_volume": 0.0014858738441830876,
+      "R00_s": 0.9842411413335236,
+      "R00_p": 8.453238781901373e-06,
+      "R00_total": 0.9842495945723054
+    },
+    "checker": {
+      "status": "PASS",
+      "receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/checker_repair/b0_output_checker_final_pass.json",
+      "receipt_sha256": "9f843cd09eeefba80beba1dd53e83f3691aa37450d6ce510bbd32a6502ccd46d",
+      "v19_one_q_factor_lifecycle_pass": true,
+      "factor_build_count": 56,
+      "max_simultaneous_factors": 1,
+      "max_simultaneous_petsc_matrices": 1,
+      "all_eight_q_coverage": true
+    },
+    "same_discrete_v18_comparison": {
+      "status": "PASS_BITWISE_EQUAL_SAVED_OUTPUTS",
+      "comparison_receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/checker_repair/b0_v18_same_discrete_official_comparison.json",
+      "comparison_receipt_sha256": "7265419fd3b30b7a30933417270c65be46af5a989b22b120ffa8d372fb3fc969",
+      "all_checked_fields_modes_geometry_and_reference_arrays_bitwise_equal": true,
+      "input_sha_equal": false,
+      "physical_model_and_geometry_equal": true,
+      "comparison_scope": "read-only saved outputs; no PDE, factor build, or operator reapplication"
+    },
+    "result": "PASS_OFFICIAL_SMALL_MODEL_REFERENCE_FIELD"
+  },
+  "preserved_e1_startup_failure": {
+    "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v19__full3d_iterative__mpi1__Mna/20261009T045134.718476Z",
+    "source_sha": "f23d907bbb60249cbd2844921ca86cfd43f84658",
+    "classification": "WORKER_FAILED_BEFORE_NUMERIC_OR_KSP",
+    "reason": "E1 q_count=4 was incorrectly required to provide a V18 Ny8 startup receipt",
+    "repair_attempt_receipt_sha256": "99718d487cf9f9a4e591dbdcda24c9ad8fbdc3af403c02f729e467f0f8e9ac87"
+  },
+  "qualification_limits": {
+    "target_size_fe_csr_factor_or_pde": "NOT_RUN",
+    "full_cold_activation_to_required_checker_clock": "UNKNOWN",
+    "continuum_convergence": "NOT_ESTABLISHED",
+    "ny4_ny8_saved_field_all_mode_gate_v19": "PASS_532_OF_532",
+    "prior_v18_b0_significant_mode_gate": "NOT_EVALUATED_NO_FROZEN_B0_SIGNIFICANT_MODE_SET"
+  },
+  "evidence_hashes": {
+    "e1_event_ledger_sha256": "4658bf921dd32fa3e2ec745809059ebb1e8828c6bac6fc5c683c024ae53f7169",
+    "e1_inventory_sha256": "976a10dd91044606ef8ee6325d9e81c9821bcd6995795b5ae88fd32fd34515cc",
+    "b0_candidate_summary_sha256": "24822e16b92f0fb2a86d95c111ad85a31ca6ff5673a18b2f03267e999e815cea",
+    "b0_run_summary_sha256": "ab4ad7bbee8a2f35f2f28658bf63479db15bb409e372fdc446f0c4adc7a0bb09",
+    "b0_event_ledger_sha256": "9841bb1db6cd51643aaa9d6ddab6bc8e7f62d0ba111e0262faea46d97d5739da"
+  },
+  "ny4_ny8_saved_field_all_mode_gate": {
+    "status": "PASS",
+    "source": "Review V19 §2.3; V19 offline saved-array check only",
+    "comparison": "B0 Ny4 recovery arrays versus B0 Ny8 V18 saved arrays; same physical model/geometry and all 532 ordered mode keys",
+    "representation": "boundary_plane gauge; no phase fit; incident arrays bitwise equal and incident L2 norm is 1",
+    "formula": "|a8_j-a4_j| <= 1e-8*||a_inc||2 + 0.01*max(|a4_j|,|a8_j|)",
+    "thresholds": {
+      "incident_amplitude_absolute_term": 1e-08,
+      "relative_amplitude_term": 0.01
+    },
+    "counts": {
+      "ordered_modes": 532,
+      "pass": 532,
+      "fail": 0
+    },
+    "maximum_amplitude_absolute_difference": {
+      "value": 2.867679608630119e-10,
+      "mode": "top (0,0,s)"
+    },
+    "maximum_mixed_gate_ratio": {
+      "value": 0.0008598041759216972,
+      "mode": "bottom (-4,-2,s)"
+    },
+    "maximum_conventional_ny4_relative_ratio": {
+      "value": 4.766113962636139,
+      "mode": "bottom (1,2,p)",
+      "ny4_amplitude_magnitude": 1.3874e-16,
+      "ny8_amplitude_magnitude": 6.2713e-16,
+      "absolute_difference": 6.612421984685926e-16,
+      "interpretation": "near-zero channel; large conventional ratio but tiny incident-normalized absolute error"
+    },
+    "incident_arrays_bitwise_equal": true,
+    "max_per_channel_power_ratio_difference": 3.3066807972326195e-11,
+    "power_gate": "all per-channel power differences recorded; no new power threshold inferred",
+    "total_power": {
+      "R_ny4": 0.9842736080926772,
+      "R_ny8": 0.9842736080921148,
+      "delta_R": -5.623279619726418e-13,
+      "T_ny4": 0.01424051814398891,
+      "T_ny8": 0.014240518110484093,
+      "delta_T": -3.350481697639296e-11
+    },
+    "script": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_b0_y4_y8_mixed_mode_gate.py",
+    "script_sha256": "54b8c92c290e95b1780082ad67154ad67b29434fe868b35508aad869c3d04b4e",
+    "receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_b0_y4_y8_mixed_mode_gate.json",
+    "receipt_sha256": "28ca4936017a48db2e3a80a625a99122e8d41d8b92894b7aec4bff3c58cb9a53",
+    "prior_v18_status_preserved": "NOT_EVALUATED_NO_FROZEN_B0_SIGNIFICANT_MODE_SET",
+    "scope_limit": "This new V19 all-ordered-mode mixed gate is saved-array agreement for this B0 geometry, not continuum convergence."
+  },
+  "auxiliary_startup_diagnostics": {
+    "original_strict_physical_regular_e1": {
+      "status": "PRESERVED_RAW_STRICT_DIAGNOSTIC_NEGATIVE",
+      "failed_gates": [
+        {
+          "name": "original_regular_equation",
+          "measured": 1.1132298655868788e-10,
+          "limit": 1e-10
+        },
+        {
+          "name": "independent_sector_action_consistency",
+          "measured": 1.3329901315372852e-11,
+          "limit": 1e-11
+        },
+        {
+          "name": "two_local_original_equations",
+          "measured": 1.1029072507993518e-10,
+          "limit": 1e-10
+        }
+      ],
+      "receipt_sha256": "3a061fcf8fc4956f98e81daafc7d5b41fee07eebe4af71c25df78fcf0fd7a4de"
+    },
+    "candidate_regular_inverse_checks": {
+      "b0_y8": {
+        "passed": 4,
+        "total": 4,
+        "interior_only_rows_per_case": 72000,
+        "all_q_per_case": 8,
+        "all_port_modes_per_case": 532,
+        "candidate_summary_sha256": "24822e16b92f0fb2a86d95c111ad85a31ca6ff5673a18b2f03267e999e815cea"
+      },
+      "e1": {
+        "passed": 4,
+        "total": 4,
+        "interior_only_rows_per_case": 342000,
+        "all_q_per_case": 4,
+        "all_port_modes_per_case": 588,
+        "candidate_summary_sha256": "fa042ca4620da0ff1825f48bf46538c3956c21591f3a3c28185ad156f75f0cdf"
+      }
+    },
+    "interpretation": "Raw strict checks remain separate. Candidate regular_inverse_checks applied frozen V15 selected/native admission to four whole candidate states per model; all eight selected checks pass."
+  }
+}

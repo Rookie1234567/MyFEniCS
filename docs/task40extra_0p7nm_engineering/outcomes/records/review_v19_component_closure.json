@@ -1,0 +1,621 @@
+{
+  "schema": "task40extra.review_v19_component_closure.v1",
+  "classification": "PASS_WITH_QUALIFICATIONS",
+  "review": "Review V19",
+  "branch_identity": {
+    "branch": "task40extra_0p7nm_engineering",
+    "canonical_worktree": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering",
+    "frozen_e1_source_sha": "71042327e5f3a77cd39a1be7b5dfa46afe52db6b",
+    "source_was_frozen_before_e1_formal_run": true,
+    "e1_run_tracked_worktree_clean": true,
+    "executor_commit_or_push": false,
+    "controller_owns_commit_and_push": true
+  },
+  "source_and_input_identity": {
+    "e1": {
+      "source_sha": "71042327e5f3a77cd39a1be7b5dfa46afe52db6b",
+      "input": "input/task40extra_0p7nm_engineering/nonseparable_e1_p6_reference_v19.dat",
+      "input_sha256": "f34f8bf11bf4ed0715178ca0edc3ead361f50e25f04741f94ae9e50c2301995a",
+      "physical_model_sha256": "6ea7e95a9b415b3bcc97c67e3c4d3580c7a6999211fbfb3f15bc42fad2ce821d",
+      "profile": "task40extra_v17_p6_y_orbit_e1_reference_v1",
+      "grid_cells": 760,
+      "cell_axes": [
+        10,
+        4,
+        19
+      ],
+      "ordered_modes": 588,
+      "q_count": 4
+    },
+    "b0_y8": {
+      "source_sha": "14f5ee6943458b80b582b723c61cc84afd0efc24",
+      "input": "input/task40extra_0p7nm_engineering/b0_p6_reference_v19_ny8.dat",
+      "input_sha256": "1c9c907da734e14a583d92ae1ae6aa216b296bddbe710701758b5571387dd0e8",
+      "physical_model_sha256": "e8002d20258fa5c1e4f8f0888bca68f621b1006492f3f1b8aaff6b0d82099903",
+      "profile": "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+      "grid_cells": 160,
+      "cell_axes": [
+        4,
+        8,
+        5
+      ],
+      "ordered_modes": 532,
+      "q_count": 8
+    }
+  },
+  "strategy_contract": {
+    "name": "ONE_Q_REFACTOR_V19",
+    "q_assembly_strategy": "ROW_TILE_BOUNDED_CSR_V17",
+    "ordinary_solver_default_changed": false,
+    "research_opt_in_only": true,
+    "all_q_source_csr_and_rhs_coverage_retained": true,
+    "max_simultaneous_factor_contract": 1,
+    "max_simultaneous_petsc_input_matrix_contract": 1,
+    "meaning": "保留全部 q 的不可变 CSR；按需重建一个 q 的 PETSc 输入矩阵和数值因子，完成该 q 后销毁，再处理下一 q。数学算子、q 集合、复数精度、右端项和残差门不变。"
+  },
+  "qualification_reuse": {
+    "b0_y8": {
+      "v18_complete_operator_qualification_reused": true,
+      "v19_checker_revalidated_q_coverage_and_startup_cases": true,
+      "saved_v18_startup_comparison_status": "PASS",
+      "saved_startup_cases": [
+        "generic_full_independent",
+        "nonzero_all_mode_port_rhs"
+      ],
+      "full_solution_and_alpha_l2_delta_for_each_saved_case": 0.0,
+      "separate_saved_field_comparison": "same physical model and geometry; all checked saved field, mode, and geometry arrays bitwise equal; input SHA differs because run/profile identity differs",
+      "reuse_scope": "仅对应 B0 Ny=8 离散；不推广到 E1 或原尺寸目标"
+    },
+    "e1": {
+      "v18_b0_ny8_startup_receipt_reused": false,
+      "reason": "E1 profile has q_count=4 and no same-discrete V18 Ny=8 witness",
+      "current_profile_q_coverage": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "all_four_q_input_probe_and_solve_coverage": true,
+      "v19_q_count_scoped_startup_policy": "Ny8-specific saved startup receipt is required only for the matching B0 q=8 profile; E1 q=4 runs the three independent startup witnesses recorded below."
+    }
+  },
+  "factor_lifecycle": {
+    "e1": {
+      "strategy": "ONE_Q_REFACTOR_V19",
+      "factor_build_count": 28,
+      "symbolic_build_count": 32,
+      "cache_miss_count": 28,
+      "cache_hit_count": 0,
+      "max_simultaneous_factors": 1,
+      "max_simultaneous_petsc_matrices": 1,
+      "q_input_coverage": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "q_probe_coverage": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "q_solve_coverage": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "mat_solve_counter_categories": {
+        "startup_rhs": 16,
+        "pc_initial_rhs": 12,
+        "pc_augmentation_rhs": 0,
+        "factor_probe": 28,
+        "other_validation_rhs": 0,
+        "total": 56,
+        "categories_disjoint_and_reconciled": true
+      },
+      "reference_pc_apply_count": 3,
+      "augmentation_occurred": false,
+      "checker_lifecycle_gate": "PASS"
+    },
+    "b0_y8": {
+      "strategy": "ONE_Q_REFACTOR_V19",
+      "factor_build_count": 56,
+      "symbolic_build_count": 64,
+      "factor_probe_count": 56,
+      "max_simultaneous_factors": 1,
+      "max_simultaneous_petsc_matrices": 1,
+      "q_input_probe_and_solve_coverage": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "reference_pc_apply_count": 3,
+      "augmentation_occurred": false,
+      "checker_lifecycle_gate": "PASS"
+    }
+  },
+  "numeric_gate_status": {
+    "e1_full_explicit_a6_residual": 1.4035843656500764E-8,
+    "e1_native_full_a6_witness": 1.4035835978415286E-8,
+    "e1_a6_limit": 0.000001,
+    "e1_all_four_q_used": true,
+    "e1_checker_status": "PASS",
+    "b0_full_explicit_a6_residual": 1.2189184363208502E-8,
+    "b0_native_full_a6_witness": 1.218918601504642E-8,
+    "b0_a6_limit": 0.000001,
+    "b0_checker_status": "PASS",
+    "conclusion": "B0 Ny=8 与 E1 本轮当前 p6 reference 均完成真实求解、残差 Gate、官方输出和独立 checker；原尺寸目标仍未资格化。"
+  },
+  "preserved_non_pass_attempts": [
+    {
+      "attempt": "E1 V19 startup-scope receipt failure",
+      "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v19__full3d_iterative__mpi1__Mna/20261009T045134.718476Z",
+      "source_sha": "f23d907bbb60249cbd2844921ca86cfd43f84658",
+      "classification": "WORKER_FAILED_BEFORE_NUMERIC_OR_KSP",
+      "reason": "q_count=4 E1 incorrectly required the saved V18 Ny=8 startup receipt",
+      "receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/e1_startup_scope_repair_v2.json",
+      "repair_validation": "57 passed in 3.48 s; final source frozen as 71042327e5f3a77cd39a1be7b5dfa46afe52db6b"
+    },
+    {
+      "attempt": "Ny8 native support calibration attempt 01",
+      "classification": "FAILED_BEFORE_NATIVE_MESH",
+      "reason": "script did not add repository root to sys.path",
+      "receipt_sha256": "130eeeb42bc3ca3bc50e06978fddc03e487a24f384701fc1bd79e597ee17db7c"
+    },
+    {
+      "attempt": "Ny8 native support calibration attempt 02",
+      "classification": "SUPPORT_SCAN_COMPLETED_BUT_RECEIPT_PACKAGING_FAILED",
+      "reason": "NameError: src was undefined while packaging the receipt",
+      "receipt_sha256": "80bfb9adff015bbfa35a67fce76f2cbec61fa8b95ddd4f6eea9e764e8a28a02d"
+    },
+    {
+      "attempt": "Ny8 support projection attempt 01",
+      "classification": "DERIVATION_COMPLETED_IN_MEMORY_BUT_RECEIPT_FAILED",
+      "reason": "receipt requested missing assigned_mode_count key",
+      "receipt_sha256": "3e3a3f0cacd31f4d6ffbbca95f8e8a25658da9f7cbee6d303cd4007fdbab7e38"
+    },
+    {
+      "attempt": "Ny8 support projection attempt 02",
+      "classification": "DERIVATION_COMPLETED_IN_MEMORY_BUT_RECEIPT_FAILED",
+      "reason": "receipt used started instead of the recorded timing field",
+      "receipt_sha256": "b436b9a997b14b80790e5dba9875ea9131a532f072965ed62ee36d1695615d1a"
+    }
+  ],
+  "v15_pc_apply_gate_review": {
+    "scope": "三次已记录的 reference-PC apply；逐 q 逆作用、alpha、完整增广/消元 FE 和非抵消预算均按 V15 冻结门复核。",
+    "limits": {
+      "q_strict_residual": 1E-10,
+      "q_bounded_residual": 1E-8,
+      "alpha_closure": 1E-9,
+      "complete_augmented_fe": 1E-8,
+      "eliminated_fe": 1E-8,
+      "non_cancelling_budget": 1E-8,
+      "raw_decomposition_closure": 1E-10
+    },
+    "b0_y8": {
+      "q_count": 8,
+      "calls": [
+        {
+          "call": 1,
+          "max_q_residual": 1.895145589043064E-12,
+          "alpha_closure": 3.7044604449192656E-14,
+          "complete_augmented_fe": 1.5160507201974966E-11,
+          "eliminated_fe": 1.517122603132532E-11,
+          "non_cancelling_budget": 2.054229431249796E-11,
+          "frozen_alpha_denominator": 0.6737689366445113,
+          "effective_rhs_scale": 1.0000000000000004,
+          "raw_decomposition_closure_norm": 1.4339347457388274E-16,
+          "raw_decomposition_scale": 5.000000000016797,
+          "strict_q_gate_pass": true
+        },
+        {
+          "call": 2,
+          "max_q_residual": 1.045256501350136E-12,
+          "alpha_closure": 1.9503416502178454E-14,
+          "complete_augmented_fe": 4.3298898667418995E-12,
+          "eliminated_fe": 4.3305884662539164E-12,
+          "non_cancelling_budget": 6.1902102119568225E-12,
+          "frozen_alpha_denominator": 0.09230626527031342,
+          "effective_rhs_scale": 1.0000000000573643,
+          "raw_decomposition_closure_norm": 1.3832464608728597E-16,
+          "raw_decomposition_scale": 6.454817899773623,
+          "strict_q_gate_pass": true
+        },
+        {
+          "call": 3,
+          "max_q_residual": 7.015144578878685E-13,
+          "alpha_closure": 2.875015451854331E-14,
+          "complete_augmented_fe": 2.2941866906500965E-12,
+          "eliminated_fe": 2.2954114074800766E-12,
+          "non_cancelling_budget": 3.801608738952358E-12,
+          "frozen_alpha_denominator": 0.048887740831166246,
+          "effective_rhs_scale": 1.000000000383319,
+          "raw_decomposition_closure_norm": 1.2154519640990484E-16,
+          "raw_decomposition_scale": 6.673306508863723,
+          "strict_q_gate_pass": true
+        }
+      ],
+      "all_eight_q_covered_each_call": true,
+      "v15_pc_gate": "PASS"
+    },
+    "e1": {
+      "q_count": 4,
+      "calls": [
+        {
+          "call": 1,
+          "max_q_residual": 7.267495494066732E-11,
+          "alpha_closure": 2.008646331734797E-13,
+          "complete_augmented_fe": 1.0825820241810625E-10,
+          "eliminated_fe": 1.117586867482729E-10,
+          "non_cancelling_budget": 1.6533095542277788E-10,
+          "frozen_alpha_denominator": 2.185082071171253,
+          "effective_rhs_scale": 0.9999999999999988,
+          "raw_decomposition_closure_norm": 1.0656150070984649E-16,
+          "raw_decomposition_scale": 5.000000000136215,
+          "strict_q_gate_pass": true,
+          "v15_pc_gate": "PASS"
+        },
+        {
+          "call": 2,
+          "max_q_residual": 1.0923441543837498E-10,
+          "alpha_closure": 1.3681072906689297E-13,
+          "complete_augmented_fe": 8.476560041879181E-11,
+          "eliminated_fe": 8.581361548946907E-11,
+          "non_cancelling_budget": 1.1937601992614775E-10,
+          "frozen_alpha_denominator": 1.6427134769498344,
+          "effective_rhs_scale": 1.000000001106204,
+          "raw_decomposition_closure_norm": 9.971578657921812E-17,
+          "raw_decomposition_scale": 5.785125334059111,
+          "strict_q_gate_pass": false,
+          "classification": "bounded_inexact_only",
+          "q": 0,
+          "v15_pc_gate": "PASS_WITH_BOUNDED_INEXACT"
+        },
+        {
+          "call": 3,
+          "max_q_residual": 9.63225933629071E-12,
+          "alpha_closure": 1.1173979175081301E-13,
+          "complete_augmented_fe": 8.414737817086186E-12,
+          "eliminated_fe": 8.493699397123351E-12,
+          "non_cancelling_budget": 1.3045211526346387E-11,
+          "frozen_alpha_denominator": 0.1848638253614152,
+          "effective_rhs_scale": 1.0000000168835086,
+          "raw_decomposition_closure_norm": 9.965982184733821E-17,
+          "raw_decomposition_scale": 5.783751335357517,
+          "strict_q_gate_pass": true,
+          "v15_pc_gate": "PASS"
+        }
+      ],
+      "all_four_q_covered_each_call": true,
+      "bounded_gate_all_calls": "PASS",
+      "note": "E1 第2次调用的 q=0 为 bounded-inexact-only（1.0923e-10 高于 strict 1e-10，但低于原 bounded 1e-8）；不得简写成全程 strict。"
+    }
+  },
+  "startup_inverse_witnesses": {
+    "q_strict_limit": 1E-10,
+    "v15_pc_limits": {
+      "alpha_closure": 1E-9,
+      "complete_augmented_fe": 1E-8,
+      "eliminated_fe": 1E-8,
+      "non_cancelling_budget": 1E-8
+    },
+    "b0_y8": {
+      "case_count": 4,
+      "passed_cases": 4,
+      "all_candidate_selections_admitted": true,
+      "all_selected_candidate_indices": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "all_reference_pc_admissions": "V15_REFERENCE_PC_PASS",
+      "cases_use_initial_whole_state": true,
+      "selection_rule": "The initial whole candidate state is selected when all V15 original, frozen, and structural gates pass.",
+      "status": "PASS_V15_SELECTED_NATIVE_ADMISSION",
+      "candidate_summary_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v19_ny8__full3d_iterative__mpi1__Mna/20261009T033616.757334Z/task40_v10_p6_candidate_summary.json",
+      "candidate_summary_sha256": "24822e16b92f0fb2a86d95c111ad85a31ca6ff5673a18b2f03267e999e815cea",
+      "q_branches_per_case": 8,
+      "all_q_covered_each_case": true,
+      "all_four_q_gate_applicable": false,
+      "ordered_modes_per_case": 532,
+      "all_port_modes_covered_each_case": true,
+      "interior_only_rows_per_case": 72000,
+      "cases": [
+        {
+          "name": "generic_full_independent",
+          "passed": true,
+          "candidate_selected_index": 0,
+          "reference_pc_selected_index": 0,
+          "q_residual": 3.738613710707853E-12,
+          "alpha_closure": 7.849667422971598E-14,
+          "complete_augmented_fe": 1.9943732077358636E-11,
+          "eliminated_fe": 1.9978947232269616E-11,
+          "noncancelling_budget": 4.692345652003687E-11,
+          "frozen_denominators": {
+            "alpha_closure": 257.62576809260315,
+            "full_equation": 461.49219755174926,
+            "local_combined": 922.9831990431967
+          }
+        },
+        {
+          "name": "interior_only_all_72000",
+          "passed": true,
+          "candidate_selected_index": 0,
+          "reference_pc_selected_index": 0,
+          "q_residual": 2.0822298572681885E-12,
+          "alpha_closure": 6.45868382492641E-14,
+          "complete_augmented_fe": 2.0647969277438146E-11,
+          "eliminated_fe": 2.06839612442079E-11,
+          "noncancelling_budget": 4.8636769611053875E-11,
+          "frozen_denominators": {
+            "alpha_closure": 255.4685837167322,
+            "full_equation": 380.24291860618916,
+            "local_combined": 760.48317547445
+          }
+        },
+        {
+          "name": "nonzero_all_mode_port_rhs",
+          "passed": true,
+          "candidate_selected_index": 0,
+          "reference_pc_selected_index": 0,
+          "q_residual": 7.292074383027059E-12,
+          "alpha_closure": 1.8011499523662872E-14,
+          "complete_augmented_fe": 6.000986940462462E-13,
+          "eliminated_fe": 6.007893261099437E-13,
+          "noncancelling_budget": 1.3987473373049584E-12,
+          "frozen_denominators": {
+            "alpha_closure": 49.46081833737324,
+            "full_equation": 1249.3883131642065,
+            "local_combined": 2467.8379903869554
+          }
+        },
+        {
+          "name": "physical_regular_incident_rhs",
+          "passed": true,
+          "candidate_selected_index": 0,
+          "reference_pc_selected_index": 0,
+          "q_residual": 1.7223349733680965E-12,
+          "alpha_closure": 1.8746942246942828E-14,
+          "complete_augmented_fe": 1.5158097910012003E-11,
+          "eliminated_fe": 1.516230894806155E-11,
+          "noncancelling_budget": 2.041933639066373E-11,
+          "frozen_denominators": {
+            "alpha_closure": 1.8245529896570418,
+            "full_equation": 2.707980273984799,
+            "local_combined": 2.7079802739848033
+          }
+        }
+      ]
+    },
+    "e1": {
+      "case_count": 4,
+      "passed_cases": 4,
+      "all_candidate_selections_admitted": true,
+      "all_selected_candidate_indices": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "all_reference_pc_admissions": "V15_REFERENCE_PC_PASS",
+      "cases_use_initial_whole_state": true,
+      "selection_rule": "The initial whole candidate state is selected when all V15 original, frozen, and structural gates pass.",
+      "status": "PASS_V15_SELECTED_NATIVE_ADMISSION",
+      "candidate_summary_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v19__full3d_iterative__mpi1__Mna/20261009T065008.007716Z/task40_v10_p6_candidate_summary.json",
+      "candidate_summary_sha256": "fa042ca4620da0ff1825f48bf46538c3956c21591f3a3c28185ad156f75f0cdf",
+      "q_branches_per_case": 4,
+      "all_q_covered_each_case": true,
+      "all_four_q_covered_each_case": true,
+      "ordered_modes_per_case": 588,
+      "all_port_modes_covered_each_case": true,
+      "interior_only_rows_per_case": 342000,
+      "cases": [
+        {
+          "name": "generic_full_independent",
+          "passed": true,
+          "candidate_selected_index": 0,
+          "reference_pc_selected_index": 0,
+          "q_residual": 2.2373653990034576E-11,
+          "alpha_closure": 5.533584479287119E-13,
+          "complete_augmented_fe": 2.8255911341937957E-11,
+          "eliminated_fe": 3.14345340215377E-11,
+          "noncancelling_budget": 5.48019455639114E-11,
+          "frozen_denominators": {
+            "alpha_closure": 391.65633348042115,
+            "full_equation": 994.9543514518911,
+            "local_combined": 1407.07788898732
+          }
+        },
+        {
+          "name": "interior_only_all_342000",
+          "passed": true,
+          "candidate_selected_index": 0,
+          "reference_pc_selected_index": 0,
+          "q_residual": 4.472618798209755E-12,
+          "alpha_closure": 6.301641710684083E-13,
+          "complete_augmented_fe": 1.0246580803802E-11,
+          "eliminated_fe": 1.1906239252162624E-11,
+          "noncancelling_budget": 2.3781171370493484E-11,
+          "frozen_denominators": {
+            "alpha_closure": 126.96820522017705,
+            "full_equation": 828.0364268302093,
+            "local_combined": 1171.0190490372581
+          }
+        },
+        {
+          "name": "nonzero_all_mode_port_rhs",
+          "passed": true,
+          "candidate_selected_index": 0,
+          "reference_pc_selected_index": 0,
+          "q_residual": 2.9048190757523482E-11,
+          "alpha_closure": 1.447179341811343E-13,
+          "complete_augmented_fe": 7.259800915460589E-13,
+          "eliminated_fe": 7.621665925171413E-13,
+          "noncancelling_budget": 1.397932970689912E-12,
+          "frozen_denominators": {
+            "alpha_closure": 51.30642632793936,
+            "full_equation": 1779.9167100815991,
+            "local_combined": 2491.2069120377278
+          }
+        },
+        {
+          "name": "physical_regular_incident_rhs",
+          "passed": true,
+          "candidate_selected_index": 0,
+          "reference_pc_selected_index": 0,
+          "q_residual": 6.853994798168654E-11,
+          "alpha_closure": 2.5459479475721687E-13,
+          "complete_augmented_fe": 1.0572074755462997E-10,
+          "eliminated_fe": 1.1132298655868708E-10,
+          "noncancelling_budget": 1.7244420133113138E-10,
+          "frozen_denominators": {
+            "alpha_closure": 3.3106462004125716,
+            "full_equation": 1.5151129763459958,
+            "local_combined": 1.5151129763459956
+          }
+        }
+      ]
+    },
+    "interpretation": "The original raw strict E1 physical-regular-RHS receipt uses the same frozen alpha/full/local denominators as the V15 selected/native case (3.3106462004125716, 1.5151129763459958, 1.5151129763459956). It retains three checks above their original strict limits. The selected/native candidate passes the V15 contract frozen before these runs: alpha closure <=1e-9; complete augmented FE, eliminated FE, and non-cancelling budget <=1e-8; actual q MatSolve <=1e-8; initial factor admission probe remains <=1e-10; required mapping, coverage, and structural gates also pass. This is a tolerance/contract distinction at identical denominators, not a V19 denominator or threshold change.",
+    "original_three_receipt_raw_strict_checks": {
+      "b0_y8": [
+        {
+          "case": "generic_full_independent",
+          "status": "PASS",
+          "q_count": 8,
+          "max_q_residual": 3.738613710707853E-12,
+          "alpha_closure": 7.849667422971598E-14,
+          "complete_augmented_fe": 1.9943732077358636E-11,
+          "eliminated_fe": 1.9978947232269616E-11,
+          "non_cancelling_budget": 4.692345652003687E-11,
+          "frozen_alpha_denominator": 257.62576809260315,
+          "receipt_sha256": "3a8efc224581619621dece0f848236c897b3ec55d51963b04e26b9714cdfb455"
+        },
+        {
+          "case": "nonzero_all_mode_port_rhs",
+          "status": "PASS",
+          "q_count": 8,
+          "max_q_residual": 7.292074383027059E-12,
+          "alpha_closure": 1.8011499523662872E-14,
+          "complete_augmented_fe": 6.000986940462462E-13,
+          "eliminated_fe": 6.007893261099437E-13,
+          "non_cancelling_budget": 1.3987473373049584E-12,
+          "frozen_alpha_denominator": 49.46081833737324,
+          "receipt_sha256": "b83875644f0f7963962eda9b42ea85155c6f372781bdecf2bd2196d911593b41"
+        },
+        {
+          "case": "physical_regular_incident_rhs",
+          "status": "PASS",
+          "q_count": 8,
+          "max_q_residual": 1.7223349733680965E-12,
+          "alpha_closure": 1.8746942246942828E-14,
+          "complete_augmented_fe": 1.5158097910012003E-11,
+          "eliminated_fe": 1.516230894806155E-11,
+          "non_cancelling_budget": 2.041933639066373E-11,
+          "frozen_alpha_denominator": 1.8245529896570418,
+          "receipt_sha256": "30521efdc3753bb18aed28d9b118f223e5278fa856c60a7b8c6d7639f3250a17"
+        }
+      ],
+      "e1": [
+        {
+          "case": "generic_full_independent",
+          "status": "PASS",
+          "q_count": 4,
+          "max_q_residual": 2.2373653990034576E-11,
+          "alpha_closure": 5.533584479287119E-13,
+          "complete_augmented_fe": 2.8255911341937957E-11,
+          "eliminated_fe": 3.14345340215377E-11,
+          "non_cancelling_budget": 5.48019455639114E-11,
+          "frozen_alpha_denominator": 391.65633348042115,
+          "receipt_sha256": "7fd6e006de7e25c06c6dce14933092ab799a9ff8708f531ae5b1d9d943b7be42"
+        },
+        {
+          "case": "nonzero_all_mode_port_rhs",
+          "status": "PASS",
+          "q_count": 4,
+          "max_q_residual": 2.9048190757523482E-11,
+          "alpha_closure": 1.447179341811343E-13,
+          "complete_augmented_fe": 7.259800915460589E-13,
+          "eliminated_fe": 7.621665925171413E-13,
+          "non_cancelling_budget": 1.397932970689912E-12,
+          "frozen_alpha_denominator": 51.30642632793936,
+          "receipt_sha256": "270695450501bedf82fa890ae5cdef3bbf07d98484af4d5236630a6f72a52b3b"
+        },
+        {
+          "case": "physical_regular_incident_rhs",
+          "status": "FAIL_DIAGNOSTIC",
+          "q_count": 4,
+          "max_q_residual": 6.853994798168654E-11,
+          "alpha_closure": 2.5459479475721687E-13,
+          "complete_augmented_fe": 1.0572074755462997E-10,
+          "eliminated_fe": 1.1132298655868708E-10,
+          "non_cancelling_budget": 1.7244420133113138E-10,
+          "frozen_alpha_denominator": 3.3106462004125716,
+          "failed_gates": [
+            {
+              "name": "original_regular_equation",
+              "measured": 1.1132298655868788E-10,
+              "limit": 1E-10
+            },
+            {
+              "name": "independent_sector_action_consistency",
+              "measured": 1.3329901315372852E-11,
+              "limit": 1E-11
+            },
+            {
+              "name": "two_local_original_equations",
+              "measured": 1.1029072507993518E-10,
+              "limit": 1E-10
+            }
+          ],
+          "receipt_sha256": "3a061fcf8fc4956f98e81daafc7d5b41fee07eebe4af71c25df78fcf0fd7a4de"
+        }
+      ],
+      "relationship_to_selected_candidate": "The preserved raw strict receipt and the V15 selected/native physical_regular_incident_rhs case use identical frozen denominators: alpha 3.3106462004125716, full equation 1.5151129763459958, local combined 1.5151129763459956. The raw strict checks still exceed their original 1e-10/1e-11/1e-10 limits. Candidate index 0 passes the pre-frozen V15 native contract (alpha <=1e-9; FE residuals, non-cancelling budget, and each actual q MatSolve <=1e-8, with factor probe <=1e-10 and mapping/coverage/structural gates); this does not classify the strict checks as passed or imply a V19 threshold/denominator change."
+    },
+    "original_strict_physical_regular_diagnostic_e1": {
+      "status": "PRESERVED_RAW_STRICT_DIAGNOSTIC_NEGATIVE",
+      "receipt_sha256": "3a061fcf8fc4956f98e81daafc7d5b41fee07eebe4af71c25df78fcf0fd7a4de",
+      "failed_gates": [
+        {
+          "name": "original_regular_equation",
+          "measured": 1.1132298655868788E-10,
+          "limit": 1E-10
+        },
+        {
+          "name": "independent_sector_action_consistency",
+          "measured": 1.3329901315372852E-11,
+          "limit": 1E-11
+        },
+        {
+          "name": "two_local_original_equations",
+          "measured": 1.1029072507993518E-10,
+          "limit": 1E-10
+        }
+      ],
+      "q_residual_maximum": 6.853994798168654E-11,
+      "q_residual_limit": 1E-10,
+      "relationship_to_selected_candidate": "The preserved raw strict receipt and the V15 selected/native physical_regular_incident_rhs case use identical frozen denominators: alpha 3.3106462004125716, full equation 1.5151129763459958, local combined 1.5151129763459956. The raw strict checks still exceed their original 1e-10/1e-11/1e-10 limits. Candidate index 0 passes the pre-frozen V15 native contract (alpha <=1e-9; FE residuals, non-cancelling budget, and each actual q MatSolve <=1e-8, with factor probe <=1e-10 and mapping/coverage/structural gates); this does not classify the strict checks as passed or imply a V19 threshold/denominator change.",
+      "shared_frozen_denominators_with_selected_candidate": {
+        "alpha_closure": 3.3106462004125716,
+        "full_equation": 1.5151129763459958,
+        "local_combined": 1.5151129763459956
+      }
+    }
+  },
+  "fresh_factor_probe_gate": {
+    "strict_limit": 1E-10,
+    "b0_y8_maximum_relative_residual": 9.945587763449953E-12,
+    "e1_maximum_relative_residual": 2.186269126691737E-11,
+    "all_q_probes_strict": true,
+    "source": "v19_one_q_row_tile_p6_reference_events.jsonl"
+  }
+}

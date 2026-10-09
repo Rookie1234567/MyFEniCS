@@ -48,6 +48,7 @@
 | [`task035c_hybrid_channel_memory_closure/README.md`](task035c_hybrid_channel_memory_closure/README.md) | Task035c：修复 Full3D–Hybrid 离散 phase/traction 合同；p6/h10 六路径 12/12+12/12；static Hybrid M120 峰值下降31.89%，50%目标未达 |
 | [`task037c_hybrid_iterative_robustness/response_v3.md`](task037c_hybrid_iterative_robustness/response_v3.md) | Task037c白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5 的授权 research extension；M_robust=120，preferred RSS未过，不是production-qualified |
 | [`task038_input_driven_configuration/response_v1.md`](task038_input_driven_configuration/response_v1.md) | Task038：单一 `.dat` input-driven configuration；11 migrated/6 retained，ordinary数值算法不变；source-branch full pytest 1119 passed/48 skipped，integration full 由用户授权 controlled stop |
+| [`task40extra_0p7nm_engineering/README.md`](task40extra_0p7nm_engineering/README.md) | Task40extra Review V19：B0 Ny=8、E1 p6及B0 Ny4/Ny8 532模式保存场门通过；Ny=8 support界收紧；原尺寸2 TB/48 h仍 NOT_QUALIFIED |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
@@ -78,6 +79,7 @@
 | Task037b | frozen Hybrid iterative M10 | 白名单能力已选择性进入 master；仍为 explicit-opt-in research capability，ordinary defaults不变，not production-qualified |
 | Task037c | Hybrid iterative robustness | 白名单能力已选择性进入 master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过，仍not production-qualified |
 | Task038 | 单一 `.dat` input-driven configuration | 已按 Review V1 白名单选择性进入 master；11 migrated/6 retained，ordinary defaults 不变；source-branch full pytest 1119 passed/48 skipped，integration full 为用户授权 controlled stop |
+| Task40extra | ONE_Q_REFACTOR_V19 内存/时间交换、Ny=8 support校准与B0全模式保存场门 | B0 Ny=8、E1 p6正式场和532模式saved-field gate通过；目标2 TB/48 h未资格化，ordinary default unchanged |
 
 ## 当前任务
 
@@ -100,6 +102,7 @@
 | Task037b | `task037b_hybrid_fem_modal_iterative/` | 白名单能力已选择性进入master；frozen M10仍为explicit-opt-in research capability，ordinary defaults不变；Case101 compact、runner/watchdog/checker与V7边界见下方 |
 | Task037c | `task037c_hybrid_iterative_robustness/` | 白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过；not production-qualified |
 | Task038 | `task038_input_driven_configuration/` | 单一 `.dat` 普通入口；11 migrated/6 retained；ordinary 数值算法不变；final full pytest 1119 passed/48 skipped |
+| Task40extra | `task40extra_0p7nm_engineering/` | Review V19 P5文档证据收口已完成；B0与E1小模型及B0全模式保存场门通过；目标仍未资格化；等待主控最终核验、结算和提交推送 |
 
 ## Task28 审计入口
 
@@ -203,7 +206,7 @@ Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcom
 | Task037c | [`response_v3.md`](task037c_hybrid_iterative_robustness/response_v3.md)、[`outcomes/summary.md`](task037c_hybrid_iterative_robustness/outcomes/summary.md)；白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5、M_robust=120，preferred RSS未过、not production-qualified |
 | Task038 | [`response_v1.md`](task038_input_driven_configuration/response_v1.md)、[`outcomes/summary.md`](task038_input_driven_configuration/outcomes/summary.md)；单一 `.dat` 普通入口、11 migrated/6 retained，ordinary 数值算法不变；source-branch full pytest 1119 passed/48 skipped，integration full 为用户授权 controlled stop |
 
-## Task039extra 收口与 Task40extra 交接
+## Task039extra 收口与 Task40extra Review V19 交接
 
 | 入口 | 内容 |
 |---|---|
@@ -213,4 +216,13 @@ Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcom
 | [`task039_extra_physical_multilevel/outcomes/summary.md`](task039_extra_physical_multilevel/outcomes/summary.md) | Task39 最终汇总及历史证据入口 |
 | [`task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_offline_comparison_v34.json`](task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_offline_comparison_v34.json) | 已保存 V29/V30/V31 数组比较及文件哈希 |
 
-Task40extra 的活动任务书使用用户选择的 B 线 N0–N6；其正式入口在后续 Task40 分支。
+Task40extra 的活动执行分支为 task40extra_0p7nm_engineering。Review V19 的当前交付和历史入口：
+
+| 文件 | 用途 |
+|---|---|
+| [`task40extra_0p7nm_engineering/README.md`](task40extra_0p7nm_engineering/README.md) | 当前V19结果入口及V18/V17历史导航 |
+| [`task40extra_0p7nm_engineering/review_report_v19.md`](task40extra_0p7nm_engineering/review_report_v19.md) 与 [`response_v19.md`](task40extra_0p7nm_engineering/response_v19.md) | V19执行合同与五项问题回应 |
+| [`task40extra_0p7nm_engineering/outcomes/summary.md`](task40extra_0p7nm_engineering/outcomes/summary.md) 与 [`outcomes/test_summary.md`](task40extra_0p7nm_engineering/outcomes/test_summary.md) | 当前结果、成本、负结果、测试和未运行范围；旧V18内容保留在后半段 |
+| [`task40extra_0p7nm_engineering/outcomes/records/run_index.json`](task40extra_0p7nm_engineering/outcomes/records/run_index.json) | V19正式运行、P4校准/投影、修复与收口测试的hash-bound索引 |
+
+普通求解器默认未变；执行者未提交、推送或合并master。

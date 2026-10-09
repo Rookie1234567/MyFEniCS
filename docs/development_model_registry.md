@@ -2187,6 +2187,22 @@ R0 不改变旧 V16–V18 结果；R1/R2/R3、official E/H、near-field、R/T/A�
 production model。
 
 
+## Task40extra Review V19：one-q正式小模型、P4 support与保存场全模式门
+
+V19保留为Task40同一执行分支上的研究证据。one-q策略一次只让一个q子问题的PETSc输入矩阵和数值因子同时驻留；q代表y周期边界相位不同的子方程。此策略降低并发因子占用，但会重复建立symbolic/numeric因子。它没有改变Maxwell方程、离散或ordinary solver default。 正式B0身份为source 14f5ee6943458b80b582b723c61cc84afd0efc24、input 1c9c907da734e14a583d92ae1ae6aa216b296bddbe710701758b5571387dd0e8、physical model e8002d20258fa5c1e4f8f0888bca68f621b1006492f3f1b8aaff6b0d82099903；E1为source 71042327e5f3a77cd39a1be7b5dfa46afe52db6b、input f34f8bf11bf4ed0715178ca0edc3ead361f50e25f04741f94ae9e50c2301995a、physical model 6ea7e95a9b415b3bcc97c67e3c4d3580c7a6999211fbfb3f15bc42fad2ce821d。
+
+| 对象 | measured/derived 状态 | 关键结果 | 边界与证据 |
+|---|---|---|---|
+| B0 Ny=8 p6 | 正式Full3D解，measured | 160 cells、532 modes、8 q；A6=1.2189184363e-8；R/T/A_balance/A_volume=0.9842736081/0.0142405181/0.001485873797/0.001485873844；checker PASS | 小几何离散解；[formal compact](task40extra_0p7nm_engineering/outcomes/records/review_v19_formal_results.json) |
+| E1 p6 | 正式Full3D解，measured | 760 cells、588 modes、4 q；A6=1.40358436565e-8；R/T/A_balance/A_volume=0.06235654127/0.91592650550/0.02171695323/0.02171695270；R00_s/p/total=0.06235610892/1.1637503e-23/0.06235610892；checker PASS | 588 mode rows检查；checker未重放operator；[formal compact](task40extra_0p7nm_engineering/outcomes/records/review_v19_formal_results.json) |
+| B0 Ny4/Ny8全模式门 | saved-array comparison，measured | V19 mixed amplitude gate 532/532通过；最大比值0.0008598042；near-zero mode传统相对比4.766但绝对差6.6124e-16 | 新V19规则；旧V18未冻结significant set状态仍保留；不是连续收敛 |
+| Ny=8 support校准 | 有界原生p6 FE/Floquet MPC，measured | 4×8×14=448 cells；304,860 full FE rows；support 348/cell，78,336/边界面 | 没有目标FE/CSR/factor/PDE；[sparse compact](task40extra_0p7nm_engineering/outcomes/records/review_v19_sparse_capacity.json) |
+| Ny=8目标CSR结构界 | 由32,060 mode manifest与support界推导 | 30,464 cells；全q payload上界176,839,493,968 B；最大单q22,330,568,180 B；相对旧fallback减少33.765% | 不是实测numeric NNZ、RSS或factor占用 |
+| E1原始strict regular-RHS receipt | 独立保留的诊断负结果；full/local分母与selected/native候选相同，为1.5151129763459958/1.5151129763459956 | original equation 1.11323e-10>1e-10；sector consistency 1.33299e-11>1e-11；local equations 1.10291e-10>1e-10 | V15预冻结FE/预算1e-8、alpha 1e-9合同下候选4/4通过；同尺度的strict门仍保留为负项，V19未改分母或阈值；[component compact](task40extra_0p7nm_engineering/outcomes/records/review_v19_component_closure.json) |
+| 原尺寸目标 | NOT_QUALIFIED | 2 TB与172,800 s目标；target numeric NNZ/factor、最终网格、owner并发、evanescent cutoff未知 | target FE/CSR/factor/PDE not_run；[cost compact](task40extra_0p7nm_engineering/outcomes/records/review_v19_cost_and_readiness.json) |
+
+下一项只登记E1 p6 Ny=4→Ny=8设计，固定Nx=10、Nz=19和物理配置，y单独加密并比较全部588模式；本轮未运行。ordinary default未变；最终campaign结算和分支提交由主控负责。参见[Response V19](task40extra_0p7nm_engineering/response_v19.md)、[summary](task40extra_0p7nm_engineering/outcomes/summary.md)和[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。
+
 ## Task40extra Review V2：0.7 nm非可分Full3D证据登记
 
 P1/P4的体积场/curl对照是保存场离线后处理，官方R/T来自DtN端口模态功率，`A_volume`来自材料体积分。P3改变的是模式包络M，不是网格h；固定坐标R5旧样本不等于P1体积/curl结果。表中RSS为进程树峰值，swap为任务口径；MUMPS INFOG29是因子条目数，不是内存字节。

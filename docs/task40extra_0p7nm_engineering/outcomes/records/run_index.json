@@ -2,7 +2,7 @@
   "schema": "task40extra.run_index.v1",
   "branch": "task40extra_0p7nm_engineering",
   "repair_base_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
-  "current_code_sha": "23626f44243d19d58af41d15a8ccafcba41ee54b",
+  "current_code_sha": "71042327e5f3a77cd39a1be7b5dfa46afe52db6b",
   "input": {
     "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat",
     "sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
@@ -1295,7 +1295,7 @@
       "fix": "allow the authorized V6 postprocess continuation after preserved POSTPROCESS_PARENT_FAILED when postprocess source is newer"
     }
   ],
-  "last_formal_run_source_sha": "cbdcc12812b439f5252949ad1279331b86a2dbb6",
+  "last_formal_run_source_sha": "71042327e5f3a77cd39a1be7b5dfa46afe52db6b",
   "review_v1_continuation": {
     "review": "docs/task40extra_0p7nm_engineering/review_report_v1.md",
     "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
@@ -4073,6 +4073,230 @@
         "subtests_passed": 134,
         "scope": "documentation and p6 support counter; no FE/PDE"
       }
+    }
+  },
+  "review_v19_evidence_index": {
+    "schema": "task40extra.review_v19_evidence_index.v1",
+    "branch": "task40extra_0p7nm_engineering",
+    "review": "Review V19 P5",
+    "classification": "B0 Ny8 and E1 p6 formal small-model pass; B0 Ny4/Ny8 saved-field all-mode gate pass; target remains NOT_QUALIFIED",
+    "current_code_sha": "71042327e5f3a77cd39a1be7b5dfa46afe52db6b",
+    "last_formal_run_source_sha": "71042327e5f3a77cd39a1be7b5dfa46afe52db6b",
+    "formal_runs": {
+      "b0_y8": {
+        "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v19_ny8__full3d_iterative__mpi1__Mna/20261009T033616.757334Z",
+        "source_sha": "14f5ee6943458b80b582b723c61cc84afd0efc24",
+        "input_sha256": "1c9c907da734e14a583d92ae1ae6aa216b296bddbe710701758b5571387dd0e8",
+        "a6_full_explicit": 1.2189184363208502e-08,
+        "checker_sha256": "9f843cd09eeefba80beba1dd53e83f3691aa37450d6ce510bbd32a6502ccd46d",
+        "run_id": "task40extra_0p7nm_b0_p6_reference_v19_ny8"
+      },
+      "e1_p6": {
+        "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v19__full3d_iterative__mpi1__Mna/20261009T065008.007716Z",
+        "source_sha": "71042327e5f3a77cd39a1be7b5dfa46afe52db6b",
+        "input_sha256": "f34f8bf11bf4ed0715178ca0edc3ead361f50e25f04741f94ae9e50c2301995a",
+        "a6_full_explicit": 1.4035843656500764e-08,
+        "checker_sha256": "1a92ae14fae3637711cb214d2d339e63388ce39d87f22da31f95efb497037490",
+        "run_id": "task40extra_0p7nm_nonseparable_e1_p6_reference_v19"
+      }
+    },
+    "preserved_failures": [
+      {
+        "kind": "E1 first V19 startup scope",
+        "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v19__full3d_iterative__mpi1__Mna/20261009T045134.718476Z",
+        "source_sha": "f23d907bbb60249cbd2844921ca86cfd43f84658",
+        "classification": "WORKER_FAILED_BEFORE_NUMERIC_OR_KSP",
+        "reason": "q_count=4 E1 incorrectly required the B0 Ny8 V18 startup receipt",
+        "repair_test_receipt_sha256": "99718d487cf9f9a4e591dbdcda24c9ad8fbdc3af403c02f729e467f0f8e9ac87",
+        "repair_test_result": "57 passed in 3.48 s"
+      },
+      {
+        "kind": "E1 original strict physical_regular_incident_rhs diagnostic",
+        "classification": "PRESERVED_RAW_STRICT_DIAGNOSTIC_NEGATIVE",
+        "failed_gates": {
+          "original_regular_equation": {
+            "value": 1.1132298655868788e-10,
+            "limit": 1e-10
+          },
+          "independent_sector_action_consistency": {
+            "value": 1.3329901315372852e-11,
+            "limit": 1e-11
+          },
+          "two_local_original_equations": {
+            "value": 1.1029072507993518e-10,
+            "limit": 1e-10
+          }
+        },
+        "receipt_sha256": "3a061fcf8fc4956f98e81daafc7d5b41fee07eebe4af71c25df78fcf0fd7a4de",
+        "candidate_admission_relationship": "The raw strict receipt uses the same frozen denominators as the selected/native E1 physical regular-RHS case (alpha 3.3106462004125716; full/local 1.5151129763459958/1.5151129763459956). Its three over-limit checks retain their original strict limits; the candidate passes the pre-frozen V15 native contract (FE/budget <=1e-8, alpha <=1e-9, plus required gates). No denominator or threshold was changed in V19."
+      }
+    ],
+    "saved_field_mode_gate": {
+      "model": "B0 Ny4 versus Ny8, 532 ordered keys",
+      "status": "PASS",
+      "pass": 532,
+      "fail": 0,
+      "runner_sha256": "54b8c92c290e95b1780082ad67154ad67b29434fe868b35508aad869c3d04b4e",
+      "receipt_sha256": "28ca4936017a48db2e3a80a625a99122e8d41d8b92894b7aec4bff3c58cb9a53",
+      "prior_v18_unfrozen_significant_mode_status_preserved": true
+    },
+    "p4": {
+      "support_calibration_receipt_sha256": "2c4c9f45f2d3eb635f4b32beab5da4e5604ae5237bc8e1ae26d561ecede09891",
+      "projection_receipt_sha256": "630e9b57a1ad7419cde7fac9f84e0f36ff8f9f6b3f42d5d3a3d1cfa57a203473",
+      "target_fe_csr_factor_or_pde": "NOT_RUN",
+      "calibration_execution_type": "ignored historical research script, 1,422 lines; tracked core dependencies remain separately hash-bound"
+    },
+    "phase_timing_boundary": {
+      "cost_compact": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v19_cost_and_readiness.json",
+      "full_cold_activation_to_checker_seconds": "UNKNOWN",
+      "checker_after_worker_seconds": "UNKNOWN",
+      "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6"
+    },
+    "fixed_window": {
+      "receipt_sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0",
+      "t0_utc": "2026-10-09T01:45:00.727771902Z",
+      "deadline_utc": "2026-10-10T01:45:00.727771902Z",
+      "last_accounting": "sequence 55984 cumulative 25509.272498278337 s, as-of only; controller owns final settlement",
+      "controller_closeout_accounting": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/controller_v19_closeout_accounting.json",
+        "sha256": "d861f82c0b2fda3b17dcfbd6c0f8cb77517c4af23ebf677a1021883929ee6842",
+        "sequence": 55985,
+        "cumulative_charged_seconds": 31324.373504745337,
+        "remaining_numerical_seconds": 54475.62649525466,
+        "sample": {
+          "monotonic": 1099917.33828295,
+          "boottime": 1099917.338283792,
+          "utc_ns": 1791541625095607195,
+          "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6"
+        },
+        "status": "controller closeout as-of; immutable window unchanged; no further FE"
+      }
+    },
+    "compact_records": {
+      "docs/task40extra_0p7nm_engineering/outcomes/records/review_v19_component_closure.json": {
+        "sha256": "cbf4c204f5fff5122a06535d8fcfdb386036c8cbfcb4e5514daca1584a281558"
+      },
+      "docs/task40extra_0p7nm_engineering/outcomes/records/review_v19_sparse_capacity.json": {
+        "sha256": "27451a8665a5c6b741484beba043b038791db474e82854af5288bf91fb000ee7"
+      },
+      "docs/task40extra_0p7nm_engineering/outcomes/records/review_v19_formal_results.json": {
+        "sha256": "512adfd6ce414ff47e9f7f1f2da9bd1d4f1ec77aa1f842e8d3dc04e584d95336"
+      },
+      "docs/task40extra_0p7nm_engineering/outcomes/records/review_v19_cost_and_readiness.json": {
+        "sha256": "40890472fa55a8166a8314fe9948af50589feb52c667e0f188b2962064a308cc"
+      }
+    },
+    "document_hashes_at_p5_closeout": {
+      "docs/task40extra_0p7nm_engineering/response_v19.md": {
+        "sha256": "8638d48a1bc2a917540369e26e6162ccba0dc4379fc1116343244e7cf97eb3e0"
+      },
+      "docs/task40extra_0p7nm_engineering/outcomes/summary.md": {
+        "sha256": "627781f9ec33a67ff5431bf127f3bd23a678f4378a62d988909e040d545494c7"
+      },
+      "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md": {
+        "sha256": "1781e66a8a10ac74e83cacbf6bc2e4d48ae66448cea9f5dfd634088303a2406b"
+      },
+      "docs/task40extra_0p7nm_engineering/README.md": {
+        "sha256": "6977caf0a6cf54aae2ce645c4c63e1a7dc71d0bf91c13816ce116f943e2e331a"
+      },
+      "docs/development_progress.md": {
+        "sha256": "7f102eb966e3e9c2a43e9b9093a44711558cd9a9d34e17cc30f8d811623cfe74"
+      },
+      "docs/development_model_registry.md": {
+        "sha256": "dc6b772da7880533bc72cf539db5bf5fb450f91aeeff7465fd580ad3ac85b74e"
+      },
+      "docs/README.md": {
+        "sha256": "b505a4de42d45c9f93a689d25ebf47d1a46c6793fcb2815cf5492c305e6db2e4"
+      }
+    },
+    "test_evidence": {
+      "e1_scope_repair": {
+        "result": "57 passed in 3.48 s",
+        "receipt_sha256": "99718d487cf9f9a4e591dbdcda24c9ad8fbdc3af403c02f729e467f0f8e9ac87"
+      },
+      "focused_closeout_initial": {
+        "result": "132 passed, 134 subtests passed in 5.40 s",
+        "log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_closeout_targeted_pytest_02.log",
+        "log_sha256": "deb35beccbae3e690f163eb6c977b156fabe748e047a9a13fc0cc988391040c9"
+      },
+      "full_repository_pytest": "NOT_RUN",
+      "mpi4": "NOT_RUN",
+      "ci": "NOT_RUN",
+      "final_post_index": {
+        "result": "132 passed, 134 subtests passed in 5.59 s",
+        "log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_closeout_targeted_pytest_04.log",
+        "log_sha256": "c4305f7a8b32f8946b0c0305928b265ae33f97f8ff19da0a287c06a8b13f4b61"
+      },
+      "focused_before_final_copyedit": {
+        "result": "132 passed, 134 subtests passed in 4.85 s",
+        "log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_closeout_targeted_pytest_05.log",
+        "log_sha256": "7993e3292d60561522108e46193f2d8cc836cf485111069aeffb856262dbe644",
+        "scope": "focused implementation/component/document suite; before final narrative copyedit; no PDE"
+      },
+      "controller_final_docs_and_counter": {
+        "result": "36 passed, 134 subtests passed in 0.46 s",
+        "log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/controller_v19_final_docs_and_counter_tests.log",
+        "log_sha256": "2d532dd68c57f002425d24ea6dd58b3541224bd498ac44647f747fafea8f7d1b",
+        "scope": "after final copyedit; document contracts plus bounded support counter, no FE/PDE"
+      },
+      "controller_after_accounting_docs_and_counter": {
+        "result": "36 passed, 134 subtests passed in 0.36 s",
+        "log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/controller_v19_final_evidence_contract_tests.log",
+        "log_sha256": "7c34317ecad71be3dfe26a62e89937ccda6c0bd5e39fcd474859a8c78c991c6c",
+        "scope": "after closeout accounting paragraphs; four document contracts plus p6 support counter; no FE/PDE"
+      }
+    },
+    "changed_document_paths": [
+      "docs/task40extra_0p7nm_engineering/response_v19.md",
+      "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+      "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md",
+      "docs/task40extra_0p7nm_engineering/README.md",
+      "docs/development_progress.md",
+      "docs/development_model_registry.md",
+      "docs/README.md"
+    ],
+    "executor_commit_or_push": false,
+    "controller_owns_final_settlement_commit_and_push": true,
+    "startup_candidate_v15_admissions": {
+      "b0_y8": {
+        "pass": 4,
+        "total": 4,
+        "candidate_summary_sha256": "24822e16b92f0fb2a86d95c111ad85a31ca6ff5673a18b2f03267e999e815cea",
+        "q_branches_per_case": 8,
+        "ordered_modes_per_case": 532,
+        "interior_only_rows_per_case": 72000,
+        "selected_candidate_indices": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "native_admission": "V15_REFERENCE_PC_PASS"
+      },
+      "e1": {
+        "pass": 4,
+        "total": 4,
+        "candidate_summary_sha256": "fa042ca4620da0ff1825f48bf46538c3956c21591f3a3c28185ad156f75f0cdf",
+        "q_branches_per_case": 4,
+        "ordered_modes_per_case": 588,
+        "interior_only_rows_per_case": 342000,
+        "selected_candidate_indices": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "native_admission": "V15_REFERENCE_PC_PASS"
+      }
+    },
+    "controller_review": {
+      "status": "COMPLETE_AUTHORIZED_V19_WORK_READY_FOR_CENTRAL_COMMIT",
+      "numerical_source_sha": "71042327e5f3a77cd39a1be7b5dfa46afe52db6b",
+      "formal_services_inactive": true,
+      "historical_runs_reviews_preserved": true,
+      "no_additional_pde_at_closeout": true,
+      "target_2tb_48h": "NOT_QUALIFIED",
+      "phase": "P0-P5 completed; ready for central delivery and ChatGPT review"
     }
   }
 }

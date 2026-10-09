@@ -1,0 +1,195 @@
+{
+  "schema": "task40extra.review_v19_cost_and_readiness.v1",
+  "classification": "SMALL_MODEL_ONE_Q_COST_MEASURED_TARGET_READINESS_NOT_QUALIFIED",
+  "branch": "task40extra_0p7nm_engineering",
+  "fixed_window": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json",
+    "sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0",
+    "t0_utc": "2026-10-09T01:45:00.727771902Z",
+    "deadline_utc": "2026-10-10T01:45:00.727771902Z",
+    "closeout_reserve_seconds": 600,
+    "window_refreshed": false,
+    "last_read_accounting_snapshot": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_accounting_v10.jsonl",
+      "sequence": 55984,
+      "label": "launcher_after_watchdog",
+      "cumulative_charged_seconds": 25509.272498278337,
+      "status": "as-of snapshot only; not a final settlement"
+    },
+    "controller_closeout_accounting": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/controller_v19_closeout_accounting.json",
+      "sha256": "d861f82c0b2fda3b17dcfbd6c0f8cb77517c4af23ebf677a1021883929ee6842",
+      "sequence": 55985,
+      "cumulative_charged_seconds": 31324.373504745337,
+      "remaining_numerical_seconds": 54475.62649525466,
+      "sample": {
+        "monotonic": 1099917.33828295,
+        "boottime": 1099917.338283792,
+        "utc_ns": 1791541625095607195,
+        "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6"
+      },
+      "status": "controller closeout as-of; immutable window unchanged; no further FE"
+    },
+    "legacy_accounting_snapshot_preserved": true
+  },
+  "formal_run_cost": {
+    "b0_y8_v18_baseline": {
+      "source_sha": "3b9457e57ceb15f21306a35baac07f42036840b1",
+      "run_case_full_workflow_seconds": 2474.995817267103,
+      "watchdog_resource_authority_seconds": 2474.820380249992,
+      "process_tree_rss_peak_bytes": 4869050368,
+      "cgroup_memory_peak_bytes": 5899956224,
+      "factor_lifecycle": "eight q factors simultaneously live"
+    },
+    "b0_y8_v19_one_q": {
+      "source_sha": "14f5ee6943458b80b582b723c61cc84afd0efc24",
+      "run_case_full_workflow_seconds": 2501.9054289138876,
+      "watchdog_resource_authority_seconds": 2501.784191746963,
+      "process_tree_rss_peak_bytes": 4012605440,
+      "cgroup_memory_peak_bytes": 5152567296,
+      "task_swap_peak_bytes": 0,
+      "full_workflow_delta_vs_v18_seconds": 26.9096116467846,
+      "full_workflow_delta_fraction_vs_v18": 0.0108728,
+      "interpretation": "Comparable B0 launcher/watchdog run_case workflow, but source revisions differ and checker/full-cold-activation boundaries are separate; the 26.91 s delta is not an isolated factor-only cost."
+    },
+    "e1_p6_v19_one_q": {
+      "source_sha": "71042327e5f3a77cd39a1be7b5dfa46afe52db6b",
+      "run_case_full_workflow_seconds": 6584.210969868116,
+      "watchdog_resource_authority_seconds": 6584.038481260883,
+      "process_tree_rss_peak_bytes": 12093280256,
+      "cgroup_memory_peak_bytes": 12555325440,
+      "task_swap_peak_bytes": 0,
+      "dedicated_cgroup_swap_peak_bytes": 0,
+      "oom_or_oom_kill": 0,
+      "profile": "task40extra_v17_p6_y_orbit_e1_reference_v1",
+      "note": "The independent output checker ran after the worker service. Activation/ABI preparation and the full cold activation-to-required-checker path are UNKNOWN. Any cache-miss JIT actually performed inside the worker is included in the measured run_case workflow; it must not be described as universally excluded."
+    }
+  },
+  "factor_build_and_probe_cost": {
+    "observed_pattern": {
+      "e1": "4 startup all-q inverse checks plus 3 PC applications; no augmented correction; 7 fresh factors per q",
+      "b0_y8": "4 startup all-q inverse checks plus 3 PC applications; no augmented correction; 7 fresh factors per q",
+      "transfer_limit": "This pattern is the observed small-formal-run call structure, not a guaranteed target field call count."
+    },
+    "e1": {
+      "q_count": 4,
+      "symbolic_builds": 32,
+      "numeric_factor_builds": 28,
+      "builds_per_q": 7,
+      "MatSolve_total": 56,
+      "MatSolve_breakdown": {
+        "startup_rhs": 16,
+        "pc_initial_rhs": 12,
+        "pc_augmentation_rhs": 0,
+        "factor_probe": 28,
+        "other_validation_rhs": 0
+      },
+      "numeric_elapsed_seconds_sum": 223.13437832868658,
+      "fresh_symbolic_seconds_for_28_rebuilds": 22.109798620222136,
+      "initial_four_q_symbolic_seconds": 1.7226538420654836,
+      "factor_probe_count": 28,
+      "factor_probe_elapsed_seconds_sum": 3.488056253641844,
+      "maximum_numeric_time_for_one_build_seconds": 20.0315211948473,
+      "maximum_factor_allocated_upper_bytes_for_one_q": 1648000000,
+      "maximum_factor_used_upper_bytes_for_one_q": 1445000000
+    },
+    "b0_y8": {
+      "q_count": 8,
+      "symbolic_builds": 64,
+      "numeric_factor_builds": 56,
+      "builds_per_q": 7,
+      "factor_probe_count": 56,
+      "numeric_elapsed_seconds_sum": 12.308370747370645,
+      "fresh_symbolic_seconds_for_56_rebuilds": 1.179287102073431,
+      "initial_eight_q_symbolic_seconds": 0.16581389564089477,
+      "factor_probe_elapsed_seconds_sum": 0.2527257213369012,
+      "maximum_numeric_time_for_one_build_seconds": 0.30818611895665526,
+      "maximum_factor_allocated_upper_bytes_for_one_q": 120000000,
+      "maximum_factor_used_upper_bytes_for_one_q": 108000000
+    },
+    "timing_rule": "Symbolic, numeric, probe, and worker wall clocks are reported separately. The substage totals are not added again to parent workflow time; they do not include activation-to-checker cold critical path."
+  },
+  "target_2tb_48h_readiness": {
+    "status": "NOT_QUALIFIED",
+    "memory_target_decimal_bytes": 2000000000000,
+    "single_field_time_target_seconds": 172800,
+    "ny8_ordered_modes": 32060,
+    "ny8_grid_axes": [
+      272,
+      8,
+      14
+    ],
+    "ny8_physical_cells": 30464,
+    "ny8_structural_all_q_csr_payload_upper_bytes": 176839493968,
+    "ny8_structural_max_single_q_csr_payload_upper_bytes": 22330568180,
+    "boundary_support_upper_per_face": 78336,
+    "target_numeric_nnz_factor_and_full_run": "NOT_RUN",
+    "local_port_owner_and_lifetime_at_target": "UNKNOWN",
+    "final_x_y_z_mesh_and_evanescent_mode_cutoff": "UNKNOWN",
+    "full_cold_start_to_required_checker_seconds": "UNKNOWN",
+    "why_no_extrapolation": "The target q row count and NNZ upper are far beyond B0/E1 observations. No target FE space, q CSR, numeric factor, or PDE was built; small-model factor bytes/time cannot be scaled linearly to certify 2 TB or 48 h."
+  },
+  "next_precision_comparison": {
+    "design": "E1 same-physics p6 Ny=4 versus Ny=8; keep Nx=10/Nz=19, geometry, gaps, interfaces, materials, incidence, azimuth and all 588 ordered mode keys fixed; refine only y, 760 to 1520 cells.",
+    "primary_observables": [
+      "common-subcell E",
+      "common-subcell H",
+      "common-subcell scaled-curl",
+      "R",
+      "T",
+      "A_balance",
+      "A_volume",
+      "all 588 incident-normalized complex channel amplitudes",
+      "all per-channel powers"
+    ],
+    "normalization": "Use the frozen Ny4 reference norm for E/H/scaled-curl; if zero, report absolute difference and relative null. Normalize mode amplitudes by incident array.",
+    "observation_gates": {
+      "E_H_scaled_curl_relative_l2": 0.01,
+      "R_T_A_balance_A_volume_absolute": 0.001,
+      "all_ordered_mode_mixed_amplitude": "|a8_j-a4_j| <= 1e-8*||a_inc||2 + 0.01*max(|a4_j|,|a8_j|)",
+      "per_channel_power": "Record every delta; freeze any acceptance threshold before next run."
+    },
+    "classification": "DESIGN_ONLY_NOT_RUN; if passed, tested y-direction agreement on this E1 small geometry only, not continuum convergence.",
+    "resource_gate": "Before formal E1 Ny8, complete new model/operator qualification and resource admission; the already-qualified runtime does not require reinstall."
+  },
+  "phase_timing": {
+    "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6",
+    "utc_run_manifest_intervals": {
+      "b0_y8": {
+        "start": "2026-10-09T03:36:16.766628+00:00",
+        "end": "2026-10-09T04:21:42.075276+00:00"
+      },
+      "e1": {
+        "start": "2026-10-09T06:50:08.021483+00:00",
+        "end": "2026-10-09T08:50:10.136128+00:00"
+      },
+      "semantics": "UTC manifest intervals are retained separately from monotonic parent and watchdog durations; do not add them."
+    },
+    "b0_y8": {
+      "run_case_parent_seconds": 2501.9054289138876,
+      "watchdog_resource_authority_seconds": 2501.784191746963,
+      "solver_parent_seconds": 43.886408862,
+      "ksp_child_seconds": 40.887723317,
+      "factor_audit_setup_seconds": 2.1037009910214692,
+      "ksp_event_record_to_worker_complete_seconds": 15.044710127,
+      "run_case_parent_seconds_role": "launcher/watchdog full-case workflow; not net worker-only time"
+    },
+    "e1": {
+      "run_case_parent_seconds": 6584.210969868116,
+      "watchdog_resource_authority_seconds": 6584.038481260883,
+      "solver_parent_seconds": 390.730517946,
+      "ksp_child_seconds": 376.171056939,
+      "factor_audit_setup_seconds": 11.684009553864598,
+      "ksp_event_record_to_worker_complete_seconds": 141.353211526,
+      "run_case_parent_seconds_role": "launcher/watchdog full-case workflow; not net worker-only time"
+    },
+    "checker_after_worker_seconds": null,
+    "activation_abi_preparation_seconds": null,
+    "cold_jit_preparation_seconds": null,
+    "full_cold_activation_to_required_checker_seconds": null,
+    "unknown_policy": "Missing older phase starts and checker/cold-preparation durations remain UNKNOWN; stage durations are not summed into an invented end-to-end time.",
+    "timing_rule": "Parent, watchdog, solver, KSP child, factor-audit setup, and event-tail measurements have different scopes and may overlap. Never sum child phases into parent or label run_case as the full cold activation-to-checker path.",
+    "semantics": "run_case parent is the launcher/watchdog full-case workflow, not a net worker-only duration. Any cache-miss JIT that actually occurs inside the worker is included. Watchdog authority has an independent boundary. Parent, watchdog, solver, KSP child, setup and event tail may overlap and must not be summed.",
+    "cold_jit_scope_interpretation": "UNKNOWN whether/how much cache-miss JIT occurred inside the measured worker; if it did, it is included. UNKNOWN is the full cold JIT plus activation/ABI pre-worker path and post-worker checker duration."
+  }
+}

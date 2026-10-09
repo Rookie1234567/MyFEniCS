@@ -1,0 +1,422 @@
+{
+  "schema": "task40extra.review_v19_sparse_capacity.v1",
+  "classification": "MEASURED_SMALL_MODEL_AND_DERIVED_TARGET_BOUNDS_WITH_OPEN_TARGET_CAPACITY",
+  "branch": "task40extra_0p7nm_engineering",
+  "frozen_e1_source_sha": "71042327e5f3a77cd39a1be7b5dfa46afe52db6b",
+  "e1_optimized_entry": {
+    "input_sha256": "f34f8bf11bf4ed0715178ca0edc3ead361f50e25f04741f94ae9e50c2301995a",
+    "row_tile_strategy": "ROW_TILE_BOUNDED_CSR_V17",
+    "factor_lifecycle": "ONE_Q_REFACTOR_V19",
+    "cell_axes": [
+      10,
+      4,
+      19
+    ],
+    "cells": 760,
+    "ordered_modes": 588,
+    "q_count": 4,
+    "actual_route_confirmed_by_candidate_summary": true
+  },
+  "e1_measured_resource_peaks": {
+    "process_tree_simultaneous_rss_peak_bytes": 12093280256,
+    "dedicated_cgroup_memory_peak_bytes": 12555325440,
+    "task_process_tree_swap_peak_bytes": 0,
+    "dedicated_cgroup_swap_peak_bytes": 0,
+    "oom_or_oom_kill": 0,
+    "pss": null,
+    "process_tree_identity_and_status_coverage": "complete",
+    "global_wsl_swap_delta_pages": {
+      "pswpin": 470,
+      "pswpout": 1662,
+      "attribution": "host-global and unassigned; not task swap"
+    },
+    "run_summary_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v19__full3d_iterative__mpi1__Mna/20261009T065008.007716Z/run_summary.json",
+    "run_summary_sha256": "837b18fa657e17edc05f1155c11a1763b607541d201b9ef1768f27564f91e651",
+    "resource_authority_elapsed_seconds": 6584.038481260883,
+    "run_case_full_workflow_monotonic_seconds": 6584.210969868116,
+    "pss_status": "DISABLED_BY_PROFILE"
+  },
+  "b0_same_discrete_peak_comparison": {
+    "comparison_basis": "B0 Ny=8 p6, 160 cells, 532 modes, same saved physical geometry and bitwise-equal official fields; V18 all-q-live versus V19 one-q-rebuild",
+    "v18_source_sha": "3b9457e57ceb15f21306a35baac07f42036840b1",
+    "v18_run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z",
+    "v18_process_tree_rss_peak_bytes": 4869050368,
+    "v18_cgroup_memory_peak_bytes": 5899956224,
+    "v18_all_q_mumps_allocated_upper_bytes": 935000000,
+    "v18_all_q_mumps_used_upper_bytes": 840000000,
+    "v19_source_sha": "14f5ee6943458b80b582b723c61cc84afd0efc24",
+    "v19_run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v19_ny8__full3d_iterative__mpi1__Mna/20261009T033616.757334Z",
+    "v19_process_tree_rss_peak_bytes": 4012605440,
+    "v19_cgroup_memory_peak_bytes": 5152567296,
+    "v19_max_single_q_mumps_allocated_upper_bytes": 120000000,
+    "v19_max_single_q_mumps_used_upper_bytes": 108000000,
+    "measured_process_tree_peak_decrease_bytes": 856444928,
+    "measured_cgroup_peak_decrease_bytes": 747388928,
+    "factor_field_all_q_sum_to_one_q_max_allocated_delta_bytes": 815000000,
+    "factor_field_all_q_sum_to_one_q_max_used_delta_bytes": 732000000,
+    "factor_field_semantics": "MUMPS decimal-MB upper fields, not whole-process memory",
+    "causal_limit": "The peak delta is an observed between-run change under the two lifecycle strategies; source revisions differ, so it is not an isolated proof that factor lifecycle alone caused the whole RSS delta."
+  },
+  "e1_owner_and_backing_inventory": {
+    "classification": "partially recorded owner payloads; not a complete time-indexed peak ledger",
+    "candidate_summary_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v19__full3d_iterative__mpi1__Mna/20261009T065008.007716Z/task40_v10_p6_candidate_summary.json",
+    "candidate_summary_sha256": "fa042ca4620da0ff1825f48bf46538c3956c21591f3a3c28185ad156f75f0cdf",
+    "target_condensed_transferred_owner": "target_action.condensed",
+    "cell_count": 760,
+    "local_class_count": 231,
+    "unique_cell_lu_factor_buffers": 231,
+    "unique_cell_s_v_buffers": 231,
+    "unique_recovery_buffers": 231,
+    "unique_trace_rhs_projection_buffers": 231,
+    "local_schur_payload_bytes": 689762304,
+    "shared_read_only_identity_cache_bytes": 1620000,
+    "unique_port_payload_owner_bytes": 682970496,
+    "port_payload_sum_with_aliases_bytes": 834531584,
+    "port_payload_categories_with_aliases_bytes": {
+      "raw": 341635072,
+      "staging": 151603200,
+      "transformed": 221340672,
+      "direct_trace": 119952640
+    },
+    "local_carrier_cell_payload_bytes": 562975744,
+    "resident_hp_bytes": 9408,
+    "resident_hhat_bytes": 0,
+    "global_a6_or_s6_materialized": false,
+    "limitation": "These structured payload sizes are not a complete concurrent process inventory. Their overlap with the measured RSS peak, allocator retention, owner last-use times, and release-to-OS/cgroup delta were not completely recorded."
+  },
+  "e1_one_q_factor_observation": {
+    "classification": "measured MUMPS factor fields and per-event elapsed times for E1 q factors; excludes other owners and is not target extrapolation",
+    "event_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v19__full3d_iterative__mpi1__Mna/20261009T065008.007716Z/v19_one_q_row_tile_p6_reference_events.jsonl",
+    "event_sha256": "4658bf921dd32fa3e2ec745809059ebb1e8828c6bac6fc5c683c024ae53f7169",
+    "inventory_receipt_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v19__full3d_iterative__mpi1__Mna/20261009T065008.007716Z/v19_one_q_row_tile_p6_reference_inventory.json",
+    "inventory_receipt_sha256": "976a10dd91044606ef8ee6325d9e81c9821bcd6995795b5ae88fd32fd34515cc",
+    "inventory_receipt_status": {
+      "entries": {},
+      "component_totals": {},
+      "inventory_peak_bytes": 0,
+      "workspace_peak_bytes": 17825792,
+      "interpretation": "Empty resource-inventory entries mean not recorded, not zero live memory; the workspace peak is a separately scoped ledger."
+    },
+    "q_observations": [
+      {
+        "q": 0,
+        "rows": 38424,
+        "nnz": 21018000,
+        "builds": 7,
+        "max_live_factor": 1,
+        "allocated_bytes_upper_max": 1627000000,
+        "used_bytes_upper_max": 1427000000,
+        "numeric_elapsed_seconds_sum": 77.53913537506014,
+        "numeric_elapsed_seconds_min": 6.286491150967777,
+        "numeric_elapsed_seconds_max": 20.0315211948473,
+        "fresh_symbolic_elapsed_seconds_max": 5.988222938030958
+      },
+      {
+        "q": 1,
+        "rows": 38508,
+        "nnz": 21325222,
+        "builds": 7,
+        "max_live_factor": 1,
+        "allocated_bytes_upper_max": 1647000000,
+        "used_bytes_upper_max": 1444000000,
+        "numeric_elapsed_seconds_sum": 51.105592879932374,
+        "numeric_elapsed_seconds_min": 6.172825786052272,
+        "numeric_elapsed_seconds_max": 9.990071967011318,
+        "fresh_symbolic_elapsed_seconds_max": 0.6247708229348063
+      },
+      {
+        "q": 2,
+        "rows": 38508,
+        "nnz": 21336900,
+        "builds": 7,
+        "max_live_factor": 1,
+        "allocated_bytes_upper_max": 1648000000,
+        "used_bytes_upper_max": 1445000000,
+        "numeric_elapsed_seconds_sum": 50.309436751762405,
+        "numeric_elapsed_seconds_min": 6.462832200806588,
+        "numeric_elapsed_seconds_max": 8.471041626064107,
+        "fresh_symbolic_elapsed_seconds_max": 0.6959715799894184
+      },
+      {
+        "q": 3,
+        "rows": 38508,
+        "nnz": 21329326,
+        "builds": 7,
+        "max_live_factor": 1,
+        "allocated_bytes_upper_max": 1610000000,
+        "used_bytes_upper_max": 1413000000,
+        "numeric_elapsed_seconds_sum": 44.18021332193166,
+        "numeric_elapsed_seconds_min": 6.092839336022735,
+        "numeric_elapsed_seconds_max": 6.544464339967817,
+        "fresh_symbolic_elapsed_seconds_max": 0.43085168092511594
+      }
+    ],
+    "numeric_elapsed_seconds_sum_all_28_builds": 223.13437832868658,
+    "fresh_symbolic_seconds_in_28_rebuild_events": 22.109798620222136,
+    "initial_four_q_symbolic_seconds": 1.7226538420654836,
+    "factor_probe_count": 28,
+    "factor_probe_elapsed_seconds_sum": 3.488056253641844,
+    "target_transfer_is_unqualified": true
+  },
+  "ny8_native_support_calibration": {
+    "status": "PASS_BOUNDED_SUPPORT_ONLY",
+    "script_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_ny8_native_support_calibration_attempt03.py",
+    "script_sha256": "eba6ccfa592a4c60f33acc3221e7a524a74b283f71ec94e4956f35e38d4f4335",
+    "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_ny8_native_support_calibration_attempt03.json",
+    "receipt_sha256": "2c4c9f45f2d3eb635f4b32beab5da4e5604ae5237bc8e1ae26d561ecede09891",
+    "small_mesh_axes": [
+      4,
+      8,
+      14
+    ],
+    "small_mesh_cells": 448,
+    "native_p6_degree": 6,
+    "actual_floquet_mpc": true,
+    "full_fe_rows": 304860,
+    "independent_rows": 292608,
+    "slave_rows": 12252,
+    "target_and_calibration_permutation_code_sets": [
+      0,
+      576,
+      4680,
+      32769,
+      36873
+    ],
+    "target_code_set_coverage_complete": true,
+    "max_folded_cell_trace_support": 348,
+    "all_cell_classes_measured_support": 348,
+    "max_folded_boundary_support_per_face": 1080,
+    "conservative_target_boundary_support_upper_per_face": 78336,
+    "verified_shared_normal_x_face_rows_per_interface": 60,
+    "single_calibration_process_high_water_rss_bytes": 634454016,
+    "support_scan_elapsed_seconds": 1.6016950481571257,
+    "memory_and_time_scope": "single process/native support function only; excludes activation/import and is not a whole-system or PDE measurement",
+    "target_fe_or_csr_or_factor_or_pde_built": false
+  },
+  "target_ny8_structural_projection": {
+    "status": "PASS_DERIVED_BOUND_ONLY",
+    "script_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_ny8_support_projection_attempt03.py",
+    "script_sha256": "5714281251c0e34e03b122ed09d170ab9193b506e34d4b4657cd494e1c7c5913",
+    "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_ny8_support_projection_attempt03.json",
+    "receipt_sha256": "630e9b57a1ad7419cde7fac9f84e0f36ff8f9f6b3f42d5d3a3d1cfa57a203473",
+    "full_ordered_mode_manifest": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "full_ordered_mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "ordered_modes": 32060,
+    "target_cell_axes": [
+      272,
+      8,
+      14
+    ],
+    "target_physical_cells": 30464,
+    "target_topology_full_storage_rows": 20181348,
+    "target_topology_independent_rows": 19897344,
+    "target_support_refined_from": 432,
+    "target_support_refined_to": 348,
+    "q_mode_counts": [
+      4076,
+      4052,
+      4028,
+      3984,
+      3856,
+      3984,
+      4028,
+      4052
+    ],
+    "q_augmented_row_counts": [
+      777644,
+      777620,
+      777596,
+      777552,
+      777424,
+      777552,
+      777596,
+      777620
+    ],
+    "q_nnz_upper_bounds": [
+      1116372880,
+      1112417680,
+      1108463632,
+      1101217536,
+      1080160000,
+      1101217536,
+      1108463632,
+      1112417680
+    ],
+    "q_int32_csr_payload_upper_bytes": [
+      22330568180,
+      22251464084,
+      22172383028,
+      22027460932,
+      21606309700,
+      22027460932,
+      22172383028,
+      22251464084
+    ],
+    "max_single_q_payload_upper_bytes": 22330568180,
+    "all_distinct_q_payload_upper_sum_bytes": 176839493968,
+    "v18_fallback_distinct_q_payload_upper_sum_bytes": 266988562768,
+    "derived_payload_upper_reduction_bytes": 90149068800,
+    "derived_payload_upper_reduction_fraction": 0.33765142545950605,
+    "all_q_int32_structural_bounds_pass": true,
+    "target_fe_space_or_q_csr_or_factor_or_pde_built": false,
+    "upper_bound_not_measurement": true
+  },
+  "target_unknowns": [
+    "目标实际 numerical NNZ、CSR 物理驻留与同时 owner overlap",
+    "目标最大单 q symbolic/numeric factor allocated/used、临时工作区和时间",
+    "目标 local/port/factor/recovery/Krylov/output owner 的独立 backing 与 last-use/release 行为",
+    "最终原尺寸 x/y/z 网格与倏逝模式截断规则",
+    "activation、ABI、冷 JIT、正式场、输出和 required checker 的完整冷启动墙钟",
+    "2 TB 十进制物理内存和单场 172800 s 可行性"
+  ],
+  "next_precision_comparison_design": {
+    "status": "DESIGN_ONLY_NOT_RUN",
+    "model": "同一 E1 物理模型与材料，p6，Ny=4 对 Ny=8；固定 Nx=10、Nz=19，几何/缺口/材料界面/入射/方位角不变，Ny 从 4 加倍到 8，cells 从 760 到 1520；使用同一套 588 个有序 mode keys。",
+    "comparison": "共同子单元上的 E/H/scaled-curl；全部 588 个入射归一化复振幅、逐通道功率，以及 R/T/A_balance/A_volume。",
+    "normalization": "场与 scaled-curl 的相对 L2 使用冻结的 Ny=4 reference 范数作分母；若该范数为零，则报告绝对差并将相对差写为 null。所有复振幅按 incident array 归一化。",
+    "gates": {
+      "E_H_scaled_curl_relative_l2": 0.01,
+      "R_T_A_balance_A_volume_absolute": 0.001,
+      "all_ordered_mode_mixed_amplitude": "|a8_j-a4_j| <= 1e-8*||a_inc||2 + 0.01*max(|a4_j|,|a8_j|)",
+      "per_channel_power": "记录全部通道差值；本轮没有冻结新阈值，须在运行前冻结"
+    },
+    "scope_limit": "若通过，只说明该 E1 小几何下的 y 方向 tested agreement；不是 continuum convergence，也不证明原尺寸资源能力。",
+    "execution": "本轮不运行；先对 E1 Ny=8 模型完成新的 operator qualification 与资源 admission。当前已资格化 runtime 不需重装。"
+  },
+  "p4_ny8_native_support_calibration": {
+    "status": "PASS_BOUNDED_NATIVE_CALIBRATION",
+    "runner": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_ny8_native_support_calibration_attempt03.py",
+    "runner_sha256": "eba6ccfa592a4c60f33acc3221e7a524a74b283f71ec94e4956f35e38d4f4335",
+    "receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_ny8_native_support_calibration_attempt03.json",
+    "receipt_sha256": "2c4c9f45f2d3eb635f4b32beab5da4e5604ae5237bc8e1ae26d561ecede09891",
+    "model": {
+      "cell_axes": [
+        4,
+        8,
+        14
+      ],
+      "cells": 448,
+      "degree": 6,
+      "full_fe_rows": 304860,
+      "independent_rows": 292608,
+      "mpc_slave_rows": 12252
+    },
+    "target_permutation_codes": [
+      0,
+      576,
+      4680,
+      32769,
+      36873
+    ],
+    "coverage": {
+      "all_target_codes_covered": true,
+      "support_counter_source": "src/solvers/task40_p6_support_bounds.py",
+      "folded_cell_support": 348,
+      "boundary_face_support": 78336,
+      "shared_normal_x_interface_rows": 60
+    },
+    "cost": {
+      "scan_seconds": 1.601695,
+      "single_process_rss_high_water_bytes": 634454016
+    },
+    "scope": "实际 p6 FE/MPC 小校准和支持计数；没有构造目标 FE/CSR/factor/PDE。",
+    "execution_type": "Ignored historical research script (1,422 lines); not a lightweight or production wrapper."
+  },
+  "p4_ny8_target_projection": {
+    "status": "PASS_DERIVED_STRUCTURAL_UPPER_ONLY",
+    "runner": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_ny8_support_projection_attempt03.py",
+    "runner_sha256": "5714281251c0e34e03b122ed09d170ab9193b506e34d4b4657cd494e1c7c5913",
+    "receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_ny8_support_projection_attempt03.json",
+    "receipt_sha256": "630e9b57a1ad7419cde7fac9f84e0f36ff8f9f6b3f42d5d3a3d1cfa57a203473",
+    "target": {
+      "cell_axes": [
+        272,
+        8,
+        14
+      ],
+      "cells": 30464,
+      "ordered_modes": 32060
+    },
+    "q_rows": [
+      777644,
+      777620,
+      777596,
+      777552,
+      777424,
+      777552,
+      777596,
+      777620
+    ],
+    "q_nnz_upper": [
+      1116372880,
+      1112417680,
+      1108463632,
+      1101217536,
+      1080160000,
+      1101217536,
+      1108463632,
+      1112417680
+    ],
+    "all_q_csr_payload_upper_bytes": 176839493968,
+    "max_single_q_csr_payload_upper_bytes": 22330568180,
+    "reduction_vs_support_432_fallback_bytes": 90149068800,
+    "reduction_vs_support_432_fallback_fraction": 0.33765,
+    "all_int32_structural_bounds_pass": true,
+    "scope_limit": "Derived CSR structure bound only; not target numeric NNZ, simultaneous resident memory, factor bytes, or solver qualification.",
+    "execution_type": "Ignored offline research projection script; consumes saved mode/support receipts and tracked support-counter source."
+  },
+  "tracked_dependencies": {
+    "support_counter": {
+      "path": "src/solvers/task40_p6_support_bounds.py",
+      "sha256": "f1599b73b8281d22d64ab2259a2edaea3a0a5b4d785e50635614940a7ca0212a"
+    },
+    "calibration_wrapper_sources": [
+      {
+        "path": "src/common/config_3d.py",
+        "sha256": "c4cf27346824767a1a5f6dbde396fd61391a29d6cdf66b66603fa369eefcc92e"
+      },
+      {
+        "path": "src/constraints/floquet_3d.py",
+        "sha256": "aa9486750cdc2c163a30975802aba8a9660974a18fe97471795e34d4e15b6b1a"
+      },
+      {
+        "path": "src/geometry/mesh_builder_3d.py",
+        "sha256": "58016a498637ea2a993425eeae711c1a2fb62b3fad44e19e32fac87a0dca67b3"
+      },
+      {
+        "path": "src/geometry/task40_nonseparable_plan.py",
+        "sha256": "8549f9acb6463a46ccce1f3a9b4cc0a3c1039c5a7bc2b13435e361ca1f3d1487"
+      },
+      {
+        "path": "src/solvers/hcurl_assembly_time_condensation.py",
+        "sha256": "0edd5478ef5c08649c95c0d1ade16436b4833e169f4cc6835731bdf1bc0f1e26"
+      },
+      {
+        "path": "src/solvers/task40_v10_p6_yorbit.py",
+        "sha256": "7ff7016808bbf0d9966487d88498e605a2347d3ceb93bf34cf51559931378963"
+      },
+      {
+        "path": "src/solvers/y_orbit_transform_bank.py",
+        "sha256": "d2da983e292c079cf4fe609b0a70b4f0d0b64fb6121f5510d74c69e03113ff98"
+      },
+      {
+        "path": "src/solvers/task40_p6_support_bounds.py",
+        "sha256": "f1599b73b8281d22d64ab2259a2edaea3a0a5b4d785e50635614940a7ca0212a"
+      },
+      {
+        "path": "benchmarks/subreaper_watchdog.py",
+        "sha256": "6e1b6aa8ea65ca5b243820b0350ab07469f2afd88fe896948992170980a05d33"
+      },
+      {
+        "path": "benchmarks/task034_wsl_resources.py",
+        "sha256": "bf6d9a7d337ef4d77721d5e260f986937db2f58c8d06ef4dc9344d8798563653"
+      }
+    ],
+    "reproduction_commands": [
+      "source scripts/task40_fresh_c1/activate_local_wsl_complex.sh \"$PWD/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix\" \"$PWD/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json\" \"$PWD/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit\"",
+      "python benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_ny8_native_support_calibration_attempt03.py",
+      "python benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/v19_ny8_support_projection_attempt03.py"
+    ],
+    "note": "历史命令仅用于复现理解；当前 outputs 已存在且 runner 使用独占创建，本轮不重跑。"
+  }
+}
