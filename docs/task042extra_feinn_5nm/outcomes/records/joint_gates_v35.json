@@ -1007,5 +1007,10 @@
   "CURRENT_DENSE_WAVE_SOLVER_FAMILY_CLOSED": true,
   "candidate_decision": "NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE",
   "full_target_qualified": false,
-  "neural_resource_gain_qualified": false
+  "neural_resource_gain_qualified": false,
+  "unchanged_power_observables": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/reused_power_observables_v35.json",
+    "bytes": 1695,
+    "sha256": "a480c9d5ff8b2839e94f18eabc5a671bebfe0d0a0c3cb2227142608851ee4e8c"
+  }
 }

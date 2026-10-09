@@ -42,7 +42,7 @@ V34确定性强控制空间：NOT_RUN_NUMERICAL_BUDGET；原A最佳残差仍FAIL
 `CURRENT_DENSE_WAVE_SOLVER_FAMILY_CLOSED / FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED`。没有证据支持新的单场神经生产候选：`NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE`。0.7nm三维pilot/p-h/端口扩展本轮全部NOT_RUN且未注册。原50×25×140nm、Si17/120nm、lambda0.7完整3D FE、decimal2e12B、ownswap/OOC0、172800s完整冷流程及原精度目标未达。
 
 
-本次没有保存的新场，未运行新场评分；旧actual网络与producer两类原Gate分别复用。完整E/H/curl、六点、四类40复通道、功率、逐级功率、体吸收、原区域、MPC/端口恢复与q复核见[全部Gate](outcomes/records/joint_gates_v35.json)；没有新场时无新指标CSV，旧两态完整原Gate继续绑定复用。对未完成B不伪造场、通道或oracle资格。
+本次没有保存的新场，未运行新场评分；旧actual网络与producer两类原Gate分别复用。完整E/H/curl、六点、四类40复通道、功率、逐级功率、体吸收、原区域、MPC/端口恢复与q复核见[全部Gate](outcomes/records/joint_gates_v35.json)；没有新场时无新指标CSV，旧两态完整原Gate继续绑定复用。对未完成B不伪造场、通道或oracle资格。 旧R/T/A/A_volume/R00三项见[原功率复用](outcomes/records/reused_power_observables_v35.json)，全部仍为diagnostic；[原指标及分子/分母](outcomes/records/full_metric_index_v34.csv)、[四类40复通道](outcomes/records/complex_channels_v34.csv)、[逐级功率](outcomes/records/per_mode_power_v34.csv)、[六点](outcomes/records/six_complex_field_points_v34.csv)、[原区域](outcomes/records/material_interface_regions_v34.csv)逐位未变，不重造数值。
 
 ## 2. 可复核的执行与修复
 
@@ -67,3 +67,5 @@ oracle永久标记：reference_used_for_coefficient_fit=true、reference_used_fo
 [专题](outcomes/neural_space_feasibility_v35.md)、[设计](outcomes/design_v35.md)、[快照](outcomes/records/snapshot_identity_v35.json)、[A最优性](outcomes/records/unlabelled_optimality_v35.json)、[B oracle](outcomes/records/field_oracle_v35.json)、[秩](outcomes/records/rank_stability_v35.json)、[全部Gate](outcomes/records/joint_gates_v35.json)、[测试/失败](outcomes/records/tests_v35.json)、[费用](outcomes/records/cost_capacity_v35.json)、[ignored原数组hash索引](outcomes/records/raw_artifact_index_v35.json)。本地targeted tests/ruff/compileall，未full pytest、重装或声称CI。有限新页GitHub视觉与本地结构分开记录；旧网页失败保留，服务错误不重做健康数值。
 
 README/summary、progress、模型总账、tests/changed_files同步；历史原文、负结果、UNKNOWN和费用保留。只提交推送task42extra_feinn_5nm，不amend/强推/merge，不修改其他工作树或安排其他支线。最终准确HEAD、显式tracking/ahead-behind/clean及本任务清场在最终回报，之后停止等待review，不通知其他对话框。
+
+有限GitHub呈现收据：[rendering_v35.json](outcomes/records/rendering_v35.json)。三份实际首屏的标题、正文和可见表格已目视，绑定页面发布901de943b6f6559badcb88ff9446518916e1b528与Review发布936fdcff435a772619ae720119e2a22de0dabccd。另一次公式锚点检查截图未定位到公式段，未授新公式视觉PASS；也不授整页或全部表格视觉PASS。本地fence/表格/链接结构另有通过收据。此后的封存仅补可复用功率/原CSV链接和收据，没有数值修改。

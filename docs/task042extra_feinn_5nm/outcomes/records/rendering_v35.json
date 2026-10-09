@@ -1,0 +1,129 @@
+{
+  "attempts": [
+    {
+      "name": "review",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/936fdcff435a772619ae720119e2a22de0dabccd/docs/task042extra_feinn_5nm/review_report_v34.md",
+      "published_source_sha": "936fdcff435a772619ae720119e2a22de0dabccd",
+      "classification": "COMPLETED",
+      "tree_cleared": true,
+      "supervised_seconds": 10.10479502310045,
+      "sampled_tree_peak_bytes": 1121681408,
+      "sampled_swap_bytes": 0,
+      "screenshot": {
+        "path": "tmp/task42extra/v35/render_check/review/page.png",
+        "bytes": 415999,
+        "sha256": "6cb9606415f299a21eb79588f1077ed93882336e5c14e8f01bab4db8b6f503a8"
+      },
+      "resource_summary": {
+        "path": "tmp/task42extra/v35/render_check/review/watchdog/summary.json",
+        "bytes": 2416,
+        "sha256": "cb7adeae078a40f8bfc507adace795b13a5e4c1be6fffc51875fcb1d22db4431"
+      }
+    },
+    {
+      "name": "response",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/901de943b6f6559badcb88ff9446518916e1b528/docs/task042extra_feinn_5nm/response_v35.md",
+      "published_source_sha": "901de943b6f6559badcb88ff9446518916e1b528",
+      "classification": "COMPLETED",
+      "tree_cleared": true,
+      "supervised_seconds": 34.151519116945565,
+      "sampled_tree_peak_bytes": 892407808,
+      "sampled_swap_bytes": 0,
+      "screenshot": {
+        "path": "tmp/task42extra/v35/render_check/response/page.png",
+        "bytes": 305884,
+        "sha256": "6e2fba6d347d4e5c062ea0cd0679b84e8154b0c006301fb8e4b52f8a3c6f6499"
+      },
+      "resource_summary": {
+        "path": "tmp/task42extra/v35/render_check/response/watchdog/summary.json",
+        "bytes": 2411,
+        "sha256": "051e7ef72b3d13dce0bdcb121c1e5d0ed1ac094e7ef6de725fcaa9a9e979e016"
+      }
+    },
+    {
+      "name": "feasibility",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/901de943b6f6559badcb88ff9446518916e1b528/docs/task042extra_feinn_5nm/outcomes/neural_space_feasibility_v35.md",
+      "published_source_sha": "901de943b6f6559badcb88ff9446518916e1b528",
+      "classification": "COMPLETED",
+      "tree_cleared": true,
+      "supervised_seconds": 9.494902681093663,
+      "sampled_tree_peak_bytes": 1105649664,
+      "sampled_swap_bytes": 0,
+      "screenshot": {
+        "path": "tmp/task42extra/v35/render_check/feasibility/page.png",
+        "bytes": 375373,
+        "sha256": "ca2c7794275e09a9d7f78aa0d085cb29cd74141cdec2108d635299482aa464c1"
+      },
+      "resource_summary": {
+        "path": "tmp/task42extra/v35/render_check/feasibility/watchdog/summary.json",
+        "bytes": 2396,
+        "sha256": "8afa776a41cab0d7e75348ec9addf008dd2723996749a9edec4082a86898fe01"
+      }
+    },
+    {
+      "name": "feasibility_math",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/901de943b6f6559badcb88ff9446518916e1b528/docs/task042extra_feinn_5nm/outcomes/neural_space_feasibility_v35.md#%E6%95%B0%E5%AD%A6%E5%92%8C%E7%A8%B3%E5%AE%9A%E6%80%A7%E9%99%90%E5%AE%9A",
+      "published_source_sha": "901de943b6f6559badcb88ff9446518916e1b528",
+      "classification": "COMPLETED",
+      "tree_cleared": true,
+      "supervised_seconds": 8.294935415964574,
+      "sampled_tree_peak_bytes": 487706624,
+      "sampled_swap_bytes": 0,
+      "screenshot": {
+        "path": "tmp/task42extra/v35/render_check/feasibility_math/page.png",
+        "bytes": 399121,
+        "sha256": "1d8a41da74481d8725685f219fe8d336d629cfe32ef524ab1603a561db528e5a"
+      },
+      "resource_summary": {
+        "path": "tmp/task42extra/v35/render_check/feasibility_math/watchdog/summary.json",
+        "bytes": 2337,
+        "sha256": "37655a5a12ce12d720247b161845e2ef04328f78933858dd2f0574e032497e83"
+      }
+    }
+  ],
+  "visual_inspection": {
+    "method": "Actual Firefox screenshots opened with view_image; full authoritative Markdown read separately",
+    "review": {
+      "published_sha": "936fdcff435a772619ae720119e2a22de0dabccd",
+      "title_and_first_viewport": "PASS",
+      "whole_page": "NOT_VERIFIED"
+    },
+    "response": {
+      "published_sha": "901de943b6f6559badcb88ff9446518916e1b528",
+      "title_text_and_visible_table_columns": "PASS",
+      "entire_table_and_page": "NOT_VERIFIED"
+    },
+    "feasibility": {
+      "published_sha": "901de943b6f6559badcb88ff9446518916e1b528",
+      "title_text_and_visible_table_columns": "PASS",
+      "entire_table_and_page": "NOT_VERIFIED"
+    },
+    "feasibility_math": {
+      "published_sha": "901de943b6f6559badcb88ff9446518916e1b528",
+      "browser_completed": true,
+      "formula_visual": "NOT_COVERED_ANCHOR_DID_NOT_REACH_SECTION",
+      "reason": "Screenshot still shows table and sticky file bar; neither formula is visible, so no formula PASS is claimed",
+      "more_render_attempts": "NOT_RUN_FINITE_CHECK_CLOSED"
+    },
+    "new_formula_visual_qualified": false,
+    "local_table_fence_link_contract": "PASS_SEPARATE_RECEIPT",
+    "historical_failed_screenshots_and_limits_retained": true,
+    "numeric_replay_for_rendering": false
+  },
+  "scope": "Only the three published first viewports and one new-formula anchor viewport",
+  "whole_page_visual_pass": false,
+  "all_tables_visual_pass": false,
+  "local_structural_checks": "Separate publication_contract_v35.json",
+  "raw_attempts": {
+    "path": "tmp/task42extra/v35/render_check/attempts.json",
+    "bytes": 9664,
+    "sha256": "1550a4dca067ddee338051b524d01fb89490c58d8376f376f528efb764da7e46"
+  },
+  "raw_formula_attempt": {
+    "path": "tmp/task42extra/v35/render_check/feasibility_math/attempt.json",
+    "bytes": 2874,
+    "sha256": "3e014268f75910b20c0e039b1d427d0540e5e37a46a41312a15fa945f00aa744"
+  },
+  "original_historical_render_failures_retained": true,
+  "new_numeric_reruns": 0
+}

@@ -169,6 +169,33 @@
       }
     },
     {
+      "name": "metadata_seal",
+      "summary": {
+        "path": "tmp/task42extra/v35/metadata_seal/watchdog/summary.json",
+        "bytes": 2051,
+        "sha256": "07b5a27464e881475a69de503541d4132ab65abaa17aaaa96102783e249cabcc"
+      },
+      "source_state": {
+        "source_sha": "2c1546c2f195a9d6b89703b7e509e899e0db75dc",
+        "purpose": "V35 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "cleared": true,
+      "supervised_seconds": 2.152340185130015,
+      "peak_bytes": 85446656,
+      "swap_bytes": 0,
+      "actual_pytest_summary": "NOT_APPLICABLE_OR_NOT_RETAINED",
+      "preserved_local_junit": [],
+      "junit_testcase_count": 0,
+      "junit_failures": 0,
+      "actual_log": {
+        "path": "tmp/task42extra/v35/metadata_seal/watchdog/worker.log",
+        "bytes": 411,
+        "sha256": "c8d528a143053abccc1126385617f99c0e92e3b328878d5c2d2c8e284c09e431"
+      }
+    },
+    {
       "name": "repair_qa",
       "summary": {
         "path": "tmp/task42extra/v35/repair_qa/watchdog/summary.json",
@@ -302,5 +329,10 @@
     "path": "tmp/task42extra/v35/budget_repair_tested_source.json",
     "bytes": 542,
     "sha256": "10750a53c122da39ca6e7f1f67999373ba2ec1ca8e63088d7ad52333a36f52b3"
+  },
+  "limited_visual_receipt": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/rendering_v35.json",
+    "bytes": 5733,
+    "sha256": "374e3576bddc575077a3a3f767d0e73ddb35634e66815c0e59aa10e094b1760f"
   }
 }

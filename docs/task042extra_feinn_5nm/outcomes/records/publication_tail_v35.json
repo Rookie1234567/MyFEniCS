@@ -1,0 +1,21 @@
+{
+  "authority": "936fdcff435a772619ae720119e2a22de0dabccd",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "metadata_publication_source": "901de943b6f6559badcb88ff9446518916e1b528",
+  "tail_snapshot_monotonic": 1464609.931874239,
+  "continuous_calendar_seconds": 10963.514259393793,
+  "total_limit_seconds": 14400,
+  "remaining_seconds": 3436.4857406062074,
+  "final_reserve_seconds": 1800,
+  "formal_A_B_elapsed_seconds": 6789.793583235936,
+  "numerical_window_never_reset": true,
+  "unique_B_projection_attempts": 1,
+  "new_numerical_operations_since_B_stop": 0,
+  "new_reference_coefficients_read_since_B_stop": 0,
+  "visual_supervised_seconds": 62.04615223710425,
+  "all_current_known_trees_cleared": true,
+  "ownswap_OOC_bytes": 0,
+  "final_git_receipt": "tmp/task42extra/v35/delivery_receipt.json after final push and exact fetch",
+  "final_git_tail_not_yet_measured": true,
+  "notification_sent": false
+}

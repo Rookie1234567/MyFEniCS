@@ -1,0 +1,54 @@
+{
+  "records": {
+    "LEARNED_COMPLEX_WAVE_BACKFIT": {
+      "port": {
+        "R_total": 0.8094565003033881,
+        "T_total": 0.03230161958028803,
+        "A_balance": 0.15824188011632384,
+        "R00_s": 0.8093603318367864,
+        "R00_p": 2.5424238437048956e-07,
+        "R00_total": 0.8093605860791707
+      },
+      "A_volume": 0.15340990991245268,
+      "power_source": "dtn_port_modal_amplitudes",
+      "reference_planes": [
+        -1.25,
+        8.75
+      ],
+      "old_field_reused_bitwise": true,
+      "official_candidate_results": false
+    },
+    "DETERMINISTIC_COMPLEX_WAVE_BACKFIT": {
+      "port": {
+        "R_total": 0.809179719986032,
+        "T_total": 0.03227894548196619,
+        "A_balance": 0.1585413345320018,
+        "R00_s": 0.8090826715616863,
+        "R00_p": 3.7355234314924343e-07,
+        "R00_total": 0.8090830451140295
+      },
+      "A_volume": 0.15331226672862866,
+      "power_source": "dtn_port_modal_amplitudes",
+      "reference_planes": [
+        -1.25,
+        8.75
+      ],
+      "old_field_reused_bitwise": true,
+      "official_candidate_results": false
+    }
+  },
+  "scope": "UNCHANGED_V34_FIELDS_DIAGNOSTIC_ONLY",
+  "original_saved_physics": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v34.json",
+    "bytes": 167000,
+    "sha256": "c934b8959129f127c9ce2b2b726ef9b3f78930c9268eb4c8b3408f7f5ceb330b"
+  },
+  "new_FE": 0,
+  "new_network_forward": 0,
+  "new_power_computation": 0,
+  "original_independent_checker": {
+    "path": "benchmarks/artifacts/task42extra/v34/v34_complex_compare/result.json",
+    "bytes": 35140,
+    "sha256": "6e615ca910f3e086a90fa78a7737c927bc5963119a504218ecb7fa8e10d14fe3"
+  }
+}

@@ -227,8 +227,8 @@
   "publication_documents": [
     {
       "path": "docs/task042extra_feinn_5nm/response_v35.md",
-      "bytes": 9290,
-      "sha256": "12256d14046c553e76fc30f973e476f4c376553796ca4564a901254f867019ac"
+      "bytes": 10304,
+      "sha256": "ce6dadde442521e7696f45dc94962d77b61b2013a45eaf6a2275f9762014545b"
     },
     {
       "path": "docs/task042extra_feinn_5nm/README.md",
@@ -289,13 +289,18 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/joint_gates_v35.json",
-      "bytes": 39723,
-      "sha256": "d383f35fdca1f8bf06e24affc9268ed78c461498a27d258db3af23afb962f0d3"
+      "bytes": 39957,
+      "sha256": "da32453608bbb896001a86ce8e5ab0ca23f5e66f0c3e8b843a65755cacbac23c"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/publication_contract_v35.json",
-      "bytes": 644,
-      "sha256": "c3957007c45f5b66342c4fb41d167c70f6394d5d338c8519c3e3f738c893cb5d"
+      "bytes": 652,
+      "sha256": "131c452e4ac93a7143ff6cb6e2209370c7054292e0c6e136d9d1bc5ec9c022c6"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/publication_tail_v35.json",
+      "bytes": 922,
+      "sha256": "9000b3a925b36d81c9fe23ca4777d9890aee3252d8bf1fd9d3604129b33a63d1"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/rank_spectra_scales_v35.csv",
@@ -313,9 +318,19 @@
       "sha256": "9a5f4812c6833a8f7a6e41343cb80ae43cf4a1e660c615690040c27a88dc862e"
     },
     {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/rendering_v35.json",
+      "bytes": 5733,
+      "sha256": "374e3576bddc575077a3a3f767d0e73ddb35634e66815c0e59aa10e094b1760f"
+    },
+    {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v35.json",
       "bytes": 3118,
       "sha256": "470f84b5799e3751971560c90f7f8aacaf84e038a0eda55acc0706bffb771d5b"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/reused_power_observables_v35.json",
+      "bytes": 1695,
+      "sha256": "a480c9d5ff8b2839e94f18eabc5a671bebfe0d0a0c3cb2227142608851ee4e8c"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/run_index_v35.json",
@@ -334,8 +349,8 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/tests_v35.json",
-      "bytes": 11646,
-      "sha256": "6d1afa53c8a3e369127398dd74347eeb858a863355079e25319d432b5fc8cad9"
+      "bytes": 12888,
+      "sha256": "0268297b757dfc9fa4662c5cec95397083a68dcaf0f22c12567f87cd849a8658"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/unlabelled_optimality_v35.json",
@@ -378,6 +393,21 @@
       "path": "tmp/task42extra/v35/final_delivery_v35.py",
       "bytes": 5470,
       "sha256": "e060bd00a2ae45ab52c8342a7daed485e818e13bd8c206fc397eaa2886c8a13d"
+    },
+    {
+      "path": "tmp/task42extra/v35/final_publication_v35.py",
+      "bytes": 7259,
+      "sha256": "36d2e6c01b16e7f0067241952f1ebc613084a03ddcf3e20035bd14a2bf81b706"
+    },
+    {
+      "path": "tmp/task42extra/v35/launch_render_check.py",
+      "bytes": 3016,
+      "sha256": "9e6f96b7e5c4c147f6fbeec39b6264fae739cd32b381e8169012ed173f0d61fd"
+    },
+    {
+      "path": "tmp/task42extra/v35/render_math_v35.py",
+      "bytes": 2183,
+      "sha256": "15bbf2636de4c0b37ba192e99a59d9d29c70bb70fc57a22f4859861e364453fa"
     }
   ],
   "new_large_arrays_rehashed": false,
@@ -385,5 +415,7 @@
   "new_field_physics": "NOT_RUN_NO_COMMITTED_ORACLE",
   "numerical_source_not_document_HEAD": true,
   "history_and_original_errors_retained": true,
-  "final_HEAD": "FINAL_DELIVERY_RECEIPT_AND_USER_REPORT"
+  "final_HEAD": "FINAL_DELIVERY_RECEIPT_AND_USER_REPORT",
+  "metadata_publication_source": "901de943b6f6559badcb88ff9446518916e1b528",
+  "all_visual_scope_is_limited": true
 }

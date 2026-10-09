@@ -2,7 +2,7 @@
   "passed": true,
   "checks": 1345,
   "raw": {
-    "path": "tmp/task42extra/v35/publication_checks_v35.json",
+    "path": "tmp/task42extra/v35/publication_checks_v35.initial.json",
     "bytes": 112413,
     "sha256": "496804c3321b10167acdb8685d81b51df6a4434ef4a14b336992bddaa60878b6"
   },
@@ -16,5 +16,16 @@
   "new_network_forward": 0,
   "new_optimization": 0,
   "new_oracle_field_physics": "NOT_RUN_NO_COMMITTED_ORACLE",
-  "old_physics": "REUSED_UNCHANGED_BITWISE_FIELDS_AND_HASH_BOUND_INDEPENDENT_GATE"
+  "old_physics": "REUSED_UNCHANGED_BITWISE_FIELDS_AND_HASH_BOUND_INDEPENDENT_GATE",
+  "final_metadata_check": {
+    "passed": true,
+    "checks": 1464,
+    "raw": {
+      "path": "tmp/task42extra/v35/publication_checks_v35.json",
+      "bytes": 120688,
+      "sha256": "1a982f56430c9d887bde18b2cc9b7b4be0f3f29aa249b642163e3afd12d09134"
+    },
+    "checker_metadata_source_sha": "901de943b6f6559badcb88ff9446518916e1b528",
+    "numerical_checks_repeated": false
+  }
 }
