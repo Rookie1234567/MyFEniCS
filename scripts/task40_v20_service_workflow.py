@@ -561,6 +561,21 @@ def _campaign_accounting_path_from_manifest(
     return accounting_path
 
 
+def _checker_numerical_output_directory(
+    run_directory: Path, declared_numerical_output: Path
+) -> Path:
+    """Locate the actual packet/footer root emitted for this run."""
+
+    candidates = (declared_numerical_output.resolve(), run_directory.resolve())
+    for candidate in candidates:
+        if (candidate / "v10_candidate_official_output.json").is_file():
+            return candidate
+    for candidate in candidates:
+        if (candidate / "v20_partial_result.json").is_file():
+            return candidate
+    return candidates[0]
+
+
 def _official_checker_passed(returncode: int, payload: Any) -> bool:
     """The checker CLI's authoritative success marker is status=PASS."""
 
@@ -815,7 +830,10 @@ def run_service(
         run_directory = Path(str(run_case_payload["run_directory"])).resolve()
         run_summary = json.loads(summary_path.read_text(encoding="utf-8"))
         run_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        numerical_output = Path(str(run_summary["numerical_output_directory"])).resolve()
+        numerical_output = _checker_numerical_output_directory(
+            run_directory,
+            Path(str(run_summary["numerical_output_directory"])),
+        )
         record.update(
             run_directory=str(run_directory),
             run_summary_path=str(summary_path),

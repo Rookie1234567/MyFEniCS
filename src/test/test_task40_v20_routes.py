@@ -527,6 +527,42 @@ def test_v20_service_rejects_legacy_campaign_field_for_v20_run(tmp_path):
         )
 
 
+def test_v20_service_finds_footer_in_actual_saved_root_and_rejects_absence(tmp_path):
+    import json
+
+    from scripts.task40_v20_service_workflow import (
+        _check_partial_result,
+        _checker_numerical_output_directory,
+    )
+
+    run_directory = ROOT / (
+        "results/task40extra_nonseparable_0p7nm/"
+        "task40extra_0p7nm_target_original_ny8_resource_pilot_v20__"
+        "full3d_iterative__mpi1__Mna/20261009T153003.130200Z"
+    )
+    if not run_directory.is_dir():
+        pytest.skip("the saved V20 target preflight run directory is unavailable")
+    summary_path = run_directory / "run_summary.json"
+    manifest_path = run_directory / "run_manifest.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    declared_output = Path(summary["numerical_output_directory"])
+    input_path = INPUT_ROOT / V20_INPUTS[1]
+
+    assert (run_directory / "v20_partial_result.json").is_file()
+    assert not declared_output.is_dir()
+    assert _checker_numerical_output_directory(run_directory, declared_output) == run_directory
+    missing_footer = _check_partial_result(
+        input_path=input_path,
+        summary_path=summary_path,
+        manifest_path=manifest_path,
+        numerical_output=tmp_path / "missing-footer",
+        expected_stop_stage="preflight",
+    )
+    assert missing_footer["status"] == "NO_PARTIAL_FOOTER"
+    assert missing_footer["checker_passed"] is False
+    assert missing_footer["official_result"] is False
+
+
 def test_v20_service_reads_the_actual_run_case_launcher_result_object():
     import json
 
