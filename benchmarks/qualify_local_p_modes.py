@@ -14,7 +14,7 @@ def main():
     from petsc4py import PETSc
     if PETSc.ScalarType!=np.complex128 or PETSc.IntType!=np.int64 or os.environ.get('_MYFENICS_NATIVE_QUALIFIED_ACTIVATION')!='1':raise RuntimeError('V67 qualified ABI')
     paths=['src/solvers/local_p_mode_scope.py','src/solvers/local_p_mode_study.py','benchmarks/collect_local_p_modes.py',
-        'benchmarks/collect_frozen_local_h.py','src/runners/port_preparation.py','scripts/run_case.py','src/test/test_local_p_modes.py','benchmarks/qualify_local_p_modes.py']
+        'benchmarks/collect_frozen_local_h.py','src/runners/port_preparation.py','src/runners/preparation_interruption.py','scripts/run_case.py','src/test/test_local_p_modes.py','benchmarks/qualify_local_p_modes.py']
     for p in paths:compile((ROOT/p).read_bytes(),p,'exec')
     commands=[[sys.executable,'-m','unittest','-q','src.test.test_local_p_modes',
         'src.test.test_frozen_local_h.FrozenLocalTests.test_dual_denominators_keep_one_numerator_and_all_complex_components',

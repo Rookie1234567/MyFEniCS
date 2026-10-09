@@ -92,5 +92,17 @@ class LocalModeTests(unittest.TestCase):
                     runs.append(dict(source_sha='source',before_clock=dict(observed_utc=stamp(start+3)),folder=str(own),elapsed_seconds=47.))
             self.assertAlmostEqual(scope.auxiliary_wrapper_overhead(folder,runs),43.3)
 
+    def test_external_interruption_preserves_unknown_cause_and_charges_upper(self):
+        from src.runners.preparation_interruption import interrupted_summary
+        active=dict(source_sha='old-source',before_clock=dict(boot_id='boot',observed_monotonic=10.,observed_utc='2026-10-09T00:00:00+00:00'))
+        samples=[dict(elapsed_seconds=t,members=[dict(pid=7)],rss_bytes=b,swap_bytes=0) for t,b in [(4.,8),(5.,9)]]
+        observation=dict(boot_id='boot',monotonic=17.,utc='2026-10-09T00:00:07+00:00',live_matching_actors=[],absent_recorded_pids={7:True})
+        r=interrupted_summary(active,samples,observation,outer_exit_code=143)
+        self.assertEqual((r['elapsed_lower_seconds'],r['elapsed_seconds'],r['unobserved_tail_seconds']),(5.,7.,2.))
+        self.assertIsNone(r['leader_exit_code']);self.assertFalse(r['replay_authorized'])
+        self.assertEqual(r['source_sha'],'old-source')
+        for bad in (dict(observation,live_matching_actors=[7]),dict(observation,absent_recorded_pids={}),dict(observation,boot_id='other')):
+            with self.assertRaises(ValueError):interrupted_summary(active,samples,bad,outer_exit_code=143)
+
 
 if __name__=='__main__':unittest.main()

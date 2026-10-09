@@ -151,4 +151,5 @@ def implementation_hashes():
     from .frozen_local_h_scope import implementation_hashes as prior
     r=prior();names=['src/solvers/local_p_mode_scope.py','src/solvers/local_p_mode_study.py','benchmarks/collect_local_p_modes.py',
         'benchmarks/qualify_local_p_modes.py','src/test/test_local_p_modes.py',str(PLAN.relative_to(ROOT))]
+    names.append('src/runners/preparation_interruption.py')
     r.update({n:hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in names});return r
