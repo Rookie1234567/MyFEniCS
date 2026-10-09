@@ -1,5 +1,13 @@
 # 项目开发进度：Task000–Task041
 
+## 2026-10-09：Task041 Review V11 W0.7 P1 唯一 warm 场终态
+
+**模型与阶段。** 本场为复用既有producer packet的W0.7缩减pilot：10×5 nm、接口2/22 nm、p6/h0.70、M400/MPI8、matched L20/N29/h20/29；运行源码HEAD `47fc621a478adf26ebe9ca41d54563e188bab1d1`，Invocation `797ae38854d546898a895c81d803a5ec`，当前QEP=0。one-cell及bottom/top P4 numeric完成，fixed-H6 setup repeat/linearity gate通过，outer有iteration 1进度，但后续fixed-H6 modal内层第二次solve未通过显式残差门。
+
+**失败与资源。** 失败solve KSP reason `-3`、8迭代、`rtol=0.001`，显式相对残差`0.005653709235402098`高于限值；solver/total S_H MatMult为8/9，上限9/10，`budget_exhausted=false`。失败发生于outer right-FGMRES PC的后续modal solve，不是top构造；`top_construction_cleanup`仅是cleanup覆盖的最后stage标签。case cap/warning/W为`85,899,345,920/77,309,411,328/8,589,934,592 B`，node0 MemFree reserve/floor `412,316,860,416 B`，host MemAvailable独立检查。service summary tree峰`47,073,288,192 B`、consumer resource summary tree峰`47,027,847,168 B`、专属job cgroup峰`44,504,326,144 B`分列；均低于cap，本场不是资源停止或OOM。
+
+**服务终态与范围。** consumer `IMPLEMENTATION_FAILURE`、public rc3、finalizer `failed/service_boundary_failure`、8/10，`controlled_stop.active=false`；唯一finalizer wall`9,685.695409207 s`，V5 ledger 193项、SHA `803c4cb9c05b0c25426af3d75f6e20d9940bf08c351ed22a911f584e62e0b6ae`。最终五残差、recovery、完整E/H/RTA、A_volume、衍射及physics未到达；不能登记完整数值pass或50×25 nm、2 TB、48 h资格。W5弱显著衍射通道按用户决定延期处理、原失败保留且不作为0.7前置；W2本阶段未推进以免延误主线。完整失败solve及raw入口见[Response V13](task041_mpi1_shortwave_hybrid_capacity/response_v13.md)、[Task041 outcomes](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)和repo-root ignored证据`results/task041_v11_w0p7_pilot80gib_pord_warm_run_20261009T074322Z/terminal_compact_v11.json`。
+
 ## 2026-10-09：Task041 W0.7 PORD warm场终态
 
 本次是W0.7缩减pilot（10×5 nm、接口2/22 nm、p6/h0.70/M400/MPI8、matched L20/N29/h20/29）的独立warm consumer；复用producer packet，QEP=0。source `6ffa7768329b637d96a9dccc2eb5aa00d510bb28`，Invocation `12180bdec9824ec49d60b26aefe3655b`。PORD调整因子分解使用的消元顺序，不改方程；本场bottom P4 numeric完成，top仅完成symbolic，numeric前预算筛查拒绝。
@@ -2969,7 +2977,9 @@ Task041 H0/H1详细记录见[outcomes summary](task041_mpi1_shortwave_hybrid_cap
 
 当前独立pilot输入为`input/official/task041/side_balh/w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat`，材料候选record SHA `fe3bf4e5df2f369907f21033a4aa84e62fdf7b3a0961e05ec29743c9cafd70d2`。输入可枚举1292个external-mode候选；尚无producer packet，本阶段未运行QEP/FE。六个批准selector的12个唯一case最终在13个分批serial attempt中通过；局部测试fixture失败和重试均保留，最终test351 SHA `f92641ffd227f108fd42071103d3ea820d9983db6bfd456230c3dc8405cb33af`没有一次性整组通过。V5对各pytest parent wall各记一次，共`65.0168370383326 s`；ledger为144项、SHA `24a6f6917006275d5035aa220cfb83e5755be9afe0f8036cc9793cc4e3b8bca4`。逐attempt记录见[测试摘要](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)。当前仅serial public-contract/输入解析证据，不是MPI8 producer或数值结果；下一步等待新的ignored冷运行包静态审查和单独准入。
 
-## 2026-10-09：Review V11 P0 资源合同与 P1 W0.7 准备（进行中）
+## 历史快照：2026-10-09 Review V11 P0资源合同与P1 W0.7启动前准备
+
+本节保留dispatch前的合同、测试与准入快照；其中“等待审核、尚未dispatch”等文字只描述该时点，实际唯一warm场终态见本文件顶部。
 
 **背景和基线。** 近期 W0.7 warm 场在 P4 数值分解前被资源预算门拒绝，没有到 fixed-H6 feedback、outer、五项真残差或完整物理输出。为避免继续复用旧 49.566 GiB 上限，Review V11 给注册的缩减 pilot 单独设 80 GiB case cap，同时保留 node0 384 GiB floor，并继续由父级 host/cgroup 可用量限制。该 cap 是允许的运行上限，不是内存峰值预测。
 
@@ -2982,4 +2992,4 @@ Task041 H0/H1详细记录见[outcomes summary](task041_mpi1_shortwave_hybrid_cap
 | 原生MPI8 ABI | rank map `[10,11,14,15,16,17,18,19]`，PETSc 3.19.6/MUMPS 5.6.2/OpenMPI 4.1.6 | rc0；complex128、Int32、membind0、六线程变量均为1；精确加载已审 .so SHA `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b`。无factor或矩阵求解 |
 | 数值包身份 | W0.7 p6/h0.70/M400/MPI8、接口2/22、matched L20/N29/h20/29、fixed-H6；复用 producer source `2708214386d38bd69f73e6b196c8ed843bb53d81`，本次QEP=0 | manifest SHA `63b7635e99dd476a94c97a07aa469be8c5087ef55fadeb7e8f908b1ded0d84e2`；packet identity SHA `73111acd2d48344e4ef36a0d838371f8ccc0efcddc1b7d9d3a46173f4ad2fbc6`。只复核11份小封套，不读全shards、不声称完整validator已运行 |
 
-**结论和下一步。** PORD source-counted bottom/top Δ为`3,962,155,812/5,500,664,516 B`，仅是symbolic预算筛查量，不是RSS上界；numeric门仍按当场fresh B + 单份INFOG(17)×1,000,000 + W判定，不能预扣历史收益。当前只完成准备、宿主准入和MPI8 ABI，等待主控审阅后再决定是否dispatch；没有QEP、FE、outer、五门或物理结果。W5弱显著衍射通道明确为“用户决定延期处理”，保留原失败工件且不作0.7前置；W2本阶段不推进以免延误0.7。
+**准备阶段结论（历史）。** PORD source-counted bottom/top Δ为`3,962,155,812/5,500,664,516 B`，仅是symbolic预算筛查量，不是RSS上界；numeric门仍按当场fresh B + 单份INFOG(17)×1,000,000 + W判定，不能预扣历史收益。本表原先记录准备和准入；实际dispatch后完成的阶段、残差失败与终态以本文件顶部为准。W5弱显著衍射通道按用户决定延期处理，保留原失败且不作0.7前置；W2本阶段不推进以免延误0.7。

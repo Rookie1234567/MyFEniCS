@@ -1,5 +1,16 @@
 # 开发阶段研究对象与计算结果总账
 
+## Task041 Review V11：W0.7 P1 warm场终态（2026-10-09）
+
+| 模型/阶段 | 实测结果 | 资格边界与证据 |
+|---|---|---|
+| W0.7 reduced p6/h0.70/M400/MPI8，10×5 nm、接口2/22、matched L20/N29/h20/29 | Invocation `797ae38854d546898a895c81d803a5ec`；runtime source `47fc621a478adf26ebe9ca41d54563e188bab1d1`；producer复用，QEP=0；one-cell及bottom/top P4 numeric完成 | 唯一warm consumer；不是50×25 nm、2 TB或48 h资格 |
+| fixed-H6 modal内层 | 两次solve中第二次reason `-3`，8/8 iterations，显式relative residual `0.005653709235402098 > 0.001`；S_H MatMult 8/9、上限9/10，`budget_exhausted=false` | outer iteration 1之后的后续right-FGMRES PC调用失败；精确outer KSP iteration未持久化；cleanup标签`top_construction_cleanup`不是失败位置 |
+| 资源/服务 | case cap 85,899,345,920 B；service tree峰47,073,288,192 B；consumer resource tree峰47,027,847,168 B；专属cgroup峰44,504,326,144 B | 不同采样口径分列；本场非资源拒绝、OOM或controlled stop |
+| 终态/账目 | consumer `IMPLEMENTATION_FAILURE`、public rc3；finalizer `failed/service_boundary_failure` 8/10，`controlled_stop.active=false`；唯一wall9,685.695409207 s；V5 ledger 193项SHA `803c4cb9c05b0c25426af3d75f6e20d9940bf08c351ed22a911f584e62e0b6ae` | 最终五残差、恢复、完整E/H/RTA、A_volume、衍射及physics未到达；无完整数值pass |
+
+outer phase的`balh_side_rhs_audits.jsonl`有5项128/128步`INNER_APPROXIMATE_RETURN`；六条side记录均为writer-local，bottom/top各index 0、1、2，不作精确outer iteration映射，也不当作失败fixed-H6 modal solve的通过证据。W5弱显著衍射通道按用户决定延期处理，保留原失败、不写PASS、不作0.7前置；W2本阶段未推进。详见[Response V13](task041_mpi1_shortwave_hybrid_capacity/response_v13.md)与[Task041 outcomes](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)。
+
 ## Task041 Review V10-r2：W0.7 PORD warm场终态（2026-10-09）
 
 | 模型/阶段 | 当前记录 | 资格边界与证据 |
@@ -52,17 +63,17 @@ bottom numeric后top numeric门的条件式fresh-B上限为32,298,046,707 B；�
 
 跨Invocation同阶段的描述性对照：fresh B减少5,020,377,088 B，bottom INFOG(17)增加690,000,000 B，筛查缺口从7,476,508,109降至3,146,131,021 B。不能据此将B变化全部归因于compact orientation。当前top numeric未来fresh-B限额32,202,046,707 B，本场未测。
 
-## Task041 Review V11：独立 W0.7 pilot 资源合同与 P1 准备（2026-10-09，未运行）
+## 历史快照：Task041 Review V11 P0资源合同与W0.7 P1启动前准备（2026-10-09）
 
-此条登记的是执行准备，不是模型数值结果。缩减 W0.7 case 的独立 hard cap 为 `85,899,345,920 B`，warning 为 `77,309,411,328 B`，政策余量 W 为 `8,589,934,592 B`，node0 floor 仍为 `412,316,860,416 B`。cap 是允许的运行上限；它不预测实际峰值，也不代表更严的 host、cgroup 或 node0 门可以忽略。普通共享资源常量未改。
+此条登记的是dispatch前准备快照，不是模型数值结果。缩减 W0.7 case 的独立 hard cap 为 `85,899,345,920 B`，warning 为 `77,309,411,328 B`，政策余量 W 为 `8,589,934,592 B`，node0 MemFree reserve/floor仍为`412,316,860,416 B`。cap是运行限制，不预测峰值，也不替代独立host MemAvailable、cgroup或node0门。普通共享资源常量未改。
 
 | Model ID / 阶段 | 记录 | 状态与证据边界 |
 |---|---|---|
 | `task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot` P0 | p6/h0.70、M400/MPI8、Hybrid接口2/22 nm、matched L20/N29/h20/29、fixed-H6；P4 target `5e-13`/最多2次同因子修正 | 只通过public/input/resource合同serial测试；不构成FE或数值pass。commit `a3332dc12de1ddfec824a8b64ab5dcc23f68261b` |
-| 同模型 P1准备 | 复用producer source `2708214386d38bd69f73e6b196c8ed843bb53d81` packet，QEP=0；host门及MPI8 native ABI通过 | dispatch尚未执行；无factor、outer、R/T/A、恢复或物理结果。等待主控审核准备包 |
+| 同模型 P1准备快照 | 复用producer source `2708214386d38bd69f73e6b196c8ed843bb53d81` packet，QEP=0；host门及MPI8 native ABI通过 | 当时准备状态；实际warm运行终态与失败位置以本文件顶部V11记录为准 |
 | 资格边界 | W5显著衍射通道仍保留原失败并按用户决定延期处理；W2此阶段不推进 | 不登记W0.7 solver/容量资格；50×25 nm、2 TB、48 h仍未资格化 |
 
-证据： [Response V13](task041_mpi1_shortwave_hybrid_capacity/response_v13.md)、[V11交付进度](task041_mpi1_shortwave_hybrid_capacity/outcomes/shortwave_delivery_v11.md)、[Task041 outcomes](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md) 与 ignored package `results/task041_v11_w0p7_pilot80gib_pord_warm_preparation_20261009T074322Z/`。P0测试的分attempt边界见[test summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)。
+证据： [Response V13](task041_mpi1_shortwave_hybrid_capacity/response_v13.md)、[V11交付进度](task041_mpi1_shortwave_hybrid_capacity/outcomes/shortwave_delivery_v11.md)、[Task041 outcomes](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md) 与 ignored package `results/task041_v11_w0p7_pilot80gib_pord_warm_preparation_20261009T074322Z/`。P0测试的分attempt边界见[test summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)；运行期状态不覆盖顶部终态。
 
 ## 历史：Task041 Review V10-r2 deferred-AMD warm场（2026-10-08）
 

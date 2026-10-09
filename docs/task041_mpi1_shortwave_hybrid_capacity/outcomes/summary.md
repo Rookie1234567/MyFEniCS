@@ -1,8 +1,23 @@
 # Task041 outcomes summary
 
-## 2026-10-09：Review V11 P0 完成 / W0.7 P1 准备待审
+## 2026-10-09：Review V11 W0.7 P1 唯一 warm 场终态
 
-P0 为注册的缩减 W0.7 pilot 单独设定资源限制，避免改动其他模型共享上限；P1 将已核 producer packet、当前 consumer 源码、CPU map、PETSc 原生扩展与启动命令绑定在一份 ignored 包里。该包未启动 FE。
+本轮真实计算使用已验证 producer packet，当前 QEP=0。缩减模型为 W 材料10×5 nm、p6/h0.70、M400/MPI8、接口2/22 nm、matched L20/N29/h20/29。one-cell、两侧P4 numeric及fixed-H6 setup repeat/linearity gate完成；outer记录到iteration 1，但fixed-H6 modal内层第二次solve未通过残差门，未生成完整场或物理结果。
+
+| 阶段/对象 | 实测结果 | 资格边界 |
+|---|---|---|
+| 身份 | Invocation `797ae38854d546898a895c81d803a5ec`；source `47fc621a478adf26ebe9ca41d54563e188bab1d1`；producer source `2708214386d38bd69f73e6b196c8ed843bb53d81`；unit `task041-v11-w0p7-pilot80gib-pord-warm-cpu10-11-14-15-16-17-18-19-20261009T074322Z.service` | 一次warm consumer；producer复用，QEP=0 |
+| fixed-H6 modal solve | solve_count=2、not_converged_count=1；失败solve KSP reason `-3`，8迭代，`rtol=0.001`，显式相对残差 `0.005653709235402098`、原始残差门失败；S_H solver/total MatMult=8/9、上限9/10，`budget_exhausted=false` | 不得称9+1预算耗尽或近似通过；失败RHS与iterate未持久化 |
+| outer关系与清理 | iteration 1 marker记第一次modal solve及`ITERATING`；失败发生于后续outer right-FGMRES PC中的第二次modal solve。`top_construction_cleanup`是cleanup覆盖的末态stage标签，不是失败源；bottom/top release与cleanup markers均在失败后，destroy error=0 | 第二次solve对应的精确outer KSP iteration号未持久化 |
+| 资源 | cap/warning/W=`85,899,345,920/77,309,411,328/8,589,934,592 B`；node0 MemFree reserve/floor=`412,316,860,416 B`，host MemAvailable独立检查。service summary tree峰`47,073,288,192 B`、consumer resource summary tree峰`47,027,847,168 B`、dedicated cgroup峰`44,504,326,144 B` | 独立采样口径不相加；均低于case cap，本场非资源拒绝、OOM或受控停止 |
+| 服务终态与账目 | consumer `IMPLEMENTATION_FAILURE`；public `task041_public_command_nonzero` rc3；finalizer `failed/service_boundary_failure` 8/10，false为`public_result_completed`与`service_terminal_normal`；`controlled_stop.active=false`；唯一finalizer wall `9,685.695409207 s` | V5 193项、SHA `803c4cb9c05b0c25426af3d75f6e20d9940bf08c351ed22a911f584e62e0b6ae`；runroot一条匹配记录，ledger行不直接保存Invocation |
+| 未到达 | 最终五残差、recovery、完整E/H/RTA、A_volume、衍射及physics均未运行 | 本场不构成W0.7完整数值pass，不资格化50×25 nm、2 TB或48 h |
+
+outer phase的`balh_side_rhs_audits.jsonl`有5个`SideBalancedInverse` side probe以128/128步`INNER_APPROXIMATE_RETURN`返回；六条均为writer-local记录，bottom/top各index 0、1、2，不映射到精确outer iteration。这些与失败的fixed-H6 8步modal solve不同。完整时序、残差与raw SHA见[Response V13](../response_v13.md)及repo-root ignored证据`results/task041_v11_w0p7_pilot80gib_pord_warm_run_20261009T074322Z/terminal_compact_v11.json`。W5弱显著衍射通道按用户决定延期处理，原失败/比较工件保留、不写PASS、不作为0.7前置；W2本阶段未推进以免延误主线。
+
+## 历史快照：2026-10-09 Review V11 P0 完成 / W0.7 P1 准备待审
+
+以下内容记录dispatch前的P0合同与P1准备快照；“尚未dispatch/等待审核”只描述该时点，现由本summary顶部的终态更新。P0为注册缩减W0.7 pilot单独设定资源限制，避免改动其他模型共享上限；P1把producer packet、consumer源码、CPU map、PETSc扩展和启动命令绑定在ignored包里。
 
 | 范围 | 实际记录 | 当前结论与边界 |
 |---|---|---|
@@ -15,7 +30,7 @@ P0 为注册的缩减 W0.7 pilot 单独设定资源限制，避免改动其他�
 
 注册 case 是 W 材料 10×5 nm、p6/h0.70、M400/MPI8、接口2/22 nm与 matched L20/N29/h20/29，fixed-H6/P4 target `5e-13`、最多两次同因子修正。producer 复用 source `2708214386d38bd69f73e6b196c8ed843bb53d81`，manifest SHA `63b7635e99dd476a94c97a07aa469be8c5087ef55fadeb7e8f908b1ded0d84e2`，packet identity SHA `73111acd2d48344e4ef36a0d838371f8ccc0efcddc1b7d9d3a46173f4ad2fbc6`；准备时只核11个小封套文件，未读 shards。当前 MPI8 bridge SHA `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b`。完整 attempt/raw/hash 见[Response V13](../response_v13.md)、[V11交付进度](shortwave_delivery_v11.md)和 package 的 `post_abi_current_admission.json`。
 
-P1的 PORD source-counted Δ bottom/top 为 `3,962,155,812/5,500,664,516 B`，只是后续 symbolic 筛查值，不是 RSS 上界；真实 numeric 仍需各自 fresh B + 当场单份 INFOG(17)×1e6 + W。当前没有 dispatch，不能登记 pilot 数值通过或资源资格。
+P1的 PORD source-counted Δ bottom/top 为 `3,962,155,812/5,500,664,516 B`，只是symbolic筛查值，不是RSS上界；真实numeric仍需各自fresh B + 当场单份INFOG(17)×1e6 + W。该准备快照之后已发生上方唯一warm场；不要把准备包字段当作终态。
 
 ## 2026-10-09：W0.7 PORD warm场终态（top numeric前预算拒绝）
 
