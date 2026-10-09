@@ -11,12 +11,12 @@ from src.postprocessing.paired_field_norms import score_differences,NAMES
 from benchmarks.collect_independent_tetra import restored,saved_output_check,digest
 
 
-def saved_original(record,folder,journal):
+def saved_original(record,folder,journal,*,body_q=13):
     from src.solvers.independent_tetra_study import load_boundary
     from src.solvers.independent_tetra_fields import tangential_check
     from src.solvers.tetra_coefficient_action import CoefficientFullAction
     s,v,f=restored(record,journal);b=load_boundary(s,record['boundary_arrays'],record['mode_sha256'],'q63')
-    action=CoefficientFullAction(s,b,13);audit,res,rhs=action.audit(v['x'],v['rhs'],journal)
+    action=CoefficientFullAction(s,b,body_q);audit,res,rhs=action.audit(v['x'],v['rhs'],journal)
     arrays=save_arrays(folder/'independent_original.npz',x=v['x'],residual=res,rhs=rhs,action=rhs-res)
     old=checked_arrays(record['audit']['arrays']);op=relative(res-old['residual'],rhs)
     tangent=tangential_check(s,f,folder);output=saved_output_check(record)
@@ -26,7 +26,7 @@ def saved_original(record,folder,journal):
     del s,v,f,b,action;gc.collect();return result
 
 
-def first_normalization(pair,first):
+def first_normalization(pair,first,*,label='P6'):
     """Pure arrays: common L4 subcell numerator, saved P6 global norm."""
     cached=checked_arrays(pair['arrays']);numerator=cached['per_cell_integrals'][:,:,0].sum(axis=0)
     norms=[]
@@ -38,7 +38,7 @@ def first_normalization(pair,first):
         {n:cached['selected_'+n+'_first'] for n in NAMES},{n:cached['selected_'+n+'_second'] for n in NAMES})
     op=float(np.max(np.abs(norms[0]['reference']-norms[1]['reference'])/np.maximum(norms[-1]['reference'],1e-24)))
     physical=pair['modes']['outgoing_amplitude_at_boundary_relative']<=1e-4 and pair['modes']['mode_power_max_absolute']<=1e-6 and max(pair['power_differences'].values())<=1e-5 and max(pair['energies'])<=1e-5
-    result.update(denominator='P6',parent_sha256=first['arrays']['sha256'],common_numerator=pair['arrays'],reference_packets=norms,
+    result.update(denominator=label,parent_sha256=first['arrays']['sha256'],common_numerator=pair['arrays'],reference_packets=norms,
         quadrature_operation_scaled=op,pass_gate=result['field_and_selected_pass'] and physical and op<=1e-10)
     return result
 

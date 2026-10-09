@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v67]
+stage = "SOLVE_COMPLETE"
+run_id = "task042_v67_local_p5_solve_complete"

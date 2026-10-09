@@ -1,0 +1,79 @@
+"""Independent producers, actual p5 quadrature and role-specific live budgets."""
+import copy
+import json
+import tempfile
+import unittest
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+from src.solvers import local_p_mode_scope as scope
+from src.io.independent_tetra_reference import load_tetra_reference
+
+
+class LocalModeTests(unittest.TestCase):
+    def test_dat_to_scope_to_live_budget_has_three_distinct_profiles(self):
+        from src.runners.port_preparation import context,storage_limits,preparation_memory_envelope
+        for role in scope.STAGES:
+            with tempfile.TemporaryDirectory() as td:
+                p=Path(td)/'one.dat';p.write_text(f'schema_version=1\n[task042_v67]\nstage="{role}"\nrun_id="task042_v67_fixture"\n')
+                s=load_tetra_reference(p,scope_module=scope)
+            modes=1188 if role=='M4' else 828;degree=4 if role=='M4' else 5
+            profile=[192,224,256] if role=='M4' else [256,320,384] if role in scope.GROUPS['L5'] else [64,80,96]
+            self.assertEqual([s.execution[k] for k in ('planning_memory_gib','warning_memory_gib','terminate_memory_gib')],profile)
+            self.assertEqual((s.boundary['complete_modes'],s.solver['degree'],s.geometry['cells']),(modes,degree,25576))
+            self.assertEqual((s.discretization['production_body_q'],s.discretization['oracle_body_q']),(2*degree+3,2*degree+5))
+            with patch('src.runners.port_preparation.shared_envelope',return_value=dict(effective_available_bytes=2048*2**30,system_reserve_bytes=128*2**30,reserve_bytes=0)):
+                e=preparation_memory_envelope('v67',role)
+            self.assertEqual(e['planning_cap_bytes'],profile[0]*2**30);self.assertEqual(e['launch_cap_bytes'],profile[2]*2**30)
+        self.assertIs(context('v67')[0],scope.window)
+        self.assertEqual(storage_limits('v67')['task_storage_bytes'],480*2**30)
+
+    def test_M4_uses_old_p4_parent_even_if_new_L5_prepare_is_missing(self):
+        with patch('src.solvers.frozen_local_h_scope.stage',return_value={'checkpoint':'old-p4'}) as prior,patch.object(scope,'stage',side_effect=FileNotFoundError('new p5 absent')):
+            self.assertEqual(scope.prepared_parent('M4')['checkpoint'],'old-p4');prior.assert_called_once_with('PREPARE')
+            with self.assertRaises(FileNotFoundError):scope.prepared_parent('SOLVE_COMPLETE')
+
+    def test_M4_does_not_consume_old_space_gate_or_L5_status(self):
+        with tempfile.TemporaryDirectory() as td,patch.object(scope.window,'TMP',Path(td)),patch.object(scope,'ARTIFACT',Path(td)),\
+            patch.object(scope.window,'available_at_boundary',return_value=20000),patch.object(scope,'numeric_attempts',return_value=0),\
+            patch.object(scope,'prepared_parent',return_value={'checkpoint':'healthy-p4'}),patch.object(scope,'stage',return_value={'pass_gate':True}) as calls:
+            scope.require_stage('M4');calls.assert_called_once_with('PREFLIGHT')
+            (Path(td)/'scientific_queue_frozen.json').write_text('{}')
+            with self.assertRaisesRegex(RuntimeError,'final queue'):scope.require_stage('M4')
+
+    def test_actual_study_passes_spec_q15_and_explicit_provider_to_solver(self):
+        from src.solvers.local_p_mode_study import execute
+        journal=SimpleNamespace(source_state=None)
+        with patch('src.solvers.local_p_mode_study.Journal',return_value=journal),patch('src.solvers.independent_tetra_study.solve') as solve,\
+            patch('src.solvers.local_p_mode_study.CoefficientFullAction',return_value='independent') as action:
+            execute('SOLVE_COMPLETE',Path('/tmp/fixture'),dict(memory_budget=scope.memory_budget('SOLVE_COMPLETE'),stage='V67-SOLVE_COMPLETE'))
+            kw=solve.call_args.kwargs;self.assertIs(kw['scope_module'],scope)
+            kw['action_factory']({'spec':{'degree':5}},'q63');self.assertEqual(action.call_args.args[2],15)
+            kw['action_factory']({'spec':{'degree':4}},'q63');self.assertEqual(action.call_args.args[2],13)
+
+    def test_checkpoint_mode_change_still_rejects_wrong_degree(self):
+        from src.solvers.tetra_body_checkpoint import body_fingerprint
+        a=dict(physical=scope.physical_for('M4'),degree=4,local_dim=84,body_q=11,arrays={'actual':'p4'},kappa=[1,2,0])
+        b=copy.deepcopy(a);b['physical']['boundary']['complete_modes']=828
+        self.assertEqual(body_fingerprint(a),body_fingerprint(b))
+        b['degree']=5;b['local_dim']=140;b['body_q']=13
+        self.assertNotEqual(body_fingerprint(a),body_fingerprint(b))
+
+    def test_cumulative_case_costs_do_not_refresh_on_resume(self):
+        with tempfile.TemporaryDirectory() as td:
+            w=scope.LocalModeWindow(Path(td),label='fixture',total=39600)
+            rows=[dict(role=r,folder=str(Path(td)/r),elapsed_seconds=t) for r,t in [('PREPARE',9000),('SOLVE_COMPLETE',3000),('SOLVE_COMPLETE',500),('M4',1000)]]
+            with patch.object(w,'ledger',return_value=dict(runs=rows,active=None)):
+                self.assertEqual(w.case_remaining('L5'),23500);self.assertEqual(w.case_remaining('M4'),9800)
+
+    def test_symbolic_is_not_a_time_or_memory_admission_ticket(self):
+        from src.solvers.phase_explicit_accuracy_capacity import numeric_plan
+        info=dict(infog={'16':100000,'17':100000})
+        self.assertTrue(numeric_plan(30*2**30,info,256*2**30)['admitted'])
+        self.assertFalse(numeric_plan(30*2**30,info,192*2**30)['admitted'])
+        j=SimpleNamespace(event=lambda *a,**kw:None)
+        with patch.object(scope.window,'snapshot',return_value={'heavy_remaining_seconds':20000}),patch.object(scope.window,'charged_wall',return_value=0),patch.object(scope.window,'case_remaining',return_value=11699):
+            with self.assertRaisesRegex(RuntimeError,'output reserve'):scope.numeric_guard('SOLVE_COMPLETE',j)
+
+
+if __name__=='__main__':unittest.main()
