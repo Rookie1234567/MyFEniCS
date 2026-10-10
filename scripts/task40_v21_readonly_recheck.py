@@ -9,6 +9,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import struct
 from typing import Any, Mapping
 
 
@@ -78,7 +79,7 @@ def _finite_nonnegative_below(value: Any, limit: float) -> bool:
 
 
 def _v22_completed_probe_checks(
-    receipt: Mapping[str, Any], probe: Mapping[str, Any]
+    receipt: Mapping[str, Any], probe: Mapping[str, Any], *, expected_q_count: int = 8
 ) -> dict[str, bool]:
     """Recompute a V22 completion from bound raw coverage, FE/MPC, and error fields."""
 
@@ -309,7 +310,7 @@ def _v22_completed_probe_checks(
             and independent_packet_passed
         ),
         "v22_q_factor_ksp_and_full_field_still_unbuilt": (
-            probe.get("expected_q_count") == 8
+            probe.get("expected_q_count") == expected_q_count
             and probe.get("built_q_count") == 0
             and probe.get("q_csr_created") is False
             and probe.get("factor_created") is False
@@ -320,6 +321,593 @@ def _v22_completed_probe_checks(
     }
 
 
+def _v23_complex_array_sha256(values: list[complex]) -> str:
+    digest = hashlib.sha256()
+    for value in values:
+        digest.update(struct.pack("<dd", float(value.real), float(value.imag)))
+    return digest.hexdigest()
+
+
+def _v23_float_array_sha256(values: list[float]) -> str:
+    digest = hashlib.sha256()
+    for value in values:
+        digest.update(struct.pack("<d", float(value)))
+    return digest.hexdigest()
+
+
+def _v23_complex_payload(value: Any) -> complex | None:
+    if not isinstance(value, Mapping):
+        return None
+    real = value.get("real")
+    imag = value.get("imag")
+    if not all(
+        isinstance(item, (int, float))
+        and not isinstance(item, bool)
+        and math.isfinite(float(item))
+        for item in (real, imag)
+    ):
+        return None
+    return complex(float(real), float(imag))
+
+
+def _v23_relative_error(candidate: list[complex], oracle: list[complex]) -> float:
+    if len(candidate) != len(oracle):
+        return math.inf
+    delta = math.sqrt(sum(abs(a - b) ** 2 for a, b in zip(candidate, oracle, strict=True)))
+    norm = math.sqrt(sum(abs(value) ** 2 for value in oracle))
+    return (0.0 if delta == 0.0 else math.inf) if norm == 0.0 else delta / norm
+
+
+def _v23_q_contribution_checks(tile: Mapping[str, Any]) -> dict[str, bool]:
+    contributions = tile.get("contributions")
+    contributions = contributions if isinstance(contributions, Mapping) else {}
+    recorded_errors = tile.get("candidate_vs_independent_oracle_relative_errors")
+    recorded_errors = recorded_errors if isinstance(recorded_errors, Mapping) else {}
+    checks: dict[str, bool] = {}
+    for name, error_key in (
+        ("C_direct", "C_direct"),
+        ("minus_D_direct", "minus_D_direct"),
+    ):
+        contribution = contributions.get(name)
+        contribution = contribution if isinstance(contribution, Mapping) else {}
+        shape = contribution.get("shape")
+        candidate_payload = contribution.get("values")
+        oracle_payload = contribution.get("oracle_values")
+        candidate_values = (
+            [_v23_complex_payload(value) for value in candidate_payload]
+            if isinstance(candidate_payload, list)
+            else []
+        )
+        oracle_values = (
+            [_v23_complex_payload(value) for value in oracle_payload]
+            if isinstance(oracle_payload, list)
+            else []
+        )
+        candidate_ok = bool(candidate_values) and all(value is not None for value in candidate_values)
+        oracle_ok = bool(oracle_values) and all(value is not None for value in oracle_values)
+        candidate_complex = [value for value in candidate_values if value is not None]
+        oracle_complex = [value for value in oracle_values if value is not None]
+        index_rows = contribution.get("I")
+        index_columns = contribution.get("J")
+        expected_shape = (
+            [len(candidate_complex), 1]
+            if name == "C_direct"
+            else [1, len(candidate_complex)]
+        )
+        indices_ok = (
+            isinstance(index_rows, list)
+            and isinstance(index_columns, list)
+            and (
+                len(index_rows) == len(candidate_complex) and index_columns == [0]
+                if name == "C_direct"
+                else index_rows == [0] and len(index_columns) == len(candidate_complex)
+            )
+        )
+        computed_error = _v23_relative_error(candidate_complex, oracle_complex)
+        candidate_hash = _v23_complex_array_sha256(candidate_complex) if candidate_ok else None
+        oracle_hash = _v23_complex_array_sha256(oracle_complex) if oracle_ok else None
+        recorded_error = contribution.get("relative_error")
+        top_error = recorded_errors.get(error_key)
+        checks[f"{name}_payload_shape_values_and_indices_valid"] = (
+            candidate_ok
+            and oracle_ok
+            and shape == expected_shape
+            and indices_ok
+            and len(candidate_complex) == len(oracle_complex)
+        )
+        checks[f"{name}_candidate_oracle_hashes_recomputed"] = (
+            candidate_ok
+            and oracle_ok
+            and contribution.get("candidate_values_sha256") == candidate_hash
+            and contribution.get("oracle_values_sha256") == oracle_hash
+        )
+        checks[f"{name}_relative_error_recomputed_under_limit"] = (
+            _finite_nonnegative_below(computed_error, 1.0e-11)
+            and _finite_nonnegative_below(recorded_error, 1.0e-11)
+            and _finite_nonnegative_below(top_error, 1.0e-11)
+            and math.isclose(float(recorded_error), computed_error, rel_tol=1.0e-12, abs_tol=1.0e-15)
+            and math.isclose(float(top_error), computed_error, rel_tol=1.0e-12, abs_tol=1.0e-15)
+            and contribution.get("limit") == 1.0e-11
+            and recorded_errors.get("limit_each") == 1.0e-11
+        )
+
+    h = contributions.get("H_original")
+    h = h if isinstance(h, Mapping) else {}
+    candidate_h = _v23_complex_payload(h.get("value"))
+    oracle_h = _v23_complex_payload(h.get("oracle_value"))
+    h_error = (
+        abs(candidate_h - oracle_h) / abs(oracle_h)
+        if candidate_h is not None and oracle_h is not None and abs(oracle_h) > 0.0
+        else 0.0
+        if candidate_h == oracle_h and candidate_h is not None
+        else math.inf
+    )
+    checks["H_original_payload_and_hashes_recomputed"] = (
+        candidate_h is not None
+        and oracle_h is not None
+        and h.get("shape") == [1, 1]
+        and h.get("I") == [0]
+        and h.get("J") == [0]
+        and h.get("candidate_values_sha256")
+        == _v23_float_array_sha256([candidate_h.real])
+        and h.get("oracle_values_sha256")
+        == _v23_float_array_sha256([oracle_h.real])
+        and candidate_h.imag == 0.0
+        and oracle_h.imag == 0.0
+    )
+    h_top_error = recorded_errors.get("H_original")
+    checks["H_original_relative_error_recomputed_under_limit"] = (
+        _finite_nonnegative_below(h_error, 1.0e-11)
+        and _finite_nonnegative_below(h.get("relative_error"), 1.0e-11)
+        and _finite_nonnegative_below(h_top_error, 1.0e-11)
+        and math.isclose(float(h["relative_error"]), h_error, rel_tol=1.0e-12, abs_tol=1.0e-15)
+        and math.isclose(float(h_top_error), h_error, rel_tol=1.0e-12, abs_tol=1.0e-15)
+        and h.get("limit") == 1.0e-11
+        and recorded_errors.get("limit_each") == 1.0e-11
+    )
+    return checks
+
+
+def _v23_projection_readback_valid(
+    *,
+    output_directory: str | Path | None,
+    receipt: Mapping[str, Any],
+    q_tile: Mapping[str, Any],
+    tile: Mapping[str, Any],
+) -> bool:
+    readback = q_tile.get("q_projection_readback_artifact")
+    readback = readback if isinstance(readback, Mapping) else {}
+    relative = Path(str(readback.get("artifact_path", "")))
+    if (
+        output_directory is None
+        or relative.is_absolute()
+        or ".." in relative.parts
+        or not _is_sha256(readback.get("artifact_sha256"))
+    ):
+        return False
+    path = Path(output_directory).resolve() / relative
+    artifacts = receipt.get("artifact_hashes")
+    artifacts = artifacts if isinstance(artifacts, Mapping) else {}
+    bound = artifacts.get(str(relative))
+    if (
+        not path.is_file()
+        or _sha256_file(path) != readback.get("artifact_sha256")
+        or not isinstance(bound, Mapping)
+        or bound.get("path") != str(relative)
+        or bound.get("sha256") != readback.get("artifact_sha256")
+    ):
+        return False
+
+    try:
+        import numpy as np
+        from scipy import sparse
+
+        with np.load(path, allow_pickle=False) as saved:
+            required = {
+                "q_map_data", "q_map_indices", "q_map_indptr", "q_map_shape",
+                "q_map_support_global_rows", "selected_q_trace_rows",
+                "candidate_B_support", "oracle_B_support", "candidate_D_support",
+                "oracle_D_support", "candidate_C_direct", "oracle_C_direct",
+                "candidate_minus_D_direct", "oracle_minus_D_direct",
+                "candidate_H_original", "oracle_H_original", "original_H_p",
+                "selected_mode_key_json",
+            }
+            if not required.issubset(saved.files):
+                return False
+            shape = tuple(int(value) for value in saved["q_map_shape"])
+            q_map = sparse.csr_matrix(
+                (
+                    np.asarray(saved["q_map_data"], dtype=np.complex128),
+                    np.asarray(saved["q_map_indices"]),
+                    np.asarray(saved["q_map_indptr"]),
+                ),
+                shape=shape,
+            )
+            q_map.sum_duplicates()
+            q_map.sort_indices()
+            digest = hashlib.sha256()
+            digest.update(np.asarray(q_map.shape, dtype="<i8").tobytes())
+            for array in (q_map.data, q_map.indices, q_map.indptr):
+                digest.update(array.dtype.str.encode("ascii"))
+                digest.update(np.asarray(array.shape, dtype="<i8").tobytes())
+                digest.update(np.ascontiguousarray(array).tobytes())
+            q_map_sha = digest.hexdigest()
+            if (
+                list(shape) != readback.get("q_trace_map_shape")
+                or int(q_map.nnz) != readback.get("q_trace_map_nnz")
+                or q_map_sha != readback.get("q_trace_map_sha256")
+                or q_map_sha != tile.get("q_trace_map_sha256")
+            ):
+                return False
+            support_rows = np.asarray(saved["q_map_support_global_rows"], dtype=np.int64)
+            selected = np.asarray(saved["selected_q_trace_rows"], dtype=np.int64)
+            if (
+                support_rows.shape != (shape[0],)
+                or selected.tolist() != tile.get("I_trace_q_rows")
+                or selected.size == 0
+                or selected.min() < 0
+                or selected.max() >= shape[1]
+            ):
+                return False
+            candidate_b = np.asarray(saved["candidate_B_support"], dtype=np.complex128)
+            oracle_b = np.asarray(saved["oracle_B_support"], dtype=np.complex128)
+            candidate_d = np.asarray(saved["candidate_D_support"], dtype=np.complex128)
+            oracle_d = np.asarray(saved["oracle_D_support"], dtype=np.complex128)
+            if any(values.shape != (shape[0],) for values in (candidate_b, oracle_b, candidate_d, oracle_d)):
+                return False
+            original_h = float(np.asarray(saved["original_H_p"], dtype=np.float64).reshape(-1)[0])
+            if not math.isfinite(original_h) or original_h <= 0.0:
+                return False
+            mode_key = json.loads(str(np.asarray(saved["selected_mode_key_json"]).item()))
+            if mode_key != tile.get("mode_key"):
+                return False
+            raw_oracle_path = Path(str(q_tile.get("production_oracle_artifact_path", "")))
+            raw_oracle_digest = q_tile.get("production_oracle_artifact_sha256")
+            if raw_oracle_path.is_absolute() or ".." in raw_oracle_path.parts:
+                return False
+            with np.load(Path(output_directory).resolve() / raw_oracle_path, allow_pickle=False) as raw:
+                raw_b_rows = np.asarray(raw["B_rows"], dtype=np.int64)
+                raw_b_values = np.asarray(raw["B_values"], dtype=np.complex128)
+                raw_d_rows = np.asarray(raw["D_rows"], dtype=np.int64)
+                raw_d_values = np.asarray(raw["D_values"], dtype=np.complex128)
+                raw_h = float(np.asarray(raw["H_p"], dtype=np.float64).reshape(-1)[0])
+                raw_mode_key = json.loads(str(np.asarray(raw["mode_key_json"]).item()))
+                raw_h_identity = str(np.asarray(raw["original_H_identity_sha256"]).item())
+            frozen_oracle = tile.get("frozen_B_D_H_oracle")
+            frozen_oracle = frozen_oracle if isinstance(frozen_oracle, Mapping) else {}
+            original_h_identity = q_tile.get("original_H_p_identity")
+            original_h_identity = (
+                original_h_identity if isinstance(original_h_identity, Mapping) else {}
+            )
+            expected_b_support = np.zeros(shape[0], dtype=np.complex128)
+            expected_d_support = np.zeros(shape[0], dtype=np.complex128)
+            b_positions = np.searchsorted(support_rows, raw_b_rows)
+            d_positions = np.searchsorted(support_rows, raw_d_rows)
+            if (
+                np.any(b_positions >= shape[0])
+                or np.any(d_positions >= shape[0])
+                or not np.array_equal(support_rows[b_positions], raw_b_rows)
+                or not np.array_equal(support_rows[d_positions], raw_d_rows)
+            ):
+                return False
+            expected_b_support[b_positions] = raw_b_values
+            expected_d_support[d_positions] = raw_d_values
+            hash_array = lambda values: hashlib.sha256(
+                np.ascontiguousarray(values).tobytes()
+            ).hexdigest()
+            if (
+                not _is_sha256(raw_oracle_digest)
+                or _sha256_file(Path(output_directory).resolve() / raw_oracle_path)
+                != raw_oracle_digest
+                or raw_mode_key != mode_key
+                or raw_h != original_h
+                or raw_h_identity != original_h_identity.get("identity_sha256")
+                or hash_array(raw_b_values) != frozen_oracle.get("B_values_sha256")
+                or hash_array(raw_d_values) != frozen_oracle.get("D_values_sha256")
+                or not np.array_equal(candidate_b, expected_b_support)
+                or not np.array_equal(oracle_b, expected_b_support)
+                or not np.array_equal(candidate_d, expected_d_support)
+                or not np.array_equal(oracle_d, expected_d_support)
+            ):
+                return False
+            scale = 1.0 / math.sqrt(original_h)
+            c_candidate = np.asarray(q_map.conjugate().transpose() @ candidate_b).reshape(-1) * scale
+            c_oracle = np.asarray(q_map.conjugate().transpose() @ oracle_b).reshape(-1) * scale
+            d_candidate = -scale * np.asarray(q_map.transpose() @ candidate_d).reshape(-1)
+            d_oracle = -scale * np.asarray(q_map.transpose() @ oracle_d).reshape(-1)
+            c_record = tile["contributions"]["C_direct"]
+            d_record = tile["contributions"]["minus_D_direct"]
+            c_candidate_json = [_v23_complex_payload(value) for value in c_record["values"]]
+            c_oracle_json = [_v23_complex_payload(value) for value in c_record["oracle_values"]]
+            d_candidate_json = [_v23_complex_payload(value) for value in d_record["values"]]
+            d_oracle_json = [_v23_complex_payload(value) for value in d_record["oracle_values"]]
+            if any(value is None for value in (*c_candidate_json, *c_oracle_json, *d_candidate_json, *d_oracle_json)):
+                return False
+            selected_c_candidate = [complex(value) for value in c_candidate[selected]]
+            selected_c_oracle = [complex(value) for value in c_oracle[selected]]
+            selected_d_candidate = [complex(value) for value in d_candidate[selected]]
+            selected_d_oracle = [complex(value) for value in d_oracle[selected]]
+            if any(
+                not np.array_equal(np.asarray(actual), np.asarray(expected))
+                for actual, expected in (
+                    (selected_c_candidate, c_candidate_json),
+                    (selected_c_oracle, c_oracle_json),
+                    (selected_d_candidate, d_candidate_json),
+                    (selected_d_oracle, d_oracle_json),
+                )
+            ):
+                return False
+            candidate_h = original_h * scale * scale
+            oracle_h = candidate_h
+            if (
+                not np.array_equal(np.asarray(saved["candidate_C_direct"], dtype=np.complex128), c_candidate)
+                or not np.array_equal(np.asarray(saved["oracle_C_direct"], dtype=np.complex128), c_oracle)
+                or not np.array_equal(np.asarray(saved["candidate_minus_D_direct"], dtype=np.complex128), d_candidate)
+                or not np.array_equal(np.asarray(saved["oracle_minus_D_direct"], dtype=np.complex128), d_oracle)
+                or float(np.asarray(saved["candidate_H_original"], dtype=np.float64).reshape(-1)[0]) != candidate_h
+                or float(np.asarray(saved["oracle_H_original"], dtype=np.float64).reshape(-1)[0]) != oracle_h
+                or float(np.asarray(tile["contributions"]["H_original"]["value"]["real"])) != candidate_h
+            ):
+                return False
+            return True
+    except (OSError, ValueError, KeyError, TypeError, ImportError, json.JSONDecodeError):
+        return False
+
+
+def _v23_completed_probe_checks(
+    receipt: Mapping[str, Any],
+    probe: Mapping[str, Any],
+    *,
+    expected_q_count: int,
+    expected_campaign_window_sha256: str | None,
+    output_directory: str | Path | None,
+) -> dict[str, bool]:
+    """Independently verify V23 campaign identity and the nested selected-q evidence."""
+
+    campaign = probe.get("campaign_window")
+    campaign = campaign if isinstance(campaign, Mapping) else {}
+    q_tile = probe.get("v23_selected_q_port_tile")
+    q_tile = q_tile if isinstance(q_tile, Mapping) else {}
+    q_coverage = receipt.get("q_coverage")
+    q_coverage = q_coverage if isinstance(q_coverage, Mapping) else {}
+    full_pass = probe.get("status") == "PASS_ALL_MODE_B_D_STREAM_WITH_PARTIAL_Q_PORT_TILE"
+    planned_handoff = probe.get("status") == "PLANNED_SCAN_HANDOFF_WITH_PARTIAL_Q_PORT_TILE"
+    resource_stopped = probe.get("status") == "RESOURCE_CONTROLLED_STOP"
+    failed_probe = probe.get("status") in {
+        "FAILED", "FAILED_NATIVE_OPERATOR_GATE", "FAILED_SELECTED_Q_PORT_TILE"
+    }
+    q_child_passed = q_tile.get("status") == "PASS_REAL_ORIGINAL_NY8_Q_PORT_TILE"
+    mode_coverage = probe.get("partial_mode_coverage")
+    mode_coverage = mode_coverage if isinstance(mode_coverage, Mapping) else {}
+    by_side = mode_coverage.get("completed_by_side")
+    by_side = by_side if isinstance(by_side, Mapping) else {}
+    completed_mode_count = mode_coverage.get("completed_mode_count")
+    expected_mode_count = mode_coverage.get("expected_mode_count")
+    side_counts_valid = all(
+        isinstance(by_side.get(side), int)
+        and not isinstance(by_side.get(side), bool)
+        and by_side.get(side) >= 0
+        for side in ("bottom", "top")
+    )
+    side_count_sum = (
+        sum(by_side[side] for side in ("bottom", "top"))
+        if side_counts_valid
+        else None
+    )
+    witness = probe.get("operator_witness")
+    witness = witness if isinstance(witness, Mapping) else {}
+    full_coverage = witness.get("mode_coverage")
+    full_coverage = full_coverage if isinstance(full_coverage, Mapping) else {}
+    q_tile_path = q_tile.get("artifact_path")
+    q_tile_digest = q_tile.get("artifact_sha256")
+    q_file_valid = False
+    if output_directory is not None and isinstance(q_tile_path, str):
+        relative = Path(q_tile_path)
+        if not relative.is_absolute() and ".." not in relative.parts:
+            path = Path(output_directory).resolve() / relative
+            if path.is_file() and _is_sha256(q_tile_digest) and _sha256_file(path) == q_tile_digest:
+                try:
+                    decoded = json.loads(path.read_text(encoding="utf-8"))
+                    if isinstance(decoded, Mapping):
+                        embedded = dict(q_tile)
+                        embedded.pop("artifact_sha256", None)
+                        q_file_valid = embedded == decoded
+                except (OSError, json.JSONDecodeError):
+                    q_file_valid = False
+
+    artifacts = receipt.get("artifact_hashes")
+    artifacts = artifacts if isinstance(artifacts, Mapping) else {}
+    q_artifact_binding = artifacts.get(q_tile_path)
+    q_artifact_binding = q_artifact_binding if isinstance(q_artifact_binding, Mapping) else {}
+    oracle_path = q_tile.get("production_oracle_artifact_path")
+    oracle_digest = q_tile.get("production_oracle_artifact_sha256")
+    tile = q_tile.get("q_tile")
+    tile = tile if isinstance(tile, Mapping) else {}
+    oracle_binding = artifacts.get(oracle_path)
+    oracle_binding = oracle_binding if isinstance(oracle_binding, Mapping) else {}
+    oracle_file_valid = False
+    if output_directory is not None and isinstance(oracle_path, str):
+        relative_oracle = Path(oracle_path)
+        if not relative_oracle.is_absolute() and ".." not in relative_oracle.parts:
+            oracle_file = Path(output_directory).resolve() / relative_oracle
+            oracle_file_valid = (
+                oracle_file.is_file()
+                and _is_sha256(oracle_digest)
+                and _sha256_file(oracle_file) == oracle_digest
+            )
+    projection_readback_valid = _v23_projection_readback_valid(
+        output_directory=output_directory,
+        receipt=receipt,
+        q_tile=q_tile,
+        tile=tile,
+    )
+
+    canonical_tile_sha = hashlib.sha256(
+        json.dumps(tile, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    frozen_oracle = tile.get("frozen_B_D_H_oracle")
+    frozen_oracle = frozen_oracle if isinstance(frozen_oracle, Mapping) else {}
+    mode_identity = {
+        "run_id": receipt.get("run_id"),
+        "source_sha": receipt.get("source_sha"),
+        "input_sha256": receipt.get("input_sha256"),
+        "target_physical_model_sha256": receipt.get("physical_model_sha256"),
+    }
+    q_child_not_started_for_geometry_gate = (
+        receipt.get("outcome") == "RESOURCE_CONTROLLED_STOP"
+        and receipt.get("blocked_task_stage") == "geometry_inventory"
+        and "target_operator_probe" not in (receipt.get("attempted_stages") or [])
+        and not q_tile
+    )
+    q_child_explicit_nonpass = (
+        q_tile.get("status")
+        in {"NOT_RUN", "NOT_RUN_TIME_STOP", "NOT_RUN_RESOURCE_GATE", "FAILED"}
+        and q_coverage.get("status")
+        == {
+            "NOT_RUN": "NOT_RUN",
+            "NOT_RUN_TIME_STOP": "NOT_RUN_TIME_STOP",
+            "NOT_RUN_RESOURCE_GATE": "NOT_RUN_RESOURCE_GATE",
+            "FAILED": "FAILED",
+        }.get(q_tile.get("status"))
+    )
+    checks = {
+        "v23_registered_campaign_sha_bound": (
+            expected_campaign_window_sha256 is not None
+            and campaign.get("campaign_version") == "V23"
+            and campaign.get("window_sha256") == expected_campaign_window_sha256
+        ),
+        "v23_probe_receipt_source_input_physical_identity_matches": (
+            probe.get("run_id") == mode_identity["run_id"]
+            and probe.get("source_sha") == mode_identity["source_sha"]
+            and probe.get("input_sha256") == mode_identity["input_sha256"]
+            and probe.get("physical_model_sha256") == mode_identity["target_physical_model_sha256"]
+        ),
+        "v23_q_child_identity_and_campaign_match": q_child_not_started_for_geometry_gate
+        or (
+            q_tile.get("schema") == "task40extra.review_v23_original_ny8_selected_q_port_tile.v1"
+            and q_tile.get("run_id") == mode_identity["run_id"]
+            and q_tile.get("source_sha") == mode_identity["source_sha"]
+            and q_tile.get("input_sha256") == mode_identity["input_sha256"]
+            and q_tile.get("target_physical_model_sha256") == mode_identity["target_physical_model_sha256"]
+            and isinstance(q_tile.get("campaign_before"), Mapping)
+            and q_tile["campaign_before"].get("window_sha256") == expected_campaign_window_sha256
+            and (
+                not q_child_passed
+                or (
+                    isinstance(q_tile.get("campaign_after"), Mapping)
+                    and q_tile["campaign_after"].get("window_sha256")
+                    == expected_campaign_window_sha256
+                )
+            )
+        ),
+        "v23_q_coverage_is_profile_bound_full_q_unbuilt": (
+            expected_q_count == 8
+            and q_coverage.get("expected_q_count") == expected_q_count
+            and q_coverage.get("built_q_count") == 0
+            and q_coverage.get("full_q_matrix_coverage") == "0/8"
+            and q_coverage.get("volume_qualification")
+            == ("PARTIAL_NOT_RUN" if q_child_passed else "NOT_RUN")
+        ),
+        "v23_selected_q_tile_child_and_oracle_artifacts_are_hash_bound": (
+            q_child_not_started_for_geometry_gate
+            or (
+                q_child_passed
+                and q_tile.get("selected_q_port_tile_built") is True
+                and q_tile.get("full_q_matrix_coverage") == "0/8"
+                and q_tile.get("complete_q_matrices") == "0/8"
+                and q_tile.get("volume_qualification") == "PARTIAL_NOT_RUN"
+                and q_file_valid
+                and q_artifact_binding.get("path") == q_tile_path
+                and q_artifact_binding.get("sha256") == q_tile_digest
+                and oracle_file_valid
+                and oracle_binding.get("path") == oracle_path
+                and oracle_binding.get("sha256") == oracle_digest
+                and frozen_oracle.get("artifact_path") == oracle_path
+                and frozen_oracle.get("artifact_sha256") == oracle_digest
+                and projection_readback_valid
+            )
+            or (
+                q_child_explicit_nonpass
+                and q_file_valid
+                and q_artifact_binding.get("path") == q_tile_path
+                and q_artifact_binding.get("sha256") == q_tile_digest
+            )
+        ),
+        "v23_q_tile_hash_and_contribution_errors_recomputed": (
+            q_child_not_started_for_geometry_gate
+            or q_child_explicit_nonpass
+            or (
+                q_child_passed
+                and q_tile.get("q_tile_sha256") == canonical_tile_sha
+                and tile.get("row_global_q") == 0
+                and tile.get("column_global_q") == 0
+                and tile.get("q_port_alias_column") == 0
+                and all(_v23_q_contribution_checks(tile).values())
+            )
+        ),
+        "v23_full_scan_or_planned_prefix_status_is_explicit": (
+            (
+                full_pass
+                and receipt.get("outcome") == "STAGE_COMPLETED"
+                and full_coverage.get("expected") == 32_060
+                and full_coverage.get("completed") == 32_060
+                and full_coverage.get("completed_by_side")
+                == {"bottom": 16_030, "top": 16_030}
+            )
+            or (
+                planned_handoff
+                and receipt.get("outcome") == "PLANNED_HANDOFF"
+                and q_child_passed
+                and isinstance(receipt.get("planned_handoff"), Mapping)
+                and receipt["planned_handoff"].get("status") == "PLANNED_SUFFIX_HANDOFF"
+                and receipt["planned_handoff"].get("classification")
+                == "PLANNING_ONLY_NOT_A_RESOURCE_OR_NUMERICAL_STOP"
+                and receipt["planned_handoff"].get("suffix_marked_complete") is False
+                and isinstance(completed_mode_count, int)
+                and not isinstance(completed_mode_count, bool)
+                and 0 < completed_mode_count < 32_060
+                and expected_mode_count == 32_060
+                and side_counts_valid
+                and side_count_sum == completed_mode_count
+                and mode_coverage.get("stream_prefix_sha256")
+                and isinstance(probe.get("latest_mode_checkpoint"), Mapping)
+            )
+            or (
+                resource_stopped
+                and receipt.get("outcome") == "RESOURCE_CONTROLLED_STOP"
+                and isinstance(receipt.get("resource_gate"), Mapping)
+                and (
+                    q_child_not_started_for_geometry_gate
+                    or q_child_passed
+                    or q_child_explicit_nonpass
+                )
+            )
+            or (
+                failed_probe
+                and receipt.get("outcome") == "STAGE_FAILED"
+                and bool(receipt.get("failure_message") or probe.get("failure_message"))
+                and (q_child_passed or q_child_explicit_nonpass)
+            )
+        ),
+        "v23_probe_never_claims_full_field_or_official_result": (
+            receipt.get("official_result") is False
+            and (
+                q_child_not_started_for_geometry_gate
+                or (
+                    q_tile.get("official_result") is False
+                    and q_tile.get("pde_solved") is False
+                    and q_tile.get("factor_count") == 0
+                    and q_tile.get("ksp_created") is False
+                    and q_tile.get("official_R_T_A_created") is False
+                )
+            )
+        ),
+    }
+    if q_child_passed:
+        checks.update(_v23_q_contribution_checks(tile))
+    return checks
+
+
 def validate_stage_receipt_semantics(
     receipt: Mapping[str, Any],
     *,
@@ -327,8 +915,10 @@ def validate_stage_receipt_semantics(
     heavy_authorized: bool | None,
     output_directory: str | Path | None = None,
     operator_probe_authorized: bool | None = None,
+    expected_q_count: int | None = None,
+    expected_campaign_window_sha256: str | None = None,
 ) -> dict[str, bool]:
-    """Check the four v2 partial outcomes; none can be promoted to a full result."""
+    """Check registered partial outcomes; none can be promoted to a full result."""
 
     attempted = receipt.get("attempted_stages")
     completed = receipt.get("completed_stages")
@@ -344,14 +934,35 @@ def validate_stage_receipt_semantics(
         )
 
     outcome = receipt.get("outcome")
+    probe_candidate = receipt.get("target_operator_probe")
+    probe_candidate = probe_candidate if isinstance(probe_candidate, Mapping) else {}
+    is_v23_probe = (
+        probe_candidate.get("schema")
+        == "task40extra.review_v23_compact_boundary_operator_probe.v1"
+    )
+    if expected_q_count is None:
+        candidate_q_count = receipt.get("expected_q_count")
+        if not isinstance(candidate_q_count, int) or isinstance(candidate_q_count, bool):
+            candidate_q_count = probe_candidate.get("expected_q_count")
+        if not isinstance(candidate_q_count, int) or isinstance(candidate_q_count, bool):
+            q_coverage_candidate = receipt.get("q_coverage")
+            q_coverage_candidate = (
+                q_coverage_candidate if isinstance(q_coverage_candidate, Mapping) else {}
+            )
+            candidate_q_count = q_coverage_candidate.get("expected_q_count", 4)
+        expected_q_count = int(candidate_q_count)
+    q_count_is_valid = expected_q_count > 0
     checks = {
         "schema_v2": receipt.get("schema") == "task40extra.review_v20_partial_result.v2",
         "requested_stage_matches": receipt.get("requested_stop_stage") == expected_stage,
         "official_result_false": receipt.get("official_result") is False,
         "stage_lists_known_ordered": ordered_known(attempted) and ordered_known(completed),
         "completed_is_attempted_subset": all(stage in attempted for stage in completed),
-        "outcome_supported": outcome
-        in {"AUTH_NOT_GRANTED", "RESOURCE_CONTROLLED_STOP", "STAGE_COMPLETED", "STAGE_FAILED"},
+        "outcome_supported": (
+            outcome
+            in {"AUTH_NOT_GRANTED", "RESOURCE_CONTROLLED_STOP", "STAGE_COMPLETED", "STAGE_FAILED"}
+            or (is_v23_probe and outcome == "PLANNED_HANDOFF")
+        ),
     }
     artifact_hashes = receipt.get("artifact_hashes")
     artifact_hashes = artifact_hashes if isinstance(artifact_hashes, Mapping) else {}
@@ -390,12 +1001,135 @@ def validate_stage_receipt_semantics(
         {
             "artifact_hashes_well_formed_and_bound": artifact_bindings_valid,
             "q_coverage_state_explicit": q_coverage.get("status")
-            in {"KNOWN", "UNKNOWN", "NOT_RUN"},
+            in (
+                {"KNOWN", "UNKNOWN", "NOT_RUN", "PARTIAL_REAL_Q_PORT_TILE", "NOT_RUN_RESOURCE_GATE", "NOT_RUN_TIME_STOP", "FAILED"}
+                if is_v23_probe
+                else {"KNOWN", "UNKNOWN", "NOT_RUN"}
+            ),
+            "profile_q_count_positive": q_count_is_valid,
             "cleanup_state_explicit": cleanup.get("status")
             in {"PASS", "FAILED", "UNKNOWN", "NOT_RUN"},
         }
     )
-    if expected_stage == "target_operator_probe":
+    if expected_stage == "target_operator_probe" and is_v23_probe:
+        allowed_v23_stages = ["preflight", "geometry_inventory", "target_operator_probe"]
+        probe_facts = probe_candidate
+        blocked_task_stage = receipt.get("blocked_task_stage")
+        checks.update(
+            {
+                "operator_probe_authorization_matches_outcome": (
+                    operator_probe_authorized is (outcome != "AUTH_NOT_GRANTED")
+                ),
+                "heavy_authorization_remains_false": heavy_authorized is False,
+                "v23_stage_prefix_order": attempted
+                == allowed_v23_stages[: len(attempted)]
+                and completed == allowed_v23_stages[: len(completed)],
+                "v23_attempted_contains_only_registered_stages": all(
+                    stage in allowed_v23_stages for stage in attempted
+                ),
+                "v23_completed_is_attempted_prefix": completed
+                == attempted[: len(completed)],
+                "v23_profile_q_count_is_eight": expected_q_count == 8
+                and q_coverage.get("expected_q_count") == expected_q_count
+                and q_coverage.get("built_q_count") == 0
+                and q_coverage.get("full_q_matrix_coverage") == "0/8",
+            }
+        )
+        if outcome == "STAGE_COMPLETED":
+            stage_result = receipt.get("stage_result")
+            stage_result = stage_result if isinstance(stage_result, Mapping) else {}
+            checks.update(
+                {
+                    "v23_full_probe_stage_completed": attempted == allowed_v23_stages
+                    and completed == allowed_v23_stages,
+                    "v23_full_scan_status_matches": probe_facts.get("status")
+                    == "PASS_ALL_MODE_B_D_STREAM_WITH_PARTIAL_Q_PORT_TILE",
+                    "v23_stage_marker_matches": stage_result.get("completed_stage")
+                    == "target_operator_probe",
+                    "v23_q_child_coverage_and_errors_recomputed": True,
+                }
+            )
+        elif outcome == "PLANNED_HANDOFF":
+            checks.update(
+                {
+                    "v23_planned_handoff_stage_is_not_claimed_complete": (
+                        attempted == allowed_v23_stages
+                        and completed == allowed_v23_stages[:-1]
+                        and blocked_task_stage is None
+                        and receipt.get("failed_stage") is None
+                    ),
+                    "v23_planned_handoff_is_not_a_gate_or_numerical_stop": (
+                        probe_facts.get("status")
+                        == "PLANNED_SCAN_HANDOFF_WITH_PARTIAL_Q_PORT_TILE"
+                        and isinstance(receipt.get("planned_handoff"), Mapping)
+                        and receipt.get("resource_gate") is None
+                    ),
+                    "v23_q_child_coverage_and_errors_recomputed": True,
+                }
+            )
+        elif outcome == "RESOURCE_CONTROLLED_STOP":
+            checks.update(
+                {
+                    "v23_resource_stage_is_partial": (
+                        blocked_task_stage in {"geometry_inventory", "target_operator_probe"}
+                        and blocked_task_stage in attempted
+                        and blocked_task_stage not in completed
+                        and attempted == [*completed, blocked_task_stage]
+                    ),
+                    "v23_resource_gate_evidence_present": isinstance(
+                        receipt.get("resource_gate"), Mapping
+                    ),
+                    "v23_q_child_coverage_and_errors_recomputed": True,
+                }
+            )
+        elif outcome == "STAGE_FAILED":
+            checks.update(
+                {
+                    "v23_failure_stage_is_attempted_and_incomplete": (
+                        receipt.get("failed_stage") == "target_operator_probe"
+                        and receipt.get("failed_stage") in attempted
+                        and receipt.get("failed_stage") not in completed
+                        and attempted == [*completed, receipt.get("failed_stage")]
+                    ),
+                    "v23_failure_evidence_present": bool(
+                        receipt.get("failure_message") or probe_facts.get("failure_message")
+                    ),
+                    "v23_q_child_coverage_and_errors_recomputed": True,
+                }
+            )
+        elif outcome == "AUTH_NOT_GRANTED":
+            checks.update(
+                {
+                    "v23_authorization_denial_stopped_before_probe": (
+                        operator_probe_authorized is False
+                        and attempted == completed
+                        and "target_operator_probe" not in attempted
+                    ),
+                    "v23_q_not_built": q_coverage.get("built_q_count") == 0,
+                    "v23_q_child_coverage_and_errors_recomputed": True,
+                }
+            )
+        else:
+            checks["v23_q_child_coverage_and_errors_recomputed"] = False
+        if outcome in {
+            "STAGE_COMPLETED",
+            "PLANNED_HANDOFF",
+            "RESOURCE_CONTROLLED_STOP",
+            "STAGE_FAILED",
+        }:
+            v23_detail_checks = _v23_completed_probe_checks(
+                receipt,
+                probe_facts,
+                expected_q_count=expected_q_count,
+                expected_campaign_window_sha256=expected_campaign_window_sha256,
+                output_directory=output_directory,
+            )
+            checks.update(v23_detail_checks)
+            checks["v23_q_child_coverage_and_errors_recomputed"] = all(
+                v23_detail_checks.values()
+            )
+        return checks
+    elif expected_stage == "target_operator_probe":
         allowed_v22_stages = ["preflight", "geometry_inventory", "target_operator_probe"]
         attempted_prefix = attempted == allowed_v22_stages[: len(attempted)]
         completed_prefix = completed == allowed_v22_stages[: len(completed)]
@@ -416,7 +1150,7 @@ def validate_stage_receipt_semantics(
                 == attempted[: len(completed)],
                 "v22_q_inventory_explicit": (
                     q_coverage.get("status") == "NOT_RUN"
-                    and q_coverage.get("expected_q_count") == 8
+                    and q_coverage.get("expected_q_count") == expected_q_count
                     and q_coverage.get("built_q_count") == 0
                 ),
             }
@@ -459,7 +1193,11 @@ def validate_stage_receipt_semantics(
                     "v22_q_remains_unbuilt": q_coverage.get("built_q_count") == 0,
                 }
             )
-            checks.update(_v22_completed_probe_checks(receipt, probe_facts))
+            checks.update(
+                _v22_completed_probe_checks(
+                    receipt, probe_facts, expected_q_count=expected_q_count
+                )
+            )
         elif outcome == "STAGE_FAILED":
             failed_stage = receipt.get("failed_stage")
             checks.update(
@@ -541,8 +1279,8 @@ def validate_stage_receipt_semantics(
             checks["q_csr_hashes_complete"] = (
                 q_coverage.get("status") == "KNOWN"
                 and isinstance(q_inventory, Mapping)
-                and len(q_inventory) == 4
-                and set(q_inventory) == {"0", "1", "2", "3"}
+                and len(q_inventory) == expected_q_count
+                and set(q_inventory) == {str(q) for q in range(expected_q_count)}
                 and all(
                     isinstance(row, Mapping)
                     and isinstance(row.get("csr_sha256"), str)

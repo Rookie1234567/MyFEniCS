@@ -16,7 +16,7 @@
 - 每次 Python/FEniCS 命令都在同一 shell 中 `cd`、source 资格化 activation、做 ABI preflight，再运行命令。
 - 若 exec 返回 ENOENT，先检查既有 `/bin/bash`、`login:false`、精确 workdir 和执行授权参数。
 - 修正调用参数后仍失败时，报告真实阻塞；不切换项目/窗口/主机，也不反复探针。
-- 每次接续读取用户指定的最新 review（本轮为 V10）、固定窗口记录、当前账本与最新 run index。
+- 每次接续读取用户本轮明确指定的最新 review、对应固定窗口记录、当前账本与最新 run index；不得从历史编号恢复旧批次。
 - T0 和 deadline 永不刷新；历史费用、unknown 和负结果不得清零、覆盖或改写。
 - UTC 推导 elapsed/remaining 与 monotonic elapsed、资源耗时、费用扣款分开记录。
 - 一次只运行一个 heavy case；先过 ABI 与输入身份 Gate，W0 不通过时不启动 W1 FE/W2。

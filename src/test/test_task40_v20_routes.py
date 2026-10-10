@@ -1033,6 +1033,79 @@ def test_v22_operator_probe_selector_is_explicit_and_reaches_stage_runner(
     assert all(checks.values()), checks
 
 
+def test_v23_planned_scan_handoff_remains_nested_under_target_operator_probe(
+    tmp_path, monkeypatch
+):
+    from scripts.task40_v20_service_workflow import render_stage_input
+    from src.runners import task038_full3d_iterative
+    from src.runners import task40_v20_stage_runner
+
+    canonical = INPUT_ROOT / "target_original_ny8_operator_probe_v22.dat"
+    staged_text = render_stage_input(
+        canonical.read_text(encoding="utf-8"), "target_operator_probe"
+    )
+    staged = tmp_path / canonical.name
+    staged.write_text(staged_text, encoding="utf-8")
+    resolved = load_and_resolve(staged).as_jsonable()
+
+    def fake_preflight(payload, *, source_sha, profile, mesh_id):
+        assert profile == "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1"
+        assert mesh_id == "TARGET_ORIGINAL_NY8"
+        return (
+            {
+                "run_id": payload["run_id"],
+                "source_sha": source_sha,
+                "input_sha256": payload["provenance"]["input_sha256"],
+                "physical_model_sha256": payload["provenance"]["physical_model_sha256"],
+            },
+            (),
+            (),
+        )
+
+    def fake_probe(*_args, **_kwargs):
+        return {
+            "schema": "task40extra.review_v23_compact_boundary_operator_probe.v1",
+            "status": "PLANNED_SCAN_HANDOFF_WITH_PARTIAL_Q_PORT_TILE",
+            "attempted_stages": ["geometry_inventory", "target_operator_probe"],
+            "completed_stages": ["geometry_inventory"],
+            "partial_stages": ["target_operator_probe"],
+            "failed_stage": None,
+            "blocked_task_stage": None,
+            "planned_handoff": {
+                "status": "PLANNED_SUFFIX_HANDOFF",
+                "classification": "PLANNING_ONLY_NOT_A_RESOURCE_OR_NUMERICAL_STOP",
+                "suffix_marked_complete": False,
+            },
+            "q_coverage": {
+                "status": "PARTIAL_REAL_Q_PORT_TILE",
+                "expected_q_count": 8,
+                "built_q_count": 0,
+                "full_q_matrix_coverage": "0/8",
+            },
+            "official_result": False,
+        }
+
+    monkeypatch.setattr(task40_v20_stage_runner, "_preflight", fake_preflight)
+    import src.solvers.task40_v22_operator_probe as probe_module
+
+    monkeypatch.setattr(probe_module, "run_v22_target_operator_probe", fake_probe)
+    output = tmp_path / "worker-output"
+    outcome = task038_full3d_iterative.run_full3d_iterative(
+        resolved, output, source_sha="a" * 40
+    )
+    receipt = json.loads((output / "v20_partial_result.json").read_text())
+    assert outcome["status"] == "planned_handoff"
+    assert receipt["outcome"] == "PLANNED_HANDOFF"
+    assert receipt["classification"] == (
+        "TARGET_OPERATOR_PROBE_PLANNED_SCAN_HANDOFF_Q_PORT_TILE_COMPLETE"
+    )
+    assert receipt["requested_stop_stage"] == "target_operator_probe"
+    assert receipt["completed_stages"] == ["preflight", "geometry_inventory"]
+    assert receipt["partial_stages"] == ["target_operator_probe"]
+    assert receipt["planned_handoff"]["suffix_marked_complete"] is False
+    assert receipt["q_coverage"]["full_q_matrix_coverage"] == "0/8"
+
+
 def test_v22_action_checkpoint_roundtrips_exact_completed_B_D_H_prefix(tmp_path):
     import numpy as np
 
@@ -2017,3 +2090,100 @@ def test_v20_v14_runtime_rejects_unregistered_campaign_scope_before_window_read(
             batch_identity=f"task40_review_v20_{case.mesh_id.lower()}_wrong_scope",
             evidence_prefix=f"v20_{case.mesh_id.lower()}_wrong_scope_fixture",
         )
+
+
+def test_service_campaign_router_scopes_v23_separately_from_v22():
+    from scripts import task40_v20_service_workflow as service
+
+    target = service._resolve_service_campaign(
+        ROOT,
+        service.TASK40_V23_CAMPAIGN_WINDOW,
+        profile=service.V23_TARGET_PROFILE,
+        stop_stage="target_operator_probe",
+    )
+    assert target["sha256"] == service.TASK40_V23_CAMPAIGN_SHA256
+    assert target["stage_scope"] == "target_operator_probe"
+
+    with pytest.raises(ValueError, match="restricted to the registered Ny8 target"):
+        service._resolve_service_campaign(
+            ROOT,
+            service.TASK40_V23_CAMPAIGN_WINDOW,
+            profile="task40extra_v20_p6_y_orbit_e2_reference_v1",
+            stop_stage="target_operator_probe",
+        )
+    with pytest.raises(ValueError, match="outside its explicit campaign scope"):
+        service._resolve_service_campaign(
+            ROOT,
+            service.TASK40_V23_CAMPAIGN_WINDOW,
+            profile=service.V23_TARGET_PROFILE,
+            stop_stage="local_port_components",
+        )
+
+
+def test_partial_checker_cli_and_api_share_profile_q_count(tmp_path, capsys):
+    import json
+
+    from scripts import task40_v20_service_workflow as service
+
+    profile = service.V23_TARGET_PROFILE
+    input_path = tmp_path / "input.dat"
+    input_path.write_text(
+        "[solver]\npreconditioner = \"" + profile + "\"\n"
+        "[execution]\ntask40_v22_operator_probe_authorized = false\n"
+        "task40_target_heavy_authorized = false\n",
+        encoding="utf-8",
+    )
+    source_sha = "a" * 40
+    input_sha = service._sha256_file(input_path)
+    physical_sha = "b" * 64
+    manifest_path = tmp_path / "run_manifest.json"
+    manifest_path.write_text(json.dumps({
+        "run_id": "fixture_v23",
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+    }), encoding="utf-8")
+    summary_path = tmp_path / "run_summary.json"
+    summary_path.write_text(json.dumps({"result_classification": "controlled_stop"}), encoding="utf-8")
+    numerical_output = tmp_path / "numerical"
+    numerical_output.mkdir()
+    partial = {
+        "schema": "task40extra.review_v20_partial_result.v2",
+        "status": "failed",
+        "outcome": "AUTH_NOT_GRANTED",
+        "run_id": "fixture_v23",
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "requested_stop_stage": "target_operator_probe",
+        "attempted_stages": ["preflight"],
+        "completed_stages": ["preflight"],
+        "official_result": False,
+        "q_coverage": {"status": "NOT_RUN", "expected_q_count": 8, "built_q_count": 0},
+        "cleanup": {"status": "NOT_RUN"},
+        "artifact_hashes": {},
+    }
+    (numerical_output / "v20_partial_result.json").write_text(
+        json.dumps(partial), encoding="utf-8"
+    )
+    expected = service._check_partial_result(
+        input_path=input_path,
+        summary_path=summary_path,
+        manifest_path=manifest_path,
+        numerical_output=numerical_output,
+        expected_stop_stage="target_operator_probe",
+    )
+    output_path = tmp_path / "checker.json"
+    code = service.main([
+        "check-partial",
+        "--input", str(input_path),
+        "--summary", str(summary_path),
+        "--manifest", str(manifest_path),
+        "--numerical-output", str(numerical_output),
+        "--stop-stage", "target_operator_probe",
+        "--output", str(output_path),
+    ])
+    capsys.readouterr()
+    assert code == 0, expected
+    assert expected["profile_q_count"] == 8
+    assert json.loads(output_path.read_text(encoding="utf-8")) == expected

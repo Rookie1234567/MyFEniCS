@@ -19,7 +19,8 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass, field
 import hashlib
-from types import MappingProxyType
+import sys
+from types import GeneratorType, MappingProxyType
 from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
@@ -200,6 +201,471 @@ class P6DirectTracePortTerms:
     B_values: np.ndarray = field(default_factory=lambda: np.empty(0, dtype=np.complex128))
     D_original_rows: np.ndarray = field(default_factory=lambda: np.empty(0, dtype=PETSc.IntType))
     D_values: np.ndarray = field(default_factory=lambda: np.empty(0, dtype=np.complex128))
+
+
+class P6GlobalDirectCarrierProvider:
+    """Replay production mode functionals while retaining only one direct mode.
+
+    The factory must create a fresh iterator over the ordered production
+    FullspaceDtnModeFunctional stream. Its mode table is metadata; carrier
+    values are never tupled or cached. Rows classified as cell interior are
+    omitted here and must be represented by the action's local cell terms
+    when interior_rows_are_managed is true. When attached to an action, this
+    provider owns every retained trace B/D row: cached local terms may supply
+    only Bi/Di (Bt/Dt must be absent or exactly zero), and generated local
+    trace callbacks are rejected because their non-overlap cannot be proven.
+    Every remaining row is already MPC-processed: this provider only maps its
+    original global row to the active trace index and never applies an MPC
+    pullback.
+    """
+
+    def __init__(
+        self,
+        entry_factory: Callable[[], Any],
+        *,
+        condensed: AssemblyTimeCondensedSystem,
+        mode_count: int,
+        interior_rows_are_managed: bool = False,
+        interior_rows: Any | None = None,
+        source_label: str = "production_mode_iterator",
+    ) -> None:
+        if not callable(entry_factory):
+            raise TypeError("global direct provider requires a repeatable iterator factory")
+        if isinstance(mode_count, bool) or not isinstance(mode_count, int):
+            raise TypeError("global direct provider mode_count must be an integer")
+        if mode_count != int(condensed.appended_rows):
+            raise ValueError("global direct provider mode count differs from the port block")
+        if not source_label:
+            raise ValueError("global direct provider source label must be nonempty")
+        self._entry_factory = entry_factory
+        self.mode_count = mode_count
+        self.interior_rows_are_managed = bool(interior_rows_are_managed)
+        self.source_label = str(source_label)
+        self._condensed = condensed
+        self.full_rows = int(condensed.full_rows)
+        self._original_to_active = condensed.trace_constraints.original_to_active
+        self._expected_mode_keys: tuple[tuple[Any, ...], ...] | None = None
+        self._expected_h_values: np.ndarray | None = None
+        self._original_h_identity_sha256: str | None = None
+        self._original_h_mode_indices: tuple[int, ...] | None = None
+        if interior_rows is not None:
+            if self.interior_rows_are_managed:
+                raise ValueError("explicit interior-row classifier cannot also manage local interior terms")
+            rows = np.asarray(interior_rows)
+            if (
+                rows.ndim != 1
+                or rows.dtype.kind not in "iu"
+                or (rows.size and (int(rows[0]) < 0 or int(rows[-1]) >= self.full_rows))
+                or (rows.size > 1 and np.any(rows[1:] <= rows[:-1]))
+            ):
+                raise ValueError("explicit interior-row classifier must be sorted unique global indices")
+            # Borrow the already-qualified classifier; do not duplicate the
+            # many-million-row volume inventory for a selected boundary tile.
+            self._interior_records = None
+            self._interior_rows = rows
+        elif self.interior_rows_are_managed:
+            interior_count = sum(
+                len(cell.interior_original_dofs) for cell in condensed.cell_recovery_maps
+            )
+            record_dtype = np.dtype(
+                [
+                    ("row", np.dtype(PETSc.IntType)),
+                    ("cell", np.dtype(np.int32)),
+                    ("local", np.dtype(np.int32)),
+                ]
+            )
+            interior_records = np.empty(interior_count, dtype=record_dtype)
+            offset = 0
+            for cell_index, cell in enumerate(condensed.cell_recovery_maps):
+                rows = np.asarray(cell.interior_original_dofs, dtype=PETSc.IntType).reshape(-1)
+                stop = offset + len(rows)
+                interior_records["row"][offset:stop] = rows
+                interior_records["cell"][offset:stop] = cell_index
+                interior_records["local"][offset:stop] = np.arange(
+                    len(rows), dtype=np.int32
+                )
+                offset = stop
+            interior_records.sort(order="row", kind="stable")
+            interior_rows = interior_records["row"]
+            if interior_rows.size > 1 and np.any(interior_rows[1:] == interior_rows[:-1]):
+                raise ValueError("cell interior row metadata contains duplicate global rows")
+            self._interior_records: np.ndarray | None = interior_records
+            self._interior_rows = interior_rows
+        else:
+            interior_parts = [
+                np.asarray(cell.interior_original_dofs, dtype=PETSc.IntType).reshape(-1)
+                for cell in condensed.cell_recovery_maps
+                if len(cell.interior_original_dofs)
+            ]
+            if interior_parts:
+                interior_rows = np.concatenate(interior_parts)
+                interior_rows.sort()
+                if interior_rows.size > 1 and np.any(interior_rows[1:] == interior_rows[:-1]):
+                    raise ValueError("cell interior row metadata contains duplicate global rows")
+            else:
+                interior_rows = np.empty(0, dtype=PETSc.IntType)
+            self._interior_records = None
+            self._interior_rows = interior_rows
+        self._cell_ports: tuple[np.ndarray, ...] | None = None
+        self._bound_cells: tuple[Any, ...] | None = None
+        self._sweep_counts: dict[str, int] = defaultdict(int)
+        self._entry_counts: dict[str, int] = defaultdict(int)
+        self._direct_entry_counts: dict[str, int] = defaultdict(int)
+        self._interior_entry_counts: dict[str, int] = defaultdict(int)
+        self._max_current_mode_payload_bytes = 0
+        self._max_direct_rows_by_side: dict[str, int] = {"B": 0, "D": 0}
+
+    @property
+    def condensed(self) -> AssemblyTimeCondensedSystem:
+        return self._condensed
+
+    def bind_cell_terms(self, cells: Sequence[Any]) -> None:
+        """Bind interior ownership after the action has built its real cells."""
+        if not self.interior_rows_are_managed:
+            return
+        if len(cells) != len(self._condensed.cell_recovery_maps):
+            raise ValueError("provider cell ownership differs from its condensed owner")
+        self._bound_cells = tuple(cells)
+        self._cell_ports = tuple(
+            np.asarray(cell.ports, dtype=PETSc.IntType) for cell in self._bound_cells
+        )
+
+    def bind_original_port_block(
+        self,
+        original_port_block: DiagonalOriginalPortBlock | DenseOriginalPortBlock,
+        *,
+        mode_indices: Sequence[int] | None = None,
+    ) -> None:
+        """Bind every stream yield to the original ordered mode keys and H_p."""
+        if not isinstance(original_port_block, (DiagonalOriginalPortBlock, DenseOriginalPortBlock)):
+            raise TypeError("global direct provider requires an explicit original H_p identity")
+        if mode_indices is None:
+            indices = tuple(range(original_port_block.count))
+        else:
+            indices = tuple(mode_indices)
+            if any(type(index) is not int for index in indices):
+                raise TypeError("provider original-H mode indices must be integers")
+        if len(indices) != self.mode_count or any(
+            index < 0 or index >= original_port_block.count for index in indices
+        ):
+            raise ValueError("provider ordered mode slice differs from its port count")
+        keys = tuple(tuple(original_port_block.mode_keys[index]) for index in indices)
+        if any(len(key) != 5 for key in keys) or len(set(keys)) != len(keys):
+            raise ValueError("original H_p mode keys must be unique five-field physical identities")
+        if isinstance(original_port_block, DiagonalOriginalPortBlock):
+            h_values: np.ndarray | None = np.ascontiguousarray(
+                original_port_block.diagonal[np.asarray(indices, dtype=np.int64)],
+                dtype=np.complex128,
+            )
+        else:
+            # Generic dense H has no per-mode scalar identity; retain its full
+            # original-block digest and ordered keys without copying a square.
+            h_values = None
+        if h_values is not None and (
+            h_values.shape != (self.mode_count,) or not np.isfinite(h_values).all()
+        ):
+            raise ValueError("original H_p mode slice is nonfinite or has the wrong layout")
+        if self._expected_mode_keys is not None and (
+            self._expected_mode_keys != keys
+            or (
+                self._expected_h_values is not None
+                and h_values is not None
+                and not np.array_equal(self._expected_h_values, h_values)
+            )
+        ):
+            raise ValueError("provider was already bound to a different original H_p identity")
+        self._expected_mode_keys = keys
+        self._expected_h_values = h_values
+        self._original_h_identity_sha256 = str(original_port_block.identity_sha256)
+        self._original_h_mode_indices = indices
+
+    @staticmethod
+    def _entry_component(entry: Any, side: str) -> tuple[np.ndarray, np.ndarray]:
+        rows = np.asarray(
+            getattr(entry, "coupling_rows" if side == "B" else "projection_rows")
+        ).reshape(-1)
+        values = np.asarray(
+            getattr(entry, "coupling_values" if side == "B" else "projection_values")
+        ).reshape(-1)
+        if rows.dtype.kind not in "iu" or rows.dtype.kind == "b":
+            raise ValueError(f"production {side} rows must be integer global indices")
+        if values.dtype.kind not in "biufc" or rows.size != values.size:
+            raise ValueError(f"production {side} row/value layout is invalid")
+        if values.dtype != np.dtype(np.complex128):
+            values = np.asarray(values, dtype=np.complex128)
+        if not np.isfinite(values).all():
+            raise ValueError(f"production {side} values contain non-finite entries")
+        if rows.size > 1 and np.any(rows[1:] <= rows[:-1]):
+            raise ValueError(f"production {side} rows must be sorted and unique")
+        return rows, values
+
+    def _direct_component(
+        self, entry: Any, port: int, side: str, operation: str
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        rows, values = self._entry_component(entry, side)
+        if rows.size and (int(rows[0]) < 0 or int(rows[-1]) >= self.full_rows):
+            raise ValueError(f"production {side} row exceeds the full FE storage range")
+        if not rows.size:
+            empty = np.empty(0, dtype=PETSc.IntType)
+            return empty, values, empty
+        positions = np.searchsorted(self._interior_rows, rows)
+        interior = positions < len(self._interior_rows)
+        if np.any(interior):
+            candidates = np.flatnonzero(interior)
+            interior[candidates] = (
+                self._interior_rows[positions[candidates]] == rows[candidates]
+            )
+        interior_count = int(np.count_nonzero(interior))
+        if interior_count and not self.interior_rows_are_managed:
+            raise ValueError(
+                f"production {side} stream has {interior_count} interior rows without local cell terms"
+            )
+        if interior_count:
+            if (
+                self._interior_records is None
+                or self._cell_ports is None
+                or self._bound_cells is None
+            ):
+                raise RuntimeError("managed interior support has not been bound to action cells")
+            interior_positions = np.flatnonzero(interior)
+            record_positions = positions[interior]
+            owners = self._interior_records["cell"][record_positions]
+            local_rows = self._interior_records["local"][record_positions]
+            for owner in np.unique(owners):
+                cell_index = int(owner)
+                selected = owners == owner
+                cell = self._bound_cells[cell_index]
+                port_columns = np.flatnonzero(self._cell_ports[cell_index] == port)
+                if port_columns.size != 1:
+                    raise ValueError(
+                        f"production {side} interior row for mode {port} has no local term on cell {cell_index}"
+                    )
+                if cell.generated_action is not None:
+                    raise ValueError(
+                        f"production {side} interior support on cell {cell_index} uses an unqualified generated local term"
+                    )
+                selected_local = local_rows[selected]
+                selected_values = values[interior_positions[selected]]
+                expected_values = (
+                    cell.Bi[selected_local, int(port_columns[0])]
+                    if side == "B"
+                    else cell.Di[int(port_columns[0]), selected_local]
+                )
+                if not np.array_equal(expected_values, selected_values):
+                    raise ValueError(
+                        f"production {side} interior values for mode {port} differ from local terms on cell {cell_index}"
+                    )
+        keep = ~interior
+        direct_rows = rows if bool(np.all(keep)) else rows[keep]
+        direct_values = values if bool(np.all(keep)) else values[keep]
+        active_rows = np.empty(len(direct_rows), dtype=PETSc.IntType)
+        try:
+            for index, original in enumerate(direct_rows):
+                active_rows[index] = self._original_to_active[int(original)]
+        except KeyError as exc:
+            raise ValueError(
+                f"production {side} direct row is an MPC slave or outside the active trace"
+            ) from exc
+        self._direct_entry_counts[f"{operation}/{side}"] += len(direct_rows)
+        self._interior_entry_counts[f"{operation}/{side}"] += interior_count
+        self._max_direct_rows_by_side[side] = max(
+            self._max_direct_rows_by_side[side], len(direct_rows)
+        )
+        _ = port
+        return direct_rows, direct_values, active_rows
+
+    def _iter_mode_data(
+        self, operation: str, *, components: tuple[str, ...] = ("B", "D")
+    ):
+        if self._expected_mode_keys is None:
+            raise RuntimeError("global direct provider is not bound to the original ordered H_p block")
+        self._sweep_counts[operation] += 1
+        source = self._entry_factory()
+        if not isinstance(source, GeneratorType):
+            raise TypeError("global direct provider factory must return a streaming generator")
+        iterator = iter(source)
+        emitted = 0
+        current = None
+        entry = None
+        try:
+            for port, entry in enumerate(iterator):
+                if port >= self.mode_count:
+                    raise ValueError("global direct provider emitted more entries than its port count")
+                key = getattr(entry, "mode_key", None)
+                try:
+                    normalized_key = (
+                        int(key[0]), str(key[1]), int(key[2]), int(key[3]), str(key[4])
+                    )
+                except (IndexError, TypeError, ValueError) as error:
+                    raise ValueError("global direct provider emitted a malformed full mode key") from error
+                if tuple(key) != normalized_key or normalized_key != self._expected_mode_keys[port]:
+                    raise ValueError(
+                        f"global direct provider full mode key/order differs from original H_p at port {port}"
+                    )
+                if self._expected_h_values is not None:
+                    try:
+                        entry_h = complex(getattr(entry, "normalization_h"))
+                    except (AttributeError, TypeError, ValueError) as error:
+                        raise ValueError("global direct provider emitted invalid original H_p") from error
+                    if entry_h != complex(self._expected_h_values[port]):
+                        raise ValueError(
+                            f"global direct provider H_p differs from original mode identity at port {port}"
+                        )
+                current = {}
+                for side in components:
+                    current[side] = self._direct_component(entry, port, side, operation)
+                self._entry_counts[operation] += 1
+                emitted += 1
+                self._max_current_mode_payload_bytes = max(
+                    self._max_current_mode_payload_bytes,
+                    int(sum(array.nbytes for part in current.values() for array in part)),
+                )
+                yield port, current.get("B"), current.get("D")
+                current = None
+                entry = None
+            if emitted != self.mode_count:
+                raise ValueError(
+                    f"global direct provider emitted {emitted} modes; expected {self.mode_count}"
+                )
+        finally:
+            current = None
+            entry = None
+            source.close()
+
+    def add_B_full(self, alpha: np.ndarray, target: np.ndarray) -> None:
+        for port, b_data, _d_data in self._iter_mode_data(
+            "apply_B_full", components=("B",)
+        ):
+            assert b_data is not None
+            rows, values, _active = b_data
+            if rows.size:
+                target[rows] += values * alpha[port]
+
+    def add_D_full(self, field: np.ndarray, target: np.ndarray) -> None:
+        for port, _b_data, d_data in self._iter_mode_data(
+            "apply_D_full", components=("D",)
+        ):
+            assert d_data is not None
+            rows, values, _active = d_data
+            if rows.size:
+                target[port] += np.dot(values, field[rows])
+
+    def add_reduced(
+        self, target: np.ndarray, alpha: np.ndarray, active: np.ndarray
+    ) -> None:
+        for port, b_data, d_data in self._iter_mode_data("reduced_apply"):
+            assert b_data is not None and d_data is not None
+            b_rows, b_values, b_active = b_data
+            if b_rows.size:
+                target[b_active] += b_values * alpha[port]
+            d_rows, d_values, d_active = d_data
+            if d_rows.size:
+                target[len(active) + port] -= np.dot(d_values, active[d_active])
+
+    def iter_reduced_direct_tiles(self):
+        """Yield one mode's bounded B/D trace rows in active coordinates.
+
+        This is the numerical seam for consumers that project a selected
+        direct port tile without first constructing a complete condensed
+        action.  Each yield borrows only the current source mode; callers must
+        consume or discard it before requesting the next one.
+        """
+
+        yield from self._iter_mode_data("reduced_direct_tiles")
+
+    @property
+    def audit(self) -> Mapping[str, Any]:
+        expected_h_copy_bytes = (
+            0 if self._expected_h_values is None else int(self._expected_h_values.nbytes)
+        )
+        mode_keys = self._expected_mode_keys or ()
+        mode_key_metadata_bytes = sys.getsizeof(mode_keys) + sum(
+            sys.getsizeof(key) + sum(sys.getsizeof(value) for value in key)
+            for key in mode_keys
+        )
+        interior_classifier_bytes = int(
+            self._interior_rows.nbytes
+            if self._interior_records is None
+            else self._interior_records.nbytes
+        )
+        return MappingProxyType({
+            "source": self.source_label,
+            "mode_count": int(self.mode_count),
+            "provider_retains_entries_between_yields": False,
+            "source_iterator_workspace_included": False,
+            "source_iterator_final_mode_cache_reported_separately": True,
+            "original_H_mode_identity_sha256": self._original_h_identity_sha256,
+            "original_H_mode_indices": (
+                None if self._original_h_mode_indices is None
+                else list(self._original_h_mode_indices)
+            ),
+            "ordered_full_mode_keys_bound": self._expected_mode_keys is not None,
+            "original_H_values_bound": self._expected_h_values is not None,
+            "interior_rows_are_managed_by_local_terms": self.interior_rows_are_managed,
+            "interior_ownership_checked_per_cell_and_mode": bool(
+                self.interior_rows_are_managed and self._cell_ports is not None
+            ),
+            "interior_values_checked_against_cached_local_terms": bool(
+                self.interior_rows_are_managed and self._bound_cells is not None
+            ),
+            "interior_classifier_rows": int(len(self._interior_rows)),
+            "interior_classifier_bytes": int(
+                interior_classifier_bytes
+            ),
+            "expected_H_values_backing_bytes": expected_h_copy_bytes,
+            "expected_mode_key_metadata_shallow_bytes": int(mode_key_metadata_bytes),
+            "provider_owned_backing_bytes": int(
+                interior_classifier_bytes
+                + expected_h_copy_bytes
+                + mode_key_metadata_bytes
+            ),
+            "direct_rows_use_active_index_mapping_only": True,
+            "second_mpc_application": False,
+            "iterator_sweeps_by_operation": dict(self._sweep_counts),
+            "mode_entries_processed_by_operation": dict(self._entry_counts),
+            "direct_rows_processed_by_operation_and_side": dict(self._direct_entry_counts),
+            "interior_rows_deferred_by_operation_and_side": dict(self._interior_entry_counts),
+            "peak_current_mode_payload_bytes": int(self._max_current_mode_payload_bytes),
+            "peak_direct_rows_by_side": dict(self._max_direct_rows_by_side),
+        })
+
+
+def build_p6_global_direct_provider_from_surface(
+    condensed: AssemblyTimeCondensedSystem,
+    modes: Sequence[Any],
+    surface_assemblers: Mapping[tuple[str, int], Any],
+    mpc: Any,
+    cfg: Any,
+    *,
+    phase_gauge: str = "global_z",
+    assembly_context: Mapping[str, Any] | None = None,
+    interior_rows_are_managed: bool = False,
+) -> P6GlobalDirectCarrierProvider:
+    """Bind the bounded provider to the production surface functional iterator."""
+
+    from .fullspace_dtn_action import iter_fullspace_dtn_functionals_from_surface
+
+    mode_table = tuple(modes)
+    if len(mode_table) != int(condensed.appended_rows):
+        raise ValueError("production mode table differs from the appended port rows")
+
+    def factory():
+        return iter_fullspace_dtn_functionals_from_surface(
+            mode_table,
+            surface_assemblers,
+            mpc,
+            cfg,
+            phase_gauge=phase_gauge,
+            assembly_context=assembly_context,
+        )
+
+    return P6GlobalDirectCarrierProvider(
+        factory,
+        condensed=condensed,
+        mode_count=len(mode_table),
+        interior_rows_are_managed=interior_rows_are_managed,
+        source_label="iter_fullspace_dtn_functionals_from_surface",
+    )
 
 
 @dataclass(frozen=True)
@@ -626,6 +1092,7 @@ class P6CellCondensedAction:
         port_terms: Mapping[int, P6CellPortTerms] | None = None,
         generated_port_actions: Mapping[int, P6GeneratedCellPortAction] | None = None,
         direct_trace_terms: Sequence[P6DirectTracePortTerms] = (),
+        global_direct_provider: P6GlobalDirectCarrierProvider | None = None,
         direct_terms_are_owned: bool = False,
         owns_condensed: bool = False,
         port_coupling_mode: str = "cached",
@@ -645,13 +1112,33 @@ class P6CellCondensedAction:
             port_block_layout == RESEARCH_PORT_LAYOUT
             and port_coupling_mode != "cached"
             and not generated_port_actions
+            and global_direct_provider is None
         ):
-            raise ValueError("research layout needs cached XiB or generated streamed port actions")
+            raise ValueError(
+                "research layout needs cached XiB, generated cell actions, or a global direct provider"
+            )
         if generated_port_actions and port_coupling_mode != "streamed":
             raise ValueError("generated per-cell port actions require streamed coupling mode")
+        if global_direct_provider is not None and not isinstance(
+            global_direct_provider, P6GlobalDirectCarrierProvider
+        ):
+            raise TypeError("global_direct_provider must be a P6GlobalDirectCarrierProvider")
+        if (
+            global_direct_provider is not None
+            and global_direct_provider.condensed is not condensed
+        ):
+            raise ValueError("global direct provider belongs to a different condensed owner")
+        if global_direct_provider is not None and direct_trace_terms:
+            raise ValueError("static and streamed direct trace terms cannot be combined")
+        if (
+            global_direct_provider is not None
+            and global_direct_provider.mode_count != int(condensed.appended_rows)
+        ):
+            raise ValueError("global direct provider port count differs from the action")
         self.port_block_layout = str(port_block_layout)
         self.port_coupling_mode = str(port_coupling_mode)
         self.condensed = condensed
+        self._global_direct_provider = global_direct_provider
         self.owns_condensed = bool(owns_condensed)
         self._streamed_action_lu_solve_count = 0
         self._streamed_recovery_lu_solve_count = 0
@@ -678,6 +1165,10 @@ class P6CellCondensedAction:
                 raise ValueError("original_port_block size differs from the appended port rows")
             self._H_p = None
             self._original_port_block = original_port_block
+        if global_direct_provider is not None:
+            if self._original_port_block is None:
+                raise ValueError("global direct provider requires the explicit original H_p mode identity")
+            global_direct_provider.bind_original_port_block(self._original_port_block)
         self._port_terms = dict(port_terms or {})
         unknown_cells = set(self._port_terms).difference(range(len(condensed.cell_recovery_maps)))
         if unknown_cells:
@@ -692,6 +1183,8 @@ class P6CellCondensedAction:
         if any(not isinstance(action, P6GeneratedCellPortAction) for action in self._generated_port_actions.values()):
             raise TypeError("generated_port_actions must contain P6GeneratedCellPortAction values")
         self._cells: tuple[_CellActionData, ...] = self._build_cells(retained)
+        if self._global_direct_provider is not None:
+            self._global_direct_provider.bind_cell_terms(self._cells)
         # The streamed prototype does not retain its staging map after cell
         # arrays are validated.  Preserve the established cached object's
         # metadata lifetime and behavior.
@@ -794,6 +1287,7 @@ class P6CellCondensedAction:
             "class_cache_shared_across_cells": True,
             "direct_trace_B_entry_count": int(sum(len(rows) for rows, _values in self._direct_B_original.values())),
             "direct_trace_D_entry_count": int(sum(len(rows) for rows, _values in self._direct_D_original.values())),
+            "global_direct_provider_enabled": self._global_direct_provider is not None,
             "direct_term_construction": {
                 "strategy": (
                     "bounded_reusable_chunk_owned_outputs"
@@ -856,6 +1350,19 @@ class P6CellCondensedAction:
                 name=f"port_terms[{index}]",
             )
             generated_action = self._generated_port_actions.get(index)
+            if self._global_direct_provider is not None:
+                if generated_action is not None:
+                    raise ValueError(
+                        "global direct provider owns all trace B/D rows; generated local trace callbacks are not qualified"
+                    )
+                if bt is not None and np.any(bt != 0):
+                    raise ValueError(
+                        "global direct provider owns all trace B rows; cached local Bt must be absent or exactly zero"
+                    )
+                if dt is not None and np.any(dt != 0):
+                    raise ValueError(
+                        "global direct provider owns all trace D rows; cached local Dt must be absent or exactly zero"
+                    )
             if generated_action is not None:
                 if any(not callable(getattr(generated_action, name)) for name in ("apply_B", "apply_D")):
                     raise TypeError("generated cell port actions must provide callable B and D actions")
@@ -1171,6 +1678,11 @@ class P6CellCondensedAction:
         self._audit["generated_callback_call_count"] = int(
             self._generated_callback_call_count
         )
+        self._audit["global_direct_provider"] = (
+            None
+            if self._global_direct_provider is None
+            else dict(self._global_direct_provider.audit)
+        )
         return MappingProxyType(self._audit)
 
     @property
@@ -1282,6 +1794,52 @@ class P6CellCondensedAction:
                 "resident_Hhat_bytes": 0 if self._Hhat is None else int(self._Hhat.nbytes),
                 "Hhat_materialized": self._Hhat is not None,
                 "per_cell_transformed_arrays_resident": self.port_coupling_mode == "cached",
+                "global_direct_provider_metadata_bytes": (
+                    0
+                    if self._global_direct_provider is None
+                    else int(
+                        self._global_direct_provider.audit["interior_classifier_bytes"]
+                        + self._global_direct_provider.audit[
+                            "expected_mode_key_metadata_shallow_bytes"
+                        ]
+                    )
+                ),
+                "global_direct_provider_expected_H_copy_bytes": (
+                    0
+                    if self._global_direct_provider is None
+                    else int(
+                        self._global_direct_provider.audit[
+                            "expected_H_values_backing_bytes"
+                        ]
+                    )
+                ),
+                "global_direct_provider_owned_backing_bytes": (
+                    0
+                    if self._global_direct_provider is None
+                    else int(
+                        self._global_direct_provider.audit[
+                            "provider_owned_backing_bytes"
+                        ]
+                    )
+                ),
+                "global_direct_provider_mode_key_metadata_shallow_bytes": (
+                    0
+                    if self._global_direct_provider is None
+                    else int(
+                        self._global_direct_provider.audit[
+                            "expected_mode_key_metadata_shallow_bytes"
+                        ]
+                    )
+                ),
+                "global_direct_provider_resident_value_bytes": 0,
+                "global_direct_provider_bytes_scope": (
+                    "resident coupling-entry cache only; fixed H copy and mode-key metadata are counted in provider-owned backing"
+                ),
+                "global_direct_provider_audit": (
+                    None
+                    if self._global_direct_provider is None
+                    else dict(self._global_direct_provider.audit)
+                ),
             }
         )
 
@@ -1692,6 +2250,8 @@ class P6CellCondensedAction:
         for port, (rows, values) in self._direct_D_active.items():
             total = np.dot(values, active[rows])
             target[self.condensed.active_rows + port] -= total
+        if self._global_direct_provider is not None:
+            self._global_direct_provider.add_reduced(target, alpha, active)
 
     def mult(self, _matrix: PETSc.Mat | None, source: PETSc.Vec, target: PETSc.Vec) -> None:
         """PETSc MatPython callback backed by the single validated action path."""
@@ -1753,10 +2313,15 @@ class P6CellCondensedAction:
         if self.condensed.comm.Get_size() != 1:
             raise ValueError("reduced contribution layouts require MPI1")
         has_generated = any(cell.generated_action is not None for cell in self._cells)
-        if has_generated and (
+        requires_bounded_port_tiles = (
+            has_generated or self._global_direct_provider is not None
+        )
+        if requires_bounded_port_tiles and (
             type(hhat_block_columns) is not int or hhat_block_columns <= 0
         ):
-            raise ValueError("generated reduced contribution layouts require a bounded port tile width")
+            raise ValueError(
+                "generated/local or global direct reduced layouts require bounded Hhat port columns"
+            )
         trace_rows = int(self.condensed.active_rows)
         total_rows = self.reduced_size
         port_count = int(self.condensed.appended_rows)
@@ -1807,6 +2372,23 @@ class P6CellCondensedAction:
             yield port_id, columns, f"direct/-D/port/{port}"
             del port_id
 
+        if self._global_direct_provider is not None:
+            for port, b_data, d_data in self._global_direct_provider._iter_mode_data(
+                "reduced_layouts"
+            ):
+                if b_data is not None:
+                    _rows, _values, active_rows = b_data
+                    if active_rows.size:
+                        port_id = np.asarray([trace_rows + port], dtype=PETSc.IntType)
+                        yield active_rows, port_id, f"direct/C/provider/{port}"
+                        del port_id
+                if d_data is not None:
+                    _rows, _values, active_rows = d_data
+                    if active_rows.size:
+                        port_id = np.asarray([trace_rows + port], dtype=PETSc.IntType)
+                        yield port_id, active_rows, f"direct/-D/provider/{port}"
+                        del port_id
+
     def iter_reduced_contributions(
         self,
         *,
@@ -1829,10 +2411,15 @@ class P6CellCondensedAction:
         if self.condensed.comm.Get_size() != 1:
             raise ValueError("reduced contributions require MPI1")
         has_generated = any(cell.generated_action is not None for cell in self._cells)
-        if has_generated and (
+        requires_bounded_port_tiles = (
+            has_generated or self._global_direct_provider is not None
+        )
+        if requires_bounded_port_tiles and (
             type(hhat_block_columns) is not int or hhat_block_columns <= 0
         ):
-            raise ValueError("generated reduced contributions require a bounded port tile width")
+            raise ValueError(
+                "generated/local or global direct reduced contributions require bounded Hhat port columns"
+            )
         trace_rows = int(self.condensed.active_rows)
         total_rows = self.reduced_size
         port_count = int(self.condensed.appended_rows)
@@ -2172,6 +2759,37 @@ class P6CellCondensedAction:
             block = -np.asarray(values, dtype=np.complex128).reshape(1, -1)
             yield checked(port_id, columns, block, label)
             del port_id, block
+
+        if self._global_direct_provider is not None:
+            for port, b_data, d_data in self._global_direct_provider._iter_mode_data(
+                "reduced_contributions"
+            ):
+                if b_data is not None:
+                    _rows, values, active_rows = b_data
+                    if active_rows.size:
+                        label = f"direct/C/provider/{port}"
+                        port_id = np.asarray([trace_rows + port], dtype=PETSc.IntType)
+                        gate(
+                            label,
+                            values.nbytes,
+                            int(active_rows.nbytes + port_id.nbytes),
+                        )
+                        block = values.reshape(-1, 1)
+                        yield checked(active_rows, port_id, block, label)
+                        del port_id, block
+                if d_data is not None:
+                    _rows, values, active_rows = d_data
+                    if active_rows.size:
+                        label = f"direct/-D/provider/{port}"
+                        port_id = np.asarray([trace_rows + port], dtype=PETSc.IntType)
+                        gate(
+                            label,
+                            values.nbytes,
+                            int(active_rows.nbytes + port_id.nbytes + values.nbytes),
+                        )
+                        block = -values.reshape(1, -1)
+                        yield checked(port_id, active_rows, block, label)
+                        del port_id, block
 
     def original_hp_solve(self, rhs: Any) -> np.ndarray:
         """Solve with the original ``H_p`` (never with ``Hhat``)."""
@@ -2562,6 +3180,8 @@ class P6CellCondensedAction:
                     ).reshape(-1)
         for port, (rows, row_values) in self._direct_B_original.items():
             result[rows] += row_values * values[port]
+        if self._global_direct_provider is not None:
+            self._global_direct_provider.add_B_full(values, result)
         return result
 
     def apply_D_full(self, full_field: Any) -> np.ndarray:
@@ -2593,6 +3213,8 @@ class P6CellCondensedAction:
             result[cell.ports] += local
         for port, (rows, row_values) in self._direct_D_original.items():
             result[port] += np.dot(row_values, field[rows])
+        if self._global_direct_provider is not None:
+            self._global_direct_provider.add_D_full(field, result)
         return result
 
     def create_reduced_rhs_vector(self) -> PETSc.Vec:
@@ -2780,26 +3402,34 @@ def build_p6_cell_condensed_action_from_carrier(
 def build_p6_cell_condensed_action_from_generated(
     condensed: AssemblyTimeCondensedSystem,
     original_port_block: DiagonalOriginalPortBlock | DenseOriginalPortBlock,
-    generated_port_actions: Mapping[int, P6GeneratedCellPortAction],
+    generated_port_actions: Mapping[int, P6GeneratedCellPortAction] | None,
     *,
     port_terms: Mapping[int, P6CellPortTerms] | None = None,
     direct_trace_terms: Sequence[P6DirectTracePortTerms] = (),
+    global_direct_provider: P6GlobalDirectCarrierProvider | None = None,
     owns_condensed: bool = False,
 ) -> P6CellCondensedAction:
-    """Build the production streamed action without constructing a carrier.
+    """Build a carrier action without constructing a resident full carrier.
 
-    The caller supplies cell-local raw B/D generators and the original ``H_p``
-    representation.  This route does not enumerate carrier entries, allocate
-    a global original-row lookup, or retain per-cell dense ``Bi``/``Di``
-    matrices.  Optional cached terms may be mixed in only for other cells.
+    Cell-local raw B/D generators and/or a replayable global direct provider
+    may supply the coupling. A direct-only provider is a valid zero
+    cell-generator action when its production stream has no interior rows.
+    Optional cached cell terms may be mixed in for separately represented
+    interior support.
     """
 
     if not isinstance(
         original_port_block, (DiagonalOriginalPortBlock, DenseOriginalPortBlock)
     ):
         raise TypeError("generated p6 action requires an explicit original H_p block")
-    if not isinstance(generated_port_actions, Mapping) or not generated_port_actions:
-        raise ValueError("generated p6 action requires a nonempty cell callback mapping")
+    if generated_port_actions is None:
+        generated_port_actions = {}
+    if not isinstance(generated_port_actions, Mapping):
+        raise TypeError("generated p6 action cell callbacks must be a mapping")
+    if not generated_port_actions and global_direct_provider is None:
+        raise ValueError(
+            "p6 action requires cell callbacks or a global direct provider"
+        )
     for action in generated_port_actions.values():
         if action.apply_B_tile is None or action.apply_D_tile is None:
             raise ValueError("production generated p6 actions require bounded B and D tile callbacks")
@@ -2809,8 +3439,11 @@ def build_p6_cell_condensed_action_from_generated(
         port_terms=port_terms,
         generated_port_actions=generated_port_actions,
         direct_trace_terms=direct_trace_terms,
+        global_direct_provider=global_direct_provider,
         owns_condensed=owns_condensed,
-        port_coupling_mode="streamed",
+        port_coupling_mode=(
+            "streamed" if generated_port_actions else "cached"
+        ),
         port_block_layout=RESEARCH_PORT_LAYOUT,
         original_port_block=original_port_block,
     )
@@ -2877,9 +3510,11 @@ __all__ = (
     "P6CellPortTerms",
     "P6GeneratedCellPortAction",
     "P6DirectTracePortTerms",
+    "P6GlobalDirectCarrierProvider",
     "P6RetainedBALHBridge",
     "apply_p6_hhat_vector_action",
     "build_p6_cell_condensed_action_from_generated",
+    "build_p6_global_direct_provider_from_surface",
     "build_p6_cell_condensed_action_from_carrier",
     "condense_physical_cell_blocks",
     "native_residual_from_augmented",

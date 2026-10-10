@@ -27,6 +27,9 @@ from src.runners.task40_v10_campaign import (  # noqa: E402
     TASK40_V22_CAMPAIGN_SHA256,
     TASK40_V22_CAMPAIGN_WINDOW,
     TASK40_V22_STAGE_SCOPE,
+    TASK40_V23_CAMPAIGN_SHA256,
+    TASK40_V23_CAMPAIGN_WINDOW,
+    TASK40_V23_STAGE_SCOPE,
     load_fixed_campaign_window,
 )
 
@@ -46,6 +49,17 @@ V22_STOP_STAGE_SCOPE = {
     "local_port_components": "local_port_components",
     "target_operator_probe": "target_operator_probe",
 }
+# V23 keeps the hash-bound V22 physical profile but has a separate campaign
+# identity, immutable window, and explicit scope. It cannot authorize V22 work.
+V23_TARGET_PROFILE = V22_TARGET_PROFILE
+V23_STOP_STAGE_SCOPE = {
+    "preflight": "implementation",
+    "geometry_inventory": "geometry_descriptor",
+    "target_operator_probe": "target_operator_probe",
+}
+V23_ARTIFACT_ROOT = Path(
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl"
+)
 RUNTIME_PREFIX_RELATIVE = Path(
     "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
 )
@@ -109,6 +123,23 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _profile_q_count(profile_identity: str) -> int:
+    """Return the periodic q count from the registered, hash-bound profile."""
+
+    from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
+
+    try:
+        profile = TASK40_P6_PERIODIC_PROFILES[profile_identity]
+    except KeyError as error:
+        raise ValueError(
+            f"partial receipt profile is not registered for q-count validation: {profile_identity!r}"
+        ) from error
+    count = int(profile.q_count)
+    if count <= 0:
+        raise ValueError("registered periodic profile q_count must be positive")
+    return count
+
+
 def _resolve_service_campaign(
     repo_root: Path,
     campaign_path: Path,
@@ -131,16 +162,27 @@ def _resolve_service_campaign(
         }
 
     v22_path = (repo_root / TASK40_V22_CAMPAIGN_WINDOW).resolve()
-    if supplied != v22_path:
-        raise ValueError("service campaign window is not a registered V19 or V22 path")
-    if profile != V22_TARGET_PROFILE:
-        raise ValueError("the V22 campaign route is restricted to the registered Ny8 target")
-    stage_scope = V22_STOP_STAGE_SCOPE.get(stop_stage)
-    if stage_scope is None or stage_scope not in TASK40_V22_STAGE_SCOPE:
-        raise ValueError("the V22 service stop stage is outside its explicit campaign scope")
-    if _sha256_file(v22_path) != TASK40_V22_CAMPAIGN_SHA256:
-        raise ValueError("the registered V22 campaign window SHA changed")
-    window = load_fixed_campaign_window(v22_path, require_current_boot=True)
+    v23_path = (repo_root / TASK40_V23_CAMPAIGN_WINDOW).resolve()
+    if supplied == v22_path:
+        if profile != V22_TARGET_PROFILE:
+            raise ValueError("the V22 campaign route is restricted to the registered Ny8 target")
+        stage_scope = V22_STOP_STAGE_SCOPE.get(stop_stage)
+        if stage_scope is None or stage_scope not in TASK40_V22_STAGE_SCOPE:
+            raise ValueError("the V22 service stop stage is outside its explicit campaign scope")
+        if _sha256_file(v22_path) != TASK40_V22_CAMPAIGN_SHA256:
+            raise ValueError("the registered V22 campaign window SHA changed")
+        window = load_fixed_campaign_window(v22_path, require_current_boot=True)
+    elif supplied == v23_path:
+        if profile != V23_TARGET_PROFILE:
+            raise ValueError("the V23 campaign route is restricted to the registered Ny8 target")
+        stage_scope = V23_STOP_STAGE_SCOPE.get(stop_stage)
+        if stage_scope is None or stage_scope not in TASK40_V23_STAGE_SCOPE:
+            raise ValueError("the V23 service stop stage is outside its explicit campaign scope")
+        if _sha256_file(v23_path) != TASK40_V23_CAMPAIGN_SHA256:
+            raise ValueError("the registered V23 campaign window SHA changed")
+        window = load_fixed_campaign_window(v23_path, require_current_boot=True)
+    else:
+        raise ValueError("service campaign window is not a registered V19, V22, or V23 path")
     return {
         "path": window.path,
         "sha256": window.sha256,
@@ -978,6 +1020,8 @@ def _check_partial_result(
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     run_summary = json.loads(summary_path.read_text(encoding="utf-8"))
     _, input_data = _read_case(input_path)
+    profile_identity = str(input_data.get("solver", {}).get("preconditioner", ""))
+    expected_q_count = _profile_q_count(profile_identity)
     partial_path = numerical_output / "v20_partial_result.json"
     if not partial_path.is_file():
         return {
@@ -992,6 +1036,28 @@ def _check_partial_result(
             "error": "no official packet or V20 partial footer exists; preserve run/watchdog raw evidence",
         }
     partial = json.loads(partial_path.read_text(encoding="utf-8"))
+    campaign_evidence = manifest.get("task40_v20_campaign")
+    campaign_evidence = campaign_evidence if isinstance(campaign_evidence, dict) else {}
+    probe_identity = partial.get("target_operator_probe")
+    probe_identity = probe_identity if isinstance(probe_identity, dict) else {}
+    v23_expected_window = (ROOT / TASK40_V23_CAMPAIGN_WINDOW).resolve()
+    v23_expected_accounting = v23_expected_window.with_name("campaign_accounting_v10.jsonl")
+    v23_identity_claimed = (
+        probe_identity.get("schema")
+        == "task40extra.review_v23_compact_boundary_operator_probe.v1"
+        or campaign_evidence.get("window_sha256") == TASK40_V23_CAMPAIGN_SHA256
+        or campaign_evidence.get("window_path") == str(v23_expected_window)
+    )
+    v23_campaign_identity_valid = (
+        campaign_evidence.get("window_sha256") == TASK40_V23_CAMPAIGN_SHA256
+        and Path(str(campaign_evidence.get("window_path", ""))).resolve()
+        == v23_expected_window
+        and Path(str(campaign_evidence.get("accounting_path", ""))).resolve()
+        == v23_expected_accounting
+        and v23_expected_window.is_file()
+        and _sha256_file(v23_expected_window) == TASK40_V23_CAMPAIGN_SHA256
+        and v23_expected_accounting.is_file()
+    )
     expected_completed = STAGE_PREFIXES.get(expected_stop_stage)
     v2_receipt = partial.get("schema") == "task40extra.review_v20_partial_result.v2"
     if v2_receipt and expected_stop_stage in {
@@ -1033,6 +1099,10 @@ def _check_partial_result(
             == expected_completed[len(expected_completed_for_failure)]
         ),
     }
+    if v23_identity_claimed:
+        checks["v23_manifest_campaign_window_and_accounting_bind"] = (
+            v23_campaign_identity_valid
+        )
     if expected_stop_stage in {"build_and_symbolic", "one_q_numeric"} and not v2_receipt:
         checks["target_heavy_authorization_remains_false"] = (
             input_data.get("execution", {}).get("task40_target_heavy_authorized") is False
@@ -1050,6 +1120,10 @@ def _check_partial_result(
             operator_probe_authorized=input_data.get("execution", {}).get(
                 "task40_v22_operator_probe_authorized"
             ),
+            expected_q_count=expected_q_count,
+            expected_campaign_window_sha256=(
+                TASK40_V23_CAMPAIGN_SHA256 if v23_identity_claimed else None
+            ),
         )
         checks.update({f"stage_semantics_{name}": passed for name, passed in semantic_checks.items()})
     if "geometry_inventory" in (partial.get("completed_stages") or []):
@@ -1065,6 +1139,7 @@ def _check_partial_result(
     checker_passed = all(checks.values())
     return {
         "schema": "task40extra.review_v20_partial_stage_checker.v1",
+        "profile_q_count": expected_q_count,
         "status": "PARTIAL_RECEIPT_CHECKED" if checker_passed else "PARTIAL_RECEIPT_INVALID",
         "checker_passed": checker_passed,
         "official_result": False,
@@ -1140,7 +1215,13 @@ def run_service(
     if branch != "task40extra_0p7nm_engineering" or dirty.strip():
         raise RuntimeError("V20 user-service requires the frozen Task40 branch and clean source")
 
-    evidence_directory = repo_root / ARTIFACT_ROOT / "service_runs" / unit
+    artifact_root = (
+        V23_ARTIFACT_ROOT
+        if Path(campaign_registration["path"]).resolve()
+        == (repo_root / TASK40_V23_CAMPAIGN_WINDOW).resolve()
+        else ARTIFACT_ROOT
+    )
+    evidence_directory = repo_root / artifact_root / "service_runs" / unit
     evidence_directory.mkdir(parents=True, exist_ok=False)
     events: list[dict[str, Any]] = []
     event_log = evidence_directory / "outer_clock_events.jsonl"

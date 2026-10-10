@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from pathlib import Path
+import struct
 
 import pytest
 
@@ -292,6 +294,239 @@ def _v22_receipt(outcome: str) -> tuple[dict[str, object], bool]:
     return receipt, True
 
 
+def _v23_receipt(
+    tmp_path: Path,
+    *,
+    run_id: str = "task40-v23-fixture",
+    source_sha: str = "a" * 40,
+    input_sha: str = "b" * 64,
+    physical_sha: str = "c" * 64,
+) -> tuple[dict[str, object], str]:
+    from src.runners.task40_v10_campaign import TASK40_V23_CAMPAIGN_SHA256
+    import numpy as np
+    from scipy import sparse
+    from src.solvers.task40_v22_operator_probe import _sparse_csr_sha256
+
+    def complex_hash(value: complex) -> str:
+        return hashlib.sha256(struct.pack("<dd", value.real, value.imag)).hexdigest()
+
+    def float_hash(value: float) -> str:
+        return hashlib.sha256(struct.pack("<d", value)).hexdigest()
+
+    c_value = 2.0 + 0.0j
+    d_value = 0.0 + 3.0j
+    h_value = 1.0
+    q_map = sparse.csr_matrix(np.asarray([[1.0 + 0.0j]], dtype=np.complex128))
+    q_map_sha = _sparse_csr_sha256(q_map)
+    mode_key = [0, "bottom", 1, 2, "s"]
+    b_rows = np.asarray([5], dtype=np.int64)
+    b_values = np.asarray([c_value], dtype=np.complex128)
+    d_rows = np.asarray([5], dtype=np.int64)
+    d_raw = np.asarray([-d_value], dtype=np.complex128)
+    original_h_identity = "e" * 64
+    oracle_path = tmp_path / "v23_selected_mode_production_B_D_H.npz"
+    with oracle_path.open("wb") as stream:
+        np.savez(
+            stream,
+            mode_key_json=np.asarray(json.dumps(mode_key, separators=(",", ":"))),
+            B_rows=b_rows,
+            B_values=b_values,
+            D_rows=d_rows,
+            D_values=d_raw,
+            H_p=np.asarray([h_value], dtype=np.float64),
+            original_H_identity_sha256=np.asarray(original_h_identity),
+        )
+    oracle_sha = hashlib.sha256(oracle_path.read_bytes()).hexdigest()
+    readback_path = tmp_path / "v23_selected_q_projection_readback.npz"
+    with readback_path.open("wb") as stream:
+        np.savez(
+            stream,
+            q_map_data=q_map.data,
+            q_map_indices=q_map.indices,
+            q_map_indptr=q_map.indptr,
+            q_map_shape=np.asarray(q_map.shape, dtype=np.int64),
+            q_map_support_global_rows=np.asarray([5], dtype=np.int64),
+            selected_q_trace_rows=np.asarray([0], dtype=np.int64),
+            candidate_B_support=np.asarray([c_value], dtype=np.complex128),
+            oracle_B_support=np.asarray([c_value], dtype=np.complex128),
+            candidate_D_support=np.asarray([d_raw[0]], dtype=np.complex128),
+            oracle_D_support=np.asarray([d_raw[0]], dtype=np.complex128),
+            candidate_C_direct=np.asarray([c_value], dtype=np.complex128),
+            oracle_C_direct=np.asarray([c_value], dtype=np.complex128),
+            candidate_minus_D_direct=np.asarray([d_value], dtype=np.complex128),
+            oracle_minus_D_direct=np.asarray([d_value], dtype=np.complex128),
+            candidate_H_original=np.asarray([h_value], dtype=np.float64),
+            oracle_H_original=np.asarray([h_value], dtype=np.float64),
+            original_H_p=np.asarray([h_value], dtype=np.float64),
+            selected_mode_key_json=np.asarray(
+                json.dumps(mode_key, separators=(",", ":"))
+            ),
+        )
+    readback_sha = hashlib.sha256(readback_path.read_bytes()).hexdigest()
+    array_hash = lambda value: hashlib.sha256(np.ascontiguousarray(value).tobytes()).hexdigest()
+    tile = {
+        "row_global_q": 0,
+        "column_global_q": 0,
+        "q_port_alias_column": 0,
+        "I_trace_q_rows": [0],
+        "J_port_q_column": 0,
+        "q_trace_map_shape": [1, 1],
+        "q_trace_map_nnz": 1,
+        "q_trace_map_sha256": q_map_sha,
+        "mode_key": mode_key,
+        "candidate_vs_independent_oracle_relative_errors": {
+            "C_direct": 0.0,
+            "minus_D_direct": 0.0,
+            "H_original": 0.0,
+            "limit_each": 1.0e-11,
+        },
+        "contributions": {
+            "C_direct": {
+                "shape": [1, 1],
+                "I": [5],
+                "J": [0],
+                "values": [{"real": 2.0, "imag": 0.0}],
+                "oracle_values": [{"real": 2.0, "imag": 0.0}],
+                "relative_error": 0.0,
+                "limit": 1.0e-11,
+                "candidate_values_sha256": complex_hash(c_value),
+                "oracle_values_sha256": complex_hash(c_value),
+            },
+            "minus_D_direct": {
+                "shape": [1, 1],
+                "I": [0],
+                "J": [5],
+                "values": [{"real": 0.0, "imag": 3.0}],
+                "oracle_values": [{"real": 0.0, "imag": 3.0}],
+                "relative_error": 0.0,
+                "limit": 1.0e-11,
+                "candidate_values_sha256": complex_hash(d_value),
+                "oracle_values_sha256": complex_hash(d_value),
+            },
+            "H_original": {
+                "shape": [1, 1],
+                "I": [0],
+                "J": [0],
+                "value": {"real": h_value, "imag": 0.0},
+                "oracle_value": {"real": h_value, "imag": 0.0},
+                "relative_error": 0.0,
+                "limit": 1.0e-11,
+                "candidate_values_sha256": float_hash(h_value),
+                "oracle_values_sha256": float_hash(h_value),
+            },
+            "volume": {"status": "PARTIAL_NOT_RUN"},
+        },
+        "frozen_B_D_H_oracle": {
+            "artifact_path": oracle_path.name,
+            "artifact_sha256": oracle_sha,
+            "B_values_sha256": array_hash(b_values),
+            "D_values_sha256": array_hash(d_raw),
+        },
+    }
+    tile_sha = hashlib.sha256(
+        json.dumps(tile, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    q_child = {
+        "schema": "task40extra.review_v23_original_ny8_selected_q_port_tile.v1",
+        "status": "PASS_REAL_ORIGINAL_NY8_Q_PORT_TILE",
+        "official_result": False,
+        "run_id": run_id,
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "target_physical_model_sha256": physical_sha,
+        "campaign_before": {"window_sha256": TASK40_V23_CAMPAIGN_SHA256},
+        "campaign_after": {"window_sha256": TASK40_V23_CAMPAIGN_SHA256},
+        "original_H_p_identity": {"identity_sha256": original_h_identity},
+        "expected_q_count": 8,
+        "full_q_matrix_coverage": "0/8",
+        "factor_count": 0,
+        "ksp_created": False,
+        "pde_solved": False,
+        "official_R_T_A_created": False,
+        "selected_q_port_tile_built": True,
+        "q_tile": tile,
+        "q_tile_sha256": tile_sha,
+        "production_oracle_artifact_path": oracle_path.name,
+        "production_oracle_artifact_sha256": oracle_sha,
+        "q_projection_readback_artifact": {
+            "artifact_path": readback_path.name,
+            "artifact_sha256": readback_sha,
+            "q_trace_map_shape": [1, 1],
+            "q_trace_map_nnz": 1,
+            "q_trace_map_sha256": q_map_sha,
+            "selected_q_trace_rows_sha256": hashlib.sha256(
+                np.asarray([0], dtype=np.int32).tobytes()
+            ).hexdigest(),
+        },
+        "complete_q_matrices": "0/8",
+        "volume_qualification": "PARTIAL_NOT_RUN",
+        "artifact_path": "v23_reference_q_port_tile.json",
+    }
+    q_path = tmp_path / q_child["artifact_path"]
+    q_path.write_text(json.dumps(q_child, sort_keys=True), encoding="utf-8")
+    q_sha = hashlib.sha256(q_path.read_bytes()).hexdigest()
+    q_child["artifact_sha256"] = q_sha
+    artifact_hashes = {
+        q_path.name: {"path": q_path.name, "sha256": q_sha},
+        oracle_path.name: {"path": oracle_path.name, "sha256": oracle_sha},
+        readback_path.name: {"path": readback_path.name, "sha256": readback_sha},
+    }
+    q_coverage = {
+        "status": "PARTIAL_REAL_Q_PORT_TILE",
+        "expected_q_count": 8,
+        "built_q_count": 0,
+        "full_q_matrix_coverage": "0/8",
+        "selected_q_port_tile": q_path.name,
+        "selected_q_port_tile_sha256": q_sha,
+        "volume_qualification": "PARTIAL_NOT_RUN",
+    }
+    probe = {
+        "schema": "task40extra.review_v23_compact_boundary_operator_probe.v1",
+        "status": "PASS_ALL_MODE_B_D_STREAM_WITH_PARTIAL_Q_PORT_TILE",
+        "run_id": run_id,
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "campaign_window": {
+            "campaign_version": "V23",
+            "window_sha256": TASK40_V23_CAMPAIGN_SHA256,
+            "read_only": True,
+        },
+        "expected_q_count": 8,
+        "v23_selected_q_port_tile": q_child,
+        "operator_witness": {
+            "mode_coverage": {
+                "expected": 32_060,
+                "completed": 32_060,
+                "completed_by_side": {"bottom": 16_030, "top": 16_030},
+            }
+        },
+    }
+    receipt = {
+        "schema": "task40extra.review_v20_partial_result.v2",
+        "outcome": "STAGE_COMPLETED",
+        "requested_stop_stage": "target_operator_probe",
+        "official_result": False,
+        "run_id": run_id,
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "attempted_stages": ["preflight", "geometry_inventory", "target_operator_probe"],
+        "completed_stages": ["preflight", "geometry_inventory", "target_operator_probe"],
+        "partial_stages": [],
+        "failed_stage": None,
+        "blocked_task_stage": None,
+        "expected_q_count": 8,
+        "built_q_count": 0,
+        "q_coverage": q_coverage,
+        "cleanup": {"status": "UNKNOWN"},
+        "stage_result": {"completed_stage": "target_operator_probe"},
+        "target_operator_probe": probe,
+        "artifact_hashes": artifact_hashes,
+    }
+    return receipt, TASK40_V23_CAMPAIGN_SHA256
+
+
 def test_e2_admission_recomputes_both_byte_gates():
     result = recompute_admission_gate(
         {
@@ -349,6 +584,147 @@ def test_v22_receipt_prefix_and_state_semantics(outcome, authorized):
         operator_probe_authorized=operator_authorized,
     )
     assert all(checks.values()), checks
+
+
+def test_v23_checker_binds_nested_q_tile_and_recomputes_c_d_h_values(tmp_path):
+    receipt, campaign_sha = _v23_receipt(tmp_path)
+    checks = validate_stage_receipt_semantics(
+        receipt,
+        expected_stage="target_operator_probe",
+        heavy_authorized=False,
+        operator_probe_authorized=True,
+        expected_q_count=8,
+        expected_campaign_window_sha256=campaign_sha,
+        output_directory=tmp_path,
+    )
+    assert all(checks.values()), checks
+
+    contribution = receipt["target_operator_probe"]["v23_selected_q_port_tile"][
+        "q_tile"
+    ]["contributions"]["C_direct"]
+    contribution["values"][0]["real"] = 2.5
+    tampered = validate_stage_receipt_semantics(
+        receipt,
+        expected_stage="target_operator_probe",
+        heavy_authorized=False,
+        operator_probe_authorized=True,
+        expected_q_count=8,
+        expected_campaign_window_sha256=campaign_sha,
+        output_directory=tmp_path,
+    )
+    assert tampered["C_direct_candidate_oracle_hashes_recomputed"] is False
+    assert tampered["C_direct_relative_error_recomputed_under_limit"] is False
+    assert tampered["v23_q_tile_hash_and_contribution_errors_recomputed"] is False
+
+
+def test_v23_checker_accepts_planned_handoff_with_durable_partial_mode_prefix(tmp_path):
+    receipt, campaign_sha = _v23_receipt(tmp_path)
+    receipt["outcome"] = "PLANNED_HANDOFF"
+    receipt["completed_stages"] = ["preflight", "geometry_inventory"]
+    receipt["partial_stages"] = ["target_operator_probe"]
+    receipt["stage_result"] = None
+    receipt["planned_handoff"] = {
+        "status": "PLANNED_SUFFIX_HANDOFF",
+        "classification": "PLANNING_ONLY_NOT_A_RESOURCE_OR_NUMERICAL_STOP",
+        "suffix_marked_complete": False,
+    }
+    probe = receipt["target_operator_probe"]
+    probe["status"] = "PLANNED_SCAN_HANDOFF_WITH_PARTIAL_Q_PORT_TILE"
+    probe["partial_mode_coverage"] = {
+        "expected_mode_count": 32_060,
+        "completed_mode_count": 128,
+        "completed_by_side": {"bottom": 64, "top": 64},
+        "stream_prefix_sha256": "f" * 64,
+    }
+    probe["latest_mode_checkpoint"] = {"checkpoint_json_path": "checkpoint.json"}
+    probe["planned_handoff"] = dict(receipt["planned_handoff"])
+    checks = validate_stage_receipt_semantics(
+        receipt,
+        expected_stage="target_operator_probe",
+        heavy_authorized=False,
+        operator_probe_authorized=True,
+        expected_q_count=8,
+        expected_campaign_window_sha256=campaign_sha,
+        output_directory=tmp_path,
+    )
+    assert all(checks.values()), checks
+
+
+def test_service_partial_checker_binds_v23_manifest_and_campaign(tmp_path):
+    from scripts.task40_v20_service_workflow import _check_partial_result
+    from src.io import load_and_resolve
+    from src.runners.task40_v10_campaign import (
+        TASK40_V23_CAMPAIGN_SHA256,
+        TASK40_V23_CAMPAIGN_WINDOW,
+    )
+
+    root = Path(__file__).resolve().parents[2]
+    input_path = root / (
+        "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/"
+        "stage_inputs/target_operator_probe/target_original_ny8_operator_probe_v22.dat"
+    )
+    input_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    payload = load_and_resolve(input_path).as_jsonable()
+    physical_sha = payload["provenance"]["physical_model_sha256"]
+    output = tmp_path / "numerical-output"
+    output.mkdir()
+    receipt, _ = _v23_receipt(
+        output,
+        run_id=payload["run_id"],
+        source_sha="f" * 40,
+        input_sha=input_sha,
+        physical_sha=physical_sha,
+    )
+    geometry_path = output / "v20_geometry_inventory.json"
+    geometry_path.write_text("{}\n", encoding="utf-8")
+    receipt["artifact_hashes"][geometry_path.name] = {
+        "path": geometry_path.name,
+        "sha256": hashlib.sha256(geometry_path.read_bytes()).hexdigest(),
+    }
+    (output / "v20_partial_result.json").write_text(
+        json.dumps(receipt, sort_keys=True), encoding="utf-8"
+    )
+    campaign_path = (root / TASK40_V23_CAMPAIGN_WINDOW).resolve()
+    accounting_path = campaign_path.with_name("campaign_accounting_v10.jsonl")
+    manifest = {
+        "run_id": payload["run_id"],
+        "source_sha": "f" * 40,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "solver": {"preconditioner": payload["solver"]["preconditioner"]},
+        "task40_v20_campaign": {
+            "window_path": str(campaign_path),
+            "window_sha256": TASK40_V23_CAMPAIGN_SHA256,
+            "accounting_path": str(accounting_path),
+        },
+    }
+    manifest_path = tmp_path / "run_manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    summary_path = tmp_path / "run_summary.json"
+    summary_path.write_text(
+        json.dumps({"run_id": payload["run_id"], "result_classification": "stage_completed"}),
+        encoding="utf-8",
+    )
+    checked = _check_partial_result(
+        input_path=input_path,
+        summary_path=summary_path,
+        manifest_path=manifest_path,
+        numerical_output=output,
+        expected_stop_stage="target_operator_probe",
+    )
+    assert checked["checker_passed"] is True, checked
+
+    manifest["task40_v20_campaign"]["window_sha256"] = "0" * 64
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    tampered = _check_partial_result(
+        input_path=input_path,
+        summary_path=summary_path,
+        manifest_path=manifest_path,
+        numerical_output=output,
+        expected_stop_stage="target_operator_probe",
+    )
+    assert tampered["checker_passed"] is False
+    assert tampered["checks"]["v23_manifest_campaign_window_and_accounting_bind"] is False
 
 
 def test_v22_completion_recomputes_raw_coverage_fe_mpc_and_native_gates():
@@ -653,3 +1029,30 @@ def test_stage_runner_emits_receipt_for_worker_success_resource_stop_and_error(
             output_directory=tmp_path,
         )
         assert checks["heavy_cleanup_proved"] is False
+
+
+@pytest.mark.parametrize("expected_q_count", [4, 8])
+def test_q_csr_checker_uses_profile_q_count_and_rejects_missing_or_illegal_keys(
+    expected_q_count,
+):
+    receipt, authorized = _receipt("STAGE_COMPLETED")
+    valid = {
+        str(q): {"csr_sha256": f"{q + 1:064x}"}
+        for q in range(expected_q_count)
+    }
+    receipt["stage_result"]["q_csr_inventory"] = valid
+    receipt["q_coverage"]["q_csr_inventory"] = valid
+    for inventory, expected in (
+        (valid, True),
+        ({key: value for key, value in valid.items() if key != str(expected_q_count - 1)}, False),
+        ({**valid, str(expected_q_count): {"csr_sha256": "f" * 64}}, False),
+    ):
+        receipt["stage_result"]["q_csr_inventory"] = inventory
+        receipt["q_coverage"]["q_csr_inventory"] = inventory
+        checks = validate_stage_receipt_semantics(
+            receipt,
+            expected_stage="build_and_symbolic",
+            heavy_authorized=authorized,
+            expected_q_count=expected_q_count,
+        )
+        assert checks["q_csr_hashes_complete"] is expected

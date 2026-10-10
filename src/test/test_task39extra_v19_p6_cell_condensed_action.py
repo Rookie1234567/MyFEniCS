@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import gc
 from types import SimpleNamespace
+import weakref
 
 import numpy as np
 import pytest
@@ -24,6 +26,7 @@ from src.solvers.p6_cell_condensed_action import (
     P6CellPortTerms,
     P6GeneratedCellPortAction,
     P6DirectTracePortTerms,
+    P6GlobalDirectCarrierProvider,
     P6RetainedBALHBridge,
     apply_p6_hhat_vector_action,
     build_p6_cell_condensed_action_from_carrier,
@@ -433,6 +436,346 @@ def test_generated_reduced_contributions_stream_bounded_b_d_and_hhat_tiles() -> 
     finally:
         generated.destroy()
         cached.destroy()
+
+
+def test_global_direct_provider_streams_full_reduced_and_contribution_paths() -> None:
+    condensed, block, prior = _problem()
+    prior.destroy()
+    mode_keys = [(index, "top", index, 0, "s") for index in range(2)]
+    hp = np.asarray([[6.0, 0.2], [-0.1, 7.0]], dtype=np.complex128)
+    original_hp = DenseOriginalPortBlock(
+        hp, mode_keys, reason="two-mode global direct provider fixture", max_bytes=64
+    )
+    rows = np.asarray([2, 3], dtype=PETSc.IntType)
+    b_expected = (
+        np.asarray([0.5 + 0.2j, -0.1 + 0.4j], dtype=np.complex128),
+        np.asarray([-0.3 + 0.1j, 0.8 - 0.2j], dtype=np.complex128),
+    )
+    d_expected = (
+        np.asarray([0.2 - 0.3j, 0.6 + 0.1j], dtype=np.complex128),
+        np.asarray([-0.4 + 0.2j, 0.3 + 0.5j], dtype=np.complex128),
+    )
+    value_refs: list[weakref.ReferenceType[np.ndarray]] = []
+    source_closed: list[bool] = []
+
+    def stream_modes():
+        try:
+            for port in range(2):
+                b_values = b_expected[port].copy()
+                d_values = d_expected[port].copy()
+                value_refs.extend((weakref.ref(b_values), weakref.ref(d_values)))
+                yield SimpleNamespace(
+                    mode_key=mode_keys[port],
+                    coupling_rows=rows,
+                    coupling_values=b_values,
+                    projection_rows=rows,
+                    projection_values=d_values,
+                )
+        finally:
+            source_closed.append(True)
+
+    provider = P6GlobalDirectCarrierProvider(
+        stream_modes, condensed=condensed, mode_count=2, source_label="test-stream"
+    )
+    other_condensed = _FakeCondensed((block,))
+    mismatched_provider = P6GlobalDirectCarrierProvider(
+        stream_modes, condensed=other_condensed, mode_count=2, source_label="wrong-owner"
+    )
+    with pytest.raises(ValueError, match="different condensed owner"):
+        build_p6_cell_condensed_action_from_generated(
+            condensed, original_hp, {}, global_direct_provider=mismatched_provider
+        )
+    action = build_p6_cell_condensed_action_from_generated(
+        condensed, original_hp, {}, global_direct_provider=provider
+    )
+    try:
+        alpha = np.asarray([1.2 - 0.3j, -0.4 + 0.8j], dtype=np.complex128)
+        expected_b = np.zeros(condensed.full_rows, dtype=np.complex128)
+        for port in range(2):
+            expected_b[rows] += b_expected[port] * alpha[port]
+        np.testing.assert_allclose(action.apply_B_full(alpha), expected_b, rtol=0.0, atol=0.0)
+
+        field = np.asarray([0.1j, -0.2, 0.7 + 0.3j, -0.5j], dtype=np.complex128)
+        expected_d = np.asarray(
+            [np.dot(d_expected[port], field[rows]) for port in range(2)],
+            dtype=np.complex128,
+        )
+        np.testing.assert_allclose(action.apply_D_full(field), expected_d, rtol=0.0, atol=0.0)
+
+        with pytest.raises(ValueError, match="bounded Hhat port columns"):
+            list(action.iter_reduced_contribution_layouts())
+        with pytest.raises(ValueError, match="bounded Hhat port columns"):
+            list(action.iter_reduced_contributions(allocation_gate=lambda *_args: None))
+        layouts = list(action.iter_reduced_contribution_layouts(hhat_block_columns=1))
+        assert any(label == "direct/C/provider/0" for _r, _c, label in layouts)
+        assert any(label == "direct/-D/provider/1" for _r, _c, label in layouts)
+        matrix = np.zeros((action.reduced_size, action.reduced_size), dtype=np.complex128)
+        direct = np.zeros_like(matrix)
+        for contribution_rows, contribution_columns, values, label in action.iter_reduced_contributions(
+            allocation_gate=lambda *_args: None, hhat_block_columns=1
+        ):
+            matrix[np.ix_(contribution_rows, contribution_columns)] += values
+            if label.startswith("direct/") and "/provider/" in label:
+                direct[np.ix_(contribution_rows, contribution_columns)] += values
+        expected_direct = np.zeros_like(matrix)
+        for port in range(2):
+            expected_direct[:2, 2 + port] = b_expected[port]
+            expected_direct[2 + port, :2] = -d_expected[port]
+        np.testing.assert_array_equal(direct, expected_direct)
+        reduced = np.asarray([0.4, -0.7j, 0.2 + 0.3j, 0.5], dtype=np.complex128)
+        np.testing.assert_allclose(matrix @ reduced, action.apply(reduced), rtol=2e-13, atol=2e-13)
+        assert action.audit["generated_port_action_count"] == 0
+        assert action.buffer_inventory["global_direct_provider_resident_value_bytes"] == 0
+        assert action.buffer_inventory["global_direct_provider_expected_H_copy_bytes"] == 0
+        assert action.buffer_inventory["global_direct_provider_mode_key_metadata_shallow_bytes"] > 0
+        assert action.buffer_inventory["global_direct_provider_owned_backing_bytes"] >= action.buffer_inventory[
+            "global_direct_provider_mode_key_metadata_shallow_bytes"
+        ]
+        assert "fixed H copy and mode-key metadata" in action.buffer_inventory[
+            "global_direct_provider_bytes_scope"
+        ]
+        assert action.audit["global_direct_provider"]["second_mpc_application"] is False
+        assert action.audit["global_direct_provider"]["iterator_sweeps_by_operation"] == {
+            "apply_B_full": 1,
+            "apply_D_full": 1,
+            "reduced_layouts": 1,
+            "reduced_contributions": 1,
+            "reduced_apply": 1,
+        }
+        direct_tiles = list(provider.iter_reduced_direct_tiles())
+        assert [port for port, _b, _d in direct_tiles] == [0, 1]
+        for port, b_data, d_data in direct_tiles:
+            assert b_data is not None and d_data is not None
+            np.testing.assert_array_equal(b_data[1], b_expected[port])
+            np.testing.assert_array_equal(d_data[1], d_expected[port])
+            np.testing.assert_array_equal(b_data[2], [0, 1])
+            np.testing.assert_array_equal(d_data[2], [0, 1])
+        del direct_tiles, port, b_data, d_data
+        gc.collect()
+        assert action.audit["global_direct_provider"]["iterator_sweeps_by_operation"][
+            "reduced_direct_tiles"
+        ] == 1
+        closed_before = len(source_closed)
+        early = provider._iter_mode_data("early_close")
+        borrowed = next(early)
+        del borrowed
+        early.close()
+        assert len(source_closed) == closed_before + 1
+        del layouts, matrix, direct
+        gc.collect()
+        assert value_refs and all(reference() is None for reference in value_refs)
+    finally:
+        action.destroy()
+
+
+def test_global_direct_provider_inventory_counts_h_copy_and_mode_keys() -> None:
+    condensed = SimpleNamespace(
+        full_rows=32,
+        appended_rows=1,
+        trace_constraints=SimpleNamespace(original_to_active={}),
+        cell_recovery_maps=(),
+    )
+    provider = P6GlobalDirectCarrierProvider(
+        lambda: iter(()), condensed=condensed, mode_count=1, source_label="inventory-fixture"
+    )
+    original_h = DiagonalOriginalPortBlock(
+        np.asarray([3.0 + 0.0j], dtype=np.complex128),
+        [(0, "bottom", 1, 2, "s")],
+    )
+    provider.bind_original_port_block(original_h, mode_indices=(0,))
+    audit = provider.audit
+    assert audit["expected_H_values_backing_bytes"] == np.dtype(np.complex128).itemsize
+    assert audit["expected_mode_key_metadata_shallow_bytes"] > 0
+    assert audit["provider_owned_backing_bytes"] == (
+        audit["interior_classifier_bytes"]
+        + audit["expected_H_values_backing_bytes"]
+        + audit["expected_mode_key_metadata_shallow_bytes"]
+    )
+
+
+@pytest.mark.parametrize("trace_term", ("Bt", "Dt"))
+def test_global_direct_provider_rejects_overlapping_cached_trace_terms(trace_term: str) -> None:
+    condensed, block, prior = _problem()
+    prior.destroy()
+    mode_keys = [(index, "top", index, 0, "s") for index in range(2)]
+    rows = np.asarray([2, 3], dtype=PETSc.IntType)
+
+    def stream_modes():
+        for port in range(2):
+            values = np.asarray([1.0 + port, 0.5j], dtype=np.complex128)
+            yield SimpleNamespace(
+                mode_key=mode_keys[port],
+                coupling_rows=rows,
+                coupling_values=values,
+                projection_rows=rows,
+                projection_values=values.copy(),
+            )
+
+    provider = P6GlobalDirectCarrierProvider(
+        stream_modes,
+        condensed=condensed,
+        mode_count=2,
+        interior_rows_are_managed=True,
+    )
+    trace_terms = {
+        "Bt": np.zeros_like(block["Bt"]),
+        "Dt": np.zeros_like(block["Dt"]),
+    }
+    trace_terms[trace_term][0, 0] = 1.0 + 0.25j
+    terms = {
+        0: P6CellPortTerms(
+            block["Bi"],
+            block["Di"],
+            np.asarray([0, 1], dtype=PETSc.IntType),
+            **trace_terms,
+        )
+    }
+    original_hp = DenseOriginalPortBlock(
+        block["H"], mode_keys, reason="overlapping provider trace fixture", max_bytes=64
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "global direct provider owns all trace B rows"
+            if trace_term == "Bt"
+            else "global direct provider owns all trace D rows"
+        ),
+    ):
+        build_p6_cell_condensed_action_from_generated(
+            condensed,
+            original_hp,
+            {},
+            port_terms=terms,
+            global_direct_provider=provider,
+        )
+
+
+def test_global_direct_provider_rejects_same_ordinal_wrong_full_mode_key() -> None:
+    condensed, block, prior = _problem()
+    prior.destroy()
+    rows = np.asarray([2, 3], dtype=PETSc.IntType)
+    expected_keys = [(0, "top", 0, 0, "s"), (1, "top", 1, 0, "s")]
+
+    def stream_modes():
+        for port in range(2):
+            # The ordinal is unchanged, but the physical side identity is wrong.
+            emitted_key = (
+                (port, "bottom", 0, 0, "s") if port == 0 else expected_keys[port]
+            )
+            values = np.asarray([0.25 + 0.5j, -0.3j], dtype=np.complex128)
+            yield SimpleNamespace(
+                mode_key=emitted_key,
+                coupling_rows=rows,
+                coupling_values=values,
+                projection_rows=rows,
+                projection_values=values.copy(),
+            )
+
+    provider = P6GlobalDirectCarrierProvider(
+        stream_modes, condensed=condensed, mode_count=2, source_label="wrong-physical-key"
+    )
+    original_hp = DenseOriginalPortBlock(
+        np.eye(2, dtype=np.complex128),
+        expected_keys,
+        reason="full ordered mode-key mismatch fixture",
+        max_bytes=64,
+    )
+    action = build_p6_cell_condensed_action_from_generated(
+        condensed, original_hp, {}, global_direct_provider=provider
+    )
+    try:
+        with pytest.raises(ValueError, match="full mode key/order differs from original H_p at port 0"):
+            action.apply_B_full(np.ones(2, dtype=np.complex128))
+    finally:
+        action.destroy()
+
+
+def test_global_direct_provider_defers_interior_rows_only_to_existing_cell_terms() -> None:
+    condensed, block, prior = _problem()
+    prior.destroy()
+    mode_keys = [(index, "top", index, 0, "s") for index in range(2)]
+    rows = np.asarray([0, 1, 2, 3], dtype=PETSc.IntType)
+    b_trace = np.asarray([[0.5, -0.2], [0.3j, 0.7]], dtype=np.complex128)
+    d_trace = np.asarray([[0.1, -0.4j], [0.6, 0.2 + 0.3j]], dtype=np.complex128)
+
+    def stream_modes():
+        for port in range(2):
+            yield SimpleNamespace(
+                mode_key=mode_keys[port],
+                coupling_rows=rows,
+                coupling_values=np.concatenate((block["Bi"][:, port], b_trace[:, port])),
+                projection_rows=rows,
+                projection_values=np.concatenate((block["Di"][port, :], d_trace[port, :])),
+            )
+
+    original_hp = DenseOriginalPortBlock(
+        block["H"], mode_keys, reason="interior/direct split fixture", max_bytes=64
+    )
+    unmanaged = P6GlobalDirectCarrierProvider(
+        stream_modes, condensed=condensed, mode_count=2
+    )
+    unmanaged.bind_original_port_block(original_hp)
+    with pytest.raises(ValueError, match="interior rows without local cell terms"):
+        unmanaged.add_B_full(np.ones(2, dtype=np.complex128), np.zeros(4, dtype=np.complex128))
+
+    partial_provider = P6GlobalDirectCarrierProvider(
+        stream_modes,
+        condensed=condensed,
+        mode_count=2,
+        interior_rows_are_managed=True,
+    )
+    partial_action = build_p6_cell_condensed_action_from_generated(
+        condensed,
+        original_hp,
+        {},
+        port_terms={
+            0: P6CellPortTerms(
+                block["Bi"][:, :1],
+                block["Di"][:1, :],
+                np.asarray([0], dtype=PETSc.IntType),
+            )
+        },
+        global_direct_provider=partial_provider,
+    )
+    with pytest.raises(ValueError, match="mode 1.*cell 0"):
+        partial_action.apply_B_full(np.ones(2, dtype=np.complex128))
+    partial_action.destroy()
+
+    provider = P6GlobalDirectCarrierProvider(
+        stream_modes,
+        condensed=condensed,
+        mode_count=2,
+        interior_rows_are_managed=True,
+    )
+    action = build_p6_cell_condensed_action_from_generated(
+        condensed,
+        original_hp,
+        {},
+        port_terms={
+            0: P6CellPortTerms(
+                block["Bi"],
+                block["Di"],
+                np.asarray([0, 1], dtype=PETSc.IntType),
+            )
+        },
+        global_direct_provider=provider,
+    )
+    try:
+        alpha = np.asarray([0.8 + 0.2j, -0.1 + 0.6j], dtype=np.complex128)
+        expected_b = np.zeros(4, dtype=np.complex128)
+        expected_b[:2] = block["Bi"] @ alpha
+        expected_b[2:] = b_trace @ alpha
+        np.testing.assert_allclose(action.apply_B_full(alpha), expected_b, rtol=0.0, atol=0.0)
+        field = np.asarray([0.4, -0.3j, 0.2 + 0.1j, -0.5], dtype=np.complex128)
+        expected_d = block["Di"] @ field[:2] + d_trace @ field[2:]
+        np.testing.assert_allclose(action.apply_D_full(field), expected_d, rtol=0.0, atol=0.0)
+        audit = action.audit["global_direct_provider"]
+        assert audit["interior_rows_are_managed_by_local_terms"] is True
+        assert audit["interior_rows_deferred_by_operation_and_side"]["apply_B_full/B"] == 4
+        assert audit["interior_rows_deferred_by_operation_and_side"]["apply_D_full/D"] == 4
+    finally:
+        action.destroy()
 
 
 def test_v16_bounded_q_route_matches_small_p6_action_fixture(monkeypatch) -> None:

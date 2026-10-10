@@ -15,7 +15,7 @@ import json
 import sys
 from pathlib import Path
 import shutil
-from time import perf_counter
+from time import perf_counter, process_time
 from types import SimpleNamespace
 from typing import Any, Callable, Iterable, Mapping, Sequence
 
@@ -162,12 +162,91 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+class _RollingDigest:
+    """A compact, restartable hash chain over ordered update segments."""
+
+    def __init__(self, state_hex: str | None = None) -> None:
+        self._state = bytes(32) if state_hex is None else bytes.fromhex(state_hex)
+        if len(self._state) != 32:
+            raise ValueError("rolling digest state must be one SHA-256 value")
+
+    def update(self, value: bytes | bytearray | memoryview) -> None:
+        leaf = hashlib.sha256(bytes(value)).digest()
+        self._state = hashlib.sha256(self._state + leaf).digest()
+
+    def copy(self) -> "_RollingDigest":
+        return _RollingDigest(self.hexdigest())
+
+    def hexdigest(self) -> str:
+        return self._state.hex()
+
+
 def _array_sha256(value: Any) -> str:
     array = np.ascontiguousarray(value)
     digest = hashlib.sha256()
     digest.update(repr((array.shape, str(array.dtype))).encode("ascii"))
     digest.update(memoryview(array).cast("B"))
     return digest.hexdigest()
+
+
+def _cell_support_row_counts(
+    global_rows: Sequence[int],
+    *,
+    interior_rows_sorted: np.ndarray,
+    interior_cell_ids_sorted: np.ndarray,
+    cell_ids_sorted: np.ndarray,
+) -> np.ndarray:
+    """Count retained interior rows per cell for one already-filtered mode."""
+
+    rows = np.unique(np.asarray(global_rows, dtype=np.int64).reshape(-1))
+    counts = np.zeros(len(cell_ids_sorted), dtype=np.int64)
+    if not rows.size or not interior_rows_sorted.size:
+        return counts
+    positions = np.searchsorted(interior_rows_sorted, rows)
+    valid = positions < len(interior_rows_sorted)
+    matched = np.zeros(len(rows), dtype=np.bool_)
+    matched[valid] = interior_rows_sorted[positions[valid]] == rows[valid]
+    if np.any(matched):
+        cell_positions = np.searchsorted(
+            cell_ids_sorted, interior_cell_ids_sorted[positions[matched]]
+        )
+        counts = np.bincount(cell_positions, minlength=len(cell_ids_sorted))
+    return counts
+
+
+def _accumulate_cell_mode_support(
+    per_cell_mode_counts: np.ndarray,
+    per_cell_row_memberships: np.ndarray,
+    per_mode_row_counts: np.ndarray,
+) -> None:
+    """Count a cell once per mode while retaining raw row memberships separately."""
+
+    counts = np.asarray(per_mode_row_counts, dtype=np.int64).reshape(-1)
+    if counts.shape != per_cell_mode_counts.shape or counts.shape != per_cell_row_memberships.shape:
+        raise ValueError("per-mode cell counts do not match the cell inventory")
+    if np.any(counts < 0):
+        raise ValueError("per-mode cell row counts cannot be negative")
+    per_cell_mode_counts += counts > 0
+    per_cell_row_memberships += counts
+
+
+def _summarize_cell_mode_support(
+    per_cell_mode_counts: np.ndarray, *, expected_mode_count: int
+) -> dict[str, Any]:
+    """Summarize m_c over cells; bins count cells with each mode multiplicity."""
+
+    values = np.asarray(per_cell_mode_counts, dtype=np.int64).reshape(-1)
+    if np.any(values < 0) or np.any(values > int(expected_mode_count)):
+        raise ValueError("per-cell m_c is outside the side's expected mode count")
+    return {
+        "histogram_by_modes_0_to_expected": np.bincount(
+            values, minlength=int(expected_mode_count) + 1
+        ).tolist(),
+        "sum": int(np.sum(values, dtype=np.int64)),
+        "sum_squares": int(np.dot(values, values)),
+        "per_cell_mode_count": values.tolist(),
+        "cell_count": int(len(values)),
+    }
 
 
 def _write_json(path: Path, value: Mapping[str, Any]) -> None:
@@ -621,6 +700,7 @@ def _direct_mpc_filtered_component_entries(
     dual_coefficients: Sequence[complex],
     master_counts: Sequence[int],
     index_dtype: Any,
+    compact_row_domain: Sequence[int] | None = None,
     admit_additional_bytes: Callable[[str, int], None] | None = None,
     relative_tol: float = 1e-13,
     absolute_floor: float = 0.0,
@@ -643,8 +723,32 @@ def _direct_mpc_filtered_component_entries(
     ):
         raise ValueError("direct component workspace or support-filter policy is invalid")
     vector.fill(0.0 + 0.0j)
-    for global_rows, local_values in facet_contributions:
+    row_domain = (
+        np.asarray(compact_row_domain, dtype=np.int64).reshape(-1)
+        if compact_row_domain is not None
+        else None
+    )
+    if row_domain is not None and (
+        not len(row_domain)
+        or (len(row_domain) > 1 and np.any(row_domain[1:] <= row_domain[:-1]))
+        or len(row_domain) != len(vector)
+    ):
+        raise ValueError("compact component row domain must be sorted, unique, and match its workspace")
+
+    def workspace_rows(global_rows: Sequence[int], label: str) -> np.ndarray:
         rows = np.asarray(global_rows, dtype=np.int64).reshape(-1)
+        if row_domain is None:
+            return rows
+        positions = np.searchsorted(row_domain, rows)
+        valid = positions < len(row_domain)
+        matched = np.zeros(len(rows), dtype=np.bool_)
+        matched[valid] = row_domain[positions[valid]] == rows[valid]
+        if not np.all(matched):
+            raise ValueError(f"{label} row escaped the compact boundary/MPC closure")
+        return positions
+
+    for global_rows, local_values in facet_contributions:
+        rows = workspace_rows(global_rows, "direct facet")
         values = np.asarray(local_values, dtype=np.complex128).reshape(-1)
         if (
             rows.shape != values.shape
@@ -656,8 +760,8 @@ def _direct_mpc_filtered_component_entries(
     raw_nonzero_count = int(np.count_nonzero(vector))
     raw_norm = float(np.linalg.norm(vector))
 
-    slave = np.asarray(slave_rows, dtype=np.int64).reshape(-1)
-    masters = np.asarray(master_rows, dtype=np.int64).reshape(-1)
+    slave = workspace_rows(slave_rows, "MPC slave")
+    masters = workspace_rows(master_rows, "MPC master")
     dual = np.asarray(dual_coefficients, dtype=np.complex128).reshape(-1)
     counts = np.asarray(master_counts, dtype=np.int64).reshape(-1)
     if (
@@ -720,7 +824,10 @@ def _direct_mpc_filtered_component_entries(
         keep = np.abs(values) > cutoff
         local_rows = np.flatnonzero(keep)
         count = len(local_rows)
-        output_rows[offset : offset + count] = start + local_rows
+        compact_rows = start + local_rows
+        output_rows[offset : offset + count] = (
+            row_domain[compact_rows] if row_domain is not None else compact_rows
+        )
         output_values[offset : offset + count] = values[local_rows]
         offset += count
     if offset != retained_count:
@@ -801,6 +908,34 @@ def _global_mpc_expansions(
     return result
 
 
+def _compact_reference_mode_indices(modes: Sequence[Any]) -> dict[str, list[int]]:
+    """Select first/middle/last real k-vectors and any adjacent s/p partners."""
+
+    by_side: dict[str, list[int]] = {"bottom": [], "top": []}
+    k_keys: dict[int, tuple[complex, ...]] = {}
+    for index, mode in enumerate(modes):
+        side = str(getattr(mode, "side", ""))
+        if side not in by_side:
+            continue
+        by_side[side].append(index)
+        k_keys[index] = tuple(
+            complex(value) for value in np.asarray(mode.k_vector).reshape(-1)
+        )
+    selected: dict[str, list[int]] = {"bottom": [], "top": []}
+    for side, indices in by_side.items():
+        grouped: dict[tuple[complex, ...], list[int]] = {}
+        for index in indices:
+            grouped.setdefault(k_keys[index], []).append(index)
+        groups = list(grouped.values())
+        if not groups:
+            raise ValueError(f"target mode inventory omitted the {side} side")
+        for group_index in sorted({0, len(groups) // 2, len(groups) - 1}):
+            for index in groups[group_index]:
+                if index not in selected[side]:
+                    selected[side].append(index)
+    return selected
+
+
 class _V22NativeFacetRule:
     """Bounded native facet quadrature plus the production MPC dual pullback.
 
@@ -822,6 +957,7 @@ class _V22NativeFacetRule:
         quadrature_degree: int,
         cfg: Any,
         mpc_expansions: Mapping[int, tuple[Any, Any]],
+        rolling_filter_digest: bool = False,
     ) -> None:
         from petsc4py import PETSc
 
@@ -933,6 +1069,37 @@ class _V22NativeFacetRule:
         self._slave_rows = np.asarray(slave_rows, dtype=self.index_dtype)
         self._master_rows = np.asarray(master_rows, dtype=self.index_dtype)
         self._dual_coefficients = np.asarray(dual_coefficients, dtype=np.complex128)
+        candidate_parts = [
+            np.asarray(group["global_dofs"], dtype=np.int64).reshape(-1)
+            for side_groups in self.groups.values()
+            for group in side_groups.values()
+        ]
+        if self._master_rows.size:
+            candidate_parts.append(self._master_rows.astype(np.int64, copy=False))
+        self.candidate_rows = np.unique(np.concatenate(candidate_parts)).astype(
+            self.index_dtype, copy=False
+        )
+        if not self.candidate_rows.size:
+            raise ValueError("V23 compact boundary/MPC row domain is empty")
+        for side_groups in self.groups.values():
+            for group in side_groups.values():
+                compact_dofs = np.searchsorted(self.candidate_rows, group["global_dofs"])
+                if not np.array_equal(self.candidate_rows[compact_dofs], group["global_dofs"]):
+                    raise ValueError("V23 boundary cell row escaped the compact candidate domain")
+                group["compact_dofs"] = np.ascontiguousarray(
+                    compact_dofs, dtype=self.index_dtype
+                )
+        self._compact_slave_rows = np.ascontiguousarray(
+            np.searchsorted(self.candidate_rows, self._slave_rows), dtype=self.index_dtype
+        )
+        self._compact_master_rows = np.ascontiguousarray(
+            np.searchsorted(self.candidate_rows, self._master_rows), dtype=self.index_dtype
+        )
+        if (
+            not np.array_equal(self.candidate_rows[self._compact_slave_rows], self._slave_rows)
+            or not np.array_equal(self.candidate_rows[self._compact_master_rows], self._master_rows)
+        ):
+            raise ValueError("V23 MPC closure row escaped the compact candidate domain")
         self._master_counts = np.asarray(
             [len(mpc_expansions[int(row)][0]) for row in slave_rows], dtype=np.int64
         )
@@ -947,8 +1114,11 @@ class _V22NativeFacetRule:
             }
             for side in ("bottom", "top")
         }
+        self._rolling_filter_digest = bool(rolling_filter_digest)
         self._component_filter_hashers = {
-            (side, component): hashlib.sha256()
+            (side, component): (
+                _RollingDigest() if self._rolling_filter_digest else hashlib.sha256()
+            )
             for side in ("bottom", "top")
             for component in (0, 1)
         }
@@ -961,6 +1131,9 @@ class _V22NativeFacetRule:
                 "rows_dropped_by_global_mask": 0,
                 "retained_rows": 0,
                 "retained_norm_squared_sum": 0.0,
+                "raw_rows_nonzero_before_mpc": 0,
+                "raw_rows_tiny_before_mpc_relative_filter": 0,
+                "raw_slave_rows_nonzero_before_mpc": 0,
             }
             for side in ("bottom", "top")
             for component in (0, 1)
@@ -969,8 +1142,18 @@ class _V22NativeFacetRule:
             "component_assembly_calls": 0,
             "native_group_integral_builds": 0,
             "native_facet_contributions": 0,
+            "component_wall_seconds_total": 0.0,
+            "component_process_cpu_seconds_total": 0.0,
+            "group_integral_phase_wall_seconds_total": 0.0,
+            "group_integral_phase_process_cpu_seconds_total": 0.0,
+            "mpc_pullback_phase_wall_seconds_total": 0.0,
+            "mpc_pullback_phase_process_cpu_seconds_total": 0.0,
+            "global_filter_phase_wall_seconds_total": 0.0,
+            "global_filter_phase_process_cpu_seconds_total": 0.0,
             "last_mode_key": None,
             "last_class_ids_by_side": {},
+            "last_component_wall_seconds": None,
+            "last_component_process_cpu_seconds": None,
             "support_filter": {
                 "stage": "after actual finalized-MPC E^H pullback",
                 "relative_tol": 1e-13,
@@ -978,6 +1161,17 @@ class _V22NativeFacetRule:
                 "zero_entries_removed_only_by_exact_zero_or_global_filter": True,
             },
         }
+
+    def compact_positions(self, global_rows: Sequence[int]) -> np.ndarray:
+        rows = np.asarray(global_rows, dtype=np.int64).reshape(-1)
+        positions = np.searchsorted(self.candidate_rows, rows)
+        valid = positions < len(self.candidate_rows)
+        matched = np.zeros(len(rows), dtype=np.bool_)
+        matched[valid] = self.candidate_rows[positions[valid]] == rows[valid]
+        if not np.all(matched):
+            missing = rows[~matched][:8].tolist()
+            raise ValueError(f"global rows escaped the compact boundary/MPC closure: {missing}")
+        return positions
 
     def _mode_local_rows(self, side: str, class_id: str, permutation: int, mode: Any):
         wave_key = (
@@ -1026,8 +1220,11 @@ class _V22NativeFacetRule:
         if int(self.space.mesh.comm.size) != 1:
             raise ValueError("V22 native surface assembly is qualified only for MPI1")
         assembled_at = perf_counter()
-        vector = np.zeros(self.native_size, dtype=np.complex128)
+        assembled_cpu_at = process_time()
+        vector = np.zeros(len(self.candidate_rows), dtype=np.complex128)
         side = str(mode.side)
+        group_wall_at = perf_counter()
+        group_cpu_at = process_time()
         for key, group in self.groups[side].items():
             local_pair, _built = self._mode_local_rows(
                 side, key[1], key[2], mode
@@ -1043,29 +1240,51 @@ class _V22NativeFacetRule:
                     + complex(mode.gamma) * group["origins"][:, 1]
                 )
             )
-            rows = group["global_dofs"][:, active]
+            rows = group["compact_dofs"][:, active]
             values = phase[:, None] * local_values[active][None, :]
             np.add.at(vector, rows.reshape(-1), values.reshape(-1))
             self.assembly_stats["native_facet_contributions"] += len(
                 group["facet_ids"]
             )
+        group_wall_seconds = perf_counter() - group_wall_at
+        group_cpu_seconds = process_time() - group_cpu_at
+        mpc_wall_at = perf_counter()
+        mpc_cpu_at = process_time()
 
+        raw_magnitudes = np.abs(vector)
+        raw_maximum = float(np.max(raw_magnitudes, initial=0.0))
+        raw_cutoff = 1e-13 * raw_maximum
+        filter_total = self._component_filter_totals[(side, component)]
+        filter_total["raw_rows_nonzero_before_mpc"] += int(
+            np.count_nonzero(raw_magnitudes)
+        )
+        filter_total["raw_rows_tiny_before_mpc_relative_filter"] += int(
+            np.count_nonzero((raw_magnitudes > 0.0) & (raw_magnitudes < raw_cutoff))
+        )
+        filter_total["raw_slave_rows_nonzero_before_mpc"] += int(
+            np.count_nonzero(vector[self._compact_slave_rows])
+        )
+        del raw_magnitudes
         if self._slave_rows.size:
-            slave_values = vector[self._slave_rows].copy()
+            slave_values = vector[self._compact_slave_rows].copy()
             routed_values = np.repeat(slave_values, self._master_counts)
             np.add.at(
                 vector,
-                self._master_rows,
+                self._compact_master_rows,
                 self._dual_coefficients * routed_values,
             )
-            vector[self._slave_rows] = 0.0 + 0.0j
+            vector[self._compact_slave_rows] = 0.0 + 0.0j
+        mpc_wall_seconds = perf_counter() - mpc_wall_at
+        mpc_cpu_seconds = process_time() - mpc_cpu_at
+        filter_wall_at = perf_counter()
+        filter_cpu_at = process_time()
         magnitudes = np.abs(vector)
         maximum = float(np.max(magnitudes, initial=0.0))
         cutoff = 1e-13 * maximum
         nonzero_before = int(np.count_nonzero(magnitudes))
-        rows = np.flatnonzero(magnitudes > cutoff).astype(self.index_dtype, copy=False)
-        values = np.ascontiguousarray(vector[rows], dtype=np.complex128)
-        filter_total = self._component_filter_totals[(side, component)]
+        compact_rows = np.flatnonzero(magnitudes > cutoff)
+        rows = np.ascontiguousarray(self.candidate_rows[compact_rows], dtype=self.index_dtype)
+        values = np.ascontiguousarray(vector[compact_rows], dtype=np.complex128)
         filter_total["assembled_component_vector_count"] += 1
         filter_total["global_maximum_abs_max"] = max(
             filter_total["global_maximum_abs_max"], maximum
@@ -1086,6 +1305,8 @@ class _V22NativeFacetRule:
         filter_hasher.update(str(mode.polarization).encode("ascii"))
         filter_hasher.update(np.ascontiguousarray(rows).tobytes())
         filter_hasher.update(values.tobytes())
+        filter_wall_seconds = perf_counter() - filter_wall_at
+        filter_cpu_seconds = process_time() - filter_cpu_at
         self.assembly_stats["component_assembly_calls"] += 1
         self.assembly_stats["last_mode_key"] = [
             side,
@@ -1096,9 +1317,191 @@ class _V22NativeFacetRule:
         self.assembly_stats["last_class_ids_by_side"] = {
             side: list(self.class_ids_by_side[side])
         }
-        self.assembly_stats["last_component_seconds"] = perf_counter() - assembled_at
+        component_wall_seconds = perf_counter() - assembled_at
+        component_cpu_seconds = process_time() - assembled_cpu_at
+        self.assembly_stats["component_wall_seconds_total"] += component_wall_seconds
+        self.assembly_stats["component_process_cpu_seconds_total"] += component_cpu_seconds
+        self.assembly_stats["group_integral_phase_wall_seconds_total"] += group_wall_seconds
+        self.assembly_stats["group_integral_phase_process_cpu_seconds_total"] += group_cpu_seconds
+        self.assembly_stats["mpc_pullback_phase_wall_seconds_total"] += mpc_wall_seconds
+        self.assembly_stats["mpc_pullback_phase_process_cpu_seconds_total"] += mpc_cpu_seconds
+        self.assembly_stats["global_filter_phase_wall_seconds_total"] += filter_wall_seconds
+        self.assembly_stats["global_filter_phase_process_cpu_seconds_total"] += filter_cpu_seconds
+        self.assembly_stats["last_component_wall_seconds"] = component_wall_seconds
+        self.assembly_stats["last_component_process_cpu_seconds"] = component_cpu_seconds
+        # Preserve the historical field as an alias for existing V22 consumers.
+        self.assembly_stats["last_component_seconds"] = component_wall_seconds
         return rows, values
 
+    def compare_full_domain_reference(
+        self,
+        mode: Any,
+        component: int,
+        *,
+        field_values_by_candidate_rows: np.ndarray | None = None,
+        alpha: complex = 1.0 + 0.0j,
+    ) -> dict[str, Any]:
+        """Require exact compact/full-domain equivalence for a bounded witness."""
+
+        field_values = (
+            None
+            if field_values_by_candidate_rows is None
+            else np.asarray(field_values_by_candidate_rows, dtype=np.complex128)
+        )
+        if field_values is not None and field_values.shape != self.candidate_rows.shape:
+            raise ValueError("paired timing field differs from the compact candidate-row domain")
+        alpha_value = complex(alpha)
+        if not np.isfinite(alpha_value.real) or not np.isfinite(alpha_value.imag) or alpha_value == 0.0:
+            raise ValueError("paired timing alpha must be finite and nonzero")
+
+        self._basis_cache.clear()
+        compact_wall_at = perf_counter()
+        compact_cpu_at = process_time()
+        compact_rows, compact_values = self.assemble_component(mode, component)
+        compact_b_alpha = alpha_value * compact_values
+        compact_d_x = (
+            None
+            if field_values is None
+            else np.dot(compact_values, field_values[self.compact_positions(compact_rows)])
+        )
+        compact_wall_seconds = perf_counter() - compact_wall_at
+        compact_cpu_seconds = process_time() - compact_cpu_at
+
+        self._basis_cache.clear()
+        reference_wall_at = perf_counter()
+        reference_cpu_at = process_time()
+        reference = np.zeros(self.native_size, dtype=np.complex128)
+        side = str(mode.side)
+        for key, group in self.groups[side].items():
+            local_pair, _built = self._mode_local_rows(side, key[1], key[2], mode)
+            local_values = local_pair[component]
+            active = np.flatnonzero(local_values != 0.0)
+            if not active.size:
+                continue
+            phase = np.exp(
+                1j
+                * (
+                    complex(mode.alpha) * group["origins"][:, 0]
+                    + complex(mode.gamma) * group["origins"][:, 1]
+                )
+            )
+            values = phase[:, None] * local_values[active][None, :]
+            np.add.at(
+                reference,
+                group["global_dofs"][:, active].reshape(-1),
+                values.reshape(-1),
+            )
+        raw_slave_nonzero = int(np.count_nonzero(reference[self._slave_rows]))
+        if self._slave_rows.size:
+            slave_values = reference[self._slave_rows].copy()
+            routed_values = np.repeat(slave_values, self._master_counts)
+            np.add.at(
+                reference,
+                self._master_rows,
+                self._dual_coefficients * routed_values,
+            )
+            reference[self._slave_rows] = 0.0 + 0.0j
+        magnitudes = np.abs(reference)
+        maximum = float(np.max(magnitudes, initial=0.0))
+        cutoff = 1e-13 * maximum
+        reference_rows = np.flatnonzero(magnitudes > cutoff).astype(
+            self.index_dtype, copy=False
+        )
+        reference_values = np.ascontiguousarray(reference[reference_rows])
+        reference_b_alpha = alpha_value * reference_values
+        reference_d_x = (
+            None
+            if field_values is None
+            else np.dot(
+                reference_values,
+                field_values[self.compact_positions(reference_rows)],
+            )
+        )
+        reference_wall_seconds = perf_counter() - reference_wall_at
+        reference_cpu_seconds = process_time() - reference_cpu_at
+        support_equal = np.array_equal(compact_rows, reference_rows)
+        values_equal = np.array_equal(compact_values, reference_values)
+        b_alpha_equal = np.array_equal(compact_b_alpha, reference_b_alpha)
+        d_x_equal = (
+            field_values is None
+            or (compact_d_x == reference_d_x)
+        )
+        positive = magnitudes[magnitudes > 0.0]
+        cutoff_distance = (
+            float(np.min(np.abs(positive / cutoff - 1.0))) if cutoff > 0.0 and positive.size else None
+        )
+        result = {
+            "mode_key": [side, int(mode.m), int(mode.n), str(mode.polarization)],
+            "component": int(component),
+            "status": "PASS_EXACT" if support_equal and values_equal else "FAILED",
+            "support_rows_equal": bool(support_equal),
+            "retained_values_bitwise_equal": bool(values_equal),
+            "B_alpha_bitwise_equal": bool(b_alpha_equal),
+            "D_x_bitwise_equal": bool(d_x_equal),
+            "compact_row_count": int(len(compact_rows)),
+            "reference_row_count": int(len(reference_rows)),
+            "compact_rows_sha256": _array_sha256(compact_rows),
+            "reference_rows_sha256": _array_sha256(reference_rows),
+            "compact_values_sha256": _array_sha256(compact_values),
+            "reference_values_sha256": _array_sha256(reference_values),
+            "maximum_abs": maximum,
+            "cutoff": cutoff,
+            "closest_nonzero_to_cutoff_relative_distance": cutoff_distance,
+            "raw_mpc_slave_rows_nonzero_before_pullback": raw_slave_nonzero,
+            "full_vector_bytes": int(self.native_size * np.dtype(np.complex128).itemsize),
+            "paired_timing": {
+                "status": "MEASURED_SAME_MODE_FIELD_ALPHA_COLD_CACHE" if field_values is not None else "MEASURED_SAME_MODE_COLD_CACHE",
+                "mode_key": [side, int(mode.m), int(mode.n), str(mode.polarization)],
+                "component": int(component),
+                "field_sha256": None if field_values is None else _array_sha256(field_values),
+                "alpha": {"real": alpha_value.real, "imag": alpha_value.imag},
+                "alpha_sha256": _array_sha256(np.asarray([alpha_value], dtype=np.complex128)),
+                "cache_policy": "basis cache cleared before each path; equal integral/cache state",
+                "compact_wall_seconds": compact_wall_seconds,
+                "compact_process_cpu_seconds": compact_cpu_seconds,
+                "full_domain_reference_wall_seconds": reference_wall_seconds,
+                "full_domain_reference_process_cpu_seconds": reference_cpu_seconds,
+                "compact_B_alpha_sha256": _array_sha256(compact_b_alpha),
+                "reference_B_alpha_sha256": _array_sha256(reference_b_alpha),
+                "compact_D_x_sha256": None if compact_d_x is None else _array_sha256(np.asarray([compact_d_x], dtype=np.complex128)),
+                "reference_D_x_sha256": None if reference_d_x is None else _array_sha256(np.asarray([reference_d_x], dtype=np.complex128)),
+            },
+        }
+        if result["status"] != "PASS_EXACT" or not b_alpha_equal or not d_x_equal:
+            raise ValueError(
+                "compact boundary component differs from the complete global-row reference: "
+                f"{result}"
+            )
+        return result
+
+    def restore_filter_audit(self, audit: Mapping[str, Any]) -> None:
+        if not self._rolling_filter_digest:
+            raise ValueError("only V23 rolling component digests are restartable")
+        for side in ("bottom", "top"):
+            for component in (0, 1):
+                row = audit.get(side, {}).get(str(component), {})
+                if not isinstance(row, Mapping):
+                    raise ValueError("V23 checkpoint component filter audit is incomplete")
+                digest = row.get("retained_stream_sha256")
+                if not isinstance(digest, str) or len(digest) != 64:
+                    raise ValueError("V23 checkpoint component digest is malformed")
+                self._component_filter_hashers[(side, component)] = _RollingDigest(digest)
+                totals = self._component_filter_totals[(side, component)]
+                for key in tuple(totals):
+                    if key in row:
+                        totals[key] = row[key]
+                for key in (
+                    "assembled_component_vector_count",
+                    "exact_nonzero_rows_before_filter",
+                    "rows_dropped_by_global_mask",
+                    "retained_rows",
+                    "raw_rows_nonzero_before_mpc",
+                    "raw_rows_tiny_before_mpc_relative_filter",
+                    "raw_slave_rows_nonzero_before_mpc",
+                ):
+                    value = totals[key]
+                    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                        raise ValueError("V23 checkpoint component filter counter is invalid")
     def filter_audit(self) -> dict[str, Any]:
         return {
             side: {
@@ -1114,7 +1517,7 @@ class _V22NativeFacetRule:
                     "retained_stream_sha256": self._component_filter_hashers[
                         (side, component)
                     ].copy().hexdigest(),
-                    "scope": "actual global component vector after finalized MPC E^H; rank 0/MPI1",
+                    "scope": "complete 882-row boundary-cell union plus finalized MPC master closure after MPC E^H; rank 0/MPI1",
                 }
                 for component in (0, 1)
             }
@@ -1234,10 +1637,23 @@ def _read_v22_campaign_state(root: Path) -> dict[str, Any]:
         time_namespace_identity,
     )
 
-    window = load_fixed_campaign_window(root / TASK40_V22_CAMPAIGN_WINDOW)
+    registered_path = os.environ.get("TASK40_V10_CAMPAIGN_WINDOW")
+    window_path = (
+        Path(registered_path).resolve()
+        if registered_path
+        else (root / TASK40_V22_CAMPAIGN_WINDOW).resolve()
+    )
+    window = load_fixed_campaign_window(window_path)
+    expected_sha = os.environ.get("TASK40_V10_CAMPAIGN_WINDOW_SHA256")
+    if expected_sha is not None and expected_sha != window.sha256:
+        raise ValueError("probe campaign window differs from the supervised V23/V22 SHA")
+    expected_accounting = os.environ.get("TASK40_V10_CAMPAIGN_ACCOUNTING")
+    accounting_path = window.path.parent / CAMPAIGN_ACCOUNTING_NAME
+    if expected_accounting is not None and Path(expected_accounting).resolve() != accounting_path:
+        raise ValueError("probe campaign ledger differs from the registered window directory")
     return read_campaign_state(
         window,
-        window.path.parent / CAMPAIGN_ACCOUNTING_NAME,
+        accounting_path,
         namespace_identity=time_namespace_identity(),
     )
 
@@ -1256,37 +1672,91 @@ def _write_v22_action_checkpoint(
     b_action: np.ndarray,
     d_values: np.ndarray,
     h_values: np.ndarray,
+    candidate_rows: np.ndarray | None = None,
+    checkpoint_directory: Path | None = None,
+    restart_state: Mapping[str, Any] | None = None,
+    checkpoint_interval: int = 8,
     failure_facts: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    slot = (mode_count // 8) % 2
-    data_path = output_directory / f"v22_mode_sweep_checkpoint_{slot}.npz"
+    from src.runners.task40_v10_campaign import TASK40_V23_CAMPAIGN_SHA256
+
+    is_v23 = os.environ.get("TASK40_V10_CAMPAIGN_WINDOW_SHA256") == TASK40_V23_CAMPAIGN_SHA256
+    if is_v23 and restart_state is None:
+        raise ValueError("V23 action checkpoints require the complete restart state")
+    storage_directory = Path(checkpoint_directory or output_directory).resolve()
+    storage_directory.mkdir(parents=True, exist_ok=True)
+    prefix = "v23" if is_v23 else "v22"
+    slot = (mode_count // max(int(checkpoint_interval), 1)) % 2
+    data_path = storage_directory / f"{prefix}_mode_sweep_checkpoint_{slot}.npz"
+    checkpoint_json_name = f"{prefix}_mode_sweep_checkpoint.json"
     temporary = data_path.with_suffix(data_path.suffix + ".tmp")
-    b_rows = np.flatnonzero(b_action != 0.0 + 0.0j).astype(np.int64, copy=False)
+    b_compact_rows = np.flatnonzero(b_action != 0.0 + 0.0j)
+    b_rows = (
+        np.asarray(candidate_rows, dtype=np.int64)[b_compact_rows]
+        if candidate_rows is not None
+        else b_compact_rows.astype(np.int64, copy=False)
+    )
     arrays = {
-        "B_nonzero_rows": b_rows,
-        "B_nonzero_values": np.ascontiguousarray(b_action[b_rows], dtype=np.complex128),
+        "B_nonzero_rows": np.ascontiguousarray(b_rows, dtype=np.int64),
+        "B_nonzero_values": np.ascontiguousarray(b_action[b_compact_rows], dtype=np.complex128),
         "D_completed_values": np.ascontiguousarray(d_values[:mode_count], dtype=np.complex128),
         "H_completed_values": np.ascontiguousarray(h_values[:mode_count], dtype=np.float64),
     }
+    if is_v23:
+        assert restart_state is not None
+        cell_state = restart_state.get("m_c_state")
+        if not isinstance(cell_state, Mapping):
+            raise ValueError("V23 checkpoint omitted per-cell multiplicity state")
+        for side in ("bottom", "top"):
+            side_state = cell_state.get(side)
+            if not isinstance(side_state, Mapping):
+                raise ValueError("V23 checkpoint omitted one side's per-cell state")
+            for metric in ("B", "D", "union"):
+                metric_state = side_state.get(metric)
+                if not isinstance(metric_state, Mapping):
+                    raise ValueError("V23 checkpoint omitted one per-cell support metric")
+                for state_name in (
+                    "per_cell_mode_counts",
+                    "per_cell_interior_row_memberships",
+                ):
+                    array_name = f"m_c_{side}_{metric}_{state_name}"
+                    arrays[array_name] = np.ascontiguousarray(
+                        metric_state[state_name], dtype=np.int64
+                    )
     with temporary.open("wb") as stream:
         np.savez(stream, **arrays)
         stream.flush()
         os.fsync(stream.fileno())
     payload_sha256 = _sha256_file(temporary)
     temporary.replace(data_path)
-    directory_fd = os.open(output_directory, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    directory_fd = os.open(storage_directory, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
     try:
         os.fsync(directory_fd)
     finally:
         os.close(directory_fd)
     checkpoint = {
-        "schema": "task40extra.review_v22_mode_sweep_checkpoint.v2",
+        "schema": (
+            "task40extra.review_v23_compact_mode_sweep_checkpoint.v1"
+            if is_v23
+            else "task40extra.review_v22_mode_sweep_checkpoint.v2"
+        ),
         "run_id": preflight.get("run_id"),
         "source_sha": preflight.get("source_sha"),
         "input_sha256": preflight.get("input_sha256"),
         "physical_model_sha256": preflight.get("physical_model_sha256"),
         "mode_manifest_sha256": mode_inventory.get("mode_manifest_sha256"),
         "ordered_mode_key_sha256": mode_inventory.get("ordered_mode_key_sha256"),
+        "campaign_window_sha256": os.environ.get("TASK40_V10_CAMPAIGN_WINDOW_SHA256"),
+        "compact_candidate_row_count": (
+            int(len(candidate_rows)) if candidate_rows is not None else None
+        ),
+        "compact_candidate_rows_sha256": (
+            _array_sha256(candidate_rows) if candidate_rows is not None else None
+        ),
+        "checkpoint_json_path": os.path.relpath(
+            storage_directory / checkpoint_json_name, Path(output_directory).resolve()
+        ),
+        "checkpoint_interval_modes": int(checkpoint_interval),
         "completed_mode_count": int(mode_count),
         "next_mode_index": int(mode_count),
         "mode_count_by_side": dict(mode_counts_by_side),
@@ -1298,6 +1768,13 @@ def _write_v22_action_checkpoint(
         },
         "global_D_support_row_count_by_side": {
             side: int(support_rows_by_side[side]["D"]) for side in ("bottom", "top")
+        },
+        "global_B_D_support_row_count_by_side": {
+            side: {
+                key: int(value)
+                for key, value in support_rows_by_side[side].items()
+            }
+            for side in ("bottom", "top")
         },
         "stream_prefix_sha256": stream_digest.copy().hexdigest(),
         "component_filter_prefix": {
@@ -1320,10 +1797,279 @@ def _write_v22_action_checkpoint(
             "completed D/H mode values, streaming digest, and exact side/class/mode prefix"
         ),
     }
+    if is_v23:
+        assert restart_state is not None
+        checkpoint["restart_state"] = {
+            "field_sha256": restart_state.get("field_sha256"),
+            "rng_bit_generator_state_after_completed_mode_prefix": restart_state.get(
+                "rng_state"
+            ),
+            "stream_digest_state": stream_digest.copy().hexdigest(),
+            "support_category_totals": restart_state.get("support_category_totals"),
+            "calibration_results": restart_state.get("calibration_results"),
+            "mode_sweep_elapsed_seconds": float(
+                restart_state.get("mode_sweep_elapsed_seconds", 0.0)
+            ),
+            "mode_sweep_process_cpu_seconds": float(
+                restart_state.get("mode_sweep_process_cpu_seconds", 0.0)
+            ),
+            "mode_timing_by_side": restart_state.get("mode_timing_by_side"),
+            "expected_mode_counts_by_side": restart_state.get(
+                "expected_mode_counts_by_side"
+            ),
+            "per_cell_state_array_prefix": "m_c_{side}_{metric}_",
+        }
+        checkpoint["checkpoint_scope"] = (
+            "restartable V23 compact B action by global row IDs, completed D/H prefix, "
+            "field identity, alpha RNG state, per-cell per-mode inventory and separate raw "
+            "row memberships, support categories, component-filter audit, calibration state, "
+            "stream digest, and exact side/class/mode prefix"
+        )
     if failure_facts is not None:
         checkpoint["fail_fast_operator_gate_failure"] = dict(failure_facts)
-    _write_json(output_directory / "v22_mode_sweep_checkpoint.json", checkpoint)
+    _write_json(storage_directory / checkpoint_json_name, checkpoint)
     return checkpoint
+
+
+def _v23_checkpoint_directory(
+    root: Path,
+    *,
+    preflight: Mapping[str, Any],
+    mode_inventory: Mapping[str, Any],
+    campaign_window_sha256: str,
+) -> Path:
+    identity = {
+        "source_sha": preflight.get("source_sha"),
+        "input_sha256": preflight.get("input_sha256"),
+        "physical_model_sha256": preflight.get("physical_model_sha256"),
+        "mode_manifest_sha256": mode_inventory.get("mode_manifest_sha256"),
+        "ordered_mode_key_sha256": mode_inventory.get("ordered_mode_key_sha256"),
+        "campaign_window_sha256": campaign_window_sha256,
+    }
+    if any(not isinstance(value, str) or len(value) != 64 for value in identity.values()):
+        raise ValueError("V23 checkpoint identity is incomplete or malformed")
+    key = hashlib.sha256(
+        json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    return (
+        Path(root).resolve()
+        / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl/operator_checkpoints"
+        / key
+    )
+
+
+def _load_v23_action_checkpoint(
+    checkpoint_directory: Path,
+    *,
+    preflight: Mapping[str, Any],
+    mode_inventory: Mapping[str, Any],
+    campaign_window_sha256: str,
+    candidate_rows: np.ndarray,
+    modes: Sequence[Any],
+    h_values: np.ndarray,
+    side_cell_counts: Mapping[str, int],
+    expected_field_sha256: str,
+) -> dict[str, Any] | None:
+    """Load a hash-bound V23 prefix, refusing any stale or partial identity."""
+
+    checkpoint_directory = Path(checkpoint_directory).resolve()
+    metadata_path = checkpoint_directory / "v23_mode_sweep_checkpoint.json"
+    if not metadata_path.exists():
+        return None
+    checkpoint = json.loads(metadata_path.read_text(encoding="utf-8"))
+    if checkpoint.get("schema") != "task40extra.review_v23_compact_mode_sweep_checkpoint.v1":
+        raise ValueError("V23 checkpoint schema differs from the restart contract")
+    identity = {
+        "source_sha": preflight.get("source_sha"),
+        "input_sha256": preflight.get("input_sha256"),
+        "physical_model_sha256": preflight.get("physical_model_sha256"),
+        "mode_manifest_sha256": mode_inventory.get("mode_manifest_sha256"),
+        "ordered_mode_key_sha256": mode_inventory.get("ordered_mode_key_sha256"),
+        "campaign_window_sha256": campaign_window_sha256,
+        "compact_candidate_row_count": int(len(candidate_rows)),
+        "compact_candidate_rows_sha256": _array_sha256(candidate_rows),
+    }
+    for key, expected in identity.items():
+        if checkpoint.get(key) != expected:
+            raise ValueError(f"V23 checkpoint identity mismatch for {key}")
+    if checkpoint.get("fail_fast_operator_gate_failure") is not None:
+        raise ValueError("V23 checkpoint records a failed numerical gate and cannot resume")
+    count = checkpoint.get("completed_mode_count")
+    next_index = checkpoint.get("next_mode_index")
+    if (
+        not isinstance(count, int)
+        or isinstance(count, bool)
+        or not 0 <= count <= len(modes)
+        or next_index != count
+    ):
+        raise ValueError("V23 checkpoint mode prefix is invalid")
+    expected_side_counts = {
+        side: sum(str(mode.side) == side for mode in modes[:count])
+        for side in ("bottom", "top")
+    }
+    if checkpoint.get("mode_count_by_side") != expected_side_counts:
+        raise ValueError("V23 checkpoint side-mode prefix is inconsistent with ordered modes")
+    prefix = checkpoint.get("completed_side_class_mode_prefix")
+    if not isinstance(prefix, Mapping) or any(
+        not isinstance(prefix.get(side), Mapping)
+        or any(value != expected_side_counts[side] for value in prefix[side].values())
+        for side in ("bottom", "top")
+    ):
+        raise ValueError("V23 checkpoint side/class prefix is inconsistent")
+    payload = checkpoint.get("actual_action_payload")
+    if not isinstance(payload, Mapping) or payload.get("B_values_are_exact_nonzeros_without_numeric_threshold") is not True:
+        raise ValueError("V23 checkpoint action payload declaration is invalid")
+    data_path = (checkpoint_directory / str(payload.get("path", ""))).resolve()
+    if data_path.parent != checkpoint_directory or not data_path.is_file():
+        raise ValueError("V23 checkpoint NPZ payload is missing or escaped its directory")
+    if _sha256_file(data_path) != payload.get("sha256"):
+        raise ValueError("V23 checkpoint NPZ hash does not match its receipt")
+    restart = checkpoint.get("restart_state")
+    if not isinstance(restart, Mapping) or restart.get("field_sha256") != expected_field_sha256:
+        raise ValueError("V23 checkpoint saved-field identity differs from the regenerated field")
+    rng_state = restart.get("rng_bit_generator_state_after_completed_mode_prefix")
+    stream_state = restart.get("stream_digest_state")
+    elapsed_prefix = float(restart.get("mode_sweep_elapsed_seconds", 0.0))
+    cpu_elapsed_prefix = float(restart.get("mode_sweep_process_cpu_seconds", 0.0))
+    mode_timing_by_side = restart.get("mode_timing_by_side")
+    if not isinstance(rng_state, Mapping) or not isinstance(stream_state, str) or len(stream_state) != 64:
+        raise ValueError("V23 checkpoint omitted its RNG or stream-digest continuation state")
+    if (
+        not np.isfinite(elapsed_prefix)
+        or elapsed_prefix < 0.0
+        or not np.isfinite(cpu_elapsed_prefix)
+        or cpu_elapsed_prefix < 0.0
+    ):
+        raise ValueError("V23 checkpoint cumulative mode time is invalid")
+    if not isinstance(mode_timing_by_side, Mapping):
+        raise ValueError("V23 checkpoint omitted side-specific wall/CPU timing state")
+    for side in ("bottom", "top"):
+        side_timing = mode_timing_by_side.get(side)
+        expected = expected_side_counts[side]
+        if (
+            not isinstance(side_timing, Mapping)
+            or side_timing.get("completed_modes") != expected
+            or not isinstance(side_timing.get("wall_seconds"), (int, float))
+            or not np.isfinite(float(side_timing["wall_seconds"]))
+            or float(side_timing["wall_seconds"]) < 0.0
+            or not isinstance(side_timing.get("process_cpu_seconds"), (int, float))
+            or not np.isfinite(float(side_timing["process_cpu_seconds"]))
+            or float(side_timing["process_cpu_seconds"]) < 0.0
+        ):
+            raise ValueError("V23 checkpoint side-specific timing does not match its mode prefix")
+    try:
+        bytes.fromhex(stream_state)
+    except ValueError as error:
+        raise ValueError("V23 checkpoint stream digest is malformed") from error
+    with np.load(data_path, allow_pickle=False) as archive:
+        required = {
+            "B_nonzero_rows",
+            "B_nonzero_values",
+            "D_completed_values",
+            "H_completed_values",
+        }
+        if not required.issubset(archive.files):
+            raise ValueError("V23 checkpoint omitted an action payload array")
+        b_rows = np.asarray(archive["B_nonzero_rows"], dtype=np.int64)
+        b_values = np.asarray(archive["B_nonzero_values"], dtype=np.complex128)
+        d_values = np.asarray(archive["D_completed_values"], dtype=np.complex128)
+        h_completed = np.asarray(archive["H_completed_values"], dtype=np.float64)
+        candidate = np.asarray(candidate_rows, dtype=np.int64)
+        if (
+            b_rows.ndim != 1
+            or b_values.shape != b_rows.shape
+            or (
+                len(b_rows)
+                and (np.any(np.diff(b_rows) <= 0) or np.any(b_values == 0.0))
+            )
+            or d_values.shape != (count,)
+            or h_completed.shape != (count,)
+            or not np.isfinite(b_values).all()
+            or not np.isfinite(d_values).all()
+            or not np.isfinite(h_completed).all()
+            or not np.array_equal(h_completed, np.asarray(h_values[:count], dtype=np.float64))
+        ):
+            raise ValueError("V23 checkpoint action arrays have invalid shape/order/value")
+        positions = np.searchsorted(candidate, b_rows)
+        if len(b_rows) and (
+            np.any(positions >= len(candidate))
+            or not np.array_equal(candidate[positions], b_rows)
+        ):
+            raise ValueError("V23 checkpoint B global rows escaped the compact candidate domain")
+        b_action = np.zeros(len(candidate), dtype=np.complex128)
+        b_action[positions] = b_values
+        cell_state: dict[str, dict[str, dict[str, np.ndarray]]] = {}
+        for side in ("bottom", "top"):
+            cell_state[side] = {}
+            for metric in ("B", "D", "union"):
+                cell_state[side][metric] = {}
+                for state_name in (
+                    "per_cell_mode_counts",
+                    "per_cell_interior_row_memberships",
+                ):
+                    key = f"m_c_{side}_{metric}_{state_name}"
+                    if key not in archive.files:
+                        raise ValueError(f"V23 checkpoint omitted {key}")
+                    value = np.asarray(archive[key], dtype=np.int64)
+                    if value.shape != (int(side_cell_counts[side]),) or np.any(value < 0):
+                        raise ValueError(f"V23 checkpoint array {key} has invalid dimensions or values")
+                    if state_name == "per_cell_mode_counts" and np.any(
+                        value > expected_side_counts[side]
+                    ):
+                        raise ValueError(f"V23 checkpoint array {key} exceeds the mode prefix")
+                    if state_name == "per_cell_interior_row_memberships" and np.any(
+                        value > expected_side_counts[side] * 450
+                    ):
+                        raise ValueError(f"V23 checkpoint array {key} exceeds the row prefix")
+                    cell_state[side][metric][state_name] = value.copy()
+    support_rows = checkpoint.get("global_B_support_row_count_by_side")
+    support_d = checkpoint.get("global_D_support_row_count_by_side")
+    category_totals = restart.get("support_category_totals")
+    calibration_results = restart.get("calibration_results")
+    if not all(isinstance(value, Mapping) for value in (support_rows, support_d, category_totals, calibration_results)):
+        raise ValueError("V23 checkpoint omitted accumulated support/calibration state")
+    support_by_side = {
+        side: {
+            "B": int(support_rows[side]),
+            "D": int(support_d[side]),
+            "nonempty_B_modes": 0,
+            "nonempty_D_modes": 0,
+        }
+        for side in ("bottom", "top")
+    }
+    raw_support = checkpoint.get("global_B_D_support_row_count_by_side")
+    if isinstance(raw_support, Mapping):
+        for side in ("bottom", "top"):
+            support_by_side[side]["B"] = int(raw_support[side]["B"])
+            support_by_side[side]["D"] = int(raw_support[side]["D"])
+            support_by_side[side]["nonempty_B_modes"] = int(raw_support[side]["nonempty_B_modes"])
+            support_by_side[side]["nonempty_D_modes"] = int(raw_support[side]["nonempty_D_modes"])
+    else:
+        raise ValueError("V23 checkpoint omitted support mode counters")
+    return {
+        "checkpoint": checkpoint,
+        "mode_count": count,
+        "b_action": b_action,
+        "d_values": d_values.copy(),
+        "cell_state": cell_state,
+        "support_rows_by_side": support_by_side,
+        "support_category_totals": category_totals,
+        "class_mode_prefix": prefix,
+        "component_filter_audit": checkpoint.get("component_filter_prefix"),
+        "calibration_results": calibration_results,
+        "rng_state": rng_state,
+        "stream_digest_state": stream_state,
+        "mode_sweep_elapsed_seconds": elapsed_prefix,
+        "mode_sweep_process_cpu_seconds": cpu_elapsed_prefix,
+        "mode_timing_by_side": {
+            side: {
+                "completed_modes": int(mode_timing_by_side[side]["completed_modes"]),
+                "wall_seconds": float(mode_timing_by_side[side]["wall_seconds"]),
+                "process_cpu_seconds": float(mode_timing_by_side[side]["process_cpu_seconds"]),
+            }
+            for side in ("bottom", "top")
+        },
+    }
 
 
 def _native_calibration_gate_failure(
@@ -2696,6 +3442,863 @@ def _packet_apply_D_tile(
     return np.ascontiguousarray(result)
 
 
+def _sparse_csr_sha256(matrix: Any) -> str:
+    from scipy import sparse
+
+    value = sparse.csr_matrix(matrix, dtype=np.complex128, copy=True)
+    value.sort_indices()
+    digest = hashlib.sha256()
+    digest.update(np.asarray(value.shape, dtype="<i8").tobytes())
+    for array in (value.data, value.indices, value.indptr):
+        digest.update(array.dtype.str.encode("ascii"))
+        digest.update(np.asarray(array.shape, dtype="<i8").tobytes())
+        digest.update(np.ascontiguousarray(array).tobytes())
+    return digest.hexdigest()
+
+
+def _v23_q_coverage_record(q_tile: Mapping[str, Any]) -> dict[str, Any]:
+    status = str(q_tile.get("status", "NOT_RUN"))
+    base = {
+        "expected_q_count": 8,
+        "built_q_count": 0,
+        "full_q_matrix_coverage": "0/8",
+        "selected_q_port_tile": q_tile.get("artifact_path", "NOT_RUN"),
+        "selected_q_port_tile_sha256": q_tile.get("artifact_sha256"),
+        "volume_qualification": "PARTIAL_NOT_RUN",
+    }
+    if status == "PASS_REAL_ORIGINAL_NY8_Q_PORT_TILE":
+        return {
+            **base,
+            "status": "PARTIAL_REAL_Q_PORT_TILE",
+            "reason": "one actual q=0 port tile is measured; full q matrices and volume Schur blocks remain unbuilt",
+        }
+    if status == "NOT_RUN_RESOURCE_GATE":
+        return {
+            **base,
+            "status": "NOT_RUN_RESOURCE_GATE",
+            "volume_qualification": "NOT_RUN",
+            "reason": "the selected real q port tile stopped at its recorded memory admission gate",
+        }
+    if status == "NOT_RUN_TIME_STOP":
+        return {
+            **base,
+            "status": "NOT_RUN_TIME_STOP",
+            "volume_qualification": "NOT_RUN",
+            "reason": "the fixed campaign numerical cutoff arrived before the selected q tile started",
+        }
+    if status == "NOT_RUN":
+        return {
+            **base,
+            "status": "NOT_RUN",
+            "volume_qualification": "NOT_RUN",
+            "reason": "the selected real q tile was not attempted",
+        }
+    return {
+        **base,
+        "status": "FAILED",
+        "volume_qualification": "NOT_RUN",
+        "failure_type": q_tile.get("failure_type"),
+        "failure_message": q_tile.get("failure_message"),
+    }
+
+
+def _v23_scan_time_forecast(
+    modes: Sequence[Any],
+    *,
+    next_mode_index: int,
+    mode_timing_by_side: Mapping[str, Mapping[str, Any]],
+    observed_wall_seconds: float,
+    observed_process_cpu_seconds: float,
+) -> dict[str, Any]:
+    remaining = {side: 0 for side in ("bottom", "top")}
+    for mode in modes[next_mode_index:]:
+        side = str(mode.side)
+        if side not in remaining:
+            raise ValueError("V23 timing forecast encountered an unknown port side")
+        remaining[side] += 1
+    measured_rates: dict[str, dict[str, float]] = {}
+    for side in ("bottom", "top"):
+        record = mode_timing_by_side.get(side, {})
+        count = int(record.get("completed_modes", 0))
+        if count > 0:
+            measured_rates[side] = {
+                "wall_seconds_per_mode": float(record["wall_seconds"]) / count,
+                "process_cpu_seconds_per_mode": float(record["process_cpu_seconds"]) / count,
+            }
+    if not measured_rates:
+        return {
+            "status": "NOT_ESTIMABLE_BEFORE_A_MEASURED_MODE",
+            "remaining_modes_by_side": remaining,
+            "estimated_remaining_wall_seconds": None,
+            "estimated_remaining_process_cpu_seconds": None,
+            "rate_by_side": {},
+        }
+    conservative_wall_rate = max(
+        values["wall_seconds_per_mode"] for values in measured_rates.values()
+    )
+    conservative_cpu_rate = max(
+        values["process_cpu_seconds_per_mode"] for values in measured_rates.values()
+    )
+    completed_count = sum(
+        int(mode_timing_by_side.get(side, {}).get("completed_modes", 0))
+        for side in ("bottom", "top")
+    )
+    attributed_wall = sum(
+        float(mode_timing_by_side.get(side, {}).get("wall_seconds", 0.0))
+        for side in ("bottom", "top")
+    )
+    attributed_cpu = sum(
+        float(mode_timing_by_side.get(side, {}).get("process_cpu_seconds", 0.0))
+        for side in ("bottom", "top")
+    )
+    shared_wall_overhead_per_mode = (
+        max(float(observed_wall_seconds) - attributed_wall, 0.0) / completed_count
+        if completed_count
+        else 0.0
+    )
+    shared_cpu_overhead_per_mode = (
+        max(float(observed_process_cpu_seconds) - attributed_cpu, 0.0) / completed_count
+        if completed_count
+        else 0.0
+    )
+    rate_by_side = {}
+    wall_estimate = 0.0
+    cpu_estimate = 0.0
+    for side in ("bottom", "top"):
+        measured = measured_rates.get(side)
+        wall_rate = (
+            measured["wall_seconds_per_mode"] if measured else conservative_wall_rate
+        )
+        cpu_rate = (
+            measured["process_cpu_seconds_per_mode"] if measured else conservative_cpu_rate
+        )
+        rate_by_side[side] = {
+            "wall_seconds_per_mode": wall_rate,
+            "process_cpu_seconds_per_mode": cpu_rate,
+            "source": "measured_side_block_rate" if measured else "conservative_max_measured_side_rate",
+            "completed_modes": int(
+                mode_timing_by_side.get(side, {}).get("completed_modes", 0)
+            ),
+        }
+        wall_estimate += remaining[side] * (wall_rate + shared_wall_overhead_per_mode)
+        cpu_estimate += remaining[side] * (cpu_rate + shared_cpu_overhead_per_mode)
+    return {
+        "status": "MEASURED_SIDE_RATE_FORECAST",
+        "remaining_modes_by_side": remaining,
+        "rate_by_side": rate_by_side,
+        "shared_wall_overhead_per_mode_seconds": shared_wall_overhead_per_mode,
+        "shared_process_cpu_overhead_per_mode_seconds": shared_cpu_overhead_per_mode,
+        "estimated_remaining_wall_seconds": wall_estimate,
+        "estimated_remaining_process_cpu_seconds": cpu_estimate,
+        "planning_only_not_a_numerical_gate": True,
+    }
+
+
+def _run_v23_original_ny8_q_port_tile(
+    root: Path,
+    output_directory: Path,
+    *,
+    preflight: Mapping[str, Any],
+    modes: Sequence[Any],
+    mode_rows: Sequence[Mapping[str, Any]],
+    space: Any,
+    mpc: Any,
+    cfg: Any,
+    assemblers: Mapping[tuple[str, int], Any],
+    assembly_context: Mapping[str, Any],
+    axes_values: Mapping[str, Any],
+    mapping_rows: Sequence[Mapping[str, Any]],
+    boundary_global_rows: Sequence[int],
+    interior_rows: np.ndarray,
+    h_values: np.ndarray,
+    resource_sample: Callable[[], Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Build one real Ny8 boundary port tile using the probe's existing FE/MPC."""
+    from dolfinx import cpp
+    from petsc4py import PETSc
+    from scipy import sparse
+
+    from src.solvers.dtn_boundary_phase_gauge import BOUNDARY_PLANE
+    from src.solvers.fullspace_dtn_action import iter_fullspace_dtn_functionals_from_surface
+    from src.solvers.hcurl_canonical_vector_dolfinx import _physical_entity_transform
+    from src.solvers.original_port_blocks import DiagonalOriginalPortBlock
+    from src.solvers.p6_cell_condensed_action import P6GlobalDirectCarrierProvider
+    from src.solvers.task40_v10_p6_periodic_profile import (
+        TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
+    )
+    from src.solvers.task40_v10_p6_yorbit import (
+        Task40V10FullLayout,
+        build_task40_v10_sector_contexts,
+    )
+
+    started = perf_counter()
+    cpu_started = process_time()
+    output_path = output_directory / "v23_reference_q_port_tile.json"
+    oracle_path = output_directory / "v23_selected_mode_production_B_D_H.npz"
+    projection_readback_path = output_directory / "v23_selected_q_projection_readback.npz"
+    profile = TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE
+    resource_gates: list[dict[str, Any]] = []
+    result: dict[str, Any] = {
+        "schema": "task40extra.review_v23_original_ny8_selected_q_port_tile.v1",
+        "status": "NOT_RUN",
+        "official_result": False,
+        "run_id": preflight.get("run_id"),
+        "source_sha": preflight.get("source_sha"),
+        "input_sha256": preflight.get("input_sha256"),
+        "target_physical_model_sha256": preflight.get("physical_model_sha256"),
+        "profile_identity": profile.identity(),
+        "expected_q_count": int(profile.q_count),
+        "full_q_matrix_coverage": "0/8",
+        "factor_count": 0,
+        "ksp_created": False,
+        "pde_solved": False,
+        "official_R_T_A_created": False,
+        "resource_gates": resource_gates,
+    }
+    provider = tile_iterator = q_map = None
+    try:
+        from src.runners.task40_v10_campaign import TASK40_V23_CAMPAIGN_SHA256
+
+        campaign_before = _read_v22_campaign_state(root)
+        if campaign_before["campaign_window_sha256"] != TASK40_V23_CAMPAIGN_SHA256:
+            raise ValueError("selected q tile requires the registered fixed V23 campaign")
+        result["campaign_before"] = {
+            "window_sha256": campaign_before["campaign_window_sha256"],
+            "remaining_numerical_seconds": campaign_before["remaining_numerical_seconds"],
+        }
+        if campaign_before["remaining_numerical_seconds"] <= 0.0:
+            result.update(
+                status="NOT_RUN_TIME_STOP",
+                time_stop={
+                    "classification": "NUMERICAL_TIME_STOP",
+                    "remaining_numerical_seconds": 0.0,
+                    "source": "fixed V23 campaign numerical cutoff",
+                },
+            )
+            return result
+        if int(space.mesh.comm.size) != 1 or mpc.function_space is not space:
+            raise ValueError("selected original Ny8 q tile requires the existing MPI1 p6 space/MPC")
+        axes = {name: np.asarray(axes_values[name], dtype=np.float64) for name in ("x", "y", "z")}
+        if any(
+            values.ndim != 1 or len(values) < 2 or not np.isfinite(values).all()
+            or np.any(np.diff(values) <= 0.0)
+            for values in axes.values()
+        ):
+            raise ValueError("saved actual Ny8 axes are incomplete or non-monotone")
+        if tuple(len(axes[name]) - 1 for name in ("x", "y", "z")) != profile.global_cell_axes:
+            raise ValueError("existing target axes differ from the registered Ny8 profile")
+        full_rows = int(space.dofmap.index_map.size_global)
+        if full_rows != profile.global_storage_rows:
+            raise ValueError("existing p6 storage rows differ from the registered Ny8 profile")
+        if full_rows - int(len(mpc.slaves)) != profile.global_independent_rows:
+            raise ValueError("existing finalized MPC rows differ from the registered Ny8 profile")
+        if (
+            h_values.shape != (len(modes),)
+            or not np.isfinite(h_values).all()
+            or np.any(h_values <= 0.0)
+            or len(interior_rows) > 1 and np.any(interior_rows[1:] <= interior_rows[:-1])
+        ):
+            raise ValueError("frozen original H_p or existing interior-row classifier is invalid")
+
+        axis_tuples = {name: tuple(map(float, axes[name])) for name in ("x", "y", "z")}
+        contexts = build_task40_v10_sector_contexts(
+            tuple(modes),
+            cfg,
+            axis_tuples,
+            expected_q_counts=profile.q_port_counts,
+            expected_sector_counts=profile.sector_port_counts,
+        )
+        q0_context = contexts[0]
+        q0_aliases = np.flatnonzero(np.asarray(q0_context.local_branch_indices) == 0)
+        if tuple(q0_context.global_q_indices) != (0, profile.q_count // 2):
+            raise ValueError("actual q=0 Ny8 sector assignment differs from the registered profile")
+        if len(q0_aliases) != profile.q_port_counts[0] or not len(q0_aliases):
+            raise ValueError("actual q=0 physical port alias count differs from the profile")
+        local_mode_index = int(q0_aliases[0])
+        mode_index = int(q0_context.original_mode_indices[local_mode_index])
+        mode = modes[mode_index]
+        mode_row = mode_rows[mode_index]
+        mode_keys = tuple(
+            (
+                int(row["mode_index"]), str(row["side"]), int(row["m"]),
+                int(row["n"]), str(row["polarization"]),
+            )
+            for row in mode_rows
+        )
+        original_h = DiagonalOriginalPortBlock(h_values, mode_keys)
+        expected_key = original_h.mode_keys[mode_index]
+        if expected_key[1:] != (
+            str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)
+        ):
+            raise ValueError("selected q=0 physical mode differs from the original H_p key")
+        result["q_assignment"] = {
+            "status": "PASS_PROFILE_BOUND_ACTUAL_MODE_ASSIGNMENT",
+            "global_q": 0,
+            "paired_global_q": int(q0_context.global_q_indices[1]),
+            "twist_index": int(q0_context.twist_index),
+            "q_port_count": len(q0_aliases),
+            "expected_q_port_count": int(profile.q_port_counts[0]),
+            "selected_local_mode_index": local_mode_index,
+            "selected_original_mode_index": mode_index,
+            "selected_q_port_alias_column": 0,
+            "mode_key": list(expected_key),
+            "mode_assignment_source": "build_task40_v10_sector_contexts over the original Ny8 axes and complete frozen mode table",
+        }
+        result["original_H_p_identity"] = {
+            **original_h.audit,
+            "selected_original_H_p": float(original_h.diagonal[mode_index].real),
+            "mode_manifest_sha256": preflight.get("target_mode_inventory", {}).get(
+                "mode_manifest_sha256"
+            ),
+        }
+
+        # Reuse the original full-layout Ny8 DFT only; no global entity records
+        # or q matrix are constructed here.
+        layout_metadata = SimpleNamespace(
+            ny=int(profile.q_count),
+            width=int(profile.rows_per_q),
+            independent=range(profile.global_independent_rows),
+            full_rows=int(profile.global_storage_rows),
+            dimension_counts={3: int(profile.global_interior_rows)},
+        )
+        full_layout = Task40V10FullLayout(
+            layout_metadata,
+            cfg,
+            expected_inventory={
+                "ny": profile.q_count,
+                "width": profile.rows_per_q,
+                "independent_rows": profile.global_independent_rows,
+                "storage_rows": profile.global_storage_rows,
+                "interior_rows": profile.global_interior_rows,
+            },
+        )
+        result["full_layout_formula"] = {
+            **dict(full_layout.audit),
+            "q0_dft_column_sha256": _array_sha256(full_layout.cell_dft[:, 0]),
+            "full_FE_entity_map_materialized": False,
+        }
+
+        # Prove the target and filled-reference port patches share the same
+        # complete facet rectangles; their volume/material identities stay separate.
+        nx, ny, nz = profile.global_cell_axes
+        actual_bounds = {"bottom": [], "top": []}
+        for row in mapping_rows:
+            side = str(row["side"])
+            if side not in actual_bounds:
+                raise ValueError("target boundary mapping contains an unknown port side")
+            actual_bounds[side].append(
+                tuple(float(value) for value in np.asarray(row["cell_bounds_nm"]).reshape(-1))
+            )
+        expected_bounds = {"bottom": [], "top": []}
+        for side, iz in (("bottom", 0), ("top", nz - 1)):
+            for iy in range(ny):
+                for ix in range(nx):
+                    expected_bounds[side].append(
+                        tuple(float(value) for value in np.asarray(
+                            [
+                                [axes["x"][ix], axes["x"][ix + 1]],
+                                [axes["y"][iy], axes["y"][iy + 1]],
+                                [axes["z"][iz], axes["z"][iz + 1]],
+                            ], dtype=np.float64
+                        ).reshape(-1))
+                    )
+        max_boundary_delta = 0.0
+        for side in ("bottom", "top"):
+            if len(actual_bounds[side]) != _EXPECTED_FACETS_BY_SIDE[side]:
+                raise ValueError("actual production port facet count differs from the frozen descriptor")
+            if len(expected_bounds[side]) != _EXPECTED_FACETS_BY_SIDE[side]:
+                raise ValueError("filled-reference port facet count differs from the Ny8 profile")
+            left, right = sorted(actual_bounds[side]), sorted(expected_bounds[side])
+            for actual, reference in zip(left, right, strict=True):
+                delta = max(abs(a - b) for a, b in zip(actual, reference, strict=True))
+                max_boundary_delta = max(max_boundary_delta, delta)
+                if delta > 1.0e-10:
+                    raise ValueError("target and filled-reference port boundary descriptors differ")
+        descriptor = {
+            side: [list(row) for row in sorted(actual_bounds[side])]
+            for side in ("bottom", "top")
+        }
+        descriptor_sha = hashlib.sha256(
+            json.dumps(descriptor, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        result["boundary_descriptor_equivalence"] = {
+            "status": "PASS_COMPLETE_SAME_PORT_CELL_RECTANGLES",
+            "descriptor_sha256": descriptor_sha,
+            "target_physical_model_sha256": preflight.get("physical_model_sha256"),
+            "filled_reference_geometry_identity": "same actual Ny8 axes/profile with filled interior; not assembled as a second mesh",
+            "target_material_and_void_identity_preserved_separately": True,
+            "facets_by_side": {side: len(actual_bounds[side]) for side in actual_bounds},
+            "maximum_cell_bound_difference_nm": max_boundary_delta,
+            "phase_gauge": BOUNDARY_PLANE,
+        }
+
+        # Freeze original production B/D/H independently, then compare a fresh
+        # provider replay against that read-back record.
+        oracle_audit: dict[str, Any] = {}
+        oracle_iterator = iter_fullspace_dtn_functionals_from_surface(
+            modes, assemblers, mpc, cfg, phase_gauge=BOUNDARY_PLANE,
+            assembly_context=assembly_context, start_index=mode_index,
+            stop_index=mode_index + 1, audit=oracle_audit,
+        )
+        try:
+            oracle = next(oracle_iterator)
+            if tuple(oracle.mode_key) != expected_key:
+                raise ValueError("frozen production oracle key differs from original H_p")
+            if complex(oracle.normalization_h) != complex(original_h.diagonal[mode_index]):
+                raise ValueError("frozen production oracle H_p differs from original H_p")
+            b_rows = np.array(oracle.coupling_rows, copy=True)
+            b_values = np.array(oracle.coupling_values, copy=True)
+            d_rows = np.array(oracle.projection_rows, copy=True)
+            d_values = np.array(oracle.projection_values, copy=True)
+            hp_value = float(oracle.normalization_h)
+            oracle_key = tuple(oracle.mode_key)
+            if next(oracle_iterator, None) is not None:
+                raise ValueError("bounded production oracle emitted more than one mode")
+        finally:
+            oracle_iterator.close()
+        support_rows = np.unique(np.concatenate((b_rows, d_rows))).astype(np.int64, copy=False)
+        if not len(support_rows) or not len(b_rows) or not len(d_rows):
+            raise ValueError("selected real production mode has empty B or independent D support")
+        boundary_rows = np.asarray(boundary_global_rows, dtype=np.int64)
+        boundary_positions = np.searchsorted(boundary_rows, support_rows)
+        boundary_ok = boundary_positions < len(boundary_rows)
+        boundary_match = np.zeros(len(support_rows), dtype=np.bool_)
+        boundary_match[boundary_ok] = boundary_rows[boundary_positions[boundary_ok]] == support_rows[boundary_ok]
+        if not np.all(boundary_match):
+            raise ValueError("production B/D support escapes the complete mapped port-adjacent cell set")
+        interior_positions = np.searchsorted(interior_rows, support_rows)
+        interior_ok = interior_positions < len(interior_rows)
+        is_interior = np.zeros(len(support_rows), dtype=np.bool_)
+        is_interior[interior_ok] = interior_rows[interior_positions[interior_ok]] == support_rows[interior_ok]
+        if np.any(is_interior):
+            raise ValueError("selected B/D contains a cell-interior row without a qualified local term")
+        with oracle_path.open("wb") as stream:
+            np.savez(
+                stream,
+                mode_key_json=np.asarray(json.dumps(list(oracle_key), separators=(",", ":"))),
+                B_rows=np.asarray(b_rows, dtype="<i8"), B_values=np.asarray(b_values, dtype="<c16"),
+                D_rows=np.asarray(d_rows, dtype="<i8"), D_values=np.asarray(d_values, dtype="<c16"),
+                H_p=np.asarray([hp_value], dtype="<f8"),
+                original_H_identity_sha256=np.asarray(original_h.identity_sha256),
+            )
+            stream.flush()
+            os.fsync(stream.fileno())
+        oracle_sha = _sha256_file(oracle_path)
+        with np.load(oracle_path, allow_pickle=False) as frozen:
+            if str(frozen["mode_key_json"].item()) != json.dumps(list(oracle_key), separators=(",", ":")):
+                raise ValueError("hash-bound production B/D/H read-back changed its mode key")
+            b_rows = np.array(frozen["B_rows"], dtype=np.int64, copy=True)
+            b_values = np.array(frozen["B_values"], dtype=np.complex128, copy=True)
+            d_rows = np.array(frozen["D_rows"], dtype=np.int64, copy=True)
+            d_values = np.array(frozen["D_values"], dtype=np.complex128, copy=True)
+            hp_value = float(frozen["H_p"][0])
+            if str(frozen["original_H_identity_sha256"].item()) != original_h.identity_sha256:
+                raise ValueError("frozen production oracle is bound to a different original H_p block")
+
+        topology = space.mesh.topology
+        for dim in (1, 2):
+            topology.create_entities(dim)
+            topology.create_connectivity(dim, topology.dim)
+            topology.create_connectivity(topology.dim, dim)
+        topology.create_entity_permutations()
+        counts = {dim: int(topology.index_map(dim).size_local) for dim in (1, 2)}
+        geometry_bytes = 3 * 8 * (2 * counts[1] + 4 * counts[2])
+        inventory_reserve = (counts[1] + counts[2]) * 768 + geometry_bytes
+        resource_gates.append(_resource_admission(
+            "v23_actual_edge_face_orbit_inventory", inventory_reserve,
+            resource_sample=resource_sample, require_task_cgroup=True,
+        ))
+        geometry_by_dim = {
+            1: np.asarray(cpp.mesh.entities_to_geometry(
+                space.mesh._cpp_object, 1, np.arange(counts[1], dtype=np.int32), True
+            ), dtype=np.int32),
+            2: np.asarray(cpp.mesh.entities_to_geometry(
+                space.mesh._cpp_object, 2, np.arange(counts[2], dtype=np.int32), True
+            ), dtype=np.int32),
+        }
+        slave_rows = np.asarray(mpc.slaves, dtype=np.int64)
+        slave_rows.sort()
+        grid = tuple(axes[name] for name in ("x", "y", "z"))
+        layout = space.dofmap.dof_layout
+        base_sizes: dict[Any, int] = {}
+        base_masks: dict[Any, int] = {}
+        orbit_rows = [0] * profile.q_count
+
+        def block_stream():
+            for dim in (1, 2):
+                entity_to_cell = topology.connectivity(dim, topology.dim)
+                cell_to_entity = topology.connectivity(topology.dim, dim)
+                for entity in range(counts[dim]):
+                    incident = entity_to_cell.links(entity)
+                    if not len(incident):
+                        continue
+                    cell = int(incident[0])
+                    local_entity = np.flatnonzero(np.asarray(cell_to_entity.links(cell)) == entity)
+                    if len(local_entity) != 1:
+                        raise ValueError("actual entity/cell incidence is not unique")
+                    positions = np.asarray(layout.entity_dofs(dim, int(local_entity[0])), dtype=np.int32)
+                    if not len(positions):
+                        continue
+                    local_dofs = np.asarray(space.dofmap.cell_dofs(cell), dtype=np.int32)
+                    rows = np.asarray(space.dofmap.index_map.local_to_global(local_dofs[positions]), dtype=np.int64)
+                    sp = np.searchsorted(slave_rows, rows)
+                    valid = sp < len(slave_rows)
+                    slave = np.zeros(len(rows), dtype=np.bool_)
+                    slave[valid] = slave_rows[sp[valid]] == rows[valid]
+                    if np.all(slave):
+                        continue
+                    if np.any(slave):
+                        raise ValueError("actual edge/face p6 block is partly eliminated by the y MPC")
+                    coords = space.mesh.geometry.x[geometry_by_dim[dim][entity]].astype(np.float64, copy=False)
+                    indexed = []
+                    for point in coords:
+                        ijk = []
+                        for values, value in zip(grid, point, strict=True):
+                            pos = int(np.searchsorted(values, value))
+                            choices = [p for p in (pos - 1, pos) if 0 <= p < len(values)]
+                            nearest = min(choices, key=lambda p: abs(float(values[p]) - float(value)))
+                            if abs(float(values[nearest]) - float(value)) > 1.0e-9:
+                                raise ValueError("actual edge/face coordinate misses the saved grid")
+                            ijk.append(nearest)
+                        indexed.append(tuple(ijk))
+                    orbit = min(point[1] for point in indexed)
+                    if orbit >= profile.q_count:
+                        raise ValueError("uneliminated Ny8 y-maximum entity cannot own an orbit")
+                    base = (dim, tuple(sorted((x, y - orbit, z) for x, y, z in indexed)))
+                    yield dim, entity, rows, coords, orbit, base
+
+        for dim, _entity, rows, _coords, orbit, base in block_stream():
+            mask = 1 << orbit
+            if base_masks.get(base, 0) & mask:
+                raise ValueError("duplicate actual edge/face block in the same y orbit")
+            base_masks[base] = base_masks.get(base, 0) | mask
+            if base in base_sizes and base_sizes[base] != len(rows):
+                raise ValueError("canonical edge/face block width changes across Ny8 orbits")
+            base_sizes[base] = len(rows)
+            orbit_rows[orbit] += len(rows)
+        full_mask = (1 << profile.q_count) - 1
+        trace_width = sum(base_sizes.values())
+        if (
+            not base_sizes or any(mask != full_mask for mask in base_masks.values())
+            or trace_width != profile.trace_rows_per_q
+            or sum(orbit_rows) != profile.global_trace_rows
+            or any(value != trace_width for value in orbit_rows)
+        ):
+            raise ValueError("actual edge/face inventory differs from the registered complete Ny8 trace")
+        slots: dict[Any, tuple[int, int]] = {}
+        offset = 0
+        for base in sorted(base_sizes):
+            size = base_sizes[base]
+            slots[base] = (offset, size)
+            offset += size
+
+        max_block = max(base_sizes.values())
+        nnz_bound = len(support_rows) * max_block
+        tile_reserve = (
+            32 * nnz_bound + 8 * (len(support_rows) + 1)
+            + 4 * trace_width * 16 + 32 * len(support_rows)
+            + 16 * max_block * max_block
+        )
+        resource_gates.append(_resource_admission(
+            "v23_selected_original_ny8_q_port_map_tile", tile_reserve,
+            resource_sample=resource_sample, require_task_cgroup=True,
+        ))
+        q_rows = np.empty(nnz_bound, dtype=np.int32)
+        q_cols = np.empty(nnz_bound, dtype=np.int32)
+        q_data = np.empty(nnz_bound, dtype=np.complex128)
+        b_oracle_q = np.zeros(trace_width, dtype=np.complex128)
+        d_oracle_q = np.zeros(trace_width, dtype=np.complex128)
+        covered = np.zeros(len(support_rows), dtype=np.bool_)
+        predecessors: list[dict[str, Any]] = []
+        q_nnz = 0
+        for dim, entity, rows, coords, orbit, base in block_stream():
+            pos = np.searchsorted(support_rows, rows)
+            valid = pos < len(support_rows)
+            selected = np.zeros(len(rows), dtype=np.bool_)
+            selected[valid] = support_rows[pos[valid]] == rows[valid]
+            if not np.any(selected):
+                continue
+            selected_pos = pos[selected]
+            if np.any(covered[selected_pos]):
+                raise ValueError("selected production rows appear in multiple FE entity blocks")
+            covered[selected_pos] = True
+            first, width = slots[base]
+            transform, state = _physical_entity_transform(coords, dim, 6, 1.0e-9)
+            if transform.shape != (width, width) or not np.isfinite(transform).all():
+                raise ValueError("actual selected p6 entity transform is invalid")
+            phase = complex(full_layout.cell_dft[orbit, 0])
+            bv = np.zeros(width, dtype=np.complex128)
+            dv = np.zeros(width, dtype=np.complex128)
+            bi = np.searchsorted(b_rows, rows)
+            bm = (bi < len(b_rows))
+            bm[bm] &= b_rows[bi[bm]] == rows[bm]
+            bv[bm] = b_values[bi[bm]]
+            di = np.searchsorted(d_rows, rows)
+            dm = (di < len(d_rows))
+            dm[dm] &= d_rows[di[dm]] == rows[dm]
+            dv[dm] = d_values[di[dm]]
+            b_oracle_q[first:first + width] += np.conjugate(phase) * (transform.conj().T @ bv)
+            d_oracle_q[first:first + width] += phase * (transform.T @ dv)
+            for local_row in np.flatnonzero(selected):
+                nz = np.flatnonzero(transform[local_row] != 0.0)
+                stop = q_nnz + len(nz)
+                if stop > nnz_bound:
+                    raise RuntimeError("selected q map exceeded its admitted sparse bound")
+                q_rows[q_nnz:stop] = int(pos[local_row])
+                q_cols[q_nnz:stop] = first + nz
+                q_data[q_nnz:stop] = transform[local_row, nz] * phase
+                q_nnz = stop
+            predecessors.append({
+                "dimension": int(dim), "orbit": int(orbit),
+                "canonical_base": [int(base[0]), [list(map(int, p)) for p in base[1]]],
+                "canonical_trace_columns": list(range(first, first + width)),
+                "all_native_entity_rows": list(map(int, rows)),
+                "selected_production_rows": list(map(int, rows[selected])),
+                "entity_coordinates_sha256": _array_sha256(coords),
+                "primal_transform_state": list(state),
+                "canonical_to_native_transform_sha256": _array_sha256(transform),
+                "q0_dft_phase": {"real": phase.real, "imag": phase.imag},
+            })
+        if not np.all(covered):
+            raise ValueError("some production B/D rows have no complete edge/face block predecessor")
+        q_map = sparse.csr_matrix(
+            (q_data[:q_nnz], (q_rows[:q_nnz], q_cols[:q_nnz])),
+            shape=(len(support_rows), trace_width), dtype=np.complex128,
+        )
+        q_map.sum_duplicates()
+        q_map.sort_indices()
+        q_map_sha = _sparse_csr_sha256(q_map)
+
+        class CompactSelectedRows:
+            def __getitem__(self, row: int) -> int:
+                pos = int(np.searchsorted(support_rows, int(row)))
+                if pos >= len(support_rows) or int(support_rows[pos]) != int(row):
+                    raise KeyError(row)
+                return pos
+
+        provider_owner = SimpleNamespace(
+            full_rows=full_rows, appended_rows=1,
+            trace_constraints=SimpleNamespace(original_to_active=CompactSelectedRows()),
+            cell_recovery_maps=(),
+        )
+        provider_audit: dict[str, Any] = {}
+        def entry_factory():
+            return iter_fullspace_dtn_functionals_from_surface(
+                modes, assemblers, mpc, cfg, phase_gauge=BOUNDARY_PLANE,
+                assembly_context=assembly_context, start_index=mode_index,
+                stop_index=mode_index + 1, audit=provider_audit,
+            )
+        provider = P6GlobalDirectCarrierProvider(
+            entry_factory, condensed=provider_owner, mode_count=1,
+            interior_rows_are_managed=False, interior_rows=interior_rows,
+            source_label="full_original_ny8_surface_functional_stream",
+        )
+        provider.bind_original_port_block(original_h, mode_indices=(mode_index,))
+        candidate_b = np.zeros(len(support_rows), dtype=np.complex128)
+        candidate_d = np.zeros(len(support_rows), dtype=np.complex128)
+        tile_iterator = iter(provider.iter_reduced_direct_tiles())
+        try:
+            port, b_data, d_data = next(tile_iterator)
+            if int(port) != 0 or b_data is None or d_data is None:
+                raise ValueError("original-size direct provider omitted the selected B or D rows")
+            br, bv, bp = b_data
+            dr, dv, dp = d_data
+            if not (
+                np.array_equal(br, b_rows) and np.array_equal(bv, b_values)
+                and np.array_equal(dr, d_rows) and np.array_equal(dv, d_values)
+            ):
+                raise ValueError("provider replay differs bitwise from frozen production B/D")
+            if not np.array_equal(br, support_rows[bp]) or not np.array_equal(dr, support_rows[dp]):
+                raise ValueError("provider active indices differ from original FE row identities")
+            candidate_b[bp] = bv
+            candidate_d[dp] = dv
+            b_candidate_q = np.asarray(q_map.conj().T @ candidate_b, dtype=np.complex128)
+            d_candidate_q = np.asarray(q_map.T @ candidate_d, dtype=np.complex128)
+            # Release the borrowed current-mode payload before advancing the
+            # provider generator, even though this bounded provider has one mode.
+            del br, bv, bp, dr, dv, dp, b_data, d_data
+            try:
+                next(tile_iterator)
+            except StopIteration:
+                pass
+            else:
+                raise ValueError("one-mode original-size provider emitted an extra port")
+        finally:
+            tile_iterator.close()
+            tile_iterator = None
+
+        hp_global = float(original_h.diagonal[mode_index].real)
+        scale = 1.0 / np.sqrt(hp_global)
+        c_candidate = b_candidate_q * scale
+        d_candidate = -scale * d_candidate_q
+        c_oracle = b_oracle_q * scale
+        d_oracle_q_scaled = -scale * d_oracle_q
+        h_candidate = hp_global * scale * scale
+        h_oracle = hp_value * scale * scale
+        def relative_error(candidate: np.ndarray, oracle_value: np.ndarray) -> float:
+            norm = float(np.linalg.norm(oracle_value))
+            delta = float(np.linalg.norm(candidate - oracle_value))
+            return (0.0 if delta == 0.0 else float("inf")) if norm == 0.0 else delta / norm
+        errors = {
+            "C_direct": relative_error(c_candidate, c_oracle),
+            "minus_D_direct": relative_error(d_candidate, d_oracle_q_scaled),
+            "H_original": abs(h_candidate - h_oracle) / abs(h_oracle) if h_oracle else float("inf"),
+        }
+        if any(value > 1.0e-11 for value in errors.values()) or not np.isclose(
+            h_candidate, 1.0, rtol=1.0e-13, atol=1.0e-15
+        ):
+            raise ValueError(f"selected real q port tile failed independent projection: {errors}")
+        selected_i = np.flatnonzero(
+            (c_candidate != 0.0) | (d_candidate != 0.0)
+            | (c_oracle != 0.0) | (d_oracle_q_scaled != 0.0)
+        ).astype(np.int32, copy=False)
+        if not len(selected_i):
+            raise ValueError("selected q=0 port tile is an exact zero block under the frozen support gates")
+        oracle_b_support = np.zeros_like(candidate_b)
+        oracle_d_support = np.zeros_like(candidate_d)
+        oracle_b_support[np.searchsorted(support_rows, b_rows)] = b_values
+        oracle_d_support[np.searchsorted(support_rows, d_rows)] = d_values
+        with projection_readback_path.open("wb") as stream:
+            np.savez(
+                stream,
+                q_map_data=np.asarray(q_map.data, dtype="<c16"),
+                q_map_indices=np.asarray(q_map.indices),
+                q_map_indptr=np.asarray(q_map.indptr),
+                q_map_shape=np.asarray(q_map.shape, dtype="<i8"),
+                q_map_support_global_rows=np.asarray(support_rows, dtype="<i8"),
+                selected_q_trace_rows=np.asarray(selected_i, dtype="<i8"),
+                candidate_B_support=np.asarray(candidate_b, dtype="<c16"),
+                oracle_B_support=np.asarray(oracle_b_support, dtype="<c16"),
+                candidate_D_support=np.asarray(candidate_d, dtype="<c16"),
+                oracle_D_support=np.asarray(oracle_d_support, dtype="<c16"),
+                candidate_C_direct=np.asarray(c_candidate, dtype="<c16"),
+                oracle_C_direct=np.asarray(c_oracle, dtype="<c16"),
+                candidate_minus_D_direct=np.asarray(d_candidate, dtype="<c16"),
+                oracle_minus_D_direct=np.asarray(d_oracle_q_scaled, dtype="<c16"),
+                candidate_H_original=np.asarray([h_candidate], dtype="<f8"),
+                oracle_H_original=np.asarray([h_oracle], dtype="<f8"),
+                original_H_p=np.asarray([hp_value], dtype="<f8"),
+                selected_mode_key_json=np.asarray(
+                    json.dumps(list(expected_key), separators=(",", ":"))
+                ),
+            )
+            stream.flush()
+            os.fsync(stream.fileno())
+        projection_readback_sha = _sha256_file(projection_readback_path)
+        tile = {
+            "row_global_q": 0,
+            "column_global_q": 0,
+            "q_port_alias_column": 0,
+            "mode_key": list(expected_key),
+            "mode_manifest_row": dict(mode_row),
+            "I_trace_q_rows": selected_i.tolist(),
+            "J_port_q_column": 0,
+            "q_trace_map_shape": list(map(int, q_map.shape)),
+            "q_trace_map_nnz": int(q_map.nnz),
+            "q_trace_map_sha256": q_map_sha,
+            "candidate_vs_independent_oracle_relative_errors": {**errors, "limit_each": 1.0e-11},
+            "provider_B_D_bitwise_match_to_frozen_production": True,
+            "provider_audit": dict(provider.audit),
+            "selected_mapping_predecessor_count": len(predecessors),
+            "selected_mapping_predecessors": predecessors,
+            "contributions": {
+                "C_direct": {
+                    "status": "MEASURED_AND_INDEPENDENTLY_CHECKED",
+                    "shape": [len(selected_i), 1], "I": selected_i.tolist(), "J": [0],
+                    "values": [{"real": float(x.real), "imag": float(x.imag)} for x in c_candidate[selected_i]],
+                    "relative_error": errors["C_direct"], "limit": 1.0e-11,
+                    "candidate_values_sha256": _array_sha256(c_candidate[selected_i]),
+                    "oracle_values_sha256": _array_sha256(c_oracle[selected_i]),
+                    "oracle_values": [
+                        {"real": float(x.real), "imag": float(x.imag)}
+                        for x in c_oracle[selected_i]
+                    ],
+                },
+                "minus_D_direct": {
+                    "status": "MEASURED_AND_INDEPENDENTLY_CHECKED",
+                    "shape": [1, len(selected_i)], "I": [0], "J": selected_i.tolist(),
+                    "values": [{"real": float(x.real), "imag": float(x.imag)} for x in d_candidate[selected_i]],
+                    "relative_error": errors["minus_D_direct"], "limit": 1.0e-11,
+                    "candidate_values_sha256": _array_sha256(d_candidate[selected_i]),
+                    "oracle_values_sha256": _array_sha256(d_oracle_q_scaled[selected_i]),
+                    "oracle_values": [
+                        {"real": float(x.real), "imag": float(x.imag)}
+                        for x in d_oracle_q_scaled[selected_i]
+                    ],
+                },
+                "H_original": {
+                    "status": "MEASURED_AND_INDEPENDENTLY_CHECKED",
+                    "shape": [1, 1], "I": [0], "J": [0], "value": {"real": h_candidate, "imag": 0.0},
+                    "relative_error": errors["H_original"], "limit": 1.0e-11,
+                    "candidate_values_sha256": _array_sha256(np.asarray([h_candidate], dtype=np.float64)),
+                    "oracle_values_sha256": _array_sha256(np.asarray([h_oracle], dtype=np.float64)),
+                    "oracle_value": {"real": h_oracle, "imag": 0.0},
+                },
+                "volume": {"status": "PARTIAL_NOT_RUN", "scope": "local trace-trace Schur block and Kcond"},
+                "local_interior_schur_correction": {"status": "NOT_RUN", "reason": "no local inverse or callback was built"},
+            },
+            "production_functional_scope": {
+                "selected_side": str(mode.side),
+                "complete_side_facets": len(actual_bounds[str(mode.side)]),
+                "expected_side_facets": _EXPECTED_FACETS_BY_SIDE[str(mode.side)],
+                "global_MPC_and_both_global_support_filters": True,
+                "oracle_stream_audit": dict(oracle_audit),
+                "candidate_provider_stream_audit": dict(provider_audit),
+            },
+            "frozen_B_D_H_oracle": {
+                "artifact_path": oracle_path.name, "artifact_sha256": oracle_sha,
+                "B_rows": len(b_rows), "D_rows": len(d_rows), "H_p": hp_value,
+                "B_values_sha256": _array_sha256(b_values),
+                "D_values_sha256": _array_sha256(d_values),
+            },
+            "full_q_matrices": "0/8",
+            "volume_qualification": "PARTIAL_NOT_RUN",
+        }
+        result.update(
+            status="PASS_REAL_ORIGINAL_NY8_Q_PORT_TILE",
+            selected_q_port_tile_built=True,
+            q_tile=tile,
+            q_tile_sha256=hashlib.sha256(
+                json.dumps(tile, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest(),
+            production_oracle_artifact_path=oracle_path.name,
+            production_oracle_artifact_sha256=oracle_sha,
+            q_projection_readback_artifact={
+                "artifact_path": projection_readback_path.name,
+                "artifact_sha256": projection_readback_sha,
+                "q_trace_map_shape": list(map(int, q_map.shape)),
+                "q_trace_map_nnz": int(q_map.nnz),
+                "q_trace_map_sha256": q_map_sha,
+                "selected_q_trace_rows_sha256": _array_sha256(selected_i),
+                "purpose": "finite q-map CSR and candidate/oracle C,-D,H values for independent readback",
+            },
+            complete_q_matrices="0/8",
+            volume_qualification="PARTIAL_NOT_RUN",
+        )
+        campaign_after = _read_v22_campaign_state(root)
+        if campaign_after["campaign_window_sha256"] != campaign_before["campaign_window_sha256"]:
+            raise ValueError("fixed V23 campaign identity changed during selected original q tile")
+        result["campaign_after"] = {
+            "window_sha256": campaign_after["campaign_window_sha256"],
+            "remaining_numerical_seconds": campaign_after["remaining_numerical_seconds"],
+        }
+    except _ProbeResourceBlocked as error:
+        result.update(status="NOT_RUN_RESOURCE_GATE", resource_blocker=error.facts, failure_message=None)
+    except Exception as error:
+        result.update(status="FAILED", failure_type=type(error).__name__,
+                      failure_message=f"{type(error).__name__}: {error}")
+    finally:
+        provider = tile_iterator = q_map = None
+        result["resource_gates"] = resource_gates
+        result["resource_after_q_tile"] = _memory_snapshot(resource_sample)
+        result["elapsed_wall_seconds"] = perf_counter() - started
+        result["elapsed_process_cpu_seconds"] = process_time() - cpu_started
+        result["artifact_path"] = output_path.name
+        _write_json(output_path, result)
+        result["artifact_sha256"] = _sha256_file(output_path)
+    return result
+
+
 def _run_probe(
     resolved: Mapping[str, Any],
     output_directory: Path,
@@ -2767,12 +4370,22 @@ def _run_probe(
     b_action = d_values = h_values = None
     polynomial = permutation_info = dof_index_map = None
     geometry_facts = None
+    v23_q_tile_facts: dict[str, Any] | None = None
     mpc_expansions = native_quadrature_identity = generated_packet_witness = None
     try:
         current_stage = "geometry_inventory"
         attempted.append(current_stage)
         campaign_state_entry = _read_v22_campaign_state(root)
+        from src.runners.task40_v10_campaign import TASK40_V23_CAMPAIGN_SHA256
+
+        is_v23_campaign = (
+            campaign_state_entry["campaign_window_sha256"] == TASK40_V23_CAMPAIGN_SHA256
+        )
+        if is_v23_campaign:
+            facts["schema"] = "task40extra.review_v23_compact_boundary_operator_probe.v1"
+            facts["q_coverage"] = _v23_q_coverage_record({"status": "NOT_RUN"})
         facts["campaign_window"] = {
+            "campaign_version": "V23" if is_v23_campaign else "V22",
             "window_sha256": campaign_state_entry["campaign_window_sha256"],
             "read_only": True,
             "remaining_numerical_seconds_at_probe_entry": campaign_state_entry[
@@ -2944,6 +4557,8 @@ def _run_probe(
             "bottom": set(),
             "top": set(),
         }
+        boundary_cell_global_dofs: dict[int, np.ndarray] = {}
+        boundary_cell_side: dict[int, str] = {}
         mapped_cell_ids = sorted({int(row["cell_id"]) for row in mapping_rows})
         mapped_cell_id_set = set(mapped_cell_ids)
         for cell_id in range(int(mesh_object.topology.index_map(3).size_local)):
@@ -2972,6 +4587,22 @@ def _run_probe(
         trace_positions = np.setdiff1d(
             np.arange(882, dtype=np.int32), interior_positions, assume_unique=False
         )
+        mesh_object.topology.create_connectivity(3, 2)
+        cell_to_facet = mesh_object.topology.connectivity(3, 2)
+        facet_entity_dofs = space.element.basix_element.entity_dofs[2]
+        actual_port_face_rows: set[int] = set()
+        for row in mapping_rows:
+            cell_id = int(row["cell_id"])
+            facet_ids = np.asarray(cell_to_facet.links(cell_id), dtype=np.int64)
+            local_facets = np.flatnonzero(facet_ids == int(row["facet_id"]))
+            if len(local_facets) != 1:
+                raise ValueError("saved port facet does not map to one local cell face")
+            face_positions = np.asarray(
+                facet_entity_dofs[int(local_facets[0])], dtype=np.int32
+            )
+            actual_port_face_rows.update(
+                map(int, boundary_cell_global_dofs[cell_id][face_positions])
+            )
         for row in mapping_rows:
             cell_id = int(row["cell_id"])
             side = str(row["side"])
@@ -2979,6 +4610,12 @@ def _run_probe(
             global_dofs = np.asarray(
                 dof_index_map.local_to_global(local_dofs), dtype=PETSc.IntType
             )
+            previous = boundary_cell_global_dofs.setdefault(cell_id, global_dofs.copy())
+            if not np.array_equal(previous, global_dofs):
+                raise ValueError("one boundary cell produced inconsistent global dofmaps")
+            previous_side = boundary_cell_side.setdefault(cell_id, side)
+            if previous_side != side:
+                raise ValueError("one boundary-adjacent cell maps to both physical port sides")
             boundary_dof_count_by_side[side] += int(len(global_dofs))
             unique_boundary_dofs_by_side[side].update(map(int, global_dofs))
             boundary_cell_dof_digest.update(
@@ -2992,6 +4629,29 @@ def _run_probe(
         mpc_expansions = _global_mpc_expansions(
             mpc, dof_index_map, boundary_global_rows
         )
+        boundary_rows_array = np.asarray(boundary_global_rows, dtype=np.int64)
+        interior_pairs = [
+            (int(global_row), int(cell_id))
+            for cell_id, global_dofs in boundary_cell_global_dofs.items()
+            for global_row in global_dofs[interior_positions]
+        ]
+        interior_pairs.sort(key=lambda row_cell: row_cell[0])
+        interior_rows_sorted = np.asarray(
+            [row for row, _cell_id in interior_pairs], dtype=np.int64
+        )
+        interior_cell_ids_sorted = np.asarray(
+            [cell_id for _row, cell_id in interior_pairs], dtype=np.int64
+        )
+        if len(np.unique(interior_rows_sorted)) != len(interior_rows_sorted):
+            raise ValueError("boundary cell interior rows are not unique global DoFs")
+        interior_row_set = set(map(int, interior_rows_sorted))
+        actual_port_face_rows.difference_update(interior_row_set)
+        other_trace_rows = set(boundary_global_rows) - interior_row_set - actual_port_face_rows
+        support_category_rows = {
+            "interior": interior_rows_sorted,
+            "actual_port_face_trace": np.asarray(sorted(actual_port_face_rows), dtype=np.int64),
+            "other_trace": np.asarray(sorted(other_trace_rows), dtype=np.int64),
+        }
         expansion_digest = hashlib.sha256()
         for slave, (masters, coefficients_for_row) in sorted(mpc_expansions.items()):
             expansion_digest.update(np.asarray([slave], dtype="<i8").tobytes())
@@ -3046,7 +4706,7 @@ def _run_probe(
             "expected_by_side": {"bottom": 16_030, "top": 16_030},
             "expected_boundary_facets_by_side": _EXPECTED_FACETS_BY_SIDE,
             "potential_side_specific_mode_facet_pairs": 69_762_560,
-            "support_by_cell_and_sum_m_c_squared": "UNKNOWN until connected to generated per-cell support inventory",
+            "support_by_cell_and_sum_m_c_squared": "COMPACT_CELL_INVENTORY_PENDING_MODE_SWEEP",
         }
 
         resource_gates.append(
@@ -3063,6 +4723,23 @@ def _run_probe(
         permutation_info = np.asarray(mesh_object.topology.get_cell_permutation_info())
         if permutation_info.shape != (30_464,):
             raise ValueError("actual target hexahedral permutation inventory changed")
+        candidate_upper_rows = (
+            len(mapped_cell_ids) * int(space.element.space_dimension)
+            + sum(len(masters) for masters, _coefficients in mpc_expansions.values())
+        )
+        candidate_upper_bytes = candidate_upper_rows * (
+            np.dtype(PETSc.IntType).itemsize
+            + np.dtype(np.complex128).itemsize * 2
+            + np.dtype(np.int64).itemsize
+        )
+        resource_gates.append(
+            _resource_admission(
+                "compact_boundary_rows_mpc_closure_and_action_arrays",
+                candidate_upper_bytes,
+                resource_sample=resource_sample,
+                require_task_cgroup=True,
+            )
+        )
         native_rule = _V22NativeFacetRule(
             space=space,
             dof_index_map=dof_index_map,
@@ -3072,6 +4749,7 @@ def _run_probe(
             quadrature_degree=qdegree,
             cfg=cfg,
             mpc_expansions=mpc_expansions,
+            rolling_filter_digest=is_v23_campaign,
         )
         assemblers = native_rule.assemblers()
         context = _build_v22_native_gauge_context(
@@ -3084,6 +4762,73 @@ def _run_probe(
             cell_dofmap_sha256=cell_dof_digest.hexdigest(),
         )
         facts["native_surface_quadrature_identity"] = native_quadrature_identity
+        facts["compact_boundary_domain"] = {
+            "status": "PASS_COMPLETE_BOUNDARY_CELL_UNION_AND_GLOBAL_MPC_MASTER_CLOSURE",
+            "candidate_global_row_count": int(len(native_rule.candidate_rows)),
+            "candidate_global_rows_sha256": _array_sha256(native_rule.candidate_rows),
+            "full_global_storage_rows": int(full_rows),
+            "candidate_fraction_of_global_rows": float(len(native_rule.candidate_rows) / full_rows),
+            "cell_dof_order_preserved": True,
+            "global_mpc_master_order_preserved": True,
+            "filter_scope_includes_all_possible_nonzero_rows": True,
+            "inventory_cell_count_by_side": {
+                side: int(len(side_cell_positions[side])) for side in ("bottom", "top")
+            },
+            "row_categories": {
+                name: int(len(rows)) for name, rows in support_category_rows.items()
+            },
+        }
+        support_category_rows["slave"] = np.unique(
+            np.asarray(native_rule._slave_rows, dtype=np.int64)
+        )
+        support_category_rows["unknown"] = np.setdiff1d(
+            np.asarray(native_rule.candidate_rows, dtype=np.int64),
+            boundary_rows_array,
+            assume_unique=True,
+        )
+        cell_ids_sorted = np.asarray(sorted(boundary_cell_side), dtype=np.int64)
+        cell_sides_sorted = np.asarray(
+            [boundary_cell_side[int(cell_id)] for cell_id in cell_ids_sorted],
+            dtype="U6",
+        )
+        side_cell_positions = {
+            side: np.flatnonzero(cell_sides_sorted == side)
+            for side in ("bottom", "top")
+        }
+        expected_mode_counts_by_side = {
+            side: sum(str(mode.side) == side for mode in modes)
+            for side in ("bottom", "top")
+        }
+        m_c_state = {
+            side: {
+                metric: {
+                    "per_cell_mode_counts": np.zeros(
+                        len(side_cell_positions[side]), dtype=np.int64
+                    ),
+                    "per_cell_interior_row_memberships": np.zeros(
+                        len(side_cell_positions[side]), dtype=np.int64
+                    ),
+                }
+                for metric in ("B", "D", "union")
+            }
+            for side in ("bottom", "top")
+        }
+        support_category_totals = {
+            side: {
+                component: {
+                    category: 0
+                    for category in (
+                        "interior",
+                        "actual_port_face_trace",
+                        "other_trace",
+                        "slave",
+                        "unknown",
+                    )
+                }
+                for component in ("B", "D")
+            }
+            for side in ("bottom", "top")
+        }
         facts["native_surface_adapter"] = {
             "status": "QUALIFIED_AXIS_ALIGNED_AFFINE_CLASS_RULE",
             "geometry_class_count": len(
@@ -3109,6 +4854,19 @@ def _run_probe(
             "ffcx_surface_forms_compiled": False,
         }
 
+        representative_indices = _compact_reference_mode_indices(modes)
+        full_reference_bytes = full_rows * (
+            np.dtype(np.complex128).itemsize + np.dtype(np.float64).itemsize
+        )
+        resource_gates.append(
+            _resource_admission(
+                "bounded_compact_vs_legacy_full_domain_equivalence",
+                full_reference_bytes,
+                resource_sample=resource_sample,
+                require_task_cgroup=True,
+            )
+        )
+        compact_equivalence_checks: list[dict[str, Any]] = []
         h_values = np.asarray(
             [
                 assembly_projection_denominator(mode, cfg, BOUNDARY_PLANE)
@@ -3116,6 +4874,43 @@ def _run_probe(
             ],
             dtype=np.float64,
         )
+        v23_q_tile_facts: dict[str, Any] | None = None
+        if is_v23_campaign:
+            facts["scan_schedule"] = {
+                "q_tile_planned_reserve_seconds": 3600.0,
+                "q_tile_planned_reserve_scope": "planning amount only; not a numerical or resource gate",
+                "q_tile_runs_before_mode_sweep": True,
+                "original_H_p_source": "assembly_projection_denominator over the full frozen mode table; no integral iterator pass",
+            }
+            v23_q_tile_facts = _run_v23_original_ny8_q_port_tile(
+                root,
+                output_directory,
+                preflight=preflight,
+                modes=modes,
+                mode_rows=mode_rows,
+                space=space,
+                mpc=mpc,
+                cfg=cfg,
+                assemblers=assemblers,
+                assembly_context=context,
+                axes_values=geometry_facts["actual_axes"],
+                mapping_rows=mapping_rows,
+                boundary_global_rows=boundary_global_rows,
+                interior_rows=interior_rows_sorted,
+                h_values=h_values,
+                resource_sample=resource_sample,
+            )
+            facts["v23_selected_q_port_tile"] = v23_q_tile_facts
+            resource_gates.extend(v23_q_tile_facts.get("resource_gates", ()))
+            facts["q_coverage"] = _v23_q_coverage_record(v23_q_tile_facts)
+            facts["scan_schedule"].update(
+                {
+                    "q_tile_actual_wall_seconds": v23_q_tile_facts.get("elapsed_wall_seconds"),
+                    "q_tile_actual_process_cpu_seconds": v23_q_tile_facts.get("elapsed_process_cpu_seconds"),
+                    "q_tile_status_before_mode_sweep": v23_q_tile_facts.get("status"),
+                    "q_tile_planned_reserve_released_after_attempt": True,
+                }
+            )
         resource_gates.append(
             _resource_admission(
                 "two_saved_cell_generated_action_and_local_q_tiles",
@@ -3223,23 +5018,80 @@ def _run_probe(
         field.x.scatter_forward()
         mpc.backsubstitution(field)
         field.x.scatter_forward()
-        selected_field_values = np.asarray(field.x.array, dtype=np.complex128)
+        selected_field_values = np.ascontiguousarray(
+            field_values[native_rule.candidate_rows], dtype=np.complex128
+        )
+        del field
+        field = None
+        del field_values
+        field_values = None
+        gc.collect()
+
+        for side in ("bottom", "top"):
+            for mode_index in representative_indices[side]:
+                mode = modes[mode_index]
+                for component in (0, 1):
+                    compact_equivalence_checks.append(
+                        native_rule.compare_full_domain_reference(
+                            mode,
+                            component,
+                            field_values_by_candidate_rows=selected_field_values,
+                            alpha=complex(0.75, -0.125),
+                        )
+                    )
+                gc.collect()
+        nontrivial_mpc_witnesses = [
+            row
+            for row in compact_equivalence_checks
+            if row["raw_mpc_slave_rows_nonzero_before_pullback"] > 0
+        ]
+        if not nontrivial_mpc_witnesses:
+            raise ValueError(
+                "representative compact/full-domain comparisons did not exercise a nonzero MPC slave row"
+            )
+        cutoff_distances = [
+            row["closest_nonzero_to_cutoff_relative_distance"]
+            for row in compact_equivalence_checks
+            if row["closest_nonzero_to_cutoff_relative_distance"] is not None
+        ]
+        compact_timing = [row["paired_timing"] for row in compact_equivalence_checks]
+        facts["compact_domain_equivalence"] = {
+            "status": "PASS_EXACT_ROWS_MASKS_VALUES_B_ALPHA_AND_D_X",
+            "comparison_count": len(compact_equivalence_checks),
+            "representative_mode_indices_by_side": representative_indices,
+            "first_middle_last_k_vectors_and_same_k_s_p_partners": True,
+            "nontrivial_mpc_rows_exercised": True,
+            "raw_mpc_slave_nonzero_comparison_count": len(nontrivial_mpc_witnesses),
+            "cutoff_policy": {"relative_tol": 1e-13, "absolute_floor": 0.0},
+            "minimum_cutoff_distance_relative": min(cutoff_distances) if cutoff_distances else None,
+            "paired_timing_summary": {
+                "field_source": "same seeded random field after actual MPC homogenization/backsubstitution used by the subsequent Dx scan",
+                "alpha": {"real": 0.75, "imag": -0.125},
+                "cache_policy": "basis cache cleared before each compact and full-domain path",
+                "compact_wall_seconds_total": sum(row["compact_wall_seconds"] for row in compact_timing),
+                "compact_process_cpu_seconds_total": sum(row["compact_process_cpu_seconds"] for row in compact_timing),
+                "full_domain_reference_wall_seconds_total": sum(row["full_domain_reference_wall_seconds"] for row in compact_timing),
+                "full_domain_reference_process_cpu_seconds_total": sum(row["full_domain_reference_process_cpu_seconds"] for row in compact_timing),
+            },
+            "rows_values_and_hashes_by_mode_component": compact_equivalence_checks,
+        }
 
         resource_gates.append(
             _resource_admission(
-                "B_alpha_global_accumulator",
-                full_rows * np.dtype(np.complex128).itemsize,
+                "compact_B_alpha_accumulator",
+                len(native_rule.candidate_rows) * np.dtype(np.complex128).itemsize,
                 resource_sample=resource_sample,
                 require_task_cgroup=True,
             )
         )
-        b_action = np.zeros(full_rows, dtype=np.complex128)
+        b_action = np.zeros(len(native_rule.candidate_rows), dtype=np.complex128)
         d_values = np.empty(len(modes), dtype=np.complex128)
         mode_counts_by_side = {"bottom": 0, "top": 0}
         support_rows_by_side = {
             side: {"B": 0, "D": 0, "nonempty_B_modes": 0, "nonempty_D_modes": 0}
             for side in ("bottom", "top")
         }
+        field_sha256 = _array_sha256(selected_field_values)
         calibration_index_by_side: dict[str, int] = {}
         for index, mode in enumerate(modes):
             side = str(getattr(mode, "side", ""))
@@ -3251,26 +5103,202 @@ def _run_probe(
             side: [row for row in mapping_rows if str(row["side"]) == side]
             for side in ("bottom", "top")
         }
-        stream_digest = hashlib.sha256()
+        stream_digest = _RollingDigest() if is_v23_campaign else hashlib.sha256()
         mode_started = perf_counter()
+        mode_cpu_started = process_time()
+        mode_elapsed_offset = 0.0
+        mode_cpu_elapsed_offset = 0.0
+        mode_timing_by_side = {
+            side: {"completed_modes": 0, "wall_seconds": 0.0, "process_cpu_seconds": 0.0}
+            for side in ("bottom", "top")
+        }
         calibration_results: dict[str, dict[str, Any]] = {}
-        checkpoint_interval = 8
+        checkpoint_interval = 256 if is_v23_campaign else 8
         class_mode_prefix = {
             side: {class_id: 0 for class_id in native_rule.class_ids_by_side[side]}
             for side in ("bottom", "top")
         }
         stream_audit: dict[str, Any] = {}
+
+        checkpoint_directory = (
+            _v23_checkpoint_directory(
+                root,
+                preflight=preflight,
+                mode_inventory=mode_inventory,
+                campaign_window_sha256=campaign_state_entry[
+                    "campaign_window_sha256"
+                ],
+            )
+            if is_v23_campaign
+            else output_directory
+        )
+        mode_index = 0
+        if is_v23_campaign:
+            resume = _load_v23_action_checkpoint(
+                checkpoint_directory,
+                preflight=preflight,
+                mode_inventory=mode_inventory,
+                campaign_window_sha256=campaign_state_entry[
+                    "campaign_window_sha256"
+                ],
+                candidate_rows=native_rule.candidate_rows,
+                modes=modes,
+                h_values=h_values,
+                side_cell_counts={
+                    side: len(side_cell_positions[side]) for side in ("bottom", "top")
+                },
+                expected_field_sha256=field_sha256,
+            )
+            if resume is not None:
+                checkpoint = resume["checkpoint"]
+                b_action[:] = resume["b_action"]
+                d_values[: resume["mode_count"]] = resume["d_values"]
+                mode_index = int(resume["mode_count"])
+                mode_counts_by_side.update(checkpoint["mode_count_by_side"])
+                support_rows_by_side.update(resume["support_rows_by_side"])
+                for side in ("bottom", "top"):
+                    if set(resume["class_mode_prefix"][side]) != set(
+                        class_mode_prefix[side]
+                    ):
+                        raise ValueError("V23 checkpoint boundary-class inventory changed")
+                    class_mode_prefix[side] = {
+                        str(key): int(value)
+                        for key, value in resume["class_mode_prefix"][side].items()
+                    }
+                    for metric in ("B", "D", "union"):
+                        for state_name in (
+                            "per_cell_mode_counts",
+                            "per_cell_interior_row_memberships",
+                        ):
+                            m_c_state[side][metric][state_name][:] = resume[
+                                "cell_state"
+                            ][side][metric][state_name]
+                    for component in ("B", "D"):
+                        for category in support_category_totals[side][component]:
+                            support_category_totals[side][component][category] = int(
+                                resume["support_category_totals"][side][component][category]
+                            )
+                native_rule.restore_filter_audit(resume["component_filter_audit"])
+                calibration_results.update(resume["calibration_results"])
+                rng.bit_generator.state = dict(resume["rng_state"])
+                stream_digest = _RollingDigest(resume["stream_digest_state"])
+                mode_elapsed_offset = float(resume["mode_sweep_elapsed_seconds"])
+                mode_cpu_elapsed_offset = float(resume["mode_sweep_process_cpu_seconds"])
+                mode_timing_by_side = resume["mode_timing_by_side"]
+                stream_audit["prior_prefix_audit"] = {
+                    "status": "PREFIX_RESTORED_FROM_CHECKPOINT",
+                    "completed_mode_count": mode_index,
+                    "global_combination_filter_audit": "SUFFIX_ONLY_REGENERATED_BY_ITERATOR",
+                }
+                facts["action_checkpoint_resume"] = {
+                    "status": "RESTORED_HASH_BOUND_PREFIX",
+                    "checkpoint_path": str(
+                        (checkpoint_directory / "v23_mode_sweep_checkpoint.json").relative_to(
+                            root
+                        )
+                    ),
+                    "completed_mode_count": mode_index,
+                    "field_sha256": field_sha256,
+                    "candidate_rows_sha256": _array_sha256(native_rule.candidate_rows),
+                    "alpha_rng_state_restored": True,
+                    "per_cell_inventory_restored": True,
+                }
+            else:
+                facts["action_checkpoint_resume"] = {
+                    "status": "STARTED_WITH_EMPTY_PREFIX",
+                    "checkpoint_directory": str(checkpoint_directory.relative_to(root)),
+                }
+
+        mode_started = perf_counter()
+        mode_cpu_started = process_time()
+
+        def write_action_checkpoint(**checkpoint_arguments: Any) -> dict[str, Any]:
+            restart_state = None
+            if is_v23_campaign:
+                restart_state = {
+                    "field_sha256": field_sha256,
+                    "rng_state": rng.bit_generator.state,
+                    "m_c_state": m_c_state,
+                    "support_category_totals": support_category_totals,
+                    "calibration_results": calibration_results,
+                    "mode_sweep_elapsed_seconds": mode_elapsed_offset
+                    + perf_counter()
+                    - mode_started,
+                    "mode_sweep_process_cpu_seconds": mode_cpu_elapsed_offset
+                    + process_time()
+                    - mode_cpu_started,
+                    "mode_timing_by_side": {
+                        side: dict(record) for side, record in mode_timing_by_side.items()
+                    },
+                    "expected_mode_counts_by_side": expected_mode_counts_by_side,
+                }
+            return _write_v22_action_checkpoint(
+                output_directory,
+                checkpoint_directory=checkpoint_directory,
+                restart_state=restart_state,
+                **checkpoint_arguments,
+            )
+
+        def accumulate_cell_multiplicity(
+            side_name: str, metric: str, global_rows: Sequence[int]
+        ) -> None:
+            counts = _cell_support_row_counts(
+                global_rows,
+                interior_rows_sorted=interior_rows_sorted,
+                interior_cell_ids_sorted=interior_cell_ids_sorted,
+                cell_ids_sorted=cell_ids_sorted,
+            )
+            local = counts[side_cell_positions[side_name]]
+            if local.size and int(np.max(local)) > 450:
+                raise ValueError("per-cell production support exceeds the 450 interior rows")
+            state = m_c_state[side_name][metric]
+            _accumulate_cell_mode_support(
+                state["per_cell_mode_counts"],
+                state["per_cell_interior_row_memberships"],
+                local,
+            )
+
+        def accumulate_support_categories(
+            side_name: str, component_name: str, global_rows: Sequence[int]
+        ) -> None:
+            rows = np.asarray(global_rows, dtype=np.int64).reshape(-1)
+            category_counts: dict[str, int] = {}
+            for category, category_rows in support_category_rows.items():
+                positions = np.searchsorted(category_rows, rows)
+                valid = positions < len(category_rows)
+                matched = np.zeros(len(rows), dtype=np.bool_)
+                matched[valid] = category_rows[positions[valid]] == rows[valid]
+                category_counts[category] = int(np.count_nonzero(matched))
+            if category_counts["slave"]:
+                raise ValueError("production support retained MPC slave rows after finalized E^H")
+            classified = sum(
+                category_counts[name]
+                for name in (
+                    "interior",
+                    "actual_port_face_trace",
+                    "other_trace",
+                    "unknown",
+                )
+            )
+            if classified != len(rows):
+                raise ValueError(
+                    f"production {component_name} support has unclassified global rows: "
+                    f"{len(rows) - classified}"
+                )
+            totals = support_category_totals[side_name][component_name]
+            for category, count in category_counts.items():
+                totals[category] += count
+
         state_before_first_batch = _read_v22_campaign_state(root)
         if state_before_first_batch["campaign_window_sha256"] != campaign_state_entry[
             "campaign_window_sha256"
         ]:
             raise ValueError("fixed Task40 V22 campaign identity changed before the first batch")
         if state_before_first_batch["remaining_numerical_seconds"] <= 120.0:
-            checkpoint = _write_v22_action_checkpoint(
-                output_directory,
+            checkpoint = write_action_checkpoint(
                 preflight=preflight,
                 mode_inventory=mode_inventory,
-                mode_count=0,
+                mode_count=mode_index,
                 mode_counts_by_side=mode_counts_by_side,
                 class_mode_prefix=class_mode_prefix,
                 support_rows_by_side=support_rows_by_side,
@@ -3278,12 +5306,14 @@ def _run_probe(
                 component_filter_audit=native_rule.filter_audit(),
                 b_action=b_action,
                 d_values=d_values,
+                candidate_rows=native_rule.candidate_rows,
+                checkpoint_interval=checkpoint_interval,
                 h_values=h_values,
             )
             checkpoint["campaign_remaining_numerical_seconds"] = state_before_first_batch[
                 "remaining_numerical_seconds"
             ]
-            _write_json(output_directory / "v22_mode_sweep_checkpoint.json", checkpoint)
+            _write_json(output_directory / checkpoint["checkpoint_json_path"], checkpoint)
             facts.update(
                 status="RESOURCE_CONTROLLED_STOP",
                 failed_stage=None,
@@ -3296,12 +5326,12 @@ def _run_probe(
                     ],
                     "next_batch_estimated_seconds": None,
                     "output_closeout_margin_seconds": 120.0,
-                    "checkpoint_mode_count": 0,
+                    "checkpoint_mode_count": mode_index,
                     "source": "read_campaign_state read-only fixed V22 window",
                 },
                 partial_mode_coverage={
                     "expected_mode_count": len(modes),
-                    "completed_mode_count": 0,
+                    "completed_mode_count": mode_index,
                     "completed_by_side": dict(mode_counts_by_side),
                     "completed_side_class_mode_prefix": {
                         side_name: dict(class_mode_prefix[side_name])
@@ -3310,18 +5340,24 @@ def _run_probe(
                     "stream_prefix_sha256": stream_digest.hexdigest(),
                 },
                 partial_action_result={
-                    "checkpoint_path": "v22_mode_sweep_checkpoint.json",
+                    "checkpoint_path": checkpoint["checkpoint_json_path"],
                     "checkpoint_sha256": _sha256_file(
-                        output_directory / "v22_mode_sweep_checkpoint.json"
+                        output_directory / checkpoint["checkpoint_json_path"]
                     ),
                     "actual_B_D_H_values_saved": True,
                     "official_R_T_A": "NOT_RUN",
                 },
                 q_coverage={
-                    "status": "NOT_RUN",
-                    "expected_q_count": 8,
-                    "built_q_count": 0,
-                    "reason": "cooperative fixed campaign time stop before the first mode batch",
+                    **(
+                        _v23_q_coverage_record(v23_q_tile_facts or {"status": "NOT_RUN"})
+                        if is_v23_campaign
+                        else {
+                            "status": "NOT_RUN",
+                            "expected_q_count": 8,
+                            "built_q_count": 0,
+                            "reason": "cooperative fixed campaign time stop before the first mode batch",
+                        }
+                    ),
                 },
             )
             return facts
@@ -3332,9 +5368,17 @@ def _run_probe(
             cfg,
             phase_gauge=BOUNDARY_PLANE,
             assembly_context=context,
+            start_index=mode_index,
             audit=stream_audit,
         )
-        mode_index = 0
+
+        def record_mode_block_timing(
+            side_name: str, wall_started: float, cpu_started: float
+        ) -> None:
+            timing = mode_timing_by_side[side_name]
+            timing["completed_modes"] += 1
+            timing["wall_seconds"] += perf_counter() - wall_started
+            timing["process_cpu_seconds"] += process_time() - cpu_started
 
         def controlled_resource_stop(
             error: _ProbeResourceBlocked,
@@ -3347,8 +5391,7 @@ def _run_probe(
                     class_mode_prefix[completed_current_side][class_id] += 1
             if operator_iterator is not None:
                 operator_iterator.close()
-            checkpoint = _write_v22_action_checkpoint(
-                output_directory,
+            checkpoint = write_action_checkpoint(
                 preflight=preflight,
                 mode_inventory=mode_inventory,
                 mode_count=completed_mode_count,
@@ -3359,15 +5402,17 @@ def _run_probe(
                 component_filter_audit=native_rule.filter_audit(),
                 b_action=b_action,
                 d_values=d_values,
+                candidate_rows=native_rule.candidate_rows,
+                checkpoint_interval=checkpoint_interval,
                 h_values=h_values,
             )
             campaign_state = _read_v22_campaign_state(root)
             checkpoint["campaign_remaining_numerical_seconds"] = campaign_state[
                 "remaining_numerical_seconds"
             ]
-            _write_json(output_directory / "v22_mode_sweep_checkpoint.json", checkpoint)
+            _write_json(output_directory / checkpoint["checkpoint_json_path"], checkpoint)
             checkpoint_sha = _sha256_file(
-                output_directory / "v22_mode_sweep_checkpoint.json"
+                output_directory / checkpoint["checkpoint_json_path"]
             )
             facts.update(
                 status="RESOURCE_CONTROLLED_STOP",
@@ -3393,17 +5438,23 @@ def _run_probe(
                     "stream_prefix_sha256": stream_digest.copy().hexdigest(),
                 },
                 partial_action_result={
-                    "checkpoint_path": "v22_mode_sweep_checkpoint.json",
+                    "checkpoint_path": checkpoint["checkpoint_json_path"],
                     "checkpoint_sha256": checkpoint_sha,
                     "actual_B_D_H_values_saved": True,
                     "official_R_T_A": "NOT_RUN",
                 },
                 resource_gates=resource_gates,
                 q_coverage={
-                    "status": "NOT_RUN",
-                    "expected_q_count": 8,
-                    "built_q_count": 0,
-                    "reason": "resource admission stopped during the actual B/D operator probe",
+                    **(
+                        _v23_q_coverage_record(v23_q_tile_facts or {"status": "NOT_RUN"})
+                        if is_v23_campaign
+                        else {
+                            "status": "NOT_RUN",
+                            "expected_q_count": 8,
+                            "built_q_count": 0,
+                            "reason": "resource admission stopped during the actual B/D operator probe",
+                        }
+                    ),
                 },
             )
             facts["native_same_rule_path_consistency_by_side"] = {
@@ -3412,6 +5463,8 @@ def _run_probe(
             return facts
 
         while True:
+            mode_item_wall_started = perf_counter()
+            mode_item_cpu_started = process_time()
             try:
                 functional = next(operator_iterator)
             except StopIteration:
@@ -3425,9 +5478,10 @@ def _run_probe(
             side = str(functional.mode_key[1])
             if side not in mode_counts_by_side:
                 raise ValueError("production iterator emitted an unknown target side")
+            mode_timing_recorded = False
             production_component_work = None
             if current_index in calibration_index_by_side.values():
-                workspace_bytes = _EXPECTED_FULL_ROWS * np.dtype(np.complex128).itemsize
+                workspace_bytes = len(native_rule.candidate_rows) * np.dtype(np.complex128).itemsize
                 try:
                     workspace_gate = _resource_admission(
                         f"native_direct_B_calibration_vector_{side}",
@@ -3440,20 +5494,26 @@ def _run_probe(
                     return controlled_resource_stop(error, mode_index)
                 resource_gates.append(workspace_gate)
                 production_component_work = np.empty(
-                    full_rows, dtype=np.complex128
+                    len(native_rule.candidate_rows), dtype=np.complex128
                 )
             alpha = complex(rng.standard_normal(), rng.standard_normal())
             if len(functional.coupling_rows):
-                b_action[functional.coupling_rows] += functional.coupling_values * alpha
+                compact_b_rows = native_rule.compact_positions(functional.coupling_rows)
+                b_action[compact_b_rows] += functional.coupling_values * alpha
+            compact_d_rows = native_rule.compact_positions(functional.projection_rows)
             d_value = (
                 np.dot(
                     functional.projection_values,
-                    selected_field_values[functional.projection_rows],
+                    selected_field_values[compact_d_rows],
                 )
                 if len(functional.projection_rows)
                 else 0.0 + 0.0j
             )
             d_values[current_index] = d_value
+            if float(functional.normalization_h) != float(h_values[current_index]):
+                raise ValueError(
+                    f"production H_p differs from the precomputed original mode scalar at mode {current_index}"
+                )
             h_values[current_index] = float(functional.normalization_h)
             mode_counts_by_side[side] += 1
             support = support_rows_by_side[side]
@@ -3461,6 +5521,14 @@ def _run_probe(
             support["D"] += int(len(functional.projection_rows))
             support["nonempty_B_modes"] += int(bool(len(functional.coupling_rows)))
             support["nonempty_D_modes"] += int(bool(len(functional.projection_rows)))
+            accumulate_support_categories(side, "B", functional.coupling_rows)
+            accumulate_support_categories(side, "D", functional.projection_rows)
+            union_support_rows = np.union1d(
+                functional.coupling_rows, functional.projection_rows
+            )
+            accumulate_cell_multiplicity(side, "B", functional.coupling_rows)
+            accumulate_cell_multiplicity(side, "D", functional.projection_rows)
+            accumulate_cell_multiplicity(side, "union", union_support_rows)
             stream_digest.update(np.asarray([current_index], dtype="<i8").tobytes())
             stream_digest.update(_array_sha256(functional.coupling_rows).encode("ascii"))
             stream_digest.update(_array_sha256(functional.coupling_values).encode("ascii"))
@@ -3496,7 +5564,9 @@ def _run_probe(
                         cfg=cfg,
                         quadrature_degree=qdegree,
                     )
-                    direct_dx += np.dot(raw_d, selected_field_values[local_dofs])
+                    direct_dx += np.dot(
+                        raw_d, selected_field_values[native_rule.compact_positions(global_dofs)]
+                    )
                     production_b = np.zeros(len(interior_ids), dtype=np.complex128)
                     if len(functional.coupling_rows):
                         positions = np.searchsorted(
@@ -3537,10 +5607,12 @@ def _run_probe(
                         generated_port = np.asarray([current_index], dtype=PETSc.IntType)
                         local_trace = global_dofs[trace_positions]
                         local_xi = np.ascontiguousarray(
-                            selected_field_values[interior_ids], dtype=np.complex128
+                            selected_field_values[native_rule.compact_positions(interior_ids)],
+                            dtype=np.complex128,
                         )
                         local_xt = np.ascontiguousarray(
-                            selected_field_values[local_trace], dtype=np.complex128
+                            selected_field_values[native_rule.compact_positions(local_trace)],
+                            dtype=np.complex128,
                         )
 
                         def generate_raw_pair():
@@ -3646,7 +5718,9 @@ def _run_probe(
                 production_dx = (
                     np.dot(
                         functional.projection_values,
-                        selected_field_values[functional.projection_rows],
+                        selected_field_values[
+                            native_rule.compact_positions(functional.projection_rows)
+                        ],
                     )
                     if len(functional.projection_rows)
                     else 0.0 + 0.0j
@@ -3731,6 +5805,7 @@ def _run_probe(
                             dual_coefficients=native_rule._dual_coefficients,
                             master_counts=native_rule._master_counts,
                             index_dtype=native_rule.index_dtype,
+                            compact_row_domain=native_rule.candidate_rows,
                             admit_additional_bytes=admit_calibration_bytes,
                         )
                         direct_component_entries.append(entries)
@@ -3833,7 +5908,7 @@ def _run_probe(
                     direct_D_x_same_domain = (
                         np.dot(
                             direct_D_values,
-                            selected_field_values[direct_D_rows],
+                            selected_field_values[native_rule.compact_positions(direct_D_rows)],
                         )
                         if len(direct_D_rows)
                         else 0.0 + 0.0j
@@ -3841,7 +5916,9 @@ def _run_probe(
                     grouped_D_x_same_domain = (
                         np.dot(
                             functional.projection_values,
-                            selected_field_values[functional.projection_rows],
+                            selected_field_values[
+                                native_rule.compact_positions(functional.projection_rows)
+                            ],
                         )
                         if len(functional.projection_rows)
                         else 0.0 + 0.0j
@@ -3962,6 +6039,10 @@ def _run_probe(
                 facts["native_same_rule_path_consistency_by_side"] = {
                     name: dict(result) for name, result in calibration_results.items()
                 }
+                record_mode_block_timing(
+                    side, mode_item_wall_started, mode_item_cpu_started
+                )
+                mode_timing_recorded = True
                 gate_failure = _native_calibration_gate_failure(
                     side=side,
                     mode_index=current_index,
@@ -3971,8 +6052,7 @@ def _run_probe(
                 if gate_failure is not None:
                     for class_id in class_mode_prefix[side]:
                         class_mode_prefix[side][class_id] += 1
-                    checkpoint = _write_v22_action_checkpoint(
-                        output_directory,
+                    checkpoint = write_action_checkpoint(
                         preflight=preflight,
                         mode_inventory=mode_inventory,
                         mode_count=mode_index + 1,
@@ -3983,6 +6063,8 @@ def _run_probe(
                         component_filter_audit=native_rule.filter_audit(),
                         b_action=b_action,
                         d_values=d_values,
+                        candidate_rows=native_rule.candidate_rows,
+                        checkpoint_interval=checkpoint_interval,
                         h_values=h_values,
                         failure_facts=gate_failure,
                     )
@@ -4008,32 +6090,41 @@ def _run_probe(
                             "stream_prefix_sha256": stream_digest.copy().hexdigest(),
                         },
                         partial_action_result={
-                            "checkpoint_path": "v22_mode_sweep_checkpoint.json",
+                            "checkpoint_path": checkpoint["checkpoint_json_path"],
                             "checkpoint_sha256": _sha256_file(
-                                output_directory / "v22_mode_sweep_checkpoint.json"
+                                output_directory / checkpoint["checkpoint_json_path"]
                             ),
                             "actual_B_D_H_values_saved": True,
                             "official_R_T_A": "NOT_RUN",
                         },
                         q_coverage={
-                            "status": "NOT_RUN",
-                            "expected_q_count": 8,
-                            "built_q_count": 0,
-                            "reason": (
-                                "first native calibration gate failed before the remaining "
-                                "mode sweep or q construction"
+                            **(
+                                _v23_q_coverage_record(v23_q_tile_facts or {"status": "NOT_RUN"})
+                                if is_v23_campaign
+                                else {
+                                    "status": "NOT_RUN",
+                                    "expected_q_count": 8,
+                                    "built_q_count": 0,
+                                    "reason": (
+                                        "first native calibration gate failed before the remaining "
+                                        "mode sweep or q construction"
+                                    ),
+                                }
                             ),
                         },
                     )
                     return facts
+            if not mode_timing_recorded:
+                record_mode_block_timing(
+                    side, mode_item_wall_started, mode_item_cpu_started
+                )
             for class_id in class_mode_prefix[side]:
                 class_mode_prefix[side][class_id] += 1
             mode_index += 1
             functional = None
 
             if mode_index % checkpoint_interval == 0 or mode_index == len(modes):
-                checkpoint = _write_v22_action_checkpoint(
-                    output_directory,
+                checkpoint = write_action_checkpoint(
                     preflight=preflight,
                     mode_inventory=mode_inventory,
                     mode_count=mode_index,
@@ -4045,8 +6136,10 @@ def _run_probe(
                     b_action=b_action,
                     d_values=d_values,
                     h_values=h_values,
+                    candidate_rows=native_rule.candidate_rows,
+                    checkpoint_interval=checkpoint_interval,
                 )
-                elapsed = perf_counter() - mode_started
+                elapsed = mode_elapsed_offset + perf_counter() - mode_started
                 seconds_per_mode = elapsed / max(mode_index, 1)
                 campaign_checkpoint_state = _read_v22_campaign_state(root)
                 if campaign_checkpoint_state["campaign_window_sha256"] != campaign_state_entry[
@@ -4056,8 +6149,36 @@ def _run_probe(
                 checkpoint["campaign_remaining_numerical_seconds"] = campaign_checkpoint_state[
                     "remaining_numerical_seconds"
                 ]
-                _write_json(output_directory / "v22_mode_sweep_checkpoint.json", checkpoint)
+                _write_json(output_directory / checkpoint["checkpoint_json_path"], checkpoint)
                 facts["latest_mode_checkpoint"] = checkpoint
+                scan_forecast = None
+                if is_v23_campaign:
+                    scan_forecast = _v23_scan_time_forecast(
+                        modes,
+                        next_mode_index=mode_index,
+                        mode_timing_by_side=mode_timing_by_side,
+                        observed_wall_seconds=elapsed,
+                        observed_process_cpu_seconds=(
+                            mode_cpu_elapsed_offset
+                            + process_time()
+                            - mode_cpu_started
+                        ),
+                    )
+                    campaign_available = max(
+                        float(campaign_checkpoint_state["remaining_numerical_seconds"])
+                        - 120.0,
+                        0.0,
+                    )
+                    facts["scan_time_forecast"] = {
+                        **scan_forecast,
+                        "current_mode_count": mode_index,
+                        "campaign_remaining_numerical_seconds": float(
+                            campaign_checkpoint_state["remaining_numerical_seconds"]
+                        ),
+                        "output_closeout_reserve_seconds": 120.0,
+                        "available_numerical_seconds_after_closeout_reserve": campaign_available,
+                    }
+
                 if mode_index < len(modes) and campaign_checkpoint_state[
                     "remaining_numerical_seconds"
                 ] <= max(120.0, 2.0 * checkpoint_interval * seconds_per_mode):
@@ -4094,9 +6215,9 @@ def _run_probe(
                             "stream_prefix_sha256": stream_digest.copy().hexdigest(),
                         },
                         partial_action_result={
-                            "checkpoint_path": "v22_mode_sweep_checkpoint.json",
+                            "checkpoint_path": checkpoint["checkpoint_json_path"],
                             "checkpoint_sha256": _sha256_file(
-                                output_directory / "v22_mode_sweep_checkpoint.json"
+                                output_directory / checkpoint["checkpoint_json_path"]
                             ),
                             "actual_B_D_H_values_saved": True,
                             "official_R_T_A": "NOT_RUN",
@@ -4110,26 +6231,30 @@ def _run_probe(
                     )
                     return facts
 
-        mode_sweep_seconds = perf_counter() - mode_started
+        mode_sweep_seconds = mode_elapsed_offset + perf_counter() - mode_started
         if mode_index != len(modes) or mode_counts_by_side != {"bottom": 16_030, "top": 16_030}:
             raise ValueError("production surface iterator did not cover the complete 32,060-mode table")
         # The iterator audit reuses the same full ordered manifest for this one pass.
         b_facts = {
             "status": "MEASURED_ALL_32_060_MODES",
-            "vector_scope": "one global raw B alpha accumulator over every ordered mode",
+            "vector_scope": "compact B alpha accumulator indexed by complete boundary-cell and MPC-master global-row identities",
             "mode_count": mode_index,
             "mode_count_by_side": mode_counts_by_side,
             "support_rows_by_side": support_rows_by_side,
             "nonzero_rows": int(np.count_nonzero(b_action)),
             "norm": float(np.linalg.norm(b_action)),
             "sha256": _array_sha256(b_action),
+            "candidate_global_rows_sha256": _array_sha256(native_rule.candidate_rows),
+            "candidate_global_row_count": int(len(native_rule.candidate_rows)),
             "mode_sweep_seconds": mode_sweep_seconds,
             "mode_functional_stream_sha256": stream_digest.hexdigest(),
         }
         d_facts = {
             "status": "MEASURED_ALL_32_060_MODES",
             "field_vector_rows": int(len(selected_field_values)),
+            "field_vector_scope": "one gather of MPC-backsubstituted values at compact candidate global rows",
             "field_sha256": _array_sha256(selected_field_values),
+            "candidate_global_rows_sha256": _array_sha256(native_rule.candidate_rows),
             "field_slave_rows_backsubstituted": True,
             "mode_values_sha256": _array_sha256(d_values),
             "mode_values_norm": float(np.linalg.norm(d_values)),
@@ -4170,7 +6295,62 @@ def _run_probe(
             },
             "mode_count_by_side": mode_counts_by_side,
             "global_B_D_support_rows_by_side": support_rows_by_side,
-            "per_cell_m_c_and_sum_m_c_squared": "UNKNOWN; fullspace carrier functionals are global rows, not a generated per-cell support map",
+            "online_cell_inventory": {
+                "status": "MEASURED_IN_THE_SAME_PRODUCTION_MODE_SWEEP",
+                "m_c_definition": (
+                    "for each boundary-adjacent cell, the number of distinct modes in which "
+                    "at least one retained production B row, D row, or B/D union row belongs "
+                    "to that cell's 450 interior global rows; each cell contributes at most "
+                    "once per mode, regardless of how many rows are supported"
+                ),
+                "expected_mode_count_by_side": expected_mode_counts_by_side,
+                "cell_ids_by_side": {
+                    side: cell_ids_sorted[side_cell_positions[side]].tolist()
+                    for side in ("bottom", "top")
+                },
+                "cell_ids_sha256": {
+                    side: _array_sha256(cell_ids_sorted[side_cell_positions[side]])
+                    for side in ("bottom", "top")
+                },
+                "m_c_by_side": {
+                    side: {
+                        metric: _summarize_cell_mode_support(
+                            state["per_cell_mode_counts"],
+                            expected_mode_count=expected_mode_counts_by_side[side],
+                        )
+                        for metric, state in m_c_state[side].items()
+                    }
+                    for side in ("bottom", "top")
+                },
+                "raw_interior_row_memberships_by_side": {
+                    side: {
+                        metric: {
+                            "total_across_modes_and_cells": int(
+                                np.sum(
+                                    state["per_cell_interior_row_memberships"],
+                                    dtype=np.int64,
+                                )
+                            ),
+                            "per_cell_row_membership_sum": state[
+                                "per_cell_interior_row_memberships"
+                            ].tolist(),
+                        }
+                        for metric, state in m_c_state[side].items()
+                    }
+                    for side in ("bottom", "top")
+                },
+                "filtered_support_category_entries_by_side": support_category_totals,
+                "category_definitions": {
+                    "interior": "unique boundary-cell interior global rows",
+                    "actual_port_face_trace": "Basix entity DoFs on the mapped physical port facets",
+                    "other_trace": "remaining boundary-cell trace rows outside actual port facets",
+                    "slave": "raw finalized MPC slave support before E^H; absent from retained output by contract",
+                    "unknown": "retained MPC master-closure rows outside the boundary-cell dof union",
+                },
+                "unclassified_retained_rows": 0,
+                "raw_component_filter_audit": native_rule.filter_audit(),
+                "weighted_production_filter_audit": stream_audit,
+            },
             "raw_tiny_local_B_interior_entries_below_1e-13_by_calibration_side": {
                 side: result.get("raw_tiny_B_interior_count_below_1e-13")
                 for side, result in calibration_results.items()
@@ -4185,7 +6365,7 @@ def _run_probe(
                 "completed": mode_index,
                 "completed_by_side": mode_counts_by_side,
                 "checkpoint_interval_modes": checkpoint_interval,
-                "checkpoint_path": "v22_mode_sweep_checkpoint.json",
+                "checkpoint_path": checkpoint["checkpoint_json_path"],
                 "resume_scope": "the latest atomic checkpoint retains exact B nonzeros and completed D/H values for inspection/recovery",
                 "completed_side_class_mode_prefix": {
                     side: dict(class_mode_prefix[side]) for side in ("bottom", "top")
@@ -4194,6 +6374,7 @@ def _run_probe(
             "B_alpha": b_facts,
             "D_x": d_facts,
             "native_882_row_calibration_by_side": calibration_results,
+            "online_support_inventory": facts["production_support"]["online_cell_inventory"],
             "generated_p6_api_witness": generated_packet_witness,
             "all_ordered_modes": 32_060,
             "potential_side_specific_mode_facet_pairs": 69_762_560,
@@ -4225,19 +6406,73 @@ def _run_probe(
                 "qualification remains a separate pre-sweep gate"
             ),
         }
-        if native_limits_passed:
-            facts["status"] = "PASS_ALL_MODE_B_D_STREAM_WITH_Q_UNBUILT"
-            completed.append("target_operator_probe")
-        else:
+        if not native_limits_passed:
             facts["status"] = "FAILED_NATIVE_OPERATOR_GATE"
             facts["failed_stage"] = "target_operator_probe"
             facts["failure_message"] = "native 882-row B/D or generated callback tile calibration exceeded its recorded gate"
-        facts["q_coverage"] = {
-            "status": "NOT_RUN",
-            "expected_q_count": 8,
-            "built_q_count": 0,
-            "reason": "only a 2x2 local trace/port selector consumed the generated action; the eight physical Ny8 q maps and target q CSR were not built",
-        }
+        elif is_v23_campaign:
+            q_status = (v23_q_tile_facts or {}).get("status")
+            if q_status == "PASS_REAL_ORIGINAL_NY8_Q_PORT_TILE":
+                facts["status"] = "PASS_ALL_MODE_B_D_STREAM_WITH_PARTIAL_Q_PORT_TILE"
+                completed.append("target_operator_probe")
+            elif q_status in {"NOT_RUN_RESOURCE_GATE", "NOT_RUN_TIME_STOP"}:
+                facts.update(
+                    status="RESOURCE_CONTROLLED_STOP",
+                    failed_stage=None,
+                    blocked_task_stage="target_operator_probe",
+                    partial_stages=["target_operator_probe"],
+                    resource_blocker={
+                        "gate_type": (
+                            "fixed_campaign_time_cooperative_stop"
+                            if q_status == "NOT_RUN_TIME_STOP"
+                            else "selected_q_port_tile_resource_admission"
+                        ),
+                        "q_tile_status": q_status,
+                        "q_tile_resource_blocker": (v23_q_tile_facts or {}).get(
+                            "resource_blocker"
+                        ),
+                        "q_tile_time_stop": (v23_q_tile_facts or {}).get(
+                            "time_stop"
+                        ),
+                        "checkpoint_mode_count": mode_index,
+                        "checkpoint_path": checkpoint["checkpoint_json_path"],
+                    },
+                    partial_mode_coverage={
+                        "expected_mode_count": len(modes),
+                        "completed_mode_count": mode_index,
+                        "completed_by_side": dict(mode_counts_by_side),
+                        "completed_side_class_mode_prefix": {
+                            side_name: dict(class_mode_prefix[side_name])
+                            for side_name in ("bottom", "top")
+                        },
+                        "stream_prefix_sha256": stream_digest.copy().hexdigest(),
+                    },
+                    partial_action_result={
+                        "checkpoint_path": checkpoint["checkpoint_json_path"],
+                        "checkpoint_sha256": _sha256_file(
+                            output_directory / checkpoint["checkpoint_json_path"]
+                        ),
+                        "actual_B_D_H_values_saved": True,
+                        "official_R_T_A": "NOT_RUN",
+                    },
+                )
+            else:
+                facts["status"] = "FAILED_SELECTED_Q_PORT_TILE"
+                facts["failed_stage"] = "target_operator_probe"
+                facts["failure_message"] = (
+                    (v23_q_tile_facts or {}).get("failure_message")
+                    or f"V23 q port tile did not pass: {q_status}"
+                )
+        else:
+            facts["status"] = "PASS_ALL_MODE_B_D_STREAM_WITH_Q_UNBUILT"
+            completed.append("target_operator_probe")
+            facts["q_coverage"] = {
+                "status": "NOT_RUN",
+                "expected_q_count": 8,
+                "built_q_count": 0,
+                "full_q_matrix_coverage": "0/8",
+                "reason": "V22 selected q port tile is outside this campaign",
+            }
         return facts
     except _ProbeResourceBlocked as error:
         facts.update(
@@ -4251,12 +6486,16 @@ def _run_probe(
             probe_scope=(
                 "only the actual completed prefix is credited; the blocked stage remains partial and is not complete"
             ),
-            q_coverage={
-                "status": "NOT_RUN",
-                "expected_q_count": 8,
-                "built_q_count": 0,
-                "reason": "resource admission stopped before q construction",
-            },
+            q_coverage=(
+                _v23_q_coverage_record(v23_q_tile_facts or {"status": "NOT_RUN"})
+                if is_v23_campaign
+                else {
+                    "status": "NOT_RUN",
+                    "expected_q_count": 8,
+                    "built_q_count": 0,
+                    "reason": "resource admission stopped before q construction",
+                }
+            ),
         )
         return facts
     except Exception as error:
@@ -4267,12 +6506,16 @@ def _run_probe(
             failure_message=f"{type(error).__name__}: {error}",
             failure_type=type(error).__name__,
             resource_gates=resource_gates,
-            q_coverage={
-                "status": "NOT_RUN",
-                "expected_q_count": 8,
-                "built_q_count": 0,
-                "reason": "probe failed before q construction",
-            },
+            q_coverage=(
+                _v23_q_coverage_record(v23_q_tile_facts or {"status": "NOT_RUN"})
+                if is_v23_campaign
+                else {
+                    "status": "NOT_RUN",
+                    "expected_q_count": 8,
+                    "built_q_count": 0,
+                    "reason": "probe failed before q construction",
+                }
+            ),
         )
         return facts
     finally:

@@ -1063,6 +1063,14 @@ def run_task40_v20_stage(
             outcome = "STAGE_COMPLETED"
             status = "stage_completed"
             classification = "TARGET_OPERATOR_PROBE_B_D_STREAM_COMPLETE_Q_NOT_BUILT"
+        elif probe_status == "PASS_ALL_MODE_B_D_STREAM_WITH_PARTIAL_Q_PORT_TILE":
+            outcome = "STAGE_COMPLETED"
+            status = "stage_completed"
+            classification = "TARGET_OPERATOR_PROBE_COMPLETE_WITH_PARTIAL_Q_PORT_TILE"
+        elif probe_status == "PLANNED_SCAN_HANDOFF_WITH_PARTIAL_Q_PORT_TILE":
+            outcome = "PLANNED_HANDOFF"
+            status = "planned_handoff"
+            classification = "TARGET_OPERATOR_PROBE_PLANNED_SCAN_HANDOFF_Q_PORT_TILE_COMPLETE"
         else:
             outcome = "STAGE_FAILED"
             status = "failed"
@@ -1103,16 +1111,25 @@ def run_task40_v20_stage(
             if outcome == "RESOURCE_CONTROLLED_STOP"
             else None,
             "stage_result": (
-                {"completed_stage": "target_operator_probe"}
+                {
+                    "completed_stage": "target_operator_probe",
+                    "probe_status": probe_status,
+                }
                 if outcome == "STAGE_COMPLETED"
                 else None
             ),
+            "planned_handoff": probe.get("planned_handoff")
+            if outcome == "PLANNED_HANDOFF"
+            else None,
             "artifact_hashes": {
                 name: {"path": name, "sha256": _sha256_file(output_directory / name)}
                 for name in (
                     "v20_stage_preflight.json",
                     "v20_geometry_inventory.json",
                     "v22_target_operator_probe.json",
+                    "v23_reference_q_port_tile.json",
+                    "v23_selected_mode_production_B_D_H.npz",
+                    "v23_selected_q_projection_readback.npz",
                 )
                 if (output_directory / name).is_file()
             },
