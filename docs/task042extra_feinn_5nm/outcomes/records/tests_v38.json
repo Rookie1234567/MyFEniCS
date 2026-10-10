@@ -1,0 +1,398 @@
+{
+  "schema": "task42extra.v38.tests.v1",
+  "qualification_source": "a319b9b0cc09a04989111cb4494380d9912d0a5e",
+  "test_source": {
+    "path": "src/test/test_ftt_ml.py",
+    "bytes": 21288,
+    "sha256": "3452f99d4db7cc37ff7c482ea14838bec5278d223d983456ddb86aba9ff983b6"
+  },
+  "batches": [
+    {
+      "name": "light_tests01",
+      "summary": {
+        "path": "tmp/task42extra/v38/light_tests01/summary.json",
+        "bytes": 2309,
+        "sha256": "3a1783b57894971263ccd94b5654305aaab76d68415eace3676da301d56a8de2"
+      },
+      "classification": "USER_CONTROLLED_STOP",
+      "leader_exit_code": -15,
+      "descendants_cleared": true,
+      "elapsed_seconds": 3.614898222964257,
+      "tree_peak_bytes": 335310848,
+      "tree_swap_bytes": 0,
+      "JUnit": "NOT_RETAINED",
+      "logs": [
+        {
+          "path": "tmp/task42extra/v38/light_tests01/watchdog/worker.log",
+          "bytes": 5,
+          "sha256": "f85d30e7d95a052f65167f1f1095186d1190c91502b4ab7aedab460a6eab8870"
+        }
+      ]
+    },
+    {
+      "name": "light_tests02",
+      "summary": {
+        "path": "tmp/task42extra/v38/light_tests02/summary.json",
+        "bytes": 1986,
+        "sha256": "5385557386a468943cbde13deaea7f4ff4c6ac72632bde9a0b4d915078cf09d7"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 5.325539670884609,
+      "tree_peak_bytes": 369537024,
+      "tree_swap_bytes": 0,
+      "JUnit": {
+        "path": "tmp/task42extra/v38/ftt_targeted02.xml",
+        "bytes": 1109,
+        "sha256": "af6d6190b9035f51c19334f35a7311c736552039ad521451206d2327921c0adf"
+      },
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "testcases": [
+        "test_complex_chain_and_zero[fttnn-9072]",
+        "test_complex_chain_and_zero[chebtt-9120]",
+        "test_streaming_map_real_adjoint[fttnn]",
+        "test_streaming_map_real_adjoint[chebtt]",
+        "test_native_explicit_metric_forbids_reference_or_gram",
+        "test_actual_optimizer_transaction_and_atomic_reopen[Adam]",
+        "test_actual_optimizer_transaction_and_atomic_reopen[LBFGS]",
+        "test_atomic_interrupt_keeps_previous"
+      ],
+      "logs": [
+        {
+          "path": "tmp/task42extra/v38/light_tests02/watchdog/worker.log",
+          "bytes": 193,
+          "sha256": "7a973f779d1f0cdc4c4c85866587511d7e3f51cc6ac98129d53f1c31fac4b822"
+        }
+      ]
+    },
+    {
+      "name": "light_tests03",
+      "summary": {
+        "path": "tmp/task42extra/v38/light_tests03/summary.json",
+        "bytes": 2004,
+        "sha256": "e7b5f2c9f99370972ea80173ead6237eabfbfd1468520540f5412d496db701c3"
+      },
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "descendants_cleared": true,
+      "elapsed_seconds": 5.3582608280703425,
+      "tree_peak_bytes": 385482752,
+      "tree_swap_bytes": 0,
+      "JUnit": {
+        "path": "tmp/task42extra/v38/ftt_targeted03.xml",
+        "bytes": 1336,
+        "sha256": "644a87eb4427b2a77758d0fcab06b8634947f5d6f088502e713d66f176792125"
+      },
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "testcases": [
+        "test_complex_chain_and_zero[fttnn-9072]",
+        "test_complex_chain_and_zero[chebtt-9120]",
+        "test_streaming_map_real_adjoint[fttnn]",
+        "test_streaming_map_real_adjoint[chebtt]",
+        "test_native_explicit_metric_forbids_reference_or_gram",
+        "test_actual_optimizer_transaction_and_atomic_reopen[Adam]",
+        "test_actual_optimizer_transaction_and_atomic_reopen[LBFGS]",
+        "test_atomic_interrupt_keeps_previous",
+        "test_label_and_old_model_file_isolation",
+        "test_new_stages_validate_without_loading_numerical_data"
+      ],
+      "logs": [
+        {
+          "path": "tmp/task42extra/v38/light_tests03/watchdog/worker.log",
+          "bytes": 268,
+          "sha256": "1fb226973a4ee540659dd46a970be44feae293b5f15406d02839d8b06117909e"
+        }
+      ]
+    },
+    {
+      "name": "light_tests04",
+      "summary": {
+        "path": "tmp/task42extra/v38/light_tests04/summary.json",
+        "bytes": 1990,
+        "sha256": "6025c4c376a90ddc0da68d2d3d49f1a2aa8e4de5092c1d6002ec7c4fe9155c01"
+      },
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "descendants_cleared": true,
+      "elapsed_seconds": 1.9821418998762965,
+      "tree_peak_bytes": 43855872,
+      "tree_swap_bytes": 0,
+      "JUnit": "NOT_RETAINED",
+      "logs": [
+        {
+          "path": "tmp/task42extra/v38/light_tests04/watchdog/worker.log",
+          "bytes": 1043,
+          "sha256": "601b4ed0d40371e160854c00a374b62aa654887efd1014219cff177f9e53fc60"
+        }
+      ]
+    },
+    {
+      "name": "light_tests05",
+      "summary": {
+        "path": "tmp/task42extra/v38/light_tests05/summary.json",
+        "bytes": 1999,
+        "sha256": "3c3472484b156177ef5150afbff9a7bbdaaea469a622259022bcc7d3848603e3"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 5.340571684995666,
+      "tree_peak_bytes": 385441792,
+      "tree_swap_bytes": 0,
+      "JUnit": {
+        "path": "tmp/task42extra/v38/ftt_targeted05.xml",
+        "bytes": 1336,
+        "sha256": "35144141a38f7ae816b38c472e3f2bbe22fc6c8872f0a8098869b1807fd49056"
+      },
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "testcases": [
+        "test_complex_chain_and_zero[fttnn-9072]",
+        "test_complex_chain_and_zero[chebtt-9120]",
+        "test_streaming_map_real_adjoint[fttnn]",
+        "test_streaming_map_real_adjoint[chebtt]",
+        "test_native_explicit_metric_forbids_reference_or_gram",
+        "test_actual_optimizer_transaction_and_atomic_reopen[Adam]",
+        "test_actual_optimizer_transaction_and_atomic_reopen[LBFGS]",
+        "test_atomic_interrupt_keeps_previous",
+        "test_label_and_old_model_file_isolation",
+        "test_new_stages_validate_without_loading_numerical_data"
+      ],
+      "logs": [
+        {
+          "path": "tmp/task42extra/v38/light_tests05/watchdog/worker.log",
+          "bytes": 233,
+          "sha256": "50b0251eedf27bf644e783ced331e4552415056b39647410a1a79f7797d43d99"
+        }
+      ]
+    },
+    {
+      "name": "light_tests06",
+      "summary": {
+        "path": "tmp/task42extra/v38/light_tests06/summary.json",
+        "bytes": 2000,
+        "sha256": "b9e5acad903439c094da1511f96563c63f7d5d5b969fd33d965e9ac15a590f11"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 6.018190062139183,
+      "tree_peak_bytes": 387694592,
+      "tree_swap_bytes": 0,
+      "JUnit": {
+        "path": "tmp/task42extra/v38/ftt_targeted06.xml",
+        "bytes": 1849,
+        "sha256": "c8f4ebe5aa0e56127162c0660f7fa7cf8c686de4c106eb25d20793782e494cf5"
+      },
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "testcases": [
+        "test_complex_chain_and_zero[fttnn-9072]",
+        "test_complex_chain_and_zero[chebtt-9120]",
+        "test_streaming_map_real_adjoint[fttnn]",
+        "test_streaming_map_real_adjoint[chebtt]",
+        "test_native_explicit_metric_forbids_reference_or_gram",
+        "test_actual_optimizer_transaction_and_atomic_reopen[Adam]",
+        "test_actual_optimizer_transaction_and_atomic_reopen[LBFGS]",
+        "test_atomic_interrupt_keeps_previous",
+        "test_label_and_old_model_file_isolation",
+        "test_new_stages_validate_without_loading_numerical_data",
+        "test_two_nonunit_floquet_seams_corner_and_real_adjoint[fttnn]",
+        "test_two_nonunit_floquet_seams_corner_and_real_adjoint[chebtt]",
+        "test_full_checkpoint_next_update_equivalence_and_trial_rng_rollback",
+        "test_reference_fit_G_gradient_and_no_original_inverse_calls"
+      ],
+      "logs": [
+        {
+          "path": "tmp/task42extra/v38/light_tests06/watchdog/worker.log",
+          "bytes": 213,
+          "sha256": "096d69f746dd870abc48bf1d9cf7858fedcd5276ea649f775abe951a017090ab"
+        }
+      ]
+    },
+    {
+      "name": "light_tests07",
+      "summary": {
+        "path": "tmp/task42extra/v38/light_tests07/summary.json",
+        "bytes": 2000,
+        "sha256": "e070bf9c70443c91480acc8470909beeb16060a128c84eadafabdd40d68d85aa"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 6.229060380952433,
+      "tree_peak_bytes": 388120576,
+      "tree_swap_bytes": 0,
+      "JUnit": {
+        "path": "tmp/task42extra/v38/ftt_targeted07.xml",
+        "bytes": 2254,
+        "sha256": "56836466d84e3d15c006f18c6bee64efce1b91beeec25556fda3efb4628066c9"
+      },
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "testcases": [
+        "test_complex_chain_and_zero[fttnn-9072]",
+        "test_complex_chain_and_zero[chebtt-9120]",
+        "test_streaming_map_real_adjoint[fttnn]",
+        "test_streaming_map_real_adjoint[chebtt]",
+        "test_native_explicit_metric_forbids_reference_or_gram",
+        "test_actual_optimizer_transaction_and_atomic_reopen[Adam]",
+        "test_actual_optimizer_transaction_and_atomic_reopen[LBFGS]",
+        "test_atomic_interrupt_keeps_previous",
+        "test_label_and_old_model_file_isolation",
+        "test_new_stages_validate_without_loading_numerical_data",
+        "test_two_nonunit_floquet_seams_corner_and_real_adjoint[fttnn]",
+        "test_two_nonunit_floquet_seams_corner_and_real_adjoint[chebtt]",
+        "test_full_checkpoint_next_update_equivalence_and_trial_rng_rollback",
+        "test_reference_fit_G_gradient_and_no_original_inverse_calls",
+        "test_setup_exhausts_route_time_preserves_zero_and_distinguishes_call_cap",
+        "test_actual_schema_usage_flags_include_reference_exposed_verifier",
+        "test_actual_checkpoint_identity_rejects_mixed_source_label_and_buffers"
+      ],
+      "logs": [
+        {
+          "path": "tmp/task42extra/v38/light_tests07/watchdog/worker.log",
+          "bytes": 213,
+          "sha256": "b795c990d0fe6d06b3011a1074c27cde96332ae24731b98f3093e4e94a1df6fc"
+        }
+      ]
+    },
+    {
+      "name": "light_tests08",
+      "summary": {
+        "path": "tmp/task42extra/v38/light_tests08/summary.json",
+        "bytes": 2000,
+        "sha256": "7f08b219f025bc0762820f975d55465c7011fbd75f235140e2dedbce71aa6d18"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 8.021953087067232,
+      "tree_peak_bytes": 380223488,
+      "tree_swap_bytes": 0,
+      "JUnit": {
+        "path": "tmp/task42extra/v38/ftt_targeted08.xml",
+        "bytes": 626,
+        "sha256": "5a72c16a468b4150b413ea62f32d92336f5b0e0ad0d6e09456280d57d4b0f22c"
+      },
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "testcases": [
+        "test_setup_exhausts_route_time_preserves_zero_and_distinguishes_call_cap",
+        "test_actual_schema_usage_flags_include_reference_exposed_verifier",
+        "test_actual_checkpoint_identity_rejects_mixed_source_label_and_buffers"
+      ],
+      "logs": [
+        {
+          "path": "tmp/task42extra/v38/light_tests08/watchdog/worker.log",
+          "bytes": 227,
+          "sha256": "f69751b8e7838ae802195a7a10529fb87186d0326e17624a99e0aa875a00683f"
+        }
+      ]
+    },
+    {
+      "name": "tests09",
+      "summary": {
+        "path": "tmp/task42extra/v38/tests09/summary.json",
+        "bytes": 1999,
+        "sha256": "f10f43c7dad33ff769ff5263c77f3bdb0257f5a6ec416f661518c00a5865efd9"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "elapsed_seconds": 3.883625998860225,
+      "tree_peak_bytes": 308449280,
+      "tree_swap_bytes": 0,
+      "JUnit": {
+        "path": "tmp/task42extra/v38/ftt_targeted09.xml",
+        "bytes": 849,
+        "sha256": "5ea0461d3a570c39854f754a49e0c854be4659dc5cc1210846983880dea84bb9"
+      },
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "testcases": [
+        "test_original_G_and_independent_integral_complex_pairing_negative_controls",
+        "test_FTT_purpose_override_actual_writer_reopen[False]",
+        "test_FTT_purpose_override_actual_writer_reopen[True]",
+        "test_fixed_axis_diagnostics_do_not_modify_parameters[fttnn]",
+        "test_fixed_axis_diagnostics_do_not_modify_parameters[chebtt]"
+      ],
+      "logs": [
+        {
+          "path": "tmp/task42extra/v38/tests09/watchdog/worker.log",
+          "bytes": 247,
+          "sha256": "c71b6d88fee058d5f340359ed343947010580caf4ffec7aa935fdd35a3c7e46c"
+        }
+      ]
+    }
+  ],
+  "unique_ftt_case_count": 22,
+  "final_qualification": "17 unchanged dependency cases reused plus 5 final affected cases passed; no sum of repeated executions",
+  "reused_s0_source": "dedaec1b347d85a28bf8b608cbf677d560b86a0d",
+  "reused_s0_mapping_and_model_math_unchanged": true,
+  "full_pytest": false,
+  "CI_claimed": false,
+  "environment_install_count": 0,
+  "small_fixture_is_not_physical_pass": true,
+  "physical_joint_result": "FAIL all four actual models and separately all four producer states",
+  "qualification_dependency_identity": {
+    "final_affected_source": "a319b9b0cc09a04989111cb4494380d9912d0a5e",
+    "unchanged_seventeen_qualification_source": "26e71e886a42bf5ba65dcb99c7f2162d5d80569e",
+    "final_source_change": "five new postprocessing tests/helpers; existing model and moment mathematics byte unchanged",
+    "historical_uncommitted_test_source_snapshots": "NOT_RETAINED; do not assign later HEAD as the historical test source"
+  },
+  "first_final_document_checks": {
+    "summary": {
+      "path": "tmp/task42extra/v38/docs01/summary.json",
+      "bytes": 1998,
+      "sha256": "7430f0d25bcc6b61f32692a7e7de6478eee58a29351deea9f282d2b0f6ba0801"
+    },
+    "classification": "COMPLETED",
+    "elapsed_seconds": 2.620871158083901,
+    "tree_peak_bytes": 68468736,
+    "tree_swap_bytes": 0,
+    "metadata_check_count": 462,
+    "JUnit": {
+      "path": "tmp/task42extra/v38/docs_targeted01.xml",
+      "bytes": 566,
+      "sha256": "d5ce897981bf6ec4d0646cd50faba6ae1c8a0bf6d42af2986a4561aa640c3001"
+    },
+    "scope": "finite new local metadata/CSV norms/power and amended documentation tables/fences; no model or FE"
+  },
+  "final_affected_document_checks": {
+    "summary": {
+      "path": "tmp/task42extra/v38/docs02/summary.json",
+      "sha256": "80be10225c3d1f616b85ac29f49d83d3f3e8a2ec0016317c67085b201fc5d893"
+    },
+    "elapsed_seconds": 2.7057693612296134,
+    "tree_peak_bytes": 68579328,
+    "tree_swap_bytes": 0,
+    "metadata_check_count": 463,
+    "JUnit": {
+      "path": "tmp/task42extra/v38/docs_targeted02.xml",
+      "sha256": "0b9d8bc0f730e9511b35daac1747ec6f960af88f31597986b75f52c31ee0d64c"
+    },
+    "tests": 2,
+    "numerical_replay_count": 0
+  },
+  "final_CSV_LF_affected_check": {
+    "path": "tmp/task42extra/v38/docs03/summary.json",
+    "sha256": "df907a60af1b28becca72154b9624fdf8f35eee59b4ba8f63d2a7be2cf61b139",
+    "classification": "COMPLETED",
+    "elapsed_seconds": 2.6858962308615446,
+    "RSS_peak_bytes": 64643072,
+    "swap_bytes": 0,
+    "metadata_checks": 463,
+    "numeric_fields_changed": 0
+  }
+}

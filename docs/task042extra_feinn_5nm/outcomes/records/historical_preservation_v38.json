@@ -1,0 +1,53 @@
+{
+  "schema": "task42extra.v38.history.v1",
+  "rows": [
+    {
+      "path": "docs/task042extra_feinn_5nm/README.md",
+      "historical_source": "a319b9b0cc09a04989111cb4494380d9912d0a5e",
+      "historical_bytes": 45079,
+      "historical_sha256": "669e77b6c9ce2084438e44da138fbe9d4eeca5873d029a0afd4a657cd5d22b0f",
+      "new_prefix_bytes": 3847,
+      "historical_suffix_unchanged": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "historical_source": "a319b9b0cc09a04989111cb4494380d9912d0a5e",
+      "historical_bytes": 140131,
+      "historical_sha256": "f3f32c24446b3833a61d17d2197d05998c3fc864d3def749785a3763d87507ba",
+      "new_prefix_bytes": 3960,
+      "historical_suffix_unchanged": true
+    },
+    {
+      "path": "docs/development_progress.md",
+      "historical_source": "a319b9b0cc09a04989111cb4494380d9912d0a5e",
+      "historical_bytes": 254511,
+      "historical_sha256": "d7b0aca7be6c5bcafd8459a7e0a7bdbea240e476320a194f2e6fdb96d16781dd",
+      "new_prefix_bytes": 3884,
+      "historical_suffix_unchanged": true
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "historical_source": "a319b9b0cc09a04989111cb4494380d9912d0a5e",
+      "historical_bytes": 297273,
+      "historical_sha256": "c9a9709aaf62edbe6397be4dbfb48db599c64b40adf7762817fced9a27aa8e3c",
+      "new_prefix_bytes": 3920,
+      "historical_suffix_unchanged": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "historical_source": "a319b9b0cc09a04989111cb4494380d9912d0a5e",
+      "historical_bytes": 59097,
+      "historical_sha256": "09f193a00dbd772891993b0d1bc107ba05fef4b84db9928f487e177c948b6d76",
+      "new_prefix_bytes": 4094,
+      "historical_suffix_unchanged": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "historical_source": "a319b9b0cc09a04989111cb4494380d9912d0a5e",
+      "historical_bytes": 59295,
+      "historical_sha256": "d13c5087f2d7a0d93d1700b250031fc483db4b903687620c8030121dc69b2846",
+      "new_prefix_bytes": 1292,
+      "historical_suffix_unchanged": true
+    }
+  ]
+}

@@ -1,0 +1,2331 @@
+{
+  "schema": "task42extra.v38.final_metadata.v1",
+  "scope": "new compact metadata and CSV consistency only; no FE/network/training",
+  "source_head": "a319b9b0cc09a04989111cb4494380d9912d0a5e",
+  "checks": [
+    {
+      "name": "historical suffix byte unchanged: docs/task042extra_feinn_5nm/README.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "historical suffix byte unchanged: docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "historical suffix byte unchanged: docs/development_progress.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "historical suffix byte unchanged: docs/development_model_registry.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "historical suffix byte unchanged: docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "historical suffix byte unchanged: docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "closed fences README.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no forbidden new display README.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "consistent table columns README.md",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "new local link response_v38.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link outcomes/fttnn_pilot_v38.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link outcomes/records/full_numerical_gates_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link outcomes/records/run_index_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link outcomes/records/resource_costs_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link outcomes/records/tests_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no invalid encoding README.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "closed fences response_v38.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no forbidden new display response_v38.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "consistent table columns response_v38.md",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "new local link review_report_v37.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link outcomes/records/full_numerical_gates_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link outcomes/records/complex_channels_native_v38.csv",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link outcomes/records/complex_channels_fit_v38.csv",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link outcomes/records/implementation_qualification_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link outcomes/records/resource_costs_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link outcomes/records/run_index_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link outcomes/records/repair_log_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no invalid encoding response_v38.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "closed fences summary.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no forbidden new display summary.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "consistent table columns summary.md",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "new local link ../response_v38.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link fttnn_pilot_v38.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/full_numerical_gates_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/complex_channels_native_v38.csv",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/complex_channels_fit_v38.csv",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/resource_costs_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/run_index_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/tests_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no invalid encoding summary.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "math leading blank fttnn_pilot_v38.md:12",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "math leading blank fttnn_pilot_v38.md:19",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "math leading blank fttnn_pilot_v38.md:27",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "closed fences fttnn_pilot_v38.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no forbidden new display fttnn_pilot_v38.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "consistent table columns fttnn_pilot_v38.md",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "new local link ../review_report_v37.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/implementation_qualification_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/full_numerical_gates_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/complex_channels_native_v38.csv",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/complex_channels_fit_v38.csv",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/resource_costs_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/run_index_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/repair_log_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no invalid encoding fttnn_pilot_v38.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "closed fences test_summary.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no forbidden new display test_summary.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "consistent table columns test_summary.md",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "new local link records/tests_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/implementation_qualification_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/full_numerical_gates_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/repair_log_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no invalid encoding test_summary.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "closed fences changed_files.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no forbidden new display changed_files.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "consistent table columns changed_files.md",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/tests_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/full_numerical_gates_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/run_index_v36.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/tests_v36.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/joint_gates_v36.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/run_index_v35.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/raw_artifact_index_v35.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/tests_v35.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link neural_route_decision_v35.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v33.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/tests_v33.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/full_numerical_gates_v33.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/provenance_v33.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v32.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/run_index_v32.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v31.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/run_index_v31.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v30.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/run_index_v30.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/full_numerical_gates_v30.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/common_cost_node_v30.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/frozen_field_qualification_v30.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/engineering_pause_3_v30.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/projection_qualification_v30.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/screening_targeted_tests_v30.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v29.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/run_index_v29.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/run_index_v1.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/run_index_v3.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link ../response_v3.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/publication_manifest_v4.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/publication_manifest_v7.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/publication_manifest_v8.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/publication_manifest_v10.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v13.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v13.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/archive_receipt_v14.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v15.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v16.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/diagnostic_dependencies_v17.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v18.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v18.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v20.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v21.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v22.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v23.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link ../../../benchmarks/cases/portable_interval_facet/README.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/run_index_v23.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v24.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v25.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v26.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/run_index_v26.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v27.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/selective_merge_manifest_v28.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/run_index_v28.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/repair_log_v28.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/dependency_qualification_v30.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link ../response_v34.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no invalid encoding changed_files.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "math leading blank development_progress.md:920",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "math leading blank development_progress.md:1327",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "math leading blank development_progress.md:1842",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "math leading blank development_progress.md:1851",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "math leading blank development_progress.md:1950",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "closed fences development_progress.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no forbidden new display development_progress.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "consistent table columns development_progress.md",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "new local link task042extra_feinn_5nm/response_v38.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link task042extra_feinn_5nm/outcomes/fttnn_pilot_v38.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link task042extra_feinn_5nm/outcomes/records/resource_costs_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no invalid encoding development_progress.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "closed fences development_model_registry.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no forbidden new display development_model_registry.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "consistent table columns development_model_registry.md",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "new local link task042extra_feinn_5nm/outcomes/fttnn_pilot_v38.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link task042extra_feinn_5nm/outcomes/records/run_index_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link task042extra_feinn_5nm/outcomes/records/resource_costs_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no invalid encoding development_model_registry.md",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "pilot actual math count",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "finite valid JSON final_metadata_checks_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "finite valid JSON full_numerical_gates_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "finite valid JSON gate_decisions_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "finite valid JSON historical_preservation_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "finite valid JSON implementation_qualification_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "finite valid JSON repair_log_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "finite valid JSON resource_costs_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "finite valid JSON run_index_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "finite valid JSON selective_merge_manifest_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "finite valid JSON tests_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "finite valid JSON training_and_fit_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "exact eight new run stages",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full source SHA v38_ftt_checks",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "actual stage complete v38_ftt_checks",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_checks_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_checks_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_checks_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_checks_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_checks_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_checks/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full source SHA v38_fttnn_native",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "actual stage complete v38_fttnn_native",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_fttnn_native_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_fttnn_native_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_fttnn_native_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_fttnn_native_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_fttnn_native_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_fttnn_native/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_fttnn_native/checkpoint_index.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_fttnn_native/history.jsonl",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_fttnn_native/frozen_field.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_fttnn_native/checkpoints/current.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_fttnn_native/checkpoints/committed_000047.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_fttnn_native/checkpoints/committed_000000.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full source SHA v38_chebtt_native",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "actual stage complete v38_chebtt_native",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_chebtt_native_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_chebtt_native_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_chebtt_native_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_chebtt_native_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_chebtt_native_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_chebtt_native/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_chebtt_native/checkpoint_index.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_chebtt_native/history.jsonl",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_chebtt_native/frozen_field.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_chebtt_native/checkpoints/current.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_chebtt_native/checkpoints/committed_000069.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_chebtt_native/checkpoints/committed_000000.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full source SHA v38_ftt_reconstruct",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "actual stage complete v38_ftt_reconstruct",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_reconstruct_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_reconstruct_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_reconstruct_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_reconstruct_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_reconstruct_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_reconstruct/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_reconstruct/reconstruction.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_reconstruct/FTTNN_R8_NATIVE_EUC.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_reconstruct/CHEB_TT_R8_NATIVE_EUC.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full source SHA v38_ftt_compare",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "actual stage complete v38_ftt_compare",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_compare_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_compare_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_compare_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_compare_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_compare_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_compare/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_compare/verifier_result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_compare/saved_checker.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_compare/complete_FE_field_samples_q15.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full source SHA v38_fttnn_reference_fit",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "actual stage complete v38_fttnn_reference_fit",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_fttnn_reference_fit_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_fttnn_reference_fit_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_fttnn_reference_fit_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_fttnn_reference_fit_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_fttnn_reference_fit_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_fttnn_reference_fit/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_fttnn_reference_fit/checkpoint_index.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_fttnn_reference_fit/history.jsonl",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_fttnn_reference_fit/frozen_field.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_fttnn_reference_fit/checkpoints/current.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_fttnn_reference_fit/checkpoints/committed_000041.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_fttnn_reference_fit/checkpoints/committed_000000.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full source SHA v38_chebtt_reference_fit",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "actual stage complete v38_chebtt_reference_fit",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_chebtt_reference_fit_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_chebtt_reference_fit_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_chebtt_reference_fit_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_chebtt_reference_fit_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_chebtt_reference_fit_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_chebtt_reference_fit/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_chebtt_reference_fit/checkpoint_index.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_chebtt_reference_fit/history.jsonl",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_chebtt_reference_fit/frozen_field.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_chebtt_reference_fit/checkpoints/current.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_chebtt_reference_fit/checkpoints/committed_000034.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_chebtt_reference_fit/checkpoints/committed_000000.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full source SHA v38_ftt_fit_compare",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "actual stage complete v38_ftt_fit_compare",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_fit_compare_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_fit_compare_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_fit_compare_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_fit_compare_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages tmp/task42extra/v38/durable/v38_ftt_fit_compare_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/reconstruction.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/verifier_result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/saved_checker.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/reconstruct_abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/compare_abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/complete_FE_field_samples_q15.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/FTTNN_R8_FIT_G.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same file identity across stages benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/CHEB_TT_R8_FIT_G.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_checks_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_checks_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_checks_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_checks_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_checks_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_checks/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_fttnn_native_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_fttnn_native_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_fttnn_native_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_fttnn_native_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_fttnn_native_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_fttnn_native/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_fttnn_native/checkpoint_index.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_fttnn_native/history.jsonl",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_fttnn_native/frozen_field.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_fttnn_native/checkpoints/current.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_fttnn_native/checkpoints/committed_000047.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_fttnn_native/checkpoints/committed_000000.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_chebtt_native_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_chebtt_native_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_chebtt_native_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_chebtt_native_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_chebtt_native_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_chebtt_native/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_chebtt_native/checkpoint_index.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_chebtt_native/history.jsonl",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_chebtt_native/frozen_field.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_chebtt_native/checkpoints/current.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_chebtt_native/checkpoints/committed_000069.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_chebtt_native/checkpoints/committed_000000.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_reconstruct_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_reconstruct_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_reconstruct_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_reconstruct_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_reconstruct_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_reconstruct/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_reconstruct/reconstruction.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_reconstruct/FTTNN_R8_NATIVE_EUC.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_reconstruct/CHEB_TT_R8_NATIVE_EUC.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_compare_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_compare_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_compare_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_compare_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_compare_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_compare/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_compare/verifier_result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_compare/saved_checker.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_compare/complete_FE_field_samples_q15.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_fttnn_reference_fit_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_fttnn_reference_fit_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_fttnn_reference_fit_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_fttnn_reference_fit_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_fttnn_reference_fit_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_fttnn_reference_fit/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_fttnn_reference_fit/checkpoint_index.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_fttnn_reference_fit/history.jsonl",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_fttnn_reference_fit/frozen_field.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_fttnn_reference_fit/checkpoints/current.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_fttnn_reference_fit/checkpoints/committed_000041.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_fttnn_reference_fit/checkpoints/committed_000000.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_chebtt_reference_fit_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_chebtt_reference_fit_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_chebtt_reference_fit_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_chebtt_reference_fit_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_chebtt_reference_fit_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_chebtt_reference_fit/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_chebtt_reference_fit/checkpoint_index.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_chebtt_reference_fit/history.jsonl",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_chebtt_reference_fit/frozen_field.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_chebtt_reference_fit/checkpoints/current.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_chebtt_reference_fit/checkpoints/committed_000034.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_chebtt_reference_fit/checkpoints/committed_000000.pt",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_fit_compare_attempt1/input_original.dat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_fit_compare_attempt1/resolved_config.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_fit_compare_attempt1/run_manifest.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_fit_compare_attempt1/run_summary.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file tmp/task42extra/v38/durable/v38_ftt_fit_compare_attempt1/abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/reconstruction.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/verifier_result.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/saved_checker.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/reconstruct_abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/compare_abi.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/complete_FE_field_samples_q15.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/FTTNN_R8_FIT_G.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bound actual file benchmarks/artifacts/task42extra/v38/v38_ftt_fit_compare/CHEB_TT_R8_FIT_G.npz",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "both actual and producer scored",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "reference new solves zero",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "all actual numerical gates fail",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "32 full field/sample/channel entries FTTNN_R8_NATIVE_EUC",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "original raw relative numerators FTTNN_R8_NATIVE_EUC",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "native label isolation FTTNN_R8_NATIVE_EUC",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "32 full field/sample/channel entries CHEB_TT_R8_NATIVE_EUC",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "original raw relative numerators CHEB_TT_R8_NATIVE_EUC",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "native label isolation CHEB_TT_R8_NATIVE_EUC",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "32 full field/sample/channel entries FTTNN_R8_NATIVE_EUC_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "original raw relative numerators FTTNN_R8_NATIVE_EUC_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "native label isolation FTTNN_R8_NATIVE_EUC_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "32 full field/sample/channel entries CHEB_TT_R8_NATIVE_EUC_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "original raw relative numerators CHEB_TT_R8_NATIVE_EUC_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "native label isolation CHEB_TT_R8_NATIVE_EUC_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "32 full field/sample/channel entries FTTNN_R8_FIT_G",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "original raw relative numerators FTTNN_R8_FIT_G",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "fit purpose firewall FTTNN_R8_FIT_G",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "32 full field/sample/channel entries CHEB_TT_R8_FIT_G",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "original raw relative numerators CHEB_TT_R8_FIT_G",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "fit purpose firewall CHEB_TT_R8_FIT_G",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "32 full field/sample/channel entries FTTNN_R8_FIT_G_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "original raw relative numerators FTTNN_R8_FIT_G_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "fit purpose firewall FTTNN_R8_FIT_G_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "32 full field/sample/channel entries CHEB_TT_R8_FIT_G_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "original raw relative numerators CHEB_TT_R8_FIT_G_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "fit purpose firewall CHEB_TT_R8_FIT_G_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "five complete 40 mode vectors complex_channels_native_v38.csv",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full mode ordering REFERENCE",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full mode ordering FTTNN_R8_NATIVE_EUC",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_NATIVE_EUC/total",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_NATIVE_EUC/scattered",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_NATIVE_EUC/outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_NATIVE_EUC/boundary_outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power FTTNN_R8_NATIVE_EUC/top",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power FTTNN_R8_NATIVE_EUC/bottom",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV maximum per-mode difference FTTNN_R8_NATIVE_EUC",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full mode ordering FTTNN_R8_NATIVE_EUC_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_NATIVE_EUC_PRODUCER/total",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_NATIVE_EUC_PRODUCER/scattered",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_NATIVE_EUC_PRODUCER/outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_NATIVE_EUC_PRODUCER/boundary_outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power FTTNN_R8_NATIVE_EUC_PRODUCER/top",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power FTTNN_R8_NATIVE_EUC_PRODUCER/bottom",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV maximum per-mode difference FTTNN_R8_NATIVE_EUC_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full mode ordering CHEB_TT_R8_NATIVE_EUC",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_NATIVE_EUC/total",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_NATIVE_EUC/scattered",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_NATIVE_EUC/outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_NATIVE_EUC/boundary_outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power CHEB_TT_R8_NATIVE_EUC/top",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power CHEB_TT_R8_NATIVE_EUC/bottom",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV maximum per-mode difference CHEB_TT_R8_NATIVE_EUC",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full mode ordering CHEB_TT_R8_NATIVE_EUC_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_NATIVE_EUC_PRODUCER/total",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_NATIVE_EUC_PRODUCER/scattered",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_NATIVE_EUC_PRODUCER/outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_NATIVE_EUC_PRODUCER/boundary_outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power CHEB_TT_R8_NATIVE_EUC_PRODUCER/top",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power CHEB_TT_R8_NATIVE_EUC_PRODUCER/bottom",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV maximum per-mode difference CHEB_TT_R8_NATIVE_EUC_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "five complete 40 mode vectors complex_channels_fit_v38.csv",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full mode ordering REFERENCE",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full mode ordering FTTNN_R8_FIT_G",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_FIT_G/total",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_FIT_G/scattered",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_FIT_G/outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_FIT_G/boundary_outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power FTTNN_R8_FIT_G/top",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power FTTNN_R8_FIT_G/bottom",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV maximum per-mode difference FTTNN_R8_FIT_G",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full mode ordering FTTNN_R8_FIT_G_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_FIT_G_PRODUCER/total",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_FIT_G_PRODUCER/scattered",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_FIT_G_PRODUCER/outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm FTTNN_R8_FIT_G_PRODUCER/boundary_outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power FTTNN_R8_FIT_G_PRODUCER/top",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power FTTNN_R8_FIT_G_PRODUCER/bottom",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV maximum per-mode difference FTTNN_R8_FIT_G_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full mode ordering CHEB_TT_R8_FIT_G",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_FIT_G/total",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_FIT_G/scattered",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_FIT_G/outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_FIT_G/boundary_outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power CHEB_TT_R8_FIT_G/top",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power CHEB_TT_R8_FIT_G/bottom",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV maximum per-mode difference CHEB_TT_R8_FIT_G",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "full mode ordering CHEB_TT_R8_FIT_G_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_FIT_G_PRODUCER/total",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_FIT_G_PRODUCER/scattered",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_FIT_G_PRODUCER/outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV independently reproduced complex norm CHEB_TT_R8_FIT_G_PRODUCER/boundary_outgoing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power CHEB_TT_R8_FIT_G_PRODUCER/top",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV outgoing original power CHEB_TT_R8_FIT_G_PRODUCER/bottom",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "CSV maximum per-mode difference CHEB_TT_R8_FIT_G_PRODUCER",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "zero inverses and factors v38_fttnn_native",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bounded actual calls v38_fttnn_native",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "nonnegative exclusive timing remainder v38_fttnn_native",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "did not reach LBFGS boundary v38_fttnn_native",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "zero inverses and factors v38_chebtt_native",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bounded actual calls v38_chebtt_native",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "nonnegative exclusive timing remainder v38_chebtt_native",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "did not reach LBFGS boundary v38_chebtt_native",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "zero inverses and factors v38_fttnn_reference_fit",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bounded actual calls v38_fttnn_reference_fit",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "nonnegative exclusive timing remainder v38_fttnn_reference_fit",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "did not reach LBFGS boundary v38_fttnn_reference_fit",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "zero inverses and factors v38_chebtt_reference_fit",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "bounded actual calls v38_chebtt_reference_fit",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "nonnegative exclusive timing remainder v38_chebtt_reference_fit",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "did not reach LBFGS boundary v38_chebtt_reference_fit",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "cold cost unknown honest",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no unqualified zero point seven run",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "no zero point seven stage files",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "unchanged original authority",
+      "passed": true,
+      "details": null
+    }
+  ],
+  "bound_actual_files": 86,
+  "CSV_rows": {
+    "complex_channels_native_v38.csv": 200,
+    "complex_channels_fit_v38.csv": 200
+  },
+  "physical_checks_reused_from_independent_completed_processes": true,
+  "model_FE_A_G_action_count": 0,
+  "legacy_large_array_reload_count": 0,
+  "elapsed_continuous_s": 14872.418398055015
+}

@@ -1,0 +1,18 @@
+{
+  "schema": "task42extra.v38.decisions.v1",
+  "FTT_interface": true,
+  "CHEB_interface": true,
+  "native_FTT_joint": false,
+  "native_CHEB_joint": false,
+  "numerical_state": "NUMERICAL_GATE_NOT_REACHED",
+  "research_signal": false,
+  "representation_fit_executed": true,
+  "reduced_0p7": "NOT_RUN_UNLABELLED_FTT_M5_JOINT_FAIL",
+  "reduced_0p7_inputs_registered": false,
+  "production_initialization_allowed": false,
+  "NN_resource_gain": "NO_VERIFIED_NN_INCREMENT",
+  "full_target": "FULL_TARGET_NOT_QUALIFIED",
+  "solver": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "next_production_candidate": "NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE",
+  "additional_rank_seed_width_or_training_authorized": false
+}

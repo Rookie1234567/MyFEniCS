@@ -1,0 +1,67 @@
+{
+  "schema": "task42extra.v38.repairs.v1",
+  "rows": [
+    {
+      "stage": "light_tests01",
+      "failure": "sandbox process view could not independently establish neighbor admission",
+      "hypothesis": "native task supervision needs host process visibility",
+      "change": "user-authorized native execution; controlled SIGTERM to the own identified guard only",
+      "test": "original watchdog reported USER_CONTROLLED_STOP, descendants_cleared=true, swap0; native light_tests02 passed 8 tests",
+      "resume": "light_tests02",
+      "healthy_producer_repeated": false
+    },
+    {
+      "stage": "light_tests03",
+      "failure": "ML environment has no ruff module after all 10 tests passed",
+      "hypothesis": "lint tool is already installed in task pure environment",
+      "change": "use existing pure activation for Ruff; ML activation for Torch tests",
+      "test": "pure Ruff 0.12.12 available; final affected-source qualification in light_tests04",
+      "resume": "light_tests04",
+      "environment_install_count": 0
+    },
+    {
+      "detected_monotonic": 1517034.143185209,
+      "root_cause": "ftt_fit_compare usage metadata inferred only from metric_kind, which is None for verifier role",
+      "evidence": "src/runners/neural_wave_campaign.py labelled=spec.get(metric_kind)==reference_fit_G; fit_compare schema has metric_kind None",
+      "affected": "future fit comparison manifest/main result metadata; current native route unaffected; independent verifier already labels fit correctly",
+      "hypothesis": "explicit role-aware usage flags needed",
+      "planned_change": "repair after active route has exited; targeted actual flag helper test; retain healthy qualification and producer",
+      "status": "IDENTIFIED_PENDING_SAFE_BOUNDARY"
+    },
+    {
+      "time_monotonic": 1519295.846673158,
+      "failure": "FTTNN first route result CALL_LIMIT despite46of1000; final loss-gradient elapsed64.96758945705369 begins with prior checkpoint remaining39.32641789899208",
+      "hypothesis": "start-only deadline guard omitted in-flight completion budget; stage label inferred incorrectly",
+      "change": "prospective closure plus complete save guard; explicit TIME_LIMIT; permanent fit-role usage helper; strict checkpoint identity and producer pairing",
+      "test": "17 actual small tests pass; Ruff/compile pass; original qualification mapping/core math unchanged; healthy FTTNN producer preserved",
+      "retry": "next authorized independent control route; no FTTNN prefix replay",
+      "original_stop_record_retained": true,
+      "compute_soft_cutoff_overshoot_lower_bound_seconds": 25.641171558061615,
+      "old_hard_cap_pass": true
+    },
+    {
+      "failure": "fit saved_checker inherited features_reference_exposed=false",
+      "hypothesis": "legacy checker flags were not all overridden for new reference fit",
+      "change": "explicit purpose override, independent sparse G / saved FE energy pairing, per-axis post-freeze diagnostics",
+      "test": "5 affected tests plus Ruff/compile pass, tests09 tree308449280B swap0",
+      "resume_source": "a319b9b0cc09a04989111cb4494380d9912d0a5e",
+      "healthy_producer_replayed": false
+    },
+    {
+      "stage": "publication",
+      "failure": "new derived CSV default CRLF rejected by git cached whitespace check",
+      "hypothesis": "csv.writer default record terminator is CRLF",
+      "change": "LF line termination only; all parsed fields exactly unchanged",
+      "test": "before/after parsed 400 rows bitwise-string equivalent; subsequent same norm/power metadata test",
+      "resume": "same publication commit; no numerical replay",
+      "monotonic": 1528279.686422976
+    }
+  ],
+  "no_healthy_training_reference_or_operator_replayed": true,
+  "pending_flag_discovery_resolution": {
+    "old_discovery_row_retained": true,
+    "resolved_source": "a319b9b0cc09a04989111cb4494380d9912d0a5e",
+    "actual_independent_fit_reconstruct_FE_and_checker": "completed with all fitted purpose flags correct",
+    "healthy_training_replayed": false
+  }
+}

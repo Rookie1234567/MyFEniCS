@@ -1,0 +1,161 @@
+{
+  "schema": "task42extra.v38.selective.v1",
+  "authority": "670a33398dfa9413c275772796611e085ef17c35",
+  "numeric_implementation_head": "a319b9b0cc09a04989111cb4494380d9912d0a5e",
+  "groups": {
+    "production numerical/core": [],
+    "research-only": [
+      "src/solvers/ftt_field.py",
+      "src/solvers/ftt_moments.py",
+      "src/solvers/ftt_optimization.py",
+      "src/solvers/ftt_qualification.py"
+    ],
+    "reusable runner/watchdog": [
+      "src/io/ftt_campaign.py",
+      "src/io/neural_wave_campaign.py",
+      "src/runners/block_wave_admission.py",
+      "src/runners/ftt_worker.py",
+      "src/runners/neural_wave_campaign.py",
+      "src/runners/neural_wave_dependencies.py"
+    ],
+    "checker/benchmark": [
+      "src/postprocessing/ftt_verification.py",
+      "src/test/test_ftt_ml.py"
+    ],
+    "compact evidence/docs": [
+      "input/task042extra_feinn_5nm/design_v38.json",
+      "input/task042extra_feinn_5nm/v38_chebtt_native.dat",
+      "input/task042extra_feinn_5nm/v38_chebtt_reference_fit.dat",
+      "input/task042extra_feinn_5nm/v38_ftt_checks.dat",
+      "input/task042extra_feinn_5nm/v38_ftt_compare.dat",
+      "input/task042extra_feinn_5nm/v38_ftt_fit_compare.dat",
+      "input/task042extra_feinn_5nm/v38_ftt_reconstruct.dat",
+      "input/task042extra_feinn_5nm/v38_fttnn_native.dat",
+      "input/task042extra_feinn_5nm/v38_fttnn_reference_fit.dat"
+    ],
+    "do-not-merge": [
+      "benchmarks/artifacts/task42extra/v38",
+      "tmp/task42extra/v38",
+      "reference-fitted checkpoints and fields",
+      "unqualified FTT solver defaults"
+    ]
+  },
+  "source_bindings": [
+    {
+      "path": "input/task042extra_feinn_5nm/design_v38.json",
+      "bytes": 4608,
+      "sha256": "d3cff19e78ea032753fa7fac63f5a2c06ead026e6768a11ab93be2f917c5b43a"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v38_chebtt_native.dat",
+      "bytes": 144,
+      "sha256": "d28fb587ba6c215a34fd2d6c08eeb9962debba8bb58c269bf1fd38f44a44624a"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v38_chebtt_reference_fit.dat",
+      "bytes": 151,
+      "sha256": "2b240bc4f5c1e797787a2cacd264ee76f30ed45ee99cd1c335c3aae30651c2ec"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v38_ftt_checks.dat",
+      "bytes": 141,
+      "sha256": "1691bc9797bbf6882bb348c88d535c9ae71365ebd9b990172d0f569e26ec260c"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v38_ftt_compare.dat",
+      "bytes": 142,
+      "sha256": "a9fed94e404cafd20bb466526b9a70e9e7aa74164453b20f0a3ff1e913e4bd2b"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v38_ftt_fit_compare.dat",
+      "bytes": 146,
+      "sha256": "5a449ab638cc907a5da035dc8076ccedaf8f9ebee460b94c8a339b25d4b2e49d"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v38_ftt_reconstruct.dat",
+      "bytes": 146,
+      "sha256": "5704383bad9eaf37dec3b5946d1e821e2e211a4b6eb1cd9054e2e5e65d5f2195"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v38_fttnn_native.dat",
+      "bytes": 143,
+      "sha256": "a0ca566a5ae15f271e192a5c45505d61a0239c189ad0dd27399d56a83e0b3a4e"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v38_fttnn_reference_fit.dat",
+      "bytes": 150,
+      "sha256": "7c96aaea8b6e470e555c50fe8674256eebd64a7991f6ce3a366fc1a8540fffb9"
+    },
+    {
+      "path": "src/io/ftt_campaign.py",
+      "bytes": 3342,
+      "sha256": "df67e7a79c3ce424260c6f18b526555e2ccd1042d23b145d7762188cefb34299"
+    },
+    {
+      "path": "src/io/neural_wave_campaign.py",
+      "bytes": 7991,
+      "sha256": "af2a9f6d13dc42c69fad720874aa9adfd6ae6f371e619f0bcd02cad2859ea289"
+    },
+    {
+      "path": "src/postprocessing/ftt_verification.py",
+      "bytes": 14956,
+      "sha256": "93c403702e78f6234bccf797773d3228b6e1a7ebe5d702b6211afc1b30c8a0c4"
+    },
+    {
+      "path": "src/runners/block_wave_admission.py",
+      "bytes": 4579,
+      "sha256": "31a991bab697a27f75e3aab84a0db6b6cff68f4323efb6b1fd01bf46fe21600b"
+    },
+    {
+      "path": "src/runners/ftt_worker.py",
+      "bytes": 11768,
+      "sha256": "314f0b57d100155a213bf14fc87bd5f9398fed028c44ef645fa0e1e2a5a81590"
+    },
+    {
+      "path": "src/runners/neural_wave_campaign.py",
+      "bytes": 28395,
+      "sha256": "d01fede14cfc94dbb2d9255c8b36c25aab39a8374d360aca8e8ac7db37fd981d"
+    },
+    {
+      "path": "src/runners/neural_wave_dependencies.py",
+      "bytes": 11148,
+      "sha256": "7aef2a5bd76a43e54f93086fc3f372f2b00bca154f47bc7e58328dc8a0aa36ef"
+    },
+    {
+      "path": "src/solvers/ftt_field.py",
+      "bytes": 4395,
+      "sha256": "ce8435c55dc7be3ebd8058db60ff642d7d6b5b3365d4038988a437b16fd3abdd"
+    },
+    {
+      "path": "src/solvers/ftt_moments.py",
+      "bytes": 4546,
+      "sha256": "3b9be26b0981a9f186c7a6775abda181bfc1196fe594bbc4907dace876a529ac"
+    },
+    {
+      "path": "src/solvers/ftt_optimization.py",
+      "bytes": 11548,
+      "sha256": "d5360773aac6b050f840e120dc85ca5bd5ea6874e7ea2e1ac2c035e0f60806b6"
+    },
+    {
+      "path": "src/solvers/ftt_qualification.py",
+      "bytes": 5946,
+      "sha256": "635eab8518a76ab1995814e3dd0eb5d1e76c80f5c060ab041c4a23b5948ade7c"
+    },
+    {
+      "path": "src/test/test_ftt_ml.py",
+      "bytes": 21288,
+      "sha256": "3452f99d4db7cc37ff7c482ea14838bec5278d223d983456ddb86aba9ff983b6"
+    }
+  ],
+  "production_default_changed": false,
+  "production_solver_qualified": false,
+  "merge_approved": false,
+  "suggested_review_order": [
+    "research-only model/microbatch mathematics",
+    "opt-in schema and durable dependency chain",
+    "independent reconstruction and numerical checker",
+    "compact actual results and cost"
+  ],
+  "tests": "records/tests_v38.json",
+  "fresh_M5_evidence": "records/full_numerical_gates_v38.json"
+}

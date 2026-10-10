@@ -1,3 +1,32 @@
+<!-- TASK42EXTRA_V38_CURRENT_BEGIN -->
+# 当前V38：FTTNN与同秩控制的实际神经数值结论
+
+本支只做神经。Review V37 授权的新FTTNN已实际完成两条从零无标签训练、独立新模型q30/q60重建、完整FE compare-only和保存数组checker；M5联合门均FAIL。没有在接口、commit或普通bug处停止。FTTNN以三个小网络的复矩阵连乘生成三维场，避免旧全局波库/重复QR，但仍需完整矩、原A/A*和逐点反传。本次没有同精度神经资源收益。
+
+| measured；原M5/5nm/384hex/p3/31968复FE/40端口 | 无标签FTTNN | 同秩Chebyshev控制 | 原门/解释 |
+|---|---:|---:|---|
+| 实参数 / 实际完整调用 / Adam / L-BFGS | 9072 / 46 / 46 / 0 | 9120 / 68 / 68 / 0 | 每条3600s先到；未达Adam500 |
+| native / augmented | 0.998818668222 / 0.998818668222 | 3.39713275365 / 3.39713275365 | 各1e-6，FAIL |
+| 独立total原残差 | 0.473142162262 | 1.60922776845 | 1e-6，FAIL |
+| 总E / 散射E L2相对差 | 0.685720474906 / 0.999950913962 | 0.685749540923 / 0.999993299439 | 各1e-4；同p3原参考完整分母 |
+| 总H / 散射H、scaled-curl相对差 | 0.683758070006 / 0.999951999695 | 0.68384279279 / 1.00007590129 | 各1e-4，FAIL |
+| R / T / A_balance / A_volume | 0.837465686644 / 0.113250263846 / 0.0492840495103 / 0.463379025542 | 0.837444396846 / 0.113278457882 / 0.0492771452711 / 0.463355617548 | 原残差未过，仅diagnostic |
+| 独立能量闭合 / 最大逐级功率绝对差 | 0.414094976032 / 0.0809182401449 | 0.414078472276 / 0.0809442210956 | 1e-5 / 1e-6，FAIL |
+| 实际模型重建 / MPC / q30-q60作用 | 0 / 0 / 1.86670425752e-15 | 0 / 0 / 8.64289041436e-14 | 1e-10 / 1e-10 / 1e-8，PASS |
+| 本阶段attempt秒 / 同时树RSS采样峰B | 3502.51148525 / 463720448 | 3385.22676557 / 463044608 | loaded-packet实测；swap0，冷N=1 UNKNOWN |
+| 条件隔离拟合G误差 / 调用 | 0.992359773046 / 40 | 0.924916613637 / 33 | 原零初态；参考暴露、非PDE-only；非最优空间oracle |
+| actual / producer联合Gate | FAIL / FAIL | FAIL / FAIL | 不挑有利版本；全部四类40复通道/六点/区域已验 |
+
+[Response V38](../response_v38.md)、[方法/完整结果](fttnn_pilot_v38.md)、[原数值/分母/联合Gate](records/full_numerical_gates_v38.json)、[无标签复通道](records/complex_channels_native_v38.csv)、[隔离拟合复通道](records/complex_channels_fit_v38.csv)、[成本](records/resource_costs_v38.json)、[source/input](records/run_index_v38.json)、[测试](records/tests_v38.json)。
+
+NUMERICAL_GATE_NOT_REACHED / FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED。接口与梯度资格、完整参数真实更新、完整场失败和成本收益分别判定：模型小不等于求解成功。全局Gram因子/Gsolve/Maxwell因子均0；孤立拟合仅G乘法。研究信号未达，0.7nm缩小pilot未准入、未注册、NOT_RUN；不自动新rank/seed/loss/架构或继续训练。
+
+FTTNN首轮旧raw stop_reason错误及训练软截止越界下界25.6411715581s永久保留，总硬3600s、内存和swap门未超；150s收口未合格，120s完整保存窗口没有独立资格记录，因此不追认整条时间协议PASS；硬总时限、内存和零swap与该流程缺口分列。后续最小计时/用途修复没有重放健康训练。全过程冷N=1、项目精确历史累计仍UNKNOWN；旧波库10186.178641493432s不是新FTT必要前缀，但旧费用全部保留。
+
+原50×25×140nm、Si17/120nm、λ0.7完整三维FE、双Floquet/全部内部/完整端口、decimal2e12B整机、ownswap/OOC0、172800s完整冷流程及原精度门仍未达到。M3600较好态、最终退化、D0成本否决/D1未运行及所有负结果/UNKNOWN保持；下方历史全文不改，旧“当前/下一步”不是新授权。旧稠密波库继续关闭，本支不转去W0/W1、全口面、传统PC、存储或主线接入。
+
+<!-- TASK42EXTRA_V38_CURRENT_END -->
+
 <!-- TASK42EXTRA_V37_CURRENT_BEGIN -->
 # 当前V37：数值问题已回答，新机制准入证据不足
 

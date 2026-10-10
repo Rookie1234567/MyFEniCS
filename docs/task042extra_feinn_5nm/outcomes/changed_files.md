@@ -1,3 +1,16 @@
+# V38依赖分组：真实神经试验opt-in，默认求解器不变
+
+| 依赖组 | 本轮变化/证据 | 合入边界 |
+|---|---|---|
+| research-only | ftt_field/moments/optimization/qualification：复三核、完整矩微批VJP、原native或隔离G-fit、事务 | 两模型实算联合FAIL，不作production默认 |
+| reusable runner/watchdog | schema8、8个one-run、ftt_worker薄接线、原durable身份/时钟/资源角色复用 | 只管理本任务；旧普通默认/其他工作树不改 |
+| checker/benchmark | 独立FTT参数重建q30/q60、FE compare-only、G/原FE积分恒等式、22个小fixture | 完整原物理门不降；fit永远参考暴露/非official |
+| compact evidence/docs | design、回执/专题、四类40复通道、原Gate/成本/source/测试/修复 | 历史与UNKNOWN保留，大数组ignored |
+| production numerical/core | 无新合格生产候选 | NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE；无merge许可 |
+| do-not-merge | 原大模型/场/轨迹/环境与参考拟合权重 | 禁生产初始化、禁将监督权重反馈无标签或0.7nm |
+
+[逐文件source与审阅顺序](records/selective_merge_manifest_v38.json)、[测试](records/tests_v38.json)、[新M5完整Gate](records/full_numerical_gates_v38.json)。下方历史全文保留。
+
 # 当前V36：同目标分块审计，普通production默认不变
 
 |依赖组|变化/资格|合入边界|

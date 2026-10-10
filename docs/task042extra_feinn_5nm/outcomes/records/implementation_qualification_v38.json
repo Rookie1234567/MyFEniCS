@@ -1,0 +1,351 @@
+{
+  "schema": "task42extra.v38.qualification.v1",
+  "qualification_source": "dedaec1b347d85a28bf8b608cbf677d560b86a0d",
+  "full_M5_qualification": {
+    "implementation_qualified": true,
+    "models": {
+      "fttnn": {
+        "model_kind": "fttnn",
+        "real_parameters": 9072,
+        "zero_scattered_exact": true,
+        "complete_closure_probe_count": 2,
+        "complete_closure_seconds": 32.48739485209808,
+        "old_complete_mapping": 1.4909050069888745e-15,
+        "real_adjoint_relative": 2.240438824521991e-15,
+        "batch_point_microbatch": {
+          "coefficients": 0.0,
+          "gradient": 4.2774187027678576e-15,
+          "loss": 0.0,
+          "Adam_update": 1.1653648828166353e-17
+        },
+        "finite_differences": [
+          {
+            "direction": 0,
+            "analytic": -4.714668561422107,
+            "observations": [
+              {
+                "h": 0.0001,
+                "observed": -4.714668569718583,
+                "relative": 1.7597157226834214e-09
+              },
+              {
+                "h": 1e-05,
+                "observed": -4.71466856168945,
+                "relative": 5.670461819397482e-11
+              },
+              {
+                "h": 1e-06,
+                "observed": -4.714668566663249,
+                "relative": 1.111667249293632e-09
+              }
+            ]
+          },
+          {
+            "direction": 1,
+            "analytic": -0.9419476929769139,
+            "observations": [
+              {
+                "h": 0.0001,
+                "observed": -0.9419477176209057,
+                "relative": 2.6162802796723906e-08
+              },
+              {
+                "h": 1e-05,
+                "observed": -0.9419476906913359,
+                "relative": 2.426438407553998e-09
+              },
+              {
+                "h": 1e-06,
+                "observed": -0.9419476931782356,
+                "relative": 2.1372909296092107e-10
+              }
+            ]
+          },
+          {
+            "direction": 2,
+            "analytic": -16.145048620250307,
+            "observations": [
+              {
+                "h": 0.0001,
+                "observed": -16.14504861731092,
+                "relative": 1.8206122937655957e-10
+              },
+              {
+                "h": 1e-05,
+                "observed": -16.145048618199098,
+                "relative": 1.2704879549722726e-10
+              },
+              {
+                "h": 1e-06,
+                "observed": -16.145048601146073,
+                "relative": 1.1832875259804075e-09
+              }
+            ]
+          }
+        ],
+        "quadrature": {
+          "coefficients": 4.3157541164409854e-15,
+          "original_action_load_relative": 1.2035802728469186e-13
+        },
+        "parameter_gradient_rms": 18.949591208767902,
+        "mapping_costs": {
+          "coordinates": 1.110836781328544,
+          "network": 138.68124668090604,
+          "moments": 4.900141871534288,
+          "point_adjoint": 1.087166645564139,
+          "VJP": 48.48099240101874
+        },
+        "core_costs": {
+          "core_evaluation": 164.22815499873832,
+          "contraction": 71.95187175809406
+        },
+        "counts": {
+          "forward": 20,
+          "VJP": 2,
+          "point_forward": 92160,
+          "point_backward": 9216
+        },
+        "complete_edge_face_interior": true,
+        "unique_owner": true,
+        "full_mpc_expansion": true,
+        "nonunit_constraint_coefficients": 1152,
+        "qualified": true
+      },
+      "chebtt": {
+        "model_kind": "chebtt",
+        "real_parameters": 9120,
+        "zero_scattered_exact": true,
+        "complete_closure_probe_count": 2,
+        "complete_closure_seconds": 37.390554705867544,
+        "old_complete_mapping": 1.4997595862998554e-15,
+        "real_adjoint_relative": 2.4948626700188127e-15,
+        "batch_point_microbatch": {
+          "coefficients": 0.0,
+          "gradient": 4.631192119381876e-15,
+          "loss": 0.0,
+          "Adam_update": 9.442109307287727e-18
+        },
+        "finite_differences": [
+          {
+            "direction": 0,
+            "analytic": -609659.8712910182,
+            "observations": [
+              {
+                "h": 0.0001,
+                "observed": -609659.8712913692,
+                "relative": 5.757180549950679e-13
+              },
+              {
+                "h": 1e-05,
+                "observed": -609659.8714590073,
+                "relative": 2.755455353660723e-10
+              },
+              {
+                "h": 1e-06,
+                "observed": -609659.8720178008,
+                "relative": 1.192111593069663e-09
+              }
+            ]
+          },
+          {
+            "direction": 1,
+            "analytic": -338517.0350754549,
+            "observations": [
+              {
+                "h": 0.0001,
+                "observed": -338517.0348826796,
+                "relative": 5.694701089166821e-10
+              },
+              {
+                "h": 1e-05,
+                "observed": -338517.0350782573,
+                "relative": 8.27848392933678e-12
+              },
+              {
+                "h": 1e-06,
+                "observed": -338517.0307010412,
+                "relative": 1.2922285260719658e-08
+              }
+            ]
+          },
+          {
+            "direction": 2,
+            "analytic": 63916.927526564425,
+            "observations": [
+              {
+                "h": 0.0001,
+                "observed": 63916.927352547646,
+                "relative": 2.7225460576698724e-09
+              },
+              {
+                "h": 1e-05,
+                "observed": 63916.92776232957,
+                "relative": 3.6886182678453686e-09
+              },
+              {
+                "h": 1e-06,
+                "observed": 63916.92440956831,
+                "relative": 4.87663633948187e-08
+              }
+            ]
+          }
+        ],
+        "quadrature": {
+          "coefficients": 4.2748519710230225e-15,
+          "original_action_load_relative": 8.030360318526774e-11
+        },
+        "parameter_gradient_rms": 404810.38699070085,
+        "mapping_costs": {
+          "coordinates": 1.5573842010926455,
+          "network": 216.25311787216924,
+          "moments": 7.794035990256816,
+          "point_adjoint": 1.2943076950032264,
+          "VJP": 50.389874887187034
+        },
+        "core_costs": {
+          "core_evaluation": 294.12705496069975,
+          "contraction": 72.39907531137578
+        },
+        "counts": {
+          "forward": 20,
+          "VJP": 2,
+          "point_forward": 92160,
+          "point_backward": 9216
+        },
+        "complete_edge_face_interior": true,
+        "unique_owner": true,
+        "full_mpc_expansion": true,
+        "nonunit_constraint_coefficients": 1152,
+        "qualified": true
+      }
+    },
+    "Gsolve_count": 0,
+    "global_Gram_factor_count": 0,
+    "global_Maxwell_factor_count": 0,
+    "reference_used_for_training": false,
+    "features_reference_exposed": false,
+    "pde_only_solve": false,
+    "production_initialization_allowed": false,
+    "official_candidate_results": false,
+    "pde_only_solver_qualified": false,
+    "source_sha": "dedaec1b347d85a28bf8b608cbf677d560b86a0d",
+    "input_sha256": "1691bc9797bbf6882bb348c88d535c9ae71365ebd9b990172d0f569e26ec260c",
+    "design_sha256": "d3cff19e78ea032753fa7fac63f5a2c06ead026e6768a11ab93be2f917c5b43a",
+    "worker_elapsed_seconds": 877.6391085810028,
+    "actual_route_elapsed_seconds": 942.0520514659584,
+    "full_original_target_qualified": false
+  },
+  "junit": [
+    {
+      "file": {
+        "path": "tmp/task42extra/v38/ftt_targeted02.xml",
+        "sha256": "af6d6190b9035f51c19334f35a7311c736552039ad521451206d2327921c0adf",
+        "bytes": 1109
+      },
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "8",
+      "time": "2.651",
+      "timestamp": "2026-10-10T07:36:21.882552",
+      "hostname": "fenics-ws01"
+    },
+    {
+      "file": {
+        "path": "tmp/task42extra/v38/ftt_targeted03.xml",
+        "sha256": "644a87eb4427b2a77758d0fcab06b8634947f5d6f088502e713d66f176792125",
+        "bytes": 1336
+      },
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "10",
+      "time": "2.782",
+      "timestamp": "2026-10-10T07:39:12.581094",
+      "hostname": "fenics-ws01"
+    },
+    {
+      "file": {
+        "path": "tmp/task42extra/v38/ftt_targeted05.xml",
+        "sha256": "35144141a38f7ae816b38c472e3f2bbe22fc6c8872f0a8098869b1807fd49056",
+        "bytes": 1336
+      },
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "10",
+      "time": "2.809",
+      "timestamp": "2026-10-10T07:42:12.907968",
+      "hostname": "fenics-ws01"
+    },
+    {
+      "file": {
+        "path": "tmp/task42extra/v38/ftt_targeted06.xml",
+        "sha256": "c8f4ebe5aa0e56127162c0660f7fa7cf8c686de4c106eb25d20793782e494cf5",
+        "bytes": 1849
+      },
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "14",
+      "time": "3.019",
+      "timestamp": "2026-10-10T08:00:04.178911",
+      "hostname": "fenics-ws01"
+    },
+    {
+      "file": {
+        "path": "tmp/task42extra/v38/ftt_targeted07.xml",
+        "sha256": "56836466d84e3d15c006f18c6bee64efce1b91beeec25556fda3efb4628066c9",
+        "bytes": 2254
+      },
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "17",
+      "time": "3.258",
+      "timestamp": "2026-10-10T09:03:36.475646",
+      "hostname": "fenics-ws01"
+    },
+    {
+      "file": {
+        "path": "tmp/task42extra/v38/ftt_targeted08.xml",
+        "sha256": "5a72c16a468b4150b413ea62f32d92336f5b0e0ad0d6e09456280d57d4b0f22c",
+        "bytes": 626
+      },
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "3",
+      "time": "3.826",
+      "timestamp": "2026-10-10T09:06:43.055141",
+      "hostname": "fenics-ws01"
+    },
+    {
+      "file": {
+        "path": "tmp/task42extra/v38/ftt_targeted09.xml",
+        "sha256": "5ea0461d3a570c39854f754a49e0c854be4659dc5cc1210846983880dea84bb9",
+        "bytes": 849
+      },
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "5",
+      "time": "1.531",
+      "timestamp": "2026-10-10T10:06:35.983971",
+      "hostname": "fenics-ws01"
+    }
+  ],
+  "newest_affected_tests": "ftt_targeted09.xml",
+  "local_tests_only_no_CI_claim": true,
+  "no_full_pytest": true,
+  "actual_M5_y_Floquet_phase": 1.0,
+  "two_nonunit_seams_are_additional_synthetic_witnesses": true,
+  "expensive_prior_Gates_reused_by_unchanged_numerical_file_hashes": true
+}
