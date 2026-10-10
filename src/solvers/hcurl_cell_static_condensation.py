@@ -216,6 +216,8 @@ def build_explicit_cell_static_condensation(
     owned_cell_interiors: Iterable[Iterable[int] | np.ndarray],
     *,
     cell_processor=None,
+    preallocation_extra_by_original_row=None,
+    stage_callback=None,
 ) -> CellStaticCondensationSystem:
     """Form ``A_tt - sum(A_ti A_ii^-1 A_it)`` and its condensed RHS.
 
@@ -235,12 +237,22 @@ def build_explicit_cell_static_condensation(
     interior_rows = full_rows - trace_rows
     if interior_rows <= 0 or trace_rows <= 0:
         raise ValueError("static condensation requires both interior and trace rows")
+    def progress(event, **values):
+        if stage_callback is not None:
+            stage_callback(event, **values)
+    progress('exact_trace_numbering_complete', trace_rows=trace_rows)
+    extra = preallocation_extra_by_original_row
+    if extra is not None:
+        extra = np.asarray(extra, dtype=PETSc.IntType)
+        if comm.size != 1 or extra.shape != (full_rows,) or np.any(extra < 0):
+            raise ValueError('serial exact Schur preallocation row inventory')
 
     trace_is = PETSc.IS().createGeneral(owned_trace, comm=A.getComm())
     try:
         trace_submatrix = A.createSubMatrix(trace_is, trace_is)
     finally:
         trace_is.destroy()
+    progress('exact_trace_submatrix_created')
     # MatAXPY/new-pattern insertion into a parallel submatrix is unreliable in
     # the qualified PETSc 3.19 stack.  Reinsert the trace block into a fresh
     # AIJ so PETSc owns a canonical off-diagonal map before Schur fill is added.
@@ -256,6 +268,10 @@ def build_explicit_cell_static_condensation(
         local_row = trace_row - trace_row_start
         diagonal_nnz[local_row] = int(np.count_nonzero(diagonal))
         off_diagonal_nnz[local_row] = int(len(trace_columns) - diagonal_nnz[local_row])
+        if extra is not None:
+            diagonal_nnz[local_row] += extra[owned_trace[local_row]]
+    extra_entries = 0 if extra is None else int(extra[owned_trace].sum())
+    progress('exact_trace_capacity_scanned', reserved_extra_entries=extra_entries)
     condensed = PETSc.Mat().createAIJ(
         size=trace_submatrix.getSizes(),
         nnz=(diagonal_nnz, off_diagonal_nnz),
@@ -265,6 +281,7 @@ def build_explicit_cell_static_condensation(
         PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR,
         False,
     )
+    progress('exact_trace_AIJ_allocated')
     for trace_row in range(trace_row_start, trace_row_end):
         trace_columns, trace_values = trace_submatrix.getRow(trace_row)
         if len(trace_columns):
@@ -273,6 +290,8 @@ def build_explicit_cell_static_condensation(
                 _idx(trace_columns),
                 np.asarray(trace_values, dtype=PETSc.ScalarType),
             )
+        if (trace_row-trace_row_start+1) % 65536 == 0:
+            progress('exact_trace_block_copy_progress', rows_copied=trace_row-trace_row_start+1)
     if local_trace_rows:
         del trace_columns, trace_values, _trace_values
     trace_submatrix.destroy()
@@ -283,6 +302,7 @@ def build_explicit_cell_static_condensation(
             b.getValues(owned_trace), dtype=PETSc.ScalarType
         )
     condensed_rhs.assemble()
+    progress('exact_trace_block_copy_committed')
 
     transpose_started = perf_counter()
     # petsc4py 3.19 Mat.transpose() is in-place when no output is supplied.
@@ -293,6 +313,7 @@ def build_explicit_cell_static_condensation(
     transpose_seconds = float(
         comm.allreduce(perf_counter() - transpose_started, op=MPI.MAX)
     )
+    progress('exact_full_transpose_ready', seconds=transpose_seconds)
     local_dense_scalar_entries = 0
     local_max_interior = 0
     local_max_trace_rows = 0
@@ -381,6 +402,8 @@ def build_explicit_cell_static_condensation(
         ),
         "all_cell_dense_factor_cache_retained": False,
         "full_matrix_required_as_input": True,
+        "reserved_extra_entries": extra_entries,
+        "actual_allocated_entries": int(condensed.getInfo()['nz_allocated']),
         "assembly_cost_avoided": False,
         "transpose_seconds": transpose_seconds,
         "local_dense_solve_seconds_max": float(

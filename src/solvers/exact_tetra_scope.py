@@ -3,6 +3,7 @@ import copy
 import hashlib
 import json
 import time
+from datetime import datetime
 from pathlib import Path
 
 from .durable_l5_scope import DurableWindow
@@ -16,16 +17,42 @@ GROUPS={'C5':('PREPARE_C5','C5'),'M5':('M5',)}
 
 
 class ExactWindow(DurableWindow):
+    def consumer_case(self):
+        p=verification_inventory_for('VERIFY_COST')
+        if p is None:raise ValueError('V69 consumer needs explicit frozen inventory')
+        phase=json.loads(p.read_text())['phase']
+        if phase not in ('C5_ONLY','FINAL'):raise ValueError('V69 consumer phase')
+        return 'C5' if phase=='C5_ONLY' else 'M5'
+
+    def begin(self,role,folder,source):
+        case=self.consumer_case() if role=='VERIFY_COST' else 'M5' if role=='M5' else 'C5' if role in GROUPS['C5'] else None
+        super().begin(role,folder,source)
+        from src.runners.task042_shared import write_json
+        book=self.ledger();book['active']['case_group']=case
+        write_json(self.LEDGER_PATH,book)
+
     def case_remaining(self,case=None,*,active=False):
         book=self.ledger();current=book['active']
-        if case is None:case='M5' if current and current['role']=='M5' else 'C5'
+        if case is None:case=current.get('case_group') if current and current.get('case_group') else 'M5' if current and current['role']=='M5' else 'C5'
         roles=GROUPS[case];used=0.
         for row in book['runs']:
-            if row['role'] not in roles:continue
+            if row['role'] not in roles and not (row['role']=='VERIFY_COST' and row.get('case_group')==case):continue
             p=Path(row['folder'])/'run_summary.json'
             used+=json.loads(p.read_text())['launch_wall_seconds'] if p.exists() else row['elapsed_seconds']
         used+=one_run_overhead(self.TMP,book['runs'],roles=roles)
-        if active and current is not None and current['role'] in roles:
+        for p in self.TMP.glob('VERIFY_COST_one_run*/receipt.json'):
+            r=json.loads(p.read_text());entry=json.loads((p.parent/'entry_start.json').read_text())
+            if entry.get('case_group')!=case:continue
+            begin=datetime.fromisoformat(r['start_utc']);end=datetime.fromisoformat(r['end_utc'])
+            matched=[x for x in book['runs'] if x['role']=='VERIFY_COST' and x['source_sha']==r['source_sha']
+                and begin<=datetime.fromisoformat(x['before_clock']['observed_utc'])<=end]
+            if len(matched)>1:raise ValueError('V69 consumer wrapper matching')
+            covered=0.
+            if matched:
+                q=Path(matched[0]['folder'])/'run_summary.json'
+                covered=json.loads(q.read_text())['launch_wall_seconds'] if q.exists() else matched[0]['elapsed_seconds']
+            used+=max(0.,r['elapsed_seconds']-covered)
+        if active and current is not None and (current['role'] in roles or current.get('case_group')==case):
             used+=max(0.,time.monotonic()-current['before_clock']['observed_monotonic'])
         return plan_record()['cumulative_case_seconds'][case]-used
 
@@ -34,6 +61,7 @@ class ExactWindow(DurableWindow):
         quota=plan_record()['case_wall_seconds'].get(role,900)-used
         if role in GROUPS['C5']:quota=min(quota,self.case_remaining('C5'))
         if role=='M5':quota=min(quota,self.case_remaining('M5'))
+        if role=='VERIFY_COST':quota=min(quota,self.case_remaining(self.consumer_case()))
         return min(quota,self.total-self.charged_wall()-180,self.snapshot()['heavy_remaining_seconds']-180)
 
     def require_live(self,*,heavy=True,margin=0):
@@ -41,7 +69,7 @@ class ExactWindow(DurableWindow):
         from .scattering_accuracy_scope import AccuracyWindow
         value=AccuracyWindow.require_live(self,heavy=heavy,margin=margin)
         active=self.ledger()['active']
-        if heavy and active and active['role'] in (*GROUPS['C5'],*GROUPS['M5']) and self.case_remaining(active=True)<=margin:
+        if heavy and active and (active['role'] in (*GROUPS['C5'],*GROUPS['M5']) or active.get('case_group')) and self.case_remaining(active=True)<=margin:
             raise RuntimeError('V69 cumulative case deadline')
         return value
 

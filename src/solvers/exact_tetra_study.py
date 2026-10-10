@@ -13,7 +13,7 @@ from .scattering_anchor import Journal,relative,save_arrays
 from .p6_completion_study import setup_identity
 from .tetra_body_checkpoint import load_checkpoint,file_digest,body_fingerprint
 from .tetra_coefficient_action import CoefficientFullAction
-from .exact_tetra_condensation import tetra_interiors,build_checkpoint,ExactRecovery
+from .exact_tetra_condensation import tetra_interiors,build_checkpoint,ExactRecovery,port_schur_preallocation
 
 
 def prepared_provider(s,folder,journal):
@@ -105,13 +105,26 @@ def make_reduction(s,A,rhs,folder,journal,state,b,oracle,*,path=None):
              mode_sha256=b['digest'],boundary_arrays=b['arrays'],oracle_arrays=oracle['arrays'],
              partition='actual_Basix_entity3_native_to_compact_MPC_unique_owner')
     path=folder/'exact_condensed' if path is None else Path(path)
+    C,D,H=core.boundary_matrices(s,b)
+    with journal.measured('exact_port_Schur_support_capacity_plan'):
+        extra,preallocation=port_schur_preallocation(s,C,D,cells)
+    write_json(folder/'port_schur_preallocation.json',preallocation)
+    # Copies of original/transpose/retained operators and reserved AIJ payload
+    # are all bounded before allocation. Numeric still has its own symbolic Gate.
+    # Current RSS already includes the read-only K, augmented CSR and setup.
+    # Six further full-CSR payloads conservatively cover PETSc input, the
+    # retained submatrix/new AIJ, transpose construction and transient copies.
+    added=6*(A.data.nbytes+A.indices.nbytes+A.indptr.nbytes)+preallocation['extra_AIJ_payload_upper_bytes']
+    journal.allocation('exact_condensed_forming',dict(matrix_payload_bytes=added,workspace_bytes=2*2**30))
+    journal.event('exact_condensed_forming_capacity',planned_added_matrix_upper_bytes=added,
+                  workspace_bytes=2*2**30,preallocation=preallocation,admitted=True)
     with journal.measured('exact_cell_elimination_and_atomic_recovery_checkpoint'):
-        receipt=build_checkpoint(A,rhs,cells,path,identity=rid,source=state,journal=journal)
+        receipt=build_checkpoint(A,rhs,cells,path,identity=rid,source=state,journal=journal,preallocation_extra=extra)
+    del extra
     if A.shape[0]-767280>scope.plan_record()['reduced_row_cap']:raise ValueError('actual retained row capacity')
     service=ExactRecovery(receipt,identity=rid);service.receipt=receipt
     # One complete recovered vector, independent q15 body/q63 boundary.
     rng=np.random.default_rng(6907);t=rng.normal(size=len(service.retained))+1j*rng.normal(size=len(service.retained))
-    C,D,H=core.boundary_matrices(s,b)
     t[-len(H):]/=np.maximum(np.abs(H),1.)
     witness_rhs=rhs.copy();witness_rhs[:s['P'].shape[1]]+=np.sin(np.arange(s['P'].shape[1])*.173)*1e-3
     x=service.recover(t,witness_rhs);red=service.condense_rhs(witness_rhs)-service.apply_trace(t)

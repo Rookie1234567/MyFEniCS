@@ -58,6 +58,37 @@ def check_internal_graph(A, cells):
                 cross_cell_structural_zeros=zeros,nonzero_cross_cell_couplings=0)
 
 
+def port_schur_preallocation(setup, C, D, cells):
+    """Reserve an upper bound from actual nonzero ports and entity closures.
+
+    This only reserves AIJ capacity. It neither inserts nor drops a value and
+    does not define a new numerical matrix or threshold-based sparsity rule.
+    """
+    n,m=C.shape
+    if D.shape!=(m,n) or n!=setup['P'].shape[1]:raise ValueError('port preallocation identity')
+    owner=np.full(n,-1,np.int32)
+    for c,i in enumerate(cells):owner[i]=c
+    # Independently consider C_i and D_i; never assume an adjoint relation.
+    incident=np.r_[C.nonzero()[0],D.nonzero()[1]]
+    connected=np.unique(owner[incident]);connected=connected[connected>=0]
+    touched=np.zeros(n,bool)
+    for c in connected:
+        native=setup['V'].dofmap.cell_dofs(int(c))
+        closure=setup['P'][native].indices
+        touched[closure[owner[closure]<0]]=True
+    support=np.flatnonzero(touched);extra=np.zeros(n+m,np.int64)
+    extra[support]=m
+    extra[n:]=len(support)+m
+    entries=int(extra.sum())
+    detail=dict(rule='actual nonzero Ci/Di cell entity closure upper bound; capacity only',
+        connected_cells=len(connected),retained_FE_support=len(support),all_ports=m,
+        extra_capacity_entries_upper=entries,extra_AIJ_payload_upper_bytes=entries*24,
+        graph_workspace_bytes=owner.nbytes+3*incident.nbytes+touched.nbytes+extra.nbytes+support.nbytes,
+        no_entries_inserted_or_dropped=True,threshold=0,nonhermitian_sides_separately_consumed=True)
+    if detail['graph_workspace_bytes']>2*2**30:raise ValueError('preallocation workspace')
+    return extra,detail
+
+
 class RecoveryWriter:
     """One bounded batch of local factors and original non-Hermitian blocks."""
     def __init__(self, folder, journal=None, batch=64):
@@ -73,6 +104,9 @@ class RecoveryWriter:
             raise ValueError('nonfinite cell solve')
         self.pending.append((interior.copy(),rows.copy(),cols.copy(),lu,piv,it.copy(),ti.copy(),ii.copy()))
         self.count+=1
+        if self.journal and self.count==1:
+            self.journal.event('exact_first_local_LU_returned',interior_rows=len(interior),
+                               retained_rows=len(rows),retained_columns=len(cols))
         if len(self.pending)>=self.batch:self.flush()
         return solved
 
@@ -98,7 +132,7 @@ def _write_array(folder,name,value):
                 shape=list(a.shape),dtype=str(a.dtype),bytes=p.stat().st_size)
 
 
-def build_checkpoint(A, rhs, cells, path, *, identity, source, journal=None):
+def build_checkpoint(A, rhs, cells, path, *, identity, source, journal=None, preallocation_extra=None):
     """Reuse the qualified assembled H(curl) elimination, then seal the result."""
     from .hcurl_cell_static_condensation import build_explicit_cell_static_condensation
     from .independent_tetra_study import petsc_matrix
@@ -106,11 +140,15 @@ def build_checkpoint(A, rhs, cells, path, *, identity, source, journal=None):
     if path.exists():raise FileExistsError('sealed condensed checkpoint: reload instead')
     partial=path.with_name(path.name+'.partial');partial.mkdir(parents=True,exist_ok=False)
     graph=check_internal_graph(A,cells)
+    if journal:journal.event('exact_cell_internal_graph_checked',**graph)
     writer=RecoveryWriter(partial/'recovery',journal)
     matrix=petsc_matrix(A);b=matrix.createVecRight();b.array[:]=rhs
+    if journal:journal.event('exact_original_PETSc_matrix_loaded')
     condensed=None
     try:
-        condensed=build_explicit_cell_static_condensation(matrix,b,cells,cell_processor=writer)
+        condensed=build_explicit_cell_static_condensation(matrix,b,cells,cell_processor=writer,
+            preallocation_extra_by_original_row=preallocation_extra,
+            stage_callback=journal.event if journal else None)
         writer.flush()
         ip,ix,data=condensed.matrix.getValuesCSR()
         retained=condensed.owned_trace_original_dofs

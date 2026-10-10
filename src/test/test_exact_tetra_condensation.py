@@ -8,7 +8,7 @@ from unittest.mock import patch
 import numpy as np
 from scipy import sparse
 
-from src.solvers.exact_tetra_condensation import build_checkpoint,ExactRecovery,check_internal_graph
+from src.solvers.exact_tetra_condensation import build_checkpoint,ExactRecovery,check_internal_graph,port_schur_preallocation
 from src.solvers import exact_tetra_scope as scope
 
 
@@ -26,8 +26,10 @@ class ExactTetraTests(unittest.TestCase):
         self.assertGreater(np.linalg.norm(A.toarray()-A.toarray().conj().T),1.)
         self.assertTrue(np.all(np.abs(b[-3:])>0))
         with tempfile.TemporaryDirectory() as td:
-            r=build_checkpoint(A,b,cells,Path(td)/'sealed',identity={'case':'complex_nonzero_fi_g'},source={'source_sha':'fixture'})
+            extra=np.zeros(A.shape[0],np.int64);extra[-3:]=A.shape[0]
+            r=build_checkpoint(A,b,cells,Path(td)/'sealed',identity={'case':'complex_nonzero_fi_g'},source={'source_sha':'fixture'},preallocation_extra=extra)
             first=ExactRecovery(r);g=first.condense_rhs(b);S=first.matrix.toarray()
+            self.assertEqual(first.manifest['build_audit']['reserved_extra_entries'],int(extra.sum()))
             expected=np.linalg.solve(A.toarray(),b);trace=np.linalg.solve(S,g)
             full=first.recover(trace,b)
             np.testing.assert_allclose(full,expected,rtol=2e-13,atol=2e-13)
@@ -55,6 +57,20 @@ class ExactTetraTests(unittest.TestCase):
     def test_intercell_internal_coupling_is_not_silently_removed(self):
         A,b,cells=self.fixture();A[0,2]=1e-200
         with self.assertRaisesRegex(ValueError,'crosses'):check_internal_graph(A,cells)
+
+    def test_capacity_uses_both_actual_port_sides_without_value_drop(self):
+        from types import SimpleNamespace
+        # Cell closures share retained row 4; only C_i touches cell 0, only
+        # D_i touches cell 1. An arbitrarily small nonzero is still included.
+        setup=dict(P=sparse.eye(7,format='csr'),V=SimpleNamespace(dofmap=SimpleNamespace(
+            cell_dofs=lambda c:np.array([[0,1,4,5],[2,3,4,6]])[c])))
+        C=sparse.csr_matrix(([1e-200],([0],[0])),shape=(7,2))
+        D=sparse.csr_matrix(([1j],([1],[2])),shape=(2,7))
+        extra,detail=port_schur_preallocation(setup,C,D,(np.arange(2),np.arange(2,4)))
+        np.testing.assert_array_equal(extra,[0,0,0,0,2,2,2,5,5])
+        self.assertEqual(detail['connected_cells'],2)
+        self.assertEqual(detail['retained_FE_support'],3)
+        self.assertTrue(detail['no_entries_inserted_or_dropped'])
 
     def test_live_schema_memory_row_scope_and_parent_no_closed_guard(self):
         from src.io.independent_tetra_reference import load_tetra_reference
@@ -85,6 +101,14 @@ class ExactTetraTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td,patch.object(scope,'ARTIFACT',Path(td)),patch.object(scope.window,'TMP',Path(td)),patch.object(scope,'stage',return_value={'pass_gate':True}),patch.object(scope,'numeric_attempts',return_value=0):
             d=Path(td)/'returned';d.mkdir();(d/'returned_audit_pending.json').write_text(json.dumps({'role':'C5'}))
             with self.assertRaisesRegex(RuntimeError,'saved consumer'):scope.require_stage('C5')
+
+    def test_final_consumers_inherit_their_case_quota_without_reset(self):
+        runs=[dict(role='PREPARE_C5',folder='absent_prepare',elapsed_seconds=31),
+              dict(role='VERIFY_COST',case_group='C5',folder='absent_C5',elapsed_seconds=13),
+              dict(role='VERIFY_COST',case_group='M5',folder='absent_M5',elapsed_seconds=17)]
+        with tempfile.TemporaryDirectory() as td,patch.object(scope.window,'TMP',Path(td)),patch.object(scope.window,'ledger',return_value=dict(runs=runs,active=None)):
+            self.assertEqual(scope.window.case_remaining('C5'),25200-44)
+            self.assertEqual(scope.window.case_remaining('M5'),14400-17)
 
 
 if __name__=='__main__':unittest.main()
