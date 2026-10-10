@@ -84,6 +84,76 @@ def _validate_v22_physical_identity_bindings(
         raise ValueError("target-mode physical identity differs from its frozen input/manifest")
 
 
+def _saved_global_packet_to_boundary_plane(
+    saved_b_global: Any,
+    saved_d_global: Any,
+    saved_h_global: float,
+    global_z_phase: complex,
+) -> tuple[np.ndarray, np.ndarray, float]:
+    """Convert one saved global-z B/D/H packet into the boundary-plane gauge."""
+
+    b_global = np.asarray(saved_b_global, dtype=np.complex128)
+    d_global = np.asarray(saved_d_global, dtype=np.complex128)
+    h_global = float(saved_h_global)
+    phase = complex(global_z_phase)
+    if (
+        b_global.shape != d_global.shape
+        or not np.isfinite(b_global).all()
+        or not np.isfinite(d_global).all()
+        or not np.isfinite(h_global)
+        or h_global <= 0.0
+        or not np.isfinite(phase)
+        or phase == 0.0
+    ):
+        raise ValueError("saved global-z B/D/H gauge conversion inputs are invalid")
+    b_plane = np.ascontiguousarray(b_global / phase, dtype=np.complex128)
+    # Keep the packet's original H_global for this D conversion.
+    d_plane = np.ascontiguousarray(
+        d_global * h_global / np.conjugate(phase), dtype=np.complex128
+    )
+    h_plane = h_global / abs(phase) ** 2
+    if not np.isfinite(b_plane).all() or not np.isfinite(d_plane).all():
+        raise ValueError("saved global-z B/D gauge conversion is nonfinite")
+    if not np.isfinite(h_plane) or h_plane <= 0.0:
+        raise ValueError("saved global-z H_p gauge conversion is nonfinite or nonpositive")
+    return b_plane, d_plane, float(h_plane)
+
+
+def _saved_packet_action_h(mode_identity: Mapping[str, Any]) -> float:
+    """Select the boundary-plane H used by generated/cached local actions."""
+
+    action_h = float(mode_identity.get("H_p"))
+    packet_plane_h = float(mode_identity.get("H_p_boundary_plane_from_packet"))
+    if (
+        mode_identity.get("H_p_gauge") != "boundary_plane"
+        or not np.isfinite(action_h)
+        or action_h <= 0.0
+        or action_h != packet_plane_h
+    ):
+        raise ValueError("saved packet action H_p is not the converted boundary-plane value")
+    return action_h
+
+
+def _transform_mode_basis_columns(
+    space_element: Any, basis: Any, cell_info: Any
+) -> np.ndarray:
+    """Apply the real cell orientation to each contiguous modal basis column."""
+
+    transformed = np.ascontiguousarray(basis, dtype=np.complex128)
+    if transformed.ndim != 2 or not np.isfinite(transformed).all():
+        raise ValueError("saved modal basis must be a finite two-dimensional array")
+    if not space_element.needs_dof_transformations:
+        return transformed
+    info = np.asarray(cell_info, dtype=np.uint32).reshape(-1)
+    if info.shape != (1,):
+        raise ValueError("modal basis orientation requires exactly one cell_info value")
+    for component in range(transformed.shape[1]):
+        column = np.ascontiguousarray(transformed[:, component])
+        space_element.T_apply(column, info, 1)
+        transformed[:, component] = column
+    return transformed
+
+
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -1283,6 +1353,15 @@ def _exercise_saved_packet_generated_action(
             or mode_index < 0
         ):
             raise ValueError(f"saved {side} packet mode identity is incomplete")
+        z_face = float(
+            facts["actual_boundary_bounds_nm"][2][0 if side == "bottom" else 1]
+        )
+        global_z_phase = complex(np.exp(1j * mode_k[2] * z_face))
+        saved_b_plane, saved_d_plane_raw, saved_boundary_h = (
+            _saved_global_packet_to_boundary_plane(
+                saved_b, saved_d, h_value, global_z_phase
+            )
+        )
         mode_identity = {
             "mode_index": mode_index,
             "mode_key": (side, int(key[1]), int(key[2]), str(key[3])),
@@ -1290,19 +1369,14 @@ def _exercise_saved_packet_generated_action(
             "e": mode_e,
             "k": mode_k,
             "traction": mode_traction,
-            "H_p": h_value,
+            "H_p": saved_boundary_h,
+            "H_p_gauge": "boundary_plane",
+            "H_p_global_z": h_value,
+            "H_p_boundary_plane_from_packet": saved_boundary_h,
+            "global_z_phase": global_z_phase,
             "npz_sha256": packet_sha,
         }
         modes_by_side[side] = mode_identity
-
-        z_face = float(facts["actual_boundary_bounds_nm"][2][0 if side == "bottom" else 1])
-        global_z_phase = complex(np.exp(1j * mode_k[2] * z_face))
-        if global_z_phase == 0.0:
-            raise ValueError("saved mode has a singular boundary-plane phase conversion")
-        saved_b_plane = np.ascontiguousarray(saved_b / global_z_phase, dtype=np.complex128)
-        saved_d_plane_raw = np.ascontiguousarray(
-            saved_d * h_value / np.conjugate(global_z_phase), dtype=np.complex128
-        )
 
         if modes is not None:
             if mode_index >= len(modes):
@@ -1324,9 +1398,17 @@ def _exercise_saved_packet_generated_action(
                 if not np.allclose(current_traction, mode_traction, rtol=0.0, atol=1e-13):
                     raise ValueError(f"saved {side} traction differs from the current production mode")
             if mode_normalizations is not None:
-                current_h = float(mode_normalizations[mode_index])
-                if abs(current_h - h_value) > 1e-12 * max(abs(current_h), abs(h_value), 1.0):
-                    raise ValueError(f"saved {side} original H_p differs from the current production iterator")
+                current_boundary_h = float(mode_normalizations[mode_index])
+                if abs(saved_boundary_h - current_boundary_h) > 1e-12 * max(
+                    abs(saved_boundary_h), abs(current_boundary_h), 1.0
+                ):
+                    raise ValueError(
+                        f"saved {side} global-z H_p converts to boundary-plane "
+                        "H_p different from the current production normalization "
+                        f"(saved_global={h_value:.17g}, "
+                        f"saved_boundary={saved_boundary_h:.17g}, "
+                        f"current_boundary={current_boundary_h:.17g})"
+                    )
 
         cell_id = int(facts["actual_boundary_cell"])
         cell_info_by_side[side] = local_orientation
@@ -1488,7 +1570,7 @@ def _exercise_saved_packet_generated_action(
             mode_specs_by_side[side] = [{
                 "mode_index": None,
                 "mode_key": modes_by_side[side]["mode_key"],
-                "H_p": float(modes_by_side[side]["H_p"]),
+                "H_p": _saved_packet_action_h(modes_by_side[side]),
                 "factory": raw_pair_factories[side],
                 "cached_pair": (
                     record["saved_b_plane"], record["saved_d_plane_raw"]
@@ -1529,15 +1611,13 @@ def _exercise_saved_packet_generated_action(
             record["integrated_basis_global"] / record["global_z_phase"],
             dtype=np.complex128,
         )
-        if space.element.needs_dof_transformations:
-            cell_transform = np.asarray(
-                [int(np.asarray(cell_info_by_side[side]).reshape(-1)[0])],
-                dtype=np.uint32,
-            )
-            for component in range(2):
-                space.element.T_apply(
-                    basis[:, component], cell_transform, 1
-                )
+        cell_transform = np.asarray(
+            [int(np.asarray(cell_info_by_side[side]).reshape(-1)[0])],
+            dtype=np.uint32,
+        )
+        basis = _transform_mode_basis_columns(
+            space.element, basis, cell_transform
+        )
         from src.solvers.dtn_port_3d import _traction_vector
 
         def table_pair(mode: Any, basis: np.ndarray = basis) -> tuple[np.ndarray, np.ndarray]:
@@ -2199,10 +2279,27 @@ def _exercise_saved_packet_generated_action(
             "raw_B_D_packet_conversion": {
                 side: {
                     "source": source_kind[side],
-                    "gauge": "boundary_plane; saved global-z B divided by exp(i*kz*z_face), normalized saved D multiplied by H_p/conj(phase)",
+                    "gauge": (
+                        "boundary_plane; B_plane=B_global/g, "
+                        "D_plane=D_global*H_global/conj(g), "
+                        "H_plane=H_global/|g|^2"
+                    ),
                     "B_relative_to_converted_saved_packet": packet_records[side]["b_relative_to_packet"],
                     "raw_D_relative_to_converted_saved_packet": packet_records[side]["d_relative_to_packet"],
-                    "original_H_p": modes_by_side[side]["H_p"],
+                    "original_H_p": modes_by_side[side]["H_p_global_z"],
+                    "original_H_p_gauge": "global_z",
+                    "global_z_phase": {
+                        "real": float(modes_by_side[side]["global_z_phase"].real),
+                        "imag": float(modes_by_side[side]["global_z_phase"].imag),
+                    },
+                    "boundary_plane_H_p_from_saved_packet": modes_by_side[side][
+                        "H_p_boundary_plane_from_packet"
+                    ],
+                    "production_boundary_plane_H_p": float(
+                        mode_normalizations[modes_by_side[side]["mode_index"]]
+                    ) if mode_normalizations is not None else None,
+                    "saved_packet_npz_sha256": modes_by_side[side]["npz_sha256"],
+                    "raw_D_conversion_uses_original_global_H": True,
                     "raw_D_kept_independent": True,
                 }
                 for side in ("bottom", "top")

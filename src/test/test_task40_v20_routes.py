@@ -1221,6 +1221,98 @@ def test_v22_physical_model_and_mode_identity_bindings_are_separate():
         )
 
 
+def test_v22_saved_packet_global_to_boundary_gauge_keeps_original_h_for_d():
+    import numpy as np
+
+    from src.solvers.task40_v22_operator_probe import (
+        _saved_packet_action_h,
+        _saved_global_packet_to_boundary_plane,
+    )
+
+    saved_b_global = np.asarray([1.0 + 2.0j, -0.5 + 0.25j])
+    saved_d_global = np.asarray([0.75 - 1.5j, -2.0 + 0.5j])
+    saved_h_global = 1234.2066054142099
+    phase = 0.7 + 0.4j
+    b_plane, d_plane, h_plane = _saved_global_packet_to_boundary_plane(
+        saved_b_global, saved_d_global, saved_h_global, phase
+    )
+    assert abs(phase) != pytest.approx(1.0)
+    np.testing.assert_allclose(b_plane, saved_b_global / phase, rtol=0.0, atol=0.0)
+    np.testing.assert_allclose(
+        d_plane,
+        saved_d_global * saved_h_global / np.conjugate(phase),
+        rtol=0.0,
+        atol=0.0,
+    )
+    assert h_plane == pytest.approx(saved_h_global / abs(phase) ** 2, rel=1e-15)
+    wrong_d_plane = saved_d_global * h_plane / np.conjugate(phase)
+    assert not np.allclose(d_plane, wrong_d_plane, rtol=1e-12, atol=0.0)
+
+    actual_saved_global_h = 1234.2066054142099
+    actual_boundary_h = 1250.0
+    actual_phase_magnitude_sq = 0.98736528433136783
+    actual_phase = complex(
+        0.6, (actual_phase_magnitude_sq - 0.6**2) ** 0.5
+    )
+    _b, _d, actual_plane_h = _saved_global_packet_to_boundary_plane(
+        np.asarray([1.0 + 0.5j]),
+        np.asarray([0.25 - 0.75j]),
+        actual_saved_global_h,
+        actual_phase,
+    )
+    assert actual_plane_h == pytest.approx(actual_boundary_h, rel=1e-15)
+    mode_identity = {
+        "H_p": actual_plane_h,
+        "H_p_gauge": "boundary_plane",
+        "H_p_global_z": actual_saved_global_h,
+        "H_p_boundary_plane_from_packet": actual_plane_h,
+    }
+    assert _saved_packet_action_h(mode_identity) == pytest.approx(1250.0, rel=0.0)
+    with pytest.raises(ValueError, match="converted boundary-plane value"):
+        _saved_packet_action_h(
+            dict(mode_identity, H_p=actual_saved_global_h)
+        )
+
+
+def test_v22_modal_basis_transform_uses_contiguous_columns_and_real_p6_cell_info():
+    import numpy as np
+
+    from src.solvers.task40_v22_operator_probe import (
+        _transform_mode_basis_columns,
+    )
+    from src.test.test_46_task033_high_order_floquet_topology import (
+        _fixed_target_fixture,
+    )
+
+    _cfg, mesh_data, space = _fixed_target_fixture(6, h_nm=50.0)
+    topology = mesh_data.mesh.topology
+    topology.create_entity_permutations()
+    cell_infos = np.asarray(topology.get_cell_permutation_info(), dtype=np.uint32)
+    nonzero = next((int(value) for value in cell_infos if int(value) != 0), None)
+    assert nonzero is not None
+    assert space.element.needs_dof_transformations
+    assert space.element.space_dimension == 882
+
+    cell_info = np.asarray([nonzero], dtype=np.uint32)
+    basis = np.ascontiguousarray(
+        np.random.default_rng(40_022).standard_normal((882, 2))
+        + 1j * np.random.default_rng(40_023).standard_normal((882, 2)),
+        dtype=np.complex128,
+    )
+    assert basis.flags.c_contiguous
+    assert not basis[:, 0].flags.c_contiguous
+    untransformed = basis.copy()
+    expected = basis.copy()
+    for component in range(expected.shape[1]):
+        column = np.ascontiguousarray(expected[:, component])
+        space.element.T_apply(column, cell_info, 1)
+        expected[:, component] = column
+
+    actual = _transform_mode_basis_columns(space.element, basis, cell_info)
+    np.testing.assert_allclose(actual, expected, rtol=0.0, atol=0.0)
+    assert np.linalg.norm(actual - untransformed) > 0.0
+
+
 def test_fullspace_surface_iterator_reports_second_global_filter_audit(monkeypatch):
     import numpy as np
 
