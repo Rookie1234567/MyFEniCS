@@ -1701,11 +1701,11 @@ def _exercise_saved_packet_generated_action(
             dtype=np.complex128,
         )
         di = np.ascontiguousarray(
-            np.row_stack([spec["cached_pair"][1][interior] for spec in side_specs]),
+            np.vstack([spec["cached_pair"][1][interior] for spec in side_specs]),
             dtype=np.complex128,
         )
         dt = np.ascontiguousarray(
-            np.row_stack([spec["cached_pair"][1][trace] for spec in side_specs]),
+            np.vstack([spec["cached_pair"][1][trace] for spec in side_specs]),
             dtype=np.complex128,
         )
         condensed_cell = condense_physical_cell_blocks(
