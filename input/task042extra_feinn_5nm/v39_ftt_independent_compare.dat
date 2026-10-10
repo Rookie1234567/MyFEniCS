@@ -1,0 +1,5 @@
+schema_version = 9
+
+[neural_wave]
+stage = "v39_ftt_independent_compare"
+design_sha256 = "37d37c2839e24189680e03f30719d06d38d922cc4bb800d49f71b1c5a2f3559f"

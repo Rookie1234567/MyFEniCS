@@ -17,6 +17,7 @@ from src.solvers.optimization_checkpoint import (
     atomic_json,
     capture,
     optimizer_step,
+    restore,
 )
 
 
@@ -75,9 +76,12 @@ def run_training(
     *,
     call_limit,
     adam_steps,
+    mapping=None,
+    resume_state=None,
+    resume_identity=None,
 ):
     artifact = Path(artifact)
-    mapping = StreamingMomentMap(packet)
+    mapping = StreamingMomentMap(packet) if mapping is None else mapping
     params = list(model.parameters())
     optimizer = torch.optim.Adam(params, lr=1e-3, weight_decay=0)
     store = CheckpointStore(artifact / "checkpoints")
@@ -91,13 +95,83 @@ def run_training(
     )
     costs = dict(closures=0.0, optimizer_and_commit=0.0, persistence=0.0, audit=0.0)
     phase = "Adam"
+    inherited_counts = counts.copy()
+    if resume_state is not None:
+        from src.postprocessing.ftt_verification import validate_checkpoint_identity
+
+        if resume_identity is None:
+            raise ValueError("FULL_FTT_RESUME_IDENTITY_REQUIRED")
+        validate_checkpoint_identity(
+            resume_state, resume_identity, model, isinstance(metric, FieldMetric)
+        )
+        phase = resume_state["metadata"]["phase"]
+        if phase == "L-BFGS":
+            optimizer = torch.optim.LBFGS(
+                params,
+                lr=1,
+                history_size=20,
+                line_search_fn="strong_wolfe",
+                max_iter=20,
+                max_eval=25,
+                tolerance_grad=1e-7,
+                tolerance_change=1e-9,
+            )
+        elif phase != "Adam":
+            raise ValueError("FTT_RESUME_PHASE_UNKNOWN")
+        restore(model, optimizer, resume_state)
+        counts = resume_state["metadata"]["counts"].copy()
+        published_counts = resume_identity.get("counts", counts)
+        # The original final audit occurs after the final model save. Charge
+        # that saved, hash-bound published work too; never replay it for logs.
+        if any(
+            counts[k] != published_counts[k] for k in counts if k != "native_audits"
+        ):
+            raise ValueError("FTT_PARENT_PUBLISHED_WORK_STATE_MISMATCH")
+        if published_counts["native_audits"] < counts["native_audits"]:
+            raise ValueError("FTT_PARENT_PUBLISHED_AUDIT_COUNT_REGRESSED")
+        counts = published_counts.copy()
+        inherited_counts = counts.copy()
+        if (
+            counts["attempted_calls"] >= call_limit
+            or counts["Adam_updates"] > adam_steps
+        ):
+            raise ValueError("FTT_INHERITED_WORK_LIMIT_EXHAUSTED")
+        if phase == "Adam" and any(
+            int(s["step"]) != counts["Adam_updates"] for s in optimizer.state.values()
+        ):
+            raise ValueError("FTT_ADAM_MOMENT_STEP_IDENTITY_MISMATCH")
     labelled = isinstance(metric, FieldMetric)
     c = mapping.forward(model)
-    if np.any(c):
+    if resume_state is None and np.any(c):
         raise ValueError("STRICT_ZERO_SCATTERED_INITIALIZATION_REQUIRED")
+    resume_pairing = None
+    if resume_state is not None:
+        saved = np.asarray(resume_state["c"])
+        numerator = float(np.linalg.norm(c - saved))
+        denominator = float(np.linalg.norm(saved))
+        if denominator == 0 or numerator / denominator > 1e-10:
+            raise ValueError("FTT_RESUME_FULL_COEFFICIENT_PAIRING_FAILED")
+        residual = (
+            c - metric.reference
+            if isinstance(metric, FieldMetric)
+            else action.apply(c) - action.f
+        )
+        old_r = np.asarray(resume_state["r"])
+        r_num = float(np.linalg.norm(residual - old_r))
+        r_den = float(np.linalg.norm(old_r))
+        if r_den == 0 or r_num / r_den > 1e-10:
+            raise ValueError("FTT_RESUME_RESIDUAL_PAIRING_FAILED")
+        resume_pairing = dict(
+            c_numerator=numerator,
+            c_denominator=denominator,
+            c_relative=numerator / denominator,
+            r_numerator=r_num,
+            r_denominator=r_den,
+            r_relative=r_num / r_den,
+        )
     audit_rows = []
     history = (artifact / "history.jsonl").open("a", buffering=1)
-    last_audit = 0
+    last_audit = counts["complete_loss_gradient_calls"]
     stop_reason = "CALL_LIMIT"
     trial = None
     longest_closure_seconds = 0.0
@@ -120,6 +194,10 @@ def run_training(
             update=update,
             parameters_only=False,
             optimizer_recoverable=True,
+            inherited_counts=inherited_counts,
+            parent_checkpoint_sha256=(
+                resume_identity["checkpoint"]["sha256"] if resume_identity else None
+            ),
             r_kind="reference_coefficient_error"
             if labelled
             else "original_native_residual",
@@ -147,7 +225,7 @@ def run_training(
         return row
 
     zero = save(pin=True)
-    audit("zero")
+    audit("inherited_complete_boundary" if resume_state is not None else "zero")
 
     def closure():
         nonlocal trial, longest_closure_seconds
@@ -303,6 +381,12 @@ def run_training(
         checkpoint=final_record,
         zero_checkpoint=zero,
         counts=counts,
+        inherited_counts=inherited_counts,
+        new_counts={k: counts[k] - inherited_counts[k] for k in counts},
+        resume_pairing=resume_pairing,
+        parent_checkpoint_sha256=(
+            resume_identity["checkpoint"]["sha256"] if resume_identity else None
+        ),
         costs=costs,
         mapping_costs=mapping.costs,
         mapping_counts=mapping.counts,

@@ -30,7 +30,7 @@ def source_gate():
 def window(spec=None):
     profile = profile_paths(spec or {})
     data = json.loads(profile["window"].read_text())
-    budget = {31: 86400, 32: 57600, 33: 43200, 34: 57600, 35: 14400, 36: 21600, 38:28800}.get((spec or {}).get("campaign_version"), 172800)
+    budget = {31: 86400, 32: 57600, 33: 43200, 34: 57600, 35: 14400, 36: 21600, 38:28800,39:43200}.get((spec or {}).get("campaign_version"), 172800)
     if data["budget_s"] != budget or not data["single_window"]:
         raise ValueError("V30_SINGLE_48H_WINDOW_IDENTITY_FAILED")
     if abs(data["deadline_monotonic"] - data["origin_monotonic"] - budget) > 1e-5:
@@ -40,7 +40,7 @@ def window(spec=None):
 
 def stage_deadline(spec, allocation, campaign):
     """Preserve the original window and leave time for full frozen-field gates."""
-    if spec.get("campaign_version") in (36, 38):
+    if spec.get("campaign_version") in (36, 38, 39):
         return min(allocation["deadline_monotonic"], campaign["deadline_monotonic"]-1800), 1800
     if spec.get("campaign_version") == 35:
         deadline = min(allocation["deadline_monotonic"], campaign["deadline_monotonic"]-1800)
@@ -259,7 +259,7 @@ def durable(spec, *, origin, attempt=1):
         management_supervised=True,
         allowed_scope=scope,
         socket_directory=root / "sockets"
-        if spec.get("campaign_version") in (32,33,34,35,36,38)
+        if spec.get("campaign_version") in (32,33,34,35,36,38,39)
         else None,
     )
 
@@ -334,6 +334,7 @@ def launch(spec):
             "blocked_oracle",
             "blocked_verify",
             "ftt_checks", "ftt_train", "ftt_reconstruct", "ftt_compare", "ftt_fit_compare",
+            "ftt_factored_checks", "ftt_factored_benchmark", "ftt_independent_compare",
         )
         else 2
     ) * 2**30
@@ -351,7 +352,7 @@ def launch(spec):
                 resource_observation_cost,
             )
 
-            if spec.get("campaign_version") in (31, 32, 33, 34, 35, 36, 38):
+            if spec.get("campaign_version") in (31, 32, 33, 34, 35, 36, 38, 39):
                 from src.runners.block_wave_admission import (
                     stable_window as qualified_stability,
                 )
@@ -537,8 +538,11 @@ def launch(spec):
                                     pde_only_solve=spec["role"] == "space_unlabelled",
                                     pde_only_solver_qualified=False,
                                     official_candidate_results=False)
-            if spec.get("campaign_version") == 38:
-                from src.runners.ftt_worker import CHAIN
+            if spec.get("campaign_version") in (38,39):
+                if spec.get("campaign_version")==39:
+                    from src.runners.ftt_structure_worker import CHAIN
+                else:
+                    from src.runners.ftt_worker import CHAIN
                 from src.io.ftt_campaign import usage_flags
                 manifest["binding_source_files"].update({p:digest(ROOT/p) for p in CHAIN})
                 manifest.update(usage_flags(spec))
@@ -560,7 +564,7 @@ def launch(spec):
                 str(ticks(os.getpid())),
                 sys.executable,
                 "-m",
-                "src.runners.ftt_worker" if spec.get("campaign_version")==38 else "src.runners.neural_wave_worker",
+                "src.runners.ftt_structure_worker" if spec.get("campaign_version")==39 else "src.runners.ftt_worker" if spec.get("campaign_version")==38 else "src.runners.neural_wave_worker",
                 str(directory.relative_to(ROOT)),
             ]
             result = supervise(

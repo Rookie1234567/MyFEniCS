@@ -153,14 +153,25 @@ def route_stages(fit=False):
     ]
 
 
-def reconstruct(design, action, packet, high, artifact, marker, fit=False):
+def reconstruct(
+    design,
+    action,
+    packet,
+    high,
+    artifact,
+    marker,
+    fit=False,
+    route_pairs=None,
+    source_root=None,
+):
     from src.solvers.ftt_field import FTTField
     from src.solvers.ftt_moments import StreamingMomentMap
     from src.solvers.optimization_checkpoint import load_checkpoint
 
     result = {}
-    for stage, name in route_stages(fit):
-        candidate = json.loads((ART / stage / "result.json").read_text())
+    source_root = ART if source_root is None else source_root
+    for stage, name in route_stages(fit) if route_pairs is None else route_pairs:
+        candidate = json.loads((source_root / stage / "result.json").read_text())
         entry = candidate["checkpoint"]
         model = FTTField(
             design["model"]["geometry"]["bounds_nm"], candidate["model_kind"]
@@ -169,10 +180,10 @@ def reconstruct(design, action, packet, high, artifact, marker, fit=False):
             name: p.detach().numpy().copy() for name, p in model.named_parameters()
         }
         state = load_checkpoint(
-            ART / stage / "checkpoints" / entry["name"], entry["sha256"]
+            source_root / stage / "checkpoints" / entry["name"], entry["sha256"]
         )
         validate_checkpoint_identity(state, candidate, model, fit)
-        producer_file = ART / stage / "frozen_field.npz"
+        producer_file = source_root / stage / "frozen_field.npz"
         with np.load(producer_file, allow_pickle=False) as data:
             if not np.array_equal(data["c"], state["c"]) or not np.array_equal(
                 data["r"], state["r"]
@@ -209,7 +220,9 @@ def reconstruct(design, action, packet, high, artifact, marker, fit=False):
     return result
 
 
-def compare(design, action, packet, rebuild_dir, artifact, marker, fit=False):
+def compare(
+    design, action, packet, rebuild_dir, artifact, marker, fit=False, route_pairs=None
+):
     from src.solvers.feinn_fem import build_model
     from src.solvers.feinn_reference import field_physics, _region_field_errors
     from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
@@ -219,7 +232,7 @@ def compare(design, action, packet, rebuild_dir, artifact, marker, fit=False):
 
     reconstruction = json.loads((rebuild_dir / "reconstruction.json").read_text())
     states = {}
-    for _, name in route_stages(fit):
+    for _, name in route_stages(fit) if route_pairs is None else route_pairs:
         with np.load(rebuild_dir / (name + ".npz"), allow_pickle=False) as data:
             states[name] = np.array(data["c30"])
             states[name + "_PRODUCER"] = np.array(data["saved"])
@@ -365,5 +378,14 @@ if __name__ == "__main__":
 
     saved_check(
         ROOT / Path(sys.argv[1]),
-        json.loads((ROOT / "input/task042extra_feinn_5nm/design_v38.json").read_text()),
+        json.loads(
+            (
+                ROOT
+                / (
+                    sys.argv[3]
+                    if len(sys.argv) == 4 and sys.argv[2] == "--design"
+                    else "input/task042extra_feinn_5nm/design_v38.json"
+                )
+            ).read_text()
+        ),
     )
