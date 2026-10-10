@@ -908,6 +908,28 @@ def _global_mpc_expansions(
     return result
 
 
+def _mapped_port_face_global_rows(
+    mapping_rows: Sequence[Mapping[str, Any]],
+    cell_to_facet: Any,
+    boundary_cell_global_dofs: Mapping[int, np.ndarray],
+    entity_closure_dofs: Sequence[Sequence[int]],
+) -> set[int]:
+    """Return global rows in actual mapped physical port face closures."""
+
+    rows: set[int] = set()
+    for row in mapping_rows:
+        cell_id = int(row["cell_id"])
+        facet_ids = np.asarray(cell_to_facet.links(cell_id), dtype=np.int64)
+        local_facets = np.flatnonzero(facet_ids == int(row["facet_id"]))
+        if len(local_facets) != 1:
+            raise ValueError("saved port facet does not map to one local cell face")
+        face_positions = np.asarray(
+            entity_closure_dofs[int(local_facets[0])], dtype=np.int32
+        )
+        rows.update(map(int, boundary_cell_global_dofs[cell_id][face_positions]))
+    return rows
+
+
 def _compact_reference_mode_indices(modes: Sequence[Any]) -> dict[str, list[int]]:
     """Select first/middle/last real k-vectors and any adjacent s/p partners."""
 
@@ -4589,20 +4611,7 @@ def _run_probe(
         )
         mesh_object.topology.create_connectivity(3, 2)
         cell_to_facet = mesh_object.topology.connectivity(3, 2)
-        facet_entity_dofs = space.element.basix_element.entity_dofs[2]
-        actual_port_face_rows: set[int] = set()
-        for row in mapping_rows:
-            cell_id = int(row["cell_id"])
-            facet_ids = np.asarray(cell_to_facet.links(cell_id), dtype=np.int64)
-            local_facets = np.flatnonzero(facet_ids == int(row["facet_id"]))
-            if len(local_facets) != 1:
-                raise ValueError("saved port facet does not map to one local cell face")
-            face_positions = np.asarray(
-                facet_entity_dofs[int(local_facets[0])], dtype=np.int32
-            )
-            actual_port_face_rows.update(
-                map(int, boundary_cell_global_dofs[cell_id][face_positions])
-            )
+        facet_entity_closure_dofs = space.element.basix_element.entity_closure_dofs[2]
         for row in mapping_rows:
             cell_id = int(row["cell_id"])
             side = str(row["side"])
@@ -4622,6 +4631,21 @@ def _run_probe(
                 np.asarray([int(row["facet_id"]), cell_id], dtype="<i8").tobytes()
             )
             del local_dofs, global_dofs
+        cell_ids_sorted = np.asarray(sorted(boundary_cell_side), dtype=np.int64)
+        cell_sides_sorted = np.asarray(
+            [boundary_cell_side[int(cell_id)] for cell_id in cell_ids_sorted],
+            dtype="U6",
+        )
+        side_cell_positions = {
+            side: np.flatnonzero(cell_sides_sorted == side)
+            for side in ("bottom", "top")
+        }
+        actual_port_face_rows = _mapped_port_face_global_rows(
+            mapping_rows,
+            cell_to_facet,
+            boundary_cell_global_dofs,
+            facet_entity_closure_dofs,
+        )
         boundary_global_rows = sorted(
             unique_boundary_dofs_by_side["bottom"]
             | unique_boundary_dofs_by_side["top"]
@@ -4786,15 +4810,6 @@ def _run_probe(
             boundary_rows_array,
             assume_unique=True,
         )
-        cell_ids_sorted = np.asarray(sorted(boundary_cell_side), dtype=np.int64)
-        cell_sides_sorted = np.asarray(
-            [boundary_cell_side[int(cell_id)] for cell_id in cell_ids_sorted],
-            dtype="U6",
-        )
-        side_cell_positions = {
-            side: np.flatnonzero(cell_sides_sorted == side)
-            for side in ("bottom", "top")
-        }
         expected_mode_counts_by_side = {
             side: sum(str(mode.side) == side for mode in modes)
             for side in ("bottom", "top")
@@ -6342,7 +6357,10 @@ def _run_probe(
                 "filtered_support_category_entries_by_side": support_category_totals,
                 "category_definitions": {
                     "interior": "unique boundary-cell interior global rows",
-                    "actual_port_face_trace": "Basix entity DoFs on the mapped physical port facets",
+                    "actual_port_face_trace": (
+                        "Basix entity-closure DoFs, including face edges, "
+                        "on the mapped physical port facets"
+                    ),
                     "other_trace": "remaining boundary-cell trace rows outside actual port facets",
                     "slave": "raw finalized MPC slave support before E^H; absent from retained output by contract",
                     "unknown": "retained MPC master-closure rows outside the boundary-cell dof union",

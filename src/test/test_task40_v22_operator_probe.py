@@ -11,6 +11,7 @@ from src.solvers.task40_v22_operator_probe import (
     _cell_support_row_counts,
     _compact_reference_mode_indices,
     _load_v23_action_checkpoint,
+    _mapped_port_face_global_rows,
     _summarize_cell_mode_support,
     _v23_checkpoint_directory,
     _write_v22_action_checkpoint,
@@ -130,6 +131,34 @@ def test_compact_component_matches_full_vector_bitwise_with_mpc_and_cutoff_rows(
     # The equality-at-cutoff entry is dropped; the next representable value is retained.
     assert 879 not in rows
     assert 878 in rows
+
+
+class _FakeCellToFacet:
+    @staticmethod
+    def links(_cell_id):
+        return np.array([31, 32, 33, 34, 35, 36], dtype=np.int32)
+
+
+def test_port_face_inventory_uses_real_p6_entity_closure_and_cached_dofmap_rows():
+    from basix.ufl import element
+
+    p6 = element("N1curl", "hexahedron", 6).basix_element
+    face_dofs = np.asarray(p6.entity_dofs[2][0], dtype=np.int32)
+    closure_dofs = np.asarray(p6.entity_closure_dofs[2][0], dtype=np.int32)
+    assert p6.dim == 882
+    assert len(closure_dofs) > len(face_dofs)
+    cell_rows = np.arange(p6.dim, dtype=np.int64) + 20_000
+    cached_rows = {0: cell_rows}
+
+    actual = _mapped_port_face_global_rows(
+        [{"cell_id": 0, "facet_id": 31}],
+        _FakeCellToFacet(),
+        cached_rows,
+        p6.entity_closure_dofs[2],
+    )
+
+    assert actual == set(map(int, cell_rows[closure_dofs]))
+    assert set(map(int, cell_rows[face_dofs])) < actual
 
 
 def test_compact_reference_mode_selection_includes_first_middle_last_and_s_p_pairs():
