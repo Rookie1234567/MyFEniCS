@@ -123,8 +123,26 @@
       "numeric_replay": 0,
       "PDE_replay": 0,
       "included_in_F7_repair_interval": true
+    },
+    {
+      "id": "F9",
+      "root_cause": "new document first table had three header columns but two separator columns",
+      "failed_source": "25f594977984f38844d7239f212cd1e8882ad761",
+      "fixed_document_source": "2561bc3e464c0dbf54d66b65dc1baa38e99e9e08",
+      "evidence": "tmp/task042/v69/aux_post_documents01/supervision/worker.log",
+      "change": "only the separator row in response/outcome; targeted final-byte documents check",
+      "replay": "15 compact document contracts after earlier parse failure; no scientific replay",
+      "new_actions": 0,
+      "new_numeric": 0,
+      "new_solve": 0,
+      "failed_record_unchanged": true
     }
   ],
   "historical_failures_preserved": true,
-  "legal_returned_fields_never_refactored": true
+  "legal_returned_fields_never_refactored": true,
+  "before_document_repair_archive": {
+    "path": "benchmarks/artifacts/task042/v69/final_closure_record_prior_versions/repair_journal_v69.json",
+    "bytes": 6437,
+    "sha256": "8c32ef9d0a519c685de8925c2c44af1605d47d91da6983b1713dce0cb006cbd7"
+  }
 }

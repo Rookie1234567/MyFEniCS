@@ -23,9 +23,15 @@
       "start_utc": "2026-10-10T06:47:25.655681+00:00",
       "end_utc": "2026-10-10T07:08:44.391587+00:00",
       "conservative_upper_seconds": 1278.735906
+    },
+    {
+      "root_group": "F9_document_parse_repair_and_targeted_recheck",
+      "start_utc": "2026-10-10T10:01:10.820110+00:00",
+      "end_utc": "2026-10-10T10:06:17.097354+00:00",
+      "conservative_upper_seconds": 306.277244
     }
   ],
-  "conservative_union_seconds": 6339.2508450000005,
+  "conservative_union_seconds": 6645.528089,
   "limit_seconds": 7200,
   "initial_implementation_not_relabelled_as_repair": true,
   "failed_first_forming_run_fully_charged_in_total_cost": true,
@@ -40,7 +46,13 @@
     "F5",
     "F6",
     "F7",
-    "F8"
+    "F8",
+    "F9"
   ],
-  "no_new_repairs_after_final_source": "valid only if journal still has exactly these eight IDs"
+  "no_scientific_repairs_after_final_numerical_source": true,
+  "before_document_repair_archive": {
+    "path": "benchmarks/artifacts/task042/v69/final_closure_record_prior_versions/repair_budget_v69.json",
+    "bytes": 1512,
+    "sha256": "f47855f98be064f3bacc882d09e615ad86999fd356de424a1b8b4d811bb78a91"
+  }
 }
