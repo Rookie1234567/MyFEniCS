@@ -430,3 +430,122 @@ def test_actual_checkpoint_identity_rejects_mixed_source_label_and_buffers():
             validate_checkpoint_identity(damaged, candidate, model, False)
     with pytest.raises(ValueError, match="PURPOSE"):
         validate_checkpoint_identity(state, candidate, model, True)
+
+
+def gram_samples_fixture():
+    from scipy import sparse
+
+    rng = np.random.default_rng(4213803)
+    V = rng.normal(size=(12, 4)) + 1j * rng.normal(size=(12, 4))
+    C = rng.normal(size=(12, 4)) + 1j * rng.normal(size=(12, 4))
+    weights = np.array([[0.2, 0.7], [0.3, 1.1]])
+    W = np.repeat(weights.reshape(-1), 3)
+    G = sparse.csr_matrix(
+        V.conj().T @ (W[:, None] * V) + 25 * C.conj().T @ (W[:, None] * C)
+    )
+    reference = rng.normal(size=4) + 1j * rng.normal(size=4)
+    candidate = rng.normal(size=4) + 1j * rng.normal(size=4)
+    samples = dict(
+        weights=weights,
+        reference_c=reference,
+        REFERENCE_E=(V @ reference).reshape(2, 2, 3),
+        REFERENCE_curl=(C @ reference).reshape(2, 2, 3),
+        candidate_c=candidate,
+        candidate_E=(V @ candidate).reshape(2, 2, 3),
+        candidate_curl=(C @ candidate).reshape(2, 2, 3),
+    )
+    return G, samples
+
+
+def test_original_G_and_independent_integral_complex_pairing_negative_controls():
+    from src.postprocessing.ftt_verification import gram_integral_pairing
+
+    G, samples = gram_samples_fixture()
+    good = gram_integral_pairing(G, samples, ("candidate",))
+    assert good["records"]["candidate"]["identity_pass"]
+    assert good["G_matvec_count"] == 2
+    assert good["Gsolve_count"] == good["global_Gram_factor_count"] == 0
+    wrong_length = gram_integral_pairing(G, samples, ("candidate",), length_nm=1)
+    assert not wrong_length["records"]["candidate"]["identity_pass"]
+    wrong_conjugate = gram_integral_pairing(G.conjugate(), samples, ("candidate",))
+    assert not wrong_conjugate["records"]["candidate"]["identity_pass"]
+    damaged = deepcopy(samples)
+    damaged["candidate_c"] = damaged["candidate_c"].conj()
+    assert not gram_integral_pairing(G, damaged, ("candidate",))["records"][
+        "candidate"
+    ]["identity_pass"]
+
+
+@pytest.mark.parametrize("labelled", (False, True))
+def test_FTT_purpose_override_actual_writer_reopen(tmp_path, monkeypatch, labelled):
+    import json
+    from scipy.sparse import save_npz
+    from src.postprocessing import ftt_verification
+    from src.runners import block_wave_worker
+    from src.solvers import feinn_native
+    from src.solvers.neural_wave_greedy import atomic_json, atomic_npz
+    from src.io.neural_wave_campaign import digest
+
+    G, samples = gram_samples_fixture()
+    save_npz(tmp_path / "gram.npz", G)
+    atomic_npz(tmp_path / "raw.npz", **samples)
+    atomic_json(
+        tmp_path / "verifier_result.json",
+        dict(
+            reference_used_for_training=labelled,
+            raw_complete_fields=dict(
+                path="raw.npz", sha256=digest(tmp_path / "raw.npz")
+            ),
+        ),
+    )
+    monkeypatch.setattr(ftt_verification, "ROOT", tmp_path)
+    monkeypatch.setattr(feinn_native, "load_native", lambda *_: object())
+    monkeypatch.setattr(
+        block_wave_worker,
+        "saved_checker",
+        lambda *_: dict(
+            records=dict(
+                candidate=dict(
+                    m5_full_discrete_numerical_gate=True,
+                    features_reference_exposed=False,
+                )
+            )
+        ),
+    )
+    design = dict(
+        files=dict(native=dict(path="native.npz")),
+        gram=dict(path="gram.npz", sha256=digest(tmp_path / "gram.npz")),
+    )
+    ftt_verification.saved_check(tmp_path, design)
+    reopened = json.loads((tmp_path / "saved_checker.json").read_text())
+    result = reopened["records"]["candidate"]
+    assert result["reference_used_for_training"] == labelled
+    assert result["features_reference_exposed"] == labelled
+    assert result["pde_only_solve"] == (not labelled)
+    assert result["pde_only_solver_qualified"] == (not labelled)
+    assert not result["official_candidate_results"]
+    assert not result["production_initialization_allowed"]
+    assert reopened["G_and_independent_FE_integral_pairing"]["records"]["candidate"][
+        "identity_pass"
+    ]
+
+
+@pytest.mark.parametrize("kind", ("fttnn", "chebtt"))
+def test_fixed_axis_diagnostics_do_not_modify_parameters(kind):
+    from src.postprocessing.ftt_verification import parameter_change_diagnostics
+
+    model = FTTField(BOX, kind)
+    initial = {name: p.detach().numpy().copy() for name, p in model.named_parameters()}
+    model.nonzero_qualification_state()
+    before = deepcopy(model.state_dict())
+    result = parameter_change_diagnostics(model, initial)
+    assert sum(row["real_parameter_count"] for row in result.values()) == (
+        9072 if kind == "fttnn" else 9120
+    )
+    assert (
+        result["x"]["changed_real_parameters"]
+        == result["y"]["changed_real_parameters"]
+        == 0
+    )
+    assert result["z"]["changed_real_parameters"] > 0
+    assert all(torch.equal(before[key], model.state_dict()[key]) for key in before)

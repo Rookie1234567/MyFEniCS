@@ -2,11 +2,110 @@
 
 import json
 from pathlib import Path
+from time import perf_counter
 import numpy as np
 from src.io.neural_wave_campaign import ROOT, digest
 from src.solvers.neural_wave_greedy import atomic_json, atomic_npz
 
 ART = ROOT / "benchmarks/artifacts/task42extra/v38"
+
+
+def gram_integral_pairing(G, samples, names, length_nm=5.0):
+    """Pair original sparse G with independently saved complete FE integrals."""
+    weights = np.asarray(samples["weights"])
+    reference = np.asarray(samples["reference_c"])
+    if (
+        weights.ndim != 2
+        or not np.isfinite(weights).all()
+        or np.any(weights <= 0)
+        or G.shape != (reference.size, reference.size)
+    ):
+        raise ValueError("FTT_G_INTEGRAL_LAYOUT_OR_WEIGHTS_INVALID")
+
+    def integral(E, curl):
+        return float(
+            np.sum(
+                weights
+                * (
+                    np.sum(abs(E) ** 2, axis=-1)
+                    + length_nm**2 * np.sum(abs(curl) ** 2, axis=-1)
+                )
+            )
+        )
+
+    def quadratic(c):
+        value = np.vdot(c, G @ c)
+        if (
+            not np.isfinite(value)
+            or value.real < 0
+            or abs(value.imag) > 1e-10 * max(value.real, 1e-30)
+        ):
+            raise ValueError("FTT_G_QUADRATIC_NOT_REAL_POSITIVE")
+        return float(value.real)
+
+    ref_g = quadratic(reference)
+    ref_integral = integral(samples["REFERENCE_E"], samples["REFERENCE_curl"])
+    if min(ref_g, ref_integral) <= 0:
+        raise ValueError("FTT_REFERENCE_G_NORM_NONZERO_REQUIRED")
+    ref_pair = abs(ref_g - ref_integral) / ref_g
+    records = {}
+    for name in names:
+        error = samples[name + "_c"] - reference
+        error_g = quadratic(error)
+        error_integral = integral(
+            samples[name + "_E"] - samples["REFERENCE_E"],
+            samples[name + "_curl"] - samples["REFERENCE_curl"],
+        )
+        pair = abs(error_g - error_integral) / max(error_g, 1e-30)
+        records[name] = dict(
+            G_error_energy=error_g,
+            independently_integrated_error_energy=error_integral,
+            G_reference_energy=ref_g,
+            independently_integrated_reference_energy=ref_integral,
+            error_energy_pairing_relative=pair,
+            reference_energy_pairing_relative=ref_pair,
+            E_G=float(np.sqrt(error_g / ref_g)),
+            identity_pass=bool(max(pair, ref_pair) <= 1e-8),
+        )
+    return dict(
+        length_nm=length_nm,
+        definition="integral |E|^2 + length_nm^2 |curl E|^2",
+        G_matvec_count=1 + len(names),
+        Gsolve_count=0,
+        global_Gram_factor_count=0,
+        records=records,
+    )
+
+
+def parameter_change_diagnostics(model, initial):
+    """Post-freeze axis diagnostics; no rescaling or feedback to training."""
+    import torch
+
+    nodes = torch.as_tensor(np.polynomial.legendre.leggauss(33)[0], dtype=torch.float64)
+    records = {}
+    for axis, label in enumerate("xyz"):
+        prefix = "cores." + str(axis)
+        entries = [
+            (name, p.detach().numpy().reshape(-1))
+            for name, p in model.named_parameters()
+            if name == prefix or name.startswith(prefix + ".")
+        ]
+        values = np.concatenate([p for _, p in entries])
+        delta = np.concatenate([p - initial[name].reshape(-1) for name, p in entries])
+        with torch.no_grad():
+            core = model.core(axis, nodes).numpy()
+        records[label] = dict(
+            real_parameter_count=int(values.size),
+            parameter_RMS=float(np.sqrt(np.mean(values**2))),
+            parameter_delta_from_original_zero_seed_RMS=float(
+                np.sqrt(np.mean(delta**2))
+            ),
+            changed_real_parameters=int(np.count_nonzero(delta)),
+            kernel_element_RMS_at_fixed_33_nodes=float(
+                np.sqrt(np.mean(abs(core) ** 2))
+            ),
+        )
+    return records
 
 
 def validate_checkpoint_identity(state, candidate, model, fit):
@@ -66,6 +165,9 @@ def reconstruct(design, action, packet, high, artifact, marker, fit=False):
         model = FTTField(
             design["model"]["geometry"]["bounds_nm"], candidate["model_kind"]
         )
+        initial = {
+            name: p.detach().numpy().copy() for name, p in model.named_parameters()
+        }
         state = load_checkpoint(
             ART / stage / "checkpoints" / entry["name"], entry["sha256"]
         )
@@ -92,6 +194,9 @@ def reconstruct(design, action, packet, high, artifact, marker, fit=False):
             candidate_source_sha=candidate["source_sha"],
             committed_boundary_sha256=entry["sha256"],
             producer_field_sha256=digest(producer_file),
+            per_axis_parameter_and_kernel_diagnostics=parameter_change_diagnostics(
+                model, initial
+            ),
             checkpoint_identity_checked=True,
             reference_used_for_training=fit,
             pde_only_solve=not fit,
@@ -221,9 +326,29 @@ def saved_check(directory, design):
             "reference_used_for_training"
         ]
     )
-    for record in result["records"].values():
+    frozen = json.loads((directory / "verifier_result.json").read_text())
+    raw = ROOT / frozen["raw_complete_fields"]["path"]
+    gram_entry = design["gram"]
+    gram_file = ROOT / gram_entry["path"]
+    if digest(gram_file) != gram_entry["sha256"]:
+        raise ValueError("FTT_ORIGINAL_G_SCORING_IDENTITY_CHANGED")
+    from scipy.sparse import load_npz
+
+    began = perf_counter()
+    G = load_npz(gram_file)
+    with np.load(raw, allow_pickle=False) as arrays:
+        pairing = gram_integral_pairing(G, arrays, tuple(result["records"]))
+    pairing["load_and_pairing_seconds"] = perf_counter() - began
+    pairing["Gram_sha256"] = gram_entry["sha256"]
+    result["G_and_independent_FE_integral_pairing"] = pairing
+    del G
+    for name, record in result["records"].items():
+        record["m5_full_discrete_numerical_gate"] &= pairing["records"][name][
+            "identity_pass"
+        ]
         record.update(
             reference_used_for_training=labelled,
+            features_reference_exposed=labelled,
             pde_only_solve=not labelled,
             pde_only_solver_qualified=False
             if labelled
