@@ -656,3 +656,23 @@ research-only、do-not-merge 依赖组说明，负结果文档/compact 保留，
 | resource/numerical scope | cap/warning/W=`85,899,345,920 / 77,309,411,328 / 8,589,934,592 B`；node0 floor=`412,316,860,416 B` | cap不是峰值预测；PORD Delta不是RSS上界；无FE/physics/outer/RTA/衍射结果 |
 
 此包尚未启动，故不能更新W0.7数值结果、容量资格或模型登记为成功。前一真实场的负分类不变；W5弱显著衍射通道按用户决定延期处理，W2不延误0.7主线。包摘要见[交付进度](shortwave_delivery_v11.md)，逐attempt合同测试和SHA见[test summary](test_summary.md)。
+
+## 2026-10-10：Review V12 bounded modal policy 与 W0.7 warm 准备（未dispatch）
+
+V12 要解决的问题是：旧 fixed-H6 模态内层在很少的迭代后就停止，导致已经构好的侧区因子无法用于更多外层进展。新合同先保留 fixed-H6；只有 modal solve 正常返回、输入未污染且返回向量可信时，才允许一次 fixed physical BAL_H 备选。它改变的是模态预条件器的有界求解与安全切换，不改原全局方程、外层迭代、P4/物理门或最终五项真残差。side restart64仍默认关闭，只能在V12停滞证据和fresh内存门都满足时试一次。
+
+| 项目 | 状态/数值 | 证据与边界 |
+|---|---|---|
+| 源码 | commit `eca72c8b12e2b979f919cb5b69578ad99111fef0`，parent `8af296d9cbe41e7132e9e623574d9b9a5fb5fdda`，仅11个获审源码/测试路径；upstream 0/0 | 34 runtime + 5 tests 共39行逐项绑定HEAD blob与工作树；source binding SHA `ecfbf7c4650fa47951b8a5a727717b1edb68d428d75146dedc56bfbf1e8294bb` |
+| 测试/计账 | 15个唯一pytest parent attempt，合计 `184.67645929614082 s`；V5 218→233项，SHA `18bca854947d3dbfecc2081153469e70d5b395dd70e507bd0a1c3ac9400378f1` | 成功 evidence 按serial/MPI2与setup/public route分批；早期fixture、rank-local断言和生产接线失败保留，不宣称最终HEAD一次整组通过；逐attempt见[test summary](test_summary.md)及[compact](../../../results/task041_v12_a2_setup_public_bridge_scope_fix_fixturefix16_20261010T0814Z/v12_a2_test_attempts_compact.json)，SHA `6b7338fb08996301c37d2c637ab7637d0a729c8c3de44e777cfcd7663dd63406` |
+| warm 包 | `results/task041_v12_w0p7_bounded_modal_backup_policy_only_preparation_20261010T085320Z/`；17项payload，SHA256SUMS全过 | config `d9dcbb98be62870d1db14e9da1a206d9c00b80a7534e81d6c85be71646bae460`；argv `849ee146a1a2548a5ef51e428d721470f79b7e3a6319e4f261364661edb91674`；manifest `81269c387e9198c647ac7f2b3733ce8ef927ca37243021c193fec37a7abb8be2`；dispatch字段为false |
+| 运行身份 | unit `task041-v12-w0p7-bounded-modal-backup-policy-only-cpu10-11-14-15-16-17-18-19-20261010T085320Z.service`；runroot `results/task041_v12_w0p7_bounded_modal_backup_policy_only_run_20261010T085320Z/` | config、public argv、service parent/ExecStopPost使用同一路径；39条source绑定对应HEAD `eca72c8...`。这是准备身份，不是Invocation |
+| policy请求 | `modal_feedback_method=null`；唯一请求为 `task041_v12_bounded_inexact_modal_once_backup`；primary pure fixed-H6，最多一次条件 physical BAL_H backup | service resolve 与 public CLI `--validate-only` 均通过。validate-only仅通过公共入口校验，不调用launcher、不读producer shards、不运行FE；receipt `9ba7bfc5699588d64a9a5d8210580cd6262ee881b88cee4d572c35985b27f720`。actual备用方法仍`not_run` |
+| policy数值合同 | modal `32/32/34/35`、target `1e-3`、允许作为PC返回的上限 `eta<=0.1`；条件备用标签 `fixed_physical_balh_once_modal_gmres_research` | 只有正常返回/可信iterate与输入完整性等条件通过才能使用近似；异常、非有限、breakdown或身份/布局错误仍拒绝。任何PC可用状态都不等于原方程通过 |
+| 原数值门 | P4 `5e-13/max2`、fixed-Q原残差、8次SH setup、outer五项真残差及恢复/物理门原样 | 本阶段未运行真实矩阵/FE；所有门保持待实际consumer判断 |
+| 资源 | hard `85,899,345,920 B`，warning `77,309,411,328 B`，W `8,589,934,592 B`，node0 floor `412,316,860,416 B` | 80 GiB是运行hard cap，不是峰值预测；不设elapsed stop；V8资源绑定中的swap仅观察 |
+| Host admission | 父包2026-10-10 08:24 UTC两点采样，raw SHA `9afef4e5aac0bdff309040984653965c9e680730f3ab43e9bb037e6884ea1a0a`、assessment SHA `ae4fc65137778eab4841529c14158175d324c978f01e6fab5f117a1b3bffba82` | 这些只是历史父包证据，不构成085320Z派生unit/config/runroot的fresh准入；候选CPU/host/node0/cgroup/disk与manager/root状态须对派生身份重新采样 |
+| Producer/bridge | 原producer source `2708214386d38bd69f73e6b196c8ed843bb53d81`；manifest `63b7635e99dd476a94c97a07aa469be8c5087ef55fadeb7e8f908b1ded0d84e2`；identity `73111acd2d48344e4ef36a0d838371f8ccc0efcddc1b7d9d3a46173f4ad2fbc6`；bridge `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b` | QEP=0；准备时未读全shards或跑完整validator；consumer仍保留正式封套验证和hydration链 |
+| 结果 | dispatch、consumer、两侧numeric、outer、五项残差、recovery、E/H/RTA/A_volume、衍射均`not_run` | 这是准备阶段，不是FE pass、收敛结论或W0.7资格 |
+
+W5弱显著衍射通道按用户决定延期处理；W2不延误W0.7。当前没有启动授权或第二场安排；需等待主控审核该sealed package与下一次fresh启动门。50×25 nm、约2 TB及48 h完整目标尚未实现。

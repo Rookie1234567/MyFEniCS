@@ -1898,3 +1898,15 @@ incident-specific orphan sampler 与大型 raw artifact 仍不合入。
 该显式动作每次P4的Q采用固定一次同因子修正，并保留原A4残差检查；普通pure fixed-H6、默认P4 target `5e-13/max2` 与其他已注册case的路由不变。资源运行上限为80 GiB、warning72 GiB、政策W8 GiB，node0 floor384 GiB；这些是保护合同，不是factor峰值预测。MPI2 tiny合同测试、MPI8 ABI与small envelope核对不构成大因子容量、consumer数值或目标模型资格。
 
 前一真实W0.7场 `IMPLEMENTATION_FAILURE`/physics not reached仍保留，不被新候选洗白；W5弱显著衍射通道按用户决定延期处理，不作为当前0.7前置；W2不延误0.7主线。历史与当前准备证据入口见[Task041 Response V13](task041_mpi1_shortwave_hybrid_capacity/response_v13.md)、[V11 delivery](task041_mpi1_shortwave_hybrid_capacity/outcomes/shortwave_delivery_v11.md)和[summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)。
+
+### Task041 Review V12：bounded modal backup policy（2026-10-10，prepared / not_run）
+
+| 注册模型 / policy | 当前身份 | 证据状态与限制 |
+|---|---|---|
+| `task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot` / `task041_v12_bounded_inexact_modal_once_backup` | 请求字段 `modal_feedback_method=null`；唯一请求为V12 policy。primary `fixed_h6_modal_gmres_research`；最多一次条件备用 `fixed_physical_balh_once_modal_gmres_research` | 已提交commit `eca72c8b12e2b979f919cb5b69578ad99111fef0`，11路径。15个serial/MPI2/public pytest attempt分批，唯一wall `184.67645929614082 s`，V5 233项；不声称最终HEAD单次整组通过 |
+| 原问题边界 | modal GMRES 32/32，目标`1e-3`；只有可信正常返回且独立残差符合`eta<=0.1`方可作为近似PC；最多一次安全切换 | 原右FGMRES与五项原方程真残差、P4 `5e-13/max2`及物理门不变；接线合同和tiny测试不等于真实收敛 |
+| warm准备 | 纠正包 `results/task041_v12_w0p7_bounded_modal_backup_policy_only_preparation_20261010T085320Z/`；config SHA `d9dcbb98be62870d1db14e9da1a206d9c00b80a7534e81d6c85be71646bae460`；argv SHA `849ee146a1a2548a5ef51e428d721470f79b7e3a6319e4f261364661edb91674` | config与public argv只请求V12 policy并保留pure fixed-H6初始方法；service resolve及public validate-only通过。父包host样本只作历史记录，纠正包自身fresh host门尚未运行；无dispatch、无Invocation、无数值输出 |
+| 固定资源与输入 | W0.7 p6/h0.70/M400/MPI8、matched L20/N29/h20/29；cap/warning/W=`85,899,345,920/77,309,411,328/8,589,934,592 B`，node0 floor=`412,316,860,416 B` | producer source/packet identity复用，QEP=0；cap不是预测峰值，consumer仍须原validator/hydration路径 |
+| 资格状态 | `prepared_waiting_dispatch_review` | 不登记为FE pass、收敛证明、完整物理资格或50×25 nm目标结果。W5用户决定延期；W2不延误W0.7 |
+
+逐attempt证据与测试SHA见 [V12 attempt compact](../results/task041_v12_a2_setup_public_bridge_scope_fix_fixturefix16_20261010T0814Z/v12_a2_test_attempts_compact.json)、[outcomes进度](task041_mpi1_shortwave_hybrid_capacity/outcomes/w0p7_inexact_pc_progress_v12.md)和[Response V14](task041_mpi1_shortwave_hybrid_capacity/response_v14.md)。

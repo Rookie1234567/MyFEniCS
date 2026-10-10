@@ -479,3 +479,27 @@ consumer接线pytest父wall总计`15.245187369175255 s`，三条按独立attempt
 | `...mpi2_20261009T1418Z` | MPI2两rank各4 passed；两个cell-condensed Q节点、method混用拒绝与dense fixed action | 3.2692086030729115 s | `f8d7b2a26e355a706a362a9e58461b0a949c69b9f0d9adc15e7fcd734b92fb62` | `1aa3558993792a62323fa72370e95dc1c2e011a6dae71cac7ce06ae57a98d6c9` | `d47a6c0dbf2a734561688084ff7f82fcd3c3a7491890ed8e71f06935a4ccc4b6` |
 
 上述10个pytest父wall各按attempt唯一计账，合计`47.17164364620112 s`；V5 ledger现有203项、SHA `a4514aa3499fe1df305317b65de91039214b178dd288c3f9e90ac903278c3fa8`。失败输出和源码哈希边界仍在各ignored attempt目录。MPI2 tiny合同验证不证明MPI8完整FE或生产残差通过。后续本次warm package阶段没有再跑pytest；也没有新增FE/QEP/packet验证或service dispatch。
+
+## 2026-10-10：V12 bounded modal policy serial/MPI2 attempts
+
+该组15个真实pytest parent attempt的逐项原始绑定见 [attempt compact](../../../results/task041_v12_a2_setup_public_bridge_scope_fix_fixturefix16_20261010T0814Z/v12_a2_test_attempts_compact.json)，SHA `6b7338fb08996301c37d2c637ab7637d0a729c8c3de44e777cfcd7663dd63406`。compact为每个attempt保留source SHA、argv/stdout/attempt hash、pytest可见pass/fail/skip、parent wall和清理记录。测试V5账本新增 `184.67645929614082 s`，218→233项，末态ledger SHA `18bca854947d3dbfecc2081153469e70d5b395dd70e507bd0a1c3ac9400378f1`；ABI及preflight wall不计入。
+
+| Attempt | 可见结果 | parent wall（s） | 分类/说明 |
+|---|---:|---:|---|
+| `restart64_cost_serial_mpi2_retry_blis_0742Z:serial` | 1 pass / 1 fail | 5.352422140 | fixture未接受local row-count参数 |
+| `fixturefix_0745Z:serial` | 3 pass / 1 fail / 3 skip | 3.232351317 | candidate所需restart32证据缺失 |
+| `fixturefix2_0743Z:serial` | 2 pass / 1 fail / 2 skip | 3.222780675 | 同类restart32证据fixture缺失 |
+| `fixturefix3_0744Z:serial` | 1 pass / 1 fail / 1 skip | 3.251890174 | 同类restart32证据fixture缺失 |
+| `fixturefix4_0745Z:serial` | 1 pass / 1 fail | 3.253733454 | production restart-helper cleanup scope错误 |
+| `fixturefix5_0746Z:serial` | 1 pass / 1 fail | 3.212961526 | fixture outer-PC调用顺序错误 |
+| `fixturefix6_0747Z:serial` | 2 pass / 1 fail | 3.246939476 | backup stop决策delegate缺失 |
+| `fixturefix7_0748Z:serial` | 0 pass / 1 fail | 2.178591863 | fixture identity比较错误 |
+| `fixturefix8_0749Z:serial` | 1 pass / 1 fail | 3.244412911 | fixture diagnostics键期望错误 |
+| `fixturefix9_0751Z:serial` | 2 pass | 3.251163491 | `test_v12_backup_does_not_fallback_after_primary_matmult_exception`；`test_task041_v12_backup_service_and_supervisor_bind_one_switch` |
+| `fixturefix9_0751Z:mpi2` | wrapper摘要`1 failed, 12 passed`；rank summary仅1/2，未保存rank身份 | 133.939134262 | `test_v12_finite_stop_waits_for_resolved_trial_and_two_fresh_windows` 的owner-only snapshot断言在non-owner看到空列表后rank-local失败，另一rank等待后续collective；不得据此声称任一rank或MPI2组通过，保留并清场 |
+| `fixturefix10_0755Z:mpi2` | 两rank各5 pass | 3.255342793 | 五个test350合同：backup normal refusal、outer stagnation、finite stop、restart32 restore-capacity refusal、primary MatMult exception不fallback；不是restart64选择/捕获测试 |
+| `fixturefix13_0805Z:serial` | 0 pass / 1 fail | 4.318557923 | staged bridge scope层级问题 |
+| `fixturefix15_0811Z:serial` | 0 pass / 1 fail | 4.323737307 | default trial state未初始化 |
+| `fixturefix16_0814Z:serial` | 2 pass | 5.392439984 | 最后setup helper与显式public route回归 |
+
+各行只总结各自attempt，不把失败attempt里的部分pass并成最终源码整组通过。源SHA在每个attempt间变化，完整逐路径SHA不在此重复抄写，见compact。上述tiny wrapper/小矩阵合同不是真实FE，不产生物理资格，也不说明生产内层一定达到`1e-3`。V12最终源码commit为 `eca72c8b12e2b979f919cb5b69578ad99111fef0`；source binding包含34 runtime+5 test，SHA `ecfbf7c4650fa47951b8a5a727717b1edb68d428d75146dedc56bfbf1e8294bb`。

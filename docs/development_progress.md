@@ -3025,3 +3025,37 @@ W0.7独立 warm package 已完成实际host双样本与MPI8 native ABI门，当�
 包入口为[Response V13](task041_mpi1_shortwave_hybrid_capacity/response_v13.md)及[delivery V11](task041_mpi1_shortwave_hybrid_capacity/outcomes/shortwave_delivery_v11.md)；机器执行契约为 `results/task041_v11_w0p7_fixed_physical_balh_once_warm_preparation_20261009T142126Z/execution_contract.json`，post-ABI identity receipt为同目录`post_abi_identity_final.json`。producer packet仍复用原manifest/identity，当前QEP=0；正式链的validator/hydration尚未执行。
 
 仍保持PORD、matched L20/N29、P4 target `5e-13/max2`、fixed-Q单修正与 `1e-10` 门、8次SH/9+1、outer五门和完整恢复物理合同。资源cap/warning/W=`85,899,345,920/77,309,411,328/8,589,934,592 B`，node0 floor `412,316,860,416 B`，swap observe-only，不设elapsed强停。以上不是容量或FE资格。本候选等待主控对这一精确sealed argv作最后一次dispatch决定。W5通道问题按用户决定延期处理；W2不得延误0.7主线。
+
+## 2026-10-10：Review V12 W0.7 bounded modal 代码与 warm 准备
+
+### 背景与选择
+
+此前W0.7 warm consumer能够完成两侧P4 numeric，但fixed-H6模态GMRES在8步时不能满足内部`1e-3`目标，作业因此尚未走完原外层与物理恢复。V12代码给注册pilot一份明确、有上限的策略：先按原fixed-H6动作求解；仅当primary KSP正常返回、输入未被改动、iterate可信且独立模态残差满足允许条件，才把近似向量作为PC使用，或在安全入口最多切换一次fixed physical BAL_H。此举给原right-FGMRES有限继续机会，不能把内部近似说成原方程通过。原五项全局残差、物理输出和恢复门不变。
+
+### 基线、实现与验证
+
+| 项目 | 当前事实 | 解释与边界 |
+|---|---|---|
+| 基线与代码 | commit `eca72c8b12e2b979f919cb5b69578ad99111fef0`，parent `8af296d9cbe41e7132e9e623574d9b9a5fb5fdda`；11个审核路径；upstream 0/0 | 仅Task041研究路径；不改变ordinary default |
+| 提交文件 | 2 workflow、4 launcher/service/supervisor、2 solver、3 tests | 路径详见[Response V14](task041_mpi1_shortwave_hybrid_capacity/response_v14.md) |
+| 测试 | 15个pytest parent attempts，唯一wall `184.67645929614082 s`；V5 233项/SHA `18bca854947d3dbfecc2081153469e70d5b395dd70e507bd0a1c3ac9400378f1` | serial、MPI2和public边界分批通过；rank-local断言等待、fixture和接线失败保留，不声称最终commit同SHA单次全组通过。compact SHA `6b7338fb08996301c37d2c637ab7637d0a729c8c3de44e777cfcd7663dd63406` |
+| source binding | 34 runtime + 5 test，39条；SHA `ecfbf7c4650fa47951b8a5a727717b1edb68d428d75146dedc56bfbf1e8294bb` | HEAD blob OID/hash与工作树逐项一致；source hashes按attempt留档 |
+
+### Warm准备与结果边界
+
+| 准备项 | 记录值 | 状态 |
+|---|---|---|
+| 包 | `results/task041_v12_w0p7_bounded_modal_backup_policy_only_preparation_20261010T085320Z/`；manifest列17项payload | SHA256SUMS通过；dispatch字段为false，原父包保留为请求冲突的负准备证据 |
+| config / argv | `d9dcbb98be62870d1db14e9da1a206d9c00b80a7534e81d6c85be71646bae460` / `849ee146a1a2548a5ef51e428d721470f79b7e3a6319e4f261364661edb91674` | `modal_feedback_method=null`，public argv无standalone method flag，仅保留fixed-H6与V12 policy；service parent/ExecStopPost绑定同一config路径 |
+| unit / root | `task041-v12-w0p7-bounded-modal-backup-policy-only-cpu10-11-14-15-16-17-18-19-20261010T085320Z.service` / `results/task041_v12_w0p7_bounded_modal_backup_policy_only_run_20261010T085320Z/` | 父包08:24 UTC host样本为历史证据，不是该派生unit/runroot的fresh门；本派生身份需重新检查 |
+| 模型与资源 | W0.7 reduced，p6/h0.70/M400/MPI8、matched L20/N29/h20/29；hard/warning/W `85,899,345,920/77,309,411,328/8,589,934,592 B`；node0 floor `412,316,860,416 B` | swap仅观察、无elapsed stop；cap是运行限制而非预估峰值 |
+| producer/ABI | producer source `2708214386d38bd69f73e6b196c8ed843bb53d81`，原manifest/identity复用，QEP=0；桥SHA `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b` | 未预读shards或预跑validator；复用MPI8 ABI只证明旧精确native栈/map/桥，ABI源HEAD较早，不是当前V12 Python源测试 |
+| service / CLI入口 | receipt SHA `9ba7bfc5699588d64a9a5d8210580cd6262ee881b88cee4d572c35985b27f720` | service resolve为pure fixed-H6 primary + once-backup policy；public `--validate-only`返回valid，只读五个小envelope，不读shards、不调用launcher、不运行QEP/FE |
+| Host admission | 父包 raw/assessment SHA `9afef4e5aac0bdff309040984653965c9e680730f3ab43e9bb037e6884ea1a0a` / `ae4fc65137778eab4841529c14158175d324c978f01e6fab5f117a1b3bffba82` | 08:24 UTC两点样本只属父包；085320Z派生包自身fresh host双样本尚未运行 |
+| 数值结果 | 尚无本包Invocation、两侧fresh numeric gate、outer、五真残差、恢复或完整物理量 | 全部`not_run`；无W0.7 PASS或资格 |
+
+host raw `9afef4e5aac0bdff309040984653965c9e680730f3ab43e9bb037e6884ea1a0a`及assessment `ae4fc65137778eab4841529c14158175d324c978f01e6fab5f117a1b3bffba82`记录了2026-10-10 08:24 UTC样本：当时socket0/node0候选CPU无固定数值用户任务，Task039/042在map外；node0、host、cgroup与磁盘门通过，`performance_not_isolated=true`。这些是采样时事实，不能替代正式启动时的fresh gate。详细门值、包交叉哈希与producer小封套见[进度记录](task041_mpi1_shortwave_hybrid_capacity/outcomes/w0p7_inexact_pc_progress_v12.md)及ignored package。
+
+### 当前决定与未完成项
+
+本阶段完成实现、定向合同测试和启动准备；**没有dispatch**。待主控审核sealed argv和之后fresh门。目标50×25 nm、约2 TB整机与48 h全计算仍未完成。W5弱显著级按用户决定延期处理，旧失败保留；W2不延误W0.7主线。
