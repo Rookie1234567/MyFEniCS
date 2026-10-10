@@ -1,0 +1,325 @@
+{
+  "physical_descriptor": {
+    "geometry": {
+      "scale_fraction": "7/135",
+      "cells": 80,
+      "axes_nm": {
+        "x": [
+          0.0,
+          0.8555555555555555,
+          1.2962962962962963,
+          1.737037037037037,
+          2.5925925925925926
+        ],
+        "y": [
+          0.0,
+          0.32407407407407407,
+          0.6481481481481481,
+          0.9722222222222222,
+          1.2962962962962963
+        ],
+        "z": [
+          -0.5185185185185185,
+          0.0,
+          2.074074074074074,
+          4.148148148148148,
+          6.222222222222222,
+          6.7407407407407405
+        ]
+      },
+      "notch_box_nm": [
+        1.2962962962962963,
+        1.737037037037037,
+        0.32407407407407407,
+        0.9722222222222222,
+        2.074074074074074,
+        4.148148148148148
+      ],
+      "notch_expected_changed_cells": 2,
+      "notch_rule": "actual center in box and original Si grating; do not repeat along y"
+    },
+    "materials": {
+      "canonical_table": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "Si_n": [
+        0.999885140474,
+        4.32477054e-06
+      ],
+      "epsilon": "n*n",
+      "mu_r": [
+        1.0,
+        0.0
+      ]
+    },
+    "incidence": {
+      "wavelength_nm": 0.7,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 5.0,
+      "polarization": "s",
+      "amplitude": [
+        1.0,
+        0.0
+      ]
+    },
+    "discretization": {
+      "degree": "per explicit case",
+      "volume_form": "complete Ckappa trial/test",
+      "surface_quadrature_degree": 47,
+      "independent_surface_reference_q": 63
+    },
+    "boundary": {
+      "Floquet": "xy complex high order canonical moments",
+      "manual_m": [
+        -11,
+        11
+      ],
+      "manual_n": [
+        -4,
+        4
+      ],
+      "sides": [
+        "top",
+        "bottom"
+      ],
+      "polarizations": [
+        "s",
+        "p"
+      ],
+      "complete_modes": 828,
+      "all_q": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "memory_budget": {
+    "planning_gib": 64,
+    "warning_gib": 80,
+    "sampled_stop_gib": 96,
+    "neighbor_growth_gib": 384,
+    "extra_cache_workspace_gib": 2
+  },
+  "assembly_row_cap": 2000000,
+  "historical_cost_unknown": "preserved; control CPU/Git and past unobserved costs unknown",
+  "schema": "task042.v69.exact-tetra-p5-DtN.v1",
+  "batch": "V69_EXACT_TETRA_CONDENSATION_AND_P5_DTN",
+  "review_commit": "0f7d19e692b49ff06557d95891a843a3803fcdd5",
+  "stages": [
+    "PREFLIGHT",
+    "PREPARE_C5",
+    "C5",
+    "M5",
+    "VERIFY_COST"
+  ],
+  "new_storage_bytes": 51539607552,
+  "task_storage_bytes": 601295421440,
+  "free_bytes": 53687091200,
+  "evidence_reserve_bytes": 536870912,
+  "total_loaded_seconds": 36000,
+  "numeric_audit_output_reserve_seconds": 3600,
+  "maximum_new_solves": 3,
+  "maximum_body_builds": 0,
+  "historical_loaded_known_lower_seconds": 292060.3758982854,
+  "case_wall_seconds": {
+    "PREFLIGHT": 2700,
+    "PREPARE_C5": 7200,
+    "C5": 18000,
+    "M5": 14400,
+    "VERIFY_COST": 9000
+  },
+  "cases": {
+    "C5": {
+      "case": "NOTCH",
+      "degree": 5,
+      "h_ratio": 2,
+      "cells": 25576,
+      "independent": 1943745,
+      "rows": 1944573,
+      "complete_modes": 828,
+      "triangle_backend": "reachable_owner_support",
+      "assembly_row_cap": 2000000,
+      "memory_budget": {
+        "planning_gib": 256,
+        "warning_gib": 320,
+        "sampled_stop_gib": 384,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "mesh_override": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v64/task042_v64_resolution_preflight_20261008T134653003445Z/mesh_mate.npz",
+        "sha256": "c470274ab6c64cee0b8eef09dbcdadadfac4c6ca229d7fc2b6e608ded62f540c",
+        "members": {
+          "geometry_x": {
+            "shape": [
+              5168,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "b9ea4991759723ee9dd8d60911210d10970a1cba97022e882bbfff9a0e341922"
+          },
+          "geometry_dofmap": {
+            "shape": [
+              25576,
+              4
+            ],
+            "dtype": "int32",
+            "sha256": "15636635cd32d6044a23a1f0cfc1fb4fa705499d616f779883bf8ff53fe92161"
+          },
+          "cell_tags": {
+            "shape": [
+              25576
+            ],
+            "dtype": "int32",
+            "sha256": "3735ebf585ff18f52f473dab1dfded80f8b551246152f7b3f054baf70a95c6a5"
+          },
+          "regular_tags": {
+            "shape": [
+              25576
+            ],
+            "dtype": "int32",
+            "sha256": "c66232ef0de0c2ead460034ab774e2760978741ac0335c7e7b46e7c7a31a2f5c"
+          },
+          "original_parent_cell": {
+            "shape": [
+              25576
+            ],
+            "dtype": "int64",
+            "sha256": "700a08daf6ff3c8b91139a8d2533a909c57268a7fa06f9a34dc6e0035a839a24"
+          }
+        }
+      },
+      "notch_tetrahedra": 1000
+    },
+    "M5": {
+      "case": "NOTCH",
+      "degree": 5,
+      "h_ratio": 2,
+      "cells": 25576,
+      "independent": 1943745,
+      "rows": 1944933,
+      "complete_modes": 1188,
+      "triangle_backend": "reachable_owner_support",
+      "assembly_row_cap": 2000000,
+      "memory_budget": {
+        "planning_gib": 256,
+        "warning_gib": 320,
+        "sampled_stop_gib": 384,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "mesh_override": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v64/task042_v64_resolution_preflight_20261008T134653003445Z/mesh_mate.npz",
+        "sha256": "c470274ab6c64cee0b8eef09dbcdadadfac4c6ca229d7fc2b6e608ded62f540c",
+        "members": {
+          "geometry_x": {
+            "shape": [
+              5168,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "b9ea4991759723ee9dd8d60911210d10970a1cba97022e882bbfff9a0e341922"
+          },
+          "geometry_dofmap": {
+            "shape": [
+              25576,
+              4
+            ],
+            "dtype": "int32",
+            "sha256": "15636635cd32d6044a23a1f0cfc1fb4fa705499d616f779883bf8ff53fe92161"
+          },
+          "cell_tags": {
+            "shape": [
+              25576
+            ],
+            "dtype": "int32",
+            "sha256": "3735ebf585ff18f52f473dab1dfded80f8b551246152f7b3f054baf70a95c6a5"
+          },
+          "regular_tags": {
+            "shape": [
+              25576
+            ],
+            "dtype": "int32",
+            "sha256": "c66232ef0de0c2ead460034ab774e2760978741ac0335c7e7b46e7c7a31a2f5c"
+          },
+          "original_parent_cell": {
+            "shape": [
+              25576
+            ],
+            "dtype": "int64",
+            "sha256": "700a08daf6ff3c8b91139a8d2533a909c57268a7fa06f9a34dc6e0035a839a24"
+          }
+        }
+      },
+      "notch_tetrahedra": 1000
+    }
+  },
+  "memory_profiles": {
+    "default": {
+      "planning_gib": 64,
+      "warning_gib": 80,
+      "sampled_stop_gib": 96,
+      "neighbor_growth_gib": 384,
+      "extra_cache_workspace_gib": 2
+    },
+    "C5": {
+      "planning_gib": 256,
+      "warning_gib": 320,
+      "sampled_stop_gib": 384,
+      "neighbor_growth_gib": 384,
+      "extra_cache_workspace_gib": 2
+    },
+    "M5": {
+      "planning_gib": 256,
+      "warning_gib": 320,
+      "sampled_stop_gib": 384,
+      "neighbor_growth_gib": 384,
+      "extra_cache_workspace_gib": 2
+    }
+  },
+  "cumulative_case_seconds": {
+    "C5": 25200,
+    "M5": 14400
+  },
+  "frozen_mesh_spec": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v64/task042_v64_resolution_preflight_20261008T134653003445Z/local_mesh_spec.json",
+    "sha256": "7e3aab7b2458ec65db37762fcab0dee84ad3c4f060a46fbab3a27fbe33dcea1e"
+  },
+  "forecast_numeric_upper_seconds": 8000,
+  "prepared_parent": {
+    "namespace": "v67",
+    "role": "PREPARE",
+    "checkpoint_manifest_sha256": "4516d89efe3d919e8e658b8fe497b606cac5c355bf5c753b6b2cb503130cd0bf"
+  },
+  "original_qualification": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v67/task042_v67_local_p5_solve_complete_20261009T130237983420Z/body_original_action_qualification.json",
+    "sha256": "06315a299808ff828299522b59282591add67c7e85ef1dcf49e7f2e33e62c7a6"
+  },
+  "original_pairs": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v67/task042_v67_local_p5_solve_complete_20261009T130237983420Z/original_operator_pairs.json",
+    "sha256": "b7dfbdb3480ad44e6d9607c0b609c8a9c1c8e8cb30f959ffaff28e386c902ae3"
+  },
+  "unchanged_numerical_closure": [
+    "src/solvers/independent_tetra_reference.py",
+    "src/solvers/independent_tetra_fields.py",
+    "src/solvers/tetra_coefficient_action.py",
+    "src/solvers/tetra_body_checkpoint.py",
+    "src/solvers/tetra_boundary_support.py",
+    "src/solvers/fixed_phase_fem.py",
+    "src/solvers/fullspace_dtn_action.py",
+    "src/solvers/dtn_port_3d.py",
+    "src/constraints/floquet_3d.py",
+    "src/constraints/floquet_3d_high_order.py",
+    "src/constraints/high_order_floquet_trace.py",
+    "src/common/analytic_fields_3d.py",
+    "src/common/config_3d.py",
+    "src/common/modes_3d.py",
+    "src/common/optical_material_table.py",
+    "input/materials/si_optical_constants_v1.json"
+  ],
+  "review_sha256": "4c02963f3bd768ec4e083f3d05fb8b645686c041938df9a4f6a2601abd445864",
+  "reduced_row_cap": 1300000,
+  "recovery_cache_bytes": 4294967296,
+  "workspace_bytes": 2147483648
+}

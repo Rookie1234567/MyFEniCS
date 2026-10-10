@@ -62,7 +62,7 @@ def release_prepared_body(prepared):
             prepared.pop(name,None)
 
 
-def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,action_factory=None):
+def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,action_factory=None,system_adapter=None):
     scope=scope_module
     budget=scope.memory_budget(role) if hasattr(scope,"memory_budget") else scope.plan_record()["memory_budget"]
     from petsc4py import PETSc
@@ -140,7 +140,17 @@ def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,
         if prepared is not None:
             from .tetra_body_checkpoint import qualification_receipt
             prepared['qualification']=qualification_receipt(prepared['checkpoint'],errors,identity,state,folder/'body_original_action_qualification.json')
-    phases=[_mode_boundary_phase(m,s['cfg']) for m in b['modes']];left,right=port_coordinate_scales(n,H,phases)
+    full_rhs=rhs
+    recovery=None
+    if system_adapter is not None:
+        recovery=system_adapter(s,A,rhs,folder,journal,state,b,oracle)
+        A=recovery.matrix;rhs=recovery.condense_rhs(full_rhs)
+        release_prepared_body(prepared)
+        del K,C,D;gc.collect()
+        journal.event('full_operator_and_prepared_owners_released_before_condensed_factor',
+                      full_rows=len(full_rhs),retained_rows=A.shape[0])
+    numerical_n=A.shape[0]-len(H)
+    phases=[_mode_boundary_phase(m,s['cfg']) for m in b['modes']];left,right=port_coordinate_scales(numerical_n,H,phases)
     scaled=(sparse.diags(left)@A@sparse.diags(right)).tocsr();matrix=petsc_matrix(scaled)
     factor=None
     try:
@@ -160,17 +170,32 @@ def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,
                     if relative(res,rhs)<=1e-10:break
                     r.array[:]=left*res;factor.solve_repeated(r,sol);x+=right*sol.array
         finally:r.destroy();sol.destroy()
+        reduced_true=relative(rhs-A@x,rhs)
+        snapshot_residual=rhs-A@x
+        if recovery is not None:
+            # Returned retained coefficients are durable before reconstruction.
+            retained_receipt=save_arrays(folder/'retained_returned.npz',trace_port=x,rhs=rhs,residual=snapshot_residual)
+            write_json(folder/'retained_audit_pending.json',dict(status='RECOVERY_PENDING',arrays=retained_receipt,
+                recovery_checkpoint=recovery.receipt,role=role,source=state))
+            with journal.measured('exact_original_all_internal_recovery'):
+                x=recovery.recover(x,full_rhs)
+            snapshot_residual=recovery.lift_residual(snapshot_residual)
         # Commit the unique legal returned vector before ANY derived field.
         native=s['P']@x[:n]
-        arrays=save_arrays(folder/'solution.npz',x=x,u_independent=x[:n],u_native=native,port=x[n:],rhs=rhs,residual=rhs-A@x,
+        arrays=save_arrays(folder/'solution.npz',x=x,u_independent=x[:n],u_native=native,port=x[n:],rhs=full_rhs,residual=snapshot_residual,
             kappa=s['kappa'],masters=s['masters'],slaves=s['floquet'].mpc.slaves,P_data=s['P'].data,P_indices=s['P'].indices,P_indptr=s['P'].indptr,
             **s['geometry'])
         pending=dict(status='AUDIT_PENDING',role=role,arrays=arrays,source=state,spec=s['spec'],physical=s['physical'],form=form,
             mode_sha256=b['digest'],boundary_arrays={'q47':b['arrays'],'q63':oracle['arrays']},nnz=A.nnz,capacity=cap,
-            production_true=relative(rhs-A@x,rhs),new_numeric_factors=1,new_complete_solves=1)
+            production_true=reduced_true,new_numeric_factors=1,new_complete_solves=1)
+        if recovery is not None:
+            pending.update(exact_condensation=True,condensed_checkpoint=recovery.receipt,
+                condensed_true=reduced_true,full_rows=len(full_rhs),retained_rows=A.shape[0],
+                residual_snapshot_kind='exact algebraic lift of retained residual; original measured independently below',
+                condensed_service_calls=recovery.calls,retained_returned=retained_receipt)
         if prepared is not None:pending.update(body_checkpoint=prepared['checkpoint'],body_qualification=prepared['qualification'],prepared_start=True)
         write_json(folder/'returned_audit_pending.json',pending)
-        aud,res,orrhs=(core.audit(s,oracle,x,rhs,journal) if independent is None else independent.audit(x,rhs,journal))
+        aud,res,orrhs=(core.audit(s,oracle,x,full_rhs,journal) if independent is None else independent.audit(x,full_rhs,journal))
         raw=save_arrays(folder/'independent_original.npz',residual=res,rhs=orrhs,action=orrhs-res,x=x)
         aud['arrays']=raw;pending.update(audit=aud,equation_pass=aud['pass_gate'],original_operator_witness=identity)
         write_json(folder/'returned_audit_pending.json',pending)
@@ -178,7 +203,10 @@ def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,
         if factor is not None:factor.destroy()
         matrix.destroy()
     release_prepared_body(prepared)
-    del A,K,scaled,C,D;gc.collect();journal.event('global_body_augmented_and_factor_released')
+    del A,scaled
+    if recovery is None:del K,C,D
+    else:del recovery
+    gc.collect();journal.event('global_body_augmented_and_factor_released')
     output,accuracy=complete_output(s,b,x,folder,journal)
     result=dict(pending,status='COMPLETED',output=output,accuracy=accuracy,
         accuracy_pass=accuracy is not None and accuracy['pass_gate'] and aud['pass_gate'],deployment_complete=True,timings=journal.timings,calls=journal.calls)

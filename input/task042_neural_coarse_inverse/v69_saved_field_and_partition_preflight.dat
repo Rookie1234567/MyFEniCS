@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v69]
+stage = "PREFLIGHT"
+run_id = "task042_v69_saved_field_and_partition_preflight"

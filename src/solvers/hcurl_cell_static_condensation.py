@@ -214,6 +214,8 @@ def build_explicit_cell_static_condensation(
     A: PETSc.Mat,
     b: PETSc.Vec,
     owned_cell_interiors: Iterable[Iterable[int] | np.ndarray],
+    *,
+    cell_processor=None,
 ) -> CellStaticCondensationSystem:
     """Form ``A_tt - sum(A_ti A_ii^-1 A_it)`` and its condensed RHS.
 
@@ -307,10 +309,13 @@ def build_explicit_cell_static_condensation(
             trace_original_columns,
         ) = _dense_cell_blocks(A, A_transpose, b, interior)
         solve_started = perf_counter()
-        solved = np.linalg.solve(
-            A_ii,
-            np.column_stack((A_it, b_i)),
-        )
+        if cell_processor is None:
+            solved = np.linalg.solve(A_ii, np.column_stack((A_it, b_i)))
+        else:
+            # Opt-in transaction writer uses this same local block algebra.
+            # The default assembled H(curl) path is unchanged.
+            solved = cell_processor(A_ii, A_it, A_ti, b_i, interior,
+                                    trace_original_rows, trace_original_columns)
         correction = A_ti @ solved[:, : A_it.shape[1]]
         rhs_correction = A_ti @ solved[:, -1]
         local_solve_seconds += perf_counter() - solve_started
