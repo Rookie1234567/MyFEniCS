@@ -94,3 +94,5 @@ FTT_MAP_EQUIVALENCE_PASS / FTT_EXECUTION_COST_GATE_PASS / OPTIMIZATION_SCHEDULE_
 0.7nm缩小pilot未通过无标签FTT M5联合前置，NOT_RUN，未预注册空输入。原50×25×140nm、Si17/120nm、λ0.7完整三维FE、decimal2e12B整机、ownswap/OOC0和172800s完整冷流程仍未达成。M3600较好态、最终退化、D0成本否决/D1未运行及所有历史失败/UNKNOWN保留。本支不转去W0/W1/传统PC/存储/主线，也不给其他支线安排工作。
 
 有限GitHub实际呈现与本地Markdown结构检查分列，不因网页错误重做健康数值。最终准确HEAD、显式tracking、ahead/behind、clean、锁FREE和自身清场见最终消息/交付收据；文档HEAD不冒充数值source。只推本分支，不amend/强推/merge，完成后等待review，不通知隔壁、不自动开下一批。
+
+最终封存补充（不改变结果正文/数值source）：[资源与清场尾账](outcomes/records/resource_and_cleanup_tail_v39.json)、[对象与AD预算](outcomes/records/memory_lifecycle_v39.json)、[有限实际GitHub视图](outcomes/records/render_check_v39.json)。截图绑定发布10f06e6938a8624681cd49f30d4e090d0433f9ed；后续仅CSV的LF换行/收据与本段链接。回执可见数值行正常；专题/补充的表格样式有部分限制，最后行/页面后半/所有表未授全页视觉PASS，不因呈现限制重做健康数值。关闭前源码和数值不变。

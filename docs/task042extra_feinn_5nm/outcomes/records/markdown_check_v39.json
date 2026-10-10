@@ -32,18 +32,37 @@
       "scope": "Selected full new/authority page",
       "result": {
         "path": "docs/task042extra_feinn_5nm/response_v39.md",
+        "sha256": "6654671966cd55158d465ca00fa3e45d23ce0fe821e104b9246f16fe0a125091",
+        "checked_scope": "entire page",
+        "markdown_tables": 3,
+        "parsed_tables": 3,
+        "math_fences": 0,
+        "links": 15
+      },
+      "before_append_publication_result": {
+        "path": "docs/task042extra_feinn_5nm/response_v39.md",
         "sha256": "1c55bf7238f02230ab20553b7e8ecb67c5595f07c31ba6e43728e476b17610a2",
         "checked_scope": "entire page",
         "markdown_tables": 3,
         "parsed_tables": 3,
         "math_fences": 0,
         "links": 12
-      }
+      },
+      "only_footer_links_added": true
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/ftt_structure_aware_v39.md",
       "scope": "Selected full new/authority page",
       "result": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/ftt_structure_aware_v39.md",
+        "sha256": "4a4b83e0bec63932408b865a51a722d643059a934a6e3f49ff48ab612d3e11b5",
+        "checked_scope": "entire page",
+        "markdown_tables": 3,
+        "parsed_tables": 3,
+        "math_fences": 0,
+        "links": 9
+      },
+      "before_append_publication_result": {
         "path": "docs/task042extra_feinn_5nm/outcomes/ftt_structure_aware_v39.md",
         "sha256": "be4833b91d41793dfc4442d4ddd1e03c844a5ec6ad3c948f4be9c83f2f378b53",
         "checked_scope": "entire page",
@@ -51,7 +70,8 @@
         "parsed_tables": 3,
         "math_fences": 0,
         "links": 6
-      }
+      },
+      "only_footer_links_added": true
     },
     {
       "path": "docs/task042extra_feinn_5nm/README.md",

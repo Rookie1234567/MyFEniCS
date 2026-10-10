@@ -1,8 +1,83 @@
 {
   "schema": "task42extra.v39.render.v1",
-  "status": "NOT_RUN_PENDING_PUBLICATION",
-  "actual_visual_pass": false,
-  "scope": "Finite GitHub published key viewports; no whole-page or historical visual certification",
-  "numerical_work_complete": true,
-  "web_errors_do_not_restart_numerics": true
+  "initial_status": "NOT_RUN_PENDING_PUBLICATION",
+  "publication_sha": "10f06e6938a8624681cd49f30d4e090d0433f9ed",
+  "attempts": [
+    {
+      "name": "review",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/15d20ed4f109fef52376a13e58c1204bce89d588/docs/task042extra_feinn_5nm/review_report_v38.md",
+      "published_sha": "15d20ed4f109fef52376a13e58c1204bce89d588",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_seconds": 38.291527923895046,
+      "published_blob_sha256": "5a8fccef901a42c57d5975c2221b847b0c7b54c38524903d4434c39850efe401",
+      "screenshot": "tmp/task42extra/v39/render_views/review/page.png",
+      "screenshot_sha256": "51e7af16e15a923ab89069d54f344e94d601d53a211db96c3616268dc34bd416",
+      "inspection": {
+        "visual": "PASS_VISIBLE_SCOPE_ONLY",
+        "visible_first_result_table": "PASS",
+        "first_formula": "PARTIAL_VISIBLE_NO_FULL_FORMULA_CERTIFICATION",
+        "unseen_tables_and_page_tail": "NOT_VERIFIED"
+      }
+    },
+    {
+      "name": "addendum",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/812a7818aa072379885017336bf63f9f80aa4a6c/docs/task042extra_feinn_5nm/review_report_v38_execution_addendum.md",
+      "published_sha": "812a7818aa072379885017336bf63f9f80aa4a6c",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_seconds": 41.36368063488044,
+      "published_blob_sha256": "cabdd520d772e5dffc1659ecb136d5ffc5521d1c585d553fca3f1c0a95e91e43",
+      "screenshot": "tmp/task42extra/v39/render_views/addendum/page.png",
+      "screenshot_sha256": "e74495da274eab124ad1dafa29eeca49e8596ebe3d4b5abdcba72c991228d678",
+      "inspection": {
+        "visual": "PARTIAL_STYLE_LOADING_NOT_FULL_VISUAL_PASS",
+        "visible_body_and_cost_formula": "RENDERED",
+        "table_css_and_full_page": "NOT_QUALIFIED"
+      }
+    },
+    {
+      "name": "structure",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/10f06e6938a8624681cd49f30d4e090d0433f9ed/docs/task042extra_feinn_5nm/outcomes/ftt_structure_aware_v39.md",
+      "published_sha": "10f06e6938a8624681cd49f30d4e090d0433f9ed",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_seconds": 64.44700045813806,
+      "published_blob_sha256": "be4833b91d41793dfc4442d4ddd1e03c844a5ec6ad3c948f4be9c83f2f378b53",
+      "screenshot": "tmp/task42extra/v39/render_views/structure/page.png",
+      "screenshot_sha256": "01d8d777c34d3d51ccd152188763f6060b8085e75aa1d102b9b4d519b0a0dc8e",
+      "inspection": {
+        "visual": "PARTIAL_TABLE_STYLING_VISIBLE_CONTENT_RENDERED",
+        "visible_performance_table_content": "READABLE_AND_ALIGNED",
+        "observed_style_limitation": "Table border/background styling absent in this capture; do not certify fully styled GitHub layout",
+        "full_result_table_and_page_tail": "NOT_VERIFIED_VIEWPORT_CROPPED"
+      }
+    },
+    {
+      "name": "response",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/10f06e6938a8624681cd49f30d4e090d0433f9ed/docs/task042extra_feinn_5nm/response_v39.md",
+      "published_sha": "10f06e6938a8624681cd49f30d4e090d0433f9ed",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_seconds": 39.9297837279737,
+      "published_blob_sha256": "1c55bf7238f02230ab20553b7e8ecb67c5595f07c31ba6e43728e476b17610a2",
+      "screenshot": "tmp/task42extra/v39/render_views/response/page.png",
+      "screenshot_sha256": "bbda8b9063f4cdc6fe4a4fa6492032194000b6e9e0cd693f9a4383689fc96977",
+      "inspection": {
+        "visual": "PASS_VISIBLE_SCOPE_ONLY",
+        "header_and_visible_numeric_rows": "PASS",
+        "full_first_result_table": "LAST_JOINT_ROW_PARTIALLY_CROPPED_NOT_FULL_TABLE_CERTIFICATION",
+        "unseen_cost_tables_and_page_tail": "NOT_VERIFIED"
+      }
+    }
+  ],
+  "scope": "Actual GitHub top viewport only; no whole-page/full-table visual certification; visual inspection separate",
+  "whole_page_and_all_tables_visual_pass": false,
+  "old_render_failures_preserved": true,
+  "numerical_results_not_reexecuted": true,
+  "supervisor": {
+    "path": "tmp/task42extra/v39/render01/summary.json",
+    "sha256": "34d4f58bc968b72c3cbacddddb6abd438dce58d28579d4d2399f789b1bcf5291",
+    "bytes": 2539
+  }
 }

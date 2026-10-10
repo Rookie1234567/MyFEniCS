@@ -1,0 +1,33 @@
+{
+  "schema": "task42extra.v39.memory-plan.v1",
+  "new_static_cache_bytes": {
+    "fttnn": 1631140,
+    "chebtt": 1631140
+  },
+  "new_dynamic_cache_bytes": {
+    "fttnn": 438144,
+    "chebtt": 438144
+  },
+  "predicted_AD_microbatch_working_allowance_bytes": 268435456,
+  "AD_allowance_semantics": "Conservative planning allowance, not measured allocator/AD peak; one axis microbatch <=512, maximum core output384 real values per point; graphs released per microbatch",
+  "new_cache_AD_cap_bytes": 1073741824,
+  "internal_temporary_planning_limit_bytes": 12884901888,
+  "numerical_warning_bytes": 12884901888,
+  "numerical_hard_stop_bytes": 17179869184,
+  "original_resource_envelope_planning_cap_field_semantics": "Operational hard RSS admission budget16GiB; distinct from retained-object planning<=12GiB",
+  "model_parameter_bytes": {
+    "fttnn": 72576,
+    "chebtt": 72960
+  },
+  "full_complex_vector_bytes_each": 511488,
+  "full_operator_packet_moments_master_maps_ports_and_physical_recovery_costs_retained": true,
+  "lifecycle": "Training: native+q30+one model/optimizer+bounded core cache+O(N)c/r/dual. Independent rebuild: q30 then q60, old point micrographs released. FE compare: Torch absent, reference/read-only field and quadrature buffers. Serial phases released before next stage.",
+  "large_N_by_P_N_by_rank_squared_global_AD_or_UQ_allocations": false,
+  "sampled_formal_tree_peak_bytes": 759439360,
+  "whole_cold_N1_allocator_peak": "UNKNOWN",
+  "ownswap_and_OOC_bytes": 0,
+  "checkpoint_r_meaning": {
+    "native": "Ac-f: original full native equation residual",
+    "reference_fit": "c-c_ref: coefficient error, not the PDE residual; original equation audits only separately at start/end/final verification"
+  }
+}

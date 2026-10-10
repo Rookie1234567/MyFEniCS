@@ -40,6 +40,32 @@
       "test": "Targeted pure delivery checks only; healthy numerical producers remain frozen",
       "retry": "delivery_checks02",
       "monotonic": 1544156.698375399
+    },
+    {
+      "failure": "Published CSV used default csv.writer CRLF; git diff --check reported trailing whitespace and the shell did not stop the commit",
+      "hypothesis": "CSV data are valid; only repository LF formatting is wrong",
+      "change": "Replace CRLF with LF in compact CSV, retain exact published bytes; no numerical producer changed",
+      "test": "All 400 parsed rows/fields byte-string equal; independent delivery checker rerun and git diff --check",
+      "resume": "Follow-up ordinary sealing commit; no amend/force or numerical rerun",
+      "monotonic": 1544642.181263744,
+      "details": [
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/complex_channels_fit_v39.csv",
+          "old_sha256": "ba8176c8d7f63aac7134a8f2274235344df7bb554ae29554850b52af2060f975",
+          "new_sha256": "29762d7217ac2a269bf05422fcef3d319ad6bb817bc8d81f6862918a458a48c5",
+          "rows": 200,
+          "all_parsed_field_strings_identical": true,
+          "old_bytes_retained": "tmp/task42extra/v39/complex_channels_fit_v39.csv.published_ba8176c8d7f63aac7134a8f2274235344df7bb554ae29554850b52af2060f975"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/complex_channels_native_v39.csv",
+          "old_sha256": "266fb7f5c07976aa24464d3bf829144f940a581323a9dca93d7f14193b054a9a",
+          "new_sha256": "4e21d87056382b7a77a1b110a786b532413eed3bd06f89dc9e11eb1b3e51786c",
+          "rows": 200,
+          "all_parsed_field_strings_identical": true,
+          "old_bytes_retained": "tmp/task42extra/v39/complex_channels_native_v39.csv.published_266fb7f5c07976aa24464d3bf829144f940a581323a9dca93d7f14193b054a9a"
+        }
+      ]
     }
   ],
   "no_healthy_operator_reference_or_training_prefix_replayed": true,
