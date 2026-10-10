@@ -163,6 +163,24 @@ class P6CellPortTerms:
 
 
 @dataclass(frozen=True)
+class P6GeneratedCellPortAction:
+    """One cell's B/D actions generated on demand in bounded mode batches.
+
+    ``apply_B(alpha)`` returns ``(Bi@alpha, Bt@alpha)`` and
+    ``apply_D(x_i, x_t)`` returns the independent raw ``Di@x_i + Dt@x_t``.
+    They must not retain mode-by-cell matrices or infer D from B.
+    ``callback_workspace_bytes`` is the
+    caller-reported upper bound for one callback's additional numerical
+    workspace; it excludes interpreter and native-library internals.
+    """
+
+    port_indices: np.ndarray
+    apply_B: Callable[[np.ndarray], tuple[np.ndarray, np.ndarray]]
+    apply_D: Callable[[np.ndarray, np.ndarray], np.ndarray]
+    callback_workspace_bytes: int = 0
+
+
+@dataclass(frozen=True)
 class P6DirectTracePortTerms:
     """Carrier entries whose volume rows are trace rows, before MPC reduction."""
 
@@ -517,14 +535,15 @@ class _CellActionData:
     trace_from_interior: np.ndarray
     interior_lu: tuple[np.ndarray, np.ndarray]
     Bi: np.ndarray
-    Bt: np.ndarray
+    Bt: np.ndarray | None
     Di: np.ndarray
-    Dt: np.ndarray
+    Dt: np.ndarray | None
     ports: np.ndarray
     Bhat: np.ndarray | None
     Dhat: np.ndarray | None
     XiB: np.ndarray | None
     Hlocal: np.ndarray | None
+    generated_action: P6GeneratedCellPortAction | None
 
 
 def _normalise_port_terms(
@@ -534,19 +553,25 @@ def _normalise_port_terms(
     nt: int,
     appended_rows: int,
     name: str,
-    streamed: bool = False,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray | None]:
-    """Validate one cell's optional carrier block and fill omitted blocks."""
+) -> tuple[
+    np.ndarray,
+    np.ndarray | None,
+    np.ndarray,
+    np.ndarray | None,
+    np.ndarray,
+    np.ndarray | None,
+]:
+    """Validate optional carrier blocks while retaining absent blocks as ``None``."""
 
     if term is None:
         ports = np.empty(0, dtype=PETSc.IntType)
         return (
             np.zeros((ni, 0), dtype=np.complex128),
-            np.zeros((nt, 0), dtype=np.complex128),
+            None,
             np.zeros((0, ni), dtype=np.complex128),
-            np.zeros((0, nt), dtype=np.complex128),
+            None,
             ports,
-            np.zeros((0, 0), dtype=np.complex128),
+            None,
         )
     ports = np.ascontiguousarray(np.asarray(term.port_indices, dtype=PETSc.IntType)).reshape(-1)
     if len(np.unique(ports)) != len(ports) or np.any(ports < 0) or np.any(ports >= appended_rows):
@@ -554,15 +579,9 @@ def _normalise_port_terms(
     np_ = len(ports)
     bi = _complex_matrix(term.Bi, f"{name}.Bi", shape=(ni, np_))
     di = _complex_matrix(term.Di, f"{name}.Di", shape=(np_, ni))
-    bt = np.zeros((nt, np_), dtype=np.complex128) if term.Bt is None else _complex_matrix(term.Bt, f"{name}.Bt", shape=(nt, np_))
-    dt = np.zeros((np_, nt), dtype=np.complex128) if term.Dt is None else _complex_matrix(term.Dt, f"{name}.Dt", shape=(np_, nt))
-    h = (
-        None
-        if streamed and term.H is None
-        else np.zeros((np_, np_), dtype=np.complex128)
-        if term.H is None
-        else _complex_matrix(term.H, f"{name}.H", shape=(np_, np_))
-    )
+    bt = None if term.Bt is None else _complex_matrix(term.Bt, f"{name}.Bt", shape=(nt, np_))
+    dt = None if term.Dt is None else _complex_matrix(term.Dt, f"{name}.Dt", shape=(np_, nt))
+    h = None if term.H is None else _complex_matrix(term.H, f"{name}.H", shape=(np_, np_))
     return bi, bt, di, dt, ports, h
 
 
@@ -594,6 +613,7 @@ class P6CellCondensedAction:
         *,
         H_p: Any | None,
         port_terms: Mapping[int, P6CellPortTerms] | None = None,
+        generated_port_actions: Mapping[int, P6GeneratedCellPortAction] | None = None,
         direct_trace_terms: Sequence[P6DirectTracePortTerms] = (),
         direct_terms_are_owned: bool = False,
         owns_condensed: bool = False,
@@ -610,8 +630,14 @@ class P6CellCondensedAction:
             raise ValueError("port_coupling_mode must be 'cached' or 'streamed'")
         if port_block_layout not in {LEGACY_PORT_LAYOUT, RESEARCH_PORT_LAYOUT}:
             raise ValueError("unknown original/condensed port-block layout")
-        if port_block_layout == RESEARCH_PORT_LAYOUT and port_coupling_mode != "cached":
-            raise ValueError("cached representation requires cached local XiB data")
+        if (
+            port_block_layout == RESEARCH_PORT_LAYOUT
+            and port_coupling_mode != "cached"
+            and not generated_port_actions
+        ):
+            raise ValueError("research layout needs cached XiB or generated streamed port actions")
+        if generated_port_actions and port_coupling_mode != "streamed":
+            raise ValueError("generated per-cell port actions require streamed coupling mode")
         self.port_block_layout = str(port_block_layout)
         self.port_coupling_mode = str(port_coupling_mode)
         self.condensed = condensed
@@ -620,6 +646,7 @@ class P6CellCondensedAction:
         self._streamed_recovery_lu_solve_count = 0
         self._streamed_hhat_lu_solve_count = 0
         self._streamed_max_local_scratch_bytes = 0
+        self._generated_callback_call_count = 0
         # Hlocal contributions are merged into this original carrier block
         # below.  Own the copy explicitly so construction never mutates the
         # caller's carrier array; the large class payloads remain borrowed.
@@ -644,6 +671,15 @@ class P6CellCondensedAction:
         unknown_cells = set(self._port_terms).difference(range(len(condensed.cell_recovery_maps)))
         if unknown_cells:
             raise ValueError(f"port terms refer to unknown cells: {sorted(unknown_cells)}")
+        self._generated_port_actions = dict(generated_port_actions or {})
+        generated_cells = set(self._generated_port_actions)
+        if generated_cells.intersection(self._port_terms):
+            raise ValueError("a cell cannot use both dense port terms and a generated port action")
+        unknown_generated_cells = generated_cells.difference(range(len(condensed.cell_recovery_maps)))
+        if unknown_generated_cells:
+            raise ValueError(f"generated port actions refer to unknown cells: {sorted(unknown_generated_cells)}")
+        if any(not isinstance(action, P6GeneratedCellPortAction) for action in self._generated_port_actions.values()):
+            raise TypeError("generated_port_actions must contain P6GeneratedCellPortAction values")
         self._cells: tuple[_CellActionData, ...] = self._build_cells(retained)
         # The streamed prototype does not retain its staging map after cell
         # arrays are validated.  Preserve the established cached object's
@@ -693,9 +729,13 @@ class P6CellCondensedAction:
             _unique_numpy_backing_inventory(direct_output_arrays)
         )
         if self.port_block_layout == RESEARCH_PORT_LAYOUT:
-            self._original_port_block, self._condensed_port_block = build_cached_port_representation(
-                self._original_port_block, self._cells
-            )
+            if self._generated_port_actions:
+                # Generated actions do not retain XiB/Di correction matrices.
+                self._condensed_port_block = None
+            else:
+                self._original_port_block, self._condensed_port_block = build_cached_port_representation(
+                    self._original_port_block, self._cells
+                )
             self._Hhat = None
         elif self.port_coupling_mode == "cached":
             self._Hhat = self._H_p.copy()
@@ -729,6 +769,14 @@ class P6CellCondensedAction:
                 self.port_coupling_mode == "cached" and self.port_block_layout == LEGACY_PORT_LAYOUT
             ),
             "port_coupling_mode": self.port_coupling_mode,
+            "generated_port_action_count": len(self._generated_port_actions),
+            "generated_port_mode_count": int(sum(
+                len(cell.ports) for cell in self._cells if cell.generated_action is not None
+            )),
+            "generated_callback_workspace_bound_bytes": int(max(
+                (cell.generated_action.callback_workspace_bytes for cell in self._cells
+                 if cell.generated_action is not None), default=0
+            )),
             "shared_S_V_buffer_count": len({id(cell.S_V) for cell in self._cells}),
             "shared_recovery_buffer_count": len({id(cell.recovery) for cell in self._cells}),
             "shared_LU_factor_buffer_count": len({id(cell.interior_lu[0]) for cell in self._cells}),
@@ -795,8 +843,26 @@ class P6CellCondensedAction:
                 nt=nt,
                 appended_rows=self.condensed.appended_rows,
                 name=f"port_terms[{index}]",
-                streamed=self.port_coupling_mode == "streamed",
             )
+            generated_action = self._generated_port_actions.get(index)
+            if generated_action is not None:
+                if any(not callable(getattr(generated_action, name)) for name in ("apply_B", "apply_D")):
+                    raise TypeError("generated cell port actions must provide callable B and D actions")
+                workspace_bytes = generated_action.callback_workspace_bytes
+                if isinstance(workspace_bytes, bool) or not isinstance(workspace_bytes, int) or workspace_bytes < 0:
+                    raise ValueError("generated callback workspace bound must be a nonnegative integer")
+                generated_ports = np.asarray(generated_action.port_indices)
+                if (
+                    generated_ports.ndim != 1
+                    or generated_ports.dtype.kind not in "iu"
+                    or generated_ports.dtype.kind == "b"
+                    or not generated_ports.size
+                    or np.any(generated_ports < 0)
+                    or np.any(generated_ports >= self.condensed.appended_rows)
+                    or len(np.unique(generated_ports)) != len(generated_ports)
+                ):
+                    raise ValueError("generated port indices must be unique valid integer indices")
+                ports = np.ascontiguousarray(generated_ports, dtype=PETSc.IntType)
             recovery = _borrow_matrix(
                 self.condensed.interior_from_trace_by_class[cell.class_key],
                 "interior recovery",
@@ -810,15 +876,22 @@ class P6CellCondensedAction:
             factor = self.condensed.interior_lu_by_class[cell.class_key]
             if self.port_coupling_mode == "cached":
                 xib = np.ascontiguousarray(lu_solve(factor, bi))
-                bhat = np.ascontiguousarray(bt + trace_from_interior @ bi)
-                dhat = np.ascontiguousarray(dt + di @ recovery)
+                bhat = np.ascontiguousarray(
+                    trace_from_interior @ bi if bt is None
+                    else bt + trace_from_interior @ bi
+                )
+                dhat = np.ascontiguousarray(
+                    di @ recovery if dt is None else dt + di @ recovery
+                )
             else:
                 xib = bhat = dhat = None
             # ``recovery=-Vii^{-1}Vit``; hence ``Dt-Di*Xit=Dt+Di*recovery``.
             for row in range(nt):
                 original = int(cell.trace_original_dofs[row])
                 if original not in constraints.original_to_active:
-                    if np.any(bt[row]) or np.any(dt[:, row]):
+                    touches_b = bt is not None and np.any(bt[row])
+                    touches_d = dt is not None and np.any(dt[:, row])
+                    if touches_b or touches_d:
                         raise ValueError("local port coupling touches an MPC slave trace row")
             for values in (schur, recovery, trace_from_interior, bi, bt, di, dt, h):
                 if values is not None and not np.isfinite(values).all():
@@ -840,14 +913,15 @@ class P6CellCondensedAction:
                     trace_from_interior=trace_from_interior,
                     interior_lu=factor,
                     Bi=_readonly(bi),
-                    Bt=_readonly(bt),
+                    Bt=None if bt is None else _readonly(bt),
                     Di=_readonly(di),
-                    Dt=_readonly(dt),
+                    Dt=None if dt is None else _readonly(dt),
                     ports=port_indices,
                     Bhat=None if bhat is None else _readonly(bhat),
                     Dhat=None if dhat is None else _readonly(dhat),
                     XiB=None if xib is None else _readonly(xib),
                     Hlocal=None if h is None else _readonly(h),
+                    generated_action=generated_action,
                 )
             )
         return tuple(result)
@@ -1005,7 +1079,15 @@ class P6CellCondensedAction:
     def port_block_representation_identity(self) -> Mapping[str, Any] | None:
         if self.port_block_layout != RESEARCH_PORT_LAYOUT:
             return None
-        assert self._original_port_block is not None and self._condensed_port_block is not None
+        assert self._original_port_block is not None
+        if self._condensed_port_block is None:
+            return MappingProxyType({
+                "layout": self.port_block_layout,
+                "original_H_identity_sha256": self._original_port_block.identity_sha256,
+                "generated_cell_port_actions": True,
+                "cached_condensed_correction": False,
+                "Hhat_materialized": False,
+            })
         return MappingProxyType(port_block_representation_identity(
             self._original_port_block, self._condensed_port_block, layout=self.port_block_layout
         ))
@@ -1014,6 +1096,10 @@ class P6CellCondensedAction:
         if self.port_block_layout == RESEARCH_PORT_LAYOUT:
             if self._Hhat is not None:
                 return self._Hhat.copy()
+            if self._generated_port_actions:
+                raise NotImplementedError(
+                    "generated mode actions do not retain a materializable Hhat correction"
+                )
             assert self._original_port_block is not None and self._condensed_port_block is not None
             if isinstance(self._original_port_block, DiagonalOriginalPortBlock):
                 result = self._original_port_block.materialize_for_small_oracle(
@@ -1062,6 +1148,9 @@ class P6CellCondensedAction:
         )
         self._audit["streamed_max_local_scratch_bytes"] = int(
             self._streamed_max_local_scratch_bytes
+        )
+        self._audit["generated_callback_call_count"] = int(
+            self._generated_callback_call_count
         )
         return MappingProxyType(self._audit)
 
@@ -1141,6 +1230,16 @@ class P6CellCondensedAction:
                     {id(cell.trace_from_interior) for cell in self._cells}
                 ),
                 "port_coupling_mode": self.port_coupling_mode,
+                "generated_port_action_count": int(sum(
+                    cell.generated_action is not None for cell in self._cells
+                )),
+                "generated_port_mode_count": int(sum(
+                    len(cell.ports) for cell in self._cells if cell.generated_action is not None
+                )),
+                "generated_callback_workspace_bound_bytes": int(max(
+                    (cell.generated_action.callback_workspace_bytes for cell in self._cells
+                     if cell.generated_action is not None), default=0
+                )),
                 "raw_port_payload_bytes_sum": bytes_for(raw_fields),
                 "transformed_port_payload_bytes_sum": bytes_for(transformed_fields),
                 "staging_port_payload_bytes_sum": staging_bytes,
@@ -1221,7 +1320,11 @@ class P6CellCondensedAction:
                 "port_action": (
                     "cached Hhat plus sparse direct trace terms"
                     if self.port_coupling_mode == "cached"
-                    else "original Hp plus per-cell streamed Di*solve(Bi*alpha), no resident Hhat"
+                    else (
+                        "original Hp plus bounded generated Bi/Bt/Di/Dt callbacks and local solves, no resident Hhat"
+                        if self._generated_port_actions
+                        else "original Hp plus per-cell streamed Di*solve(Bi*alpha), no resident Hhat"
+                    )
                 ),
                 "original_hp_for_bridge": True,
                 "global_S6_matrix": False,
@@ -1243,59 +1346,122 @@ class P6CellCondensedAction:
     def _check_reduced_array(self, value: Any, name: str) -> np.ndarray:
         return _complex_vector(value, name, size=self.reduced_size)
 
-    @staticmethod
-    def _streamed_cell_action(cell: Any, local_trace: np.ndarray, alpha: np.ndarray):
-        """Apply one cell's local trace/port terms and report named scratch."""
+    def _generated_B_action(
+        self, cell: _CellActionData, amplitudes: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
+        generated = cell.generated_action
+        if generated is None:
+            raise RuntimeError("generated action requested for a cached cell")
+        self._generated_callback_call_count += 1
+        result = generated.apply_B(np.ascontiguousarray(amplitudes, dtype=np.complex128))
+        if not isinstance(result, tuple) or len(result) != 2:
+            raise ValueError("generated B callback must return (Bi_alpha, Bt_alpha)")
+        bi_alpha, bt_alpha = result
+        expected = (len(cell.original_interiors), len(cell.original_trace))
+        for name, value, size in zip(("Bi_alpha", "Bt_alpha"), (bi_alpha, bt_alpha), expected, strict=True):
+            if (
+                not isinstance(value, np.ndarray)
+                or value.shape != (size,)
+                or value.dtype != np.dtype(np.complex128)
+                or not value.flags.c_contiguous
+                or not np.isfinite(value).all()
+            ):
+                raise ValueError(f"generated B callback returned an invalid {name} vector")
+        return bi_alpha, bt_alpha
 
+    def _generated_D_action(
+        self, cell: _CellActionData, interior: np.ndarray, trace: np.ndarray
+    ) -> np.ndarray:
+        generated = cell.generated_action
+        if generated is None:
+            raise RuntimeError("generated action requested for a cached cell")
+        self._generated_callback_call_count += 1
+        result = generated.apply_D(
+            np.ascontiguousarray(interior, dtype=np.complex128),
+            np.ascontiguousarray(trace, dtype=np.complex128),
+        )
+        if (
+            not isinstance(result, np.ndarray)
+            or result.shape != (len(cell.ports),)
+            or result.dtype != np.dtype(np.complex128)
+            or not result.flags.c_contiguous
+            or not np.isfinite(result).all()
+        ):
+            raise ValueError("generated D callback returned an invalid port vector")
+        return result
+
+    @staticmethod
+    def _streamed_cell_action(
+        cell: Any,
+        local_trace: np.ndarray,
+        alpha: np.ndarray,
+        *,
+        owner: "P6CellCondensedAction | None" = None,
+    ):
+        """Apply one cell's cached or generated local port terms with bounded scratch."""
+
+        generated_action = getattr(cell, "generated_action", None)
         local_action = np.asarray(cell.S_V @ local_trace, dtype=np.complex128).reshape(-1)
         port_action = None
         local_lu_solve_calls = 0
+        scratch_arrays = [local_trace, local_action]
         scratch_bytes = int(local_trace.nbytes + local_action.nbytes)
         if len(cell.ports):
             local_alpha = alpha[cell.ports]
-            bi_alpha = cell.Bi @ local_alpha
-            b_action = cell.Bt @ local_alpha
+            if generated_action is None:
+                bi_alpha = cell.Bi @ local_alpha
+                bt_alpha = None if cell.Bt is None else cell.Bt @ local_alpha
+            else:
+                if owner is None:
+                    raise ValueError("generated cell action requires its owning P6 action")
+                bi_alpha, bt_alpha = owner._generated_B_action(cell, local_alpha)
             trace_from_b = cell.trace_from_interior @ bi_alpha
-            b_action += trace_from_b
+            if generated_action is not None:
+                b_action = trace_from_b.copy() + bt_alpha
+            else:
+                b_action = trace_from_b.copy() if bt_alpha is None else bt_alpha.copy()
+                if bt_alpha is not None:
+                    b_action += trace_from_b
             local_action += b_action
 
             recovery_trace = cell.recovery @ local_trace
-            di_recovery_trace = cell.Di @ recovery_trace
-            dt_trace = cell.Dt @ local_trace
             xi_b_alpha = lu_solve(cell.interior_lu, bi_alpha)
             local_lu_solve_calls += 1
-            di_xi_b_alpha = cell.Di @ xi_b_alpha
-            port_action = -dt_trace.copy()
-            port_action -= di_recovery_trace
-            port_action += di_xi_b_alpha
-            scratch_bytes = sum(
-                array.nbytes
-                for array in (
-                    local_trace,
-                    local_action,
-                    local_alpha,
-                    bi_alpha,
-                    b_action,
-                    trace_from_b,
-                    recovery_trace,
-                    di_recovery_trace,
-                    dt_trace,
-                    xi_b_alpha,
-                    di_xi_b_alpha,
-                    port_action,
+            if generated_action is None:
+                di_recovery_trace = cell.Di @ recovery_trace
+                dt_trace = (
+                    np.zeros_like(local_alpha)
+                    if cell.Dt is None
+                    else cell.Dt @ local_trace
                 )
-            )
+                di_xi_b_alpha = cell.Di @ xi_b_alpha
+                port_action = -dt_trace.copy()
+                port_action -= di_recovery_trace
+                port_action += di_xi_b_alpha
+                scratch_arrays.extend((di_recovery_trace, dt_trace, di_xi_b_alpha))
+            else:
+                # One independent D pass forms Di*(XiB*alpha - recovery*trace) - Dt*trace.
+                d_interior_input = xi_b_alpha - recovery_trace
+                d_trace_input = -local_trace
+                port_action = owner._generated_D_action(
+                    cell, d_interior_input, d_trace_input
+                )
+                scratch_arrays.extend((d_interior_input, d_trace_input))
+                scratch_bytes += generated_action.callback_workspace_bytes
+
+            scratch_arrays.extend((
+                local_alpha, bi_alpha, b_action, trace_from_b,
+                recovery_trace, xi_b_alpha, port_action,
+            ))
+            if bt_alpha is not None:
+                scratch_arrays.append(bt_alpha)
+            scratch_bytes = sum(array.nbytes for array in scratch_arrays) + scratch_bytes
             del (
-                local_alpha,
-                bi_alpha,
-                b_action,
-                trace_from_b,
-                recovery_trace,
-                di_recovery_trace,
-                dt_trace,
-                xi_b_alpha,
-                di_xi_b_alpha,
+                local_alpha, bi_alpha, bt_alpha, b_action, trace_from_b,
+                recovery_trace, xi_b_alpha,
             )
+            if generated_action is None:
+                del di_recovery_trace, dt_trace, di_xi_b_alpha
         return local_action, port_action, int(scratch_bytes), local_lu_solve_calls
 
     def _apply_streamed_array(self, source: np.ndarray) -> np.ndarray:
@@ -1309,7 +1475,7 @@ class P6CellCondensedAction:
                 cell.expansion @ active[cell.active_ids], dtype=np.complex128
             ).reshape(-1)
             local_action, port_action, scratch_bytes, cell_solve_calls = (
-                self._streamed_cell_action(cell, local_trace, alpha)
+                self._streamed_cell_action(cell, local_trace, alpha, owner=self)
             )
             self._streamed_max_local_scratch_bytes = max(
                 self._streamed_max_local_scratch_bytes, scratch_bytes
@@ -1763,7 +1929,16 @@ class P6CellCondensedAction:
                 ids, coefficients = constraints.expansion_by_original[int(original)]
                 result[ids] += np.conjugate(coefficients) * correction[row]
             if len(cell.ports):
-                result[self.condensed.active_rows + cell.ports] += cell.Di @ lu_solve(cell.interior_lu, bi)
+                solved_rhs = lu_solve(cell.interior_lu, bi)
+                if cell.generated_action is None:
+                    port_rhs_correction = cell.Di @ solved_rhs
+                else:
+                    port_rhs_correction = self._generated_D_action(
+                        cell,
+                        solved_rhs,
+                        np.zeros(len(cell.original_trace), dtype=np.complex128),
+                    )
+                result[self.condensed.active_rows + cell.ports] += port_rhs_correction
         if port_rhs is not None:
             result[self.condensed.active_rows :] += _complex_vector(
                 port_rhs, "port RHS", size=self.condensed.appended_rows
@@ -1819,7 +1994,11 @@ class P6CellCondensedAction:
             if len(cell.ports):
                 if self.port_coupling_mode == "streamed":
                     local_alpha = alpha[cell.ports]
-                    bi_alpha = cell.Bi @ local_alpha
+                    bi_alpha = (
+                        cell.Bi @ local_alpha
+                        if cell.generated_action is None
+                        else self._generated_B_action(cell, local_alpha)[0]
+                    )
                     xi_b_alpha = lu_solve(cell.interior_lu, bi_alpha)
                     self._streamed_recovery_lu_solve_count += 1
                     self._streamed_max_local_scratch_bytes = max(
@@ -2033,10 +2212,16 @@ class P6CellCondensedAction:
             if not len(cell.ports):
                 continue
             local = values[cell.ports]
-            result[cell.original_interiors] += cell.Bi @ local
-            for row, original in enumerate(cell.original_trace):
-                if int(original) in constraints.original_to_active:
-                    result[int(original)] += cell.Bt[row] @ local
+            if cell.generated_action is None:
+                result[cell.original_interiors] += cell.Bi @ local
+                bt_action = None if cell.Bt is None else cell.Bt @ local
+            else:
+                bi_action, bt_action = self._generated_B_action(cell, local)
+                result[cell.original_interiors] += bi_action
+            if bt_action is not None:
+                for row, original in enumerate(cell.original_trace):
+                    if int(original) in constraints.original_to_active:
+                        result[int(original)] += bt_action[row]
         for port, (rows, row_values) in self._direct_B_original.items():
             result[rows] += row_values * values[port]
         return result
@@ -2052,12 +2237,17 @@ class P6CellCondensedAction:
         for cell in self._cells:
             if not len(cell.ports):
                 continue
-            local = cell.Di @ field[cell.original_interiors]
+            interior = field[cell.original_interiors]
             trace = field[cell.original_trace].copy()
             for row, original in enumerate(cell.original_trace):
                 if int(original) not in constraints.original_to_active:
                     trace[row] = 0.0
-            local += cell.Dt @ trace
+            if cell.generated_action is None:
+                local = cell.Di @ interior
+                if cell.Dt is not None:
+                    local += cell.Dt @ trace
+            else:
+                local = self._generated_D_action(cell, interior, trace)
             result[cell.ports] += local
         for port, (rows, row_values) in self._direct_D_original.items():
             result[port] += np.dot(row_values, field[rows])
@@ -2304,6 +2494,7 @@ __all__ = (
     "P6MatrixFreeHhatTerm",
     "P6CellCondensedAction",
     "P6CellPortTerms",
+    "P6GeneratedCellPortAction",
     "P6DirectTracePortTerms",
     "P6RetainedBALHBridge",
     "apply_p6_hhat_vector_action",

@@ -827,10 +827,16 @@ def _controlled_stop(
     requested_stage: str,
     completed_stages: list[str],
     reason: str,
+    outcome: str | None = None,
+    attempted_stages: list[str] | None = None,
     additional: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     receipt = {
-        "schema": "task40extra.review_v20_partial_result.v1",
+        "schema": (
+            "task40extra.review_v20_partial_result.v2"
+            if outcome is not None
+            else "task40extra.review_v20_partial_result.v1"
+        ),
         "status": "controlled_stop",
         "classification": "CONTROLLED_STOP",
         "run_id": preflight.get("run_id"),
@@ -851,6 +857,24 @@ def _controlled_stop(
         "outer_budget": "not charged by this adapter; the launcher/watchdog owns campaign accounting",
         **dict(additional or {}),
     }
+    if outcome is not None:
+        receipt["outcome"] = outcome
+        receipt["attempted_stages"] = list(
+            completed_stages if attempted_stages is None else attempted_stages
+        )
+        receipt["q_coverage"] = {
+            "status": "NOT_RUN",
+            "reason": "the stop occurred before target q assembly",
+        }
+        receipt["cleanup"] = {
+            "status": "NOT_RUN",
+            "reason": "no heavy worker owner was created by this stop path",
+        }
+        receipt["artifact_hashes"] = {
+            name: {"path": name, "sha256": _sha256_file(output_directory / name)}
+            for name in ("v20_stage_preflight.json", "v20_geometry_inventory.json", "v20_local_port_components.json")
+            if (output_directory / name).is_file()
+        }
     _write_json(output_directory / "v20_partial_result.json", receipt)
     return {
         "passed": True,
@@ -860,6 +884,137 @@ def _controlled_stop(
         "summary": receipt,
         "numerical_output_directory": str(output_directory),
     }
+
+
+def _worker_stage_receipt(
+    output_directory: Path,
+    *,
+    preflight: Mapping[str, Any],
+    requested_stage: str,
+    completed_prefix: list[str],
+    target_heavy_authorized: bool,
+    worker_result: Mapping[str, Any] | None,
+    failure: BaseException | None = None,
+) -> dict[str, Any]:
+    """Record what the worker actually attempted and completed, never a full result."""
+
+    summary = worker_result.get("summary", {}) if worker_result is not None else {}
+    if not isinstance(summary, Mapping):
+        summary = {}
+    stage_result = summary.get("v20_stage_result")
+    if not isinstance(stage_result, Mapping):
+        stage_result = None
+    worker_classification = summary.get("result_classification")
+    stage_completed = bool(
+        failure is None
+        and worker_result is not None
+        and worker_result.get("passed") is True
+        and stage_result is not None
+        and stage_result.get("completed_stage") == requested_stage
+    )
+    if stage_completed:
+        outcome = "STAGE_COMPLETED"
+        completed_stages = [*completed_prefix, requested_stage]
+    elif failure is None and worker_classification == "RESOURCE_CONTROLLED_STOP":
+        outcome = "RESOURCE_CONTROLLED_STOP"
+        completed_stages = list(completed_prefix)
+    else:
+        outcome = "STAGE_FAILED"
+        completed_stages = list(completed_prefix)
+
+    worker_error = (
+        {"type": type(failure).__name__, "message": str(failure)}
+        if failure is not None
+        else summary.get("error")
+    )
+    artifact_hashes: dict[str, dict[str, str]] = {}
+    for name in (
+        "v20_stage_preflight.json",
+        "v20_geometry_inventory.json",
+        "v20_local_port_components.json",
+        "task40_v10_p6_candidate_summary.json",
+    ):
+        path = output_directory / name
+        if path.is_file():
+            artifact_hashes[name] = {
+                "path": name,
+                "sha256": _sha256_file(path),
+            }
+
+    q_csr_inventory = stage_result.get("q_csr_inventory") if stage_result else None
+    if isinstance(q_csr_inventory, Mapping):
+        q_coverage = {
+            "status": "KNOWN",
+            "all_q_symbolic_covered": stage_result.get("all_q_symbolic_covered"),
+            "q_count": len(q_csr_inventory),
+            "q_csr_inventory": dict(q_csr_inventory),
+            "source": "worker v20_stage_result; hash-bound by candidate summary artifact",
+        }
+    elif outcome == "AUTH_NOT_GRANTED":
+        q_coverage = {
+            "status": "NOT_RUN",
+            "reason": "authorization gate stopped before target q assembly",
+        }
+    else:
+        q_coverage = {
+            "status": "UNKNOWN",
+            "reason": "worker result did not expose completed-q inventory and hashes",
+        }
+    cleanup = summary.get("cleanup")
+    if isinstance(cleanup, Mapping):
+        cleanup_facts = {
+            key: cleanup.get(key)
+            for key in (
+                "native_owners_released",
+                "process_descendants_cleared",
+                "temporary_stage_objects_released",
+            )
+        }
+        cleanup_facts["status"] = (
+            "PASS"
+            if all(cleanup_facts[key] is True for key in cleanup_facts)
+            else "UNKNOWN"
+        )
+    else:
+        cleanup_facts = {
+            "status": "UNKNOWN",
+            "reason": "worker result did not expose a unified owner/descendant cleanup receipt",
+        }
+
+    receipt = {
+        "schema": "task40extra.review_v20_partial_result.v2",
+        "status": {
+            "AUTH_NOT_GRANTED": "controlled_stop",
+            "RESOURCE_CONTROLLED_STOP": "controlled_stop",
+            "STAGE_COMPLETED": "stage_completed",
+            "STAGE_FAILED": "failed",
+        }[outcome],
+        "outcome": outcome,
+        "classification": worker_classification or outcome,
+        "run_id": preflight.get("run_id"),
+        "profile": preflight.get("case_profile"),
+        "source_sha": preflight.get("source_sha"),
+        "input_sha256": preflight.get("input_sha256"),
+        "physical_model_sha256": preflight.get("physical_model_sha256"),
+        "requested_stop_stage": requested_stage,
+        "attempted_stages": [*completed_prefix, requested_stage],
+        "completed_stages": completed_stages,
+        "failed_stage": requested_stage if outcome == "STAGE_FAILED" else None,
+        "target_heavy_authorized": target_heavy_authorized,
+        "worker_status": worker_result.get("status") if worker_result is not None else None,
+        "worker_result_classification": worker_classification,
+        "stage_result": dict(stage_result) if stage_result is not None else None,
+        "q_coverage": q_coverage,
+        "cleanup": cleanup_facts,
+        "resource_gate": worker_error if outcome == "RESOURCE_CONTROLLED_STOP" else None,
+        "error": worker_error if outcome == "STAGE_FAILED" else None,
+        "artifact_hashes": artifact_hashes,
+        "not_run": [name for name in V20_STAGE_NAMES if name not in completed_stages],
+        "official_result": False,
+        "full_field_release_allowed": False,
+    }
+    _write_json(output_directory / "v20_partial_result.json", receipt)
+    return receipt
 
 
 def run_task40_v20_stage(
@@ -908,6 +1063,8 @@ def run_task40_v20_stage(
             requested_stage=stop_stage,
             completed_stages=completed,
             reason="TARGET_HEAVY_NOT_AUTHORIZED_IN_THIS_NOTEBOOK_EXECUTION; stage is registered and its worker route is available after explicit resource authorization",
+            outcome="AUTH_NOT_GRANTED",
+            attempted_stages=completed,
             additional={
                 "production_worker_route": "src.runners.task40_v10_worker.run_task40_v10_p6_reference_worker",
                 "target_heavy_authorized": False,
@@ -993,9 +1150,11 @@ def run_task40_v20_stage(
         _write_json(output_directory / "v20_local_port_components.json", local_facts)
         completed.append("local_port_components")
         if local_facts.get("status") != "PASS":
+            attempted = list(completed)
             receipt = {
-                "schema": "task40extra.review_v20_partial_result.v1",
+                "schema": "task40extra.review_v20_partial_result.v2",
                 "status": "failed",
+                "outcome": "STAGE_FAILED",
                 "classification": "LOCAL_COMPONENT_GATE_FAILED",
                 "run_id": preflight["run_id"],
                 "profile": profile,
@@ -1003,7 +1162,23 @@ def run_task40_v20_stage(
                 "input_sha256": preflight["input_sha256"],
                 "physical_model_sha256": preflight["physical_model_sha256"],
                 "requested_stop_stage": stop_stage,
-                "completed_stages": completed,
+                "attempted_stages": attempted,
+                "completed_stages": completed[:-1],
+                "failed_stage": "local_port_components",
+                "q_coverage": {
+                    "status": "NOT_RUN",
+                    "reason": "local component gate failed before target q assembly",
+                },
+                "cleanup": {
+                    "status": "UNKNOWN",
+                    "reason": "local component runner did not provide a unified cleanup receipt",
+                },
+                "failure_message": "V20 original-size local/port component gate failed",
+                "artifact_hashes": {
+                    name: {"path": name, "sha256": _sha256_file(output_directory / name)}
+                    for name in ("v20_stage_preflight.json", "v20_geometry_inventory.json", "v20_local_port_components.json")
+                    if (output_directory / name).is_file()
+                },
                 "official_result": False,
                 "not_run": ["all-q CSR/symbolic", "one-q numeric", "full field"],
                 "local_port_components": local_facts,
@@ -1021,14 +1196,35 @@ def run_task40_v20_stage(
     if stop_stage in {"build_and_symbolic", "one_q_numeric"}:
         from src.runners.task40_v10_worker import run_task40_v10_p6_reference_worker
 
-        return run_task40_v10_p6_reference_worker(
-            resolved_payload,
+        worker_result = None
+        worker_failure: BaseException | None = None
+        try:
+            worker_result = run_task40_v10_p6_reference_worker(
+                resolved_payload,
+                output_directory,
+                source_sha=source_sha,
+                profile_identity=profile,
+                share_transform_bank=True,
+                stop_after_stage=stop_stage,
+            )
+        except BaseException as error:
+            worker_failure = error
+        receipt = _worker_stage_receipt(
             output_directory,
-            source_sha=source_sha,
-            profile_identity=profile,
-            share_transform_bank=True,
-            stop_after_stage=stop_stage,
+            preflight=preflight,
+            requested_stage=stop_stage,
+            completed_prefix=completed,
+            target_heavy_authorized=bool(
+                resolved_payload["execution"].get("task40_target_heavy_authorized")
+            ),
+            worker_result=worker_result,
+            failure=worker_failure,
         )
+        if worker_failure is not None:
+            raise worker_failure
+        if worker_result is None:
+            raise RuntimeError("V20 stage worker returned no result")
+        return {**dict(worker_result), "v20_partial_result": receipt}
 
     if profile.endswith("_e2_reference_v1") and stop_stage == "full":
         from src.runners.task40_v10_worker import run_task40_v10_p6_reference_worker
@@ -1042,8 +1238,9 @@ def run_task40_v20_stage(
         )
 
     receipt = {
-        "schema": "task40extra.review_v20_partial_result.v1",
+        "schema": "task40extra.review_v20_partial_result.v2",
         "status": "controlled_stop",
+        "outcome": "STAGE_COMPLETED",
         "classification": "CONTROLLED_STOP_AT_REQUESTED_STAGE",
         "run_id": preflight["run_id"],
         "profile": profile,
@@ -1051,7 +1248,22 @@ def run_task40_v20_stage(
         "input_sha256": preflight["input_sha256"],
         "physical_model_sha256": preflight["physical_model_sha256"],
         "requested_stop_stage": stop_stage,
+        "attempted_stages": completed,
         "completed_stages": completed,
+        "q_coverage": {
+            "status": "NOT_RUN",
+            "reason": "requested pre-q stage completed without target q assembly",
+        },
+        "cleanup": {
+            "status": "UNKNOWN",
+            "reason": "stage result did not provide a unified owner/descendant cleanup receipt",
+        },
+        "stage_result": {"completed_stage": stop_stage},
+        "artifact_hashes": {
+            name: {"path": name, "sha256": _sha256_file(output_directory / name)}
+            for name in ("v20_stage_preflight.json", "v20_geometry_inventory.json", "v20_local_port_components.json")
+            if (output_directory / name).is_file()
+        },
         "official_result": False,
         "not_run": [
             name for name in V20_STAGE_NAMES if name not in completed

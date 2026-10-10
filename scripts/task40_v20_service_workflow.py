@@ -915,6 +915,9 @@ def _check_partial_result(
         }
     partial = json.loads(partial_path.read_text(encoding="utf-8"))
     expected_completed = STAGE_PREFIXES.get(expected_stop_stage)
+    v2_receipt = partial.get("schema") == "task40extra.review_v20_partial_result.v2"
+    if v2_receipt and expected_stop_stage in {"build_and_symbolic", "one_q_numeric"}:
+        expected_completed = None
     if expected_stop_stage == "full" and manifest.get("mesh_id") == "TARGET_ORIGINAL_NY8":
         expected_completed = ["preflight"]
     checks = {
@@ -929,10 +932,22 @@ def _check_partial_result(
             expected_completed is None or partial.get("completed_stages") == expected_completed
         ),
     }
-    if expected_stop_stage in {"build_and_symbolic", "one_q_numeric"}:
+    if expected_stop_stage in {"build_and_symbolic", "one_q_numeric"} and not v2_receipt:
         checks["target_heavy_authorization_remains_false"] = (
             input_data.get("execution", {}).get("task40_target_heavy_authorized") is False
         )
+    if v2_receipt:
+        from scripts.task40_v21_readonly_recheck import validate_stage_receipt_semantics
+
+        semantic_checks = validate_stage_receipt_semantics(
+            partial,
+            expected_stage=expected_stop_stage,
+            heavy_authorized=input_data.get("execution", {}).get(
+                "task40_target_heavy_authorized"
+            ),
+            output_directory=numerical_output,
+        )
+        checks.update({f"stage_semantics_{name}": passed for name, passed in semantic_checks.items()})
     if "geometry_inventory" in (partial.get("completed_stages") or []):
         checks["geometry_artifact_present"] = (
             numerical_output / "v20_geometry_inventory.json"

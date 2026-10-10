@@ -1,3 +1,30 @@
+# Task40extra Review V21 增量结果：真实端口面数已知，完整 per-facet support 仍未知
+
+V21 沿用同一 Task40 执行分支和固定窗口，只在现有 V20 保存几何、局部数组与 E2 事件上做有限实现和只读核算。几何面数是直接从 tagged facet 记录重算；模式—单元关联需要 production carrier 按精确 `Bi/Di` support 建立，本轮没有分配目标 global carrier，因此不把全量 manifest 当成每面都活跃。
+
+| V21 项 | 实际证据 | 状态与边界 |
+|---|---|---|
+| Ny=8 z 端口库存 | top/bottom 每侧 2,176 facets，共 4,352；原尺寸 30,464 cells，target/filled-reference 各 60 类、共享 class ID 60 | 几何库存证据；boundary facet 到所有 cell class 的映射未读 HDF5，记 `UNKNOWN` |
+| 模式表和实际 action witness | 32,060 ordered modes，top/bottom 各 16,030；本轮每侧仅一个实际 key，共 2/32,060；每个局部 block 882 rows，450 interior/432 trace | 非全侧扫描；cell/facet/class ID 未从 witness 绑定，均为 `UNKNOWN`；q30 独立 full-row B/D 对照 `NOT_RUN` |
+| per-cell active modes `m_c` | 实现按精确非零 Bi/Di interior support 建立关联，不设浮点门限 | 全局 carrier/MPC未建立，support 直方图、`Σm_c`、`Σm_c²` 均 `UNKNOWN` |
+| all modes × all boundary cells 条件情景 | 若每个 4,352 port-adjacent cells 都关联本侧全部 16,030 modes，四类 logical payload 合计 21,328,367,943,680 B | 条件推导，不是实际 support、RAM allocation 或峰值；见 [target port inventory V21](records/target_port_inventory_v21.json) |
+| None 零块 | 每侧局部 old explicit-zero→None 逻辑减少 13,840 B；两侧 action/RHS/recovery/full B/D 数值差为 0 | 过程级 HWM 顺序累计，RSS/cgroup 节省 `NO_DETECTABLE_NOT_ATTRIBUTABLE`；不宣称实际 RAM 降低 |
+| generated bounded action | 本地 `P6CellCondensedAction` 回调与两侧单模式 saved target witness | production carrier builder/Task40 worker尚未接入；为 `PARTIAL`，不代表 global action 或 PDE |
+| E2 原始事件复核 | 4 个 q CSR 均已建，unique backing 1,969,523,536 B；首个 q0 symbolic admission projection 超 cap 149,505,816 B | `RESOURCE_CONTROLLED_STOP`；numeric factor/KSP/field/R/T/A `NOT_RUN`；历史 `NO_PARTIAL_FOOTER` 未改，见 [E2 partial recheck V21](records/e2_partial_recheck_v21.json) |
+| V20 stage footer semantics | worker success/resource/error 路径新增实际 attempted/completed receipt；checker 核对授权、q/hash 和 cleanup | heavy stage cleanup 缺 owner/descendant/temporary-object证据时为 `UNKNOWN` 并拒绝 PASS；不改变数学或资源 gate |
+| 最终原尺寸资格 | global target MPC/operator、all-q symbolic/numeric、完整 A6 和官方 R/T/A | `NOT_RUN / NOT_QUALIFIED`；2 TB、48 h 与 Ny=8 精度不具备资格 |
+
+单模式 known-state forward 仍保留 top 负结果：`1.488391772882517e-11 > 1e-11`；bottom 为 `9.173378724262687e-12`。新 generated B/D 与保存 V20 candidate vectors 的比较不是独立 q30 full-row B/D checker；边界 witness 的 global cell/facet/class 连接也未建立。HDF5 文件 SHA 已记录，但 dataset 未读。
+
+执行者最终定向回归为 15 passed（0.16 s）；主控收口后在最终 solver source 上联合复跑 p6/streamed 两个测试文件为 28 passed（129.61 s）；此前兼容性小组为 3 passed、2 deselected（0.26 s）。E2 partial recheck 是 raw event readback，不是 FE/PDE；完整命令和身份见 [V21 test summary](test_summary.md) 与 [targeted test receipt](records/targeted_tests_v21.json)。工作树在 HEAD `75273597809d2876f091a222b678f3af6756725c` 上留有未提交改动，未 commit/push。旧 V20 总账和所有历史失败记录保留在下文。
+
+## 固定窗口主控只读 sample
+
+同一 V19 窗口未刷新：T0 2026-10-09T01:45:00.727771902Z，deadline 2026-10-10T01:45:00.727771902Z，600 s closeout reserve；window SHA-256 b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0。主控 qualified read_campaign_state sample 为 2026-10-10T00:38:20.741056830Z：conservative-realtime interval 15,480.292692466 s，projected cumulative 82,400.02111048152 s，numerical remaining 3,399.9788895184756 s。持久账本 SHA-256 7ea9e880520accf2fd87d8ee63b894c7e3e1ec366308dd0c8bb4492abd705a11，83,032 行/seq 83031，尾部已写 cumulative 66,919.72841801553 s。该投影是只读 as-of 值，无新扣账、无 ledger/window 修改；未结算值保持 unknown。详见 [Response V21](../response_v21.md) 与 [V21 run index](records/run_index.json)。
+
+
+---
+
 # Task40extra Review V20 结果总账：原尺寸阶段入口接通，E2 资源受控停止
 
 Task40 研究 0.7 nm 波长下的三维 Maxwell 散射。p6 是六阶有限元基函数；q 是 y 周期边界的不同相位子问题。V20 把已有 V19 小模型基线接到原尺寸 `50×25×140 nm` 的分阶段入口：先实测几何与有限局部/端口组件，同时运行唯一获准的 E2 p6 增长案例。局部和几何证据只覆盖所测部分，不能代替全局方程、残差、官方功率量或 2 TB/48 h 资格。

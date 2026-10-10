@@ -1,4 +1,19 @@
-# Task40extra 当前模型登记：Review V20 原尺寸入口、局部实测与 E2 资源停止
+# Task40extra 当前模型登记：Review V21 部分端口库存与 E2 资源停止
+
+有限元把真实结构划成网格，再用 p6 基函数近似电磁场；q 是 y 周期边界上的相位子问题。V21 在 V20 保存的原尺寸 Ny=8 几何上做了零块表示、单面局部 action 和阶段回执修复，并只读复核了 E2 原始资源停点。
+
+| 模型 / 阶段 | source、输入与方法 | 实测/复核结果 | 状态与资格范围 |
+|---|---|---|---|
+| 原尺寸 Ny=8 端口 inventory | 30,464 cells；每侧 2,176 z facets；32,060 ordered modes；exact Bi/Di nonzero support 定义 active mode | 两个单模式 side witness 共 2/32,060；零块 None 与显式零 local action/RHS/recovery/B/D 差异为 0；逻辑零 payload 减少 27,680 B | full per-facet support、Σm_c、Σm_c² UNKNOWN；无目标 global carrier/MPC；RSS 节省 NO_DETECTABLE_NOT_ATTRIBUTABLE |
+| generated bounded local action | 对局部 port action 逐批生成 B/D callback，核验局部 RHS/recovery 与 dense Schur | 单面见证部分成立；top forward 1.488391772882517e-11 超过 1e-11，bottom 9.173378724262687e-12 | PARTIAL；fullspace carrier builder 与 Task40 worker 未接入 callback；不代表生产端到端 bounded |
+| E2 p6 880 cells | 用保存的 97,311 行事件和 candidate summary 只读重算四 q CSR 与 symbolic admission | projected 13,669,107,480 B，比 cap 13,519,601,664 B 高 149,505,816 B | RESOURCE_CONTROLLED_STOP；q0 symbolic、factor/KSP/field/R/T/A NOT_RUN；历史 cleanup UNKNOWN、NO_PARTIAL_FOOTER 保留 |
+| 原尺寸 full-field target | 仍需构造并核验目标 global FE/MPC/operator、all-q、恢复和物理输出 | 本轮未运行 full PDE | NOT_QUALIFIED；2 TB/48 h 与最终精度没有资格；ordinary solver default 不变 |
+
+固定窗口读数及账本身份以本次 response/run index 为准；只读 projection 不作为新的 campaign debit。所有 V20 正式结果和历史分类保留在下文。
+
+---
+
+# Task40extra 模型登记历史：Review V20 原尺寸入口、局部实测与 E2 资源停止
 
 有限元将真实结构切成网格，再用 p6 基函数近似电磁场；q 是 y 周期边界的不同相位分支。V20 将几何和局部/端口组件落到原尺寸 Ny=8 recipe，并执行 E2 p6 唯一增长 case。登记区分“某个组件通过”与“完整目标离散/场通过”。
 

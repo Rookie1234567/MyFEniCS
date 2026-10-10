@@ -1,4 +1,17 @@
-# Task40extra Review V20 项目进展：原尺寸几何/局部组件实测，E2 资源停点保留
+# Task40extra Review V21 项目进展：端口零块与阶段回执证据已收口，目标全解仍未资格化
+
+| 对象 | 方法解决的问题 | 本轮证据 | 结论边界 |
+|---|---|---|---|
+| 原尺寸端口 inventory | 逐面模式支持关系决定局部端口缓存规模；没有全局 carrier 时不得把全部模式当成已关联 | 30,464 cells，z 端口每侧 2,176 facets，32,060 ordered modes；[inventory](task40extra_0p7nm_engineering/outcomes/records/target_port_inventory_v21.json) | 实际 support histogram、Σm_c、Σm_c² 仍 UNKNOWN；q30 full-row B/D 独立对照 NOT_RUN |
+| None 零块与局部作用 | 缺省零耦合不再分配同形零数组，保留消元产生的有效耦合 | 两侧省去 27,680 B logical payload；action/RHS/recovery/B/D 差异为 0 | RSS/cgroup 收益不可归因；generated action 未接入 production carrier/worker，状态 PARTIAL |
+| E2 与阶段回执 | 读取原始事件复核资源 Gate，成功/停止/异常需留下可核回执 | 首个 q0 symbolic 前超 cap 149,505,816 B；[E2 recheck](task40extra_0p7nm_engineering/outcomes/records/e2_partial_recheck_v21.json)；定向测试 15 passed | numeric factor/KSP/field/R/T/A NOT_RUN；原 NO_PARTIAL_FOOTER 保留 |
+| 固定窗口 | 保留原 T0 与 deadline，按 qualified campaign API 做只读投影 | 2026-10-10T00:38:20.741056830Z sample；projected 82,400.02111048152 s；remaining 3,399.9788895184756 s | 不是新费用扣账；实际持久尾值与未结算部分分开记录 |
+
+详见 [Task40extra V21 response](task40extra_0p7nm_engineering/response_v21.md)、[outcomes summary](task40extra_0p7nm_engineering/outcomes/summary.md) 和 [test summary](task40extra_0p7nm_engineering/outcomes/test_summary.md)。当前没有 full target operator/field 或 official R/T/A；2 TB/48 h 与最终精度继续 NOT_QUALIFIED。V21 源码与文档由主控集中审查；执行者未提交/推送或合并 master。
+
+---
+
+# Task40extra Review V20 项目进展（历史基线）：原尺寸几何/局部组件实测，E2 资源停点保留
 
 | 对象 | 方法为何需要、改变了哪一步 | 结果 | 结论边界 |
 |---|---|---|---|

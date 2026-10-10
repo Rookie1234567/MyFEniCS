@@ -5329,5 +5329,243 @@
       "abi_receipt_sha256": "69711e67e26d422c9d0eb5845cfec90e693e1740fddc2b5f09031d28b50490c2",
       "scope": "documentation/model-registry/retrospective contracts only; no FE/PDE"
     }
+  },
+  "review_v21_evidence_index": {
+    "review": "docs/task40extra_0p7nm_engineering/review_report_v21.md",
+    "response": "docs/task40extra_0p7nm_engineering/response_v21.md",
+    "branch": "task40extra_0p7nm_engineering",
+    "worktree_head": "75273597809d2876f091a222b678f3af6756725c",
+    "working_tree_state": "modified_uncommitted_no_commit_no_push",
+    "target_port_inventory": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/target_port_inventory_v21.json",
+      "sha256": "2fabb29f30fa79267aa0e2235bb0ca5f668f9048906e475f25995e8af0b1ec2c",
+      "status": "PARTIAL_ACTUAL_INVENTORY_CONDITIONAL_FULL_SUPPORT_BYTES",
+      "geometry_inventory_sha256": "491dac32b7e3ba927ce44444f834ff1e27406c3dfe95a9438fac8cae45adce34",
+      "mesh_hdf5_sha256": "0bcc83dea1fb912a88612732f088467b7cb2fd2e152e19370d98342709be1dba",
+      "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+      "faces_per_side": 2176,
+      "ordered_mode_count": 32060,
+      "actual_global_sum_m_c": "UNKNOWN",
+      "actual_global_sum_m_c_squared": "UNKNOWN",
+      "independent_q30_full_row_B_D": "NOT_RUN"
+    },
+    "e2_readonly_recheck": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/e2_partial_recheck_v21.json",
+      "sha256": "92c7c93cd2f0b7061357358df8ab43f1899deb5b2ef98fa403e64de918b821a2",
+      "status": "E2_PARTIAL_RESOURCE_STOP_RECHECKED",
+      "raw_event_sha256": "a286afa3344ea6473ef5a71837e5562e97527d95b143f3ea69452cf16f2bf0ef",
+      "old_checker_status": "NO_PARTIAL_FOOTER",
+      "old_checker_passed": false,
+      "cleanup_status": "UNKNOWN_NO_VERIFIABLE_NATIVE_OWNER_AND_DESCENDANT_FOOTER",
+      "numeric_factor": "NOT_RUN",
+      "KSP": "NOT_RUN",
+      "field": "NOT_RUN",
+      "official_R_T_A": "NOT_RUN"
+    },
+    "targeted_test_receipt": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/targeted_tests_v21.json",
+      "sha256": "a1d2863519b29cd0b20a5de7a2a3f0c92a10a55d4aacb93fd04675f65a76e6fe",
+      "result": {
+        "elapsed_seconds": 0.16,
+        "failed": 0,
+        "passed": 15,
+        "skipped": 0
+      },
+      "command": "source scripts/task40_fresh_c1/activate_local_wsl_complex.sh <qualified runtime_prefix> <continuation ABI receipt> <qualified JIT cache>; test _MYFENICS_WSL_QUALIFIED_ACTIVATION=1; python -m pytest -q src/test/test_task40_v21_readonly_recheck.py src/test/test_task40_v20_routes.py::test_original_target_unapproved_heavy_stages_stop_before_geometry",
+      "final_closeout_reruns": {
+        "documentation_contracts": {
+          "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py",
+          "result": {
+            "elapsed_seconds": 0.26,
+            "failed": 0,
+            "passed": 29,
+            "skipped": 0,
+            "subtests_passed": 134
+          }
+        },
+        "no_PDE_or_heavy_worker_started": true,
+        "runs": [
+          {
+            "command": "python -m pytest -q src/test/test_task40_v21_readonly_recheck.py",
+            "result": {
+              "elapsed_seconds": 0.12,
+              "failed": 0,
+              "passed": 12,
+              "skipped": 0
+            }
+          },
+          {
+            "command": "python -m pytest -q src/test/test_task40_v20_routes.py::test_original_target_unapproved_heavy_stages_stop_before_geometry",
+            "result": {
+              "elapsed_seconds": 0.12,
+              "failed": 0,
+              "passed": 3,
+              "skipped": 0
+            }
+          },
+          {
+            "command": "python -m pytest -q src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+            "result": {
+              "elapsed_seconds": 0.76,
+              "failed": 0,
+              "passed": 23,
+              "skipped": 0
+            }
+          }
+        ],
+        "runtime": {
+          "MPI_size": 1,
+          "PETSc_int_type": "int32",
+          "PETSc_scalar_type": "complex128",
+          "qualified_activation_marker": 1
+        }
+      },
+      "main_review_final_combined_regression": {
+        "command": "source scripts/activate_myfenics_wsl.sh; ABI preflight in same shell; python -m pytest -q src/test/test_task39extra_v19_p6_cell_condensed_action.py src/test/test_task39extra_v30_streamed_ports.py",
+        "result": {
+          "elapsed_seconds": 129.61,
+          "failed": 0,
+          "passed": 28,
+          "skipped": 0
+        },
+        "captured_summary": "28 passed in 129.61s (0:02:09)",
+        "runtime": {
+          "qualified_activation_marker": 1,
+          "PETSc_scalar_type": "complex128",
+          "PETSc_int_type": "int32",
+          "MPI_size": 1,
+          "python": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/.venv/bin/python",
+          "DOLFINx": "0.10.0.post2",
+          "Basix": "0.10.0"
+        },
+        "source_file_sha256": {
+          "src/solvers/p6_cell_condensed_action.py": "77a7c61a862a9329e86bb67c2ed8d9d89ff7965a2a095e81f83d7d655eaae66e",
+          "src/solvers/task40_w1_local_probe.py": "13d97a07e2d1e35a9ee5abd1b5604201766734410f738728142f88ad023936cd",
+          "src/runners/task40_v20_stage_runner.py": "c3d20e4d98d3d12b0f9da8c3dcaf2e2d7684f8f1bcd7278248522763cbcfb2b8",
+          "scripts/task40_v20_service_workflow.py": "7eb3762c82b0da17574fa7082ce7a182e7f77fd4a9594696b057e0f659b687ef",
+          "src/test/test_task39extra_v19_p6_cell_condensed_action.py": "dc596e523075d85f123ff4085caf60532aac33342f3604bcdb13e48859c7f244",
+          "src/test/test_task39extra_v30_streamed_ports.py": "e7802859061fb9ef55f862fc017dedce1e2283279406288d030bc022826fe88d"
+        },
+        "scope": "p6 action, generated local B/D callbacks, zero-block None representation, non-Hermitian streamed action compatibility; no global target MPC or PDE",
+        "no_PDE_or_heavy_worker_started": true
+      },
+      "main_review_final_doc_contracts": {
+        "command": "source scripts/activate_myfenics_wsl.sh; ABI preflight in same shell; python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py",
+        "result": {
+          "elapsed_seconds": 0.08,
+          "failed": 0,
+          "passed": 29,
+          "skipped": 0,
+          "subtests_passed": 134
+        },
+        "runtime": {
+          "qualified_activation_marker": 1,
+          "PETSc_scalar_type": "complex128",
+          "PETSc_int_type": "int32",
+          "MPI_size": 1
+        },
+        "scope": "documentation/model-registry/retrospective contracts; no FE/PDE"
+      },
+      "main_review_post_whitespace_checker_rerun": {
+        "command": "source scripts/activate_myfenics_wsl.sh; ABI preflight in same shell; python -m pytest -q src/test/test_task40_v21_readonly_recheck.py",
+        "result": {
+          "elapsed_seconds": 0.08,
+          "failed": 0,
+          "passed": 12,
+          "skipped": 0
+        },
+        "source_file_sha256": {
+          "src/test/test_task40_v21_readonly_recheck.py": "4a63c3c1784d3b4238c20f4ded0e01f2dcfb3edd51e8abe881d30def5b749484",
+          "scripts/task40_v21_readonly_recheck.py": "1c10c023934ec41c145d56cb06a22c14368a7b082c3dc42101ca147f85bfd658"
+        },
+        "runtime": {
+          "qualified_activation_marker": 1,
+          "PETSc_scalar_type": "complex128",
+          "PETSc_int_type": "int32",
+          "MPI_size": 1
+        },
+        "scope": "read-only E2 admission/checker and partial-receipt fixtures; no worker/PDE"
+      }
+    },
+    "zero_block_pair": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v21_wsl/target_zero_block_pair_v2.json",
+      "sha256": "a86afade78c56445c35b6be844e86507fbce5daa8f4d11a68b299939da0a548e",
+      "rss_saving_claim": "NO_DETECTABLE_NOT_ATTRIBUTABLE",
+      "logical_bytes_removed_two_sides": 27680
+    },
+    "generated_side_action_witness": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v21_wsl/generated_side_action_witness.json",
+      "sha256": "a4ac80c9c2c29350d9327962b9c34634d000fffe65a7fdf5aee0748d04ae9dfe",
+      "scope": "one actual mode per side; no q30 independent full-row B/D comparison"
+    },
+    "source_file_sha256": {
+      "scripts/task40_v20_service_workflow.py": "7eb3762c82b0da17574fa7082ce7a182e7f77fd4a9594696b057e0f659b687ef",
+      "scripts/task40_v21_readonly_recheck.py": "1c10c023934ec41c145d56cb06a22c14368a7b082c3dc42101ca147f85bfd658",
+      "src/runners/task40_v20_stage_runner.py": "c3d20e4d98d3d12b0f9da8c3dcaf2e2d7684f8f1bcd7278248522763cbcfb2b8",
+      "src/solvers/p6_cell_condensed_action.py": "77a7c61a862a9329e86bb67c2ed8d9d89ff7965a2a095e81f83d7d655eaae66e",
+      "src/solvers/task40_w1_local_probe.py": "13d97a07e2d1e35a9ee5abd1b5604201766734410f738728142f88ad023936cd",
+      "src/test/test_task39extra_v19_p6_cell_condensed_action.py": "dc596e523075d85f123ff4085caf60532aac33342f3604bcdb13e48859c7f244",
+      "src/test/test_task40_v21_readonly_recheck.py": "6e65a3098b6a6214e70e85d38bbd6a39dbaadd193c43f0d9c473de264af602c4"
+    },
+    "full_repository_pytest": "NOT_RUN",
+    "MPI4": "NOT_RUN",
+    "Ruff": "NOT_RUN",
+    "CI": "NOT_RUN",
+    "new_PDE": "NOT_RUN",
+    "window_projection_v21": {
+      "status": "MASTER_READ_ONLY_SAMPLE",
+      "sample_source": "controller-provided read_campaign_state result using qualified Task40 runtime; no separate charge receipt was created",
+      "sample_utc": "2026-10-10T00:38:20.741056830Z",
+      "timebase_policy": "conservative_realtime",
+      "conservative_realtime_interval_seconds": 15480.292692466,
+      "utc_minus_monotonic_discrepancy_seconds": 1546.894188271197,
+      "projected_cumulative_charged_seconds": 82400.02111048152,
+      "numerical_cutoff_seconds": 85800.0,
+      "projected_numerical_remaining_seconds": 3399.9788895184756,
+      "wall_seconds_to_deadline": 3999.986715072,
+      "closeout_reserve_seconds": 600.0,
+      "true_current_settled_balance": "UNKNOWN; projection is not a persisted ledger debit",
+      "fixed_window": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json",
+        "sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0",
+        "t0_utc": "2026-10-09T01:45:00.727771902Z",
+        "deadline_utc": "2026-10-10T01:45:00.727771902Z",
+        "budget_seconds": 86400,
+        "window_refreshed": false
+      },
+      "persisted_campaign_ledger": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_accounting_v10.jsonl",
+        "sha256": "7ea9e880520accf2fd87d8ee63b894c7e3e1ec366308dd0c8bb4492abd705a11",
+        "record_count": 83032,
+        "tail_sequence": 83031,
+        "tail_cumulative_charged_seconds": 66919.72841801553,
+        "unchanged": true,
+        "new_charge_appended": false
+      },
+      "prior_snapshot": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/controller_closeout_campaign_snapshot.json",
+        "sha256": "0dcd4752f762ac66516b954e64914fc09816a3a9ed92f37a2099507268c79de4",
+        "sample_utc": "2026-10-09T21:10:21.576890277Z",
+        "projected_cumulative_charged_seconds_as_of": 69920.85694392852,
+        "remaining_numerical_seconds_as_of": 15879.14305607148,
+        "not_current_balance": true
+      },
+      "process_scan": {
+        "result": "NO_MATCHING_PYTHON_PYTEST_DOLFINX_MPI_PROCESS",
+        "method": "read-only ps command-name filter during V21 closeout",
+        "full_descendant_cleanup_proof": "NOT_ESTABLISHED_BY_THIS_SCAN",
+        "historical_e2_cleanup": "UNKNOWN"
+      }
+    },
+    "documentation_files_sha256": {
+      "docs/task40extra_0p7nm_engineering/response_v21.md": "d6195c93861956e492ec192c41a0b04e00a70799875f141ae01d1ebddbae56b9",
+      "docs/task40extra_0p7nm_engineering/outcomes/summary.md": "80acef12c22a534a1eea555a8da3b85d960211ee4935d34aa565226ed6a25bf5",
+      "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md": "b4eaf55a1675909f56cdf89449c7b7bb3a05a281d26081f5e48c2859074e23b4",
+      "docs/task40extra_0p7nm_engineering/README.md": "017752d3caa88759a695530f283f62f369811dd555d3881faab41750043a99f1",
+      "docs/development_progress.md": "ff8b903b85835c374ccde9a7c63d832109c4d46a947d33077bac31b1058c29bd",
+      "docs/development_model_registry.md": "68fdaece5215869606ab669643cd3a7db505e440123d997e8f7b7eaf0196a0f6",
+      "docs/README.md": "ec3e22ee220ce613761029430e39cd2d628422813ccbbffd06a3e790898f2790",
+      "docs/task40extra_0p7nm_engineering/outcomes/records/targeted_tests_v21.json": "a1d2863519b29cd0b20a5de7a2a3f0c92a10a55d4aacb93fd04675f65a76e6fe"
+    }
   }
 }

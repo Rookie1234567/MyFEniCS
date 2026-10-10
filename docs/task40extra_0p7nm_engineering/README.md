@@ -1,5 +1,18 @@
 # Task40extra：0.7 nm 工程方法（笔记本起步）
 
+## Review V21 当前交付
+
+V21 沿用既有 V20 canonical worktree、固定窗口与输入身份。它减少缺省零耦合的逻辑数组存储，增加本地生成式 B/D action 见证，并从原 E2 事件只读复核阶段资源结果。真实全边界模式 support 仍未知，generated callback 尚未接入 fullspace carrier builder/Task40 worker；full target、官方 R/T/A 与 2 TB/48 h 继续 NOT_QUALIFIED。
+
+| 文件 | 内容 |
+|---|---|
+| [Review V21](review_report_v21.md) 与 [Response V21](response_v21.md) | 本轮执行合同、实际证据、固定窗口 sample、未完成项与资格边界 |
+| [V21 outcomes summary](outcomes/summary.md) 与 [test summary](outcomes/test_summary.md) | 增量模型账、负结果、测试与未运行项 |
+| [V21 run index](outcomes/records/run_index.json) | V21 evidence index、原始身份、只读窗口采样和文件 hashes |
+| [目标端口库存 V21](outcomes/records/target_port_inventory_v21.json) | 2,176 facets/side、模式身份、条件存储量与 UNKNOWN support |
+| [E2 partial recheck V21](outcomes/records/e2_partial_recheck_v21.json) | 旧 E2 resource stop 的 raw-event 只读重算 |
+| [定向测试回执 V21](outcomes/records/targeted_tests_v21.json) | ABI、命令、15 项阶段 receipt/checker 测试结果与 source hashes |
+
 ## Review V20 当前交付
 
 V20 将原尺寸 `50×25×140 nm`、Ny=8、p6 的分阶段入口接通，取得 30,464-cell 实际几何与部分局部/端口实测，并运行唯一获准的 E2 p6 增长场至资源 Gate。E2 在符号因子准入前受控停止；原尺寸目标没有全局 FE/算子/场，2 TB/48 h 仍 `NOT_QUALIFIED`。源码 route 修复不改数值方法或 ordinary solver default。

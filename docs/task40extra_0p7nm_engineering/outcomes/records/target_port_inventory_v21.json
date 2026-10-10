@@ -1,0 +1,1485 @@
+{
+  "actual_boundary_faces": {
+    "bottom_face_count": 2176,
+    "boundary_face_to_all_class_mapping": "UNKNOWN without reading the HDF5 cell/facet membership datasets",
+    "facet_tags": {
+      "bottom": "15",
+      "top": "16"
+    },
+    "source": "v20_geometry_inventory.periodic_face_inventory; tagged facet IDs paired by projected coordinates",
+    "top_bottom_coordinate_pairing_pass": true,
+    "top_face_count": 2176,
+    "total_z_port_face_count": 4352
+  },
+  "evidence_class": "measured raw geometry and one-mode witnesses; full per-facet support unknown; all-mode storage numbers conditional",
+  "generated_at_utc": "2026-10-10",
+  "geometry_run": {
+    "actual_axes": [
+      272,
+      8,
+      14
+    ],
+    "actual_cell_count": 30464,
+    "cell_classes": [
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.21153846153846154,
+          3.125,
+          10.0
+        ],
+        "class_id": "c00",
+        "filled_reference_cell_count": 1,
+        "material": "substrate",
+        "target_cell_count": 1
+      },
+      {
+        "cell_permutation": 36873,
+        "cell_widths_nm": [
+          0.21153846153846154,
+          3.125,
+          10.0
+        ],
+        "class_id": "c01",
+        "filled_reference_cell_count": 1,
+        "material": "substrate",
+        "target_cell_count": 1
+      },
+      {
+        "cell_permutation": 576,
+        "cell_widths_nm": [
+          0.21153846153846154,
+          3.125,
+          10.0
+        ],
+        "class_id": "c02",
+        "filled_reference_cell_count": 7,
+        "material": "substrate",
+        "target_cell_count": 7
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.21153846153846154,
+          3.125,
+          10.0
+        ],
+        "class_id": "c03",
+        "filled_reference_cell_count": 195,
+        "material": "air",
+        "target_cell_count": 195
+      },
+      {
+        "cell_permutation": 36873,
+        "cell_widths_nm": [
+          0.2115384615384615,
+          3.125,
+          10.0
+        ],
+        "class_id": "c04",
+        "filled_reference_cell_count": 1,
+        "material": "substrate",
+        "target_cell_count": 1
+      },
+      {
+        "cell_permutation": 4680,
+        "cell_widths_nm": [
+          0.21153846153846154,
+          3.125,
+          10.0
+        ],
+        "class_id": "c05",
+        "filled_reference_cell_count": 7,
+        "material": "substrate",
+        "target_cell_count": 7
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.21153846153846154,
+          3.125,
+          10.0
+        ],
+        "class_id": "c06",
+        "filled_reference_cell_count": 13,
+        "material": "air",
+        "target_cell_count": 13
+      },
+      {
+        "cell_permutation": 36873,
+        "cell_widths_nm": [
+          0.21153846153846156,
+          3.125,
+          10.0
+        ],
+        "class_id": "c07",
+        "filled_reference_cell_count": 2,
+        "material": "substrate",
+        "target_cell_count": 2
+      },
+      {
+        "cell_permutation": 4680,
+        "cell_widths_nm": [
+          0.2115384615384615,
+          3.125,
+          10.0
+        ],
+        "class_id": "c08",
+        "filled_reference_cell_count": 7,
+        "material": "substrate",
+        "target_cell_count": 7
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.2115384615384615,
+          3.125,
+          10.0
+        ],
+        "class_id": "c09",
+        "filled_reference_cell_count": 13,
+        "material": "air",
+        "target_cell_count": 13
+      },
+      {
+        "cell_permutation": 4680,
+        "cell_widths_nm": [
+          0.21153846153846156,
+          3.125,
+          10.0
+        ],
+        "class_id": "c10",
+        "filled_reference_cell_count": 14,
+        "material": "substrate",
+        "target_cell_count": 14
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.21153846153846156,
+          3.125,
+          10.0
+        ],
+        "class_id": "c11",
+        "filled_reference_cell_count": 26,
+        "material": "air",
+        "target_cell_count": 26
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.2115384615384615,
+          3.125,
+          10.0
+        ],
+        "class_id": "c12",
+        "filled_reference_cell_count": 91,
+        "material": "air",
+        "target_cell_count": 91
+      },
+      {
+        "cell_permutation": 36873,
+        "cell_widths_nm": [
+          0.21153846153846145,
+          3.125,
+          10.0
+        ],
+        "class_id": "c13",
+        "filled_reference_cell_count": 3,
+        "material": "substrate",
+        "target_cell_count": 3
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.21153846153846156,
+          3.125,
+          10.0
+        ],
+        "class_id": "c14",
+        "filled_reference_cell_count": 182,
+        "material": "air",
+        "target_cell_count": 182
+      },
+      {
+        "cell_permutation": 36873,
+        "cell_widths_nm": [
+          0.21153846153846168,
+          3.125,
+          10.0
+        ],
+        "class_id": "c15",
+        "filled_reference_cell_count": 59,
+        "material": "substrate",
+        "target_cell_count": 59
+      },
+      {
+        "cell_permutation": 4680,
+        "cell_widths_nm": [
+          0.21153846153846145,
+          3.125,
+          10.0
+        ],
+        "class_id": "c16",
+        "filled_reference_cell_count": 21,
+        "material": "substrate",
+        "target_cell_count": 21
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.21153846153846145,
+          3.125,
+          10.0
+        ],
+        "class_id": "c17",
+        "filled_reference_cell_count": 39,
+        "material": "air",
+        "target_cell_count": 39
+      },
+      {
+        "cell_permutation": 4680,
+        "cell_widths_nm": [
+          0.21153846153846168,
+          3.125,
+          10.0
+        ],
+        "class_id": "c18",
+        "filled_reference_cell_count": 413,
+        "material": "substrate",
+        "target_cell_count": 413
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.21153846153846168,
+          3.125,
+          10.0
+        ],
+        "class_id": "c19",
+        "filled_reference_cell_count": 767,
+        "material": "air",
+        "target_cell_count": 767
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.21153846153846145,
+          3.125,
+          10.0
+        ],
+        "class_id": "c20",
+        "filled_reference_cell_count": 273,
+        "material": "air",
+        "target_cell_count": 273
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.21153846153846168,
+          3.125,
+          10.0
+        ],
+        "class_id": "c21",
+        "filled_reference_cell_count": 5369,
+        "material": "air",
+        "target_cell_count": 5369
+      },
+      {
+        "cell_permutation": 36873,
+        "cell_widths_nm": [
+          0.21153846153846123,
+          3.125,
+          10.0
+        ],
+        "class_id": "c22",
+        "filled_reference_cell_count": 3,
+        "material": "substrate",
+        "target_cell_count": 3
+      },
+      {
+        "cell_permutation": 4680,
+        "cell_widths_nm": [
+          0.21153846153846123,
+          3.125,
+          10.0
+        ],
+        "class_id": "c23",
+        "filled_reference_cell_count": 21,
+        "material": "substrate",
+        "target_cell_count": 21
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.21153846153846123,
+          3.125,
+          10.0
+        ],
+        "class_id": "c24",
+        "filled_reference_cell_count": 39,
+        "material": "air",
+        "target_cell_count": 39
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.21153846153846123,
+          3.125,
+          10.0
+        ],
+        "class_id": "c25",
+        "filled_reference_cell_count": 273,
+        "material": "air",
+        "target_cell_count": 273
+      },
+      {
+        "cell_permutation": 36873,
+        "cell_widths_nm": [
+          0.2115384615384608,
+          3.125,
+          10.0
+        ],
+        "class_id": "c26",
+        "filled_reference_cell_count": 3,
+        "material": "substrate",
+        "target_cell_count": 3
+      },
+      {
+        "cell_permutation": 4680,
+        "cell_widths_nm": [
+          0.2115384615384608,
+          3.125,
+          10.0
+        ],
+        "class_id": "c27",
+        "filled_reference_cell_count": 21,
+        "material": "substrate",
+        "target_cell_count": 21
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.2115384615384608,
+          3.125,
+          10.0
+        ],
+        "class_id": "c28",
+        "filled_reference_cell_count": 39,
+        "material": "air",
+        "target_cell_count": 39
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.2115384615384608,
+          3.125,
+          10.0
+        ],
+        "class_id": "c29",
+        "filled_reference_cell_count": 273,
+        "material": "air",
+        "target_cell_count": 273
+      },
+      {
+        "cell_permutation": 36873,
+        "cell_widths_nm": [
+          0.2115384615384599,
+          3.125,
+          10.0
+        ],
+        "class_id": "c30",
+        "filled_reference_cell_count": 64,
+        "material": "substrate",
+        "target_cell_count": 64
+      },
+      {
+        "cell_permutation": 4680,
+        "cell_widths_nm": [
+          0.2115384615384599,
+          3.125,
+          10.0
+        ],
+        "class_id": "c31",
+        "filled_reference_cell_count": 448,
+        "material": "substrate",
+        "target_cell_count": 448
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.2115384615384599,
+          3.125,
+          10.0
+        ],
+        "class_id": "c32",
+        "filled_reference_cell_count": 832,
+        "material": "air",
+        "target_cell_count": 832
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.2115384615384599,
+          3.125,
+          10.0
+        ],
+        "class_id": "c33",
+        "filled_reference_cell_count": 5824,
+        "material": "air",
+        "target_cell_count": 5824
+      },
+      {
+        "cell_permutation": 36873,
+        "cell_widths_nm": [
+          0.21153846153846345,
+          3.125,
+          10.0
+        ],
+        "class_id": "c34",
+        "filled_reference_cell_count": 1,
+        "material": "substrate",
+        "target_cell_count": 1
+      },
+      {
+        "cell_permutation": 4680,
+        "cell_widths_nm": [
+          0.21153846153846345,
+          3.125,
+          10.0
+        ],
+        "class_id": "c35",
+        "filled_reference_cell_count": 7,
+        "material": "substrate",
+        "target_cell_count": 7
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.21153846153846345,
+          3.125,
+          10.0
+        ],
+        "class_id": "c36",
+        "filled_reference_cell_count": 13,
+        "material": "air",
+        "target_cell_count": 13
+      },
+      {
+        "cell_permutation": 36873,
+        "cell_widths_nm": [
+          0.14655172413793238,
+          3.125,
+          10.0
+        ],
+        "class_id": "c37",
+        "filled_reference_cell_count": 66,
+        "material": "substrate",
+        "target_cell_count": 66
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.21153846153846345,
+          3.125,
+          10.0
+        ],
+        "class_id": "c38",
+        "filled_reference_cell_count": 91,
+        "material": "air",
+        "target_cell_count": 91
+      },
+      {
+        "cell_permutation": 36873,
+        "cell_widths_nm": [
+          0.14655172413792883,
+          3.125,
+          10.0
+        ],
+        "class_id": "c39",
+        "filled_reference_cell_count": 47,
+        "material": "substrate",
+        "target_cell_count": 47
+      },
+      {
+        "cell_permutation": 4680,
+        "cell_widths_nm": [
+          0.14655172413793238,
+          3.125,
+          10.0
+        ],
+        "class_id": "c40",
+        "filled_reference_cell_count": 462,
+        "material": "substrate",
+        "target_cell_count": 462
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.14655172413793238,
+          3.125,
+          10.0
+        ],
+        "class_id": "c41",
+        "filled_reference_cell_count": 792,
+        "material": "grating",
+        "target_cell_count": 792
+      },
+      {
+        "cell_permutation": 4680,
+        "cell_widths_nm": [
+          0.14655172413792883,
+          3.125,
+          10.0
+        ],
+        "class_id": "c42",
+        "filled_reference_cell_count": 329,
+        "material": "substrate",
+        "target_cell_count": 329
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.14655172413792883,
+          3.125,
+          10.0
+        ],
+        "class_id": "c43",
+        "filled_reference_cell_count": 564,
+        "material": "grating",
+        "target_cell_count": 564
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.14655172413793238,
+          3.125,
+          10.0
+        ],
+        "class_id": "c44",
+        "filled_reference_cell_count": 5544,
+        "material": "grating",
+        "target_cell_count": 5064
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.14655172413792883,
+          3.125,
+          10.0
+        ],
+        "class_id": "c45",
+        "filled_reference_cell_count": 3948,
+        "material": "grating",
+        "target_cell_count": 3548
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.14655172413793238,
+          3.125,
+          10.0
+        ],
+        "class_id": "c46",
+        "filled_reference_cell_count": 66,
+        "material": "air",
+        "target_cell_count": 66
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.14655172413792883,
+          3.125,
+          10.0
+        ],
+        "class_id": "c47",
+        "filled_reference_cell_count": 47,
+        "material": "air",
+        "target_cell_count": 47
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.14655172413793238,
+          3.125,
+          10.0
+        ],
+        "class_id": "c48",
+        "filled_reference_cell_count": 462,
+        "material": "air",
+        "target_cell_count": 942
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.14655172413792883,
+          3.125,
+          10.0
+        ],
+        "class_id": "c49",
+        "filled_reference_cell_count": 329,
+        "material": "air",
+        "target_cell_count": 729
+      },
+      {
+        "cell_permutation": 36873,
+        "cell_widths_nm": [
+          0.14655172413793593,
+          3.125,
+          10.0
+        ],
+        "class_id": "c50",
+        "filled_reference_cell_count": 3,
+        "material": "substrate",
+        "target_cell_count": 3
+      },
+      {
+        "cell_permutation": 4680,
+        "cell_widths_nm": [
+          0.14655172413793593,
+          3.125,
+          10.0
+        ],
+        "class_id": "c51",
+        "filled_reference_cell_count": 21,
+        "material": "substrate",
+        "target_cell_count": 21
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.14655172413793593,
+          3.125,
+          10.0
+        ],
+        "class_id": "c52",
+        "filled_reference_cell_count": 36,
+        "material": "grating",
+        "target_cell_count": 36
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.14655172413793593,
+          3.125,
+          10.0
+        ],
+        "class_id": "c53",
+        "filled_reference_cell_count": 252,
+        "material": "grating",
+        "target_cell_count": 204
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.14655172413793593,
+          3.125,
+          10.0
+        ],
+        "class_id": "c54",
+        "filled_reference_cell_count": 21,
+        "material": "air",
+        "target_cell_count": 69
+      },
+      {
+        "cell_permutation": 36873,
+        "cell_widths_nm": [
+          0.211538461538467,
+          3.125,
+          10.0
+        ],
+        "class_id": "c55",
+        "filled_reference_cell_count": 18,
+        "material": "substrate",
+        "target_cell_count": 18
+      },
+      {
+        "cell_permutation": 4680,
+        "cell_widths_nm": [
+          0.211538461538467,
+          3.125,
+          10.0
+        ],
+        "class_id": "c56",
+        "filled_reference_cell_count": 126,
+        "material": "substrate",
+        "target_cell_count": 126
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.211538461538467,
+          3.125,
+          10.0
+        ],
+        "class_id": "c57",
+        "filled_reference_cell_count": 234,
+        "material": "air",
+        "target_cell_count": 234
+      },
+      {
+        "cell_permutation": 0,
+        "cell_widths_nm": [
+          0.211538461538467,
+          3.125,
+          10.0
+        ],
+        "class_id": "c58",
+        "filled_reference_cell_count": 1638,
+        "material": "air",
+        "target_cell_count": 1638
+      },
+      {
+        "cell_permutation": 32769,
+        "cell_widths_nm": [
+          0.14655172413793593,
+          3.125,
+          10.0
+        ],
+        "class_id": "c59",
+        "filled_reference_cell_count": 3,
+        "material": "air",
+        "target_cell_count": 3
+      }
+    ],
+    "filled_reference_cell_class_count": 60,
+    "filled_reference_only_cell_class_count": 0,
+    "geometry_artifact_flags": {
+      "factor_created": false,
+      "global_C_D_created": false,
+      "global_mpc_created": false,
+      "global_p6_space_created": false,
+      "q_csr_created": false
+    },
+    "geometry_inventory_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/v20_geometry_inventory.json",
+    "geometry_inventory_sha256": "491dac32b7e3ba927ce44444f834ff1e27406c3dfe95a9438fac8cae45adce34",
+    "input_sha256": "e5e0986920a71d8e9d5224c6c7be8e9060ba5791391db2037a9128741061bf38",
+    "material_cell_counts": {
+      "air": 18080,
+      "grating": 10208,
+      "substrate": 2176
+    },
+    "mesh_hdf5_bytes": 2839728,
+    "mesh_hdf5_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/mesh_3d.h5",
+    "mesh_hdf5_sha256": "0bcc83dea1fb912a88612732f088467b7cb2fd2e152e19370d98342709be1dba",
+    "mesh_xdmf_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/mesh_3d.xdmf",
+    "mesh_xdmf_sha256": "69187085a247671d31be04cb813d75c1c6ec2f8214f329f9008002f77ec33af1",
+    "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+    "resolved_config_sha256": "8f5c5f1c93cebf233b6456a52b52a88fed30aaca12b66fe35fc7bda88a152ccd",
+    "run_id": "task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
+    "run_manifest_sha256": "a5ed2a1a390f7f7bea05547faedfa81736c6f3778e65a6a3ad59a10ecae6be15",
+    "shared_cell_class_count": 60,
+    "source_sha": "4b5ed041b69f8f91e283ae1b251ba76e6070de95",
+    "target_adjacent_cell_class_membership_for_top_bottom": "UNKNOWN; inventory stores only two boundary-cell witnesses; class representative bounds do not map all class members",
+    "target_cell_class_count": 60,
+    "target_only_cell_class_count": 0
+  },
+  "inspection_identity": {
+    "inspection": "qualified read-only JSON/NPZ/manifest/HDF5 file identity; no HDF5 dataset read; no FE/MPC/carrier/q assembly/PDE",
+    "repository_head": "75273597809d2876f091a222b678f3af6756725c"
+  },
+  "limitations": [
+    "No global target MPC or C/D map, no q CSR, no factor, no PDE, no official R/T/A.",
+    "Per-facet mode association, sum_m and sum_m_squared remain unknown; the all-mode scenario is conditional and is not measured memory consumption.",
+    "Geometry HDF5 identity is recorded, but HDF5 datasets were not read; boundary-cell-to-class membership remains unknown.",
+    "The top single-mode local forward check is CONTROLLED_NEGATIVE_ABOVE_LIMIT (1.488391772882517e-11 > 1e-11); retain the negative. The bottom one passes at 9.173378724262687e-12. Neither result is a global solver qualification."
+  ],
+  "logical_storage": {
+    "actual_one_cell_witness_per_side": {
+      "logical_bytes": {
+        "Bi_plus_Di": 28800,
+        "XiB_plus_Bhat_plus_Dhat": 42048,
+        "absent_Bt_plus_Dt": 27648,
+        "absent_Hlocal": 32
+      },
+      "scope": "two local witness actions only; m_c=1 for each witness, not a global target sum",
+      "sum_m_c": 2,
+      "sum_m_c_squared": 2
+    },
+    "conditional_all_boundary_cells_all_side_modes": {
+      "assumption": "every one of the 2176 port-adjacent cells on each side is associated with every mode on that side; actual support is not known",
+      "complex128_itemsize_bytes": 16,
+      "logical_payload_bytes": {
+        "Bi_plus_Di": 1004580864000,
+        "XiB_plus_Bhat_plus_Dhat": 1466688061440,
+        "absent_Bt_plus_Dt": 964397629440,
+        "absent_Hlocal": 17892701388800
+      },
+      "logical_payload_formulas": {
+        "Bi_plus_Di": "16 * 900 * sum_m_c",
+        "XiB_plus_Bhat_plus_Dhat": "16 * 1314 * sum_m_c",
+        "absent_Bt_plus_Dt": "16 * 864 * sum_m_c",
+        "absent_Hlocal": "16 * sum_m_c_squared"
+      },
+      "sum_m_c": 69762560,
+      "sum_m_c_squared": 1118293836800,
+      "sum_of_listed_payloads_bytes": 21328367943680
+    },
+    "current_production_owner_account": {
+      "carrier_direct_maps_unique_backings_and_lifetimes": "UNKNOWN; no global carrier/direct-map construction occurred",
+      "generated_action_callback_workspace_bound_per_m_1_cell": 35456,
+      "workspace_bound_scope": "logical NumPy workspace only; excludes native, BLAS/NumPy temporaries and the full production carrier"
+    },
+    "dtype": "complex128",
+    "zero_vs_none_pair": {
+      "VmRSS_VmHWM_interpretation": "HWM is process-wide/cumulative and captures prior runtime/import allocations; old/new were sequential in one process; shared cgroup peak/swap is not attributable to this task; no RSS savings claim",
+      "exact_action_rhs_recovery_B_D_differences": "zero in the measured local pair",
+      "per_side": {
+        "bottom": {
+          "dense_schur_oracle": {
+            "B_full": {
+              "maximum_absolute_error": 3.97040629412426e-34,
+              "observed_shape": [
+                882
+              ],
+              "reference_shape": [
+                882
+              ],
+              "relative_l2": 2.322397255085625e-31,
+              "worst_flat_index": 461
+            },
+            "D_full": {
+              "maximum_absolute_error": 4.336808689942018e-19,
+              "observed_shape": [
+                1
+              ],
+              "reference_shape": [
+                1
+              ],
+              "relative_l2": 4.866304083757431e-16,
+              "worst_flat_index": 0
+            },
+            "action": {
+              "maximum_absolute_error": 0.0,
+              "observed_shape": [
+                433
+              ],
+              "reference_shape": [
+                433
+              ],
+              "relative_l2": 0.0,
+              "worst_flat_index": 0
+            },
+            "recovery": {
+              "maximum_absolute_error": 2.794884301942512e-10,
+              "observed_shape": [
+                882
+              ],
+              "reference_shape": [
+                882
+              ],
+              "relative_l2": 1.3184376153130695e-11,
+              "worst_flat_index": 608
+            },
+            "rhs": {
+              "maximum_absolute_error": 9.14826104086877e-09,
+              "observed_shape": [
+                433
+              ],
+              "reference_shape": [
+                433
+              ],
+              "relative_l2": 2.402222099692621e-13,
+              "worst_flat_index": 81
+            }
+          },
+          "explicit_zero_vs_absent_none": {
+            "B_full": {
+              "maximum_absolute_error": 0.0,
+              "observed_shape": [
+                882
+              ],
+              "reference_shape": [
+                882
+              ],
+              "relative_l2": 0.0,
+              "worst_flat_index": 0
+            },
+            "D_full": {
+              "maximum_absolute_error": 0.0,
+              "observed_shape": [
+                1
+              ],
+              "reference_shape": [
+                1
+              ],
+              "relative_l2": 0.0,
+              "worst_flat_index": 0
+            },
+            "action": {
+              "maximum_absolute_error": 0.0,
+              "observed_shape": [
+                433
+              ],
+              "reference_shape": [
+                433
+              ],
+              "relative_l2": 0.0,
+              "worst_flat_index": 0
+            },
+            "recovery": {
+              "maximum_absolute_error": 0.0,
+              "observed_shape": [
+                882
+              ],
+              "reference_shape": [
+                882
+              ],
+              "relative_l2": 0.0,
+              "worst_flat_index": 0
+            },
+            "rhs": {
+              "maximum_absolute_error": 0.0,
+              "observed_shape": [
+                433
+              ],
+              "reference_shape": [
+                433
+              ],
+              "relative_l2": 0.0,
+              "worst_flat_index": 0
+            }
+          },
+          "logical_payload": {
+            "formula_bytes_for_one_real_mode": 13840,
+            "new_raw_port_payload_bytes": 14400,
+            "old_raw_port_payload_bytes": 28240,
+            "resident_zero_arrays": [
+              "Bt[432×1]",
+              "Dt[1×432]",
+              "Hlocal[1×1]"
+            ],
+            "resident_zero_payload_removed_bytes": 13840,
+            "rss_saving_inferred_from_logical_bytes": false
+          },
+          "max_sampled_process_VmHWM_bytes": 193347584,
+          "resource_samples_vm": {
+            "after_explicit_zero_action_apply": {
+              "process_VmHWM_bytes": 193314816,
+              "process_VmHWM_valid": true,
+              "process_VmRSS_current_bytes": 193314816,
+              "shared_cgroup_memory_current_bytes": 917827584,
+              "shared_cgroup_memory_peak_bytes": 14030671872,
+              "shared_cgroup_swap_current_bytes": 145637376
+            },
+            "after_explicit_zero_action_build": {
+              "process_VmHWM_bytes": 193204224,
+              "process_VmHWM_valid": true,
+              "process_VmRSS_current_bytes": 193204224,
+              "shared_cgroup_memory_current_bytes": 917827584,
+              "shared_cgroup_memory_peak_bytes": 14030671872,
+              "shared_cgroup_swap_current_bytes": 145637376
+            },
+            "after_explicit_zero_action_release": {
+              "process_VmHWM_bytes": 193314816,
+              "process_VmHWM_valid": true,
+              "process_VmRSS_current_bytes": 193314816,
+              "shared_cgroup_memory_current_bytes": 917827584,
+              "shared_cgroup_memory_peak_bytes": 14030671872,
+              "shared_cgroup_swap_current_bytes": 145637376
+            },
+            "after_none_action_apply": {
+              "process_VmHWM_bytes": 193343488,
+              "process_VmHWM_valid": true,
+              "process_VmRSS_current_bytes": 193343488,
+              "shared_cgroup_memory_current_bytes": 917815296,
+              "shared_cgroup_memory_peak_bytes": 14030671872,
+              "shared_cgroup_swap_current_bytes": 145637376
+            },
+            "after_none_action_build": {
+              "process_VmHWM_bytes": 193339392,
+              "process_VmHWM_valid": true,
+              "process_VmRSS_current_bytes": 193339392,
+              "shared_cgroup_memory_current_bytes": 917557248,
+              "shared_cgroup_memory_peak_bytes": 14030671872,
+              "shared_cgroup_swap_current_bytes": 145637376
+            },
+            "after_none_action_release": {
+              "process_VmHWM_bytes": 193347584,
+              "process_VmHWM_valid": true,
+              "process_VmRSS_current_bytes": 193347584,
+              "shared_cgroup_memory_current_bytes": 917815296,
+              "shared_cgroup_memory_peak_bytes": 14030671872,
+              "shared_cgroup_swap_current_bytes": 145637376
+            },
+            "before_pair": {
+              "process_VmHWM_bytes": 192585728,
+              "process_VmHWM_valid": true,
+              "process_VmRSS_current_bytes": 192585728,
+              "shared_cgroup_memory_current_bytes": 916779008,
+              "shared_cgroup_memory_peak_bytes": 14030671872,
+              "shared_cgroup_swap_current_bytes": 145637376
+            }
+          },
+          "rss_saving_claim": "NO_DETECTABLE_NOT_ATTRIBUTABLE"
+        },
+        "top": {
+          "dense_schur_oracle": {
+            "B_full": {
+              "maximum_absolute_error": 0.0,
+              "observed_shape": [
+                882
+              ],
+              "reference_shape": [
+                882
+              ],
+              "relative_l2": 0.0,
+              "worst_flat_index": 0
+            },
+            "D_full": {
+              "maximum_absolute_error": 0.0,
+              "observed_shape": [
+                1
+              ],
+              "reference_shape": [
+                1
+              ],
+              "relative_l2": 0.0,
+              "worst_flat_index": 0
+            },
+            "action": {
+              "maximum_absolute_error": 1.0842021724855044e-19,
+              "observed_shape": [
+                433
+              ],
+              "reference_shape": [
+                433
+              ],
+              "relative_l2": 7.881403676908346e-25,
+              "worst_flat_index": 432
+            },
+            "recovery": {
+              "maximum_absolute_error": 1.5279578100477706e-10,
+              "observed_shape": [
+                882
+              ],
+              "reference_shape": [
+                882
+              ],
+              "relative_l2": 8.827105922414142e-12,
+              "worst_flat_index": 609
+            },
+            "rhs": {
+              "maximum_absolute_error": 9.75521422438174e-09,
+              "observed_shape": [
+                433
+              ],
+              "reference_shape": [
+                433
+              ],
+              "relative_l2": 2.2722526003307062e-13,
+              "worst_flat_index": 146
+            }
+          },
+          "explicit_zero_vs_absent_none": {
+            "B_full": {
+              "maximum_absolute_error": 0.0,
+              "observed_shape": [
+                882
+              ],
+              "reference_shape": [
+                882
+              ],
+              "relative_l2": 0.0,
+              "worst_flat_index": 0
+            },
+            "D_full": {
+              "maximum_absolute_error": 0.0,
+              "observed_shape": [
+                1
+              ],
+              "reference_shape": [
+                1
+              ],
+              "relative_l2": 0.0,
+              "worst_flat_index": 0
+            },
+            "action": {
+              "maximum_absolute_error": 0.0,
+              "observed_shape": [
+                433
+              ],
+              "reference_shape": [
+                433
+              ],
+              "relative_l2": 0.0,
+              "worst_flat_index": 0
+            },
+            "recovery": {
+              "maximum_absolute_error": 0.0,
+              "observed_shape": [
+                882
+              ],
+              "reference_shape": [
+                882
+              ],
+              "relative_l2": 0.0,
+              "worst_flat_index": 0
+            },
+            "rhs": {
+              "maximum_absolute_error": 0.0,
+              "observed_shape": [
+                433
+              ],
+              "reference_shape": [
+                433
+              ],
+              "relative_l2": 0.0,
+              "worst_flat_index": 0
+            }
+          },
+          "logical_payload": {
+            "formula_bytes_for_one_real_mode": 13840,
+            "new_raw_port_payload_bytes": 14400,
+            "old_raw_port_payload_bytes": 28240,
+            "resident_zero_arrays": [
+              "Bt[432×1]",
+              "Dt[1×432]",
+              "Hlocal[1×1]"
+            ],
+            "resident_zero_payload_removed_bytes": 13840,
+            "rss_saving_inferred_from_logical_bytes": false
+          },
+          "max_sampled_process_VmHWM_bytes": 196661248,
+          "resource_samples_vm": {
+            "after_explicit_zero_action_apply": {
+              "process_VmHWM_bytes": 196644864,
+              "process_VmHWM_valid": true,
+              "process_VmRSS_current_bytes": 196644864,
+              "shared_cgroup_memory_current_bytes": 937938944,
+              "shared_cgroup_memory_peak_bytes": 14030671872,
+              "shared_cgroup_swap_current_bytes": 145637376
+            },
+            "after_explicit_zero_action_build": {
+              "process_VmHWM_bytes": 196644864,
+              "process_VmHWM_valid": true,
+              "process_VmRSS_current_bytes": 196644864,
+              "shared_cgroup_memory_current_bytes": 937938944,
+              "shared_cgroup_memory_peak_bytes": 14030671872,
+              "shared_cgroup_swap_current_bytes": 145637376
+            },
+            "after_explicit_zero_action_release": {
+              "process_VmHWM_bytes": 196644864,
+              "process_VmHWM_valid": true,
+              "process_VmRSS_current_bytes": 196644864,
+              "shared_cgroup_memory_current_bytes": 937938944,
+              "shared_cgroup_memory_peak_bytes": 14030671872,
+              "shared_cgroup_swap_current_bytes": 145637376
+            },
+            "after_none_action_apply": {
+              "process_VmHWM_bytes": 196661248,
+              "process_VmHWM_valid": true,
+              "process_VmRSS_current_bytes": 196661248,
+              "shared_cgroup_memory_current_bytes": 937680896,
+              "shared_cgroup_memory_peak_bytes": 14030671872,
+              "shared_cgroup_swap_current_bytes": 145637376
+            },
+            "after_none_action_build": {
+              "process_VmHWM_bytes": 196661248,
+              "process_VmHWM_valid": true,
+              "process_VmRSS_current_bytes": 196661248,
+              "shared_cgroup_memory_current_bytes": 937938944,
+              "shared_cgroup_memory_peak_bytes": 14030671872,
+              "shared_cgroup_swap_current_bytes": 145637376
+            },
+            "after_none_action_release": {
+              "process_VmHWM_bytes": 196661248,
+              "process_VmHWM_valid": true,
+              "process_VmRSS_current_bytes": 196661248,
+              "shared_cgroup_memory_current_bytes": 937680896,
+              "shared_cgroup_memory_peak_bytes": 14030671872,
+              "shared_cgroup_swap_current_bytes": 145637376
+            },
+            "before_pair": {
+              "process_VmHWM_bytes": 196640768,
+              "process_VmHWM_valid": true,
+              "process_VmRSS_current_bytes": 196640768,
+              "shared_cgroup_memory_current_bytes": 938205184,
+              "shared_cgroup_memory_peak_bytes": 14030671872,
+              "shared_cgroup_swap_current_bytes": 145637376
+            }
+          },
+          "rss_saving_claim": "NO_DETECTABLE_NOT_ATTRIBUTABLE"
+        }
+      },
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v21_wsl/target_zero_block_pair_v2.json",
+      "receipt_sha256": "a86afade78c56445c35b6be844e86507fbce5daa8f4d11a68b299939da0a548e",
+      "scope": "old explicit-zero and new None representation, one real local mode per side",
+      "two_side_resident_zero_payload_removed_bytes": 27680
+    }
+  },
+  "mode_manifest": {
+    "artifact_sha256_readback": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "manifest_identity_scope": "full ordered mode manifest; does not prove each mode is nonzero on each boundary cell",
+    "mode_manifest_bytes": 36244923,
+    "mode_manifest_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "ordered_key_count": 32060,
+    "ordered_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+    "polarization_counts": {
+      "p": 16030,
+      "s": 16030
+    },
+    "side_counts": {
+      "bottom": 16030,
+      "top": 16030
+    },
+    "target_physical_inventory_identity_sha256": "a855565b82c1d88e84352dd355aec3531464261e5ab0df3e45de17e1879eaf1f"
+  },
+  "mode_to_facet_association": {
+    "actual_global_sum_m_c": "UNKNOWN; global target carrier and exact facet-cell map were not built",
+    "actual_global_sum_m_c_squared": "UNKNOWN; global target carrier and exact facet-cell map were not built",
+    "actual_per_facet_q_or_mode_hashes": "UNKNOWN",
+    "actual_support_histogram": "UNKNOWN",
+    "all_boundary_association_constructed": false,
+    "association_rule": "data-derived from exact nonzero Bi/Di interior support in the carrier builder; no floating threshold is applied",
+    "full_side_mode_scan": false,
+    "geometry_boundary_witness_examples": {
+      "bottom": {
+        "bound_to_generated_witness": false,
+        "cell_id": 0,
+        "facet_id": 0,
+        "source": "geometry inventory boundary_face_cells example only"
+      },
+      "top": {
+        "bound_to_generated_witness": false,
+        "cell_id": 503,
+        "facet_id": 2344,
+        "source": "geometry inventory boundary_face_cells example only"
+      },
+      "warning": "These two geometry examples are not proved to be the cells/facets used by the generated single-mode witness."
+    },
+    "single_mode_target_witnesses": {
+      "bottom": {
+        "candidate_B_vs_saved_v20": {
+          "maximum_absolute_error": 8.791334862707697e-16,
+          "relative_l2": 2.719455876279042e-15
+        },
+        "candidate_D_vs_saved_v20": {
+          "maximum_absolute_error": 1.2731443387096943e-18,
+          "relative_l2": 2.7019933490223554e-15
+        },
+        "cell_class_id": "UNKNOWN_NO_EXACT_CELL_TO_CLASS_LINK_IN_THE_WITNESS",
+        "cell_id": "UNKNOWN_NOT_BOUND_TO_THE_SAVED_GEOMETRY_FACET_TABLE",
+        "comparison_scope": {
+          "independent_dense_Schur_oracle": "separate local reduced-action/RHS/recovery comparison; does not prove independent full-row B/D agreement",
+          "new_generated_B_D_vs_independent_q30_full_row": "NOT_RUN_OR_NOT_PRESENT_IN_THIS_RECEIPT",
+          "new_generated_B_D_vs_saved_V20_vectors": "candidate/saved-vector identity comparison from the same target saved witness; not established as an independent q30 full-row checker"
+        },
+        "executed_mode_count": 1,
+        "facet_id": "UNKNOWN_FACE_INDICES_ARE_NOT_GLOBAL_FACET_IDS",
+        "full_table_scanned": false,
+        "generated_comparisons": {
+          "full_B_vs_native_mode": {
+            "maximum_absolute_error": 0.0,
+            "normalization": "norm(observed-expected,2) / max(norm(expected,2), norm(observed,2), tiny)",
+            "relative_l2": 0.0,
+            "worst_flat_index": 0
+          },
+          "full_D_vs_native_mode": {
+            "maximum_absolute_error": 4.2339448331361006e-19,
+            "normalization": "norm(observed-expected,2) / max(norm(expected,2), norm(observed,2), tiny)",
+            "relative_l2": 4.750881236628723e-16,
+            "worst_flat_index": 0
+          },
+          "recovery_vs_dense_local_solve": {
+            "maximum_absolute_error": 2.7948674762749084e-10,
+            "normalization": "norm(observed-expected,2) / max(norm(expected,2), norm(observed,2), tiny)",
+            "relative_l2": 1.3184435811031027e-11,
+            "worst_flat_index": 608
+          },
+          "reduced_action_vs_dense_local_schur": {
+            "maximum_absolute_error": 9.69739903612216e-19,
+            "normalization": "norm(observed-expected,2) / max(norm(expected,2), norm(observed,2), tiny)",
+            "relative_l2": 8.403467657525055e-24,
+            "worst_flat_index": 432
+          },
+          "reduced_rhs_vs_dense_local_schur": {
+            "maximum_absolute_error": 9.14826104086877e-09,
+            "normalization": "norm(observed-expected,2) / max(norm(expected,2), norm(observed,2), tiny)",
+            "relative_l2": 2.402222099692621e-13,
+            "worst_flat_index": 81
+          }
+        },
+        "input_nonzero_facts": {
+          "B_trace_direct_nonzero_count": 288,
+          "Bi_internal_max_abs": 8.86568020928153e-16,
+          "Bi_internal_nonzero_count": 300,
+          "D_trace_direct_nonzero_count": 288,
+          "Di_internal_max_abs": 1.3111630641623817e-18,
+          "Di_internal_nonzero_count": 300,
+          "alpha_abs": 0.007898046620237504,
+          "full_rhs_interior_norm": 7843063.335887239,
+          "full_rhs_trace_norm": 1328889.326625944,
+          "interior_solution_norm": 30.658888749610103,
+          "port_rhs_abs": 0.007007025337476877,
+          "trace_solution_norm": 27.458680791903518
+        },
+        "known_state_forward": {
+          "gate_limit": 1e-11,
+          "gate_status": "PASS",
+          "mode_key": [
+            "bottom",
+            -142,
+            -5,
+            "s"
+          ],
+          "normalization": "norm(xi_recovered-xi_saved,2) / max(norm(xi_saved,2), tiny)",
+          "relative_l2": 9.173378724262687e-12,
+          "worst_local_full_row_index": 609
+        },
+        "local_dimensions": {
+          "full_rows": 882,
+          "interior_rows": 450,
+          "trace_rows": 432
+        },
+        "local_mpc_mapping": "identity only; global target MPC not built",
+        "m_c_for_this_single_cell_witness": 1,
+        "mode_key": [
+          "bottom",
+          -142,
+          -5,
+          "s"
+        ],
+        "ordered_mode_index": 16030,
+        "saved_v20_array_identity": {
+          "array_equal": true,
+          "relative_l2": 0.0
+        }
+      },
+      "top": {
+        "candidate_B_vs_saved_v20": {
+          "maximum_absolute_error": 9.363136817782116e-16,
+          "relative_l2": 2.7307537817507756e-15
+        },
+        "candidate_D_vs_saved_v20": {
+          "maximum_absolute_error": 1.2970837635304818e-18,
+          "relative_l2": 2.7042301248539642e-15
+        },
+        "cell_class_id": "UNKNOWN_NO_EXACT_CELL_TO_CLASS_LINK_IN_THE_WITNESS",
+        "cell_id": "UNKNOWN_NOT_BOUND_TO_THE_SAVED_GEOMETRY_FACET_TABLE",
+        "comparison_scope": {
+          "independent_dense_Schur_oracle": "separate local reduced-action/RHS/recovery comparison; does not prove independent full-row B/D agreement",
+          "new_generated_B_D_vs_independent_q30_full_row": "NOT_RUN_OR_NOT_PRESENT_IN_THIS_RECEIPT",
+          "new_generated_B_D_vs_saved_V20_vectors": "candidate/saved-vector identity comparison from the same target saved witness; not established as an independent q30 full-row checker"
+        },
+        "executed_mode_count": 1,
+        "facet_id": "UNKNOWN_FACE_INDICES_ARE_NOT_GLOBAL_FACET_IDS",
+        "full_table_scanned": false,
+        "generated_comparisons": {
+          "full_B_vs_native_mode": {
+            "maximum_absolute_error": 0.0,
+            "normalization": "norm(observed-expected,2) / max(norm(expected,2), norm(observed,2), tiny)",
+            "relative_l2": 0.0,
+            "worst_flat_index": 0
+          },
+          "full_D_vs_native_mode": {
+            "maximum_absolute_error": 2.42434975903054e-19,
+            "normalization": "norm(observed-expected,2) / max(norm(expected,2), norm(observed,2), tiny)",
+            "relative_l2": 2.1750338753826206e-16,
+            "worst_flat_index": 0
+          },
+          "recovery_vs_dense_local_solve": {
+            "maximum_absolute_error": 1.52795960975633e-10,
+            "normalization": "norm(observed-expected,2) / max(norm(expected,2), norm(observed,2), tiny)",
+            "relative_l2": 8.827070070530074e-12,
+            "worst_flat_index": 609
+          },
+          "reduced_action_vs_dense_local_schur": {
+            "maximum_absolute_error": 1.0842021724855044e-19,
+            "normalization": "norm(observed-expected,2) / max(norm(expected,2), norm(observed,2), tiny)",
+            "relative_l2": 7.881403676908346e-25,
+            "worst_flat_index": 432
+          },
+          "reduced_rhs_vs_dense_local_schur": {
+            "maximum_absolute_error": 9.75521422438174e-09,
+            "normalization": "norm(observed-expected,2) / max(norm(expected,2), norm(observed,2), tiny)",
+            "relative_l2": 2.2722526003307062e-13,
+            "worst_flat_index": 146
+          }
+        },
+        "input_nonzero_facts": {
+          "B_trace_direct_nonzero_count": 288,
+          "Bi_internal_max_abs": 9.410773185044578e-16,
+          "Bi_internal_nonzero_count": 300,
+          "D_trace_direct_nonzero_count": 288,
+          "Di_internal_max_abs": 1.3337025742949567e-18,
+          "Di_internal_nonzero_count": 300,
+          "alpha_abs": 1.0,
+          "full_rhs_interior_norm": 8509657.319900073,
+          "full_rhs_trace_norm": 1532790.1053914474,
+          "interior_solution_norm": 29.330046627479128,
+          "port_rhs_abs": 0.9991345274603356,
+          "trace_solution_norm": 29.155361274066845
+        },
+        "known_state_forward": {
+          "gate_limit": 1e-11,
+          "gate_status": "CONTROLLED_NEGATIVE_ABOVE_LIMIT",
+          "mode_key": [
+            "top",
+            -142,
+            -5,
+            "s"
+          ],
+          "normalization": "norm(xi_recovered-xi_saved,2) / max(norm(xi_saved,2), tiny)",
+          "relative_l2": 1.488391772882517e-11,
+          "worst_local_full_row_index": 613
+        },
+        "local_dimensions": {
+          "full_rows": 882,
+          "interior_rows": 450,
+          "trace_rows": 432
+        },
+        "local_mpc_mapping": "identity only; global target MPC not built",
+        "m_c_for_this_single_cell_witness": 1,
+        "mode_key": [
+          "top",
+          -142,
+          -5,
+          "s"
+        ],
+        "ordered_mode_index": 0,
+        "saved_v20_array_identity": {
+          "array_equal": true,
+          "relative_l2": 0.0
+        }
+      }
+    },
+    "witness_receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v21_wsl/generated_side_action_witness.json",
+    "witness_receipt_sha256": "a4ac80c9c2c29350d9327962b9c34634d000fffe65a7fdf5aee0748d04ae9dfe"
+  },
+  "roles_and_operator_scope": {
+    "bloch_phase_facts": {
+      "bloch_kx_nm_inverse": [
+        8.97461192517716,
+        0.0
+      ],
+      "bloch_ky_nm_inverse": [
+        0.0,
+        0.0
+      ],
+      "floquet_phases": [
+        [
+          -0.8692301774091008,
+          0.49440762401215377
+        ],
+        [
+          1.0,
+          0.0
+        ]
+      ],
+      "relative_consistency_spread": [
+        0.0,
+        0.0
+      ]
+    },
+    "filled_reference": "60-class geometry catalog is present; global reference C/D carrier, global MPC and q matrices were not created by this geometry inventory",
+    "global_target_mpc": "NOT_RUN",
+    "global_target_operator_and_PDE": "NOT_RUN",
+    "incidence_polarization": "s",
+    "target_geometry": "actual original target Ny=8 geometry; model_variant=original",
+    "twist_and_sector_instances": "NOT_CREATED_OR_NOT_RECORDED in this geometry receipt; exact per-cell instances/ownership UNKNOWN"
+  },
+  "schema": "task40extra.review_v21.target_port_inventory.v1",
+  "status": "PARTIAL_ACTUAL_INVENTORY_CONDITIONAL_FULL_SUPPORT_BYTES"
+}

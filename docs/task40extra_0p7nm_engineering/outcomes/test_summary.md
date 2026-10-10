@@ -1,3 +1,29 @@
+# Task40extra Review V21 定向测试与只读复核
+
+| 检查 | source / 命令 / 回执 | 结果 | 证据边界 |
+|---|---|---|---|
+| None 零块与局部 p6 action regression | `src/test/test_task39extra_v19_p6_cell_condensed_action.py`、`src/test/test_task39extra_v30_streamed_ports.py`；日志 `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v21_wsl/p6_action_regression_attempt03.log` | 28 passed in 119.45 s | 核对缓存零块/None、condensation 与 streamed 兼容；不是全局 target MPC/PDE |
+| 主控最终联合复核（solver source 未在本次复跑期间改变） | `source scripts/activate_myfenics_wsl.sh`；同 shell ABI preflight；`python -m pytest -q src/test/test_task39extra_v19_p6_cell_condensed_action.py src/test/test_task39extra_v30_streamed_ports.py` | **28 passed in 129.61 s** | Task40 runtime、activation marker=1、PETSc complex128/int32、MPI1；组件与 80-mode carrier fixtures，不是 global target MPC/PDE；全仓/MPI4/Ruff/CI 仍 `NOT_RUN` |
+| 旧 streamed class-call 兼容性修复 | V30 直接类调用 fixture；日志 `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v21_wsl/streamed_compatibility_targeted_attempt02.log` | 3 passed、2 deselected in 0.26 s | 初始合并回归曾因 `_streamed_cell_action` 调用签名改变而有 3 项失败；已恢复兼容并跑 focused suite，失败原因与最终通过分别保留 |
+| 阶段 receipt、checker 与 E2 byte arithmetic | qualified activation 后：`python -m pytest -q src/test/test_task40_v21_readonly_recheck.py src/test/test_task40_v20_routes.py::test_original_target_unapproved_heavy_stages_stop_before_geometry`；[targeted test receipt](records/targeted_tests_v21.json) | **15 passed、0 failed、0 skipped in 0.16 s** | 覆盖 authorization denial、resource stop、stage complete、stage failure、q0/q-all 语义、q CSR hash 绑定、cleanup 未知拒绝、partial checker integration；没有启动 worker/PDE |
+| V21 最终 focused reruns | qualified activation 后分别运行 V21 recheck、heavy-authorization route 和 p6 cell-action 测试 | 12 passed in 0.12 s；3 passed in 0.12 s；23 passed in 0.76 s | 与更早 combined 15 passed receipt 相互补充；没有启动 worker/PDE |
+| 主控修正尾部空白后的 checker 复验 | `src/test/test_task40_v21_readonly_recheck.py`，同 shell ABI preflight | 12 passed in 0.08 s | 绑定修正后 source SHA；只测 checker fixtures，没有启动 worker/PDE |
+| 最终文档合同测试 | documentation/model registry/retrospective/markdown contracts | 29 passed、134 subtests passed in 0.23 s；在最终摘要/索引编辑后重跑 | 仅文档与索引合同，不是 full repository pytest、Ruff 或 CI |
+| 主控最终文档合同复核 | 同上四个合同测试；Task40 qualified activation、PETSc complex128/int32、MPI1 | 29 passed、134 subtests passed in 0.08 s | 在本轮最终 response/summary/test receipt edits 后复跑；不含 FE/PDE、全仓 pytest、Ruff 或 CI |
+| E2 raw-event只读复核 | `python -m scripts.task40_v21_readonly_recheck --run-directory <saved E2 run> --output docs/task40extra_0p7nm_engineering/outcomes/records/e2_partial_recheck_v21.json` | `E2_PARTIAL_RESOURCE_STOP_RECHECKED`；event line=97,311；byte arithmetic deficit=149,505,816 B | 读取已有 JSON/JSONL，不启动 worker；旧 `NO_PARTIAL_FOOTER`、worker/outer exit 与 `cleanup=UNKNOWN` 均保留 |
+| 目标端口 inventory readback | qualified Python 从 V20 geometry JSON、mode manifest、zero-pair 和 generated witness 写出 [target port inventory V21](records/target_port_inventory_v21.json) | 2,176 z facets/side、32,060 modes；full `Σm_c` / `Σm_c²` `UNKNOWN` | 没有读 HDF5 dataset、构造 global carrier/MPC 或跑全模式扫描；21.328 TB 是 all-cell/all-mode 条件 payload 情景，不是实测 |
+| 文档/whitespace 检查 | `git diff --check` | PASS | 只做本地 whitespace 检查；不代表 markdown renderer、Ruff 或 CI 通过 |
+| full repository pytest / MPI4 / Ruff / CI / PDE | 本轮 | `NOT_RUN` | 不声称全仓、MPI4、Ruff、CI 或原尺寸数值资格通过 |
+
+本次最终 focused reruns 使用 Task40 qualified WSL activation（marker=1，PETSc complex128/int32，MPI1）；ABI preflight 通过。V21 raw-event receipt 与 port inventory 是只读/离线整理，没有触发 worker、PDE 或额外资源门。fixed-window sample 是主控 read_campaign_state 的只读结果，没有修改 campaign ledger/window。
+
+## 固定窗口主控只读 sample
+
+同一 V19 窗口未刷新：T0 2026-10-09T01:45:00.727771902Z，deadline 2026-10-10T01:45:00.727771902Z，600 s closeout reserve；window SHA-256 b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0。主控 qualified read_campaign_state sample 为 2026-10-10T00:38:20.741056830Z：conservative-realtime interval 15,480.292692466 s，projected cumulative 82,400.02111048152 s，numerical remaining 3,399.9788895184756 s。持久账本 SHA-256 7ea9e880520accf2fd87d8ee63b894c7e3e1ec366308dd0c8bb4492abd705a11，83,032 行/seq 83031，尾部已写 cumulative 66,919.72841801553 s。该投影是只读 as-of 值，无新扣账、无 ledger/window 修改；未结算值保持 unknown。详见 [Response V21](../response_v21.md) 与 [V21 run index](records/run_index.json)。
+
+
+---
+
 # Task40extra Review V20 收口测试摘要
 
 | 阶段 / source | 命令、身份或收据 | 结果 | 证据边界 |
@@ -6,7 +32,7 @@
 | V20 route + ABI repair | 冻结源码 `c319719433e99fe652754f2844c5d79669b111cb`；定向 route 与 ABI suites | 42 passed、1 skipped in 0.58 s；compileall 与 diffcheck PASS | 只验证精确 V20 route/profile/ABI 合同，不建 FE、不运行 PDE；receipt `controller_v20_target_runtime_source_freeze.json` |
 | target actual pre-mesh route | 同一 frozen source；`controller_target_actual_pre_mesh_chain.json` | `FE mesh=0, q CSR=0, factor=0`；target contract PASS | 只验证路由和轻量拒绝，不是 geometry/PDE 结果；receipt SHA-256 `8ed9ce90941e697bf773a5cf71c1fee05db0594b67481898e4eb1132f82feebd` |
 | V20 component-resume targeted tests | Earlier patch-validation receipt; latest receipt `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/patch_validation/v20_local_port_resume_targeted_pytest_20261010_v2.json` (SHA-256 `730b0846efc2a3d8e5ddfd9f2f95492abe330b5ca7a4cb7564b5538607fd44b9`), log SHA-256 `300377b7ca47518f8e58601f2223af547757cb8cd3136653f8d74266ebc028ff` | Earlier run: 32 passed, 1 skipped in 0.32 s; latest recorded run: 35 passed, 1 skipped | Software/record fixtures only; no full-size FE/PDE or new service run |
-| final ABI preflight + documentation contracts | HEAD `c319719433e99fe652754f2844c5d79669b111cb`；ABI receipt `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/doc_closeout/v20_doc_abi_preflight_final.json` SHA-256 `69711e67e26d422c9d0eb5845cfec90e693e1740fddc2b5f09031d28b50490c2`；`python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py` | 29 passed、134 subtests passed in 0.26 s；日志 `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/doc_closeout/v20_docs_contract_attempt02.log` SHA-256 `14104cd9cd29e0661324d98d6b2347203f15630934cb0ed90ab2a3ffe660c1c2` | 文档、模型登记和回顾合同；只做 qualified complex128/int32、MPI1/runtime provenance 预检，不含 FE/PDE |
+| final ABI preflight + documentation contracts | HEAD `c319719433e99fe652754f2844c5d79669b111cb`；ABI receipt `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/doc_closeout/v20_doc_abi_preflight_final.json` SHA-256 `69711e67e26d422c9d0eb5845cfec90e693e1740fddc2b5f09031d28b50490c2`；`python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py` | 29 passed、134 subtests passed in 0.23 s；在最终摘要/索引编辑后重跑；日志 `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/doc_closeout/v20_docs_contract_attempt02.log` SHA-256 `14104cd9cd29e0661324d98d6b2347203f15630934cb0ed90ab2a3ffe660c1c2` | 文档、模型登记和回顾合同；只做 qualified complex128/int32、MPI1/runtime provenance 预检，不含 FE/PDE |
 | V20 E2 full case | source `4b004d09b17d07a1f19f4c9d8443e76153e69a4b`；input and physical hashes in formal compact | `RESOURCE_CONTROLLED_STOP` before numeric factor; checker `NO_PARTIAL_FOOTER` | 这是资源/PDE evidence，不是 pytest pass；完整分层身份见 run index |
 | target geometry/local-port | source `f88d0606a8c351e7185afd9e839e8c8ddfd9bb81` | geometry PASS; local/port PARTIAL, 17/60 direction classes matched | bounded component evidence only; no global FE/MPC/q CSR/factor/field |
 | full repository pytest / MPI4 / Ruff / CI | 本轮 | NOT_RUN | 不声称全仓、MPI4、Ruff 或 CI 通过 |

@@ -1,0 +1,171 @@
+{
+  "branch": "task40extra_0p7nm_engineering",
+  "command": "source scripts/task40_fresh_c1/activate_local_wsl_complex.sh <qualified runtime_prefix> <continuation ABI receipt> <qualified JIT cache>; test _MYFENICS_WSL_QUALIFIED_ACTIVATION=1; python -m pytest -q src/test/test_task40_v21_readonly_recheck.py src/test/test_task40_v20_routes.py::test_original_target_unapproved_heavy_stages_stop_before_geometry",
+  "coverage": [
+    "E2 admission byte arithmetic",
+    "four partial outcome semantics",
+    "authorization-safe prefix",
+    "worker success/resource/error receipt creation",
+    "q0 numeric exact-q/all-q receipt rules",
+    "q CSR hash to candidate-summary binding",
+    "cleanup proof required for heavy stage checker pass",
+    "legacy V20 partial-checker integration"
+  ],
+  "environment": {
+    "MPI_size": 1,
+    "PETSc_int_type": "int32",
+    "PETSc_scalar_type": "complex128",
+    "qualified_activation_marker": 1,
+    "runtime": "Task40 local WSL qualified runtime"
+  },
+  "final_closeout_reruns": {
+    "documentation_contracts": {
+      "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py",
+      "rerun_after_final_summary_and_index_edits": true,
+      "result": {
+        "elapsed_seconds": 0.23,
+        "failed": 0,
+        "passed": 29,
+        "skipped": 0,
+        "subtests_passed": 134
+      }
+    },
+    "no_PDE_or_heavy_worker_started": true,
+    "runs": [
+      {
+        "command": "python -m pytest -q src/test/test_task40_v21_readonly_recheck.py",
+        "result": {
+          "elapsed_seconds": 0.12,
+          "failed": 0,
+          "passed": 12,
+          "skipped": 0
+        }
+      },
+      {
+        "command": "python -m pytest -q src/test/test_task40_v20_routes.py::test_original_target_unapproved_heavy_stages_stop_before_geometry",
+        "result": {
+          "elapsed_seconds": 0.12,
+          "failed": 0,
+          "passed": 3,
+          "skipped": 0
+        }
+      },
+      {
+        "command": "python -m pytest -q src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+        "result": {
+          "elapsed_seconds": 0.76,
+          "failed": 0,
+          "passed": 23,
+          "skipped": 0
+        }
+      }
+    ],
+    "runtime": {
+      "MPI_size": 1,
+      "PETSc_int_type": "int32",
+      "PETSc_scalar_type": "complex128",
+      "qualified_activation_marker": 1
+    }
+  },
+  "no_PDE_or_worker_started": true,
+  "prior_focused_action_regression": {
+    "log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v21_wsl/p6_action_regression_attempt03.log",
+    "result": "28 passed in 119.45s"
+  },
+  "prior_streamed_compatibility_fixture": {
+    "log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v21_wsl/streamed_compatibility_targeted_attempt02.log",
+    "result": "3 passed, 2 deselected in 0.26s"
+  },
+  "remaining_unknown": [
+    "A future heavy worker cleanup proof is UNKNOWN unless it emits verified native-owner, process-descendant, and temporary-object release facts; the checker rejects heavy STAGE_COMPLETED/RESOURCE_CONTROLLED_STOP without them."
+  ],
+  "repository_head": "75273597809d2876f091a222b678f3af6756725c",
+  "result": {
+    "elapsed_seconds": 0.16,
+    "failed": 0,
+    "passed": 15,
+    "skipped": 0
+  },
+  "schema": "task40extra.review_v21.targeted_test_receipt.v1",
+  "source_file_sha256": {
+    "scripts/task40_v20_service_workflow.py": "7eb3762c82b0da17574fa7082ce7a182e7f77fd4a9594696b057e0f659b687ef",
+    "scripts/task40_v21_readonly_recheck.py": "1c10c023934ec41c145d56cb06a22c14368a7b082c3dc42101ca147f85bfd658",
+    "src/runners/task40_v20_stage_runner.py": "c3d20e4d98d3d12b0f9da8c3dcaf2e2d7684f8f1bcd7278248522763cbcfb2b8",
+    "src/solvers/p6_cell_condensed_action.py": "77a7c61a862a9329e86bb67c2ed8d9d89ff7965a2a095e81f83d7d655eaae66e",
+    "src/solvers/task40_w1_local_probe.py": "13d97a07e2d1e35a9ee5abd1b5604201766734410f738728142f88ad023936cd",
+    "src/test/test_task39extra_v19_p6_cell_condensed_action.py": "dc596e523075d85f123ff4085caf60532aac33342f3604bcdb13e48859c7f244",
+    "src/test/test_task40_v21_readonly_recheck.py": "4a63c3c1784d3b4238c20f4ded0e01f2dcfb3edd51e8abe881d30def5b749484"
+  },
+  "status": "PASS",
+  "tests": {
+    "existing_pre_worker_authorization_stop_parameter_cases": 3,
+    "new_readonly_recheck_and_outcome_fixtures": 12
+  },
+  "working_tree_state": "modified_uncommitted_no_commit_no_push",
+  "main_review_final_combined_regression": {
+    "command": "source scripts/activate_myfenics_wsl.sh; ABI preflight in same shell; python -m pytest -q src/test/test_task39extra_v19_p6_cell_condensed_action.py src/test/test_task39extra_v30_streamed_ports.py",
+    "result": {
+      "elapsed_seconds": 129.61,
+      "failed": 0,
+      "passed": 28,
+      "skipped": 0
+    },
+    "captured_summary": "28 passed in 129.61s (0:02:09)",
+    "runtime": {
+      "qualified_activation_marker": 1,
+      "PETSc_scalar_type": "complex128",
+      "PETSc_int_type": "int32",
+      "MPI_size": 1,
+      "python": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/.venv/bin/python",
+      "DOLFINx": "0.10.0.post2",
+      "Basix": "0.10.0"
+    },
+    "source_file_sha256": {
+      "src/solvers/p6_cell_condensed_action.py": "77a7c61a862a9329e86bb67c2ed8d9d89ff7965a2a095e81f83d7d655eaae66e",
+      "src/solvers/task40_w1_local_probe.py": "13d97a07e2d1e35a9ee5abd1b5604201766734410f738728142f88ad023936cd",
+      "src/runners/task40_v20_stage_runner.py": "c3d20e4d98d3d12b0f9da8c3dcaf2e2d7684f8f1bcd7278248522763cbcfb2b8",
+      "scripts/task40_v20_service_workflow.py": "7eb3762c82b0da17574fa7082ce7a182e7f77fd4a9594696b057e0f659b687ef",
+      "src/test/test_task39extra_v19_p6_cell_condensed_action.py": "dc596e523075d85f123ff4085caf60532aac33342f3604bcdb13e48859c7f244",
+      "src/test/test_task39extra_v30_streamed_ports.py": "e7802859061fb9ef55f862fc017dedce1e2283279406288d030bc022826fe88d"
+    },
+    "scope": "p6 action, generated local B/D callbacks, zero-block None representation, non-Hermitian streamed action compatibility; no global target MPC or PDE",
+    "no_PDE_or_heavy_worker_started": true
+  },
+  "main_review_final_doc_contracts": {
+    "command": "source scripts/activate_myfenics_wsl.sh; ABI preflight in same shell; python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py",
+    "result": {
+      "elapsed_seconds": 0.08,
+      "failed": 0,
+      "passed": 29,
+      "skipped": 0,
+      "subtests_passed": 134
+    },
+    "runtime": {
+      "qualified_activation_marker": 1,
+      "PETSc_scalar_type": "complex128",
+      "PETSc_int_type": "int32",
+      "MPI_size": 1
+    },
+    "scope": "documentation/model-registry/retrospective contracts; no FE/PDE"
+  },
+  "main_review_post_whitespace_checker_rerun": {
+    "command": "source scripts/activate_myfenics_wsl.sh; ABI preflight in same shell; python -m pytest -q src/test/test_task40_v21_readonly_recheck.py",
+    "result": {
+      "elapsed_seconds": 0.08,
+      "failed": 0,
+      "passed": 12,
+      "skipped": 0
+    },
+    "source_file_sha256": {
+      "src/test/test_task40_v21_readonly_recheck.py": "4a63c3c1784d3b4238c20f4ded0e01f2dcfb3edd51e8abe881d30def5b749484",
+      "scripts/task40_v21_readonly_recheck.py": "1c10c023934ec41c145d56cb06a22c14368a7b082c3dc42101ca147f85bfd658"
+    },
+    "runtime": {
+      "qualified_activation_marker": 1,
+      "PETSc_scalar_type": "complex128",
+      "PETSc_int_type": "int32",
+      "MPI_size": 1
+    },
+    "scope": "read-only E2 admission/checker and partial-receipt fixtures; no worker/PDE"
+  }
+}

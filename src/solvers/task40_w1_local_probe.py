@@ -635,6 +635,207 @@ def native_local_face_witness(
     }
 
 
+def build_generated_boundary_side_action(
+    *,
+    modes: list[dict],
+    side: str,
+    local: dict[str, Any],
+    mode_indices: Any,
+    generate_native_vectors: Any,
+):
+    """Build a one-cell P6 action whose B/D blocks are regenerated per mode.
+
+    This is the production call seam for a boundary side: callers may pass
+    the complete side-active index list or a bounded subset. Each callback
+    generates one full native B/D row pair, immediately contracts it, and
+    releases it; no mode-by-cell Bi/Di/Bt/Dt matrix is retained. The returned
+    action is the existing ``P6CellCondensedAction`` API with an identity
+    diagonal original-H block. Its local trace constraints are identity only;
+    a global target MPC map remains a separate qualification.
+    """
+
+    from types import SimpleNamespace
+
+    from mpi4py import MPI
+    from petsc4py import PETSc
+    from scipy.linalg import lu_solve
+
+    from .hcurl_assembly_time_condensation import CellRecoveryMap
+    from .original_port_blocks import DiagonalOriginalPortBlock
+    from .p6_cell_condensed_action import (
+        P6CellCondensedAction,
+        P6GeneratedCellPortAction,
+    )
+    from .retained_port_block_layout import RESEARCH_PORT_LAYOUT
+
+    if side not in ("top", "bottom") or not callable(generate_native_vectors):
+        raise ValueError("generated boundary action needs one physical side and a mode-vector generator")
+    selected = np.ascontiguousarray(np.asarray(mode_indices, dtype=np.int64)).reshape(-1)
+    if (
+        selected.size == 0
+        or np.any(selected < 0)
+        or np.any(selected >= len(modes))
+        or len(np.unique(selected)) != len(selected)
+        or any(modes[int(index)]["side"] != side for index in selected)
+    ):
+        raise ValueError("generated boundary action indices must be unique and belong to the selected side")
+    interior = np.ascontiguousarray(local["interior_positions"], dtype=PETSc.IntType)
+    trace = np.ascontiguousarray(local["trace_positions"], dtype=PETSc.IntType)
+    full_rows = int(local["local_full_dimension"])
+    ni, nt, nport = len(interior), len(trace), len(selected)
+    generation_audit: dict[str, Any] = {
+        "mode_generation_calls": 0,
+        "mode_generation_seconds": 0.0,
+        "callback_seconds": {},
+        "maximum_generated_mode_batch": 1,
+        "maximum_live_generated_mode_pairs": 1,
+    }
+
+    def generated(index: int) -> tuple[np.ndarray, np.ndarray]:
+        began = perf_counter()
+        b_native, d_native = generate_native_vectors(int(index))
+        b_native = np.asarray(b_native)
+        d_native = np.asarray(d_native)
+        if (
+            b_native.shape != (full_rows,)
+            or d_native.shape != (full_rows,)
+            or b_native.dtype != np.dtype(np.complex128)
+            or d_native.dtype != np.dtype(np.complex128)
+            or not b_native.flags.c_contiguous
+            or not d_native.flags.c_contiguous
+            or not np.isfinite(b_native).all()
+            or not np.isfinite(d_native).all()
+        ):
+            raise ValueError("generated native B/D rows must be finite C-contiguous complex128 full-row vectors")
+        generation_audit["mode_generation_calls"] += 1
+        generation_audit["mode_generation_seconds"] += perf_counter() - began
+        return b_native, d_native
+
+    def apply_b(amplitudes: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        began = perf_counter()
+        bi_action = np.zeros(ni, dtype=np.complex128)
+        bt_action = np.zeros(nt, dtype=np.complex128)
+        for local_port, mode_index in enumerate(selected):
+            b_native, _d_native = generated(int(mode_index))
+            bi_action += b_native[interior] * amplitudes[local_port]
+            bt_action += b_native[trace] * amplitudes[local_port]
+        generation_audit["callback_seconds"]["B_alpha"] = (
+            generation_audit["callback_seconds"].get("B_alpha", 0.0)
+            + perf_counter() - began
+        )
+        return bi_action, bt_action
+
+    def apply_d(interior_values: np.ndarray, trace_values: np.ndarray) -> np.ndarray:
+        began = perf_counter()
+        result = np.empty(nport, dtype=np.complex128)
+        for local_port, mode_index in enumerate(selected):
+            _b_native, d_native = generated(int(mode_index))
+            result[local_port] = (
+                np.dot(d_native[interior], interior_values)
+                + np.dot(d_native[trace], trace_values)
+            )
+        generation_audit["callback_seconds"]["D_x"] = (
+            generation_audit["callback_seconds"].get("D_x", 0.0)
+            + perf_counter() - began
+        )
+        return result
+
+    class_key = ("task40-generated-boundary-side", side, int(selected[0]), int(nport))
+    vii = np.asarray(local["Vii"], dtype=np.complex128)
+    vit = np.asarray(local["Vit"], dtype=np.complex128)
+    vti = np.asarray(local["Vti"], dtype=np.complex128)
+    vtt = np.asarray(local["Vtt"], dtype=np.complex128)
+    factor = local["factor"]
+    solved_vit = lu_solve(factor, vit)
+    recovery = -np.ascontiguousarray(solved_vit)
+    trace_rhs_projection = -np.ascontiguousarray(
+        vti @ lu_solve(factor, np.eye(ni, dtype=np.complex128))
+    )
+    schur = np.ascontiguousarray(vtt - vti @ solved_vit)
+    expansion_by_original = {
+        int(original): (
+            np.asarray([row], dtype=PETSc.IntType),
+            np.asarray([1.0 + 0.0j], dtype=np.complex128),
+        )
+        for row, original in enumerate(trace)
+    }
+    constraints = SimpleNamespace(
+        owned_active_original_dofs=trace.copy(),
+        original_to_active={int(original): row for row, original in enumerate(trace)},
+        expansion_by_original=expansion_by_original,
+    )
+    condensed = SimpleNamespace(
+        matrix=None,
+        active_rows=nt,
+        appended_rows=nport,
+        full_rows=full_rows,
+        owned_active_rows=nt,
+        owned_appended_rows=nport,
+        owned_trace_original_dofs=trace.copy(),
+        comm=MPI.COMM_SELF,
+        trace_constraints=constraints,
+        cell_recovery_maps=(CellRecoveryMap(
+            interior_original_dofs=interior.copy(),
+            trace_original_dofs=trace.copy(),
+            class_key=class_key,
+        ),),
+        interior_lu_by_class={class_key: factor},
+        interior_from_trace_by_class={class_key: recovery},
+        trace_from_interior_rhs_by_class={class_key: trace_rhs_projection},
+        retained_local_schur_by_class={class_key: schur},
+        build_audit={},
+    )
+    local_ports = np.arange(nport, dtype=PETSc.IntType)
+    generated_terms = P6GeneratedCellPortAction(
+        port_indices=local_ports,
+        apply_B=apply_b,
+        apply_D=apply_d,
+        callback_workspace_bytes=int(16 * (2 * full_rows + 2 * nport + max(ni, nt))),
+    )
+    mode_keys = [
+        (
+            int(modes[int(index)].get("mode_index", index)),
+            str(modes[int(index)]["side"]),
+            int(modes[int(index)]["m"]),
+            int(modes[int(index)]["n"]),
+            str(modes[int(index)]["polarization"]),
+        )
+        for index in selected
+    ]
+    action = P6CellCondensedAction(
+        condensed,
+        H_p=None,
+        port_block_layout=RESEARCH_PORT_LAYOUT,
+        original_port_block=DiagonalOriginalPortBlock(
+            np.ones(nport, dtype=np.complex128), mode_keys
+        ),
+        port_coupling_mode="streamed",
+        generated_port_actions={0: generated_terms},
+    )
+    ordered_indices = np.asarray(
+        [int(modes[int(index)].get("mode_index", index)) for index in selected],
+        dtype="<i8",
+    )
+    mode_digest = hashlib.sha256(ordered_indices.tobytes()).hexdigest()
+    return action, {
+        "side": side,
+        "selected_mode_count": nport,
+        "selected_ordered_mode_indices": ordered_indices.tolist(),
+        "selected_mode_indices_sha256": mode_digest,
+        "local_dimensions": {"full_rows": full_rows, "interior_rows": ni, "trace_rows": nt},
+        "local_trace_mapping": "identity only; global target MPC not built",
+        "mode_batch_policy": "one full native B/D mode row is generated, immediately contracted, then released",
+        "maximum_generated_mode_batch": 1,
+        "callback_workspace_bound_bytes": generated_terms.callback_workspace_bytes,
+        "callback_workspace_scope": (
+            "identified output/input numerical vectors; excludes FacetPolynomial/Basix/NumPy native temporaries"
+        ),
+        "generation_audit": generation_audit,
+        "port_block_representation": dict(action.port_block_representation_identity),
+        "buffer_inventory": dict(action.buffer_inventory),
+    }
+
+
 def stream_boundary_correction(
     *,
     modes: list[dict],
@@ -1026,6 +1227,196 @@ def stream_boundary_correction(
     )
     if direct_b_relative > 1e-14 or direct_d_relative > 1e-14:
         raise ValueError("native full-row/trace direct carrier split changed its values")
+
+    from pathlib import Path
+
+    def process_rss_sample() -> dict[str, Any]:
+        rss = hwm = None
+        for line in Path("/proc/self/status").read_text().splitlines():
+            if line.startswith("VmRSS:"):
+                rss = int(line.split()[1]) * 1024
+            elif line.startswith("VmHWM:"):
+                hwm = int(line.split()[1]) * 1024
+        return {
+            "VmRSS_bytes": rss,
+            "VmHWM_bytes": hwm,
+            "VmHWM_valid": bool(rss is not None and hwm is not None and hwm >= rss),
+            "scope": "whole stream_boundary_correction process; includes local assembly and prior probe state",
+        }
+
+    def local_compare(expected: np.ndarray, observed: np.ndarray) -> dict[str, Any]:
+        difference = np.asarray(observed) - np.asarray(expected)
+        flat = np.abs(difference).reshape(-1)
+        worst = int(np.argmax(flat)) if flat.size else 0
+        scale = max(
+            float(np.linalg.norm(expected)),
+            float(np.linalg.norm(observed)),
+            np.finfo(float).tiny,
+        )
+        return {
+            "relative_l2": float(np.linalg.norm(difference) / scale),
+            "maximum_absolute_error": float(flat[worst]) if flat.size else 0.0,
+            "worst_flat_index": worst,
+            "normalization": "norm(observed-expected,2) / max(norm(expected,2), norm(observed,2), tiny)",
+        }
+
+    generated_resource_samples = {"before_adapter": process_rss_sample()}
+    adapter_started = perf_counter()
+    generated_action, generated_action_info = build_generated_boundary_side_action(
+        modes=modes,
+        side=side,
+        local=local,
+        mode_indices=np.asarray([witness_index], dtype=np.int64),
+        generate_native_vectors=native_mode_vectors,
+    )
+    adapter_build_seconds = perf_counter() - adapter_started
+    generated_resource_samples["after_adapter_build"] = process_rss_sample()
+    generated_alpha = np.asarray([alpha[witness_index]], dtype=np.complex128)
+    generated_field = np.zeros(local["local_full_dimension"], dtype=np.complex128)
+    generated_field[interior] = xi0
+    generated_field[trace] = xt
+    b_started = perf_counter()
+    generated_b_full = generated_action.apply_B_full(generated_alpha)
+    b_action_seconds = perf_counter() - b_started
+    d_started = perf_counter()
+    generated_d_full = generated_action.apply_D_full(generated_field)
+    d_action_seconds = perf_counter() - d_started
+    generated_full_rhs = local["tensor"] @ generated_field + generated_b_full
+    generated_port_rhs = -generated_d_full + generated_alpha
+    generated_reduced = np.r_[xt, generated_alpha]
+    action_started = perf_counter()
+    generated_reduced_action = generated_action.apply(generated_reduced)
+    action_seconds = perf_counter() - action_started
+    rhs_started = perf_counter()
+    generated_reduced_rhs = generated_action.reduce_rhs(
+        generated_full_rhs,
+        port_rhs=generated_port_rhs,
+        rhs_is_mpc_dual=False,
+    )
+    rhs_seconds = perf_counter() - rhs_started
+    recovery_started = perf_counter()
+    generated_recovery = generated_action.recover_storage(
+        generated_reduced, full_rhs=generated_full_rhs
+    )
+    recovery_seconds = perf_counter() - recovery_started
+    generated_resource_samples["after_generated_actions"] = process_rss_sample()
+
+    local_vii = local["Vii"]
+    local_vit = local["Vit"]
+    local_vti = local["Vti"]
+    local_vtt = local["Vtt"]
+    b_i = witness_b_native[interior]
+    b_t = witness_b_native[trace]
+    d_i = witness_d_native[interior]
+    d_t = witness_d_native[trace]
+    reduced_dense = np.block([
+        [local_vtt, b_t[:, None]],
+        [-d_t[None, :], np.ones((1, 1), dtype=np.complex128)],
+    ])
+    reduced_dense -= np.vstack((local_vti, -d_i[None, :])) @ np.linalg.solve(
+        local_vii, np.hstack((local_vit, b_i[:, None]))
+    )
+    oracle_generated_action = reduced_dense @ generated_reduced
+    oracle_generated_rhs = np.r_[generated_full_rhs[trace], generated_port_rhs] - (
+        np.vstack((local_vti, -d_i[None, :]))
+        @ np.linalg.solve(local_vii, generated_full_rhs[interior])
+    )
+    oracle_generated_recovery = np.zeros(local["local_full_dimension"], dtype=np.complex128)
+    oracle_generated_recovery[trace] = xt
+    oracle_generated_recovery[interior] = np.linalg.solve(
+        local_vii,
+        generated_full_rhs[interior] - b_i * generated_alpha[0] - local_vit @ xt,
+    )
+    generated_errors = {
+        "reduced_action_vs_dense_local_schur": local_compare(
+            oracle_generated_action, generated_reduced_action
+        ),
+        "reduced_rhs_vs_dense_local_schur": local_compare(
+            oracle_generated_rhs, generated_reduced_rhs
+        ),
+        "recovery_vs_dense_local_solve": local_compare(
+            oracle_generated_recovery, generated_recovery
+        ),
+        "full_B_vs_native_mode": local_compare(
+            witness_b_native * generated_alpha[0], generated_b_full
+        ),
+        "full_D_vs_native_mode": local_compare(
+            np.asarray([np.dot(witness_d_native, generated_field)]), generated_d_full
+        ),
+    }
+    generated_forward_error = generated_recovery[interior] - xi0
+    generated_forward_relative = float(
+        np.linalg.norm(generated_forward_error)
+        / max(float(np.linalg.norm(xi0)), np.finfo(float).tiny)
+    )
+    generated_internal_residual = (
+        local_vii @ generated_recovery[interior]
+        + local_vit @ xt
+        + b_i * generated_alpha[0]
+        - generated_full_rhs[interior]
+    )
+    generated_internal_scale = max(
+        float(np.linalg.norm(local_vii @ generated_recovery[interior])),
+        float(np.linalg.norm(local_vit @ xt)),
+        float(np.linalg.norm(b_i * generated_alpha[0])),
+        float(np.linalg.norm(generated_full_rhs[interior])),
+        np.finfo(float).tiny,
+    )
+    generated_internal_relative = float(
+        np.linalg.norm(generated_internal_residual) / generated_internal_scale
+    )
+    generated_action_info["generation_audit"]["p6_action_callback_call_count"] = int(
+        generated_action.audit["generated_callback_call_count"]
+    )
+    generated_action_info["generation_audit"]["expected_native_row_generations_for_recorded_calls"] = int(
+        generated_action.audit["generated_callback_call_count"]
+    )
+    generated_action_info["timing_seconds"] = {
+        "adapter_build": float(adapter_build_seconds),
+        "full_B_action": float(b_action_seconds),
+        "full_D_action": float(d_action_seconds),
+        "reduced_action": float(action_seconds),
+        "reduced_rhs": float(rhs_seconds),
+        "recovery": float(recovery_seconds),
+        "B_mode_generation_inside_callbacks": float(
+            generated_action_info["generation_audit"]["callback_seconds"].get("B_alpha", 0.0)
+        ),
+        "D_mode_generation_inside_callbacks": float(
+            generated_action_info["generation_audit"]["callback_seconds"].get("D_x", 0.0)
+        ),
+    }
+    generated_action_info["resource_samples"] = generated_resource_samples
+    generated_action_info["numerical_comparison"] = generated_errors
+    generated_action_info["known_state_forward"] = {
+        "relative_l2": generated_forward_relative,
+        "gate_limit": 1e-11,
+        "gate_status": "PASS" if generated_forward_relative <= 1e-11 else "CONTROLLED_NEGATIVE_ABOVE_LIMIT",
+        "normalization": "norm(xi_recovered-xi_saved,2) / max(norm(xi_saved,2), tiny)",
+        "worst_local_full_row_index": int(
+            interior[int(np.argmax(np.abs(generated_forward_error)))]
+        ),
+        "mode_key": [
+            modes[witness_index]["side"], modes[witness_index]["m"],
+            modes[witness_index]["n"], modes[witness_index]["polarization"],
+        ],
+    }
+    generated_action_info["original_internal_equation"] = {
+        "relative_l2": generated_internal_relative,
+        "gate_limit": 1e-11,
+        "gate_status": "PASS" if generated_internal_relative <= 1e-11 else "CONTROLLED_NEGATIVE_ABOVE_LIMIT",
+        "normalization": "norm(Vii*xi+Vit*xt+Bi*alpha-fi) / max(norm(Vii*xi),norm(Vit*xt),norm(Bi*alpha),norm(fi),tiny)",
+        "worst_local_full_row_index": int(
+            interior[int(np.argmax(np.abs(generated_internal_residual)))]
+        ),
+        "mode_key": [
+            modes[witness_index]["side"], modes[witness_index]["m"],
+            modes[witness_index]["n"], modes[witness_index]["polarization"],
+        ],
+    }
+    generated_action_info["runtime_scope"] = (
+        "one actual saved-order target mode on one target boundary cell; no full side carrier, no target global operator or PDE"
+    )
+    generated_action.destroy()
     return {
         "degree": int(degree),
         "side": side,
@@ -1093,6 +1484,7 @@ def stream_boundary_correction(
             "D_constructed_independently_from_B": True,
             "global_target_MPC_mapping": "NOT_RUN",
         },
+        "generated_p6_side_action": generated_action_info,
         "original_Hp_representation": "implicit identity vector action",
         "local_integral_calls": local_integral_calls,
         "nonzero_internal_rhs_norm": float(np.linalg.norm(fi)),

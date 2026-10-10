@@ -22,6 +22,8 @@ from src.solvers.p6_cell_condensed_action import (
     P6MatrixFreeHhatTerm,
     P6CellCondensedAction,
     P6CellPortTerms,
+    P6GeneratedCellPortAction,
+    P6DirectTracePortTerms,
     P6RetainedBALHBridge,
     apply_p6_hhat_vector_action,
     build_p6_cell_condensed_action_from_carrier,
@@ -30,6 +32,7 @@ from src.solvers.p6_cell_condensed_action import (
     raw_plane_D_action_from_global_normalized,
 )
 from src.solvers.original_port_blocks import DiagonalOriginalPortBlock
+from src.solvers.retained_port_block_layout import RESEARCH_PORT_LAYOUT
 from src.solvers.task40_v10_p6_yorbit import (
     Q_ASSEMBLY_BOUNDED_V16,
     Q_ASSEMBLY_LEGACY,
@@ -120,6 +123,176 @@ def _problem() -> tuple[_FakeCondensed, dict[str, np.ndarray], P6CellCondensedAc
     }
     action = P6CellCondensedAction(condensed, H_p=block["H"] * 0.0 + _matrix(rng, 2, 2, 6.0), port_terms=terms)
     return condensed, block, action
+
+
+def test_absent_cached_port_blocks_match_explicit_zeros_without_dense_payload() -> None:
+    condensed, block, seed_action = _problem()
+    hp = seed_action._H_p.copy()
+    seed_action.destroy()
+    rng = np.random.default_rng(20261010)
+    ports = np.asarray([0, 1], dtype=PETSc.IntType)
+    bi = np.asarray(1.0e-12 * block["Bi"], dtype=np.complex128)
+    di = np.asarray(1.0e-12 * block["Di"], dtype=np.complex128)
+    explicit_zero_terms = {
+        0: P6CellPortTerms(
+            bi,
+            di,
+            ports,
+            Bt=np.zeros((2, 2), dtype=np.complex128),
+            Dt=np.zeros((2, 2), dtype=np.complex128),
+            H=np.zeros((2, 2), dtype=np.complex128),
+        )
+    }
+    absent_terms = {
+        0: P6CellPortTerms(bi, di, ports, Bt=None, Dt=None, H=None)
+    }
+    direct_terms = (
+        P6DirectTracePortTerms(
+            port_index=0,
+            B_original_rows=np.asarray([2], dtype=PETSc.IntType),
+            B_values=np.asarray([1.0e-15 + 2.0e-15j], dtype=np.complex128),
+            D_original_rows=np.asarray([3], dtype=PETSc.IntType),
+            D_values=np.asarray([-2.0e-15 + 1.0e-15j], dtype=np.complex128),
+        ),
+    )
+    explicit_zero = P6CellCondensedAction(
+        condensed,
+        H_p=hp,
+        port_terms=explicit_zero_terms,
+        direct_trace_terms=direct_terms,
+    )
+    absent = P6CellCondensedAction(
+        condensed,
+        H_p=hp,
+        port_terms=absent_terms,
+        direct_trace_terms=direct_terms,
+    )
+    try:
+        assert absent._cells[0].Bt is None
+        assert absent._cells[0].Dt is None
+        assert absent._cells[0].Hlocal is None
+        assert np.any(absent._cells[0].Bi != 0.0)
+        assert np.any(absent._cells[0].Di != 0.0)
+        assert np.any(absent._H_p != 0.0)
+
+        reduced = rng.normal(size=absent.reduced_size) + 1j * rng.normal(
+            size=absent.reduced_size
+        )
+        full_rhs = rng.normal(size=condensed.full_rows) + 1j * rng.normal(
+            size=condensed.full_rows
+        )
+        port_rhs = rng.normal(size=condensed.appended_rows) + 1j * rng.normal(
+            size=condensed.appended_rows
+        )
+        recovered_zero = explicit_zero.recover_storage(reduced, full_rhs=full_rhs)
+        recovered_absent = absent.recover_storage(reduced, full_rhs=full_rhs)
+        comparisons = (
+            ("reduced_action", explicit_zero.apply(reduced), absent.apply(reduced)),
+            (
+                "condensed_rhs",
+                explicit_zero.reduce_rhs(full_rhs, port_rhs=port_rhs),
+                absent.reduce_rhs(full_rhs, port_rhs=port_rhs),
+            ),
+            ("recovery", recovered_zero, recovered_absent),
+            (
+                "full_B",
+                explicit_zero.apply_B_full(reduced[condensed.active_rows :]),
+                absent.apply_B_full(reduced[condensed.active_rows :]),
+            ),
+            (
+                "full_D",
+                explicit_zero.apply_D_full(recovered_zero),
+                absent.apply_D_full(recovered_absent),
+            ),
+        )
+        for _name, expected, observed in comparisons:
+            np.testing.assert_allclose(observed, expected, rtol=0.0, atol=0.0)
+
+        old_inventory = explicit_zero.buffer_inventory
+        new_inventory = absent.buffer_inventory
+        assert old_inventory["raw_port_payload_bytes_sum"] - new_inventory[
+            "raw_port_payload_bytes_sum"
+        ] == 3 * 2 * 2 * np.dtype(np.complex128).itemsize
+        assert old_inventory["staging_port_payload_bytes_sum"] - new_inventory[
+            "staging_port_payload_bytes_sum"
+        ] == 3 * 2 * 2 * np.dtype(np.complex128).itemsize
+        assert old_inventory["unique_port_payload_owner_bytes"] > new_inventory[
+            "unique_port_payload_owner_bytes"
+        ]
+    finally:
+        absent.destroy()
+        explicit_zero.destroy()
+
+
+def test_streamed_absent_port_blocks_use_port_dimension_when_nt_differs() -> None:
+    rng = np.random.default_rng(20261011)
+    block = {
+        "Vii": _matrix(rng, 2, 2, 5.0),
+        "Vit": _matrix(rng, 2, 2),
+        "Vti": _matrix(rng, 2, 2),
+        "Vtt": _matrix(rng, 2, 2, 3.0),
+        "Bi": _matrix(rng, 2, 3),
+        "Di": _matrix(rng, 3, 2),
+    }
+    condensed = _FakeCondensed((block,), appended_rows=3)
+    terms = {
+        0: P6CellPortTerms(
+            block["Bi"],
+            block["Di"],
+            np.arange(3, dtype=PETSc.IntType),
+            Bt=None,
+            Dt=None,
+            H=None,
+        )
+    }
+    hp = np.diag(np.asarray([1.2 + 0.1j, 1.4 - 0.2j, 1.7 + 0.3j]))
+    cached = P6CellCondensedAction(condensed, H_p=hp, port_terms=terms)
+    streamed = P6CellCondensedAction(
+        condensed, H_p=hp, port_terms=terms, port_coupling_mode="streamed"
+    )
+    try:
+        assert cached._cells[0].Dt is None
+        assert streamed._cells[0].Dt is None
+        assert len(streamed._cells[0].ports) == 3
+        assert len(streamed._cells[0].original_trace) == 2
+        reduced = rng.normal(size=cached.reduced_size) + 1j * rng.normal(
+            size=cached.reduced_size
+        )
+        full_rhs = rng.normal(size=condensed.full_rows) + 1j * rng.normal(
+            size=condensed.full_rows
+        )
+        port_rhs = rng.normal(size=condensed.appended_rows) + 1j * rng.normal(
+            size=condensed.appended_rows
+        )
+        np.testing.assert_allclose(
+            streamed.apply(reduced), cached.apply(reduced), rtol=2.0e-13, atol=2.0e-13
+        )
+        np.testing.assert_allclose(
+            streamed.reduce_rhs(full_rhs, port_rhs=port_rhs),
+            cached.reduce_rhs(full_rhs, port_rhs=port_rhs),
+            rtol=2.0e-13,
+            atol=2.0e-13,
+        )
+        streamed_recovery = streamed.recover_storage(reduced, full_rhs=full_rhs)
+        cached_recovery = cached.recover_storage(reduced, full_rhs=full_rhs)
+        np.testing.assert_allclose(
+            streamed_recovery, cached_recovery, rtol=2.0e-13, atol=2.0e-13
+        )
+        np.testing.assert_allclose(
+            streamed.apply_B_full(reduced[condensed.active_rows :]),
+            cached.apply_B_full(reduced[condensed.active_rows :]),
+            rtol=0.0,
+            atol=0.0,
+        )
+        np.testing.assert_allclose(
+            streamed.apply_D_full(streamed_recovery),
+            cached.apply_D_full(cached_recovery),
+            rtol=5.0e-15,
+            atol=5.0e-15,
+        )
+    finally:
+        streamed.destroy()
+        cached.destroy()
 
 
 def test_reduced_contribution_iterator_matches_cached_action() -> None:
@@ -1362,3 +1535,163 @@ def test_global_normalized_projection_maps_to_raw_boundary_plane_di():
     expected = hp * scale * global_normalized
     np.testing.assert_allclose(actual, expected, rtol=2e-14, atol=2e-14)
     assert not np.isclose(abs(scale), 1.0)
+
+
+def test_generated_port_action_matches_cached_with_unequal_modes_and_mpc_slave():
+    rng = np.random.default_rng(20261012)
+    n_i, n_t, n_p = 2, 3, 2
+    interior = np.asarray([0, 1], dtype=PETSc.IntType)
+    trace = np.asarray([2, 3, 4], dtype=PETSc.IntType)
+    class_key = ("generated-mpc-fixture",)
+    volume = _matrix(rng, n_i + n_t, n_i + n_t, 6.0)
+    vii = volume[np.ix_(interior, interior)]
+    vit = volume[np.ix_(interior, trace)]
+    vti = volume[np.ix_(trace, interior)]
+    vtt = volume[np.ix_(trace, trace)]
+    factor = lu_factor(vii)
+    xit = lu_solve(factor, vit)
+    recovery = -xit
+    trace_rhs_projection = -vti @ lu_solve(factor, np.eye(n_i, dtype=np.complex128))
+    schur = vtt - vti @ xit
+    active_trace = np.asarray([2, 3], dtype=PETSc.IntType)
+    expansion_by_original = {
+        2: (np.asarray([0], dtype=PETSc.IntType), np.asarray([1.0], dtype=np.complex128)),
+        3: (np.asarray([1], dtype=PETSc.IntType), np.asarray([1.0], dtype=np.complex128)),
+        4: (
+            np.asarray([0, 1], dtype=PETSc.IntType),
+            np.asarray([0.35 + 0.1j, 0.65 - 0.1j], dtype=np.complex128),
+        ),
+    }
+    constraints = SimpleNamespace(
+        owned_active_original_dofs=active_trace.copy(),
+        original_to_active={2: 0, 3: 1},
+        expansion_by_original=expansion_by_original,
+    )
+    condensed = SimpleNamespace(
+        matrix=None,
+        active_rows=2,
+        appended_rows=n_p,
+        full_rows=n_i + n_t,
+        owned_active_rows=2,
+        owned_appended_rows=n_p,
+        owned_trace_original_dofs=trace.copy(),
+        comm=MPI.COMM_SELF,
+        trace_constraints=constraints,
+        cell_recovery_maps=(CellRecoveryMap(
+            interior_original_dofs=interior.copy(),
+            trace_original_dofs=trace.copy(),
+            class_key=class_key,
+        ),),
+        interior_lu_by_class={class_key: factor},
+        interior_from_trace_by_class={class_key: recovery},
+        trace_from_interior_rhs_by_class={class_key: trace_rhs_projection},
+        retained_local_schur_by_class={class_key: schur},
+        build_audit={},
+    )
+
+    def mode_column(port):
+        scale = float(port + 1)
+        bi_col = np.asarray([0.2 + 0.1j * scale, -0.3j + 0.05 * scale], dtype=np.complex128)
+        bt_col = np.asarray([0.07j * scale, 0.11 * scale, 0.0j], dtype=np.complex128)
+        di_row = np.asarray([0.13 - 0.03j * scale, -0.09j * scale], dtype=np.complex128)
+        dt_row = np.asarray([0.02j * scale, -0.04 * scale, 0.0j], dtype=np.complex128)
+        return bi_col, bt_col, di_row, dt_row
+
+    ports = np.arange(n_p, dtype=PETSc.IntType)
+    bi_columns, bt_columns, di_rows, dt_rows = zip(
+        *(mode_column(port) for port in range(n_p)), strict=True
+    )
+    bi = np.column_stack(bi_columns)
+    bt = np.column_stack(bt_columns)
+    di = np.vstack(di_rows)
+    dt = np.vstack(dt_rows)
+    hp_diagonal = np.asarray([1.3 + 0.1j, 1.7 - 0.2j], dtype=np.complex128)
+    hp = np.diag(hp_diagonal)
+    cached = P6CellCondensedAction(
+        condensed,
+        H_p=hp,
+        port_terms={0: P6CellPortTerms(
+            bi, di, ports, Bt=bt, Dt=dt,
+            H=np.zeros((n_p, n_p), dtype=np.complex128),
+        )},
+    )
+
+    def generate_B(amplitudes):
+        bi_action = np.zeros(n_i, dtype=np.complex128)
+        bt_action = np.zeros(n_t, dtype=np.complex128)
+        for port, amplitude in enumerate(amplitudes):
+            _bi, _bt, _di, _dt = mode_column(port)
+            bi_action += _bi * amplitude
+            bt_action += _bt * amplitude
+        return bi_action, bt_action
+
+    def generate_D(interior_values, trace_values):
+        return np.ascontiguousarray([
+            np.dot(mode_column(port)[2], interior_values)
+            + np.dot(mode_column(port)[3], trace_values)
+            for port in range(n_p)
+        ], dtype=np.complex128)
+
+    generated = P6CellCondensedAction(
+        condensed,
+        H_p=None,
+        port_block_layout=RESEARCH_PORT_LAYOUT,
+        original_port_block=DiagonalOriginalPortBlock(
+            hp_diagonal,
+            [("target", "bottom", -1, 0, "s"), ("target", "bottom", 0, 0, "s")],
+        ),
+        port_coupling_mode="streamed",
+        generated_port_actions={0: P6GeneratedCellPortAction(
+            port_indices=ports,
+            apply_B=generate_B,
+            apply_D=generate_D,
+            callback_workspace_bytes=1024,
+        )},
+    )
+    try:
+        assert generated._cells[0].generated_action is not None
+        assert generated._cells[0].Bt is None and generated._cells[0].Dt is None
+        assert generated._cells[0].Bi.shape == (n_i, 0)
+        assert generated._cells[0].Di.shape == (0, n_i)
+        assert generated.buffer_inventory["raw_port_payload_bytes_sum"] == 0
+        assert generated.buffer_inventory["transformed_port_payload_bytes_sum"] == 0
+        assert generated.buffer_inventory["generated_port_mode_count"] == n_p
+        assert generated.buffer_inventory["generated_callback_workspace_bound_bytes"] == 1024
+        assert generated.port_block_representation_identity["generated_cell_port_actions"]
+        assert generated._condensed_port_block is None
+
+        reduced = rng.normal(size=generated.reduced_size) + 1j * rng.normal(
+            size=generated.reduced_size
+        )
+        full_rhs = rng.normal(size=condensed.full_rows) + 1j * rng.normal(
+            size=condensed.full_rows
+        )
+        port_rhs = rng.normal(size=n_p) + 1j * rng.normal(size=n_p)
+        np.testing.assert_allclose(generated.apply(reduced), cached.apply(reduced), rtol=2e-13, atol=2e-13)
+        np.testing.assert_allclose(
+            generated.reduce_rhs(full_rhs, port_rhs=port_rhs),
+            cached.reduce_rhs(full_rhs, port_rhs=port_rhs),
+            rtol=2e-13,
+            atol=2e-13,
+        )
+        generated_recovery = generated.recover_storage(reduced, full_rhs=full_rhs)
+        cached_recovery = cached.recover_storage(reduced, full_rhs=full_rhs)
+        np.testing.assert_allclose(generated_recovery, cached_recovery, rtol=2e-13, atol=2e-13)
+        assert generated_recovery[4] == 0.0
+        alpha = reduced[condensed.active_rows :]
+        generated_B = generated.apply_B_full(alpha)
+        cached_B = cached.apply_B_full(alpha)
+        np.testing.assert_allclose(generated_B, cached_B, rtol=0.0, atol=0.0)
+        assert generated_B[4] == 0.0
+        full_field = rng.normal(size=condensed.full_rows) + 1j * rng.normal(size=condensed.full_rows)
+        full_field[4] = 3.0 - 2.0j
+        np.testing.assert_allclose(
+            generated.apply_D_full(full_field),
+            cached.apply_D_full(full_field),
+            rtol=0.0,
+            atol=0.0,
+        )
+        assert generated.audit["generated_callback_call_count"] > 0
+    finally:
+        generated.destroy()
+        cached.destroy()
