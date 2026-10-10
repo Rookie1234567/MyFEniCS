@@ -1,0 +1,5 @@
+schema_version = 10
+
+[neural_wave]
+stage = "v40_interior_moment_tensor"
+design_sha256 = "f9a9195effa580af78068c5f8ec9fbe114527e4486f849813e790290be448a6b"

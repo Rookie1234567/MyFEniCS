@@ -1,0 +1,188 @@
+{
+  "model": {
+    "wavelength_nm": 5.0,
+    "geometry": {
+      "bounds_nm": [
+        [
+          -5,
+          5
+        ],
+        [
+          -3.75,
+          3.75
+        ],
+        [
+          -1.25,
+          8.75
+        ]
+      ],
+      "substrate_z_nm": 0,
+      "block_bounds_nm": [
+        [
+          -2.5,
+          2.5
+        ],
+        [
+          -3.75,
+          3.75
+        ],
+        [
+          0,
+          7.5
+        ]
+      ],
+      "notch_bounds_nm": [
+        [
+          0,
+          2.5
+        ],
+        [
+          -1.25,
+          1.25
+        ],
+        [
+          2.5,
+          5
+        ]
+      ],
+      "cells": [
+        8,
+        6,
+        8
+      ],
+      "step_nm": 1.25
+    },
+    "materials": {
+      "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "si_n": [
+        0.99396854453,
+        0.00435380777
+      ]
+    },
+    "incidence": {
+      "grazing_deg": 1.0,
+      "azimuth_deg": 0.0,
+      "polarization": "s",
+      "amplitude": 1.0,
+      "background": "layered"
+    },
+    "finite_element": {
+      "family": "N1curl",
+      "cell": "hexahedron",
+      "degree": 3,
+      "operator_quadrature_degree": 15
+    },
+    "boundary": {
+      "floquet_xy": true,
+      "dtn": "complete original auto_propagating Fourier-DtN",
+      "pml": false
+    },
+    "near_zero": {
+      "vector_denominator": "max(norm(reference), 1e-12*nonzero natural scale)",
+      "E_natural_scale": "incident amplitude 1 times sqrt(domain volume in nm^3)",
+      "scaled_curl_natural_scale": "same incident E scale",
+      "selected_E_scale": 1.0,
+      "selected_H_code_scale": 1.0,
+      "port_scale": "incident ordered amplitude norm",
+      "report_absolute_and_denominator": true,
+      "phase_fit": false
+    }
+  },
+  "ranks": [
+    1,
+    8,
+    8,
+    1
+  ],
+  "native_identity": {
+    "mesh_coordinates_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+    "cell_tags_sha256": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+    "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e"
+  },
+  "reference": {
+    "path": "benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+    "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+  },
+  "schema": "ftt.capacity-design.v1",
+  "campaign": "V40_FTT_CAPACITY_DECISION",
+  "campaign_version": 40,
+  "authority_sha": "e4d6ca9553b73d2938a44b31b3ef2b03204ad571",
+  "base_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "seed": 4214001,
+  "new_PDE_or_training_authorized": false,
+  "files": {
+    "native": {
+      "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/native.npz",
+      "sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215"
+    },
+    "moments_q30": {
+      "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/moments_q30.npz",
+      "sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5"
+    }
+  },
+  "norm_record": {
+    "path": "benchmarks/artifacts/task42extra/v39/v39_ftt_independent_compare/verifier_result.json",
+    "sha256": "13e797c71ba112829ee7d3f82eb9ef172bde9ede37419c5a6b2b8d439525981b"
+  },
+  "parents": {
+    "native_final": {
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v39/v39_fttnn_native_continue/result.json",
+        "sha256": "689a2b7c02898dabc475ba19447f5a2da60e21837a66f39798a159361ba9b7c5"
+      },
+      "checkpoint": {
+        "path": "benchmarks/artifacts/task42extra/v39/v39_fttnn_native_continue/checkpoints/committed_000479.pt",
+        "sha256": "9cef959a367c2beb16da13092ad4fa5587dfceceb72352c24b605e834c542e31"
+      },
+      "index": {
+        "path": "benchmarks/artifacts/task42extra/v39/v39_fttnn_native_continue/checkpoint_index.json",
+        "sha256": "8b51eb178f89fdb5cb8ed38f67fce2fbcc17181ccff504aeb64c6da6795cb975"
+      },
+      "original_source_sha": "962de40947413b5c4c383f62189e951b92e5ecaa",
+      "origin_metric": "native_euc",
+      "original_labels": false
+    },
+    "fit_final": {
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v39/v39_fttnn_fit_continue/result.json",
+        "sha256": "1ab81a8bb47994a0387de65b67a7def721c6a6b19d38ec156a0d9defc7730edb"
+      },
+      "checkpoint": {
+        "path": "benchmarks/artifacts/task42extra/v39/v39_fttnn_fit_continue/checkpoints/committed_000080.pt",
+        "sha256": "364fc6ed39ed3e51e3c51249708adc3fe006998beb974011559c0dc5729945b7"
+      },
+      "index": {
+        "path": "benchmarks/artifacts/task42extra/v39/v39_fttnn_fit_continue/checkpoint_index.json",
+        "sha256": "2a24ac4bb5ea42322d9c9b90a4e0dd37e5bdb3ecfd8675b6c8d1b6b034fb85f1"
+      },
+      "original_source_sha": "962de40947413b5c4c383f62189e951b92e5ecaa",
+      "origin_metric": "reference_fit_G",
+      "original_labels": true
+    }
+  },
+  "limits": {
+    "total_s": 14400,
+    "final_reserve_s": 1800,
+    "core_array_planning_bytes": 268435456,
+    "pure_tree_bytes": 2147483648
+  },
+  "rank_bounds": {
+    "pure_r8": [
+      8,
+      64,
+      8
+    ],
+    "width16": [
+      8,
+      17,
+      8
+    ],
+    "cheb19": [
+      8,
+      19,
+      8
+    ]
+  },
+  "no_feature_truncation": true,
+  "conditional_chart_not_actual_FE": true
+}
