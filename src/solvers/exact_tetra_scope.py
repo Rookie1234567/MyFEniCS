@@ -156,5 +156,6 @@ def implementation_hashes():
         'src/solvers/exact_tetra_condensation.py','src/solvers/exact_tetra_study.py',
         'src/solvers/hcurl_cell_static_condensation.py','benchmarks/collect_exact_tetra.py',
         'benchmarks/qualify_exact_tetra.py','src/test/test_exact_tetra_condensation.py',
+        'src/solvers/tetra_polynomial_difference.py','src/test/test_tetra_same_basis_difference.py',
         'src/postprocessing/saved_interface_diagnosis.py']
     return {n:hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in sorted(set(names))}

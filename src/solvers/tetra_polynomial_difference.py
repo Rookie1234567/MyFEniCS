@@ -66,7 +66,8 @@ def same_native_difference(f,g):
     ea,eb=a.element.basix_element,b.element.basix_element
     identities=((a.mesh.geometry.x,b.mesh.geometry.x),
                 (a.mesh.geometry.dofmap,b.mesh.geometry.dofmap),
-                (a.dofmap.list.array,b.dofmap.list.array),
+                (getattr(a.dofmap.list,'array',a.dofmap.list),
+                 getattr(b.dofmap.list,'array',b.dofmap.list)),
                 (ea.coefficient_matrix,eb.coefficient_matrix))
     if ea.cell_type!=eb.cell_type or ea.map_type!=eb.map_type or ea.degree!=eb.degree or any(
             not np.array_equal(x,y) for x,y in identities) or f.x.array.shape!=g.x.array.shape:
