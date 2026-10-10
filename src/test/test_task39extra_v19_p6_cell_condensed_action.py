@@ -27,11 +27,15 @@ from src.solvers.p6_cell_condensed_action import (
     P6RetainedBALHBridge,
     apply_p6_hhat_vector_action,
     build_p6_cell_condensed_action_from_carrier,
+    build_p6_cell_condensed_action_from_generated,
     condense_physical_cell_blocks,
     native_residual_from_augmented,
     raw_plane_D_action_from_global_normalized,
 )
-from src.solvers.original_port_blocks import DiagonalOriginalPortBlock
+from src.solvers.original_port_blocks import (
+    DenseOriginalPortBlock,
+    DiagonalOriginalPortBlock,
+)
 from src.solvers.retained_port_block_layout import RESEARCH_PORT_LAYOUT
 from src.solvers.task40_v10_p6_yorbit import (
     Q_ASSEMBLY_BOUNDED_V16,
@@ -337,6 +341,98 @@ def test_reduced_contribution_iterator_builds_hhat_by_column_blocks(monkeypatch)
     np.testing.assert_allclose(blocked, full, rtol=0.0, atol=1e-14)
     np.testing.assert_allclose(blocked @ rhs, expected, rtol=2e-12, atol=2e-12)
     assert labels[:2] == ["ports/Hhat/0:1", "ports/Hhat/1:2"]
+
+
+def test_generated_reduced_contributions_stream_bounded_b_d_and_hhat_tiles() -> None:
+    condensed, block, _seed = _problem()
+    rng = np.random.default_rng(20261010)
+    hp = _matrix(rng, 2, 2, diagonal=7.0)
+    mode_keys = [(index, "top", index, 0, "s") for index in range(2)]
+    original_hp = DenseOriginalPortBlock(
+        hp, mode_keys, reason="two-mode generated q-tile oracle", max_bytes=64
+    )
+    cached = P6CellCondensedAction(
+        condensed,
+        H_p=None,
+        port_terms={
+            0: P6CellPortTerms(
+                block["Bi"],
+                block["Di"],
+                np.asarray([0, 1], dtype=PETSc.IntType),
+                Bt=block["Bt"],
+                Dt=block["Dt"],
+            )
+        },
+        port_block_layout=RESEARCH_PORT_LAYOUT,
+        original_port_block=original_hp,
+    )
+    b_widths: list[int] = []
+    d_shapes: list[tuple[int, int]] = []
+    generated_gate_labels: list[str] = []
+
+    def apply_b(alpha):
+        return block["Bi"] @ alpha, block["Bt"] @ alpha
+
+    def apply_d(xi, xt):
+        return block["Di"] @ xi + block["Dt"] @ xt
+
+    def apply_b_tile(ports, alpha):
+        b_widths.append(int(alpha.shape[1]))
+        return block["Bi"][:, ports] @ alpha, block["Bt"][:, ports] @ alpha
+
+    def apply_d_tile(ports, xi, xt):
+        d_shapes.append((len(ports), int(xi.shape[1])))
+        return block["Di"][ports, :] @ xi + block["Dt"][ports, :] @ xt
+
+    generated = build_p6_cell_condensed_action_from_generated(
+        condensed,
+        original_hp,
+        {
+            0: P6GeneratedCellPortAction(
+                port_indices=np.asarray([0, 1], dtype=PETSc.IntType),
+                apply_B=apply_b,
+                apply_D=apply_d,
+                callback_workspace_bytes=256,
+                apply_B_tile=apply_b_tile,
+                apply_D_tile=apply_d_tile,
+            )
+        },
+    )
+    try:
+        cached_matrix = np.zeros((cached.reduced_size, cached.reduced_size), dtype=np.complex128)
+        for rows, columns, values, _label in cached.iter_reduced_contributions(
+            allocation_gate=lambda *_args: None,
+            hhat_block_columns=1,
+        ):
+            cached_matrix[np.ix_(rows, columns)] += values
+        generated_matrix = np.zeros_like(cached_matrix)
+        labels = []
+
+        def generated_gate(label, _facts):
+            generated_gate_labels.append(label)
+
+        for rows, columns, values, label in generated.iter_reduced_contributions(
+            allocation_gate=generated_gate,
+            hhat_block_columns=1,
+        ):
+            generated_matrix[np.ix_(rows, columns)] += values
+            labels.append(label)
+
+        np.testing.assert_allclose(generated_matrix, cached_matrix, rtol=3e-13, atol=3e-13)
+        rhs = _matrix(np.random.default_rng(20261011), generated.reduced_size, 1)[:, 0]
+        np.testing.assert_allclose(generated_matrix @ rhs, generated.apply(rhs), rtol=3e-13, atol=3e-13)
+        assert "ports/Hhat/0:1" in labels
+        assert "cell/C_hat/0/0:1" in labels
+        assert "cell/-D_hat/0/0:1" in labels
+        assert b_widths and max(b_widths) == 1
+        assert d_shapes.count((2, 1)) == 2
+        assert d_shapes.count((1, 2)) == 2
+        identity_gate = "p6_reduced_contribution/cell/D_trace_identity/0"
+        first_d_gate = "p6_reduced_contribution/cell/-D_hat/0/0:1"
+        assert generated_gate_labels.index(identity_gate) < generated_gate_labels.index(first_d_gate)
+    finally:
+        generated.destroy()
+        cached.destroy()
 
 
 def test_v16_bounded_q_route_matches_small_p6_action_fixture(monkeypatch) -> None:

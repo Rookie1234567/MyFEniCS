@@ -66,7 +66,9 @@ class Task40V10P6PeriodicProfile:
                 result[key] = list(value)
         result.update(
             schema=(
-                "task40extra.review_v20_p6_periodic_profile.v1"
+                "task40extra.review_v22_p6_periodic_profile.v1"
+                if self.name.startswith("task40extra_v22_")
+                else "task40extra.review_v20_p6_periodic_profile.v1"
                 if self.name.startswith("task40extra_v20_")
                 else
                 "task40extra.review_v18_ny8_p6_periodic_profile.v1"
@@ -119,7 +121,9 @@ class Task40V10P6PeriodicProfile:
         }
         if mismatches:
             label = (
-                "Task40 V20"
+                "Task40 V22"
+                if self.name.startswith("task40extra_v22_")
+                else "Task40 V20"
                 if self.name.startswith("task40extra_v20_")
                 else "Task40 V18 Ny8"
                 if self.name.startswith("task40extra_v18_")
@@ -307,6 +311,11 @@ TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE = Task40V10P6PeriodicProfile(
     sector_port_counts=(7932, 8036, 8056, 8036),
 )
 
+TASK40_V22_P6_TARGET_ORIGINAL_NY8_PROFILE = replace(
+    TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
+    name="task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1",
+)
+
 TASK40_P6_PERIODIC_PROFILES = {
     TASK40_V10_P6_PROFILE.name: TASK40_V10_P6_PROFILE,
     TASK40_V11_P6_GX560_PROFILE.name: TASK40_V11_P6_GX560_PROFILE,
@@ -322,6 +331,7 @@ TASK40_P6_PERIODIC_PROFILES = {
     TASK40_V18_P6_B0_Y8_PROFILE.name: TASK40_V18_P6_B0_Y8_PROFILE,
     TASK40_V20_P6_E2_PROFILE.name: TASK40_V20_P6_E2_PROFILE,
     TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE.name: TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
+    TASK40_V22_P6_TARGET_ORIGINAL_NY8_PROFILE.name: TASK40_V22_P6_TARGET_ORIGINAL_NY8_PROFILE,
 }
 
 TASK40_V15_SELECTOR_PROFILE_IDENTITIES = frozenset(
@@ -337,5 +347,6 @@ TASK40_V15_SELECTOR_PROFILE_IDENTITIES = frozenset(
         "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
         TASK40_V20_P6_E2_PROFILE.name,
         TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE.name,
+        TASK40_V22_P6_TARGET_ORIGINAL_NY8_PROFILE.name,
     }
 )

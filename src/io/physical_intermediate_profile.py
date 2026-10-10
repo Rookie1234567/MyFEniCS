@@ -92,10 +92,15 @@ TASK40_V20_P6_E2_PROFILE = "task40extra_v20_p6_y_orbit_e2_reference_v1"
 TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE = (
     "task40extra_v20_p6_y_orbit_target_original_ny8_v1"
 )
+TASK40_V22_P6_TARGET_ORIGINAL_NY8_PROFILE = (
+    "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1"
+)
+TASK40_V22_P6_PROFILES = (TASK40_V22_P6_TARGET_ORIGINAL_NY8_PROFILE,)
 TASK40_V20_P6_PROFILES = (
     TASK40_V20_P6_E2_PROFILE,
     TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
 )
+TASK40_V20_V22_P6_PROFILES = (*TASK40_V20_P6_PROFILES, *TASK40_V22_P6_PROFILES)
 TASK40_V10_P4_CONTROL_PROFILE = TASK40_B0_P4_CONTROL_PROFILE
 A4_TENSOR_H6_PROFILES = (
     A4_TENSOR_H6_PROFILE,
@@ -139,7 +144,7 @@ TASK40_PROFILES = (
 )
 A4_TENSOR_H6_PROFILES = (*A4_TENSOR_H6_PROFILES, TASK40_V10_P4_CONTROL_PROFILE)
 FUSED_KERNEL_PROFILES = (*FUSED_KERNEL_PROFILES, TASK40_V10_P4_CONTROL_PROFILE)
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE, PROJECTION_LAYOUT_V31_PROFILE, *TASK40_PROFILES, TASK40_V10_P6_REFERENCE_PROFILE, *TASK40_V11_P6_PROFILES, *TASK40_V15_P6_PROFILES, *TASK40_V16_P6_PROFILES, *TASK40_V17_P6_PROFILES, *TASK40_V18_P6_PROFILES, *TASK40_V20_P6_PROFILES) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE, PROJECTION_LAYOUT_V31_PROFILE, *TASK40_PROFILES, TASK40_V10_P6_REFERENCE_PROFILE, *TASK40_V11_P6_PROFILES, *TASK40_V15_P6_PROFILES, *TASK40_V16_P6_PROFILES, *TASK40_V17_P6_PROFILES, *TASK40_V18_P6_PROFILES, *TASK40_V20_V22_P6_PROFILES) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -159,7 +164,7 @@ def profile_facts(identity=PROFILE) -> dict:
         *TASK40_V16_P6_PROFILES,
         *TASK40_V17_P6_PROFILES,
         *TASK40_V18_P6_PROFILES,
-        *TASK40_V20_P6_PROFILES,
+        *TASK40_V20_V22_P6_PROFILES,
     ):
         from src.geometry.task40_nonseparable_plan import (
             TASK40_COMPARISON_GROUP,
@@ -181,15 +186,18 @@ def profile_facts(identity=PROFILE) -> dict:
             TASK40_V18_P6_B0_Y8_PROFILE as V18_B0_Y8_PERIODIC,
             TASK40_V20_P6_E2_PROFILE as V20_E2_PERIODIC,
             TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE as V20_TARGET_PERIODIC,
+            TASK40_V22_P6_TARGET_ORIGINAL_NY8_PROFILE as V22_TARGET_PERIODIC,
         )
 
         is_v16 = identity in TASK40_V16_P6_PROFILES
         is_v17 = identity in TASK40_V17_P6_PROFILES
         is_v18 = identity in TASK40_V18_P6_PROFILES
+        is_v22 = identity in TASK40_V22_P6_PROFILES
         is_v20 = identity in TASK40_V20_P6_PROFILES
-        is_row_tile = is_v17 or is_v18 or is_v20
+        is_review20_case = is_v20 or is_v22
+        is_row_tile = is_v17 or is_v18 or is_review20_case
         v20_case = None
-        if is_v20:
+        if is_review20_case:
             from src.solvers.task40_v20_registry import TASK40_V20_CASES_BY_PROFILE
 
             v20_case = TASK40_V20_CASES_BY_PROFILE[identity]
@@ -225,10 +233,12 @@ def profile_facts(identity=PROFILE) -> dict:
                 "B0_CANDIDATE",
             ),
         }
-        if is_v20:
+        if is_review20_case:
             periodic = (
                 V20_E2_PERIODIC
                 if identity == TASK40_V20_P6_E2_PROFILE
+                else V22_TARGET_PERIODIC
+                if is_v22
                 else V20_TARGET_PERIODIC
             )
             run_id = v20_case.run_id
@@ -241,13 +251,17 @@ def profile_facts(identity=PROFILE) -> dict:
         facts = profile_facts(TASK40_V10_P6_REFERENCE_PROFILE)
         facts.update(
             identity=identity,
-            scope=f"review_{'v20_row_tile_one_q' if is_v20 else 'v18_ny8_row_tile' if is_v18 else 'v17_row_tile' if is_v17 else 'v16' if is_v16 else 'v15'}_{case_name.lower()}_full_p6_y_orbit_reference_inverse",
+            scope=(
+                f"review_v22_target_original_ny8_operator_probe_{case_name.lower()}"
+                if is_v22
+                else f"review_{'v20_row_tile_one_q' if is_v20 else 'v18_ny8_row_tile' if is_v18 else 'v17_row_tile' if is_v17 else 'v16' if is_v16 else 'v15'}_{case_name.lower()}_full_p6_y_orbit_reference_inverse"
+            ),
             run_id=run_id,
             comparison_group=TASK40_COMPARISON_GROUP,
             stage=stage,
             input_path=(
                 v20_case.input_path
-                if is_v20
+                if is_review20_case
                 else "input/task40extra_0p7nm_engineering/"
                 + (
                     "b0_p6_reference_v18_ny8.dat"
@@ -280,9 +294,9 @@ def profile_facts(identity=PROFILE) -> dict:
             ),
             periodic_inventory=periodic.identity(),
             qualification=(
-                f"Review V20 {case_name} exact route registration; geometry/operator/full-field "
+                f"Review {'V22' if is_v22 else 'V20'} {case_name} exact route registration; geometry/operator/full-field "
                 "qualification remains pending"
-                if is_v20
+                if is_review20_case
                 else
                 f"Review {'V18 Ny8 row-tile CSR' if is_v18 else 'V17 row-tile CSR' if is_v17 else 'V16 bounded-CSR' if is_v16 else 'V15'} {case_name} case; one full p6 target solve uses the "
                 f"same live {periodic.q_count}-q factors, complete native residual admission, "
@@ -318,18 +332,21 @@ def profile_facts(identity=PROFILE) -> dict:
             q_solve_true_residual_relative=1.0e-8,
             factor_probe_true_residual_relative=1.0e-10,
         )
-        if is_v20:
+        if is_review20_case:
             facts["gates"]["task40_mesh_id"] = mesh_id
+        stage_seconds = 21_600 if is_v22 else 86_400
         facts["resources"].update(
-            workflow_seconds=86400,
-            solve_seconds=86400,
-            pc_soft_seconds=86400,
-            pc_hard_seconds=86400,
+            workflow_seconds=stage_seconds,
+            solve_seconds=stage_seconds,
+            pc_soft_seconds=stage_seconds,
+            pc_hard_seconds=stage_seconds,
             process_tree_rss_cap_bytes=16 * 1024**3,
             require_zero_swap=True,
             campaign_window_required=True,
             campaign_closeout_reserve_seconds=600,
-            stage_budgets={stage: {"workflow_seconds": 86400, "solve_seconds": 86400}},
+            stage_budgets={
+                stage: {"workflow_seconds": stage_seconds, "solve_seconds": stage_seconds}
+            },
         )
         facts.setdefault("route_selection", {}).update(
             task40_reference_pc_strategy=TASK40_V15_REFERENCE_PC_STRATEGY,

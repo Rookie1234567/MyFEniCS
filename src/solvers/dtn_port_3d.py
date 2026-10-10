@@ -876,6 +876,7 @@ def _combine_owned_entries(
     comm: MPI.Intracomm,
     relative_tol: float = 1.0e-13,
     absolute_floor: float = 0.0,
+    audit: dict[str, Any] | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Combine component functionals with a scale-homogeneous cutoff."""
     row_blocks: list[np.ndarray] = []
@@ -906,8 +907,44 @@ def _combine_owned_entries(
     local_maximum = float(np.max(np.abs(summed_values), initial=0.0))
     global_maximum = float(comm.allreduce(local_maximum, op=MPI.MAX))
     cutoff = max(float(absolute_floor), relative_tol * global_maximum)
-    keep = np.abs(summed_values) > cutoff
-    return _idx(unique_rows[keep]), summed_values[keep].copy()
+    magnitudes = np.abs(summed_values)
+    keep = magnitudes > cutoff
+    output_rows = _idx(unique_rows[keep])
+    output_values = summed_values[keep].copy()
+    if audit is not None:
+        digest = hashlib.sha256()
+        digest.update(np.ascontiguousarray(output_rows).tobytes())
+        digest.update(np.ascontiguousarray(output_values, dtype=np.complex128).tobytes())
+        audit.update(
+            {
+                "relative_tol": float(relative_tol),
+                "absolute_floor": float(absolute_floor),
+                "global_maximum_abs": global_maximum,
+                "global_cutoff": cutoff,
+                "local_input_component_entry_count": int(
+                    sum(
+                        len(rows)
+                        for (rows, _), coefficient in zip(
+                            component_entries, coefficients
+                        )
+                        if abs(complex(coefficient)) > 0.0
+                    )
+                ),
+                "local_coalesced_row_count_before_mask": int(len(summed_values)),
+                "local_nonzero_coalesced_rows_before_mask": int(
+                    np.count_nonzero(magnitudes)
+                ),
+                "local_rows_dropped_by_global_mask": int(
+                    np.count_nonzero(magnitudes) - len(output_rows)
+                ),
+                "local_retained_row_count": int(len(output_rows)),
+                "local_norm_before_mask": float(np.linalg.norm(summed_values)),
+                "local_norm_after_mask": float(np.linalg.norm(output_values)),
+                "local_retained_stream_sha256": digest.hexdigest(),
+                "audit_scope": "owned rows; global for the registered MPI1 V22 probe",
+            }
+        )
+    return output_rows, output_values
 
 
 def _active_trace_values_from_augmented(

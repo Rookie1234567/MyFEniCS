@@ -63,6 +63,14 @@ def test_service_campaign_router_keeps_v19_and_scopes_v22_to_ny8(monkeypatch):
     assert target["sha256"] == service.TASK40_V22_CAMPAIGN_SHA256
     assert target["stage_scope"] == "geometry_descriptor"
 
+    target_operator = service._resolve_service_campaign(
+        ROOT,
+        service.TASK40_V22_CAMPAIGN_WINDOW,
+        profile=service.V22_TARGET_PROFILE,
+        stop_stage="target_operator_probe",
+    )
+    assert target_operator["stage_scope"] == "target_operator_probe"
+
     with pytest.raises(ValueError, match="restricted to the registered Ny8 target"):
         service._resolve_service_campaign(
             ROOT,
@@ -904,6 +912,330 @@ def test_user_service_wrapper_routes_v20_to_clocked_workflow_without_starting_se
     assert "--abi-receipt" in argv_text
     assert "--jit-cache" in argv_text
     assert "target_original_ny8_resource_pilot_v20.dat" in argv_text
+
+
+def test_v22_user_service_wrapper_routes_operator_probe_to_clocked_workflow(
+    tmp_path,
+):
+    import os
+    import subprocess
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    capture = tmp_path / "systemd_run_argv.bin"
+    fake_systemd_run = fake_bin / "systemd-run"
+    fake_systemd_run.write_text(
+        "#!/usr/bin/env bash\nprintf '%s\\0' \"$@\" > \"$CAPTURE_SYSTEMD_ARGV\"\n",
+        encoding="utf-8",
+    )
+    fake_systemd_run.chmod(0o755)
+    environment = dict(os.environ)
+    environment["PATH"] = f"{fake_bin}:{environment['PATH']}"
+    environment["CAPTURE_SYSTEMD_ARGV"] = str(capture)
+    v22_input = INPUT_ROOT / "target_original_ny8_operator_probe_v22.dat"
+    v22_window = ROOT / (
+        "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v22_wsl/"
+        "campaign_window_v22.json"
+    )
+    result = subprocess.run(
+        [
+            "bash",
+            str(ROOT / "scripts/run_case_in_user_service.sh"),
+            str(v22_input),
+            "--task40-v10-campaign-window",
+            str(v22_window),
+        ],
+        cwd=ROOT,
+        env=environment,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    argv = capture.read_bytes().decode().split("\0")
+    argv_text = " ".join(argv)
+    assert "MemoryMax=16G" in argv_text
+    assert "MemorySwapMax=0" in argv_text
+    assert "runtime_prefix/bin/python -S scripts/task40_v20_service_workflow.py run-service" in argv_text
+    assert "target_original_ny8_operator_probe_v22.dat" in argv_text
+    assert "campaign_window_v22.json" in argv_text
+
+
+def test_v22_operator_probe_selector_is_explicit_and_reaches_stage_runner(
+    tmp_path, monkeypatch
+):
+    from scripts.task40_v20_service_workflow import render_stage_input
+    from src.runners import task40_v20_stage_runner
+    from src.runners import task038_full3d_iterative
+
+    canonical = INPUT_ROOT / "target_original_ny8_operator_probe_v22.dat"
+    staged_text = render_stage_input(
+        canonical.read_text(encoding="utf-8"), "target_operator_probe"
+    )
+    staged = tmp_path / canonical.name
+    staged.write_text(staged_text, encoding="utf-8")
+    resolved = load_and_resolve(staged).as_jsonable()
+    assert resolved["execution"]["task40_execution_stop_stage"] == "target_operator_probe"
+    assert resolved["execution"]["task40_v22_operator_probe_authorized"] is True
+
+    def fake_preflight(payload, *, source_sha, profile, mesh_id):
+        assert profile == "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1"
+        assert mesh_id == "TARGET_ORIGINAL_NY8"
+        return (
+            {
+                "run_id": payload["run_id"],
+                "source_sha": source_sha,
+                "input_sha256": payload["provenance"]["input_sha256"],
+                "physical_model_sha256": payload["provenance"]["physical_model_sha256"],
+            },
+            (),
+            (),
+        )
+
+    def fake_probe(*_args, **_kwargs):
+        return {
+            "schema": "task40extra.review_v22_target_operator_probe.v1",
+            "status": "RESOURCE_CONTROLLED_STOP",
+            "attempted_stages": ["geometry_inventory", "target_operator_probe"],
+            "completed_stages": ["geometry_inventory"],
+            "partial_stages": ["target_operator_probe"],
+            "failed_stage": None,
+            "blocked_task_stage": "target_operator_probe",
+            "resource_blocker": {"gate": "fixture"},
+            "q_coverage": {"status": "NOT_RUN", "expected_q_count": 8, "built_q_count": 0},
+            "official_result": False,
+        }
+
+    monkeypatch.setattr(task40_v20_stage_runner, "_preflight", fake_preflight)
+    import src.solvers.task40_v22_operator_probe as probe_module
+
+    monkeypatch.setattr(probe_module, "run_v22_target_operator_probe", fake_probe)
+    output = tmp_path / "worker-output"
+    outcome = task038_full3d_iterative.run_full3d_iterative(
+        resolved, output, source_sha="a" * 40
+    )
+    receipt = json.loads((output / "v20_partial_result.json").read_text())
+    assert outcome["status"] == "controlled_stop"
+    assert receipt["requested_stop_stage"] == "target_operator_probe"
+    assert receipt["completed_stages"] == ["preflight", "geometry_inventory"]
+    assert receipt["partial_stages"] == ["target_operator_probe"]
+    from scripts.task40_v21_readonly_recheck import validate_stage_receipt_semantics
+
+    checks = validate_stage_receipt_semantics(
+        receipt,
+        expected_stage="target_operator_probe",
+        heavy_authorized=resolved["execution"]["task40_target_heavy_authorized"],
+        output_directory=output,
+        operator_probe_authorized=resolved["execution"][
+            "task40_v22_operator_probe_authorized"
+        ],
+    )
+    assert all(checks.values()), checks
+
+
+def test_v22_action_checkpoint_roundtrips_exact_completed_B_D_H_prefix(tmp_path):
+    import numpy as np
+
+    from src.solvers.task40_v22_operator_probe import _write_v22_action_checkpoint
+
+    b_action = np.asarray(
+        [0.0 + 0.0j, 1.0e-30 - 2.0e-30j, 2.0 + 3.0j, 0.0 + 0.0j],
+        dtype=np.complex128,
+    )
+    d_values = np.asarray([1.0 + 2.0j, 3.0 - 4.0j, 99.0 + 0.0j], dtype=np.complex128)
+    h_values = np.asarray([2.0, 4.0, 6.0], dtype=np.float64)
+    mode_inventory = {
+        "mode_manifest_sha256": "1" * 64,
+        "ordered_mode_key_sha256": "2" * 64,
+    }
+    filter_audit = {
+        side: {
+            "0": {"retained_stream_sha256": "3" * 64},
+            "1": {"retained_stream_sha256": "4" * 64},
+        }
+        for side in ("bottom", "top")
+    }
+    checkpoint = _write_v22_action_checkpoint(
+        tmp_path,
+        preflight={
+            "run_id": "run-v22",
+            "source_sha": "a" * 40,
+            "input_sha256": "b" * 64,
+            "physical_model_sha256": "c" * 64,
+        },
+        mode_inventory=mode_inventory,
+        mode_count=2,
+        mode_counts_by_side={"bottom": 2, "top": 0},
+        class_mode_prefix={"bottom": {"c00": 2}, "top": {"c01": 0}},
+        support_rows_by_side={
+            "bottom": {"B": 7, "D": 8},
+            "top": {"B": 0, "D": 0},
+        },
+        stream_digest=__import__("hashlib").sha256(b"prefix"),
+        component_filter_audit=filter_audit,
+        b_action=b_action,
+        d_values=d_values,
+        h_values=h_values,
+    )
+    assert checkpoint["completed_mode_count"] == 2
+    assert checkpoint["actual_action_payload"][
+        "B_values_are_exact_nonzeros_without_numeric_threshold"
+    ] is True
+    with np.load(tmp_path / checkpoint["actual_action_payload"]["path"]) as archive:
+        assert np.array_equal(archive["B_nonzero_rows"], np.asarray([1, 2]))
+        assert np.array_equal(archive["B_nonzero_values"], b_action[[1, 2]])
+        assert np.array_equal(archive["D_completed_values"], d_values[:2])
+        assert np.array_equal(archive["H_completed_values"], h_values[:2])
+    saved = json.loads((tmp_path / "v22_mode_sweep_checkpoint.json").read_text())
+    assert saved["actual_action_payload"]["sha256"] == checkpoint[
+        "actual_action_payload"
+    ]["sha256"]
+    assert saved["completed_side_class_mode_prefix"]["bottom"] == {"c00": 2}
+    assert saved["component_filter_prefix"]["bottom"]["0"][
+        "retained_stream_sha256"
+    ] == "3" * 64
+
+
+def test_v22_first_native_gate_failure_is_checkpointed_before_mode_sweep(tmp_path):
+    import hashlib
+
+    import numpy as np
+
+    from src.solvers.task40_v22_operator_probe import (
+        _native_calibration_gate_failure,
+        _write_v22_action_checkpoint,
+    )
+
+    failure = _native_calibration_gate_failure(
+        side="bottom",
+        mode_index=0,
+        mode_key=(0, 0, "s"),
+        calibration_result={
+            "B_interior_relative": 2e-10,
+            "D_x_relative": 4e-16,
+            "generated_action_api_witness": {
+                "status": "PASS_RAW_LOCAL_CALLBACK_TILES"
+            },
+        },
+    )
+    assert failure is not None
+    assert failure["failed_checks"] == ["native_B_interior_relative"]
+
+    b_action = np.asarray([1e-30 - 2e-30j, 0.0 + 0.0j, 3.0 + 4.0j])
+    d_values = np.asarray([5.0 + 6.0j, 99.0 + 0.0j])
+    h_values = np.asarray([2.0, 7.0])
+    filter_audit = {
+        side: {str(component): {"retained_stream_sha256": "a" * 64} for component in (0, 1)}
+        for side in ("bottom", "top")
+    }
+    checkpoint = _write_v22_action_checkpoint(
+        tmp_path,
+        preflight={
+            "run_id": "run-v22-fail-fast",
+            "source_sha": "a" * 40,
+            "input_sha256": "b" * 64,
+            "physical_model_sha256": "c" * 64,
+        },
+        mode_inventory={
+            "mode_manifest_sha256": "1" * 64,
+            "ordered_mode_key_sha256": "2" * 64,
+        },
+        mode_count=1,
+        mode_counts_by_side={"bottom": 1, "top": 0},
+        class_mode_prefix={"bottom": {"c00": 1}, "top": {"c01": 0}},
+        support_rows_by_side={
+            "bottom": {"B": 2, "D": 1},
+            "top": {"B": 0, "D": 0},
+        },
+        stream_digest=hashlib.sha256(b"first-mode"),
+        component_filter_audit=filter_audit,
+        b_action=b_action,
+        d_values=d_values,
+        h_values=h_values,
+        failure_facts=failure,
+    )
+
+    assert checkpoint["completed_mode_count"] == 1
+    assert checkpoint["fail_fast_operator_gate_failure"] == failure
+    with np.load(tmp_path / checkpoint["actual_action_payload"]["path"]) as archive:
+        assert np.array_equal(archive["B_nonzero_rows"], np.asarray([0, 2]))
+        assert np.array_equal(archive["B_nonzero_values"], b_action[[0, 2]])
+        assert np.array_equal(archive["D_completed_values"], d_values[:1])
+        assert np.array_equal(archive["H_completed_values"], h_values[:1])
+
+
+def test_fullspace_surface_iterator_reports_second_global_filter_audit(monkeypatch):
+    import numpy as np
+
+    from mpi4py import MPI
+
+    from src.solvers import dtn_port_3d, fullspace_dtn_action
+
+    class IndexMap:
+        local_range = (0, 3)
+        size_local = 3
+        size_global = 3
+
+    class Mpc:
+        function_space = SimpleNamespace(
+            mesh=SimpleNamespace(comm=MPI.COMM_SELF),
+            dofmap=SimpleNamespace(index_map=IndexMap()),
+        )
+
+    class Component:
+        boundary_reference_z = None
+        boundary_tag = 7
+        quadrature_degree = None
+
+        def __init__(self, rows, values):
+            self.rows = np.asarray(rows, dtype=np.int32)
+            self.values = np.asarray(values, dtype=np.complex128)
+
+        def assemble_entries(self, _mode, _mpc):
+            return self.rows.copy(), self.values.copy()
+
+    mode = SimpleNamespace(
+        side="top",
+        m=0,
+        n=0,
+        alpha=0.0 + 0.0j,
+        gamma=0.0 + 0.0j,
+        k_vector=np.asarray([0.0, 0.0, 1.0], dtype=np.complex128),
+        e_vector=np.asarray([1.0 + 0.0j, 1.0 + 0.0j], dtype=np.complex128),
+        polarization="s",
+    )
+    monkeypatch.setattr(
+        fullspace_dtn_action,
+        "build_ordered_mode_manifest",
+        lambda _modes, _cfg: ([{"mode_index": 0}], b"manifest", "d" * 64),
+    )
+    monkeypatch.setattr(dtn_port_3d, "_mode_projection_denominator", lambda *_args: 2.0)
+    monkeypatch.setattr(
+        dtn_port_3d,
+        "_traction_vector",
+        lambda *_args: np.asarray([1.0 + 0.0j, 0.0 + 0.0j]),
+    )
+    audit = {}
+    iterator = fullspace_dtn_action.iter_fullspace_dtn_functionals_from_surface(
+        [mode],
+        {
+            ("top", 0): Component([0, 1], [1.0 + 0.0j, 1.0e-14 + 0.0j]),
+            ("top", 1): Component([0], [0.5 + 0.0j]),
+        },
+        Mpc(),
+        SimpleNamespace(),
+        audit=audit,
+    )
+    functional = next(iterator)
+    assert np.array_equal(functional.projection_rows, np.asarray([0], dtype=np.int32))
+    assert np.array_equal(functional.coupling_rows, np.asarray([0], dtype=np.int32))
+    assert list(iterator) == []
+    combined = audit["global_combination_filter_audit"]
+    assert combined["projection"]["global_maximum_abs_max"] == 1.5
+    assert combined["projection"]["rows_dropped_by_global_mask"] == 1
+    assert combined["coupling"]["rows_dropped_by_global_mask"] == 1
+    assert combined["projection"]["norm_before_mask"] >= combined["projection"]["norm_after_mask"]
+    assert len(combined["projection"]["retained_stream_sha256"]) == 64
 
 
 def test_v20_service_accepts_only_the_official_checker_pass_marker():

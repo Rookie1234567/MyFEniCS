@@ -607,6 +607,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
                 "task40extra_v20_p6_y_orbit_e2_reference_v1",
                 "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+                "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1",
             }
             v15_profiles = {
                 "task40extra_v15_p6_y_orbit_b0_reference_v1",
@@ -618,6 +619,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
                 "task40extra_v20_p6_y_orbit_e2_reference_v1",
                 "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+                "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1",
             }
             v17_profiles = {
                 "task40extra_v17_p6_y_orbit_b0_reference_v1",
@@ -626,6 +628,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
                 "task40extra_v20_p6_y_orbit_e2_reference_v1",
                 "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+                "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1",
             }
             v16_profiles = {
                 "task40extra_v16_p6_y_orbit_gx560_reference_v1",
@@ -695,6 +698,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
                     "task40extra_v20_p6_y_orbit_e2_reference_v1",
                     "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+                    "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1",
                 }
                 and reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
                 and q_assembly_strategy == TASK40_Q_ASSEMBLY_ROW_TILE_V17
@@ -713,6 +717,18 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 )
                 for profile, case in TASK40_V20_CASES_BY_PROFILE.items()
             }
+            is_v22_operator_profile = (
+                preconditioner
+                == "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1"
+            )
+            if is_v22_operator_profile:
+                from src.geometry.task40_nonseparable_plan import TASK40_V22_OPERATOR_PROBE_RUN_ID
+
+                v20_cases[preconditioner] = (
+                    TASK40_V22_OPERATOR_PROBE_RUN_ID,
+                    "V22_TARGET_OPERATOR_PROBE",
+                    {"preflight", "target_operator_probe"},
+                )
             stop_stage = execution.get("task40_execution_stop_stage")
             if preconditioner in v20_cases:
                 expected_run, expected_solver_stage, allowed_stop_stages = v20_cases[
@@ -733,7 +749,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "solver.task40_factor_lifecycle_strategy",
                         "V20 requires the explicit ONE_Q_REFACTOR_V19 route",
                     )
-                v20_case = TASK40_V20_CASES_BY_PROFILE[preconditioner]
+                v20_case = TASK40_V20_CASES_BY_PROFILE[
+                    "task40extra_v20_p6_y_orbit_target_original_ny8_v1"
+                    if is_v22_operator_profile
+                    else preconditioner
+                ]
                 if v20_case.mesh_id == "TARGET_ORIGINAL_NY8":
                     from src.solvers.task40_v20_mode_inventory import (
                         TARGET_MODE_KEY_SHA256,
@@ -788,6 +808,32 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                                 "execution.task40_component_resume_manifest_path",
                                 "resume is restricted to a repo-relative manifest for the exact target local_port_components stage",
                             )
+                    is_v22_operator_profile = (
+                        preconditioner
+                        == "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1"
+                    )
+                    v22_authorized = execution.get("task40_v22_operator_probe_authorized")
+                    if type(v22_authorized) is not bool:
+                        raise _error(
+                            "execution.task40_v22_operator_probe_authorized",
+                            "Task40 requires an explicit V22 operator-probe authorization boolean",
+                        )
+                    if is_v22_operator_profile:
+                        if (stop_stage == "target_operator_probe") != v22_authorized:
+                            raise _error(
+                                "execution.task40_v22_operator_probe_authorized",
+                                "V22 authorization must be true exactly for the target_operator_probe selector",
+                            )
+                        if execution.get("task40_target_heavy_authorized") is not False:
+                            raise _error(
+                                "execution.task40_target_heavy_authorized",
+                                "the V22 operator probe does not authorize the V20 heavy stages",
+                            )
+                    elif v22_authorized:
+                        raise _error(
+                            "execution.task40_v22_operator_probe_authorized",
+                            "V22 operator-probe authorization is reserved for its dedicated profile",
+                        )
                     if type(execution.get("task40_target_heavy_authorized")) is not bool:
                         raise _error(
                             "execution.task40_target_heavy_authorized",
@@ -864,6 +910,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
                 "task40extra_v20_p6_y_orbit_e2_reference_v1",
                 "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+                "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -1421,6 +1468,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
                 "task40extra_v20_p6_y_orbit_e2_reference_v1",
                 "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+                "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1",
             }:
                 from src.geometry.task40_nonseparable_plan import (
                     TASK40_B0_P6_V15_RUN_ID,
@@ -1433,6 +1481,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     TASK40_E1_V17_RUN_ID,
                     TASK40_E1_V19_RUN_ID,
                     TASK40_TARGET_ORIGINAL_NY8_V20_RUN_ID,
+                    TASK40_V22_OPERATOR_PROBE_RUN_ID,
                     TASK40_GX560_V15_RUN_ID,
                     TASK40_GX560_V17_RUN_ID,
                     TASK40_Q_ASSEMBLY_LEGACY,
@@ -1471,6 +1520,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "V20_TARGET_NY8_RESOURCE_PILOT",
                         4,
                     ),
+                    "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1": (
+                        TASK40_V22_OPERATOR_PROBE_RUN_ID,
+                        "V22_TARGET_OPERATOR_PROBE",
+                        4,
+                    ),
                 }
                 expected_run, expected_stage, expected_coarse_degree = cases[
                     preconditioner
@@ -1481,12 +1535,14 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "task40extra_v18_p6_y_orbit_b0_y8_reference_v1": TASK40_B0_P6_V19_Y8_RUN_ID,
                         "task40extra_v20_p6_y_orbit_e2_reference_v1": TASK40_E2_P6_V20_RUN_ID,
                         "task40extra_v20_p6_y_orbit_target_original_ny8_v1": TASK40_TARGET_ORIGINAL_NY8_V20_RUN_ID,
+                        "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1": TASK40_V22_OPERATOR_PROBE_RUN_ID,
                     }.get(preconditioner)
                 expected_q_assembly_strategy = (
                     TASK40_Q_ASSEMBLY_ROW_TILE_V17
                     if preconditioner.startswith("task40extra_v17_")
                     or preconditioner == "task40extra_v18_p6_y_orbit_b0_y8_reference_v1"
                     or preconditioner.startswith("task40extra_v20_")
+                    or preconditioner == "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1"
                     else TASK40_Q_ASSEMBLY_LEGACY
                 )
                 if (
@@ -2032,6 +2088,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
                 "task40extra_v20_p6_y_orbit_e2_reference_v1",
                 "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+                "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1",
             }
             if task40_0p7nm:
                 if not isclose(

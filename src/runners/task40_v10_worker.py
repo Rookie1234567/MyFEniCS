@@ -4420,7 +4420,7 @@ def _candidate_contract(
         TASK40_V16_P6_E1_PROFILE,
         TASK40_V17_P6_B0_PROFILE,
         TASK40_V18_P6_B0_Y8_PROFILE,
-        TASK40_V20_P6_PROFILES,
+        TASK40_V20_V22_P6_PROFILES,
         TASK40_V17_P6_GX560_PROFILE,
         TASK40_V17_P6_E1_PROFILE,
     )
@@ -4461,7 +4461,7 @@ def _candidate_contract(
     is_v15 = reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
     is_v19 = factor_lifecycle_strategy == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
     is_v18 = profile_identity == TASK40_V18_P6_B0_Y8_PROFILE
-    is_v20 = profile_identity in TASK40_V20_P6_PROFILES
+    is_v20 = profile_identity in TASK40_V20_V22_P6_PROFILES
     is_v16 = q_assembly_strategy == TASK40_Q_ASSEMBLY_BOUNDED_V16
     is_v17 = q_assembly_strategy == TASK40_Q_ASSEMBLY_ROW_TILE_V17
     case_identity = {
@@ -4502,7 +4502,7 @@ def _candidate_contract(
         TASK40_V17_P6_GX560_PROFILE: (None, None, None, None),
         TASK40_V17_P6_E1_PROFILE: (None, None, None, None),
         TASK40_V18_P6_B0_Y8_PROFILE: (None, None, None, None),
-        **{profile: (None, None, None, None) for profile in TASK40_V20_P6_PROFILES},
+        **{profile: (None, None, None, None) for profile in TASK40_V20_V22_P6_PROFILES},
     }
     try:
         strict_identity, v13_identity, v15_identity, v16_identity = case_identity[profile_identity]
@@ -4698,7 +4698,7 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V16_P6_E1_PROFILE,
         TASK40_V17_P6_E1_PROFILE,
         TASK40_V18_P6_B0_Y8_PROFILE,
-        TASK40_V20_P6_PROFILES,
+        TASK40_V20_V22_P6_PROFILES,
         profile_facts,
     )
     from src.runners.physical_p4_schur_v14 import (
@@ -4814,11 +4814,11 @@ def run_task40_v10_p6_reference_worker(
         "task40extra_v17_p6_y_orbit_gx560_reference_v1",
         "task40extra_v17_p6_y_orbit_e1_reference_v1",
         TASK40_V18_P6_B0_Y8_PROFILE,
-        *TASK40_V20_P6_PROFILES,
+        *TASK40_V20_V22_P6_PROFILES,
     ):
         raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}")
     is_v18 = profile_identity == TASK40_V18_P6_B0_Y8_PROFILE
-    is_v20 = profile_identity in TASK40_V20_P6_PROFILES
+    is_v20 = profile_identity in TASK40_V20_V22_P6_PROFILES
     v20_case = None
     if is_v20:
         from src.solvers.task40_v20_registry import task40_v20_case

@@ -7,6 +7,7 @@ import ast
 from collections import Counter
 import hashlib
 import json
+import math
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -14,6 +15,7 @@ from typing import Any, Mapping
 V20_STAGE_ORDER = (
     "preflight",
     "geometry_inventory",
+    "target_operator_probe",
     "local_port_components",
     "build_and_symbolic",
     "one_q_numeric",
@@ -58,12 +60,196 @@ def recompute_admission_gate(gate: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _is_sha256(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(char in "0123456789abcdef" for char in value)
+    )
+
+
+def _finite_nonnegative_below(value: Any, limit: float) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+        and 0.0 <= float(value) <= limit
+    )
+
+
+def _v22_completed_probe_checks(
+    receipt: Mapping[str, Any], probe: Mapping[str, Any]
+) -> dict[str, bool]:
+    """Recompute a V22 completion from bound raw coverage, FE/MPC, and error fields."""
+
+    descriptor = probe.get("descriptor")
+    descriptor = descriptor if isinstance(descriptor, Mapping) else {}
+    p6_space = probe.get("p6_space")
+    p6_space = p6_space if isinstance(p6_space, Mapping) else {}
+    mpc = descriptor.get("global_mpc_identity")
+    mpc = mpc if isinstance(mpc, Mapping) else {}
+    witness = probe.get("operator_witness")
+    witness = witness if isinstance(witness, Mapping) else {}
+    coverage = witness.get("mode_coverage")
+    coverage = coverage if isinstance(coverage, Mapping) else {}
+    expected_by_side = {"bottom": 16_030, "top": 16_030}
+    native = witness.get("native_882_row_calibration_by_side")
+    native = native if isinstance(native, Mapping) else {}
+    generated = witness.get("generated_p6_api_witness")
+    generated = generated if isinstance(generated, Mapping) else {}
+    independent_packets = generated.get("independent_saved_full_row_packet_reference")
+    independent_packets = (
+        independent_packets if isinstance(independent_packets, Mapping) else {}
+    )
+    crossmode = generated.get("same_cell_s_p_crossmode")
+    crossmode = crossmode if isinstance(crossmode, Mapping) else {}
+    q_consumer = generated.get("local_q_row_tile_consumer")
+    q_consumer = q_consumer if isinstance(q_consumer, Mapping) else {}
+    coverage_target = probe.get("mode_coverage_target")
+    coverage_target = coverage_target if isinstance(coverage_target, Mapping) else {}
+
+    hashes = (
+        descriptor.get("mode_manifest_sha256"),
+        descriptor.get("ordered_mode_key_sha256"),
+        descriptor.get("saved_mesh_xdmf_sha256"),
+        descriptor.get("saved_mesh_h5_sha256"),
+        descriptor.get("saved_boundary_mapping_sha256"),
+        descriptor.get("actual_cell_dofmap_sha256"),
+        mpc.get("slave_rows_sha256"),
+        mpc.get("master_local_indices_sha256"),
+        mpc.get("coefficients_sha256"),
+        mpc.get("offsets_sha256"),
+    )
+    receipt_source = receipt.get("source_sha")
+    probe_source = probe.get("source_sha")
+    receipt_input = receipt.get("input_sha256")
+    probe_input = probe.get("input_sha256")
+    receipt_physical = receipt.get("physical_model_sha256")
+    probe_physical = probe.get("physical_model_sha256")
+
+    full_rows = 20_181_348
+    independent_rows = 19_897_344
+    calibration_passed = set(native) == {"bottom", "top"} and all(
+        isinstance(native.get(side), Mapping)
+        and native[side].get("status")
+        == "MEASURED_NATIVE_882_ROW_SAME_RULE_PATH_CONSISTENCY"
+        and native[side].get("independent_reference") is False
+        and _finite_nonnegative_below(native[side].get("B_interior_relative"), 1e-10)
+        and _finite_nonnegative_below(native[side].get("D_x_relative"), 1e-10)
+        for side in ("bottom", "top")
+    )
+    independent_packet_passed = (
+        independent_packets.get("status")
+        == "PASS_HASH_BOUND_SAVED_DEGREE60_FULL_ROW_B_D_PACKETS"
+        and independent_packets.get("quadrature_degree_by_side")
+        == {"bottom": 60, "top": 60}
+        and independent_packets.get("full_local_rows_by_side")
+        == {"bottom": 882, "top": 882}
+        and independent_packets.get("independent_B_D_construction_by_side")
+        == {"bottom": True, "top": True}
+        and set(independent_packets.get("mode_indices_by_side", {}))
+        == {"bottom", "top"}
+        and set(independent_packets.get("actual_cell_ids_by_side", {}))
+        == {"bottom", "top"}
+        and set(independent_packets.get("actual_class_ids_by_side", {}))
+        == {"bottom", "top"}
+        and set(independent_packets.get("packet_npz_sha256_by_side", {}))
+        == {"bottom", "top"}
+        and set(independent_packets.get("B_relative_to_live_native_by_side", {}))
+        == {"bottom", "top"}
+        and set(independent_packets.get("D_relative_to_live_native_by_side", {}))
+        == {"bottom", "top"}
+        and all(
+            _is_sha256(independent_packets["packet_npz_sha256_by_side"][side])
+            and _finite_nonnegative_below(
+                independent_packets["B_relative_to_live_native_by_side"][side], 1e-10
+            )
+            and _finite_nonnegative_below(
+                independent_packets["D_relative_to_live_native_by_side"][side], 1e-10
+            )
+            and isinstance(independent_packets["mode_indices_by_side"][side], int)
+            and not isinstance(independent_packets["mode_indices_by_side"][side], bool)
+            and isinstance(independent_packets["actual_cell_ids_by_side"][side], int)
+            and not isinstance(independent_packets["actual_cell_ids_by_side"][side], bool)
+            and isinstance(independent_packets["actual_class_ids_by_side"][side], str)
+            and independent_packets["actual_class_ids_by_side"][side] != "UNAVAILABLE"
+            for side in ("bottom", "top")
+        )
+    )
+    b_alpha = witness.get("B_alpha")
+    b_alpha = b_alpha if isinstance(b_alpha, Mapping) else {}
+    return {
+        "v22_source_input_physical_bindings_match": (
+            isinstance(receipt_source, str)
+            and len(receipt_source) == 40
+            and all(char in "0123456789abcdef" for char in receipt_source)
+            and probe_source == receipt_source
+            and probe_input == receipt_input
+            and probe_physical == receipt_physical
+            and descriptor.get("staged_input_sha256") == receipt_input
+            and descriptor.get("physical_model_sha256") == receipt_physical
+            and descriptor.get("mode_manifest_sha256") == probe.get("mode_manifest_sha256")
+        ),
+        "v22_saved_mesh_dofmap_and_mpc_identity_complete": (
+            p6_space.get("cell_count") == 30_464
+            and p6_space.get("cell_dof_dimension") == 882
+            and p6_space.get("global_storage_rows") == full_rows
+            and p6_space.get("global_independent_rows") == independent_rows
+            and p6_space.get("interior_rows_per_cell") == 450
+            and p6_space.get("trace_rows_per_cell") == 432
+            and mpc.get("global_storage_rows") == full_rows
+            and mpc.get("global_independent_rows") == independent_rows
+            and mpc.get("owned_slave_count") == full_rows - independent_rows
+            and mpc.get("mpc_finalized") is True
+            and mpc.get("coefficient_count", 0) > 0
+            and isinstance(mpc.get("offset_count"), int)
+            and not isinstance(mpc.get("offset_count"), bool)
+            and mpc["offset_count"] >= 0
+            and all(_is_sha256(value) for value in hashes)
+        ),
+        "v22_mode_coverage_recomputed": (
+            coverage.get("expected") == 32_060
+            and coverage.get("completed") == 32_060
+            and coverage.get("completed_by_side") == expected_by_side
+            and coverage_target.get("expected_mode_count") == 32_060
+            and coverage_target.get("expected_by_side") == expected_by_side
+            and b_alpha.get("mode_count") == 32_060
+            and b_alpha.get("mode_count_by_side") == expected_by_side
+        ),
+        "v22_both_native_error_gates_recomputed": calibration_passed,
+        "v22_independent_saved_full_row_packets_bound": independent_packet_passed,
+        "v22_generated_factory_and_q_consumer_connected": (
+            generated.get("status") == "PASS_GENERATED_FACTORY_AND_BOUNDED_Q_TILES"
+            and generated.get("P6CellCondensedAction_factory_connected") is True
+            and generated.get("row_tile_q_consumer_connected") is True
+            and crossmode.get("consumed_by_local_q11_tile") is True
+            and isinstance(crossmode.get("Hhat_only_s_p_projection"), list)
+            and isinstance(crossmode.get("full_q11_s_p_projection"), list)
+            and q_consumer.get("trace_only_selector") is True
+            and q_consumer.get("same_cell_s_p_port_only_selector") is True
+            and q_consumer.get("Hhat_only_projection_recorded_independently") is True
+            and q_consumer.get("full_port_port_tile_recorded") is True
+            and independent_packet_passed
+        ),
+        "v22_q_factor_ksp_and_full_field_still_unbuilt": (
+            probe.get("expected_q_count") == 8
+            and probe.get("built_q_count") == 0
+            and probe.get("q_csr_created") is False
+            and probe.get("factor_created") is False
+            and probe.get("ksp_created") is False
+            and probe.get("pde_solved") is False
+            and witness.get("all_q_csr_factor_ksp_and_full_field") == "NOT_RUN"
+        ),
+    }
+
+
 def validate_stage_receipt_semantics(
     receipt: Mapping[str, Any],
     *,
     expected_stage: str,
     heavy_authorized: bool | None,
     output_directory: str | Path | None = None,
+    operator_probe_authorized: bool | None = None,
 ) -> dict[str, bool]:
     """Check the four v2 partial outcomes; none can be promoted to a full result."""
 
@@ -132,6 +318,89 @@ def validate_stage_receipt_semantics(
             in {"PASS", "FAILED", "UNKNOWN", "NOT_RUN"},
         }
     )
+    if expected_stage == "target_operator_probe":
+        allowed_v22_stages = ["preflight", "geometry_inventory", "target_operator_probe"]
+        attempted_prefix = attempted == allowed_v22_stages[: len(attempted)]
+        completed_prefix = completed == allowed_v22_stages[: len(completed)]
+        probe_facts = receipt.get("target_operator_probe")
+        probe_facts = probe_facts if isinstance(probe_facts, Mapping) else {}
+        blocked_task_stage = receipt.get("blocked_task_stage")
+        checks.update(
+            {
+                "operator_probe_authorization_matches_outcome": (
+                    operator_probe_authorized is (outcome != "AUTH_NOT_GRANTED")
+                ),
+                "heavy_authorization_remains_false": heavy_authorized is False,
+                "v22_stage_prefix_order": attempted_prefix and completed_prefix,
+                "v22_attempted_contains_only_registered_stages": all(
+                    stage in allowed_v22_stages for stage in attempted
+                ),
+                "v22_completed_is_attempted_prefix": completed
+                == attempted[: len(completed)],
+                "v22_q_inventory_explicit": (
+                    q_coverage.get("status") == "NOT_RUN"
+                    and q_coverage.get("expected_q_count") == 8
+                    and q_coverage.get("built_q_count") == 0
+                ),
+            }
+        )
+        if outcome == "AUTH_NOT_GRANTED":
+            checks.update(
+                {
+                    "v22_authorization_denial_safe_prefix": (
+                        operator_probe_authorized is False
+                        and "target_operator_probe" not in attempted
+                        and attempted == completed
+                    ),
+                    "v22_q_not_built": q_coverage.get("built_q_count") == 0,
+                }
+            )
+        elif outcome == "RESOURCE_CONTROLLED_STOP":
+            checks.update(
+                {
+                    "v22_resource_stage_is_partial": (
+                        blocked_task_stage in {"geometry_inventory", "target_operator_probe"}
+                        and blocked_task_stage in attempted
+                        and blocked_task_stage not in completed
+                    ),
+                    "v22_resource_gate_present": isinstance(receipt.get("resource_gate"), Mapping),
+                    "v22_resource_prefix_exact": attempted
+                    == [*completed, blocked_task_stage],
+                }
+            )
+        elif outcome == "STAGE_COMPLETED":
+            stage_result = receipt.get("stage_result")
+            stage_result = stage_result if isinstance(stage_result, Mapping) else {}
+            checks.update(
+                {
+                    "v22_probe_stage_completed": attempted == allowed_v22_stages
+                    and completed == allowed_v22_stages,
+                    "v22_stage_marker_matches": stage_result.get("completed_stage")
+                    == "target_operator_probe",
+                    "v22_probe_status_passed": probe_facts.get("status")
+                    == "PASS_ALL_MODE_B_D_STREAM_WITH_Q_UNBUILT",
+                    "v22_q_remains_unbuilt": q_coverage.get("built_q_count") == 0,
+                }
+            )
+            checks.update(_v22_completed_probe_checks(receipt, probe_facts))
+        elif outcome == "STAGE_FAILED":
+            failed_stage = receipt.get("failed_stage")
+            checks.update(
+                {
+                    "v22_failed_stage_is_attempted_and_incomplete": (
+                        failed_stage in {"geometry_inventory", "target_operator_probe"}
+                        and failed_stage in attempted
+                        and failed_stage not in completed
+                    ),
+                    "v22_failure_follows_exact_prefix": attempted
+                    == [*completed, failed_stage],
+                    "v22_failure_evidence_present": bool(
+                        receipt.get("failure_message") or probe_facts.get("failure_message")
+                    ),
+                }
+            )
+        return checks
+
     if outcome == "AUTH_NOT_GRANTED":
         checks.update(
             {

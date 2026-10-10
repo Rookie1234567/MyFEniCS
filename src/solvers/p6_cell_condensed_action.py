@@ -168,9 +168,12 @@ class P6GeneratedCellPortAction:
 
     ``apply_B(alpha)`` returns raw local ``(Bi@alpha, Bt@alpha)`` rows and
     ``apply_D(x_i, x_t)`` returns the independent raw
-    ``Di@x_i + Dt@x_t``. The action applies the cell MPC expansion and its
-    conjugate pullback exactly once. Callbacks must not retain mode-by-cell
-    matrices or infer D from B.
+    ``Di@x_i + Dt@x_t``. Optional tile callbacks provide the same operators
+    for selected global port indices and multiple right-hand sides, allowing
+    q assembly to stream both port rows and columns without materializing
+    ``B_i``, ``D_i`` or ``Hhat``. The action applies the cell MPC expansion
+    and its conjugate pullback exactly once. Callbacks must not retain
+    mode-by-cell matrices or infer D from B.
     ``callback_workspace_bytes`` is the
     caller-reported upper bound for one callback's additional numerical
     workspace; it excludes interpreter and native-library internals.
@@ -180,6 +183,12 @@ class P6GeneratedCellPortAction:
     apply_B: Callable[[np.ndarray], tuple[np.ndarray, np.ndarray]]
     apply_D: Callable[[np.ndarray, np.ndarray], np.ndarray]
     callback_workspace_bytes: int = 0
+    apply_B_tile: Callable[
+        [np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]
+    ] | None = None
+    apply_D_tile: Callable[
+        [np.ndarray, np.ndarray, np.ndarray], np.ndarray
+    ] | None = None
 
 
 @dataclass(frozen=True)
@@ -850,6 +859,14 @@ class P6CellCondensedAction:
             if generated_action is not None:
                 if any(not callable(getattr(generated_action, name)) for name in ("apply_B", "apply_D")):
                     raise TypeError("generated cell port actions must provide callable B and D actions")
+                if any(
+                    callback is not None and not callable(callback)
+                    for callback in (
+                        generated_action.apply_B_tile,
+                        generated_action.apply_D_tile,
+                    )
+                ):
+                    raise TypeError("generated B/D tile callbacks must be callable when provided")
                 workspace_bytes = generated_action.callback_workspace_bytes
                 if isinstance(workspace_bytes, bool) or not isinstance(workspace_bytes, int) or workspace_bytes < 0:
                     raise ValueError("generated callback workspace bound must be a nonnegative integer")
@@ -1412,6 +1429,131 @@ class P6CellCondensedAction:
         return result
 
     @staticmethod
+    def _generated_port_positions(cell: _CellActionData, ports: np.ndarray) -> np.ndarray:
+        """Resolve only requested port indices without a full Python lookup map."""
+
+        cell_ports = np.asarray(cell.ports, dtype=PETSc.IntType)
+        if len(cell_ports) < 2 or np.all(cell_ports[1:] > cell_ports[:-1]):
+            positions = np.searchsorted(cell_ports, ports)
+            if (
+                np.any(positions >= len(cell_ports))
+                or not np.array_equal(cell_ports[positions], ports)
+            ):
+                raise ValueError("generated tile refers to a port outside this cell")
+            return np.asarray(positions, dtype=np.intp)
+        positions = np.empty(len(ports), dtype=np.intp)
+        for index, port in enumerate(ports):
+            matches = np.flatnonzero(cell_ports == port)
+            if len(matches) != 1:
+                raise ValueError("generated tile refers to a port outside this cell")
+            positions[index] = int(matches[0])
+        return positions
+
+    def _generated_B_tile(
+        self,
+        cell: _CellActionData,
+        port_indices: Any,
+        amplitudes: Any,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Generate raw B rows for selected ports and a bounded RHS tile."""
+
+        generated = cell.generated_action
+        if generated is None:
+            raise RuntimeError("generated B tile requested for a cached cell")
+        ports = np.asarray(port_indices, dtype=PETSc.IntType).reshape(-1)
+        values = np.asarray(amplitudes, dtype=np.complex128)
+        if (
+            ports.size == 0
+            or values.ndim != 2
+            or values.shape[0] != len(ports)
+            or values.shape[1] == 0
+            or not np.isfinite(values).all()
+            or len(np.unique(ports)) != len(ports)
+        ):
+            raise ValueError("generated B tile needs unique ports and a finite nonempty RHS block")
+        if generated.apply_B_tile is not None:
+            if not np.isin(ports, cell.ports).all():
+                raise ValueError("generated B tile refers to a port outside this cell")
+            self._generated_callback_call_count += 1
+            result = generated.apply_B_tile(ports, np.ascontiguousarray(values))
+            if not isinstance(result, tuple) or len(result) != 2:
+                raise ValueError("generated B tile callback must return (Bi_tile, Bt_tile)")
+            bi, bt = result
+        else:
+            positions = self._generated_port_positions(cell, ports)
+            bi = np.empty((len(cell.original_interiors), values.shape[1]), dtype=np.complex128)
+            bt = np.empty((len(cell.original_trace), values.shape[1]), dtype=np.complex128)
+            for column in range(values.shape[1]):
+                amplitudes_full = np.zeros(len(cell.ports), dtype=np.complex128)
+                amplitudes_full[positions] = values[:, column]
+                bi[:, column], bt[:, column] = self._generated_B_action(
+                    cell, amplitudes_full
+                )
+        expected = (
+            (len(cell.original_interiors), values.shape[1]),
+            (len(cell.original_trace), values.shape[1]),
+        )
+        for name, value, shape in zip(("Bi_tile", "Bt_tile"), (bi, bt), expected, strict=True):
+            if (
+                not isinstance(value, np.ndarray)
+                or value.shape != shape
+                or value.dtype != np.dtype(np.complex128)
+                or not value.flags.c_contiguous
+                or not np.isfinite(value).all()
+            ):
+                raise ValueError(f"generated B tile callback returned an invalid {name}")
+        return bi, bt
+
+    def _generated_D_tile(
+        self,
+        cell: _CellActionData,
+        output_ports: Any,
+        interior: Any,
+        trace: Any,
+    ) -> np.ndarray:
+        """Generate raw D rows for selected output ports and a bounded tile."""
+
+        generated = cell.generated_action
+        if generated is None:
+            raise RuntimeError("generated D tile requested for a cached cell")
+        ports = np.asarray(output_ports, dtype=PETSc.IntType).reshape(-1)
+        xi = np.asarray(interior, dtype=np.complex128)
+        xt = np.asarray(trace, dtype=np.complex128)
+        width = xi.shape[1] if xi.ndim == 2 else -1
+        if (
+            ports.size == 0
+            or len(np.unique(ports)) != len(ports)
+            or xi.shape != (len(cell.original_interiors), width)
+            or xt.shape != (len(cell.original_trace), width)
+            or width <= 0
+            or not np.isfinite(xi).all()
+            or not np.isfinite(xt).all()
+        ):
+            raise ValueError("generated D tile requires unique ports and finite local RHS blocks")
+        if generated.apply_D_tile is not None:
+            if not np.isin(ports, cell.ports).all():
+                raise ValueError("generated D tile refers to a port outside this cell")
+            self._generated_callback_call_count += 1
+            result = generated.apply_D_tile(
+                ports, np.ascontiguousarray(xi), np.ascontiguousarray(xt)
+            )
+        else:
+            positions = self._generated_port_positions(cell, ports)
+            result = np.empty((len(ports), width), dtype=np.complex128)
+            for column in range(width):
+                full = self._generated_D_action(cell, xi[:, column], xt[:, column])
+                result[:, column] = full[positions]
+        if (
+            not isinstance(result, np.ndarray)
+            or result.shape != (len(ports), width)
+            or result.dtype != np.dtype(np.complex128)
+            or not result.flags.c_contiguous
+            or not np.isfinite(result).all()
+        ):
+            raise ValueError("generated D tile callback returned an invalid matrix")
+        return result
+
+    @staticmethod
     def _streamed_cell_action(
         cell: Any,
         local_trace: np.ndarray,
@@ -1608,8 +1750,13 @@ class P6CellCondensedAction:
         """
         if self._destroyed or getattr(self.condensed, "_destroyed", False):
             raise RuntimeError("p6 contribution owner has been destroyed")
-        if self.condensed.comm.Get_size() != 1 or self.port_coupling_mode != "cached":
-            raise ValueError("reduced contribution layouts require MPI1 cached port terms")
+        if self.condensed.comm.Get_size() != 1:
+            raise ValueError("reduced contribution layouts require MPI1")
+        has_generated = any(cell.generated_action is not None for cell in self._cells)
+        if has_generated and (
+            type(hhat_block_columns) is not int or hhat_block_columns <= 0
+        ):
+            raise ValueError("generated reduced contribution layouts require a bounded port tile width")
         trace_rows = int(self.condensed.active_rows)
         total_rows = self.reduced_size
         port_count = int(self.condensed.appended_rows)
@@ -1630,6 +1777,18 @@ class P6CellCondensedAction:
         for cell_index, cell in enumerate(self._cells):
             yield cell.active_ids, cell.active_ids, f"volume/cell/{cell_index}"
             if not len(cell.ports):
+                continue
+            if cell.generated_action is not None:
+                assert hhat_block_columns is not None
+                ordered_ports = np.sort(np.asarray(cell.ports, dtype=PETSc.IntType))
+                for start in range(0, len(ordered_ports), hhat_block_columns):
+                    stop = min(start + hhat_block_columns, len(ordered_ports))
+                    global_ports = trace_rows + ordered_ports[start:stop]
+                    yield cell.active_ids, global_ports, f"cell/C_hat/{cell_index}/{start}:{stop}"
+                for start in range(0, len(ordered_ports), hhat_block_columns):
+                    stop = min(start + hhat_block_columns, len(ordered_ports))
+                    global_ports = trace_rows + ordered_ports[start:stop]
+                    yield global_ports, cell.active_ids, f"cell/-D_hat/{cell_index}/{start}:{stop}"
                 continue
             if cell.Bhat is None or cell.Dhat is None:
                 raise ValueError("cached p6 trace/port formulas are unavailable")
@@ -1667,8 +1826,13 @@ class P6CellCondensedAction:
             raise ValueError("fresh whole-tree contribution allocation gate required")
         if self._destroyed or getattr(self.condensed, "_destroyed", False):
             raise RuntimeError("p6 contribution owner has been destroyed")
-        if self.condensed.comm.Get_size() != 1 or self.port_coupling_mode != "cached":
-            raise ValueError("reduced contributions require MPI1 cached port terms")
+        if self.condensed.comm.Get_size() != 1:
+            raise ValueError("reduced contributions require MPI1")
+        has_generated = any(cell.generated_action is not None for cell in self._cells)
+        if has_generated and (
+            type(hhat_block_columns) is not int or hhat_block_columns <= 0
+        ):
+            raise ValueError("generated reduced contributions require a bounded port tile width")
         trace_rows = int(self.condensed.active_rows)
         total_rows = self.reduced_size
         port_count = int(self.condensed.appended_rows)
@@ -1709,6 +1873,8 @@ class P6CellCondensedAction:
 
         ports = np.arange(trace_rows, total_rows, dtype=PETSc.IntType)
         if hhat_block_columns is None:
+            if has_generated:
+                raise ValueError("generated Hhat cannot be materialized as one full block")
             hhat_bytes = int(16 * port_count * port_count)
             gate("ports/Hhat", hhat_bytes, hhat_bytes)
             hhat = self._materialize_Hhat()
@@ -1723,13 +1889,21 @@ class P6CellCondensedAction:
                 label = f"ports/Hhat/{start}:{stop}"
                 block_bytes = int(16 * port_count * width)
                 max_internal_width = max(
-                    (int(cell.Bi.shape[0]) for cell in self._cells), default=0
+                    (
+                        int(cell.Bi.shape[0])
+                        if cell.generated_action is None
+                        else len(cell.original_interiors)
+                        for cell in self._cells
+                    ),
+                    default=0,
                 )
                 max_cell_port_width = max(
                     (len(cell.ports) for cell in self._cells), default=0
                 )
-                if self.port_block_layout == RESEARCH_PORT_LAYOUT:
-                    assert self._condensed_port_block is not None
+                if (
+                    self.port_block_layout == RESEARCH_PORT_LAYOUT
+                    and self._condensed_port_block is not None
+                ):
                     max_internal_width = max(
                         (
                             int(correction.XiB.shape[0])
@@ -1759,6 +1933,34 @@ class P6CellCondensedAction:
                 # output-column arrays, correction port indices, and Boolean masks.
                 index_workspace = int(16 * max_cell_port_width + 32 * width)
                 basis_workspace = block_bytes
+                generated_cells = [
+                    cell for cell in self._cells
+                    if cell.generated_action is not None
+                ]
+                generated_workspace = 0
+                if generated_cells:
+                    max_generated_interiors = max(
+                        len(cell.original_interiors) for cell in generated_cells
+                    )
+                    max_generated_trace = max(
+                        len(cell.original_trace) for cell in generated_cells
+                    )
+                    # Generated Hhat columns can simultaneously retain the
+                    # callback identity, Bi/Bt, LU result, zero trace block,
+                    # raw D output, and the indexed-add temporary. Callback
+                    # internals are covered by the caller-supplied bound.
+                    generated_workspace = (
+                        max(
+                            cell.generated_action.callback_workspace_bytes
+                            for cell in generated_cells
+                        )
+                        + 16 * local_width * local_width
+                        + 16 * (2 * max_generated_interiors
+                                + 2 * max_generated_trace
+                                + 2 * max_cell_port_width) * local_width
+                        + 8 * (3 * max_cell_port_width + 4 * local_width)
+                        + 2 * max_cell_port_width
+                    )
                 hhat_workspace = (
                     basis_workspace
                     + xi_b_copy
@@ -1766,6 +1968,7 @@ class P6CellCondensedAction:
                     + 2 * local_delta
                     + indexed_target_copy
                     + index_workspace
+                    + generated_workspace
                 )
                 gate(
                     label,
@@ -1780,30 +1983,54 @@ class P6CellCondensedAction:
                 del basis
 
                 if self.port_block_layout == RESEARCH_PORT_LAYOUT:
-                    assert self._condensed_port_block is not None
-                    for correction in self._condensed_port_block._corrections:
-                        correction_ports = np.asarray(
-                            correction.port_indices, dtype=np.int64
-                        )
-                        selected = np.flatnonzero(
-                            (correction_ports >= start) & (correction_ports < stop)
-                        )
-                        if not len(selected):
-                            continue
-                        output_columns = correction_ports[selected] - start
-                        xi_b = correction.XiB[:, selected]
-                        delta = np.asarray(correction.Di @ xi_b, dtype=np.complex128)
-                        hhat_block[np.ix_(correction_ports, output_columns)] += delta
-                        del xi_b, delta, selected, output_columns
+                    if self._condensed_port_block is not None:
+                        for correction in self._condensed_port_block._corrections:
+                            correction_ports = np.asarray(
+                                correction.port_indices, dtype=np.int64
+                            )
+                            selected = np.flatnonzero(
+                                (correction_ports >= start) & (correction_ports < stop)
+                            )
+                            if not len(selected):
+                                continue
+                            output_columns = correction_ports[selected] - start
+                            xi_b = correction.XiB[:, selected]
+                            delta = np.asarray(correction.Di @ xi_b, dtype=np.complex128)
+                            hhat_block[np.ix_(correction_ports, output_columns)] += delta
+                            del xi_b, delta, selected, output_columns
+                    cells_to_visit = (
+                        cell for cell in self._cells if cell.generated_action is not None
+                    )
                 else:
-                    for cell in self._cells:
-                        cell_ports = np.asarray(cell.ports, dtype=np.int64)
-                        selected = np.flatnonzero(
-                            (cell_ports >= start) & (cell_ports < stop)
+                    cells_to_visit = iter(self._cells)
+                for cell in cells_to_visit:
+                    cell_ports = np.asarray(cell.ports, dtype=np.int64)
+                    selected = np.flatnonzero(
+                        (cell_ports >= start) & (cell_ports < stop)
+                    )
+                    if not len(selected):
+                        continue
+                    output_columns = cell_ports[selected] - start
+                    if cell.generated_action is not None:
+                        selected_ports = np.ascontiguousarray(
+                            cell_ports[selected], dtype=PETSc.IntType
                         )
-                        if not len(selected):
-                            continue
-                        output_columns = cell_ports[selected] - start
+                        amplitudes = np.eye(len(selected_ports), dtype=np.complex128)
+                        bi, _bt = self._generated_B_tile(
+                            cell, selected_ports, amplitudes
+                        )
+                        xi_b = lu_solve(cell.interior_lu, bi)
+                        delta = self._generated_D_tile(
+                            cell,
+                            cell.ports,
+                            xi_b,
+                            np.zeros(
+                                (len(cell.original_trace), len(selected_ports)),
+                                dtype=np.complex128,
+                            ),
+                        )
+                        self._streamed_hhat_lu_solve_count += 1
+                    else:
                         xi_b = (
                             cell.XiB[:, selected]
                             if cell.XiB is not None
@@ -1812,8 +2039,8 @@ class P6CellCondensedAction:
                         if cell.XiB is None:
                             self._streamed_hhat_lu_solve_count += 1
                         delta = np.asarray(cell.Di @ xi_b, dtype=np.complex128)
-                        hhat_block[np.ix_(cell_ports, output_columns)] += delta
-                        del xi_b, delta, selected, output_columns
+                    hhat_block[np.ix_(cell_ports, output_columns)] += delta
+                    del xi_b, delta, selected, output_columns
 
                 yield checked(ports, ports[start:stop], hhat_block, label)
                 del hhat_block
@@ -1842,6 +2069,79 @@ class P6CellCondensedAction:
 
             port_indices = np.asarray(cell.ports, dtype=PETSc.IntType)
             if not len(port_indices):
+                continue
+            if cell.generated_action is not None:
+                assert hhat_block_columns is not None
+                for start in range(0, len(port_indices), hhat_block_columns):
+                    stop = min(start + hhat_block_columns, len(port_indices))
+                    tile_width = stop - start
+                    c_payload = index_bytes * tile_width + 16 * active_count * tile_width
+                    c_workspace = (
+                        int(cell.generated_action.callback_workspace_bytes)
+                        + 16 * tile_width * tile_width
+                        + 16 * len(cell.original_interiors) * tile_width
+                        + 48 * len(cell.original_trace) * tile_width
+                        + index_bytes * (4 * tile_width + len(cell.ports))
+                        + len(cell.ports)
+                        + expansion_bytes
+                    )
+                    label = f"cell/C_hat/{cell_index}/{start}:{stop}"
+                    gate(label, c_payload, c_workspace)
+                    tile_ports = np.ascontiguousarray(port_indices[start:stop])
+                    bi, bt = self._generated_B_tile(
+                        cell,
+                        tile_ports,
+                        np.eye(tile_width, dtype=np.complex128),
+                    )
+                    bhat = bt + cell.trace_from_interior @ bi
+                    c_hat = np.asarray(
+                        cell.expansion.conjugate().T @ bhat, dtype=np.complex128
+                    )
+                    global_ports = trace_rows + tile_ports
+                    yield checked(cell.active_ids, global_ports, c_hat, label)
+                    del bi, bt, bhat, c_hat, global_ports
+
+                trace_identity_bytes = 16 * len(cell.original_trace) ** 2
+                gate(
+                    f"cell/D_trace_identity/{cell_index}",
+                    0,
+                    trace_identity_bytes,
+                )
+                trace_identity = np.eye(
+                    len(cell.original_trace), dtype=np.complex128
+                )
+                for start in range(0, len(port_indices), hhat_block_columns):
+                    stop = min(start + hhat_block_columns, len(port_indices))
+                    port_tile_width = stop - start
+                    d_payload = (
+                        index_bytes * port_tile_width
+                        + 16 * port_tile_width * active_count
+                    )
+                    d_workspace = (
+                        int(cell.generated_action.callback_workspace_bytes)
+                        + 16 * len(cell.ports) * len(cell.original_trace)
+                        + 16 * port_tile_width * active_count
+                        + expansion_bytes
+                        + index_bytes * (
+                            3 * port_tile_width + len(cell.ports)
+                        )
+                        + len(cell.ports)
+                    )
+                    label = f"cell/-D_hat/{cell_index}/{start}:{stop}"
+                    gate(label, d_payload, d_workspace)
+                    tile_ports = np.ascontiguousarray(
+                        port_indices[start:stop]
+                    )
+                    raw_d = self._generated_D_tile(
+                        cell, tile_ports, cell.recovery, trace_identity
+                    )
+                    d_hat = -np.asarray(
+                        cell.expansion.T @ raw_d.T, dtype=np.complex128
+                    ).T
+                    global_ports = trace_rows + tile_ports
+                    yield checked(global_ports, cell.active_ids, d_hat, label)
+                    del raw_d, d_hat, global_ports, tile_ports
+                del trace_identity
                 continue
             if cell.Bhat is None or cell.Dhat is None:
                 raise ValueError("cached p6 trace/port formulas are unavailable")
@@ -2477,6 +2777,45 @@ def build_p6_cell_condensed_action_from_carrier(
     )
 
 
+def build_p6_cell_condensed_action_from_generated(
+    condensed: AssemblyTimeCondensedSystem,
+    original_port_block: DiagonalOriginalPortBlock | DenseOriginalPortBlock,
+    generated_port_actions: Mapping[int, P6GeneratedCellPortAction],
+    *,
+    port_terms: Mapping[int, P6CellPortTerms] | None = None,
+    direct_trace_terms: Sequence[P6DirectTracePortTerms] = (),
+    owns_condensed: bool = False,
+) -> P6CellCondensedAction:
+    """Build the production streamed action without constructing a carrier.
+
+    The caller supplies cell-local raw B/D generators and the original ``H_p``
+    representation.  This route does not enumerate carrier entries, allocate
+    a global original-row lookup, or retain per-cell dense ``Bi``/``Di``
+    matrices.  Optional cached terms may be mixed in only for other cells.
+    """
+
+    if not isinstance(
+        original_port_block, (DiagonalOriginalPortBlock, DenseOriginalPortBlock)
+    ):
+        raise TypeError("generated p6 action requires an explicit original H_p block")
+    if not isinstance(generated_port_actions, Mapping) or not generated_port_actions:
+        raise ValueError("generated p6 action requires a nonempty cell callback mapping")
+    for action in generated_port_actions.values():
+        if action.apply_B_tile is None or action.apply_D_tile is None:
+            raise ValueError("production generated p6 actions require bounded B and D tile callbacks")
+    return P6CellCondensedAction(
+        condensed,
+        H_p=None,
+        port_terms=port_terms,
+        generated_port_actions=generated_port_actions,
+        direct_trace_terms=direct_trace_terms,
+        owns_condensed=owns_condensed,
+        port_coupling_mode="streamed",
+        port_block_layout=RESEARCH_PORT_LAYOUT,
+        original_port_block=original_port_block,
+    )
+
+
 class P6RetainedBALHBridge:
     """Implement ``J M_aug J^H`` around one retained BAL_H callback."""
 
@@ -2540,6 +2879,7 @@ __all__ = (
     "P6DirectTracePortTerms",
     "P6RetainedBALHBridge",
     "apply_p6_hhat_vector_action",
+    "build_p6_cell_condensed_action_from_generated",
     "build_p6_cell_condensed_action_from_carrier",
     "condense_physical_cell_blocks",
     "native_residual_from_augmented",

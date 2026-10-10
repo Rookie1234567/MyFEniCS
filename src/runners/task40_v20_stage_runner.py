@@ -18,6 +18,7 @@ import numpy as np
 V20_STAGE_NAMES = (
     "preflight",
     "geometry_inventory",
+    "target_operator_probe",
     "local_port_components",
     "build_and_symbolic",
     "one_q_numeric",
@@ -27,6 +28,7 @@ V20_TARGET_Q0 = 0
 V20_TARGET_FULL_FIELD_QUALIFIED = False
 _V20_TARGET_RUN_ID = "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
 _V20_TARGET_PROFILE = "task40extra_v20_p6_y_orbit_target_original_ny8_v1"
+_V22_TARGET_OPERATOR_PROFILE = "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1"
 _V20_COMPLETED_PREFIX_SCOPE = (
     "reuse the separately verified original c00 packet and all c01-c59 packets from the hash-bound "
     "failed original-size TARGET_ORIGINAL_NY8 local/port run; replay every saved local packet, "
@@ -1034,6 +1036,101 @@ def run_task40_v20_stage(
     )
     _write_json(output_directory / "v20_stage_preflight.json", preflight)
     completed = ["preflight"]
+
+    if profile == _V22_TARGET_OPERATOR_PROFILE and stop_stage == "target_operator_probe":
+        from src.solvers.task40_v22_operator_probe import (
+            run_v22_target_operator_probe,
+        )
+
+        probe = run_v22_target_operator_probe(
+            resolved_payload,
+            output_directory,
+            source_sha=source_sha,
+            preflight=preflight,
+            modes=modes,
+            mode_rows=mode_rows,
+            resource_sample=_resource_snapshot,
+        )
+        probe_status = str(probe.get("status", "FAILED"))
+        attempted = list(probe.get("attempted_stages", []))
+        completed = ["preflight", *probe.get("completed_stages", [])]
+        failed_stage = probe.get("failed_stage")
+        if probe_status == "RESOURCE_CONTROLLED_STOP":
+            outcome = "RESOURCE_CONTROLLED_STOP"
+            status = "controlled_stop"
+            classification = "RESOURCE_CONTROLLED_STOP"
+        elif probe_status == "PASS_ALL_MODE_B_D_STREAM_WITH_Q_UNBUILT":
+            outcome = "STAGE_COMPLETED"
+            status = "stage_completed"
+            classification = "TARGET_OPERATOR_PROBE_B_D_STREAM_COMPLETE_Q_NOT_BUILT"
+        else:
+            outcome = "STAGE_FAILED"
+            status = "failed"
+            classification = "TARGET_OPERATOR_PROBE_FAILED"
+        receipt = {
+            "schema": "task40extra.review_v20_partial_result.v2",
+            "status": status,
+            "outcome": outcome,
+            "classification": classification,
+            "run_id": preflight["run_id"],
+            "profile": profile,
+            "source_sha": source_sha,
+            "input_sha256": preflight["input_sha256"],
+            "physical_model_sha256": preflight["physical_model_sha256"],
+            "requested_stop_stage": stop_stage,
+            "attempted_stages": ["preflight", *attempted],
+            "completed_stages": completed,
+            "partial_stages": list(probe.get("partial_stages", [])),
+            "failed_stage": failed_stage,
+            "blocked_task_stage": probe.get("blocked_task_stage"),
+            "q_coverage": probe.get(
+                "q_coverage",
+                {
+                    "status": "NOT_RUN",
+                    "expected_q_count": 8,
+                    "built_q_count": 0,
+                    "reason": "target operator probe did not build any q CSR or factor",
+                },
+            ),
+            "expected_q_count": 8,
+            "built_q_count": 0,
+            "cleanup": probe.get(
+                "cleanup",
+                {"status": "UNKNOWN", "reason": "operator probe cleanup receipt unavailable"},
+            ),
+            "failure_message": probe.get("failure_message"),
+            "resource_gate": probe.get("resource_blocker")
+            if outcome == "RESOURCE_CONTROLLED_STOP"
+            else None,
+            "stage_result": (
+                {"completed_stage": "target_operator_probe"}
+                if outcome == "STAGE_COMPLETED"
+                else None
+            ),
+            "artifact_hashes": {
+                name: {"path": name, "sha256": _sha256_file(output_directory / name)}
+                for name in (
+                    "v20_stage_preflight.json",
+                    "v20_geometry_inventory.json",
+                    "v22_target_operator_probe.json",
+                )
+                if (output_directory / name).is_file()
+            },
+            "official_result": False,
+            "not_run": [name for name in V20_STAGE_NAMES if name not in completed],
+            "geometry_inventory": probe.get("geometry_inventory"),
+            "target_operator_probe": probe,
+            "full_field_release_allowed": False,
+        }
+        _write_json(output_directory / "v20_partial_result.json", receipt)
+        return {
+            "passed": outcome != "STAGE_FAILED",
+            "errors": [receipt["failure_message"]] if status == "failed" else [],
+            "official_result": False,
+            "status": status,
+            "summary": receipt,
+            "numerical_output_directory": str(output_directory),
+        }
 
     if mesh_id == "TARGET_ORIGINAL_NY8" and stop_stage == "full":
         return _controlled_stop(

@@ -617,7 +617,7 @@ def build_fullspace_dtn_action(
     return FullspaceDtnAction(carrier, comm=carrier.comm if comm is None else comm)
 
 
-def build_fullspace_dtn_carrier_from_surface(
+def iter_fullspace_dtn_functionals_from_surface(
     modes: Sequence[Any],
     surface_assemblers: Mapping[tuple[str, int], Any],
     mpc: Any,
@@ -625,11 +625,20 @@ def build_fullspace_dtn_carrier_from_surface(
     *,
     phase_gauge: str = "global_z",
     assembly_context: Mapping[str, Any] | None = None,
-) -> FullspaceDtnCarrier:
-    """Build the carrier from the current MPC-reduced surface functionals."""
+    start_index: int = 0,
+    stop_index: int | None = None,
+    audit: dict[str, Any] | None = None,
+):
+    """Yield production B/D/H functionals one ordered mode at a time.
 
+    The two global support filters remain inside ``assemble_entries`` and
+    ``_combine_owned_entries`` after MPC assembly. The iterator retains only
+    the current component arrays (plus an immediately adjacent duplicate
+    polarization when it shares a wavevector); callers may apply and discard
+    each yielded functional before asking for the next one.
+    """
     if mpc is None:
-        raise ValueError("dynamic DtN surface carrier requires the finalized MPC")
+        raise ValueError("dynamic DtN surface iterator requires the finalized MPC")
     from .dtn_port_3d import _combine_owned_entries
     from .dtn_boundary_phase_gauge import (
         BOUNDARY_PLANE,
@@ -642,6 +651,12 @@ def build_fullspace_dtn_carrier_from_surface(
 
     validate_phase_gauge(phase_gauge)
     modes = tuple(modes)
+    if not modes:
+        raise ValueError("dynamic DtN surface iterator requires a nonempty ordered mode table")
+    start_index = int(start_index)
+    stop_index = len(modes) if stop_index is None else int(stop_index)
+    if not 0 <= start_index <= stop_index <= len(modes):
+        raise ValueError("surface functional mode range is outside the ordered mode table")
     manifest_rows, _manifest_bytes, physical_manifest_sha = build_ordered_mode_manifest(modes, cfg)
     if phase_gauge == BOUNDARY_PLANE:
         required = {"schema", "source_sha256", "mesh", "cell_dofmap_sha256", "orientation",
@@ -650,7 +665,7 @@ def build_fullspace_dtn_carrier_from_surface(
             raise ValueError("boundary-plane carrier requires a complete discrete/source assembly context")
         assembly_context = deep_frozen_identity(assembly_context)
         context_sha = hashlib.sha256(_canonical_json_bytes(assembly_context)).hexdigest()
-        for mode in modes:
+        for mode in modes[start_index:stop_index]:
             expected_z = port_plane_z(mode, cfg)
             expected_tag = int(cfg.tags.z_max if mode.side == "top" else cfg.tags.z_min)
             for component in (0, 1):
@@ -661,69 +676,145 @@ def build_fullspace_dtn_carrier_from_surface(
                     raise ValueError("surface assembler phase/tag/quadrature differs from boundary-plane context")
     elif assembly_context is not None:
         raise ValueError("assembly_context is reserved for explicit boundary-plane assembly")
+    else:
+        context_sha = None
 
-    modes = tuple(modes)
     comm = mpc.function_space.mesh.comm
     index_map = mpc.function_space.dofmap.index_map
     owned_start = int(index_map.local_range[0])
     owned_end = owned_start + int(index_map.size_local)
     global_rows = int(index_map.size_global)
-    component_cache: dict[
-        tuple[str, int, int, complex, complex, complex],
-        tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]],
-    ] = {}
+    def key_for(mode: Any):
+        return (str(mode.side), int(mode.m), int(mode.n), complex(mode.alpha),
+                complex(mode.gamma), complex(mode.k_vector[2]))
 
-    def components_for(mode: Any):
-        key = (
-            str(mode.side),
-            int(mode.m),
-            int(mode.n),
-            complex(mode.alpha),
-            complex(mode.gamma),
-            complex(mode.k_vector[2]),
+    stats = audit if audit is not None else {}
+    peak_component_bytes = 0
+    emitted = 0
+    combination_filter_totals = {
+        name: {
+            "mode_count": 0,
+            "input_component_entry_count": 0,
+            "coalesced_row_count_before_mask": 0,
+            "rows_dropped_by_global_mask": 0,
+            "retained_row_count": 0,
+            "global_maximum_abs_max": 0.0,
+            "global_cutoff_max": 0.0,
+            "norm_before_squared_sum": 0.0,
+            "norm_after_squared_sum": 0.0,
+        }
+        for name in ("projection", "coupling")
+    }
+    combination_filter_hashers = {
+        name: hashlib.sha256() for name in ("projection", "coupling")
+    }
+
+    def record_combination_filter(name, detail, mode_index, rows, values):
+        if audit is None:
+            return
+        total = combination_filter_totals[name]
+        total["mode_count"] += 1
+        total["input_component_entry_count"] += detail[
+            "local_input_component_entry_count"
+        ]
+        total["coalesced_row_count_before_mask"] += detail[
+            "local_coalesced_row_count_before_mask"
+        ]
+        total["rows_dropped_by_global_mask"] += detail[
+            "local_rows_dropped_by_global_mask"
+        ]
+        total["retained_row_count"] += detail["local_retained_row_count"]
+        total["global_maximum_abs_max"] = max(
+            total["global_maximum_abs_max"], detail["global_maximum_abs"]
         )
-        components = component_cache.get(key)
-        if components is None:
-            components = (
-                surface_assemblers[(mode.side, 0)].assemble_entries(mode, mpc),
-                surface_assemblers[(mode.side, 1)].assemble_entries(mode, mpc),
+        total["global_cutoff_max"] = max(
+            total["global_cutoff_max"], detail["global_cutoff"]
+        )
+        total["norm_before_squared_sum"] += detail["local_norm_before_mask"] ** 2
+        total["norm_after_squared_sum"] += detail["local_norm_after_mask"] ** 2
+        hasher = combination_filter_hashers[name]
+        hasher.update(np.asarray([mode_index], dtype="<i8").tobytes())
+        hasher.update(np.ascontiguousarray(rows).tobytes())
+        hasher.update(np.ascontiguousarray(values, dtype=np.complex128).tobytes())
+    cached_key = None
+    cached_components = None
+    components = None
+    functional = None
+
+    def component_backing_bytes(component_pairs):
+        owners = {}
+        for pair in component_pairs:
+            for component in pair:
+                for array in component:
+                    owner = array
+                    while isinstance(getattr(owner, "base", None), np.ndarray):
+                        owner = owner.base
+                    owners[id(owner)] = int(owner.nbytes)
+        return int(sum(owners.values()))
+
+    def assemble_components(mode):
+        first = surface_assemblers[(mode.side, 0)].assemble_entries(mode, mpc)
+        second = surface_assemblers[(mode.side, 1)].assemble_entries(mode, mpc)
+        return first, second
+
+    try:
+        for index in range(start_index, stop_index):
+            mode = modes[index]
+            key = key_for(mode)
+            if key != cached_key:
+                # Drop every iterator-owned alias before generating the next
+                # pair.  This bounds unique numeric backing independently of
+                # whether a duplicate wavevector appears later in the table.
+                components = None
+                cached_components = None
+                cached_key = None
+                cached_components = assemble_components(mode)
+                cached_key = key
+            components = cached_components
+            current_component_bytes = component_backing_bytes(cached_components or ())
+            peak_component_bytes = max(peak_component_bytes, current_component_bytes)
+            projection_audit: dict[str, Any] | None = {} if audit is not None else None
+            projection_rows, projection_values = _combine_owned_entries(
+                components,
+                (mode.e_vector[0], mode.e_vector[1]),
+                comm=comm,
+                audit=projection_audit,
             )
-            component_cache[key] = components
-        return components
+            if projection_audit is not None:
+                record_combination_filter(
+                    "projection", projection_audit, index, projection_rows, projection_values
+                )
+            from .dtn_port_3d import _mode_projection_denominator, _traction_vector
 
-    entries: list[FullspaceDtnModeFunctional] = []
-    for index, mode in enumerate(modes):
-        components = components_for(mode)
-        projection_rows, projection_values = _combine_owned_entries(
-            components,
-            (mode.e_vector[0], mode.e_vector[1]),
-            comm=comm,
-        )
-        from .dtn_port_3d import _mode_projection_denominator, _traction_vector
-
-        denominator = (
-            assembly_projection_denominator(mode, cfg, phase_gauge)
-            if phase_gauge == BOUNDARY_PLANE else _mode_projection_denominator(mode, cfg)
-        )
-        mode_identity = manifest_rows[index]
-        if phase_gauge == BOUNDARY_PLANE:
-            mode_identity = _mode_identity(index, mode, cfg, denominator)
-            mode_identity.update({
-                "assembly_identity_schema": "task40extra.fullspace-dtn-plane-assembly.v1",
-                "physical_generator_manifest_sha256": physical_manifest_sha,
-                "assembly_context_sha256": context_sha,
-                "global_projection_denominator_diagnostic": manifest_rows[index]["projection_denominator"],
-                "phase_gauge": phase_gauge_descriptor(mode, cfg, phase_gauge),
-            })
-            mode_identity = deep_frozen_identity(mode_identity)
-        traction = _traction_vector(mode, cfg)
-        coupling_rows, coupling_values = _combine_owned_entries(
-            components,
-            (-traction[0], -traction[1]),
-            comm=comm,
-        )
-        entries.append(
-            FullspaceDtnModeFunctional(
+            denominator = (
+                assembly_projection_denominator(mode, cfg, phase_gauge)
+                if phase_gauge == BOUNDARY_PLANE
+                else _mode_projection_denominator(mode, cfg)
+            )
+            mode_identity = manifest_rows[index]
+            if phase_gauge == BOUNDARY_PLANE:
+                mode_identity = _mode_identity(index, mode, cfg, denominator)
+                mode_identity.update({
+                    "assembly_identity_schema": "task40extra.fullspace-dtn-plane-assembly.v1",
+                    "physical_generator_manifest_sha256": physical_manifest_sha,
+                    "assembly_context_sha256": context_sha,
+                    "global_projection_denominator_diagnostic": manifest_rows[index]["projection_denominator"],
+                    "phase_gauge": phase_gauge_descriptor(mode, cfg, phase_gauge),
+                })
+                mode_identity = deep_frozen_identity(mode_identity)
+            traction = _traction_vector(mode, cfg)
+            coupling_audit: dict[str, Any] | None = {} if audit is not None else None
+            coupling_rows, coupling_values = _combine_owned_entries(
+                components,
+                (-traction[0], -traction[1]),
+                comm=comm,
+                audit=coupling_audit,
+            )
+            if coupling_audit is not None:
+                record_combination_filter(
+                    "coupling", coupling_audit, index, coupling_rows, coupling_values
+                )
+            functional = FullspaceDtnModeFunctional(
                 mode_key=(int(index), str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)),
                 coupling_rows=coupling_rows,
                 coupling_values=_readonly(coupling_values, np.dtype(np.complex128)),
@@ -734,7 +825,78 @@ def build_fullspace_dtn_carrier_from_surface(
                 normalization_h=float(denominator),
                 mode_identity=mode_identity,
             )
-        )
+            emitted += 1
+            yield functional
+            next_key = key_for(modes[index + 1]) if index + 1 < stop_index else None
+            if next_key != key:
+                cached_key = None
+                cached_components = None
+            functional = None
+            components = None
+            del coupling_rows, coupling_values, projection_rows, projection_values
+    finally:
+        cached_key = None
+        cached_components = None
+        components = None
+        functional = None
+        stats.update({
+            "mode_index_range": [start_index, stop_index],
+            "yielded_mode_count": emitted,
+            "peak_component_cache_unique_backing_bytes": int(peak_component_bytes),
+            "current_component_cache_unique_backing_bytes": 0,
+            "component_cache_max_live_wavevector_keys": 1,
+            "component_cache_policy": "one current wavevector key; only adjacent duplicate polarizations are reused; key transition drops prior backing before assembly",
+            "global_support_threshold_stages": [
+                "component vectors after MPC assembly via _vec_nonzero_owned_entries",
+                "weighted component combination via _combine_owned_entries",
+            ],
+            "raw_D_with_original_Hp": True,
+            "assembly_context_sha256": context_sha,
+            "physical_generator_manifest_sha256": physical_manifest_sha,
+            "owned_range": [owned_start, owned_end],
+            "global_rows": global_rows,
+            "global_combination_filter_audit": {
+                name: {
+                    **combination_filter_totals[name],
+                    "norm_before_mask": float(
+                        np.sqrt(combination_filter_totals[name]["norm_before_squared_sum"])
+                    ),
+                    "norm_after_mask": float(
+                        np.sqrt(combination_filter_totals[name]["norm_after_squared_sum"])
+                    ),
+                    "retained_stream_sha256": combination_filter_hashers[name].copy().hexdigest(),
+                    "relative_tol": 1e-13,
+                    "absolute_floor": 0.0,
+                    "scope": "second production global combination mask after weighted component coalescing",
+                }
+                for name in ("projection", "coupling")
+            },
+        })
+
+
+def build_fullspace_dtn_carrier_from_surface(
+    modes: Sequence[Any],
+    surface_assemblers: Mapping[tuple[str, int], Any],
+    mpc: Any,
+    cfg: Any,
+    *,
+    phase_gauge: str = "global_z",
+    assembly_context: Mapping[str, Any] | None = None,
+) -> FullspaceDtnCarrier:
+    """Build the cached carrier by consuming the same production iterator."""
+
+    if mpc is None:
+        raise ValueError("dynamic DtN surface carrier requires the finalized MPC")
+    modes = tuple(modes)
+    iterator_audit: dict[str, Any] = {}
+    entries = tuple(iter_fullspace_dtn_functionals_from_surface(
+        modes, surface_assemblers, mpc, cfg, phase_gauge=phase_gauge,
+        assembly_context=assembly_context, audit=iterator_audit,
+    ))
+    index_map = mpc.function_space.dofmap.index_map
+    owned_start = int(index_map.local_range[0])
+    owned_end = owned_start + int(index_map.size_local)
+    global_rows = int(index_map.size_global)
     slaves = np.asarray(mpc.slaves, dtype=np.int32)
     owned_slaves = slaves[slaves < int(index_map.size_local)]
     slave_rows = np.asarray(index_map.local_to_global(owned_slaves), dtype=PETSc.IntType)
@@ -744,51 +906,43 @@ def build_fullspace_dtn_carrier_from_surface(
         ownership_range=(owned_start, owned_end),
         slave_rows=slave_rows,
         batch_size=FULLSPACE_DTN_BATCH_SIZE,
-        comm=comm,
+        comm=mpc.function_space.mesh.comm,
     )
-    if phase_gauge == BOUNDARY_PLANE:
+    if phase_gauge == "boundary_plane":
+        from .dtn_boundary_phase_gauge import deep_frozen_identity
+
+        frozen_context = deep_frozen_identity(assembly_context)
         result.phase_gauge = phase_gauge
-        result.physical_generator_manifest_sha256 = physical_manifest_sha
-        result.assembly_context = assembly_context
-        result.assembly_context_sha256 = context_sha
-        component_arrays = [
-            array
-            for pair in component_cache.values()
-            for component in pair
-            for array in component
-        ]
+        result.physical_generator_manifest_sha256 = iterator_audit["physical_generator_manifest_sha256"]
+        result.assembly_context = frozen_context
+        result.assembly_context_sha256 = iterator_audit["assembly_context_sha256"]
         staging_arrays = [
-            array
-            for item in entries
-            for array in (
-                item.coupling_rows,
-                item.coupling_values,
-                item.projection_rows,
-                item.projection_values,
-            )
+            array for item in entries
+            for array in (item.coupling_rows, item.coupling_values,
+                          item.projection_rows, item.projection_values)
         ]
         retained_arrays = [
-            array
-            for item in result.entries
-            for array in (
-                item.coupling_rows,
-                item.coupling_values,
-                item.projection_rows,
-                item.projection_values,
-            )
+            array for item in result.entries
+            for array in (item.coupling_rows, item.coupling_values,
+                          item.projection_rows, item.projection_values)
         ]
         owners = {}
-        for array in component_arrays + staging_arrays + retained_arrays:
+        for array in staging_arrays + retained_arrays:
             owner = array
             while isinstance(getattr(owner, "base", None), np.ndarray):
                 owner = owner.base
             owners[id(owner)] = int(owner.nbytes)
         result.construction_numeric_inventory = MappingProxyType({
-            "component_cache_payload_with_aliases": sum(array.nbytes for array in component_arrays),
+            "component_cache_current_unique_backing_bytes_after_build": int(
+                iterator_audit["current_component_cache_unique_backing_bytes"]
+            ),
+            "component_cache_peak_unique_backing_bytes_during_build": int(
+                iterator_audit["peak_component_cache_unique_backing_bytes"]
+            ),
             "staging_functional_payload_with_aliases": sum(array.nbytes for array in staging_arrays),
             "retained_functional_payload_with_aliases": sum(array.nbytes for array in retained_arrays),
             "unique_named_numpy_backing_bytes_before_staging_release": int(sum(owners.values())),
-            "scope": "named buffers before staging release; not RSS/peak; excludes sorting/JIT/MPC/allocator/identity temporaries",
+            "scope": "component current and peak unique backing are reported separately; functional staging and retained carrier payload are measured at construction overlap; none is RSS/process-tree peak",
             "resource_authority": "external whole-tree gate required",
         })
     return result
@@ -804,6 +958,7 @@ __all__ = (
     "build_dynamic_mode_inventory",
     "build_fullspace_dtn_action",
     "build_fullspace_dtn_carrier_from_surface",
+    "iter_fullspace_dtn_functionals_from_surface",
     "build_ordered_mode_manifest",
     "classify_port_mode",
 )

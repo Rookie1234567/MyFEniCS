@@ -127,7 +127,7 @@ def _registered_v15_profile_inventory(identity: Any) -> dict[str, Any]:
         TASK40_V16_P6_PROFILES,
         TASK40_V17_P6_PROFILES,
         TASK40_V18_P6_PROFILES,
-        TASK40_V20_P6_PROFILES,
+        TASK40_V20_V22_P6_PROFILES,
     )
     from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
 
@@ -136,7 +136,7 @@ def _registered_v15_profile_inventory(identity: Any) -> dict[str, Any]:
         *TASK40_V16_P6_PROFILES,
         *TASK40_V17_P6_PROFILES,
         *TASK40_V18_P6_PROFILES,
-        *TASK40_V20_P6_PROFILES,
+        *TASK40_V20_V22_P6_PROFILES,
     ):
         raise ValueError(f"unknown registered Task40 V15/V16/V17 profile identity: {identity!r}")
     profile = TASK40_P6_PERIODIC_PROFILES.get(identity)
@@ -167,13 +167,13 @@ def _verify_v17_row_tile_assembly_summary(
     from src.io.physical_intermediate_profile import (
         TASK40_V17_P6_PROFILES,
         TASK40_V18_P6_PROFILES,
-        TASK40_V20_P6_PROFILES,
+        TASK40_V20_V22_P6_PROFILES,
     )
 
     if not isinstance(profile_identity, str) or profile_identity not in (
         *TASK40_V17_P6_PROFILES,
         *TASK40_V18_P6_PROFILES,
-        *TASK40_V20_P6_PROFILES,
+        *TASK40_V20_V22_P6_PROFILES,
     ):
         raise ValueError(
             "V17 row-tile summary is not bound to an exact registered V17 profile or V18 profile"
@@ -182,7 +182,7 @@ def _verify_v17_row_tile_assembly_summary(
     q_count = int(profile_inventory["q_count"])
     sector_count = len(profile_inventory["sector_port_counts"])
     is_ny8 = profile_identity in TASK40_V18_P6_PROFILES
-    if profile_identity in TASK40_V20_P6_PROFILES:
+    if profile_identity in TASK40_V20_V22_P6_PROFILES:
         from src.solvers.task40_v20_registry import task40_v20_case
 
         is_ny8 = task40_v20_case(profile=profile_identity).mesh_id == "TARGET_ORIGINAL_NY8"
@@ -2121,10 +2121,10 @@ def verify_v10_output_bundle(
     has_registered_v18_profile = (
         isinstance(packet_profile, str) and packet_profile in TASK40_V18_P6_PROFILES
     )
-    from src.io.physical_intermediate_profile import TASK40_V20_P6_PROFILES
+    from src.io.physical_intermediate_profile import TASK40_V20_V22_P6_PROFILES
 
     has_registered_v20_profile = (
-        isinstance(packet_profile, str) and packet_profile in TASK40_V20_P6_PROFILES
+        isinstance(packet_profile, str) and packet_profile in TASK40_V20_V22_P6_PROFILES
     )
     if has_registered_v20_profile:
         from src.solvers.task40_v20_registry import task40_v20_case

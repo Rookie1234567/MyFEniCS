@@ -39,11 +39,12 @@ CAMPAIGN_RELATIVE = Path(
     "campaign_window_v19.json"
 )
 CAMPAIGN_SHA256 = "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0"
-V22_TARGET_PROFILE = "task40extra_v20_p6_y_orbit_target_original_ny8_v1"
+V22_TARGET_PROFILE = "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1"
 V22_STOP_STAGE_SCOPE = {
     "preflight": "implementation",
     "geometry_inventory": "geometry_descriptor",
     "local_port_components": "local_port_components",
+    "target_operator_probe": "target_operator_probe",
 }
 RUNTIME_PREFIX_RELATIVE = Path(
     "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
@@ -73,10 +74,19 @@ V20_INPUTS = {
             "one_q_numeric",
         },
     ),
+    "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1": (
+        Path("input/task40extra_0p7nm_engineering/target_original_ny8_operator_probe_v22.dat"),
+        {"target_operator_probe"},
+    ),
 }
 STAGE_PREFIXES = {
     "preflight": ["preflight"],
     "geometry_inventory": ["preflight", "geometry_inventory"],
+    "target_operator_probe": [
+        "preflight",
+        "geometry_inventory",
+        "target_operator_probe",
+    ],
     "local_port_components": [
         "preflight",
         "geometry_inventory",
@@ -176,6 +186,23 @@ def render_stage_input(
     original_data = tomllib.loads(canonical_text)
     changed_data = tomllib.loads(replaced)
     original_data["execution"]["task40_execution_stop_stage"] = stop_stage
+    profile = str(original_data.get("solver", {}).get("preconditioner", ""))
+    v22_profile = "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1"
+    if stop_stage == "target_operator_probe":
+        if profile != v22_profile:
+            raise ValueError("target_operator_probe requires the dedicated V22 profile/input")
+        original_data["execution"]["task40_v22_operator_probe_authorized"] = True
+        replaced, count = re.subn(
+            r'(?m)^task40_v22_operator_probe_authorized = false\s*$',
+            "task40_v22_operator_probe_authorized = true",
+            replaced,
+            count=1,
+        )
+        if count != 1:
+            raise ValueError("V22 canonical input must carry the explicit false authorization field")
+        changed_data = tomllib.loads(replaced)
+    elif profile == v22_profile:
+        original_data["execution"]["task40_v22_operator_probe_authorized"] = False
     if (component_resume_manifest_path is None) != (
         component_resume_manifest_sha256 is None
     ):
@@ -967,10 +994,23 @@ def _check_partial_result(
     partial = json.loads(partial_path.read_text(encoding="utf-8"))
     expected_completed = STAGE_PREFIXES.get(expected_stop_stage)
     v2_receipt = partial.get("schema") == "task40extra.review_v20_partial_result.v2"
-    if v2_receipt and expected_stop_stage in {"build_and_symbolic", "one_q_numeric"}:
+    if v2_receipt and expected_stop_stage in {
+        "target_operator_probe", "build_and_symbolic", "one_q_numeric"
+    }:
         expected_completed = None
     if expected_stop_stage == "full" and manifest.get("mesh_id") == "TARGET_ORIGINAL_NY8":
         expected_completed = ["preflight"]
+    actual_completed = partial.get("completed_stages")
+    expected_completed_for_failure = None
+    failed_stage = partial.get("failed_stage")
+    if (
+        partial.get("status") == "failed"
+        and isinstance(expected_completed, list)
+        and isinstance(failed_stage, str)
+        and failed_stage in expected_completed
+    ):
+        failed_index = expected_completed.index(failed_stage)
+        expected_completed_for_failure = expected_completed[:failed_index]
     checks = {
         "run_id_matches": partial.get("run_id") == manifest.get("run_id"),
         "source_sha_matches": partial.get("source_sha") == manifest.get("source_sha"),
@@ -980,7 +1020,17 @@ def _check_partial_result(
         "requested_stage_matches": partial.get("requested_stop_stage") == expected_stop_stage,
         "official_result_false": partial.get("official_result") is False,
         "completed_stages_expected": (
-            expected_completed is None or partial.get("completed_stages") == expected_completed
+            expected_completed is None
+            or actual_completed == expected_completed
+            or (
+                expected_completed_for_failure is not None
+                and actual_completed == expected_completed_for_failure
+            )
+        ),
+        "failure_stage_is_next_incomplete_stage": (
+            expected_completed_for_failure is None
+            or failed_stage
+            == expected_completed[len(expected_completed_for_failure)]
         ),
     }
     if expected_stop_stage in {"build_and_symbolic", "one_q_numeric"} and not v2_receipt:
@@ -997,6 +1047,9 @@ def _check_partial_result(
                 "task40_target_heavy_authorized"
             ),
             output_directory=numerical_output,
+            operator_probe_authorized=input_data.get("execution", {}).get(
+                "task40_v22_operator_probe_authorized"
+            ),
         )
         checks.update({f"stage_semantics_{name}": passed for name, passed in semantic_checks.items()})
     if "geometry_inventory" in (partial.get("completed_stages") or []):

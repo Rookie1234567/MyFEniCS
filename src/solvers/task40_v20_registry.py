@@ -16,6 +16,8 @@ from src.io.physical_intermediate_profile import (
 
 
 TASK40_V20_MODEL_ID = "task40extra_nonseparable_0p7nm"
+TASK40_V22_TARGET_OPERATOR_PROFILE = "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1"
+TASK40_V22_TARGET_OPERATOR_RUN_ID = "task40extra_0p7nm_target_original_ny8_operator_probe_v22"
 
 
 V20_STOP_STAGES = (
@@ -70,6 +72,22 @@ TASK40_V20_CASES_BY_PROFILE = MappingProxyType(
                 "original-size resource/solver pilot; full-field accuracy is not qualified"
             ),
         ),
+        TASK40_V22_TARGET_OPERATOR_PROFILE: Task40V20Case(
+            model_id=TASK40_V20_MODEL_ID,
+            run_id=TASK40_V22_TARGET_OPERATOR_RUN_ID,
+            profile=TASK40_V22_TARGET_OPERATOR_PROFILE,
+            mesh_id="TARGET_ORIGINAL_NY8",
+            solver_stage="V22_TARGET_OPERATOR_PROBE",
+            input_path=(
+                "input/task40extra_0p7nm_engineering/"
+                "target_original_ny8_operator_probe_v22.dat"
+            ),
+            qualification_scope=(
+                "explicit V22 original-size generated B/D and bounded q-tile probe; "
+                "full mode coverage and full-field accuracy remain pending"
+            ),
+            allowed_stop_stages=("preflight", "geometry_inventory", "target_operator_probe"),
+        ),
     }
 )
 TASK40_V20_CASES_BY_RUN_ID = MappingProxyType(
@@ -90,6 +108,8 @@ def task40_v20_case(*, run_id: str | None = None, profile: str | None = None) ->
 
 __all__ = [
     "TASK40_V20_MODEL_ID",
+    "TASK40_V22_TARGET_OPERATOR_PROFILE",
+    "TASK40_V22_TARGET_OPERATOR_RUN_ID",
     "TASK40_V20_CASES_BY_PROFILE",
     "TASK40_V20_CASES_BY_RUN_ID",
     "V20_STOP_STAGES",

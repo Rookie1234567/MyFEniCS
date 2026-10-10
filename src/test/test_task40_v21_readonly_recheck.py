@@ -93,6 +93,171 @@ def _receipt(outcome: str) -> tuple[dict[str, object], bool | None]:
     return receipt, True
 
 
+def _v22_receipt(outcome: str) -> tuple[dict[str, object], bool]:
+    source_sha = "a" * 40
+    input_sha = "b" * 64
+    physical_sha = "c" * 64
+    q_coverage = {
+        "status": "NOT_RUN",
+        "expected_q_count": 8,
+        "built_q_count": 0,
+    }
+    probe: dict[str, object] = {
+        "schema": "task40extra.review_v22_target_operator_probe.v1",
+        "status": "PASS_ALL_MODE_B_D_STREAM_WITH_Q_UNBUILT",
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "mode_manifest_sha256": "d" * 64,
+        "expected_q_count": 8,
+        "built_q_count": 0,
+        "q_csr_created": False,
+        "factor_created": False,
+        "ksp_created": False,
+        "pde_solved": False,
+        "official_result": False,
+        "mode_coverage_target": {
+            "expected_mode_count": 32_060,
+            "expected_by_side": {"bottom": 16_030, "top": 16_030},
+        },
+        "p6_space": {
+            "cell_count": 30_464,
+            "cell_dof_dimension": 882,
+            "global_storage_rows": 20_181_348,
+            "global_independent_rows": 19_897_344,
+            "interior_rows_per_cell": 450,
+            "trace_rows_per_cell": 432,
+        },
+        "descriptor": {
+            "staged_input_sha256": input_sha,
+            "physical_model_sha256": physical_sha,
+            "mode_manifest_sha256": "d" * 64,
+            "ordered_mode_key_sha256": "e" * 64,
+            "saved_mesh_xdmf_sha256": "f" * 64,
+            "saved_mesh_h5_sha256": "1" * 64,
+            "saved_boundary_mapping_sha256": "2" * 64,
+            "actual_cell_dofmap_sha256": "3" * 64,
+            "global_mpc_identity": {
+                "global_storage_rows": 20_181_348,
+                "global_independent_rows": 19_897_344,
+                "owned_slave_count": 284_004,
+                "slave_rows_sha256": "4" * 64,
+                "master_local_indices_sha256": "5" * 64,
+                "coefficients_sha256": "6" * 64,
+                "offsets_sha256": "7" * 64,
+                "coefficient_count": 284_004,
+                "offset_count": 0,
+                "mpc_finalized": True,
+            },
+        },
+        "operator_witness": {
+            "mode_coverage": {
+                "expected": 32_060,
+                "completed": 32_060,
+                "completed_by_side": {"bottom": 16_030, "top": 16_030},
+            },
+            "B_alpha": {
+                "mode_count": 32_060,
+                "mode_count_by_side": {"bottom": 16_030, "top": 16_030},
+            },
+            "native_882_row_calibration_by_side": {
+                side: {
+                    "status": "MEASURED_NATIVE_882_ROW_SAME_RULE_PATH_CONSISTENCY",
+                    "independent_reference": False,
+                    "B_interior_relative": 1e-12,
+                    "D_x_relative": 1e-12,
+                }
+                for side in ("bottom", "top")
+            },
+            "generated_p6_api_witness": {
+                "status": "PASS_GENERATED_FACTORY_AND_BOUNDED_Q_TILES",
+                "P6CellCondensedAction_factory_connected": True,
+                "row_tile_q_consumer_connected": True,
+                "independent_saved_full_row_packet_reference": {
+                    "status": "PASS_HASH_BOUND_SAVED_DEGREE60_FULL_ROW_B_D_PACKETS",
+                    "quadrature_degree_by_side": {"bottom": 60, "top": 60},
+                    "full_local_rows_by_side": {"bottom": 882, "top": 882},
+                    "independent_B_D_construction_by_side": {
+                        "bottom": True,
+                        "top": True,
+                    },
+                    "B_relative_to_live_native_by_side": {
+                        "bottom": 1e-14,
+                        "top": 1e-14,
+                    },
+                    "D_relative_to_live_native_by_side": {
+                        "bottom": 1e-14,
+                        "top": 1e-14,
+                    },
+                    "mode_indices_by_side": {"bottom": 1, "top": 0},
+                    "actual_cell_ids_by_side": {"bottom": 1, "top": 0},
+                    "actual_class_ids_by_side": {"bottom": "c00", "top": "c01"},
+                    "packet_npz_sha256_by_side": {
+                        "bottom": "8" * 64,
+                        "top": "9" * 64,
+                    },
+                },
+                "same_cell_s_p_crossmode": {
+                    "consumed_by_local_q11_tile": True,
+                    "Hhat_only_s_p_projection": [[{"real": 1.0, "imag": 0.0}]],
+                    "full_q11_s_p_projection": [[{"real": 1.0, "imag": 0.0}]],
+                },
+                "local_q_row_tile_consumer": {
+                    "trace_only_selector": True,
+                    "same_cell_s_p_port_only_selector": True,
+                    "Hhat_only_projection_recorded_independently": True,
+                    "full_port_port_tile_recorded": True,
+                },
+            },
+            "all_q_csr_factor_ksp_and_full_field": "NOT_RUN",
+        },
+        "q_coverage": dict(q_coverage),
+    }
+    receipt: dict[str, object] = {
+        "schema": "task40extra.review_v20_partial_result.v2",
+        "outcome": outcome,
+        "requested_stop_stage": "target_operator_probe",
+        "official_result": False,
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "artifact_hashes": {},
+        "q_coverage": dict(q_coverage),
+        "cleanup": {"status": "UNKNOWN", "reason": "native lifecycle not observed"},
+        "target_operator_probe": probe,
+    }
+    if outcome == "AUTH_NOT_GRANTED":
+        receipt.update(
+            attempted_stages=["preflight"],
+            completed_stages=["preflight"],
+        )
+        return receipt, False
+    if outcome == "RESOURCE_CONTROLLED_STOP":
+        receipt.update(
+            attempted_stages=["preflight", "geometry_inventory"],
+            completed_stages=["preflight"],
+            blocked_task_stage="geometry_inventory",
+            resource_gate={"classification": "RESOURCE_CONTROLLED_STOP"},
+        )
+        return receipt, True
+    if outcome == "STAGE_COMPLETED":
+        receipt.update(
+            attempted_stages=["preflight", "geometry_inventory", "target_operator_probe"],
+            completed_stages=["preflight", "geometry_inventory", "target_operator_probe"],
+            stage_result={"completed_stage": "target_operator_probe"},
+        )
+        return receipt, True
+    probe["status"] = "FAILED"
+    probe["failure_message"] = "fixture ordinary failure"
+    receipt.update(
+        attempted_stages=["preflight", "geometry_inventory", "target_operator_probe"],
+        completed_stages=["preflight", "geometry_inventory"],
+        failed_stage="target_operator_probe",
+        failure_message="fixture ordinary failure",
+    )
+    return receipt, True
+
+
 def test_e2_admission_recomputes_both_byte_gates():
     result = recompute_admission_gate(
         {
@@ -129,6 +294,72 @@ def test_stage_receipt_state_semantics_cover_authorize_stop_complete_and_fail(
         receipt, expected_stage="build_and_symbolic", heavy_authorized=authorized
     )
     assert all(checks.values()) is expected_pass
+
+
+@pytest.mark.parametrize(
+    ("outcome", "authorized"),
+    [
+        ("AUTH_NOT_GRANTED", False),
+        ("RESOURCE_CONTROLLED_STOP", True),
+        ("STAGE_FAILED", True),
+        ("STAGE_COMPLETED", True),
+    ],
+)
+def test_v22_receipt_prefix_and_state_semantics(outcome, authorized):
+    receipt, operator_authorized = _v22_receipt(outcome)
+    assert operator_authorized is authorized
+    checks = validate_stage_receipt_semantics(
+        receipt,
+        expected_stage="target_operator_probe",
+        heavy_authorized=False,
+        operator_probe_authorized=operator_authorized,
+    )
+    assert all(checks.values()), checks
+
+
+def test_v22_completion_recomputes_raw_coverage_fe_mpc_and_native_gates():
+    receipt, authorized = _v22_receipt("STAGE_COMPLETED")
+    checks = validate_stage_receipt_semantics(
+        receipt,
+        expected_stage="target_operator_probe",
+        heavy_authorized=False,
+        operator_probe_authorized=authorized,
+    )
+    assert all(checks.values()), checks
+
+    probe = receipt["target_operator_probe"]
+    probe["operator_witness"]["native_882_row_calibration_by_side"]["top"][
+        "D_x_relative"
+    ] = 2e-10
+    tampered = validate_stage_receipt_semantics(
+        receipt,
+        expected_stage="target_operator_probe",
+        heavy_authorized=False,
+        operator_probe_authorized=authorized,
+    )
+    assert tampered["v22_both_native_error_gates_recomputed"] is False
+    probe["operator_witness"]["generated_p6_api_witness"][
+        "same_cell_s_p_crossmode"
+    ]["consumed_by_local_q11_tile"] = False
+    tampered_crossmode = validate_stage_receipt_semantics(
+        receipt,
+        expected_stage="target_operator_probe",
+        heavy_authorized=False,
+        operator_probe_authorized=authorized,
+    )
+    assert tampered_crossmode["v22_generated_factory_and_q_consumer_connected"] is False
+
+
+def test_v22_wrong_q_count_is_rejected_for_partial_receipt():
+    receipt, authorized = _v22_receipt("RESOURCE_CONTROLLED_STOP")
+    receipt["q_coverage"]["expected_q_count"] = 4
+    checks = validate_stage_receipt_semantics(
+        receipt,
+        expected_stage="target_operator_probe",
+        heavy_authorized=False,
+        operator_probe_authorized=authorized,
+    )
+    assert checks["v22_q_inventory_explicit"] is False
 
 
 def test_stage_complete_binds_q_hashes_to_candidate_summary_and_cleanup(tmp_path):
