@@ -113,6 +113,14 @@ def _parser() -> argparse.ArgumentParser:
         help="select the explicitly registered W0.7 fixed physical BAL_H feedback",
     )
     parser.add_argument(
+        "--task041-modal-solver-policy",
+        choices=(
+            "task041_v12_bounded_inexact_modal",
+            "task041_v12_bounded_inexact_modal_once_backup",
+        ),
+        default=None,
+    )
+    parser.add_argument(
         "--task041-expected-rank-cpus",
         help="comma-separated frozen Task041 rank-to-CPU map (fixed-H6 only)",
     )
@@ -162,6 +170,7 @@ def main(argv: list[str] | None = None) -> int:
             args.task041_fixed_h6_modal_gmres_research
             or expected_rank_cpus is not None
             or args.task041_modal_feedback_method is not None
+            or args.task041_modal_solver_policy is not None
         ):
             from benchmarks.task041_balh_workflow import (
                 task041_fixed_h6_modal_gmres_binding,
@@ -191,6 +200,7 @@ def main(argv: list[str] | None = None) -> int:
                     task041_resource_policy=args.task041_resource_policy,
                     expected_rank_cpus=expected_rank_cpus,
                     modal_feedback_method=args.task041_modal_feedback_method,
+                    modal_solver_policy=args.task041_modal_solver_policy,
                 )
             except (TypeError, ValueError) as exc:
                 raise InputError(str(exc)) from exc
@@ -448,6 +458,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.task041_fixed_h6_modal_gmres_research
             ),
             modal_feedback_method=args.task041_modal_feedback_method,
+            modal_solver_policy=args.task041_modal_solver_policy,
             expected_rank_cpus=expected_rank_cpus,
         )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))

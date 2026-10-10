@@ -240,6 +240,7 @@ def _load_task041_supervision_record(
     representative_rhs_probe: Mapping[str, Any] | None,
     expected_fixed_h6_binding: Mapping[str, Any] | None = None,
     expected_modal_feedback_method: str | None = None,
+    expected_modal_solver_policy: str | None = None,
     expected_packet_source_binding: Mapping[str, Any] | None = None,
     expected_producer_execution: Mapping[str, Any] | None = None,
     side_setup_schedule: str | None = None,
@@ -315,6 +316,33 @@ def _load_task041_supervision_record(
             classification="task041_identity_failure",
             stage="supervision_record",
         )
+    if expected_modal_solver_policy is not None:
+        expected_policy = (
+            expected_fixed_h6_binding.get("modal_solver_policy")
+            if isinstance(expected_fixed_h6_binding, Mapping)
+            else None
+        )
+        if (
+            expected_modal_solver_policy
+            not in {
+                "task041_v12_bounded_inexact_modal",
+                "task041_v12_bounded_inexact_modal_once_backup",
+            }
+            or not isinstance(expected_policy, Mapping)
+            or expected_policy.get("policy_id") != expected_modal_solver_policy
+        ):
+            raise Task041SupervisorError(
+                "supervision modal solver policy is outside its fixed-H6 binding",
+                classification="task041_identity_failure",
+                stage="supervision_record",
+            )
+        expected["modal_solver_policy"] = expected_modal_solver_policy
+    elif "modal_solver_policy" in payload:
+        raise Task041SupervisorError(
+            "supervision record has an unexpected modal solver policy",
+            classification="task041_identity_failure",
+            stage="supervision_record",
+        )
     if expected_packet_source_binding is not None:
         expected["packet_source_binding"] = dict(
             expected_packet_source_binding
@@ -380,6 +408,7 @@ def _load_task041_supervision_record(
             else None
         ),
         "modal_feedback_method": expected_modal_feedback_method,
+        "modal_solver_policy": expected_modal_solver_policy,
         "packet_source_binding": (
             dict(expected_packet_source_binding)
             if expected_packet_source_binding is not None
@@ -1631,6 +1660,37 @@ def run_task041_supervised_public_command(
             classification="task041_identity_failure",
             stage="supervised_public_profile",
         )
+    expected_modal_solver_policy = profile_contract.get("modal_solver_policy")
+    if expected_modal_solver_policy is not None:
+        fixed_binding = profile_contract.get("fixed_h6_modal_gmres_research")
+        policy_binding = (
+            fixed_binding.get("modal_solver_policy")
+            if isinstance(fixed_binding, Mapping)
+            else None
+        )
+        if (
+            expected_modal_solver_policy
+            not in {
+                "task041_v12_bounded_inexact_modal",
+                "task041_v12_bounded_inexact_modal_once_backup",
+            }
+            or not isinstance(policy_binding, Mapping)
+            or policy_binding.get("policy_id") != expected_modal_solver_policy
+            or not isinstance(launch_manifest, Mapping)
+            or launch_manifest.get("modal_solver_policy")
+            != expected_modal_solver_policy
+        ):
+            raise Task041SupervisorError(
+                "supervised public policy request differs from service launch binding",
+                classification="task041_identity_failure",
+                stage="supervised_public_profile",
+            )
+    elif isinstance(launch_manifest, Mapping) and "modal_solver_policy" in launch_manifest:
+        raise Task041SupervisorError(
+            "supervised public launch contains an unrequested modal solver policy",
+            classification="task041_identity_failure",
+            stage="supervised_public_profile",
+        )
     active_phase = profile_contract["active_consumer_phase"]
     if is_case_runtime:
         phase_budget = profile_contract["phase_budgets_seconds"][active_phase]
@@ -1714,6 +1774,11 @@ def run_task041_supervised_public_command(
         **(
             {"modal_feedback_method": expected_modal_feedback_method}
             if expected_modal_feedback_method is not None
+            else {}
+        ),
+        **(
+            {"modal_solver_policy": expected_modal_solver_policy}
+            if expected_modal_solver_policy is not None
             else {}
         ),
         "budget": {
@@ -8136,6 +8201,1092 @@ def _validate_task041_top_causal_replay_result(
     }
 
 
+def _task041_v12_backup_trigger_matches_policy(
+    trigger: Any, *, policy: Mapping[str, Any], rank_count: int
+) -> bool:
+    """Validate the sealed normal-return or two-window stagnation trigger."""
+
+    if (
+        policy.get("policy_id")
+        != "task041_v12_bounded_inexact_modal_once_backup"
+        or rank_count != TASK041_BALH_MPI_SIZE
+        or policy.get("max_it") != 32
+        or policy.get("solver_matmult_limit") != 34
+        or policy.get("total_matmult_limit_including_final") != 35
+        or policy.get("approximate_return_eta_max") != 0.1
+        or not isinstance(trigger, Mapping)
+    ):
+        return False
+    if trigger.get("kind") == "normal_trusted_primary_return_eta_above_0.1":
+        primary = trigger.get("primary_normal_return")
+        if not isinstance(primary, Mapping):
+            return False
+        eligibility = primary.get("backup_eligibility")
+        if not isinstance(eligibility, Mapping):
+            return False
+        eta = primary.get("final_relative_residual")
+        reason = primary.get("ksp_reason")
+        iterations = primary.get("iterations")
+        reason_class = eligibility.get("normal_ksp_reason_class")
+        runtime_diverged_its = eligibility.get("runtime_diverged_its_reason")
+        rows = primary.get("rank_local_accounting")
+        if (
+            trigger.get("safe_boundary")
+            != "after_primary_modal_KSP_return_before_backup_modal_KSP_entry"
+            or not isinstance(eta, (int, float))
+            or isinstance(eta, bool)
+            or not math.isfinite(float(eta))
+            or float(eta) <= 0.1
+            or type(reason) is not int
+            or type(iterations) is not int
+            or not 0 <= iterations <= 32
+            or (
+                reason > 0
+                and reason_class != "positive_reason"
+            )
+            or (
+                reason <= 0
+                and (
+                    reason_class != "runtime_DIVERGED_ITS_at_max_it"
+                    or type(runtime_diverged_its) is not int
+                    or reason != runtime_diverged_its
+                    or iterations != 32
+                )
+            )
+            or primary.get("status")
+            != "PRIMARY_MODAL_TARGET_NOT_MET_BACKUP_ELIGIBLE"
+            or primary.get("normal_primary_return_completed") is not True
+            or primary.get("ksp_status") != "returned"
+            or primary.get("raw_residual_pass") is not False
+            or primary.get("final_residual_evaluated") is not True
+            or primary.get("trusted_iterate") is not True
+            or primary.get("input_unchanged") is not True
+            or primary.get("pc_usable") is not False
+            or eligibility.get("eligible") is not True
+            or eligibility.get("normal_ksp_reason_allowed") is not True
+            or eligibility.get("normal_ksp_reason_class") != reason_class
+            or eligibility.get("runtime_diverged_its_reason")
+            != runtime_diverged_its
+            or eligibility.get("iteration_count_within_limit") is not True
+            or eligibility.get("raw_residual_pass") is not False
+            or eligibility.get("raw_relative_residual") != float(eta)
+            or eligibility.get("eta_above_approximate_bound") is not True
+            or eligibility.get("trusted_iterate") is not True
+            or eligibility.get("input_unchanged") is not True
+            or eligibility.get("budget_exhausted") is not False
+            or eligibility.get("final_residual_evaluated") is not True
+            or any(
+                eligibility.get(key) is not None
+                for key in (
+                    "mat_preflight_failure",
+                    "modal_action_failure",
+                    "pc_failure",
+                )
+            )
+            or not isinstance(rows, list)
+            or len(rows) != rank_count
+            or primary.get("rank_local_accounting_scope")
+            != "one_record_per_rank; do_not_sum_replicated_owner_values"
+        ):
+            return False
+        owner_attempts = primary.get("owner_constraint_lu_solve_attempts")
+        if type(owner_attempts) is not int or owner_attempts < 0:
+            return False
+        for rank, row in enumerate(rows):
+            if (
+                not isinstance(row, Mapping)
+                or row.get("rank") != rank
+                or any(
+                    type(row.get(key)) is not int or row[key] < 0
+                    for key in (
+                        "local_constraint_lu_factorizations",
+                        "local_constraint_lu_solve_attempts",
+                        "local_constraint_lu_solve_successes",
+                    )
+                )
+            ):
+                return False
+        return rows[-1]["local_constraint_lu_solve_attempts"] == owner_attempts and all(
+            row["local_constraint_lu_solve_attempts"] == 0
+            for row in rows[:-1]
+        )
+
+    if trigger.get("status") != "two_consecutive_outer_windows_stalled":
+        return False
+    metrics = policy.get("outer_stagnation_metrics")
+    windows = trigger.get("windows")
+    width = policy.get("outer_stagnation_window_steps")
+    limit = policy.get("outer_stagnation_window_improvement_max")
+    gate_threshold = policy.get("outer_stagnation_residual_gate_threshold")
+    block_metrics = [
+        name
+        for name in (
+            "bottom_true_relative_residual",
+            "top_true_relative_residual",
+            "modal_true_relative_residual",
+        )
+        if name in metrics
+    ] if isinstance(metrics, list) else []
+    if (
+        not isinstance(metrics, list)
+        or metrics
+        != [
+            "global_true_relative_residual",
+            "bottom_true_relative_residual",
+            "top_true_relative_residual",
+            "modal_true_relative_residual",
+        ]
+        or trigger.get("metrics") != metrics
+        or type(width) is not int
+        or width != 8
+        or not isinstance(limit, (int, float))
+        or isinstance(limit, bool)
+        or float(limit) != 0.1
+        or not isinstance(gate_threshold, (int, float))
+        or isinstance(gate_threshold, bool)
+        or not math.isfinite(float(gate_threshold))
+        or float(gate_threshold) != 5.0e-9
+        or policy.get("outer_stagnation_residual_gate_threshold") != 5.0e-9
+        or trigger.get("residual_gate_threshold") != float(gate_threshold)
+        or trigger.get("global_metric") != "global_true_relative_residual"
+        or trigger.get("block_metrics") != block_metrics
+        or trigger.get("required_max_improvement_fraction") != 0.1
+        or trigger.get("next_safe_boundary")
+        != "next_outer_PC_modal_solve_before_KSP_entry"
+        or not isinstance(windows, list)
+        or len(windows) not in (2, 3)
+    ):
+        return False
+
+    def read_finite_metric_map(value: Any) -> dict[str, float] | None:
+        if not isinstance(value, Mapping) or set(value) != set(metrics):
+            return None
+        result = {}
+        for name in metrics:
+            scalar = value.get(name)
+            if (
+                not isinstance(scalar, (int, float))
+                or isinstance(scalar, bool)
+                or not math.isfinite(float(scalar))
+                or float(scalar) < 0.0
+            ):
+                return None
+            result[name] = float(scalar)
+        return result
+
+    recomputed: list[dict[str, Any]] = []
+    previous_end = None
+    metrics_passed_in_segment: set[str] = set()
+    for window_index, window in enumerate(windows):
+        if not isinstance(window, Mapping):
+            return False
+        start = window.get("start_iteration")
+        end = window.get("end_iteration")
+        samples = window.get("samples")
+        baseline_source = window.get("baseline_source")
+        baseline_values = read_finite_metric_map(
+            window.get("baseline_best_by_metric")
+        )
+        baseline_iterations = window.get("baseline_best_iteration_by_metric")
+        improvements = window.get("improvement_fraction_by_metric")
+        if (
+            type(start) is not int
+            or type(end) is not int
+            or end - start != width
+            or (previous_end is not None and start != previous_end)
+            or not isinstance(samples, list)
+            or len(samples) != width + 1
+            or not isinstance(baseline_source, str)
+            or baseline_source
+            not in ("segment_start_sample", "previous_window_best")
+            or baseline_values is None
+            or not isinstance(baseline_iterations, Mapping)
+            or set(baseline_iterations) != set(metrics)
+            or any(type(baseline_iterations.get(name)) is not int for name in metrics)
+            or window.get("gate_threshold") != float(gate_threshold)
+        ):
+            return False
+
+        sample_values = []
+        for offset, sample in enumerate(samples):
+            if not isinstance(sample, Mapping) or type(sample.get("iteration")) is not int:
+                return False
+            if sample.get("iteration") != start + offset:
+                return False
+            residuals = read_finite_metric_map(sample.get("residuals"))
+            if residuals is None:
+                return False
+            sample_values.append((int(sample["iteration"]), residuals))
+
+        best_values = {}
+        best_iterations = {}
+        for name in metrics:
+            best_iteration, best_row = min(
+                sample_values,
+                key=lambda item: (item[1][name], item[0]),
+            )
+            best_values[name] = float(best_row[name])
+            best_iterations[name] = int(best_iteration)
+        end_values = dict(sample_values[-1][1])
+        passed_metrics_at_window_end = [
+            name for name in metrics if end_values[name] <= float(gate_threshold)
+        ]
+        passed_metrics_in_window = [
+            name for name in metrics if best_values[name] <= float(gate_threshold)
+        ]
+        metrics_passed_in_segment.update(passed_metrics_in_window)
+        passed_metrics_in_segment = [
+            name for name in metrics if name in metrics_passed_in_segment
+        ]
+        required_metrics_in_window = [
+            name for name in metrics if name not in passed_metrics_in_window
+        ]
+        required_metrics_for_stagnation = [
+            name for name in metrics if name not in passed_metrics_at_window_end
+        ]
+        required_metrics_at_window_end = [
+            name for name in metrics if name not in passed_metrics_at_window_end
+        ]
+        improvement_values = {}
+        for name in metrics:
+            baseline = baseline_values[name]
+            current_best = best_values[name]
+            if baseline == 0.0:
+                expected = 0.0 if current_best == 0.0 else None
+            else:
+                candidate = (baseline - current_best) / baseline
+                expected = candidate if math.isfinite(candidate) else None
+            actual = improvements.get(name) if isinstance(improvements, Mapping) else None
+            if expected is None:
+                if actual is not None:
+                    return False
+            elif (
+                not isinstance(actual, (int, float))
+                or isinstance(actual, bool)
+                or not math.isfinite(float(actual))
+                or not math.isclose(
+                    float(actual), expected, rel_tol=1.0e-12, abs_tol=1.0e-12
+                )
+            ):
+                return False
+            improvement_values[name] = expected
+
+        if (
+            not isinstance(improvements, Mapping)
+            or set(improvements) != set(metrics)
+            or window.get("best_residual_by_metric") != best_values
+            or not isinstance(window.get("best_iteration_by_metric"), Mapping)
+            or any(
+                type(window["best_iteration_by_metric"].get(name)) is not int
+                for name in metrics
+            )
+            or window.get("best_iteration_by_metric") != best_iterations
+            or window.get("end_residual_by_metric") != end_values
+            or window.get("passed_metrics_in_window") != passed_metrics_in_window
+            or window.get("passed_metrics_in_segment")
+            != passed_metrics_in_segment
+            or window.get("required_metrics_in_window")
+            != required_metrics_in_window
+            or window.get("required_metrics_for_stagnation")
+            != required_metrics_for_stagnation
+            or window.get("passed_metrics_at_window_end")
+            != passed_metrics_at_window_end
+            or window.get("required_metrics_at_window_end")
+            != required_metrics_at_window_end
+            or window.get("global_metric_required")
+            is not (
+                "global_true_relative_residual" in required_metrics_for_stagnation
+            )
+            or window.get("unmet_block_metrics")
+            != [
+                name
+                for name in block_metrics
+                if name in required_metrics_for_stagnation
+            ]
+        ):
+            return False
+        computed_stalled = bool(
+            required_metrics_for_stagnation
+            and all(
+                improvement_values[name] is not None
+                and improvement_values[name] < float(limit)
+                for name in required_metrics_for_stagnation
+            )
+        )
+        if type(window.get("stalled")) is not bool or window["stalled"] is not computed_stalled:
+            return False
+
+        if window_index == 0:
+            if len(windows) == 2 and baseline_source != "segment_start_sample":
+                return False
+            if baseline_source == "segment_start_sample":
+                first_sample_values = sample_values[0][1]
+                if (
+                    baseline_values != first_sample_values
+                    or any(
+                        type(baseline_iterations.get(name)) is not int
+                        or baseline_iterations[name] != start
+                        for name in metrics
+                    )
+                ):
+                    return False
+        else:
+            previous = recomputed[-1]
+            if (
+                baseline_source != "previous_window_best"
+                or baseline_values != previous["best_values"]
+                or dict(baseline_iterations)
+                != previous["best_iterations"]
+                or sample_values[0][1] != previous["end_values"]
+            ):
+                return False
+
+        recomputed.append(
+            {
+                "best_values": best_values,
+                "best_iterations": best_iterations,
+                "end_values": end_values,
+                "passed_metrics_in_segment": passed_metrics_in_segment,
+                "stalled": computed_stalled,
+            }
+        )
+        previous_end = end
+
+    stalled_window_ends = trigger.get("stalled_window_end_iterations")
+    return not (
+        type(trigger.get("observed_at_iteration")) is not int
+        or trigger.get("observed_at_iteration") != previous_end
+        or not isinstance(stalled_window_ends, list)
+        or any(type(value) is not int for value in stalled_window_ends)
+        or stalled_window_ends
+        != [int(window["end_iteration"]) for window in windows[-2:]]
+        or not all(window["stalled"] for window in recomputed[-2:])
+    )
+
+
+def _task041_v12_restart64_selection_matches(
+    record: Mapping[str, Any], *, rank_count: int
+) -> bool:
+    """Recompute the sealed restart64 residual-and-wall selection from rank rows."""
+
+    selection = record.get("selection_evidence")
+    candidate = record.get("candidate_rhs_binding")
+    baseline_rows = (
+        candidate.get("restart32_reference_work_by_rank")
+        if isinstance(candidate, Mapping)
+        else None
+    )
+    trial_rows = record.get("restart64_rank_records")
+    rule_id = (
+        "same_rhs_eta64_at_most_0.9_eta32_and_max_rank_trial_wall_with_one_setup_not_higher"
+        "_and_log_residual_reduction_per_wall_not_lower"
+    )
+    if (
+        not isinstance(selection, Mapping)
+        or selection.get("rule_id") != rule_id
+        or not isinstance(baseline_rows, list)
+        or len(baseline_rows) != rank_count
+        or not isinstance(trial_rows, list)
+        or len(trial_rows) != rank_count
+    ):
+        return False
+
+    def finite(value: Any, *, positive: bool = False) -> float | None:
+        if (
+            not isinstance(value, (int, float))
+            or isinstance(value, bool)
+            or not math.isfinite(float(value))
+        ):
+            return None
+        result = float(value)
+        return result if result >= 0.0 and (not positive or result > 0.0) else None
+
+    eta32 = finite(record.get("restart32_relative_residual"), positive=True)
+    eta64 = finite(record.get("restart64_relative_residual"), positive=True)
+
+    def invalid_evidence_matches() -> bool:
+        return bool(
+            selection.get("eligible_for_64") is False
+            and selection.get("residual_improved_by_at_least_10_percent") is False
+            and selection.get("max_rank_trial_wall_with_one_setup_not_higher")
+            is False
+            and selection.get("log_residual_reduction_per_wall_not_lower") is False
+            and all(
+                selection.get(name) is None
+                for name in (
+                    "restart32_max_rank_side_wall_seconds",
+                    "restart64_max_rank_side_solve_wall_seconds",
+                    "restart64_max_rank_setup_wall_seconds",
+                    "restart64_max_rank_trial_wall_with_setup_seconds",
+                    "restart32_log_residual_reduction_per_wall",
+                    "restart64_log_residual_reduction_per_wall",
+                )
+            )
+        )
+
+    if (
+        eta32 is None
+        or eta64 is None
+        or eta32 >= 1.0
+        or eta64 >= 1.0
+    ):
+        return invalid_evidence_matches()
+    baseline_local: list[float] = []
+    baseline_maxes: list[float] = []
+    trial_local: list[float] = []
+    setup_local: list[float] = []
+    for rank, (baseline, trial) in enumerate(
+        zip(baseline_rows, trial_rows, strict=True)
+    ):
+        if (
+            not isinstance(baseline, Mapping)
+            or baseline.get("rank") != rank
+            or not isinstance(trial, Mapping)
+            or trial.get("rank") != rank
+        ):
+            return invalid_evidence_matches()
+        values = (
+            finite(baseline.get("rank_local_elapsed_seconds"), positive=True),
+            finite(baseline.get("max_rank_elapsed_seconds"), positive=True),
+            finite(trial.get("elapsed_local_seconds"), positive=True),
+            finite(trial.get("ksp_setup_elapsed_local_seconds")),
+        )
+        if any(value is None for value in values):
+            return invalid_evidence_matches()
+        baseline_local.append(float(values[0]))
+        baseline_maxes.append(float(values[1]))
+        trial_local.append(float(values[2]))
+        setup_local.append(float(values[3]))
+    baseline_wall = max(baseline_local)
+    trial_solve_wall = max(trial_local)
+    setup_wall = max(setup_local)
+    trial_wall_with_setup = max(
+        solve + setup for solve, setup in zip(trial_local, setup_local, strict=True)
+    )
+    reported_solve = finite(
+        record.get("trial_elapsed_seconds_max_rank"), positive=True
+    )
+    reported_setup = finite(
+        record.get("trial_ksp_setup_elapsed_max_rank_seconds")
+    )
+    reported_total = finite(
+        record.get("trial_transition_wall_including_one_setup_max_rank_seconds"),
+        positive=True,
+    )
+    if (
+        reported_solve is None
+        or reported_setup is None
+        or reported_total is None
+        or not all(
+            math.isclose(value, baseline_wall, rel_tol=1.0e-12, abs_tol=1.0e-15)
+            for value in baseline_maxes
+        )
+        or not math.isclose(
+            reported_solve, trial_solve_wall, rel_tol=1.0e-12, abs_tol=1.0e-15
+        )
+        or not math.isclose(
+            reported_setup, setup_wall, rel_tol=1.0e-12, abs_tol=1.0e-15
+        )
+        or not math.isclose(
+            reported_total,
+            trial_wall_with_setup,
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-15,
+        )
+    ):
+        return invalid_evidence_matches()
+    try:
+        baseline_rate = -math.log(eta32) / baseline_wall
+        trial_rate = -math.log(eta64) / trial_wall_with_setup
+    except (OverflowError, ZeroDivisionError):
+        return invalid_evidence_matches()
+    if not math.isfinite(baseline_rate) or not math.isfinite(trial_rate):
+        return invalid_evidence_matches()
+    residual_ok = eta64 <= 0.9 * eta32
+    wall_ok = trial_wall_with_setup <= baseline_wall
+    rate_ok = trial_rate >= baseline_rate
+    eligible = residual_ok and wall_ok and rate_ok
+    expected_numbers = {
+        "restart32_max_rank_side_wall_seconds": baseline_wall,
+        "restart64_max_rank_side_solve_wall_seconds": trial_solve_wall,
+        "restart64_max_rank_setup_wall_seconds": setup_wall,
+        "restart64_max_rank_trial_wall_with_setup_seconds": trial_wall_with_setup,
+        "restart32_log_residual_reduction_per_wall": baseline_rate,
+        "restart64_log_residual_reduction_per_wall": trial_rate,
+    }
+    try:
+        apply_seconds = finite(record.get("cumulative_side_apply_seconds"))
+        setup_seconds = finite(
+            record.get("cumulative_restart_transition_ksp_setup_seconds")
+        )
+        combined_seconds = finite(
+            record.get(
+                "cumulative_side_wall_seconds_including_transition_setup"
+            )
+        )
+    except (TypeError, ValueError):
+        return False
+    return bool(
+        apply_seconds is not None
+        and setup_seconds is not None
+        and combined_seconds is not None
+        and math.isclose(
+            combined_seconds,
+            apply_seconds + setup_seconds,
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-12,
+        )
+        and selection.get("residual_improved_by_at_least_10_percent") is residual_ok
+        and selection.get("max_rank_trial_wall_with_one_setup_not_higher") is wall_ok
+        and selection.get("log_residual_reduction_per_wall_not_lower") is rate_ok
+        and selection.get("eligible_for_64") is eligible
+        and selection.get("reason")
+        == (
+            "residual_and_cost_improved"
+            if eligible
+            else "restart64_did_not_improve_residual_and_cost_together"
+        )
+        and all(
+            isinstance(selection.get(name), (int, float))
+            and not isinstance(selection.get(name), bool)
+            and math.isclose(
+                float(selection[name]), expected, rel_tol=1.0e-12, abs_tol=1.0e-15
+            )
+            for name, expected in expected_numbers.items()
+        )
+    )
+
+
+def _task041_v12_post_backup_stop_matches(
+    summary: Mapping[str, Any],
+    candidate_inventory: Any,
+    fixed_solver: Any,
+    solve: Any,
+    solve_inventory: Any,
+    *,
+    rank_count: int,
+) -> dict[str, Any]:
+    """Independently bind a finite V12 stop to its trigger, live trial and x/f."""
+
+    postsolve = solve.get("postsolve") if isinstance(solve, Mapping) else None
+    observed = (
+        summary.get("modal_post_backup_stop_record"),
+        candidate_inventory.get("modal_post_backup_stop_record")
+        if isinstance(candidate_inventory, Mapping)
+        else None,
+        fixed_solver.get("post_backup_stop_record")
+        if isinstance(fixed_solver, Mapping)
+        else None,
+        solve_inventory.get("task041_v12_policy_stop")
+        if isinstance(solve_inventory, Mapping)
+        else None,
+        postsolve.get("policy_stop") if isinstance(postsolve, Mapping) else None,
+    )
+    present = [value for value in observed if value is not None]
+    if not present:
+        return {"present": False, "pass": True, "status": "not_requested"}
+    if (
+        rank_count != TASK041_BALH_MPI_SIZE
+        or len(present) != len(observed)
+        or any(not isinstance(value, Mapping) for value in observed)
+        or any(dict(value) != dict(observed[0]) for value in observed[1:])
+        or not isinstance(fixed_solver, Mapping)
+        or not isinstance(solve, Mapping)
+        or not isinstance(solve_inventory, Mapping)
+        or not isinstance(postsolve, Mapping)
+    ):
+        return {"present": True, "pass": False, "status": "stop_record_copies_mismatch"}
+
+    stop = dict(observed[0])
+    policy = fixed_solver.get("modal_solver_policy")
+    trial_state = fixed_solver.get("side_restart64_trial_state")
+    audit = fixed_solver.get("backup_switch_audit")
+    trial_status = stop.get("side_restart64_trial_status")
+    trial_result = trial_state.get("result") if isinstance(trial_state, Mapping) else None
+    observation = stop.get("outer_observation")
+    windows = stop.get("windows")
+    reason_code = stop.get("reason_code")
+    capacity_stop = (
+        stop.get("status") == "post_backup_restart32_restore_capacity_stop"
+    )
+    expected_stop_status = (
+        "post_backup_restart32_restore_capacity_stop"
+        if capacity_stop
+        else "post_backup_two_window_stagnation_after_trial_resolution"
+    )
+    expected_schema = (
+        "task041.v12.post_backup_capacity_stop.v1"
+        if capacity_stop
+        else "task041.v12.post_backup_finite_stop.v1"
+    )
+    expected_stop_reason = (
+        "task041_v12_restart32_restore_workspace_capacity_refused"
+        if capacity_stop
+        else "task041_v12_post_backup_two_windows_stalled_after_side_trial_resolution"
+    )
+    expected_postsolve_decision = (
+        "POLICY_CAPACITY_STOP" if capacity_stop else "POLICY_STAGNATION_STOP"
+    )
+    try:
+        from petsc4py import PETSc
+
+        runtime_reason = int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
+    except Exception:  # noqa: BLE001 - absent runtime enum is not a valid stop proof
+        return {"present": True, "pass": False, "status": "runtime_reason_unavailable"}
+
+    rank_binding = stop.get("rank_local_solution_rhs_binding")
+    rank_rows = rank_binding.get("records") if isinstance(rank_binding, Mapping) else None
+    residuals = stop.get("postsolve_true_residuals")
+    fixed_identity = (
+        solve.get("converged_reason") == reason_code
+        and solve.get("iterations") == stop.get("iterations_at_stop")
+        and solve.get("max_it") == stop.get("configured_max_it")
+        and solve.get("pass") is False
+        and postsolve.get("reason") == reason_code
+        and postsolve.get("decision") == expected_postsolve_decision
+        and postsolve.get("pass") is False
+        and postsolve.get("converged") is False
+        and postsolve.get("max_it_reached") is False
+    )
+    trial_resolution_valid = bool(
+        isinstance(trial_state, Mapping)
+        and trial_state.get("resolved") is True
+        and trial_state.get("pending") is False
+        and trial_state.get("trial_count") == 1
+        and trial_state.get("status") == trial_status
+        and isinstance(trial_result, Mapping)
+        and trial_result.get("status") == trial_status
+        and trial_status
+        in {
+            "trial_completed_selected_64",
+            "trial_completed_retained_32",
+            "capacity_gate_refused",
+            "capacity_gate_refused_restart32_restore",
+            "not_required_no_eligible_restart32_rhs",
+        }
+    )
+    if trial_status in {
+        "capacity_gate_refused",
+        "capacity_gate_refused_restart32_restore",
+    }:
+        from src.solvers.hybrid_fem_modal_block_ldu import (
+            _task041_v12_capacity_gate_has_byte_admission,
+            _task041_v12_capacity_gate_has_byte_refusal,
+            _task041_v12_nonselected_restart64_trial_matches,
+        )
+
+        if trial_status == "capacity_gate_refused":
+            trial_resolution_valid = bool(
+                trial_resolution_valid
+                and _task041_v12_capacity_gate_has_byte_refusal(
+                    trial_result.get("gate")
+                )
+            )
+        else:
+            restore_gate = trial_result.get("gate")
+            restart64_gate = trial_result.get("restart64_gate")
+            restart64_was_refused = bool(
+                _task041_v12_capacity_gate_has_byte_refusal(restart64_gate)
+                and restart64_gate.get("phase") == "allocate_restart64"
+            )
+            restart64_was_admitted = bool(
+                _task041_v12_capacity_gate_has_byte_admission(
+                    restart64_gate,
+                    phase="allocate_restart64",
+                    restart=64,
+                )
+                and trial_result.get("same_p4_factor_handle_all_ranks") is True
+                and _task041_v12_nonselected_restart64_trial_matches(
+                    trial_result, rank_count=rank_count
+                )
+            )
+            restart64_was_refused = bool(
+                restart64_was_refused
+                and trial_result.get("restart64_trial_selected_restart") is None
+            )
+            trial_resolution_valid = bool(
+                trial_resolution_valid
+                and stop.get("side_trial_record") == dict(trial_result)
+                and stop.get("capacity_gate") == restore_gate
+                and trial_result.get("stage") == "restore_restart32"
+                and trial_result.get("restart32_restore_required") is True
+                and trial_result.get("restart32_restored") is False
+                and trial_result.get("restart32_restored_handle_live") is False
+                and trial_result.get("restore_capacity_stop_required") is True
+                and trial_result.get("selected_restart") is None
+                and _task041_v12_capacity_gate_has_byte_refusal(restore_gate)
+                and restore_gate.get("phase") == "restore_restart32"
+                and (restart64_was_refused or restart64_was_admitted)
+            )
+    elif trial_status == "not_required_no_eligible_restart32_rhs":
+        side_seen = trial_result.get("side_solve_seen")
+        trial_resolution_valid = bool(
+            trial_resolution_valid
+            and isinstance(side_seen, Mapping)
+            and dict(side_seen) == {"bottom": True, "top": True}
+        )
+    elif trial_status in {
+        "trial_completed_selected_64",
+        "trial_completed_retained_32",
+    }:
+        eta32 = trial_result.get("restart32_relative_residual")
+        eta64 = trial_result.get("restart64_relative_residual")
+        selection = trial_result.get("selection_evidence")
+        trial_residual = trial_result.get("restart64_original_D_residual")
+        candidate_binding = trial_result.get("candidate_rhs_binding")
+        rank_records = trial_result.get("restart64_rank_records")
+        residual_keys = {
+            "rhs_norm",
+            "solution_norm",
+            "residual_norm",
+            "relative_residual",
+        }
+        residual_values = (
+            [trial_residual.get(key) for key in residual_keys]
+            if isinstance(trial_residual, Mapping)
+            else []
+        )
+        residual_valid = bool(
+            isinstance(trial_residual, Mapping)
+            and set(trial_residual) == residual_keys
+            and all(
+                isinstance(value, (int, float))
+                and not isinstance(value, bool)
+                and math.isfinite(float(value))
+                and float(value) >= 0.0
+                for value in residual_values
+            )
+            and isinstance(candidate_binding, Mapping)
+            and isinstance(candidate_binding.get("original_D_rhs_norm"), (int, float))
+            and not isinstance(candidate_binding.get("original_D_rhs_norm"), bool)
+            and math.isfinite(float(candidate_binding["original_D_rhs_norm"]))
+            and float(candidate_binding["original_D_rhs_norm"]) > 0.0
+            and type(candidate_binding.get("global_size")) is int
+            and candidate_binding["global_size"] > 0
+            and trial_residual["rhs_norm"]
+            == candidate_binding["original_D_rhs_norm"]
+            and isinstance(eta64, (int, float))
+            and not isinstance(eta64, bool)
+            and trial_residual["relative_residual"] == eta64
+            and math.isclose(
+                float(trial_residual["relative_residual"]),
+                float(trial_residual["residual_norm"])
+                / float(trial_residual["rhs_norm"]),
+                rel_tol=1.0e-12,
+                abs_tol=1.0e-15,
+            )
+            and isinstance(rank_records, list)
+            and len(rank_records) == rank_count
+            and all(
+                isinstance(row, Mapping)
+                and row.get("rank") == rank
+                and row.get("ksp_reason") == trial_result.get("restart64_reason")
+                and row.get("iterations")
+                == trial_result.get("restart64_iterations")
+                and row.get("same_p4_factor_handle_local") is True
+                and row.get("candidate_rhs_unchanged_local") is True
+                and isinstance(row.get("original_D_residual"), Mapping)
+                and dict(row["original_D_residual"]) == dict(trial_residual)
+                for rank, row in enumerate(rank_records)
+            )
+        )
+        trial_resolution_valid = bool(
+            trial_resolution_valid
+            and trial_result.get("same_p4_factor_handle_all_ranks") is True
+            and _task041_v12_restart64_selection_matches(
+                trial_result, rank_count=rank_count
+            )
+            and isinstance(eta32, (int, float))
+            and not isinstance(eta32, bool)
+            and isinstance(eta64, (int, float))
+            and not isinstance(eta64, bool)
+            and math.isfinite(float(eta32))
+            and math.isfinite(float(eta64))
+            and float(eta32) >= 0.0
+            and float(eta64) >= 0.0
+            and residual_valid
+            and isinstance(selection, Mapping)
+            and trial_result.get("selected_restart")
+            == (64 if selection.get("eligible_for_64") is True else 32)
+            and trial_status
+            == (
+                "trial_completed_selected_64"
+                if selection.get("eligible_for_64") is True
+                else "trial_completed_retained_32"
+            )
+        )
+
+    if capacity_stop:
+        windows_valid = bool(
+            observation is None
+            and windows in (None, [])
+            and stop.get("observation_segment") == "post_side_restart64_trial"
+            and type(stop.get("observed_at_iteration")) is int
+            and stop["observed_at_iteration"] >= 0
+            and stop.get("side_restart64_trial_status")
+            == "capacity_gate_refused_restart32_restore"
+            and isinstance(stop.get("capacity_gate"), Mapping)
+        )
+    else:
+        windows_valid = bool(
+            isinstance(observation, Mapping)
+            and isinstance(windows, list)
+            and len(windows) == 2
+            and windows == observation.get("windows", [])[-2:]
+            and observation.get("status") == "two_consecutive_outer_windows_stalled"
+            and observation.get("observation_segment") == stop.get("observation_segment")
+            and stop.get("observed_at_iteration")
+            == observation.get("observed_at_iteration")
+            and observation.get("stalled_window_end_iterations")
+            == [window.get("end_iteration") for window in windows]
+            and all(
+                isinstance(window, Mapping) and window.get("stalled") is True
+                for window in windows
+            )
+            and _task041_v12_backup_trigger_matches_policy(
+                observation,
+                policy=policy if isinstance(policy, Mapping) else {},
+                rank_count=rank_count,
+            )
+        )
+    ownership_valid = bool(
+        isinstance(rank_binding, Mapping)
+        and rank_binding.get("scope")
+        == "one owned record per MPI rank; no vector gather"
+        and isinstance(rank_rows, list)
+        and len(rank_rows) == rank_count
+        and [row.get("rank") for row in rank_rows if isinstance(row, Mapping)]
+        == list(range(rank_count))
+        and all(
+            isinstance(row, Mapping)
+            and isinstance(row.get("range"), list)
+            and len(row["range"]) == 2
+            and all(type(value) is int for value in row["range"])
+            and row["range"][1] >= row["range"][0]
+            and type(row.get("global_size")) is int
+            and row.get("solution_finite_local") is True
+            and row.get("rhs_unchanged_local") is True
+            and all(
+                isinstance(row.get(key), str)
+                and len(row[key]) == 64
+                and all(character in "0123456789abcdef" for character in row[key])
+                for key in (
+                    "solution_local_sha256",
+                    "rhs_local_sha256_before",
+                    "rhs_local_sha256_after",
+                )
+            )
+            and row.get("rhs_local_sha256_before")
+            == row.get("rhs_local_sha256_after")
+            for row in rank_rows
+        )
+        and all(
+            rank_rows[index]["range"][1] == rank_rows[index + 1]["range"][0]
+            for index in range(rank_count - 1)
+        )
+        and rank_rows[0]["range"][0] == 0
+        and rank_rows[-1]["range"][1] == stop.get("original_rhs_global_size")
+        and all(
+            row.get("global_size") == stop.get("original_rhs_global_size")
+            for row in rank_rows
+        )
+    )
+    residuals_valid = bool(
+        isinstance(residuals, Mapping)
+        and set(residuals)
+        == {
+            "reported_relative_residual",
+            "global_true_relative_residual",
+            "bottom_true_relative_residual",
+            "top_true_relative_residual",
+            "modal_true_relative_residual",
+        }
+        and all(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+            and float(value) >= 0.0
+            for value in residuals.values()
+        )
+        and stop.get("postsolve_all_finite_nonnegative") is True
+        and stop.get("postsolve_original_residual_pass") is False
+    )
+    valid = bool(
+        stop.get("schema") == expected_schema
+        and stop.get("status") == expected_stop_status
+        and stop.get("stop_reason") == expected_stop_reason
+        and stop.get("backup_switches") == 1
+        and isinstance(audit, Mapping)
+        and audit.get("actual") is True
+        and audit.get("switch_count") == 1
+        and fixed_identity
+        and stop.get("converged") is False
+        and stop.get("max_it_reached") is False
+        and stop.get("reason_name") == "DIVERGED_MAX_IT"
+        and stop.get("runtime_reason_source")
+        == "petsc4py.PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT"
+        and type(reason_code) is int
+        and reason_code == runtime_reason
+        and type(stop.get("configured_max_it")) is int
+        and type(stop.get("iterations_at_stop")) is int
+        and 1 <= stop["iterations_at_stop"] < stop["configured_max_it"]
+        and stop.get("current_ksp_iterate_available") is True
+        and stop.get("current_trusted_solution_retained") is True
+        and stop.get("original_rhs_retained") is True
+        and stop.get("original_rhs_unchanged") is True
+        and trial_resolution_valid
+        and windows_valid
+        and ownership_valid
+        and residuals_valid
+    )
+    return {
+        "present": True,
+        "pass": valid,
+        "status": "validated" if valid else "finite_stop_evidence_rejected",
+        "reason_code": reason_code,
+        "trial_status": trial_status,
+        "outer_windows_valid": windows_valid,
+        "trial_resolution_valid": trial_resolution_valid,
+        "ownership_valid": ownership_valid,
+        "residuals_valid": residuals_valid,
+    }
+
+
+def _task041_v12_backup_linearity_gate_matches(
+    gate: Any, *, rank_count: int
+) -> bool:
+    """Require the recorded physical action gate to contain its full scope."""
+
+    rank_results = gate.get("rank_results") if isinstance(gate, Mapping) else None
+    metrics = gate.get("metrics") if isinstance(gate, Mapping) else None
+    metric_names = {
+        "zero_absolute",
+        "repeat_x",
+        "complex_homogeneity",
+        "repeat_y",
+        "additivity",
+        "near_zero_absolute",
+    }
+    if (
+        rank_count != TASK041_BALH_MPI_SIZE
+        or not isinstance(gate, Mapping)
+        or gate.get("status") != "passed"
+        or gate.get("pass") is not True
+        or gate.get("mode")
+        != "fixed_physical_balh_modal_feedback_complex_repeat_linearity"
+        or gate.get("relative_limit") != 1.0e-10
+        or gate.get("absolute_limit") != 1.0e-10
+        or gate.get("requested_s_h_actions") != 8
+        or gate.get("operator_actions_maximum") != 8
+        or gate.get("rank_count") != rank_count
+        or gate.get("rank_action_counts_scope")
+        != "per-rank local; do_not_sum_across_ranks"
+        or not isinstance(metrics, Mapping)
+        or set(metrics) != metric_names
+        or any(
+            not isinstance(metric, Mapping) or metric.get("pass") is not True
+            for metric in metrics.values()
+        )
+        or not isinstance(rank_results, list)
+        or len(rank_results) != rank_count
+    ):
+        return False
+    for rank, row in enumerate(rank_results):
+        input_unchanged = (
+            row.get("input_unchanged_by_action")
+            if isinstance(row, Mapping)
+            else None
+        )
+        side_counts = (
+            row.get("modal_feedback_side_counts")
+            if isinstance(row, Mapping)
+            else None
+        )
+        if (
+            not isinstance(row, Mapping)
+            or row.get("rank") != rank
+            or row.get("pass") is not True
+            or row.get("operator_action_attempts") != 8
+            or row.get("operator_action_completions") != 8
+            or row.get("constraint_lu_solve_attempts") != 0
+            or not isinstance(input_unchanged, Mapping)
+            or set(input_unchanged)
+            != {
+                "zero",
+                "x",
+                "x_repeat",
+                "alpha_x",
+                "y",
+                "y_repeat",
+                "x_plus_y",
+                "near_zero_x",
+            }
+            or any(value is not True for value in input_unchanged.values())
+            or row.get("original_side_apply_count_delta")
+            != {"bottom": 0, "top": 0}
+            or not isinstance(side_counts, Mapping)
+            or set(side_counts) != {"bottom", "top"}
+            or any(
+                not isinstance(side, Mapping)
+                or side.get("operation_sequence_matches") is not True
+                for side in side_counts.values()
+            )
+        ):
+            return False
+    return True
+
+
+def _task041_v12_backup_primary_diagnostics_matches(audit: Any) -> bool:
+    """Require the primary method's counters and scalar history at one switch."""
+
+    primary = audit.get("primary_diagnostics") if isinstance(audit, Mapping) else None
+    if not isinstance(primary, Mapping):
+        return False
+    solver_calls = primary.get("cumulative_solver_matmult_calls")
+    total_calls = primary.get("cumulative_total_matmult_calls")
+    solve_count = primary.get("solve_count")
+    scalar_history = primary.get("scalar_history")
+    solver_record = primary.get("primary_solver_record")
+    if (
+        primary.get("method") != "fixed_h6_modal_gmres_research"
+        or type(solve_count) is not int
+        or solve_count < 1
+        or type(solver_calls) is not int
+        or type(total_calls) is not int
+        or solver_calls < 0
+        or total_calls < solver_calls
+        or not isinstance(scalar_history, list)
+        or not isinstance(solver_record, Mapping)
+        or solver_record.get("cumulative_solver_matmult_calls") != solver_calls
+        or solver_record.get("cumulative_total_matmult_calls") != total_calls
+    ):
+        return False
+    if solver_record.get("ksp_status") == "not_run_zero_rhs":
+        expected_checkpoints = []
+    else:
+        iterations = solver_record.get("iterations")
+        if type(iterations) is not int or not 0 <= iterations <= 32:
+            return False
+        expected_checkpoints = [
+            checkpoint
+            for checkpoint in (8, 16, 32)
+            if checkpoint <= iterations
+        ]
+    if [row.get("iteration") for row in scalar_history] != expected_checkpoints:
+        return False
+    for row in scalar_history:
+        if (
+            not isinstance(row, Mapping)
+            or row.get("iteration") not in {8, 16, 32}
+            or not isinstance(row.get("reported_residual_norm"), (int, float))
+            or isinstance(row.get("reported_residual_norm"), bool)
+            or not math.isfinite(float(row["reported_residual_norm"]))
+            or float(row["reported_residual_norm"]) < 0.0
+        ):
+            return False
+    return True
+
+
 def _consumer_result(
     consumer_root: Path,
     *,
@@ -8152,6 +9303,7 @@ def _consumer_result(
     expected_diagnostic_model_id: str | None = None,
     expected_fixed_h6_modal_gmres_research: bool = False,
     expected_modal_feedback_method: str | None = None,
+    expected_modal_solver_policy: str | None = None,
     expected_fixed_h6_binding: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     summary_path = consumer_root / "consumer_summary.json"
@@ -8182,11 +9334,34 @@ def _consumer_result(
         solve_inventory = (
             solve.get("inventory") if isinstance(solve, Mapping) else None
         )
-        solver_key = (
-            "fixed_physical_balh_modal_solver"
-            if expected_modal_feedback_method is not None
-            else "fixed_h6_modal_solver"
+        backup_policy_requested = (
+            expected_modal_solver_policy
+            == "task041_v12_bounded_inexact_modal_once_backup"
         )
+        observed_solver_records = (
+            [
+                (key, solve_inventory.get(key))
+                for key in (
+                    "fixed_h6_modal_solver",
+                    "fixed_physical_balh_modal_solver",
+                )
+                if isinstance(solve_inventory.get(key), Mapping)
+            ]
+            if isinstance(solve_inventory, Mapping)
+            else []
+        )
+        if backup_policy_requested:
+            solver_key = (
+                observed_solver_records[0][0]
+                if len(observed_solver_records) == 1
+                else None
+            )
+        else:
+            solver_key = (
+                "fixed_physical_balh_modal_solver"
+                if expected_modal_feedback_method is not None
+                else "fixed_h6_modal_solver"
+            )
         fixed_solver = (
             solve_inventory.get(solver_key)
             if isinstance(solve_inventory, Mapping)
@@ -8216,25 +9391,40 @@ def _consumer_result(
             if expected_modal_feedback_method is not None
             else "fixed_h6_modal_gmres_research"
         )
+        expected_candidate_method = (
+            "fixed_h6_modal_gmres_research"
+            if backup_policy_requested
+            else expected_action_method
+        )
         expected_qualification_method = (
-            "fixed_physical_balh_once_modal_gmres_research_with_original_outer_fgmres"
+            "task041_v12_h6_primary_once_physical_backup_with_original_outer_fgmres"
+            if backup_policy_requested
+            else "fixed_physical_balh_once_modal_gmres_research_with_original_outer_fgmres"
             if expected_modal_feedback_method is not None
             else "fixed_h6_modal_gmres_research_with_original_outer_fgmres"
+        )
+        solve_is_physical = bool(
+            expected_modal_feedback_method is not None
+            or (
+                backup_policy_requested
+                and solve_method
+                == "fixed_physical_balh_once_modal_gmres_research"
+            )
         )
         expected_operator = (
             "C-PbJb[Qb+(I-QbA6b)H6b(I-A6bQb)]Jb^H Tb-"
             "PtJt[Qt+(I-QtA6t)H6t(I-A6tQt)]Jt^H Tt"
-            if expected_modal_feedback_method is not None
+            if solve_is_physical
             else "C-PbJbH6bJb^H Tb-PtJtH6tJt^H Tt"
         )
         expected_side_action_method = (
-            expected_modal_feedback_method
-            if expected_modal_feedback_method is not None
+            "fixed_physical_balh_once"
+            if solve_is_physical
             else "fixed_h6_active_trace"
         )
         expected_side_operator_identity = (
             "borrowed_fixed_physical_balh_active_trace"
-            if expected_modal_feedback_method is not None
+            if solve_is_physical
             else "borrowed_fixed_h6_active_trace_J_H6_JH"
         )
         summary_binding = summary.get("modal_feedback_binding")
@@ -8252,11 +9442,155 @@ def _consumer_result(
         solver_inventory_exclusive = bool(
             isinstance(solve_inventory, Mapping)
             and (
-                "fixed_h6_modal_solver" not in solve_inventory
-                if expected_modal_feedback_method is not None
-                else "fixed_physical_balh_modal_solver" not in solve_inventory
+                len(observed_solver_records) == 1
+                and observed_solver_records[0][0] == solver_key
+                if backup_policy_requested
+                else (
+                    "fixed_h6_modal_solver" not in solve_inventory
+                    if expected_modal_feedback_method is not None
+                    else "fixed_physical_balh_modal_solver" not in solve_inventory
+                )
             )
         )
+        backup_actual_route_valid = False
+        finite_stop_validation = {
+            "present": False,
+            "pass": True,
+            "status": "not_requested",
+        }
+        if backup_policy_requested and isinstance(fixed_solver, Mapping):
+            expected_rank_cpus = (
+                expected_fixed_h6_binding.get("expected_rank_cpus")
+                if isinstance(expected_fixed_h6_binding, Mapping)
+                else None
+            )
+            backup_rank_count = (
+                len(expected_rank_cpus)
+                if isinstance(expected_rank_cpus, (list, tuple))
+                and all(type(cpu) is int for cpu in expected_rank_cpus)
+                else 0
+            )
+            history = fixed_solver.get("method_history")
+            audit = fixed_solver.get("backup_switch_audit")
+            actual_key = candidate_inventory.get(
+                "modal_actual_solver_inventory_key"
+            ) if isinstance(candidate_inventory, Mapping) else None
+            actual_method = candidate_inventory.get("modal_actual_method") if isinstance(
+                candidate_inventory, Mapping
+            ) else None
+            candidate_history = candidate_inventory.get("modal_method_history") if isinstance(
+                candidate_inventory, Mapping
+            ) else None
+            candidate_audit = candidate_inventory.get("modal_backup_switch_audit") if isinstance(
+                candidate_inventory, Mapping
+            ) else None
+            finite_stop_validation = _task041_v12_post_backup_stop_matches(
+                summary,
+                candidate_inventory,
+                fixed_solver,
+                solve,
+                solve_inventory,
+                rank_count=backup_rank_count,
+            )
+            no_switch_initial = bool(
+                history == ["fixed_h6_modal_gmres_research"]
+                and solver_key == "fixed_h6_modal_solver"
+                and solve_method == "fixed_h6_modal_gmres_research"
+                and fixed_solver.get("actual_feedback_method") is None
+                and isinstance(audit, Mapping)
+                and audit.get("requested") is False
+                and audit.get("allowed") is False
+                and audit.get("actual") is False
+                and audit.get("switch_count") == 0
+                and audit.get("trigger") is None
+                and audit.get("status") == "not_requested"
+            )
+            terminal_decision = (
+                audit.get("outer_terminal_decision")
+                if isinstance(audit, Mapping)
+                else None
+            )
+            terminal_status = audit.get("status") if isinstance(audit, Mapping) else None
+            terminal_positive = (
+                isinstance(terminal_decision, Mapping)
+                and terminal_decision.get("positive") is True
+                and terminal_decision.get("decision")
+                in {"CONVERGED_USER", "CONVERGED_RTOL"}
+            )
+            terminal_nonconverged = bool(
+                isinstance(terminal_decision, Mapping)
+                and not terminal_positive
+            )
+            no_switch_terminal = bool(
+                history == ["fixed_h6_modal_gmres_research"]
+                and solver_key == "fixed_h6_modal_solver"
+                and solve_method == "fixed_h6_modal_gmres_research"
+                and fixed_solver.get("actual_feedback_method") is None
+                and isinstance(audit, Mapping)
+                and audit.get("requested") is True
+                and audit.get("allowed") is False
+                and audit.get("actual") is False
+                and audit.get("switch_count") == 0
+                and audit.get("method_history") == history
+                and audit.get("status")
+                in {
+                    "backup_not_needed_outer_converged_before_next_PC_boundary",
+                    "backup_not_run_outer_terminated_before_next_PC_boundary",
+                }
+                and (
+                    terminal_status
+                    == "backup_not_needed_outer_converged_before_next_PC_boundary"
+                    and terminal_positive
+                    or terminal_status
+                    == "backup_not_run_outer_terminated_before_next_PC_boundary"
+                    and terminal_nonconverged
+                )
+                and _task041_v12_backup_trigger_matches_policy(
+                    audit.get("trigger"),
+                    policy=fixed_solver.get("modal_solver_policy", {}),
+                    rank_count=backup_rank_count,
+                )
+            )
+            one_switch = bool(
+                history
+                == [
+                    "fixed_h6_modal_gmres_research",
+                    "fixed_physical_balh_once_modal_gmres_research",
+                ]
+                and solver_key == "fixed_physical_balh_modal_solver"
+                and solve_method
+                == "fixed_physical_balh_once_modal_gmres_research"
+                and fixed_solver.get("actual_feedback_method")
+                == "fixed_physical_balh_once"
+                and isinstance(audit, Mapping)
+                and audit.get("requested") is True
+                and audit.get("allowed") is True
+                and audit.get("actual") is True
+                and audit.get("switch_count") == 1
+                and audit.get("status") == "switched_after_backup_linearity_gate"
+                and audit.get("same_live_side_factor_handles_verified") is True
+                and audit.get("method_history") == history
+                and _task041_v12_backup_primary_diagnostics_matches(audit)
+                and _task041_v12_backup_trigger_matches_policy(
+                    audit.get("trigger"),
+                    policy=fixed_solver.get("modal_solver_policy", {}),
+                    rank_count=backup_rank_count,
+                )
+                and isinstance(audit.get("backup_linearity_gate"), Mapping)
+                and _task041_v12_backup_linearity_gate_matches(
+                    audit.get("backup_linearity_gate"),
+                    rank_count=backup_rank_count,
+                )
+                and finite_stop_validation.get("pass") is True
+            )
+            backup_actual_route_valid = bool(
+                candidate_method == "fixed_h6_modal_gmres_research"
+                and actual_key == solver_key
+                and actual_method == solve_method
+                and candidate_history == history
+                and candidate_audit == dict(audit or {})
+                and (no_switch_initial or no_switch_terminal or one_switch)
+            )
         qualification_method_valid = True
         if expected_modal_feedback_method is None:
             pure_qualification_method = summary.get("qualification_method")
@@ -8271,30 +9605,66 @@ def _consumer_result(
                 and summary_request in (None,)
                 and candidate_request in (None,)
                 and solve_request in (None,)
-                and summary.get("qualification_method")
-                != "fixed_physical_balh_once_modal_gmres_research_with_original_outer_fgmres"
+                and (
+                    backup_policy_requested
+                    or summary.get("qualification_method")
+                    != "fixed_physical_balh_once_modal_gmres_research_with_original_outer_fgmres"
+                )
             )
-            side_actions_valid = bool(
-                not isinstance(fixed_solver, Mapping)
-                or (
-                    "fixed_physical_balh_actions" not in fixed_solver
-                    and fixed_solver.get("method")
-                    == "fixed_h6_modal_gmres_research"
-                    and fixed_solver.get("feedback_method") in (None,)
-                    and pure_solver_operator
-                    in (
-                        None,
-                        "C-PbJbH6bJb^H Tb-PtJtH6tJt^H Tt",
+            if backup_policy_requested:
+                qualification_method_valid = (
+                    pure_qualification_method == expected_qualification_method
+                )
+                side_key = (
+                    "fixed_physical_balh_actions"
+                    if solve_is_physical
+                    else "fixed_h6_actions"
+                )
+                other_side_key = (
+                    "fixed_h6_actions"
+                    if solve_is_physical
+                    else "fixed_physical_balh_actions"
+                )
+                side_actions = (
+                    fixed_solver.get(side_key)
+                    if isinstance(fixed_solver, Mapping)
+                    else None
+                )
+                side_actions_valid = bool(
+                    isinstance(side_actions, Mapping)
+                    and set(side_actions) == {"bottom", "top"}
+                    and other_side_key not in fixed_solver
+                    and all(
+                        isinstance(side_actions.get(side), Mapping)
+                        and side_actions[side].get("method")
+                        == expected_side_action_method
+                        and side_actions[side].get("operator_identity")
+                        == expected_side_operator_identity
+                        for side in ("bottom", "top")
                     )
                 )
-            )
-            if pure_qualification_method is None:
-                qualification_method_valid = True
             else:
-                qualification_method_valid = (
-                    pure_qualification_method
-                    == "fixed_h6_modal_gmres_research_with_original_outer_fgmres"
+                side_actions_valid = bool(
+                    not isinstance(fixed_solver, Mapping)
+                    or (
+                        "fixed_physical_balh_actions" not in fixed_solver
+                        and fixed_solver.get("method")
+                        == "fixed_h6_modal_gmres_research"
+                        and fixed_solver.get("feedback_method") in (None,)
+                        and pure_solver_operator
+                        in (
+                            None,
+                            "C-PbJbH6bJb^H Tb-PtJtH6tJt^H Tt",
+                        )
+                    )
                 )
+                if pure_qualification_method is None:
+                    qualification_method_valid = True
+                else:
+                    qualification_method_valid = (
+                        pure_qualification_method
+                        == "fixed_h6_modal_gmres_research_with_original_outer_fgmres"
+                    )
         else:
             from src.solvers.petsc_lu_stage import (
                 W0P7_PORD_SOURCE_MODEL_AUDIT_PATH,
@@ -8369,14 +9739,59 @@ def _consumer_result(
                 and valid_feedback_binding(candidate_binding)
                 and dict(summary_binding) == dict(candidate_binding)
             )
+        expected_policy_binding = (
+            expected_fixed_h6_binding.get("modal_solver_policy")
+            if isinstance(expected_fixed_h6_binding, Mapping)
+            else None
+        )
+        candidate_policy = (
+            candidate_inventory.get("modal_solver_policy")
+            if isinstance(candidate_inventory, Mapping)
+            else None
+        )
+        solver_policy = (
+            fixed_solver.get("modal_solver_policy")
+            if isinstance(fixed_solver, Mapping)
+            else None
+        )
+        modal_solver_policy_valid = bool(
+            (
+                expected_modal_solver_policy is None
+                and expected_policy_binding is None
+                and summary.get("modal_solver_policy") is None
+                and candidate_policy is None
+                and solver_policy is None
+            )
+            or (
+                expected_modal_solver_policy
+                in {
+                    "task041_v12_bounded_inexact_modal",
+                    "task041_v12_bounded_inexact_modal_once_backup",
+                }
+                and isinstance(expected_policy_binding, Mapping)
+                and expected_policy_binding.get("policy_id")
+                == expected_modal_solver_policy
+                and summary.get("modal_solver_policy")
+                == expected_modal_solver_policy
+                and candidate_policy == dict(expected_policy_binding)
+                and solver_policy == dict(expected_policy_binding)
+            )
+        )
         fixed_h6_method_validation = {
             "pass": bool(
-                candidate_method == expected_action_method
-                and solve_method == expected_action_method
+                candidate_method == expected_candidate_method
+                and (
+                    backup_actual_route_valid
+                    if backup_policy_requested
+                    else solve_method == expected_action_method
+                )
                 and isinstance(fixed_solver, Mapping)
                 and (
                     fixed_solver.get("operator") == expected_operator
-                    if expected_modal_feedback_method is not None
+                    if (
+                        expected_modal_feedback_method is not None
+                        or backup_policy_requested
+                    )
                     else fixed_solver.get("operator")
                     in (None, expected_operator)
                 )
@@ -8385,15 +9800,20 @@ def _consumer_result(
                 and (
                     summary.get("qualification_method")
                     == expected_qualification_method
-                    if expected_modal_feedback_method is not None
+                    if (
+                        expected_modal_feedback_method is not None
+                        or backup_policy_requested
+                    )
                     else qualification_method_valid
                 )
                 and registered_binding_matches
                 and solver_inventory_exclusive
                 and feedback_binding_valid
+                and modal_solver_policy_valid
                 and side_actions_valid
             ),
             "candidate_inventory_method": candidate_method,
+            "candidate_expected_method": expected_candidate_method,
             "solve_inventory_method": solve_method,
             "expected_modal_feedback_method": expected_modal_feedback_method,
             "summary_modal_feedback_method": summary_request,
@@ -8402,21 +9822,30 @@ def _consumer_result(
             "registered_fixed_h6_binding_match": registered_binding_matches,
             "solver_inventory_exclusive": solver_inventory_exclusive,
             "feedback_binding_match": feedback_binding_valid,
+            "expected_modal_solver_policy": expected_modal_solver_policy,
+            "modal_solver_policy_match": modal_solver_policy_valid,
             "side_actions_match": side_actions_valid,
             "operator_match": (
                 isinstance(fixed_solver, Mapping)
                 and (
                     fixed_solver.get("operator") == expected_operator
-                    if expected_modal_feedback_method is not None
+                    if (
+                        expected_modal_feedback_method is not None
+                        or backup_policy_requested
+                    )
                     else fixed_solver.get("operator")
                     in (None, expected_operator)
                 )
             ),
+            "backup_actual_route_match": (
+                backup_actual_route_valid if backup_policy_requested else None
+            ),
+            "post_backup_finite_stop_validation": finite_stop_validation,
             "candidate_inventory_pointer": (
                 "/setup/candidate_inventory/modal_inner_method"
             ),
             "solve_inventory_pointer": (
-                "/setup/full_formal/solve/inventory/modal_inner_solver/method"
+                f"/setup/full_formal/solve/inventory/{solver_key}/method"
             ),
         }
     modal_feedback_request_valid = True
@@ -9500,6 +10929,7 @@ def run_task041_public_supervisor(
     task041_resource_policy: str | None = None,
     fixed_h6_modal_gmres_research: bool = False,
     modal_feedback_method: str | None = None,
+    modal_solver_policy: str | None = None,
     expected_rank_cpus: Sequence[int] | None = None,
 ) -> dict[str, Any]:
     """Run one Task041 consumer, optionally reusing a completed BAL_H producer."""
@@ -9528,6 +10958,8 @@ def run_task041_public_supervisor(
     }
     if modal_feedback_method is not None:
         result["modal_feedback_method"] = modal_feedback_method
+    if modal_solver_policy is not None:
+        result["modal_solver_policy"] = modal_solver_policy
     git_identity: dict[str, Any] | None = None
     environment_snapshot: dict[str, Any] | None = None
     packet: dict[str, Any] | None = None
@@ -9586,6 +11018,7 @@ def run_task041_public_supervisor(
             fixed_h6_modal_gmres_research
             or expected_rank_cpus is not None
             or modal_feedback_method is not None
+            or modal_solver_policy is not None
         ):
             from benchmarks.task041_balh_workflow import (
                 task041_fixed_h6_modal_gmres_binding,
@@ -9613,6 +11046,7 @@ def run_task041_public_supervisor(
                     task041_resource_policy=task041_resource_policy,
                     expected_rank_cpus=expected_rank_cpus,
                     modal_feedback_method=modal_feedback_method,
+                    modal_solver_policy=modal_solver_policy,
                 )
             except (TypeError, ValueError) as exc:
                 raise Task041SupervisorError(
@@ -9765,6 +11199,33 @@ def run_task041_public_supervisor(
                     classification="task041_identity_failure",
                     stage="fixed_h6_research",
                 )
+            if modal_solver_policy is not None:
+                policy_binding = fixed_h6_binding.get("modal_solver_policy")
+                if (
+                    modal_solver_policy
+                    not in {
+                        "task041_v12_bounded_inexact_modal",
+                        "task041_v12_bounded_inexact_modal_once_backup",
+                    }
+                    or not isinstance(policy_binding, Mapping)
+                    or policy_binding.get("policy_id") != modal_solver_policy
+                    or run_manifest.get("modal_solver_policy")
+                    != modal_solver_policy
+                ):
+                    raise Task041SupervisorError(
+                        "run manifest does not bind the requested V12 modal solver policy",
+                        classification="task041_identity_failure",
+                        stage="fixed_h6_research",
+                    )
+            elif (
+                "modal_solver_policy" in run_manifest
+                or "modal_solver_policy" in fixed_h6_binding
+            ):
+                raise Task041SupervisorError(
+                    "pure fixed-H6 run contains an unrequested modal solver policy",
+                    classification="task041_identity_failure",
+                    stage="fixed_h6_research",
+                )
             if packet_source_binding is not None:
                 if run_manifest.get("packet_source_binding") != packet_source_binding:
                     raise Task041SupervisorError(
@@ -9793,8 +11254,14 @@ def run_task041_public_supervisor(
             result["fixed_h6_modal_gmres_research"] = fixed_h6_binding
             if modal_feedback_method is not None:
                 result["modal_feedback_method"] = modal_feedback_method
+            if modal_solver_policy is not None:
+                result["modal_solver_policy"] = modal_solver_policy
             result["post_start_document_allowlist"] = expected_document_allowlist
-        elif expected_rank_cpus is not None or modal_feedback_method is not None:
+        elif (
+            expected_rank_cpus is not None
+            or modal_feedback_method is not None
+            or modal_solver_policy is not None
+        ):
             raise Task041SupervisorError(
                 "modal feedback and explicit rank maps require fixed-H6 research",
                 classification="task041_identity_failure",
@@ -9802,7 +11269,10 @@ def run_task041_public_supervisor(
             )
         else:
             default_run_manifest = _read_json(root / "run_manifest.json")
-            if "modal_feedback_method" in default_run_manifest:
+            if (
+                "modal_feedback_method" in default_run_manifest
+                or "modal_solver_policy" in default_run_manifest
+            ):
                 raise Task041SupervisorError(
                     "default route run manifest contains an unrequested modal feedback method",
                     classification="task041_identity_failure",
@@ -10237,6 +11707,7 @@ def run_task041_public_supervisor(
                 ),
                 expected_fixed_h6_binding=fixed_h6_binding,
                 expected_modal_feedback_method=modal_feedback_method,
+                expected_modal_solver_policy=modal_solver_policy,
                 expected_packet_source_binding=packet_source_binding,
                 expected_producer_execution=(
                     case_runtime_contract.get("producer")
@@ -11039,6 +12510,7 @@ def run_task041_public_supervisor(
                         fixed_h6_binding is not None
                     ),
                     modal_feedback_method=modal_feedback_method,
+                    modal_solver_policy=modal_solver_policy,
                     expected_rank_cpus=expected_rank_cpus,
                     packet_source_binding=(
                         packet_source_binding
@@ -11237,6 +12709,7 @@ def run_task041_public_supervisor(
                         fixed_h6_binding is not None
                     ),
                     expected_modal_feedback_method=modal_feedback_method,
+                    expected_modal_solver_policy=modal_solver_policy,
                     expected_fixed_h6_binding=fixed_h6_binding,
                 )
             except Task041SupervisorError as exc:
@@ -11323,6 +12796,7 @@ def run_task041_public_supervisor(
                     fixed_h6_binding is not None
                 ),
                 expected_modal_feedback_method=modal_feedback_method,
+                expected_modal_solver_policy=modal_solver_policy,
                 expected_fixed_h6_binding=fixed_h6_binding,
             )
         except Task041SupervisorError as exc:

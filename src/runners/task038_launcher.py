@@ -3665,6 +3665,7 @@ def launch_specification(
     task041_resource_policy: str | None = None,
     fixed_h6_modal_gmres_research: bool = False,
     modal_feedback_method: str | None = None,
+    modal_solver_policy: str | None = None,
     expected_rank_cpus: Sequence[int] | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
@@ -3705,6 +3706,7 @@ def launch_specification(
         fixed_h6_modal_gmres_research
         or expected_rank_cpus is not None
         or modal_feedback_method is not None
+        or modal_solver_policy is not None
     ):
         try:
             from benchmarks.task041_balh_workflow import (
@@ -3732,6 +3734,7 @@ def launch_specification(
                 task041_resource_policy=task041_resource_policy,
                 expected_rank_cpus=expected_rank_cpus,
                 modal_feedback_method=modal_feedback_method,
+                modal_solver_policy=modal_solver_policy,
             )
         except (TypeError, ValueError) as exc:
             raise InputError(str(exc)) from exc
@@ -4124,6 +4127,21 @@ def launch_specification(
         )
         manifest["modal_feedback_method"] = modal_feedback_method
         _write_json(run_directory / "run_manifest.json", manifest)
+    if modal_solver_policy is not None:
+        if (
+            fixed_h6_binding is None
+            or fixed_h6_binding.get("modal_solver_policy", {}).get("policy_id")
+            != modal_solver_policy
+        ):
+            raise InputError(
+                "modal solver policy request does not match the registered fixed-H6 binding"
+            )
+        manifest["modal_solver_policy"] = modal_solver_policy
+        _write_json(run_directory / "run_manifest.json", manifest)
+    elif fixed_h6_binding is not None and "modal_solver_policy" in fixed_h6_binding:
+        raise InputError(
+            "fixed-H6 binding contains an unrequested modal solver policy"
+        )
     if packet_source_binding is not None:
         manifest["packet_source_binding"] = packet_source_binding
         _write_json(run_directory / "run_manifest.json", manifest)
@@ -4213,6 +4231,7 @@ def launch_specification(
                     fixed_h6_modal_gmres_research
                 ),
                 modal_feedback_method=modal_feedback_method,
+                modal_solver_policy=modal_solver_policy,
                 expected_rank_cpus=expected_rank_cpus,
             )
         except OSError as exc:

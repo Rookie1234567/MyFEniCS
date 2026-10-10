@@ -1150,6 +1150,8 @@ def _build_fixture(
     reuse_leading_ph_dual: bool = False,
     h6_action=None,
     local_row_counts: tuple[int, ...] | None = None,
+    side_restart64_trial_state: dict[str, object] | None = None,
+    side_restart64_memory_gate=None,
 ) -> tuple[SideBalancedInverse, dict[str, object]]:
     operator, operator_context = _scale_matrix(
         size, 2.0, local_row_counts=local_row_counts
@@ -1178,6 +1180,8 @@ def _build_fixture(
         record_iteration_history=record_iteration_history,
         p4_inverse_backend=p4_inverse_backend,
         reuse_leading_ph_dual=reuse_leading_ph_dual,
+        side_restart64_trial_state=side_restart64_trial_state,
+        side_restart64_memory_gate=side_restart64_memory_gate,
     )
     return inverse, {
         "operator": operator,
@@ -4074,6 +4078,8 @@ def _fixed_q_real_cell_condensed_fixture(
     *,
     physical_trace_scale: float = 1.0,
     empty_owner: bool = False,
+    side_restart64_trial_state: dict[str, object] | None = None,
+    side_restart64_memory_gate=None,
 ):
     """Build a one-cell real P4Cell inverse and the fixed-Q side callback."""
 
@@ -4256,6 +4262,8 @@ def _fixed_q_real_cell_condensed_fixture(
             p4_inverse_backend="cell_condensed",
             h6_action=h6,
             local_row_counts=full_local_rows,
+            side_restart64_trial_state=side_restart64_trial_state,
+            side_restart64_memory_gate=side_restart64_memory_gate,
         )
         p4 = None
         old_full_action = side_owned["full_action"].matrix
@@ -5155,3 +5163,723 @@ def test_side_inverse_fixed_ksp_budget_contract(
         operator.destroy()
     assert restored_real_ksp is True
     assert inverse._ksp is None
+
+
+def test_v12_restart64_selection_requires_same_rhs_residual_and_wall_cost():
+    """Synthetic scalar timings exercise the fixed restart64 choice boundary."""
+
+    def evidence(
+        eta32: float,
+        eta64: float,
+        baseline_seconds: tuple[float, ...],
+        trial_seconds: tuple[float, ...],
+        setup_seconds: tuple[float, ...],
+    ) -> dict[str, object]:
+        rank_count = len(baseline_seconds)
+        baseline_max = max(baseline_seconds)
+        setup_max = max(setup_seconds)
+        trial_max = max(trial_seconds)
+        baseline = [
+            {
+                "rank": rank,
+                "rank_local_elapsed_seconds": baseline_seconds[rank],
+                "max_rank_elapsed_seconds": baseline_max,
+            }
+            for rank in range(rank_count)
+        ]
+        trial = [
+            {
+                "rank": rank,
+                "elapsed_local_seconds": trial_seconds[rank],
+                "ksp_setup_elapsed_local_seconds": setup_seconds[rank],
+            }
+            for rank in range(rank_count)
+        ]
+        return side_inverse_module._v12_restart64_selection_evidence(
+            eta32,
+            eta64,
+            baseline,
+            trial,
+            trial_elapsed_max_rank_seconds=trial_max,
+            trial_setup_elapsed_max_rank_seconds=setup_max,
+        )
+
+    improved = evidence(0.8, 0.4, (0.20, 0.18), (0.15, 0.14), (0.01, 0.02))
+    assert improved["eligible_for_64"] is True
+    assert improved["residual_improved_by_at_least_10_percent"] is True
+    assert improved["max_rank_trial_wall_with_one_setup_not_higher"] is True
+    assert improved["log_residual_reduction_per_wall_not_lower"] is True
+    assert improved["restart64_max_rank_trial_wall_with_setup_seconds"] == pytest.approx(
+        0.16
+    )
+
+    # The eta is slightly better, but the same-RHS max-rank trial cost is much
+    # worse; retaining restart32 is required even though eta64 < eta32.
+    slower = evidence(0.8, 0.76, (0.20, 0.18), (2.0, 1.8), (0.1, 0.1))
+    assert slower["eligible_for_64"] is False
+    assert slower["max_rank_trial_wall_with_one_setup_not_higher"] is False
+
+    baseline_missing = [
+        {
+            "rank": 0,
+            "rank_local_elapsed_seconds": None,
+            "max_rank_elapsed_seconds": None,
+        }
+    ]
+    trial_one = [
+        {
+            "rank": 0,
+            "elapsed_local_seconds": 0.1,
+            "ksp_setup_elapsed_local_seconds": 0.01,
+        }
+    ]
+    missing_cost = side_inverse_module._v12_restart64_selection_evidence(
+        0.8,
+        0.4,
+        baseline_missing,
+        trial_one,
+        trial_elapsed_max_rank_seconds=0.1,
+        trial_setup_elapsed_max_rank_seconds=0.01,
+    )
+    assert missing_cost["eligible_for_64"] is False
+    assert missing_cost["restart32_max_rank_side_wall_seconds"] is None
+
+    nonfinite_trial = [dict(trial_one[0], elapsed_local_seconds=float("nan"))]
+    nonfinite_cost = side_inverse_module._v12_restart64_selection_evidence(
+        0.8,
+        0.4,
+        [
+            {
+                "rank": 0,
+                "rank_local_elapsed_seconds": 0.2,
+                "max_rank_elapsed_seconds": 0.2,
+            }
+        ],
+        nonfinite_trial,
+        trial_elapsed_max_rank_seconds=0.1,
+        trial_setup_elapsed_max_rank_seconds=0.01,
+    )
+    assert nonfinite_cost["eligible_for_64"] is False
+
+    assert side_inverse_module._V12_RESTART64_SELECTION_RULE.startswith(
+        "same_rhs_eta64_at_most_0.9_eta32"
+    )
+
+
+@pytest.mark.parametrize(
+    ("history_case", "reason", "captured"),
+    [
+        ("two_windows_stalled", _DIVERGED_ITS, True),
+        ("second_window_improves", _DIVERGED_ITS, False),
+        ("positive_runtime_reason", 2, False),
+    ],
+    ids=["eligible", "ineligible_progress", "ineligible_reason"],
+)
+@pytest.mark.parametrize(
+    "empty_owner", [False, True], ids=["owned_layout", "mpi2_empty_owner"]
+)
+def test_v12_restart32_candidate_capture_uses_armed_entry_and_owned_rhs(
+    history_case: str,
+    reason: int,
+    captured: bool,
+    empty_owner: bool,
+) -> None:
+    """Run the real armed capture entry with an explicitly synthetic scalar history.
+
+    The PETSc Vec, production candidate method, rank-local copy/hash, and gate
+    callback are real fixture paths.  Only the 64..128 residual scalars are
+    synthetic; this is not evidence of a 128-step FE stagnation.
+    """
+
+    comm = MPI.COMM_WORLD
+    if empty_owner and comm.size != 2:
+        pytest.skip("the empty-owner capture layout requires MPI2")
+    state: dict[str, object] = {
+        "schema": "task041.v12.side_restart64_trial_state.v1",
+        "policy_id": "task041_v12_bounded_inexact_modal_once_backup",
+        "status": "capture_armed",
+        "resolved": False,
+        "pending": False,
+        "trial_count": 0,
+        "backup_method_active": True,
+        "backup_commit_count": 1,
+        "post_backup_side_solve_seen": {"bottom": False, "top": False},
+        "outer_stagnation_confirmed": True,
+        "capture_armed": True,
+    }
+    gate_requests: list[dict[str, object]] = []
+
+    def tiny_fresh_gate(request):
+        gate_requests.append(dict(request))
+        return {
+            "schema": "tiny_fixture_only_side_restart_memory_gate.v1",
+            "pass": True,
+            "status": "admitted_for_tiny_test_only",
+            "phase": request["phase"],
+            "restart": request["restart"],
+        }
+
+    inverse, owned = _fixed_q_real_cell_condensed_fixture(
+        empty_owner=empty_owner,
+        side_restart64_trial_state=state,
+        side_restart64_memory_gate=tiny_fresh_gate,
+    )
+    source = inverse._operator.createVecRight()
+    source_local_before = None
+    source_global_before = None
+    candidate = None
+    try:
+        local = source.getArray()
+        local[:] = np.asarray(
+            [0.75 - 0.25j + 0.1 * index for index in range(local.size)],
+            dtype=PETSc.ScalarType,
+        )
+        source.assemble()
+        source_local_before = np.array(
+            source.getArray(readonly=True), dtype=np.complex128, copy=True
+        )
+        source_global_before = _gather_dense_vector(source)
+        rhs_norm = float(source.norm())
+        assert np.isfinite(rhs_norm) and rhs_norm > 0.0
+        assert inverse._side_restart64_capture_is_armed() is True
+
+        samples = []
+        for iteration in range(64, 129):
+            if history_case == "second_window_improves" and iteration >= 96:
+                eta = 0.4
+            else:
+                eta = 0.5
+            samples.append(
+                {
+                    "iteration": iteration,
+                    "reported_residual": None,
+                    "original_D_true_residual_norm": eta * rhs_norm,
+                    "original_D_rhs_norm": rhs_norm,
+                    "original_D_true_relative_residual": eta,
+                    "finite": True,
+                    "scope": "synthetic_scalar_history_for_capture_boundary_only",
+                }
+            )
+        final_eta = float(samples[-1]["original_D_true_relative_residual"])
+        solve_record = {
+            "rank": int(comm.rank),
+            "status": "INNER_APPROXIMATE_RETURN",
+            "reason": int(reason),
+            "iterations": 128,
+            "elapsed_local_seconds": 0.2 + 0.01 * int(comm.rank),
+            "elapsed_seconds": 0.2 + 0.01 * (comm.size - 1),
+            "counts": {"delta": {"Q": 128, "H6": 128, "A6": 128}},
+            "operation_seconds": {
+                "per_rank_accumulated_seconds": {
+                    "Q": 0.01,
+                    "H6": 0.02,
+                    "A6": 0.03,
+                }
+            },
+            "p4_call_history": [],
+        }
+        result = inverse._consider_restart32_candidate(
+            source,
+            reason=int(reason),
+            iterations=128,
+            residual_audit={
+                "rhs_norm": rhs_norm,
+                "residual_norm": final_eta * rhs_norm,
+                "relative_residual": final_eta,
+            },
+            samples=samples,
+            solve_record=solve_record,
+        )
+        assert (result is not None) is captured
+        np.testing.assert_array_equal(
+            source.getArray(readonly=True), source_local_before
+        )
+        np.testing.assert_array_equal(_gather_dense_vector(source), source_global_before)
+        if captured:
+            assert result["status"] == "candidate_captured"
+            assert state["status"] == "candidate_captured"
+            assert state["candidate"]["captured_owner_sharded"] is True
+            assert state["candidate"]["restart32_evidence"]["window_end_iterations"] == [
+                [64, 96],
+                [96, 128],
+            ]
+            work_rows = state["candidate"]["restart32_evidence"][
+                "restart32_reference_work_by_rank"
+            ]
+            assert len(work_rows) == comm.size
+            assert [row["rank"] for row in work_rows] == list(range(comm.size))
+            candidate = inverse._side_restart64_candidate_rhs
+            assert candidate is not None
+            assert candidate.getSize() == source.getSize()
+            assert candidate.getOwnershipRange() == source.getOwnershipRange()
+            np.testing.assert_array_equal(
+                candidate.getArray(readonly=True), source_local_before
+            )
+            assert len(gate_requests) == 1
+            request = gate_requests[0]
+            assert request["phase"] == "capture_restart32_rhs"
+            assert request["rhs_local_sha256"] == (
+                side_inverse_module._local_complex_vec_sha256(source)
+            )
+            assert request["rhs_local_sha256"] == (
+                side_inverse_module._local_complex_vec_sha256(candidate)
+            )
+            layout = comm.allgather(
+                {
+                    "rank": comm.rank,
+                    "local_size": int(request["local_vector_size"]),
+                    "range": list(request["rhs_ownership_range"]),
+                    "global_size": int(request["rhs_global_size"]),
+                }
+            )
+            assert sum(row["local_size"] for row in layout) == source.getSize()
+            assert layout[0]["range"][0] == 0
+            assert layout[-1]["range"][1] == source.getSize()
+            if empty_owner:
+                assert [row["local_size"] for row in layout] == [0, 2]
+            same_candidate = candidate
+            second_result = inverse._consider_restart32_candidate(
+                source,
+                reason=int(reason),
+                iterations=128,
+                residual_audit={"relative_residual": final_eta},
+                samples=samples,
+                solve_record=solve_record,
+            )
+            assert second_result is None
+            assert inverse._side_restart64_candidate_rhs is same_candidate
+            assert len(gate_requests) == 1
+        else:
+            assert state["status"] == "capture_armed"
+            assert inverse._side_restart64_candidate_rhs is None
+            assert gate_requests == []
+    finally:
+        if candidate is not None:
+            candidate.destroy()
+            inverse._side_restart64_candidate_rhs = None
+        source.destroy()
+        inverse.destroy()
+        owned["operator"].destroy()
+
+
+@pytest.mark.parametrize(
+    "empty_owner", [False, True], ids=["serial_layout", "mpi2_empty_owner"]
+)
+@pytest.mark.parametrize(
+    "restore_refused", [False, True], ids=["restart32_restored", "restore_gate_refused"]
+)
+def test_v12_side_restart64_capacity_refusal_retains_real_cell_restart32_and_factor(
+    empty_owner: bool,
+    restore_refused: bool,
+) -> None:
+    """A denied tiny gate destroys the old KSP before restoring or refusing KSP32.
+
+    The captured-candidate state is deliberately seeded to reach the post-capture
+    safe boundary; this does not claim that the tiny solve met production capture
+    eligibility or that the fixture callback is a real resource admission. The
+    refusal branch retains the P4 factor and returns a typed no-KSP state for the
+    outer safe-stop path; it does not bypass the restore gate.
+    """
+
+    comm = MPI.COMM_WORLD
+    if empty_owner and comm.size != 2:
+        pytest.skip("the empty-owner side-trial case requires MPI2")
+    gate_requests: list[dict[str, object]] = []
+    state: dict[str, object] = {
+        "schema": "task041.v12.side_restart64_trial_state.v1",
+        "policy_id": "task041_v12_bounded_inexact_modal_once_backup",
+        "status": "armed",
+        "resolved": False,
+        "pending": False,
+        "trial_count": 0,
+    }
+
+    def deny_tiny_workspace(request):
+        gate_requests.append(dict(request))
+        return {
+            "schema": "tiny_fixture_only_side_restart_memory_gate.v1",
+            "pass": request["phase"] == "restore_restart32" and not restore_refused,
+            "status": (
+                "admitted_for_tiny_test_only"
+                if request["phase"] == "restore_restart32" and not restore_refused
+                else "refused"
+            ),
+            "phase": request["phase"],
+            "restart": request["restart"],
+            "reason": "fixture refuses restart64 then admits a fresh restart32 workspace",
+        }
+
+    inverse, owned = _fixed_q_real_cell_condensed_fixture(
+        empty_owner=empty_owner,
+        side_restart64_trial_state=state,
+        side_restart64_memory_gate=deny_tiny_workspace,
+    )
+    p4 = owned["p4_factor"]
+    source = inverse._operator.createVecRight()
+    source.set(PETSc.ScalarType(1.0 + 0.25j))
+    candidate = source.duplicate()
+    source.copy(candidate)
+    restart32_handle = inverse._ksp
+    try:
+        assert isinstance(p4, P4CondensedExactFactor)
+        assert isinstance(p4.inverse, P4CellCondensedInverse)
+        assert restart32_handle is not None
+        assert inverse._gmres_restart == 32
+        state.update(
+            {
+                "status": "candidate_captured",
+                "resolved": False,
+                "pending": True,
+                "trial_count": 0,
+                "candidate_side": "bottom",
+                "candidate": {
+                    "side": "bottom",
+                    "original_D_relative_residual": 0.25,
+                    "original_D_rhs_norm": float(candidate.norm()),
+                    # This branch seeds the post-capture state directly. Keep
+                    # the production candidate schema without inventing solve
+                    # timings or claiming a real restart32 solve occurred.
+                    "restart32_evidence": {
+                        "restart32_reference_work_by_rank": [
+                            {"rank": int(rank), "fixture_seeded": True}
+                            for rank in range(comm.size)
+                        ]
+                    },
+                },
+            }
+        )
+        inverse._side_restart64_candidate_rhs = candidate
+
+        result = inverse.run_side_restart64_trial()
+        candidate = None
+        assert result["status"] == (
+            "capacity_gate_refused_restart32_restore"
+            if restore_refused
+            else "capacity_gate_refused"
+        )
+        assert result["stage"] == (
+            "restore_restart32" if restore_refused else "allocate_restart64"
+        )
+        assert result["restart32_original_handle_destroyed"] is True
+        assert result["restart32_handle_retained"] is False
+        assert result["restart32_restore_required"] is restore_refused
+        assert result["restart32_restored"] is not restore_refused
+        assert result["restart32_restored_handle_live"] is not restore_refused
+        assert result["restart32_restore_gate"]["phase"] == "restore_restart32"
+        assert result["restart32_restore_gate"]["pass"] is not restore_refused
+        assert result["candidate_rhs_binding"]["restart32_reference_work_by_rank"] == (
+            state["candidate"]["restart32_evidence"][
+                "restart32_reference_work_by_rank"
+            ]
+        )
+        assert result["factor_handle_retained"] is True
+        assert state["trial_count"] == 1
+        assert state["resolved"] is False
+        assert (inverse._ksp is None) is restore_refused
+        if not restore_refused:
+            assert inverse._ksp is not restart32_handle
+        assert inverse._gmres_restart == 32
+        assert inverse._nested_ksp_created_count == (1 if restore_refused else 2)
+        assert inverse._nested_ksp_destroy_count == 1
+        assert inverse._p4_factor is p4
+        assert p4._destroyed is False
+        assert p4.inverse.destroyed is False
+        assert len(gate_requests) == 2
+        request = gate_requests[0]
+        assert request["phase"] == "allocate_restart64"
+        assert request["existing_restart32_ksp_live"] is False
+        assert request["candidate_rhs_live"] is True
+        assert request["workspace_lifecycle"] == (
+            "restart32_ksp_destroyed_plus_candidate_rhs_live_plus_full_new_restart64_workspace"
+        )
+        assert request["restart"] == 64
+        restore_request = gate_requests[1]
+        assert restore_request["phase"] == "restore_restart32"
+        assert restore_request["existing_restart32_ksp_live"] is False
+        assert restore_request["candidate_rhs_live"] is False
+        assert restore_request["workspace_lifecycle"] == (
+            "restart64_ksp_and_candidate_rhs_destroyed_plus_full_new_restart32_workspace"
+        )
+        assert restore_request["restart"] == 32
+        local_range = list(map(int, request["rhs_ownership_range"]))
+        assert local_range[1] - local_range[0] == request["local_vector_size"]
+        operator_local_rows, operator_local_columns = map(
+            int,
+            (
+                request["operator_local_rows"],
+                request["operator_local_columns"],
+            ),
+        )
+        assert operator_local_columns == request["local_vector_size"]
+        assert operator_local_rows >= 0
+        owner_rows = comm.allgather(
+            {
+                "rank": comm.rank,
+                "range": local_range,
+                "local_size": request["local_vector_size"],
+                "operator_local_rows": operator_local_rows,
+                "operator_local_columns": operator_local_columns,
+                "global_size": request["rhs_global_size"],
+            }
+        )
+        if empty_owner:
+            assert [row["local_size"] for row in owner_rows] == [0, 2]
+        assert owner_rows[0]["range"][0] == 0
+        assert owner_rows[-1]["range"][1] == owner_rows[0]["global_size"]
+        assert sum(row["operator_local_rows"] for row in owner_rows) == owner_rows[0]["global_size"]
+        assert sum(row["operator_local_columns"] for row in owner_rows) == owner_rows[0]["global_size"]
+        with pytest.raises(RuntimeError, match="not at its sealed safe boundary"):
+            inverse.run_side_restart64_trial()
+        assert (inverse._ksp is None) is restore_refused
+        if not restore_refused:
+            assert inverse._ksp is not restart32_handle
+        assert inverse._p4_factor is p4
+    finally:
+        if candidate is not None:
+            candidate.destroy()
+        source.destroy()
+        inverse.destroy()
+        owned["operator"].destroy()
+
+
+@pytest.mark.parametrize("empty_owner", [False, True], ids=["serial_layout", "mpi2_empty_owner"])
+def test_v12_side_restart64_trial_borrows_p4_and_records_real_original_D_residual(
+    empty_owner: bool,
+) -> None:
+    """The tiny admitted trial solves the same RHS and audits the original D.
+
+    The candidate transition is seeded; the restart32/apply and restart64 solves,
+    same-factor use, and original-D residuals are actual fixture operations. The
+    memory callback only admits this tiny test and is not a fresh-capacity proof.
+    """
+
+    comm = MPI.COMM_WORLD
+    if empty_owner and comm.size != 2:
+        pytest.skip("the empty-owner side-trial case requires MPI2")
+    gate_requests: list[dict[str, object]] = []
+    state: dict[str, object] = {
+        "schema": "task041.v12.side_restart64_trial_state.v1",
+        "policy_id": "task041_v12_bounded_inexact_modal_once_backup",
+        "status": "armed",
+        "resolved": False,
+        "pending": False,
+        "trial_count": 0,
+    }
+
+    def admit_tiny_workspace(request):
+        gate_requests.append(dict(request))
+        return {
+            "schema": "tiny_fixture_only_side_restart_memory_gate.v1",
+            "pass": True,
+            "status": "admitted_for_tiny_test_only",
+            "phase": request["phase"],
+            "restart": request["restart"],
+        }
+
+    inverse, owned = _fixed_q_real_cell_condensed_fixture(
+        empty_owner=empty_owner,
+        side_restart64_trial_state=state,
+        side_restart64_memory_gate=admit_tiny_workspace,
+    )
+    p4 = owned["p4_factor"]
+    source = inverse._operator.createVecRight()
+    source.set(PETSc.ScalarType(0.75 - 0.2j))
+    source_before = _gather_dense_vector(source)
+    solution32 = inverse._operator.createVecRight()
+    candidate = None
+    restart32_handle = inverse._ksp
+    try:
+        assert isinstance(p4, P4CondensedExactFactor)
+        assert isinstance(p4.inverse, P4CellCondensedInverse)
+        assert restart32_handle is not None
+        assert inverse._gmres_restart == 32
+        inverse.apply(source, solution32)
+        restart32_residual = inverse._explicit_residual(source, solution32)
+        assert np.isfinite(restart32_residual["relative_residual"])
+        assert restart32_residual["rhs_norm"] > 0.0
+        restart32_work_by_rank = comm.allgather(
+            inverse._restart32_reference_work(inverse._last_apply)
+        )
+        assert [row["rank"] for row in restart32_work_by_rank] == list(
+            range(comm.size)
+        )
+
+        candidate = source.duplicate()
+        source.copy(candidate)
+        np.testing.assert_array_equal(
+            _gather_dense_vector(candidate), source_before
+        )
+        inverse._side_restart64_candidate_rhs = candidate
+        state.update(
+            {
+                "status": "candidate_captured",
+                "resolved": False,
+                "pending": True,
+                "trial_count": 0,
+                "candidate_side": "bottom",
+                "candidate": {
+                    "side": "bottom",
+                    "original_D_relative_residual": float(
+                        restart32_residual["relative_residual"]
+                    ),
+                    "original_D_rhs_norm": float(restart32_residual["rhs_norm"]),
+                    "global_size": int(source.getSize()),
+                    "captured_owner_sharded": True,
+                    "restart32_evidence": {
+                        "restart32_reference_work_by_rank": restart32_work_by_rank
+                    },
+                },
+            }
+        )
+        record = inverse.run_side_restart64_trial()
+        candidate = None
+        assert record["status"] in {
+            "trial_completed_selected_64",
+            "trial_completed_retained_32",
+        }
+        assert record["same_p4_factor_handle_all_ranks"] is True
+        selection = record["selection_evidence"]
+        assert selection["eligible_for_64"] is (
+            record["status"] == "trial_completed_selected_64"
+        )
+        assert selection["rule_id"] == side_inverse_module._V12_RESTART64_SELECTION_RULE
+        if record["selected_restart"] == 64:
+            assert selection["residual_improved_by_at_least_10_percent"] is True
+            assert selection["max_rank_trial_wall_with_one_setup_not_higher"] is True
+            assert selection["log_residual_reduction_per_wall_not_lower"] is True
+        assert record["trial_transition_wall_including_one_setup_max_rank_seconds"] == pytest.approx(
+            selection["restart64_max_rank_trial_wall_with_setup_seconds"]
+        )
+        assert record[
+            "cumulative_side_wall_seconds_including_transition_setup"
+        ] == pytest.approx(
+            record["cumulative_side_apply_seconds"]
+            + record["cumulative_restart_transition_ksp_setup_seconds"]
+        )
+        assert record["restart32_relative_residual"] == restart32_residual[
+            "relative_residual"
+        ]
+        assert record["candidate_rhs_binding"]["original_D_rhs_norm"] == source.norm()
+        assert record["restart64_mgs_setup"]["preallocate_vectors"] is True
+        assert record["restart64_mgs_setup"]["orthogonalization"] == (
+            "modified_gram_schmidt"
+        )
+        assert record["restart64_mgs_setup"]["readback_matches"] is True
+        residual = record["restart64_original_D_residual"]
+        assert set(residual) == {
+            "rhs_norm",
+            "solution_norm",
+            "residual_norm",
+            "relative_residual",
+        }
+        assert all(
+            np.isfinite(float(residual[key])) and float(residual[key]) >= 0.0
+            for key in residual
+        )
+        assert residual["rhs_norm"] == source.norm()
+        assert residual["relative_residual"] == record[
+            "restart64_relative_residual"
+        ]
+        assert np.isclose(
+            residual["relative_residual"],
+            residual["residual_norm"] / residual["rhs_norm"],
+            rtol=1.0e-12,
+            atol=1.0e-15,
+        )
+        rank_records = record["restart64_rank_records"]
+        assert len(rank_records) == comm.size
+        assert all(
+            row["same_p4_factor_handle_local"] is True
+            and row["candidate_rhs_unchanged_local"] is True
+            and row["original_D_residual"] == residual
+            for row in rank_records
+        )
+        restart32_work = record["candidate_rhs_binding"][
+            "restart32_reference_work_by_rank"
+        ]
+        assert isinstance(restart32_work, list)
+        assert len(restart32_work) == comm.size
+        for rank, row in enumerate(restart32_work):
+            assert row["rank"] == rank
+            assert type(row["iterations"]) is int
+            assert row["iterations"] >= 0
+            assert isinstance(row["reason"], int)
+            for timing_key in (
+                "rank_local_elapsed_seconds",
+                "max_rank_elapsed_seconds",
+            ):
+                assert np.isfinite(float(row[timing_key]))
+                assert float(row[timing_key]) >= 0.0
+            assert set(row["rank_local_operation_seconds"]) == {"Q", "H6", "A6"}
+            assert isinstance(row["rank_local_count_delta"], dict)
+            assert isinstance(row["p4_costs"], dict)
+            assert type(row["p4_costs"]["call_count"]) is int
+        for rank, row in enumerate(rank_records):
+            assert row["rank"] == rank
+            assert np.isfinite(float(row["elapsed_local_seconds"]))
+            assert np.isfinite(float(row["ksp_setup_elapsed_local_seconds"]))
+            assert row["ksp_setup_elapsed_local_seconds"] >= 0.0
+            assert set(row["operation_seconds"]["per_rank_accumulated_seconds"]) == {
+                "Q",
+                "H6",
+                "A6",
+            }
+            assert isinstance(row["rank_local_count_delta"], dict)
+            assert isinstance(row["p4_costs"], dict)
+            assert type(row["p4_costs"]["call_count"]) is int
+        assert inverse._p4_factor is p4
+        assert p4._destroyed is False
+        assert p4.inverse.destroyed is False
+        assert inverse._side_restart64_candidate_rhs is None
+        assert state["trial_count"] == 1
+        assert len(gate_requests) == (
+            1 if record["status"] == "trial_completed_selected_64" else 2
+        )
+        assert gate_requests[0]["phase"] == "allocate_restart64"
+        assert gate_requests[0]["existing_restart32_ksp_live"] is False
+        assert gate_requests[0]["candidate_rhs_live"] is True
+        assert gate_requests[0]["operator_local_columns"] == gate_requests[0]["local_vector_size"]
+        if empty_owner:
+            expected_range = [0, 0] if comm.rank == 0 else [0, 2]
+            assert gate_requests[0]["rhs_ownership_range"] == expected_range
+        np.testing.assert_array_equal(_gather_dense_vector(source), source_before)
+        if record["status"] == "trial_completed_retained_32":
+            assert inverse._ksp is not restart32_handle
+            assert inverse._gmres_restart == 32
+            assert record["restart32_original_handle_destroyed"] is True
+            assert record["restart32_handle_retained"] is False
+            assert record["restart32_restore_required"] is False
+            assert record["restart32_restored"] is True
+            assert record["restart32_restore_gate"]["phase"] == "restore_restart32"
+            assert record["restart32_restore_gate"]["pass"] is True
+            assert gate_requests[1]["phase"] == "restore_restart32"
+            assert gate_requests[1]["candidate_rhs_live"] is False
+            assert gate_requests[1]["existing_restart32_ksp_live"] is False
+            expected_restart = 32
+        else:
+            assert inverse._ksp is not restart32_handle
+            assert inverse._gmres_restart == 64
+            assert record["restart32_original_handle_destroyed"] is True
+            assert record["restart32_handle_retained"] is False
+            assert record["restart32_restore_required"] is False
+            assert record["restart64_handle_retained"] is True
+            expected_restart = 64
+        contract = inverse._ksp_contract_audit()
+        assert contract["pass"] is True
+        assert contract["actual"]["restart"] == expected_restart
+        if record["status"] == "trial_completed_retained_32":
+            assert inverse._nested_ksp_created_count == 3
+            assert inverse._nested_ksp_destroy_count == 2
+        else:
+            assert inverse._nested_ksp_created_count == 2
+            assert inverse._nested_ksp_destroy_count == 1
+        with pytest.raises(RuntimeError, match="not at its sealed safe boundary"):
+            inverse.run_side_restart64_trial()
+        assert inverse._p4_factor is p4
+    finally:
+        if candidate is not None:
+            candidate.destroy()
+        source.destroy()
+        solution32.destroy()
+        inverse.destroy()
+        owned["operator"].destroy()

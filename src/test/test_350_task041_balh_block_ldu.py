@@ -9,6 +9,7 @@ import inspect
 import json
 import linecache
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 import pytest
@@ -394,7 +395,207 @@ def _destroy_fixed_h6_modal_krylov_components(
         operator = bundle.get("active_operator")
         if operator is not None:
             operator.destroy()
+    for matrix in fixture.get("v12_owned_matrices", []):
+        matrix.destroy()
     _destroy_fixture(fixture)
+
+
+def _v12_fixed_h6_modal_components():
+    """Build actual tiny H6 adapters with a test-injected 40x40 modal matrix."""
+
+    fixture = _tiny_fixture()
+    bundles: list[dict[str, object]] = []
+    owned_matrices: list[PETSc.Mat] = []
+    fixture["v12_owned_matrices"] = owned_matrices
+    try:
+        for side in ("bottom", "top"):
+            bundle = _tiny_fixed_h6_bundle(side)
+            bundles.append(bundle)
+            bundle["adapter"] = FixedH6ActiveTraceAction(
+                bundle["active_operator"], bundle["condensed"], bundle["h6"]
+            )
+
+        mode_count = 20
+        comm = MPI.COMM_WORLD
+        owner = comm.size - 1
+        modal_template = PETSc.Vec().createMPI(
+            (mode_count if comm.rank == owner else 0, mode_count), comm=comm
+        )
+        active_template = bundles[0]["active_operator"].createVecRight()
+        rng = np.random.default_rng(41012)
+        side_blocks = []
+        try:
+            for _side in ("bottom", "top"):
+                projection_dense = (
+                    rng.standard_normal((mode_count, 4))
+                    + 1j * rng.standard_normal((mode_count, 4))
+                ) / 8.0
+                positive_dense = (
+                    rng.standard_normal((4, mode_count))
+                    + 1j * rng.standard_normal((4, mode_count))
+                ) / 9.0
+                negative_dense = (
+                    rng.standard_normal((4, mode_count))
+                    + 1j * rng.standard_normal((4, mode_count))
+                ) / 11.0
+                projection = _matrix_from_dense(
+                    modal_template, active_template, projection_dense
+                )
+                positive = _matrix_from_dense(
+                    active_template, modal_template, positive_dense
+                )
+                negative = _matrix_from_dense(
+                    active_template, modal_template, negative_dense
+                )
+                owned_matrices.extend((projection, positive, negative))
+                side_blocks.append(
+                    SimpleNamespace(
+                        projection=projection,
+                        positive_traction=positive,
+                        negative_traction=negative,
+                        positive_interior_correction=np.zeros(
+                            (mode_count, mode_count), dtype=np.complex128
+                        ),
+                        negative_interior_correction=np.zeros(
+                            (mode_count, mode_count), dtype=np.complex128
+                        ),
+                        modal_rhs_correction=np.zeros(
+                            mode_count, dtype=np.complex128
+                        ),
+                    )
+                )
+        finally:
+            active_template.destroy()
+            modal_template.destroy()
+
+        factors = np.asarray(
+            [0.35 + 0.004j * (index + 1) for index in range(mode_count)],
+            dtype=np.complex128,
+        )
+        coupling = SimpleNamespace(
+            mode_count_per_direction=mode_count,
+            internal_unknown_count=2 * mode_count,
+            negative_trace_to_positive=np.eye(mode_count, dtype=np.complex128),
+            propagation=SimpleNamespace(
+                forward=SimpleNamespace(factors=factors.copy()),
+                backward=SimpleNamespace(
+                    factors=np.asarray(0.68 - 0.003j * np.arange(1, mode_count + 1))
+                ),
+            ),
+            bottom=side_blocks[0],
+            top=side_blocks[1],
+        )
+        fixture["v12_coupling"] = coupling
+        constraint = np.asarray(
+            internal_modal_constraint_matrix(coupling), dtype=np.complex128
+        )
+        diagonal = np.geomspace(0.03, 30.0, 2 * mode_count) * np.exp(
+            1j * np.linspace(-0.2, 0.25, 2 * mode_count)
+        )
+        schur = np.diag(diagonal) @ constraint
+        assert np.isfinite(schur).all()
+        assert np.linalg.norm(schur - schur.conj().T) > 1.0
+        return fixture, bundles, coupling, schur
+    except BaseException:
+        _destroy_fixed_h6_modal_krylov_components(fixture, bundles, None)
+        raise
+
+
+def _set_v12_test_schur(
+    system: block_ldu._FixedH6ModalKrylovSystem,
+    dense_schur: np.ndarray,
+) -> None:
+    matrix = np.asarray(dense_schur, dtype=np.complex128)
+    system._modal_action.apply = lambda values: np.asarray(
+        matrix @ np.asarray(values, dtype=np.complex128), dtype=np.complex128
+    )
+
+
+def _v12_fixed_physical_backup_fixture(snapshot_callback):
+    """Join the real tiny side inverses to the 40-mode modal test coupling."""
+
+    side_fixture = _fixed_h6_side_block_fixture()
+    modal_fixture, modal_bundles, coupling, schur = _v12_fixed_h6_modal_components()
+    primary_actions = []
+    solver = bundle = None
+    try:
+        for side in ("bottom", "top"):
+            inverse = side_fixture[f"{side}_inverse"]
+            inverse.configure_diagnostic_p4_corrections(
+                0, None, refinement_target_tolerance=5.0e-13
+            )
+            transfer = inverse._owner_transfer
+
+            def project(source: PETSc.Vec, *, timing=None) -> PETSc.Vec:
+                del timing
+                result = source.duplicate()
+                source.copy(result)
+                first, last = map(int, result.getOwnershipRange())
+                local_rows = np.arange(first, last, dtype=np.int64)
+                retained = np.isin(local_rows, np.asarray([0, 1, 4, 5]))
+                result.getArray()[~retained] = PETSc.ScalarType(0.0)
+                result.assemble()
+                return result
+
+            transfer.apply_adjoint = project
+            transfer.apply_primal = project
+            primary_actions.append(inverse.create_fixed_h6_active_trace_action())
+
+        # Keep the backup candidate close to C^-1's exact operator so the
+        # tiny same-factor solve tests the switch and its gates, not a hard
+        # synthetic conditioning problem in the physical branch.
+        for side in (coupling.bottom, coupling.top):
+            for name in ("projection", "positive_traction", "negative_traction"):
+                getattr(side, name).scale(1.0e-4)
+        solver = block_ldu._FixedH6ModalKrylovSystem(
+            coupling,
+            primary_actions[0],
+            primary_actions[1],
+            modal_owner=MPI.COMM_WORLD.size - 1,
+            modal_solver_policy=block_ldu.TASK041_V12_MODAL_BACKUP_POLICY_ID,
+            snapshot_callback=snapshot_callback,
+        )
+        bundle = block_ldu._FixedH6ModalGmresResearchBundle(
+            solver,
+            primary_actions[0],
+            primary_actions[1],
+            coupling=coupling,
+            backup_side_inverses=(
+                side_fixture["bottom_inverse"],
+                side_fixture["top_inverse"],
+            ),
+        )
+        primary_actions = []
+        return {
+            "side_fixture": side_fixture,
+            "modal_fixture": modal_fixture,
+            "modal_bundles": modal_bundles,
+            "coupling": coupling,
+            "primary_schur": schur,
+            "solver": solver,
+            "bundle": bundle,
+        }
+    except BaseException:
+        if bundle is not None:
+            bundle.destroy()
+        elif solver is not None:
+            solver.destroy()
+        for action in reversed(primary_actions):
+            action.destroy()
+        _destroy_fixed_h6_modal_krylov_components(
+            modal_fixture, modal_bundles, None
+        )
+        _destroy_side_block_fixture(side_fixture)
+        raise
+
+
+def _destroy_v12_fixed_physical_backup_fixture(fixture) -> None:
+    if fixture["bundle"] is not None and not fixture["bundle"]._destroyed:
+        fixture["bundle"].destroy()
+    _destroy_fixed_h6_modal_krylov_components(
+        fixture["modal_fixture"], fixture["modal_bundles"], None
+    )
+    _destroy_side_block_fixture(fixture["side_fixture"])
 
 
 def test_fixed_h6_modal_gmres_matches_dense_solve_and_borrows_adapters() -> None:
@@ -2476,6 +2677,1282 @@ def test_side_balh_fixed_h6_modal_inner_error_propagates_without_fallback(
         if original_context is not None:
             original_context.destroy()
         _destroy_side_block_fixture(fixture)
+
+
+def test_task041_v12_modal_policy_is_bounded_and_keeps_legacy_defaults():
+    policy_id = "task041_v12_bounded_inexact_modal"
+    policy = block_ldu.resolve_task041_modal_solver_policy(policy_id)
+    assert policy == {
+        "policy_id": policy_id,
+        "target_rtol": 1.0e-3,
+        "max_it": 32,
+        "restart": 32,
+        "solver_matmult_limit": 34,
+        "total_matmult_limit_including_final": 35,
+        "approximate_return_eta_max": 0.1,
+        "accepted_normal_return_conditions": (
+            "runtime_DIVERGED_ITS_at_max_it_or_positive_reason_with_raw_target_miss"
+        ),
+        "raw_reason_and_residual_preserved": True,
+    }
+    assert block_ldu.resolve_task041_modal_solver_policy(None) is None
+    backup_policy = block_ldu.resolve_task041_modal_solver_policy(
+        block_ldu.TASK041_V12_MODAL_BACKUP_POLICY_ID
+    )
+    assert backup_policy == json.loads(json.dumps(backup_policy))
+    assert backup_policy["policy_id"] == (
+        block_ldu.TASK041_V12_MODAL_BACKUP_POLICY_ID
+    )
+    assert backup_policy["maximum_backup_switches"] == 1
+    assert backup_policy["side_restart64_trial"]["enabled_by_default"] is False
+    assert backup_policy["side_restart64_trial"]["status"] == (
+        "registered_once_trial_requires_live_fresh_authority_callback"
+    )
+    assert backup_policy["side_restart64_trial"]["selection_rule"] == (
+        "same_rhs_eta64_at_most_0.9_eta32_and_max_rank_trial_wall_with_one_setup_not_higher"
+        "_and_log_residual_reduction_per_wall_not_lower"
+    )
+    assert block_ldu._FixedH6ModalKrylovSystem.rtol == 1.0e-3
+    assert block_ldu._FixedH6ModalKrylovSystem.max_it == 8
+    assert block_ldu._FixedH6ModalKrylovSystem.solver_matmult_limit == 9
+    assert block_ldu._FixedH6ModalKrylovSystem.total_matmult_limit == 10
+
+    reason_enum = PETSc.KSP.ConvergedReason
+    diverged_its = getattr(reason_enum, "DIVERGED_ITS", None)
+    if diverged_its is None:
+        diverged_its = reason_enum.DIVERGED_MAX_IT
+    accepted_reason = int(reason_enum.CONVERGED_RTOL)
+
+    def classify(**changes):
+        values = {
+            "policy": policy,
+            "reason": int(diverged_its),
+            "iterations": 32,
+            "raw_relative_residual": 0.05,
+            "raw_residual_pass": False,
+            "trusted_iterate": True,
+            "input_unchanged": True,
+            "budget_exhausted": False,
+            "mat_preflight_failure": None,
+            "modal_action_failure": None,
+            "pc_failure": None,
+        }
+        values.update(changes)
+        return block_ldu._bounded_modal_return_eligibility(**values)
+
+    exhausted_its = classify()
+    assert exhausted_its["pc_usable"] is True
+    assert exhausted_its["status"] == "INNER_TARGET_NOT_MET_APPROX_RETURN"
+    positive_raw_miss = classify(reason=accepted_reason, iterations=7)
+    assert positive_raw_miss["pc_usable"] is True
+
+    rejected = (
+        classify(reason=-5),
+        classify(iterations=31),
+        classify(reason=accepted_reason, iterations=33),
+        classify(
+            reason=accepted_reason,
+            raw_relative_residual=5.0e-4,
+            raw_residual_pass=False,
+        ),
+        classify(raw_relative_residual=0.1000001),
+        classify(raw_relative_residual=None),
+        classify(raw_residual_pass=True),
+        classify(trusted_iterate=False),
+        classify(input_unchanged=False),
+        classify(budget_exhausted=True),
+        classify(mat_preflight_failure="injected MatMult preflight failure"),
+        classify(modal_action_failure="injected S_H action failure"),
+        classify(pc_failure="injected PC failure"),
+    )
+    assert all(item["pc_usable"] is False for item in rejected)
+
+
+def test_v12_modal_wrapper_extends_legacy_budget_and_writes_solver_snapshot(
+    tmp_path,
+):
+    """Exercise KSP, approximate-PC decision and the real owner snapshot writer.
+
+    The 40x40 complex non-Hermitian Schur action is deliberately injected at
+    the modal action boundary; the production wrapper, PETSc KSP, C-LU PC,
+    raw residual, policy decision and snapshot callback remain real.
+    """
+
+    from benchmarks.task041_exact_side_workflow import (
+        _write_task041_modal_inner_snapshot,
+    )
+
+    fixture, bundles, coupling, schur = _v12_fixed_h6_modal_components()
+    systems: list[block_ldu._FixedH6ModalKrylovSystem] = []
+    policy_id = block_ldu.TASK041_V12_MODAL_SOLVER_POLICY_ID
+    owner = MPI.COMM_WORLD.size - 1
+    run_root = tmp_path / "solver_callback_snapshot"
+    identity = {"model_id": "test_only_modal_matrix", "mpi_size": MPI.COMM_WORLD.size}
+    binding = {"producer_source_sha": "c" * 40, "consumer_source_sha": "d" * 40}
+
+    def new_system(*, policy=None, snapshot_callback=None):
+        system = block_ldu._FixedH6ModalKrylovSystem(
+            coupling,
+            bundles[0]["adapter"],
+            bundles[1]["adapter"],
+            modal_owner=owner,
+            modal_solver_policy=policy,
+            snapshot_callback=snapshot_callback,
+        )
+        _set_v12_test_schur(system, schur)
+        systems.append(system)
+        return system
+
+    def write_snapshot(payload):
+        return _write_task041_modal_inner_snapshot(
+            run_root,
+            payload,
+            source_sha="a" * 40,
+            identity=identity,
+            packet_manifest_sha256="b" * 64,
+            consumer_binding=binding,
+        )
+
+    easy_rhs = np.zeros(40, dtype=np.complex128)
+    easy_indices = np.asarray([0, 1, 2, 3, 4, 5, 34, 35, 36, 37, 38, 39])
+    easy_rhs[easy_indices] = np.asarray(
+        [1.0 + 0.1j * index for index in range(easy_indices.size)],
+        dtype=np.complex128,
+    )
+    hard_rhs = np.zeros(40, dtype=np.complex128)
+    hard_rhs[:32] = np.asarray(
+        [1.0 + 0.01j * index for index in range(32)], dtype=np.complex128
+    )
+    hard_rhs[32] = 0.05 - 0.01j
+
+    try:
+        legacy = new_system()
+        assert legacy.max_it == 8
+        assert legacy.solver_matmult_limit == 9
+        assert legacy.total_matmult_limit == 10
+        assert legacy._rhs_input_bytes is None
+        assert legacy._rhs_input_sha256 is None
+        legacy_rhs = easy_rhs.copy()
+        with pytest.raises(RuntimeError, match="did not converge"):
+            legacy.solve(legacy_rhs)
+        legacy_result = dict(legacy.diagnostics["last_solve"])
+        assert legacy_result["iterations"] == 8
+        assert legacy_result["raw_residual_pass"] is False
+        assert legacy_result["final_relative_residual"] > legacy.rtol
+        assert "trusted_iterate" not in legacy_result
+        assert np.array_equal(legacy_rhs, easy_rhs)
+
+        policy_system = new_system(policy=policy_id, snapshot_callback=write_snapshot)
+        assert policy_system.max_it == 32
+        assert policy_system.rtol == pytest.approx(1.0e-3)
+        assert policy_system.diagnostics["restart"] == 32
+        assert policy_system.solver_matmult_limit == 34
+        assert policy_system.total_matmult_limit == 35
+        assert legacy.max_it == 8
+        assert legacy.solver_matmult_limit == 9
+        assert legacy.total_matmult_limit == 10
+        legacy.destroy()
+        expected_local = 40 if MPI.COMM_WORLD.rank == owner else 0
+        assert policy_system._rhs.getLocalSize() == expected_local
+
+        zero_result = policy_system.solve(np.zeros(40, dtype=np.complex128))
+        zero_record = dict(policy_system.diagnostics["last_solve"])
+        np.testing.assert_array_equal(zero_result, np.zeros(40, dtype=np.complex128))
+        assert zero_record["status"] == "zero_rhs_exact"
+        assert zero_record["ksp_status"] == "not_run_zero_rhs"
+        assert zero_record["trusted_iterate"] is True
+        assert zero_record["input_unchanged"] is True
+        zero_states = MPI.COMM_WORLD.allgather(
+            (zero_record["status"], zero_record["pc_usable"])
+        )
+        assert len(set(zero_states)) == 1
+
+        first_unmet_rhs = hard_rhs.copy()
+        policy_system.solve(first_unmet_rhs)
+        first_unmet = dict(policy_system.diagnostics["last_solve"])
+        diverged_its = getattr(PETSc.KSP.ConvergedReason, "DIVERGED_ITS", None)
+        if diverged_its is None:
+            diverged_its = PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT
+        assert first_unmet["iterations"] == 32
+        assert first_unmet["status"] == "INNER_TARGET_NOT_MET_APPROX_RETURN"
+        assert first_unmet["ksp_reason"] == int(diverged_its)
+        assert first_unmet["raw_residual_pass"] is False
+        assert 1.0e-3 < first_unmet["final_relative_residual"] <= 0.1
+        assert first_unmet["solver_matmult_calls"] <= 34
+        assert first_unmet["total_matmult_calls"] <= 35
+        assert first_unmet["total_matmult_calls"] == (
+            first_unmet["solver_matmult_calls"] + 1
+        )
+        assert first_unmet["final_residual_evaluated"] is True
+        assert policy_system.diagnostics["budget_exhausted"] is False
+        assert first_unmet["pc_usable"] is True
+        assert first_unmet["trusted_iterate"] is True
+        assert first_unmet["input_unchanged"] is True
+        assert first_unmet["snapshot_record"]["status"] == "written"
+        assert np.array_equal(first_unmet_rhs, hard_rhs)
+        first_path = run_root / first_unmet["snapshot_record"]["path"]
+        first_snapshot_sha_before_repeat = (
+            hashlib.sha256(first_path.read_bytes()).hexdigest()
+            if MPI.COMM_WORLD.rank == owner
+            else None
+        )
+        first_snapshot_sha_before_repeat = MPI.COMM_WORLD.bcast(
+            first_snapshot_sha_before_repeat, root=owner
+        )
+        approximate_states = MPI.COMM_WORLD.allgather(
+            (
+                first_unmet["status"],
+                first_unmet["ksp_reason"],
+                first_unmet["pc_usable"],
+            )
+        )
+        assert len(set(approximate_states)) == 1
+
+        success_rhs = easy_rhs.copy()
+        policy_system.solve(success_rhs)
+        success_record = dict(policy_system.diagnostics["last_solve"])
+        assert success_record["status"] == "converged"
+        assert success_record["raw_residual_pass"] is True
+        assert success_record["pc_usable"] is True
+        assert success_record["trusted_iterate"] is True
+        assert success_record["input_unchanged"] is True
+        assert success_record["snapshot_record"]["status"] == "written"
+        assert np.array_equal(success_rhs, easy_rhs)
+
+        # A later unmet solve must not replace the first owner snapshot.
+        policy_system.solve(hard_rhs.copy())
+        index_path = run_root / "numerical_output/modal_inner_snapshots/index.json"
+        owner_record = None
+        if MPI.COMM_WORLD.rank == owner:
+            index = json.loads(index_path.read_text(encoding="utf-8"))
+            assert set(index["records"]) == {
+                "first_unmet_target",
+                "first_success_control",
+            }
+            with np.load(first_path, allow_pickle=False) as archive:
+                g = np.asarray(archive["g"], dtype=np.complex128)
+                m = np.asarray(archive["m"], dtype=np.complex128)
+                raw = np.asarray(archive["raw_residual"], dtype=np.complex128)
+            independently_recomputed = g - schur @ m
+            response_error = float(np.linalg.norm(raw - independently_recomputed))
+            residual_norm_error = abs(
+                float(np.linalg.norm(raw))
+                - float(first_unmet["final_residual_norm"])
+            )
+            after_sha = hashlib.sha256(first_path.read_bytes()).hexdigest()
+            owner_record = (
+                first_snapshot_sha_before_repeat,
+                after_sha,
+                len(index["records"]),
+                response_error,
+                residual_norm_error,
+            )
+        owner_record = MPI.COMM_WORLD.bcast(owner_record, root=owner)
+        assert owner_record[0] == owner_record[1]
+        assert owner_record[2] == 2
+        assert owner_record[3] <= 1.0e-12 * max(float(np.linalg.norm(hard_rhs)), 1.0)
+        assert owner_record[4] <= 1.0e-10 * max(
+            float(first_unmet["final_residual_norm"]), 1.0
+        )
+    finally:
+        for system in systems:
+            system.destroy()
+        _destroy_fixed_h6_modal_krylov_components(fixture, bundles, None)
+
+
+def test_v12_modal_wrapper_rejects_input_mutation_and_eta_above_bound():
+    fixture, bundles, coupling, schur = _v12_fixed_h6_modal_components()
+    systems: list[block_ldu._FixedH6ModalKrylovSystem] = []
+    policy_id = block_ldu.TASK041_V12_MODAL_SOLVER_POLICY_ID
+    owner = MPI.COMM_WORLD.size - 1
+    easy_rhs = np.zeros(40, dtype=np.complex128)
+    easy_rhs[[0, 2, 5, 9, 14, 20, 25, 31, 36, 39]] = (
+        1.0 + 0.2j * np.arange(10)
+    )
+
+    def new_system():
+        system = block_ldu._FixedH6ModalKrylovSystem(
+            coupling,
+            bundles[0]["adapter"],
+            bundles[1]["adapter"],
+            modal_owner=owner,
+            modal_solver_policy=policy_id,
+            snapshot_callback=lambda _payload: {"status": "test_snapshot"},
+        )
+        _set_v12_test_schur(system, schur)
+        systems.append(system)
+        return system
+
+    try:
+        system = new_system()
+        rhs = np.zeros(40, dtype=np.complex128)
+        rhs[[0, 2, 5, 9, 14, 20, 25, 31, 36, 39]] = (
+            1.0 + 0.2j * np.arange(10)
+        )
+        original_rhs = rhs.copy()
+        mutated = False
+
+        def mutate_input_during_real_mat_mult(values):
+            nonlocal mutated
+            if not mutated:
+                rhs[0] += 0.25 - 0.1j
+                mutated = True
+            return schur @ np.asarray(values, dtype=np.complex128)
+
+        system._modal_action.apply = mutate_input_during_real_mat_mult
+        with pytest.raises(RuntimeError, match="did not converge"):
+            system.solve(rhs)
+        mutation_record = dict(system.diagnostics["last_solve"])
+        assert mutation_record["ksp_reason"] > 0
+        assert mutation_record["raw_residual_pass"] is True
+        assert mutation_record["trusted_iterate"] is True
+        assert mutation_record["input_unchanged"] is False
+        assert mutation_record["status"] == "modal_rhs_input_modified"
+        assert mutation_record["pc_usable"] is False
+        assert mutation_record["normal_return_rejection_reason"]
+        assert not np.array_equal(rhs, original_rhs)
+
+        # Use a deliberately ill-conditioned, finite test Schur action so the
+        # real wrapper reaches eta>0.1 after its bounded KSP solve.  The right
+        # preconditioner still solves the same test constraint matrix; only
+        # this test-injected 40x40 action changes.
+        bad_eta_system = new_system()
+        test_constraint = np.asarray(
+            internal_modal_constraint_matrix(coupling), dtype=np.complex128
+        )
+        bad_eta_diagonal = np.geomspace(1.0e-12, 1.0e12, 40) * np.exp(
+            1j * np.linspace(-0.2, 0.25, 40)
+        )
+        bad_eta_schur = np.diag(bad_eta_diagonal) @ test_constraint
+        assert np.isfinite(bad_eta_schur).all()
+        assert np.linalg.norm(bad_eta_schur - bad_eta_schur.conj().T) > 1.0
+        _set_v12_test_schur(bad_eta_system, bad_eta_schur)
+        bad_eta_rhs = np.ones(40, dtype=np.complex128)
+        with pytest.raises(RuntimeError, match="did not converge"):
+            bad_eta_system.solve(bad_eta_rhs)
+        bad_eta = dict(bad_eta_system.diagnostics["last_solve"])
+        assert 0 < bad_eta["iterations"] <= 32
+        assert isinstance(bad_eta["ksp_reason"], int)
+        assert bad_eta["raw_residual_pass"] is False
+        assert bad_eta["final_relative_residual"] > 0.1
+        assert bad_eta["pc_usable"] is False
+        assert bad_eta["approximate_return_decision"]["status"] == "rejected"
+
+        # Positive KSP reason with an independently missed raw target is
+        # explicitly injected here; it is wrapper-path evidence, not a natural
+        # PETSc reason observed from this matrix.
+        _set_v12_test_schur(system, schur)
+        real_ksp = system._ksp
+
+        class PositiveReasonKspProxy:
+            def __getattr__(self, name):
+                return getattr(real_ksp, name)
+
+            def getConvergedReason(self):
+                return int(PETSc.KSP.ConvergedReason.CONVERGED_RTOL)
+
+        system._ksp = PositiveReasonKspProxy()
+        injected = system.solve(
+            np.asarray(
+                [1.0 + 0.01j * index for index in range(32)]
+                + [0.05 - 0.01j]
+                + [0.0j] * 7,
+                dtype=np.complex128,
+            )
+        )
+        injected_record = dict(system.diagnostics["last_solve"])
+        assert injected.shape == (40,)
+        assert injected_record["ksp_reason"] > 0
+        assert injected_record["raw_residual_pass"] is False
+        assert 1.0e-3 < injected_record["final_relative_residual"] <= 0.1
+        assert injected_record["approximate_return_decision"][
+            "positive_reason_with_raw_target_miss"
+        ] is True
+        assert injected_record["pc_usable"] is True
+        assert injected_record["status"] == "INNER_TARGET_NOT_MET_APPROX_RETURN"
+
+        # Exceptions and non-finite actions remain hard failures on the real
+        # policy wrapper path; neither is converted to approximate usability.
+        for failure_kind in ("action_exception", "nonfinite_action", "pc_exception"):
+            failing = new_system()
+            if failure_kind == "action_exception":
+                def fail_action(_values):
+                    raise RuntimeError("injected policy MatMult exception")
+
+                failing._modal_action.apply = fail_action
+            elif failure_kind == "nonfinite_action":
+                failing._modal_action.apply = lambda values: np.full_like(
+                    np.asarray(values, dtype=np.complex128), np.nan
+                )
+            else:
+                def fail_pc(_pc, _source, _target):
+                    raise RuntimeError("injected policy C-LU PC exception")
+
+                failing._apply_constraint_pc = fail_pc
+            with pytest.raises(RuntimeError):
+                failing.solve(easy_rhs)
+            failure_record = dict(failing.diagnostics["last_solve"])
+            assert failure_record.get("pc_usable") is False
+            assert failure_record[
+                "policy_exception_rejection_reason"
+            ] == "exception_prevented_a_usable_V12_modal_return"
+            assert failure_record["final_residual_evaluated"] is False
+    finally:
+        for system in systems:
+            system.destroy()
+        _destroy_fixed_h6_modal_krylov_components(fixture, bundles, None)
+
+
+def test_v12_modal_approximate_pc_is_usable_by_outer_right_fgmres():
+    fixture, bundles, coupling, schur = _v12_fixed_h6_modal_components()
+    systems: list[block_ldu._FixedH6ModalKrylovSystem] = []
+    outer_ksp = outer_matrix = outer_pc_context = rhs_vec = solution = None
+    policy_id = block_ldu.TASK041_V12_MODAL_SOLVER_POLICY_ID
+    comm = MPI.COMM_WORLD
+    owner = comm.size - 1
+    mode_template = PETSc.Vec().createMPI(
+        (40 if comm.rank == owner else 0, 40), comm=comm
+    )
+    try:
+        system = block_ldu._FixedH6ModalKrylovSystem(
+            coupling,
+            bundles[0]["adapter"],
+            bundles[1]["adapter"],
+            modal_owner=owner,
+            modal_solver_policy=policy_id,
+            snapshot_callback=lambda _payload: {"status": "test_snapshot"},
+        )
+        _set_v12_test_schur(system, schur)
+        systems.append(system)
+        # The outer system is deliberately distinct from the inner modal
+        # action, so the residual below checks the original outer A/f rather
+        # than reusing the inner KSP's own S_H residual.
+        outer_operator = 0.95 * schur + 0.05 * np.eye(40, dtype=np.complex128)
+        assert np.linalg.norm(outer_operator - outer_operator.conj().T) > 1.0
+        outer_matrix = _matrix_from_dense(
+            mode_template, mode_template, outer_operator
+        )
+        rhs_vec = outer_matrix.createVecRight()
+        solution = outer_matrix.createVecRight()
+        modal_rhs = np.zeros(40, dtype=np.complex128)
+        modal_rhs[:32] = 1.0 + 0.01j * np.arange(32)
+        modal_rhs[32] = 0.05 - 0.01j
+        _set_vector(rhs_vec, modal_rhs)
+
+        class ModalApproximatePc:
+            def __init__(self):
+                self.inner_statuses = []
+
+            def apply(self, _pc, source, target):
+                local = (
+                    np.asarray(source.getArray(readonly=True), dtype=np.complex128).copy()
+                    if comm.rank == owner
+                    else None
+                )
+                full_rhs = np.asarray(comm.bcast(local, root=owner), dtype=np.complex128)
+                result = system.solve(full_rhs)
+                self.inner_statuses.append(
+                    dict(system.diagnostics["last_solve"])
+                )
+                target.set(0.0)
+                if comm.rank == owner:
+                    target.getArray()[:] = result
+
+            def destroy(self, _pc=None):
+                return None
+
+        outer_pc_context = ModalApproximatePc()
+        outer_ksp = PETSc.KSP().create(comm)
+        outer_ksp.setOperators(outer_matrix)
+        outer_ksp.setType(PETSc.KSP.Type.FGMRES)
+        outer_ksp.setGMRESRestart(40)
+        outer_ksp.setPCSide(PETSc.PC.Side.RIGHT)
+        outer_ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
+        outer_ksp.setInitialGuessNonzero(False)
+        outer_ksp.setTolerances(rtol=1.0e-8, atol=0.0, max_it=40)
+        pc = outer_ksp.getPC()
+        pc.setType(PETSc.PC.Type.PYTHON)
+        pc.setPythonContext(outer_pc_context)
+        outer_ksp.setUp()
+        outer_ksp.solve(rhs_vec, solution)
+
+        computed = _gather_vector(solution)
+        independent_residual = outer_operator @ computed - modal_rhs
+        relative = float(
+            np.linalg.norm(independent_residual) / np.linalg.norm(modal_rhs)
+        )
+        assert int(outer_ksp.getConvergedReason()) > 0
+        assert relative <= 1.0e-8
+        assert any(
+            row.get("status") == "INNER_TARGET_NOT_MET_APPROX_RETURN"
+            and 1.0e-3 < row.get("final_relative_residual", 0.0) <= 0.1
+            and row.get("pc_usable") is True
+            for row in outer_pc_context.inner_statuses
+        )
+        np.testing.assert_array_equal(_gather_vector(rhs_vec), modal_rhs)
+    finally:
+        if outer_ksp is not None:
+            outer_ksp.destroy()
+        if solution is not None:
+            solution.destroy()
+        if rhs_vec is not None:
+            rhs_vec.destroy()
+        if outer_matrix is not None:
+            outer_matrix.destroy()
+        mode_template.destroy()
+        for system in systems:
+            system.destroy()
+        _destroy_fixed_h6_modal_krylov_components(fixture, bundles, None)
+
+
+def test_v12_backup_switches_after_normal_primary_refusal_and_keeps_outer_residual():
+    """Exercise one same-factor backup after a trusted normal primary return."""
+
+    snapshot_calls: list[str] = []
+    snapshot_scalar_histories: list[list[dict[str, Any]]] = []
+    comm = MPI.COMM_WORLD
+    owner = comm.size - 1
+
+    def record_snapshot(payload):
+        snapshot_calls.append(str(payload["snapshot_kind"]))
+        snapshot_scalar_histories.append(list(payload.get("scalar_history", ())))
+        return {
+            "status": "written",
+            "snapshot_kind": str(payload["snapshot_kind"]),
+        }
+
+    fixture = _v12_fixed_physical_backup_fixture(record_snapshot)
+    bundle = fixture["bundle"]
+    solver = fixture["solver"]
+    side_inverses = (
+        fixture["side_fixture"]["bottom_inverse"],
+        fixture["side_fixture"]["top_inverse"],
+    )
+    factors_before = tuple(inverse._p4_factor for inverse in side_inverses)
+    factor_destroy_counts_before = tuple(
+        int(inverse._p4_factor.destroy_count) for inverse in side_inverses
+    )
+    modal_count = int(bundle.modal_count)
+    bad_diagonal = np.geomspace(1.0e-12, 1.0e12, modal_count) * np.exp(
+        1j * np.linspace(-0.2, 0.25, modal_count)
+    )
+    bad_schur = np.diag(bad_diagonal) @ np.asarray(
+        solver.modal_constraint, dtype=np.complex128
+    )
+    _set_v12_test_schur(solver, bad_schur)
+    primary_rhs = np.ones(modal_count, dtype=np.complex128)
+    primary_rhs_before = primary_rhs.copy()
+    outer_ksp = outer_matrix = outer_rhs = outer_solution = mode_template = None
+    outer_pc_context = None
+    try:
+        backup_solution = bundle.solve(primary_rhs)
+        assert np.array_equal(primary_rhs, primary_rhs_before)
+        diagnostics = bundle.diagnostics
+        audit = diagnostics["backup_switch_audit"]
+        assert diagnostics["method"] == (
+            "fixed_physical_balh_once_modal_gmres_research"
+        )
+        assert diagnostics["method_history"] == [
+            "fixed_h6_modal_gmres_research",
+            "fixed_physical_balh_once_modal_gmres_research",
+        ]
+        assert audit["requested"] is True
+        assert audit["allowed"] is True
+        assert audit["actual"] is True
+        assert audit["switch_count"] == 1
+        assert audit["same_live_side_factor_handles_verified"] is True
+        assert audit["backup_linearity_gate"]["pass"] is True
+        trigger = audit["trigger"]
+        assert trigger["kind"] == (
+            "normal_trusted_primary_return_eta_above_0.1"
+        )
+        assert trigger["safe_boundary"] == (
+            "after_primary_modal_KSP_return_before_backup_modal_KSP_entry"
+        )
+        primary = trigger["primary_normal_return"]
+        assert primary["status"] == (
+            "PRIMARY_MODAL_TARGET_NOT_MET_BACKUP_ELIGIBLE"
+        )
+        assert primary["normal_primary_return_completed"] is True
+        assert primary["trusted_iterate"] is True
+        assert primary["input_unchanged"] is True
+        assert primary["raw_residual_pass"] is False
+        assert primary["final_residual_evaluated"] is True
+        assert primary["backup_eligibility"]["eligible"] is True
+        assert primary["backup_eligibility"]["raw_relative_residual"] > 0.1
+        rank_rows = primary["rank_local_accounting"]
+        assert [row["rank"] for row in rank_rows] == list(range(comm.size))
+        owner_attempts = primary["owner_constraint_lu_solve_attempts"]
+        assert isinstance(owner_attempts, int) and owner_attempts > 0
+        for row in rank_rows:
+            assert row["local_constraint_lu_solve_attempts"] == (
+                owner_attempts if row["rank"] == owner else 0
+            )
+        trigger_rows = comm.allgather(
+            json.dumps(trigger, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        )
+        assert len(set(trigger_rows)) == 1
+        primary_total = primary["cumulative_total_matmult_calls"]
+        backup_record = diagnostics["last_solve"]
+        assert backup_record["pc_usable"] is True
+        assert backup_record["final_relative_residual"] <= 0.1
+        assert diagnostics["cumulative_total_matmult_calls"] == (
+            primary_total + backup_record["total_matmult_calls"]
+        )
+        assert audit["primary_diagnostics"]["primary_solver_record"] == primary
+        assert audit["primary_diagnostics"]["method"] == (
+            "fixed_h6_modal_gmres_research"
+        )
+        assert audit["primary_diagnostics"]["solve_count"] >= 1
+        assert audit["primary_diagnostics"]["cumulative_solver_matmult_calls"] == (
+            primary["cumulative_solver_matmult_calls"]
+        )
+        assert audit["primary_diagnostics"]["cumulative_total_matmult_calls"] == (
+            primary["cumulative_total_matmult_calls"]
+        )
+        primary_scalar_history = audit["primary_diagnostics"]["scalar_history"]
+        owner_snapshot_scalar_history = comm.bcast(
+            snapshot_scalar_histories[0] if comm.rank == owner else None,
+            root=owner,
+        )
+        assert primary_scalar_history == owner_snapshot_scalar_history
+        assert all(
+            row["iteration"] in (8, 16, 32)
+            for row in primary_scalar_history
+        )
+        assert np.isfinite(backup_solution).all()
+        snapshot_call_rows = comm.allgather(list(snapshot_calls))
+        owner_snapshot_calls = snapshot_call_rows[owner]
+        assert len(owner_snapshot_calls) <= 2
+        assert owner_snapshot_calls.count("first_unmet_target") == 1
+        assert owner_snapshot_calls.count("first_success_control") <= 1
+        assert all(
+            not kinds
+            for rank, kinds in enumerate(snapshot_call_rows)
+            if rank != owner
+        )
+        assert tuple(inverse._p4_factor for inverse in side_inverses) == factors_before
+        assert bundle._backup_p4_factor_handles == factors_before
+        assert all(
+            action._side_inverse is inverse
+            for action, inverse in zip(
+                bundle._side_actions, side_inverses, strict=True
+            )
+        )
+        assert tuple(
+            int(inverse._p4_factor.destroy_count) for inverse in side_inverses
+        ) == factor_destroy_counts_before
+        assert all(inverse.diagnostics["destroyed"] is False for inverse in side_inverses)
+
+        # The switched PC is then used by a small, independent right-FGMRES
+        # outer equation; the acceptance check recomputes that outer A x - f.
+        constraint = np.asarray(solver.modal_constraint, dtype=np.complex128).copy()
+        mode_template = PETSc.Vec().createMPI(
+            (modal_count if comm.rank == owner else 0, modal_count), comm=comm
+        )
+        outer_matrix = _matrix_from_dense(mode_template, mode_template, constraint)
+        outer_rhs = outer_matrix.createVecRight()
+        outer_solution = outer_matrix.createVecRight()
+        outer_values = np.asarray(
+            [0.7 + 0.03j * index for index in range(modal_count)],
+            dtype=np.complex128,
+        )
+        _set_vector(outer_rhs, outer_values)
+        class SwitchedModalPc:
+            def __init__(self):
+                self.calls = 0
+
+            def apply(self, _pc, source, target):
+                self.calls += 1
+                bundle.set_outer_pc_apply_index(self.calls)
+                local = (
+                    np.asarray(source.getArray(readonly=True), dtype=np.complex128).copy()
+                    if comm.rank == owner
+                    else None
+                )
+                full = np.asarray(comm.bcast(local, root=owner), dtype=np.complex128)
+                result = bundle.solve(full)
+                target.set(0.0)
+                if comm.rank == owner:
+                    target.getArray()[:] = result
+
+            def destroy(self, _pc=None):
+                return None
+
+        outer_pc_context = SwitchedModalPc()
+        outer_ksp = PETSc.KSP().create(comm)
+        outer_ksp.setOperators(outer_matrix)
+        outer_ksp.setType(PETSc.KSP.Type.FGMRES)
+        outer_ksp.setGMRESRestart(modal_count)
+        outer_ksp.setPCSide(PETSc.PC.Side.RIGHT)
+        outer_ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
+        outer_ksp.setInitialGuessNonzero(False)
+        outer_ksp.setTolerances(rtol=1.0e-8, atol=0.0, max_it=modal_count)
+        outer_ksp.getPC().setType(PETSc.PC.Type.PYTHON)
+        outer_ksp.getPC().setPythonContext(outer_pc_context)
+        outer_ksp.setUp()
+        outer_ksp.solve(outer_rhs, outer_solution)
+        outer_x = _gather_vector(outer_solution)
+        outer_residual = constraint @ outer_x - outer_values
+        outer_relative = float(np.linalg.norm(outer_residual) / np.linalg.norm(outer_values))
+        assert int(outer_ksp.getConvergedReason()) > 0
+        assert outer_relative <= 1.0e-8
+        np.testing.assert_array_equal(_gather_vector(outer_rhs), outer_values)
+        assert bundle.diagnostics["method_history"] == diagnostics["method_history"]
+    finally:
+        if outer_ksp is not None:
+            outer_ksp.destroy()
+        for vector in (outer_solution, outer_rhs, mode_template):
+            if vector is not None:
+                vector.destroy()
+        if outer_matrix is not None:
+            outer_matrix.destroy()
+        _destroy_v12_fixed_physical_backup_fixture(fixture)
+
+
+def test_v12_backup_outer_stagnation_switches_at_next_pc_and_terminal_can_cancel():
+    metrics = (
+        "global_true_relative_residual",
+        "bottom_true_relative_residual",
+        "top_true_relative_residual",
+        "modal_true_relative_residual",
+    )
+
+    def residual_point(iteration, **changes):
+        values = {name: 1.0 for name in metrics}
+        values.update(changes)
+        return {"iteration": iteration, **values}
+
+    def feed_rows(bundle, rows):
+        observations = {}
+        for row in rows:
+            observed = bundle.observe_outer_true_residual(
+                row, gate_threshold=5.0e-9
+            )
+            if row["iteration"] in (8, 16):
+                observations[row["iteration"]] = observed
+        return observations
+
+    callback = lambda _payload: {"status": "recorded"}
+    fixture = _v12_fixed_physical_backup_fixture(callback)
+    try:
+        bundle = fixture["bundle"]
+        solver = fixture["solver"]
+        primary_rhs = np.full(
+            bundle.modal_count, 0.25 + 0.1j, dtype=np.complex128
+        )
+        primary_rhs_before = primary_rhs.copy()
+        primary_solution = bundle.solve(primary_rhs)
+        assert np.isfinite(primary_solution).all()
+        np.testing.assert_array_equal(primary_rhs, primary_rhs_before)
+        assert isinstance(bundle.diagnostics["last_solve"], dict)
+        assert solver._backup_switches == 0
+        assert solver.method == "fixed_h6_modal_gmres_research"
+        observations = feed_rows(
+            bundle, [residual_point(iteration) for iteration in range(17)]
+        )
+        assert observations[8]["status"] == "outer_progress_not_stalled"
+        observation = observations[16]
+        assert observation["status"] == "two_consecutive_outer_windows_stalled"
+        assert observation["next_safe_boundary"] == (
+            "next_outer_PC_modal_solve_before_KSP_entry"
+        )
+        assert observation["stalled_window_end_iterations"] == [8, 16]
+        assert len(observation["windows"]) == 2
+        assert [len(window["samples"]) for window in observation["windows"]] == [9, 9]
+        assert all(window["stalled"] for window in observation["windows"])
+        assert solver.method == "fixed_h6_modal_gmres_research"
+        assert solver._backup_pending is True
+        assert solver._backup_switches == 0
+        zero_rhs = np.zeros(bundle.modal_count, dtype=np.complex128)
+        result = bundle.solve(zero_rhs)
+        np.testing.assert_array_equal(result, np.zeros_like(zero_rhs))
+        assert bundle.diagnostics["backup_switch_audit"]["actual"] is True
+        assert bundle.diagnostics["backup_switch_audit"]["trigger"]["status"] == (
+            "two_consecutive_outer_windows_stalled"
+        )
+        assert solver._backup_pending is False
+    finally:
+        _destroy_v12_fixed_physical_backup_fixture(fixture)
+
+    terminal_fixture = _v12_fixed_physical_backup_fixture(callback)
+    try:
+        bundle = terminal_fixture["bundle"]
+        solver = terminal_fixture["solver"]
+        terminal_observations = feed_rows(
+            bundle, [residual_point(iteration) for iteration in range(17)]
+        )
+        assert terminal_observations[16]["status"] == (
+            "two_consecutive_outer_windows_stalled"
+        )
+        terminal = {
+            "identity": "multimetric_true_residual_gate.v1",
+            "iteration": 17,
+            "threshold": 5.0e-9,
+            "all_finite_nonnegative": True,
+            "positive": True,
+            "decision": "CONVERGED_USER",
+            "reason": "all true residuals passed",
+            "residuals": {name: 1.0e-9 for name in metrics},
+        }
+        bundle.record_outer_terminal(terminal)
+        assert solver._backup_pending is False
+        assert solver._backup_switches == 0
+        assert solver.method == "fixed_h6_modal_gmres_research"
+        assert bundle.diagnostics["backup_switch_audit"]["status"] == (
+            "backup_not_needed_outer_converged_before_next_PC_boundary"
+        )
+    finally:
+        _destroy_v12_fixed_physical_backup_fixture(terminal_fixture)
+
+    rebound_fixture = _v12_fixed_physical_backup_fixture(callback)
+    try:
+        rows = []
+        for iteration in range(17):
+            value = 0.2 if 3 <= iteration <= 7 else 1.0
+            rows.append(residual_point(iteration, **{name: value for name in metrics}))
+        observations = feed_rows(rebound_fixture["bundle"], rows)
+        first_window = observations[8]["windows"][-1]
+        assert first_window["end_residual_by_metric"][metrics[0]] == 1.0
+        assert first_window["best_residual_by_metric"][metrics[0]] == 0.2
+        assert first_window["improvement_fraction_by_metric"][metrics[0]] == 0.8
+        assert observations[8]["status"] == "outer_progress_not_stalled"
+        assert observations[16]["status"] == "outer_progress_not_stalled"
+        assert rebound_fixture["solver"]._backup_pending is False
+    finally:
+        _destroy_v12_fixed_physical_backup_fixture(rebound_fixture)
+
+    spike_fixture = _v12_fixed_physical_backup_fixture(callback)
+    try:
+        rows = [
+            residual_point(
+                iteration,
+                **(
+                    {"bottom_true_relative_residual": 10.0}
+                    if iteration == 4
+                    else {}
+                ),
+            )
+            for iteration in range(17)
+        ]
+        for row in rows:
+            if row["iteration"] >= 9:
+                row.update({name: 0.7 for name in metrics})
+        observations = feed_rows(spike_fixture["bundle"], rows)
+        assert observations[8]["windows"][-1]["best_residual_by_metric"][
+            "bottom_true_relative_residual"
+        ] == 1.0
+        assert observations[8]["windows"][-1]["stalled"] is True
+        assert observations[16]["windows"][-1]["stalled"] is False
+        assert observations[16]["status"] == "outer_progress_not_stalled"
+        assert spike_fixture["solver"]._backup_pending is False
+    finally:
+        _destroy_v12_fixed_physical_backup_fixture(spike_fixture)
+
+    block_progress_fixture = _v12_fixed_physical_backup_fixture(callback)
+    try:
+        rows = [
+            residual_point(
+                iteration,
+                bottom_true_relative_residual=1.0 - 0.02 * iteration,
+            )
+            for iteration in range(17)
+        ]
+        observations = feed_rows(block_progress_fixture["bundle"], rows)
+        assert observations[8]["windows"][-1]["improvement_fraction_by_metric"][
+            "bottom_true_relative_residual"
+        ] >= 0.1
+        assert observations[16]["windows"][-1]["improvement_fraction_by_metric"][
+            "bottom_true_relative_residual"
+        ] >= 0.1
+        assert observations[8]["windows"][-1]["unmet_block_metrics"] == list(
+            metrics[1:]
+        )
+        assert observations[16]["status"] == "outer_progress_not_stalled"
+        assert block_progress_fixture["solver"]._backup_pending is False
+    finally:
+        _destroy_v12_fixed_physical_backup_fixture(block_progress_fixture)
+
+    passed_block_fixture = _v12_fixed_physical_backup_fixture(callback)
+    try:
+        rows = [
+            residual_point(
+                iteration,
+                top_true_relative_residual=1.0e-10,
+            )
+            for iteration in range(17)
+        ]
+        observations = feed_rows(passed_block_fixture["bundle"], rows)
+        first_window = observations[8]["windows"][-1]
+        assert first_window["passed_metrics_at_window_end"] == [
+            "top_true_relative_residual"
+        ]
+        assert first_window["required_metrics_at_window_end"] == [
+            "global_true_relative_residual",
+            "bottom_true_relative_residual",
+            "modal_true_relative_residual",
+        ]
+        assert first_window["global_metric_required"] is True
+        assert first_window["unmet_block_metrics"] == [
+            "bottom_true_relative_residual",
+            "modal_true_relative_residual",
+        ]
+        assert first_window["stalled"] is True
+        assert observations[16]["status"] == (
+            "two_consecutive_outer_windows_stalled"
+        )
+        assert passed_block_fixture["solver"]._backup_pending is True
+    finally:
+        _destroy_v12_fixed_physical_backup_fixture(passed_block_fixture)
+
+    passed_then_rebounded_fixture = _v12_fixed_physical_backup_fixture(callback)
+    try:
+        rows = [
+            residual_point(
+                iteration,
+                top_true_relative_residual=(
+                    1.0e-10 if iteration == 3 else 1.0
+                ),
+            )
+            for iteration in range(17)
+        ]
+        observations = feed_rows(passed_then_rebounded_fixture["bundle"], rows)
+        second_window = observations[16]["windows"][-1]
+        assert second_window["passed_metrics_in_window"] == []
+        assert second_window["passed_metrics_in_segment"] == [
+            "top_true_relative_residual"
+        ]
+        assert second_window["required_metrics_for_stagnation"] == [
+            "global_true_relative_residual",
+            "bottom_true_relative_residual",
+            "top_true_relative_residual",
+            "modal_true_relative_residual",
+        ]
+        assert second_window["unmet_block_metrics"] == [
+            "bottom_true_relative_residual",
+            "top_true_relative_residual",
+            "modal_true_relative_residual",
+        ]
+        assert second_window["stalled"] is True
+        # The first window made genuine best-residual progress; a transient
+        # gate crossing does not make the regressed block disappear later.
+        assert observations[16]["status"] == "outer_progress_not_stalled"
+        assert passed_then_rebounded_fixture["solver"]._backup_pending is False
+    finally:
+        _destroy_v12_fixed_physical_backup_fixture(
+            passed_then_rebounded_fixture
+        )
+
+
+def test_v12_finite_stop_waits_for_resolved_trial_and_two_fresh_windows():
+    """A resolved one-trial route may stop finitely before outer max-it."""
+
+    metrics = (
+        "global_true_relative_residual",
+        "bottom_true_relative_residual",
+        "top_true_relative_residual",
+        "modal_true_relative_residual",
+    )
+    fixture = _v12_fixed_physical_backup_fixture(
+        lambda _payload: {"status": "recorded"}
+    )
+    solver = fixture["solver"]
+    bundle = fixture["bundle"]
+    try:
+        solver._backup_switches = 1
+        state = {
+            "schema": "task041.v12.side_restart64_trial_state.v1",
+            "policy_id": block_ldu.TASK041_V12_MODAL_BACKUP_POLICY_ID,
+            "status": "candidate_captured",
+            "resolved": False,
+            "pending": True,
+            "trial_count": 0,
+        }
+        solver._side_restart64_trial_state = state
+        solver._start_outer_observation_segment(
+            "post_backup_waiting_for_side_trial_resolution",
+            boundary_reason="test_candidate_not_yet_resolved",
+        )
+        for iteration in range(17):
+            observation = bundle.observe_outer_true_residual(
+                {"iteration": iteration, **{name: 1.0 for name in metrics}},
+                gate_threshold=5.0e-9,
+            )
+        assert observation["status"] == "two_consecutive_outer_windows_stalled"
+        assert solver._post_backup_stop_pending is None
+        assert solver.post_backup_stop_decision() is None
+
+        state.update(
+            {
+                "status": "not_required_no_eligible_restart32_rhs",
+                "resolved": True,
+                "pending": False,
+                "trial_count": 1,
+                "result": {
+                    "status": "not_required_no_eligible_restart32_rhs",
+                    "side_solve_seen": {"bottom": True, "top": True},
+                },
+            }
+        )
+        solver._start_outer_observation_segment(
+            "post_side_restart64_trial",
+            boundary_reason="test_trial_resolved",
+        )
+        end_observation = None
+        for iteration in range(17):
+            end_observation = bundle.observe_outer_true_residual(
+                {"iteration": iteration, **{name: 1.0 for name in metrics}},
+                gate_threshold=5.0e-9,
+            )
+        stop = solver.post_backup_stop_decision()
+        assert end_observation["status"] == "two_consecutive_outer_windows_stalled"
+        assert stop is not None
+        assert [row["end_iteration"] for row in stop["windows"]] == [8, 16]
+        assert stop["converged"] is False
+        assert stop["max_it_reached"] is False
+
+        reason_code = int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
+        stop_request = {
+            **stop,
+            "reason_name": "DIVERGED_MAX_IT",
+            "runtime_reason_source": (
+                "petsc4py.PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT"
+            ),
+            "reason_code": reason_code,
+            "configured_max_it": 2048,
+            "iterations_at_stop": 16,
+            "current_ksp_iterate_available": True,
+            "current_trusted_solution_retained": False,
+            "original_rhs_retained": True,
+        }
+        solver.record_post_backup_policy_stop(stop_request)
+        owned_rows = [
+            {
+                "rank": rank,
+                "range": [rank, rank + 1],
+                "global_size": MPI.COMM_WORLD.size,
+                "solution_local_sha256": "a" * 64,
+                "rhs_local_sha256_before": "b" * 64,
+                "rhs_local_sha256_after": "b" * 64,
+                "solution_finite_local": True,
+                "rhs_unchanged_local": True,
+            }
+            for rank in range(MPI.COMM_WORLD.size)
+        ]
+        finite_record = {
+            **stop_request,
+            "current_trusted_solution_retained": True,
+            "original_rhs_unchanged": True,
+            "postsolve_all_finite_nonnegative": True,
+            "postsolve_original_residual_pass": False,
+            "original_rhs_global_size": MPI.COMM_WORLD.size,
+            "rank_local_solution_rhs_binding": {
+                "scope": "one owned record per MPI rank; no vector gather",
+                "records": owned_rows,
+            },
+            "postsolve_true_residuals": {
+                "reported_relative_residual": 0.2,
+                "global_true_relative_residual": 0.2,
+                "bottom_true_relative_residual": 0.2,
+                "top_true_relative_residual": 0.2,
+                "modal_true_relative_residual": 0.2,
+            },
+            "result_checkpoint_path": (
+                "HybridBlockLduIterativeResult.solution -> "
+                "Task039 retained_solution_checkpoint -> owner_sharded packet"
+            ),
+        }
+        solver.finalize_post_backup_policy_stop(finite_record)
+        retained = solver.diagnostics["post_backup_stop_record"]
+        assert retained["current_trusted_solution_retained"] is True
+        assert retained["original_rhs_unchanged"] is True
+        assert retained["postsolve_original_residual_pass"] is False
+        assert "owner_sharded packet" in retained["result_checkpoint_path"]
+    finally:
+        _destroy_v12_fixed_physical_backup_fixture(fixture)
+
+
+def test_v12_restart32_restore_capacity_stop_retains_x_and_rhs(monkeypatch):
+    """A real byte-refusal classification has a distinct finite stop path.
+
+    The byte-gate schema is independently covered by the W0.7 callback tests;
+    this state-machine fixture isolates the post-refusal outer handoff and x/f
+    retention without claiming a real resource admission.
+    """
+
+    fixture = _v12_fixed_physical_backup_fixture(
+        lambda _payload: {"status": "unused"}
+    )
+    solver = fixture["solver"]
+    bundle = fixture["bundle"]
+    refusal_gate = {"phase": "restore_restart32", "fixture_only": True}
+    restart64_refusal_gate = {
+        "phase": "allocate_restart64",
+        "fixture_only": True,
+    }
+    monkeypatch.setattr(
+        block_ldu,
+        "_task041_v12_capacity_gate_has_byte_refusal",
+            lambda gate: gate == refusal_gate or gate == restart64_refusal_gate,
+    )
+    trial = {
+        "status": "capacity_gate_refused_restart32_restore",
+        "stage": "restore_restart32",
+        "gate": refusal_gate,
+        "restart64_gate": restart64_refusal_gate,
+        "restart32_restore_required": True,
+        "restart32_restored": False,
+        "restart32_restored_handle_live": False,
+        "restore_capacity_stop_required": True,
+        "restart64_trial_selected_restart": None,
+        "selected_restart": None,
+        "same_p4_factor_handle_all_ranks": True,
+    }
+    try:
+        solver._backup_switches = 1
+        solver._side_restart64_trial_state = {
+            "schema": "task041.v12.side_restart64_trial_state.v1",
+            "policy_id": block_ldu.TASK041_V12_MODAL_BACKUP_POLICY_ID,
+            "status": "candidate_captured",
+            "resolved": False,
+            "pending": True,
+            "trial_count": 0,
+        }
+        solver.resolve_side_restart64_trial(trial)
+        solver._outer_last_observed_iteration = 16
+        stop = bundle.post_backup_stop_decision()
+        assert stop is not None
+        assert stop["schema"] == "task041.v12.post_backup_capacity_stop.v1"
+        assert stop["stop_reason"] == (
+            "task041_v12_restart32_restore_workspace_capacity_refused"
+        )
+        assert stop.get("windows") in (None, [])
+        assert stop["current_ksp_iterate_available"] is True
+        assert stop["original_rhs_retained"] is True
+
+        reason_code = int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
+        stop_request = {
+            **stop,
+            "reason_name": "DIVERGED_MAX_IT",
+            "runtime_reason_source": (
+                "petsc4py.PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT"
+            ),
+            "reason_code": reason_code,
+            "configured_max_it": 2048,
+            "iterations_at_stop": 16,
+            "max_it_reached": False,
+            "converged": False,
+            "current_ksp_iterate_available": True,
+            "current_trusted_solution_retained": False,
+            "original_rhs_retained": True,
+        }
+        solver.record_post_backup_policy_stop(stop_request)
+        owner_rows = [
+            {
+                "rank": rank,
+                "range": [rank, rank + 1],
+                "global_size": MPI.COMM_WORLD.size,
+                "solution_local_sha256": "a" * 64,
+                "rhs_local_sha256_before": "b" * 64,
+                "rhs_local_sha256_after": "b" * 64,
+                "solution_finite_local": True,
+                "rhs_unchanged_local": True,
+            }
+            for rank in range(MPI.COMM_WORLD.size)
+        ]
+        finalized = {
+            **stop_request,
+            "current_trusted_solution_retained": True,
+            "original_rhs_unchanged": True,
+            "postsolve_all_finite_nonnegative": True,
+            "postsolve_original_residual_pass": False,
+            "original_rhs_global_size": MPI.COMM_WORLD.size,
+            "rank_local_solution_rhs_binding": {
+                "scope": "one owned record per MPI rank; no vector gather",
+                "records": owner_rows,
+            },
+            "postsolve_true_residuals": {
+                "reported_relative_residual": 0.2,
+                "global_true_relative_residual": 0.2,
+                "bottom_true_relative_residual": 0.2,
+                "top_true_relative_residual": 0.2,
+                "modal_true_relative_residual": 0.2,
+            },
+            "result_checkpoint_path": (
+                "HybridBlockLduIterativeResult.solution -> "
+                "Task039 retained_solution_checkpoint -> owner_sharded packet"
+            ),
+        }
+        solver.finalize_post_backup_policy_stop(finalized)
+        retained = solver.diagnostics["post_backup_stop_record"]
+        assert retained["status"] == "post_backup_restart32_restore_capacity_stop"
+        assert retained["current_trusted_solution_retained"] is True
+        assert retained["original_rhs_unchanged"] is True
+        assert retained["postsolve_original_residual_pass"] is False
+        assert "owner_sharded packet" in retained["result_checkpoint_path"]
+    finally:
+        _destroy_v12_fixed_physical_backup_fixture(fixture)
+
+
+def test_v12_backup_does_not_fallback_after_primary_matmult_exception():
+    fixture = _v12_fixed_physical_backup_fixture(
+        lambda _payload: {"status": "unused"}
+    )
+    bundle = fixture["bundle"]
+    solver = fixture["solver"]
+    try:
+        def fail_primary(_values):
+            raise RuntimeError("injected primary MatMult failure")
+
+        solver._modal_action.apply = fail_primary
+        with pytest.raises(RuntimeError, match="modal KSP failed"):
+            bundle.solve(np.ones(bundle.modal_count, dtype=np.complex128))
+        diagnostics = bundle.diagnostics
+        assert diagnostics["method"] == "fixed_h6_modal_gmres_research"
+        assert diagnostics["backup_switches"] == 0
+        assert diagnostics["backup_switch_audit"]["actual"] is False
+        assert diagnostics["last_solve"]["status"] == "ksp_callback_failed"
+        assert (
+            "injected primary MatMult failure"
+            in diagnostics["last_solve"]["error"]
+        )
+        for inverse in (
+            fixture["side_fixture"]["bottom_inverse"],
+            fixture["side_fixture"]["top_inverse"],
+        ):
+            assert inverse.diagnostics["destroyed"] is False
+            assert inverse._p4_factor.destroy_count == 0
+    finally:
+        _destroy_v12_fixed_physical_backup_fixture(fixture)
+
+
+def test_v12_modal_constructor_collectively_rejects_rank_local_bad_policy():
+    if MPI.COMM_WORLD.size != 2:
+        pytest.skip("rank-local policy validation requires MPI2")
+    fixture, bundles, _dense_operator = _fixed_h6_modal_krylov_components()
+    policy_id = block_ldu.TASK041_V12_MODAL_SOLVER_POLICY_ID
+    policy_value = "not-a-registered-policy" if MPI.COMM_WORLD.rank == 0 else policy_id
+    local_error = None
+    try:
+        try:
+            block_ldu._FixedH6ModalKrylovSystem(
+                fixture["coupling"],
+                bundles[0]["adapter"],
+                bundles[1]["adapter"],
+                modal_owner=MPI.COMM_WORLD.size - 1,
+                modal_solver_policy=policy_value,
+                snapshot_callback=lambda _payload: {"status": "unused"},
+            )
+        except RuntimeError as exc:
+            local_error = str(exc)
+        assert local_error is not None
+        synchronized_errors = MPI.COMM_WORLD.allgather(local_error)
+        assert len(set(synchronized_errors)) == 1
+        assert "input preflight failed" in local_error
+        assert "rank 0: ValueError" in local_error
+        assert all(bundle["adapter"].audit["destroyed"] is False for bundle in bundles)
+    finally:
+        _destroy_fixed_h6_modal_krylov_components(fixture, bundles, None)
 
 
 def test_side_balh_anderson_inner_failure_is_synchronized_without_fallback(

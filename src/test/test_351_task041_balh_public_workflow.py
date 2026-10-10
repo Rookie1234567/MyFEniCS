@@ -73,6 +73,7 @@ from benchmarks.task041_exact_side_workflow import (
     _task041_w0p7_stage_budget_projection,
     _task041_worker_time_stop_enforced,
     _Task041TopCausalPacketCapture,
+    _write_task041_modal_inner_snapshot,
     run_task041_consumer,
 )
 from benchmarks.task041_rank_numa import (
@@ -2250,6 +2251,43 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
     assert len(operator_boundary_calls) == 2
     assert forbidden_side_build_calls == []
 
+    policy_id = "task041_v12_bounded_inexact_modal"
+    with pytest.raises(CandidateOperatorBoundaryReached):
+        worker.run_task041_consumer(
+            input_path=pilot_path,
+            packet_manifest=manifest_path,
+            packet_identity=identity_path,
+            packet_manifest_sha256="d" * 64,
+            run_directory=tmp_path / "pilot_modal_policy_setup_boundary",
+            source_sha=source_sha,
+            candidate=True,
+            comm=comm,
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            fixed_h6_modal_gmres_research=True,
+            p4_refinement_target_tolerance=5.0e-13,
+            expected_rank_cpus=tuple(range(10, 18)),
+            modal_solver_policy=policy_id,
+        )
+    policy_helper_args, policy_helper_kwargs = candidate_setup_calls[-1]
+    del policy_helper_args
+    assert policy_helper_kwargs["modal_solver_policy"] == policy_id
+    assert callable(policy_helper_kwargs["modal_snapshot_callback"])
+    assert policy_helper_kwargs["modal_feedback_method"] is None
+    assert policy_helper_kwargs["modal_feedback_binding"] is None
+    assert fixed_h6_binding_calls[-2][0]["modal_solver_policy"] == policy_id
+    assert fixed_h6_binding_calls[-1][0]["modal_solver_policy"] == policy_id
+    assert fixed_h6_binding_calls[-2][1]["modal_solver_policy"]["policy_id"] == (
+        policy_id
+    )
+    assert fixed_h6_binding_calls[-1][1]["modal_solver_policy"]["policy_id"] == (
+        policy_id
+    )
+    assert modal_feedback_bindings[-2:] == [None, None]
+    assert len(operator_boundary_calls) == 3
+    assert forbidden_side_build_calls == []
+
     # Drive an actual StagedFactorRejected through the production exact-side
     # factory wrapper and worker catch/summary path, without creating a factor.
     bridge_path = Path(worker.os.environ[worker.TASK041_W0P7_STAGE_BRIDGE_PATH_ENV])
@@ -2290,6 +2328,7 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
 
     monkeypatch.setattr(recovery, "build_frozen_m10_setup", reject_at_setup)
     consumer_summaries.clear()
+    modal_feedback_bindings_before_stage_rejection = len(modal_feedback_bindings)
     with pytest.raises(StagedFactorRejected, match="synthetic stage budget refusal") as exc:
         worker.run_task041_consumer(
             input_path=pilot_path,
@@ -2308,8 +2347,16 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
             p4_refinement_target_tolerance=5.0e-13,
             expected_rank_cpus=tuple(range(10, 18)),
         )
-    assert len(modal_feedback_bindings) == 6
-    assert modal_feedback_bindings[5]["method"] == "fixed_physical_balh_once"
+    assert len(modal_feedback_bindings) == (
+        modal_feedback_bindings_before_stage_rejection + 1
+    )
+    stage_rejection_binding = modal_feedback_bindings[
+        modal_feedback_bindings_before_stage_rejection
+    ]
+    assert stage_rejection_binding["method"] == "fixed_physical_balh_once"
+    assert stage_rejection_binding["selection_source"] == (
+        "registered_w0p7_matched_cell_fixed_h6_consumer"
+    )
     assert exc.value.failure_classification == (
         "TASK041_STAGED_FACTOR_BUDGET_REJECTED"
     )
@@ -3042,13 +3089,21 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
 
 
 @pytest.mark.parametrize(
-    ("input_name", "model_id", "p4_target", "packet_source", "modal_feedback_method"),
+    (
+        "input_name",
+        "model_id",
+        "p4_target",
+        "packet_source",
+        "modal_feedback_method",
+        "modal_solver_policy",
+    ),
     (
         (
             "13p5nm_p6h10_m120_mpi8_cell_condensed.dat",
             TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
             None,
             "producer_root",
+            None,
             None,
         ),
         (
@@ -3057,12 +3112,14 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
             5.0e-13,
             "legacy_descriptor",
             None,
+            None,
         ),
         (
             "5nm_p6h4_m480_mpi8_cell_condensed.dat",
             TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
             5.0e-13,
             "producer_root",
+            None,
             None,
         ),
         (
@@ -3071,6 +3128,7 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
             5.0e-13,
             "producer_root",
             None,
+            None,
         ),
         (
             "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat",
@@ -3078,12 +3136,14 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
             5.0e-13,
             "fresh_producer",
             None,
+            None,
         ),
         (
             "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat",
             TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
             5.0e-13,
             "validated_producer_root",
+            None,
             None,
         ),
         (
@@ -3092,6 +3152,23 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
             5.0e-13,
             "validated_producer_root",
             "fixed_physical_balh_once",
+            None,
+        ),
+        (
+            "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat",
+            TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+            5.0e-13,
+            "validated_producer_root",
+            None,
+            "task041_v12_bounded_inexact_modal",
+        ),
+        (
+            "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat",
+            TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+            5.0e-13,
+            "validated_producer_root",
+            None,
+            "task041_v12_bounded_inexact_modal_once_backup",
         ),
     ),
     ids=(
@@ -3102,6 +3179,8 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
         "w0p7nm-fresh-fixed-h6-pilot",
         "w0p7nm-validated-producer-root-fixed-h6-pilot",
         "w0p7nm-explicit-fixed-physical-balh-method",
+        "w0p7nm-explicit-v12-modal-policy",
+        "w0p7nm-explicit-v12-once-backup-policy",
     ),
 )
 def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
@@ -3110,6 +3189,7 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     p4_target,
     packet_source,
     modal_feedback_method,
+    modal_solver_policy,
     tmp_path: Path,
     monkeypatch,
     capsys,
@@ -3157,7 +3237,36 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         task041_resource_policy=resource_policy,
         expected_rank_cpus=rank_cpus,
         modal_feedback_method=modal_feedback_method,
+        modal_solver_policy=modal_solver_policy,
     )
+    if modal_solver_policy is not None:
+        with pytest.raises(ValueError, match="V12 modal policy requires"):
+            task041_fixed_h6_modal_gmres_binding(
+                TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+                enabled=True,
+                candidate=True,
+                mpi_size=8,
+                mode_count=480,
+                p4_inverse_backend="cell_condensed",
+                p4_refinement_target_tolerance=5.0e-13,
+                task041_resource_policy=resource_policy,
+                expected_rank_cpus=rank_cpus,
+                modal_solver_policy=modal_solver_policy,
+            )
+        with pytest.raises(ValueError, match="V12 modal policy requires"):
+            task041_fixed_h6_modal_gmres_binding(
+                model_id,
+                enabled=True,
+                candidate=True,
+                mpi_size=8,
+                mode_count=int(specification.method["requested_modes_per_direction"]),
+                p4_inverse_backend="cell_condensed",
+                p4_refinement_target_tolerance=p4_target,
+                task041_resource_policy=resource_policy,
+                expected_rank_cpus=rank_cpus,
+                modal_feedback_method="fixed_physical_balh_once",
+                modal_solver_policy=modal_solver_policy,
+            )
     if packet_source == "validated_producer_root":
         producer_root = (tmp_path / "producer").resolve()
         packet_root = producer_root / "selected_mode_packet"
@@ -3187,7 +3296,10 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         supervision_payload = {"packet_source_binding": source_binding}
         if modal_feedback_method is not None:
             supervision_payload["modal_feedback_method"] = modal_feedback_method
+        if modal_feedback_method is not None or modal_solver_policy is not None:
             supervision_payload["fixed_h6_modal_gmres_research"] = fixed_binding
+        if modal_solver_policy is not None:
+            supervision_payload["modal_solver_policy"] = modal_solver_policy
         if source_binding["source_type"] == "validated_producer_root":
             registered = task041_balh_service_contract(model_id)
             supervision_payload["producer_execution"] = (
@@ -3238,6 +3350,10 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         public_args.extend(
             ["--task041-modal-feedback-method", modal_feedback_method]
         )
+    if modal_solver_policy is not None:
+        public_args.extend(
+            ["--task041-modal-solver-policy", modal_solver_policy]
+        )
     if packet_source == "producer_root":
         public_args.extend(["--producer-packet-root", str(tmp_path / "producer")])
     elif packet_source == "validated_producer_root":
@@ -3282,6 +3398,7 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     assert captured["task041_resource_policy"] == resource_policy
     assert captured["task041_p4_refinement_target_tolerance"] == p4_target
     assert captured.get("modal_feedback_method") == modal_feedback_method
+    assert captured.get("modal_solver_policy") == modal_solver_policy
     if packet_source == "producer_root":
         assert captured["producer_packet_root"] == tmp_path / "producer"
         assert captured["legacy_native_packet_descriptor"] is None
@@ -3321,6 +3438,7 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         "fixed_h6_modal_gmres_research": True,
         "expected_rank_cpus": rank_cpus,
         "modal_feedback_method": modal_feedback_method,
+        "modal_solver_policy": modal_solver_policy,
     }
     if packet_source == "producer_root":
         launcher_kwargs["producer_packet_root"] = tmp_path / "producer"
@@ -3344,6 +3462,9 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     assert launcher_supervisor_call.get("modal_feedback_method") == (
         modal_feedback_method
     )
+    assert launcher_supervisor_call.get("modal_solver_policy") == (
+        modal_solver_policy
+    )
     launch_manifest = json.loads(
         (launcher_root / "run_manifest.json").read_text(encoding="utf-8")
     )
@@ -3360,6 +3481,13 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         assert "modal_feedback_method" not in launch_manifest
     else:
         assert launch_manifest["modal_feedback_method"] == modal_feedback_method
+    if modal_solver_policy is None:
+        assert "modal_solver_policy" not in launch_manifest
+    else:
+        assert launch_manifest["modal_solver_policy"] == modal_solver_policy
+        assert launch_manifest["fixed_h6_modal_gmres_research"][
+            "modal_solver_policy"
+        ]["policy_id"] == modal_solver_policy
     if source_binding is None:
         assert "packet_source_binding" not in launch_manifest
     else:
@@ -3400,6 +3528,8 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         service_config["packet_source_binding"] = source_binding
     if modal_feedback_method is not None:
         service_config["modal_feedback_method"] = modal_feedback_method
+    if modal_solver_policy is not None:
+        service_config["modal_solver_policy"] = modal_solver_policy
 
     def resolve_service_contract(config=service_config, target=p4_target):
         return service._service_contract(
@@ -3433,6 +3563,11 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
                 **(
                     {"modal_feedback_method": modal_feedback_method}
                     if modal_feedback_method is not None
+                    else {}
+                ),
+                **(
+                    {"modal_solver_policy": modal_solver_policy}
+                    if modal_solver_policy is not None
                     else {}
                 ),
             },
@@ -3485,6 +3620,7 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         task041_resource_policy=resource_policy,
         fixed_h6_modal_gmres_research=True,
         modal_feedback_method=modal_feedback_method,
+        modal_solver_policy=modal_solver_policy,
         expected_rank_cpus=rank_cpus,
         **worker_packet_binding,
         **(
@@ -3514,6 +3650,7 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     assert parsed_worker.task041_expected_rank_cpus == cpu_argument
     assert parsed_worker.task041_p4_refinement_target_tolerance == p4_target
     assert parsed_worker.task041_modal_feedback_method == modal_feedback_method
+    assert parsed_worker.task041_modal_solver_policy == modal_solver_policy
     if packet_source == "producer_root":
         assert "--packet-origin" not in worker_command
         assert "--legacy-native-binding" not in worker_command
@@ -3772,6 +3909,89 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         assert service._modal_feedback_method_matches_request(
             service_contract, {"modal_feedback_method": "other_method"}
         ) is False
+    if modal_solver_policy is None:
+        assert "modal_solver_policy" not in service_contract
+        assert service._modal_solver_policy_matches_request(
+            service_contract, {"modal_solver_policy": None}
+        ) is True
+        assert service._modal_solver_policy_matches_request(
+            service_contract,
+            {
+                "modal_solver_policy": None,
+                "setup": {
+                    "candidate_inventory": {
+                        "modal_solver_policy": {"policy_id": "unrequested"}
+                    }
+                },
+            },
+        ) is False
+    else:
+        command_without_policy = copy.deepcopy(service_config)
+        policy_flag_index = command_without_policy["public_command"].index(
+            "--task041-modal-solver-policy"
+        )
+        del command_without_policy["public_command"][
+            policy_flag_index : policy_flag_index + 2
+        ]
+        with pytest.raises(
+            service.Task041ServiceError,
+            match="must bind the same supported policy once",
+        ):
+            resolve_service_contract(command_without_policy)
+        resolved_policy = fixed_binding["modal_solver_policy"]
+        assert service_contract["modal_solver_policy"] == modal_solver_policy
+        assert resolved_policy["policy_id"] == modal_solver_policy
+        if modal_solver_policy == "task041_v12_bounded_inexact_modal_once_backup":
+            h6_method = "fixed_h6_modal_gmres_research"
+            no_switch_audit = {
+                "requested": False,
+                "allowed": False,
+                "actual": False,
+                "switch_count": 0,
+                "trigger": None,
+                "status": "not_requested",
+            }
+            candidate_policy_result = {
+                "modal_solver_policy": resolved_policy,
+                "modal_inner_method": h6_method,
+                "modal_actual_solver_inventory_key": "fixed_h6_modal_solver",
+                "modal_actual_method": h6_method,
+                "modal_method_history": [h6_method],
+                "modal_backup_switch_audit": no_switch_audit,
+            }
+            actual_solver_policy_result = {
+                "modal_solver_policy": resolved_policy,
+                "method": h6_method,
+                "actual_feedback_method": None,
+                "method_history": [h6_method],
+                "backup_switch_audit": no_switch_audit,
+            }
+        else:
+            candidate_policy_result = {"modal_solver_policy": resolved_policy}
+            actual_solver_policy_result = {"modal_solver_policy": resolved_policy}
+        policy_result = {
+            "modal_solver_policy": modal_solver_policy,
+            "fixed_h6_modal_gmres_research": fixed_binding,
+            "setup": {
+                "candidate_inventory": candidate_policy_result,
+                "full_formal": {
+                    "solve": {
+                        "inventory": {
+                            "fixed_h6_modal_solver": actual_solver_policy_result
+                        }
+                    }
+                },
+            },
+        }
+        assert service._modal_solver_policy_matches_request(
+            service_contract, policy_result
+        ) is True
+        policy_result["setup"]["full_formal"]["solve"]["inventory"][
+            "fixed_h6_modal_solver"
+        ]["modal_solver_policy"] = {"policy_id": "tampered"}
+        assert service._modal_solver_policy_matches_request(
+            service_contract, policy_result
+        ) is False
     assert service_contract["post_start_document_allowlist"] == sorted(
         supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
     )
@@ -3871,6 +4091,10 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
             assert service_launch["modal_feedback_method"] == (
                 modal_feedback_method
             )
+        if modal_solver_policy is None:
+            assert "modal_solver_policy" not in service_launch
+        else:
+            assert service_launch["modal_solver_policy"] == modal_solver_policy
         assert service_launch["post_start_document_allowlist"] == sorted(
             supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
         )
@@ -4592,6 +4816,361 @@ def test_task041_supervisor_checks_observed_fixed_h6_method_paths(tmp_path: Path
     summary_path.write_text(json.dumps(unrequested, sort_keys=True) + "\n")
     unrequested_result = supervisor._consumer_result(root, process_group_gone=True)
     assert unrequested_result["modal_feedback_request_valid"] is False
+
+
+def test_task041_v12_backup_service_and_supervisor_bind_one_switch(tmp_path: Path):
+    from benchmarks.task041_balh_workflow import (
+        TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        task041_fixed_h6_modal_gmres_binding,
+    )
+    from src.runners import task041_service as service
+
+    h6 = "fixed_h6_modal_gmres_research"
+    physical = "fixed_physical_balh_once_modal_gmres_research"
+    policy_id = "task041_v12_bounded_inexact_modal_once_backup"
+    pilot_id = TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+    fixed_binding = task041_fixed_h6_modal_gmres_binding(
+        pilot_id,
+        enabled=True,
+        candidate=True,
+        mpi_size=8,
+        mode_count=400,
+        p4_inverse_backend="cell_condensed",
+        p4_refinement_target_tolerance=5.0e-13,
+        task041_resource_policy=TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        expected_rank_cpus=tuple(range(10, 18)),
+        modal_solver_policy=policy_id,
+    )
+    policy = fixed_binding["modal_solver_policy"]
+    rank_rows = [
+        {
+            "rank": rank,
+            "local_constraint_lu_factorizations": int(rank == 7),
+            "local_constraint_lu_solve_attempts": 4 if rank == 7 else 0,
+            "local_constraint_lu_solve_successes": 4 if rank == 7 else 0,
+            "local_solver_matmult_calls": 34,
+            "local_total_matmult_calls": 35,
+        }
+        for rank in range(8)
+    ]
+    raw_eta = 0.2
+    primary_record = {
+        "status": "PRIMARY_MODAL_TARGET_NOT_MET_BACKUP_ELIGIBLE",
+        "cumulative_solver_matmult_calls": 34,
+        "cumulative_total_matmult_calls": 35,
+        "ksp_reason": 2,
+        "ksp_status": "returned",
+        "iterations": 32,
+        "final_relative_residual": raw_eta,
+        "raw_residual_pass": False,
+        "final_residual_evaluated": True,
+        "trusted_iterate": True,
+        "input_unchanged": True,
+        "normal_primary_return_completed": True,
+        "pc_usable": False,
+        "owner_constraint_lu_solve_attempts": 4,
+        "rank_local_accounting_scope": (
+            "one_record_per_rank; do_not_sum_replicated_owner_values"
+        ),
+        "rank_local_accounting": rank_rows,
+        "backup_eligibility": {
+            "eligible": True,
+            "normal_ksp_reason_allowed": True,
+            "normal_ksp_reason_class": "positive_reason",
+            "runtime_diverged_its_reason": -3,
+            "iteration_count_within_limit": True,
+            "final_residual_evaluated": True,
+            "raw_residual_pass": False,
+            "raw_relative_residual": raw_eta,
+            "eta_above_approximate_bound": True,
+            "trusted_iterate": True,
+            "input_unchanged": True,
+            "budget_exhausted": False,
+            "mat_preflight_failure": None,
+            "modal_action_failure": None,
+            "pc_failure": None,
+        },
+    }
+    trigger = {
+        "kind": "normal_trusted_primary_return_eta_above_0.1",
+        "safe_boundary": (
+            "after_primary_modal_KSP_return_before_backup_modal_KSP_entry"
+        ),
+        "primary_normal_return": primary_record,
+    }
+    metrics = {
+        name: {"pass": True}
+        for name in (
+            "zero_absolute",
+            "repeat_x",
+            "complex_homogeneity",
+            "repeat_y",
+            "additivity",
+            "near_zero_absolute",
+        )
+    }
+    input_names = {
+        "zero",
+        "x",
+        "x_repeat",
+        "alpha_x",
+        "y",
+        "y_repeat",
+        "x_plus_y",
+        "near_zero_x",
+    }
+    gate_rows = [
+        {
+            "rank": rank,
+            "pass": True,
+            "operator_action_attempts": 8,
+            "operator_action_completions": 8,
+            "constraint_lu_solve_attempts": 0,
+            "input_unchanged_by_action": {name: True for name in input_names},
+            "original_side_apply_count_delta": {"bottom": 0, "top": 0},
+            "modal_feedback_side_counts": {
+                "bottom": {"operation_sequence_matches": True},
+                "top": {"operation_sequence_matches": True},
+            },
+        }
+        for rank in range(8)
+    ]
+    gate = {
+        "status": "passed",
+        "pass": True,
+        "mode": "fixed_physical_balh_modal_feedback_complex_repeat_linearity",
+        "relative_limit": 1.0e-10,
+        "absolute_limit": 1.0e-10,
+        "requested_s_h_actions": 8,
+        "operator_actions_maximum": 8,
+        "rank_count": 8,
+        "rank_action_counts_scope": "per-rank local; do_not_sum_across_ranks",
+        "metrics": metrics,
+        "rank_results": gate_rows,
+    }
+    switch_audit = {
+        "requested": True,
+        "allowed": True,
+        "actual": True,
+        "switch_count": 1,
+        "trigger": trigger,
+        "status": "switched_after_backup_linearity_gate",
+        "same_live_side_factor_handles_verified": True,
+        "method_history": [h6, physical],
+        "primary_diagnostics": {
+            "method": h6,
+            "solve_count": 1,
+            "cumulative_solver_matmult_calls": 34,
+            "cumulative_total_matmult_calls": 35,
+            "scalar_history": [
+                {"iteration": count, "reported_residual_norm": 1.0 / count}
+                for count in (8, 16, 32)
+            ],
+            "primary_solver_record": primary_record,
+        },
+        "backup_linearity_gate": gate,
+    }
+    physical_operator = (
+        "C-PbJb[Qb+(I-QbA6b)H6b(I-A6bQb)]Jb^H Tb-"
+        "PtJt[Qt+(I-QtA6t)H6t(I-A6tQt)]Jt^H Tt"
+    )
+    physical_action = {
+        "method": "fixed_physical_balh_once",
+        "operator_identity": "borrowed_fixed_physical_balh_active_trace",
+    }
+    solver = {
+        "method": physical,
+        "actual_feedback_method": "fixed_physical_balh_once",
+        "feedback_method": None,
+        "modal_feedback_method": None,
+        "modal_solver_policy": policy,
+        "method_history": [h6, physical],
+        "backup_switch_audit": switch_audit,
+        "operator": physical_operator,
+        "fixed_physical_balh_actions": {
+            "bottom": physical_action,
+            "top": physical_action,
+        },
+    }
+    candidate = {
+        "modal_inner_method": h6,
+        "modal_solver_policy": policy,
+        "modal_actual_solver_inventory_key": "fixed_physical_balh_modal_solver",
+        "modal_actual_method": physical,
+        "modal_method_history": [h6, physical],
+        "modal_backup_switch_audit": switch_audit,
+    }
+    summary = {
+        "qualification_method": (
+            "task041_v12_h6_primary_once_physical_backup_with_original_outer_fgmres"
+        ),
+        "fixed_h6_modal_gmres_research": fixed_binding,
+        "modal_solver_policy": policy_id,
+        "setup": {
+            "candidate_inventory": candidate,
+            "full_formal": {
+                "solve": {
+                    "inventory": {"fixed_physical_balh_modal_solver": solver}
+                }
+            },
+        },
+    }
+    root = tmp_path / "v12-backup-consumer"
+    root.mkdir()
+    summary_path = root / "consumer_summary.json"
+    summary_path.write_text(json.dumps(summary, sort_keys=True) + "\n")
+    observed = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        expected_fixed_h6_modal_gmres_research=True,
+        expected_modal_solver_policy=policy_id,
+        expected_fixed_h6_binding=fixed_binding,
+    )
+    assert observed["fixed_h6_method_validation"]["pass"] is True
+    service_contract = {
+        "modal_solver_policy": policy_id,
+        "fixed_h6_modal_gmres_research": fixed_binding,
+    }
+    public_result = {
+        "modal_solver_policy": policy_id,
+        "fixed_h6_modal_gmres_research": fixed_binding,
+        "setup": summary["setup"],
+    }
+    assert service._modal_solver_policy_matches_request(
+        service_contract, public_result
+    ) is True
+
+    bad_normal_boundary = copy.deepcopy(summary)
+    bad_solver_audit = bad_normal_boundary["setup"]["full_formal"]["solve"][
+        "inventory"
+    ]["fixed_physical_balh_modal_solver"]["backup_switch_audit"]
+    bad_solver_audit["trigger"]["safe_boundary"] = "inside_primary_ksp"
+    bad_normal_boundary["setup"]["candidate_inventory"][
+        "modal_backup_switch_audit"
+    ] = copy.deepcopy(bad_solver_audit)
+    summary_path.write_text(json.dumps(bad_normal_boundary, sort_keys=True) + "\n")
+    boundary_rejected = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        expected_fixed_h6_modal_gmres_research=True,
+        expected_modal_solver_policy=policy_id,
+        expected_fixed_h6_binding=fixed_binding,
+    )
+    assert boundary_rejected["fixed_h6_method_validation"]["pass"] is False
+    public_result["setup"] = bad_normal_boundary["setup"]
+    assert service._modal_solver_policy_matches_request(
+        service_contract, public_result
+    ) is False
+
+    stagnation_metrics = [
+        "global_true_relative_residual",
+        "bottom_true_relative_residual",
+        "top_true_relative_residual",
+        "modal_true_relative_residual",
+    ]
+
+    def constant_residual_window(start, end, baseline, baseline_source):
+        samples = [
+            {
+                "iteration": iteration,
+                "residuals": {name: 1.0 for name in stagnation_metrics},
+            }
+            for iteration in range(start, end + 1)
+        ]
+        baseline_iterations = {
+            name: (start if baseline_source == "segment_start_sample" else 0)
+            for name in stagnation_metrics
+        }
+        return {
+            "start_iteration": start,
+            "end_iteration": end,
+            "gate_threshold": 5.0e-9,
+            "baseline_source": baseline_source,
+            "baseline_best_by_metric": dict(baseline),
+            "baseline_best_iteration_by_metric": baseline_iterations,
+            "best_residual_by_metric": {name: 1.0 for name in stagnation_metrics},
+            "best_iteration_by_metric": {
+                name: start for name in stagnation_metrics
+            },
+            "end_residual_by_metric": {name: 1.0 for name in stagnation_metrics},
+            "improvement_fraction_by_metric": {
+                name: 0.0 for name in stagnation_metrics
+            },
+            "passed_metrics_in_window": [],
+            "passed_metrics_in_segment": [],
+            "required_metrics_in_window": list(stagnation_metrics),
+            "required_metrics_for_stagnation": list(stagnation_metrics),
+            "passed_metrics_at_window_end": [],
+            "required_metrics_at_window_end": list(stagnation_metrics),
+            "global_metric_required": True,
+            "unmet_block_metrics": list(stagnation_metrics[1:]),
+            "stalled": True,
+            "samples": samples,
+        }
+
+    initial_baseline = {name: 1.0 for name in stagnation_metrics}
+    first_window = constant_residual_window(
+        0, 8, initial_baseline, "segment_start_sample"
+    )
+    second_window = constant_residual_window(
+        8, 16, initial_baseline, "previous_window_best"
+    )
+    outer_trigger = {
+        "status": "two_consecutive_outer_windows_stalled",
+        "observed_at_iteration": 16,
+        "metrics": stagnation_metrics,
+        "global_metric": "global_true_relative_residual",
+        "block_metrics": stagnation_metrics[1:],
+        "residual_gate_threshold": 5.0e-9,
+        "required_max_improvement_fraction": 0.1,
+        "next_safe_boundary": "next_outer_PC_modal_solve_before_KSP_entry",
+        "stalled_window_end_iterations": [8, 16],
+        "windows": [first_window, second_window],
+    }
+    assert supervisor._task041_v12_backup_trigger_matches_policy(
+        outer_trigger, policy=policy, rank_count=8
+    ) is True
+    bad_outer_boundary = copy.deepcopy(outer_trigger)
+    bad_outer_boundary["next_safe_boundary"] = "after_outer_solve"
+    assert supervisor._task041_v12_backup_trigger_matches_policy(
+        bad_outer_boundary, policy=policy, rank_count=8
+    ) is False
+    endpoint_only_trigger = copy.deepcopy(outer_trigger)
+    endpoint_only_trigger["windows"][1].pop("samples")
+    assert supervisor._task041_v12_backup_trigger_matches_policy(
+        endpoint_only_trigger, policy=policy, rank_count=8
+    ) is False
+    interior_value_mismatch = copy.deepcopy(outer_trigger)
+    interior_value_mismatch["windows"][1]["samples"][2]["residuals"][
+        "bottom_true_relative_residual"
+    ] = 0.01
+    assert supervisor._task041_v12_backup_trigger_matches_policy(
+        interior_value_mismatch, policy=policy, rank_count=8
+    ) is False
+
+    tampered = copy.deepcopy(summary)
+    tampered_audit = tampered["setup"]["full_formal"]["solve"]["inventory"][
+        "fixed_physical_balh_modal_solver"
+    ]["backup_switch_audit"]
+    tampered_audit["trigger"]["primary_normal_return"]["backup_eligibility"][
+        "normal_ksp_reason_class"
+    ] = "runtime_DIVERGED_ITS_at_max_it"
+    tampered["setup"]["candidate_inventory"]["modal_backup_switch_audit"] = (
+        tampered_audit
+    )
+    summary_path.write_text(json.dumps(tampered, sort_keys=True) + "\n")
+    rejected = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        expected_fixed_h6_modal_gmres_research=True,
+        expected_modal_solver_policy=policy_id,
+        expected_fixed_h6_binding=fixed_binding,
+    )
+    assert rejected["fixed_h6_method_validation"]["pass"] is False
+    public_result["setup"] = tampered["setup"]
+    assert service._modal_solver_policy_matches_request(
+        service_contract, public_result
+    ) is False
 
 
 def test_registered_formal_p4_target_rejects_13p5nm_and_old_2nm_full():
@@ -6646,6 +7225,160 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     assert captured["expected_rank_cpus"] == default_rank_cpus
     assert captured["p4_refinement_target_tolerance"] == 5.0e-13
     assert "packet_source_binding" not in captured
+
+
+def test_task041_v12_modal_snapshot_writer_binds_owner_vectors_and_limits_records(
+    tmp_path: Path,
+):
+    source_sha = "a" * 40
+    manifest_sha = "b" * 64
+    identity = {"model_id": TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID, "mpi_size": 8}
+    consumer_binding = {
+        "producer_source_sha": "c" * 40,
+        "consumer_source_sha": source_sha,
+    }
+    vectors = {
+        "g": np.asarray([1.0 + 2.0j, -0.5 + 0.25j], dtype=np.complex128),
+        "m": np.asarray([0.9 + 1.8j, -0.4 + 0.2j], dtype=np.complex128),
+        "raw_residual": np.asarray([0.1 + 0.2j, -0.1 + 0.05j], dtype=np.complex128),
+    }
+    scalar_history = [
+        {"iteration": 8, "reported_residual_norm": 0.4},
+        {"iteration": 16, "reported_residual_norm": 0.1},
+        {"iteration": 32, "reported_residual_norm": 0.02},
+    ]
+
+    def payload(kind: str, *, raw_pass: bool, eta: float) -> dict[str, object]:
+        return {
+            "snapshot_kind": kind,
+            "policy_id": "task041_v12_bounded_inexact_modal",
+            "policy": {
+                "target_rtol": 1.0e-3,
+                "max_it": 32,
+                "solver_matmult_limit": 34,
+                "total_matmult_limit_including_final": 35,
+            },
+            "method": "fixed_h6_modal_gmres_research",
+            "modal_solve_ordinal": 1 if not raw_pass else 2,
+            "outer_pc_apply_index": 1 if not raw_pass else 2,
+            "modal_owner": 7,
+            "rank_count": 8,
+            "ksp_reason": -3 if not raw_pass else 2,
+            "iterations": 32 if not raw_pass else 24,
+            "rhs_norm": float(np.linalg.norm(vectors["g"])),
+            "raw_relative_residual": eta,
+            "raw_residual_pass": raw_pass,
+            "trusted_iterate": True,
+            "pc_usable": True,
+            "approximate_return_decision": (
+                {
+                    "pc_usable": True,
+                    "status": "INNER_TARGET_NOT_MET_APPROX_RETURN",
+                }
+                if not raw_pass
+                else None
+            ),
+            "solver_matmult_calls": 34 if not raw_pass else 26,
+            "total_matmult_calls": 35 if not raw_pass else 27,
+            "scalar_history": scalar_history,
+            **vectors,
+        }
+
+    run_root = tmp_path / "consumer"
+    first = _write_task041_modal_inner_snapshot(
+        run_root,
+        payload("first_unmet_target", raw_pass=False, eta=0.02),
+        source_sha=source_sha,
+        identity=identity,
+        packet_manifest_sha256=manifest_sha,
+        consumer_binding=consumer_binding,
+    )
+    first_path = run_root / first["path"]
+    with np.load(first_path, allow_pickle=False) as archive:
+        assert set(archive.files) == {"g", "m", "raw_residual", "scalar_history"}
+        for key, expected in vectors.items():
+            np.testing.assert_array_equal(archive[key], expected)
+        np.testing.assert_array_equal(
+            archive["scalar_history"],
+            np.asarray([[8, 0.4], [16, 0.1], [32, 0.02]], dtype=np.float64),
+        )
+    assert hashlib.sha256(first_path.read_bytes()).hexdigest() == first["sha256"]
+
+    second = _write_task041_modal_inner_snapshot(
+        run_root,
+        payload("first_success_control", raw_pass=True, eta=5.0e-4),
+        source_sha=source_sha,
+        identity=identity,
+        packet_manifest_sha256=manifest_sha,
+        consumer_binding=consumer_binding,
+    )
+    index_path = run_root / second["index_path"]
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    assert index["source_sha"] == source_sha
+    assert index["identity"] == identity
+    assert index["packet_manifest_sha256"] == manifest_sha
+    assert index["consumer_binding"] == consumer_binding
+    assert index["vector_definitions"]["raw_residual"] == (
+        "independent unscaled g minus S_tilde times m; may be non-finite when untrusted"
+    )
+    assert set(index["records"]) == {"first_unmet_target", "first_success_control"}
+    assert index["records"]["first_unmet_target"]["vector_fields"] == [
+        "g",
+        "m",
+        "raw_residual",
+    ]
+    assert index["records"]["first_unmet_target"]["metadata"][
+        "scalar_history"
+    ] == scalar_history
+    assert index["records"]["first_success_control"]["metadata"][
+        "raw_residual_pass"
+    ] is True
+    assert index["records"]["first_success_control"]["metadata"]["pc_usable"] is True
+    second_path = run_root / second["path"]
+    assert hashlib.sha256(second_path.read_bytes()).hexdigest() == second["sha256"]
+    with pytest.raises(FileExistsError, match="modal snapshot already exists"):
+        _write_task041_modal_inner_snapshot(
+            run_root,
+            payload("first_success_control", raw_pass=True, eta=5.0e-4),
+            source_sha=source_sha,
+            identity=identity,
+            packet_manifest_sha256=manifest_sha,
+            consumer_binding=consumer_binding,
+        )
+
+    untrusted_root = tmp_path / "untrusted-consumer"
+    untrusted_payload = payload(
+        "first_unmet_target", raw_pass=False, eta=0.02
+    )
+    untrusted_payload["trusted_iterate"] = False
+    untrusted_payload["raw_relative_residual"] = None
+    untrusted_payload["pc_usable"] = False
+    untrusted_payload["approximate_return_decision"] = {
+        "pc_usable": False,
+        "status": "rejected",
+    }
+    untrusted_payload["m"] = vectors["m"].copy()
+    untrusted_payload["m"][0] = np.nan + 1.0j
+    untrusted_payload["raw_residual"] = vectors["raw_residual"].copy()
+    untrusted_payload["raw_residual"][1] = np.inf + 0.0j
+    untrusted = _write_task041_modal_inner_snapshot(
+        untrusted_root,
+        untrusted_payload,
+        source_sha=source_sha,
+        identity=identity,
+        packet_manifest_sha256=manifest_sha,
+        consumer_binding=consumer_binding,
+    )
+    with np.load(untrusted_root / untrusted["path"], allow_pickle=False) as archive:
+        assert np.isfinite(archive["g"]).all()
+        assert np.isnan(archive["m"][0].real)
+        assert np.isinf(archive["raw_residual"][1].real)
+    untrusted_index = json.loads(
+        (untrusted_root / untrusted["index_path"]).read_text(encoding="utf-8")
+    )
+    assert untrusted_index["records"]["first_unmet_target"]["metadata"][
+        "trusted_iterate"
+    ] is False
 
 
 @pytest.mark.parametrize(

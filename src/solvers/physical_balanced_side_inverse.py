@@ -10,8 +10,11 @@ remain borrowed.
 
 from __future__ import annotations
 
+import hashlib
+import json
+import math
 import sys
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from contextlib import contextmanager
 from time import perf_counter
 from typing import Any
@@ -134,6 +137,181 @@ _DETAIL_TIMING_SEMANTICS = {
 _DIVERGED_ITS = int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
 _P4_INVERSE_BACKENDS = frozenset({"full", "cell_condensed"})
 FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD = "fixed_physical_balh_once"
+_V12_RESTART64_SELECTION_RULE = (
+    "same_rhs_eta64_at_most_0.9_eta32_and_max_rank_trial_wall_with_one_setup_not_higher"
+    "_and_log_residual_reduction_per_wall_not_lower"
+)
+
+
+def _v12_restart64_selection_evidence(
+    eta32: Any,
+    eta64: Any,
+    restart32_work_by_rank: Any,
+    restart64_rank_records: Any,
+    *,
+    trial_elapsed_max_rank_seconds: Any,
+    trial_setup_elapsed_max_rank_seconds: Any,
+) -> dict[str, Any]:
+    """Apply the fixed same-RHS residual and wall-cost rule to one trial."""
+
+    evidence: dict[str, Any] = {
+        "rule_id": _V12_RESTART64_SELECTION_RULE,
+        "residual_improved_by_at_least_10_percent": False,
+        "max_rank_trial_wall_with_one_setup_not_higher": False,
+        "log_residual_reduction_per_wall_not_lower": False,
+        "restart32_max_rank_side_wall_seconds": None,
+        "restart64_max_rank_side_solve_wall_seconds": None,
+        "restart64_max_rank_setup_wall_seconds": None,
+        "restart64_max_rank_trial_wall_with_setup_seconds": None,
+        "restart32_log_residual_reduction_per_wall": None,
+        "restart64_log_residual_reduction_per_wall": None,
+        "eligible_for_64": False,
+        "reason": "missing_or_nonfinite_same_rhs_cost_or_residual_evidence",
+    }
+
+    def finite_number(value: Any, *, strictly_positive: bool = False) -> float | None:
+        if (
+            not isinstance(value, (int, float))
+            or isinstance(value, bool)
+            or not math.isfinite(float(value))
+        ):
+            return None
+        result = float(value)
+        if result < 0.0 or (strictly_positive and result <= 0.0):
+            return None
+        return result
+
+    eta32_value = finite_number(eta32, strictly_positive=True)
+    eta64_value = finite_number(eta64, strictly_positive=True)
+    if (
+        eta32_value is None
+        or eta64_value is None
+        or eta32_value >= 1.0
+        or eta64_value >= 1.0
+        or not isinstance(restart32_work_by_rank, list)
+        or not isinstance(restart64_rank_records, list)
+        or not restart32_work_by_rank
+        or len(restart32_work_by_rank) != len(restart64_rank_records)
+    ):
+        evidence["reason"] = "invalid_residual_or_rank_cost_evidence"
+        return evidence
+
+    restart32_local_walls: list[float] = []
+    restart32_reported_maxes: list[float] = []
+    restart64_local_walls: list[float] = []
+    restart64_setup_local_walls: list[float] = []
+    for rank, (baseline, trial) in enumerate(
+        zip(restart32_work_by_rank, restart64_rank_records, strict=True)
+    ):
+        if (
+            not isinstance(baseline, Mapping)
+            or type(baseline.get("rank")) is not int
+            or baseline.get("rank") != rank
+            or not isinstance(trial, Mapping)
+            or type(trial.get("rank")) is not int
+            or trial.get("rank") != rank
+        ):
+            evidence["reason"] = "rank_cost_evidence_mismatch"
+            return evidence
+        baseline_local = finite_number(
+            baseline.get("rank_local_elapsed_seconds"), strictly_positive=True
+        )
+        baseline_max = finite_number(
+            baseline.get("max_rank_elapsed_seconds"), strictly_positive=True
+        )
+        trial_local = finite_number(
+            trial.get("elapsed_local_seconds"), strictly_positive=True
+        )
+        setup_local = finite_number(
+            trial.get("ksp_setup_elapsed_local_seconds")
+        )
+        if any(
+            value is None
+            for value in (baseline_local, baseline_max, trial_local, setup_local)
+        ):
+            evidence["reason"] = "missing_or_nonfinite_same_rhs_rank_timing"
+            return evidence
+        restart32_local_walls.append(float(baseline_local))
+        restart32_reported_maxes.append(float(baseline_max))
+        restart64_local_walls.append(float(trial_local))
+        restart64_setup_local_walls.append(float(setup_local))
+
+    restart32_max_rank = max(restart32_local_walls)
+    restart64_max_rank = max(restart64_local_walls)
+    restart64_setup_max_rank = max(restart64_setup_local_walls)
+    restart64_trial_max_rank_with_setup = max(
+        solve_wall + setup_wall
+        for solve_wall, setup_wall in zip(
+            restart64_local_walls, restart64_setup_local_walls, strict=True
+        )
+    )
+    reported_trial_elapsed = finite_number(
+        trial_elapsed_max_rank_seconds, strictly_positive=True
+    )
+    reported_trial_setup = finite_number(
+        trial_setup_elapsed_max_rank_seconds
+    )
+    if (
+        reported_trial_elapsed is None
+        or reported_trial_setup is None
+        or not all(
+            math.isclose(value, restart32_max_rank, rel_tol=1.0e-12, abs_tol=1.0e-15)
+            for value in restart32_reported_maxes
+        )
+        or not math.isclose(
+            reported_trial_elapsed,
+            restart64_max_rank,
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-15,
+        )
+        or not math.isclose(
+            reported_trial_setup,
+            restart64_setup_max_rank,
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-15,
+        )
+    ):
+        evidence["reason"] = "reported_max_rank_cost_does_not_match_rank_records"
+        return evidence
+
+    try:
+        restart32_log_rate = -math.log(eta32_value) / restart32_max_rank
+        restart64_log_rate = (
+            -math.log(eta64_value) / restart64_trial_max_rank_with_setup
+        )
+    except (OverflowError, ZeroDivisionError):
+        evidence["reason"] = "nonfinite_log_residual_cost"
+        return evidence
+    if not math.isfinite(restart32_log_rate) or not math.isfinite(restart64_log_rate):
+        evidence["reason"] = "nonfinite_log_residual_cost"
+        return evidence
+
+    residual_improved = eta64_value <= 0.9 * eta32_value
+    wall_not_higher = restart64_trial_max_rank_with_setup <= restart32_max_rank
+    log_rate_not_lower = restart64_log_rate >= restart32_log_rate
+    eligible = bool(residual_improved and wall_not_higher and log_rate_not_lower)
+    evidence.update(
+        {
+            "residual_improved_by_at_least_10_percent": residual_improved,
+            "max_rank_trial_wall_with_one_setup_not_higher": wall_not_higher,
+            "log_residual_reduction_per_wall_not_lower": log_rate_not_lower,
+            "restart32_max_rank_side_wall_seconds": restart32_max_rank,
+            "restart64_max_rank_side_solve_wall_seconds": restart64_max_rank,
+            "restart64_max_rank_setup_wall_seconds": restart64_setup_max_rank,
+            "restart64_max_rank_trial_wall_with_setup_seconds": (
+                restart64_trial_max_rank_with_setup
+            ),
+            "restart32_log_residual_reduction_per_wall": restart32_log_rate,
+            "restart64_log_residual_reduction_per_wall": restart64_log_rate,
+            "eligible_for_64": eligible,
+            "reason": (
+                "residual_and_cost_improved"
+                if eligible
+                else "restart64_did_not_improve_residual_and_cost_together"
+            ),
+        }
+    )
+    return evidence
 
 
 def _p4_solve_count(p4_factor: Any) -> int:
@@ -270,6 +448,10 @@ def _fixed_q_cell_solve_audit(
 
 _GMRES_RESTART_LIBRARY: Any | None = None
 _GMRES_RESTART_FUNCTION: Any | None = None
+_GMRES_PREALLOCATE_FUNCTION: Any | None = None
+_GMRES_SET_ORTHOGONALIZATION_FUNCTION: Any | None = None
+_GMRES_GET_ORTHOGONALIZATION_FUNCTION: Any | None = None
+_GMRES_MGS_FUNCTION: Any | None = None
 
 
 def _live_gmres_restart(ksp: PETSc.KSP) -> int:
@@ -316,6 +498,81 @@ def _live_gmres_restart(ksp: PETSc.KSP) -> int:
             f"KSPGMRESGetRestart failed with PetscErrorCode={error_code}"
         )
     return int(restart.value)
+
+
+def _gmres_native_stage_functions() -> tuple[Any, Any, Any, Any]:
+    """Load only public PETSc GMRES controls used by the explicit restart trial."""
+
+    import ctypes
+
+    global _GMRES_RESTART_LIBRARY
+    global _GMRES_PREALLOCATE_FUNCTION
+    global _GMRES_SET_ORTHOGONALIZATION_FUNCTION
+    global _GMRES_GET_ORTHOGONALIZATION_FUNCTION
+    global _GMRES_MGS_FUNCTION
+    if _GMRES_PREALLOCATE_FUNCTION is None:
+        try:
+            library = ctypes.CDLL(PETSc.__file__)
+            preallocate = library.KSPGMRESSetPreAllocateVectors
+            set_orthogonalization = library.KSPGMRESSetOrthogonalization
+            get_orthogonalization = library.KSPGMRESGetOrthogonalization
+            mgs = library.KSPGMRESModifiedGramSchmidtOrthogonalization
+        except (AttributeError, OSError) as exc:
+            raise RuntimeError(
+                "loaded PETSc lacks the public GMRES restart-trial controls"
+            ) from exc
+        preallocate.argtypes = [ctypes.c_void_p]
+        preallocate.restype = ctypes.c_int
+        set_orthogonalization.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        set_orthogonalization.restype = ctypes.c_int
+        get_orthogonalization.argtypes = [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_void_p),
+        ]
+        get_orthogonalization.restype = ctypes.c_int
+        mgs.restype = ctypes.c_void_p
+        _GMRES_RESTART_LIBRARY = library
+        _GMRES_PREALLOCATE_FUNCTION = preallocate
+        _GMRES_SET_ORTHOGONALIZATION_FUNCTION = set_orthogonalization
+        _GMRES_GET_ORTHOGONALIZATION_FUNCTION = get_orthogonalization
+        _GMRES_MGS_FUNCTION = mgs
+    return (
+        _GMRES_PREALLOCATE_FUNCTION,
+        _GMRES_SET_ORTHOGONALIZATION_FUNCTION,
+        _GMRES_GET_ORTHOGONALIZATION_FUNCTION,
+        _GMRES_MGS_FUNCTION,
+    )
+
+
+def _configure_gmres_restart_trial(ksp: PETSc.KSP) -> dict[str, Any]:
+    """Freeze public FGMRES preallocation and MGS before candidate setup."""
+
+    import ctypes
+
+    preallocate, set_orthogonalization, get_orthogonalization, mgs = (
+        _gmres_native_stage_functions()
+    )
+    handle = ctypes.c_void_p(int(ksp.handle))
+    preallocate_error = int(preallocate(handle))
+    mgs_address = int(ctypes.cast(mgs, ctypes.c_void_p).value or 0)
+    set_error = int(
+        set_orthogonalization(handle, ctypes.c_void_p(mgs_address))
+    )
+    observed = ctypes.c_void_p()
+    get_error = int(get_orthogonalization(handle, ctypes.byref(observed)))
+    if preallocate_error or set_error or get_error:
+        raise RuntimeError(
+            "PETSc FGMRES restart64 setup failed "
+            f"(preallocate={preallocate_error}, set_mgs={set_error}, get={get_error})"
+        )
+    if int(observed.value or 0) != mgs_address:
+        raise RuntimeError("PETSc FGMRES did not retain modified Gram-Schmidt")
+    return {
+        "preallocate_vectors": True,
+        "orthogonalization": "modified_gram_schmidt",
+        "set_from_public_petsc_api": True,
+        "readback_matches": True,
+    }
 
 
 def _owner_transfer_primal_route_plan_snapshot(
@@ -696,6 +953,15 @@ def _same_handle(left: Any, right: Any) -> bool:
         return int(left.handle) == int(right.handle)
     except (AttributeError, TypeError, ValueError):
         return False
+
+
+def _local_complex_vec_sha256(vector: PETSc.Vec) -> str:
+    """Hash an owned complex128 Vec view without materializing a byte copy."""
+
+    values = np.asarray(vector.getArray(readonly=True))
+    if values.dtype != np.dtype(np.complex128) or not values.flags.c_contiguous:
+        raise TypeError("restart-trial Vec hashing requires a contiguous complex128 view")
+    return hashlib.sha256(memoryview(values).cast("B")).hexdigest()
 
 
 def _classify_ksp_result(
@@ -1350,6 +1616,9 @@ class SideBalancedInverse:
         p4_inverse_backend: str = "full",
         physical_action_backend: str | None = None,
         reuse_leading_ph_dual: bool = False,
+        side_restart64_trial_state: dict[str, Any] | None = None,
+        side_restart64_memory_gate: Callable[[Mapping[str, Any]], Mapping[str, Any]]
+        | None = None,
     ) -> None:
         _validate_ksp_pair(max_it, rtol)
         if not isinstance(reuse_leading_ph_dual, bool):
@@ -1361,6 +1630,27 @@ class SideBalancedInverse:
         if p4_inverse_backend not in _P4_INVERSE_BACKENDS:
             raise ValueError(
                 "p4_inverse_backend must be 'full' or 'cell_condensed'"
+            )
+        if (side_restart64_trial_state is None) != (
+            side_restart64_memory_gate is None
+        ):
+            raise ValueError(
+                "the V12 side restart trial state and fresh memory gate must be supplied together"
+            )
+        if side_restart64_trial_state is not None and (
+                not isinstance(side_restart64_trial_state, dict)
+                or side_restart64_trial_state.get("schema")
+                != "task041.v12.side_restart64_trial_state.v1"
+                or side_restart64_trial_state.get("policy_id")
+                != "task041_v12_bounded_inexact_modal_once_backup"
+                or side_system.side not in {"bottom", "top"}
+                or not callable(side_restart64_memory_gate)
+                or max_it != 128
+                or float(rtol) != 1.0e-2
+                or p4_inverse_backend != "cell_condensed"
+        ):
+            raise ValueError(
+                "the side restart64 trial is limited to registered V12 staged cell-condensed W0.7 sides"
             )
         operator = side_system.A
         condensed = side_system.static_condensation.condensed
@@ -1416,10 +1706,19 @@ class SideBalancedInverse:
         self._iteration_history: list[dict[str, Any]] | None = (
             [] if self._record_iteration_history else None
         )
-        self._p4_factor_created_count = 1
-        self._p4_factor_destroy_count = 0
+        self._side_restart64_trial_state = side_restart64_trial_state
+        self._side_restart64_memory_gate = side_restart64_memory_gate
+        self._gmres_restart = 32
         self._nested_ksp_created_count = 1
         self._nested_ksp_destroy_count = 0
+        self._restart_transition_ksp_setup_seconds = 0.0
+        self._active_restart64_ksp: PETSc.KSP | None = None
+        self._active_restart32_samples: list[dict[str, Any]] | None = None
+        self._side_restart64_candidate_rhs: PETSc.Vec | None = None
+        self._side_restart64_trial_record: dict[str, Any] | None = None
+        self._side_restart64_trial_running = False
+        self._p4_factor_created_count = 1
+        self._p4_factor_destroy_count = 0
         self._checkpoint_count = 0
         self._pc_apply_count = 0
         self._q_count = 0
@@ -1618,7 +1917,7 @@ class SideBalancedInverse:
             "pc_side_label": "RIGHT",
             "norm_type": int(PETSc.KSP.NormType.UNPRECONDITIONED),
             "norm_type_label": "UNPRECONDITIONED",
-            "restart": 32,
+            "restart": int(self._gmres_restart),
             "rtol": self._rtol,
             "atol": 0.0,
             "max_it": self._max_it,
@@ -1677,6 +1976,22 @@ class SideBalancedInverse:
             iteration=int(_iteration),
             reported_residual=float(_reported_residual),
         )
+        capture_every_step = self._side_restart64_capture_is_armed()
+        sample_iteration = int(_iteration)
+        if self._active_restart32_samples is not None and (
+            capture_every_step
+            or sample_iteration in {1, 4, 8}
+            or sample_iteration > 0 and sample_iteration % 32 == 0
+        ):
+            sample = self._restart32_true_residual_sample(
+                _ksp,
+                iteration=sample_iteration,
+                reported_residual=float(_reported_residual),
+            )
+            if not self._active_restart32_samples or self._active_restart32_samples[-1][
+                "iteration"
+            ] != sample_iteration:
+                self._active_restart32_samples.append(sample)
         if self._diagnostic_callback is not None and (
             int(_iteration) == 1
             or (int(_iteration) > 0 and int(_iteration) % 32 == 0)
@@ -1691,6 +2006,996 @@ class SideBalancedInverse:
                 ),
             )
         self._checkpoint()
+
+    def _restart32_true_residual_sample(
+        self,
+        ksp: PETSc.KSP,
+        *,
+        iteration: int,
+        reported_residual: float | None,
+        final_solution: PETSc.Vec | None = None,
+    ) -> dict[str, Any]:
+        """Measure a bounded original-D residual sample for the V12 side trial."""
+
+        if self._operator is None or self._active_rhs_source is None:
+            raise RuntimeError("restart32 trajectory lost its original D/RHS")
+        solution = final_solution
+        owns_solution = solution is None
+        residual = self._operator.createVecLeft()
+        if solution is None:
+            solution = self._operator.createVecRight()
+        try:
+            if owns_solution:
+                ksp.buildSolution(solution)
+            self._operator.mult(solution, residual)
+            residual.scale(PETSc.ScalarType(-1.0))
+            residual.axpy(PETSc.ScalarType(1.0), self._active_rhs_source)
+            local_finite = bool(
+                np.isfinite(solution.getArray(readonly=True)).all()
+                and np.isfinite(residual.getArray(readonly=True)).all()
+            )
+            finite = bool(self._comm.allreduce(local_finite, op=MPI.LAND))
+            residual_norm = float(residual.norm())
+            rhs_norm = self._active_rhs_norm
+            relative = (
+                residual_norm / rhs_norm
+                if rhs_norm is not None and rhs_norm > 0.0
+                else 0.0
+                if rhs_norm == 0.0 and residual_norm == 0.0
+                else None
+            )
+            finite = bool(
+                finite
+                and np.isfinite(residual_norm)
+                and relative is not None
+                and np.isfinite(relative)
+            )
+            return {
+                "iteration": int(iteration),
+                "reported_residual": reported_residual,
+                "original_D_true_residual_norm": residual_norm,
+                "original_D_rhs_norm": rhs_norm,
+                "original_D_true_relative_residual": relative,
+                "finite": finite,
+                "scope": "global_norm_from_distributed_owned_rows",
+            }
+        finally:
+            residual.destroy()
+            if owns_solution:
+                solution.destroy()
+
+    def _side_restart64_capture_is_armed(self) -> bool:
+        state = self._side_restart64_trial_state
+        return bool(
+            isinstance(state, Mapping)
+            and state.get("schema") == "task041.v12.side_restart64_trial_state.v1"
+            and state.get("backup_method_active") is True
+            and state.get("backup_commit_count") == 1
+            and state.get("outer_stagnation_confirmed") is True
+            and state.get("capture_armed") is True
+            and state.get("status") == "capture_armed"
+            and state.get("trial_count") == 0
+            and self._gmres_restart == 32
+            and self._max_it == 128
+        )
+
+    def _mark_post_backup_side_solve_seen(self) -> None:
+        state = self._side_restart64_trial_state
+        if not isinstance(state, dict) or state.get("backup_method_active") is not True:
+            return
+        if state.get("status") not in {"armed", "capture_armed"}:
+            return
+        seen = state.get("post_backup_side_solve_seen")
+        if isinstance(seen, dict) and self._side_system is not None:
+            seen[str(self._side_system.side)] = True
+
+    def _consider_restart32_candidate(
+        self,
+        source: PETSc.Vec,
+        *,
+        reason: int | None,
+        iterations: int,
+        residual_audit: Mapping[str, Any],
+        samples: Sequence[Mapping[str, Any]],
+        solve_record: Mapping[str, Any],
+    ) -> dict[str, Any] | None:
+        """Capture at most one true-residual-stagnant owned RHS after outer stagnation."""
+
+        self._mark_post_backup_side_solve_seen()
+        if not self._side_restart64_capture_is_armed():
+            return None
+        local_samples = {
+            int(row["iteration"]): dict(row)
+            for row in samples
+            if type(row.get("iteration")) is int
+        }
+        required_iterations = tuple(range(64, 129))
+        local_error = None
+        candidate_evidence: dict[str, Any] = {}
+        try:
+            eta = residual_audit.get("relative_residual")
+            sample_rows = [local_samples.get(value) for value in required_iterations]
+            if (
+                self._side_system is None
+                or reason != _DIVERGED_ITS
+                or iterations != 128
+                or solve_record.get("reason") != reason
+                or solve_record.get("iterations") != iterations
+                or not isinstance(eta, (int, float))
+                or isinstance(eta, bool)
+                or not np.isfinite(float(eta))
+                or float(eta) <= self._rtol
+                or any(not isinstance(row, Mapping) for row in sample_rows)
+                or any(row.get("finite") is not True for row in sample_rows)
+            ):
+                candidate_evidence = {
+                    "eligible": False,
+                    "reason": "not_a_finite_128_step_non_target_return",
+                }
+            else:
+                eta_by_iteration = {
+                    int(row["iteration"]): float(
+                        row["original_D_true_relative_residual"]
+                    )
+                    for row in sample_rows
+                }
+                eta64 = eta_by_iteration[64]
+                first_best = min(
+                    eta_by_iteration[iteration] for iteration in range(64, 97)
+                )
+                first_improvement = (
+                    (eta64 - first_best) / eta64 if eta64 > 0.0 else None
+                )
+                second_best = min(
+                    eta_by_iteration[iteration] for iteration in range(96, 129)
+                )
+                second_improvement = (
+                    (first_best - second_best) / first_best
+                    if first_best > 0.0
+                    else None
+                )
+                eligible = bool(
+                    first_improvement is not None
+                    and second_improvement is not None
+                    and np.isfinite(first_improvement)
+                    and np.isfinite(second_improvement)
+                    and first_improvement < 0.10
+                    and second_improvement < 0.10
+                )
+                candidate_evidence = {
+                    "eligible": eligible,
+                    "reason": (
+                        "two_restart32_true_residual_windows_stalled"
+                        if eligible
+                        else "restart32_true_residual_windows_still_improving"
+                    ),
+                    "sampling_scope": (
+                        "original_D_true_residual_each_iteration_after_outer_stagnation"
+                    ),
+                    "window_end_iterations": [[64, 96], [96, 128]],
+                    "window_best_relative_residuals": [first_best, second_best],
+                    "window_improvement_fractions": [
+                        first_improvement,
+                        second_improvement,
+                    ],
+                    "required_improvement": "both strictly below 0.10",
+                    "final_original_D_relative_residual": float(eta),
+                    "target_rtol": self._rtol,
+                    "samples": [dict(row) for row in sample_rows],
+                }
+        except Exception as exc:  # noqa: BLE001 - rank errors are agreed before gate
+            local_error = f"{type(exc).__name__}: {exc}"
+        evidence_signature = hashlib.sha256(
+            json.dumps(
+                candidate_evidence,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+        ).hexdigest()
+        rank_evidence = self._comm.allgather(
+            {
+                "rank": int(self._comm.rank),
+                "error": local_error,
+                "evidence_sha256": evidence_signature,
+                "eligible": candidate_evidence.get("eligible"),
+                "reason": candidate_evidence.get("reason"),
+                "runtime_reason": reason,
+                "iterations": int(iterations),
+                "restart32_work": self._restart32_reference_work(solve_record),
+            }
+        )
+        errors = [row for row in rank_evidence if row.get("error") is not None]
+        if errors:
+            raise RuntimeError(
+                "side restart32 candidate evidence failed collectively: "
+                + "; ".join(
+                    f"rank {row['rank']}: {row['error']}" for row in errors
+                )
+            )
+        signatures = [
+            (
+                row.get("evidence_sha256"),
+                row.get("eligible"),
+                row.get("reason"),
+                row.get("runtime_reason"),
+                row.get("iterations"),
+            )
+            for row in rank_evidence
+        ]
+        if any(value != signatures[0] for value in signatures[1:]):
+            raise RuntimeError("side restart32 candidate evidence differs across ranks")
+        evidence = dict(candidate_evidence)
+        evidence["restart32_reference_work_by_rank"] = [
+            dict(row["restart32_work"]) for row in rank_evidence
+        ]
+        state = self._side_restart64_trial_state
+        if not evidence.get("eligible") or not isinstance(state, dict):
+            return None
+        if state.get("status") != "capture_armed" or state.get("trial_count") != 0:
+            raise RuntimeError("side restart64 candidate was already consumed or disarmed")
+        if self._side_restart64_memory_gate is None:
+            raise RuntimeError("side restart64 candidate has no fresh memory gate")
+        if self._operator is None:
+            raise RuntimeError("side restart64 candidate lost its operator layout")
+        local_operator_rows, local_operator_columns = (
+            int(value) for value in self._operator.getLocalSize()
+        )
+        local_sha = _local_complex_vec_sha256(source)
+        gate = self._side_restart64_memory_gate(
+            {
+                "phase": "capture_restart32_rhs",
+                "side": str(self._side_system.side),
+                "restart": 32,
+                "workspace_lifecycle": (
+                    "restart32_ksp_live_plus_source_rhs_before_candidate_copy"
+                ),
+                "existing_restart32_ksp_live": True,
+                "restart64_trial_ksp_live": False,
+                "candidate_rhs_live": False,
+                "existing_restart32_restart": 32,
+                "local_vector_size": int(source.getLocalSize()),
+                "operator_local_rows": local_operator_rows,
+                "operator_local_columns": local_operator_columns,
+                "rhs_local_sha256": local_sha,
+                "rhs_global_size": int(source.getSize()),
+                "rhs_ownership_range": list(map(int, source.getOwnershipRange())),
+                "original_D_rhs_norm": float(source.norm()),
+            }
+        )
+        if not isinstance(gate, Mapping) or type(gate.get("pass")) is not bool:
+            raise RuntimeError("side restart64 capture gate returned no explicit decision")
+        if gate.get("pass") is not True:
+            state.update(
+                {
+                    "status": "capacity_gate_refused",
+                    "pending": True,
+                    "capture_armed": False,
+                    "capture_gate": dict(gate),
+                    "result": {
+                        "status": "capacity_gate_refused",
+                        "stage": "capture_restart32_rhs",
+                        "refused_object": "captured_restart32_rhs_vector",
+                        "side": str(self._side_system.side),
+                        "candidate": evidence,
+                        "gate": dict(gate),
+                    },
+                }
+            )
+            return {"status": "capacity_gate_refused", "gate": dict(gate)}
+        captured = None
+        allocation_error = None
+        try:
+            captured = source.duplicate()
+            source.copy(captured)
+        except Exception as exc:  # noqa: BLE001 - allocation is not a budget refusal
+            allocation_error = f"{type(exc).__name__}: {exc}"
+        allocation_errors = self._comm.allgather(allocation_error)
+        if any(value is not None for value in allocation_errors):
+            if captured is not None:
+                captured.destroy()
+            raise RuntimeError(
+                "side restart64 RHS capture failed after its memory gate: "
+                + "; ".join(
+                    f"rank {rank}: {error}"
+                    for rank, error in enumerate(allocation_errors)
+                    if error is not None
+                )
+            )
+        if captured is None:
+            raise RuntimeError("side restart64 RHS capture produced no owned Vec")
+        self._side_restart64_candidate_rhs = captured
+        state.update(
+            {
+                "status": "candidate_captured",
+                "pending": True,
+                "capture_armed": False,
+                "candidate_side": str(self._side_system.side),
+                "candidate": {
+                    "side": str(self._side_system.side),
+                    "original_D_rhs_norm": float(source.norm()),
+                    "original_D_relative_residual": float(
+                        residual_audit["relative_residual"]
+                    ),
+                    "global_size": int(source.getSize()),
+                    "capture_gate": dict(gate),
+                    "restart32_evidence": evidence,
+                    "captured_owner_sharded": True,
+                },
+            }
+        )
+        return {"status": "candidate_captured", "candidate": dict(state["candidate"])}
+
+    @staticmethod
+    def _p4_timing_costs(calls: Any) -> dict[str, Any] | None:
+        """Summarize existing scalar P4 timers without retaining call records."""
+
+        p4_timing_fields = (
+            "factor_solve_seconds",
+            "factor_backsolve_seconds",
+            "solution_recovery_seconds",
+        )
+        if not isinstance(calls, list):
+            return None
+        p4_costs: dict[str, Any] = {"call_count": len(calls), "timings": {}}
+        for name in p4_timing_fields:
+            values = [
+                float(call[name])
+                for call in calls
+                if isinstance(call, Mapping)
+                and isinstance(call.get(name), (int, float))
+                and not isinstance(call.get(name), bool)
+                and np.isfinite(float(call[name]))
+                and float(call[name]) >= 0.0
+            ]
+            p4_costs["timings"][name] = {
+                "sum_of_recorded_rank_local_seconds": float(sum(values)),
+                "recorded_call_count": len(values),
+                "missing_or_nonfinite_call_count": len(calls) - len(values),
+            }
+        return p4_costs
+
+    @classmethod
+    def _restart32_reference_work(
+        cls, solve_record: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        """Keep bounded scalar cost evidence for the same-RHS restart32 solve."""
+
+        counts = solve_record.get("counts")
+        count_delta = counts.get("delta") if isinstance(counts, Mapping) else None
+        operations = solve_record.get("operation_seconds")
+        local_operations = (
+            operations.get("per_rank_accumulated_seconds")
+            if isinstance(operations, Mapping)
+            else None
+        )
+        elapsed = solve_record.get("elapsed_seconds")
+        if (
+            not isinstance(elapsed, (int, float))
+            or isinstance(elapsed, bool)
+            or not np.isfinite(float(elapsed))
+            or float(elapsed) < 0.0
+        ):
+            elapsed = None
+        return {
+            "rank": int(solve_record.get("rank", -1)),
+            "iterations": int(solve_record.get("iterations", 0)),
+            "reason": solve_record.get("reason"),
+            "rank_local_elapsed_seconds": solve_record.get(
+                "elapsed_local_seconds"
+            ),
+            "max_rank_elapsed_seconds": elapsed,
+            "rank_local_operation_seconds": (
+                dict(local_operations)
+                if isinstance(local_operations, Mapping)
+                else None
+            ),
+            "rank_local_count_delta": (
+                dict(count_delta) if isinstance(count_delta, Mapping) else None
+            ),
+            "p4_costs": cls._p4_timing_costs(
+                solve_record.get("p4_call_history")
+            ),
+        }
+
+    def _destroy_nested_ksp_for_restart(self) -> None:
+        ksp, self._ksp = self._ksp, None
+        context, self._pc_context = self._pc_context, None
+        if context is not None:
+            context.owner = None
+        if ksp is not None:
+            ksp.destroy()
+            self._nested_ksp_destroy_count += 1
+
+    def _create_nested_ksp_for_restart(
+        self,
+        restart: int,
+        *,
+        trial_monitor: bool,
+        install: bool = False,
+    ) -> tuple[Mapping[str, Any], PETSc.KSP, _SidePythonPcContext]:
+        if self._operator is None:
+            raise RuntimeError("cannot recreate side KSP after operator release")
+        if install and self._ksp is not None:
+            raise RuntimeError("cannot replace a live side KSP without releasing it")
+        ksp = PETSc.KSP().create(self._operator.getComm())
+        context = _SidePythonPcContext(self)
+        local_error = None
+        setup_facts: Mapping[str, Any] = {}
+        try:
+            ksp.setOperators(self._operator)
+            ksp.setType("fgmres")
+            ksp.setPCSide(PETSc.PC.Side.RIGHT)
+            ksp.setGMRESRestart(int(restart))
+            ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
+            ksp.setInitialGuessNonzero(False)
+            ksp.setTolerances(rtol=self._rtol, atol=0.0, max_it=self._max_it)
+            pc = ksp.getPC()
+            pc.setType("python")
+            pc.setPythonContext(context)
+            if trial_monitor:
+                ksp.setMonitor(self._trial_monitor)
+            else:
+                ksp.setMonitor(self._monitor)
+            if restart == 64:
+                setup_facts = _configure_gmres_restart_trial(ksp)
+            ksp.setUp()
+        except Exception as exc:  # noqa: BLE001 - setup status is agreed before solve
+            local_error = f"{type(exc).__name__}: {exc}"
+        records = self._comm.allgather(
+            {"error": local_error, "setup_facts": dict(setup_facts)}
+        )
+        failures = [
+            f"rank {rank}: {record['error']}"
+            for rank, record in enumerate(records)
+            if record.get("error") is not None
+        ]
+        setup_signatures = [
+            json.dumps(
+                record.get("setup_facts"),
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            )
+            for record in records
+        ]
+        if setup_signatures and any(
+            signature != setup_signatures[0]
+            for signature in setup_signatures[1:]
+        ):
+            failures.append("restart KSP setup facts differ across ranks")
+        if failures:
+            context.owner = None
+            ksp.destroy()
+            raise RuntimeError(
+                "side restart KSP setup failed collectively; " + "; ".join(failures)
+            )
+        self._nested_ksp_created_count += 1
+        common_setup = records[0].get("setup_facts") if records else {}
+        if install:
+            self._ksp = ksp
+            self._pc_context = context
+            self._gmres_restart = int(restart)
+        return dict(common_setup or {}), ksp, context
+
+    def _trial_monitor(
+        self, _ksp: PETSc.KSP, _iteration: int, _reported_residual: float
+    ) -> None:
+        self._checkpoint()
+
+    def run_side_restart64_trial(self) -> dict[str, Any]:
+        """Compare one captured RHS with restart64 using non-overlapping KSP workspaces."""
+
+        state = self._side_restart64_trial_state
+        candidate = self._side_restart64_candidate_rhs
+        if (
+            not isinstance(state, dict)
+            or state.get("status") != "candidate_captured"
+            or state.get("trial_count") != 0
+            or candidate is None
+            or self._destroyed
+            or self._apply_in_progress
+            or self._active_p4_call_records is not None
+            or self._operator is None
+            or self._p4_factor is None
+            or self._memory_gate_missing()
+            or self._ksp is None
+            or self._gmres_restart != 32
+        ):
+            raise RuntimeError("side restart64 trial is not at its sealed safe boundary")
+        factor_handle = self._p4_factor
+        if self._p4_factor is not factor_handle:
+            raise RuntimeError("side restart trial lost its borrowed P4 factor")
+        source_norm = float(candidate.norm())
+        if not np.isfinite(source_norm) or source_norm <= 0.0:
+            raise RuntimeError("captured side restart64 RHS is not finite and nonzero")
+        local_operator_rows, local_operator_columns = (
+            int(value) for value in self._operator.getLocalSize()
+        )
+        rhs_binding = {
+            "global_size": int(candidate.getSize()),
+            "local_size": int(candidate.getLocalSize()),
+            "ownership_range": list(map(int, candidate.getOwnershipRange())),
+            "local_sha256": _local_complex_vec_sha256(candidate),
+            "original_D_rhs_norm": source_norm,
+        }
+        side = str(self._side_system.side)
+
+        def gate(phase: str, restart: int) -> Mapping[str, Any]:
+            if self._side_restart64_memory_gate is None:
+                raise RuntimeError("side restart64 live memory callback was released")
+            lifecycle = {
+                "capture_restart32_rhs": (
+                    "restart32_ksp_live_plus_source_rhs_before_candidate_copy"
+                ),
+                "allocate_restart64": (
+                    "restart32_ksp_destroyed_plus_candidate_rhs_live_plus_full_new_restart64_workspace"
+                ),
+                "restore_restart32": (
+                    "restart64_ksp_and_candidate_rhs_destroyed_plus_full_new_restart32_workspace"
+                ),
+            }.get(phase)
+            if lifecycle is None:
+                raise ValueError("side restart trial requested an unknown gate phase")
+            return self._side_restart64_memory_gate(
+                {
+                    "phase": phase,
+                    "side": side,
+                    "restart": int(restart),
+                    "workspace_lifecycle": lifecycle,
+                    "existing_restart32_ksp_live": phase
+                    == "capture_restart32_rhs",
+                    "restart64_trial_ksp_live": False,
+                    "candidate_rhs_live": phase == "allocate_restart64",
+                    "existing_restart32_restart": 32,
+                    "local_vector_size": rhs_binding["local_size"],
+                    "operator_local_rows": local_operator_rows,
+                    "operator_local_columns": local_operator_columns,
+                    "rhs_local_sha256": rhs_binding["local_sha256"],
+                    "rhs_global_size": rhs_binding["global_size"],
+                    "rhs_ownership_range": rhs_binding["ownership_range"],
+                    "original_D_rhs_norm": source_norm,
+                }
+            )
+
+        def release_candidate() -> None:
+            nonlocal candidate
+            if candidate is not None:
+                if self._side_restart64_candidate_rhs is candidate:
+                    self._side_restart64_candidate_rhs = None
+                candidate.destroy()
+                candidate = None
+
+        def update_trial_state(record: dict[str, Any]) -> None:
+            state.update(
+                {
+                    "status": record["status"],
+                    "pending": True,
+                    "trial_count": 1,
+                    "resolved": False,
+                    "result": record,
+                }
+            )
+            self._side_restart64_trial_record = dict(record)
+
+        def restore_restart32() -> tuple[Mapping[str, Any], dict[str, Any] | None]:
+            if candidate is not None:
+                raise RuntimeError("restart32 restore gate ran while candidate RHS was live")
+            if self._ksp is not None or self._pc_context is not None:
+                raise RuntimeError("restart32 restore gate ran with another KSP live")
+            restore_gate = gate("restore_restart32", 32)
+            if not isinstance(restore_gate, Mapping) or type(
+                restore_gate.get("pass")
+            ) is not bool:
+                raise RuntimeError("restart32 restore gate returned no explicit decision")
+            setup_record: dict[str, Any] | None = None
+            if restore_gate.get("pass") is True:
+                setup_started = perf_counter()
+                setup_facts, _restored_ksp, _restored_context = (
+                    self._create_nested_ksp_for_restart(
+                        32,
+                        trial_monitor=False,
+                        install=True,
+                    )
+                )
+                setup_local = float(perf_counter() - setup_started)
+                setup_max = float(self._comm.allreduce(setup_local, op=MPI.MAX))
+                self._restart_transition_ksp_setup_seconds += setup_max
+                setup_rows = self._comm.allgather(
+                    {
+                        "rank": int(self._comm.rank),
+                        "elapsed_local_seconds": setup_local,
+                    }
+                )
+                setup_record = {
+                    "setup_facts": dict(setup_facts),
+                    "elapsed_seconds_by_rank": setup_rows,
+                    "elapsed_max_rank_seconds": setup_max,
+                    "restart": 32,
+                    "same_p4_factor_handle": self._p4_factor is factor_handle,
+                }
+            return restore_gate, setup_record
+
+        # Destroy the old nested KSP before taking the full restart64 B sample.
+        # Its basis is not retained alongside the trial workspace.
+        self._destroy_nested_ksp_for_restart()
+        if self._ksp is not None or self._pc_context is not None:
+            release_candidate()
+            raise RuntimeError("restart32 KSP was not released before restart64 gate")
+
+        trial_ksp: PETSc.KSP | None = None
+        trial_context: _SidePythonPcContext | None = None
+        solution: PETSc.Vec | None = None
+        installed_trial = False
+        previous_instrumentation: dict[str, Any] | None = None
+        record: dict[str, Any] | None = None
+        restore_after_trial = False
+        gate64: Mapping[str, Any] | None = None
+        choose64 = False
+        try:
+            gate64 = gate("allocate_restart64", 64)
+            if not isinstance(gate64, Mapping) or type(gate64.get("pass")) is not bool:
+                raise RuntimeError("restart64 allocation gate returned no explicit decision")
+            if gate64.get("pass") is not True:
+                restore_after_trial = True
+                record = {
+                    "status": "capacity_gate_refused",
+                    "stage": "allocate_restart64",
+                    "refused_object": "one_complete_restart64_FGMRES_KSP_workspace",
+                    "side": side,
+                    "gate": dict(gate64),
+                    "restart64_gate": dict(gate64),
+                    "restart32_original_handle_destroyed": True,
+                    "restart32_handle_retained": False,
+                    "restart32_restore_required": True,
+                    "restart32_restored": False,
+                    "factor_handle_retained": self._p4_factor is factor_handle,
+                    "restart64_trial_selected_restart": None,
+                    "candidate_rhs_binding": {
+                        **rhs_binding,
+                        "rank_layout": gate64.get("rank_layout"),
+                        "restart32_reference_work_by_rank": (
+                            state["candidate"]["restart32_evidence"].get(
+                                "restart32_reference_work_by_rank"
+                            )
+                        ),
+                    },
+                    "original_D_rhs_norm": source_norm,
+                }
+            else:
+                trial_setup_started = perf_counter()
+                setup_facts, trial_ksp, trial_context = (
+                    self._create_nested_ksp_for_restart(
+                        64,
+                        trial_monitor=True,
+                        install=False,
+                    )
+                )
+                trial_setup_elapsed_local = float(perf_counter() - trial_setup_started)
+                trial_setup_elapsed_max = float(
+                    self._comm.allreduce(trial_setup_elapsed_local, op=MPI.MAX)
+                )
+                self._restart_transition_ksp_setup_seconds += trial_setup_elapsed_max
+                solution_error = None
+                try:
+                    solution = self._operator.createVecRight()
+                    solution.set(0.0)
+                except Exception as exc:  # noqa: BLE001 - agree before trial solve
+                    solution_error = f"{type(exc).__name__}: {exc}"
+                solution_errors = self._comm.allgather(solution_error)
+                failures = [
+                    f"rank {rank}: {error}"
+                    for rank, error in enumerate(solution_errors)
+                    if error is not None
+                ]
+                if failures:
+                    raise RuntimeError(
+                        "restart64 solution Vec allocation failed collectively; "
+                        + "; ".join(failures)
+                    )
+                assert trial_ksp is not None and trial_context is not None and solution is not None
+                previous_instrumentation = {
+                    "rhs_operation_seconds": self._rhs_operation_seconds,
+                    "rhs_detail_seconds": self._rhs_detail_seconds,
+                    "rhs_detail_seen": self._rhs_detail_seen,
+                    "active_p4_call_records": self._active_p4_call_records,
+                    "active_true_residual_samples": self._active_true_residual_samples,
+                    "active_restart32_samples": self._active_restart32_samples,
+                }
+                trial_p4_call_records: list[dict[str, Any]] = []
+                self._rhs_operation_seconds = {
+                    name: 0.0 for name in ("Q", "H6", "A6")
+                }
+                self._rhs_detail_seconds = {
+                    name: 0.0 for name in _DETAIL_TIMING_NAMES
+                }
+                self._rhs_detail_seen = {
+                    name: False for name in _DETAIL_TIMING_NAMES
+                }
+                # This bounded trial has its own short P4 record list.
+                self._active_p4_call_records = trial_p4_call_records
+                self._active_true_residual_samples = (
+                    [] if self._diagnostic_callback is not None else None
+                )
+                self._active_restart32_samples = None
+                before = self._count_snapshot()
+                started = perf_counter()
+                self._side_restart64_trial_running = True
+                self._apply_in_progress = True
+                self._active_apply_pc_count = 0
+                self._active_pc_index = None
+                self._active_pc_q_count = 0
+                self._active_rhs_source = candidate
+                self._active_rhs_norm = source_norm
+                self._pending_pc_exception = None
+                self._active_restart64_ksp = trial_ksp
+                try:
+                    trial_ksp.solve(candidate, solution)
+                    pending_pc_exception = self._pending_pc_exception
+                    if pending_pc_exception is not None:
+                        raise pending_pc_exception
+                    reason = int(trial_ksp.getConvergedReason())
+                    iterations = int(trial_ksp.getIterationNumber())
+                    residual = self._explicit_residual(candidate, solution)
+                    candidate_after_sha = _local_complex_vec_sha256(candidate)
+                    local_finite = bool(
+                        np.isfinite(solution.getArray(readonly=True)).all()
+                        and np.isfinite(float(residual["relative_residual"]))
+                    )
+                    finite = bool(self._comm.allreduce(local_finite, op=MPI.LAND))
+                    reason64 = _DIVERGED_ITS
+                    if (
+                        not finite
+                        or candidate_after_sha != rhs_binding["local_sha256"]
+                        or iterations < 0
+                        or iterations > 128
+                        or not (reason > 0 or reason == reason64)
+                    ):
+                        raise RuntimeError(
+                            "restart64 trial changed its RHS or returned a breakdown, "
+                            "non-finite state, or unsupported KSP reason"
+                        )
+                    local_elapsed = float(perf_counter() - started)
+                    elapsed = float(self._comm.allreduce(local_elapsed, op=MPI.MAX))
+                    operation_timing = self._rhs_operation_timing(
+                        local_elapsed, reduce=True
+                    )
+                    p4_costs = self._p4_timing_costs(trial_p4_call_records)
+                    self._total_iterations += iterations
+                    self._total_apply_seconds += elapsed
+                    after = self._count_snapshot()
+                    local_record = {
+                        "rank": int(self._comm.rank),
+                        "ksp_reason": reason,
+                        "iterations": iterations,
+                        "original_D_residual": dict(residual),
+                        "rank_local_count_delta": self._count_delta(before, after),
+                        "elapsed_local_seconds": local_elapsed,
+                        "ksp_setup_elapsed_local_seconds": trial_setup_elapsed_local,
+                        "operation_seconds": operation_timing,
+                        "p4_costs": p4_costs,
+                        "same_p4_factor_handle_local": self._p4_factor is factor_handle,
+                        "candidate_rhs_unchanged_local": (
+                            candidate_after_sha == rhs_binding["local_sha256"]
+                        ),
+                    }
+                    rank_records = self._comm.allgather(local_record)
+                    if any(
+                        row.get("same_p4_factor_handle_local") is not True
+                        for row in rank_records
+                    ):
+                        raise RuntimeError(
+                            "restart64 trial replaced or released the borrowed P4 handle"
+                        )
+                    if any(
+                        row.get("candidate_rhs_unchanged_local") is not True
+                        for row in rank_records
+                    ):
+                        raise RuntimeError(
+                            "restart64 trial changed its captured original-D RHS"
+                        )
+                    if any(
+                        row.get("ksp_reason") != reason
+                        or row.get("iterations") != iterations
+                        or row.get("original_D_residual") != dict(residual)
+                        for row in rank_records
+                    ):
+                        raise RuntimeError(
+                            "restart64 trial solve evidence differs across ranks"
+                        )
+                    eta32 = float(
+                        state["candidate"]["original_D_relative_residual"]
+                    )
+                    eta64 = float(residual["relative_residual"])
+                    restart32_work_by_rank = state["candidate"][
+                        "restart32_evidence"
+                    ].get("restart32_reference_work_by_rank")
+                    selection_evidence = _v12_restart64_selection_evidence(
+                        eta32,
+                        eta64,
+                        restart32_work_by_rank,
+                        rank_records,
+                        trial_elapsed_max_rank_seconds=elapsed,
+                        trial_setup_elapsed_max_rank_seconds=(
+                            trial_setup_elapsed_max
+                        ),
+                    )
+                    choose64 = selection_evidence["eligible_for_64"] is True
+                    restore_after_trial = not choose64
+                    if choose64:
+                        trial_ksp.setMonitor(self._monitor)
+                        self._ksp = trial_ksp
+                        self._pc_context = trial_context
+                        self._gmres_restart = 64
+                        installed_trial = True
+                    record = {
+                        "status": (
+                            "trial_completed_selected_64"
+                            if choose64
+                            else "trial_completed_retained_32"
+                        ),
+                        "side": side,
+                        "restart32_relative_residual": eta32,
+                        "restart64_relative_residual": eta64,
+                        "restart64_reason": reason,
+                        "restart64_iterations": iterations,
+                        "restart64_original_D_residual": dict(residual),
+                        "restart64_rank_records": rank_records,
+                        "restart64_gate": dict(gate64),
+                        "restart32_original_handle_destroyed": True,
+                        "restart32_handle_retained": False,
+                        "restart32_restore_required": not choose64,
+                        "restart32_restored": False,
+                        "restart64_handle_retained": choose64,
+                        "restart64_mgs_setup": dict(setup_facts),
+                        "candidate_rhs_binding": {
+                            **rhs_binding,
+                            "rank_layout": gate64.get("rank_layout"),
+                            "restart32_reference_work_by_rank": (
+                                state["candidate"]["restart32_evidence"].get(
+                                    "restart32_reference_work_by_rank"
+                                )
+                            ),
+                        },
+                        "restart64_cost_scope": (
+                            "per-rank side wall, nested KSP setup, Q/H6/A6 timing, P4 scalar timer sums, and PC/P4 action-count deltas; see rank records"
+                        ),
+                        "trial_elapsed_seconds_max_rank": elapsed,
+                        "trial_ksp_setup_elapsed_max_rank_seconds": (
+                            trial_setup_elapsed_max
+                        ),
+                        "trial_transition_wall_including_one_setup_max_rank_seconds": (
+                            selection_evidence[
+                                "restart64_max_rank_trial_wall_with_setup_seconds"
+                            ]
+                        ),
+                        "same_p4_factor_handle_all_ranks": True,
+                        "selected_restart": 64 if choose64 else 32,
+                        "selection_rule": _V12_RESTART64_SELECTION_RULE,
+                        "selection_evidence": selection_evidence,
+                        "cumulative_side_iterations": int(self._total_iterations),
+                        "cumulative_side_apply_seconds": float(
+                            self._total_apply_seconds
+                        ),
+                        "cumulative_restart_transition_ksp_setup_seconds": float(
+                            self._restart_transition_ksp_setup_seconds
+                        ),
+                        "cumulative_side_wall_seconds_including_transition_setup": float(
+                            self._total_apply_seconds
+                            + self._restart_transition_ksp_setup_seconds
+                        ),
+                    }
+                finally:
+                    self._active_rhs_source = None
+                    self._active_rhs_norm = None
+                    self._active_pc_index = None
+                    self._active_pc_q_count = 0
+                    self._apply_in_progress = False
+                    self._active_restart64_ksp = None
+                    self._side_restart64_trial_running = False
+                    self._pending_pc_exception = None
+        finally:
+            if solution is not None:
+                solution.destroy()
+            release_candidate()
+            if previous_instrumentation is not None:
+                self._rhs_operation_seconds = previous_instrumentation[
+                    "rhs_operation_seconds"
+                ]
+                self._rhs_detail_seconds = previous_instrumentation[
+                    "rhs_detail_seconds"
+                ]
+                self._rhs_detail_seen = previous_instrumentation[
+                    "rhs_detail_seen"
+                ]
+                self._active_p4_call_records = previous_instrumentation[
+                    "active_p4_call_records"
+                ]
+                self._active_true_residual_samples = previous_instrumentation[
+                    "active_true_residual_samples"
+                ]
+                self._active_restart32_samples = previous_instrumentation[
+                    "active_restart32_samples"
+                ]
+            if not installed_trial and trial_ksp is not None:
+                if trial_context is not None:
+                    trial_context.owner = None
+                trial_ksp.destroy()
+                self._nested_ksp_destroy_count += 1
+
+        if restore_after_trial:
+            if record is None:
+                raise RuntimeError("restart32 restore has no terminal trial record")
+            restore_gate, restore_setup = restore_restart32()
+            record["restart64_trial_selected_restart"] = record.get(
+                "selected_restart"
+            )
+            record["restart32_restore_gate"] = dict(restore_gate)
+            record["restart32_restore_setup"] = restore_setup
+            if restore_gate.get("pass") is True:
+                record["status"] = (
+                    "capacity_gate_refused"
+                    if record.get("stage") == "allocate_restart64"
+                    else "trial_completed_retained_32"
+                )
+                record["stage"] = record.get("stage", "trial_completed_retained_32")
+                record["restart32_restore_required"] = False
+                record["restart32_restored"] = True
+                record["restart32_handle_retained"] = False
+                record["restart32_restored_handle_live"] = self._ksp is not None
+                record["selected_restart"] = 32
+            else:
+                record["status"] = "capacity_gate_refused_restart32_restore"
+                record["stage"] = "restore_restart32"
+                record["gate"] = dict(restore_gate)
+                record["refused_object"] = (
+                    "one_complete_restart32_FGMRES_KSP_workspace_for_future_side_apply"
+                )
+                record["restart32_restore_required"] = True
+                record["restart32_restored"] = False
+                record["restart32_restored_handle_live"] = False
+                record["selected_restart"] = None
+                record["restore_capacity_stop_required"] = True
+            record["factor_handle_retained"] = self._p4_factor is factor_handle
+            record["same_p4_factor_handle_all_ranks"] = bool(
+                self._p4_factor is factor_handle
+            )
+            record["cumulative_side_iterations"] = int(self._total_iterations)
+            record["cumulative_side_apply_seconds"] = float(
+                self._total_apply_seconds
+            )
+            record["cumulative_restart_transition_ksp_setup_seconds"] = float(
+                self._restart_transition_ksp_setup_seconds
+            )
+            record[
+                "cumulative_side_wall_seconds_including_transition_setup"
+            ] = float(
+                self._total_apply_seconds
+                + self._restart_transition_ksp_setup_seconds
+            )
+        elif record is not None:
+            record["restart32_restore_required"] = False
+            record["restart32_restored"] = False
+            record["restart32_restored_handle_live"] = False
+            record["selected_restart"] = 64
+            record["factor_handle_retained"] = self._p4_factor is factor_handle
+            record["same_p4_factor_handle_all_ranks"] = bool(
+                self._p4_factor is factor_handle
+            )
+            record[
+                "cumulative_side_wall_seconds_including_transition_setup"
+            ] = float(
+                self._total_apply_seconds
+                + self._restart_transition_ksp_setup_seconds
+            )
+
+        if record is None:
+            raise RuntimeError("side restart trial ended without a terminal record")
+        update_trial_state(record)
+        return record
+
+    def _memory_gate_missing(self) -> bool:
+        return self._side_restart64_memory_gate is None
 
     def _emit_ksp_true_residual_sample(
         self,
@@ -2408,6 +3713,11 @@ class SideBalancedInverse:
             if fixed_p4_correction_steps is None
             else fixed_p4_correction_steps
         )
+        record_restart_trial_costs = bool(
+            self._side_restart64_trial_running
+            or self._side_restart64_capture_is_armed()
+        )
+        record_p4_timing = bool(self._detailed_timing or record_restart_trial_costs)
 
         def observe_p4_correction(
             audit: Mapping[str, Any], vectors: Mapping[str, Any]
@@ -2540,7 +3850,7 @@ class SideBalancedInverse:
                     rhs_global_size=int(coarse_rhs.getSize()),
                 ) is True
                 apply_kwargs: dict[str, Any] = {
-                    "timing": p4_timing if self._detailed_timing else None
+                    "timing": p4_timing if record_p4_timing else None
                 }
                 if correction_steps:
                     apply_kwargs["diagnostic_correction_steps"] = correction_steps
@@ -2574,7 +3884,7 @@ class SideBalancedInverse:
                 solve_kwargs: dict[str, Any] = {
                     "residual_tolerance": 1.0e-10
                 }
-                if self._detailed_timing:
+                if record_p4_timing:
                     solve_kwargs["timing"] = p4_timing
                 if self._diagnostic_callback is not None:
                     solve_kwargs["diagnostic_audit"] = True
@@ -2974,9 +4284,14 @@ class SideBalancedInverse:
         if (
             self._apply_in_progress
             and self._diagnostic_callback is not None
-            and self._ksp is not None
+            and (self._active_restart64_ksp is not None or self._ksp is not None)
         ):
-            self._active_ksp_iteration = int(self._ksp.getIterationNumber())
+            active_ksp = (
+                self._active_restart64_ksp
+                if self._active_restart64_ksp is not None
+                else self._ksp
+            )
+            self._active_ksp_iteration = int(active_ksp.getIterationNumber())
         else:
             self._active_ksp_iteration = None
         self._emit_diagnostic("PC_input", vectors={"source": source})
@@ -3327,17 +4642,20 @@ class SideBalancedInverse:
         self._active_pc_q_count = 0
         self._active_ksp_iteration = None
         self._active_rhs_norm = None
+        capture_restart32 = self._side_restart64_capture_is_armed()
         self._active_p4_call_records = (
             []
             if (
                 self._diagnostic_callback is not None
                 or self._p4_refinement_target_tolerance is not None
+                or capture_restart32
             )
             else None
         )
         self._active_true_residual_samples = (
             [] if self._diagnostic_callback is not None else None
         )
+        self._active_restart32_samples = [] if capture_restart32 else None
         if self._iteration_history is not None:
             self._iteration_history.clear()
         before = self._count_snapshot()
@@ -3409,6 +4727,24 @@ class SideBalancedInverse:
             self._active_rhs_norm = rhs_norm
             residual_audit["rhs_norm"] = rhs_norm
             zero_rhs = rhs_norm == 0.0
+            if self._active_restart32_samples is not None:
+                local_finite = bool(
+                    np.isfinite(source.getArray(readonly=True)).all()
+                )
+                finite = bool(self._comm.allreduce(local_finite, op=MPI.LAND))
+                self._active_restart32_samples.append(
+                    {
+                        "iteration": 0,
+                        "reported_residual": None,
+                        "original_D_true_residual_norm": rhs_norm,
+                        "original_D_rhs_norm": rhs_norm,
+                        "original_D_true_relative_residual": (
+                            1.0 if rhs_norm > 0.0 else 0.0
+                        ),
+                        "finite": finite,
+                        "scope": "zero_initial_guess_exact_rhs_residual",
+                    }
+                )
             if not zero_rhs:
                 solve_started = True
                 self._ksp.solve(source, target)
@@ -3440,6 +4776,21 @@ class SideBalancedInverse:
                     iterations,
                     self._max_it,
                 )
+                if (
+                    self._active_restart32_samples is not None
+                    and not any(
+                        row.get("iteration") == iterations
+                        for row in self._active_restart32_samples
+                    )
+                ):
+                    self._active_restart32_samples.append(
+                        self._restart32_true_residual_sample(
+                            self._ksp,
+                            iteration=iterations,
+                            reported_residual=None,
+                            final_solution=target,
+                        )
+                    )
             else:
                 status = "ZERO_RHS_EXACT"
 
@@ -3463,6 +4814,7 @@ class SideBalancedInverse:
                 "ksp_rtol": self._rtol,
                 "ksp_max_it": self._max_it,
                 "elapsed_seconds": elapsed,
+                "elapsed_local_seconds": float(local_elapsed),
                 "execution_variant": execution_variant,
                 "operation_seconds": operation_timing,
                 "counts": {
@@ -3500,6 +4852,16 @@ class SideBalancedInverse:
                     else {}
                 ),
             }
+            restart32_capture = self._consider_restart32_candidate(
+                source,
+                reason=reason,
+                iterations=iterations,
+                residual_audit=residual_audit,
+                samples=tuple(self._active_restart32_samples or ()),
+                solve_record=record,
+            )
+            if restart32_capture is not None:
+                record["side_restart64_capture"] = dict(restart32_capture)
         except BaseException as exc:
             if solve_started and self._ksp is not None:
                 try:
@@ -3588,6 +4950,7 @@ class SideBalancedInverse:
             self._active_ksp_iteration = None
             self._active_p4_call_records = None
             self._active_true_residual_samples = None
+            self._active_restart32_samples = None
             self._active_rhs_source = None
             self._active_rhs_norm = None
 
@@ -3656,7 +5019,7 @@ class SideBalancedInverse:
             "research_only": True,
             "ksp_type": "fgmres",
             "pc_side": "right",
-            "restart": 32,
+            "restart": int(self._gmres_restart),
             "norm_type": "unpreconditioned",
             "zero_initial_guess": True,
             "ksp_rtol": self._rtol,
@@ -3682,6 +5045,13 @@ class SideBalancedInverse:
             "apply_count": int(self._apply_count),
             "total_iterations": int(self._total_iterations),
             "total_apply_seconds": float(self._total_apply_seconds),
+            "restart_transition_ksp_setup_seconds": float(
+                self._restart_transition_ksp_setup_seconds
+            ),
+            "total_side_wall_seconds_including_restart_transition_setup": float(
+                self._total_apply_seconds
+                + self._restart_transition_ksp_setup_seconds
+            ),
             "direct_factor_count": p4_live,
             "local_direct_factor_count": p4_live,
             "local_direct_factor_count_owned": p4_live,
@@ -3701,6 +5071,20 @@ class SideBalancedInverse:
             "approximate_nonlinear_inverse": True,
             "counts": self._count_snapshot(),
             "last_apply": dict(self._last_apply),
+            "side_restart64_trial": (
+                None
+                if self._side_restart64_trial_state is None
+                else {
+                    key: value
+                    for key, value in self._side_restart64_trial_state.items()
+                    if not key.startswith("_")
+                }
+            ),
+            "side_restart64_trial_record": (
+                None
+                if self._side_restart64_trial_record is None
+                else dict(self._side_restart64_trial_record)
+            ),
             **(
                 {
                     "independent_p4_call_history": list(
@@ -3747,13 +5131,21 @@ class SideBalancedInverse:
     def destroy(self) -> None:
         if self._destroyed:
             return
+        if self._side_restart64_trial_running:
+            raise RuntimeError("cannot destroy a side inverse during its restart64 trial")
         self._destroyed = True
+        candidate_rhs, self._side_restart64_candidate_rhs = (
+            self._side_restart64_candidate_rhs,
+            None,
+        )
+        if candidate_rhs is not None:
+            candidate_rhs.destroy()
         ksp = self._ksp
         self._ksp = None
         try:
             if ksp is not None:
                 ksp.destroy()
-                self._nested_ksp_destroy_count = 1
+                self._nested_ksp_destroy_count += 1
         finally:
             self._pending_pc_exception = None
             if self._pc_context is not None:
@@ -3819,6 +5211,9 @@ def build_side_balanced_inverse(
     reuse_primal_route_plan: bool = False,
     reuse_leading_ph_dual: bool = False,
     compact_orientation: bool = False,
+    side_restart64_trial_state: dict[str, Any] | None = None,
+    side_restart64_memory_gate: Callable[[Mapping[str, Any]], Mapping[str, Any]]
+    | None = None,
 ) -> SideBalancedInverse:
     """Build one side adapter and release all partial owned state on failure."""
 
@@ -3830,6 +5225,29 @@ def build_side_balanced_inverse(
         raise TypeError("defer_p4_numeric must be an exact bool")
     if not isinstance(compact_orientation, bool):
         raise TypeError("compact_orientation must be a boolean")
+    if (side_restart64_trial_state is None) != (
+        side_restart64_memory_gate is None
+    ):
+        raise ValueError(
+            "V12 side restart state and live memory gate must be supplied together"
+        )
+    if side_restart64_trial_state is not None and (
+        not isinstance(side_restart64_trial_state, dict)
+        or side_restart64_trial_state.get("schema")
+        != "task041.v12.side_restart64_trial_state.v1"
+        or side_restart64_trial_state.get("policy_id")
+        != "task041_v12_bounded_inexact_modal_once_backup"
+        or not callable(side_restart64_memory_gate)
+        or max_it != 128
+        or float(rtol) != 1.0e-2
+        or side_system.side not in {"bottom", "top"}
+        or p4_inverse_backend != "cell_condensed"
+        or factor_stage_factory is None
+        or defer_p4_numeric is not True
+    ):
+        raise ValueError(
+            "V12 side restart is limited to staged deferred cell-condensed W0.7 sides"
+        )
     if reuse_leading_ph_dual and diagnostic_callback is not None:
         raise ValueError(
             "leading PH reuse is incompatible with mutable vector diagnostics"
@@ -4036,6 +5454,8 @@ def build_side_balanced_inverse(
             p4_inverse_backend=p4_inverse_backend,
             physical_action_backend=physical_action_backend,
             reuse_leading_ph_dual=reuse_leading_ph_dual,
+            side_restart64_trial_state=side_restart64_trial_state,
+            side_restart64_memory_gate=side_restart64_memory_gate,
         )
         full_action = None
         p4_factor = None

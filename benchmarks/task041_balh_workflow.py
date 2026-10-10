@@ -797,6 +797,7 @@ def task041_fixed_h6_modal_gmres_binding(
     task041_resource_policy: str | None,
     expected_rank_cpus: Sequence[int] | None = None,
     modal_feedback_method: str | None = None,
+    modal_solver_policy: str | None = None,
 ) -> dict[str, Any] | None:
     """Bind the default-off fixed-H6 route to registered V9 cases."""
 
@@ -807,6 +808,20 @@ def task041_fixed_h6_modal_gmres_binding(
     if modal_feedback_method is not None and not enabled:
         raise ValueError(
             "modal_feedback_method requires explicit fixed-H6 research opt-in"
+        )
+    if modal_solver_policy not in (
+        None,
+        "task041_v12_bounded_inexact_modal",
+        "task041_v12_bounded_inexact_modal_once_backup",
+    ):
+        raise ValueError("unsupported Task041 modal solver policy")
+    if modal_solver_policy is not None and (
+        not enabled
+        or modal_feedback_method is not None
+        or model_id != TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+    ):
+        raise ValueError(
+            "the V12 modal policy requires pure fixed-H6 on the registered W0.7 pilot"
         )
     if not enabled:
         if model_id == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID:
@@ -896,6 +911,14 @@ def task041_fixed_h6_modal_gmres_binding(
     }
     if modal_feedback_method is not None:
         binding["modal_feedback_method"] = modal_feedback_method
+    if modal_solver_policy is not None:
+        from src.solvers.hybrid_fem_modal_block_ldu import (
+            resolve_task041_modal_solver_policy,
+        )
+
+        binding["modal_solver_policy"] = resolve_task041_modal_solver_policy(
+            modal_solver_policy
+        )
     return binding
 
 
@@ -1437,6 +1460,7 @@ def build_task041_balh_candidate_consumer_command(
     task041_resource_policy: str | None = None,
     fixed_h6_modal_gmres_research: bool = False,
     modal_feedback_method: str | None = None,
+    modal_solver_policy: str | None = None,
     expected_rank_cpus: Sequence[int] | None = None,
     packet_source_binding: Mapping[str, Any] | None = None,
 ) -> list[str]:
@@ -1487,6 +1511,7 @@ def build_task041_balh_candidate_consumer_command(
         task041_resource_policy=task041_resource_policy,
         expected_rank_cpus=expected_rank_cpus,
         modal_feedback_method=modal_feedback_method,
+        modal_solver_policy=modal_solver_policy,
     )
     if packet_source_binding is not None:
         if (
@@ -1692,6 +1717,10 @@ def build_task041_balh_candidate_consumer_command(
         if modal_feedback_method is not None:
             command.extend(
                 ("--task041-modal-feedback-method", modal_feedback_method)
+            )
+        if modal_solver_policy is not None:
+            command.extend(
+                ("--task041-modal-solver-policy", modal_solver_policy)
             )
     if packet_source_binding is not None:
         command.extend(
@@ -2210,6 +2239,14 @@ def _parser() -> argparse.ArgumentParser:
         choices=("fixed_physical_balh_once",),
         default=None,
     )
+    parser.add_argument(
+        "--task041-modal-solver-policy",
+        choices=(
+            "task041_v12_bounded_inexact_modal",
+            "task041_v12_bounded_inexact_modal_once_backup",
+        ),
+        default=None,
+    )
     parser.add_argument("--task041-expected-rank-cpus")
     time_control = parser.add_mutually_exclusive_group()
     time_control.add_argument(
@@ -2264,6 +2301,7 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
             args.task041_fixed_h6_modal_gmres_research
         ),
         modal_feedback_method=args.task041_modal_feedback_method,
+        modal_solver_policy=args.task041_modal_solver_policy,
         expected_rank_cpus=task041_parse_expected_rank_cpus(
             args.task041_expected_rank_cpus
         ),

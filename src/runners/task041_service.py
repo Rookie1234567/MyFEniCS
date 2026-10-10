@@ -89,13 +89,18 @@ def _fixed_h6_service_binding(
         )
     configured_rank_cpus = config.get("expected_rank_cpus")
     configured_modal_feedback_method = config.get("modal_feedback_method")
+    configured_modal_solver_policy = config.get("modal_solver_policy")
     research_flag = "--task041-fixed-h6-modal-gmres-research"
     cpu_flag = "--task041-expected-rank-cpus"
     modal_feedback_flag = "--task041-modal-feedback-method"
+    modal_solver_policy_flag = "--task041-modal-solver-policy"
     research_positions = [i for i, value in enumerate(command) if value == research_flag]
     cpu_positions = [i for i, value in enumerate(command) if value == cpu_flag]
     modal_feedback_positions = [
         i for i, value in enumerate(command) if value == modal_feedback_flag
+    ]
+    modal_solver_policy_positions = [
+        i for i, value in enumerate(command) if value == modal_solver_policy_flag
     ]
     if not enabled:
         if (
@@ -104,6 +109,8 @@ def _fixed_h6_service_binding(
             or configured_rank_cpus is not None
             or configured_modal_feedback_method is not None
             or modal_feedback_positions
+            or configured_modal_solver_policy is not None
+            or modal_solver_policy_positions
         ):
             raise Task041ServiceError(
                 "fixed-H6/modal-feedback command options require the matching service config opt-in"
@@ -129,6 +136,30 @@ def _fixed_h6_service_binding(
     elif modal_feedback_positions:
         raise Task041ServiceError(
             "public command requests modal feedback absent from service config"
+        )
+    if configured_modal_solver_policy is not None:
+        if (
+            configured_modal_solver_policy
+            not in {
+                "task041_v12_bounded_inexact_modal",
+                "task041_v12_bounded_inexact_modal_once_backup",
+            }
+            or len(modal_solver_policy_positions) != 1
+        ):
+            raise Task041ServiceError(
+                "service modal solver policy and public command must bind the same supported policy once"
+            )
+        policy_position = modal_solver_policy_positions[0]
+        if (
+            policy_position + 1 >= len(command)
+            or command[policy_position + 1] != configured_modal_solver_policy
+        ):
+            raise Task041ServiceError(
+                "service modal solver policy differs from the public command"
+            )
+    elif modal_solver_policy_positions:
+        raise Task041ServiceError(
+            "public command requests a modal solver policy absent from service config"
         )
     if len(research_positions) != 1 or len(cpu_positions) != 1:
         raise Task041ServiceError(
@@ -168,6 +199,7 @@ def _fixed_h6_service_binding(
             task041_resource_policy=task041_resource_policy,
             expected_rank_cpus=configured_cpus,
             modal_feedback_method=configured_modal_feedback_method,
+            modal_solver_policy=configured_modal_solver_policy,
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise Task041ServiceError(str(exc)) from exc
@@ -281,6 +313,7 @@ def _service_contract(
     model_id = str(config["model_id"])
     command = list(config.get("public_command", []))
     configured_modal_feedback_method = config.get("modal_feedback_method")
+    configured_modal_solver_policy = config.get("modal_solver_policy")
     bound_profile = (
         _performance_profile_binding(
             command,
@@ -404,6 +437,10 @@ def _service_contract(
             if configured_modal_feedback_method is not None:
                 resolved_contract["modal_feedback_method"] = (
                     configured_modal_feedback_method
+                )
+            if configured_modal_solver_policy is not None:
+                resolved_contract["modal_solver_policy"] = (
+                    configured_modal_solver_policy
                 )
             resolved_contract["post_start_document_allowlist"] = sorted(
                 supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
@@ -596,6 +633,234 @@ def _modal_feedback_method_matches_request(
         and public_result.get("modal_feedback_method")
         == contract.get("modal_feedback_method")
     )
+
+
+def _modal_solver_policy_matches_request(
+    contract: Mapping[str, Any], public_result: Any
+) -> bool:
+    """Check the sealed policy against both candidate and actual solver records."""
+
+    requested = contract.get("modal_solver_policy")
+    if not isinstance(public_result, Mapping):
+        return False
+    setup = public_result.get("setup")
+    candidate = (
+        setup.get("candidate_inventory") if isinstance(setup, Mapping) else None
+    )
+    formal = setup.get("full_formal") if isinstance(setup, Mapping) else None
+    solve = formal.get("solve") if isinstance(formal, Mapping) else None
+    inventory = solve.get("inventory") if isinstance(solve, Mapping) else None
+    solver = None
+    solver_key = None
+    observed_solvers = []
+    if isinstance(inventory, Mapping):
+        observed_solvers = [
+            (key, inventory.get(key))
+            for key in (
+                "fixed_h6_modal_solver",
+                "fixed_physical_balh_modal_solver",
+            )
+            if isinstance(inventory.get(key), Mapping)
+        ]
+        if len(observed_solvers) == 1:
+            solver_key, solver = observed_solvers[0]
+    result_binding = public_result.get("fixed_h6_modal_gmres_research")
+    if requested is None:
+        return bool(
+            len(observed_solvers) <= 1
+            and public_result.get("modal_solver_policy") is None
+            and not (
+                isinstance(result_binding, Mapping)
+                and result_binding.get("modal_solver_policy") is not None
+            )
+            and not (
+                isinstance(candidate, Mapping)
+                and candidate.get("modal_solver_policy") is not None
+            )
+            and not (
+                any(
+                    observed.get("modal_solver_policy") is not None
+                    for _key, observed in observed_solvers
+                )
+            )
+        )
+    fixed_binding = contract.get("fixed_h6_modal_gmres_research")
+    expected_policy = (
+        fixed_binding.get("modal_solver_policy")
+        if isinstance(fixed_binding, Mapping)
+        else None
+    )
+    expected_rank_cpus = (
+        fixed_binding.get("expected_rank_cpus")
+        if isinstance(fixed_binding, Mapping)
+        else None
+    )
+    rank_count = (
+        len(expected_rank_cpus)
+        if isinstance(expected_rank_cpus, (list, tuple))
+        and all(type(cpu) is int for cpu in expected_rank_cpus)
+        else 0
+    )
+    return bool(
+        requested
+        in {
+            "task041_v12_bounded_inexact_modal",
+            "task041_v12_bounded_inexact_modal_once_backup",
+        }
+        and isinstance(expected_policy, Mapping)
+        and expected_policy.get("policy_id") == requested
+        and public_result.get("modal_solver_policy") == requested
+        and isinstance(candidate, Mapping)
+        and candidate.get("modal_solver_policy") == expected_policy
+        and isinstance(solver, Mapping)
+        and solver.get("modal_solver_policy") == expected_policy
+        and rank_count == TASK041_BALH_MPI_SIZE
+        and _modal_solver_policy_actual_route_matches(
+            requested=requested,
+            candidate=candidate,
+            solver=solver,
+            solver_key=solver_key,
+            rank_count=rank_count,
+        )
+    )
+
+
+def _task041_v12_backup_trigger_matches_policy(
+    trigger: Any, *, policy: Mapping[str, Any], rank_count: int
+) -> bool:
+    """Check that a recorded one-time switch has an allowed V12 trigger."""
+    return supervisor._task041_v12_backup_trigger_matches_policy(
+        trigger, policy=policy, rank_count=rank_count
+    )
+
+
+def _modal_solver_policy_actual_route_matches(
+    *,
+    requested: str,
+    candidate: Any,
+    solver: Any,
+    solver_key: str | None,
+    rank_count: int,
+) -> bool:
+    """Bind the recorded method history to the sealed A1/A2 policy."""
+
+    h6 = "fixed_h6_modal_gmres_research"
+    physical = "fixed_physical_balh_once_modal_gmres_research"
+    if not isinstance(candidate, Mapping) or not isinstance(solver, Mapping):
+        return False
+    history = solver.get("method_history")
+    audit = solver.get("backup_switch_audit")
+    if (
+        not isinstance(history, list)
+        or not isinstance(audit, Mapping)
+        or candidate.get("modal_inner_method") != h6
+    ):
+        return False
+    if requested == "task041_v12_bounded_inexact_modal":
+        return bool(
+            history == [h6]
+            and solver_key == "fixed_h6_modal_solver"
+            and solver.get("method") == h6
+            and solver.get("actual_feedback_method") is None
+            and audit.get("requested") is False
+            and audit.get("allowed") is False
+            and audit.get("actual") is False
+            and audit.get("switch_count") == 0
+        )
+    if requested != "task041_v12_bounded_inexact_modal_once_backup":
+        return False
+    no_switch_initial = bool(
+        history == [h6]
+        and solver_key == "fixed_h6_modal_solver"
+        and solver.get("method") == h6
+        and solver.get("actual_feedback_method") is None
+        and audit.get("requested") is False
+        and audit.get("allowed") is False
+        and audit.get("actual") is False
+        and audit.get("switch_count") == 0
+        and audit.get("trigger") is None
+        and audit.get("status") == "not_requested"
+    )
+    terminal_decision = audit.get("outer_terminal_decision")
+    terminal_status = audit.get("status")
+    terminal_positive = bool(
+        isinstance(terminal_decision, Mapping)
+        and terminal_decision.get("positive") is True
+        and terminal_decision.get("decision")
+        in {"CONVERGED_USER", "CONVERGED_RTOL"}
+    )
+    terminal_nonconverged = bool(
+        isinstance(terminal_decision, Mapping) and not terminal_positive
+    )
+    no_switch_terminal = bool(
+        history == [h6]
+        and solver_key == "fixed_h6_modal_solver"
+        and solver.get("method") == h6
+        and solver.get("actual_feedback_method") is None
+        and audit.get("requested") is True
+        and audit.get("allowed") is False
+        and audit.get("actual") is False
+        and audit.get("switch_count") == 0
+        and audit.get("method_history") == history
+        and audit.get("status")
+        in {
+            "backup_not_needed_outer_converged_before_next_PC_boundary",
+            "backup_not_run_outer_terminated_before_next_PC_boundary",
+        }
+        and isinstance(audit.get("trigger"), Mapping)
+        and _task041_v12_backup_trigger_matches_policy(
+            audit.get("trigger"),
+            policy=solver.get("modal_solver_policy", {}),
+            rank_count=rank_count,
+        )
+        and isinstance(audit.get("outer_terminal_decision"), Mapping)
+        and (
+            terminal_status
+            == "backup_not_needed_outer_converged_before_next_PC_boundary"
+            and terminal_positive
+            or terminal_status
+            == "backup_not_run_outer_terminated_before_next_PC_boundary"
+            and terminal_nonconverged
+        )
+    )
+    no_switch = bool(
+        (no_switch_initial or no_switch_terminal)
+        and candidate.get("modal_actual_solver_inventory_key")
+        == "fixed_h6_modal_solver"
+        and candidate.get("modal_actual_method") == h6
+        and candidate.get("modal_method_history") == history
+        and candidate.get("modal_backup_switch_audit") == dict(audit)
+    )
+    one_switch = bool(
+        history == [h6, physical]
+        and solver_key == "fixed_physical_balh_modal_solver"
+        and solver.get("method") == physical
+        and solver.get("actual_feedback_method") == "fixed_physical_balh_once"
+        and audit.get("requested") is True
+        and audit.get("allowed") is True
+        and audit.get("actual") is True
+        and audit.get("switch_count") == 1
+        and audit.get("same_live_side_factor_handles_verified") is True
+        and audit.get("method_history") == history
+        and supervisor._task041_v12_backup_primary_diagnostics_matches(audit)
+        and isinstance(audit.get("trigger"), Mapping)
+        and _task041_v12_backup_trigger_matches_policy(
+            audit.get("trigger"),
+            policy=solver.get("modal_solver_policy", {}),
+            rank_count=rank_count,
+        )
+        and audit.get("status") == "switched_after_backup_linearity_gate"
+        and isinstance(audit.get("backup_linearity_gate"), Mapping)
+        and supervisor._task041_v12_backup_linearity_gate_matches(
+            audit.get("backup_linearity_gate"), rank_count=rank_count
+        )
+        and candidate.get("modal_actual_solver_inventory_key")
+        == "fixed_physical_balh_modal_solver"
+        and candidate.get("modal_actual_method") == physical
+        and candidate.get("modal_method_history") == history
+        and candidate.get("modal_backup_switch_audit") == dict(audit)
+    )
+    return no_switch or one_switch
 
 
 def _side_setup_schedule_binding(
@@ -1022,6 +1287,11 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
         **(
             {"modal_feedback_method": contract["modal_feedback_method"]}
             if isinstance(contract.get("modal_feedback_method"), str)
+            else {}
+        ),
+        **(
+            {"modal_solver_policy": contract["modal_solver_policy"]}
+            if isinstance(contract.get("modal_solver_policy"), str)
             else {}
         ),
         **(
@@ -1458,10 +1728,18 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             expected["post_start_document_allowlist"] = sorted(
                 supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
             )
+            expected_policy = contract.get("modal_solver_policy")
+            if expected_policy is not None:
+                expected["modal_solver_policy"] = expected_policy
+            elif "modal_solver_policy" in launch:
+                raise Task041ServiceError(
+                    "service launch declares an unrequested modal solver policy"
+                )
         elif (
             "fixed_h6_modal_gmres_research" in launch
             or "post_start_document_allowlist" in launch
             or "modal_feedback_method" in launch
+            or "modal_solver_policy" in launch
         ):
             raise Task041ServiceError(
                 "default service launch must not declare fixed-H6 identity"
@@ -1601,6 +1879,9 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
     modal_feedback_method_match = _modal_feedback_method_matches_request(
         contract, public
     )
+    modal_solver_policy_match = _modal_solver_policy_matches_request(
+        contract, public
+    )
     public_ok = bool(
         isinstance(public, Mapping)
         and public.get("status") == "completed"
@@ -1627,6 +1908,7 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
         "pre_exit_members_clean": pre_clean,
         "public_result_completed": public_ok,
         "modal_feedback_method_matches_request": modal_feedback_method_match,
+        "modal_solver_policy_matches_request": modal_solver_policy_match,
         "post_cgroup_finalizer_only": post_members == [os.getpid()],
         "post_hash_phase_completed": post_ok,
         "closed_artifacts_hashed": artifact_ok,
@@ -1636,6 +1918,7 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
     controlled_checks = {
         "service_terminal_captured": terminal["available"],
         "modal_feedback_method_matches_request": modal_feedback_method_match,
+        "modal_solver_policy_matches_request": modal_solver_policy_match,
         "service_terminal_exit3": (
             terminal["SERVICE_RESULT"] == "exit-code"
             and terminal["EXIT_CODE"] == "exited"
