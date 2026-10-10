@@ -1,3 +1,11 @@
+# 当前入口：Review V67 / V69
+
+完成冻结p5/0.7nm完整空间的精确内部消元消费和独立p5模式对照；完整原方程、六场及费用与连续精度分开验收。旧P6/L5、L4F/L5 FAIL保持，无NN训练、目标尺度或merge。
+
+[正式回应](response_v69.md) · [完整结果](outcomes/exact_tetra_condensation_p5_modes_v69.md) · [费用](outcomes/records/resource_costs_final_v69.json) · [离散参照](outcomes/records/discrete_reference_contract_v69.json)
+
+---
+
 # 当前入口：V68同一L5已持久完成
 
 已完成同一冻结25576tet/p5/828的0.7nm真实三维NOTCH完整场，保留全部内部未知量、完整双周期及开放边界；没有静态凝聚或神经训练。formal独立原式3.35489e-10通过1e-6门，严格direct1e-10仍FAIL。 L4F/L5散射E/H=3.53386e-4/3.61018e-4；P6/L5=1.14449e-4/1.23013e-4，240点最大分别1.81996e-3/9.56042e-4，均超1e-4。两固定分母均FAIL，功率/物理通道通过不覆盖场差。

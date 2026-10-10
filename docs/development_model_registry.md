@@ -1,3 +1,14 @@
+# Task042 V69模型账追加
+
+| 模型 | 原空间 | 方法/资格入口 |
+|---|---|---|
+| C5 | 冻结25576tet/p5/828 | 全空间精确内部消元与恢复，不改变物理离散 |
+| M5 | 同mesh/p5/1188 | 独立零初值模式对照，连续精度单列 |
+
+[完整方程/六场/功率](task042_neural_coarse_inverse/outcomes/records/complete_physics_v69.json) · [费用及未配平限制](task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v69.json)。
+
+---
+
 # 新模型：Task042 V68完整L5
 
 | 身份 | 方法与规模 | 实际资格 | 费用 |

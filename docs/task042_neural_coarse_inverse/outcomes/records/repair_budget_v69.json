@@ -1,0 +1,46 @@
+{
+  "intervals": [
+    {
+      "root_group": "F1_F2",
+      "start_utc": "2026-10-10T03:00:42.108409+00:00",
+      "end_utc": "2026-10-10T03:04:49.506681+00:00",
+      "conservative_upper_seconds": 247.398272
+    },
+    {
+      "root_group": "F3",
+      "start_utc": "2026-10-10T03:13:13.969935+00:00",
+      "end_utc": "2026-10-10T03:19:24.871261+00:00",
+      "conservative_upper_seconds": 370.901326
+    },
+    {
+      "root_group": "F4_F5_F6_diagnosis_repair_and_affected_replay",
+      "start_utc": "2026-10-10T03:41:05.176680+00:00",
+      "end_utc": "2026-10-10T04:55:07.392021+00:00",
+      "conservative_upper_seconds": 4442.215341
+    },
+    {
+      "root_group": "F7_F8_failed_consumer_repair_and_comparison_only_replay",
+      "start_utc": "2026-10-10T06:47:25.655681+00:00",
+      "end_utc": "2026-10-10T07:08:44.391587+00:00",
+      "conservative_upper_seconds": 1278.735906
+    }
+  ],
+  "conservative_union_seconds": 6339.2508450000005,
+  "limit_seconds": 7200,
+  "initial_implementation_not_relabelled_as_repair": true,
+  "failed_first_forming_run_fully_charged_in_total_cost": true,
+  "initial_preparation_before_diagnosis_is_work_not_relabelled_as_repair": true,
+  "standalone_failed_tests_inside_intervals_not_added_twice": true,
+  "part_of_total_elapsed_not_additional_wall": true,
+  "ordinary_repair_ids": [
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6",
+    "F7",
+    "F8"
+  ],
+  "no_new_repairs_after_final_source": "valid only if journal still has exactly these eight IDs"
+}

@@ -1,0 +1,130 @@
+{
+  "entries": [
+    {
+      "id": "F1",
+      "root_cause": "cost metadata key seconds absent",
+      "failed_source": "4dc9fb866d976bbf4714954d157ec8148f50ae9d",
+      "evidence": "auxiliary_pre01/stderr.log",
+      "science_started": false,
+      "change": "add required seconds from unchanged measured elapsed; preserve v1",
+      "no_replayed_science": true
+    },
+    {
+      "id": "F2",
+      "root_cause": "Ruff free-variable lifetime warning after explicit setup release",
+      "evidence": "aux_pre_02/command1.stdout",
+      "failed_source": "4dc9fb866d976bbf4714954d157ec8148f50ae9d",
+      "change": "capture centers explicitly before geometric sort",
+      "five_algebra_schema_tests_passed": true,
+      "full_PDE_or_factor_replayed": false,
+      "UTC": "2026-10-10T03:03:18.199591+00:00"
+    },
+    {
+      "id": "F3",
+      "root_cause": "complete random witness must separately check body and operation-scaled ports, not allow auxiliary port scale to hide body error",
+      "evidence": "reduction_witness_review.json",
+      "change": "original Aii saved in bounded recovery chunks; check local recovery plus separate independent body/port witness; complete per-direction D score inventory",
+      "old_preflight": {
+        "source": "8940bc2f7eb701b87a90770f6a60970ba4c5f23c",
+        "two_cell_errors": [
+          1.0241611784932398e-15,
+          1.1873971033550208e-15
+        ],
+        "same_local_elimination_formula_reused": true,
+        "new_complete_solves": 0
+      },
+      "replay": "only short changed tests; existing D arrays scored without field replay",
+      "UTC": "2026-10-10T03:13:13.969935+00:00"
+    },
+    {
+      "id": "F4",
+      "UTC": "2026-10-10T04:21:24.726582+00:00",
+      "root_cause": "Schur AIJ preallocation omitted fill from actual nonzero Ci/Di; precise first-run runtime hotspot remains unknown",
+      "failed_source": "a314b0c32dd87286a8ff1cd6472abc688e23fb85",
+      "evidence": [
+        "prepare_controlled_repair_stop.json",
+        "implementation_stop_events.jsonl",
+        "PREPARE_C5_one_run01/receipt.json",
+        "prepare_stack_sample.stderr"
+      ],
+      "first_prepare_outer_seconds": 3167.2488233540207,
+      "failed_first_run_local_LU_count": {
+        "lower": 0,
+        "upper": 25576,
+        "budget_charge_uses_upper": true
+      },
+      "new_body_builds": 0,
+      "numeric_factors": 0,
+      "legal_complete_fields": 0,
+      "change": "reserve closure-based exact nonzero port support; log each initialization subphase and first local LU; include live RSS plus conservative explicit owners; case consumer costs do not reset",
+      "replay": "same read-only K; no old preflight/D replay; one repaired forming attempt, same-root second failure must change diagnosis or use authorized full M5",
+      "repair_start_utc": "2026-10-10T04:11:25.449894+00:00",
+      "affected_replay_charged": true,
+      "no_resource_or_math_threshold_changed": true
+    },
+    {
+      "id": "F5",
+      "UTC": "2026-10-10T04:35:27.404564+00:00",
+      "root_cause": "FINAL trace-block assembly compresses unused reserved slots before ADD Schur updates",
+      "failed_source": "b5fae70b6bf3c5c081f8a5df3feebb377926c058",
+      "evidence": [
+        "prepare_controlled_repair_stop02.json",
+        "stop_writer_failure02.json",
+        "prepare_controlled_repair_signal02.json",
+        "PREPARE_C5_one_run02/receipt.json"
+      ],
+      "affected_replay_seconds": 671.3218858300243,
+      "first_local_LU_observed": true,
+      "local_LU_bounds": {
+        "lower": 1,
+        "upper": 25576,
+        "budget_uses_upper": true
+      },
+      "change": "only opt-in transfer uses MAT_FLUSH_ASSEMBLY, final Schur assembly remains FINAL; synthetic local installed PETSc capacity witness and exact full algebra mandatory before continuation",
+      "diagnosis_changed": true,
+      "third_blind_replay": false,
+      "original_math_and_thresholds_unchanged": true,
+      "new_body_builds": 0,
+      "new_numeric_factors": 0,
+      "official_reference": "https://petsc.org/release/manualpages/Mat/MatAssemblyBegin/",
+      "official_rule_paraphrase": "Switch INSERT/ADD with FLUSH; FINAL compresses unfilled preallocated slots; installed 3.19 test is authoritative runtime evidence"
+    },
+    {
+      "id": "F6",
+      "UTC": "2026-10-10T04:38:37.926796+00:00",
+      "root_cause": "test misinterpreted PETSc nz_allocated total as per-row remaining insertion capacity",
+      "failed_source": "9a142d339d018fc21add4c00fa5f30a029934351",
+      "evidence": "aux_pre_06/command0.stderr",
+      "change": "check actual new-entry allocation error with FINAL versus successful no-allocation insertion after FLUSH; preserve failed test; strict reproduction now rejects missing one of six fields/selected vectors",
+      "new_PDE_replay": false,
+      "old_global_numeric_count": 0,
+      "no_threshold_changed": true
+    },
+    {
+      "id": "F7",
+      "UTC": "2026-10-10T06:59:16.803319+00:00",
+      "root_cause": "near-identical fields separately evaluated before subtracting make tiny-numerator relative q31 spot unstable",
+      "failed_source": "9b9d2fcdbb9e4f76d1c22163eca909bd68f1eac1",
+      "evidence": "VERIFY_COST_one_run01/receipt.json",
+      "change": "opt-in exact same native basis, geometry and numbering coefficient subtraction; independent q31 evaluates actual difference field; preserve original gate and record large-field subtraction diagnostics",
+      "affected_replay": "only comparison; completed C5 original/tangent/output receipt reused under exact coefficient and oracle source hash",
+      "new_numeric": 0,
+      "new_solve": 0,
+      "repair_start_utc": "2026-10-10T06:55:14.145825+00:00"
+    },
+    {
+      "id": "F8",
+      "UTC": "2026-10-10T07:02:22.040472+00:00",
+      "root_cause": "installed DOLFINx dofmap.list is ndarray rather than adjacency object",
+      "failed_source": "8f6733896fdc375657b2aae28149a03c4b48153f",
+      "evidence": "aux_pre_08/command1.stdout",
+      "change": "read exact native numbering from either ndarray or adjacency array; require exact equality unchanged; include new module and test in live identity closure",
+      "replay": "same one targeted same-basis field fixture and source/schema gate only",
+      "numeric_replay": 0,
+      "PDE_replay": 0,
+      "included_in_F7_repair_interval": true
+    }
+  ],
+  "historical_failures_preserved": true,
+  "legal_returned_fields_never_refactored": true
+}

@@ -1,0 +1,92 @@
+{
+  "successful_scientific_local_LU_and_service_calls": [
+    {
+      "role": "PREFLIGHT_actual_cells",
+      "local_LU_attempts": 2,
+      "source_sha": "8940bc2f7eb701b87a90770f6a60970ba4c5f23c",
+      "small_saved_pairs_not_full_PDE": true
+    },
+    {
+      "role": "PREPARE_C5_success",
+      "local_LU_attempts": 25576,
+      "recovery_service_calls": null,
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v69/task042_v69_exact_p5_condense_prepare_20261010T044023322425Z/exact_condensed/manifest.json",
+        "sha256": "2c1953f0e52a0363d6516378fa3e03d96f76488d2c909ae582936da6d240da19",
+        "bytes": 10034398400,
+        "nnz": 266599917
+      }
+    },
+    {
+      "role": "C5",
+      "source_sha": "9b9d2fcdbb9e4f76d1c22163eca909bd68f1eac1",
+      "local_LU_attempts": 0,
+      "recovery_service_calls": {
+        "local_lu_solve": 76728,
+        "trace_action": 0
+      },
+      "scalar_original_action_calls": {
+        "A": 1,
+        "AH": 0,
+        "factor": 2
+      }
+    },
+    {
+      "role": "M5",
+      "source_sha": "c2cca174957b0e7d37a8c100b4d59a2fccf4a867",
+      "local_LU_attempts": 25576,
+      "recovery_service_calls": {
+        "local_lu_solve": 102304,
+        "trace_action": 1
+      },
+      "scalar_original_action_calls": {
+        "A": 4,
+        "AH": 0,
+        "factor": 2
+      }
+    }
+  ],
+  "failed_attempt_bounds": [
+    {
+      "role": "PREPARE_C5_one_run01",
+      "local_LU_lower": 0,
+      "local_LU_upper": 25576
+    },
+    {
+      "role": "PREPARE_C5_one_run02",
+      "local_LU_lower": 1,
+      "local_LU_upper": 25576
+    }
+  ],
+  "scientific_local_LU_lower": 51155,
+  "scientific_local_LU_upper": 102306,
+  "failed_unknown_counts_budget_uses_upper": true,
+  "synthetic_test_LU_calls": "unknown separately; no full PDE/numeric factor in targeted fixtures",
+  "new_global_numeric_attempts": 2,
+  "new_body_K_main_builds": 0,
+  "verify_new_factors": 0,
+  "verify_complete_solves": 0,
+  "original_action_calls_by_successful_stage": {
+    "PREFLIGHT": null,
+    "PREPARE_C5": null,
+    "C5": {
+      "A": 1,
+      "AH": 0,
+      "factor": 2
+    },
+    "M5": {
+      "A": 4,
+      "AH": 0,
+      "factor": 2
+    },
+    "VERIFY_COST": {
+      "A": 1,
+      "AH": 0,
+      "factor": 0,
+      "port_recovery": 1
+    }
+  },
+  "unknown_failed_action_counts": "not rolled back; failed PREPARE exited before a saved full-action witness",
+  "forming_lu_solve_per_successful_cell": 1,
+  "forming_solve_multi_RHS_not_one_count_per_column": true
+}

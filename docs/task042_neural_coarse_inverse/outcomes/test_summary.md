@@ -1,3 +1,11 @@
+# V69最终必要验证
+
+最终consumer/M5 source c2cca174957b0e7d37a8c100b4d59a2fccf4a867；C5求解source 9b9d2fcdbb9e4f76d1c22163eca909bd68f1eac1：8项新增复数非Hermitian/非零载荷/实际容量/完整checker库存targeted测试及1项同基系数差/完整相位curl回归，相关Ruff/compile及5项dat真实validate通过。完整恢复原作用与真实两cell配对通过，C5/M5实际物理解和保存checker另列；不以测试数代替物理资格。旧失败保留，无full pytest/CI。
+
+[核资格与执行链](records/execution_chain_v69.json) · [科学](records/scientific_checks_v69.json) · [文档最终字节](records/documentation_checks_v69.json)。
+
+---
+
 # V68最终定点与完整物理审核
 
 最终科学source dda480bd6d2cb532aefd7875c1d69d874dbd6841：5项父资产/返回场守卫/持久轮询与明确停止targeted检查、相关Ruff/compile及3个dat真实validate通过。两次控制累计约12.3s，原始停机前落盘和后代清场保留；无full pytest/CI/历史PDE重放。

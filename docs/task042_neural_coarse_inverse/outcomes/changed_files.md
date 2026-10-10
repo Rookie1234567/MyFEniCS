@@ -1,3 +1,11 @@
+# V69薄四面体消元接入
+
+新增真实实体内部映射、原CSR局部精确消元/恢复checkpoint和薄backend/parent/模式接线；复用既有完整tetra、独立系数原作用、MUMPS及输出。默认核数学不变，opt-in装配以FLUSH保留预留槽。新数组与失败ignored，旧历史保持；不推广production或merge。
+
+[按依赖分组](records/selective_merge_manifest_v69.json) · [真实source](records/authority_identity_v69.json)。
+
+---
+
 # V68最小执行链与薄恢复接入
 
 durable_l5_scope/study只绑定V67健康p5父K、当前窗口及返回场状态；既有完整tetra求解数学未改。durable_stop_events与原subreaper增加opt-in的停止前原子证据，短工具轮询不等于任务截止；原PSI/RSS/swap门保持。run_case/port_preparation只注册三项V68 one-run。collect_durable_l5复用原式与原场比较，不复制solver。

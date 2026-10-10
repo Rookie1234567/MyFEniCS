@@ -1,0 +1,36 @@
+{
+  "successful_prepared_start_segments_seconds": {
+    "C5": 7559.584269383922,
+    "M5": 8518.362687221961
+  },
+  "failed_segments_separate": {
+    "C5": [
+      {
+        "entry": "PREPARE_C5_one_run01",
+        "seconds": 3167.2488233540207,
+        "exit_code": 3
+      },
+      {
+        "entry": "PREPARE_C5_one_run02",
+        "seconds": 671.3218858300243,
+        "exit_code": 3
+      }
+    ],
+    "M5": []
+  },
+  "unique_outer_wall_not_added_to_nested_timings": true,
+  "C5_preparation_and_solve_separate_processes": true,
+  "OS_JIT_cache_not_cleared": true,
+  "parent_prepare_seconds": 12095.119183719857,
+  "parent_body_seconds_nested_not_added": "about 11740s; not added to inclusive parent PREPARE",
+  "V67_failed_factor_interval_seconds": [
+    1432.073909353,
+    2057.882138
+  ],
+  "V68_L5_prepared_start_seconds": 5955.676414642017,
+  "V68_L5_sampled_peak_bytes": 139116351488,
+  "fresh_end_to_end_N1_with_new_K": "unknown; prepared asset reused, not measured fresh in V69",
+  "old_reference_generation_not_free": true,
+  "no_balanced_production_speed_ratio": true,
+  "research_compares_and_independent_consumers_separate": true
+}

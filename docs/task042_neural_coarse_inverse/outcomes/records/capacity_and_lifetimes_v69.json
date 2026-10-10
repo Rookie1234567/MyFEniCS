@@ -1,0 +1,327 @@
+{
+  "states": {
+    "C5": {
+      "full_native": 1979985,
+      "full_independent_FE": 1943745,
+      "full_rows": 1944573,
+      "retained_rows": 1177293,
+      "augmented_stored_nnz": 266599917,
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v69/task042_v69_exact_p5_condense_prepare_20261010T044023322425Z/exact_condensed/manifest.json",
+        "sha256": "2c1953f0e52a0363d6516378fa3e03d96f76488d2c909ae582936da6d240da19",
+        "bytes": 10034398400,
+        "nnz": 266599917
+      },
+      "local_recovery_identity": {
+        "maximum_cell_operation_scaled": 5.962453991614276e-16,
+        "pass_gate": true,
+        "original_Aii_retained": true,
+        "cells": 25576
+      },
+      "condensed_service_calls": {
+        "local_lu_solve": 76728,
+        "trace_action": 0
+      },
+      "symbolic_numeric_plan": {
+        "symbolic_estimate_mb": 104461,
+        "numeric_memory_allocation_cap_mb": 208922,
+        "current_whole_tree_rss_bytes": 25026744320,
+        "factor_workspace_estimate_times_two_bytes": 208922000000,
+        "future_workspace_reserve_bytes": 2147483648,
+        "planned_simultaneous_bytes": 236096227968,
+        "limit_bytes": 274877906944,
+        "admitted": true,
+        "estimate_units": "decimal MB",
+        "classification": "symbolic prediction plus bounded allocation, not measured peak"
+      },
+      "numeric_controls": {
+        "icntl": {
+          "7": 7,
+          "10": 0,
+          "14": 20,
+          "18": 0,
+          "22": 0,
+          "23": 208922
+        },
+        "modified": false
+      },
+      "raw_INFOG9": -5093,
+      "positive_factor_items": null,
+      "factor_fill": null,
+      "negative_encoded_fill_retained_unknown": true,
+      "factor_persisted": false,
+      "prepared_assets_not_saved_global_factor": true,
+      "lifecycle": [
+        {
+          "role": "C5",
+          "folder": "results/task042/task042_v69_exact_p5_condensed_solve_20261010T045548832019Z",
+          "source_sha": "9b9d2fcdbb9e4f76d1c22163eca909bd68f1eac1",
+          "classification": "COMPLETED",
+          "supervised_seconds": 6594.718692955095,
+          "launch_seconds": 6635.779286794132,
+          "peak_bytes": 118948667392,
+          "swap_bytes": 0,
+          "shared_workstation": true,
+          "sampling": {
+            "sample_count": 4300,
+            "actual_max_sample_gap_seconds": 1.8956336649134755,
+            "sampled_tree_peak_bytes": 118948667392,
+            "own_swap_peak_bytes": 0,
+            "sampled_not_cgroup": true
+          },
+          "disjoint_timing": {
+            "exclusive_seconds": {
+              "tetra_mesh_materials_full_periodic_space": 53.16129688313231,
+              "read_only_qualified_v67_p5_K_checked_reopen": 59.63969128392637,
+              "same_p5_q47_q63_readonly_consume": 19.349882172886282,
+              "h_sparse_symbolic_capacity": 17.862454171990976,
+              "h_bounded_numeric_factor": 4320.664937852183,
+              "full_uncondensed_tetra_direct_solve": 98.12340984796174,
+              "exact_original_all_internal_recovery": 32.720009427983314,
+              "independent_COEFFICIENT_FIRST_PUBLIC_BASIX_body_q15_triangle63": 41.26753019914031,
+              "full_physical_E_H_curl_240_points": 1.991504958132282,
+              "complete_tetra_volume_and_analytic_q23_q31": 1694.1798006289173,
+              "all828_complex_channel_powers_and_output": 0.5238991631194949
+            },
+            "inclusive_seconds_do_not_sum": {
+              "tetra_mesh_materials_full_periodic_space": 53.16129688313231,
+              "read_only_qualified_v67_p5_K_checked_reopen": 59.63969128392637,
+              "same_p5_q47_q63_readonly_consume": 19.349882172886282,
+              "h_sparse_symbolic_capacity": 17.862454171990976,
+              "h_bounded_numeric_factor": 4320.664937852183,
+              "full_uncondensed_tetra_direct_solve": 98.12340984796174,
+              "exact_original_all_internal_recovery": 32.720009427983314,
+              "independent_COEFFICIENT_FIRST_PUBLIC_BASIX_body_q15_triangle63": 41.26753019914031,
+              "full_physical_E_H_curl_240_points": 1.991504958132282,
+              "complete_tetra_volume_and_analytic_q23_q31": 1694.1798006289173,
+              "all828_complex_channel_powers_and_output": 0.5238991631194949
+            },
+            "root_measured_seconds": 6339.484416589374,
+            "complete": true,
+            "unclosed_suffix_seconds": null
+          },
+          "actual_global_numeric_factors": 1,
+          "lifecycle": [
+            {
+              "event": "object_owner_snapshot",
+              "elapsed_s": 217.09446446993388,
+              "RSS_bytes": 20456464384,
+              "owner_role": "production_full_sparse_and_boundary",
+              "unique_visible_numpy_owner_bytes": 18600794660,
+              "unique_owner_count": 12,
+              "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+            },
+            {
+              "event": "full_operator_and_prepared_owners_released_before_condensed_factor",
+              "elapsed_s": 346.9168605718296,
+              "RSS_bytes": 9858555904,
+              "full_rows": 1944573,
+              "retained_rows": 1177293
+            },
+            {
+              "event": "factor_present",
+              "elapsed_s": 4706.416120945942,
+              "RSS_bytes": 114556084224,
+              "backend": "PETSc_LU_MUMPS_SYMBOLIC_CAPACITY_BOUNDED",
+              "factor_class": "FINITE_AUTHORITY_EXACT_FACTOR_PRESENT"
+            },
+            {
+              "event": "global_finite_factor_released",
+              "elapsed_s": 4892.78425733489,
+              "RSS_bytes": 21971177472
+            },
+            {
+              "event": "global_body_augmented_and_factor_released",
+              "elapsed_s": 4894.020344849909,
+              "RSS_bytes": 2728931328
+            }
+          ],
+          "symbolic_numeric_capacity": {
+            "symbolic_estimate_mb": 104461,
+            "numeric_memory_allocation_cap_mb": 208922,
+            "current_whole_tree_rss_bytes": 25026744320,
+            "factor_workspace_estimate_times_two_bytes": 208922000000,
+            "future_workspace_reserve_bytes": 2147483648,
+            "planned_simultaneous_bytes": 236096227968,
+            "limit_bytes": 274877906944,
+            "admitted": true,
+            "estimate_units": "decimal MB",
+            "classification": "symbolic prediction plus bounded allocation, not measured peak"
+          }
+        }
+      ]
+    },
+    "M5": {
+      "full_native": 1979985,
+      "full_independent_FE": 1943745,
+      "full_rows": 1944933,
+      "retained_rows": 1177653,
+      "augmented_stored_nnz": 275026797,
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v69/task042_v69_p5_modes1188_20261010T070926776322Z/exact_condensed/manifest.json",
+        "sha256": "a72dbe1ed269ad79f56a6e1c8f4f6741ef9203f11fb3a0b5983391e82a7996ab",
+        "bytes": 10281629120,
+        "nnz": 275026797
+      },
+      "local_recovery_identity": {
+        "maximum_cell_operation_scaled": 6.233850961682438e-16,
+        "pass_gate": true,
+        "original_Aii_retained": true,
+        "cells": 25576
+      },
+      "condensed_service_calls": {
+        "local_lu_solve": 102304,
+        "trace_action": 1
+      },
+      "symbolic_numeric_plan": {
+        "symbolic_estimate_mb": 105852,
+        "numeric_memory_allocation_cap_mb": 211704,
+        "current_whole_tree_rss_bytes": 27484794880,
+        "factor_workspace_estimate_times_two_bytes": 211704000000,
+        "future_workspace_reserve_bytes": 2147483648,
+        "planned_simultaneous_bytes": 241336278528,
+        "limit_bytes": 274877906944,
+        "admitted": true,
+        "estimate_units": "decimal MB",
+        "classification": "symbolic prediction plus bounded allocation, not measured peak"
+      },
+      "numeric_controls": {
+        "icntl": {
+          "7": 7,
+          "10": 0,
+          "14": 20,
+          "18": 0,
+          "22": 0,
+          "23": 211704
+        },
+        "modified": false
+      },
+      "raw_INFOG9": -5157,
+      "positive_factor_items": null,
+      "factor_fill": null,
+      "negative_encoded_fill_retained_unknown": true,
+      "factor_persisted": false,
+      "prepared_assets_not_saved_global_factor": true,
+      "lifecycle": [
+        {
+          "role": "M5",
+          "folder": "results/task042/task042_v69_p5_modes1188_20261010T070926776322Z",
+          "source_sha": "c2cca174957b0e7d37a8c100b4d59a2fccf4a867",
+          "classification": "COMPLETED",
+          "supervised_seconds": 8435.801579263061,
+          "launch_seconds": 8478.251484866021,
+          "peak_bytes": 121609695232,
+          "swap_bytes": 0,
+          "shared_workstation": true,
+          "sampling": {
+            "sample_count": 3145,
+            "actual_max_sample_gap_seconds": 3.3826830650214106,
+            "sampled_tree_peak_bytes": 121609695232,
+            "own_swap_peak_bytes": 0,
+            "sampled_not_cgroup": true
+          },
+          "disjoint_timing": {
+            "exclusive_seconds": {
+              "tetra_mesh_materials_full_periodic_space": 60.09352644812316,
+              "read_only_qualified_v67_p5_K_checked_reopen": 67.8849851610139,
+              "fresh_triangle_all828_q47": 74.46252750791609,
+              "fresh_triangle_all828_q63": 76.75844207289629,
+              "two_standard_UFL_PUBLIC_BASIX_operator_pairs": 78.52070339606144,
+              "exact_port_Schur_support_capacity_plan": 4.631303984904662,
+              "exact_cell_elimination_and_atomic_recovery_checkpoint": 482.99352003610693,
+              "full_recovered_public_Basix_original_witness": 83.67530826479197,
+              "h_sparse_symbolic_capacity": 21.83091960195452,
+              "h_bounded_numeric_factor": 4971.061958862003,
+              "full_uncondensed_tetra_direct_solve": 111.31411655596457,
+              "exact_original_all_internal_recovery": 38.03638874809258,
+              "independent_COEFFICIENT_FIRST_PUBLIC_BASIX_body_q15_triangle63": 47.85431379987858,
+              "full_physical_E_H_curl_240_points": 2.4218185800127685,
+              "complete_tetra_volume_and_analytic_q23_q31": 1877.0908026001416,
+              "all828_complex_channel_powers_and_output": 0.3693976600188762
+            },
+            "inclusive_seconds_do_not_sum": {
+              "tetra_mesh_materials_full_periodic_space": 60.09352644812316,
+              "read_only_qualified_v67_p5_K_checked_reopen": 67.8849851610139,
+              "fresh_triangle_all828_q47": 74.46252750791609,
+              "fresh_triangle_all828_q63": 76.75844207289629,
+              "two_standard_UFL_PUBLIC_BASIX_operator_pairs": 78.52070339606144,
+              "exact_port_Schur_support_capacity_plan": 4.631303984904662,
+              "exact_cell_elimination_and_atomic_recovery_checkpoint": 482.99352003610693,
+              "full_recovered_public_Basix_original_witness": 83.67530826479197,
+              "h_sparse_symbolic_capacity": 21.83091960195452,
+              "h_bounded_numeric_factor": 4971.061958862003,
+              "full_uncondensed_tetra_direct_solve": 111.31411655596457,
+              "exact_original_all_internal_recovery": 38.03638874809258,
+              "independent_COEFFICIENT_FIRST_PUBLIC_BASIX_body_q15_triangle63": 47.85431379987858,
+              "full_physical_E_H_curl_240_points": 2.4218185800127685,
+              "complete_tetra_volume_and_analytic_q23_q31": 1877.0908026001416,
+              "all828_complex_channel_powers_and_output": 0.3693976600188762
+            },
+            "root_measured_seconds": 7999.000033279881,
+            "complete": true,
+            "unclosed_suffix_seconds": null
+          },
+          "actual_global_numeric_factors": 1,
+          "lifecycle": [
+            {
+              "event": "object_owner_snapshot",
+              "elapsed_s": 419.39938941411674,
+              "RSS_bytes": 22592864256,
+              "owner_role": "production_full_sparse_and_boundary",
+              "unique_visible_numpy_owner_bytes": 19033956740,
+              "unique_owner_count": 12,
+              "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+            },
+            {
+              "event": "full_operator_and_prepared_owners_released_before_condensed_factor",
+              "elapsed_s": 1318.610945861088,
+              "RSS_bytes": 11972263936,
+              "full_rows": 1944933,
+              "retained_rows": 1177653
+            },
+            {
+              "event": "factor_present",
+              "elapsed_s": 6336.0696649560705,
+              "RSS_bytes": 117086220288,
+              "backend": "PETSc_LU_MUMPS_SYMBOLIC_CAPACITY_BOUNDED",
+              "factor_class": "FINITE_AUTHORITY_EXACT_FACTOR_PRESENT"
+            },
+            {
+              "event": "global_finite_factor_released",
+              "elapsed_s": 6549.475793943973,
+              "RSS_bytes": 24152903680
+            },
+            {
+              "event": "global_body_augmented_and_factor_released",
+              "elapsed_s": 6550.860412499169,
+              "RSS_bytes": 4303847424
+            }
+          ],
+          "symbolic_numeric_capacity": {
+            "symbolic_estimate_mb": 105852,
+            "numeric_memory_allocation_cap_mb": 211704,
+            "current_whole_tree_rss_bytes": 27484794880,
+            "factor_workspace_estimate_times_two_bytes": 211704000000,
+            "future_workspace_reserve_bytes": 2147483648,
+            "planned_simultaneous_bytes": 241336278528,
+            "limit_bytes": 274877906944,
+            "admitted": true,
+            "estimate_units": "decimal MB",
+            "classification": "symbolic prediction plus bounded allocation, not measured peak"
+          }
+        }
+      ]
+    }
+  },
+  "numeric_attempts": 2,
+  "body_K_main_builds": 0,
+  "healthy_body_K_nnz": 439529923,
+  "healthy_body_K_bytes": 8863726552,
+  "numerical_objects_not_retained_for_output": true,
+  "local_LU_present": true,
+  "global_sparse_LU_present": true,
+  "full_K_input_required": true,
+  "matrix_free": false,
+  "distributed_production": false,
+  "row_reduction_not_same_fraction_RSS_or_time_claim": true
+}

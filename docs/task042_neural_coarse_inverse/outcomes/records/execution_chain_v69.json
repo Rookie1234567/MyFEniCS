@@ -1,0 +1,205 @@
+{
+  "persistent_handles": [
+    {
+      "session_id": 38592,
+      "role": "aux_pre05",
+      "source": "b5fae70b6bf3c5c081f8a5df3feebb377926c058",
+      "persistent_handle": true,
+      "short_poll_not_deadline": true,
+      "completed_exit": 0
+    },
+    {
+      "session_id": 63903,
+      "role": "PREPARE_C5_one_run02",
+      "source": "b5fae70b6bf3c5c081f8a5df3feebb377926c058",
+      "persistent_handle": true,
+      "short_poll_not_deadline": true
+    },
+    {
+      "session_id": 82649,
+      "role": "aux_pre06",
+      "source": "9a142d339d018fc21add4c00fa5f30a029934351",
+      "persistent_handle": true,
+      "completed_exit": 1,
+      "failure_preserved": true
+    },
+    {
+      "session_id": 73590,
+      "role": "aux_pre07",
+      "source": "9b9d2fcdbb9e4f76d1c22163eca909bd68f1eac1",
+      "persistent_handle": true,
+      "completed_exit": 0
+    },
+    {
+      "session_id": 96291,
+      "role": "PREPARE_C5_one_run03",
+      "source": "9b9d2fcdbb9e4f76d1c22163eca909bd68f1eac1",
+      "persistent_handle": true,
+      "short_poll_not_deadline": true
+    },
+    {
+      "session_id": 57597,
+      "role": "C5_one_run01",
+      "source": "9b9d2fcdbb9e4f76d1c22163eca909bd68f1eac1",
+      "persistent_handle": true,
+      "short_poll_not_deadline": true
+    },
+    {
+      "role": "VERIFY_COST",
+      "attempt": "01",
+      "session_id": 87289,
+      "utc": "2026-10-10T06:47:34.907653+00:00",
+      "monotonic": 1539849.76854007,
+      "tool_wait_does_not_kill": true
+    },
+    {
+      "role": "VERIFY_COST",
+      "attempt": "02",
+      "session_id": 85996,
+      "utc": "2026-10-10T07:04:21.796600+00:00",
+      "monotonic": 1540856.657488805,
+      "tool_wait_does_not_kill": true,
+      "no_PDE_replay": true
+    },
+    {
+      "role": "M5",
+      "attempt": "01",
+      "session_id": 75868,
+      "utc": "2026-10-10T07:09:39.793675+00:00",
+      "monotonic": 1541174.654562158,
+      "tool_wait_does_not_kill": true,
+      "physical_zero_initial": true
+    },
+    {
+      "role": "VERIFY_COST",
+      "attempt": "03",
+      "session_id": 54654,
+      "folder": "tmp/task042/v69/VERIFY_COST_one_run03",
+      "source_sha": "c2cca174957b0e7d37a8c100b4d59a2fccf4a867",
+      "utc": "2026-10-10T09:32:54.607033+00:00",
+      "monotonic": 1549769.467923261,
+      "kind": "persistent unified exec; short poll does not kill",
+      "full_factor": 0,
+      "new_solve": 0
+    },
+    {
+      "role": "post",
+      "tag": "collect01",
+      "session_id": 57462,
+      "folder": "tmp/task042/v69/auxiliary_postcollect01",
+      "source_sha": "c2cca174957b0e7d37a8c100b4d59a2fccf4a867",
+      "utc": "2026-10-10T09:43:46.146626+00:00",
+      "monotonic": 1550421.007512983,
+      "kind": "supervised incremental scalar/NPZ evidence collection; no factor/solve"
+    }
+  ],
+  "qualification": {
+    "path": "tmp/task042/v69/qualification.json",
+    "sha256": "ddcf19471ca1824a6fc423883a475e2fe423ce65842b0d2936454050c1d3875f"
+  },
+  "final_tests": {
+    "path": "tmp/task042/v69/aux_pre_09/tests.json",
+    "sha256": "aade6a3ace3c58a23efd31b9960a64de6c9a79c8610e2791119a7a8f5548e367"
+  },
+  "stop_events": [
+    {
+      "path": "tmp/task042/v69/C5_one_run01/outer_stop_events.jsonl",
+      "sha256": "6a76bc7239fc7bfd2a040e2bc99bedecb8084b889f6144bc6dfa8619ba204a6c"
+    },
+    {
+      "path": "tmp/task042/v69/M5_one_run01/outer_stop_events.jsonl",
+      "sha256": "d8b38f9da7a470436f75b30977996a87fa4270887ded10bd4ea6f186d609c769"
+    },
+    {
+      "path": "tmp/task042/v69/PREFLIGHT_one_run01/outer_stop_events.jsonl",
+      "sha256": "06625b66aa2f705d94a20ede1511b0fbcfabeb254c717a90607b9d18ad1c89bb"
+    },
+    {
+      "path": "tmp/task042/v69/PREPARE_C5_one_run01/outer_stop_events.jsonl",
+      "sha256": "b46c9b845ab36ec528a71f062c6207fd22bcbb897d0e1d4d6bd8141400dd0659"
+    },
+    {
+      "path": "tmp/task042/v69/PREPARE_C5_one_run02/outer_stop_events.jsonl",
+      "sha256": "8cc7c1ae7e63902d9d24eaaf53a5ea61f6aff893af0fbc8d77ab4f92611769b1"
+    },
+    {
+      "path": "tmp/task042/v69/PREPARE_C5_one_run03/outer_stop_events.jsonl",
+      "sha256": "6390c45fc9467e41b9a99d61c277db9c2743ea387ade208076a41190b894ed30"
+    },
+    {
+      "path": "tmp/task042/v69/VERIFY_COST_one_run01/outer_stop_events.jsonl",
+      "sha256": "cde43df9bf32ea0c95fef1af46d9743ad4fca8e02d9ae36a4724f6691a4a061e"
+    },
+    {
+      "path": "tmp/task042/v69/VERIFY_COST_one_run02/outer_stop_events.jsonl",
+      "sha256": "346393843763d17e4cd9eceaa10b1b0b52c4472a0d2992ba2d3069b6c14423f8"
+    },
+    {
+      "path": "tmp/task042/v69/VERIFY_COST_one_run03/outer_stop_events.jsonl",
+      "sha256": "b9b6ee881ae7634c3e6afcefc585a5569eee32541e40c6ba60d1056d280281a7"
+    },
+    {
+      "path": "tmp/task042/v69/aux_post_collect01/supervision/stop_events.jsonl",
+      "sha256": "138e86ecb0b311835364f5c164a93a6f327eea0238cfc78312bacb40ea0760c6"
+    },
+    {
+      "path": "tmp/task042/v69/aux_pre_02/supervision/stop_events.jsonl",
+      "sha256": "0cc9bcb819b66bef263eb95650feaa487fb44ae435bcb94a9c05ab5b547d02a9"
+    },
+    {
+      "path": "tmp/task042/v69/aux_pre_03/supervision/stop_events.jsonl",
+      "sha256": "6f6e5572e83103cfae63957b774cb465aca701a0f30be2cacec17a876bbbb8d0"
+    },
+    {
+      "path": "tmp/task042/v69/aux_pre_04/supervision/stop_events.jsonl",
+      "sha256": "a7ba2d51e501bb54bc10e629a1ad9db2d52fb1ed1ddd3bfea7164f1fdbbedc99"
+    },
+    {
+      "path": "tmp/task042/v69/aux_pre_05/supervision/stop_events.jsonl",
+      "sha256": "d18569ba7e28509223855022bd906470ebd73a912b6812cc88a751ba1e1845cf"
+    },
+    {
+      "path": "tmp/task042/v69/aux_pre_06/supervision/stop_events.jsonl",
+      "sha256": "d889d75794e0bd42de8dbf29b16dbf3bbb11a2e20c8c9a94de4ec0d778c6f867"
+    },
+    {
+      "path": "tmp/task042/v69/aux_pre_07/supervision/stop_events.jsonl",
+      "sha256": "e03f4e9f3b518b2ba58279d715055f259095578ecbc8bf04a0e19c09e56546b4"
+    },
+    {
+      "path": "tmp/task042/v69/aux_pre_08/supervision/stop_events.jsonl",
+      "sha256": "63841d48abd78443951e40efa92cd2f0414b24d4898c4f866246c5a87c7b059c"
+    },
+    {
+      "path": "tmp/task042/v69/aux_pre_09/supervision/stop_events.jsonl",
+      "sha256": "6c2ce30f63c9510130db40c718ba5f771f4dbcc5530b597848c55c29cadbafcf"
+    },
+    {
+      "path": "tmp/task042/v69/implementation_stop_events.jsonl",
+      "sha256": "7503d38691ec0ca3194e42e605019e78c7f603193dff95f5724d7cda23199e90"
+    }
+  ],
+  "intentional_stops": [
+    {
+      "path": "tmp/task042/v69/prepare_controlled_repair_stop.json",
+      "sha256": "8028e9315be7d11f49ba7535489a84da5b7912dfaded8722488cdbda8711f1be"
+    },
+    {
+      "path": "tmp/task042/v69/prepare_controlled_repair_stop02.json",
+      "sha256": "8a056ea90762ba9a8f535b5bedb9456e68a181729ba52a3c4f4fc5ca38f0e17d"
+    },
+    {
+      "path": "tmp/task042/v69/prepare_controlled_repair_signal02.json",
+      "sha256": "eb3c2f46dbf769e7e42fdec19ef25fbf7a82422566b477fc41f178a8b83855fe"
+    }
+  ],
+  "stop_writer_failure": {
+    "path": "tmp/task042/v69/stop_writer_failure02.json",
+    "sha256": "fc427b04e10c659cec127f5f3c9561756a6421b2e4798a0808b47dda4caa8f6d"
+  },
+  "short_poll_does_not_kill": true,
+  "raw_SIGNAL_sender_unknown_preserved": true,
+  "separate_sender_evidence": true,
+  "old_V67_sender_unresolved": true,
+  "old_ledgers_closed_unchanged": true
+}

@@ -1,0 +1,35 @@
+{
+  "rows": [
+    {
+      "role": "C5",
+      "parent_array_sha256": "10567b6b86dc57cf137706410e97b1a146a79609eaaaa526a1b3c49203aeb75f",
+      "mode_json_sha256": "cbca73dc06ec84f239a05ef166f701ab7722ee0a398c81eac4360c990d879dda",
+      "count": 828,
+      "expected_mode_count": 828,
+      "max_operation_scaled_coordinate_and_power_defect": 7.216449660063518e-15,
+      "totals_defect": 7.882583474838611e-15,
+      "incident_power_defect": 2.255140518769849e-16,
+      "energy_from_all_actual_modes_and_volume": 4.206576059706535e-12,
+      "recomputed_R": 0.07621855922659818,
+      "recomputed_T": 0.9056651611303399,
+      "pass_gate": true
+    },
+    {
+      "role": "M5",
+      "parent_array_sha256": "8ca9e54aedcd6e8a5602f227b65702eb6b4910d1454ab03bc20f68a94396cb92",
+      "mode_json_sha256": "2817b0c0d3527ce3397cea7032d29a61488ccedb2315582c46ea264415d365fc",
+      "count": 1188,
+      "expected_mode_count": 1188,
+      "max_operation_scaled_coordinate_and_power_defect": 6.772360450213455e-15,
+      "totals_defect": 7.438494264988549e-15,
+      "incident_power_defect": 2.255140518769849e-16,
+      "energy_from_all_actual_modes_and_volume": 4.165518624477116e-12,
+      "recomputed_R": 0.07621855919072644,
+      "recomputed_T": 0.9056651611672505,
+      "pass_gate": true
+    }
+  ],
+  "new_FE_calls": 0,
+  "original_power_function_calls": 0,
+  "complete_inventory_checked": true
+}

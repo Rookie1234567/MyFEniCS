@@ -1,0 +1,16 @@
+{
+  "case_full_vector_bytes": 31113168,
+  "case_retained_vector_bytes": 18836688,
+  "example_65_full_vectors_bytes": 2022355920,
+  "example_65_retained_vectors_bytes": 1224384720,
+  "actual_new_Krylov_steps": 0,
+  "FGMRES_bank_example_derived_not_measured_RSS": true,
+  "graph_and_fill_do_not_scale_linearly_with_rows": true,
+  "global_K_and_global_LU_present": true,
+  "current_continuum_accuracy": false,
+  "target_0p7_full_geometry": false,
+  "target_2TB48h": false,
+  "NN_training_inference": 0,
+  "NN20": false,
+  "neighbor_tasks_not_duplicated": true
+}
