@@ -207,7 +207,9 @@ def build(setup,boundary,rhs,kernel,folder,journal,*,identity,source):
     # Port entries and the global physical load are inserted exactly once.
     for j,row in enumerate(rows):
         a,z=C.indptr[row:row+2]
-        if z>a:S.setValues([j],nt+C.indices[a:z],C.data[a:z],addv=PETSc.InsertMode.ADD_VALUES)
+        for first in range(a,z,32):
+            last=min(first+32,z)
+            S.setValues([j],nt+C.indices[first:last],C.data[first:last],addv=PETSc.InsertMode.ADD_VALUES)
     for j in range(m):
         a,z=D.indptr[j: j+2];cols=mapping[D.indices[a:z]];good=cols>=0
         if good.any():S.setValues([nt+j],cols[good],-D.data[a:z][good],addv=PETSc.InsertMode.ADD_VALUES)
@@ -249,11 +251,12 @@ def build(setup,boundary,rhs,kernel,folder,journal,*,identity,source):
                 Ci=C[i].tocsr();Di=DT[i].T.tocsr();ports=np.union1d(Ci.indices,Di.nonzero()[0])
                 if len(ports):
                     ci=Ci[:,ports].toarray();di=Di[ports].toarray()
-                    responses=lu_solve((a['lu'],a['piv']),np.column_stack((a['it'],ci)))
-                    vi=responses[:,:110];vc=responses[:,110:]
-                    S.setValues(ids,nt+ports,-dense.conj().T@a['ti']@vc,addv=PETSc.InsertMode.ADD_VALUES)
+                    vi=lu_solve((a['lu'],a['piv']),a['it'])
                     S.setValues(nt+ports,ids,di@vi@dense,addv=PETSc.InsertMode.ADD_VALUES)
-                    S.setValues(nt+ports,nt+ports,di@vc,addv=PETSc.InsertMode.ADD_VALUES)
+                    for first in range(0,len(ports),32):
+                        last=min(first+32,len(ports));vc=lu_solve((a['lu'],a['piv']),ci[:,first:last])
+                        S.setValues(ids,nt+ports[first:last],-dense.conj().T@a['ti']@vc,addv=PETSc.InsertMode.ADD_VALUES)
+                        S.setValues(nt+ports,nt+ports[first:last],di@vc,addv=PETSc.InsertMode.ADD_VALUES)
                     reduced_rhs[nt+ports]+=di@h
                 pending.append((c,i,ids,E,key))
                 if len(pending)==64:flush()
@@ -267,6 +270,7 @@ def build(setup,boundary,rhs,kernel,folder,journal,*,identity,source):
         pm=dict(schema='assembly-time-tetra-local-packet-v1',identity=identity,source=source,full_FE_rows=n,ports=m,cells=len(internal),
             full_rows=n+m,retained_rows=len(retained),members=members,classes=classes,maps=maps,kernel=kernel.identity,
             local_LU_count=lu_count,exact_cache_peak_bytes=cache_peak,cache_limit_bytes=4*2**30,cell_batch_max=64,
+            port_column_batch_max=32,
             full_body_assemble_matrix=0,full_K_reads=0,full_A_materializations=0,old_recovery_reads=0,
             bytes=sum(r['bytes'] for r in members.values())+sum(Path(r['path']).stat().st_size for r in list(classes.values())+maps))
         local_receipt=_seal(packet,pm)
