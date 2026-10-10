@@ -3575,3 +3575,12 @@ F1同离散G1 M0 reference通过；F2 residual通过但checker因80/180模式合
 ## Task40extra Review V22：原尺寸端口作用前缀，窗口受控收口
 
 2026-10-10，同一 `task40extra_0p7nm_engineering` 分支，50×25×140 nm、λ0.7 nm、30,464 cells、p6空间20,181,348 storage rows／19,897,344 independent rows，真实全局MPC 284,004 slave rows。生成式端口边生成边作用，避免先保存完整carrier；完成18,968/32,060模式（top16,030，bottom2,938），两侧首模式生产B/D路径一致性通过，独立882-row B/D packet仅每侧一个。固定6h窗口协作停止，q CSR/factor/KSP/PDE/RTA均NOT_RUN；全模式/方向资格及原尺寸2TB/48h尚未闭合。树RSS峰3,242,729,472 B，cgroup峰3,533,070,336 B，task swap0；monotonic run3,991.941 s、保守时钟4,383.978 s分列。worker native cleanup UNKNOWN与外部descendants已清场分列，旧失败原样保留。证据：[Response V22](task40extra_0p7nm_engineering/response_v22.md)、[operator compact](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v22.json)、[主控核算](task40extra_0p7nm_engineering/outcomes/records/controller_readback_v22.json)。
+
+
+## Task40extra Review V23：Ny=8 全模式支撑完成，q-only 未运行
+
+2026-10-10，执行分支完成 Ny=8、30,464-cell、p6 原尺寸边界模式扫描：bottom/top 各16,030，共32,060个 B/D/H 模式作用值。两级全局相对阈值1e-13后，每侧 B/D retained mode-row entries 各2,429,660,672，分类全为 actual port-face trace；每侧2,176个边界相邻单元的 内部 m_c 都在0-bin。这里的 m_c 是阈值后库存，原始 component 仍含 tiny nonzero，不能叫原始积分严格为零。
+
+24个同场同α compact/full 选样对照在 rows、masks、values、Bα、Dx 上完全一致，wall为1.782 s / 3.016 s；仅是局部样本。process-tree RSS峰3,060,957,184 B，专用cgroup峰3,238,825,984 B/16 GiB，task swap 0，descendants cleared。未建 full carrier，不报假设性内存节省。
+
+原扫描源码1291aeef089e6c02c4b9e28125f60072aa769340在完整扫描后 q 叶子把cell counts当x/y/z坐标触发TypeError；修复及受限selector源码冻结为43588de8275a1014375ab8d5fdd1d835b0bcee55。定向 route/probe 19项、numeric-stage 3项、q checker/readback 2项通过；固定14:40:51Z数值截止后未启动 q-only，q覆盖仍0/8，完整场、PDE、R/T/A均NOT_RUN。campaign accounting seq34907累计20,567.556 s，标签明确为closeout-only/no-q-launch。详见[Response V23](task40extra_0p7nm_engineering/response_v23.md)、[任务账本](task40extra_0p7nm_engineering/outcomes/records/review_v23_incremental_workflow_ledger.json)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)及四份[operator](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v23.json)、[support](task40extra_0p7nm_engineering/outcomes/records/production_support_v23.json)、[performance](task40extra_0p7nm_engineering/outcomes/records/performance_v23.json)、[q tile](task40extra_0p7nm_engineering/outcomes/records/q_tile_v23.json) compact evidence。

@@ -1,0 +1,253 @@
+{
+  "schema": "task40extra.review_v23_production_support.v1",
+  "scan_source_sha": "1291aeef089e6c02c4b9e28125f60072aa769340",
+  "input_sha256": "33cb569eb900f60100569a6659138589a9d26784a22e05d50c7fe63190bac4ff",
+  "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+  "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+  "modes_completed": 32060,
+  "modes_by_side": {
+    "bottom": 16030,
+    "top": 16030
+  },
+  "candidate_domain": {
+    "global_storage_rows": 20181348,
+    "candidate_rows": 3177132,
+    "candidate_sha256": "7bcf2fdecc7248275dcc483460661902d2ca8b180169718d1a1b0b942e38df37",
+    "fraction": 0.15742912713263751,
+    "scope": "boundary-cell dof union plus finalized MPC master closure; no full carrier allocation"
+  },
+  "thresholds": {
+    "component_and_weighted_global_relative_tol": 1e-13,
+    "absolute_floor": 0.0,
+    "changed": false
+  },
+  "retained_categories_by_side_B_D": {
+    "bottom": {
+      "B": {
+        "actual_port_face_trace": 2429660672,
+        "interior": 0,
+        "other_trace": 0,
+        "slave": 0,
+        "unknown": 0
+      },
+      "D": {
+        "actual_port_face_trace": 2429660672,
+        "interior": 0,
+        "other_trace": 0,
+        "slave": 0,
+        "unknown": 0
+      }
+    },
+    "top": {
+      "B": {
+        "actual_port_face_trace": 2429660672,
+        "interior": 0,
+        "other_trace": 0,
+        "slave": 0,
+        "unknown": 0
+      },
+      "D": {
+        "actual_port_face_trace": 2429660672,
+        "interior": 0,
+        "other_trace": 0,
+        "slave": 0,
+        "unknown": 0
+      }
+    }
+  },
+  "m_c_definition": "for each boundary-adjacent cell, the number of distinct modes in which at least one retained production B row, D row, or B/D union row belongs to that cell's 450 interior global rows; each cell contributes at most once per mode, regardless of how many rows are supported",
+  "raw_component_filter_audit": {
+    "bottom": {
+      "0": {
+        "assembled_component_vector_count": 8021,
+        "raw_rows_nonzero_before_mpc": 4489963296,
+        "raw_rows_tiny_before_mpc_relative_filter": 3859038108,
+        "raw_slave_rows_nonzero_before_mpc": 91631904,
+        "retained_rows": 618221568,
+        "rows_dropped_by_global_mask": 3780109824,
+        "retained_stream_sha256": "210c301226d0f5cb6a501a256255f6842dd28132db55c219b77c1381a86daf57"
+      },
+      "1": {
+        "assembled_component_vector_count": 8021,
+        "raw_rows_nonzero_before_mpc": 4401026448,
+        "raw_rows_tiny_before_mpc_relative_filter": 3794629752,
+        "raw_slave_rows_nonzero_before_mpc": 2695056,
+        "retained_rows": 606031072,
+        "rows_dropped_by_global_mask": 3792300320,
+        "retained_stream_sha256": "46666c5a4cc3bc769887ed0db6e63b8c84e9cc45976d48b803005a4a62303934"
+      }
+    },
+    "top": {
+      "0": {
+        "assembled_component_vector_count": 8021,
+        "raw_rows_nonzero_before_mpc": 4489963296,
+        "raw_rows_tiny_before_mpc_relative_filter": 3859038108,
+        "raw_slave_rows_nonzero_before_mpc": 91631904,
+        "retained_rows": 618221568,
+        "rows_dropped_by_global_mask": 3780109824,
+        "retained_stream_sha256": "c06acd8ea4ddc7b18ee305150e4f695c09609a0a4b3df79a85b81deda3353ce7"
+      },
+      "1": {
+        "assembled_component_vector_count": 8021,
+        "raw_rows_nonzero_before_mpc": 4401026448,
+        "raw_rows_tiny_before_mpc_relative_filter": 3794629752,
+        "raw_slave_rows_nonzero_before_mpc": 2695056,
+        "retained_rows": 606031072,
+        "rows_dropped_by_global_mask": 3792300320,
+        "retained_stream_sha256": "c9b1ae2cfd80fdc073eb2efdea4ab5c3e60d5909e79705ea5f203ca5b25fae84"
+      }
+    }
+  },
+  "weighted_filter": {
+    "component_calls": 32084,
+    "native_group_integral_builds": 434106,
+    "native_facet_contributions": 69814784,
+    "peak_cache_unique_backing_bytes": 3133440,
+    "coupling": {
+      "input_component_entry_count": 4875524736,
+      "retained_row_count": 4859321344,
+      "rows_dropped_by_global_mask": 16203392,
+      "relative_tol": 1e-13,
+      "absolute_floor": 0.0,
+      "retained_stream_sha256": "7b28f77eab7b4a4fdcf0c30e03a554bc638cf50e476994c3d918641e5dbdf4f4"
+    },
+    "projection": {
+      "input_component_entry_count": 4875524736,
+      "retained_row_count": 4859321344,
+      "rows_dropped_by_global_mask": 16203392,
+      "relative_tol": 1e-13,
+      "absolute_floor": 0.0,
+      "retained_stream_sha256": "204faf35f7b0ee8125fb0d9cc2d27641453b7f685d8835979085c42815e7ef34"
+    }
+  },
+  "raw_caveat": {
+    "tiny_B_interior_entries_by_calibration_side": {
+      "bottom": 652800,
+      "top": 652800
+    },
+    "meaning": "m_c=0 is only after both production filters. Raw components contain tiny nonzero interior values; no raw-zero certificate.",
+    "legacy_field_warning": "raw_interior_row_memberships_by_side counts retained filtered functional, not unfiltered raw entries."
+  },
+  "independent_filtered_support_qualification": {
+    "production_exact_qualification": "PARTIAL",
+    "scope": "two representative first-mode all-facet side calibrations; shared-kernel path consistency only",
+    "status": "MATCHED_ON_TWO_CALIBRATED_MODES",
+    "support_mismatch_count_by_side": {
+      "bottom": {
+        "B": 0,
+        "D": 0
+      },
+      "top": {
+        "B": 0,
+        "D": 0
+      }
+    }
+  },
+  "evidence": [
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T114302.254770Z/v22_target_operator_probe.json",
+      "scope": "support and m_c",
+      "bytes": 4544211,
+      "sha256": "ca5df369e1d2464a78a63c76b3694d95cd8bd485d23754700cbb20ffeacb1c30"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl/operator_checkpoints/1045d9a34bd857e3e68a92258c485195d76986366aa23f410f79fe91d24fcc77/v23_mode_sweep_checkpoint.json",
+      "scope": "checkpoint metadata",
+      "bytes": 25510,
+      "sha256": "f362583c0d34e8a37cb6077f8b244363b33f4f6dcc32de535c3c39b30b80eea7"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl/operator_checkpoints/1045d9a34bd857e3e68a92258c485195d76986366aa23f410f79fe91d24fcc77/v23_mode_sweep_checkpoint_1.npz",
+      "scope": "saved payload",
+      "bytes": 8503402,
+      "sha256": "63fb295da67b209a6eef7ed5d16df91c687aaa0e5e6860c6d391a5ca6a1a40f3"
+    }
+  ],
+  "retained_internal_m_c": {
+    "bottom": {
+      "B": {
+        "cell_count": 2176,
+        "nonzero_histogram_bins": {
+          "0": 2176
+        },
+        "unlisted_bins_zero": true,
+        "sum_m_c": 0,
+        "sum_m_c_squared": 0,
+        "max_m_c": 0
+      },
+      "D": {
+        "cell_count": 2176,
+        "nonzero_histogram_bins": {
+          "0": 2176
+        },
+        "unlisted_bins_zero": true,
+        "sum_m_c": 0,
+        "sum_m_c_squared": 0,
+        "max_m_c": 0
+      },
+      "union": {
+        "cell_count": 2176,
+        "nonzero_histogram_bins": {
+          "0": 2176
+        },
+        "unlisted_bins_zero": true,
+        "sum_m_c": 0,
+        "sum_m_c_squared": 0,
+        "max_m_c": 0
+      }
+    },
+    "top": {
+      "B": {
+        "cell_count": 2176,
+        "nonzero_histogram_bins": {
+          "0": 2176
+        },
+        "unlisted_bins_zero": true,
+        "sum_m_c": 0,
+        "sum_m_c_squared": 0,
+        "max_m_c": 0
+      },
+      "D": {
+        "cell_count": 2176,
+        "nonzero_histogram_bins": {
+          "0": 2176
+        },
+        "unlisted_bins_zero": true,
+        "sum_m_c": 0,
+        "sum_m_c_squared": 0,
+        "max_m_c": 0
+      },
+      "union": {
+        "cell_count": 2176,
+        "nonzero_histogram_bins": {
+          "0": 2176
+        },
+        "unlisted_bins_zero": true,
+        "sum_m_c": 0,
+        "sum_m_c_squared": 0,
+        "max_m_c": 0
+      }
+    }
+  },
+  "all_boundary_cell_m_c": {
+    "status": "UNKNOWN_NOT_MEASURED",
+    "scope": "B/D/union counts over all 882 cell rows, including port-face and other trace; current counters cover only the 450 interior rows. Interior zero histograms cannot substitute for whole-cell mode histograms."
+  },
+  "cache_elimination": {
+    "actual_cached_bytes_deleted": 0,
+    "full_carrier_was_constructed": false,
+    "filtered_target_interior_support": "MEASURED_ZERO_AFTER_BOTH_EXISTING_FILTERS",
+    "independent_support_qualification": "PARTIAL",
+    "reference_twist_sector_equivalence": "NOT_PROVEN",
+    "raw_tiny_entries_preserved": true
+  },
+  "direct_inventory": {
+    "B_retained_mode_row_entries": 4859321344,
+    "D_retained_mode_row_entries": 4859321344,
+    "complex128_B_logical_value_bytes": 77749141504,
+    "complex128_D_logical_value_bytes": 77749141504,
+    "scope": "derived logical payload if all retained values were cached; excludes indices; never allocated and not RSS savings",
+    "component_cache_peak_unique_backing_bytes": 3133440,
+    "all_co_resident_owner_unique_backing_bytes": null
+  }
+}

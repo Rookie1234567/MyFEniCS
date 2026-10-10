@@ -1,0 +1,116 @@
+{
+  "schema": "task40extra.review_v23_q_tile.v1",
+  "scan_source_sha": "1291aeef089e6c02c4b9e28125f60072aa769340",
+  "patched_source_sha": "43588de8275a1014375ab8d5fdd1d835b0bcee55",
+  "profile": {
+    "all_four_q_required": false,
+    "all_q_required": true,
+    "augmented_rows_per_q": [
+      777644,
+      777620,
+      777596,
+      777552,
+      777424,
+      777552,
+      777596,
+      777620
+    ],
+    "degree": 6,
+    "global_cell_axes": [
+      272,
+      8,
+      14
+    ],
+    "global_cell_count": 30464,
+    "global_independent_rows": 19897344,
+    "global_interior_rows": 13708800,
+    "global_storage_rows": 20181348,
+    "global_trace_rows": 6188544,
+    "local_cell_count": 7616,
+    "local_independent_rows": 4974336,
+    "local_interior_rows": 3427200,
+    "local_storage_rows": 5252256,
+    "local_trace_rows": 1547136,
+    "local_width_per_q": 2487168,
+    "local_y_cells": 2,
+    "mode_count": 32060,
+    "name": "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+    "ordinary_default_changed": false,
+    "q_count": 8,
+    "q_port_counts": [
+      4076,
+      4052,
+      4028,
+      3984,
+      3856,
+      3984,
+      4028,
+      4052
+    ],
+    "replication_count": 4,
+    "rows_per_q": 2487168,
+    "schema": "task40extra.review_v20_p6_periodic_profile.v1",
+    "sector_port_counts": [
+      7932,
+      8036,
+      8056,
+      8036
+    ],
+    "status": "DERIVED_EXPECTATIONS_RUNTIME_READBACK_REQUIRED",
+    "trace_rows_per_q": 773568
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T112539.178322Z",
+      "source_sha": "44c5ff913bb0f566a1809e6e12a40f8581120f3a",
+      "completed_modes": 0,
+      "status": "WORKER_FAILED_EXIT_4",
+      "failure": "KeyError: 0"
+    },
+    {
+      "attempt": 2,
+      "root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T113401.222233Z",
+      "source_sha": "6d000188aeaa6cd483bdc7c1750de52e4903cf60",
+      "completed_modes": 0,
+      "probe_failure": "ValueError: V23 checkpoint identity is incomplete or malformed",
+      "q_failure": "ValueError: selected original Ny8 q tile requires the existing MPI1 p6 space/MPC"
+    },
+    {
+      "attempt": 3,
+      "root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T114302.254770Z",
+      "source_sha": "1291aeef089e6c02c4b9e28125f60072aa769340",
+      "completed_modes": 32060,
+      "status": "WORKER_FAILED_EXIT_4_AFTER_COMPLETE_SCAN",
+      "q_failure": "TypeError: list indices must be integers or slices, not str",
+      "q_wall_seconds": 0.08921253914013505,
+      "q_tile_sha256": "ad6ea6e2753a5ed1f8c10dc77ba807bfbe917333572bdc0f060d178fe942e2a8"
+    }
+  ],
+  "root_cause": "The q helper expected x/y/z coordinate arrays but received geometry_facts.actual_axes=[272,8,14], the cell-count list.",
+  "patch": "Read mesh_axis_x_values/y_values/z_values from resolved discretization and add a restricted hash-bound q-only checkpoint selector.",
+  "frozen_patch_sha": "43588de8275a1014375ab8d5fdd1d835b0bcee55",
+  "real_checkpoint_identity_binding": "PASS against existing checkpoint only; no q FE.",
+  "targeted_validation": {
+    "route_probe": "19 passed, 39 deselected",
+    "numeric_stage": "3 passed",
+    "q_checker_readback": "2 passed",
+    "py_compile": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "q_only_supplement": {
+    "status": "TIME_BUDGET_NOT_SUFFICIENT / NOT_RUN",
+    "attempted": false,
+    "cutoff_utc": "2026-10-10T14:40:51Z",
+    "campaign_sequence": 34907,
+    "campaign_label": "controller_numeric_cutoff_closeout_only_no_q_launch",
+    "next_authorization": "Requires a new review-authorized window bound to preserved V23 evidence; current window expired."
+  },
+  "boundary": {
+    "built_q": 0,
+    "expected_q": 8,
+    "coverage": "0/8",
+    "q_map_tile_values_nnz_bytes_time": "NOT_RUN",
+    "factor_KSP_full_field_PDE_R_T_A": "NOT_RUN"
+  }
+}

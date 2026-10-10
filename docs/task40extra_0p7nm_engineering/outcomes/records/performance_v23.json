@@ -1,0 +1,114 @@
+{
+  "schema": "task40extra.review_v23_performance.v1",
+  "scan_source_sha": "1291aeef089e6c02c4b9e28125f60072aa769340",
+  "patched_source_sha": "43588de8275a1014375ab8d5fdd1d835b0bcee55",
+  "paired_compact_full": {
+    "count": 24,
+    "status": "PASS_EXACT_ROWS_MASKS_VALUES_B_ALPHA_AND_D_X",
+    "same_field_alpha": true,
+    "nontrivial_MPC_rows": true,
+    "exact_rows_masks_values_Balpha_Dx": true,
+    "compact_wall_seconds": 1.782056791940704,
+    "full_wall_seconds": 3.016087355557829,
+    "wall_ratio": 1.692475441410167,
+    "compact_CPU_seconds": 1.9800338520000196,
+    "full_CPU_seconds": 3.342078958000009,
+    "scope": "24 selected paired cases only; not full scan or end-to-end throughput"
+  },
+  "scan_timing": {
+    "controller_scan_wall_seconds": 8817.045978131006,
+    "operator_witness_timer_seconds": 8817.562797014136,
+    "process_CPU_seconds": 9642.055588917001,
+    "workflow_monotonic_seconds": 8866.382983499905,
+    "watchdog_conservative_seconds": 9703.518256643665,
+    "note": "Timer boundaries differ; do not add or use for end-to-end speedup.",
+    "watchdog_legacy_elapsed_seconds": 8866.260855725966,
+    "watchdog_clock_interval": {
+      "elapsed_seconds": {
+        "monotonic": 8866.261072629131,
+        "boottime": 8866.261071960209,
+        "utc": 9703.511957486
+      },
+      "budget_seconds": 9703.518256643665,
+      "discrepancy_seconds": 837.2508855257911,
+      "tolerance_seconds": 88.66261072629132,
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": 837.2508848568687,
+      "step": {
+        "elapsed_seconds": {
+          "monotonic": 0.03980712499469519,
+          "boottime": 0.039806134067475796,
+          "utc": 0.039806055
+        },
+        "budget_seconds": 0.03980712499469519,
+        "discrepancy_seconds": 1.0699946951867045e-06,
+        "tolerance_seconds": 5.0,
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": -1.0699946951867045e-06
+      },
+      "utc_positive_excess_seconds": 837.2519104065211
+    }
+  },
+  "component_timing": {
+    "calls": 32084,
+    "group_integral_builds": 434106,
+    "facet_contributions": 69814784,
+    "wall_seconds": 1802.5613914607093,
+    "CPU_seconds": 1971.7649456149443,
+    "phase_wall_seconds": {
+      "integral": 1016.5806518748868,
+      "MPC": 426.0623952015303,
+      "filter": 358.10698721697554
+    }
+  },
+  "resources": {
+    "tree_RSS_peak_bytes": 3060957184,
+    "cgroup_memory_peak_bytes": 3238825984,
+    "cgroup_cap_bytes": 17179869184,
+    "tree_swap_peak_bytes": 0,
+    "cgroup_swap_peak_bytes": 0,
+    "PSS": null,
+    "PSS_status": "DISABLED_BY_PROFILE",
+    "descendants_cleared": true,
+    "remaining_children": [],
+    "global_swap": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 53701,
+        "pswpout_pages": 92101
+      },
+      "end": {
+        "pswpin_pages": 53703,
+        "pswpout_pages": 92101
+      },
+      "delta": {
+        "pswpin_pages": 2,
+        "pswpout_pages": 0
+      }
+    },
+    "full_carrier_saving": "NOT_MEASURED",
+    "worker_native_object_cleanup": "UNKNOWN"
+  },
+  "evidence": [
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T114302.254770Z/run_summary.json",
+      "scope": "workflow time",
+      "bytes": 11478,
+      "sha256": "386d36c19166afb85b1f4bb587934f90797d834d19ce6aea7eb7c2ceb2786cdb"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T114302.254770Z/watchdog/summary.json",
+      "scope": "resources",
+      "bytes": 9800,
+      "sha256": "a36f088477f6060df85ff9c2e69e171e8ddc298445a76476d1cbb60810860bd6"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T114302.254770Z/v22_target_operator_probe.json",
+      "scope": "phase timers",
+      "bytes": 4544211,
+      "sha256": "ca5df369e1d2464a78a63c76b3694d95cd8bd485d23754700cbb20ffeacb1c30"
+    }
+  ]
+}

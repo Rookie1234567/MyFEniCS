@@ -1,0 +1,65 @@
+{
+  "schema": "task40extra.review_v23_incremental_workflow_ledger.v1",
+  "scope": "Task-level snapshot; raw append-only stream remains authoritative and untouched.",
+  "branch": "task40extra_0p7nm_engineering",
+  "window": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl/campaign_window_v23.json",
+    "sha256": "e77793e53542c6094da819456457910893b33c9be5ca3b548482be6bfc3dbdfb",
+    "T0_utc": "2026-10-10T09:00:51Z",
+    "numeric_cutoff_utc": "2026-10-10T14:40:51Z",
+    "deadline_utc": "2026-10-10T15:00:51Z",
+    "total_seconds": 21600,
+    "reserve_seconds": 1200,
+    "refreshed": false
+  },
+  "append_only_accounting": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl/campaign_accounting_v10.jsonl",
+    "sha256": "640af31802441a8078525837a9f3c90cca98ad05b771a2d397be2ed21204e5f6",
+    "lines": 34909,
+    "tail_sequence": 34908,
+    "tail_label": "controller_administrative_audit_after_deadline_no_numerical_work",
+    "tail_cumulative_seconds": 21924.545990237653,
+    "tail_utc": "2026-10-10T15:06:15.543465+00:00",
+    "note": "Cumulative includes preparation, repair, tests, failed attempts, scan and closeout; do not allocate by subtraction."
+  },
+  "measured_costs": {
+    "scan_wall_seconds": 8817.045978131006,
+    "workflow_monotonic_seconds": 8866.382983499905,
+    "watchdog_conservative_seconds": 9703.518256643665,
+    "q_leaf_wall_seconds": 0.08921253914013505,
+    "q_only": "NOT_RUN",
+    "documentation_time": "not separately measured",
+    "watchdog_legacy_elapsed_seconds": 8866.260855725966
+  },
+  "decision": {
+    "q_only": "TIME_BUDGET_NOT_SUFFICIENT / NOT_RUN",
+    "basis": "fixed cutoff passed; tail label records closeout-only/no-q-launch",
+    "scan_source_sha": "1291aeef089e6c02c4b9e28125f60072aa769340",
+    "patch_source_sha": "43588de8275a1014375ab8d5fdd1d835b0bcee55",
+    "negative_attempts_preserved": true,
+    "next_step": "Further numerical work needs a new review-authorized window bound to saved V23 evidence."
+  },
+  "project_level_ledger": {
+    "path": "docs/development_progress.md",
+    "section": "Task40extra Review V23"
+  },
+  "numeric_cutoff_snapshot": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl/campaign_accounting_v10.jsonl",
+    "sha256": "b5f301bff13abbfdcd3341418e5bb47b365bd6a57c74997e29083b765216a521",
+    "lines": 34908,
+    "tail_sequence": 34907,
+    "tail_label": "controller_numeric_cutoff_closeout_only_no_q_launch",
+    "tail_cumulative_seconds": 20567.55595381465,
+    "tail_utc": "2026-10-10T14:43:38.553428Z",
+    "note": "Cumulative includes preparation, repair, tests, failed attempts, scan and closeout; do not allocate by subtraction."
+  },
+  "administrative_closeout": {
+    "observed_utc": "2026-10-10T15:06:15.543465+00:00",
+    "deadline_overrun_seconds_at_audit": 324.54346493,
+    "numeric_work_after_cutoff": false,
+    "window_refreshed": false,
+    "classification": "ADMINISTRATIVE_CLOSEOUT_OVERRUN",
+    "commit_push_and_final_readback_seconds": "UNKNOWN_AT_PRECOMMIT_SNAPSHOT; appended to original ledger after remote readback",
+    "scope": "Actual administrative completion exceeded the fixed deadline; not additional numerical authorization."
+  }
+}

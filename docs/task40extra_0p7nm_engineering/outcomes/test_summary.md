@@ -408,3 +408,18 @@ Native component-only receipt 的重算 Gate 数值、worker 失败位置、4 �
 早期 native worker attempts 的 measured elapsed 子计时和 6bbc shell blocker 的 unknown cost 见 [Response V7](../response_v7.md) 与 [incremental ledger](records/review_v7_incremental_workflow_ledger.json)。三次 worker 仅小计 worker elapsed，不折算完整 W0 准备或收费。
 
 本轮离线证据身份进一步确认：原 35-member 包（47,078 B，SHA256 `d5f934e09e034b1349c2860948e1dc91ec24c9670ba6dd5939a01bc8e6379f62`）是运行日志/ABI/资源/测试收据，不是 tensor/场数据；native 侧 36 份支持文件共 5,757,491 B，逐文件 SHA 和 copy/fsync/readback 通过。worker 在 scientific raw export 前失败，原始 p6 tensor/field 数组根本不存在；另一次支持收据跨窗传输被 auto-review 拒绝后，没有尝试替代通道。JIT 64 files / 1,220,807,231 B 留在 native 原路径，未复制。
+
+
+## Review V23 定向验证与未运行范围
+
+定向验证针对最终 patch 内容，随后主控冻结同一内容为 43588de8275a1014375ab8d5fdd1d835b0bcee55。测试只覆盖服务 selector、stage/checker 接线和 fixture 原始贡献重算，不代表真实 Ny=8 q tile 或 PDE 通过。
+
+| 验证 | 结果 | 范围 |
+|---|---|---|
+| route/probe selector | 19 passed, 39 deselected in 3.06 s | 定向命令选择的 route/probe tests |
+| numeric-stage | 3 passed in 0.09 s | stage 状态和 route shape，不运行 FE |
+| q contribution/projection readback fixtures | 2 passed in 0.18 s | 从 fixture raw data 重算 C、-D、H 与身份 |
+| 真实旧 checkpoint binding helper | PASS | 校验 32,060-mode metadata/payload/source/input/window identity；不是 q FE |
+| py_compile / git diff --check | PASS | 语法和 whitespace 检查 |
+
+测试输出保存在执行 transcript；未另存 pytest log，因此没有独立 log SHA。full repository pytest、MPI2/MPI4、Ruff、CI、documentation contract suite、q-only service、FE/q tile、q CSR/factor/KSP/PDE 均 NOT_RUN。控制器在固定数值 cutoff 后要求停止数值运行，不从未运行项推断通过。

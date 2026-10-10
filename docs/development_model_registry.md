@@ -2263,3 +2263,12 @@ E2 v3重建p6 mesh/space并做一次native matrix-free A6动作和streaming DtN�
 ## Task40extra Review V22：原尺寸端口作用前缀，窗口受控收口
 
 2026-10-10，同一 `task40extra_0p7nm_engineering` 分支，50×25×140 nm、λ0.7 nm、30,464 cells、p6空间20,181,348 storage rows／19,897,344 independent rows，真实全局MPC 284,004 slave rows。生成式端口边生成边作用，避免先保存完整carrier；完成18,968/32,060模式（top16,030，bottom2,938），两侧首模式生产B/D路径一致性通过，独立882-row B/D packet仅每侧一个。固定6h窗口协作停止，q CSR/factor/KSP/PDE/RTA均NOT_RUN；全模式/方向资格及原尺寸2TB/48h尚未闭合。树RSS峰3,242,729,472 B，cgroup峰3,533,070,336 B，task swap0；monotonic run3,991.941 s、保守时钟4,383.978 s分列。worker native cleanup UNKNOWN与外部descendants已清场分列，旧失败原样保留。证据：[Response V22](task40extra_0p7nm_engineering/response_v22.md)、[operator compact](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v22.json)、[主控核算](task40extra_0p7nm_engineering/outcomes/records/controller_readback_v22.json)。
+
+
+## Task40extra Review V23：原尺寸边界作用与库存
+
+| 模型与方法 | 数值/资源结果 | 未完成与证据 |
+|---|---|---|
+| 50×25×140 nm、λ0.7 nm、30464 cells、p6/Ny8；生成式边界、紧凑候选域，保留真实 Floquet MPC | Bα/Dx/H 32060/32060；候选3177132行；24个旧/新作用样本完全相同；树RSS峰3060957184 B、cgroup峰3238825984 B、任务swap0；扫描8817.046 s，保守运行计费9703.518 s | q叶子TypeError后修复未再运行；完整q0/8，factor/KSP/PDE/RTA未运行；内部筛选后零支撑不替代整单元m_c或raw-zero资格；[Response V23](task40extra_0p7nm_engineering/response_v23.md) |
+
+原尺寸2TB/48h仍NO-GO。未重新计算旧PDE，行政收口超固定截止的成本保留在同一原始账本，不开启新窗口。

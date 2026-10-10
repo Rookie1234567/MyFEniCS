@@ -1071,3 +1071,25 @@ native 侧 36 份支持收据 `5,757,491 B` 有逐文件 SHA 和 copy/fsync/read
 5f74 提交中的完整旧 pre-FE ledger 与旧完整 response 均有独立、hash-bound 原文快照：[ledger snapshot](records/review_v7_prefe_snapshot_5f74e15.json)（10,566 B，SHA256 `e89103312f52f5717a3219d7ca01f5ea0c1ff41b178321ba43a62c259eae2f20`）及[旧 response snapshot](../response_v7_prefe_snapshot_5f74e15.md)（12,983 B，SHA256 `922f6efc5e75e63e480025eef60294c70d999d20b0aa96958beaa256244a8bd5`）。旧 response 中目标/AUTO/W1/H 成本账与历史负结果保留完整；早期 source authorization/no-PID/held 仅属历史时点。
 
 本地文档合同 suite 使用 `scripts/activate_myfenics_wsl.sh` 的 `.venv`、PETSc 3.19/Open MPI 4.1.6 旧栈；最终输出见 test summary，不代表 native W0 ABI 或 PDE。native focused `40 passed, 10 skipped` 与两次 public validator PASS 均是已有 native 回执，不代表 PDE 或 raw checker 通过。数值代码仍以 `5f74e15fae6e01e4361325db162806a7319ba3f4` 为基线；主控审核后统一提交推送并回读最终 HEAD。
+
+
+## Review V23：Ny=8 全模式支撑扫描完成，q-only 未运行
+
+目标为 0.7 nm、Ny=8、30,464-cell、p6 三维非可分 Maxwell 模型。此次扫描完成 bottom/top 各 16,030 个边界模式，共 32,060 个 B/D/H 作用值。有限元每个单元有 450 个内部行和 432 个 trace 行；周期 MPC 先把 slave 项归并到独立 master 行。生产流程再对 component 和加权组合各做一次全局 1e-13 筛选。m_c 数的是某个边界相邻单元有多少模式留下内部 B/D 支撑。
+
+| V23 结果 | 实测值 | 状态与范围 |
+|---|---:|---|
+| B/D/H mode coverage | 32,060/32,060；每侧 16,030 | checkpoint 已保存 |
+| 每侧 retained B/D mode-row entries | B=2,429,660,672；D=2,429,660,672 | 全部分类为 actual port-face trace；interior、other trace、slave、unknown 为0 |
+| 内部 m_c histogram | 每侧 2,176 cells 全在0-bin | 仅适用于两级 production 筛选后；raw component 仍有 tiny nonzero |
+| compact/full exact comparison | 24 cases；rows/masks/values/Bα/Dx exact | 局部等价；wall 1.782 s 对 3.016 s，不能外推全程 |
+| q coverage | 0/8 | q-only 在固定 cutoff 后未运行；TIME_BUDGET_NOT_SUFFICIENT / NOT_RUN |
+| full PDE / R/T/A | NOT_RUN | 不宣称求解或物理资格通过 |
+
+candidate domain 有 3,177,132 行，约为全部 20,181,348 storage rows 的 15.7%。它是边界单元 dof union 与 finalized MPC master closure 的候选范围；本轮没有建立完整 carrier，因此没有声称理论上的 carrier 内存节省。support 统计的筛选后零 m_c 不是 raw-zero 证明；原始局部 B witness 的 interior 最大绝对值约 8.92e-16。旧字段 raw_interior_row_memberships_by_side 来源是 retained filtered functional，不能解释为 raw 积分支持。
+
+三次 attempt 均保留：第一次 KeyError: 0，第二次 checkpoint identity ValueError 及 MPI1 p6/MPC space 接线 ValueError，第三次完成扫描后 q 坐标 helper 把 [272, 8, 14] cell counts 当 coordinate map 触发 TypeError。扫描源码 SHA 为 1291aeef089e6c02c4b9e28125f60072aa769340；修复 selector/source SHA 为 43588de8275a1014375ab8d5fdd1d835b0bcee55。修复后 identity helper 与定向 route/probe 19、numeric-stage 3、q checker/readback 2 项通过，但 cutoff 14:40:51Z 已过，未运行 q-only。
+
+运行 wall 8,817.046 s，workflow monotonic 8,866.383 s，watchdog conservative 9,703.518 s。进程树 RSS peak 3,060,957,184 B；专用 cgroup peak 3,238,825,984 B/16 GiB；task swap 0，descendants cleared。完整身份、mode inventory、资源口径和 artifact hashes 见 [Response V23](../response_v23.md) 及 [operator](records/target_operator_probe_v23.json)、[support](records/production_support_v23.json)、[performance](records/performance_v23.json)、[q tile](records/q_tile_v23.json)、[run index](records/run_index.json)。下一阶段任何 q 数值工作都需新 review 授权新 window，并绑定现有 V23 checkpoint。
+
+主控核验：整单元（包含 trace）的 m_c/Σm_c/Σm_c² 仍 UNKNOWN；已完成的是内部支撑零计数。实际缓存删除 0 B，不把逻辑载荷当 RSS 收益。watchdog legacy elapsed=8866.261 s，保守计费=9703.518 s。行政收口超原截止，数值 cutoff 后无新计算，费用追加原账本，窗口未刷新。

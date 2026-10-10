@@ -1,0 +1,144 @@
+{
+  "schema": "task40extra.review_v23_target_operator_probe.v1",
+  "scan_source_sha": "1291aeef089e6c02c4b9e28125f60072aa769340",
+  "patched_source_sha": "43588de8275a1014375ab8d5fdd1d835b0bcee55",
+  "input_sha256": "33cb569eb900f60100569a6659138589a9d26784a22e05d50c7fe63190bac4ff",
+  "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+  "campaign_window_sha256": "e77793e53542c6094da819456457910893b33c9be5ca3b548482be6bfc3dbdfb",
+  "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+  "ordered_mode_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+  "run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
+  "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T114302.254770Z",
+  "classification": {
+    "science_scan": "COMPLETE_ALL_32060_MODES",
+    "outer_worker": "WORKER_FAILED_EXIT_4",
+    "failure_scope": "q tile leaf only, after full B/D/H mode scan",
+    "official_result": false,
+    "PDE": "NOT_RUN",
+    "official_R_T_A": "NOT_RUN"
+  },
+  "model": {
+    "axes_cells": [
+      272,
+      8,
+      14
+    ],
+    "global_cells": 30464,
+    "degree": 6,
+    "storage_rows": 20181348,
+    "independent_rows": 19897344,
+    "interior_rows": 13708800,
+    "trace_rows": 6188544,
+    "MPC_slave_rows": 284004,
+    "MPC_coefficients_sha256": "9312e5f0ad152e517ffc5b7050951fe33ea75f2066bd2e6e7a40639e70366411",
+    "boundary_facets": {
+      "bottom": 2176,
+      "top": 2176
+    }
+  },
+  "scan": {
+    "completed_modes": 32060,
+    "modes_by_side": {
+      "bottom": 16030,
+      "top": 16030
+    },
+    "B_exact_nonzero_rows": 313344,
+    "B_candidate_rows": 3177132,
+    "B_candidate_sha256": "7bcf2fdecc7248275dcc483460661902d2ca8b180169718d1a1b0b942e38df37",
+    "D_values": 32060,
+    "H_values": 32060,
+    "retained_B_D_mode_row_entries_by_side": {
+      "bottom": {
+        "B": 2429660672,
+        "D": 2429660672,
+        "nonempty_B_modes": 16030,
+        "nonempty_D_modes": 16030
+      },
+      "top": {
+        "B": 2429660672,
+        "D": 2429660672,
+        "nonempty_B_modes": 16030,
+        "nonempty_D_modes": 16030
+      }
+    },
+    "checkpoint_metadata": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl/operator_checkpoints/1045d9a34bd857e3e68a92258c485195d76986366aa23f410f79fe91d24fcc77/v23_mode_sweep_checkpoint.json",
+      "scope": "complete all-mode metadata",
+      "bytes": 25510,
+      "sha256": "f362583c0d34e8a37cb6077f8b244363b33f4f6dcc32de535c3c39b30b80eea7"
+    },
+    "terminal_payload": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl/operator_checkpoints/1045d9a34bd857e3e68a92258c485195d76986366aa23f410f79fe91d24fcc77/v23_mode_sweep_checkpoint_1.npz",
+      "scope": "terminal B/D/H payload",
+      "bytes": 8503402,
+      "sha256": "63fb295da67b209a6eef7ed5d16df91c687aaa0e5e6860c6d391a5ca6a1a40f3"
+    },
+    "previous_slot_sha256": "0e72f46aeb0d8d4724cc108c8177f5a6d45eac5f81c0d66fc2665de74e4a667f"
+  },
+  "q": {
+    "expected": 8,
+    "built": 0,
+    "coverage": "0/8",
+    "old_tile_status": "FAILED",
+    "failure": "TypeError: list indices must be integers or slices, not str",
+    "old_tile_sha256": "ad6ea6e2753a5ed1f8c10dc77ba807bfbe917333572bdc0f060d178fe942e2a8",
+    "q_only_after_patch": "TIME_BUDGET_NOT_SUFFICIENT / NOT_RUN",
+    "factor_KSP_full_field_PDE_R_T_A": "NOT_RUN"
+  },
+  "partial_receipt": {
+    "status": "PARTIAL_RECEIPT_CHECKED",
+    "checker_passed": true,
+    "science_status": "failed",
+    "scope": "receipt identity and failure semantics only"
+  },
+  "raw_evidence": [
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T114302.254770Z/run_manifest.json",
+      "scope": "run source and exit",
+      "bytes": 7901,
+      "sha256": "6f75315cb3d6f290935c2e57050603f2d5479a44badf43e9d39c061f9d2b780e"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T114302.254770Z/run_summary.json",
+      "scope": "workflow/resource summary",
+      "bytes": 11478,
+      "sha256": "386d36c19166afb85b1f4bb587934f90797d834d19ce6aea7eb7c2ceb2786cdb"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T114302.254770Z/watchdog/summary.json",
+      "scope": "watchdog",
+      "bytes": 9800,
+      "sha256": "a36f088477f6060df85ff9c2e69e171e8ddc298445a76476d1cbb60810860bd6"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T114302.254770Z/v22_target_operator_probe.json",
+      "scope": "mode inventory and q failure",
+      "bytes": 4544211,
+      "sha256": "ca5df369e1d2464a78a63c76b3694d95cd8bd485d23754700cbb20ffeacb1c30"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T114302.254770Z/v22_pre_sweep_witness.json",
+      "scope": "FE/MPC identity",
+      "bytes": 16014,
+      "sha256": "0e74ac43ff81e360fa59910cacc6fdc2547deca0bb13634dde022749777f1b7c"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T114302.254770Z/v23_reference_q_port_tile.json",
+      "scope": "preserved q failure",
+      "bytes": 3376,
+      "sha256": "ad6ea6e2753a5ed1f8c10dc77ba807bfbe917333572bdc0f060d178fe942e2a8"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl/service_runs/myfenics-case-20261010T114301-2221659/outer_workflow_record.json",
+      "scope": "outer service",
+      "bytes": 35783,
+      "sha256": "e87befc3cc86af83787d961168b73453b6fed233a68d0bf4bbe2027b45a404e8"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl/service_runs/myfenics-case-20261010T114301-2221659/partial_checker_result.json",
+      "scope": "partial checker",
+      "bytes": 2965,
+      "sha256": "fabdfb6edc87a23849709693500cd6e923595a545c20b1204a9fa5d47643e2c3"
+    }
+  ]
+}
