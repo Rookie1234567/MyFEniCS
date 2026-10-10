@@ -8,6 +8,39 @@ from src.solvers.tetra_body_checkpoint import file_digest
 from benchmarks.collect_exact_tetra import strict_reproduction
 
 
+def stored_value_inventory(path, member, *, chunk_entries=1048576):
+    """Count exact stored values with bounded reads, without resident mmap pages."""
+    if chunk_entries <= 0:
+        raise ValueError('positive inventory chunk')
+    with Path(path).open('rb') as stream:
+        version = np.lib.format.read_magic(stream)
+        if version == (1, 0):
+            shape, fortran, dtype = np.lib.format.read_array_header_1_0(stream)
+        elif version == (2, 0):
+            shape, fortran, dtype = np.lib.format.read_array_header_2_0(stream)
+        else:
+            raise ValueError('unsupported sealed NPY version')
+        if fortran or dtype.hasobject or str(dtype) != member['dtype'] or list(shape) != member['shape']:
+            raise ValueError('sealed stored-value inventory identity')
+        count = int(np.prod(shape))
+        nonzero = nonfinite = consumed = 0
+        while consumed < count:
+            size = min(chunk_entries, count-consumed)
+            block = np.fromfile(stream, dtype=dtype, count=size)
+            if len(block) != size:
+                raise ValueError('truncated sealed NPY payload')
+            nonzero += int(np.count_nonzero(block))
+            nonfinite += int(np.count_nonzero(~np.isfinite(block)))
+            consumed += size
+        if stream.read(1):
+            raise ValueError('unexpected sealed NPY tail')
+    return dict(stored_entries=count, exact_nonzero_entries=nonzero,
+        explicit_zero_entries=count-nonzero, nonfinite_entries=nonfinite,
+        bytes_scanned=count*dtype.itemsize, chunk_entries=chunk_entries,
+        maximum_block_bytes=min(count, chunk_entries)*dtype.itemsize,
+        memory_mapped=False, threshold=0, numerical_drop_performed=False)
+
+
 def compare_S():
     """Separate compare-only process. Old S cannot enter production BUILD."""
     scope.window.guard_worker_parent()
