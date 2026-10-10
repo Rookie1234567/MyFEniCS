@@ -34,11 +34,13 @@ def algebra_checks():
 
 
 def functional_checks(packet, native):
-    import basix
+    import basix.ufl
     from src.solvers.ftt_interior_bridge import interior_transform, physical_targets
     from src.solvers.feinn_interpolation import full_moment_element
 
-    element=basix.create_element(basix.ElementFamily.N1E,basix.CellType.hexahedron,3)
+    # The qualified FE uses the UFL default variant. A direct create_element
+    # with its different default dual basis is NOT the saved moment identity.
+    element=basix.ufl.element("N1curl", "hexahedron", 3).basix_element
     high=full_moment_element(element,30)
     if not (np.array_equal(high.points,packet['reference_points']) and
             np.array_equal(high.interpolation_matrix,packet['interpolation'])):
@@ -83,6 +85,8 @@ def functional_checks(packet, native):
                 MPC_internal_independent=no_slave,orientation_interior_trace_cross_absolute=cross,
                 dual_nonunit_Floquet=phases,random_pairs_not_uniform_rank_proof=True,
                 original_q30_interpolation_bitwise_matched=True,
+                original_FE_element_constructor='basix.ufl.element(N1curl,hexahedron,3)',
+                lagrange_variant=str(element.lagrange_variant),
                 algebraic_density_basis='Legendre tensor polynomial in original Basix interior dual span; Q111 survives affine component mixing',
                 arbitrary_FTT_rank_theorem='separate one-dimensional functional products only if original physical coordinate maps separate exactly',
                 original_MPC_expansion_values_nonunit_count=int(np.count_nonzero(abs(native['evals']-1)>1e-15)))
