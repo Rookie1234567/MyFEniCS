@@ -2481,6 +2481,7 @@ def _run_probe(
     )
     from src.solvers.dtn_port_3d import _dtn_surface_quadrature_degree
     from src.solvers.fullspace_dtn_action import iter_fullspace_dtn_functionals_from_surface
+    from src.solvers.p6_cell_condensed_action import P6GeneratedCellPortAction
     from src.solvers.task40_v20_mode_inventory import TARGET_MODE_PHYSICAL_IDENTITY_SHA256
 
     root = Path(__file__).resolve().parents[2]
