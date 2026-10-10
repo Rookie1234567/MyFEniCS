@@ -162,9 +162,33 @@ def _v22_receipt(outcome: str) -> tuple[dict[str, object], bool]:
             },
             "native_882_row_calibration_by_side": {
                 side: {
-                    "status": "MEASURED_NATIVE_882_ROW_SAME_RULE_PATH_CONSISTENCY",
+                    "status": "MEASURED_RAW_PACKET_AND_PRODUCTION_SUPPORT_PATH_CONSISTENCY",
                     "independent_reference": False,
+                    "production_B_relative": 1e-12,
+                    "production_D_relative": 1e-12,
+                    "production_D_vector_relative": 1e-12,
+                    "production_B_path_consistency_only": True,
+                    "production_B_reference_domain": "direct MPC/two-filter support union",
+                    "production_D_reference_domain": "full-field production action",
+                    "production_B_support_mismatch_count": 0,
+                    "production_D_support_mismatch_count": 0,
+                    "production_D_path_consistency_only": True,
+                    "production_B_support_digest": {
+                        "direct_rows_sha256": "8" * 64,
+                        "grouped_rows_sha256": "9" * 64,
+                        "direct_values_sha256": "a" * 64,
+                        "grouped_values_sha256": "b" * 64,
+                    },
+                    "production_D_support_digest": {
+                        "direct_rows_sha256": "c" * 64,
+                        "grouped_rows_sha256": "d" * 64,
+                        "direct_values_sha256": "e" * 64,
+                        "grouped_values_sha256": "f" * 64,
+                    },
+                    # The historical raw-vs-filtered metric is retained as a
+                    # diagnostic and must not substitute for the same-domain gate.
                     "B_interior_relative": 1e-12,
+                    "raw_B_interior_vs_filtered_relative": 1.0,
                     "D_x_relative": 1e-12,
                 }
                 for side in ("bottom", "top")
@@ -210,6 +234,16 @@ def _v22_receipt(outcome: str) -> tuple[dict[str, object], bool]:
                 },
             },
             "all_q_csr_factor_ksp_and_full_field": "NOT_RUN",
+        },
+        "production_support": {
+            "direct_filtered_support_qualification": {
+                "status": "MATCHED_ON_TWO_CALIBRATED_MODES",
+                "production_exact_qualification": "PARTIAL",
+                "support_mismatch_count_by_side": {
+                    "bottom": {"B": 0, "D": 0},
+                    "top": {"B": 0, "D": 0},
+                },
+            }
         },
         "q_coverage": dict(q_coverage),
     }
@@ -329,7 +363,7 @@ def test_v22_completion_recomputes_raw_coverage_fe_mpc_and_native_gates():
 
     probe = receipt["target_operator_probe"]
     probe["operator_witness"]["native_882_row_calibration_by_side"]["top"][
-        "D_x_relative"
+        "production_D_vector_relative"
     ] = 2e-10
     tampered = validate_stage_receipt_semantics(
         receipt,
@@ -338,6 +372,34 @@ def test_v22_completion_recomputes_raw_coverage_fe_mpc_and_native_gates():
         operator_probe_authorized=authorized,
     )
     assert tampered["v22_both_native_error_gates_recomputed"] is False
+
+    mismatch_receipt, mismatch_authorized = _v22_receipt("STAGE_COMPLETED")
+    mismatch_probe = mismatch_receipt["target_operator_probe"]
+    mismatch_native = mismatch_probe["operator_witness"][
+        "native_882_row_calibration_by_side"
+    ]
+    mismatch_native["top"]["production_D_support_mismatch_count"] = 2
+    mismatch_qualification = mismatch_probe["production_support"][
+        "direct_filtered_support_qualification"
+    ]
+    mismatch_qualification["status"] = "PARTIAL_SUPPORT_MISMATCH"
+    mismatch_qualification["support_mismatch_count_by_side"]["top"]["D"] = 2
+    mismatch_checks = validate_stage_receipt_semantics(
+        mismatch_receipt,
+        expected_stage="target_operator_probe",
+        heavy_authorized=False,
+        operator_probe_authorized=mismatch_authorized,
+    )
+    assert mismatch_checks["v22_direct_filtered_support_exactness_remains_partial"] is True
+    mismatch_qualification["production_exact_qualification"] = "EXACT"
+    mislabeled_checks = validate_stage_receipt_semantics(
+        mismatch_receipt,
+        expected_stage="target_operator_probe",
+        heavy_authorized=False,
+        operator_probe_authorized=mismatch_authorized,
+    )
+    assert mislabeled_checks["v22_direct_filtered_support_exactness_remains_partial"] is False
+
     probe["operator_witness"]["generated_p6_api_witness"][
         "same_cell_s_p_crossmode"
     ]["consumed_by_local_q11_tile"] = False

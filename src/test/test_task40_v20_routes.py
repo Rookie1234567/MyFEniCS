@@ -1106,20 +1106,78 @@ def test_v22_first_native_gate_failure_is_checkpointed_before_mode_sweep(tmp_pat
         _write_v22_action_checkpoint,
     )
 
+    valid_calibration = {
+        "production_B_relative": 2e-10,
+        "production_D_relative": 4e-16,
+        "production_D_vector_relative": 1e-12,
+        "raw_B_interior_vs_filtered_relative": 1.0,
+        "production_B_reference_domain": "direct MPC/two-filter support union",
+        "production_D_reference_domain": "direct full-facet versus grouped action",
+        "production_B_path_consistency_only": True,
+        "production_D_path_consistency_only": True,
+        "production_B_support_mismatch_count": 0,
+        "production_D_support_mismatch_count": 0,
+        "production_B_support_digest": {
+            "direct_rows_sha256": "1" * 64,
+            "grouped_rows_sha256": "2" * 64,
+            "direct_values_sha256": "3" * 64,
+            "grouped_values_sha256": "4" * 64,
+        },
+        "production_D_support_digest": {
+            "direct_rows_sha256": "5" * 64,
+            "grouped_rows_sha256": "6" * 64,
+            "direct_values_sha256": "7" * 64,
+            "grouped_values_sha256": "8" * 64,
+        },
+        "B_interior_relative": 2e-10,
+        "D_x_relative": 4e-16,
+        "generated_action_api_witness": {
+            "status": "PASS_RAW_LOCAL_CALLBACK_TILES"
+        },
+    }
     failure = _native_calibration_gate_failure(
         side="bottom",
         mode_index=0,
         mode_key=(0, 0, "s"),
+        calibration_result=valid_calibration,
+    )
+    assert failure is not None
+    assert failure["failed_checks"] == ["native_production_B_relative"]
+    assert failure["raw_B_interior_vs_filtered_relative"] == 1.0
+
+    vector_failure = _native_calibration_gate_failure(
+        side="bottom",
+        mode_index=0,
+        mode_key=(0, 0, "s"),
         calibration_result={
-            "B_interior_relative": 2e-10,
-            "D_x_relative": 4e-16,
+            **valid_calibration,
+            "production_B_relative": 0.0,
+            "production_D_relative": 0.0,
+            "production_D_vector_relative": 2e-10,
+        },
+    )
+    assert vector_failure is not None
+    assert vector_failure["failed_checks"] == ["native_production_D_vector_relative"]
+
+    legacy_only = _native_calibration_gate_failure(
+        side="bottom",
+        mode_index=0,
+        mode_key=(0, 0, "s"),
+        calibration_result={
+            "B_interior_relative": 0.0,
+            "D_x_relative": 0.0,
             "generated_action_api_witness": {
                 "status": "PASS_RAW_LOCAL_CALLBACK_TILES"
             },
         },
     )
-    assert failure is not None
-    assert failure["failed_checks"] == ["native_B_interior_relative"]
+    assert legacy_only is not None
+    assert legacy_only["failed_checks"] == [
+        "native_production_B_relative",
+        "native_production_D_relative",
+        "native_production_D_vector_relative",
+        "native_production_B_reference_domain",
+    ]
 
     b_action = np.asarray([1e-30 - 2e-30j, 0.0 + 0.0j, 3.0 + 4.0j])
     d_values = np.asarray([5.0 + 6.0j, 99.0 + 0.0j])
@@ -1162,6 +1220,72 @@ def test_v22_first_native_gate_failure_is_checkpointed_before_mode_sweep(tmp_pat
         assert np.array_equal(archive["B_nonzero_values"], b_action[[0, 2]])
         assert np.array_equal(archive["D_completed_values"], d_values[:1])
         assert np.array_equal(archive["H_completed_values"], h_values[:1])
+
+
+def test_v22_direct_component_filter_matches_mpc_then_two_global_cutoffs():
+    import numpy as np
+    from mpi4py import MPI
+
+    from src.solvers.dtn_port_3d import _combine_owned_entries
+    from src.solvers.task40_v22_operator_probe import (
+        _direct_mpc_filtered_component_entries,
+    )
+
+    workspace = np.zeros(6, dtype=np.complex128)
+    admissions = []
+
+    def admit(stage, byte_count):
+        admissions.append((stage, byte_count))
+
+    def direct_component(facets):
+        return _direct_mpc_filtered_component_entries(
+            workspace,
+            facets,
+            slave_rows=np.asarray([4]),
+            master_rows=np.asarray([1, 2]),
+            dual_coefficients=np.asarray([0.5 - 0.25j, 0.0 + 0.5j]),
+            master_counts=np.asarray([2]),
+            index_dtype=np.int64,
+            admit_additional_bytes=admit,
+            relative_tol=1e-13,
+            absolute_floor=0.0,
+            chunk_size=3,
+        )
+
+    first, first_audit = direct_component(
+        [
+            ([0, 1, 4], [1.0, 0.1, 2e-14]),
+            ([0, 2, 3, 4], [-0.2, 0.2, 1e-14, 2e-14]),
+        ]
+    )
+    second, second_audit = direct_component(
+        [
+            ([0, 1, 2, 3], [0.8 - 1e-16, 0.02, 0.05, 2e-14]),
+        ]
+    )
+    assert first[0].tolist() == [0, 1, 2]
+    assert second[0].tolist() == [0, 1, 2]
+    assert first_audit["relative_tol"] == second_audit["relative_tol"] == 1e-13
+    assert first_audit["absolute_floor"] == second_audit["absolute_floor"] == 0.0
+    assert first_audit["rows_dropped_by_global_mask"] == 1
+    assert second_audit["rows_dropped_by_global_mask"] == 1
+    assert first_audit["dropped_norm"] == pytest.approx(1e-14)
+    assert second_audit["dropped_norm"] == pytest.approx(2e-14)
+
+    combination_audit = {}
+    combined_rows, combined_values = _combine_owned_entries(
+        (first, second),
+        (1.0, -1.0),
+        comm=MPI.COMM_SELF,
+        audit=combination_audit,
+    )
+    assert combined_rows.tolist() == [1, 2]
+    assert combined_values == pytest.approx(np.asarray([0.08, 0.15]))
+    assert combination_audit["relative_tol"] == 1e-13
+    assert combination_audit["absolute_floor"] == 0.0
+    assert combination_audit["local_rows_dropped_by_global_mask"] == 1
+    assert any(stage == "direct_component_filter_scratch" for stage, _ in admissions)
+    assert any(stage == "direct_component_filtered_sparse_entries" for stage, _ in admissions)
 
 
 def test_v22_physical_model_and_mode_identity_bindings_are_separate():

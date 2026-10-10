@@ -17,7 +17,7 @@ from pathlib import Path
 import shutil
 from time import perf_counter
 from types import SimpleNamespace
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any, Callable, Iterable, Mapping, Sequence
 
 import numpy as np
 
@@ -570,6 +570,184 @@ def _native_local_port_pair(
     if not np.isfinite(raw_b).all() or not np.isfinite(raw_d).all():
         raise FloatingPointError("native boundary descriptor produced non-finite B/D rows")
     return raw_b, raw_d
+
+
+def _native_local_component_basis(
+    *,
+    polynomial: Any,
+    space_element: Any,
+    mode: Any,
+    side: str,
+    bounds: Sequence[Sequence[float]],
+    cell_info: Any,
+    component: int,
+    quadrature_degree: int,
+) -> np.ndarray:
+    """Integrate one raw component on an actual facet and apply its cell map."""
+
+    if component not in (0, 1):
+        raise ValueError("native production component must be zero or one")
+    box = np.asarray(bounds, dtype=np.float64)
+    lower = box[:, 0]
+    upper = box[:, 1]
+    integrated = polynomial.integral_native(
+        side,
+        np.asarray(
+            [complex(mode.alpha), complex(mode.gamma), 0.0 + 0.0j],
+            dtype=np.complex128,
+        ),
+        np.diag(upper - lower),
+        lower,
+        quadrature_degree,
+    )
+    values = np.ascontiguousarray(integrated[:, component], dtype=np.complex128)
+    if space_element.needs_dof_transformations:
+        space_element.T_apply(
+            values,
+            np.asarray([cell_info], dtype=np.uint32),
+            1,
+        )
+    if not np.isfinite(values).all():
+        raise FloatingPointError("direct native component contains non-finite rows")
+    return values
+
+
+def _direct_mpc_filtered_component_entries(
+    work_vector: np.ndarray,
+    facet_contributions: Iterable[tuple[Sequence[int], Sequence[complex]]],
+    *,
+    slave_rows: Sequence[int],
+    master_rows: Sequence[int],
+    dual_coefficients: Sequence[complex],
+    master_counts: Sequence[int],
+    index_dtype: Any,
+    admit_additional_bytes: Callable[[str, int], None] | None = None,
+    relative_tol: float = 1e-13,
+    absolute_floor: float = 0.0,
+    chunk_size: int = 262_144,
+) -> tuple[tuple[np.ndarray, np.ndarray], dict[str, Any]]:
+    """Directly sum facet rows, apply MPC E^H, then reproduce one global mask.
+
+    Filtering scans are chunked so the only full-size numerical workspace is
+    ``work_vector``. Retained sparse arrays are admitted by their measured size
+    before allocation.
+    """
+
+    vector = np.asarray(work_vector)
+    if (
+        vector.ndim != 1
+        or vector.dtype != np.dtype(np.complex128)
+        or chunk_size <= 0
+        or relative_tol < 0.0
+        or absolute_floor < 0.0
+    ):
+        raise ValueError("direct component workspace or support-filter policy is invalid")
+    vector.fill(0.0 + 0.0j)
+    for global_rows, local_values in facet_contributions:
+        rows = np.asarray(global_rows, dtype=np.int64).reshape(-1)
+        values = np.asarray(local_values, dtype=np.complex128).reshape(-1)
+        if (
+            rows.shape != values.shape
+            or (rows.size and (int(rows.min()) < 0 or int(rows.max()) >= len(vector)))
+            or not np.isfinite(values).all()
+        ):
+            raise ValueError("direct facet contribution has invalid rows or values")
+        np.add.at(vector, rows, values)
+    raw_nonzero_count = int(np.count_nonzero(vector))
+    raw_norm = float(np.linalg.norm(vector))
+
+    slave = np.asarray(slave_rows, dtype=np.int64).reshape(-1)
+    masters = np.asarray(master_rows, dtype=np.int64).reshape(-1)
+    dual = np.asarray(dual_coefficients, dtype=np.complex128).reshape(-1)
+    counts = np.asarray(master_counts, dtype=np.int64).reshape(-1)
+    if (
+        slave.shape != counts.shape
+        or int(counts.sum()) != len(masters)
+        or masters.shape != dual.shape
+        or (slave.size and (int(slave.min()) < 0 or int(slave.max()) >= len(vector)))
+        or (masters.size and (int(masters.min()) < 0 or int(masters.max()) >= len(vector)))
+        or not np.isfinite(dual).all()
+    ):
+        raise ValueError("direct component MPC E^H rows are inconsistent")
+    if slave.size:
+        slave_values = vector[slave].copy()
+        routed_values = np.repeat(slave_values, counts)
+        np.add.at(vector, masters, dual * routed_values)
+        vector[slave] = 0.0 + 0.0j
+
+    scratch_bytes = int(chunk_size) * 64
+    if admit_additional_bytes is not None:
+        admit_additional_bytes("direct_component_filter_scratch", scratch_bytes)
+    global_maximum = 0.0
+    for start in range(0, len(vector), chunk_size):
+        stop = min(start + chunk_size, len(vector))
+        magnitudes = np.abs(vector[start:stop])
+        global_maximum = max(global_maximum, float(np.max(magnitudes, initial=0.0)))
+    cutoff = max(float(absolute_floor), float(relative_tol) * global_maximum)
+
+    prefilter_nonzero_count = 0
+    dropped_count = 0
+    retained_count = 0
+    prefilter_norm_squared = 0.0
+    dropped_norm_squared = 0.0
+    retained_norm_squared = 0.0
+    for start in range(0, len(vector), chunk_size):
+        stop = min(start + chunk_size, len(vector))
+        values = vector[start:stop]
+        magnitudes = np.abs(values)
+        nonzero = magnitudes > 0.0
+        keep = magnitudes > cutoff
+        dropped = nonzero & ~keep
+        prefilter_nonzero_count += int(np.count_nonzero(nonzero))
+        prefilter_norm_squared += float(np.vdot(values, values).real)
+        dropped_values = values[dropped]
+        dropped_count += int(len(dropped_values))
+        dropped_norm_squared += float(np.vdot(dropped_values, dropped_values).real)
+        retained_values = values[keep]
+        retained_count += int(len(retained_values))
+        retained_norm_squared += float(np.vdot(retained_values, retained_values).real)
+
+    output_dtype = np.dtype(index_dtype)
+    output_bytes = retained_count * (output_dtype.itemsize + np.dtype(np.complex128).itemsize)
+    if admit_additional_bytes is not None and output_bytes:
+        admit_additional_bytes("direct_component_filtered_sparse_entries", int(output_bytes))
+    output_rows = np.empty(retained_count, dtype=output_dtype)
+    output_values = np.empty(retained_count, dtype=np.complex128)
+    offset = 0
+    for start in range(0, len(vector), chunk_size):
+        stop = min(start + chunk_size, len(vector))
+        values = vector[start:stop]
+        keep = np.abs(values) > cutoff
+        local_rows = np.flatnonzero(keep)
+        count = len(local_rows)
+        output_rows[offset : offset + count] = start + local_rows
+        output_values[offset : offset + count] = values[local_rows]
+        offset += count
+    if offset != retained_count:
+        raise RuntimeError("direct component retained count changed during bounded extraction")
+    digest = hashlib.sha256()
+    digest.update(np.ascontiguousarray(output_rows).tobytes())
+    digest.update(np.ascontiguousarray(output_values).tobytes())
+    audit = {
+        "scope": "direct per-facet vector after actual finalized MPC E^H, before weighted combination",
+        "relative_tol": float(relative_tol),
+        "absolute_floor": float(absolute_floor),
+        "raw_assembled_nonzero_rows_before_mpc": raw_nonzero_count,
+        "raw_assembled_norm_before_mpc": raw_norm,
+        "global_maximum_abs_after_mpc": global_maximum,
+        "global_cutoff_after_mpc": cutoff,
+        "nonzero_rows_before_global_mask": prefilter_nonzero_count,
+        "norm_before_global_mask": float(np.sqrt(prefilter_norm_squared)),
+        "rows_dropped_by_global_mask": dropped_count,
+        "dropped_norm": float(np.sqrt(dropped_norm_squared)),
+        "retained_rows": retained_count,
+        "retained_norm": float(np.sqrt(retained_norm_squared)),
+        "retained_entries_sha256": digest.hexdigest(),
+        "bounded_filter_chunk_rows": int(chunk_size),
+        "filter_scratch_upper_bound_bytes": scratch_bytes,
+    }
+    return (output_rows, output_values), audit
+
 
 
 def _global_mpc_expansions(
@@ -1165,17 +1343,67 @@ def _native_calibration_gate_failure(
             return None
         return value if np.isfinite(value) else None
 
-    b_relative = finite_metric("B_interior_relative")
-    d_relative = finite_metric("D_x_relative")
+    b_relative = finite_metric("production_B_relative")
+    d_relative = finite_metric("production_D_relative")
+    d_vector_relative = finite_metric("production_D_vector_relative")
+    raw_scope_relative = finite_metric("raw_B_interior_vs_filtered_relative")
+    b_domain = calibration_result.get("production_B_reference_domain")
+    d_domain = calibration_result.get("production_D_reference_domain")
+    b_support_digest = calibration_result.get("production_B_support_digest")
+    d_support_digest = calibration_result.get("production_D_support_digest")
+    b_support_mismatch = calibration_result.get("production_B_support_mismatch_count")
+    d_support_mismatch = calibration_result.get("production_D_support_mismatch_count")
+
+    def valid_support_digest(value: Any) -> bool:
+        return bool(
+            isinstance(value, Mapping)
+            and all(
+                isinstance(value.get(name), str)
+                and len(value[name]) == 64
+                and all(character in "0123456789abcdef" for character in value[name])
+                for name in (
+                    "direct_rows_sha256",
+                    "grouped_rows_sha256",
+                    "direct_values_sha256",
+                    "grouped_values_sha256",
+                )
+            )
+        )
+
+    valid_production_support = bool(
+        valid_support_digest(b_support_digest)
+        and valid_support_digest(d_support_digest)
+        and isinstance(b_support_mismatch, int)
+        and not isinstance(b_support_mismatch, bool)
+        and b_support_mismatch >= 0
+        and isinstance(d_support_mismatch, int)
+        and not isinstance(d_support_mismatch, bool)
+        and d_support_mismatch >= 0
+        and calibration_result.get("production_B_path_consistency_only") is True
+        and calibration_result.get("production_D_path_consistency_only") is True
+    )
     api_witness = calibration_result.get("generated_action_api_witness")
     api_status = (
         api_witness.get("status") if isinstance(api_witness, Mapping) else None
     )
     failed_checks = []
     if b_relative is None or b_relative > relative_limit:
-        failed_checks.append("native_B_interior_relative")
+        failed_checks.append("native_production_B_relative")
     if d_relative is None or d_relative > relative_limit:
-        failed_checks.append("native_D_x_relative")
+        failed_checks.append("native_production_D_relative")
+    if (
+        d_vector_relative is None
+        or not 0.0 <= d_vector_relative <= relative_limit
+    ):
+        failed_checks.append("native_production_D_vector_relative")
+    if (
+        not isinstance(b_domain, str)
+        or not b_domain
+        or not isinstance(d_domain, str)
+        or not d_domain
+        or not valid_production_support
+    ):
+        failed_checks.append("native_production_B_reference_domain")
     if api_status != "PASS_RAW_LOCAL_CALLBACK_TILES":
         failed_checks.append("generated_action_api_witness")
     if not failed_checks:
@@ -1185,8 +1413,20 @@ def _native_calibration_gate_failure(
         "side": str(side),
         "mode_index": int(mode_index),
         "mode_key": list(mode_key),
-        "B_interior_relative": b_relative,
-        "D_x_relative": d_relative,
+        "production_B_relative": b_relative,
+        "production_D_relative": d_relative,
+        "production_D_vector_relative": d_vector_relative,
+        "raw_B_interior_vs_filtered_relative": raw_scope_relative,
+        "production_B_reference_domain": b_domain,
+        "production_D_reference_domain": d_domain,
+        "production_B_support_digest": (
+            dict(b_support_digest) if isinstance(b_support_digest, Mapping) else None
+        ),
+        "production_B_support_mismatch_count": b_support_mismatch,
+        "production_D_support_digest": (
+            dict(d_support_digest) if isinstance(d_support_digest, Mapping) else None
+        ),
+        "production_D_support_mismatch_count": d_support_mismatch,
         "generated_action_api_status": api_status,
         "relative_limit": float(relative_limit),
         "failed_checks": failed_checks,
@@ -2479,7 +2719,11 @@ def _run_probe(
         BOUNDARY_PLANE,
         assembly_projection_denominator,
     )
-    from src.solvers.dtn_port_3d import _dtn_surface_quadrature_degree
+    from src.solvers.dtn_port_3d import (
+        _combine_owned_entries,
+        _dtn_surface_quadrature_degree,
+        _traction_vector,
+    )
     from src.solvers.fullspace_dtn_action import iter_fullspace_dtn_functionals_from_surface
     from src.solvers.p6_cell_condensed_action import P6GeneratedCellPortAction
     from src.solvers.task40_v20_mode_inventory import TARGET_MODE_PHYSICAL_IDENTITY_SHA256
@@ -3091,6 +3335,82 @@ def _run_probe(
             audit=stream_audit,
         )
         mode_index = 0
+
+        def controlled_resource_stop(
+            error: _ProbeResourceBlocked,
+            completed_mode_count: int,
+            *,
+            completed_current_side: str | None = None,
+        ) -> dict[str, Any]:
+            if completed_current_side is not None:
+                for class_id in class_mode_prefix[completed_current_side]:
+                    class_mode_prefix[completed_current_side][class_id] += 1
+            if operator_iterator is not None:
+                operator_iterator.close()
+            checkpoint = _write_v22_action_checkpoint(
+                output_directory,
+                preflight=preflight,
+                mode_inventory=mode_inventory,
+                mode_count=completed_mode_count,
+                mode_counts_by_side=mode_counts_by_side,
+                class_mode_prefix=class_mode_prefix,
+                support_rows_by_side=support_rows_by_side,
+                stream_digest=stream_digest,
+                component_filter_audit=native_rule.filter_audit(),
+                b_action=b_action,
+                d_values=d_values,
+                h_values=h_values,
+            )
+            campaign_state = _read_v22_campaign_state(root)
+            checkpoint["campaign_remaining_numerical_seconds"] = campaign_state[
+                "remaining_numerical_seconds"
+            ]
+            _write_json(output_directory / "v22_mode_sweep_checkpoint.json", checkpoint)
+            checkpoint_sha = _sha256_file(
+                output_directory / "v22_mode_sweep_checkpoint.json"
+            )
+            facts.update(
+                status="RESOURCE_CONTROLLED_STOP",
+                failed_stage=None,
+                partial_stages=["target_operator_probe"],
+                blocked_task_stage="target_operator_probe",
+                resource_blocker={
+                    **error.facts,
+                    "checkpoint_mode_count": completed_mode_count,
+                    "checkpoint_sha256": checkpoint_sha,
+                },
+                probe_scope=(
+                    "the exact completed ordered prefix is checkpointed; the unstarted suffix is not credited"
+                ),
+                partial_mode_coverage={
+                    "expected_mode_count": len(modes),
+                    "completed_mode_count": completed_mode_count,
+                    "completed_by_side": dict(mode_counts_by_side),
+                    "completed_side_class_mode_prefix": {
+                        side_name: dict(class_mode_prefix[side_name])
+                        for side_name in ("bottom", "top")
+                    },
+                    "stream_prefix_sha256": stream_digest.copy().hexdigest(),
+                },
+                partial_action_result={
+                    "checkpoint_path": "v22_mode_sweep_checkpoint.json",
+                    "checkpoint_sha256": checkpoint_sha,
+                    "actual_B_D_H_values_saved": True,
+                    "official_R_T_A": "NOT_RUN",
+                },
+                resource_gates=resource_gates,
+                q_coverage={
+                    "status": "NOT_RUN",
+                    "expected_q_count": 8,
+                    "built_q_count": 0,
+                    "reason": "resource admission stopped during the actual B/D operator probe",
+                },
+            )
+            facts["native_same_rule_path_consistency_by_side"] = {
+                name: dict(result) for name, result in calibration_results.items()
+            }
+            return facts
+
         while True:
             try:
                 functional = next(operator_iterator)
@@ -3105,6 +3425,23 @@ def _run_probe(
             side = str(functional.mode_key[1])
             if side not in mode_counts_by_side:
                 raise ValueError("production iterator emitted an unknown target side")
+            production_component_work = None
+            if current_index in calibration_index_by_side.values():
+                workspace_bytes = _EXPECTED_FULL_ROWS * np.dtype(np.complex128).itemsize
+                try:
+                    workspace_gate = _resource_admission(
+                        f"native_direct_B_calibration_vector_{side}",
+                        workspace_bytes,
+                        resource_sample=resource_sample,
+                        require_task_cgroup=True,
+                    )
+                except _ProbeResourceBlocked as error:
+                    resource_gates.append(error.facts)
+                    return controlled_resource_stop(error, mode_index)
+                resource_gates.append(workspace_gate)
+                production_component_work = np.empty(
+                    full_rows, dtype=np.complex128
+                )
             alpha = complex(rng.standard_normal(), rng.standard_normal())
             if len(functional.coupling_rows):
                 b_action[functional.coupling_rows] += functional.coupling_values * alpha
@@ -3306,7 +3643,6 @@ def _run_probe(
                         del generated_port, local_trace, local_xi, local_xt
                     del raw_b, raw_d, local_b, production_b, error
                     del local_dofs, global_dofs, interior_ids
-                local_seconds = perf_counter() - local_started
                 production_dx = (
                     np.dot(
                         functional.projection_values,
@@ -3322,8 +3658,279 @@ def _run_probe(
                     abs(direct_dx - production_dx)
                     / max(abs(direct_dx), abs(production_dx), np.finfo(float).tiny)
                 )
+                calibration_result = calibration_results.setdefault(side, {})
+                calibration_result.update(
+                    {
+                    "raw_B_interior_vs_filtered_relative": b_relative,
+                    # Retain the historical field as the exact old raw-scope
+                    # diagnostic; it is no longer the production consistency gate.
+                    "B_interior_relative": b_relative,
+                    "B_interior_max_absolute": float(b_max_abs),
+                    "B_interior_worst": b_worst,
+                    "raw_tiny_B_interior_count_below_1e-13": raw_tiny_count,
+                    "raw_D_x_vs_filtered_relative": dx_relative,
+                    "D_x_relative": dx_relative,
+                    "raw_native_D_x": {"real": float(direct_dx.real), "imag": float(direct_dx.imag)},
+                    "grouped_production_D_x": {
+                        "real": float(production_dx.real),
+                        "imag": float(production_dx.imag),
+                    },
+                    "raw_D_x_comparison_domain": (
+                        "direct full-facet D action on the selected actual field versus the grouped "
+                        "production projection action after the existing two global filters"
+                    ),
+                    }
+                )
+
+                def admit_calibration_bytes(stage: str, additional_bytes: int) -> None:
+                    try:
+                        gate = _resource_admission(
+                            f"{stage}_{side}",
+                            additional_bytes,
+                            resource_sample=resource_sample,
+                            require_task_cgroup=True,
+                        )
+                    except _ProbeResourceBlocked as error:
+                        resource_gates.append(error.facts)
+                        raise
+                    resource_gates.append(gate)
+
+                def direct_component_facet_contributions(component: int):
+                    for facet_row in rows_by_side[side]:
+                        facet_cell = int(facet_row["cell_id"])
+                        facet_local_dofs = np.asarray(
+                            space.dofmap.cell_dofs(facet_cell), dtype=np.int32
+                        )
+                        facet_global_dofs = np.asarray(
+                            dof_index_map.local_to_global(facet_local_dofs),
+                            dtype=PETSc.IntType,
+                        )
+                        component_values = _native_local_component_basis(
+                            polynomial=polynomial,
+                            space_element=space.element,
+                            mode=modes[current_index],
+                            side=side,
+                            bounds=facet_row["cell_bounds_nm"],
+                            cell_info=permutation_info[facet_cell],
+                            component=component,
+                            quadrature_degree=qdegree,
+                        )
+                        yield facet_global_dofs, component_values
+
+                try:
+                    if production_component_work is None:
+                        raise RuntimeError("direct production B workspace was not admitted")
+                    direct_component_entries = []
+                    direct_component_audit = {}
+                    for component in (0, 1):
+                        entries, component_audit = _direct_mpc_filtered_component_entries(
+                            production_component_work,
+                            direct_component_facet_contributions(component),
+                            slave_rows=native_rule._slave_rows,
+                            master_rows=native_rule._master_rows,
+                            dual_coefficients=native_rule._dual_coefficients,
+                            master_counts=native_rule._master_counts,
+                            index_dtype=native_rule.index_dtype,
+                            admit_additional_bytes=admit_calibration_bytes,
+                        )
+                        direct_component_entries.append(entries)
+                        direct_component_audit[str(component)] = component_audit
+                        calibration_result["direct_component_filter_audit"] = dict(
+                            direct_component_audit
+                        )
+                    traction = np.asarray(
+                        _traction_vector(modes[current_index], cfg)[:2],
+                        dtype=np.complex128,
+                    )
+                    combination_reserve = int(
+                        (
+                            len(direct_component_entries[0][0])
+                            + len(direct_component_entries[1][0])
+                            + len(functional.coupling_rows)
+                            + len(functional.projection_rows)
+                        )
+                        * 384
+                    )
+                    admit_calibration_bytes(
+                        "direct_weighted_B_D_combination_and_comparison", combination_reserve
+                    )
+                    direct_B_audit: dict[str, Any] = {}
+                    direct_B_rows, direct_B_values = _combine_owned_entries(
+                        tuple(direct_component_entries),
+                        (-traction[0], -traction[1]),
+                        comm=MPI.COMM_WORLD,
+                        audit=direct_B_audit,
+                    )
+                    support_union = np.union1d(
+                        direct_B_rows, functional.coupling_rows
+                    )
+                    direct_aligned = np.zeros(len(support_union), dtype=np.complex128)
+                    grouped_aligned = np.zeros(len(support_union), dtype=np.complex128)
+                    if len(direct_B_rows):
+                        direct_aligned[
+                            np.searchsorted(support_union, direct_B_rows)
+                        ] = direct_B_values
+                    if len(functional.coupling_rows):
+                        grouped_aligned[
+                            np.searchsorted(support_union, functional.coupling_rows)
+                        ] = functional.coupling_values
+                    direct_error = direct_aligned - grouped_aligned
+                    production_B_relative = float(
+                        np.linalg.norm(direct_error)
+                        / max(
+                            np.linalg.norm(direct_B_values),
+                            np.linalg.norm(functional.coupling_values),
+                            np.finfo(float).tiny,
+                        )
+                    )
+                    production_B_max_absolute = float(
+                        np.max(np.abs(direct_error), initial=0.0)
+                    )
+                    production_B_support_mismatch = int(
+                        len(
+                            np.setxor1d(
+                                direct_B_rows,
+                                functional.coupling_rows,
+                                assume_unique=True,
+                            )
+                        )
+                    )
+                    calibration_result.update(
+                        production_B_relative=production_B_relative,
+                        production_B_max_absolute=production_B_max_absolute,
+                        production_B_support_mismatch_count=production_B_support_mismatch,
+                        production_B_reference_domain=(
+                            "direct per-facet native component vectors after actual MPC E^H, "
+                            "component global-max masks, production traction weighting, and "
+                            "the second global-max mask; compared on the full sorted support union"
+                        ),
+                        production_B_path_consistency_only=True,
+                        production_B_support_digest={
+                            "direct_rows_sha256": _array_sha256(direct_B_rows),
+                            "grouped_rows_sha256": _array_sha256(functional.coupling_rows),
+                            "direct_values_sha256": _array_sha256(direct_B_values),
+                            "grouped_values_sha256": _array_sha256(functional.coupling_values),
+                            "direct_row_count": int(len(direct_B_rows)),
+                            "grouped_row_count": int(len(functional.coupling_rows)),
+                            "support_union_row_count": int(len(support_union)),
+                        },
+                        production_B_combination_filter_audit=direct_B_audit,
+                        direct_component_filter_audit=direct_component_audit,
+                    )
+                    electric = np.asarray(
+                        modes[current_index].e_vector[:2], dtype=np.complex128
+                    )
+                    direct_D_audit: dict[str, Any] = {}
+                    direct_D_rows, direct_D_projected = _combine_owned_entries(
+                        tuple(direct_component_entries),
+                        (electric[0], electric[1]),
+                        comm=MPI.COMM_WORLD,
+                        audit=direct_D_audit,
+                    )
+                    direct_D_values = np.ascontiguousarray(
+                        np.conjugate(direct_D_projected), dtype=np.complex128
+                    )
+                    direct_D_x_same_domain = (
+                        np.dot(
+                            direct_D_values,
+                            selected_field_values[direct_D_rows],
+                        )
+                        if len(direct_D_rows)
+                        else 0.0 + 0.0j
+                    )
+                    grouped_D_x_same_domain = (
+                        np.dot(
+                            functional.projection_values,
+                            selected_field_values[functional.projection_rows],
+                        )
+                        if len(functional.projection_rows)
+                        else 0.0 + 0.0j
+                    )
+                    production_D_relative = float(
+                        abs(direct_D_x_same_domain - grouped_D_x_same_domain)
+                        / max(
+                            abs(direct_D_x_same_domain),
+                            abs(grouped_D_x_same_domain),
+                            np.finfo(float).tiny,
+                        )
+                    )
+                    production_D_support_mismatch = int(
+                        len(
+                            np.setxor1d(
+                                direct_D_rows,
+                                functional.projection_rows,
+                                assume_unique=True,
+                            )
+                        )
+                    )
+                    d_support_union = np.union1d(
+                        direct_D_rows, functional.projection_rows
+                    )
+                    direct_D_aligned = np.zeros(
+                        len(d_support_union), dtype=np.complex128
+                    )
+                    grouped_D_aligned = np.zeros(
+                        len(d_support_union), dtype=np.complex128
+                    )
+                    if len(direct_D_rows):
+                        direct_D_aligned[
+                            np.searchsorted(d_support_union, direct_D_rows)
+                        ] = direct_D_values
+                    if len(functional.projection_rows):
+                        grouped_D_aligned[
+                            np.searchsorted(d_support_union, functional.projection_rows)
+                        ] = functional.projection_values
+                    production_D_vector_relative = float(
+                        np.linalg.norm(direct_D_aligned - grouped_D_aligned)
+                        / max(
+                            np.linalg.norm(direct_D_values),
+                            np.linalg.norm(functional.projection_values),
+                            np.finfo(float).tiny,
+                        )
+                    )
+                    calibration_result.update(
+                        production_D_relative=production_D_relative,
+                        production_D_vector_relative=production_D_vector_relative,
+                        production_D_support_mismatch_count=production_D_support_mismatch,
+                        production_D_reference_domain=(
+                            "direct per-facet components after actual MPC E^H and component global-max "
+                            "masks, original electric weights, second global-max mask, conjugated raw D, "
+                            "and action on the same selected field"
+                        ),
+                        production_D_path_consistency_only=True,
+                        production_D_x_same_domain={
+                            "direct": {
+                                "real": float(direct_D_x_same_domain.real),
+                                "imag": float(direct_D_x_same_domain.imag),
+                            },
+                            "grouped": {
+                                "real": float(grouped_D_x_same_domain.real),
+                                "imag": float(grouped_D_x_same_domain.imag),
+                            },
+                        },
+                        production_D_support_digest={
+                            "direct_rows_sha256": _array_sha256(direct_D_rows),
+                            "grouped_rows_sha256": _array_sha256(functional.projection_rows),
+                            "direct_values_sha256": _array_sha256(direct_D_values),
+                            "grouped_values_sha256": _array_sha256(
+                                functional.projection_values
+                            ),
+                            "direct_row_count": int(len(direct_D_rows)),
+                            "grouped_row_count": int(len(functional.projection_rows)),
+                            "support_union_row_count": int(len(d_support_union)),
+                        },
+                        production_D_combination_filter_audit=direct_D_audit,
+                    )
+                except _ProbeResourceBlocked as error:
+                    return controlled_resource_stop(
+                        error,
+                        mode_index + 1,
+                        completed_current_side=side,
+                    )
+
+                local_seconds = perf_counter() - local_started
                 calibration_results[side].update(
-                    status="MEASURED_NATIVE_882_ROW_SAME_RULE_PATH_CONSISTENCY",
+                    status="MEASURED_RAW_PACKET_AND_PRODUCTION_SUPPORT_PATH_CONSISTENCY",
                     independent_reference=False,
                     shared_integral_kernel="FacetPolynomial.integral_native",
                     mode_index=current_index,
@@ -3334,19 +3941,24 @@ def _run_probe(
                     ],
                     facet_count=len(rows_by_side[side]),
                     boundary_class_count=len({str(row["class_id"]) for row in rows_by_side[side]}),
-                    B_interior_relative=b_relative,
-                    B_interior_max_absolute=float(b_max_abs),
-                    B_interior_worst=b_worst,
-                    D_x_relative=dx_relative,
-                    native_D_x={"real": float(direct_dx.real), "imag": float(direct_dx.imag)},
-                    production_D_x={"real": float(production_dx.real), "imag": float(production_dx.imag)},
-                    **{"raw_tiny_B_interior_count_below_1e-13": raw_tiny_count},
+                    raw_B_interior_vs_filtered_domain=(
+                        "legacy diagnostic only: unfiltered raw local interior entries versus "
+                        "the grouped production functional after MPC and both global filters"
+                    ),
                     seconds=local_seconds,
                     source=(
-                        "actual 2176 saved target facets per side; same native integral kernel on direct and iterator paths; "
-                        "path consistency only, not an independent quadrature oracle"
+                        "direct and grouped routes share FacetPolynomial.integral_native but use "
+                        "different per-facet versus class-grouped accumulation paths; production "
+                        "comparison is path consistency, not an independent quadrature oracle; "
+                        "independent full 882-row qualification remains the saved packet witness"
                     ),
                 )
+                del direct_component_entries, direct_component_audit
+                del direct_B_rows, direct_B_values, direct_B_audit
+                del direct_D_rows, direct_D_projected, direct_D_values, direct_D_audit
+                del d_support_union, direct_D_aligned, grouped_D_aligned
+                del support_union, direct_aligned, grouped_aligned, direct_error
+                del production_component_work
                 facts["native_same_rule_path_consistency_by_side"] = {
                     name: dict(result) for name, result in calibration_results.items()
                 }
@@ -3526,9 +4138,36 @@ def _run_probe(
             "normalization_h_max": float(np.max(h_values)),
             "mode_sweep_seconds": mode_sweep_seconds,
         }
+        support_mismatch_by_side = {
+            side: {
+                "B": result.get("production_B_support_mismatch_count"),
+                "D": result.get("production_D_support_mismatch_count"),
+            }
+            for side, result in calibration_results.items()
+        }
+        support_mismatch_detected = any(
+            isinstance(count, int)
+            and not isinstance(count, bool)
+            and count > 0
+            for side_counts in support_mismatch_by_side.values()
+            for count in side_counts.values()
+        )
         facts["production_support"] = {
             "status": "MEASURED_ALL_MODES_AFTER_BOTH_GLOBAL_FILTER_STAGES",
             "support_semantics": descriptor_identity["production_support_semantics"],
+            "direct_filtered_support_qualification": {
+                "status": (
+                    "PARTIAL_SUPPORT_MISMATCH"
+                    if support_mismatch_detected
+                    else "MATCHED_ON_TWO_CALIBRATED_MODES"
+                ),
+                "production_exact_qualification": "PARTIAL",
+                "support_mismatch_count_by_side": support_mismatch_by_side,
+                "scope": (
+                    "two representative first-mode all-facet side calibrations; "
+                    "shared-kernel path consistency only"
+                ),
+            },
             "mode_count_by_side": mode_counts_by_side,
             "global_B_D_support_rows_by_side": support_rows_by_side,
             "per_cell_m_c_and_sum_m_c_squared": "UNKNOWN; fullspace carrier functionals are global rows, not a generated per-cell support map",
@@ -3567,16 +4206,24 @@ def _run_probe(
         facts["resource_gates"] = resource_gates
         facts["resource_before_release"] = _memory_snapshot(resource_sample)
         native_limits_passed = all(
-            result.get("B_interior_relative", np.inf) <= 1e-10
-            and result.get("D_x_relative", np.inf) <= 1e-10
+            result.get("production_B_relative", np.inf) <= 1e-10
+            and result.get("production_D_relative", np.inf) <= 1e-10
+            and 0.0 <= result.get("production_D_vector_relative", -1.0) <= 1e-10
             and result.get("generated_action_api_witness", {}).get("status")
             == "PASS_RAW_LOCAL_CALLBACK_TILES"
             for result in calibration_results.values()
         ) and generated_packet_witness.get("status") == "PASS_GENERATED_FACTORY_AND_BOUNDED_Q_TILES"
         facts["operator_gate_limits"] = {
-            "native_B_interior_relative": 1e-10,
-            "native_D_x_vs_production_relative": 1e-10,
-            "scope": "two all-facet side calibrations; all-mode production B/D functionals streamed separately",
+            "production_B_relative": 1e-10,
+            "production_D_relative": 1e-10,
+            "production_D_vector_relative": 1e-10,
+            "independent_raw_882_row_packet_B_D_relative": 1e-10,
+            "legacy_raw_B_interior_vs_filtered_relative": "diagnostic_only_not_a_gate",
+            "scope": (
+                "two all-facet side calibrations; B is direct per-facet MPC/two-filter path "
+                "consistency against grouped production, while independent raw 882-row packet "
+                "qualification remains a separate pre-sweep gate"
+            ),
         }
         if native_limits_passed:
             facts["status"] = "PASS_ALL_MODE_B_D_STREAM_WITH_Q_UNBUILT"

@@ -132,11 +132,85 @@ def _v22_completed_probe_checks(
     calibration_passed = set(native) == {"bottom", "top"} and all(
         isinstance(native.get(side), Mapping)
         and native[side].get("status")
-        == "MEASURED_NATIVE_882_ROW_SAME_RULE_PATH_CONSISTENCY"
+        == "MEASURED_RAW_PACKET_AND_PRODUCTION_SUPPORT_PATH_CONSISTENCY"
         and native[side].get("independent_reference") is False
-        and _finite_nonnegative_below(native[side].get("B_interior_relative"), 1e-10)
-        and _finite_nonnegative_below(native[side].get("D_x_relative"), 1e-10)
+        and _finite_nonnegative_below(native[side].get("production_B_relative"), 1e-10)
+        and _finite_nonnegative_below(native[side].get("production_D_relative"), 1e-10)
+        and _finite_nonnegative_below(
+            native[side].get("production_D_vector_relative"), 1e-10
+        )
+        and native[side].get("production_B_path_consistency_only") is True
+        and isinstance(native[side].get("production_B_reference_domain"), str)
+        and isinstance(native[side].get("production_D_reference_domain"), str)
+        and isinstance(native[side].get("production_B_support_digest"), Mapping)
+        and native[side].get("production_D_path_consistency_only") is True
+        and isinstance(native[side].get("production_D_support_digest"), Mapping)
+        and all(
+            _is_sha256(native[side]["production_B_support_digest"].get(name))
+            for name in (
+                "direct_rows_sha256",
+                "grouped_rows_sha256",
+                "direct_values_sha256",
+                "grouped_values_sha256",
+            )
+        )
+        and all(
+            _is_sha256(native[side]["production_D_support_digest"].get(name))
+            for name in (
+                "direct_rows_sha256",
+                "grouped_rows_sha256",
+                "direct_values_sha256",
+                "grouped_values_sha256",
+            )
+        )
+        and isinstance(native[side].get("production_B_support_mismatch_count"), int)
+        and not isinstance(native[side].get("production_B_support_mismatch_count"), bool)
+        and isinstance(native[side].get("production_D_support_mismatch_count"), int)
+        and not isinstance(native[side].get("production_D_support_mismatch_count"), bool)
         for side in ("bottom", "top")
+    )
+    direct_support_qualification = probe.get("production_support")
+    direct_support_qualification = (
+        direct_support_qualification
+        if isinstance(direct_support_qualification, Mapping)
+        else {}
+    ).get("direct_filtered_support_qualification")
+    direct_support_qualification = (
+        direct_support_qualification
+        if isinstance(direct_support_qualification, Mapping)
+        else {}
+    )
+    support_mismatch_counts_valid = set(native) == {"bottom", "top"}
+    recomputed_support_mismatches: dict[str, dict[str, int]] = {}
+    for side in ("bottom", "top"):
+        side_record = native.get(side)
+        side_record = side_record if isinstance(side_record, Mapping) else {}
+        b_mismatch = side_record.get("production_B_support_mismatch_count")
+        d_mismatch = side_record.get("production_D_support_mismatch_count")
+        if not all(
+            isinstance(value, int) and not isinstance(value, bool) and value >= 0
+            for value in (b_mismatch, d_mismatch)
+        ):
+            support_mismatch_counts_valid = False
+        else:
+            recomputed_support_mismatches[side] = {"B": b_mismatch, "D": d_mismatch}
+    support_mismatch_detected = any(
+        count > 0
+        for side_counts in recomputed_support_mismatches.values()
+        for count in side_counts.values()
+    )
+    expected_support_qualification_status = (
+        "PARTIAL_SUPPORT_MISMATCH"
+        if support_mismatch_detected
+        else "MATCHED_ON_TWO_CALIBRATED_MODES"
+    )
+    support_exactness_remains_partial = (
+        support_mismatch_counts_valid
+        and direct_support_qualification.get("production_exact_qualification") == "PARTIAL"
+        and direct_support_qualification.get("status")
+        == expected_support_qualification_status
+        and direct_support_qualification.get("support_mismatch_count_by_side")
+        == recomputed_support_mismatches
     )
     independent_packet_passed = (
         independent_packets.get("status")
@@ -217,6 +291,9 @@ def _v22_completed_probe_checks(
             and b_alpha.get("mode_count_by_side") == expected_by_side
         ),
         "v22_both_native_error_gates_recomputed": calibration_passed,
+        "v22_direct_filtered_support_exactness_remains_partial": (
+            support_exactness_remains_partial
+        ),
         "v22_independent_saved_full_row_packets_bound": independent_packet_passed,
         "v22_generated_factory_and_q_consumer_connected": (
             generated.get("status") == "PASS_GENERATED_FACTORY_AND_BOUNDED_Q_TILES"
