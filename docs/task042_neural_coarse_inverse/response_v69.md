@@ -5,7 +5,7 @@
 本次采用用户明确选定的GitHub远端Review V67，不导入旧附件，不改写原身份校验失败。Review commit `0f7d19e692b49ff06557d95891a843a3803fcdd5`，blob `d2a28a8ad0d1797fcdc06cb1a654cf4f4c010bf7`，SHA256 `4c02963f3bd768ec4e083f3d05fb8b645686c041938df9a4f6a2601abd445864`；base `ccd357885f7f9be84efe3be07868cc94f13d93fc`。[唯一身份与运行source](outcomes/records/authority_identity_v69.json)。
 
 | 对象 | 实际空间与计算方式 | 资格边界 |
-|---|---|
+|---|---|---|
 | C5 | 原L5 p5/828；内部767280、retained FE1176465、含port1177293行 | 严格同离散再现，与连续准确性分开 |
 | M5 | 同mesh/p5，m±13/n±5，上下侧×s/p共1188模式 | 独立物理零初值；新边界/RHS/factor另建 |
 | 旧P6/L5 | 已保存空间差分和240点 | 原FAIL、旧分母、取值owner及历史费用保持 |
