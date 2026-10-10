@@ -9,7 +9,6 @@ import hashlib
 import json
 import math
 from pathlib import Path
-import struct
 from typing import Any, Mapping
 
 
@@ -321,18 +320,28 @@ def _v22_completed_probe_checks(
     }
 
 
-def _v23_complex_array_sha256(values: list[complex]) -> str:
+def _v23_numpy_array_sha256(values: Any) -> str:
+    """Recompute the fixed NumPy shape/dtype/bytes identity written by V23."""
+
+    import numpy as np
+
+    array = np.ascontiguousarray(values)
     digest = hashlib.sha256()
-    for value in values:
-        digest.update(struct.pack("<dd", float(value.real), float(value.imag)))
+    digest.update(repr((array.shape, str(array.dtype))).encode("ascii"))
+    digest.update(memoryview(array).cast("B"))
     return digest.hexdigest()
+
+
+def _v23_complex_array_sha256(values: list[complex]) -> str:
+    import numpy as np
+
+    return _v23_numpy_array_sha256(np.asarray(values, dtype=np.complex128))
 
 
 def _v23_float_array_sha256(values: list[float]) -> str:
-    digest = hashlib.sha256()
-    for value in values:
-        digest.update(struct.pack("<d", float(value)))
-    return digest.hexdigest()
+    import numpy as np
+
+    return _v23_numpy_array_sha256(np.asarray(values, dtype=np.float64))
 
 
 def _v23_complex_payload(value: Any) -> complex | None:
@@ -592,9 +601,7 @@ def _v23_projection_readback_valid(
                 return False
             expected_b_support[b_positions] = raw_b_values
             expected_d_support[d_positions] = raw_d_values
-            hash_array = lambda values: hashlib.sha256(
-                np.ascontiguousarray(values).tobytes()
-            ).hexdigest()
+            hash_array = _v23_numpy_array_sha256
             if (
                 not _is_sha256(raw_oracle_digest)
                 or _sha256_file(Path(output_directory).resolve() / raw_oracle_path)
@@ -615,6 +622,17 @@ def _v23_projection_readback_valid(
             c_oracle = np.asarray(q_map.conjugate().transpose() @ oracle_b).reshape(-1) * scale
             d_candidate = -scale * np.asarray(q_map.transpose() @ candidate_d).reshape(-1)
             d_oracle = -scale * np.asarray(q_map.transpose() @ oracle_d).reshape(-1)
+            projection_arrays = {
+                "candidate_C_direct": np.asarray(saved["candidate_C_direct"], dtype=np.complex128),
+                "oracle_C_direct": np.asarray(saved["oracle_C_direct"], dtype=np.complex128),
+                "candidate_minus_D_direct": np.asarray(saved["candidate_minus_D_direct"], dtype=np.complex128),
+                "oracle_minus_D_direct": np.asarray(saved["oracle_minus_D_direct"], dtype=np.complex128),
+            }
+            if any(
+                values.shape != (shape[1],) or not np.all(np.isfinite(values))
+                for values in projection_arrays.values()
+            ):
+                return False
             c_record = tile["contributions"]["C_direct"]
             d_record = tile["contributions"]["minus_D_direct"]
             c_candidate_json = [_v23_complex_payload(value) for value in c_record["values"]]
@@ -623,30 +641,83 @@ def _v23_projection_readback_valid(
             d_oracle_json = [_v23_complex_payload(value) for value in d_record["oracle_values"]]
             if any(value is None for value in (*c_candidate_json, *c_oracle_json, *d_candidate_json, *d_oracle_json)):
                 return False
-            selected_c_candidate = [complex(value) for value in c_candidate[selected]]
-            selected_c_oracle = [complex(value) for value in c_oracle[selected]]
-            selected_d_candidate = [complex(value) for value in d_candidate[selected]]
-            selected_d_oracle = [complex(value) for value in d_oracle[selected]]
+            selected_json = (
+                (projection_arrays["candidate_C_direct"][selected], c_candidate_json),
+                (projection_arrays["oracle_C_direct"][selected], c_oracle_json),
+                (projection_arrays["candidate_minus_D_direct"][selected], d_candidate_json),
+                (projection_arrays["oracle_minus_D_direct"][selected], d_oracle_json),
+            )
             if any(
-                not np.array_equal(np.asarray(actual), np.asarray(expected))
-                for actual, expected in (
-                    (selected_c_candidate, c_candidate_json),
-                    (selected_c_oracle, c_oracle_json),
-                    (selected_d_candidate, d_candidate_json),
-                    (selected_d_oracle, d_oracle_json),
-                )
+                not np.array_equal(actual, np.asarray(expected, dtype=np.complex128))
+                for actual, expected in selected_json
             ):
                 return False
+
+            def relative_error(candidate: Any, reference: Any, denominator: Any) -> float:
+                candidate_array = np.asarray(candidate, dtype=np.complex128).reshape(-1)
+                reference_array = np.asarray(reference, dtype=np.complex128).reshape(-1)
+                denominator_array = np.asarray(denominator, dtype=np.complex128).reshape(-1)
+                if (
+                    candidate_array.shape != reference_array.shape
+                    or candidate_array.shape != denominator_array.shape
+                    or not np.all(np.isfinite(candidate_array))
+                    or not np.all(np.isfinite(reference_array))
+                    or not np.all(np.isfinite(denominator_array))
+                ):
+                    return math.inf
+                delta = float(np.linalg.norm(candidate_array - reference_array))
+                norm = float(np.linalg.norm(denominator_array))
+                if not math.isfinite(delta) or not math.isfinite(norm):
+                    return math.inf
+                return 0.0 if delta == 0.0 else math.inf if norm == 0.0 else delta / norm
+
+            c_oracle_saved = projection_arrays["oracle_C_direct"]
+            d_oracle_saved = projection_arrays["oracle_minus_D_direct"]
+            readback_errors = {
+                "C_candidate_projection_vs_saved_candidate": relative_error(
+                    c_candidate, projection_arrays["candidate_C_direct"], c_oracle_saved
+                ),
+                "C_candidate_projection_vs_frozen_oracle": relative_error(
+                    c_candidate, c_oracle_saved, c_oracle_saved
+                ),
+                "C_oracle_projection_vs_saved_oracle": relative_error(
+                    c_oracle, c_oracle_saved, c_oracle_saved
+                ),
+                "C_full_candidate_vs_frozen_oracle": relative_error(
+                    projection_arrays["candidate_C_direct"], c_oracle_saved, c_oracle_saved
+                ),
+                "minus_D_candidate_projection_vs_saved_candidate": relative_error(
+                    d_candidate, projection_arrays["candidate_minus_D_direct"], d_oracle_saved
+                ),
+                "minus_D_candidate_projection_vs_frozen_oracle": relative_error(
+                    d_candidate, d_oracle_saved, d_oracle_saved
+                ),
+                "minus_D_oracle_projection_vs_saved_oracle": relative_error(
+                    d_oracle, d_oracle_saved, d_oracle_saved
+                ),
+                "minus_D_full_candidate_vs_frozen_oracle": relative_error(
+                    projection_arrays["candidate_minus_D_direct"], d_oracle_saved, d_oracle_saved
+                ),
+            }
+            if not all(_finite_nonnegative_below(error, 1.0e-11) for error in readback_errors.values()):
+                return False
+
             candidate_h = original_h * scale * scale
             oracle_h = candidate_h
+            candidate_h_saved = float(np.asarray(saved["candidate_H_original"], dtype=np.float64).reshape(-1)[0])
+            oracle_h_saved = float(np.asarray(saved["oracle_H_original"], dtype=np.float64).reshape(-1)[0])
+            h_record = tile["contributions"]["H_original"]
+            candidate_h_json = _v23_complex_payload(h_record.get("value"))
+            oracle_h_json = _v23_complex_payload(h_record.get("oracle_value"))
             if (
-                not np.array_equal(np.asarray(saved["candidate_C_direct"], dtype=np.complex128), c_candidate)
-                or not np.array_equal(np.asarray(saved["oracle_C_direct"], dtype=np.complex128), c_oracle)
-                or not np.array_equal(np.asarray(saved["candidate_minus_D_direct"], dtype=np.complex128), d_candidate)
-                or not np.array_equal(np.asarray(saved["oracle_minus_D_direct"], dtype=np.complex128), d_oracle)
-                or float(np.asarray(saved["candidate_H_original"], dtype=np.float64).reshape(-1)[0]) != candidate_h
-                or float(np.asarray(saved["oracle_H_original"], dtype=np.float64).reshape(-1)[0]) != oracle_h
-                or float(np.asarray(tile["contributions"]["H_original"]["value"]["real"])) != candidate_h
+                candidate_h_json is None
+                or oracle_h_json is None
+                or candidate_h_json.imag != 0.0
+                or oracle_h_json.imag != 0.0
+                or candidate_h_saved != candidate_h
+                or oracle_h_saved != oracle_h
+                or candidate_h_saved != candidate_h_json.real
+                or oracle_h_saved != oracle_h_json.real
             ):
                 return False
             return True

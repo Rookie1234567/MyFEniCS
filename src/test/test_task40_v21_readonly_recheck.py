@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-import struct
 
 import pytest
 
@@ -307,14 +306,25 @@ def _v23_receipt(
     from scipy import sparse
     from src.solvers.task40_v22_operator_probe import _sparse_csr_sha256
 
+    def array_hash(value) -> str:
+        array = np.ascontiguousarray(value)
+        digest = hashlib.sha256()
+        digest.update(repr((array.shape, str(array.dtype))).encode("ascii"))
+        digest.update(memoryview(array).cast("B"))
+        return digest.hexdigest()
+
     def complex_hash(value: complex) -> str:
-        return hashlib.sha256(struct.pack("<dd", value.real, value.imag)).hexdigest()
+        return array_hash(np.asarray([value], dtype=np.complex128))
 
     def float_hash(value: float) -> str:
-        return hashlib.sha256(struct.pack("<d", value)).hexdigest()
+        return array_hash(np.asarray([value], dtype=np.float64))
 
     c_value = 2.0 + 0.0j
     d_value = 0.0 + 3.0j
+    c_oracle_value = complex(np.nextafter(c_value.real, np.inf), c_value.imag)
+    d_oracle_value = complex(d_value.real, np.nextafter(d_value.imag, np.inf))
+    c_error = abs(c_value - c_oracle_value) / abs(c_oracle_value)
+    d_error = abs(d_value - d_oracle_value) / abs(d_oracle_value)
     h_value = 1.0
     q_map = sparse.csr_matrix(np.asarray([[1.0 + 0.0j]], dtype=np.complex128))
     q_map_sha = _sparse_csr_sha256(q_map)
@@ -352,9 +362,9 @@ def _v23_receipt(
             candidate_D_support=np.asarray([d_raw[0]], dtype=np.complex128),
             oracle_D_support=np.asarray([d_raw[0]], dtype=np.complex128),
             candidate_C_direct=np.asarray([c_value], dtype=np.complex128),
-            oracle_C_direct=np.asarray([c_value], dtype=np.complex128),
+            oracle_C_direct=np.asarray([c_oracle_value], dtype=np.complex128),
             candidate_minus_D_direct=np.asarray([d_value], dtype=np.complex128),
-            oracle_minus_D_direct=np.asarray([d_value], dtype=np.complex128),
+            oracle_minus_D_direct=np.asarray([d_oracle_value], dtype=np.complex128),
             candidate_H_original=np.asarray([h_value], dtype=np.float64),
             oracle_H_original=np.asarray([h_value], dtype=np.float64),
             original_H_p=np.asarray([h_value], dtype=np.float64),
@@ -363,7 +373,6 @@ def _v23_receipt(
             ),
         )
     readback_sha = hashlib.sha256(readback_path.read_bytes()).hexdigest()
-    array_hash = lambda value: hashlib.sha256(np.ascontiguousarray(value).tobytes()).hexdigest()
     tile = {
         "row_global_q": 0,
         "column_global_q": 0,
@@ -375,8 +384,8 @@ def _v23_receipt(
         "q_trace_map_sha256": q_map_sha,
         "mode_key": mode_key,
         "candidate_vs_independent_oracle_relative_errors": {
-            "C_direct": 0.0,
-            "minus_D_direct": 0.0,
+            "C_direct": c_error,
+            "minus_D_direct": d_error,
             "H_original": 0.0,
             "limit_each": 1.0e-11,
         },
@@ -386,22 +395,22 @@ def _v23_receipt(
                 "I": [5],
                 "J": [0],
                 "values": [{"real": 2.0, "imag": 0.0}],
-                "oracle_values": [{"real": 2.0, "imag": 0.0}],
-                "relative_error": 0.0,
+                "oracle_values": [{"real": c_oracle_value.real, "imag": c_oracle_value.imag}],
+                "relative_error": c_error,
                 "limit": 1.0e-11,
                 "candidate_values_sha256": complex_hash(c_value),
-                "oracle_values_sha256": complex_hash(c_value),
+                "oracle_values_sha256": complex_hash(c_oracle_value),
             },
             "minus_D_direct": {
                 "shape": [1, 1],
                 "I": [0],
                 "J": [5],
                 "values": [{"real": 0.0, "imag": 3.0}],
-                "oracle_values": [{"real": 0.0, "imag": 3.0}],
-                "relative_error": 0.0,
+                "oracle_values": [{"real": d_oracle_value.real, "imag": d_oracle_value.imag}],
+                "relative_error": d_error,
                 "limit": 1.0e-11,
                 "candidate_values_sha256": complex_hash(d_value),
-                "oracle_values_sha256": complex_hash(d_value),
+                "oracle_values_sha256": complex_hash(d_oracle_value),
             },
             "H_original": {
                 "shape": [1, 1],
@@ -615,6 +624,38 @@ def test_v23_checker_binds_nested_q_tile_and_recomputes_c_d_h_values(tmp_path):
     assert tampered["C_direct_candidate_oracle_hashes_recomputed"] is False
     assert tampered["C_direct_relative_error_recomputed_under_limit"] is False
     assert tampered["v23_q_tile_hash_and_contribution_errors_recomputed"] is False
+
+
+def test_v23_projection_readback_rejects_rebound_over_gate_oracle(tmp_path):
+    import numpy as np
+    from scripts.task40_v21_readonly_recheck import (
+        _v23_complex_array_sha256,
+        _v23_projection_readback_valid,
+    )
+
+    receipt, _ = _v23_receipt(tmp_path)
+    q_child = receipt["target_operator_probe"]["v23_selected_q_port_tile"]
+    tile = q_child["q_tile"]
+    relative = q_child["q_projection_readback_artifact"]["artifact_path"]
+    readback_path = tmp_path / relative
+    with np.load(readback_path, allow_pickle=False) as saved:
+        arrays = {name: np.asarray(saved[name]) for name in saved.files}
+    arrays["oracle_C_direct"] = np.asarray([2.5 + 0.0j], dtype=np.complex128)
+    with readback_path.open("wb") as stream:
+        np.savez(stream, **arrays)
+    readback_sha = hashlib.sha256(readback_path.read_bytes()).hexdigest()
+    q_child["q_projection_readback_artifact"]["artifact_sha256"] = readback_sha
+    receipt["artifact_hashes"][relative]["sha256"] = readback_sha
+    contribution = tile["contributions"]["C_direct"]
+    contribution["oracle_values"] = [{"real": 2.5, "imag": 0.0}]
+    contribution["oracle_values_sha256"] = _v23_complex_array_sha256([2.5 + 0.0j])
+
+    assert _v23_projection_readback_valid(
+        output_directory=tmp_path,
+        receipt=receipt,
+        q_tile=q_child,
+        tile=tile,
+    ) is False
 
 
 def test_v23_checker_accepts_planned_handoff_with_durable_partial_mode_prefix(tmp_path):
