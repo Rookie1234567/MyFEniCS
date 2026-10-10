@@ -1,0 +1,549 @@
+{
+  "persistent_handles": [
+    {
+      "role": "BUILD",
+      "session_id": 4558,
+      "entry": "BUILD_one_run01",
+      "observed_utc": "2026-10-10T17:18:47.735337+00:00",
+      "persistent_exec_job_handle": true,
+      "short_poll_not_task_deadline": true
+    },
+    {
+      "role": "compare_S",
+      "session_id": 17861,
+      "entry": "auxiliary_compare_S01",
+      "observed_utc": "2026-10-10T17:18:47.735441+00:00",
+      "persistent_exec_job_handle": true,
+      "short_poll_not_task_deadline": true
+    },
+    {
+      "role": "ACTION",
+      "session_id": 59022,
+      "entry": "ACTION_one_run01",
+      "observed_utc": "2026-10-10T17:18:47.735490+00:00",
+      "persistent_exec_job_handle": true,
+      "short_poll_not_task_deadline": true
+    },
+    {
+      "role": "SOLVE",
+      "session_id": 4607,
+      "entry": "SOLVE_one_run01",
+      "observed_utc": "2026-10-10T17:18:47.735529+00:00",
+      "persistent_exec_job_handle": true,
+      "short_poll_not_task_deadline": true
+    },
+    {
+      "utc": "2026-10-10T20:44:49.129774+00:00",
+      "monotonic": 1590083.990664266,
+      "role": "VERIFY_COST",
+      "attempt": "01",
+      "session_id": 81470,
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "command": "python tmp/task042/v70/run_once.py VERIFY_COST input/task042_neural_coarse_inverse/v70_compare_verify_cost.dat 01",
+      "short_poll_does_not_kill": true
+    },
+    {
+      "role": "post_collect",
+      "session_id": 47625,
+      "entry": "auxiliary_postcollect01",
+      "observed_utc": "2026-10-10T20:56:13.013858+00:00",
+      "persistent_exec_job_handle": true,
+      "short_poll_not_task_deadline": true
+    },
+    {
+      "role": "post_collect_reentry",
+      "session_id": 19823,
+      "entry": "auxiliary_postcollect02",
+      "observed_utc": "2026-10-10T21:05:35.926724+00:00",
+      "persistent_exec_job_handle": true,
+      "short_poll_not_task_deadline": true
+    }
+  ],
+  "formal_outer_receipts": {
+    "ACTION_one_run01": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v70_trace_action_no_global_s.dat"
+      ],
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "start_utc": "2026-10-10T17:08:11.666068+00:00",
+      "end_utc": "2026-10-10T17:12:21.011813+00:00",
+      "elapsed_seconds": 249.34574974700809,
+      "exit_code": 0,
+      "input_sha256": "c4c9cff19e97361cc428d6a84c07d827a71b41df40c0e9fca3f779b631b84637",
+      "wrapper_sha256": "21d84c43e957d1fd385fa7207f37f1e57b89a486b18982cc75644726d152b4b9",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    "PREFLIGHT_one_run02": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v70_cell_kernel_preflight.dat"
+      ],
+      "source_sha": "a1f85ad161d8ab98047b7c137e0cbc07ec726d4c",
+      "start_utc": "2026-10-10T14:03:27.743433+00:00",
+      "end_utc": "2026-10-10T14:06:00.376754+00:00",
+      "elapsed_seconds": 152.63333982299082,
+      "exit_code": 3,
+      "input_sha256": "965e9c76b28702d4e6b46f6f868b47090ef5fc3f6ccddae5403615910afb67a1",
+      "wrapper_sha256": "21d84c43e957d1fd385fa7207f37f1e57b89a486b18982cc75644726d152b4b9",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    "BUILD_one_run01": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v70_assembly_time_p5_prepare.dat"
+      ],
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "start_utc": "2026-10-10T14:23:44.179840+00:00",
+      "end_utc": "2026-10-10T17:04:31.006297+00:00",
+      "elapsed_seconds": 9646.826483891113,
+      "exit_code": 0,
+      "input_sha256": "cced6b36719ce3f7f6049e3ca48b294ff72752e98cc27775abb1c419771bdbbc",
+      "wrapper_sha256": "21d84c43e957d1fd385fa7207f37f1e57b89a486b18982cc75644726d152b4b9",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    "SOLVE_one_run01": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v70_assembly_time_p5_solve.dat"
+      ],
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "start_utc": "2026-10-10T17:12:34.687229+00:00",
+      "end_utc": "2026-10-10T20:43:41.234819+00:00",
+      "elapsed_seconds": 12666.547604534077,
+      "exit_code": 0,
+      "input_sha256": "e95516fb105c5430d37556fdfc12d9895be76fd19cafec8c3b296a677a0ea04f",
+      "wrapper_sha256": "21d84c43e957d1fd385fa7207f37f1e57b89a486b18982cc75644726d152b4b9",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    "VERIFY_COST_one_run01": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v70_compare_verify_cost.dat"
+      ],
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "start_utc": "2026-10-10T20:44:37.123878+00:00",
+      "end_utc": "2026-10-10T20:55:27.405260+00:00",
+      "elapsed_seconds": 650.2813932159916,
+      "exit_code": 0,
+      "input_sha256": "9578ec3a233e868d49cdd267201af0fd7779d88c6aca3d486c42bf837895213a",
+      "wrapper_sha256": "21d84c43e957d1fd385fa7207f37f1e57b89a486b18982cc75644726d152b4b9",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    "PREFLIGHT_one_run04": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v70_cell_kernel_preflight.dat"
+      ],
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "start_utc": "2026-10-10T14:20:35.990727+00:00",
+      "end_utc": "2026-10-10T14:23:30.133807+00:00",
+      "elapsed_seconds": 174.1430958060082,
+      "exit_code": 0,
+      "input_sha256": "965e9c76b28702d4e6b46f6f868b47090ef5fc3f6ccddae5403615910afb67a1",
+      "wrapper_sha256": "21d84c43e957d1fd385fa7207f37f1e57b89a486b18982cc75644726d152b4b9",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    "PREFLIGHT_one_run03": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v70_cell_kernel_preflight.dat"
+      ],
+      "source_sha": "aa6cb19721035e1f8dbc42ea7835faceef54a9af",
+      "start_utc": "2026-10-10T14:12:32.726655+00:00",
+      "end_utc": "2026-10-10T14:15:12.470974+00:00",
+      "elapsed_seconds": 159.74431583611295,
+      "exit_code": 3,
+      "input_sha256": "965e9c76b28702d4e6b46f6f868b47090ef5fc3f6ccddae5403615910afb67a1",
+      "wrapper_sha256": "21d84c43e957d1fd385fa7207f37f1e57b89a486b18982cc75644726d152b4b9",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    "PREFLIGHT_one_run01": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v70_cell_kernel_preflight.dat"
+      ],
+      "source_sha": "c6294aed0016297b7fc9b47974765518a4bde5b1",
+      "start_utc": "2026-10-10T13:56:21.878786+00:00",
+      "end_utc": "2026-10-10T13:59:16.552182+00:00",
+      "elapsed_seconds": 174.67342284787446,
+      "exit_code": 3,
+      "input_sha256": "965e9c76b28702d4e6b46f6f868b47090ef5fc3f6ccddae5403615910afb67a1",
+      "wrapper_sha256": "21d84c43e957d1fd385fa7207f37f1e57b89a486b18982cc75644726d152b4b9",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    }
+  },
+  "auxiliary_outer_receipts": {
+    "auxiliary_pre05": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "05",
+        "python",
+        "-m",
+        "benchmarks.qualify_assembly_tetra"
+      ],
+      "source_sha": "aa6cb19721035e1f8dbc42ea7835faceef54a9af",
+      "start_utc": "2026-10-10T14:10:45.976500+00:00",
+      "end_utc": "2026-10-10T14:12:21.603905+00:00",
+      "elapsed_seconds": 95.62741110101342,
+      "exit_code": 0,
+      "wrapper_sha256": "1e9939382e3ac87992d67a3d57bbd490237cf8c8ea1d55ed5cee0460836d0093",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_pre06": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "06",
+        "python",
+        "-m",
+        "benchmarks.qualify_assembly_tetra"
+      ],
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "start_utc": "2026-10-10T14:15:47.793448+00:00",
+      "end_utc": "2026-10-10T14:16:32.764933+00:00",
+      "elapsed_seconds": 44.97149438899942,
+      "exit_code": 1,
+      "wrapper_sha256": "1e9939382e3ac87992d67a3d57bbd490237cf8c8ea1d55ed5cee0460836d0093",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_postcollect02": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "post",
+        "collect02",
+        "python",
+        "tmp/task042/v70/collect_wrapper.py"
+      ],
+      "source_sha": "d6cd48cf449a0e613146c0f4aff01caac48f68c8",
+      "start_utc": "2026-10-10T21:04:26.242734+00:00",
+      "end_utc": "2026-10-10T21:08:53.513479+00:00",
+      "elapsed_seconds": 267.2707593908999,
+      "exit_code": 0,
+      "wrapper_sha256": "1e9939382e3ac87992d67a3d57bbd490237cf8c8ea1d55ed5cee0460836d0093",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_pre04": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "04",
+        "python",
+        "-m",
+        "benchmarks.qualify_assembly_tetra"
+      ],
+      "source_sha": "a1f85ad161d8ab98047b7c137e0cbc07ec726d4c",
+      "start_utc": "2026-10-10T14:01:04.444682+00:00",
+      "end_utc": "2026-10-10T14:02:40.122394+00:00",
+      "elapsed_seconds": 95.677706298884,
+      "exit_code": 0,
+      "wrapper_sha256": "1e9939382e3ac87992d67a3d57bbd490237cf8c8ea1d55ed5cee0460836d0093",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_pre02": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "02",
+        "python",
+        "-m",
+        "benchmarks.qualify_assembly_tetra"
+      ],
+      "source_sha": "c6294aed0016297b7fc9b47974765518a4bde5b1",
+      "start_utc": "2026-10-10T13:50:19.352408+00:00",
+      "end_utc": "2026-10-10T13:51:04.588415+00:00",
+      "elapsed_seconds": 45.23601474799216,
+      "exit_code": 1,
+      "wrapper_sha256": "1e9939382e3ac87992d67a3d57bbd490237cf8c8ea1d55ed5cee0460836d0093",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_postcollect01": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "post",
+        "collect01",
+        "python",
+        "tmp/task042/v70/collect_wrapper.py"
+      ],
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "start_utc": "2026-10-10T20:55:51.378618+00:00",
+      "end_utc": "2026-10-10T20:57:52.899421+00:00",
+      "elapsed_seconds": 121.52081959112547,
+      "exit_code": 1,
+      "wrapper_sha256": "1e9939382e3ac87992d67a3d57bbd490237cf8c8ea1d55ed5cee0460836d0093",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_pre03": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "03",
+        "python",
+        "-m",
+        "benchmarks.qualify_assembly_tetra"
+      ],
+      "source_sha": "c6294aed0016297b7fc9b47974765518a4bde5b1",
+      "start_utc": "2026-10-10T13:54:01.227404+00:00",
+      "end_utc": "2026-10-10T13:55:34.277229+00:00",
+      "elapsed_seconds": 93.04981899796985,
+      "exit_code": 0,
+      "wrapper_sha256": "1e9939382e3ac87992d67a3d57bbd490237cf8c8ea1d55ed5cee0460836d0093",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_pre07": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "07",
+        "python",
+        "-m",
+        "benchmarks.qualify_assembly_tetra"
+      ],
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "start_utc": "2026-10-10T14:18:48.584565+00:00",
+      "end_utc": "2026-10-10T14:20:25.030365+00:00",
+      "elapsed_seconds": 96.44578887801617,
+      "exit_code": 0,
+      "wrapper_sha256": "1e9939382e3ac87992d67a3d57bbd490237cf8c8ea1d55ed5cee0460836d0093",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_compare_S01": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "compare_S",
+        "01",
+        "python",
+        "-m",
+        "benchmarks.collect_assembly_tetra"
+      ],
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "start_utc": "2026-10-10T17:04:46.899451+00:00",
+      "end_utc": "2026-10-10T17:07:55.611389+00:00",
+      "elapsed_seconds": 188.7119361530058,
+      "exit_code": 0,
+      "wrapper_sha256": "1e9939382e3ac87992d67a3d57bbd490237cf8c8ea1d55ed5cee0460836d0093",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_pre01": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "01",
+        "python",
+        "-m",
+        "benchmarks.qualify_assembly_tetra"
+      ],
+      "source_sha": "cd812a00ed6fd2cea38e549eabe0aca5dbbb2c6e",
+      "start_utc": "2026-10-10T13:46:23.181409+00:00",
+      "end_utc": "2026-10-10T13:47:56.945430+00:00",
+      "elapsed_seconds": 93.76400446495973,
+      "exit_code": 0,
+      "wrapper_sha256": "1e9939382e3ac87992d67a3d57bbd490237cf8c8ea1d55ed5cee0460836d0093",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_QUALIFY01": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "QUALIFY",
+        "01",
+        "python",
+        "-m",
+        "benchmarks.qualify_assembly_tetra"
+      ],
+      "source_sha": "eafe3c116c2dc162ed5ffaf99136b376f291fb7e",
+      "start_utc": "2026-10-10T13:43:52.128757+00:00",
+      "end_utc": "2026-10-10T13:45:23.543090+00:00",
+      "elapsed_seconds": 91.41438791481778,
+      "exit_code": 0,
+      "wrapper_sha256": "1e9939382e3ac87992d67a3d57bbd490237cf8c8ea1d55ed5cee0460836d0093",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    }
+  },
+  "durable_stop_event_files": [
+    {
+      "path": "tmp/task042/v70/ACTION_one_run01/outer_stop_events.jsonl",
+      "sha256": "d409071bfb1cc4a827ebdb1ac2a3c2644ea41e07b40ffdd0f068f6b66779d2d0"
+    },
+    {
+      "path": "tmp/task042/v70/BUILD_one_run01/outer_stop_events.jsonl",
+      "sha256": "3b15bbb5f48acc3bd48472baa9812592dd05c5afb780382de35cc261680b7c51"
+    },
+    {
+      "path": "tmp/task042/v70/PREFLIGHT_one_run01/outer_stop_events.jsonl",
+      "sha256": "af51a481347560ac2012fad7bdb619443f3784c424afa07ce462aee12ad3f9ec"
+    },
+    {
+      "path": "tmp/task042/v70/PREFLIGHT_one_run02/outer_stop_events.jsonl",
+      "sha256": "2818edf030f9b340040a2c8ecd1eab3324d4310fe16f64c50c7e36e9cb9af683"
+    },
+    {
+      "path": "tmp/task042/v70/PREFLIGHT_one_run03/outer_stop_events.jsonl",
+      "sha256": "87ac91f058a4b49c777ebf141751be7194d878dea02d4f4f864732fc51317c1b"
+    },
+    {
+      "path": "tmp/task042/v70/PREFLIGHT_one_run04/outer_stop_events.jsonl",
+      "sha256": "279384718ce118b2328a95738efa2c0075580f55ebd83920c2df05dbbe9828f4"
+    },
+    {
+      "path": "tmp/task042/v70/SOLVE_one_run01/outer_stop_events.jsonl",
+      "sha256": "7505220148a222b66060874ad8aa8644e42997476a586ac73222dcf5af585d96"
+    },
+    {
+      "path": "tmp/task042/v70/VERIFY_COST_one_run01/outer_stop_events.jsonl",
+      "sha256": "b6270220978a19a35c54b9c6b994b7ebbd9ae179c00d3feb75d15a4c007efbef"
+    },
+    {
+      "path": "tmp/task042/v70/aux_QUALIFY_01/supervision/stop_events.jsonl",
+      "sha256": "f72cb10bcb141c8e99fa1dcda30fa94f212c1cddd12eb2cb2b325ddb529583ba"
+    },
+    {
+      "path": "tmp/task042/v70/aux_compare_S_01/supervision/stop_events.jsonl",
+      "sha256": "dab5690775339945196936076e3028c901948602bf0df598b282a3e6b906fd93"
+    },
+    {
+      "path": "tmp/task042/v70/aux_post_collect01/supervision/stop_events.jsonl",
+      "sha256": "da9f6abcafd025e50ed55847faad495d83315977dbbbc22bf68ec647f81641d8"
+    },
+    {
+      "path": "tmp/task042/v70/aux_post_collect02/supervision/stop_events.jsonl",
+      "sha256": "5962b863d7d25c49298969591338ce9522d8cfc8994ba2d2d8d915f1da760131"
+    },
+    {
+      "path": "tmp/task042/v70/aux_pre_01/supervision/stop_events.jsonl",
+      "sha256": "a3bf78273c6fdd8da85ffa5fd294a7f4e1a88f1af3f6a5305aeee0b29f5cea3e"
+    },
+    {
+      "path": "tmp/task042/v70/aux_pre_03/supervision/stop_events.jsonl",
+      "sha256": "57d0aa5941b6948a2a4f98aea6e502663f64a08338bf3b5aff7115b02fa437b8"
+    },
+    {
+      "path": "tmp/task042/v70/aux_pre_04/supervision/stop_events.jsonl",
+      "sha256": "d7504c903c6f008d535ae304eb7daca93d768203bf47a14c9066e67b3d94dfac"
+    },
+    {
+      "path": "tmp/task042/v70/aux_pre_05/supervision/stop_events.jsonl",
+      "sha256": "ffd6bc2cfe1ff2e881de3a7589a19abc8275533a52db27281d85512c5227b8ac"
+    },
+    {
+      "path": "tmp/task042/v70/aux_pre_07/supervision/stop_events.jsonl",
+      "sha256": "9d55ad322d2643c3370f618a2be36331565c2e069408ba392937b5bbd92acec1"
+    }
+  ],
+  "qualification": {
+    "path": "tmp/task042/v70/qualification.json",
+    "sha256": "b84684a674ae52e93b731e64e4d32a54c96df003fcb5908964d152c215306d5f"
+  },
+  "targeted_final_source": "0490af3085f32940787f0a02f0d801578ab87b73",
+  "final_focused_tests": "tmp/task042/v70/aux_pre_07/tests.json",
+  "rejected_entries": [
+    {
+      "path": "tmp/task042/v70/aux_pre_06/admission.json",
+      "status": "REJECTED",
+      "error": "RuntimeError: No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+      "sha256": "143f5a92c62283a99d0b03b773d8668e38da5eaead9daf728fc2f6d8be56a58f"
+    },
+    {
+      "path": "tmp/task042/v70/aux_pre_02/admission.json",
+      "status": "REJECTED",
+      "error": "RuntimeError: No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+      "sha256": "f0069d3364e7bf6898fae9a4dd4e010b517282d2889ad0f041576c4a15bb07c2"
+    }
+  ],
+  "short_poll_does_not_kill": true,
+  "duplicate_numeric_or_actor_restarts": 0,
+  "scientific_resource_kills": 0,
+  "aux_resource_controlled_stops": 1,
+  "post_resource_reentry": {
+    "root_cause": "NPY_MMAP_RESIDENT_PREFIX_SCAN",
+    "round": 1,
+    "source_before": "0490af3085f32940787f0a02f0d801578ab87b73",
+    "stop_utc": "2026-10-10T20:56:56.877733+00:00",
+    "located_utc": "2026-10-10T21:03:46.218791+00:00",
+    "sampled_peak_bytes": 2511233024,
+    "preserved_guard_bytes": 2147483648,
+    "fix": "bounded np.fromfile chunks, same exact zero/finite counts; no global matrix or solve",
+    "affected": "post-collection only",
+    "PDE_replay": 0,
+    "independent_VERIFY_replay": 0,
+    "reentry_cap": 1,
+    "cooldown_cap_seconds": 600,
+    "reentry_entry_utc": "2026-10-10T21:04:26.098851+00:00",
+    "cooldown_seconds_at_entry": 449.221118,
+    "reentries_used": 1,
+    "reentry_source": "d6cd48cf449a0e613146c0f4aff01caac48f68c8",
+    "guard_unchanged": true,
+    "targeted_validation": "stream_inventory_validation/receipt.json",
+    "reentry_completed": true,
+    "reentry_peak_bytes": 879456256,
+    "reentry_guard_unchanged": true,
+    "actual_actor_start_seconds_from_stop": 497.83277
+  },
+  "additional_inventory_validation": "tmp/task042/v70/stream_inventory_validation/receipt.json",
+  "ordinary_repair_journal": "repair_journal_v70.json",
+  "failed_preflight_attempts": 3,
+  "refused_aux_before_actor": 2,
+  "old_ledgers_closed_unchanged": true,
+  "old_failure_sender_unknown_not_relabelled": true,
+  "legal_returned_field_never_refactored": true,
+  "local_packets_and_new_S_reopened_without_reconstruction": true,
+  "partial_BUILD_ADD_resume_NOT_TESTED": true,
+  "no_fresh_window_or_rollback": true
+}

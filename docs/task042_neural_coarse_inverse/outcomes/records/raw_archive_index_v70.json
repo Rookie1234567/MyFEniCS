@@ -1,0 +1,25 @@
+{
+  "files": {
+    "hash_bound_full_payload": {
+      "path": "benchmarks/artifacts/task042/v70/increment_full_indexes_v70/raw_archive_index_v70.json",
+      "bytes": 288610,
+      "sha256": "778d64b88f1a2813b5cee4e206f5c0f89113a1f96c962a6f9468bc2d3bcd7b30",
+      "complete_original_payload": true
+    },
+    "json_pointer": "/files",
+    "item_count": 664,
+    "values_not_truncated_or_recomputed": true
+  },
+  "full_payload": {
+    "path": "benchmarks/artifacts/task042/v70/increment_full_indexes_v70/raw_archive_index_v70.json",
+    "bytes": 288610,
+    "sha256": "778d64b88f1a2813b5cee4e206f5c0f89113a1f96c962a6f9468bc2d3bcd7b30",
+    "complete_original_payload": true
+  },
+  "long_lists_saved_in_ignored_artifact": [
+    {
+      "json_pointer": "/files",
+      "item_count": 664
+    }
+  ]
+}

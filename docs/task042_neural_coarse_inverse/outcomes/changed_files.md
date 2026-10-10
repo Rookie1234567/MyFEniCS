@@ -1,3 +1,11 @@
+# V70最小装配时四面体provider
+
+新增packed DG0真实tet核、流式局部响应包与全局K前的early retained_provider；复用现有MUMPS/原式/完整输出，独立ACTION不读全局S。默认路径不变，局部数值核心在src；原历史保持，大数组ignored。
+
+[依赖分组](records/selective_merge_manifest_v70.json) · [真实source](records/authority_identity_v70.json)。
+
+---
+
 # V69薄四面体消元接入
 
 新增真实实体内部映射、原CSR局部精确消元/恢复checkpoint和薄backend/parent/模式接线；复用既有完整tetra、独立系数原作用、MUMPS及输出。默认核数学不变，opt-in装配以FLUSH保留预留槽。新数组与失败ignored，旧历史保持；不推广production或merge。

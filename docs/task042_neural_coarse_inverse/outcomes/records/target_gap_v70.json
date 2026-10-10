@@ -1,0 +1,23 @@
+{
+  "scope": "same finite 25576tet/p5/828 equation, not original dimensions",
+  "full_FE": 1943745,
+  "full_with_ports": 1944573,
+  "retained_with_ports": 1177293,
+  "one_full_vector_complex128_bytes": 31113168,
+  "one_retained_vector_complex128_bytes": 18836688,
+  "bytes_are_derived_not_tree_RSS": true,
+  "measured_new_Krylov_vectors": 0,
+  "global_LU_present": true,
+  "local_interface_actions": 2,
+  "distributed_implemented": false,
+  "preconditioner_qualified": false,
+  "historical_spatial_accuracy": "FAIL preserved; engineering reproduction does not close it",
+  "target_factor_fill": null,
+  "target_iteration_count": null,
+  "target_RSS": null,
+  "target_2TB48h": false,
+  "NN_training": 0,
+  "NN20": false,
+  "next_pilot": "bounded trace iteration/data-distribution qualification on this frozen operator, with a new explicit PC and budget contract",
+  "automatic_next_run": false
+}

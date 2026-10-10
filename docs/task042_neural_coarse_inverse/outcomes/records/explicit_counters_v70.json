@@ -1,0 +1,115 @@
+{
+  "actual_preflight_kernel_calls": 16,
+  "BUILD_exact_classes": 10660,
+  "BUILD_local_LU_count": 10660,
+  "BUILD_raw_kernel_calls_from_unique_class_manifest": 10660,
+  "kernel_call_count_kind": "derived from exact class inventory and one tensor call on each cache miss; no separate persisted raw-call counter",
+  "BUILD_class_cache_peak_bytes": 3497759200,
+  "forming_solve_per_exact_class": 1,
+  "BUILD_rhs_local_solve_calls": 25576,
+  "BUILD_actual_port_coupled_cells_from_ACTION_calls": 256,
+  "BUILD_port_response_solve_calls_bounds": [
+    512,
+    6912
+  ],
+  "BUILD_all_local_solve_calls_bounds": [
+    36748,
+    43148
+  ],
+  "port_column_chunk_count_not_independently_persisted": true,
+  "cell_scatter_count": 25576,
+  "multi_RHS_solve_count_not_number_of_columns": true,
+  "ACTION_calls": {
+    "trace_action": 2,
+    "local_lu_solve": 1024,
+    "global_K_reads": 0,
+    "global_S_reads": 0,
+    "global_FE_matrix_formations": 0,
+    "factors": 0,
+    "class_reads": 10660,
+    "class_bytes_read": 3513173560,
+    "boundary_C": 2,
+    "boundary_D": 2
+  },
+  "SOLVE_calls": {
+    "A": 1,
+    "AH": 0,
+    "factor": 2
+  },
+  "SOLVE_local_recovery_service_calls": {
+    "trace_action": 0,
+    "local_lu_solve": 25576,
+    "global_K_reads": 0,
+    "global_S_reads": 1,
+    "global_FE_matrix_formations": 0,
+    "factors": 0,
+    "class_reads": 10660,
+    "class_bytes_read": 3513173560,
+    "boundary_C": 0,
+    "boundary_D": 0
+  },
+  "original_action_calls_by_stage": {
+    "PREFLIGHT": null,
+    "BUILD": null,
+    "ACTION": {
+      "trace_action": 2,
+      "local_lu_solve": 1024,
+      "global_K_reads": 0,
+      "global_S_reads": 0,
+      "global_FE_matrix_formations": 0,
+      "factors": 0,
+      "class_reads": 10660,
+      "class_bytes_read": 3513173560,
+      "boundary_C": 2,
+      "boundary_D": 2
+    },
+    "SOLVE": {
+      "A": 1,
+      "AH": 0,
+      "factor": 2
+    },
+    "VERIFY_COST": {
+      "A": 1,
+      "AH": 0,
+      "factor": 0
+    }
+  },
+  "BUILD_independent_original_columns": 2,
+  "compare_only_old_S_columns": 2,
+  "new_global_numeric_attempts": 1,
+  "new_full_body_K_builds": 0,
+  "production_old_K_reads": 0,
+  "production_old_S_reads": 0,
+  "production_old_recovery_reads": 0,
+  "verify_factor": 0,
+  "verify_solve": 0,
+  "failed_attempt_bounds": [
+    {
+      "entry": "PREFLIGHT_one_run01",
+      "kernel_call_lower": 0,
+      "kernel_call_upper": 0,
+      "local_LU_lower": 0,
+      "local_LU_upper": 0,
+      "basis": "saved traceback fails in TetraCellKernel constructor before tensor()"
+    },
+    {
+      "entry": "PREFLIGHT_one_run02",
+      "kernel_call_lower": 0,
+      "kernel_call_upper": 0,
+      "local_LU_lower": 0,
+      "local_LU_upper": 0,
+      "basis": "saved traceback fails in TetraCellKernel constructor before tensor()"
+    },
+    {
+      "entry": "PREFLIGHT_one_run03",
+      "kernel_call_lower": 0,
+      "kernel_call_upper": 0,
+      "local_LU_lower": 0,
+      "local_LU_upper": 0,
+      "basis": "saved traceback fails in TetraCellKernel constructor before tensor()"
+    }
+  ],
+  "synthetic_test_local_LU_calls": "unknown; pure block regression, no full PDE or numeric factor",
+  "kernel_events": [],
+  "failed_costs_and_counts_not_rolled_back": true
+}

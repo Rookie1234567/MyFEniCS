@@ -1,0 +1,135 @@
+{
+  "groups": {
+    "production_numerical_core": {
+      "order": 1,
+      "files": [
+        "src/solvers/assembly_tetra_scope.py",
+        "src/solvers/assembly_tetra_study.py",
+        "src/solvers/independent_tetra_reference.py",
+        "src/solvers/independent_tetra_study.py",
+        "src/solvers/tetra_assembly_packet.py",
+        "src/solvers/tetra_cell_kernel.py"
+      ],
+      "behavior": "Opt-in exact DG0 tetra kernel and local elimination. Default full-K route unchanged.",
+      "dependencies": [
+        "src/solvers/hcurl_cell_static_condensation.py",
+        "src/solvers/tetra_coefficient_action.py",
+        "src/solvers/independent_tetra_fields.py"
+      ],
+      "tests": "final 5 targeted tests; Q eight cells; BUILD complete original-action pair; complete SOLVE and independent VERIFY",
+      "evidence": "scientific_checks_v70.json"
+    },
+    "reusable_runner_watchdog": {
+      "order": 2,
+      "files": [
+        "scripts/run_case.py",
+        "src/runners/port_preparation.py"
+      ],
+      "behavior": "Thin scoped entry, budget and early provider. Existing durable supervision retained.",
+      "dependencies": [
+        "src/solvers/assembly_tetra_scope.py"
+      ],
+      "tests": "targeted early-provider/dat/resource tests and five validates",
+      "evidence": "execution_chain_v70.json"
+    },
+    "checker_benchmark": {
+      "order": 3,
+      "files": [
+        "benchmarks/collect_assembly_tetra.py",
+        "benchmarks/qualify_assembly_tetra.py",
+        "src/test/test_assembly_tetra_inventory.py",
+        "src/test/test_tetra_assembly_packet.py"
+      ],
+      "behavior": "Independent saved consumers and focused tests; no new PDE or factor.",
+      "dependencies": [
+        "src/solvers/assembly_tetra_scope.py",
+        "src/solvers/tetra_polynomial_difference.py"
+      ],
+      "tests": "5 focused tests and frozen saved-array checker",
+      "evidence": "scientific_checks_v70.json"
+    },
+    "compact_evidence_docs": {
+      "order": 4,
+      "files": [
+        "docs/development_model_registry.md",
+        "docs/development_progress.md",
+        "docs/task042_neural_coarse_inverse/README.md",
+        "docs/task042_neural_coarse_inverse/outcomes/assembly_time_tetra_trace_action_v70.md",
+        "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+        "docs/task042_neural_coarse_inverse/outcomes/records/array_inventory_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/assembly_time_checkpoint_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/authority_identity_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/capacity_and_lifetimes_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/complete_physics_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/delivery_index_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/deployment_cost_boundary_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/documentation_checks_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/execution_chain_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/explicit_counters_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/minimum_result_cost_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/modal_recalculation_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/paired_results_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/raw_archive_final_tail_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/raw_archive_index_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/repair_budget_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/repair_journal_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_at_delivery_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/retained_operator_contract_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/scientific_checks_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/sealed_array_manifest_inventory_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/selective_merge_manifest_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/source_bindings_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/source_control_bindings_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/stored_structure_inventory_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/target_gap_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/trace_action_qualification_v70.json",
+        "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+        "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+        "docs/task042_neural_coarse_inverse/response_v70.md"
+      ],
+      "behavior": "Only V70 new records, response and outcome; navigation adds a short prefix.",
+      "tests": "one compact document contract over final published document bytes",
+      "evidence": "documentation_checks_v70.json"
+    },
+    "research_only": {
+      "order": null,
+      "files": [
+        "input/task042_neural_coarse_inverse/assembly_time_tetra_v70.json",
+        "input/task042_neural_coarse_inverse/v70_assembly_time_p5_prepare.dat",
+        "input/task042_neural_coarse_inverse/v70_assembly_time_p5_solve.dat",
+        "input/task042_neural_coarse_inverse/v70_cell_kernel_preflight.dat",
+        "input/task042_neural_coarse_inverse/v70_compare_verify_cost.dat",
+        "input/task042_neural_coarse_inverse/v70_trace_action_no_global_s.dat"
+      ],
+      "behavior": "Fixed V70 case inputs/plan; not a production default.",
+      "tests": "five schema/one-run validates",
+      "evidence": "authority_identity_v70.json"
+    },
+    "do_not_merge": {
+      "order": null,
+      "files": [
+        "benchmarks/artifacts/task042/v70/",
+        "tmp/task042/v70/"
+      ],
+      "behavior": "Ignored large arrays, raw provenance, local control helpers; retained locally."
+    }
+  },
+  "merge_approved": false,
+  "authority": "7eb964ce194748d5c3510a4dc1798e312282aa57",
+  "actual_numerical_source": "0490af3085f32940787f0a02f0d801578ab87b73",
+  "document_HEAD_separate": true,
+  "all_tracked_delivery_changes_assigned": true,
+  "anticipated_scalar_closure_files": [
+    "docs/task042_neural_coarse_inverse/outcomes/records/delivery_index_v70.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/minimum_result_cost_v70.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/raw_archive_final_tail_v70.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/source_control_bindings_v70.json"
+  ],
+  "old_task_review_response_raw_unchanged": true,
+  "historical_navigation_bytes_retained_after_short_prefix": true,
+  "fresh_PDE": "SOLVE from new cell-formed S; no old field initial state",
+  "production_default_not_promoted": true
+}

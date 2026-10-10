@@ -1,0 +1,30 @@
+{
+  "manifest": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v70/task042_v70_assembly_time_p5_prepare_20261010T142344843423Z/retained_S/manifest.json",
+    "sha256": "1c86d9ab24935cfe04615b01f525336bc8553d1ea3a6f0975aa787da1fa13645",
+    "bytes": 6436072032
+  },
+  "member": {
+    "file": "data.npy",
+    "sha256": "3437b1bfa5801cbde29e175b4405201db14e6b729e8f17c40982805472076c9d",
+    "member_sha256": "283100d351a5e6a5873ff0745042439669506feeb5277337ef6be85ab3de4609",
+    "shape": [
+      266599917
+    ],
+    "dtype": "complex128",
+    "bytes": 4265598800
+  },
+  "stored_entries": 266599917,
+  "exact_nonzero_entries": 266599916,
+  "explicit_zero_entries": 1,
+  "nonfinite_entries": 0,
+  "bytes_scanned": 4265598672,
+  "chunk_entries": 1048576,
+  "maximum_block_bytes": 16777216,
+  "memory_mapped": false,
+  "threshold": 0,
+  "numerical_drop_performed": false,
+  "global_matrix_formed": 0,
+  "old_matrix_reads": 0,
+  "cost_scope": "post scientific inventory only; included in supervised post cost"
+}

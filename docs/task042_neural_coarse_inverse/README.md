@@ -1,3 +1,11 @@
+# 当前入口：Review V68 / V70
+
+相同0.7nm/25576tet/p5/828：生产不形成或读取完整K，直接从单元核形成接口S；独立无S局部作用与完整场同离散再现、真实成本分列。全局LU仍存在，旧空间FAIL与历史费用保持，无NN/目标/merge资格。
+
+[正式回应](response_v70.md) · [完整结果](outcomes/assembly_time_tetra_trace_action_v70.md) · [接口合同](outcomes/records/retained_operator_contract_v70.json) · [全费用](outcomes/records/resource_costs_final_v70.json)
+
+---
+
 # 当前入口：Review V67 / V69
 
 完成冻结p5/0.7nm完整空间的精确内部消元消费和独立p5模式对照；完整原方程、六场及费用与连续精度分开验收。旧P6/L5、L4F/L5 FAIL保持，无NN训练、目标尺度或merge。

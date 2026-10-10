@@ -1,0 +1,21 @@
+{
+  "rows": [
+    {
+      "role": "SOLVE",
+      "parent_array_sha256": "b118066c12549c62d97b13f4905f44649f7d775af79d49655251e0b74c63a4d3",
+      "mode_json_sha256": "587a9c2a3c15394ebe9af23ce07c719da8115cb885f6ce35fe45eae3fe3898ce",
+      "count": 828,
+      "expected_mode_count": 828,
+      "max_operation_scaled_coordinate_and_power_defect": 6.994405055138486e-15,
+      "totals_defect": 7.549516567451064e-15,
+      "incident_power_defect": 2.255140518769849e-16,
+      "energy_from_all_actual_modes_and_volume": 4.227233146858467e-12,
+      "recomputed_R": 0.07621855922650042,
+      "recomputed_T": 0.9056651611304155,
+      "pass_gate": true
+    }
+  ],
+  "new_FE_calls": 0,
+  "original_power_function_calls": 0,
+  "complete_inventory_checked": true
+}

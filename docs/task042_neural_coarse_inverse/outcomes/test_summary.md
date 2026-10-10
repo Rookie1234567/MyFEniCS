@@ -1,3 +1,11 @@
+# V70必要验证追加
+
+最终数值source 0490af3085f32940787f0a02f0d801578ab87b73：5项非Hermitian/非零40port/早provider/真实pack键/可选header targeted测试，相关Ruff/compile和5项one-run dat validate通过；另两项分块库存/坏identity/半写定点测试通过，消费修复在d6cd48cf，未重放PDE。8个实际cell、新S完整恢复、两次独立ACTION和完整物理解另列，不以测试数代替科学Gate。全部失败保留，无full pytest/CI。
+
+[执行链](records/execution_chain_v70.json) · [最终科学检查](records/scientific_checks_v70.json) · [文档最终字节](records/documentation_checks_v70.json)。
+
+---
+
 # V69最终必要验证
 
 最终consumer/M5 source c2cca174957b0e7d37a8c100b4d59a2fccf4a867；C5求解source 9b9d2fcdbb9e4f76d1c22163eca909bd68f1eac1：8项新增复数非Hermitian/非零载荷/实际容量/完整checker库存targeted测试及1项同基系数差/完整相位curl回归，相关Ruff/compile及5项dat真实validate通过。完整恢复原作用与真实两cell配对通过，C5/M5实际物理解和保存checker另列；不以测试数代替物理资格。旧失败保留，无full pytest/CI。

@@ -1,3 +1,15 @@
+# V70：无完整K构建与完整物理解
+
+相同0.7nm/25576tet/p5/828：生产不形成或读取完整K，直接从单元核形成接口S；独立无S局部作用与完整场同离散再现、真实成本分列。全局LU仍存在，旧空间FAIL与历史费用保持，无NN/目标/merge资格。
+
+| 工作 | 完整证据入口 |
+|---|---|
+| 新S与原场恢复 | [完整方程/六场/828功率](../response_v70.md) |
+| 无global-S接口作用 | [两固定作用与真实费用](records/trace_action_qualification_v70.json) |
+| 冷构建、prepared-start和历史链 | [部署边界](records/deployment_cost_boundary_v70.json) |
+
+---
+
 # V69完整场、凝聚和模式
 
 完成冻结p5/0.7nm完整空间的精确内部消元消费和独立p5模式对照；完整原方程、六场及费用与连续精度分开验收。旧P6/L5、L4F/L5 FAIL保持，无NN训练、目标尺度或merge。

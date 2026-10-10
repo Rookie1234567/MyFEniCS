@@ -1,0 +1,35 @@
+{
+  "intervals": [
+    {
+      "root_group": "packed_coefficient_ABI_and_optional_code_identity",
+      "start_utc": "2026-10-10T13:56:21.878786+00:00",
+      "end_utc": "2026-10-10T14:23:30.133807+00:00",
+      "conservative_upper_seconds": 1628.255021
+    },
+    {
+      "root_group": "post_consumer_resident_mmap_scan",
+      "start_utc": "2026-10-10T20:55:51.378618+00:00",
+      "end_utc": "2026-10-10T21:04:26.098851+00:00",
+      "conservative_upper_seconds": 514.720233
+    }
+  ],
+  "conservative_union_seconds": 2142.975254,
+  "limit_seconds": 7200,
+  "root_causes": [
+    "FFCX_CODE_OPTIONAL_HEADER_SERIALIZATION",
+    "FFCX_DG0_PACK_INTEGRAL_KEY_ABI",
+    "NPY_MMAP_RESIDENT_PREFIX_SCAN"
+  ],
+  "repair_rounds": 4,
+  "root_rounds": {
+    "FFCX_CODE_OPTIONAL_HEADER_SERIALIZATION": 1,
+    "FFCX_DG0_PACK_INTEGRAL_KEY_ABI": 2,
+    "NPY_MMAP_RESIDENT_PREFIX_SCAN": 1
+  },
+  "no_third_blind_retry": true,
+  "failed_qualification_and_test_replays_fully_charged": true,
+  "overlapping_root_intervals_not_added_twice": true,
+  "initial_implementation_not_relabelled_as_repair": true,
+  "part_of_elapsed_not_additional_wall": true,
+  "later_repairs_require_additional_intervals": true
+}

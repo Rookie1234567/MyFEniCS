@@ -1,0 +1,74 @@
+{
+  "local_manifest": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v70/task042_v70_assembly_time_p5_prepare_20261010T142344843423Z/local_packet/manifest.json",
+    "sha256": "9bef5add6398999c70c21c7f26a86833fc1eb46f98598c8503aa3c41743728da",
+    "bytes": 4172648576
+  },
+  "S_manifest": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v70/task042_v70_assembly_time_p5_prepare_20261010T142344843423Z/retained_S/manifest.json",
+    "sha256": "1c86d9ab24935cfe04615b01f525336bc8553d1ea3a6f0975aa787da1fa13645",
+    "bytes": 6436072032
+  },
+  "each_array_member_SHA_dtype_shape_in_sealed_manifest": true,
+  "COMMIT_binds_manifest": true,
+  "manifest_consumer_checks_members_on_reopen": true,
+  "large_CSR_npy_members": {
+    "data": {
+      "file": "data.npy",
+      "sha256": "3437b1bfa5801cbde29e175b4405201db14e6b729e8f17c40982805472076c9d",
+      "member_sha256": "283100d351a5e6a5873ff0745042439669506feeb5277337ef6be85ab3de4609",
+      "shape": [
+        266599917
+      ],
+      "dtype": "complex128",
+      "bytes": 4265598800
+    },
+    "indices": {
+      "file": "indices.npy",
+      "sha256": "f9a5a0ad71f416170716eb37abb3ed60931e4b579ba702d2355c63d61dd1d2a0",
+      "member_sha256": "421652ee22680f358038b47c9c3078caa0482b33c7b40918fe96ec66568b0deb",
+      "shape": [
+        266599917
+      ],
+      "dtype": "int64",
+      "bytes": 2132799464
+    },
+    "indptr": {
+      "file": "indptr.npy",
+      "sha256": "3e464a24f619fe9fd94b86e0dd0c964c8373938f4aafafe226e39ee5ea6c8d0a",
+      "member_sha256": "8ca6d9890ab1251eed221e1311e8252e8801ce0ee6a269a0fdf49920835aa825",
+      "shape": [
+        1177294
+      ],
+      "dtype": "int64",
+      "bytes": 9418480
+    },
+    "rhs": {
+      "file": "rhs.npy",
+      "sha256": "ab529f2ef0a5f8fc1f535b663bff5dc7f4427305365967212b2a1a9359a554bf",
+      "member_sha256": "178dc0c55cf2deb504c214a526db461e0b0624a957457a7b9c35efda14b099ee",
+      "shape": [
+        1177293
+      ],
+      "dtype": "complex128",
+      "bytes": 18836816
+    },
+    "retained": {
+      "file": "retained.npy",
+      "sha256": "f74d8e33ab2e643e2f7339da37394039de5249075a9fc056b5d2d1157f6c9245",
+      "member_sha256": "0294d51422d8d8870c3ef8ff8574b962ee019b0b32d5cf93839d1a65d6821eeb",
+      "shape": [
+        1177293
+      ],
+      "dtype": "int64",
+      "bytes": 9418472
+    }
+  },
+  "local_class_count": 10660,
+  "local_class_members_not_duplicated_in_nested_JSON": true,
+  "no_omission_of_npy_arrays_from_inventory": true,
+  "payload_bytes": {
+    "local": 4172648576,
+    "S": 6436072032
+  }
+}

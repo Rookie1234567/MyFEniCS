@@ -1,0 +1,62 @@
+{
+  "entries": [
+    {
+      "root_cause": "FFCX_DG0_PACK_INTEGRAL_KEY_ABI",
+      "round": 1,
+      "failure_source": "c6294aed0016297b7fc9b47974765518a4bde5b1",
+      "evidence": "benchmarks/artifacts/task042/v70/task042_v70_cell_kernel_preflight_20261010T135622303328Z/result.json",
+      "observed_error": "KeyError((_IntegralType.cell,-1))",
+      "located_source": "qualified native dolfinx/fem/Form.h stores tuple<IntegralType,int,int> including topology kernel index",
+      "minimal_fix": "accept only one explicit all-cell id=-1/kernel_index=0 key; retain per-cell exact DG0 material check",
+      "targeted_test": "test_packed_coefficient_kernel_key_not_first_item",
+      "UTC": "2026-10-10T14:00:57.975832+00:00",
+      "monotonic": 1565852.836723552,
+      "mathematical_input_changed": false,
+      "previous_failure_preserved": true
+    },
+    {
+      "root_cause": "FFCX_DG0_PACK_INTEGRAL_KEY_ABI",
+      "round": 2,
+      "failure_source": "a1f85ad161d8ab98047b7c137e0cbc07ec726d4c",
+      "evidence": "benchmarks/artifacts/task042/v70/task042_v70_cell_kernel_preflight_20261010T140328152910Z/result.json",
+      "observed_error": "packed key is (cell,0), not UFCx all-cell domain -1",
+      "new_diagnosis": "native pack.h allocate_coefficient_storage loops integral index i from zero; UFCx domain id is separately -1",
+      "minimal_fix": "bind sole actual cell integral index 0 with UFCx domain -1 and exact packed row/material checks",
+      "targeted_test": "actual zero-index key and wrong-index rejection",
+      "previous_hypothesis": "Form integral map topology-key hypothesis did not resolve live pack key; preserved",
+      "UTC": "2026-10-10T14:10:22.496405+00:00",
+      "monotonic": 1566417.357296608,
+      "mathematical_input_changed": false,
+      "previous_failure_preserved": true
+    },
+    {
+      "root_cause": "FFCX_CODE_OPTIONAL_HEADER_SERIALIZATION",
+      "round": 1,
+      "failure_source": "aa6cb19721035e1f8dbc42ea7835faceef54a9af",
+      "evidence": "benchmarks/artifacts/task042/v70/task042_v70_cell_kernel_preflight_20261010T141233181694Z/result.json",
+      "observed_error": "FFCx code tuple header is None",
+      "minimal_fix": "JSON preserves None and binds exact loaded compiled module byte hash; no mathematical change",
+      "targeted_test": "test_compiled_identity_with_missing_FFCx_header",
+      "UTC": "2026-10-10T14:15:30.934975+00:00",
+      "monotonic": 1566725.795864844,
+      "previous_failure_preserved": true
+    },
+    {
+      "root_cause": "NPY_MMAP_RESIDENT_PREFIX_SCAN",
+      "round": 1,
+      "source_before": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "stop_utc": "2026-10-10T20:56:56.877733+00:00",
+      "located_utc": "2026-10-10T21:03:46.218791+00:00",
+      "sampled_peak_bytes": 2511233024,
+      "preserved_guard_bytes": 2147483648,
+      "fix": "bounded np.fromfile chunks, same exact zero/finite counts; no global matrix or solve",
+      "affected": "post-collection only",
+      "PDE_replay": 0,
+      "independent_VERIFY_replay": 0,
+      "reentry_cap": 1,
+      "cooldown_cap_seconds": 600
+    }
+  ],
+  "historical_failures_preserved": true,
+  "legal_returned_fields_never_refactored": true
+}

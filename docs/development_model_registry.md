@@ -1,3 +1,14 @@
+# Task042 V70模型账追加
+
+| 模型/消费者 | 原空间 | 实际方法与边界 |
+|---|---|---|
+| V70同离散完整解 | 25576tet/p5/828，FE1943745 | 单元核直接形成S，保留全内部恢复与global LU |
+| 独立ACTION | 同retained1177293行 | 只读局部packet/边界；无global K/S或factor |
+
+[完整方程/六场/功率](task042_neural_coarse_inverse/outcomes/records/complete_physics_v70.json) · [消费合同](task042_neural_coarse_inverse/outcomes/records/retained_operator_contract_v70.json)。
+
+---
+
 # Task042 V69模型账追加
 
 | 模型 | 原空间 | 方法/资格入口 |
