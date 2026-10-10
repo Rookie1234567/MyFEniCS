@@ -89,7 +89,7 @@ def run_stage(manifest, artifact, marker, directory):
     fit = spec.get("metric_kind") == "reference_fit_G"
     if spec["role"] == "ftt_train":
         qualification = json.loads((ART / "v38_ftt_checks/result.json").read_text())
-        if not qualification["implementation_qualified"]:
+        if not qualification["models"][spec["model_kind"]]["qualified"]:
             raise ValueError("NEW_FTT_INTERFACE_NOT_QUALIFIED")
         if fit:
             checked = json.loads(
@@ -277,7 +277,14 @@ def main():
         publish_event(directory, stage, values)
 
     try:
-        atomic_json(directory / "abi.json", abi(manifest["spec"]["mode"]))
+        facts = abi(manifest["spec"]["mode"])
+        if manifest["spec"]["mode"] == "ml":
+            facts["neuron_and_derivative_dtype"] = (
+                "FTT parameters and coordinate buffers float64; "
+                "paired complex outputs and complete moments complex128"
+            )
+            facts["dtype_verification"] = "explicit FTTField dtype and qualified mapping"
+        atomic_json(directory / "abi.json", facts)
         result = run_stage(manifest, artifact, marker, directory)
         result.update(
             reference_used_for_training=manifest["reference_used_for_training"],
