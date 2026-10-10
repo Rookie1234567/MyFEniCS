@@ -1,0 +1,230 @@
+{
+  "schema": "task40extra.review_v24_q_tile.v1",
+  "review": "Task40extra Review V24",
+  "source_sha": "eca24be972a0eca1480b6f1f2fb9d745fb823718",
+  "campaign_window_sha256": "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358",
+  "run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
+  "service_id": "myfenics-case-20261010T170717-2236957",
+  "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T170718.363692Z",
+  "status": "PASS_REAL_ORIGINAL_NY8_Q_PORT_TILE",
+  "scope": {
+    "q": 0,
+    "paired_q": 4,
+    "selected_mode_key": [
+      10,
+      "top",
+      -142,
+      0,
+      "s"
+    ],
+    "selected_modes": 1,
+    "port_facets": 2176,
+    "trace_map_shape": [
+      50048,
+      773568
+    ],
+    "trace_map_nnz": 222946,
+    "trace_map_sha256": "34b0ccad4b756bef2c63c015de339a2106e5f03677b5ee9589483f730d04d7e1",
+    "q_port_inventory_aliases": 4076,
+    "selected_q_port_alias_column": 0,
+    "selected_original_mode_index": 10,
+    "selected_local_mode_index": 2,
+    "numeric_C_columns_tested": 1,
+    "numeric_negative_D_rows_tested": 1,
+    "numeric_H_entries_tested": 1,
+    "port_facets_on_selected_mode_side": 2176,
+    "selected_original_H_p_value": 1250.0
+  },
+  "projection_errors_against_independent_oracle": {
+    "C_relative_error": 4.8436017086968805e-17,
+    "negative_D_relative_error": 4.690516209749925e-17,
+    "H_relative_error": 0.0,
+    "limit": 1e-11
+  },
+  "qualification": {
+    "tile_status": "PASS_REAL_ORIGINAL_NY8_Q_PORT_TILE",
+    "full_q_matrices": "0/8",
+    "volume_qualification": "PARTIAL_NOT_RUN",
+    "PDE": "NOT_RUN",
+    "official_R_T_A": "NOT_RUN"
+  },
+  "checker_history": {
+    "initial_required_checker_exit_code": 2,
+    "initial_false_checks": [
+      "q_only_raw_C_minus_D_H_payload_recomputed",
+      "q_only_projection_npz_readback_recomputed"
+    ],
+    "initial_result_sha256": "4dc2fe840babc8f1a3afb3d945f10abdfa343bc644cb38fce82b90093b096193",
+    "initial_output_log_sha256": "e8aa22c3a048edfcd7527aa62c98b503930b97e8d1e1a4630c5d3ef157624772",
+    "offline_postfix_checks_passed": 22,
+    "offline_postfix_status": "PARTIAL_RECEIPT_CHECKED",
+    "offline_postfix_full_pass": false,
+    "offline_postfix_official_result": false,
+    "offline_postfix_sha256": "36073c3d1e29e8362e5cfa99c7a20f6d003d8cafb15aa5dde12bee645e03ea34",
+    "offline_postfix_binding_sha256": "2f505e42fa7a4b946488e61b8ef656bd0d2daa73b31ca7d677e99d5ec5ec479f",
+    "note": "The postfix checker re-read saved artifacts offline; B was not rerun.",
+    "initial_result_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T170717-2236957/partial_checker_result.json",
+    "initial_output_log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T170717-2236957/required_checker_output.raw.txt"
+  },
+  "timing": {
+    "tile_wall_seconds": 23.758030311902985,
+    "tile_process_cpu_seconds": 25.875420297,
+    "run_case_workflow_monotonic_seconds": 56.047974047,
+    "worker_watchdog_nested_seconds": 56.006412827,
+    "outer_parent_monotonic_seconds": 60.399409638,
+    "outer_parent_conservative_budget_seconds": 66.230654382
+  },
+  "resources": {
+    "process_tree_rss_peak_bytes": 2939039744,
+    "dedicated_cgroup_peak_bytes": 3120656384,
+    "dedicated_cgroup_limit_bytes": 17179869184,
+    "task_swap_peak_bytes": 0,
+    "PSS": "disabled/null",
+    "descendants_cleared": true,
+    "native_owner_cleanup": "UNKNOWN"
+  },
+  "artifacts": {
+    "raw_tile_json": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T170718.363692Z/v23_reference_q_port_tile.json",
+      "bytes": 14794336,
+      "sha256": "429e846163bd5188c830a931f663088e00632db8224803ff6e943591b967539d"
+    },
+    "projection_npz": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T170718.363692Z/v23_selected_q_projection_readback.npz",
+      "bytes": 57843260,
+      "sha256": "47256cdb483489dc04d46ff229916bfad480f79a525b7781b87682b83f5794fa"
+    },
+    "oracle_npz": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T170718.363692Z/v23_selected_mode_production_B_D_H.npz",
+      "bytes": 2404438,
+      "sha256": "c06612aa79806b8c180c9717b266b32be0f0ad538cae26a14e8a5ec8c795459d"
+    },
+    "run_manifest": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T170718.363692Z/run_manifest.json",
+      "sha256": "7361fb0b087add9505bdf2b525782c2771dff536f5f09d58efd47bc4e7926d81"
+    },
+    "run_summary": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T170718.363692Z/run_summary.json",
+      "sha256": "92a51abc05d476f67b7e49b8e9e965e246a961ed05c8a1c029d97e3f788b3343"
+    },
+    "watchdog_summary": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T170718.363692Z/watchdog/summary.json",
+      "sha256": "9c0b3b378bb45057260cdc4829ba278078f1bfed333b5ffa994a0ed3f222f2bd"
+    },
+    "initial_checker": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T170717-2236957/partial_checker_result.json",
+      "bytes": 1945,
+      "exit_code": 2,
+      "sha256": "4dc2fe840babc8f1a3afb3d945f10abdfa343bc644cb38fce82b90093b096193"
+    },
+    "initial_checker_output_log_sha256": "e8aa22c3a048edfcd7527aa62c98b503930b97e8d1e1a4630c5d3ef157624772",
+    "offline_postfix": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/v24_q0_partial_checker_postfix_4d4942fb.json",
+      "checks_passed": 22,
+      "status": "PARTIAL_RECEIPT_CHECKED",
+      "full_pass": false,
+      "official_result": false,
+      "sha256": "36073c3d1e29e8362e5cfa99c7a20f6d003d8cafb15aa5dde12bee645e03ea34",
+      "binding_sha256": "2f505e42fa7a4b946488e61b8ef656bd0d2daa73b31ca7d677e99d5ec5ec479f"
+    },
+    "outer_workflow_record": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T170717-2236957/outer_workflow_record.json",
+      "sha256": "1ba084190409d8bf944755a2efcebb3b808fb828a666391b45d8f648cb5828bc"
+    },
+    "abi_receipt": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+      "sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426"
+    },
+    "initial_checker_output_log": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T170717-2236957/required_checker_output.raw.txt",
+      "bytes": 1811,
+      "sha256": "e8aa22c3a048edfcd7527aa62c98b503930b97e8d1e1a4630c5d3ef157624772"
+    },
+    "legacy_local_checker_snapshot": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/v24_q0_partial_checker_result.json",
+      "bytes": 1883,
+      "sha256": "2cc766b18d435aedcc27d55196d2b65addd9087fcced42cc8d100be313852077",
+      "note": "A separate preserved local checker snapshot; not the original B service required-checker result."
+    }
+  },
+  "identity": {
+    "review_base_sha": "84dce5a39eb34a259166f34e063312a2cd86ef0c",
+    "review_sha": "92a59c167b53f828cc0408eca664d0eebc878428",
+    "input_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/target_operator_probe/target_original_ny8_operator_probe_v22.dat",
+    "input_sha256": "33cb569eb900f60100569a6659138589a9d26784a22e05d50c7fe63190bac4ff",
+    "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+    "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "campaign_window": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_window_v24.json",
+      "sha256": "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358",
+      "T0_utc": "2026-10-10T16:33:11Z",
+      "numeric_cutoff_utc": "2026-10-10T22:13:11Z",
+      "deadline_utc": "2026-10-10T22:33:11Z",
+      "refreshed": false
+    },
+    "abi": {
+      "qualified_activation": true,
+      "python": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+      "runtime_prefix": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+      "scalar_type": "complex128",
+      "int_type": "int32",
+      "mpi_size": 1,
+      "preflight_returncode": 0,
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+      "receipt_sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426",
+      "preflight_stdout_sha256": "afbc606b098997a2c32c66ec34d6beb047008b20581bffd57ba962a6d581394b"
+    }
+  },
+  "run_outer_records": {
+    "B": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T170717-2236957/outer_workflow_record.json",
+      "sha256": "1ba084190409d8bf944755a2efcebb3b808fb828a666391b45d8f648cb5828bc"
+    },
+    "C": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T190955-2246242/outer_workflow_record.json",
+      "sha256": "2e4d6d215eda945eeb3b4e4fd40357652c297ef032462bd8773e6efc0ac44c29"
+    },
+    "D": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T202438-2252669/outer_workflow_record.json",
+      "sha256": "73e3167ca9500bf30bf1333ac5538c317ad96d0b5d62e2fab6b3ede7846a8aff"
+    }
+  },
+  "artifact_campaign_window_sha256": "e77793e53542c6094da819456457910893b33c9be5ca3b548482be6bfc3dbdfb",
+  "execution_campaign_window_sha256": "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358",
+  "abi": {
+    "qualified_activation": true,
+    "python": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+    "runtime_prefix": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+    "scalar_type": "complex128",
+    "int_type": "int32",
+    "mpi_size": 1,
+    "preflight_returncode": 0,
+    "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+    "receipt_sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426",
+    "preflight_stdout_sha256": "afbc606b098997a2c32c66ec34d6beb047008b20581bffd57ba962a6d581394b"
+  },
+  "input_sha256": "33cb569eb900f60100569a6659138589a9d26784a22e05d50c7fe63190bac4ff",
+  "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+  "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+  "review_base_sha": "84dce5a39eb34a259166f34e063312a2cd86ef0c",
+  "review_sha": "92a59c167b53f828cc0408eca664d0eebc878428",
+  "input_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/target_operator_probe/target_original_ny8_operator_probe_v22.dat",
+  "changed_source_paths": [
+    "scripts/task40_v20_service_workflow.py",
+    "scripts/task40_v21_readonly_recheck.py",
+    "src/runners/task40_v10_campaign.py",
+    "src/runners/task40_v20_stage_runner.py",
+    "src/solvers/fullspace_dtn_action.py",
+    "src/solvers/hcurl_assembly_time_condensation.py",
+    "src/solvers/p6_cell_condensed_action.py",
+    "src/solvers/task40_v22_operator_probe.py",
+    "src/solvers/task40_v24_real_edge_panel.py",
+    "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+    "src/test/test_task40_v10_campaign.py",
+    "src/test/test_task40_v20_routes.py",
+    "src/test/test_task40_v21_readonly_recheck.py",
+    "src/test/test_task40_v22_operator_probe.py",
+    "src/test/test_task40_v24_real_edge_panel.py"
+  ],
+  "selection_note": "The q inventory contains 4,076 aliases; this run numerically projected only alias column 0: one C column, the corresponding -D row, and H. All 2,176 top-side port facets were included for that selected mode."
+}

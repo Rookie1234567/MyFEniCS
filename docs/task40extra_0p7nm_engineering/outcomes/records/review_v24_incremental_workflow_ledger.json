@@ -1,0 +1,226 @@
+{
+  "schema": "task40extra.review_v24_incremental_workflow_ledger.v1",
+  "scope": "V24 closeout snapshot; original campaign stream remains authoritative and append-only.",
+  "branch": "task40extra_0p7nm_engineering",
+  "source_sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+  "window": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_window_v24.json",
+    "sha256": "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358",
+    "T0_utc": "2026-10-10T16:33:11Z",
+    "numeric_cutoff_utc": "2026-10-10T22:13:11Z",
+    "deadline_utc": "2026-10-10T22:33:11Z",
+    "total_seconds": 21600.0,
+    "reserve_seconds": 1200.0,
+    "refreshed": false
+  },
+  "append_only_accounting": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_accounting_v10.jsonl",
+    "sha256": "0953013861fa59dd0fdc8ea4fc5e91d57cc48444403f7131d25fefd2720ef5fd",
+    "lines": 940,
+    "tail_sequence": 939,
+    "tail_label": "main_v24_final_closeout_before_commit",
+    "tail_cumulative_seconds": 16392.82494264909,
+    "tail_utc_ns": 1791666383824760749,
+    "note": "Real append-only as-of before final commit/push; subsequent publishing time remains in the same fixed window and is not assumed zero."
+  },
+  "measured_costs": {
+    "C_cold_generation_seconds": 6.768845421960577,
+    "C_cold_provider_apply_seconds": 0.491495531052351,
+    "C_regeneration_seconds": 6.561613416997716,
+    "D_panel_wall_seconds": 42.85989587381482,
+    "D_panel_process_cpu_seconds": 46.734381918000004,
+    "D_run_case_workflow_monotonic_seconds": 83.05290023982525,
+    "D_worker_watchdog_nested_elapsed_seconds": 79.83005329710431,
+    "D_outer_parent_monotonic_seconds": 89.76063235197216,
+    "D_outer_parent_conservative_budget_seconds": 98.59094257479775,
+    "documentation_time": "not separately measured",
+    "administrative_per_attempt_cost": "UNKNOWN; aggregate append-only campaign accounting retains overall charge",
+    "B_tile_wall_seconds": 23.758030311902985,
+    "B_tile_process_cpu_seconds": 25.875420297,
+    "B_outer_parent_monotonic_seconds": 60.399409638,
+    "B_outer_parent_conservative_budget_seconds": 66.230654382,
+    "C_outer_parent_monotonic_seconds": 57.149448573,
+    "C_outer_parent_conservative_budget_seconds": 63.003226947,
+    "C_warm_apply_seconds": [
+      0.4829748719930649,
+      0.48880144278518856
+    ],
+    "C_post_release_regenerate_apply_seconds": 0.468681805068627
+  },
+  "decision": {
+    "optional_single_q": "NOT_ADMITTED",
+    "reason": "full volume action NOT_RUN; complete selected-q streaming reference entry NOT_QUALIFIED; co-resident full-stage capacity UNKNOWN",
+    "resource_gate_triggered": false,
+    "full_q": "0/8",
+    "PDE": "NOT_RUN",
+    "official_result": false,
+    "ordinary_default_changed": false,
+    "window_refreshed": false
+  },
+  "preserved_administrative_events": [
+    "early service run_case failure (exit 3) and separate checker readback failure (exit 2); raw records preserved",
+    "q0 representation cast mismatch classified as representation_cast_mismatch_not_candidate_dof_mismatch",
+    "q0 initial partial checker failed two raw-recompute/readback checks; postfix receipt later passed all required checks, full_pass remained false",
+    "one monitoring script syntax failure before execution; corrected without source/window/result change",
+    "one prior pre-assessment import of nonexistent src.runners.task40_timebase; corrected to existing read_campaign_state and no file/window/source changed",
+    "documentation closeout command once ran python without qualified activation and returned command-not-found; rerun as read-only with qualified activation; no PDE or tests launched by failed command",
+    "individual elapsed/cost for these administrative attempts is not separately measured",
+    "MAIN history check initially treated legitimate current_code_sha update as immutable; subsequent check verified old runs prefix and all old review indices unchanged.",
+    "MAIN final document insertion initially matched an older identical table heading; limited replacement to the V24 section, then 6+4+29 final tests passed. Both were administrative checks, no FE/PDE execution."
+  ],
+  "project_level_ledger": {
+    "path": "docs/development_progress.md",
+    "section": "Task40extra Review V24"
+  },
+  "evidence": {
+    "C_main_audit_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/main_v24_C_audit.json",
+    "C_main_audit_sha256": "602598f70c72d520799092749156188832012c0ad3295f30657e49017dce09f6",
+    "D_main_audit_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/main_v24_D_audit.json",
+    "D_main_audit_sha256": "1a56ec60aaeca5d0980461fd692e54a7edc3864d4125616e6f6fff9bab848107",
+    "D_checker_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T202438-2252669/partial_checker_result.json",
+    "D_checker_sha256": "4d1bcf83bdc591b89f863a26ec8979872e69253d7a1c8e4053eec3c3ac50fbf7",
+    "B_compact_path": "docs/task40extra_0p7nm_engineering/outcomes/records/q_tile_v24.json",
+    "B_raw_checker_sha256": "4dc2fe840babc8f1a3afb3d945f10abdfa343bc644cb38fce82b90093b096193",
+    "B_offline_postfix_sha256": "36073c3d1e29e8362e5cfa99c7a20f6d003d8cafb15aa5dde12bee645e03ea34",
+    "C_checker_checks_passed": 22,
+    "C_source_sha": "a233ac49f84269265ddc684d31cb9b790864b018",
+    "D_checker_checks_passed": 34,
+    "D_source_sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+    "D_main_audit_scope": "hash recomputation and serialized record reconciliation; no independent recomputation of all six classes"
+  },
+  "source_history": [
+    {
+      "sha": "a516bbe532525e024df1cc3fde00c14efbd930e1",
+      "change": "bind new execution window to immutable V23 scan"
+    },
+    {
+      "sha": "eca24be972a0eca1480b6f1f2fb9d745fb823718",
+      "change": "preserve native row dtype when loading V23 checkpoint"
+    },
+    {
+      "sha": "4d4942fb69c6bac4342f1f024d2d9b08e52803f1",
+      "change": "verify typed q payloads and independent projection readback"
+    },
+    {
+      "sha": "99e2322bbe60ea916ba3954feca0fd1a431cd3b7",
+      "change": "select bounded port modes and batch active-row mapping"
+    },
+    {
+      "sha": "a233ac49f84269265ddc684d31cb9b790864b018",
+      "change": "measure bounded production port reuse with independent readback"
+    },
+    {
+      "sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+      "change": "qualify bounded real edge volume and V17 q row tiles"
+    }
+  ],
+  "source_and_scope": {
+    "v24_source_commits": 6,
+    "final_source_sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+    "source_changed_during_v24": true,
+    "documentation_closeout_changed_numerical_source": false,
+    "ordinary_default_changed": false,
+    "commit_push_by_this_closeout": false,
+    "main_paths": [
+      "scripts/task40_v20_service_workflow.py",
+      "scripts/task40_v21_readonly_recheck.py",
+      "src/runners/task40_v10_campaign.py",
+      "src/runners/task40_v20_stage_runner.py",
+      "src/solvers/fullspace_dtn_action.py",
+      "src/solvers/hcurl_assembly_time_condensation.py",
+      "src/solvers/p6_cell_condensed_action.py",
+      "src/solvers/task40_v22_operator_probe.py",
+      "src/solvers/task40_v24_real_edge_panel.py",
+      "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+      "src/test/test_task40_v10_campaign.py",
+      "src/test/test_task40_v20_routes.py",
+      "src/test/test_task40_v21_readonly_recheck.py",
+      "src/test/test_task40_v22_operator_probe.py",
+      "src/test/test_task40_v24_real_edge_panel.py"
+    ]
+  },
+  "identity": {
+    "review_base_sha": "84dce5a39eb34a259166f34e063312a2cd86ef0c",
+    "review_sha": "92a59c167b53f828cc0408eca664d0eebc878428",
+    "input_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/target_operator_probe/target_original_ny8_operator_probe_v22.dat",
+    "input_sha256": "33cb569eb900f60100569a6659138589a9d26784a22e05d50c7fe63190bac4ff",
+    "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+    "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "campaign_window": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_window_v24.json",
+      "sha256": "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358",
+      "T0_utc": "2026-10-10T16:33:11Z",
+      "numeric_cutoff_utc": "2026-10-10T22:13:11Z",
+      "deadline_utc": "2026-10-10T22:33:11Z",
+      "refreshed": false
+    },
+    "abi": {
+      "qualified_activation": true,
+      "python": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+      "runtime_prefix": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+      "scalar_type": "complex128",
+      "int_type": "int32",
+      "mpi_size": 1,
+      "preflight_returncode": 0,
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+      "receipt_sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426",
+      "preflight_stdout_sha256": "afbc606b098997a2c32c66ec34d6beb047008b20581bffd57ba962a6d581394b"
+    }
+  },
+  "run_outer_records": {
+    "B": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T170717-2236957/outer_workflow_record.json",
+      "sha256": "1ba084190409d8bf944755a2efcebb3b808fb828a666391b45d8f648cb5828bc"
+    },
+    "C": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T190955-2246242/outer_workflow_record.json",
+      "sha256": "2e4d6d215eda945eeb3b4e4fd40357652c297ef032462bd8773e6efc0ac44c29"
+    },
+    "D": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T202438-2252669/outer_workflow_record.json",
+      "sha256": "73e3167ca9500bf30bf1333ac5538c317ad96d0b5d62e2fab6b3ede7846a8aff"
+    }
+  },
+  "campaign_window_sha256": "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358",
+  "changed_source_paths": [
+    "scripts/task40_v20_service_workflow.py",
+    "scripts/task40_v21_readonly_recheck.py",
+    "src/runners/task40_v10_campaign.py",
+    "src/runners/task40_v20_stage_runner.py",
+    "src/solvers/fullspace_dtn_action.py",
+    "src/solvers/hcurl_assembly_time_condensation.py",
+    "src/solvers/p6_cell_condensed_action.py",
+    "src/solvers/task40_v22_operator_probe.py",
+    "src/solvers/task40_v24_real_edge_panel.py",
+    "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+    "src/test/test_task40_v10_campaign.py",
+    "src/test/test_task40_v20_routes.py",
+    "src/test/test_task40_v21_readonly_recheck.py",
+    "src/test/test_task40_v22_operator_probe.py",
+    "src/test/test_task40_v24_real_edge_panel.py"
+  ],
+  "worker_end_accounting_snapshot": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_accounting_v10.jsonl",
+    "sha256": "a7b0cdbfd0ab072cec0eed89127b5c028092d976cecf09d870ac1c4dea645643",
+    "lines": 939,
+    "tail_sequence": 938,
+    "tail_label": "watchdog_end",
+    "tail_cumulative_seconds": 13986.26581643009,
+    "tail_utc_ns": 1791663977265634530,
+    "note": "Aggregate includes preparation, attempted commands, tests, services and closeout. Do not infer individual charges by subtracting cumulative values."
+  },
+  "main_final_targeted_tests": {
+    "source_sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+    "qualified_python": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/.venv/bin/python",
+    "targeted_D_tests_passed": 6,
+    "route_compatibility_tests_passed": 4,
+    "documentation_tests_passed": 29,
+    "command_D": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_v24_real_edge_panel.py",
+    "command_route": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_v20_routes.py -k 'v24_route_requires or partial_checker_distinguishes_v23_execution_from_v24_execution or v24_bounded_sample_readback'",
+    "command_documentation": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py",
+    "raw_log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/main_final_targeted_tests.txt",
+    "raw_log_sha256": "9794cb03882635656cf3e181003999431d0f29e832072f030f251d846d9b2c2d",
+    "raw_log_bytes": 310,
+    "FE_or_PDE_rerun": false
+  }
+}

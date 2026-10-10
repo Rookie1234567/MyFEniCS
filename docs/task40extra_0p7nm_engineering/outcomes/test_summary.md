@@ -423,3 +423,20 @@ Native component-only receipt 的重算 Gate 数值、worker 失败位置、4 �
 | py_compile / git diff --check | PASS | 语法和 whitespace 检查 |
 
 测试输出保存在执行 transcript；未另存 pytest log，因此没有独立 log SHA。full repository pytest、MPI2/MPI4、Ruff、CI、documentation contract suite、q-only service、FE/q tile、q CSR/factor/KSP/PDE 均 NOT_RUN。控制器在固定数值 cutoff 后要求停止数值运行，不从未运行项推断通过。
+
+
+## Review V24 文档收口测试与未运行范围
+
+本节只记录最终文档、compact 和索引校验；不把它们当作 FE/PDE 测试。B/C/D 的数值结果分别依赖各自 source-bound raw record 与 checker，见 [Response V24](../response_v24.md) 和 [q tile](records/q_tile_v24.json)。
+
+| 验证 | 命令 / 检查 | 结果 | 范围 |
+|---|---|---|---|
+| D 数值组件与 C 接线定向测试 | `python -m pytest -q src/test/test_task40_v24_real_edge_panel.py`；`python -m pytest -q src/test/test_task40_v20_routes.py -k "v24_route_requires or partial_checker_distinguishes_v23_execution_from_v24_execution or v24_bounded_sample_readback"` | 6 + 4 项通过；主控在冻结源码 809d6a15 上最终复验 | 仅 bounded panel、MPC/q 投影、原始数组读回与 selector/checker 兼容 fixture；真实原尺寸 B/C/D 另由正式 raw 验收 |
+| 文档合同 | source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py | 29 passed | 导航、模型注册、回顾结构、Markdown 表格合同；不运行 FE/PDE |
+| JSON 与 hash 绑定 | qualified activation 下解析 compact/index，并校验 B/C/D raw hashes、source/input/window/ABI | PASS；B/C/D source、window、input、ABI 与 raw hash 已核对 | 不重算数值，只校验可见原始记录与文档身份 |
+| Markdown 结构与 diff | 本地链接/表格列数检查；git diff --check | PASS；本地链接、表格列数与 git diff --check | 不代表 GitHub rendered view |
+| B checker history | B original required checker + offline postfix | 原 checker exit 2，有两项 raw readback false；postfix 22/22 检查通过但 partial、full_pass=false | 已保存回执离线核验，没有重跑 B |
+| C checker | C independent checker | 22/22 检查通过 | 32-mode reuse/census bounded evidence |
+| D checker与主控审计 | D independent partial checker；MAIN audit record | checker 34/34 为真但 partial；MAIN 重算 NPZ SHA、核对 checker与序列化 witness；未重新计算六类数值 | bounded internal y-edge panel only |
+
+没有运行 full repository pytest、MPI2/MPI4、Ruff、CI、full q construction、global factor/KSP、完整 PDE 或 official R/T/A。GitHub rendered view 未由本地校验代替，仍待主控检查。后续新增数值运行需新的 review/window；本文档收口阶段不重启 B/C/D 数值计算。

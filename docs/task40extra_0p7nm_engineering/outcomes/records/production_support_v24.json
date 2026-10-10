@@ -1,0 +1,205 @@
+{
+  "schema": "task40extra.review_v24_production_support.v1",
+  "source_sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+  "input_sha256": "33cb569eb900f60100569a6659138589a9d26784a22e05d50c7fe63190bac4ff",
+  "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+  "campaign_window_sha256": "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358",
+  "C_mode_reuse": {
+    "status": "PASS_V24_PORT_REUSE_C_AND_VOLUME_CENSUS",
+    "modes": 32,
+    "groups": "side × global q × s/polarization",
+    "class_census_cells": 30464,
+    "raw_classes": 29,
+    "oriented_classes": 60,
+    "class_cache_estimate": 2199609160,
+    "estimate_scope": "numeric class cache plus per-cell metadata only; excludes global trace-constraint maps, expansions, lookup tables, action owner closures, and full-q setup",
+    "full_volume_action_admitted": false,
+    "payload_bytes": 180373760,
+    "cache_sha256": "c1653296aa852c6834eb590a43177b9ebcf6f157761db94572ae5231bc933ba6",
+    "all_source_backings_released_before_and_after_regenerate": "PASS_ALL_ARRAY_BACKINGS_RELEASED_BEFORE_REGENERATE_AND_AFTER",
+    "q0_anchor_rerun": false,
+    "q_matrices": 0
+  },
+  "D_panel": {
+    "status": "PASS_V24_REAL_EDGE_ORBIT_Q_PANEL",
+    "incident_cells": 32,
+    "per_orbit": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "cell_rows": {
+      "interior": 450,
+      "trace": 432,
+      "all": 882
+    },
+    "active_trace_columns": 8688,
+    "finalized_mpc": true,
+    "unique_slave_rows": 312,
+    "maximum_local_active_columns": 432,
+    "oriented_classes": 6,
+    "fresh_lu": 6,
+    "max_identity_defect": 4.222051637995127e-20,
+    "refinement_corrections": 0,
+    "q_row": {
+      "shape": [
+        48,
+        8688
+      ],
+      "nnz": 417024,
+      "relative_error": 0.0,
+      "limit": 1e-11
+    },
+    "edge_self_qr": {
+      "shape": [
+        48,
+        48
+      ],
+      "nnz": 2304,
+      "relative_error": 1.3236785363666466e-16,
+      "offdiagonal_evaluated": true
+    },
+    "C_minus_D_H_recomputed_in_D": false,
+    "full_volume_action": false,
+    "full_q_matrices": 0,
+    "q_total": 8,
+    "pde_solved": false,
+    "classification": "REAL_INTERNAL_Y_EDGE_ORBIT_VOLUME_ROW_PANEL; not an exterior DtN port or boundary-facet panel",
+    "main_audit_scope": "MAIN reconciled the independent checker 34 check results, recomputed the raw NPZ SHA, and checked serialized residual/timing/resource/cleanup fields; MAIN did not independently rerun the numerical math over all six classes."
+  },
+  "scope_note": "B is a single real q0 port tile; C is a bounded 32-mode cache/census; D is a real internal-y-edge volume row panel. None qualifies production-wide carrier/action lifecycle, complete q matrices, or PDE.",
+  "evidence": {
+    "raw_D_json": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T202439.437904Z/v24_real_edge_volume_panel.json",
+    "raw_D_json_sha256": "9f1edf0f61c23695334abd978d427d6e605d99e04d2951bd67c3a09b72078646",
+    "raw_D_npz": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T202439.437904Z/v24_real_edge_volume_panel.npz",
+    "raw_D_npz_sha256": "7a44fc988776d677822493098bb05a767d89314da370aa86d6e5881fae8ee6e5",
+    "main_D_audit_sha256": "1a56ec60aaeca5d0980461fd692e54a7edc3864d4125616e6f6fff9bab848107"
+  },
+  "source_history": [
+    {
+      "sha": "a516bbe532525e024df1cc3fde00c14efbd930e1",
+      "change": "bind new execution window to immutable V23 scan"
+    },
+    {
+      "sha": "eca24be972a0eca1480b6f1f2fb9d745fb823718",
+      "change": "preserve native row dtype when loading V23 checkpoint"
+    },
+    {
+      "sha": "4d4942fb69c6bac4342f1f024d2d9b08e52803f1",
+      "change": "verify typed q payloads and independent projection readback"
+    },
+    {
+      "sha": "99e2322bbe60ea916ba3954feca0fd1a431cd3b7",
+      "change": "select bounded port modes and batch active-row mapping"
+    },
+    {
+      "sha": "a233ac49f84269265ddc684d31cb9b790864b018",
+      "change": "measure bounded production port reuse with independent readback"
+    },
+    {
+      "sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+      "change": "qualify bounded real edge volume and V17 q row tiles"
+    }
+  ],
+  "B_q0_port_tile": {
+    "source_sha": "eca24be972a0eca1480b6f1f2fb9d745fb823718",
+    "q": 0,
+    "paired_q": 4,
+    "selected_mode_key": [
+      10,
+      "top",
+      -142,
+      0,
+      "s"
+    ],
+    "port_facets": 2176,
+    "trace_map_shape": [
+      50048,
+      773568
+    ],
+    "trace_map_nnz": 222946,
+    "trace_map_sha256": "34b0ccad4b756bef2c63c015de339a2106e5f03677b5ee9589483f730d04d7e1",
+    "C_error": 4.8436017086968805e-17,
+    "minus_D_error": 4.690516209749925e-17,
+    "H_error": 0.0,
+    "limit": 1e-11,
+    "full_q_matrices": "0/8",
+    "volume": "PARTIAL_NOT_RUN",
+    "PDE": "NOT_RUN",
+    "compact": "docs/task40extra_0p7nm_engineering/outcomes/records/q_tile_v24.json",
+    "raw_npz_sha256": "47256cdb483489dc04d46ff229916bfad480f79a525b7781b87682b83f5794fa",
+    "q_port_inventory_aliases": 4076,
+    "selected_q_port_alias_column": 0,
+    "selected_original_mode_index": 10,
+    "selected_local_mode_index": 2,
+    "numeric_C_columns_tested": 1,
+    "numeric_negative_D_rows_tested": 1,
+    "numeric_H_entries_tested": 1,
+    "top_side_port_facets_in_selected_mode": 2176,
+    "selected_original_H_p_value": 1250.0
+  },
+  "identity": {
+    "review_base_sha": "84dce5a39eb34a259166f34e063312a2cd86ef0c",
+    "review_sha": "92a59c167b53f828cc0408eca664d0eebc878428",
+    "input_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/target_operator_probe/target_original_ny8_operator_probe_v22.dat",
+    "input_sha256": "33cb569eb900f60100569a6659138589a9d26784a22e05d50c7fe63190bac4ff",
+    "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+    "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "campaign_window": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_window_v24.json",
+      "sha256": "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358",
+      "T0_utc": "2026-10-10T16:33:11Z",
+      "numeric_cutoff_utc": "2026-10-10T22:13:11Z",
+      "deadline_utc": "2026-10-10T22:33:11Z",
+      "refreshed": false
+    },
+    "abi": {
+      "qualified_activation": true,
+      "python": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+      "runtime_prefix": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+      "scalar_type": "complex128",
+      "int_type": "int32",
+      "mpi_size": 1,
+      "preflight_returncode": 0,
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+      "receipt_sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426",
+      "preflight_stdout_sha256": "afbc606b098997a2c32c66ec34d6beb047008b20581bffd57ba962a6d581394b"
+    }
+  },
+  "run_outer_records": {
+    "B": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T170717-2236957/outer_workflow_record.json",
+      "sha256": "1ba084190409d8bf944755a2efcebb3b808fb828a666391b45d8f648cb5828bc"
+    },
+    "C": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T190955-2246242/outer_workflow_record.json",
+      "sha256": "2e4d6d215eda945eeb3b4e4fd40357652c297ef032462bd8773e6efc0ac44c29"
+    },
+    "D": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T202438-2252669/outer_workflow_record.json",
+      "sha256": "73e3167ca9500bf30bf1333ac5538c317ad96d0b5d62e2fab6b3ede7846a8aff"
+    }
+  },
+  "changed_source_paths": [
+    "scripts/task40_v20_service_workflow.py",
+    "scripts/task40_v21_readonly_recheck.py",
+    "src/runners/task40_v10_campaign.py",
+    "src/runners/task40_v20_stage_runner.py",
+    "src/solvers/fullspace_dtn_action.py",
+    "src/solvers/hcurl_assembly_time_condensation.py",
+    "src/solvers/p6_cell_condensed_action.py",
+    "src/solvers/task40_v22_operator_probe.py",
+    "src/solvers/task40_v24_real_edge_panel.py",
+    "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+    "src/test/test_task40_v10_campaign.py",
+    "src/test/test_task40_v20_routes.py",
+    "src/test/test_task40_v21_readonly_recheck.py",
+    "src/test/test_task40_v22_operator_probe.py",
+    "src/test/test_task40_v24_real_edge_panel.py"
+  ]
+}

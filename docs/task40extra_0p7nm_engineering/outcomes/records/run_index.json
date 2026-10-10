@@ -2,7 +2,7 @@
   "schema": "task40extra.run_index.v1",
   "branch": "task40extra_0p7nm_engineering",
   "repair_base_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
-  "current_code_sha": "43588de8275a1014375ab8d5fdd1d835b0bcee55",
+  "current_code_sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
   "input": {
     "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat",
     "sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
@@ -2032,6 +2032,50 @@
       "completed_modes_reused_from_old_checkpoint": 32060,
       "q_numerics_created": false,
       "reason": "Fixed cutoff had passed; campaign sequence 34907 records closeout-only/no-q-launch. A new review-authorized window is required."
+    },
+    {
+      "run_id": "task40extra_review_v24_port_reuse_c",
+      "stage": "V24_PORT_REUSE_C_AND_VOLUME_CLASS_CENSUS",
+      "attempt": 1,
+      "kind": "bounded_actual_mode_reuse_and_volume_class_census",
+      "source_head": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+      "input_sha256": "33cb569eb900f60100569a6659138589a9d26784a22e05d50c7fe63190bac4ff",
+      "campaign_window_sha256": "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358",
+      "service_id": "myfenics-case-20261010T190955-2246242",
+      "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T190956.343813Z",
+      "status": "PASS_V24_PORT_REUSE_C_AND_VOLUME_CENSUS",
+      "independent_checker_checks_passed": 22,
+      "mode_groups": 32,
+      "full_q_matrices_created": 0,
+      "full_volume_action": "NOT_RUN_PENDING_D",
+      "pde_solved": false,
+      "official_result": false
+    },
+    {
+      "run_id": "task40extra_review_v24_real_edge_volume_panel_d",
+      "stage": "V24_REAL_EDGE_ORBIT_VOLUME_ROW_PANEL",
+      "attempt": 1,
+      "kind": "bounded_real_volume_q_row_panel",
+      "source_head": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+      "input_sha256": "33cb569eb900f60100569a6659138589a9d26784a22e05d50c7fe63190bac4ff",
+      "campaign_window_sha256": "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358",
+      "service_id": "myfenics-case-20261010T202438-2252669",
+      "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T202439.437904Z",
+      "status": "PASS_V24_REAL_EDGE_ORBIT_Q_PANEL_PARTIAL_RECEIPT",
+      "independent_checker_checks_passed": 34,
+      "incident_cells": 32,
+      "q_row_shape": [
+        48,
+        8688
+      ],
+      "edge_self_qr_shape": [
+        48,
+        48
+      ],
+      "full_q_matrices_created": 0,
+      "full_volume_action": false,
+      "pde_solved": false,
+      "official_result": false
     }
   ],
   "ledger": {
@@ -5959,6 +6003,540 @@
       "classification": "ADMINISTRATIVE_CLOSEOUT_OVERRUN",
       "commit_push_and_final_readback_seconds": "UNKNOWN_AT_PRECOMMIT_SNAPSHOT; appended to original ledger after remote readback",
       "scope": "Actual administrative completion exceeded the fixed deadline; not additional numerical authorization."
+    }
+  },
+  "review_v24_evidence_index": {
+    "review": "docs/task40extra_0p7nm_engineering/review_report_v24.md",
+    "review_sha": "92a59c167b53f828cc0408eca664d0eebc878428",
+    "review_sha256": "92393f51aacbff9fc9f4c322b213666fe9869b6890ee9913748a45af2d226786",
+    "review_registration_head": "84dce5a39eb34a259166f34e063312a2cd86ef0c",
+    "branch": "task40extra_0p7nm_engineering",
+    "source_sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+    "input_sha256": "33cb569eb900f60100569a6659138589a9d26784a22e05d50c7fe63190bac4ff",
+    "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+    "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "campaign_window": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_window_v24.json",
+      "sha256": "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358",
+      "T0_utc": "2026-10-10T16:33:11Z",
+      "numeric_cutoff_utc": "2026-10-10T22:13:11Z",
+      "deadline_utc": "2026-10-10T22:33:11Z",
+      "refreshed": false
+    },
+    "runs": {
+      "C": {
+        "service_id": "myfenics-case-20261010T190955-2246242",
+        "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T190956.343813Z",
+        "status": "PASS_V24_PORT_REUSE_C_AND_VOLUME_CENSUS",
+        "checker_checks_passed": 22,
+        "q_matrices": 0,
+        "volume_action": "NOT_RUN_PENDING_D",
+        "source_sha": "a233ac49f84269265ddc684d31cb9b790864b018",
+        "main_audit_sha256": "602598f70c72d520799092749156188832012c0ad3295f30657e49017dce09f6",
+        "full_q_matrices": 0,
+        "q0_anchor_rerun": false,
+        "full_volume_action": "NOT_RUN"
+      },
+      "D": {
+        "service_id": "myfenics-case-20261010T202438-2252669",
+        "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T202439.437904Z",
+        "status": "PASS_V24_REAL_EDGE_ORBIT_Q_PANEL",
+        "checker_checks_passed": 34,
+        "checker_status": "PARTIAL_RECEIPT_CHECKED",
+        "full_pass": false,
+        "official_result": false,
+        "pde_solved": false,
+        "source_sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+        "main_audit_sha256": "1a56ec60aaeca5d0980461fd692e54a7edc3864d4125616e6f6fff9bab848107",
+        "main_audit_scope": "MAIN recomputed raw NPZ SHA and reconciled independent checker results and serialized witness/resource fields; MAIN did not rerun numerical math over all six classes.",
+        "classification": "real internal y-edge orbit volume row panel; not an exterior port/boundary-facet panel"
+      },
+      "B": {
+        "source_sha": "eca24be972a0eca1480b6f1f2fb9d745fb823718",
+        "service_id": "myfenics-case-20261010T170717-2236957",
+        "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T170718.363692Z",
+        "status": "PASS_REAL_ORIGINAL_NY8_Q_PORT_TILE",
+        "q": 0,
+        "paired_q": 4,
+        "selected_mode_key": [
+          10,
+          "top",
+          -142,
+          0,
+          "s"
+        ],
+        "port_facets": 2176,
+        "trace_map_shape": [
+          50048,
+          773568
+        ],
+        "trace_map_nnz": 222946,
+        "C_error": 4.8436017086968805e-17,
+        "negative_D_error": 4.690516209749925e-17,
+        "H_error": 0.0,
+        "limit": 1e-11,
+        "initial_checker_exit": 2,
+        "initial_false_checks": [
+          "q_only_raw_C_minus_D_H_payload_recomputed",
+          "q_only_projection_npz_readback_recomputed"
+        ],
+        "postfix_checks_passed": 22,
+        "postfix_status": "PARTIAL_RECEIPT_CHECKED",
+        "full_pass": false,
+        "official_result": false,
+        "complete_q_matrices": 0,
+        "full_volume_action": "PARTIAL_NOT_RUN",
+        "PDE": false,
+        "q_port_inventory_aliases": 4076,
+        "selected_q_port_alias_column": 0,
+        "selected_original_mode_index": 10,
+        "selected_local_mode_index": 2,
+        "numeric_C_columns_tested": 1,
+        "numeric_negative_D_rows_tested": 1,
+        "numeric_H_entries_tested": 1,
+        "top_side_port_facets_in_selected_mode": 2176,
+        "selected_original_H_p_value": 1250.0
+      }
+    },
+    "campaign_accounting": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_accounting_v10.jsonl",
+      "sha256": "0953013861fa59dd0fdc8ea4fc5e91d57cc48444403f7131d25fefd2720ef5fd",
+      "lines": 940,
+      "tail_sequence": 939,
+      "tail_label": "main_v24_final_closeout_before_commit",
+      "tail_cumulative_seconds": 16392.82494264909,
+      "tail_utc_ns": 1791666383824760749,
+      "note": "Real append-only as-of before final commit/push; subsequent publishing time remains in the same fixed window and is not assumed zero."
+    },
+    "D_scope": {
+      "incident_cells": 32,
+      "cells_per_y_orbit": 4,
+      "orbits": 8,
+      "cell_rows": {
+        "interior": 450,
+        "trace": 432,
+        "total": 882
+      },
+      "active_trace_columns": 8688,
+      "native_q_row_shape": [
+        48,
+        8688
+      ],
+      "native_q_row_nnz": 417024,
+      "edge_self_qr_shape": [
+        48,
+        48
+      ],
+      "edge_self_qr_nnz": 2304,
+      "non_edge_q_column_projection": "NOT_RUN",
+      "full_q_coverage": "0/8",
+      "full_volume_action": "NOT_RUN",
+      "PDE": "NOT_RUN",
+      "R_T_A": "NOT_RUN"
+    },
+    "main_D_audit": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/main_v24_D_audit.json",
+      "sha256": "1a56ec60aaeca5d0980461fd692e54a7edc3864d4125616e6f6fff9bab848107",
+      "checker_checks_passed": 34,
+      "raw_npz_sha256_recomputed": true,
+      "raw_npz_bytes": 122274084,
+      "local_maximum_errors": {
+        "full_equation_residual_relative": 1.1482096831726816e-15,
+        "recovered_interior_forward_relative": 6.3309899286681456e-12,
+        "condensed_trace_residual_relative": 4.8468962492704906e-14
+      }
+    },
+    "timing_resource_scope": {
+      "outer_parent_monotonic_seconds": 89.76063235197216,
+      "outer_parent_conservative_budget_seconds": 98.59094257479775,
+      "worker_watchdog_nested_seconds": 79.83005329710431,
+      "tree_rss_peak_bytes": 2950139904,
+      "cgroup_memory_peak_bytes": 3557376000,
+      "cgroup_memory_limit_bytes": 17179869184,
+      "task_swap_peak_bytes": 0,
+      "PSS": "DISABLED/null",
+      "descendants_cleared": true,
+      "resource_gate_failure_or_OOM": false
+    },
+    "optional_single_q_closeout": {
+      "decision": "NOT_ADMITTED",
+      "resource_gate_triggered": false,
+      "gaps": [
+        "full volume action NOT_RUN",
+        "complete selected-q streaming reference entry NOT_QUALIFIED",
+        "full-stage co-resident capacity UNKNOWN"
+      ],
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/v24_optional_single_q_assessment_closeout.json",
+      "sha256": "7ea6374e5e89acdbbb9f6b97e06f2033a9909319e6f9a13d7c0c7a94227583c3"
+    },
+    "preserved_attempts": [
+      "earlier V24 service attempt source a516bbe532525e024df1cc3fde00c14efbd930e1 exited run_case 3; retained under its source-bound outer record, not attributed to C",
+      "B q0 service source eca24be972a0eca1480b6f1f2fb9d745fb823718 returned worker exit 0 but required checker exit 2 on two raw readback checks",
+      "q0 representation cast mismatch receipt preserved",
+      "B offline q0 postfix checker read saved artifacts: 22 checks true, partial receipt only; B was not rerun"
+    ],
+    "tests": {
+      "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py",
+      "result": "29 passed",
+      "git_diff_check": "PASS",
+      "local_markdown_link_table_check": "PASS",
+      "JSON_and_raw_hash_binding": "PASS",
+      "full_repository_pytest": "NOT_RUN",
+      "Ruff": "NOT_RUN",
+      "CI": "NOT_RUN",
+      "GitHub_rendered_view": "PENDING_MAIN_REVIEW",
+      "source_window_input_ABI_binding": "PASS"
+    },
+    "source_changes": true,
+    "ordinary_default_changed": false,
+    "commit_or_push_by_executor": false,
+    "evidence_files": [
+      {
+        "path": "docs/task40extra_0p7nm_engineering/response_v24.md",
+        "bytes": 14790,
+        "sha256": "e8886abe2f8882e664ed61dcc745c0b0e2772bbb9c3609a3e2d0059a6573f3c4"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/README.md",
+        "bytes": 22566,
+        "sha256": "d4be9a81076f59653567e4dd4fe9fe3e58f8cacb3bdf73dffe6580bc6ae32385"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+        "bytes": 170747,
+        "sha256": "adfe22724ec04f84b41a8b3a7014ede983dff50fab73b44783d5cf10c7320400"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md",
+        "bytes": 73349,
+        "sha256": "23cff355f60f440d89c05dd55d451208f1c5030bb24e991f3e7ad81d5fab1777"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v24.json",
+        "bytes": 23405,
+        "sha256": "e6bf6ca501f4b982c03692164aec1f5e293b644a11c327776afa288e1d7ad2ab"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/production_support_v24.json",
+        "bytes": 8794,
+        "sha256": "b5adee195c5a0fd1d2983a39b66a5b6c5051581a2d375126f68e9c820e4afda0"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/performance_v24.json",
+        "bytes": 9596,
+        "sha256": "0efb983e7d7ff3798d64ad843864bbb915e02cd9be85fb501d918e23c3e26d68"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v24_incremental_workflow_ledger.json",
+        "bytes": 12811,
+        "sha256": "cacbb622d99e85b859d64e65b0fb2ce582cfc2560673971c724601a7dc91d363"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/q_tile_v24.json",
+        "bytes": 12568,
+        "sha256": "918896011ecf9fc9179db0f430b515867ccac3c0611070a1eca2be9bb6d07f7e"
+      },
+      {
+        "path": "docs/development_progress.md",
+        "bytes": 273018,
+        "sha256": "1921b6e00151d790b41882571e4a4e1d1d96eb183d59f39eeeb0c2ea55389927"
+      },
+      {
+        "path": "docs/development_model_registry.md",
+        "bytes": 291753,
+        "sha256": "687a0ff53af8c4863192a233ec9987191b2bf00f14ef9eea566620d4b8b81f0a"
+      },
+      {
+        "path": "docs/README.md",
+        "bytes": 31668,
+        "sha256": "4b532e8119b427177a9932fa3d6253149c57b2058a1aeb0eb4ff590314ba4036"
+      }
+    ],
+    "raw_evidence": [
+      {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T202439.437904Z/v24_bounded_port_reuse_volume_sample.json",
+        "bytes": 78516,
+        "sha256": "b074f750ad3e8273a7802c476d8a46adcaea86d5d5aa7b3cb15be2a93167a783"
+      },
+      {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T202439.437904Z/v24_bounded_32_mode_B_D_H_cache.npz",
+        "bytes": 180419718,
+        "sha256": "c1653296aa852c6834eb590a43177b9ebcf6f157761db94572ae5231bc933ba6"
+      },
+      {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T202439.437904Z/v24_bounded_32_mode_provider_replay.npz",
+        "bytes": 155116254,
+        "sha256": "b08803eb82ee1d78727a0dbe2fc64370de864a18430c65c0e108e410b74dd7d8"
+      },
+      {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T202439.437904Z/v24_real_edge_volume_panel.json",
+        "bytes": 292527,
+        "sha256": "9f1edf0f61c23695334abd978d427d6e605d99e04d2951bd67c3a09b72078646"
+      },
+      {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T202439.437904Z/v24_real_edge_volume_panel.npz",
+        "bytes": 122274084,
+        "sha256": "7a44fc988776d677822493098bb05a767d89314da370aa86d6e5881fae8ee6e5"
+      },
+      {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T202439.437904Z/run_manifest.json",
+        "bytes": 7922,
+        "sha256": "4e8cbaa439bbdb83a41009fbaa519a592c5d960b17ed4f8e49644bbbd3079cfe"
+      },
+      {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T202439.437904Z/run_summary.json",
+        "bytes": 11412,
+        "sha256": "3f779ffd0627407696e5cf46c283d3f8ee0a9f212dd2d1695a55e415784541e0"
+      },
+      {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T202439.437904Z/watchdog/summary.json",
+        "bytes": 9741,
+        "sha256": "0b2f11a0e852638c4b6d5f7d8a1055c1c56886a3590e2de93f0d43153450f033"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T190955-2246242/partial_checker_result.json",
+        "bytes": 1814,
+        "sha256": "a5e2bbeef214aa52b0f97b34fee77071b3daad4d8b22b7ddd71c7e75bf4f7084"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T190955-2246242/outer_workflow_record.json",
+        "bytes": 37842,
+        "sha256": "2e4d6d215eda945eeb3b4e4fd40357652c297ef032462bd8773e6efc0ac44c29"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T202438-2252669/partial_checker_result.json",
+        "bytes": 2592,
+        "sha256": "4d1bcf83bdc591b89f863a26ec8979872e69253d7a1c8e4053eec3c3ac50fbf7"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T202438-2252669/outer_workflow_record.json",
+        "bytes": 40662,
+        "sha256": "73e3167ca9500bf30bf1333ac5538c317ad96d0b5d62e2fab6b3ede7846a8aff"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/main_v24_C_audit.json",
+        "bytes": 6506,
+        "sha256": "602598f70c72d520799092749156188832012c0ad3295f30657e49017dce09f6"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/main_v24_D_audit.json",
+        "bytes": 2144,
+        "sha256": "1a56ec60aaeca5d0980461fd692e54a7edc3864d4125616e6f6fff9bab848107"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_window_v24.json",
+        "bytes": 3877,
+        "sha256": "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_accounting_v10.jsonl",
+        "bytes": 1084582,
+        "sha256": "0953013861fa59dd0fdc8ea4fc5e91d57cc48444403f7131d25fefd2720ef5fd"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/v24_optional_single_q_assessment_150min.json",
+        "bytes": 1685,
+        "sha256": "fa1586dbd1865e6379066b68f8271c88564429f86bad294699f4895df13e1653"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/v24_optional_single_q_assessment_closeout.json",
+        "bytes": 1442,
+        "sha256": "7ea6374e5e89acdbbb9f6b97e06f2033a9909319e6f9a13d7c0c7a94227583c3"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/v24_q0_checkpoint_identity_mismatch_receipt.json",
+        "bytes": 3994,
+        "sha256": "fbe93128107049b3a01ee8abb0be2fbd31972336011da526f54068b54f1d8af9"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/v24_q0_partial_checker_result.json",
+        "bytes": 1883,
+        "sha256": "2cc766b18d435aedcc27d55196d2b65addd9087fcced42cc8d100be313852077"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/v24_q0_partial_checker_postfix_4d4942fb.json",
+        "bytes": 1780,
+        "sha256": "36073c3d1e29e8362e5cfa99c7a20f6d003d8cafb15aa5dde12bee645e03ea34"
+      },
+      {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T170718.363692Z/v23_reference_q_port_tile.json",
+        "bytes": 14794336,
+        "sha256": "429e846163bd5188c830a931f663088e00632db8224803ff6e943591b967539d"
+      },
+      {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T170718.363692Z/v23_selected_q_projection_readback.npz",
+        "bytes": 57843260,
+        "sha256": "47256cdb483489dc04d46ff229916bfad480f79a525b7781b87682b83f5794fa"
+      },
+      {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T170718.363692Z/v23_selected_mode_production_B_D_H.npz",
+        "bytes": 2404438,
+        "sha256": "c06612aa79806b8c180c9717b266b32be0f0ad538cae26a14e8a5ec8c795459d"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T170717-2236957/outer_workflow_record.json",
+        "bytes": 37171,
+        "sha256": "1ba084190409d8bf944755a2efcebb3b808fb828a666391b45d8f648cb5828bc"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T170717-2236957/partial_checker_result.json",
+        "bytes": 1945,
+        "sha256": "4dc2fe840babc8f1a3afb3d945f10abdfa343bc644cb38fce82b90093b096193"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T170717-2236957/required_checker_output.raw.txt",
+        "bytes": 1811,
+        "sha256": "e8aa22c3a048edfcd7527aa62c98b503930b97e8d1e1a4630c5d3ef157624772"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/main_final_targeted_tests.json",
+        "bytes": 1192,
+        "sha256": "5b19e9c7ab94c2441547085abfd15208cb8dd54f55c0170f5f0084a38328a3ce",
+        "role": "MAIN final qualified targeted test receipt"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/main_final_targeted_tests.txt",
+        "bytes": 310,
+        "sha256": "9794cb03882635656cf3e181003999431d0f29e832072f030f251d846d9b2c2d",
+        "role": "MAIN final targeted test stdout"
+      }
+    ],
+    "documentation_closeout": "V24 evidence package corrected for B/C/D identities and boundaries; local final checks recorded; main review pending; no numerical run after D.",
+    "scientific_base_sha": "84dce5a39eb34a259166f34e063312a2cd86ef0c",
+    "source_history": [
+      {
+        "sha": "a516bbe532525e024df1cc3fde00c14efbd930e1",
+        "subject": "Task40 V24: bind new execution window to immutable V23 scan"
+      },
+      {
+        "sha": "eca24be972a0eca1480b6f1f2fb9d745fb823718",
+        "subject": "Task40 V24: preserve native row dtype when loading V23 checkpoint"
+      },
+      {
+        "sha": "4d4942fb69c6bac4342f1f024d2d9b08e52803f1",
+        "subject": "Task40 V24: verify typed q payloads and independent projection readback"
+      },
+      {
+        "sha": "99e2322bbe60ea916ba3954feca0fd1a431cd3b7",
+        "subject": "Task40 V24: select bounded port modes and batch active-row mapping"
+      },
+      {
+        "sha": "a233ac49f84269265ddc684d31cb9b790864b018",
+        "subject": "Task40 V24: measure bounded production port reuse with independent readback"
+      },
+      {
+        "sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+        "subject": "Task40 V24: qualify bounded real edge volume and V17 q row tiles"
+      }
+    ],
+    "changed_source_paths": [
+      "scripts/task40_v20_service_workflow.py",
+      "scripts/task40_v21_readonly_recheck.py",
+      "src/runners/task40_v10_campaign.py",
+      "src/runners/task40_v20_stage_runner.py",
+      "src/solvers/fullspace_dtn_action.py",
+      "src/solvers/hcurl_assembly_time_condensation.py",
+      "src/solvers/p6_cell_condensed_action.py",
+      "src/solvers/task40_v22_operator_probe.py",
+      "src/solvers/task40_v24_real_edge_panel.py",
+      "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+      "src/test/test_task40_v10_campaign.py",
+      "src/test/test_task40_v20_routes.py",
+      "src/test/test_task40_v21_readonly_recheck.py",
+      "src/test/test_task40_v22_operator_probe.py",
+      "src/test/test_task40_v24_real_edge_panel.py"
+    ],
+    "documentation_closeout_source_changes": false,
+    "source_changes_note": "V24 includes the six source commits listed above; this later documentation closeout changed no numerical source.",
+    "documentation_closeout_commit_or_push": false,
+    "timing_resource_scope_by_run": {
+      "B": {
+        "tile_wall_seconds": 23.758030311902985,
+        "tile_cpu_seconds": 25.875420297,
+        "workflow_monotonic_seconds": 56.047974047,
+        "watchdog_nested_seconds": 56.006412827,
+        "outer_parent_monotonic_seconds": 60.399409638,
+        "outer_parent_conservative_seconds": 66.230654382,
+        "tree_rss_peak_bytes": 2939039744,
+        "cgroup_peak_bytes": 3120656384,
+        "cgroup_limit_bytes": 17179869184,
+        "task_swap_peak_bytes": 0,
+        "PSS": "null/disabled",
+        "native_owner_cleanup": "UNKNOWN"
+      },
+      "C": {
+        "sample_wall_seconds": 19.169654542813078,
+        "sample_cpu_seconds": 20.602398088,
+        "cold_generation_seconds": 6.768845421960577,
+        "warm_apply_seconds": [
+          0.4829748719930649,
+          0.48880144278518856
+        ],
+        "regenerate_seconds": 6.561613416997716,
+        "regenerate_apply_seconds": 0.468681805068627,
+        "workflow_monotonic_seconds": 52.632270543,
+        "watchdog_nested_seconds": 52.537909669,
+        "outer_parent_monotonic_seconds": 57.149448573,
+        "outer_parent_conservative_seconds": 63.003226947,
+        "tree_rss_peak_bytes": 3170832384,
+        "cgroup_peak_bytes": 3470761984,
+        "cgroup_limit_bytes": 17179869184,
+        "task_swap_peak_bytes": 0,
+        "PSS": "null/disabled",
+        "descendants_cleared": true
+      },
+      "D": {
+        "panel_wall_seconds": 42.85989587381482,
+        "panel_cpu_seconds": 46.734381918,
+        "workflow_monotonic_seconds": 83.05290023982525,
+        "watchdog_nested_seconds": 79.83005329710431,
+        "outer_parent_monotonic_seconds": 89.76063235197216,
+        "outer_parent_conservative_seconds": 98.59094257479775,
+        "tree_rss_peak_bytes": 2950139904,
+        "cgroup_peak_bytes": 3557376000,
+        "cgroup_limit_bytes": 17179869184,
+        "task_swap_peak_bytes": 0,
+        "PSS": "null/disabled",
+        "descendants_cleared": true,
+        "oom_or_resource_gate_failure": false
+      }
+    },
+    "identity_audit": {
+      "window_binding_source": "campaign_window_v24.json and each B/C/D outer_workflow_record.json",
+      "input_sha256": "33cb569eb900f60100569a6659138589a9d26784a22e05d50c7fe63190bac4ff",
+      "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+      "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+      "qualified_activation": true,
+      "python_runtime": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+      "PETSc_scalar": "complex128",
+      "PETSc_int": "int32",
+      "MPI": 1,
+      "ABI_receipt_sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426",
+      "run_outer_record_sha256": {
+        "B": "1ba084190409d8bf944755a2efcebb3b808fb828a666391b45d8f648cb5828bc",
+        "C": "2e4d6d215eda945eeb3b4e4fd40357652c297ef032462bd8773e6efc0ac44c29",
+        "D": "73e3167ca9500bf30bf1333ac5538c317ad96d0b5d62e2fab6b3ede7846a8aff"
+      }
+    },
+    "main_final_targeted_tests": {
+      "source_sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+      "qualified_python": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/.venv/bin/python",
+      "targeted_D_tests_passed": 6,
+      "route_compatibility_tests_passed": 4,
+      "documentation_tests_passed": 29,
+      "command_D": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_v24_real_edge_panel.py",
+      "command_route": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_v20_routes.py -k 'v24_route_requires or partial_checker_distinguishes_v23_execution_from_v24_execution or v24_bounded_sample_readback'",
+      "command_documentation": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py",
+      "raw_log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/main_final_targeted_tests.txt",
+      "raw_log_sha256": "9794cb03882635656cf3e181003999431d0f29e832072f030f251d846d9b2c2d",
+      "raw_log_bytes": 310,
+      "FE_or_PDE_rerun": false
+    },
+    "final_metadata_correction": {
+      "field": "selected_original_H_p_value",
+      "value": 1250.0,
+      "selected_original_mode_index": 10,
+      "raw_evidence_changed": false
     }
   }
 }

@@ -1093,3 +1093,30 @@ candidate domain 有 3,177,132 行，约为全部 20,181,348 storage rows 的 15
 运行 wall 8,817.046 s，workflow monotonic 8,866.383 s，watchdog conservative 9,703.518 s。进程树 RSS peak 3,060,957,184 B；专用 cgroup peak 3,238,825,984 B/16 GiB；task swap 0，descendants cleared。完整身份、mode inventory、资源口径和 artifact hashes 见 [Response V23](../response_v23.md) 及 [operator](records/target_operator_probe_v23.json)、[support](records/production_support_v23.json)、[performance](records/performance_v23.json)、[q tile](records/q_tile_v23.json)、[run index](records/run_index.json)。下一阶段任何 q 数值工作都需新 review 授权新 window，并绑定现有 V23 checkpoint。
 
 主控核验：整单元（包含 trace）的 m_c/Σm_c/Σm_c² 仍 UNKNOWN；已完成的是内部支撑零计数。实际缓存删除 0 B，不把逻辑载荷当 RSS 收益。watchdog legacy elapsed=8866.261 s，保守计费=9703.518 s。行政收口超原截止，数值 cutoff 后无新计算，费用追加原账本，窗口未刷新。
+
+
+## Review V24：B/C/D 有界证据；完整 q 与 PDE 未运行
+
+模型为 50×25×140 nm、波长 0.7 nm、Ny=8、p6、272×8×14 网格，共 30,464 个单元。局部单元有 450 个内部自由度和 432 个 trace 自由度；消去单元内部未知量能形成较小边界方程，但只有收齐全域关联单元和列后才是完整体积算子。
+
+V24 先后冻结六个源码提交，从科学基线 84dce5a39eb34a259166f34e063312a2cd86ef0c 到最终 source 809d6a151eed7b4d0eca0430fee2782285e786e7。B、C、D 分属不同 run source，故按各自身份记录：
+
+| 阶段 | source / run | 实测和结果 | 资格边界 |
+|---|---|---|---|
+| B：q0 单模式端口 tile | source eca24be972a0eca1480b6f1f2fb9d745fb823718；20261010T170718.363692Z | mode [10,"top",-142,0,"s"]；top 侧全部 2,176 facets；q 端口库存 4,076 aliases，本次仅 alias column 0（original mode 10/local mode 2，H_p original index 1250）做一列 C、一行 −D 与 H 投影；real map 50,048×773,568、222,946 nnz；C/−D/H 投影误差 4.8436e-17 / 4.6905e-17 / 0，限值 1e-11 | 原 checker 有 2 项 raw readback 失败；offline postfix 22 项通过但状态 partial、未重跑 B；q 矩阵 0/8，volume/PDE/RTA 未运行；[q tile](records/q_tile_v24.json) |
+| C：端口复用与类别盘点 | source a233ac49f84269265ddc684d31cb9b790864b018；20261010T190956.343813Z | 32 模态；cold generate 6.768845 s；warm applies 0.482975/0.488801 s；释放后 regenerate 6.561613 s，apply 0.468682 s；cache 180,373,760 B；128/128 backing 生命周期释放；30,464 cells、29 raw/60 oriented classes | 独立 checker 22 项通过；类别 cache + cell metadata 估算 2,199,609,160 B，排除全局 constraints/maps/owner closures/full-q setup；未重跑 q0、无 full volume action |
+| D：真实内部 y-edge 体积 row panel | source 809d6a151eed7b4d0eca0430fee2782285e786e7；20261010T202439.437904Z | 8 个 y-edge 轨道×4 cells；每 cell 450 interior+432 trace rows；6 oriented classes；finalized MPC 触及 312 slave rows、8,688 active trace cols；V17 q row 48×8,688 / 417,024 nnz、误差 0；edge-self q×r 48×48 / 2,304 nnz、误差 1.32368e-16 | 这是器件内部 y-edge 体积面板，不是外部端口/边界 facet；非 edge-self q 列未投影。checker 34 项为真但 partial；主控审计未重新运行六类数值运算 |
+
+B 的 q0 tile 原始 NPZ 为 57,843,260 B，SHA-256 47256cdb483489dc04d46ff229916bfad480f79a525b7781b87682b83f5794fa；其旧 artifact window 与新 V24 execution window 分别记录，不能混用。B/C/D 均绑定固定 V24 execution window b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358、input 33cb569e…bac4ff、model ea3bc109…80241，且通过 qualified WSL ABI preflight（complex128/int32、MPI1）。C/D 的 outer records 提供 D panel 原始 JSON 顶层未写出的 execution-window 身份；身份细节见各 compact。
+
+D 的局部 residual/recovery 记录分别为 1.1482096831726816e-15、6.3309899286681456e-12、4.8468962492704906e-14。独立 D checker 34 项都为真；主控重新计算了 raw NPZ SHA，并调和 checker 结果与序列化字段，没有重新对 6 个类别运行完整局部数学。D 是 S-only panel，没有在本次 D 内重算 C−D+H。三个局部数值都不是 global PDE residual。
+
+| 运行 | wall/CPU；父工作流 | tree RSS；cgroup 峰值/上限 | task swap / 资格 |
+|---|---|---|---|
+| B | tile 23.758030/25.875420 s；parent 60.399410/66.230654 s monotonic/conservative | 2,939,039,744 B；3,120,656,384/17,179,869,184 B | 0；PSS null；native owner cleanup unknown |
+| C | sample 19.169655/20.602398 s；parent 57.149449/63.003227 s | 3,170,832,384 B；3,470,761,984/17,179,869,184 B | 0；128 backing released；无 full carrier lifecycle 证明 |
+| D | panel 42.859896/46.734382 s；parent 89.760632/98.590943 s | 2,950,139,904 B；3,557,376,000/17,179,869,184 B | 0；PSS null；无 OOM/resource stop |
+
+B/C/D 的 worker watchdog 分别为 56.006413 / 52.537910 / 79.830053 s，均嵌套在 parent interval 中，不应相加。RSS 是进程树同时采样峰，cgroup 数值是独立 job 组峰值。完整 q 矩阵仍 0/8；global volume action、reference inverse、global RHS/recovery、full explicit residual、factor/KSP、PDE、official R/T/A 未运行。可选 single-q 是因完整 volume action、selected-q streaming reference entry 与共驻容量缺口而 NOT_ADMITTED，不是实测资源失败；2 TB/48 h 仍 NOT_QUALIFIED。
+
+数值源码/接口变更、opt-in 边界和 selective merge 分组见 [Response V24](../response_v24.md)。固定 window 未刷新，append-only accounting 为收费权威；单项行政尝试耗时保持 UNKNOWN。本次 closeout 仅作文档与 compact 整理，不改数值源码。

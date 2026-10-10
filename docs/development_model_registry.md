@@ -2272,3 +2272,15 @@ E2 v3重建p6 mesh/space并做一次native matrix-free A6动作和streaming DtN�
 | 50×25×140 nm、λ0.7 nm、30464 cells、p6/Ny8；生成式边界、紧凑候选域，保留真实 Floquet MPC | Bα/Dx/H 32060/32060；候选3177132行；24个旧/新作用样本完全相同；树RSS峰3060957184 B、cgroup峰3238825984 B、任务swap0；扫描8817.046 s，保守运行计费9703.518 s | q叶子TypeError后修复未再运行；完整q0/8，factor/KSP/PDE/RTA未运行；内部筛选后零支撑不替代整单元m_c或raw-zero资格；[Response V23](task40extra_0p7nm_engineering/response_v23.md) |
 
 原尺寸2TB/48h仍NO-GO。未重新计算旧PDE，行政收口超固定截止的成本保留在同一原始账本，不开启新窗口。
+
+
+## Task40extra Review V24：分 source 的 B/C/D 有界资格登记
+
+| 阶段 / 模型身份 | 数值结果 | 资源与资格边界 |
+|---|---|---|
+| B q0 real port tile；source=eca24be972a0eca1480b6f1f2fb9d745fb823718；input/window/ABI 见 q_tile compact | q0 mode [10,top,-142,0,s]；map 50,048×773,568、222,946 nnz；C/−D/H 误差 4.8436e-17/4.6905e-17/0；原 checker 两项 readback 失败，离线 22 项 postfix 通过但仍 partial | tree RSS 2,939,039,744 B；cgroup 3,120,656,384/17,179,869,184 B；swap0；只是一列/行端口 tile |
+| C 32-mode port reuse + class census；source=a233ac49f84269265ddc684d31cb9b790864b018 | cold generation 6.768845 s；warm applies 0.482975/0.488801 s；regenerate 6.561613 s；128/128 array backings released；29 raw/60 oriented classes over 30,464 cells | cache payload 180,373,760 B；class cache + cell metadata estimate 2,199,609,160 B，不含全局 maps/owner closure/full-q setup；无完整 q/action |
+| D real internal y-edge volume row panel；source=809d6a151eed7b4d0eca0430fee2782285e786e7 | 32 cells，8 internal y-edge orbits；V17 q row 48×8,688/417,024 nnz、误差0；edge-self q×r 48×48、相对误差1.32368e-16；checker 34项真但 partial | tree RSS 2,950,139,904 B；cgroup 3,557,376,000 B/16 GiB；swap0；D不是外部边界 panel，MAIN未重算六类数学 |
+| 全局模型结果 | 完整 q 矩阵 0/8；PDE、official R/T/A、global explicit residual、factor/KSP 均未运行 | single-q NOT_ADMITTED 因完整 volume action、streaming reference entry 与共驻容量缺口；非测得资源失败；2 TB/48 h NOT_QUALIFIED |
+
+V24 有六个源码提交，且三个结果绑定不同 source；execution window SHA 为 b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358，qualified ABI 是 PETSc complex128/int32、MPI1。该登记不是 production qualification，也不改变 ordinary default 或 master。细节见 [Response V24](task40extra_0p7nm_engineering/response_v24.md)、[B q tile](task40extra_0p7nm_engineering/outcomes/records/q_tile_v24.json) 和 [outcomes summary](task40extra_0p7nm_engineering/outcomes/summary.md)。

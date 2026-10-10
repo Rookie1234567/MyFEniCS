@@ -1,0 +1,198 @@
+{
+  "schema": "task40extra.review_v24_performance.v1",
+  "source_sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+  "input_sha256": "33cb569eb900f60100569a6659138589a9d26784a22e05d50c7fe63190bac4ff",
+  "campaign_window_sha256": "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358",
+  "C_timing": {
+    "cold_generation_seconds": 6.768845421960577,
+    "cold_provider_apply_seconds": 0.491495531052351,
+    "warm_generation_seconds": 0,
+    "regeneration_seconds": 6.561613416997716,
+    "cache_write_seconds": 0.2950190028641373,
+    "sample_total_wall_seconds": 19.169654542813078,
+    "sample_process_cpu_seconds": 20.602398088,
+    "provider_sweeps": 3,
+    "logical_cache_payload_bytes": 180373760,
+    "source_sha": "a233ac49f84269265ddc684d31cb9b790864b018",
+    "warm_provider_apply_seconds": [
+      0.4829748719930649,
+      0.48880144278518856
+    ],
+    "post_release_regenerate_provider_apply_seconds": 0.468681805068627,
+    "run_case_workflow_monotonic_seconds": 52.632270543,
+    "worker_watchdog_nested_seconds": 52.537909669,
+    "outer_parent_monotonic_seconds": 57.149448573,
+    "outer_parent_conservative_budget_seconds": 63.003226947,
+    "process_tree_rss_peak_bytes": 3170832384,
+    "dedicated_cgroup_peak_bytes": 3470761984,
+    "dedicated_cgroup_limit_bytes": 17179869184,
+    "task_swap_peak_bytes": 0,
+    "PSS": "disabled/null",
+    "descendants_cleared": true
+  },
+  "D_timing": {
+    "local_lu_and_schur": 0.38151733740232885,
+    "mpc_projection_and_accumulation": 0.015481402864679694,
+    "raw_kernel_generation": 39.12875745072961,
+    "total_process_cpu": 46.734381918000004,
+    "total_wall": 42.85989587381482,
+    "volume_form_compile": 0.040083603002130985,
+    "run_case_workflow_monotonic_seconds": 83.05290023982525,
+    "worker_watchdog_elapsed_seconds": 79.83005329710431,
+    "outer_parent_monotonic_seconds": 89.76063235197216,
+    "outer_parent_conservative_budget_seconds": 98.59094257479775,
+    "timer_scope_note": "Worker watchdog is nested within run_case/outer parent intervals; do not add it to the parent.",
+    "source_sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+    "process_tree_rss_peak_bytes": 2950139904,
+    "dedicated_cgroup_peak_bytes": 3557376000,
+    "dedicated_cgroup_limit_bytes": 17179869184,
+    "task_swap_peak_bytes": 0,
+    "PSS": "disabled/null",
+    "descendants_cleared": true,
+    "resource_gate_failure_or_OOM": false
+  },
+  "resources": {
+    "worker_tree_rss_peak_bytes": 2950139904,
+    "worker_cgroup_memory_peak_bytes": 3557376000,
+    "worker_cgroup_memory_limit_bytes": 17179869184,
+    "task_swap_peak_bytes": 0,
+    "global_swap_delta_pages": 0,
+    "global_swap_scope": "WSL-global diagnostic, not dedicated-task attribution",
+    "pss": "disabled/null",
+    "descendants_cleared": true,
+    "remaining_children": [],
+    "oom_or_resource_gate_failure": false
+  },
+  "capacity": {
+    "C_full_class_cache_estimate_bytes_including_cell_metadata": 2199609160,
+    "estimate_excludes": "numeric class cache plus per-cell metadata only; excludes global trace-constraint maps, expansions, lookup tables, action owner closures, and full-q setup",
+    "D_panel_additional_object_upper_bound_bytes": 865911128,
+    "full_stage_coexistence_capacity": "UNKNOWN"
+  },
+  "evidence": {
+    "D_watchdog_summary_sha256": "0b2f11a0e852638c4b6d5f7d8a1055c1c56886a3590e2de93f0d43153450f033",
+    "D_run_summary_sha256": "3f779ffd0627407696e5cf46c283d3f8ee0a9f212dd2d1695a55e415784541e0",
+    "main_D_audit_sha256": "1a56ec60aaeca5d0980461fd692e54a7edc3864d4125616e6f6fff9bab848107"
+  },
+  "source_history": [
+    {
+      "sha": "a516bbe532525e024df1cc3fde00c14efbd930e1",
+      "change": "bind new execution window to immutable V23 scan"
+    },
+    {
+      "sha": "eca24be972a0eca1480b6f1f2fb9d745fb823718",
+      "change": "preserve native row dtype when loading V23 checkpoint"
+    },
+    {
+      "sha": "4d4942fb69c6bac4342f1f024d2d9b08e52803f1",
+      "change": "verify typed q payloads and independent projection readback"
+    },
+    {
+      "sha": "99e2322bbe60ea916ba3954feca0fd1a431cd3b7",
+      "change": "select bounded port modes and batch active-row mapping"
+    },
+    {
+      "sha": "a233ac49f84269265ddc684d31cb9b790864b018",
+      "change": "measure bounded production port reuse with independent readback"
+    },
+    {
+      "sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+      "change": "qualify bounded real edge volume and V17 q row tiles"
+    }
+  ],
+  "B_q0_port_tile_timing": {
+    "source_sha": "eca24be972a0eca1480b6f1f2fb9d745fb823718",
+    "tile_wall_seconds": 23.758030311902985,
+    "tile_process_cpu_seconds": 25.875420297,
+    "run_case_workflow_monotonic_seconds": 56.047974047,
+    "worker_watchdog_nested_seconds": 56.006412827,
+    "outer_parent_monotonic_seconds": 60.399409638,
+    "outer_parent_conservative_budget_seconds": 66.230654382,
+    "process_tree_rss_peak_bytes": 2939039744,
+    "dedicated_cgroup_peak_bytes": 3120656384,
+    "dedicated_cgroup_limit_bytes": 17179869184,
+    "task_swap_peak_bytes": 0,
+    "PSS": "disabled/null",
+    "descendants_cleared": true,
+    "native_owner_cleanup": "UNKNOWN"
+  },
+  "runs": {
+    "B": {
+      "source_sha": "eca24be972a0eca1480b6f1f2fb9d745fb823718",
+      "service_id": "myfenics-case-20261010T170717-2236957",
+      "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T170718.363692Z",
+      "checker": "22-check offline postfix; partial only; original checker exit 2 preserved"
+    },
+    "C": {
+      "source_sha": "a233ac49f84269265ddc684d31cb9b790864b018",
+      "service_id": "myfenics-case-20261010T190955-2246242",
+      "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T190956.343813Z",
+      "checker": "22 independent checks passed"
+    },
+    "D": {
+      "source_sha": "809d6a151eed7b4d0eca0430fee2782285e786e7",
+      "service_id": "myfenics-case-20261010T202438-2252669",
+      "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T202439.437904Z",
+      "checker": "34 independent checks passed; partial receipt; MAIN audit scope limited"
+    }
+  },
+  "identity": {
+    "review_base_sha": "84dce5a39eb34a259166f34e063312a2cd86ef0c",
+    "review_sha": "92a59c167b53f828cc0408eca664d0eebc878428",
+    "input_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/target_operator_probe/target_original_ny8_operator_probe_v22.dat",
+    "input_sha256": "33cb569eb900f60100569a6659138589a9d26784a22e05d50c7fe63190bac4ff",
+    "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+    "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "campaign_window": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_window_v24.json",
+      "sha256": "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358",
+      "T0_utc": "2026-10-10T16:33:11Z",
+      "numeric_cutoff_utc": "2026-10-10T22:13:11Z",
+      "deadline_utc": "2026-10-10T22:33:11Z",
+      "refreshed": false
+    },
+    "abi": {
+      "qualified_activation": true,
+      "python": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+      "runtime_prefix": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+      "scalar_type": "complex128",
+      "int_type": "int32",
+      "mpi_size": 1,
+      "preflight_returncode": 0,
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+      "receipt_sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426",
+      "preflight_stdout_sha256": "afbc606b098997a2c32c66ec34d6beb047008b20581bffd57ba962a6d581394b"
+    }
+  },
+  "run_outer_records": {
+    "B": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T170717-2236957/outer_workflow_record.json",
+      "sha256": "1ba084190409d8bf944755a2efcebb3b808fb828a666391b45d8f648cb5828bc"
+    },
+    "C": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T190955-2246242/outer_workflow_record.json",
+      "sha256": "2e4d6d215eda945eeb3b4e4fd40357652c297ef032462bd8773e6efc0ac44c29"
+    },
+    "D": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/service_runs/myfenics-case-20261010T202438-2252669/outer_workflow_record.json",
+      "sha256": "73e3167ca9500bf30bf1333ac5538c317ad96d0b5d62e2fab6b3ede7846a8aff"
+    }
+  },
+  "changed_source_paths": [
+    "scripts/task40_v20_service_workflow.py",
+    "scripts/task40_v21_readonly_recheck.py",
+    "src/runners/task40_v10_campaign.py",
+    "src/runners/task40_v20_stage_runner.py",
+    "src/solvers/fullspace_dtn_action.py",
+    "src/solvers/hcurl_assembly_time_condensation.py",
+    "src/solvers/p6_cell_condensed_action.py",
+    "src/solvers/task40_v22_operator_probe.py",
+    "src/solvers/task40_v24_real_edge_panel.py",
+    "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+    "src/test/test_task40_v10_campaign.py",
+    "src/test/test_task40_v20_routes.py",
+    "src/test/test_task40_v21_readonly_recheck.py",
+    "src/test/test_task40_v22_operator_probe.py",
+    "src/test/test_task40_v24_real_edge_panel.py"
+  ]
+}

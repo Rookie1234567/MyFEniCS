@@ -48,7 +48,7 @@
 | [`task035c_hybrid_channel_memory_closure/README.md`](task035c_hybrid_channel_memory_closure/README.md) | Task035c：修复 Full3D–Hybrid 离散 phase/traction 合同；p6/h10 六路径 12/12+12/12；static Hybrid M120 峰值下降31.89%，50%目标未达 |
 | [`task037c_hybrid_iterative_robustness/response_v3.md`](task037c_hybrid_iterative_robustness/response_v3.md) | Task037c白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5 的授权 research extension；M_robust=120，preferred RSS未过，不是production-qualified |
 | [`task038_input_driven_configuration/response_v1.md`](task038_input_driven_configuration/response_v1.md) | Task038：单一 `.dat` input-driven configuration；11 migrated/6 retained，ordinary数值算法不变；source-branch full pytest 1119 passed/48 skipped，integration full 由用户授权 controlled stop |
-| [`task40extra_0p7nm_engineering/README.md`](task40extra_0p7nm_engineering/README.md) | Task40extra Review V21：原尺寸4,352个z-port facet已映射到54/60个几何类别；carrier support仍UNKNOWN，E2资源停点保留，生产bounded action与目标full仍未资格化 |
+| [`task40extra_0p7nm_engineering/README.md`](task40extra_0p7nm_engineering/README.md) | Task40extra Review V24：q0单模式端口 tile、32模态复用与真实内部 y-edge 体积行面板；完整q 0/8、PDE未运行，single-q因依赖未闭合而NOT_ADMITTED |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
@@ -79,7 +79,7 @@
 | Task037b | frozen Hybrid iterative M10 | 白名单能力已选择性进入 master；仍为 explicit-opt-in research capability，ordinary defaults不变，not production-qualified |
 | Task037c | Hybrid iterative robustness | 白名单能力已选择性进入 master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过，仍not production-qualified |
 | Task038 | 单一 `.dat` input-driven configuration | 已按 Review V1 白名单选择性进入 master；11 migrated/6 retained，ordinary defaults 不变；source-branch full pytest 1119 passed/48 skipped，integration full 为用户授权 controlled stop |
-| Task40extra | Review V21：端口库存、零块表示、局部生成式 action 与阶段回执 | z-port geometry mapping 54/60 classes；carrier support UNKNOWN；local bounded action PARTIAL；E2 RESOURCE_CONTROLLED_STOP；full target/2 TB/48 h NOT_QUALIFIED；ordinary default unchanged |
+| Task40extra | Review V24：q0 端口 tile、32 模态复用与真实内部 y-edge 体积面板 | B/C/D bounded evidence only；B postfix partial、C 22 checks、D 34 checks partial；完整 q 0/8、PDE 未运行；single-q 因依赖缺口 NOT_ADMITTED，非资源失败；ordinary default unchanged |
 
 ## 当前任务
 
@@ -102,7 +102,7 @@
 | Task037b | `task037b_hybrid_fem_modal_iterative/` | 白名单能力已选择性进入master；frozen M10仍为explicit-opt-in research capability，ordinary defaults不变；Case101 compact、runner/watchdog/checker与V7边界见下方 |
 | Task037c | `task037c_hybrid_iterative_robustness/` | 白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过；not production-qualified |
 | Task038 | `task038_input_driven_configuration/` | 单一 `.dat` 普通入口；11 migrated/6 retained；ordinary 数值算法不变；final full pytest 1119 passed/48 skipped |
-| Task40extra | `task40extra_0p7nm_engineering/` | Review V21几何映射增量已整理；carrier support与production bounded action仍部分，E2受控停止；固定窗口未刷新，文档和证据待主控集中收口 |
+| Task40extra | `task40extra_0p7nm_engineering/` | Review V24 B/C/D 有界证据已整理；完整q 0/8、PDE未运行；single-q依赖缺口已登记；更正后的文档待主控审阅，ordinary default不变 |
 
 ## Task28 审计入口
 
@@ -216,14 +216,14 @@ Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcom
 | [`task039_extra_physical_multilevel/outcomes/summary.md`](task039_extra_physical_multilevel/outcomes/summary.md) | Task39 最终汇总及历史证据入口 |
 | [`task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_offline_comparison_v34.json`](task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_offline_comparison_v34.json) | 已保存 V29/V30/V31 数组比较及文件哈希 |
 
-Task40extra 的活动执行分支为 task40extra_0p7nm_engineering。Review V21 是当前交付，V20及更早记录保留为历史入口：
+Task40extra 的活动执行分支为 task40extra_0p7nm_engineering。Review V24 是当前交付，V23及更早记录保留为历史入口：
 
 | 文件 | 用途 |
 |---|---|
-| [`task40extra_0p7nm_engineering/README.md`](task40extra_0p7nm_engineering/README.md) | 当前V21结果入口及V20、V19和更早历史导航 |
-| [`task40extra_0p7nm_engineering/review_report_v21.md`](task40extra_0p7nm_engineering/review_report_v21.md) 与 [`response_v21.md`](task40extra_0p7nm_engineering/response_v21.md) | 当前 V21 执行回应、端口库存与固定窗口只读 sample |
-| [`task40extra_0p7nm_engineering/review_report_v20.md`](task40extra_0p7nm_engineering/review_report_v20.md) 与 [`response_v20.md`](task40extra_0p7nm_engineering/response_v20.md) | V20执行回应与目标阶段交接，保留为历史记录 |
+| [`task40extra_0p7nm_engineering/README.md`](task40extra_0p7nm_engineering/README.md) | 当前V24结果入口及V23、V22和更早历史导航 |
+| [`task40extra_0p7nm_engineering/review_report_v24.md`](task40extra_0p7nm_engineering/review_report_v24.md) 与 [`response_v24.md`](task40extra_0p7nm_engineering/response_v24.md) | 当前 V24 执行合同、B/C/D 分 source 面板、主控核验范围和资格边界 |
+| [`task40extra_0p7nm_engineering/outcomes/summary.md`](task40extra_0p7nm_engineering/outcomes/summary.md)、[`outcomes/test_summary.md`](task40extra_0p7nm_engineering/outcomes/test_summary.md) 与 [`outcomes/records/q_tile_v24.json`](task40extra_0p7nm_engineering/outcomes/records/q_tile_v24.json) | V24 B/C/D 分项结果、q0 compact、文档测试范围和完整证据索引；V23及更早 review/response 保留为历史入口 |
 | [`task40extra_0p7nm_engineering/outcomes/summary.md`](task40extra_0p7nm_engineering/outcomes/summary.md) 与 [`outcomes/test_summary.md`](task40extra_0p7nm_engineering/outcomes/test_summary.md) | 当前结果、成本、负结果、测试和未运行范围；V19及更早历史保留在后半段 |
 | [`task40extra_0p7nm_engineering/outcomes/records/run_index.json`](task40extra_0p7nm_engineering/outcomes/records/run_index.json) | V21/V20命令、ABI、原始证据与hash-bound索引 |
 
-普通求解器默认未变；执行者未提交、推送或合并master。
+普通求解器默认未变；六个 V24 源码提交已包含在冻结 source，本文档收口没有新增代码提交、推送或 master 合并。

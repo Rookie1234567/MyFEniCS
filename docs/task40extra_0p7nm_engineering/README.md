@@ -1,3 +1,18 @@
+## Review V24 当前交付：q0 端口 tile、32 模态复用与真实内部 edge 面板
+
+V24 包含六个已冻结源码提交，科学基线为 84dce5a39eb34a259166f34e063312a2cd86ef0c，最终 source 为 809d6a151eed7b4d0eca0430fee2782285e786e7。B 是源码 eca24be… 上的 q0 单模式端口 tile；C 是源码 a233ac4… 上的 32 模态复用/类别盘点；D 是最终源码上的真实内部 y-edge 体积行面板。B/C/D 的 source、execution window、input、ABI 与 raw hashes 分开绑定。完整 q 仍 0/8，full volume action、PDE、official R/T/A 未运行；可选 single-q 因未闭合依赖保持 NOT_ADMITTED，不是资源失败。
+
+| 文件 | 内容 |
+|---|---|
+| [Review V24](review_report_v24.md) 与 [Response V24](response_v24.md) | 冻结源码历史、B/C/D 实际接线范围、复核边界、资源和 selective merge 分组 |
+| [V24 outcomes summary](outcomes/summary.md) 与 [test summary](outcomes/test_summary.md) | 分开记录三次数值证据、文档合同检查与未运行项 |
+| [q0 tile](outcomes/records/q_tile_v24.json) / [operator](outcomes/records/target_operator_probe_v24.json) | B 的端口 map、C/D 结果和逐 run source/window/input/ABI 身份 |
+| [support](outcomes/records/production_support_v24.json) / [performance](outcomes/records/performance_v24.json) | 有界生产支持、独立计时、RSS/cgroup/swap 口径 |
+| [增量账本](outcomes/records/review_v24_incremental_workflow_ledger.json) 与 [run index](outcomes/records/run_index.json) | 固定 window、append-only accounting、原始失败及全部 hash 索引 |
+| [可选 single-q closeout](../../benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/v24_optional_single_q_assessment_closeout.json) | 因 volume action、streaming reference entry 和共驻容量未闭合而 NOT_ADMITTED |
+
+六个 V24 源码提交属于阶段实现；本轮文档 closeout 本身没有改数值源码、提交或推送，也没有改变 ordinary default。当前 package 等待主控审查。
+
 ## Review V22 当前交付
 
 V22 在原尺寸 Ny=8 上完成 18,968/32,060 个真实模式 support/action 前缀，并取得两侧各一个独立 882-row B/D packet 的限定范围通过；固定 campaign 窗口在 q 构造前 cooperative stop。完整 FE/MPC、8-q、factor/KSP、场、R/T/A 与目标精度仍未资格化。
