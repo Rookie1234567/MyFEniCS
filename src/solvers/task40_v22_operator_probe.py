@@ -5149,6 +5149,222 @@ def _run_v24_bounded_port_reuse_and_volume_census(
     return result
 
 
+def _run_v24_real_edge_volume_panel(
+    root: Path,
+    output_directory: Path,
+    *,
+    selector: Mapping[str, Any],
+    preflight: Mapping[str, Any],
+    cfg: Any,
+    mesh_object: Any,
+    cell_tags: Any,
+    space: Any,
+    mpc: Any,
+    axes_values: Mapping[str, Any],
+    resource_sample: Callable[[], Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Run D only, reusing the hash-bound C files and preserving its checker."""
+
+    import shutil
+    from time import perf_counter
+
+    import ufl
+    from dolfinx import fem
+
+    from .common_3d_forms import _build_physical_volume_terms
+    from .task40_v24_real_edge_panel import (
+        LocalEquationWitnessFailure,
+        _array_sha256,
+        build_real_edge_volume_panel,
+        write_panel_payload,
+    )
+
+    if selector.get("operation") != "D_REAL_EDGE_PANEL":
+        raise ValueError("V24 D runner requires the explicit D_REAL_EDGE_PANEL operation")
+    allowed_results = (root / "results").resolve()
+    c_sample_path = (root / str(selector.get("c_sample_path", ""))).resolve()
+    c_cache_path = (root / str(selector.get("c_cache_path", ""))).resolve()
+    c_replay_path = (root / str(selector.get("c_replay_path", ""))).resolve()
+    for path in (c_sample_path, c_cache_path, c_replay_path):
+        if not path.is_relative_to(allowed_results) or not path.is_file():
+            raise ValueError("V24 D selector is missing a C artifact under results/")
+    if (
+        _sha256_file(c_sample_path) != selector.get("c_sample_sha256")
+        or _sha256_file(c_cache_path) != selector.get("c_cache_sha256")
+        or _sha256_file(c_replay_path) != selector.get("c_replay_sha256")
+    ):
+        raise ValueError("V24 D selector C artifact hashes no longer match")
+    c_sample = json.loads(c_sample_path.read_text(encoding="utf-8"))
+    port = c_sample.get("port_reuse", {})
+    volume = c_sample.get("volume_census", {})
+    if (
+        c_sample.get("status") != "PASS_V24_PORT_REUSE_C_AND_VOLUME_CENSUS"
+        or c_sample.get("source_sha") != selector.get("c_source_sha")
+        or c_sample.get("campaign_window_sha256") != selector.get("campaign_window_sha256")
+        or port.get("cache_payload_path") != c_cache_path.name
+        or port.get("cache_payload_sha256") != selector.get("c_cache_sha256")
+        or port.get("replay_payload_path") != c_replay_path.name
+        or port.get("replay_payload_sha256") != selector.get("c_replay_sha256")
+        or volume.get("cell_count") != 30_464
+        or volume.get("class_counts", {}).get("raw_class_count") != 29
+        or volume.get("class_counts", {}).get("oriented_class_count") != 60
+        or c_sample.get("full_q_matrix") is not False
+        or c_sample.get("pde_solved") is not False
+    ):
+        raise ValueError("V24 D selector C receipt differs from the completed C evidence")
+
+    q0_anchor = c_sample.get("q0_anchor", {})
+    if (
+        q0_anchor.get("checker_sha256") != selector.get("q0_partial_checker_sha256")
+        or q0_anchor.get("rerun") is not False
+    ):
+        raise ValueError("V24 D C receipt is not bound to the qualified prior q0 checker")
+
+    # The stage partial checker consumes a run-local copy, but the source of
+    # every copied byte remains the separately hash-bound completed C run.
+    copies = (
+        (c_sample_path, output_directory / "v24_bounded_port_reuse_volume_sample.json"),
+        (c_cache_path, output_directory / c_cache_path.name),
+        (c_replay_path, output_directory / c_replay_path.name),
+    )
+    for source, destination in copies:
+        if destination.exists():
+            raise FileExistsError(destination)
+        shutil.copyfile(source, destination)
+        if _sha256_file(destination) != _sha256_file(source):
+            raise IOError(f"copied V24 C artifact failed byte identity: {source.name}")
+    c_sample["artifact_path"] = "v24_bounded_port_reuse_volume_sample.json"
+    c_sample["artifact_sha256"] = _sha256_file(
+        output_directory / c_sample["artifact_path"]
+    )
+
+    compile_admission = _resource_admission(
+        "v24_real_edge_volume_form_compile",
+        1024 * 2**20,
+        resource_sample=resource_sample,
+        require_task_cgroup=True,
+    )
+    compile_started = perf_counter()
+    trial = ufl.TrialFunction(space)
+    test = ufl.TestFunction(space)
+    dx = ufl.Measure("dx", domain=mesh_object, subdomain_data=cell_tags)
+    curl_form, mass_form = _build_physical_volume_terms(cfg, trial, test, dx)
+    compiled_volume_form = fem.form(curl_form + mass_form)
+    form_compile_seconds = perf_counter() - compile_started
+
+    def panel_resource_admission(stage: str, additional_bytes: int):
+        return _resource_admission(
+            stage,
+            additional_bytes,
+            resource_sample=resource_sample,
+            require_task_cgroup=True,
+        )
+
+    try:
+        panel = build_real_edge_volume_panel(
+            compiled_form=compiled_volume_form,
+            function_space=space,
+            cell_tags=cell_tags,
+            mpc=mpc,
+            cfg=cfg,
+            axes_values=axes_values,
+            resource_sample=resource_sample,
+            resource_admission=panel_resource_admission,
+        )
+    except LocalEquationWitnessFailure as error:
+        failure_record: dict[str, Any] = {
+            "schema": "task40extra.review_v24_real_edge_orbit_volume_panel_failure.v1",
+            "status": "FAILED_LOCAL_EQUATION_CONDENSE_RECOVER_WITNESS",
+            "official_result": False,
+            "full_q_matrix": False,
+            "full_volume_action": False,
+            "pde_solved": False,
+            "factor_created": False,
+            "ksp_created": False,
+            "source_sha": preflight.get("source_sha"),
+            "campaign_window_sha256": selector.get("campaign_window_sha256"),
+            "failed_oriented_class": error.oriented_class,
+            "failure_message": str(error),
+            "local_equation_condense_recover_witness": error.audit,
+            "c_artifact_binding": {
+                "sample_path": str(c_sample_path.relative_to(root)),
+                "sample_sha256": selector["c_sample_sha256"],
+                "cache_path": str(c_cache_path.relative_to(root)),
+                "cache_sha256": selector["c_cache_sha256"],
+                "replay_path": str(c_replay_path.relative_to(root)),
+                "replay_sha256": selector["c_replay_sha256"],
+                "source_sha": selector["c_source_sha"],
+                "reused_without_recomputation": True,
+            },
+            "payload": error.payload,
+            "payload_hashes": {
+                "local_equation_witness_payloads_sha256": {
+                    name: _array_sha256(array)
+                    for name, array in error.payload.items()
+                }
+            },
+        }
+        failure_record = write_panel_payload(output_directory, failure_record)
+        failure_path = output_directory / "v24_real_edge_volume_panel.json"
+        failure_record["artifact_path"] = failure_path.name
+        _write_json(failure_path, failure_record)
+        raise
+    panel["source_sha"] = preflight.get("source_sha")
+    panel["c_artifact_binding"] = {
+        "sample_path": str(c_sample_path.relative_to(root)),
+        "sample_sha256": selector["c_sample_sha256"],
+        "cache_path": str(c_cache_path.relative_to(root)),
+        "cache_sha256": selector["c_cache_sha256"],
+        "replay_path": str(c_replay_path.relative_to(root)),
+        "replay_sha256": selector["c_replay_sha256"],
+        "source_sha": selector["c_source_sha"],
+        "reused_without_recomputation": True,
+    }
+    panel["timing_seconds"]["volume_form_compile"] = float(form_compile_seconds)
+    panel["capacity"]["form_compile_admission"] = compile_admission
+    panel = write_panel_payload(output_directory, panel)
+    panel_path = output_directory / "v24_real_edge_volume_panel.json"
+    panel["artifact_path"] = panel_path.name
+    _write_json(panel_path, panel)
+
+    q_coverage = _v23_q_coverage_record({"status": "NOT_RUN"})
+    q_coverage.update(
+        {
+            "built_q_count": 0,
+            "full_q_matrix_coverage": "0/8",
+            "volume_qualification": "PARTIAL_REAL_EDGE_ORBIT_Q_PANEL",
+            "reason": (
+                "the complete 48-row edge-orbit q-row block was assembled against all "
+                "touched active trace columns; the 48x48 edge self q-by-r diagnostic "
+                "was measured, non-edge q-column projection not run, and no full q "
+                "matrix or full-volume action was built"
+            ),
+        }
+    )
+    return {
+        "schema": "task40extra.review_v24_real_edge_volume_panel_run.v1",
+        "status": "PASS_V24_REAL_EDGE_VOLUME_PANEL",
+        "official_result": False,
+        "full_q_matrix": False,
+        "factor_created": False,
+        "ksp_created": False,
+        "pde_solved": False,
+        "source_sha": preflight.get("source_sha"),
+        "campaign_window_sha256": selector.get("campaign_window_sha256"),
+        "v24_bounded_port_reuse_volume_sample": c_sample,
+        "v24_real_edge_volume_panel": panel,
+        "q_coverage": q_coverage,
+        "resource_gates": [
+            compile_admission,
+            panel["capacity"]["admission"],
+        ],
+        "c_artifacts_copied_and_hash_verified": True,
+        "c_sample_recomputed": False,
+        "q0_rerun": False,
+        "full_mode_scan_rerun": False,
+    }
+
+
 def _run_probe(
     resolved: Mapping[str, Any],
     output_directory: Path,
@@ -5844,6 +6060,14 @@ def _run_probe(
                 if selector_sha256 != os.environ.get("TASK40_V24_CD_SELECTOR_SHA256"):
                     raise ValueError("V24 C/D selector file hash differs from its service binding")
                 selector = json.loads(selector_path.read_text(encoding="utf-8"))
+                selector_operation = selector.get(
+                    "operation", "C_PORT_REUSE_VOLUME_CENSUS"
+                )
+                if selector_operation not in {
+                    "C_PORT_REUSE_VOLUME_CENSUS",
+                    "D_REAL_EDGE_PANEL",
+                }:
+                    raise ValueError("V24 selector names an unsupported C/D operation")
                 q0_checker_path = Path(
                     str(selector.get("q0_partial_checker_path", ""))
                 ).resolve()
@@ -5876,43 +6100,70 @@ def _run_probe(
                     or q0_checker.get("full_pass") is not False
                 ):
                     raise ValueError("V24 bounded sample is not bound to a passing prior q0 checker")
-                cd_facts = _run_v24_bounded_port_reuse_and_volume_census(
-                    root,
-                    output_directory,
-                    selector=selector,
-                    preflight=preflight,
-                    modes=modes,
-                    mode_rows=mode_rows,
-                    cfg=cfg,
-                    mesh_object=mesh_object,
-                    cell_tags=cell_tags,
-                    space=space,
-                    mpc=mpc,
-                    assemblers=assemblers,
-                    assembly_context=context,
-                    axes_values=axes_values,
-                    candidate_global_rows=native_rule.candidate_rows,
-                    interior_rows=interior_rows_sorted,
-                    mpc_expansions=mpc_expansions,
-                    h_values=h_values,
-                    resource_sample=resource_sample,
-                )
-                resource_gates.extend(cd_facts.get("resource_gates", ()))
+                if selector_operation == "D_REAL_EDGE_PANEL":
+                    d_facts = _run_v24_real_edge_volume_panel(
+                        root,
+                        output_directory,
+                        selector=selector,
+                        preflight=preflight,
+                        cfg=cfg,
+                        mesh_object=mesh_object,
+                        cell_tags=cell_tags,
+                        space=space,
+                        mpc=mpc,
+                        axes_values=axes_values,
+                        resource_sample=resource_sample,
+                    )
+                    resource_gates.extend(d_facts.get("resource_gates", ()))
+                    facts["v24_bounded_port_reuse_volume_sample"] = d_facts[
+                        "v24_bounded_port_reuse_volume_sample"
+                    ]
+                    facts["v24_real_edge_volume_panel"] = d_facts[
+                        "v24_real_edge_volume_panel"
+                    ]
+                    facts["q_coverage"] = d_facts["q_coverage"]
+                    facts["status"] = "PASS_V24_REAL_EDGE_VOLUME_PANEL"
+                else:
+                    cd_facts = _run_v24_bounded_port_reuse_and_volume_census(
+                        root,
+                        output_directory,
+                        selector=selector,
+                        preflight=preflight,
+                        modes=modes,
+                        mode_rows=mode_rows,
+                        cfg=cfg,
+                        mesh_object=mesh_object,
+                        cell_tags=cell_tags,
+                        space=space,
+                        mpc=mpc,
+                        assemblers=assemblers,
+                        assembly_context=context,
+                        axes_values=axes_values,
+                        candidate_global_rows=native_rule.candidate_rows,
+                        interior_rows=interior_rows_sorted,
+                        mpc_expansions=mpc_expansions,
+                        h_values=h_values,
+                        resource_sample=resource_sample,
+                    )
+                    facts["v24_bounded_port_reuse_volume_sample"] = cd_facts
+                    facts["q_coverage"] = _v23_q_coverage_record({"status": "NOT_RUN"})
+                    facts["q_coverage"]["reason"] = (
+                        "V24 measured bounded port reuse and exact-geometry volume-class census; "
+                        "the real face panel remains NOT_RUN and no full q matrix was built"
+                    )
+                    facts["status"] = (
+                        "PASS_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
+                        if cd_facts.get("status") == "PASS_V24_PORT_REUSE_C_AND_VOLUME_CENSUS"
+                        else "FAILED_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
+                    )
                 facts["resource_gates"] = resource_gates
-                facts["v24_bounded_port_reuse_volume_sample"] = cd_facts
-                facts["q_coverage"] = _v23_q_coverage_record({"status": "NOT_RUN"})
-                facts["q_coverage"]["reason"] = (
-                    "V24 measured bounded port reuse and exact-geometry volume-class census; "
-                    "the real face panel remains NOT_RUN and no full q matrix was built"
-                )
-                facts["status"] = (
-                    "PASS_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
-                    if cd_facts.get("status") == "PASS_V24_PORT_REUSE_C_AND_VOLUME_CENSUS"
-                    else "FAILED_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
-                )
                 facts["failed_stage"] = (
                     None
-                    if facts["status"] == "PASS_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
+                    if facts["status"]
+                    in {
+                        "PASS_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE",
+                        "PASS_V24_REAL_EDGE_VOLUME_PANEL",
+                    }
                     else "target_operator_probe"
                 )
                 facts["partial_stages"] = ["target_operator_probe"]

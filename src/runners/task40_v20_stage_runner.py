@@ -1075,6 +1075,10 @@ def run_task40_v20_stage(
             outcome = "STAGE_COMPLETED"
             status = "stage_completed"
             classification = "TARGET_OPERATOR_PROBE_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
+        elif probe_status == "PASS_V24_REAL_EDGE_VOLUME_PANEL":
+            outcome = "STAGE_COMPLETED"
+            status = "stage_completed"
+            classification = "TARGET_OPERATOR_PROBE_V24_REAL_EDGE_VOLUME_PANEL"
         elif probe_status == "PLANNED_SCAN_HANDOFF_WITH_PARTIAL_Q_PORT_TILE":
             outcome = "PLANNED_HANDOFF"
             status = "planned_handoff"
@@ -1142,6 +1146,8 @@ def run_task40_v20_stage(
                     "v24_bounded_port_reuse_volume_sample.json",
                     "v24_bounded_32_mode_B_D_H_cache.npz",
                     "v24_bounded_32_mode_provider_replay.npz",
+                    "v24_real_edge_volume_panel.json",
+                    "v24_real_edge_volume_panel.npz",
                 )
                 if (output_directory / name).is_file()
             },

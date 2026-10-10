@@ -817,6 +817,31 @@ def _bind_v24_cd_selector(
         or selector.get("sum_duplicate_cell_integrals") is not True
     ):
         raise ValueError("V24 C/D selector differs from the frozen bounded sample contract")
+    operation = selector.get("operation", "C_PORT_REUSE_VOLUME_CENSUS")
+    if operation not in {"C_PORT_REUSE_VOLUME_CENSUS", "D_REAL_EDGE_PANEL"}:
+        raise ValueError("V24 selector names an unsupported C/D operation")
+    c_artifact_binding: dict[str, str] = {}
+    if operation == "D_REAL_EDGE_PANEL":
+        results_root = (repo_root / "results").resolve()
+        for path_key, hash_key in (
+            ("c_sample_path", "c_sample_sha256"),
+            ("c_cache_path", "c_cache_sha256"),
+            ("c_replay_path", "c_replay_sha256"),
+        ):
+            artifact_path = (repo_root / str(selector.get(path_key, ""))).resolve()
+            artifact_hash = selector.get(hash_key)
+            if (
+                not artifact_path.is_relative_to(results_root)
+                or not artifact_path.is_file()
+                or not isinstance(artifact_hash, str)
+                or _sha256_file(artifact_path) != artifact_hash
+            ):
+                raise ValueError(f"V24 D selector has an invalid hash-bound C artifact: {path_key}")
+            c_artifact_binding[path_key] = str(artifact_path)
+            c_artifact_binding[hash_key] = artifact_hash
+        if not isinstance(selector.get("c_source_sha"), str):
+            raise ValueError("V24 D selector must bind the completed C source SHA")
+        c_artifact_binding["c_source_sha"] = str(selector["c_source_sha"])
     q0_path = (repo_root / str(selector.get("q0_partial_checker_path", ""))).resolve()
     if not q0_path.is_relative_to(allowed_root) or not q0_path.is_file():
         raise ValueError("V24 C/D selector is missing its bound q0 partial checker receipt")
@@ -836,6 +861,7 @@ def _bind_v24_cd_selector(
     ):
         raise ValueError("V24 C/D selector q0 partial receipt is not a qualified checker pass")
     return {
+        "operation": str(operation),
         "selector_path": str(selector_path),
         "selector_sha256": hashlib.sha256(selector_raw).hexdigest(),
         "schema": str(selector["schema"]),
@@ -846,6 +872,7 @@ def _bind_v24_cd_selector(
         "q_only_checkpoint_payload_sha256": str(q_only_binding["checkpoint_payload_sha256"]),
         "mode_count": 32,
         "max_cache_bytes": 536_870_912,
+        **c_artifact_binding,
     }
 
 
@@ -1763,6 +1790,603 @@ def _v24_bounded_sample_readback_checks(
     return checks
 
 
+def _v24_real_edge_panel_readback_checks(
+    *, output_directory: Path, probe: dict[str, Any]
+) -> dict[str, bool]:
+    """Independently replay the saved V24 edge row block and local witnesses."""
+    import math
+
+    import numpy as np
+    from scipy import sparse
+
+    checks = {
+        "v24_real_edge_panel_json_and_payload_hashes": False,
+        "v24_real_edge_panel_json_matches_probe_receipt": False,
+        "v24_real_edge_panel_48_by_all_active_columns": False,
+        "v24_real_edge_panel_q_row_and_edge_self_recomputed": False,
+        "v24_real_edge_panel_v17_csr_relative_oracles_recomputed": False,
+        "v24_real_edge_panel_full_trace_and_incident_cell_inventory": False,
+        "v24_real_edge_panel_cell_projection_maps_hash_bound": False,
+        "v24_real_edge_panel_native_block_reaccumulated_from_cells": False,
+        "v24_real_edge_panel_local_witness_blocks_independently_verified": False,
+        "v24_real_edge_panel_local_witness_residuals_recomputed": False,
+        "v24_real_edge_panel_q_scope_is_partial_and_explicit": False,
+    }
+
+    def array_sha256(value: Any) -> str:
+        array = np.ascontiguousarray(value)
+        digest = hashlib.sha256()
+        digest.update(repr((array.shape, str(array.dtype))).encode("ascii"))
+        digest.update(memoryview(array).cast("B"))
+        return digest.hexdigest()
+
+    def relative_error(actual: Any, expected: Any) -> tuple[float, float, float]:
+        left = np.asarray(actual, dtype=np.complex128)
+        right = np.asarray(expected, dtype=np.complex128)
+        if left.shape != right.shape:
+            return float("inf"), float("inf"), float(np.linalg.norm(right))
+        error_norm = float(np.linalg.norm(left - right))
+        oracle_norm = float(np.linalg.norm(right))
+        if oracle_norm == 0.0:
+            return (
+                0.0 if error_norm == 0.0 else float("inf"),
+                error_norm,
+                oracle_norm,
+            )
+        return error_norm / oracle_norm, error_norm, oracle_norm
+
+    def pass_metrics(
+        A_ii: np.ndarray,
+        A_it: np.ndarray,
+        A_ti: np.ndarray,
+        A_tt: np.ndarray,
+        schur: np.ndarray,
+        xi_true: np.ndarray,
+        xt_true: np.ndarray,
+        b_i: np.ndarray,
+        b_t: np.ndarray,
+        xi: np.ndarray,
+        solve_b: np.ndarray,
+    ) -> tuple[dict[str, float], np.ndarray]:
+        interior_residual = A_ii @ xi + A_it @ xt_true - b_i
+        trace_residual = A_ti @ xi + A_tt @ xt_true - b_t
+        full_rhs_norm = float(np.hypot(np.linalg.norm(b_i), np.linalg.norm(b_t)))
+        equation_relative = float(
+            np.hypot(np.linalg.norm(interior_residual), np.linalg.norm(trace_residual))
+            / max(full_rhs_norm, np.finfo(np.float64).tiny)
+        )
+        forward_relative = float(
+            np.linalg.norm(xi - xi_true)
+            / max(float(np.linalg.norm(xi_true)), np.finfo(np.float64).tiny)
+        )
+        rhs_condensed = b_t - A_ti @ solve_b
+        condensed_relative = float(
+            np.linalg.norm(schur @ xt_true - rhs_condensed)
+            / max(float(np.linalg.norm(rhs_condensed)), np.finfo(np.float64).tiny)
+        )
+        return (
+            {
+                "equation": equation_relative,
+                "forward": forward_relative,
+                "condensed": condensed_relative,
+            },
+            rhs_condensed,
+        )
+
+    try:
+        panel = probe.get("v24_real_edge_volume_panel")
+        if not isinstance(panel, dict):
+            return checks
+        json_path = output_directory / "v24_real_edge_volume_panel.json"
+        payload_path = output_directory / "v24_real_edge_volume_panel.npz"
+        if not json_path.is_file() or not payload_path.is_file():
+            return checks
+        disk_panel = json.loads(json_path.read_text(encoding="utf-8"))
+        payload_hash = _sha256_file(payload_path)
+        partial_path = output_directory / "v20_partial_result.json"
+        partial = json.loads(partial_path.read_text(encoding="utf-8"))
+        artifact_records = partial.get("artifact_hashes", {})
+        json_artifact = artifact_records.get(json_path.name, {})
+        npz_artifact = artifact_records.get(payload_path.name, {})
+        hashes = panel.get("payload_hashes", {})
+        checks["v24_real_edge_panel_json_and_payload_hashes"] = bool(
+            panel.get("status") == "PASS_V24_REAL_EDGE_ORBIT_Q_PANEL"
+            and panel.get("payload_file") == payload_path.name
+            and panel.get("payload_sha256") == payload_hash
+            and hashes.get("payload_file_sha256") == payload_hash
+            and json_artifact.get("sha256") == _sha256_file(json_path)
+            and npz_artifact.get("sha256") == payload_hash
+        )
+        checks["v24_real_edge_panel_json_matches_probe_receipt"] = (
+            disk_panel == panel
+        )
+
+        with np.load(payload_path, allow_pickle=False) as archive:
+            payload = {name: archive[name] for name in archive.files}
+        native = np.asarray(payload["native_panel"], dtype=np.complex128)
+        canonical = np.asarray(payload["canonical_row_panel"], dtype=np.complex128)
+        q_row_saved = np.asarray(payload["q_row_panel"], dtype=np.complex128)
+        edge_native_saved = np.asarray(
+            payload["edge_self_native_panel"], dtype=np.complex128
+        )
+        edge_canonical_saved = np.asarray(
+            payload["edge_self_canonical_panel"], dtype=np.complex128
+        )
+        edge_q_saved = np.asarray(payload["edge_self_q_panel"], dtype=np.complex128)
+        entity_map = np.asarray(payload["entity_map"], dtype=np.complex128)
+        dft = np.asarray(payload["dft"], dtype=np.complex128)
+        dft_edge = np.asarray(payload["dft_edge"], dtype=np.complex128)
+        column_rows = np.asarray(payload["column_global_rows"], dtype=np.int64)
+        for hash_name, array_name in (
+            ("native_panel_sha256", "native_panel"),
+            ("canonical_row_panel_sha256", "canonical_row_panel"),
+            ("q_row_panel_sha256", "q_row_panel"),
+            ("edge_self_q_panel_sha256", "edge_self_q_panel"),
+            ("entity_map_sha256", "entity_map"),
+            ("dft_sha256", "dft"),
+            ("column_global_rows_sha256", "column_global_rows"),
+        ):
+            checks.setdefault("v24_real_edge_panel_array_hashes_recomputed", True)
+            if hashes.get(hash_name) != array_sha256(payload[array_name]):
+                checks["v24_real_edge_panel_array_hashes_recomputed"] = False
+        witness_hashes = hashes.get(
+            "local_equation_witness_payloads_sha256", {}
+        )
+        projection_hashes = hashes.get(
+            "cell_mpc_projection_payloads_sha256", {}
+        )
+        if not isinstance(witness_hashes, dict) or any(
+            name not in payload or witness_hashes.get(name) != array_sha256(payload[name])
+            for name in witness_hashes
+        ):
+            checks["v24_real_edge_panel_array_hashes_recomputed"] = False
+        checks["v24_real_edge_panel_cell_projection_maps_hash_bound"] = bool(
+            isinstance(projection_hashes, dict)
+            and bool(projection_hashes)
+            and all(
+                name in payload and digest == array_sha256(payload[name])
+                for name, digest in projection_hashes.items()
+            )
+        )
+
+        column_count = len(column_rows)
+        checks["v24_real_edge_panel_48_by_all_active_columns"] = bool(
+            native.shape == (48, column_count)
+            and canonical.shape == (48, column_count)
+            and q_row_saved.shape == (48, column_count)
+            and column_count == panel.get("incident_cells", {}).get(
+                "active_trace_column_count"
+            )
+            and len(np.unique(column_rows)) == column_count
+            and np.all(np.diff(column_rows) > 0)
+        )
+
+        direct_canonical = entity_map.conjugate().T @ native
+        direct_q_row = dft_edge.conjugate().T @ direct_canonical
+        entity_canonical_error = relative_error(canonical, direct_canonical)[0]
+        q_row_payload_error = relative_error(q_row_saved, direct_q_row)[0]
+        selected = panel.get("selected_entity", {})
+        orbit_rows = np.asarray(
+            selected.get("global_rows_by_orbit", []), dtype=np.int64
+        )
+        expected_rows = orbit_rows.reshape(-1)
+        edge_positions = np.searchsorted(column_rows, expected_rows)
+        edge_positions_valid = bool(
+            orbit_rows.shape == (8, 6)
+            and len(np.unique(expected_rows)) == 48
+            and np.all(edge_positions < column_count)
+            and np.array_equal(column_rows[edge_positions], expected_rows)
+        )
+        edge_native = native[:, edge_positions] if edge_positions_valid else np.empty((48, 0))
+        direct_edge_canonical = entity_map.conjugate().T @ edge_native
+        direct_edge_q = dft_edge.conjugate().T @ direct_edge_canonical @ dft_edge
+        edge_native_error = relative_error(edge_native_saved, edge_native)[0]
+        edge_canonical_error = relative_error(edge_canonical_saved, direct_edge_canonical)[0]
+        edge_q_error = relative_error(edge_q_saved, direct_edge_q)[0]
+
+        q_row_csr = sparse.csr_matrix(
+            (
+                payload["q_row_csr_data"],
+                payload["q_row_csr_indices"],
+                payload["q_row_csr_indptr"],
+            ),
+            shape=(48, column_count),
+        )
+        q_edge_csr = sparse.csr_matrix(
+            (
+                payload["q_edge_csr_data"],
+                payload["q_edge_csr_indices"],
+                payload["q_edge_csr_indptr"],
+            ),
+            shape=(48, 48),
+        )
+        q_row_csr_error = relative_error(q_row_csr.toarray(), direct_q_row)[0]
+        q_edge_csr_error = relative_error(q_edge_csr.toarray(), direct_edge_q)[0]
+        v17 = panel.get("v17_row_tile_csr", {})
+        checks["v24_real_edge_panel_q_row_and_edge_self_recomputed"] = bool(
+            dft_edge.shape == (48, 48)
+            and np.allclose(dft_edge, np.kron(dft, np.eye(6)), rtol=0.0, atol=0.0)
+            and edge_positions_valid
+            and max(
+                entity_canonical_error,
+                q_row_payload_error,
+                edge_native_error,
+                edge_canonical_error,
+                edge_q_error,
+            ) <= 1e-11
+        )
+        checks["v24_real_edge_panel_v17_csr_relative_oracles_recomputed"] = bool(
+            v17.get("consumer") == "_assemble_bounded_v17_row_tile_q_patterns"
+            and v17.get("index_dtype")
+            == np.dtype(payload["q_row_csr_indices"].dtype).str
+            and q_row_csr.shape == tuple(v17.get("q_row_native_column_block_shape", ()))
+            and q_edge_csr.shape == tuple(v17.get("q_edge_self_block_shape", ()))
+            and q_row_csr_error <= 1e-11
+            and q_edge_csr_error <= 1e-11
+            and float(v17.get("q_row_relative_frobenius_error", float("inf"))) <= 1e-11
+            and float(
+                v17.get("q_edge_self_relative_frobenius_error", float("inf"))
+            ) <= 1e-11
+            and v17.get("relative_error_limit") == 1e-11
+            and int(v17.get("q_row_native_column_block_nnz", -1)) == q_row_csr.nnz
+            and int(v17.get("q_edge_self_block_nnz", -1)) == q_edge_csr.nnz
+            and int(v17.get("staging_peak_bytes", -1)) >= 0
+            and int(v17.get("support_route_spool_peak_file_bytes", -1)) >= 0
+        )
+
+        incident = panel.get("incident_cells", {})
+        selected_edges = panel.get("selected_entity", {})
+        checks["v24_real_edge_panel_full_trace_and_incident_cell_inventory"] = bool(
+            incident.get("cell_dofs_per_cell") == 882
+            and incident.get("interior_rows_per_cell") == 450
+            and incident.get("trace_rows_per_cell") == 432
+            and incident.get("complete_432_trace_rows_retained_before_projection") is True
+            and incident.get("complete_active_trace_columns_accumulated") is True
+            and incident.get("all_incident_cells_included_exactly_once") is True
+            and len(selected_edges.get("global_edge_ids_by_orbit", [])) == 8
+            and len(selected_edges.get("global_rows_by_orbit", [])) == 8
+            and all(len(rows) == 6 for rows in selected_edges.get("global_rows_by_orbit", []))
+            and sum(incident.get("projected_cell_count_by_orbit", []))
+            == incident.get("cell_count")
+        )
+
+        witness_audits = panel.get("local_equation_condense_recover_witnesses", {})
+        witness_ok = bool(witness_audits) and set(witness_audits) == set(
+            panel.get("local_lu", {}).get("oriented_classes", {})
+        )
+        witness_residuals_ok = witness_ok
+        for class_key, audit in witness_audits.items():
+            prefix = str(audit.get("payload_prefix", ""))
+            names = {
+                name: f"{prefix}_{name}"
+                for name in (
+                    "A_ii",
+                    "A_it",
+                    "A_ti",
+                    "A_tt",
+                    "schur",
+                    "x_i_true",
+                    "x_t_true",
+                    "b_i",
+                    "b_t",
+                    "x_i_recovered_initial",
+                    "solve_b_initial",
+                    "x_i_recovered",
+                    "solve_b_selected",
+                    "rhs_condensed",
+                )
+            }
+            if any(name not in payload for name in names.values()):
+                witness_ok = False
+                witness_residuals_ok = False
+                continue
+            A_ii, A_it, A_ti, A_tt = (
+                np.asarray(payload[names[name]], dtype=np.complex128)
+                for name in ("A_ii", "A_it", "A_ti", "A_tt")
+            )
+            schur = np.asarray(payload[names["schur"]], dtype=np.complex128)
+            xi_true = np.asarray(payload[names["x_i_true"]], dtype=np.complex128)
+            xt_true = np.asarray(payload[names["x_t_true"]], dtype=np.complex128)
+            b_i = np.asarray(payload[names["b_i"]], dtype=np.complex128)
+            b_t = np.asarray(payload[names["b_t"]], dtype=np.complex128)
+            xi_initial = np.asarray(
+                payload[names["x_i_recovered_initial"]], dtype=np.complex128
+            )
+            solve_b_initial = np.asarray(
+                payload[names["solve_b_initial"]], dtype=np.complex128
+            )
+            xi_final = np.asarray(payload[names["x_i_recovered"]], dtype=np.complex128)
+            solve_b_final = np.asarray(
+                payload[names["solve_b_selected"]], dtype=np.complex128
+            )
+            rhs_condensed_saved = np.asarray(
+                payload[names["rhs_condensed"]], dtype=np.complex128
+            )
+            expected_shapes = (
+                A_ii.shape == (450, 450)
+                and A_it.shape == (450, 432)
+                and A_ti.shape == (432, 450)
+                and A_tt.shape == (432, 432)
+                and schur.shape == (432, 432)
+                and xi_true.shape == (450,)
+                and xt_true.shape == (432,)
+                and b_i.shape == (450,)
+                and b_t.shape == (432,)
+            )
+            arrays = (
+                A_ii,
+                A_it,
+                A_ti,
+                A_tt,
+                schur,
+                xi_true,
+                xt_true,
+                b_i,
+                b_t,
+                xi_initial,
+                solve_b_initial,
+                xi_final,
+                solve_b_final,
+                rhs_condensed_saved,
+            )
+            witness_ok = witness_ok and expected_shapes and all(
+                np.isfinite(array).all() for array in arrays
+            )
+            initial_metrics, _ = pass_metrics(
+                A_ii,
+                A_it,
+                A_ti,
+                A_tt,
+                schur,
+                xi_true,
+                xt_true,
+                b_i,
+                b_t,
+                xi_initial,
+                solve_b_initial,
+            )
+            final_metrics, rhs_condensed_recomputed = pass_metrics(
+                A_ii,
+                A_it,
+                A_ti,
+                A_tt,
+                schur,
+                xi_true,
+                xt_true,
+                b_i,
+                b_t,
+                xi_final,
+                solve_b_final,
+            )
+            rhs_condensed_error = relative_error(
+                rhs_condensed_saved, rhs_condensed_recomputed
+            )[0]
+            corrections = int(audit.get("refinement_correction_count", -1))
+            history = audit.get("refinement_history", [])
+            current_lu = panel.get("local_lu", {}).get("oriented_classes", {}).get(
+                class_key, {}
+            )
+            witness_ok = witness_ok and bool(
+                audit.get("status") == "PASS_LOCAL_EQUATION_CONDENSE_RECOVER_WITNESS"
+                and float(np.linalg.norm(b_i)) > 0.0
+                and corrections <= 3
+                and len(history) == corrections + 1
+                and int(current_lu.get("fresh_factorizations", 0)) == 1
+                and int(current_lu.get("iterative_refinement_corrections", -1))
+                == corrections
+                and int(current_lu.get("maximum_iterative_refinement_corrections_allowed", 0))
+                == 3
+                and float(audit.get("same_lu_fresh_factorizations", 0)) == 1.0
+                and float(audit.get("same_lu_refinement_corrections", -1))
+                == corrections
+                and float(audit.get("same_lu_max_refinement_corrections", 0)) == 3.0
+                and (not bool(audit.get("initial_state_passed")) or corrections == 0)
+                and bool(audit.get("initial_state_passed"))
+                == (
+                    initial_metrics["equation"] <= 1e-10
+                    and initial_metrics["forward"] <= 1e-11
+                    and initial_metrics["condensed"] <= 1e-10
+                )
+            )
+            witness_residuals_ok = witness_residuals_ok and bool(
+                final_metrics["equation"] <= 1e-10
+                and final_metrics["forward"] <= 1e-11
+                and final_metrics["condensed"] <= 1e-10
+                and rhs_condensed_error <= 1e-11
+                and float(audit.get("full_equation_residual_relative", float("inf")))
+                <= 1e-10
+                and float(
+                    audit.get("recovered_interior_forward_relative", float("inf"))
+                )
+                <= 1e-11
+                and float(
+                    audit.get("condensed_trace_residual_relative", float("inf"))
+                )
+                <= 1e-10
+            )
+            for correction in range(1, corrections + 1):
+                state = f"refinement_{correction:03d}"
+                if (
+                    f"{prefix}_{state}_x_i_recovered" not in payload
+                    or f"{prefix}_{state}_solve_b" not in payload
+                ):
+                    witness_ok = False
+                    witness_residuals_ok = False
+            if corrections:
+                last_state = f"refinement_{corrections:03d}"
+                witness_ok = witness_ok and np.array_equal(
+                    payload[f"{prefix}_{last_state}_x_i_recovered"], xi_final
+                ) and np.array_equal(
+                    payload[f"{prefix}_{last_state}_solve_b"], solve_b_final
+                )
+            if not math.isfinite(final_metrics["equation"]):
+                witness_residuals_ok = False
+
+        cell_records = panel.get("cell_mpc_projection_records", [])
+        reconstructed_panel = np.zeros_like(native)
+        seen_cell_ids: set[int] = set()
+        active_global_union: set[int] = set()
+        orbit_counts = [0] * 8
+        cell_reaccumulation_ok = bool(
+            isinstance(cell_records, list)
+            and len(cell_records) == panel.get("incident_cells", {}).get("cell_count")
+        )
+        expected_orbit_rows = np.asarray(
+            panel.get("selected_entity", {}).get("global_rows_by_orbit", []),
+            dtype=np.int64,
+        )
+        expected_cells_by_orbit = panel.get("incident_cells", {}).get(
+            "cells_by_orbit", {}
+        )
+        for record in cell_records if isinstance(cell_records, list) else []:
+            try:
+                cell_id = int(record["cell_id"])
+                orbit = int(record["orbit_index"])
+                class_key = str(record["oriented_class_key"])
+                prefix = str(
+                    witness_audits[class_key]["payload_prefix"]
+                )
+                schur_key = str(record["schur_payload_key"])
+                trace_rows = np.asarray(
+                    payload[record["trace_global_rows_payload_key"]],
+                    dtype=np.int64,
+                )
+                active_rows = np.asarray(
+                    payload[record["active_global_rows_payload_key"]],
+                    dtype=np.int64,
+                )
+                expansion_data = np.asarray(
+                    payload[record["expansion_data_payload_key"]],
+                    dtype=np.complex128,
+                )
+                expansion_indices = np.asarray(
+                    payload[record["expansion_indices_payload_key"]]
+                )
+                expansion_indptr = np.asarray(
+                    payload[record["expansion_indptr_payload_key"]]
+                )
+                expansion_shape = tuple(record["expansion_shape"])
+                expansion = sparse.csr_matrix(
+                    (expansion_data, expansion_indices, expansion_indptr),
+                    shape=expansion_shape,
+                )
+                selected_edge_rows = np.asarray(
+                    record["selected_edge_global_rows"], dtype=np.int64
+                )
+                selected_columns = np.asarray(
+                    record["selected_edge_expansion_columns"], dtype=np.int64
+                )
+                panel_row_positions = np.asarray(
+                    record["panel_row_positions"], dtype=np.int64
+                )
+                panel_column_positions = np.asarray(
+                    record["panel_column_positions"], dtype=np.int64
+                )
+                expected_active_positions = np.searchsorted(
+                    active_rows, selected_edge_rows
+                )
+                expected_column_positions = np.searchsorted(
+                    column_rows, active_rows
+                )
+                expected_row_positions = orbit * 6 + np.arange(6)
+                expected_schur_key = f"{prefix}_schur"
+                expected_cells = expected_cells_by_orbit.get(str(orbit), [])
+                schur = np.asarray(payload[schur_key], dtype=np.complex128)
+                trace_and_map_valid = bool(
+                    0 <= orbit < 8
+                    and trace_rows.shape == (432,)
+                    and len(np.unique(trace_rows)) == 432
+                    and active_rows.ndim == 1
+                    and len(active_rows) > 0
+                    and len(np.unique(active_rows)) == len(active_rows)
+                    and np.all(np.diff(active_rows) > 0)
+                    and expansion.shape == (432, len(active_rows))
+                    and expansion.nnz == int(record["expansion_nnz"])
+                    and np.array_equal(expansion.indptr, expansion_indptr)
+                    and np.all(np.diff(expansion.indptr) >= 1)
+                    and np.isfinite(expansion.data).all()
+                    and np.all(expansion.indices >= 0)
+                    and np.all(expansion.indices < len(active_rows))
+                    and selected_edge_rows.shape == (6,)
+                    and expected_orbit_rows.shape == (8, 6)
+                    and np.array_equal(
+                        selected_edge_rows, expected_orbit_rows[orbit]
+                    )
+                    and np.array_equal(selected_columns, expected_active_positions)
+                    and np.all(selected_columns < len(active_rows))
+                    and np.array_equal(panel_row_positions, expected_row_positions)
+                    and np.array_equal(
+                        panel_column_positions, expected_column_positions
+                    )
+                    and np.all(panel_column_positions < column_count)
+                    and schur_key == expected_schur_key
+                    and schur.shape == (432, 432)
+                    and cell_id not in seen_cell_ids
+                    and cell_id in set(map(int, expected_cells))
+                )
+                cell_reaccumulation_ok = cell_reaccumulation_ok and trace_and_map_valid
+                if not trace_and_map_valid:
+                    continue
+                expansion_dense = expansion.toarray()
+                selected_expansion = expansion_dense[:, selected_columns]
+                projected = selected_expansion.conjugate().T @ schur @ expansion_dense
+                if projected.shape != (6, len(active_rows)):
+                    cell_reaccumulation_ok = False
+                    continue
+                reconstructed_panel[np.ix_(panel_row_positions, panel_column_positions)] += (
+                    projected
+                )
+                seen_cell_ids.add(cell_id)
+                active_global_union.update(map(int, active_rows))
+                orbit_counts[orbit] += 1
+            except (KeyError, TypeError, ValueError, IndexError, OverflowError):
+                cell_reaccumulation_ok = False
+        reconstructed_relative_error = relative_error(
+            reconstructed_panel, native
+        )[0]
+        cell_reaccumulation_ok = bool(
+            cell_reaccumulation_ok
+            and len(seen_cell_ids) == len(cell_records)
+            and active_global_union == set(map(int, column_rows))
+            and orbit_counts
+            == panel.get("incident_cells", {}).get("projected_cell_count_by_orbit")
+            and reconstructed_relative_error <= 1e-11
+        )
+        checks["v24_real_edge_panel_native_block_reaccumulated_from_cells"] = (
+            cell_reaccumulation_ok
+        )
+
+        checks["v24_real_edge_panel_local_witness_blocks_independently_verified"] = bool(
+            witness_ok
+            and panel.get("local_lu", {}).get(
+                "maximum_fresh_factorizations_per_class"
+            ) == 1
+            and panel.get("local_lu", {}).get(
+                "maximum_iterative_refinement_corrections_per_class", 4
+            ) <= 3
+        )
+        checks["v24_real_edge_panel_local_witness_residuals_recomputed"] = bool(
+            witness_residuals_ok
+        )
+        q_coverage = probe.get("q_coverage", {})
+        checks["v24_real_edge_panel_q_scope_is_partial_and_explicit"] = bool(
+            panel.get("full_q_matrix") is False
+            and panel.get("full_volume_action") is False
+            and panel.get("pde_solved") is False
+            and q_coverage.get("built_q_count") == 0
+            and q_coverage.get("full_q_matrix_coverage") == "0/8"
+            and q_coverage.get("volume_qualification")
+            == "PARTIAL_REAL_EDGE_ORBIT_Q_PANEL"
+            and "non-edge q-column projection not run"
+            in str(q_coverage.get("reason", ""))
+            and panel.get("q_projection", {}).get("full_q_column_projection")
+            == "NOT_RUN_FOR_NON_EDGE_COLUMNS"
+        )
+    except (OSError, ValueError, TypeError, KeyError, IndexError, ArithmeticError):
+        return checks
+    return checks
+
+
 def _check_partial_result(
     *,
     input_path: Path,
@@ -1807,7 +2431,10 @@ def _check_partial_result(
     v24_cd_receipt = (
         partial.get("schema") == "task40extra.review_v20_partial_result.v2"
         and partial.get("classification")
-        == "TARGET_OPERATOR_PROBE_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
+        in {
+            "TARGET_OPERATOR_PROBE_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE",
+            "TARGET_OPERATOR_PROBE_V24_REAL_EDGE_VOLUME_PANEL",
+        }
     )
     q_only_supplement_identity = partial.get("q_only_supplement")
     q_only_supplement_identity = (
@@ -2046,23 +2673,44 @@ def _check_partial_result(
         v24_stage_result = v24_stage_result if isinstance(v24_stage_result, dict) else {}
         v24_q_coverage = partial.get("q_coverage")
         v24_q_coverage = v24_q_coverage if isinstance(v24_q_coverage, dict) else {}
+        real_edge_panel = (
+            partial.get("classification")
+            == "TARGET_OPERATOR_PROBE_V24_REAL_EDGE_VOLUME_PANEL"
+        )
+        expected_probe_status = (
+            "PASS_V24_REAL_EDGE_VOLUME_PANEL"
+            if real_edge_panel
+            else "PASS_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
+        )
+        q_volume_check = (
+            v24_q_coverage.get("built_q_count") == 0
+            and v24_q_coverage.get("full_q_matrix_coverage") == "0/8"
+            and (
+                (
+                    v24_q_coverage.get("volume_qualification")
+                    == "PARTIAL_REAL_EDGE_ORBIT_Q_PANEL"
+                    and "non-edge q-column projection not run"
+                    in str(v24_q_coverage.get("reason", ""))
+                )
+                if real_edge_panel
+                else (
+                    v24_q_coverage.get("volume_qualification") == "NOT_RUN"
+                    and "real face panel remains NOT_RUN"
+                    in str(v24_q_coverage.get("reason", ""))
+                )
+            )
+        )
         checks.update(
             {
                 "v24_cd_receipt_classification_and_stage_status": (
                     partial.get("status") == "stage_completed"
                     and partial.get("outcome") == "STAGE_COMPLETED"
                     and v24_stage_result.get("probe_status")
-                    == "PASS_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
+                    == expected_probe_status
                     and probe_identity.get("status")
-                    == "PASS_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
+                    == expected_probe_status
                 ),
-                "v24_cd_q_and_volume_actions_remain_not_run": (
-                    v24_q_coverage.get("built_q_count") == 0
-                    and v24_q_coverage.get("full_q_matrix_coverage") == "0/8"
-                    and v24_q_coverage.get("volume_qualification") == "NOT_RUN"
-                    and "real face panel remains NOT_RUN"
-                    in str(v24_q_coverage.get("reason", ""))
-                ),
+                "v24_cd_q_and_volume_scope_is_accurate": q_volume_check,
                 **{
                     f"{name}": passed
                     for name, passed in _v24_bounded_sample_readback_checks(
@@ -2072,6 +2720,16 @@ def _check_partial_result(
                 },
             }
         )
+        if real_edge_panel:
+            checks.update(
+                {
+                    f"{name}": passed
+                    for name, passed in _v24_real_edge_panel_readback_checks(
+                        output_directory=numerical_output,
+                        probe=probe_identity,
+                    ).items()
+                }
+            )
     if "geometry_inventory" in (partial.get("completed_stages") or []):
         checks["geometry_artifact_present"] = (
             numerical_output / "v20_geometry_inventory.json"

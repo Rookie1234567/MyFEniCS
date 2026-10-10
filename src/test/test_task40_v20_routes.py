@@ -2656,6 +2656,21 @@ def test_v24_bounded_sample_readback_recomputes_cache_and_four_actions(
     )
     assert all(checks.values()), checks
 
+    d_output = tmp_path / "d_run_copy"
+    d_output.mkdir()
+    d_sample_path = d_output / sample_path.name
+    d_sample_path.write_bytes(sample_path.read_bytes())
+    for artifact_path in (cache_path, replay_path):
+        (d_output / artifact_path.name).write_bytes(artifact_path.read_bytes())
+    d_sample = json.loads(d_sample_path.read_text(encoding="utf-8"))
+    d_sample["artifact_path"] = d_sample_path.name
+    d_sample["artifact_sha256"] = service._sha256_file(d_sample_path)
+    d_checks = service._v24_bounded_sample_readback_checks(
+        output_directory=d_output,
+        probe={"v24_bounded_port_reuse_volume_sample": d_sample},
+    )
+    assert all(d_checks.values()), d_checks
+
     with np.load(cache_path, allow_pickle=False) as cache:
         tampered = {name: cache[name] for name in cache.files}
     tampered["mode_00_B_values"] = tampered["mode_00_B_values"].copy()
