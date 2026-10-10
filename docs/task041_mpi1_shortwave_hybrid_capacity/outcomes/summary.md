@@ -1,5 +1,18 @@
 # Task041 outcomes summary
 
+## 2026-10-10：W0.7 fixed physical BAL_H warm retry（最新终态）
+
+| 范围 | 实测结果 | 资格边界 |
+|---|---|---|
+| 身份与路径 | Invocation `45a94a21808643a0b446c357c39fa48c`；source `598596b029ce9d952e3587837b3b217320909182`；0.7 nm、10×5 nm、p6/h0.70/M400/MPI8；producer复用，QEP=0 | reduced warm consumer，不是50×25 nm/full cold场 |
+| 已完成 | one-cell、bottom/top P4 numeric与admission、固定物理BAL_H反馈的8次线性样本；actual method `fixed_physical_balh_once_modal_gmres_research` | 两侧因子已算好，但连接它们的模态子求解未把残差压到要求；第一次modal solve失败，未完成outer |
+| modal失败 | 固定物理BAL_H反馈的第一次modal solve中，GMRES达到`max_it=8`且未收敛（reason -3）；RHS `0.09648882926540421`；显式relative residual `0.01916530113811127 > rtol 0.001` | 未触发独立S_H MatMult调用预算拒绝（8/9，上限9/10，`budget_exhausted=false`）；失败RHS/迭代向量 `not_persisted` |
+| 其他side sample | outer/index0 writer-local：bottom `ZERO_RHS_EXACT`；top `INNER_APPROXIMATE_RETURN` 128/128、relative `0.08801306313790089 > 0.01` | 独立于modal失败；不表示P4失败或outer收敛 |
+| 终态/资源 | consumer `IMPLEMENTATION_FAILURE`、public rc3；finalizer `failed/service_boundary_failure` 9/11，false为`public_result_completed`、`service_terminal_normal`；controlled stop=false。Tree峰 `46,405,410,816 B`；finalizer/post-IO cgroup峰 `43,664,695,296 B` | 低于72 GiB warning/80 GiB cap；非资源停止。无outer收敛、五残差、recovery或physics |
+| 唯一账目 | finalizer service wall `3,697.345224675 s`；V5 212项、SHA `632d802cc33112da7cdd44e05ad3ff06438ea70f9ba05d5639766a0a5600a2c5` | runroot唯一命中；parent/public wall是嵌套区间，不另收费 |
+
+当前失败warm的约1.027 h不能外推为目标cold流程时长。Review V11目标的50×25 nm几何、完整对象内存与2 TB容量证据、cold QEP至cleanup的48 h完整链均未资格化；完整物理结果也未产生。W5按用户决定延期处理，W2不为绕过当前modal未收敛而启动。hash-bound [terminal compact](../../../results/task041_v11_w0p7_fixed_physical_balh_once_warm_retry_run_20261009T235026Z/terminal_compact_v1.json) SHA `f5eeefa92c9c32df5eb556d8f9574cad06a92bf2ac7993d707b9a310f8cc331e`；详见[Response V13](../response_v13.md)。
+
 ## 2026-10-10：W0.7 fixed-Q 计数门终态
 
 | 范围 | 实测结果 | 说明 |

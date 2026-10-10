@@ -1,5 +1,13 @@
 # 项目开发进度：Task000–Task041
 
+## 2026-10-10：W0.7 reduced fixed physical BAL_H warm retry终态
+
+最新Invocation `45a94a21808643a0b446c357c39fa48c`（source `598596b029ce9d952e3587837b3b217320909182`）复用producer、QEP=0，运行10×5 nm/p6/h0.70/M400/MPI8。两侧P4 numeric/admission与固定物理BAL_H反馈的8次线性样本通过；两侧因子已算好，但连接它们的模态子求解未把残差压到要求。固定物理BAL_H反馈方法的第一次modal solve中，GMRES达到`max_it=8`且未收敛（KSP reason -3），显式relative residual `0.01916530113811127` 超过`rtol=0.001`。未触发独立S_H MatMult调用预算拒绝（8/9，上限9/10，`budget_exhausted=false`）。失败发生于outer PC内的modal solve，不是P4或资源问题。原`failure_stage=top_construction_cleanup`保留为raw标签；失败RHS与迭代向量未保存。
+
+consumer `IMPLEMENTATION_FAILURE`、public rc3、finalizer `failed/service_boundary_failure` 9/11（仅public结果完成/服务正常终止为false），`controlled_stop.active=false`。Tree峰`46,405,410,816 B`；finalizer/post-IO cgroup峰`43,664,695,296 B`，低于warning/cap；资源门未触发。outer仅启动至iteration0，未收敛，也没有最终五残差、恢复或完整物理输出。唯一service wall`3,697.345224675 s`（失败warm，不可当成功cold时间）；V5 212项、SHA `632d802cc33112da7cdd44e05ad3ff06438ea70f9ba05d5639766a0a5600a2c5`。详细调用链、另一条独立128步side audit和not_persisted字段见[Response V13](task041_mpi1_shortwave_hybrid_capacity/response_v13.md)与[compact](../results/task041_v11_w0p7_fixed_physical_balh_once_warm_retry_run_20261009T235026Z/terminal_compact_v1.json)，SHA `f5eeefa92c9c32df5eb556d8f9574cad06a92bf2ac7993d707b9a310f8cc331e`。
+
+Review V11目标50×25 nm、约2 TB与cold QEP至cleanup不超过48 h尚未资格化；当前10×5 nm reduced case未完成数值验收，约1.027 h只代表失败warm服务时长。W5按用户决定延期；W2不阻当前主线。
+
 ## 2026-10-10：W0.7 fixed-Q 计数门事故与tiny合同收口
 
 Invocation `3cc1884481474e5ba390e757eeb482c0`复用producer、QEP=0，bottom/top P4 numeric均完成；随后fixed physical BAL_H modal sample的固定Q计数门因一次调用实际记录`backsolves=0`而报`IMPLEMENTATION_FAILURE`。public rc1、service exit3，finalizer `failed/service_boundary_failure`、9/11，false为`public_result_completed`与`service_terminal_normal`，`controlled_stop.active=false`。唯一service wall `1771.020854749 s`按runroot在V5仅计一次；ledger 211项、SHA `00b34a553294f5b230c0572b174cc4af09ec7c0186f8422af4a85a4854cf0e15`。没有outer、五项最终残差、recovery或完整物理输出。

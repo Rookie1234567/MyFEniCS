@@ -1,5 +1,15 @@
 # Review V11 执行交付进度
 
+## 2026-10-10：W0.7 fixed physical BAL_H warm retry 终态
+
+Invocation `45a94a21808643a0b446c357c39fa48c` 使用source `598596b029ce9d952e3587837b3b217320909182`，复用producer、QEP=0；10×5 nm/p6/h0.70/M400/MPI8 reduced case。两侧P4 numeric/admission与固定物理BAL_H反馈的8次线性样本通过。两侧因子已算好，但连接它们的模态子求解未把残差压到要求，未得到合格全场。该反馈方法的第一次modal solve在GMRES `max_it=8`时reason `-3`未收敛：RHS norm `0.09648882926540421`，显式残差 norm `0.0018492374693352754`，relative `0.01916530113811127 > 0.001`。没有触发独立S_H MatMult调用预算拒绝（8/9，上限9/10，`budget_exhausted=false`）。异常抛自outer右预条件器调用modal solver；raw `failure_stage=top_construction_cleanup`照录但不是因果失败位置。失败RHS和迭代向量 `not_persisted`。
+
+独立writer-local `phase=outer,index=0` side RHS记录中，bottom为exact-zero直接返回；top为128步近似返回、relative `0.08801306313790089`（目标`0.01`未达到）。它与首次modal solve分列，不称P4失败或outer收敛。outer只记录iteration 0 `ITERATING`，无最终五残差、recovery或physics输出。
+
+终态保持consumer `IMPLEMENTATION_FAILURE` / public rc3 / finalizer `failed/service_boundary_failure`，11项9 true、2 false（`public_result_completed`,`service_terminal_normal`），`controlled_stop.active=false`。资源tree峰`46,405,410,816 B`；此前运行采样cgroup峰`43,663,454,208 B`；finalizer/post-IO `cgroup_history_peak_bytes=43,664,695,296 B`，低于77,309,411,328 B warning及85,899,345,920 B hard cap；不是资源停止。finalizer唯一service wall `3,697.345224675 s`（约1.027 h），V5 212项/SHA `632d802cc33112da7cdd44e05ad3ff06438ea70f9ba05d5639766a0a5600a2c5`，只按runroot计一次，嵌套parent/public wall不另加。
+
+目标仍是50×25 nm、约2 TB及cold QEP至cleanup在48 h内完成。当前仅10×5 nm warm consumer且QEP=0，未到outer收敛、最终残差、恢复和完整物理输出；故目标几何、全目标内存与cold wall均无资格证据。1.027 h是失败warm场实测，不能外推成功流程。W5按用户决定延期处理；W2本阶段不启动。细节与hash-bound [terminal compact](../../../results/task041_v11_w0p7_fixed_physical_balh_once_warm_retry_run_20261009T235026Z/terminal_compact_v1.json)，SHA `f5eeefa92c9c32df5eb556d8f9574cad06a92bf2ac7993d707b9a310f8cc331e`，见[Response V13](../response_v13.md)。
+
 ## 2026-10-10：fixed-Q zero-count 事故收口
 
 Invocation `3cc1884481474e5ba390e757eeb482c0`（source `f4718519d8a244eae9ea87148422ade14771e534`）复用既有producer、QEP=0；bottom/top P4 numeric都完成。随后 fixed physical BAL_H modal sample 固定Q门报 `backsolves=0`，而当前动作要求一次同因子数学修正；consumer为`IMPLEMENTATION_FAILURE`，public rc1、service exit3，finalizer `failed/service_boundary_failure`、9/11，false为`public_result_completed`和`service_terminal_normal`，`controlled_stop.active=false`。raw `failure_stage=top_construction_cleanup`保持原值；它不改变marker显示的modal sample失败位置。

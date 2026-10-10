@@ -1,5 +1,9 @@
 # Test and evidence summary
 
+## 2026-10-10：W0.7 warm runtime terminal（非pytest）
+
+Invocation `45a94a21808643a0b446c357c39fa48c` 是正式warm consumer，不是测试attempt，因此本节不增加pytest/V5测试wall。两侧P4 numeric/admission与固定物理BAL_H反馈的8次线性样本通过；固定物理BAL_H反馈方法的第一次modal solve中，GMRES达到`max_it=8`且未收敛（KSP reason `-3`），显式relative residual `0.01916530113811127 > 0.001`。未触发独立S_H MatMult调用预算拒绝（8/9，上限9/10，`budget_exhausted=false`）。consumer RHS/迭代向量未持久化。consumer为`IMPLEMENTATION_FAILURE`、public rc3、finalizer `failed/service_boundary_failure` 9/11；唯一service wall `3697.345224675 s`沿V5已有runroot行计一次，ledger 212项/SHA `632d802cc33112da7cdd44e05ad3ff06438ea70f9ba05d5639766a0a5600a2c5`。outer/最终残差/recovery/physics未完成；组件测试不能替代该生产数值结果。完整证据见[Response V13](../response_v13.md)和[terminal compact](../../../results/task041_v11_w0p7_fixed_physical_balh_once_warm_retry_run_20261009T235026Z/terminal_compact_v1.json)（SHA `f5eeefa92c9c32df5eb556d8f9574cad06a92bf2ac7993d707b9a310f8cc331e`）。
+
 ## 2026-10-10：fixed-Q exact-zero 分支与MPI2合同验证
 
 这组小测试检查固定Q中的一次数学修正如何与P4因子的实际solve次数分别记账。它在真实小型`P4CellCondensedInverse` fixture上验证direct exact-zero证据、非零分支调用数、计数不匹配拒绝、复数线性和原矩阵残差；MPI2再检查empty-owner本地零不被当成全局零。测试通过只证明这些tiny组件合同，不证明W0.7 production场已通过。

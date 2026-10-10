@@ -1,5 +1,17 @@
 # 开发阶段研究对象与计算结果总账
 
+## Task041 Review V11：W0.7 fixed physical BAL_H warm retry终态（2026-10-10）
+
+| 模型/阶段 | 实测结果 | 资格边界与证据 |
+|---|---|---|
+| W0.7 reduced p6/h0.70/M400/MPI8，10×5 nm | Invocation `45a94a21808643a0b446c357c39fa48c`；source `598596b029ce9d952e3587837b3b217320909182`；producer复用、QEP=0；fixed physical method实际绑定成功 | 不是50×25 nm目标或cold QEP全流程 |
+| P4与setup | bottom/top numeric、admission及固定物理BAL_H反馈的8次线性样本通过 | 两侧因子已算好，但连接它们的模态子求解未把残差压到要求；不归为P4失败 |
+| modal/outer | 固定物理BAL_H反馈方法的第一次modal solve中，GMRES达到`max_it=8`且未收敛（reason -3）；显式relative residual `0.01916530113811127 > 0.001`；S_H MatMult 8/9 | 未触发独立S_H MatMult调用预算拒绝（8/9，上限9/10，`budget_exhausted=false`）；outer iteration仅记录0/ITERATING，无收敛 |
+| 服务终态 | consumer `IMPLEMENTATION_FAILURE`、public rc3、finalizer `failed/service_boundary_failure` 9/11；controlled stop=false | false仅`public_result_completed`、`service_terminal_normal`；tree峰46,405,410,816 B、finalizer/post-IO cgroup峰43,664,695,296 B，低于warning/cap |
+| 计费与输出 | 唯一wall3,697.345224675 s；V5 212项，SHA `632d802cc33112da7cdd44e05ad3ff06438ea70f9ba05d5639766a0a5600a2c5` | 最终残差、recovery、完整E/H、R/T/A、A_volume、衍射与physics未完成；失败RHS/迭代向量not_persisted |
+
+侧向writer-local outer/index0记录中的top 128步近似返回（relative `0.08801306313790089`）与首次modal solve失败是不同样本。服务时长约1.027 h属于失败warm run，不能外推cold成功时间。50×25 nm目标、约2 TB完整内存资格及48 h cold QEP至cleanup均未证明。W5按用户决定延期，W2未启动。见[Response V13](task041_mpi1_shortwave_hybrid_capacity/response_v13.md)及[terminal compact](../results/task041_v11_w0p7_fixed_physical_balh_once_warm_retry_run_20261009T235026Z/terminal_compact_v1.json)，SHA `f5eeefa92c9c32df5eb556d8f9574cad06a92bf2ac7993d707b9a310f8cc331e`。
+
 ## Task041 Review V11：W0.7 P1 warm场终态（2026-10-09）
 
 | 模型/阶段 | 实测结果 | 资格边界与证据 |

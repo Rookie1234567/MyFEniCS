@@ -2,6 +2,26 @@
 
 本文件回应 Task041 Review V11 的当前执行批次。任务目录未提供单独 `README.md`；本轮依照仓库规则读取 `task.md`、Review V11、此前 Response V12、outcomes、仓库文档规则及开发总账。W5 的弱显著衍射通道按用户决定延期处理；保留其原失败与比较工件，不写成通过，也不作为本轮 W0.7 的前置。W2 本批未推进，避免延误 W0.7 主线。
 
+## 2026-10-10：W0.7 fixed physical BAL_H warm retry 终态（Invocation `45a94a21808643a0b446c357c39fa48c`）
+
+这次运行复用了已合格的 producer packet，当前 Invocation 的 QEP=0。模型为缩减 pilot：0.7 nm、10×5 nm、p6/h0.70、M400、MPI8，接口2/22 nm、matched L20/N29/h20/29；请求方法为 `fixed_physical_balh_once`，consumer 实际方法为 `fixed_physical_balh_once_modal_gmres_research`。通俗地说，两侧因子已经算好，但连接它们的模态子求解没有把残差压到要求，因此没有得到合格全场。两侧 P4 numeric 与 admission、固定物理 BAL_H 反馈的8次线性样本均通过。失败发生于该反馈方法的第一次 modal solve，因而没有完成 outer、最终场恢复或物理输出。
+
+| 项目 | 实际证据 | 边界 |
+|---|---|---|
+| 身份 | source HEAD `598596b029ce9d952e3587837b3b217320909182`；unit `task041-v11-w0p7-fixed-physical-balh-once-warm-retry-cpu10-11-14-15-16-17-18-19-20261009T235026Z.service`；runroot `results/task041_v11_w0p7_fixed_physical_balh_once_warm_retry_run_20261009T235026Z/`；CPU map `[10,11,14,15,16,17,18,19]` | producer复用，QEP=0；不是cold QEP到cleanup运行 |
+| 启动绑定 | config SHA `c832b0960e8c4c34a5d979b43857231b61049e45e30b9cbd4c4f27b15b8922e6`；systemd argv SHA `bde97bd427ea2291a010763b44cf42c2df39be38ea1b8930ebf7725f2b4a1d40`；launch manifest SHA `9cd83e85e117caf2f44963e1275ba5c8618a39810e93974729eb3871c0869eb4` | 固定method请求与实际method匹配 |
+| 首次 modal solve | 固定物理 BAL_H 反馈实际只记录1次 solve、1次未收敛；GMRES达到 `max_it=8`，reason `-3`；`rhs_norm=0.09648882926540421`，显式 `residual_norm=0.0018492374693352754`，`relative_residual=0.01916530113811127 > rtol=0.001`；`raw_residual_pass=false` | 未触发独立 S_H MatMult 调用预算拒绝（8/9，上限9/10，`budget_exhausted=false`） |
+| 抛错调用链 | `FixedH6ModalBlockLDUPreconditioner.apply` 形成modal RHS后调用 modal Schur solve；`_FixedH6ModalKrylovSystem.solve` 显式计算残差，reason `-3` 使状态为 `ksp_not_converged` 并抛错，relative residual也超过rtol。原始 `failure_stage=top_construction_cleanup` 保留，但它是清理阶段标签，不是本次数值抛错位置 | `outer_solve_progress` 仅记录 iteration 0 / `ITERATING`；失败发生在第一次外层PC应用内、固定物理 BAL_H 反馈的第一次modal solve，不能表述为outer收敛 |
+| 另一项side RHS记录 | writer-local `phase=outer,index=0`：bottom为 `ZERO_RHS_EXACT`、零迭代；top为 `INNER_APPROXIMATE_RETURN`，128/128步，relative residual `0.08801306313790089`、`rtol=0.01`、未达显式目标 | 这是独立side RHS样本，不能替代或混同上面的8步modal solve，也不据此称P4失败或budget exhausted |
+| 未保存字段 | 失败modal RHS及迭代向量均为 `not_persisted`；diagnostic output关闭，consumer只保存last-solve标量记录 | 不重建、不补算这些向量 |
+| 终态 | consumer `IMPLEMENTATION_FAILURE`；public `task041_public_command_nonzero` / rc3；finalizer `failed/service_boundary_failure`，11项9 true/2 false，false仅 `public_result_completed`、`service_terminal_normal`；`controlled_stop.active=false` | 资源与cleanup门未触发失败分类；没有outer收敛、最终五残差、recovery或physics结果 |
+| 资源 | process-tree RSS authority峰 `46,405,410,816 B`；此前运行采样cgroup峰 `43,663,454,208 B`；finalizer `post_io.result.cgroup_history_peak_bytes` 为 `43,664,695,296 B`（含finalizer/post-IO生命周期）；warning `77,309,411,328 B`、hard cap `85,899,345,920 B`；最低host MemAvailable `1,915,343,118,336 B` | 两个cgroup数值分别是运行阶段快照与含finalizer/post-IO的最终峰；最终峰低于warning/cap。本场不是资源拒绝或OOM。node0 MemFree floor与host MemAvailable是不同检查 |
+| 唯一服务账目 | finalizer unit wall `3,697.345224675 s`（约1.027 h）；V5 212项、SHA `632d802cc33112da7cdd44e05ad3ff06438ea70f9ba05d5639766a0a5600a2c5`，该runroot唯一命中第211行（0-based） | `parent_wall=3,696.5190987 s`、nested public phase `3,696.3200797229074 s`，两者为嵌套区间，不另计费；该1.027 h是失败warm服务时长，不能外推为成功cold流程耗时 |
+
+hash-bound [终态compact](../../results/task041_v11_w0p7_fixed_physical_balh_once_warm_retry_run_20261009T235026Z/terminal_compact_v1.json) SHA `f5eeefa92c9c32df5eb556d8f9574cad06a92bf2ac7993d707b9a310f8cc331e`；它绑定consumer summary SHA `e0198e64822a2260602e048ac0139db203f3f66f3452070bcb8a3c251deb5a35`、markers/side RHS audits、service parent/finalizer、memory stages、launch manifest、V5 ledger、config及argv原件。
+
+**目标缺口。** 这次只运行10×5 nm reduced pilot，未达到Review V11的50×25 nm目标单胞；没有目标尺度的mesh/模态数资格序列，也没有2 TB目标的完整对象驻留与峰值证据。当前outer尚未收敛，最终五项残差、恢复、完整E/H、R/T/A、`A_volume`、全衍射及physics均未完成。48 h目标要求cold QEP至cleanup的完整一次生命周期；本场复用packet且QEP=0，所以失败warm的1.027 h不构成48 h资格。W5弱显著通道按用户决定延期处理并保留原负结果；W2不为绕过本modal阻塞启动。本任务未完成，不能据此登记W0.7完整数值资格。
+
 ## 2026-10-10：fixed-Q 精确零分支计数合同事故与定向测试
 
 本场复用了既有合格 producer packet，QEP=0。bottom、top 两个 P4 因子均完成 numeric；随后 fixed physical BAL_H 的 modal sample 固定-Q计数门拒绝。raw异常为 `fixed physical BAL_H Q did not perform exactly one same-factor P4 correction: backsolves=0`。原始 `failure_stage=top_construction_cleanup` 字段照录；marker顺序显示 modal sample 在两侧 P4 numeric 完成后开始，因此该标签不改写成资源/清理失败，也不据它说top numeric失败。
