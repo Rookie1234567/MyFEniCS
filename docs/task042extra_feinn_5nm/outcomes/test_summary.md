@@ -1,3 +1,14 @@
+<!-- TASK42EXTRA_V41_CURRENT_BEGIN -->
+# V41：新条件核资格及最终受影响回归
+
+39项数学/完整矩受影响案例、2项用途封存与writer复读、1项恢复目录测试，共42项相关案例通过；真实两模型三轴资格及隐藏FD通过。原39案例source f0bd287e8865d9717020a1f523aaf222d24f4794，用途/目录各补受影响测试；不重做旧全benchmark、谱/oracle或fullpytest。test05保存态脚本字段错误和attempt2目录错误保留；健康数值不重算。Ruff/compileall本地通过，CI未运行。
+
+[tests](records/tests_v41.json)、[资格](records/conditional_operator_qualification_v41.json)、[修复](records/repair_log_v41.json)。
+
+下方历史全文保留；旧“当前/下一步”不是新授权。
+
+<!-- TASK42EXTRA_V41_CURRENT_END -->
+
 <!-- TASK42EXTRA_V40_CURRENT_BEGIN -->
 # 当前V40：28项小fixture与真实FE内部矩资格
 

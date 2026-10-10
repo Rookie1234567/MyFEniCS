@@ -1,0 +1,19 @@
+{
+  "schema": "task42extra.v41.delivery.v1",
+  "declared_binding_count": 122,
+  "frozen_source_file_checks": 196,
+  "all_declared_arrays_and_source_hashes_pass": true,
+  "actual_and_producer_records": 6,
+  "full_complex_mode_rows": 960,
+  "six_point_component_rows": 432,
+  "raw_arrays_physics_and_numerical_comparisons_unchanged_by_policy_seal": true,
+  "wrong_use_metadata_preserved": true,
+  "production_initialization_allowed": false,
+  "strict_joint_gate": "FAIL_ALL_ROUTES",
+  "conditional_0p7": "NOT_RUN",
+  "same_accuracy_NN_gain": "NOT_VERIFIED",
+  "numerical_source": "f0bd287e8865d9717020a1f523aaf222d24f4794",
+  "checker_recovery_source": "d38d28953bed93b9457a060ec9c496083676586a",
+  "full_repository_pytest": false,
+  "CI_claimed": false
+}

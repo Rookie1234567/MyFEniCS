@@ -1,0 +1,912 @@
+{
+  "schema": "task42extra.v41.routes.v1",
+  "routes": {
+    "FTTNN_CONDITIONAL_CORE_LEARNED": {
+      "stage": "v41_fttnn_core_learned",
+      "source_sha": "f0bd287e8865d9717020a1f523aaf222d24f4794",
+      "input_sha256": "a0e63a8be9d56e29ced5596f6e68df67cce3108c1536d5801945b99e7e854226",
+      "model_kind": "fttnn",
+      "status": "BLOCK_ALTERNATION_STAGNATION",
+      "stop_reason": "BLOCK_ALTERNATION_STAGNATION",
+      "counts": {
+        "core_visits": 12,
+        "LSMR_iterations": 2887,
+        "LSMR_unretained_iterations_upper_bound": 0,
+        "accepted_core_updates": 12,
+        "effective_core_updates": 12,
+        "accepted_hidden_updates": 4,
+        "effective_hidden_updates": 4,
+        "hidden_actual_calls": 54,
+        "K": 2923,
+        "KH": 2923,
+        "B": 2911,
+        "BH": 2923,
+        "round_audits": 4,
+        "uncommitted_K": 0,
+        "uncommitted_KH": 0
+      },
+      "exclusive_top_level_costs": {
+        "core_solve_and_check": 1269.228150280891,
+        "real_acceptance": 3.7443771141115576,
+        "hidden": 24.240517090074718,
+        "persistence": 0.7389716831967235,
+        "audit": 0.18988387612625957
+      },
+      "nested_mapping_costs_not_additive": {
+        "setup": 0.18483178480528295,
+        "core_evaluation": 0.05018696002662182,
+        "contraction": 240.175365525065,
+        "moments": 109.46060503530316,
+        "core_cotangent": 661.1188218696043,
+        "core_backward": 10.558050791500136,
+        "cache_hash": 1.1903328488115221
+      },
+      "native_action_counts": {
+        "A": 2998,
+        "AH": 2977,
+        "audit": 5,
+        "port_solve": 5986
+      },
+      "nested_native_action_costs_not_additive": {
+        "A": 89.95966645493172,
+        "AH": 157.93793257931247,
+        "audit": 0.23653324507176876,
+        "port_solve": 0.09371727495454252
+      },
+      "cache_planned_bytes": 2507428,
+      "original_equation": {
+        "native_relative": 0.9389867496106388,
+        "augmented_relative": 0.9389867496106388,
+        "original_total_augmented_relative": 0.4447996770398518,
+        "port_absolute": 6.94277085033697e-18,
+        "port_full_rhs_relative": 2.385487588655554e-17,
+        "port_operation_relative": 2.0147806742981812e-17,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 0.08758306946247857,
+        "full_coefficient_norm": 0.131599168016544,
+        "port_unknown_norm": 0.002313206651568565,
+        "strict_pass": false
+      },
+      "rounds": [
+        {
+          "round": 0,
+          "native": 0.9455859858419445,
+          "start_native": 1.0,
+          "relative_native_improvement": 0.05441401415805547,
+          "original_equation": {
+            "native_relative": 0.9455859858419445,
+            "augmented_relative": 0.9455859858419445,
+            "original_total_augmented_relative": 0.44792574686524145,
+            "port_absolute": 9.82828764796627e-18,
+            "port_full_rhs_relative": 3.3769310131879547e-17,
+            "port_operation_relative": 2.954668679953451e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.08065510161528935,
+            "full_coefficient_norm": 0.12157566442672307,
+            "port_unknown_norm": 0.0022341148267717836,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 3,
+            "LSMR_iterations": 545,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 3,
+            "effective_core_updates": 3,
+            "accepted_hidden_updates": 1,
+            "effective_hidden_updates": 1,
+            "hidden_actual_calls": 12,
+            "K": 554,
+            "KH": 554,
+            "B": 551,
+            "BH": 554,
+            "round_audits": 1,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 1,
+          "native": 0.9393171790833279,
+          "start_native": 0.9455859858419445,
+          "relative_native_improvement": 0.006629547024255989,
+          "original_equation": {
+            "native_relative": 0.9393171790833279,
+            "augmented_relative": 0.9393171790833279,
+            "original_total_augmented_relative": 0.44495620206301595,
+            "port_absolute": 1.5545900998783775e-17,
+            "port_full_rhs_relative": 5.341463039251362e-17,
+            "port_operation_relative": 4.518897003974703e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.0873286989425528,
+            "full_coefficient_norm": 0.1312271379598723,
+            "port_unknown_norm": 0.0023094958150766,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 6,
+            "LSMR_iterations": 1423,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 6,
+            "effective_core_updates": 6,
+            "accepted_hidden_updates": 2,
+            "effective_hidden_updates": 2,
+            "hidden_actual_calls": 26,
+            "K": 1441,
+            "KH": 1441,
+            "B": 1435,
+            "BH": 1441,
+            "round_audits": 2,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 2,
+          "native": 0.939188984932853,
+          "start_native": 0.9393171790833279,
+          "relative_native_improvement": 0.00013647589262664168,
+          "original_equation": {
+            "native_relative": 0.939188984932853,
+            "augmented_relative": 0.939188984932853,
+            "original_total_augmented_relative": 0.44489547626816484,
+            "port_absolute": 2.1124393158284553e-17,
+            "port_full_rhs_relative": 7.258193995344425e-17,
+            "port_operation_relative": 6.14017686379954e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.08745755134445636,
+            "full_coefficient_norm": 0.13140826752386733,
+            "port_unknown_norm": 0.0023097757072978674,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 9,
+            "LSMR_iterations": 2120,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 9,
+            "effective_core_updates": 9,
+            "accepted_hidden_updates": 3,
+            "effective_hidden_updates": 3,
+            "hidden_actual_calls": 40,
+            "K": 2147,
+            "KH": 2147,
+            "B": 2138,
+            "BH": 2147,
+            "round_audits": 3,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 3,
+          "native": 0.9389867496106388,
+          "start_native": 0.939188984932853,
+          "relative_native_improvement": 0.00021532974242521974,
+          "original_equation": {
+            "native_relative": 0.9389867496106388,
+            "augmented_relative": 0.9389867496106388,
+            "original_total_augmented_relative": 0.4447996770398518,
+            "port_absolute": 6.94277085033697e-18,
+            "port_full_rhs_relative": 2.385487588655554e-17,
+            "port_operation_relative": 2.0147806742981812e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.08758306946247857,
+            "full_coefficient_norm": 0.131599168016544,
+            "port_unknown_norm": 0.002313206651568565,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 12,
+            "LSMR_iterations": 2887,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 12,
+            "effective_core_updates": 12,
+            "accepted_hidden_updates": 4,
+            "effective_hidden_updates": 4,
+            "hidden_actual_calls": 54,
+            "K": 2923,
+            "KH": 2923,
+            "B": 2911,
+            "BH": 2923,
+            "round_audits": 4,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        }
+      ],
+      "checkpoint": {
+        "name": "committed_000021.pt",
+        "sha256": "9cc4b44604bdf8a5b13fc5bc056c986e008ae2ea0cb019bdee4a0472f1e2fb3e",
+        "bytes": 1868918
+      },
+      "history": {
+        "path": "benchmarks/artifacts/task42extra/v41/v41_fttnn_core_learned/history.jsonl",
+        "sha256": "3d03e6036e339a14143260a108acc0217b335aad86c24172bdc10ee2b8866507",
+        "bytes": 32956
+      },
+      "stop_code_histogram": {
+        "2": 8,
+        "7": 4
+      },
+      "linearity_pair_max": 3.865968379795142e-13,
+      "max_true_adjoint_relative": 0.021499174982010323,
+      "all_actual_accepted_core_and_hidden_updates_rechecked": true,
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "design_informed_by_reference_diagnostics": true,
+      "production_initialization_allowed": false,
+      "official_candidate_results": false,
+      "pde_only_solver_qualified": false,
+      "new_global_factors": 0,
+      "full_FE_Krylov_count": 0,
+      "Gsolve_count": 0,
+      "LSMR_internal_state_recoverable": false
+    },
+    "FTTNN_CONDITIONAL_CORE_FROZEN": {
+      "stage": "v41_fttnn_core_frozen",
+      "source_sha": "f0bd287e8865d9717020a1f523aaf222d24f4794",
+      "input_sha256": "8461095ed6947417448af97ca8bb482b1f3f11ca7156257a2f80a56b916e61b9",
+      "model_kind": "fttnn",
+      "status": "BLOCK_ALTERNATION_STAGNATION",
+      "stop_reason": "BLOCK_ALTERNATION_STAGNATION",
+      "counts": {
+        "core_visits": 12,
+        "LSMR_iterations": 2352,
+        "LSMR_unretained_iterations_upper_bound": 0,
+        "accepted_core_updates": 12,
+        "effective_core_updates": 12,
+        "accepted_hidden_updates": 0,
+        "effective_hidden_updates": 0,
+        "hidden_actual_calls": 0,
+        "K": 2388,
+        "KH": 2388,
+        "B": 2376,
+        "BH": 2388,
+        "round_audits": 4,
+        "uncommitted_K": 0,
+        "uncommitted_KH": 0
+      },
+      "exclusive_top_level_costs": {
+        "core_solve_and_check": 1439.086791422218,
+        "real_acceptance": 4.698094806168228,
+        "hidden": 0.0,
+        "persistence": 0.6222562508191913,
+        "audit": 0.3029665141366422
+      },
+      "nested_mapping_costs_not_additive": {
+        "setup": 0.20191427413374186,
+        "core_evaluation": 0.01970332325436175,
+        "contraction": 270.5950857424177,
+        "moments": 115.3187004562933,
+        "core_cotangent": 712.4919281217735,
+        "core_backward": 10.771637120982632,
+        "cache_hash": 0.9266804757062346
+      },
+      "native_action_counts": {
+        "A": 2401,
+        "AH": 2388,
+        "audit": 5,
+        "port_solve": 4800
+      },
+      "nested_native_action_costs_not_additive": {
+        "A": 107.79453713679686,
+        "AH": 196.22022498305887,
+        "audit": 0.3552534985356033,
+        "port_solve": 0.12414320977404714
+      },
+      "cache_planned_bytes": 2507428,
+      "original_equation": {
+        "native_relative": 0.9394138682933815,
+        "augmented_relative": 0.9394138682933815,
+        "original_total_augmented_relative": 0.44500200391210853,
+        "port_absolute": 1.993680570384357e-17,
+        "port_full_rhs_relative": 6.850147237921268e-17,
+        "port_operation_relative": 5.804532764196439e-17,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 0.08720834202868055,
+        "full_coefficient_norm": 0.13104048330346443,
+        "port_unknown_norm": 0.002305540169298646,
+        "strict_pass": false
+      },
+      "rounds": [
+        {
+          "round": 0,
+          "native": 0.9456015265941116,
+          "start_native": 1.0,
+          "relative_native_improvement": 0.05439847340588844,
+          "original_equation": {
+            "native_relative": 0.9456015265941116,
+            "augmented_relative": 0.9456015265941116,
+            "original_total_augmented_relative": 0.44793310854691293,
+            "port_absolute": 1.9666365661262107e-17,
+            "port_full_rhs_relative": 6.757225927545275e-17,
+            "port_operation_relative": 5.913643839032091e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.08063736257340388,
+            "full_coefficient_norm": 0.1215480285349941,
+            "port_unknown_norm": 0.0022335818251693596,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 3,
+            "LSMR_iterations": 545,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 3,
+            "effective_core_updates": 3,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 554,
+            "KH": 554,
+            "B": 551,
+            "BH": 554,
+            "round_audits": 1,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 1,
+          "native": 0.9394524413832958,
+          "start_native": 0.9456015265941116,
+          "relative_native_improvement": 0.0065028291916614375,
+          "original_equation": {
+            "native_relative": 0.9394524413832958,
+            "augmented_relative": 0.9394524413832958,
+            "original_total_augmented_relative": 0.4450202760527357,
+            "port_absolute": 4.29496030640307e-19,
+            "port_full_rhs_relative": 1.4757183731903676e-18,
+            "port_operation_relative": 1.250648390152663e-18,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.08717891696363296,
+            "full_coefficient_norm": 0.13099806712503173,
+            "port_unknown_norm": 0.002305462540535146,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 6,
+            "LSMR_iterations": 1434,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 6,
+            "effective_core_updates": 6,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 1452,
+            "KH": 1452,
+            "B": 1446,
+            "BH": 1452,
+            "round_audits": 2,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 2,
+          "native": 0.9394229281475852,
+          "start_native": 0.9394524413832958,
+          "relative_native_improvement": 3.141535900112886e-05,
+          "original_equation": {
+            "native_relative": 0.9394229281475852,
+            "augmented_relative": 0.9394229281475852,
+            "original_total_augmented_relative": 0.4450062955810031,
+            "port_absolute": 1.3489052209105854e-18,
+            "port_full_rhs_relative": 4.634744156360429e-18,
+            "port_operation_relative": 3.928009345072699e-18,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.08719489905169633,
+            "full_coefficient_norm": 0.13101994611784282,
+            "port_unknown_norm": 0.0023053850167364634,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 9,
+            "LSMR_iterations": 1928,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 9,
+            "effective_core_updates": 9,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 1955,
+            "KH": 1955,
+            "B": 1946,
+            "BH": 1955,
+            "round_audits": 3,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 3,
+          "native": 0.9394138682933815,
+          "start_native": 0.9394229281475852,
+          "relative_native_improvement": 9.644063320453579e-06,
+          "original_equation": {
+            "native_relative": 0.9394138682933815,
+            "augmented_relative": 0.9394138682933815,
+            "original_total_augmented_relative": 0.44500200391210853,
+            "port_absolute": 1.993680570384357e-17,
+            "port_full_rhs_relative": 6.850147237921268e-17,
+            "port_operation_relative": 5.804532764196439e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.08720834202868055,
+            "full_coefficient_norm": 0.13104048330346443,
+            "port_unknown_norm": 0.002305540169298646,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 12,
+            "LSMR_iterations": 2352,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 12,
+            "effective_core_updates": 12,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 2388,
+            "KH": 2388,
+            "B": 2376,
+            "BH": 2388,
+            "round_audits": 4,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        }
+      ],
+      "checkpoint": {
+        "name": "committed_000017.pt",
+        "sha256": "ce99f7c9c610024691fedd7abf88dfb6714f10ce6dcf7d0886c7ce52f4fec790",
+        "bytes": 1712555
+      },
+      "history": {
+        "path": "benchmarks/artifacts/task42extra/v41/v41_fttnn_core_frozen/history.jsonl",
+        "sha256": "e94ea5fc8b5cffbb3bb9f3867d044802c7541e1fc62238a3ad85d7107adde38a",
+        "bytes": 23379
+      },
+      "stop_code_histogram": {
+        "2": 9,
+        "7": 3
+      },
+      "linearity_pair_max": 3.865968379795142e-13,
+      "max_true_adjoint_relative": 0.8371775231946148,
+      "all_actual_accepted_core_and_hidden_updates_rechecked": true,
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "design_informed_by_reference_diagnostics": true,
+      "production_initialization_allowed": false,
+      "official_candidate_results": false,
+      "pde_only_solver_qualified": false,
+      "new_global_factors": 0,
+      "full_FE_Krylov_count": 0,
+      "Gsolve_count": 0,
+      "LSMR_internal_state_recoverable": false
+    },
+    "CHEBTT_CONDITIONAL_CORE_CONTROL": {
+      "stage": "v41_chebtt_core_control",
+      "source_sha": "f0bd287e8865d9717020a1f523aaf222d24f4794",
+      "input_sha256": "76044812a097f33c736e680e73204b9c6b9987494612abf2b9742ceb5586cf3d",
+      "model_kind": "chebtt",
+      "status": "ROUND_LIMIT",
+      "stop_reason": "ROUND_LIMIT",
+      "counts": {
+        "core_visits": 18,
+        "LSMR_iterations": 5400,
+        "LSMR_unretained_iterations_upper_bound": 0,
+        "accepted_core_updates": 18,
+        "effective_core_updates": 18,
+        "accepted_hidden_updates": 0,
+        "effective_hidden_updates": 0,
+        "hidden_actual_calls": 0,
+        "K": 5454,
+        "KH": 5454,
+        "B": 5436,
+        "BH": 5454,
+        "round_audits": 6,
+        "uncommitted_K": 0,
+        "uncommitted_KH": 0
+      },
+      "exclusive_top_level_costs": {
+        "core_solve_and_check": 3304.021540776361,
+        "real_acceptance": 8.247373554855585,
+        "hidden": 0.0,
+        "persistence": 0.9502321269828826,
+        "audit": 0.8189834514632821
+      },
+      "nested_mapping_costs_not_additive": {
+        "setup": 0.3477153091225773,
+        "core_evaluation": 0.04539509862661362,
+        "contraction": 623.3262670761906,
+        "moments": 265.97567354817875,
+        "core_cotangent": 1630.2424222640693,
+        "core_backward": 26.815888918936253,
+        "cache_hash": 1.6431810271460563
+      },
+      "native_action_counts": {
+        "A": 5473,
+        "AH": 5454,
+        "audit": 7,
+        "port_solve": 10942
+      },
+      "nested_native_action_costs_not_additive": {
+        "A": 249.18934907880612,
+        "AH": 451.9249008668121,
+        "audit": 0.8707057333085686,
+        "port_solve": 0.29109644796699286
+      },
+      "cache_planned_bytes": 2507428,
+      "original_equation": {
+        "native_relative": 0.19086785577976426,
+        "augmented_relative": 0.19086785577976426,
+        "original_total_augmented_relative": 0.09041443944067783,
+        "port_absolute": 1.476131685662676e-17,
+        "port_full_rhs_relative": 5.071885406096339e-17,
+        "port_operation_relative": 3.960717725604282e-17,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 0.21053586549258493,
+        "full_coefficient_norm": 0.3029535969992243,
+        "port_unknown_norm": 0.00250158006038584,
+        "strict_pass": false
+      },
+      "rounds": [
+        {
+          "round": 0,
+          "native": 0.33751910432790927,
+          "start_native": 1.0,
+          "relative_native_improvement": 0.6624808956720907,
+          "original_equation": {
+            "native_relative": 0.33751910432790927,
+            "augmented_relative": 0.33751910432790927,
+            "original_total_augmented_relative": 0.1598833941610411,
+            "port_absolute": 7.154656277928246e-18,
+            "port_full_rhs_relative": 2.4582899421584685e-17,
+            "port_operation_relative": 5.0306808568864834e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.04971021401178286,
+            "full_coefficient_norm": 0.07216505158518684,
+            "port_unknown_norm": 0.000967247586317236,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 3,
+            "LSMR_iterations": 900,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 3,
+            "effective_core_updates": 3,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 909,
+            "KH": 909,
+            "B": 906,
+            "BH": 909,
+            "round_audits": 1,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 1,
+          "native": 0.24669927510503373,
+          "start_native": 0.33751910432790927,
+          "relative_native_improvement": 0.2690805588730217,
+          "original_equation": {
+            "native_relative": 0.24669927510503373,
+            "augmented_relative": 0.24669927510503373,
+            "original_total_augmented_relative": 0.1168618811057386,
+            "port_absolute": 3.759460149360856e-18,
+            "port_full_rhs_relative": 1.291724258177152e-17,
+            "port_operation_relative": 1.968774657657123e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.09693535285215066,
+            "full_coefficient_norm": 0.1388778130576221,
+            "port_unknown_norm": 0.0012973523278306497,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 6,
+            "LSMR_iterations": 1800,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 6,
+            "effective_core_updates": 6,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 1818,
+            "KH": 1818,
+            "B": 1812,
+            "BH": 1818,
+            "round_audits": 2,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 2,
+          "native": 0.21833565651899844,
+          "start_native": 0.24669927510503373,
+          "relative_native_improvement": 0.11497244397641339,
+          "original_equation": {
+            "native_relative": 0.21833565651899844,
+            "augmented_relative": 0.21833565651899844,
+            "original_total_augmented_relative": 0.10342598502734168,
+            "port_absolute": 1.3895103156977024e-17,
+            "port_full_rhs_relative": 4.774260426937253e-17,
+            "port_operation_relative": 5.466712607604256e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.1435333725399742,
+            "full_coefficient_norm": 0.20672937142470513,
+            "port_unknown_norm": 0.001711120196258771,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 9,
+            "LSMR_iterations": 2700,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 9,
+            "effective_core_updates": 9,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 2727,
+            "KH": 2727,
+            "B": 2718,
+            "BH": 2727,
+            "round_audits": 3,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 3,
+          "native": 0.20329968570350798,
+          "start_native": 0.21833565651899844,
+          "relative_native_improvement": 0.06886630912794635,
+          "original_equation": {
+            "native_relative": 0.20329968570350798,
+            "augmented_relative": 0.20329968570350798,
+            "original_total_augmented_relative": 0.09630341917057798,
+            "port_absolute": 1.7362680363230364e-17,
+            "port_full_rhs_relative": 5.965695743835371e-17,
+            "port_operation_relative": 5.3631388435590585e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.17510974554375147,
+            "full_coefficient_norm": 0.2524730435451878,
+            "port_unknown_norm": 0.0021739225736089563,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 12,
+            "LSMR_iterations": 3600,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 12,
+            "effective_core_updates": 12,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 3636,
+            "KH": 3636,
+            "B": 3624,
+            "BH": 3636,
+            "round_audits": 4,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 4,
+          "native": 0.19715138196628668,
+          "start_native": 0.20329968570350798,
+          "relative_native_improvement": 0.030242563907294892,
+          "original_equation": {
+            "native_relative": 0.19715138196628668,
+            "augmented_relative": 0.19715138196628668,
+            "original_total_augmented_relative": 0.09339095686182515,
+            "port_absolute": 7.825924379482623e-18,
+            "port_full_rhs_relative": 2.6889329749528785e-17,
+            "port_operation_relative": 2.3023434115223876e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.19299267273148832,
+            "full_coefficient_norm": 0.27783322159375917,
+            "port_unknown_norm": 0.0022805109228890025,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 15,
+            "LSMR_iterations": 4500,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 15,
+            "effective_core_updates": 15,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 4545,
+            "KH": 4545,
+            "B": 4530,
+            "BH": 4545,
+            "round_audits": 5,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 5,
+          "native": 0.19086785577976426,
+          "start_native": 0.19715138196628668,
+          "relative_native_improvement": 0.031871580730775284,
+          "original_equation": {
+            "native_relative": 0.19086785577976426,
+            "augmented_relative": 0.19086785577976426,
+            "original_total_augmented_relative": 0.09041443944067783,
+            "port_absolute": 1.476131685662676e-17,
+            "port_full_rhs_relative": 5.071885406096339e-17,
+            "port_operation_relative": 3.960717725604282e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.21053586549258493,
+            "full_coefficient_norm": 0.3029535969992243,
+            "port_unknown_norm": 0.00250158006038584,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 18,
+            "LSMR_iterations": 5400,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 18,
+            "effective_core_updates": 18,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 5454,
+            "KH": 5454,
+            "B": 5436,
+            "BH": 5454,
+            "round_audits": 6,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        }
+      ],
+      "checkpoint": {
+        "name": "committed_000025.pt",
+        "sha256": "60a297f08ba8877039c3fe7a3ffbb294d537efc6521cc2b4396ea55d603ef558",
+        "bytes": 1700165
+      },
+      "history": {
+        "path": "benchmarks/artifacts/task42extra/v41/v41_chebtt_core_control/history.jsonl",
+        "sha256": "c52b9924287ae56e3d29306d95e92f7549a9ae135b2fedd850cc274813695f84",
+        "bytes": 35179
+      },
+      "stop_code_histogram": {
+        "7": 18
+      },
+      "linearity_pair_max": 1.2290116203932717e-15,
+      "max_true_adjoint_relative": 0.6422476046896519,
+      "all_actual_accepted_core_and_hidden_updates_rechecked": true,
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "design_informed_by_reference_diagnostics": true,
+      "production_initialization_allowed": false,
+      "official_candidate_results": false,
+      "pde_only_solver_qualified": false,
+      "new_global_factors": 0,
+      "full_FE_Krylov_count": 0,
+      "Gsolve_count": 0,
+      "LSMR_internal_state_recoverable": false
+    }
+  },
+  "inherited_training_updates": 0,
+  "old_10186_wave_prefix_required_for_new_solve": false,
+  "actual_initialization": {
+    "source_sha": "f0bd287e8865d9717020a1f523aaf222d24f4794",
+    "abi": {
+      "python": "/home/fenics/Projects/NN-Lab-V2/.venv-ml/bin/python",
+      "mode": "ml",
+      "activated": true,
+      "threads": {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1"
+      },
+      "cpu_affinity": [
+        12
+      ],
+      "numpy": "1.26.4",
+      "cuda_visible": "",
+      "torch": "2.7.1+cpu",
+      "torch_threads": 1,
+      "torch_interop": 1,
+      "torch_default_dtype": "torch.float32",
+      "neuron_and_derivative_dtype": "FTT parameters and coordinate buffers float64; paired complex outputs and complete moments complex128",
+      "dtype_verification": "explicit FTTField dtype and qualified mapping"
+    },
+    "zero_and_final": {
+      "v41_fttnn_core_learned": {
+        "zero": {
+          "path": "benchmarks/artifacts/task42extra/v41/v41_fttnn_core_learned/checkpoints/committed_000000.pt",
+          "sha256": "d685e25fd367f11094df4bcdb87c41d842aa23b81ba38eb5bc19f2d1cd3ddd7d",
+          "bytes": 1379041
+        },
+        "final": {
+          "path": "benchmarks/artifacts/task42extra/v41/v41_fttnn_core_learned/checkpoints/committed_000021.pt",
+          "sha256": "9cc4b44604bdf8a5b13fc5bc056c986e008ae2ea0cb019bdee4a0472f1e2fb3e",
+          "bytes": 1868918
+        }
+      },
+      "v41_fttnn_core_frozen": {
+        "zero": {
+          "path": "benchmarks/artifacts/task42extra/v41/v41_fttnn_core_frozen/checkpoints/committed_000000.pt",
+          "sha256": "4295d062907cce8597f3ef7dda7da63a2eb26880c2b9aed09b9dbbf7e64edf1c",
+          "bytes": 1379041
+        },
+        "final": {
+          "path": "benchmarks/artifacts/task42extra/v41/v41_fttnn_core_frozen/checkpoints/committed_000017.pt",
+          "sha256": "ce99f7c9c610024691fedd7abf88dfb6714f10ce6dcf7d0886c7ce52f4fec790",
+          "bytes": 1712555
+        }
+      },
+      "v41_chebtt_core_control": {
+        "zero": {
+          "path": "benchmarks/artifacts/task42extra/v41/v41_chebtt_core_control/checkpoints/committed_000000.pt",
+          "sha256": "0bc5684c795bf41b9f3a51dd5127657cf9930a49519316dead81e61fd422f8a1",
+          "bytes": 1373841
+        },
+        "final": {
+          "path": "benchmarks/artifacts/task42extra/v41/v41_chebtt_core_control/checkpoints/committed_000025.pt",
+          "sha256": "60a297f08ba8877039c3fe7a3ffbb294d537efc6521cc2b4396ea55d603ef558",
+          "bytes": 1700165
+        }
+      }
+    },
+    "NN_initial_parameters_and_buffers_bitwise_equal": true,
+    "all_routes_initial_c_exact_zero": true,
+    "x_y_nonzero_z_output_only_zero": true,
+    "hidden_parameter_count": 912,
+    "frozen_hidden_bitwise_unchanged": true,
+    "learned_hidden_final_difference_norm": 0.000231493441119918,
+    "buffers_bitwise_unchanged": true,
+    "reference_identity_in_training_checkpoints": null,
+    "new_training_or_model_forward_or_native_action": false
+  },
+  "conditional_linear_contribution_vs_hidden_learning_separated": true,
+  "initialization_field_exact_zero": true,
+  "full_cold_N1": "UNKNOWN"
+}

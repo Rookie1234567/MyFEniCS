@@ -1,0 +1,398 @@
+{
+  "schema": "task42extra.v41.cost.v1",
+  "unique_window": {
+    "campaign": "V41_FTT_CONDITIONAL_CORE_SOLVE",
+    "campaign_version": 41,
+    "origin_utc": "2026-10-10T11:20:26.707865+00:00",
+    "origin_monotonic": 1556221.568732456,
+    "deadline_monotonic": 1599421.568732456,
+    "budget_s": 43200,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "single_window": true,
+    "original_origin_preserved": true,
+    "tail_reserve_s": 1800,
+    "first_readonly_head": "80d65063fc82592baffc5f479635aaba450a2eff",
+    "initial_state": "NOT_STARTED_V40_COMPLETE",
+    "first_retained_observation_utc": "2026-10-10T11:30:26.7078648Z",
+    "unretained_initial_inspection_allowance_s": 600,
+    "origin_kind": "CONSERVATIVE_DEADLINE_ANCHOR_BEFORE_FIRST_RETAINED_OBSERVATION",
+    "unretained_preparation_exact_cost": "UNKNOWN"
+  },
+  "collection_monotonic": 1566614.658329095,
+  "conservative_collection_elapsed_s": 10393.089596638922,
+  "remaining_s": 32806.91040336108,
+  "exact_unretained_initial_preparation_s": "UNKNOWN",
+  "deadline_anchor_allowance_s": 600,
+  "stages": [
+    {
+      "stage": "v41_chebtt_core_control",
+      "attempt": "v41_chebtt_core_control_attempt1",
+      "source_sha": "f0bd287e8865d9717020a1f523aaf222d24f4794",
+      "cpu": 13,
+      "actual_attempt_s": 3384.2425483989064,
+      "supervised_s": 3320.175696401857,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 388096000,
+      "tree_swap_peak_bytes": 0,
+      "RSS_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "memory_admission": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1904190795776,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1904190795776,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "PSI_observed_seconds": 60.00208009011112,
+      "worker_stop_monotonic": 1568651.350896039,
+      "stage_deadline_monotonic": 1568801.350896039,
+      "summary": {
+        "path": "tmp/task42extra/v41/durable/v41_chebtt_core_control_attempt1/run_summary.json",
+        "sha256": "98a3a5676a7b72aac5c253f49cfca51c29acb2899049759443622faafdfdb566",
+        "bytes": 13107
+      }
+    },
+    {
+      "stage": "v41_core_independent_compare",
+      "attempt": "v41_core_independent_compare_attempt1",
+      "source_sha": "f0bd287e8865d9717020a1f523aaf222d24f4794",
+      "cpu": 38,
+      "actual_attempt_s": 542.590202138992,
+      "supervised_s": 476.9945004750043,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 643035136,
+      "tree_swap_peak_bytes": 0,
+      "RSS_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "memory_admission": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1891826253824,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1891826253824,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "PSI_observed_seconds": 60.00198142696172,
+      "worker_stop_monotonic": 1568472.711935467,
+      "stage_deadline_monotonic": 1568622.711935467,
+      "summary": {
+        "path": "tmp/task42extra/v41/durable/v41_core_independent_compare_attempt1/run_summary.json",
+        "sha256": "3c4b2e4227e8fc42f1ac2e5e816e7c57f3ac422d62ee3781f1c729d6dad1f63c",
+        "bytes": 13164
+      }
+    },
+    {
+      "stage": "v41_core_independent_compare",
+      "attempt": "v41_core_independent_compare_attempt2",
+      "source_sha": "b64d594993316df4a1784553954c20468cde0229",
+      "cpu": 0,
+      "actual_attempt_s": 66.81249429611489,
+      "supervised_s": 2.5052365730516613,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 204083200,
+      "tree_swap_peak_bytes": 0,
+      "RSS_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true,
+      "memory_admission": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1891149746176,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1891149746176,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "PSI_observed_seconds": 60.00195251707919,
+      "worker_stop_monotonic": 1568472.711935467,
+      "stage_deadline_monotonic": 1568622.711935467,
+      "summary": {
+        "path": "tmp/task42extra/v41/durable/v41_core_independent_compare_attempt2/run_summary.json",
+        "sha256": "854aa0378929fc25ff8abe12405a5704ffb2dfe3281e8eaceef693c5b9529eb8",
+        "bytes": 13119
+      }
+    },
+    {
+      "stage": "v41_core_independent_compare",
+      "attempt": "v41_core_independent_compare_attempt3",
+      "source_sha": "d38d28953bed93b9457a060ec9c496083676586a",
+      "cpu": 13,
+      "actual_attempt_s": 78.01122497092001,
+      "supervised_s": 12.369490880984813,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 503197696,
+      "tree_swap_peak_bytes": 0,
+      "RSS_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "memory_admission": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1890433417216,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1890433417216,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "PSI_observed_seconds": 60.002031459938735,
+      "worker_stop_monotonic": 1568472.711935467,
+      "stage_deadline_monotonic": 1568622.711935467,
+      "summary": {
+        "path": "tmp/task42extra/v41/durable/v41_core_independent_compare_attempt3/run_summary.json",
+        "sha256": "16d3ce0aa3be67e852d50441191b3e5333908e84c565fc8e7fbad897401a1bad",
+        "bytes": 13130
+      }
+    },
+    {
+      "stage": "v41_core_linear_checks",
+      "attempt": "v41_core_linear_checks_attempt1",
+      "source_sha": "7ae99c6aaafe41b234f49ba11b059a970968eb82",
+      "cpu": 0,
+      "actual_attempt_s": 258.4745220250916,
+      "supervised_s": 193.07125468715094,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 405676032,
+      "tree_swap_peak_bytes": 0,
+      "RSS_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "memory_admission": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1914480836608,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1914480836608,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "PSI_observed_seconds": 60.002066008979455,
+      "worker_stop_monotonic": 1563444.709826371,
+      "stage_deadline_monotonic": 1563594.709826371,
+      "summary": {
+        "path": "tmp/task42extra/v41/durable/v41_core_linear_checks_attempt1/run_summary.json",
+        "sha256": "90c8181ed54f608ab6e2f55b5fdab4bf69ef1630519068674a31893966dc9a9e",
+        "bytes": 13081
+      }
+    },
+    {
+      "stage": "v41_fttnn_core_frozen",
+      "attempt": "v41_fttnn_core_frozen_attempt1",
+      "source_sha": "f0bd287e8865d9717020a1f523aaf222d24f4794",
+      "cpu": 2,
+      "actual_attempt_s": 1514.969840822043,
+      "supervised_s": 1450.5783436510246,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 393895936,
+      "tree_swap_peak_bytes": 0,
+      "RSS_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "memory_admission": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1909206740992,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1909206740992,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "PSI_observed_seconds": 60.00205304916017,
+      "worker_stop_monotonic": 1567077.523944438,
+      "stage_deadline_monotonic": 1567227.523944438,
+      "summary": {
+        "path": "tmp/task42extra/v41/durable/v41_fttnn_core_frozen_attempt1/run_summary.json",
+        "sha256": "ddfdb56c1be9ef4b6eab0499e5bd53d0baac6dbd930d270718e860c13879fa4c",
+        "bytes": 13094
+      }
+    },
+    {
+      "stage": "v41_fttnn_core_learned",
+      "attempt": "v41_fttnn_core_learned_attempt1",
+      "source_sha": "f0bd287e8865d9717020a1f523aaf222d24f4794",
+      "cpu": 26,
+      "actual_attempt_s": 1371.5718173629139,
+      "supervised_s": 1306.0802025131416,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 469508096,
+      "tree_swap_peak_bytes": 0,
+      "RSS_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "memory_admission": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1913422467072,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1913422467072,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "PSI_observed_seconds": 60.00237192190252,
+      "worker_stop_monotonic": 1565669.964443566,
+      "stage_deadline_monotonic": 1565819.964443566,
+      "summary": {
+        "path": "tmp/task42extra/v41/durable/v41_fttnn_core_learned_attempt1/run_summary.json",
+        "sha256": "df6de5b47b10f07164a00c805b43f1b3d5ff78bf5f639d65e257a02557ece450",
+        "bytes": 13103
+      }
+    }
+  ],
+  "bounded_light_work": [
+    {
+      "name": "test01",
+      "summary": {
+        "path": "tmp/task42extra/v41/test01/summary.json",
+        "sha256": "872351364058327b759cc428afd25b59a944d1c3cd23d8e7bb325881987e4abf",
+        "bytes": 1996
+      },
+      "supervised_s": 8.546401671832427,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 337461248,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "test02",
+      "summary": {
+        "path": "tmp/task42extra/v41/test02/summary.json",
+        "sha256": "8d8a86cee8e8785a328de0629698d4be163f5a358548ae5a067ec4a71fe133f3",
+        "bytes": 2010
+      },
+      "supervised_s": 11.634112035157159,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 418877440,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "test03",
+      "summary": {
+        "path": "tmp/task42extra/v41/test03/summary.json",
+        "sha256": "a61b31326e9905c9cc406ba0f953248dc7de62597773abe1af5ac10882153132",
+        "bytes": 1983
+      },
+      "supervised_s": 7.901530623901635,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 410238976,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "test04",
+      "summary": {
+        "path": "tmp/task42extra/v41/test04/summary.json",
+        "sha256": "8915ae0793d488d4e787c5d9921ebd23c47602b6244f86ed141a885e0fbd7fc0",
+        "bytes": 1982
+      },
+      "supervised_s": 4.963566475082189,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 317394944,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "test05",
+      "summary": {
+        "path": "tmp/task42extra/v41/test05/summary.json",
+        "sha256": "62f9a3e04a6fda95f72ba234eb4531163ad5b981c753973d8dfa1cd4cc9786e3",
+        "bytes": 2013
+      },
+      "supervised_s": 9.209984140936285,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 658161664,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "test06",
+      "summary": {
+        "path": "tmp/task42extra/v41/test06/summary.json",
+        "sha256": "537997378ea4b068f663fbd3c615ec41b8f000162b224fae00405e0c79434bea",
+        "bytes": 1982
+      },
+      "supervised_s": 4.232872297056019,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 330407936,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "test07",
+      "summary": {
+        "path": "tmp/task42extra/v41/test07/summary.json",
+        "sha256": "856b5c08d792a0cecfa543be7ef7e9dee3f60468638c1d201f2df5616e816945",
+        "bytes": 1982
+      },
+      "supervised_s": 4.890917391050607,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 318971904,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "test08",
+      "summary": {
+        "path": "tmp/task42extra/v41/test08/summary.json",
+        "sha256": "b622fade296dc1b4749234348c7a31019ab09d0599f0ce17c20fd52249395e1f",
+        "bytes": 1983
+      },
+      "supervised_s": 5.0071615390479565,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 318402560,
+      "tree_swap_peak_bytes": 0
+    }
+  ],
+  "formal_actual_attempt_sum_s": 7216.672650014982,
+  "sampled_tree_RSS_peak_max_over_serial_stages_bytes": 658161664,
+  "RSS_scope": "max of serial simultaneous own-tree sampled peaks, not sum or all-host peak",
+  "own_swap_sampled_bytes": 0,
+  "OOC_bytes": 0,
+  "new_global_Gram_and_Maxwell_factors": 0,
+  "Gsolve_count": 0,
+  "G_matvecs_independent_scoring_per_checker": 7,
+  "successes_60s_PSI_in_campaign_wall": true,
+  "mandatory_system_and_384GiB_growth_protection_unchanged": true,
+  "actual_rejection_extra_wait_s": "recorded in tail; short fresh-admission retries retained, no indefinite waiting",
+  "historical_project_exact_cumulative_s": "UNKNOWN",
+  "previous_costs": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v40.json",
+    "sha256": "16adf0ca97ecc5b7323b695572fdc10027fc7d550186eaecac5ee47f33de1893",
+    "bytes": 9869
+  },
+  "old_failures_and_all_costs_preserved": true,
+  "old_wave_10186_training_required_for_new_routes": false,
+  "necessary_mesh_native_moments_cold_preparation_cost": "UNKNOWN_NOT_FREE",
+  "complete_cold_N1": "UNKNOWN",
+  "loaded_packet_route_and_research_campaign_costs_separated": true,
+  "same_accuracy_NN_resource_gain": "NOT_VERIFIED_ALL_ROUTES_FAIL",
+  "no_all_host_peak_measurement_of_Codex_tool_control": true,
+  "final_reserve_s": 1800,
+  "numerical_stage_soft_allocation_transfer_required": false
+}

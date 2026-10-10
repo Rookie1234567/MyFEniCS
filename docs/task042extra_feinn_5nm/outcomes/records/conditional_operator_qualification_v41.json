@@ -1,0 +1,567 @@
+{
+  "schema": "task42extra.v41.qualification.v1",
+  "raw_qualification": {
+    "models": {
+      "fttnn": {
+        "initial_old_point_pair": {
+          "numerator": 3.1055204649703353e-16,
+          "denominator": 0.19758882259271146,
+          "relative": 1.5717085735015103e-15
+        },
+        "axes": [
+          {
+            "axis": 0,
+            "K_adjoint_relative": 4.3311610326308375e-15,
+            "B_adjoint_relative": 1.5469636173730298e-15,
+            "complex_linearity": {
+              "numerator": 9.941857968055908e-17,
+              "denominator": 0.22222447152436955,
+              "relative": 4.473790802542493e-16
+            },
+            "pure_imaginary_linearity": {
+              "numerator": 8.710563193401778e-17,
+              "denominator": 0.2112464520690224,
+              "relative": 4.1234127759720667e-16
+            },
+            "bias_all_components_linearity": {
+              "numerator": 8.487892248158897e-17,
+              "denominator": 0.19774542542711623,
+              "relative": 4.29233304883066e-16
+            },
+            "independent_old_point_mapping": {
+              "numerator": 3.617973185721348e-16,
+              "denominator": 0.22222447152436958,
+              "relative": 1.628071454463823e-15
+            },
+            "short_inner": {
+              "stop_code": 7,
+              "iterations": 3,
+              "reported_normr": 2.008848407524963,
+              "reported_normar": 20.22268587811696,
+              "reported_normA": 42.07146578691669,
+              "reported_condA": 1.8608970655285786,
+              "reported_normx": 0.42752300977816,
+              "true_linear_residual_norm": 2.0088484075249706,
+              "true_linear_rhs_norm": 7.877930992936883,
+              "true_adjoint_residual_norm": 20.222685878117016,
+              "true_adjoint_initial_norm": 143.26162148028055,
+              "true_adjoint_residual_relative": 0.1411591301924542,
+              "counts": {
+                "K": 9,
+                "KH": 8,
+                "B": 6,
+                "BH": 7
+              },
+              "costs_including_nested_actions": {
+                "K": 1.6035474783275276,
+                "KH": 2.348650587024167,
+                "B": 1.5213391070719808,
+                "BH": 3.0293392594903708
+              },
+              "solve_and_independent_check_seconds": 3.998512347927317,
+              "inexact_at_iteration_limit": true,
+              "original_PDE_pass_from_stop_code": false
+            },
+            "short_acceptance": {
+              "linearity_pairing": {
+                "numerator": 9.12468347715238e-17,
+                "denominator": 0.04688162414028687,
+                "relative": 1.9463240970167774e-15
+              },
+              "old_loss": 31.030898364737855,
+              "trial_loss": 2.0177359622078064,
+              "native_trial": 2.0088484075249724,
+              "accepted": true,
+              "effective_decrease": true,
+              "delta_complex_norm": 0.42752300977816
+            },
+            "restored_parameter_hash": "01addd9ff39e46642d5308a7422337eeefb85778359b6eda0d99dfb3ac20ac96",
+            "cache_bytes": 457456
+          },
+          {
+            "axis": 1,
+            "K_adjoint_relative": 2.090406112811722e-15,
+            "B_adjoint_relative": 7.975152738542998e-16,
+            "complex_linearity": {
+              "numerator": 1.0542721177736568e-16,
+              "denominator": 0.21812706652879205,
+              "relative": 4.833293430985083e-16
+            },
+            "pure_imaginary_linearity": {
+              "numerator": 9.025069114308509e-17,
+              "denominator": 0.21172840145811564,
+              "relative": 4.26256895728458e-16
+            },
+            "bias_all_components_linearity": {
+              "numerator": 8.248720408329464e-17,
+              "denominator": 0.19781568591622126,
+              "relative": 4.1699020834085705e-16
+            },
+            "independent_old_point_mapping": {
+              "numerator": 3.497493822517019e-16,
+              "denominator": 0.21812706652879207,
+              "relative": 1.6034203724347804e-15
+            },
+            "short_inner": {
+              "stop_code": 7,
+              "iterations": 3,
+              "reported_normr": 1.1493703383229257,
+              "reported_normar": 19.399829903035528,
+              "reported_normA": 85.27004729141153,
+              "reported_condA": 1.5269452454539731,
+              "reported_normx": 0.18491127025049942,
+              "true_linear_residual_norm": 1.149370338322931,
+              "true_linear_rhs_norm": 7.877930992936883,
+              "true_adjoint_residual_norm": 19.3998299030356,
+              "true_adjoint_initial_norm": 363.9641174820801,
+              "true_adjoint_residual_relative": 0.053301490370107035,
+              "counts": {
+                "K": 9,
+                "KH": 8,
+                "B": 6,
+                "BH": 7
+              },
+              "costs_including_nested_actions": {
+                "K": 1.2015551240183413,
+                "KH": 2.516073948238045,
+                "B": 1.0259964615106583,
+                "BH": 2.599052662262693
+              },
+              "solve_and_independent_check_seconds": 3.0895812320522964,
+              "inexact_at_iteration_limit": true,
+              "original_PDE_pass_from_stop_code": false
+            },
+            "short_acceptance": {
+              "linearity_pairing": {
+                "numerator": 9.283128567633188e-17,
+                "denominator": 0.012918430012866638,
+                "relative": 7.185957239685687e-15
+              },
+              "old_loss": 31.030898364737855,
+              "trial_loss": 0.660526087308285,
+              "native_trial": 1.1493703383229312,
+              "accepted": true,
+              "effective_decrease": true,
+              "delta_complex_norm": 0.18491127025049942
+            },
+            "restored_parameter_hash": "01addd9ff39e46642d5308a7422337eeefb85778359b6eda0d99dfb3ac20ac96",
+            "cache_bytes": 452696
+          },
+          {
+            "axis": 2,
+            "K_adjoint_relative": 1.8416245904127724e-15,
+            "B_adjoint_relative": 8.767155425248083e-15,
+            "complex_linearity": {
+              "numerator": 2.054639055151714e-16,
+              "denominator": 0.5321735691768644,
+              "relative": 3.8608438565066505e-16
+            },
+            "pure_imaginary_linearity": {
+              "numerator": 1.685033685127182e-16,
+              "denominator": 0.4144450660023203,
+              "relative": 4.0657588263283806e-16
+            },
+            "bias_all_components_linearity": {
+              "numerator": 8.018110186916652e-17,
+              "denominator": 0.18937269761640346,
+              "relative": 4.2340370538303635e-16
+            },
+            "independent_old_point_mapping": {
+              "numerator": 9.047687700319316e-16,
+              "denominator": 0.5321735691768646,
+              "relative": 1.700138493220127e-15
+            },
+            "short_inner": {
+              "stop_code": 7,
+              "iterations": 3,
+              "reported_normr": 1.1152255452309492,
+              "reported_normar": 71.70725670749924,
+              "reported_normA": 395.51314510376545,
+              "reported_condA": 1.6147417423067933,
+              "reported_normx": 0.03821809777029001,
+              "true_linear_residual_norm": 1.1152255452309563,
+              "true_linear_rhs_norm": 7.877930992936883,
+              "true_adjoint_residual_norm": 71.7072567074997,
+              "true_adjoint_initial_norm": 1886.679094191599,
+              "true_adjoint_residual_relative": 0.03800712952629853,
+              "counts": {
+                "K": 9,
+                "KH": 8,
+                "B": 6,
+                "BH": 7
+              },
+              "costs_including_nested_actions": {
+                "K": 1.3361723597627133,
+                "KH": 2.5476967927534133,
+                "B": 1.059215727262199,
+                "BH": 2.6487198271788657
+              },
+              "solve_and_independent_check_seconds": 3.2143732861150056,
+              "inexact_at_iteration_limit": true,
+              "original_PDE_pass_from_stop_code": false
+            },
+            "short_acceptance": {
+              "linearity_pairing": {
+                "numerator": 9.095670944457137e-17,
+                "denominator": 0.01368924832990992,
+                "relative": 6.644390345804319e-15
+              },
+              "old_loss": 31.030898364737855,
+              "trial_loss": 0.6218640083678416,
+              "native_trial": 1.1152255452309563,
+              "accepted": true,
+              "effective_decrease": true,
+              "delta_complex_norm": 0.03821809777029001
+            },
+            "restored_parameter_hash": "01addd9ff39e46642d5308a7422337eeefb85778359b6eda0d99dfb3ac20ac96",
+            "cache_bytes": 457592
+          }
+        ],
+        "hidden_FD": [
+          [
+            {
+              "h": 0.0001,
+              "FD": 11.437330034027582,
+              "adjoint": 11.437330064659594,
+              "relative": 2.67824853431062e-09
+            },
+            {
+              "h": 1e-05,
+              "FD": 11.437330065255933,
+              "adjoint": 11.437330064659594,
+              "relative": 5.2139701730718075e-11
+            },
+            {
+              "h": 1e-06,
+              "FD": 11.437330053709616,
+              "adjoint": 11.437330064659594,
+              "relative": 9.573894116583292e-10
+            }
+          ],
+          [
+            {
+              "h": 0.0001,
+              "FD": 22.021408398043008,
+              "adjoint": 22.021408334393804,
+              "relative": 2.8903329928238372e-09
+            },
+            {
+              "h": 1e-05,
+              "FD": 22.02140833489352,
+              "adjoint": 22.021408334393804,
+              "relative": 2.2692192993271536e-11
+            },
+            {
+              "h": 1e-06,
+              "FD": 22.021408359051975,
+              "adjoint": 22.021408334393804,
+              "relative": 1.1197363136104918e-09
+            }
+          ],
+          [
+            {
+              "h": 0.0001,
+              "FD": 17.20926843781001,
+              "adjoint": 17.209268447499074,
+              "relative": 5.630142735631199e-10
+            },
+            {
+              "h": 1e-05,
+              "FD": 17.209268446549686,
+              "adjoint": 17.209268447499074,
+              "relative": 5.516725632867609e-11
+            },
+            {
+              "h": 1e-06,
+              "FD": 17.209268440510073,
+              "adjoint": 17.209268447499074,
+              "relative": 4.0611844710044623e-10
+            }
+          ]
+        ],
+        "full_parameter_count": 9072,
+        "qualified": true,
+        "qualification_not_used_as_formal_initialization": true
+      },
+      "chebtt": {
+        "initial_old_point_pair": {
+          "numerator": 1.4229886701025251e-12,
+          "denominator": 72.20926704418181,
+          "relative": 1.9706454979412245e-14
+        },
+        "axes": [
+          {
+            "axis": 0,
+            "K_adjoint_relative": 8.75133303737269e-16,
+            "B_adjoint_relative": 2.421518770725464e-15,
+            "complex_linearity": {
+              "numerator": 2.660855134402431e-14,
+              "denominator": 73.34262353082812,
+              "relative": 3.6279792108663704e-16
+            },
+            "pure_imaginary_linearity": {
+              "numerator": 2.356498949395522e-14,
+              "denominator": 73.53693313861436,
+              "relative": 3.20451077957468e-16
+            },
+            "bias_all_components_linearity": {
+              "numerator": 2.199122194666086e-14,
+              "denominator": 72.21365009816981,
+              "relative": 3.045299872913945e-16
+            },
+            "independent_old_point_mapping": {
+              "numerator": 1.4651557556003314e-12,
+              "denominator": 73.34262353082849,
+              "relative": 1.997686590778246e-14
+            },
+            "short_inner": {
+              "stop_code": 7,
+              "iterations": 3,
+              "reported_normr": 1695.6539813873717,
+              "reported_normar": 1476638.8237779608,
+              "reported_normA": 4073.4438127172048,
+              "reported_condA": 1.6042310824626989,
+              "reported_normx": 2.848122662657578,
+              "true_linear_residual_norm": 1695.6539813873744,
+              "true_linear_rhs_norm": 4945.380333772445,
+              "true_adjoint_residual_norm": 1476638.823777961,
+              "true_adjoint_initial_norm": 7976474.587668282,
+              "true_adjoint_residual_relative": 0.18512424349233947,
+              "counts": {
+                "K": 9,
+                "KH": 8,
+                "B": 6,
+                "BH": 7
+              },
+              "costs_including_nested_actions": {
+                "K": 1.4163336497731507,
+                "KH": 2.692194703966379,
+                "B": 1.2447768452111632,
+                "BH": 2.742301804944873
+              },
+              "solve_and_independent_check_seconds": 3.4993570898659527,
+              "inexact_at_iteration_limit": true,
+              "original_PDE_pass_from_stop_code": false
+            },
+            "short_acceptance": {
+              "linearity_pairing": {
+                "numerator": 2.4738008193470916e-14,
+                "denominator": 40.650516950380165,
+                "relative": 6.08553348132503e-16
+              },
+              "old_loss": 12228393.322831647,
+              "trial_loss": 1437621.2122974277,
+              "native_trial": 1695.6539813873746,
+              "accepted": true,
+              "effective_decrease": true,
+              "delta_complex_norm": 2.848122662657578
+            },
+            "restored_parameter_hash": "ee997f6082dfe21504452fc531a52b067eb61438a52b750f07a87770a9a7a186",
+            "cache_bytes": 459728
+          },
+          {
+            "axis": 1,
+            "K_adjoint_relative": 5.468589259689137e-16,
+            "B_adjoint_relative": 6.349089111515214e-16,
+            "complex_linearity": {
+              "numerator": 2.6063339717432715e-14,
+              "denominator": 72.37082187005458,
+              "relative": 3.601360195166878e-16
+            },
+            "pure_imaginary_linearity": {
+              "numerator": 2.3167923508323942e-14,
+              "denominator": 72.38902291401615,
+              "relative": 3.2004746818924267e-16
+            },
+            "bias_all_components_linearity": {
+              "numerator": 2.219256411241757e-14,
+              "denominator": 72.21385046323915,
+              "relative": 3.073172801347134e-16
+            },
+            "independent_old_point_mapping": {
+              "numerator": 1.4250551707299665e-12,
+              "denominator": 72.37082187005494,
+              "relative": 1.9691018201903482e-14
+            },
+            "short_inner": {
+              "stop_code": 7,
+              "iterations": 3,
+              "reported_normr": 2684.7400241324362,
+              "reported_normar": 1360401.37418907,
+              "reported_normA": 3302.4735611424176,
+              "reported_condA": 1.640329831520778,
+              "reported_normx": 3.2974614558082456,
+              "true_linear_residual_norm": 2684.740024132437,
+              "true_linear_rhs_norm": 4945.380333772445,
+              "true_adjoint_residual_norm": 1360401.374189072,
+              "true_adjoint_initial_norm": 5182859.468755053,
+              "true_adjoint_residual_relative": 0.2624808529712743,
+              "counts": {
+                "K": 9,
+                "KH": 8,
+                "B": 6,
+                "BH": 7
+              },
+              "costs_including_nested_actions": {
+                "K": 3.4730470618233085,
+                "KH": 3.923090534983203,
+                "B": 2.806477884761989,
+                "BH": 4.949173875618726
+              },
+              "solve_and_independent_check_seconds": 6.082565493881702,
+              "inexact_at_iteration_limit": true,
+              "original_PDE_pass_from_stop_code": false
+            },
+            "short_acceptance": {
+              "linearity_pairing": {
+                "numerator": 2.58509315733145e-14,
+                "denominator": 61.49417328619031,
+                "relative": 4.2038017899689074e-16
+              },
+              "old_loss": 12228393.322831647,
+              "trial_loss": 3603914.4985893136,
+              "native_trial": 2684.7400241324335,
+              "accepted": true,
+              "effective_decrease": true,
+              "delta_complex_norm": 3.2974614558082456
+            },
+            "restored_parameter_hash": "ee997f6082dfe21504452fc531a52b067eb61438a52b750f07a87770a9a7a186",
+            "cache_bytes": 454408
+          },
+          {
+            "axis": 2,
+            "K_adjoint_relative": 4.860331809941933e-15,
+            "B_adjoint_relative": 4.198771938666603e-15,
+            "complex_linearity": {
+              "numerator": 3.792458784200527e-14,
+              "denominator": 109.83091502245603,
+              "relative": 3.4529975311824736e-16
+            },
+            "pure_imaginary_linearity": {
+              "numerator": 2.891842084895194e-14,
+              "denominator": 92.9179065327342,
+              "relative": 3.112254884774468e-16
+            },
+            "bias_all_components_linearity": {
+              "numerator": 1.8983240308497965e-14,
+              "denominator": 72.20148316096764,
+              "relative": 2.6292036503150905e-16
+            },
+            "independent_old_point_mapping": {
+              "numerator": 2.5118488265340357e-12,
+              "denominator": 109.83091502245667,
+              "relative": 2.2870143857223157e-14
+            },
+            "short_inner": {
+              "stop_code": 7,
+              "iterations": 3,
+              "reported_normr": 1226.4542600111345,
+              "reported_normar": 5052420.123636112,
+              "reported_normA": 16688.363367970473,
+              "reported_condA": 1.4843817882199715,
+              "reported_normx": 0.6369945652475301,
+              "true_linear_residual_norm": 1226.454260011134,
+              "true_linear_rhs_norm": 4945.380333772445,
+              "true_adjoint_residual_norm": 5052420.1236361135,
+              "true_adjoint_initial_norm": 38634337.94007945,
+              "true_adjoint_residual_relative": 0.13077537737212544,
+              "counts": {
+                "K": 9,
+                "KH": 8,
+                "B": 6,
+                "BH": 7
+              },
+              "costs_including_nested_actions": {
+                "K": 1.4344125776551664,
+                "KH": 2.255759023828432,
+                "B": 1.2112329432275146,
+                "BH": 2.312780873849988
+              },
+              "solve_and_independent_check_seconds": 3.0055850471835583,
+              "inexact_at_iteration_limit": true,
+              "original_PDE_pass_from_stop_code": false
+            },
+            "short_acceptance": {
+              "linearity_pairing": {
+                "numerator": 2.2099554256249992e-14,
+                "denominator": 33.25255670036703,
+                "relative": 6.645971452777363e-16
+              },
+              "old_loss": 12228393.322831647,
+              "trial_loss": 752095.0259497301,
+              "native_trial": 1226.4542600111351,
+              "accepted": true,
+              "effective_decrease": true,
+              "delta_complex_norm": 0.6369945652475301
+            },
+            "restored_parameter_hash": "ee997f6082dfe21504452fc531a52b067eb61438a52b750f07a87770a9a7a186",
+            "cache_bytes": 459880
+          }
+        ],
+        "hidden_FD": [],
+        "full_parameter_count": 9120,
+        "qualified": true,
+        "qualification_not_used_as_formal_initialization": true
+      }
+    },
+    "qualified": true,
+    "reference_used_for_training": false,
+    "reference_loaded": false,
+    "label_firewall_negative_checks": [
+      {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+        "rejected": true
+      },
+      {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+        "rejected": true
+      },
+      {
+        "path": "benchmarks/artifacts/task42extra/v40/v40_interior_moment_tensor/interior_tensor.npz",
+        "rejected": true
+      },
+      {
+        "path": "benchmarks/artifacts/task42extra/v39/v39_fttnn_fit_continue/checkpoints/committed_000001.pt",
+        "rejected": true
+      }
+    ],
+    "source_sha": "7ae99c6aaafe41b234f49ba11b059a970968eb82",
+    "input_sha256": "406c4b061c367da3c79b594a1ed5a9db4bc3afcc2a8b86b3e02dacde0e02d104",
+    "design_sha256": "4c4534c49ae71790ec284c8212f8a424aefaefa45391cf4f859908d715230b4d",
+    "worker_elapsed_seconds": 189.95433271606453,
+    "features_reference_exposed": false,
+    "benchmark_previously_seen": true,
+    "design_informed_by_reference_diagnostics": true,
+    "production_initialization_allowed": false,
+    "official_candidate_results": false,
+    "pde_only_solver_qualified": false,
+    "global_Maxwell_factor_count": 0,
+    "global_Gram_factor_count": 0,
+    "Gsolve_count": 0,
+    "full_original_target_qualified": false
+  },
+  "qualification_record": {
+    "path": "benchmarks/artifacts/task42extra/v41/v41_core_linear_checks/result.json",
+    "sha256": "3d45aabb29843da3996ce1ffbb9cb07b34a4fb7248c1cc93c0504cdd81d515f1",
+    "bytes": 20231
+  },
+  "qualification_recomputed_from_numeric_fields": {
+    "fttnn": {
+      "derived_pass": true,
+      "maximum_linear_and_adjoint_relative": 8.767155425248083e-15,
+      "parameter_count": 9072
+    },
+    "chebtt": {
+      "derived_pass": true,
+      "maximum_linear_and_adjoint_relative": 2.2870143857223157e-14,
+      "parameter_count": 9120
+    }
+  },
+  "full_edge_face_interior_Piola_owner_orientation_MPC": true,
+  "exact_skew_geometry_fallback_preserved": true,
+  "actual_M5_y_phase": 1.0,
+  "two_nonunit_Floquet_seams_scope": "targeted synthetic full-map fixture; not a new physical M5 identity",
+  "new_N_by_parameter_or_explicit_B_matrix": false,
+  "new_AH_A_or_BH_B": false,
+  "adjoint_lhs_rhs_vectors": "NOT_RETAINED; independently recorded dot-pair ratios retained; no replay to invent vectors"
+}

@@ -1,3 +1,21 @@
+<!-- TASK42EXTRA_V41_CURRENT_BEGIN -->
+# V41：opt-in条件核与紧凑证据依赖组
+
+| 依赖组 | 文件/改动 | 数值行为与验证 | 合入边界 |
+|---|---|---|---|
+| research-only核心 | src/solvers/ftt_conditional_core.py、ftt_core_training.py、ftt_core_qualification.py；ftt_factored_moments显式核表接口 | 条件核LSMR/真实接受/完整事务；小fixture和真实三轴资格 | 非production默认，三路线FAIL |
+| reusable runner/watchdog接线 | src/io/ftt_core_campaign.py、neural_wave_campaign.py；src/runners/ftt_core_worker.py及既有campaign/dependencies/admission | schema11、单窗/角色/引用限制，原watchdog复用；逐stage真实清场 | 仅显式opt-in，不复制调度 |
+| checker/postprocessing | src/postprocessing/ftt_verification.py | 研究用途限制/原失败保留；独立旧逐点与FE/保存checker复用 | ordinary默认不变，无新完成器 |
+| input / test | design_v41.json、五个v41 dat；src/test/test_ftt_conditional_core.py | 参数/预算先冻结；42项相关案例，实际label拒绝 | 不注册0.7nm空输入 |
+| compact evidence/docs | response_v41、专题、records及自身导航/总账 | 原残差/全E/H/通道/费用/FAIL全部保留 | 待review，不merge |
+| do-not-merge | 当前未合格研究求解配置、ignored大型场/检查点 | 不升production，不删除历史 | 无master合并授权 |
+
+[run/source/hash](records/run_index_v41.json)、[tests](records/tests_v41.json)、[完整Gate](records/full_numerical_gates_v41.json)。
+
+下方历史全文保留；旧“当前/下一步”不是新授权。
+
+<!-- TASK42EXTRA_V41_CURRENT_END -->
+
 <!-- TASK42EXTRA_V40_CURRENT_BEGIN -->
 # V40变更按依赖组：容量诊断不是production求解器
 

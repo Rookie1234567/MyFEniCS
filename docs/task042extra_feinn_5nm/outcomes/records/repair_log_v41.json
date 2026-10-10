@@ -1,0 +1,59 @@
+{
+  "schema": "task42extra.v41.repairs.v1",
+  "rows": [
+    {
+      "failure": "Ruff absent in ML environment",
+      "hypothesis": "qualified environments separate tooling",
+      "change": "use existing pure Ruff activation",
+      "test": "Ruff PASS",
+      "resume": "no install and no numerical rerun"
+    },
+    {
+      "failure": "inspection helper imported unavailable own_jobs symbol",
+      "hypothesis": "readonly process inspection API mismatch",
+      "change": "finite native /proc exact cmdline/PID/start_ticks and flock probe",
+      "test": "own trees and lock identified",
+      "resume": "no duplicate calculation"
+    },
+    {
+      "failure": "test05 saved-state hidden count included axis tokens",
+      "hypothesis": "substring matched axis instead of layer",
+      "change": "split dotted key and choose layer index0/2",
+      "test": "39 pytest healthy retained; test06 saved checks PASS",
+      "resume": "saved arrays only, no NN forward or training"
+    },
+    {
+      "failure": "generic nested comparisons allowed production initialization",
+      "hypothesis": "generic policy not restricted for research opt-in",
+      "change": "FTT-use policy adapter and atomic metadata seal",
+      "test": "two corruption/writer/reopen tests plus formal saved-checker-only second attempt",
+      "resume": "same original reconstruction/FE arrays reused, wrong old report retained"
+    }
+  ],
+  "formal_training_or_FE_postprocessing_failed_attempt_count": 0,
+  "formal_saved_checker_wiring_failed_attempt_count": 1,
+  "checker_directory_repair": {
+    "failure": "attempt2 reused existing independent checker supervisor directory",
+    "hypothesis": "namespace was artifact-only rather than attempt-bound",
+    "change": "bind checker directory to durable attempt name",
+    "test": "test08 one namespace/retention test",
+    "resume": "attempt3 saved arrays only, original stage/campaign deadlines retained",
+    "failure_record": {
+      "path": "benchmarks/artifacts/task42extra/v41/v41_core_independent_compare/failure_v41_core_independent_compare_attempt2.json",
+      "sha256": "ae90a2d13286becb9acb62dadde18f01ff0d11a80d97a1029704f94255dd1e67",
+      "bytes": 1123
+    }
+  },
+  "repair_journal": {
+    "path": "tmp/task42extra/v41/repair_journal.jsonl",
+    "sha256": "876c585b66209f702511f5912775bf332da756d88a5cbaad96cc3b4f18c62b20",
+    "bytes": 1392
+  },
+  "metadata_and_test_failure_preserved": {
+    "path": "tmp/task42extra/v41/test05/summary.json",
+    "sha256": "62f9a3e04a6fda95f72ba234eb4531163ad5b981c753973d8dfa1cd4cc9786e3",
+    "bytes": 2013
+  },
+  "healthy_reference_or_training_or_FE_postprocessing_reexecuted": false,
+  "ordinary_default_changed": false
+}

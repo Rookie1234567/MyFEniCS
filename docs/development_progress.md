@@ -1,3 +1,14 @@
+<!-- TASK42EXTRA_V41_CURRENT_BEGIN -->
+# Task42extra V41：实际条件核神经试验的有限负结果
+
+本批改变训练分解方式：固定另外两核后，用matrix-free LSMR求当前核的线性输出，再在学习路线更新隐藏函数。两条NN同零态和同秩Cheb控制实际完成，核心步均降低原loss，learned隐藏四次更新，但原残差0.938986749611/0.939413868293/0.19086785578、散射E0.999900336902/0.999911279035/0.990621722409均FAIL。映射/MPC/求积通过不替代真实全场；完整费用/三路线/actual-producer原Gate已保存，coldN=1 UNKNOWN，无20%同精度收益资格。当前配置关闭，0.7nm NOT_RUN；旧负结果/UNKNOWN、M3600/Mfinal与D0/D1保持。最终原尺寸0.7nm、decimal2e12B及172800s尚未达。
+
+[回执](task042extra_feinn_5nm/response_v41.md)、[专题](task042extra_feinn_5nm/outcomes/ftt_conditional_core_v41.md)、[独立Gate](task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v41.json)、[成本](task042extra_feinn_5nm/outcomes/records/resource_costs_v41.json)。
+
+下方历史全文保留；旧“当前/下一步”不是新授权。
+
+<!-- TASK42EXTRA_V41_CURRENT_END -->
+
 <!-- TASK42EXTRA_V40_CURRENT_BEGIN -->
 # Task42extra V40：内部矩与特征谱数值闭环
 

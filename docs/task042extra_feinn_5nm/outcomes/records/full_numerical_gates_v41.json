@@ -1,0 +1,2198 @@
+{
+  "schema": "task42extra.v41.full-gates.v1",
+  "reference_pass": true,
+  "reference_independent_total_native": {
+    "absolute": 2.0031988204746677e-12,
+    "denominator": 0.6143992411628639,
+    "relative": 3.2604187737654823e-12
+  },
+  "reference_volume_absorption": 0.1551111048473817,
+  "reference_independent_energy_closure": 2.9765079290200447e-13,
+  "records": {
+    "FTTNN_CONDITIONAL_CORE_LEARNED": {
+      "equation_audit": {
+        "native_relative": 0.9389867496106444,
+        "augmented_relative": 0.9389867496106444,
+        "original_total_augmented_relative": 0.4447996770398518,
+        "port_absolute": 1.594694881503179e-17,
+        "port_full_rhs_relative": 5.479260268735123e-17,
+        "port_operation_relative": 4.6277783005021413e-17,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 0.08758306946247876,
+        "full_coefficient_norm": 0.13159916801654412,
+        "port_unknown_norm": 0.0023132066515685725,
+        "strict_pass": false
+      },
+      "independent_total_native": {
+        "absolute": 0.2732845840427768,
+        "denominator": 0.6143992411628639,
+        "relative": 0.44479967703985973
+      },
+      "port_recovery_relative": 5.479260268735123e-17,
+      "MPC_relative": 0.0,
+      "field_errors": {
+        "scattered_E": {
+          "absolute": 4.924477928352354,
+          "denominator": 4.924968765995545,
+          "relative": 0.999900336902321
+        },
+        "total_E": {
+          "absolute": 4.924477928352354,
+          "denominator": 7.181828746565669,
+          "relative": 0.6856857914785598
+        },
+        "scattered_curl": {
+          "absolute": 4.931739359085233,
+          "denominator": 4.932148447613399,
+          "relative": 0.9999170567284194
+        },
+        "scattered_H_code": {
+          "absolute": 4.931739359085233,
+          "denominator": 4.932148447613399,
+          "relative": 0.9999170567284194
+        },
+        "total_curl": {
+          "absolute": 4.931739359085233,
+          "denominator": 7.212948437953144,
+          "relative": 0.6837341763231485
+        },
+        "total_H_code": {
+          "absolute": 4.931739359085233,
+          "denominator": 7.212948437953144,
+          "relative": 0.6837341763231485
+        },
+        "selected_total_E_0": {
+          "absolute": 0.11906002981128866,
+          "denominator": 0.13194919556467757,
+          "relative": 0.9023172085420481
+        },
+        "selected_total_E_1": {
+          "absolute": 0.14025409820299184,
+          "denominator": 0.15959299759304102,
+          "relative": 0.8788236346098155
+        },
+        "selected_total_E_2": {
+          "absolute": 0.18012941545122718,
+          "denominator": 0.22191447037493334,
+          "relative": 0.811706488301062
+        },
+        "selected_total_E_3": {
+          "absolute": 0.17981112852747244,
+          "denominator": 0.22060881498779575,
+          "relative": 0.8150677412297407
+        },
+        "selected_total_E_4": {
+          "absolute": 0.2106410132237493,
+          "denominator": 0.33690469353720454,
+          "relative": 0.6252243357378104
+        },
+        "selected_total_E_5": {
+          "absolute": 0.2083379571401621,
+          "denominator": 0.38853734738424456,
+          "relative": 0.5362108907747445
+        },
+        "selected_total_H_code_0": {
+          "absolute": 0.11860408322805803,
+          "denominator": 0.13498656327177444,
+          "relative": 0.8786362164748736
+        },
+        "selected_total_H_code_1": {
+          "absolute": 0.13951207022327602,
+          "denominator": 0.1624608692224158,
+          "relative": 0.8587426060873656
+        },
+        "selected_total_H_code_2": {
+          "absolute": 0.17897016952027928,
+          "denominator": 0.22257254655600656,
+          "relative": 0.8040981346962507
+        },
+        "selected_total_H_code_3": {
+          "absolute": 0.17760273943942165,
+          "denominator": 0.2238624120722341,
+          "relative": 0.7933566774135993
+        },
+        "selected_total_H_code_4": {
+          "absolute": 0.2101138369742595,
+          "denominator": 0.3390254512856469,
+          "relative": 0.6197582989049029
+        },
+        "selected_total_H_code_5": {
+          "absolute": 0.2106834120463453,
+          "denominator": 0.38956450208507676,
+          "relative": 0.5408177873463796
+        },
+        "selected_scattered_E_0": {
+          "absolute": 0.1190600298112886,
+          "denominator": 0.1194883851661965,
+          "relative": 0.996415087924135
+        },
+        "selected_scattered_E_1": {
+          "absolute": 0.1402540982029918,
+          "denominator": 0.14049960183072555,
+          "relative": 0.9982526382670499
+        },
+        "selected_scattered_E_2": {
+          "absolute": 0.18012941545122718,
+          "denominator": 0.1781186295547797,
+          "relative": 1.0112890263161893
+        },
+        "selected_scattered_E_3": {
+          "absolute": 0.17981112852747247,
+          "denominator": 0.1790193278624174,
+          "relative": 1.0044229898218788
+        },
+        "selected_scattered_E_4": {
+          "absolute": 0.2106410132237493,
+          "denominator": 0.21062923348898163,
+          "relative": 1.0000559264000184
+        },
+        "selected_scattered_E_5": {
+          "absolute": 0.20833795714016212,
+          "denominator": 0.2082360854003647,
+          "relative": 1.000489212710667
+        },
+        "selected_scattered_H_code_0": {
+          "absolute": 0.11860408322805797,
+          "denominator": 0.11875440294684922,
+          "relative": 0.9987341966692509
+        },
+        "selected_scattered_H_code_1": {
+          "absolute": 0.1395120702232761,
+          "denominator": 0.13983377895060534,
+          "relative": 0.9976993489717326
+        },
+        "selected_scattered_H_code_2": {
+          "absolute": 0.17897016952027936,
+          "denominator": 0.17911399555897148,
+          "relative": 0.9991970139561497
+        },
+        "selected_scattered_H_code_3": {
+          "absolute": 0.17760273943942165,
+          "denominator": 0.17748744587933368,
+          "relative": 1.000649587127229
+        },
+        "selected_scattered_H_code_4": {
+          "absolute": 0.21011383697425956,
+          "denominator": 0.21066700047921647,
+          "relative": 0.9973742280295509
+        },
+        "selected_scattered_H_code_5": {
+          "absolute": 0.21068341204634522,
+          "denominator": 0.20919501855536216,
+          "relative": 1.0071148610576937
+        },
+        "complex_total_channels": {
+          "absolute": 0.24680093708344567,
+          "denominator": 0.4382342339399896,
+          "relative": 0.5631712859685941
+        },
+        "complex_scattered_channels": {
+          "absolute": 0.24680093708344564,
+          "denominator": 0.2468359522790033,
+          "relative": 0.9998581438593755
+        },
+        "complex_outgoing_channels": {
+          "absolute": 0.24680093708344567,
+          "denominator": 0.9130801710515086,
+          "relative": 0.2702949257995913
+        },
+        "complex_boundary_outgoing_channels": {
+          "absolute": 0.23630481197691308,
+          "denominator": 0.9095181214967073,
+          "relative": 0.25981319821099197
+        }
+      },
+      "channel_definition_checks": {
+        "scattered": {
+          "absolute": 0.0,
+          "denominator": 0.0023132066515685725,
+          "relative": 0.0
+        },
+        "total": {
+          "absolute": 0.0,
+          "denominator": 0.6807300193380563,
+          "relative": 0.0
+        },
+        "outgoing": {
+          "absolute": 0.0,
+          "denominator": 0.9555597468351508,
+          "relative": 0.0
+        },
+        "boundary_outgoing": {
+          "absolute": 0.0,
+          "denominator": 0.9435866199781208,
+          "relative": 0.0
+        }
+      },
+      "A_volume": 0.4648698893319216,
+      "power_absolute_differences": {
+        "R_total": 0.025695497966231606,
+        "T_total": 0.08087016456816763,
+        "A_balance": 0.10656566253439924,
+        "A_volume": 0.30975878448453986
+      },
+      "energy_closure": 0.4163244470186416,
+      "max_per_mode_power_absolute": 0.08091069473624565,
+      "original_equation_pass": false,
+      "field_pass": false,
+      "power_pass": false,
+      "quadrature_pass": true,
+      "model_rebuild_pass": true,
+      "m5_full_discrete_numerical_gate": false,
+      "pde_only_solver_qualified": false,
+      "official_candidate_results": false,
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "production_initialization_allowed": false
+    },
+    "FTTNN_CONDITIONAL_CORE_FROZEN": {
+      "equation_audit": {
+        "native_relative": 0.9394138682933676,
+        "augmented_relative": 0.9394138682933676,
+        "original_total_augmented_relative": 0.4450020039121031,
+        "port_absolute": 2.0828078797138964e-17,
+        "port_full_rhs_relative": 7.156382449768367e-17,
+        "port_operation_relative": 6.064023875697933e-17,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 0.08720834202868054,
+        "full_coefficient_norm": 0.13104048330346404,
+        "port_unknown_norm": 0.002305540169298648,
+        "strict_pass": false
+      },
+      "independent_total_native": {
+        "absolute": 0.2734088935195529,
+        "denominator": 0.6143992411628639,
+        "relative": 0.44500200391210787
+      },
+      "port_recovery_relative": 7.156382449768367e-17,
+      "MPC_relative": 0.0,
+      "field_errors": {
+        "scattered_E": {
+          "absolute": 4.924531818013189,
+          "denominator": 4.924968765995545,
+          "relative": 0.999911279034829
+        },
+        "total_E": {
+          "absolute": 4.924531818013189,
+          "denominator": 7.181828746565669,
+          "relative": 0.6856932950911823
+        },
+        "scattered_curl": {
+          "absolute": 4.9317921419344595,
+          "denominator": 4.932148447613399,
+          "relative": 0.9999277585249665
+        },
+        "scattered_H_code": {
+          "absolute": 4.9317921419344595,
+          "denominator": 4.932148447613399,
+          "relative": 0.9999277585249665
+        },
+        "total_curl": {
+          "absolute": 4.9317921419344595,
+          "denominator": 7.212948437953144,
+          "relative": 0.6837414941141573
+        },
+        "total_H_code": {
+          "absolute": 4.9317921419344595,
+          "denominator": 7.212948437953144,
+          "relative": 0.6837414941141573
+        },
+        "selected_total_E_0": {
+          "absolute": 0.1190752751675869,
+          "denominator": 0.13194919556467757,
+          "relative": 0.9024327481346389
+        },
+        "selected_total_E_1": {
+          "absolute": 0.14027102998685143,
+          "denominator": 0.15959299759304102,
+          "relative": 0.878929728135941
+        },
+        "selected_total_E_2": {
+          "absolute": 0.18009430121323883,
+          "denominator": 0.22191447037493334,
+          "relative": 0.8115482550955886
+        },
+        "selected_total_E_3": {
+          "absolute": 0.17981840243098984,
+          "denominator": 0.22060881498779575,
+          "relative": 0.815100713182914
+        },
+        "selected_total_E_4": {
+          "absolute": 0.21070403823840475,
+          "denominator": 0.33690469353720454,
+          "relative": 0.6254114064906507
+        },
+        "selected_total_E_5": {
+          "absolute": 0.2082926544341489,
+          "denominator": 0.38853734738424456,
+          "relative": 0.5360942927016938
+        },
+        "selected_total_H_code_0": {
+          "absolute": 0.1186178719184759,
+          "denominator": 0.13498656327177444,
+          "relative": 0.8787383650893998
+        },
+        "selected_total_H_code_1": {
+          "absolute": 0.139527901771033,
+          "denominator": 0.1624608692224158,
+          "relative": 0.8588400544626744
+        },
+        "selected_total_H_code_2": {
+          "absolute": 0.17896604948881634,
+          "denominator": 0.22257254655600656,
+          "relative": 0.8040796237364459
+        },
+        "selected_total_H_code_3": {
+          "absolute": 0.177609241265236,
+          "denominator": 0.2238624120722341,
+          "relative": 0.7933857212613545
+        },
+        "selected_total_H_code_4": {
+          "absolute": 0.21009783862903486,
+          "denominator": 0.3390254512856469,
+          "relative": 0.6197111096889782
+        },
+        "selected_total_H_code_5": {
+          "absolute": 0.2106699619307954,
+          "denominator": 0.38956450208507676,
+          "relative": 0.5407832613167288
+        },
+        "selected_scattered_E_0": {
+          "absolute": 0.11907527516758694,
+          "denominator": 0.1194883851661965,
+          "relative": 0.9965426765284762
+        },
+        "selected_scattered_E_1": {
+          "absolute": 0.14027102998685126,
+          "denominator": 0.14049960183072555,
+          "relative": 0.9983731495257213
+        },
+        "selected_scattered_E_2": {
+          "absolute": 0.1800943012132388,
+          "denominator": 0.1781186295547797,
+          "relative": 1.011091886701562
+        },
+        "selected_scattered_E_3": {
+          "absolute": 0.17981840243098982,
+          "denominator": 0.1790193278624174,
+          "relative": 1.0044636217670673
+        },
+        "selected_scattered_E_4": {
+          "absolute": 0.21070403823840492,
+          "denominator": 0.21062923348898163,
+          "relative": 1.0003551489419782
+        },
+        "selected_scattered_E_5": {
+          "absolute": 0.20829265443414888,
+          "denominator": 0.2082360854003647,
+          "relative": 1.0002716581695021
+        },
+        "selected_scattered_H_code_0": {
+          "absolute": 0.11861787191847603,
+          "denominator": 0.11875440294684922,
+          "relative": 0.9988503076518831
+        },
+        "selected_scattered_H_code_1": {
+          "absolute": 0.13952790177103297,
+          "denominator": 0.13983377895060534,
+          "relative": 0.9978125658773734
+        },
+        "selected_scattered_H_code_2": {
+          "absolute": 0.1789660494888164,
+          "denominator": 0.17911399555897148,
+          "relative": 0.9991740116695327
+        },
+        "selected_scattered_H_code_3": {
+          "absolute": 0.17760924126523603,
+          "denominator": 0.17748744587933368,
+          "relative": 1.0006862197227469
+        },
+        "selected_scattered_H_code_4": {
+          "absolute": 0.2100978386290346,
+          "denominator": 0.21066700047921647,
+          "relative": 0.9972982866377403
+        },
+        "selected_scattered_H_code_5": {
+          "absolute": 0.21066996193079537,
+          "denominator": 0.20919501855536216,
+          "relative": 1.0070505664313554
+        },
+        "complex_total_channels": {
+          "absolute": 0.24680471240661547,
+          "denominator": 0.4382342339399896,
+          "relative": 0.5631799008208294
+        },
+        "complex_scattered_channels": {
+          "absolute": 0.2468047124066155,
+          "denominator": 0.2468359522790033,
+          "relative": 0.9998734387268169
+        },
+        "complex_outgoing_channels": {
+          "absolute": 0.24680471240661547,
+          "denominator": 0.9130801710515086,
+          "relative": 0.27029906051118563
+        },
+        "complex_boundary_outgoing_channels": {
+          "absolute": 0.23630856214389456,
+          "denominator": 0.9095181214967073,
+          "relative": 0.2598173214570195
+        }
+      },
+      "channel_definition_checks": {
+        "scattered": {
+          "absolute": 0.0,
+          "denominator": 0.002305540169298648,
+          "relative": 0.0
+        },
+        "total": {
+          "absolute": 0.0,
+          "denominator": 0.6807340714669772,
+          "relative": 0.0
+        },
+        "outgoing": {
+          "absolute": 0.0,
+          "denominator": 0.955551957409474,
+          "relative": 0.0
+        },
+        "boundary_outgoing": {
+          "absolute": 0.0,
+          "denominator": 0.9435785602777188,
+          "relative": 0.0
+        }
+      },
+      "A_volume": 0.46486019304076637,
+      "power_absolute_differences": {
+        "R_total": 0.025678645775552567,
+        "T_total": 0.08087121504279662,
+        "A_balance": 0.10654986081834919,
+        "A_volume": 0.30974908819338465
+      },
+      "energy_closure": 0.41629894901143616,
+      "max_per_mode_power_absolute": 0.08091230677066766,
+      "original_equation_pass": false,
+      "field_pass": false,
+      "power_pass": false,
+      "quadrature_pass": true,
+      "model_rebuild_pass": true,
+      "m5_full_discrete_numerical_gate": false,
+      "pde_only_solver_qualified": false,
+      "official_candidate_results": false,
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "production_initialization_allowed": false
+    },
+    "CHEBTT_CONDITIONAL_CORE_CONTROL": {
+      "equation_audit": {
+        "native_relative": 0.19086785577976417,
+        "augmented_relative": 0.19086785577976417,
+        "original_total_augmented_relative": 0.09041443944067583,
+        "port_absolute": 3.2006338224908976e-17,
+        "port_full_rhs_relative": 1.0997154340781172e-16,
+        "port_operation_relative": 8.587856515130151e-17,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 0.210535865492585,
+        "full_coefficient_norm": 0.3029535969992242,
+        "port_unknown_norm": 0.002501580060385845,
+        "strict_pass": false
+      },
+      "independent_total_native": {
+        "absolute": 0.055550562982427894,
+        "denominator": 0.6143992411628639,
+        "relative": 0.09041443944053089
+      },
+      "port_recovery_relative": 1.0997154340781172e-16,
+      "MPC_relative": 0.0,
+      "field_errors": {
+        "scattered_E": {
+          "absolute": 4.87878104178204,
+          "denominator": 4.924968765995545,
+          "relative": 0.9906217224092043
+        },
+        "total_E": {
+          "absolute": 4.87878104178204,
+          "denominator": 7.181828746565669,
+          "relative": 0.6793229432148545
+        },
+        "scattered_curl": {
+          "absolute": 4.885542995795104,
+          "denominator": 4.932148447613399,
+          "relative": 0.9905506794223019
+        },
+        "scattered_H_code": {
+          "absolute": 4.885542995795104,
+          "denominator": 4.932148447613399,
+          "relative": 0.9905506794223019
+        },
+        "total_curl": {
+          "absolute": 4.885542995795104,
+          "denominator": 7.212948437953144,
+          "relative": 0.6773295328285336
+        },
+        "total_H_code": {
+          "absolute": 4.885542995795104,
+          "denominator": 7.212948437953144,
+          "relative": 0.6773295328285336
+        },
+        "selected_total_E_0": {
+          "absolute": 0.11820274552521967,
+          "denominator": 0.13194919556467757,
+          "relative": 0.8958201300081454
+        },
+        "selected_total_E_1": {
+          "absolute": 0.13862877846376093,
+          "denominator": 0.15959299759304102,
+          "relative": 0.8686394801434932
+        },
+        "selected_total_E_2": {
+          "absolute": 0.17867675651977144,
+          "denominator": 0.22191447037493334,
+          "relative": 0.805160457620857
+        },
+        "selected_total_E_3": {
+          "absolute": 0.17692587312731528,
+          "denominator": 0.22060881498779575,
+          "relative": 0.8019891369123349
+        },
+        "selected_total_E_4": {
+          "absolute": 0.20422267170070632,
+          "denominator": 0.33690469353720454,
+          "relative": 0.6061734241709338
+        },
+        "selected_total_E_5": {
+          "absolute": 0.20935266056467788,
+          "denominator": 0.38853734738424456,
+          "relative": 0.5388224889424549
+        },
+        "selected_total_H_code_0": {
+          "absolute": 0.11860186257626523,
+          "denominator": 0.13498656327177444,
+          "relative": 0.8786197655649536
+        },
+        "selected_total_H_code_1": {
+          "absolute": 0.14006534883318203,
+          "denominator": 0.1624608692224158,
+          "relative": 0.8621482176204945
+        },
+        "selected_total_H_code_2": {
+          "absolute": 0.17924070992058144,
+          "denominator": 0.22257254655600656,
+          "relative": 0.8053136502865083
+        },
+        "selected_total_H_code_3": {
+          "absolute": 0.17657438600837946,
+          "denominator": 0.2238624120722341,
+          "relative": 0.788762992294588
+        },
+        "selected_total_H_code_4": {
+          "absolute": 0.20633227736615428,
+          "denominator": 0.3390254512856469,
+          "relative": 0.6086040932434551
+        },
+        "selected_total_H_code_5": {
+          "absolute": 0.21030206476178642,
+          "denominator": 0.38956450208507676,
+          "relative": 0.5398388806890282
+        },
+        "selected_scattered_E_0": {
+          "absolute": 0.1182027455252197,
+          "denominator": 0.1194883851661965,
+          "relative": 0.9892404635045606
+        },
+        "selected_scattered_E_1": {
+          "absolute": 0.1386287784637609,
+          "denominator": 0.14049960183072555,
+          "relative": 0.9866844934605677
+        },
+        "selected_scattered_E_2": {
+          "absolute": 0.1786767565197715,
+          "denominator": 0.1781186295547797,
+          "relative": 1.003133456429498
+        },
+        "selected_scattered_E_3": {
+          "absolute": 0.1769258731273153,
+          "denominator": 0.1790193278624174,
+          "relative": 0.9883059848335987
+        },
+        "selected_scattered_E_4": {
+          "absolute": 0.20422267170070643,
+          "denominator": 0.21062923348898163,
+          "relative": 0.9695837007895187
+        },
+        "selected_scattered_E_5": {
+          "absolute": 0.20935266056467794,
+          "denominator": 0.2082360854003647,
+          "relative": 1.0053620637468594
+        },
+        "selected_scattered_H_code_0": {
+          "absolute": 0.11860186257626511,
+          "denominator": 0.11875440294684922,
+          "relative": 0.9987154971369576
+        },
+        "selected_scattered_H_code_1": {
+          "absolute": 0.14006534883318217,
+          "denominator": 0.13983377895060534,
+          "relative": 1.001656036791072
+        },
+        "selected_scattered_H_code_2": {
+          "absolute": 0.1792407099205813,
+          "denominator": 0.17911399555897148,
+          "relative": 1.0007074509237226
+        },
+        "selected_scattered_H_code_3": {
+          "absolute": 0.17657438600837946,
+          "denominator": 0.17748744587933368,
+          "relative": 0.9948556368793826
+        },
+        "selected_scattered_H_code_4": {
+          "absolute": 0.2063322773661545,
+          "denominator": 0.21066700047921647,
+          "relative": 0.9794238152952218
+        },
+        "selected_scattered_H_code_5": {
+          "absolute": 0.21030206476178623,
+          "denominator": 0.20919501855536216,
+          "relative": 1.0052919338809738
+        },
+        "complex_total_channels": {
+          "absolute": 0.2468171680393709,
+          "denominator": 0.4382342339399896,
+          "relative": 0.5632083231388291
+        },
+        "complex_scattered_channels": {
+          "absolute": 0.24681716803937093,
+          "denominator": 0.2468359522790033,
+          "relative": 0.9999238999041309
+        },
+        "complex_outgoing_channels": {
+          "absolute": 0.24681716803937087,
+          "denominator": 0.9130801710515086,
+          "relative": 0.27031270184647066
+        },
+        "complex_boundary_outgoing_channels": {
+          "absolute": 0.23633021357832082,
+          "denominator": 0.9095181214967073,
+          "relative": 0.25984112684793426
+        }
+      },
+      "channel_definition_checks": {
+        "scattered": {
+          "absolute": 0.0,
+          "denominator": 0.002501580060385845,
+          "relative": 0.0
+        },
+        "total": {
+          "absolute": 0.0,
+          "denominator": 0.6807641880412763,
+          "relative": 0.0
+        },
+        "outgoing": {
+          "absolute": 0.0,
+          "denominator": 0.9556118564919548,
+          "relative": 0.0
+        },
+        "boundary_outgoing": {
+          "absolute": 0.0,
+          "denominator": 0.9436443424269135,
+          "relative": 0.0
+        }
+      },
+      "A_volume": 0.46012977976531094,
+      "power_absolute_differences": {
+        "R_total": 0.025889899811018635,
+        "T_total": 0.08080131139741263,
+        "A_balance": 0.10669121120843127,
+        "A_volume": 0.3050186749179292
+      },
+      "energy_closure": 0.41170988612606285,
+      "max_per_mode_power_absolute": 0.08086419104660403,
+      "original_equation_pass": false,
+      "field_pass": false,
+      "power_pass": false,
+      "quadrature_pass": true,
+      "model_rebuild_pass": true,
+      "m5_full_discrete_numerical_gate": false,
+      "pde_only_solver_qualified": false,
+      "official_candidate_results": false,
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "production_initialization_allowed": false
+    },
+    "FTTNN_CONDITIONAL_CORE_LEARNED_PRODUCER": {
+      "equation_audit": {
+        "native_relative": 0.9389867496106388,
+        "augmented_relative": 0.9389867496106388,
+        "original_total_augmented_relative": 0.4447996770398518,
+        "port_absolute": 6.94277085033697e-18,
+        "port_full_rhs_relative": 2.385487588655554e-17,
+        "port_operation_relative": 2.0147806742981812e-17,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 0.08758306946247857,
+        "full_coefficient_norm": 0.131599168016544,
+        "port_unknown_norm": 0.002313206651568565,
+        "strict_pass": false
+      },
+      "independent_total_native": {
+        "absolute": 0.273284584042776,
+        "denominator": 0.6143992411628639,
+        "relative": 0.4447996770398585
+      },
+      "port_recovery_relative": 2.385487588655554e-17,
+      "MPC_relative": 0.0,
+      "field_errors": {
+        "scattered_E": {
+          "absolute": 4.924477928352354,
+          "denominator": 4.924968765995545,
+          "relative": 0.999900336902321
+        },
+        "total_E": {
+          "absolute": 4.924477928352354,
+          "denominator": 7.181828746565669,
+          "relative": 0.6856857914785598
+        },
+        "scattered_curl": {
+          "absolute": 4.931739359085233,
+          "denominator": 4.932148447613399,
+          "relative": 0.9999170567284194
+        },
+        "scattered_H_code": {
+          "absolute": 4.931739359085233,
+          "denominator": 4.932148447613399,
+          "relative": 0.9999170567284194
+        },
+        "total_curl": {
+          "absolute": 4.931739359085233,
+          "denominator": 7.212948437953144,
+          "relative": 0.6837341763231485
+        },
+        "total_H_code": {
+          "absolute": 4.931739359085233,
+          "denominator": 7.212948437953144,
+          "relative": 0.6837341763231485
+        },
+        "selected_total_E_0": {
+          "absolute": 0.11906002981128866,
+          "denominator": 0.13194919556467757,
+          "relative": 0.9023172085420481
+        },
+        "selected_total_E_1": {
+          "absolute": 0.1402540982029919,
+          "denominator": 0.15959299759304102,
+          "relative": 0.8788236346098158
+        },
+        "selected_total_E_2": {
+          "absolute": 0.18012941545122715,
+          "denominator": 0.22191447037493334,
+          "relative": 0.8117064883010618
+        },
+        "selected_total_E_3": {
+          "absolute": 0.17981112852747247,
+          "denominator": 0.22060881498779575,
+          "relative": 0.8150677412297408
+        },
+        "selected_total_E_4": {
+          "absolute": 0.21064101322374923,
+          "denominator": 0.33690469353720454,
+          "relative": 0.6252243357378102
+        },
+        "selected_total_E_5": {
+          "absolute": 0.2083379571401621,
+          "denominator": 0.38853734738424456,
+          "relative": 0.5362108907747445
+        },
+        "selected_total_H_code_0": {
+          "absolute": 0.11860408322805792,
+          "denominator": 0.13498656327177444,
+          "relative": 0.8786362164748728
+        },
+        "selected_total_H_code_1": {
+          "absolute": 0.1395120702232758,
+          "denominator": 0.1624608692224158,
+          "relative": 0.8587426060873643
+        },
+        "selected_total_H_code_2": {
+          "absolute": 0.1789701695202797,
+          "denominator": 0.22257254655600656,
+          "relative": 0.8040981346962525
+        },
+        "selected_total_H_code_3": {
+          "absolute": 0.1776027394394217,
+          "denominator": 0.2238624120722341,
+          "relative": 0.7933566774135995
+        },
+        "selected_total_H_code_4": {
+          "absolute": 0.2101138369742595,
+          "denominator": 0.3390254512856469,
+          "relative": 0.6197582989049029
+        },
+        "selected_total_H_code_5": {
+          "absolute": 0.21068341204634533,
+          "denominator": 0.38956450208507676,
+          "relative": 0.5408177873463796
+        },
+        "selected_scattered_E_0": {
+          "absolute": 0.11906002981128863,
+          "denominator": 0.1194883851661965,
+          "relative": 0.9964150879241352
+        },
+        "selected_scattered_E_1": {
+          "absolute": 0.1402540982029919,
+          "denominator": 0.14049960183072555,
+          "relative": 0.9982526382670505
+        },
+        "selected_scattered_E_2": {
+          "absolute": 0.18012941545122715,
+          "denominator": 0.1781186295547797,
+          "relative": 1.011289026316189
+        },
+        "selected_scattered_E_3": {
+          "absolute": 0.17981112852747247,
+          "denominator": 0.1790193278624174,
+          "relative": 1.0044229898218788
+        },
+        "selected_scattered_E_4": {
+          "absolute": 0.21064101322374928,
+          "denominator": 0.21062923348898163,
+          "relative": 1.0000559264000184
+        },
+        "selected_scattered_E_5": {
+          "absolute": 0.20833795714016212,
+          "denominator": 0.2082360854003647,
+          "relative": 1.000489212710667
+        },
+        "selected_scattered_H_code_0": {
+          "absolute": 0.11860408322805788,
+          "denominator": 0.11875440294684922,
+          "relative": 0.9987341966692501
+        },
+        "selected_scattered_H_code_1": {
+          "absolute": 0.13951207022327602,
+          "denominator": 0.13983377895060534,
+          "relative": 0.997699348971732
+        },
+        "selected_scattered_H_code_2": {
+          "absolute": 0.1789701695202795,
+          "denominator": 0.17911399555897148,
+          "relative": 0.9991970139561505
+        },
+        "selected_scattered_H_code_3": {
+          "absolute": 0.17760273943942162,
+          "denominator": 0.17748744587933368,
+          "relative": 1.0006495871272287
+        },
+        "selected_scattered_H_code_4": {
+          "absolute": 0.21011383697425945,
+          "denominator": 0.21066700047921647,
+          "relative": 0.9973742280295504
+        },
+        "selected_scattered_H_code_5": {
+          "absolute": 0.21068341204634522,
+          "denominator": 0.20919501855536216,
+          "relative": 1.0071148610576937
+        },
+        "complex_total_channels": {
+          "absolute": 0.24680093708344567,
+          "denominator": 0.4382342339399896,
+          "relative": 0.5631712859685941
+        },
+        "complex_scattered_channels": {
+          "absolute": 0.24680093708344564,
+          "denominator": 0.2468359522790033,
+          "relative": 0.9998581438593755
+        },
+        "complex_outgoing_channels": {
+          "absolute": 0.24680093708344567,
+          "denominator": 0.9130801710515086,
+          "relative": 0.2702949257995913
+        },
+        "complex_boundary_outgoing_channels": {
+          "absolute": 0.23630481197691308,
+          "denominator": 0.9095181214967073,
+          "relative": 0.25981319821099197
+        }
+      },
+      "channel_definition_checks": {
+        "scattered": {
+          "absolute": 0.0,
+          "denominator": 0.002313206651568565,
+          "relative": 0.0
+        },
+        "total": {
+          "absolute": 0.0,
+          "denominator": 0.6807300193380563,
+          "relative": 0.0
+        },
+        "outgoing": {
+          "absolute": 0.0,
+          "denominator": 0.9555597468351508,
+          "relative": 0.0
+        },
+        "boundary_outgoing": {
+          "absolute": 0.0,
+          "denominator": 0.9435866199781208,
+          "relative": 0.0
+        }
+      },
+      "A_volume": 0.4648698893319216,
+      "power_absolute_differences": {
+        "R_total": 0.025695497966231606,
+        "T_total": 0.08087016456816763,
+        "A_balance": 0.10656566253439924,
+        "A_volume": 0.30975878448453986
+      },
+      "energy_closure": 0.4163244470186416,
+      "max_per_mode_power_absolute": 0.08091069473624565,
+      "original_equation_pass": false,
+      "field_pass": false,
+      "power_pass": false,
+      "quadrature_pass": true,
+      "model_rebuild_pass": true,
+      "m5_full_discrete_numerical_gate": false,
+      "pde_only_solver_qualified": false,
+      "official_candidate_results": false,
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "production_initialization_allowed": false
+    },
+    "FTTNN_CONDITIONAL_CORE_FROZEN_PRODUCER": {
+      "equation_audit": {
+        "native_relative": 0.9394138682933815,
+        "augmented_relative": 0.9394138682933815,
+        "original_total_augmented_relative": 0.44500200391210853,
+        "port_absolute": 1.993680570384357e-17,
+        "port_full_rhs_relative": 6.850147237921268e-17,
+        "port_operation_relative": 5.804532764196439e-17,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 0.08720834202868055,
+        "full_coefficient_norm": 0.13104048330346443,
+        "port_unknown_norm": 0.002305540169298646,
+        "strict_pass": false
+      },
+      "independent_total_native": {
+        "absolute": 0.2734088935195572,
+        "denominator": 0.6143992411628639,
+        "relative": 0.4450020039121149
+      },
+      "port_recovery_relative": 6.850147237921268e-17,
+      "MPC_relative": 0.0,
+      "field_errors": {
+        "scattered_E": {
+          "absolute": 4.924531818013189,
+          "denominator": 4.924968765995545,
+          "relative": 0.999911279034829
+        },
+        "total_E": {
+          "absolute": 4.924531818013189,
+          "denominator": 7.181828746565669,
+          "relative": 0.6856932950911823
+        },
+        "scattered_curl": {
+          "absolute": 4.93179214193446,
+          "denominator": 4.932148447613399,
+          "relative": 0.9999277585249666
+        },
+        "scattered_H_code": {
+          "absolute": 4.93179214193446,
+          "denominator": 4.932148447613399,
+          "relative": 0.9999277585249666
+        },
+        "total_curl": {
+          "absolute": 4.93179214193446,
+          "denominator": 7.212948437953144,
+          "relative": 0.6837414941141574
+        },
+        "total_H_code": {
+          "absolute": 4.93179214193446,
+          "denominator": 7.212948437953144,
+          "relative": 0.6837414941141574
+        },
+        "selected_total_E_0": {
+          "absolute": 0.11907527516758702,
+          "denominator": 0.13194919556467757,
+          "relative": 0.9024327481346399
+        },
+        "selected_total_E_1": {
+          "absolute": 0.14027102998685137,
+          "denominator": 0.15959299759304102,
+          "relative": 0.8789297281359406
+        },
+        "selected_total_E_2": {
+          "absolute": 0.1800943012132388,
+          "denominator": 0.22191447037493334,
+          "relative": 0.8115482550955885
+        },
+        "selected_total_E_3": {
+          "absolute": 0.17981840243098984,
+          "denominator": 0.22060881498779575,
+          "relative": 0.815100713182914
+        },
+        "selected_total_E_4": {
+          "absolute": 0.21070403823840492,
+          "denominator": 0.33690469353720454,
+          "relative": 0.6254114064906513
+        },
+        "selected_total_E_5": {
+          "absolute": 0.20829265443414874,
+          "denominator": 0.38853734738424456,
+          "relative": 0.5360942927016934
+        },
+        "selected_total_H_code_0": {
+          "absolute": 0.11861787191847574,
+          "denominator": 0.13498656327177444,
+          "relative": 0.8787383650893986
+        },
+        "selected_total_H_code_1": {
+          "absolute": 0.1395279017710329,
+          "denominator": 0.1624608692224158,
+          "relative": 0.8588400544626738
+        },
+        "selected_total_H_code_2": {
+          "absolute": 0.17896604948881653,
+          "denominator": 0.22257254655600656,
+          "relative": 0.8040796237364468
+        },
+        "selected_total_H_code_3": {
+          "absolute": 0.17760924126523603,
+          "denominator": 0.2238624120722341,
+          "relative": 0.7933857212613546
+        },
+        "selected_total_H_code_4": {
+          "absolute": 0.21009783862903444,
+          "denominator": 0.3390254512856469,
+          "relative": 0.619711109688977
+        },
+        "selected_total_H_code_5": {
+          "absolute": 0.21066996193079554,
+          "denominator": 0.38956450208507676,
+          "relative": 0.5407832613167292
+        },
+        "selected_scattered_E_0": {
+          "absolute": 0.11907527516758701,
+          "denominator": 0.1194883851661965,
+          "relative": 0.9965426765284768
+        },
+        "selected_scattered_E_1": {
+          "absolute": 0.14027102998685131,
+          "denominator": 0.14049960183072555,
+          "relative": 0.9983731495257216
+        },
+        "selected_scattered_E_2": {
+          "absolute": 0.1800943012132388,
+          "denominator": 0.1781186295547797,
+          "relative": 1.011091886701562
+        },
+        "selected_scattered_E_3": {
+          "absolute": 0.17981840243098982,
+          "denominator": 0.1790193278624174,
+          "relative": 1.0044636217670673
+        },
+        "selected_scattered_E_4": {
+          "absolute": 0.21070403823840494,
+          "denominator": 0.21062923348898163,
+          "relative": 1.0003551489419784
+        },
+        "selected_scattered_E_5": {
+          "absolute": 0.20829265443414885,
+          "denominator": 0.2082360854003647,
+          "relative": 1.0002716581695021
+        },
+        "selected_scattered_H_code_0": {
+          "absolute": 0.11861787191847589,
+          "denominator": 0.11875440294684922,
+          "relative": 0.9988503076518819
+        },
+        "selected_scattered_H_code_1": {
+          "absolute": 0.13952790177103286,
+          "denominator": 0.13983377895060534,
+          "relative": 0.9978125658773727
+        },
+        "selected_scattered_H_code_2": {
+          "absolute": 0.17896604948881625,
+          "denominator": 0.17911399555897148,
+          "relative": 0.9991740116695319
+        },
+        "selected_scattered_H_code_3": {
+          "absolute": 0.17760924126523603,
+          "denominator": 0.17748744587933368,
+          "relative": 1.0006862197227469
+        },
+        "selected_scattered_H_code_4": {
+          "absolute": 0.2100978386290347,
+          "denominator": 0.21066700047921647,
+          "relative": 0.9972982866377408
+        },
+        "selected_scattered_H_code_5": {
+          "absolute": 0.2106699619307955,
+          "denominator": 0.20919501855536216,
+          "relative": 1.007050566431356
+        },
+        "complex_total_channels": {
+          "absolute": 0.24680471240661547,
+          "denominator": 0.4382342339399896,
+          "relative": 0.5631799008208294
+        },
+        "complex_scattered_channels": {
+          "absolute": 0.2468047124066155,
+          "denominator": 0.2468359522790033,
+          "relative": 0.9998734387268169
+        },
+        "complex_outgoing_channels": {
+          "absolute": 0.24680471240661547,
+          "denominator": 0.9130801710515086,
+          "relative": 0.27029906051118563
+        },
+        "complex_boundary_outgoing_channels": {
+          "absolute": 0.23630856214389456,
+          "denominator": 0.9095181214967073,
+          "relative": 0.2598173214570195
+        }
+      },
+      "channel_definition_checks": {
+        "scattered": {
+          "absolute": 0.0,
+          "denominator": 0.002305540169298646,
+          "relative": 0.0
+        },
+        "total": {
+          "absolute": 0.0,
+          "denominator": 0.6807340714669772,
+          "relative": 0.0
+        },
+        "outgoing": {
+          "absolute": 0.0,
+          "denominator": 0.955551957409474,
+          "relative": 0.0
+        },
+        "boundary_outgoing": {
+          "absolute": 0.0,
+          "denominator": 0.9435785602777188,
+          "relative": 0.0
+        }
+      },
+      "A_volume": 0.4648601930407664,
+      "power_absolute_differences": {
+        "R_total": 0.025678645775552567,
+        "T_total": 0.08087121504279662,
+        "A_balance": 0.10654986081834919,
+        "A_volume": 0.30974908819338476
+      },
+      "energy_closure": 0.4162989490114364,
+      "max_per_mode_power_absolute": 0.08091230677066766,
+      "original_equation_pass": false,
+      "field_pass": false,
+      "power_pass": false,
+      "quadrature_pass": true,
+      "model_rebuild_pass": true,
+      "m5_full_discrete_numerical_gate": false,
+      "pde_only_solver_qualified": false,
+      "official_candidate_results": false,
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "production_initialization_allowed": false
+    },
+    "CHEBTT_CONDITIONAL_CORE_CONTROL_PRODUCER": {
+      "equation_audit": {
+        "native_relative": 0.19086785577976426,
+        "augmented_relative": 0.19086785577976426,
+        "original_total_augmented_relative": 0.09041443944067783,
+        "port_absolute": 1.476131685662676e-17,
+        "port_full_rhs_relative": 5.071885406096339e-17,
+        "port_operation_relative": 3.960717725604282e-17,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 0.21053586549258493,
+        "full_coefficient_norm": 0.3029535969992243,
+        "port_unknown_norm": 0.00250158006038584,
+        "strict_pass": false
+      },
+      "independent_total_native": {
+        "absolute": 0.05555056298242807,
+        "denominator": 0.6143992411628639,
+        "relative": 0.09041443944053117
+      },
+      "port_recovery_relative": 5.071885406096339e-17,
+      "MPC_relative": 0.0,
+      "field_errors": {
+        "scattered_E": {
+          "absolute": 4.87878104178204,
+          "denominator": 4.924968765995545,
+          "relative": 0.9906217224092043
+        },
+        "total_E": {
+          "absolute": 4.87878104178204,
+          "denominator": 7.181828746565669,
+          "relative": 0.6793229432148545
+        },
+        "scattered_curl": {
+          "absolute": 4.885542995795104,
+          "denominator": 4.932148447613399,
+          "relative": 0.9905506794223019
+        },
+        "scattered_H_code": {
+          "absolute": 4.885542995795104,
+          "denominator": 4.932148447613399,
+          "relative": 0.9905506794223019
+        },
+        "total_curl": {
+          "absolute": 4.885542995795104,
+          "denominator": 7.212948437953144,
+          "relative": 0.6773295328285336
+        },
+        "total_H_code": {
+          "absolute": 4.885542995795104,
+          "denominator": 7.212948437953144,
+          "relative": 0.6773295328285336
+        },
+        "selected_total_E_0": {
+          "absolute": 0.11820274552521967,
+          "denominator": 0.13194919556467757,
+          "relative": 0.8958201300081454
+        },
+        "selected_total_E_1": {
+          "absolute": 0.13862877846376093,
+          "denominator": 0.15959299759304102,
+          "relative": 0.8686394801434932
+        },
+        "selected_total_E_2": {
+          "absolute": 0.17867675651977144,
+          "denominator": 0.22191447037493334,
+          "relative": 0.805160457620857
+        },
+        "selected_total_E_3": {
+          "absolute": 0.17692587312731528,
+          "denominator": 0.22060881498779575,
+          "relative": 0.8019891369123349
+        },
+        "selected_total_E_4": {
+          "absolute": 0.20422267170070632,
+          "denominator": 0.33690469353720454,
+          "relative": 0.6061734241709338
+        },
+        "selected_total_E_5": {
+          "absolute": 0.20935266056467788,
+          "denominator": 0.38853734738424456,
+          "relative": 0.5388224889424549
+        },
+        "selected_total_H_code_0": {
+          "absolute": 0.11860186257626525,
+          "denominator": 0.13498656327177444,
+          "relative": 0.8786197655649537
+        },
+        "selected_total_H_code_1": {
+          "absolute": 0.1400653488331818,
+          "denominator": 0.1624608692224158,
+          "relative": 0.8621482176204932
+        },
+        "selected_total_H_code_2": {
+          "absolute": 0.17924070992058144,
+          "denominator": 0.22257254655600656,
+          "relative": 0.8053136502865083
+        },
+        "selected_total_H_code_3": {
+          "absolute": 0.17657438600837935,
+          "denominator": 0.2238624120722341,
+          "relative": 0.7887629922945875
+        },
+        "selected_total_H_code_4": {
+          "absolute": 0.20633227736615462,
+          "denominator": 0.3390254512856469,
+          "relative": 0.6086040932434561
+        },
+        "selected_total_H_code_5": {
+          "absolute": 0.21030206476178653,
+          "denominator": 0.38956450208507676,
+          "relative": 0.5398388806890285
+        },
+        "selected_scattered_E_0": {
+          "absolute": 0.11820274552521969,
+          "denominator": 0.1194883851661965,
+          "relative": 0.9892404635045605
+        },
+        "selected_scattered_E_1": {
+          "absolute": 0.1386287784637609,
+          "denominator": 0.14049960183072555,
+          "relative": 0.9866844934605677
+        },
+        "selected_scattered_E_2": {
+          "absolute": 0.1786767565197715,
+          "denominator": 0.1781186295547797,
+          "relative": 1.003133456429498
+        },
+        "selected_scattered_E_3": {
+          "absolute": 0.1769258731273153,
+          "denominator": 0.1790193278624174,
+          "relative": 0.9883059848335987
+        },
+        "selected_scattered_E_4": {
+          "absolute": 0.2042226717007064,
+          "denominator": 0.21062923348898163,
+          "relative": 0.9695837007895185
+        },
+        "selected_scattered_E_5": {
+          "absolute": 0.2093526605646779,
+          "denominator": 0.2082360854003647,
+          "relative": 1.0053620637468594
+        },
+        "selected_scattered_H_code_0": {
+          "absolute": 0.1186018625762651,
+          "denominator": 0.11875440294684922,
+          "relative": 0.9987154971369575
+        },
+        "selected_scattered_H_code_1": {
+          "absolute": 0.14006534883318217,
+          "denominator": 0.13983377895060534,
+          "relative": 1.001656036791072
+        },
+        "selected_scattered_H_code_2": {
+          "absolute": 0.17924070992058128,
+          "denominator": 0.17911399555897148,
+          "relative": 1.0007074509237224
+        },
+        "selected_scattered_H_code_3": {
+          "absolute": 0.17657438600837946,
+          "denominator": 0.17748744587933368,
+          "relative": 0.9948556368793826
+        },
+        "selected_scattered_H_code_4": {
+          "absolute": 0.2063322773661546,
+          "denominator": 0.21066700047921647,
+          "relative": 0.9794238152952222
+        },
+        "selected_scattered_H_code_5": {
+          "absolute": 0.2103020647617862,
+          "denominator": 0.20919501855536216,
+          "relative": 1.0052919338809738
+        },
+        "complex_total_channels": {
+          "absolute": 0.2468171680393709,
+          "denominator": 0.4382342339399896,
+          "relative": 0.5632083231388291
+        },
+        "complex_scattered_channels": {
+          "absolute": 0.24681716803937093,
+          "denominator": 0.2468359522790033,
+          "relative": 0.9999238999041309
+        },
+        "complex_outgoing_channels": {
+          "absolute": 0.24681716803937087,
+          "denominator": 0.9130801710515086,
+          "relative": 0.27031270184647066
+        },
+        "complex_boundary_outgoing_channels": {
+          "absolute": 0.23633021357832082,
+          "denominator": 0.9095181214967073,
+          "relative": 0.25984112684793426
+        }
+      },
+      "channel_definition_checks": {
+        "scattered": {
+          "absolute": 0.0,
+          "denominator": 0.00250158006038584,
+          "relative": 0.0
+        },
+        "total": {
+          "absolute": 0.0,
+          "denominator": 0.6807641880412763,
+          "relative": 0.0
+        },
+        "outgoing": {
+          "absolute": 0.0,
+          "denominator": 0.9556118564919548,
+          "relative": 0.0
+        },
+        "boundary_outgoing": {
+          "absolute": 0.0,
+          "denominator": 0.9436443424269135,
+          "relative": 0.0
+        }
+      },
+      "A_volume": 0.46012977976531094,
+      "power_absolute_differences": {
+        "R_total": 0.025889899811018635,
+        "T_total": 0.08080131139741263,
+        "A_balance": 0.10669121120843127,
+        "A_volume": 0.3050186749179292
+      },
+      "energy_closure": 0.41170988612606285,
+      "max_per_mode_power_absolute": 0.08086419104660403,
+      "original_equation_pass": false,
+      "field_pass": false,
+      "power_pass": false,
+      "quadrature_pass": true,
+      "model_rebuild_pass": true,
+      "m5_full_discrete_numerical_gate": false,
+      "pde_only_solver_qualified": false,
+      "official_candidate_results": false,
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "production_initialization_allowed": false
+    }
+  },
+  "statuses_trusted": false,
+  "full_size_0p7_target_qualified": false,
+  "bound_verifier_result_sha256": "51f1ebfd5be127fc21480e02f814d020c3e0b8f9a1d2ee8f4172d3a37b90a77a",
+  "bound_verifier_result_path": "benchmarks/artifacts/task42extra/v41/v41_core_independent_compare/verifier_result.json",
+  "bound_complete_field_samples_sha256": "7c1260a57bc017880c0f8d916ab5c7ce1a90c82694e837c45f2e3afb97ffa668",
+  "G_and_independent_FE_integral_pairing": {
+    "length_nm": 5.0,
+    "definition": "integral |E|^2 + length_nm^2 |curl E|^2",
+    "G_matvec_count": 7,
+    "Gsolve_count": 0,
+    "global_Gram_factor_count": 0,
+    "records": {
+      "FTTNN_CONDITIONAL_CORE_LEARNED": {
+        "G_error_energy": 984.446652378841,
+        "independently_integrated_error_energy": 984.4466523788989,
+        "G_reference_energy": 984.610790300809,
+        "independently_integrated_reference_energy": 984.6107903008673,
+        "error_energy_pairing_relative": 5.878083922625192e-14,
+        "reference_energy_pairing_relative": 5.923289519645751e-14,
+        "E_G": 0.9999166448485327,
+        "identity_pass": true
+      },
+      "FTTNN_CONDITIONAL_CORE_FROZEN": {
+        "G_error_energy": 984.4677366014887,
+        "independently_integrated_error_energy": 984.4677366015468,
+        "G_reference_energy": 984.610790300809,
+        "independently_integrated_reference_energy": 984.6107903008673,
+        "error_energy_pairing_relative": 5.901054134723986e-14,
+        "reference_energy_pairing_relative": 5.923289519645751e-14,
+        "E_G": 0.9999273525655211,
+        "identity_pass": true
+      },
+      "CHEBTT_CONDITIONAL_CORE_CONTROL": {
+        "G_error_energy": 966.0943137564996,
+        "independently_integrated_error_energy": 966.0943137565571,
+        "G_reference_energy": 984.610790300809,
+        "independently_integrated_reference_energy": 984.6107903008673,
+        "error_energy_pairing_relative": 5.95444348113996e-14,
+        "reference_energy_pairing_relative": 5.923289519645751e-14,
+        "E_G": 0.9905524295864078,
+        "identity_pass": true
+      },
+      "FTTNN_CONDITIONAL_CORE_LEARNED_PRODUCER": {
+        "G_error_energy": 984.446652378841,
+        "independently_integrated_error_energy": 984.4466523788989,
+        "G_reference_energy": 984.610790300809,
+        "independently_integrated_reference_energy": 984.6107903008673,
+        "error_energy_pairing_relative": 5.878083922625192e-14,
+        "reference_energy_pairing_relative": 5.923289519645751e-14,
+        "E_G": 0.9999166448485327,
+        "identity_pass": true
+      },
+      "FTTNN_CONDITIONAL_CORE_FROZEN_PRODUCER": {
+        "G_error_energy": 984.4677366014887,
+        "independently_integrated_error_energy": 984.4677366015467,
+        "G_reference_energy": 984.610790300809,
+        "independently_integrated_reference_energy": 984.6107903008673,
+        "error_energy_pairing_relative": 5.889506083579712e-14,
+        "reference_energy_pairing_relative": 5.923289519645751e-14,
+        "E_G": 0.9999273525655211,
+        "identity_pass": true
+      },
+      "CHEBTT_CONDITIONAL_CORE_CONTROL_PRODUCER": {
+        "G_error_energy": 966.0943137564993,
+        "independently_integrated_error_energy": 966.0943137565571,
+        "G_reference_energy": 984.610790300809,
+        "independently_integrated_reference_energy": 984.6107903008673,
+        "error_energy_pairing_relative": 5.977978830867786e-14,
+        "reference_energy_pairing_relative": 5.923289519645751e-14,
+        "E_G": 0.9905524295864077,
+        "identity_pass": true
+      }
+    },
+    "load_and_pairing_seconds": 1.6255288950633258,
+    "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+  },
+  "independent_compact_numeric_gate_recalculation": {
+    "FTTNN_CONDITIONAL_CORE_LEARNED": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    },
+    "FTTNN_CONDITIONAL_CORE_FROZEN": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    },
+    "CHEBTT_CONDITIONAL_CORE_CONTROL": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    },
+    "FTTNN_CONDITIONAL_CORE_LEARNED_PRODUCER": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    },
+    "FTTNN_CONDITIONAL_CORE_FROZEN_PRODUCER": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    },
+    "CHEBTT_CONDITIONAL_CORE_CONTROL_PRODUCER": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    }
+  },
+  "reconstruction": {
+    "FTTNN_CONDITIONAL_CORE_LEARNED": {
+      "complete_model_mapping_relative": 4.6096115306453396e-14,
+      "coefficient_q30_q60_relative": 3.8745960523880104e-14,
+      "original_action_q30_q60_load_relative": 4.440928647988529e-13,
+      "model_reconstruction_pass": true,
+      "quadrature_pass": true,
+      "candidate_source_sha": "f0bd287e8865d9717020a1f523aaf222d24f4794",
+      "committed_boundary_sha256": "9cc4b44604bdf8a5b13fc5bc056c986e008ae2ea0cb019bdee4a0472f1e2fb3e",
+      "producer_field_sha256": "951c8fca102c72f3fc2746077b5a7469c9300c258507a436f7e413214c212641",
+      "per_axis_parameter_and_kernel_diagnostics": {
+        "x": {
+          "real_parameter_count": 1120,
+          "parameter_RMS": 0.26796697742912423,
+          "parameter_delta_from_original_zero_seed_RMS": 0.16476004683675713,
+          "changed_real_parameters": 1120,
+          "kernel_element_RMS_at_fixed_33_nodes": 0.19307836651782215
+        },
+        "y": {
+          "real_parameter_count": 6832,
+          "parameter_RMS": 0.0941924293420998,
+          "parameter_delta_from_original_zero_seed_RMS": 0.04316513677472431,
+          "changed_real_parameters": 6832,
+          "kernel_element_RMS_at_fixed_33_nodes": 0.26664290538841373
+        },
+        "z": {
+          "real_parameter_count": 1120,
+          "parameter_RMS": 0.1823588474710927,
+          "parameter_delta_from_original_zero_seed_RMS": 0.1338756852692848,
+          "changed_real_parameters": 1120,
+          "kernel_element_RMS_at_fixed_33_nodes": 0.47516638151092694
+        }
+      },
+      "checkpoint_identity_checked": true,
+      "reference_used_for_training": false,
+      "pde_only_solve": true,
+      "production_initialization_allowed": false,
+      "FE_norm_q15_q30_relative": 1.1794931484392562e-14
+    },
+    "FTTNN_CONDITIONAL_CORE_FROZEN": {
+      "complete_model_mapping_relative": 5.4035323278720466e-14,
+      "coefficient_q30_q60_relative": 2.9806073949826756e-14,
+      "original_action_q30_q60_load_relative": 3.6289577744288754e-13,
+      "model_reconstruction_pass": true,
+      "quadrature_pass": true,
+      "candidate_source_sha": "f0bd287e8865d9717020a1f523aaf222d24f4794",
+      "committed_boundary_sha256": "ce99f7c9c610024691fedd7abf88dfb6714f10ce6dcf7d0886c7ce52f4fec790",
+      "producer_field_sha256": "b47747bafd2670cd2da0993990e3661351c4772204bb08c5b792d1bfa5d78450",
+      "per_axis_parameter_and_kernel_diagnostics": {
+        "x": {
+          "real_parameter_count": 1120,
+          "parameter_RMS": 0.25517568690095055,
+          "parameter_delta_from_original_zero_seed_RMS": 0.14832438304629775,
+          "changed_real_parameters": 816,
+          "kernel_element_RMS_at_fixed_33_nodes": 0.1903985242693909
+        },
+        "y": {
+          "real_parameter_count": 6832,
+          "parameter_RMS": 0.09627984020752005,
+          "parameter_delta_from_original_zero_seed_RMS": 0.047503579818782775,
+          "changed_real_parameters": 6528,
+          "kernel_element_RMS_at_fixed_33_nodes": 0.29113344174403627
+        },
+        "z": {
+          "real_parameter_count": 1120,
+          "parameter_RMS": 0.1870300028366023,
+          "parameter_delta_from_original_zero_seed_RMS": 0.14017193851505513,
+          "changed_real_parameters": 816,
+          "kernel_element_RMS_at_fixed_33_nodes": 0.4969941388628702
+        }
+      },
+      "checkpoint_identity_checked": true,
+      "reference_used_for_training": false,
+      "pde_only_solve": true,
+      "production_initialization_allowed": false,
+      "FE_norm_q15_q30_relative": 7.430426545761185e-15
+    },
+    "CHEBTT_CONDITIONAL_CORE_CONTROL": {
+      "complete_model_mapping_relative": 1.0371050895883714e-14,
+      "coefficient_q30_q60_relative": 4.74857986080244e-15,
+      "original_action_q30_q60_load_relative": 1.9858546726390965e-13,
+      "model_reconstruction_pass": true,
+      "quadrature_pass": true,
+      "candidate_source_sha": "f0bd287e8865d9717020a1f523aaf222d24f4794",
+      "committed_boundary_sha256": "60a297f08ba8877039c3fe7a3ffbb294d537efc6521cc2b4396ea55d603ef558",
+      "producer_field_sha256": "dd12b936b5b044baa37838c05f48e408f8775cce1bf7e095f36f8b9762421532",
+      "per_axis_parameter_and_kernel_diagnostics": {
+        "x": {
+          "real_parameter_count": 912,
+          "parameter_RMS": 4.821678298292651,
+          "parameter_delta_from_original_zero_seed_RMS": 4.8204064401053,
+          "changed_real_parameters": 912,
+          "kernel_element_RMS_at_fixed_33_nodes": 18.648387322107094
+        },
+        "y": {
+          "real_parameter_count": 7296,
+          "parameter_RMS": 1.0045315932009193,
+          "parameter_delta_from_original_zero_seed_RMS": 1.0044718741842107,
+          "changed_real_parameters": 7296,
+          "kernel_element_RMS_at_fixed_33_nodes": 5.1132029237992205
+        },
+        "z": {
+          "real_parameter_count": 912,
+          "parameter_RMS": 2.271291232903966e-06,
+          "parameter_delta_from_original_zero_seed_RMS": 2.271291232903966e-06,
+          "changed_real_parameters": 912,
+          "kernel_element_RMS_at_fixed_33_nodes": 9.592916817867305e-06
+        }
+      },
+      "checkpoint_identity_checked": true,
+      "reference_used_for_training": false,
+      "pde_only_solve": true,
+      "production_initialization_allowed": false,
+      "FE_norm_q15_q30_relative": 1.3092780877321338e-14
+    },
+    "FTTNN_CONDITIONAL_CORE_LEARNED_PRODUCER": {
+      "complete_model_mapping_relative": 4.6096115306453396e-14,
+      "coefficient_q30_q60_relative": 3.8745960523880104e-14,
+      "original_action_q30_q60_load_relative": 4.440928647988529e-13,
+      "model_reconstruction_pass": true,
+      "quadrature_pass": true,
+      "candidate_source_sha": "f0bd287e8865d9717020a1f523aaf222d24f4794",
+      "committed_boundary_sha256": "9cc4b44604bdf8a5b13fc5bc056c986e008ae2ea0cb019bdee4a0472f1e2fb3e",
+      "producer_field_sha256": "951c8fca102c72f3fc2746077b5a7469c9300c258507a436f7e413214c212641",
+      "per_axis_parameter_and_kernel_diagnostics": {
+        "x": {
+          "real_parameter_count": 1120,
+          "parameter_RMS": 0.26796697742912423,
+          "parameter_delta_from_original_zero_seed_RMS": 0.16476004683675713,
+          "changed_real_parameters": 1120,
+          "kernel_element_RMS_at_fixed_33_nodes": 0.19307836651782215
+        },
+        "y": {
+          "real_parameter_count": 6832,
+          "parameter_RMS": 0.0941924293420998,
+          "parameter_delta_from_original_zero_seed_RMS": 0.04316513677472431,
+          "changed_real_parameters": 6832,
+          "kernel_element_RMS_at_fixed_33_nodes": 0.26664290538841373
+        },
+        "z": {
+          "real_parameter_count": 1120,
+          "parameter_RMS": 0.1823588474710927,
+          "parameter_delta_from_original_zero_seed_RMS": 0.1338756852692848,
+          "changed_real_parameters": 1120,
+          "kernel_element_RMS_at_fixed_33_nodes": 0.47516638151092694
+        }
+      },
+      "checkpoint_identity_checked": true,
+      "reference_used_for_training": false,
+      "pde_only_solve": true,
+      "production_initialization_allowed": false,
+      "FE_norm_q15_q30_relative": 1.1794930864214024e-14
+    },
+    "FTTNN_CONDITIONAL_CORE_FROZEN_PRODUCER": {
+      "complete_model_mapping_relative": 5.4035323278720466e-14,
+      "coefficient_q30_q60_relative": 2.9806073949826756e-14,
+      "original_action_q30_q60_load_relative": 3.6289577744288754e-13,
+      "model_reconstruction_pass": true,
+      "quadrature_pass": true,
+      "candidate_source_sha": "f0bd287e8865d9717020a1f523aaf222d24f4794",
+      "committed_boundary_sha256": "ce99f7c9c610024691fedd7abf88dfb6714f10ce6dcf7d0886c7ce52f4fec790",
+      "producer_field_sha256": "b47747bafd2670cd2da0993990e3661351c4772204bb08c5b792d1bfa5d78450",
+      "per_axis_parameter_and_kernel_diagnostics": {
+        "x": {
+          "real_parameter_count": 1120,
+          "parameter_RMS": 0.25517568690095055,
+          "parameter_delta_from_original_zero_seed_RMS": 0.14832438304629775,
+          "changed_real_parameters": 816,
+          "kernel_element_RMS_at_fixed_33_nodes": 0.1903985242693909
+        },
+        "y": {
+          "real_parameter_count": 6832,
+          "parameter_RMS": 0.09627984020752005,
+          "parameter_delta_from_original_zero_seed_RMS": 0.047503579818782775,
+          "changed_real_parameters": 6528,
+          "kernel_element_RMS_at_fixed_33_nodes": 0.29113344174403627
+        },
+        "z": {
+          "real_parameter_count": 1120,
+          "parameter_RMS": 0.1870300028366023,
+          "parameter_delta_from_original_zero_seed_RMS": 0.14017193851505513,
+          "changed_real_parameters": 816,
+          "kernel_element_RMS_at_fixed_33_nodes": 0.4969941388628702
+        }
+      },
+      "checkpoint_identity_checked": true,
+      "reference_used_for_training": false,
+      "pde_only_solve": true,
+      "production_initialization_allowed": false,
+      "FE_norm_q15_q30_relative": 7.575182463078532e-15
+    },
+    "CHEBTT_CONDITIONAL_CORE_CONTROL_PRODUCER": {
+      "complete_model_mapping_relative": 1.0371050895883714e-14,
+      "coefficient_q30_q60_relative": 4.74857986080244e-15,
+      "original_action_q30_q60_load_relative": 1.9858546726390965e-13,
+      "model_reconstruction_pass": true,
+      "quadrature_pass": true,
+      "candidate_source_sha": "f0bd287e8865d9717020a1f523aaf222d24f4794",
+      "committed_boundary_sha256": "60a297f08ba8877039c3fe7a3ffbb294d537efc6521cc2b4396ea55d603ef558",
+      "producer_field_sha256": "dd12b936b5b044baa37838c05f48e408f8775cce1bf7e095f36f8b9762421532",
+      "per_axis_parameter_and_kernel_diagnostics": {
+        "x": {
+          "real_parameter_count": 912,
+          "parameter_RMS": 4.821678298292651,
+          "parameter_delta_from_original_zero_seed_RMS": 4.8204064401053,
+          "changed_real_parameters": 912,
+          "kernel_element_RMS_at_fixed_33_nodes": 18.648387322107094
+        },
+        "y": {
+          "real_parameter_count": 7296,
+          "parameter_RMS": 1.0045315932009193,
+          "parameter_delta_from_original_zero_seed_RMS": 1.0044718741842107,
+          "changed_real_parameters": 7296,
+          "kernel_element_RMS_at_fixed_33_nodes": 5.1132029237992205
+        },
+        "z": {
+          "real_parameter_count": 912,
+          "parameter_RMS": 2.271291232903966e-06,
+          "parameter_delta_from_original_zero_seed_RMS": 2.271291232903966e-06,
+          "changed_real_parameters": 912,
+          "kernel_element_RMS_at_fixed_33_nodes": 9.592916817867305e-06
+        }
+      },
+      "checkpoint_identity_checked": true,
+      "reference_used_for_training": false,
+      "pde_only_solve": true,
+      "production_initialization_allowed": false,
+      "FE_norm_q15_q30_relative": 1.3196450367339507e-14
+    }
+  },
+  "region_errors": {
+    "FTTNN_CONDITIONAL_CORE_LEARNED": {
+      "air": {
+        "cells": 200,
+        "cell_ids_sha256": "e58d767a1e7bdd1653527fffb4af97c456677db1d79b123b34cd357d8708bd88",
+        "scattered_L2": {
+          "absolute": 3.743212248316262,
+          "reference_denominator": 3.75464404157279,
+          "relative": 0.9969552923979075
+        },
+        "scattered_scaled_curl": {
+          "absolute": 3.7464115632643002,
+          "reference_denominator": 3.749806421289861,
+          "relative": 0.9990946577918566
+        }
+      },
+      "substrate": {
+        "cells": 48,
+        "cell_ids_sha256": "1f7a8b7a4d20c7416d767b6148eee39009b8423f0c715317c28df06f8bc656b1",
+        "scattered_L2": {
+          "absolute": 1.1485361862018937,
+          "reference_denominator": 1.1484887691458534,
+          "relative": 1.0000412864777732
+        },
+        "scattered_scaled_curl": {
+          "absolute": 1.156855177254386,
+          "reference_denominator": 1.1567260764208487,
+          "relative": 1.0001116088209379
+        }
+      },
+      "grating": {
+        "cells": 136,
+        "cell_ids_sha256": "6ac7746cc041b9348d32f56471811e0e547a8ca00915f2d0b52da92962f0992b",
+        "scattered_L2": {
+          "absolute": 2.986588280943518,
+          "reference_denominator": 2.973035320049073,
+          "relative": 1.0045586276096516
+        },
+        "scattered_scaled_curl": {
+          "absolute": 2.991344113178863,
+          "reference_denominator": 2.987812727778746,
+          "relative": 1.001181929967459
+        }
+      },
+      "interface_near": {
+        "cells": 264,
+        "cell_ids_sha256": "539e5a5f5922e7752d5ed7904b7e879fe77f7bb9430ce581789929bd3cf10777",
+        "scattered_L2": {
+          "absolute": 3.9455693746825404,
+          "reference_denominator": 3.940659528523539,
+          "relative": 1.0012459452849105
+        },
+        "scattered_scaled_curl": {
+          "absolute": 3.9533141966380456,
+          "reference_denominator": 3.951290249286099,
+          "relative": 1.0005122244189255
+        }
+      }
+    },
+    "FTTNN_CONDITIONAL_CORE_LEARNED_PRODUCER": {
+      "air": {
+        "cells": 200,
+        "cell_ids_sha256": "e58d767a1e7bdd1653527fffb4af97c456677db1d79b123b34cd357d8708bd88",
+        "scattered_L2": {
+          "absolute": 3.743212248316261,
+          "reference_denominator": 3.75464404157279,
+          "relative": 0.9969552923979073
+        },
+        "scattered_scaled_curl": {
+          "absolute": 3.7464115632643002,
+          "reference_denominator": 3.749806421289861,
+          "relative": 0.9990946577918566
+        }
+      },
+      "substrate": {
+        "cells": 48,
+        "cell_ids_sha256": "1f7a8b7a4d20c7416d767b6148eee39009b8423f0c715317c28df06f8bc656b1",
+        "scattered_L2": {
+          "absolute": 1.1485361862018937,
+          "reference_denominator": 1.1484887691458534,
+          "relative": 1.0000412864777732
+        },
+        "scattered_scaled_curl": {
+          "absolute": 1.1568551772543854,
+          "reference_denominator": 1.1567260764208487,
+          "relative": 1.0001116088209372
+        }
+      },
+      "grating": {
+        "cells": 136,
+        "cell_ids_sha256": "6ac7746cc041b9348d32f56471811e0e547a8ca00915f2d0b52da92962f0992b",
+        "scattered_L2": {
+          "absolute": 2.9865882809435185,
+          "reference_denominator": 2.973035320049073,
+          "relative": 1.0045586276096519
+        },
+        "scattered_scaled_curl": {
+          "absolute": 2.991344113178862,
+          "reference_denominator": 2.987812727778746,
+          "relative": 1.0011819299674587
+        }
+      },
+      "interface_near": {
+        "cells": 264,
+        "cell_ids_sha256": "539e5a5f5922e7752d5ed7904b7e879fe77f7bb9430ce581789929bd3cf10777",
+        "scattered_L2": {
+          "absolute": 3.94556937468254,
+          "reference_denominator": 3.940659528523539,
+          "relative": 1.0012459452849105
+        },
+        "scattered_scaled_curl": {
+          "absolute": 3.9533141966380456,
+          "reference_denominator": 3.951290249286099,
+          "relative": 1.0005122244189255
+        }
+      }
+    },
+    "FTTNN_CONDITIONAL_CORE_FROZEN": {
+      "air": {
+        "cells": 200,
+        "cell_ids_sha256": "e58d767a1e7bdd1653527fffb4af97c456677db1d79b123b34cd357d8708bd88",
+        "scattered_L2": {
+          "absolute": 3.7433597880363787,
+          "reference_denominator": 3.75464404157279,
+          "relative": 0.9969945876595843
+        },
+        "scattered_scaled_curl": {
+          "absolute": 3.7465307448105287,
+          "reference_denominator": 3.749806421289861,
+          "relative": 0.9991264411782074
+        }
+      },
+      "substrate": {
+        "cells": 48,
+        "cell_ids_sha256": "1f7a8b7a4d20c7416d767b6148eee39009b8423f0c715317c28df06f8bc656b1",
+        "scattered_L2": {
+          "absolute": 1.1485499699696924,
+          "reference_denominator": 1.1484887691458534,
+          "relative": 1.000053288134358
+        },
+        "scattered_scaled_curl": {
+          "absolute": 1.1568692717831068,
+          "reference_denominator": 1.1567260764208487,
+          "relative": 1.0001237936666054
+        }
+      },
+      "grating": {
+        "cells": 136,
+        "cell_ids_sha256": "6ac7746cc041b9348d32f56471811e0e547a8ca00915f2d0b52da92962f0992b",
+        "scattered_L2": {
+          "absolute": 2.986486914489867,
+          "reference_denominator": 2.973035320049073,
+          "relative": 1.0045245323357181
+        },
+        "scattered_scaled_curl": {
+          "absolute": 2.9912764160872714,
+          "reference_denominator": 2.987812727778746,
+          "relative": 1.001159272224903
+        }
+      },
+      "interface_near": {
+        "cells": 264,
+        "cell_ids_sha256": "539e5a5f5922e7752d5ed7904b7e879fe77f7bb9430ce581789929bd3cf10777",
+        "scattered_L2": {
+          "absolute": 3.945577917023148,
+          "reference_denominator": 3.940659528523539,
+          "relative": 1.0012481130287985
+        },
+        "scattered_scaled_curl": {
+          "absolute": 3.9533129293595284,
+          "reference_denominator": 3.951290249286099,
+          "relative": 1.0005119036936845
+        }
+      }
+    },
+    "FTTNN_CONDITIONAL_CORE_FROZEN_PRODUCER": {
+      "air": {
+        "cells": 200,
+        "cell_ids_sha256": "e58d767a1e7bdd1653527fffb4af97c456677db1d79b123b34cd357d8708bd88",
+        "scattered_L2": {
+          "absolute": 3.7433597880363787,
+          "reference_denominator": 3.75464404157279,
+          "relative": 0.9969945876595843
+        },
+        "scattered_scaled_curl": {
+          "absolute": 3.746530744810529,
+          "reference_denominator": 3.749806421289861,
+          "relative": 0.9991264411782075
+        }
+      },
+      "substrate": {
+        "cells": 48,
+        "cell_ids_sha256": "1f7a8b7a4d20c7416d767b6148eee39009b8423f0c715317c28df06f8bc656b1",
+        "scattered_L2": {
+          "absolute": 1.1485499699696924,
+          "reference_denominator": 1.1484887691458534,
+          "relative": 1.000053288134358
+        },
+        "scattered_scaled_curl": {
+          "absolute": 1.156869271783107,
+          "reference_denominator": 1.1567260764208487,
+          "relative": 1.0001237936666056
+        }
+      },
+      "grating": {
+        "cells": 136,
+        "cell_ids_sha256": "6ac7746cc041b9348d32f56471811e0e547a8ca00915f2d0b52da92962f0992b",
+        "scattered_L2": {
+          "absolute": 2.986486914489867,
+          "reference_denominator": 2.973035320049073,
+          "relative": 1.0045245323357181
+        },
+        "scattered_scaled_curl": {
+          "absolute": 2.9912764160872714,
+          "reference_denominator": 2.987812727778746,
+          "relative": 1.001159272224903
+        }
+      },
+      "interface_near": {
+        "cells": 264,
+        "cell_ids_sha256": "539e5a5f5922e7752d5ed7904b7e879fe77f7bb9430ce581789929bd3cf10777",
+        "scattered_L2": {
+          "absolute": 3.9455779170231486,
+          "reference_denominator": 3.940659528523539,
+          "relative": 1.0012481130287987
+        },
+        "scattered_scaled_curl": {
+          "absolute": 3.9533129293595284,
+          "reference_denominator": 3.951290249286099,
+          "relative": 1.0005119036936845
+        }
+      }
+    },
+    "CHEBTT_CONDITIONAL_CORE_CONTROL": {
+      "air": {
+        "cells": 200,
+        "cell_ids_sha256": "e58d767a1e7bdd1653527fffb4af97c456677db1d79b123b34cd357d8708bd88",
+        "scattered_L2": {
+          "absolute": 3.715900384054965,
+          "reference_denominator": 3.75464404157279,
+          "relative": 0.9896811369895945
+        },
+        "scattered_scaled_curl": {
+          "absolute": 3.7261920202795173,
+          "reference_denominator": 3.749806421289861,
+          "relative": 0.993702501314129
+        }
+      },
+      "substrate": {
+        "cells": 48,
+        "cell_ids_sha256": "1f7a8b7a4d20c7416d767b6148eee39009b8423f0c715317c28df06f8bc656b1",
+        "scattered_L2": {
+          "absolute": 1.14524268805108,
+          "reference_denominator": 1.1484887691458534,
+          "relative": 0.9971736065846011
+        },
+        "scattered_scaled_curl": {
+          "absolute": 1.1528708538141064,
+          "reference_denominator": 1.1567260764208487,
+          "relative": 0.9966671257047552
+        }
+      },
+      "grating": {
+        "cells": 136,
+        "cell_ids_sha256": "6ac7746cc041b9348d32f56471811e0e547a8ca00915f2d0b52da92962f0992b",
+        "scattered_L2": {
+          "absolute": 2.9466944149160814,
+          "reference_denominator": 2.973035320049073,
+          "relative": 0.9911400631686553
+        },
+        "scattered_scaled_curl": {
+          "absolute": 2.9419232121511962,
+          "reference_denominator": 2.987812727778746,
+          "relative": 0.9846411004274469
+        }
+      },
+      "interface_near": {
+        "cells": 264,
+        "cell_ids_sha256": "539e5a5f5922e7752d5ed7904b7e879fe77f7bb9430ce581789929bd3cf10777",
+        "scattered_L2": {
+          "absolute": 3.9082923185592335,
+          "reference_denominator": 3.940659528523539,
+          "relative": 0.9917863469985105
+        },
+        "scattered_scaled_curl": {
+          "absolute": 3.9119120690443117,
+          "reference_denominator": 3.951290249286099,
+          "relative": 0.9900340957617826
+        }
+      }
+    },
+    "CHEBTT_CONDITIONAL_CORE_CONTROL_PRODUCER": {
+      "air": {
+        "cells": 200,
+        "cell_ids_sha256": "e58d767a1e7bdd1653527fffb4af97c456677db1d79b123b34cd357d8708bd88",
+        "scattered_L2": {
+          "absolute": 3.715900384054965,
+          "reference_denominator": 3.75464404157279,
+          "relative": 0.9896811369895945
+        },
+        "scattered_scaled_curl": {
+          "absolute": 3.7261920202795173,
+          "reference_denominator": 3.749806421289861,
+          "relative": 0.993702501314129
+        }
+      },
+      "substrate": {
+        "cells": 48,
+        "cell_ids_sha256": "1f7a8b7a4d20c7416d767b6148eee39009b8423f0c715317c28df06f8bc656b1",
+        "scattered_L2": {
+          "absolute": 1.14524268805108,
+          "reference_denominator": 1.1484887691458534,
+          "relative": 0.9971736065846011
+        },
+        "scattered_scaled_curl": {
+          "absolute": 1.1528708538141064,
+          "reference_denominator": 1.1567260764208487,
+          "relative": 0.9966671257047552
+        }
+      },
+      "grating": {
+        "cells": 136,
+        "cell_ids_sha256": "6ac7746cc041b9348d32f56471811e0e547a8ca00915f2d0b52da92962f0992b",
+        "scattered_L2": {
+          "absolute": 2.946694414916082,
+          "reference_denominator": 2.973035320049073,
+          "relative": 0.9911400631686554
+        },
+        "scattered_scaled_curl": {
+          "absolute": 2.9419232121511967,
+          "reference_denominator": 2.987812727778746,
+          "relative": 0.984641100427447
+        }
+      },
+      "interface_near": {
+        "cells": 264,
+        "cell_ids_sha256": "539e5a5f5922e7752d5ed7904b7e879fe77f7bb9430ce581789929bd3cf10777",
+        "scattered_L2": {
+          "absolute": 3.9082923185592335,
+          "reference_denominator": 3.940659528523539,
+          "relative": 0.9917863469985105
+        },
+        "scattered_scaled_curl": {
+          "absolute": 3.911912069044312,
+          "reference_denominator": 3.951290249286099,
+          "relative": 0.9900340957617827
+        }
+      }
+    }
+  },
+  "original_verifier": {
+    "path": "benchmarks/artifacts/task42extra/v41/v41_core_independent_compare/verifier_result.json",
+    "sha256": "51f1ebfd5be127fc21480e02f814d020c3e0b8f9a1d2ee8f4172d3a37b90a77a",
+    "bytes": 538663
+  },
+  "original_saved_checker": {
+    "path": "benchmarks/artifacts/task42extra/v41/v41_core_independent_compare/saved_checker.json",
+    "sha256": "c718ea29da32cc8173e2b3016de6b4888c4851c989c4e168f6c0d1b92ed2a802",
+    "bytes": 54339
+  },
+  "actual_and_producer_scored_separately": true,
+  "new_reference_solve_count": 0,
+  "previous_wrong_policy_record": {
+    "path": "benchmarks/artifacts/task42extra/v41/v41_core_independent_compare/verifier_result_before_research_policy.json",
+    "sha256": "16a75ef26c4b8b6a4957b57922b2402005de6fc73322d8890876d7b07e42eee8",
+    "bytes": 538205
+  },
+  "policy_seal": {
+    "source_sha": "b64d594993316df4a1784553954c20468cde0229",
+    "previous_report_sha256": "16a75ef26c4b8b6a4957b57922b2402005de6fc73322d8890876d7b07e42eee8",
+    "previous_report": "verifier_result_before_research_policy.json",
+    "numerical_fields_and_raw_arrays_changed": false,
+    "old_wrong_use_flags_preserved": true,
+    "production_initialization_allowed": false,
+    "official_candidate_results": false
+  },
+  "research_signal": {
+    "FTTNN_CONDITIONAL_CORE_LEARNED": false,
+    "FTTNN_CONDITIONAL_CORE_FROZEN": false,
+    "CHEBTT_CONDITIONAL_CORE_CONTROL": false,
+    "FTTNN_CONDITIONAL_CORE_LEARNED_PRODUCER": false,
+    "FTTNN_CONDITIONAL_CORE_FROZEN_PRODUCER": false,
+    "CHEBTT_CONDITIONAL_CORE_CONTROL_PRODUCER": false
+  },
+  "conditional_0p7": "NOT_RUN_LEARNED_M5_JOINT_GATE_FAILED_NOT_REGISTERED",
+  "decision": "NUMERICAL_GATE_NOT_REACHED",
+  "FEINN_MAIN_SOLVER_ON_HOLD": true,
+  "NO_VERIFIED_NN_INCREMENT": true,
+  "FULL_TARGET_NOT_QUALIFIED": true
+}
