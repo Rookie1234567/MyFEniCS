@@ -108,6 +108,12 @@ def diagnose(folder,journal,*,maximum_seconds=2700):
     for k,name in enumerate(fields):
         x=values[0,:,:,k][valid];y=values[1,:,:,k][valid]
         norms[name]=dict(same_direction_relative=relative(x-y,y),directions_consumed=int(valid.sum()))
+    directional_scores=[]
+    for d in range(8):
+        hit=valid[:,d]
+        directional_scores.append(dict(direction=d,vector=directions[d].tolist(),points=int(hit.sum()),
+            six_vector_relative={name:relative(values[0,:,d,k][hit]-values[1,:,d,k][hit],values[1,:,d,k][hit])
+                                 for k,name in enumerate(fields)}))
     spread={}
     for side,label in enumerate(('P6','L5')):
         spread[label]={}
@@ -123,7 +129,7 @@ def diagnose(folder,journal,*,maximum_seconds=2700):
     result=dict(status='COMPLETED' if len(point_records)==240 else 'PARTIAL',
         layers=layer_rows,layer_definition='0: cells touching true unlike-material face; 1: one additional face neighbor; 2: remaining domain',
         periodic_seams_are_not_material_interfaces=True,ports_not_material_interfaces=True,
-        fixed_direction_pairs=norms,side_spreads=spread,points=point_records,arrays=packet,
+        fixed_direction_pairs=norms,per_direction_scores=directional_scores,side_spreads=spread,points=point_records,arrays=packet,
         prior_comparison=frozen['arrays'],old_point_values_unchanged=True,not_a_global_error_bound=True,
         new_global_integrations=0,new_factors=0,new_solves=0,seconds=time.monotonic()-began)
     write_json(folder/'diagnosis.json',result);return result

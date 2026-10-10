@@ -71,7 +71,7 @@ class RecoveryWriter:
         solved=lu_solve((lu,piv),np.column_stack((it,bi)),check_finite=True)
         if not np.all(np.isfinite(solved)):
             raise ValueError('nonfinite cell solve')
-        self.pending.append((interior.copy(),rows.copy(),cols.copy(),lu,piv,it.copy(),ti.copy()))
+        self.pending.append((interior.copy(),rows.copy(),cols.copy(),lu,piv,it.copy(),ti.copy(),ii.copy()))
         self.count+=1
         if len(self.pending)>=self.batch:self.flush()
         return solved
@@ -79,7 +79,7 @@ class RecoveryWriter:
     def flush(self):
         if not self.pending:return
         payload={}
-        for i,name in enumerate(('interior','rows','cols','lu','piv','it','ti')):
+        for i,name in enumerate(('interior','rows','cols','lu','piv','it','ti','ii')):
             values=[np.asarray(x[i]).reshape(-1) for x in self.pending]
             payload[name]=np.concatenate(values)
             payload[name+'_offsets']=np.r_[0,np.cumsum([v.size for v in values])].astype(np.int64)
@@ -164,13 +164,13 @@ class ExactRecovery:
                 def part(name):
                     return a[name][a[name+'_offsets'][j]:a[name+'_offsets'][j+1]]
                 interior,rows,cols=part('interior'),part('rows'),part('cols');ni=len(interior)
-                yield interior,rows,cols,part('lu').reshape(ni,ni),part('piv'),part('it').reshape(ni,len(cols)),part('ti').reshape(len(rows),ni)
+                yield interior,rows,cols,part('lu').reshape(ni,ni),part('piv'),part('it').reshape(ni,len(cols)),part('ti').reshape(len(rows),ni),part('ii').reshape(ni,ni)
 
     def condense_rhs(self,full_rhs):
         r=np.asarray(full_rhs)
         if r.shape!=(self.manifest['full_rows'],):raise ValueError('full arbitrary RHS length')
         out=r[self.retained].copy()
-        for i,rows,cols,lu,piv,it,ti in self.chunks():
+        for i,rows,cols,lu,piv,it,ti,ii in self.chunks():
             out[self.mapping[rows]]-=ti@lu_solve((lu,piv),r[i]);self.calls['local_lu_solve']+=1
         return out
 
@@ -182,8 +182,16 @@ class ExactRecovery:
         if np.asarray(trace_port).shape!=(len(self.retained),) or np.asarray(full_rhs).shape!=(self.manifest['full_rows'],):
             raise ValueError('recovery full/retained lengths')
         x=np.empty(self.manifest['full_rows'],np.complex128);x[self.retained]=trace_port
-        for i,rows,cols,lu,piv,it,ti in self.chunks():
+        maximum=0.
+        from .scattering_anchor import relative
+        for i,rows,cols,lu,piv,it,ti,ii in self.chunks():
             x[i]=lu_solve((lu,piv),full_rhs[i]-it@x[cols]);self.calls['local_lu_solve']+=1
+            internal=ii@x[i];trace=it@x[cols]
+            maximum=max(maximum,relative(full_rhs[i]-internal-trace,
+                np.abs(full_rhs[i])+np.abs(internal)+np.abs(trace)))
+        self.last_identity=dict(maximum_cell_operation_scaled=maximum,pass_gate=maximum<=1e-10,
+                                original_Aii_retained=True,cells=self.manifest['local_LU_count'])
+        if not self.last_identity['pass_gate']:raise ValueError('original local internal recovery identity')
         return x
 
     def lift_residual(self,r):

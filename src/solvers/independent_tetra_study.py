@@ -193,6 +193,7 @@ def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,
                 condensed_true=reduced_true,full_rows=len(full_rhs),retained_rows=A.shape[0],
                 residual_snapshot_kind='exact algebraic lift of retained residual; original measured independently below',
                 condensed_service_calls=recovery.calls,retained_returned=retained_receipt)
+            pending['internal_recovery_identity']=recovery.last_identity
         if prepared is not None:pending.update(body_checkpoint=prepared['checkpoint'],body_qualification=prepared['qualification'],prepared_start=True)
         write_json(folder/'returned_audit_pending.json',pending)
         aud,res,orrhs=(core.audit(s,oracle,x,full_rhs,journal) if independent is None else independent.audit(x,full_rhs,journal))

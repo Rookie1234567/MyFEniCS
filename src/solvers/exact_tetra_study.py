@@ -120,11 +120,19 @@ def make_reduction(s,A,rhs,folder,journal,state,b,oracle,*,path=None):
     residual=witness_rhs-original;prediction=service.lift_residual(red)
     error=relative(residual-prediction,original)
     production_error=relative(A@x-original,original)
+    n=s['P'].shape[1]
+    body_error=relative((residual-prediction)[:n],original[:n])
+    port_scale=np.abs(D@x[:n])+np.abs(H*x[n:])+np.abs(witness_rhs[n:])
+    port_error=relative((residual-prediction)[n:],port_scale)
+    body_production_error=relative((A@x-original)[:n],original[:n])
     raw=save_arrays(folder/'recovered_original_witness.npz',retained=t,full=x,rhs=witness_rhs,
                     original_action=original,original_residual=residual,condensed_residual_lift=prediction)
-    verified=dict(status='ORIGINAL_REDUCTION_VERIFIED' if max(error,production_error)<=1e-10 else 'FAILED',
-        pass_gate=max(error,production_error)<=1e-10,checkpoint=receipt,operation_error=error,
+    maximum=max(error,production_error,body_error,port_error,body_production_error)
+    verified=dict(status='ORIGINAL_REDUCTION_VERIFIED' if maximum<=1e-10 else 'FAILED',
+        pass_gate=maximum<=1e-10,checkpoint=receipt,operation_error=error,
         production_original_error=production_error,arrays=raw,full_space_rows=A.shape[0],retained_rows=len(t),
+        body_operation_error=body_error,port_operation_error=port_error,body_production_original_error=body_production_error,
+        internal_recovery_identity=service.last_identity,
         local_LU_count=service.manifest['local_LU_count'],service_calls=service.calls,source=state)
     write_json(folder/'reduction_qualification.json',verified)
     if not verified['pass_gate']:raise ValueError('complete independent recovered-vector reduction gate')
