@@ -930,6 +930,42 @@ def _mapped_port_face_global_rows(
     return rows
 
 
+def _same_v23_mpc_function_space_layout(space: Any, mpc_space: Any) -> bool:
+    """Compare the MPC and caller FE spaces by their owned-cell dof layout."""
+
+    try:
+        space_dofmap = space.dofmap
+        mpc_dofmap = mpc_space.dofmap
+        space_index_map = space_dofmap.index_map
+        mpc_index_map = mpc_dofmap.index_map
+        if (
+            mpc_space.mesh is not space.mesh
+            or int(mpc_space.element.basix_element.hash())
+            != int(space.element.basix_element.hash())
+            or int(mpc_index_map.size_global) != int(space_index_map.size_global)
+            or int(mpc_index_map.size_local) != int(space_index_map.size_local)
+            or tuple(int(value) for value in mpc_index_map.local_range)
+            != tuple(int(value) for value in space_index_map.local_range)
+            or int(mpc_index_map.num_ghosts) != int(space_index_map.num_ghosts)
+            or int(mpc_dofmap.index_map_bs) != int(space_dofmap.index_map_bs)
+            or not np.array_equal(mpc_index_map.ghosts, space_index_map.ghosts)
+            or not np.array_equal(mpc_index_map.owners, space_index_map.owners)
+        ):
+            return False
+
+        topology = space.mesh.topology
+        cell_dim = int(topology.dim)
+        owned_cell_count = int(topology.index_map(cell_dim).size_local)
+        for cell in range(owned_cell_count):
+            if not np.array_equal(
+                mpc_dofmap.cell_dofs(cell), space_dofmap.cell_dofs(cell)
+            ):
+                return False
+        return True
+    except (AttributeError, IndexError, TypeError, ValueError):
+        return False
+
+
 def _compact_reference_mode_indices(modes: Sequence[Any]) -> dict[str, list[int]]:
     """Select first/middle/last real k-vectors and any adjacent s/p partners."""
 
@@ -1868,7 +1904,22 @@ def _v23_checkpoint_directory(
         "ordered_mode_key_sha256": mode_inventory.get("ordered_mode_key_sha256"),
         "campaign_window_sha256": campaign_window_sha256,
     }
-    if any(not isinstance(value, str) or len(value) != 64 for value in identity.values()):
+    source_sha = identity["source_sha"]
+    content_hashes = tuple(
+        value for key, value in identity.items() if key != "source_sha"
+    )
+    valid_source_sha = (
+        isinstance(source_sha, str)
+        and len(source_sha) == 40
+        and all(character in "0123456789abcdef" for character in source_sha.lower())
+    )
+    valid_content_hashes = all(
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value.lower())
+        for value in content_hashes
+    )
+    if not valid_source_sha or not valid_content_hashes:
         raise ValueError("V23 checkpoint identity is incomplete or malformed")
     key = hashlib.sha256(
         json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -3698,7 +3749,9 @@ def _run_v23_original_ny8_q_port_tile(
                 },
             )
             return result
-        if int(space.mesh.comm.size) != 1 or mpc.function_space is not space:
+        if int(space.mesh.comm.size) != 1 or not _same_v23_mpc_function_space_layout(
+            space, mpc.function_space
+        ):
             raise ValueError("selected original Ny8 q tile requires the existing MPI1 p6 space/MPC")
         axes = {name: np.asarray(axes_values[name], dtype=np.float64) for name in ("x", "y", "z")}
         if any(

@@ -12,6 +12,7 @@ from src.solvers.task40_v22_operator_probe import (
     _compact_reference_mode_indices,
     _load_v23_action_checkpoint,
     _mapped_port_face_global_rows,
+    _same_v23_mpc_function_space_layout,
     _summarize_cell_mode_support,
     _v23_checkpoint_directory,
     _write_v22_action_checkpoint,
@@ -224,12 +225,83 @@ def test_cell_multiplicity_counts_modes_once_and_deduplicates_B_D_union():
     assert summary["sum_squares"] == 5
 
 
+def test_v23_mpc_space_layout_compares_owned_cells_and_global_dof_identity():
+    from basix.ufl import element
+
+    basix_element = element("N1curl", "hexahedron", 6).basix_element
+    topology = SimpleNamespace(
+        dim=3,
+        index_map=lambda _dim: SimpleNamespace(size_local=2),
+    )
+    mesh = SimpleNamespace(comm=SimpleNamespace(size=2), topology=topology)
+    cells = [
+        np.arange(882, dtype=np.int32),
+        np.arange(100, 982, dtype=np.int32),
+    ]
+
+    def make_index_map():
+        return SimpleNamespace(
+            size_global=20_181_348,
+            size_local=1_000,
+            local_range=(0, 1_000),
+            num_ghosts=1,
+            ghosts=np.asarray([20_000_000], dtype=np.int64),
+            owners=np.asarray([1], dtype=np.int32),
+        )
+
+    def make_space_dofmap():
+        return SimpleNamespace(
+            index_map=make_index_map(),
+            index_map_bs=1,
+            cell_dofs=lambda cell: cells[int(cell)],
+        )
+
+    expected = SimpleNamespace(
+        mesh=mesh,
+        element=SimpleNamespace(basix_element=basix_element),
+        dofmap=make_space_dofmap(),
+    )
+    mpc_cells = [cell.copy() for cell in cells]
+    mpc_wrapper = SimpleNamespace(
+        mesh=mesh,
+        element=SimpleNamespace(basix_element=basix_element),
+        dofmap=SimpleNamespace(
+            index_map=make_index_map(),
+            index_map_bs=1,
+            cell_dofs=lambda cell: mpc_cells[int(cell)],
+        ),
+    )
+
+    assert mpc_wrapper is not expected
+    assert _same_v23_mpc_function_space_layout(expected, mpc_wrapper)
+
+    mpc_wrapper.dofmap.index_map.size_global -= 1
+    assert not _same_v23_mpc_function_space_layout(expected, mpc_wrapper)
+    mpc_wrapper.dofmap.index_map.size_global = expected.dofmap.index_map.size_global
+
+    mpc_wrapper.dofmap.index_map.local_range = (1, 1_001)
+    assert not _same_v23_mpc_function_space_layout(expected, mpc_wrapper)
+    mpc_wrapper.dofmap.index_map.local_range = expected.dofmap.index_map.local_range
+
+    mpc_wrapper.dofmap.index_map.ghosts[0] -= 1
+    assert not _same_v23_mpc_function_space_layout(expected, mpc_wrapper)
+    mpc_wrapper.dofmap.index_map.ghosts[0] = expected.dofmap.index_map.ghosts[0]
+
+    mpc_wrapper.dofmap.index_map.owners[0] = 0
+    assert not _same_v23_mpc_function_space_layout(expected, mpc_wrapper)
+    mpc_wrapper.dofmap.index_map.owners[0] = expected.dofmap.index_map.owners[0]
+
+    # Keep cell zero identical: only a mismatch on the second owned cell rejects it.
+    mpc_cells[1][0], mpc_cells[1][1] = mpc_cells[1][1], mpc_cells[1][0]
+    assert not _same_v23_mpc_function_space_layout(expected, mpc_wrapper)
+
+
 def test_v23_checkpoint_round_trip_restores_exact_prefix_state(tmp_path, monkeypatch):
     monkeypatch.setenv(
         "TASK40_V10_CAMPAIGN_WINDOW_SHA256", TASK40_V23_CAMPAIGN_SHA256
     )
     preflight = {
-        "source_sha": "1" * 64,
+        "source_sha": "1" * 40,
         "input_sha256": "2" * 64,
         "physical_model_sha256": "3" * 64,
         "run_id": "fixture-run",
