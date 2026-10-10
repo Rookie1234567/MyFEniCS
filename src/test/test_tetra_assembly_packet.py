@@ -13,6 +13,16 @@ from src.solvers.scattering_anchor import save_arrays
 
 
 class AssemblyPacketTests(unittest.TestCase):
+    def test_compiled_identity_with_missing_FFCx_header(self):
+        from src.solvers.tetra_cell_kernel import compiled_identity
+        with tempfile.TemporaryDirectory() as td:
+            p=Path(td)/'module.so';p.write_bytes(b'compiled fixture')
+            a=compiled_identity((None,'C source'),p)
+            self.assertEqual(len(a['compiled_module_sha256']),64)
+            self.assertNotEqual(a['compiled_code_sha256'],compiled_identity((None,None),p)['compiled_code_sha256'])
+            p.write_bytes(b'different compiled fixture')
+            self.assertNotEqual(a['compiled_module_sha256'],compiled_identity((None,'C source'),p)['compiled_module_sha256'])
+
     def test_packed_coefficient_kernel_key_not_first_item(self):
         from src.solvers.tetra_cell_kernel import packed_cell_coefficients
         from dolfinx import fem

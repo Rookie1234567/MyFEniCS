@@ -5,9 +5,20 @@ matrix and cannot consume a body/Schur checkpoint. Translation reuse is
 opt-in after actual-cell qualification, with unrounded J and coefficient keys.
 """
 import hashlib
+import json
+from pathlib import Path
 import numpy as np
 
 from .hcurl_assembly_time_condensation import _orient_cell_tensor
+
+
+def compiled_identity(code,module_path):
+    """FFCx may omit the header/source on a cache hit; bind the binary too."""
+    encoded=json.dumps(code,ensure_ascii=True).encode()
+    p=Path(module_path)
+    return dict(compiled_code_sha256=hashlib.sha256(encoded).hexdigest(),
+                compiled_module_path=str(p),compiled_module_sha256=hashlib.sha256(p.read_bytes()).hexdigest(),
+                compiled_code_serialization='JSON preserving None header/cache entries')
 
 
 def packed_cell_coefficients(packed,cell_type):
@@ -52,10 +63,9 @@ class TetraCellKernel:
         setup['mesh'].topology.create_entity_permutations()
         self.permutations=setup['mesh'].topology.get_cell_permutation_info()
         self.calls=0
-        code=a.code if isinstance(a.code,str) else '\n'.join(a.code)
         self.identity=dict(q=self.q,local_dim=self.dim,embedded_superdegree=setup['V'].element.basix_element.embedded_superdegree,
             form='inner(Ckappa(u),Ckappa(v))/mu-k0^2*eps*inner(u,v)',
-            implementation='FFCx_complex128_packed_DG0_tetra_cell',compiled_code_sha256=hashlib.sha256(code.encode()).hexdigest(),
+            implementation='FFCx_complex128_packed_DG0_tetra_cell',**compiled_identity(a.code,a.module.__file__),
             coefficients_sha256=hashlib.sha256(self.coefficients.tobytes()).hexdigest(),num_coefficients=int(uf.num_coefficients),
             coefficient_integral_key=[str(coefficient_key[0]),*coefficient_key[1:]],
             num_constants=int(uf.num_constants),full_body_assemble_matrix=0)
