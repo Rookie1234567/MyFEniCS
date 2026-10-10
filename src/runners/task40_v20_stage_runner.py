@@ -1071,6 +1071,10 @@ def run_task40_v20_stage(
             outcome = "STAGE_COMPLETED"
             status = "stage_completed"
             classification = "TARGET_OPERATOR_PROBE_Q_ONLY_SUPPLEMENT"
+        elif probe_status == "PASS_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE":
+            outcome = "STAGE_COMPLETED"
+            status = "stage_completed"
+            classification = "TARGET_OPERATOR_PROBE_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
         elif probe_status == "PLANNED_SCAN_HANDOFF_WITH_PARTIAL_Q_PORT_TILE":
             outcome = "PLANNED_HANDOFF"
             status = "planned_handoff"
@@ -1135,6 +1139,9 @@ def run_task40_v20_stage(
                     "v23_q_only_supplement.json",
                     "v23_selected_mode_production_B_D_H.npz",
                     "v23_selected_q_projection_readback.npz",
+                    "v24_bounded_port_reuse_volume_sample.json",
+                    "v24_bounded_32_mode_B_D_H_cache.npz",
+                    "v24_bounded_32_mode_provider_replay.npz",
                 )
                 if (output_directory / name).is_file()
             },

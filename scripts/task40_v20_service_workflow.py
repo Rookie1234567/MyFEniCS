@@ -743,6 +743,112 @@ def _extract_v23_q_only_scan_arg(case_args: list[str]) -> tuple[list[str], Path 
     return cleaned, selected
 
 
+def _extract_v24_cd_selector_arg(case_args: list[str]) -> tuple[list[str], Path | None]:
+    """Remove the explicit V24 bounded port/volume sample selector."""
+
+    cleaned: list[str] = []
+    selected: Path | None = None
+    index = 0
+    flag = "--v24-bounded-port-reuse-volume-selector"
+    while index < len(case_args):
+        value = case_args[index]
+        if value == flag:
+            if selected is not None or index + 1 >= len(case_args):
+                raise ValueError("V24 C/D selector must appear once with a selector JSON path")
+            selected = Path(case_args[index + 1]).resolve()
+            index += 2
+            continue
+        if value.startswith(flag + "="):
+            if selected is not None:
+                raise ValueError("V24 C/D selector must appear only once")
+            selected = Path(value.split("=", 1)[1]).resolve()
+            index += 1
+            continue
+        cleaned.append(value)
+        index += 1
+    return cleaned, selected
+
+
+def _bind_v24_cd_selector(
+    selector_path: Path,
+    *,
+    input_path: Path,
+    campaign_registration: dict[str, Any],
+    profile: str,
+    stop_stage: str,
+    q_only_binding: dict[str, str | int] | None,
+    repo_root: Path,
+) -> dict[str, str | int]:
+    """Bind the bounded C/D sample to V24 and the existing q-only checkpoint."""
+
+    selector_path = selector_path.resolve()
+    allowed_root = (repo_root / V24_ARTIFACT_ROOT).resolve()
+    if not selector_path.is_relative_to(allowed_root) or not selector_path.is_file():
+        raise ValueError("V24 C/D selector must be a file under the registered V24 artifact directory")
+    if (
+        campaign_registration.get("version") != "V24"
+        or campaign_registration.get("sha256") != TASK40_V24_CAMPAIGN_SHA256
+        or profile != V23_TARGET_PROFILE
+        or stop_stage != "target_operator_probe"
+        or q_only_binding is None
+    ):
+        raise ValueError("V24 C/D selector requires the registered Ny8 V24 probe and full q-only checkpoint")
+    selector_raw = selector_path.read_bytes()
+    selector = json.loads(selector_raw)
+    if not isinstance(selector, dict):
+        raise ValueError("V24 C/D selector must contain a JSON object")
+    if (
+        selector.get("schema") != "task40extra.review_v24_bounded_port_reuse_volume_selector.v1"
+        or selector.get("campaign_window_sha256") != TASK40_V24_CAMPAIGN_SHA256
+        or selector.get("input_sha256") != _sha256_file(input_path)
+        or selector.get("q_only_scan_manifest_sha256")
+        != q_only_binding.get("scan_manifest_sha256")
+        or selector.get("q_only_checkpoint_metadata_sha256")
+        != q_only_binding.get("checkpoint_metadata_sha256")
+        or selector.get("q_only_checkpoint_payload_sha256")
+        != q_only_binding.get("checkpoint_payload_sha256")
+        or selector.get("mode_count") != 32
+        or selector.get("selection")
+        != "first valid actual mode for every side x global-q x s/polarization group"
+        or selector.get("max_cache_bytes") != 536_870_912
+        or selector.get("volume_trace_dimension") != 432
+        or selector.get("face_panel_rows") != 60
+        or selector.get("y_orbit_count") != 8
+        or selector.get("sum_duplicate_cell_integrals") is not True
+    ):
+        raise ValueError("V24 C/D selector differs from the frozen bounded sample contract")
+    q0_path = (repo_root / str(selector.get("q0_partial_checker_path", ""))).resolve()
+    if not q0_path.is_relative_to(allowed_root) or not q0_path.is_file():
+        raise ValueError("V24 C/D selector is missing its bound q0 partial checker receipt")
+    q0_sha = _sha256_file(q0_path)
+    if selector.get("q0_partial_checker_sha256") != q0_sha:
+        raise ValueError("V24 C/D selector q0 checker receipt hash differs")
+    q0_receipt = json.loads(q0_path.read_text(encoding="utf-8"))
+    q0_checks = q0_receipt.get("checks")
+    if (
+        q0_receipt.get("status") != "PARTIAL_RECEIPT_CHECKED"
+        or q0_receipt.get("checker_passed") is not True
+        or q0_receipt.get("official_result") is not False
+        or q0_receipt.get("full_pass") is not False
+        or not isinstance(q0_checks, dict)
+        or not q0_checks
+        or not all(value is True for value in q0_checks.values())
+    ):
+        raise ValueError("V24 C/D selector q0 partial receipt is not a qualified checker pass")
+    return {
+        "selector_path": str(selector_path),
+        "selector_sha256": hashlib.sha256(selector_raw).hexdigest(),
+        "schema": str(selector["schema"]),
+        "q0_partial_checker_path": str(q0_path),
+        "q0_partial_checker_sha256": q0_sha,
+        "q_only_scan_manifest_sha256": str(q_only_binding["scan_manifest_sha256"]),
+        "q_only_checkpoint_metadata_sha256": str(q_only_binding["checkpoint_metadata_sha256"]),
+        "q_only_checkpoint_payload_sha256": str(q_only_binding["checkpoint_payload_sha256"]),
+        "mode_count": 32,
+        "max_cache_bytes": 536_870_912,
+    }
+
+
 def _bind_v23_q_only_scan_checkpoint(
     scan_directory: Path,
     *,
@@ -879,6 +985,7 @@ def _validate_v24_q_only_selector(
     *,
     stop_stage: str,
     scan_directory: Path | None,
+    cd_selector_path: Path | None = None,
 ) -> None:
     if (
         campaign_registration.get("version") == "V24"
@@ -886,6 +993,12 @@ def _validate_v24_q_only_selector(
         and scan_directory is None
     ):
         raise ValueError("V24 target_operator_probe requires the registered V23 q-only scan selector")
+    if cd_selector_path is not None and (
+        campaign_registration.get("version") != "V24"
+        or stop_stage != "target_operator_probe"
+        or scan_directory is None
+    ):
+        raise ValueError("V24 C/D selector requires V24 target_operator_probe and its q-only scan checkpoint")
 
 
 def _run_case_output_checker(packet_path: Path, runtime_prefix: Path) -> list[str]:
@@ -1261,6 +1374,395 @@ def _q_only_execution_artifact_campaigns_valid(
     return False
 
 
+def _v24_bounded_sample_readback_checks(
+    *, output_directory: Path, probe: dict[str, Any]
+) -> dict[str, bool]:
+    """Independently replay bounded V24 Bα, -Dx, and original-H actions."""
+    import numpy as np
+
+    sample = probe.get("v24_bounded_port_reuse_volume_sample")
+    sample = sample if isinstance(sample, dict) else {}
+    port = sample.get("port_reuse")
+    port = port if isinstance(port, dict) else {}
+    volume = sample.get("volume_census")
+    volume = volume if isinstance(volume, dict) else {}
+    regenerated_record = port.get("regenerated_apply")
+    regenerated_record = regenerated_record if isinstance(regenerated_record, dict) else {}
+    selected_h_action = port.get("selected_H_p_action")
+    selected_h_action = selected_h_action if isinstance(selected_h_action, dict) else {}
+    cache_release = port.get("cache_release")
+    cache_release = cache_release if isinstance(cache_release, dict) else {}
+    selection = sample.get("mode_selection")
+    selection = selection if isinstance(selection, dict) else {}
+    q0_anchor = sample.get("q0_anchor")
+    q0_anchor = q0_anchor if isinstance(q0_anchor, dict) else {}
+    resource_samples = sample.get("resource_samples")
+    resource_samples = resource_samples if isinstance(resource_samples, list) else []
+    cache_name = "v24_bounded_32_mode_B_D_H_cache.npz"
+    replay_name = "v24_bounded_32_mode_provider_replay.npz"
+    cache_path = output_directory / cache_name
+    replay_path = output_directory / replay_name
+    sample_path = output_directory / "v24_bounded_port_reuse_volume_sample.json"
+    q0_checker_path = Path(str(q0_anchor.get("checker_path", ""))).resolve()
+    q0_root = (ROOT / V24_ARTIFACT_ROOT).resolve()
+    q0_checker_valid = False
+    if q0_checker_path.is_relative_to(q0_root) and q0_checker_path.is_file():
+        try:
+            q0_checker = json.loads(q0_checker_path.read_text(encoding="utf-8"))
+            q0_checker_valid = bool(
+                _sha256_file(q0_checker_path) == q0_anchor.get("checker_sha256")
+                and q0_checker.get("status") == "PARTIAL_RECEIPT_CHECKED"
+                and q0_checker.get("checker_passed") is True
+                and q0_checker.get("official_result") is False
+                and q0_checker.get("full_pass") is False
+                and isinstance(q0_checker.get("checks"), dict)
+                and bool(q0_checker["checks"])
+                and all(value is True for value in q0_checker["checks"].values())
+            )
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            q0_checker_valid = False
+    selected_groups = selection.get("groups")
+    expected_groups = {
+        (side, q, polarization)
+        for side in ("bottom", "top")
+        for q in range(8)
+        for polarization in ("s", "p")
+    }
+    actual_groups: set[tuple[str, int, str]] = set()
+    selected_mode_indices: list[int] = []
+    groups_valid = isinstance(selected_groups, list)
+    if groups_valid:
+        try:
+            for group in selected_groups:
+                actual_groups.add(
+                    (
+                        str(group["side"]),
+                        int(group["global_q"]),
+                        str(group["polarization"]),
+                    )
+                )
+                selected_mode_indices.append(int(group["original_mode_index"]))
+            groups_valid = (
+                actual_groups == expected_groups
+                and len(actual_groups) == 32
+                and len(set(selected_mode_indices)) == 32
+            )
+        except (KeyError, TypeError, ValueError):
+            groups_valid = False
+    sample_file_valid = False
+    if sample_path.is_file():
+        try:
+            sample_file_valid = json.loads(sample_path.read_text(encoding="utf-8")) == {
+                key: value
+                for key, value in sample.items()
+                if key not in {"artifact_path", "artifact_sha256"}
+            }
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            sample_file_valid = False
+    checks: dict[str, bool] = {
+        "v24_sample_scope_is_bounded_and_nonofficial": (
+            sample.get("status") == "PASS_V24_PORT_REUSE_C_AND_VOLUME_CENSUS"
+            and sample.get("official_result") is False
+            and sample.get("full_q_matrix") is False
+            and sample.get("factor_created") is False
+            and sample.get("ksp_created") is False
+            and sample.get("pde_solved") is False
+        ),
+        "v24_mode_sample_has_32_actual_groups": (
+            selection.get("selected_mode_count") == 32
+            and groups_valid
+        ),
+        "v24_cache_and_replay_files_are_hash_bound": (
+            port.get("cache_payload_path") == cache_name
+            and port.get("replay_payload_path") == replay_name
+            and cache_path.is_file()
+            and replay_path.is_file()
+            and port.get("cache_payload_sha256") == _sha256_file(cache_path)
+            and port.get("replay_payload_sha256") == _sha256_file(replay_path)
+        ),
+        "v24_sample_json_is_hash_bound_to_probe": (
+            sample_path.is_file()
+            and sample.get("artifact_path") == sample_path.name
+            and sample.get("artifact_sha256") == _sha256_file(sample_path)
+            and sample_file_valid
+        ),
+        "v24_cache_identity_recomputed": False,
+        "v24_actions_recomputed_from_raw_B_D_H": False,
+        "v24_cold_warm_regenerate_lifecycle_is_recorded": False,
+        "v24_volume_capacity_scope_not_overclaimed": (
+            volume.get("full_volume_action_admitted") is False
+            and "excludes global trace-constraint maps" in str(
+                volume.get("full_volume_class_cache_estimate_scope", "")
+            )
+        ),
+        "v24_q0_anchor_is_bound_and_not_rerun": (
+            q0_anchor.get("status") == "PREVIOUS_PARTIAL_Q0_CHECKER_PASS_BOUND"
+            and q0_anchor.get("rerun") is False
+            and q0_checker_valid
+        ),
+    }
+    if not (cache_path.is_file() and replay_path.is_file()):
+        return checks
+
+    def array_sha256(value: Any) -> str:
+        array = np.ascontiguousarray(value)
+        digest = hashlib.sha256()
+        digest.update(repr((array.shape, str(array.dtype))).encode("ascii"))
+        digest.update(memoryview(array).cast("B"))
+        return digest.hexdigest()
+
+    def relative_l2(candidate: np.ndarray, oracle: np.ndarray) -> float:
+        denominator = float(np.linalg.norm(oracle))
+        delta = float(np.linalg.norm(candidate - oracle))
+        if denominator == 0.0:
+            return 0.0 if delta == 0.0 else float("inf")
+        return delta / denominator
+
+    warm_records = port.get("warm_actions", [])
+    warm_records = warm_records if isinstance(warm_records, list) else []
+    action_records = [
+        port.get("cold_apply"),
+        *warm_records,
+        port.get("regenerated_apply"),
+    ]
+    action_records = [record for record in action_records if isinstance(record, dict)]
+    expected_action_ids = {
+        "cold_apply", "warm_apply_1", "warm_apply_2", "regenerated_apply"
+    }
+    cache_digest = hashlib.sha256()
+    raw_identity_valid = True
+    replay_valid = len(action_records) == 4 and {
+        str(record.get("action_id")) for record in action_records
+    } == expected_action_ids
+    action_hashes_valid = replay_valid
+    action_limits_valid = replay_valid
+    action_inputs_by_id: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+    actions_by_id: dict[str, dict[str, Any]] = {}
+    try:
+        with np.load(cache_path, allow_pickle=False) as cache, np.load(
+            replay_path, allow_pickle=False
+        ) as replay:
+            indices = np.asarray(cache["mode_indices"])
+            mode_keys = json.loads(str(cache["mode_keys_json"].item()))
+            active_rows = np.asarray(replay["active_original_rows"])
+            selected_indices = port.get("selected_original_mode_indices")
+            selected_groups = selection.get("groups")
+            selected_keys = {
+                int(group["original_mode_index"]): list(group["mode_key"])
+                for group in selected_groups
+                if isinstance(group, dict)
+                and isinstance(group.get("original_mode_index"), int)
+                and isinstance(group.get("mode_key"), list)
+            } if isinstance(selected_groups, list) else {}
+            raw_identity_valid = bool(
+                indices.shape == (32,)
+                and indices.dtype.kind in "iu"
+                and (len(indices) < 2 or np.all(indices[1:] > indices[:-1]))
+                and indices.tolist() == selected_indices
+                and len(mode_keys) == 32
+                and len(selected_keys) == 32
+                and all(
+                    selected_keys.get(int(index)) == mode_key
+                    for index, mode_key in zip(indices, mode_keys, strict=True)
+                )
+                and active_rows.ndim == 1
+                and active_rows.dtype.kind in "iu"
+                and active_rows.dtype.kind != "b"
+                and (len(active_rows) < 2 or np.all(active_rows[1:] > active_rows[:-1]))
+                and array_sha256(active_rows)
+                == sample.get("active_original_rows_sha256")
+            )
+            for mode_index in range(32):
+                prefix = f"mode_{mode_index:02d}"
+                b_rows = np.asarray(cache[f"{prefix}_B_rows"])
+                b_values = np.asarray(cache[f"{prefix}_B_values"])
+                d_rows = np.asarray(cache[f"{prefix}_D_rows"])
+                d_values = np.asarray(cache[f"{prefix}_D_values"])
+                h_value = np.asarray(cache[f"{prefix}_H_p"])
+                mode_identity = json.dumps(
+                    mode_keys[mode_index], ensure_ascii=False, separators=(",", ":")
+                )
+                cache_digest.update(mode_identity.encode())
+                cache_digest.update(np.asarray(h_value, dtype="<f8").tobytes())
+                for name, array in (
+                    ("B_rows", b_rows),
+                    ("B_values", b_values),
+                    ("D_rows", d_rows),
+                    ("D_values", d_values),
+                ):
+                    cache_digest.update(name.encode())
+                    cache_digest.update(array.dtype.str.encode())
+                    cache_digest.update(np.asarray(array.shape, dtype="<i8").tobytes())
+                    cache_digest.update(memoryview(np.ascontiguousarray(array)).cast("B"))
+                raw_identity_valid = raw_identity_valid and bool(
+                    b_rows.ndim == d_rows.ndim == b_values.ndim == d_values.ndim == 1
+                    and b_rows.dtype.kind in "iu"
+                    and d_rows.dtype.kind in "iu"
+                    and b_values.dtype == np.dtype(np.complex128)
+                    and d_values.dtype == np.dtype(np.complex128)
+                    and len(b_rows) == len(b_values)
+                    and len(d_rows) == len(d_values)
+                    and len(h_value) == 1
+                    and np.isfinite(b_values).all()
+                    and np.isfinite(d_values).all()
+                    and np.isfinite(h_value).all()
+                    and float(h_value[0]) > 0.0
+                    and (len(b_rows) < 2 or np.all(b_rows[1:] > b_rows[:-1]))
+                    and (len(d_rows) < 2 or np.all(d_rows[1:] > d_rows[:-1]))
+                )
+            raw_identity_valid = raw_identity_valid and (
+                cache_digest.hexdigest() == port.get("cache_sha256")
+            )
+            actions_by_id = {str(record["action_id"]): record for record in action_records}
+            output_by_id: dict[str, np.ndarray] = {}
+            for action_id in sorted(expected_action_ids):
+                record = actions_by_id[action_id]
+                alpha = np.asarray(replay[f"{action_id}_alpha"], dtype=np.complex128)
+                trace = np.asarray(replay[f"{action_id}_active_trace"], dtype=np.complex128)
+                output = np.asarray(replay[f"{action_id}_provider_output"], dtype=np.complex128)
+                h_output = np.asarray(replay[f"{action_id}_H_p_alpha_output"], dtype=np.complex128)
+                if (
+                    alpha.shape != (32,)
+                    or trace.shape != active_rows.shape
+                    or output.shape != (len(active_rows) + 32,)
+                    or h_output.shape != (32,)
+                    or not np.any(alpha)
+                    or not np.any(trace)
+                ):
+                    replay_valid = False
+                    continue
+                expected_b = np.zeros(len(active_rows), dtype=np.complex128)
+                expected_minus_d = np.zeros(32, dtype=np.complex128)
+                expected_h = np.empty(32, dtype=np.complex128)
+                for mode_index in range(32):
+                    prefix = f"mode_{mode_index:02d}"
+                    b_rows = np.asarray(cache[f"{prefix}_B_rows"])
+                    b_values = np.asarray(cache[f"{prefix}_B_values"], dtype=np.complex128)
+                    d_rows = np.asarray(cache[f"{prefix}_D_rows"])
+                    d_values = np.asarray(cache[f"{prefix}_D_values"], dtype=np.complex128)
+                    b_positions = np.searchsorted(active_rows, b_rows)
+                    d_positions = np.searchsorted(active_rows, d_rows)
+                    b_found = b_positions < len(active_rows)
+                    d_found = d_positions < len(active_rows)
+                    if np.any(b_found):
+                        loc = np.flatnonzero(b_found)
+                        b_found[loc] = active_rows[b_positions[loc]] == b_rows[loc]
+                    if np.any(d_found):
+                        loc = np.flatnonzero(d_found)
+                        d_found[loc] = active_rows[d_positions[loc]] == d_rows[loc]
+                    if not np.all(b_found) or not np.all(d_found):
+                        raw_identity_valid = False
+                        continue
+                    np.add.at(expected_b, b_positions, b_values * alpha[mode_index])
+                    expected_minus_d[mode_index] = -np.dot(
+                        d_values, trace[d_positions]
+                    )
+                    expected_h[mode_index] = (
+                        complex(cache[f"{prefix}_H_p"][0]) * alpha[mode_index]
+                    )
+                b_relative = relative_l2(output[:len(active_rows)], expected_b)
+                d_relative = relative_l2(output[len(active_rows):], expected_minus_d)
+                h_relative = relative_l2(h_output, expected_h)
+                expected_errors = {
+                    "B_alpha": b_relative,
+                    "minus_Dx": d_relative,
+                    "H_p_alpha": h_relative,
+                }
+                recorded_errors = record.get("oracle_relative_errors", {})
+                limits = record.get("relative_error_limits", {})
+                action_limits_valid = action_limits_valid and all(
+                    np.isfinite(expected_errors[name])
+                    and expected_errors[name] <= float(limits.get(name, 0.0)) <= 1.0e-11
+                    for name in expected_errors
+                )
+                action_hashes_valid = action_hashes_valid and (
+                    array_sha256(alpha) == record.get("input_alpha_sha256")
+                    and array_sha256(trace) == record.get("input_active_trace_sha256")
+                    and array_sha256(output) == record.get("provider_output_sha256")
+                    and array_sha256(h_output) == record.get("H_p_alpha_output_sha256")
+                    and array_sha256(active_rows) == record.get("active_original_rows_sha256")
+                    and all(
+                        np.isclose(
+                            float(recorded_errors.get(name, float("inf"))),
+                            expected_errors[name],
+                            rtol=1.0e-6,
+                            atol=1.0e-14,
+                        )
+                        for name in expected_errors
+                    )
+                )
+                replay_valid = replay_valid and bool(np.isfinite(output).all() and np.isfinite(h_output).all())
+                action_inputs_by_id[action_id] = (alpha, trace)
+                output_by_id[action_id] = output
+            if "cold_apply" in output_by_id and "regenerated_apply" in output_by_id:
+                regen_delta = relative_l2(output_by_id["regenerated_apply"], output_by_id["cold_apply"])
+                action_limits_valid = action_limits_valid and regen_delta <= 1.0e-11
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+        raw_identity_valid = replay_valid = action_hashes_valid = action_limits_valid = False
+
+    checks["v24_cache_identity_recomputed"] = bool(raw_identity_valid)
+    checks["v24_actions_recomputed_from_raw_B_D_H"] = bool(
+        replay_valid and action_hashes_valid and action_limits_valid
+    )
+    distinct_action_inputs = bool(
+        len(action_inputs_by_id) == 4
+        and set(actions_by_id) == expected_action_ids
+        and len(
+            {
+                actions_by_id[action_id]["input_alpha_sha256"]
+                for action_id in ("cold_apply", "warm_apply_1", "warm_apply_2")
+            }
+        ) == 3
+        and len(
+            {
+                actions_by_id[action_id]["input_active_trace_sha256"]
+                for action_id in ("cold_apply", "warm_apply_1", "warm_apply_2")
+            }
+        ) == 3
+        and np.array_equal(
+            action_inputs_by_id["cold_apply"][0],
+            action_inputs_by_id["regenerated_apply"][0],
+        )
+        and np.array_equal(
+            action_inputs_by_id["cold_apply"][1],
+            action_inputs_by_id["regenerated_apply"][1],
+        )
+    )
+    try:
+        regeneration_error = float(
+            regenerated_record.get("same_input_relative_error_vs_cold", float("inf"))
+        )
+        regeneration_error_limit = float(
+            regenerated_record.get("relative_error_limit", 0.0)
+        )
+    except (TypeError, ValueError):
+        regeneration_error, regeneration_error_limit = float("inf"), 0.0
+    checks["v24_cold_warm_regenerate_lifecycle_is_recorded"] = bool(
+        port.get("status") == "PASS_COLD_WARM_RELEASE_REGENERATE_APPLY"
+        and port.get("functional_generation_count_cold") == 32
+        and port.get("functional_generation_count_warm") == 0
+        and port.get("functional_generation_count_regenerate") == 32
+        and port.get("provider_cold_apply_sweep_count") == 1
+        and port.get("provider_warm_apply_sweep_count") == 2
+        and port.get("provider_total_sweep_count") == 3
+        and port.get("provider_total_mode_entries_processed") == 96
+        and distinct_action_inputs
+        and port.get("cache_bytes", 0) > 0
+        and port.get("cache_bytes", 0) <= port.get("cache_byte_limit", 0)
+        and port.get("cache_sha256") == port.get("regenerated_cache_sha256")
+        and port.get("cache_bytes") == port.get("regenerated_cache_bytes")
+        and regeneration_error <= regeneration_error_limit <= 1.0e-11
+        and selected_h_action.get("representation") == "diagonal_original_H"
+        and selected_h_action.get("mode_count") == 32
+        and selected_h_action.get("apply_count") == 4
+        and selected_h_action.get("no_Hhat_materialized") is True
+        and len(resource_samples) == 15
+        and cache_release.get("status")
+        == "PASS_ALL_ARRAY_BACKINGS_RELEASED_BEFORE_REGENERATE_AND_AFTER"
+    )
+    return checks
+
+
 def _check_partial_result(
     *,
     input_path: Path,
@@ -1302,6 +1804,11 @@ def _check_partial_result(
         partial.get("schema") == "task40extra.review_v20_partial_result.v2"
         and partial.get("classification") == "TARGET_OPERATOR_PROBE_Q_ONLY_SUPPLEMENT"
     )
+    v24_cd_receipt = (
+        partial.get("schema") == "task40extra.review_v20_partial_result.v2"
+        and partial.get("classification")
+        == "TARGET_OPERATOR_PROBE_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
+    )
     q_only_supplement_identity = partial.get("q_only_supplement")
     q_only_supplement_identity = (
         q_only_supplement_identity
@@ -1334,6 +1841,7 @@ def _check_partial_result(
             and q_only_supplement_identity.get("execution_campaign_window_sha256")
             == TASK40_V24_CAMPAIGN_SHA256
         )
+        or v24_cd_receipt
     )
     v24_campaign_identity_valid = (
         campaign_evidence.get("window_sha256") == TASK40_V24_CAMPAIGN_SHA256
@@ -1401,7 +1909,7 @@ def _check_partial_result(
         checks["target_heavy_authorization_remains_false"] = (
             input_data.get("execution", {}).get("task40_target_heavy_authorized") is False
         )
-    if v2_receipt and not q_only_receipt:
+    if v2_receipt and not q_only_receipt and not v24_cd_receipt:
         from scripts.task40_v21_readonly_recheck import validate_stage_receipt_semantics
 
         semantic_checks = validate_stage_receipt_semantics(
@@ -1533,6 +2041,37 @@ def _check_partial_result(
                 ),
             }
         )
+    elif v24_cd_receipt:
+        v24_stage_result = partial.get("stage_result")
+        v24_stage_result = v24_stage_result if isinstance(v24_stage_result, dict) else {}
+        v24_q_coverage = partial.get("q_coverage")
+        v24_q_coverage = v24_q_coverage if isinstance(v24_q_coverage, dict) else {}
+        checks.update(
+            {
+                "v24_cd_receipt_classification_and_stage_status": (
+                    partial.get("status") == "stage_completed"
+                    and partial.get("outcome") == "STAGE_COMPLETED"
+                    and v24_stage_result.get("probe_status")
+                    == "PASS_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
+                    and probe_identity.get("status")
+                    == "PASS_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
+                ),
+                "v24_cd_q_and_volume_actions_remain_not_run": (
+                    v24_q_coverage.get("built_q_count") == 0
+                    and v24_q_coverage.get("full_q_matrix_coverage") == "0/8"
+                    and v24_q_coverage.get("volume_qualification") == "NOT_RUN"
+                    and "real face panel remains NOT_RUN"
+                    in str(v24_q_coverage.get("reason", ""))
+                ),
+                **{
+                    f"{name}": passed
+                    for name, passed in _v24_bounded_sample_readback_checks(
+                        output_directory=numerical_output,
+                        probe=probe_identity,
+                    ).items()
+                },
+            }
+        )
     if "geometry_inventory" in (partial.get("completed_stages") or []):
         checks["geometry_artifact_present"] = (
             numerical_output / "v20_geometry_inventory.json"
@@ -1595,6 +2134,7 @@ def run_service(
     if case_args and case_args[0] == "--":
         case_args = case_args[1:]
     case_args, q_only_scan_directory = _extract_v23_q_only_scan_arg(case_args)
+    case_args, v24_cd_selector_path = _extract_v24_cd_selector_arg(case_args)
     input_path, campaign_path, stop_stage, data = _parse_case_arguments(case_args)
     canonical_relative, _supported = V20_INPUTS[data["solver"]["preconditioner"]]
     canonical_path = repo_root / canonical_relative
@@ -1619,6 +2159,7 @@ def run_service(
         campaign_registration,
         stop_stage=stop_stage,
         scan_directory=q_only_scan_directory,
+        cd_selector_path=v24_cd_selector_path,
     )
     q_only_binding = (
         _bind_v23_q_only_scan_checkpoint(
@@ -1630,6 +2171,19 @@ def run_service(
             repo_root=repo_root,
         )
         if q_only_scan_directory is not None
+        else None
+    )
+    v24_cd_binding = (
+        _bind_v24_cd_selector(
+            v24_cd_selector_path,
+            input_path=input_path,
+            campaign_registration=campaign_registration,
+            profile=str(data["solver"]["preconditioner"]),
+            stop_stage=stop_stage,
+            q_only_binding=q_only_binding,
+            repo_root=repo_root,
+        )
+        if v24_cd_selector_path is not None
         else None
     )
     fixed_campaign = Path(campaign_registration["path"])
@@ -1674,6 +2228,8 @@ def run_service(
     }
     if q_only_binding is not None:
         record["old_v23_scan_artifact_binding"] = dict(q_only_binding)
+    if v24_cd_binding is not None:
+        record["v24_bounded_port_reuse_volume_selector_binding"] = dict(v24_cd_binding)
     event_identity = {
         key: record[key]
         for key in (
@@ -1750,6 +2306,19 @@ def run_service(
                     ),
                     "TASK40_V23_Q_ONLY_CHECKPOINT_PAYLOAD_SHA256": str(
                         q_only_binding["checkpoint_payload_sha256"]
+                    ),
+                }
+            )
+        if v24_cd_binding is not None:
+            environment.update(
+                {
+                    "TASK40_V24_CD_SELECTOR_PATH": str(v24_cd_binding["selector_path"]),
+                    "TASK40_V24_CD_SELECTOR_SHA256": str(v24_cd_binding["selector_sha256"]),
+                    "TASK40_V24_CD_Q0_PARTIAL_CHECKER_PATH": str(
+                        v24_cd_binding["q0_partial_checker_path"]
+                    ),
+                    "TASK40_V24_CD_Q0_PARTIAL_CHECKER_SHA256": str(
+                        v24_cd_binding["q0_partial_checker_sha256"]
                     ),
                 }
             )

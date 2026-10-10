@@ -2415,6 +2415,264 @@ def test_partial_checker_distinguishes_v23_execution_from_v24_execution(
     assert ("v24_execution_manifest_window_and_accounting_bind" in result["checks"]) is is_v24
 
 
+def test_v24_bounded_sample_readback_recomputes_cache_and_four_actions(
+    tmp_path, monkeypatch
+):
+    import hashlib
+
+    import numpy as np
+
+    from scripts import task40_v20_service_workflow as service
+
+    output = tmp_path / "numerical"
+    output.mkdir()
+    q0_root = tmp_path / "local_v24_wsl"
+    q0_root.mkdir()
+    monkeypatch.setattr(service, "V24_ARTIFACT_ROOT", q0_root)
+    q0_path = q0_root / "q0_partial_checker.json"
+    q0_path.write_text(
+        json.dumps(
+            {
+                "status": "PARTIAL_RECEIPT_CHECKED",
+                "checker_passed": True,
+                "official_result": False,
+                "full_pass": False,
+                "checks": {"prior_q0": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    def array_sha(value):
+        array = np.ascontiguousarray(value)
+        digest = hashlib.sha256()
+        digest.update(repr((array.shape, str(array.dtype))).encode("ascii"))
+        digest.update(memoryview(array).cast("B"))
+        return digest.hexdigest()
+
+    groups = []
+    mode_keys = []
+    for side in ("bottom", "top"):
+        for q in range(8):
+            for polarization in ("s", "p"):
+                index = len(groups)
+                key = [index, side, q, 0, polarization]
+                groups.append(
+                    {
+                        "side": side,
+                        "global_q": q,
+                        "polarization": polarization,
+                        "original_mode_index": index,
+                        "mode_key": key,
+                    }
+                )
+                mode_keys.append(key)
+
+    cache_path = output / "v24_bounded_32_mode_B_D_H_cache.npz"
+    cache_payload = {
+        "mode_indices": np.arange(32, dtype="<i8"),
+        "mode_keys_json": np.asarray(
+            json.dumps(mode_keys, ensure_ascii=False, separators=(",", ":"))
+        ),
+    }
+    cache_digest = hashlib.sha256()
+    cache_bytes = 0
+    b_values_by_mode = []
+    d_values_by_mode = []
+    h_values = []
+    for index in range(32):
+        prefix = f"mode_{index:02d}"
+        b_rows = np.asarray([10], dtype="<i8")
+        b_values = np.asarray([1.0 + index / 100.0 + 0.25j], dtype="<c16")
+        d_rows = np.asarray([20], dtype="<i8")
+        d_values = np.asarray([2.0 + index / 100.0 - 0.5j], dtype="<c16")
+        h_value = np.asarray([3.0 + index / 100.0], dtype="<f8")
+        b_values_by_mode.append(b_values[0])
+        d_values_by_mode.append(d_values[0])
+        h_values.append(h_value[0])
+        for name, value in (
+            ("B_rows", b_rows),
+            ("B_values", b_values),
+            ("D_rows", d_rows),
+            ("D_values", d_values),
+            ("H_p", h_value),
+        ):
+            cache_payload[f"{prefix}_{name}"] = value
+        cache_digest.update(
+            json.dumps(mode_keys[index], ensure_ascii=False, separators=(",", ":")).encode()
+        )
+        cache_digest.update(h_value.tobytes())
+        for name, value in (
+            ("B_rows", b_rows),
+            ("B_values", b_values),
+            ("D_rows", d_rows),
+            ("D_values", d_values),
+        ):
+            cache_digest.update(name.encode())
+            cache_digest.update(value.dtype.str.encode())
+            cache_digest.update(np.asarray(value.shape, dtype="<i8").tobytes())
+            cache_digest.update(memoryview(np.ascontiguousarray(value)).cast("B"))
+            cache_bytes += value.nbytes
+        cache_bytes += h_value.nbytes
+    with cache_path.open("wb") as stream:
+        np.savez(stream, **cache_payload)
+
+    active_rows = np.asarray([10, 20], dtype="<i8")
+    replay_path = output / "v24_bounded_32_mode_provider_replay.npz"
+    replay_payload = {"active_original_rows": active_rows}
+    action_records = {}
+    alpha_by_id = {}
+    trace_by_id = {}
+    for offset, action_id in enumerate(
+        ("cold_apply", "warm_apply_1", "warm_apply_2", "regenerated_apply")
+    ):
+        if action_id == "regenerated_apply":
+            alpha = alpha_by_id["cold_apply"].copy()
+            trace = trace_by_id["cold_apply"].copy()
+        else:
+            alpha = np.asarray(
+                [index + 1 + offset + 1j * (32 - index + offset) for index in range(32)],
+                dtype="<c16",
+            )
+            trace = np.asarray([1 + 0.5j * offset, 2 - 0.25j * offset], dtype="<c16")
+        alpha_by_id[action_id] = alpha
+        trace_by_id[action_id] = trace
+        expected_b = np.asarray(
+            [np.dot(np.asarray(b_values_by_mode), alpha), 0j], dtype="<c16"
+        )
+        expected_minus_d = np.asarray(
+            [-value * trace[1] for value in d_values_by_mode], dtype="<c16"
+        )
+        provider_output = np.concatenate((expected_b, expected_minus_d))
+        h_output = np.asarray(h_values, dtype="<f8") * alpha
+        replay_payload[f"{action_id}_alpha"] = alpha
+        replay_payload[f"{action_id}_active_trace"] = trace
+        replay_payload[f"{action_id}_provider_output"] = provider_output
+        replay_payload[f"{action_id}_H_p_alpha_output"] = h_output
+        action_records[action_id] = {
+            "action_id": action_id,
+            "input_alpha_sha256": array_sha(alpha),
+            "input_active_trace_sha256": array_sha(trace),
+            "provider_output_sha256": array_sha(provider_output),
+            "H_p_alpha_output_sha256": array_sha(h_output),
+            "active_original_rows_sha256": array_sha(active_rows),
+            "oracle_relative_errors": {
+                "B_alpha": 0.0,
+                "minus_Dx": 0.0,
+                "H_p_alpha": 0.0,
+            },
+            "relative_error_limits": {
+                "B_alpha": 1.0e-11,
+                "minus_Dx": 1.0e-11,
+                "H_p_alpha": 1.0e-11,
+            },
+        }
+    with replay_path.open("wb") as stream:
+        np.savez(stream, **replay_payload)
+    action_records["regenerated_apply"].update(
+        same_input_relative_error_vs_cold=0.0,
+        relative_error_limit=1.0e-11,
+    )
+
+    sample = {
+        "schema": "task40extra.review_v24_bounded_port_reuse_volume_sample.v1",
+        "status": "PASS_V24_PORT_REUSE_C_AND_VOLUME_CENSUS",
+        "official_result": False,
+        "full_q_matrix": False,
+        "factor_created": False,
+        "ksp_created": False,
+        "pde_solved": False,
+        "q0_anchor": {
+            "status": "PREVIOUS_PARTIAL_Q0_CHECKER_PASS_BOUND",
+            "checker_path": str(q0_path),
+            "checker_sha256": service._sha256_file(q0_path),
+            "rerun": False,
+        },
+        "mode_selection": {"selected_mode_count": 32, "groups": groups},
+        "active_original_rows_sha256": array_sha(active_rows),
+        "resource_samples": [{"label": f"sample_{index}"} for index in range(15)],
+        "port_reuse": {
+            "status": "PASS_COLD_WARM_RELEASE_REGENERATE_APPLY",
+            "selected_original_mode_indices": list(range(32)),
+            "functional_generation_count_cold": 32,
+            "functional_generation_count_warm": 0,
+            "functional_generation_count_regenerate": 32,
+            "provider_cold_apply_sweep_count": 1,
+            "provider_warm_apply_sweep_count": 2,
+            "provider_total_sweep_count": 3,
+            "provider_total_mode_entries_processed": 96,
+            "cold_apply": action_records["cold_apply"],
+            "warm_actions": [action_records["warm_apply_1"], action_records["warm_apply_2"]],
+            "regenerated_apply": action_records["regenerated_apply"],
+            "cache_bytes": cache_bytes,
+            "cache_byte_limit": 100_000,
+            "cache_sha256": cache_digest.hexdigest(),
+            "regenerated_cache_sha256": cache_digest.hexdigest(),
+            "regenerated_cache_bytes": cache_bytes,
+            "cache_payload_path": cache_path.name,
+            "cache_payload_sha256": service._sha256_file(cache_path),
+            "replay_payload_path": replay_path.name,
+            "replay_payload_sha256": service._sha256_file(replay_path),
+            "selected_H_p_action": {
+                "representation": "diagonal_original_H",
+                "mode_count": 32,
+                "apply_count": 4,
+                "no_Hhat_materialized": True,
+            },
+            "cache_release": {
+                "status": "PASS_ALL_ARRAY_BACKINGS_RELEASED_BEFORE_REGENERATE_AND_AFTER"
+            },
+        },
+        "volume_census": {
+            "full_volume_action_admitted": False,
+            "full_volume_class_cache_estimate_scope": (
+                "numeric class cache; excludes global trace-constraint maps"
+            ),
+        },
+    }
+    sample_path = output / "v24_bounded_port_reuse_volume_sample.json"
+
+    def persist_sample():
+        sample_path.write_text(
+            json.dumps(
+                {
+                    key: value
+                    for key, value in sample.items()
+                    if key not in {"artifact_path", "artifact_sha256"}
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        sample["artifact_path"] = sample_path.name
+        sample["artifact_sha256"] = service._sha256_file(sample_path)
+
+    persist_sample()
+    probe = {"v24_bounded_port_reuse_volume_sample": sample}
+    checks = service._v24_bounded_sample_readback_checks(
+        output_directory=output, probe=probe
+    )
+    assert all(checks.values()), checks
+
+    with np.load(cache_path, allow_pickle=False) as cache:
+        tampered = {name: cache[name] for name in cache.files}
+    tampered["mode_00_B_values"] = tampered["mode_00_B_values"].copy()
+    tampered["mode_00_B_values"][0] += 0.5
+    with cache_path.open("wb") as stream:
+        np.savez(stream, **tampered)
+    sample["port_reuse"]["cache_payload_sha256"] = service._sha256_file(cache_path)
+    persist_sample()
+    tampered_checks = service._v24_bounded_sample_readback_checks(
+        output_directory=output, probe=probe
+    )
+    assert tampered_checks["v24_cache_and_replay_files_are_hash_bound"] is True
+    assert tampered_checks["v24_sample_json_is_hash_bound_to_probe"] is True
+    assert tampered_checks["v24_cache_identity_recomputed"] is False
+    assert tampered_checks["v24_actions_recomputed_from_raw_B_D_H"] is False
+
+
 def test_partial_checker_cli_and_api_share_profile_q_count(tmp_path, capsys):
     import json
 

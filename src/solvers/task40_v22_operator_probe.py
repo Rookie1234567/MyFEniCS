@@ -4424,6 +4424,731 @@ def _v23_actual_axis_values(resolved: Mapping[str, Any]) -> dict[str, Any]:
     return values
 
 
+def _run_v24_bounded_port_reuse_and_volume_census(
+    root: Path,
+    output_directory: Path,
+    *,
+    selector: Mapping[str, Any],
+    preflight: Mapping[str, Any],
+    modes: Sequence[Any],
+    mode_rows: Sequence[Mapping[str, Any]],
+    cfg: Any,
+    mesh_object: Any,
+    cell_tags: Any,
+    space: Any,
+    mpc: Any,
+    assemblers: Mapping[tuple[str, int], Any],
+    assembly_context: Mapping[str, Any],
+    axes_values: Mapping[str, Any],
+    candidate_global_rows: Sequence[int],
+    interior_rows: np.ndarray,
+    mpc_expansions: Mapping[int, tuple[np.ndarray, np.ndarray]],
+    h_values: np.ndarray,
+    resource_sample: Callable[[], Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Measure one bounded 32-mode port cache and census real volume classes."""
+    import gc
+    import weakref
+
+    from petsc4py import PETSc
+
+    from src.solvers.fullspace_dtn_action import iter_fullspace_dtn_functionals_from_surface
+    from src.solvers.hcurl_assembly_time_condensation import (
+        assembly_time_condensation_capacity_facts,
+        assembly_time_geometry_class_counts,
+    )
+    from src.solvers.original_port_blocks import DiagonalOriginalPortBlock
+    from src.solvers.p6_cell_condensed_action import P6GlobalDirectCarrierProvider
+    from src.solvers.task40_v10_p6_periodic_profile import (
+        TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE as profile,
+    )
+    from src.solvers.task40_v10_p6_yorbit import build_task40_v10_sector_contexts
+
+    started = perf_counter()
+    cpu_started = process_time()
+    result: dict[str, Any] = {
+        "schema": "task40extra.review_v24_bounded_port_reuse_volume_sample.v1",
+        "status": "NOT_RUN",
+        "official_result": False,
+        "full_q_matrix": False,
+        "factor_created": False,
+        "ksp_created": False,
+        "pde_solved": False,
+        "input_sha256": preflight.get("input_sha256"),
+        "source_sha": preflight.get("source_sha"),
+        "campaign_window_sha256": selector.get("campaign_window_sha256"),
+        "q0_anchor": {
+            "status": "PREVIOUS_PARTIAL_Q0_CHECKER_PASS_BOUND",
+            "checker_path": os.environ.get("TASK40_V24_CD_Q0_PARTIAL_CHECKER_PATH"),
+            "checker_sha256": os.environ.get("TASK40_V24_CD_Q0_PARTIAL_CHECKER_SHA256"),
+            "rerun": False,
+        },
+        "resource_gates": [],
+        "resource_samples": [],
+    }
+    cache_limit = int(selector["max_cache_bytes"])
+
+    def record_resource_sample(label: str) -> dict[str, Any]:
+        sample = {"label": label, **dict(_memory_snapshot(resource_sample))}
+        result["resource_samples"].append(sample)
+        return sample
+
+    result["resource_gates"].append(
+        _resource_admission(
+            "v24_bounded_32_mode_cache",
+            cache_limit,
+            resource_sample=resource_sample,
+            require_task_cgroup=True,
+        )
+    )
+    axis_tuples = {
+        name: tuple(map(float, axes_values[name])) for name in ("x", "y", "z")
+    }
+    contexts = build_task40_v10_sector_contexts(
+        tuple(modes),
+        cfg,
+        axis_tuples,
+        expected_q_counts=profile.q_port_counts,
+        expected_sector_counts=profile.sector_port_counts,
+    )
+    selected_by_group: dict[tuple[str, int, str], int] = {}
+    for context in contexts:
+        qids = tuple(int(value) for value in context.global_q_indices)
+        for local_index, original_index in enumerate(context.original_mode_indices):
+            mode_index = int(original_index)
+            branch = int(context.local_branch_indices[local_index])
+            if branch < 0 or branch >= len(qids):
+                raise ValueError("V24 sector context has an invalid local q branch")
+            mode = modes[mode_index]
+            key = (str(mode.side), qids[branch], str(mode.polarization))
+            selected_by_group.setdefault(key, mode_index)
+    expected_groups = {
+        (side, q, polarization)
+        for side in ("bottom", "top")
+        for q in range(profile.q_count)
+        for polarization in ("s", "p")
+    }
+    if set(selected_by_group) != expected_groups or len(selected_by_group) != 32:
+        raise ValueError("actual sector contexts do not provide the complete side×q×s/p sample")
+    selected_indices = tuple(sorted(selected_by_group.values()))
+    if len(set(selected_indices)) != 32:
+        raise ValueError("V24 side×q×polarization groups selected duplicate original modes")
+    selected_groups = [
+        {
+            "side": side,
+            "global_q": q,
+            "polarization": polarization,
+            "original_mode_index": int(selected_by_group[(side, q, polarization)]),
+            "mode_key": list(
+                (
+                    int(mode_rows[selected_by_group[(side, q, polarization)]]["mode_index"]),
+                    str(mode_rows[selected_by_group[(side, q, polarization)]]["side"]),
+                    int(mode_rows[selected_by_group[(side, q, polarization)]]["m"]),
+                    int(mode_rows[selected_by_group[(side, q, polarization)]]["n"]),
+                    str(mode_rows[selected_by_group[(side, q, polarization)]]["polarization"]),
+                )
+            ),
+        }
+        for side in ("bottom", "top")
+        for q in range(profile.q_count)
+        for polarization in ("s", "p")
+    ]
+    if h_values.shape != (len(modes),) or len(mode_rows) != len(modes):
+        raise ValueError("V24 selected mode/H_p table differs from the frozen mode inventory")
+    original_mode_keys = tuple(
+        (
+            int(row["mode_index"]), str(row["side"]), int(row["m"]),
+            int(row["n"]), str(row["polarization"]),
+        )
+        for row in mode_rows
+    )
+    original_h = DiagonalOriginalPortBlock(h_values, original_mode_keys)
+    selected_h = np.asarray(h_values[np.asarray(selected_indices, dtype=np.int64)], dtype=np.float64)
+    selected_mode_keys = tuple(original_mode_keys[index] for index in selected_indices)
+    selected_h_block = DiagonalOriginalPortBlock(selected_h, selected_mode_keys)
+    if selected_h.shape != (32,) or not np.isfinite(selected_h).all() or np.any(selected_h <= 0.0):
+        raise ValueError("selected original H_p entries are invalid")
+    result["mode_selection"] = {
+        "status": "PASS_32_ACTUAL_SIDE_Q_POLARIZATION_GROUPS",
+        "selection_source": "build_task40_v10_sector_contexts over the full frozen mode table",
+        "selected_mode_count": len(selected_indices),
+        "selected_original_mode_indices": list(selected_indices),
+        "groups": selected_groups,
+        "mode_key_sha256": hashlib.sha256(
+            json.dumps(selected_groups, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest(),
+        "original_H_p_identity_sha256": original_h.identity_sha256,
+        "selected_H_p_sha256": _array_sha256(selected_h),
+    }
+
+    def cache_digest(entries: Sequence[Any]) -> str:
+        digest = hashlib.sha256()
+        for entry in entries:
+            digest.update(
+                json.dumps(list(entry.mode_key), ensure_ascii=False, separators=(",", ":")).encode()
+            )
+            digest.update(np.asarray([entry.normalization_h], dtype="<f8").tobytes())
+            for name, value in (
+                ("B_rows", entry.coupling_rows),
+                ("B_values", entry.coupling_values),
+                ("D_rows", entry.projection_rows),
+                ("D_values", entry.projection_values),
+            ):
+                array = np.asarray(value)
+                digest.update(name.encode())
+                digest.update(array.dtype.str.encode())
+                digest.update(np.asarray(array.shape, dtype="<i8").tobytes())
+                digest.update(memoryview(np.ascontiguousarray(array)).cast("B"))
+        return digest.hexdigest()
+
+    def cache_backing_bytes(entries: Sequence[Any]) -> int:
+        owners: dict[int, int] = {}
+        for entry in entries:
+            for value in (
+                entry.coupling_rows,
+                entry.coupling_values,
+                entry.projection_rows,
+                entry.projection_values,
+            ):
+                owner = value
+                while True:
+                    base = getattr(owner, "base", None)
+                    if isinstance(base, np.ndarray):
+                        owner = base
+                    elif isinstance(getattr(base, "obj", None), np.ndarray):
+                        owner = base.obj
+                    else:
+                        break
+                owners[id(owner)] = int(owner.nbytes)
+        return int(sum(owners.values()))
+
+    def cache_backing_references(entries: Sequence[Any]) -> list[Any]:
+        owners: dict[int, np.ndarray] = {}
+        for entry in entries:
+            for value in (
+                entry.coupling_rows,
+                entry.coupling_values,
+                entry.projection_rows,
+                entry.projection_values,
+            ):
+                owner = np.asarray(value)
+                while True:
+                    base = getattr(owner, "base", None)
+                    if isinstance(base, np.ndarray):
+                        owner = base
+                    elif isinstance(getattr(base, "obj", None), np.ndarray):
+                        owner = base.obj
+                    else:
+                        break
+                owners[id(owner)] = owner
+        return [weakref.ref(owner) for owner in owners.values()]
+
+    def generate_cache() -> tuple[list[Any], list[Any], dict[str, Any], float, float]:
+        audit: dict[str, Any] = {}
+        entries: list[Any] = []
+        wall = perf_counter()
+        cpu = process_time()
+        iterator = iter_fullspace_dtn_functionals_from_surface(
+            modes,
+            assemblers,
+            mpc,
+            cfg,
+            phase_gauge="boundary_plane",
+            assembly_context=assembly_context,
+            mode_indices=selected_indices,
+            audit=audit,
+        )
+        try:
+            for item in iterator:
+                if len(entries) >= 32:
+                    raise ValueError("bounded V24 cache emitted more than 32 modes")
+                entries.append(item)
+                if cache_backing_bytes(entries) > cache_limit:
+                    raise ValueError("actual V24 32-mode cache exceeded its selector byte bound")
+        finally:
+            iterator.close()
+        wall_seconds = perf_counter() - wall
+        cpu_seconds = process_time() - cpu
+        if len(entries) != 32:
+            raise ValueError(f"V24 selected iterator emitted {len(entries)} modes; expected 32")
+        return entries, cache_backing_references(entries), audit, wall_seconds, cpu_seconds
+
+    record_resource_sample("before_cold_generation")
+    cache_entries, cache_references, cold_audit, cold_wall, cold_cpu = generate_cache()
+    record_resource_sample("after_cold_generation")
+    cold_digest = cache_digest(cache_entries)
+    cold_bytes = cache_backing_bytes(cache_entries)
+    mode_key_order = [list(entry.mode_key) for entry in cache_entries]
+    cache_row_dtypes = [
+        {
+            "B_rows": entry.coupling_rows.dtype.str,
+            "D_rows": entry.projection_rows.dtype.str,
+        }
+        for entry in cache_entries
+    ]
+    expected_order = [list(original_mode_keys[index]) for index in selected_indices]
+    if mode_key_order != expected_order:
+        raise ValueError("cold cache mode order differs from the selected original H_p ordering")
+    cache_path = output_directory / "v24_bounded_32_mode_B_D_H_cache.npz"
+    persist_started = perf_counter()
+    payload: dict[str, Any] = {
+        "mode_indices": np.asarray(selected_indices, dtype="<i8"),
+        "mode_keys_json": np.asarray(
+            json.dumps(mode_key_order, ensure_ascii=False, separators=(",", ":"))
+        ),
+    }
+    for port, entry in enumerate(cache_entries):
+        prefix = f"mode_{port:02d}"
+        payload[f"{prefix}_B_rows"] = np.asarray(entry.coupling_rows)
+        payload[f"{prefix}_B_values"] = np.asarray(entry.coupling_values)
+        payload[f"{prefix}_D_rows"] = np.asarray(entry.projection_rows)
+        payload[f"{prefix}_D_values"] = np.asarray(entry.projection_values)
+        payload[f"{prefix}_H_p"] = np.asarray([entry.normalization_h], dtype="<f8")
+    with cache_path.open("xb") as stream:
+        np.savez(stream, **payload)
+        stream.flush()
+        os.fsync(stream.fileno())
+    del payload
+    persistence_seconds = perf_counter() - persist_started
+    cache_payload_sha256 = _sha256_file(cache_path)
+
+    index_reserve = (
+        2 * len(candidate_global_rows) * int(np.dtype(PETSc.IntType).itemsize)
+        + len(candidate_global_rows)
+    )
+    result["resource_gates"].append(
+        _resource_admission(
+            "v24_compact_active_boundary_index",
+            index_reserve,
+            resource_sample=resource_sample,
+            require_task_cgroup=True,
+        )
+    )
+    candidate_rows = np.asarray(candidate_global_rows, dtype=PETSc.IntType)
+    if candidate_rows.ndim != 1 or (
+        len(candidate_rows) > 1 and np.any(candidate_rows[1:] <= candidate_rows[:-1])
+    ):
+        raise ValueError("V24 native candidate rows must be sorted and unique")
+    active_mask = np.ones(len(candidate_rows), dtype=np.bool_)
+    for excluded in (np.asarray(interior_rows, dtype=PETSc.IntType),
+                     np.asarray(sorted(map(int, mpc_expansions)), dtype=PETSc.IntType)):
+        positions = np.searchsorted(candidate_rows, excluded)
+        in_range = positions < len(candidate_rows)
+        if np.any(in_range):
+            candidates = np.flatnonzero(in_range)
+            matched = candidate_rows[positions[candidates]] == excluded[candidates]
+            active_mask[positions[candidates[matched]]] = False
+    active_original_rows = candidate_rows[active_mask]
+    if not len(active_original_rows):
+        raise ValueError("V24 selected boundary has no active trace rows")
+    result["active_original_rows_sha256"] = _array_sha256(active_original_rows)
+
+    class CompactActiveRows:
+        def __getitem__(self, original: int) -> int:
+            position = int(np.searchsorted(active_original_rows, int(original)))
+            if position >= len(active_original_rows) or int(active_original_rows[position]) != int(original):
+                raise KeyError(original)
+            return position
+
+        def map_original_rows(self, rows: Any) -> np.ndarray:
+            values = np.asarray(rows)
+            if values.ndim != 1 or values.dtype.kind not in "iu" or values.dtype.kind == "b":
+                raise ValueError("V24 direct rows must be a one-dimensional integer array")
+            positions = np.searchsorted(active_original_rows, values)
+            found = positions < len(active_original_rows)
+            if np.any(found):
+                candidates = np.flatnonzero(found)
+                found[candidates] = active_original_rows[positions[candidates]] == values[candidates]
+            if not np.all(found):
+                raise ValueError("V24 direct B/D row is outside the independent boundary trace")
+            return np.asarray(positions, dtype=PETSc.IntType)
+
+    compact_rows = CompactActiveRows()
+    provider_owner = SimpleNamespace(
+        full_rows=int(space.dofmap.index_map.size_global),
+        active_rows=len(active_original_rows),
+        appended_rows=32,
+        trace_constraints=SimpleNamespace(
+            original_to_active=compact_rows,
+            map_original_rows=compact_rows.map_original_rows,
+        ),
+        cell_recovery_maps=(),
+    )
+
+    def build_provider(entries: Sequence[Any]) -> tuple[Any, Any]:
+        def cached_factory():
+            yield from entries
+
+        value = P6GlobalDirectCarrierProvider(
+            cached_factory,
+            condensed=provider_owner,
+            mode_count=32,
+            interior_rows_are_managed=False,
+            interior_rows=interior_rows,
+            source_label="v24_bounded_cached_production_mode_functionals",
+        )
+        value.bind_original_port_block(original_h, mode_indices=selected_indices)
+        return value, cached_factory
+
+    # Three saved actions plus the current input/output/oracle working set can
+    # coexist during the final warm call. Include the row identity vector too.
+    warm_input_bytes = (
+        9 * (len(active_original_rows) + 32) * np.dtype(np.complex128).itemsize
+        + len(active_original_rows) * np.dtype(PETSc.IntType).itemsize
+    )
+    result["resource_gates"].append(
+        _resource_admission(
+            "v24_two_distinct_warm_trace_actions",
+            warm_input_bytes,
+            resource_sample=resource_sample,
+            require_task_cgroup=True,
+        )
+    )
+    rng = np.random.default_rng(20261011)
+
+    def relative_l2(candidate: np.ndarray, oracle_value: np.ndarray) -> float:
+        denominator = float(np.linalg.norm(oracle_value))
+        delta = float(np.linalg.norm(candidate - oracle_value))
+        if denominator == 0.0:
+            return 0.0 if delta == 0.0 else float("inf")
+        return delta / denominator
+
+    def independent_replay(
+        entries: Sequence[Any], alpha: np.ndarray, active: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
+        expected_b = np.zeros(len(active_original_rows), dtype=np.complex128)
+        expected_minus_d = np.zeros(32, dtype=np.complex128)
+        for port, entry in enumerate(entries):
+            b_active = compact_rows.map_original_rows(entry.coupling_rows)
+            if b_active.size:
+                np.add.at(
+                    expected_b,
+                    b_active,
+                    np.asarray(entry.coupling_values, dtype=np.complex128) * alpha[port],
+                )
+            d_active = compact_rows.map_original_rows(entry.projection_rows)
+            if d_active.size:
+                expected_minus_d[port] = -np.dot(
+                    np.asarray(entry.projection_values, dtype=np.complex128),
+                    active[d_active],
+                )
+        return expected_b, expected_minus_d
+
+    def action_inputs() -> tuple[np.ndarray, np.ndarray]:
+        alpha = np.empty(32, dtype=np.complex128)
+        alpha.real = rng.standard_normal(32)
+        alpha.imag = rng.standard_normal(32)
+        active = np.empty(len(active_original_rows), dtype=np.complex128)
+        active.real = rng.standard_normal(len(active_original_rows))
+        active.imag = rng.standard_normal(len(active_original_rows))
+        if not np.any(alpha) or not np.any(active):
+            raise ValueError("V24 warm B/D action received a zero input")
+        return alpha, active
+
+    def measure_action(
+        *,
+        action_id: str,
+        provider: Any,
+        entries: Sequence[Any],
+        alpha: np.ndarray,
+        active: np.ndarray,
+    ) -> tuple[dict[str, Any], dict[str, np.ndarray]]:
+        target = np.zeros(len(active_original_rows) + 32, dtype=np.complex128)
+        before_sample = record_resource_sample(f"before_{action_id}")
+        wall = perf_counter()
+        cpu = process_time()
+        provider.add_reduced(target, alpha, active)
+        action_wall = perf_counter() - wall
+        action_cpu = process_time() - cpu
+        provider_audit = dict(provider.audit)
+        expected_b, expected_minus_d = independent_replay(entries, alpha, active)
+        expected_h = selected_h * alpha
+        h_wall = perf_counter()
+        h_cpu = process_time()
+        actual_h = selected_h_block.apply(alpha)
+        h_apply_wall = perf_counter() - h_wall
+        h_apply_cpu = process_time() - h_cpu
+        b_relative = relative_l2(target[:len(active_original_rows)], expected_b)
+        d_relative = relative_l2(target[len(active_original_rows):], expected_minus_d)
+        h_relative = relative_l2(actual_h, expected_h)
+        limits = {"B_alpha": 1.0e-11, "minus_Dx": 1.0e-11, "H_p_alpha": 1.0e-11}
+        passed = (
+            b_relative <= limits["B_alpha"]
+            and d_relative <= limits["minus_Dx"]
+            and h_relative <= limits["H_p_alpha"]
+        )
+        if not passed:
+            raise ValueError(
+                "V24 Bα, -Dx, or original H_p·alpha action differs from its separate oracle: "
+                f"B={b_relative:.6g}, -D={d_relative:.6g}, H={h_relative:.6g}"
+            )
+        after_sample = record_resource_sample(f"after_{action_id}")
+        output = target
+        h_output = actual_h
+        record = {
+            "action_id": action_id,
+            "input_alpha_sha256": _array_sha256(alpha),
+            "input_active_trace_sha256": _array_sha256(active),
+            "provider_output_sha256": _array_sha256(output),
+            "H_p_alpha_output_sha256": _array_sha256(h_output),
+            "active_original_rows_sha256": _array_sha256(active_original_rows),
+            "output_active_B_norm": float(np.linalg.norm(output[:len(active_original_rows)])),
+            "output_port_minus_D_norm": float(np.linalg.norm(output[len(active_original_rows):])),
+            "oracle_relative_errors": {
+                "B_alpha": b_relative,
+                "minus_Dx": d_relative,
+                "H_p_alpha": h_relative,
+            },
+            "oracle_norms": {
+                "B_alpha": float(np.linalg.norm(expected_b)),
+                "minus_Dx": float(np.linalg.norm(expected_minus_d)),
+                "H_p_alpha": float(np.linalg.norm(expected_h)),
+            },
+            "relative_error_limits": limits,
+            "provider_add_reduced_wall_seconds": action_wall,
+            "provider_add_reduced_process_cpu_seconds": action_cpu,
+            "original_H_p_apply_wall_seconds": h_apply_wall,
+            "original_H_p_apply_process_cpu_seconds": h_apply_cpu,
+            "provider_audit_after_action": provider_audit,
+            "resource_sample_before": before_sample,
+            "resource_sample_after": after_sample,
+            "status": "PASS",
+        }
+        return record, {
+            "alpha": alpha,
+            "active_trace": active,
+            "provider_output": output,
+            "H_p_alpha_output": h_output,
+        }
+
+    provider, cached_factory = build_provider(cache_entries)
+    cold_inputs = action_inputs()
+    cold_run, cold_arrays = measure_action(
+        action_id="cold_apply", provider=provider, entries=cache_entries,
+        alpha=cold_inputs[0], active=cold_inputs[1],
+    )
+    warm_inputs = [action_inputs(), action_inputs()]
+    warm_runs = []
+    warm_arrays = []
+    for index, (alpha, active) in enumerate(warm_inputs):
+        record, arrays = measure_action(
+            action_id=f"warm_apply_{index + 1}", provider=provider,
+            entries=cache_entries, alpha=alpha, active=active,
+        )
+        warm_runs.append(record)
+        warm_arrays.append(arrays)
+    all_action_runs = [cold_run, *warm_runs]
+    all_action_arrays = [cold_arrays, *warm_arrays]
+    if len({run["input_alpha_sha256"] for run in all_action_runs}) != 3 or len(
+        {run["input_active_trace_sha256"] for run in all_action_runs}
+    ) != 3:
+        raise ValueError("V24 cold/warm applications did not use three distinct nonzero input pairs")
+    cold_provider_audit = dict(cold_run["provider_audit_after_action"])
+    provider_audit = dict(provider.audit)
+    cold_sweeps = cold_provider_audit.get("iterator_sweeps_by_operation", {}).get("reduced_apply", 0)
+    cold_entries = cold_provider_audit.get("mode_entries_processed_by_operation", {}).get("reduced_apply", 0)
+    provider_sweeps = provider_audit.get("iterator_sweeps_by_operation", {}).get("reduced_apply", 0)
+    provider_entries = provider_audit.get("mode_entries_processed_by_operation", {}).get("reduced_apply", 0)
+    if cold_sweeps != 1 or cold_entries != 32 or provider_sweeps != 3 or provider_entries != 96:
+        raise ValueError("V24 cold/warm provider sweep counts differ from three full 32-mode applies")
+    record_resource_sample("before_cold_cache_release")
+    del provider
+    del cached_factory
+    del entry
+    cold_cache_array_count = len(cache_references)
+    cache_entries.clear()
+    cache_entries = []
+    gc.collect()
+    released = sum(reference() is None for reference in cache_references)
+    if released != len(cache_references):
+        raise RuntimeError("V24 bounded port cache did not release every unique B/D backing array")
+    cache_references.clear()
+    del cache_references
+    record_resource_sample("after_cold_cache_release")
+
+    record_resource_sample("before_cache_regeneration")
+    regenerated, regenerated_references, regenerate_audit, regenerate_wall, regenerate_cpu = generate_cache()
+    regenerated_digest = cache_digest(regenerated)
+    regenerated_bytes = cache_backing_bytes(regenerated)
+    if regenerated_digest != cold_digest or regenerated_bytes != cold_bytes:
+        raise ValueError("V24 release/regenerate changed the exact selected B/D/H payload")
+    record_resource_sample("after_cache_regeneration")
+    regenerated_provider, regenerated_factory = build_provider(regenerated)
+    regenerated_run, regenerated_arrays = measure_action(
+        action_id="regenerated_apply",
+        provider=regenerated_provider,
+        entries=regenerated,
+        alpha=cold_arrays["alpha"],
+        active=cold_arrays["active_trace"],
+    )
+    if regenerated_arrays["provider_output"].shape != cold_arrays["provider_output"].shape:
+        raise ValueError("V24 regenerated provider output shape differs from the cold action")
+    regeneration_relative = relative_l2(
+        regenerated_arrays["provider_output"], cold_arrays["provider_output"]
+    )
+    if regeneration_relative > 1.0e-11:
+        raise ValueError("V24 regenerated cache changed the same-input Bα/-Dx action")
+    regenerated_apply_audit = dict(regenerated_provider.audit)
+    if (
+        regenerated_apply_audit.get("iterator_sweeps_by_operation", {}).get("reduced_apply", 0) != 1
+        or regenerated_apply_audit.get("mode_entries_processed_by_operation", {}).get("reduced_apply", 0) != 32
+    ):
+        raise ValueError("V24 regenerated provider did not apply one complete 32-mode pass")
+    del regenerated_provider
+    del regenerated_factory
+    regenerated_released_references = list(regenerated_references)
+    regenerated.clear()
+    regenerated = []
+    regenerated_references.clear()
+    del regenerated_references
+    gc.collect()
+    regenerated_released = sum(reference() is None for reference in regenerated_released_references)
+    if regenerated_released != len(regenerated_released_references):
+        raise RuntimeError("regenerated V24 cache retained a B/D backing array after release")
+    regenerated_cache_array_count = len(regenerated_released_references)
+    record_resource_sample("after_regenerated_cache_release")
+
+    replay_path = output_directory / "v24_bounded_32_mode_provider_replay.npz"
+    replay_payload: dict[str, Any] = {
+        "active_original_rows": np.asarray(active_original_rows),
+    }
+    replay_records = [*all_action_runs, regenerated_run]
+    replay_arrays = [*all_action_arrays, regenerated_arrays]
+    for record, arrays in zip(replay_records, replay_arrays, strict=True):
+        prefix = str(record["action_id"])
+        replay_payload[f"{prefix}_alpha"] = np.asarray(arrays["alpha"], dtype="<c16")
+        replay_payload[f"{prefix}_active_trace"] = np.asarray(arrays["active_trace"], dtype="<c16")
+        replay_payload[f"{prefix}_provider_output"] = np.asarray(arrays["provider_output"], dtype="<c16")
+        replay_payload[f"{prefix}_H_p_alpha_output"] = np.asarray(arrays["H_p_alpha_output"], dtype="<c16")
+    with replay_path.open("xb") as stream:
+        np.savez(stream, **replay_payload)
+        stream.flush()
+        os.fsync(stream.fileno())
+    del replay_payload
+    replay_payload_sha256 = _sha256_file(replay_path)
+
+    census_started = perf_counter()
+    class_counts = assembly_time_geometry_class_counts(
+        mesh_object,
+        cell_tags,
+        preserve_exact_geometry=True,
+    )
+    census_seconds = perf_counter() - census_started
+    index_bytes = int(np.dtype(PETSc.IntType).itemsize)
+    capacity = assembly_time_condensation_capacity_facts(
+        dimension=882,
+        interior_dimension=450,
+        trace_dimension=432,
+        raw_class_count=int(class_counts["raw_class_count"]),
+        oriented_class_count=int(class_counts["oriented_class_count"]),
+        identity_class_count=1,
+        retain_local_schur=True,
+        scalar_bytes=int(np.dtype(np.complex128).itemsize),
+        index_bytes=index_bytes,
+        real_bytes=int(np.dtype(np.float64).itemsize),
+    )
+    cell_count = int(mesh_object.topology.index_map(mesh_object.topology.dim).size_local)
+    cell_metadata_upper = cell_count * (882 * index_bytes + 128)
+    full_cache_peak_upper = int(
+        capacity["workspace_bytes_upper"]
+        + capacity["retained_numeric_bytes_upper"]
+        + cell_metadata_upper
+    )
+    try:
+        full_volume_admission = _resource_admission(
+            "v24_full_volume_class_cache_candidate",
+            full_cache_peak_upper,
+            resource_sample=resource_sample,
+            require_task_cgroup=True,
+        )
+        full_volume_admission["status"] = "CLASS_CACHE_ESTIMATE_ADMITTED_ONLY"
+    except _ProbeResourceBlocked as blocked:
+        full_volume_admission = {**blocked.facts, "status": "BLOCKED_USE_REAL_FACE_PANEL"}
+    result["resource_gates"].append(full_volume_admission)
+    result.update(
+        {
+            "status": "PASS_V24_PORT_REUSE_C_AND_VOLUME_CENSUS",
+            "port_reuse": {
+                "status": "PASS_COLD_WARM_RELEASE_REGENERATE_APPLY",
+                "selected_mode_count": 32,
+                "selected_original_mode_indices": list(selected_indices),
+                "functional_generation_count_cold": int(cold_audit.get("yielded_mode_count", 0)),
+                "functional_generation_wall_seconds_cold": cold_wall,
+                "functional_generation_process_cpu_seconds_cold": cold_cpu,
+                "functional_generation_count_warm": 0,
+                "provider_cold_apply_sweep_count": int(cold_sweeps),
+                "provider_warm_apply_sweep_count": int(provider_sweeps - cold_sweeps),
+                "provider_warm_mode_entries_processed": int(provider_entries - cold_entries),
+                "provider_total_sweep_count": int(provider_sweeps),
+                "provider_total_mode_entries_processed": int(provider_entries),
+                "cold_apply": cold_run,
+                "warm_actions": warm_runs,
+                "regenerated_apply": {
+                    **regenerated_run,
+                    "same_input_relative_error_vs_cold": regeneration_relative,
+                    "relative_error_limit": 1.0e-11,
+                    "provider_audit": regenerated_apply_audit,
+                },
+                "cache_bytes": cold_bytes,
+                "cache_byte_limit": cache_limit,
+                "cache_sha256": cold_digest,
+                "regenerated_cache_sha256": regenerated_digest,
+                "regenerated_cache_bytes": regenerated_bytes,
+                "functional_generation_count_regenerate": int(
+                    regenerate_audit.get("yielded_mode_count", 0)
+                ),
+                "functional_generation_wall_seconds_regenerate": regenerate_wall,
+                "functional_generation_process_cpu_seconds_regenerate": regenerate_cpu,
+                "cache_release": {
+                    "cold_cache_arrays_released": int(released),
+                    "cold_cache_arrays_total": int(cold_cache_array_count),
+                    "regenerated_cache_arrays_released": int(regenerated_released),
+                    "regenerated_cache_arrays_total": int(regenerated_cache_array_count),
+                    "status": "PASS_ALL_ARRAY_BACKINGS_RELEASED_BEFORE_REGENERATE_AND_AFTER",
+                },
+                "cold_iterator_audit": dict(cold_audit),
+                "regenerate_iterator_audit": dict(regenerate_audit),
+                "provider_audit": provider_audit,
+                "cache_payload_path": cache_path.name,
+                "cache_payload_sha256": cache_payload_sha256,
+                "cache_row_dtypes": cache_row_dtypes,
+                "cache_payload_write_seconds": persistence_seconds,
+                "replay_payload_path": replay_path.name,
+                "replay_payload_sha256": replay_payload_sha256,
+                "replay_action_count": len(replay_records),
+                "selected_H_p_action": {
+                    "representation": selected_h_block.representation,
+                    "diagonal_sha256": _array_sha256(selected_h_block.diagonal),
+                    "mode_count": selected_h_block.count,
+                    "apply_count": len(replay_records),
+                    "no_Hhat_materialized": True,
+                },
+            },
+            "volume_census": {
+                "status": "PASS_EXACT_GEOMETRY_CLASS_CENSUS",
+                "cell_count": cell_count,
+                "class_counts": class_counts,
+                "capacity_facts": capacity,
+                "full_cache_peak_upper_bytes_including_cell_metadata": full_cache_peak_upper,
+                "full_cache_admission": full_volume_admission,
+                "census_wall_seconds": census_seconds,
+                "preserve_exact_geometry": True,
+                "sum_duplicate_cell_integrals_required": True,
+                "full_volume_class_cache_estimate_scope": "numeric class cache plus per-cell metadata only; excludes global trace-constraint maps, expansions, lookup tables, action owner closures, and full-q setup",
+                "full_volume_action_admitted": False,
+                "volume_action_status": "NOT_RUN_PENDING_REAL_FACE_PANEL",
+            },
+            "elapsed_wall_seconds": perf_counter() - started,
+            "elapsed_process_cpu_seconds": process_time() - cpu_started,
+        }
+    )
+    json_path = output_directory / "v24_bounded_port_reuse_volume_sample.json"
+    _write_json(json_path, result)
+    result["artifact_path"] = json_path.name
+    result["artifact_sha256"] = _sha256_file(json_path)
+    return result
+
+
 def _run_probe(
     resolved: Mapping[str, Any],
     output_directory: Path,
@@ -5112,6 +5837,88 @@ def _run_probe(
             old_field_sha256 = checkpoint["restart_state"]["field_sha256"]
             del restored
             axes_values = _v23_actual_axis_values(resolved)
+            selector_path_text = os.environ.get("TASK40_V24_CD_SELECTOR_PATH")
+            if is_v24_campaign and selector_path_text is not None:
+                selector_path = Path(selector_path_text).resolve()
+                selector_sha256 = _sha256_file(selector_path)
+                if selector_sha256 != os.environ.get("TASK40_V24_CD_SELECTOR_SHA256"):
+                    raise ValueError("V24 C/D selector file hash differs from its service binding")
+                selector = json.loads(selector_path.read_text(encoding="utf-8"))
+                q0_checker_path = Path(
+                    str(selector.get("q0_partial_checker_path", ""))
+                ).resolve()
+                if (
+                    selector.get("schema")
+                    != "task40extra.review_v24_bounded_port_reuse_volume_selector.v1"
+                    or selector.get("campaign_window_sha256")
+                    != campaign_state_entry["campaign_window_sha256"]
+                    or selector.get("input_sha256") != preflight.get("input_sha256")
+                    or selector.get("mode_count") != 32
+                    or selector.get("max_cache_bytes") != 536_870_912
+                    or selector.get("q_only_scan_manifest_sha256")
+                    != os.environ.get("TASK40_V23_Q_ONLY_SCAN_MANIFEST_SHA256")
+                    or selector.get("q_only_checkpoint_metadata_sha256")
+                    != os.environ.get("TASK40_V23_Q_ONLY_CHECKPOINT_METADATA_SHA256")
+                    or selector.get("q_only_checkpoint_payload_sha256")
+                    != os.environ.get("TASK40_V23_Q_ONLY_CHECKPOINT_PAYLOAD_SHA256")
+                    or not q0_checker_path.is_file()
+                    or _sha256_file(q0_checker_path)
+                    != selector.get("q0_partial_checker_sha256")
+                    or _sha256_file(q0_checker_path)
+                    != os.environ.get("TASK40_V24_CD_Q0_PARTIAL_CHECKER_SHA256")
+                ):
+                    raise ValueError("V24 selector no longer matches its q0 and full-scan identities")
+                q0_checker = json.loads(q0_checker_path.read_text(encoding="utf-8"))
+                if (
+                    q0_checker.get("status") != "PARTIAL_RECEIPT_CHECKED"
+                    or q0_checker.get("checker_passed") is not True
+                    or q0_checker.get("official_result") is not False
+                    or q0_checker.get("full_pass") is not False
+                ):
+                    raise ValueError("V24 bounded sample is not bound to a passing prior q0 checker")
+                cd_facts = _run_v24_bounded_port_reuse_and_volume_census(
+                    root,
+                    output_directory,
+                    selector=selector,
+                    preflight=preflight,
+                    modes=modes,
+                    mode_rows=mode_rows,
+                    cfg=cfg,
+                    mesh_object=mesh_object,
+                    cell_tags=cell_tags,
+                    space=space,
+                    mpc=mpc,
+                    assemblers=assemblers,
+                    assembly_context=context,
+                    axes_values=axes_values,
+                    candidate_global_rows=native_rule.candidate_rows,
+                    interior_rows=interior_rows_sorted,
+                    mpc_expansions=mpc_expansions,
+                    h_values=h_values,
+                    resource_sample=resource_sample,
+                )
+                resource_gates.extend(cd_facts.get("resource_gates", ()))
+                facts["resource_gates"] = resource_gates
+                facts["v24_bounded_port_reuse_volume_sample"] = cd_facts
+                facts["q_coverage"] = _v23_q_coverage_record({"status": "NOT_RUN"})
+                facts["q_coverage"]["reason"] = (
+                    "V24 measured bounded port reuse and exact-geometry volume-class census; "
+                    "the real face panel remains NOT_RUN and no full q matrix was built"
+                )
+                facts["status"] = (
+                    "PASS_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
+                    if cd_facts.get("status") == "PASS_V24_PORT_REUSE_C_AND_VOLUME_CENSUS"
+                    else "FAILED_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
+                )
+                facts["failed_stage"] = (
+                    None
+                    if facts["status"] == "PASS_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE"
+                    else "target_operator_probe"
+                )
+                facts["partial_stages"] = ["target_operator_probe"]
+                if facts["failed_stage"] is None:
+                    completed.append("target_operator_probe")
+                return facts
             v23_q_tile_facts = _run_v23_original_ny8_q_port_tile(
                 root,
                 output_directory,
