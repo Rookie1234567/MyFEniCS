@@ -4433,6 +4433,19 @@ def _candidate_contract(
     campaign = getattr(runtime, "campaign_context", None)
     shared = getattr(runtime, "shared_budget", {})
     reserved = float(getattr(runtime, "workflow_reserved_seconds", -1.0))
+    campaign_seconds = float(
+        campaign.get(
+            "campaign_seconds",
+            shared.get("total_budget_seconds", CAMPAIGN_SECONDS),
+        )
+        if isinstance(campaign, Mapping)
+        else CAMPAIGN_SECONDS
+    )
+    closeout_reserve_seconds = float(
+        campaign.get("closeout_reserve_seconds", CLOSEOUT_RESERVE_SECONDS)
+        if isinstance(campaign, Mapping)
+        else CLOSEOUT_RESERVE_SECONDS
+    )
     reference_pc_strategy = str(
         solver.get("task40_reference_pc_strategy", TASK40_STRICT_REFERENCE_PC_STRATEGY)
     )
@@ -4601,7 +4614,18 @@ def _candidate_contract(
         ),
         "no_v14_ledger": getattr(runtime, "_ledger_path", None) is None,
         "time_policy": getattr(runtime, "time_policy", None) == V14_TIME_POLICY_ENFORCE,
-        "reserved_time": np.isfinite(reserved) and 0.0 < reserved <= CAMPAIGN_SECONDS - CLOSEOUT_RESERVE_SECONDS,
+        "campaign_window_budget": (
+            np.isfinite(campaign_seconds)
+            and np.isfinite(closeout_reserve_seconds)
+            and campaign_seconds > closeout_reserve_seconds > 0.0
+            and (
+                not isinstance(shared, Mapping)
+                or float(shared.get("total_budget_seconds", campaign_seconds))
+                == campaign_seconds
+            )
+        ),
+        "reserved_time": np.isfinite(reserved)
+        and 0.0 < reserved <= campaign_seconds - closeout_reserve_seconds,
         "profile_contract": (
             contract.get("identity") == profile_identity
             and isinstance(contract.get("scope"), str)
@@ -4639,8 +4663,8 @@ def _candidate_contract(
         "campaign_window_sha256": campaign["window_sha256"],
         "campaign_accounting_path": campaign["accounting_path"],
         "worker_reserved_seconds": reserved,
-        "campaign_seconds": CAMPAIGN_SECONDS,
-        "closeout_reserve_seconds": CLOSEOUT_RESERVE_SECONDS,
+        "campaign_seconds": campaign_seconds,
+        "closeout_reserve_seconds": closeout_reserve_seconds,
         "effective_wall_clock_authority": "existing_V11_fixed_deadline_and_cumulative_remaining",
         "campaign_writer": "subreaper_watchdog_only",
         "worker_accounting_access": "read_only_projection",

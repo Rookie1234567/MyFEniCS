@@ -564,6 +564,8 @@ class _V14Runtime:
                 "window_path": str(window.path),
                 "window_sha256": window.sha256,
                 "accounting_path": str(state["path"]),
+                "campaign_seconds": window.total_seconds,
+                "closeout_reserve_seconds": window.closeout_seconds,
                 "remaining_numerical_seconds": remaining,
                 "read_only": True,
             }

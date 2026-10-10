@@ -23,6 +23,12 @@ from src.runners.workflow_timebase import (  # noqa: E402
     checked_interval,
     clock_sample,
 )
+from src.runners.task40_v10_campaign import (  # noqa: E402
+    TASK40_V22_CAMPAIGN_SHA256,
+    TASK40_V22_CAMPAIGN_WINDOW,
+    TASK40_V22_STAGE_SCOPE,
+    load_fixed_campaign_window,
+)
 
 
 ARTIFACT_ROOT = Path(
@@ -33,6 +39,12 @@ CAMPAIGN_RELATIVE = Path(
     "campaign_window_v19.json"
 )
 CAMPAIGN_SHA256 = "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0"
+V22_TARGET_PROFILE = "task40extra_v20_p6_y_orbit_target_original_ny8_v1"
+V22_STOP_STAGE_SCOPE = {
+    "preflight": "implementation",
+    "geometry_inventory": "geometry_descriptor",
+    "local_port_components": "local_port_components",
+}
 RUNTIME_PREFIX_RELATIVE = Path(
     "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
 )
@@ -85,6 +97,45 @@ def _sha256_file(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _resolve_service_campaign(
+    repo_root: Path,
+    campaign_path: Path,
+    *,
+    profile: str,
+    stop_stage: str,
+) -> dict[str, Any]:
+    """Resolve only the historical V19 or exact, scoped V22 service window."""
+
+    supplied = campaign_path if campaign_path.is_absolute() else repo_root / campaign_path
+    supplied = supplied.resolve()
+    v19_path = (repo_root / CAMPAIGN_RELATIVE).resolve()
+    if supplied == v19_path:
+        if _sha256_file(v19_path) != CAMPAIGN_SHA256:
+            raise ValueError("the existing V19 fixed campaign window SHA changed")
+        return {
+            "path": v19_path,
+            "sha256": CAMPAIGN_SHA256,
+            "stage_scope": None,
+        }
+
+    v22_path = (repo_root / TASK40_V22_CAMPAIGN_WINDOW).resolve()
+    if supplied != v22_path:
+        raise ValueError("service campaign window is not a registered V19 or V22 path")
+    if profile != V22_TARGET_PROFILE:
+        raise ValueError("the V22 campaign route is restricted to the registered Ny8 target")
+    stage_scope = V22_STOP_STAGE_SCOPE.get(stop_stage)
+    if stage_scope is None or stage_scope not in TASK40_V22_STAGE_SCOPE:
+        raise ValueError("the V22 service stop stage is outside its explicit campaign scope")
+    if _sha256_file(v22_path) != TASK40_V22_CAMPAIGN_SHA256:
+        raise ValueError("the registered V22 campaign window SHA changed")
+    window = load_fixed_campaign_window(v22_path, require_current_boot=True)
+    return {
+        "path": window.path,
+        "sha256": window.sha256,
+        "stage_scope": stage_scope,
+    }
 
 
 def _unified_cgroup_membership(pid: int | str = "self") -> str | None:
@@ -1022,9 +1073,14 @@ def run_service(
     )
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", unit):
         raise ValueError("invalid systemd user-service unit name")
-    fixed_campaign = repo_root / CAMPAIGN_RELATIVE
-    if campaign_path.resolve() != fixed_campaign.resolve() or _sha256_file(fixed_campaign) != CAMPAIGN_SHA256:
-        raise ValueError("V20 service must use the unchanged fixed V19 campaign window")
+    campaign_registration = _resolve_service_campaign(
+        repo_root,
+        campaign_path,
+        profile=str(data["solver"]["preconditioner"]),
+        stop_stage=stop_stage,
+    )
+    fixed_campaign = Path(campaign_registration["path"])
+    campaign_sha256 = str(campaign_registration["sha256"])
     branch = subprocess.check_output(["git", "branch", "--show-current"], cwd=repo_root, text=True).strip()
     source_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo_root, text=True).strip()
     dirty = subprocess.check_output(["git", "status", "--porcelain"], cwd=repo_root, text=True)
@@ -1048,7 +1104,8 @@ def run_service(
         "physical_model_sha256": None,
         "stop_stage": stop_stage,
         "campaign_window_path": str(fixed_campaign),
-        "campaign_window_sha256": CAMPAIGN_SHA256,
+        "campaign_window_sha256": campaign_sha256,
+        "campaign_stage_scope": campaign_registration["stage_scope"],
         "abi_receipt_path": str(abi_receipt),
         "abi_receipt_sha256": _sha256_file(abi_receipt),
         "qualified_jit_cache": str(jit_cache),
@@ -1189,7 +1246,7 @@ def run_service(
             record["partial_checker_result_path"] = str(checker_output)
         campaign_accounting = _campaign_accounting_path_from_manifest(
             run_manifest,
-            expected_window_sha256=CAMPAIGN_SHA256,
+            expected_window_sha256=campaign_sha256,
             expected_accounting_path=fixed_campaign.with_name(
                 "campaign_accounting_v10.jsonl"
             ),
@@ -1204,7 +1261,7 @@ def run_service(
             environment=environment,
             repo_root=repo_root,
             campaign_window=fixed_campaign,
-            campaign_sha256=CAMPAIGN_SHA256,
+            campaign_sha256=campaign_sha256,
             campaign_accounting=campaign_accounting,
             source_state={"branch": branch, "source_sha": source_sha, "clean": True},
             profile=str(data["solver"]["preconditioner"]),

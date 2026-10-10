@@ -1,6 +1,29 @@
 from dataclasses import replace
 
+import pytest
+
 from src.runners import task40_v10_campaign as campaign
+
+
+def test_v22_campaign_window_is_bound_to_its_exact_six_hour_registration():
+    path = campaign.TASK40_V22_CAMPAIGN_WINDOW.resolve()
+    window = campaign.load_fixed_campaign_window(path, require_current_boot=False)
+
+    assert window.sha256 == campaign.TASK40_V22_CAMPAIGN_SHA256
+    assert window.total_seconds == 21_600.0
+    assert window.closeout_seconds == 600.0
+    assert window.payload["parent_window"] == campaign.TASK40_V22_PARENT_WINDOW
+    assert window.payload["parent_ledger"] == campaign.TASK40_V22_PARENT_LEDGER
+
+    with pytest.raises(ValueError, match="SHA-256 changed"):
+        campaign._validate_v22_campaign_registration(
+            path, "0" * 64, window.payload
+        )
+    changed_scope = dict(window.payload, stage_scope=["implementation"])
+    with pytest.raises(ValueError, match="identity or scope changed"):
+        campaign._validate_v22_campaign_registration(
+            path, window.sha256, changed_scope
+        )
 
 
 def test_campaign_observation_keeps_forward_utc_charge_across_service_attempts(

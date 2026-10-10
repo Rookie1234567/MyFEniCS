@@ -42,6 +42,95 @@ def test_v20_dat_profile_facts_and_checker_inventory_use_registry(filename):
     assert inventory["q_port_counts"] == tuple(periodic.q_port_counts)
 
 
+def test_service_campaign_router_keeps_v19_and_scopes_v22_to_ny8(monkeypatch):
+    from scripts import task40_v20_service_workflow as service
+
+    historical = service._resolve_service_campaign(
+        ROOT,
+        service.CAMPAIGN_RELATIVE,
+        profile="task40extra_v20_p6_y_orbit_e2_reference_v1",
+        stop_stage="full",
+    )
+    assert historical["sha256"] == service.CAMPAIGN_SHA256
+    assert historical["stage_scope"] is None
+
+    target = service._resolve_service_campaign(
+        ROOT,
+        service.TASK40_V22_CAMPAIGN_WINDOW,
+        profile=service.V22_TARGET_PROFILE,
+        stop_stage="geometry_inventory",
+    )
+    assert target["sha256"] == service.TASK40_V22_CAMPAIGN_SHA256
+    assert target["stage_scope"] == "geometry_descriptor"
+
+    with pytest.raises(ValueError, match="restricted to the registered Ny8 target"):
+        service._resolve_service_campaign(
+            ROOT,
+            service.TASK40_V22_CAMPAIGN_WINDOW,
+            profile="task40extra_v20_p6_y_orbit_e2_reference_v1",
+            stop_stage="geometry_inventory",
+        )
+    with pytest.raises(ValueError, match="outside its explicit campaign scope"):
+        service._resolve_service_campaign(
+            ROOT,
+            service.TASK40_V22_CAMPAIGN_WINDOW,
+            profile=service.V22_TARGET_PROFILE,
+            stop_stage="build_and_symbolic",
+        )
+    monkeypatch.setattr(service, "TASK40_V22_CAMPAIGN_SHA256", "0" * 64)
+    with pytest.raises(ValueError, match="V22 campaign window SHA changed"):
+        service._resolve_service_campaign(
+            ROOT,
+            service.TASK40_V22_CAMPAIGN_WINDOW,
+            profile=service.V22_TARGET_PROFILE,
+            stop_stage="geometry_inventory",
+        )
+
+
+def test_v20_worker_contract_reports_registered_six_hour_campaign_limit():
+    from src.io.physical_intermediate_profile import profile_facts
+    from src.runners import task40_v10_worker
+    from src.runners.physical_v14_budget import V14_TIME_POLICY_ENFORCE
+    from src.solvers.task40_v20_registry import TASK40_V20_CASES_BY_PROFILE
+
+    profile = "task40extra_v20_p6_y_orbit_target_original_ny8_v1"
+    case = TASK40_V20_CASES_BY_PROFILE[profile]
+    payload = load_and_resolve(
+        INPUT_ROOT / "target_original_ny8_resource_pilot_v20.dat"
+    ).as_jsonable()
+    window_sha = "a" * 64
+    runtime = SimpleNamespace(
+        stage=case.solver_stage,
+        campaign_context={
+            "read_only": True,
+            "window_path": "fixed-v22-window.json",
+            "window_sha256": window_sha,
+            "accounting_path": "v22-accounting.jsonl",
+            "campaign_seconds": 21_600.0,
+            "closeout_reserve_seconds": 600.0,
+        },
+        shared_budget={
+            "campaign_window_sha256": window_sha,
+            "total_budget_seconds": 21_600.0,
+        },
+        workflow_reserved_seconds=20_000.0,
+        require_zero_swap=True,
+        _ledger_path=None,
+        time_policy=V14_TIME_POLICY_ENFORCE,
+    )
+
+    contract = task40_v10_worker._candidate_contract(
+        payload,
+        profile_facts(profile),
+        runtime,
+        profile_identity=profile,
+    )
+
+    assert all(contract["checks"].values())
+    assert contract["campaign_seconds"] == 21_600.0
+    assert contract["closeout_reserve_seconds"] == 600.0
+
+
 def test_target_component_resume_input_requires_hash_bound_local_port_manifest(tmp_path):
     from scripts.task40_v20_service_workflow import render_stage_input
 

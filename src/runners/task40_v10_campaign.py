@@ -27,6 +27,47 @@ CAMPAIGN_SCHEMA = "task40extra.review_v10_campaign.v1"
 CAMPAIGN_SECONDS = 86_400.0
 CLOSEOUT_RESERVE_SECONDS = 600.0
 CAMPAIGN_ACCOUNTING_NAME = "campaign_accounting_v10.jsonl"
+TASK40_V22_CAMPAIGN_WINDOW = (
+    Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v22_wsl")
+    / "campaign_window_v22.json"
+)
+TASK40_V22_CAMPAIGN_SHA256 = "a4da3d83c2a06672a2337a518dcc8a8bb5d12a446e995783e0f9dd406427d777"
+TASK40_V22_CAMPAIGN_SECONDS = 21_600.0
+TASK40_V22_CLOSEOUT_RESERVE_SECONDS = 600.0
+TASK40_V22_CAMPAIGN_ID = "task40extra_v22_generated_production_operator"
+TASK40_V22_REVIEW_SHA = "c2ec1e87cbbc88ba568537d6d1d591d76794611e"
+TASK40_V22_REVIEW_PATH = "docs/task40extra_0p7nm_engineering/review_report_v22.md"
+TASK40_V22_STAGE_SCOPE = (
+    "implementation",
+    "targeted_tests",
+    "geometry_descriptor",
+    "local_port_components",
+    "target_operator_probe",
+    "bounded_q_tiles",
+    "checker",
+    "persistence_readback",
+    "closeout",
+)
+TASK40_V22_FORBIDDEN_SCOPE = (
+    "all_target_q_csr",
+    "target_global_factor",
+    "target_ksp",
+    "full_target_field",
+)
+TASK40_V22_PARENT_WINDOW = {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json",
+    "sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0",
+    "t0_utc": "2026-10-09T01:45:00.727771902Z",
+    "deadline_utc": "2026-10-10T01:45:00.727771902Z",
+    "verified_expired": True,
+}
+TASK40_V22_PARENT_LEDGER = {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_accounting_v10.jsonl",
+    "sha256": "7ea9e880520accf2fd87d8ee63b894c7e3e1ec366308dd0c8bb4492abd705a11",
+    "last_persisted_cumulative_seconds": 66919.72841801553,
+    "unsettled_interval": "UNKNOWN_RETAINED_UNMODIFIED",
+    "historical_cleanup": "UNKNOWN_RETAINED_UNMODIFIED",
+}
 
 
 def _utc_ns(value: Any) -> int:
@@ -43,6 +84,42 @@ def _utc_ns(value: Any) -> int:
     if dot and (not fraction.isdigit() or len(fraction) > 9):
         raise ValueError("campaign timestamp precision must not exceed nanoseconds")
     return timegm(instant.utctimetuple()) * 1_000_000_000 + nanos
+
+
+def _validate_v22_campaign_registration(
+    resolved: Path, digest: str, payload: Mapping[str, Any]
+) -> None:
+    expected_path = (
+        Path(__file__).resolve().parents[2] / TASK40_V22_CAMPAIGN_WINDOW
+    ).resolve()
+    if resolved != expected_path:
+        raise ValueError("the V22 campaign window is not at its registered path")
+    if digest != TASK40_V22_CAMPAIGN_SHA256:
+        raise ValueError("the registered V22 campaign window SHA-256 changed")
+    expected_fields = {
+        "schema": CAMPAIGN_SCHEMA,
+        "campaign": TASK40_V22_CAMPAIGN_ID,
+        "authority": "User-authorized Review V22 section 7: independent six-hour work package",
+        "active_review_sha": TASK40_V22_REVIEW_SHA,
+        "active_review_path": TASK40_V22_REVIEW_PATH,
+        "source_at_entry": TASK40_V22_REVIEW_SHA,
+        "t0_utc": "2026-10-10T02:34:32Z",
+        "deadline_utc": "2026-10-10T08:34:32Z",
+        "campaign_seconds": TASK40_V22_CAMPAIGN_SECONDS,
+        "closeout_reserve_seconds": TASK40_V22_CLOSEOUT_RESERVE_SECONDS,
+        "time_policy": CONSERVATIVE_REALTIME,
+        "stage_scope": list(TASK40_V22_STAGE_SCOPE),
+        "forbidden_scope": list(TASK40_V22_FORBIDDEN_SCOPE),
+        "window_refreshed": False,
+        "old_costs_and_unknowns_preserved": True,
+        "parent_window": TASK40_V22_PARENT_WINDOW,
+        "parent_ledger": TASK40_V22_PARENT_LEDGER,
+    }
+    changed = [
+        key for key, value in expected_fields.items() if payload.get(key) != value
+    ]
+    if changed:
+        raise ValueError(f"registered V22 campaign identity or scope changed: {changed}")
 
 
 @dataclass(frozen=True)
@@ -286,14 +363,24 @@ def load_fixed_campaign_window(
     if payload.get("window_refreshed") is not False or payload.get(
         "old_costs_and_unknowns_preserved"
     ) is not True:
-        raise ValueError("the V10 campaign window was refreshed or erased prior costs")
+        raise ValueError("the fixed campaign window was refreshed or erased prior costs")
+    digest = hashlib.sha256(raw).hexdigest()
+    v22_path = (
+        Path(__file__).resolve().parents[2] / TASK40_V22_CAMPAIGN_WINDOW
+    ).resolve()
+    is_v22 = resolved == v22_path
+    if is_v22:
+        _validate_v22_campaign_registration(resolved, digest, payload)
+        expected_total = TASK40_V22_CAMPAIGN_SECONDS
+    else:
+        expected_total = CAMPAIGN_SECONDS
     total = float(payload.get("campaign_seconds", 0.0))
-    if total != CAMPAIGN_SECONDS or payload.get("time_policy") != CONSERVATIVE_REALTIME:
-        raise ValueError("the fixed V10 campaign duration or clock policy changed")
+    if total != expected_total or payload.get("time_policy") != CONSERVATIVE_REALTIME:
+        raise ValueError("the fixed campaign duration or clock policy differs from its registration")
     t0_ns = _utc_ns(payload.get("t0_utc"))
     deadline_ns = _utc_ns(payload.get("deadline_utc"))
     if deadline_ns - t0_ns != int(total * 1e9):
-        raise ValueError("the V10 campaign deadline does not equal the original T0 plus 24 hours")
+        raise ValueError("the fixed campaign deadline does not equal its registered T0 plus duration")
     initial = payload.get("first_full_three_clock_sample")
     if not isinstance(initial, dict):
         raise ValueError("the initial full monotone/UTC/boot sample is missing")
@@ -318,15 +405,18 @@ def load_fixed_campaign_window(
     if payload.get("bootstrap_time_treatment") is None:
         raise ValueError("campaign startup and preparation costs are not accounted")
     closeout = float(payload.get("closeout_reserve_seconds", CLOSEOUT_RESERVE_SECONDS))
-    if closeout != CLOSEOUT_RESERVE_SECONDS or closeout >= total:
-        raise ValueError("the fixed 600-second closeout reserve changed")
+    expected_closeout = (
+        TASK40_V22_CLOSEOUT_RESERVE_SECONDS if is_v22 else CLOSEOUT_RESERVE_SECONDS
+    )
+    if closeout != expected_closeout or closeout >= total:
+        raise ValueError("the fixed campaign closeout reserve changed")
     if require_current_boot:
         now = clock_sample(include_boot_id=True)
         if now.get("boot_id") != anchor["boot_id"]:
             raise TimebaseInconsistency("WSL boot identity changed during the active V10 campaign")
     return FixedCampaignWindow(
         path=resolved,
-        sha256=hashlib.sha256(raw).hexdigest(),
+        sha256=digest,
         payload=payload,
         anchor=anchor,
         t0_utc_ns=t0_ns,
@@ -341,6 +431,17 @@ __all__ = [
     "CAMPAIGN_ACCOUNTING_NAME",
     "CAMPAIGN_SCHEMA",
     "CLOSEOUT_RESERVE_SECONDS",
+    "TASK40_V22_CAMPAIGN_WINDOW",
+    "TASK40_V22_CAMPAIGN_SHA256",
+    "TASK40_V22_CAMPAIGN_SECONDS",
+    "TASK40_V22_CLOSEOUT_RESERVE_SECONDS",
+    "TASK40_V22_CAMPAIGN_ID",
+    "TASK40_V22_REVIEW_SHA",
+    "TASK40_V22_REVIEW_PATH",
+    "TASK40_V22_STAGE_SCOPE",
+    "TASK40_V22_FORBIDDEN_SCOPE",
+    "TASK40_V22_PARENT_WINDOW",
+    "TASK40_V22_PARENT_LEDGER",
     "CampaignAccount",
     "FixedCampaignWindow",
     "TASK40_V10_CAMPAIGN_WINDOW",
