@@ -1592,9 +1592,15 @@ def test_generated_port_action_matches_cached_with_unequal_modes_and_mpc_slave()
     def mode_column(port):
         scale = float(port + 1)
         bi_col = np.asarray([0.2 + 0.1j * scale, -0.3j + 0.05 * scale], dtype=np.complex128)
-        bt_col = np.asarray([0.07j * scale, 0.11 * scale, 0.0j], dtype=np.complex128)
+        bt_col = np.asarray(
+            [0.07j * scale, 0.11 * scale, (0.03 + 0.02j) * scale],
+            dtype=np.complex128,
+        )
         di_row = np.asarray([0.13 - 0.03j * scale, -0.09j * scale], dtype=np.complex128)
-        dt_row = np.asarray([0.02j * scale, -0.04 * scale, 0.0j], dtype=np.complex128)
+        dt_row = np.asarray(
+            [0.02j * scale, -0.04 * scale, (-0.015 + 0.025j) * scale],
+            dtype=np.complex128,
+        )
         return bi_col, bt_col, di_row, dt_row
 
     ports = np.arange(n_p, dtype=PETSc.IntType)
@@ -1602,9 +1608,23 @@ def test_generated_port_action_matches_cached_with_unequal_modes_and_mpc_slave()
         *(mode_column(port) for port in range(n_p)), strict=True
     )
     bi = np.column_stack(bi_columns)
-    bt = np.column_stack(bt_columns)
+    bt_raw = np.column_stack(bt_columns)
     di = np.vstack(di_rows)
-    dt = np.vstack(dt_rows)
+    dt_raw = np.vstack(dt_rows)
+    trace_expansion = np.asarray(
+        [
+            [1.0 + 0.0j, 0.0j],
+            [0.0j, 1.0 + 0.0j],
+            [0.35 + 0.1j, 0.65 - 0.1j],
+        ],
+        dtype=np.complex128,
+    )
+    # The cached fixture uses production-dual rows. The generated path below
+    # receives raw local rows and applies E^H B and D E itself.
+    bt = np.zeros_like(bt_raw)
+    bt[:2] = trace_expansion.conjugate().T @ bt_raw
+    dt = np.zeros_like(dt_raw)
+    dt[:, :2] = dt_raw @ trace_expansion
     hp_diagonal = np.asarray([1.3 + 0.1j, 1.7 - 0.2j], dtype=np.complex128)
     hp = np.diag(hp_diagonal)
     cached = P6CellCondensedAction(
@@ -1666,6 +1686,7 @@ def test_generated_port_action_matches_cached_with_unequal_modes_and_mpc_slave()
         full_rhs = rng.normal(size=condensed.full_rows) + 1j * rng.normal(
             size=condensed.full_rows
         )
+        full_rhs[4] = 0.0
         port_rhs = rng.normal(size=n_p) + 1j * rng.normal(size=n_p)
         np.testing.assert_allclose(generated.apply(reduced), cached.apply(reduced), rtol=2e-13, atol=2e-13)
         np.testing.assert_allclose(
@@ -1681,7 +1702,7 @@ def test_generated_port_action_matches_cached_with_unequal_modes_and_mpc_slave()
         alpha = reduced[condensed.active_rows :]
         generated_B = generated.apply_B_full(alpha)
         cached_B = cached.apply_B_full(alpha)
-        np.testing.assert_allclose(generated_B, cached_B, rtol=0.0, atol=0.0)
+        np.testing.assert_allclose(generated_B, cached_B, rtol=0.0, atol=2e-16)
         assert generated_B[4] == 0.0
         full_field = rng.normal(size=condensed.full_rows) + 1j * rng.normal(size=condensed.full_rows)
         full_field[4] = 3.0 - 2.0j
@@ -1691,6 +1712,52 @@ def test_generated_port_action_matches_cached_with_unequal_modes_and_mpc_slave()
             rtol=0.0,
             atol=0.0,
         )
+
+        raw_B = np.zeros((condensed.full_rows, n_p), dtype=np.complex128)
+        raw_B[interior, :] = bi
+        raw_B[trace, :] = bt_raw
+        raw_D = np.zeros((n_p, condensed.full_rows), dtype=np.complex128)
+        raw_D[:, interior] = di
+        raw_D[:, trace] = dt_raw
+
+        def expand_primal(storage):
+            expanded = np.asarray(storage, dtype=np.complex128).copy()
+            expanded[4] = trace_expansion[2] @ expanded[active_trace]
+            return expanded
+
+        def pullback_dual(raw):
+            dual = np.asarray(raw, dtype=np.complex128).copy()
+            dual[active_trace] += trace_expansion[2].conjugate() * dual[4]
+            dual[4] = 0.0
+            return dual
+
+        alpha = reduced[condensed.active_rows :]
+        oracle_B = pullback_dual(raw_B @ alpha)
+        np.testing.assert_allclose(
+            generated.apply_B_full(alpha), oracle_B, rtol=2e-14, atol=2e-14
+        )
+        oracle_D = raw_D @ expand_primal(full_field)
+        np.testing.assert_allclose(
+            generated.apply_D_full(full_field), oracle_D, rtol=2e-14, atol=2e-14
+        )
+
+        def native_apply(storage):
+            primal = expand_primal(storage)
+            port_action = raw_D @ primal
+            raw_native = volume @ primal + raw_B @ (port_action / hp_diagonal)
+            return pullback_dual(raw_native)
+
+        residual_facts = generated.evaluate_native_residual(
+            reduced,
+            full_rhs,
+            native_apply,
+            port_rhs=port_rhs,
+            rhs_is_mpc_dual=True,
+        )
+        assert np.linalg.norm(residual_facts["internal_residual"]) > 0.0
+        assert np.linalg.norm(residual_facts["native_residual"]) > 0.0
+        for metric in ("native_identity_relative", "schur_port_identity_relative"):
+            assert residual_facts[metric] <= 1e-10, (metric, residual_facts[metric])
         assert generated.audit["generated_callback_call_count"] > 0
     finally:
         generated.destroy()

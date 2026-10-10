@@ -166,9 +166,11 @@ class P6CellPortTerms:
 class P6GeneratedCellPortAction:
     """One cell's B/D actions generated on demand in bounded mode batches.
 
-    ``apply_B(alpha)`` returns ``(Bi@alpha, Bt@alpha)`` and
-    ``apply_D(x_i, x_t)`` returns the independent raw ``Di@x_i + Dt@x_t``.
-    They must not retain mode-by-cell matrices or infer D from B.
+    ``apply_B(alpha)`` returns raw local ``(Bi@alpha, Bt@alpha)`` rows and
+    ``apply_D(x_i, x_t)`` returns the independent raw
+    ``Di@x_i + Dt@x_t``. The action applies the cell MPC expansion and its
+    conjugate pullback exactly once. Callbacks must not retain mode-by-cell
+    matrices or infer D from B.
     ``callback_workspace_bytes`` is the
     caller-reported upper bound for one callback's additional numerical
     workspace; it excludes interpreter and native-library internals.
@@ -1346,6 +1348,25 @@ class P6CellCondensedAction:
     def _check_reduced_array(self, value: Any, name: str) -> np.ndarray:
         return _complex_vector(value, name, size=self.reduced_size)
 
+    def _active_original_rows_for_ids(self, active_ids: Any) -> np.ndarray:
+        """Map reduced trace IDs to original storage rows for MPI1 vectors."""
+
+        if self.condensed.comm.Get_size() != 1:
+            raise NotImplementedError("global active-to-original row mapping is MPI1-only")
+        originals = np.asarray(
+            self.condensed.trace_constraints.owned_active_original_dofs,
+            dtype=PETSc.IntType,
+        ).reshape(-1)
+        if len(originals) != self.condensed.active_rows:
+            raise ValueError("owned active trace rows do not cover the MPI1 active space")
+        ids = np.asarray(active_ids, dtype=PETSc.IntType).reshape(-1)
+        if np.any(ids < 0) or np.any(ids >= self.condensed.active_rows):
+            raise ValueError("cell refers to an active trace ID outside the reduced space")
+        # The qualified condensation builders number original_to_active in
+        # this owned row order; gather only this cell's rows, never a second
+        # full-size active-to-original vector.
+        return originals[ids]
+
     def _generated_B_action(
         self, cell: _CellActionData, amplitudes: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
@@ -2087,11 +2108,16 @@ class P6CellCondensedAction:
             rhs_i = rhs[cell.original_interiors]
             vii_xi = _factored_matrix_action(cell.interior_lu, internal)
             vit_xt = -_factored_matrix_action(cell.interior_lu, cell.recovery @ local_trace)
-            bi_alpha = (
-                cell.Bi @ alpha[cell.ports]
-                if len(cell.ports)
-                else np.zeros_like(rhs_i)
-            )
+            if len(cell.ports) and cell.generated_action is not None:
+                bi_alpha, _bt_alpha = self._generated_B_action(
+                    cell, alpha[cell.ports]
+                )
+            else:
+                bi_alpha = (
+                    cell.Bi @ alpha[cell.ports]
+                    if len(cell.ports)
+                    else np.zeros_like(rhs_i)
+                )
             lhs_i = vii_xi + vit_xt + bi_alpha
             internal_error = rhs_i - lhs_i
             internal_residuals.append(internal_error)
@@ -2100,10 +2126,16 @@ class P6CellCondensedAction:
                 ids, coefficients = self.condensed.trace_constraints.expansion_by_original[int(original)]
                 trace_internal_correction[ids] += np.conjugate(coefficients) * trace_correction[row]
             if len(cell.ports):
-                port_internal_correction[cell.ports] += cell.Di @ lu_solve(
-                    cell.interior_lu,
-                    internal_error,
-                )
+                solved_error = lu_solve(cell.interior_lu, internal_error)
+                if cell.generated_action is None:
+                    port_correction = cell.Di @ solved_error
+                else:
+                    port_correction = self._generated_D_action(
+                        cell,
+                        solved_error,
+                        np.zeros(len(cell.original_trace), dtype=np.complex128),
+                    )
+                port_internal_correction[cell.ports] += port_correction
             internal_scales.append(
                 max(
                     float(np.linalg.norm(vii_xi))
@@ -2219,9 +2251,15 @@ class P6CellCondensedAction:
                 bi_action, bt_action = self._generated_B_action(cell, local)
                 result[cell.original_interiors] += bi_action
             if bt_action is not None:
-                for row, original in enumerate(cell.original_trace):
-                    if int(original) in constraints.original_to_active:
-                        result[int(original)] += bt_action[row]
+                if cell.generated_action is None:
+                    for row, original in enumerate(cell.original_trace):
+                        if int(original) in constraints.original_to_active:
+                            result[int(original)] += bt_action[row]
+                else:
+                    original_rows = self._active_original_rows_for_ids(cell.active_ids)
+                    result[original_rows] += np.asarray(
+                        cell.expansion.conjugate().T @ bt_action
+                    ).reshape(-1)
         for port, (rows, row_values) in self._direct_B_original.items():
             result[rows] += row_values * values[port]
         return result
@@ -2238,15 +2276,19 @@ class P6CellCondensedAction:
             if not len(cell.ports):
                 continue
             interior = field[cell.original_interiors]
-            trace = field[cell.original_trace].copy()
-            for row, original in enumerate(cell.original_trace):
-                if int(original) not in constraints.original_to_active:
-                    trace[row] = 0.0
             if cell.generated_action is None:
+                trace = field[cell.original_trace].copy()
+                for row, original in enumerate(cell.original_trace):
+                    if int(original) not in constraints.original_to_active:
+                        trace[row] = 0.0
                 local = cell.Di @ interior
                 if cell.Dt is not None:
                     local += cell.Dt @ trace
             else:
+                original_rows = self._active_original_rows_for_ids(cell.active_ids)
+                trace = np.asarray(
+                    cell.expansion @ field[original_rows], dtype=np.complex128
+                ).reshape(-1)
                 local = self._generated_D_action(cell, interior, trace)
             result[cell.ports] += local
         for port, (rows, row_values) in self._direct_D_original.items():
