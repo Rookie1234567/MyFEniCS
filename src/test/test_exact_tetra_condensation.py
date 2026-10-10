@@ -30,6 +30,9 @@ class ExactTetraTests(unittest.TestCase):
             r=build_checkpoint(A,b,cells,Path(td)/'sealed',identity={'case':'complex_nonzero_fi_g'},source={'source_sha':'fixture'},preallocation_extra=extra)
             first=ExactRecovery(r);g=first.condense_rhs(b);S=first.matrix.toarray()
             self.assertEqual(first.manifest['build_audit']['reserved_extra_entries'],int(extra.sum()))
+            audit=first.manifest['build_audit']
+            self.assertEqual(audit['trace_transfer_assembly'],'FLUSH')
+            self.assertEqual(audit['before_transfer_allocated_entries'],audit['after_transfer_allocated_entries'])
             expected=np.linalg.solve(A.toarray(),b);trace=np.linalg.solve(S,g)
             full=first.recover(trace,b)
             np.testing.assert_allclose(full,expected,rtol=2e-13,atol=2e-13)
@@ -71,6 +74,23 @@ class ExactTetraTests(unittest.TestCase):
         self.assertEqual(detail['connected_cells'],2)
         self.assertEqual(detail['retained_FE_support'],3)
         self.assertTrue(detail['no_entries_inserted_or_dropped'])
+
+    def test_installed_PETSc_flush_preserves_capacity_before_schur_add(self):
+        from petsc4py import PETSc
+        numbers={}
+        for label,kind in [('FINAL',PETSc.Mat.AssemblyType.FINAL),('FLUSH',PETSc.Mat.AssemblyType.FLUSH)]:
+            A=PETSc.Mat().createAIJ([3,3],nnz=3,comm=PETSc.COMM_SELF)
+            for row in range(3):A.setValue(row,row,2.+1j)
+            before=int(A.getInfo()['nz_allocated']);A.assemble(kind)
+            after=int(A.getInfo()['nz_allocated']);numbers[label]=(before,after)
+            if label=='FLUSH':
+                A.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR,True)
+                A.setValue(0,1,3.-2j,addv=PETSc.InsertMode.ADD_VALUES)
+                A.assemble();self.assertEqual(A.getValue(0,1),3.-2j)
+            A.destroy()
+        self.assertLess(numbers['FINAL'][1],numbers['FINAL'][0])
+        self.assertEqual(numbers['FLUSH'][1],numbers['FLUSH'][0])
+        print('installed PETSc reserved-capacity witness:',numbers)
 
     def test_live_schema_memory_row_scope_and_parent_no_closed_guard(self):
         from src.io.independent_tetra_reference import load_tetra_reference

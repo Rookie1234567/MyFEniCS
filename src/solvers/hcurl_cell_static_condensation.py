@@ -295,14 +295,22 @@ def build_explicit_cell_static_condensation(
     if local_trace_rows:
         del trace_columns, trace_values, _trace_values
     trace_submatrix.destroy()
-    condensed.assemble()
+    initial_allocated_entries=int(condensed.getInfo()['nz_allocated'])
+    # FINAL compresses unused row capacity. The opt-in Schur fill must retain
+    # that capacity while switching INSERT -> ADD; only the finished Schur is
+    # finally assembled. Defaults retain the qualified historical behavior.
+    condensed.assemble(PETSc.Mat.AssemblyType.FLUSH if extra is not None else PETSc.Mat.AssemblyType.FINAL)
+    transferred_allocated_entries=int(condensed.getInfo()['nz_allocated'])
     condensed_rhs = condensed.createVecRight()
     if len(owned_trace):
         condensed_rhs.getArray()[:] = np.asarray(
             b.getValues(owned_trace), dtype=PETSc.ScalarType
         )
     condensed_rhs.assemble()
-    progress('exact_trace_block_copy_committed')
+    progress('exact_trace_block_copy_committed',
+             transfer_assembly='FLUSH' if extra is not None else 'FINAL',
+             before_assembly_allocated_entries=initial_allocated_entries,
+             after_assembly_allocated_entries=transferred_allocated_entries)
 
     transpose_started = perf_counter()
     # petsc4py 3.19 Mat.transpose() is in-place when no output is supplied.
@@ -404,6 +412,9 @@ def build_explicit_cell_static_condensation(
         "full_matrix_required_as_input": True,
         "reserved_extra_entries": extra_entries,
         "actual_allocated_entries": int(condensed.getInfo()['nz_allocated']),
+        "trace_transfer_assembly": 'FLUSH' if extra is not None else 'FINAL',
+        "before_transfer_allocated_entries": initial_allocated_entries,
+        "after_transfer_allocated_entries": transferred_allocated_entries,
         "assembly_cost_avoided": False,
         "transpose_seconds": transpose_seconds,
         "local_dense_solve_seconds_max": float(
