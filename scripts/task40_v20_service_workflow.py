@@ -668,6 +668,146 @@ def _parse_case_arguments(case_args: list[str]) -> tuple[Path, Path, str, dict[s
     return input_path, campaign, stop_stage, data
 
 
+def _extract_v23_q_only_scan_arg(case_args: list[str]) -> tuple[list[str], Path | None]:
+    """Remove the one-off q-only selector before forwarding arguments to run_case."""
+
+    cleaned: list[str] = []
+    selected: Path | None = None
+    index = 0
+    while index < len(case_args):
+        value = case_args[index]
+        if value == "--v23-q-only-scan-checkpoint":
+            if selected is not None or index + 1 >= len(case_args):
+                raise ValueError("V23 q-only selector must appear once with a scan run directory")
+            selected = Path(case_args[index + 1]).resolve()
+            index += 2
+            continue
+        if value.startswith("--v23-q-only-scan-checkpoint="):
+            if selected is not None:
+                raise ValueError("V23 q-only selector must appear only once")
+            selected = Path(value.split("=", 1)[1]).resolve()
+            index += 1
+            continue
+        cleaned.append(value)
+        index += 1
+    return cleaned, selected
+
+
+def _bind_v23_q_only_scan_checkpoint(
+    scan_directory: Path,
+    *,
+    input_path: Path,
+    campaign_registration: dict[str, Any],
+    profile: str,
+    stop_stage: str,
+    repo_root: Path,
+) -> dict[str, str | int]:
+    """Validate the completed V23 scan and bind its exact restart files for the worker."""
+
+    expected_old_source = "1291aeef089e6c02c4b9e28125f60072aa769340"
+    scan_directory = scan_directory.resolve()
+    if not scan_directory.is_relative_to((repo_root / "results").resolve()):
+        raise ValueError("V23 q-only selector must name a prior run under this repository's results")
+    if (
+        profile != V23_TARGET_PROFILE
+        or stop_stage != "target_operator_probe"
+        or campaign_registration.get("sha256") != TASK40_V23_CAMPAIGN_SHA256
+    ):
+        raise ValueError("V23 q-only selector is restricted to the registered Ny8 probe/window")
+    manifest_path = scan_directory / "run_manifest.json"
+    summary_path = scan_directory / "run_summary.json"
+    if not manifest_path.is_file() or not summary_path.is_file():
+        raise ValueError("selected old V23 scan is missing its run manifest or summary")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    current_input_sha = _sha256_file(input_path)
+    campaign = manifest.get("task40_v20_campaign", {})
+    if (
+        manifest.get("source_sha") != expected_old_source
+        or manifest.get("input_sha256") != current_input_sha
+        or summary.get("status") != "finished"
+        or summary.get("result_classification") != "WORKER_FAILED"
+        or campaign.get("window_sha256") != TASK40_V23_CAMPAIGN_SHA256
+    ):
+        raise ValueError("selected old scan source/input/window or terminal classification differs")
+    numerical_output = _checker_numerical_output_directory(
+        scan_directory,
+        Path(str(summary.get("numerical_output_directory", ""))),
+    )
+    probe_path = numerical_output / "v22_target_operator_probe.json"
+    q_failure_path = numerical_output / "v23_reference_q_port_tile.json"
+    witness_path = numerical_output / "v22_pre_sweep_witness.json"
+    preflight_path = numerical_output / "v20_stage_preflight.json"
+    required = (probe_path, q_failure_path, witness_path, preflight_path)
+    if any(not path.is_file() for path in required):
+        raise ValueError("selected old V23 scan is missing its probe, q failure, witness, or preflight")
+    probe = json.loads(probe_path.read_text(encoding="utf-8"))
+    q_failure = json.loads(q_failure_path.read_text(encoding="utf-8"))
+    preflight = json.loads(preflight_path.read_text(encoding="utf-8"))
+    checkpoint = probe.get("latest_mode_checkpoint")
+    mode_inventory = preflight.get("target_mode_inventory", {})
+    if (
+        probe.get("status") != "FAILED_SELECTED_Q_PORT_TILE"
+        or q_failure.get("status") != "FAILED"
+        or q_failure.get("failure_type") != "TypeError"
+        or "list indices" not in str(q_failure.get("failure_message", ""))
+        or not isinstance(checkpoint, dict)
+        or checkpoint.get("completed_mode_count") != 32_060
+        or preflight.get("source_sha") != expected_old_source
+    ):
+        raise ValueError("selected old V23 scan does not contain the preserved full-prefix q-tile failure")
+    identity = {
+        "source_sha": expected_old_source,
+        "input_sha256": manifest.get("input_sha256"),
+        "physical_model_sha256": manifest.get("physical_model_sha256"),
+        "mode_manifest_sha256": mode_inventory.get("mode_manifest_sha256"),
+        "ordered_mode_key_sha256": mode_inventory.get("ordered_mode_key_sha256"),
+        "campaign_window_sha256": TASK40_V23_CAMPAIGN_SHA256,
+    }
+    checkpoint_key = hashlib.sha256(
+        json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    checkpoint_directory = (
+        repo_root
+        / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl/operator_checkpoints"
+        / checkpoint_key
+    ).resolve()
+    checkpoint_path = Path(str(checkpoint.get("checkpoint_json_path", "")))
+    if not checkpoint_path.is_absolute():
+        checkpoint_path = (numerical_output / checkpoint_path).resolve()
+    else:
+        checkpoint_path = checkpoint_path.resolve()
+    if not checkpoint_path.is_file() or checkpoint_path.parent != checkpoint_directory:
+        raise ValueError("old V23 terminal checkpoint path does not match its source-bound identity")
+    checkpoint_data = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+    if checkpoint_data != checkpoint:
+        raise ValueError("old V23 terminal checkpoint metadata differs from the scan's embedded receipt")
+    payload = checkpoint_data.get("actual_action_payload", {})
+    payload_path = (checkpoint_path.parent / str(payload.get("path", ""))).resolve()
+    if (
+        not payload_path.is_file()
+        or payload_path.parent != checkpoint_path.parent
+        or _sha256_file(payload_path) != payload.get("sha256")
+    ):
+        raise ValueError("old V23 terminal checkpoint payload is missing or hash-mismatched")
+    return {
+        "scan_run_directory": str(scan_directory),
+        "scan_manifest_path": str(manifest_path),
+        "scan_manifest_sha256": _sha256_file(manifest_path),
+        "scan_numerical_output": str(numerical_output),
+        "scan_preflight_path": str(preflight_path),
+        "scan_witness_path": str(witness_path),
+        "old_q_failure_path": str(q_failure_path),
+        "old_q_failure_sha256": _sha256_file(q_failure_path),
+        "old_source_sha": expected_old_source,
+        "checkpoint_metadata_path": str(checkpoint_path),
+        "checkpoint_metadata_sha256": _sha256_file(checkpoint_path),
+        "checkpoint_payload_path": str(payload_path),
+        "checkpoint_payload_sha256": str(payload["sha256"]),
+        "completed_mode_count": 32_060,
+    }
+
+
 def _run_case_output_checker(packet_path: Path, runtime_prefix: Path) -> list[str]:
     return [
         str(runtime_prefix / "bin/python"),
@@ -1107,7 +1247,11 @@ def _check_partial_result(
         checks["target_heavy_authorization_remains_false"] = (
             input_data.get("execution", {}).get("task40_target_heavy_authorized") is False
         )
-    if v2_receipt:
+    q_only_receipt = (
+        v2_receipt
+        and partial.get("classification") == "TARGET_OPERATOR_PROBE_Q_ONLY_SUPPLEMENT"
+    )
+    if v2_receipt and not q_only_receipt:
         from scripts.task40_v21_readonly_recheck import validate_stage_receipt_semantics
 
         semantic_checks = validate_stage_receipt_semantics(
@@ -1126,6 +1270,102 @@ def _check_partial_result(
             ),
         )
         checks.update({f"stage_semantics_{name}": passed for name, passed in semantic_checks.items()})
+    elif q_only_receipt:
+        supplement = partial.get("q_only_supplement")
+        supplement = supplement if isinstance(supplement, dict) else {}
+        supplement_path = numerical_output / "v23_q_only_supplement.json"
+        tile_path = numerical_output / "v23_reference_q_port_tile.json"
+        supplement_disk = (
+            json.loads(supplement_path.read_text(encoding="utf-8"))
+            if supplement_path.is_file()
+            else {}
+        )
+        tile = json.loads(tile_path.read_text(encoding="utf-8")) if tile_path.is_file() else {}
+        tile_inner = tile.get("q_tile", {})
+        tile_inner = tile_inner if isinstance(tile_inner, dict) else {}
+        from scripts.task40_v21_readonly_recheck import (
+            _v23_projection_readback_valid,
+            _v23_q_contribution_checks,
+        )
+
+        raw_contribution_checks = _v23_q_contribution_checks(tile_inner)
+        projection_readback_valid = _v23_projection_readback_valid(
+            output_directory=numerical_output,
+            receipt=partial,
+            q_tile=tile,
+            tile=tile_inner,
+        )
+        contributions = tile_inner.get("contributions", {})
+        direct_checks: dict[str, bool] = {}
+        for name in ("C_direct", "minus_D_direct", "H_original"):
+            evidence = contributions.get(name, {}) if isinstance(contributions, dict) else {}
+            try:
+                relative_error = float(evidence.get("relative_error", float("inf")))
+                limit = float(evidence.get("limit", 1.0e-11))
+            except (TypeError, ValueError):
+                relative_error, limit = float("inf"), 0.0
+            direct_checks[name] = bool(
+                evidence.get("status") == "MEASURED_AND_INDEPENDENTLY_CHECKED"
+                and relative_error <= limit <= 1.0e-11
+            )
+        cleanup = partial.get("cleanup", {})
+        cleared_aliases = cleanup.get("known_python_reference_aliases_cleared", [])
+        checks.update(
+            {
+                "q_only_supplement_artifact_hash_matches": (
+                    supplement_path.is_file()
+                    and supplement.get("artifact_sha256") == _sha256_file(supplement_path)
+                ),
+                "q_only_supplement_disk_receipt_matches": (
+                    supplement_disk.get("old_checkpoint_metadata_sha256")
+                    == supplement.get("old_checkpoint_metadata_sha256")
+                    and supplement_disk.get("old_q_failure_sha256")
+                    == supplement.get("old_q_failure_sha256")
+                ),
+                "q_only_old_source_and_complete_prefix_bound": (
+                    supplement.get("old_scan_source_sha")
+                    == "1291aeef089e6c02c4b9e28125f60072aa769340"
+                    and supplement.get("old_checkpoint_completed_mode_count") == 32_060
+                ),
+                "q_only_old_failure_preserved_as_typeerror": (
+                    supplement.get("old_q_failure_type") == "TypeError"
+                    and "list indices" in str(supplement.get("old_q_failure_message", ""))
+                    and isinstance(supplement.get("old_q_failure_sha256"), str)
+                    and len(str(supplement.get("old_q_failure_sha256"))) == 64
+                ),
+                "q_only_checkpoint_hashes_bound": (
+                    all(
+                        isinstance(supplement.get(key), str)
+                        and len(str(supplement.get(key))) == 64
+                        for key in (
+                            "old_checkpoint_metadata_sha256",
+                            "old_checkpoint_payload_sha256",
+                            "old_checkpoint_field_sha256",
+                        )
+                    )
+                    and supplement.get("mesh_mpc_h_and_mode_identity_revalidated") is True
+                ),
+                "q_only_tile_passed_without_full_matrix_or_solver": (
+                    tile.get("status") == "PASS_REAL_ORIGINAL_NY8_Q_PORT_TILE"
+                    and tile.get("full_q_matrix_coverage") == "0/8"
+                    and tile.get("factor_count") == 0
+                    and tile.get("ksp_created") is False
+                    and tile.get("pde_solved") is False
+                    and supplement.get("mode_scan_repeated") is False
+                ),
+                "q_only_raw_C_minus_D_H_payload_recomputed": all(
+                    raw_contribution_checks.values()
+                ),
+                "q_only_projection_npz_readback_recomputed": projection_readback_valid,
+                "q_only_recorded_C_minus_D_H_within_limits": all(direct_checks.values()),
+                "q_only_python_references_cleared_and_worker_finished": (
+                    isinstance(cleared_aliases, list)
+                    and {"space", "mpc", "mesh_object"}.issubset(cleared_aliases)
+                    and run_summary.get("status") == "finished"
+                    and run_summary.get("result_classification") == "worker_exit0"
+                ),
+            }
+        )
     if "geometry_inventory" in (partial.get("completed_stages") or []):
         checks["geometry_artifact_present"] = (
             numerical_output / "v20_geometry_inventory.json"
@@ -1187,6 +1427,7 @@ def run_service(
 ) -> int:
     if case_args and case_args[0] == "--":
         case_args = case_args[1:]
+    case_args, q_only_scan_directory = _extract_v23_q_only_scan_arg(case_args)
     input_path, campaign_path, stop_stage, data = _parse_case_arguments(case_args)
     canonical_relative, _supported = V20_INPUTS[data["solver"]["preconditioner"]]
     canonical_path = repo_root / canonical_relative
@@ -1206,6 +1447,18 @@ def run_service(
         campaign_path,
         profile=str(data["solver"]["preconditioner"]),
         stop_stage=stop_stage,
+    )
+    q_only_binding = (
+        _bind_v23_q_only_scan_checkpoint(
+            q_only_scan_directory,
+            input_path=input_path,
+            campaign_registration=campaign_registration,
+            profile=str(data["solver"]["preconditioner"]),
+            stop_stage=stop_stage,
+            repo_root=repo_root,
+        )
+        if q_only_scan_directory is not None
+        else None
     )
     fixed_campaign = Path(campaign_registration["path"])
     campaign_sha256 = str(campaign_registration["sha256"])
@@ -1246,6 +1499,8 @@ def run_service(
         "run_case_argv": [str(runtime_prefix / "bin/python"), "scripts/run_case.py", *case_args],
         "evidence_directory": str(evidence_directory),
     }
+    if q_only_binding is not None:
+        record["v23_q_only_scan_binding"] = dict(q_only_binding)
     event_identity = {
         key: record[key]
         for key in (
@@ -1286,6 +1541,42 @@ def run_service(
             )
         if environment.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1":
             raise RuntimeError("V20 user-service did not receive the qualified activation marker")
+        if q_only_binding is not None:
+            environment.update(
+                {
+                    "TASK40_V23_Q_ONLY_SCAN_RUN_DIR": str(q_only_binding["scan_run_directory"]),
+                    "TASK40_V23_Q_ONLY_SCAN_MANIFEST_SHA256": str(
+                        q_only_binding["scan_manifest_sha256"]
+                    ),
+                    "TASK40_V23_Q_ONLY_SCAN_NUMERICAL_OUTPUT": str(
+                        q_only_binding["scan_numerical_output"]
+                    ),
+                    "TASK40_V23_Q_ONLY_SCAN_PREFLIGHT": str(
+                        q_only_binding["scan_preflight_path"]
+                    ),
+                    "TASK40_V23_Q_ONLY_SCAN_WITNESS": str(
+                        q_only_binding["scan_witness_path"]
+                    ),
+                    "TASK40_V23_Q_ONLY_OLD_Q_FAILURE": str(
+                        q_only_binding["old_q_failure_path"]
+                    ),
+                    "TASK40_V23_Q_ONLY_OLD_Q_FAILURE_SHA256": str(
+                        q_only_binding["old_q_failure_sha256"]
+                    ),
+                    "TASK40_V23_Q_ONLY_CHECKPOINT_METADATA": str(
+                        q_only_binding["checkpoint_metadata_path"]
+                    ),
+                    "TASK40_V23_Q_ONLY_CHECKPOINT_METADATA_SHA256": str(
+                        q_only_binding["checkpoint_metadata_sha256"]
+                    ),
+                    "TASK40_V23_Q_ONLY_CHECKPOINT_PAYLOAD": str(
+                        q_only_binding["checkpoint_payload_path"]
+                    ),
+                    "TASK40_V23_Q_ONLY_CHECKPOINT_PAYLOAD_SHA256": str(
+                        q_only_binding["checkpoint_payload_sha256"]
+                    ),
+                }
+            )
 
         abi_command, abi_code, abi_stdout, abi_stderr = _abi_preflight(
             runtime_prefix, environment, repo_root

@@ -4374,6 +4374,21 @@ def _run_v23_original_ny8_q_port_tile(
     return result
 
 
+def _v23_actual_axis_values(resolved: Mapping[str, Any]) -> dict[str, Any]:
+    """Return coordinate vectors; geometry inventory ``actual_axes`` are cell counts."""
+
+    discretization = resolved.get("discretization")
+    if not isinstance(discretization, Mapping):
+        raise ValueError("resolved input omitted the V23 actual mesh-axis coordinate vectors")
+    values = {
+        axis: discretization.get(f"mesh_axis_{axis}_values")
+        for axis in ("x", "y", "z")
+    }
+    if any(value is None for value in values.values()):
+        raise ValueError("resolved input omitted one or more V23 mesh-axis coordinate vectors")
+    return values
+
+
 def _run_probe(
     resolved: Mapping[str, Any],
     output_directory: Path,
@@ -4943,6 +4958,162 @@ def _run_probe(
             dtype=np.float64,
         )
         v23_q_tile_facts: dict[str, Any] | None = None
+        q_only_scan_directory = os.environ.get("TASK40_V23_Q_ONLY_SCAN_RUN_DIR")
+        if q_only_scan_directory is not None:
+            if not is_v23_campaign:
+                raise ValueError("V23 q-only supplement selector requires the fixed V23 campaign")
+            expected_old_source = "1291aeef089e6c02c4b9e28125f60072aa769340"
+            scan_directory = Path(q_only_scan_directory).resolve()
+            scan_manifest_path = scan_directory / "run_manifest.json"
+            scan_manifest = json.loads(scan_manifest_path.read_text(encoding="utf-8"))
+            if (
+                scan_manifest.get("source_sha") != expected_old_source
+                or scan_manifest.get("input_sha256") != preflight.get("input_sha256")
+                or scan_manifest.get("physical_model_sha256")
+                != preflight.get("physical_model_sha256")
+                or scan_manifest.get("task40_v20_campaign", {}).get("window_sha256")
+                != campaign_state_entry["campaign_window_sha256"]
+                or _sha256_file(scan_manifest_path)
+                != os.environ.get("TASK40_V23_Q_ONLY_SCAN_MANIFEST_SHA256")
+            ):
+                raise ValueError("old V23 scan source/input/model/window/manifest identity differs")
+            scan_output = Path(
+                os.environ["TASK40_V23_Q_ONLY_SCAN_NUMERICAL_OUTPUT"]
+            ).resolve()
+            scan_preflight_path = Path(os.environ["TASK40_V23_Q_ONLY_SCAN_PREFLIGHT"]).resolve()
+            scan_witness_path = Path(os.environ["TASK40_V23_Q_ONLY_SCAN_WITNESS"]).resolve()
+            old_q_failure_path = Path(os.environ["TASK40_V23_Q_ONLY_OLD_Q_FAILURE"]).resolve()
+            checkpoint_metadata_path = Path(
+                os.environ["TASK40_V23_Q_ONLY_CHECKPOINT_METADATA"]
+            ).resolve()
+            checkpoint_payload_path = Path(
+                os.environ["TASK40_V23_Q_ONLY_CHECKPOINT_PAYLOAD"]
+            ).resolve()
+            old_probe_path = scan_output / "v22_target_operator_probe.json"
+            old_probe = json.loads(old_probe_path.read_text(encoding="utf-8"))
+            old_q_failure = json.loads(old_q_failure_path.read_text(encoding="utf-8"))
+            old_preflight = json.loads(scan_preflight_path.read_text(encoding="utf-8"))
+            old_witness = json.loads(scan_witness_path.read_text(encoding="utf-8"))
+            checkpoint = json.loads(checkpoint_metadata_path.read_text(encoding="utf-8"))
+            payload_record = checkpoint.get("actual_action_payload", {})
+            if (
+                old_probe.get("status") != "FAILED_SELECTED_Q_PORT_TILE"
+                or old_q_failure.get("status") != "FAILED"
+                or old_q_failure.get("failure_type") != "TypeError"
+                or "list indices" not in str(old_q_failure.get("failure_message", ""))
+                or _sha256_file(old_q_failure_path)
+                != os.environ.get("TASK40_V23_Q_ONLY_OLD_Q_FAILURE_SHA256")
+                or _sha256_file(checkpoint_metadata_path)
+                != os.environ.get("TASK40_V23_Q_ONLY_CHECKPOINT_METADATA_SHA256")
+                or checkpoint.get("source_sha") != expected_old_source
+                or checkpoint.get("completed_mode_count") != len(modes)
+                or checkpoint.get("mode_count_by_side")
+                != {"bottom": 16_030, "top": 16_030}
+                or old_preflight.get("source_sha") != expected_old_source
+                or old_witness.get("source_sha") != expected_old_source
+                or old_witness.get("input_sha256") != preflight.get("input_sha256")
+                or old_witness.get("physical_model_sha256")
+                != preflight.get("physical_model_sha256")
+                or old_witness.get("mode_manifest_sha256")
+                != mode_inventory.get("mode_manifest_sha256")
+                or old_witness.get("ordered_mode_key_sha256")
+                != mode_inventory.get("ordered_mode_key_sha256")
+                or old_witness.get("actual_p6_space") != facts.get("p6_space")
+                or old_witness.get("actual_global_mpc_identity") != mpc_identity
+                or old_witness.get("boundary_mpc_dual_pullback")
+                != descriptor_identity["boundary_mpc_dual_pullback"]
+                or checkpoint != old_probe.get("latest_mode_checkpoint")
+                or not checkpoint_payload_path.is_file()
+                or checkpoint_payload_path.parent != checkpoint_metadata_path.parent
+                or _sha256_file(checkpoint_payload_path)
+                != payload_record.get("sha256")
+                or payload_record.get("sha256")
+                != os.environ.get("TASK40_V23_Q_ONLY_CHECKPOINT_PAYLOAD_SHA256")
+            ):
+                raise ValueError("old V23 terminal q failure/checkpoint or FE/MPC/H identity changed")
+            old_preflight = dict(old_preflight)
+            old_preflight["source_sha"] = expected_old_source
+            restored = _load_v23_action_checkpoint(
+                checkpoint_metadata_path.parent,
+                preflight=old_preflight,
+                mode_inventory=mode_inventory,
+                campaign_window_sha256=campaign_state_entry["campaign_window_sha256"],
+                candidate_rows=np.asarray(native_rule.candidate_rows, dtype=np.int64),
+                modes=modes,
+                h_values=h_values,
+                side_cell_counts={
+                    side: len(side_cell_positions[side]) for side in ("bottom", "top")
+                },
+                expected_field_sha256=str(
+                    checkpoint.get("restart_state", {}).get("field_sha256", "")
+                ),
+            )
+            if restored is None or restored.get("mode_count") != len(modes):
+                raise ValueError("old V23 checkpoint failed complete-prefix validation")
+            old_field_sha256 = checkpoint["restart_state"]["field_sha256"]
+            del restored
+            axes_values = _v23_actual_axis_values(resolved)
+            v23_q_tile_facts = _run_v23_original_ny8_q_port_tile(
+                root,
+                output_directory,
+                preflight=preflight,
+                modes=modes,
+                mode_rows=mode_rows,
+                space=space,
+                mpc=mpc,
+                cfg=cfg,
+                assemblers=assemblers,
+                assembly_context=context,
+                axes_values=axes_values,
+                mapping_rows=mapping_rows,
+                boundary_global_rows=boundary_global_rows,
+                interior_rows=interior_rows_sorted,
+                h_values=h_values,
+                resource_sample=resource_sample,
+            )
+            facts["v23_selected_q_port_tile"] = v23_q_tile_facts
+            facts["q_coverage"] = _v23_q_coverage_record(v23_q_tile_facts)
+            supplement = {
+                "schema": "task40extra.review_v23_q_only_supplement.v1",
+                "status": "PASS_Q_TILE_ONLY" if v23_q_tile_facts.get("status") == "PASS_REAL_ORIGINAL_NY8_Q_PORT_TILE" else v23_q_tile_facts.get("status"),
+                "patched_q_source_sha": preflight.get("source_sha"),
+                "old_scan_source_sha": expected_old_source,
+                "old_scan_run_directory": str(scan_directory),
+                "old_scan_manifest_sha256": _sha256_file(scan_manifest_path),
+                "old_q_failure_path": str(old_q_failure_path),
+                "old_q_failure_sha256": _sha256_file(old_q_failure_path),
+                "old_q_failure_type": old_q_failure.get("failure_type"),
+                "old_q_failure_message": old_q_failure.get("failure_message"),
+                "old_checkpoint_metadata_path": str(checkpoint_metadata_path),
+                "old_checkpoint_metadata_sha256": _sha256_file(checkpoint_metadata_path),
+                "old_checkpoint_payload_path": str(checkpoint_payload_path),
+                "old_checkpoint_payload_sha256": _sha256_file(checkpoint_payload_path),
+                "old_checkpoint_completed_mode_count": int(checkpoint["completed_mode_count"]),
+                "old_checkpoint_field_sha256": old_field_sha256,
+                "mesh_mpc_h_and_mode_identity_revalidated": True,
+                "mode_scan_repeated": False,
+                "full_q_matrix_coverage": "0/8",
+                "factor_count": 0,
+                "ksp_created": False,
+                "pde_solved": False,
+                "official_result": False,
+                "q_tile_status": v23_q_tile_facts.get("status"),
+                "q_tile_artifact_path": v23_q_tile_facts.get("artifact_path"),
+            }
+            supplement_path = output_directory / "v23_q_only_supplement.json"
+            _write_json(supplement_path, supplement)
+            supplement["artifact_path"] = supplement_path.name
+            supplement["artifact_sha256"] = _sha256_file(supplement_path)
+            facts["q_only_supplement"] = supplement
+            facts["status"] = (
+                "PASS_V23_Q_ONLY_SUPPLEMENT"
+                if supplement["status"] == "PASS_Q_TILE_ONLY"
+                else "FAILED_V23_Q_ONLY_SUPPLEMENT"
+            )
+            facts["failed_stage"] = None if supplement["status"] == "PASS_Q_TILE_ONLY" else "target_operator_probe"
+            if supplement["status"] == "PASS_Q_TILE_ONLY":
+                completed.append("target_operator_probe")
+            return facts
         if is_v23_campaign:
             facts["scan_schedule"] = {
                 "q_tile_planned_reserve_seconds": 3600.0,
@@ -4961,7 +5132,7 @@ def _run_probe(
                 cfg=cfg,
                 assemblers=assemblers,
                 assembly_context=context,
-                axes_values=geometry_facts["actual_axes"],
+                axes_values=_v23_actual_axis_values(resolved),
                 mapping_rows=mapping_rows,
                 boundary_global_rows=boundary_global_rows,
                 interior_rows=interior_rows_sorted,

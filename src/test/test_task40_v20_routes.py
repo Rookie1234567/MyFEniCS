@@ -95,6 +95,26 @@ def test_service_campaign_router_keeps_v19_and_scopes_v22_to_ny8(monkeypatch):
         )
 
 
+def test_v23_q_only_scan_selector_is_consumed_only_once():
+    from scripts.task40_v20_service_workflow import _extract_v23_q_only_scan_arg
+
+    forwarded, scan = _extract_v23_q_only_scan_arg(
+        [
+            "case.dat",
+            "--task40-v10-campaign-window",
+            "window.json",
+            "--v23-q-only-scan-checkpoint",
+            "results/old_scan",
+        ]
+    )
+    assert forwarded == ["case.dat", "--task40-v10-campaign-window", "window.json"]
+    assert scan == (ROOT / "results/old_scan").resolve()
+    with pytest.raises(ValueError, match="only once"):
+        _extract_v23_q_only_scan_arg(
+            ["case.dat", "--v23-q-only-scan-checkpoint=a", "--v23-q-only-scan-checkpoint=b"]
+        )
+
+
 def test_v20_worker_contract_reports_registered_six_hour_campaign_limit():
     from src.io.physical_intermediate_profile import profile_facts
     from src.runners import task40_v10_worker

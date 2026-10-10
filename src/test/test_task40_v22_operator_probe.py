@@ -14,10 +14,23 @@ from src.solvers.task40_v22_operator_probe import (
     _mapped_port_face_global_rows,
     _same_v23_mpc_function_space_layout,
     _summarize_cell_mode_support,
+    _v23_actual_axis_values,
     _v23_checkpoint_directory,
     _write_v22_action_checkpoint,
 )
 from src.runners.task40_v10_campaign import TASK40_V23_CAMPAIGN_SHA256
+
+
+def test_v23_axis_values_use_resolved_coordinate_vectors_not_cell_counts():
+    axes = {"x": [0.0, 1.0, 2.0], "y": [0.0, 0.5], "z": [0.0, 3.0]}
+    resolved = {
+        "discretization": {
+            f"mesh_axis_{axis}_values": values for axis, values in axes.items()
+        },
+        "geometry_facts": {"actual_axes": [2, 1, 1]},
+    }
+
+    assert _v23_actual_axis_values(resolved) == axes
 
 
 class _FakeDofMap:

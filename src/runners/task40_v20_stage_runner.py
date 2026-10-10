@@ -1067,6 +1067,10 @@ def run_task40_v20_stage(
             outcome = "STAGE_COMPLETED"
             status = "stage_completed"
             classification = "TARGET_OPERATOR_PROBE_COMPLETE_WITH_PARTIAL_Q_PORT_TILE"
+        elif probe_status == "PASS_V23_Q_ONLY_SUPPLEMENT":
+            outcome = "STAGE_COMPLETED"
+            status = "stage_completed"
+            classification = "TARGET_OPERATOR_PROBE_Q_ONLY_SUPPLEMENT"
         elif probe_status == "PLANNED_SCAN_HANDOFF_WITH_PARTIAL_Q_PORT_TILE":
             outcome = "PLANNED_HANDOFF"
             status = "planned_handoff"
@@ -1128,6 +1132,7 @@ def run_task40_v20_stage(
                     "v20_geometry_inventory.json",
                     "v22_target_operator_probe.json",
                     "v23_reference_q_port_tile.json",
+                    "v23_q_only_supplement.json",
                     "v23_selected_mode_production_B_D_H.npz",
                     "v23_selected_q_projection_readback.npz",
                 )
@@ -1137,6 +1142,7 @@ def run_task40_v20_stage(
             "not_run": [name for name in V20_STAGE_NAMES if name not in completed],
             "geometry_inventory": probe.get("geometry_inventory"),
             "target_operator_probe": probe,
+            "q_only_supplement": probe.get("q_only_supplement"),
             "full_field_release_allowed": False,
         }
         _write_json(output_directory / "v20_partial_result.json", receipt)
