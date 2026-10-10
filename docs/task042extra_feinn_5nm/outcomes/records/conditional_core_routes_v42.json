@@ -1,0 +1,1007 @@
+{
+  "schema": "task42extra.v42.routes.v1",
+  "routes": {
+    "BLOCH_FTTNN_CORE_LEARNED": {
+      "stage": "v42_bloch_fttnn_learned",
+      "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+      "input_sha256": "e3e1dcae7615706401d1b6ffee885cb348d98b94d647ee484cd9fba6bc094d9d",
+      "model_kind": "fttnn",
+      "status": "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED",
+      "stop_reason": "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED",
+      "counts": {
+        "core_visits": 12,
+        "LSMR_iterations": 3358,
+        "LSMR_unretained_iterations_upper_bound": 0,
+        "accepted_core_updates": 12,
+        "effective_core_updates": 12,
+        "accepted_hidden_updates": 4,
+        "effective_hidden_updates": 4,
+        "hidden_actual_calls": 53,
+        "K": 3394,
+        "KH": 3394,
+        "B": 3382,
+        "BH": 3394,
+        "round_audits": 4,
+        "uncommitted_K": 0,
+        "uncommitted_KH": 0
+      },
+      "exclusive_top_level_costs": {
+        "core_solve_and_check": 2740.0098835073877,
+        "real_acceptance": 8.189551123417914,
+        "hidden": 43.45128865283914,
+        "persistence": 1.2729172811377794,
+        "audit": 0.8378342781215906,
+        "scalar_validation": 42.562125503085554
+      },
+      "nested_mapping_costs_not_additive": {
+        "setup": 0.2266749299596995,
+        "core_evaluation": 0.277464083628729,
+        "contraction": 473.45075287204236,
+        "moments": 203.60560474731028,
+        "core_cotangent": 1278.478114270838,
+        "core_backward": 35.14422497735359,
+        "cache_hash": 1.622105548158288
+      },
+      "native_action_counts": {
+        "A": 3468,
+        "AH": 3447,
+        "audit": 5,
+        "port_solve": 6926
+      },
+      "nested_native_action_costs_not_additive": {
+        "A": 263.5144208515994,
+        "AH": 468.3946830474306,
+        "audit": 0.9424774015787989,
+        "port_solve": 0.4923807324375957
+      },
+      "cache_planned_bytes": 2507428,
+      "original_equation": {
+        "native_relative": 0.4445502961171412,
+        "augmented_relative": 0.4445502961171412,
+        "original_total_augmented_relative": 0.2105842582154816,
+        "port_absolute": 2.22044755607561e-16,
+        "port_full_rhs_relative": 7.629302767528097e-16,
+        "port_operation_relative": 5.546651087793344e-18,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 11.602667610419735,
+        "full_coefficient_norm": 16.934600865260624,
+        "port_unknown_norm": 0.28728330271186164,
+        "strict_pass": false
+      },
+      "rounds": [
+        {
+          "round": 0,
+          "native": 0.7458208710527267,
+          "start_native": 1.0,
+          "relative_native_improvement": 0.25417912894727335,
+          "original_equation": {
+            "native_relative": 0.7458208710527267,
+            "augmented_relative": 0.7458208710527267,
+            "original_total_augmented_relative": 0.3532966601620069,
+            "port_absolute": 1.777278193561073e-15,
+            "port_full_rhs_relative": 6.106603780711456e-15,
+            "port_operation_relative": 8.309024090661907e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 5.566900365617067,
+            "full_coefficient_norm": 8.15885716362016,
+            "port_unknown_norm": 0.14968092836358685,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 3,
+            "LSMR_iterations": 684,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 3,
+            "effective_core_updates": 3,
+            "accepted_hidden_updates": 1,
+            "effective_hidden_updates": 1,
+            "hidden_actual_calls": 14,
+            "K": 693,
+            "KH": 693,
+            "B": 690,
+            "BH": 693,
+            "round_audits": 1,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 1,
+          "native": 0.7414145076395426,
+          "start_native": 0.7458208710527267,
+          "relative_native_improvement": 0.005908072010594751,
+          "original_equation": {
+            "native_relative": 0.7414145076395426,
+            "augmented_relative": 0.7414145076395426,
+            "original_total_augmented_relative": 0.3512093580526576,
+            "port_absolute": 1.7763571210624967e-15,
+            "port_full_rhs_relative": 6.103439039917081e-15,
+            "port_operation_relative": 8.417957971017517e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 5.507300406733194,
+            "full_coefficient_norm": 8.0706187316528,
+            "port_unknown_norm": 0.14778329263711235,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 6,
+            "LSMR_iterations": 1584,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 6,
+            "effective_core_updates": 6,
+            "accepted_hidden_updates": 2,
+            "effective_hidden_updates": 2,
+            "hidden_actual_calls": 28,
+            "K": 1602,
+            "KH": 1602,
+            "B": 1596,
+            "BH": 1602,
+            "round_audits": 2,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 2,
+            "boundary_sha256": "8c976e14ff2d2b7c84e018d8c8f12c6603994cf0d1fc04267c9d178728eb627f",
+            "field_sha256": "b5d9bab8470742e12cb5ff2edfe348709dc935a53d5d54631c9591c3af036287",
+            "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+            "design_sha256": "59ea6a6ad008a835671fae2b17cc324e85abe1536bcc581139ef24f54941c21b",
+            "native_relative": 0.7414145076395426,
+            "augmented_relative": 0.7414145076395426,
+            "scattered_E_relative": 0.47185776611813274,
+            "scattered_H_relative": 0.47227456456719313,
+            "scattered_curl_relative": 0.47227456456719313,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 436850688
+          },
+          "predeclared_continuation_allowed": true
+        },
+        {
+          "round": 2,
+          "native": 0.6738096748863964,
+          "start_native": 0.7414145076395426,
+          "relative_native_improvement": 0.0911835849670398,
+          "original_equation": {
+            "native_relative": 0.6738096748863964,
+            "augmented_relative": 0.6738096748863964,
+            "original_total_augmented_relative": 0.31918482971145595,
+            "port_absolute": 1.5731581601112173e-16,
+            "port_full_rhs_relative": 5.405261597760172e-16,
+            "port_operation_relative": 5.72178934340935e-18,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 7.524948200863766,
+            "full_coefficient_norm": 11.006355170410439,
+            "port_unknown_norm": 0.1946960912748728,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 9,
+            "LSMR_iterations": 2458,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 9,
+            "effective_core_updates": 9,
+            "accepted_hidden_updates": 3,
+            "effective_hidden_updates": 3,
+            "hidden_actual_calls": 41,
+            "K": 2485,
+            "KH": 2485,
+            "B": 2476,
+            "BH": 2485,
+            "round_audits": 3,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 3,
+          "native": 0.4445502961171412,
+          "start_native": 0.6738096748863964,
+          "relative_native_improvement": 0.3402435247132777,
+          "original_equation": {
+            "native_relative": 0.4445502961171412,
+            "augmented_relative": 0.4445502961171412,
+            "original_total_augmented_relative": 0.2105842582154816,
+            "port_absolute": 2.22044755607561e-16,
+            "port_full_rhs_relative": 7.629302767528097e-16,
+            "port_operation_relative": 5.546651087793344e-18,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 11.602667610419735,
+            "full_coefficient_norm": 16.934600865260624,
+            "port_unknown_norm": 0.28728330271186164,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 12,
+            "LSMR_iterations": 3358,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 12,
+            "effective_core_updates": 12,
+            "accepted_hidden_updates": 4,
+            "effective_hidden_updates": 4,
+            "hidden_actual_calls": 53,
+            "K": 3394,
+            "KH": 3394,
+            "B": 3382,
+            "BH": 3394,
+            "round_audits": 4,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 4,
+            "boundary_sha256": "c72def0a2c1afa0930d072097996d6e673939668ff18a22a7669a6b81d7cc49a",
+            "field_sha256": "97715e98944f32be85bd0b4241d150007b1124e6e86e5582bfe593afded37ac9",
+            "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+            "design_sha256": "59ea6a6ad008a835671fae2b17cc324e85abe1536bcc581139ef24f54941c21b",
+            "native_relative": 0.4445502961171412,
+            "augmented_relative": 0.4445502961171412,
+            "scattered_E_relative": 0.13262668389171134,
+            "scattered_H_relative": 0.13288426317472338,
+            "scattered_curl_relative": 0.13288426317472338,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 436604928
+          },
+          "predeclared_continuation_allowed": false
+        }
+      ],
+      "checkpoint": {
+        "name": "committed_000023.pt",
+        "sha256": "820482a3ff75c87203f301e628b5874be2e387b0627b8765a96e1a8ae6076c2f",
+        "bytes": 1887719
+      },
+      "history": {
+        "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_fttnn_learned/history.jsonl",
+        "sha256": "5b4ec3dc55969d0c771aa8d84bd57d55bfce1cf1e3bff0ec9eea89dc5223d7c3",
+        "bytes": 36280
+      },
+      "stop_code_histogram": {
+        "2": 3,
+        "7": 9
+      },
+      "linearity_pair_max": 9.864684478783135e-13,
+      "max_true_adjoint_relative": 0.23334542817779652,
+      "all_actual_accepted_core_and_hidden_updates_rechecked": true,
+      "phase_definition": {
+        "wavevector_nm_inverse": [
+          1.2564456695248023,
+          0.0,
+          0.0
+        ],
+        "origin_nm": [
+          0.0,
+          0.0,
+          3.75
+        ],
+        "coordinate_unit": "physical_nm",
+        "sign": 1,
+        "unfolded_incident_wavevector": true,
+        "phase_applied": "before_complete_moments_and_Piola",
+        "MPC_expansion_count": 1,
+        "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+        "sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+      },
+      "validation_used_for_stopping": true,
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "design_informed_by_reference_diagnostics": true,
+      "production_initialization_allowed": false,
+      "official_candidate_results": false,
+      "pde_only_solver_qualified": false,
+      "new_global_factors": 0,
+      "full_FE_Krylov_count": 0,
+      "Gsolve_count": 0,
+      "LSMR_internal_state_recoverable": false
+    },
+    "BLOCH_FTTNN_CORE_FROZEN": {
+      "stage": "v42_bloch_fttnn_frozen",
+      "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+      "input_sha256": "f2158cba8205df2f70e72c8f57cef52ca7dbd2657a956d47f66096fa6e5c44f2",
+      "model_kind": "fttnn",
+      "status": "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED",
+      "stop_reason": "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED",
+      "counts": {
+        "core_visits": 12,
+        "LSMR_iterations": 3050,
+        "LSMR_unretained_iterations_upper_bound": 0,
+        "accepted_core_updates": 12,
+        "effective_core_updates": 12,
+        "accepted_hidden_updates": 0,
+        "effective_hidden_updates": 0,
+        "hidden_actual_calls": 0,
+        "K": 3086,
+        "KH": 3086,
+        "B": 3074,
+        "BH": 3086,
+        "round_audits": 4,
+        "uncommitted_K": 0,
+        "uncommitted_KH": 0
+      },
+      "exclusive_top_level_costs": {
+        "core_solve_and_check": 2047.211652071448,
+        "real_acceptance": 4.720687414286658,
+        "hidden": 0.0,
+        "persistence": 0.7483278464060277,
+        "audit": 0.34152066288515925,
+        "scalar_validation": 32.90556716825813
+      },
+      "nested_mapping_costs_not_additive": {
+        "setup": 0.4591369070112705,
+        "core_evaluation": 0.026909181149676442,
+        "contraction": 379.136500477558,
+        "moments": 158.27628399641253,
+        "core_cotangent": 985.974056570325,
+        "core_backward": 18.29067207244225,
+        "cache_hash": 1.368779813637957
+      },
+      "native_action_counts": {
+        "A": 3099,
+        "AH": 3086,
+        "audit": 5,
+        "port_solve": 6196
+      },
+      "nested_native_action_costs_not_additive": {
+        "A": 162.317156531848,
+        "AH": 303.3807538866531,
+        "audit": 0.5272935240063816,
+        "port_solve": 0.19408826064318419
+      },
+      "cache_planned_bytes": 2507428,
+      "original_equation": {
+        "native_relative": 0.7431417894533643,
+        "augmented_relative": 0.7431417894533643,
+        "original_total_augmented_relative": 0.35202757448996697,
+        "port_absolute": 1.77635693786786e-15,
+        "port_full_rhs_relative": 6.1034384104731e-15,
+        "port_operation_relative": 8.445637260392955e-17,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 5.478920938348757,
+        "full_coefficient_norm": 8.029607277921876,
+        "port_unknown_norm": 0.1472078765204092,
+        "strict_pass": false
+      },
+      "rounds": [
+        {
+          "round": 0,
+          "native": 0.7460663046143842,
+          "start_native": 1.0,
+          "relative_native_improvement": 0.25393369538561583,
+          "original_equation": {
+            "native_relative": 0.7460663046143842,
+            "augmented_relative": 0.7460663046143842,
+            "original_total_augmented_relative": 0.3534129224724222,
+            "port_absolute": 1.7764246051065516e-15,
+            "port_full_rhs_relative": 6.103670910380611e-15,
+            "port_operation_relative": 8.295376898791129e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 5.573632070668163,
+            "full_coefficient_norm": 8.168703516129458,
+            "port_unknown_norm": 0.14985211047549085,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 3,
+            "LSMR_iterations": 684,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 3,
+            "effective_core_updates": 3,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 693,
+            "KH": 693,
+            "B": 690,
+            "BH": 693,
+            "round_audits": 1,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 1,
+          "native": 0.7440919981564101,
+          "start_native": 0.7460663046143842,
+          "relative_native_improvement": 0.002646288199538082,
+          "original_equation": {
+            "native_relative": 0.7440919981564101,
+            "augmented_relative": 0.7440919981564101,
+            "original_total_augmented_relative": 0.3524776900261122,
+            "port_absolute": 5.594401091548124e-17,
+            "port_full_rhs_relative": 1.9221971540658596e-16,
+            "port_operation_relative": 2.6575802267949285e-18,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 5.4839019044180555,
+            "full_coefficient_norm": 8.036896898096888,
+            "port_unknown_norm": 0.14734045756900777,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 6,
+            "LSMR_iterations": 1479,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 6,
+            "effective_core_updates": 6,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 1497,
+            "KH": 1497,
+            "B": 1491,
+            "BH": 1497,
+            "round_audits": 2,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 2,
+            "boundary_sha256": "c27f9ea44178e94771e2b5ceec54bee7477c1585f7adc1484b653a9cc31dfdea",
+            "field_sha256": "713f4f34d0a7676fc30bc82c5e1d7048dd977588198b0068228f45afeab6cb6d",
+            "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+            "design_sha256": "59ea6a6ad008a835671fae2b17cc324e85abe1536bcc581139ef24f54941c21b",
+            "native_relative": 0.7440919981564101,
+            "augmented_relative": 0.7440919981564101,
+            "scattered_E_relative": 0.47448493666164004,
+            "scattered_H_relative": 0.4749004479886711,
+            "scattered_curl_relative": 0.4749004479886711,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 444936192
+          },
+          "predeclared_continuation_allowed": true
+        },
+        {
+          "round": 2,
+          "native": 0.7436017043296416,
+          "start_native": 0.7440919981564101,
+          "relative_native_improvement": 0.0006589156018117963,
+          "original_equation": {
+            "native_relative": 0.7436017043296416,
+            "augmented_relative": 0.7436017043296416,
+            "original_total_augmented_relative": 0.3522454369768648,
+            "port_absolute": 1.7764110741329147e-15,
+            "port_full_rhs_relative": 6.103624418899949e-15,
+            "port_operation_relative": 8.446743319420081e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 5.47895966290112,
+            "full_coefficient_norm": 8.029640192470142,
+            "port_unknown_norm": 0.14720321743445128,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 9,
+            "LSMR_iterations": 2281,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 9,
+            "effective_core_updates": 9,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 2308,
+            "KH": 2308,
+            "B": 2299,
+            "BH": 2308,
+            "round_audits": 3,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 3,
+          "native": 0.7431417894533643,
+          "start_native": 0.7436017043296416,
+          "relative_native_improvement": 0.0006184962643299653,
+          "original_equation": {
+            "native_relative": 0.7431417894533643,
+            "augmented_relative": 0.7431417894533643,
+            "original_total_augmented_relative": 0.35202757448996697,
+            "port_absolute": 1.77635693786786e-15,
+            "port_full_rhs_relative": 6.1034384104731e-15,
+            "port_operation_relative": 8.445637260392955e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 5.478920938348757,
+            "full_coefficient_norm": 8.029607277921876,
+            "port_unknown_norm": 0.1472078765204092,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 12,
+            "LSMR_iterations": 3050,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 12,
+            "effective_core_updates": 12,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 3086,
+            "KH": 3086,
+            "B": 3074,
+            "BH": 3086,
+            "round_audits": 4,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 4,
+            "boundary_sha256": "98c71fbd9917925a65017e8f15412a7629e9c570feaaa44bda517867c42f657b",
+            "field_sha256": "7516d589d2912f0a1c9fc0c32df7909397e3302d090ac19510c5b970c6a80043",
+            "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+            "design_sha256": "59ea6a6ad008a835671fae2b17cc324e85abe1536bcc581139ef24f54941c21b",
+            "native_relative": 0.7431417894533643,
+            "augmented_relative": 0.7431417894533643,
+            "scattered_E_relative": 0.4750046686931137,
+            "scattered_H_relative": 0.47541840062705076,
+            "scattered_curl_relative": 0.47541840062705076,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 436797440
+          },
+          "predeclared_continuation_allowed": false
+        }
+      ],
+      "checkpoint": {
+        "name": "committed_000019.pt",
+        "sha256": "40cdd60283efe2d07b8a21235c46b9223d8572ff745e3c619dd19ca87c778bbb",
+        "bytes": 1729244
+      },
+      "history": {
+        "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_fttnn_frozen/history.jsonl",
+        "sha256": "4f71541590456aed455d51edb5edb2c2916def575725cc98e7607731275e5383",
+        "bytes": 26854
+      },
+      "stop_code_histogram": {
+        "2": 5,
+        "7": 7
+      },
+      "linearity_pair_max": 9.864684478783135e-13,
+      "max_true_adjoint_relative": 0.8656661643392679,
+      "all_actual_accepted_core_and_hidden_updates_rechecked": true,
+      "phase_definition": {
+        "wavevector_nm_inverse": [
+          1.2564456695248023,
+          0.0,
+          0.0
+        ],
+        "origin_nm": [
+          0.0,
+          0.0,
+          3.75
+        ],
+        "coordinate_unit": "physical_nm",
+        "sign": 1,
+        "unfolded_incident_wavevector": true,
+        "phase_applied": "before_complete_moments_and_Piola",
+        "MPC_expansion_count": 1,
+        "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+        "sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+      },
+      "validation_used_for_stopping": true,
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "design_informed_by_reference_diagnostics": true,
+      "production_initialization_allowed": false,
+      "official_candidate_results": false,
+      "pde_only_solver_qualified": false,
+      "new_global_factors": 0,
+      "full_FE_Krylov_count": 0,
+      "Gsolve_count": 0,
+      "LSMR_internal_state_recoverable": false
+    },
+    "BLOCH_CHEBTT_CORE_CONTROL": {
+      "stage": "v42_bloch_chebtt_control",
+      "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+      "input_sha256": "9dd9ffd8330f0fd50dcc5131d45f1762606163e9c5dd1884ac6a2cb6571886e5",
+      "model_kind": "chebtt",
+      "status": "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED",
+      "stop_reason": "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED",
+      "counts": {
+        "core_visits": 12,
+        "LSMR_iterations": 3600,
+        "LSMR_unretained_iterations_upper_bound": 0,
+        "accepted_core_updates": 12,
+        "effective_core_updates": 12,
+        "accepted_hidden_updates": 0,
+        "effective_hidden_updates": 0,
+        "hidden_actual_calls": 0,
+        "K": 3636,
+        "KH": 3636,
+        "B": 3624,
+        "BH": 3636,
+        "round_audits": 4,
+        "uncommitted_K": 0,
+        "uncommitted_KH": 0
+      },
+      "exclusive_top_level_costs": {
+        "core_solve_and_check": 2773.8114426028915,
+        "real_acceptance": 6.078929272247478,
+        "hidden": 0.0,
+        "persistence": 1.118511601118371,
+        "audit": 0.536183969816193,
+        "scalar_validation": 38.55694803618826
+      },
+      "nested_mapping_costs_not_additive": {
+        "setup": 0.2639326450880617,
+        "core_evaluation": 0.06373406946659088,
+        "contraction": 478.84780076285824,
+        "moments": 206.84313791058958,
+        "core_cotangent": 1291.85271157627,
+        "core_backward": 32.570213318103924,
+        "cache_hash": 1.2458085974212736
+      },
+      "native_action_counts": {
+        "A": 3649,
+        "AH": 3636,
+        "audit": 5,
+        "port_solve": 7296
+      },
+      "nested_native_action_costs_not_additive": {
+        "A": 263.3063756832853,
+        "AH": 445.4810261146631,
+        "audit": 1.0990003123879433,
+        "port_solve": 0.38712332118302584
+      },
+      "cache_planned_bytes": 2507428,
+      "original_equation": {
+        "native_relative": 0.23415990592109232,
+        "augmented_relative": 0.23415990592109232,
+        "original_total_augmented_relative": 0.11092195983867663,
+        "port_absolute": 1.6047132160133067e-17,
+        "port_full_rhs_relative": 5.5136825666160185e-17,
+        "port_operation_relative": 5.349597926060654e-17,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 0.21247647554891225,
+        "full_coefficient_norm": 0.30517692247551387,
+        "port_unknown_norm": 0.0020088667795663947,
+        "strict_pass": false
+      },
+      "rounds": [
+        {
+          "round": 0,
+          "native": 0.373862729150472,
+          "start_native": 1.0,
+          "relative_native_improvement": 0.6261372708495281,
+          "original_equation": {
+            "native_relative": 0.373862729150472,
+            "augmented_relative": 0.373862729150472,
+            "original_total_augmented_relative": 0.17709943324800625,
+            "port_absolute": 2.4848511071366607e-18,
+            "port_full_rhs_relative": 8.537774907901244e-18,
+            "port_operation_relative": 2.834944041226796e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.07786043645075805,
+            "full_coefficient_norm": 0.11090548324553902,
+            "port_unknown_norm": 0.0006110886442004664,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 3,
+            "LSMR_iterations": 900,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 3,
+            "effective_core_updates": 3,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 909,
+            "KH": 909,
+            "B": 906,
+            "BH": 909,
+            "round_audits": 1,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 1,
+          "native": 0.27672389976190526,
+          "start_native": 0.373862729150472,
+          "relative_native_improvement": 0.25982485499235297,
+          "original_equation": {
+            "native_relative": 0.27672389976190526,
+            "augmented_relative": 0.27672389976190526,
+            "original_total_augmented_relative": 0.13108459868507016,
+            "port_absolute": 5.116559431789538e-18,
+            "port_full_rhs_relative": 1.758014096138584e-17,
+            "port_operation_relative": 3.137603555135586e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.12145444073944726,
+            "full_coefficient_norm": 0.1728424089347328,
+            "port_unknown_norm": 0.0011067459735677814,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 6,
+            "LSMR_iterations": 1800,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 6,
+            "effective_core_updates": 6,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 1818,
+            "KH": 1818,
+            "B": 1812,
+            "BH": 1818,
+            "round_audits": 2,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 2,
+            "boundary_sha256": "f9c68b4646bc9fddd83bf1cf166c93de25bbf7aed0dc9e4e0631a9edf74f4f13",
+            "field_sha256": "e2f648e3bca5898e616271c462737c8fa22b533ab4369db55203f5a6c3aa7f8b",
+            "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+            "design_sha256": "59ea6a6ad008a835671fae2b17cc324e85abe1536bcc581139ef24f54941c21b",
+            "native_relative": 0.27672389976190526,
+            "augmented_relative": 0.27672389976190526,
+            "scattered_E_relative": 0.9972643276260883,
+            "scattered_H_relative": 0.9972316041632125,
+            "scattered_curl_relative": 0.9972316041632125,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 437002240
+          },
+          "predeclared_continuation_allowed": true
+        },
+        {
+          "round": 2,
+          "native": 0.24991375839652863,
+          "start_native": 0.27672389976190526,
+          "relative_native_improvement": 0.09688408333520963,
+          "original_equation": {
+            "native_relative": 0.24991375839652863,
+            "augmented_relative": 0.24991375839652863,
+            "original_total_augmented_relative": 0.11838458750208819,
+            "port_absolute": 1.4542020036904665e-17,
+            "port_full_rhs_relative": 4.996536550004783e-17,
+            "port_operation_relative": 6.190890870746599e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.16785019514807936,
+            "full_coefficient_norm": 0.24042467091025063,
+            "port_unknown_norm": 0.0015736429849174337,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 9,
+            "LSMR_iterations": 2700,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 9,
+            "effective_core_updates": 9,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 2727,
+            "KH": 2727,
+            "B": 2718,
+            "BH": 2727,
+            "round_audits": 3,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          }
+        },
+        {
+          "round": 3,
+          "native": 0.23415990592109232,
+          "start_native": 0.24991375839652863,
+          "relative_native_improvement": 0.06303715560325525,
+          "original_equation": {
+            "native_relative": 0.23415990592109232,
+            "augmented_relative": 0.23415990592109232,
+            "original_total_augmented_relative": 0.11092195983867663,
+            "port_absolute": 1.6047132160133067e-17,
+            "port_full_rhs_relative": 5.5136825666160185e-17,
+            "port_operation_relative": 5.349597926060654e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 0.21247647554891225,
+            "full_coefficient_norm": 0.30517692247551387,
+            "port_unknown_norm": 0.0020088667795663947,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 12,
+            "LSMR_iterations": 3600,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 12,
+            "effective_core_updates": 12,
+            "accepted_hidden_updates": 0,
+            "effective_hidden_updates": 0,
+            "hidden_actual_calls": 0,
+            "K": 3636,
+            "KH": 3636,
+            "B": 3624,
+            "BH": 3636,
+            "round_audits": 4,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 4,
+            "boundary_sha256": "da8ad9015c6ca2c382681c423572a966ca4c2081db495e1d745b7d7f5a9021fc",
+            "field_sha256": "31a6362f970ee906737a65db865d20626b921759238f67e1bd955ad8587d4950",
+            "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+            "design_sha256": "59ea6a6ad008a835671fae2b17cc324e85abe1536bcc581139ef24f54941c21b",
+            "native_relative": 0.23415990592109232,
+            "augmented_relative": 0.23415990592109232,
+            "scattered_E_relative": 0.9905539455393946,
+            "scattered_H_relative": 0.9904936479655901,
+            "scattered_curl_relative": 0.9904936479655901,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 436215808
+          },
+          "predeclared_continuation_allowed": false
+        }
+      ],
+      "checkpoint": {
+        "name": "committed_000019.pt",
+        "sha256": "3af9e9d7dffbf36e08d33df9ac1b77f37f2c21e51b1326c49589f636c063bbd2",
+        "bytes": 1702390
+      },
+      "history": {
+        "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_chebtt_control/history.jsonl",
+        "sha256": "1080e2a222ca1ac52e5efbaccff9692d43abbeb70119ed0547dddb7b36c1b065",
+        "bytes": 26937
+      },
+      "stop_code_histogram": {
+        "7": 12
+      },
+      "linearity_pair_max": 8.667555354860959e-16,
+      "max_true_adjoint_relative": 0.5340281409771108,
+      "all_actual_accepted_core_and_hidden_updates_rechecked": true,
+      "phase_definition": {
+        "wavevector_nm_inverse": [
+          1.2564456695248023,
+          0.0,
+          0.0
+        ],
+        "origin_nm": [
+          0.0,
+          0.0,
+          3.75
+        ],
+        "coordinate_unit": "physical_nm",
+        "sign": 1,
+        "unfolded_incident_wavevector": true,
+        "phase_applied": "before_complete_moments_and_Piola",
+        "MPC_expansion_count": 1,
+        "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+        "sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+      },
+      "validation_used_for_stopping": true,
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "design_informed_by_reference_diagnostics": true,
+      "production_initialization_allowed": false,
+      "official_candidate_results": false,
+      "pde_only_solver_qualified": false,
+      "new_global_factors": 0,
+      "full_FE_Krylov_count": 0,
+      "Gsolve_count": 0,
+      "LSMR_internal_state_recoverable": false
+    }
+  },
+  "inherited_training_updates": 0,
+  "old_10186_wave_prefix_required_for_new_solve": false,
+  "actual_initialization": {
+    "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+    "abi": {
+      "python": "/home/fenics/Projects/NN-Lab-V2/.venv-ml/bin/python",
+      "mode": "ml",
+      "activated": true,
+      "threads": {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1"
+      },
+      "cpu_affinity": [
+        3
+      ],
+      "numpy": "1.26.4",
+      "cuda_visible": "",
+      "torch": "2.7.1+cpu",
+      "torch_threads": 1,
+      "torch_interop": 1,
+      "torch_default_dtype": "torch.float32",
+      "neuron_and_derivative_dtype": "FTT parameters and coordinate buffers float64; paired complex outputs and complete moments complex128",
+      "dtype_verification": "explicit FTTField dtype and qualified mapping"
+    },
+    "zero_and_final": {
+      "v42_bloch_fttnn_learned": {
+        "zero": {
+          "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_fttnn_learned/checkpoints/committed_000000.pt",
+          "sha256": "f258cad13aca74f6969126545125d75498182d3d55c573791ec7615e3db163b0",
+          "bytes": 1381842
+        },
+        "final": {
+          "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_fttnn_learned/checkpoints/committed_000023.pt",
+          "sha256": "820482a3ff75c87203f301e628b5874be2e387b0627b8765a96e1a8ae6076c2f",
+          "bytes": 1887719
+        }
+      },
+      "v42_bloch_fttnn_frozen": {
+        "zero": {
+          "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_fttnn_frozen/checkpoints/committed_000000.pt",
+          "sha256": "0c82bc1910a923847f77b2ab4dbac8082c0251029de350024b8f6a2f182b695f",
+          "bytes": 1381906
+        },
+        "final": {
+          "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_fttnn_frozen/checkpoints/committed_000019.pt",
+          "sha256": "40cdd60283efe2d07b8a21235c46b9223d8572ff745e3c619dd19ca87c778bbb",
+          "bytes": 1729244
+        }
+      },
+      "v42_bloch_chebtt_control": {
+        "zero": {
+          "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_chebtt_control/checkpoints/committed_000000.pt",
+          "sha256": "dd74dca2df38051344b81eadd77d92e2b17f8a8fce55fdccd59ec01b4573365b",
+          "bytes": 1376127
+        },
+        "final": {
+          "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_chebtt_control/checkpoints/committed_000019.pt",
+          "sha256": "3af9e9d7dffbf36e08d33df9ac1b77f37f2c21e51b1326c49589f636c063bbd2",
+          "bytes": 1702390
+        }
+      }
+    },
+    "NN_initial_parameters_and_buffers_bitwise_equal": true,
+    "all_routes_initial_c_exact_zero": true,
+    "x_y_nonzero_z_output_only_zero": true,
+    "hidden_parameter_count": 912,
+    "frozen_hidden_bitwise_unchanged": true,
+    "learned_hidden_final_difference_norm": 0.0015149363485671974,
+    "buffers_bitwise_unchanged": true,
+    "reference_identity_in_training_checkpoints": null,
+    "new_training_or_model_forward_or_native_action": false,
+    "training_source_separate_from_document_HEAD": true,
+    "all_phase_buffers_bitwise_retained": true,
+    "Torch_intra_threads": 1,
+    "Torch_interop_threads": 1,
+    "full_pytest_run": false,
+    "CI_claimed": false
+  },
+  "conditional_linear_contribution_vs_hidden_learning_separated": true,
+  "initialization_field_exact_zero": true,
+  "full_cold_N1": "UNKNOWN"
+}

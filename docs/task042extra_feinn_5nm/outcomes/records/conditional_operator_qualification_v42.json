@@ -1,0 +1,1099 @@
+{
+  "schema": "task42extra.v42.qualification.v1",
+  "raw_qualification": {
+    "models": {
+      "fttnn": {
+        "initial_old_point_pair": {
+          "numerator": 3.8275125525857843e-16,
+          "denominator": 0.19178854312079402,
+          "relative": 1.9956940546626424e-15
+        },
+        "axes": [
+          {
+            "axis": 0,
+            "K_adjoint_relative": 1.3146391942052814e-15,
+            "B_adjoint_relative": 1.6973983709598148e-15,
+            "complex_linearity": {
+              "numerator": 1.0310308043661441e-16,
+              "denominator": 0.2007598090702917,
+              "relative": 5.135643479343771e-16
+            },
+            "pure_imaginary_linearity": {
+              "numerator": 9.935128802824368e-17,
+              "denominator": 0.19183122683401613,
+              "relative": 5.179098818682339e-16
+            },
+            "bias_all_components_linearity": {
+              "numerator": 8.725877154878028e-17,
+              "denominator": 0.19177175261776108,
+              "relative": 4.55013683494379e-16
+            },
+            "independent_old_point_mapping": {
+              "numerator": 4.109769223915129e-16,
+              "denominator": 0.20075980907029178,
+              "relative": 2.04710755750728e-15
+            },
+            "short_inner": {
+              "stop_code": 7,
+              "iterations": 3,
+              "reported_normr": 2.702027747235696,
+              "reported_normar": 30.06815385216438,
+              "reported_normA": 55.87874011331772,
+              "reported_condA": 1.6800468374909838,
+              "reported_normx": 0.34171004617159145,
+              "true_linear_residual_norm": 2.702027747235695,
+              "true_linear_rhs_norm": 9.0296812610296,
+              "true_adjoint_residual_norm": 30.068153852164418,
+              "true_adjoint_initial_norm": 262.5275564075494,
+              "true_adjoint_residual_relative": 0.11453332466739768,
+              "counts": {
+                "K": 9,
+                "KH": 8,
+                "B": 6,
+                "BH": 7
+              },
+              "costs_including_nested_actions": {
+                "K": 1.5217649131081998,
+                "KH": 1.9878781726583838,
+                "B": 1.1817355640232563,
+                "BH": 2.2857429226860404
+              },
+              "solve_and_independent_check_seconds": 2.95134933385998,
+              "inexact_at_iteration_limit": true,
+              "original_PDE_pass_from_stop_code": false
+            },
+            "short_acceptance": {
+              "linearity_pairing": {
+                "numerator": 9.786113918783304e-17,
+                "denominator": 0.0639150911350315,
+                "relative": 1.5311116271599263e-15
+              },
+              "old_loss": 40.767571837894565,
+              "trial_loss": 3.6504769734158096,
+              "native_trial": 2.702027747235696,
+              "accepted": true,
+              "effective_decrease": true,
+              "delta_complex_norm": 0.34171004617159145
+            },
+            "restored_parameter_hash": "9909d87d5da4df8c08ab7bb04113144087fb065d36ed0c0ea446d40c4dfcf8bb",
+            "cache_bytes": 476768,
+            "complete_axis_work_seconds": 17.065180567093194,
+            "complete_work_save": {
+              "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_ftt_checks/qualification_work_fttnn_axis0.pt",
+              "sha256": "0a9111f820c226e46121d91446d01128962c52edd817072633529bb462c66a2c"
+            }
+          },
+          {
+            "axis": 1,
+            "K_adjoint_relative": 2.272997308932539e-15,
+            "B_adjoint_relative": 7.463047947467573e-15,
+            "complex_linearity": {
+              "numerator": 1.0923542148501523e-16,
+              "denominator": 0.22198082611765418,
+              "relative": 4.920939497140097e-16
+            },
+            "pure_imaginary_linearity": {
+              "numerator": 8.974436968378334e-17,
+              "denominator": 0.2042818232000776,
+              "relative": 4.3931647112766345e-16
+            },
+            "bias_all_components_linearity": {
+              "numerator": 8.89387246618069e-17,
+              "denominator": 0.19175329185002415,
+              "relative": 4.638185024295096e-16
+            },
+            "independent_old_point_mapping": {
+              "numerator": 4.637550626332142e-16,
+              "denominator": 0.2219808261176542,
+              "relative": 2.0891672075651024e-15
+            },
+            "short_inner": {
+              "stop_code": 7,
+              "iterations": 3,
+              "reported_normr": 1.743010939028028,
+              "reported_normar": 50.22060553796666,
+              "reported_normA": 113.42331476203265,
+              "reported_condA": 2.1258221199562612,
+              "reported_normx": 0.17387540438252605,
+              "true_linear_residual_norm": 1.743010939028031,
+              "true_linear_rhs_norm": 9.0296812610296,
+              "true_adjoint_residual_norm": 50.22060553796672,
+              "true_adjoint_initial_norm": 579.7885271498656,
+              "true_adjoint_residual_relative": 0.086618832878329,
+              "counts": {
+                "K": 9,
+                "KH": 8,
+                "B": 6,
+                "BH": 7
+              },
+              "costs_including_nested_actions": {
+                "K": 1.7279883967712522,
+                "KH": 2.5560047596227378,
+                "B": 1.1156670979689807,
+                "BH": 2.5382082485593855
+              },
+              "solve_and_independent_check_seconds": 3.1379066868685186,
+              "inexact_at_iteration_limit": true,
+              "original_PDE_pass_from_stop_code": false
+            },
+            "short_acceptance": {
+              "linearity_pairing": {
+                "numerator": 1.0336136099968581e-16,
+                "denominator": 0.036540701074322876,
+                "relative": 2.828663872361162e-15
+              },
+              "old_loss": 40.767571837894565,
+              "trial_loss": 1.5190435667856896,
+              "native_trial": 1.7430109390280304,
+              "accepted": true,
+              "effective_decrease": true,
+              "delta_complex_norm": 0.17387540438252605
+            },
+            "restored_parameter_hash": "9909d87d5da4df8c08ab7bb04113144087fb065d36ed0c0ea446d40c4dfcf8bb",
+            "cache_bytes": 467248,
+            "complete_axis_work_seconds": 17.49267651210539,
+            "complete_work_save": {
+              "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_ftt_checks/qualification_work_fttnn_axis1.pt",
+              "sha256": "3020dd1b07595774d19e95c73f5f5b2ee8a6b58a75d41fce0c26a6d08ac0f6ab"
+            }
+          },
+          {
+            "axis": 2,
+            "K_adjoint_relative": 1.88047296294905e-15,
+            "B_adjoint_relative": 2.990878279719894e-15,
+            "complex_linearity": {
+              "numerator": 2.1245329053678245e-16,
+              "denominator": 0.6975354516514575,
+              "relative": 3.045770505768365e-16
+            },
+            "pure_imaginary_linearity": {
+              "numerator": 1.569370229133353e-16,
+              "denominator": 0.4640050309094888,
+              "relative": 3.382226753139412e-16
+            },
+            "bias_all_components_linearity": {
+              "numerator": 7.915538707977651e-17,
+              "denominator": 0.1863954549208138,
+              "relative": 4.246637189378036e-16
+            },
+            "independent_old_point_mapping": {
+              "numerator": 1.39841080291969e-15,
+              "denominator": 0.6975354516514576,
+              "relative": 2.004788143181637e-15
+            },
+            "short_inner": {
+              "stop_code": 7,
+              "iterations": 3,
+              "reported_normr": 1.1588987182434585,
+              "reported_normar": 90.74496124734985,
+              "reported_normA": 435.49513947769833,
+              "reported_condA": 1.5709923098739778,
+              "reported_normx": 0.04979217390893965,
+              "true_linear_residual_norm": 1.15889871824346,
+              "true_linear_rhs_norm": 9.0296812610296,
+              "true_adjoint_residual_norm": 90.74496124734996,
+              "true_adjoint_initial_norm": 1986.2824786416795,
+              "true_adjoint_residual_relative": 0.04568582878977313,
+              "counts": {
+                "K": 9,
+                "KH": 8,
+                "B": 6,
+                "BH": 7
+              },
+              "costs_including_nested_actions": {
+                "K": 1.4105536111164838,
+                "KH": 2.2965744689572603,
+                "B": 1.1730834119953215,
+                "BH": 2.423220712225884
+              },
+              "solve_and_independent_check_seconds": 3.051490796962753,
+              "inexact_at_iteration_limit": true,
+              "original_PDE_pass_from_stop_code": false
+            },
+            "short_acceptance": {
+              "linearity_pairing": {
+                "numerator": 8.988382402647068e-17,
+                "denominator": 0.016640265706102598,
+                "relative": 5.40158586491242e-15
+              },
+              "old_loss": 40.767571837894565,
+              "trial_loss": 0.6715231195731687,
+              "native_trial": 1.1588987182434618,
+              "accepted": true,
+              "effective_decrease": true,
+              "delta_complex_norm": 0.04979217390893965
+            },
+            "restored_parameter_hash": "9909d87d5da4df8c08ab7bb04113144087fb065d36ed0c0ea446d40c4dfcf8bb",
+            "cache_bytes": 477040,
+            "complete_axis_work_seconds": 17.980921514099464,
+            "complete_work_save": {
+              "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_ftt_checks/qualification_work_fttnn_axis2.pt",
+              "sha256": "c04c7f241ec0be16090f6976c895a02d7b76cfd173981b65432c3e4b57641dfe"
+            }
+          }
+        ],
+        "hidden_FD": [
+          [
+            {
+              "h": 0.0001,
+              "FD": -23.400953639871602,
+              "adjoint": -23.400953625194454,
+              "relative": 6.272030025535789e-10
+            },
+            {
+              "h": 1e-05,
+              "FD": -23.400953624630457,
+              "adjoint": -23.400953625194454,
+              "relative": 2.4101447242561753e-11
+            },
+            {
+              "h": 1e-06,
+              "FD": -23.400953644170386,
+              "adjoint": -23.400953625194454,
+              "relative": 8.109042146502621e-10
+            }
+          ],
+          [
+            {
+              "h": 0.0001,
+              "FD": -21.008486182410024,
+              "adjoint": -21.008486154055035,
+              "relative": 1.3496921777856221e-09
+            },
+            {
+              "h": 1e-05,
+              "FD": -21.008486155338346,
+              "adjoint": -21.008486154055035,
+              "relative": 6.108537405158164e-11
+            },
+            {
+              "h": 1e-06,
+              "FD": -21.008486164930673,
+              "adjoint": -21.008486154055035,
+              "relative": 5.176783363844797e-10
+            }
+          ],
+          [
+            {
+              "h": 0.0001,
+              "FD": 1.5965495391867535,
+              "adjoint": 1.5965495692600928,
+              "relative": 1.883645829315716e-08
+            },
+            {
+              "h": 1e-05,
+              "FD": 1.5965495691716567,
+              "adjoint": 1.5965495692600928,
+              "relative": 5.5392046070408807e-11
+            },
+            {
+              "h": 1e-06,
+              "FD": 1.596549555671345,
+              "adjoint": 1.5965495692600928,
+              "relative": 8.511322270431624e-09
+            }
+          ]
+        ],
+        "full_parameter_count": 9072,
+        "qualified": true,
+        "qualification_not_used_as_formal_initialization": true
+      },
+      "chebtt": {
+        "initial_old_point_pair": {
+          "numerator": 1.3326758074208636e-12,
+          "denominator": 72.30370933032764,
+          "relative": 1.8431638151956826e-14
+        },
+        "axes": [
+          {
+            "axis": 0,
+            "K_adjoint_relative": 2.7220488134514336e-15,
+            "B_adjoint_relative": 1.161805372398813e-15,
+            "complex_linearity": {
+              "numerator": 2.740885954687058e-14,
+              "denominator": 74.54877837484642,
+              "relative": 3.676634298291685e-16
+            },
+            "pure_imaginary_linearity": {
+              "numerator": 2.585136802328692e-14,
+              "denominator": 73.615103837801,
+              "relative": 3.511693480762621e-16
+            },
+            "bias_all_components_linearity": {
+              "numerator": 2.309002214541963e-14,
+              "denominator": 72.30639220695151,
+              "relative": 3.193358351960446e-16
+            },
+            "independent_old_point_mapping": {
+              "numerator": 1.3740378011859197e-12,
+              "denominator": 74.54877837484672,
+              "relative": 1.843139258804447e-14
+            },
+            "short_inner": {
+              "stop_code": 7,
+              "iterations": 3,
+              "reported_normr": 1917.2617801781673,
+              "reported_normar": 1876534.6194061001,
+              "reported_normA": 4784.549030094842,
+              "reported_condA": 1.7078642249147018,
+              "reported_normx": 2.6831852202104574,
+              "true_linear_residual_norm": 1917.2617801781657,
+              "true_linear_rhs_norm": 5254.015953604975,
+              "true_adjoint_residual_norm": 1876534.6194060978,
+              "true_adjoint_initial_norm": 9593625.214490747,
+              "true_adjoint_residual_relative": 0.1956022439329478,
+              "counts": {
+                "K": 9,
+                "KH": 8,
+                "B": 6,
+                "BH": 7
+              },
+              "costs_including_nested_actions": {
+                "K": 1.5240010449197143,
+                "KH": 2.3542832925450057,
+                "B": 1.17649034736678,
+                "BH": 2.503988955402747
+              },
+              "solve_and_independent_check_seconds": 3.177406763890758,
+              "inexact_at_iteration_limit": true,
+              "original_PDE_pass_from_stop_code": false
+            },
+            "short_acceptance": {
+              "linearity_pairing": {
+                "numerator": 2.567827845377016e-14,
+                "denominator": 43.09887248774339,
+                "relative": 5.95799309159947e-16
+              },
+              "old_loss": 13802341.820367793,
+              "trial_loss": 1837946.366865975,
+              "native_trial": 1917.2617801781646,
+              "accepted": true,
+              "effective_decrease": true,
+              "delta_complex_norm": 2.6831852202104574
+            },
+            "restored_parameter_hash": "d8c178e18cad76b5a44b164bee37bddeacf6e4f792f8a14fa5270cd5a31f3011",
+            "cache_bytes": 481312,
+            "complete_axis_work_seconds": 22.242705577984452,
+            "complete_work_save": {
+              "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_ftt_checks/qualification_work_chebtt_axis0.pt",
+              "sha256": "99a5539bc3e2cf476a4f69e949aa676b8ffd61bf4d0dfc4561e11962527d278e"
+            }
+          },
+          {
+            "axis": 1,
+            "K_adjoint_relative": 7.017920156157739e-15,
+            "B_adjoint_relative": 2.7781097140530606e-15,
+            "complex_linearity": {
+              "numerator": 2.6350060700896283e-14,
+              "denominator": 72.3257302447012,
+              "relative": 3.6432484831809583e-16
+            },
+            "pure_imaginary_linearity": {
+              "numerator": 2.3157601816912757e-14,
+              "denominator": 72.37377282275888,
+              "relative": 3.199722898739161e-16
+            },
+            "bias_all_components_linearity": {
+              "numerator": 2.1871997458157182e-14,
+              "denominator": 72.297826393435,
+              "relative": 3.025263489822326e-16
+            },
+            "independent_old_point_mapping": {
+              "numerator": 1.3361184554460803e-12,
+              "denominator": 72.32573024470146,
+              "relative": 1.847362551232538e-14
+            },
+            "short_inner": {
+              "stop_code": 7,
+              "iterations": 3,
+              "reported_normr": 2620.171108277965,
+              "reported_normar": 1328323.009842465,
+              "reported_normA": 2980.0066445940283,
+              "reported_condA": 1.4875744473326802,
+              "reported_normx": 3.825004999734799,
+              "true_linear_residual_norm": 2620.171108277967,
+              "true_linear_rhs_norm": 5254.015953604975,
+              "true_adjoint_residual_norm": 1328323.0098424654,
+              "true_adjoint_initial_norm": 5459118.943958845,
+              "true_adjoint_residual_relative": 0.24332186630819072,
+              "counts": {
+                "K": 9,
+                "KH": 8,
+                "B": 6,
+                "BH": 7
+              },
+              "costs_including_nested_actions": {
+                "K": 1.8096976042725146,
+                "KH": 2.326816733693704,
+                "B": 1.6274674660526216,
+                "BH": 2.886632716981694
+              },
+              "solve_and_independent_check_seconds": 3.987140875076875,
+              "inexact_at_iteration_limit": true,
+              "original_PDE_pass_from_stop_code": false
+            },
+            "short_acceptance": {
+              "linearity_pairing": {
+                "numerator": 2.618136956072625e-14,
+                "denominator": 60.34078813181049,
+                "relative": 4.338917400869005e-16
+              },
+              "old_loss": 13802341.820367793,
+              "trial_loss": 3432648.3183272895,
+              "native_trial": 2620.171108277966,
+              "accepted": true,
+              "effective_decrease": true,
+              "delta_complex_norm": 3.825004999734799
+            },
+            "restored_parameter_hash": "d8c178e18cad76b5a44b164bee37bddeacf6e4f792f8a14fa5270cd5a31f3011",
+            "cache_bytes": 470672,
+            "complete_axis_work_seconds": 22.851561418036,
+            "complete_work_save": {
+              "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_ftt_checks/qualification_work_chebtt_axis1.pt",
+              "sha256": "bb4bc3c047a036a7ddf5b06bb29f9473afcfa809550a874cde0450cb3a72b277"
+            }
+          },
+          {
+            "axis": 2,
+            "K_adjoint_relative": 2.5493060323673026e-14,
+            "B_adjoint_relative": 4.1385570953591254e-15,
+            "complex_linearity": {
+              "numerator": 3.5172884749178224e-14,
+              "denominator": 106.61440976914376,
+              "relative": 3.29907418944019e-16
+            },
+            "pure_imaginary_linearity": {
+              "numerator": 2.854168528656622e-14,
+              "denominator": 85.93861156478191,
+              "relative": 3.3211713299616253e-16
+            },
+            "bias_all_components_linearity": {
+              "numerator": 1.9252441614030815e-14,
+              "denominator": 72.22667092757867,
+              "relative": 2.665558493390225e-16
+            },
+            "independent_old_point_mapping": {
+              "numerator": 1.9555173119867326e-12,
+              "denominator": 106.61440976914416,
+              "relative": 1.834196068074739e-14
+            },
+            "short_inner": {
+              "stop_code": 7,
+              "iterations": 3,
+              "reported_normr": 1314.1932482280363,
+              "reported_normar": 5539502.964583185,
+              "reported_normA": 17348.337250853285,
+              "reported_condA": 1.436431191935182,
+              "reported_normx": 0.6478043507164151,
+              "true_linear_residual_norm": 1314.1932482280379,
+              "true_linear_rhs_norm": 5254.015953604975,
+              "true_adjoint_residual_norm": 5539502.964583189,
+              "true_adjoint_initial_norm": 42382233.679407254,
+              "true_adjoint_residual_relative": 0.13070342178012037,
+              "counts": {
+                "K": 9,
+                "KH": 8,
+                "B": 6,
+                "BH": 7
+              },
+              "costs_including_nested_actions": {
+                "K": 1.489325480768457,
+                "KH": 2.375221615890041,
+                "B": 1.1700447327457368,
+                "BH": 2.5267064289655536
+              },
+              "solve_and_independent_check_seconds": 3.178181894822046,
+              "inexact_at_iteration_limit": true,
+              "original_PDE_pass_from_stop_code": false
+            },
+            "short_acceptance": {
+              "linearity_pairing": {
+                "numerator": 2.2036872688579807e-14,
+                "denominator": 34.03349101532111,
+                "relative": 6.475055021143527e-16
+              },
+              "old_loss": 13802341.820367793,
+              "trial_loss": 863551.9468440792,
+              "native_trial": 1314.1932482280372,
+              "accepted": true,
+              "effective_decrease": true,
+              "delta_complex_norm": 0.6478043507164151
+            },
+            "restored_parameter_hash": "d8c178e18cad76b5a44b164bee37bddeacf6e4f792f8a14fa5270cd5a31f3011",
+            "cache_bytes": 481616,
+            "complete_axis_work_seconds": 22.489823983050883,
+            "complete_work_save": {
+              "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_ftt_checks/qualification_work_chebtt_axis2.pt",
+              "sha256": "7a052c27fffe58f43c59e643b823c98a1b30488c70e230792c1d90d92f51a819"
+            }
+          }
+        ],
+        "hidden_FD": [],
+        "full_parameter_count": 9120,
+        "qualified": true,
+        "qualification_not_used_as_formal_initialization": true
+      }
+    },
+    "qualified": true,
+    "reference_used_for_training": false,
+    "reference_loaded": false,
+    "physical_phase": {
+      "fttnn": {
+        "moment_families": {
+          "edge": {
+            "count": 3744,
+            "norm": 0.06461999690714434,
+            "numerator": 1.1303626284762807e-16,
+            "denominator": 0.06461999690714436,
+            "relative": 1.7492458721416439e-15
+          },
+          "face": {
+            "count": 14400,
+            "norm": 0.12723209115461628,
+            "numerator": 1.9627258527143475e-16,
+            "denominator": 0.12723209115461628,
+            "relative": 1.5426342795302984e-15
+          },
+          "interior": {
+            "count": 13824,
+            "norm": 0.12813702139717725,
+            "numerator": 3.085423778905044e-16,
+            "denominator": 0.12813702139717725,
+            "relative": 2.4079097088899656e-15
+          }
+        },
+        "zero_phase_regression": {
+          "c": {
+            "numerator": 0.0,
+            "denominator": 0.18546601454698267,
+            "relative": 0.0
+          },
+          "original_action": {
+            "numerator": 0.0,
+            "denominator": 2.4245474179904067,
+            "relative": 0.0
+          },
+          "VJP": {
+            "numerator": 0.0,
+            "denominator": 16.253969670530015,
+            "relative": 0.0
+          },
+          "K_axis0": {
+            "numerator": 0.0,
+            "denominator": 2.2843038866413865,
+            "relative": 0.0
+          },
+          "KH_axis0": {
+            "numerator": 0.0,
+            "denominator": 2.4753284080836275,
+            "relative": 0.0
+          },
+          "K_axis1": {
+            "numerator": 0.0,
+            "denominator": 6.524703902678006,
+            "relative": 0.0
+          },
+          "KH_axis1": {
+            "numerator": 0.0,
+            "denominator": 5.807140912604136,
+            "relative": 0.0
+          },
+          "K_axis2": {
+            "numerator": 0.0,
+            "denominator": 25.8508114072112,
+            "relative": 0.0
+          },
+          "KH_axis2": {
+            "numerator": 0.0,
+            "denominator": 14.176167719413463,
+            "relative": 0.0
+          }
+        },
+        "q30_q60": {
+          "numerator": 7.959366873584751e-16,
+          "denominator": 0.191788543120794,
+          "relative": 4.150074214063825e-15
+        },
+        "q30_q60_original_A_load_relative": 1.0790924738826763e-13,
+        "negative_controls": {
+          "wrong_sign": {
+            "numerator": 0.2659056039344119,
+            "denominator": 0.191788543120794,
+            "relative": 1.3864519726130713
+          },
+          "wrong_units": {
+            "numerator": 0.32017946847864365,
+            "denominator": 0.191788543120794,
+            "relative": 1.669440015908486
+          },
+          "folded_kx": {
+            "numerator": 0.24857036637118396,
+            "denominator": 0.191788543120794,
+            "relative": 1.2960647300742418
+          },
+          "duplicate_MPC": {
+            "numerator": 9.902078543826666e-05,
+            "denominator": 0.24787733692266292,
+            "relative": 0.00039947494461408094
+          }
+        },
+        "phase_cache_invalidated": true,
+        "complete_state_restored": {
+          "numerator": 0.0,
+          "denominator": 0.191788543120794,
+          "relative": 0.0
+        },
+        "qualified": true,
+        "complete_batch1_batch8_pair": {
+          "numerator": 0.0,
+          "denominator": 0.191788543120794,
+          "relative": 0.0
+        },
+        "additional_phase_checks_elapsed_seconds": 122.83608115208335,
+        "reference_loaded": false,
+        "qualification_not_used_as_initialization": true
+      },
+      "chebtt": {
+        "moment_families": {
+          "edge": {
+            "count": 3744,
+            "norm": 27.878723662664754,
+            "numerator": 9.139088973529441e-13,
+            "denominator": 27.878723662665053,
+            "relative": 3.2781590305615144e-14
+          },
+          "face": {
+            "count": 14400,
+            "norm": 46.80908346536664,
+            "numerator": 9.43026463064562e-13,
+            "denominator": 46.80908346536687,
+            "relative": 2.0146227895324824e-14
+          },
+          "interior": {
+            "count": 13824,
+            "norm": 47.534333433820066,
+            "numerator": 2.26928237519968e-13,
+            "denominator": 47.534333433820066,
+            "relative": 4.773985898759053e-15
+          }
+        },
+        "zero_phase_regression": {
+          "c": {
+            "numerator": 0.0,
+            "denominator": 73.09304409308427,
+            "relative": 0.0
+          },
+          "original_action": {
+            "numerator": 0.0,
+            "denominator": 1467.1794187452658,
+            "relative": 0.0
+          },
+          "VJP": {
+            "numerator": 0.0,
+            "denominator": 2426.3663143549807,
+            "relative": 0.0
+          },
+          "K_axis0": {
+            "numerator": 0.0,
+            "denominator": 426.18333730526933,
+            "relative": 0.0
+          },
+          "KH_axis0": {
+            "numerator": 0.0,
+            "denominator": 442.3826802941377,
+            "relative": 0.0
+          },
+          "K_axis1": {
+            "numerator": 0.0,
+            "denominator": 437.84556711808165,
+            "relative": 0.0
+          },
+          "KH_axis1": {
+            "numerator": 0.0,
+            "denominator": 443.71480182814975,
+            "relative": 0.0
+          },
+          "K_axis2": {
+            "numerator": 0.0,
+            "denominator": 2387.1841955587706,
+            "relative": 0.0
+          },
+          "KH_axis2": {
+            "numerator": 0.0,
+            "denominator": 2344.0708671563143,
+            "relative": 0.0
+          }
+        },
+        "q30_q60": {
+          "numerator": 1.347145073645643e-12,
+          "denominator": 72.30370933032755,
+          "relative": 1.8631756048518348e-14
+        },
+        "q30_q60_original_A_load_relative": 1.4286916589612738e-10,
+        "negative_controls": {
+          "wrong_sign": {
+            "numerator": 106.41222973743662,
+            "denominator": 72.34341080321055,
+            "relative": 1.4709318866219967
+          },
+          "wrong_units": {
+            "numerator": 113.18938347913407,
+            "denominator": 73.0513265304707,
+            "relative": 1.5494500764735768
+          },
+          "folded_kx": {
+            "numerator": 105.35206944308494,
+            "denominator": 73.09305285927523,
+            "relative": 1.4413417598785678
+          },
+          "duplicate_MPC": {
+            "numerator": 0.03191693088120358,
+            "denominator": 95.98231759462023,
+            "relative": 0.0003325292791533147
+          }
+        },
+        "phase_cache_invalidated": true,
+        "complete_state_restored": {
+          "numerator": 0.0,
+          "denominator": 72.30370933032735,
+          "relative": 0.0
+        },
+        "qualified": true,
+        "complete_batch1_batch8_pair": {
+          "numerator": 0.0,
+          "denominator": 72.30370933032735,
+          "relative": 0.0
+        },
+        "additional_phase_checks_elapsed_seconds": 169.55100066098385,
+        "reference_loaded": false,
+        "qualification_not_used_as_initialization": true
+      }
+    },
+    "phase_definition": {
+      "wavevector_nm_inverse": [
+        1.2564456695248023,
+        0.0,
+        0.0
+      ],
+      "origin_nm": [
+        0.0,
+        0.0,
+        3.75
+      ],
+      "coordinate_unit": "physical_nm",
+      "sign": 1,
+      "unfolded_incident_wavevector": true,
+      "phase_applied": "before_complete_moments_and_Piola",
+      "MPC_expansion_count": 1,
+      "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+      "sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+    },
+    "production_initialization_allowed": false,
+    "label_firewall_negative_checks": [
+      {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+        "rejected": true
+      },
+      {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+        "rejected": true
+      },
+      {
+        "path": "benchmarks/artifacts/task42extra/v40/v40_interior_moment_tensor/interior_tensor.npz",
+        "rejected": true
+      },
+      {
+        "path": "benchmarks/artifacts/task42extra/v39/v39_fttnn_fit_continue/checkpoints/committed_000001.pt",
+        "rejected": true
+      }
+    ],
+    "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+    "input_sha256": "2ce9f55295d3ab8b670e3091da060fe028825854f5ded829670851ee25e0d577",
+    "design_sha256": "59ea6a6ad008a835671fae2b17cc324e85abe1536bcc581139ef24f54941c21b",
+    "worker_elapsed_seconds": 450.07189358305186,
+    "features_reference_exposed": false,
+    "benchmark_previously_seen": true,
+    "design_informed_by_reference_diagnostics": true,
+    "official_candidate_results": false,
+    "pde_only_solver_qualified": false,
+    "global_Maxwell_factor_count": 0,
+    "global_Gram_factor_count": 0,
+    "Gsolve_count": 0,
+    "full_original_target_qualified": false
+  },
+  "qualification_record": {
+    "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_ftt_checks/result.json",
+    "sha256": "2e06adaea62742cc177c197e4e20adcd72052b698c154b5fc490d8adbeada4c1",
+    "bytes": 29422
+  },
+  "qualification_recomputed_from_numeric_fields": {
+    "fttnn": {
+      "derived_pass": true,
+      "maximum_linear_and_adjoint_relative": 7.463047947467573e-15,
+      "parameter_count": 9072
+    },
+    "chebtt": {
+      "derived_pass": true,
+      "maximum_linear_and_adjoint_relative": 2.5493060323673026e-14,
+      "parameter_count": 9120
+    }
+  },
+  "physical_phase_checks": {
+    "fttnn": {
+      "moment_families": {
+        "edge": {
+          "count": 3744,
+          "norm": 0.06461999690714434,
+          "numerator": 1.1303626284762807e-16,
+          "denominator": 0.06461999690714436,
+          "relative": 1.7492458721416439e-15
+        },
+        "face": {
+          "count": 14400,
+          "norm": 0.12723209115461628,
+          "numerator": 1.9627258527143475e-16,
+          "denominator": 0.12723209115461628,
+          "relative": 1.5426342795302984e-15
+        },
+        "interior": {
+          "count": 13824,
+          "norm": 0.12813702139717725,
+          "numerator": 3.085423778905044e-16,
+          "denominator": 0.12813702139717725,
+          "relative": 2.4079097088899656e-15
+        }
+      },
+      "zero_phase_regression": {
+        "c": {
+          "numerator": 0.0,
+          "denominator": 0.18546601454698267,
+          "relative": 0.0
+        },
+        "original_action": {
+          "numerator": 0.0,
+          "denominator": 2.4245474179904067,
+          "relative": 0.0
+        },
+        "VJP": {
+          "numerator": 0.0,
+          "denominator": 16.253969670530015,
+          "relative": 0.0
+        },
+        "K_axis0": {
+          "numerator": 0.0,
+          "denominator": 2.2843038866413865,
+          "relative": 0.0
+        },
+        "KH_axis0": {
+          "numerator": 0.0,
+          "denominator": 2.4753284080836275,
+          "relative": 0.0
+        },
+        "K_axis1": {
+          "numerator": 0.0,
+          "denominator": 6.524703902678006,
+          "relative": 0.0
+        },
+        "KH_axis1": {
+          "numerator": 0.0,
+          "denominator": 5.807140912604136,
+          "relative": 0.0
+        },
+        "K_axis2": {
+          "numerator": 0.0,
+          "denominator": 25.8508114072112,
+          "relative": 0.0
+        },
+        "KH_axis2": {
+          "numerator": 0.0,
+          "denominator": 14.176167719413463,
+          "relative": 0.0
+        }
+      },
+      "q30_q60": {
+        "numerator": 7.959366873584751e-16,
+        "denominator": 0.191788543120794,
+        "relative": 4.150074214063825e-15
+      },
+      "q30_q60_original_A_load_relative": 1.0790924738826763e-13,
+      "negative_controls": {
+        "wrong_sign": {
+          "numerator": 0.2659056039344119,
+          "denominator": 0.191788543120794,
+          "relative": 1.3864519726130713
+        },
+        "wrong_units": {
+          "numerator": 0.32017946847864365,
+          "denominator": 0.191788543120794,
+          "relative": 1.669440015908486
+        },
+        "folded_kx": {
+          "numerator": 0.24857036637118396,
+          "denominator": 0.191788543120794,
+          "relative": 1.2960647300742418
+        },
+        "duplicate_MPC": {
+          "numerator": 9.902078543826666e-05,
+          "denominator": 0.24787733692266292,
+          "relative": 0.00039947494461408094
+        }
+      },
+      "phase_cache_invalidated": true,
+      "complete_state_restored": {
+        "numerator": 0.0,
+        "denominator": 0.191788543120794,
+        "relative": 0.0
+      },
+      "qualified": true,
+      "complete_batch1_batch8_pair": {
+        "numerator": 0.0,
+        "denominator": 0.191788543120794,
+        "relative": 0.0
+      },
+      "additional_phase_checks_elapsed_seconds": 122.83608115208335,
+      "reference_loaded": false,
+      "qualification_not_used_as_initialization": true
+    },
+    "chebtt": {
+      "moment_families": {
+        "edge": {
+          "count": 3744,
+          "norm": 27.878723662664754,
+          "numerator": 9.139088973529441e-13,
+          "denominator": 27.878723662665053,
+          "relative": 3.2781590305615144e-14
+        },
+        "face": {
+          "count": 14400,
+          "norm": 46.80908346536664,
+          "numerator": 9.43026463064562e-13,
+          "denominator": 46.80908346536687,
+          "relative": 2.0146227895324824e-14
+        },
+        "interior": {
+          "count": 13824,
+          "norm": 47.534333433820066,
+          "numerator": 2.26928237519968e-13,
+          "denominator": 47.534333433820066,
+          "relative": 4.773985898759053e-15
+        }
+      },
+      "zero_phase_regression": {
+        "c": {
+          "numerator": 0.0,
+          "denominator": 73.09304409308427,
+          "relative": 0.0
+        },
+        "original_action": {
+          "numerator": 0.0,
+          "denominator": 1467.1794187452658,
+          "relative": 0.0
+        },
+        "VJP": {
+          "numerator": 0.0,
+          "denominator": 2426.3663143549807,
+          "relative": 0.0
+        },
+        "K_axis0": {
+          "numerator": 0.0,
+          "denominator": 426.18333730526933,
+          "relative": 0.0
+        },
+        "KH_axis0": {
+          "numerator": 0.0,
+          "denominator": 442.3826802941377,
+          "relative": 0.0
+        },
+        "K_axis1": {
+          "numerator": 0.0,
+          "denominator": 437.84556711808165,
+          "relative": 0.0
+        },
+        "KH_axis1": {
+          "numerator": 0.0,
+          "denominator": 443.71480182814975,
+          "relative": 0.0
+        },
+        "K_axis2": {
+          "numerator": 0.0,
+          "denominator": 2387.1841955587706,
+          "relative": 0.0
+        },
+        "KH_axis2": {
+          "numerator": 0.0,
+          "denominator": 2344.0708671563143,
+          "relative": 0.0
+        }
+      },
+      "q30_q60": {
+        "numerator": 1.347145073645643e-12,
+        "denominator": 72.30370933032755,
+        "relative": 1.8631756048518348e-14
+      },
+      "q30_q60_original_A_load_relative": 1.4286916589612738e-10,
+      "negative_controls": {
+        "wrong_sign": {
+          "numerator": 106.41222973743662,
+          "denominator": 72.34341080321055,
+          "relative": 1.4709318866219967
+        },
+        "wrong_units": {
+          "numerator": 113.18938347913407,
+          "denominator": 73.0513265304707,
+          "relative": 1.5494500764735768
+        },
+        "folded_kx": {
+          "numerator": 105.35206944308494,
+          "denominator": 73.09305285927523,
+          "relative": 1.4413417598785678
+        },
+        "duplicate_MPC": {
+          "numerator": 0.03191693088120358,
+          "denominator": 95.98231759462023,
+          "relative": 0.0003325292791533147
+        }
+      },
+      "phase_cache_invalidated": true,
+      "complete_state_restored": {
+        "numerator": 0.0,
+        "denominator": 72.30370933032735,
+        "relative": 0.0
+      },
+      "qualified": true,
+      "complete_batch1_batch8_pair": {
+        "numerator": 0.0,
+        "denominator": 72.30370933032735,
+        "relative": 0.0
+      },
+      "additional_phase_checks_elapsed_seconds": 169.55100066098385,
+      "reference_loaded": false,
+      "qualification_not_used_as_initialization": true
+    }
+  },
+  "phase_definition": {
+    "wavevector_nm_inverse": [
+      1.2564456695248023,
+      0.0,
+      0.0
+    ],
+    "origin_nm": [
+      0.0,
+      0.0,
+      3.75
+    ],
+    "coordinate_unit": "physical_nm",
+    "sign": 1,
+    "unfolded_incident_wavevector": true,
+    "phase_applied": "before_complete_moments_and_Piola",
+    "MPC_expansion_count": 1,
+    "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+    "sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+  },
+  "full_edge_face_interior_Piola_owner_orientation_MPC": true,
+  "exact_skew_geometry_fallback_preserved": true,
+  "actual_M5_y_phase": 1.0,
+  "two_nonunit_Floquet_seams_scope": "targeted synthetic full-map fixture; not a new physical M5 identity",
+  "new_N_by_parameter_or_explicit_B_matrix": false,
+  "new_AH_A_or_BH_B": false,
+  "adjoint_lhs_rhs_vectors": "NOT_RETAINED; independently recorded dot-pair ratios retained; no replay to invent vectors"
+}

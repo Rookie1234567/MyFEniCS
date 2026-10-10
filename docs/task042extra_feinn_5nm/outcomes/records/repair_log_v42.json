@@ -1,0 +1,147 @@
+{
+  "schema": "task42extra.v42.repairs.v1",
+  "repair_journal": [
+    {
+      "failure": "cfg.kx complex carrier raised float TypeError before design write",
+      "hypothesis": "air k stored complex with zero imaginary component",
+      "change": "validate exact real finite k first then take real part; no altered wavevector",
+      "test": "original physical cfg phase_definition",
+      "phase_definition": {
+        "wavevector_nm_inverse": [
+          1.2564456695248023,
+          0.0,
+          0.0
+        ],
+        "origin_nm": [
+          0.0,
+          0.0,
+          3.75
+        ],
+        "coordinate_unit": "physical_nm",
+        "sign": 1,
+        "unfolded_incident_wavevector": true,
+        "phase_applied": "before_complete_moments_and_Piola",
+        "MPC_expansion_count": 1,
+        "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+        "sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+      },
+      "healthy_arrays_recomputed": false
+    },
+    {
+      "failure": "15 new Bloch tests rejected integer metadata buffers by the qualified all-FP64 mapping check",
+      "hypothesis": "new immutable identity codes were uint8/int64, while existing mapping requires FP64 state",
+      "change": "store exact 0..255 identity codes as nontrainable FP64 buffers; numerical cores/phase unchanged",
+      "test": "test02 62 passed, old default regressions included",
+      "old_failure": "tmp/task42extra/v42/test01/junit.xml",
+      "healthy_arrays_recomputed": false,
+      "monotonic": 1572088.724488927
+    },
+    {
+      "scope": "read_only_status_helper_after_context_compaction",
+      "failure": "unactivated shell had no python command",
+      "hypothesis": "qualified task activation was missing only from the readonly helper invocation",
+      "change": "source existing activate_task42extra.sh pure in the same shell",
+      "test": "readonly window/process/history query succeeded with exact current source",
+      "resume": "same live supervised calculation retained; no numerical restart",
+      "monotonic": 1578152.715071641
+    },
+    {
+      "scope": "publication_helper_static_repair",
+      "failure": "static inspection found two stale V41 state keys in the new saved-state-only publication helper",
+      "hypothesis": "prior-version helper copied with route references unchanged",
+      "change": "use exact V42 saved learned and frozen route keys; also check Cheb phase buffers",
+      "test": "AST parse of all V42 ignored publication helpers passed; real saved state test follows final numerical cleanup",
+      "resume": "same frozen healthy route outputs; no model forward or training repeated",
+      "monotonic": 1581811.893774456
+    },
+    {
+      "scope": "publication_helper_real_reopen_check",
+      "failure": "stale saved-state helper route keys were caught before execution",
+      "hypothesis": "documentation helper carried two prior-version names",
+      "change": "exact V42 keys and all-route buffer checks",
+      "test": "fresh guarded saved_state_guard COMPLETED; actual PT reopened with hash verification, bitwise common zero initialization and unchanged phase buffers; Torch intra/inter-op1",
+      "resume": "no training/model forward/FE repeated",
+      "monotonic": 1582682.645749531
+    },
+    {
+      "failure": "collection recomputation returned complete_state_restored ratio dictionary instead of Boolean, then compared it to qualified=True",
+      "hypothesis": "Python and-expression preserved its final dictionary operand",
+      "change": "explicitly test restored relative ratio <=1e-10; all scientific thresholds unchanged",
+      "test": "raw numeric fields independently inspected: all mapping/adjoint/FD/phase/quad/negative-control gates within the original thresholds; guarded full aggregation follows",
+      "resume": "same healthy frozen numerical data; only failed partial compact index retained and regenerated",
+      "failed_partial": {
+        "path": "tmp/task42extra/v42/evidence_guard/partial_records/run_index_v42.json",
+        "sha256": "1cf4022cbc5a6c6e9a1af377d9ea6de34846a52aade76c129989c013959524a5"
+      },
+      "monotonic": 1582932.295860032
+    },
+    {
+      "failure": "collection assumed V41 corrective research_use_policy_seal exists on V42 healthy report",
+      "hypothesis": "old V41 policy needed metadata repair; new V42 report already false end-to-end and intentionally has no repair seal",
+      "change": "verify original compare use flags false and classify optional seal NOT_REQUIRED without writing raw report",
+      "test": "all six original comparison policy entries false; raw report unchanged; successful guarded aggregation follows",
+      "resume": "same original verifier/raw arrays, existing healthy compact qualification and route records reused",
+      "failed_partial": {
+        "path": "tmp/task42extra/v42/evidence_guard2/partial_records/run_index_v42.json",
+        "sha256": "fe4c1feff34e5ce98ad4e3fc85ffbc08b454b1394008c960952180a324bd372e"
+      },
+      "monotonic": 1583149.75269882
+    },
+    {
+      "failure": "new end-to-end policy evidence link was parsed before the same checker created its verified record",
+      "hypothesis": "pure metadata dependency ordering; numerical evidence healthy",
+      "change": "create actual strict-false raw/manifest/reopen record before parsing its document link",
+      "test": "helper AST passed; guarded complete metadata check follows",
+      "resume": "no FE/model/producer repeated",
+      "failed_guard": "tmp/task42extra/v42/publication_check_guard/summary.json",
+      "monotonic": 1583513.645359277
+    },
+    {
+      "failure": "pre-commit staged whitespace gate rejected new compact CSV CRLF and new-page EOF blank lines",
+      "hypothesis": "csv.DictWriter defaults to CRLF; untracked files were not covered by the earlier unstaged diff check",
+      "change": "normalize only unpublished compact CSV to LF and remove new-page trailing blanks",
+      "test": "each CSV field and row matched byte-for-byte textual value before/after; targeted document/hash/policy check follows",
+      "resume": "no source, original arrays, or numerical producer changed",
+      "bindings": [
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/conditional_inner_solver_v42.csv",
+          "old_sha256": "59208a2b48a9e11ee4732eb81c5dc838d1883850faa9705b8df2a55e7d6ee3e5",
+          "new_sha256": "872d9599975812907be337927076fda8ac7875073272a9249319847241ec7b9c",
+          "rows": 36,
+          "all_fields_identical": true
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/full_40_complex_channels_v42.csv",
+          "old_sha256": "23e74d358aa94d10aaa1fa3c77c2865e2ecf077faa6de98c8f970c765492dadd",
+          "new_sha256": "bb448fb5911bd81e2cecb226aed70ae7bd3c2c7e0c456777e694cc3d549a485e",
+          "rows": 960,
+          "all_fields_identical": true
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/power_and_energy_v42.csv",
+          "old_sha256": "69c5317394882921f585f6da14bdd91758879600f7b710e2275b37534a8efcd1",
+          "new_sha256": "d2b7e816c0c06420994cf695cd796f534f760a8017607dbb805652f1fd1219b5",
+          "rows": 6,
+          "all_fields_identical": true
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/six_point_complex_fields_v42.csv",
+          "old_sha256": "a68a8b5efc5fbebf41dd9d9b324762c5ebdc694e89f3c315865a6af027715f0e",
+          "new_sha256": "b8f6a5f7fdac98936627fbca4e46443e261f9d00002b9de313692ca1a82b7998",
+          "rows": 432,
+          "all_fields_identical": true
+        }
+      ],
+      "original_gate_returncode": 2,
+      "original_gate_log": "tmp/task42extra/v42/publication_whitespace_initial.log",
+      "monotonic": 1583781.898355861
+    }
+  ],
+  "initial_failed_light_test": {
+    "path": "tmp/task42extra/v42/test01/summary.json",
+    "sha256": "21439c97f734853602a5a6fdc37179569fe289cbcede702955ff3d03c1902642",
+    "bytes": 1987
+  },
+  "healthy_reference_or_training_or_FE_postprocessing_reexecuted": false,
+  "ordinary_default_changed": false
+}

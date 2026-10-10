@@ -1,0 +1,50 @@
+{
+  "schema": "task42extra.v42.history.v1",
+  "records": [
+    {
+      "new_route": "BLOCH_FTTNN_CORE_LEARNED",
+      "historical_route": "FTTNN_CONDITIONAL_CORE_LEARNED",
+      "current_native": 0.44455029611817526,
+      "historical_native": 0.9389867496106444,
+      "current_scattered_E": 0.13262668389171162,
+      "historical_scattered_E": 0.999900336902321,
+      "current_scattered_H": 0.13288426317472365,
+      "historical_scattered_H": 0.9999170567284194,
+      "fourth_baseline_reexecuted": false,
+      "concurrent_hardware_isolation_proven": false,
+      "same_accuracy_resource_comparison_qualified": false
+    },
+    {
+      "new_route": "BLOCH_FTTNN_CORE_FROZEN",
+      "historical_route": "FTTNN_CONDITIONAL_CORE_FROZEN",
+      "current_native": 0.7431417894534417,
+      "historical_native": 0.9394138682933676,
+      "current_scattered_E": 0.475004668693114,
+      "historical_scattered_E": 0.999911279034829,
+      "current_scattered_H": 0.4754184006270511,
+      "historical_scattered_H": 0.9999277585249665,
+      "fourth_baseline_reexecuted": false,
+      "concurrent_hardware_isolation_proven": false,
+      "same_accuracy_resource_comparison_qualified": false
+    },
+    {
+      "new_route": "BLOCH_CHEBTT_CORE_CONTROL",
+      "historical_route": "CHEBTT_CONDITIONAL_CORE_CONTROL",
+      "current_native": 0.2341599059210935,
+      "historical_native": 0.19086785577976417,
+      "current_scattered_E": 0.9905539455393946,
+      "historical_scattered_E": 0.9906217224092043,
+      "current_scattered_H": 0.9904936479655898,
+      "historical_scattered_H": 0.9905506794223019,
+      "fourth_baseline_reexecuted": false,
+      "concurrent_hardware_isolation_proven": false,
+      "same_accuracy_resource_comparison_qualified": false
+    }
+  ],
+  "historical_gate_binding": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v41.json",
+    "sha256": "1d2942424c5735b066ebc49cd9561757471fc8b9c6d891b44c94b777ee0fcd49",
+    "bytes": 80621
+  },
+  "interpretation": "Existing phase/no-phase numerical comparison, not a new simultaneous hardware or same-cost trial"
+}

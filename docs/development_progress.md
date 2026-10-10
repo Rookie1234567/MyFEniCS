@@ -1,3 +1,14 @@
+<!-- TASK42EXTRA_V42_CURRENT_BEGIN -->
+# Task42extra V42：Bloch包络FTT真实神经对照完成
+
+已将入射未折叠横向相位在完整Nédélec矩前乘入三轴FTT；核心参数LSMR与真实隐藏学习按预登记轮次分流实际执行。三条M5联合FAIL，原残差分别0.444550296118/0.743141789453/0.234159905921，散射E误差分别0.132626683892/0.475004668693/0.990553945539。实际网络与producer、全场/通道/能量及完整费用分开保存；same-accuracy NN收益不合格、coldN=1 UNKNOWN。0.7nm未准入/未注册。原目标及旧较好/退化、FAIL/UNKNOWN和费用不变。
+
+[回执](task042extra_feinn_5nm/response_v42.md)、[专题](task042extra_feinn_5nm/outcomes/bloch_envelope_ftt_v42.md)、[完整Gate](task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v42.json)、[费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v42.json)。
+
+下方历史全文保留；历史“下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V42_CURRENT_END -->
+
 <!-- TASK42EXTRA_V41_CURRENT_BEGIN -->
 # Task42extra V41：实际条件核神经试验的有限负结果
 

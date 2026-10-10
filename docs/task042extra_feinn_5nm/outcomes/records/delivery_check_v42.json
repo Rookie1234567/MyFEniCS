@@ -1,0 +1,34 @@
+{
+  "schema": "task42extra.v42.delivery.v1",
+  "declared_binding_count": 114,
+  "frozen_source_file_checks": 55,
+  "all_declared_arrays_and_source_hashes_pass": true,
+  "actual_and_producer_records": 6,
+  "original_vector_denominators_preserved": true,
+  "record_rows": {
+    "conditional_inner_solver_v42.csv": 36,
+    "full_40_complex_channels_v42.csv": 960,
+    "six_point_complex_fields_v42.csv": 432,
+    "power_and_energy_v42.csv": 6
+  },
+  "production_initialization_allowed": false,
+  "reference_training": false,
+  "validation_used_for_stopping": true,
+  "numerical_sources": [
+    "c1c82474d9a26675f1829db5a219efdc04a60f59"
+  ],
+  "source_not_document_HEAD": true,
+  "end_to_end_use_flags_strict_false": true,
+  "strict_joint_gate": {
+    "BLOCH_FTTNN_CORE_LEARNED": false,
+    "BLOCH_FTTNN_CORE_FROZEN": false,
+    "BLOCH_CHEBTT_CORE_CONTROL": false,
+    "BLOCH_FTTNN_CORE_LEARNED_PRODUCER": false,
+    "BLOCH_FTTNN_CORE_FROZEN_PRODUCER": false,
+    "BLOCH_CHEBTT_CORE_CONTROL_PRODUCER": false
+  },
+  "conditional_0p7": "NOT_RUN_LEARNED_JOINT_GATE_FAILED",
+  "same_accuracy_NN_gain": "NOT_VERIFIED",
+  "full_repository_pytest": false,
+  "CI_claimed": false
+}

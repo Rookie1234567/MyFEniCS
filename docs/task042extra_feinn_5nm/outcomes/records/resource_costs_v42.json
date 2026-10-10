@@ -1,0 +1,357 @@
+{
+  "schema": "task42extra.v42.cost.v1",
+  "unique_window": {
+    "campaign": "V42_BLOCH_ENVELOPE_FTT",
+    "campaign_version": 42,
+    "origin_monotonic": 1570751.87351258,
+    "origin_utc": "2026-10-10T15:22:37.012648+00:00",
+    "deadline_monotonic": 1599551.87351258,
+    "budget_s": 28800,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "single_window": true,
+    "tail_reserve_s": 1800,
+    "first_readonly_head": "8e187eae48551812a5cd335a3c0dfbce9236239c",
+    "initial_state": "NOT_STARTED_V41_COMPLETE",
+    "first_retained_observation_utc": "2026-10-10T15:24:37.012648+00:00",
+    "unretained_initial_inspection_allowance_s": 120,
+    "origin_kind": "CONSERVATIVE_DEADLINE_ANCHOR_BEFORE_FIRST_RETAINED_OBSERVATION",
+    "unretained_preparation_exact_cost": "UNKNOWN"
+  },
+  "collection_monotonic": 1583211.914437951,
+  "conservative_collection_elapsed_s": 12460.040925370995,
+  "remaining_s": 16339.959074629005,
+  "exact_unretained_initial_preparation_s": "UNKNOWN",
+  "deadline_anchor_allowance_s": 120,
+  "stages": [
+    {
+      "stage": "v42_bloch_chebtt_control",
+      "attempt": "v42_bloch_chebtt_control_attempt1",
+      "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+      "cpu": 0,
+      "actual_attempt_s": 2893.557372739073,
+      "supervised_s": 2827.9605337970424,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 825778176,
+      "tree_swap_peak_bytes": 0,
+      "RSS_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "memory_admission": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1801441439744,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1801441439744,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "PSI_observed_seconds": 60.00206518894993,
+      "worker_stop_monotonic": 1584109.908240129,
+      "stage_deadline_monotonic": 1584259.908240129,
+      "summary": {
+        "path": "tmp/task42extra/v42/durable/v42_bloch_chebtt_control_attempt1/run_summary.json",
+        "sha256": "4fb52ff5182513c35b83a567ac8f93831058826ed807688b8b23bd5e2c371b70",
+        "bytes": 14408
+      }
+    },
+    {
+      "stage": "v42_bloch_ftt_checks",
+      "attempt": "v42_bloch_ftt_checks_attempt1",
+      "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+      "cpu": 0,
+      "actual_attempt_s": 517.3043607489672,
+      "supervised_s": 453.1076332589146,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 588414976,
+      "tree_swap_peak_bytes": 0,
+      "RSS_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "memory_admission": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1862862114816,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1862862114816,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "PSI_observed_seconds": 60.002092654118314,
+      "worker_stop_monotonic": 1578096.559100717,
+      "stage_deadline_monotonic": 1578246.559100717,
+      "summary": {
+        "path": "tmp/task42extra/v42/durable/v42_bloch_ftt_checks_attempt1/run_summary.json",
+        "sha256": "511d82fade39f96982c94a63e0cd22c07f893314dd54959941e2147fe5408000",
+        "bytes": 14305
+      }
+    },
+    {
+      "stage": "v42_bloch_fttnn_frozen",
+      "attempt": "v42_bloch_fttnn_frozen_attempt1",
+      "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+      "cpu": 6,
+      "actual_attempt_s": 2156.686533696018,
+      "supervised_s": 2092.4510885479394,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 832794624,
+      "tree_swap_peak_bytes": 0,
+      "RSS_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "memory_admission": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1855446659072,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1855446659072,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "PSI_observed_seconds": 60.001990554854274,
+      "worker_stop_monotonic": 1581885.518129655,
+      "stage_deadline_monotonic": 1582035.518129655,
+      "summary": {
+        "path": "tmp/task42extra/v42/durable/v42_bloch_fttnn_frozen_attempt1/run_summary.json",
+        "sha256": "2be10dfa4a7a2daacd3920135aeeb90df8c6cbd116f23df7fdc80f03df06dd57",
+        "bytes": 14400
+      }
+    },
+    {
+      "stage": "v42_bloch_fttnn_learned",
+      "attempt": "v42_bloch_fttnn_learned_attempt1",
+      "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+      "cpu": 2,
+      "actual_attempt_s": 2920.6633467029314,
+      "supervised_s": 2849.027029779041,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 910639104,
+      "tree_swap_peak_bytes": 0,
+      "RSS_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "memory_admission": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1856781754368,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1856781754368,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "PSI_observed_seconds": 60.00213159318082,
+      "worker_stop_monotonic": 1578884.698488845,
+      "stage_deadline_monotonic": 1579034.698488845,
+      "summary": {
+        "path": "tmp/task42extra/v42/durable/v42_bloch_fttnn_learned_attempt1/run_summary.json",
+        "sha256": "f6771a73f77bbcbba1e2e69ede1bdd110da2627a33c1c67cf1660b51b3f408d1",
+        "bytes": 14407
+      }
+    },
+    {
+      "stage": "v42_bloch_independent_compare",
+      "attempt": "v42_bloch_independent_compare_attempt1",
+      "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+      "cpu": 4,
+      "actual_attempt_s": 715.7223149379715,
+      "supervised_s": 651.3642490780912,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 653291520,
+      "tree_swap_peak_bytes": 0,
+      "RSS_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "memory_admission": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1778347991040,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1778347991040,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "PSI_observed_seconds": 60.00210730615072,
+      "worker_stop_monotonic": 1585232.840945594,
+      "stage_deadline_monotonic": 1585382.840945594,
+      "summary": {
+        "path": "tmp/task42extra/v42/durable/v42_bloch_independent_compare_attempt1/run_summary.json",
+        "sha256": "5d014c9061b2d26bfd13c6f23b015c1a16585238aa439090a9f4ce9dc47d06de",
+        "bytes": 14401
+      }
+    }
+  ],
+  "bounded_light_work": [
+    {
+      "name": "evidence_guard",
+      "summary": {
+        "path": "tmp/task42extra/v42/evidence_guard/summary.json",
+        "sha256": "02254441de6a18d7a543dce17112561b2cf2054c76280e36a56869adfb6de006",
+        "bytes": 2000
+      },
+      "supervised_s": 3.7909953421913087,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 103383040,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "evidence_guard2",
+      "summary": {
+        "path": "tmp/task42extra/v42/evidence_guard2/summary.json",
+        "sha256": "6ebf5b4ddd5e88144db55540af8ae5794c4b0007086bdbae7bf229781a03968f",
+        "bytes": 1998
+      },
+      "supervised_s": 2.757118033943698,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 92921856,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "final06",
+      "summary": {
+        "path": "tmp/task42extra/v42/final06/summary.json",
+        "sha256": "b378df93e1748440adb57b9390e0bda8a8e5fe4a99d555ba54d02dedc1f16214",
+        "bytes": 1982
+      },
+      "supervised_s": 8.60415648506023,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 409161728,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "final_targeted_guard",
+      "summary": {
+        "path": "tmp/task42extra/v42/final_targeted_guard/summary.json",
+        "sha256": "816714776a1b011c222119261caab6825402f2720b5d564314d93e81e561078c",
+        "bytes": 1983
+      },
+      "supervised_s": 8.684567671036348,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 408997888,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "lint03",
+      "summary": {
+        "path": "tmp/task42extra/v42/lint03/summary.json",
+        "sha256": "841938fe5f134f1c4e9b32212a555348a279b75a027ebf8de83319b3a5397bcc",
+        "bytes": 1982
+      },
+      "supervised_s": 2.0802804729901254,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 76582912,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "lint05",
+      "summary": {
+        "path": "tmp/task42extra/v42/lint05/summary.json",
+        "sha256": "607f67e8c5235de62dad1e4a37c21e25de873ebf6f8f17a1a364e9a5b3bdd6f8",
+        "bytes": 1982
+      },
+      "supervised_s": 1.9948294388595968,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 73932800,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "saved_state_guard",
+      "summary": {
+        "path": "tmp/task42extra/v42/saved_state_guard/summary.json",
+        "sha256": "2a86e7df3b8a8a26b2a98384505f2c9fef24cca06b9585709547aae206242e9f",
+        "bytes": 1983
+      },
+      "supervised_s": 5.6322774100117385,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 327143424,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "test01",
+      "summary": {
+        "path": "tmp/task42extra/v42/test01/summary.json",
+        "sha256": "21439c97f734853602a5a6fdc37179569fe289cbcede702955ff3d03c1902642",
+        "bytes": 1987
+      },
+      "supervised_s": 8.349156008800492,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 418787328,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "test02",
+      "summary": {
+        "path": "tmp/task42extra/v42/test02/summary.json",
+        "sha256": "f47870185943775b90155ab8ba4d17027d11b74a6ba738ad9962dc356a6f6874",
+        "bytes": 1996
+      },
+      "supervised_s": 7.679844595957547,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 458850304,
+      "tree_swap_peak_bytes": 0
+    },
+    {
+      "name": "test04",
+      "summary": {
+        "path": "tmp/task42extra/v42/test04/summary.json",
+        "sha256": "c3d77718b0f21a7d3139dfbe9c35511b7da9d60ec25ddaf7454e2aced3f1f698",
+        "bytes": 1997
+      },
+      "supervised_s": 10.724432428833097,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 418525184,
+      "tree_swap_peak_bytes": 0
+    }
+  ],
+  "formal_actual_attempt_sum_s": 9203.933928824961,
+  "sampled_tree_RSS_peak_max_over_serial_stages_bytes": 910639104,
+  "RSS_scope": "max of serial simultaneous own-tree sampled peaks, not sum or all-host peak",
+  "own_swap_sampled_bytes": 0,
+  "OOC_bytes": 0,
+  "new_global_Gram_and_Maxwell_factors": 0,
+  "Gsolve_count": 0,
+  "G_matvecs_independent_scoring_per_checker": 7,
+  "successes_60s_PSI_in_campaign_wall": true,
+  "mandatory_system_and_384GiB_growth_protection_unchanged": true,
+  "actual_rejection_extra_wait_s": "recorded in tail; short fresh-admission retries retained, no indefinite waiting",
+  "historical_project_exact_cumulative_s": "UNKNOWN",
+  "previous_costs": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v41.json",
+    "sha256": "43149ef59f92b11bb31ca1842ea996caab7bf5f340bd1e3100ff729e21916f00",
+    "bytes": 16216
+  },
+  "old_failures_and_all_costs_preserved": true,
+  "old_wave_10186_training_required_for_new_routes": false,
+  "necessary_mesh_native_moments_cold_preparation_cost": "UNKNOWN_NOT_FREE",
+  "complete_cold_N1": "UNKNOWN",
+  "loaded_packet_route_and_research_campaign_costs_separated": true,
+  "same_accuracy_NN_resource_gain": "NOT_VERIFIED_ALL_ROUTES_FAIL",
+  "no_all_host_peak_measurement_of_Codex_tool_control": true,
+  "final_reserve_s": 1800,
+  "numerical_stage_soft_allocation_transfer_required": false,
+  "light_Torch_interop_qualification": "NOT_RETAINED_FOR_INITIAL_TESTS; formal numeric ABI independently verifies 1",
+  "formal_Torch_intra_interop_1": true
+}

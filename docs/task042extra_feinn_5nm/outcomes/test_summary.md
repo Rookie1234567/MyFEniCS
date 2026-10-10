@@ -1,3 +1,20 @@
+<!-- TASK42EXTRA_V42_CURRENT_BEGIN -->
+# V42：相位全链路资格及受影响定向测试
+
+新增相位不是只接入forward：活动核心替换、K/K*、B/B*、隐藏VJP、缓存、保存及独立export都接通同一相位。独立对照明确调用未改的旧FTT点值后再乘chi，避免两个同时漏相位的实现互相证明。phase=0的c、原作用、VJP、三轴K/K*回归为零差；边3744、面14400、内部13824三个独立矩族均通过。实际M5 ky=0，两个非单位周期缝和角点资格另由合成fixture覆盖，不冒称真实M5的第二非单位相位。
+
+真实三轴非零复数、纯虚、bias、全部分量、K/B复伴随及隐藏三个非零FD方向通过。q30/q60原作用、batch1/8、参数与相位缓存失效、接受/拒绝和完整恢复通过；错号、错单位、折叠kx与重复MPC均被独立路径检出。原skew/不支持几何的准确逐点后备保留，真实J、orientation、owner及微小非零未删。每模型三次短完整工作含实际写回c/r和存盘，资格状态没有用于正式初值。
+
+普通接线错误已同批最小修复：实际cfg.kx为实值complex，改为先验证虚部严格零后取real；新的相位身份buffer原为整数，触发既有全FP64映射守卫，改为可精确表示的FP64非训练buffer，不改变相位数学。原15项失败记录保留，后续62/64项受影响测试及最终新相位20项通过，Ruff/compileall通过；无full pytest、安装或CI声明。后续若有修复，以完整repair记录为准，不删除初始失败。
+
+用途限制贯穿raw/manifest/checkpoint/compare/seal/reopen，production_initialization_allowed=false、official_candidate_results=false及pde_only_solver_qualified=false。原残差失败时R/T/A全部diagnostic；reference_used_for_training=false、features_reference_exposed=false，但参考标量参与继续判断已明确披露。健康旧算子、准确参考和上游产物未因文档、序列化或网页错误重算。
+
+[tests](records/tests_v42.json)、[真实资格](records/conditional_operator_qualification_v42.json)。
+
+下方历史全文保留；历史“下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V42_CURRENT_END -->
+
 <!-- TASK42EXTRA_V41_CURRENT_BEGIN -->
 # V41：新条件核资格及最终受影响回归
 

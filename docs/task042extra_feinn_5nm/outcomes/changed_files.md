@@ -1,3 +1,21 @@
+<!-- TASK42EXTRA_V42_CURRENT_BEGIN -->
+# V42：最小相位opt-in、复用核心流程及完整证据
+
+| 依赖组 | 改动与验证 | 合入边界 |
+|---|---|---|
+| research-only核心 | ftt_bloch_phase/field/qualification；条件core轴特征接相位，真实三轴/FD/完整矩资格 | 新表示未合格，不升production |
+| reusable runner接线 | ftt_bloch_campaign/worker；原core worker profile与training标量回调；显式schema12/预算/角色/白名单 | ordinary无相位默认保留，复用durable，不复制调度 |
+| checker/postprocessing | ftt_bloch_scalars隔离字段限制；ftt_verification旧逐点显式相位重建 | 只回传预登记标量，独立保存checker，不复制求解器 |
+| input/tests | design_v42及五个dat；test_ftt_bloch与受影响条件/结构tests | seed/相位/物理/容量先冻结，无0.7nm空输入 |
+| compact evidence/docs | response/topic/records、自身导航/总账 | 历史原字节保留，待review |
+| do-not-merge | 未合格研究配置与ignored大数组/检查点 | 无production/master合入授权 |
+
+[run/source/hash](records/run_index_v42.json)、[tests](records/tests_v42.json)、[Gate](records/full_numerical_gates_v42.json)。
+
+下方历史全文保留；历史“下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V42_CURRENT_END -->
+
 <!-- TASK42EXTRA_V41_CURRENT_BEGIN -->
 # V41：opt-in条件核与紧凑证据依赖组
 
