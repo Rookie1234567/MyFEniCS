@@ -1,6 +1,8 @@
 """FTT model reconstruction and original saved-field physics, separate roles."""
 
 import json
+from copy import deepcopy
+import os
 from pathlib import Path
 from time import perf_counter
 import numpy as np
@@ -8,6 +10,47 @@ from src.io.neural_wave_campaign import ROOT, digest
 from src.solvers.neural_wave_greedy import atomic_json, atomic_npz
 
 ART = ROOT / "benchmarks/artifacts/task42extra/v38"
+
+
+def research_comparison_policy(comparisons):
+    """Numerical qualification never grants production use to this pilot."""
+    result = deepcopy(comparisons)
+    for row in result.values():
+        row["production_initialization_allowed"] = False
+        row["official_candidate_results"] = False
+    return result
+
+
+def seal_saved_research_policy(directory, source_sha):
+    """Correct only use metadata; preserve the original report and arrays."""
+    path = directory / "verifier_result.json"
+    result = json.loads(path.read_text())
+    corrected = research_comparison_policy(result["comparisons"])
+    if corrected == result["comparisons"]:
+        return None
+    original_sha = digest(path)
+    for name in ("verifier_result.json", "saved_checker.json", "result.json"):
+        source = directory / name
+        saved = directory / (source.stem + "_before_research_policy.json")
+        if source.exists() and not saved.exists():
+            temporary = saved.with_suffix(".json.tmp")
+            with temporary.open("wb") as stream:
+                stream.write(source.read_bytes())
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, saved)
+    result["comparisons"] = corrected
+    result["research_use_policy_seal"] = dict(
+        source_sha=source_sha,
+        previous_report_sha256=original_sha,
+        previous_report="verifier_result_before_research_policy.json",
+        numerical_fields_and_raw_arrays_changed=False,
+        old_wrong_use_flags_preserved=True,
+        production_initialization_allowed=False,
+        official_candidate_results=False,
+    )
+    atomic_json(path, result)
+    return result["research_use_policy_seal"]
 
 
 def gram_integral_pairing(G, samples, names, length_nm=5.0):
@@ -309,7 +352,7 @@ def compare(
             ),
             independent_MPC_recovery_checks=mpc,
             physics=physics,
-            comparisons=comparisons,
+            comparisons=research_comparison_policy(comparisons),
             region_errors={
                 name: _region_field_errors(model, action, reference, c)
                 for name, c in states.items()

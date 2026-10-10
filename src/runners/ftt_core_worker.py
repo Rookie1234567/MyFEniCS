@@ -134,6 +134,11 @@ def independent_compare(manifest, artifact, marker, directory):
             check=True,
         )
     from src.runners.saved_field_supervision import run_checker
+    from src.postprocessing.ftt_verification import seal_saved_research_policy
+
+    policy_seal = seal_saved_research_policy(artifact, manifest["source_sha"])
+    if policy_seal:
+        marker("saved_research_use_policy_corrected", policy_seal)
 
     command = [
         "bash",
@@ -154,6 +159,8 @@ def independent_compare(manifest, artifact, marker, directory):
         independent_checker_summary=summary,
         verification_complete=True,
         new_reference_solve_count=0,
+        previously_healthy_reconstruction_and_FE_compare_reused=True,
+        research_use_policy_seal=policy_seal,
     )
 
 

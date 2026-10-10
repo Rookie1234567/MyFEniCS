@@ -26,6 +26,57 @@ from src.solvers.optimization_checkpoint import (
 from src.solvers.ftt_core_training import CoreBoundary, hidden_step
 
 
+def test_research_comparison_policy_does_not_change_numerical_fields():
+    from src.postprocessing.ftt_verification import research_comparison_policy
+
+    original = {
+        "route": dict(
+            native=0.2,
+            qualified=False,
+            errors={"E": 0.3},
+            production_initialization_allowed=True,
+            official_candidate_results=False,
+        )
+    }
+    saved = deepcopy(original)
+    corrected = research_comparison_policy(original)
+    assert original == saved
+    assert not corrected["route"]["production_initialization_allowed"]
+    assert corrected["route"]["errors"] == original["route"]["errors"]
+    assert corrected["route"]["native"] == original["route"]["native"]
+
+
+def test_saved_research_policy_writer_preserves_failed_report_and_reopen(tmp_path):
+    from src.postprocessing.ftt_verification import seal_saved_research_policy
+    from src.io.neural_wave_campaign import digest
+
+    original = dict(
+        comparisons={
+            "route": dict(
+                native=0.2,
+                qualified=False,
+                production_initialization_allowed=True,
+                official_candidate_results=False,
+            )
+        },
+        raw_complete_fields={"path": "no-array-loaded", "sha256": "original"},
+    )
+    path = tmp_path / "verifier_result.json"
+    path.write_text(json.dumps(original))
+    old = path.read_bytes()
+    previous_sha = digest(path)
+    record = seal_saved_research_policy(tmp_path, "a" * 40)
+    assert record["previous_report_sha256"] == previous_sha
+    assert (
+        tmp_path / "verifier_result_before_research_policy.json"
+    ).read_bytes() == old
+    reopened = json.loads(path.read_text())
+    assert not reopened["comparisons"]["route"]["production_initialization_allowed"]
+    assert reopened["raw_complete_fields"] == original["raw_complete_fields"]
+    assert not reopened["comparisons"]["route"]["qualified"]
+    assert seal_saved_research_policy(tmp_path, "a" * 40) is None
+
+
 class PointFixture:
     def __init__(self, coordinates, matrix):
         self.x, self.matrix = coordinates, matrix
