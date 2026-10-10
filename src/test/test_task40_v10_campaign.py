@@ -117,3 +117,26 @@ def test_v23_campaign_window_is_bound_to_its_exact_six_hour_registration():
         campaign._validate_v23_campaign_registration(
             path, window.sha256, changed_scope
         )
+
+
+def test_v24_campaign_window_is_bound_to_its_exact_six_hour_registration():
+    path = campaign.TASK40_V24_CAMPAIGN_WINDOW.resolve()
+    window = campaign.load_fixed_campaign_window(path, require_current_boot=False)
+
+    assert window.sha256 == campaign.TASK40_V24_CAMPAIGN_SHA256
+    assert window.total_seconds == 21_600.0
+    assert window.closeout_seconds == 1_200.0
+    assert window.payload["campaign"] == campaign.TASK40_V24_CAMPAIGN_ID
+    assert window.payload["stage_scope"] == list(campaign.TASK40_V24_STAGE_SCOPE)
+    assert window.payload["forbidden_scope"] == list(campaign.TASK40_V24_FORBIDDEN_SCOPE)
+    assert window.payload["parent_window"] == campaign.TASK40_V24_PARENT_WINDOW
+    assert window.payload["parent_ledger"] == campaign.TASK40_V24_PARENT_LEDGER
+    assert window.payload["artifact_execution_identity_separate"] is True
+
+    with pytest.raises(ValueError, match="SHA-256 changed"):
+        campaign._validate_v24_campaign_registration(path, "0" * 64, window.payload)
+    changed_scope = dict(window.payload, stage_scope=["implementation"])
+    with pytest.raises(ValueError, match="identity or scope changed"):
+        campaign._validate_v24_campaign_registration(
+            path, window.sha256, changed_scope
+        )

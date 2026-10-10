@@ -30,6 +30,15 @@ from src.runners.task40_v10_campaign import (  # noqa: E402
     TASK40_V23_CAMPAIGN_SHA256,
     TASK40_V23_CAMPAIGN_WINDOW,
     TASK40_V23_STAGE_SCOPE,
+    TASK40_V24_CAMPAIGN_RECEIPT,
+    TASK40_V24_CAMPAIGN_RECEIPT_SHA256,
+    TASK40_V24_CAMPAIGN_SHA256,
+    TASK40_V24_CAMPAIGN_WINDOW,
+    TASK40_V24_REVIEW_COMMIT,
+    TASK40_V24_REVIEW_PATH,
+    TASK40_V24_REVIEW_SHA256,
+    TASK40_V24_STAGE_SCOPE,
+    TASK40_V24_PARENT_LEDGER,
     load_fixed_campaign_window,
 )
 
@@ -59,6 +68,14 @@ V23_STOP_STAGE_SCOPE = {
 }
 V23_ARTIFACT_ROOT = Path(
     "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl"
+)
+V24_TARGET_PROFILE = V22_TARGET_PROFILE
+V24_STOP_STAGE_SCOPE = {
+    "preflight": "implementation",
+    "target_operator_probe": "target_operator_probe",
+}
+V24_ARTIFACT_ROOT = Path(
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl"
 )
 RUNTIME_PREFIX_RELATIVE = Path(
     "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
@@ -147,7 +164,7 @@ def _resolve_service_campaign(
     profile: str,
     stop_stage: str,
 ) -> dict[str, Any]:
-    """Resolve only the historical V19 or exact, scoped V22 service window."""
+    """Resolve a historical V19 or an exact, scoped V22/V23/V24 window."""
 
     supplied = campaign_path if campaign_path.is_absolute() else repo_root / campaign_path
     supplied = supplied.resolve()
@@ -159,10 +176,12 @@ def _resolve_service_campaign(
             "path": v19_path,
             "sha256": CAMPAIGN_SHA256,
             "stage_scope": None,
+            "version": "V19",
         }
 
     v22_path = (repo_root / TASK40_V22_CAMPAIGN_WINDOW).resolve()
     v23_path = (repo_root / TASK40_V23_CAMPAIGN_WINDOW).resolve()
+    v24_path = (repo_root / TASK40_V24_CAMPAIGN_WINDOW).resolve()
     if supplied == v22_path:
         if profile != V22_TARGET_PROFILE:
             raise ValueError("the V22 campaign route is restricted to the registered Ny8 target")
@@ -172,6 +191,7 @@ def _resolve_service_campaign(
         if _sha256_file(v22_path) != TASK40_V22_CAMPAIGN_SHA256:
             raise ValueError("the registered V22 campaign window SHA changed")
         window = load_fixed_campaign_window(v22_path, require_current_boot=True)
+        campaign_version = "V22"
     elif supplied == v23_path:
         if profile != V23_TARGET_PROFILE:
             raise ValueError("the V23 campaign route is restricted to the registered Ny8 target")
@@ -181,12 +201,42 @@ def _resolve_service_campaign(
         if _sha256_file(v23_path) != TASK40_V23_CAMPAIGN_SHA256:
             raise ValueError("the registered V23 campaign window SHA changed")
         window = load_fixed_campaign_window(v23_path, require_current_boot=True)
+        campaign_version = "V23"
+    elif supplied == v24_path:
+        if profile != V24_TARGET_PROFILE:
+            raise ValueError("the V24 campaign route is restricted to the registered Ny8 target")
+        stage_scope = V24_STOP_STAGE_SCOPE.get(stop_stage)
+        if stage_scope is None or stage_scope not in TASK40_V24_STAGE_SCOPE:
+            raise ValueError("the V24 service stop stage is outside its explicit campaign scope")
+        if _sha256_file(v24_path) != TASK40_V24_CAMPAIGN_SHA256:
+            raise ValueError("the registered V24 campaign window SHA changed")
+        receipt_path = (repo_root / TASK40_V24_CAMPAIGN_RECEIPT).resolve()
+        if (
+            not receipt_path.is_file()
+            or _sha256_file(receipt_path) != TASK40_V24_CAMPAIGN_RECEIPT_SHA256
+        ):
+            raise ValueError("the V24 campaign registration receipt is missing or changed")
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        if (
+            receipt.get("schema") != "task40extra.review_v24_campaign_registration.v1"
+            or receipt.get("manifest_path") != str(TASK40_V24_CAMPAIGN_WINDOW)
+            or receipt.get("manifest_sha256") != TASK40_V24_CAMPAIGN_SHA256
+            or receipt.get("review_sha") != TASK40_V24_REVIEW_COMMIT
+            or receipt.get("review_path") != TASK40_V24_REVIEW_PATH
+            or receipt.get("review_sha256") != TASK40_V24_REVIEW_SHA256
+            or receipt.get("stage_scope") != list(TASK40_V24_STAGE_SCOPE)
+            or receipt.get("registration_state") != "REGISTERED_FOR_DEVELOPMENT; service/probe/checkpoint-loader/watchdog qualification required before FE"
+        ):
+            raise ValueError("the V24 campaign registration receipt identity or scope changed")
+        window = load_fixed_campaign_window(v24_path, require_current_boot=True)
+        campaign_version = "V24"
     else:
-        raise ValueError("service campaign window is not a registered V19, V22, or V23 path")
+        raise ValueError("service campaign window is not a registered V19, V22, V23, or V24 path")
     return {
         "path": window.path,
         "sha256": window.sha256,
         "stage_scope": stage_scope,
+        "version": campaign_version,
     }
 
 
@@ -702,7 +752,7 @@ def _bind_v23_q_only_scan_checkpoint(
     stop_stage: str,
     repo_root: Path,
 ) -> dict[str, str | int]:
-    """Validate the completed V23 scan and bind its exact restart files for the worker."""
+    """Bind the immutable V23 scan artifact to the current V23 or V24 execution."""
 
     expected_old_source = "1291aeef089e6c02c4b9e28125f60072aa769340"
     scan_directory = scan_directory.resolve()
@@ -711,9 +761,10 @@ def _bind_v23_q_only_scan_checkpoint(
     if (
         profile != V23_TARGET_PROFILE
         or stop_stage != "target_operator_probe"
-        or campaign_registration.get("sha256") != TASK40_V23_CAMPAIGN_SHA256
+        or campaign_registration.get("sha256")
+        not in {TASK40_V23_CAMPAIGN_SHA256, TASK40_V24_CAMPAIGN_SHA256}
     ):
-        raise ValueError("V23 q-only selector is restricted to the registered Ny8 probe/window")
+        raise ValueError("V23 q-only selector is restricted to the registered Ny8 V23/V24 probe")
     manifest_path = scan_directory / "run_manifest.json"
     summary_path = scan_directory / "run_summary.json"
     if not manifest_path.is_file() or not summary_path.is_file():
@@ -722,12 +773,22 @@ def _bind_v23_q_only_scan_checkpoint(
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     current_input_sha = _sha256_file(input_path)
     campaign = manifest.get("task40_v20_campaign", {})
+    old_window_path = (repo_root / TASK40_V23_CAMPAIGN_WINDOW).resolve()
+    old_accounting_path = old_window_path.with_name("campaign_accounting_v10.jsonl")
     if (
         manifest.get("source_sha") != expected_old_source
         or manifest.get("input_sha256") != current_input_sha
         or summary.get("status") != "finished"
         or summary.get("result_classification") != "WORKER_FAILED"
         or campaign.get("window_sha256") != TASK40_V23_CAMPAIGN_SHA256
+        or Path(str(campaign.get("window_path", ""))).resolve() != old_window_path
+        or Path(str(campaign.get("accounting_path", ""))).resolve()
+        != old_accounting_path
+        or not old_window_path.is_file()
+        or _sha256_file(old_window_path) != TASK40_V23_CAMPAIGN_SHA256
+        or not old_accounting_path.is_file()
+        or _sha256_file(old_accounting_path)
+        != TASK40_V24_PARENT_LEDGER["sha256"]
     ):
         raise ValueError("selected old scan source/input/window or terminal classification differs")
     numerical_output = _checker_numerical_output_directory(
@@ -791,6 +852,11 @@ def _bind_v23_q_only_scan_checkpoint(
     ):
         raise ValueError("old V23 terminal checkpoint payload is missing or hash-mismatched")
     return {
+        "execution_campaign_window_path": str(campaign_registration["path"]),
+        "execution_campaign_window_sha256": str(campaign_registration["sha256"]),
+        "artifact_campaign_window_path": str(old_window_path),
+        "artifact_campaign_window_sha256": TASK40_V23_CAMPAIGN_SHA256,
+        "artifact_campaign_accounting_path": str(old_accounting_path),
         "scan_run_directory": str(scan_directory),
         "scan_manifest_path": str(manifest_path),
         "scan_manifest_sha256": _sha256_file(manifest_path),
@@ -806,6 +872,20 @@ def _bind_v23_q_only_scan_checkpoint(
         "checkpoint_payload_sha256": str(payload["sha256"]),
         "completed_mode_count": 32_060,
     }
+
+
+def _validate_v24_q_only_selector(
+    campaign_registration: dict[str, Any],
+    *,
+    stop_stage: str,
+    scan_directory: Path | None,
+) -> None:
+    if (
+        campaign_registration.get("version") == "V24"
+        and stop_stage == "target_operator_probe"
+        and scan_directory is None
+    ):
+        raise ValueError("V24 target_operator_probe requires the registered V23 q-only scan selector")
 
 
 def _run_case_output_checker(packet_path: Path, runtime_prefix: Path) -> list[str]:
@@ -1147,6 +1227,40 @@ def _official_checker_passed(returncode: int, payload: Any) -> bool:
     )
 
 
+def _q_only_execution_artifact_campaigns_valid(
+    supplement: dict[str, Any],
+    *,
+    manifest_execution_sha256: str | None,
+    v23_window: Path,
+    v23_accounting: Path,
+) -> bool:
+    execution_sha256 = str(manifest_execution_sha256 or "")
+    old_sha256 = supplement.get("old_scan_campaign_window_sha256")
+    old_window_path = supplement.get("old_scan_campaign_window_path")
+    old_accounting_path = supplement.get("old_scan_campaign_accounting_path")
+    if execution_sha256 == TASK40_V24_CAMPAIGN_SHA256:
+        return bool(
+            supplement.get("execution_campaign_window_sha256")
+            == TASK40_V24_CAMPAIGN_SHA256
+            and old_sha256 == TASK40_V23_CAMPAIGN_SHA256
+            and Path(str(old_window_path or "")).resolve() == v23_window
+            and Path(str(old_accounting_path or "")).resolve() == v23_accounting
+            and v23_window.is_file()
+            and _sha256_file(v23_window) == TASK40_V23_CAMPAIGN_SHA256
+            and v23_accounting.is_file()
+            and _sha256_file(v23_accounting) == TASK40_V24_PARENT_LEDGER["sha256"]
+        )
+    if execution_sha256 == TASK40_V23_CAMPAIGN_SHA256:
+        return bool(
+            supplement.get("execution_campaign_window_sha256")
+            in (None, TASK40_V23_CAMPAIGN_SHA256)
+            and old_sha256 in (None, TASK40_V23_CAMPAIGN_SHA256)
+            and old_window_path in (None, str(v23_window))
+            and old_accounting_path in (None, str(v23_accounting))
+        )
+    return False
+
+
 def _check_partial_result(
     *,
     input_path: Path,
@@ -1182,6 +1296,18 @@ def _check_partial_result(
     probe_identity = probe_identity if isinstance(probe_identity, dict) else {}
     v23_expected_window = (ROOT / TASK40_V23_CAMPAIGN_WINDOW).resolve()
     v23_expected_accounting = v23_expected_window.with_name("campaign_accounting_v10.jsonl")
+    v24_expected_window = (ROOT / TASK40_V24_CAMPAIGN_WINDOW).resolve()
+    v24_expected_accounting = v24_expected_window.with_name("campaign_accounting_v10.jsonl")
+    q_only_receipt = (
+        partial.get("schema") == "task40extra.review_v20_partial_result.v2"
+        and partial.get("classification") == "TARGET_OPERATOR_PROBE_Q_ONLY_SUPPLEMENT"
+    )
+    q_only_supplement_identity = partial.get("q_only_supplement")
+    q_only_supplement_identity = (
+        q_only_supplement_identity
+        if isinstance(q_only_supplement_identity, dict)
+        else {}
+    )
     v23_identity_claimed = (
         probe_identity.get("schema")
         == "task40extra.review_v23_compact_boundary_operator_probe.v1"
@@ -1197,6 +1323,30 @@ def _check_partial_result(
         and v23_expected_window.is_file()
         and _sha256_file(v23_expected_window) == TASK40_V23_CAMPAIGN_SHA256
         and v23_expected_accounting.is_file()
+    )
+    v24_identity_claimed = (
+        probe_identity.get("schema")
+        == "task40extra.review_v24_compact_boundary_operator_probe.v1"
+        or campaign_evidence.get("window_sha256") == TASK40_V24_CAMPAIGN_SHA256
+        or campaign_evidence.get("window_path") == str(v24_expected_window)
+        or (
+            q_only_receipt
+            and q_only_supplement_identity.get("execution_campaign_window_sha256")
+            == TASK40_V24_CAMPAIGN_SHA256
+        )
+    )
+    v24_campaign_identity_valid = (
+        campaign_evidence.get("window_sha256") == TASK40_V24_CAMPAIGN_SHA256
+        and Path(str(campaign_evidence.get("window_path", ""))).resolve()
+        == v24_expected_window
+        and Path(str(campaign_evidence.get("accounting_path", ""))).resolve()
+        == v24_expected_accounting
+        and v24_expected_window.is_file()
+        and _sha256_file(v24_expected_window) == TASK40_V24_CAMPAIGN_SHA256
+        and v24_expected_accounting.is_file()
+        and (ROOT / TASK40_V24_CAMPAIGN_RECEIPT).is_file()
+        and _sha256_file(ROOT / TASK40_V24_CAMPAIGN_RECEIPT)
+        == TASK40_V24_CAMPAIGN_RECEIPT_SHA256
     )
     expected_completed = STAGE_PREFIXES.get(expected_stop_stage)
     v2_receipt = partial.get("schema") == "task40extra.review_v20_partial_result.v2"
@@ -1243,14 +1393,14 @@ def _check_partial_result(
         checks["v23_manifest_campaign_window_and_accounting_bind"] = (
             v23_campaign_identity_valid
         )
+    if v24_identity_claimed:
+        checks["v24_execution_manifest_window_and_accounting_bind"] = (
+            v24_campaign_identity_valid
+        )
     if expected_stop_stage in {"build_and_symbolic", "one_q_numeric"} and not v2_receipt:
         checks["target_heavy_authorization_remains_false"] = (
             input_data.get("execution", {}).get("task40_target_heavy_authorized") is False
         )
-    q_only_receipt = (
-        v2_receipt
-        and partial.get("classification") == "TARGET_OPERATOR_PROBE_Q_ONLY_SUPPLEMENT"
-    )
     if v2_receipt and not q_only_receipt:
         from scripts.task40_v21_readonly_recheck import validate_stage_receipt_semantics
 
@@ -1266,7 +1416,11 @@ def _check_partial_result(
             ),
             expected_q_count=expected_q_count,
             expected_campaign_window_sha256=(
-                TASK40_V23_CAMPAIGN_SHA256 if v23_identity_claimed else None
+                TASK40_V24_CAMPAIGN_SHA256
+                if v24_identity_claimed
+                else TASK40_V23_CAMPAIGN_SHA256
+                if v23_identity_claimed
+                else None
             ),
         )
         checks.update({f"stage_semantics_{name}": passed for name, passed in semantic_checks.items()})
@@ -1321,11 +1475,24 @@ def _check_partial_result(
                     == supplement.get("old_checkpoint_metadata_sha256")
                     and supplement_disk.get("old_q_failure_sha256")
                     == supplement.get("old_q_failure_sha256")
+                    and supplement_disk.get("execution_campaign_window_sha256")
+                    == supplement.get("execution_campaign_window_sha256")
+                    and supplement_disk.get("old_scan_campaign_window_sha256")
+                    == supplement.get("old_scan_campaign_window_sha256")
                 ),
                 "q_only_old_source_and_complete_prefix_bound": (
                     supplement.get("old_scan_source_sha")
                     == "1291aeef089e6c02c4b9e28125f60072aa769340"
                     and supplement.get("old_checkpoint_completed_mode_count") == 32_060
+                ),
+                "q_only_execution_and_artifact_campaigns_are_bound":
+                _q_only_execution_artifact_campaigns_valid(
+                    supplement,
+                    manifest_execution_sha256=str(
+                        campaign_evidence.get("window_sha256", "")
+                    ),
+                    v23_window=v23_expected_window,
+                    v23_accounting=v23_expected_accounting,
                 ),
                 "q_only_old_failure_preserved_as_typeerror": (
                     supplement.get("old_q_failure_type") == "TypeError"
@@ -1448,6 +1615,11 @@ def run_service(
         profile=str(data["solver"]["preconditioner"]),
         stop_stage=stop_stage,
     )
+    _validate_v24_q_only_selector(
+        campaign_registration,
+        stop_stage=stop_stage,
+        scan_directory=q_only_scan_directory,
+    )
     q_only_binding = (
         _bind_v23_q_only_scan_checkpoint(
             q_only_scan_directory,
@@ -1468,12 +1640,12 @@ def run_service(
     if branch != "task40extra_0p7nm_engineering" or dirty.strip():
         raise RuntimeError("V20 user-service requires the frozen Task40 branch and clean source")
 
-    artifact_root = (
-        V23_ARTIFACT_ROOT
-        if Path(campaign_registration["path"]).resolve()
-        == (repo_root / TASK40_V23_CAMPAIGN_WINDOW).resolve()
-        else ARTIFACT_ROOT
-    )
+    if campaign_registration.get("version") == "V24":
+        artifact_root = V24_ARTIFACT_ROOT
+    elif campaign_registration.get("version") == "V23":
+        artifact_root = V23_ARTIFACT_ROOT
+    else:
+        artifact_root = ARTIFACT_ROOT
     evidence_directory = repo_root / artifact_root / "service_runs" / unit
     evidence_directory.mkdir(parents=True, exist_ok=False)
     events: list[dict[str, Any]] = []
@@ -1490,6 +1662,7 @@ def run_service(
         "canonical_input_sha256": _sha256_file(canonical_path),
         "physical_model_sha256": None,
         "stop_stage": stop_stage,
+        "campaign_version": campaign_registration["version"],
         "campaign_window_path": str(fixed_campaign),
         "campaign_window_sha256": campaign_sha256,
         "campaign_stage_scope": campaign_registration["stage_scope"],
@@ -1500,7 +1673,7 @@ def run_service(
         "evidence_directory": str(evidence_directory),
     }
     if q_only_binding is not None:
-        record["v23_q_only_scan_binding"] = dict(q_only_binding)
+        record["old_v23_scan_artifact_binding"] = dict(q_only_binding)
     event_identity = {
         key: record[key]
         for key in (
@@ -1544,6 +1717,9 @@ def run_service(
         if q_only_binding is not None:
             environment.update(
                 {
+                    "TASK40_V23_Q_ONLY_SCAN_WINDOW_SHA256": str(
+                        q_only_binding["artifact_campaign_window_sha256"]
+                    ),
                     "TASK40_V23_Q_ONLY_SCAN_RUN_DIR": str(q_only_binding["scan_run_directory"]),
                     "TASK40_V23_Q_ONLY_SCAN_MANIFEST_SHA256": str(
                         q_only_binding["scan_manifest_sha256"]

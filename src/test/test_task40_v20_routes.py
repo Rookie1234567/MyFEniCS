@@ -2140,6 +2140,177 @@ def test_service_campaign_router_scopes_v23_separately_from_v22():
         )
 
 
+def test_v24_route_requires_q_only_selector_before_fe_and_binds_real_v23_checkpoint(
+    monkeypatch,
+):
+    import builtins
+
+    from scripts import task40_v20_service_workflow as service
+
+    def reject_fe_import(name, *args, **kwargs):
+        if name.split(".", 1)[0] in {"dolfinx", "petsc4py", "slepc4py", "mpi4py"}:
+            raise AssertionError(f"unexpected FE/MPI import before V24 selector gate: {name}")
+        return original_import(name, *args, **kwargs)
+
+    original_import = builtins.__import__
+    monkeypatch.setattr(builtins, "__import__", reject_fe_import)
+
+    execution = service._resolve_service_campaign(
+        ROOT,
+        service.TASK40_V24_CAMPAIGN_WINDOW,
+        profile=service.V24_TARGET_PROFILE,
+        stop_stage="target_operator_probe",
+    )
+    assert execution["version"] == "V24"
+    assert execution["sha256"] == service.TASK40_V24_CAMPAIGN_SHA256
+    assert execution["stage_scope"] == "target_operator_probe"
+    with pytest.raises(ValueError, match="requires the registered V23 q-only scan selector"):
+        service._validate_v24_q_only_selector(
+            execution, stop_stage="target_operator_probe", scan_directory=None
+        )
+    service._validate_v24_q_only_selector(
+        execution, stop_stage="preflight", scan_directory=None
+    )
+
+    scan_directory = ROOT / (
+        "results/task40extra_nonseparable_0p7nm/"
+        "task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/"
+        "20261010T114302.254770Z"
+    )
+    if not (scan_directory / "run_manifest.json").is_file():
+        pytest.skip("the exact V23 scan artifact is unavailable in this checkout")
+    binding = service._bind_v23_q_only_scan_checkpoint(
+        scan_directory,
+        input_path=ROOT
+        / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/"
+        "stage_inputs/target_operator_probe/target_original_ny8_operator_probe_v22.dat",
+        campaign_registration=execution,
+        profile=service.V24_TARGET_PROFILE,
+        stop_stage="target_operator_probe",
+        repo_root=ROOT,
+    )
+    assert binding["execution_campaign_window_sha256"] == service.TASK40_V24_CAMPAIGN_SHA256
+    assert binding["artifact_campaign_window_sha256"] == service.TASK40_V23_CAMPAIGN_SHA256
+    assert binding["completed_mode_count"] == 32_060
+    assert len(binding["checkpoint_metadata_sha256"]) == 64
+    assert len(binding["checkpoint_payload_sha256"]) == 64
+
+
+def test_q_only_campaign_pair_validation_keeps_v23_and_rejects_swapped_hashes():
+    from scripts import task40_v20_service_workflow as service
+
+    old_window = (ROOT / service.TASK40_V23_CAMPAIGN_WINDOW).resolve()
+    old_accounting = old_window.with_name("campaign_accounting_v10.jsonl")
+    v24_pair = {
+        "execution_campaign_window_sha256": service.TASK40_V24_CAMPAIGN_SHA256,
+        "old_scan_campaign_window_sha256": service.TASK40_V23_CAMPAIGN_SHA256,
+        "old_scan_campaign_window_path": str(old_window),
+        "old_scan_campaign_accounting_path": str(old_accounting),
+    }
+    assert service._q_only_execution_artifact_campaigns_valid(
+        v24_pair,
+        manifest_execution_sha256=service.TASK40_V24_CAMPAIGN_SHA256,
+        v23_window=old_window,
+        v23_accounting=old_accounting,
+    )
+
+    swapped_artifact = dict(
+        v24_pair, old_scan_campaign_window_sha256=service.TASK40_V24_CAMPAIGN_SHA256
+    )
+    assert not service._q_only_execution_artifact_campaigns_valid(
+        swapped_artifact,
+        manifest_execution_sha256=service.TASK40_V24_CAMPAIGN_SHA256,
+        v23_window=old_window,
+        v23_accounting=old_accounting,
+    )
+    swapped_execution = dict(
+        v24_pair, execution_campaign_window_sha256=service.TASK40_V23_CAMPAIGN_SHA256
+    )
+    assert not service._q_only_execution_artifact_campaigns_valid(
+        swapped_execution,
+        manifest_execution_sha256=service.TASK40_V24_CAMPAIGN_SHA256,
+        v23_window=old_window,
+        v23_accounting=old_accounting,
+    )
+    assert service._q_only_execution_artifact_campaigns_valid(
+        {},
+        manifest_execution_sha256=service.TASK40_V23_CAMPAIGN_SHA256,
+        v23_window=old_window,
+        v23_accounting=old_accounting,
+    )
+
+
+@pytest.mark.parametrize("campaign_version", ["V23", "V24"])
+def test_partial_checker_distinguishes_v23_execution_from_v24_execution(
+    tmp_path, campaign_version
+):
+    from scripts import task40_v20_service_workflow as service
+
+    is_v24 = campaign_version == "V24"
+    window = (
+        service.TASK40_V24_CAMPAIGN_WINDOW
+        if is_v24
+        else service.TASK40_V23_CAMPAIGN_WINDOW
+    )
+    window_sha = (
+        service.TASK40_V24_CAMPAIGN_SHA256
+        if is_v24
+        else service.TASK40_V23_CAMPAIGN_SHA256
+    )
+    window_path = (ROOT / window).resolve()
+    accounting_path = window_path.with_name("campaign_accounting_v10.jsonl")
+    input_path = tmp_path / "input.dat"
+    input_path.write_text(
+        "[solver]\npreconditioner = \"" + service.V24_TARGET_PROFILE + "\"\n",
+        encoding="utf-8",
+    )
+    source_sha = "a" * 40
+    input_sha = service._sha256_file(input_path)
+    physical_sha = "b" * 64
+    run_id = f"fixture_{campaign_version.lower()}"
+    manifest_path = tmp_path / "run_manifest.json"
+    manifest_path.write_text(json.dumps({
+        "run_id": run_id,
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "task40_v20_campaign": {
+            "window_path": str(window_path),
+            "window_sha256": window_sha,
+            "accounting_path": str(accounting_path),
+        },
+    }), encoding="utf-8")
+    summary_path = tmp_path / "run_summary.json"
+    summary_path.write_text(json.dumps({
+        "status": "finished",
+        "result_classification": "worker_exit0",
+    }), encoding="utf-8")
+    numerical_output = tmp_path / "numerical"
+    numerical_output.mkdir()
+    (numerical_output / "v20_partial_result.json").write_text(json.dumps({
+        "schema": "task40extra.review_v20_partial_result.v1",
+        "status": "failed",
+        "run_id": run_id,
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "requested_stop_stage": "target_operator_probe",
+        "failed_stage": "geometry_inventory",
+        "completed_stages": ["preflight"],
+        "official_result": False,
+    }), encoding="utf-8")
+
+    result = service._check_partial_result(
+        input_path=input_path,
+        summary_path=summary_path,
+        manifest_path=manifest_path,
+        numerical_output=numerical_output,
+        expected_stop_stage="target_operator_probe",
+    )
+    assert result["checker_passed"], result
+    assert ("v24_execution_manifest_window_and_accounting_bind" in result["checks"]) is is_v24
+
+
 def test_partial_checker_cli_and_api_share_profile_q_count(tmp_path, capsys):
     import json
 

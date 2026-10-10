@@ -119,6 +119,66 @@ TASK40_V23_PARENT_LEDGER = {
     "unsettled_interval": "UNKNOWN_RETAINED_UNMODIFIED",
     "historical_cleanup": "worker native/temp UNKNOWN; external V22 descendants cleared; scopes preserved",
 }
+TASK40_V24_CAMPAIGN_WINDOW = (
+    Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl")
+    / "campaign_window_v24.json"
+)
+TASK40_V24_CAMPAIGN_SHA256 = "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358"
+TASK40_V24_CAMPAIGN_RECEIPT = (
+    Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl")
+    / "registration_receipt_v24.json"
+)
+TASK40_V24_CAMPAIGN_RECEIPT_SHA256 = "32fd8cce122e391c6bcc7671ecfb9cc99b33b40d31e903a849676aece3bdfc76"
+TASK40_V24_CAMPAIGN_SECONDS = 21_600.0
+TASK40_V24_CLOSEOUT_RESERVE_SECONDS = 1_200.0
+TASK40_V24_CAMPAIGN_ID = "task40extra_v24_real_q_port_reuse_volume_and_row_tiles"
+TASK40_V24_REVIEW_COMMIT = "92a59c167b53f828cc0408eca664d0eebc878428"
+TASK40_V24_REVIEW_SHA256 = "92393f51aacbff9fc9f4c322b213666fe9869b6890ee9913748a45af2d226786"
+TASK40_V24_REVIEW_PATH = "docs/task40extra_0p7nm_engineering/review_report_v24.md"
+TASK40_V24_SOURCE_AT_ENTRY = "84dce5a39eb34a259166f34e063312a2cd86ef0c"
+TASK40_V24_STAGE_SCOPE = (
+    "implementation",
+    "targeted_tests",
+    "target_operator_probe",
+    "bounded_q_tiles",
+    "filled_reference_q_tiles",
+    "bounded_port_mode_reuse",
+    "bounded_global_direct_provider",
+    "production_volume_classes",
+    "bounded_volume_action",
+    "volume_panel",
+    "v17_row_tile",
+    "selected_reference_q_build_only_conditional",
+    "checker",
+    "persistence_readback",
+    "closeout",
+)
+TASK40_V24_FORBIDDEN_SCOPE = (
+    "all_target_q_csr",
+    "all_reference_q_csr",
+    "target_global_factor",
+    "target_symbolic",
+    "target_numeric",
+    "target_ksp",
+    "full_target_field",
+    "global_mumps_factor",
+)
+TASK40_V24_PARENT_WINDOW = {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl/campaign_window_v23.json",
+    "sha256": TASK40_V23_CAMPAIGN_SHA256,
+    "t0_utc": "2026-10-10T09:00:51Z",
+    "deadline_utc": "2026-10-10T15:00:51Z",
+    "verified_expired": True,
+}
+TASK40_V24_PARENT_LEDGER = {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl/campaign_accounting_v10.jsonl",
+    "sha256": "2892d305b53f01229b976f925591ccbafd0bf4fc87a1ac823a263e021977322b",
+    "last_sequence": 34909,
+    "last_label": "controller_committed_pushed_remote_readback_administrative_closeout_no_numerical_work",
+    "last_persisted_cumulative_seconds": 22012.362380510654,
+    "unsettled_interval": "UNKNOWN_RETAINED_UNMODIFIED",
+    "administrative_closeout_overrun_preserved": True,
+}
 
 
 def _utc_ns(value: Any) -> int:
@@ -209,6 +269,45 @@ def _validate_v23_campaign_registration(
     ]
     if changed:
         raise ValueError(f"registered V23 campaign identity or scope changed: {changed}")
+
+
+def _validate_v24_campaign_registration(
+    resolved: Path, digest: str, payload: Mapping[str, Any]
+) -> None:
+    expected_path = (
+        Path(__file__).resolve().parents[2] / TASK40_V24_CAMPAIGN_WINDOW
+    ).resolve()
+    if resolved != expected_path:
+        raise ValueError("the V24 campaign window is not at its registered path")
+    if digest != TASK40_V24_CAMPAIGN_SHA256:
+        raise ValueError("the registered V24 campaign window SHA-256 changed")
+    expected_fields = {
+        "schema": CAMPAIGN_SCHEMA,
+        "campaign": TASK40_V24_CAMPAIGN_ID,
+        "authority": "User-authorized Review V24 section 7 independent six-hour package",
+        "active_review_sha": TASK40_V24_REVIEW_COMMIT,
+        "active_review_path": TASK40_V24_REVIEW_PATH,
+        "active_review_sha256": TASK40_V24_REVIEW_SHA256,
+        "source_at_entry": TASK40_V24_SOURCE_AT_ENTRY,
+        "review_at_registration": TASK40_V24_REVIEW_COMMIT,
+        "t0_utc": "2026-10-10T16:33:11Z",
+        "deadline_utc": "2026-10-10T22:33:11Z",
+        "campaign_seconds": TASK40_V24_CAMPAIGN_SECONDS,
+        "closeout_reserve_seconds": TASK40_V24_CLOSEOUT_RESERVE_SECONDS,
+        "time_policy": CONSERVATIVE_REALTIME,
+        "stage_scope": list(TASK40_V24_STAGE_SCOPE),
+        "forbidden_scope": list(TASK40_V24_FORBIDDEN_SCOPE),
+        "window_refreshed": False,
+        "old_costs_and_unknowns_preserved": True,
+        "parent_window": TASK40_V24_PARENT_WINDOW,
+        "parent_ledger": TASK40_V24_PARENT_LEDGER,
+        "artifact_execution_identity_separate": True,
+    }
+    changed = [
+        key for key, value in expected_fields.items() if payload.get(key) != value
+    ]
+    if changed:
+        raise ValueError(f"registered V24 campaign identity or scope changed: {changed}")
 
 
 @dataclass(frozen=True)
@@ -460,8 +559,12 @@ def load_fixed_campaign_window(
     v23_path = (
         Path(__file__).resolve().parents[2] / TASK40_V23_CAMPAIGN_WINDOW
     ).resolve()
+    v24_path = (
+        Path(__file__).resolve().parents[2] / TASK40_V24_CAMPAIGN_WINDOW
+    ).resolve()
     is_v22 = resolved == v22_path
     is_v23 = resolved == v23_path
+    is_v24 = resolved == v24_path
     if is_v22:
         _validate_v22_campaign_registration(resolved, digest, payload)
         expected_total = TASK40_V22_CAMPAIGN_SECONDS
@@ -470,6 +573,10 @@ def load_fixed_campaign_window(
         _validate_v23_campaign_registration(resolved, digest, payload)
         expected_total = TASK40_V23_CAMPAIGN_SECONDS
         expected_closeout = TASK40_V23_CLOSEOUT_RESERVE_SECONDS
+    elif is_v24:
+        _validate_v24_campaign_registration(resolved, digest, payload)
+        expected_total = TASK40_V24_CAMPAIGN_SECONDS
+        expected_closeout = TASK40_V24_CLOSEOUT_RESERVE_SECONDS
     else:
         expected_total = CAMPAIGN_SECONDS
         expected_closeout = CLOSEOUT_RESERVE_SECONDS
@@ -538,6 +645,34 @@ __all__ = [
     "TASK40_V22_FORBIDDEN_SCOPE",
     "TASK40_V22_PARENT_WINDOW",
     "TASK40_V22_PARENT_LEDGER",
+    "TASK40_V23_CAMPAIGN_WINDOW",
+    "TASK40_V23_CAMPAIGN_SHA256",
+    "TASK40_V23_CAMPAIGN_SECONDS",
+    "TASK40_V23_CLOSEOUT_RESERVE_SECONDS",
+    "TASK40_V23_CAMPAIGN_ID",
+    "TASK40_V23_REVIEW_COMMIT",
+    "TASK40_V23_REVIEW_SHA256",
+    "TASK40_V23_REVIEW_PATH",
+    "TASK40_V23_SOURCE_AT_ENTRY",
+    "TASK40_V23_STAGE_SCOPE",
+    "TASK40_V23_FORBIDDEN_SCOPE",
+    "TASK40_V23_PARENT_WINDOW",
+    "TASK40_V23_PARENT_LEDGER",
+    "TASK40_V24_CAMPAIGN_WINDOW",
+    "TASK40_V24_CAMPAIGN_SHA256",
+    "TASK40_V24_CAMPAIGN_RECEIPT",
+    "TASK40_V24_CAMPAIGN_RECEIPT_SHA256",
+    "TASK40_V24_CAMPAIGN_SECONDS",
+    "TASK40_V24_CLOSEOUT_RESERVE_SECONDS",
+    "TASK40_V24_CAMPAIGN_ID",
+    "TASK40_V24_REVIEW_COMMIT",
+    "TASK40_V24_REVIEW_SHA256",
+    "TASK40_V24_REVIEW_PATH",
+    "TASK40_V24_SOURCE_AT_ENTRY",
+    "TASK40_V24_STAGE_SCOPE",
+    "TASK40_V24_FORBIDDEN_SCOPE",
+    "TASK40_V24_PARENT_WINDOW",
+    "TASK40_V24_PARENT_LEDGER",
     "CampaignAccount",
     "FixedCampaignWindow",
     "TASK40_V10_CAMPAIGN_WINDOW",

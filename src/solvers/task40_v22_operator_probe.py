@@ -1704,7 +1704,7 @@ def _read_v22_campaign_state(root: Path) -> dict[str, Any]:
     window = load_fixed_campaign_window(window_path)
     expected_sha = os.environ.get("TASK40_V10_CAMPAIGN_WINDOW_SHA256")
     if expected_sha is not None and expected_sha != window.sha256:
-        raise ValueError("probe campaign window differs from the supervised V23/V22 SHA")
+        raise ValueError("probe campaign window differs from the supervised V24/V23/V22 SHA")
     expected_accounting = os.environ.get("TASK40_V10_CAMPAIGN_ACCOUNTING")
     accounting_path = window.path.parent / CAMPAIGN_ACCOUNTING_NAME
     if expected_accounting is not None and Path(expected_accounting).resolve() != accounting_path:
@@ -3730,15 +3730,25 @@ def _run_v23_original_ny8_q_port_tile(
     }
     provider = tile_iterator = q_map = None
     try:
-        from src.runners.task40_v10_campaign import TASK40_V23_CAMPAIGN_SHA256
+        from src.runners.task40_v10_campaign import (
+            TASK40_V23_CAMPAIGN_SHA256,
+            TASK40_V24_CAMPAIGN_SHA256,
+        )
 
         campaign_before = _read_v22_campaign_state(root)
-        if campaign_before["campaign_window_sha256"] != TASK40_V23_CAMPAIGN_SHA256:
-            raise ValueError("selected q tile requires the registered fixed V23 campaign")
+        if campaign_before["campaign_window_sha256"] not in {
+            TASK40_V23_CAMPAIGN_SHA256,
+            TASK40_V24_CAMPAIGN_SHA256,
+        }:
+            raise ValueError("selected q tile requires the registered fixed V23 or V24 execution window")
         result["campaign_before"] = {
             "window_sha256": campaign_before["campaign_window_sha256"],
             "remaining_numerical_seconds": campaign_before["remaining_numerical_seconds"],
         }
+        result["execution_campaign_window_sha256"] = campaign_before[
+            "campaign_window_sha256"
+        ]
+        result["artifact_campaign_window_sha256"] = TASK40_V23_CAMPAIGN_SHA256
         if campaign_before["remaining_numerical_seconds"] <= 0.0:
             result.update(
                 status="NOT_RUN_TIME_STOP",
@@ -4352,7 +4362,7 @@ def _run_v23_original_ny8_q_port_tile(
         )
         campaign_after = _read_v22_campaign_state(root)
         if campaign_after["campaign_window_sha256"] != campaign_before["campaign_window_sha256"]:
-            raise ValueError("fixed V23 campaign identity changed during selected original q tile")
+            raise ValueError("fixed execution campaign identity changed during selected original q tile")
         result["campaign_after"] = {
             "window_sha256": campaign_after["campaign_window_sha256"],
             "remaining_numerical_seconds": campaign_after["remaining_numerical_seconds"],
@@ -4466,16 +4476,27 @@ def _run_probe(
         current_stage = "geometry_inventory"
         attempted.append(current_stage)
         campaign_state_entry = _read_v22_campaign_state(root)
-        from src.runners.task40_v10_campaign import TASK40_V23_CAMPAIGN_SHA256
+        from src.runners.task40_v10_campaign import (
+            TASK40_V23_CAMPAIGN_SHA256,
+            TASK40_V24_CAMPAIGN_SHA256,
+        )
 
         is_v23_campaign = (
             campaign_state_entry["campaign_window_sha256"] == TASK40_V23_CAMPAIGN_SHA256
         )
+        is_v24_campaign = (
+            campaign_state_entry["campaign_window_sha256"] == TASK40_V24_CAMPAIGN_SHA256
+        )
         if is_v23_campaign:
             facts["schema"] = "task40extra.review_v23_compact_boundary_operator_probe.v1"
             facts["q_coverage"] = _v23_q_coverage_record({"status": "NOT_RUN"})
+        elif is_v24_campaign:
+            facts["schema"] = "task40extra.review_v24_compact_boundary_operator_probe.v1"
+            facts["q_coverage"] = _v23_q_coverage_record({"status": "NOT_RUN"})
         facts["campaign_window"] = {
-            "campaign_version": "V23" if is_v23_campaign else "V22",
+            "campaign_version": (
+                "V24" if is_v24_campaign else "V23" if is_v23_campaign else "V22"
+            ),
             "window_sha256": campaign_state_entry["campaign_window_sha256"],
             "read_only": True,
             "remaining_numerical_seconds_at_probe_entry": campaign_state_entry[
@@ -4489,7 +4510,7 @@ def _run_probe(
                 {
                     "gate_type": "fixed_campaign_time_cooperative_stop",
                     "remaining_numerical_seconds": 0.0,
-                    "source": "read_campaign_state read-only fixed V22 window",
+                    "source": "read_campaign_state read-only fixed execution window",
                 },
             )
         geometry_path = root / _GEOMETRY_RELATIVE
@@ -4960,19 +4981,32 @@ def _run_probe(
         v23_q_tile_facts: dict[str, Any] | None = None
         q_only_scan_directory = os.environ.get("TASK40_V23_Q_ONLY_SCAN_RUN_DIR")
         if q_only_scan_directory is not None:
-            if not is_v23_campaign:
-                raise ValueError("V23 q-only supplement selector requires the fixed V23 campaign")
+            if not (is_v23_campaign or is_v24_campaign):
+                raise ValueError("V23 q-only supplement requires the registered V23 or V24 execution window")
             expected_old_source = "1291aeef089e6c02c4b9e28125f60072aa769340"
+            expected_old_window_path = (
+                root
+                / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v23_wsl/campaign_window_v23.json"
+            ).resolve()
+            expected_old_accounting_path = expected_old_window_path.with_name(
+                "campaign_accounting_v10.jsonl"
+            )
             scan_directory = Path(q_only_scan_directory).resolve()
             scan_manifest_path = scan_directory / "run_manifest.json"
             scan_manifest = json.loads(scan_manifest_path.read_text(encoding="utf-8"))
+            scan_campaign = scan_manifest.get("task40_v20_campaign", {})
             if (
                 scan_manifest.get("source_sha") != expected_old_source
                 or scan_manifest.get("input_sha256") != preflight.get("input_sha256")
                 or scan_manifest.get("physical_model_sha256")
                 != preflight.get("physical_model_sha256")
-                or scan_manifest.get("task40_v20_campaign", {}).get("window_sha256")
-                != campaign_state_entry["campaign_window_sha256"]
+                or scan_campaign.get("window_sha256") != TASK40_V23_CAMPAIGN_SHA256
+                or Path(str(scan_campaign.get("window_path", ""))).resolve()
+                != expected_old_window_path
+                or Path(str(scan_campaign.get("accounting_path", ""))).resolve()
+                != expected_old_accounting_path
+                or os.environ.get("TASK40_V23_Q_ONLY_SCAN_WINDOW_SHA256")
+                != TASK40_V23_CAMPAIGN_SHA256
                 or _sha256_file(scan_manifest_path)
                 != os.environ.get("TASK40_V23_Q_ONLY_SCAN_MANIFEST_SHA256")
             ):
@@ -5037,7 +5071,7 @@ def _run_probe(
                 checkpoint_metadata_path.parent,
                 preflight=old_preflight,
                 mode_inventory=mode_inventory,
-                campaign_window_sha256=campaign_state_entry["campaign_window_sha256"],
+                campaign_window_sha256=TASK40_V23_CAMPAIGN_SHA256,
                 candidate_rows=np.asarray(native_rule.candidate_rows, dtype=np.int64),
                 modes=modes,
                 h_values=h_values,
@@ -5079,6 +5113,12 @@ def _run_probe(
                 "patched_q_source_sha": preflight.get("source_sha"),
                 "old_scan_source_sha": expected_old_source,
                 "old_scan_run_directory": str(scan_directory),
+                "execution_campaign_window_sha256": campaign_state_entry[
+                    "campaign_window_sha256"
+                ],
+                "old_scan_campaign_window_path": str(expected_old_window_path),
+                "old_scan_campaign_window_sha256": TASK40_V23_CAMPAIGN_SHA256,
+                "old_scan_campaign_accounting_path": str(expected_old_accounting_path),
                 "old_scan_manifest_sha256": _sha256_file(scan_manifest_path),
                 "old_q_failure_path": str(old_q_failure_path),
                 "old_q_failure_sha256": _sha256_file(old_q_failure_path),
