@@ -1,0 +1,512 @@
+{
+  "status": "SETTLED_CLOSED",
+  "canonical": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "authority": "7eb964ce194748d5c3510a4dc1798e312282aa57",
+  "actual_run_sources": [
+    {
+      "role": "QUALIFY",
+      "source_sha": "eafe3c116c2dc162ed5ffaf99136b376f291fb7e",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v70/aux_QUALIFY_01",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "cd812a00ed6fd2cea38e549eabe0aca5dbbb2c6e",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v70/aux_pre_01",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "c6294aed0016297b7fc9b47974765518a4bde5b1",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v70/aux_pre_03",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "PREFLIGHT",
+      "source_sha": "c6294aed0016297b7fc9b47974765518a4bde5b1",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v70_cell_kernel_preflight_20261010T135622303328Z",
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "a1f85ad161d8ab98047b7c137e0cbc07ec726d4c",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v70/aux_pre_04",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "PREFLIGHT",
+      "source_sha": "a1f85ad161d8ab98047b7c137e0cbc07ec726d4c",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v70_cell_kernel_preflight_20261010T140328152910Z",
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "aa6cb19721035e1f8dbc42ea7835faceef54a9af",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v70/aux_pre_05",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "PREFLIGHT",
+      "source_sha": "aa6cb19721035e1f8dbc42ea7835faceef54a9af",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v70_cell_kernel_preflight_20261010T141233181694Z",
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v70/aux_pre_07",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "PREFLIGHT",
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v70_cell_kernel_preflight_20261010T142036629336Z",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "BUILD",
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v70_assembly_time_p5_prepare_20261010T142344843423Z",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "compare_S",
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v70/aux_compare_S_01",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "ACTION",
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v70_trace_action_no_global_s_20261010T170812633288Z",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "SOLVE",
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v70_assembly_time_p5_solve_20261010T171235413041Z",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "VERIFY_COST",
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v70_compare_verify_cost_20261010T204437846153Z",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v70/aux_post_collect01",
+      "classification": "RESOURCE_CONTROLLED_STOP"
+    },
+    {
+      "role": "post",
+      "source_sha": "d6cd48cf449a0e613146c0f4aff01caac48f68c8",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v70/aux_post_collect02",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "source_sha": "f158e816e302e45594bd1f6758aff3a3388c2045",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v70/aux_post_documents01",
+      "classification": "COMPLETED"
+    }
+  ],
+  "document_check_source": "f158e816e302e45594bd1f6758aff3a3388c2045",
+  "final_document_bytes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "85d315e0c7563a1a6e1fe9f3622e15c873a585b809c329ee986150b819f70785",
+      "tables": [],
+      "links": [
+        "response_v70.md",
+        "outcomes/assembly_time_tetra_trace_action_v70.md",
+        "outcomes/records/retained_operator_contract_v70.json",
+        "outcomes/records/resource_costs_final_v70.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "22b0d7806703f1bf0484ad4716bfddbb0cc4e4af204163f0839a058fc14c6e5c",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "../response_v70.md",
+        "records/trace_action_qualification_v70.json",
+        "records/deployment_cost_boundary_v70.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "4d3198aeded0292e9a48d1faf4ff9283ef576c23f8b8c29a414fc3b7eb72d0e7",
+      "tables": [],
+      "links": [
+        "records/execution_chain_v70.json",
+        "records/scientific_checks_v70.json",
+        "records/documentation_checks_v70.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "f39307b687b4372a3c1d1709e6375d201d745c60a1c12a403a856b5948d28314",
+      "tables": [],
+      "links": [
+        "records/selective_merge_manifest_v70.json",
+        "records/authority_identity_v70.json"
+      ]
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "6bb0ed1718cc5a3a2f42d9aa35c5e615e7f582411188c6590ac2e8efd1322e66",
+      "tables": [],
+      "links": [
+        "task042_neural_coarse_inverse/response_v70.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v70.json"
+      ]
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "a51df2e280cdc5274a99b1795fcc30c41767ca242530173a4b718742e7491c3e",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "task042_neural_coarse_inverse/outcomes/records/complete_physics_v70.json",
+        "task042_neural_coarse_inverse/outcomes/records/retained_operator_contract_v70.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v68.md",
+      "sha256": "34583e6b20d79b3d5a007d7e3c7f282dae552477960b6f9d0783c56f1713af6a",
+      "tables": [
+        {
+          "line": 39,
+          "columns": 3
+        },
+        {
+          "line": 57,
+          "columns": 3
+        },
+        {
+          "line": 125,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "response_v69.md",
+        "outcomes/summary.md",
+        "outcomes/records/resource_costs_final_v69.json",
+        "outcomes/records/paired_results_v69.json",
+        "outcomes/records/exact_condensed_checkpoint_v69.json",
+        "outcomes/records/saved_field_diagnosis_v69.json",
+        "outcomes/records/complete_physics_v69.json",
+        "../../src/solvers/independent_tetra_reference.py",
+        "../../src/solvers/hcurl_assembly_time_condensation.py",
+        "../../src/solvers/independent_tetra_study.py"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v70.md",
+      "sha256": "f9aa9a4e7f42dfa0ce7954a6b2967aa2c9df5e44ced83ec76a27c5217c7e359c",
+      "tables": [
+        {
+          "line": 7,
+          "columns": 3
+        },
+        {
+          "line": 16,
+          "columns": 3
+        },
+        {
+          "line": 26,
+          "columns": 3
+        },
+        {
+          "line": 46,
+          "columns": 3
+        },
+        {
+          "line": 66,
+          "columns": 2
+        },
+        {
+          "line": 84,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "outcomes/records/authority_identity_v70.json",
+        "outcomes/records/assembly_time_checkpoint_v70.json",
+        "outcomes/records/trace_action_qualification_v70.json",
+        "outcomes/records/complete_physics_v70.json",
+        "outcomes/records/scientific_checks_v70.json",
+        "outcomes/records/modal_recalculation_v70.json",
+        "outcomes/records/paired_results_v70.json",
+        "outcomes/records/capacity_and_lifetimes_v70.json",
+        "outcomes/records/sealed_array_manifest_inventory_v70.json",
+        "outcomes/records/deployment_cost_boundary_v70.json",
+        "outcomes/records/resource_costs_final_v70.json",
+        "outcomes/records/repair_journal_v70.json",
+        "outcomes/records/repair_budget_v70.json",
+        "outcomes/records/execution_chain_v70.json",
+        "outcomes/records/retained_operator_contract_v70.json",
+        "outcomes/records/target_gap_v70.json",
+        "outcomes/records/selective_merge_manifest_v70.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/assembly_time_tetra_trace_action_v70.md",
+      "sha256": "6ae2099a0c73e033e07564427d48a59e9047810d2561261f1c683594b40dd5ae",
+      "tables": [
+        {
+          "line": 7,
+          "columns": 3
+        },
+        {
+          "line": 16,
+          "columns": 3
+        },
+        {
+          "line": 26,
+          "columns": 3
+        },
+        {
+          "line": 46,
+          "columns": 3
+        },
+        {
+          "line": 66,
+          "columns": 2
+        },
+        {
+          "line": 84,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "records/authority_identity_v70.json",
+        "records/assembly_time_checkpoint_v70.json",
+        "records/trace_action_qualification_v70.json",
+        "records/complete_physics_v70.json",
+        "records/scientific_checks_v70.json",
+        "records/modal_recalculation_v70.json",
+        "records/paired_results_v70.json",
+        "records/capacity_and_lifetimes_v70.json",
+        "records/sealed_array_manifest_inventory_v70.json",
+        "records/deployment_cost_boundary_v70.json",
+        "records/resource_costs_final_v70.json",
+        "records/repair_journal_v70.json",
+        "records/repair_budget_v70.json",
+        "records/execution_chain_v70.json",
+        "records/retained_operator_contract_v70.json",
+        "records/target_gap_v70.json",
+        "records/selective_merge_manifest_v70.json"
+      ]
+    }
+  ],
+  "records": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/array_inventory_v70.json",
+      "bytes": 12312,
+      "sha256": "af27c254caf22e4cd4a5077b667a5abeed928cc388a195fc4b79497d349f8e0f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/assembly_time_checkpoint_v70.json",
+      "bytes": 50769,
+      "sha256": "abeec2dab6b255ae320de2085693d04030c5c5c0a46a12b1281f3b1f079a7e5a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/authority_identity_v70.json",
+      "bytes": 26346,
+      "sha256": "c6e0ef640fc935b6a06ca662c1dde2286f6cf4a2aa891893d4378964b15041ab"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/capacity_and_lifetimes_v70.json",
+      "bytes": 9762,
+      "sha256": "f26064cf5d82a5add7df89d4d6377125d9772aaf5017eaf0fb0968460059e2bb"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/complete_physics_v70.json",
+      "bytes": 18631,
+      "sha256": "341ac4ae1454f903333bbabc62a9f3e46d009adaad8c0eb9ab3378622d322033"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/deployment_cost_boundary_v70.json",
+      "bytes": 5754,
+      "sha256": "66596fccad7d5912e54d5af4de9303581e438fc1aa566add3651f5e4f26eba43"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/documentation_checks_v70.json",
+      "bytes": 7415,
+      "sha256": "e09a63fc2e1f275cb70c6a709ef8fc9f07c1f34de60f8ad4f4970ac23e5a014a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/execution_chain_v70.json",
+      "bytes": 23395,
+      "sha256": "2f1b42633c675ebec255b18f9d37fc64bbf0912ca47f5cfcf3a9ba0bf4c9bd93"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/explicit_counters_v70.json",
+      "bytes": 3221,
+      "sha256": "32cf5d3e6fabd54ddd63160c0ed480dfb556e34ea9e437845ca0d624fb5ee4b3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/minimum_result_cost_v70.json",
+      "bytes": 6527,
+      "sha256": "3e9f677e7110bb9a0e9a0318c21f061f7b4b832aca163245b844dc07d2be13e1"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/modal_recalculation_v70.json",
+      "bytes": 759,
+      "sha256": "bea204a76fc3e76d6f5bf8c18cc4a3a34ac74dd748b0f0d3a97f850ebad7f582"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/paired_results_v70.json",
+      "bytes": 21375,
+      "sha256": "c52e61e447afbd3bee969df8bed1135891ab050ae3ee80abcf55974550cc29d3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/raw_archive_final_tail_v70.json",
+      "bytes": 169025,
+      "sha256": "86a85b48de295ab397c90bcf104fc893bf01246a66b3e0596a00285ed8a2e062"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/raw_archive_index_v70.json",
+      "bytes": 797,
+      "sha256": "d2f937d3e2ae94f0be5ba7e173b12afe4e2cc62d55eafdf047dec8f31ce0e732"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/repair_budget_v70.json",
+      "bytes": 1190,
+      "sha256": "a8fc37de368af6df04061da59d72f7691dc3678ee12674ea032e91e6b9655bc9"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/repair_journal_v70.json",
+      "bytes": 3191,
+      "sha256": "74c13d25cdf31bb994f86bbb0767a4acf6c8397198fee9340fd26cbbb969f58c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_at_delivery_v70.json",
+      "bytes": 118812,
+      "sha256": "610a9e182f9e11bb5c0822dd957a5fe16cc130b37c461de32ff41ddc7d54a82c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v70.json",
+      "bytes": 150081,
+      "sha256": "ec31ea8f4253433d01bb19a30c81309cb9887cd123de6636a9603577fc4b3837"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v70.json",
+      "bytes": 105352,
+      "sha256": "8e2bbcbe8817cc6088d3eb7a813de01ef7039151128399c21c3b072eaa3fb80d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/retained_operator_contract_v70.json",
+      "bytes": 24015,
+      "sha256": "ae78afd1ddb90b3d91cbd44febb19ba29ffa599116e0e7ec9e06a6fe0f8097ca"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v70.json",
+      "bytes": 44114,
+      "sha256": "3cc926fb3a952f11e37ab96627b2491484510c01367f668a5a3c4f3a7217765c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/scientific_checks_v70.json",
+      "bytes": 14612,
+      "sha256": "d3de23ce9775bb6f1bd68db10a9fbf9e7c9f024c5ea0cfea2f8c4edf08ef228b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/sealed_array_manifest_inventory_v70.json",
+      "bytes": 2581,
+      "sha256": "40ccf0558837bbfb08e68817e45d07c8e3a49125c53e85086a3eae2a66884b31"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/selective_merge_manifest_v70.json",
+      "bytes": 7366,
+      "sha256": "cbbfdc9aa5dc092a534606651785de2839214e718c7c239edf8b3ee580c88a2a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/source_bindings_v70.json",
+      "bytes": 836,
+      "sha256": "f78cb429ac5d62aecb2c697ec6bf6d32994968715450cc8b952eea6a3f91e913"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/source_control_bindings_v70.json",
+      "bytes": 13412,
+      "sha256": "429f7a50700ef20406ec47c18c5fe44cbaa7735946ea4b020208d668f1fad189"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/stored_structure_inventory_v70.json",
+      "bytes": 1033,
+      "sha256": "87f0e1f076910e71a74ff5aa1ca21858066f77546d64ba5688c86a8f33350f95"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/target_gap_v70.json",
+      "bytes": 895,
+      "sha256": "dd49e5cb47b2a8ba448f2f9dc2538ae06c8be93dc7e0031267793aebd2b327e1"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/trace_action_qualification_v70.json",
+      "bytes": 3896,
+      "sha256": "be18d70f4898c3e0ee62e698c090f6fd8e26de944493e1c111b3ba1e06b830cf"
+    }
+  ],
+  "clock": {
+    "start_utc": "2026-10-10T13:21:24.218543+00:00",
+    "start_monotonic": 1563479.079419508,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 39600,
+    "total_limit_seconds": 43200,
+    "scientific_loaded_limit_seconds": 36000,
+    "review_commit": "7eb964ce194748d5c3510a4dc1798e312282aa57",
+    "contract_HEAD": "7eb964ce194748d5c3510a4dc1798e312282aa57",
+    "closed": false,
+    "first_work_start_never_refreshed": true,
+    "first_observed_proc_uptime": 1563479.08,
+    "start_monotonic_kind": "backbound from live UTC/monotonic pair to first actual UTC",
+    "heavy_stop_utc": "2026-10-11T00:21:24.218543+00:00",
+    "deadline_utc": "2026-10-11T01:21:24.218543+00:00",
+    "observed_utc": "2026-10-10T21:19:00.868632+00:00",
+    "observed_monotonic": 1592135.729500089,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 28656.650089025497,
+    "heavy_remaining_seconds": 10943.349910974503,
+    "total_remaining_seconds": 14543.349910974503
+  },
+  "final_settlement_utc": "2026-10-10T21:19:00.906497+00:00",
+  "complete_fields": [
+    "SOLVE"
+  ],
+  "storage": {
+    "new_bytes": 13386683348,
+    "task_artifact_bytes": 171139712556,
+    "free_bytes": 2862109417472,
+    "reserve_bytes": 536870912
+  },
+  "closed": true,
+  "active": null,
+  "cleanup": {
+    "utc": "2026-10-10T21:18:13.883193+00:00",
+    "active": null,
+    "live_matching_actors": [],
+    "all_recorded_descendant_groups_cleared": true,
+    "own_lock_acquired_then_released": true,
+    "lock_path": "tmp/task042/task042_shared.lock",
+    "neighbor_modified_or_notified": false
+  },
+  "GitHub_visual": "NOT_VERIFIED",
+  "CI": "NOT_RUN",
+  "final_commit_is_document_HEAD_not_numerical_source": true,
+  "neighbor_notification": false,
+  "final_push_identity": "tmp/task042/v70/final_git_receipt.json; live non-self-referential remote check"
+}

@@ -1,5 +1,230 @@
 {
-  "status": "PENDING_LOCAL",
+  "status": "PASSED_LOCAL",
+  "final_bytes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "85d315e0c7563a1a6e1fe9f3622e15c873a585b809c329ee986150b819f70785",
+      "tables": [],
+      "links": [
+        "response_v70.md",
+        "outcomes/assembly_time_tetra_trace_action_v70.md",
+        "outcomes/records/retained_operator_contract_v70.json",
+        "outcomes/records/resource_costs_final_v70.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "22b0d7806703f1bf0484ad4716bfddbb0cc4e4af204163f0839a058fc14c6e5c",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "../response_v70.md",
+        "records/trace_action_qualification_v70.json",
+        "records/deployment_cost_boundary_v70.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "4d3198aeded0292e9a48d1faf4ff9283ef576c23f8b8c29a414fc3b7eb72d0e7",
+      "tables": [],
+      "links": [
+        "records/execution_chain_v70.json",
+        "records/scientific_checks_v70.json",
+        "records/documentation_checks_v70.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "f39307b687b4372a3c1d1709e6375d201d745c60a1c12a403a856b5948d28314",
+      "tables": [],
+      "links": [
+        "records/selective_merge_manifest_v70.json",
+        "records/authority_identity_v70.json"
+      ]
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "6bb0ed1718cc5a3a2f42d9aa35c5e615e7f582411188c6590ac2e8efd1322e66",
+      "tables": [],
+      "links": [
+        "task042_neural_coarse_inverse/response_v70.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v70.json"
+      ]
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "a51df2e280cdc5274a99b1795fcc30c41767ca242530173a4b718742e7491c3e",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "task042_neural_coarse_inverse/outcomes/records/complete_physics_v70.json",
+        "task042_neural_coarse_inverse/outcomes/records/retained_operator_contract_v70.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v68.md",
+      "sha256": "34583e6b20d79b3d5a007d7e3c7f282dae552477960b6f9d0783c56f1713af6a",
+      "tables": [
+        {
+          "line": 39,
+          "columns": 3
+        },
+        {
+          "line": 57,
+          "columns": 3
+        },
+        {
+          "line": 125,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "response_v69.md",
+        "outcomes/summary.md",
+        "outcomes/records/resource_costs_final_v69.json",
+        "outcomes/records/paired_results_v69.json",
+        "outcomes/records/exact_condensed_checkpoint_v69.json",
+        "outcomes/records/saved_field_diagnosis_v69.json",
+        "outcomes/records/complete_physics_v69.json",
+        "../../src/solvers/independent_tetra_reference.py",
+        "../../src/solvers/hcurl_assembly_time_condensation.py",
+        "../../src/solvers/independent_tetra_study.py"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v70.md",
+      "sha256": "f9aa9a4e7f42dfa0ce7954a6b2967aa2c9df5e44ced83ec76a27c5217c7e359c",
+      "tables": [
+        {
+          "line": 7,
+          "columns": 3
+        },
+        {
+          "line": 16,
+          "columns": 3
+        },
+        {
+          "line": 26,
+          "columns": 3
+        },
+        {
+          "line": 46,
+          "columns": 3
+        },
+        {
+          "line": 66,
+          "columns": 2
+        },
+        {
+          "line": 84,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "outcomes/records/authority_identity_v70.json",
+        "outcomes/records/assembly_time_checkpoint_v70.json",
+        "outcomes/records/trace_action_qualification_v70.json",
+        "outcomes/records/complete_physics_v70.json",
+        "outcomes/records/scientific_checks_v70.json",
+        "outcomes/records/modal_recalculation_v70.json",
+        "outcomes/records/paired_results_v70.json",
+        "outcomes/records/capacity_and_lifetimes_v70.json",
+        "outcomes/records/sealed_array_manifest_inventory_v70.json",
+        "outcomes/records/deployment_cost_boundary_v70.json",
+        "outcomes/records/resource_costs_final_v70.json",
+        "outcomes/records/repair_journal_v70.json",
+        "outcomes/records/repair_budget_v70.json",
+        "outcomes/records/execution_chain_v70.json",
+        "outcomes/records/retained_operator_contract_v70.json",
+        "outcomes/records/target_gap_v70.json",
+        "outcomes/records/selective_merge_manifest_v70.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/assembly_time_tetra_trace_action_v70.md",
+      "sha256": "6ae2099a0c73e033e07564427d48a59e9047810d2561261f1c683594b40dd5ae",
+      "tables": [
+        {
+          "line": 7,
+          "columns": 3
+        },
+        {
+          "line": 16,
+          "columns": 3
+        },
+        {
+          "line": 26,
+          "columns": 3
+        },
+        {
+          "line": 46,
+          "columns": 3
+        },
+        {
+          "line": 66,
+          "columns": 2
+        },
+        {
+          "line": 84,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "records/authority_identity_v70.json",
+        "records/assembly_time_checkpoint_v70.json",
+        "records/trace_action_qualification_v70.json",
+        "records/complete_physics_v70.json",
+        "records/scientific_checks_v70.json",
+        "records/modal_recalculation_v70.json",
+        "records/paired_results_v70.json",
+        "records/capacity_and_lifetimes_v70.json",
+        "records/sealed_array_manifest_inventory_v70.json",
+        "records/deployment_cost_boundary_v70.json",
+        "records/resource_costs_final_v70.json",
+        "records/repair_journal_v70.json",
+        "records/repair_budget_v70.json",
+        "records/execution_chain_v70.json",
+        "records/retained_operator_contract_v70.json",
+        "records/target_gap_v70.json",
+        "records/selective_merge_manifest_v70.json"
+      ]
+    }
+  ],
+  "history": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "355bd5684024b16064b6d4393675a81aad1cd4eecad4a307e7f414495b9b09c3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "b1ed8f2834ba6322f967a440fdb6669d9ff9106cf524b0d4d270dae9191a6396"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "612f5d4f61514966f27333b8fb1654db019ce1cf82ec841978c0eeeebdf78cf3"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "a5acefa8f0bc1d992b641b14dbad51b41ef78385f73a6f91d2e58efa03f369a7"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "1327e18f21823f6fbe1c44b6a090c8d47a1c2af998d1fc9edc294cc7c7f9bde3"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "4e641cadd6a7dc7a84236f909c436711f826e5434df5bcc637b173955455090e"
+    }
+  ],
+  "test_seconds": 0.2644095818977803,
   "GitHub_visual": "NOT_VERIFIED",
   "CI": "NOT_RUN"
 }

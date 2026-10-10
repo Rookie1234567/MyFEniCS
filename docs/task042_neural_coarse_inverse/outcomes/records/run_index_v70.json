@@ -543,6 +543,74 @@
       "descendants_cleared": true,
       "peak_bytes": 2511233024,
       "swap_bytes": 0
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v70/aux_post_collect02",
+      "source_sha": "d6cd48cf449a0e613146c0f4aff01caac48f68c8",
+      "before_clock": {
+        "start_utc": "2026-10-10T13:21:24.218543+00:00",
+        "start_monotonic": 1563479.079419508,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 39600,
+        "total_limit_seconds": 43200,
+        "scientific_loaded_limit_seconds": 36000,
+        "review_commit": "7eb964ce194748d5c3510a4dc1798e312282aa57",
+        "contract_HEAD": "7eb964ce194748d5c3510a4dc1798e312282aa57",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "first_observed_proc_uptime": 1563479.08,
+        "start_monotonic_kind": "backbound from live UTC/monotonic pair to first actual UTC",
+        "heavy_stop_utc": "2026-10-11T00:21:24.218543+00:00",
+        "deadline_utc": "2026-10-11T01:21:24.218543+00:00",
+        "observed_utc": "2026-10-10T21:05:14.710503+00:00",
+        "observed_monotonic": 1591309.57137089,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 27830.491959810257,
+        "heavy_remaining_seconds": 11769.508040189743,
+        "total_remaining_seconds": 15369.508040189743
+      },
+      "elapsed_seconds": 169.5577365050558,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 879456256,
+      "swap_bytes": 0
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v70/aux_post_documents01",
+      "source_sha": "f158e816e302e45594bd1f6758aff3a3388c2045",
+      "before_clock": {
+        "start_utc": "2026-10-10T13:21:24.218543+00:00",
+        "start_monotonic": 1563479.079419508,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 39600,
+        "total_limit_seconds": 43200,
+        "scientific_loaded_limit_seconds": 36000,
+        "review_commit": "7eb964ce194748d5c3510a4dc1798e312282aa57",
+        "contract_HEAD": "7eb964ce194748d5c3510a4dc1798e312282aa57",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "first_observed_proc_uptime": 1563479.08,
+        "start_monotonic_kind": "backbound from live UTC/monotonic pair to first actual UTC",
+        "heavy_stop_utc": "2026-10-11T00:21:24.218543+00:00",
+        "deadline_utc": "2026-10-11T01:21:24.218543+00:00",
+        "observed_utc": "2026-10-10T21:15:19.638686+00:00",
+        "observed_monotonic": 1591914.499554336,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 28435.42014336586,
+        "heavy_remaining_seconds": 11164.57985663414,
+        "total_remaining_seconds": 14764.57985663414
+      },
+      "elapsed_seconds": 14.935766707872972,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 142626816,
+      "swap_bytes": 0
     }
   ],
   "pointers": {
@@ -917,5 +985,7 @@
       "status": "REJECTED",
       "error": "RuntimeError: No audited unoccupied physical core; do not overlap a busy worker/SMT sibling"
     }
-  ]
+  ],
+  "closed_at_final_settlement": true,
+  "active": null
 }

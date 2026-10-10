@@ -545,5 +545,31 @@
   "legal_returned_field_never_refactored": true,
   "local_packets_and_new_S_reopened_without_reconstruction": true,
   "partial_BUILD_ADD_resume_NOT_TESTED": true,
-  "no_fresh_window_or_rollback": true
+  "no_fresh_window_or_rollback": true,
+  "final_document_auxiliary": {
+    "command": [
+      "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+      "-m",
+      "src.runners.port_preparation",
+      "--aux",
+      "post",
+      "documents01",
+      "python",
+      "tmp/task042/v70/docs_once.py"
+    ],
+    "source_sha": "f158e816e302e45594bd1f6758aff3a3388c2045",
+    "start_utc": "2026-10-10T21:14:30.537394+00:00",
+    "end_utc": "2026-10-10T21:16:24.053352+00:00",
+    "elapsed_seconds": 113.51596346590668,
+    "exit_code": 0,
+    "wrapper_sha256": "1e9939382e3ac87992d67a3d57bbd490237cf8c8ea1d55ed5cee0460836d0093",
+    "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+  },
+  "metadata_only_native_marker_correction": {
+    "path": "tmp/task042/v70/manual_abi_precheck_correction.json",
+    "sha256": "98724fa309594796146991b962b8822d29d1ae93346086ea293dac5cc2fa932b",
+    "preserved_failed_assertion": true,
+    "new_PDE": 0,
+    "scientific_qualification_replay": 0
+  }
 }

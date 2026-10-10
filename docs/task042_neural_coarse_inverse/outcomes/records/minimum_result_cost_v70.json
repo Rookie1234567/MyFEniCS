@@ -1,0 +1,136 @@
+{
+  "status": "SETTLED_CLOSED",
+  "complete_fields": [
+    "SOLVE"
+  ],
+  "formal_equation_pass": true,
+  "direct_target_pass": false,
+  "current_charged_conservative_seconds": 26952.667493458568,
+  "current_known_unique_lower_seconds": 25665.888607822788,
+  "research_known_unique_cumulative_lower_seconds": 340487.167195462,
+  "deployment": {
+    "status": "MEASURED_COMPLETE_SEGMENTS",
+    "complete_necessary_build_plus_prepared_solve_seconds": 22313.37408842519,
+    "segments": [
+      {
+        "entry": "BUILD_one_run01",
+        "role": "BUILD",
+        "command": [
+          "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scripts/run_case.py",
+          "input/task042_neural_coarse_inverse/v70_assembly_time_p5_prepare.dat"
+        ],
+        "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+        "start_utc": "2026-10-10T14:23:44.179840+00:00",
+        "end_utc": "2026-10-10T17:04:31.006297+00:00",
+        "elapsed_seconds": 9646.826483891113,
+        "exit_code": 0,
+        "input_sha256": "cced6b36719ce3f7f6049e3ca48b294ff72752e98cc27775abb1c419771bdbbc",
+        "wrapper_sha256": "21d84c43e957d1fd385fa7207f37f1e57b89a486b18982cc75644726d152b4b9",
+        "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+        "cache": "OS/JIT not cleared; new numerical case objects",
+        "received_signals": []
+      },
+      {
+        "entry": "SOLVE_one_run01",
+        "role": "SOLVE",
+        "command": [
+          "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scripts/run_case.py",
+          "input/task042_neural_coarse_inverse/v70_assembly_time_p5_solve.dat"
+        ],
+        "source_sha": "0490af3085f32940787f0a02f0d801578ab87b73",
+        "start_utc": "2026-10-10T17:12:34.687229+00:00",
+        "end_utc": "2026-10-10T20:43:41.234819+00:00",
+        "elapsed_seconds": 12666.547604534077,
+        "exit_code": 0,
+        "input_sha256": "e95516fb105c5430d37556fdfc12d9895be76fd19cafec8c3b296a677a0ea04f",
+        "wrapper_sha256": "21d84c43e957d1fd385fa7207f37f1e57b89a486b18982cc75644726d152b4b9",
+        "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+        "cache": "OS/JIT not cleared; new numerical case objects",
+        "received_signals": []
+      }
+    ],
+    "whole_elapsed_first_BUILD_start_to_complete_SOLVE_end_seconds": 22797.054979,
+    "interleaved_research_and_idle_gap_seconds": 483.6808905748112,
+    "prepared_start_SOLVE_seconds": 12666.547604534077,
+    "new_process_live_objects_each_stage": true,
+    "OS_JIT_caches_not_cleared": true,
+    "numerical_asset_lifecycle": "fresh BUILD raw/S/local; prepared S/local reused by SOLVE; fresh global numeric factor",
+    "BUILD_JIT_cache_hit_time_is_measured_not_a_fresh_compiler_speed_ratio": true,
+    "validation_qualification_ACTION_S_compare_VERIFY_documentation_separate_T_research": true,
+    "failed_qualification_receipts": [
+      {
+        "entry": "PREFLIGHT_one_run02",
+        "command": [
+          "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scripts/run_case.py",
+          "input/task042_neural_coarse_inverse/v70_cell_kernel_preflight.dat"
+        ],
+        "source_sha": "a1f85ad161d8ab98047b7c137e0cbc07ec726d4c",
+        "start_utc": "2026-10-10T14:03:27.743433+00:00",
+        "end_utc": "2026-10-10T14:06:00.376754+00:00",
+        "elapsed_seconds": 152.63333982299082,
+        "exit_code": 3,
+        "input_sha256": "965e9c76b28702d4e6b46f6f868b47090ef5fc3f6ccddae5403615910afb67a1",
+        "wrapper_sha256": "21d84c43e957d1fd385fa7207f37f1e57b89a486b18982cc75644726d152b4b9",
+        "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+        "cache": "OS/JIT not cleared; new numerical case objects",
+        "received_signals": []
+      },
+      {
+        "entry": "PREFLIGHT_one_run03",
+        "command": [
+          "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scripts/run_case.py",
+          "input/task042_neural_coarse_inverse/v70_cell_kernel_preflight.dat"
+        ],
+        "source_sha": "aa6cb19721035e1f8dbc42ea7835faceef54a9af",
+        "start_utc": "2026-10-10T14:12:32.726655+00:00",
+        "end_utc": "2026-10-10T14:15:12.470974+00:00",
+        "elapsed_seconds": 159.74431583611295,
+        "exit_code": 3,
+        "input_sha256": "965e9c76b28702d4e6b46f6f868b47090ef5fc3f6ccddae5403615910afb67a1",
+        "wrapper_sha256": "21d84c43e957d1fd385fa7207f37f1e57b89a486b18982cc75644726d152b4b9",
+        "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+        "cache": "OS/JIT not cleared; new numerical case objects",
+        "received_signals": []
+      },
+      {
+        "entry": "PREFLIGHT_one_run01",
+        "command": [
+          "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scripts/run_case.py",
+          "input/task042_neural_coarse_inverse/v70_cell_kernel_preflight.dat"
+        ],
+        "source_sha": "c6294aed0016297b7fc9b47974765518a4bde5b1",
+        "start_utc": "2026-10-10T13:56:21.878786+00:00",
+        "end_utc": "2026-10-10T13:59:16.552182+00:00",
+        "elapsed_seconds": 174.67342284787446,
+        "exit_code": 3,
+        "input_sha256": "965e9c76b28702d4e6b46f6f868b47090ef5fc3f6ccddae5403615910afb67a1",
+        "wrapper_sha256": "21d84c43e957d1fd385fa7207f37f1e57b89a486b18982cc75644726d152b4b9",
+        "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+        "cache": "OS/JIT not cleared; new numerical case objects",
+        "received_signals": []
+      }
+    ],
+    "parent_original_K_prepare_seconds": 12095.119183719857,
+    "old_C5_prepared_start_seconds": 7559.58426938,
+    "old_L5_prepared_start_seconds": 5955.676414642017,
+    "old_necessary_K_and_failures_already_in_historical_prefix_once": true,
+    "old_ready_K_cost_not_a_matched_fresh_control": true,
+    "production_speed_ratio": null,
+    "production_peak_reduction_ratio": null,
+    "no_nested_timer_double_addition": true,
+    "missing_individual_BUILD_kernel_LU_ADD_timers": "unknown within measured combined kernel/elimination/direct ADD interval",
+    "no_extra_PDE_for_timing": true
+  },
+  "peak_sampled_tree_bytes": 119483629568,
+  "max_gap_seconds": 12.106373907998204,
+  "closed": true,
+  "active": null,
+  "continuum_accuracy": false,
+  "target_2TB48h": false,
+  "NN20": false
+}
