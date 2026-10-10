@@ -138,7 +138,8 @@ def run_stage(manifest, artifact, marker):
                      reference_exposed=True, status="DIAGNOSTIC_FEATURES_FROZEN"), **Fsave)
     if role == "ftt_capacity_decision":
         from benchmarks.check_ftt_capacity import check_saved
-        checked = check_saved(ART)
+        checked = check_saved(ART, frozen_design=dict(
+            path=str(DESIGN.relative_to(ROOT)), sha256=manifest['design_sha256']))
         phase(artifact, "saved_checker", checked)
         return dict(status="DIAGNOSTIC_COMPLETE", decision=checked["decision"],
                     saved_checker=checked, future_training_authorized=False,

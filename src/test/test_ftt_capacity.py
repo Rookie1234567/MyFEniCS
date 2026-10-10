@@ -215,3 +215,54 @@ def test_corrupted_saved_records_not_trusted_even_with_updated_json(saved_fixtur
 def test_invalid_bound_metadata_rejected(ranks,denominator,defect):
     with pytest.raises(ValueError):
         rank_bound({},ranks,denominator,defect)
+
+
+@pytest.mark.parametrize('bad_kind', ['margin', 'rank', 'backward'])
+def test_checker_recomputes_rank_and_numerical_margin(saved_fixture,bad_kind):
+    from benchmarks.check_ftt_capacity import check_saved
+    root,_,sr,_,write=saved_fixture
+    if bad_kind=='margin':
+        sr['bounds']['pure_r8']['numerical_margin']=0
+    elif bad_kind=='rank':
+        sr['bounds']['pure_r8']['ranks']=[7,64,8]
+    else:
+        sr['spectra']['x'][0]['backward_error_numerator']=.1
+    write('v40_rank_and_feature_bounds/spectra.json',sr)
+    with pytest.raises(ValueError,match='CAPACITY_'):
+        check_saved(root)
+
+
+@pytest.mark.parametrize('bad_kind', ['none', 'erase_geometry', 'axis', 'design_hash'])
+def test_checker_reads_original_geometry_arrays(saved_fixture,bad_kind):
+    from benchmarks.check_ftt_capacity import check_saved
+    from src.io.neural_wave_campaign import digest
+    root,bridge,_,_,write=saved_fixture
+    ids=np.indices((8,6,8)).reshape(3,-1).T
+    J=np.tile(np.eye(3)[None,:,:]*1.25,(384,1,1))
+    J[:,0,1]=1e-15
+    packet=root/'packet.npz'
+    np.savez(packet,jacobians=J,origins=ids*1.25)
+    frozen=write('design.json',{'files':{'moments_q30':{'path':'packet.npz','sha256':digest(packet)}},
+                              'model':{'geometry':{'cells':[8,6,8]}}})
+    bridge['original_axis_origin_or_width_nonseparability_max_nm']=0
+    Tpath=root/bridge['arrays']['path']
+    with np.load(Tpath) as saved:
+        T={k:np.array(saved[k]) for k in saved.files}
+    T['axis_ids']=ids
+    if bad_kind=='erase_geometry':
+        bridge['original_J_non_diagonal_max_nm']=0
+        bridge['rank_bound_transferable_to_actual_FE']=True
+    elif bad_kind=='axis':
+        T['axis_ids'][0]=T['axis_ids'][1]
+    elif bad_kind=='design_hash':
+        frozen['sha256']='0'*64
+    np.savez(Tpath,**T)
+    bridge['arrays']['sha256']=digest(Tpath)
+    write('v40_interior_moment_tensor/interior_tensor.json',bridge)
+    if bad_kind=='none':
+        record=check_saved(root,frozen_design=frozen)
+        assert record['original_geometry_array_check']['off_axis_max_nm']==1e-15
+        assert not record['actual_FE_rank_bridge_qualified']
+    else:
+        with pytest.raises(ValueError,match='CAPACITY_'):
+            check_saved(root,frozen_design=frozen)

@@ -27,13 +27,50 @@ def independent_tail(spectra, ranks, norm, defect):
     return float(np.sqrt(sum(v*v for v in values))/norm)
 
 
-def check_saved(artifact_root):
+def check_saved(artifact_root, *, frozen_design=None):
     root = Path(artifact_root)
     bridge = json.loads((root/"v40_interior_moment_tensor/interior_tensor.json").read_text())
     sr = json.loads((root/"v40_rank_and_feature_bounds/spectra.json").read_text())
     fr = json.loads((root/"v40_rank_and_feature_bounds/features.json").read_text())
     T, S = read_arrays(bridge["arrays"]), read_arrays(sr["arrays"])
     F = read_arrays(fr["arrays"])
+    geometry_rechecked = None
+    if frozen_design is not None:
+        design_path = ROOT / frozen_design['path']
+        if digest(design_path) != frozen_design['sha256']:
+            raise ValueError('CAPACITY_CHECKER_DESIGN_HASH_FAILED')
+        design = json.loads(design_path.read_text())
+        entry = design['files']['moments_q30']
+        packet_path = ROOT / entry['path']
+        if digest(packet_path) != entry['sha256']:
+            raise ValueError('CAPACITY_CHECKER_ORIGINAL_GEOMETRY_HASH_FAILED')
+        # Only the small original geometry arrays are materialized. No FE or
+        # original moment producer is called by this independent checker.
+        with np.load(packet_path, allow_pickle=False) as packet:
+            J, origins = np.array(packet['jacobians']), np.array(packet['origins'])
+        ids = T['axis_ids']
+        counts = design['model']['geometry']['cells']
+        expected_cells = int(np.prod(counts))
+        if (J.shape != (expected_cells, 3, 3) or origins.shape != (expected_cells, 3)
+            or ids.shape != (expected_cells, 3) or
+            len({tuple(row) for row in ids}) != expected_cells or
+            any(set(ids[:, a]) != set(range(counts[a])) for a in range(3)) or
+            not np.isfinite(J).all() or not np.isfinite(origins).all() or
+            np.any(np.linalg.det(J) <= 0)):
+            raise ValueError('CAPACITY_ORIGINAL_GEOMETRY_AXIS_IDENTITY_FAILED')
+        off_axis = float(np.max(abs(J[:, ~np.eye(3, dtype=bool)])))
+        dependence = 0.0
+        for a in range(3):
+            for index in range(counts[a]):
+                selected = ids[:, a] == index
+                dependence = max(dependence, float(np.ptp(origins[selected, a])),
+                                 float(np.ptp(J[selected, a, a])))
+        if (off_axis != bridge['original_J_non_diagonal_max_nm'] or
+            dependence != bridge['original_axis_origin_or_width_nonseparability_max_nm']):
+            raise ValueError('CAPACITY_ORIGINAL_GEOMETRY_ARRAY_REPORT_MISMATCH')
+        geometry_rechecked = dict(original_moments=entry,
+            off_axis_max_nm=off_axis, axis_origin_or_width_dependence_nm=dependence,
+            original_arrays_recomputed_not_status_only=True)
     norm = bridge["original_full_scattered_E_denominator"]
     original = bridge['input_identity']['norm_record']
     original_path = ROOT/original['path']
@@ -53,6 +90,7 @@ def check_saved(artifact_root):
     if bessel_energy > norm**2*(1+1e-10):
         raise ValueError("CAPACITY_BESSEL_NORMALIZATION_FAILED")
     svd_rows=[]
+    measured_backwards=[]
     for s in "xyz":
         for a in range(3):
             M=np.moveaxis(T['full_'+s],a,0).reshape(T['full_'+s].shape[a],-1)
@@ -61,18 +99,28 @@ def check_saved(artifact_root):
             if (len(sigma)!=min(M.shape) or np.any(np.diff(sigma)>0) or np.any(sigma<0)
                 or not np.array_equal(sigma,np.asarray(r['singular_values']))):
                 raise ValueError('CAPACITY_FULL_SPECTRUM_LAYOUT_OR_TRUNCATION_FAILED')
-            backward=float(np.linalg.norm((U*sigma)@Vh-M)/np.linalg.norm(M))
+            backward_absolute=float(np.linalg.norm((U*sigma)@Vh-M))
+            denominator=float(np.linalg.norm(M))
+            backward=backward_absolute/denominator
+            if (abs(backward_absolute-r['backward_error_numerator']) > 32*np.finfo(float).eps*denominator or
+                abs(denominator-r['backward_error_denominator']) > 32*np.finfo(float).eps*denominator):
+                raise ValueError('CAPACITY_SVD_REPORTED_PERTURBATION_MISMATCH')
+            measured_backwards.append(backward_absolute)
             orthogonal=max(float(np.linalg.norm(U.conj().T@U-np.eye(len(sigma)))),
                            float(np.linalg.norm(Vh@Vh.conj().T-np.eye(len(sigma)))))
             if max(backward,orthogonal)>1e-12:
                 raise ValueError('CAPACITY_SAVED_SVD_RECONSTRUCTION_FAILED')
             svd_rows.append(dict(component=s,axis=a,backward_relative=backward,orthogonality=orthogonal))
     bounds={}
+    margin=max(1e-8,10*max(input_defect,*measured_backwards)/norm)
     for name,ranks in (('pure_r8',[8,64,8]),('width16',[8,17,8]),('cheb19',[8,19,8])):
         lower=independent_tail(sr['spectra'],ranks,norm,input_defect)
         expected=sr['bounds'][name]['conservative_relative_lower_estimate']
         if abs(lower-expected)>1e-13:
             raise ValueError('CAPACITY_TAIL_ENERGY_OR_FULL_DENOMINATOR_FAILED')
+        if (sr['bounds'][name]['ranks'] != ranks or
+            abs(sr['bounds'][name]['numerical_margin']-margin)>1e-15):
+            raise ValueError('CAPACITY_FIXED_RANK_OR_NUMERICAL_MARGIN_FAILED')
         bounds[name]=lower
     feature_rows={}
     cells=(8,6,8)
@@ -110,7 +158,6 @@ def check_saved(artifact_root):
                   bridge['original_axis_origin_or_width_nonseparability_max_nm']==0)
     if bridge['rank_bound_transferable_to_actual_FE'] != transferable or bridge['original_J_was_zeroed']:
         raise ValueError('CAPACITY_ACTUAL_GEOMETRY_RANK_PROMOTION_REJECTED')
-    margin=sr['bounds']['pure_r8']['numerical_margin']
     if not transferable:
         selected='NO_VALID_FE_CAPACITY_CERTIFICATE'
     elif bounds['pure_r8']>1e-4+margin:
@@ -126,4 +173,5 @@ def check_saved(artifact_root):
         feature_bounds=feature_rows, SVD_checks=svd_rows, reference_E_norm=norm,
         Bessel_ratio=bessel_energy/norm**2, independent_moment_pair_relative=pairing,
         numerical_margin=margin, no_solver_or_production_PASS=True,
+        original_geometry_array_check=geometry_rechecked,
         original_V39_numerical_FAIL_unchanged=True, result_kind='DIAGNOSTIC')
