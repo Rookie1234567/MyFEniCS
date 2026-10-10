@@ -26,6 +26,19 @@ from src.solvers.optimization_checkpoint import (
 from src.solvers.ftt_core_training import CoreBoundary, hidden_step
 
 
+def test_saved_checker_output_namespace_is_unique_per_recovery(tmp_path):
+    from src.runners.ftt_core_worker import checker_directory
+
+    artifact = tmp_path / "artifact"
+    first = checker_directory(artifact, tmp_path / "stage_attempt1")
+    second = checker_directory(artifact, tmp_path / "stage_attempt2")
+    assert first != second and first.parent == second.parent == artifact
+    first.mkdir(parents=True)
+    (first / "retained.json").write_text("old evidence")
+    second.mkdir()
+    assert (first / "retained.json").read_text() == "old evidence"
+
+
 def test_research_comparison_policy_does_not_change_numerical_fields():
     from src.postprocessing.ftt_verification import research_comparison_policy
 

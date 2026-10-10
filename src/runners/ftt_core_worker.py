@@ -102,6 +102,11 @@ def subphase(directory, phase):
         raise ValueError("UNKNOWN_CORE_VERIFICATION_PHASE")
 
 
+def checker_directory(artifact, directory):
+    """Each recovery owns a fresh supervisor directory; old evidence stays."""
+    return artifact / ("independent_pure_checker_" + directory.name)
+
+
 def independent_compare(manifest, artifact, marker, directory):
     from src.runners.guarded_exec import ticks
 
@@ -150,7 +155,7 @@ def independent_compare(manifest, artifact, marker, directory):
     ]
     summary = run_checker(
         command,
-        artifact / "independent_pure_checker",
+        checker_directory(artifact, directory),
         manifest["worker_stop_monotonic"],
         manifest["source_sha"],
     )
@@ -160,7 +165,10 @@ def independent_compare(manifest, artifact, marker, directory):
         verification_complete=True,
         new_reference_solve_count=0,
         previously_healthy_reconstruction_and_FE_compare_reused=True,
-        research_use_policy_seal=policy_seal,
+        research_use_policy_seal=policy_seal
+        or json.loads((artifact / "verifier_result.json").read_text()).get(
+            "research_use_policy_seal"
+        ),
     )
 
 
