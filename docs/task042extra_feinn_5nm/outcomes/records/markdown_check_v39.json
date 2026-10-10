@@ -1,0 +1,139 @@
+{
+  "schema": "task42extra.v39.markdown.v1",
+  "pages": [
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v38.md",
+      "scope": "Selected full new/authority page",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/review_report_v38.md",
+        "sha256": "5a8fccef901a42c57d5975c2221b847b0c7b54c38524903d4434c39850efe401",
+        "checked_scope": "entire page",
+        "markdown_tables": 4,
+        "parsed_tables": 4,
+        "math_fences": 3,
+        "links": 10
+      }
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v38_execution_addendum.md",
+      "scope": "Selected full new/authority page",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/review_report_v38_execution_addendum.md",
+        "sha256": "cabdd520d772e5dffc1659ecb136d5ffc5521d1c585d553fca3f1c0a95e91e43",
+        "checked_scope": "entire page",
+        "markdown_tables": 3,
+        "parsed_tables": 3,
+        "math_fences": 1,
+        "links": 5
+      }
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/response_v39.md",
+      "scope": "Selected full new/authority page",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/response_v39.md",
+        "sha256": "1c55bf7238f02230ab20553b7e8ecb67c5595f07c31ba6e43728e476b17610a2",
+        "checked_scope": "entire page",
+        "markdown_tables": 3,
+        "parsed_tables": 3,
+        "math_fences": 0,
+        "links": 12
+      }
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/ftt_structure_aware_v39.md",
+      "scope": "Selected full new/authority page",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/ftt_structure_aware_v39.md",
+        "sha256": "be4833b91d41793dfc4442d4ddd1e03c844a5ec6ad3c948f4be9c83f2f378b53",
+        "checked_scope": "entire page",
+        "markdown_tables": 3,
+        "parsed_tables": 3,
+        "math_fences": 0,
+        "links": 6
+      }
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/README.md",
+      "scope": "New current section only; old history untouched",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/README.md",
+        "sha256": "58f118570d43347813497369685dac9787e480ffefc21c4d6ac875f5e5ac3216",
+        "checked_scope": "当前V39：完整FTT优化已执行，联合数值门未到",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 5
+      }
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "scope": "New current section only; old history untouched",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "sha256": "e5ddee7aa91d62f242c4326bbdcfb7e074db067e166057b2de6634dc3bd8e9aa",
+        "checked_scope": "当前V39：等价映射提速与原神经求解失败分列",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 5
+      }
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "scope": "New current section only; old history untouched",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "sha256": "9c7ac064432fcab19ddf1c4e18d9261b76f00bb49cf2923eb2dcecb4bc0ffc38",
+        "checked_scope": "当前V39：完整矩结构等价、真实恢复及数值失败分别验收",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 4
+      }
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "scope": "New current section only; old history untouched",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "sha256": "734f39d549a393780d5d23fcea6886db2b246ddc387e763c110ced581587c3dd",
+        "checked_scope": "V39改动与依赖组",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 0
+      }
+    },
+    {
+      "path": "docs/development_progress.md",
+      "scope": "New current section only; old history untouched",
+      "result": {
+        "path": "docs/development_progress.md",
+        "sha256": "e048375d0aaf734ed811f58cf3dd2251aa6021f192eb7c537407afa6ea58e36a",
+        "checked_scope": "Task42extra V39：补完整优化量并关闭未合格配置",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 3
+      }
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "scope": "New current section only; old history untouched",
+      "result": {
+        "path": "docs/development_model_registry.md",
+        "sha256": "71b90476c7ca42d0d6507761cd5ff3b53c7363069254195a08f662fc8a6345b8",
+        "checked_scope": "Task42extra V39模型总账：FTT内核提速，M5仍未求准",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 3
+      }
+    }
+  ],
+  "local_parser_table_fence_and_link_checks": true,
+  "new_source_is_readonly_delivery_checker_not_numerical_HEAD": true,
+  "old_page_history_byte_preservation_verified": true,
+  "actual_GitHub_visual": "SEPARATE_BOUNDED_PUBLISHED_VIEW_CHECK"
+}

@@ -1,3 +1,32 @@
+<!-- TASK42EXTRA_V39_CURRENT_BEGIN -->
+# 当前V39：完整FTT优化已执行，联合数值门未到
+
+本支只做神经。V39已把同一FTT的重复一维核和完整矩收缩改成等价结构计算，完整工作均值从39.78/47.68s降到0.618/0.608s；全部正确性/成本门通过后，真实完成累计Adam500→freshLB、两native各1000调用，以及隔离fit的Adam100→freshLB各500调用。没有在接口、commit或普通bug处停止，但M5联合场和原方程仍FAIL，不能把内核加速算作NN求解增益。
+
+| measured；原M5/5nm/384hex/p3/N31968/40端口 | 无标签FTTNN | 无标签Cheb-TT | 原门/解释 |
+|---|---:|---:|---|
+| 调用 / Adam / LB外层 | 1000 / 500 / 22 | 1000 / 500 / 23 | 继承46/68完整状态，新增954/932 |
+| native / augmented | 0.948212215045 / 0.948212215045 | 0.989534468620 / 0.989534468620 | 各1e-6，FAIL |
+| 独立total原残差 | 0.449169796264 | 0.468744220559 | 1e-6，FAIL；准确原值见JSON |
+| 总E / 散射E相对误差 | 0.685383023283 / 0.999458825608 | 0.685746705183 / 0.999989164225 | 各1e-4，FAIL |
+| 总H / 散射H、scaled-curl | 0.683434443047 / 0.999478716178 | 0.683783453926 / 0.999989122038 | 各1e-4，FAIL |
+| R / T / A_balance / A_volume | 0.837413466178 / 0.113317049643 / 0.049269484179 / 0.464578132737 | 0.837501564732 / 0.113256211846 / 0.049242223422 / 0.463356114376 | 原残差失败，仅diagnostic |
+| 独立能量闭合 / 最大逐级功率绝对差 | 0.415308648558 / 0.080857729243 | 0.414113890953 / 0.080924226063 | 1e-5 / 1e-6，FAIL |
+| 实际模型重建 / MPC | 5.04918189575e-15 / 0 | 3.16275156736e-14 / 0 | 1e-10，PASS；q/完整原作用也PASS |
+| 本轮native attempt秒 / 树RSS采样峰B | 556.216935188 / 496128000 | 545.834501735 / 516124672 | 另归属V38前缀，冷N=1 UNKNOWN |
+| 隔离fit G误差 / 调用 / LB外层 | 0.945276943861 / 500 / 17 | 0.021516917589 / 500 / 18 | 参考暴露，非无标签解、非最佳oracle |
+| actual / producer联合Gate | FAIL / FAIL | FAIL / FAIL | 全场/六点/四类40通道/区域已验 |
+
+FTT_MAP_EQUIVALENCE_PASS / FTT_EXECUTION_COST_GATE_PASS / OPTIMIZATION_SCHEDULE_COMPLETED；NUMERICAL_GATE_NOT_REACHED / FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED。按合同关闭此r8/native-EUC+固定优化流程自动续算，不推论所有r8模型无解、不自动rank/seed/loss扫描。0.7nm缩小pilot未准入、未注册、NOT_RUN。
+
+实际数值source962de40947413b5c4c383f62189e951b92e5ecaa，文档HEAD分开；全局Gram/Maxwell因子、Gsolve均0。原PSI/CPU/系统及384GiB邻增长保护保持，成功准入计原43200s连续窗，ownswap/OOC0；旧资源分派失败、初版fit成本失败、V38计时缺口和全部费用/UNKNOWN保留。原50×25×140nm、Si17/120nm、λ0.7完整3D FE、decimal2e12B整机、172800s完整冷流程仍未达成；M3600较好态/Mfinal退化、D0成本否决/D1未运行不改。不转去W0/W1、传统PC/存储或主线接入。
+
+[回执](response_v39.md)、[专题](outcomes/ftt_structure_aware_v39.md)、[Gate](outcomes/records/full_numerical_gates_v39.json)、[运行](outcomes/records/run_index_v39.json)、[成本](outcomes/records/resource_costs_v39.json)。
+
+下方历史原文保留；旧“当前/下一步”不构成新运行授权。
+
+<!-- TASK42EXTRA_V39_CURRENT_END -->
+
 <!-- TASK42EXTRA_V38_CURRENT_BEGIN -->
 # 当前V38：新FTT神经试验完整闭环，M5数值门未到
 

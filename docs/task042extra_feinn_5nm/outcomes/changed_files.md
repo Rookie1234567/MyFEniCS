@@ -1,3 +1,19 @@
+<!-- TASK42EXTRA_V39_CURRENT_BEGIN -->
+# V39改动与依赖组
+
+| 组 | 本轮文件/依赖 | 数值变化、证据与合入建议 |
+|---|---|---|
+| production numerical/core | 普通默认路径无变化 | 未授production merge，不提升研究solver |
+| research-only | src/solvers/ftt_factored_moments.py、ftt_structure_qualification.py、ftt_optimization.py | 同FTT有限和/共轭余切等价重排、显式完整resume；old Streaming默认保持；原M5配对通过，求解精度FAIL |
+| reusable runner/watchdog | src/io/ftt_structure_campaign.py；ftt_structure_worker.py；neural_wave_campaign/dependencies与block_wave_admission最小dispatch | 显式schema9/角色/原clock，资源门不改；version39旧观察池误分派修复 |
+| checker/benchmark | src/postprocessing/ftt_verification.py；benchmarks/check_ftt_structure_delivery.py；src/test/test_ftt_structure*.py | 原独立重建/FE/数组Gate及纯交付损坏负控，source与数学核source分开 |
+| compact evidence/docs | 8个v39 one-run dat、design_v39.json；Response/专题/summary及records | 输入只研究，raw/PT/完整轨迹留ignored；README/progress/总账同步本支 |
+| do-not-merge | 研究输入、旧全部失败、拟合权重、ignored大数组/PT、生产资格自动提升 | 标签永久隔离，无NN净增益、无合并批准；保留历史证据 |
+
+依赖顺序：已有FTT/完整矩/native → opt-in分解与resume → stage/schema/白名单 → targeted资格/clean实现source → 正式数值 → 独立checker/compact/docs。实现source962de40947413b5c4c383f62189e951b92e5ecaa；交付checker是后续只读记录验证，不拿交付HEAD替换数值source。本批没有新Gram/Maxwell因子、完整FE逆或原尺寸运行。详细提交diff由本分支Git历史给出，不修改其他分支/任务。
+
+<!-- TASK42EXTRA_V39_CURRENT_END -->
+
 # V38依赖分组：真实神经试验opt-in，默认求解器不变
 
 | 依赖组 | 本轮变化/证据 | 合入边界 |

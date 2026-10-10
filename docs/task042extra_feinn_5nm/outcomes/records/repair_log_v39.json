@@ -1,0 +1,47 @@
+{
+  "rows": [
+    {
+      "failure": "initial_scalar_entity_loop_cost",
+      "hypothesis": "Python dispatch and einsum planning dominate finite sums",
+      "change": "bounded 8cell contractions and exact sparse repeated-node scatter metadata",
+      "test": "tests02 34 passed; original cell forward/VJP errors <1.4e-15; complete cost remains to be measured",
+      "retry": "formal V39 qualifications after clean commit",
+      "elapsed_campaign_s": 1296.7620253460482
+    },
+    {
+      "failure": "Ruff module missing in ML, then explicit lint findings",
+      "hypothesis": "lint tooling belongs to qualified pure environment; local names/lambdas violate lint",
+      "change": "use installed pure Ruff, explicit marker functions, unambiguous interpolation name",
+      "test": "targeted final tests and lint scheduled; old failed logs retained",
+      "retry": "tests04",
+      "elapsed_campaign_s": 1296.7621147751343
+    },
+    {
+      "failure": "V30_RESOURCE_OBSERVATION_BUDGET_REACHED before terminal; attempt1 worker_started=false",
+      "hypothesis": "V39 omitted from neural_wave_dependencies.fresh_admission version dispatch",
+      "change": "Add only version39 to the reviewed V31+ admission path; thresholds and original allocation unchanged",
+      "test": "tests05: dedicated V39 dispatch/expired V30 pool negative and original timebase regression; completed, swap0, all descendants cleared",
+      "retry": "Same v39_ftt_factored_checks allocation, attempt2 after clean fix commit",
+      "monotonic": 1538847.98291292
+    },
+    {
+      "event": "equivalent kernel cost refinement",
+      "failure": "Native cost gates PASS; fit cost gates FAIL: 2745.998061746126 / 2914.2626981986687s >1800s",
+      "hypothesis": "Repeated bitwise-identical one-dimensional Gauss moments across 19 entities still dominate runtime",
+      "change": "Reuse exact one-dimensional linear functionals in a bounded local tensor; all polynomial coefficients retained; existing three old point work snapshots reused by hash",
+      "test": "tests06:15 passed/Ruff/compileall; tree RSS390017024B/swap0/cleared",
+      "retry": "Same original campaign and stage allocations; qualification attempt3 and benchmark attempt2; no repeat old benchmark producer",
+      "monotonic": 1539946.069916121
+    },
+    {
+      "failure": "Delivery CSV checker treated REFERENCE rows as unexpected routes after eight fixture tests passed",
+      "hypothesis": "CSV intentionally retains the original reference plus four actual/producer routes",
+      "change": "Bind route coverage to the explicit original REFERENCE and reconstruction route set, retaining all saved channels",
+      "test": "Targeted pure delivery checks only; healthy numerical producers remain frozen",
+      "retry": "delivery_checks02",
+      "monotonic": 1544156.698375399
+    }
+  ],
+  "no_healthy_operator_reference_or_training_prefix_replayed": true,
+  "ordinary_bug_count_handoff_cap_used": false
+}

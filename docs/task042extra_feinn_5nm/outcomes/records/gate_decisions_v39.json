@@ -1,0 +1,40 @@
+{
+  "schema": "task42extra.v39.decisions.v1",
+  "mapping_equivalence": true,
+  "native_execution_cost": {
+    "fttnn": true,
+    "chebtt": true
+  },
+  "fit_execution_cost": {
+    "fttnn": true,
+    "chebtt": true
+  },
+  "optimization_schedule": {
+    "v39_fttnn_native_continue": "OPTIMIZATION_SCHEDULE_COMPLETED",
+    "v39_chebtt_native_continue": "OPTIMIZATION_SCHEDULE_COMPLETED",
+    "v39_fttnn_fit_continue": "OPTIMIZATION_SCHEDULE_COMPLETED",
+    "v39_chebtt_fit_continue": "OPTIMIZATION_SCHEDULE_COMPLETED"
+  },
+  "actual_and_producer_joint": {
+    "FTTNN_R8_FACTORED_MAP_CONTINUE": false,
+    "CHEB_TT_R8_FACTORED_MAP_CONTINUE": false,
+    "FTTNN_R8_FACTORED_MAP_CONTINUE_PRODUCER": false,
+    "CHEB_TT_R8_FACTORED_MAP_CONTINUE_PRODUCER": false,
+    "FTTNN_R8_FACTORED_FIT_CONTINUE": false,
+    "CHEB_TT_R8_FACTORED_FIT_CONTINUE": false,
+    "FTTNN_R8_FACTORED_FIT_CONTINUE_PRODUCER": false,
+    "CHEB_TT_R8_FACTORED_FIT_CONTINUE_PRODUCER": false
+  },
+  "native_research_signal": false,
+  "numerical_state": "NUMERICAL_GATE_NOT_REACHED",
+  "reduced_0p7": "NOT_RUN_UNLABELLED_FTT_M5_JOINT_FAIL",
+  "reduced_0p7_input_registered": false,
+  "neural_resource_gain": "NO_VERIFIED_NN_INCREMENT",
+  "same_precision_traditional_FE_comparison": "NOT_QUALIFIED",
+  "solver": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "full_target": "FULL_TARGET_NOT_QUALIFIED",
+  "r8_native_EUC_fixed_optimization_route": "CLOSED_NO_AUTOMATIC_CONTINUATION",
+  "next_production_candidate": "NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE",
+  "entire_rank8_function_class_impossibility_proved": false,
+  "additional_training_rank_seed_or_loss_authorized": false
+}

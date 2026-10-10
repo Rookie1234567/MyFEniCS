@@ -1,0 +1,413 @@
+{
+  "schema": "task42extra.v39.resource.v1",
+  "unique_window": {
+    "campaign": "V39_STRUCTURE_AWARE_FTT_COMPLETION",
+    "origin_monotonic": 1537003.008426003,
+    "origin_utc": "2026-10-10T06:00:08Z",
+    "budget_s": 43200,
+    "initial_state": "NOT_STARTED_V38_ONLY",
+    "initial_head": "812a7818aa072379885017336bf63f9f80aa4a6c",
+    "deadline_monotonic": 1580203.008426003,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "single_window": true,
+    "campaign_version": 39
+  },
+  "collected_elapsed_s": 6668.029345990159,
+  "remaining_s": 36531.97065400984,
+  "final_reserve_s": 1800,
+  "stages": [
+    {
+      "stage": "v39_ftt_factored_checks",
+      "attempt": "v39_ftt_factored_checks_attempt1",
+      "source_sha": "330f228073a0823ff80647ab2f7c80e4e27e6400",
+      "actual_attempt_s": 0.4918987029232085,
+      "supervised_s": null,
+      "cpu": null,
+      "sampled_simultaneous_tree_RSS_peak_bytes": "NOT_RETAINED",
+      "sampled_tree_swap_peak_bytes": "NOT_RETAINED",
+      "memory_scope": "NO_WORKER_STARTED",
+      "summary": {
+        "path": "tmp/task42extra/v39/durable/v39_ftt_factored_checks_attempt1/run_summary.json",
+        "sha256": "af12490a8a5cafc549436a270102448b23e1670b285f7bd72f57d204f82b50cc",
+        "bytes": 640
+      },
+      "classification": "RESOURCE_ADMISSION_REJECTED_BEFORE_TERMINAL",
+      "descendant_cleanup_verified": true
+    },
+    {
+      "stage": "v39_ftt_factored_checks",
+      "attempt": "v39_ftt_factored_checks_attempt2",
+      "source_sha": "2e8dccaa20b9141d49ee55f95295f5a5fbb83441",
+      "actual_attempt_s": 328.59405273385346,
+      "supervised_s": 264.62959776399657,
+      "cpu": 1,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 759439360,
+      "sampled_tree_swap_peak_bytes": 0,
+      "memory_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "summary": {
+        "path": "tmp/task42extra/v39/durable/v39_ftt_factored_checks_attempt2/run_summary.json",
+        "sha256": "7e7749d55750d65e75a598fb26bd4152b2bc047c87d8e2ebac21446c9d0bc74e",
+        "bytes": 12438
+      },
+      "classification": "COMPLETED",
+      "descendant_cleanup_verified": true
+    },
+    {
+      "stage": "v39_ftt_factored_checks",
+      "attempt": "v39_ftt_factored_checks_attempt3",
+      "source_sha": "962de40947413b5c4c383f62189e951b92e5ecaa",
+      "actual_attempt_s": 196.2060962219257,
+      "supervised_s": 132.0171592500992,
+      "cpu": 13,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 704667648,
+      "sampled_tree_swap_peak_bytes": 0,
+      "memory_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "summary": {
+        "path": "tmp/task42extra/v39/durable/v39_ftt_factored_checks_attempt3/run_summary.json",
+        "sha256": "a5a89c21eee98caefbb7610ffde6f859e18f85f58e7c6c56c5f96c16a08fe09c",
+        "bytes": 12437
+      },
+      "classification": "COMPLETED",
+      "descendant_cleanup_verified": true
+    },
+    {
+      "stage": "v39_ftt_factored_benchmark",
+      "attempt": "v39_ftt_factored_benchmark_attempt1",
+      "source_sha": "2e8dccaa20b9141d49ee55f95295f5a5fbb83441",
+      "actual_attempt_s": 367.17074731900357,
+      "supervised_s": 303.06941740913317,
+      "cpu": 1,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 485662720,
+      "sampled_tree_swap_peak_bytes": 0,
+      "memory_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "summary": {
+        "path": "tmp/task42extra/v39/durable/v39_ftt_factored_benchmark_attempt1/run_summary.json",
+        "sha256": "c4e0dbda3f3cb636ff4873bb029f0e68f7397eaf839b2e2e3b155cac21c2e926",
+        "bytes": 12452
+      },
+      "classification": "COMPLETED",
+      "descendant_cleanup_verified": true
+    },
+    {
+      "stage": "v39_ftt_factored_benchmark",
+      "attempt": "v39_ftt_factored_benchmark_attempt2",
+      "source_sha": "962de40947413b5c4c383f62189e951b92e5ecaa",
+      "actual_attempt_s": 77.28679205710068,
+      "supervised_s": 13.377466805046424,
+      "cpu": 0,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 476803072,
+      "sampled_tree_swap_peak_bytes": 0,
+      "memory_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "summary": {
+        "path": "tmp/task42extra/v39/durable/v39_ftt_factored_benchmark_attempt2/run_summary.json",
+        "sha256": "e763c7601cf4528df893eebb16727c8aee8005354d7171ce1f569b4684cec164",
+        "bytes": 12450
+      },
+      "classification": "COMPLETED",
+      "descendant_cleanup_verified": true
+    },
+    {
+      "stage": "v39_fttnn_native_continue",
+      "attempt": "v39_fttnn_native_continue_attempt1",
+      "source_sha": "962de40947413b5c4c383f62189e951b92e5ecaa",
+      "actual_attempt_s": 556.2169351880439,
+      "supervised_s": 492.16304330411367,
+      "cpu": 12,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 496128000,
+      "sampled_tree_swap_peak_bytes": 0,
+      "memory_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "summary": {
+        "path": "tmp/task42extra/v39/durable/v39_fttnn_native_continue_attempt1/run_summary.json",
+        "sha256": "5b334379e4697b05dccae5846338bdb3297f52fe51dd747154945988baf50941",
+        "bytes": 12455
+      },
+      "classification": "COMPLETED",
+      "descendant_cleanup_verified": true
+    },
+    {
+      "stage": "v39_chebtt_native_continue",
+      "attempt": "v39_chebtt_native_continue_attempt1",
+      "source_sha": "962de40947413b5c4c383f62189e951b92e5ecaa",
+      "actual_attempt_s": 545.8345017351676,
+      "supervised_s": 481.88890976901166,
+      "cpu": 1,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 516124672,
+      "sampled_tree_swap_peak_bytes": 0,
+      "memory_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "summary": {
+        "path": "tmp/task42extra/v39/durable/v39_chebtt_native_continue_attempt1/run_summary.json",
+        "sha256": "c2b42e7e2b3e5dae69fda6f0042fc58f1f5d0c99158f2d48c75591dfb02898a1",
+        "bytes": 12459
+      },
+      "classification": "COMPLETED",
+      "descendant_cleanup_verified": true
+    },
+    {
+      "stage": "v39_ftt_independent_compare",
+      "attempt": "v39_ftt_independent_compare_attempt1",
+      "source_sha": "962de40947413b5c4c383f62189e951b92e5ecaa",
+      "actual_attempt_s": 356.00032932311296,
+      "supervised_s": 292.0726407789625,
+      "cpu": 7,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 621998080,
+      "sampled_tree_swap_peak_bytes": 0,
+      "memory_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "summary": {
+        "path": "tmp/task42extra/v39/durable/v39_ftt_independent_compare_attempt1/run_summary.json",
+        "sha256": "65c2ddc9825833cd3446679b67283832e1ea7e6c864b95a27723b31fa251bfe6",
+        "bytes": 12532
+      },
+      "classification": "COMPLETED",
+      "descendant_cleanup_verified": true
+    },
+    {
+      "stage": "v39_fttnn_fit_continue",
+      "attempt": "v39_fttnn_fit_continue_attempt1",
+      "source_sha": "962de40947413b5c4c383f62189e951b92e5ecaa",
+      "actual_attempt_s": 252.68112502712756,
+      "supervised_s": 188.6320953539107,
+      "cpu": 2,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 633483264,
+      "sampled_tree_swap_peak_bytes": 0,
+      "memory_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "summary": {
+        "path": "tmp/task42extra/v39/durable/v39_fttnn_fit_continue_attempt1/run_summary.json",
+        "sha256": "205295b04c2acda470c188fb566406722e5a61f37c70d988fbb26f57158dec81",
+        "bytes": 12450
+      },
+      "classification": "COMPLETED",
+      "descendant_cleanup_verified": true
+    },
+    {
+      "stage": "v39_chebtt_fit_continue",
+      "attempt": "v39_chebtt_fit_continue_attempt1",
+      "source_sha": "962de40947413b5c4c383f62189e951b92e5ecaa",
+      "actual_attempt_s": 258.2064747030381,
+      "supervised_s": 194.2527110679075,
+      "cpu": 3,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 658649088,
+      "sampled_tree_swap_peak_bytes": 0,
+      "memory_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "summary": {
+        "path": "tmp/task42extra/v39/durable/v39_chebtt_fit_continue_attempt1/run_summary.json",
+        "sha256": "f55c4a460ec44c0003f5d34f37e88b56cf53d08949b57b05cdbae205531cd221",
+        "bytes": 12458
+      },
+      "classification": "COMPLETED",
+      "descendant_cleanup_verified": true
+    },
+    {
+      "stage": "v39_ftt_fit_compare",
+      "attempt": "v39_ftt_fit_compare_attempt1",
+      "source_sha": "962de40947413b5c4c383f62189e951b92e5ecaa",
+      "actual_attempt_s": 357.43989881896414,
+      "supervised_s": 293.45503127295524,
+      "cpu": 2,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 621756416,
+      "sampled_tree_swap_peak_bytes": 0,
+      "memory_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "summary": {
+        "path": "tmp/task42extra/v39/durable/v39_ftt_fit_compare_attempt1/run_summary.json",
+        "sha256": "b5c8a59e74c2cffbbd665ea775829d3895ed41addce74b457ee7e54445a20b2b",
+        "bytes": 12522
+      },
+      "classification": "COMPLETED",
+      "descendant_cleanup_verified": true
+    }
+  ],
+  "light_tests_and_prototypes": [
+    {
+      "name": "inspect01",
+      "summary": {
+        "path": "tmp/task42extra/v39/inspect01/summary.json",
+        "sha256": "38828e64b87dd30a6d6d70d9bc6d940b0a277b3530b79a2738b617542652f48c",
+        "bytes": 1986
+      },
+      "elapsed_s": 1.9946478321217,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "RSS_sampled_peak_bytes": 70594560,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "stdout": {
+        "path": "tmp/task42extra/v39/inspect01/watchdog/worker.log",
+        "sha256": "9588f26f03e3c35e3b4900395fd91c54a7ef058cb9c1a5336c9ac6067757e56d",
+        "bytes": 2138
+      }
+    },
+    {
+      "name": "probe01",
+      "summary": {
+        "path": "tmp/task42extra/v39/probe01/summary.json",
+        "sha256": "52cd4193464ce8f384dee6eeab2e62b344d41c7d14cfec104e298b7e03a78345",
+        "bytes": 1991
+      },
+      "elapsed_s": 11.374330051941797,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "RSS_sampled_peak_bytes": 319492096,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "stdout": {
+        "path": "tmp/task42extra/v39/probe01/watchdog/worker.log",
+        "sha256": "db670ce088eb4784dd9ac56669d51329e4435465e50169ca751c0550c310e8ec",
+        "bytes": 672
+      }
+    },
+    {
+      "name": "probe02",
+      "summary": {
+        "path": "tmp/task42extra/v39/probe02/summary.json",
+        "sha256": "985e09c0eaa836955da5bc3b167636efeacabc946213a703b034fdd66f9fa69f",
+        "bytes": 1990
+      },
+      "elapsed_s": 6.130985533120111,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "RSS_sampled_peak_bytes": 320856064,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "stdout": {
+        "path": "tmp/task42extra/v39/probe02/watchdog/worker.log",
+        "sha256": "ed7df3a3e15b990485313397b47ab13e4183a588a028dd0aa265a99a56413582",
+        "bytes": 672
+      }
+    },
+    {
+      "name": "tests01",
+      "summary": {
+        "path": "tmp/task42extra/v39/tests01/summary.json",
+        "sha256": "638688fe27c662f092ea20518ca1c5ee90352ed8b377bd1ecf6af314ab8e07f1",
+        "bytes": 1990
+      },
+      "elapsed_s": 6.083783151116222,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "RSS_sampled_peak_bytes": 385949696,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "stdout": {
+        "path": "tmp/task42extra/v39/tests01/watchdog/worker.log",
+        "sha256": "3ef693222b15a13f76f1dea27619efcf2cf572250bbea21cd0317824d65dc687",
+        "bytes": 190
+      }
+    },
+    {
+      "name": "tests02",
+      "summary": {
+        "path": "tmp/task42extra/v39/tests02/summary.json",
+        "sha256": "89ea6833990d1f616cf0738bcd54930dd9f64eecabb7b77d91b2d2f3976b8ba7",
+        "bytes": 2008
+      },
+      "elapsed_s": 6.0452743789646775,
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "RSS_sampled_peak_bytes": 391819264,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "stdout": {
+        "path": "tmp/task42extra/v39/tests02/watchdog/worker.log",
+        "sha256": "d21d908eefc669508e8e191e16ddaecb339ca5342467e20caf2d7f05918e2c81",
+        "bytes": 264
+      }
+    },
+    {
+      "name": "tests03",
+      "summary": {
+        "path": "tmp/task42extra/v39/tests03/summary.json",
+        "sha256": "9150a09ca82dd82b6852228bf38a881350b5dcc623f61b9739c1b5988073366b",
+        "bytes": 1993
+      },
+      "elapsed_s": 1.9985850770026445,
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "RSS_sampled_peak_bytes": 43769856,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "stdout": {
+        "path": "tmp/task42extra/v39/tests03/watchdog/worker.log",
+        "sha256": "e4c55d58bbe8ac4f5587477a55fe09ddab107f6300d483cbcce4e866f8928285",
+        "bytes": 1646
+      }
+    },
+    {
+      "name": "tests04",
+      "summary": {
+        "path": "tmp/task42extra/v39/tests04/summary.json",
+        "sha256": "ed00c59c29e225cee4b50ef237ef839039eba2be520532c0db7f84846f654230",
+        "bytes": 2003
+      },
+      "elapsed_s": 6.112373804906383,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "RSS_sampled_peak_bytes": 388997120,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "stdout": {
+        "path": "tmp/task42extra/v39/tests04/watchdog/worker.log",
+        "sha256": "ef15e34b1bd9835a65710d4b1272f159d9899fa5c633a983cf1fea48d4f08b47",
+        "bytes": 253
+      }
+    },
+    {
+      "name": "tests05",
+      "summary": {
+        "path": "tmp/task42extra/v39/tests05/summary.json",
+        "sha256": "89cf34da6b447858872e36cfc513f3251c956170e4365ef9e2ef14d455b3afe3",
+        "bytes": 2003
+      },
+      "elapsed_s": 3.9636875549331307,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "RSS_sampled_peak_bytes": 302112768,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "stdout": {
+        "path": "tmp/task42extra/v39/tests05/watchdog/worker.log",
+        "sha256": "e3418c205e3d207187e2066637a547a69df7ab08164ef6fe5d921c14fdd38f33",
+        "bytes": 132
+      }
+    },
+    {
+      "name": "tests06",
+      "summary": {
+        "path": "tmp/task42extra/v39/tests06/summary.json",
+        "sha256": "bd27adaafcf173c54df94c98cdf2dc6df178f7e22e52b0a22c24d831dbc39fe7",
+        "bytes": 2003
+      },
+      "elapsed_s": 6.560153372818604,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "RSS_sampled_peak_bytes": 390017024,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "stdout": {
+        "path": "tmp/task42extra/v39/tests06/watchdog/worker.log",
+        "sha256": "daee9956f323ad9b8e2c8321b2159c7e5c22ab8a096e2943468af1a90b386ec1",
+        "bytes": 138
+      }
+    }
+  ],
+  "sum_formal_actual_attempt_s": 3296.128851830261,
+  "sampled_serial_formal_RSS_peak_bytes": 759439360,
+  "peak_scope": "Serial maxima of sampled supervised formal chains; unmonitored preparation intervals are not certified",
+  "original_thresholds_preserved": true,
+  "numeric_warn_bytes": 12884901888,
+  "numeric_hard_bytes": 17179869184,
+  "new_cache_AD_cap_bytes": 1073741824,
+  "light_hard_bytes": 2147483648,
+  "MPI": 1,
+  "math_Torch_threads": 1,
+  "CPU_only": true,
+  "system_and_neighbor_reserve_bytes": "max(128GiB,effective total/10)+384GiB",
+  "successful_60s_admission_charged_to_wall_not_failed_wait_pool": true,
+  "rejected_foreground_extra_wait_cap_s": 900,
+  "inherited_V38_prefix_charged_only_in_route_attribution": true,
+  "cold_N1_total_s": "UNKNOWN",
+  "project_exact_historical_cumulative_s": "UNKNOWN",
+  "cold_missing_items": "Fresh native/moments/mesh build and full qualification allocation; reused preparation is not free",
+  "old_dense_wave_10186_178641493432s_prefix_is_FTT_required": false,
+  "all_old_failures_costs_and_unknowns_preserved": true,
+  "V38_FTT_soft_cutoff_overshoot_lower_bound_s": 25.6411715581,
+  "later_fix_does_not_retroactively_qualify_V38_time_protocol": true
+}

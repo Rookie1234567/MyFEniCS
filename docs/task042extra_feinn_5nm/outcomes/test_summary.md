@@ -1,3 +1,20 @@
+<!-- TASK42EXTRA_V39_CURRENT_BEGIN -->
+# 当前V39：完整矩结构等价、真实恢复及数值失败分别验收
+
+最终数学核source962de40947413b5c4c383f62189e951b92e5ecaa。实际M5两模型旧/新c/loss/VJP、三个非零FD、Adam动量与freshLB外层、batch1/8、点128/512、完整边/面/内部矩、真实原相位和合成两非单位缝、q30/q60、缓存/事务通过；该资格不等于M5求解精度通过。
+
+| 局部检查 | 实际结果 | 保留范围/失败 |
+|---|---|---|
+| 新结构kernel targeted tests06 | 15 passed；Ruff/compileall PASS | 旧FTT依赖按影响复用，前序31/34/14等批次不相加为唯一总数 |
+| 保存交付checker的pure fixture | 8 passed；Ruff/compile PASS | 包括失败残差、错误分母、遗漏六点、标签越权、模型/逐级功率损坏拒绝 |
+| 原冻结数值/文件/source核对 | 148绑定、92历史Git blob、400CSV行 | 从原分子/分母重算actual与producer八个最终Gate，不只信status |
+| 原M5完整原场Gate | 8份actual/producer均FAIL | native约0.948/0.990，散射场约99.95%/100%误差，详见完整数值 |
+| 原始工程/成本失败 | 全保留 | 初始版本准入分派、Ruff环境/格式、初版fit成本FAIL；交付CSV参考行误判已局部修复 |
+
+[测试与已保留日志](records/tests_v39.json)、[数学资格](records/implementation_qualification_v39.json)、[完整实际场/原分母](records/full_numerical_gates_v39.json)、[纯保存交付checker](records/delivery_check_v39.json)。无full pytest、环境重装或CI声明，无新参考solve。GitHub实际视觉另记，不冒充全页/历史批量资格；网页失败不重做健康数值。
+
+<!-- TASK42EXTRA_V39_CURRENT_END -->
+
 <!-- TASK42EXTRA_V38_CURRENT_BEGIN -->
 # 当前V38：新FTT完整接口资格与独立数值失败分列
 

@@ -1,0 +1,75 @@
+{
+  "schema": "ftt.structure-delivery-check.v1",
+  "verified_file_bindings": 148,
+  "verified_historical_source_blobs": 92,
+  "complete_channel_CSV_rows": 400,
+  "recomputed_actual_and_producer_gates": {
+    "FTTNN_R8_FACTORED_MAP_CONTINUE": {
+      "original_equation_pass": false,
+      "field_pass": false,
+      "power_pass": false,
+      "model_rebuild_pass": true,
+      "quadrature_pass": true,
+      "m5_full_discrete_numerical_gate": false
+    },
+    "CHEB_TT_R8_FACTORED_MAP_CONTINUE": {
+      "original_equation_pass": false,
+      "field_pass": false,
+      "power_pass": false,
+      "model_rebuild_pass": true,
+      "quadrature_pass": true,
+      "m5_full_discrete_numerical_gate": false
+    },
+    "FTTNN_R8_FACTORED_MAP_CONTINUE_PRODUCER": {
+      "original_equation_pass": false,
+      "field_pass": false,
+      "power_pass": false,
+      "model_rebuild_pass": true,
+      "quadrature_pass": true,
+      "m5_full_discrete_numerical_gate": false
+    },
+    "CHEB_TT_R8_FACTORED_MAP_CONTINUE_PRODUCER": {
+      "original_equation_pass": false,
+      "field_pass": false,
+      "power_pass": false,
+      "model_rebuild_pass": true,
+      "quadrature_pass": true,
+      "m5_full_discrete_numerical_gate": false
+    },
+    "FTTNN_R8_FACTORED_FIT_CONTINUE": {
+      "original_equation_pass": false,
+      "field_pass": false,
+      "power_pass": false,
+      "model_rebuild_pass": true,
+      "quadrature_pass": true,
+      "m5_full_discrete_numerical_gate": false
+    },
+    "CHEB_TT_R8_FACTORED_FIT_CONTINUE": {
+      "original_equation_pass": false,
+      "field_pass": false,
+      "power_pass": false,
+      "model_rebuild_pass": true,
+      "quadrature_pass": true,
+      "m5_full_discrete_numerical_gate": false
+    },
+    "FTTNN_R8_FACTORED_FIT_CONTINUE_PRODUCER": {
+      "original_equation_pass": false,
+      "field_pass": false,
+      "power_pass": false,
+      "model_rebuild_pass": true,
+      "quadrature_pass": true,
+      "m5_full_discrete_numerical_gate": false
+    },
+    "CHEB_TT_R8_FACTORED_FIT_CONTINUE_PRODUCER": {
+      "original_equation_pass": false,
+      "field_pass": false,
+      "power_pass": false,
+      "model_rebuild_pass": true,
+      "quadrature_pass": true,
+      "m5_full_discrete_numerical_gate": false
+    }
+  },
+  "statuses_trusted": false,
+  "new_FE_model_forward_training_or_factor_calls": 0,
+  "checker_source_sha256": "e942ff1938084bb810d1e64f7ed8271aff36a8daa362ea238ca129cde93981a3"
+}

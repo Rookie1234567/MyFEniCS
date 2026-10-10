@@ -1,0 +1,1177 @@
+{
+  "schema": "task42extra.v39.mapping-qualification.v1",
+  "qualification": {
+    "implementation_qualified": true,
+    "models": {
+      "fttnn": {
+        "qualified": true,
+        "witnesses": {
+          "c": {
+            "numerator": 8.02941138060716e-18,
+            "denominator": 0.003647951368063423,
+            "relative": 2.201074129140518e-15,
+            "passed": true
+          },
+          "parent_c": {
+            "numerator": 8.02941138060716e-18,
+            "denominator": 0.003647951368063423,
+            "relative": 2.201074129140518e-15,
+            "passed": true
+          },
+          "residual": {
+            "numerator": 2.7795646900565673e-16,
+            "denominator": 0.2906981854560586,
+            "relative": 9.561685724649016e-16,
+            "passed": true
+          },
+          "gradient": {
+            "numerator": 9.484628208573283e-15,
+            "denominator": 2.073140574422801,
+            "relative": 4.5750048624724694e-15,
+            "passed": true
+          },
+          "original_action": {
+            "numerator": 2.7726139935664783e-16,
+            "denominator": 0.03537436757855262,
+            "relative": 7.837918197151053e-15,
+            "passed": true
+          },
+          "batch_microbatch_c": {
+            "numerator": 0.0,
+            "denominator": 0.0036479513680634226,
+            "relative": 0.0,
+            "passed": true
+          },
+          "batch_microbatch_gradient": {
+            "numerator": 9.84208101241803e-16,
+            "denominator": 2.0731405744227978,
+            "relative": 4.747425781851891e-16,
+            "passed": true
+          },
+          "Adam_update": {
+            "numerator": 3.5682180735681607e-17,
+            "denominator": 10.3605340935511,
+            "relative": 3.4440483872247406e-18,
+            "passed": true
+          },
+          "LBFGS_returned_c": {
+            "numerator": 6.829192063277353e-18,
+            "denominator": 0.002953638607833807,
+            "relative": 2.3121285201123064e-15,
+            "passed": true
+          },
+          "LBFGS_true_residual": {
+            "numerator": 2.1575125565960644e-16,
+            "denominator": 0.28989210317371394,
+            "relative": 7.442467500755631e-16,
+            "passed": true
+          },
+          "LBFGS_true_objective": {
+            "numerator": 0.0,
+            "denominator": 0.4960568308800172,
+            "relative": 0.0,
+            "passed": true
+          },
+          "restored_cache": {
+            "numerator": 0.0,
+            "denominator": 0.0036479513680634226,
+            "relative": 0.0,
+            "passed": true
+          }
+        },
+        "nonzero_FD": [
+          {
+            "direction": 0,
+            "analytic": -0.015280983629428369,
+            "observations": [
+              {
+                "h": 0.0001,
+                "observed": -0.015280984703158751,
+                "numerator": 1.0737303823837863e-09,
+                "denominator": 0.015280983629428369,
+                "relative": 7.026578971761861e-08
+              },
+              {
+                "h": 1e-05,
+                "observed": -0.015280983634013976,
+                "numerator": 4.585607935037039e-12,
+                "denominator": 0.015280983629428369,
+                "relative": 3.0008591372390454e-10
+              },
+              {
+                "h": 1e-06,
+                "observed": -0.015280983645116208,
+                "numerator": 1.568783991601208e-11,
+                "denominator": 0.015280983629428369,
+                "relative": 1.026625006377219e-09
+              }
+            ]
+          },
+          {
+            "direction": 1,
+            "analytic": -0.003218198114474785,
+            "observations": [
+              {
+                "h": 0.0001,
+                "observed": -0.003218200876342614,
+                "numerator": 2.7618678290555754e-09,
+                "denominator": 0.003218198114474785,
+                "relative": 8.5820317171689e-07
+              },
+              {
+                "h": 1e-05,
+                "observed": -0.0032181981413081924,
+                "numerator": 2.6833407457821368e-11,
+                "denominator": 0.003218198114474785,
+                "relative": 8.33802224205225e-09
+              },
+              {
+                "h": 1e-06,
+                "observed": -0.0032181980413881206,
+                "numerator": 7.308666432476185e-11,
+                "denominator": 0.003218198114474785,
+                "relative": 2.2710430410120887e-08
+              }
+            ]
+          },
+          {
+            "direction": 2,
+            "analytic": -0.0007196311249055326,
+            "observations": [
+              {
+                "h": 0.0001,
+                "observed": -0.0007196356330285703,
+                "numerator": 4.5081230376324555e-09,
+                "denominator": 0.0007196311249055326,
+                "relative": 6.264491461822535e-06
+              },
+              {
+                "h": 1e-05,
+                "observed": -0.0007196311491153294,
+                "numerator": 2.420979681918428e-11,
+                "denominator": 0.0007196311249055326,
+                "relative": 3.3641953469372726e-08
+              },
+              {
+                "h": 1e-06,
+                "observed": -0.0007196311047064086,
+                "numerator": 2.0199124057401763e-11,
+                "denominator": 0.0007196311249055326,
+                "relative": 2.8068719317905184e-08
+              }
+            ]
+          }
+        ],
+        "Adam_moment_pairing_max": 1.934719964118549e-15,
+        "original_configuration_LBFGS_outer_calls": 23,
+        "quadrature": {
+          "coefficients": {
+            "numerator": 1.756543143820723e-17,
+            "denominator": 0.0036479513680634226,
+            "relative": 4.815149563666508e-15,
+            "passed": true
+          },
+          "load_relative": 2.417534735777498e-15
+        },
+        "plan_interpolation": [
+          {
+            "rows": [
+              0,
+              1,
+              2
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.4348442050607428,
+            "relative": 1.3292089859013779e-15,
+            "polynomial_degrees": [
+              2,
+              0,
+              0
+            ]
+          },
+          {
+            "rows": [
+              3,
+              4,
+              5
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              2,
+              0
+            ]
+          },
+          {
+            "rows": [
+              6,
+              7,
+              8
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              0,
+              2
+            ]
+          },
+          {
+            "rows": [
+              9,
+              10,
+              11
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              2,
+              0
+            ]
+          },
+          {
+            "rows": [
+              12,
+              13,
+              14
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              0,
+              2
+            ]
+          },
+          {
+            "rows": [
+              15,
+              16,
+              17
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.4348442050607428,
+            "relative": 1.3292089859013779e-15,
+            "polynomial_degrees": [
+              2,
+              0,
+              0
+            ]
+          },
+          {
+            "rows": [
+              18,
+              19,
+              20
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              0,
+              2
+            ]
+          },
+          {
+            "rows": [
+              21,
+              22,
+              23
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              0,
+              2
+            ]
+          },
+          {
+            "rows": [
+              24,
+              25,
+              26
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.4348442050607428,
+            "relative": 1.3292089859013779e-15,
+            "polynomial_degrees": [
+              2,
+              0,
+              0
+            ]
+          },
+          {
+            "rows": [
+              27,
+              28,
+              29
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              2,
+              0
+            ]
+          },
+          {
+            "rows": [
+              30,
+              31,
+              32
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              2,
+              0
+            ]
+          },
+          {
+            "rows": [
+              33,
+              34,
+              35
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.4348442050607428,
+            "relative": 1.3292089859013779e-15,
+            "polynomial_degrees": [
+              2,
+              0,
+              0
+            ]
+          },
+          {
+            "rows": [
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "numerator": 5.107296475826841e-16,
+            "denominator": 0.32558993895912136,
+            "relative": 1.568628469342253e-15,
+            "polynomial_degrees": [
+              2,
+              2,
+              0
+            ]
+          },
+          {
+            "rows": [
+              48,
+              49,
+              50,
+              51,
+              52,
+              53,
+              54,
+              55,
+              56,
+              57,
+              58,
+              59
+            ],
+            "numerator": 5.107296475826841e-16,
+            "denominator": 0.32558993895912136,
+            "relative": 1.568628469342253e-15,
+            "polynomial_degrees": [
+              2,
+              0,
+              2
+            ]
+          },
+          {
+            "rows": [
+              60,
+              61,
+              62,
+              63,
+              64,
+              65,
+              66,
+              67,
+              68,
+              69,
+              70,
+              71
+            ],
+            "numerator": 5.107296475826841e-16,
+            "denominator": 0.32558993895912136,
+            "relative": 1.568628469342253e-15,
+            "polynomial_degrees": [
+              0,
+              2,
+              2
+            ]
+          },
+          {
+            "rows": [
+              72,
+              73,
+              74,
+              75,
+              76,
+              77,
+              78,
+              79,
+              80,
+              81,
+              82,
+              83
+            ],
+            "numerator": 5.107296475826841e-16,
+            "denominator": 0.32558993895912136,
+            "relative": 1.568628469342253e-15,
+            "polynomial_degrees": [
+              0,
+              2,
+              2
+            ]
+          },
+          {
+            "rows": [
+              84,
+              85,
+              86,
+              87,
+              88,
+              89,
+              90,
+              91,
+              92,
+              93,
+              94,
+              95
+            ],
+            "numerator": 5.107296475826841e-16,
+            "denominator": 0.32558993895912136,
+            "relative": 1.568628469342253e-15,
+            "polynomial_degrees": [
+              2,
+              0,
+              2
+            ]
+          },
+          {
+            "rows": [
+              96,
+              97,
+              98,
+              99,
+              100,
+              101,
+              102,
+              103,
+              104,
+              105,
+              106,
+              107
+            ],
+            "numerator": 5.107296475826841e-16,
+            "denominator": 0.32558993895912136,
+            "relative": 1.568628469342253e-15,
+            "polynomial_degrees": [
+              2,
+              2,
+              0
+            ]
+          },
+          {
+            "rows": [
+              108,
+              109,
+              110,
+              111,
+              112,
+              113,
+              114,
+              115,
+              116,
+              117,
+              118,
+              119,
+              120,
+              121,
+              122,
+              123,
+              124,
+              125,
+              126,
+              127,
+              128,
+              129,
+              130,
+              131,
+              132,
+              133,
+              134,
+              135,
+              136,
+              137,
+              138,
+              139,
+              140,
+              141,
+              142,
+              143
+            ],
+            "numerator": 6.538756627560804e-16,
+            "denominator": 0.2740285891997589,
+            "relative": 2.3861585561768664e-15,
+            "polynomial_degrees": [
+              2,
+              2,
+              2
+            ]
+          }
+        ],
+        "axis_node_counts": [
+          142,
+          107,
+          143
+        ],
+        "tensor_entities": 19,
+        "exact_fallback_entities": 0,
+        "aligned_cells": 384,
+        "max_affine_roundoff": 1.495622138878498e-15,
+        "max_coordinate_roundoff_nm": 4.440892098500626e-15,
+        "cache_static_bytes": 1631140,
+        "cache_dynamic_bytes": 438144,
+        "model_parameters": 9072,
+        "parent_checkpoint_sha256": "c3927e1f6b8debc5f24c487707f7fae3588d59061bb223857278566fee92c870",
+        "costs": {
+          "setup": 0.26249724300578237,
+          "core_evaluation": 0.03501226520165801,
+          "contraction": 3.4670386237557977,
+          "moments": 1.585169711848721,
+          "core_cotangent": 4.829677565023303,
+          "core_backward": 0.06620879005640745,
+          "cache_hash": 0.0367594703566283
+        },
+        "reference_loaded": false
+      },
+      "chebtt": {
+        "qualified": true,
+        "witnesses": {
+          "c": {
+            "numerator": 1.6774478832980121e-15,
+            "denominator": 0.07098614586432826,
+            "relative": 2.3630637540232453e-14,
+            "passed": true
+          },
+          "parent_c": {
+            "numerator": 1.6774478832980121e-15,
+            "denominator": 0.07098614586432826,
+            "relative": 2.3630637540232453e-14,
+            "passed": true
+          },
+          "residual": {
+            "numerator": 6.937116156402838e-14,
+            "denominator": 0.9887083197965642,
+            "relative": 7.016342451563686e-14,
+            "passed": true
+          },
+          "gradient": {
+            "numerator": 2.369183363675017e-10,
+            "denominator": 14301.915807986112,
+            "relative": 1.656549650748243e-14,
+            "passed": true
+          },
+          "original_action": {
+            "numerator": 6.93710369333743e-14,
+            "denominator": 0.9457196226008144,
+            "relative": 7.33526462553433e-14,
+            "passed": true
+          },
+          "batch_microbatch_c": {
+            "numerator": 0.0,
+            "denominator": 0.07098614586432808,
+            "relative": 0.0,
+            "passed": true
+          },
+          "batch_microbatch_gradient": {
+            "numerator": 5.697933721342282e-12,
+            "denominator": 14301.915807986019,
+            "relative": 3.984035284392196e-16,
+            "passed": true
+          },
+          "Adam_update": {
+            "numerator": 2.020133839874809e-17,
+            "denominator": 14.422172787172485,
+            "relative": 1.4007139351926061e-18,
+            "passed": true
+          },
+          "LBFGS_returned_c": {
+            "numerator": 1.1281718544747843e-15,
+            "denominator": 0.010109085153455537,
+            "relative": 1.1159979734557356e-13,
+            "passed": true
+          },
+          "LBFGS_true_residual": {
+            "numerator": 5.985290796000311e-14,
+            "denominator": 0.30158811855823714,
+            "relative": 1.9845910457657973e-13,
+            "passed": true
+          },
+          "LBFGS_true_objective": {
+            "numerator": 1.7763568394002505e-15,
+            "denominator": 0.5368922316381657,
+            "relative": 3.3085910630150676e-15,
+            "passed": true
+          },
+          "restored_cache": {
+            "numerator": 0.0,
+            "denominator": 0.07098614586432808,
+            "relative": 0.0,
+            "passed": true
+          }
+        },
+        "nonzero_FD": [
+          {
+            "direction": 0,
+            "analytic": -65.21033657860664,
+            "observations": [
+              {
+                "h": 0.0001,
+                "observed": -65.2104649234797,
+                "numerator": 0.00012834487306179199,
+                "denominator": 65.21033657860664,
+                "relative": 1.9681676218168407e-06
+              },
+              {
+                "h": 1e-05,
+                "observed": -65.2103378616431,
+                "numerator": 1.2830364539695438e-06,
+                "denominator": 65.21033657860664,
+                "relative": 1.9675353958998973e-08
+              },
+              {
+                "h": 1e-06,
+                "observed": -65.21033659145914,
+                "numerator": 1.2852495956394705e-08,
+                "denominator": 65.21033657860664,
+                "relative": 1.9709292469150027e-10
+              }
+            ]
+          },
+          {
+            "direction": 1,
+            "analytic": 129.38828246251055,
+            "observations": [
+              {
+                "h": 0.0001,
+                "observed": 129.388278531648,
+                "numerator": 3.930862533252366e-06,
+                "denominator": 129.38828246251055,
+                "relative": 3.0380359476456526e-08
+              },
+              {
+                "h": 1e-05,
+                "observed": 129.38828242323729,
+                "numerator": 3.927326019947941e-08,
+                "denominator": 129.38828246251055,
+                "relative": 3.035302691405506e-10
+              },
+              {
+                "h": 1e-06,
+                "observed": 129.38828246289447,
+                "numerator": 3.8392045098589733e-10,
+                "denominator": 129.38828246251055,
+                "relative": 2.9671964391144607e-12
+              }
+            ]
+          },
+          {
+            "direction": 2,
+            "analytic": 46.29391369335095,
+            "observations": [
+              {
+                "h": 0.0001,
+                "observed": 46.29386186615125,
+                "numerator": 5.182719969809568e-05,
+                "denominator": 46.29391369335095,
+                "relative": 1.1195251289704517e-06
+              },
+              {
+                "h": 1e-05,
+                "observed": 46.29391317516606,
+                "numerator": 5.181848905522202e-07,
+                "denominator": 46.29391369335095,
+                "relative": 1.1193369694008943e-08
+              },
+              {
+                "h": 1e-06,
+                "observed": 46.29391368737856,
+                "numerator": 5.9723888057305885e-09,
+                "denominator": 46.29391369335095,
+                "relative": 1.2901023761549856e-10
+              }
+            ]
+          }
+        ],
+        "Adam_moment_pairing_max": 7.133286283384707e-15,
+        "original_configuration_LBFGS_outer_calls": 22,
+        "quadrature": {
+          "coefficients": {
+            "numerator": 5.704057859857406e-16,
+            "denominator": 0.07098614586432808,
+            "relative": 8.035452256781567e-15,
+            "passed": true
+          },
+          "load_relative": 1.237583643932393e-13
+        },
+        "plan_interpolation": [
+          {
+            "rows": [
+              0,
+              1,
+              2
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.4348442050607428,
+            "relative": 1.3292089859013779e-15,
+            "polynomial_degrees": [
+              2,
+              0,
+              0
+            ]
+          },
+          {
+            "rows": [
+              3,
+              4,
+              5
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              2,
+              0
+            ]
+          },
+          {
+            "rows": [
+              6,
+              7,
+              8
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              0,
+              2
+            ]
+          },
+          {
+            "rows": [
+              9,
+              10,
+              11
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              2,
+              0
+            ]
+          },
+          {
+            "rows": [
+              12,
+              13,
+              14
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              0,
+              2
+            ]
+          },
+          {
+            "rows": [
+              15,
+              16,
+              17
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.4348442050607428,
+            "relative": 1.3292089859013779e-15,
+            "polynomial_degrees": [
+              2,
+              0,
+              0
+            ]
+          },
+          {
+            "rows": [
+              18,
+              19,
+              20
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              0,
+              2
+            ]
+          },
+          {
+            "rows": [
+              21,
+              22,
+              23
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              0,
+              2
+            ]
+          },
+          {
+            "rows": [
+              24,
+              25,
+              26
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.4348442050607428,
+            "relative": 1.3292089859013779e-15,
+            "polynomial_degrees": [
+              2,
+              0,
+              0
+            ]
+          },
+          {
+            "rows": [
+              27,
+              28,
+              29
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              2,
+              0
+            ]
+          },
+          {
+            "rows": [
+              30,
+              31,
+              32
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.43484420506074273,
+            "relative": 1.329208985901378e-15,
+            "polynomial_degrees": [
+              0,
+              2,
+              0
+            ]
+          },
+          {
+            "rows": [
+              33,
+              34,
+              35
+            ],
+            "numerator": 5.779988248338807e-16,
+            "denominator": 0.4348442050607428,
+            "relative": 1.3292089859013779e-15,
+            "polynomial_degrees": [
+              2,
+              0,
+              0
+            ]
+          },
+          {
+            "rows": [
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "numerator": 5.107296475826841e-16,
+            "denominator": 0.32558993895912136,
+            "relative": 1.568628469342253e-15,
+            "polynomial_degrees": [
+              2,
+              2,
+              0
+            ]
+          },
+          {
+            "rows": [
+              48,
+              49,
+              50,
+              51,
+              52,
+              53,
+              54,
+              55,
+              56,
+              57,
+              58,
+              59
+            ],
+            "numerator": 5.107296475826841e-16,
+            "denominator": 0.32558993895912136,
+            "relative": 1.568628469342253e-15,
+            "polynomial_degrees": [
+              2,
+              0,
+              2
+            ]
+          },
+          {
+            "rows": [
+              60,
+              61,
+              62,
+              63,
+              64,
+              65,
+              66,
+              67,
+              68,
+              69,
+              70,
+              71
+            ],
+            "numerator": 5.107296475826841e-16,
+            "denominator": 0.32558993895912136,
+            "relative": 1.568628469342253e-15,
+            "polynomial_degrees": [
+              0,
+              2,
+              2
+            ]
+          },
+          {
+            "rows": [
+              72,
+              73,
+              74,
+              75,
+              76,
+              77,
+              78,
+              79,
+              80,
+              81,
+              82,
+              83
+            ],
+            "numerator": 5.107296475826841e-16,
+            "denominator": 0.32558993895912136,
+            "relative": 1.568628469342253e-15,
+            "polynomial_degrees": [
+              0,
+              2,
+              2
+            ]
+          },
+          {
+            "rows": [
+              84,
+              85,
+              86,
+              87,
+              88,
+              89,
+              90,
+              91,
+              92,
+              93,
+              94,
+              95
+            ],
+            "numerator": 5.107296475826841e-16,
+            "denominator": 0.32558993895912136,
+            "relative": 1.568628469342253e-15,
+            "polynomial_degrees": [
+              2,
+              0,
+              2
+            ]
+          },
+          {
+            "rows": [
+              96,
+              97,
+              98,
+              99,
+              100,
+              101,
+              102,
+              103,
+              104,
+              105,
+              106,
+              107
+            ],
+            "numerator": 5.107296475826841e-16,
+            "denominator": 0.32558993895912136,
+            "relative": 1.568628469342253e-15,
+            "polynomial_degrees": [
+              2,
+              2,
+              0
+            ]
+          },
+          {
+            "rows": [
+              108,
+              109,
+              110,
+              111,
+              112,
+              113,
+              114,
+              115,
+              116,
+              117,
+              118,
+              119,
+              120,
+              121,
+              122,
+              123,
+              124,
+              125,
+              126,
+              127,
+              128,
+              129,
+              130,
+              131,
+              132,
+              133,
+              134,
+              135,
+              136,
+              137,
+              138,
+              139,
+              140,
+              141,
+              142,
+              143
+            ],
+            "numerator": 6.538756627560804e-16,
+            "denominator": 0.2740285891997589,
+            "relative": 2.3861585561768664e-15,
+            "polynomial_degrees": [
+              2,
+              2,
+              2
+            ]
+          }
+        ],
+        "axis_node_counts": [
+          142,
+          107,
+          143
+        ],
+        "tensor_entities": 19,
+        "exact_fallback_entities": 0,
+        "aligned_cells": 384,
+        "max_affine_roundoff": 1.495622138878498e-15,
+        "max_coordinate_roundoff_nm": 4.440892098500626e-15,
+        "cache_static_bytes": 1631140,
+        "cache_dynamic_bytes": 438144,
+        "model_parameters": 9120,
+        "parent_checkpoint_sha256": "91d11667280bb6fe838bd0f2df772faa70c3a38fb5685b0ff331f31f7d6d0029",
+        "costs": {
+          "setup": 0.2737403509672731,
+          "core_evaluation": 0.07011428056284785,
+          "contraction": 3.205490303458646,
+          "moments": 1.407962521770969,
+          "core_cotangent": 5.466085005784407,
+          "core_backward": 0.0741754590999335,
+          "cache_hash": 0.01972133037634194
+        },
+        "reference_loaded": false
+      }
+    },
+    "global_Gram_factor": 0,
+    "Gsolve": 0,
+    "global_Maxwell_factor": 0,
+    "source_sha": "962de40947413b5c4c383f62189e951b92e5ecaa",
+    "input_sha256": "9cd038dc1842af3896a998dae8c2ab5cf8430a54f539405dc13ed41d40c47aad",
+    "design_sha256": "37d37c2839e24189680e03f30719d06d38d922cc4bb800d49f71b1c5a2f3559f",
+    "reference_used_for_training": false,
+    "features_reference_exposed": false,
+    "pde_only_solve": false,
+    "model_kind": null,
+    "metric_kind": null,
+    "worker_elapsed_seconds": 129.18236237205565,
+    "production_initialization_allowed": false,
+    "pde_only_solver_qualified": false,
+    "official_candidate_results": false,
+    "full_original_target_qualified": false
+  },
+  "record": {
+    "path": "benchmarks/artifacts/task42extra/v39/v39_ftt_factored_checks/result.json",
+    "sha256": "57f76cb861642dab6839b9d146ee789e03041a056725785e39d72bc4f732607b",
+    "bytes": 28740
+  },
+  "old_point_path_unchanged": true,
+  "full_owner_rows": 31968,
+  "edge_face_interior_all_retained": true,
+  "small_nonzero_interpolation_entries_retained": true,
+  "polynomial_truncation": false,
+  "static_entity_sharing": "Only byte-identical 1D linear functional rows; every polynomial coefficient retained",
+  "unsupported_geometries_use_exact_point_fallback": true,
+  "cache_scope": "Fresh per-stage map; bound to model kind/full parameter/buffer hash/coordinates/dtype",
+  "actual_M5_y_Floquet_phase": 1.0,
+  "two_nonunit_seams_are_additional_synthetic_tests": true
+}
