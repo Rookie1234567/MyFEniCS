@@ -59,10 +59,28 @@ def norms(record,s,f,journal,folder):
     return rows
 
 
-def numerator(f,g,cfg,kappa,journal,folder,q,*,parent_hashes,spot=False):
+def same_native_difference(f,g):
+    """Subtract coefficients only after exact native basis/geometry checks."""
+    from dolfinx import fem
+    a,b=f.function_space,g.function_space
+    ea,eb=a.element.basix_element,b.element.basix_element
+    identities=((a.mesh.geometry.x,b.mesh.geometry.x),
+                (a.mesh.geometry.dofmap,b.mesh.geometry.dofmap),
+                (a.dofmap.list.array,b.dofmap.list.array),
+                (ea.coefficient_matrix,eb.coefficient_matrix))
+    if ea.cell_type!=eb.cell_type or ea.map_type!=eb.map_type or ea.degree!=eb.degree or any(
+            not np.array_equal(x,y) for x,y in identities) or f.x.array.shape!=g.x.array.shape:
+        raise ValueError('coefficient difference requires identical native basis, geometry and numbering')
+    delta=fem.Function(b);delta.x.array[:]=g.x.array-f.x.array;delta.x.scatter_forward()
+    return delta
+
+
+def numerator(f,g,cfg,kappa,journal,folder,q,*,parent_hashes,spot=False,coefficient_first=False):
     folder.mkdir(parents=True,exist_ok=True)
     a=CachedTetraEvaluator(f.function_space,q,kappa);b=CachedTetraEvaluator(g.function_space,q,kappa)
-    parents=parent_map(a,b);identity=dict(parents=parent_hashes,q=q,carrier=list(kappa),cells=len(b.geometry))
+    delta=same_native_difference(f,g) if coefficient_first else None
+    parents=parent_map(a,b);identity=dict(parents=parent_hashes,q=q,carrier=list(kappa),cells=len(b.geometry),
+        strategy='SAME_NATIVE_BASIS_COEFFICIENT_FIRST' if coefficient_first else 'SEPARATE_FIELDS')
     ix=hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest();chunks=[]
     with journal.measured('same_real_carrier_polynomial_numerator_q'+str(q)):
         for begin in range(0,len(b.geometry),128):
@@ -74,8 +92,12 @@ def numerator(f,g,cfg,kappa,journal,folder,q,*,parent_hashes,spot=False):
             per=[]
             for c in range(begin,end):
                 J,o,det=b.geometry[c];points=b.points@J.T+o;w=abs(det)*b.weights
-                va=a.at(f,int(parents[c]),points,cfg.k0);vb=b.at(g,c,points,cfg.k0)
-                per.append([float(np.sum(w[:,None]*np.abs(vb[k]-va[k])**2)) for k in ('E','H','curl')])
+                if delta is not None:
+                    difference=b.at(delta,c,points,cfg.k0)
+                else:
+                    va=a.at(f,int(parents[c]),points,cfg.k0);vb=b.at(g,c,points,cfg.k0)
+                    difference={k:vb[k]-va[k] for k in ('E','H','curl')}
+                per.append([float(np.sum(w[:,None]*np.abs(difference[k])**2)) for k in ('E','H','curl')])
             array=np.asarray(per);receipt=save_arrays(folder/f'block_{begin:05d}.npz',per_cell_difference=array)
             write_json(path,dict(identity=ix,begin=begin,end=end,arrays=receipt));chunks.append(array)
             journal.event('polynomial_numerator_block_committed',q=q,begin=begin,end=end,sha256=receipt['sha256'])
@@ -86,14 +108,21 @@ def numerator(f,g,cfg,kappa,journal,folder,q,*,parent_hashes,spot=False):
         with journal.measured('new_pair_independent_q31_fixed_subcell_check'):
             for c in np.unique(np.linspace(0,len(b.geometry)-1,8,dtype=int)):
                 p,w,vg=direct.cell(g,int(c),cfg.k0);vf=left.at(f,int(parents[c]),p,cfg.k0)
-                actual=np.array([np.sum(w[:,None]*np.abs(vg[k]-vf[k])**2) for k in ('E','H','curl')])
+                legacy=np.array([np.sum(w[:,None]*np.abs(vg[k]-vf[k])**2) for k in ('E','H','curl')])
+                if delta is not None:
+                    _,_,difference=direct.cell(delta,int(c),cfg.k0)
+                    actual=np.array([np.sum(w[:,None]*np.abs(difference[k])**2) for k in ('E','H','curl')])
+                else:actual=legacy
                 op=float(np.max(np.abs(actual-per[c])/np.maximum(actual,1e-24)))
-                spot_rows.append(dict(cell=int(c),polynomial=per[c],q31=actual,relative_squared=op))
+                spot_rows.append(dict(cell=int(c),polynomial=per[c],q31=actual,relative_squared=op,
+                    original_separate_field_subtraction_q31=legacy,
+                    separate_subtraction_relative=float(np.max(np.abs(legacy-actual)/np.maximum(actual,1e-24)))))
+        write_json(folder/'independent_q31_spots.json',dict(identity=identity,rows=spot_rows))
         if max(r['relative_squared'] for r in spot_rows)>2e-6:raise ValueError('independent q31 numerator mismatch; use original comparison')
     return per,parents,spot_rows
 
 
-def comparison(first,second,folder,journal,*,spot=True):
+def comparison(first,second,folder,journal,*,spot=True,coefficient_first=False):
     from benchmarks.collect_independent_tetra import restored
     from .phase_notch_hp_modes import mode_comparison
     folder.mkdir(parents=True,exist_ok=True);kappa=require_identity(first,second)
@@ -101,7 +130,7 @@ def comparison(first,second,folder,journal,*,spot=True):
     for s in (a,b):
         if s['V'].mesh.basix_cell().name!='tetrahedron' or s['cfg'].mu_r!=1:raise ValueError('affine tetra/piecewise constant mu certificate')
     q=2*max(a['V'].element.basix_element.embedded_superdegree,b['V'].element.basix_element.embedded_superdegree)+3
-    per,parents,spot_rows=numerator(f,g,b['cfg'],kappa,journal,folder/'numerator',q,parent_hashes=[first['arrays']['sha256'],second['arrays']['sha256']],spot=spot)
+    per,parents,spot_rows=numerator(f,g,b['cfg'],kappa,journal,folder/'numerator',q,parent_hashes=[first['arrays']['sha256'],second['arrays']['sha256']],spot=spot,coefficient_first=coefficient_first)
     denominator=norms(second,b,g,journal,folder);hi=denominator[-1];lo=denominator[0]
     sums=per.sum(axis=0);sums=np.r_[sums,sums]
     fields={k:dict(difference_squared=float(sums[j]),reference_squared=float(hi['reference'][j]),incident_squared=float(hi['incident'][j]),
@@ -127,7 +156,8 @@ def comparison(first,second,folder,journal,*,spot=True):
     result=dict(backend='SAME_REAL_CARRIER_POLYNOMIAL_DIFFERENCE',fields=fields,selected=selected,arrays=receipt,q=q,
         quadrature_pair=[23,31],quadrature_operation_scaled=qdef,q23_arrays=q23_receipt,modes=modes,power_differences=power,energies=energies,
         parent_array_sha256=[first['arrays']['sha256'],second['arrays']['sha256']],physical_truth_not_assumed=True,
-        numerator_certificate=dict(q=q,actual_superdegrees=[a['V'].element.basix_element.embedded_superdegree,b['V'].element.basix_element.embedded_superdegree],spot_q31=spot_rows),
+        numerator_certificate=dict(q=q,actual_superdegrees=[a['V'].element.basix_element.embedded_superdegree,b['V'].element.basix_element.embedded_superdegree],spot_q31=spot_rows,
+            coefficient_first_same_native_basis=coefficient_first),
         per_cell_denominator_location='actual original or once-supplemented second-field integral packet',
         pass_gate=gate,classification='SPACE_INCREMENT_PASS' if gate else 'SPACE_INCREMENT_FAIL')
     write_json(folder/'comparison.json',result);return result

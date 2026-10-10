@@ -18,9 +18,11 @@ def main():
         'src/solvers/independent_tetra_study.py','src/solvers/hcurl_cell_static_condensation.py',
         'src/runners/port_preparation.py','scripts/run_case.py','src/io/independent_tetra_reference.py',
         'src/postprocessing/saved_interface_diagnosis.py','benchmarks/collect_exact_tetra.py',
-        'benchmarks/qualify_exact_tetra.py','src/test/test_exact_tetra_condensation.py']
+        'benchmarks/qualify_exact_tetra.py','src/test/test_exact_tetra_condensation.py',
+        'src/solvers/tetra_polynomial_difference.py','src/test/test_tetra_same_basis_difference.py']
     for p in paths:compile((ROOT/p).read_bytes(),p,'exec')
     commands=[[sys.executable,'-m','unittest','-q','src.test.test_exact_tetra_condensation'],
+        [sys.executable,'-m','pytest','-q','src/test/test_tetra_same_basis_difference.py'],
         ['/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff','check','--select','E9,F63,F7,F82',*paths]]
     commands.extend([sys.executable,'scripts/run_case.py',str(p),'--validate-only'] for p in sorted((ROOT/'input/task042_neural_coarse_inverse').glob('v69_*.dat')))
     rows=[]

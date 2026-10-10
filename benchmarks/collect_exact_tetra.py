@@ -40,8 +40,22 @@ def verify(folder,journal):
     checks={};pairs={};scores={};independent={};prior=None
     if frozen['phase']=='C5_ONLY':
         candidate=scope.stage('C5');own=folder/'C5';own.mkdir(exist_ok=True)
-        checks['C5']=saved_original(candidate,own,journal,body_q=15)
-        pair=comparison(parent,candidate,folder/'L5_C5',journal)
+        resume_path=scope.window.TMP/'C5_partial_consumer_receipt.json'
+        if resume_path.exists():
+            resume=json.loads(resume_path.read_text())
+            if resume['C5_array_sha256']!=candidate['arrays']['sha256']:
+                raise ValueError('C5 partial consumer frozen coefficient identity')
+            for item in resume['unchanged_oracle_sources']:
+                if file_digest(scope.ROOT/item['path'])!=item['sha256']:
+                    raise ValueError('C5 original checker dependency changed')
+            p=Path(resume['checker']['path'])
+            if file_digest(p)!=resume['checker']['sha256']:raise ValueError('C5 original saved checker bytes')
+            checks['C5']=json.loads(p.read_text())
+            if checks['C5']['arrays']['members']['x']['sha256']!=candidate['arrays']['members']['x']['sha256']:
+                raise ValueError('C5 original checker consumed another coefficient vector')
+            journal.event('unchanged_completed_C5_original_checker_reused',receipt=resume)
+        else:checks['C5']=saved_original(candidate,own,journal,body_q=15)
+        pair=comparison(parent,candidate,folder/'L5_C5',journal,coefficient_first=True)
         check=saved_pair(pair,parent,candidate,expected_points=selected_points(candidate['physical']))
         if not check['published_gate_matches_recalculation']:raise ValueError('V69 independent reproduction score')
         pairs['L5_C5']=pair;independent['L5_C5']=check;scores['L5_C5']=strict_reproduction(pair)
@@ -63,7 +77,7 @@ def verify(folder,journal):
             checks['M5']=saved_original(candidate,own,journal,body_q=15)
             projection=folder/'L5_all1188';projection.mkdir(exist_ok=True)
             projected=project_old_field(parent,candidate,projection,journal)
-            pair=comparison(projected,candidate,folder/'L5_M5',journal)
+            pair=comparison(projected,candidate,folder/'L5_M5',journal,coefficient_first=True)
             check=saved_pair(pair,projected,candidate,expected_points=selected_points(candidate['physical']))
             if not check['published_gate_matches_recalculation']:raise ValueError('V69 independent all1188 saved score')
             pairs['L5_M5']=pair;independent['L5_M5']=check
