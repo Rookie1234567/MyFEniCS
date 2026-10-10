@@ -95,3 +95,11 @@ actual由独立旧逐点FTT参数生成，producer由训练器保存，两者各
 0.7nm缩小pilot因learned M5联合FAIL而NOT_RUN，未注册空输入；原50×25×140nm、Si17/120nm、λ0.7完整3D FE、decimal2e12B整机、自身swap/OOC0、172800s完整冷流程及原精度仍未达到。未知的是可合格神经表示/优化、同精度完整成本以及原尺寸规模全过程，不由本次低RSS或小权重推断。旧M3600较好/Mfinal退化、D0成本否决/D1未运行、失败/UNKNOWN与全部费用保留。不改其他支线，不向Task42、主线或dot安排工作。
 
 源码依赖分组：新增条件核/事务为research-only opt-in；既有runner只加显式schema11/预算/角色/依赖；独立FTT比较用途修复不改ordinary默认；compact证据可供review。没有production merge建议，没有传统完成器/存储/接口任务。完整费用尾段、文档解析和有限实际GitHub视觉检查分别补记；网页错误不改科学结论。
+
+<!-- V41_FINAL_PUBLICATION_TAIL -->
+
+有限发布尾段已完成：Review V40首屏中一个完整表格及一个公式目视可读，Response V41返回504、专题返回GitHub服务错误，后两页及未见页尾视觉NOT_VERIFIED；本地全文解析仍通过，截图成功不等于页面通过。初始结果发布为45b0f82f26cb5264fbc1cae1c80f14f6fbf5ac73，随后只补此尾账，不改变任何数值源码或已冻结原数组。
+
+正式attempt合计7216.672650014982s保持；numeric自身树采样峰643035136B，包含浏览器后串行各阶段峰最大1159696384B，两者不可混称。自身swap/OOC0；发布/解析/成功60s准入等在原唯一总窗内，尾账的完成子项不再重复叠加父子timer。精确初始准备、项目历史累计与冷N=1仍UNKNOWN。最终清场/准确Git及窗口结账保存在ignored delivery_receipt.json和最终答复，不为自引用SHA反复重算或重开窗口。
+
+[实际页面范围与失败](records/render_check_v41.json)、[有限发布尾账](records/publication_tail_v41.json)。

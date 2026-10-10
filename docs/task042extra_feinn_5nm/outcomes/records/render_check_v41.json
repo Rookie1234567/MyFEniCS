@@ -1,0 +1,59 @@
+{
+  "schema": "task42extra.v41.render.v1",
+  "publication_sha": "45b0f82f26cb5264fbc1cae1c80f14f6fbf5ac73",
+  "attempts": [
+    {
+      "name": "review",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/4ed149dd709419f00bad01e6e5dea7079fa61d81/docs/task042extra_feinn_5nm/review_report_v40.md",
+      "published_sha": "4ed149dd709419f00bad01e6e5dea7079fa61d81",
+      "published_blob_sha256": "0024ddcce57a6f1530acdc40d2e39c155d2a594b150d8a9a7138b3d1b8fb5fa4",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_s": 21.432203891919926,
+      "screenshot": "tmp/task42extra/v41/render_views/review/page.png",
+      "screenshot_sha256": "b36b19f37f515f7583aada0e4b8054180d9d7cdee687bd4375a6082779a1b9d4",
+      "visual_status": "PASS_SELECTED_VIEWPORT_ONLY",
+      "observation": "Title, opening, section1 full first table and section2 first formula readable.",
+      "complete_tables_viewed": 1,
+      "complete_formulas_viewed": 1,
+      "remaining_tables_formulas_and_page_tail": "NOT_VERIFIED",
+      "actual_image_viewed": true
+    },
+    {
+      "name": "response",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/45b0f82f26cb5264fbc1cae1c80f14f6fbf5ac73/docs/task042extra_feinn_5nm/response_v41.md",
+      "published_sha": "45b0f82f26cb5264fbc1cae1c80f14f6fbf5ac73",
+      "published_blob_sha256": "e4c6ba8b212e5957619c288e088f0e4835cf376294bccaecb8e8eb0b312e1494",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_s": 13.962794645922258,
+      "screenshot": "tmp/task42extra/v41/render_views/response/page.png",
+      "screenshot_sha256": "93c829037abe3af280c5cdfba488437216885cd2d17155113bc915fd186a53e2",
+      "visual_status": "NOT_VERIFIED",
+      "observation": "Actual screenshot shows 504 Gateway Time-out.",
+      "actual_image_viewed": true
+    },
+    {
+      "name": "core",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/45b0f82f26cb5264fbc1cae1c80f14f6fbf5ac73/docs/task042extra_feinn_5nm/outcomes/ftt_conditional_core_v41.md",
+      "published_sha": "45b0f82f26cb5264fbc1cae1c80f14f6fbf5ac73",
+      "published_blob_sha256": "dc75fbebb41669637dc016562743f3b3ab1204d93f637f2b350b7dc69842d38e",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_s": 12.187226241920143,
+      "screenshot": "tmp/task42extra/v41/render_views/core/page.png",
+      "screenshot_sha256": "10bcabc07a8cb031f136f58692ae82f93b78c12dd7f9c8e329a45aff7a46af52",
+      "visual_status": "NOT_VERIFIED",
+      "observation": "Actual screenshot shows GitHub unicorn service error.",
+      "actual_image_viewed": true
+    }
+  ],
+  "scope": "selected first viewport only; independent full text read from Git; unseen page/formula/table portions unverified",
+  "overall": "PARTIAL_REVIEW_VIEW_ONLY_NEW_RESPONSE_AND_TOPIC_NOT_VERIFIED",
+  "screenshot_generation_is_visual_pass": false,
+  "local_full_text_parser_is_browser_visual_pass": false,
+  "no_numerical_rerun": true,
+  "historical_render_failures_preserved": true,
+  "final_tail_changes": "No numerical or formula edits; final tail itself not visually verified.",
+  "completed_utc": "2026-10-10T14:34:34.039697+00:00"
+}

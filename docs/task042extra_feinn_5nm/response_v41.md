@@ -66,3 +66,11 @@
 [专题](outcomes/ftt_conditional_core_v41.md)、[独立完整Gate/分母/区域](outcomes/records/full_numerical_gates_v41.json)、[42次内层与真实接受](outcomes/records/conditional_inner_solver_v41.csv)、[隐藏及轮次](outcomes/records/hidden_updates_and_rounds_v41.json)、[三路线/初态](outcomes/records/conditional_core_routes_v41.json)、[完整40×四类复通道](outcomes/records/full_40_complex_channels_v41.csv)、[六点复场](outcomes/records/six_point_complex_fields_v41.csv)、[功率](outcomes/records/power_and_energy_v41.csv)、[用途/分母定义](outcomes/records/channel_and_norm_definitions_v41.json)、[run/source/hash](outcomes/records/run_index_v41.json)、[tests](outcomes/records/tests_v41.json)、[修复](outcomes/records/repair_log_v41.json)。大场与完整checkpoint留ignored，全部hash-bound。
 
 只提交推送task42extra_feinn_5nm，不amend/强推/merge。最终完整HEAD、显式tracking/ahead-behind、clean及numerical.lock/自身数值和浏览器清场在发布收据及最终答复核对。有限GitHub视觉检查与本地解析分别记录，网页服务失败不冒称视觉PASS、不重做数值。整批结束等待review，不通知其他窗口或自动开下一包。
+
+<!-- V41_FINAL_PUBLICATION_TAIL -->
+
+有限发布尾段已完成：Review V40首屏中一个完整表格及一个公式目视可读，Response V41返回504、专题返回GitHub服务错误，后两页及未见页尾视觉NOT_VERIFIED；本地全文解析仍通过，截图成功不等于页面通过。初始结果发布为45b0f82f26cb5264fbc1cae1c80f14f6fbf5ac73，随后只补此尾账，不改变任何数值源码或已冻结原数组。
+
+正式attempt合计7216.672650014982s保持；numeric自身树采样峰643035136B，包含浏览器后串行各阶段峰最大1159696384B，两者不可混称。自身swap/OOC0；发布/解析/成功60s准入等在原唯一总窗内，尾账的完成子项不再重复叠加父子timer。精确初始准备、项目历史累计与冷N=1仍UNKNOWN。最终清场/准确Git及窗口结账保存在ignored delivery_receipt.json和最终答复，不为自引用SHA反复重算或重开窗口。
+
+[实际页面范围与失败](outcomes/records/render_check_v41.json)、[有限发布尾账](outcomes/records/publication_tail_v41.json)。

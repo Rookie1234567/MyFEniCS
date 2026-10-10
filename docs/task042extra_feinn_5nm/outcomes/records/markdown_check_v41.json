@@ -6,12 +6,12 @@
       "scope": "complete new selected page",
       "result": {
         "path": "docs/task042extra_feinn_5nm/response_v41.md",
-        "sha256": "e4c6ba8b212e5957619c288e088f0e4835cf376294bccaecb8e8eb0b312e1494",
+        "sha256": "8fe7bbca35d6962db86bd26846a4b012672ab3aa6d1a928babe5d673fd9bb04f",
         "checked_scope": "entire page",
         "markdown_tables": 1,
         "parsed_tables": 1,
         "math_fences": 0,
-        "links": 14
+        "links": 16
       }
     },
     {
@@ -19,12 +19,12 @@
       "scope": "complete new selected page",
       "result": {
         "path": "docs/task042extra_feinn_5nm/outcomes/ftt_conditional_core_v41.md",
-        "sha256": "dc75fbebb41669637dc016562743f3b3ab1204d93f637f2b350b7dc69842d38e",
+        "sha256": "d2f71d4f126bc42b05c8edc5993b50dde69c970d050e638a20c7c620311e662a",
         "checked_scope": "entire page",
         "markdown_tables": 1,
         "parsed_tables": 1,
         "math_fences": 2,
-        "links": 8
+        "links": 10
       }
     },
     {
@@ -121,5 +121,5 @@
   ],
   "historical_sections_byte_preserved": true,
   "scope": "new response/topic/current navigation only; no historical rerender",
-  "GitHub_visual_status": "PENDING_FINITE_ACTUAL_VIEW_NOT_LOCAL_PARSER_PASS"
+  "GitHub_visual_status": "PARTIAL_REVIEW_VIEW_ONLY_NEW_RESPONSE_AND_TOPIC_NOT_VERIFIED"
 }

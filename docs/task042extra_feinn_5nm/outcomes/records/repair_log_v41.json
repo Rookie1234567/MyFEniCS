@@ -28,6 +28,34 @@
       "change": "FTT-use policy adapter and atomic metadata seal",
       "test": "two corruption/writer/reopen tests plus formal saved-checker-only second attempt",
       "resume": "same original reconstruction/FE arrays reused, wrong old report retained"
+    },
+    {
+      "failure": "Document writer normal string converted LaTeX backslash-f into form feed",
+      "hypothesis": "Python string escape in documentation-only generator",
+      "change": "raw formatted string and remove the one pre-publication form feed",
+      "test": "complete changed-page parser PASS",
+      "resume": "same numerical evidence retained"
+    },
+    {
+      "failure": "Response record links initially omitted outcomes prefix",
+      "hypothesis": "response and topic are at different directory levels",
+      "change": "correct response-relative outcomes/records paths before publication",
+      "test": "all changed-page local links exist",
+      "resume": "no producer or FE rerun"
+    },
+    {
+      "failure": "Existing independent compare stage attempt1 rejected before worker on repair invocation",
+      "hypothesis": "explicit new attempt required for saved-checker-only recovery",
+      "change": "use recorded attempt2 then corrected attempt3 namespace",
+      "test": "no extra numeric worker for rejected invocation",
+      "resume": "healthy artifacts reused"
+    },
+    {
+      "failure": "Response and topic GitHub service error on finite actual capture",
+      "hypothesis": "page service did not return published Markdown",
+      "change": "retain screenshot failures and mark visual NOT_VERIFIED",
+      "test": "actual image inspection; Review selected view readable",
+      "resume": "no numerical re-execution"
     }
   ],
   "formal_training_or_FE_postprocessing_failed_attempt_count": 0,
