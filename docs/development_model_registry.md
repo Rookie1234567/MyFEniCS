@@ -2258,3 +2258,8 @@ P1/P4的体积场/curl对照是保存场离线后处理，官方R/T来自DtN端�
 | P6 local blocks | 3种真实tag，内部450/trace432；非零RHS closure `1.43e-11–2.35e-11`；M3904为16列合成重采样动作 | 不证明完整高M端口、全域因子或TB容量；`records/p6_local_block_inventory_v2.json` |
 
 E2 v3重建p6 mesh/space并做一次native matrix-free A6动作和streaming DtN恢复；不构造全局AIJ/H6、p4 factor、KSP或新solve，原worker失败分类不变。P7仅文档提案，`R=P^H`不意味着物理`D=B^H`；其资源/层数/终层/外层约束待下一阶段资格化。全模型raw identity、p4 factor字段定义及分阶段资源见 [Task40 run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)、[资源组成](task40extra_0p7nm_engineering/outcomes/records/resource_components_v2.json)、[campaign](task40extra_0p7nm_engineering/outcomes/review_v2_campaign.md) 和 [总账](task40extra_0p7nm_engineering/outcomes/summary.md)。
+
+
+## Task40extra Review V22：原尺寸端口作用前缀，窗口受控收口
+
+2026-10-10，同一 `task40extra_0p7nm_engineering` 分支，50×25×140 nm、λ0.7 nm、30,464 cells、p6空间20,181,348 storage rows／19,897,344 independent rows，真实全局MPC 284,004 slave rows。生成式端口边生成边作用，避免先保存完整carrier；完成18,968/32,060模式（top16,030，bottom2,938），两侧首模式生产B/D路径一致性通过，独立882-row B/D packet仅每侧一个。固定6h窗口协作停止，q CSR/factor/KSP/PDE/RTA均NOT_RUN；全模式/方向资格及原尺寸2TB/48h尚未闭合。树RSS峰3,242,729,472 B，cgroup峰3,533,070,336 B，task swap0；monotonic run3,991.941 s、保守时钟4,383.978 s分列。worker native cleanup UNKNOWN与外部descendants已清场分列，旧失败原样保留。证据：[Response V22](task40extra_0p7nm_engineering/response_v22.md)、[operator compact](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v22.json)、[主控核算](task40extra_0p7nm_engineering/outcomes/records/controller_readback_v22.json)。

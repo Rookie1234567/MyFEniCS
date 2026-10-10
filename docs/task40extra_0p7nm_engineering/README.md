@@ -1,3 +1,19 @@
+## Review V22 当前交付
+
+V22 在原尺寸 Ny=8 上完成 18,968/32,060 个真实模式 support/action 前缀，并取得两侧各一个独立 882-row B/D packet 的限定范围通过；固定 campaign 窗口在 q 构造前 cooperative stop。完整 FE/MPC、8-q、factor/KSP、场、R/T/A 与目标精度仍未资格化。
+
+| 文件 | 内容 |
+|---|---|
+| [Response V22](response_v22.md) | 六项审查结论、受控停止、资源与资格边界 |
+| [V22 outcomes summary](outcomes/summary.md) / [test summary](outcomes/test_summary.md) | 增量结果与定向测试范围 |
+| [V22 operator compact](outcomes/records/target_operator_probe_v22.json) | raw receipt、prefix、资源、独立 packet 与 cleanup 状态 |
+| [V22 port inventory](outcomes/records/target_port_inventory_v22.json) | 4,352 boundary facets, partial side/class mode coverage, UNKNOWN per-cell active-mode sums |
+| [V22 test receipt](outcomes/records/targeted_tests_v22.json) | 冻结源码下的定向测试和未运行项 |
+| [V22 port inventory](outcomes/records/target_port_inventory_v22.json) | 4,352 boundary facets, partial side/class mode coverage, UNKNOWN per-cell active-mode sums |
+| [V22 run index](outcomes/records/run_index.json) | 正式 attempt、固定窗口与证据身份 |
+
+---
+
 # Task40extra：0.7 nm 工程方法（笔记本起步）
 
 ## Review V21 当前交付

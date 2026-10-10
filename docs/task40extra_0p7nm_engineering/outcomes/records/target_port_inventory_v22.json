@@ -1,0 +1,53 @@
+{
+  "schema": "task40extra.v22_target_port_inventory.v1",
+  "source_sha": "ae3f1a4bc557170dc9af51669139683a8ab032a5",
+  "input_sha256": "33cb569eb900f60100569a6659138589a9d26784a22e05d50c7fe63190bac4ff",
+  "expected": {
+    "boundary_facets": {
+      "top": 2176,
+      "bottom": 2176
+    },
+    "ordered_modes": {
+      "top": 16030,
+      "bottom": 16030
+    },
+    "potential_side_specific_mode_facet_pairs": 69762560,
+    "meaning": "geometric upper inventory only; not measured action support or memory allocation"
+  },
+  "measured_prefix": {
+    "completed_modes": 18968,
+    "by_side": {
+      "top": 16030,
+      "bottom": 2938
+    },
+    "top_classes_completed": 26,
+    "bottom_classes_completed": 28,
+    "combined_unique_classes": 54,
+    "stream_prefix_sha256": "617cb54178e46928647b245f5f5de1225dc4ac614a009e0735746b86cfcfbe54"
+  },
+  "independent_packet_coverage": {
+    "rows_per_packet": 882,
+    "packets": {
+      "top": 1,
+      "bottom": 1
+    },
+    "full_mode_by_row_coverage": "PARTIAL",
+    "all_60_boundary_classes_qualified": "NO"
+  },
+  "active_modes_per_cell": {
+    "histogram": "UNKNOWN",
+    "sum_m_c": "UNKNOWN",
+    "sum_m_c_squared": "UNKNOWN",
+    "reason": "V22 did not connect the complete global carrier/MPC inventory to generated per-cell support"
+  },
+  "status": "PARTIAL_SUPPORT_INVENTORY_NOT_FULL_QUALIFICATION",
+  "global_mpc_identity": {
+    "constraint_mode": "topological_trace_p6",
+    "mpc_finalized": true,
+    "owned_slave_count": 284004,
+    "global_storage_rows": 20181348,
+    "global_independent_rows": 19897344,
+    "coefficients_sha256": "9312e5f0ad152e517ffc5b7050951fe33ea75f2066bd2e6e7a40639e70366411"
+  },
+  "local_witness_identity_mpc_scope": "local 882-row packets only; zero local expansion rows does not mean global MPC is absent"
+}

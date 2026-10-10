@@ -1,0 +1,102 @@
+{
+  "schema": "task40extra.v22_target_operator_probe_compact.v1",
+  "classification": "RESOURCE_CONTROLLED_STOP",
+  "run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
+  "raw_run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261010T070935.463004Z",
+  "raw_receipt": {
+    "path": "v22_target_operator_probe.json",
+    "sha256": "0385bce9c595358d08eaa3c4903a7fc4be647ecb51bf73ad506429f7237d38d5"
+  },
+  "checkpoint": {
+    "path": "v22_mode_sweep_checkpoint.json",
+    "sha256": "aae2e73f5254b9c037a702427f0620b52b8f64895b2eaefd76431994338adb13",
+    "completed": 18968,
+    "expected": 32060,
+    "by_side": {
+      "top": 16030,
+      "bottom": 2938
+    },
+    "stream_prefix_sha256": "617cb54178e46928647b245f5f5de1225dc4ac614a009e0735746b86cfcfbe54",
+    "B_exact_nonzero_rows": 313344
+  },
+  "identity": {
+    "source_sha": "ae3f1a4bc557170dc9af51669139683a8ab032a5",
+    "input_sha256": "33cb569eb900f60100569a6659138589a9d26784a22e05d50c7fe63190bac4ff",
+    "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+    "window_sha256": "a4da3d83c2a06672a2337a518dcc8a8bb5d12a446e995783e0f9dd406427d777"
+  },
+  "independent_packet_gate": {
+    "scope": "one hash-bound 882-row degree-60 packet per side",
+    "B_relative": {
+      "bottom": 2.2291648838449984E-12,
+      "top": 2.2292179612871744E-12
+    },
+    "D_relative": {
+      "bottom": 2.2290502550535386E-12,
+      "top": 2.2292713241509635E-12
+    },
+    "status": "PASS_WITHIN_TWO_PACKET_SCOPE"
+  },
+  "production_path_consistency": {
+    "top": {
+      "mode_index": 0,
+      "B_relative": 1.053320956020788E-16,
+      "Dx_relative": 2.438814907210454E-16,
+      "D_vector_relative": 1.0375720722723396E-16,
+      "support_mismatch": 0
+    },
+    "bottom": {
+      "mode_index": 16030,
+      "B_relative": 1.053174841556285E-16,
+      "Dx_relative": 1.6146832813496576E-15,
+      "D_vector_relative": 1.0383763990038156E-16,
+      "support_mismatch": 0
+    },
+    "status": "SHARED_KERNEL_PATH_CONSISTENCY_NOT_INDEPENDENT_REFERENCE"
+  },
+  "downstream": {
+    "q": "NOT_RUN 0/8",
+    "factor": "NOT_RUN",
+    "KSP": "NOT_RUN",
+    "full_field": "NOT_RUN",
+    "R_T_A": "NOT_RUN",
+    "PDE": "NOT_RUN"
+  },
+  "support": {
+    "sum_m_c": "UNKNOWN",
+    "sum_m_c_squared": "UNKNOWN",
+    "all_mode_882_row_independent_coverage": "PARTIAL"
+  },
+  "worker_cleanup": {
+    "native_owners_released": "UNKNOWN",
+    "temporary_stage_objects_released": "UNKNOWN",
+    "process_descendants_cleared": "UNKNOWN"
+  },
+  "external_watchdog": {
+    "descendants_cleared": true,
+    "remaining_children": [],
+    "tree_rss_peak_bytes": 3242729472,
+    "cgroup_peak_bytes": 3533070336,
+    "task_swap_peak_bytes": 0,
+    "oom_kill": 0,
+    "pss": null
+  },
+  "timing": {
+    "run_monotonic_seconds": 3991.941,
+    "conservative_attempt_seconds": 4383.978,
+    "ledger_cumulative_seconds": 20889.287384595274,
+    "probe_window_cumulative_seconds": 20887.459420917243,
+    "difference_unassigned_seconds": 1.827964,
+    "accounting_note": "Different raw samples/scopes; no reconciliation inferred."
+  },
+  "global_mpc_identity": {
+    "constraint_mode": "topological_trace_p6",
+    "mpc_finalized": true,
+    "owned_slave_count": 284004,
+    "global_storage_rows": 20181348,
+    "global_independent_rows": 19897344,
+    "coefficient_count": 284004,
+    "coefficients_sha256": "9312e5f0ad152e517ffc5b7050951fe33ea75f2066bd2e6e7a40639e70366411"
+  },
+  "local_witness_mpc_scope": "identity MPC with zero local expansion rows applies only to the two local 882-row packets; it is not the global descriptor MPC"
+}

@@ -1,0 +1,12 @@
+{
+  "schema": "task40extra.v22_targeted_tests.v1",
+  "source_sha": "ae3f1a4bc557170dc9af51669139683a8ab032a5",
+  "abi_preflight": "PASS qualified WSL; complex128/int32; MPI1",
+  "tests": {
+    "command": "python -m pytest -q src/test/test_task40_v20_routes.py::test_v22_first_native_gate_failure_is_checkpointed_before_mode_sweep src/test/test_task40_v20_routes.py::test_v22_direct_component_filter_matches_mpc_then_two_global_cutoffs src/test/test_task40_v21_readonly_recheck.py::test_v22_completion_recomputes_raw_coverage_fe_mpc_and_native_gates",
+    "result": "3 passed in 0.78s",
+    "scope": "V22 checkpoint failure gate, direct component/MPC filtering and terminal recomputation; no PDE"
+  },
+  "other_checks": {"py_compile": "PASS", "git_diff_check": "PASS", "Ruff": "NOT_RUN unavailable in qualified runtime"},
+  "not_run": ["same-LU bounded correction fixture", "three MUMPS lifecycle admission/cleanup fixtures", "full repository pytest", "MPI4", "CI", "new PDE/q run"]
+}

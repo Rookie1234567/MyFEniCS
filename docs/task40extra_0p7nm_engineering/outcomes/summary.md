@@ -1,3 +1,17 @@
+# Task40extra Review V22 增量结果：原尺寸全局 MPC descriptor 已记录，模式扫描部分完成
+
+| 阶段 | 模型与方法 | 实测结果 | 资源/资格边界 |
+|---|---|---|---|
+| 原尺寸 Ny=8 MPC descriptor | `topological_trace_p6`，MPC finalized | 284,004 owned slave rows；storage/independent rows `20,181,348/19,897,344`；coefficient SHA `9312e5f0ad152e517ffc5b7050951fe33ea75f2066bd2e6e7a40639e70366411` | 全局 descriptor 身份，不表示本轮构建了完整全局算子或求解 |
+| 原尺寸 Ny=8 operator probe | p6 generated cell action；top/bottom 按 boundary class 扫描 | 18,968/32,060 modes；top 16,030/16,030，bottom 2,938/16,030 | `RESOURCE_CONTROLLED_STOP`；不是数值失败或 all-mode pass |
+| 独立 B/D packet | 每侧一个 hash-bound、degree-60、882-row packet | B/D 相对误差均约 `2.229e-12`，低于该 packet 的 `1e-10` 限值 | 仅代表 mode/cell/class；全模式 882-row 独立覆盖 PARTIAL |
+| production support 一致性 | 同一 kernel 的 top/bottom 锚点 | B、Dx、D-vector 均低于 `1e-10`；support mismatch=0 | shared-kernel 一致性，不是独立参考 |
+| 下一阶段 | global q / factor / KSP / 完整场 / R/T/A | q 0/8，均 NOT_RUN | `Σm_c`、`Σm_c²` UNKNOWN；cached reference 未完全接通；2 TB/48 h NOT_QUALIFIED |
+
+两侧 882-row 局部 witness 使用 identity MPC 且局部 expansion rows=0；这不表示 global MPC 缺失或为零。watchdog process-tree RSS 峰 3,242,729,472 B；专用 cgroup 峰 3,533,070,336/17,179,869,184 B，task swap=0，OOM-kill=0，PSS=null/disabled。run monotonic 3,991.941 s；含 UTC 正跳的保守 attempt 计时 4,383.978 s。worker native-owner cleanup UNKNOWN；外部 watchdog descendants-cleared=true。V22 CLI 仍有 legacy E2-only entry gap，详见 [V22 response](../response_v22.md) 与 [test summary](test_summary.md)。旧 V21 负结果保留。
+
+---
+
 # Task40extra Review V21 增量结果：真实端口面数已知，完整 per-facet support 仍未知
 
 V21 沿用同一 Task40 执行分支和固定窗口，只在现有 V20 保存几何、局部数组与 E2 事件上做有限实现和只读核算。几何面数是直接从 tagged facet 记录重算；生产 factory 通过 interior_locations 归属 carrier coupling_rows/projection_rows，并以 B/D 字典 key 并集形成 port 候选；生成端精确零筛选是另一条规则。本轮没有目标 global carrier/MPC，因此不把全量 manifest 当成每面都活跃。

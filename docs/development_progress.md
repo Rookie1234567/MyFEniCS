@@ -3570,3 +3570,8 @@ V26 本轮 Full3D p6/h7.5、coarse p4 场已经完成 126 步并通过残差/物
 F1同离散G1 M0 reference通过；F2 residual通过但checker因80/180模式合同错误exit4、official_result=false；其原始DtN R/T/A_volume=`0.07565188084569026/0.9062068016471507/0.018141266883419625`已保留并用于P3离线比较；F3/F5为authority-limited正式结果；E1是电尺寸增长诊断；E2原worker输出sample合同失败、v3只恢复保存场。P6局部块/RHS闭合和合成M=3904动作不构成高M物理或目标内存资格。P7仅为文档设计：原增广算子与`Ĥ_ℓ`同维端口嵌入、Galerkin `R=P^H`、保留物理`D`与`B^H`独立；层/终层/外层上限均为待现场资格化提案。
 
 不改变ordinary default，不实施Phase II，不作master merge。本阶段完整模型SHA、R/T/A、资源分量、负结果和 selective-merge manifest 见 [Task40 Review V2 response](task40extra_0p7nm_engineering/response_v3.md)、[campaign](task40extra_0p7nm_engineering/outcomes/review_v2_campaign.md)、[summary](task40extra_0p7nm_engineering/outcomes/summary.md) 与 [run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。执行分支上的文档证据待审；没有master merge。
+
+
+## Task40extra Review V22：原尺寸端口作用前缀，窗口受控收口
+
+2026-10-10，同一 `task40extra_0p7nm_engineering` 分支，50×25×140 nm、λ0.7 nm、30,464 cells、p6空间20,181,348 storage rows／19,897,344 independent rows，真实全局MPC 284,004 slave rows。生成式端口边生成边作用，避免先保存完整carrier；完成18,968/32,060模式（top16,030，bottom2,938），两侧首模式生产B/D路径一致性通过，独立882-row B/D packet仅每侧一个。固定6h窗口协作停止，q CSR/factor/KSP/PDE/RTA均NOT_RUN；全模式/方向资格及原尺寸2TB/48h尚未闭合。树RSS峰3,242,729,472 B，cgroup峰3,533,070,336 B，task swap0；monotonic run3,991.941 s、保守时钟4,383.978 s分列。worker native cleanup UNKNOWN与外部descendants已清场分列，旧失败原样保留。证据：[Response V22](task40extra_0p7nm_engineering/response_v22.md)、[operator compact](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v22.json)、[主控核算](task40extra_0p7nm_engineering/outcomes/records/controller_readback_v22.json)。

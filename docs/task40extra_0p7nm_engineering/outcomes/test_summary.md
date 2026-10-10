@@ -1,3 +1,15 @@
+# Task40extra Review V22 定向测试与文档收口
+
+| 检查 | source / 命令 | 结果 | 证据边界 |
+|---|---|---|---|
+| V22 production gate/checkpoint tests | frozen source `ae3f1a4bc557170dc9af51669139683a8ab032a5`；3 个 V22 定向测试（详见 [receipt](records/targeted_tests_v22.json)） | 3 passed in 0.78 s | checkpoint fail-fast、MPC/component filter 与终端重算；没有运行 PDE |
+| py_compile / diff check | 同一 frozen source | PASS | 软件静态检查；Ruff 因 qualified runtime 无模块而 NOT_RUN |
+| LU≤3 same-factor correction / MUMPS lifecycle fixtures | 本轮受固定窗口截止限制 | NOT_RUN | 不把未完成 fixture 记作通过 |
+| V21 read-only CLI 对 V22 raw root | `task40_v21_readonly_recheck.py` main 仍要求旧 E2 的 `task40_v10_p6_candidate_summary.json` | FileNotFoundError；V22 receipt 由主控转用公共 `validate_stage_receipt_semantics` API 核验 | CLI 接线问题，不是 worker/PDE 失败；API 结果以主控回执为准 |
+| full repository pytest / MPI4 / CI / new PDE | 本轮 | NOT_RUN | 不声称全仓、MPI4、CI 或数值求解通过 |
+
+---
+
 # Task40extra Review V21 定向测试与只读复核
 
 | 检查 | source / 命令 / 回执 | 结果 | 证据边界 |
