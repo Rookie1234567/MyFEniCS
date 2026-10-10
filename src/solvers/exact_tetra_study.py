@@ -62,7 +62,8 @@ def preflight(folder,journal):
     cells=tetra_interiors(s);prepared=prepared_provider(s,folder,journal);A,rhs=full_objects(s,prepared)
     if A.shape!=(1944573,1944573) or len(np.concatenate(cells))!=767280:raise ValueError('actual full/retained dimensions')
     # Exactly two real cells, selected geometrically before inspecting errors.
-    ids=sorted(range(len(cells)),key=lambda c:tuple(s['geometry']['cell_centers'][c]))
+    centers=s['geometry']['cell_centers']
+    ids=sorted(range(len(cells)),key=lambda c:tuple(centers[c]))
     selected=[ids[0],ids[-1]];errors=[];records=[]
     with journal.measured('two_actual_tetra_local_elimination_pairs'):
         AT=A.T.tocsr()
