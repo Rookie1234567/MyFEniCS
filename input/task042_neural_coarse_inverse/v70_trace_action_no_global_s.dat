@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v70]
+stage = "ACTION"
+run_id = "task042_v70_trace_action_no_global_s"

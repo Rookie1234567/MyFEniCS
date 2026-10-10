@@ -62,7 +62,7 @@ def release_prepared_body(prepared):
             prepared.pop(name,None)
 
 
-def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,action_factory=None,system_adapter=None):
+def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,action_factory=None,system_adapter=None,retained_provider=None):
     scope=scope_module
     budget=scope.memory_budget(role) if hasattr(scope,"memory_budget") else scope.plan_record()["memory_budget"]
     from petsc4py import PETSc
@@ -96,9 +96,13 @@ def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,
             new_numeric_factors=0,new_complete_solves=0,post_only=True,timings=journal.timings,postprocessing_source=state,
             original_producer=previous or resume)
     scope.require_stage(role)
-    s=core.make_setup(scope.case_spec(role),scope.physical_for(role),journal);cap=core.assembly_capacity(s,journal)
+    s=core.make_setup(scope.case_spec(role),scope.physical_for(role),journal)
+    retained_input=retained_provider(s,folder,journal) if retained_provider is not None else None
+    cap=retained_input['capacity'] if retained_input is not None else core.assembly_capacity(s,journal)
     if not cap['admitted']:return dict(status='CAPACITY_BLOCKED',capacity=cap,role=role)
-    if prepared_provider is None:
+    if retained_input is not None:
+        prepared=None;b=retained_input['boundary'];oracle=retained_input['oracle']
+    elif prepared_provider is None:
         b=core.boundary(s,47,journal,folder);oracle=core.boundary(s,63,journal,folder)
         prepared=None
     else:
@@ -108,14 +112,26 @@ def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,
     inc=relative(b['incident']-oracle['incident'],oracle['incident'])
     write_json(folder/'boundary_pair.json',dict(pair=pair,incident=inc))
     if not pair['pass'] or inc>1e-11:raise ValueError('complete fresh tetra q47/q63 boundary not qualified')
-    if prepared_provider is None:K,form=core.production_body(s,journal)
-    C,D,H=core.boundary_matrices(s,b);n=K.shape[0]
-    A=sparse.bmat([[K,C],[-D,sparse.diags(H)]],format='csr');rhs=core.rhs_vector(s,b)
-    journal.owners('production_full_sparse_and_boundary',dict(K=K,C=C,D=D,A=A))
+    if retained_input is not None:
+        # This branch precedes both full-K assembly and full augmented bmat.
+        recovery=retained_input['recovery'];A=recovery.matrix
+        full_rhs=retained_input['full_rhs'];rhs=retained_input['rhs']
+        form=retained_input['form'];H=recovery.H;n=s['P'].shape[1]
+        journal.owners('assembly_time_retained_only',dict(S=A))
+    else:
+        if prepared_provider is None:K,form=core.production_body(s,journal)
+        C,D,H=core.boundary_matrices(s,b);n=K.shape[0]
+        A=sparse.bmat([[K,C],[-D,sparse.diags(H)]],format='csr');rhs=core.rhs_vector(s,b)
+        journal.owners('production_full_sparse_and_boundary',dict(K=K,C=C,D=D,A=A))
     # Two nonzero complex vectors certify all interior/edge/face and all ports.
     rng=np.random.default_rng(6207);columns=[];errors=[]
     independent=action_factory(s,oracle) if action_factory is not None else None
-    if prepared is not None and 'reuse_original_pairs' in prepared:
+    if retained_input is not None:
+        q=retained_input['qualification']
+        if not q['pass_gate']:raise ValueError('assembly-time retained original qualification')
+        identity=q['arrays']
+        write_json(folder/'original_operator_pairs.json',dict(q,reused=True))
+    elif prepared is not None and 'reuse_original_pairs' in prepared:
         # Explicit opt-in provider has checked the original bytes, exact body
         # identity and unchanged numerical closure. Scope/log changes do not
         # demand another pair of costly full-space experiments.
@@ -140,8 +156,8 @@ def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,
         if prepared is not None:
             from .tetra_body_checkpoint import qualification_receipt
             prepared['qualification']=qualification_receipt(prepared['checkpoint'],errors,identity,state,folder/'body_original_action_qualification.json')
-    full_rhs=rhs
-    recovery=None
+    if retained_input is None:
+        full_rhs=rhs;recovery=None
     if system_adapter is not None:
         recovery=system_adapter(s,A,rhs,folder,journal,state,b,oracle)
         A=recovery.matrix;rhs=recovery.condense_rhs(full_rhs)
@@ -150,6 +166,7 @@ def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,
         journal.event('full_operator_and_prepared_owners_released_before_condensed_factor',
                       full_rows=len(full_rhs),retained_rows=A.shape[0])
     numerical_n=A.shape[0]-len(H)
+    returned_nnz=A.nnz;returned_rows=A.shape[0]
     phases=[_mode_boundary_phase(m,s['cfg']) for m in b['modes']];left,right=port_coordinate_scales(numerical_n,H,phases)
     scaled=(sparse.diags(left)@A@sparse.diags(right)).tocsr();matrix=petsc_matrix(scaled)
     factor=None
@@ -177,6 +194,12 @@ def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,
             retained_receipt=save_arrays(folder/'retained_returned.npz',trace_port=x,rhs=rhs,residual=snapshot_residual)
             write_json(folder/'retained_audit_pending.json',dict(status='RECOVERY_PENDING',arrays=retained_receipt,
                 recovery_checkpoint=recovery.receipt,role=role,source=state))
+            if retained_input is not None:
+                # Returned coefficients are durable. Release opaque numeric
+                # and all global Schur/scaling owners before full recovery.
+                factor.destroy();factor=None;matrix.destroy();matrix=None
+                del A,scaled;recovery.release_matrix();gc.collect()
+                journal.event('assembly_time_global_factor_S_released_before_full_recovery')
             with journal.measured('exact_original_all_internal_recovery'):
                 x=recovery.recover(x,full_rhs)
             snapshot_residual=recovery.lift_residual(snapshot_residual)
@@ -186,14 +209,17 @@ def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,
             kappa=s['kappa'],masters=s['masters'],slaves=s['floquet'].mpc.slaves,P_data=s['P'].data,P_indices=s['P'].indices,P_indptr=s['P'].indptr,
             **s['geometry'])
         pending=dict(status='AUDIT_PENDING',role=role,arrays=arrays,source=state,spec=s['spec'],physical=s['physical'],form=form,
-            mode_sha256=b['digest'],boundary_arrays={'q47':b['arrays'],'q63':oracle['arrays']},nnz=A.nnz,capacity=cap,
+            mode_sha256=b['digest'],boundary_arrays={'q47':b['arrays'],'q63':oracle['arrays']},nnz=returned_nnz,capacity=cap,
             production_true=reduced_true,new_numeric_factors=1,new_complete_solves=1)
         if recovery is not None:
             pending.update(exact_condensation=True,condensed_checkpoint=recovery.receipt,
-                condensed_true=reduced_true,full_rows=len(full_rhs),retained_rows=A.shape[0],
+                condensed_true=reduced_true,full_rows=len(full_rhs),retained_rows=returned_rows,
                 residual_snapshot_kind='exact algebraic lift of retained residual; original measured independently below',
                 condensed_service_calls=recovery.calls,retained_returned=retained_receipt)
             pending['internal_recovery_identity']=recovery.last_identity
+        if retained_input is not None:
+            pending.update(assembly_time_tetra=True,local_packet=recovery.receipt,retained_checkpoint=recovery.matrix_receipt,
+                producer_counters=retained_input['producer_counters'],prepared_start=True)
         if prepared is not None:pending.update(body_checkpoint=prepared['checkpoint'],body_qualification=prepared['qualification'],prepared_start=True)
         write_json(folder/'returned_audit_pending.json',pending)
         aud,res,orrhs=(core.audit(s,oracle,x,full_rhs,journal) if independent is None else independent.audit(x,full_rhs,journal))
@@ -202,9 +228,11 @@ def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,
         write_json(folder/'returned_audit_pending.json',pending)
     finally:
         if factor is not None:factor.destroy()
-        matrix.destroy()
+        if matrix is not None:matrix.destroy()
     release_prepared_body(prepared)
-    del A,scaled
+    if retained_input is None:del A,scaled
+    if retained_input is not None:
+        recovery.release_cache();retained_input.clear()
     if recovery is None:del K,C,D
     else:del recovery
     gc.collect();journal.event('global_body_augmented_and_factor_released')

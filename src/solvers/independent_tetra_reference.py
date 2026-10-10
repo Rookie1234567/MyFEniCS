@@ -236,10 +236,10 @@ def boundary_matrices(s,b):
     return sparse.csr_matrix((vv,(rr,cc)),shape=(n,m)),sparse.csr_matrix((dv,(dr,dc)),shape=(m,n)),np.array([e.normalization_h for e in b['carrier'].entries])
 
 
-def production_body(s,journal):
+def body_form(s):
+    """Construct the unchanged complete phase form without assembling K."""
     import ufl
     from dolfinx import fem
-    import dolfinx.fem.petsc
     from petsc4py import PETSc
     V=s['V'];cfg=s['cfg'];mesh=s['mesh']
     dg=fem.functionspace(mesh,('DG',0));eps=fem.Function(dg)
@@ -250,6 +250,13 @@ def production_body(s,journal):
     q=2*cfg.nedelec_degree+3
     if q<2*V.element.basix_element.embedded_superdegree:raise ValueError('tet body degree does not cover actual superdegree')
     form=(ufl.inner(ck(u),ck(v))/cfg.mu_r-cfg.k0**2*eps*ufl.inner(u,v))*ufl.dx(metadata={'quadrature_degree':q})
+    return form,eps,q
+
+
+def production_body(s,journal):
+    from dolfinx import fem
+    import dolfinx.fem.petsc
+    V=s['V'];form,eps,q=body_form(s)
     with journal.measured('standard_UFL_FFCx_full_uncondensed_body'):
         with journal.measured('body_JIT_form'):
             a=fem.form(form,jit_options={'cache_dir':__import__('os').environ['FFCX_CACHE_DIR']})

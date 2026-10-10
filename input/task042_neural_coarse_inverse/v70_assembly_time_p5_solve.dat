@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v70]
+stage = "SOLVE"
+run_id = "task042_v70_assembly_time_p5_solve"
