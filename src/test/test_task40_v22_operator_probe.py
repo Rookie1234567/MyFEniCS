@@ -3,6 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 
 from src.solvers.task40_v22_operator_probe import (
     _RollingDigest,
@@ -323,7 +324,7 @@ def test_v23_checkpoint_round_trip_restores_exact_prefix_state(tmp_path, monkeyp
         "mode_manifest_sha256": "4" * 64,
         "ordered_mode_key_sha256": "5" * 64,
     }
-    candidate = np.array([10, 12, 15], dtype=np.int64)
+    candidate = np.array([10, 12, 15], dtype=np.int32)
     window_sha = TASK40_V23_CAMPAIGN_SHA256
     checkpoint_directory = _v23_checkpoint_directory(
         tmp_path,
@@ -432,3 +433,19 @@ def test_v23_checkpoint_round_trip_restores_exact_prefix_state(tmp_path, monkeyp
     assert restored["rng_state"] == rng_state
     assert restored["mode_sweep_process_cpu_seconds"] == 11.0
     assert restored["mode_timing_by_side"]["top"]["completed_modes"] == 1
+
+    # The checkpoint binds the exact native PETSc index dtype as well as row values.
+    # An int64 cast preserves values/order but must not masquerade as the same identity.
+    assert np.array_equal(candidate, candidate.astype(np.int64))
+    with pytest.raises(ValueError, match="compact_candidate_rows_sha256"):
+        _load_v23_action_checkpoint(
+            checkpoint_directory,
+            preflight=preflight,
+            mode_inventory=mode_inventory,
+            campaign_window_sha256=window_sha,
+            candidate_rows=candidate.astype(np.int64),
+            modes=modes,
+            h_values=h_values,
+            side_cell_counts={"bottom": 2, "top": 2},
+            expected_field_sha256="6" * 64,
+        )

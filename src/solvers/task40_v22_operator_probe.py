@@ -5072,7 +5072,7 @@ def _run_probe(
                 preflight=old_preflight,
                 mode_inventory=mode_inventory,
                 campaign_window_sha256=TASK40_V23_CAMPAIGN_SHA256,
-                candidate_rows=np.asarray(native_rule.candidate_rows, dtype=np.int64),
+                candidate_rows=native_rule.candidate_rows,
                 modes=modes,
                 h_values=h_values,
                 side_cell_counts={
