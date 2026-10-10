@@ -151,6 +151,32 @@ def test_structure_schema_isolation_and_parent_binding():
         parent(bad, "fttnn", False)
 
 
+def test_v39_admission_never_spends_expired_v30_observation_pool(monkeypatch):
+    from src.io.neural_wave_campaign import ROOT
+    from src.runners import block_wave_admission, neural_wave_dependencies
+
+    calls = []
+    expected = {"cpu": 17, "fresh_sample": True}
+
+    def approved(directory, hard, *, scope=None, prefix="admission"):
+        calls.append((directory, hard, scope, prefix))
+        return expected
+
+    def expired_pool(*_):
+        pytest.fail("V39 must not consult the exhausted V30 observation pool")
+
+    monkeypatch.setattr(block_wave_admission, "fresh_admission", approved)
+    monkeypatch.setattr(neural_wave_dependencies, "resource_observation_cost", expired_pool)
+    directory = ROOT / "tmp/task42extra/v39/durable/checks_attempt2"
+    result = neural_wave_dependencies.fresh_admission(
+        directory, 16 * 2**30, scope={17, 18}, prefix="outer", reserve_s=64
+    )
+    assert result is expected
+    assert calls == [(directory, 16 * 2**30, {17, 18}, "outer")]
+    assert block_wave_admission.pool(directory).parent.name == "v39"
+    assert block_wave_admission.wait_limit(directory) == 900
+
+
 def test_inherited_full_Adam_to_fresh_LBFGS_budget_and_atomic_state(tmp_path):
     from src.solvers.ftt_optimization import make_metric, run_training
     from src.solvers.optimization_checkpoint import load_checkpoint
