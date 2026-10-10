@@ -1,12 +1,12 @@
 # Task40extra Review V21 增量结果：真实端口面数已知，完整 per-facet support 仍未知
 
-V21 沿用同一 Task40 执行分支和固定窗口，只在现有 V20 保存几何、局部数组与 E2 事件上做有限实现和只读核算。几何面数是直接从 tagged facet 记录重算；模式—单元关联需要 production carrier 按精确 `Bi/Di` support 建立，本轮没有分配目标 global carrier，因此不把全量 manifest 当成每面都活跃。
+V21 沿用同一 Task40 执行分支和固定窗口，只在现有 V20 保存几何、局部数组与 E2 事件上做有限实现和只读核算。几何面数是直接从 tagged facet 记录重算；生产 factory 通过 interior_locations 归属 carrier coupling_rows/projection_rows，并以 B/D 字典 key 并集形成 port 候选；生成端精确零筛选是另一条规则。本轮没有目标 global carrier/MPC，因此不把全量 manifest 当成每面都活跃。
 
 | V21 项 | 实际证据 | 状态与边界 |
 |---|---|---|
-| Ny=8 z 端口库存 | top/bottom 每侧 2,176 facets，共 4,352；原尺寸 30,464 cells，target/filled-reference 各 60 类、共享 class ID 60 | 几何库存证据；boundary facet 到所有 cell class 的映射未读 HDF5，记 `UNKNOWN` |
+| Ny=8 z 端口库存 | top/bottom 每侧 2,176 facets 和互异相邻 cells，共4,352条实际 facet→cell→class 映射；bottom/top 分别出现28/26类，合计54/60；原尺寸30,464 cells | saved HDF5 mesh-only readback已完成facet到cell class对齐；carrier mode-support仍UNKNOWN，不把几何分类当作算子覆盖 |
 | 模式表和实际 action witness | 32,060 ordered modes，top/bottom 各 16,030；本轮每侧仅一个实际 key，共 2/32,060；每个局部 block 882 rows，450 interior/432 trace | 非全侧扫描；cell/facet/class ID 未从 witness 绑定，均为 `UNKNOWN`；q30 独立 full-row B/D 对照 `NOT_RUN` |
-| per-cell active modes `m_c` | 实现按精确非零 Bi/Di interior support 建立关联，不设浮点门限 | 全局 carrier/MPC未建立，support 直方图、`Σm_c`、`Σm_c²` 均 `UNKNOWN` |
+| per-cell active modes `m_c` | factory的carrier coupling_rows/projection_rows按interior_locations归属，port候选来自B/D字典key并集；生成端精确零筛选单独判定 | 全局 carrier/MPC未建立，support 直方图、`Σm_c`、`Σm_c²` 均 `UNKNOWN` |
 | all modes × all boundary cells 条件情景 | 若每个 4,352 port-adjacent cells 都关联本侧全部 16,030 modes，四类 logical payload 合计 21,328,367,943,680 B | 条件推导，不是实际 support、RAM allocation 或峰值；见 [target port inventory V21](records/target_port_inventory_v21.json) |
 | None 零块 | 每侧局部 old explicit-zero→None 逻辑减少 13,840 B；两侧 action/RHS/recovery/full B/D 数值差为 0 | 过程级 HWM 顺序累计，RSS/cgroup 节省 `NO_DETECTABLE_NOT_ATTRIBUTABLE`；不宣称实际 RAM 降低 |
 | generated bounded action | 本地 `P6CellCondensedAction` 回调与两侧单模式 saved target witness | production carrier builder/Task40 worker尚未接入；为 `PARTIAL`，不代表 global action 或 PDE |
@@ -14,13 +14,13 @@ V21 沿用同一 Task40 执行分支和固定窗口，只在现有 V20 保存几
 | V20 stage footer semantics | worker success/resource/error 路径新增实际 attempted/completed receipt；checker 核对授权、q/hash 和 cleanup | heavy stage cleanup 缺 owner/descendant/temporary-object证据时为 `UNKNOWN` 并拒绝 PASS；不改变数学或资源 gate |
 | 最终原尺寸资格 | global target MPC/operator、all-q symbolic/numeric、完整 A6 和官方 R/T/A | `NOT_RUN / NOT_QUALIFIED`；2 TB、48 h 与 Ny=8 精度不具备资格 |
 
-单模式 known-state forward 仍保留 top 负结果：`1.488391772882517e-11 > 1e-11`；bottom 为 `9.173378724262687e-12`。新 generated B/D 与保存 V20 candidate vectors 的比较不是独立 q30 full-row B/D checker；边界 witness 的 global cell/facet/class 连接也未建立。HDF5 文件 SHA 已记录，但 dataset 未读。
+单模式 known-state forward 仍保留 top 负结果：`1.488391772882517e-11 > 1e-11`；bottom 为 `9.173378724262687e-12`。新 generated B/D 与保存 V20 candidate vectors 的比较不是独立 q30 full-row B/D checker；边界 witness 的 global cell/facet/class 连接也未建立。HDF5 mesh-only readback 已完成；4,352 条 facet→adjacent-cell→class 原始映射与规范 digest 见 inventory 和 run index。该读回不建立 carrier，所以真实 mode support 仍 UNKNOWN。几何 mapping helper 定向测试5 passed in 0.08 s；文档合同收口复测29 passed、134 subtests passed in 0.23 s。
 
-执行者最终定向回归为 15 passed（0.16 s）；主控收口后在最终 solver source 上联合复跑 p6/streamed 两个测试文件为 28 passed（129.61 s）；此前兼容性小组为 3 passed、2 deselected（0.26 s）。E2 partial recheck 是 raw event readback，不是 FE/PDE；完整命令和身份见 [V21 test summary](test_summary.md) 与 [targeted test receipt](records/targeted_tests_v21.json)。执行者在父 HEAD `75273597809d2876f091a222b678f3af6756725c` 上留下待主控审查的未提交改动；主控随后集中提交并推送到同一分支。V21 未启动 E2、原尺寸 PDE 或其他 heavy worker。旧 V20 总账和所有历史失败记录保留在下文。
+执行者最终定向回归为 15 passed（0.16 s）；主控收口后在最终 solver source 上联合复跑 p6/streamed 两个测试文件为 28 passed（129.61 s）；此前兼容性小组为 3 passed、2 deselected（0.26 s）。E2 partial recheck 是 raw event readback，不是 FE/PDE；完整命令和身份见 [V21 test summary](test_summary.md) 与 [targeted test receipt](records/targeted_tests_v21.json)。边界映射代码由主控冻结于 ba897281f3b8ed227f73e645dc60b7210f46db73；执行者只更新文档与证据回执，未 commit/push；由主控统一收口。V21 未启动 E2、原尺寸 PDE 或其他 heavy worker。旧 V20 总账和所有历史失败记录保留在下文。
 
 ## 固定窗口主控只读 sample
 
-同一 V19 窗口未刷新：T0 2026-10-09T01:45:00.727771902Z，deadline 2026-10-10T01:45:00.727771902Z，600 s closeout reserve；window SHA-256 b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0。主控 qualified read_campaign_state sample 为 2026-10-10T00:38:20.741056830Z：conservative-realtime interval 15,480.292692466 s，projected cumulative 82,400.02111048152 s，numerical remaining 3,399.9788895184756 s。持久账本 SHA-256 7ea9e880520accf2fd87d8ee63b894c7e3e1ec366308dd0c8bb4492abd705a11，83,032 行/seq 83031，尾部已写 cumulative 66,919.72841801553 s。该投影是只读 as-of 值，无新扣账、无 ledger/window 修改；未结算值保持 unknown。详见 [Response V21](../response_v21.md) 与 [V21 run index](records/run_index.json)。
+同一 V19 窗口未刷新：T0 2026-10-09T01:45:00.727771902Z，deadline 2026-10-10T01:45:00.727771902Z，600 s closeout reserve；window SHA-256 b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0。此前主控 qualified read_campaign_state sample 为2026-10-10T00:38:20.741056830Z（projected cumulative 82,400.02111048152 s，remaining 3,399.9788895184756 s）；最新只读sample为2026-10-10T01:17:38.378013Z：interval 17,837.929648505 s、UTC-minus-monotonic discrepancy 1,784.9477480050991 s、projected cumulative 84,757.65806652053 s、扣除600 s reserve后numerical remaining 1,042.3419334794744 s。未写新ledger行，window/ledger未修改。持久账本 SHA-256 7ea9e880520accf2fd87d8ee63b894c7e3e1ec366308dd0c8bb4492abd705a11，83,032 行/seq 83031，尾部已写 cumulative 66,919.72841801553 s。该投影是只读 as-of 值，无新扣账、无 ledger/window 修改；未结算值保持 unknown。详见 [Response V21](../response_v21.md) 与 [V21 run index](records/run_index.json)。
 
 
 ---

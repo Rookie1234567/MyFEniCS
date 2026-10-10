@@ -5334,12 +5334,12 @@
     "review": "docs/task40extra_0p7nm_engineering/review_report_v21.md",
     "response": "docs/task40extra_0p7nm_engineering/response_v21.md",
     "branch": "task40extra_0p7nm_engineering",
-    "worktree_head": "75273597809d2876f091a222b678f3af6756725c",
-    "working_tree_state": "PRE_CONTROLLER_COMMIT_MODIFIED_UNCOMMITTED_AT_EVIDENCE_CAPTURE; controller commit/push completed afterward",
+    "worktree_head": "ba897281f3b8ed227f73e645dc60b7210f46db73",
+    "working_tree_state": "source frozen at ba897281f3b8ed227f73e645dc60b7210f46db73; executor docs/evidence modified uncommitted; no executor commit or push",
     "target_port_inventory": {
       "path": "docs/task40extra_0p7nm_engineering/outcomes/records/target_port_inventory_v21.json",
-      "sha256": "2fabb29f30fa79267aa0e2235bb0ca5f668f9048906e475f25995e8af0b1ec2c",
-      "status": "PARTIAL_ACTUAL_INVENTORY_CONDITIONAL_FULL_SUPPORT_BYTES",
+      "sha256": "968436b51955a27af82068a28c7996f76de7289bfc8033684d8bf4cb808d5f3e",
+      "status": "GEOMETRY_CLASS_MAPPING_COMPLETE_SUPPORT_UNKNOWN",
       "geometry_inventory_sha256": "491dac32b7e3ba927ce44444f834ff1e27406c3dfe95a9438fac8cae45adce34",
       "mesh_hdf5_sha256": "0bcc83dea1fb912a88612732f088467b7cb2fd2e152e19370d98342709be1dba",
       "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
@@ -5347,7 +5347,18 @@
       "ordered_mode_count": 32060,
       "actual_global_sum_m_c": "UNKNOWN",
       "actual_global_sum_m_c_squared": "UNKNOWN",
-      "independent_q30_full_row_B_D": "NOT_RUN"
+      "independent_q30_full_row_B_D": "NOT_RUN",
+      "boundary_facet_class_count_by_side": {
+        "bottom": 28,
+        "top": 26
+      },
+      "boundary_class_union": 54,
+      "raw_mapping_rows": 4352,
+      "raw_mapping_artifact_sha256": "e5a38b003e3d061b04934a3158346a21448b6b2c6f884749c0182380676c3320",
+      "canonical_mapping_digest_sha256": "164e1bf13f08beafc933528ace76315416e4be37bf10b97a03629cca53ab74b6",
+      "source_head": "ba897281f3b8ed227f73e645dc60b7210f46db73",
+      "command_artifact_sha256": "92528b83494272441d89a34c8f07a4a5466730acd2df8a4546209ed564765295",
+      "command_receipt_sha256": "4d7c9b59e2b374b0e37a0acae2135077924ff2f3b4af8d09c21b01826e6bca6d"
     },
     "e2_readonly_recheck": {
       "path": "docs/task40extra_0p7nm_engineering/outcomes/records/e2_partial_recheck_v21.json",
@@ -5364,7 +5375,7 @@
     },
     "targeted_test_receipt": {
       "path": "docs/task40extra_0p7nm_engineering/outcomes/records/targeted_tests_v21.json",
-      "sha256": "a1d2863519b29cd0b20a5de7a2a3f0c92a10a55d4aacb93fd04675f65a76e6fe",
+      "sha256": "1441335942d878623919efc61cbc3fc3f2a25b4d56c4fdfab361c3acf39173b8",
       "result": {
         "elapsed_seconds": 0.16,
         "failed": 0,
@@ -5485,6 +5496,99 @@
           "MPI_size": 1
         },
         "scope": "read-only E2 admission/checker and partial-receipt fixtures; no worker/PDE"
+      },
+      "geometry_mapping_closeout": {
+        "source_head": "ba897281f3b8ed227f73e645dc60b7210f46db73",
+        "raw_artifact_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/v21_boundary_facet_class_mapping.json",
+        "raw_artifact_sha256": "e5a38b003e3d061b04934a3158346a21448b6b2c6f884749c0182380676c3320",
+        "canonical_mapping_digest_sha256": "164e1bf13f08beafc933528ace76315416e4be37bf10b97a03629cca53ab74b6",
+        "readback_result": {
+          "rows": 4352,
+          "bottom_facets": 2176,
+          "top_facets": 2176,
+          "bottom_unique_adjacent_cells": 2176,
+          "top_unique_adjacent_cells": 2176,
+          "bottom_classes": 28,
+          "top_classes": 26,
+          "class_catalog": 60,
+          "class_union": 54
+        },
+        "command_record": {
+          "command_scope": "qualified WSL activation followed by the exact saved-mesh readback Python command",
+          "command_item_id": "exec-e6284f8a-e44c-4b28-9597-f41669765859",
+          "command_artifact_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/v21_boundary_mapping_command.txt",
+          "command_artifact_sha256": "92528b83494272441d89a34c8f07a4a5466730acd2df8a4546209ed564765295",
+          "command_artifact_characters": 14745,
+          "command_receipt_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/v21_boundary_mapping_command_receipt.json",
+          "command_receipt_sha256": "4d7c9b59e2b374b0e37a0acae2135077924ff2f3b4af8d09c21b01826e6bca6d",
+          "command_body_status": "RECOVERED_FROM_EXISTING_TOOL_HISTORY_AND_SAVED_BY_CONTROLLER; no rerun",
+          "source_head": "ba897281f3b8ed227f73e645dc60b7210f46db73",
+          "backend_command_execution_duration_ms": 1047,
+          "duration_scope": "backend duration for the entire command execution; does not isolate pure readback time or full preparation wall time"
+        },
+        "input_identity": {
+          "staged_input_sha256": "e5e0986920a71d8e9d5224c6c7be8e9060ba5791391db2037a9128741061bf38",
+          "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+          "first_canonical_input_attempt": "identity guard rejected before mesh read/output; not a numerical failure"
+        },
+        "runtime": {
+          "qualified_activation_marker": 1,
+          "python": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+          "PETSc_scalar_type": "complex128",
+          "PETSc_int_type": "int32",
+          "MPI_size": 1,
+          "DOLFINx": "0.10.0",
+          "Basix": "0.10.0"
+        },
+        "costs": {
+          "reader_pid": "UNKNOWN_NOT_CAPTURED",
+          "process_tree_rss_peak_bytes": "UNKNOWN",
+          "cgroup_memory_peak_bytes": "UNKNOWN",
+          "cpu_time": "UNKNOWN",
+          "swap": "UNKNOWN",
+          "backend_command_execution_duration_ms": 1047,
+          "pure_readback_elapsed_seconds": "UNKNOWN",
+          "full_preparation_wall_elapsed_seconds": "UNKNOWN",
+          "prior_reported_readback_wall_seconds": {
+            "value": 5.8,
+            "status": "UNVERIFIED_PRIOR_CLAIM_NOT_A_MEASUREMENT"
+          },
+          "observer_pid": 2179667,
+          "observer_pid_source": "controller read_campaign_state API process, not geometry reader or process-name scan"
+        },
+        "mapper_unit_test": {
+          "command": "python -m pytest -q src/test/test_task40_v21_boundary_inventory.py",
+          "result": {
+            "passed": 5,
+            "failed": 0,
+            "skipped": 0,
+            "elapsed_seconds": 0.08
+          },
+          "scope": "helper unit fixtures; does not read HDF5 or qualify global mode support"
+        },
+        "documentation_contracts_after_edits": {
+          "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py",
+          "result": {
+            "passed": 29,
+            "failed": 0,
+            "skipped": 0,
+            "subtests_passed": 134,
+            "elapsed_seconds": 0.23
+          },
+          "scope": "documentation/model-registry/retrospective/markdown contracts; no FE/PDE"
+        },
+        "campaign_snapshot": {
+          "source": "controller read_campaign_state API",
+          "sample_utc": "2026-10-10T01:17:38.378013Z",
+          "window_sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0",
+          "ledger_sha256": "7ea9e880520accf2fd87d8ee63b894c7e3e1ec366308dd0c8bb4492abd705a11",
+          "projected_cumulative_seconds": 84757.65806652053,
+          "projected_numerical_remaining_after_reserve_seconds": 1042.3419334794744,
+          "ledger_or_window_modified": false,
+          "observer_pid": 2179667,
+          "observer_pid_source": "controller read_campaign_state API process; not geometry reader"
+        },
+        "no_FE_space_MPC_carrier_q_CSR_factor_worker_or_PDE_started": true
       }
     },
     "zero_block_pair": {
@@ -5505,7 +5609,9 @@
       "src/solvers/p6_cell_condensed_action.py": "77a7c61a862a9329e86bb67c2ed8d9d89ff7965a2a095e81f83d7d655eaae66e",
       "src/solvers/task40_w1_local_probe.py": "13d97a07e2d1e35a9ee5abd1b5604201766734410f738728142f88ad023936cd",
       "src/test/test_task39extra_v19_p6_cell_condensed_action.py": "dc596e523075d85f123ff4085caf60532aac33342f3604bcdb13e48859c7f244",
-      "src/test/test_task40_v21_readonly_recheck.py": "6e65a3098b6a6214e70e85d38bbd6a39dbaadd193c43f0d9c473de264af602c4"
+      "src/test/test_task40_v21_readonly_recheck.py": "6e65a3098b6a6214e70e85d38bbd6a39dbaadd193c43f0d9c473de264af602c4",
+      "src/geometry/task40_v21_boundary_inventory.py": "0b0d4ebe9d9238c449a6fc5cf1764bec8c563c2c7cb7fedfed4847938fc92905",
+      "src/test/test_task40_v21_boundary_inventory.py": "6f2c3cc190b22067b69e7984d4751e84befca348770447afe259b9c2bc281be7"
     },
     "full_repository_pytest": "NOT_RUN",
     "MPI4": "NOT_RUN",
@@ -5554,18 +5660,58 @@
         "result": "NO_MATCHING_PYTHON_PYTEST_DOLFINX_MPI_PROCESS",
         "method": "read-only ps command-name filter during V21 closeout",
         "full_descendant_cleanup_proof": "NOT_ESTABLISHED_BY_THIS_SCAN",
-        "historical_e2_cleanup": "UNKNOWN"
+        "historical_e2_cleanup": "UNKNOWN",
+        "pid_attribution": "PID 2179667 was reported by read_campaign_state API, not by this separate process-name scan"
+      },
+      "latest_readonly_sample": {
+        "source": "controller read_campaign_state API",
+        "sample_utc": "2026-10-10T01:17:38.378013Z",
+        "conservative_realtime_interval_seconds": 17837.929648505,
+        "utc_minus_monotonic_discrepancy_seconds": 1784.9477480050991,
+        "projected_cumulative_charged_seconds": 84757.65806652053,
+        "projected_numerical_remaining_seconds": 1042.3419334794744,
+        "closeout_reserve_seconds": 600,
+        "ledger_sha256": "7ea9e880520accf2fd87d8ee63b894c7e3e1ec366308dd0c8bb4492abd705a11",
+        "ledger_lines": 83032,
+        "ledger_sequence": 83031,
+        "persisted_tail_cumulative_seconds": 66919.72841801553,
+        "ledger_or_window_modified": false,
+        "new_charge_written": false,
+        "final_settlement": false,
+        "observer_pid": 2179667,
+        "observer_pid_source": "controller read_campaign_state API process; not geometry reader or process-name scan"
       }
     },
     "documentation_files_sha256": {
-      "docs/task40extra_0p7nm_engineering/response_v21.md": "49ef89a8db6b263d5875c4f57dc0cac3c6fe2ac540d7d80a7e3dced39dc06ca6",
-      "docs/task40extra_0p7nm_engineering/outcomes/summary.md": "374e71cbb26c72dd922aa91d24aef95529ad1964e3bed518b028285ccb017756",
-      "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md": "b4eaf55a1675909f56cdf89449c7b7bb3a05a281d26081f5e48c2859074e23b4",
-      "docs/task40extra_0p7nm_engineering/README.md": "017752d3caa88759a695530f283f62f369811dd555d3881faab41750043a99f1",
-      "docs/development_progress.md": "ff8b903b85835c374ccde9a7c63d832109c4d46a947d33077bac31b1058c29bd",
-      "docs/development_model_registry.md": "68fdaece5215869606ab669643cd3a7db505e440123d997e8f7b7eaf0196a0f6",
-      "docs/README.md": "ec3e22ee220ce613761029430e39cd2d628422813ccbbffd06a3e790898f2790",
-      "docs/task40extra_0p7nm_engineering/outcomes/records/targeted_tests_v21.json": "a1d2863519b29cd0b20a5de7a2a3f0c92a10a55d4aacb93fd04675f65a76e6fe"
+      "docs/task40extra_0p7nm_engineering/response_v21.md": "a49974e92f070c4e5b4bcf5e02b404e3273a2354b3de5902619515ead15d1d6a",
+      "docs/task40extra_0p7nm_engineering/outcomes/summary.md": "56646cdbbb85fe2c2207d5fe08d16e9e583b693ae7f0aa278a9278a26124cbc9",
+      "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md": "b82ea24cb29278a8eea0464d0958e57fdd01bb50126395dfe072c89b481b4a8c",
+      "docs/task40extra_0p7nm_engineering/README.md": "75b702a435274f3c2faa8eeabcff1212f3a4fd3d726e1a98e94c0db5fc35168a",
+      "docs/development_progress.md": "7036ff567fcddbd3255b3f4bc81294bcbd70381e263591a8b890ca9b1b679eef",
+      "docs/development_model_registry.md": "30fa65b7d50fd3034224d33f8cee954edbfbe13a77aee36d4dcc419323d3ca2b",
+      "docs/README.md": "782bc46bfad3076f576b991faf5dcf40cc8de7fdb91f0d05daa37f49026b57bd",
+      "docs/task40extra_0p7nm_engineering/outcomes/records/targeted_tests_v21.json": "1441335942d878623919efc61cbc3fc3f2a25b4d56c4fdfab361c3acf39173b8",
+      "docs/task40extra_0p7nm_engineering/outcomes/records/target_port_inventory_v21.json": "968436b51955a27af82068a28c7996f76de7289bfc8033684d8bf4cb808d5f3e"
+    },
+    "boundary_facet_class_mapping": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/v21_boundary_facet_class_mapping.json",
+      "sha256": "e5a38b003e3d061b04934a3158346a21448b6b2c6f884749c0182380676c3320",
+      "canonical_mapping_digest_sha256": "164e1bf13f08beafc933528ace76315416e4be37bf10b97a03629cca53ab74b6",
+      "rows": 4352,
+      "source_head": "ba897281f3b8ed227f73e645dc60b7210f46db73",
+      "ignored_artifact": true,
+      "command_artifact_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/v21_boundary_mapping_command.txt",
+      "command_artifact_sha256": "92528b83494272441d89a34c8f07a4a5466730acd2df8a4546209ed564765295",
+      "command_receipt_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/v21_boundary_mapping_command_receipt.json",
+      "command_receipt_sha256": "4d7c9b59e2b374b0e37a0acae2135077924ff2f3b4af8d09c21b01826e6bca6d",
+      "command_item_id": "exec-e6284f8a-e44c-4b28-9597-f41669765859",
+      "backend_command_execution_duration_ms": 1047,
+      "pure_readback_elapsed_seconds": "UNKNOWN",
+      "full_preparation_wall_elapsed_seconds": "UNKNOWN",
+      "prior_reported_readback_wall_seconds": {
+        "value": 5.8,
+        "status": "UNVERIFIED_PRIOR_CLAIM_NOT_A_MEASUREMENT"
+      }
     }
   }
 }

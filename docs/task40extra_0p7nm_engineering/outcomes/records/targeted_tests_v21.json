@@ -94,14 +94,16 @@
     "src/solvers/p6_cell_condensed_action.py": "77a7c61a862a9329e86bb67c2ed8d9d89ff7965a2a095e81f83d7d655eaae66e",
     "src/solvers/task40_w1_local_probe.py": "13d97a07e2d1e35a9ee5abd1b5604201766734410f738728142f88ad023936cd",
     "src/test/test_task39extra_v19_p6_cell_condensed_action.py": "dc596e523075d85f123ff4085caf60532aac33342f3604bcdb13e48859c7f244",
-    "src/test/test_task40_v21_readonly_recheck.py": "4a63c3c1784d3b4238c20f4ded0e01f2dcfb3edd51e8abe881d30def5b749484"
+    "src/test/test_task40_v21_readonly_recheck.py": "4a63c3c1784d3b4238c20f4ded0e01f2dcfb3edd51e8abe881d30def5b749484",
+    "src/geometry/task40_v21_boundary_inventory.py": "0b0d4ebe9d9238c449a6fc5cf1764bec8c563c2c7cb7fedfed4847938fc92905",
+    "src/test/test_task40_v21_boundary_inventory.py": "6f2c3cc190b22067b69e7984d4751e84befca348770447afe259b9c2bc281be7"
   },
   "status": "PASS",
   "tests": {
     "existing_pre_worker_authorization_stop_parameter_cases": 3,
     "new_readonly_recheck_and_outcome_fixtures": 12
   },
-  "working_tree_state": "modified_uncommitted_no_commit_no_push",
+  "working_tree_state": "source frozen at ba897281f3b8ed227f73e645dc60b7210f46db73; documentation/evidence modified uncommitted; executor did not commit or push",
   "main_review_final_combined_regression": {
     "command": "source scripts/activate_myfenics_wsl.sh; ABI preflight in same shell; python -m pytest -q src/test/test_task39extra_v19_p6_cell_condensed_action.py src/test/test_task39extra_v30_streamed_ports.py",
     "result": {
@@ -167,5 +169,98 @@
       "MPI_size": 1
     },
     "scope": "read-only E2 admission/checker and partial-receipt fixtures; no worker/PDE"
+  },
+  "geometry_mapping_closeout": {
+    "source_head": "ba897281f3b8ed227f73e645dc60b7210f46db73",
+    "raw_artifact_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/v21_boundary_facet_class_mapping.json",
+    "raw_artifact_sha256": "e5a38b003e3d061b04934a3158346a21448b6b2c6f884749c0182380676c3320",
+    "canonical_mapping_digest_sha256": "164e1bf13f08beafc933528ace76315416e4be37bf10b97a03629cca53ab74b6",
+    "readback_result": {
+      "rows": 4352,
+      "bottom_facets": 2176,
+      "top_facets": 2176,
+      "bottom_unique_adjacent_cells": 2176,
+      "top_unique_adjacent_cells": 2176,
+      "bottom_classes": 28,
+      "top_classes": 26,
+      "class_catalog": 60,
+      "class_union": 54
+    },
+    "command_record": {
+      "command_scope": "qualified WSL activation followed by the exact saved-mesh readback Python command",
+      "command_item_id": "exec-e6284f8a-e44c-4b28-9597-f41669765859",
+      "command_artifact_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/v21_boundary_mapping_command.txt",
+      "command_artifact_sha256": "92528b83494272441d89a34c8f07a4a5466730acd2df8a4546209ed564765295",
+      "command_artifact_characters": 14745,
+      "command_receipt_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/v21_boundary_mapping_command_receipt.json",
+      "command_receipt_sha256": "4d7c9b59e2b374b0e37a0acae2135077924ff2f3b4af8d09c21b01826e6bca6d",
+      "command_body_status": "RECOVERED_FROM_EXISTING_TOOL_HISTORY_AND_SAVED_BY_CONTROLLER; no rerun",
+      "source_head": "ba897281f3b8ed227f73e645dc60b7210f46db73",
+      "backend_command_execution_duration_ms": 1047,
+      "duration_scope": "backend duration for the entire command execution; does not isolate pure readback time or full preparation wall time"
+    },
+    "input_identity": {
+      "staged_input_sha256": "e5e0986920a71d8e9d5224c6c7be8e9060ba5791391db2037a9128741061bf38",
+      "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+      "first_canonical_input_attempt": "identity guard rejected before mesh read/output; not a numerical failure"
+    },
+    "runtime": {
+      "qualified_activation_marker": 1,
+      "python": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+      "PETSc_scalar_type": "complex128",
+      "PETSc_int_type": "int32",
+      "MPI_size": 1,
+      "DOLFINx": "0.10.0",
+      "Basix": "0.10.0"
+    },
+    "costs": {
+      "reader_pid": "UNKNOWN_NOT_CAPTURED",
+      "process_tree_rss_peak_bytes": "UNKNOWN",
+      "cgroup_memory_peak_bytes": "UNKNOWN",
+      "cpu_time": "UNKNOWN",
+      "swap": "UNKNOWN",
+      "backend_command_execution_duration_ms": 1047,
+      "pure_readback_elapsed_seconds": "UNKNOWN",
+      "full_preparation_wall_elapsed_seconds": "UNKNOWN",
+      "prior_reported_readback_wall_seconds": {
+        "value": 5.8,
+        "status": "UNVERIFIED_PRIOR_CLAIM_NOT_A_MEASUREMENT"
+      },
+      "observer_pid": 2179667,
+      "observer_pid_source": "controller read_campaign_state API process, not geometry reader or process-name scan"
+    },
+    "mapper_unit_test": {
+      "command": "python -m pytest -q src/test/test_task40_v21_boundary_inventory.py",
+      "result": {
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0,
+        "elapsed_seconds": 0.08
+      },
+      "scope": "helper unit fixtures; does not read HDF5 or qualify global mode support"
+    },
+    "documentation_contracts_after_edits": {
+      "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py",
+      "result": {
+        "passed": 29,
+        "failed": 0,
+        "skipped": 0,
+        "subtests_passed": 134,
+        "elapsed_seconds": 0.23
+      },
+      "scope": "documentation/model-registry/retrospective/markdown contracts; no FE/PDE"
+    },
+    "campaign_snapshot": {
+      "source": "controller read_campaign_state API",
+      "sample_utc": "2026-10-10T01:17:38.378013Z",
+      "window_sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0",
+      "ledger_sha256": "7ea9e880520accf2fd87d8ee63b894c7e3e1ec366308dd0c8bb4492abd705a11",
+      "projected_cumulative_seconds": 84757.65806652053,
+      "projected_numerical_remaining_after_reserve_seconds": 1042.3419334794744,
+      "ledger_or_window_modified": false,
+      "observer_pid": 2179667,
+      "observer_pid_source": "controller read_campaign_state API process; not geometry reader"
+    },
+    "no_FE_space_MPC_carrier_q_CSR_factor_worker_or_PDE_started": true
   }
 }

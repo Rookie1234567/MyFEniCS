@@ -1,7 +1,7 @@
 {
   "actual_boundary_faces": {
     "bottom_face_count": 2176,
-    "boundary_face_to_all_class_mapping": "UNKNOWN without reading the HDF5 cell/facet membership datasets",
+    "boundary_face_to_all_class_mapping": "READ_BACK_COMPLETE: exact saved-mesh facet-to-adjacent-cell-class rows are in geometry_mapping_readback.raw_artifact_path; this is geometric class association, not mode support",
     "facet_tags": {
       "bottom": "15",
       "top": "16"
@@ -9,9 +9,16 @@
     "source": "v20_geometry_inventory.periodic_face_inventory; tagged facet IDs paired by projected coordinates",
     "top_bottom_coordinate_pairing_pass": true,
     "top_face_count": 2176,
-    "total_z_port_face_count": 4352
+    "total_z_port_face_count": 4352,
+    "boundary_facet_class_count_by_side": {
+      "bottom": 28,
+      "top": 26
+    },
+    "boundary_class_union": 54,
+    "raw_facet_mapping_rows": 4352,
+    "mapping_artifact_sha256": "e5a38b003e3d061b04934a3158346a21448b6b2c6f884749c0182380676c3320"
   },
-  "evidence_class": "measured raw geometry and one-mode witnesses; full per-facet support unknown; all-mode storage numbers conditional",
+  "evidence_class": "measured saved-mesh geometry and facet-to-adjacent-cell-class mapping plus one-mode witnesses; full per-facet carrier support and all-mode storage remain unknown/conditional",
   "generated_at_utc": "2026-10-10",
   "geometry_run": {
     "actual_axes": [
@@ -770,19 +777,19 @@
     "run_manifest_sha256": "a5ed2a1a390f7f7bea05547faedfa81736c6f3778e65a6a3ad59a10ecae6be15",
     "shared_cell_class_count": 60,
     "source_sha": "4b5ed041b69f8f91e283ae1b251ba76e6070de95",
-    "target_adjacent_cell_class_membership_for_top_bottom": "UNKNOWN; inventory stores only two boundary-cell witnesses; class representative bounds do not map all class members",
+    "target_adjacent_cell_class_membership_for_top_bottom": "READ_BACK_COMPLETE for every saved top/bottom facet using exact cell class metric keys; 54 of the 60 catalog classes occur on z ports",
     "target_cell_class_count": 60,
     "target_only_cell_class_count": 0
   },
   "inspection_identity": {
-    "inspection": "qualified read-only JSON/NPZ/manifest/HDF5 file identity; no HDF5 dataset read; no FE/MPC/carrier/q assembly/PDE",
-    "repository_head": "75273597809d2876f091a222b678f3af6756725c"
+    "inspection": "qualified read-only DOLFINx mesh-only HDF5 topology/geometry readback, reconstructed cell/boundary tags and class membership; no new mesh, FE space, global MPC/carrier/q CSR/factor/PDE",
+    "repository_head": "ba897281f3b8ed227f73e645dc60b7210f46db73"
   },
   "limitations": [
     "No global target MPC or C/D map, no q CSR, no factor, no PDE, no official R/T/A.",
-    "Per-facet mode association, sum_m and sum_m_squared remain unknown; the all-mode scenario is conditional and is not measured memory consumption.",
-    "Geometry HDF5 identity is recorded, but HDF5 datasets were not read; boundary-cell-to-class membership remains unknown.",
-    "The top single-mode local forward check is CONTROLLED_NEGATIVE_ABOVE_LIMIT (1.488391772882517e-11 > 1e-11); retain the negative. The bottom one passes at 9.173378724262687e-12. Neither result is a global solver qualification."
+    "Geometric facet-to-adjacent-cell-class mapping is complete for all 4,352 saved z-port facets; per-facet mode support, sum_m and sum_m_squared remain UNKNOWN; all-mode storage numbers are conditional.",
+    "No real carrier support was built. The top single-mode local forward check is CONTROLLED_NEGATIVE_ABOVE_LIMIT (1.488391772882517e-11 > 1e-11); retain the negative. The bottom one passes at 9.173378724262687e-12. Neither result is a global solver qualification.",
+    "Readback process PID, process-tree RSS, cgroup peak, CPU and swap costs were not captured for this readback; no resource savings or prior-run peak is attributed to it."
   ],
   "logical_storage": {
     "actual_one_cell_witness_per_side": {
@@ -1227,12 +1234,12 @@
     "target_physical_inventory_identity_sha256": "a855565b82c1d88e84352dd355aec3531464261e5ab0df3e45de17e1879eaf1f"
   },
   "mode_to_facet_association": {
-    "actual_global_sum_m_c": "UNKNOWN; global target carrier and exact facet-cell map were not built",
-    "actual_global_sum_m_c_squared": "UNKNOWN; global target carrier and exact facet-cell map were not built",
-    "actual_per_facet_q_or_mode_hashes": "UNKNOWN",
+    "actual_global_sum_m_c": "UNKNOWN; the production global carrier/MPC and mode support were not built; geometric facet-to-class mapping is complete",
+    "actual_global_sum_m_c_squared": "UNKNOWN; the production global carrier/MPC and mode support were not built; geometric facet-to-class mapping is complete",
+    "actual_per_facet_q_or_mode_hashes": "UNKNOWN; no real carrier support was built",
     "actual_support_histogram": "UNKNOWN",
     "all_boundary_association_constructed": false,
-    "association_rule": "data-derived from exact nonzero Bi/Di interior support in the carrier builder; no floating threshold is applied",
+    "association_rule": "Production factory associates carrier coupling_rows/projection_rows through interior_locations and forms port candidates from the union of B/D dictionary keys; exact-zero filtering at generation is a separate rule. This geometry-only readback does not build a carrier or establish mode support.",
     "full_side_mode_scan": false,
     "geometry_boundary_witness_examples": {
       "bottom": {
@@ -1446,7 +1453,8 @@
       }
     },
     "witness_receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v21_wsl/generated_side_action_witness.json",
-    "witness_receipt_sha256": "a4ac80c9c2c29350d9327962b9c34634d000fffe65a7fdf5aee0748d04ae9dfe"
+    "witness_receipt_sha256": "a4ac80c9c2c29350d9327962b9c34634d000fffe65a7fdf5aee0748d04ae9dfe",
+    "geometric_facet_to_class_mapping": "COMPLETE; all 4,352 saved z-port facets map to one adjacent cell and exact saved class key"
   },
   "roles_and_operator_scope": {
     "bloch_phase_facts": {
@@ -1481,5 +1489,149 @@
     "twist_and_sector_instances": "NOT_CREATED_OR_NOT_RECORDED in this geometry receipt; exact per-cell instances/ownership UNKNOWN"
   },
   "schema": "task40extra.review_v21.target_port_inventory.v1",
-  "status": "PARTIAL_ACTUAL_INVENTORY_CONDITIONAL_FULL_SUPPORT_BYTES"
+  "status": "GEOMETRY_CLASS_MAPPING_COMPLETE_SUPPORT_UNKNOWN",
+  "geometry_mapping_readback": {
+    "status": "GEOMETRY_MAPPING_COMPLETE_SUPPORT_UNKNOWN",
+    "source_head": "ba897281f3b8ed227f73e645dc60b7210f46db73",
+    "branch": "task40extra_0p7nm_engineering",
+    "source_code_sha256": "0b0d4ebe9d9238c449a6fc5cf1764bec8c563c2c7cb7fedfed4847938fc92905",
+    "mapper_test_sha256": "6f2c3cc190b22067b69e7984d4751e84befca348770447afe259b9c2bc281be7",
+    "raw_artifact_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/v21_boundary_facet_class_mapping.json",
+    "raw_artifact_sha256": "e5a38b003e3d061b04934a3158346a21448b6b2c6f884749c0182380676c3320",
+    "canonical_mapping_digest_sha256": "164e1bf13f08beafc933528ace76315416e4be37bf10b97a03629cca53ab74b6",
+    "raw_mapping_rows": 4352,
+    "mesh": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/mesh_3d.h5",
+      "sha256": "0bcc83dea1fb912a88612732f088467b7cb2fd2e152e19370d98342709be1dba",
+      "cells": 30464,
+      "vertices": 36855,
+      "cell_topology_order_matches_saved_geometry_dofmap": true,
+      "original_cell_index_identity": true,
+      "geometry_input_global_indices_identity": true
+    },
+    "input_identity": {
+      "successful_staged_input_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/stage_inputs/local_port_components/target_original_ny8_resource_pilot_v20.dat",
+      "successful_staged_input_sha256": "e5e0986920a71d8e9d5224c6c7be8e9060ba5791391db2037a9128741061bf38",
+      "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+      "initial_canonical_input_path": "input/task40extra_0p7nm_engineering/target_original_ny8_resource_pilot_v20.dat",
+      "initial_canonical_input_sha256": "f6726d005713b586f1bccfbf6904dd64f3f1f31dd3b069607b55e9b430d294c7",
+      "initial_attempt": "IDENTITY_GUARD_REJECTED_BEFORE_MESH_READ_OR_OUTPUT_WRITE; not a numerical/physics failure",
+      "successful_attempt": "USED_EXACT_SAVED_RUN_STAGED_INPUT"
+    },
+    "readback_method": {
+      "scope": "read saved XDMF/HDF5 topology and geometry only; reconstruct tags using load_and_resolve, simulation_config_3d_from_normalized, _mark_cells, _mark_boundary_facets; independently recompute _mesh_cell_classes and _facet_pair_inventory; no mesh rebuild or PDE",
+      "class_and_tag_checks": {
+        "all_60_saved_class_ids_and_target_reference_counts_match": true,
+        "all_saved_class_metric_keys_match_recomputed": true,
+        "class_count": 60,
+        "material_tag_counts_reconstructed_from_saved_input": {
+          "air": 18080,
+          "substrate": 2176,
+          "grating": 10208
+        },
+        "cell_permutation_histogram": {
+          "0": 24766,
+          "32769": 3523,
+          "36873": 271,
+          "4680": 1897,
+          "576": 7
+        },
+        "cell_permutation_histogram_matches_saved_record": true
+      },
+      "facet_checks": {
+        "every_boundary_facet_has_one_adjacent_cell": 4352,
+        "every_facet_vertex_belongs_to_adjacent_cell": 4352,
+        "pairing_count_per_side": 2176,
+        "saved_boundary_samples_match_recomputed_exactly": true,
+        "saved_projected_centers_match_readback_dolfinx_centers_exactly": 4352,
+        "saved_top_bottom_pairings_match_recomputed_exactly": true,
+        "side_material_tags_reconstructed_from_mark_cells": {
+          "bottom": 2,
+          "top": 1
+        },
+        "unique_boundary_cells_per_side": {
+          "bottom": 2176,
+          "top": 2176
+        }
+      },
+      "boundary_class_count_by_side": {
+        "bottom": {
+          "distinct_classes": 28,
+          "facets": 2176,
+          "unique_adjacent_cells": 2176
+        },
+        "top": {
+          "distinct_classes": 26,
+          "facets": 2176,
+          "unique_adjacent_cells": 2176
+        }
+      },
+      "boundary_class_union": 54,
+      "boundary_class_catalog_size": 60,
+      "class_ids_and_exact_width_permutation_metric_keys_match": true
+    },
+    "runtime": {
+      "qualified_activation_marker": 1,
+      "python": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+      "PETSc_scalar_type": "complex128",
+      "PETSc_int_type": "int32",
+      "MPI_size": 1,
+      "DOLFINx": "0.10.0",
+      "Basix": "0.10.0",
+      "operation": "saved-mesh read-only DOLFINx HDF5 reader"
+    },
+    "command_record": {
+      "command_scope": "qualified WSL activation followed by the exact saved-mesh readback Python command",
+      "command_item_id": "exec-e6284f8a-e44c-4b28-9597-f41669765859",
+      "command_artifact_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/v21_boundary_mapping_command.txt",
+      "command_artifact_sha256": "92528b83494272441d89a34c8f07a4a5466730acd2df8a4546209ed564765295",
+      "command_artifact_characters": 14745,
+      "command_receipt_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/v21_boundary_mapping_command_receipt.json",
+      "command_receipt_sha256": "4d7c9b59e2b374b0e37a0acae2135077924ff2f3b4af8d09c21b01826e6bca6d",
+      "command_body_status": "RECOVERED_FROM_EXISTING_TOOL_HISTORY_AND_SAVED_BY_CONTROLLER; no rerun",
+      "source_head": "ba897281f3b8ed227f73e645dc60b7210f46db73",
+      "backend_command_execution_duration_ms": 1047,
+      "duration_scope": "backend duration for the entire command execution; does not isolate pure readback time or full preparation wall time"
+    },
+    "cost_and_resources": {
+      "reader_pid": "UNKNOWN_NOT_CAPTURED",
+      "observer_pid": 2179667,
+      "observer_scope": "process associated with the controller read_campaign_state API sample at 2026-10-10T01:17:38.378013Z; not the geometry reader PID and not the process-name scan PID",
+      "post_readback_process_scan": "a separate read-only process-name scan reported no matching Python/pytest/DOLFINx/MPI process; PID 2179667 was not obtained from that scan; this is not proof of historical descendant cleanup",
+      "process_tree_rss_peak_bytes": "UNKNOWN",
+      "cgroup_memory_peak_bytes": "UNKNOWN",
+      "cpu_time": "UNKNOWN",
+      "swap": "UNKNOWN",
+      "memory_savings_claim": "NONE",
+      "backend_command_execution_duration_ms": 1047,
+      "pure_readback_elapsed_seconds": "UNKNOWN",
+      "full_preparation_wall_elapsed_seconds": "UNKNOWN",
+      "prior_reported_readback_wall_seconds": {
+        "value": 5.8,
+        "status": "UNVERIFIED_PRIOR_CLAIM_NOT_A_MEASUREMENT"
+      }
+    },
+    "campaign_snapshot": {
+      "source": "controller read_campaign_state API; read-only observation",
+      "sample_utc": "2026-10-10T01:17:38.378013Z",
+      "window_sha256": "b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0",
+      "window_t0_utc": "2026-10-09T01:45:00.727771902Z",
+      "window_deadline_utc": "2026-10-10T01:45:00.727771902Z",
+      "closeout_reserve_seconds": 600,
+      "conservative_realtime_interval_seconds": 17837.929648505,
+      "utc_minus_monotonic_discrepancy_seconds": 1784.9477480050991,
+      "projected_cumulative_seconds": 84757.65806652053,
+      "projected_numerical_remaining_after_reserve_seconds": 1042.3419334794744,
+      "ledger_sha256": "7ea9e880520accf2fd87d8ee63b894c7e3e1ec366308dd0c8bb4492abd705a11",
+      "ledger_lines": 83032,
+      "ledger_sequence": 83031,
+      "persisted_ledger_tail_cumulative_seconds": 66919.72841801553,
+      "ledger_modified": false,
+      "window_modified": false,
+      "new_charge_written": false,
+      "projection_is_final_settlement": false,
+      "observer_pid": 2179667,
+      "observer_pid_source": "controller read_campaign_state API process at the sample time; not the geometry reader"
+    }
+  }
 }

@@ -48,7 +48,7 @@
 | [`task035c_hybrid_channel_memory_closure/README.md`](task035c_hybrid_channel_memory_closure/README.md) | Task035c：修复 Full3D–Hybrid 离散 phase/traction 合同；p6/h10 六路径 12/12+12/12；static Hybrid M120 峰值下降31.89%，50%目标未达 |
 | [`task037c_hybrid_iterative_robustness/response_v3.md`](task037c_hybrid_iterative_robustness/response_v3.md) | Task037c白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5 的授权 research extension；M_robust=120，preferred RSS未过，不是production-qualified |
 | [`task038_input_driven_configuration/response_v1.md`](task038_input_driven_configuration/response_v1.md) | Task038：单一 `.dat` input-driven configuration；11 migrated/6 retained，ordinary数值算法不变；source-branch full pytest 1119 passed/48 skipped，integration full 由用户授权 controlled stop |
-| [`task40extra_0p7nm_engineering/README.md`](task40extra_0p7nm_engineering/README.md) | Task40extra Review V21：端口零块与阶段回执增量已记录；E2资源停点保留；生产 bounded action 与目标full仍部分/未资格化 |
+| [`task40extra_0p7nm_engineering/README.md`](task40extra_0p7nm_engineering/README.md) | Task40extra Review V21：原尺寸4,352个z-port facet已映射到54/60个几何类别；carrier support仍UNKNOWN，E2资源停点保留，生产bounded action与目标full仍未资格化 |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
@@ -79,7 +79,7 @@
 | Task037b | frozen Hybrid iterative M10 | 白名单能力已选择性进入 master；仍为 explicit-opt-in research capability，ordinary defaults不变，not production-qualified |
 | Task037c | Hybrid iterative robustness | 白名单能力已选择性进入 master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过，仍not production-qualified |
 | Task038 | 单一 `.dat` input-driven configuration | 已按 Review V1 白名单选择性进入 master；11 migrated/6 retained，ordinary defaults 不变；source-branch full pytest 1119 passed/48 skipped，integration full 为用户授权 controlled stop |
-| Task40extra | Review V21：端口库存、零块表示、局部生成式 action 与阶段回执 | local bounded action PARTIAL；E2 RESOURCE_CONTROLLED_STOP；full target/2 TB/48 h NOT_QUALIFIED；ordinary default unchanged |
+| Task40extra | Review V21：端口库存、零块表示、局部生成式 action 与阶段回执 | z-port geometry mapping 54/60 classes；carrier support UNKNOWN；local bounded action PARTIAL；E2 RESOURCE_CONTROLLED_STOP；full target/2 TB/48 h NOT_QUALIFIED；ordinary default unchanged |
 
 ## 当前任务
 
@@ -102,7 +102,7 @@
 | Task037b | `task037b_hybrid_fem_modal_iterative/` | 白名单能力已选择性进入master；frozen M10仍为explicit-opt-in research capability，ordinary defaults不变；Case101 compact、runner/watchdog/checker与V7边界见下方 |
 | Task037c | `task037c_hybrid_iterative_robustness/` | 白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过；not production-qualified |
 | Task038 | `task038_input_driven_configuration/` | 单一 `.dat` 普通入口；11 migrated/6 retained；ordinary 数值算法不变；final full pytest 1119 passed/48 skipped |
-| Task40extra | `task40extra_0p7nm_engineering/` | Review V21证据已整理；目标support与 production bounded action 仍部分，E2受控停止；V21窗口/文档待主控审阅和集中收口 |
+| Task40extra | `task40extra_0p7nm_engineering/` | Review V21几何映射增量已整理；carrier support与production bounded action仍部分，E2受控停止；固定窗口未刷新，文档和证据待主控集中收口 |
 
 ## Task28 审计入口
 

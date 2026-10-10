@@ -2,7 +2,7 @@
 
 ## Review V21 当前交付
 
-V21 沿用既有 V20 canonical worktree、固定窗口与输入身份。它减少缺省零耦合的逻辑数组存储，增加本地生成式 B/D action 见证，并从原 E2 事件只读复核阶段资源结果。真实全边界模式 support 仍未知，generated callback 尚未接入 fullspace carrier builder/Task40 worker；full target、官方 R/T/A 与 2 TB/48 h 继续 NOT_QUALIFIED。
+V21 沿用既有 V20 canonical worktree、固定窗口与输入身份。它减少缺省零耦合的逻辑数组存储，增加本地生成式 B/D action 见证，从原 E2 事件只读复核阶段资源结果，并已把保存网格的4,352个z-port facet映射到唯一相邻cell/class。真实全边界模式 support 仍未知，generated callback 尚未接入 fullspace carrier builder/Task40 worker；full target、官方 R/T/A 与 2 TB/48 h 继续 NOT_QUALIFIED。
 
 | 文件 | 内容 |
 |---|---|

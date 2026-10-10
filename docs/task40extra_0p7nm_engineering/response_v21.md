@@ -4,7 +4,7 @@
 
 | 分项 | 本轮结论 | 证据边界 |
 |---|---|---|
-| `TARGET_PORT_INVENTORY` | 真实 z 端口面每侧 2,176；mode manifest 共 32,060 个有序 key | 全边界每个 cell 关联多少模式、`Σm_c` 和 `Σm_c²` 仍 `UNKNOWN`；没有建 global carrier/MPC |
+| `TARGET_PORT_INVENTORY` | 真实 z 端口面每侧 2,176；已读回 4,352 条 facet→adjacent-cell→class 关系（bottom 28类、top 26类，合计覆盖60类中的54类）；mode manifest 共 32,060 个有序 key | 全边界每个 cell 关联多少模式、`Σm_c` 和 `Σm_c²` 仍 `UNKNOWN`；没有建 global carrier/MPC |
 | `ZERO_BLOCK_STORAGE` | `None` 不再物化为稠密零块；两侧局部 action/RHS/recovery/B/D 与显式零表示逐项相同 | 两侧移除的逻辑 payload 共 27,680 B；没有可归因的 RSS/cgroup 节省证据 |
 | `BOUNDED_PORT_ACTION` | `P6CellCondensedAction` 的生成式 B/D 回调与单面局部见证通过 | fullspace carrier builder 和 Task40 worker 仍未接入该回调；不能称完整生产路径已 bounded |
 | E2 | 新的 raw-event 只读重算通过；仍是首个 q0 symbolic admission 前的资源受控停止 | 历史 `NO_PARTIAL_FOOTER` 和外层 `WORKER_FAILED` 保留；不补写旧 run 的 footer |
@@ -12,15 +12,23 @@
 
 ## 目标端口库存与单面见证
 
-几何回执来自原尺寸 Ny=8 目标网格：30,464 cells，axes 为 `272×8×14`；目标和 filled-reference 各有 60 个 cell class，60 个 class ID 共同出现。z 端口 tag 15/16 的实际面数分别为 2,176，坐标配对通过。几何回执中 `global_C_D_created`、`global_mpc_created`、`global_p6_space_created`、`q_csr_created` 和 `factor_created` 均为 false。原几何 JSON SHA-256 为 `491dac32b7e3ba927ce44444f834ff1e27406c3dfe95a9438fac8cae45adce34`；对应 mesh HDF5 为 2,839,728 bytes，SHA-256 `0bcc83dea1fb912a88612732f088467b7cb2fd2e152e19370d98342709be1dba`。本轮只记录 HDF5 文件身份，没有读取其中的 cell/facet membership 数据。
+几何回执来自原尺寸 Ny=8 目标网格：30,464 cells，axes 为 `272×8×14`；目标和 filled-reference 各有 60 个 cell class，60 个 class ID 共同出现。z 端口 tag 15/16 的实际面数分别为 2,176，坐标配对通过。几何回执中 `global_C_D_created`、`global_mpc_created`、`global_p6_space_created`、`q_csr_created` 和 `factor_created` 均为 false。原几何 JSON SHA-256 为 `491dac32b7e3ba927ce44444f834ff1e27406c3dfe95a9438fac8cae45adce34`；对应 mesh HDF5 为 2,839,728 bytes，SHA-256 `0bcc83dea1fb912a88612732f088467b7cb2fd2e152e19370d98342709be1dba`。后续在主控冻结的源码 HEAD ba897281f3b8ed227f73e645dc60b7210f46db73 上，qualified WSL DOLFINx mesh-only reader 只读 HDF5 topology/geometry，并按原输入规则重建 cell/boundary tags；4,352 个 z-port facets 均恰有一个相邻 cell，facet 中心、上下配对、cell vertex membership 与保存几何逐项吻合。没有重建 mesh、FE space、MPC、carrier、q CSR、factor 或 PDE。
 
-mode manifest SHA-256 为 `52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d`：bottom/top 各 16,030 个 mode，p/s 各 16,030 个。它证明了有序模式表和侧别数量，不证明每个 mode 在每个边界 cell 上都非零。现有 carrier builder 按精确非零的 `Bi/Di` interior support 关联模式，不用浮点阈值；但本轮没有建立目标全局 carrier，也没有把每个真实 port facet 与 cell class 对齐。因此实际 support 直方图、全局 `Σm_c`、`Σm_c²` 及独立 backing/alias 总量全部保持 `UNKNOWN`。
+mode manifest SHA-256 为 `52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d`：bottom/top 各 16,030 个 mode，p/s 各 16,030 个。它证明了有序模式表和侧别数量，不证明每个 mode 在每个边界 cell 上都非零。生产构造函数根据 interior_locations，把 carrier 的 coupling_rows/projection_rows 归到所属单元，再由 B/D 字典键的并集确定候选端口；生成端的精确零筛选是另一项规则，本次几何读回没有验证它。 本轮现在已把每个真实 port facet 对齐到唯一相邻 cell 与其精确 class key（z-port 上出现54/60类）；但没有建立目标全局 carrier，因此实际 mode-support 直方图、全局 `Σm_c`、`Σm_c²` 及独立 backing/alias 总量全部保持 `UNKNOWN`。
 
 新生成动作回执每侧只执行一个已保存的实际 mode：top `['top', -142, -5, 's']`，index 0；bottom `['bottom', -142, -5, 's']`，index 16,030。每个局部 witness 有 882 行（450 interior、432 trace），只使用 identity local mapping；没有完整 side scan 或 global target MPC。两侧合计是 2/32,060 个 full-order mode witness，不能折算为 60 类覆盖。本轮 witness 未绑定目标 cell/facet/class ID，因此 V20 的 17/60 仍是唯一合格方向类别覆盖；其余 43 类仍未资格化。生成式 B/D 与回执中的 native-mode 向量差异在 roundoff 量级；与 saved V20 candidate B/D 的对照是同一保存 witness 的身份比较。当前回执**没有**把新生成 B/D 直接与独立 q30 full-row B/D checker 对照；这项仍未完成。保存的 geometry examples 给出 bottom `(cell 0, facet 0)` 和 top `(cell 503, facet 2344)`，但未证明它们就是新 generated witness 所用的实例；该 witness 的 cell ID、facet ID 和 class ID 均记 `UNKNOWN`。
 
 独立 dense local Schur oracle 的 reduced action、RHS 和 recovery 对照分别保留在 inventory record。known-state forward 门限为 `1e-11`：bottom `9.173378724262687e-12` 通过；top `1.488391772882517e-11` 超限，状态 `CONTROLLED_NEGATIVE_ABOVE_LIMIT`。该 top 负结果保留，不调整阈值，也不据此声称全局 solver 失败或通过。
 
 完整计数、原始输入身份、分类边界和逐类数量见 [target port inventory V21](outcomes/records/target_port_inventory_v21.json)。条件情景假定每个端口邻接 cell 都关联本侧全部 16,030 个 modes：`Σm_c=69,762,560`、`Σm_c²=1,118,293,836,800`。按 complex128 推导，`Bi+Di` 为 1,004,580,864,000 B，缺省零 `Bt+Dt` 为 964,397,629,440 B，`XiB+Bhat+Dhat` 为 1,466,688,061,440 B，缺省 `Hlocal` 为 17,892,701,388,800 B，合计 21,328,367,943,680 B。它是明确的条件库存情景，**不是实测 allocation、实际 support 或峰值内存**。
+
+## 已保存网格的端口 facet→cell class 读回
+
+这次把每个开放边界面与它所属的体单元，以及材料、尺寸和方向类别对应起来，为后续按真实单元核算端口库存提供基础。读回使用已保存的网格，不建立新的电磁方程或求解因子。
+
+读回结果保存在 ignored raw artifact [v21_boundary_facet_class_mapping.json](../../results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/v21_boundary_facet_class_mapping.json)，文件 SHA-256 为 e5a38b003e3d061b04934a3158346a21448b6b2c6f884749c0182380676c3320，规范 mapping digest 为 164e1bf13f08beafc933528ace76315416e4be37bf10b97a03629cca53ab74b6。其 4,352 行覆盖每侧 2,176 个 facet 与 2,176 个互异相邻 cell；bottom/top 分别出现28/26个 class，合计54/60。重建 tags 使用 saved staged input SHA-256 e5e0986920a71d8e9d5224c6c7be8e9060ba5791391db2037a9128741061bf38；首次误用 canonical 输入因 SHA-256 f6726d005713b586f1bccfbf6904dd64f3f1f31dd3b069607b55e9b430d294c7 不匹配而在读 mesh/写输出前被身份门拒绝，这不是数值或物理失败。主控从现存 tool history 找回实际 readback 命令；完整命令有14,745字符，保存为 [v21_boundary_mapping_command.txt](../../results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/v21_boundary_mapping_command.txt)，SHA-256 92528b83494272441d89a34c8f07a4a5466730acd2df8a4546209ed564765295；工具回执 [v21_boundary_mapping_command_receipt.json](../../results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261009T155523.962924Z/target_geometry/v21_boundary_mapping_command_receipt.json)，SHA-256 4d7c9b59e2b374b0e37a0acae2135077924ff2f3b4af8d09c21b01826e6bca6d，command item exec-e6284f8a-e44c-4b28-9597-f41669765859。后端报告整条命令执行时长1,047 ms；纯 mesh readback 与完整准备 wall time 都 UNKNOWN，先前约5.8 s 的说法未获回执支持，标为未核实而非实测。reader PID、CPU、process-tree RSS、cgroup peak 和 swap 均 UNKNOWN。PID 2179667 属于 01:17:38 read_campaign_state API 观察进程，不是 reader PID，也不是进程名扫描 PID；独立的进程名扫描未发现匹配进程，但不构成历史后代清理证明。未把 V20 的0.487844814 s 或历史 RSS/cgroup 峰值挪作本次成本。
+
+mapping 使用已有 _mark_cells、_mark_boundary_facets、_mesh_cell_classes、_facet_pair_inventory 规则/函数，保存的60类 metric/permutation keys、material tags 与完整 cell-permutation histogram 均重算一致。该几何映射只回答每个 z-port facet 属于哪个邻接 cell/class，不提供 mode/carrier support：全局 Σm_c、Σm_c²、true nonzero support 仍 UNKNOWN；17/60 的 production direction qualification、top forward error 1.488391772882517e-11 > 1e-11 的负结果、q30 独立 full-row B/D、global MPC/FE/factor/PDE 和官方 R/T/A 均不变。
 
 ## None 零块与内存测量
 
@@ -51,7 +59,7 @@ mode manifest SHA-256 为 `52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d0659
 
 `P6CellCondensedAction` 保留缺省零块为 `None`，并为本地操作提供生成式 B/D 回调；one-mode side witness 验证了实际 saved target local data。生产 `build_p6_cell_condensed_action_from_carrier` 仍未接受 `generated_port_actions`，Task40 worker 仍经 fullspace carrier 和 cached builder，因此本轮只能报 `PARTIAL_BOUNDED_LOCAL_ACTION`，不能称端到端 production adapter 已接好。global target operator、q coverage、native class coverage 和 final solver qualifications 继续不变。
 
-V21 receipt/checker 的较早 combined focused suite 为 **15 passed in 0.16 s**；文档与索引收口后，三组最终定向复测分别为 V21 recheck **12 passed in 0.12 s**、heavy-authorization route **3 passed in 0.12 s**、p6 cell-action 回归 **23 passed in 0.76 s**。主控随后在相同最终 solver source 上联合复跑 p6 action 与 streamed-port 两个测试文件，**28 passed in 129.61 s**。相关 documentation-contract suite 为 **29 passed、134 subtests passed in 0.23 s**。此前局部 p6/streamed regression 28 passed in 119.45 s、兼容性项 3 passed/2 deselected in 0.26 s 的独立收据仍保留。`git diff --check` 通过。没有运行 full repository pytest、MPI4、Ruff、CI 或新 PDE；不声称这些项目通过。完整测试边界见 [test summary](outcomes/test_summary.md)。
+V21 receipt/checker 的较早 combined focused suite 为 **15 passed in 0.16 s**；文档与索引收口后，三组最终定向复测分别为 V21 recheck **12 passed in 0.12 s**、heavy-authorization route **3 passed in 0.12 s**、p6 cell-action 回归 **23 passed in 0.76 s**。主控随后在相同最终 solver source 上联合复跑 p6 action 与 streamed-port 两个测试文件，**28 passed in 129.61 s**。相关 documentation-contract suite 为 **29 passed、134 subtests passed in 0.23 s**。几何映射 helper 的定向单测另为5 passed in 0.08 s；本次 response/summary/test-summary 修改后再次运行四份文档合同测试为29 passed、134 subtests passed in 0.23 s。此前局部 p6/streamed regression 28 passed in 119.45 s、兼容性项 3 passed/2 deselected in 0.26 s 的独立收据仍保留。`git diff --check` 通过。没有运行 full repository pytest、MPI4、Ruff、CI 或新 PDE；不声称这些项目通过。完整测试边界见 [test summary](outcomes/test_summary.md)。
 
 ## 固定窗口、只读投影与进程状态
 
@@ -62,11 +70,12 @@ V21 receipt/checker 的较早 combined focused suite 为 **15 passed in 0.16 s**
 | 固定窗口 | benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/campaign_window_v19.json；SHA-256 b1591b7cf03b79aaf0820d352e636bdb79a6800bb19489eba92375cb73cbe6b0 |
 | T0 / deadline | 2026-10-09T01:45:00.727771902Z / 2026-10-10T01:45:00.727771902Z；总预算 86,400 s，数值 cutoff 85,800 s，保留收口 600 s |
 | 持久账本尾记录 | campaign_accounting_v10.jsonl，83,032 行，seq 83031，SHA-256 7ea9e880520accf2fd87d8ee63b894c7e3e1ec366308dd0c8bb4492abd705a11；最后已写 cumulative charge 为 66,919.72841801553 s |
-| 主控只读 sample | 2026-10-10T00:38:20.741056830Z；API 的 conservative-realtime interval 为 15,480.292692466 s，UTC-minus-monotonic discrepancy 为 1,546.894188271197 s |
-| sample 投影 | cumulative 82,400.02111048152 s；扣除收口预留后的 numerical remaining 为 3,399.9788895184756 s；距离 deadline 的 wall time 约 3,999.986715072 s |
+| 主控此前只读 sample | 2026-10-10T00:38:20.741056830Z；conservative-realtime interval 15,480.292692466 s，UTC-minus-monotonic discrepancy 1,546.894188271197 s（保留为历史 sample） |
+| 最新主控只读 sample | 2026-10-10T01:17:38.378013Z；conservative-realtime interval 17,837.929648505 s，UTC-minus-monotonic discrepancy 1,784.9477480050991 s |
+| 最新 sample 投影 | projected cumulative 84,757.65806652053 s；扣除600 s收口预留后的 numerical remaining 为1,042.3419334794744 s；这是只读as-of投影，不是新扣账或最终结算 |
 
 V20 snapshot 0dcd4752f762ac66516b954e64914fc09816a3a9ed92f37a2099507268c79de4 是更早的 as-of 读数：sample 为 2026-10-09T21:10:21.576890277Z，投影 cumulative 69,920.85694392852 s。它不是 V21 当前余额。V21 数值仅是主控 API 在给定 sample 的只读投影；账本当前最后实际写入值仍是 seq 83031 的 66,919.72841801553 s。投影没有成为新扣账，尚未结算区间及旧 unknown 不改写为零。
 
 qualified shell 的进程名扫描没有发现 Python、pytest、DOLFINx 或 MPI worker；这是进程名过滤结果，不构成对任意 detached descendant 的完整清场证明。历史 E2 的 owner/descendant cleanup 仍为 UNKNOWN。本轮没有启动 E2、PDE 或其他 heavy worker。
 
-执行者未提交/推送，也未合并 master；由主控完成本轮集中提交与推送，最终 SHA 在主控回执中报告。
+边界映射 helper 已由主控冻结于 ba897281f3b8ed227f73e645dc60b7210f46db73；执行者只补充已授权的 inventory、response、summary、test summary 与 run index，没有 commit/push，也未合并 master。文档和证据由主控统一审查、提交和推送，最终完整 HEAD 见主控回执。
