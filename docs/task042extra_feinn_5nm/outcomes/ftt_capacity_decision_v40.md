@@ -73,3 +73,12 @@ native和fit只取V39各自唯一final完整checkpoint；核对模型/buffers/�
 所有新输出DIAGNOSTIC/reference_exposed=true/pde_only_solve=false/production_initialization_allowed=false/pde_only_solver_qualified=false/official_candidate_results=false。原V39全物理FAIL照旧复用；全部历史较好态、最终退化、D0成本否决/D1未运行、负结果、UNKNOWN与费用永久保留。原50×25×140nm、Si17/120nm、λ0.7完整3D FE/decimal2e12B/ownswap OOC0/172800s与原精度门未达；本批不注册0.7nm、p/h/端口扩展，不恢复W0/W1、传统PC、存储或主线接口。
 
 [Response V40](../response_v40.md)、[run/provenance](records/run_index_v40.json)、[原始修复与失败](records/repair_log_v40.json)、[tests](records/tests_v40.json)。大数组/完整模型/原packet保持ignored原位置，本轮仅新增小型诊断raw及compact引用，没有移动或重复封存健康旧数据。只提交推送本分支，完成后保持自身清场等待review。
+
+
+## 发布尾段与视觉限定
+
+完整数值及独立checker没有重做。实际GitHub首屏分别访问审阅发布e4d6ca95和文档发布b9853da3417d9537fae0f7be6180b92dda19a4bf；三页均显示服务错误页，未呈现正文/表格/公式，因此全部文档视觉NOT_VERIFIED，没有把截图成功或本地结构检查当视觉PASS。旧网页失败与本次截图/峰值/费用保留。
+
+正式数值阶段最大同时自身树RSS采样峰347017216B；包含浏览器的所有已采样串行轻阶段峰最大632467456B，分别低于16GiB与2GiB，自身swap/OOC0。末次元数据轻任务在CPU准入时被拒绝，worker未启动；原数值不重做，改为复用既有有界fresh_admission并重新实测60sPSI/CPU窗口，不放宽阈值、不改邻任务。原失败CPU sampler细耗时NOT_RETAINED，尾账保守计入拒绝后全部额外日历区间并受900s限制；早期资源记录的拒绝等待0仅是当时快照，不冒充整批最终值。连续窗口尾账含代码、修复、成功60sPSI、失败、保存、审核、Git和浏览器；阶段秒是总wall的子集不能重复相加，最终Git/fetch收尾由ignored交付收据绑定。项目精确历史累计和冷N=1仍UNKNOWN。
+
+[实际渲染失败收据](records/render_check_v40.json)、[发布与自身清场账](records/resource_and_cleanup_tail_v40.json)。

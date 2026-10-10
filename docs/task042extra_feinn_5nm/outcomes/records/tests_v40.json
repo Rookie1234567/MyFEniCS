@@ -76,5 +76,9 @@
   "new_page_parser_checks": "markdown_check_v40.json",
   "saved_numeric_binding_checks": "delivery_check_v40.json",
   "final_doc_writer_failure_preserved": "tmp/task42extra/v40/docs01/watchdog/worker.log",
-  "affected_doc_check_resume": "tmp/task42extra/v40/docs02/summary.json"
+  "affected_doc_check_resume": "tmp/task42extra/v40/docs02/summary.json",
+  "final_visual_check": "render_check_v40.json: actual GitHub error page, NOT_VERIFIED",
+  "final_resource_receipt": "resource_and_cleanup_tail_v40.json",
+  "final_metadata_guard_complete": true,
+  "final_local_parser_checks": "9 selected pages/current sections PASS; old history preserved"
 }

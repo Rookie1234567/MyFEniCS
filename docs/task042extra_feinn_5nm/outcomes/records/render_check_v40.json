@@ -1,0 +1,71 @@
+{
+  "schema": "task42extra.v40.render.v1",
+  "publication_sha": "b9853da3417d9537fae0f7be6180b92dda19a4bf",
+  "attempts": [
+    {
+      "name": "review",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/e4d6ca9553b73d2938a44b31b3ef2b03204ad571/docs/task042extra_feinn_5nm/review_report_v39.md",
+      "published_sha": "e4d6ca9553b73d2938a44b31b3ef2b03204ad571",
+      "published_blob_sha256": "073c30960622ea3011091f3e8464b2008af6b3eb87c565cd197b4bf361fa771c",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_s": 7.292447593063116,
+      "screenshot": "tmp/task42extra/v40/render_views/review/page.png",
+      "screenshot_sha256": "10bcabc07a8cb031f136f58692ae82f93b78c12dd7f9c8e329a45aff7a46af52",
+      "visual_inspection": {
+        "status": "GITHUB_SERVICE_ERROR_PAGE_DOCUMENT_VISUAL_NOT_VERIFIED",
+        "observed": "GitHub unicorn error page: We are having a really bad day; no document body rendered",
+        "first_table": "NOT_RENDERED_NOT_VERIFIED",
+        "formulas": "NOT_RENDERED_NOT_VERIFIED",
+        "all_page_visual_PASS": false
+      }
+    },
+    {
+      "name": "response",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/b9853da3417d9537fae0f7be6180b92dda19a4bf/docs/task042extra_feinn_5nm/response_v40.md",
+      "published_sha": "b9853da3417d9537fae0f7be6180b92dda19a4bf",
+      "published_blob_sha256": "f1926d30dd554f0ff390613d29782f51e193816a6dc0e8d9f7aaad3c4c222bad",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_s": 7.452225107001141,
+      "screenshot": "tmp/task42extra/v40/render_views/response/page.png",
+      "screenshot_sha256": "10bcabc07a8cb031f136f58692ae82f93b78c12dd7f9c8e329a45aff7a46af52",
+      "visual_inspection": {
+        "status": "GITHUB_SERVICE_ERROR_PAGE_DOCUMENT_VISUAL_NOT_VERIFIED",
+        "observed": "GitHub unicorn error page: We are having a really bad day; no document body rendered",
+        "first_table": "NOT_RENDERED_NOT_VERIFIED",
+        "formulas": "NOT_RENDERED_NOT_VERIFIED",
+        "all_page_visual_PASS": false
+      }
+    },
+    {
+      "name": "capacity",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/b9853da3417d9537fae0f7be6180b92dda19a4bf/docs/task042extra_feinn_5nm/outcomes/ftt_capacity_decision_v40.md",
+      "published_sha": "b9853da3417d9537fae0f7be6180b92dda19a4bf",
+      "published_blob_sha256": "a81f3bca7eba782dae8358f8bb940c9a4d2c76f44f21daa3c3b7d1ebab30d534",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_s": 7.524328579893336,
+      "screenshot": "tmp/task42extra/v40/render_views/capacity/page.png",
+      "screenshot_sha256": "10bcabc07a8cb031f136f58692ae82f93b78c12dd7f9c8e329a45aff7a46af52",
+      "visual_inspection": {
+        "status": "GITHUB_SERVICE_ERROR_PAGE_DOCUMENT_VISUAL_NOT_VERIFIED",
+        "observed": "GitHub unicorn error page: We are having a really bad day; no document body rendered",
+        "first_table": "NOT_RENDERED_NOT_VERIFIED",
+        "formulas": "NOT_RENDERED_NOT_VERIFIED",
+        "all_page_visual_PASS": false
+      }
+    }
+  ],
+  "scope": "selected first viewport only; independent full text read from Git; unseen page/formula/table portions unverified",
+  "browser_screenshot_saved_is_not_render_PASS": true,
+  "whole_page_and_all_tables_visual_PASS": false,
+  "old_render_failures_preserved": true,
+  "local_markdown_parser_PASS": true,
+  "numerical_data_reexecuted": false,
+  "light_supervisor": {
+    "path": "tmp/task42extra/v40/render01/summary.json",
+    "sha256": "bf220670838033c8358ddc503a43d993d0d05a1509338d8ea9717304174401ae",
+    "bytes": 2207
+  }
+}

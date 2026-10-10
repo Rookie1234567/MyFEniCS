@@ -6,12 +6,12 @@
       "scope": "complete selected new page",
       "result": {
         "path": "docs/task042extra_feinn_5nm/response_v40.md",
-        "sha256": "f1926d30dd554f0ff390613d29782f51e193816a6dc0e8d9f7aaad3c4c222bad",
+        "sha256": "acf7005b4605d554e1c926116901a5e8b2f22dbc40a0a9d9c96f01bd5819c115",
         "checked_scope": "entire page",
         "markdown_tables": 2,
         "parsed_tables": 2,
         "math_fences": 0,
-        "links": 12
+        "links": 14
       }
     },
     {
@@ -19,12 +19,12 @@
       "scope": "complete selected new page",
       "result": {
         "path": "docs/task042extra_feinn_5nm/outcomes/ftt_capacity_decision_v40.md",
-        "sha256": "a81f3bca7eba782dae8358f8bb940c9a4d2c76f44f21daa3c3b7d1ebab30d534",
+        "sha256": "4bdecc971781670c3a841fb56fe6bd25a9475a2ac35f593d7c7ab08b159ac406",
         "checked_scope": "entire page",
         "markdown_tables": 3,
         "parsed_tables": 3,
         "math_fences": 1,
-        "links": 10
+        "links": 12
       }
     },
     {

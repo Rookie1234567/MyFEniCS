@@ -31,6 +31,12 @@
       "change": "move formula to raw literal substituted into document",
       "test": "py_compile of ignored writer/checker; docs02 affected-page rerun only",
       "resume": "publication only, healthy numerical payloads remain unchanged"
+    },
+    {
+      "kind": "resource_rejection_not_bug",
+      "evidence": "tmp/task42extra/v40/metadata01/rejection.json",
+      "resume": "bounded fresh qualification only; no numerical restart",
+      "costs": "60s PSI and failed CPU sample charged in original continuous wall"
     }
   ],
   "first_formal_failure": {
@@ -53,5 +59,6 @@
     "unused imports / compound statements found by Ruff, fixed before clean implementation",
     "local subset integral variable overwritten spotted and repaired before formal"
   ],
-  "healthy_tensor_spectra_and_reference_recomputed_for_checker": false
+  "healthy_tensor_spectra_and_reference_recomputed_for_checker": false,
+  "metadata_CPU_requalification": "existing fresh_admission, unchanged original thresholds/scope, new measured60s window passed; no producer replay"
 }
