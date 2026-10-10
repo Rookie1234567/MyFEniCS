@@ -409,10 +409,23 @@ class FactoredMomentMap:
         )
 
     def forward(self, model, batch=8):
+        return self.forward_with_core_values(model, self._cores(model), batch=batch)
+
+    def forward_with_core_values(self, model, values, batch=8):
+        """Opt-in fixed-axis linear action without mutating base parameters.
+
+        ``model`` supplies the matching exact point fallback; ``values`` are
+        its three bounded one-dimensional core tables. The ordinary forward
+        and its cache behavior are unchanged.
+        """
         if batch not in (1, 8):
             raise ValueError("ONLY_BATCH_1_8")
         self.counts["forward"] += 1
-        values = self._cores(model)
+        if len(values) != 3 or any(
+            v.shape[0] != len(self.nodes[a]) or v.dtype != np.complex128
+            or not np.isfinite(v).all() for a, v in enumerate(values)
+        ):
+            raise ValueError("FTT_MATCHING_FINITE_AXIS_CORE_TABLES_REQUIRED")
         out = np.empty(self.size, dtype=np.complex128)
         p = self.packet
         for cells, fast in self._blocks(batch):

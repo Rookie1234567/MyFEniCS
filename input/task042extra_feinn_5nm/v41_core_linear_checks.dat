@@ -1,0 +1,5 @@
+schema_version = 11
+
+[neural_wave]
+stage = "v41_core_linear_checks"
+design_sha256 = "4c4534c49ae71790ec284c8212f8a424aefaefa45391cf4f859908d715230b4d"
