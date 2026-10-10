@@ -8,6 +8,7 @@ import subprocess
 import sys
 from time import monotonic
 import traceback
+from dataclasses import dataclass
 
 from src.io.neural_wave_campaign import ROOT, digest
 from src.io.ftt_core_campaign import DESIGN, routes
@@ -33,6 +34,25 @@ CHAIN = BASE_CHAIN + (
     "src/runners/block_wave_admission.py",
     "src/runners/feinn_resources.py",
 )
+
+
+@dataclass(frozen=True)
+class CoreWorkerProfile:
+    design: Path = DESIGN
+    artifacts: Path = ART
+    route_pairs: object = routes
+    checks_stage: str = "v41_core_linear_checks"
+    checks_role: str = "ftt_core_checks"
+    compare_role: str = "ftt_core_compare"
+    learned_role: str = "FTTNN_CONDITIONAL_CORE_LEARNED"
+    worker_module: str = "src.runners.ftt_core_worker"
+    model_factory: object = None
+    qualification: object = None
+    independent_field: object = None
+    training_options: object = None
+
+
+DEFAULT_PROFILE = CoreWorkerProfile()
 
 
 def install_unlabelled_firewall(design, artifact):
@@ -63,9 +83,9 @@ def install_unlabelled_firewall(design, artifact):
     return records
 
 
-def subphase(directory, phase):
+def subphase(directory, phase, profile=DEFAULT_PROFILE):
     manifest = json.loads((directory / "run_manifest.json").read_text())
-    design = json.loads(DESIGN.read_text())
+    design = json.loads(profile.design.read_text())
     artifact = ROOT / manifest["artifact"]
     from src.runners.neural_wave_worker import publish_event
 
@@ -91,12 +111,14 @@ def subphase(directory, phase):
             load_arrays(files["moments_q60"]),
             artifact,
             marker,
-            route_pairs=routes(),
-            source_root=ART,
+            route_pairs=profile.route_pairs(),
+            source_root=profile.artifacts,
+            model_factory=profile.model_factory,
+            independent_field=profile.independent_field,
         )
     elif phase == "compare":
         compare(
-            design, action, packet, artifact, artifact, marker, route_pairs=routes()
+            design, action, packet, artifact, artifact, marker, route_pairs=profile.route_pairs()
         )
     else:
         raise ValueError("UNKNOWN_CORE_VERIFICATION_PHASE")
@@ -107,7 +129,7 @@ def checker_directory(artifact, directory):
     return artifact / ("independent_pure_checker_" + directory.name)
 
 
-def independent_compare(manifest, artifact, marker, directory):
+def independent_compare(manifest, artifact, marker, directory, profile=DEFAULT_PROFILE):
     from src.runners.guarded_exec import ticks
 
     for phase, mode, name in [
@@ -119,7 +141,7 @@ def independent_compare(manifest, artifact, marker, directory):
         command = (
             "source scripts/activate_task42extra.sh "
             + mode
-            + " && exec python -m src.runners.ftt_core_worker "
+            + " && exec python -m " + profile.worker_module + " "
             + shlex.quote(str(directory.relative_to(ROOT)))
             + " --subphase "
             + phase
@@ -151,7 +173,7 @@ def independent_compare(manifest, artifact, marker, directory):
         "source scripts/activate_task42extra.sh pure && exec python -m src.postprocessing.ftt_verification "
         + shlex.quote(str(artifact.relative_to(ROOT)))
         + " --design "
-        + shlex.quote(str(DESIGN.relative_to(ROOT))),
+        + shlex.quote(str(profile.design.relative_to(ROOT))),
     ]
     summary = run_checker(
         command,
@@ -172,16 +194,16 @@ def independent_compare(manifest, artifact, marker, directory):
     )
 
 
-def run_stage(manifest, artifact, marker, directory):
+def run_stage(manifest, artifact, marker, directory, profile=DEFAULT_PROFILE):
     spec = manifest["spec"]
-    design = json.loads(DESIGN.read_text())
-    if digest(DESIGN) != manifest["design_sha256"]:
+    design = json.loads(profile.design.read_text())
+    if digest(profile.design) != manifest["design_sha256"]:
         raise ValueError("CORE_FROZEN_DESIGN_CHANGED")
-    if spec["role"] == "ftt_core_compare":
-        return independent_compare(manifest, artifact, marker, directory)
-    if spec["role"] != "ftt_core_checks":
+    if spec["role"] == profile.compare_role:
+        return independent_compare(manifest, artifact, marker, directory, profile)
+    if spec["role"] != profile.checks_role:
         qualification = json.loads(
-            (ART / "v41_core_linear_checks/result.json").read_text()
+            (profile.artifacts / profile.checks_stage / "result.json").read_text()
         )
         if not qualification["models"][spec["model_kind"]]["qualified"]:
             raise ValueError("CORE_ACTUAL_NEW_OPERATOR_NOT_QUALIFIED")
@@ -203,10 +225,11 @@ def run_stage(manifest, artifact, marker, directory):
     packet = load_arrays(files["moments_q30"])
     if (action.size, action.nc, action.np) != (31968, 384, 40):
         raise ValueError("CORE_ORIGINAL_M5_IDENTITY")
-    if spec["role"] == "ftt_core_checks":
+    if spec["role"] == profile.checks_role:
         from src.solvers.ftt_core_qualification import actual_checks
 
-        result = actual_checks(
+        qualifier = profile.qualification or actual_checks
+        result = qualifier(
             action, packet, design, marker, manifest["worker_stop_monotonic"]
         )
         forbidden = [
@@ -235,7 +258,7 @@ def run_stage(manifest, artifact, marker, directory):
         design["model"]["geometry"]["bounds_nm"],
         spec["model_kind"],
         seed=design["seed"],
-    )
+    ) if profile.model_factory is None else profile.model_factory(design, spec["model_kind"])
     binding = dict(
         source_sha=manifest["source_sha"],
         input_sha256=manifest["input_sha256"],
@@ -256,6 +279,11 @@ def run_stage(manifest, artifact, marker, directory):
         official_candidate_results=False,
         pde_only_solver_qualified=False,
     )
+    if "phase_definition" in design:
+        binding.update(phase_sha256=design["phase_definition"]["sha256"],
+            phase_definition=design["phase_definition"], validation_used_for_stopping=True)
+    options = {} if profile.training_options is None else profile.training_options(
+        manifest, artifact, marker, directory, design)
     result = run_core_training(
         action,
         packet,
@@ -264,16 +292,17 @@ def run_stage(manifest, artifact, marker, directory):
         binding,
         manifest["worker_stop_monotonic"],
         marker,
-        learned=spec["role"] == "FTTNN_CONDITIONAL_CORE_LEARNED",
+        learned=spec["role"] == profile.learned_role,
+        **options,
     )
     result["label_firewall_actual_open_negative_checks"] = label_checks
     return result
 
 
-def main():
+def main(profile=DEFAULT_PROFILE):
     directory = ROOT / Path(sys.argv[1])
     if len(sys.argv) == 4 and sys.argv[2] == "--subphase":
-        subphase(directory, sys.argv[3])
+        subphase(directory, sys.argv[3], profile)
         return
     manifest = json.loads((directory / "run_manifest.json").read_text())
     artifact = ROOT / manifest["artifact"]
@@ -285,7 +314,7 @@ def main():
     began = monotonic()
     try:
         atomic_json(directory / "abi.json", ftt_abi(manifest["spec"]["mode"]))
-        result = run_stage(manifest, artifact, marker, directory)
+        result = run_stage(manifest, artifact, marker, directory, profile)
         result.update(
             source_sha=manifest["source_sha"],
             input_sha256=manifest["input_sha256"],

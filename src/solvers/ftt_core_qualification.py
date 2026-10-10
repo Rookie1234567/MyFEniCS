@@ -1,6 +1,7 @@
 """Targeted actual-core qualification; finite witnesses never become initials."""
 
 from copy import deepcopy
+from time import monotonic
 import numpy as np
 import torch
 from src.solvers.ftt_field import FTTField
@@ -17,19 +18,24 @@ from src.solvers.ftt_conditional_core import (
 )
 
 
-def actual_checks(action, packet, design, marker, deadline):
-    rng = np.random.default_rng(4214101)
+def actual_checks(action, packet, design, marker, deadline, *, model_factory=None, independent_field=None, work_persist=None):
+    seed = design.get("qualification_seed", 4214101)
+    rng = np.random.default_rng(seed)
     reports = {}
     for kind in ("fttnn", "chebtt"):
-        model = FTTField(design["model"]["geometry"]["bounds_nm"], kind)
-        model.nonzero_qualification_state(seed=4214101)
+        model = FTTField(design["model"]["geometry"]["bounds_nm"], kind) if model_factory is None else model_factory(design, kind)
+        model.nonzero_qualification_state(seed=seed)
         mapping = FactoredMomentMap(packet)
         old = StreamingMomentMap(packet)
         c = mapping.forward(model)
         base = deepcopy(model.state_dict())
-        initial_pair = relative_pair(c, old.forward(model))
+        def point_field():
+            return model if independent_field is None else independent_field(model)
+
+        initial_pair = relative_pair(c, old.forward(point_field()))
         rows = []
         for axis in range(3):
+            axis_began = monotonic()
             op = ConditionalCoreAction(
                 model, mapping, action, axis, deadline=deadline - 120, marker=marker
             )
@@ -55,7 +61,7 @@ def actual_checks(action, packet, design, marker, deadline):
             mapping.invalidate()
             updated = mapping.forward(model)
             linear = relative_pair(c + kd, updated)
-            independent = relative_pair(updated, old.forward(model))
+            independent = relative_pair(updated, old.forward(point_field()))
             model.load_state_dict(base)
             mapping.invalidate()
             pure = 1j * d.real
@@ -75,9 +81,10 @@ def actual_checks(action, packet, design, marker, deadline):
             mapping.invalidate()
             b = (action.f - action.apply(c)) / action.bnorm
             delta, inner = solve_core(op, b, maxiter=3)
-            _, _, acceptance = verify_and_apply_core(
+            updated_c, updated_r, acceptance = verify_and_apply_core(
                 model, mapping, action, op, delta, c
             )
+            saved_work = None if work_persist is None else work_persist(kind, axis, model, updated_c, updated_r)
             model.load_state_dict(base)
             mapping.invalidate()
             row = dict(
@@ -92,6 +99,8 @@ def actual_checks(action, packet, design, marker, deadline):
                 short_acceptance=acceptance,
                 restored_parameter_hash=model_identity(model),
                 cache_bytes=op.cache_bytes,
+                complete_axis_work_seconds=monotonic() - axis_began,
+                complete_work_save=saved_work,
             )
             rows.append(row)
             marker(

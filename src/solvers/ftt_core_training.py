@@ -118,7 +118,8 @@ def hidden_step(model, mapping, action, deadline, marker):
 
 
 def run_core_training(
-    action, packet, model, artifact, binding, deadline, marker, *, learned
+    action, packet, model, artifact, binding, deadline, marker, *, learned,
+    validation_callback=None,
 ):
     artifact = Path(artifact)
     artifact.mkdir(parents=True, exist_ok=True)
@@ -177,6 +178,8 @@ def run_core_training(
         ):
             if state["metadata"][key] != binding[key]:
                 raise ValueError("CORE_RESUME_IDENTITY_CHANGED:" + key)
+        if state["metadata"].get("phase_sha256") != binding.get("phase_sha256"):
+            raise ValueError("CORE_RESUME_PHASE_IDENTITY_CHANGED")
         if (
             state["metadata"]["reference_used_for_training"]
             or state["metadata"]["reference_sha256"] is not None
@@ -284,8 +287,35 @@ def run_core_training(
         final = store.records[-1]
     longest_pair = 0.0
     round_start_native = position["round_start_native"]
+
+    def validate_round():
+        nonlocal stop
+        from src.solvers.ftt_bloch_field import scalar_continuation
+
+        began = monotonic()
+        number = position["complete_rounds"]
+        scalar = validation_callback(number, final, c, r)
+        costs["scalar_validation"] = costs.get("scalar_validation", 0.0) + monotonic() - began
+        rounds[-1]["isolated_validation_scalars"] = scalar
+        previous = rounds[-3]["native"] if len(rounds) >= 3 else None
+        allowed = scalar_continuation(number, rounds[-1]["native"],
+            scalar["scattered_E_relative"], scalar["scattered_H_relative"], previous)
+        rounds[-1]["predeclared_continuation_allowed"] = allowed
+        persisted = save("complete_round_with_scalar_validation")
+        emit(dict(kind="validation", round=number, scalars=scalar,
+                  continuation_allowed=allowed, committed_checkpoint_sha256=persisted["sha256"]))
+        if not allowed:
+            stop = "EARLY_NO_FIELD_PROGRESS" if number == 2 else "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED"
+        return allowed
+
     try:
+        if validation_callback is not None:
+            from src.solvers.ftt_bloch_field import scalar_checkpoint_pending
+            if scalar_checkpoint_pending(position, rounds):
+                validate_round()
         while position["round"] < 6:
+            if stop in ("EARLY_NO_FIELD_PROGRESS", "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED"):
+                break
             if monotonic() >= deadline - 20:
                 stop = "ROUTE_SAVE_RESERVE"
                 break
@@ -470,6 +500,9 @@ def run_core_training(
                 round_start_native = native
                 position["round_start_native"] = native
                 persisted = save("complete_round")
+                if validation_callback is not None and position["complete_rounds"] in (2, 4):
+                    validate_round()
+                    persisted = final
                 emit(
                     dict(
                         kind="round",
@@ -477,6 +510,8 @@ def run_core_training(
                         committed_checkpoint_sha256=persisted["sha256"],
                     )
                 )
+                if stop in ("EARLY_NO_FIELD_PROGRESS", "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED"):
+                    break
                 if (
                     position["complete_rounds"] >= 2
                     and position["slow_streak"] >= 2

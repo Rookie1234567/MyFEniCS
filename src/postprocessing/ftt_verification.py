@@ -175,8 +175,10 @@ def validate_checkpoint_identity(state, candidate, model, fit):
         or state["optimizer_class"] != candidate["checkpoint"]["optimizer_class"]
     ):
         raise ValueError("FTT_CHECKPOINT_PURPOSE_ORDER_OR_OPTIMIZER_MISMATCH")
+    if state["metadata"].get("phase_sha256") != candidate.get("phase_sha256"):
+        raise ValueError("FTT_CHECKPOINT_PHASE_BINDING_MISMATCH")
     # Coordinate buffers are fixed identities, not extra optimization variables.
-    for key in ("center", "half_width", "initial_core_scales"):
+    for key in ("center", "half_width", "initial_core_scales") + getattr(model, "phase_buffer_names", ()):
         if not np.array_equal(
             state["model"][key].numpy(), model.state_dict()[key].numpy()
         ):
@@ -206,6 +208,8 @@ def reconstruct(
     fit=False,
     route_pairs=None,
     source_root=None,
+    model_factory=None,
+    independent_field=None,
 ):
     from src.solvers.ftt_field import FTTField
     from src.solvers.ftt_moments import StreamingMomentMap
@@ -218,7 +222,7 @@ def reconstruct(
         entry = candidate["checkpoint"]
         model = FTTField(
             design["model"]["geometry"]["bounds_nm"], candidate["model_kind"]
-        )
+        ) if model_factory is None else model_factory(design, candidate["model_kind"])
         initial = {
             name: p.detach().numpy().copy() for name, p in model.named_parameters()
         }
@@ -233,8 +237,9 @@ def reconstruct(
             ):
                 raise ValueError("FTT_FROZEN_PRODUCER_AND_COMMITTED_STATE_MISMATCH")
         model.load_state_dict(state["model"], strict=True)
-        c30 = StreamingMomentMap(packet).forward(model)
-        c60 = StreamingMomentMap(high).forward(model)
+        field = model if independent_field is None else independent_field(model)
+        c30 = StreamingMomentMap(packet).forward(field)
+        c60 = StreamingMomentMap(high).forward(field)
         saved = np.asarray(state["c"], dtype=np.complex128)
         same = float(np.linalg.norm(c30 - saved) / max(np.linalg.norm(saved), 1e-30))
         drift = float(np.linalg.norm(c60 - c30) / max(np.linalg.norm(c30), 1e-30))
@@ -255,6 +260,7 @@ def reconstruct(
             reference_used_for_training=fit,
             pde_only_solve=not fit,
             production_initialization_allowed=False,
+            independent_point_phase=independent_field is not None,
         )
         atomic_npz(artifact / (name + ".npz"), c30=c30, c60=c60, saved=saved)
         result[name] = record

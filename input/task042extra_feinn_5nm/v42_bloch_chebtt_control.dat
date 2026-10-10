@@ -1,0 +1,5 @@
+schema_version = 12
+
+[neural_wave]
+stage = "v42_bloch_chebtt_control"
+design_sha256 = "59ea6a6ad008a835671fae2b17cc324e85abe1536bcc581139ef24f54941c21b"

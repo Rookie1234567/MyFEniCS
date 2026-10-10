@@ -1,0 +1,266 @@
+{
+  "schema": "ftt.bloch-envelope-design.v1",
+  "campaign_version": 41,
+  "authority_sha": "7c9b3e69b16f6cdd1fb1504e50203d3740305dae",
+  "base_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "seed": 4213701,
+  "qualification_seed": 4214201,
+  "ranks": [
+    1,
+    8,
+    8,
+    1
+  ],
+  "model": {
+    "wavelength_nm": 5.0,
+    "geometry": {
+      "bounds_nm": [
+        [
+          -5,
+          5
+        ],
+        [
+          -3.75,
+          3.75
+        ],
+        [
+          -1.25,
+          8.75
+        ]
+      ],
+      "substrate_z_nm": 0,
+      "block_bounds_nm": [
+        [
+          -2.5,
+          2.5
+        ],
+        [
+          -3.75,
+          3.75
+        ],
+        [
+          0,
+          7.5
+        ]
+      ],
+      "notch_bounds_nm": [
+        [
+          0,
+          2.5
+        ],
+        [
+          -1.25,
+          1.25
+        ],
+        [
+          2.5,
+          5
+        ]
+      ],
+      "cells": [
+        8,
+        6,
+        8
+      ],
+      "step_nm": 1.25
+    },
+    "materials": {
+      "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "si_n": [
+        0.99396854453,
+        0.00435380777
+      ]
+    },
+    "incidence": {
+      "grazing_deg": 1.0,
+      "azimuth_deg": 0.0,
+      "polarization": "s",
+      "amplitude": 1.0,
+      "background": "layered"
+    },
+    "finite_element": {
+      "family": "N1curl",
+      "cell": "hexahedron",
+      "degree": 3,
+      "operator_quadrature_degree": 15
+    },
+    "boundary": {
+      "floquet_xy": true,
+      "dtn": "complete original auto_propagating Fourier-DtN",
+      "pml": false
+    },
+    "near_zero": {
+      "vector_denominator": "max(norm(reference), 1e-12*nonzero natural scale)",
+      "E_natural_scale": "incident amplitude 1 times sqrt(domain volume in nm^3)",
+      "scaled_curl_natural_scale": "same incident E scale",
+      "selected_E_scale": 1.0,
+      "selected_H_code_scale": 1.0,
+      "port_scale": "incident ordered amplitude norm",
+      "report_absolute_and_denominator": true,
+      "phase_fit": false
+    }
+  },
+  "native_identity": {
+    "mesh_coordinates_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+    "cell_tags_sha256": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+    "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e"
+  },
+  "files": {
+    "native": {
+      "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/native.npz",
+      "sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215"
+    },
+    "moments_q30": {
+      "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/moments_q30.npz",
+      "sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5"
+    },
+    "moments_q60": {
+      "path": "benchmarks/artifacts/task42extra/v30/v30_wave_checks/moments_q60.npz",
+      "sha256": "849f5bdebb5767dfdbedb005360196b1fddb1aa45db3bd3a3f121c2d1a6f9a56"
+    }
+  },
+  "reference": {
+    "path": "benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+    "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+  },
+  "gram": {
+    "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+    "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+  },
+  "point_batch": 512,
+  "cell_batch": 8,
+  "initial_core_normalization": "NOT_USED_EXACT_XAVIER_OR_NORMAL",
+  "neural_architecture": [
+    1,
+    16,
+    16,
+    [
+      48,
+      384,
+      48
+    ]
+  ],
+  "activation": "sin,sin,linear",
+  "real_parameters": {
+    "fttnn": 9072,
+    "chebtt": 9120
+  },
+  "chebyshev_degrees": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18
+  ],
+  "network_quadrature": [
+    30,
+    60
+  ],
+  "volume_DtN_degree": 15,
+  "training": {
+    "metric": "native_euc",
+    "from_zero": true,
+    "hidden_real_parameters": 912,
+    "reference_used_for_training": false,
+    "features_reference_exposed": false,
+    "benchmark_previously_seen": true,
+    "design_informed_by_reference_diagnostics": true,
+    "pde_only_solve": true,
+    "production_initialization_allowed": false
+  },
+  "limits": {
+    "rounds": 6,
+    "visits": 18,
+    "LSMR_iterations": 5400,
+    "route_seconds": 5400,
+    "total_seconds": 28800,
+    "final_reserve_seconds": 1800
+  },
+  "ordinary_default_changed": false,
+  "old_wave_family_closed": true,
+  "teacher_and_old_weights_forbidden": true,
+  "campaign": "V42_BLOCH_ENVELOPE_FTT",
+  "mapping_kind": "factored_exact_moments",
+  "core_solver": {
+    "method": "LSMR",
+    "damp": 0,
+    "atol": 1e-08,
+    "btol": 1e-08,
+    "conlim": 1000000000000.0,
+    "maxiter": 300
+  },
+  "hidden_solver": {
+    "method": "LBFGS",
+    "lr": 1,
+    "history_size": 10,
+    "line_search": "strong_wolfe",
+    "max_iter": 10,
+    "max_eval": 20,
+    "tolerance_grad": 1e-07,
+    "tolerance_change": 1e-09,
+    "actual_call_limit": 20
+  },
+  "axis_orders": [
+    [
+      2,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      2
+    ]
+  ],
+  "stagnation": {
+    "minimum_complete_rounds": 2,
+    "consecutive_rounds": 2,
+    "relative_round_improvement_below": 0.001,
+    "native_above": 0.01
+  },
+  "validation": {
+    "native_target": 1e-08,
+    "continuation_target_if_scalar_validation_fails": 1e-10
+  },
+  "authority": "docs/task042extra_feinn_5nm/review_report_v41.md",
+  "validation_used_for_stopping": true,
+  "production_initialization_allowed": false,
+  "phase_definition": {
+    "wavevector_nm_inverse": [
+      1.2564456695248023,
+      0.0,
+      0.0
+    ],
+    "origin_nm": [
+      0.0,
+      0.0,
+      3.75
+    ],
+    "coordinate_unit": "physical_nm",
+    "sign": 1,
+    "unfolded_incident_wavevector": true,
+    "phase_applied": "before_complete_moments_and_Piola",
+    "MPC_expansion_count": 1,
+    "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+    "sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+  },
+  "scalar_stopping_rules": {
+    "round2": "stop if native>0.5 and scattered_E>0.5 and scattered_H>0.5",
+    "round4": "continue iff all three<=0.1 OR native<=native_round2/2 and E,H<=0.2",
+    "feedback": "scalars_only"
+  }
+}

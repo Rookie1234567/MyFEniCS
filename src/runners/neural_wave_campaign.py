@@ -30,7 +30,7 @@ def source_gate():
 def window(spec=None):
     profile = profile_paths(spec or {})
     data = json.loads(profile["window"].read_text())
-    budget = {31: 86400, 32: 57600, 33: 43200, 34: 57600, 35: 14400, 36: 21600, 38:28800,39:43200,40:14400,41:43200}.get((spec or {}).get("campaign_version"), 172800)
+    budget = {31: 86400, 32: 57600, 33: 43200, 34: 57600, 35: 14400, 36: 21600, 38:28800,39:43200,40:14400,41:43200,42:28800}.get((spec or {}).get("campaign_version"), 172800)
     if data["budget_s"] != budget or not data["single_window"]:
         raise ValueError("V30_SINGLE_48H_WINDOW_IDENTITY_FAILED")
     if abs(data["deadline_monotonic"] - data["origin_monotonic"] - budget) > 1e-5:
@@ -40,7 +40,7 @@ def window(spec=None):
 
 def stage_deadline(spec, allocation, campaign):
     """Preserve the original window and leave time for full frozen-field gates."""
-    if spec.get("campaign_version") in (36, 38, 39, 40, 41):
+    if spec.get("campaign_version") in (36, 38, 39, 40, 41, 42):
         return min(allocation["deadline_monotonic"], campaign["deadline_monotonic"]-1800), 1800
     if spec.get("campaign_version") == 35:
         deadline = min(allocation["deadline_monotonic"], campaign["deadline_monotonic"]-1800)
@@ -259,7 +259,7 @@ def durable(spec, *, origin, attempt=1):
         management_supervised=True,
         allowed_scope=scope,
         socket_directory=root / "sockets"
-        if spec.get("campaign_version") in (32,33,34,35,36,38,39,40,41)
+        if spec.get("campaign_version") in (32,33,34,35,36,38,39,40,41,42)
         else None,
     )
 
@@ -336,6 +336,8 @@ def launch(spec):
             "ftt_checks", "ftt_train", "ftt_reconstruct", "ftt_compare", "ftt_fit_compare",
             "ftt_factored_checks", "ftt_factored_benchmark", "ftt_independent_compare",
             "ftt_capacity_checks", "ftt_interior_tensor",
+            "bloch_ftt_checks", "bloch_ftt_compare", "BLOCH_FTTNN_CORE_LEARNED",
+            "BLOCH_FTTNN_CORE_FROZEN", "BLOCH_CHEBTT_CORE_CONTROL",
             "ftt_core_checks", "ftt_core_compare", "FTTNN_CONDITIONAL_CORE_LEARNED",
             "FTTNN_CONDITIONAL_CORE_FROZEN", "CHEBTT_CONDITIONAL_CORE_CONTROL",
         )
@@ -355,7 +357,7 @@ def launch(spec):
                 resource_observation_cost,
             )
 
-            if spec.get("campaign_version") in (31, 32, 33, 34, 35, 36, 38, 39, 40, 41):
+            if spec.get("campaign_version") in (31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42):
                 from src.runners.block_wave_admission import (
                     stable_window as qualified_stability,
                 )
@@ -560,12 +562,17 @@ def launch(spec):
                     production_initialization_allowed=False, pde_only_solver_qualified=False,
                     official_candidate_results=False, new_training_count=0,
                     global_Gram_factor_count=0, Gsolve_count=0, global_Maxwell_factor_count=0)
-            if spec.get("campaign_version") == 41:
-                from src.runners.ftt_core_worker import CHAIN
+            if spec.get("campaign_version") in (41, 42):
+                if spec["campaign_version"] == 42:
+                    from src.runners.ftt_bloch_worker import CHAIN
+                else:
+                    from src.runners.ftt_core_worker import CHAIN
                 manifest["binding_source_files"].update({p:digest(ROOT/p) for p in CHAIN})
                 manifest.update(reference_used_for_training=False, features_reference_exposed=False,
                     benchmark_previously_seen=True, design_informed_by_reference_diagnostics=True,
-                    pde_only_solve=spec["role"] not in ("ftt_core_checks", "ftt_core_compare"),
+                    pde_only_solve=spec["role"] not in ("ftt_core_checks", "ftt_core_compare", "bloch_ftt_checks", "bloch_ftt_compare"),
+                    validation_used_for_stopping=spec["campaign_version"] == 42,
+                    phase_definition=json.loads(profile["design"].read_text()).get("phase_definition"),
                     production_initialization_allowed=False, pde_only_solver_qualified=False,
                     official_candidate_results=False, global_Gram_factor_count=0,
                     Gsolve_count=0, global_Maxwell_factor_count=0)
@@ -584,7 +591,7 @@ def launch(spec):
                 str(ticks(os.getpid())),
                 sys.executable,
                 "-m",
-                "src.runners.ftt_core_worker" if spec.get("campaign_version")==41 else "src.runners.ftt_capacity_worker" if spec.get("campaign_version")==40 else "src.runners.ftt_structure_worker" if spec.get("campaign_version")==39 else "src.runners.ftt_worker" if spec.get("campaign_version")==38 else "src.runners.neural_wave_worker",
+                "src.runners.ftt_bloch_worker" if spec.get("campaign_version")==42 else "src.runners.ftt_core_worker" if spec.get("campaign_version")==41 else "src.runners.ftt_capacity_worker" if spec.get("campaign_version")==40 else "src.runners.ftt_structure_worker" if spec.get("campaign_version")==39 else "src.runners.ftt_worker" if spec.get("campaign_version")==38 else "src.runners.neural_wave_worker",
                 str(directory.relative_to(ROOT)),
             ]
             result = supervise(

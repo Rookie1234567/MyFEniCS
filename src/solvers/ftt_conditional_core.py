@@ -17,16 +17,24 @@ class CoreBudgetStop(Exception):
 
 
 def axis_features(model, axis, normalized):
-    """Real scalar features, including NN bias, in the actual output order."""
+    """Output features including bias; opt-in physical phase also covers K.
+
+    Ordinary features stay real. The Bloch adapter makes them complex, so an
+    active replacement never bypasses the phase attached to model.core.
+    """
     with torch.no_grad():
         x = torch.as_tensor(normalized, dtype=torch.float64).reshape(-1)
         if model.model_kind == "fttnn":
             h = model.cores[axis][:-1](x[:, None])
-            return torch.cat((h, torch.ones_like(h[:, :1])), 1).numpy()
-        terms = [torch.ones_like(x), x]
-        for _ in range(2, 19):
-            terms.append(2 * x * terms[-1] - terms[-2])
-        return torch.stack(terms, 1).numpy()
+            features = torch.cat((h, torch.ones_like(h[:, :1])), 1)
+        else:
+            terms = [torch.ones_like(x), x]
+            for _ in range(2, 19):
+                terms.append(2 * x * terms[-1] - terms[-2])
+            features = torch.stack(terms, 1)
+        if hasattr(model, "core_phase"):
+            features = features * model.core_phase(axis, x)[:, None]
+        return features.numpy()
 
 
 def output_coefficients(model, axis, *, gradient=False):

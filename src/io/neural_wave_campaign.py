@@ -31,7 +31,7 @@ STAGES = {
 
 
 def profile_paths(spec):
-    if spec.get("campaign_version") in (31, 32, 33, 34, 35, 36, 38, 39, 40, 41):
+    if spec.get("campaign_version") in (31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42):
         version = spec["campaign_version"]
         root = ROOT / f"tmp/task42extra/v{version}"
         return dict(
@@ -39,7 +39,7 @@ def profile_paths(spec):
             window=root / "batch_window.json",
             design=ROOT / f"input/task042extra_feinn_5nm/design_v{version}.json",
             artifacts=ROOT / f"benchmarks/artifacts/task42extra/v{version}",
-            reserve=1800 if version in (33, 34, 35, 36, 38, 39, 40, 41) else 3600,
+            reserve=1800 if version in (33, 34, 35, 36, 38, 39, 40, 41, 42) else 3600,
         )
     return dict(
         root=ROOT / "tmp/task42extra/v30",
@@ -67,6 +67,9 @@ def load_wave(path):
         data = tomllib.loads(raw.decode())
     except (UnicodeError, tomllib.TOMLDecodeError) as error:
         raise InputError(str(error)) from error
+    if data.get("schema_version") == 12:
+        from src.io.ftt_bloch_campaign import load_bloch
+        return load_bloch(path, data, raw)
     if data.get("schema_version") == 11:
         from src.io.ftt_core_campaign import load_core
         return load_core(path, data, raw)
