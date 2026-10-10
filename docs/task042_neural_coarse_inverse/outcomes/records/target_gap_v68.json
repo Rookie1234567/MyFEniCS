@@ -1,0 +1,20 @@
+{
+  "status": "FINITE_L5_COMPLETED",
+  "formal_equation_pass": true,
+  "direct_target_pass": false,
+  "joint_increment_pass": {
+    "L4F_L5": false,
+    "P6_L5": false
+  },
+  "inherited_target_gap": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/target_gap_v67.json",
+    "sha256": "44c0efd857d9d8dbff34857e78f31c52d96ed4567293e9f0a613fed8f804c5a5"
+  },
+  "historical_M4_p4_mode_pass_not_inherited_by_p5": true,
+  "continuum_accuracy": false,
+  "target_2TB48h": false,
+  "NN20": false,
+  "no_new_target_mesh_vectors_operator_or_training": true,
+  "unknown_target_factor_fill_iterations_complete_N1": "unknown",
+  "unique_next_pilot": "下一pilot只检验一个可证伪原因：P6/L5超门差异是否集中在材料/缺口界面邻域，使用本次保存逐cell差分、原分母及240点位置作独立区域归因；复用已资格求值与checker，不新factor、不再原样增加p/h/M。它消除精度来源不明的blocker，不解决全局LU扩展问题。"
+}

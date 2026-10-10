@@ -1,0 +1,80 @@
+{
+  "review_commit": "9934973deeed79d9dfc6aa40a69902960f191ef9",
+  "review_blob": "e83f0d50a6c6cd40822f8db81546d64087336ae3",
+  "review_sha256": "999b16d8249e360bb28baf0d2f9c6f9636670f5580cf9dca5c27ea155fbc471d",
+  "original_base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "intake_HEAD": "6216525665b49dac6dfd4e7d4eb9db50770122a5",
+  "post_ff_HEAD": "9934973deeed79d9dfc6aa40a69902960f191ef9",
+  "running_source": "dda480bd6d2cb532aefd7875c1d69d874dbd6841",
+  "canonical": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "origin": "git@github-myfenics:Rookie1234567/MyFEniCS.git",
+  "upstream": "origin/task42_neural_coarse_inverse",
+  "first_work": {
+    "first_utc": "2026-10-09T23:28:25.119741+00:00",
+    "first_monotonic": 1513499.980629371,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_seconds": 43200,
+    "heavy_stop_utc": "2026-10-10T10:28:25.119741+00:00",
+    "delivery_deadline_utc": "2026-10-10T11:28:25.119741+00:00",
+    "science_loaded_seconds_cap": 36000,
+    "l5_case_seconds_cap": 28800,
+    "repair_seconds_cap": 7200
+  },
+  "qualified_test_receipt": "tmp/task042/v68/aux_pre_03/tests.json",
+  "old_windows_closed": true,
+  "read_only_parent_namespace": "v67",
+  "read_only_parent_role": "PREPARE",
+  "unqualified_old_numeric_not_recovered": true,
+  "utc": "2026-10-09T23:44:13.763613+00:00",
+  "monotonic": 1514448.624504547,
+  "run_sources_by_run": [
+    {
+      "role": "pre",
+      "source_sha": "cb15da53bdba9e8cd1dd66296353a05a66f05551",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v68/aux_pre_01",
+      "classification": "MONITORING_FAILED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "cb15da53bdba9e8cd1dd66296353a05a66f05551",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v68/aux_pre_02",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "dda480bd6d2cb532aefd7875c1d69d874dbd6841",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v68/aux_pre_03",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "PREFLIGHT",
+      "source_sha": "dda480bd6d2cb532aefd7875c1d69d874dbd6841",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v68_l5_resume_preflight_20261009T234346743196Z",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "SOLVE_COMPLETE",
+      "source_sha": "dda480bd6d2cb532aefd7875c1d69d874dbd6841",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v68_l5_solve_complete_20261009T234704216345Z",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "VERIFY_COST",
+      "source_sha": "dda480bd6d2cb532aefd7875c1d69d874dbd6841",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v68_compare_verify_cost_20261010T012709593791Z",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "source_sha": "dda480bd6d2cb532aefd7875c1d69d874dbd6841",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v68/aux_post_collect01",
+      "classification": "COMPLETED"
+    }
+  ],
+  "plan": {
+    "path": "input/task042_neural_coarse_inverse/durable_l5_v68.json",
+    "sha256": "198954c97db244a06d21cfd86fab31a920393f4f84d1cc1dbd4a15ce06f473c9"
+  },
+  "final_document_source_before_delivery": "dda480bd6d2cb532aefd7875c1d69d874dbd6841"
+}

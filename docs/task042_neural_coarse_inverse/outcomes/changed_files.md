@@ -1,3 +1,11 @@
+# V68最小执行链与薄恢复接入
+
+durable_l5_scope/study只绑定V67健康p5父K、当前窗口及返回场状态；既有完整tetra求解数学未改。durable_stop_events与原subreaper增加opt-in的停止前原子证据，短工具轮询不等于任务截止；原PSI/RSS/swap门保持。run_case/port_preparation只注册三项V68 one-run。collect_durable_l5复用原式与原场比较，不复制solver。
+
+源/运行/文档身份分开；新factor实际一次，不声称旧未完成factor可恢复。新raw/向量ignored，六导航历史后缀逐字保留，旧报告/失败账不改。[按依赖分组](records/selective_merge_manifest_v68.json) · [原始源绑定](records/source_bindings_v68.json) · [真实身份](records/authority_identity_v68.json)。未获merge/production默认许可。
+
+---
+
 # V67增量与依赖组
 
 薄local_p_mode_scope/study及5个dat扩展现有完整tetra prepare/solve/保存消费者；p5/q13-q15由真实spec取得，M4明确指向V66 p4体K。runner接线只新增opt-in namespace，数学核和默认资源门不变。

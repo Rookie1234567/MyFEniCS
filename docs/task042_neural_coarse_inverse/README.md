@@ -1,3 +1,13 @@
+# 当前入口：V68同一L5已持久完成
+
+已完成同一冻结25576tet/p5/828的0.7nm真实三维NOTCH完整场，保留全部内部未知量、完整双周期及开放边界；没有静态凝聚或神经训练。formal独立原式3.35489e-10通过1e-6门，严格direct1e-10仍FAIL。 L4F/L5散射E/H=3.53386e-4/3.61018e-4；P6/L5=1.14449e-4/1.23013e-4，240点最大分别1.81996e-3/9.56042e-4，均超1e-4。两固定分母均FAIL，功率/物理通道通过不覆盖场差。
+
+prepared-start完整T_N1=5955.676415s，L5采样树峰129.562199GiB、实际最大gap1.001985s、swap0；父PREPARE12095.119184s及旧143中断区间继续计费。fresh匹配冷N1/生产比unknown，原尺寸/连续精度/2TB48h/NN20未授。
+
+[回应](response_v68.md) · [完整结果](outcomes/durable_l5_completion_v68.md) · [空间比较](outcomes/records/paired_results_v68.json) · [费用](outcomes/records/resource_costs_final_v68.json) · [同离散参照](outcomes/records/discrete_reference_contract_v68.json)。清场closed、同分支push后暂停，不通知邻窗。
+
+---
+
 # 当前入口：V67局部p5与独立模式对照
 
 M4已完成25576tet/p4/1188全部物理输出及独立审核，formal2.2723991e-10；828→1188双分母模式增量PASS。L5已保存p5 K及两列原作用见证，但numeric外部SIGTERM未返回场，原因unknown，本轮两次numeric额度已用完。未授连续/原尺寸/2TB48h/NN20。

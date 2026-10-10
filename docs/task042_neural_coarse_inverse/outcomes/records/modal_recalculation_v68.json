@@ -1,0 +1,21 @@
+{
+  "rows": [
+    {
+      "role": "L5",
+      "parent_array_sha256": "604ce3bff79c0cfc9f04fd0de2cbc88b399eed5c9153fcc3345a1a95a2d5b6ce",
+      "mode_json_sha256": "5c0959b61dcc8125f5545d7445e4d4749df842607b64e4a03eb4f52e8b3b20cd",
+      "count": 828,
+      "expected_mode_count": 828,
+      "max_operation_scaled_coordinate_and_power_defect": 7.327471962526033e-15,
+      "totals_defect": 7.882583474838611e-15,
+      "incident_power_defect": 2.255140518769849e-16,
+      "energy_from_all_actual_modes_and_volume": 4.267471792607225e-12,
+      "recomputed_R": 0.07621855922691262,
+      "recomputed_T": 0.9056651611299471,
+      "pass_gate": true
+    }
+  ],
+  "new_FE_calls": 0,
+  "original_power_function_calls": 0,
+  "complete_inventory_checked": true
+}

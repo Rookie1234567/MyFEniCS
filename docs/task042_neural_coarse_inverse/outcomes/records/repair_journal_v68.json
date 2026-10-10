@@ -1,0 +1,46 @@
+{
+  "entries": [
+    {
+      "id": "F1",
+      "cause": "auxiliary command lacked executable: -m was argv[0]",
+      "evidence": "tmp/task042/v68/aux_pre_01/summary.json",
+      "classification": "ENTRY_COMMAND_NO_SCIENTIFIC_CONSUMPTION",
+      "old_source": "cb15da53bdba9e8cd1dd66296353a05a66f05551",
+      "repair": "pass python -m benchmarks.qualify_durable_l5 to original --aux command adapter",
+      "replay": "only affected lightweight final-source tests; no body/factor/solve",
+      "failed_call_seconds": 78.63675775495358,
+      "source_changed": false,
+      "original_failure_kept": true,
+      "utc": "2026-10-09T23:40:33.159392+00:00"
+    },
+    {
+      "id": "F2",
+      "cause": "successful pure-process fixture temporary directory would erase stop raw",
+      "repair": "preserve normal and explicit-stop raw folders under current supervised auxiliary",
+      "source": "dda480bd",
+      "replay": "only tiny controls/binding/schema tests; no PDE",
+      "old_controls_pass_kept": true
+    },
+    {
+      "id": "F3",
+      "cause": "one excess closing parenthesis in new ignored scalar delivery helper",
+      "evidence": "tmp/task042/v68/metadata_failure_F3/failure.json",
+      "repair": "remove unmatched parenthesis; AST parse eight ignored controls only",
+      "active_numeric_source_changed": false,
+      "no_PDE_replay": true,
+      "passed_receipt": "tmp/task042/v68/ignored_controls_parse.json"
+    },
+    {
+      "id": "F4",
+      "cause": "scalar delivery pointer incorrectly named per-aux .qualification.json; actual immutable final-source receipt is namespace qualification.json",
+      "evidence": "tmp/task042/v68/metadata_delivery01/receipt.json",
+      "repair": "bind actual final-source qualification; only rerun scalar delivery",
+      "scope": "new metadata only",
+      "existing_returned_L5_untouched": true,
+      "scientific_replay": false,
+      "partial_record_versions": "tmp/task042/v68/metadata_failure_F4"
+    }
+  ],
+  "historical_failures_preserved": true,
+  "legal_returned_L5_never_refactored": true
+}

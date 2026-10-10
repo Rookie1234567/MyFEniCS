@@ -1,0 +1,154 @@
+{
+  "historical": {
+    "classification": "HISTORICAL_SENDER_UNRESOLVED",
+    "old_record_path": "docs/task042_neural_coarse_inverse/outcomes/records/interruption_classification_v67.json",
+    "old_sha256": "18bd841881ae82ec7632b4d70a6876b97463db598d3b254be73a86185daf937d",
+    "original_classification": null,
+    "known_outer_exit": 143,
+    "inference": "No identified sender/recipient or OOM/convergence evidence; historical classification unchanged",
+    "read_scope": "Only V67 L5 receipt, last resources, launcher source and own cgroup available counters; no neighbor logs",
+    "forensics_started_utc": "2026-10-09T23:28:25.119741+00:00",
+    "finished_utc": "2026-10-09T23:33:26.977462+00:00",
+    "elapsed_from_first_seconds": 301.8577212030068,
+    "no_unresolved_name_gate": true,
+    "memory.events": "unavailable",
+    "memory.events.local": "unavailable"
+  },
+  "persistent_sessions": [
+    {
+      "role": "aux_pre01",
+      "session_id": 42525,
+      "first_yield_ms": 1000,
+      "scientific_wall_cap_seconds": 900,
+      "tool_policy": "persistent exec session; polls preserve live job; no command timeout argument",
+      "utc": "2026-10-09T23:38:35.972683+00:00",
+      "monotonic": 1514110.833569654
+    },
+    {
+      "role": "aux_pre03",
+      "session_id": 29266,
+      "first_yield_ms": 1000,
+      "poll_keeps_same_supervised_job": true,
+      "utc": "2026-10-09T23:42:22.710952+00:00"
+    },
+    {
+      "role": "PREFLIGHT",
+      "session_id": 8556,
+      "first_yield_ms": 1000,
+      "scientific_role_cap_seconds": 1800,
+      "tool_timeout_seconds": null,
+      "policy": "polling existing persistent session; no launch restart",
+      "utc": "2026-10-09T23:44:13.763613+00:00"
+    },
+    {
+      "role": "SOLVE_COMPLETE",
+      "session_id": 19416,
+      "first_yield_ms": 1000,
+      "scientific_case_cumulative_cap_seconds": 28800,
+      "tool_timeout_seconds": null,
+      "polling_keeps_job": true,
+      "utc": "2026-10-09T23:47:09.485670+00:00",
+      "monotonic": 1514624.346559941
+    },
+    {
+      "role": "VERIFY_COST",
+      "session_id": 59809,
+      "first_yield_ms": 1000,
+      "scientific_role_cap_seconds": 10800,
+      "tool_timeout_seconds": null,
+      "new_factor": 0,
+      "new_solve": 0,
+      "polling_keeps_job": true,
+      "utc": "2026-10-10T01:27:16.656189+00:00",
+      "monotonic": 1520631.517078649
+    }
+  ],
+  "control_receipt": {
+    "path": "tmp/task042/v68/aux_pre_03/control_fixtures/control_receipt.json",
+    "sha256": "52dcdfd457565dfaed1ced312a2bbce5c501dc4040d0ebe3e3b233bf7918f3a7"
+  },
+  "final_qualification": {
+    "path": "tmp/task042/v68/qualification.json",
+    "sha256": "f5160ba85776107acc98fe6f74f5dd52e66a0de6e8ed93ead51d182e1aa2cd61"
+  },
+  "control_raw_files": [
+    {
+      "path": "tmp/task042/v68/aux_pre_03/control_fixtures/control_receipt.json",
+      "sha256": "52dcdfd457565dfaed1ced312a2bbce5c501dc4040d0ebe3e3b233bf7918f3a7"
+    },
+    {
+      "path": "tmp/task042/v68/aux_pre_03/control_fixtures/explicit_stop/resources.jsonl",
+      "sha256": "567bcfc0f0a0a96f358b1f108a2d529b30f9bd698919cc82b0d883cd478161db"
+    },
+    {
+      "path": "tmp/task042/v68/aux_pre_03/control_fixtures/explicit_stop/stop_events.jsonl",
+      "sha256": "5227f11f9b45733fd3c9a3c95582733f75d5af818346b431e9573dc05f47065b"
+    },
+    {
+      "path": "tmp/task042/v68/aux_pre_03/control_fixtures/explicit_stop/summary.json",
+      "sha256": "4c7cd70eeb7a757c94d6ce805623f01bb5ace7cbb5127a44628ada6cc8a005c7"
+    },
+    {
+      "path": "tmp/task042/v68/aux_pre_03/control_fixtures/explicit_stop/worker.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tmp/task042/v68/aux_pre_03/control_fixtures/normal/resources.jsonl",
+      "sha256": "390eb6a5c00eab3ae4961b2b3bd9670cdd2cde5d11ecdf43122e6b82ea5f538a"
+    },
+    {
+      "path": "tmp/task042/v68/aux_pre_03/control_fixtures/normal/stop_events.jsonl",
+      "sha256": "5f0c60511bce338c5e3868ae2d8d84628e46589c19196889e349989fabb14e4b"
+    },
+    {
+      "path": "tmp/task042/v68/aux_pre_03/control_fixtures/normal/summary.json",
+      "sha256": "4869c60bdd47f363889c9586ce713c46b9df230b86a8b7d33304e8be223e97fd"
+    },
+    {
+      "path": "tmp/task042/v68/aux_pre_03/control_fixtures/normal/worker.log",
+      "sha256": "1a50242e64b31d085fbdaaafc1d6dc71b29fbe0308cb6f08ee0ed795734ddaa5"
+    }
+  ],
+  "durable_stop_events": [
+    {
+      "path": "tmp/task042/v68/PREFLIGHT_one_run01/outer_stop_events.jsonl",
+      "sha256": "2469ec07cd6869d19556f5baff586932c846f4a6094d0bfd1da769e22b09d552"
+    },
+    {
+      "path": "tmp/task042/v68/SOLVE_COMPLETE_one_run01/outer_stop_events.jsonl",
+      "sha256": "c460d51c95d75e10b2a5c12c1346d6010b658e3a4fb9aaee24a760607c59b4e1"
+    },
+    {
+      "path": "tmp/task042/v68/VERIFY_COST_one_run01/outer_stop_events.jsonl",
+      "sha256": "6e88fc13943e2f7ff963a70ccf6cc52a4940bfb70a4c5cab3ae4af1c6812ecd9"
+    },
+    {
+      "path": "tmp/task042/v68/aux_post_collect01/supervision/stop_events.jsonl",
+      "sha256": "7dba0346d654fcc6f60a925cc3af8d7544adee71076a0f1f981912bf826bd5f8"
+    },
+    {
+      "path": "tmp/task042/v68/aux_pre_01/supervision/stop_events.jsonl",
+      "sha256": "4fd6820e92b487f7ba17b93e9f9963c3616d50f2fcde3e2cf482bf9c7ce64d0a"
+    },
+    {
+      "path": "tmp/task042/v68/aux_pre_02/supervision/stop_events.jsonl",
+      "sha256": "09d1396fbbc2dee9305d423376a653e6931c22d79462eb1741319f356a0a86b8"
+    },
+    {
+      "path": "tmp/task042/v68/aux_pre_03/control_fixtures/explicit_stop/stop_events.jsonl",
+      "sha256": "5227f11f9b45733fd3c9a3c95582733f75d5af818346b431e9573dc05f47065b"
+    },
+    {
+      "path": "tmp/task042/v68/aux_pre_03/control_fixtures/normal/stop_events.jsonl",
+      "sha256": "5f0c60511bce338c5e3868ae2d8d84628e46589c19196889e349989fabb14e4b"
+    },
+    {
+      "path": "tmp/task042/v68/aux_pre_03/supervision/stop_events.jsonl",
+      "sha256": "c337e9f75646e3a7b74c88214c0002f276d6c7abfb0ad2adf5dfe8097c7b42cc"
+    }
+  ],
+  "received_SIGNAL_sender_requires_independent_evidence": true,
+  "no_TERM_ignored": true,
+  "short_tool_wait_is_not_scientific_deadline": true,
+  "old_closed_windows_unchanged": true
+}

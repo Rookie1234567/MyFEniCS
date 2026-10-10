@@ -1,0 +1,88 @@
+{
+  "production_default_unchanged": true,
+  "merge_approved": false,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "paths": [
+        "src/solvers/durable_l5_scope.py",
+        "src/solvers/durable_l5_study.py",
+        "src/solvers/independent_tetra_study.py"
+      ],
+      "behavior": "opt-in exact parent and returned-field guards; Maxwell/UFL/MPC/action mathematics unchanged",
+      "dependencies": [
+        "existing complete tetra prepare/solve/fields",
+        "v67 qualified p5 K",
+        "same L5 q47/q63 boundary assets"
+      ],
+      "tests": "final dda480bd 5 targeted checks and 3 dat validate",
+      "fresh_PDE_evidence": "complete L5 prepared-start and new-process q15/q63 audit",
+      "production_promotion": false
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "paths": [
+        "src/runners/durable_stop_events.py",
+        "benchmarks/subreaper_watchdog.py",
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py"
+      ],
+      "behavior": "V68 durable pre-signal events and separate tool polling/deadline; existing resource guards unchanged",
+      "dependencies": [
+        "existing subreaper",
+        "frozen UTC/monotonic/boot"
+      ],
+      "tests": "normal polling and explicit-stop raw controls",
+      "production_promotion": "separate review required"
+    },
+    {
+      "group": "checker/benchmark",
+      "paths": [
+        "benchmarks/collect_durable_l5.py",
+        "benchmarks/qualify_durable_l5.py",
+        "src/test/test_durable_l5.py"
+      ],
+      "behavior": "reuses independent PUBLIC_BASIX and saved-array checker; no factor/solve in VERIFY",
+      "dependencies": [
+        "collect_frozen_local_h",
+        "tetra_polynomial_difference",
+        "check_independent_tetra"
+      ],
+      "tests": "L5原式/51024切向面及两项双分母评分"
+    },
+    {
+      "group": "compact evidence/docs",
+      "paths": [
+        "docs/task042_neural_coarse_inverse/response_v68.md",
+        "docs/task042_neural_coarse_inverse/outcomes/durable_l5_completion_v68.md",
+        "docs/task042_neural_coarse_inverse/outcomes/records/*_v68.json"
+      ],
+      "behavior": "new measured result/cost, preserved failure bounds and six historical suffixes",
+      "tests": "one final compact documentation contract"
+    },
+    {
+      "group": "research-only",
+      "paths": [
+        "input/task042_neural_coarse_inverse/durable_l5_v68.json",
+        "input/task042_neural_coarse_inverse/v68_*.dat"
+      ],
+      "behavior": "one fixed finite L5; no continuum/target/NN/production qualification"
+    },
+    {
+      "group": "do-not-merge",
+      "paths": [
+        "tmp/task042/v68",
+        "benchmarks/artifacts/task042/v68",
+        "results/task042/task042_v68_*"
+      ],
+      "behavior": "ignored arrays, raw process logs and local control"
+    }
+  ],
+  "suggested_review_order": [
+    "stop evidence and exact parent guards",
+    "thin adapter/checker",
+    "compact evidence/docs",
+    "research inputs"
+  ],
+  "other_branches_modified": false
+}

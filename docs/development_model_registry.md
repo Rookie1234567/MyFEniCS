@@ -1,3 +1,13 @@
+# 新模型：Task042 V68完整L5
+
+| 身份 | 方法与规模 | 实际资格 | 费用 |
+|---|---|---|---|
+| 0.7nm/s7/135/真实NOTCH/25576tet/p5/828/原κ | 完整UFL、全部内部、Floquet/MUMPS；FE1943745/系统1944573；aug464436991项 | formal3.35489e-10 PASS；direct1e-10 FAIL；两空间增量FAIL；非连续真值 | prepared-start5955.676415s；采样树峰129.562199GiB；父PREPARE及失败链仍计费，匹配fresh N1 unknown |
+
+R/T/Av=0.0762185592269/0.90566516113/0.0181162796389，828模式/六场/240点完整；M4旧p4模式PASS不授给p5。无NN训练或目标/2TB48h资格。[全物理](task042_neural_coarse_inverse/outcomes/records/complete_physics_v68.json) · [离散契约](task042_neural_coarse_inverse/outcomes/records/discrete_reference_contract_v68.json) · [费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v68.json)。
+
+---
+
 # 新模型：Task042 V67 L5与M4
 
 | 模型身份 | 实际方法 | 资格 | 成本口径 |

@@ -1,3 +1,19 @@
+# V68最终定点与完整物理审核
+
+最终科学source dda480bd6d2cb532aefd7875c1d69d874dbd6841：5项父资产/返回场守卫/持久轮询与明确停止targeted检查、相关Ruff/compile及3个dat真实validate通过。两次控制累计约12.3s，原始停机前落盘和后代清场保留；无full pytest/CI/历史PDE重放。
+
+| 实际验收 | 结果与边界 |
+|---|---|
+| 同字节父p5 K和q47/q63 | v67/PREPARE只读重载；COMMIT/数学身份/旧两列资格复用；新body构建0 |
+| 一次完整L5/独立PUBLIC_BASIX q15+q63 | formal3.35489e-10 PASS；严格direct1e-10 FAIL |
+| 新进程原式/共享周期切向E | 51024面最大7.77458e-15；producer-consumer操作差0 |
+| 全828模式独立复算/体吸收 | 最大操作差7.32747e-15；能量约4.27e-12，PASS |
+| 两项保存六场/240点/通道双分母checker | L4F/L5与P6/L5的FAIL均由原数组复算，不因FAIL重求解 |
+
+[最终资格](records/execution_chain_v68.json) · [科学](records/scientific_checks_v68.json) · [模式](records/modal_recalculation_v68.json) · [修复](records/repair_journal_v68.json)。一次紧凑文档检查见[最终字节](records/documentation_checks_v68.json)；GitHub视觉NOT_VERIFIED，CI NOT_RUN。
+
+---
+
 # V67定点验证
 
 最终数值source f179d6430f7f2f3216ca5765c0eef19c5bfddcce：11项新增参数/独立parent/完整模式/收费和中断计界targeted测试、相关Ruff/compile及5项dat validate通过。仅本地测试，CI NOT_RUN；没有全库pytest或历史PDE重放。
