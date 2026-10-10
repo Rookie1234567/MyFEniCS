@@ -77,20 +77,28 @@ class ExactTetraTests(unittest.TestCase):
 
     def test_installed_PETSc_flush_preserves_capacity_before_schur_add(self):
         from petsc4py import PETSc
-        numbers={}
+        numbers={};allocation_failures={}
         for label,kind in [('FINAL',PETSc.Mat.AssemblyType.FINAL),('FLUSH',PETSc.Mat.AssemblyType.FLUSH)]:
             A=PETSc.Mat().createAIJ([3,3],nnz=3,comm=PETSc.COMM_SELF)
             for row in range(3):A.setValue(row,row,2.+1j)
             before=int(A.getInfo()['nz_allocated']);A.assemble(kind)
             after=int(A.getInfo()['nz_allocated']);numbers[label]=(before,after)
-            if label=='FLUSH':
-                A.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR,True)
+            A.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR,True)
+            try:
                 A.setValue(0,1,3.-2j,addv=PETSc.InsertMode.ADD_VALUES)
+            except PETSc.Error as exc:
+                if label!='FINAL':raise
+                self.assertIn('New nonzero',str(exc))
+                self.assertIn('malloc',str(exc))
+                allocation_failures[label]=str(exc)
+            else:
+                self.assertEqual(label,'FLUSH')
                 A.assemble();self.assertEqual(A.getValue(0,1),3.-2j)
             A.destroy()
-        self.assertLess(numbers['FINAL'][1],numbers['FINAL'][0])
         self.assertEqual(numbers['FLUSH'][1],numbers['FLUSH'][0])
-        print('installed PETSc reserved-capacity witness:',numbers)
+        self.assertEqual(set(allocation_failures),{'FINAL'})
+        print('installed PETSc allocated totals (not per-row capacity):',numbers)
+        print('installed PETSc FINAL new entry rejected, FLUSH no-allocation insert passed')
 
     def test_live_schema_memory_row_scope_and_parent_no_closed_guard(self):
         from src.io.independent_tetra_reference import load_tetra_reference
@@ -113,10 +121,13 @@ class ExactTetraTests(unittest.TestCase):
 
     def test_strict_checker_and_returns_prevent_numeric_replay(self):
         from benchmarks.collect_exact_tetra import strict_reproduction
-        p=dict(fields={'E':{'relative':5e-7}},selected={'E':7e-7},
+        names=[kind+'_'+part for part in ('total','scattered') for kind in ('E','H','curl')]
+        p=dict(fields={name:{'relative':5e-7} for name in names},selected={name:7e-7 for name in names},
             modes={'outgoing_amplitude_at_boundary_relative':2e-7,'mode_power_max_absolute':2e-10},
             power_differences={'R':2e-9},energies=[1e-7],quadrature_operation_scaled=1e-12)
-        self.assertTrue(strict_reproduction(p)['pass_gate']);p['fields']['E']['relative']=2e-6
+        self.assertTrue(strict_reproduction(p)['pass_gate']);p['fields']['E_total']['relative']=2e-6
+        self.assertFalse(strict_reproduction(p)['pass_gate'])
+        p['fields']['E_total']['relative']=5e-7;del p['selected']['curl_scattered']
         self.assertFalse(strict_reproduction(p)['pass_gate'])
         with tempfile.TemporaryDirectory() as td,patch.object(scope,'ARTIFACT',Path(td)),patch.object(scope.window,'TMP',Path(td)),patch.object(scope,'stage',return_value={'pass_gate':True}),patch.object(scope,'numeric_attempts',return_value=0):
             d=Path(td)/'returned';d.mkdir();(d/'returned_audit_pending.json').write_text(json.dumps({'role':'C5'}))

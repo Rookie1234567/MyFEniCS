@@ -12,9 +12,12 @@ from benchmarks.collect_frozen_local_h import saved_original,first_normalization
 
 def strict_reproduction(pair):
     """Recompute the stricter same-discretization limits from actual metrics."""
+    names={kind+'_'+part for part in ('total','scattered') for kind in ('E','H','curl')}
+    if set(pair.get('fields',{}))!=names or set(pair.get('selected',{}))!=names:
+        return dict(inventory_complete=False,pass_gate=False)
     values=[r['relative'] for r in pair['fields'].values()]+list(pair['selected'].values())
     finite=all(np.isfinite(x) and x>=0 for x in values)
-    result=dict(complete_fields_and_points=finite and max(values)<=1e-6,
+    result=dict(inventory_complete=True,complete_fields_and_points=finite and max(values)<=1e-6,
         complex_channels=np.isfinite(pair['modes']['outgoing_amplitude_at_boundary_relative']) and pair['modes']['outgoing_amplitude_at_boundary_relative']<=1e-6,
         powers=max(pair['power_differences'].values())<=1e-8,
         per_mode_power=pair['modes']['mode_power_max_absolute']<=1e-9,
