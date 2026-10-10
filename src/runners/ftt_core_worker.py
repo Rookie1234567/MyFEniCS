@@ -35,6 +35,34 @@ CHAIN = BASE_CHAIN + (
 )
 
 
+def install_unlabelled_firewall(design, artifact):
+    """Actually reject label opens, before any original native training load."""
+
+    def firewall(event, args):
+        if event == "open" and not training_allowed(args[0], design, artifact, False):
+            raise PermissionError("CORE_UNLABELLED_DATA_FIREWALL:" + str(args[0]))
+
+    sys.addaudithook(firewall)
+    forbidden = [
+        design["reference"]["path"],
+        design["gram"]["path"],
+        "benchmarks/artifacts/task42extra/v40/v40_interior_moment_tensor/interior_tensor.npz",
+        "benchmarks/artifacts/task42extra/v39/v39_fttnn_fit_continue/checkpoints/committed_000001.pt",
+    ]
+    records = []
+    for name in forbidden:
+        try:
+            with (ROOT / name).open("rb") as stream:
+                stream.read(0)
+        except PermissionError as error:
+            if not str(error).startswith("CORE_UNLABELLED_DATA_FIREWALL:"):
+                raise
+            records.append(dict(path=name, actual_open_rejected=True, bytes_read=0))
+        else:
+            raise ValueError("CORE_LABEL_ACTUAL_OPEN_NOT_REJECTED")
+    return records
+
+
 def subphase(directory, phase):
     manifest = json.loads((directory / "run_manifest.json").read_text())
     design = json.loads(DESIGN.read_text())
@@ -143,16 +171,15 @@ def run_stage(manifest, artifact, marker, directory):
         if not qualification["models"][spec["model_kind"]]["qualified"]:
             raise ValueError("CORE_ACTUAL_NEW_OPERATOR_NOT_QUALIFIED")
 
-        def firewall(event, args):
-            if event == "open" and not training_allowed(
-                args[0], design, artifact, False
-            ):
-                raise PermissionError("CORE_UNLABELLED_DATA_FIREWALL:" + str(args[0]))
-
-        sys.addaudithook(firewall)
+        label_checks = install_unlabelled_firewall(design, artifact)
         marker(
             "training_file_firewall_installed",
-            dict(reference_allowed=False, fit_allowed=False, V40_tensor_allowed=False),
+            dict(
+                reference_allowed=False,
+                fit_allowed=False,
+                V40_tensor_allowed=False,
+                actual_open_negative_checks=label_checks,
+            ),
         )
     from src.solvers.feinn_native import load_native
 
@@ -214,7 +241,7 @@ def run_stage(manifest, artifact, marker, directory):
         official_candidate_results=False,
         pde_only_solver_qualified=False,
     )
-    return run_core_training(
+    result = run_core_training(
         action,
         packet,
         model,
@@ -224,6 +251,8 @@ def run_stage(manifest, artifact, marker, directory):
         marker,
         learned=spec["role"] == "FTTNN_CONDITIONAL_CORE_LEARNED",
     )
+    result["label_firewall_actual_open_negative_checks"] = label_checks
+    return result
 
 
 def main():

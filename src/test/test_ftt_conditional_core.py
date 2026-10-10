@@ -327,3 +327,24 @@ def test_actual_hidden_transaction_and_fixed_outputs(mode, monkeypatch, tmp_path
         assert all(torch.equal(model.state_dict()[k], before[k]) for k in before)
     for axis in range(3):
         assert np.array_equal(output_coefficients(model, axis), outputs[axis])
+
+
+def test_actual_label_opens_rejected_in_isolated_process():
+    import subprocess
+    import sys
+
+    code = """
+import json
+from src.runners.ftt_core_worker import install_unlabelled_firewall, DESIGN, ART, ROOT
+d=json.loads(DESIGN.read_text())
+r=install_unlabelled_firewall(d,ART/'test_firewall')
+assert len(r)==4 and all(x['actual_open_rejected'] and x['bytes_read']==0 for x in r)
+with (ROOT/d['files']['native']['path']).open('rb') as f:
+    assert f.read(0)==b''
+print(json.dumps(r))
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stderr
+    assert len(json.loads(result.stdout)) == 4
