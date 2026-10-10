@@ -11,16 +11,17 @@ from .hcurl_assembly_time_condensation import _orient_cell_tensor
 
 
 def packed_cell_coefficients(packed,cell_type):
-    """Bind the single all-cell integral, including live topology kernel 0.
+    """Bind the sole cell integral after checking UFCx's all-cell domain.
 
-    The qualified C++ ABI keys include (type, id, kernel_index); older public
-    Python annotations still describe two entries. Both explicit versions
-    are checked, never a first-dictionary-item/material fallback.
+    The live DOLFINx 0.10 pack.h allocates (type, integral_index), so its
+    sole integral is (cell, 0), although UFCx's domain id is -1. Older
+    domain-id keys are explicit alternatives. Row/material checks remain
+    mandatory; no first-dictionary-item or material fallback is used.
     """
     keys=list(packed)
     if len(keys)!=1:raise ValueError('single all-cell coefficient inventory: '+repr(keys))
     key=keys[0]
-    if (len(key) not in (2,3) or key[0]!=cell_type or key[1]!=-1
+    if (len(key) not in (2,3) or key[0]!=cell_type or key[1] not in (-1,0)
             or len(key)==3 and key[2]!=0):raise ValueError('all-cell DG0 topology kernel 0: '+repr(keys))
     return np.ascontiguousarray(packed[key],dtype=np.complex128),key
 
@@ -37,7 +38,8 @@ class TetraCellKernel:
             self.compiled=fem.form(form,jit_options={'cache_dir':__import__('os').environ['FFCX_CACHE_DIR']})
         a=self.compiled;uf=a.ufcx_form;self.ffi=a.module.ffi
         begin,end=[int(uf.form_integral_offsets[i]) for i in (0,1)]
-        if end-begin!=1 or int(uf.form_integral_ids[begin])!=-1 or int(uf.num_coefficients)!=1:
+        if (end-begin!=1 or int(uf.form_integral_ids[begin])!=-1 or int(uf.num_coefficients)!=1
+                or a.num_integrals(fem.IntegralType.cell,0)!=1):
             raise ValueError('single all-cell DG0 coefficient domain required')
         self.kernel=uf.form_integrals[begin].tabulate_tensor_complex128
         self.coefficients,coefficient_key=packed_cell_coefficients(fem.pack_coefficients(a),fem.IntegralType.cell)

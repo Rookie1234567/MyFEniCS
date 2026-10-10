@@ -17,10 +17,11 @@ class AssemblyPacketTests(unittest.TestCase):
         from src.solvers.tetra_cell_kernel import packed_cell_coefficients
         from dolfinx import fem
         values=np.array([[1.+.17j],[2.-.2j]])
-        for key in [(fem.IntegralType.cell,-1),(fem.IntegralType.cell,-1,0)]:
+        for key in [(fem.IntegralType.cell,0),(fem.IntegralType.cell,-1),(fem.IntegralType.cell,-1,0)]:
             a,k=packed_cell_coefficients({key:values},fem.IntegralType.cell)
             np.testing.assert_array_equal(a,values);self.assertEqual(k,key)
-        for packed in [{(fem.IntegralType.cell,3,0):values},
+        for packed in [{(fem.IntegralType.cell,1):values},
+                       {(fem.IntegralType.cell,3,0):values},
                        {(fem.IntegralType.cell,-1,1):values},
                        {(fem.IntegralType.cell,-1,0):values,(fem.IntegralType.cell,3,0):values}]:
             with self.assertRaises(ValueError):packed_cell_coefficients(packed,fem.IntegralType.cell)
