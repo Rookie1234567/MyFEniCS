@@ -13,6 +13,18 @@ from src.solvers.scattering_anchor import save_arrays
 
 
 class AssemblyPacketTests(unittest.TestCase):
+    def test_packed_coefficient_kernel_key_not_first_item(self):
+        from src.solvers.tetra_cell_kernel import packed_cell_coefficients
+        from dolfinx import fem
+        values=np.array([[1.+.17j],[2.-.2j]])
+        for key in [(fem.IntegralType.cell,-1),(fem.IntegralType.cell,-1,0)]:
+            a,k=packed_cell_coefficients({key:values},fem.IntegralType.cell)
+            np.testing.assert_array_equal(a,values);self.assertEqual(k,key)
+        for packed in [{(fem.IntegralType.cell,3,0):values},
+                       {(fem.IntegralType.cell,-1,1):values},
+                       {(fem.IntegralType.cell,-1,0):values,(fem.IntegralType.cell,3,0):values}]:
+            with self.assertRaises(ValueError):packed_cell_coefficients(packed,fem.IntegralType.cell)
+
     def fixture(self,root):
         rng=np.random.default_rng(7000);n=140;m=40;nt=110
         raw=rng.normal(size=(n,n))+1j*rng.normal(size=(n,n))+200*np.eye(n)

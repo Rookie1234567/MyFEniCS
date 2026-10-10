@@ -10,6 +10,21 @@ import numpy as np
 from .hcurl_assembly_time_condensation import _orient_cell_tensor
 
 
+def packed_cell_coefficients(packed,cell_type):
+    """Bind the single all-cell integral, including live topology kernel 0.
+
+    The qualified C++ ABI keys include (type, id, kernel_index); older public
+    Python annotations still describe two entries. Both explicit versions
+    are checked, never a first-dictionary-item/material fallback.
+    """
+    keys=list(packed)
+    if len(keys)!=1:raise ValueError('single all-cell coefficient inventory: '+repr(keys))
+    key=keys[0]
+    if (len(key) not in (2,3) or key[0]!=cell_type or key[1]!=-1
+            or len(key)==3 and key[2]!=0):raise ValueError('all-cell DG0 topology kernel 0: '+repr(keys))
+    return np.ascontiguousarray(packed[key],dtype=np.complex128),key
+
+
 class TetraCellKernel:
     def __init__(self,setup,journal):
         from dolfinx import fem
@@ -25,7 +40,7 @@ class TetraCellKernel:
         if end-begin!=1 or int(uf.form_integral_ids[begin])!=-1 or int(uf.num_coefficients)!=1:
             raise ValueError('single all-cell DG0 coefficient domain required')
         self.kernel=uf.form_integrals[begin].tabulate_tensor_complex128
-        self.coefficients=np.ascontiguousarray(fem.pack_coefficients(a)[(fem.IntegralType.cell,-1)],dtype=np.complex128)
+        self.coefficients,coefficient_key=packed_cell_coefficients(fem.pack_coefficients(a),fem.IntegralType.cell)
         self.constants=np.ascontiguousarray(fem.pack_constants(a),dtype=np.complex128)
         cfg=setup['cfg'];table={cfg.tags.air:cfg.eps_air,cfg.tags.substrate:cfg.eps_substrate,cfg.tags.grating:cfg.eps_grating}
         tags=setup['data'].cell_tags.values
@@ -40,6 +55,7 @@ class TetraCellKernel:
             form='inner(Ckappa(u),Ckappa(v))/mu-k0^2*eps*inner(u,v)',
             implementation='FFCx_complex128_packed_DG0_tetra_cell',compiled_code_sha256=hashlib.sha256(code.encode()).hexdigest(),
             coefficients_sha256=hashlib.sha256(self.coefficients.tobytes()).hexdigest(),num_coefficients=int(uf.num_coefficients),
+            coefficient_integral_key=[str(coefficient_key[0]),*coefficient_key[1:]],
             num_constants=int(uf.num_constants),full_body_assemble_matrix=0)
 
     def coordinates(self,c,*,translated=False):
