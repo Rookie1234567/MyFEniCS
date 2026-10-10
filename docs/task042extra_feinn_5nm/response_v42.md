@@ -89,3 +89,11 @@ loaded-packet路线实测、可复用准备、研发历史和冷N=1分开。必�
 [相位与资格](outcomes/records/conditional_operator_qualification_v42.json)、[三路线/初态](outcomes/records/conditional_core_routes_v42.json)、[内层逐次CSV](outcomes/records/conditional_inner_solver_v42.csv)、[隐藏及轮次](outcomes/records/hidden_updates_and_rounds_v42.json)、[隔离标量分流](outcomes/records/isolated_scalar_continuation_v42.json)、[完整Gate/分母/区域](outcomes/records/full_numerical_gates_v42.json)、[四类40复通道](outcomes/records/full_40_complex_channels_v42.csv)、[六点复场](outcomes/records/six_point_complex_fields_v42.csv)、[功率](outcomes/records/power_and_energy_v42.csv)、[通道/范数定义](outcomes/records/channel_and_norm_definitions_v42.json)、[run/source/hash](outcomes/records/run_index_v42.json)、[资源](outcomes/records/resource_costs_v42.json)、[tests](outcomes/records/tests_v42.json)、[修复](outcomes/records/repair_log_v42.json)。[端到端用途与保存态复读](outcomes/records/end_to_end_research_use_v42.json)。大数组和完整检查点留ignored，均hash-bound。
 
 [专题](outcomes/bloch_envelope_ftt_v42.md)。只提交推送本分支，最终准确HEAD/base、显式tracking、ahead/behind、clean及锁/自身清场在发布收据和最终答复核对。有限GitHub实际呈现与本地结构检查分开，网页失败不授视觉PASS或触发健康数值重做。完成后等待review，不通知其他窗口或自动开下一批。
+
+<!-- V42_FINAL_PUBLICATION_TAIL -->
+
+有限实际页面检查结果：NOT_VERIFIED_GITHUB_SERVICE_ERROR：三个固定提交页均实际目视到GitHub服务错误页，未显示任务正文、公式或表格；有限检查到此停止；具体可见范围、失败和未覆盖页尾见呈现记录。本地完整文本解析与浏览器目视分开，截图产生不授全页PASS。初始结果发布为ff797df38b9da8a35b1b7621e4b121a70264398f；此尾段只补费用和呈现，不改变已冻结数值源码或原数组。
+
+正式attempt合计9203.933928824961s保持；numeric自身同时树采样峰910639104B；包含轻检查/浏览器后串行各阶段峰最大910639104B，两种口径不混称。自身swap/OOC0，成功60s准入、解析、修复和发布都计入原唯一28800s窗。未保留的精确准备时间、项目历史精确累计和完整冷N=1仍UNKNOWN。最终准确Git、锁/自身清场及最后窗口观察保存在ignored delivery_receipt.json和最终答复，不为自引用SHA重开窗口。
+
+[实际页面范围](outcomes/records/render_check_v42.json)、[发布尾账](outcomes/records/publication_tail_v42.json)。

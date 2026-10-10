@@ -6,12 +6,12 @@
       "scope": "complete new selected page",
       "result": {
         "path": "docs/task042extra_feinn_5nm/response_v42.md",
-        "sha256": "2813ca844ebb79b2e8b8769f84dbe9245f987f5068a970bef3f04c16a5d4bc11",
+        "sha256": "f5a294387fb9905ec09caf3e72ed33a8efbee2c60e882305c638cde96148a13b",
         "checked_scope": "entire page",
         "markdown_tables": 1,
         "parsed_tables": 1,
         "math_fences": 0,
-        "links": 16
+        "links": 18
       }
     },
     {
@@ -19,12 +19,12 @@
       "scope": "complete new selected page",
       "result": {
         "path": "docs/task042extra_feinn_5nm/outcomes/bloch_envelope_ftt_v42.md",
-        "sha256": "24eed2d776529b24bb50c8156ef799186190ee09f76efe3d0e6f4fd5e10bb1d3",
+        "sha256": "3436848508d66e2b11cbc31e091efe716ea69bed5db14f67fee66758a788f92c",
         "checked_scope": "entire page",
         "markdown_tables": 1,
         "parsed_tables": 1,
         "math_fences": 1,
-        "links": 15
+        "links": 17
       }
     },
     {
@@ -121,5 +121,5 @@
   ],
   "historical_sections_byte_preserved": true,
   "scope": "new response/topic/current sections only; no historical rerender",
-  "GitHub_visual_status": "PENDING_FINITE_ACTUAL_VIEW_NOT_LOCAL_PARSER_PASS"
+  "GitHub_visual_status": "NOT_VERIFIED_GITHUB_SERVICE_ERROR\uff1a\u4e09\u4e2a\u56fa\u5b9a\u63d0\u4ea4\u9875\u5747\u5b9e\u9645\u76ee\u89c6\u5230GitHub\u670d\u52a1\u9519\u8bef\u9875\uff0c\u672a\u663e\u793a\u4efb\u52a1\u6b63\u6587\u3001\u516c\u5f0f\u6216\u8868\u683c\uff1b\u6709\u9650\u68c0\u67e5\u5230\u6b64\u505c\u6b62"
 }
