@@ -1,0 +1,52 @@
+{
+  "status": "SETTLED_CLOSED",
+  "returned_full_finite_fields": [
+    "L5"
+  ],
+  "formal_equation_pass": {
+    "L5": true
+  },
+  "direct_target_pass": {
+    "L5": false
+  },
+  "current_charged_conservative_seconds": 7749.925793242569,
+  "current_known_lower_seconds": 7147.522087242569,
+  "historical_known_lower_seconds": 284912.85381104285,
+  "research_known_cumulative_lower_seconds": 292060.3758982854,
+  "research_historical_lower_plus_current_conservative_seconds": 292662.77960428543,
+  "deployment": {
+    "L5": {
+      "prepared_start_complete_seconds": 5955.676414642017,
+      "T_N1_scope": "one case process startup through complete independent original audit, six fields/240 points/828 modes/power/volume/provenance/IO and descendant cleanup; activation already completed",
+      "body_parent_namespace": "v67",
+      "body_parent_role": "PREPARE",
+      "read_only_exact_parent": true,
+      "q47_q63_reused_from_same_L5": true,
+      "parent_prepare_complete_seconds": 12095.119183719857,
+      "recorded_prepare_plus_success_subtotal_seconds": 18050.795598361874,
+      "original_qualification_cost": "inside V67 failed call bounds; not assigned a fabricated zero or counted twice",
+      "process_boundaries": "parent PREPARE plus V68 SOLVE_COMPLETE are separate measured processes, not a continuous fresh cold N1",
+      "exact_matched_fresh_N1_seconds": null,
+      "OS_JIT_cache_not_cleared": true,
+      "old_failed_call_bounds_seconds": [
+        1432.0739093529992,
+        2057.882138
+      ],
+      "prepare_plus_success_plus_old_failed_call_bounds_seconds": [
+        19482.869507714873,
+        20108.677736361875
+      ],
+      "historical_sender": "HISTORICAL_SENDER_UNRESOLVED",
+      "prior_sender_or_oom_or_nonconvergence_not_inferred": true,
+      "saved_new_process_L5_checker_in_research_verify": true,
+      "research_comparisons_not_in_prepared_start_N1": true
+    }
+  },
+  "peak_sampled_tree_bytes": 139116351488,
+  "max_gap_seconds": 2.024832734139636,
+  "old_failures_NOT_RUN_closed_preserved": true,
+  "NN20": false,
+  "target_2TB48h": false,
+  "closed": true,
+  "active": null
+}

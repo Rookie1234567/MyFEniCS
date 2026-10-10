@@ -179,6 +179,66 @@
       "descendants_cleared": true,
       "peak_bytes": 4184190976,
       "swap_bytes": 0
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v68/aux_post_collect01",
+      "source_sha": "dda480bd6d2cb532aefd7875c1d69d874dbd6841",
+      "before_clock": {
+        "start_utc": "2026-10-09T23:28:25.119741+00:00",
+        "start_monotonic": 1513499.980629371,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 39600,
+        "total_limit_seconds": 43200,
+        "scientific_loaded_limit_seconds": 36000,
+        "review_commit": "9934973deeed79d9dfc6aa40a69902960f191ef9",
+        "contract_HEAD": "9934973deeed79d9dfc6aa40a69902960f191ef9",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "observed_utc": "2026-10-10T01:37:53.323774+00:00",
+        "observed_monotonic": 1521268.184641188,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 7768.204033136368,
+        "heavy_remaining_seconds": 31831.795966863632,
+        "total_remaining_seconds": 35431.79596686363
+      },
+      "elapsed_seconds": 17.838530388195068,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 415764480,
+      "swap_bytes": 0
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v68/aux_post_documents01",
+      "source_sha": "b542f69425c07f1c50efa7e17c8038deabaa4347",
+      "before_clock": {
+        "start_utc": "2026-10-09T23:28:25.119741+00:00",
+        "start_monotonic": 1513499.980629371,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 39600,
+        "total_limit_seconds": 43200,
+        "scientific_loaded_limit_seconds": 36000,
+        "review_commit": "9934973deeed79d9dfc6aa40a69902960f191ef9",
+        "contract_HEAD": "9934973deeed79d9dfc6aa40a69902960f191ef9",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "observed_utc": "2026-10-10T01:44:01.608535+00:00",
+        "observed_monotonic": 1521636.469401534,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 8136.4887936115265,
+        "heavy_remaining_seconds": 31463.511206388474,
+        "total_remaining_seconds": 35063.51120638847
+      },
+      "elapsed_seconds": 3.2099946341477334,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 129146880,
+      "swap_bytes": 0
     }
   ],
   "pointers": {
@@ -309,5 +369,8 @@
       "scope": "full supervised auxiliary launch through cleanup; activation already completed"
     }
   },
-  "rejected_entries": []
+  "rejected_entries": [],
+  "closed_at_final_settlement": true,
+  "active": null,
+  "final_snapshot_includes_collection_and_documentation": true
 }
