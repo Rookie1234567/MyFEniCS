@@ -16,7 +16,7 @@ V21 沿用同一 Task40 执行分支和固定窗口，只在现有 V20 保存几
 
 单模式 known-state forward 仍保留 top 负结果：`1.488391772882517e-11 > 1e-11`；bottom 为 `9.173378724262687e-12`。新 generated B/D 与保存 V20 candidate vectors 的比较不是独立 q30 full-row B/D checker；边界 witness 的 global cell/facet/class 连接也未建立。HDF5 文件 SHA 已记录，但 dataset 未读。
 
-执行者最终定向回归为 15 passed（0.16 s）；主控收口后在最终 solver source 上联合复跑 p6/streamed 两个测试文件为 28 passed（129.61 s）；此前兼容性小组为 3 passed、2 deselected（0.26 s）。E2 partial recheck 是 raw event readback，不是 FE/PDE；完整命令和身份见 [V21 test summary](test_summary.md) 与 [targeted test receipt](records/targeted_tests_v21.json)。工作树在 HEAD `75273597809d2876f091a222b678f3af6756725c` 上留有未提交改动，未 commit/push。旧 V20 总账和所有历史失败记录保留在下文。
+执行者最终定向回归为 15 passed（0.16 s）；主控收口后在最终 solver source 上联合复跑 p6/streamed 两个测试文件为 28 passed（129.61 s）；此前兼容性小组为 3 passed、2 deselected（0.26 s）。E2 partial recheck 是 raw event readback，不是 FE/PDE；完整命令和身份见 [V21 test summary](test_summary.md) 与 [targeted test receipt](records/targeted_tests_v21.json)。执行者在父 HEAD `75273597809d2876f091a222b678f3af6756725c` 上留下待主控审查的未提交改动；主控随后集中提交并推送到同一分支。V21 未启动 E2、原尺寸 PDE 或其他 heavy worker。旧 V20 总账和所有历史失败记录保留在下文。
 
 ## 固定窗口主控只读 sample
 

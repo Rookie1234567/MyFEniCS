@@ -5335,7 +5335,7 @@
     "response": "docs/task40extra_0p7nm_engineering/response_v21.md",
     "branch": "task40extra_0p7nm_engineering",
     "worktree_head": "75273597809d2876f091a222b678f3af6756725c",
-    "working_tree_state": "modified_uncommitted_no_commit_no_push",
+    "working_tree_state": "PRE_CONTROLLER_COMMIT_MODIFIED_UNCOMMITTED_AT_EVIDENCE_CAPTURE; controller commit/push completed afterward",
     "target_port_inventory": {
       "path": "docs/task40extra_0p7nm_engineering/outcomes/records/target_port_inventory_v21.json",
       "sha256": "2fabb29f30fa79267aa0e2235bb0ca5f668f9048906e475f25995e8af0b1ec2c",
@@ -5558,8 +5558,8 @@
       }
     },
     "documentation_files_sha256": {
-      "docs/task40extra_0p7nm_engineering/response_v21.md": "d6195c93861956e492ec192c41a0b04e00a70799875f141ae01d1ebddbae56b9",
-      "docs/task40extra_0p7nm_engineering/outcomes/summary.md": "80acef12c22a534a1eea555a8da3b85d960211ee4935d34aa565226ed6a25bf5",
+      "docs/task40extra_0p7nm_engineering/response_v21.md": "49ef89a8db6b263d5875c4f57dc0cac3c6fe2ac540d7d80a7e3dced39dc06ca6",
+      "docs/task40extra_0p7nm_engineering/outcomes/summary.md": "374e71cbb26c72dd922aa91d24aef95529ad1964e3bed518b028285ccb017756",
       "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md": "b4eaf55a1675909f56cdf89449c7b7bb3a05a281d26081f5e48c2859074e23b4",
       "docs/task40extra_0p7nm_engineering/README.md": "017752d3caa88759a695530f283f62f369811dd555d3881faab41750043a99f1",
       "docs/development_progress.md": "ff8b903b85835c374ccde9a7c63d832109c4d46a947d33077bac31b1058c29bd",
