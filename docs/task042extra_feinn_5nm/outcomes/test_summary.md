@@ -1,3 +1,17 @@
+<!-- TASK42EXTRA_V40_CURRENT_BEGIN -->
+# 当前V40：28项小fixture与真实FE内部矩资格
+
+| 最终相关检查 | 实际结果 | 数值边界 |
+|---|---|---|
+| 新容量/保存checker fixture | 28 passed；Ruff/compileall PASS | 已知复秩8/12、Bessel、轴/共轭/分母/删列、更新JSON后的原J/rank/margin/hash/用途损坏拒绝 |
+| 原生Basix内部泛函 | 原入口与q30 packet逐位匹配，独立转换/积分通过 | 首次不同默认variant失败完整保留，定向修复后继续 |
+| 原参考内部矩 / 全E范数 | 7.43e-15 / 2.71e-15相对配对 | 不是新的PDE或全场Gate |
+| 完整谱与固定函数 | 154完整奇异值、三对象全列保留、独立saved checker通过 | actual FE certificate未通过，不授solver PASS |
+
+[tests](records/tests_v40.json)、[原资格与桥接](records/interior_moment_bridge_v40.json)、[checker](records/saved_capacity_checker_v40.json)、[修复](records/repair_log_v40.json)。无full pytest、环境重装、旧benchmark/参考/全场重跑或CI声明。所有历史原文和失败保留。
+
+<!-- TASK42EXTRA_V40_CURRENT_END -->
+
 <!-- TASK42EXTRA_V39_CURRENT_BEGIN -->
 # 当前V39：完整矩结构等价、真实恢复及数值失败分别验收
 

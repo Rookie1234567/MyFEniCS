@@ -1,0 +1,890 @@
+{
+  "schema": "task42extra.v40.interior-bridge.v1",
+  "qualification": {
+    "algebra": {
+      "qualified": true,
+      "known_rank8": {
+        "ranks": [
+          8,
+          64,
+          8
+        ],
+        "components": {
+          "x": [
+            {
+              "axis": 0,
+              "rank": 8,
+              "tail_norm": 5.359186177612513e-16,
+              "perturbation_norm": 2.2937958532748104e-15,
+              "conservative_tail_norm": 0.0
+            },
+            {
+              "axis": 1,
+              "rank": 64,
+              "tail_norm": 0.0,
+              "perturbation_norm": 2.4583516252650887e-15,
+              "conservative_tail_norm": 0.0
+            },
+            {
+              "axis": 2,
+              "rank": 8,
+              "tail_norm": 5.442370112638559e-16,
+              "perturbation_norm": 2.422617885340901e-15,
+              "conservative_tail_norm": 0.0
+            }
+          ],
+          "y": [
+            {
+              "axis": 0,
+              "rank": 8,
+              "tail_norm": 4.705957239426113e-16,
+              "perturbation_norm": 2.4904392255112908e-15,
+              "conservative_tail_norm": 0.0
+            },
+            {
+              "axis": 1,
+              "rank": 64,
+              "tail_norm": 0.0,
+              "perturbation_norm": 2.1896200623047753e-15,
+              "conservative_tail_norm": 0.0
+            },
+            {
+              "axis": 2,
+              "rank": 8,
+              "tail_norm": 4.688608151428156e-16,
+              "perturbation_norm": 2.3572345815966697e-15,
+              "conservative_tail_norm": 0.0
+            }
+          ],
+          "z": [
+            {
+              "axis": 0,
+              "rank": 8,
+              "tail_norm": 5.145470915352629e-16,
+              "perturbation_norm": 2.253590047676815e-15,
+              "conservative_tail_norm": 0.0
+            },
+            {
+              "axis": 1,
+              "rank": 64,
+              "tail_norm": 0.0,
+              "perturbation_norm": 2.2888249490898895e-15,
+              "conservative_tail_norm": 0.0
+            },
+            {
+              "axis": 2,
+              "rank": 8,
+              "tail_norm": 6.347658732422574e-16,
+              "perturbation_norm": 2.485003295605704e-15,
+              "conservative_tail_norm": 0.0
+            }
+          ]
+        },
+        "denominator_full_scattered_E": 4.898979485566356,
+        "conservative_relative_lower_estimate": 0.0,
+        "numerical_margin": 1e-08,
+        "E_gate": 0.0001,
+        "exceeds_gate_and_margin": false,
+        "same_component_axis_aggregation": "MAX_NOT_SUM",
+        "physical_component_aggregation": "SUM_ENERGIES",
+        "floating_point_diagnostic_not_interval_proof": true
+      },
+      "known_rank12": {
+        "ranks": [
+          8,
+          64,
+          8
+        ],
+        "components": {
+          "x": [
+            {
+              "axis": 0,
+              "rank": 8,
+              "tail_norm": 2.0,
+              "perturbation_norm": 0.0,
+              "conservative_tail_norm": 2.0
+            },
+            {
+              "axis": 1,
+              "rank": 64,
+              "tail_norm": 0.0,
+              "perturbation_norm": 0.0,
+              "conservative_tail_norm": 0.0
+            },
+            {
+              "axis": 2,
+              "rank": 8,
+              "tail_norm": 2.0,
+              "perturbation_norm": 0.0,
+              "conservative_tail_norm": 2.0
+            }
+          ],
+          "y": [
+            {
+              "axis": 0,
+              "rank": 8,
+              "tail_norm": 2.0,
+              "perturbation_norm": 0.0,
+              "conservative_tail_norm": 2.0
+            },
+            {
+              "axis": 1,
+              "rank": 64,
+              "tail_norm": 0.0,
+              "perturbation_norm": 0.0,
+              "conservative_tail_norm": 0.0
+            },
+            {
+              "axis": 2,
+              "rank": 8,
+              "tail_norm": 2.0,
+              "perturbation_norm": 0.0,
+              "conservative_tail_norm": 2.0
+            }
+          ],
+          "z": [
+            {
+              "axis": 0,
+              "rank": 8,
+              "tail_norm": 2.0,
+              "perturbation_norm": 0.0,
+              "conservative_tail_norm": 2.0
+            },
+            {
+              "axis": 1,
+              "rank": 64,
+              "tail_norm": 0.0,
+              "perturbation_norm": 0.0,
+              "conservative_tail_norm": 0.0
+            },
+            {
+              "axis": 2,
+              "rank": 8,
+              "tail_norm": 2.0,
+              "perturbation_norm": 0.0,
+              "conservative_tail_norm": 2.0
+            }
+          ]
+        },
+        "denominator_full_scattered_E": 6.0,
+        "conservative_relative_lower_estimate": 0.5773502691896257,
+        "numerical_margin": 1e-08,
+        "E_gate": 0.0001,
+        "exceeds_gate_and_margin": true,
+        "same_component_axis_aggregation": "MAX_NOT_SUM",
+        "physical_component_aggregation": "SUM_ENERGIES",
+        "floating_point_diagnostic_not_interval_proof": true
+      },
+      "wrong_conjugate_negative_relative": 1.336357995432623,
+      "disjoint_component_Bessel_energy": 24.000000000000007,
+      "full_reference_energy_including_orthogonal_remainder": 27.000000000000007,
+      "no_bridge_negative": "NO_VALID_FE_CAPACITY_CERTIFICATE",
+      "manufactured_not_PDE": true
+    },
+    "original_functionals": {
+      "qualified": true,
+      "original_functional_witnesses": [
+        {
+          "numerator": 2.2915433602300334e-14,
+          "denominator": 0.9674830603332047,
+          "relative": 2.3685617394074242e-14,
+          "full_J_used": true,
+          "trace_values_used": false,
+          "internal_dofs_from_Basix": [
+            108,
+            109,
+            110,
+            111,
+            112,
+            113,
+            114,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120,
+            121,
+            122,
+            123,
+            124,
+            125,
+            126,
+            127,
+            128,
+            129,
+            130,
+            131,
+            132,
+            133,
+            134,
+            135,
+            136,
+            137,
+            138,
+            139,
+            140,
+            141,
+            142,
+            143
+          ],
+          "target_polynomial_degrees": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ],
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              1
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ],
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              1
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ],
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              1
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              1
+            ]
+          ],
+          "target_components": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "complex_pair": 2.1303353167498925e-14,
+          "complete_q30_density_pair": 2.3965508835584665e-14,
+          "arbitrary_point_values_preserved_by_same_linear_functional": true,
+          "permutation_or_shear": false
+        },
+        {
+          "numerator": 1.7657267261270808e-14,
+          "denominator": 0.9442097048525445,
+          "relative": 1.8700578028933003e-14,
+          "full_J_used": true,
+          "trace_values_used": false,
+          "internal_dofs_from_Basix": [
+            108,
+            109,
+            110,
+            111,
+            112,
+            113,
+            114,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120,
+            121,
+            122,
+            123,
+            124,
+            125,
+            126,
+            127,
+            128,
+            129,
+            130,
+            131,
+            132,
+            133,
+            134,
+            135,
+            136,
+            137,
+            138,
+            139,
+            140,
+            141,
+            142,
+            143
+          ],
+          "target_polynomial_degrees": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ],
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              1
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ],
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              1
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ],
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              1
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              1
+            ]
+          ],
+          "target_components": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "complex_pair": 1.6373805293812655e-14,
+          "complete_q30_density_pair": 1.9055440094822006e-14,
+          "arbitrary_point_values_preserved_by_same_linear_functional": true,
+          "permutation_or_shear": true
+        },
+        {
+          "numerator": 2.2980555510364e-14,
+          "denominator": 0.9676172324574971,
+          "relative": 2.374963440037063e-14,
+          "full_J_used": true,
+          "trace_values_used": false,
+          "internal_dofs_from_Basix": [
+            108,
+            109,
+            110,
+            111,
+            112,
+            113,
+            114,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120,
+            121,
+            122,
+            123,
+            124,
+            125,
+            126,
+            127,
+            128,
+            129,
+            130,
+            131,
+            132,
+            133,
+            134,
+            135,
+            136,
+            137,
+            138,
+            139,
+            140,
+            141,
+            142,
+            143
+          ],
+          "target_polynomial_degrees": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ],
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              1
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ],
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              1
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ],
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              1
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              1
+            ]
+          ],
+          "target_components": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "complex_pair": 2.118888044891368e-14,
+          "complete_q30_density_pair": 2.4033566422537454e-14,
+          "arbitrary_point_values_preserved_by_same_linear_functional": true,
+          "permutation_or_shear": true
+        }
+      ],
+      "interior_owner_count": 13824,
+      "MPC_internal_independent": true,
+      "orientation_interior_trace_cross_absolute": 0.0,
+      "dual_nonunit_Floquet": {
+        "x": [
+          0.9323273456060345,
+          0.361615431964962
+        ],
+        "y": [
+          0.9171208228166051,
+          -0.3986093279844229
+        ],
+        "corner_absolute": 5.551115123125783e-17,
+        "synthetic_nonunit_not_actual_incidence": true
+      },
+      "random_pairs_not_uniform_rank_proof": true,
+      "original_q30_interpolation_bitwise_matched": true,
+      "original_FE_element_constructor": "basix.ufl.element(N1curl,hexahedron,3)",
+      "lagrange_variant": "LagrangeVariant.legendre",
+      "algebraic_density_basis": "Legendre tensor polynomial in original Basix interior dual span; Q111 survives affine component mixing",
+      "arbitrary_FTT_rank_theorem": "separate one-dimensional functional products only if original physical coordinate maps separate exactly",
+      "original_MPC_expansion_values_nonunit_count": 1152
+    },
+    "qualified": true,
+    "status": "DIAGNOSTIC_QUALIFIED"
+  },
+  "bridge": {
+    "reference_E_norm": 4.924968765995545,
+    "reference_E_energy": 24.255317346031685,
+    "interior_moment_energy": 24.070639168410057,
+    "Bessel_ratio": 0.9923860745671983,
+    "normalization": "physical L2 orthonormal cell Legendre, detJ^-1/2",
+    "independent_integral_relative": 7.428560388955924e-15,
+    "subset_independent_integral_relative": 7.0481594867009875e-15,
+    "max_functional_transform_relative": 1.9299363691978826e-14,
+    "subset_max_functional_transform_relative": 2.392427802286208e-14,
+    "original_orientation_pair_absolute": 4.944726724386461e-16,
+    "original_J_non_diagonal_max_nm": 1.922200449985251e-15,
+    "original_axis_origin_or_width_nonseparability_max_nm": 0.0,
+    "original_J_was_zeroed": false,
+    "rank_bound_transferable_to_actual_FE": false,
+    "rank_scope": "conditional Cartesian mathematical chart ONLY",
+    "rank_failure_reason": "FINITE_SAVED_J_AND_AXIS_MAP_NOT_EXACTLY_SEPARABLE_NO_UNIFORM_ALL_WEIGHT_PERTURBATION_BOUND",
+    "numerical_moment_pairing_pass": true,
+    "full_internal_test_degrees": [
+      "Q(2,1,1)",
+      "Q(1,2,1)",
+      "Q(1,1,2)"
+    ],
+    "fallback_test_degrees": "Q(1,1,1) for all three physical components",
+    "exact_fallback_row_space_for_affine_component_mixing": true,
+    "MPC_internal_owner_independent": true,
+    "interior_owner_unique_count": 13824,
+    "original_rows": 31968,
+    "cells": 384,
+    "reference_exposed": true,
+    "pde_only_solve": false,
+    "production_initialization_allowed": false,
+    "FE_assembly_count": 0,
+    "solve_count": 0,
+    "factor_count": 0,
+    "original_full_scattered_E_denominator": 4.924968765995558,
+    "full_E_norm_independent_relative": 2.7051290939118808e-15,
+    "full_E_norm_independent_pass": true,
+    "input_identity": {
+      "reference": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+        "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+      },
+      "norm_record": {
+        "path": "benchmarks/artifacts/task42extra/v39/v39_ftt_independent_compare/verifier_result.json",
+        "sha256": "13e797c71ba112829ee7d3f82eb9ef172bde9ede37419c5a6b2b8d439525981b"
+      },
+      "native_identity": {
+        "mesh_coordinates_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+        "cell_tags_sha256": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+        "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e"
+      }
+    },
+    "tensor_shapes": {
+      "x": [
+        24,
+        12,
+        16
+      ],
+      "y": [
+        16,
+        18,
+        16
+      ],
+      "z": [
+        16,
+        12,
+        24
+      ]
+    },
+    "tensor_complex128_bytes": 221184,
+    "status": "DIAGNOSTIC_BRIDGE_LIMITED",
+    "arrays": {
+      "path": "benchmarks/artifacts/task42extra/v40/v40_interior_moment_tensor/interior_tensor.npz",
+      "sha256": "80a9fbf83aa0ebedab68a508364b710d4edaeff4de4f80732a8ef869d4f6539f"
+    }
+  },
+  "independent_routes": "original FE internal coefficients vs original FE basis with independent centered-vertex geometry integral",
+  "original_all_J_entries_preserved": true,
+  "rank_bound_not_transferred_to_actual_FE": true,
+  "algebraic_separable_chart": "sum_r X(i) Y(i,j) Z(j); tensor linear moments retain x/z rank<=8, y<=64; shared16+constant y<=17",
+  "uniform_arbitrary_weight_perturbation_bound": "NOT_ESTABLISHED",
+  "common_Q111_fallback_extracted": true,
+  "common_Q111_does_not_fix_coordinate_nonseparability": true,
+  "old_full_field_gate_reexecuted": false
+}

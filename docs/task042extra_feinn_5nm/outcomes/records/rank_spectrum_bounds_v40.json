@@ -1,0 +1,625 @@
+{
+  "schema": "task42extra.v40.spectrum.v1",
+  "spectra": {
+    "x": [
+      {
+        "axis": 0,
+        "matrix_shape": [
+          24,
+          192
+        ],
+        "singular_values": [
+          0.008593229560378338,
+          0.004386534812423229,
+          0.0007798538608784166,
+          9.409798288066883e-05,
+          1.985562142554568e-05,
+          7.230871344947928e-06,
+          6.170551630269816e-06,
+          4.014499572036262e-06,
+          2.961510870105842e-06,
+          1.942976893834616e-06,
+          1.397748570265869e-06,
+          9.018924168099285e-07,
+          4.813402005049677e-07,
+          3.627216970837758e-07,
+          2.1939775677465873e-07,
+          1.3531627878639653e-07,
+          8.632061879328918e-08,
+          5.7995677163974155e-08,
+          3.845542614871684e-08,
+          2.0844123220775337e-08,
+          1.373657917886343e-08,
+          5.3810245823725346e-09,
+          2.3426895459613946e-09,
+          1.2623897262601687e-09
+        ],
+        "backward_error_numerator": 7.54352577342883e-18,
+        "backward_error_denominator": 0.009680021946837614,
+        "backward_error_relative": 7.792880857974954e-16,
+        "orthogonality_defect": 5.975684602489719e-15,
+        "truncation": "NONE_FULL_SPECTRUM",
+        "qualified": true
+      },
+      {
+        "axis": 1,
+        "matrix_shape": [
+          12,
+          384
+        ],
+        "singular_values": [
+          0.009383273641140312,
+          0.002367053115639201,
+          0.00023241779250720142,
+          5.361626928996322e-06,
+          3.6252287717969004e-06,
+          5.430295811447255e-07,
+          7.377262308371137e-14,
+          5.736820477417558e-14,
+          3.3103810302488254e-14,
+          2.6692706664156445e-14,
+          1.4268316069220085e-14,
+          7.904002466127088e-15
+        ],
+        "backward_error_numerator": 7.307669495110369e-18,
+        "backward_error_denominator": 0.00968002194683761,
+        "backward_error_relative": 7.549228230311739e-16,
+        "orthogonality_defect": 3.5278522604260522e-15,
+        "truncation": "NONE_FULL_SPECTRUM",
+        "qualified": true
+      },
+      {
+        "axis": 2,
+        "matrix_shape": [
+          16,
+          288
+        ],
+        "singular_values": [
+          0.008781719066052598,
+          0.004040803082243655,
+          0.0005026143280825342,
+          5.771781490056993e-05,
+          1.1639973596342887e-05,
+          6.1691534525409e-06,
+          3.009105546074342e-06,
+          2.3489226074960297e-06,
+          1.6745583802816959e-06,
+          1.257277507458769e-06,
+          7.020391859929641e-07,
+          2.470426355568566e-07,
+          1.21908293520641e-07,
+          5.878401099857813e-08,
+          2.868911185224605e-08,
+          1.5825256715050355e-08
+        ],
+        "backward_error_numerator": 7.38031916239767e-18,
+        "backward_error_denominator": 0.009680021946837614,
+        "backward_error_relative": 7.624279369334242e-16,
+        "orthogonality_defect": 4.7324332849486196e-15,
+        "truncation": "NONE_FULL_SPECTRUM",
+        "qualified": true
+      }
+    ],
+    "y": [
+      {
+        "axis": 0,
+        "matrix_shape": [
+          16,
+          288
+        ],
+        "singular_values": [
+          4.906014799054594,
+          0.03678018044441858,
+          0.009466831300092684,
+          0.005293921965372702,
+          0.001845215940883554,
+          0.001770734722380713,
+          0.0011614873860166161,
+          0.00015606222179606177,
+          8.169300179199997e-05,
+          3.772813881043407e-05,
+          2.4795281012347664e-05,
+          4.78417936615767e-06,
+          2.086452041537163e-06,
+          1.42709431502683e-06,
+          9.930314546448951e-07,
+          2.5631422150011515e-07
+        ],
+        "backward_error_numerator": 6.591267660027459e-15,
+        "backward_error_denominator": 4.9061654639030365,
+        "backward_error_relative": 1.3434662382511374e-15,
+        "orthogonality_defect": 3.890892987463147e-15,
+        "truncation": "NONE_FULL_SPECTRUM",
+        "qualified": true
+      },
+      {
+        "axis": 1,
+        "matrix_shape": [
+          18,
+          256
+        ],
+        "singular_values": [
+          4.906143483409354,
+          0.014210784219418992,
+          0.0036356266976893623,
+          0.0007072147196210145,
+          0.00012235600093543785,
+          8.852542422432145e-06,
+          4.728118438139975e-06,
+          8.201733258668553e-07,
+          3.614849716574446e-07,
+          4.066841549862545e-14,
+          3.9091476484011806e-14,
+          3.257056700507472e-14,
+          2.4857036767484903e-14,
+          1.736961498253435e-14,
+          1.355131003695631e-14,
+          1.1611099556909561e-14,
+          9.302183038475056e-15,
+          7.387286940218106e-15
+        ],
+        "backward_error_numerator": 2.7449468984581326e-15,
+        "backward_error_denominator": 4.906165463903033,
+        "backward_error_relative": 5.59489262776398e-16,
+        "orthogonality_defect": 3.692574282418902e-15,
+        "truncation": "NONE_FULL_SPECTRUM",
+        "qualified": true
+      },
+      {
+        "axis": 2,
+        "matrix_shape": [
+          16,
+          288
+        ],
+        "singular_values": [
+          4.906021176948597,
+          0.03526311140771819,
+          0.012558587088849544,
+          0.0029016590777105633,
+          0.0018671441691638293,
+          0.0014824806444224488,
+          0.0006441679745213241,
+          0.000210476616622291,
+          4.085330680914047e-05,
+          2.4893025038809663e-05,
+          1.289403472397692e-05,
+          8.570523824909646e-06,
+          2.5350849720173144e-06,
+          1.219219117588823e-06,
+          4.118985785637464e-07,
+          2.8280962581424054e-07
+        ],
+        "backward_error_numerator": 4.166605204655951e-15,
+        "backward_error_denominator": 4.9061654639030365,
+        "backward_error_relative": 8.49259005900152e-16,
+        "orthogonality_defect": 4.278440582569238e-15,
+        "truncation": "NONE_FULL_SPECTRUM",
+        "qualified": true
+      }
+    ],
+    "z": [
+      {
+        "axis": 0,
+        "matrix_shape": [
+          16,
+          288
+        ],
+        "singular_values": [
+          0.008995828661608,
+          0.0021093291082411154,
+          0.0007127687603297273,
+          0.00015390267825353247,
+          1.9504470020308253e-05,
+          7.700820058243172e-06,
+          3.4265022007378128e-06,
+          2.7056329177975673e-06,
+          1.4290715758640512e-06,
+          1.0319405888692918e-06,
+          6.148797456244383e-07,
+          3.2657937170055607e-07,
+          1.803511519318238e-07,
+          1.21428960558372e-07,
+          5.831176415092504e-08,
+          1.4528851059394302e-08
+        ],
+        "backward_error_numerator": 7.509833906900992e-18,
+        "backward_error_denominator": 0.009268570028168584,
+        "backward_error_relative": 8.102473071981409e-16,
+        "orthogonality_defect": 4.54613326269106e-15,
+        "truncation": "NONE_FULL_SPECTRUM",
+        "qualified": true
+      },
+      {
+        "axis": 1,
+        "matrix_shape": [
+          12,
+          384
+        ],
+        "singular_values": [
+          0.009139203668731125,
+          0.0015337124503744975,
+          0.00017039473434496058,
+          5.300639724901967e-06,
+          3.1857674643264005e-06,
+          4.203503386023364e-07,
+          1.9528798191798504e-13,
+          5.140067189562202e-14,
+          2.6150808409657532e-14,
+          1.7965808957855468e-14,
+          9.636366215368844e-15,
+          7.52707203821378e-15
+        ],
+        "backward_error_numerator": 8.26477592567375e-18,
+        "backward_error_denominator": 0.009268570028168584,
+        "backward_error_relative": 8.916991402725392e-16,
+        "orthogonality_defect": 3.5403498627495925e-15,
+        "truncation": "NONE_FULL_SPECTRUM",
+        "qualified": true
+      },
+      {
+        "axis": 2,
+        "matrix_shape": [
+          24,
+          192
+        ],
+        "singular_values": [
+          0.008954297750591247,
+          0.002302432730160561,
+          0.0006234668407668884,
+          0.0001902556318107882,
+          2.649690646602893e-05,
+          7.340235899417781e-06,
+          5.949983563283076e-06,
+          4.891703314405202e-06,
+          3.6877451334025096e-06,
+          2.4077155550422314e-06,
+          1.270625709387361e-06,
+          8.581868192137526e-07,
+          5.648532393491425e-07,
+          3.8146778442282217e-07,
+          2.025839036958421e-07,
+          1.1080942282152592e-07,
+          9.145435970048893e-08,
+          6.173062584407102e-08,
+          4.128846991323455e-08,
+          3.2617205040212065e-08,
+          1.5413466303920927e-08,
+          9.128577475537359e-09,
+          6.188021580801422e-09,
+          4.83765737700427e-09
+        ],
+        "backward_error_numerator": 7.289040665222206e-18,
+        "backward_error_denominator": 0.009268570028168584,
+        "backward_error_relative": 7.86425591333907e-16,
+        "orthogonality_defect": 5.478241783415527e-15,
+        "truncation": "NONE_FULL_SPECTRUM",
+        "qualified": true
+      }
+    ]
+  },
+  "bounds": {
+    "pure_r8": {
+      "ranks": [
+        8,
+        64,
+        8
+      ],
+      "components": {
+        "x": [
+          {
+            "axis": 0,
+            "rank": 8,
+            "tail_norm": 3.969316176116053e-06,
+            "perturbation_norm": 3.6453425927965646e-14,
+            "conservative_tail_norm": 3.9693161396626276e-06
+          },
+          {
+            "axis": 1,
+            "rank": 64,
+            "tail_norm": 0.0,
+            "perturbation_norm": 3.6453190071687323e-14,
+            "conservative_tail_norm": 0.0
+          },
+          {
+            "axis": 2,
+            "rank": 8,
+            "tail_norm": 2.2266953716332855e-06,
+            "perturbation_norm": 3.645326272135461e-14,
+            "conservative_tail_norm": 2.226695335180023e-06
+          }
+        ],
+        "y": [
+          {
+            "axis": 0,
+            "rank": 8,
+            "tail_norm": 9.350024075547412e-05,
+            "perturbation_norm": 4.3037150062219676e-14,
+            "conservative_tail_norm": 9.350024071243697e-05
+          },
+          {
+            "axis": 1,
+            "rank": 64,
+            "tail_norm": 0.0,
+            "perturbation_norm": 3.919082930065035e-14,
+            "conservative_tail_norm": 0.0
+          },
+          {
+            "axis": 2,
+            "rank": 8,
+            "tail_norm": 5.0363957109390765e-05,
+            "perturbation_norm": 4.061248760684817e-14,
+            "conservative_tail_norm": 5.036395706877828e-05
+          }
+        ],
+        "z": [
+          {
+            "axis": 0,
+            "rank": 8,
+            "tail_norm": 1.908601848294947e-06,
+            "perturbation_norm": 3.6453392236099114e-14,
+            "conservative_tail_norm": 1.908601811841555e-06
+          },
+          {
+            "axis": 1,
+            "rank": 64,
+            "tail_norm": 0.0,
+            "perturbation_norm": 3.645414717811789e-14,
+            "conservative_tail_norm": 0.0
+          },
+          {
+            "axis": 2,
+            "rank": 8,
+            "tail_norm": 4.720249387694561e-06,
+            "perturbation_norm": 3.645317144285744e-14,
+            "conservative_tail_norm": 4.720249351241389e-06
+          }
+        ]
+      },
+      "denominator_full_scattered_E": 4.924968765995558,
+      "conservative_relative_lower_estimate": 1.902619613439471e-05,
+      "numerical_margin": 1e-08,
+      "E_gate": 0.0001,
+      "exceeds_gate_and_margin": false,
+      "same_component_axis_aggregation": "MAX_NOT_SUM",
+      "physical_component_aggregation": "SUM_ENERGIES",
+      "floating_point_diagnostic_not_interval_proof": true
+    },
+    "width16": {
+      "ranks": [
+        8,
+        17,
+        8
+      ],
+      "components": {
+        "x": [
+          {
+            "axis": 0,
+            "rank": 8,
+            "tail_norm": 3.969316176116053e-06,
+            "perturbation_norm": 3.6453425927965646e-14,
+            "conservative_tail_norm": 3.9693161396626276e-06
+          },
+          {
+            "axis": 1,
+            "rank": 17,
+            "tail_norm": 0.0,
+            "perturbation_norm": 3.6453190071687323e-14,
+            "conservative_tail_norm": 0.0
+          },
+          {
+            "axis": 2,
+            "rank": 8,
+            "tail_norm": 2.2266953716332855e-06,
+            "perturbation_norm": 3.645326272135461e-14,
+            "conservative_tail_norm": 2.226695335180023e-06
+          }
+        ],
+        "y": [
+          {
+            "axis": 0,
+            "rank": 8,
+            "tail_norm": 9.350024075547412e-05,
+            "perturbation_norm": 4.3037150062219676e-14,
+            "conservative_tail_norm": 9.350024071243697e-05
+          },
+          {
+            "axis": 1,
+            "rank": 17,
+            "tail_norm": 7.387286940218106e-15,
+            "perturbation_norm": 3.919082930065035e-14,
+            "conservative_tail_norm": 0.0
+          },
+          {
+            "axis": 2,
+            "rank": 8,
+            "tail_norm": 5.0363957109390765e-05,
+            "perturbation_norm": 4.061248760684817e-14,
+            "conservative_tail_norm": 5.036395706877828e-05
+          }
+        ],
+        "z": [
+          {
+            "axis": 0,
+            "rank": 8,
+            "tail_norm": 1.908601848294947e-06,
+            "perturbation_norm": 3.6453392236099114e-14,
+            "conservative_tail_norm": 1.908601811841555e-06
+          },
+          {
+            "axis": 1,
+            "rank": 17,
+            "tail_norm": 0.0,
+            "perturbation_norm": 3.645414717811789e-14,
+            "conservative_tail_norm": 0.0
+          },
+          {
+            "axis": 2,
+            "rank": 8,
+            "tail_norm": 4.720249387694561e-06,
+            "perturbation_norm": 3.645317144285744e-14,
+            "conservative_tail_norm": 4.720249351241389e-06
+          }
+        ]
+      },
+      "denominator_full_scattered_E": 4.924968765995558,
+      "conservative_relative_lower_estimate": 1.902619613439471e-05,
+      "numerical_margin": 1e-08,
+      "E_gate": 0.0001,
+      "exceeds_gate_and_margin": false,
+      "same_component_axis_aggregation": "MAX_NOT_SUM",
+      "physical_component_aggregation": "SUM_ENERGIES",
+      "floating_point_diagnostic_not_interval_proof": true
+    },
+    "cheb19": {
+      "ranks": [
+        8,
+        19,
+        8
+      ],
+      "components": {
+        "x": [
+          {
+            "axis": 0,
+            "rank": 8,
+            "tail_norm": 3.969316176116053e-06,
+            "perturbation_norm": 3.6453425927965646e-14,
+            "conservative_tail_norm": 3.9693161396626276e-06
+          },
+          {
+            "axis": 1,
+            "rank": 19,
+            "tail_norm": 0.0,
+            "perturbation_norm": 3.6453190071687323e-14,
+            "conservative_tail_norm": 0.0
+          },
+          {
+            "axis": 2,
+            "rank": 8,
+            "tail_norm": 2.2266953716332855e-06,
+            "perturbation_norm": 3.645326272135461e-14,
+            "conservative_tail_norm": 2.226695335180023e-06
+          }
+        ],
+        "y": [
+          {
+            "axis": 0,
+            "rank": 8,
+            "tail_norm": 9.350024075547412e-05,
+            "perturbation_norm": 4.3037150062219676e-14,
+            "conservative_tail_norm": 9.350024071243697e-05
+          },
+          {
+            "axis": 1,
+            "rank": 19,
+            "tail_norm": 0.0,
+            "perturbation_norm": 3.919082930065035e-14,
+            "conservative_tail_norm": 0.0
+          },
+          {
+            "axis": 2,
+            "rank": 8,
+            "tail_norm": 5.0363957109390765e-05,
+            "perturbation_norm": 4.061248760684817e-14,
+            "conservative_tail_norm": 5.036395706877828e-05
+          }
+        ],
+        "z": [
+          {
+            "axis": 0,
+            "rank": 8,
+            "tail_norm": 1.908601848294947e-06,
+            "perturbation_norm": 3.6453392236099114e-14,
+            "conservative_tail_norm": 1.908601811841555e-06
+          },
+          {
+            "axis": 1,
+            "rank": 19,
+            "tail_norm": 0.0,
+            "perturbation_norm": 3.645414717811789e-14,
+            "conservative_tail_norm": 0.0
+          },
+          {
+            "axis": 2,
+            "rank": 8,
+            "tail_norm": 4.720249387694561e-06,
+            "perturbation_norm": 3.645317144285744e-14,
+            "conservative_tail_norm": 4.720249351241389e-06
+          }
+        ]
+      },
+      "denominator_full_scattered_E": 4.924968765995558,
+      "conservative_relative_lower_estimate": 1.902619613439471e-05,
+      "numerical_margin": 1e-08,
+      "E_gate": 0.0001,
+      "exceeds_gate_and_margin": false,
+      "same_component_axis_aggregation": "MAX_NOT_SUM",
+      "physical_component_aggregation": "SUM_ENERGIES",
+      "floating_point_diagnostic_not_interval_proof": true
+    }
+  },
+  "necessary_ranks": {
+    "0.01": {
+      "x": [
+        0,
+        0,
+        0
+      ],
+      "y": [
+        1,
+        1,
+        1
+      ],
+      "z": [
+        0,
+        0,
+        0
+      ]
+    },
+    "0.001": {
+      "x": [
+        1,
+        1,
+        1
+      ],
+      "y": [
+        4,
+        2,
+        3
+      ],
+      "z": [
+        1,
+        1,
+        1
+      ]
+    },
+    "0.0001": {
+      "x": [
+        3,
+        2,
+        3
+      ],
+      "y": [
+        7,
+        4,
+        7
+      ],
+      "z": [
+        3,
+        2,
+        3
+      ]
+    }
+  },
+  "measured_input_pair_defect_norm": 3.6445882402192215e-14,
+  "tensor_record_sha256": "fcb91fa790faf53bfdaae0f37c6b35fa0fbb6971c4b7ba8e5eb628c93755cab5",
+  "rank_scope": "conditional Cartesian mathematical chart ONLY",
+  "status": "DIAGNOSTIC_FULL_SPECTRUM_FROZEN",
+  "arrays": {
+    "path": "benchmarks/artifacts/task42extra/v40/v40_rank_and_feature_bounds/spectra.npz",
+    "sha256": "e052c5bdd85ce34e6f818c436bf00e8c9fb9a3a98430867d09cc4a2841f4b7a3"
+  },
+  "all_bounds_scope": "conditional Cartesian mathematical chart only; no original floating FE capacity exclusion",
+  "necessary_ranks_are_not_sufficient": true,
+  "numerical_interval_proof": false,
+  "complete_spectrum_csv": "capacity_spectrum_v40.csv"
+}

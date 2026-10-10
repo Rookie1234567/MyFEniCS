@@ -1,0 +1,242 @@
+{
+  "schema": "task42extra.v40.resource.v1",
+  "unique_window": {
+    "campaign": "V40_FTT_CAPACITY_DECISION",
+    "origin_utc": "2026-10-10T08:56:11+00:00",
+    "origin_monotonic": 1547565.860884965,
+    "origin_precision_s": 1,
+    "budget_s": 14400,
+    "deadline_monotonic": 1561965.860884965,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "initial_state": "NOT_STARTED_V39_COMPLETE",
+    "first_readonly_head": "45e6656a4ba55be77404b84681de07be16a2401f",
+    "numerical_PDE_or_training_authorized": false,
+    "tail_reserve_s": 1800,
+    "single_window": true,
+    "campaign_version": 40,
+    "original_origin_preserved": true
+  },
+  "collection_monotonic": 1550732.17928216,
+  "collected_elapsed_s": 3166.3183971950784,
+  "remaining_s": 11233.681602804922,
+  "final_reserve_s": 1800,
+  "stages": [
+    {
+      "stage": "v40_capacity_checks",
+      "attempt": "v40_capacity_checks_attempt1",
+      "source_sha": "392ec0bb55eb1481a62505591ca8bd7d28d33082",
+      "actual_attempt_s": 67.04614758514799,
+      "supervised_s": 3.10672345594503,
+      "cpu": 10,
+      "classification": "WORKER_FAILED",
+      "sampled_simultaneous_tree_RSS_peak_bytes": 297492480,
+      "tree_swap_peak_bytes": 0,
+      "scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "summary": {
+        "path": "tmp/task42extra/v40/durable/v40_capacity_checks_attempt1/run_summary.json",
+        "sha256": "15860f0c1331f82687b4095f367d7a10bb9dabc31cc576bee260ec8fb206f313",
+        "bytes": 13648
+      },
+      "descendant_cleanup_verified": true
+    },
+    {
+      "stage": "v40_capacity_checks",
+      "attempt": "v40_capacity_checks_attempt2",
+      "source_sha": "9066ce669aca126753190a170cdc00a6079729f8",
+      "actual_attempt_s": 67.10268666921183,
+      "supervised_s": 3.027117346879095,
+      "cpu": 1,
+      "classification": "COMPLETED",
+      "sampled_simultaneous_tree_RSS_peak_bytes": 260505600,
+      "tree_swap_peak_bytes": 0,
+      "scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "summary": {
+        "path": "tmp/task42extra/v40/durable/v40_capacity_checks_attempt2/run_summary.json",
+        "sha256": "ea4c6492b203ff28910500969468f4553b46089a0e397578bb33a3000456f2fa",
+        "bytes": 13643
+      },
+      "descendant_cleanup_verified": true
+    },
+    {
+      "stage": "v40_capacity_decision",
+      "attempt": "v40_capacity_decision_attempt1",
+      "source_sha": "a706d335d17ca534f8a36b53b33e79b9587d18b0",
+      "actual_attempt_s": 66.16283653792925,
+      "supervised_s": 2.156972649972886,
+      "cpu": 7,
+      "classification": "COMPLETED",
+      "sampled_simultaneous_tree_RSS_peak_bytes": 92131328,
+      "tree_swap_peak_bytes": 0,
+      "scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "summary": {
+        "path": "tmp/task42extra/v40/durable/v40_capacity_decision_attempt1/run_summary.json",
+        "sha256": "9dd688f552ebc130c0ae78826c127359f3ea73e904d0ca70d2300890cf7cfc5b",
+        "bytes": 12348
+      },
+      "descendant_cleanup_verified": true
+    },
+    {
+      "stage": "v40_interior_moment_tensor",
+      "attempt": "v40_interior_moment_tensor_attempt1",
+      "source_sha": "9066ce669aca126753190a170cdc00a6079729f8",
+      "actual_attempt_s": 70.50679824710824,
+      "supervised_s": 6.489130636211485,
+      "cpu": 1,
+      "classification": "COMPLETED",
+      "sampled_simultaneous_tree_RSS_peak_bytes": 260276224,
+      "tree_swap_peak_bytes": 0,
+      "scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "summary": {
+        "path": "tmp/task42extra/v40/durable/v40_interior_moment_tensor_attempt1/run_summary.json",
+        "sha256": "db81c550ffe5615ad328e0a3674943c9643ca713b63bf788a1b8a9e9c925acf7",
+        "bytes": 13668
+      },
+      "descendant_cleanup_verified": true
+    },
+    {
+      "stage": "v40_rank_and_feature_bounds",
+      "attempt": "v40_rank_and_feature_bounds_attempt1",
+      "source_sha": "9066ce669aca126753190a170cdc00a6079729f8",
+      "actual_attempt_s": 71.8122203820385,
+      "supervised_s": 7.954254089156166,
+      "cpu": 0,
+      "classification": "COMPLETED",
+      "sampled_simultaneous_tree_RSS_peak_bytes": 347017216,
+      "tree_swap_peak_bytes": 0,
+      "scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+      "summary": {
+        "path": "tmp/task42extra/v40/durable/v40_rank_and_feature_bounds_attempt1/run_summary.json",
+        "sha256": "b2aad6e93d5113fd5815b8bfb8096b8b3aa9a0a6bcd475cd0288e0d66a91056f",
+        "bytes": 12357
+      },
+      "descendant_cleanup_verified": true
+    }
+  ],
+  "bounded_light_work": [
+    {
+      "name": "checker_targeted01",
+      "summary": {
+        "path": "tmp/task42extra/v40/checker_targeted01/summary.json",
+        "sha256": "0e3d7c7bfc7add03ddcd6d13b6859073353af239eede120e1b5dad827759bd05",
+        "bytes": 1986
+      },
+      "supervised_s": 2.7366386589128524,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 116092928,
+      "tree_swap_peak_bytes": 0,
+      "scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "name": "functional_repair01",
+      "summary": {
+        "path": "tmp/task42extra/v40/functional_repair01/summary.json",
+        "sha256": "a724e6b4ddc672ec1954619ccbc65567953d2831b264dfed43aca8066bf51965",
+        "bytes": 1999
+      },
+      "supervised_s": 3.2554514708463103,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 216371200,
+      "tree_swap_peak_bytes": 0,
+      "scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "name": "inspect01",
+      "summary": {
+        "path": "tmp/task42extra/v40/inspect01/summary.json",
+        "sha256": "cca023545618ba24ecc5f4af7cb294dd55bf33d3b7c9beb831db386f475b2ad1",
+        "bytes": 1985
+      },
+      "supervised_s": 2.0295466668903828,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 70991872,
+      "tree_swap_peak_bytes": 0,
+      "scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "name": "probe01",
+      "summary": {
+        "path": "tmp/task42extra/v40/probe01/summary.json",
+        "sha256": "f6784d49e1d8051f85191c7fa3057229943acd902a4590ae85bec9bb1162cdc1",
+        "bytes": 1998
+      },
+      "supervised_s": 2.584872029023245,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 151031808,
+      "tree_swap_peak_bytes": 0,
+      "scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "name": "probe02",
+      "summary": {
+        "path": "tmp/task42extra/v40/probe02/summary.json",
+        "sha256": "9867a81575c86802e038a58f1bb895e42c2b8ee8e899c730bb6867ce8a2babbf",
+        "bytes": 1999
+      },
+      "supervised_s": 3.2555313350167125,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 200228864,
+      "tree_swap_peak_bytes": 0,
+      "scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "name": "targeted01",
+      "summary": {
+        "path": "tmp/task42extra/v40/targeted01/summary.json",
+        "sha256": "0566779086e8265a93c24094bee2794e057db0c65cb0b1aa4293e977ef9f0982",
+        "bytes": 1984
+      },
+      "supervised_s": 1.966025005094707,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 60006400,
+      "tree_swap_peak_bytes": 0,
+      "scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "name": "targeted02",
+      "summary": {
+        "path": "tmp/task42extra/v40/targeted02/summary.json",
+        "sha256": "f22b7f210e29134aab7d22a9ad59d7ccb3fe033338285880added40e8d10d4c4",
+        "bytes": 1984
+      },
+      "supervised_s": 2.556295669870451,
+      "sampled_simultaneous_tree_RSS_peak_bytes": 60182528,
+      "tree_swap_peak_bytes": 0,
+      "scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    }
+  ],
+  "formal_actual_attempt_sum_s": 342.6306894214358,
+  "completed_formal_actual_attempt_sum_s": 275.5845418362878,
+  "sampled_tree_RSS_peak_max_over_serial_stages_bytes": 347017216,
+  "RSS_scope": "maximum of separately sampled simultaneous own process-tree peaks; not summed RSS, not historical project peak",
+  "own_swap_sampled_bytes": 0,
+  "OOC_bytes": 0,
+  "successful_60s_PSI_checks_count": 12,
+  "successful_checks_in_total_wall": true,
+  "actual_resource_rejection_extra_wait_s": 0,
+  "mandatory_system_and_384GiB_growth_reserve_preserved": true,
+  "no_all_host_peak_measurement_for_Codex_tool_control": true,
+  "formal_soft_budget_s": 3600,
+  "formal_budget_transfer_required": false,
+  "historical_project_exact_cumulative_s": "UNKNOWN",
+  "previous_costs": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v39.json",
+    "sha256": "61d5609f2d51d1d010e5eacaab3aceafd9c17935e2be4df6929cef62c20df434",
+    "bytes": 16531
+  },
+  "old_failures_and_all_prefix_costs_preserved": true,
+  "complete_cold_N1_solve_cost": "UNKNOWN",
+  "same_accuracy_NN_resource_gain": "NOT_VERIFIED",
+  "core_and_small_matrix_planning_cap_bytes": 268435456,
+  "core_tensor_materialized_complex128_bytes": 221184,
+  "new_native_actions": 0,
+  "new_global_factors": 0,
+  "new_training": 0
+}

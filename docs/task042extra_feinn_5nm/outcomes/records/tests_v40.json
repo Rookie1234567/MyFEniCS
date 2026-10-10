@@ -1,0 +1,80 @@
+{
+  "schema": "task42extra.v40.tests.v1",
+  "tests": [
+    {
+      "name": "checker_targeted01",
+      "JUnit": {
+        "path": "tmp/task42extra/v40/checker_targeted01/junit.xml",
+        "sha256": "83c89a99ce404edfa0e8b22474c185d9ec073158a77ac93d1a7147b6405a7b8a",
+        "bytes": 3906
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "28",
+          "time": "0.538",
+          "timestamp": "2026-10-10T17:44:49.182454",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "targeted01",
+      "JUnit": {
+        "path": "tmp/task42extra/v40/targeted01/junit.xml",
+        "sha256": "e52dfa8efebec8c5e6f8d7b20cbdd24ee6fdf5daaffdfddd4149e9e139d60dec",
+        "bytes": 1990
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "14",
+          "time": "0.296",
+          "timestamp": "2026-10-10T17:23:39.496708",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "targeted02",
+      "JUnit": {
+        "path": "tmp/task42extra/v40/targeted02/junit.xml",
+        "sha256": "efdffb4492dcc812a3655de9467f06891d30c87fc77dd4a7637d2285487d90ac",
+        "bytes": 3018
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "21",
+          "time": "0.380",
+          "timestamp": "2026-10-10T17:26:22.066000",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    }
+  ],
+  "final_targeted_unique_cases": 28,
+  "qualifications": {
+    "path": "benchmarks/artifacts/task42extra/v40/v40_capacity_checks/result.json",
+    "sha256": "9b843cbea2a77560c752a2a1044b9b6aa0511240dcbb33c6d33a97465b4a6310",
+    "bytes": 16128
+  },
+  "Ruff_compileall_pass": true,
+  "full_repository_pytest_run": false,
+  "CI_claimed": false,
+  "scope": "new small capacity and saved checker fixture; real original functional qualification separate",
+  "source_sha_final_checker": "a706d335d17ca534f8a36b53b33e79b9587d18b0",
+  "new_page_parser_checks": "markdown_check_v40.json",
+  "saved_numeric_binding_checks": "delivery_check_v40.json",
+  "final_doc_writer_failure_preserved": "tmp/task42extra/v40/docs01/watchdog/worker.log",
+  "affected_doc_check_resume": "tmp/task42extra/v40/docs02/summary.json"
+}

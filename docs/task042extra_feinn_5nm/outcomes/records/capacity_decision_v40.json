@@ -1,0 +1,122 @@
+{
+  "status": "DIAGNOSTIC_COMPLETE",
+  "decision": "NO_VALID_FE_CAPACITY_CERTIFICATE",
+  "saved_checker": {
+    "qualified_saved_numeric_consistency": true,
+    "decision": "NO_VALID_FE_CAPACITY_CERTIFICATE",
+    "actual_FE_rank_bridge_qualified": false,
+    "conditional_chart_bounds": {
+      "pure_r8": 1.902619613439471e-05,
+      "width16": 1.902619613439471e-05,
+      "cheb19": 1.902619613439471e-05
+    },
+    "feature_bounds": {
+      "native_final": {
+        "relative_lower_estimate": 0.00011248011384573072,
+        "finite_chart_full_space_qualified": true,
+        "actual_FE_certificate": false
+      },
+      "fit_final": {
+        "relative_lower_estimate": 0.00014278568013918738,
+        "finite_chart_full_space_qualified": true,
+        "actual_FE_certificate": false
+      },
+      "chebyshev": {
+        "relative_lower_estimate": 7.540833158631825e-05,
+        "finite_chart_full_space_qualified": true,
+        "actual_FE_certificate": false
+      }
+    },
+    "SVD_checks": [
+      {
+        "component": "x",
+        "axis": 0,
+        "backward_relative": 7.792880857974954e-16,
+        "orthogonality": 5.975684602489719e-15
+      },
+      {
+        "component": "x",
+        "axis": 1,
+        "backward_relative": 7.549228230311739e-16,
+        "orthogonality": 3.5278522604260522e-15
+      },
+      {
+        "component": "x",
+        "axis": 2,
+        "backward_relative": 7.624279369334242e-16,
+        "orthogonality": 4.7324332849486196e-15
+      },
+      {
+        "component": "y",
+        "axis": 0,
+        "backward_relative": 1.3434662382511374e-15,
+        "orthogonality": 3.890892987463147e-15
+      },
+      {
+        "component": "y",
+        "axis": 1,
+        "backward_relative": 5.59489262776398e-16,
+        "orthogonality": 3.692574282418902e-15
+      },
+      {
+        "component": "y",
+        "axis": 2,
+        "backward_relative": 8.49259005900152e-16,
+        "orthogonality": 4.278440582569238e-15
+      },
+      {
+        "component": "z",
+        "axis": 0,
+        "backward_relative": 8.102473071981409e-16,
+        "orthogonality": 4.54613326269106e-15
+      },
+      {
+        "component": "z",
+        "axis": 1,
+        "backward_relative": 8.916991402725392e-16,
+        "orthogonality": 3.5403498627495925e-15
+      },
+      {
+        "component": "z",
+        "axis": 2,
+        "backward_relative": 7.86425591333907e-16,
+        "orthogonality": 5.478241783415527e-15
+      }
+    ],
+    "reference_E_norm": 4.924968765995558,
+    "Bessel_ratio": 0.9923860745671972,
+    "independent_moment_pair_relative": 7.428560388955922e-15,
+    "numerical_margin": 1e-08,
+    "no_solver_or_production_PASS": true,
+    "original_geometry_array_check": {
+      "original_moments": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/moments_q30.npz",
+        "sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5"
+      },
+      "off_axis_max_nm": 1.922200449985251e-15,
+      "axis_origin_or_width_dependence_nm": 0.0,
+      "original_arrays_recomputed_not_status_only": true
+    },
+    "original_V39_numerical_FAIL_unchanged": true,
+    "result_kind": "DIAGNOSTIC"
+  },
+  "future_training_authorized": false,
+  "next_production_candidate": "NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE",
+  "source_sha": "a706d335d17ca534f8a36b53b33e79b9587d18b0",
+  "input_sha256": "c5607ab20462f0cd2d1935b05541a329999019205225ad81aebbc3639d8ad08f",
+  "design_sha256": "f9a9195effa580af78068c5f8ec9fbe114527e4486f849813e790290be448a6b",
+  "worker_elapsed_seconds": 0.0885926519986242,
+  "result_kind": "DIAGNOSTIC",
+  "reference_exposed": true,
+  "reference_used_for_training": false,
+  "new_training_count": 0,
+  "forward_solve_count": 0,
+  "global_Maxwell_factor_count": 0,
+  "global_Gram_factor_count": 0,
+  "Gsolve_count": 0,
+  "pde_only_solve": false,
+  "production_initialization_allowed": false,
+  "pde_only_solver_qualified": false,
+  "official_candidate_results": false,
+  "full_original_target_qualified": false
+}

@@ -1,0 +1,57 @@
+{
+  "schema": "task42extra.v40.repairs.v1",
+  "rows": [
+    {
+      "root_cause": "wrong_default_Basix_internal_functional_variant",
+      "failed_attempt": "v40_capacity_checks_attempt1",
+      "failed_source": "392ec0bb55eb1481a62505591ca8bd7d28d33082",
+      "failure": "ORIGINAL_Q30_COMPLETE_FUNCTIONAL_PACKET_CHANGED",
+      "hypothesis": "direct create_element N1E uses a different default dual basis from qualified UFL N1curl",
+      "change": "use original basix.ufl.element(N1curl,hexahedron,3) constructor; do not alter stored packet",
+      "test": {
+        "path": "tmp/task42extra/v40/original_functional_repair_qualification.json",
+        "sha256": "13a54bf1d47e77e4da7cca6ad35f476ff6d2a6eeecd010b2cd9c169d3b6bf7a4",
+        "qualified": true,
+        "max_density_pair": 2.4033566422537454e-14,
+        "original_packet_bitwise_matched": true
+      },
+      "retry": "same V40 allocation attempt2 after clean fix commit",
+      "campaign_origin_preserved": true,
+      "monotonic": 1550057.578224937
+    },
+    {
+      "root_cause": "saved checker could trust geometry-summary and numerical-margin scalars",
+      "change": "independently read original immutable J/origin arrays and recompute perturbation/margin under design hash; producer tensors and spectra unchanged",
+      "test": "checker_targeted01/junit.xml: 28 passed including revised-json/geometry/hash/rank/margin corruptions",
+      "resume": "only independent v40_capacity_decision; no healthy producer replay"
+    },
+    {
+      "root_cause": "literal LaTeX braces parsed as f-string interpolation in ignored document writer",
+      "failure": "docs01 SyntaxError, no numerical or document producer data replaced",
+      "change": "move formula to raw literal substituted into document",
+      "test": "py_compile of ignored writer/checker; docs02 affected-page rerun only",
+      "resume": "publication only, healthy numerical payloads remain unchanged"
+    }
+  ],
+  "first_formal_failure": {
+    "path": "benchmarks/artifacts/task42extra/v40/v40_capacity_checks/failure_v40_capacity_checks_attempt1.json",
+    "sha256": "581d8c3e42adfa917ae25f64f65e38b8fe5da92208f2a30fbea06581ad3edcab",
+    "bytes": 995
+  },
+  "old_failed_wrong_variant_interpolation_pair": {
+    "path": "tmp/task42extra/v40/probe_q30_result.json",
+    "sha256": "b8b02815225ff59ac2800779c26bf29feb9404ea32f538f77713373af36b8a45",
+    "bytes": 522
+  },
+  "verified_local_functional_repair": {
+    "path": "tmp/task42extra/v40/original_functional_repair_qualification.json",
+    "sha256": "13a54bf1d47e77e4da7cca6ad35f476ff6d2a6eeecd010b2cd9c169d3b6bf7a4",
+    "bytes": 9073
+  },
+  "pre_formal_development": [
+    "inspect.py shadowed standard inspect; renamed ignored probe before numerical work",
+    "unused imports / compound statements found by Ruff, fixed before clean implementation",
+    "local subset integral variable overwritten spotted and repaired before formal"
+  ],
+  "healthy_tensor_spectra_and_reference_recomputed_for_checker": false
+}

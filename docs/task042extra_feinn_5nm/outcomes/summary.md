@@ -1,3 +1,24 @@
+<!-- TASK42EXTRA_V40_CURRENT_BEGIN -->
+# 当前V40：完整容量判别与有限裁决
+
+本支只做神经。Review V39授权的真实内部矩、完整谱、固定隐藏函数和独立保存checker已完成，**NO_VALID_FE_CAPACITY_CERTIFICATE**。原FE系数/独立积分配对7.42856038896e-15、完整范数复核2.70512909391e-15；但原J非对角1.92220044999e-15nm未被清零，没有任意权重扰动界，因此不能宣布原r8空间不可能或足够。
+
+| DIAGNOSTIC；原M5/5nm/384hex/p3/N31968/40端口 | 条件性Cartesian实际数字 | 正确限定 |
+|---|---:|---|
+| 纯r8 / 宽16 / Cheb19秩尾下估计 | 1.90261961344e-05 | 必要条件低于1e-4，未排除不是PASS |
+| native / fit固定隐藏特征下估计 | 0.000112480113846 / 0.000142785680139 | 超1e-4但近相关；80位有限核查不授原FP64/FE排除 |
+| 固定Cheb19下估计 | 7.54083315863e-05 | 低于门仍不授求解PASS |
+| 全部奇异值 / 实际内部矩字节 | 154 / 221184B | 全谱无截断，大数组ignored |
+| 5正式attempt含失败 / 同时自身树RSS峰 | 342.630689421s / 347017216B | 单核math1、swap/OOC0；总研发/发布按14400s原窗另列 |
+
+V39原M5联合FAIL、r8/native-EUC固定流程关闭不改；64/78倍仅映射收益。当前没有受支持的新增神经生产候选，不自动训练或开V41；新PDE/训练/A/G作用/全局因子均0。原50×25×140nm、Si17/120nm、λ0.7完整3D FE、decimal2e12B/ownswap OOC0/172800s目标未达；FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED。历史M3600较好、最终退化、D0成本否决/D1未运行、所有负结果/UNKNOWN和费用保留。
+
+[回执](../response_v40.md)、[专题](ftt_capacity_decision_v40.md)、[全谱/必要秩](records/rank_spectrum_bounds_v40.json)、[特征](records/frozen_feature_bounds_v40.json)、[成本](records/resource_costs_v40.json)
+
+下方完整历史原文保留；历史“当前/下一步”不构成新运行授权。
+
+<!-- TASK42EXTRA_V40_CURRENT_END -->
+
 <!-- TASK42EXTRA_V39_CURRENT_BEGIN -->
 # 当前V39：等价映射提速与原神经求解失败分列
 

@@ -1,3 +1,19 @@
+<!-- TASK42EXTRA_V40_CURRENT_BEGIN -->
+# V40变更按依赖组：容量诊断不是production求解器
+
+| 依赖组 | 新文件 / 最小变化 | 数值、测试和合入边界 |
+|---|---|---|
+| production numerical/core | 普通默认没有变化 | 未授production PASS或merge；M5原解FAIL保持 |
+| research-only | src/solvers/ftt_capacity.py、ftt_interior_bridge.py、ftt_feature_capacity.py、ftt_capacity_checks.py | 原保存FE内部矩/小SVD/冻结函数的必要条件；完整数据已取得，实际FE桥接LIMITED |
+| reusable runner/watchdog | ftt_capacity_campaign.py、ftt_capacity_worker.py及neural_wave_campaign/dependencies、block_wave_admission opt-in40 | 显式schema10、四dat、唯一14400s窗与2/16GiB角色；既有durable/资源门复用不改邻任务 |
+| checker/benchmark | benchmarks/check_ftt_capacity.py、src/test/test_ftt_capacity.py | 独立原数组/J/SVD/margin重算；28相关fixture、FE正负资格；不重新实现PDE solver |
+| compact evidence/docs | design_v40、四输入、Response/专题、154行CSV、桥接/谱/特征/source/资源/repair | 健康旧packet/模型/参考复用，历史字节保留；doc HEAD不代运行source |
+| do-not-merge | 全部研究输入/raw、未获FE桥接的排除、标签数据、自动训练/生产提升 | 新训练/solve/factors0；actual_FE_certificate=false，不注册0.7nm或自动V41 |
+
+依赖顺序：原M5/Basix完整矩和V39final/ref→src小核→opt-in stage/schema→定向资格与clean source→内部矩/谱/特征原子冻结→独立pure checker→compact/docs。旧FTT/FE算法源码未改；输入为显式研究诊断。[运行/source](records/run_index_v40.json)、[tests](records/tests_v40.json)、[完整裁决](records/capacity_decision_v40.json)。不修改其他任务/分支，不merge master。
+
+<!-- TASK42EXTRA_V40_CURRENT_END -->
+
 <!-- TASK42EXTRA_V39_CURRENT_BEGIN -->
 # V39改动与依赖组
 
