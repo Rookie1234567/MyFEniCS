@@ -6100,13 +6100,15 @@
     },
     "campaign_accounting": {
       "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_accounting_v10.jsonl",
-      "sha256": "0953013861fa59dd0fdc8ea4fc5e91d57cc48444403f7131d25fefd2720ef5fd",
-      "lines": 940,
-      "tail_sequence": 939,
-      "tail_label": "main_v24_final_closeout_before_commit",
-      "tail_cumulative_seconds": 16392.82494264909,
-      "tail_utc_ns": 1791666383824760749,
-      "note": "Real append-only as-of before final commit/push; subsequent publishing time remains in the same fixed window and is not assumed zero."
+      "sha256": "31f2d474dccc11a5385bf0da6aef7f0a4b66c80af30751fb2330e71105005bb3",
+      "immutable_as_of_snapshot_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_accounting_v24_final_asof_seq941.jsonl",
+      "immutable_as_of_snapshot_sha256": "31f2d474dccc11a5385bf0da6aef7f0a4b66c80af30751fb2330e71105005bb3",
+      "lines": 942,
+      "tail_sequence": 941,
+      "tail_label": "main_v24_final_publication_metadata_snapshot",
+      "tail_cumulative_seconds": 16584.51095769209,
+      "tail_utc_ns": 1791666575510775792,
+      "note": "Stable immutable prefix snapshot at the stated sequence. The authoritative live ledger continues append-only, including later commit/push/readback; no clock or old fee is reset."
     },
     "D_scope": {
       "incident_cells": 32,
@@ -6184,7 +6186,7 @@
       "full_repository_pytest": "NOT_RUN",
       "Ruff": "NOT_RUN",
       "CI": "NOT_RUN",
-      "GitHub_rendered_view": "PENDING_MAIN_REVIEW",
+      "GitHub_rendered_view": "UNVERIFIED_FETCH_CACHE_MISS",
       "source_window_input_ABI_binding": "PASS"
     },
     "source_changes": true,
@@ -6193,8 +6195,8 @@
     "evidence_files": [
       {
         "path": "docs/task40extra_0p7nm_engineering/response_v24.md",
-        "bytes": 14790,
-        "sha256": "e8886abe2f8882e664ed61dcc745c0b0e2772bbb9c3609a3e2d0059a6573f3c4"
+        "bytes": 15257,
+        "sha256": "35a1dd87038e6ff887a40899f675abc246e6f66feeebabd3c64c2c4ac2182dc2"
       },
       {
         "path": "docs/task40extra_0p7nm_engineering/README.md",
@@ -6208,8 +6210,8 @@
       },
       {
         "path": "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md",
-        "bytes": 73349,
-        "sha256": "23cff355f60f440d89c05dd55d451208f1c5030bb24e991f3e7ad81d5fab1777"
+        "bytes": 73401,
+        "sha256": "0b340ab02be0aa243b540653f67068a63b8cbacd6bbdf750e336442e30a9ba77"
       },
       {
         "path": "docs/task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v24.json",
@@ -6228,8 +6230,8 @@
       },
       {
         "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v24_incremental_workflow_ledger.json",
-        "bytes": 12811,
-        "sha256": "cacbb622d99e85b859d64e65b0fb2ce582cfc2560673971c724601a7dc91d363"
+        "bytes": 14385,
+        "sha256": "f9756a2e335ae4d734ac9fe8c508cc62589e35ac4f8342fd8c8a862ddca65175"
       },
       {
         "path": "docs/task40extra_0p7nm_engineering/outcomes/records/q_tile_v24.json",
@@ -6329,9 +6331,10 @@
         "sha256": "b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358"
       },
       {
-        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_accounting_v10.jsonl",
-        "bytes": 1084582,
-        "sha256": "0953013861fa59dd0fdc8ea4fc5e91d57cc48444403f7131d25fefd2720ef5fd"
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_accounting_v24_final_asof_seq941.jsonl",
+        "bytes": 1086916,
+        "sha256": "31f2d474dccc11a5385bf0da6aef7f0a4b66c80af30751fb2330e71105005bb3",
+        "role": "immutable campaign accounting prefix at final publication as-of; live stream remains append-only"
       },
       {
         "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/v24_optional_single_q_assessment_150min.json",
@@ -6537,6 +6540,18 @@
       "value": 1250.0,
       "selected_original_mode_index": 10,
       "raw_evidence_changed": false
+    },
+    "publication_verification": {
+      "verified_published_head_before_metadata_receipt": "e304b7d7f5c10213664bb4e651aefd3414cb16a8",
+      "remote_ref": "origin/task40extra_0p7nm_engineering",
+      "remote_head_matches_local": true,
+      "ahead": 0,
+      "behind": 0,
+      "working_tree_clean_at_verification": true,
+      "github_rendered_view": "UNVERIFIED_FETCH_CACHE_MISS",
+      "github_rendered_view_attempt_url": "https://github.com/Rookie1234567/MyFEniCS/blob/e304b7d7f5c10213664bb4e651aefd3414cb16a8/docs/task40extra_0p7nm_engineering/response_v24.md",
+      "local_markdown_table_and_link_checks": "PASS",
+      "final_metadata_commit_is_separate_from_frozen_numerical_source": true
     }
   }
 }

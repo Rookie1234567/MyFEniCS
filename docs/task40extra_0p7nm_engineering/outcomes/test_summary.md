@@ -439,4 +439,4 @@ Native component-only receipt 的重算 Gate 数值、worker 失败位置、4 �
 | C checker | C independent checker | 22/22 检查通过 | 32-mode reuse/census bounded evidence |
 | D checker与主控审计 | D independent partial checker；MAIN audit record | checker 34/34 为真但 partial；MAIN 重算 NPZ SHA、核对 checker与序列化 witness；未重新计算六类数值 | bounded internal y-edge panel only |
 
-没有运行 full repository pytest、MPI2/MPI4、Ruff、CI、full q construction、global factor/KSP、完整 PDE 或 official R/T/A。GitHub rendered view 未由本地校验代替，仍待主控检查。后续新增数值运行需新的 review/window；本文档收口阶段不重启 B/C/D 数值计算。
+没有运行 full repository pytest、MPI2/MPI4、Ruff、CI、full q construction、global factor/KSP、完整 PDE 或 official R/T/A。GitHub 页面获取遇到新提交 cache miss；线上渲染未确认，本地链接/表格结构检查不能替代它。后续新增数值运行需新的 review/window；本文档收口阶段不重启 B/C/D 数值计算。

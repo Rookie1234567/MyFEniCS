@@ -15,13 +15,15 @@
   },
   "append_only_accounting": {
     "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_accounting_v10.jsonl",
-    "sha256": "0953013861fa59dd0fdc8ea4fc5e91d57cc48444403f7131d25fefd2720ef5fd",
-    "lines": 940,
-    "tail_sequence": 939,
-    "tail_label": "main_v24_final_closeout_before_commit",
-    "tail_cumulative_seconds": 16392.82494264909,
-    "tail_utc_ns": 1791666383824760749,
-    "note": "Real append-only as-of before final commit/push; subsequent publishing time remains in the same fixed window and is not assumed zero."
+    "sha256": "31f2d474dccc11a5385bf0da6aef7f0a4b66c80af30751fb2330e71105005bb3",
+    "immutable_as_of_snapshot_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_accounting_v24_final_asof_seq941.jsonl",
+    "immutable_as_of_snapshot_sha256": "31f2d474dccc11a5385bf0da6aef7f0a4b66c80af30751fb2330e71105005bb3",
+    "lines": 942,
+    "tail_sequence": 941,
+    "tail_label": "main_v24_final_publication_metadata_snapshot",
+    "tail_cumulative_seconds": 16584.51095769209,
+    "tail_utc_ns": 1791666575510775792,
+    "note": "Stable immutable prefix snapshot at the stated sequence. The authoritative live ledger continues append-only, including later commit/push/readback; no clock or old fee is reset."
   },
   "measured_costs": {
     "C_cold_generation_seconds": 6.768845421960577,
@@ -222,5 +224,27 @@
     "raw_log_sha256": "9794cb03882635656cf3e181003999431d0f29e832072f030f251d846d9b2c2d",
     "raw_log_bytes": 310,
     "FE_or_PDE_rerun": false
+  },
+  "previous_precommit_accounting_as_of": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_accounting_v10.jsonl",
+    "sha256": "0953013861fa59dd0fdc8ea4fc5e91d57cc48444403f7131d25fefd2720ef5fd",
+    "lines": 940,
+    "tail_sequence": 939,
+    "tail_label": "main_v24_final_closeout_before_commit",
+    "tail_cumulative_seconds": 16392.82494264909,
+    "tail_utc_ns": 1791666383824760749,
+    "note": "Real append-only as-of before final commit/push; subsequent publishing time remains in the same fixed window and is not assumed zero."
+  },
+  "publication_verification": {
+    "verified_published_head_before_metadata_receipt": "e304b7d7f5c10213664bb4e651aefd3414cb16a8",
+    "remote_ref": "origin/task40extra_0p7nm_engineering",
+    "remote_head_matches_local": true,
+    "ahead": 0,
+    "behind": 0,
+    "working_tree_clean_at_verification": true,
+    "github_rendered_view": "UNVERIFIED_FETCH_CACHE_MISS",
+    "github_rendered_view_attempt_url": "https://github.com/Rookie1234567/MyFEniCS/blob/e304b7d7f5c10213664bb4e651aefd3414cb16a8/docs/task40extra_0p7nm_engineering/response_v24.md",
+    "local_markdown_table_and_link_checks": "PASS",
+    "final_metadata_commit_is_separate_from_frozen_numerical_source": true
   }
 }

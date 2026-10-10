@@ -129,3 +129,5 @@ q0 的表示 cast mismatch、B 的 required checker 两项 raw readback 失败�
 | 不合入 ordinary default 的范围 | 完整 q/reference、global factor/KSP、full target worker path | q 完整矩阵 0/8，full volume action、PDE、official R/T/A 未运行 | 保持 do-not-merge / not-qualified，直到新 review 给出完整证据 |
 
 本次 closeout 只改文档与 compact；六个 V24 源码提交已存在于 frozen HEAD。本 closeout 未新增数值源码修改、commit 或 push；没有合并 master，ordinary numerical default 未改变。
+
+发布核对：主控已成功推送并回读同一远端分支（元数据收据前 HEAD 为 `e304b7d7f5c10213664bb4e651aefd3414cb16a8`），ahead/behind 为 0/0、工作树干净。GitHub 页面获取遇到新提交 cache miss，因此仅确认本地 Markdown 表格/链接结构，未声称线上渲染通过。收口费用以带序号的不可变账本前缀快照索引；原 append-only 账继续记录后续提交、推送与回读，不刷新固定窗口。
