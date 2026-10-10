@@ -176,7 +176,7 @@ MPC 将周期两侧的自由度按 Floquet 相位对应起来。若 P 把独立�
 
 当前 generated reduced action 做局部展开/共轭 scatter；`apply_B_full` 只写 active original trace rows，而 `apply_D_full` 在 callback 前把 slave rows 清零。V21 MPC fixture 又事先把 Bt/Dt 的 slave 项设零，因此未覆盖真实非零 slave 耦合。[S8]、[S21]
 
-V22 明确选择并记录接口约定：可以由 descriptor 提供 raw rows、在统一层做 P*B 与 DP，也可提供已归并的 production-dual rows；整个 B/D/full/reduced/residual 路径必须一致。复测使用非平凡复 Floquet phase、非零 slave 行及共享 edge/facet，核实贡献恰好累计一次。B 与 D 按各自定义验证，不额外假设 D=B*。
+V22 明确选择并记录接口约定：可以由 descriptor 提供 raw rows、在统一层做 $P^{H}B$ 与 $DP$，也可提供已归并的 production-dual rows；整个 B/D/full/reduced/residual 路径必须一致。复测使用非平凡复 Floquet phase、非零 slave 行及共享 edge/facet，核实贡献恰好累计一次。B 与 D 按各自定义验证，不额外假设 $D=B^{H}$。
 
 ### 4.4 保持 production 的 raw D + Hp，显式处理 gauge/normalization
 
