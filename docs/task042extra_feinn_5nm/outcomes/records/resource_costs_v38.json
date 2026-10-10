@@ -1040,9 +1040,34 @@
       "descendants_cleared": true,
       "tree_sampled_peak_bytes": 64643072,
       "tree_sampled_swap_bytes": 0
+    },
+    {
+      "path": "tmp/task42extra/v38/render01",
+      "supervised_payload_s": 70.32273666304536,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "tree_sampled_peak_bytes": 1070665728,
+      "tree_sampled_swap_bytes": 0
+    },
+    {
+      "path": "tmp/task42extra/v38/seal_checks01",
+      "supervised_payload_s": 2.703856633976102,
+      "classification": "COMPLETED",
+      "exit": 0,
+      "descendants_cleared": true,
+      "tree_sampled_peak_bytes": 64593920,
+      "tree_sampled_swap_bytes": 0
     }
   ],
   "light_time_scope": "These supervised payload seconds exclude admission/preparation; all such calendar intervals are charged in the continuous total window; do not add them again to that total.",
   "prepublication_elapsed_s": 14676.6412349171,
-  "prepublication_remaining_s": 14123.35876425705
+  "prepublication_remaining_s": 14123.35876425705,
+  "maximum_sampled_supervised_tree_peak_bytes_including_light_browser": 1070665728,
+  "post_browser_publication_cost_snapshot_monotonic": 1528877.281712423,
+  "post_browser_elapsed_s": 15407.28171271109,
+  "post_browser_remaining_s": 13392.718286839081,
+  "post_browser_snapshot_scope": "includes all prior calendar prep/tests/repairs/admission/runs/waits/publication/render; final seal/push/reconciliation tail recorded in local delivery receipt, not zero",
+  "seal_precommit_elapsed_s": 15469.717416781,
+  "seal_precommit_remaining_s": 13330.282582293032
 }

@@ -394,5 +394,14 @@
     "swap_bytes": 0,
     "metadata_checks": 463,
     "numeric_fields_changed": 0
+  },
+  "post_render_seal_affected_check": {
+    "path": "tmp/task42extra/v38/seal_checks01/summary.json",
+    "sha256": "1086fead0ca18050f698d6bab7c0c6d794a50f88198c7ee99a9f3f6bcd6315fa",
+    "payload_seconds": 2.703856633976102,
+    "tree_RSS_peak_bytes": 64593920,
+    "tree_swap_bytes": 0,
+    "local_metadata_checks": 467,
+    "no_numerical_or_browser_replay": true
   }
 }

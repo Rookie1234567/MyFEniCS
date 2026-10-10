@@ -25,6 +25,8 @@ FTTNN首轮旧raw stop_reason错误及训练软截止越界下界25.6411715581s�
 
 原50×25×140nm、Si17/120nm、λ0.7完整三维FE、双Floquet/全部内部/完整端口、decimal2e12B整机、ownswap/OOC0、172800s完整冷流程及原精度门仍未达到。M3600较好态、最终退化、D0成本否决/D1未运行及所有负结果/UNKNOWN保持；下方历史全文不改，旧“当前/下一步”不是新授权。旧稠密波库继续关闭，本支不转去W0/W1、全口面、传统PC、存储或主线接入。
 
+实际GitHub有限呈现：Review可见2表/2公式、专题3公式及结果表部分、回执结果表部分目视通过；未覆盖全页/完整大表，保持PARTIAL_VISIBLE_RANGE_PASS。绑定发布31d221c465c975c9d007020b3588d4fad74a2cbc；[截图/范围/资源](records/render_check_v38.json)。
+
 <!-- TASK42EXTRA_V38_CURRENT_END -->
 
 # 当前V36：分块投影核、保全和checker恢复资格

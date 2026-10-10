@@ -139,6 +139,11 @@
       "details": null
     },
     {
+      "name": "new local link outcomes/records/render_check_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
       "name": "no invalid encoding response_v38.md",
       "passed": true,
       "details": null
@@ -274,6 +279,11 @@
       "details": null
     },
     {
+      "name": "new local link records/render_check_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
       "name": "no invalid encoding fttnn_pilot_v38.md",
       "passed": true,
       "details": null
@@ -310,6 +320,11 @@
     },
     {
       "name": "new local link records/repair_log_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "new local link records/render_check_v38.json",
       "passed": true,
       "details": null
     },
@@ -765,6 +780,11 @@
     },
     {
       "name": "finite valid JSON implementation_qualification_v38.json",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "finite valid JSON render_check_v38.json",
       "passed": true,
       "details": null
     },
@@ -2327,5 +2347,5 @@
   "physical_checks_reused_from_independent_completed_processes": true,
   "model_FE_A_G_action_count": 0,
   "legacy_large_array_reload_count": 0,
-  "elapsed_continuous_s": 14872.418398055015
+  "elapsed_continuous_s": 15408.110610234085
 }

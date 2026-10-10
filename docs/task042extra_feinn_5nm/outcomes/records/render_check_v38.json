@@ -1,0 +1,70 @@
+{
+  "schema": "task42extra.v38.render.v1",
+  "classification": "PARTIAL_VISIBLE_RANGE_PASS",
+  "exact_publication_sha": "31d221c465c975c9d007020b3588d4fad74a2cbc",
+  "attempts": [
+    {
+      "name": "review",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/670a33398dfa9413c275772796611e085ef17c35/docs/task042extra_feinn_5nm/review_report_v37.md",
+      "published_sha": "670a33398dfa9413c275772796611e085ef17c35",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_seconds": 11.039640679955482,
+      "published_blob_sha256": "6c5b8bc5be21cccb70b8853e93aa4715215709550d9b2adf18afee8936b4fa29",
+      "screenshot": "tmp/task42extra/v38/render_views/review/page.png",
+      "screenshot_sha256": "55f64107e61142d490871a4e4ca67ca6b8daba8947308cdb22c03962a9c5aa50",
+      "png_dimensions": [
+        1440,
+        2600
+      ],
+      "visual_status": "PASS_VISIBLE_RANGE_ONLY",
+      "inspected_scope": "actual GitHub sections 0,1,2.1 and start of 2.2; two full visible tables and two visible rendered formulas; later sections not visually covered",
+      "whole_page_or_all_tables_visually_qualified": false
+    },
+    {
+      "name": "pilot",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/31d221c465c975c9d007020b3588d4fad74a2cbc/docs/task042extra_feinn_5nm/outcomes/fttnn_pilot_v38.md",
+      "published_sha": "31d221c465c975c9d007020b3588d4fad74a2cbc",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_seconds": 5.328921341104433,
+      "published_blob_sha256": "b61789ab7647d456254f50959700b815123a5b206e0e08b6e8ba71eea5be70b8",
+      "screenshot": "tmp/task42extra/v38/render_views/pilot/page.png",
+      "screenshot_sha256": "32c3f65d2d75acecaa740fce6bfe15fe51e215ae73626a3b4d4aef59f7ca4f75",
+      "png_dimensions": [
+        1440,
+        2600
+      ],
+      "visual_status": "PASS_VISIBLE_RANGE_ONLY",
+      "inspected_scope": "actual title/intro, all three rendered formulas, result table header and rows through the six-point error; lower result rows and cost table not visually covered",
+      "whole_page_or_all_tables_visually_qualified": false
+    },
+    {
+      "name": "response",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/31d221c465c975c9d007020b3588d4fad74a2cbc/docs/task042extra_feinn_5nm/response_v38.md",
+      "published_sha": "31d221c465c975c9d007020b3588d4fad74a2cbc",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_seconds": 51.90456090401858,
+      "published_blob_sha256": "6de1bcf047b0cad3031d1a804e61bf398d783be201f3d685a0d58d550368cf22",
+      "screenshot": "tmp/task42extra/v38/render_views/response/page.png",
+      "screenshot_sha256": "70267cf248f0fdd32a50133007312019f88529aa97fdad510b18cf56c67d6c2d",
+      "png_dimensions": [
+        1440,
+        2600
+      ],
+      "visual_status": "PASS_VISIBLE_RANGE_ONLY",
+      "inspected_scope": "actual title/intro and result table through MPC/port recovery and beginning of model reconstruction; remaining result rows/cost paragraphs not visually covered",
+      "whole_page_or_all_tables_visually_qualified": false
+    }
+  ],
+  "full_page_visual_claim": false,
+  "old_visual_failures_preserved": true,
+  "tree_RSS_peak_bytes": 1070665728,
+  "tree_swap_bytes": 0,
+  "supervised_payload_seconds": 70.32273666304536,
+  "descendants_cleared": true,
+  "raw_guard_path": "tmp/task42extra/v38/render01/summary.json",
+  "raw_guard_sha256": "72ba7ce92dd8aa1578a7d139d835ce0a038e637cf32470cbb7dd6c661ebda5af",
+  "cost_in_continuous_window": true
+}

@@ -107,3 +107,5 @@ FTTNN无标签首轮raw stop_reason=CALL_LIMIT错误，46<1000，实际为TIME_L
 0.7nm缩小缺口要求无标签FTTNN的M5联合PASS、资源安全和剩余≥7200s；第一项失败，故NOT_RUN，没有注册空输入。原50×25×140nm、Si17/120nm、λ0.7完整三维FE、decimal2e12B整机、ownswap/OOC0和172800s完整冷流程及原精度门尚未达成。旧M3600较好态/Mfinal退化、D0成本否决/D1未运行、所有负结果/UNKNOWN和费用保持，不恢复W0/W1/传统PC/存储或给其他支线派活。
 
 仅本分支提交推送，base fbac3d8777fcfd897d93b898cb9f460f79ddd6ff。最终完整HEAD/tracking/ahead-behind/clean/锁FREE和自身清场由最终消息及本地delivery receipt报告，不把后续文档HEAD冒充数值source。有限GitHub视觉与本地结构检查分开记录，网页错误不触发健康数值重做；完成后等待review，不发隔壁通知、不自动下一批。
+
+最终呈现封存：发布31d221c465c975c9d007020b3588d4fad74a2cbc的Review/专题/回执已作有限实际GitHub目视；可见公式/表格通过，页面后半及全表NOT_VERIFIED。数值、原表与公式没有改变，后续仅增加本段及收据。见[实际范围与截图hash](records/render_check_v38.json)。
