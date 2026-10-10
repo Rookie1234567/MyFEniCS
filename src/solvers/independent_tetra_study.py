@@ -197,9 +197,13 @@ def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,
             if retained_input is not None:
                 # Returned coefficients are durable. Release opaque numeric
                 # and all global Schur/scaling owners before full recovery.
+                before_release=journal.event('assembly_time_returned_retained_before_release')['RSS_bytes']
                 factor.destroy();factor=None;matrix.destroy();matrix=None
                 del A,scaled;recovery.release_matrix();gc.collect()
-                journal.event('assembly_time_global_factor_S_released_before_full_recovery')
+                released=journal.event('assembly_time_global_factor_S_released_before_full_recovery',before_RSS_bytes=before_release)
+                write_json(folder/'factor_release_lifecycle.json',dict(before_RSS_bytes=before_release,
+                    after_RSS_bytes=released['RSS_bytes'],RSS_decreased=released['RSS_bytes']<before_release,
+                    retained_returned=retained_receipt,full_field_not_yet_recovered=True))
             with journal.measured('exact_original_all_internal_recovery'):
                 x=recovery.recover(x,full_rhs)
             snapshot_residual=recovery.lift_residual(snapshot_residual)

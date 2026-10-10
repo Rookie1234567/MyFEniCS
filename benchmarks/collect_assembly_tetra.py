@@ -30,6 +30,7 @@ def compare_S():
         new_numeric_factors=0,new_complete_solves=0,old_full_K_reads=0,old_recovery_chunk_reads=0)
     write_json(out/'S_pair.json',result)
     if not result['pass_gate']:raise ValueError('independent old/new S action gate')
+    write_json(scope.window.TMP/'compare_S_receipt.json',dict(path=str(out/'S_pair.json'),sha256=file_digest(out/'S_pair.json')))
     print(json.dumps(dict(status='TWO_OLD_NEW_S_ACTIONS_PASS',errors=errors)))
 
 

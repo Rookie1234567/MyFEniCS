@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 from .durable_l5_scope import DurableWindow
 from .scattering_accuracy_scope import AccuracyWindow
+from .tetra_body_checkpoint import file_digest
 
 ROOT=Path(__file__).resolve().parents[2];NAMESPACE='v70'
 PLAN=ROOT/'input/task042_neural_coarse_inverse/assembly_time_tetra_v70.json'
@@ -76,6 +77,10 @@ def require_stage(role):
     if role in ('ACTION','SOLVE') and not stage('BUILD')['pass_gate']:raise RuntimeError('V70 original reduction qualification')
     if role=='SOLVE':
         if any(ARTIFACT.glob('*/retained_audit_pending.json')):raise RuntimeError('legal returned vector: saved-only consumer')
+        r=json.loads((window.TMP/'compare_S_receipt.json').read_text());p=Path(r['path'])
+        if file_digest(p)!=r['sha256']:raise ValueError('V70 separate S comparison receipt')
+        q=json.loads(p.read_text())
+        if not q['pass_gate'] or q['new_S']!=stage('BUILD')['checkpoint']:raise RuntimeError('V70 old/new S comparison gate')
         n=numeric_attempts()
         if n>=2:raise RuntimeError('V70 numeric cap')
         if n:

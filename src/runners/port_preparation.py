@@ -538,6 +538,10 @@ def launch(
         # These saved consumers rebuild only mesh/space and evaluate fields.
         # They use the default FE profile, never B's larger reference budget.
         is_fe = True
+    if namespace == "v70" and role == "compare_S":
+        # A comparison-only reader of the existing finite S needs the default
+        # 64/80/96 FE consumer envelope, not the 2 GiB pure-test envelope.
+        is_fe = True
     if is_fe or (
         namespace in ("v41", "v42", "v43", "v44", "v45", "v47", "v49", "v50", "v51", "v52", "v53", "v54", "v55", "v56", "v57", "v58", "v59", "v60", "v61", "v62", "v63", "v64", "v65", "v66", "v67", "v68", "v69", "v70") and specification is not None
     ):
