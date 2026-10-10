@@ -1604,6 +1604,110 @@ def test_fullspace_surface_iterator_reports_second_global_filter_audit(monkeypat
     assert len(combined["projection"]["retained_stream_sha256"]) == 64
 
 
+def test_fullspace_surface_iterator_accepts_ordered_sparse_mode_indices(monkeypatch):
+    import numpy as np
+
+    from mpi4py import MPI
+
+    from src.solvers import dtn_port_3d, fullspace_dtn_action
+
+    class IndexMap:
+        local_range = (0, 3)
+        size_local = 3
+        size_global = 3
+
+    class Mpc:
+        function_space = SimpleNamespace(
+            mesh=SimpleNamespace(comm=MPI.COMM_SELF),
+            dofmap=SimpleNamespace(index_map=IndexMap()),
+        )
+
+    class Component:
+        boundary_reference_z = None
+        boundary_tag = 7
+        quadrature_degree = None
+
+        def __init__(self, rows, values):
+            self.rows = np.asarray(rows, dtype=np.int32)
+            self.values = np.asarray(values, dtype=np.complex128)
+            self.calls = 0
+
+        def assemble_entries(self, _mode, _mpc):
+            self.calls += 1
+            return self.rows.copy(), self.values.copy()
+
+    mode = SimpleNamespace(
+        side="top",
+        m=0,
+        n=0,
+        alpha=0.0 + 0.0j,
+        gamma=0.0 + 0.0j,
+        k_vector=np.asarray([0.0, 0.0, 1.0], dtype=np.complex128),
+        e_vector=np.asarray([1.0 + 0.0j, 1.0 + 0.0j], dtype=np.complex128),
+        polarization="s",
+    )
+    modes = [SimpleNamespace(**mode.__dict__) for _ in range(3)]
+    monkeypatch.setattr(
+        fullspace_dtn_action,
+        "build_ordered_mode_manifest",
+        lambda _modes, _cfg: ([{"mode_index": i} for i in range(3)], b"manifest", "d" * 64),
+    )
+    monkeypatch.setattr(dtn_port_3d, "_mode_projection_denominator", lambda *_args: 2.0)
+    monkeypatch.setattr(
+        dtn_port_3d,
+        "_traction_vector",
+        lambda *_args: np.asarray([1.0 + 0.0j, 0.0 + 0.0j]),
+    )
+    components = {
+        ("top", 0): Component([0], [1.0 + 0.0j]),
+        ("top", 1): Component([0], [0.5 + 0.0j]),
+    }
+    audit = {}
+    entries = list(
+        fullspace_dtn_action.iter_fullspace_dtn_functionals_from_surface(
+            modes,
+            components,
+            Mpc(),
+            SimpleNamespace(),
+            mode_indices=(0, 2),
+            audit=audit,
+        )
+    )
+
+    assert [entry.mode_key[0] for entry in entries] == [0, 2]
+    assert audit["selected_mode_indices"] == [0, 2]
+    assert [components[("top", component)].calls for component in (0, 1)] == [2, 2]
+
+
+def test_fullspace_surface_iterator_rejects_unsorted_or_mixed_mode_selection(monkeypatch):
+    from src.solvers import fullspace_dtn_action
+
+    class UnusedMpc:
+        function_space = SimpleNamespace(
+            mesh=SimpleNamespace(comm=None),
+            dofmap=SimpleNamespace(index_map=SimpleNamespace(local_range=(0, 0), size_local=0, size_global=0)),
+        )
+
+    modes = [SimpleNamespace(side="top") for _ in range(3)]
+    with pytest.raises(ValueError, match="strictly increasing"):
+        next(
+            fullspace_dtn_action.iter_fullspace_dtn_functionals_from_surface(
+                modes, {}, UnusedMpc(), SimpleNamespace(), mode_indices=(2, 0)
+            )
+        )
+    with pytest.raises(ValueError, match="cannot be combined"):
+        next(
+            fullspace_dtn_action.iter_fullspace_dtn_functionals_from_surface(
+                modes,
+                {},
+                UnusedMpc(),
+                SimpleNamespace(),
+                start_index=1,
+                mode_indices=(0, 2),
+            )
+        )
+
+
 def test_v20_service_accepts_only_the_official_checker_pass_marker():
     from scripts.task40_v20_service_workflow import _official_checker_passed
 

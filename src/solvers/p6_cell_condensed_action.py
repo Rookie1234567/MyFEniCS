@@ -458,14 +458,34 @@ class P6GlobalDirectCarrierProvider:
         keep = ~interior
         direct_rows = rows if bool(np.all(keep)) else rows[keep]
         direct_values = values if bool(np.all(keep)) else values[keep]
-        active_rows = np.empty(len(direct_rows), dtype=PETSc.IntType)
-        try:
-            for index, original in enumerate(direct_rows):
-                active_rows[index] = self._original_to_active[int(original)]
-        except KeyError as exc:
-            raise ValueError(
-                f"production {side} direct row is an MPC slave or outside the active trace"
-            ) from exc
+        vector_mapper = getattr(
+            self._condensed.trace_constraints, "map_original_rows", None
+        )
+        if callable(vector_mapper):
+            try:
+                mapped = np.asarray(vector_mapper(direct_rows))
+            except (IndexError, KeyError, ValueError) as exc:
+                raise ValueError(
+                    f"production {side} direct row is an MPC slave or outside the active trace"
+                ) from exc
+            if (
+                mapped.shape != (len(direct_rows),)
+                or mapped.dtype.kind not in "iu"
+                or mapped.dtype.kind == "b"
+                or (mapped.size and int(mapped.min()) < 0)
+                or (mapped.size and int(mapped.max()) >= self._condensed.active_rows)
+            ):
+                raise ValueError("vectorized original-to-active row map returned invalid indices")
+            active_rows = np.asarray(mapped, dtype=PETSc.IntType)
+        else:
+            active_rows = np.empty(len(direct_rows), dtype=PETSc.IntType)
+            try:
+                for index, original in enumerate(direct_rows):
+                    active_rows[index] = self._original_to_active[int(original)]
+            except KeyError as exc:
+                raise ValueError(
+                    f"production {side} direct row is an MPC slave or outside the active trace"
+                ) from exc
         self._direct_entry_counts[f"{operation}/{side}"] += len(direct_rows)
         self._interior_entry_counts[f"{operation}/{side}"] += interior_count
         self._max_direct_rows_by_side[side] = max(

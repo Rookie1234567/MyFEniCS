@@ -4154,6 +4154,14 @@ def _run_v23_original_ny8_q_port_tile(
         q_map.sort_indices()
         q_map_sha = _sparse_csr_sha256(q_map)
 
+        if (
+            support_rows.ndim != 1
+            or support_rows.dtype.kind not in "iu"
+            or support_rows.dtype.kind == "b"
+            or (len(support_rows) > 1 and np.any(support_rows[1:] <= support_rows[:-1]))
+        ):
+            raise ValueError("selected q trace support must be sorted unique integer global rows")
+
         class CompactSelectedRows:
             def __getitem__(self, row: int) -> int:
                 pos = int(np.searchsorted(support_rows, int(row)))
@@ -4161,9 +4169,26 @@ def _run_v23_original_ny8_q_port_tile(
                     raise KeyError(row)
                 return pos
 
+            def map_original_rows(self, rows: Any) -> np.ndarray:
+                values = np.asarray(rows)
+                if values.ndim != 1 or values.dtype.kind not in "iu" or values.dtype.kind == "b":
+                    raise ValueError("selected q rows must be a one-dimensional integer array")
+                positions = np.searchsorted(support_rows, values)
+                found = positions < len(support_rows)
+                if np.any(found):
+                    candidates = np.flatnonzero(found)
+                    found[candidates] = support_rows[positions[candidates]] == values[candidates]
+                if not np.all(found):
+                    raise ValueError("selected q row is outside the admitted trace support")
+                return np.asarray(positions, dtype=PETSc.IntType)
+
+        compact_selected_rows = CompactSelectedRows()
         provider_owner = SimpleNamespace(
-            full_rows=full_rows, appended_rows=1,
-            trace_constraints=SimpleNamespace(original_to_active=CompactSelectedRows()),
+            full_rows=full_rows, active_rows=len(support_rows), appended_rows=1,
+            trace_constraints=SimpleNamespace(
+                original_to_active=compact_selected_rows,
+                map_original_rows=compact_selected_rows.map_original_rows,
+            ),
             cell_recovery_maps=(),
         )
         provider_audit: dict[str, Any] = {}

@@ -438,6 +438,25 @@ def test_generated_reduced_contributions_stream_bounded_b_d_and_hhat_tiles() -> 
         cached.destroy()
 
 
+def test_trace_constraint_map_batches_owned_rows_and_checks_remote_rows() -> None:
+    from src.solvers.hcurl_assembly_time_condensation import TraceConstraintMap
+
+    constraints = TraceConstraintMap(
+        owned_active_original_dofs=np.asarray([10, 12], dtype=PETSc.IntType),
+        original_to_active={10: 5, 12: 6, 20: 9},
+        expansion_by_original={},
+        full_trace_rows=12,
+        active_rows=10,
+        slave_rows=2,
+        owned_active_range=(5, 7),
+        build_audit={},
+    )
+
+    assert constraints.map_original_rows(np.asarray([12, 10, 20])).tolist() == [6, 5, 9]
+    with pytest.raises(ValueError, match="independent active row"):
+        constraints.map_original_rows(np.asarray([11]))
+
+
 def test_global_direct_provider_streams_full_reduced_and_contribution_paths() -> None:
     condensed, block, prior = _problem()
     prior.destroy()

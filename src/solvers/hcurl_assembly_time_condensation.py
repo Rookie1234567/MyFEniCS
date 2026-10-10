@@ -150,7 +150,63 @@ class TraceConstraintMap:
     full_trace_rows: int
     active_rows: int
     slave_rows: int
+    owned_active_range: tuple[int, int]
     build_audit: dict[str, Any]
+
+    def __post_init__(self) -> None:
+        owned = np.asarray(self.owned_active_original_dofs)
+        start, stop = (int(value) for value in self.owned_active_range)
+        if (
+            owned.ndim != 1
+            or owned.dtype.kind not in "iu"
+            or owned.dtype.kind == "b"
+            or (owned.size > 1 and np.any(owned[1:] <= owned[:-1]))
+            or start < 0
+            or stop < start
+            or stop > int(self.active_rows)
+            or stop - start != len(owned)
+        ):
+            raise ValueError("owned active trace rows must be sorted and match their active range")
+
+    def map_original_rows(self, original_rows: Any) -> np.ndarray:
+        """Map a batch of independent original rows to active trace rows.
+
+        The batch API keeps callers from repeating the mapping contract and
+        allows specialized maps to replace the dictionary lookup without
+        changing the carrier provider.  Missing rows fail closed.
+        """
+        rows = np.asarray(original_rows)
+        if rows.ndim != 1 or rows.dtype.kind not in "iu" or rows.dtype.kind == "b":
+            raise ValueError("original trace rows must be a one-dimensional integer array")
+        start, stop = (int(value) for value in self.owned_active_range)
+        owned = np.asarray(self.owned_active_original_dofs)
+        positions = np.searchsorted(owned, rows)
+        local = positions < len(owned)
+        if np.any(local):
+            candidate_positions = np.flatnonzero(local)
+            local[candidate_positions] = (
+                owned[positions[candidate_positions]] == rows[candidate_positions]
+            )
+        mapped = np.empty(len(rows), dtype=PETSc.IntType)
+        mapped[local] = positions[local] + start
+        remote = np.flatnonzero(~local)
+        if remote.size:
+            try:
+                mapped[remote] = np.fromiter(
+                    (
+                        self.original_to_active[int(rows[index])]
+                        for index in remote
+                    ),
+                    dtype=PETSc.IntType,
+                    count=len(remote),
+                )
+            except KeyError as exc:
+                raise ValueError(
+                    "original trace row is not an independent active row"
+                ) from exc
+        if mapped.size and (np.any(mapped < 0) or np.any(mapped >= int(self.active_rows))):
+            raise RuntimeError("original trace row mapped outside the active range")
+        return mapped
 
 
 @dataclass
@@ -348,6 +404,7 @@ def _trace_constraint_map(
             full_trace_rows=trace_rows,
             active_rows=trace_rows,
             slave_rows=0,
+            owned_active_range=(active_start, active_start + len(owned_trace)),
             build_audit={
                 "schema_version": "task035b.trace-constraint-map.v1",
                 "status": "identity_no_mpc_constraints",
@@ -486,6 +543,7 @@ def _trace_constraint_map(
         full_trace_rows=trace_rows,
         active_rows=active_rows,
         slave_rows=slave_rows,
+        owned_active_range=(active_start, active_start + len(owned_active)),
         build_audit={
             "schema_version": "task035b.trace-constraint-map.v1",
             "status": "exact_mpc_trace_expansion_built",

@@ -627,6 +627,7 @@ def iter_fullspace_dtn_functionals_from_surface(
     assembly_context: Mapping[str, Any] | None = None,
     start_index: int = 0,
     stop_index: int | None = None,
+    mode_indices: Sequence[int] | None = None,
     audit: dict[str, Any] | None = None,
 ):
     """Yield production B/D/H functionals one ordered mode at a time.
@@ -657,6 +658,20 @@ def iter_fullspace_dtn_functionals_from_surface(
     stop_index = len(modes) if stop_index is None else int(stop_index)
     if not 0 <= start_index <= stop_index <= len(modes):
         raise ValueError("surface functional mode range is outside the ordered mode table")
+    if mode_indices is None:
+        selected_indices = tuple(range(start_index, stop_index))
+    else:
+        if start_index != 0 or stop_index != len(modes):
+            raise ValueError("explicit mode_indices cannot be combined with a mode range")
+        selected_indices = tuple(mode_indices)
+        if not selected_indices:
+            raise ValueError("explicit surface functional mode selection must be nonempty")
+        if any(type(index) is not int for index in selected_indices):
+            raise ValueError("explicit surface functional mode indices must be Python integers")
+        if any(index < 0 or index >= len(modes) for index in selected_indices):
+            raise ValueError("explicit surface functional mode index is outside the ordered mode table")
+        if any(right <= left for left, right in zip(selected_indices, selected_indices[1:])):
+            raise ValueError("explicit surface functional mode indices must be strictly increasing")
     manifest_rows, _manifest_bytes, physical_manifest_sha = build_ordered_mode_manifest(modes, cfg)
     if phase_gauge == BOUNDARY_PLANE:
         required = {"schema", "source_sha256", "mesh", "cell_dofmap_sha256", "orientation",
@@ -665,7 +680,8 @@ def iter_fullspace_dtn_functionals_from_surface(
             raise ValueError("boundary-plane carrier requires a complete discrete/source assembly context")
         assembly_context = deep_frozen_identity(assembly_context)
         context_sha = hashlib.sha256(_canonical_json_bytes(assembly_context)).hexdigest()
-        for mode in modes[start_index:stop_index]:
+        for mode_index in selected_indices:
+            mode = modes[mode_index]
             expected_z = port_plane_z(mode, cfg)
             expected_tag = int(cfg.tags.z_max if mode.side == "top" else cfg.tags.z_min)
             for component in (0, 1):
@@ -758,7 +774,7 @@ def iter_fullspace_dtn_functionals_from_surface(
         return first, second
 
     try:
-        for index in range(start_index, stop_index):
+        for selection_position, index in enumerate(selected_indices):
             mode = modes[index]
             key = key_for(mode)
             if key != cached_key:
@@ -827,8 +843,13 @@ def iter_fullspace_dtn_functionals_from_surface(
             )
             emitted += 1
             yield functional
-            next_key = key_for(modes[index + 1]) if index + 1 < stop_index else None
-            if next_key != key:
+            next_index = (
+                selected_indices[selection_position + 1]
+                if selection_position + 1 < len(selected_indices)
+                else None
+            )
+            next_key = key_for(modes[next_index]) if next_index is not None else None
+            if next_index != index + 1 or next_key != key:
                 cached_key = None
                 cached_components = None
             functional = None
@@ -841,6 +862,7 @@ def iter_fullspace_dtn_functionals_from_surface(
         functional = None
         stats.update({
             "mode_index_range": [start_index, stop_index],
+            "selected_mode_indices": list(selected_indices),
             "yielded_mode_count": emitted,
             "peak_component_cache_unique_backing_bytes": int(peak_component_bytes),
             "current_component_cache_unique_backing_bytes": 0,
