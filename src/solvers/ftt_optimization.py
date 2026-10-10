@@ -100,12 +100,15 @@ def run_training(
     last_audit = 0
     stop_reason = "CALL_LIMIT"
     trial = None
+    longest_closure_seconds = 0.0
+    longest_save_seconds = 0.0
 
     def emit(row):
         history.write(json.dumps(row, allow_nan=False) + "\n")
 
     def save(update=None, pin=False):
-        nonlocal c
+        nonlocal c, longest_save_seconds
+        whole_save_began = monotonic()
         c = mapping.forward(model)
         r = c - metric.reference if labelled else action.apply(c) - action.f
         metadata = dict(
@@ -126,6 +129,7 @@ def run_training(
         began = monotonic()
         record = store.save(state, pin=pin)
         costs["persistence"] += monotonic() - began
+        longest_save_seconds = max(longest_save_seconds, monotonic() - whole_save_began)
         return record
 
     def audit(tag):
@@ -146,16 +150,23 @@ def run_training(
     audit("zero")
 
     def closure():
-        nonlocal trial
-        if monotonic() >= deadline or counts["attempted_calls"] >= call_limit:
-            raise StopFTT("TIME_OR_CALL_LIMIT_RESERVE")
+        nonlocal trial, longest_closure_seconds
+        # Finish the current complete update before the launcher soft cutoff;
+        # the separate 150-second window remains available for the final save.
+        projected_finish_seconds = 1.5 * longest_closure_seconds + longest_save_seconds
+        if deadline - monotonic() <= projected_finish_seconds:
+            raise StopFTT("TIME_LIMIT_WITH_SAVE_RESERVE")
+        if counts["attempted_calls"] >= call_limit:
+            raise StopFTT("CALL_LIMIT")
         counts["attempted_calls"] += 1
         began = monotonic()
         actual = mapping.forward(model)
         loss, residual, dual = metric.value(actual, gradient=True)
         gradient = mapping.vjp(model, dual)
         counts["complete_loss_gradient_calls"] += 1
-        costs["closures"] += monotonic() - began
+        closure_seconds = monotonic() - began
+        costs["closures"] += closure_seconds
+        longest_closure_seconds = max(longest_closure_seconds, closure_seconds)
         if counts["complete_loss_gradient_calls"] <= 3:
             axis_gradients = {}
             for axis in range(3):
@@ -189,7 +200,7 @@ def run_training(
                 calls=counts["complete_loss_gradient_calls"],
                 loss=loss,
                 gradient_norm=float(np.linalg.norm(gradient)),
-                elapsed=monotonic() - began,
+                elapsed=closure_seconds,
             )
         )
         return torch.tensor(loss, dtype=torch.float64)
@@ -258,6 +269,8 @@ def run_training(
             if record["metadata"]["update"]["accepted_update_norm"] == 0:
                 stop_reason = "OPTIMIZER_NO_UPDATE"
                 break
+        if stop_reason == "CALL_LIMIT" and counts["attempted_calls"] < call_limit:
+            stop_reason = "TIME_LIMIT_WITH_SAVE_RESERVE"
     except StopFTT as error:
         stop_reason = str(error)
         emit(
@@ -294,6 +307,12 @@ def run_training(
         mapping_costs=mapping.costs,
         mapping_counts=mapping.counts,
         core_costs=model.costs,
+        budget_finish_guard=dict(
+            longest_complete_closure_seconds=longest_closure_seconds,
+            longest_complete_save_seconds=longest_save_seconds,
+            next_closure_multiplier=1.5,
+            launcher_soft_cutoff_monotonic=deadline,
+        ),
         action_counts=action.counts,
         action_costs=action.costs,
         audits=audit_rows,

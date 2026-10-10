@@ -323,3 +323,110 @@ def test_reference_fit_G_gradient_and_no_original_inverse_calls():
     assert abs(observed - gradient @ direction) / abs(gradient @ direction) < 1e-5
     assert not hasattr(metric, "factor")
     assert not hasattr(metric, "solve")
+
+
+def test_setup_exhausts_route_time_preserves_zero_and_distinguishes_call_cap(
+    tmp_path, monkeypatch
+):
+    from src.solvers import ftt_optimization
+
+    class ToyAction:
+        f = np.ones(9, dtype=np.complex128)
+        counts = {"A": 0, "AH": 0}
+        costs = {"A": 0.0, "AH": 0.0}
+
+        def apply(self, c, *, adjoint=False):
+            self.counts["AH" if adjoint else "A"] += 1
+            return c.copy()
+
+        def audit(self, c):
+            r = float(np.linalg.norm(c - self.f) / np.linalg.norm(self.f))
+            return dict(
+                native_relative=r,
+                augmented_relative=r,
+                original_total_augmented_relative=r,
+            )
+
+    action = ToyAction()
+    monkeypatch.setattr(ftt_optimization, "monotonic", lambda: 2.0)
+    result = ftt_optimization.run_training(
+        action,
+        fixture(),
+        FTTField(BOX, "fttnn"),
+        make_metric(action, "native_euc"),
+        tmp_path,
+        dict(model_kind="fttnn", metric_kind="native_euc"),
+        1.0,
+        lambda *_: None,
+        call_limit=1000,
+        adam_steps=500,
+    )
+    assert result["stop_reason"] == "TIME_LIMIT_WITH_SAVE_RESERVE"
+    assert result["counts"]["attempted_calls"] == 0
+    assert result["counts"]["Adam_updates"] == 0
+    state = load_checkpoint(
+        tmp_path / "checkpoints" / result["checkpoint"]["name"],
+        result["checkpoint"]["sha256"],
+    )
+    assert np.count_nonzero(state["c"]) == 0
+    assert state["optimizer_class"] == "Adam"
+
+
+def test_actual_schema_usage_flags_include_reference_exposed_verifier():
+    from src.io.ftt_campaign import usage_flags, STAGES
+    from src.io.neural_wave_campaign import ROOT, load_wave
+
+    for name in STAGES:
+        spec = load_wave(ROOT / "input/task042extra_feinn_5nm" / (name + ".dat"))
+        flags = usage_flags(spec)
+        fit = name in (
+            "v38_fttnn_reference_fit",
+            "v38_chebtt_reference_fit",
+            "v38_ftt_fit_compare",
+        )
+        assert flags["reference_used_for_training"] == fit
+        assert flags["features_reference_exposed"] == fit
+        assert not flags["official_candidate_results"]
+        assert not flags["production_initialization_allowed"]
+        if fit:
+            assert not flags["pde_only_solve"]
+
+
+def test_actual_checkpoint_identity_rejects_mixed_source_label_and_buffers():
+    from src.postprocessing.ftt_verification import validate_checkpoint_identity
+
+    model = FTTField(BOX, "fttnn")
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    binding = dict(
+        source_sha="c" * 40,
+        input_sha256="d" * 64,
+        design_sha256="e" * 64,
+        native_sha256="a" * 64,
+        moments_sha256="b" * 64,
+        reference_sha256=None,
+        model_kind="fttnn",
+        metric_kind="native_euc",
+        reference_used_for_training=False,
+        production_initialization_allowed=False,
+    )
+    candidate = dict(binding, checkpoint=dict(optimizer_class="Adam"))
+    state = capture(model, optimizer, binding)
+    validate_checkpoint_identity(state, candidate, model, False)
+    for key in (
+        "source_sha",
+        "input_sha256",
+        "native_sha256",
+        "reference_sha256",
+        "model_kind",
+    ):
+        damaged = deepcopy(state)
+        damaged["metadata"][key] = "changed_with_updated_artifact_hash"
+        with pytest.raises(ValueError, match="BINDING_MISMATCH"):
+            validate_checkpoint_identity(damaged, candidate, model, False)
+    for key in ("center", "half_width", "initial_core_scales"):
+        damaged = deepcopy(state)
+        damaged["model"][key] += 0.1
+        with pytest.raises(ValueError, match="BUFFER_CHANGED"):
+            validate_checkpoint_identity(damaged, candidate, model, False)
+    with pytest.raises(ValueError, match="PURPOSE"):
+        validate_checkpoint_identity(state, candidate, model, True)

@@ -56,14 +56,27 @@ def load_arrays(path):
         return {k: np.array(arrays[k]) for k in arrays.files}
 
 
+def ftt_abi(mode):
+    from src.runners.neural_wave_worker import abi
+
+    facts = abi(mode)
+    if mode == "ml":
+        facts["neuron_and_derivative_dtype"] = (
+            "FTT parameters and coordinate buffers float64; "
+            "paired complex outputs and complete moments complex128"
+        )
+        facts["dtype_verification"] = "explicit FTTField dtype and qualified mapping"
+    return facts
+
+
 def subphase(directory, phase):
     manifest = json.loads((directory / "run_manifest.json").read_text())
     design = json.loads(DESIGN.read_text())
     artifact = ROOT / manifest["artifact"]
     mode = "ml" if phase == "reconstruct" else "fe"
-    from src.runners.neural_wave_worker import abi, publish_event
+    from src.runners.neural_wave_worker import publish_event
 
-    atomic_json(artifact / (phase + "_abi.json"), abi(mode))
+    atomic_json(artifact / (phase + "_abi.json"), ftt_abi(mode))
     from src.solvers.feinn_native import load_native
 
     files = load_files(design)
@@ -269,7 +282,7 @@ def main():
         return
     manifest = json.loads((directory / "run_manifest.json").read_text())
     artifact = ROOT / manifest["artifact"]
-    from src.runners.neural_wave_worker import abi, publish_event
+    from src.runners.neural_wave_worker import publish_event
 
     started = monotonic()
 
@@ -277,14 +290,7 @@ def main():
         publish_event(directory, stage, values)
 
     try:
-        facts = abi(manifest["spec"]["mode"])
-        if manifest["spec"]["mode"] == "ml":
-            facts["neuron_and_derivative_dtype"] = (
-                "FTT parameters and coordinate buffers float64; "
-                "paired complex outputs and complete moments complex128"
-            )
-            facts["dtype_verification"] = "explicit FTTField dtype and qualified mapping"
-        atomic_json(directory / "abi.json", facts)
+        atomic_json(directory / "abi.json", ftt_abi(manifest["spec"]["mode"]))
         result = run_stage(manifest, artifact, marker, directory)
         result.update(
             reference_used_for_training=manifest["reference_used_for_training"],

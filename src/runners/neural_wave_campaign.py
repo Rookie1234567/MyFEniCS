@@ -539,12 +539,10 @@ def launch(spec):
                                     official_candidate_results=False)
             if spec.get("campaign_version") == 38:
                 from src.runners.ftt_worker import CHAIN
-                labelled = spec.get("metric_kind") == "reference_fit_G"
+                from src.io.ftt_campaign import usage_flags
                 manifest["binding_source_files"].update({p:digest(ROOT/p) for p in CHAIN})
-                manifest.update(reference_used_for_training=labelled,
-                    features_reference_exposed=labelled, pde_only_solve=spec["role"]=="ftt_train" and not labelled,
-                    official_candidate_results=False, pde_only_solver_qualified=False,
-                    model_schema="ftt-field.v1", model_kind=spec.get("model_kind"),
+                manifest.update(usage_flags(spec))
+                manifest.update(model_schema="ftt-field.v1", model_kind=spec.get("model_kind"),
                     metric_kind=spec.get("metric_kind"), global_Gram_factor_count=0,
                     Gsolve_count=0, global_Maxwell_factor_count=0)
             atomic_json(directory / "run_manifest.json", manifest)

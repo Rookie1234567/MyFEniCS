@@ -9,6 +9,38 @@ from src.solvers.neural_wave_greedy import atomic_json, atomic_npz
 ART = ROOT / "benchmarks/artifacts/task42extra/v38"
 
 
+def validate_checkpoint_identity(state, candidate, model, fit):
+    from src.solvers.optimization_checkpoint import parameter_order
+
+    for key in (
+        "source_sha",
+        "input_sha256",
+        "design_sha256",
+        "native_sha256",
+        "moments_sha256",
+        "reference_sha256",
+        "model_kind",
+        "metric_kind",
+    ):
+        if key not in state["metadata"] or state["metadata"][key] != candidate[key]:
+            raise ValueError("FTT_CHECKPOINT_BINDING_MISMATCH:" + key)
+    if (
+        state["metadata"]["reference_used_for_training"] != fit
+        or state["metadata"]["metric_kind"]
+        != ("reference_fit_G" if fit else "native_euc")
+        or state["metadata"]["production_initialization_allowed"]
+        or state["parameter_order"] != parameter_order(model)
+        or state["optimizer_class"] != candidate["checkpoint"]["optimizer_class"]
+    ):
+        raise ValueError("FTT_CHECKPOINT_PURPOSE_ORDER_OR_OPTIMIZER_MISMATCH")
+    # Coordinate buffers are fixed identities, not extra optimization variables.
+    for key in ("center", "half_width", "initial_core_scales"):
+        if not np.array_equal(
+            state["model"][key].numpy(), model.state_dict()[key].numpy()
+        ):
+            raise ValueError("FTT_CHECKPOINT_COORDINATE_BUFFER_CHANGED:" + key)
+
+
 def route_stages(fit=False):
     return [
         (
@@ -37,10 +69,13 @@ def reconstruct(design, action, packet, high, artifact, marker, fit=False):
         state = load_checkpoint(
             ART / stage / "checkpoints" / entry["name"], entry["sha256"]
         )
-        if state["metadata"]["reference_used_for_training"] != fit or state["metadata"][
-            "metric_kind"
-        ] != ("reference_fit_G" if fit else "native_euc"):
-            raise ValueError("FTT_CHECKPOINT_LABEL_SCOPE_MISMATCH")
+        validate_checkpoint_identity(state, candidate, model, fit)
+        producer_file = ART / stage / "frozen_field.npz"
+        with np.load(producer_file, allow_pickle=False) as data:
+            if not np.array_equal(data["c"], state["c"]) or not np.array_equal(
+                data["r"], state["r"]
+            ):
+                raise ValueError("FTT_FROZEN_PRODUCER_AND_COMMITTED_STATE_MISMATCH")
         model.load_state_dict(state["model"], strict=True)
         c30 = StreamingMomentMap(packet).forward(model)
         c60 = StreamingMomentMap(high).forward(model)
@@ -56,6 +91,8 @@ def reconstruct(design, action, packet, high, artifact, marker, fit=False):
             quadrature_pass=bool(max(drift, adrift) <= 1e-8),
             candidate_source_sha=candidate["source_sha"],
             committed_boundary_sha256=entry["sha256"],
+            producer_field_sha256=digest(producer_file),
+            checkpoint_identity_checked=True,
             reference_used_for_training=fit,
             pde_only_solve=not fit,
             production_initialization_allowed=False,

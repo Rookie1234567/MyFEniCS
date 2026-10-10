@@ -51,6 +51,22 @@ def load_ftt(path, data, raw):
     )
 
 
+def usage_flags(spec):
+    """The verifier inherits the fitted models' permanent label exposure."""
+    labelled = (
+        spec.get("metric_kind") == "reference_fit_G"
+        or spec["role"] == "ftt_fit_compare"
+    )
+    return dict(
+        reference_used_for_training=labelled,
+        features_reference_exposed=labelled,
+        pde_only_solve=spec["role"] == "ftt_train" and not labelled,
+        production_initialization_allowed=False,
+        official_candidate_results=False,
+        pde_only_solver_qualified=False,
+    )
+
+
 def load_files(design, labelled=False):
     allowed = {"native", "moments_q30", "moments_q60"}
     if set(design["files"]) != allowed:
