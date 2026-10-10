@@ -125,7 +125,7 @@ class FactoredMomentMap:
     Unsupported geometry uses exact physical coordinates and raw finite sums.
     """
 
-    def __init__(self, packet, point_batch=512):
+    def __init__(self, packet, point_batch=512, *, share_entity_integrals=True):
         started = perf_counter()
         self.packet, self.point_batch = packet, point_batch
         if point_batch not in (128, 256, 512):
@@ -217,6 +217,84 @@ class FactoredMomentMap:
         )
         self.dynamic_bytes = 0
         self.block_metadata = {}
+        self.share_entity_integrals = share_entity_integrals
+        self.shared_definitions = {}
+
+    def _shared_definition(self, permutation):
+        """Merge bitwise-identical one-dimensional linear functionals only.
+
+        Each original entity still contributes all its polynomial coefficients.
+        Endpoint evaluations and Gauss moments share a small local tensor; this
+        does not merge close coordinates or discard small coefficients.
+        """
+        key = tuple(permutation)
+        if key in self.shared_definitions:
+            return self.shared_definitions[key]
+        weights, dictionaries, definitions = [], [], []
+        for phys in range(3):
+            ref = int(np.flatnonzero(permutation == phys)[0])
+            weights.append([])
+            dictionaries.append({})
+            definitions.append(ref)
+        mappings = []
+        for plan in self.plans:
+            ids = []
+            for phys, ref in enumerate(definitions):
+                node_ids = np.searchsorted(self.ref_axes[ref], plan["axes"][ref])
+                selected = []
+                for original in plan["weights"][ref]:
+                    row = np.zeros(len(self.ref_axes[ref]), dtype=np.float64)
+                    row[node_ids] = original
+                    # Exact bytes, including signed zeros, define reuse.
+                    token = row.tobytes()
+                    if token not in dictionaries[phys]:
+                        dictionaries[phys][token] = len(weights[phys])
+                        weights[phys].append(row)
+                    selected.append(dictionaries[phys][token])
+                ids.append(np.asarray(selected))
+            mappings.append(ids)
+        W = [np.asarray(rows) for rows in weights]
+        coefficients = np.zeros(
+            (self.packet["owner_rows"].shape[1], 3, *(len(w) for w in W)),
+            dtype=np.complex128,
+        )
+        for plan, ids in zip(self.plans, mappings, strict=True):
+            original = plan["coefficients"].transpose(
+                0, 1, *[2 + ref for ref in definitions]
+            )
+            coefficients[np.ix_(plan["rows"], np.arange(3), *ids)] = original
+        self.static_bytes += coefficients.nbytes + sum(w.nbytes for w in W)
+        self.shared_definitions[key] = (W, coefficients)
+        return W, coefficients
+
+    def _shared_integrated_block(self, cells, values):
+        key = ("shared", tuple(cells))
+        if key not in self.block_metadata:
+            W, C = self._shared_definition(self.cell_plans[cells[0]][1])
+            indices, scatter = [], []
+            for phys in range(3):
+                ids = np.asarray([self.cell_indices[phys][c] for c in cells])
+                unique, inverse = np.unique(ids.ravel(), return_inverse=True)
+                S = sparse.csr_matrix(
+                    (np.ones(ids.size), (inverse, np.arange(ids.size))),
+                    shape=(len(unique), ids.size),
+                )
+                indices.append(ids)
+                scatter.append((unique, S))
+                self.static_bytes += (
+                    ids.nbytes
+                    + unique.nbytes
+                    + S.data.nbytes
+                    + S.indices.nbytes
+                    + S.indptr.nbytes
+                )
+            self.block_metadata[key] = (W, C, indices, scatter)
+        W, C, indices, scatter = self.block_metadata[key]
+        cores = [
+            contract("pn,cnsij->cpsij", w, values[a][ids])
+            for a, (w, ids) in enumerate(zip(W, indices, strict=True))
+        ]
+        return cores, C, (W, scatter)
 
     def invalidate(self):
         self.cache_key, self.core_values = None, None
@@ -342,11 +420,22 @@ class FactoredMomentMap:
                 began = perf_counter()
                 J = p["jacobians"][cells]
                 local = np.zeros((len(cells), p["owner_rows"].shape[1]), complex)
-                for plan in self.plans:
-                    cores, C, _ = self._integrated_block(cells, plan, values)
+                prepared = (
+                    [self._shared_integrated_block(cells, values)]
+                    if self.share_entity_integrals
+                    else [
+                        self._integrated_block(cells, plan, values)
+                        for plan in self.plans
+                    ]
+                )
+                for index, (cores, C, _) in enumerate(prepared):
                     F = contract("cpsij,cqsjk,crskl->cpqrsil", *cores)[..., 0, 0]
                     moments = contract("rtpqs,cpqsa->crta", C, F)
-                    local[:, plan["rows"]] = contract("crta,cat->cr", moments, J)
+                    value = contract("crta,cat->cr", moments, J)
+                    if self.share_entity_integrals:
+                        local[:] = value
+                    else:
+                        local[:, self.plans[index]["rows"]] = value
                 self.costs["contraction"] += perf_counter() - began
                 began = perf_counter()
                 oriented = contract(
@@ -412,12 +501,22 @@ class FactoredMomentMap:
                 T = p["transforms"][p["orientation_ids"][cells]]
                 loc = contract("cij,ci->cj", T.conj(), loc)
                 J = p["jacobians"][cells]
-                for plan in self.plans:
-                    cores, C, (weights, scatter) = self._integrated_block(
-                        cells, plan, values
+                prepared = (
+                    [self._shared_integrated_block(cells, values)]
+                    if self.share_entity_integrals
+                    else [
+                        self._integrated_block(cells, plan, values)
+                        for plan in self.plans
+                    ]
+                )
+                for index, (cores, C, (weights, scatter)) in enumerate(prepared):
+                    selected_dual = (
+                        loc
+                        if self.share_entity_integrals
+                        else loc[:, self.plans[index]["rows"]]
                     )
                     dF = contract(
-                        "rtpqs,cr,cat->cpqsa", C.conj(), loc[:, plan["rows"]], J.conj()
+                        "rtpqs,cr,cat->cpqsa", C.conj(), selected_dual, J.conj()
                     )
                     X, Y, Z = cores
                     ds = [

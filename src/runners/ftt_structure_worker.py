@@ -209,7 +209,19 @@ def run_stage(manifest, artifact, marker, directory):
     if spec["role"] == "ftt_factored_benchmark":
         from src.solvers.ftt_structure_qualification import benchmark
 
-        return benchmark(action, packet, design, artifact, marker)
+        previous_path = artifact / "result.json"
+        previous = (
+            json.loads(previous_path.read_text()) if previous_path.exists() else None
+        )
+        return benchmark(
+            action,
+            packet,
+            design,
+            artifact,
+            marker,
+            previous_record=previous,
+            measurement_tag="_" + manifest["source_sha"][:16] if previous else "",
+        )
     if spec["role"] == "ftt_train":
         from src.solvers.ftt_structure_qualification import load_parent_model
         from src.solvers.ftt_factored_moments import FactoredMomentMap
@@ -305,6 +317,14 @@ def main():
             official_candidate_results=False,
             full_original_target_qualified=False,
         )
+        if (artifact / "result.json").exists():
+            from src.solvers.optimization_checkpoint import atomic_write
+
+            old = artifact / "result.json"
+            archived = artifact / ("result_" + digest(old) + ".json")
+            if not archived.exists():
+                data = old.read_bytes()
+                atomic_write(archived, lambda stream: stream.write(data))
         atomic_json(artifact / "result.json", result)
         marker(
             "stage_frozen",

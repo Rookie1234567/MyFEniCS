@@ -228,7 +228,16 @@ def qualify(action, packet, high, design, artifact, marker):
     )
 
 
-def benchmark(action, packet, design, artifact, marker):
+def benchmark(
+    action,
+    packet,
+    design,
+    artifact,
+    marker,
+    *,
+    previous_record=None,
+    measurement_tag="",
+):
     results = {}
     metric = make_metric(action, "native_euc")
     artifact = Path(artifact)
@@ -243,6 +252,47 @@ def benchmark(action, packet, design, artifact, marker):
         for repetition in range(3):
             for name, mapping in (("old_point", old), ("factored", new)):
                 restore(model, opt, state)
+                if name == "old_point" and previous_record is not None:
+                    recorded = previous_record["models"][kind]
+                    if (
+                        recorded["parent_checkpoint_sha256"]
+                        != candidate["checkpoint"]["sha256"]
+                    ):
+                        raise ValueError("REUSED_MEASUREMENT_PARENT_MISMATCH")
+                    rows_found = [
+                        r
+                        for r in recorded["measurements"]
+                        if r["method"] == name and r["repetition"] == repetition
+                    ]
+                    if len(rows_found) != 1:
+                        raise ValueError("REUSED_MEASUREMENT_COVERAGE_MISMATCH")
+                    row = deepcopy(rows_found[0])
+                    file = artifact / f"{kind}_old_point_measure_{repetition}.pt"
+                    saved = load_checkpoint(file, row["saved_sha256"])
+                    if (
+                        not saved["metadata"].get("measurement_only")
+                        or saved["metadata"]["parent_checkpoint_sha256"]
+                        != candidate["checkpoint"]["sha256"]
+                    ):
+                        raise ValueError("REUSED_MEASUREMENT_IDENTITY_MISMATCH")
+                    theta = np.concatenate(
+                        [
+                            saved["model"][n].numpy().ravel()
+                            for n, _ in model.named_parameters()
+                        ]
+                    )
+                    gradient = np.concatenate(
+                        [g.numpy().ravel() for g in saved["gradients"]]
+                    )
+                    updated[name] = (theta, saved["c"], saved["r"], gradient)
+                    row.update(
+                        reused=True,
+                        new_seconds=0.0,
+                        original_source_sha=previous_record["source_sha"],
+                    )
+                    rows.append(row)
+                    marker("complete_old_measurement_reused", dict(kind=kind, **row))
+                    continue
                 start = perf_counter()
                 c = mapping.forward(model)
                 loss, r, d = metric.value(c, gradient=True)
@@ -253,7 +303,7 @@ def benchmark(action, packet, design, artifact, marker):
                 r1 = action.apply(c1) - action.f
                 updated[name] = (flat(model), c1, r1, g, loss)
                 save_start = perf_counter()
-                f = artifact / f"{kind}_{name}_measure_{repetition}.pt"
+                f = artifact / f"{kind}_{name}_measure_{repetition}{measurement_tag}.pt"
                 snap = capture(
                     model,
                     opt,
@@ -294,7 +344,8 @@ def benchmark(action, packet, design, artifact, marker):
             s = capture(model, opt, dict(measurement_only=True))
             s.update(c=cc, r=rr)
             atomic_write(
-                artifact / f"{kind}_consecutive_{k}.pt", lambda f: torch.save(s, f)
+                artifact / f"{kind}_consecutive_{k}{measurement_tag}.pt",
+                lambda f: torch.save(s, f),
             )
             consecutive.append(perf_counter() - start)
         maximum = max(
@@ -338,6 +389,11 @@ def benchmark(action, packet, design, artifact, marker):
             breakdown=new.costs,
             inherited_calls=inherited,
             parent_checkpoint_sha256=candidate["checkpoint"]["sha256"],
+            old_baseline_reused=previous_record is not None,
+            shared_one_dimensional_functionals={
+                str(k): [len(w) for w in value[0]]
+                for k, value in new.shared_definitions.items()
+            },
         )
         results[kind] = record
         marker("complete_execution_cost_gate", dict(model_kind=kind, **record))

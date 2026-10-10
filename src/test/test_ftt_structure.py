@@ -134,6 +134,76 @@ def test_cache_parameter_buffer_trial_restore_and_scatter_repeated_nodes():
     np.testing.assert_allclose(mapping.forward(model), c, rtol=0, atol=0)
 
 
+def test_shared_entities_keep_every_finite_sum_and_all_small_coefficients():
+    p = fixture()
+    model = FTTField(BOX, "fttnn")
+    model.nonzero_qualification_state()
+    fused = FactoredMomentMap(p)
+    separate = FactoredMomentMap(p, share_entity_integrals=False)
+    dual = np.arange(1, 7, dtype=np.complex128) * (0.2 + 0.7j)
+    np.testing.assert_allclose(
+        fused.forward(model), separate.forward(model), rtol=1e-12, atol=1e-14
+    )
+    np.testing.assert_allclose(
+        fused.vjp(model, dual), separate.vjp(model, dual), rtol=1e-11, atol=1e-13
+    )
+    _, C = next(iter(fused.shared_definitions.values()))
+    assert np.any(C[:, 2] != 0)  # including the original 1e-20 component
+
+
+def test_complete_old_measurements_reused_without_reexecuting_producer(
+    tmp_path, monkeypatch
+):
+    from src.solvers import ftt_structure_qualification as module
+    from src.solvers.optimization_checkpoint import digest
+
+    class Action:
+        f = np.ones(6, dtype=np.complex128)
+
+        def apply(self, c, adjoint=False):
+            return c.copy()
+
+    def parent_model(design, kind, fit=False):
+        model = FTTField(BOX, kind)
+        model.nonzero_qualification_state()
+        opt = torch.optim.Adam(model.parameters(), lr=1e-3)
+        state = capture(model, opt, dict(counts={"attempted_calls": 0}))
+        return model, opt, state, {"checkpoint": {"sha256": "a" * 64}}
+
+    monkeypatch.setattr(module, "load_parent_model", parent_model)
+    design = {
+        "parents": {
+            k + "_fit": {"counts": {"attempted_calls": 0}} for k in ("fttnn", "chebtt")
+        }
+    }
+    first = module.benchmark(Action(), fixture(), design, tmp_path, lambda *_: None)
+    first["source_sha"] = "b" * 40
+    sealed = {p.name: digest(p) for p in tmp_path.glob("*old_point*.pt")}
+
+    class ForbiddenPointProducer:
+        def __init__(self, *args):
+            pass
+
+        def forward(self, *args):
+            pytest.fail("Healthy old-point producer must not be repeated")
+
+        def vjp(self, *args):
+            pytest.fail("Healthy old-point gradient must not be repeated")
+
+    monkeypatch.setattr(module, "StreamingMomentMap", ForbiddenPointProducer)
+    second = module.benchmark(
+        Action(),
+        fixture(),
+        design,
+        tmp_path,
+        lambda *_: None,
+        previous_record=first,
+        measurement_tag="_updated",
+    )
+    assert all(v["old_baseline_reused"] for v in second["models"].values())
+    assert sealed == {p.name: digest(p) for p in tmp_path.glob("*old_point*.pt")}
+
+
 def test_structure_schema_isolation_and_parent_binding():
     from src.io.ftt_structure_campaign import STAGES, parent, DESIGN
     from src.io.neural_wave_campaign import ROOT, load_wave, profile_paths
@@ -166,7 +236,9 @@ def test_v39_admission_never_spends_expired_v30_observation_pool(monkeypatch):
         pytest.fail("V39 must not consult the exhausted V30 observation pool")
 
     monkeypatch.setattr(block_wave_admission, "fresh_admission", approved)
-    monkeypatch.setattr(neural_wave_dependencies, "resource_observation_cost", expired_pool)
+    monkeypatch.setattr(
+        neural_wave_dependencies, "resource_observation_cost", expired_pool
+    )
     directory = ROOT / "tmp/task42extra/v39/durable/checks_attempt2"
     result = neural_wave_dependencies.fresh_admission(
         directory, 16 * 2**30, scope={17, 18}, prefix="outer", reserve_s=64
