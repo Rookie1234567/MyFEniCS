@@ -1164,6 +1164,63 @@ def test_v22_first_native_gate_failure_is_checkpointed_before_mode_sweep(tmp_pat
         assert np.array_equal(archive["H_completed_values"], h_values[:1])
 
 
+def test_v22_physical_model_and_mode_identity_bindings_are_separate():
+    from src.solvers.task40_v22_operator_probe import (
+        _validate_v22_physical_identity_bindings,
+    )
+
+    physical_model_sha = "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241"
+    mode_identity_sha = "a855565b82c1d88e84352dd355aec3531464261e5ab0df3e45de17e1879eaf1f"
+    assert physical_model_sha != mode_identity_sha
+    preflight = {
+        "physical_model_sha256": physical_model_sha,
+        "target_mode_inventory": {"physical_identity_sha256": mode_identity_sha},
+    }
+    resolved = {
+        "provenance": {"physical_model_sha256": physical_model_sha},
+        "execution": {"task40_target_physical_identity_sha256": mode_identity_sha},
+    }
+
+    _validate_v22_physical_identity_bindings(
+        preflight=preflight,
+        resolved=resolved,
+        expected_mode_identity=mode_identity_sha,
+    )
+
+    wrong_model = dict(preflight, physical_model_sha256=mode_identity_sha)
+    with pytest.raises(ValueError, match="physical-model identity differs"):
+        _validate_v22_physical_identity_bindings(
+            preflight=wrong_model,
+            resolved=resolved,
+            expected_mode_identity=mode_identity_sha,
+        )
+    missing_preflight_model = {
+        key: value
+        for key, value in preflight.items()
+        if key != "physical_model_sha256"
+    }
+    missing_resolved_model = {
+        "provenance": {},
+        "execution": resolved["execution"],
+    }
+    with pytest.raises(ValueError, match="physical-model identity is missing or malformed"):
+        _validate_v22_physical_identity_bindings(
+            preflight=missing_preflight_model,
+            resolved=missing_resolved_model,
+            expected_mode_identity=mode_identity_sha,
+        )
+    wrong_mode = dict(
+        preflight,
+        target_mode_inventory={"physical_identity_sha256": "b" * 64},
+    )
+    with pytest.raises(ValueError, match="target-mode physical identity differs"):
+        _validate_v22_physical_identity_bindings(
+            preflight=wrong_mode,
+            resolved=resolved,
+            expected_mode_identity=mode_identity_sha,
+        )
+
+
 def test_fullspace_surface_iterator_reports_second_global_filter_audit(monkeypatch):
     import numpy as np
 

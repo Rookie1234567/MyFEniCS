@@ -52,6 +52,38 @@ class _ProbeResourceBlocked(RuntimeError):
         super().__init__(f"resource admission blocked before {stage}")
 
 
+def _validate_v22_physical_identity_bindings(
+    *,
+    preflight: Mapping[str, Any],
+    resolved: Mapping[str, Any],
+    expected_mode_identity: str,
+) -> None:
+    """Keep resolved-input and target-mode physical identity domains distinct."""
+
+    provenance = resolved.get("provenance", {})
+    execution = resolved.get("execution", {})
+    mode_inventory = preflight.get("target_mode_inventory")
+    if not isinstance(provenance, Mapping) or not isinstance(execution, Mapping):
+        raise ValueError("resolved V22 input omitted physical identity bindings")
+    if not isinstance(mode_inventory, Mapping):
+        raise ValueError("V22 preflight omitted the target mode physical identity")
+    physical_model_sha256 = preflight.get("physical_model_sha256")
+    if (
+        not isinstance(physical_model_sha256, str)
+        or len(physical_model_sha256) != 64
+        or any(character not in "0123456789abcdef" for character in physical_model_sha256)
+    ):
+        raise ValueError("resolved-input physical-model identity is missing or malformed")
+    if physical_model_sha256 != provenance.get("physical_model_sha256"):
+        raise ValueError("resolved-input physical-model identity differs from preflight")
+    if (
+        mode_inventory.get("physical_identity_sha256") != expected_mode_identity
+        or execution.get("task40_target_physical_identity_sha256")
+        != expected_mode_identity
+    ):
+        raise ValueError("target-mode physical identity differs from its frozen input/manifest")
+
+
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -2442,14 +2474,16 @@ def _run_probe(
             if not path.is_file() or _sha256_file(path) != expected:
                 raise ValueError(f"saved V20 XDMF/HDF5 identity changed: {path.name}")
         provenance = resolved.get("provenance", {})
-        if (
-            preflight.get("physical_model_sha256") != _MODE_PHYSICAL_SHA256
-            or preflight.get("physical_model_sha256")
-            != provenance.get("physical_model_sha256")
-            or TARGET_MODE_PHYSICAL_IDENTITY_SHA256 != _MODE_PHYSICAL_SHA256
-        ):
-            raise ValueError("canonical/staged input, saved geometry, and target mode physical identities differ")
         mode_inventory = preflight.get("target_mode_inventory")
+        _validate_v22_physical_identity_bindings(
+            preflight=preflight,
+            resolved=resolved,
+            expected_mode_identity=_MODE_PHYSICAL_SHA256,
+        )
+        if (
+            TARGET_MODE_PHYSICAL_IDENTITY_SHA256 != _MODE_PHYSICAL_SHA256
+        ):
+            raise ValueError("installed and frozen target-mode physical identities differ")
         if (
             not isinstance(mode_inventory, Mapping)
             or len(mode_rows) != 32_060
