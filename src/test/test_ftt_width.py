@@ -348,3 +348,102 @@ def test_saved_comparison_uses_all_three_and_preserves_original_wall(
     assert not result["extra_round_decision"]["allowed"]
     assert result["extra_round_decision"]["inherited_route_wall_not_reset"]
     assert len(result["extra_round_decision"]["checkpoints"]) == 3
+
+
+def test_saved_width_participation_uses_actual_masks_and_retained_gradient():
+    from src.postprocessing.ftt_common_wall import saved_width_participation
+
+    _, wide = pair()
+    hidden_ids = {id(p) for p in hidden_parameters(wide)}
+    keys = [name for name, p in wide.named_parameters() if id(p) in hidden_ids]
+    initial = capture(wide, CoreBoundary({}), {})
+    final = deepcopy(initial)
+    final["model"]["cores.0.4.weight"][:, 16:] = 1e-3
+    final["model"]["cores.0.2.weight"][0, 16] += 2e-3
+    final["model"]["cores.0.2.weight"][0, 0] += 3e-3
+    final["gradients"] = [torch.zeros_like(p) for p in wide.parameters()]
+    names = [row["name"] for row in final["parameter_order"]]
+    final["gradients"][names.index("cores.0.2.weight")][0, 16] = 4e-3
+    row = saved_width_participation(initial, final, keys)
+    assert row["old_hidden_real_parameters"] == 912
+    assert row["new_hidden_real_parameters"] == 2448
+    x = row["axes"]["x"]
+    assert x["new_hidden_real_parameters"] == 816
+    assert x["new_output_weight_change_norm"] > 0
+    assert x["new_hidden_change_norm"] == pytest.approx(2e-3)
+    assert x["old_hidden_change_norm"] == pytest.approx(3e-3)
+    assert x["retained_new_hidden_gradient_norm"] == pytest.approx(4e-3)
+    final["gradients"] = [None] * len(names)
+    assert saved_width_participation(initial, final, keys)["axes"]["x"][
+        "gradient_status"
+    ] == "NOT_RETAINED"
+    final["parameter_order"] = final["parameter_order"][::-1]
+    with pytest.raises(ValueError, match="PARAMETER_ORDER"):
+        saved_width_participation(initial, final, keys)
+
+
+def test_saved_fork_inventory_and_bitwise_claims(tmp_path, monkeypatch):
+    from src.postprocessing import ftt_common_wall as audit
+    from src.runners import ftt_bloch_worker
+    from src.io.ftt_width_campaign import routes
+
+    old, _ = pair()
+    design = dict(campaign_version=44, parent_checkpoint={})
+    parent = capture(old, CoreBoundary({}), {})
+    parent.update(c=np.ones(6, complex), r=np.ones(6, complex))
+    parent_path = tmp_path / "parent.pt"
+    atomic_write(parent_path, lambda stream: torch.save(parent, stream))
+    design["parent_checkpoint"] = dict(path="parent.pt", sha256=digest(parent_path))
+    monkeypatch.setattr(audit, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        ftt_bloch_worker,
+        "field_factory",
+        lambda *_: BlochFTTField(BOX, "fttnn", phase()),
+    )
+    root = tmp_path / "source"
+    for stage, route in routes():
+        model = old if route.startswith("W16") else widen_field(old)
+        initial = capture(model, CoreBoundary({}), {})
+        for key in ("torch_rng", "numpy_rng", "python_rng"):
+            initial[key] = deepcopy(parent[key])
+        initial.update(c=parent["c"].copy(), r=parent["r"].copy())
+        initial["c"][0] += 1e-13
+        initial["metadata"].update(
+            hidden_width=model.hidden_width,
+            hidden_real_parameters=sum(p.numel() for p in hidden_parameters(model)),
+            inherited_state=dict(inherited_counts={}),
+            new_counts={},
+        )
+        folder = root / stage / "checkpoints"
+        folder.mkdir(parents=True)
+        entries = []
+        for name in ("initial.pt", "final.pt"):
+            path = folder / name
+            atomic_write(path, lambda stream: torch.save(initial, stream))
+            entries.append(dict(name=name, sha256=digest(path)))
+        (folder.parent / "checkpoint_index.json").write_text(json.dumps(entries))
+        (folder.parent / "result.json").write_text(
+            json.dumps(dict(checkpoint=entries[-1]))
+        )
+    output = audit.initialize_output(tmp_path / "audit")
+    audit.audit_saved_forks(output, root, design)
+    record = json.loads((output / "initial_and_final_forks.json").read_text())
+    assert set(record["hidden_real_parameter_counts"].values()) == {912, 3360}
+    for route, row in record["records"].items():
+        assert row["all_initial_model_buffers_equal_function_preserving_import"]
+        assert not row["initial_c_r_bitwise_equal_parent"]
+        assert row["initial_c_r_pair"]["c"]["relative"] < 1e-10
+        if route.startswith("W32"):
+            assert row["actual_real_parameter_count"] == 19200
+            assert not row["initial_architecture_equals_parent"]
+            assert row["expanded_parameter_participation"]["new_hidden_real_parameters"] == 2448
+    frozen = root / "v44_w32_refined_frozen" / "checkpoints" / "final.pt"
+    state = load_checkpoint(frozen, digest(frozen))
+    state["model"]["cores.0.0.weight"][20, 0] += 1e-3
+    atomic_write(frozen, lambda stream: torch.save(state, stream))
+    rfile = frozen.parent.parent / "result.json"
+    result = json.loads(rfile.read_text())
+    result["checkpoint"]["sha256"] = digest(frozen)
+    rfile.write_text(json.dumps(result))
+    with pytest.raises(ValueError, match="FREEZE_HIDDEN_CHANGED"):
+        audit.audit_saved_forks(output, root, design)

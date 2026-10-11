@@ -145,6 +145,81 @@ def prepare(artifact, source_root, manifest):
     atomic_json(artifact / "selection.json", selection)
 
 
+def saved_width_participation(initial, final, hidden_keys):
+    """Read retained tensors only; do not compute a new network gradient."""
+    import torch
+
+    if initial["parameter_order"] != final["parameter_order"]:
+        raise ValueError("SAVED_WIDTH_PARAMETER_ORDER_CHANGED")
+    gradients = dict(
+        zip(
+            (row["name"] for row in final["parameter_order"]),
+            final["gradients"],
+            strict=True,
+        )
+    )
+    axes = {}
+    for axis in range(3):
+        prefix = f"cores.{axis}."
+        keys = [key for key in hidden_keys if key.startswith(prefix)]
+        old_delta2 = new_delta2 = new_gradient2 = 0.0
+        old_count = new_count = retained = missing = 0
+        for key in keys:
+            before, after = initial["model"][key], final["model"][key]
+            if before.shape != after.shape:
+                raise ValueError("SAVED_WIDTH_HIDDEN_SHAPE_CHANGED")
+            old = torch.zeros_like(before, dtype=torch.bool)
+            if key.endswith("2.weight"):
+                old[:16, :16] = True
+            else:
+                old[:16] = True
+            delta = after - before
+            old_delta2 += float((delta[old] ** 2).sum())
+            new_delta2 += float((delta[~old] ** 2).sum())
+            old_count += int(old.sum())
+            new_count += int((~old).sum())
+            gradient = gradients[key]
+            if gradient is None:
+                missing += 1
+            else:
+                if gradient.shape != after.shape:
+                    raise ValueError("SAVED_WIDTH_GRADIENT_SHAPE_CHANGED")
+                retained += 1
+                new_gradient2 += float((gradient[~old] ** 2).sum())
+        output_key = prefix + "4.weight"
+        before_output = initial["model"][output_key][:, 16:]
+        after_output = final["model"][output_key][:, 16:]
+        axes["xyz"[axis]] = dict(
+            old_hidden_real_parameters=old_count,
+            new_hidden_real_parameters=new_count,
+            new_output_real_parameters=after_output.numel(),
+            initial_new_output_weight_norm=float(torch.linalg.vector_norm(before_output)),
+            final_new_output_weight_norm=float(torch.linalg.vector_norm(after_output)),
+            new_output_weight_change_norm=float(
+                torch.linalg.vector_norm(after_output - before_output)
+            ),
+            old_hidden_change_norm=math.sqrt(old_delta2),
+            new_hidden_change_norm=math.sqrt(new_delta2),
+            retained_new_hidden_gradient_norm=(
+                math.sqrt(new_gradient2) if retained else None
+            ),
+            gradient_tensors_retained=retained,
+            gradient_tensors_not_retained=missing,
+            gradient_status=(
+                "NOT_RETAINED" if not retained else
+                "PARTIAL_NOT_RETAINED" if missing else "RETAINED_LAST_OPTIMIZER_DERIVATIVE"
+            ),
+        )
+    return dict(
+        axes=axes,
+        old_hidden_real_parameters=sum(row["old_hidden_real_parameters"] for row in axes.values()),
+        new_hidden_real_parameters=sum(row["new_hidden_real_parameters"] for row in axes.values()),
+        gradient_scope="Stored last optimizer derivative; no fresh final-state gradient computed",
+        new_network_forward_calls=0,
+        new_gradient_calls=0,
+    )
+
+
 def audit_saved_forks(artifact, source_root, design):
     import numpy as np
     from src.io.ftt_continuation_campaign import routes
@@ -165,6 +240,7 @@ def audit_saved_forks(artifact, source_root, design):
     buffer_keys = [name for name, _ in model.named_buffers()]
     initial_models = []
     records = {}
+    hidden_counts = {}
     for stage, route in routes():
         folder = source_root / stage
         index = json.loads((folder / "checkpoint_index.json").read_text())
@@ -180,7 +256,15 @@ def audit_saved_forks(artifact, source_root, design):
             expected = widen_field(model).state_dict()
         same_model = all(v.equal(expected[k]) for k, v in s0["model"].items())
         from src.solvers.ftt_conditional_core import relative_pair
-        same_field = all(relative_pair(np.asarray(s0[k]), np.asarray(parent[k]))["relative"] <= 1e-10 for k in ("c", "r")) if width_run else all(np.array_equal(s0[k], parent[k]) for k in ("c", "r"))
+        field_pairs = {
+            key: relative_pair(np.asarray(s0[key]), np.asarray(parent[key]))
+            for key in ("c", "r")
+        }
+        bitwise_field = all(np.array_equal(s0[key], parent[key]) for key in ("c", "r"))
+        same_field = (
+            all(row["relative"] <= 1e-10 for row in field_pairs.values())
+            if width_run else bitwise_field
+        )
         same_rng = (
             s0["torch_rng"].equal(parent["torch_rng"])
             and s0["python_rng"] == parent["python_rng"]
@@ -201,18 +285,41 @@ def audit_saved_forks(artifact, source_root, design):
             raise ValueError("SAVED_FORK_MODEL_FIELD_RNG_OR_BUFFER_MISMATCH")
         if ("FREEZE" in route or "FROZEN" in route) and not frozen:
             raise ValueError("SAVED_FREEZE_HIDDEN_CHANGED")
-        records[route] = dict(
+        hidden_counts[route] = sum(s0["model"][key].numel() for key in hidden_keys)
+        if width_run and hidden_counts[route] != s1["metadata"]["hidden_real_parameters"]:
+            raise ValueError("SAVED_WIDTH_HIDDEN_INVENTORY_MISMATCH")
+        record = dict(
             initial_checkpoint_sha256=zero["sha256"],
             final_checkpoint_sha256=final["sha256"],
-            all_initial_model_buffers_equal_parent=same_model,
-            initial_c_r_bitwise_equal_parent=same_field,
+            initial_c_r_bitwise_equal_parent=bitwise_field,
             initial_RNG_equal_parent=bool(same_rng),
             final_all_buffers_equal_parent=fixed_buffers,
-            final_hidden_bitwise_equal_parent=frozen,
-            hidden_delta_from_parent_norm=float(np.sqrt(delta2)),
             inherited_counts=s1["metadata"]["inherited_state"]["inherited_counts"],
             new_counts=s1["metadata"]["new_counts"],
         )
+        if width_run:
+            record.update(
+                all_initial_model_buffers_equal_function_preserving_import=same_model,
+                initial_architecture_equals_parent=s0["metadata"]["hidden_width"] == 16,
+                initial_c_r_pair=field_pairs,
+                final_hidden_bitwise_equal_initial_import=frozen,
+                hidden_delta_from_initial_import_norm=float(np.sqrt(delta2)),
+                hidden_real_parameter_count=hidden_counts[route],
+                actual_real_parameter_count=sum(
+                    s0["model"][row["name"]].numel() for row in s0["parameter_order"]
+                ),
+            )
+            if s0["metadata"]["hidden_width"] == 32:
+                record["expanded_parameter_participation"] = saved_width_participation(
+                    s0, s1, hidden_keys
+                )
+        else:
+            record.update(
+                all_initial_model_buffers_equal_parent=same_model,
+                final_hidden_bitwise_equal_parent=frozen,
+                hidden_delta_from_parent_norm=float(np.sqrt(delta2)),
+            )
+        records[route] = record
     compared_models = initial_models[1:] if width_run else initial_models
     same_forks = all(v.equal(compared_models[1][k]) for k, v in compared_models[0].items())
     if not same_forks:
@@ -222,7 +329,10 @@ def audit_saved_forks(artifact, source_root, design):
         dict(
             parent_sha256=design["parent_checkpoint"]["sha256"],
             actual_initial_forks_bitwise_same=same_forks,
-            hidden_real_parameter_count=912,
+            **(
+                dict(hidden_real_parameter_counts=hidden_counts)
+                if width_run else dict(hidden_real_parameter_count=912)
+            ),
             records=records,
             production_initialization_allowed=False,
             new_training_calls=0,
