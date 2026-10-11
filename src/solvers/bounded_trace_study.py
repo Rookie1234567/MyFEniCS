@@ -43,7 +43,8 @@ def service(journal,s=None,b=None,oracle=None,scope=scope):
         from .assembly_tetra_study import packet_identity
         identity=packet_identity(s,b,oracle)
     with journal.measured('cold_checked_local_packet_hot_maps_and_boundary_aggregate'):
-        result=HotTracePacket(p['local_packet'],identity=identity)
+        result=HotTracePacket(p['local_packet'],identity=identity,
+            action_limit=scope.plan_record()['action_limit'])
     journal.owners('exact_hot_classes_maps_boundary',result)
     return result
 
@@ -264,7 +265,6 @@ def iterate(folder,journal,state,scope=scope,role="ITERATE"):
     from petsc4py import PETSc
     from .physical_retained_fgmres import run_retained_fgmres
     from .tetra_coefficient_action import CoefficientFullAction
-    from .independent_tetra_fields import complete_output
     scope.require_stage(role);record=scope.iteration_record() if scope.NAMESPACE in ('v72','v73') else scope.stage('PC_SETUP')
     feedback=scope.NAMESPACE=='v73';policy_plan=scope.plan_record();restart=policy_plan.get('restart',32)
     iteration_seconds=policy_plan['iteration_seconds'];clock_root=scope.window.TMP/role if feedback else scope.window.TMP
@@ -411,7 +411,8 @@ def iterate(folder,journal,state,scope=scope,role="ITERATE"):
             final=result.pop('final_solution');scaled_retained=final.array.copy();t=right*scaled_retained;final.destroy()
             returned=save_arrays(folder/'retained_returned.npz',scaled_retained=scaled_retained,trace_port=t,rhs=reduced,scaled_rhs=bhat,left=left,right=right)
             pending=dict(status='RECOVERY_PENDING',retained_returned=returned,RHS=rhs_receipt,local_packet=a.receipt,
-                source=state,spec=s['spec'],physical=s['physical'],boundary_arrays=parent(scope)['boundary_arrays'],mode_sha256=b['digest'],iteration=result)
+                source=state,spec=s['spec'],physical=s['physical'],boundary_arrays=parent(scope)['boundary_arrays'],mode_sha256=b['digest'],iteration=result,
+                new_complete_solves=1,new_numeric_factors=len(patches)+1)
             write_json(folder/'retained_audit_pending.json',pending)
             if feedback:scope.freeze_candidate(role,returned,state)
             else:write_json(scope.window.TMP/'scientific_queue_frozen.json',dict(retained=returned,source=state['source_sha'],no_more_solves=True))
@@ -424,15 +425,30 @@ def iterate(folder,journal,state,scope=scope,role="ITERATE"):
             global_fine_factor_count=0,local_numeric_count=len(patches),coarse_numeric_count=1))
     phase_counts['after_KSP']=pc_calls
     write_json(folder/'PC_phase_counts.json',phase_counts)
+    x,pending=finish_retained_recovery(folder,journal,state,s=s,b=b,independent=independent,a=a,
+        full_rhs=full_rhs,t=t,pending=pending,pc_calls=pc_calls,pc_seconds=pc_seconds,scope=scope)
+    a=independent=Z=local=coarse=None;gc.collect();journal.event('unneeded_exact_operator_cache_released_before_fields')
+    return finish_retained_fields(folder,journal,state,s,b,x,pending)
+
+
+def finish_retained_recovery(folder,journal,state,*,s,b,independent,a,full_rhs,t,pending,pc_calls,pc_seconds,scope):
+    """Consume an already frozen retained vector; no KSP or numeric factor."""
     with journal.measured('final_full_original_recovery_after_KSP_and_PC_release'):x=a.recover(t,full_rhs)
     arrays=save_arrays(folder/'solution.npz',x=x,u_independent=x[:a.n],u_native=s['P']@x[:a.n],port=x[a.n:],rhs=full_rhs,
         kappa=s['kappa'],masters=s['masters'],slaves=s['floquet'].mpc.slaves,P_data=s['P'].data,P_indices=s['P'].indices,P_indptr=s['P'].indptr,**s['geometry'])
     aud,res,orrhs=action_charge('I_final_public_original',lambda:independent.audit(x,full_rhs,journal),scope=scope)
     aud['arrays']=save_arrays(folder/'independent_original.npz',residual=res,rhs=orrhs,action=orrhs-res,x=x)
     pending.update(status='AUDIT_PENDING',arrays=arrays,audit=aud,equation_pass=aud['pass_gate'],internal_recovery_identity=a.last_identity,
-        new_complete_solves=1,new_numeric_factors=len(patches)+1,global_fine_numeric_factors=0,pc_calls=pc_calls,pc_seconds=pc_seconds)
+        global_fine_numeric_factors=0,pc_calls=pc_calls,pc_seconds=pc_seconds)
     write_json(folder/'returned_audit_pending.json',pending)
-    a.release_hot();a=independent=Z=local=coarse=None;gc.collect();journal.event('unneeded_exact_operator_cache_released_before_fields')
+    a.release_hot()
+    return x,pending
+
+
+def finish_retained_fields(folder,journal,state,s,b,x,pending):
+    """Shared field tail, after the caller has released every operator owner."""
+    from .independent_tetra_fields import complete_output
+    aud=pending['audit']
     output,accuracy=complete_output(s,b,x,folder,journal)
     output['official']=bool(aud['pass_gate']);output['classification']='OFFICIAL_EQUATION_QUALIFIED' if aud['pass_gate'] else 'DIAGNOSTIC_ONLY_EQUATION_FAIL'
     write_json(folder/'field_output_classification.json',dict(official=output['official'],classification=output['classification']))
@@ -498,8 +514,65 @@ def execute_feedback(role,folder,state):
             local_numeric_count=0,coarse_numeric_count=0,new_partition_builds=0,new_interpolation_builds=0,
             new_Galerkin_builds=0,new_original_actions=0,new_KSP_solves=0,source=state,timings=journal.timings)
         write_json(folder/'reuse_admission.json',result);return result
-    if role in active.SOLVES:return iterate(folder,journal,state,scope=active,role=role)
+    if role in active.SOLVES:
+        if state.get('postprocessing_resume'):
+            return consume_interrupted_retained(role,folder,journal,state,scope=active)
+        return iterate(folder,journal,state,scope=active,role=role)
     if role=='VERIFY_COST':
         from benchmarks.collect_restart_feedback import verify
         return verify(folder,journal)
     raise ValueError('V73 explicit one-run role')
+
+
+def consume_interrupted_retained(role,folder,journal,state,*,scope):
+    """Finish a checked checkpoint after interruption, without another solve."""
+    meta=scope.checked_json(state['postprocessing_resume'])
+    if (meta['mode']!='SAVED_RETAINED_ONLY' or meta['role']!=role
+            or meta['new_KSP_solves']!=0 or meta['new_numeric_factors']!=0):
+        raise ValueError('consume-only protocol')
+    failure=scope.checked_json(meta['failed_result'])
+    latest=scope.checked_json(meta['latest_retained'])
+    gate=scope.checked_json(meta['latest_original_gate'])
+    if (failure['stage']!=role or failure['status']!='FAILED'
+            or failure['source_sha']!=latest['source']['source_sha']
+            or failure['physical_contract_sha256']!=state['physical_sha256']
+            or gate['iteration']!=latest['iteration'] or gate['iteration']%32):
+        raise ValueError('interrupted checkpoint identity')
+    frozen=checked_arrays(latest['arrays']);oldroot=Path(meta['failed_result']['path']).parent
+    s,b,oracle,a,full_rhs,left,right=setup_service(role,journal,scope=scope)
+    reduced=a.condense_rhs(full_rhs);bhat=left*reduced
+    for name,value in (('bhat',bhat),('left',left),('right',right),('trace',right*frozen['scaled_retained'])):
+        if not np.array_equal(frozen[name],value):raise ValueError('saved retained/RHS/scale identity '+name)
+    t=frozen['trace'];returned=save_arrays(folder/'retained_returned.npz',scaled_retained=frozen['scaled_retained'],
+        trace_port=t,rhs=reduced,scaled_rhs=bhat,left=left,right=right)
+    rows=[json.loads(x) for x in (oldroot/'iterations.jsonl').read_text().splitlines()]
+    snapshots=[json.loads(x) for x in (oldroot/'monitor_residuals.jsonl').read_text().splitlines()]
+    if not any(x['iteration']==latest['iteration'] and x==gate for x in snapshots):raise ValueError('original checkpoint receipt')
+    config=json.loads((oldroot/'KSP_configuration.jsonl').read_text().splitlines()[-1])
+    iteration=dict(final_evaluation=gate,iterations=latest['iteration'],attempted_iterations=rows[-1]['iteration'],
+        snapshots=snapshots,status='INTERRUPTED_SOFTWARE_INSTANCE_ACTION_CAP',reason=None,
+        ksp_solve_monotonic_seconds=None,interrupted_KSP_elapsed_lower_seconds=rows[-1]['solve_seconds'],
+        actual_KSP_configuration=config,restart=128,max_it=256,zero_start=True,
+        source_sha=failure['source_sha'],source_result=meta['failed_result'],no_iteration_replay=True,
+        checkpoint_iteration=latest['iteration'],new_KSP_solves_in_consumer=0)
+    rhs_receipt=save_arrays(folder/'physical_RHS.npz',full_rhs=full_rhs,reduced_rhs=reduced,bhat=bhat,left=left,right=right)
+    pc_calls=meta['reconstructed_PC_calls'];pc_seconds=dict(local=None,coarse=None,original=None,
+        missing_reason='exception preceded producer phase-total save; raw per-step wall and original-action counts retained')
+    for name in ('numeric_factor_progress.json','live_PC_qualification.json','factor_release_lifecycle.json',
+                 'pre_PC_numeric_forecast.json','KSP_view.txt','iterations.jsonl','monitor_residuals.jsonl'):
+        # Small metadata is copied; all factor/array payloads stay in their original directory.
+        (folder/name).write_bytes((oldroot/name).read_bytes())
+    write_json(folder/'PC_phase_counts.json',dict(reconstructed_after_interruption=pc_calls,
+        provenance=meta['counter_derivation'],exact_PC_seconds_unknown=True))
+    pending=dict(status='RECOVERY_PENDING',retained_returned=returned,RHS=rhs_receipt,local_packet=a.receipt,
+        source=state,spec=s['spec'],physical=s['physical'],boundary_arrays=parent(scope)['boundary_arrays'],mode_sha256=b['digest'],
+        iteration=iteration,new_complete_solves=0,new_numeric_factors=39,prior_KSP_attempts=1,
+        new_numeric_in_consumer=0,iteration_source_sha=failure['source_sha'],consumer_source_sha=state['source_sha'],
+        interrupted_producer=meta['failed_result'],numeric_witness_root=str(oldroot),saved_checkpoint_consumed=True)
+    write_json(folder/'retained_audit_pending.json',pending);scope.freeze_candidate(role,returned,state)
+    from .tetra_coefficient_action import CoefficientFullAction
+    independent=CoefficientFullAction(s,oracle,15)
+    x,pending=finish_retained_recovery(folder,journal,state,s=s,b=b,independent=independent,a=a,full_rhs=full_rhs,t=t,
+        pending=pending,pc_calls=pc_calls,pc_seconds=pc_seconds,scope=scope)
+    a=independent=None;gc.collect();journal.event('unneeded_exact_operator_cache_released_before_fields')
+    return finish_retained_fields(folder,journal,state,s,b,x,pending)

@@ -30,7 +30,7 @@ def verify(folder,journal):
         if frozen['retained']['sha256']!=r['retained_returned']['sha256'] or frozen['array_sha256']!=r['arrays']['sha256']:
             raise ValueError('V73 route frozen array identity')
         root=Path(json.loads((scope.ARTIFACT/(role+'.json')).read_text())['path']).parent
-        qualification=numeric_saved_check(root,minimum_bytes=12*2**30)
+        qualification=numeric_saved_check(Path(r.get('numeric_witness_root',root)),minimum_bytes=12*2**30)
         own=folder/role;own.mkdir(exist_ok=True)
         check=action_charge('V_'+role+'_public_original',lambda:saved_original(r,own,journal,body_q=15),scope=scope)
         pair=comparison(parent,r,own/'V70_pair',journal,coefficient_first=True)

@@ -12,6 +12,31 @@ from src.solvers.reused_trace_admission import future_workspace,numeric_gate
 
 
 class FeedbackTests(unittest.TestCase):
+    def test_hot_packet_receives_campaign_action_limit(self):
+        from contextlib import nullcontext
+        from types import SimpleNamespace
+        from src.solvers.bounded_trace_study import service
+        policy=SimpleNamespace(plan_record=lambda:dict(action_limit=1600,prepared_parent={'local_packet':'fixture'}))
+        journal=SimpleNamespace(measured=lambda _:nullcontext(),owners=lambda *a:None)
+        with patch('src.solvers.bounded_trace_study.HotTracePacket') as constructor:
+            service(journal,scope=policy)
+            self.assertEqual(constructor.call_args.kwargs['action_limit'],1600)
+
+    def test_saved_consumer_rejects_solve_protocol_before_FE(self):
+        from types import SimpleNamespace
+        from src.solvers.bounded_trace_study import consume_interrupted_retained
+        sc=SimpleNamespace(checked_json=lambda _:dict(mode='SAVED_RETAINED_ONLY',role='B128',new_KSP_solves=1,new_numeric_factors=0))
+        with patch('src.solvers.bounded_trace_study.setup_service') as setup:
+            with self.assertRaises(ValueError):consume_interrupted_retained('B128',None,None,dict(postprocessing_resume={}),scope=sc)
+            setup.assert_not_called()
+
+    def test_saved_consumer_dispatch_never_enters_iterate(self):
+        from src.solvers import bounded_trace_study as study,restart_feedback_scope as sc
+        state=dict(memory_budget=sc.memory_budget('B128'),postprocessing_resume={'sha256':'fixture'})
+        with patch.object(study,'Journal'),patch.object(study,'consume_interrupted_retained',return_value={'consumed':True}) as consume,patch.object(study,'iterate') as iterate:
+            self.assertTrue(study.execute_feedback('B128',Path('/tmp'),state)['consumed'])
+            consume.assert_called_once();iterate.assert_not_called()
+
     def test_complex_nonhermitian_feedback_and_counts(self):
         A=np.array([[4,1j,2,1],[.3j,3,1j,2],[1,.2,5,.5j],[2j,1,3j,6]],complex)
         Z=sparse.csr_matrix(np.array([[1],[.4j],[.2]],complex));Zf=np.zeros((4,2),complex)
