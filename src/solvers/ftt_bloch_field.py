@@ -16,8 +16,8 @@ class BlochFTTField(FTTField):
         "phase_mode_identity",
     )
 
-    def __init__(self, bounds, model_kind, phase, seed=4213701):
-        super().__init__(bounds, model_kind, seed=seed)
+    def __init__(self, bounds, model_kind, phase, seed=4213701, *, hidden_width=16):
+        super().__init__(bounds, model_kind, seed=seed, hidden_width=hidden_width)
         if (
             phase["coordinate_unit"] != "physical_nm"
             or phase["sign"] != 1
@@ -58,7 +58,7 @@ class IndependentPointPhase(torch.nn.Module):
     def __init__(self, model):
         super().__init__()
         bounds = torch.stack((model.center - model.half_width, model.center + model.half_width), 1).numpy()
-        self.plain = FTTField(bounds, model.model_kind)
+        self.plain = FTTField(bounds, model.model_kind, hidden_width=model.hidden_width)
         self.plain.load_state_dict({k: v for k, v in model.state_dict().items() if k not in model.phase_buffer_names}, strict=True)
         self.register_buffer("wavevector", model.phase_wavevector.detach().clone())
         self.register_buffer("origin", model.phase_origin.detach().clone())

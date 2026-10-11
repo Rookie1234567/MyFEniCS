@@ -43,8 +43,10 @@ class CoreBoundary:
 def hidden_step(model, mapping, action, deadline, marker, *, call_limit=20):
     """Ordinary hidden gradient with fixed outputs and a fresh LBFGS history."""
     parameters = hidden_parameters(model)
-    if sum(p.numel() for p in parameters) != 912:
-        raise ValueError("FTT_912_HIDDEN_PARAMETERS_REQUIRED")
+    hidden_count = sum(p.numel() for p in parameters)
+    expected = sum(core[0].weight.numel()+core[0].bias.numel()+core[2].weight.numel()+core[2].bias.numel() for core in model.cores)
+    if hidden_count != expected or hidden_count not in (912, 3360):
+        raise ValueError("FTT_ACTUAL_HIDDEN_PARAMETER_LAYOUT_REQUIRED")
     optimizer = torch.optim.LBFGS(
         parameters,
         lr=1,
@@ -110,7 +112,7 @@ def hidden_step(model, mapping, action, deadline, marker, *, call_limit=20):
         stop_reason=failure,
         seconds=monotonic() - began,
         gradient_kind="ordinary_hidden_gradient_fixed_output_not_reduced_VarPro",
-        hidden_real_parameters=912,
+        hidden_real_parameters=hidden_count,
         fresh_history=True,
         trials=trials,
     )
@@ -131,6 +133,7 @@ def run_core_training(
     parent_checkpoint=None,
     execution_policy=None,
     joint_validation_callback=None,
+    parent_importer=None,
 ):
     from src.solvers.ftt_core_continuation import (
         policy_for,
@@ -144,9 +147,13 @@ def run_core_training(
     )
 
     continuation = execution_policy is not None
-    if continuation and (
-        execution_policy != policy_for(learned) or parent_checkpoint is None
-    ):
+    width_run = continuation and execution_policy.get("schema") == "ftt.width-refinement-policy.v1"
+    if width_run:
+        from src.solvers.ftt_width_extension import width_policy
+        expected_policy = width_policy(learned, extra=execution_policy["total_round_limit"] == 14)
+    else:
+        expected_policy = policy_for(learned)
+    if continuation and (execution_policy != expected_policy or parent_checkpoint is None):
         raise ValueError("CORE_EXPLICIT_CONTINUATION_CONTRACT_REQUIRED")
     if parent_checkpoint is not None and not continuation:
         raise ValueError("CORE_PARENT_FORK_REQUIRES_OPT_IN_POLICY")
@@ -196,6 +203,7 @@ def run_core_training(
     history = []
     rounds = []
     last_hidden_optimizer = None
+    resume_first = None
     checkpoint_dir = artifact / "checkpoints"
     pointer = checkpoint_dir / "current.json"
     pending_path = artifact / "pending_work.json"
@@ -245,9 +253,18 @@ def run_core_training(
                     counts[key] += pending.get("counts", {}).get(key, 0)
                 if pending["kind"] == "core":
                     counts["core_visits"] += 1
-                    counts["LSMR_unretained_iterations_upper_bound"] += pending[
-                        "reserved_iterations"
-                    ]
+                    if width_run and pending.get("first_segment"):
+                        from src.io.neural_wave_campaign import digest
+                        receipt = pending["first_segment"]
+                        first_file = artifact / receipt["name"]
+                        if digest(first_file) != receipt["sha256"] or receipt["base_model_hash"] != model_identity(model):
+                            raise ValueError("CORE_RETAINED_FIRST_IDENTITY_MISMATCH")
+                        with np.load(first_file, allow_pickle=False) as data:
+                            resume_first = (data["delta"].copy(), receipt["record"])
+                        counts["LSMR_iterations"] += receipt["record"]["iterations"]
+                        counts["LSMR_unretained_iterations_upper_bound"] += pending.get("second_reserved_iterations", 0)
+                    else:
+                        counts["LSMR_unretained_iterations_upper_bound"] += pending["reserved_iterations"]
                     counts["uncommitted_K"] += pending.get("counts", {}).get("K", 0)
                     counts["uncommitted_KH"] += pending.get("counts", {}).get("KH", 0)
                     costs["core_solve_and_check"] += pending.get("elapsed_seconds", 0)
@@ -293,8 +310,11 @@ def run_core_training(
             if parent_path.stat().st_size != parent_checkpoint["bytes"]:
                 raise ValueError("CORE_PARENT_CHECKPOINT_SIZE_MISMATCH")
             state = load_checkpoint(parent_path, parent_checkpoint["sha256"])
-            inherited = validate_parent(state, parent_checkpoint, binding, model)
-            restore(model, boundary, state)
+            if parent_importer is None:
+                inherited = validate_parent(state, parent_checkpoint, binding, model)
+                restore(model, boundary, state)
+            else:
+                inherited = parent_importer(state, parent_checkpoint, binding, model, boundary)
             counts.update(state["metadata"]["counts"])
             costs.update(state["metadata"]["costs"])
             rounds = deepcopy(state["metadata"]["rounds"])
@@ -383,7 +403,7 @@ def run_core_training(
             meta.update(
                 inherited_state=deepcopy(inherited),
                 new_counts=new_work(),
-                new_complete_rounds=position["complete_rounds"] - 4,
+                new_complete_rounds=position["complete_rounds"] - inherited["inherited_rounds"],
                 execution_policy=deepcopy(execution_policy),
                 new_costs={
                     k: v - inherited["inherited_costs"].get(k, 0)
@@ -425,9 +445,11 @@ def run_core_training(
                 if len(rounds) >= 3
                 else None
             )
-            decision = trend_decision(
-                number, scalar, previous, execution_policy, learned=learned
-            )
+            if width_run:
+                from src.solvers.ftt_width_extension import width_trend
+                decision = width_trend(number, scalar, execution_policy)
+            else:
+                decision = trend_decision(number, scalar, previous, execution_policy, learned=learned)
             rounds[-1]["continuation_policy_decision"] = decision
             allowed = decision["allowed"]
         else:
@@ -565,7 +587,7 @@ def run_core_training(
                     previous_checkpoint_sha256=final["sha256"],
                     source_sha=binding["source_sha"],
                     started_monotonic=began,
-                    reserved_iterations=min(300, iteration_limit - charged),
+                    reserved_iterations=min(1200 if width_run else 300, iteration_limit - charged),
                     completed_iterations="NOT_RETAINED",
                     counts={},
                     status="STARTED_NOT_COMMITTED",
@@ -575,9 +597,28 @@ def run_core_training(
                 charged_counts = {key: 0 for key in op.counts}
                 inner_completed = False
                 try:
-                    delta, inner = solve_core(
-                        op, b, maxiter=pending["reserved_iterations"]
-                    )
+                    if width_run:
+                        from src.solvers.ftt_core_refinement import solve_refined
+                        from src.io.neural_wave_campaign import digest
+
+                        def persist_first(d, record, residual):
+                            name = f"first_segment_r{position['round']}_a{axis}_{final['generation']}.npz"
+                            atomic_npz(artifact/name, delta=d, residual=residual, b=b)
+                            pending["first_segment"] = dict(name=name, sha256=digest(artifact/name),
+                                base_model_hash=op.identity, axis=axis, record=record)
+                            pending["counts"] = op.counts.copy()
+                            pending["second_reserved_iterations"] = 900
+                            atomic_json(pending_path, pending)
+                            marker("first_segment_increment_persisted_model_not_updated", pending)
+
+                        delta, inner = solve_refined(op, b,
+                            iteration_allowance=pending["reserved_iterations"],
+                            persist_first=persist_first, resume_first=resume_first,
+                            seconds_per_iteration=longest_pair)
+                        resume_first = None
+                        counts["LSMR_unretained_iterations_upper_bound"] += inner["charged_unretained_iterations"]
+                    else:
+                        delta, inner = solve_core(op, b, maxiter=pending["reserved_iterations"])
                     inner_completed = True
                     pending["completed_iterations"] = inner["iterations"]
                     costs["core_solve_and_check"] += monotonic() - began
@@ -594,6 +635,10 @@ def run_core_training(
                     c, r, accepted = verify_and_apply_core(
                         model, mapping, action, op, delta, c
                     )
+                    if width_run and not accepted["accepted"] and inner["chosen_increment"] == "merged":
+                        with np.load(artifact/pending["first_segment"]["name"], allow_pickle=False) as retained:
+                            c, r, accepted = verify_and_apply_core(model, mapping, action, op, retained["delta"], c)
+                        inner["real_merged_writeback_rejected_first_fallback"] = True
                     costs["real_acceptance"] += monotonic() - began
                     for k in ("K", "KH", "B", "BH"):
                         counts[k] += op.counts[k] - before_check_counts[k]
@@ -806,7 +851,7 @@ def run_core_training(
             dict(
                 inherited_state=inherited,
                 new_counts=new_work(),
-                new_complete_rounds=position["complete_rounds"] - 4,
+                new_complete_rounds=position["complete_rounds"] - inherited["inherited_rounds"],
                 execution_policy=execution_policy,
                 new_costs={
                     k: v - inherited["inherited_costs"].get(k, 0)

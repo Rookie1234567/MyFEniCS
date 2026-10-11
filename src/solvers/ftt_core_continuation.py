@@ -133,6 +133,7 @@ def validate_parent(state, parent, binding, model):
             raise ValueError("PARENT_PHYSICAL_OR_MODEL_IDENTITY_CHANGED:" + key)
     if meta.get("phase_definition") != binding["phase_definition"]:
         raise ValueError("PARENT_PHASE_DEFINITION_CHANGED")
+    inherited_rounds = parent.get("inherited_rounds", 4)
     if (
         meta.get("reference_used_for_training")
         or meta.get("features_reference_exposed")
@@ -147,8 +148,8 @@ def validate_parent(state, parent, binding, model):
     if (
         state.get("optimizer_class") != "CoreBoundary"
         or pos != meta["position"]
-        or pos["round"] != 4
-        or pos["complete_rounds"] != 4
+        or pos["round"] != inherited_rounds
+        or pos["complete_rounds"] != inherited_rounds
         or pos["axis_index"] != 0
         or pos["phase"] != "core"
     ):
@@ -156,7 +157,7 @@ def validate_parent(state, parent, binding, model):
     for key, expected in parent["inherited_counts"].items():
         if meta["counts"][key] != expected:
             raise ValueError("PARENT_COUNTER_MISMATCH:" + key)
-    if len(meta["rounds"]) != 4 or "c" not in state or "r" not in state:
+    if len(meta["rounds"]) != inherited_rounds or "c" not in state or "r" not in state:
         raise ValueError("PARENT_PARTIAL_STATE_FORBIDDEN")
     from src.solvers.optimization_checkpoint import parameter_order
 
@@ -168,7 +169,7 @@ def validate_parent(state, parent, binding, model):
             raise ValueError("PARENT_PHASE_BUFFER_MISMATCH:" + key)
     return dict(
         parent_checkpoint=deepcopy(parent),
-        parent_result_status="ROUND4_FIELD_PROGRESS_NOT_QUALIFIED",
+        parent_result_status=parent.get("parent_result_status", "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED"),
         historical_round4_validation_preserved=True,
         allowed_import_identity_differences=[
             "source_sha",
@@ -179,5 +180,5 @@ def validate_parent(state, parent, binding, model):
         ],
         inherited_counts=deepcopy(meta["counts"]),
         inherited_costs=deepcopy(meta["costs"]),
-        inherited_rounds=4,
+        inherited_rounds=inherited_rounds,
     )

@@ -66,6 +66,9 @@ def prepare(artifact, source_root, manifest):
     from src.io.ftt_campaign import load_files
     from src.runners.ftt_worker import load_arrays, ftt_abi
     from src.runners.ftt_bloch_worker import field_factory
+    width_run = manifest["spec"].get("campaign_version") == 44
+    if width_run:
+        from src.io.ftt_width_campaign import DESIGN, routes
     from src.solvers.feinn_native import load_native
     from src.solvers.ftt_factored_moments import FactoredMomentMap
     from src.solvers.ftt_core_training import load_checkpoint
@@ -96,7 +99,11 @@ def prepare(artifact, source_root, manifest):
             raise ValueError("COMMON_WALL_CHECKPOINT_SIZE_CHANGED")
         state = load_checkpoint(pt, ck["sha256"])
         candidate = dict(ck["metadata"], checkpoint=ck)
-        model = field_factory(design, candidate["model_kind"])
+        if width_run:
+            from src.runners.ftt_width_worker import model_factory
+            model = model_factory(design, candidate)
+        else:
+            model = field_factory(design, candidate["model_kind"])
         validate_checkpoint_identity(state, candidate, model, False)
         if (
             candidate["route"] != route
@@ -141,6 +148,9 @@ def prepare(artifact, source_root, manifest):
 def audit_saved_forks(artifact, source_root, design):
     import numpy as np
     from src.io.ftt_continuation_campaign import routes
+    width_run = design["campaign_version"] == 44
+    if width_run:
+        from src.io.ftt_width_campaign import routes
     from src.solvers.optimization_checkpoint import load_checkpoint
     from src.runners.ftt_bloch_worker import field_factory
     from src.solvers.ftt_conditional_core import hidden_parameters
@@ -163,8 +173,14 @@ def audit_saved_forks(artifact, source_root, design):
         s0 = load_checkpoint(folder / "checkpoints" / zero["name"], zero["sha256"])
         s1 = load_checkpoint(folder / "checkpoints" / final["name"], final["sha256"])
         initial_models.append(s0["model"])
-        same_model = all(v.equal(parent["model"][k]) for k, v in s0["model"].items())
-        same_field = all(np.array_equal(s0[k], parent[k]) for k in ("c", "r"))
+        expected = parent["model"]
+        if width_run and s0["metadata"]["hidden_width"] == 32:
+            from src.solvers.ftt_width_extension import widen_field
+            model.load_state_dict(parent["model"], strict=True)
+            expected = widen_field(model).state_dict()
+        same_model = all(v.equal(expected[k]) for k, v in s0["model"].items())
+        from src.solvers.ftt_conditional_core import relative_pair
+        same_field = all(relative_pair(np.asarray(s0[k]), np.asarray(parent[k]))["relative"] <= 1e-10 for k in ("c", "r")) if width_run else all(np.array_equal(s0[k], parent[k]) for k in ("c", "r"))
         same_rng = (
             s0["torch_rng"].equal(parent["torch_rng"])
             and s0["python_rng"] == parent["python_rng"]
@@ -177,13 +193,13 @@ def audit_saved_forks(artifact, source_root, design):
             s1["model"][k].equal(parent["model"][k]) for k in buffer_keys
         )
         delta2 = sum(
-            float(((s1["model"][k] - parent["model"][k]) ** 2).sum())
+            float(((s1["model"][k] - s0["model"][k]) ** 2).sum())
             for k in hidden_keys
         )
-        frozen = all(s1["model"][k].equal(parent["model"][k]) for k in hidden_keys)
+        frozen = all(s1["model"][k].equal(s0["model"][k]) for k in hidden_keys)
         if not (same_model and same_field and same_rng and fixed_buffers):
             raise ValueError("SAVED_FORK_MODEL_FIELD_RNG_OR_BUFFER_MISMATCH")
-        if "FREEZE" in route and not frozen:
+        if ("FREEZE" in route or "FROZEN" in route) and not frozen:
             raise ValueError("SAVED_FREEZE_HIDDEN_CHANGED")
         records[route] = dict(
             initial_checkpoint_sha256=zero["sha256"],
@@ -197,9 +213,8 @@ def audit_saved_forks(artifact, source_root, design):
             inherited_counts=s1["metadata"]["inherited_state"]["inherited_counts"],
             new_counts=s1["metadata"]["new_counts"],
         )
-    same_forks = all(
-        v.equal(initial_models[1][k]) for k, v in initial_models[0].items()
-    )
+    compared_models = initial_models[1:] if width_run else initial_models
+    same_forks = all(v.equal(compared_models[1][k]) for k, v in compared_models[0].items())
     if not same_forks:
         raise ValueError("SAVED_INITIAL_FORKS_DIFFERENT")
     atomic_json(
@@ -219,6 +234,8 @@ def audit_saved_forks(artifact, source_root, design):
 def compare_common_wall(manifest, artifact, marker, directory):
     from src.runners.saved_field_supervision import run_checker
     from src.io.ftt_continuation_campaign import DESIGN
+    if manifest["spec"].get("campaign_version") == 44:
+        from src.io.ftt_width_campaign import DESIGN
 
     output = artifact / "common_wall"
     selection_file = output / "selection.json"
@@ -289,6 +306,6 @@ if __name__ == "__main__":
     artifact = ROOT / manifest["artifact"]
     prepare(
         artifact / "common_wall",
-        ROOT / "benchmarks/artifacts/task42extra/v43",
+        ROOT / ("benchmarks/artifacts/task42extra/v44" if manifest["spec"].get("campaign_version") == 44 else "benchmarks/artifacts/task42extra/v43"),
         manifest,
     )

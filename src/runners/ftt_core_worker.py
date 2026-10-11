@@ -51,6 +51,9 @@ class CoreWorkerProfile:
     independent_field: object = None
     training_options: object = None
     compare_postprocess: object = None
+    route_model_factory: object = None
+    reconstruction_model_factory: object = None
+    learned_roles: tuple = ()
 
 
 DEFAULT_PROFILE = CoreWorkerProfile()
@@ -116,6 +119,7 @@ def subphase(directory, phase, profile=DEFAULT_PROFILE):
             source_root=profile.artifacts,
             model_factory=profile.model_factory,
             independent_field=profile.independent_field,
+            candidate_model_factory=profile.reconstruction_model_factory,
         )
     elif phase == "compare":
         compare(
@@ -265,6 +269,8 @@ def run_stage(manifest, artifact, marker, directory, profile=DEFAULT_PROFILE):
         spec["model_kind"],
         seed=design["seed"],
     ) if profile.model_factory is None else profile.model_factory(design, spec["model_kind"])
+    if profile.route_model_factory is not None:
+        model = profile.route_model_factory(design, spec)
     binding = dict(
         source_sha=manifest["source_sha"],
         input_sha256=manifest["input_sha256"],
@@ -288,6 +294,10 @@ def run_stage(manifest, artifact, marker, directory, profile=DEFAULT_PROFILE):
     if "phase_definition" in design:
         binding.update(phase_sha256=design["phase_definition"]["sha256"],
             phase_definition=design["phase_definition"], validation_used_for_stopping=True)
+    if profile.route_model_factory is not None:
+        binding.update(hidden_width=model.hidden_width,
+            hidden_real_parameters=sum(p.numel() for p in __import__("src.solvers.ftt_conditional_core", fromlist=["hidden_parameters"]).hidden_parameters(model)),
+            actual_real_parameters=sum(p.numel() for p in model.parameters()))
     options = {} if profile.training_options is None else profile.training_options(
         manifest, artifact, marker, directory, design)
     result = run_core_training(
@@ -298,7 +308,7 @@ def run_stage(manifest, artifact, marker, directory, profile=DEFAULT_PROFILE):
         binding,
         manifest["worker_stop_monotonic"],
         marker,
-        learned=spec["role"] == profile.learned_role,
+        learned=spec["role"] in profile.learned_roles if profile.learned_roles else spec["role"] == profile.learned_role,
         **options,
     )
     result["label_firewall_actual_open_negative_checks"] = label_checks

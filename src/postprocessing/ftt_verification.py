@@ -210,6 +210,7 @@ def reconstruct(
     source_root=None,
     model_factory=None,
     independent_field=None,
+    candidate_model_factory=None,
 ):
     from src.solvers.ftt_field import FTTField
     from src.solvers.ftt_moments import StreamingMomentMap
@@ -223,6 +224,8 @@ def reconstruct(
         model = FTTField(
             design["model"]["geometry"]["bounds_nm"], candidate["model_kind"]
         ) if model_factory is None else model_factory(design, candidate["model_kind"])
+        if candidate_model_factory is not None:
+            model = candidate_model_factory(design, candidate)
         initial = {
             name: p.detach().numpy().copy() for name, p in model.named_parameters()
         }

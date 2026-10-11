@@ -1,0 +1,129 @@
+{
+  "schema": "task42extra.v44.precomputed-design.v1",
+  "authority": "7075a2c0d86018c3500dc2815c2bcf9c2cc739ca",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "parent": {
+    "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/checkpoints/committed_000023.pt",
+    "sha256": "ba2523341b7d1fa1cc339ea1b9544a7468e9fe7faa9dd2f93a8c000cad68e9f8",
+    "bytes": 1895143,
+    "input_kind": "unlabelled_complete_round8_boundary",
+    "binding": {
+      "source_sha": "dce792d18a45a1c874c29dfa4a42a8052fffe40f",
+      "input_sha256": "1d13062170d1117ee531b1c0b341f3b2523ceb9f5d0d4d0d865773f91420deb4",
+      "design_sha256": "5145a85f08bce5bdf6008c3451cfbc03aa05f40d0df5894a03cb521d15adb3d9",
+      "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+      "model_kind": "fttnn",
+      "metric_kind": "native_euc",
+      "route": "BLOCH_FTTNN_R4_LEARNED_CONTINUE",
+      "phase_sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+    },
+    "inherited_rounds": 8,
+    "inherited_counts": {
+      "core_visits": 24,
+      "LSMR_iterations": 6905,
+      "LSMR_unretained_iterations_upper_bound": 0,
+      "accepted_core_updates": 24,
+      "effective_core_updates": 24,
+      "accepted_hidden_updates": 8,
+      "effective_hidden_updates": 8,
+      "hidden_actual_calls": 109,
+      "K": 6977,
+      "KH": 6977,
+      "B": 6953,
+      "BH": 6977,
+      "round_audits": 8,
+      "uncommitted_K": 0,
+      "uncommitted_KH": 0
+    },
+    "path_source": "outcomes/records/run_index_v43.json",
+    "parent_result_status": "NO_CONTINUED_JOINT_PROGRESS",
+    "required_parent_prefix_seconds": 4545.707329502931
+  },
+  "width_models": {
+    "16": {
+      "real_parameters": 9072,
+      "hidden_parameters": 912
+    },
+    "32": {
+      "real_parameters": 19200,
+      "hidden_parameters": 3360
+    }
+  },
+  "ranks": [
+    1,
+    8,
+    8,
+    1
+  ],
+  "embedding": {
+    "seed": 4214401,
+    "block_formula": "W1=[old;new], W2=[[old,0],[new,new]], W3=[old,0]; biases preserve old and initialize new",
+    "random_draw_order_per_axis": [
+      "U1 Xavier",
+      "v1 uniform[-0.5,0.5]",
+      "[U21,U22] Xavier",
+      "v2 uniform[-0.5,0.5]"
+    ]
+  },
+  "core_refinement": {
+    "first": {
+      "atol": 1e-08,
+      "btol": 1e-08,
+      "maxiter": 300
+    },
+    "second": {
+      "atol": 1e-10,
+      "btol": 1e-10,
+      "maxiter": 900
+    },
+    "trigger_adjoint_ratio": 0.001,
+    "max_segments": 2,
+    "damp": 0,
+    "conlim": 1000000000000.0
+  },
+  "default_policies": {
+    "learned": {
+      "schema": "ftt.width-refinement-policy.v1",
+      "inherited_rounds": 8,
+      "total_round_limit": 12,
+      "new_round_limit": 4,
+      "new_visit_limit": 12,
+      "new_iteration_limit": 14400,
+      "new_hidden_call_limit": 80,
+      "scalar_rounds": [
+        10,
+        12
+      ],
+      "disable_historical_slow_streak": true,
+      "native_target": 1e-08,
+      "validation_feedback": "scalars_only",
+      "inner_refinement": true
+    },
+    "freeze": {
+      "schema": "ftt.width-refinement-policy.v1",
+      "inherited_rounds": 8,
+      "total_round_limit": 12,
+      "new_round_limit": 4,
+      "new_visit_limit": 12,
+      "new_iteration_limit": 14400,
+      "new_hidden_call_limit": 0,
+      "scalar_rounds": [
+        10,
+        12
+      ],
+      "disable_historical_slow_streak": true,
+      "native_target": 1e-08,
+      "validation_feedback": "scalars_only",
+      "inner_refinement": true
+    }
+  },
+  "reference_used_for_training": false,
+  "production_initialization_allowed": false,
+  "design_binding": {
+    "path": "input/task042extra_feinn_5nm/design_v44.json",
+    "bytes": 9431,
+    "sha256": "76b240bce50e468c2252b990a9467dce41ab2e0ce478a928fa9c117054b01e69"
+  },
+  "no_new_columns_library": true
+}

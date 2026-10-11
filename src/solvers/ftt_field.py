@@ -11,11 +11,14 @@ class Sin(torch.nn.Module):
 
 
 class FTTField(torch.nn.Module):
-    def __init__(self, bounds, model_kind, seed=4213701):
+    def __init__(self, bounds, model_kind, seed=4213701, *, hidden_width=16):
         super().__init__()
         if model_kind not in ("fttnn", "chebtt"):
             raise ValueError("UNKNOWN_FTT_MODEL_KIND")
         self.model_kind = model_kind
+        if hidden_width not in (16, 32) or (model_kind != "fttnn" and hidden_width != 16):
+            raise ValueError("FTT_OPT_IN_HIDDEN_WIDTH")
+        self.hidden_width = hidden_width
         self.costs = dict(core_evaluation=0.0, contraction=0.0)
         torch.manual_seed(seed)
         box = torch.as_tensor(bounds, dtype=torch.float64)
@@ -29,11 +32,11 @@ class FTTField(torch.nn.Module):
             self.cores = torch.nn.ModuleList()
             for shape in self.shapes:
                 core = torch.nn.Sequential(
-                    torch.nn.Linear(1, 16, dtype=torch.float64),
+                    torch.nn.Linear(1, hidden_width, dtype=torch.float64),
                     Sin(),
-                    torch.nn.Linear(16, 16, dtype=torch.float64),
+                    torch.nn.Linear(hidden_width, hidden_width, dtype=torch.float64),
                     Sin(),
-                    torch.nn.Linear(16, int(np.prod(shape)), dtype=torch.float64),
+                    torch.nn.Linear(hidden_width, int(np.prod(shape)), dtype=torch.float64),
                 )
                 for layer in core:
                     if isinstance(layer, torch.nn.Linear):
@@ -53,7 +56,7 @@ class FTTField(torch.nn.Module):
             )
             with torch.no_grad():
                 self.cores[2].zero_()
-        expected = 9072 if model_kind == "fttnn" else 9120
+        expected = (3 * (hidden_width**2 + 3*hidden_width) + 480*(hidden_width+1)) if model_kind == "fttnn" else 9120
         if sum(p.numel() for p in self.parameters()) != expected:
             raise ValueError("FTT_PARAMETER_INVENTORY")
         # Optional normalization is deliberately NOT used: this is the exact

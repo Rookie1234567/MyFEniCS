@@ -39,7 +39,7 @@ def read_verdict(path, request):
     return value
 
 
-def joint_callback(manifest, artifact, directory, marker, scoring_root):
+def joint_callback(manifest, artifact, directory, marker, scoring_root, *, design_path=None):
     from src.runners.saved_field_supervision import run_checker
     from src.solvers.optimization_checkpoint import atomic_write
 
@@ -71,6 +71,8 @@ def joint_callback(manifest, artifact, directory, marker, scoring_root):
             snapshot_root=str((snapshot / "source").relative_to(ROOT)),
             feedback_path=str(feedback.relative_to(ROOT)),
         )
+        if design_path is not None:
+            request["design_path"] = str(design_path.relative_to(ROOT))
         request_path = snapshot / "request.json"
         atomic_json(request_path, request)
         if feedback.exists():

@@ -44,7 +44,7 @@ def output_coefficients(model, axis, *, gradient=False):
         layer = model.cores[axis][-1]
         w = layer.weight.grad if gradient else layer.weight.detach()
         b = layer.bias.grad if gradient else layer.bias.detach()
-        packed = torch.cat((w, b[:, None]), 1).reshape(*shape, 17)
+        packed = torch.cat((w, b[:, None]), 1).reshape(*shape, w.shape[1]+1)
         real = packed[..., 0, :].movedim(-1, 0)
         imag = packed[..., 1, :].movedim(-1, 0)
     else:
@@ -54,7 +54,8 @@ def output_coefficients(model, axis, *, gradient=False):
 
 
 def set_output_coefficients(model, axis, coefficients):
-    expected = (17 if model.model_kind == "fttnn" else 19, *model.shapes[axis][:-1])
+    features = model.cores[axis][-1].in_features+1 if model.model_kind == "fttnn" else 19
+    expected = (features, *model.shapes[axis][:-1])
     coefficients = np.asarray(coefficients)
     if (
         coefficients.shape != expected
@@ -66,9 +67,9 @@ def set_output_coefficients(model, axis, coefficients):
     with torch.no_grad():
         if model.model_kind == "fttnn":
             layer = model.cores[axis][-1]
-            packed = real.movedim(0, -1).reshape(-1, 17)
-            layer.weight.copy_(packed[:, :16])
-            layer.bias.copy_(packed[:, 16])
+            packed = real.movedim(0, -1).reshape(-1, features)
+            layer.weight.copy_(packed[:, :-1])
+            layer.bias.copy_(packed[:, -1])
         else:
             model.cores[axis].copy_(real)
 
