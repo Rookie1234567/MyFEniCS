@@ -2522,6 +2522,7 @@ def _v25_complete_volume_readback_checks(
     *, output_directory: Path, probe: Mapping[str, Any], manifest: Mapping[str, Any]
 ) -> dict[str, bool]:
     """Verify V25 witness files and recompute every reported numerical gate."""
+    import numpy as np
     identity = probe.get("v25_complete_target_volume_action")
     identity = identity if isinstance(identity, Mapping) else {}
     campaign = manifest.get("task40_v20_campaign")
