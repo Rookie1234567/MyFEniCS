@@ -628,6 +628,8 @@ def iter_fullspace_dtn_functionals_from_surface(
     start_index: int = 0,
     stop_index: int | None = None,
     mode_indices: Sequence[int] | None = None,
+    precomputed_mode_rows: Sequence[Mapping[str, Any]] | None = None,
+    precomputed_physical_manifest_sha256: str | None = None,
     audit: dict[str, Any] | None = None,
 ):
     """Yield production B/D/H functionals one ordered mode at a time.
@@ -672,7 +674,35 @@ def iter_fullspace_dtn_functionals_from_surface(
             raise ValueError("explicit surface functional mode index is outside the ordered mode table")
         if any(right <= left for left, right in zip(selected_indices, selected_indices[1:])):
             raise ValueError("explicit surface functional mode indices must be strictly increasing")
-    manifest_rows, _manifest_bytes, physical_manifest_sha = build_ordered_mode_manifest(modes, cfg)
+    if precomputed_mode_rows is None:
+        if precomputed_physical_manifest_sha256 is not None:
+            raise ValueError("a precomputed manifest SHA requires precomputed ordered mode rows")
+        manifest_rows, _manifest_bytes, physical_manifest_sha = build_ordered_mode_manifest(modes, cfg)
+    else:
+        if precomputed_physical_manifest_sha256 is None:
+            raise ValueError("precomputed ordered mode rows require their frozen manifest SHA")
+        manifest_rows = tuple(precomputed_mode_rows)
+        if len(manifest_rows) != len(modes):
+            raise ValueError("precomputed ordered mode rows differ from the frozen mode table")
+        manifest_payload = {
+            "schema": FULLSPACE_DTN_MANIFEST_SCHEMA,
+            "profile": FULLSPACE_DTN_PROFILE,
+            "mode_count": len(manifest_rows),
+            "modes": manifest_rows,
+        }
+        computed_manifest_sha = hashlib.sha256(_canonical_json_bytes(manifest_payload)).hexdigest()
+        if computed_manifest_sha != str(precomputed_physical_manifest_sha256):
+            raise ValueError("precomputed ordered mode rows do not match their frozen manifest SHA")
+        for index, (mode, row) in enumerate(zip(modes, manifest_rows, strict=True)):
+            if (
+                int(row.get("mode_index", -1)) != index
+                or str(row.get("side")) != str(mode.side)
+                or int(row.get("m", 0)) != int(mode.m)
+                or int(row.get("n", 0)) != int(mode.n)
+                or str(row.get("polarization")) != str(mode.polarization)
+            ):
+                raise ValueError("precomputed mode row identity differs from the frozen mode table")
+        physical_manifest_sha = computed_manifest_sha
     if phase_gauge == BOUNDARY_PLANE:
         required = {"schema", "source_sha256", "mesh", "cell_dofmap_sha256", "orientation",
                     "basix_coefficients", "MPC", "config_sha256", "gauss", "ABI"}

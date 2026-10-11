@@ -659,15 +659,26 @@ def build_p6_global_direct_provider_from_surface(
     *,
     phase_gauge: str = "global_z",
     assembly_context: Mapping[str, Any] | None = None,
+    mode_indices: Sequence[int] | None = None,
+    precomputed_mode_rows: Sequence[Mapping[str, Any]] | None = None,
+    precomputed_physical_manifest_sha256: str | None = None,
     interior_rows_are_managed: bool = False,
+    interior_rows: Any | None = None,
 ) -> P6GlobalDirectCarrierProvider:
     """Bind the bounded provider to the production surface functional iterator."""
 
     from .fullspace_dtn_action import iter_fullspace_dtn_functionals_from_surface
 
     mode_table = tuple(modes)
-    if len(mode_table) != int(condensed.appended_rows):
+    selected = tuple(range(len(mode_table))) if mode_indices is None else tuple(mode_indices)
+    if len(selected) != int(condensed.appended_rows):
         raise ValueError("production mode table differs from the appended port rows")
+    if any(type(index) is not int for index in selected):
+        raise TypeError("production mode selection indices must be Python integers")
+    if any(index < 0 or index >= len(mode_table) for index in selected):
+        raise ValueError("production mode selection index is outside the frozen mode table")
+    if any(right <= left for left, right in zip(selected, selected[1:])):
+        raise ValueError("production mode selection must be strictly increasing")
 
     def factory():
         return iter_fullspace_dtn_functionals_from_surface(
@@ -677,13 +688,17 @@ def build_p6_global_direct_provider_from_surface(
             cfg,
             phase_gauge=phase_gauge,
             assembly_context=assembly_context,
+            mode_indices=selected,
+            precomputed_mode_rows=precomputed_mode_rows,
+            precomputed_physical_manifest_sha256=precomputed_physical_manifest_sha256,
         )
 
     return P6GlobalDirectCarrierProvider(
         factory,
         condensed=condensed,
-        mode_count=len(mode_table),
+        mode_count=len(selected),
         interior_rows_are_managed=interior_rows_are_managed,
+        interior_rows=interior_rows,
         source_label="iter_fullspace_dtn_functionals_from_surface",
     )
 

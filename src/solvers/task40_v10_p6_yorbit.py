@@ -1474,6 +1474,30 @@ def _v16_csr_payload_bytes(matrix: sparse.csr_matrix) -> int:
     return int(matrix.data.nbytes + matrix.indices.nbytes + matrix.indptr.nbytes)
 
 
+def _count_nonzero_chunked(array: Any, *, chunk_entries: int = 1_000_000) -> int:
+    """Count mapped values without materializing or retaining the whole file."""
+    value = np.asarray(array)
+    count = 0
+    for start in range(0, value.size, int(chunk_entries)):
+        stop = min(start + int(chunk_entries), value.size)
+        count += int(np.count_nonzero(value[start:stop]))
+        owner = value
+        while getattr(owner, "base", None) is not None and not hasattr(owner, "_mmap"):
+            owner = owner.base
+        mapping = getattr(owner, "_mmap", None)
+        advise = getattr(mapping, "madvise", None)
+        option = getattr(__import__("mmap"), "MADV_DONTNEED", None)
+        if callable(advise) and option is not None and value.dtype.itemsize:
+            try:
+                page = os.sysconf("SC_PAGE_SIZE")
+                begin = (start * value.dtype.itemsize) // page * page
+                end = ((stop * value.dtype.itemsize + page - 1) // page) * page
+                advise(option, begin, end - begin)
+            except (OSError, ValueError, TypeError):
+                pass
+    return count
+
+
 def _v16_layout_array_bytes(rows: np.ndarray, columns: np.ndarray) -> int:
     return int(rows.nbytes + columns.nbytes)
 
@@ -2051,6 +2075,9 @@ def _assemble_v17_row_tile_patterns(
     q_maps: tuple[sparse.csr_matrix, sparse.csr_matrix],
     *,
     allocation_gate: Callable[[str, Mapping[str, Any]], None],
+    requested_blocks: tuple[tuple[int, int], ...] | None = None,
+    disk_backed_directory: str | Path | None = None,
+    disk_backed_stem: str = "v17_q",
 ) -> tuple[dict[tuple[int, int], sparse.csr_matrix], dict[str, Any], float]:
     """Build four sparse patterns from compact support descriptors and row routes.
 
@@ -2070,12 +2097,35 @@ def _assemble_v17_row_tile_patterns(
 
     started = time.perf_counter()
     index_dtype = np.dtype(PETSc.IntType)
+    disk_backed_root = (
+        None if disk_backed_directory is None else Path(disk_backed_directory).resolve()
+    )
+    if disk_backed_root is not None:
+        disk_backed_root.mkdir(parents=True, exist_ok=True)
+        if not disk_backed_stem or any(
+            character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
+            for character in disk_backed_stem
+        ):
+            raise ValueError("V17 disk-backed stem must be a simple artifact name")
     if index_dtype.kind != "i" or index_dtype.itemsize not in (4, 8):
         raise TypeError("V17 row-tile CSR requires signed int32/int64 PETSc indices")
     if any(np.dtype(matrix.indices.dtype) != index_dtype for matrix in q_maps):
         raise TypeError("V17 q-map indices must use the qualified PETSc.IntType")
     index_limit = int(np.iinfo(index_dtype).max)
-    block_keys = ((0, 0), (0, 1), (1, 0), (1, 1))
+    all_block_keys = ((0, 0), (0, 1), (1, 0), (1, 1))
+    block_keys = all_block_keys if requested_blocks is None else tuple(requested_blocks)
+    if (
+        not block_keys
+        or len(set(block_keys)) != len(block_keys)
+        or any(
+            not isinstance(key, tuple)
+            or len(key) != 2
+            or any(type(branch) is not int or branch not in (0, 1) for branch in key)
+            or key not in all_block_keys
+            for key in block_keys
+        )
+    ):
+        raise ValueError("V17 requested blocks must be a nonempty subset of the four q branches")
     block_id = {(p, q): p * 2 + q for p, q in block_keys}
     shapes = {
         key: (int(q_maps[key[0]].shape[1]), int(q_maps[key[1]].shape[1]))
@@ -2576,21 +2626,76 @@ def _assemble_v17_row_tile_patterns(
                 allocation_gate(
                     f"task40_v17_q_row_tile_csr_materialize/p{p}q{q}",
                     {
-                        "additional_payload_bytes": csr_payload,
+                        # A disk-backed CSR still faults and dirties pages in
+                        # the task cgroup while it is populated/replayed.  Use
+                        # the full mapped payload as the conservative memory
+                        # admission request; the streaming consumer remains
+                        # independently complete if this optional upgrade is
+                        # denied.
+                        "additional_payload_bytes": int(csr_payload),
+                        "disk_backed_mmap_payload_bytes": (
+                            int(csr_payload) if disk_backed_root is not None else 0
+                        ),
+                        "mmap_page_cache_counted_as_memory": disk_backed_root is not None,
                         "workspace_bytes": materialize_workspace - reserve,
                         "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
                         "staging_live_bytes_upper": materialize_workspace,
                         "final_csr_payload_bytes": csr_payload,
+                        "csr_storage_mode": (
+                            "disk_backed_complete_row_tiles"
+                            if disk_backed_root is not None
+                            else "resident_csr"
+                        ),
+                        "disk_spool_file_bytes_required": (
+                            csr_payload if disk_backed_root is not None else 0
+                        ),
                         "final_nnz_python_integer": total_nnz,
                         "indptr_terminal_python_integer": running,
                         "indptr_dtype_after_checked_cast": index_dtype.str,
                         "support_descriptor_spool_bytes": sqlite_peak_bytes,
                     },
                 )
-                indptr = wide_indptr.astype(index_dtype, copy=True)
+                artifact_paths: dict[str, str] = {}
+                if disk_backed_root is None:
+                    indptr = wide_indptr.astype(index_dtype, copy=True)
+                    indices = np.empty(total_nnz, dtype=index_dtype)
+                    data = np.zeros(total_nnz, dtype=np.complex128)
+                else:
+                    required_bytes = csr_payload + V17_SQLITE_FREE_SPACE_RESERVE_BYTES
+                    free_bytes = int(shutil.disk_usage(disk_backed_root).free)
+                    if free_bytes < required_bytes:
+                        raise OSError(
+                            "V17 selected row-tile spool lacks its full payload plus "
+                            f"free-space reserve: {free_bytes} < {required_bytes} bytes"
+                        )
+                    artifact_paths = {
+                        "indptr": str(disk_backed_root / f"{disk_backed_stem}_{p}{q}_indptr.npy"),
+                        "indices": str(disk_backed_root / f"{disk_backed_stem}_{p}{q}_indices.npy"),
+                        "data": str(disk_backed_root / f"{disk_backed_stem}_{p}{q}_data.npy"),
+                    }
+                    if any(Path(path).exists() for path in artifact_paths.values()):
+                        raise FileExistsError("V17 selected row-tile spool path already exists")
+                    indptr = np.lib.format.open_memmap(
+                        artifact_paths["indptr"], mode="w+", dtype=index_dtype,
+                        shape=(shape[0] + 1,),
+                    )
+                    indptr[:] = wide_indptr.astype(index_dtype, copy=False)
+                    indptr.flush()
+                    indices = np.lib.format.open_memmap(
+                        artifact_paths["indices"], mode="w+", dtype=index_dtype,
+                        shape=(total_nnz,),
+                    )
+                    data = np.lib.format.open_memmap(
+                        artifact_paths["data"], mode="w+", dtype=np.complex128,
+                        shape=(total_nnz,),
+                    )
+                    # A new NPY mapping reads as zero-filled; assert it in bounded
+                    # chunks without allocating a full-length temporary array.
+                    for zero_start in range(0, total_nnz, 1 << 20):
+                        zero_stop = min(zero_start + (1 << 20), total_nnz)
+                        if np.any(data[zero_start:zero_stop] != 0.0):
+                            raise RuntimeError("new V17 data spool is not zero initialized")
                 del wide_indptr
-                indices = np.empty(total_nnz, dtype=index_dtype)
-                data = np.zeros(total_nnz, dtype=np.complex128)
                 tile_cursor = connection.execute(
                     "SELECT tile FROM routes WHERE block=? GROUP BY tile ORDER BY tile",
                     (block_id[key],),
@@ -2644,6 +2749,10 @@ def _assemble_v17_row_tile_patterns(
                                 "V17 row-tile CSR materialization differs from wide row counts"
                             )
                     del pattern
+                for mapped_array in (indptr, indices, data):
+                    flush = getattr(mapped_array, "flush", None)
+                    if callable(flush):
+                        flush()
                 matrix = sparse.csr_matrix(
                     (data, indices, indptr), shape=shape, copy=False
                 )
@@ -2667,6 +2776,12 @@ def _assemble_v17_row_tile_patterns(
                     "indptr_terminal": total_nnz,
                     "csr_payload_bytes": csr_payload,
                     "csr_index_dtype": index_dtype.str,
+                    "csr_storage_mode": (
+                        "disk_backed_complete_row_tiles"
+                        if disk_backed_root is not None
+                        else "resident_csr"
+                    ),
+                    "disk_backed_artifacts": artifact_paths,
                     "wide_counts_and_prefix_checked_before_cast": True,
                     "tile_support_rebuild_passes": 2,
                     "maximum_staging_bytes": max_staging,
@@ -2734,6 +2849,8 @@ def _accumulate_bounded_q_pattern_values(
     patterns: Mapping[str, Any],
     pattern_seconds: float,
     pattern_metadata: Mapping[str, Any] | None = None,
+    contribution_observer: Callable[[np.ndarray, np.ndarray, np.ndarray, str], None]
+    | None = None,
 ) -> tuple[dict[tuple[int, int], sparse.csr_matrix], dict[str, Any]]:
     import time
 
@@ -2751,6 +2868,7 @@ def _accumulate_bounded_q_pattern_values(
     projection_tile_plan_count = 0
     projection_tile_count = 0
     projection_left_product_count = 0
+    block_keys = tuple(blocks)
 
     def bounded_projection_gate(label: str, facts: Mapping[str, Any]) -> None:
         nonlocal projection_support_discovery_gate_count
@@ -2800,7 +2918,9 @@ def _accumulate_bounded_q_pattern_values(
         contribution_count += 1
         if str(label).startswith("ports/Hhat"):
             hhat_contribution_count += 1
-        for p, q in ((0, 0), (0, 1), (1, 0), (1, 1)):
+        if contribution_observer is not None:
+            contribution_observer(rows, columns, values, str(label))
+        for p, q in block_keys:
             projection_s, accumulation_s, staging_peak = _project_accumulate_v16(
                 blocks[p, q],
                 q_maps[p],
@@ -2822,7 +2942,7 @@ def _accumulate_bounded_q_pattern_values(
         f"{p}{q}": int(matrix.nnz) for (p, q), matrix in blocks.items()
     }
     numeric_nonzero_entries = {
-        f"{p}{q}": int(np.count_nonzero(matrix.data))
+        f"{p}{q}": _count_nonzero_chunked(matrix.data)
         for (p, q), matrix in blocks.items()
     }
     exact_zero_slots_retained = {
@@ -2847,10 +2967,11 @@ def _accumulate_bounded_q_pattern_values(
     max_staging = max(pattern_peak, contribution_staging_peak, numeric_staging_peak)
     if max_staging > V16_Q_STAGING_BUDGET_BYTES:
         raise V16StagingLimitError(
-            "four_block_peak", max_staging, V16_Q_STAGING_BUDGET_BYTES
+            "selected_block_peak", max_staging, V16_Q_STAGING_BUDGET_BYTES
         )
     audit = {
         "assembly_strategy": assembly_strategy,
+        "selected_block_keys": [list(key) for key in block_keys],
         "pattern_algorithm": pattern_algorithm,
         "staging_budget_bytes_total_all_q_blocks": V16_Q_STAGING_BUDGET_BYTES,
         "staging_budget_scope": "maximum simultaneous routing/support, row-tile bitset, prefix, query/decode, contribution and projection scratch; final CSR is separately allocation-gated",
@@ -2943,9 +3064,19 @@ def _assemble_bounded_v17_row_tile_q_patterns(
     q_maps: tuple[sparse.csr_matrix, sparse.csr_matrix],
     *,
     allocation_gate: Callable[[str, Mapping[str, Any]], None],
+    requested_blocks: tuple[tuple[int, int], ...] | None = None,
+    contribution_observer: Callable[[np.ndarray, np.ndarray, np.ndarray, str], None]
+    | None = None,
+    disk_backed_directory: str | Path | None = None,
+    disk_backed_stem: str = "v17_q",
 ) -> tuple[dict[tuple[int, int], sparse.csr_matrix], dict[str, Any]]:
     blocks, pattern_metadata, pattern_seconds = _assemble_v17_row_tile_patterns(
-        action, q_maps, allocation_gate=allocation_gate
+        action,
+        q_maps,
+        allocation_gate=allocation_gate,
+        requested_blocks=requested_blocks,
+        disk_backed_directory=disk_backed_directory,
+        disk_backed_stem=disk_backed_stem,
     )
     patterns = dict(pattern_metadata.pop("pattern_facts_by_block"))
     return _accumulate_bounded_q_pattern_values(
@@ -2958,6 +3089,7 @@ def _assemble_bounded_v17_row_tile_q_patterns(
         patterns=patterns,
         pattern_seconds=pattern_seconds,
         pattern_metadata=pattern_metadata,
+        contribution_observer=contribution_observer,
     )
 
 

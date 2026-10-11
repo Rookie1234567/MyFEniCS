@@ -727,7 +727,13 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 v20_cases[preconditioner] = (
                     TASK40_V22_OPERATOR_PROBE_RUN_ID,
                     "V22_TARGET_OPERATOR_PROBE",
-                    {"preflight", "target_operator_probe"},
+                    {
+                        "preflight",
+                        "target_operator_probe",
+                        "selected_reference_q_consumer",
+                        "selected_reference_q_build_only",
+                        "selected_reference_q_csr",
+                    },
                 )
             stop_stage = execution.get("task40_execution_stop_stage")
             if preconditioner in v20_cases:

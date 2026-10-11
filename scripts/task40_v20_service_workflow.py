@@ -89,6 +89,22 @@ V25_TARGET_PROFILE = V22_TARGET_PROFILE
 V25_STOP_STAGE_SCOPE = {
     "preflight": "implementation",
     "target_operator_probe": "target_operator_probe",
+    "selected_reference_q_consumer": "selected_reference_q_consumer",
+    "selected_reference_q_build_only": "selected_reference_q_build_only",
+    "selected_reference_q_csr": "selected_reference_q_csr",
+}
+V25_SELECTED_Q_STAGES = frozenset(
+    {
+        "selected_reference_q_consumer",
+        "selected_reference_q_build_only",
+        "selected_reference_q_csr",
+    }
+)
+V25_SELECTED_OPERATION_BY_STAGE = {
+    "target_operator_probe": "COMPLETE_TARGET_VOLUME_ACTION",
+    "selected_reference_q_consumer": "SELECTED_REFERENCE_Q_CONSUMER",
+    "selected_reference_q_build_only": "SELECTED_REFERENCE_Q_BUILD_ONLY",
+    "selected_reference_q_csr": "SELECTED_REFERENCE_Q_CSR",
 }
 V25_ARTIFACT_ROOT = Path(
     "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v25_wsl"
@@ -128,6 +144,9 @@ V20_INPUTS = {
 }
 STAGE_PREFIXES = {
     "preflight": ["preflight"],
+    "selected_reference_q_consumer": ["preflight", "selected_reference_q_consumer"],
+    "selected_reference_q_build_only": ["preflight", "selected_reference_q_build_only"],
+    "selected_reference_q_csr": ["preflight", "selected_reference_q_csr"],
     "geometry_inventory": ["preflight", "geometry_inventory"],
     "target_operator_probe": [
         "preflight",
@@ -476,10 +495,92 @@ def _validate_service_stage_input_variant(
         raise ValueError(
             "stage input is not an exact same-basename variant of the canonical input"
         )
-    if not input_path.is_relative_to(
-        (repo_root / ARTIFACT_ROOT / "stage_inputs").resolve()
+    allowed_stage_roots = [(repo_root / ARTIFACT_ROOT / "stage_inputs").resolve()]
+    if stop_stage in V25_SELECTED_Q_STAGES:
+        allowed_stage_roots.append(
+            (repo_root / V25_ARTIFACT_ROOT / "stage_inputs").resolve()
+        )
+    if not any(input_path.is_relative_to(path) for path in allowed_stage_roots):
+        raise ValueError("noncanonical V20/V25 stage input must live in its ignored stage_inputs artifact")
+
+
+
+def prepare_v25_selected_q_input(
+    stop_stage: str = "selected_reference_q_build_only",
+    repo_root: Path = ROOT,
+) -> dict[str, Any]:
+    """Create the ignored, input/window-bound stage input and operation selector."""
+    if stop_stage not in V25_SELECTED_Q_STAGES:
+        raise ValueError("V25 selected-q preparation requires one of the registered q0 stages")
+    canonical_relative, _ = V20_INPUTS[V25_TARGET_PROFILE]
+    canonical_path = repo_root / canonical_relative
+    canonical_text = canonical_path.read_text(encoding="utf-8")
+    canonical_data = tomllib.loads(canonical_text)
+    if canonical_data.get("solver", {}).get("preconditioner") != V25_TARGET_PROFILE:
+        raise ValueError("V25 selected-q canonical input/profile identity changed")
+    campaign_path = (repo_root / TASK40_V25_CAMPAIGN_WINDOW).resolve()
+    if not campaign_path.is_file() or _sha256_file(campaign_path) != TASK40_V25_CAMPAIGN_SHA256:
+        raise ValueError("V25 selected-q preparation requires the frozen campaign window")
+    rendered = render_stage_input(canonical_text, stop_stage).encode("utf-8")
+    stage_directory = (repo_root / V25_ARTIFACT_ROOT / "stage_inputs" / stop_stage).resolve()
+    stage_directory.mkdir(parents=True, exist_ok=True)
+    input_path = stage_directory / canonical_path.name
+    selector_path = stage_directory / "selected_operation.json"
+    for destination, payload in (
+        (input_path, rendered),
+        (
+            selector_path,
+            (
+                json.dumps(
+                    {
+                        "schema": "task40extra.review_v25_selected_operation.v1",
+                        "operation": V25_SELECTED_OPERATION_BY_STAGE[stop_stage],
+                        "campaign_window_sha256": TASK40_V25_CAMPAIGN_SHA256,
+                        "input_sha256": _sha256_bytes(rendered),
+                        "model_profile": V25_TARGET_PROFILE,
+                        "stop_stage": stop_stage,
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    indent=2,
+                )
+                + "\n"
+            ).encode("utf-8"),
+        ),
     ):
-        raise ValueError("noncanonical V20 stage input must live in the ignored stage_inputs artifact")
+        relative = destination.relative_to(repo_root.resolve())
+        ignored = subprocess.run(
+            ["git", "check-ignore", "-q", str(relative)],
+            cwd=repo_root,
+            check=False,
+        )
+        if ignored.returncode != 0:
+            raise RuntimeError(f"V25 selected-q artifact is not git-ignored: {relative}")
+        if destination.exists():
+            if destination.read_bytes() != payload:
+                raise FileExistsError(f"refusing to replace different V25 selected-q artifact: {destination}")
+        else:
+            with destination.open("xb") as stream:
+                stream.write(payload)
+                stream.flush()
+                os.fsync(stream.fileno())
+    return {
+        "schema": "task40extra.review_v25_selected_q_stage_input.v1",
+        "stop_stage": stop_stage,
+        "operation": V25_SELECTED_OPERATION_BY_STAGE[stop_stage],
+        "canonical_input_sha256": _sha256_file(canonical_path),
+        "stage_input_path": str(input_path),
+        "stage_input_sha256": _sha256_file(input_path),
+        "selector_path": str(selector_path),
+        "selector_sha256": _sha256_file(selector_path),
+        "campaign_window_path": str(campaign_path),
+        "campaign_window_sha256": TASK40_V25_CAMPAIGN_SHA256,
+        "launch_command": (
+            "bash scripts/run_case_in_user_service.sh "
+            f"{input_path} --task40-v10-campaign-window {TASK40_V25_CAMPAIGN_WINDOW} "
+            f"--v25-selected-operation-selector {selector_path}"
+        ),
+    }
 
 
 def prepare_stage_inputs(repo_root: Path = ROOT) -> dict[str, Any]:
@@ -751,7 +852,8 @@ def _parse_case_arguments(case_args: list[str]) -> tuple[Path, Path, str, dict[s
         raise ValueError("service V20 branch received a non-V20 profile")
     canonical_relative, supported_stages = case
     stop_stage = str(data.get("execution", {}).get("task40_execution_stop_stage", ""))
-    if stop_stage not in supported_stages | {"preflight"}:
+    v25_q_stage = profile == V25_TARGET_PROFILE and stop_stage in V25_SELECTED_Q_STAGES
+    if stop_stage not in supported_stages | {"preflight"} and not v25_q_stage:
         raise ValueError(f"unsupported user-service stop stage for {profile}: {stop_stage}")
     campaign: Path | None = None
     for index, arg in enumerate(case_args):
@@ -856,28 +958,32 @@ def _bind_v25_selected_operation_selector(
     allowed_root = (repo_root / V25_ARTIFACT_ROOT).resolve()
     if not selector_path.is_relative_to(allowed_root) or not selector_path.is_file():
         raise ValueError("V25 selected-operation selector must be under its registered artifact directory")
+    expected_operation = V25_SELECTED_OPERATION_BY_STAGE.get(stop_stage)
     if (
         campaign_registration.get("version") != "V25"
         or campaign_registration.get("sha256") != TASK40_V25_CAMPAIGN_SHA256
         or profile != V25_TARGET_PROFILE
-        or stop_stage != "target_operator_probe"
+        or expected_operation is None
     ):
-        raise ValueError("V25 operation selector requires the registered target probe/window")
+        raise ValueError("V25 operation selector requires an explicitly scoped stage/window")
     raw = selector_path.read_bytes()
     selector = json.loads(raw)
     if not isinstance(selector, dict) or (
         selector.get("schema") != "task40extra.review_v25_selected_operation.v1"
-        or selector.get("operation") != "COMPLETE_TARGET_VOLUME_ACTION"
+        or selector.get("operation") != expected_operation
         or selector.get("campaign_window_sha256") != TASK40_V25_CAMPAIGN_SHA256
         or selector.get("input_sha256") != _sha256_file(input_path)
         or selector.get("model_profile") != V25_TARGET_PROFILE
-        or selector.get("stop_stage") != "target_operator_probe"
+        or selector.get("stop_stage") != stop_stage
     ):
-        raise ValueError("V25 selected-operation selector differs from the frozen target contract")
+        raise ValueError("V25 selected-operation selector differs from the frozen stage/input/window contract")
     return {
         "selector_path": str(selector_path),
         "selector_sha256": _sha256_bytes(raw),
         "operation": str(selector["operation"]),
+        "stop_stage": stop_stage,
+        "campaign_window_sha256": TASK40_V25_CAMPAIGN_SHA256,
+        "input_sha256": _sha256_file(input_path),
     }
 
 
@@ -2905,6 +3011,334 @@ def _v25_complete_volume_readback_checks(
     return checks
 
 
+
+def _v25_selected_q0_readback_checks(
+    *, output_directory: Path, partial: Mapping[str, Any]
+) -> dict[str, bool]:
+    """Recompute selected-q errors from saved vectors and verify their identities."""
+    import math
+    import numpy as np
+    import zipfile
+
+    root = output_directory.resolve()
+    nested = partial.get("selected_reference_q0_consumer", {})
+    nested = nested if isinstance(nested, Mapping) else {}
+    operation_path = (root / "v25_selected_q0_consumer.json").resolve()
+    try:
+        operation = json.loads(operation_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        operation = {}
+    status = str(operation.get("status", ""))
+    checks: dict[str, bool] = {
+        "q0_operation_identity_and_status_hash": (
+            operation_path.is_relative_to(root)
+            and operation_path.is_file()
+            and nested.get("operation_path") == operation_path.name
+            and nested.get("operation_sha256") == _sha256_file(operation_path)
+            and nested.get("operation_status") == status
+            and operation.get("schema") == "task40extra.review_v25_selected_reference_q0_consumer.v1"
+            and operation.get("selected_q") == 0
+            and operation.get("paired_q") == 4
+            and operation.get("official_result") is False
+        ),
+        "q0_no_factor_ksp_pde_or_official_result": (
+            operation.get("factor_or_solve_built") is not True
+            and operation.get("ksp_created") is not True
+            and operation.get("pde_solved") is not True
+            and partial.get("official_result") is False
+        ),
+    }
+    try:
+        preflight = json.loads((root / "v20_stage_preflight.json").read_text(encoding="utf-8"))
+        preflight_modes = preflight.get("target_mode_inventory", {})
+        preflight_modes = preflight_modes if isinstance(preflight_modes, Mapping) else {}
+    except (OSError, json.JSONDecodeError):
+        preflight_modes = {}
+    inventory = operation.get("mode_inventory", {})
+    inventory = inventory if isinstance(inventory, Mapping) else {}
+    identity_valid = (
+        operation.get("preflight_mode_manifest_sha256", inventory.get("mode_manifest_sha256"))
+        == preflight_modes.get("mode_manifest_sha256")
+        and operation.get("ordered_mode_key_sha256", inventory.get("ordered_mode_key_sha256"))
+        == preflight_modes.get("ordered_mode_key_sha256")
+    )
+    if status in {
+        "PASS_COMPLETE_Q0_STREAM",
+        "PASS_COMPLETE_Q0_STREAM_CSR_NOT_BUILT",
+        "PASS_COMPLETE_Q0_CSR",
+        "PARTIAL_REFERENCE_NONZERO_INTERNAL_DTN_SUPPORT",
+    }:
+        identity_valid = identity_valid and (
+            type(inventory.get("q0_alias_count_actual")) is int
+            and inventory["q0_alias_count_actual"] > 0
+            and type(inventory.get("q4_alias_count_actual")) is int
+            and inventory["q4_alias_count_actual"] > 0
+            and inventory.get("selected_twist_alias_count_actual")
+            == inventory.get("q0_alias_count_actual", -1)
+            + inventory.get("q4_alias_count_actual", -1)
+        )
+    checks["q0_frozen_preflight_mode_identity"] = bool(
+        (root / "v20_stage_preflight.json").is_file() and identity_valid
+    )
+
+    saved = operation.get("saved_artifacts", {})
+    saved = saved if isinstance(saved, Mapping) else {}
+    artifacts_valid = bool(saved)
+    for item in saved.values():
+        if not isinstance(item, Mapping):
+            artifacts_valid = False
+            break
+        artifact = (root / str(item.get("path", ""))).resolve()
+        if (
+            not artifact.is_relative_to(root)
+            or not artifact.is_file()
+            or type(item.get("bytes")) is not int
+            or artifact.stat().st_size != item.get("bytes")
+            or not isinstance(item.get("sha256"), str)
+            or _sha256_file(artifact) != item.get("sha256")
+        ):
+            artifacts_valid = False
+            break
+
+    def vector_metrics(archive: Any, left_key: str, right_key: str) -> dict[str, float]:
+        left = np.asarray(archive[left_key], dtype=np.complex128).reshape(-1)
+        right = np.asarray(archive[right_key], dtype=np.complex128).reshape(-1)
+        if left.shape != right.shape:
+            raise ValueError(f"raw replay vectors have different shapes: {left_key}, {right_key}")
+        difference_sq = left_sq = right_sq = 0.0
+        step = 1_000_000
+        for start in range(0, left.size, step):
+            stop = min(start + step, left.size)
+            a, b = left[start:stop], right[start:stop]
+            if not np.isfinite(a).all() or not np.isfinite(b).all():
+                raise ValueError("raw replay vector contains non-finite values")
+            difference_sq += float(np.vdot(a - b, a - b).real)
+            left_sq += float(np.vdot(a, a).real)
+            right_sq += float(np.vdot(b, b).real)
+        absolute = math.sqrt(max(difference_sq, 0.0))
+        scale = max(math.sqrt(max(left_sq, 0.0)), math.sqrt(max(right_sq, 0.0)), np.finfo(float).tiny)
+        return {"absolute": absolute, "relative_to_component": absolute / scale}
+
+    def vector_norm(archive: Any, key: str) -> float:
+        values = np.asarray(archive[key], dtype=np.complex128).reshape(-1)
+        total = 0.0
+        for start in range(0, values.size, 1_000_000):
+            chunk = values[start : start + 1_000_000]
+            if not np.isfinite(chunk).all():
+                raise ValueError(f"raw replay vector is non-finite: {key}")
+            total += float(np.vdot(chunk, chunk).real)
+        return math.sqrt(max(total, 0.0))
+
+    def metrics_match(recorded: Any, calculated: Mapping[str, float]) -> bool:
+        if not isinstance(recorded, Mapping):
+            return False
+        try:
+            absolute = float(recorded["absolute"])
+            relative = float(recorded["relative_to_component"])
+            return (
+                math.isfinite(absolute)
+                and math.isfinite(relative)
+                and math.isclose(
+                    absolute,
+                    calculated["absolute"],
+                    rel_tol=1.0e-6,
+                    abs_tol=1.0e-14,
+                )
+                and math.isclose(
+                    relative,
+                    calculated["relative_to_component"],
+                    rel_tol=1.0e-6,
+                    abs_tol=1.0e-14,
+                )
+                and relative <= 1.0e-11
+            )
+        except (KeyError, TypeError, ValueError, OverflowError):
+            return False
+
+    pass_statuses = {
+        "PASS_COMPLETE_Q0_STREAM",
+        "PASS_COMPLETE_Q0_STREAM_CSR_NOT_BUILT",
+        "PASS_COMPLETE_Q0_CSR",
+    }
+    if status in pass_statuses:
+        stream = operation.get("complete_stream", {})
+        stream = stream if isinstance(stream, Mapping) else {}
+        replay = stream.get("consumer_replay", {})
+        replay = replay if isinstance(replay, Mapping) else {}
+        replay_facts = replay.get("replay_artifact", {})
+        replay_facts = replay_facts if isinstance(replay_facts, Mapping) else {}
+        replay_path = (root / str(replay_facts.get("path", ""))).resolve()
+        if (
+            replay_path.is_relative_to(root)
+            and replay_path.is_file()
+            and replay_facts.get("sha256") == _sha256_file(replay_path)
+            and saved.get("complete_consumer_replay", {}).get("sha256") == replay_facts.get("sha256")
+        ):
+            try:
+                recomputed: dict[str, dict[str, float]] = {}
+                with np.load(replay_path, allow_pickle=False) as archive:
+                    required = {
+                        "input_q0_case_1", "input_q0_case_2", "input_q4_pair",
+                        "stream_q0_output_case_1", "stream_q0_output_case_2",
+                        "native_q0_output_case_1", "native_q0_output_case_2",
+                        "stream_q4_output_from_q0_case_1", "native_q4_output_from_q0_case_1",
+                        "stream_q0_output_from_q4", "native_q0_output_from_q4",
+                        "stream_q4_output_case_pair", "native_q4_output_case_pair",
+                        "component_volume_stream", "component_volume_native",
+                        "component_C_stream", "component_C_native",
+                        "component_minus_D_stream", "component_minus_D_native",
+                        "component_Hhat_stream", "component_Hhat_native",
+                    }
+                    if not required.issubset(set(archive.files)):
+                        raise ValueError("complete q0 replay archive is missing required raw vectors")
+                    if any(vector_norm(archive, key) == 0.0 for key in ("input_q0_case_1", "input_q0_case_2", "input_q4_pair")):
+                        raise ValueError("q0/q4 replay inputs must all be nonzero")
+                    q0_input_distinct = bool(
+                        np.asarray(archive["input_q0_case_1"]).shape != np.asarray(archive["input_q0_case_2"]).shape
+                        or not np.array_equal(archive["input_q0_case_1"], archive["input_q0_case_2"])
+                    )
+                    if not q0_input_distinct:
+                        raise ValueError("the two q0 replay inputs are not distinct")
+                    pairs = {
+                        "q0_case_1": ("stream_q0_output_case_1", "native_q0_output_case_1"),
+                        "q0_case_2": ("stream_q0_output_case_2", "native_q0_output_case_2"),
+                        "q0_to_q4": ("stream_q4_output_from_q0_case_1", "native_q4_output_from_q0_case_1"),
+                        "q4_to_q0": ("stream_q0_output_from_q4", "native_q0_output_from_q4"),
+                        "q4_case": ("stream_q4_output_case_pair", "native_q4_output_case_pair"),
+                        "volume": ("component_volume_stream", "component_volume_native"),
+                        "C": ("component_C_stream", "component_C_native"),
+                        "-D": ("component_minus_D_stream", "component_minus_D_native"),
+                        "Hhat": ("component_Hhat_stream", "component_Hhat_native"),
+                    }
+                    for name, (left, right) in pairs.items():
+                        recomputed[name] = vector_metrics(archive, left, right)
+                    leakage_04 = vector_norm(archive, "stream_q4_output_from_q0_case_1") / max(
+                        vector_norm(archive, "stream_q0_output_case_1"), np.finfo(float).tiny
+                    )
+                    leakage_40 = vector_norm(archive, "stream_q0_output_from_q4") / max(
+                        vector_norm(archive, "stream_q4_output_case_pair"), np.finfo(float).tiny
+                    )
+                reported_q0 = replay.get("q0_replay_relative_errors", [])
+                reported_components = replay.get("q0_component_relative_errors", {})
+                reported_components = reported_components if isinstance(reported_components, Mapping) else {}
+                checks["q0_raw_stream_and_native_errors_recomputed"] = (
+                    len(reported_q0) == 2
+                    and metrics_match(reported_q0[0], recomputed["q0_case_1"])
+                    and metrics_match(reported_q0[1], recomputed["q0_case_2"])
+                    and set(reported_components) == {"volume", "C", "-D", "Hhat"}
+                    and all(metrics_match(reported_components[name], recomputed[name]) for name in reported_components)
+                    and all(metrics_match(replay.get(key), recomputed[name]) for name, key in (
+                        ("q0_to_q4", "q0_to_q4_relative_error"),
+                        ("q4_to_q0", "q4_to_q0_relative_error"),
+                        ("q4_case", "q4_to_q4_relative_error"),
+                    ))
+                    and math.isclose(float(replay.get("q0_to_q4_leakage_ratio", math.inf)), leakage_04, rel_tol=1.0e-6, abs_tol=1.0e-14)
+                    and math.isclose(float(replay.get("q4_to_q0_leakage_ratio", math.inf)), leakage_40, rel_tol=1.0e-6, abs_tol=1.0e-14)
+                    and leakage_04 <= 1.0e-11
+                    and leakage_40 <= 1.0e-11
+                )
+                pre_gate = operation.get("pre_fe_resource_gate", {})
+                checks["q0_pre_fe_memory_cgroup_and_swap_admission"] = bool(
+                    isinstance(pre_gate, Mapping)
+                    and pre_gate.get("task_cgroup_gate_passed") is True
+                    and pre_gate.get("swap_gate_status") == "PASS_ZERO_TASK_CGROUP_SWAP"
+                    and pre_gate.get("explicit_process_tree_cap_bytes") == 16 * 1024**3
+                    and pre_gate.get("disk_gate_passed") is True
+                )
+                direct = operation.get("direct_only_support", {})
+                direct = direct if isinstance(direct, Mapping) else {}
+                hp = operation.get("original_H_p", {})
+                hp = hp if isinstance(hp, Mapping) else {}
+                checks["q0_internal_support_and_Hp_identity_gates"] = bool(
+                    direct.get("passed") is True
+                    and direct.get("internal_B_nonzero_count") == 0
+                    and direct.get("internal_D_nonzero_count", direct.get("internal_minus_D_nonzero_count")) == 0
+                    and float(hp.get("local_global_scaling_error", {}).get("relative_to_component", math.inf)) <= 1.0e-12
+                    and float(hp.get("q0_normalized_H_p_identity_max_abs", math.inf)) <= 1.0e-12
+                    and hp.get("q0_q4_H_p_alias_overlap") == 0
+                )
+            except (OSError, ValueError, TypeError, KeyError, OverflowError, zipfile.BadZipFile):
+                checks["q0_raw_stream_and_native_errors_recomputed"] = False
+        else:
+            checks["q0_raw_stream_and_native_errors_recomputed"] = False
+        checks["q0_saved_artifact_hash_readback"] = artifacts_valid
+        q0_pass = bool(checks.get("q0_raw_stream_and_native_errors_recomputed"))
+        checks["q0_stage_status_matches_recomputed_consumer"] = (
+            q0_pass
+            and partial.get("status") == "stage_completed"
+            and partial.get("outcome") == "STAGE_COMPLETED"
+            and partial.get("q_coverage", {}).get("built_q_count")
+            == (1 if status == "PASS_COMPLETE_Q0_CSR" else 0)
+        )
+        if status == "PASS_COMPLETE_Q0_CSR":
+            tiles = operation.get("row_tile_store", {})
+            tiles = tiles if isinstance(tiles, Mapping) else {}
+            csr_replay = operation.get("replay", {})
+            csr_replay = csr_replay if isinstance(csr_replay, Mapping) else {}
+            csr_path = (root / "v25_selected_q0_replay.npz").resolve()
+            try:
+                with np.load(csr_path, allow_pickle=False) as archive:
+                    csr_errors = (
+                        vector_metrics(archive, "q0_replay_output_case_1", "native_q0_output_case_1"),
+                        vector_metrics(archive, "q0_replay_output_case_2", "native_q0_output_case_2"),
+                    )
+                csr_values_valid = all(item["relative_to_component"] <= 1.0e-11 for item in csr_errors)
+            except (OSError, ValueError, TypeError, KeyError, OverflowError, zipfile.BadZipFile):
+                csr_values_valid = False
+            checks["q0_complete_disk_csr_readback_recomputed"] = bool(
+                csr_values_valid
+                and csr_path.is_file()
+                and _sha256_file(csr_path) == csr_replay.get("csr_replay_file_sha256")
+                and tiles.get("complete_row_domain") is True
+                and tiles.get("complete_column_domain") is True
+                and tiles.get("row_count") == tiles.get("shape", [None])[0]
+                and operation.get("solve_ready") is False
+            )
+        else:
+            checks["q0_csr_not_built_is_explicit"] = (
+                partial.get("q_coverage", {}).get("csr_status") == "NOT_BUILT"
+            )
+    elif status == "PARTIAL_REFERENCE_NONZERO_INTERNAL_DTN_SUPPORT":
+        raw = operation.get("raw_surface_stream", {})
+        raw = raw if isinstance(raw, Mapping) else {}
+        raw_path = (root / str(raw.get("path", ""))).resolve()
+        counts = raw.get("internal_nonzero_entry_count", {})
+        counts = counts if isinstance(counts, Mapping) else {}
+        artifacts_valid = bool(
+            raw_path.is_relative_to(root)
+            and raw_path.is_file()
+            and raw.get("sha256") == _sha256_file(raw_path)
+        )
+        checks["q0_saved_artifact_hash_readback"] = artifacts_valid
+        checks["q0_nonzero_internal_support_preserved"] = bool(
+            partial.get("status") == "failed"
+            and (counts.get("B", 0) > 0 or counts.get("D", 0) > 0)
+            and "no values were dropped or zeroed" in str(operation.get("reason", ""))
+        )
+    elif status == "RESOURCE_CONTROLLED_STOP":
+        blocker = operation.get("resource_blocker", {})
+        blocker = blocker if isinstance(blocker, Mapping) else {}
+        checks["q0_resource_stop_before_fe"] = (
+            partial.get("status") == "controlled_stop"
+            and isinstance(operation.get("resource_blocker"), Mapping)
+            and isinstance(blocker.get("stage"), str)
+        )
+        checks["q0_saved_artifact_hash_readback"] = not any(
+            (root / name).exists()
+            for name in (
+                "v25_selected_q0_surface_functionals.bin",
+                "v25_selected_q0_complete_stream.json",
+            )
+        )
+    else:
+        checks["q0_failure_is_retained"] = (
+            partial.get("status") == "failed"
+            and isinstance(operation.get("failure_type"), str)
+        )
+        checks["q0_saved_artifact_hash_readback"] = artifacts_valid
+    return checks
+
+
 def _check_partial_result(
     *,
     input_path: Path,
@@ -2963,6 +3397,11 @@ def _check_partial_result(
             "TARGET_OPERATOR_PROBE_V25_COMPLETE_TARGET_VOLUME_ACTION",
             "TARGET_OPERATOR_PROBE_V25_COMPLETE_TARGET_VOLUME_ACTION_FAILED",
         }
+    )
+    v25_q0_receipt = (
+        partial.get("schema") == "task40extra.review_v20_partial_result.v2"
+        and expected_stop_stage in V25_SELECTED_Q_STAGES
+        and isinstance(partial.get("selected_reference_q0_consumer"), Mapping)
     )
     q_only_supplement_identity = partial.get("q_only_supplement")
     q_only_supplement_identity = (
@@ -3098,6 +3537,7 @@ def _check_partial_result(
         and not q_only_receipt
         and not v24_cd_receipt
         and not v25_volume_receipt
+        and not v25_q0_receipt
         and not v25_controlled_stop_receipt
     ):
         from scripts.task40_v21_readonly_recheck import validate_stage_receipt_semantics
@@ -3337,6 +3777,39 @@ def _check_partial_result(
                 },
             }
         )
+    elif v25_q0_receipt:
+        q0_stage_result = partial.get("stage_result", {})
+        q0_stage_result = q0_stage_result if isinstance(q0_stage_result, Mapping) else {}
+        q0_status = str(
+            (partial.get("selected_reference_q0_consumer", {}) or {}).get(
+                "operation_status", ""
+            )
+        )
+        q0_pass = q0_status in {
+            "PASS_COMPLETE_Q0_STREAM",
+            "PASS_COMPLETE_Q0_STREAM_CSR_NOT_BUILT",
+            "PASS_COMPLETE_Q0_CSR",
+        }
+        checks.update(
+            {
+                "v25_q0_receipt_stage_and_scope": (
+                    partial.get("requested_stop_stage") == expected_stop_stage
+                    and q0_stage_result.get("probe_status") == q0_status
+                    and partial.get("status") == (
+                        "stage_completed" if q0_pass else "controlled_stop"
+                        if q0_status == "RESOURCE_CONTROLLED_STOP" else "failed"
+                    )
+                    and partial.get("official_result") is False
+                ),
+                **{
+                    name: passed
+                    for name, passed in _v25_selected_q0_readback_checks(
+                        output_directory=numerical_output,
+                        partial=partial,
+                    ).items()
+                },
+            }
+        )
     elif v25_controlled_stop_receipt:
         blocker = partial.get("resource_gate")
         blocker = blocker if isinstance(blocker, Mapping) else {}
@@ -3462,7 +3935,7 @@ def run_service(
     ):
         raise ValueError("V25 selected-operation selector cannot be combined with V23/V24 selectors")
     if campaign_registration.get("version") == "V25" and v25_selector_path is None:
-        raise ValueError("V25 target probe requires its explicit selected-operation selector")
+        raise ValueError("V25 operations require their explicit selected-operation selector")
     q_only_binding = (
         _bind_v23_q_only_scan_checkpoint(
             q_only_scan_directory,
@@ -3875,6 +4348,12 @@ def main(argv: list[str] | None = None) -> int:
     service_parser.add_argument("--abi-receipt", type=Path, required=True)
     service_parser.add_argument("--jit-cache", type=Path, required=True)
     service_parser.add_argument("case_args", nargs=argparse.REMAINDER)
+    v25_prepare_parser = subparsers.add_parser("prepare-v25-selected-q-input")
+    v25_prepare_parser.add_argument(
+        "--stop-stage",
+        choices=sorted(V25_SELECTED_Q_STAGES),
+        default="selected_reference_q_build_only",
+    )
     partial_parser = subparsers.add_parser("check-partial")
     partial_parser.add_argument("--input", type=Path, required=True)
     partial_parser.add_argument("--summary", type=Path, required=True)
@@ -3891,6 +4370,16 @@ def main(argv: list[str] | None = None) -> int:
         return _run_required_checker_supervision_request(args.request)
     if args.command == "prepare-inputs":
         print(json.dumps(prepare_stage_inputs(), ensure_ascii=False, indent=2))
+        return 0
+    if args.command == "prepare-v25-selected-q-input":
+        print(
+            json.dumps(
+                prepare_v25_selected_q_input(args.stop_stage),
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+            )
+        )
         return 0
     if args.command == "prepare-component-resume-input":
         print(

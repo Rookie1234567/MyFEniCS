@@ -86,7 +86,14 @@ TASK40_V20_CASES_BY_PROFILE = MappingProxyType(
                 "explicit V22 original-size generated B/D and bounded q-tile probe; "
                 "full mode coverage and full-field accuracy remain pending"
             ),
-            allowed_stop_stages=("preflight", "geometry_inventory", "target_operator_probe"),
+            allowed_stop_stages=(
+                "preflight",
+                "geometry_inventory",
+                "target_operator_probe",
+                "selected_reference_q_consumer",
+                "selected_reference_q_build_only",
+                "selected_reference_q_csr",
+            ),
         ),
     }
 )
