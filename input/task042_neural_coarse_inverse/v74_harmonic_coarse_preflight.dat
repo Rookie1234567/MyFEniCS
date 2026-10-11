@@ -1,0 +1,5 @@
+schema_version = 1
+
+[task042_v74]
+stage = "PREFLIGHT"
+run_id = "task042_v74_harmonic_coarse_preflight"

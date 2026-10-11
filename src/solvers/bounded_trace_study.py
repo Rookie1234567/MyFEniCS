@@ -26,7 +26,7 @@ def action_charge(kind,operation,scope=scope):
     p=scope.window.TMP/'action_counts.json'
     counts=json.loads(p.read_text()) if p.exists() else dict(started=0,completed=0,by_kind={})
     if counts['started']>=scope.plan_record()['action_limit']:raise RuntimeError('V71 cumulative whole-action upper cap')
-    if scope.NAMESPACE=='v73' and kind.startswith(('Q_','D_')) and sum(v for k,v in counts['by_kind'].items() if k.startswith(('Q_','D_')))>=32:raise RuntimeError('V73 qualification action cap')
+    if scope.NAMESPACE in ('v73','v74') and kind.startswith(('Q_','D_')) and sum(v for k,v in counts['by_kind'].items() if k.startswith(('Q_','D_')))>=(12 if scope.NAMESPACE=='v74' else 32):raise RuntimeError('qualification action cap')
     counts['started']+=1;counts['by_kind'][kind]=counts['by_kind'].get(kind,0)+1
     write_json(p,counts)
     out=operation();counts['completed']+=1;write_json(p,counts);return out
@@ -200,9 +200,9 @@ def numeric_factors(record,journal,scope=scope,folder=None,workspace=None,clock_
     from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
     allreceipts=record['matrices']+[record['coarse_matrix']]
     infos=record['analysis']+[record['coarse_symbolic']];factors=[];remaining=sum(r['double_bytes'] for r in infos)
-    reused=scope.NAMESPACE in ('v72','v73');started=time.monotonic();rows=[]
+    reused=scope.NAMESPACE in ('v72','v73','v74');started=time.monotonic();rows=[]
     if reused:
-        clock=((clock_root or folder)/'numeric_qualification_clock.json' if scope.NAMESPACE=='v73' else scope.window.TMP/'numeric_qualification_clock.json')
+        clock=((clock_root or folder)/'numeric_qualification_clock.json' if scope.NAMESPACE in ('v73','v74') else scope.window.TMP/'numeric_qualification_clock.json')
         boot=scope.window.snapshot()['boot_id']
         if clock.exists():
             saved=json.loads(clock.read_text())
@@ -225,7 +225,7 @@ def numeric_factors(record,journal,scope=scope,folder=None,workspace=None,clock_
                 admitted=sample['swap_bytes']==0 and planned<=96*2**30
                 if reused:
                     from .reused_trace_admission import numeric_gate
-                    gate=numeric_gate(sample,remaining,workspace,minimum_bytes=12*2**30 if scope.NAMESPACE=='v73' else 8*2**30)
+                    gate=numeric_gate(sample,remaining,workspace,minimum_bytes=12*2**30 if scope.NAMESPACE in ('v73','v74') else 8*2**30)
                     planned=gate['planned_simultaneous_bytes'];admitted=gate['admitted']
                 journal.event('bounded_local_or_coarse_numeric_admission',index=j,tree=sample,remaining_double_symbolic=remaining,
                               future_workspace=workspace if reused else None,
@@ -265,21 +265,25 @@ def iterate(folder,journal,state,scope=scope,role="ITERATE"):
     from petsc4py import PETSc
     from .physical_retained_fgmres import run_retained_fgmres
     from .tetra_coefficient_action import CoefficientFullAction
-    scope.require_stage(role);record=scope.iteration_record() if scope.NAMESPACE in ('v72','v73') else scope.stage('PC_SETUP')
-    feedback=scope.NAMESPACE=='v73';policy_plan=scope.plan_record();restart=policy_plan.get('restart',32)
+    scope.require_stage(role);record=scope.iteration_record() if scope.NAMESPACE in ('v72','v73','v74') else scope.stage('PC_SETUP')
+    feedback=scope.NAMESPACE in ('v73','v74');policy_plan=scope.plan_record();restart=policy_plan.get('restart',32)
     iteration_seconds=policy_plan['iteration_seconds'];clock_root=scope.window.TMP/role if feedback else scope.window.TMP
     clock_root.mkdir(exist_ok=True)
     s,b,oracle,a,full_rhs,left,right=setup_service(role,journal,scope=scope)
     reduced=a.condense_rhs(full_rhs);bhat=left*reduced
     rhs_receipt=save_arrays(folder/'physical_RHS.npz',full_rhs=full_rhs,reduced_rhs=reduced,bhat=bhat,left=left,right=right)
     Z=csr_load(record['Z']);pa=checked_arrays(record['patch_arrays'])
+    transfer=None
+    if scope.NAMESPACE=='v74':
+        from .harmonic_trace_coarse import HarmonicTransfer
+        transfer=HarmonicTransfer.load(record['harmonic_transfer'])
     patches=[{k:pa[f'{j}_{k}'] for k in ('ids','core')} for j in range(record['patch_inventory']['patches'])]
     action=lambda v:action_charge('I_outer_scaled_trace',lambda:left*a.apply_trace(right*v),scope=scope)
     pc_kind='I_PC_internal_scaled_trace'
     pc_action=lambda v:action_charge(pc_kind,lambda:left*a.apply_trace(right*v),scope=scope)
     true_action=lambda v:action_charge('I_explicit_true_scaled_trace',lambda:left*a.apply_trace(right*v),scope=scope)
     remaining=min(scope.window.snapshot()['heavy_remaining_seconds'],scope.window.case_remaining(active=True))
-    reused=scope.NAMESPACE in ('v72','v73')
+    reused=scope.NAMESPACE in ('v72','v73','v74')
     independent=CoefficientFullAction(s,oracle,15);evaluations=[];counter=0
     if reused:
         from .reused_trace_admission import future_workspace
@@ -329,10 +333,16 @@ def iterate(folder,journal,state,scope=scope,role="ITERATE"):
     # Two actual fixed PC calls. They are numerical interface tests, not
     # reference-driven choices and not a convergence requirement.
     pc_rows=[]
-    pc=BoundedTwoLevelPC(Z,patches,local,coarse,pc_action,variant='balanced' if role=='B128' else 'additive')
+    pc=BoundedTwoLevelPC(Z,patches,local,coarse,pc_action,variant='balanced' if role=='B128' else 'additive',transfer=transfer)
     phase_counts={}
     # Immediate ownership protection includes all later vectors and witnesses.
     try:
+        if scope.NAMESPACE=='v74':
+            pc_kind='D_harmonic_physical_transfer'
+            began=time.perf_counter();zc=pc.coarse_apply(bhat);az=pc.original_apply(zc);r=bhat-az
+            write_json(folder/'coarse_physical_transfer.json',dict(relative=relative(r,bhat),absolute=float(np.linalg.norm(r)),
+                operation_scaled=relative(r,np.abs(bhat)+np.abs(az)),seconds=time.perf_counter()-began,
+                arrays=save_arrays(folder/'coarse_physical_transfer.npz',rhs=bhat,coarse_correction=zc,action=az,residual=r)))
         if feedback and role=='R128':
             from .trace_feedback_diagnostic import transfers
             pc_kind='D_feedback_original'
@@ -427,7 +437,7 @@ def iterate(folder,journal,state,scope=scope,role="ITERATE"):
     write_json(folder/'PC_phase_counts.json',phase_counts)
     x,pending=finish_retained_recovery(folder,journal,state,s=s,b=b,independent=independent,a=a,
         full_rhs=full_rhs,t=t,pending=pending,pc_calls=pc_calls,pc_seconds=pc_seconds,scope=scope)
-    a=independent=Z=local=coarse=None;gc.collect();journal.event('unneeded_exact_operator_cache_released_before_fields')
+    a=independent=Z=local=coarse=transfer=None;gc.collect();journal.event('unneeded_exact_operator_cache_released_before_fields')
     return finish_retained_fields(folder,journal,state,s,b,x,pending)
 
 

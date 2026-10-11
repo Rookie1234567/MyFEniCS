@@ -231,10 +231,10 @@ def restrict(Z,r):return np.r_[Z.conj().T@r[:Z.shape[0]],r[Z.shape[0]:]]
 
 
 class BoundedTwoLevelPC:
-    def __init__(self,Z,patches,factors,coarse_factor,action,*,variant="additive"):
+    def __init__(self,Z,patches,factors,coarse_factor,action,*,variant="additive",transfer=None):
         self.Z=Z;self.patches=patches;self.factors=factors;self.coarse=coarse_factor;self.action=action
         if variant not in ("additive","balanced"):raise ValueError("explicit two-level PC variant")
-        self.variant=variant
+        self.variant=variant;self.transfer=transfer
         self.calls=dict(apply=0,local_triangular=0,coarse_triangular=0,internal_original_action=0)
         self.seconds=dict(local=0.,coarse=0.,original=0.)
 
@@ -247,9 +247,9 @@ class BoundedTwoLevelPC:
 
     def coarse_apply(self,r):
         started=time.perf_counter()
-        rhs=restrict(self.Z,r);solution=self.solve(self.coarse,rhs)
+        rhs=self.transfer.restrict(r) if self.transfer is not None else restrict(self.Z,r);solution=self.solve(self.coarse,rhs)
         self.last_coarse=dict(rhs=rhs,solution=solution)
-        z=prolong(self.Z,solution)
+        z=self.transfer.prolong(solution) if self.transfer is not None else prolong(self.Z,solution)
         self.calls['coarse_triangular']+=1;self.seconds['coarse']+=time.perf_counter()-started
         return z
 

@@ -11,7 +11,8 @@ from src.solvers.scattering_anchor import relative
 from benchmarks.collect_bounded_trace import numeric_saved_check
 
 
-def verify(folder,journal):
+def verify(folder,journal,*,scope_module=scope):
+    scope=scope_module
     from src.solvers.bounded_trace_study import action_charge
     from benchmarks.collect_frozen_local_h import saved_original,first_normalization
     from benchmarks.check_independent_tetra import saved_pair
