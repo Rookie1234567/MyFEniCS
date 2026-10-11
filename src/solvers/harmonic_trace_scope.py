@@ -20,10 +20,19 @@ class HarmonicWindow(prior.ReuseWindow):
         elif role in ('PREFLIGHT','HARMONIC_PREPARE'):group=('PREFLIGHT','HARMONIC_PREPARE')
         else:return self.total-self.charged_wall()
         used=sum(r['elapsed_seconds'] for r in self.ledger()['runs'] if r['role'] in group)
-        if active and self.ledger()['active'] and self.ledger()['active']['role'] in group:
-            used+=time.monotonic()-self.ledger()['active']['before_clock']['observed_monotonic']
+        current=self.ledger()['active']
+        current_seconds=max(0,time.monotonic()-current['before_clock']['observed_monotonic']) if current else 0.
+        if active and current and current['role'] in group:
+            used+=current_seconds
         limit=21600 if role=='HARMONIC' else 14400
-        if role!='HARMONIC':used+=max(0,time.monotonic()-json.loads(self.WINDOW_PATH.read_text())['start_monotonic']-self.charged_wall())
+        # charged_wall contains settled intervals. The live interval is already
+        # in used above and is not unsegmented implementation time a second time.
+        if role!='HARMONIC':
+            elapsed=time.monotonic()-json.loads(self.WINDOW_PATH.read_text())['start_monotonic']
+            used+=max(0,elapsed-self.charged_wall()-current_seconds)
+            # H is first in the queue: setup, tests, waits and adaptation from
+            # the first immutable clock all belong to its four-hour allowance.
+            used=max(used,elapsed)
         return min(limit-used,self.total-self.charged_wall())
 
     def available_at_boundary(self,role):

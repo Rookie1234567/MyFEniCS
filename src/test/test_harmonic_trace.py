@@ -106,6 +106,23 @@ class HarmonicTests(unittest.TestCase):
         self.assertEqual(scope.memory_budget('HARMONIC')['sampled_stop_gib'],128)
         self.assertEqual(p['action_limit'],800)
 
+    def test_live_H_interval_equals_same_settled_interval(self):
+        from unittest.mock import patch
+        from src.solvers.harmonic_trace_scope import HarmonicWindow
+        with tempfile.TemporaryDirectory() as d:
+            clock=Path(d)/'window.json';clock.write_text(json.dumps(dict(start_monotonic=0)))
+            book=dict(runs=[dict(role='PREFLIGHT',elapsed_seconds=100),dict(role='focused',elapsed_seconds=20)],
+                active=dict(role='HARMONIC_PREPARE',before_clock=dict(observed_monotonic=1000)))
+            settled=[120.]
+            w=SimpleNamespace(total=39600,WINDOW_PATH=clock,ledger=lambda:book,charged_wall=lambda:settled[0])
+            with patch('src.solvers.harmonic_trace_scope.time.monotonic',return_value=2000):
+                live=HarmonicWindow.case_remaining(w,active=True)
+                book['runs'].append(dict(role='HARMONIC_PREPARE',elapsed_seconds=1000))
+                book['active']=None;settled[0]+=1000
+                boundary=HarmonicWindow.case_remaining(w,case='HARMONIC_PREPARE')
+            self.assertEqual(live,boundary)
+            self.assertEqual(live,14400-2000)
+
     def test_qualification_counter_12(self):
         with tempfile.TemporaryDirectory() as d:
             scope=SimpleNamespace(NAMESPACE='v74',window=SimpleNamespace(TMP=Path(d)),plan_record=lambda:dict(action_limit=800))
