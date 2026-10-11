@@ -253,6 +253,8 @@ def _write_json(path: Path, value: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     def encode_default(item: Any) -> Any:
+        if isinstance(item, Mapping):
+            return dict(item)
         if isinstance(item, np.generic):
             return item.item()
         if isinstance(item, np.ndarray):

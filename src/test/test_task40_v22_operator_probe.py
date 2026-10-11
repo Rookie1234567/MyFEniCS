@@ -18,8 +18,37 @@ from src.solvers.task40_v22_operator_probe import (
     _v23_actual_axis_values,
     _v23_checkpoint_directory,
     _write_v22_action_checkpoint,
+    _write_json,
 )
 from src.runners.task40_v10_campaign import TASK40_V23_CAMPAIGN_SHA256
+
+
+def test_v22_receipt_writer_round_trips_nested_read_only_mappings(tmp_path) -> None:
+    import json
+    from types import MappingProxyType
+
+    receipt = MappingProxyType(
+        {
+            "cell_classes": MappingProxyType(
+                {
+                    "owned_cells": 30_464,
+                    "raw_classes": 29,
+                    "oriented_classes": 60,
+                }
+            )
+        }
+    )
+    path = tmp_path / "receipt.json"
+
+    _write_json(path, receipt)
+
+    assert json.loads(path.read_text(encoding="utf-8")) == {
+        "cell_classes": {
+            "owned_cells": 30_464,
+            "raw_classes": 29,
+            "oriented_classes": 60,
+        }
+    }
 
 
 def test_v23_axis_values_use_resolved_coordinate_vectors_not_cell_counts():
