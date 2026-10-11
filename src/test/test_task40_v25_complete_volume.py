@@ -5,6 +5,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from scripts.task40_v20_service_workflow import (
+    _v25_operation_status_matches_case_evidence,
+)
 from src.solvers.task40_v25_complete_volume import (
     _atomic_save_array,
     _frozen_cell_class_coverage,
@@ -97,3 +100,23 @@ def test_p6_owner_bound_counts_cell_interior_and_trace_row_copies() -> None:
     )
     assert bound["per_cell_original_interior_and_trace_row_copies_bytes_upper"] == 107_476_992
     assert bound["additional_bytes_upper"] >= 107_476_992
+
+
+def test_recovered_v25_status_requires_explicit_saved_witness_identity() -> None:
+    witnesses = [{"status": "PASS"}, {"status": "PASS"}]
+    assert not _v25_operation_status_matches_case_evidence(
+        status="RECOVERED_SAVED_WITNESS_PASS", witnesses=witnesses
+    )
+    assert _v25_operation_status_matches_case_evidence(
+        status="RECOVERED_SAVED_WITNESS_PASS",
+        witnesses=witnesses,
+        recovery_identity_valid=True,
+    )
+    assert not _v25_operation_status_matches_case_evidence(
+        status="RECOVERED_SAVED_WITNESS_PASS",
+        witnesses=[{"status": "PASS"}, {"status": "FAILED_NUMERICAL_GATE"}],
+        recovery_identity_valid=True,
+    )
+    assert _v25_operation_status_matches_case_evidence(
+        status="PASS_COMPLETE_TARGET_VOLUME_ACTION", witnesses=witnesses
+    )

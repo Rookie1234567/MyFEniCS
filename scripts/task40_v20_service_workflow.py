@@ -12,7 +12,7 @@ import re
 import subprocess
 import sys
 import tomllib
-from typing import Any
+from typing import Any, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -2499,6 +2499,25 @@ def _v24_real_edge_panel_readback_checks(
     return checks
 
 
+def _v25_operation_status_matches_case_evidence(
+    *, status: str, witnesses: list[Any], recovery_identity_valid: bool = False
+) -> bool:
+    statuses = [
+        row.get("status") if isinstance(row, Mapping) else None for row in witnesses
+    ]
+    if status == "PASS_COMPLETE_TARGET_VOLUME_ACTION":
+        return len(statuses) == 2 and all(value == "PASS" for value in statuses)
+    if status == "FAILED_COMPLETE_TARGET_VOLUME_ACTION":
+        return any(value == "FAILED_NUMERICAL_GATE" for value in statuses)
+    if status == "RECOVERED_SAVED_WITNESS_PASS":
+        return (
+            recovery_identity_valid
+            and len(statuses) == 2
+            and all(value == "PASS" for value in statuses)
+        )
+    return False
+
+
 def _v25_complete_volume_readback_checks(
     *, output_directory: Path, probe: Mapping[str, Any], manifest: Mapping[str, Any]
 ) -> dict[str, bool]:
@@ -2511,6 +2530,62 @@ def _v25_complete_volume_readback_checks(
     if not operation_path.is_file():
         return {"v25_complete_volume_operation_file_present": False}
     operation = json.loads(operation_path.read_text(encoding="utf-8"))
+    recovery_identity = operation.get("saved_witness_recovery")
+    recovery_identity = recovery_identity if isinstance(recovery_identity, Mapping) else {}
+    is_recovery = operation.get("status") == "RECOVERED_SAVED_WITNESS_PASS"
+    recovery_original_directory = Path(
+        str(recovery_identity.get("original_output_directory", ""))
+    ).resolve()
+    original_partial_path = recovery_original_directory / "v20_partial_result.json"
+    partial_copy_path = output_directory / "v20_partial_result.json"
+    original_partial: Mapping[str, Any] = {}
+    if is_recovery and partial_copy_path.is_file():
+        try:
+            loaded_partial = json.loads(partial_copy_path.read_text(encoding="utf-8"))
+            original_partial = loaded_partial if isinstance(loaded_partial, Mapping) else {}
+        except (OSError, json.JSONDecodeError):
+            original_partial = {}
+    partial_sha256 = (
+        _sha256_file(partial_copy_path) if partial_copy_path.is_file() else None
+    )
+    try:
+        partial_is_original_hardlink = (
+            partial_copy_path.is_file()
+            and original_partial_path.is_file()
+            and partial_copy_path.samefile(original_partial_path)
+        )
+    except OSError:
+        partial_is_original_hardlink = False
+    recovery_source_sha = str(recovery_identity.get("recovery_source_sha", ""))
+    recovery_diff_sha = str(recovery_identity.get("recovery_source_diff_sha256", ""))
+    recovery_identity_valid = bool(
+        is_recovery
+        and recovery_identity.get("schema")
+        == "task40extra.review_v25_saved_witness_recovery.v1"
+        and recovery_identity.get("recovery_kind") == "saved_raw_postprocess_only"
+        and recovery_identity.get("original_run_id") == manifest.get("run_id")
+        and recovery_identity.get("original_source_sha") == manifest.get("source_sha")
+        and recovery_identity.get("original_source_sha") == operation.get("source_sha")
+        and len(recovery_source_sha) == 40
+        and all(char in "0123456789abcdef" for char in recovery_source_sha)
+        and len(recovery_diff_sha) == 64
+        and all(char in "0123456789abcdef" for char in recovery_diff_sha)
+        and recovery_identity.get("original_worker_classification") == "WORKER_FAILED"
+        and recovery_identity.get("original_worker_failure_type") == "TypeError"
+        and "mappingproxy"
+        in str(recovery_identity.get("original_worker_failure_message", ""))
+        and recovery_identity.get("original_worker_completion_claimed_pass") is False
+        and recovery_identity.get("fe_rerun") is False
+        and recovery_identity.get("original_partial_sha256") == partial_sha256
+        and partial_is_original_hardlink
+        and original_partial.get("status") == "failed"
+        and original_partial.get("classification") == "TARGET_OPERATOR_PROBE_FAILED"
+        and original_partial.get("failure_type") == "TypeError"
+        and "mappingproxy" in str(original_partial.get("failure_message", ""))
+        and original_partial.get("official_result") is False
+        and recovery_original_directory != output_directory.resolve()
+    )
+    hardlink_checks: list[bool] = []
     checks: dict[str, bool] = {
         "v25_operation_path_and_hash_match_probe": (
             identity.get("path") == operation_path.name
@@ -2580,10 +2655,21 @@ def _v25_complete_volume_readback_checks(
             continue
         manifest_name = witness.get("case_manifest_path")
         case_path = (output_directory / str(manifest_name or "")).resolve()
+        case_is_hardlink = True
+        if is_recovery:
+            try:
+                case_is_hardlink = (
+                    (recovery_original_directory / case_path.name).is_file()
+                    and case_path.samefile(recovery_original_directory / case_path.name)
+                )
+            except OSError:
+                case_is_hardlink = False
+            hardlink_checks.append(case_is_hardlink)
         case_ok = bool(
             case_path.parent == output_directory.resolve()
             and case_path.is_file()
             and _sha256_file(case_path) == witness.get("case_manifest_sha256")
+            and case_is_hardlink
         )
         case_doc = (
             json.loads(case_path.read_text(encoding="utf-8")) if case_ok else {}
@@ -2606,11 +2692,23 @@ def _v25_complete_volume_readback_checks(
                 case_ok = False
                 continue
             raw_path = (output_directory / str(record.get("path", ""))).resolve()
+            raw_is_hardlink = True
+            if is_recovery:
+                try:
+                    original_raw_path = recovery_original_directory / raw_path.name
+                    raw_is_hardlink = (
+                        original_raw_path.is_file()
+                        and raw_path.samefile(original_raw_path)
+                    )
+                except OSError:
+                    raw_is_hardlink = False
+                hardlink_checks.append(raw_is_hardlink)
             if (
                 raw_path.parent != output_directory.resolve()
                 or not raw_path.is_file()
                 or raw_path.stat().st_size != record.get("bytes")
                 or _sha256_file(raw_path) != record.get("file_sha256")
+                or not raw_is_hardlink
             ):
                 case_ok = False
                 continue
@@ -2785,11 +2883,23 @@ def _v25_complete_volume_readback_checks(
         and bool(witnesses[1].get("all_cell_internal_native_rhs_witness"))
         and cases_valid[1]
     )
-    checks["v25_operation_status_matches_case_evidence"] = bool(
-        (operation.get("status") == "PASS_COMPLETE_TARGET_VOLUME_ACTION"
-         and all(row.get("status") == "PASS" for row in witnesses))
-        or (operation.get("status") == "FAILED_COMPLETE_TARGET_VOLUME_ACTION"
-            and any(row.get("status") == "FAILED_NUMERICAL_GATE" for row in witnesses))
+    if is_recovery:
+        checks["v25_recovery_identity_and_original_failure_preserved"] = (
+            recovery_identity_valid
+        )
+        checks["v25_recovery_raw_case_manifests_and_arrays_are_hardlinked"] = (
+            len(hardlink_checks) == 26 and all(hardlink_checks)
+        )
+    checks["v25_operation_status_matches_case_evidence"] = (
+        _v25_operation_status_matches_case_evidence(
+            status=str(operation.get("status", "")),
+            witnesses=witnesses,
+            recovery_identity_valid=(
+                recovery_identity_valid
+                and len(hardlink_checks) == 26
+                and all(hardlink_checks)
+            ),
+        )
     )
     return checks
 
