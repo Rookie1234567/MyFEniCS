@@ -39,6 +39,8 @@ def storage_limits(namespace):
             from src.solvers.phase_hp_completion_scope import plan_record
         elif namespace == "v54":
             from src.solvers.phase_p_order_dtn_scope import plan_record
+        elif namespace == "v74":
+            from src.solvers.harmonic_trace_scope import plan_record
         elif namespace == "v73":
             from src.solvers.restart_feedback_scope import plan_record
         elif namespace == "v72":

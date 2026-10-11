@@ -95,6 +95,17 @@ class HarmonicTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError,'budget'):h.apply_trace(np.ones(2,complex))
         self.assertEqual(h.calls['trace_action'],800)
 
+    def test_live_launcher_uses_own_storage_and_memory(self):
+        from src.runners.port_preparation import storage_limits,context,scoped_tetra_memory
+        from src.solvers import harmonic_trace_scope as scope
+        p=scope.plan_record()
+        self.assertEqual(storage_limits('v74')['task_storage_bytes'],696*2**30)
+        self.assertIs(context('v74')[0],scope.window)
+        self.assertEqual(scoped_tetra_memory('v74','HARMONIC_PREPARE')['planning_gib'],96)
+        self.assertEqual(scoped_tetra_memory('v74','PREFLIGHT')['planning_gib'],64)
+        self.assertEqual(scope.memory_budget('HARMONIC')['sampled_stop_gib'],128)
+        self.assertEqual(p['action_limit'],800)
+
     def test_qualification_counter_12(self):
         with tempfile.TemporaryDirectory() as d:
             scope=SimpleNamespace(NAMESPACE='v74',window=SimpleNamespace(TMP=Path(d)),plan_record=lambda:dict(action_limit=800))
