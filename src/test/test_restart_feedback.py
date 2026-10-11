@@ -25,7 +25,7 @@ class FeedbackTests(unittest.TestCase):
     def test_saved_consumer_rejects_solve_protocol_before_FE(self):
         from types import SimpleNamespace
         from src.solvers.bounded_trace_study import consume_interrupted_retained
-        sc=SimpleNamespace(checked_json=lambda _:dict(mode='SAVED_RETAINED_ONLY',role='B128',new_KSP_solves=1,new_numeric_factors=0))
+        sc=SimpleNamespace(saved_json=lambda _:dict(mode='SAVED_RETAINED_ONLY',role='B128',new_KSP_solves=1,new_numeric_factors=0))
         with patch('src.solvers.bounded_trace_study.setup_service') as setup:
             with self.assertRaises(ValueError):consume_interrupted_retained('B128',None,None,dict(postprocessing_resume={}),scope=sc)
             setup.assert_not_called()
@@ -36,6 +36,18 @@ class FeedbackTests(unittest.TestCase):
         with patch.object(study,'Journal'),patch.object(study,'consume_interrupted_retained',return_value={'consumed':True}) as consume,patch.object(study,'iterate') as iterate:
             self.assertTrue(study.execute_feedback('B128',Path('/tmp'),state)['consumed'])
             consume.assert_called_once();iterate.assert_not_called()
+
+    def test_saved_consumer_reader_owns_new_namespace_not_parent(self):
+        import hashlib
+        from types import SimpleNamespace
+        from src.solvers import restart_feedback_scope as sc
+        with tempfile.TemporaryDirectory() as td,patch.object(sc,'window',SimpleNamespace(TMP=Path(td)/'own')):
+            own=Path(td)/'own';own.mkdir();p=own/'checkpoint.json';p.write_text('{"value":1}')
+            r=dict(path=str(p),sha256=hashlib.sha256(p.read_bytes()).hexdigest())
+            self.assertEqual(sc.saved_json(r),{'value':1})
+            with self.assertRaises(ValueError):sc.saved_json(dict(r,sha256='bad'))
+            outside=Path(td)/'outside.json';outside.write_text(p.read_text())
+            with self.assertRaises(ValueError):sc.saved_json(dict(r,path=str(outside)))
 
     def test_complex_nonhermitian_feedback_and_counts(self):
         A=np.array([[4,1j,2,1],[.3j,3,1j,2],[1,.2,5,.5j],[2j,1,3j,6]],complex)

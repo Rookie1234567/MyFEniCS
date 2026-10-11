@@ -30,7 +30,7 @@ def main():
         if r.returncode:
             write_json(folder/'tests.json',dict(status='FAILED',commands=rows));raise RuntimeError('V73 minimal targeted repair required')
     write_json(folder/'tests.json',dict(status='PASSED',commands=rows,implementation_hashes=implementation_hashes()))
-    print(json.dumps(dict(status='V73_TARGETED_PASSED',tests=10,commands=len(rows))))
+    print(json.dumps(dict(status='V73_TARGETED_PASSED',tests=11,commands=len(rows))))
 
 
 if __name__=='__main__':main()

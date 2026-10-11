@@ -526,13 +526,13 @@ def execute_feedback(role,folder,state):
 
 def consume_interrupted_retained(role,folder,journal,state,*,scope):
     """Finish a checked checkpoint after interruption, without another solve."""
-    meta=scope.checked_json(state['postprocessing_resume'])
+    meta=scope.saved_json(state['postprocessing_resume'])
     if (meta['mode']!='SAVED_RETAINED_ONLY' or meta['role']!=role
             or meta['new_KSP_solves']!=0 or meta['new_numeric_factors']!=0):
         raise ValueError('consume-only protocol')
-    failure=scope.checked_json(meta['failed_result'])
-    latest=scope.checked_json(meta['latest_retained'])
-    gate=scope.checked_json(meta['latest_original_gate'])
+    failure=scope.saved_json(meta['failed_result'])
+    latest=scope.saved_json(meta['latest_retained'])
+    gate=scope.saved_json(meta['latest_original_gate'])
     if (failure['stage']!=role or failure['status']!='FAILED'
             or failure['source_sha']!=latest['source']['source_sha']
             or failure['physical_contract_sha256']!=state['physical_sha256']

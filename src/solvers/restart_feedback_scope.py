@@ -42,6 +42,19 @@ def plan_record():
 
 
 checked_json=prior.checked_json
+
+
+def saved_json(receipt):
+    """Read this campaign's sealed checkpoint, separate from immutable parents."""
+    from pathlib import Path
+    from .tetra_body_checkpoint import file_digest
+    path=Path(receipt['path']).resolve()
+    if (not any(path.is_relative_to(root.resolve()) for root in (window.TMP,ARTIFACT))
+            or file_digest(path)!=receipt['sha256']):
+        raise ValueError('V73 saved-consumer path/hash identity')
+    return json.loads(path.read_text())
+
+
 parent_preparation=prior.parent_preparation
 iteration_record=parent_preparation
 physical_for=prior.physical_for
