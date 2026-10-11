@@ -7587,22 +7587,23 @@
     "attempt_id": "20261011T153931.649307Z",
     "classification": "CONTROLLED_STOP_CSR_PENDING_AT_FIXED_NUMERICAL_CUTOFF",
     "documents": {
-      "response_v27.md": "60c1d1fd699fd87868f57b7494a8acc81a6d83cfaa800f382380b13a8db60490",
-      "outcomes/summary.md": "9bda1327a5ac593f8b5879f9a44ac80508990e7887dd1c43fd09820e71d5a06a",
-      "outcomes/test_summary.md": "4a11182c92b30c79d277156c0de963395391a13a651ba1628301a154e80437a8",
-      "outcomes/target_stage_handoff_v27.md": "5d421312491d55303d840365e98fd7f450f2270aaeaadc25b81bf4e7938059f2",
+      "response_v27.md": "ff61a8231eab0fc08ca44733b0a9eddda08b28fda9bf38e2a26b86c96fb3cb27",
+      "outcomes/summary.md": "10c3d713abb7567f41396cdd66b4e6af784c62508bf1035a5df47283e2584048",
+      "outcomes/test_summary.md": "49f1162d3d93fdfb9c0ebaceb0a62d081283903225c4219bdae40e239178bef9",
+      "outcomes/target_stage_handoff_v27.md": "6dffd7a0a6d01f339941a32cd9796d7d71424a7c4219d9126b5d748a65e0c727",
       "README.md": "3fbd0204a093d839196c9eb7d62433c3d9842ab102f51352671f038da59d24de"
     },
     "input_sha256": "134ea5f08d5d5dbc366870f451ba0de0df5893c5cd73d227dac77f8a11aa2c0b",
     "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
     "raw_evidence": {
       "campaign_accounting": {
-        "bytes": 52836349,
-        "full_file_hash": null,
-        "last_cumulative_seconds": 20403.13168108645,
-        "last_label": "watchdog_start",
-        "last_sequence": 45733,
-        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl/campaign_accounting_v10.jsonl"
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl/campaign_accounting_v10.jsonl",
+        "bytes": 52838711,
+        "full_file_hash": "48b87396973a16d18da38b5e25fadd60ef5f2bffd65cf719e9126ce6409aa0db",
+        "last_sequence": 45735,
+        "last_label": "main_v27_final_evidence_hash_audit",
+        "last_cumulative_seconds": 21990.37618080045,
+        "scope": "包括行政收口超时；未恢复数值工作"
       },
       "campaign_window": {
         "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl/campaign_window_v27.json",
@@ -7653,13 +7654,22 @@
       "watchdog_summary": {
         "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/watchdog/summary.json",
         "sha256": "859a6c6dc0cf2806f338e5db43d609dcbbc71e1fa878bd83f7b8fce12825888e"
+      },
+      "campaign_accounting_at_numerical_cutoff": {
+        "bytes": 52836349,
+        "full_file_hash": null,
+        "last_cumulative_seconds": 20403.13168108645,
+        "last_label": "watchdog_start",
+        "last_sequence": 45733,
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl/campaign_accounting_v10.jsonl"
       }
     },
     "records": {
-      "outcomes/records/target_operator_probe_v27.json": "a8c416e077225de0853e1e23531c3b5f948511cedc3af6297908db471c731ae1",
-      "outcomes/records/time_resource_accounting_v27.json": "af6e69e4e97aaa189c7c862856fe6979ecf3eefd416508a1049f67b6dab7724a",
-      "outcomes/records/review_v27_incremental_workflow_ledger.json": "d74e0ef5d7df6a049e6bffb4b796611e7e9958085fd65aa8fc658014fe2d6915",
-      "outcomes/records/targeted_tests_v27.json": "cfa5726fa8deb7a29adf523c6812e0d8168fb044399507097f3afa23d4390b61"
+      "outcomes/records/target_operator_probe_v27.json": "ebdc21df81a787b45ce682809950b5bece9266ef1aecf36af94a250fbfc0a514",
+      "outcomes/records/time_resource_accounting_v27.json": "524d3067ce44d837bd158cfc3a422aab7a9b2402f5a7264ce08a39a13944d4b3",
+      "outcomes/records/review_v27_incremental_workflow_ledger.json": "cd5fe3b3c993d0abcfd8022887d8dc04369af603d3b59466b905f74f78f8abb3",
+      "outcomes/records/targeted_tests_v27.json": "ae11aa3deec63677f6cad1f4bff559d5449044dd5516e82563e6d5e7443d8d0d",
+      "outcomes/records/main_closeout_audit_v27.json": "0b2307a005e09bda80f2b689c1f92340566060fc836ef8681bfbeabde658364f"
     },
     "repository_navigation_documents": {
       "docs/README.md": "529a03d3fbd4a1dc2374653262bfe4773fc07dd8edf7d16ecda55bb196a193b3",
