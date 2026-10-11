@@ -1,3 +1,20 @@
+# Task40extra Review V26 增量结果：q0 消费者与全行结构通过，CSR 资源 Gate 受控停止
+
+任务父目标为 0.7 nm 原尺寸三维非分离模型（50×25×140 nm、272×8×14=30,464 p6 单元、Ny=8）。但本轮 q0/q4 消费者与行结构实际运行在去除 notch/void 的 regular reference（272×2×14=7,616 cells）；parent physical-model SHA 不是该 q0 stage 使用完整目标几何的证明。V26 回读 q0 保存流并用 q4 检查配对对角与跨 q 泄漏。q0 单独不是完整 Ny=8 求解。
+
+| 项目 | 模型与方法 | 实测结果 | 状态与边界 |
+|---|---|---|---|
+| 保存流消费者 | 两组不同非零 q0 输入重载既有 V25 stream，对照 hash-bound native 输出；surface integrator 未重跑 | q0 replay 误差 `1.9112e-14 / 1.9038e-14`；q4 对角 `1.8925e-14`；两方向 leakage `2.33e-16–2.41e-16`，scaled error `3.27e-16–3.31e-16`（限值 `1e-11`） | 消费者回读 PASS；本批第二 attempt 实际执行并保存三组 native case，最终 attempt 只读 recovery、没有重复 native action。KeyError 后实测计数/用时未持久化；代码派生计数 6/9，native 用时 UNKNOWN。 |
+| q0 全行结构 | selected q0 增广块，输出完整 int64 row counts 与 wide offsets | `777644×777644`；`577061168` structural preallocation positions；777,645 offsets 的末值与其相等；可用 PETSc int32 索引 | 完整结构 checkpoint PASS。此位置数不是 numeric nnz；没有构造数值 CSR。 |
+| CSR admission | 同时计入 live host/tree 与专用 cgroup 可用空间 | 额外上界 `11,570,765,788 B`；host/tree 缺 `6,737,252,316 B`；task cgroup 缺 `6,574,534,620 B` | 在 `task40_v17_q_row_tile_csr_materialize/p0q0` 前 `LIVE_RESOURCE_ADMISSION_BLOCKED` 受控停止；两种缺口分开比较，不能相加。磁盘门通过，task swap=0。 |
+| 求解范围 | 条件性单 q 因子仅在 CSR 完成且资源允许后才可启动 | 全 q CSR 0/8；factor、KSP、PDE、official R/T/A 均 `NOT_RUN` | 不表示 numerical failure；2 TB/48 h 与最终精度仍 `NOT_QUALIFIED`。 |
+| 资源与清场 | worker watchdog、task cgroup 与 checker 分开统计 | worker tree RSS `11,631,017,984 B`；outer nonoverlapping parent chain 从首个 outer clock 到 parent finish、含 checker，monotonic/conservative `2419.7040153259877/2690.1395309491086 s`；systemd lifecycle `2497.689304/2775.330775 s` 覆盖未分段启动与尾段，单独记录、不与 outer chain 相加；cgroup peak `12,059,959,296 B`；worker单调时间 `2410.700 s`；checker `6.762 s / 911,728,640 B`；后代清理通过 | WSL 全局 swap +164/+3,489 pages 是主机级计数，不能归因到本 task；task cgroup swap=0。 |
+
+最终 source `f9093c87f81d52b75fbc156e562b3745df45ccf4`；input SHA `134ea5f08d5d5dbc366870f451ba0de0df5893c5cd73d227dac77f8a11aa2c0b`；campaign window SHA `ac533aaf3946c82fde961c77f002ff1b1b2a61401f2153507ff9462d472bc7f5`。主控最终科学回读 7 项身份、结构、checker、清场和 swap 检查均为真；partial checker 26/26 条目为真，但 `full_pass=false`。
+
+campaign T0 为 `2026-10-11T07:10:58Z`，数值截止 `12:50:58Z`，总截止 `13:10:58Z`，closeout reserve 1,200 s。监督回执保留的 600 s 是旧 profile 标签；实际 window/API/watchdog 执行 1,200 s reserve 与 20,400 s cutoff。文档收口前账本快照累计 `17,830.555934262644 s`、数值余量 `2,569.444065737356 s`；后续管理成本继续追加原账本，不清零。
+
+V26 前两次尝试分别保留 checker identity/inventory 失败和 worker failure：08:52 attempt 的 saved replay 后，整个 pre-FE/surface 阶段因 8 GiB 额外对象预留门停止；09:36 attempt 实际执行并保存三组 native case，随后因 `KeyError: minus_D` 失败。最终 attempt 修正 identity binding、只读复用已保存 native 结果，完成回读后在单独的 CSR 准入门前受控停止。具体数值和身份见 [Response V26](../response_v26.md)、[operator compact](records/target_operator_probe_v26.json)、[time/resource ledger](records/time_resource_accounting_v26.json)、[workflow ledger](records/review_v26_incremental_workflow_ledger.json) 和 [run index](records/run_index.json)。
 # Task40extra Review V25 增量结果：完整 target volume saved-recovery 通过，selected-q0 native consumer 因 SIGSEGV 未完成
 
 V25 研究对象是 0.7 nm 波长下的原尺寸三维 Maxwell target（272×8×14 cells，p6）。q 是 y 周期不同相位的 reference branch；本轮 q0 producer 同时保留其配对 q4 map。target volume 通过保存数据恢复覆盖完整网格，但这不等于构建全局 A6、因子或求解 PDE。

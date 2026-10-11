@@ -1,4 +1,14 @@
-# Task40extra Review V25 增量：完整原尺寸体积通过，完整q消费者仍待恢复
+# Task40extra Review V26 项目进展：q0 消费者和结构通过，CSR 被真实资源门阻止
+
+V26 的 parent target 是原尺寸 Ny=8/p6；本轮 q0/q4 消费者和行结构实际使用去掉 notch/void 的 regular reference（272×2×14=7,616 cells），不证明完整 target 几何的装配或求解。该范围内完成 selected q0 保存流回读、q0/q4 对角/泄漏比较与完整行结构。q0 两组不同非零输入回读误差为 `1.9112e-14`、`1.9038e-14`；q0→q4 与 q4→q0 leakage ratio 为 `2.4073e-16`、`2.3258e-16`。777,644 行的预分配结构位置数为 577,061,168，counts 与 offsets 校验一致；这不是数值 nnz 或完整矩阵。
+
+CSR 所需额外对象上界为 11,570,765,788 B；host/tree 与 task cgroup 分别短缺 6,737,252,316 B、6,574,534,620 B。最终 attempt 在 CSR materialize 前受控停止；worker 后代已清场，task swap=0。全 q、factor、KSP、PDE、official R/T/A 未运行，2 TB/48 h 仍 NOT_QUALIFIED。V26 第二 attempt 实际执行并保存三组 native case，最终 attempt 只读复用、没有重复 native action；第二 attempt 的 `KeyError: minus_D` 使 measured counts/time 未持久化，source 派生计数6/9和UNKNOWN用时分开记录。08:52 attempt 的 saved replay 之后，整个 pre-FE/surface 阶段因 8 GiB 额外对象预留门未过而停止；它不是最终 attempt 的 CSR materialization gate。
+
+入口：[Response V26](task40extra_0p7nm_engineering/response_v26.md)、[summary](task40extra_0p7nm_engineering/outcomes/summary.md)、[test summary](task40extra_0p7nm_engineering/outcomes/test_summary.md)、[operator compact](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v26.json)、[resource ledger](task40extra_0p7nm_engineering/outcomes/records/time_resource_accounting_v26.json)、[workflow ledger](task40extra_0p7nm_engineering/outcomes/records/review_v26_incremental_workflow_ledger.json)。主控在 12:08:08.554017Z 保全结项前账本快照：累计 17,830.555934262644 s、数值余量 2,569.444065737356 s；后续费用追加到同一账本。
+
+---
+
+## Task40extra Review V25 历史增量：完整原尺寸体积通过，完整q消费者仍待恢复
 
 单元凝聚先在每个网格单元内消去内部自由度，保留连接单元的trace；本轮首次对原尺寸全部单元验证这一体积作用和非零内部RHS恢复。它验证数值内核，不等于已求得电磁物理场。
 

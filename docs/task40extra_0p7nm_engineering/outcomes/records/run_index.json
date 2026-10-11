@@ -2,7 +2,7 @@
   "schema": "task40extra.run_index.v1",
   "branch": "task40extra_0p7nm_engineering",
   "repair_base_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
-  "current_code_sha": "ed83343df52f7c46df52d9daf4e4a3a28c8cdb5b",
+  "current_code_sha": "f9093c87f81d52b75fbc156e562b3745df45ccf4",
   "input": {
     "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat",
     "sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
@@ -2179,6 +2179,33 @@
       "label": "q0 persisted producers then PETSc SEGV",
       "classification": "WORKER_FAILED",
       "original_status_preserved": true
+    },
+    {
+      "review": "V26",
+      "kind": "formal_worker_attempt",
+      "source_sha": "5f47bd3f491b4bf485a5caca55da6cb61d8508c5",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T085201.909343Z",
+      "label": "saved replay then whole pre-FE/surface stage blocked at 8 GiB admission; checker binding failure retained",
+      "classification": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "original_status_preserved": true
+    },
+    {
+      "review": "V26",
+      "kind": "formal_worker_attempt",
+      "source_sha": "3a61e61caf638678d483b6fa06f36374abeef67d",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T093646.477018Z",
+      "label": "three V26 native cases saved then KeyError minus_D vs live -D; measured count/time persistence gap retained",
+      "classification": "WORKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "original_status_preserved": true
+    },
+    {
+      "review": "V26",
+      "kind": "formal_worker_attempt",
+      "source_sha": "f9093c87f81d52b75fbc156e562b3745df45ccf4",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T111053.208174Z",
+      "label": "regular-reference q0 readback and row structure pass; CSR stopped at live resource admission",
+      "classification": "CONTROLLED_STOP_CSR_RESOURCE_ADMISSION",
+      "original_status_preserved": true
     }
   ],
   "ledger": {
@@ -2242,7 +2269,7 @@
       "causal_segv_stack": "UNKNOWN"
     }
   ],
-  "last_formal_run_source_sha": "9d0f4dbfc730dd620b709d048e33e9da6c77520c",
+  "last_formal_run_source_sha": "f9093c87f81d52b75fbc156e562b3745df45ccf4",
   "review_v1_continuation": {
     "review": "docs/task40extra_0p7nm_engineering/review_report_v1.md",
     "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
@@ -7395,5 +7422,165 @@
     "last_numerical_source_sha": "9d0f4dbfc730dd620b709d048e33e9da6c77520c",
     "frozen_repair_source_sha": "ed83343df52f7c46df52d9daf4e4a3a28c8cdb5b",
     "review_commit": "4a524251339e00ad481b29af61df4f4625ed2581"
+  },
+  "review_v26_evidence_index": {
+    "window_sha256": "ac533aaf3946c82fde961c77f002ff1b1b2a61401f2153507ff9462d472bc7f5",
+    "source_sha": "f9093c87f81d52b75fbc156e562b3745df45ccf4",
+    "source_binary_diff_sha256": "524a1b8b8a3326456939b651c3e9e5813af0c55c4645e5c67b9df207860243de",
+    "input_sha256": "134ea5f08d5d5dbc366870f451ba0de0df5893c5cd73d227dac77f8a11aa2c0b",
+    "campaign_closeout_snapshot": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_precloseout_campaign_snapshot_v26.json",
+      "sha256": "07f0342b852add8135797fff37271ae8d28168e2f877401690fd3d6b91109863",
+      "as_of_utc": "2026-10-11T12:08:08.554017Z",
+      "cumulative_charged_seconds": 17830.555934262644,
+      "remaining_numerical_seconds": 2569.444065737356,
+      "immutable_prefix_bytes": 19597736,
+      "immutable_prefix_sha256": "5003d6deb26f0f6838778651bd7cf5595dfce874b8797d112dde6af30ac8b01a",
+      "immutable_prefix_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_precloseout_campaign_accounting_v26.immutable.jsonl"
+    },
+    "attempts": [
+      {
+        "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T085201.909343Z",
+        "source_sha": "5f47bd3f491b4bf485a5caca55da6cb61d8508c5",
+        "worker_exit_status": 0,
+        "stage_admission": "whole selected-q0 pre-FE/surface stage blocked at 8589934592 B additional-object requirement",
+        "checker_status": "PARTIAL_RECEIPT_INVALID",
+        "classification": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED"
+      },
+      {
+        "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T093646.477018Z",
+        "source_sha": "3a61e61caf638678d483b6fa06f36374abeef67d",
+        "worker_exit_status": 4,
+        "native_cases_executed_and_saved": 3,
+        "failure": "KeyError: minus_D; live component key -D",
+        "measured_native_counts_and_elapsed": "NOT_RECORDED_OR_UNKNOWN",
+        "classification": "WORKER_FAILED_RAW_EVIDENCE_RETAINED"
+      },
+      {
+        "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T111053.208174Z",
+        "source_sha": "f9093c87f81d52b75fbc156e562b3745df45ccf4",
+        "worker_exit_status": 0,
+        "checker_status": "PARTIAL_RECEIPT_CHECKED",
+        "checker_true_checks": 26,
+        "full_pass": false,
+        "classification": "CONTROLLED_STOP_CSR_RESOURCE_ADMISSION"
+      }
+    ],
+    "records": {
+      "target_operator_probe_v26.json": "b87a152efaec3ab6045b4628e2b499d82afdcebdd86175f98b8f7aa4bc3e3e89",
+      "time_resource_accounting_v26.json": "28649fcaad302655359c1065afd7f44e2c26e8634f3ece9962b8fa0b8f988e96",
+      "review_v26_incremental_workflow_ledger.json": "5094dc647c02c7b180d56d9d164a3688f7cc7871e863db51df3610c36040e9fd"
+    },
+    "documents": {
+      "response_v26.md": "a7096039a92d91f62b956fc61aba5d1b1709bf18b0c0bf1dd4e6026807cf6aeb",
+      "outcomes/summary.md": "b8ced522ba1054a5d8beaf358b8d73278def403afc9cff0f75720dbaa057c5ea",
+      "outcomes/test_summary.md": "d685b569981045ada44897dbd3f0c2cd8801a4dfadea292726bfc3d8ca5f13c7",
+      "README.md": "acf4ca60598f5d039060a79a722a4248ae09b13bd807d7cb9fc37ced994767fd"
+    },
+    "repository_navigation_documents": {
+      "docs/README.md": "1f8130e288a2495187bf352ddf7b418f532c912e8884b619d4e172b0b216be73",
+      "docs/development_progress.md": "b961427953affad5eb58687ecb8c3f3cb26db4af46b49d7ee06365ba0d77336a",
+      "docs/development_model_registry.md": "85c4fe7eecd047853ec7a3982035f858cdbe132d97e4e801c0580b538c0b8ac6"
+    },
+    "raw_evidence": {
+      "source_freeze_reader_fix_receipt": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_source_freeze_receipt_v26_reader_fix.json",
+        "sha256": "07278460bb04de81040e6b1226442cf7667b25fd4d295c86755ca16205a688c6"
+      },
+      "campaign_window": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/campaign_window_v26.json",
+        "sha256": "ac533aaf3946c82fde961c77f002ff1b1b2a61401f2153507ff9462d472bc7f5"
+      },
+      "pre_documentation_campaign_snapshot": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_precloseout_campaign_snapshot_v26.json",
+        "sha256": "07f0342b852add8135797fff37271ae8d28168e2f877401690fd3d6b91109863"
+      },
+      "final_end_to_end_clock": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_final_end_to_end_clock_v26.json",
+        "sha256": "48ef8fa3eeeaafddc039622c14bafd976e757856132e212fd6b83de50372dfb7"
+      },
+      "main_final_scientific_readback": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_final_scientific_readback_v26.json",
+        "sha256": "ed7bb73f32be3adedd3ce3f1294a63370a2cf7f6ca968264b56e9c0a1e4411bb"
+      },
+      "final_outer_workflow_record": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/service_runs/myfenics-case-20261011T110928-2306938/outer_workflow_record.json",
+        "sha256": "c894bd7019feb4d03491438b45adf38982ad3f4a7810f78381f48caeaf59dd34"
+      },
+      "final_partial_checker": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/service_runs/myfenics-case-20261011T110928-2306938/partial_checker_result.json",
+        "sha256": "5ee75e4a07318f5857faa41f5a86ca00c436a195a6dd406472fef30102321236"
+      },
+      "final_native_recovery_manifest": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/native_consumer/v26_native_action_recovery_f9093c87f81d52b75fbc156e562b3745df45ccf4.json",
+        "sha256": "6a558896fc0e83826081d9b418a89d4cd76d45207bf7dd4cd086c68df7c12265"
+      },
+      "final_native_recovery_checker": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/native_consumer/v26_native_action_recovery_check_f9093c87f81d52b75fbc156e562b3745df45ccf4.json",
+        "sha256": "e6b88c9eeb5e2314cdf427f4db76f67ca73aac162307d005d2ac22f455ce4ce2"
+      },
+      "attempt_085201_selected_q_stage": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T085201.909343Z/v26_selected_q_stage.json",
+        "sha256": "938e21e65345fa1ca48fcd7f759f6040bbbc113e46613ea0cf3d46fa3f73560b"
+      },
+      "attempt_093646_selected_q_stage": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T093646.477018Z/v26_selected_q_stage.json",
+        "sha256": "7f58db469d37e89f4cd1fccf2a96b7ba5c2397b0257891f8daefdcf8832234c7"
+      },
+      "final_selected_q_stage": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T111053.208174Z/v26_selected_q_stage.json",
+        "sha256": "8ed8562f362afc3cf7c38453733c6859e5c6666d23510f562894b5944752d87a"
+      },
+      "final_row_structure_json": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T111053.208174Z/v26_q0_preallocation_row_structure.json",
+        "sha256": "f42ab160f8fc3d5ad04026b8c9d13491d2685205d149a9e395fdd2be7e8bb64b"
+      },
+      "final_row_structure_npz": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T111053.208174Z/v26_q0_preallocation_row_structure.npz",
+        "sha256": "b8241f8bf6e6d40c4238a0a01da90cc6e58e06a92b179d524a243fbe65deab69"
+      },
+      "final_saved_stream_replay_npz": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T111053.208174Z/v25_selected_q0_stream_replay.npz",
+        "sha256": "492d58972046d53f1aa43ba9c6c9f895f61781060b201e22ac62e96b8aacee9b"
+      },
+      "final_complete_stream_json": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T111053.208174Z/v25_selected_q0_complete_stream.json",
+        "sha256": "5381faad6bb6a494232b917d9a7010d9fd2ae3f5b3416dcf428a8ae482faba10"
+      },
+      "final_consumer_json": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T111053.208174Z/v25_selected_q0_consumer.json",
+        "sha256": "9866b65bfd94a09846dc96fb9a502ebc320175f21aa239a17b0cadf584fd87bb"
+      },
+      "producer_input_original_dat": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/input_original.dat",
+        "sha256": "7c7fcc172968bb291d6834bac6c4f2d3b71b3f1a1efb836129f5dfb872082407"
+      },
+      "campaign_immutable_prefix": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_precloseout_campaign_accounting_v26.immutable.jsonl",
+        "sha256": "5003d6deb26f0f6838778651bd7cf5595dfce874b8797d112dde6af30ac8b01a"
+      },
+      "attempt_085201_outer_workflow": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/service_runs/myfenics-case-20261011T085022-2297769/outer_workflow_record.json",
+        "sha256": "cdf2ad9bf89b488bff5ebc8d60bb836126dbc503a653512772886c2ed1119ddf"
+      },
+      "attempt_085201_partial_checker": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/service_runs/myfenics-case-20261011T085022-2297769/partial_checker_result.json",
+        "sha256": "0e9fbc89bee762cfeefd35d03c0b92bb935584810532162503777c3f4ce6c179"
+      },
+      "attempt_093646_outer_workflow": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/service_runs/myfenics-case-20261011T093458-2300832/outer_workflow_record.json",
+        "sha256": "1ebf16f746f0a7992a8bef5a01601bec7fbcb9d2afd21e868a4bcf13edf17526"
+      }
+    },
+    "validation_logs": {
+      "final_source_focused_tests": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/doc_closeout/v26_final_source_focused_pytest.log",
+        "sha256": "e80b2c52f0b708c1d90f3acc541727480e278c0df2d7f37258f676668bed4193"
+      },
+      "final_document_contract_tests": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/doc_closeout/v26_document_contract_pytest.log",
+        "sha256": "8f475134935a1f99ed04d6f60d0ccbe78a8690df1357a3e5d3c8a5f1140c8e28"
+      }
+    }
   }
 }

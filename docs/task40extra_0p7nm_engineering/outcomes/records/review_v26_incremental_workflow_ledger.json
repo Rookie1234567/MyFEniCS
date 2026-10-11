@@ -1,0 +1,134 @@
+{
+  "schema": "task40extra.review_v26_incremental_workflow_ledger.v1",
+  "branch": "task40extra_0p7nm_engineering",
+  "source_sha": "f9093c87f81d52b75fbc156e562b3745df45ccf4",
+  "scope": "V26 documentation closeout over existing saved-stream, native-recovery, row-structure and supervised resource-stop evidence; no FE/PDE rerun.",
+  "source_and_scope": {
+    "review_base_sha": "83c4fed6e29ea19f0a70a92a403b867851f3ef35",
+    "results_base_sha": "d9bde16eaede7a85e72d9e16f786a4e1ae7a3ed7",
+    "initial_v26_source_sha": "5f47bd3f491b4bf485a5caca55da6cb61d8508c5",
+    "native_recovery_attempt_source_sha": "3a61e61caf638678d483b6fa06f36374abeef67d",
+    "final_v26_source_sha": "f9093c87f81d52b75fbc156e562b3745df45ccf4",
+    "final_source_binary_diff_sha256": "524a1b8b8a3326456939b651c3e9e5813af0c55c4645e5c67b9df207860243de",
+    "documentation_closeout_changed_numerical_source": false,
+    "ordinary_default_changed": false,
+    "commit_or_push_by_documentation_closeout": false
+  },
+  "window": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/campaign_window_v26.json",
+    "sha256": "ac533aaf3946c82fde961c77f002ff1b1b2a61401f2153507ff9462d472bc7f5",
+    "t0_utc": "2026-10-11T07:10:58Z",
+    "numeric_cutoff_utc": "2026-10-11T12:50:58Z",
+    "deadline_utc": "2026-10-11T13:10:58Z",
+    "campaign_seconds": 21600,
+    "reserve_seconds": 1200,
+    "refreshed": false,
+    "old_costs_and_unknowns_preserved": true
+  },
+  "identity": {
+    "input_sha256": "134ea5f08d5d5dbc366870f451ba0de0df5893c5cd73d227dac77f8a11aa2c0b",
+    "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+    "resolved_config_sha256": "4cabeae69208b05c3b6ccf68175d948eba9f86b70cd43ad8a82bc1916063241b",
+    "producer_source_sha": "9d0f4dbfc730dd620b709d048e33e9da6c77520c",
+    "producer_input_sha256": "7c7fcc172968bb291d6834bac6c4f2d3b71b3f1a1efb836129f5dfb872082407",
+    "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "ordered_mode_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+    "abi": "qualified activation; complex128/int32; MPI1"
+  },
+  "run_outer_records": {
+    "attempt_085201": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/service_runs/myfenics-case-20261011T085022-2297769/outer_workflow_record.json",
+      "classification": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "reason": "saved replay manifest identity/inventory check failed"
+    },
+    "attempt_093646": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/service_runs/myfenics-case-20261011T093458-2300832/outer_workflow_record.json",
+      "classification": "WORKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "reason": "worker failed before native counts/timing were persisted; do not substitute zero"
+    },
+    "final_111053": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/service_runs/myfenics-case-20261011T110928-2306938/outer_workflow_record.json",
+      "sha256": "c894bd7019feb4d03491438b45adf38982ad3f4a7810f78381f48caeaf59dd34",
+      "classification": "PARTIAL_RECEIPT_CHECKED_CONTROLLED_RESOURCE_STOP",
+      "required_checker_checks_true": 26,
+      "full_pass": false
+    },
+    "systemd_end_to_end_clock": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_final_end_to_end_clock_v26.json",
+      "sha256": "48ef8fa3eeeaafddc039622c14bafd976e757856132e212fd6b83de50372dfb7"
+    }
+  },
+  "measured_costs": {
+    "selected_q0_stage_parent_seconds": 2352.2791069909,
+    "csr_parent_seconds_nested": 1556.4472410220187,
+    "worker_watchdog_monotonic_seconds": 2410.699863158865,
+    "run_summary_full_workflow_monotonic_seconds": 2410.891193368938,
+    "worker_process_tree_rss_peak_bytes": 11631017984,
+    "worker_task_cgroup_peak_bytes": 12059959296,
+    "worker_task_swap_peak_bytes": 0,
+    "required_checker_monotonic_seconds": 6.761539333034307,
+    "required_checker_process_tree_rss_peak_bytes": 911728640,
+    "wsl_global_swapin_delta_pages": 164,
+    "wsl_global_swapout_delta_pages": 3489,
+    "csr_additional_object_upper_bound_bytes": 11570765788,
+    "host_tree_incremental_shortfall_bytes": 6737252316,
+    "task_cgroup_incremental_shortfall_bytes": 6574534620,
+    "outer_parent_chain_monotonic_seconds": 2419.7040153259877,
+    "outer_parent_chain_conservative_budget_seconds": 2690.1395309491086,
+    "run_case_parent_monotonic_seconds": 2411.1156637850218,
+    "run_case_parent_conservative_budget_seconds": 2677.939236291,
+    "required_checker_parent_monotonic_seconds": 7.356200500857085,
+    "required_checker_parent_conservative_budget_seconds": 10.968143618,
+    "run_summary_conservative_workflow_seconds": 2677.5253902958375,
+    "systemd_starting_to_consumed_monotonic_seconds": 2497.689304,
+    "systemd_starting_to_consumed_utc_seconds": 2775.330775,
+    "systemd_lifecycle_scope": "independent log lifecycle, not additive to outer parent chain",
+    "start_marker_to_first_outer_clock_monotonic_seconds": 75.95538928802125,
+    "start_marker_to_first_outer_clock_attribution": "UNKNOWN"
+  },
+  "append_only_accounting": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/campaign_accounting_v10.jsonl",
+    "main_readback_snapshot_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_final_scientific_readback_v26.json",
+    "main_readback_snapshot_sha256": "ed7bb73f32be3adedd3ce3f1294a63370a2cf7f6ca968264b56e9c0a1e4411bb",
+    "as_of_utc": "2026-10-11T12:00:56.040838Z",
+    "cumulative_charged_seconds": 17398.042754791644,
+    "remaining_numerical_seconds_at_snapshot": 3001.9572452083557,
+    "note": "Aggregate includes preparation, prior attempts, tests, services and review; individual event charges are not inferred by subtracting totals. Append-only source ledger is not rewritten.",
+    "pre_documentation_closeout_snapshot_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_precloseout_campaign_snapshot_v26.json",
+    "pre_documentation_closeout_snapshot_sha256": "07f0342b852add8135797fff37271ae8d28168e2f877401690fd3d6b91109863",
+    "immutable_prefix_bytes": 19597736,
+    "immutable_prefix_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_precloseout_campaign_accounting_v26.immutable.jsonl",
+    "immutable_prefix_sha256": "5003d6deb26f0f6838778651bd7cf5595dfce874b8797d112dde6af30ac8b01a",
+    "pre_documentation_closeout_as_of_utc": "2026-10-11T12:08:08.554017Z",
+    "pre_documentation_closeout_cumulative_charged_seconds": 17830.555934262644,
+    "pre_documentation_closeout_remaining_numerical_seconds": 2569.444065737356,
+    "subsequent_closeout_commit_push_readback_costs": "not included in this immutable prefix; later append-only ledger retained"
+  },
+  "preserved_events": [
+    "earlier checker receipt failure on attempt 20261011T085201.909343Z",
+    "earlier worker failure on attempt 20261011T093646.477018Z",
+    "V25 PETSc SEGV and earlier V25 write/read failures remain in their original records",
+    "native action count/time nulls remain NOT_RECORDED or UNKNOWN, never zero",
+    "required checker supervision reserve label 600 s is preserved as legacy receipt data; effective V26 window/watchdog use 1200 s reserve and 20400 s cutoff",
+    "20261011T085201.909343Z: saved q replay completed; the complete selected-q0 pre-FE/surface stage stopped at its 8589934592 B additional-object admission; original checker identity/inventory binding failure retained; this is not a second CSR materialization gate",
+    "20261011T093646.477018Z: this V26 second attempt actually executed and saved three native cases, then failed at KeyError minus_D versus live -D; native counts/time were not persisted",
+    "20261011T111053.208174Z: final attempt reused the three V26 native cases read-only and did not repeat native actions"
+  ],
+  "decision": {
+    "saved_q0_stream_consumer": "PASS",
+    "q0_full_row_structure": "PASS",
+    "q0_numeric_csr": "CONTROLLED_STOP_NOT_BUILT",
+    "q0_factor_ksp_pde_official_results": "NOT_RUN",
+    "all_q": "0/8 CSR; NOT_RUN",
+    "target_2TB_48h": "NOT_QUALIFIED",
+    "next_owner": "Task40 main controller after review of a qualifying memory admission envelope",
+    "reusable_artifacts": [
+      "V26 hash-bound saved-stream and native-readback receipts",
+      "V26 q0 full row-count/offset checkpoint and support-route digest",
+      "V26 partial checker receipt and append-only campaign identity"
+    ],
+    "next_step": "Under a separately authorized window, reuse the row checkpoint to re-evaluate q0 CSR admission with the complete 11,570,765,788 B incremental upper bound plus live reserves; materialize only if all host/tree/cgroup gates pass, then consider the conditional one-q factor lifecycle. No new PC, storage platform or producer FE run is proposed.",
+    "ordinary_default_changed": false,
+    "master_merge": "NOT_AUTHORIZED"
+  }
+}

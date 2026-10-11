@@ -1,0 +1,203 @@
+{
+  "schema": "task40extra.review_v26_time_resource_accounting.v1",
+  "classification": "PARTIAL_WITH_CONTROLLED_RESOURCE_STOP",
+  "branch": "task40extra_0p7nm_engineering",
+  "source_sha": "f9093c87f81d52b75fbc156e562b3745df45ccf4",
+  "campaign_window": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/campaign_window_v26.json",
+    "sha256": "ac533aaf3946c82fde961c77f002ff1b1b2a61401f2153507ff9462d472bc7f5",
+    "t0_utc": "2026-10-11T07:10:58Z",
+    "numerical_cutoff_utc": "2026-10-11T12:50:58Z",
+    "deadline_utc": "2026-10-11T13:10:58Z",
+    "campaign_seconds": 21600,
+    "closeout_reserve_seconds": 1200,
+    "numerical_cutoff_seconds_from_t0": 20400,
+    "refreshed": false,
+    "window_scope": "effective window/API/watchdog policy"
+  },
+  "attempts": [
+    {
+      "service": "myfenics-case-20261011T085022-2297769.service",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T085201.909343Z",
+      "source_sha": "5f47bd3f491b4bf485a5caca55da6cb61d8508c5",
+      "worker_result": "worker_exit0",
+      "worker_exit_status": 0,
+      "required_checker_status": "PARTIAL_RECEIPT_INVALID",
+      "required_checker_returncode": 2,
+      "checker_error": "v26_saved_replay_manifest_identity_and_inventory",
+      "classification": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "scientific_progress": "saved q replay completed; the next complete selected-q0 pre-FE/surface stage was blocked by its 8 GiB additional-object admission, not the final CSR-materialization gate",
+      "required_checker_error": "missing replay manifest identity/inventory binding; original checker failure retained",
+      "resource_admission": {
+        "stage": "task40_v25_selected_q0_pre_fe_and_surface_phase",
+        "additional_object_upper_bound_bytes": 8589934592,
+        "host_effective_available_bytes": 5093335040,
+        "host_gate_passed": false,
+        "task_cgroup_current_plus_additional_bytes": 20676210688,
+        "task_cgroup_limit_minus_evidence_reserve_bytes": 17045651456,
+        "task_cgroup_gate_passed": false,
+        "task_cgroup_required": true,
+        "task_swap_gate": "PASS_ZERO_TASK_CGROUP_SWAP",
+        "scope": "whole selected-q0 pre-FE/surface stage admission; not a second CSR-materialization gate",
+        "raw_stage_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T085201.909343Z/v26_selected_q_stage.json",
+        "raw_stage_sha256": "938e21e65345fa1ca48fcd7f759f6040bbbc113e46613ea0cf3d46fa3f73560b"
+      }
+    },
+    {
+      "service": "myfenics-case-20261011T093458-2300832.service",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T093646.477018Z",
+      "source_sha": "3a61e61caf638678d483b6fa06f36374abeef67d",
+      "worker_result": "WORKER_FAILED",
+      "worker_exit_status": 4,
+      "required_checker_returncode": 1,
+      "worker_watchdog_monotonic_seconds": 1608.219551082002,
+      "process_tree_rss_peak_bytes": 11709317120,
+      "task_cgroup_memory_peak_bytes": 11841703936,
+      "task_cgroup_swap_peak_bytes": 0,
+      "host_global_swapin_delta_pages": 149,
+      "host_global_swapout_delta_pages": 5776,
+      "native_counts_and_elapsed": "NOT_RECORDED_KEYERROR_PERSISTENCE_GAP",
+      "classification": "WORKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "failure_message": "KeyError: minus_D; producer/checker expected minus_D while live component key was -D",
+      "native_cases_saved": 3,
+      "native_count_and_elapsed_receipt": "not persisted after KeyError; measured counters/time remain unknown",
+      "native_cases_source_scope": "executed and saved in this V26 second attempt; final attempt performed read-only reuse and did not repeat native actions"
+    },
+    {
+      "service": "myfenics-case-20261011T110928-2306938.service",
+      "invocation_id": "64c3b109594c47f4bd7c756844bc80c4",
+      "worker_pid_at_launch": 2307069,
+      "run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
+      "attempt": "20261011T111053.208174Z",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T111053.208174Z",
+      "source_sha": "f9093c87f81d52b75fbc156e562b3745df45ccf4",
+      "worker_result": "worker_exit0",
+      "worker_exit_status": 0,
+      "scientific_partial_status": "controlled_stop",
+      "stop_stage": "selected_reference_q_csr",
+      "required_checker_status": "PARTIAL_RECEIPT_CHECKED",
+      "required_checker_true_checks": 26,
+      "required_checker_returncode": 0,
+      "full_pass": false,
+      "official_result": false,
+      "descendants_cleared": true
+    }
+  ],
+  "final_attempt_time": {
+    "manifest_start_utc": "2026-10-11T11:10:53.225989+00:00",
+    "manifest_end_utc": "2026-10-11T11:55:30.918785+00:00",
+    "watchdog_monotonic_seconds": 2410.699863158865,
+    "run_summary_full_workflow_monotonic_seconds": 2410.891193368938,
+    "selected_q0_stage_parent_seconds": 2352.2791069909,
+    "csr_structure_parent_seconds": 1556.4472410220187,
+    "csr_parent_is_nested_within_q0_stage": true,
+    "required_checker_seconds_separate": 6.761539333034307,
+    "run_summary_conservative_workflow_seconds": 2677.5253902958375,
+    "outer_parent_chain": {
+      "nonoverlapping_parent_monotonic_seconds": 2419.7040153259877,
+      "nonoverlapping_parent_conservative_budget_seconds": 2690.1395309491086,
+      "run_case_parent_monotonic_seconds": 2411.1156637850218,
+      "run_case_parent_conservative_budget_seconds": 2677.939236291,
+      "required_checker_parent_monotonic_seconds": 7.356200500857085,
+      "required_checker_parent_conservative_budget_seconds": 10.968143618,
+      "parents_are_nonoverlapping_and_form_outer_chain": true,
+      "scope": "from first recorded outer clock through parent finish; includes run_case and required-checker parent intervals",
+      "nonoverlapping_parent_intervals_are_additive": true
+    },
+    "note": "The outer chain spans the first recorded outer clock to parent finish and includes run_case plus required-checker parent intervals; nonoverlapping outer parent intervals are additive within that scope. Nested stage and worker watchdog/summary times are not additive to the outer chain. The independent systemd Starting-to-Consumed lifecycle covers unsegmented startup before the first outer clock and tail after parent finish. The 75.95538928802125 s marker-to-first-clock interval has UNKNOWN local attribution, is already included in service/campaign accounting, and must not be added again.",
+    "systemd_lifecycle": {
+      "starting_to_consumed_monotonic_seconds": 2497.689304,
+      "starting_to_consumed_utc_seconds": 2775.330775,
+      "scope": "independent Starting-to-Consumed service lifecycle; covers startup before the first outer clock and tail after parent finish; not additive to the outer parent chain"
+    },
+    "start_marker_to_first_outer_clock_monotonic_seconds": 75.95538928802125,
+    "start_marker_to_first_outer_clock_attribution": "UNKNOWN; this startup interval is included in service/campaign accounting and must not be added again",
+    "nested_stage_worker_outer_times_not_additive": true,
+    "nonoverlapping_outer_parent_intervals_are_additive": true,
+    "startup_interval_included_in_service_and_campaign_accounting": true
+  },
+  "final_attempt_resources": {
+    "worker_process_tree_rss_peak_bytes": 11631017984,
+    "worker_task_cgroup_memory_peak_bytes": 12059959296,
+    "task_cgroup_limit_bytes": 17179869184,
+    "worker_task_cgroup_swap_peak_bytes": 0,
+    "worker_descendants_cleared": true,
+    "required_checker_process_tree_rss_peak_bytes": 911728640,
+    "required_checker_descendants_cleared": true,
+    "worker_and_checker_peaks_are_separate_scopes": true,
+    "wsl_global_swapin_delta_pages": 164,
+    "wsl_global_swapout_delta_pages": 3489,
+    "wsl_global_swap_scope": "host-wide; cannot be attributed to this task",
+    "global_swap_gate_enforced": false
+  },
+  "csr_admission": {
+    "stage": "task40_v17_q_row_tile_csr_materialize/p0q0",
+    "reason": "LIVE_RESOURCE_ADMISSION_BLOCKED",
+    "required_csr_payload_bytes": 11544333940,
+    "additional_object_upper_bound_bytes": 11570765788,
+    "process_tree_rss_at_admission_bytes": 8687230976,
+    "dynamic_process_tree_cap_bytes": 13520744448,
+    "host_effective_available_bytes": 4967731200,
+    "host_launch_cap_after_evidence_reserve_bytes": 4833513472,
+    "host_tree_incremental_shortfall_bytes": 6737252316,
+    "task_cgroup_current_bytes": 12049420288,
+    "task_cgroup_memory_limit_bytes": 17179869184,
+    "task_cgroup_limit_minus_evidence_reserve_bytes": 17045651456,
+    "task_cgroup_incremental_headroom_bytes": 4996231168,
+    "task_cgroup_incremental_shortfall_bytes": 6574534620,
+    "task_swap_bytes": 0,
+    "disk_gate_passed": true,
+    "csr_materialized": false,
+    "shortfalls_are_distinct_and_must_not_be_added": true
+  },
+  "campaign_closeout_snapshot": {
+    "earlier_main_readback": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_final_scientific_readback_v26.json",
+      "sha256": "ed7bb73f32be3adedd3ce3f1294a63370a2cf7f6ca968264b56e9c0a1e4411bb",
+      "as_of_utc": "2026-10-11T12:00:56.040838Z",
+      "cumulative_charged_seconds": 17398.042754791644,
+      "numerical_budget_remaining_seconds": 3001.9572452083557
+    },
+    "pre_documentation_closeout": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_precloseout_campaign_snapshot_v26.json",
+      "sha256": "07f0342b852add8135797fff37271ae8d28168e2f877401690fd3d6b91109863",
+      "as_of_utc": "2026-10-11T12:08:08.554017Z",
+      "cumulative_charged_seconds": 17830.555934262644,
+      "numerical_budget_remaining_seconds": 2569.444065737356,
+      "immutable_prefix_bytes": 19597736,
+      "immutable_prefix_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_precloseout_campaign_accounting_v26.immutable.jsonl",
+      "immutable_prefix_sha256": "5003d6deb26f0f6838778651bd7cf5595dfce874b8797d112dde6af30ac8b01a",
+      "subsequent_closeout_commit_push_readback_costs": "not included in this immutable prefix; later append-only ledger retained"
+    },
+    "sample_kind": "read_only_as_of_snapshot_from_append_only_campaign_accounting",
+    "campaign_ledger_not_rewritten": true,
+    "old_costs_and_unknowns_preserved": true
+  },
+  "legacy_receipt_label": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/service_runs/myfenics-case-20261011T110928-2306938/required_checker_supervision_response.json",
+    "details_supervision_campaign_closeout_reserve_seconds": 600,
+    "classification": "LEGACY_PROFILE_LABEL_ONLY",
+    "effective_campaign_closeout_reserve_seconds": 1200,
+    "effective_numerical_cutoff_seconds": 20400,
+    "raw_receipt_rewritten": false
+  },
+  "global_qualification": {
+    "all_q_csr": "NOT_RUN",
+    "factor": "NOT_RUN",
+    "ksp": "NOT_RUN",
+    "full_pde": "NOT_RUN",
+    "official_R_T_A": "NOT_RUN",
+    "target_2TB_48h": "NOT_QUALIFIED",
+    "ordinary_default_changed": false
+  },
+  "preserved_events": [
+    "085201: saved replay completed, then CSR pre-FE resource Gate blocked materialization; original checker also failed its missing identity/inventory binding",
+    "093646: three native cases were saved, then KeyError minus_D because live key was -D; native count/time receipt was not persisted, and this worker failure remains unchanged"
+  ],
+  "raw_evidence": {
+    "systemd_end_to_end_clock": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_final_end_to_end_clock_v26.json",
+      "sha256": "48ef8fa3eeeaafddc039622c14bafd976e757856132e212fd6b83de50372dfb7"
+    }
+  }
+}

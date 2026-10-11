@@ -1,3 +1,21 @@
+## Review V26 当前交付：完整 q0 消费者和行结构通过，CSR 在资源门前受控停止
+
+V26 的 parent target 是原尺寸 Ny=8；本轮 selected q0/q4 消费者和行结构实际使用去除 notch/void 的 regular reference（7,616 cells），不代表完整 target 几何或 Ny=8 全解。该范围内完成保存流读回、q0/q4 双向泄漏检查与全行结构检查。CSR 在真实 host/tree 和专用 cgroup admission 前受控停止，所以 factor、KSP、全 q、PDE 与 official R/T/A 未运行；2 TB / 48 h 仍未资格化。worker exit 0 仅表示受监督 stage 正常停收，不是求解通过。
+
+| 文件 | 内容 |
+|---|---|
+| [Review V26](review_report_v26.md) 与 [Response V26](response_v26.md) | 执行合同、q0/q4 消费者回读、结构、精确资源短缺与未运行边界 |
+| [V26 outcomes summary](outcomes/summary.md) 与 [test summary](outcomes/test_summary.md) | 模型、结果、门限、资源时钟、测试与负结果的表格总账 |
+| [V26 operator compact](outcomes/records/target_operator_probe_v26.json) | source/input/producer 身份、双输入回读、双向 leakage、row structure 和 stage receipt hashes |
+| [V26 time/resource ledger](outcomes/records/time_resource_accounting_v26.json) | 三次 V26 attempt、父/子计时、整树/cgroup/task swap/host swap 和分开的准入缺口 |
+| [V26 incremental workflow ledger](outcomes/records/review_v26_incremental_workflow_ledger.json) | 不可变窗口、append-only 计费快照、保留的失败和下一负责人 |
+| [V26 run index](outcomes/records/run_index.json) | 追加的运行与证据 hash 索引；V1–V25 历史保持原样 |
+| [Campaign snapshot](../../benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/main_precloseout_campaign_snapshot_v26.json) | 主控保全的结项前不可变账本前缀与剩余数值预算 |
+
+固定窗口 T0 `2026-10-11T07:10:58Z`，数值截止 `12:50:58Z`，总截止 `13:10:58Z`，closeout reserve 1,200 s。required-checker receipt 中的 600 s 是旧 profile 标签；window/API/watchdog 实际执行 1,200 s / 20,400 s cutoff，原 receipt 保留。执行者只做文档收口，不改数值源码、不提交或推送；主控负责集中审查和发布。
+
+---
+
 ## Review V25 当前交付：完整 target volume saved-recovery 通过，selected-q0 worker 失败
 
 V25 在固定新窗口内完成了原尺寸 30,464-cell target volume 作用与两组 saved-witness recovery；没有重跑 FE。selected-reference-q0 producer 已生成完整 surface/volume streams 和 q0/q4 maps，但 native consumer replay 在 PETSc SIGSEGV 前未写出。ownership 修复已冻结并通过定向测试；修复后 native qualification 未运行。2 TB / 48 h、完整 A6/PDE、production default 与 master merge 均未资格化。

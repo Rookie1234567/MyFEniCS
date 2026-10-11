@@ -2297,3 +2297,16 @@ E2 v3重建p6 mesh/space并做一次native matrix-free A6动作和streaming DtN�
 | 全局模型结果 | 完整 q 矩阵 0/8；PDE、official R/T/A、global explicit residual、factor/KSP 均未运行 | single-q NOT_ADMITTED 因完整 volume action、streaming reference entry 与共驻容量缺口；非测得资源失败；2 TB/48 h NOT_QUALIFIED |
 
 V24 有六个源码提交，且三个结果绑定不同 source；execution window SHA 为 b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358，qualified ABI 是 PETSc complex128/int32、MPI1。该登记不是 production qualification，也不改变 ordinary default 或 master。细节见 [Response V24](task40extra_0p7nm_engineering/response_v24.md)、[B q tile](task40extra_0p7nm_engineering/outcomes/records/q_tile_v24.json) 和 [outcomes summary](task40extra_0p7nm_engineering/outcomes/summary.md)。
+
+## Task40extra Review V26：q0 消费者与全行结构通过，CSR 受控资源停止
+
+V26 面向原尺寸 `50×25×140 nm`、`0.7 nm`、`272×8×14` p6 三维非分离 parent target；本轮 selected q0 数据实际来自去除 notch/void 的 `272×2×14`、7,616-cell regular reference。q 是 y 周期相位子问题；q0 不代表全部 Ny=8 的解。q0 的两输入 saved-stream/native-history 回读和 q4 配对 diagonal/双向 leakage 通过，随后形成完整 row counts/offsets checkpoint。结构位置数表示预分配位置，不表示已填入的数值 nnz。
+
+| 阶段 / 身份 | 方法与实测结果 | 资源/资格边界 |
+|---|---|---|
+| q0 保存消费者；source `f9093c87f81d52b75fbc156e562b3745df45ccf4` | q0 两组输入 replay 误差 `1.9112e-14/1.9038e-14`；q4 diagonal `1.8925e-14`；q0→q4、q4→q0 leakage ratio `2.4073e-16/2.3258e-16`，scaled error `3.3139e-16/3.2734e-16`，门限`1e-11`；saved-data native recovery 为 `PASS_READONLY_THREE_CASE_RECOVERY` | V26 第二 attempt 实际执行并保存三组 native case；最终 attempt 只读复用、未重复 native。KeyError 后 measured counts/time 未持久化，状态 NOT_RECORDED/UNKNOWN；source-derived counts 6 volume applies、9 provider sweeps 来自 `3a61e61caf638678d483b6fa06f36374abeef67d`，不是实测。 |
+| q0 完整行结构 | `777644×777644`，结构预分配位置 `577061168`；counts/offsets 全量一致，offset 末值匹配；结构可用 PETSc int32 | numeric CSR 未构造；纯 payload 推导 `11544333940 B`，新增对象上界 `11570765788 B`。 |
+| CSR 准入与清场 | `task40_v17_q_row_tile_csr_materialize/p0q0` 前真实 stop；host/tree 短缺 `6737252316 B`，task cgroup 短缺 `6574534620 B`；worker tree RSS peak `11631017984 B`，task cgroup peak `12059959296 B`，task swap0，descendants cleared | 受控资源停止，不是数值失败。host/tree 与 task-cgroup 缺口分开判断，不能相加。 |
+| 全局资格 | 完整 q CSR `0/8`；factor/KSP/PDE/official R/T/A 均 `NOT_RUN` | 原尺寸 2 TB / 48 h、最终精度仍 `NOT_QUALIFIED`；ordinary default unchanged。 |
+
+证据入口：[Response V26](task40extra_0p7nm_engineering/response_v26.md)、[operator compact](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v26.json)、[time/resource ledger](task40extra_0p7nm_engineering/outcomes/records/time_resource_accounting_v26.json)、[incremental workflow ledger](task40extra_0p7nm_engineering/outcomes/records/review_v26_incremental_workflow_ledger.json)。campaign window 为 T0 `2026-10-11T07:10:58Z`、数值 cutoff `12:50:58Z`、deadline `13:10:58Z`，closeout reserve 1,200 s；receipt 的旧 600 s 标签不改变有效 Gate。V25 与更早历史记录保持不变。

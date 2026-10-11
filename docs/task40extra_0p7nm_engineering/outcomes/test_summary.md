@@ -1,3 +1,20 @@
+# Task40extra Review V26 定向验证与文档合同
+
+| 验证 | source / 命令 / 回执 | 结果 | 证据边界 |
+|---|---|---|---|
+| V26 初始实现定向组 | 初始 source `5f47bd3f491b4bf485a5caca55da6cb61d8508c5`；source freeze receipt | **11 passed in 0.98 s**；compileall passed | 初始冻结阶段测试；不等同于 worker/PDE 通过。 |
+| 中间 native-recovery source 定向组 | source `3a61e61caf638678d483b6fa06f36374abeef67d`；主控阶段回执 | **6 passed** | 组件测试通过；随后 worker 保存三组 native case 后仍因 `KeyError: minus_D`（live key `-D`）失败。 |
+| 最终冻结 source focused suite（执行者冻结前） | source/diff `f9093c87f81d52b75fbc156e562b3745df45ccf4` / `524a1b8b8a3326456939b651c3e9e5813af0c55c4645e5c67b9df207860243de`；执行者回执，主控认可 | **80 passed、1 skipped**；主控另行运行 resource-stop actual readback fixture **1 passed** | final-source 软件验证与 worker 的 controlled stop 分开；不等同于全 q 或 PDE pass。 |
+| 最终 source closeout focused rerun | `source scripts/activate_myfenics_wsl.sh`；`python -m pytest -q src/test/test_task40_v25_selected_q0.py src/test/test_task40_v17_row_tile_routes.py::test_v17_q0_structure_checkpoint_precedes_int32_capacity_check` | **22 passed in 0.58 s** | qualified activation=1；Python 位于当前 `.venv`；PETSc complex128/int32、MPI1；日志 `local_v26_wsl/doc_closeout/v26_final_source_focused_pytest.log`；无 heavy worker。 |
+| 文档 / 模型登记合同 | qualified activation 后：`python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py` | **29 passed** | 本轮最终文档、模型登记与回顾合同；精确耗时见日志 `local_v26_wsl/doc_closeout/v26_document_contract_pytest.log`；不含 FE/PDE。 |
+| saved q replay / native readback | main final readback 与独立 saved-array checker；native cases 来自 V26 第二 attempt | q0 两组输入、q4 diagonal 与三组 read-only native recovery 通过；第二 attempt 实际执行并保存三组 native case，最终 attempt 未重复执行 | 最终 attempt 只读 recovery；KeyError 后实测 native 计数/用时未持久化（NOT_RECORDED/UNKNOWN），不是零调用或零秒；不是 PDE pass。 |
+| V26 partial stage checker | 最终 service 的 `partial_checker_result.json` | **26/26 checks true**；`PARTIAL_RECEIPT_CHECKED`；`full_pass=false` | 核对身份、哈希、scope、清场和受控停止，不能提升为 solver pass。 |
+| Full repository pytest / MPI2 / MPI4 / Ruff / CI / full-q PDE | 本轮 | `NOT_RUN` | 不声称全仓、MPI2/4、Ruff、CI 或全 q 通过。 |
+
+V26 worker wrapper exit 0、测试通过和 partial checker 26/26 都不是 PDE 数值成功。最终科学状态是 regular-reference q0 stream/readback 与结构通过；q0 CSR 在最终 attempt 的独立 `LIVE_RESOURCE_ADMISSION_BLOCKED` 门前受控停止，factor、KSP、PDE 与 official R/T/A `NOT_RUN`。08:52 attempt 的 8 GiB whole-stage pre-FE/surface admission 是另一项已保留的早期停点，不能与最终 CSR gate 合并。V25 及更早测试历史保留如下。
+
+---
+
 # Task40extra Review V25 测试与独立回读摘要
 
 | 验证 | source / 原始命令 | 结果 | 证据边界 |
