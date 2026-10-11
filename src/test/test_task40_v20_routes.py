@@ -95,6 +95,246 @@ def test_service_campaign_router_keeps_v19_and_scopes_v22_to_ny8(monkeypatch):
         )
 
 
+def test_v27_campaign_window_read_only_state_and_service_route_are_registered():
+    from scripts import task40_v20_service_workflow as service
+    from src.runners import task40_v10_campaign as campaign
+
+    window = campaign.load_fixed_campaign_window(
+        campaign.TASK40_V27_CAMPAIGN_WINDOW, require_current_boot=True
+    )
+    ledger = window.path.parent / campaign.CAMPAIGN_ACCOUNTING_NAME
+    ledger_before = service._sha256_file(ledger)
+    state = campaign.read_campaign_state(window)
+    assert state["read_only"] is True
+    assert state["campaign_window_sha256"] == campaign.TASK40_V27_CAMPAIGN_SHA256
+    assert state["remaining_numerical_seconds"] >= 0.0
+    assert service._sha256_file(ledger) == ledger_before
+
+    route = service._resolve_service_campaign(
+        ROOT,
+        service.TASK40_V27_CAMPAIGN_WINDOW,
+        profile=service.V27_TARGET_PROFILE,
+        stop_stage="selected_reference_q_csr",
+    )
+    assert route["version"] == "V27"
+    assert route["sha256"] == campaign.TASK40_V27_CAMPAIGN_SHA256
+    assert route["stage_scope"] == "complete_q0_numeric_csr"
+    with pytest.raises(ValueError, match="outside its explicit campaign scope"):
+        service._resolve_service_campaign(
+            ROOT,
+            service.TASK40_V27_CAMPAIGN_WINDOW,
+            profile=service.V27_TARGET_PROFILE,
+            stop_stage="target_operator_probe",
+        )
+
+
+def test_v27_service_operation_routes_to_saved_q0_stage_executor(monkeypatch, tmp_path):
+    from src.runners import task40_v20_stage_runner as runner
+
+    stop_stage = "selected_reference_q_csr"
+    payload = {"execution": {"task40_execution_stop_stage": stop_stage}}
+    modes = (SimpleNamespace(side="bottom", m=0, n=0, polarization="s"),)
+    mode_rows = ({"mode_index": 0},)
+    preflight = {"schema": "fixture", "target_mode_inventory": {}}
+    monkeypatch.setattr(
+        runner,
+        "_exact_case",
+        lambda _payload: (runner._V22_TARGET_OPERATOR_PROFILE, "TARGET_ORIGINAL_NY8"),
+    )
+    monkeypatch.setattr(
+        runner, "_preflight", lambda *_args, **_kwargs: (preflight, modes, mode_rows)
+    )
+    monkeypatch.delenv("TASK40_V26_OPERATION", raising=False)
+    monkeypatch.setenv("TASK40_V27_OPERATION", "V27_SAVED_ONLY_COMPLETE_Q0_CSR")
+    received = {}
+
+    def fake_v27(*args, **kwargs):
+        received["args"] = args
+        received.update(kwargs)
+        return {"status": "controlled_stop", "summary": {"v27": True}}
+
+    monkeypatch.setattr(runner, "_run_v27_saved_q0_stage", fake_v27)
+    result = runner.run_task40_v20_stage(payload, tmp_path / "run", source_sha="a" * 40)
+
+    assert result["summary"]["v27"] is True
+    assert received["stop_stage"] == stop_stage
+    assert received["modes"] is modes
+    assert received["mode_rows"] is mode_rows
+    assert received["source_sha"] == "a" * 40
+
+
+def test_v27_selector_binds_fixed_donor_and_execution_window(monkeypatch, tmp_path):
+    from scripts import task40_v20_service_workflow as service
+
+    input_path = tmp_path / "stage_input.dat"
+    input_path.write_text("saved-only fixture input\n", encoding="utf-8")
+    selector_path = (
+        tmp_path
+        / service.V27_ARTIFACT_ROOT
+        / "stage_inputs/selected_reference_q_csr/selected_operation.json"
+    )
+    selector_path.parent.mkdir(parents=True)
+    donor = {
+        "producer_identity": {"producer_run_id": "fixed-v26"},
+        "saved_replay_manifest": {"sha256": "a" * 64},
+        "native_recovery_manifest": {"sha256": "b" * 64},
+    }
+    selector = {
+        "schema": "task40extra.review_v27_saved_q0_operation.v1",
+        "operation": "V27_SAVED_ONLY_COMPLETE_Q0_CSR",
+        "campaign_window_sha256": service.TASK40_V27_CAMPAIGN_SHA256,
+        "input_sha256": service._sha256_file(input_path),
+        "model_profile": service.V27_TARGET_PROFILE,
+        "stop_stage": "selected_reference_q_csr",
+        "donor_import": donor,
+    }
+    selector_path.write_text(json.dumps(selector), encoding="utf-8")
+    monkeypatch.setattr(service, "verify_v27_v26_donor_import", lambda **_kwargs: donor)
+
+    binding = service._bind_v27_saved_q0_selector(
+        selector_path,
+        input_path=input_path,
+        campaign_registration={
+            "version": "V27",
+            "sha256": service.TASK40_V27_CAMPAIGN_SHA256,
+        },
+        profile=service.V27_TARGET_PROFILE,
+        stop_stage="selected_reference_q_csr",
+        repo_root=tmp_path,
+    )
+    assert binding["operation"] == selector["operation"]
+    assert binding["donor_import"] == donor
+    assert binding["campaign_window_sha256"] == service.TASK40_V27_CAMPAIGN_SHA256
+    assert binding["selector_sha256"] == service._sha256_file(selector_path)
+
+
+@pytest.mark.parametrize(
+    ("operation_status", "partial_status", "complete_csr"),
+    [
+        ("RESOURCE_CONTROLLED_STOP_BEFORE_CSR", "controlled_stop", False),
+        ("PASS_COMPLETE_Q0_CSR", "stage_completed", True),
+    ],
+)
+def test_v27_partial_checker_routes_controlled_and_completed_receipts(
+    monkeypatch, tmp_path, operation_status, partial_status, complete_csr
+):
+    from scripts import task40_v20_service_workflow as service
+
+    input_path = tmp_path / "input.dat"
+    input_path.write_text(
+        "[solver]\npreconditioner = \"" + service.V27_TARGET_PROFILE + "\"\n"
+        "[execution]\ntask40_target_heavy_authorized = false\n",
+        encoding="utf-8",
+    )
+    source_sha = "a" * 40
+    input_sha = service._sha256_file(input_path)
+    model_sha = "b" * 64
+    output = tmp_path / "numerical"
+    output.mkdir()
+    operation_path = output / "v27_saved_q0_stage.json"
+    selector_sha = "c" * 64
+    operation = {
+        "schema": "task40extra.review_v27_saved_q0_stage.v1",
+        "operation": "V27_SAVED_ONLY_COMPLETE_Q0_CSR",
+        "stop_stage": "selected_reference_q_csr",
+        "status": operation_status,
+        "selector_sha256": selector_sha,
+        "complete_numeric_csr": complete_csr,
+        "csr_status": "COMPLETE_CSR" if complete_csr else "NOT_CREATED",
+        "factor_or_solve_built": False,
+        "ksp_created": False,
+        "pde_solved": False,
+    }
+    operation_path.write_text(json.dumps(operation), encoding="utf-8")
+    stage = {
+        "operation_path": operation_path.name,
+        "operation_sha256": service._sha256_file(operation_path),
+        "operation_status": operation_status,
+        "selector_sha256": selector_sha,
+        "operation": operation,
+    }
+    partial = {
+        "schema": "task40extra.review_v20_partial_result.v2",
+        "classification": "SELECTED_REFERENCE_Q_V27_SAVED_ONLY_COMPLETE_CSR",
+        "status": partial_status,
+        "outcome": "RESOURCE_CONTROLLED_STOP" if partial_status == "controlled_stop" else "STAGE_COMPLETED",
+        "run_id": "fixture_v27",
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": model_sha,
+        "requested_stop_stage": "selected_reference_q_csr",
+        "stage_result": {"probe_status": operation_status},
+        "completed_stages": ["preflight", "selected_reference_q_csr"] if complete_csr else ["preflight"],
+        "official_result": False,
+        "q_coverage": {
+            "expected_q_count": 8,
+            "built_q_count": 1 if complete_csr else 0,
+            "full_q_matrix_coverage": "1/8" if complete_csr else "0/8",
+            "csr_status": "COMPLETE_CSR" if complete_csr else "NOT_CREATED",
+            "factor_count": 0,
+            "pde_solved": False,
+        },
+        "v27_saved_q0_stage": stage,
+    }
+    (output / "v20_partial_result.json").write_text(json.dumps(partial), encoding="utf-8")
+    window = (service.ROOT / service.TASK40_V27_CAMPAIGN_WINDOW).resolve()
+    accounting = window.with_name("campaign_accounting_v10.jsonl")
+    manifest_path = tmp_path / "run_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "run_id": "fixture_v27",
+                "source_sha": source_sha,
+                "input_sha256": input_sha,
+                "physical_model_sha256": model_sha,
+                "task40_v20_campaign": {
+                    "window_path": str(window),
+                    "window_sha256": service.TASK40_V27_CAMPAIGN_SHA256,
+                    "accounting_path": str(accounting),
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    summary_path = tmp_path / "run_summary.json"
+    summary_path.write_text(json.dumps({"result_classification": partial_status}), encoding="utf-8")
+    monkeypatch.setattr(
+        service,
+        "_v27_saved_q0_readback_checks",
+        lambda **_kwargs: {"v27_fixture_checker_called": True},
+    )
+
+    checked = service._check_partial_result(
+        input_path=input_path,
+        summary_path=summary_path,
+        manifest_path=manifest_path,
+        numerical_output=output,
+        expected_stop_stage="selected_reference_q_csr",
+    )
+    assert checked["checker_passed"] is True, checked["errors"]
+    assert checked["checks"]["v27_fixture_checker_called"] is True
+    assert checked["checks"]["v27_execution_manifest_window_accounting_and_registration_bind"] is True
+
+
+def test_v27_owned_payload_hash_reuses_bounded_advise_reader(monkeypatch, tmp_path):
+    from scripts import task40_v20_service_workflow as service
+    from src.solvers import task40_v25_selected_q0 as saved_streams
+
+    payload = tmp_path / "saved-payload.bin"
+    payload.write_bytes(b"x" * (4 * 1024 * 1024 + 17))
+    expected = service._sha256_file(payload)
+    calls = []
+    original = saved_streams._advise_file_drop
+
+    def record_advice(stream, start, length, *, telemetry=None):
+        calls.append((start, length))
+        return original(stream, start, length, telemetry=telemetry)
+
+    monkeypatch.setattr(saved_streams, "_advise_file_drop", record_advice)
+    assert service._sha256_owned_payload(payload) == expected
+    assert calls == [(0, 4 * 1024 * 1024), (4 * 1024 * 1024, 17)]
+
+
 def test_v23_q_only_scan_selector_is_consumed_only_once():
     from scripts.task40_v20_service_workflow import _extract_v23_q_only_scan_arg
 

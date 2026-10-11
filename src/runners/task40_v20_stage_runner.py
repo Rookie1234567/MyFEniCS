@@ -1311,6 +1311,817 @@ def _run_v25_selected_q0_stage(
     }
 
 
+def _run_v27_saved_q0_stage(
+    resolved_payload: Mapping[str, Any],
+    output_directory: Path,
+    *,
+    source_sha: str,
+    profile: str,
+    preflight: Mapping[str, Any],
+    modes: tuple[Any, ...] | None,
+    mode_rows: tuple[Mapping[str, Any], ...] | None,
+    stop_stage: str,
+) -> dict[str, Any]:
+    """Build/read back only the frozen saved q0 CSR; no FE or native rebuild."""
+    import gc
+    import shutil
+    import zipfile
+
+    from scipy import sparse
+
+    from src.solvers.task40_v22_operator_probe import (
+        _ProbeResourceBlocked,
+        _resource_admission,
+    )
+    from src.solvers.task40_v25_selected_q0 import (
+        _advise_file_drop,
+        _drop_mmap_pages,
+        _file_sha256,
+        _task_cgroup_memory_snapshot,
+    )
+    from src.solvers.task40_v27_saved_q0 import (
+        SavedQ0ContributionAdapter,
+        _sha256_file as _saved_q_sha256,
+        build_saved_q0_csr_structure,
+        fill_saved_q0_csr_values,
+        open_saved_q0_csr_from_manifest,
+        preflight_saved_q0_csr,
+    )
+
+    if stop_stage != "selected_reference_q_csr" or modes is None or mode_rows is None:
+        raise RuntimeError("V27 route only accepts the registered q0 CSR stop with frozen mode inventory")
+    selector_path = Path(os.environ.get("TASK40_V27_SELECTOR_PATH", "")).resolve()
+    selector_sha = os.environ.get("TASK40_V27_SELECTOR_SHA256", "")
+    raw_operation = os.environ.get("TASK40_V27_OPERATION", "")
+    expected_operation = "V27_SAVED_ONLY_COMPLETE_Q0_CSR"
+    if (
+        raw_operation != expected_operation
+        or not selector_path.is_file()
+        or len(selector_sha) != 64
+        or _sha256_file(selector_path) != selector_sha
+    ):
+        raise RuntimeError("V27 route lacks its service-bound selector and operation identity")
+    selector = json.loads(selector_path.read_text(encoding="utf-8"))
+    donor_import = selector.get("donor_import")
+    producer_identity = (
+        donor_import.get("producer_identity") if isinstance(donor_import, Mapping) else None
+    )
+    inventory = preflight.get("target_mode_inventory")
+    if (
+        selector.get("schema") != "task40extra.review_v27_saved_q0_operation.v1"
+        or selector.get("operation") != expected_operation
+        or selector.get("stop_stage") != stop_stage
+        or selector.get("model_profile") != profile
+        or selector.get("input_sha256") != preflight.get("input_sha256")
+        or not isinstance(donor_import, Mapping)
+        or not isinstance(producer_identity, Mapping)
+        or not isinstance(inventory, Mapping)
+        or selector.get("campaign_window_sha256") is None
+    ):
+        raise RuntimeError("V27 selector or preflight omits its fixed donor/window/mode identity")
+    mode_sha = inventory.get("mode_manifest_sha256")
+    key_sha = inventory.get("ordered_mode_key_sha256")
+    if not isinstance(mode_sha, str) or len(mode_sha) != 64 or not isinstance(key_sha, str) or len(key_sha) != 64:
+        raise RuntimeError("V27 route has no complete frozen mode-manifest/key identity")
+
+    repo_root = Path(__file__).resolve().parents[2]
+    producer_root = Path(os.environ.get("TASK40_V27_PRODUCER_ROOT", "")).resolve()
+    expected_producer_root = (
+        repo_root / str(producer_identity.get("producer_run_directory", ""))
+    ).resolve()
+    if not producer_root.is_dir() or producer_root != expected_producer_root:
+        raise RuntimeError("V27 producer root differs from its service-bound read-only donor identity")
+    replay_root = (
+        repo_root / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/saved_replay"
+    ).resolve()
+    native_root = (
+        repo_root / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/native_consumer"
+    ).resolve()
+    disk_reserve_bytes = 1024**3
+    resource_gates: list[dict[str, Any]] = []
+
+    def allocation_gate(stage: str, facts: Mapping[str, Any]) -> dict[str, Any]:
+        requested = sum(
+            int(facts.get(key, 0))
+            for key in (
+                "additional_payload_bytes",
+                "matrix_payload_bytes",
+                "workspace_bytes",
+                "future_co_resident_reserve_bytes",
+            )
+        )
+        before = _task_cgroup_memory_snapshot()
+        try:
+            memory = _resource_admission(
+                stage,
+                requested,
+                resource_sample=_resource_snapshot,
+                require_task_cgroup=True,
+            )
+        except _ProbeResourceBlocked as error:
+            record = {
+                "stage": stage,
+                "passed": False,
+                "request_facts": dict(facts),
+                "memory_admission": dict(error.facts),
+                "task_cgroup_memory_before": before,
+                "task_cgroup_memory_after": _task_cgroup_memory_snapshot(),
+            }
+            resource_gates.append(record)
+            raise
+        disk_required = int(facts.get("disk_payload_bytes", 0))
+        disk_free = int(shutil.disk_usage(output_directory).free)
+        disk_passed = disk_free >= disk_required + disk_reserve_bytes
+        gate_key = stage
+        for repeated in (
+            ("task40_v27_saved_q0/volume/cell/", "task40_v27_saved_q0/volume/cell"),
+            ("task40_v27_saved_q0/direct/C/provider/", "task40_v27_saved_q0/direct/C/provider"),
+            ("task40_v27_saved_q0/direct/-D/provider/", "task40_v27_saved_q0/direct/-D/provider"),
+        ):
+            if stage.startswith(repeated[0]):
+                gate_key = repeated[1]
+                break
+        record = {
+            **memory,
+            "stage": gate_key,
+            "passed": disk_passed,
+            "observation_count": 1,
+            "maximum_additional_object_upper_bound_bytes": requested,
+            "maximum_disk_payload_bytes": disk_required,
+            "disk_payload_bytes": disk_required,
+            "disk_free_bytes": disk_free,
+            "disk_reserve_bytes": disk_reserve_bytes,
+            "disk_gate_passed": disk_passed,
+            "request_facts": dict(facts),
+            "task_cgroup_memory_before": before,
+            "task_cgroup_memory_after": _task_cgroup_memory_snapshot(),
+        }
+        previous = next((item for item in resource_gates if item.get("stage") == gate_key), None)
+        if previous is None:
+            resource_gates.append(record)
+        else:
+            previous["observation_count"] = int(previous.get("observation_count", 0)) + 1
+            previous["maximum_additional_object_upper_bound_bytes"] = max(
+                int(previous.get("maximum_additional_object_upper_bound_bytes", 0)), requested
+            )
+            previous["maximum_disk_payload_bytes"] = max(
+                int(previous.get("maximum_disk_payload_bytes", 0)), disk_required
+            )
+            previous["last_host_effective_available_bytes"] = memory.get(
+                "host_effective_available_bytes"
+            )
+            previous["last_current_process_cgroup"] = memory.get("current_process_cgroup")
+        if not disk_passed:
+            raise _ProbeResourceBlocked(
+                stage,
+                {
+                    "stage": stage,
+                    "additional_object_upper_bound_bytes": requested,
+                    "disk_payload_bytes": disk_required,
+                    "disk_free_bytes": disk_free,
+                    "disk_reserve_bytes": disk_reserve_bytes,
+                    "disk_gate_passed": False,
+                    "passed": False,
+                },
+            )
+        return record
+
+    current_identity = {
+        "source_sha": source_sha,
+        "run_id": preflight.get("run_id"),
+        "input_sha256": preflight.get("input_sha256"),
+        "physical_model_sha256": preflight.get("physical_model_sha256"),
+        "campaign_window_sha256": selector["campaign_window_sha256"],
+        "mode_manifest_sha256": mode_sha,
+        "ordered_mode_key_sha256": key_sha,
+    }
+    donor_identity_sha = hashlib.sha256(
+        json.dumps(donor_import, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    source_identity = {
+        "donor_identity": dict(donor_import),
+        "execution_identity": current_identity,
+        "donor_identity_sha256": donor_identity_sha,
+    }
+    operation_path = output_directory / "v27_saved_q0_stage.json"
+    partial_path = output_directory / "v20_partial_result.json"
+    if operation_path.exists() or partial_path.exists():
+        raise FileExistsError("refusing to replace existing V27 operation or partial receipt")
+
+    operation: dict[str, Any] = {
+        "schema": "task40extra.review_v27_saved_q0_stage.v1",
+        "status": "FAILED_V27_SAVED_Q0",
+        "classification": "V27_SAVED_ONLY_Q0_CSR",
+        "official_result": False,
+        "stop_stage": stop_stage,
+        "selector_path": str(selector_path),
+        "selector_sha256": selector_sha,
+        "operation": expected_operation,
+        "current_execution_identity": current_identity,
+        "donor_import_identity_sha256": donor_identity_sha,
+        "donor_import_identity": dict(donor_import),
+        "source_identity": source_identity,
+        "saved_only_no_fe_or_native_rebuild": True,
+        "q_map_count": 1,
+        "q_map_branch": 0,
+        "factor_or_solve_built": False,
+        "ksp_created": False,
+        "pde_solved": False,
+    }
+    csr_root = output_directory / "v27_q0_csr"
+    manifest_path = csr_root / "task40_v27_q0_csr_manifest.json"
+    try:
+        payloads = {
+            str(item.get("path")): item
+            for item in producer_identity.get("payloads", [])
+            if isinstance(item, Mapping)
+        }
+        q0_map_path = (producer_root / "v25_selected_q0_map.npz").resolve()
+        lookup_path = (producer_root / "v25_selected_q0_original_to_active_int32.npy").resolve()
+        h_path = (producer_root / "v25_selected_q0_local_H_p.npy").resolve()
+        volume_path = (producer_root / "v25_selected_q0_volume_classes.bin").resolve()
+        surface_path = (producer_root / "v25_selected_q0_surface_functionals.bin").resolve()
+        for name, path in (
+            ("v25_selected_q0_map.npz", q0_map_path),
+            ("v25_selected_q0_original_to_active_int32.npy", lookup_path),
+            ("v25_selected_q0_local_H_p.npy", h_path),
+            ("v25_selected_q0_volume_classes.bin", volume_path),
+            ("v25_selected_q0_surface_functionals.bin", surface_path),
+        ):
+            item = payloads.get(name)
+            if (
+                not isinstance(item, Mapping)
+                or not path.is_relative_to(producer_root)
+                or not path.is_file()
+                or path.stat().st_size != item.get("bytes")
+                or not isinstance(item.get("sha256"), str)
+                or len(item["sha256"]) != 64
+            ):
+                raise ValueError(f"V27 donor payload path/size/hash identity is invalid: {name}")
+        q0_map_uncompressed_bytes = 0
+        with zipfile.ZipFile(q0_map_path) as archive:
+            members = {item.filename: int(item.file_size) for item in archive.infolist()}
+        if not {"data.npy", "indices.npy", "indptr.npy", "shape.npy", "format.npy"} <= set(members):
+            raise ValueError("V27 q0 map NPZ has an unexpected sparse-array inventory")
+        q0_map_uncompressed_bytes = sum(members.values())
+        lookup_bytes = int(payloads[lookup_path.name]["bytes"])
+        h_bytes = int(payloads[h_path.name]["bytes"])
+        witness = donor_import.get("row_structure_witness", {})
+        witness = witness if isinstance(witness, Mapping) else {}
+        witness_path = Path(str(witness.get("path", ""))).resolve()
+        witness_bytes = int(witness.get("bytes", 0))
+        if (
+            not witness_path.is_file()
+            or not witness_path.is_relative_to(repo_root)
+            or witness_path.stat().st_size != witness_bytes
+            or len(str(witness.get("sha256", ""))) != 64
+            or _saved_q_sha256(witness_path) != witness.get("sha256")
+        ):
+            raise ValueError("V27 frozen complete-row witness is missing or changed")
+        map_load_bytes = (
+            q0_map_uncompressed_bytes + lookup_bytes + h_bytes + witness_bytes
+        )
+        allocation_gate(
+            "task40_v27_saved_q0_readonly_inputs_load",
+            {
+                "additional_payload_bytes": int(map_load_bytes),
+                "workspace_bytes": 8 * 1024 * 1024,
+                "future_co_resident_reserve_bytes": 0,
+                "q0_map_uncompressed_payload_bytes": int(q0_map_uncompressed_bytes),
+                "active_lookup_payload_bytes": lookup_bytes,
+                "local_h_payload_bytes": h_bytes,
+                "complete_row_witness_payload_bytes": witness_bytes,
+                "q_map_count": 1,
+                "q4_map_loaded": False,
+                "mmap_or_file_cache_counted_as_memory": True,
+            },
+        )
+
+        from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
+
+        periodic = TASK40_P6_PERIODIC_PROFILES[profile]
+        with np.load(witness_path, allow_pickle=False) as archive:
+            if set(archive.files) != {"row_counts_int64", "wide_offsets_int64"}:
+                raise ValueError("V27 row witness has an unexpected field inventory")
+            row_counts = np.asarray(archive["row_counts_int64"], dtype=np.int64)
+            offsets = np.asarray(archive["wide_offsets_int64"], dtype=np.int64)
+        if row_counts.shape != (777_644,) or offsets.shape != (777_645,):
+            raise ValueError("V27 frozen full q0 row witness has the wrong vector dimensions")
+        if _file_sha256(q0_map_path) != payloads[q0_map_path.name]["sha256"]:
+            raise ValueError("V27 q0 map changed after the service donor binding")
+        q0_map = sparse.load_npz(q0_map_path)
+        if not sparse.isspmatrix_csr(q0_map):
+            raise ValueError("V27 saved q0 map is not CSR")
+        active_lookup = np.load(lookup_path, mmap_mode="r", allow_pickle=False)
+        local_h = np.load(h_path, mmap_mode="r", allow_pickle=False)
+        if (
+            q0_map.shape != (periodic.local_trace_rows + len(local_h), 777_644)
+            or q0_map.shape[0] != periodic.local_trace_rows + int(local_h.size)
+            or periodic.trace_rows_per_q + 4_076 != q0_map.shape[1]
+            or active_lookup.shape != (periodic.local_storage_rows,)
+            or local_h.shape != (sum(periodic.q_port_counts),)
+        ):
+            raise ValueError("V27 saved q0-only map/lookup/H dimensions differ from the frozen profile")
+        with q0_map_path.open("rb") as stream:
+            _advise_file_drop(stream, 0, q0_map_path.stat().st_size)
+        adapter = SavedQ0ContributionAdapter(
+            volume_stream_path=volume_path,
+            surface_stream_path=surface_path,
+            active_lookup=active_lookup,
+            local_h=local_h,
+            q0_map=q0_map,
+            active_rows=int(periodic.local_trace_rows),
+            q0_trace_rows=int(periodic.trace_rows_per_q),
+            q0_port_rows=int(q0_map.shape[1] - periodic.trace_rows_per_q),
+            allocation_gate=allocation_gate,
+            expected_cell_count=int(periodic.local_cell_count),
+            expected_class_count=45,
+        )
+        csr_preflight = preflight_saved_q0_csr(
+            adapter,
+            expected_row_counts=row_counts,
+            expected_offsets=offsets,
+            allocation_gate=allocation_gate,
+        )
+        operation["saved_only_preflight"] = {
+            **dict(csr_preflight),
+            "live_resource_gates": list(resource_gates),
+            "source_map_identity": {
+                "path": str(q0_map_path),
+                "bytes": int(q0_map_path.stat().st_size),
+                "sha256": payloads[q0_map_path.name]["sha256"],
+                "loaded_q_maps": ["q0"],
+            },
+        }
+        blocks, structure_manifest, manifest_path = build_saved_q0_csr_structure(
+            adapter,
+            output_directory=csr_root,
+            expected_row_counts=row_counts,
+            expected_offsets=offsets,
+            allocation_gate=allocation_gate,
+            source_identity=source_identity,
+        )
+        del blocks
+        q0_csr, completed_manifest = fill_saved_q0_csr_values(
+            adapter,
+            manifest_path=manifest_path,
+            allocation_gate=allocation_gate,
+            source_identity=source_identity,
+        )
+        del q0_csr
+        gc.collect()
+        csr_artifacts = completed_manifest.get("csr_artifacts", {})
+        csr_artifacts = csr_artifacts if isinstance(csr_artifacts, Mapping) else {}
+        allocation_gate(
+            "task40_v27_q0_csr_manifest_readback",
+            {
+                "additional_payload_bytes": 0,
+                "workspace_bytes": 8 * 1024 * 1024,
+                "disk_payload_bytes": 0,
+                "read_only_memory_map": True,
+                "manifest_payload_hash_read_bytes": sum(
+                    int(item.get("bytes", 0))
+                    for item in csr_artifacts.values()
+                    if isinstance(item, Mapping)
+                ),
+                "filled_csr_object_released_before_reopen": True,
+            },
+        )
+        q0_csr, completed_manifest = open_saved_q0_csr_from_manifest(manifest_path)
+        operation["csr_manifest_path"] = str(manifest_path)
+        operation["csr_manifest_sha256"] = _sha256_file(manifest_path)
+        operation["csr_status"] = completed_manifest["status"]
+        operation["csr_structure_status"] = structure_manifest["status"]
+
+        replay_artifacts = donor_import.get("saved_replay_manifest", {}).get("artifacts", {})
+        input_record = replay_artifacts.get("inputs") if isinstance(replay_artifacts, Mapping) else None
+        input_path = Path(str(input_record.get("path", ""))).resolve() if isinstance(input_record, Mapping) else Path()
+        if (
+            not isinstance(input_record, Mapping)
+            or not input_path.is_relative_to(replay_root)
+            or not input_path.is_file()
+            or input_path.stat().st_size != input_record.get("bytes")
+            or _file_sha256(input_path) != input_record.get("sha256")
+        ):
+            raise ValueError("V27 saved q0 replay inputs are not bound to the accepted V26 donor")
+        q0_size = int(q0_map.shape[1])
+        readback_reserve = adapter.owner_reserve_facts()
+        vector_bytes = q0_size * np.dtype(np.complex128).itemsize
+        allocation_gate(
+            "task40_v27_q0_csr_native_readback_vectors",
+            {
+                "additional_payload_bytes": int(8 * vector_bytes),
+                "workspace_bytes": int(
+                    9 * vector_bytes
+                    + readback_reserve["maximum_cell_contribution_payload_bytes"]
+                    + readback_reserve["maximum_cell_expansion_dense_workspace_bytes"]
+                    + readback_reserve["maximum_surface_frame_working_bytes"]
+                    + 4 * 1024 * 1024
+                ),
+                "future_co_resident_reserve_bytes": 0,
+                "q0_inputs_to_load": 2,
+                "native_q0_outputs_to_load": 6,
+                "additional_trace_port_masked_inputs": 2,
+                "full_csr_outputs": 4,
+                "component_validation_outputs": 5,
+                "csr_rows_all_columns_validation": True,
+            },
+        )
+        with np.load(input_path, allow_pickle=False) as archive:
+            if not {"q0_case_1", "q0_case_2"} <= set(archive.files):
+                raise ValueError("V27 saved q0 input archive omits either nonzero validation vector")
+            x1 = np.asarray(archive["q0_case_1"])
+            x2 = np.asarray(archive["q0_case_2"])
+        native_cases = donor_import.get("native_cases", {})
+        case1_record = native_cases.get("q0_case_1") if isinstance(native_cases, Mapping) else None
+        case2_record = native_cases.get("q0_case_2") if isinstance(native_cases, Mapping) else None
+        if not isinstance(case1_record, Mapping) or not isinstance(case2_record, Mapping):
+            raise ValueError("V27 donor import lacks both native q0 comparison cases")
+        native1_path = Path(str(case1_record.get("path", ""))).resolve()
+        native2_path = Path(str(case2_record.get("path", ""))).resolve()
+        for path, record in ((native1_path, case1_record), (native2_path, case2_record)):
+            if (
+                not path.is_relative_to(native_root)
+                or not path.is_file()
+                or path.stat().st_size != record.get("bytes")
+                or _file_sha256(path) != record.get("sha256")
+            ):
+                raise ValueError("V27 native q0 case changed after its service donor binding")
+        with np.load(native1_path, allow_pickle=False) as archive:
+            required_native1 = {
+                "native_q0_total",
+                "native_q0_volume",
+                "native_q0_C",
+                "native_q0_minus_D",
+                "native_q0_Hhat",
+            }
+            if not required_native1 <= set(archive.files):
+                raise ValueError("V27 q0 native case 1 omits a required component output")
+            native1 = {name: np.asarray(archive[name]) for name in required_native1}
+        with np.load(native2_path, allow_pickle=False) as archive:
+            if "native_q0_total" not in archive.files:
+                raise ValueError("V27 q0 native case 2 omits the total output")
+            native2 = {"native_q0_total": np.asarray(archive["native_q0_total"])}
+        for path in (input_path, native1_path, native2_path):
+            with path.open("rb") as stream:
+                _advise_file_drop(stream, 0, path.stat().st_size)
+        if any(
+            vector.shape != (q0_size,)
+            or vector.dtype != np.dtype(np.complex128)
+            or not np.isfinite(vector).all()
+            for vector in (x1, x2)
+        ) or not np.any(x1 != 0.0) or not np.any(x2 != 0.0) or np.array_equal(x1, x2):
+            raise ValueError("V27 saved q0 readback inputs must be distinct finite nonzero complex128 vectors")
+        native_component_names = {
+            "volume": "native_q0_volume",
+            "C": "native_q0_C",
+            "minus_D": "native_q0_minus_D",
+            "Hhat": "native_q0_Hhat",
+        }
+        if not {"native_q0_total", *native_component_names.values()} <= set(native1) or "native_q0_total" not in native2:
+            raise ValueError("V27 saved native cases omit q0 total or component outputs")
+        trace_rows = int(periodic.trace_rows_per_q)
+        if q0_size - trace_rows != 4_076:
+            raise ValueError("V27 q0 trace/port split differs from the frozen q0 map")
+
+        def relative_error(left: np.ndarray, right: np.ndarray) -> dict[str, float]:
+            if left.shape != right.shape or not np.isfinite(left).all() or not np.isfinite(right).all():
+                raise ValueError("V27 q0 readback vectors have invalid shape or non-finite entries")
+            absolute = float(np.linalg.norm(left - right))
+            scale = max(float(np.linalg.norm(left)), float(np.linalg.norm(right)), np.finfo(float).tiny)
+            return {"absolute": absolute, "scale": scale, "relative": absolute / scale}
+
+        full1 = np.asarray(q0_csr @ x1)
+        _drop_mmap_pages(q0_csr.data, 0, q0_csr.data.nbytes)
+        _drop_mmap_pages(q0_csr.indices, 0, q0_csr.indices.nbytes)
+        _drop_mmap_pages(q0_csr.indptr, 0, q0_csr.indptr.nbytes)
+        full2 = np.asarray(q0_csr @ x2)
+        _drop_mmap_pages(q0_csr.data, 0, q0_csr.data.nbytes)
+        _drop_mmap_pages(q0_csr.indices, 0, q0_csr.indices.nbytes)
+        _drop_mmap_pages(q0_csr.indptr, 0, q0_csr.indptr.nbytes)
+        x1_trace = x1.copy()
+        x1_trace[trace_rows:] = 0.0
+        x1_port = x1.copy()
+        x1_port[:trace_rows] = 0.0
+        trace_only = np.asarray(q0_csr @ x1_trace)
+        _drop_mmap_pages(q0_csr.data, 0, q0_csr.data.nbytes)
+        _drop_mmap_pages(q0_csr.indices, 0, q0_csr.indices.nbytes)
+        _drop_mmap_pages(q0_csr.indptr, 0, q0_csr.indptr.nbytes)
+        port_only = np.asarray(q0_csr @ x1_port)
+        _drop_mmap_pages(q0_csr.data, 0, q0_csr.data.nbytes)
+        _drop_mmap_pages(q0_csr.indices, 0, q0_csr.indices.nbytes)
+        _drop_mmap_pages(q0_csr.indptr, 0, q0_csr.indptr.nbytes)
+        component_slices = {
+            "volume": (trace_only[:trace_rows], native1["native_q0_volume"][:trace_rows], native1["native_q0_volume"][trace_rows:]),
+            "minus_D": (trace_only[trace_rows:], native1["native_q0_minus_D"][trace_rows:], native1["native_q0_minus_D"][:trace_rows]),
+            "C": (port_only[:trace_rows], native1["native_q0_C"][:trace_rows], native1["native_q0_C"][trace_rows:]),
+            "Hhat": (port_only[trace_rows:], native1["native_q0_Hhat"][trace_rows:], native1["native_q0_Hhat"][:trace_rows]),
+        }
+        component_errors = {}
+        for component, (actual_block, expected_block, expected_off_block) in component_slices.items():
+            component_errors[component] = {
+                "active_block": relative_error(actual_block, expected_block),
+                "native_off_block_relative": float(
+                    np.linalg.norm(expected_off_block)
+                    / max(float(np.linalg.norm(native1[native_component_names[component]])), np.finfo(float).tiny)
+                ),
+            }
+        component_sum = trace_only + port_only
+        full_error_1 = relative_error(full1, native1["native_q0_total"])
+        full_error_2 = relative_error(full2, native2["native_q0_total"])
+        split_sum_error = relative_error(component_sum, full1)
+        all_component_errors = [
+            error["active_block"]["relative"]
+            for error in component_errors.values()
+        ] + [error["native_off_block_relative"] for error in component_errors.values()]
+        readback_path = output_directory / "v27_q0_csr_readback.npz"
+        if readback_path.exists():
+            raise FileExistsError("refusing to overwrite V27 q0 CSR readback outputs")
+        allocation_gate(
+            "task40_v27_q0_csr_readback_persistence",
+            {
+                "disk_payload_bytes": int(4 * vector_bytes),
+                "additional_payload_bytes": 0,
+                "workspace_bytes": 4 * 1024 * 1024,
+                "raw_output_vectors": ["q0_case_1_full", "q0_case_2_full", "q0_case_1_trace_only", "q0_case_1_port_only"],
+                "atomic_write": True,
+            },
+        )
+        temporary_readback = output_directory / ".v27_q0_csr_readback.tmp"
+        with temporary_readback.open("xb") as stream:
+            np.savez(
+                stream,
+                q0_case_1_full=full1,
+                q0_case_2_full=full2,
+                q0_case_1_trace_only=trace_only,
+                q0_case_1_port_only=port_only,
+            )
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary_readback.replace(readback_path)
+        readback_artifact = {
+            "path": readback_path.name,
+            "bytes": int(readback_path.stat().st_size),
+            "sha256": _file_sha256(readback_path),
+            "array_names": ["q0_case_1_full", "q0_case_2_full", "q0_case_1_trace_only", "q0_case_1_port_only"],
+        }
+        readback = {
+            "q0_case_1_full_csr_vs_native_total": full_error_1,
+            "q0_case_2_full_csr_vs_native_total": full_error_2,
+            "q0_case_1_csr_trace_port_masked_components_vs_native": component_errors,
+            "q0_case_1_trace_plus_port_vs_full_csr": split_sum_error,
+            "relative_error_limit": 1.0e-11,
+            "all_gates_passed": bool(
+                max(
+                    [full_error_1["relative"], full_error_2["relative"], split_sum_error["relative"], *all_component_errors],
+                    default=0.0,
+                ) <= 1.0e-11
+            ),
+            "full_csr_multiply_count": 4,
+            "matvecs": [
+                {"input": "q0_case_1", "kind": "full"},
+                {"input": "q0_case_2", "kind": "full"},
+                {"input": "q0_case_1_trace_only", "kind": "masked_trace"},
+                {"input": "q0_case_1_port_only", "kind": "masked_port"},
+            ],
+            "csr_readback_artifact": readback_artifact,
+            "component_method": "four complete q0 CSR matvecs; trace/port-only q0 case 1 inputs separate volume/-D and C/Hhat output blocks",
+            "no_csr_submatrix_copies": True,
+            "no_second_adapter_contribution_pass": True,
+        }
+        if readback["all_gates_passed"] is not True:
+            raise ValueError("V27 complete q0 CSR or component native readback exceeded 1e-11")
+        operation["csr_readback"] = readback
+        operation["csr_readback_artifact"] = readback_artifact
+        operation["status"] = "PASS_COMPLETE_Q0_CSR"
+        operation["classification"] = "V27_COMPLETE_Q0_CSR_NATIVE_READBACK"
+        operation["csr_artifacts"] = dict(completed_manifest["csr_artifacts"])
+        operation["stored_structural_slots"] = int(completed_manifest["stored_structural_slots"])
+        operation["numeric_facts"] = dict(completed_manifest["numeric_pass"]["numeric_facts"])
+        operation["complete_numeric_csr"] = True
+        operation["factor_or_solve_built"] = False
+        del native1, native2, component_sum, full1, full2, trace_only, port_only
+        del x1, x2, x1_trace, x1_port
+        del adapter, q0_map, active_lookup, local_h, row_counts, offsets
+        owner_release_collected = gc.collect()
+        try:
+            resident_pages = int(Path("/proc/self/statm").read_text(encoding="ascii").split()[1])
+            current_rss_bytes = resident_pages * int(os.sysconf("SC_PAGE_SIZE"))
+        except (OSError, ValueError, IndexError):
+            current_rss_bytes = None
+        operation["saved_q0_contribution_owner_release"] = {
+            "released": ["adapter", "q0_map", "active_lookup", "local_h", "row_counts", "offsets"],
+            "garbage_collected_objects": int(owner_release_collected),
+            "current_process_rss_bytes": current_rss_bytes,
+            "task_cgroup_after_release": _task_cgroup_memory_snapshot(),
+            "allocator_or_file_cache_remains_counted": True,
+        }
+
+        factor_root = output_directory / "v27_q0_factor"
+        factor_checkpoint_path = factor_root / "v26_q0_factor_checkpoints.json"
+        try:
+            from src.solvers.task40_v10_p6_mumps import run_task40_v26_selected_q0_factor_lifecycle
+
+            factor_report = run_task40_v26_selected_q0_factor_lifecycle(
+                q0_csr,
+                allocation_gate=allocation_gate,
+                checkpoint_directory=factor_root,
+                current_identity=current_identity,
+            )
+        except _ProbeResourceBlocked as error:
+            factor_report = {
+                "schema": "task40extra.review_v26_selected_q0_factor_lifecycle.v1",
+                "status": "RESOURCE_CONTROLLED_STOP",
+                "selected_q": 0,
+                "failed_stage": error.stage,
+                "resource_blocker": {"stage": error.stage, **dict(error.facts), "passed": False},
+                "checkpoint_path": str(factor_checkpoint_path),
+                "checkpoint_sha256": _sha256_file(factor_checkpoint_path)
+                if factor_checkpoint_path.is_file() else None,
+            }
+        except Exception as error:
+            factor_report = {
+                "schema": "task40extra.review_v26_selected_q0_factor_lifecycle.v1",
+                "status": "FAILED_Q0_FACTOR_LIFECYCLE",
+                "selected_q": 0,
+                "failure_type": type(error).__name__,
+                "failure_message": str(error),
+                "checkpoint_path": str(factor_checkpoint_path),
+                "checkpoint_sha256": _sha256_file(factor_checkpoint_path)
+                if factor_checkpoint_path.is_file() else None,
+            }
+        operation["factor_lifecycle"] = factor_report
+        operation["factor_or_solve_built"] = bool(
+            factor_report.get("q_coverage", {}).get("numeric_factor_built") is True
+        )
+        operation["factor_checkpoint"] = {
+            "path": str(factor_checkpoint_path),
+            "sha256": _sha256_file(factor_checkpoint_path)
+            if factor_checkpoint_path.is_file() else None,
+        }
+        if factor_report.get("status") == "PASS_Q0_FACTOR_PROBE_AND_RHS_SOLVE":
+            operation["status"] = "PASS_COMPLETE_Q0_CSR_AND_FACTOR"
+        elif factor_report.get("status") == "RESOURCE_CONTROLLED_STOP":
+            operation["status"] = "RESOURCE_CONTROLLED_STOP_AFTER_Q0_CSR"
+            operation["failed_stage"] = factor_report.get("failed_stage")
+            operation["resource_blocker"] = factor_report.get("resource_blocker")
+        else:
+            operation["status"] = "FAILED_Q0_FACTOR_LIFECYCLE"
+            operation["failed_stage"] = "q0_factor_lifecycle"
+            operation["failure_type"] = factor_report.get("failure_type")
+            operation["failure_message"] = factor_report.get("failure_message")
+    except _ProbeResourceBlocked as error:
+        existing_manifest = {}
+        if manifest_path.is_file():
+            try:
+                existing_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                pass
+        operation.update(
+            {
+                "status": (
+                    "RESOURCE_CONTROLLED_STOP_AFTER_Q0_CSR"
+                    if existing_manifest.get("status") == "COMPLETE_CSR"
+                    else "RESOURCE_CONTROLLED_STOP_DURING_CSR"
+                    if existing_manifest
+                    else "RESOURCE_CONTROLLED_STOP_BEFORE_CSR"
+                ),
+                "classification": "V27_LIVE_RESOURCE_ADMISSION_BLOCKED",
+                "failed_stage": error.stage,
+                "resource_blocker": {"stage": error.stage, **dict(error.facts), "passed": False},
+                "csr_manifest_path": str(manifest_path) if manifest_path.is_file() else None,
+                "csr_status": existing_manifest.get("status", "NOT_CREATED"),
+                "csr_manifest_sha256": _sha256_file(manifest_path) if manifest_path.is_file() else None,
+                "complete_numeric_csr": existing_manifest.get("status") == "COMPLETE_CSR",
+            }
+        )
+    except Exception as error:
+        existing_manifest = {}
+        if manifest_path.is_file():
+            try:
+                existing_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                pass
+        operation.update(
+            {
+                "status": "FAILED_V27_SAVED_Q0",
+                "classification": "V27_SAVED_ONLY_Q0_CSR_FAILED",
+                "failed_stage": operation.get("failed_stage", "saved_only_q0_csr"),
+                "failure_type": type(error).__name__,
+                "failure_message": str(error),
+                "csr_manifest_path": str(manifest_path) if manifest_path.is_file() else None,
+                "csr_status": existing_manifest.get("status", "NOT_CREATED"),
+                "csr_manifest_sha256": _sha256_file(manifest_path) if manifest_path.is_file() else None,
+                "complete_numeric_csr": existing_manifest.get("status") == "COMPLETE_CSR",
+            }
+        )
+
+    operation["resource_gates"] = list(resource_gates)
+    operation["saved_only_no_fe_or_native_rebuild"] = True
+    _write_json(operation_path, operation)
+    status_code = str(operation.get("status"))
+    csr_built = bool(operation.get("complete_numeric_csr"))
+    factor_built = bool(operation.get("factor_or_solve_built"))
+    controlled = status_code.startswith("RESOURCE_CONTROLLED_STOP")
+    passed = status_code in {"PASS_COMPLETE_Q0_CSR", "PASS_COMPLETE_Q0_CSR_AND_FACTOR"}
+    if passed:
+        partial_status, outcome = "stage_completed", "STAGE_COMPLETED"
+        completed = ["preflight", "selected_reference_q_csr"]
+    elif controlled:
+        partial_status, outcome = "controlled_stop", "RESOURCE_CONTROLLED_STOP"
+        completed = ["preflight", "selected_reference_q_csr"] if csr_built else ["preflight"]
+    else:
+        partial_status, outcome = "failed", "STAGE_FAILED"
+        completed = ["preflight", "selected_reference_q_csr"] if csr_built else ["preflight"]
+    operation_sha = _sha256_file(operation_path)
+    receipt = {
+        "schema": "task40extra.review_v20_partial_result.v2",
+        "status": partial_status,
+        "outcome": outcome,
+        "classification": "SELECTED_REFERENCE_Q_V27_SAVED_ONLY_COMPLETE_CSR",
+        "run_id": preflight.get("run_id"),
+        "profile": profile,
+        "source_sha": source_sha,
+        "input_sha256": preflight.get("input_sha256"),
+        "physical_model_sha256": preflight.get("physical_model_sha256"),
+        "requested_stop_stage": stop_stage,
+        "attempted_stages": ["preflight", stop_stage],
+        "completed_stages": completed,
+        "failed_stage": operation.get("failed_stage") if not passed else None,
+        "stage_result": {"completed_stage": stop_stage if passed else None, "probe_status": status_code},
+        "v27_saved_q0_stage": {
+            "operation_path": operation_path.name,
+            "operation_sha256": operation_sha,
+            "operation_status": status_code,
+            "operation": operation,
+            "selector_path": str(selector_path),
+            "selector_sha256": selector_sha,
+            "donor_import_identity_sha256": donor_identity_sha,
+            "resource_gates": resource_gates,
+        },
+        "q_coverage": {
+            "status": "KNOWN",
+            "expected_q_count": 8,
+            "built_q_count": 1 if csr_built else 0,
+            "full_q_matrix_coverage": "1/8" if csr_built else "0/8",
+            "selected_q": 0,
+            "paired_action_q": 4,
+            "csr_status": "COMPLETE_CSR" if csr_built else operation.get("csr_status", "NOT_CREATED"),
+            "factor_count": int(factor_built),
+            "factor_evicted_after_probe_and_rhs_solve": bool(
+                operation.get("factor_lifecycle", {}).get("cleanup", {}).get("destroy_succeeded") is True
+            ),
+            "max_simultaneous_factors": int(
+                operation.get("factor_lifecycle", {}).get("max_simultaneous_native_objects", {}).get("factors", 0)
+            ),
+            "ksp_created": False,
+            "pde_solved": False,
+            "reason": "V27 imports the frozen V26 donor read-only, constructs only the q0 saved-data CSR, and stops at the first live resource gate; it does not create a KSP, solve the target PDE, or produce official R/T/A.",
+        },
+        "resource_gate": operation.get("resource_blocker") if controlled else None,
+        "cleanup": {"status": "OPERATION_RETURNED", "owner_cleanup": "V27 saved-only stage operation"},
+        "artifact_hashes": {
+            "v20_stage_preflight.json": {
+                "path": "v20_stage_preflight.json",
+                "sha256": _sha256_file(output_directory / "v20_stage_preflight.json"),
+            },
+            operation_path.name: {"path": operation_path.name, "sha256": operation_sha},
+            **(
+                {
+                    manifest_path.name: {
+                        "path": str(manifest_path.relative_to(output_directory)),
+                        "sha256": _sha256_file(manifest_path),
+                    }
+                }
+                if manifest_path.is_file()
+                else {}
+            ),
+            **(
+                {
+                    str(operation["csr_readback_artifact"]["path"]): {
+                        "path": str(operation["csr_readback_artifact"]["path"]),
+                        "sha256": str(operation["csr_readback_artifact"]["sha256"]),
+                    }
+                }
+                if isinstance(operation.get("csr_readback_artifact"), Mapping)
+                else {}
+            ),
+        },
+        "official_result": False,
+        "not_run": ["all other q CSR", *( [] if factor_built else ["q0 factor"] ), "KSP", "PDE", "official R/T/A"],
+        "full_field_release_allowed": False,
+    }
+    _write_json(output_directory / "v20_partial_result.json", receipt)
+    return {
+        "passed": passed or controlled,
+        "errors": [] if passed or controlled else [str(operation.get("failure_message", status_code))],
+        "official_result": False,
+        "status": partial_status,
+        "summary": receipt,
+        "numerical_output_directory": str(output_directory),
+    }
+
+
 def _run_v26_selected_q0_stage(
     resolved_payload: Mapping[str, Any],
     output_directory: Path,
@@ -2169,6 +2980,22 @@ def run_task40_v20_stage(
     )
     _write_json(output_directory / "v20_stage_preflight.json", preflight)
     completed = ["preflight"]
+
+    if (
+        profile == _V22_TARGET_OPERATOR_PROFILE
+        and stop_stage == "selected_reference_q_csr"
+        and os.environ.get("TASK40_V27_OPERATION")
+    ):
+        return _run_v27_saved_q0_stage(
+            resolved_payload,
+            output_directory,
+            source_sha=source_sha,
+            profile=profile,
+            preflight=preflight,
+            modes=modes,
+            mode_rows=mode_rows,
+            stop_stage=stop_stage,
+        )
 
     if (
         profile == _V22_TARGET_OPERATOR_PROFILE

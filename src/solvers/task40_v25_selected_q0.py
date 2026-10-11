@@ -1049,6 +1049,8 @@ def _scan_persisted_volume_stream(path: Path) -> dict[str, int]:
                 raise IOError("saved q0 volume stream ended inside a class matrix")
         mapping_payload_bytes = 0
         maximum_cell_payload_bytes = 0
+        maximum_active_count = 0
+        maximum_trace_count = 0
         for _ in range(cell_count):
             raw = stream.read(_CELL_STREAM_HEADER.size)
             if len(raw) != _CELL_STREAM_HEADER.size:
@@ -1072,6 +1074,8 @@ def _scan_persisted_volume_stream(path: Path) -> dict[str, int]:
             )
             mapping_payload_bytes += cell_payload
             maximum_cell_payload_bytes = max(maximum_cell_payload_bytes, cell_payload)
+            maximum_active_count = max(maximum_active_count, int(nactive))
+            maximum_trace_count = max(maximum_trace_count, int(ntrace))
             stream.seek(cell_payload, os.SEEK_CUR)
             if stream.tell() > file_size:
                 raise IOError("saved q0 volume stream ended inside cell expansion data")
@@ -1083,6 +1087,8 @@ def _scan_persisted_volume_stream(path: Path) -> dict[str, int]:
         "class_payload_bytes": int(class_payload_bytes),
         "mapping_payload_bytes": int(mapping_payload_bytes),
         "maximum_cell_payload_bytes": int(maximum_cell_payload_bytes),
+        "maximum_active_count": int(maximum_active_count),
+        "maximum_trace_count": int(maximum_trace_count),
     }
 
 

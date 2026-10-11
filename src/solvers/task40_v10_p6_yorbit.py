@@ -7,6 +7,7 @@ the reference inverse; no global dense FE operator is formed here.
 from __future__ import annotations
 
 import hashlib
+import os
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Sequence
 
@@ -2071,14 +2072,23 @@ def _v17_checked_row_tile_csr_layout(
     return total_nnz, int(payload)
 
 
+def _v17_sha256_file(path: Path, *, chunk_bytes: int = 4 * 1024 * 1024) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(chunk_bytes), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def _assemble_v17_row_tile_patterns(
     action: Any,
-    q_maps: tuple[sparse.csr_matrix, sparse.csr_matrix],
+    q_maps: tuple[sparse.csr_matrix, ...],
     *,
     allocation_gate: Callable[[str, Mapping[str, Any]], None],
     requested_blocks: tuple[tuple[int, int], ...] | None = None,
     disk_backed_directory: str | Path | None = None,
     disk_backed_stem: str = "v17_q",
+    support_routes_directory: str | Path | None = None,
     structure_checkpoint: Callable[
         [Mapping[str, Any], np.ndarray, np.ndarray], None
     ]
@@ -2105,6 +2115,11 @@ def _assemble_v17_row_tile_patterns(
     disk_backed_root = (
         None if disk_backed_directory is None else Path(disk_backed_directory).resolve()
     )
+    support_routes_root = (
+        None
+        if support_routes_directory is None
+        else Path(support_routes_directory).resolve()
+    )
     if disk_backed_root is not None:
         disk_backed_root.mkdir(parents=True, exist_ok=True)
         if not disk_backed_stem or any(
@@ -2112,6 +2127,19 @@ def _assemble_v17_row_tile_patterns(
             for character in disk_backed_stem
         ):
             raise ValueError("V17 disk-backed stem must be a simple artifact name")
+    if support_routes_root is not None:
+        support_routes_root.mkdir(parents=True, exist_ok=True)
+        if disk_backed_root is None or support_routes_root != disk_backed_root:
+            raise ValueError(
+                "persistent V17 support/routes currently share the disk-backed artifact directory"
+            )
+        if not disk_backed_stem or any(
+            character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
+            for character in disk_backed_stem
+        ):
+            raise ValueError("V17 support/routes stem must be a simple artifact name")
+    if len(q_maps) not in (1, 2):
+        raise ValueError("V17 routing requires one selected q0 map or the complete q0/q1 pair")
     if index_dtype.kind != "i" or index_dtype.itemsize not in (4, 8):
         raise TypeError("V17 row-tile CSR requires signed int32/int64 PETSc indices")
     if any(np.dtype(matrix.indices.dtype) != index_dtype for matrix in q_maps):
@@ -2131,6 +2159,8 @@ def _assemble_v17_row_tile_patterns(
         )
     ):
         raise ValueError("V17 requested blocks must be a nonempty subset of the four q branches")
+    if len(q_maps) == 1 and block_keys != ((0, 0),):
+        raise ValueError("a single V17 q map may only build the selected q0->q0 block")
     if structure_checkpoint is not None and block_keys != ((0, 0),):
         raise ValueError("V17 structure checkpoints are restricted to the selected q0->q0 block")
     block_id = {(p, q): p * 2 + q for p, q in block_keys}
@@ -2161,8 +2191,16 @@ def _assemble_v17_row_tile_patterns(
     pattern_facts: dict[str, Any] = {}
     blocks: dict[tuple[int, int], sparse.csr_matrix] = {}
 
+    support_route_database: Path | None = None
     with tempfile.TemporaryDirectory(prefix="task40-v17-q-row-tile-") as scratch:
-        database_path = Path(scratch) / "support_routes.sqlite3"
+        database_path = (
+            support_routes_root / f"{disk_backed_stem}_support_routes.sqlite3"
+            if support_routes_root is not None
+            else Path(scratch) / "support_routes.sqlite3"
+        )
+        if database_path.exists():
+            raise FileExistsError("V17 support/routes database path already exists")
+        support_route_database = database_path
         initial_disk = shutil.disk_usage(database_path.parent)
         spool_initial_free_bytes = int(initial_disk.free)
         if spool_initial_free_bytes < V17_SQLITE_FREE_SPACE_RESERVE_BYTES:
@@ -2936,7 +2974,20 @@ def _assemble_v17_row_tile_patterns(
         ),
         "support_route_flush_count": route_flush_count,
         "support_route_spool_peak_file_bytes": sqlite_peak_bytes,
-        "support_route_spool_removed_after_pattern": True,
+        "support_route_spool_removed_after_pattern": support_routes_root is None,
+        "support_route_database_path": (
+            None if support_routes_root is None else str(support_route_database)
+        ),
+        "support_route_database_file_bytes": (
+            0
+            if support_routes_root is None or support_route_database is None
+            else int(support_route_database.stat().st_size)
+        ),
+        "support_route_database_sha256": (
+            None
+            if support_routes_root is None or support_route_database is None
+            else _v17_sha256_file(support_route_database)
+        ),
         "sqlite_page_cache_bytes": sqlite_cache,
         "row_tile_rows": V17_ROW_TILE_ROWS,
         "full_shape_bitset_bytes": 0,
@@ -2953,7 +3004,7 @@ def _assemble_v17_row_tile_patterns(
 
 def _accumulate_bounded_q_pattern_values(
     action: Any,
-    q_maps: tuple[sparse.csr_matrix, sparse.csr_matrix],
+    q_maps: tuple[sparse.csr_matrix, ...],
     blocks: dict[tuple[int, int], sparse.csr_matrix],
     *,
     allocation_gate: Callable[[str, Mapping[str, Any]], None],
@@ -3174,7 +3225,7 @@ def _assemble_bounded_v16_q_patterns(
 
 def _assemble_bounded_v17_row_tile_q_patterns(
     action: Any,
-    q_maps: tuple[sparse.csr_matrix, sparse.csr_matrix],
+    q_maps: tuple[sparse.csr_matrix, ...],
     *,
     allocation_gate: Callable[[str, Mapping[str, Any]], None],
     requested_blocks: tuple[tuple[int, int], ...] | None = None,
@@ -3182,6 +3233,7 @@ def _assemble_bounded_v17_row_tile_q_patterns(
     | None = None,
     disk_backed_directory: str | Path | None = None,
     disk_backed_stem: str = "v17_q",
+    support_routes_directory: str | Path | None = None,
     structure_checkpoint: Callable[
         [Mapping[str, Any], np.ndarray, np.ndarray], None
     ]
@@ -3194,6 +3246,7 @@ def _assemble_bounded_v17_row_tile_q_patterns(
         requested_blocks=requested_blocks,
         disk_backed_directory=disk_backed_directory,
         disk_backed_stem=disk_backed_stem,
+        support_routes_directory=support_routes_directory,
         structure_checkpoint=structure_checkpoint,
     )
     patterns = dict(pattern_metadata.pop("pattern_facts_by_block"))

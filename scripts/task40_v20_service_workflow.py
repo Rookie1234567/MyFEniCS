@@ -55,6 +55,14 @@ from src.runners.task40_v10_campaign import (  # noqa: E402
     TASK40_V26_REVIEW_PATH,
     TASK40_V26_REVIEW_SHA256,
     TASK40_V26_STAGE_SCOPE,
+    TASK40_V27_CAMPAIGN_RECEIPT,
+    TASK40_V27_CAMPAIGN_RECEIPT_SHA256,
+    TASK40_V27_CAMPAIGN_SHA256,
+    TASK40_V27_CAMPAIGN_WINDOW,
+    TASK40_V27_REVIEW_COMMIT,
+    TASK40_V27_REVIEW_PATH,
+    TASK40_V27_REVIEW_SHA256,
+    TASK40_V27_STAGE_SCOPE,
     load_fixed_campaign_window,
 )
 
@@ -132,6 +140,30 @@ V26_SELECTED_OPERATION_BY_STAGE = {
 V26_ARTIFACT_ROOT = Path(
     "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl"
 )
+V27_ARTIFACT_ROOT = Path(
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl"
+)
+V27_TARGET_PROFILE = V26_TARGET_PROFILE
+V27_STOP_STAGE_SCOPE = {
+    "selected_reference_q_csr": "complete_q0_numeric_csr",
+}
+V27_SELECTED_Q_STAGES = frozenset(V27_STOP_STAGE_SCOPE)
+V27_SELECTED_OPERATION_BY_STAGE = {
+    "selected_reference_q_csr": "V27_SAVED_ONLY_COMPLETE_Q0_CSR",
+}
+V27_REPLAY_ROOT = V26_ARTIFACT_ROOT / "saved_replay"
+V27_NATIVE_ROOT = V26_ARTIFACT_ROOT / "native_consumer"
+V27_REPLAY_MANIFEST_SHA256 = "6e16ab0f0bae09e472d2806a71bdf28325f3ce768b089fe4a6521099e68b100f"
+V27_NATIVE_RECOVERY_TAG = "f9093c87f81d52b75fbc156e562b3745df45ccf4"
+V27_NATIVE_RECOVERY_SHA256 = "6a558896fc0e83826081d9b418a89d4cd76d45207bf7dd4cd086c68df7c12265"
+V27_NATIVE_CHECKER_SHA256 = "e6b88c9eeb5e2314cdf427f4db76f67ca73aac162307d005d2ac22f455ce4ce2"
+V27_ROW_STRUCTURE_RELATIVE = Path(
+    "results/task40extra_nonseparable_0p7nm/"
+    "task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/"
+    "20261011T111053.208174Z/v26_q0_preallocation_row_structure.npz"
+)
+V27_ROW_STRUCTURE_SHA256 = "b8241f8bf6e6d40c4238a0a01da90cc6e58e06a92b179d524a243fbe65deab69"
+V27_ROW_STRUCTURE_MANIFEST_SHA256 = "f42ab160f8fc3d5ad04026b8c9d13491d2685205d149a9e395fdd2be7e8bb64b"
 V26_PRODUCER_RUN_RELATIVE = Path(
     "results/task40extra_nonseparable_0p7nm/"
     "task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/"
@@ -216,6 +248,16 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _sha256_owned_payload(path: Path) -> str:
+    """Hash donor data in bounded chunks and advise consumed file pages away."""
+    # Reuse V25's established bounded reader, which applies POSIX_FADV_DONTNEED
+    # only to exact file ranges already consumed into the digest. Ordinary
+    # service metadata remains on _sha256_file so this stays donor-scoped.
+    from src.solvers.task40_v25_selected_q0 import _file_sha256
+
+    return _file_sha256(path)
+
+
 def _profile_q_count(profile_identity: str) -> int:
     """Return the periodic q count from the registered, hash-bound profile."""
 
@@ -260,6 +302,7 @@ def _resolve_service_campaign(
     v24_path = (repo_root / TASK40_V24_CAMPAIGN_WINDOW).resolve()
     v25_path = (repo_root / TASK40_V25_CAMPAIGN_WINDOW).resolve()
     v26_path = (repo_root / TASK40_V26_CAMPAIGN_WINDOW).resolve()
+    v27_path = (repo_root / TASK40_V27_CAMPAIGN_WINDOW).resolve()
     if supplied == v22_path:
         if profile != V22_TARGET_PROFILE:
             raise ValueError("the V22 campaign route is restricted to the registered Ny8 target")
@@ -372,8 +415,39 @@ def _resolve_service_campaign(
             raise ValueError("the V26 campaign registration receipt identity or scope changed")
         window = load_fixed_campaign_window(v26_path, require_current_boot=True)
         campaign_version = "V26"
+    elif supplied == v27_path:
+        if profile != V27_TARGET_PROFILE:
+            raise ValueError("the V27 campaign route is restricted to the registered Ny8 target")
+        stage_scope = V27_STOP_STAGE_SCOPE.get(stop_stage)
+        if stage_scope is None or stage_scope not in TASK40_V27_STAGE_SCOPE:
+            raise ValueError("the V27 service stop stage is outside its explicit campaign scope")
+        if _sha256_file(v27_path) != TASK40_V27_CAMPAIGN_SHA256:
+            raise ValueError("the registered V27 campaign window SHA changed")
+        receipt_path = (repo_root / TASK40_V27_CAMPAIGN_RECEIPT).resolve()
+        if (
+            not receipt_path.is_file()
+            or _sha256_file(receipt_path) != TASK40_V27_CAMPAIGN_RECEIPT_SHA256
+        ):
+            raise ValueError("the V27 campaign registration receipt is missing or changed")
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        if (
+            receipt.get("schema") != "task40extra.review_v27_campaign_registration.v1"
+            or receipt.get("manifest_path") != str(TASK40_V27_CAMPAIGN_WINDOW)
+            or receipt.get("manifest_sha256") != TASK40_V27_CAMPAIGN_SHA256
+            or receipt.get("review_sha") != TASK40_V27_REVIEW_COMMIT
+            or receipt.get("review_path") != TASK40_V27_REVIEW_PATH
+            or receipt.get("review_sha256") != TASK40_V27_REVIEW_SHA256
+            or receipt.get("source_at_entry")
+            != "399787abc991e0e30975bc694bd18a9a30c5470e"
+            or receipt.get("stage_scope") != list(TASK40_V27_STAGE_SCOPE)
+            or receipt.get("registration_state")
+            != "REGISTERED_FOR_DEVELOPMENT; require source route/service/checker registration before formal worker"
+        ):
+            raise ValueError("the V27 campaign registration receipt identity or scope changed")
+        window = load_fixed_campaign_window(v27_path, require_current_boot=True)
+        campaign_version = "V27"
     else:
-        raise ValueError("service campaign window is not a registered V19 or V22–V26 path")
+        raise ValueError("service campaign window is not a registered V19 or V22–V27 path")
     return {
         "path": window.path,
         "sha256": window.sha256,
@@ -581,6 +655,10 @@ def _validate_service_stage_input_variant(
         allowed_stage_roots.append(
             (repo_root / V26_ARTIFACT_ROOT / "stage_inputs").resolve()
         )
+    if stop_stage in V27_SELECTED_Q_STAGES:
+        allowed_stage_roots.append(
+            (repo_root / V27_ARTIFACT_ROOT / "stage_inputs").resolve()
+        )
     if not any(input_path.is_relative_to(path) for path in allowed_stage_roots):
         raise ValueError("noncanonical V20/V25/V26 stage input must live in its ignored stage_inputs artifact")
 
@@ -741,6 +819,80 @@ def prepare_v26_selected_q_input(
             "bash scripts/run_case_in_user_service.sh "
             f"{input_path} --task40-v10-campaign-window {TASK40_V26_CAMPAIGN_WINDOW} "
             f"--v26-selected-operation-selector {selector_path}"
+        ),
+    }
+
+
+def prepare_v27_saved_q0_input(
+    stop_stage: str = "selected_reference_q_csr",
+    repo_root: Path = ROOT,
+) -> dict[str, Any]:
+    """Create a V27 selector bound to the immutable V26 donor and fixed V27 window."""
+    if stop_stage not in V27_SELECTED_Q_STAGES:
+        raise ValueError("V27 preparation only supports the reviewed saved-only q0 CSR stage")
+    canonical_relative, _ = V20_INPUTS[V27_TARGET_PROFILE]
+    canonical_path = repo_root / canonical_relative
+    canonical_text = canonical_path.read_text(encoding="utf-8")
+    canonical_data = tomllib.loads(canonical_text)
+    if canonical_data.get("solver", {}).get("preconditioner") != V27_TARGET_PROFILE:
+        raise ValueError("V27 selected-q canonical input/profile identity changed")
+    campaign_path = (repo_root / TASK40_V27_CAMPAIGN_WINDOW).resolve()
+    if not campaign_path.is_file() or _sha256_file(campaign_path) != TASK40_V27_CAMPAIGN_SHA256:
+        raise ValueError("V27 preparation requires the existing fixed campaign window")
+    if _sha256_file(repo_root / TASK40_V27_CAMPAIGN_RECEIPT) != TASK40_V27_CAMPAIGN_RECEIPT_SHA256:
+        raise ValueError("V27 preparation requires the fixed registration receipt")
+    load_fixed_campaign_window(campaign_path, require_current_boot=True)
+    donor_import = verify_v27_v26_donor_import(repo_root=repo_root)
+    rendered = render_stage_input(canonical_text, stop_stage).encode("utf-8")
+    stage_directory = (
+        repo_root / V27_ARTIFACT_ROOT / "stage_inputs" / stop_stage
+    ).resolve()
+    stage_directory.mkdir(parents=True, exist_ok=True)
+    input_path = stage_directory / canonical_path.name
+    selector_path = stage_directory / "selected_operation.json"
+    selector = {
+        "schema": "task40extra.review_v27_saved_q0_operation.v1",
+        "operation": V27_SELECTED_OPERATION_BY_STAGE[stop_stage],
+        "campaign_window_sha256": TASK40_V27_CAMPAIGN_SHA256,
+        "input_sha256": _sha256_bytes(rendered),
+        "model_profile": V27_TARGET_PROFILE,
+        "stop_stage": stop_stage,
+        "donor_import": donor_import,
+    }
+    selector_payload = (
+        json.dumps(selector, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+    ).encode("utf-8")
+    for destination, payload in ((input_path, rendered), (selector_path, selector_payload)):
+        relative = destination.relative_to(repo_root.resolve())
+        ignored = subprocess.run(
+            ["git", "check-ignore", "-q", str(relative)], cwd=repo_root, check=False
+        )
+        if ignored.returncode != 0:
+            raise RuntimeError(f"V27 selected-q artifact is not git-ignored: {relative}")
+        if destination.exists():
+            if destination.read_bytes() != payload:
+                raise FileExistsError(f"refusing to replace different V27 artifact: {destination}")
+        else:
+            with destination.open("xb") as stream:
+                stream.write(payload)
+                stream.flush()
+                os.fsync(stream.fileno())
+    return {
+        "schema": "task40extra.review_v27_saved_q0_stage_input.v1",
+        "stop_stage": stop_stage,
+        "operation": V27_SELECTED_OPERATION_BY_STAGE[stop_stage],
+        "canonical_input_sha256": _sha256_file(canonical_path),
+        "stage_input_path": str(input_path),
+        "stage_input_sha256": _sha256_file(input_path),
+        "selector_path": str(selector_path),
+        "selector_sha256": _sha256_file(selector_path),
+        "donor_import": donor_import,
+        "campaign_window_path": str(campaign_path),
+        "campaign_window_sha256": TASK40_V27_CAMPAIGN_SHA256,
+        "launch_command": (
+            "bash scripts/run_case_in_user_service.sh "
+            f"{input_path} --task40-v10-campaign-window {TASK40_V27_CAMPAIGN_WINDOW} "
+            f"--v27-saved-q0-selector {selector_path}"
         ),
     }
 
@@ -1133,6 +1285,33 @@ def _extract_v26_selected_operation_selector_arg(
     return cleaned, selected
 
 
+def _extract_v27_saved_q0_selector_arg(
+    case_args: list[str],
+) -> tuple[list[str], Path | None]:
+    """Remove the single V27 saved-only q0 selector from forwarded case args."""
+    cleaned: list[str] = []
+    selected: Path | None = None
+    index = 0
+    flag = "--v27-saved-q0-selector"
+    while index < len(case_args):
+        value = case_args[index]
+        if value == flag:
+            if selected is not None or index + 1 >= len(case_args):
+                raise ValueError("V27 saved-q0 selector must appear once with a JSON path")
+            selected = Path(case_args[index + 1]).resolve()
+            index += 2
+            continue
+        if value.startswith(flag + "="):
+            if selected is not None:
+                raise ValueError("V27 saved-q0 selector must appear only once")
+            selected = Path(value.split("=", 1)[1]).resolve()
+            index += 1
+            continue
+        cleaned.append(value)
+        index += 1
+    return cleaned, selected
+
+
 def _bind_v25_selected_operation_selector(
     selector_path: Path,
     *,
@@ -1266,7 +1445,7 @@ def verify_v26_saved_producer_metadata(
             or item.get("sha256") != digest
             or not path.is_file()
             or path.stat().st_size != size
-            or _sha256_file(path) != digest
+            or _sha256_owned_payload(path) != digest
         ):
             raise ValueError(f"V26 saved producer payload metadata mismatch: {name}")
         payloads.append({"path": name, "bytes": size, "sha256": digest})
@@ -1286,6 +1465,152 @@ def verify_v26_saved_producer_metadata(
         "physical_model_sha256": run.get("physical_model_sha256"),
         "metadata_repair_applied": "strict_cross_check_rebind_only; old failure index unchanged",
         "payloads": payloads,
+    }
+
+
+def verify_v27_v26_donor_import(*, repo_root: Path = ROOT) -> dict[str, Any]:
+    """Bind V27 to the already-passed V26 saved replay/native recovery evidence."""
+    producer_root = (repo_root / V26_PRODUCER_RUN_RELATIVE).resolve()
+    producer_identity = verify_v26_saved_producer_metadata(
+        producer_root=producer_root, repo_root=repo_root
+    )
+    replay_root = (repo_root / V27_REPLAY_ROOT).resolve()
+    replay_path = replay_root / "v26_saved_q_replay_manifest.json"
+    if (
+        not replay_path.is_file()
+        or _sha256_file(replay_path) != V27_REPLAY_MANIFEST_SHA256
+    ):
+        raise ValueError("V27 donor saved-replay manifest identity changed")
+    replay = json.loads(replay_path.read_text(encoding="utf-8"))
+    producer_identity_sha = hashlib.sha256(
+        json.dumps(
+            producer_identity, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+    ).hexdigest()
+    if (
+        replay.get("schema") != "task40extra.review_v26_saved_q_replay.v1"
+        or replay.get("status") != "PASS_SAVED_STREAM_REPLAY_NO_NATIVE"
+        or replay.get("producer_identity") != producer_identity
+        or replay.get("producer_identity_sha256") != producer_identity_sha
+        or replay.get("official_result") is not False
+        or replay.get("csr_built") is not False
+    ):
+        raise ValueError("V27 donor saved replay is not the accepted V26 replay record")
+    replay_artifacts: dict[str, Any] = {}
+    for name, item in replay.get("artifacts", {}).items():
+        if not isinstance(item, Mapping) or not isinstance(item.get("path"), str):
+            raise ValueError(f"V27 donor replay artifact record is malformed: {name}")
+        artifact_path = (replay_root / item["path"]).resolve()
+        if (
+            not artifact_path.is_relative_to(replay_root)
+            or not artifact_path.is_file()
+            or artifact_path.stat().st_size != item.get("bytes")
+            or _sha256_owned_payload(artifact_path) != item.get("sha256")
+        ):
+            raise ValueError(f"V27 donor replay artifact changed: {name}")
+        replay_artifacts[name] = {
+            "path": str(artifact_path),
+            "bytes": int(item["bytes"]),
+            "sha256": str(item["sha256"]),
+        }
+
+    native_root = (repo_root / V27_NATIVE_ROOT).resolve()
+    recovery_path = native_root / (
+        f"v26_native_action_recovery_{V27_NATIVE_RECOVERY_TAG}.json"
+    )
+    checker_path = native_root / (
+        f"v26_native_action_recovery_check_{V27_NATIVE_RECOVERY_TAG}.json"
+    )
+    if (
+        not recovery_path.is_file()
+        or _sha256_file(recovery_path) != V27_NATIVE_RECOVERY_SHA256
+        or not checker_path.is_file()
+        or _sha256_file(checker_path) != V27_NATIVE_CHECKER_SHA256
+    ):
+        raise ValueError("V27 donor native recovery/checker hashes changed")
+    recovery = json.loads(recovery_path.read_text(encoding="utf-8"))
+    checker = json.loads(checker_path.read_text(encoding="utf-8"))
+    if (
+        recovery.get("schema") != "task40extra.review_v26_native_action_recovery.v1"
+        or recovery.get("status") != "PASS_RECOVERED_THREE_NATIVE_CASES"
+        or recovery.get("saved_replay_manifest_sha256") != V27_REPLAY_MANIFEST_SHA256
+        or recovery.get("recovery_checker_receipt_sha256") != V27_NATIVE_CHECKER_SHA256
+        or checker.get("schema") != "task40extra.review_v26_native_case_recovery_check.v1"
+        or checker.get("status") != "PASS_READONLY_THREE_CASE_RECOVERY"
+        or checker.get("native_cases") != recovery.get("cases")
+    ):
+        raise ValueError("V27 donor native recovery and independent checker disagree")
+    native_cases: dict[str, Any] = {}
+    for case_name, item in recovery.get("cases", {}).items():
+        if not isinstance(item, Mapping) or not isinstance(item.get("path"), str):
+            raise ValueError(f"V27 donor native case record is malformed: {case_name}")
+        case_path = (native_root / item["path"]).resolve()
+        if (
+            not case_path.is_relative_to(native_root)
+            or not case_path.is_file()
+            or case_path.stat().st_size != item.get("bytes")
+            or _sha256_owned_payload(case_path) != item.get("sha256")
+        ):
+            raise ValueError(f"V27 donor native case payload changed: {case_name}")
+        native_cases[str(case_name)] = {
+            "path": str(case_path),
+            "bytes": int(item["bytes"]),
+            "sha256": str(item["sha256"]),
+            "array_sha256": dict(item.get("array_sha256", {})),
+            "array_shapes": dict(item.get("array_shapes", {})),
+        }
+    if set(native_cases) != {"q0_case_1", "q0_case_2", "q4_pair"}:
+        raise ValueError("V27 donor native recovery lacks one of the three accepted cases")
+    structure_path = (repo_root / V27_ROW_STRUCTURE_RELATIVE).resolve()
+    structure_manifest_path = structure_path.with_suffix(".json")
+    if (
+        not structure_path.is_file()
+        or _sha256_owned_payload(structure_path) != V27_ROW_STRUCTURE_SHA256
+        or not structure_manifest_path.is_file()
+        or _sha256_file(structure_manifest_path) != V27_ROW_STRUCTURE_MANIFEST_SHA256
+    ):
+        raise ValueError("V27 donor full-row structure witness hashes changed")
+    structure_manifest = json.loads(structure_manifest_path.read_text(encoding="utf-8"))
+    if (
+        structure_manifest.get("schema")
+        != "task40extra.review_v26_selected_q0_row_structure_checkpoint.v1"
+        or structure_manifest.get("shape") != [777_644, 777_644]
+        or structure_manifest.get("nnz") != 577_061_168
+        or structure_manifest.get("required_csr_payload_bytes") != 11_544_333_940
+        or structure_manifest.get("array_artifact", {}).get("sha256")
+        != V27_ROW_STRUCTURE_SHA256
+    ):
+        raise ValueError("V27 donor full-row structure witness facts changed")
+    return {
+        "producer_identity": producer_identity,
+        "producer_identity_sha256": producer_identity_sha,
+        "saved_replay_manifest": {
+            "path": str(replay_path),
+            "sha256": V27_REPLAY_MANIFEST_SHA256,
+            "status": str(replay["status"]),
+            "artifacts": replay_artifacts,
+        },
+        "native_recovery_manifest": {
+            "path": str(recovery_path),
+            "sha256": V27_NATIVE_RECOVERY_SHA256,
+            "status": str(recovery["status"]),
+        },
+        "native_recovery_checker": {
+            "path": str(checker_path),
+            "sha256": V27_NATIVE_CHECKER_SHA256,
+            "status": str(checker["status"]),
+        },
+        "native_cases": native_cases,
+        "row_structure_witness": {
+            "path": str(structure_path),
+            "bytes": int(structure_path.stat().st_size),
+            "sha256": V27_ROW_STRUCTURE_SHA256,
+            "manifest_path": str(structure_manifest_path),
+            "manifest_sha256": V27_ROW_STRUCTURE_MANIFEST_SHA256,
+            "shape": [777_644, 777_644],
+            "stored_structural_slots": 577_061_168,
+            "csr_payload_bytes": 11_544_333_940,
+        },
     }
 
 
@@ -1335,6 +1660,53 @@ def _bind_v26_selected_operation_selector(
         "campaign_window_sha256": TASK40_V26_CAMPAIGN_SHA256,
         "input_sha256": _sha256_file(input_path),
         "producer_identity": metadata,
+    }
+
+
+def _bind_v27_saved_q0_selector(
+    selector_path: Path,
+    *,
+    input_path: Path,
+    campaign_registration: dict[str, Any],
+    profile: str,
+    stop_stage: str,
+    repo_root: Path,
+) -> dict[str, Any]:
+    selector_path = selector_path.resolve()
+    allowed_root = (repo_root / V27_ARTIFACT_ROOT).resolve()
+    if not selector_path.is_relative_to(allowed_root) or not selector_path.is_file():
+        raise ValueError("V27 saved-q0 selector must be under its registered artifact directory")
+    expected_operation = V27_SELECTED_OPERATION_BY_STAGE.get(stop_stage)
+    if (
+        campaign_registration.get("version") != "V27"
+        or campaign_registration.get("sha256") != TASK40_V27_CAMPAIGN_SHA256
+        or profile != V27_TARGET_PROFILE
+        or expected_operation is None
+    ):
+        raise ValueError("V27 selector requires its exact registered stage/window")
+    selector = json.loads(selector_path.read_text(encoding="utf-8"))
+    donor_import = verify_v27_v26_donor_import(repo_root=repo_root)
+    if (
+        not isinstance(selector, dict)
+        or selector.get("schema") != "task40extra.review_v27_saved_q0_operation.v1"
+        or selector.get("operation") != expected_operation
+        or selector.get("campaign_window_sha256") != TASK40_V27_CAMPAIGN_SHA256
+        or selector.get("input_sha256") != _sha256_file(input_path)
+        or selector.get("model_profile") != V27_TARGET_PROFILE
+        or selector.get("stop_stage") != stop_stage
+        or selector.get("donor_import") != donor_import
+    ):
+        raise ValueError("V27 selector or V26 donor import differs from its frozen identity")
+    raw = selector_path.read_bytes()
+    return {
+        "selector_path": str(selector_path),
+        "selector_sha256": _sha256_bytes(raw),
+        "operation": expected_operation,
+        "stop_stage": stop_stage,
+        "campaign_window_sha256": TASK40_V27_CAMPAIGN_SHA256,
+        "input_sha256": _sha256_file(input_path),
+        "donor_import": donor_import,
+        "producer_root": str((repo_root / V26_PRODUCER_RUN_RELATIVE).resolve()),
     }
 
 
@@ -5103,6 +5475,332 @@ def _v26_selected_q_readback_checks(
     return checks
 
 
+def _v27_saved_q0_readback_checks(
+    *,
+    output_directory: Path,
+    partial: Mapping[str, Any],
+    expected_stop_stage: str,
+) -> dict[str, bool]:
+    """Independently verify V27's controlled stop or saved q0 CSR readback."""
+    checks: dict[str, bool] = {}
+    stage = partial.get("v27_saved_q0_stage", {})
+    stage = stage if isinstance(stage, Mapping) else {}
+    operation = stage.get("operation", {})
+    operation = operation if isinstance(operation, Mapping) else {}
+    status = str(operation.get("status", ""))
+    try:
+        donor = operation.get("donor_import_identity", {})
+        donor = donor if isinstance(donor, Mapping) else {}
+        source_identity = operation.get("source_identity", {})
+        source_identity = source_identity if isinstance(source_identity, Mapping) else {}
+        execution = operation.get("current_execution_identity", {})
+        execution = execution if isinstance(execution, Mapping) else {}
+        producer = donor.get("producer_identity", {})
+        producer = producer if isinstance(producer, Mapping) else {}
+        selector_path = Path(str(stage.get("selector_path", ""))).resolve()
+        selector = json.loads(selector_path.read_text(encoding="utf-8"))
+        selector_sha = _sha256_file(selector_path)
+        donor_sha = hashlib.sha256(
+            json.dumps(donor, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        checks["v27_selector_donor_window_and_execution_identity_bound"] = bool(
+            expected_stop_stage == "selected_reference_q_csr"
+            and operation.get("schema") == "task40extra.review_v27_saved_q0_stage.v1"
+            and operation.get("stop_stage") == expected_stop_stage
+            and operation.get("operation") == "V27_SAVED_ONLY_COMPLETE_Q0_CSR"
+            and operation.get("selector_sha256") == stage.get("selector_sha256") == selector_sha
+            and selector.get("schema") == "task40extra.review_v27_saved_q0_operation.v1"
+            and selector.get("operation") == operation.get("operation")
+            and selector.get("donor_import") == donor
+            and operation.get("donor_import_identity_sha256") == donor_sha
+            and source_identity.get("donor_identity") == donor
+            and source_identity.get("execution_identity") == execution
+            and execution.get("source_sha") == partial.get("source_sha")
+            and execution.get("run_id") == partial.get("run_id")
+            and execution.get("input_sha256") == partial.get("input_sha256")
+            and execution.get("physical_model_sha256") == partial.get("physical_model_sha256")
+            and execution.get("campaign_window_sha256") == TASK40_V27_CAMPAIGN_SHA256
+            and operation.get("saved_only_no_fe_or_native_rebuild") is True
+            and operation.get("official_result") is False
+            and operation.get("pde_solved") is False
+            and operation.get("ksp_created") is False
+        )
+        replay = donor.get("saved_replay_manifest", {})
+        replay = replay if isinstance(replay, Mapping) else {}
+        recovery = donor.get("native_recovery_manifest", {})
+        recovery = recovery if isinstance(recovery, Mapping) else {}
+        recovery_checker = donor.get("native_recovery_checker", {})
+        recovery_checker = recovery_checker if isinstance(recovery_checker, Mapping) else {}
+        witness = donor.get("row_structure_witness", {})
+        witness = witness if isinstance(witness, Mapping) else {}
+        checks["v27_three_donor_identities_remain_separate_and_fixed"] = bool(
+            producer.get("producer_source_sha") == V26_PRODUCER_SOURCE_SHA
+            and producer.get("producer_run_id") == V26_PRODUCER_RUN_ID
+            and producer.get("producer_run_directory") == str(V26_PRODUCER_RUN_RELATIVE)
+            and replay.get("sha256") == V27_REPLAY_MANIFEST_SHA256
+            and replay.get("status") == "PASS_SAVED_STREAM_REPLAY_NO_NATIVE"
+            and recovery.get("sha256") == V27_NATIVE_RECOVERY_SHA256
+            and recovery.get("status") == "PASS_RECOVERED_THREE_NATIVE_CASES"
+            and recovery_checker.get("sha256") == V27_NATIVE_CHECKER_SHA256
+            and recovery_checker.get("status") == "PASS_READONLY_THREE_CASE_RECOVERY"
+            and witness.get("sha256") == V27_ROW_STRUCTURE_SHA256
+            and witness.get("shape") == [777_644, 777_644]
+            and witness.get("stored_structural_slots") == 577_061_168
+            and source_identity.get("donor_identity_sha256") == donor_sha
+        )
+        operation_receipt_matches = bool(
+            stage.get("operation_status") == status
+            and stage.get("operation_sha256") == _sha256_file(
+                output_directory / str(stage.get("operation_path", ""))
+            )
+            and partial.get("status") in {"controlled_stop", "stage_completed", "failed"}
+            and partial.get("official_result") is False
+            and partial.get("q_coverage", {}).get("expected_q_count") == 8
+        )
+        checks["v27_partial_receipt_binds_raw_operation"] = operation_receipt_matches
+
+        manifest_path = output_directory / "v27_q0_csr" / "task40_v27_q0_csr_manifest.json"
+        readback_path = output_directory / "v27_q0_csr_readback.npz"
+        if status in {"RESOURCE_CONTROLLED_STOP_BEFORE_CSR", "RESOURCE_CONTROLLED_STOP_DURING_CSR"}:
+            blocker = operation.get("resource_blocker", {})
+            blocker = blocker if isinstance(blocker, Mapping) else {}
+            manifest = {}
+            if manifest_path.is_file():
+                try:
+                    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    manifest = {}
+            no_completed_csr = manifest.get("status") != "COMPLETE_CSR"
+            checks["v27_resource_gate_stop_is_explicit_and_csr_state_is_accurate"] = bool(
+                partial.get("status") == "controlled_stop"
+                and partial.get("outcome") == "RESOURCE_CONTROLLED_STOP"
+                and blocker.get("passed") is False
+                and isinstance(blocker.get("stage"), str)
+                and no_completed_csr
+                and partial.get("q_coverage", {}).get("built_q_count") == 0
+                and partial.get("q_coverage", {}).get("full_q_matrix_coverage") == "0/8"
+                and partial.get("q_coverage", {}).get("factor_count") == 0
+                and operation.get("factor_or_solve_built") is False
+            )
+            checks["v27_no_csr_readback_or_factor_claim_after_gate_stop"] = bool(
+                not readback_path.exists()
+                and operation.get("csr_readback") is None
+                and operation.get("factor_or_solve_built") is False
+            )
+            if manifest:
+                checks["v27_partial_structure_manifest_state_matches_operation"] = bool(
+                    operation.get("csr_status") == manifest.get("status")
+                    and manifest.get("status") in {
+                        "ROW_STRUCTURE_CHECKPOINTED",
+                        "STRUCTURE_COMPLETE_VALUES_PENDING",
+                        "NUMERIC_FILL_INCOMPLETE",
+                    }
+                    and manifest.get("q_map_count") == 1
+                    and manifest.get("q_map_branch") == 0
+                )
+            return checks
+
+        if status == "RESOURCE_CONTROLLED_STOP_AFTER_Q0_CSR" and not readback_path.exists():
+            checks["v27_complete_csr_preserved_for_readback_continuation"] = bool(
+                partial.get("status") == "controlled_stop"
+                and operation.get("complete_numeric_csr") is True
+                and operation.get("csr_status") == "COMPLETE_CSR"
+                and partial.get("q_coverage", {}).get("built_q_count") == 1
+            )
+            checks["v27_readback_remains_unclaimed"] = operation.get("csr_readback") is None
+            try:
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                artifact_records = manifest.get("csr_artifacts", {})
+                artifact_records = artifact_records if isinstance(artifact_records, Mapping) else {}
+                csr_artifacts_ok = True
+                for name in ("indptr", "indices", "data"):
+                    item = artifact_records.get(name, {})
+                    item = item if isinstance(item, Mapping) else {}
+                    artifact_path = Path(str(item.get("path", ""))).resolve()
+                    if (
+                        not artifact_path.is_relative_to(manifest_path.parent.resolve())
+                        or not artifact_path.is_file()
+                        or artifact_path.stat().st_size != item.get("bytes")
+                        or _sha256_owned_payload(artifact_path) != item.get("sha256")
+                    ):
+                        csr_artifacts_ok = False
+                        break
+                checks["v27_complete_csr_manifest_and_payload_hashes_verified"] = bool(
+                    csr_artifacts_ok
+                    and manifest.get("schema") == "task40extra.review_v27_saved_q0_csr.v1"
+                    and manifest.get("status") == "COMPLETE_CSR"
+                    and manifest.get("shape") == [777_644, 777_644]
+                    and manifest.get("stored_structural_slots") == 577_061_168
+                    and manifest.get("csr_index_dtype") == np.dtype(np.int32).str
+                    and manifest.get("csr_data_dtype") == np.dtype(np.complex128).str
+                    and operation.get("csr_manifest_sha256") == _sha256_file(manifest_path)
+                )
+            except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError):
+                checks["v27_complete_csr_manifest_and_payload_hashes_verified"] = False
+            return checks
+
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        artifact_records = manifest.get("csr_artifacts", {})
+        artifact_records = artifact_records if isinstance(artifact_records, Mapping) else {}
+        csr_root = manifest_path.parent.resolve()
+        csr_artifacts_ok = True
+        for name in ("indptr", "indices", "data"):
+            item = artifact_records.get(name, {})
+            item = item if isinstance(item, Mapping) else {}
+            path = Path(str(item.get("path", ""))).resolve()
+            if (
+                not path.is_relative_to(csr_root)
+                or not path.is_file()
+                or path.stat().st_size != item.get("bytes")
+                or _sha256_owned_payload(path) != item.get("sha256")
+            ):
+                csr_artifacts_ok = False
+                break
+        csr_metadata_ok = bool(
+            manifest.get("schema") == "task40extra.review_v27_saved_q0_csr.v1"
+            and manifest.get("status") == "COMPLETE_CSR"
+            and manifest.get("shape") == [777_644, 777_644]
+            and manifest.get("stored_structural_slots") == 577_061_168
+            and manifest.get("q_map_count") == 1
+            and manifest.get("q_map_branch") == 0
+            and manifest.get("csr_index_dtype") == np.dtype(np.int32).str
+            and manifest.get("csr_data_dtype") == np.dtype(np.complex128).str
+            and manifest.get("saved_only_no_fe_or_native_rebuild") is True
+            and manifest.get("row_count_witness_matches") is True
+            and operation.get("csr_status") == "COMPLETE_CSR"
+            and operation.get("complete_numeric_csr") is True
+            and operation.get("stored_structural_slots") == 577_061_168
+            and operation.get("csr_manifest_sha256") == _sha256_file(manifest_path)
+            and operation.get("csr_manifest_path") == str(manifest_path)
+        )
+        checks["v27_complete_csr_identity_shape_and_payload_hashes"] = bool(
+            csr_artifacts_ok and csr_metadata_ok
+        )
+
+        artifact = operation.get("csr_readback_artifact", {})
+        artifact = artifact if isinstance(artifact, Mapping) else {}
+        readback_ok = bool(
+            artifact.get("path") == readback_path.name
+            and readback_path.is_file()
+            and readback_path.stat().st_size == artifact.get("bytes")
+            and _sha256_owned_payload(readback_path) == artifact.get("sha256")
+        )
+        donor_artifacts = replay.get("artifacts", {})
+        donor_artifacts = donor_artifacts if isinstance(donor_artifacts, Mapping) else {}
+        input_record = donor_artifacts.get("inputs", {})
+        input_record = input_record if isinstance(input_record, Mapping) else {}
+        input_path = Path(str(input_record.get("path", ""))).resolve()
+        case_records = donor.get("native_cases", {})
+        case_records = case_records if isinstance(case_records, Mapping) else {}
+        native1_record = case_records.get("q0_case_1", {})
+        native2_record = case_records.get("q0_case_2", {})
+        native1_record = native1_record if isinstance(native1_record, Mapping) else {}
+        native2_record = native2_record if isinstance(native2_record, Mapping) else {}
+        native1_path = Path(str(native1_record.get("path", ""))).resolve()
+        native2_path = Path(str(native2_record.get("path", ""))).resolve()
+        donor_inputs_ok = bool(
+            input_path.is_file()
+            and input_path.stat().st_size == input_record.get("bytes")
+            and _sha256_owned_payload(input_path) == input_record.get("sha256")
+            and native1_path.is_file()
+            and native1_path.stat().st_size == native1_record.get("bytes")
+            and _sha256_owned_payload(native1_path) == native1_record.get("sha256")
+            and native2_path.is_file()
+            and native2_path.stat().st_size == native2_record.get("bytes")
+            and _sha256_owned_payload(native2_path) == native2_record.get("sha256")
+        )
+        if not (readback_ok and donor_inputs_ok):
+            checks["v27_readback_raw_outputs_and_donor_cases_hash_bound"] = False
+            checks["v27_four_csr_matvecs_recompute_native_total_and_components"] = False
+            return checks
+        with np.load(readback_path, allow_pickle=False) as archive:
+            expected_output_names = {
+                "q0_case_1_full",
+                "q0_case_2_full",
+                "q0_case_1_trace_only",
+                "q0_case_1_port_only",
+            }
+            output_names_ok = set(archive.files) == expected_output_names
+            outputs = {name: np.asarray(archive[name]) for name in expected_output_names}
+        with np.load(input_path, allow_pickle=False) as archive:
+            x1 = np.asarray(archive["q0_case_1"])
+            x2 = np.asarray(archive["q0_case_2"])
+        with np.load(native1_path, allow_pickle=False) as archive:
+            component_names = {
+                "native_q0_total", "native_q0_volume", "native_q0_C",
+                "native_q0_minus_D", "native_q0_Hhat",
+            }
+            native1 = {name: np.asarray(archive[name]) for name in component_names}
+        with np.load(native2_path, allow_pickle=False) as archive:
+            native2_total = np.asarray(archive["native_q0_total"])
+        q0_size = 777_644
+        trace_rows = 773_568
+        vectors_valid = bool(
+            output_names_ok
+            and all(
+                value.shape == (q0_size,)
+                and value.dtype == np.dtype(np.complex128)
+                and np.isfinite(value).all()
+                for value in (*outputs.values(), x1, x2, *native1.values(), native2_total)
+            )
+            and np.any(x1 != 0.0)
+            and np.any(x2 != 0.0)
+            and not np.array_equal(x1, x2)
+        )
+
+        def relative_error(left: np.ndarray, right: np.ndarray) -> dict[str, float]:
+            absolute = float(np.linalg.norm(left - right))
+            scale = max(float(np.linalg.norm(left)), float(np.linalg.norm(right)), np.finfo(float).tiny)
+            return {"absolute": absolute, "scale": scale, "relative": absolute / scale}
+
+        total1 = relative_error(outputs["q0_case_1_full"], native1["native_q0_total"])
+        total2 = relative_error(outputs["q0_case_2_full"], native2_total)
+        split = relative_error(
+            outputs["q0_case_1_trace_only"] + outputs["q0_case_1_port_only"],
+            outputs["q0_case_1_full"],
+        )
+        native_components = {
+            "volume": (outputs["q0_case_1_trace_only"][:trace_rows], native1["native_q0_volume"][:trace_rows], native1["native_q0_volume"][trace_rows:]),
+            "minus_D": (outputs["q0_case_1_trace_only"][trace_rows:], native1["native_q0_minus_D"][trace_rows:], native1["native_q0_minus_D"][:trace_rows]),
+            "C": (outputs["q0_case_1_port_only"][:trace_rows], native1["native_q0_C"][:trace_rows], native1["native_q0_C"][trace_rows:]),
+            "Hhat": (outputs["q0_case_1_port_only"][trace_rows:], native1["native_q0_Hhat"][trace_rows:], native1["native_q0_Hhat"][:trace_rows]),
+        }
+        component_ok = all(
+            relative_error(actual, expected)["relative"] <= 1.0e-11
+            and float(np.linalg.norm(off_block))
+            / max(float(np.linalg.norm(native1[f"native_q0_{'minus_D' if name == 'minus_D' else name}"])), np.finfo(float).tiny)
+            <= 1.0e-11
+            for name, (actual, expected, off_block) in native_components.items()
+        )
+        recorded = operation.get("csr_readback", {})
+        recorded = recorded if isinstance(recorded, Mapping) else {}
+        checks["v27_readback_raw_outputs_and_donor_cases_hash_bound"] = bool(readback_ok and donor_inputs_ok)
+        checks["v27_four_csr_matvecs_recompute_native_total_and_components"] = bool(
+            vectors_valid
+            and total1["relative"] <= 1.0e-11
+            and total2["relative"] <= 1.0e-11
+            and split["relative"] <= 1.0e-11
+            and component_ok
+            and recorded.get("all_gates_passed") is True
+            and recorded.get("full_csr_multiply_count") == 4
+            and recorded.get("no_second_adapter_contribution_pass") is True
+        )
+        checks["v27_factor_status_does_not_erase_complete_csr"] = bool(
+            status in {
+                "PASS_COMPLETE_Q0_CSR",
+                "PASS_COMPLETE_Q0_CSR_AND_FACTOR",
+                "RESOURCE_CONTROLLED_STOP_AFTER_Q0_CSR",
+                "FAILED_Q0_FACTOR_LIFECYCLE",
+            }
+            and partial.get("q_coverage", {}).get("built_q_count") == 1
+            and partial.get("q_coverage", {}).get("full_q_matrix_coverage") == "1/8"
+        )
+    except Exception:
+        checks["v27_readback_raw_outputs_and_donor_cases_hash_bound"] = False
+        checks["v27_four_csr_matvecs_recompute_native_total_and_components"] = False
+    return checks
+
+
 def _check_partial_result(
     *,
     input_path: Path,
@@ -5144,6 +5842,8 @@ def _check_partial_result(
     v25_expected_accounting = v25_expected_window.with_name("campaign_accounting_v10.jsonl")
     v26_expected_window = (ROOT / TASK40_V26_CAMPAIGN_WINDOW).resolve()
     v26_expected_accounting = v26_expected_window.with_name("campaign_accounting_v10.jsonl")
+    v27_expected_window = (ROOT / TASK40_V27_CAMPAIGN_WINDOW).resolve()
+    v27_expected_accounting = v27_expected_window.with_name("campaign_accounting_v10.jsonl")
     q_only_receipt = (
         partial.get("schema") == "task40extra.review_v20_partial_result.v2"
         and partial.get("classification") == "TARGET_OPERATOR_PROBE_Q_ONLY_SUPPLEMENT"
@@ -5173,6 +5873,11 @@ def _check_partial_result(
         partial.get("schema") == "task40extra.review_v20_partial_result.v2"
         and expected_stop_stage in V26_SELECTED_Q_STAGES
         and isinstance(partial.get("v26_selected_q_stage"), Mapping)
+    )
+    v27_q_receipt = (
+        partial.get("schema") == "task40extra.review_v20_partial_result.v2"
+        and expected_stop_stage in V27_SELECTED_Q_STAGES
+        and isinstance(partial.get("v27_saved_q0_stage"), Mapping)
     )
     q_only_supplement_identity = partial.get("q_only_supplement")
     q_only_supplement_identity = (
@@ -5233,6 +5938,16 @@ def _check_partial_result(
         or campaign_evidence.get("window_path") == str(v26_expected_window)
         or v26_q_receipt
     )
+    v27_stage = partial.get("v27_saved_q0_stage", {})
+    v27_stage = v27_stage if isinstance(v27_stage, Mapping) else {}
+    v27_operation = v27_stage.get("operation", {})
+    v27_operation = v27_operation if isinstance(v27_operation, Mapping) else {}
+    v27_identity_claimed = (
+        v27_operation.get("schema") == "task40extra.review_v27_saved_q0_stage.v1"
+        or campaign_evidence.get("window_sha256") == TASK40_V27_CAMPAIGN_SHA256
+        or campaign_evidence.get("window_path") == str(v27_expected_window)
+        or v27_q_receipt
+    )
     v25_controlled_stop_receipt = bool(
         v25_identity_claimed
         and partial.get("status") == "controlled_stop"
@@ -5265,8 +5980,23 @@ def _check_partial_result(
         and _sha256_file(ROOT / TASK40_V26_CAMPAIGN_RECEIPT)
         == TASK40_V26_CAMPAIGN_RECEIPT_SHA256
     )
+    v27_campaign_identity_valid = (
+        campaign_evidence.get("window_sha256") == TASK40_V27_CAMPAIGN_SHA256
+        and Path(str(campaign_evidence.get("window_path", ""))).resolve()
+        == v27_expected_window
+        and Path(str(campaign_evidence.get("accounting_path", ""))).resolve()
+        == v27_expected_accounting
+        and v27_expected_window.is_file()
+        and _sha256_file(v27_expected_window) == TASK40_V27_CAMPAIGN_SHA256
+        and v27_expected_accounting.is_file()
+        and (ROOT / TASK40_V27_CAMPAIGN_RECEIPT).is_file()
+        and _sha256_file(ROOT / TASK40_V27_CAMPAIGN_RECEIPT)
+        == TASK40_V27_CAMPAIGN_RECEIPT_SHA256
+    )
     expected_completed = STAGE_PREFIXES.get(expected_stop_stage)
     v2_receipt = partial.get("schema") == "task40extra.review_v20_partial_result.v2"
+    if v27_q_receipt:
+        expected_completed = None
     if v2_receipt and expected_stop_stage in {
         "target_operator_probe", "build_and_symbolic", "one_q_numeric"
     }:
@@ -5336,6 +6066,10 @@ def _check_partial_result(
         checks["v26_execution_manifest_window_accounting_and_registration_bind"] = (
             v26_campaign_identity_valid
         )
+    if v27_identity_claimed:
+        checks["v27_execution_manifest_window_accounting_and_registration_bind"] = (
+            v27_campaign_identity_valid
+        )
     if expected_stop_stage in {"build_and_symbolic", "one_q_numeric"} and not v2_receipt:
         checks["target_heavy_authorization_remains_false"] = (
             input_data.get("execution", {}).get("task40_target_heavy_authorized") is False
@@ -5347,6 +6081,7 @@ def _check_partial_result(
         and not v25_volume_receipt
         and not v25_q0_receipt
         and not v26_q_receipt
+        and not v27_q_receipt
         and not v25_controlled_stop_receipt
     ):
         from scripts.task40_v21_readonly_recheck import validate_stage_receipt_semantics
@@ -5586,6 +6321,62 @@ def _check_partial_result(
                 },
             }
         )
+    elif v27_q_receipt:
+        v27_result = partial.get("stage_result", {})
+        v27_result = v27_result if isinstance(v27_result, Mapping) else {}
+        v27_status = str(v27_stage.get("operation_status", ""))
+        v27_complete_csr = v27_operation.get("complete_numeric_csr") is True
+        v27_factor_built = bool(v27_operation.get("factor_or_solve_built") is True)
+        v27_passed = v27_status in {
+            "PASS_COMPLETE_Q0_CSR",
+            "PASS_COMPLETE_Q0_CSR_AND_FACTOR",
+        }
+        v27_controlled = v27_status.startswith("RESOURCE_CONTROLLED_STOP")
+        v27_expected_partial_status = (
+            "stage_completed" if v27_passed else "controlled_stop" if v27_controlled else "failed"
+        )
+        v27_expected_completed = (
+            ["preflight", expected_stop_stage] if v27_complete_csr else ["preflight"]
+        )
+        operation_path = numerical_output / str(v27_stage.get("operation_path", ""))
+        checks.update(
+            {
+                "v27_saved_q0_stage_identity_and_status": (
+                    partial.get("requested_stop_stage") == expected_stop_stage
+                    and v27_operation.get("schema") == "task40extra.review_v27_saved_q0_stage.v1"
+                    and v27_operation.get("operation") == "V27_SAVED_ONLY_COMPLETE_Q0_CSR"
+                    and v27_operation.get("stop_stage") == expected_stop_stage
+                    and v27_result.get("probe_status") == v27_status
+                    and partial.get("status") == v27_expected_partial_status
+                    and partial.get("completed_stages") == v27_expected_completed
+                    and partial.get("official_result") is False
+                    and operation_path.is_file()
+                    and operation_path.resolve().is_relative_to(numerical_output.resolve())
+                    and _sha256_file(operation_path) == v27_stage.get("operation_sha256")
+                    and v27_operation.get("selector_sha256") == v27_stage.get("selector_sha256")
+                ),
+                "v27_q_coverage_and_factor_scope_are_accurate": (
+                    partial.get("q_coverage", {}).get("built_q_count")
+                    == (1 if v27_complete_csr else 0)
+                    and partial.get("q_coverage", {}).get("full_q_matrix_coverage")
+                    == ("1/8" if v27_complete_csr else "0/8")
+                    and partial.get("q_coverage", {}).get("csr_status")
+                    == ("COMPLETE_CSR" if v27_complete_csr else v27_operation.get("csr_status", "NOT_CREATED"))
+                    and partial.get("q_coverage", {}).get("factor_count") == int(v27_factor_built)
+                    and partial.get("q_coverage", {}).get("pde_solved") is False
+                    and v27_operation.get("ksp_created") is False
+                    and v27_operation.get("pde_solved") is False
+                ),
+                **{
+                    name: passed
+                    for name, passed in _v27_saved_q0_readback_checks(
+                        output_directory=numerical_output,
+                        partial=partial,
+                        expected_stop_stage=expected_stop_stage,
+                    ).items()
+                },
+            }
+        )
     elif v26_q_receipt:
         v26_stage = partial.get("stage_result", {})
         v26_stage = v26_stage if isinstance(v26_stage, Mapping) else {}
@@ -5766,6 +6557,7 @@ def run_service(
     case_args, v24_cd_selector_path = _extract_v24_cd_selector_arg(case_args)
     case_args, v25_selector_path = _extract_v25_selected_operation_selector_arg(case_args)
     case_args, v26_selector_path = _extract_v26_selected_operation_selector_arg(case_args)
+    case_args, v27_selector_path = _extract_v27_saved_q0_selector_arg(case_args)
     input_path, campaign_path, stop_stage, data = _parse_case_arguments(case_args)
     canonical_relative, _supported = V20_INPUTS[data["solver"]["preconditioner"]]
     canonical_path = repo_root / canonical_relative
@@ -5810,6 +6602,16 @@ def run_service(
         raise ValueError("V26 selected-operation selector cannot be combined with V23/V24/V25 selectors")
     if campaign_registration.get("version") == "V26" and v26_selector_path is None:
         raise ValueError("V26 operations require their explicit selected-operation selector")
+    if v27_selector_path is not None and (
+        campaign_registration.get("version") != "V27"
+        or q_only_scan_directory is not None
+        or v24_cd_selector_path is not None
+        or v25_selector_path is not None
+        or v26_selector_path is not None
+    ):
+        raise ValueError("V27 saved-q0 selector cannot be combined with V23–V26 selectors")
+    if campaign_registration.get("version") == "V27" and v27_selector_path is None:
+        raise ValueError("V27 operations require their explicit saved-q0 selector")
     q_only_binding = (
         _bind_v23_q_only_scan_checkpoint(
             q_only_scan_directory,
@@ -5859,6 +6661,18 @@ def run_service(
         if v26_selector_path is not None
         else None
     )
+    v27_binding = (
+        _bind_v27_saved_q0_selector(
+            v27_selector_path,
+            input_path=input_path,
+            campaign_registration=campaign_registration,
+            profile=str(data["solver"]["preconditioner"]),
+            stop_stage=stop_stage,
+            repo_root=repo_root,
+        )
+        if v27_selector_path is not None
+        else None
+    )
     fixed_campaign = Path(campaign_registration["path"])
     campaign_sha256 = str(campaign_registration["sha256"])
     branch = subprocess.check_output(["git", "branch", "--show-current"], cwd=repo_root, text=True).strip()
@@ -5867,7 +6681,9 @@ def run_service(
     if branch != "task40extra_0p7nm_engineering" or dirty.strip():
         raise RuntimeError("V20 user-service requires the frozen Task40 branch and clean source")
 
-    if campaign_registration.get("version") == "V26":
+    if campaign_registration.get("version") == "V27":
+        artifact_root = V27_ARTIFACT_ROOT
+    elif campaign_registration.get("version") == "V26":
         artifact_root = V26_ARTIFACT_ROOT
     elif campaign_registration.get("version") == "V25":
         artifact_root = V25_ARTIFACT_ROOT
@@ -5911,6 +6727,8 @@ def run_service(
         record["v25_selected_operation_selector_binding"] = dict(v25_binding)
     if v26_binding is not None:
         record["v26_selected_operation_selector_binding"] = dict(v26_binding)
+    if v27_binding is not None:
+        record["v27_saved_q0_selector_binding"] = dict(v27_binding)
     event_identity = {
         key: record[key]
         for key in (
@@ -6021,6 +6839,15 @@ def run_service(
                     ),
                     "TASK40_V26_FAILURE_INDEX_SHA256": V26_FAILURE_INDEX_SHA256,
                     "TASK40_V26_VERIFIED_INPUT_SHA256": V26_VERIFIED_INPUT_SHA256,
+                }
+            )
+        if v27_binding is not None:
+            environment.update(
+                {
+                    "TASK40_V27_SELECTOR_PATH": str(v27_binding["selector_path"]),
+                    "TASK40_V27_SELECTOR_SHA256": str(v27_binding["selector_sha256"]),
+                    "TASK40_V27_OPERATION": str(v27_binding["operation"]),
+                    "TASK40_V27_PRODUCER_ROOT": str(v27_binding["producer_root"]),
                 }
             )
 
@@ -6263,6 +7090,12 @@ def main(argv: list[str] | None = None) -> int:
         choices=sorted(V26_SELECTED_Q_STAGES),
         default="selected_reference_q_build_only",
     )
+    v27_prepare_parser = subparsers.add_parser("prepare-v27-saved-q0-input")
+    v27_prepare_parser.add_argument(
+        "--stop-stage",
+        choices=sorted(V27_SELECTED_Q_STAGES),
+        default="selected_reference_q_csr",
+    )
     partial_parser = subparsers.add_parser("check-partial")
     partial_parser.add_argument("--input", type=Path, required=True)
     partial_parser.add_argument("--summary", type=Path, required=True)
@@ -6294,6 +7127,16 @@ def main(argv: list[str] | None = None) -> int:
         print(
             json.dumps(
                 prepare_v26_selected_q_input(args.stop_stage),
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return 0
+    if args.command == "prepare-v27-saved-q0-input":
+        print(
+            json.dumps(
+                prepare_v27_saved_q0_input(args.stop_stage),
                 ensure_ascii=False,
                 sort_keys=True,
                 indent=2,
