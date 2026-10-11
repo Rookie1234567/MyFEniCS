@@ -2,7 +2,7 @@
 
 | 固定对象 | 完整结果 | 边界与证据 |
 |---|---|---|
-| 0.7nm NOTCH、25576tet/p5/828；7068阶harmonic粗层+原38块RAS | H准备时限用尽，未进入完整迭代；true=unknown / NOT_RUN；strict=False | global fine K/S/LU0；局部/粗因子存在；[回应](response_v74.md) · [完整场与费用](outcomes/local_maxwell_harmonic_coarse_v74.md) |
+| 0.7nm NOTCH、25576tet/p5/828；7068阶harmonic粗层+原38块RAS | H准备时限用尽，未进入完整迭代；true=unknown / NOT_RUN；strict=False | global fine K/S/LU0；881宏因子已释放，迭代PC numeric0；[回应](response_v74.md) · [完整场与费用](outcomes/local_maxwell_harmonic_coarse_v74.md) |
 
 不减少细层空间；用每个宏内原Maxwell方程替换粗基内部形状。保留全部失败与费用，不授连续精度、NN20或2TB48h资格。
 
