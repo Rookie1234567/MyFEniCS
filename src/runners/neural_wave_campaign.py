@@ -121,6 +121,18 @@ def worker_stop_time(spec, deadline):
     return deadline - reserve
 
 
+def launch_stable_window(spec, directory, hard):
+    """Successful current PSI checks use wall time, not the old failure pool."""
+    if spec.get("campaign_version") in (31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42, 43, 44, 45):
+        from src.runners.block_wave_admission import stable_window as qualified_stability
+        return qualified_stability(directory, hard, seconds=60)
+    from src.runners.feinn_resources import stable_window
+    from src.runners.neural_wave_dependencies import resource_observation_cost
+    if resource_observation_cost() + 64 >= 1200:
+        raise RuntimeError("V30_RESOURCE_OBSERVATION_BUDGET_REACHED")
+    return stable_window(directory, hard, seconds=60)
+
+
 def durable(spec, *, origin, attempt=1):
     from src.runners.durable_terminal import launch_tmux
     from src.runners.w1_admission_scope import capture_scope
@@ -268,7 +280,7 @@ def durable(spec, *, origin, attempt=1):
 
 def launch(spec):
     from benchmarks.subreaper_watchdog import supervise
-    from src.runners.feinn_resources import envelope, Health, stable_window
+    from src.runners.feinn_resources import envelope, Health
     from src.runners.fresh_component_receiver import (
         bind_own_terminal_core,
         set_own_low_priority,
@@ -357,21 +369,9 @@ def launch(spec):
         try:
             if shutil.disk_usage(ROOT).free < 50 * 2**30:
                 raise RuntimeError("STORAGE_START_GATE_FAILED")
-            from src.runners.neural_wave_dependencies import (
-                fresh_admission,
-                resource_observation_cost,
-            )
+            from src.runners.neural_wave_dependencies import fresh_admission
 
-            if spec.get("campaign_version") in (31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42, 43, 44):
-                from src.runners.block_wave_admission import (
-                    stable_window as qualified_stability,
-                )
-
-                qualified_stability(directory, hard, seconds=60)
-            else:
-                if resource_observation_cost() + 64 >= 1200:
-                    raise RuntimeError("V30_RESOURCE_OBSERVATION_BUDGET_REACHED")
-                stable_window(directory, hard, seconds=60)
+            launch_stable_window(spec, directory, hard)
             facts = fresh_admission(directory, hard, scope=terminal["allowed_scope"])
             set_own_low_priority()
             bind_own_terminal_core(terminal, facts["cpu"])

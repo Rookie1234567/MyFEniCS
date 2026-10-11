@@ -396,3 +396,16 @@ def test_actual_v45_durable_selects_short_task_socket_namespace(tmp_path,monkeyp
     result=campaign.durable(spec,origin=monotonic())
     assert result["socket_directory"]==root/"sockets"
     assert result["management_supervised"] and len(calls)==1
+
+
+def test_actual_v45_launch_successful_psi_ignores_exhausted_legacy_observation_pool(tmp_path,monkeypatch):
+    from src.runners.neural_wave_campaign import launch_stable_window
+    calls=[]
+    monkeypatch.setattr("src.runners.neural_wave_dependencies.resource_observation_cost",lambda:1200)
+    monkeypatch.setattr("src.runners.block_wave_admission.stable_window",
+        lambda *args,**kwargs:calls.append((args,kwargs)))
+    launch_stable_window(dict(campaign_version=45),tmp_path,16*2**30)
+    assert len(calls)==1 and calls[0][1]["seconds"]==60
+    assert calls[0][0][1]==16*2**30
+    with pytest.raises(RuntimeError,match="OBSERVATION_BUDGET"):
+        launch_stable_window(dict(campaign_version=30),tmp_path,16*2**30)
