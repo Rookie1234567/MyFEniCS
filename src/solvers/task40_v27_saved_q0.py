@@ -37,9 +37,14 @@ _VOLUME_CLASS_HEADER = struct.Struct("<II")
 def _read_saved_npy_header(stream: Any) -> dict[str, Any]:
     """Read a NumPy header without materializing the array payload."""
     version = np.lib.format.read_magic(stream)
-    if version not in {(1, 0), (2, 0), (3, 0)}:
+    readers = {
+        (1, 0): np.lib.format.read_array_header_1_0,
+        (2, 0): np.lib.format.read_array_header_2_0,
+    }
+    reader = readers.get(version)
+    if reader is None:
         raise ValueError(f"unsupported saved q0 NPY format version: {version}")
-    shape, fortran_order, dtype = np.lib.format._read_array_header(stream, version)
+    shape, fortran_order, dtype = reader(stream)
     dtype = np.dtype(dtype)
     if dtype.hasobject or any(int(dimension) < 0 for dimension in shape):
         raise ValueError("saved q0 NPY header contains an unsafe dtype or shape")
