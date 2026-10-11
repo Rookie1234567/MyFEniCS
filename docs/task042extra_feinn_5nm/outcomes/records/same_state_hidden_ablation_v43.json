@@ -1,0 +1,475 @@
+{
+  "schema": "task42extra.v43.ablation.v1",
+  "parent": {
+    "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_fttnn_learned/checkpoints/committed_000023.pt",
+    "sha256": "820482a3ff75c87203f301e628b5874be2e387b0627b8765a96e1a8ae6076c2f",
+    "bytes": 1887719,
+    "input_kind": "unlabelled_complete_round4_boundary",
+    "binding": {
+      "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+      "input_sha256": "e3e1dcae7615706401d1b6ffee885cb348d98b94d647ee484cd9fba6bc094d9d",
+      "design_sha256": "59ea6a6ad008a835671fae2b17cc324e85abe1536bcc581139ef24f54941c21b",
+      "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+      "model_kind": "fttnn",
+      "metric_kind": "native_euc",
+      "route": "BLOCH_FTTNN_CORE_LEARNED",
+      "phase_sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+    },
+    "inherited_counts": {
+      "core_visits": 12,
+      "LSMR_iterations": 3358,
+      "LSMR_unretained_iterations_upper_bound": 0,
+      "accepted_core_updates": 12,
+      "effective_core_updates": 12,
+      "accepted_hidden_updates": 4,
+      "effective_hidden_updates": 4,
+      "hidden_actual_calls": 53,
+      "K": 3394,
+      "KH": 3394,
+      "B": 3382,
+      "BH": 3394,
+      "round_audits": 4,
+      "uncommitted_K": 0,
+      "uncommitted_KH": 0
+    },
+    "path_source": "outcomes/records/run_index_v42.json (unique hash-bound file entry)",
+    "parent_result_status": "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED",
+    "required_parent_prefix_seconds": 2920.6633467029314
+  },
+  "common_rounds": [
+    {
+      "total_round": 6,
+      "records": {
+        "BLOCH_FTTNN_R4_LEARNED_CONTINUE": {
+          "round": 5,
+          "native": 0.42896096242169496,
+          "start_native": 0.43520166881457223,
+          "relative_native_improvement": 0.014339803452215779,
+          "original_equation": {
+            "native_relative": 0.42896096242169496,
+            "augmented_relative": 0.42896096242169496,
+            "original_total_augmented_relative": 0.20319956338790077,
+            "port_absolute": 3.6620600349847215e-15,
+            "port_full_rhs_relative": 1.2582582589404606e-14,
+            "port_operation_relative": 9.162727865821684e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 11.600678183205778,
+            "full_coefficient_norm": 16.930837429349666,
+            "port_unknown_norm": 0.2868933967854206,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 18,
+            "LSMR_iterations": 5158,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 18,
+            "effective_core_updates": 18,
+            "accepted_hidden_updates": 6,
+            "effective_hidden_updates": 6,
+            "hidden_actual_calls": 81,
+            "K": 5212,
+            "KH": 5212,
+            "B": 5194,
+            "BH": 5212,
+            "round_audits": 6,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 6,
+            "boundary_sha256": "8495e6e0687bceda7dd9e87e16385e35c77f254703763791776254c57a59b51f",
+            "field_sha256": "884b2b909f358e626c208a893b8de57da11c4741c332b2c256bed01654375c7b",
+            "source_sha": "dce792d18a45a1c874c29dfa4a42a8052fffe40f",
+            "design_sha256": "5145a85f08bce5bdf6008c3451cfbc03aa05f40d0df5894a03cb521d15adb3d9",
+            "native_relative": 0.42896096242169496,
+            "augmented_relative": 0.42896096242169496,
+            "scattered_E_relative": 0.13219282339575314,
+            "scattered_H_relative": 0.13242149290926544,
+            "scattered_curl_relative": 0.13242149290926544,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 436654080
+          },
+          "continuation_policy_decision": {
+            "allowed": true,
+            "reason": "ROUND6_DIAGNOSTIC_ONLY"
+          },
+          "predeclared_continuation_allowed": true
+        },
+        "BLOCH_FTTNN_R4_FREEZE_ABLATION": {
+          "round": 5,
+          "native": 0.4299737710427059,
+          "start_native": 0.4352816935030475,
+          "relative_native_improvement": 0.012194223969367222,
+          "original_equation": {
+            "native_relative": 0.4299737710427059,
+            "augmented_relative": 0.4299737710427059,
+            "original_total_augmented_relative": 0.20367933261544058,
+            "port_absolute": 2.2204477241975257e-16,
+            "port_full_rhs_relative": 7.629303345183261e-16,
+            "port_operation_relative": 5.5478981385710175e-18,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 11.618029468210304,
+            "full_coefficient_norm": 16.956140293731693,
+            "port_unknown_norm": 0.28733481274750383,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 18,
+            "LSMR_iterations": 5158,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 18,
+            "effective_core_updates": 18,
+            "accepted_hidden_updates": 4,
+            "effective_hidden_updates": 4,
+            "hidden_actual_calls": 53,
+            "K": 5212,
+            "KH": 5212,
+            "B": 5194,
+            "BH": 5212,
+            "round_audits": 6,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 6,
+            "boundary_sha256": "b3fea9ac81dc3ed022c47953e1860289fc594723b4f2188cd8ed2f1ac8ea14b8",
+            "field_sha256": "1124545197a72dfd2e3ae4eb0cba0be604c349e4493d35635c3b2ab4b6322f7d",
+            "source_sha": "dce792d18a45a1c874c29dfa4a42a8052fffe40f",
+            "design_sha256": "5145a85f08bce5bdf6008c3451cfbc03aa05f40d0df5894a03cb521d15adb3d9",
+            "native_relative": 0.4299737710427059,
+            "augmented_relative": 0.4299737710427059,
+            "scattered_E_relative": 0.1338579672917671,
+            "scattered_H_relative": 0.13407695799631708,
+            "scattered_curl_relative": 0.13407695799631708,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 444915712
+          },
+          "continuation_policy_decision": {
+            "allowed": true,
+            "reason": "ROUND6_DIAGNOSTIC_ONLY"
+          },
+          "predeclared_continuation_allowed": true
+        }
+      }
+    },
+    {
+      "total_round": 8,
+      "records": {
+        "BLOCH_FTTNN_R4_LEARNED_CONTINUE": {
+          "round": 7,
+          "native": 0.426368073350993,
+          "start_native": 0.42682415714404925,
+          "relative_native_improvement": 0.0010685519678828857,
+          "original_equation": {
+            "native_relative": 0.426368073350993,
+            "augmented_relative": 0.426368073350993,
+            "original_total_augmented_relative": 0.20197130726848653,
+            "port_absolute": 8.881852261467044e-16,
+            "port_full_rhs_relative": 3.0517424225478437e-15,
+            "port_operation_relative": 2.2421598595912075e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 11.49803403283547,
+            "full_coefficient_norm": 16.781058956014736,
+            "port_unknown_norm": 0.2843652922253674,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 24,
+            "LSMR_iterations": 6905,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 24,
+            "effective_core_updates": 24,
+            "accepted_hidden_updates": 8,
+            "effective_hidden_updates": 8,
+            "hidden_actual_calls": 109,
+            "K": 6977,
+            "KH": 6977,
+            "B": 6953,
+            "BH": 6977,
+            "round_audits": 8,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 8,
+            "boundary_sha256": "85a1da5759761e0fcebb5a95e60eba8451fc1b4cfe81523f0c440798c1205b3d",
+            "field_sha256": "393565208a88fa7ed78f3aa7cb3fcdb10674c80a8d3d3be9eb833cc5a03d99a3",
+            "source_sha": "dce792d18a45a1c874c29dfa4a42a8052fffe40f",
+            "design_sha256": "5145a85f08bce5bdf6008c3451cfbc03aa05f40d0df5894a03cb521d15adb3d9",
+            "native_relative": 0.426368073350993,
+            "augmented_relative": 0.426368073350993,
+            "scattered_E_relative": 0.12228721217651885,
+            "scattered_H_relative": 0.12254303500479195,
+            "scattered_curl_relative": 0.12254303500479195,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 436924416
+          },
+          "continuation_policy_decision": {
+            "allowed": false,
+            "reason": "NO_CONTINUED_JOINT_PROGRESS",
+            "ratios_R_E_H": [
+              0.993955419495369,
+              0.9250669517090251,
+              0.9254014005774565
+            ],
+            "ordinary": false,
+            "refinement": false
+          },
+          "predeclared_continuation_allowed": false
+        },
+        "BLOCH_FTTNN_R4_FREEZE_ABLATION": {
+          "round": 7,
+          "native": 0.426728354381651,
+          "start_native": 0.42730334450544527,
+          "relative_native_improvement": 0.0013456251423909057,
+          "original_equation": {
+            "native_relative": 0.426728354381651,
+            "augmented_relative": 0.426728354381651,
+            "original_total_augmented_relative": 0.20214197302724476,
+            "port_absolute": 3.910834430173976e-18,
+            "port_full_rhs_relative": 1.3437354041454554e-17,
+            "port_operation_relative": 9.878119283480265e-20,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 11.495682659096033,
+            "full_coefficient_norm": 16.77744227812922,
+            "port_unknown_norm": 0.2842586951228154,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 24,
+            "LSMR_iterations": 6923,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 24,
+            "effective_core_updates": 24,
+            "accepted_hidden_updates": 4,
+            "effective_hidden_updates": 4,
+            "hidden_actual_calls": 53,
+            "K": 6995,
+            "KH": 6995,
+            "B": 6971,
+            "BH": 6995,
+            "round_audits": 8,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 8,
+            "boundary_sha256": "2cb00e16c6664f0098f5e07c32d42a42f7c7cad6c4150962914721c901f86ba7",
+            "field_sha256": "3060c2acfbc5f1c5e4d23d70344172d9ed1ff05a92ae4004b1f17024d5c38b7a",
+            "source_sha": "dce792d18a45a1c874c29dfa4a42a8052fffe40f",
+            "design_sha256": "5145a85f08bce5bdf6008c3451cfbc03aa05f40d0df5894a03cb521d15adb3d9",
+            "native_relative": 0.426728354381651,
+            "augmented_relative": 0.426728354381651,
+            "scattered_E_relative": 0.12202240559199468,
+            "scattered_H_relative": 0.12226941421112858,
+            "scattered_curl_relative": 0.12226941421112858,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 444477440
+          },
+          "continuation_policy_decision": {
+            "allowed": false,
+            "reason": "AUTHORIZED_TOTAL_ROUND_LIMIT"
+          },
+          "predeclared_continuation_allowed": false
+        }
+      }
+    }
+  ],
+  "comparison_scope": "Both inherit four learning rounds; only later hidden updates differ",
+  "common_wall": {
+    "common_new_wall_seconds": 1595.7732996731065,
+    "selected": {
+      "v43_bloch_learned_continue": {
+        "elapsed_route_seconds": 1475.3654477691744,
+        "kind": "core",
+        "checkpoint": {
+          "name": "committed_000018.pt",
+          "sha256": "b3f73572cacc05c42afdbc1ad66a648d4419ccbe2ea33a29a55a750882b6822f",
+          "bytes": 1894567
+        },
+        "route": "BLOCH_FTTNN_R4_LEARNED_CONTINUE",
+        "checkpoint_path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/checkpoints/committed_000018.pt",
+        "saved_field_pair": {
+          "c": {
+            "numerator": 0.0,
+            "denominator": 16.751080549258024,
+            "relative": 0.0
+          },
+          "r": {
+            "numerator": 0.0,
+            "denominator": 0.12413231583742113,
+            "relative": 0.0
+          }
+        },
+        "checkpoint_numerical_source": "dce792d18a45a1c874c29dfa4a42a8052fffe40f",
+        "diagnostic_source": "bc85c8af422acb77f3dca599334b6d96c981d7a9",
+        "counts": {
+          "core_visits": 23,
+          "LSMR_iterations": 6605,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 23,
+          "effective_core_updates": 23,
+          "accepted_hidden_updates": 7,
+          "effective_hidden_updates": 7,
+          "hidden_actual_calls": 95,
+          "K": 6674,
+          "KH": 6674,
+          "B": 6651,
+          "BH": 6674,
+          "round_audits": 7,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "new_counts": {
+          "core_visits": 11,
+          "LSMR_iterations": 3247,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 11,
+          "effective_core_updates": 11,
+          "accepted_hidden_updates": 3,
+          "effective_hidden_updates": 3,
+          "hidden_actual_calls": 42,
+          "K": 3280,
+          "KH": 3280,
+          "B": 3269,
+          "BH": 3280,
+          "round_audits": 3,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "position": {
+          "round": 7,
+          "axis_index": 2,
+          "phase": "core",
+          "complete_rounds": 7,
+          "slow_streak": 0,
+          "round_start_native": 0.42682415714404925
+        },
+        "request_path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/common_wall/v43_bloch_learned_continue/request.json",
+        "scalars": {
+          "schema": "ftt.bloch-validation.scalars.v1",
+          "round": 7,
+          "boundary_sha256": "b3f73572cacc05c42afdbc1ad66a648d4419ccbe2ea33a29a55a750882b6822f",
+          "field_sha256": "551a214eebe9673eaada71c52e7835e4caaf3b71dc8b8ad05c6ae1f29df393e0",
+          "source_sha": "bc85c8af422acb77f3dca599334b6d96c981d7a9",
+          "design_sha256": "5145a85f08bce5bdf6008c3451cfbc03aa05f40d0df5894a03cb521d15adb3d9",
+          "native_relative": 0.4265099701034598,
+          "augmented_relative": 0.4265099701034598,
+          "scattered_E_relative": 0.12026947518979704,
+          "scattered_H_relative": 0.12051540790321136,
+          "scattered_curl_relative": 0.12051540790321136,
+          "reference_feedback": "scalars_only",
+          "production_initialization_allowed": false
+        }
+      },
+      "v43_bloch_same_state_freeze": {
+        "elapsed_route_seconds": 1595.7732996731065,
+        "kind": "round",
+        "checkpoint": {
+          "name": "committed_000018.pt",
+          "sha256": "e365714f9ace04b783b293b7a81eb8c4ce845b8a3c2a313b25c2aac862d38089",
+          "bytes": 1896167
+        },
+        "route": "BLOCH_FTTNN_R4_FREEZE_ABLATION",
+        "checkpoint_path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/checkpoints/committed_000018.pt",
+        "saved_field_pair": {
+          "c": {
+            "numerator": 0.0,
+            "denominator": 16.77744227812922,
+            "relative": 0.0
+          },
+          "r": {
+            "numerator": 0.0,
+            "denominator": 0.12419587483508718,
+            "relative": 0.0
+          }
+        },
+        "checkpoint_numerical_source": "dce792d18a45a1c874c29dfa4a42a8052fffe40f",
+        "diagnostic_source": "bc85c8af422acb77f3dca599334b6d96c981d7a9",
+        "counts": {
+          "core_visits": 24,
+          "LSMR_iterations": 6923,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 24,
+          "effective_core_updates": 24,
+          "accepted_hidden_updates": 4,
+          "effective_hidden_updates": 4,
+          "hidden_actual_calls": 53,
+          "K": 6995,
+          "KH": 6995,
+          "B": 6971,
+          "BH": 6995,
+          "round_audits": 8,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "new_counts": {
+          "core_visits": 12,
+          "LSMR_iterations": 3565,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 12,
+          "effective_core_updates": 12,
+          "accepted_hidden_updates": 0,
+          "effective_hidden_updates": 0,
+          "hidden_actual_calls": 0,
+          "K": 3601,
+          "KH": 3601,
+          "B": 3589,
+          "BH": 3601,
+          "round_audits": 4,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "position": {
+          "round": 8,
+          "axis_index": 0,
+          "phase": "core",
+          "complete_rounds": 8,
+          "slow_streak": 0,
+          "round_start_native": 0.426728354381651
+        },
+        "request_path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/common_wall/v43_bloch_same_state_freeze/request.json",
+        "scalars": {
+          "schema": "ftt.bloch-validation.scalars.v1",
+          "round": 8,
+          "boundary_sha256": "e365714f9ace04b783b293b7a81eb8c4ce845b8a3c2a313b25c2aac862d38089",
+          "field_sha256": "3060c2acfbc5f1c5e4d23d70344172d9ed1ff05a92ae4004b1f17024d5c38b7a",
+          "source_sha": "bc85c8af422acb77f3dca599334b6d96c981d7a9",
+          "design_sha256": "5145a85f08bce5bdf6008c3451cfbc03aa05f40d0df5894a03cb521d15adb3d9",
+          "native_relative": 0.426728354381651,
+          "augmented_relative": 0.426728354381651,
+          "scattered_E_relative": 0.12202240559199468,
+          "scattered_H_relative": 0.12226941421112858,
+          "scattered_curl_relative": 0.12226941421112858,
+          "reference_feedback": "scalars_only",
+          "production_initialization_allowed": false
+        }
+      }
+    },
+    "selection_uses_reference": false,
+    "selection_rule": "Latest retained complete boundary at or before the lesser final committed new wall",
+    "reference_feedback": "scalars_only_after_routes_frozen",
+    "production_initialization_allowed": false,
+    "same_accuracy_resource_gain_qualified": false,
+    "no_reference_vector_returned_to_training": true,
+    "new_reference_solve_count": 0
+  },
+  "same_accuracy_resource_gain_qualified": false
+}

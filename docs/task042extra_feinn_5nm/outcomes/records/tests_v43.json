@@ -1,0 +1,122 @@
+{
+  "schema": "task42extra.v43.tests.v1",
+  "tests": [
+    {
+      "name": "test01",
+      "JUnit": {
+        "path": "tmp/task42extra/v43/targeted01/junit.xml",
+        "sha256": "4422e92ec2e9328a0b42f4240da477620533182a5c62293e84c3a570558d2d0f",
+        "bytes": 5500
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "2",
+          "skipped": "0",
+          "tests": "20",
+          "time": "0.478",
+          "timestamp": "2026-10-11T08:52:19.409385",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "test02",
+      "JUnit": {
+        "path": "tmp/task42extra/v43/targeted02/junit.xml",
+        "sha256": "773f83d356ed74643c23d572487dae4b1c24ef3ca44dbdf4c47ec2bd7f35cc3f",
+        "bytes": 2973
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "20",
+          "time": "1.169",
+          "timestamp": "2026-10-11T08:53:55.463601",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "test03",
+      "JUnit": {
+        "path": "tmp/task42extra/v43/targeted03/junit.xml",
+        "sha256": "757012465f018dd3fa216e2578ac7e73ed01fe2f818f781e4f80848e1074d128",
+        "bytes": 3108
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "21",
+          "time": "1.178",
+          "timestamp": "2026-10-11T08:58:03.653670",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "test04",
+      "JUnit": {
+        "path": "tmp/task42extra/v43/targeted04/junit.xml",
+        "sha256": "849a85b589e98a0cd12539a365883bb5ecec12e0eb6f1eab2b17b99301ed6140",
+        "bytes": 3520
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "24",
+          "time": "1.123",
+          "timestamp": "2026-10-11T09:59:10.170480",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "test05",
+      "JUnit": {
+        "path": "tmp/task42extra/v43/targeted05/junit.xml",
+        "sha256": "283198a291bfd6cc17f86a5a72b0751b1703801adb44def64b577966291a1723",
+        "bytes": 3647
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "25",
+          "time": "1.102",
+          "timestamp": "2026-10-11T10:08:43.136545",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    }
+  ],
+  "targeted_tests_only": true,
+  "new_and_affected_targeted_cases": 25,
+  "initial_failed_tests_retained": true,
+  "qualification": {
+    "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_resume_checks/result.json",
+    "sha256": "dc4577b155ad60368fa5d538b2cbdac0bc4ed6248a8e37839b1ce5698d5cd101",
+    "bytes": 16988
+  },
+  "parent_recovery": {
+    "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_resume_checks/result.json",
+    "sha256": "dc4577b155ad60368fa5d538b2cbdac0bc4ed6248a8e37839b1ce5698d5cd101",
+    "bytes": 16988
+  },
+  "original_field_producers_not_recomputed_for_policy_repair": true,
+  "full_repository_pytest": false,
+  "CI_claimed": false,
+  "reuse_boundary": "New opt-in Bloch and impacted conditional/structure tests; qualified native/moments/reference reused without re-solving"
+}

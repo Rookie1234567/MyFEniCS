@@ -1,3 +1,19 @@
+<!-- TASK42EXTRA_V43_CURRENT_BEGIN -->
+# V43：parent恢复、执行政策与保存态比较定向验证
+
+唯一parent从V42原index定位为committed_000023.pt，1887719B，SHA256820482a3ff75c87203f301e628b5874be2e387b0627b8765a96e1a8ae6076c2f，原数值source c1c82474d9a26675f1829db5a219efdc04a60f59。两份首态完整模型/buffers/c/r/RNG逐位等同该parent；一次定向真实c/r资格配对为0/0，两路线各自必要的恢复配对也通过。继承4轮、12核心、3358 LSMR迭代、53隐藏调用；旧第4轮validation=false与FAIL保留，未重复前缀。
+
+学习本批完成总第5—8轮，新增12核心、3547 LSMR迭代、4次有效隐藏更新/56次实际调用；冻结对照新增12核心、3565迭代、零隐藏调用。累计分别6905/6923迭代和109/53隐藏调用。冻结隐藏与parent逐位相同；学习隐藏相对parent变化范数0.000164150108774，全部相位及坐标buffers不变。已保存的CoreBoundary/位置、模型、c/r、RNG和已完成隐藏优化器状态可复读，不声称恢复未保存LSMR内态。
+
+最小定向测试最终25项、Ruff/compileall通过，非full pytest、无CI声明。初始fixture错误把dummy截止设成60s，触发原保存预留守卫，两项失败保留；只将fixture截止改300s，未改变正式保护或数学门。最终比较辅助步骤的common_wall目录缺失使attempt1在健康FE审核之后失败；增加先建立目录、实际原子writer→重开回归，通过25项后以--attempt 2恢复缺失步骤。启动默认attempt1被已有阶段守卫拒绝，未启动重复worker；明确恢复沿原分配时钟。所有失败、修复、测试和等待计费。
+
+健康reconstruction.json与verifier_result.json逐字hash未变，未重训或重做健康物理producer。pure保存checker恢复时重新从同一数组重算，其load_and_pairing_seconds重新计时，JSON hash变化；首版hash留存，首版计时字段原文NOT_RETAINED，不虚称字节一致。大数组/原PT保持原位ignored。用途false贯穿manifest/checkpoint/raw/compare/reopen，R/T/A因原残差未过只作diagnostic，绝不升级official。
+
+[tests](records/tests_v43.json)、[恢复资格](records/parent_and_recovery_v43.json)。
+下方历史全文原样保留；历史下一步不构成新授权。
+
+<!-- TASK42EXTRA_V43_CURRENT_END -->
+
 <!-- TASK42EXTRA_V42_CURRENT_BEGIN -->
 # V42：相位全链路资格及受影响定向测试
 

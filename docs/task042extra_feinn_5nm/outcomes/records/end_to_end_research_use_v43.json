@@ -1,0 +1,541 @@
+{
+  "schema": "task42extra.v43.use-policy.v1",
+  "raw_json_and_manifest_occurrences": 99,
+  "all_occurrences_strict_false": true,
+  "raw_json_bindings": [
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_resume_checks/result.json",
+      "sha256": "dc4577b155ad60368fa5d538b2cbdac0bc4ed6248a8e37839b1ce5698d5cd101",
+      "bytes": 16988
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/result.json",
+      "sha256": "71ac714857ba257ebc1f39a56f7f11815a1fc962af32bb814e98d051001f36f9",
+      "bytes": 52571
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/result.json",
+      "sha256": "4a1c8177e5ea117ff410af7c1e0bc198dc2416d5ad7262132d899e7e473d6977",
+      "bytes": 52073
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json",
+      "sha256": "5418351afade3c76c63e4dfe83467b49e9ad386ce65168b78ebdb29b1c47e771",
+      "bytes": 42225
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json",
+      "sha256": "36e9b4afa2dbc97dedd61a26cbbfa5aab183f8b17a785b0ce68ced007fc3c7a9",
+      "bytes": 411125
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/saved_checker.json",
+      "sha256": "6f757116c56c2492bd994e6bfae68220367a4156d15626de73f34b1cfd127a1f",
+      "bytes": 36857
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/reconstruction.json",
+      "sha256": "e3a3b2ef1ce84ad78e14e9e9313d4d73e66b92084fbc525368bfa2491c1e3d0f",
+      "bytes": 3381
+    }
+  ],
+  "checkpoint_hash_verified_reopen": {
+    "parent_sha256": "820482a3ff75c87203f301e628b5874be2e387b0627b8765a96e1a8ae6076c2f",
+    "actual_initial_forks_bitwise_same": true,
+    "hidden_real_parameter_count": 912,
+    "records": {
+      "BLOCH_FTTNN_R4_LEARNED_CONTINUE": {
+        "initial_checkpoint_sha256": "eb6cd139821c656e630edda2c40f222374e8b6c7838619597059930147070fd2",
+        "final_checkpoint_sha256": "ba2523341b7d1fa1cc339ea1b9544a7468e9fe7faa9dd2f93a8c000cad68e9f8",
+        "all_initial_model_buffers_equal_parent": true,
+        "initial_c_r_bitwise_equal_parent": true,
+        "initial_RNG_equal_parent": true,
+        "final_all_buffers_equal_parent": true,
+        "final_hidden_bitwise_equal_parent": false,
+        "hidden_delta_from_parent_norm": 0.0001641501087737686,
+        "inherited_counts": {
+          "core_visits": 12,
+          "LSMR_iterations": 3358,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 12,
+          "effective_core_updates": 12,
+          "accepted_hidden_updates": 4,
+          "effective_hidden_updates": 4,
+          "hidden_actual_calls": 53,
+          "K": 3394,
+          "KH": 3394,
+          "B": 3382,
+          "BH": 3394,
+          "round_audits": 4,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "new_counts": {
+          "core_visits": 12,
+          "LSMR_iterations": 3547,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 12,
+          "effective_core_updates": 12,
+          "accepted_hidden_updates": 4,
+          "effective_hidden_updates": 4,
+          "hidden_actual_calls": 56,
+          "K": 3583,
+          "KH": 3583,
+          "B": 3571,
+          "BH": 3583,
+          "round_audits": 4,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        }
+      },
+      "BLOCH_FTTNN_R4_FREEZE_ABLATION": {
+        "initial_checkpoint_sha256": "5e5b945118c0972da72befe9899ad45cd12d19140150e7fad96ad10ed8a946cd",
+        "final_checkpoint_sha256": "ac67dad43557a22ef7df27b06119d8a03bf55d68757921260a4f359b9662a1a2",
+        "all_initial_model_buffers_equal_parent": true,
+        "initial_c_r_bitwise_equal_parent": true,
+        "initial_RNG_equal_parent": true,
+        "final_all_buffers_equal_parent": true,
+        "final_hidden_bitwise_equal_parent": true,
+        "hidden_delta_from_parent_norm": 0.0,
+        "inherited_counts": {
+          "core_visits": 12,
+          "LSMR_iterations": 3358,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 12,
+          "effective_core_updates": 12,
+          "accepted_hidden_updates": 4,
+          "effective_hidden_updates": 4,
+          "hidden_actual_calls": 53,
+          "K": 3394,
+          "KH": 3394,
+          "B": 3382,
+          "BH": 3394,
+          "round_audits": 4,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "new_counts": {
+          "core_visits": 12,
+          "LSMR_iterations": 3565,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 12,
+          "effective_core_updates": 12,
+          "accepted_hidden_updates": 0,
+          "effective_hidden_updates": 0,
+          "hidden_actual_calls": 0,
+          "K": 3601,
+          "KH": 3601,
+          "B": 3589,
+          "BH": 3601,
+          "round_audits": 4,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        }
+      }
+    },
+    "production_initialization_allowed": false,
+    "new_training_calls": 0,
+    "new_reference_solve_count": 0
+  },
+  "policy_rows": [
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_resume_checks/result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_resume_checks/result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_resume_checks/result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/result.json/rounds/1/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/result.json/rounds/3/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/result.json/rounds/5/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/result.json/rounds/7/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/result.json/checkpoint/metadata/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/result.json/checkpoint/metadata/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/result.json/checkpoint/metadata/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/result.json/checkpoint/metadata/rounds/1/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/result.json/checkpoint/metadata/rounds/3/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/result.json/checkpoint/metadata/rounds/5/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/result.json/checkpoint/metadata/rounds/7/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/result.json/rounds/1/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/result.json/rounds/3/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/result.json/rounds/5/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/result.json/rounds/7/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/result.json/checkpoint/metadata/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/result.json/checkpoint/metadata/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/result.json/checkpoint/metadata/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/result.json/checkpoint/metadata/rounds/1/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/result.json/checkpoint/metadata/rounds/3/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/result.json/checkpoint/metadata/rounds/5/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_same_state_freeze/result.json/checkpoint/metadata/rounds/7/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json/saved_checker/records/BLOCH_FTTNN_R4_LEARNED_CONTINUE/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json/saved_checker/records/BLOCH_FTTNN_R4_LEARNED_CONTINUE/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json/saved_checker/records/BLOCH_FTTNN_R4_LEARNED_CONTINUE/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json/saved_checker/records/BLOCH_FTTNN_R4_FREEZE_ABLATION/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json/saved_checker/records/BLOCH_FTTNN_R4_FREEZE_ABLATION/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json/saved_checker/records/BLOCH_FTTNN_R4_FREEZE_ABLATION/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json/saved_checker/records/BLOCH_FTTNN_R4_LEARNED_CONTINUE_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json/saved_checker/records/BLOCH_FTTNN_R4_LEARNED_CONTINUE_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json/saved_checker/records/BLOCH_FTTNN_R4_LEARNED_CONTINUE_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json/saved_checker/records/BLOCH_FTTNN_R4_FREEZE_ABLATION_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json/saved_checker/records/BLOCH_FTTNN_R4_FREEZE_ABLATION_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json/saved_checker/records/BLOCH_FTTNN_R4_FREEZE_ABLATION_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/reconstruction/BLOCH_FTTNN_R4_LEARNED_CONTINUE/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/reconstruction/BLOCH_FTTNN_R4_FREEZE_ABLATION/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/reconstruction/BLOCH_FTTNN_R4_LEARNED_CONTINUE_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/reconstruction/BLOCH_FTTNN_R4_FREEZE_ABLATION_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/physics/records/REFERENCE/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/physics/records/BLOCH_FTTNN_R4_LEARNED_CONTINUE/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/physics/records/BLOCH_FTTNN_R4_LEARNED_CONTINUE_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/physics/records/BLOCH_FTTNN_R4_FREEZE_ABLATION/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/physics/records/BLOCH_FTTNN_R4_FREEZE_ABLATION_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/comparisons/BLOCH_FTTNN_R4_LEARNED_CONTINUE/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/comparisons/BLOCH_FTTNN_R4_LEARNED_CONTINUE/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/comparisons/BLOCH_FTTNN_R4_LEARNED_CONTINUE/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/comparisons/BLOCH_FTTNN_R4_LEARNED_CONTINUE_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/comparisons/BLOCH_FTTNN_R4_LEARNED_CONTINUE_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/comparisons/BLOCH_FTTNN_R4_LEARNED_CONTINUE_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/comparisons/BLOCH_FTTNN_R4_FREEZE_ABLATION/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/comparisons/BLOCH_FTTNN_R4_FREEZE_ABLATION/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/comparisons/BLOCH_FTTNN_R4_FREEZE_ABLATION/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/comparisons/BLOCH_FTTNN_R4_FREEZE_ABLATION_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/comparisons/BLOCH_FTTNN_R4_FREEZE_ABLATION_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/comparisons/BLOCH_FTTNN_R4_FREEZE_ABLATION_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/verifier_result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/saved_checker.json/records/BLOCH_FTTNN_R4_LEARNED_CONTINUE/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/saved_checker.json/records/BLOCH_FTTNN_R4_LEARNED_CONTINUE/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/saved_checker.json/records/BLOCH_FTTNN_R4_LEARNED_CONTINUE/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/saved_checker.json/records/BLOCH_FTTNN_R4_FREEZE_ABLATION/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/saved_checker.json/records/BLOCH_FTTNN_R4_FREEZE_ABLATION/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/saved_checker.json/records/BLOCH_FTTNN_R4_FREEZE_ABLATION/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/saved_checker.json/records/BLOCH_FTTNN_R4_LEARNED_CONTINUE_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/saved_checker.json/records/BLOCH_FTTNN_R4_LEARNED_CONTINUE_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/saved_checker.json/records/BLOCH_FTTNN_R4_LEARNED_CONTINUE_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/saved_checker.json/records/BLOCH_FTTNN_R4_FREEZE_ABLATION_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/saved_checker.json/records/BLOCH_FTTNN_R4_FREEZE_ABLATION_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/saved_checker.json/records/BLOCH_FTTNN_R4_FREEZE_ABLATION_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/reconstruction.json/BLOCH_FTTNN_R4_LEARNED_CONTINUE/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_independent_compare/reconstruction.json/BLOCH_FTTNN_R4_FREEZE_ABLATION/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v43/durable/v43_bloch_independent_compare_attempt1/run_manifest.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v43/durable/v43_bloch_independent_compare_attempt1/run_manifest.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v43/durable/v43_bloch_independent_compare_attempt1/run_manifest.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v43/durable/v43_bloch_independent_compare_attempt2/run_manifest.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v43/durable/v43_bloch_independent_compare_attempt2/run_manifest.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v43/durable/v43_bloch_independent_compare_attempt2/run_manifest.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v43/durable/v43_bloch_learned_continue_attempt1/run_manifest.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v43/durable/v43_bloch_learned_continue_attempt1/run_manifest.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v43/durable/v43_bloch_learned_continue_attempt1/run_manifest.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v43/durable/v43_bloch_resume_checks_attempt1/run_manifest.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v43/durable/v43_bloch_resume_checks_attempt1/run_manifest.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v43/durable/v43_bloch_resume_checks_attempt1/run_manifest.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v43/durable/v43_bloch_same_state_freeze_attempt1/run_manifest.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v43/durable/v43_bloch_same_state_freeze_attempt1/run_manifest.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v43/durable/v43_bloch_same_state_freeze_attempt1/run_manifest.json/official_candidate_results",
+      "value": false
+    }
+  ],
+  "historical_wrong_flags_not_rewritten": true,
+  "original_new_comparison_already_false_no_corrective_seal_required": true,
+  "raw_arrays_or_numerical_fields_rewritten": false
+}

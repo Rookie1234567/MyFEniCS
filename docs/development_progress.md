@@ -1,3 +1,14 @@
+<!-- TASK42EXTRA_V43_CURRENT_BEGIN -->
+# Task42extra V43：同态续算完整结束，联合精度未到
+
+同一V42第4轮完整状态分叉，新增4轮后两条均独立验收FAIL。学习原残差0.426368/散射E0.122287；冻结0.426728/0.122022。保留第6轮学习稍好、共同时间中期场较好与最终退化；没有稳定后续隐藏增益或同严格精度资源收益。必要2920.6633467s学习前缀不免费且项目不重复收费；冷N=1仍UNKNOWN，0.7nm未准入、未注册。
+
+[回执](task042extra_feinn_5nm/response_v43.md)、[Gate](task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v43.json)、[成本](task042extra_feinn_5nm/outcomes/records/resource_costs_v43.json)。
+
+下方历史全文原样保留；历史下一步不构成新授权。
+
+<!-- TASK42EXTRA_V43_CURRENT_END -->
+
 <!-- TASK42EXTRA_V42_CURRENT_BEGIN -->
 # Task42extra V42：Bloch包络FTT真实神经对照完成
 

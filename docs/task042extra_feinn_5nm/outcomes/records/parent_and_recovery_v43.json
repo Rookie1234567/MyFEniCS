@@ -1,0 +1,533 @@
+{
+  "schema": "task42extra.v43.parent-recovery.v1",
+  "raw_qualification": {
+    "models": {
+      "fttnn": {
+        "qualified": true,
+        "parent_checkpoint": {
+          "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_fttnn_learned/checkpoints/committed_000023.pt",
+          "sha256": "820482a3ff75c87203f301e628b5874be2e387b0627b8765a96e1a8ae6076c2f",
+          "bytes": 1887719,
+          "input_kind": "unlabelled_complete_round4_boundary",
+          "binding": {
+            "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+            "input_sha256": "e3e1dcae7615706401d1b6ffee885cb348d98b94d647ee484cd9fba6bc094d9d",
+            "design_sha256": "59ea6a6ad008a835671fae2b17cc324e85abe1536bcc581139ef24f54941c21b",
+            "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+            "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+            "model_kind": "fttnn",
+            "metric_kind": "native_euc",
+            "route": "BLOCH_FTTNN_CORE_LEARNED",
+            "phase_sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+          },
+          "inherited_counts": {
+            "core_visits": 12,
+            "LSMR_iterations": 3358,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 12,
+            "effective_core_updates": 12,
+            "accepted_hidden_updates": 4,
+            "effective_hidden_updates": 4,
+            "hidden_actual_calls": 53,
+            "K": 3394,
+            "KH": 3394,
+            "B": 3382,
+            "BH": 3394,
+            "round_audits": 4,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "path_source": "outcomes/records/run_index_v42.json (unique hash-bound file entry)",
+          "parent_result_status": "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED",
+          "required_parent_prefix_seconds": 2920.6633467029314
+        },
+        "parent_import": {
+          "parent_checkpoint": {
+            "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_fttnn_learned/checkpoints/committed_000023.pt",
+            "sha256": "820482a3ff75c87203f301e628b5874be2e387b0627b8765a96e1a8ae6076c2f",
+            "bytes": 1887719,
+            "input_kind": "unlabelled_complete_round4_boundary",
+            "binding": {
+              "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+              "input_sha256": "e3e1dcae7615706401d1b6ffee885cb348d98b94d647ee484cd9fba6bc094d9d",
+              "design_sha256": "59ea6a6ad008a835671fae2b17cc324e85abe1536bcc581139ef24f54941c21b",
+              "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+              "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+              "model_kind": "fttnn",
+              "metric_kind": "native_euc",
+              "route": "BLOCH_FTTNN_CORE_LEARNED",
+              "phase_sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+            },
+            "inherited_counts": {
+              "core_visits": 12,
+              "LSMR_iterations": 3358,
+              "LSMR_unretained_iterations_upper_bound": 0,
+              "accepted_core_updates": 12,
+              "effective_core_updates": 12,
+              "accepted_hidden_updates": 4,
+              "effective_hidden_updates": 4,
+              "hidden_actual_calls": 53,
+              "K": 3394,
+              "KH": 3394,
+              "B": 3382,
+              "BH": 3394,
+              "round_audits": 4,
+              "uncommitted_K": 0,
+              "uncommitted_KH": 0
+            },
+            "path_source": "outcomes/records/run_index_v42.json (unique hash-bound file entry)",
+            "parent_result_status": "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED",
+            "required_parent_prefix_seconds": 2920.6633467029314
+          },
+          "parent_result_status": "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED",
+          "historical_round4_validation_preserved": true,
+          "allowed_import_identity_differences": [
+            "source_sha",
+            "input_sha256",
+            "design_sha256",
+            "route",
+            "route_origin_monotonic"
+          ],
+          "inherited_counts": {
+            "core_visits": 12,
+            "LSMR_iterations": 3358,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 12,
+            "effective_core_updates": 12,
+            "accepted_hidden_updates": 4,
+            "effective_hidden_updates": 4,
+            "hidden_actual_calls": 53,
+            "K": 3394,
+            "KH": 3394,
+            "B": 3382,
+            "BH": 3394,
+            "round_audits": 4,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "inherited_costs": {
+            "core_solve_and_check": 2740.0098835073877,
+            "real_acceptance": 8.189551123417914,
+            "hidden": 43.45128865283914,
+            "persistence": 1.2336603191215545,
+            "audit": 0.8378342781215906,
+            "scalar_validation": 42.562125503085554
+          },
+          "inherited_rounds": 4
+        },
+        "restored_position": {
+          "round": 4,
+          "axis_index": 0,
+          "phase": "core",
+          "complete_rounds": 4,
+          "slow_streak": 0,
+          "round_start_native": 0.4445502961171412
+        },
+        "parent_c_r_pair": {
+          "c": {
+            "numerator": 0.0,
+            "denominator": 16.934600865260624,
+            "relative": 0.0
+          },
+          "r": {
+            "numerator": 0.0,
+            "denominator": 0.12938280844840774,
+            "relative": 0.0
+          }
+        },
+        "original_equation": {
+          "native_relative": 0.4445502961171412,
+          "augmented_relative": 0.4445502961171412,
+          "original_total_augmented_relative": 0.2105842582154816,
+          "port_absolute": 2.22044755607561e-16,
+          "port_full_rhs_relative": 7.629302767528097e-16,
+          "port_operation_relative": 5.546651087793344e-18,
+          "augmented_rhs_norm": 0.29104200262261154,
+          "native_rhs_norm": 0.29104200262261154,
+          "slave_storage_max": 0.0,
+          "interior_coefficient_norm": 11.602667610419735,
+          "full_coefficient_norm": 16.934600865260624,
+          "port_unknown_norm": 0.28728330271186164,
+          "strict_pass": false
+        },
+        "parent_model_hash": "53c617162fbd77d6499b69b97d3d38253074b7c2804d19a7abd189edf69fdc70",
+        "same_state_fork_full_model_bitwise": true,
+        "inherited_rng_from_same_PT": true,
+        "previous_qualification_reused": {
+          "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_ftt_checks/result.json",
+          "sha256": "2e06adaea62742cc177c197e4e20adcd72052b698c154b5fc490d8adbeada4c1",
+          "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+          "no_old_qualification_rerun": true
+        },
+        "nonzero_witnesses": [
+          {
+            "axis": 2,
+            "linearity": {
+              "numerator": 1.2157542238589177e-13,
+              "denominator": 36.42034924541634,
+              "relative": 3.3381179726384028e-15
+            },
+            "complex_adjoint_relative": 1.9525762664718028e-15,
+            "counts": {
+              "K": 1,
+              "KH": 1,
+              "B": 0,
+              "BH": 0
+            },
+            "reference_read": false
+          },
+          {
+            "axis": 0,
+            "linearity": {
+              "numerator": 8.196917297425101e-14,
+              "denominator": 18.66082145097784,
+              "relative": 4.3925811727841046e-15
+            },
+            "complex_adjoint_relative": 3.7682226189208705e-15,
+            "counts": {
+              "K": 1,
+              "KH": 1,
+              "B": 0,
+              "BH": 0
+            },
+            "reference_read": false
+          },
+          {
+            "axis": 1,
+            "linearity": {
+              "numerator": 8.425103160824399e-14,
+              "denominator": 16.29854178127475,
+              "relative": 5.169237391840738e-15
+            },
+            "complex_adjoint_relative": 8.141824731120306e-15,
+            "counts": {
+              "K": 1,
+              "KH": 1,
+              "B": 0,
+              "BH": 0
+            },
+            "reference_read": false
+          }
+        ],
+        "parent_actual_c_r_checks": 1,
+        "old_full_qualification_reruns": 0,
+        "reference_read": false,
+        "new_reference_solve_count": 0,
+        "counts": {
+          "forward": 7,
+          "VJP": 3,
+          "cache_builds": 6,
+          "cache_hits": 4,
+          "backward_microbatches": 9
+        },
+        "seconds": 1.8021662021055818
+      }
+    },
+    "qualified": true,
+    "parent_checkpoint": {
+      "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_fttnn_learned/checkpoints/committed_000023.pt",
+      "sha256": "820482a3ff75c87203f301e628b5874be2e387b0627b8765a96e1a8ae6076c2f",
+      "bytes": 1887719,
+      "input_kind": "unlabelled_complete_round4_boundary",
+      "binding": {
+        "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+        "input_sha256": "e3e1dcae7615706401d1b6ffee885cb348d98b94d647ee484cd9fba6bc094d9d",
+        "design_sha256": "59ea6a6ad008a835671fae2b17cc324e85abe1536bcc581139ef24f54941c21b",
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+        "model_kind": "fttnn",
+        "metric_kind": "native_euc",
+        "route": "BLOCH_FTTNN_CORE_LEARNED",
+        "phase_sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+      },
+      "inherited_counts": {
+        "core_visits": 12,
+        "LSMR_iterations": 3358,
+        "LSMR_unretained_iterations_upper_bound": 0,
+        "accepted_core_updates": 12,
+        "effective_core_updates": 12,
+        "accepted_hidden_updates": 4,
+        "effective_hidden_updates": 4,
+        "hidden_actual_calls": 53,
+        "K": 3394,
+        "KH": 3394,
+        "B": 3382,
+        "BH": 3394,
+        "round_audits": 4,
+        "uncommitted_K": 0,
+        "uncommitted_KH": 0
+      },
+      "path_source": "outcomes/records/run_index_v42.json (unique hash-bound file entry)",
+      "parent_result_status": "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED",
+      "required_parent_prefix_seconds": 2920.6633467029314
+    },
+    "parent_import": {
+      "parent_checkpoint": {
+        "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_fttnn_learned/checkpoints/committed_000023.pt",
+        "sha256": "820482a3ff75c87203f301e628b5874be2e387b0627b8765a96e1a8ae6076c2f",
+        "bytes": 1887719,
+        "input_kind": "unlabelled_complete_round4_boundary",
+        "binding": {
+          "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+          "input_sha256": "e3e1dcae7615706401d1b6ffee885cb348d98b94d647ee484cd9fba6bc094d9d",
+          "design_sha256": "59ea6a6ad008a835671fae2b17cc324e85abe1536bcc581139ef24f54941c21b",
+          "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+          "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+          "model_kind": "fttnn",
+          "metric_kind": "native_euc",
+          "route": "BLOCH_FTTNN_CORE_LEARNED",
+          "phase_sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+        },
+        "inherited_counts": {
+          "core_visits": 12,
+          "LSMR_iterations": 3358,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 12,
+          "effective_core_updates": 12,
+          "accepted_hidden_updates": 4,
+          "effective_hidden_updates": 4,
+          "hidden_actual_calls": 53,
+          "K": 3394,
+          "KH": 3394,
+          "B": 3382,
+          "BH": 3394,
+          "round_audits": 4,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "path_source": "outcomes/records/run_index_v42.json (unique hash-bound file entry)",
+        "parent_result_status": "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED",
+        "required_parent_prefix_seconds": 2920.6633467029314
+      },
+      "parent_result_status": "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED",
+      "historical_round4_validation_preserved": true,
+      "allowed_import_identity_differences": [
+        "source_sha",
+        "input_sha256",
+        "design_sha256",
+        "route",
+        "route_origin_monotonic"
+      ],
+      "inherited_counts": {
+        "core_visits": 12,
+        "LSMR_iterations": 3358,
+        "LSMR_unretained_iterations_upper_bound": 0,
+        "accepted_core_updates": 12,
+        "effective_core_updates": 12,
+        "accepted_hidden_updates": 4,
+        "effective_hidden_updates": 4,
+        "hidden_actual_calls": 53,
+        "K": 3394,
+        "KH": 3394,
+        "B": 3382,
+        "BH": 3394,
+        "round_audits": 4,
+        "uncommitted_K": 0,
+        "uncommitted_KH": 0
+      },
+      "inherited_costs": {
+        "core_solve_and_check": 2740.0098835073877,
+        "real_acceptance": 8.189551123417914,
+        "hidden": 43.45128865283914,
+        "persistence": 1.2336603191215545,
+        "audit": 0.8378342781215906,
+        "scalar_validation": 42.562125503085554
+      },
+      "inherited_rounds": 4
+    },
+    "restored_position": {
+      "round": 4,
+      "axis_index": 0,
+      "phase": "core",
+      "complete_rounds": 4,
+      "slow_streak": 0,
+      "round_start_native": 0.4445502961171412
+    },
+    "parent_c_r_pair": {
+      "c": {
+        "numerator": 0.0,
+        "denominator": 16.934600865260624,
+        "relative": 0.0
+      },
+      "r": {
+        "numerator": 0.0,
+        "denominator": 0.12938280844840774,
+        "relative": 0.0
+      }
+    },
+    "original_equation": {
+      "native_relative": 0.4445502961171412,
+      "augmented_relative": 0.4445502961171412,
+      "original_total_augmented_relative": 0.2105842582154816,
+      "port_absolute": 2.22044755607561e-16,
+      "port_full_rhs_relative": 7.629302767528097e-16,
+      "port_operation_relative": 5.546651087793344e-18,
+      "augmented_rhs_norm": 0.29104200262261154,
+      "native_rhs_norm": 0.29104200262261154,
+      "slave_storage_max": 0.0,
+      "interior_coefficient_norm": 11.602667610419735,
+      "full_coefficient_norm": 16.934600865260624,
+      "port_unknown_norm": 0.28728330271186164,
+      "strict_pass": false
+    },
+    "parent_model_hash": "53c617162fbd77d6499b69b97d3d38253074b7c2804d19a7abd189edf69fdc70",
+    "same_state_fork_full_model_bitwise": true,
+    "inherited_rng_from_same_PT": true,
+    "previous_qualification_reused": {
+      "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_ftt_checks/result.json",
+      "sha256": "2e06adaea62742cc177c197e4e20adcd72052b698c154b5fc490d8adbeada4c1",
+      "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+      "no_old_qualification_rerun": true
+    },
+    "nonzero_witnesses": [
+      {
+        "axis": 2,
+        "linearity": {
+          "numerator": 1.2157542238589177e-13,
+          "denominator": 36.42034924541634,
+          "relative": 3.3381179726384028e-15
+        },
+        "complex_adjoint_relative": 1.9525762664718028e-15,
+        "counts": {
+          "K": 1,
+          "KH": 1,
+          "B": 0,
+          "BH": 0
+        },
+        "reference_read": false
+      },
+      {
+        "axis": 0,
+        "linearity": {
+          "numerator": 8.196917297425101e-14,
+          "denominator": 18.66082145097784,
+          "relative": 4.3925811727841046e-15
+        },
+        "complex_adjoint_relative": 3.7682226189208705e-15,
+        "counts": {
+          "K": 1,
+          "KH": 1,
+          "B": 0,
+          "BH": 0
+        },
+        "reference_read": false
+      },
+      {
+        "axis": 1,
+        "linearity": {
+          "numerator": 8.425103160824399e-14,
+          "denominator": 16.29854178127475,
+          "relative": 5.169237391840738e-15
+        },
+        "complex_adjoint_relative": 8.141824731120306e-15,
+        "counts": {
+          "K": 1,
+          "KH": 1,
+          "B": 0,
+          "BH": 0
+        },
+        "reference_read": false
+      }
+    ],
+    "parent_actual_c_r_checks": 1,
+    "old_full_qualification_reruns": 0,
+    "reference_read": false,
+    "new_reference_solve_count": 0,
+    "counts": {
+      "forward": 7,
+      "VJP": 3,
+      "cache_builds": 6,
+      "cache_hits": 4,
+      "backward_microbatches": 9
+    },
+    "seconds": 1.8021662021055818,
+    "label_firewall_negative_checks": [
+      {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+        "rejected": true
+      },
+      {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+        "rejected": true
+      },
+      {
+        "path": "benchmarks/artifacts/task42extra/v40/v40_interior_moment_tensor/interior_tensor.npz",
+        "rejected": true
+      },
+      {
+        "path": "benchmarks/artifacts/task42extra/v39/v39_fttnn_fit_continue/checkpoints/committed_000001.pt",
+        "rejected": true
+      }
+    ],
+    "source_sha": "dce792d18a45a1c874c29dfa4a42a8052fffe40f",
+    "input_sha256": "28799aec5616697eafd373da6c834acefd1d9380e7c62097a082ac791ff6601d",
+    "design_sha256": "5145a85f08bce5bdf6008c3451cfbc03aa05f40d0df5894a03cb521d15adb3d9",
+    "worker_elapsed_seconds": 3.731889500049874,
+    "reference_used_for_training": false,
+    "features_reference_exposed": false,
+    "benchmark_previously_seen": true,
+    "design_informed_by_reference_diagnostics": true,
+    "production_initialization_allowed": false,
+    "official_candidate_results": false,
+    "pde_only_solver_qualified": false,
+    "global_Maxwell_factor_count": 0,
+    "global_Gram_factor_count": 0,
+    "Gsolve_count": 0,
+    "full_original_target_qualified": false
+  },
+  "qualification_record": {
+    "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_resume_checks/result.json",
+    "sha256": "dc4577b155ad60368fa5d538b2cbdac0bc4ed6248a8e37839b1ce5698d5cd101",
+    "bytes": 16988
+  },
+  "numeric_pairing_pass_recomputed": true,
+  "parent": {
+    "path": "benchmarks/artifacts/task42extra/v42/v42_bloch_fttnn_learned/checkpoints/committed_000023.pt",
+    "sha256": "820482a3ff75c87203f301e628b5874be2e387b0627b8765a96e1a8ae6076c2f",
+    "bytes": 1887719,
+    "input_kind": "unlabelled_complete_round4_boundary",
+    "binding": {
+      "source_sha": "c1c82474d9a26675f1829db5a219efdc04a60f59",
+      "input_sha256": "e3e1dcae7615706401d1b6ffee885cb348d98b94d647ee484cd9fba6bc094d9d",
+      "design_sha256": "59ea6a6ad008a835671fae2b17cc324e85abe1536bcc581139ef24f54941c21b",
+      "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+      "model_kind": "fttnn",
+      "metric_kind": "native_euc",
+      "route": "BLOCH_FTTNN_CORE_LEARNED",
+      "phase_sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+    },
+    "inherited_counts": {
+      "core_visits": 12,
+      "LSMR_iterations": 3358,
+      "LSMR_unretained_iterations_upper_bound": 0,
+      "accepted_core_updates": 12,
+      "effective_core_updates": 12,
+      "accepted_hidden_updates": 4,
+      "effective_hidden_updates": 4,
+      "hidden_actual_calls": 53,
+      "K": 3394,
+      "KH": 3394,
+      "B": 3382,
+      "BH": 3394,
+      "round_audits": 4,
+      "uncommitted_K": 0,
+      "uncommitted_KH": 0
+    },
+    "path_source": "outcomes/records/run_index_v42.json (unique hash-bound file entry)",
+    "parent_result_status": "ROUND4_FIELD_PROGRESS_NOT_QUALIFIED",
+    "required_parent_prefix_seconds": 2920.6633467029314
+  },
+  "parent_actual_c_r_targeted_qualification_checks": 1,
+  "necessary_initial_pair_checks_in_two_forks": 2,
+  "source_identity_import_differences": [
+    "source_sha",
+    "input_sha256",
+    "design_sha256",
+    "route",
+    "route_origin_monotonic"
+  ],
+  "historical_R4_false_preserved": true,
+  "old_full_qualification_reruns": 0,
+  "reference_read": false
+}

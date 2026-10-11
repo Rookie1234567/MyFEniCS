@@ -1,3 +1,19 @@
+<!-- TASK42EXTRA_V43_CURRENT_BEGIN -->
+# V43：最小parent-fork政策、完整验收及证据
+
+| 依赖组 | 实际改变 | 资格/合入边界 |
+|---|---|---|
+| research-only | ftt_core_continuation/campaign/qualification；原循环opt-in parent-fork/policy/counters/保存 | 25定向case与一次真实parent/三轴短见证；未合格，不升production |
+| runner/watchdog接线 | continuation worker/feedback/joint；schema13及4dat；现代role/预算/原监督复用 | 不复制trainer或调度；普通默认回归 |
+| checker/postprocessing | ftt_common_wall只选保存时间，后隔离原FE标量；core worker opt-in posthook | 无reference用于选状态；原q30/q60和compare-only复用 |
+| compact evidence/docs | 回执/专题/原字段记录、自己的导航/总账 | 历史字节不改；等待review |
+| do-not-merge | 未合格研究配置与ignored模型/原场 | 无master/production合入许可 |
+
+[source/run/hash](records/run_index_v43.json)、[tests](records/tests_v43.json)、[完整Gate](records/full_numerical_gates_v43.json)。
+下方历史全文原样保留；历史下一步不构成新授权。
+
+<!-- TASK42EXTRA_V43_CURRENT_END -->
+
 <!-- TASK42EXTRA_V42_CURRENT_BEGIN -->
 # V42：最小相位opt-in、复用核心流程及完整证据
 

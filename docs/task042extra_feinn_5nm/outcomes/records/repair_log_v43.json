@@ -1,0 +1,68 @@
+{
+  "schema": "task42extra.v43.repairs.v1",
+  "repair_journal": [
+    {
+      "kind": "FIXTURE_SAVE_RESERVE_BUDGET",
+      "failure": "two loop fixtures stopped after one core",
+      "hypothesis": "60s fixture deadline was shorter than unchanged 60s next-core reserve",
+      "change": "only fixture deadline enlarged to300s; numerical guard unchanged",
+      "test": "rerun20 targeted tests",
+      "retry": "test02",
+      "real_numerical_work_repeated": false,
+      "monotonic": 1604964.23504664
+    },
+    {
+      "monotonic": 1609454.406506184,
+      "failure": "Common-wall preparation FileNotFoundError before first abi.json; comparison attempt1 failed and cleared",
+      "hypothesis": "atomic_json requires existing parent directory; common_wall namespace absent",
+      "change": "Initialize audit namespace before first atomic record; existing complete physics/reconstruction/checker retained",
+      "test": "Empty nested namespace -> actual atomic writer -> reinitialize -> reopen preservation",
+      "resume": "Continue only missing post-compare common-wall step; no training or healthy field producer rerun"
+    },
+    {
+      "monotonic": 1610697.917299248,
+      "failure": "First staged git diff --check rejected standard CSV CRLF line endings; commit was not made",
+      "hypothesis": "csv writer default CRLF is classified as trailing whitespace by local Git",
+      "change": "Normalize only the four new compact V43 CSVs to LF; retain original new CSV bytes under ignored backup",
+      "test": "All 956 data rows parsed before/after exactly identical; no numerical fields changed",
+      "resume": "Restage compact CSV records and continue publication; no producer/checker recomputation"
+    }
+  ],
+  "initial_failed_light_test": {
+    "path": "tmp/task42extra/v43/test01/summary.json",
+    "sha256": "c3584daedf11f02f41f5ea2d2ae622c39cf7a0531a03e8f4b991803c6d6eceaa",
+    "bytes": 1987
+  },
+  "healthy_reference_or_training_or_FE_postprocessing_reexecuted": false,
+  "ordinary_default_changed": false,
+  "new_compact_csv_line_ending_equivalence": [
+    {
+      "file": "conditional_inner_solver_v43.csv",
+      "parsed_rows": 24,
+      "all_parsed_fields_unchanged": true,
+      "original_sha256": "827b8c7fc7b9158ae05b9f9c2e41d3145996d5a85eeb28eb663bb2be8e52c2a9",
+      "new_sha256": "a4e6f7e1d8233ff832d6ab744a3a97b09f059678b91d8b82c24915b158cc3dd2"
+    },
+    {
+      "file": "full_40_complex_channels_v43.csv",
+      "parsed_rows": 640,
+      "all_parsed_fields_unchanged": true,
+      "original_sha256": "64852149e4fafbd9d4f2f8acc2053f6ab42ad5d35dbdc9d34aae576f102698cd",
+      "new_sha256": "fb2b3aa4c31e856ce3105f4c42d6bb327c9c11df644f27ac00bd42f1ac87014d"
+    },
+    {
+      "file": "six_point_complex_fields_v43.csv",
+      "parsed_rows": 288,
+      "all_parsed_fields_unchanged": true,
+      "original_sha256": "2edabf99b82e92bcfc6a203c3ac20db62d74c6b4357c6e2606fda22a5d5fa9fc",
+      "new_sha256": "1f32ca19f2b051275eac88bbcd284c9e48e24bf8d9f1feb994b717fa7be9fb4a"
+    },
+    {
+      "file": "power_and_energy_v43.csv",
+      "parsed_rows": 4,
+      "all_parsed_fields_unchanged": true,
+      "original_sha256": "12399352a2f6c547a5e7c40251e90f3ee007a75995c7a8270af1954c889dabb6",
+      "new_sha256": "c8143c326cc2d1bea3fe1b78366a52a892ec2f32740d070769c435e1ec8e4474"
+    }
+  ]
+}
