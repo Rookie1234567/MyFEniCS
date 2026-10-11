@@ -41,7 +41,11 @@ def entity_centers(setup,service):
             for entity,local in enumerate(dofs[dim]):
                 rows=native_to_trace[ids[local]];rows=rows[rows>=0]
                 if not len(rows):continue
-                center=xyz[vertices[dim][entity]].mean(axis=0)
+                entity_xyz=xyz[vertices[dim][entity]]
+                center=entity_xyz.mean(axis=0)
+                for d,a in enumerate(('x','y')):
+                    axis=setup['physical']['geometry']['axes_nm'][a]
+                    if np.all(entity_xyz[:,d]==axis[-1]):center[d]=axis[0]
                 centers[rows]=center
     if not np.isfinite(centers).all():raise ValueError('trace entity owner inventory')
     axes=setup['physical']['geometry']['axes_nm']

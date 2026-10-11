@@ -31,6 +31,11 @@ def action_charge(kind,operation):
     out=operation();counts['completed']+=1;write_json(p,counts);return out
 
 
+def actions_started():
+    path=scope.window.TMP/'action_counts.json'
+    return json.loads(path.read_text())['started'] if path.exists() else 0
+
+
 def service(journal,s=None,b=None,oracle=None):
     p=parent();identity=None
     if s is not None:
@@ -121,6 +126,8 @@ def pc_setup(folder,journal):
     coarse_physical=copy.deepcopy(scope.plan_record()['physical_descriptor'])
     z=coarse_physical['geometry']['axes_nm']['z']
     coarse_physical['geometry']['axes_nm']['z']=[l+(r-l)*j/2 for l,r in zip(z[:-1],z[1:]) for j in range(2)]+[z[-1]]
+    coarse_physical['discretization'].update(degree=2,FE=6240,rows=7068,
+        scope='coarse moment interpolation only; no coarse PDE assembly')
     spec=dict(case='NOTCH',degree=2,h_ratio=1,cells=960,independent=6240,complete_modes=828,notch_tetrahedra=24)
     coarse=core.make_setup(spec,coarse_physical,journal)
     if coarse['P'].shape[1]+a.m>8192:raise MemoryError('fixed p2 coarse inventory cap')
@@ -294,7 +301,7 @@ def iterate(folder,journal,state):
                 candidate_rtol=1e-11,retained_tolerance=1e-11,evaluation_policy=policy,
                 resource_sample=scope.window.require_live,
                 stop_requested=lambda:time.monotonic()-start>=21600 or scope.window.snapshot()['heavy_remaining_seconds']<=4500
-                    or scope.window.case_remaining(active=True)<=4500)
+                    or scope.window.case_remaining(active=True)<=4500 or actions_started()>=590)
             final=result.pop('final_solution');t=right*final.array.copy();final.destroy()
             returned=save_arrays(folder/'retained_returned.npz',trace_port=t,rhs=reduced,scaled_rhs=bhat,left=left,right=right)
             pending=dict(status='RECOVERY_PENDING',retained_returned=returned,RHS=rhs_receipt,local_packet=a.receipt,
