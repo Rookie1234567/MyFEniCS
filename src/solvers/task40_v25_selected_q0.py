@@ -801,13 +801,12 @@ def _native_volume_apply(volume_action: Any, full_field: np.ndarray, comm: Any) 
     source = PETSc.Vec().createWithArray(
         np.ascontiguousarray(full_field, dtype=np.complex128), comm=comm
     )
-    result = None
     try:
         result = volume_action.apply(source)
+        # FullspaceSplitVolumeAction.apply returns its action-owned reusable
+        # output Vec. Copy its values here, but leave the borrowed Vec alive.
         return np.asarray(result.getArray(readonly=True), dtype=np.complex128).copy()
     finally:
-        if result is not None:
-            result.destroy()
         source.destroy()
 
 

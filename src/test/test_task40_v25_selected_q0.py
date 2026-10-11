@@ -764,3 +764,61 @@ def test_q0_reference_inventory_routes_both_real_sides_through_native_mpc_adapte
     expected_phase = np.exp(0.5j)
     assert 883 in top_rows
     assert top_values[np.searchsorted(top_rows, 883)] == expected_phase * (2.0 + 1.0j)
+
+
+def test_native_volume_apply_keeps_borrowed_output_vec_alive_across_repeated_calls(
+    monkeypatch,
+):
+    import sys
+
+    from src.solvers.task40_v25_selected_q0 import _native_volume_apply
+
+    source_vectors = []
+
+    class FakeVec:
+        def __init__(self, array=None):
+            self.array = array
+            self.destroyed = False
+
+        def createWithArray(self, array, *, comm):
+            assert comm == "fixture-comm"
+            vector = FakeVec(array)
+            source_vectors.append(vector)
+            return vector
+
+        def getArray(self, *, readonly):
+            assert readonly is True
+            assert not self.destroyed
+            return self.array
+
+        def destroy(self):
+            self.destroyed = True
+
+    reusable_output = FakeVec(np.zeros(2, dtype=np.complex128))
+
+    class ReusingVolumeAction:
+        calls = 0
+
+        def apply(self, source):
+            assert not reusable_output.destroyed
+            self.calls += 1
+            reusable_output.array[:] = self.calls * source.array
+            return reusable_output
+
+    action = ReusingVolumeAction()
+    fake_petsc = SimpleNamespace(Vec=FakeVec)
+    monkeypatch.setitem(sys.modules, "petsc4py", SimpleNamespace(PETSc=fake_petsc))
+
+    first = _native_volume_apply(
+        action, np.asarray([1.0, 2.0], dtype=np.complex128), "fixture-comm"
+    )
+    second = _native_volume_apply(
+        action, np.asarray([3.0, 4.0], dtype=np.complex128), "fixture-comm"
+    )
+
+    assert action.calls == 2
+    assert reusable_output.destroyed is False
+    assert all(vector.destroyed for vector in source_vectors)
+    np.testing.assert_array_equal(first, [1.0, 2.0])
+    np.testing.assert_array_equal(second, [6.0, 8.0])
+    assert not np.shares_memory(first, reusable_output.array)
