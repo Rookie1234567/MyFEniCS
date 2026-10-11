@@ -64,7 +64,7 @@ class ReuseTests(unittest.TestCase):
             def destroy(self):self.destroyed=True
         expected=dict(estimate_mb=1,double_bytes=2000000,rows=2,nnz=4)
         record=dict(matrices=[{},{}],coarse_matrix={},analysis=[expected]*2,coarse_symbolic=expected)
-        sc=SimpleNamespace(NAMESPACE='v72',window=SimpleNamespace(snapshot=lambda:{'heavy_remaining_seconds':50000}))
+        sc=SimpleNamespace(NAMESPACE='v72',window=SimpleNamespace(snapshot=lambda:{'heavy_remaining_seconds':50000,'boot_id':'test'}))
         j=SimpleNamespace(measured=lambda _:contextlib.nullcontext(),event=lambda *a,**kw:None)
         with tempfile.TemporaryDirectory() as td,patch.dict('os.environ',TASK042_WATCHDOG_PARENT_PID='123'), \
                 patch('src.solvers.bounded_trace_study.csr_load',return_value=A), \
@@ -72,16 +72,19 @@ class ReuseTests(unittest.TestCase):
                 patch('src.solvers.fullspace_v17_p3_oracle._MumpsFactor',Factor), \
                 patch('benchmarks.task038_full3d_jit_staging.process_tree_snapshot',return_value=dict(rss_bytes=2*2**30,swap_bytes=0)), \
                 patch('src.solvers.bounded_trace_study.BoundedTwoLevelPC.solve',side_effect=lambda f,v:np.linalg.solve(A.toarray(),v)):
+            sc.window.TMP=Path(td)
             local,coarse=numeric_factors(record,j,scope=sc,folder=Path(td),workspace={'reserved_bytes':8*2**30})
             self.assertEqual(len(objects),3);self.assertTrue(all(f.numeric_calls==1 and not f.destroyed for f in objects))
             calibration=json.loads((Path(td)/'local_forecast_calibration.json').read_text())
             self.assertFalse(calibration['factor_destroyed']);self.assertFalse(calibration['rebuilt'])
+            clock=(Path(td)/'numeric_qualification_clock.json').read_bytes()
             for f in [*local,coarse]:f.destroy()
             objects.clear()
             with patch('src.solvers.bounded_trace_study.BoundedTwoLevelPC.solve',side_effect=lambda f,v:np.full(2,np.nan,complex)):
                 with self.assertRaises((ValueError,FloatingPointError)):
                     numeric_factors(record,j,scope=sc,folder=Path(td),workspace={'reserved_bytes':8*2**30})
             self.assertTrue(all(f.destroyed for f in objects))
+            self.assertEqual((Path(td)/'numeric_qualification_clock.json').read_bytes(),clock)
 
     def test_actual_nonzero_KSP_initial_vector_and_cumulative_iteration(self):
         from petsc4py import PETSc
@@ -91,16 +94,18 @@ class ReuseTests(unittest.TestCase):
         def action(v):o=v.duplicate();o.array[:]=A@v.array;return o
         def evaluate(t,r):return dict(true=float(np.linalg.norm(rhs.array-A@t.array)/np.linalg.norm(rhs.array)),identity=0.)
         policy=dict(original_key='true',physical_limits=dict(true=1e-6),identity_limits=dict(identity=1e-10))
-        saved=[]
+        saved=[];true_calls=[]
+        def true_action(v):true_calls.append(1);return action(v)
         try:
             result=run_retained_fgmres(rhs,action,lambda v:v.copy(),evaluate=evaluate,checkpoint=lambda *a:None,
                 append=lambda *a:None,seconds=lambda:0.,initial_vector=initial,iterations_consumed=32,
                 restart=2,max_it=8,residual_interval=2,candidate_rtol=1e-12,retained_tolerance=1e-12,
-                evaluation_policy=policy,save_retained=lambda i,v:saved.append((i,v.array.copy())))
+                evaluation_policy=policy,true_action=true_action,save_retained=lambda i,v:saved.append((i,v.array.copy())))
             self.assertFalse(result['zero_start']);self.assertEqual(result['ksp_solve_count'],1)
             np.testing.assert_allclose(saved[0][1],initial)
             self.assertEqual(saved[0][0],32)
             self.assertEqual(result['cumulative_iterations'],32+result['iterations'])
+            self.assertEqual(len(true_calls),result['explicit_action_count'])
             result['final_solution'].destroy()
         finally:rhs.destroy()
 

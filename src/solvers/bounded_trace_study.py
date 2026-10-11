@@ -199,6 +199,14 @@ def numeric_factors(record,journal,scope=scope,folder=None,workspace=None):
     allreceipts=record['matrices']+[record['coarse_matrix']]
     infos=record['analysis']+[record['coarse_symbolic']];factors=[];remaining=sum(r['double_bytes'] for r in infos)
     reused=scope.NAMESPACE=='v72';started=time.monotonic();rows=[]
+    if reused:
+        clock=scope.window.TMP/'numeric_qualification_clock.json'
+        boot=scope.window.snapshot()['boot_id']
+        if clock.exists():
+            saved=json.loads(clock.read_text())
+            if saved['boot_id']!=boot:raise ValueError('V72 numeric qualification boot identity')
+            started=saved['start_monotonic']
+        else:write_json(clock,dict(start_monotonic=started,boot_id=boot))
     try:
         for j,(receipt,expected) in enumerate(zip(allreceipts,infos,strict=True)):
             if reused and (time.monotonic()-started>=10800 or scope.window.snapshot()['heavy_remaining_seconds']<=4500):
@@ -232,16 +240,17 @@ def numeric_factors(record,journal,scope=scope,folder=None,workspace=None):
                     rng=np.random.default_rng(7205+j);v=rng.normal(size=A.shape[0])+1j*rng.normal(size=A.shape[0])
                     began=time.perf_counter();z=BoundedTwoLevelPC.solve(f,v);tri=time.perf_counter()-began
                     residual=A@z-v;err=relative(residual,v)
+                    finite=bool(np.isfinite(z).all() and np.isfinite(err))
                     row=dict(index=j,kind='local' if j<len(infos)-1 else 'coarse',input=receipt,
                         expected=expected,admission=dict(tree=sample,remaining_double_symbolic_bytes=remaining+2*estimate*1_000_000,
                         future_workspace=workspace,planned_simultaneous_bytes=planned,admitted=admitted),
                         info_after_numeric=f.info(),controls=f.symbolic_memory_settings(),triangular_seconds=tri,
-                        residual=err,finite=bool(np.isfinite(z).all()),factor_kept=True,numeric_seconds=numeric_seconds,
+                        residual=err if finite else None,finite=finite,factor_kept=True,numeric_seconds=numeric_seconds,
                         arrays=save_arrays(folder/f'factor_witness_{j:02d}.npz',input=v,output=z,residual=residual))
                     rows.append(row);write_json(folder/'numeric_factor_progress.json',dict(rows=rows,completed=len(rows),
                         numeric_seconds=time.monotonic()-started,all_remaining_double_bytes=remaining))
                     if j==0:write_json(folder/'local_forecast_calibration.json',dict(row,factor_destroyed=False,rebuilt=False))
-                    if err>1e-8 or not row['finite']:raise ValueError('V72 actual local/coarse block solve gate')
+                    if not finite or err>1e-8:raise ValueError('V72 actual local/coarse block solve gate')
             except BaseException:f.destroy();raise
             finally:matrix.destroy();del A;gc.collect()
         return factors[:-1],factors[-1]
@@ -261,7 +270,9 @@ def iterate(folder,journal,state,scope=scope):
     rhs_receipt=save_arrays(folder/'physical_RHS.npz',full_rhs=full_rhs,reduced_rhs=reduced,bhat=bhat,left=left,right=right)
     Z=csr_load(record['Z']);pa=checked_arrays(record['patch_arrays'])
     patches=[{k:pa[f'{j}_{k}'] for k in ('ids','core')} for j in range(record['patch_inventory']['patches'])]
-    action=lambda v:action_charge('I_scaled_trace',lambda:left*a.apply_trace(right*v),scope=scope)
+    action=lambda v:action_charge('I_outer_scaled_trace',lambda:left*a.apply_trace(right*v),scope=scope)
+    pc_action=lambda v:action_charge('I_PC_internal_scaled_trace',lambda:left*a.apply_trace(right*v),scope=scope)
+    true_action=lambda v:action_charge('I_explicit_true_scaled_trace',lambda:left*a.apply_trace(right*v),scope=scope)
     remaining=min(scope.window.snapshot()['heavy_remaining_seconds'],scope.window.case_remaining(active=True))
     reused=scope.NAMESPACE=='v72'
     independent=CoefficientFullAction(s,oracle,15);evaluations=[];counter=0
@@ -312,12 +323,15 @@ def iterate(folder,journal,state,scope=scope):
     # Two actual fixed PC calls. They are numerical interface tests, not
     # reference-driven choices and not a convergence requirement.
     pc_rows=[]
-    pc=BoundedTwoLevelPC(Z,patches,local,coarse,action)
+    pc=BoundedTwoLevelPC(Z,patches,local,coarse,pc_action)
     # Immediate ownership protection includes all later vectors and witnesses.
     try:
         rng=np.random.default_rng(7104)
         v=rng.normal(size=len(bhat))+1j*rng.normal(size=len(bhat));alpha=.3+.7j;first_output=None
         for j in range(2):
+            if reused:
+                qualification_start=json.loads((scope.window.TMP/'numeric_qualification_clock.json').read_text())['start_monotonic']
+                if time.monotonic()-qualification_start>=10800:raise RuntimeError('V72 numeric plus PC qualification cumulative3h cap')
             input_vector=v if j==0 else alpha*v;began=time.perf_counter();z=pc(input_vector)
             error=0. if j==0 else relative(z-alpha*first_output,alpha*first_output)
             if j==0:first_output=z.copy()
@@ -326,6 +340,10 @@ def iterate(folder,journal,state,scope=scope):
         write_json(folder/'live_PC_qualification.json',dict(pass_gate=PCpass,rows=pc_rows,calls=pc.calls,
             linear_operator_frozen=True,reference_reads=0))
         if not PCpass:raise ValueError('fixed live PC finite/complex linearity')
+        if reused:
+            elapsed=time.monotonic()-qualification_start
+            write_json(folder/'numeric_PC_qualification_complete.json',dict(elapsed_seconds=elapsed,cap_seconds=10800,pass_gate=elapsed<=10800))
+            if elapsed>10800:raise RuntimeError('V72 numeric plus PC qualification cumulative3h cap')
         remaining=min(scope.window.snapshot()['heavy_remaining_seconds'],scope.window.case_remaining(active=True))
         step_forecast=hot+max(r['seconds'] for r in pc_rows)
         forecast=min(21600.,256*step_forecast+3600)
@@ -356,6 +374,8 @@ def iterate(folder,journal,state,scope=scope):
             with (folder/name).open('a') as f:f.write(json.dumps(row,allow_nan=False)+'\n');f.flush()
         def vector_action(v):
             out=v.duplicate();out.array[:]=action(v.array);return out
+        def vector_true_action(v):
+            out=v.duplicate();out.array[:]=true_action(v.array);return out
         def vector_pc(v):
             out=v.duplicate();out.array[:]=pc(v.array);return out
         policy=dict(original_key='true',physical_limits=dict(true=1e-6,native=1e-6,augmented=1e-6,port=1e-6),
@@ -365,12 +385,13 @@ def iterate(folder,journal,state,scope=scope):
                 checkpoint=lambda iteration,vec,row:write_json(folder/'latest_original_gate.json',row),append=append,
                 seconds=lambda:time.monotonic()-start,save_retained=save,restart=32,max_it=256-iterations_consumed,residual_interval=32,
                 initial_vector=initial,iterations_consumed=iterations_consumed,
+                true_action=vector_true_action,
                 candidate_rtol=1e-11,retained_tolerance=1e-11,evaluation_policy=policy,
                 resource_sample=scope.window.require_live,
                 stop_requested=lambda:time.monotonic()-start>=21600 or scope.window.snapshot()['heavy_remaining_seconds']<=4500
                     or scope.window.case_remaining(active=True)<=4500 or actions_started(scope)>=590)
-            final=result.pop('final_solution');t=right*final.array.copy();final.destroy()
-            returned=save_arrays(folder/'retained_returned.npz',trace_port=t,rhs=reduced,scaled_rhs=bhat,left=left,right=right)
+            final=result.pop('final_solution');scaled_retained=final.array.copy();t=right*scaled_retained;final.destroy()
+            returned=save_arrays(folder/'retained_returned.npz',scaled_retained=scaled_retained,trace_port=t,rhs=reduced,scaled_rhs=bhat,left=left,right=right)
             pending=dict(status='RECOVERY_PENDING',retained_returned=returned,RHS=rhs_receipt,local_packet=a.receipt,
                 source=state,spec=s['spec'],physical=s['physical'],boundary_arrays=parent(scope)['boundary_arrays'],mode_sha256=b['digest'],iteration=result)
             write_json(folder/'retained_audit_pending.json',pending)

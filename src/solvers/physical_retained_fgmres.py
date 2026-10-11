@@ -16,7 +16,7 @@ def run_retained_fgmres(
     save_retained=lambda iteration, vector: None,
     restart=32, max_it=2048, residual_interval=8, candidate_rtol=1e-6,
     evaluation_policy=None, retained_tolerance=None, initial_vector=None,
-    iterations_consumed=0,
+    iterations_consumed=0, true_action=None,
 ):
     """Callbacks return owned action/PC vectors and plain evaluation facts."""
     from petsc4py import PETSc
@@ -76,7 +76,7 @@ def run_retained_fgmres(
         if retained_saved:
             save_retained(int(iteration)+iterations_consumed, target)
         started = perf_counter()
-        applied = action(target)
+        applied = (action if true_action is None else true_action)(target)
         residual = rhs.copy()
         try:
             residual.axpy(-1.0, applied)
