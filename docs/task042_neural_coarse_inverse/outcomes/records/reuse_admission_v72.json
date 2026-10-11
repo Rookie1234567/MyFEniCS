@@ -1,0 +1,513 @@
+{
+  "producer": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_reuse_admit_20261011T042133054087Z/result.json",
+    "sha256": "db39b64f7e0ccc44c3bbb7031b70f414c28917bf2fe5a768b15b66b2b5cfcb43"
+  },
+  "mathematics_pass": true,
+  "old_capacity": {
+    "local_double_bytes": 79520000000,
+    "coarse_double_bytes": 802000000,
+    "double_symbolic_sum_bytes": 80322000000,
+    "limit_bytes": 68719476736,
+    "admitted": false,
+    "excess_bytes": 11602523264,
+    "factors": [
+      {
+        "rows": 40125,
+        "nnz": 7684925,
+        "estimate_decimal_MB": 766,
+        "double_bytes": 1532000000
+      },
+      {
+        "rows": 66500,
+        "nnz": 13058900,
+        "estimate_decimal_MB": 1474,
+        "double_bytes": 2948000000
+      },
+      {
+        "rows": 63230,
+        "nnz": 12427300,
+        "estimate_decimal_MB": 1278,
+        "double_bytes": 2556000000
+      },
+      {
+        "rows": 37480,
+        "nnz": 7123150,
+        "estimate_decimal_MB": 712,
+        "double_bytes": 1424000000
+      },
+      {
+        "rows": 44815,
+        "nnz": 8667825,
+        "estimate_decimal_MB": 903,
+        "double_bytes": 1806000000
+      },
+      {
+        "rows": 57840,
+        "nnz": 11313800,
+        "estimate_decimal_MB": 1066,
+        "double_bytes": 2132000000
+      },
+      {
+        "rows": 67745,
+        "nnz": 13360325,
+        "estimate_decimal_MB": 1465,
+        "double_bytes": 2930000000
+      },
+      {
+        "rows": 33490,
+        "nnz": 6313550,
+        "estimate_decimal_MB": 642,
+        "double_bytes": 1284000000
+      },
+      {
+        "rows": 48130,
+        "nnz": 9252600,
+        "estimate_decimal_MB": 1034,
+        "double_bytes": 2068000000
+      },
+      {
+        "rows": 42830,
+        "nnz": 8329350,
+        "estimate_decimal_MB": 827,
+        "double_bytes": 1654000000
+      },
+      {
+        "rows": 57435,
+        "nnz": 11319825,
+        "estimate_decimal_MB": 1248,
+        "double_bytes": 2496000000
+      },
+      {
+        "rows": 35390,
+        "nnz": 6749300,
+        "estimate_decimal_MB": 512,
+        "double_bytes": 1024000000
+      },
+      {
+        "rows": 61935,
+        "nnz": 12247725,
+        "estimate_decimal_MB": 1417,
+        "double_bytes": 2834000000
+      },
+      {
+        "rows": 46500,
+        "nnz": 8904500,
+        "estimate_decimal_MB": 1044,
+        "double_bytes": 2088000000
+      },
+      {
+        "rows": 54160,
+        "nnz": 10498600,
+        "estimate_decimal_MB": 1254,
+        "double_bytes": 2508000000
+      },
+      {
+        "rows": 64310,
+        "nnz": 12628800,
+        "estimate_decimal_MB": 1394,
+        "double_bytes": 2788000000
+      },
+      {
+        "rows": 32295,
+        "nnz": 6161975,
+        "estimate_decimal_MB": 513,
+        "double_bytes": 1026000000
+      },
+      {
+        "rows": 59940,
+        "nnz": 11836050,
+        "estimate_decimal_MB": 1273,
+        "double_bytes": 2546000000
+      },
+      {
+        "rows": 40895,
+        "nnz": 7730675,
+        "estimate_decimal_MB": 886,
+        "double_bytes": 1772000000
+      },
+      {
+        "rows": 53320,
+        "nnz": 10343100,
+        "estimate_decimal_MB": 1194,
+        "double_bytes": 2388000000
+      },
+      {
+        "rows": 45955,
+        "nnz": 8956675,
+        "estimate_decimal_MB": 890,
+        "double_bytes": 1780000000
+      },
+      {
+        "rows": 57535,
+        "nnz": 11333775,
+        "estimate_decimal_MB": 1305,
+        "double_bytes": 2610000000
+      },
+      {
+        "rows": 33895,
+        "nnz": 6448875,
+        "estimate_decimal_MB": 525,
+        "double_bytes": 1050000000
+      },
+      {
+        "rows": 62235,
+        "nnz": 12308875,
+        "estimate_decimal_MB": 1432,
+        "double_bytes": 2864000000
+      },
+      {
+        "rows": 47255,
+        "nnz": 9028675,
+        "estimate_decimal_MB": 1055,
+        "double_bytes": 2110000000
+      },
+      {
+        "rows": 53110,
+        "nnz": 10299750,
+        "estimate_decimal_MB": 1204,
+        "double_bytes": 2408000000
+      },
+      {
+        "rows": 66695,
+        "nnz": 13099425,
+        "estimate_decimal_MB": 1350,
+        "double_bytes": 2700000000
+      },
+      {
+        "rows": 33270,
+        "nnz": 6348750,
+        "estimate_decimal_MB": 515,
+        "double_bytes": 1030000000
+      },
+      {
+        "rows": 59145,
+        "nnz": 11671925,
+        "estimate_decimal_MB": 1265,
+        "double_bytes": 2530000000
+      },
+      {
+        "rows": 42735,
+        "nnz": 8072725,
+        "estimate_decimal_MB": 924,
+        "double_bytes": 1848000000
+      },
+      {
+        "rows": 42360,
+        "nnz": 8125000,
+        "estimate_decimal_MB": 856,
+        "double_bytes": 1712000000
+      },
+      {
+        "rows": 68100,
+        "nnz": 13384700,
+        "estimate_decimal_MB": 1457,
+        "double_bytes": 2914000000
+      },
+      {
+        "rows": 63210,
+        "nnz": 12422700,
+        "estimate_decimal_MB": 1246,
+        "double_bytes": 2492000000
+      },
+      {
+        "rows": 39320,
+        "nnz": 7536500,
+        "estimate_decimal_MB": 768,
+        "double_bytes": 1536000000
+      },
+      {
+        "rows": 42525,
+        "nnz": 8174425,
+        "estimate_decimal_MB": 893,
+        "double_bytes": 1786000000
+      },
+      {
+        "rows": 58155,
+        "nnz": 11360175,
+        "estimate_decimal_MB": 1070,
+        "double_bytes": 2140000000
+      },
+      {
+        "rows": 68680,
+        "nnz": 13557300,
+        "estimate_decimal_MB": 1498,
+        "double_bytes": 2996000000
+      },
+      {
+        "rows": 31965,
+        "nnz": 5985825,
+        "estimate_decimal_MB": 605,
+        "double_bytes": 1210000000
+      },
+      {
+        "rows": 7068,
+        "nnz": 3541640,
+        "estimate_decimal_MB": 401,
+        "double_bytes": 802000000
+      }
+    ]
+  },
+  "new_capacity": {
+    "local_double_bytes": 79520000000,
+    "coarse_double_bytes": 802000000,
+    "double_symbolic_sum_bytes": 80322000000,
+    "limit_bytes": 85899345920,
+    "admitted": true,
+    "excess_bytes": 0,
+    "factors": [
+      {
+        "rows": 40125,
+        "nnz": 7684925,
+        "estimate_decimal_MB": 766,
+        "double_bytes": 1532000000
+      },
+      {
+        "rows": 66500,
+        "nnz": 13058900,
+        "estimate_decimal_MB": 1474,
+        "double_bytes": 2948000000
+      },
+      {
+        "rows": 63230,
+        "nnz": 12427300,
+        "estimate_decimal_MB": 1278,
+        "double_bytes": 2556000000
+      },
+      {
+        "rows": 37480,
+        "nnz": 7123150,
+        "estimate_decimal_MB": 712,
+        "double_bytes": 1424000000
+      },
+      {
+        "rows": 44815,
+        "nnz": 8667825,
+        "estimate_decimal_MB": 903,
+        "double_bytes": 1806000000
+      },
+      {
+        "rows": 57840,
+        "nnz": 11313800,
+        "estimate_decimal_MB": 1066,
+        "double_bytes": 2132000000
+      },
+      {
+        "rows": 67745,
+        "nnz": 13360325,
+        "estimate_decimal_MB": 1465,
+        "double_bytes": 2930000000
+      },
+      {
+        "rows": 33490,
+        "nnz": 6313550,
+        "estimate_decimal_MB": 642,
+        "double_bytes": 1284000000
+      },
+      {
+        "rows": 48130,
+        "nnz": 9252600,
+        "estimate_decimal_MB": 1034,
+        "double_bytes": 2068000000
+      },
+      {
+        "rows": 42830,
+        "nnz": 8329350,
+        "estimate_decimal_MB": 827,
+        "double_bytes": 1654000000
+      },
+      {
+        "rows": 57435,
+        "nnz": 11319825,
+        "estimate_decimal_MB": 1248,
+        "double_bytes": 2496000000
+      },
+      {
+        "rows": 35390,
+        "nnz": 6749300,
+        "estimate_decimal_MB": 512,
+        "double_bytes": 1024000000
+      },
+      {
+        "rows": 61935,
+        "nnz": 12247725,
+        "estimate_decimal_MB": 1417,
+        "double_bytes": 2834000000
+      },
+      {
+        "rows": 46500,
+        "nnz": 8904500,
+        "estimate_decimal_MB": 1044,
+        "double_bytes": 2088000000
+      },
+      {
+        "rows": 54160,
+        "nnz": 10498600,
+        "estimate_decimal_MB": 1254,
+        "double_bytes": 2508000000
+      },
+      {
+        "rows": 64310,
+        "nnz": 12628800,
+        "estimate_decimal_MB": 1394,
+        "double_bytes": 2788000000
+      },
+      {
+        "rows": 32295,
+        "nnz": 6161975,
+        "estimate_decimal_MB": 513,
+        "double_bytes": 1026000000
+      },
+      {
+        "rows": 59940,
+        "nnz": 11836050,
+        "estimate_decimal_MB": 1273,
+        "double_bytes": 2546000000
+      },
+      {
+        "rows": 40895,
+        "nnz": 7730675,
+        "estimate_decimal_MB": 886,
+        "double_bytes": 1772000000
+      },
+      {
+        "rows": 53320,
+        "nnz": 10343100,
+        "estimate_decimal_MB": 1194,
+        "double_bytes": 2388000000
+      },
+      {
+        "rows": 45955,
+        "nnz": 8956675,
+        "estimate_decimal_MB": 890,
+        "double_bytes": 1780000000
+      },
+      {
+        "rows": 57535,
+        "nnz": 11333775,
+        "estimate_decimal_MB": 1305,
+        "double_bytes": 2610000000
+      },
+      {
+        "rows": 33895,
+        "nnz": 6448875,
+        "estimate_decimal_MB": 525,
+        "double_bytes": 1050000000
+      },
+      {
+        "rows": 62235,
+        "nnz": 12308875,
+        "estimate_decimal_MB": 1432,
+        "double_bytes": 2864000000
+      },
+      {
+        "rows": 47255,
+        "nnz": 9028675,
+        "estimate_decimal_MB": 1055,
+        "double_bytes": 2110000000
+      },
+      {
+        "rows": 53110,
+        "nnz": 10299750,
+        "estimate_decimal_MB": 1204,
+        "double_bytes": 2408000000
+      },
+      {
+        "rows": 66695,
+        "nnz": 13099425,
+        "estimate_decimal_MB": 1350,
+        "double_bytes": 2700000000
+      },
+      {
+        "rows": 33270,
+        "nnz": 6348750,
+        "estimate_decimal_MB": 515,
+        "double_bytes": 1030000000
+      },
+      {
+        "rows": 59145,
+        "nnz": 11671925,
+        "estimate_decimal_MB": 1265,
+        "double_bytes": 2530000000
+      },
+      {
+        "rows": 42735,
+        "nnz": 8072725,
+        "estimate_decimal_MB": 924,
+        "double_bytes": 1848000000
+      },
+      {
+        "rows": 42360,
+        "nnz": 8125000,
+        "estimate_decimal_MB": 856,
+        "double_bytes": 1712000000
+      },
+      {
+        "rows": 68100,
+        "nnz": 13384700,
+        "estimate_decimal_MB": 1457,
+        "double_bytes": 2914000000
+      },
+      {
+        "rows": 63210,
+        "nnz": 12422700,
+        "estimate_decimal_MB": 1246,
+        "double_bytes": 2492000000
+      },
+      {
+        "rows": 39320,
+        "nnz": 7536500,
+        "estimate_decimal_MB": 768,
+        "double_bytes": 1536000000
+      },
+      {
+        "rows": 42525,
+        "nnz": 8174425,
+        "estimate_decimal_MB": 893,
+        "double_bytes": 1786000000
+      },
+      {
+        "rows": 58155,
+        "nnz": 11360175,
+        "estimate_decimal_MB": 1070,
+        "double_bytes": 2140000000
+      },
+      {
+        "rows": 68680,
+        "nnz": 13557300,
+        "estimate_decimal_MB": 1498,
+        "double_bytes": 2996000000
+      },
+      {
+        "rows": 31965,
+        "nnz": 5985825,
+        "estimate_decimal_MB": 605,
+        "double_bytes": 1210000000
+      },
+      {
+        "rows": 7068,
+        "nnz": 3541640,
+        "estimate_decimal_MB": 401,
+        "double_bytes": 802000000
+      }
+    ]
+  },
+  "pass_gate": true,
+  "numeric_admission_at_reuse_stage": false,
+  "actual_new_partition_Z_E0_builds": 0,
+  "controlled_read_seconds": 114.33507731487043,
+  "parent_receipts": {
+    "PREFLIGHT": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_trace_operator_preflight_20261011T010347954645Z/result.json",
+      "sha256": "b3eaf8b994f1c3ec29061e82adf77e0dd136114608790682a00c2d7f92d07cf0"
+    },
+    "PC_SETUP": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/result.json",
+      "sha256": "dea558cc24bbb908e41df166b0c86343161aa903c1bfa4c2347e1bb3c09b5176"
+    },
+    "VERIFY_COST": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_compare_verify_cost_20261011T021239770272Z/result.json",
+      "sha256": "e0bb6611e18c9594e22ffba23e084bedc0bf14c9db5e6fd94f5a46144bd0bc09"
+    }
+  }
+}

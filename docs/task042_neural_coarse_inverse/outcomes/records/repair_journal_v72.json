@@ -1,0 +1,54 @@
+{
+  "rows": [
+    {
+      "observed_UTC": "2026-10-11T04:48:07.428188+00:00",
+      "source": "5564befc97ccb749e1b0e4d5fc909592d130c808",
+      "source_sha256": "4990ecf30834cb3e4d2a0ecb8a27cf5f356d7e27b41f8e3ff683c45ed10b4f2e",
+      "root_cause": "restart convergence callback calls original audit twice for identical iteration/trace; cache only handled terminal callback",
+      "scientific_identity_failure": false,
+      "continued_current_KSP": true,
+      "running_HEAD_not_changed": true,
+      "evidence": "original_monitor_progress.json rows1/2 trace member hashes both9b25c8afa298290ea21d53c1e17c6ca3618ea67dffe79d466d3641f7e896743a",
+      "extra_actions_charged": true,
+      "extra_wall_nested_not_added_again": true,
+      "fix_after_legal_actor_exit": "extend exact vector/iteration cache; targeted synthetic restart test; no PDE replay"
+    },
+    {
+      "UTC": "2026-10-11T06:21:50.078711+00:00",
+      "root_cause": "identical restart boundary state audited twice",
+      "code_sha256_before": "4990ecf30834cb3e4d2a0ecb8a27cf5f356d7e27b41f8e3ff683c45ed10b4f2e",
+      "code_sha256_after": "aec8d6bb91a5da9fbbade5c970b284724f400a21f193c7be0bbfe05b76747afc",
+      "applied_only_after_legal_actor_exit": true,
+      "math_changed": false,
+      "new_PDE_replay": 0,
+      "new_factor_replay": 0,
+      "existing_failure_and_cost_preserved": true,
+      "targeted_regression": "real4x4 PETSc restart2 exact state/iteration audit uniqueness"
+    },
+    {
+      "observed_UTC": "2026-10-11T06:35:32.710297+00:00",
+      "fixed_UTC": "2026-10-11T06:36:03.650332+00:00",
+      "root_cause": "unmatched parenthesis in new delivery-only writer",
+      "before_sha256": "2b788339db29b2660fba8447c56367379fbc609bcc2bf039f869ebfd415b32ee",
+      "after_sha256": "2c43399e7bd2b51f14a838adafe73e6a33b4bdd13dec3d695e77a41ff3cc1c97",
+      "stderr_path": "tmp/task042/v72/metadata_phase01/delivery_records.stderr",
+      "failure_retained": true,
+      "new_factor": 0,
+      "new_KSP": 0,
+      "new_original_actions": 0,
+      "tracked_numerical_source_unchanged": true,
+      "repaired_helper_success_receipt": "tmp/task042/v72/metadata_phase02/receipt.json",
+      "repair_elapsed_upper_seconds": 32.307894
+    }
+  ],
+  "C1": "cb4201a389c8cd072b02435200739823b020317f",
+  "C2": "5564befc97ccb749e1b0e4d5fc909592d130c808",
+  "cache_fix_source": "3a4a336e34e433bb673085dea1a72ccae1bd1894",
+  "mathematics_unchanged_during_actor": true,
+  "existing_vectors_not_recomputed": true,
+  "ordinary_regression_failures": 0,
+  "repair_elapsed_conservative_upper_bound_seconds": 6787.935463999999,
+  "repair_cap_seconds": 9000,
+  "repair_bound_scope": "all first-work through pre02 + diagnosis through pre03; includes ordinary implementation and wait for unchanged running actor; nested in actual window, not an additive fee",
+  "delivery_writer_failures": 1
+}

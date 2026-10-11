@@ -1,3 +1,11 @@
+## Task042 V72：真实39因子与256步有界迭代
+
+| 模型 / 路线 | 方程与场结果 | measured规模 / 资源 | 证据 |
+|---|---|---|---|
+| 0.7nm NOTCH、25576tet/p5/828；38 RAS+p2粗层 RIGHT FGMRES | 原true=0.998857044302；同离散严格再现=FAIL；功率official=False | 1177293接口行；39numeric；采样树峰40.1189613342GiB | [回应](task042_neural_coarse_inverse/response_v72.md) · [完整outcome](task042_neural_coarse_inverse/outcomes/reused_trace_iterative_v72.md) |
+
+接口作用沿健康packet；本次无global fine K/S/factor，父内部/局部/粗LU存在。V71旧64GiB拒绝保留，新80GiB门与逐factor96GiB共驻准入通过。完整候选和828通道已保存，原残差决定科学资格；费用/修复/最终gap见回应。本批无NN；历史连续精度和2TB48h未资格。下文历史原字节保留。
+
 # Task042 V71：固定PC真实准备完成，总容量阻止完整迭代
 
 同0.7nm/25576tet/p5/828，热作用最大FE/port差5.21847e-16/6.43620e-17；真实38块与7068行粗Galerkin已保存、独立消费。全部双倍symbolic74.8056918383GiB超过64GiB，numeric/KSP/新场均0；完整迭代NOT_RUN_CAPACITY_BLOCKED，未称不收敛、NN收益或目标资格。P完整3392.80855s、采样树峰8.79606247GiB只是设置成本，不是完整解内存或生产速度比。

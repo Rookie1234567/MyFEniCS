@@ -1,0 +1,74 @@
+{
+  "producer": {
+    "path": "benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/live_PC_qualification.json",
+    "bytes": 1893,
+    "sha256": "3a35a463e40d704d5aad10f22ed343f7c6fbacab32b1e728fe15fa409b261818"
+  },
+  "pass_gate": true,
+  "rows": [
+    {
+      "seconds": 17.988769742194563,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/PC0.npz",
+        "sha256": "355c53debdb6fa7a67f9a8093b980234319cb6df0ce43a2ec2d8c520e92b46f4",
+        "members": {
+          "input": {
+            "shape": [
+              1177293
+            ],
+            "dtype": "complex128",
+            "sha256": "97ebf729bf4fc96c96ed1479385d3fffff0938b2d88724fa004c46166ca89527"
+          },
+          "output": {
+            "shape": [
+              1177293
+            ],
+            "dtype": "complex128",
+            "sha256": "ffa8c016edf877ee4b6db27f003ee2fcd317c1d4da8e4e3509105593854d3ff4"
+          }
+        }
+      },
+      "finite": true,
+      "complex_linearity": 0.0
+    },
+    {
+      "seconds": 11.734219472156838,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/PC1.npz",
+        "sha256": "bcafd7691c5802ac7f08e5c41e92674698a2469f3c3d424f074c333fb48ae6da",
+        "members": {
+          "input": {
+            "shape": [
+              1177293
+            ],
+            "dtype": "complex128",
+            "sha256": "24eeec268e80e30be5bedb05207f54951ed416e32834370079022fe22004b59a"
+          },
+          "output": {
+            "shape": [
+              1177293
+            ],
+            "dtype": "complex128",
+            "sha256": "6674b115cafddd7ce56612aa890d9576e8387c5ffeaa7b4eccaf4bfd3a16d074"
+          }
+        }
+      },
+      "finite": true,
+      "complex_linearity": 2.0677399594210033e-12
+    }
+  ],
+  "frozen_after_two_fixed_vectors": true,
+  "PC_formula": "coarse-first z0 + fixed RAS(r-Ahat*z0)",
+  "total_calls": {
+    "apply": 258,
+    "local_triangular": 9804,
+    "coarse_triangular": 258,
+    "internal_original_action": 258
+  },
+  "total_nested_seconds": {
+    "local": 2466.78973082616,
+    "coarse": 138.39216313976794,
+    "original": 333.41391376941465
+  },
+  "independent_saved_complex_homogeneity": 2.0677399594210033e-12
+}

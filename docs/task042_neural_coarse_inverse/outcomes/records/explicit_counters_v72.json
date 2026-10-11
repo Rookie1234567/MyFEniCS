@@ -1,0 +1,34 @@
+{
+  "started": 557,
+  "completed": 557,
+  "by_kind": {
+    "I_reused_hot_pair": 2,
+    "I_PC_internal_scaled_trace": 258,
+    "I_explicit_true_scaled_trace": 16,
+    "I_public_original": 16,
+    "I_outer_scaled_trace": 263,
+    "I_final_public_original": 1,
+    "V_saved_public_original": 1
+  },
+  "action_lower_bound": 557,
+  "action_upper_bound": 557,
+  "action_cap": 600,
+  "history_V71_paid_actions": 8,
+  "formal_KSP_solve_count": 1,
+  "formal_iterations": 256,
+  "new_local_numeric": 38,
+  "new_coarse_numeric": 1,
+  "new_global_fine_numeric": 0,
+  "new_global_fine_K_S_reads": 0,
+  "new_local_symbolic": 38,
+  "new_coarse_symbolic": 1,
+  "symbolic_needed_for_new_numeric_instances": true,
+  "PC_calls": {
+    "apply": 258,
+    "local_triangular": 9804,
+    "coarse_triangular": 258,
+    "internal_original_action": 258
+  },
+  "PC_setup_FIXED_RHS_triangular": 39,
+  "small_synthetic_tests_not_formal_PDE": true
+}

@@ -1,0 +1,87 @@
+{
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/solvers/bounded_trace_study.py",
+        "src/solvers/physical_retained_fgmres.py",
+        "src/solvers/reused_trace_admission.py",
+        "src/solvers/reused_trace_scope.py"
+      ],
+      "behavior": "new opt-in V72 reuse/live capacity and continuation; exact-state audit cache; default old V71 remains unchanged",
+      "dependencies": [
+        "V70 local packet",
+        "V71 owner/Z/E0/38 CSR",
+        "complex PETSc ABI"
+      ],
+      "tests": "six focused tests including real PETSc restart/initial vector and exception factor cleanup",
+      "fresh_PDE": "V72 fixed PC FGMRES candidate; equation and strict field result in scientific_checks_v72.json",
+      "merge_order": 1,
+      "production_default_qualification": false
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "scripts/run_case.py",
+        "src/runners/port_preparation.py"
+      ],
+      "behavior": "new scope and memory envelope only; own whole-tree guard intact",
+      "dependencies": [
+        "new frozen V72 scope"
+      ],
+      "tests": "three input validate and live memory resolution focused test",
+      "merge_order": 2
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/collect_bounded_trace.py",
+        "benchmarks/qualify_reused_trace.py",
+        "src/test/test_reused_trace.py"
+      ],
+      "behavior": "independent saved CSR/factor/PC/original/field evidence scoring; no solving in checker",
+      "dependencies": [
+        "frozen returned candidate",
+        "raw 39 RHS packages"
+      ],
+      "tests": "focused tests and formal unique VERIFY",
+      "merge_order": 3
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042_neural_coarse_inverse/response_v72.md",
+        "docs/task042_neural_coarse_inverse/outcomes/reused_trace_iterative_v72.md",
+        "outcomes/records/*_v72.json"
+      ],
+      "behavior": "negative result and costs retained",
+      "tests": "one final15 document contract plus incremental links/tables/JSON/history guards",
+      "merge_order": 4
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "input/task042_neural_coarse_inverse/reused_trace_iterative_v72.json",
+        "input/task042_neural_coarse_inverse/v72_compare_verify_cost.dat",
+        "input/task042_neural_coarse_inverse/v72_reuse_admit.dat",
+        "input/task042_neural_coarse_inverse/v72_trace_fgmres_solve.dat"
+      ],
+      "behavior": "fixed limited NOTCH candidate research inputs; not new production default",
+      "merge_order": 5
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "tmp/task042/v72",
+        "benchmarks/artifacts/task042/v72",
+        "results/task042/*v72*"
+      ],
+      "behavior": "large arrays, wrapper logs, diagnostic snapshots ignored; hash references only",
+      "merge_order": null
+    }
+  ],
+  "merge_approval": false,
+  "solver_pass": false,
+  "old_task_review_response_raw_unchanged": true,
+  "no_whole_branch_migration": true
+}

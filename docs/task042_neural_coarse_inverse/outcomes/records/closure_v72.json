@@ -1,0 +1,29 @@
+{
+  "status": "PENDING_FINAL_DOCUMENT_CHECK_AND_CLOSURE",
+  "active": null,
+  "window": {
+    "start_utc": "2026-10-11T04:04:31+00:00",
+    "start_monotonic": 1616465.95,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 46800,
+    "total_limit_seconds": 50400,
+    "scientific_loaded_limit_seconds": 43200,
+    "review_commit": "07d3f3d2aa6177cc015ac1a279900f7fbb14f4c7",
+    "contract_HEAD": "07d3f3d2aa6177cc015ac1a279900f7fbb14f4c7",
+    "closed": false,
+    "first_work_start_never_refreshed": true,
+    "first_observed_proc_uptime": 1616465.95,
+    "start_monotonic_kind": "first actual tool /proc/uptime; conservative UTC to whole second",
+    "heavy_stop_utc": "2026-10-11T17:04:31+00:00",
+    "deadline_utc": "2026-10-11T18:04:31+00:00"
+  },
+  "formal_KSP_count": 1,
+  "candidate_count": 1,
+  "scientific_queue_frozen": {
+    "path": "tmp/task042/v72/scientific_queue_frozen.json",
+    "bytes": 1520,
+    "sha256": "e7a01bb585cdd4a09d31ab057721369638c55c771bfb4e874f480e3961f7b9de"
+  },
+  "not_yet_claimed_closed": true,
+  "final_receipt_will_replace_this_new_record": true
+}

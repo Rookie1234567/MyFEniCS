@@ -1,0 +1,73 @@
+{
+  "as_of_source_HEAD": "3a4a336e34e433bb673085dea1a72ccae1bd1894",
+  "final_source_files": [
+    {
+      "path": "benchmarks/collect_bounded_trace.py",
+      "bytes": 17581,
+      "sha256": "69b9fb77d2ad74491834a6e44476beaa2f70e02717bdbe1f7a82a97580ae8a77"
+    },
+    {
+      "path": "benchmarks/qualify_reused_trace.py",
+      "bytes": 2118,
+      "sha256": "c7db76129e4f58932c267d97efba81275ed80eb0fc7acce18dd97e7be87d3f7d"
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/reused_trace_iterative_v72.json",
+      "bytes": 13974,
+      "sha256": "a3547640c20303bc1d63a503036ecd3328c377edb0ee7e10d14182edd39aaff7"
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v72_compare_verify_cost.dat",
+      "bytes": 98,
+      "sha256": "d4f5ef9e45afafe5a9300d4133851a2effcb42ab841335caa137599a5a5cb817"
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v72_reuse_admit.dat",
+      "bytes": 90,
+      "sha256": "9f6ea8ba90508a28a813e85ed3a89a3acf6f516bae4fdd7baf2ea33c0d0b580d"
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v72_trace_fgmres_solve.dat",
+      "bytes": 93,
+      "sha256": "8e9bbf432ae0b5c3482929f5428428859b93c4237a71c3175d9f0b4d8a6a2663"
+    },
+    {
+      "path": "scripts/run_case.py",
+      "bytes": 23230,
+      "sha256": "d830a0336d56f9024412421608cdc3b5b2ccb803f40c35392aacc709f004263a"
+    },
+    {
+      "path": "src/runners/port_preparation.py",
+      "bytes": 53792,
+      "sha256": "e60c957b3d633ab907e9d9aebf3a71db74cd57753b4133f00bb12910a3b95b9a"
+    },
+    {
+      "path": "src/solvers/bounded_trace_study.py",
+      "bytes": 32637,
+      "sha256": "9957bdfdace1c4f60e06e9d71a866e3ea479b29bff5f65eb2fc785c367cd6970"
+    },
+    {
+      "path": "src/solvers/physical_retained_fgmres.py",
+      "bytes": 11592,
+      "sha256": "aec8d6bb91a5da9fbbade5c970b284724f400a21f193c7be0bbfe05b76747afc"
+    },
+    {
+      "path": "src/solvers/reused_trace_admission.py",
+      "bytes": 3621,
+      "sha256": "8059cbb2e8c69b8ba041b9311463b7c85020ac3e0316ac5ea16d08d40493a803"
+    },
+    {
+      "path": "src/solvers/reused_trace_scope.py",
+      "bytes": 4147,
+      "sha256": "962973901e95ec53e4d7fc65155ab4f25d8a30cce73e061e9500a96c5c891f79"
+    },
+    {
+      "path": "src/test/test_reused_trace.py",
+      "bytes": 9546,
+      "sha256": "a54b3bc4b103058a9e6a04333e422eea358167e188c24b2abacb31f072b6aa53"
+    }
+  ],
+  "run_sources": "authority_identity_v72.json",
+  "large_full_manifests": "run_index_v72.json",
+  "source_vs_document_HEAD_separate": true
+}

@@ -1,0 +1,2179 @@
+{
+  "status": "COMPONENT_PASS",
+  "rows": [
+    {
+      "index": 0,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch00.npz",
+        "sha256": "68e1cf16b52cec76884db59797be1228cf254d9a76ec6754982d7c93600dbed5"
+      },
+      "rows": 40125,
+      "nnz": 7684925,
+      "estimate_decimal_MB": 766,
+      "double_estimate_bytes": 1532000000,
+      "numeric_seconds": 3.915353407151997,
+      "triangular_seconds": 0.1233549399767071,
+      "residual": 6.137556554144449e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1532
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 766,
+        "17": 766,
+        "18": 1149,
+        "20": 31190575
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 8143958016,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 80322000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/0/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 97055892608,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_00.npz",
+        "sha256": "c9de8a8b543e3fa9e59967da640518c5b3bb9335c3c4e7ca24c4da75d6efac0a"
+      }
+    },
+    {
+      "index": 1,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch01.npz",
+        "sha256": "e84abb17a3cc46a8784fc70819f1688bfcb6f1b1851a18de839ffca32be0e6d0"
+      },
+      "rows": 66500,
+      "nnz": 13058900,
+      "estimate_decimal_MB": 1474,
+      "double_estimate_bytes": 2948000000,
+      "numeric_seconds": 9.746653367066756,
+      "triangular_seconds": 0.3908193309325725,
+      "residual": 2.804425590484063e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2948
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1474,
+        "17": 1474,
+        "18": 2211,
+        "20": 60061950
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 9104343040,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 78790000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/1/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 96484277632,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_01.npz",
+        "sha256": "5b3586c657d1adaa194c100eb4f02def7ebd2155568e8dee661d3fa663272db2"
+      }
+    },
+    {
+      "index": 2,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch02.npz",
+        "sha256": "7fa37c84378953a4c1e9a60bdc6e0c3b2877057e1a610565b147729e221dfd15"
+      },
+      "rows": 63230,
+      "nnz": 12427300,
+      "estimate_decimal_MB": 1278,
+      "double_estimate_bytes": 2556000000,
+      "numeric_seconds": 7.780184536008164,
+      "triangular_seconds": 0.37956215301528573,
+      "residual": 1.690626646373213e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2556
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1278,
+        "17": 1278,
+        "18": 1917,
+        "20": 52587100
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 10274852864,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 75842000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/2/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 94706787456,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_02.npz",
+        "sha256": "02b160ba58fe6d1f67e0076caee4c6c274b02588e0a30f23f0442d1a99060cf1"
+      }
+    },
+    {
+      "index": 3,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch03.npz",
+        "sha256": "b7236970687a3bab357a5055f6b330443bf1ea3ecc74728daab5cdf678f19212"
+      },
+      "rows": 37480,
+      "nnz": 7123150,
+      "estimate_decimal_MB": 712,
+      "double_estimate_bytes": 1424000000,
+      "numeric_seconds": 3.836622682865709,
+      "triangular_seconds": 0.21643406804651022,
+      "residual": 9.946125856157565e-13,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1424
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 712,
+        "17": 712,
+        "18": 1068,
+        "20": 28842400
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 11033210880,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 73286000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/3/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 92909145472,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_03.npz",
+        "sha256": "3e3293420ee0a7967e83e1efdf9c650ff2e4b99fbfabb3808797d6cb090ede44"
+      }
+    },
+    {
+      "index": 4,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch04.npz",
+        "sha256": "6b19f3e6f7ca59069388f8f0e95f35d3d238ecfd2712857a29ea7247c1f1dcc8"
+      },
+      "rows": 44815,
+      "nnz": 8667825,
+      "estimate_decimal_MB": 903,
+      "double_estimate_bytes": 1806000000,
+      "numeric_seconds": 5.075049431063235,
+      "triangular_seconds": 0.25778098101727664,
+      "residual": 4.788527765372498e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1806
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 903,
+        "17": 903,
+        "18": 1354,
+        "20": 36609125
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 11731013632,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 71862000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/4/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 92182948224,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_04.npz",
+        "sha256": "facbaff3c7d2193c109136fb5c5044a6e84fe1a81578910d9c46b865760fa6c6"
+      }
+    },
+    {
+      "index": 5,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch05.npz",
+        "sha256": "de5d8162dade9149a15424cfd38915eaf65eeb9a549b441a5867fcc67b1790b5"
+      },
+      "rows": 57840,
+      "nnz": 11313800,
+      "estimate_decimal_MB": 1066,
+      "double_estimate_bytes": 2132000000,
+      "numeric_seconds": 5.988699418026954,
+      "triangular_seconds": 0.3121206620708108,
+      "residual": 1.599640843805375e-11,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2132
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1066,
+        "17": 1066,
+        "18": 1599,
+        "20": 42640700
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 12607545344,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 70056000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/5/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 91253479936,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_05.npz",
+        "sha256": "8ca6e7ab676c2a0d44ad2f530f6bb9fe86c8caac6ec20584dd9938dd2d6697c3"
+      }
+    },
+    {
+      "index": 6,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch06.npz",
+        "sha256": "2bed710d7ea4927ac8909980ecab45238db5cdb8f39450e169cd8ece15ae41f6"
+      },
+      "rows": 67745,
+      "nnz": 13360325,
+      "estimate_decimal_MB": 1465,
+      "double_estimate_bytes": 2930000000,
+      "numeric_seconds": 9.590636588865891,
+      "triangular_seconds": 0.21989482990466058,
+      "residual": 1.9018801453409998e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2930
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1465,
+        "17": 1465,
+        "18": 2198,
+        "20": 60722175
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 13592399872,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 67924000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/6/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 90106334464,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_06.npz",
+        "sha256": "b699a8fb56d184c0b8bdb36995fe5bb69f4ffed2e7de5eaebb9d9d4c107db450"
+      }
+    },
+    {
+      "index": 7,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch07.npz",
+        "sha256": "ffef90e7c226791230406ea3aa1307e9b3a75e020ac796e7badec85260ca36e8"
+      },
+      "rows": 33490,
+      "nnz": 6313550,
+      "estimate_decimal_MB": 642,
+      "double_estimate_bytes": 1284000000,
+      "numeric_seconds": 3.503854300128296,
+      "triangular_seconds": 0.18014995194971561,
+      "residual": 1.3806049409167037e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1284
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 642,
+        "17": 642,
+        "18": 963,
+        "20": 25606600
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 14401388544,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 64994000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/7/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 87985323136,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_07.npz",
+        "sha256": "0d9bf789df41a567a9a1f2a2357dad97c5482de57fded4f4d1d53ca9d9830699"
+      }
+    },
+    {
+      "index": 8,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch08.npz",
+        "sha256": "5bc49e909f17cd72355a62d2284a982668f8631205f037722c0a426dcb2a23d9"
+      },
+      "rows": 48130,
+      "nnz": 9252600,
+      "estimate_decimal_MB": 1034,
+      "double_estimate_bytes": 2068000000,
+      "numeric_seconds": 6.437812831019983,
+      "triangular_seconds": 0.19451474398374557,
+      "residual": 4.439079941707397e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2068
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1034,
+        "17": 1034,
+        "18": 1551,
+        "20": 43510700
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 15114608640,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 63710000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/8/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 87414543232,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_08.npz",
+        "sha256": "d516d3a285696434f3685fe76aea8ad5fd6c299194cc82ed01bcd00f11a040a0"
+      }
+    },
+    {
+      "index": 9,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch09.npz",
+        "sha256": "783aef59a22a0e8000189a8eb065e017f63983c91891e041540a07c1e7e71e1a"
+      },
+      "rows": 42830,
+      "nnz": 8329350,
+      "estimate_decimal_MB": 827,
+      "double_estimate_bytes": 1654000000,
+      "numeric_seconds": 4.562608845066279,
+      "triangular_seconds": 0.23766879294998944,
+      "residual": 7.592063256301336e-13,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1654
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 827,
+        "17": 827,
+        "18": 1241,
+        "20": 32694550
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 15920820224,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 61642000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/9/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 86152754816,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_09.npz",
+        "sha256": "9e0353054324191796df6b54d3382dc8dd21f363532edb903d6a7e37545c2a17"
+      }
+    },
+    {
+      "index": 10,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch10.npz",
+        "sha256": "c79330fbb50c0d9f3148c1ddb52c3d70cc9776dc3566a2c539dbe33e5c6d1e30"
+      },
+      "rows": 57435,
+      "nnz": 11319825,
+      "estimate_decimal_MB": 1248,
+      "double_estimate_bytes": 2496000000,
+      "numeric_seconds": 8.21144816908054,
+      "triangular_seconds": 0.28438402782194316,
+      "residual": 1.0853608385805023e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2496
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1248,
+        "17": 1248,
+        "18": 1872,
+        "20": 51951675
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 16757260288,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 59988000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/10/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 85335194880,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_10.npz",
+        "sha256": "0f76bc958a92d9bbfce4aa8c35016a2e78648531cab2f3cec215b18a4537f87f"
+      }
+    },
+    {
+      "index": 11,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch11.npz",
+        "sha256": "1ebd9835c7b8ed8df1b202f2586691186108dc62733035f36e088f51f24ff14d"
+      },
+      "rows": 35390,
+      "nnz": 6749300,
+      "estimate_decimal_MB": 512,
+      "double_estimate_bytes": 1024000000,
+      "numeric_seconds": 2.4750165939331055,
+      "triangular_seconds": 0.07319466513581574,
+      "residual": 5.558675058043898e-13,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1024
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 512,
+        "17": 512,
+        "18": 768,
+        "20": 19334200
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 17562611712,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 57492000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/11/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 83644546304,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_11.npz",
+        "sha256": "868efff4b128e1bb54190c1a5c7cab9170ba06e5fad2c718d5c7f61f26cee9d0"
+      }
+    },
+    {
+      "index": 12,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch12.npz",
+        "sha256": "722f3e6ab15aa2beb9271b69580809b1a3fe904ce79382564bfcbfbf522c1af1"
+      },
+      "rows": 61935,
+      "nnz": 12247725,
+      "estimate_decimal_MB": 1417,
+      "double_estimate_bytes": 2834000000,
+      "numeric_seconds": 9.858382592909038,
+      "triangular_seconds": 0.21461201994679868,
+      "residual": 2.1653788657205792e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2834
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1417,
+        "17": 1417,
+        "18": 2126,
+        "20": 60274225
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 18311401472,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 56468000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/12/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 83369336064,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_12.npz",
+        "sha256": "1a626ef9be4c947862207645056f0beb1c67c3f25ea277cb3f17918dd4c3256e"
+      }
+    },
+    {
+      "index": 13,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch13.npz",
+        "sha256": "edfacdd7cc31b96745336bf8966d72f2077e9b4325b360efb968825ce95c3b11"
+      },
+      "rows": 46500,
+      "nnz": 8904500,
+      "estimate_decimal_MB": 1044,
+      "double_estimate_bytes": 2088000000,
+      "numeric_seconds": 6.365574449067935,
+      "triangular_seconds": 0.20599274686537683,
+      "residual": 9.806971682626123e-13,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2088
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1044,
+        "17": 1044,
+        "18": 1566,
+        "20": 42681350
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 19310489600,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 53634000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/13/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 81534424192,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_13.npz",
+        "sha256": "886c293ccfc352ddf1404f3f2afba02d64d1b22a5d511c253fb1b73b526515a9"
+      }
+    },
+    {
+      "index": 14,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch14.npz",
+        "sha256": "49dd40d6809964d95813868f7e244bbd03f04d3167dd99156095c851eac44593"
+      },
+      "rows": 54160,
+      "nnz": 10498600,
+      "estimate_decimal_MB": 1254,
+      "double_estimate_bytes": 2508000000,
+      "numeric_seconds": 8.052170637995005,
+      "triangular_seconds": 0.1904835980385542,
+      "residual": 1.6024910893731992e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2508
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1254,
+        "17": 1254,
+        "18": 1881,
+        "20": 53056000
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 20273758208,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 51546000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/14/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 80409692800,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_14.npz",
+        "sha256": "a98b868f7db9298c1e903b0f104e6c6b2fd897b7c53be7738b236f559d583ea4"
+      }
+    },
+    {
+      "index": 15,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch15.npz",
+        "sha256": "404e477632a2e41ff7e46d8666f2cab558736ae6495e1696dd07e9167e831dce"
+      },
+      "rows": 64310,
+      "nnz": 12628800,
+      "estimate_decimal_MB": 1394,
+      "double_estimate_bytes": 2788000000,
+      "numeric_seconds": 8.570746840210631,
+      "triangular_seconds": 0.6692650772165507,
+      "residual": 2.169598225518396e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2788
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1394,
+        "17": 1394,
+        "18": 2091,
+        "20": 56613550
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 21437165568,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 49038000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/15/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 79065100160,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_15.npz",
+        "sha256": "10ff4e4a9dd9d299639aaf858ec7a99acead5fcfcc0360d534609d6293d496df"
+      }
+    },
+    {
+      "index": 16,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch16.npz",
+        "sha256": "210d345eea5116cd7381819684ca721ddfba71508b4ce042acc5258ecc71f9d5"
+      },
+      "rows": 32295,
+      "nnz": 6161975,
+      "estimate_decimal_MB": 513,
+      "double_estimate_bytes": 1026000000,
+      "numeric_seconds": 2.5910528688691556,
+      "triangular_seconds": 0.07226307108066976,
+      "residual": 3.940576600277197e-13,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1026
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 513,
+        "17": 513,
+        "18": 770,
+        "20": 19700075
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 22221271040,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 46250000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/16/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 77061205632,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_16.npz",
+        "sha256": "e899752d19a32123023d70fd24010648b4f8fa1c69d34aefdf759160cfdf4272"
+      }
+    },
+    {
+      "index": 17,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch17.npz",
+        "sha256": "1465fe7014535a7f1f9913ede238a5788c4ff62a85774a4aebd3c77cdbff452e"
+      },
+      "rows": 59940,
+      "nnz": 11836050,
+      "estimate_decimal_MB": 1273,
+      "double_estimate_bytes": 2546000000,
+      "numeric_seconds": 7.967564966995269,
+      "triangular_seconds": 0.3220954700373113,
+      "residual": 5.899214211211076e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2546
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1273,
+        "17": 1273,
+        "18": 1909,
+        "20": 52054100
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 22983839744,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 45224000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/17/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 76797774336,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_17.npz",
+        "sha256": "981869ea9d37a5f82b0d81bb1c047db3fe04061d77ac5ef8b04831d7e8889fea"
+      }
+    },
+    {
+      "index": 18,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch18.npz",
+        "sha256": "b1d3151f9da4525fcf99f3335024d1d57a34e8d5851062baa2c59438192810b8"
+      },
+      "rows": 40895,
+      "nnz": 7730675,
+      "estimate_decimal_MB": 886,
+      "double_estimate_bytes": 1772000000,
+      "numeric_seconds": 5.455627931980416,
+      "triangular_seconds": 0.13068994879722595,
+      "residual": 1.9645948628383898e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1772
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 886,
+        "17": 886,
+        "18": 1329,
+        "20": 36705625
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 23781261312,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 42678000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/18/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 75049195904,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_18.npz",
+        "sha256": "48fabdfa5123ce071b11d5844c1316c85d275046980e2bc888e7e824a11dd3d9"
+      }
+    },
+    {
+      "index": 19,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch19.npz",
+        "sha256": "c0ad5f2a1c1b5eb18baebd36cbc2f9af7abd1558f584b911f0ad1ea0e0a5bfe1"
+      },
+      "rows": 53320,
+      "nnz": 10343100,
+      "estimate_decimal_MB": 1194,
+      "double_estimate_bytes": 2388000000,
+      "numeric_seconds": 7.452462068060413,
+      "triangular_seconds": 0.2919347989372909,
+      "residual": 1.134616320380902e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2388
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1194,
+        "17": 1194,
+        "18": 1791,
+        "20": 50176150
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 24715128832,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 40906000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/19/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 74211063424,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_19.npz",
+        "sha256": "edf9808affb3a9dd3fc788670c3fa099a92ed7356f3b2e4e52f519d61d49e18a"
+      }
+    },
+    {
+      "index": 20,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch20.npz",
+        "sha256": "c524088ce080ae743807b0a76b1b6a2d5cb52d5905d8e354e6e01195b6b7d384"
+      },
+      "rows": 45955,
+      "nnz": 8956675,
+      "estimate_decimal_MB": 890,
+      "double_estimate_bytes": 1780000000,
+      "numeric_seconds": 5.071130576077849,
+      "triangular_seconds": 0.12680908385664225,
+      "residual": 4.9033068649921e-13,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1780
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 890,
+        "17": 890,
+        "18": 1335,
+        "20": 35752975
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 25618108416,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 38518000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/20/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 72726043008,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_20.npz",
+        "sha256": "dc46e82a3250d919349711f69b51ee634c945611e17348e338c2864545ab4b71"
+      }
+    },
+    {
+      "index": 21,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch21.npz",
+        "sha256": "8dd0c940b9a1d8f6c2da8f6651c634fbc71e8795b31ac6ec11506ee72655e1f1"
+      },
+      "rows": 57535,
+      "nnz": 11333775,
+      "estimate_decimal_MB": 1305,
+      "double_estimate_bytes": 2610000000,
+      "numeric_seconds": 8.17997163394466,
+      "triangular_seconds": 0.33765527210198343,
+      "residual": 6.163899732453498e-13,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2610
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1305,
+        "17": 1305,
+        "18": 1957,
+        "20": 52923175
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 26489495552,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 36738000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/21/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 71817430144,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_21.npz",
+        "sha256": "7a634e7727f367d7339e7037270f27178c1b0b6aa2e8e753fd6338c528106215"
+      }
+    },
+    {
+      "index": 22,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch22.npz",
+        "sha256": "74379b767e963e191aa33e76c45153d978f179beeebc212644b1b23972437f3f"
+      },
+      "rows": 33895,
+      "nnz": 6448875,
+      "estimate_decimal_MB": 525,
+      "double_estimate_bytes": 1050000000,
+      "numeric_seconds": 2.6809719121083617,
+      "triangular_seconds": 0.07348825805820525,
+      "residual": 3.7533737040678566e-13,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1050
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 525,
+        "17": 525,
+        "18": 787,
+        "20": 19949875
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 27238666240,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 34128000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/22/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 69956600832,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_22.npz",
+        "sha256": "addc4eedef812b0f77abc21cbed339cc2dc8d3932228568387ccc499865fc56b"
+      }
+    },
+    {
+      "index": 23,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch23.npz",
+        "sha256": "ca3c5bb0821060576576289de3f413bca6ac211d186f1009e3f6c5744013eb66"
+      },
+      "rows": 62235,
+      "nnz": 12308875,
+      "estimate_decimal_MB": 1432,
+      "double_estimate_bytes": 2864000000,
+      "numeric_seconds": 9.43889589002356,
+      "triangular_seconds": 0.2076282158959657,
+      "residual": 4.758666615363964e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2864
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1432,
+        "17": 1432,
+        "18": 2148,
+        "20": 59629875
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 28014686208,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 33078000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/23/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 69682620800,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_23.npz",
+        "sha256": "e2412c4855c2ecde607fa6cfabcedd9238ebd3dacaf45181bc2715bb804bb63d"
+      }
+    },
+    {
+      "index": 24,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch24.npz",
+        "sha256": "cf84817cdbbda913dcfd655fd8980e64db75dd2403e3a7cdf37ded93be98be8b"
+      },
+      "rows": 47255,
+      "nnz": 9028675,
+      "estimate_decimal_MB": 1055,
+      "double_estimate_bytes": 2110000000,
+      "numeric_seconds": 6.836347216973081,
+      "triangular_seconds": 0.15611365996301174,
+      "residual": 1.0243010895682745e-11,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2110
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1055,
+        "17": 1055,
+        "18": 1583,
+        "20": 44281525
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 29015224320,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 30214000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/24/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 67819158912,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_24.npz",
+        "sha256": "3180db73c082ddfad2baafc00161931ee8e46d6831c30f0ecc6585ad59de4a04"
+      }
+    },
+    {
+      "index": 25,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch25.npz",
+        "sha256": "261abd614a76fc10ccfb04ab430ac5b5c15821e6c66111b288439de8b28f26a0"
+      },
+      "rows": 53110,
+      "nnz": 10299750,
+      "estimate_decimal_MB": 1204,
+      "double_estimate_bytes": 2408000000,
+      "numeric_seconds": 7.098708325996995,
+      "triangular_seconds": 0.2873454401269555,
+      "residual": 5.651459392554081e-13,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2408
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1204,
+        "17": 1204,
+        "18": 1806,
+        "20": 49648250
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 29974241280,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 28104000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/25/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 66668175872,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_25.npz",
+        "sha256": "860a793fe8c2743867c90211db78ab56b454860a766db6a8b14e1cd4b96727f2"
+      }
+    },
+    {
+      "index": 26,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch26.npz",
+        "sha256": "b6f78b23239557c0820ab712a21819d9cae3e09da226e4e52ce34d6772f80329"
+      },
+      "rows": 66695,
+      "nnz": 13099425,
+      "estimate_decimal_MB": 1350,
+      "double_estimate_bytes": 2700000000,
+      "numeric_seconds": 7.872678768122569,
+      "triangular_seconds": 0.5039791569579393,
+      "residual": 4.035946487588478e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2700
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1350,
+        "17": 1350,
+        "18": 2025,
+        "20": 55402375
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 31100854272,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 25696000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/26/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 65386788864,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_26.npz",
+        "sha256": "915e9d154e2057ccbe1ad71f5e6ef825a34dd721ed09c72e17347b88c145143f"
+      }
+    },
+    {
+      "index": 27,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch27.npz",
+        "sha256": "43ebe1e94336cf8826200d8c4366280e063f3e4fe83870ebd338fae653eb09d0"
+      },
+      "rows": 33270,
+      "nnz": 6348750,
+      "estimate_decimal_MB": 515,
+      "double_estimate_bytes": 1030000000,
+      "numeric_seconds": 2.604303695028648,
+      "triangular_seconds": 0.07255063392221928,
+      "residual": 3.5498162563860347e-13,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1030
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 515,
+        "17": 515,
+        "18": 772,
+        "20": 19747350
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 31843708928,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 22996000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/27/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 63429643520,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_27.npz",
+        "sha256": "e3d75dd5c73fadbd582b280b3e8279fb757c90b75c21cc302072ca3e9dfcec82"
+      }
+    },
+    {
+      "index": 28,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch28.npz",
+        "sha256": "9612b26c2d97009e37204e84933597a035cd70be111c6a18ec05f2f19dd9937c"
+      },
+      "rows": 59145,
+      "nnz": 11671925,
+      "estimate_decimal_MB": 1265,
+      "double_estimate_bytes": 2530000000,
+      "numeric_seconds": 7.716033132979646,
+      "triangular_seconds": 0.5530901690945029,
+      "residual": 1.6201650347468635e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2530
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1265,
+        "17": 1265,
+        "18": 1898,
+        "20": 51531875
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 32585707520,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 21966000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/28/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 63141642112,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_28.npz",
+        "sha256": "053b84732c27ed2bb1f48579d973941833404c68023ec325409de5416defed51"
+      }
+    },
+    {
+      "index": 29,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch29.npz",
+        "sha256": "d1d790a1d7fa5e59af9a14a4a86ef053062075fd20f9557e20be9d7954b9a0cb"
+      },
+      "rows": 42735,
+      "nnz": 8072725,
+      "estimate_decimal_MB": 924,
+      "double_estimate_bytes": 1848000000,
+      "numeric_seconds": 5.5714045071508735,
+      "triangular_seconds": 0.13138184184208512,
+      "residual": 1.0137692328903328e-11,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1848
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 924,
+        "17": 924,
+        "18": 1386,
+        "20": 36925725
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 33417764864,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 19436000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/29/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 61443699456,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_29.npz",
+        "sha256": "f162fdbfdb18cd6507fbc5cc296c6652c9c3372fd572a13eb1e58917c541e62e"
+      }
+    },
+    {
+      "index": 30,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch30.npz",
+        "sha256": "75e16f63269b83802da56569541807010e287625344a857358717643c1da14aa"
+      },
+      "rows": 42360,
+      "nnz": 8125000,
+      "estimate_decimal_MB": 856,
+      "double_estimate_bytes": 1712000000,
+      "numeric_seconds": 4.980167244095355,
+      "triangular_seconds": 0.21881424402818084,
+      "residual": 2.0698516744769022e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1712
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 856,
+        "17": 856,
+        "18": 1284,
+        "20": 35214700
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 34199457792,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 17588000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/30/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 60377392384,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_30.npz",
+        "sha256": "f802967fd02070b2a1a9b32f391bfe2f4b3ad251e334fecb74b6e9c79c8f25f8"
+      }
+    },
+    {
+      "index": 31,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch31.npz",
+        "sha256": "32a6314fcfdca8d4e0e3b9bb1a8b599649b29810997b02dc7f4753716e6f9156"
+      },
+      "rows": 68100,
+      "nnz": 13384700,
+      "estimate_decimal_MB": 1457,
+      "double_estimate_bytes": 2914000000,
+      "numeric_seconds": 9.326792108127847,
+      "triangular_seconds": 0.215146292001009,
+      "residual": 6.624901171432648e-13,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2914
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1457,
+        "17": 1457,
+        "18": 2186,
+        "20": 60516300
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 35232903168,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 15876000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/31/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 59698837760,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_31.npz",
+        "sha256": "b0bfa0f77dffa25389bdac874e859e91d508a43c3e866df187fb57650ec33aea"
+      }
+    },
+    {
+      "index": 32,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch32.npz",
+        "sha256": "7ca534d49337f5261653fe6bdd34ed4be3abb205cf66ca6d55cb3e2866159911"
+      },
+      "rows": 63210,
+      "nnz": 12422700,
+      "estimate_decimal_MB": 1246,
+      "double_estimate_bytes": 2492000000,
+      "numeric_seconds": 7.353656453080475,
+      "triangular_seconds": 0.1863294169306755,
+      "residual": 5.027224701664856e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2492
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1246,
+        "17": 1246,
+        "18": 1869,
+        "20": 51011400
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 36409270272,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 12962000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/32/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 57961204864,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_32.npz",
+        "sha256": "f1b0d9953997dd274c1ca75d2e3c2ffb8871df94d51ac03f7410a5d0f7f3f7fd"
+      }
+    },
+    {
+      "index": 33,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch33.npz",
+        "sha256": "46ff3840dbe82d1c6e6b0e780dc0b53dad64501c030b0dd2d1cc84d8df71990a"
+      },
+      "rows": 39320,
+      "nnz": 7536500,
+      "estimate_decimal_MB": 768,
+      "double_estimate_bytes": 1536000000,
+      "numeric_seconds": 4.232734523015097,
+      "triangular_seconds": 0.22215665597468615,
+      "residual": 1.2809645964186004e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1536
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 768,
+        "17": 768,
+        "18": 1152,
+        "20": 31375600
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 37130899456,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 10470000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/33/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 56190834048,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_33.npz",
+        "sha256": "33087b7860b8cd6ec22dbcdb5389542e1c3091c8ae3bd4d09983936cde8f5ace"
+      }
+    },
+    {
+      "index": 34,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch34.npz",
+        "sha256": "a9c5c0bf2adc45e25341673f5e545019ed2f329157575daff5ac7f61e2f9b44c"
+      },
+      "rows": 42525,
+      "nnz": 8174425,
+      "estimate_decimal_MB": 893,
+      "double_estimate_bytes": 1786000000,
+      "numeric_seconds": 5.535020311130211,
+      "triangular_seconds": 0.1328869890421629,
+      "residual": 1.4393537483680402e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1786
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 893,
+        "17": 893,
+        "18": 1339,
+        "20": 37498625
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 37844619264,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 8934000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/34/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 55368553856,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_34.npz",
+        "sha256": "aa61db0e9810a72597dd7ee87896004bfdd5cfa5cbb6fb85bc4a2f7be376377c"
+      }
+    },
+    {
+      "index": 35,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch35.npz",
+        "sha256": "ee3ed1194dbfae9c957158ffda18bc3fda14fe1fba867507149fbdbd72b585c9"
+      },
+      "rows": 58155,
+      "nnz": 11360175,
+      "estimate_decimal_MB": 1070,
+      "double_estimate_bytes": 2140000000,
+      "numeric_seconds": 5.933097576024011,
+      "triangular_seconds": 0.31218941090628505,
+      "residual": 7.281510034928675e-13,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2140
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1070,
+        "17": 1070,
+        "18": 1605,
+        "20": 42541175
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 38799888384,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 7148000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/35/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 54537822976,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_35.npz",
+        "sha256": "53312a64b428a669fcb70c2bb9dadf04c36b82d416125d5f3f8bab19253ce300"
+      }
+    },
+    {
+      "index": 36,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch36.npz",
+        "sha256": "21fe57f7f5df714208a78b9f8de415a76ac3fbed08ff8da6f44a9662e4f319c3"
+      },
+      "rows": 68680,
+      "nnz": 13557300,
+      "estimate_decimal_MB": 1498,
+      "double_estimate_bytes": 2996000000,
+      "numeric_seconds": 9.792423808015883,
+      "triangular_seconds": 0.3581158679444343,
+      "residual": 1.3856779894492588e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 2996
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 1498,
+        "17": 1498,
+        "18": 2247,
+        "20": 62800200
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 39792852992,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 5008000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/36/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 53390787584,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_36.npz",
+        "sha256": "f3bd29dc4b3df5de3fab87e2d66e720b39bd65a19898e5a147444fae19969187"
+      }
+    },
+    {
+      "index": 37,
+      "kind": "local",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch37.npz",
+        "sha256": "5907e6411a89dbed527d87cb5afb3d3c22f8a5635402a3d8f4248de4641e78f2"
+      },
+      "rows": 31965,
+      "nnz": 5985825,
+      "estimate_decimal_MB": 605,
+      "double_estimate_bytes": 1210000000,
+      "numeric_seconds": 3.089911616872996,
+      "triangular_seconds": 0.10584948700852692,
+      "residual": 1.196193959527642e-12,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 1210
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 605,
+        "17": 605,
+        "18": 908,
+        "20": 23802825
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 40566804480,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 2012000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/37/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 51168739072,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_37.npz",
+        "sha256": "f384ec8a5e0f19b3ad2b63a90a4d96dbd294c1af705a3bb1ae24fe87c3c9f7cf"
+      }
+    },
+    {
+      "index": 38,
+      "kind": "coarse",
+      "input_CSR": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/coarse_E0.npz",
+        "sha256": "3b28c55c724e4530c0c03a452f5419a62cdacf245db07806591f929b36f5232f"
+      },
+      "rows": 7068,
+      "nnz": 3541640,
+      "estimate_decimal_MB": 401,
+      "double_estimate_bytes": 802000000,
+      "numeric_seconds": 2.7200224159751087,
+      "triangular_seconds": 0.055175367975607514,
+      "residual": 1.388704853226079e-10,
+      "finite": true,
+      "factor_kept": true,
+      "ICNTL": {
+        "7": 7,
+        "14": 20,
+        "18": 0,
+        "22": 0,
+        "23": 802
+      },
+      "INFOG": {
+        "1": 0,
+        "7": 4,
+        "16": 401,
+        "17": 401,
+        "18": 602,
+        "20": 15578080
+      },
+      "live_admission": {
+        "tree": {
+          "all_status_readable": true,
+          "rss_bytes": 40938512384,
+          "swap_bytes": 0
+        },
+        "remaining_double_symbolic_bytes": 802000000,
+        "future_workspace": {
+          "reserved_bytes": 8589934592,
+          "full_payload": {
+            "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+            "bytes": 172175,
+            "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+          },
+          "json_pointer": "/rows/38/live_admission/future_workspace"
+        },
+        "planned_simultaneous_bytes": 50330446976,
+        "admitted": true
+      },
+      "fixed_RHS_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_witness_38.npz",
+        "sha256": "4005bfb558e79173c557480cb2091b27c9410ac1226a5d9fc70cab5268e4b9be"
+      }
+    }
+  ],
+  "completed": 39,
+  "producer": {
+    "path": "benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/numeric_factor_progress.json",
+    "bytes": 309005,
+    "sha256": "c2feec8117287426f1e21d79220e43c308650332fdbd68a08c2280138fa89e58"
+  },
+  "local_numeric_count": 38,
+  "coarse_numeric_count": 1,
+  "global_fine_numeric_count": 0,
+  "first_factor_kept_calibration": {
+    "path": "benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/local_forecast_calibration.json",
+    "bytes": 6888,
+    "sha256": "48978827a431a39be3012ec2bb1467e302d694db22c2a0f18bed69048090688e"
+  },
+  "numeric_qualification_complete": {
+    "path": "benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/numeric_PC_qualification_complete.json",
+    "bytes": 89,
+    "sha256": "a37fe89d5840504ef3bad1f7924145c57545e27fa2e8584ee4a5cb851f2f6e68"
+  },
+  "actual_fixed_RHS_max": 1.388704853226079e-10,
+  "independent_scores_reference": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_compare_verify_cost_20261011T062425761927Z/result.json",
+    "sha256": "2d79c8595d59084a50836678fa9d600cebe821301cbb90809e36e9eb83cd0956"
+  },
+  "complete_new_pre_compaction_payload": {
+    "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/numeric_factor_inventory.json",
+    "bytes": 172175,
+    "sha256": "a82642c7ea919c104ceb7aad82f003a46f22b145c0398aaaab696ff7c9a298e9"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "campaign": "V72_REUSE_38PATCH_FULL_ITERATIVE",
+  "canonical": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "review_commit": "07d3f3d2aa6177cc015ac1a279900f7fbb14f4c7",
+  "review_blob": "5acdfa2e769001b696ef7973e119aef8b6bbd5ed",
+  "review_sha256": "512577697347f248ca1568bf6df61d44a3df9c7ad7cd273aeaea2b136c372d71",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "first_work": {
+    "path": "tmp/task042/v72/first_work_identity.json",
+    "bytes": 362,
+    "sha256": "4db886febb5d477ed42166b622a7e194e9d8e6a51557083829989d36fb019526"
+  },
+  "window": {
+    "start_utc": "2026-10-11T04:04:31+00:00",
+    "start_monotonic": 1616465.95,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 46800,
+    "total_limit_seconds": 50400,
+    "scientific_loaded_limit_seconds": 43200,
+    "review_commit": "07d3f3d2aa6177cc015ac1a279900f7fbb14f4c7",
+    "contract_HEAD": "07d3f3d2aa6177cc015ac1a279900f7fbb14f4c7",
+    "closed": false,
+    "first_work_start_never_refreshed": true,
+    "first_observed_proc_uptime": 1616465.95,
+    "start_monotonic_kind": "first actual tool /proc/uptime; conservative UTC to whole second",
+    "heavy_stop_utc": "2026-10-11T17:04:31+00:00",
+    "deadline_utc": "2026-10-11T18:04:31+00:00"
+  },
+  "producer_sources": {
+    "REUSE_ADMIT": "5564befc97ccb749e1b0e4d5fc909592d130c808",
+    "ITERATE": "5564befc97ccb749e1b0e4d5fc909592d130c808",
+    "VERIFY_COST": "3a4a336e34e433bb673085dea1a72ccae1bd1894"
+  },
+  "full_source_environment_bindings": {
+    "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/source_closures.json",
+    "bytes": 48724,
+    "sha256": "ce2d76648b5320d1c473be2440ef626dd844c0d029b2b9e1b561a4ea24ed3d32"
+  },
+  "parents": {
+    "read_only": true,
+    "full_payload": {
+      "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/authority_identity.json",
+      "bytes": 3107,
+      "sha256": "d8b54b52294cf91be2ec3f02c414fec0a6021d9edbccde2f36a133ef9f343ec7"
+    },
+    "json_pointer": "/parents"
+  },
+  "local_packet": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v70/task042_v70_assembly_time_p5_prepare_20261010T142344843423Z/local_packet/manifest.json",
+    "sha256": "9bef5add6398999c70c21c7f26a86833fc1eb46f98598c8503aa3c41743728da",
+    "bytes": 4172648576
+  },
+  "original_physical_sha256": "df26b8cf28e1115bdb2eb9ac9b79e698596133305310d26c1d664f94e2c5be44",
+  "unchanged_old_capacity_false": true,
+  "old_window_closed": true,
+  "no_other_branch_or_worktree_change": true,
+  "no_NN": true,
+  "no_subagents": true,
+  "no_reset_cards": true,
+  "complete_new_pre_compaction_payload": {
+    "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/authority_identity.json",
+    "bytes": 3107,
+    "sha256": "d8b54b52294cf91be2ec3f02c414fec0a6021d9edbccde2f36a133ef9f343ec7"
+  }
+}

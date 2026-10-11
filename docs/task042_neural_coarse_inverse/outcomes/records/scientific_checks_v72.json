@@ -1,0 +1,194 @@
+{
+  "producer": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_compare_verify_cost_20261011T062425761927Z/result.json",
+    "sha256": "2d79c8595d59084a50836678fa9d600cebe821301cbb90809e36e9eb83cd0956"
+  },
+  "consumer_pass": true,
+  "pass_gate": false,
+  "independent_original": {
+    "original": {
+      "true": 0.9988570443023881,
+      "native": 0.9988570443023881,
+      "augmented": 0.9992099052130248,
+      "port": 0.004562998238521363,
+      "full_augmented": 0.999209905966945,
+      "direct_target": false,
+      "rhs_q47_q63": 1.3692700863640344e-15,
+      "MPC_identity": 1.5892080231721086e-18,
+      "absolute_residual": 1.0677522915291116,
+      "original_rhs_norm": 1.068596583313331,
+      "backend": "PUBLIC_BASIX_COEFFICIENT_FIRST_Q15_TRIANGLE63",
+      "body_consumption": {
+        "seconds": 39.128040006849915,
+        "q": 15,
+        "cells": 25576,
+        "columns": 1,
+        "reference_table_bytes": 4315952,
+        "full_vector_workspace_bytes": 94459440,
+        "algorithm": "COEFFICIENT_FIRST_PUBLIC_BASIX_VECTOR",
+        "production_matrix_reads": 0
+      },
+      "closed_physical_residual_norm": 1.0673752247599841,
+      "projected_port_norm": 0.009090118330215259,
+      "pass_gate": false
+    },
+    "producer_consumer_operation": 0.0,
+    "tangential": {
+      "maximum": 7.93638214433574e-15,
+      "face_count": 51024,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_compare_verify_cost_20261011T062425761927Z/new/physical_tangential_faces.npz",
+        "sha256": "7abf3310e8575d35b209b1d82c659ab1304ac96e6461b679f398f02604bc2e25",
+        "members": {
+          "per_face": {
+            "shape": [
+              51024,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "6cb064bd3f3355f7e9aca7cc7ee91d5688a29244c93e91869f063e1af8f14c18"
+          }
+        }
+      },
+      "pass_gate": true,
+      "tested": "tangential physical E only; actual shared and translated periodic triangles"
+    },
+    "output": {
+      "A_volume": 4.5486980825136897e-08,
+      "energy": -0.003198826330586213,
+      "operation_difference": 0.0,
+      "q23_q31_relative": 3.4786537414005757e-16,
+      "pass_gate": false
+    },
+    "pass_gate": false
+  },
+  "strict_scores": {
+    "inventory_complete": true,
+    "complete_fields_and_points": false,
+    "complex_channels": false,
+    "powers": false,
+    "per_mode_power": false,
+    "energy": false,
+    "quadrature": true,
+    "pass_gate": false
+  },
+  "independent_pair": {
+    "fields": {
+      "E_total": 630.0257754980012,
+      "H_total": 629.9314041631283,
+      "curl_total": 629.9314041631278,
+      "E_scattered": 1.050342721961012,
+      "H_scattered": 1.0503211637102803,
+      "curl_scattered": 1.05032116371028
+    },
+    "selected": {
+      "E_total": 630.2498966265027,
+      "H_total": 626.4427154926478,
+      "curl_total": 626.4427154926477,
+      "E_scattered": 1.0532731141809124,
+      "H_scattered": 1.0532573695651246,
+      "curl_scattered": 1.0532573695651244
+    },
+    "selected_component_error_fractions": {
+      "E_total": [
+        0.007596698328267523,
+        0.9924033011855368,
+        4.861958953522368e-10
+      ],
+      "H_total": [
+        0.0001285982785320946,
+        9.953629345425687e-07,
+        0.9998704063585334
+      ],
+      "curl_total": [
+        0.00012859827853209475,
+        9.953629345425706e-07,
+        0.9998704063585334
+      ],
+      "E_scattered": [
+        0.007596698328267523,
+        0.9924033011855368,
+        4.861958953522368e-10
+      ],
+      "H_scattered": [
+        0.00012859827853209458,
+        9.953629345425687e-07,
+        0.9998704063585334
+      ],
+      "curl_scattered": [
+        0.00012859827853209475,
+        9.953629345425706e-07,
+        0.9998704063585334
+      ]
+    },
+    "quadrature_operation_scaled": 6.923234794599323e-16,
+    "mode_amplitude_relative": 1.239216069798432,
+    "mode_power_max_absolute": 0.920580711327248,
+    "power_differences": {
+      "R_total": 0.9205802960879401,
+      "T_total": 0.9056628882624307,
+      "A_balance": 0.014917407825509401,
+      "A_volume": 0.018116234151875986
+    },
+    "energies": [
+      4.219735671995295e-12,
+      0.003198826330586213
+    ],
+    "worst_modes": {
+      "outgoing_amplitude_at_boundary": {
+        "physical_key": [
+          "bottom",
+          0,
+          0,
+          "s",
+          -0.5185185185185185
+        ],
+        "absolute": 1.3482493841650849,
+        "difference": [
+          -1.338324357007196,
+          0.16329212272123253
+        ]
+      },
+      "power": {
+        "physical_key": [
+          "top",
+          0,
+          0,
+          "s",
+          6.7407407407407405
+        ],
+        "absolute": 0.920580711327248,
+        "difference": [
+          0.920580711327248,
+          0.0
+        ]
+      }
+    },
+    "pass_gate": false,
+    "published_gate_matches_recalculation": true,
+    "classification": "SPACE_INCREMENT_FAIL",
+    "full_integral_rows": 25576,
+    "parent_array_sha256": [
+      "b118066c12549c62d97b13f4905f44649f7d775af79d49655251e0b74c63a4d3",
+      "b74eee52bca8c7cf3bd15b96fd98cb15680a0ab8759001a16dd064794f07327c"
+    ],
+    "new_FE_calls": 0,
+    "new_factor": 0,
+    "new_solve": 0
+  },
+  "comparison_binding": {
+    "pass_gate": false
+  },
+  "factor_scores_full": {
+    "path": "benchmarks/artifacts/task042/v72/task042_v72_compare_verify_cost_20261011T062425761927Z/result.json",
+    "bytes": 176890,
+    "sha256": "2d79c8595d59084a50836678fa9d600cebe821301cbb90809e36e9eb83cd0956"
+  },
+  "new_checker_numeric": 0,
+  "new_checker_solves": 0,
+  "complete_new_pre_compaction_payload": {
+    "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/scientific_checks.json",
+    "bytes": 6785,
+    "sha256": "4c0c66eae92058df70f329263a27d2afd7b45e083492b0d664288dfed395b52e"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "factor_release": {
+    "before_RSS_bytes": 41144000512,
+    "after_RSS_bytes": 8418959360,
+    "RSS_decreased": true,
+    "global_fine_factor_count": 0,
+    "local_numeric_count": 38,
+    "coarse_numeric_count": 1
+  },
+  "producer": {
+    "path": "benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/factor_release_lifecycle.json",
+    "bytes": 187,
+    "sha256": "6d2b92dc4514000481c3bf36b23af7d523dda247c064150952bef9291210d9ff"
+  },
+  "KSP_create": 1,
+  "KSP_destroy": 1,
+  "saved_before_recovery": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/retained_returned.npz",
+    "sha256": "2786c1dbd6eb1bf879ebe06e6670d0f29f449ecdfb465bf25f1174dfab15c0fd",
+    "members": {
+      "scaled_retained": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "17b78673e539a82915614ba1812cde8e6832de0cb2146a0ed50a43d829ef5015"
+      },
+      "trace_port": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "2815955349b8eb2cfe8911ff6fa5b90c445c983b5a3a3b96702c26799e28f224"
+      },
+      "rhs": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "178dc0c55cf2deb504c214a526db461e0b0624a957457a7b9c35efda14b099ee"
+      },
+      "scaled_rhs": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "4c5d6b918f358863b9a324dd2de2f1635f7422c8c06f91e850b5d34030c7fc80"
+      },
+      "left": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "1587eab07700a6579dca059fe6b86fb3cf26ca6bd9766f639718a4edffa09404"
+      },
+      "right": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "01d0f4639777f76d9cd1b46a2567ecc9a4962f7d8747d5ad8b081aad8a5caf62"
+      }
+    }
+  },
+  "RSS_is_process_observation_not_simultaneous_tree_peak": true,
+  "field_output_classification": {
+    "official": false,
+    "classification": "DIAGNOSTIC_ONLY_EQUATION_FAIL"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "campaign": "V72",
+  "physical_sha256": "df26b8cf28e1115bdb2eb9ac9b79e698596133305310d26c1d664f94e2c5be44",
+  "rows": 1177293,
+  "retained_FE": 1176465,
+  "ports": 828,
+  "full_FE": 1943745,
+  "internal": 767280,
+  "source": "5564befc97ccb749e1b0e4d5fc909592d130c808",
+  "local_packet": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v70/task042_v70_assembly_time_p5_prepare_20261010T142344843423Z/local_packet/manifest.json",
+    "sha256": "9bef5add6398999c70c21c7f26a86833fc1eb46f98598c8503aa3c41743728da",
+    "bytes": 4172648576
+  },
+  "boundary_arrays_identity": "bf05010061b89678fb14b493e5baff737108f3f36cce6f4c88fe6ef182ab153d",
+  "parent_preparation": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/result.json",
+    "sha256": "dea558cc24bbb908e41df166b0c86343161aa903c1bfa4c2347e1bb3c09b5176"
+  },
+  "mathematics": true,
+  "actual39_numeric": true,
+  "actual_PC": true,
+  "complete_same_discrete_PASS": false,
+  "candidate": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/solution.npz",
+    "sha256": "b74eee52bca8c7cf3bd15b96fd98cb15680a0ab8759001a16dd064794f07327c"
+  },
+  "KSP": "ITERATION_BUDGET_EXHAUSTED",
+  "factor_present": "parent interior +38local +1coarse LU during solve",
+  "no_global_fine_K_S_or_factor_in_V72": true,
+  "parent_V70_BUILD_had_global_S": true,
+  "from_geometry_packet_only_cold_unknown": true,
+  "field_official": false,
+  "window_will_be_closed": true,
+  "not_authorization_to_restart": true,
+  "continuous_accuracy": false,
+  "target_qualification": false,
+  "NN20": false,
+  "complete_new_pre_compaction_payload": {
+    "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/full_delivery_payloads/retained_iterative_contract.json",
+    "bytes": 4992,
+    "sha256": "da2cf45cc88d084b5dd97bea84f1e72d18163c7446ee14f1cfd5d192ea82667e"
+  }
+}

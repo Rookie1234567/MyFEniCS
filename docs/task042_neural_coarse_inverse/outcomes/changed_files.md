@@ -1,3 +1,11 @@
+## Task042 V72：真实39因子与256步有界迭代
+
+| 模型 / 路线 | 方程与场结果 | measured规模 / 资源 | 证据 |
+|---|---|---|---|
+| 0.7nm NOTCH、25576tet/p5/828；38 RAS+p2粗层 RIGHT FGMRES | 原true=0.998857044302；同离散严格再现=FAIL；功率official=False | 1177293接口行；39numeric；采样树峰40.1189613342GiB | [回应](../response_v72.md) · [完整outcome](reused_trace_iterative_v72.md) |
+
+接口作用沿健康packet；本次无global fine K/S/factor，父内部/局部/粗LU存在。V71旧64GiB拒绝保留，新80GiB门与逐factor96GiB共驻准入通过。完整候选和828通道已保存，原残差决定科学资格；费用/修复/最终gap见回应。本批无NN；历史连续精度和2TB48h未资格。下文历史原字节保留。
+
 # V71最小opt-in热作用/两层PC/迭代接线
 
 新热映射与局部/粗层数学进入src/solvers，复用原packet、native后端、physical_retained_fgmres、runner/监督/保存消费者。只增加显式namespace、内存与停止policy，ordinary默认不变。所有source先clean commit，最终checker独立复算库存和容量拒绝；没有复制大型runner或读取全局fine K/S。
