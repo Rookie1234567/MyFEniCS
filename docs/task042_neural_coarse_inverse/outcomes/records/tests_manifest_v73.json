@@ -24,5 +24,13 @@
   },
   "full_pytest": false,
   "CI": "NOT_RUN",
-  "GitHub_visual": "NOT_VERIFIED"
+  "GitHub_visual": "NOT_VERIFIED",
+  "documentation_status": "PASSED",
+  "documentation_source": "fdc6104c4124082298dd9b3d8a5b193966d68e0a",
+  "documentation_unittest_count": 15,
+  "documentation_receipt": {
+    "path": "tmp/task042/v73/aux_post_01/document_checks.json",
+    "bytes": 2652,
+    "sha256": "0828c3009b135a0443f515e0b1157db9a6f8cbd6793342f0927f8b09a4dac0d5"
+  }
 }

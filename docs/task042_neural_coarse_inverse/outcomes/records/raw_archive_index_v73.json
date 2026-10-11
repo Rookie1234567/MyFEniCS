@@ -10,5 +10,13 @@
   "only_V73_increment": true,
   "large_arrays_copied": false,
   "old_raw_unchanged": true,
-  "final_tail_pending": true
+  "final_tail_pending": false,
+  "final_tail": {
+    "inventory": {
+      "path": "benchmarks/artifacts/task042/v73/increment_evidence_v73/final_tail/inventory.json",
+      "bytes": 340707,
+      "sha256": "c7aca9542e93bc7ae4ac25f9156cc5962bf03d8a76fa37bc110f6d18be3f6653"
+    },
+    "entries": 743
+  }
 }

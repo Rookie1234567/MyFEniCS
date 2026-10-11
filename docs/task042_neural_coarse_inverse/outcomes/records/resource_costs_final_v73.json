@@ -1,5 +1,5 @@
 {
-  "as_of_utc": "2026-10-11T12:11:15.599935+00:00",
+  "as_of_utc": "2026-10-11T12:15:15.504085+00:00",
   "window": {
     "start_utc": "2026-10-11T06:57:14.246493+00:00",
     "start_monotonic": 1626829.107371871,
@@ -24,13 +24,16 @@
       "reason": "Initial V73 tool output was truncated during context recovery; exact first tool clock cannot be recovered. The previous V72 final delivery receipt is used as an earlier conservative bound, charging the entire intervening interval rather than resetting the window. No V73 numerical actor has started."
     },
     "heavy_stop_utc": "2026-10-11T17:57:14.246493+00:00",
-    "deadline_utc": "2026-10-11T18:57:14.246493+00:00"
+    "deadline_utc": "2026-10-11T18:57:14.246493+00:00",
+    "closed": true,
+    "closed_utc": "2026-10-11T12:15:12.538329+00:00",
+    "closure_reason": "authorized fixed queue and unique VERIFY complete"
   },
-  "T_research_current_window_elapsed_seconds": 18841.27455531014,
-  "current_known_disjoint_lower_seconds": 13767.59696209291,
+  "T_research_current_window_elapsed_seconds": 19081.21496489318,
+  "current_known_disjoint_lower_seconds": 13861.072649647947,
   "conservative_initial_interval_seconds": 4110.481786,
   "initial_interval_includes_unknown_gap": true,
-  "known_disjoint_wrapper_seconds": 13765.549587097019,
+  "known_disjoint_wrapper_seconds": 13859.025274652056,
   "standalone_targeted_tests": [
     {
       "receipt": {
@@ -70,9 +73,9 @@
     }
   ],
   "known_standalone_targeted_seconds": 2.047374995891005,
-  "unassigned_wall_seconds": 963.195807217231,
+  "unassigned_wall_seconds": 1109.6605292452332,
   "parent_history_known_unique_lower_seconds": 354820.6003592662,
-  "history_plus_current_known_wall_lower_seconds": 368588.1973213591,
+  "history_plus_current_known_wall_lower_seconds": 368681.67300891416,
   "initial_interval_exact_cost_seconds": null,
   "budget_elapsed_is_conservative_not_exact_measured_cost": true,
   "parent_V72_documentation_tail_explanatory_unknown": true,
@@ -229,6 +232,23 @@
         "all_status_readable": true,
         "continuous_peak": false
       }
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v73/aux_post_01",
+      "source_sha": "fdc6104c4124082298dd9b3d8a5b193966d68e0a",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "elapsed_seconds": 4.587184872943908,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 3,
+        "sampled_tree_peak_bytes": 145797120,
+        "ownswap_bytes": 0,
+        "actual_max_gap_seconds": 2.0301885090302676,
+        "all_status_readable": true,
+        "continuous_peak": false
+      }
     }
   ],
   "wrapper_rows": [
@@ -369,6 +389,31 @@
       "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
       "cache": "OS/JIT not cleared; new numerical case objects",
       "received_signals": []
+    },
+    {
+      "entry": "auxiliary_post01",
+      "receipt": {
+        "path": "tmp/task042/v73/auxiliary_post01/receipt.json",
+        "bytes": 609,
+        "sha256": "d336792441b1e72b5f5e4dde3e0788befb21c5a11f33169c966243fe23257df9"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "post",
+        "01",
+        "python",
+        "tmp/task042/v73/document_once.py"
+      ],
+      "source_sha": "fdc6104c4124082298dd9b3d8a5b193966d68e0a",
+      "start_utc": "2026-10-11T12:13:07.633321+00:00",
+      "end_utc": "2026-10-11T12:14:41.109008+00:00",
+      "elapsed_seconds": 93.47568755503744,
+      "exit_code": 0,
+      "wrapper_sha256": "7935eb4c31f2c3540e613274b72d0c52a8179e8cad501446f99a0643b548cb0a",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
     },
     {
       "entry": "auxiliary_pre01",
@@ -747,11 +792,11 @@
   "global_fine_numeric_count": 0,
   "new_numeric_count": 78,
   "storage": {
-    "new_bytes": 5675143006,
-    "new_files": 1928,
-    "immutable_historical_bytes": 184957880035,
-    "task_deduplicated_bytes": 190633023041,
-    "free_bytes": 2744944271360,
+    "new_bytes": 5935175219,
+    "new_files": 3419,
+    "immutable_historical_bytes": 184958196062,
+    "task_deduplicated_bytes": 190893371281,
+    "free_bytes": 2744240345088,
     "new_cap": 34359738368,
     "task_cap": 712964571136,
     "evidence_reserve_bytes": 536870912
@@ -777,7 +822,7 @@
   "production_speed_or_memory_gain": null,
   "NN20": false,
   "active": null,
-  "closed": false,
+  "closed": true,
   "action_counts": {
     "started": 1153,
     "completed": 1152,
@@ -897,5 +942,53 @@
   "unique_VERIFY": {
     "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v73/task042_v73_compare_verify_cost_20261011T115102081370Z/result.json",
     "sha256": "b8bb60fd2b9319e94d8523c97acefe6271c3d23d12ee778ce91024b34851a185"
-  }
+  },
+  "status": "SETTLED_CLOSED",
+  "cleanup": {
+    "UTC": "2026-10-11T12:15:12.538329+00:00",
+    "active": null,
+    "live_matching_actors": [],
+    "all_recorded_descendants_cleared": true,
+    "own_lock_acquired_then_released": true,
+    "lock_path": "tmp/task042/task042_shared.lock",
+    "no_neighbour_signal_or_modify": true,
+    "KSP_attempts": 2,
+    "all_recorded_local_coarse_factors_destroyed": true
+  },
+  "last_window_observation": {
+    "start_utc": "2026-10-11T06:57:14.246493+00:00",
+    "start_monotonic": 1626829.107371871,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 39600,
+    "total_limit_seconds": 43200,
+    "scientific_loaded_limit_seconds": 36000,
+    "review_commit": "f1504cffd4bdcd7bfe025c0ff8e544298e1b7995",
+    "contract_HEAD": "f1504cffd4bdcd7bfe025c0ff8e544298e1b7995",
+    "first_work_start_never_refreshed": true,
+    "anchor": {
+      "schema": "task042_v73_initial_clock_v1",
+      "first_recovered_clock_utc": "2026-10-11T07:52:23.166964+00:00",
+      "first_recovered_monotonic": 1630138.027842871,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "window_start_utc": "2026-10-11T06:57:14.246493+00:00",
+      "window_start_monotonic": 1626829.107371871,
+      "window_seconds": 43200,
+      "heavy_stop_utc": "2026-10-11T17:57:14.246493+00:00",
+      "deadline_utc": "2026-10-11T18:57:14.246493+00:00",
+      "anchor_classification": "CONSERVATIVE_EARLIEST_BOUND",
+      "reason": "Initial V73 tool output was truncated during context recovery; exact first tool clock cannot be recovered. The previous V72 final delivery receipt is used as an earlier conservative bound, charging the entire intervening interval rather than resetting the window. No V73 numerical actor has started."
+    },
+    "heavy_stop_utc": "2026-10-11T17:57:14.246493+00:00",
+    "deadline_utc": "2026-10-11T18:57:14.246493+00:00",
+    "observed_utc": "2026-10-11T12:15:12.499269+00:00",
+    "observed_monotonic": 1645907.360135972,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 19078.252775907516,
+    "heavy_remaining_seconds": 20521.747224092484,
+    "total_remaining_seconds": 24121.747224092484
+  },
+  "metadata_finalization_in_whole_elapsed_not_additive": true,
+  "finalization_known_seconds": 3.0331631049048156,
+  "storage_measured_after_tail_archive": true
 }

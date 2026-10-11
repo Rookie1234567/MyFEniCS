@@ -1,8 +1,71 @@
 {
-  "status": "PENDING_FINAL_DOCUMENT_AND_GIT",
-  "active": null,
-  "scientific_queue_complete": true,
-  "closed": false,
+  "status": "CLOSED",
+  "window": {
+    "start_utc": "2026-10-11T06:57:14.246493+00:00",
+    "start_monotonic": 1626829.107371871,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 39600,
+    "total_limit_seconds": 43200,
+    "scientific_loaded_limit_seconds": 36000,
+    "review_commit": "f1504cffd4bdcd7bfe025c0ff8e544298e1b7995",
+    "contract_HEAD": "f1504cffd4bdcd7bfe025c0ff8e544298e1b7995",
+    "first_work_start_never_refreshed": true,
+    "anchor": {
+      "schema": "task042_v73_initial_clock_v1",
+      "first_recovered_clock_utc": "2026-10-11T07:52:23.166964+00:00",
+      "first_recovered_monotonic": 1630138.027842871,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "window_start_utc": "2026-10-11T06:57:14.246493+00:00",
+      "window_start_monotonic": 1626829.107371871,
+      "window_seconds": 43200,
+      "heavy_stop_utc": "2026-10-11T17:57:14.246493+00:00",
+      "deadline_utc": "2026-10-11T18:57:14.246493+00:00",
+      "anchor_classification": "CONSERVATIVE_EARLIEST_BOUND",
+      "reason": "Initial V73 tool output was truncated during context recovery; exact first tool clock cannot be recovered. The previous V72 final delivery receipt is used as an earlier conservative bound, charging the entire intervening interval rather than resetting the window. No V73 numerical actor has started."
+    },
+    "heavy_stop_utc": "2026-10-11T17:57:14.246493+00:00",
+    "deadline_utc": "2026-10-11T18:57:14.246493+00:00",
+    "closed": true,
+    "closed_utc": "2026-10-11T12:15:12.538329+00:00",
+    "closure_reason": "authorized fixed queue and unique VERIFY complete"
+  },
+  "cleanup": {
+    "UTC": "2026-10-11T12:15:12.538329+00:00",
+    "active": null,
+    "live_matching_actors": [],
+    "all_recorded_descendants_cleared": true,
+    "own_lock_acquired_then_released": true,
+    "lock_path": "tmp/task042/task042_shared.lock",
+    "no_neighbour_signal_or_modify": true,
+    "KSP_attempts": 2,
+    "all_recorded_local_coarse_factors_destroyed": true
+  },
+  "final_actions": {
+    "started": 1153,
+    "completed": 1152,
+    "by_kind": {
+      "Q_reused_hot_pair": 2,
+      "D_failed_residual_reconstruction": 1,
+      "D_feedback_original": 6,
+      "Q_PC_original": 6,
+      "I_explicit_true_scaled_trace": 16,
+      "I_public_original": 16,
+      "I_PC_internal_scaled_trace": 648,
+      "I_outer_scaled_trace": 454,
+      "I_final_public_original": 2,
+      "V_R128_public_original": 1,
+      "V_B128_public_original": 1
+    }
+  },
+  "KSP_count": 2,
+  "candidate_count": 2,
+  "numeric_count": 78,
   "no_automatic_next_window": true,
-  "delivery_receipt": "tmp/task042/v73/delivery_git_receipt.json"
+  "actual_source_vs_document_HEAD": true,
+  "final_document_receipt": {
+    "path": "tmp/task042/v73/aux_post_01/document_checks.json",
+    "bytes": 2652,
+    "sha256": "0828c3009b135a0443f515e0b1157db9a6f8cbd6793342f0927f8b09a4dac0d5"
+  },
+  "delivery_git_receipt": "tmp/task042/v73/delivery_git_receipt.json"
 }

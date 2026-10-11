@@ -459,7 +459,7 @@
     "further_KSP_not_run_reason": "two formal KSP attempts exhausted; no third solve or iteration tail",
     "no_more_numeric": true
   },
-  "source_HEAD": "5d958cab1bacd167093f39abe390ced5cfcd8404",
+  "source_HEAD": "fdc6104c4124082298dd9b3d8a5b193966d68e0a",
   "global_fine_K_reads": 0,
   "global_fine_S_reads": 0,
   "global_fine_formations": 0,
