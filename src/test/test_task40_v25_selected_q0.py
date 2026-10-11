@@ -17,6 +17,300 @@ from src.solvers.task40_v25_selected_q0 import (
 )
 
 
+def test_v26_saved_native_component_names_use_live_action_keys():
+    from src.solvers.task40_v25_selected_q0 import _native_q0_components_from_saved_case
+
+    saved = {
+        "native_q0_volume": np.asarray([1.0 + 2.0j], dtype=np.complex128),
+        "native_q0_C": np.asarray([3.0 + 4.0j], dtype=np.complex128),
+        "native_q0_minus_D": np.asarray([5.0 + 6.0j], dtype=np.complex128),
+        "native_q0_Hhat": np.asarray([7.0 + 8.0j], dtype=np.complex128),
+    }
+
+    components = _native_q0_components_from_saved_case(saved)
+
+    assert set(components) == {"volume", "C", "-D", "Hhat"}
+    np.testing.assert_array_equal(components["-D"], saved["native_q0_minus_D"])
+
+
+def _write_recovery_archive(path: Path, arrays: dict[str, np.ndarray]) -> dict:
+    with path.open("wb") as stream:
+        np.savez(stream, **arrays)
+    return {
+        "path": path.name,
+        "bytes": path.stat().st_size,
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "array_names": sorted(arrays),
+        "array_shapes": {name: list(value.shape) for name, value in arrays.items()},
+        "array_sha256": {
+            name: hashlib.sha256(memoryview(value).cast("B")).hexdigest()
+            for name, value in arrays.items()
+        },
+    }
+
+
+def _v26_native_recovery_fixture(tmp_path: Path) -> dict:
+    from scripts import task40_v20_service_workflow as service
+
+    repo = tmp_path
+    artifact = repo / service.V26_ARTIFACT_ROOT
+    native_root = artifact / "native_consumer"
+    replay_root = artifact / "saved_replay"
+    native_root.mkdir(parents=True)
+    replay_root.mkdir(parents=True)
+    old_source = "a" * 40
+    recovery_source = "f" * 40
+    input_sha = "e" * 64
+    model_sha = "b" * 64
+    campaign_sha = "c" * 64
+    mode_sha = "d" * 64
+    key_sha = "1" * 64
+    run_id = "fixture-v26-run"
+    producer_identity = {
+        "producer_run_directory": "producer",
+        "producer_run_id": service.V26_PRODUCER_RUN_ID,
+        "failure_index_sha256": service.V26_FAILURE_INDEX_SHA256,
+        "verified_input_sha256": service.V26_VERIFIED_INPUT_SHA256,
+        "payloads": [],
+    }
+    producer_sha = hashlib.sha256(
+        json.dumps(producer_identity, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    shared = {
+        "run_id": run_id,
+        "physical_model_sha256": model_sha,
+        "campaign_window_sha256": campaign_sha,
+        "producer_identity_sha256": producer_sha,
+        "mode_manifest_sha256": mode_sha,
+        "ordered_mode_key_sha256": key_sha,
+    }
+    native_identity = {"source_sha": old_source, **shared}
+    recovery_identity = {"source_sha": recovery_source, **shared}
+    (artifact / "main_source_freeze_receipt_v26_reader_fix.json").write_text(
+        json.dumps({
+            "schema": "task40extra.review_v26_main_source_freeze.v1",
+            "source_sha": old_source,
+            "worktree_clean_at_freeze": True,
+        }),
+        encoding="utf-8",
+    )
+    (repo / "producer").mkdir()
+    selector_dir = artifact / "stage_inputs/selected_reference_q_csr"
+    selector_dir.mkdir(parents=True)
+    (selector_dir / "selected_operation.json").write_text(
+        json.dumps({
+            "schema": "task40extra.review_v26_selected_operation.v1",
+            "operation": "V26_COMPLETE_Q0_CSR_AND_CONDITIONAL_FACTOR",
+            "stop_stage": "selected_reference_q_csr",
+            "input_sha256": input_sha,
+            "campaign_window_sha256": campaign_sha,
+            "model_profile": service.V26_TARGET_PROFILE,
+            "producer_identity": producer_identity,
+        }),
+        encoding="utf-8",
+    )
+
+    x1 = np.asarray([1.0 + 0.0j, 2.0 + 1.0j], dtype=np.complex128)
+    x2 = np.asarray([2.0 + 0.0j, 1.0 - 1.0j], dtype=np.complex128)
+    x4 = np.asarray([1.0 + 2.0j, 3.0 + 1.0j], dtype=np.complex128)
+    input_arrays = {"q0_case_1": x1, "q0_case_2": x2, "q4_pair": x4}
+    input_record = _write_recovery_archive(replay_root / "v26_saved_q_replay_inputs.npz", input_arrays)
+    input_sidecar = {
+        "schema": "task40extra.review_v26_saved_q_replay_inputs.v1",
+        **input_record,
+        "producer_identity_sha256": producer_sha,
+    }
+    (replay_root / "v26_saved_q_replay_inputs.json").write_text(
+        json.dumps(input_sidecar), encoding="utf-8"
+    )
+    input_record["array_shapes"] = input_sidecar["array_shapes"]
+    input_record["array_sha256"] = input_sidecar["array_sha256"]
+
+    cross04 = np.asarray([1.0e-12 + 0.0j, 0.0 + 0.0j], dtype=np.complex128)
+    cross40 = np.asarray([2.0e-12 + 0.0j, 0.0 + 0.0j], dtype=np.complex128)
+    q0_1 = np.asarray([2.0 + 0.0j, 3.0 + 0.0j], dtype=np.complex128)
+    q0_2 = np.asarray([1.0 + 1.0j, 2.0 + 0.0j], dtype=np.complex128)
+    q4 = np.asarray([4.0 + 0.0j, 5.0 + 0.0j], dtype=np.complex128)
+    components = {
+        "q0_volume": np.asarray([0.5 + 0.0j, 0.75 + 0.0j], dtype=np.complex128),
+        "q0_C": np.asarray([0.25 + 0.0j, 0.25 + 0.0j], dtype=np.complex128),
+        "q0_minus_D": np.asarray([0.25 + 0.0j, 0.5 + 0.0j], dtype=np.complex128),
+        "q0_Hhat": np.asarray([1.0 + 0.0j, 1.5 + 0.0j], dtype=np.complex128),
+    }
+    replay_cases = {
+        "q0_case_1": {"q0_total": q0_1, **components, "q4_total_from_q0": cross04},
+        "q0_case_2": {"q0_total": q0_2, "q4_total_from_q0": cross04 * 2.0},
+        "q4_pair": {"q4_total": q4, "q0_total_from_q4": cross40},
+    }
+    replay_artifacts = {"inputs": input_record}
+    replay_case_records = {}
+    replay_identity = {"source_sha": "5" * 40, **shared}
+    for case_name, arrays in replay_cases.items():
+        record = _write_recovery_archive(replay_root / f"{case_name}.npz", arrays)
+        sidecar_path = replay_root / f"{case_name}.json"
+        sidecar_path.write_text(
+            json.dumps({"sha256": record["sha256"], "array_sha256": record["array_sha256"]}),
+            encoding="utf-8",
+        )
+        case_record = {
+            **record,
+            "schema": "task40extra.review_v26_saved_q_replay_case.v1",
+            "case": case_name,
+            "producer_identity_sha256": producer_sha,
+            "current_identity": replay_identity,
+        }
+        replay_case_records[case_name] = case_record
+        replay_artifacts[case_name] = {**record, "manifest_path": sidecar_path.name}
+    replay_manifest = {
+        "schema": "task40extra.review_v26_saved_q_replay.v1",
+        "status": "PASS_SAVED_STREAM_REPLAY_NO_NATIVE",
+        "producer_identity": producer_identity,
+        "producer_identity_sha256": producer_sha,
+        "current_identity": replay_identity,
+        "preflight_mode_manifest_sha256": mode_sha,
+        "ordered_mode_key_sha256": key_sha,
+        "mode_count_full_reference": 32_060,
+        "q0_alias_count": 4_076,
+        "q4_alias_count": 3_856,
+        "selected_twist_alias_count": 7_932,
+        "official_result": False,
+        "csr_built": False,
+        "factor_or_solve_built": False,
+        "native_volume_apply_count": 0,
+        "provider_sweep_count": 0,
+        "inputs_saved_before_replay": True,
+        "each_case_output_saved_atomically_before_next_case": True,
+        "all_saved_inputs_nonzero": True,
+        "q0_inputs_distinct": True,
+        "artifacts": replay_artifacts,
+        "cases": replay_case_records,
+    }
+    (replay_root / "v26_saved_q_replay_manifest.json").write_text(
+        json.dumps(replay_manifest), encoding="utf-8"
+    )
+    replay_sha = hashlib.sha256(
+        (replay_root / "v26_saved_q_replay_manifest.json").read_bytes()
+    ).hexdigest()
+
+    native_cases = {
+        "q0_case_1": {
+            "native_q0_total": q0_1,
+            "native_q4_from_q0": cross04,
+            "native_q0_volume": components["q0_volume"],
+            "native_q0_C": components["q0_C"],
+            "native_q0_minus_D": components["q0_minus_D"],
+            "native_q0_Hhat": components["q0_Hhat"],
+        },
+        "q0_case_2": {"native_q0_total": q0_2, "native_q4_from_q0": cross04 * 2.0},
+        "q4_pair": {"native_q0_from_q4": cross40, "native_q4_total": q4},
+    }
+    native_records = {}
+    for case_name, arrays in native_cases.items():
+        path = native_root / f"v26_native_{case_name}.npz"
+        record = _write_recovery_archive(path, arrays)
+        sidecar = {
+            "schema": "task40extra.review_v26_native_action_case.v1",
+            "case": case_name,
+            **record,
+            "producer_identity_sha256": producer_sha,
+            "saved_replay_manifest_sha256": replay_sha,
+            "current_identity": native_identity,
+        }
+        path.with_suffix(".json").write_text(json.dumps(sidecar), encoding="utf-8")
+        native_records[case_name] = sidecar
+
+    prior = repo / "results/model/run/20261011T093646.477018Z"
+    prior.mkdir(parents=True)
+    (prior / "run_manifest.json").write_text(json.dumps({
+        "source_sha": old_source,
+        "run_id": run_id,
+        "input_sha256": input_sha,
+        "physical_model_sha256": model_sha,
+    }), encoding="utf-8")
+    (prior / "run_summary.json").write_text(json.dumps({
+        "status": "finished",
+        "result_classification": "WORKER_FAILED",
+        "exit_status": 4,
+        "resource_authority": {"classification": "WORKER_FAILED"},
+    }), encoding="utf-8")
+    (prior / "v26_selected_q_stage.json").write_text(json.dumps({
+        "status": "FAILED_V26_SELECTED_Q_GATES",
+        "failure_type": "KeyError",
+        "failure_message": "'minus_D'",
+        "official_result": False,
+        "resource_blocker": None,
+        "stop_stage": "selected_reference_q_csr",
+    }), encoding="utf-8")
+    return {
+        "repo": repo,
+        "native_root": native_root,
+        "replay_root": replay_root,
+        "prior_attempt": prior,
+        "identity": recovery_identity,
+        "run_id": run_id,
+        "input_sha": input_sha,
+        "model_sha": model_sha,
+    }
+
+
+def test_v26_native_case_recovery_readback_passes_three_saved_cases(tmp_path):
+    from scripts.task40_v20_service_workflow import _v26_native_case_recovery_readback
+
+    fixture = _v26_native_recovery_fixture(tmp_path)
+    receipt = _v26_native_case_recovery_readback(
+        repo_root=fixture["repo"],
+        native_root=fixture["native_root"],
+        replay_root=fixture["replay_root"],
+        prior_attempt_root=fixture["prior_attempt"],
+        recovery_identity=fixture["identity"],
+        expected_run_id=fixture["run_id"],
+        expected_input_sha256=fixture["input_sha"],
+        expected_physical_model_sha256=fixture["model_sha"],
+    )
+    assert receipt["checker_passed"] is True
+    assert receipt["source_sha_split"]["native_evidence_source_sha"] == "a" * 40
+    assert receipt["source_sha_split"]["recovery_source_sha"] == "f" * 40
+    assert receipt["historical_native_counts"]["native_volume_apply_count"]["measured"] is None
+    assert receipt["historical_native_counts"]["native_action_elapsed_seconds"]["measured"] is None
+    assert max(row["relative_to_component"] for row in receipt["recomputed_comparisons"].values()) < 1.0e-11
+
+
+def test_v26_native_case_recovery_rejects_changed_mathematical_identity(tmp_path):
+    from scripts.task40_v20_service_workflow import _v26_native_case_recovery_readback
+
+    fixture = _v26_native_recovery_fixture(tmp_path)
+    bad_identity = {**fixture["identity"], "physical_model_sha256": "9" * 64}
+    with pytest.raises(ValueError, match="source split"):
+        _v26_native_case_recovery_readback(
+            repo_root=fixture["repo"], native_root=fixture["native_root"],
+            replay_root=fixture["replay_root"], prior_attempt_root=fixture["prior_attempt"],
+            recovery_identity=bad_identity, expected_run_id=fixture["run_id"],
+            expected_input_sha256=fixture["input_sha"], expected_physical_model_sha256=fixture["model_sha"],
+        )
+
+
+def test_v26_native_case_recovery_rejects_failed_numeric_gate(tmp_path):
+    from scripts.task40_v20_service_workflow import _v26_native_case_recovery_readback
+
+    fixture = _v26_native_recovery_fixture(tmp_path)
+    path = fixture["native_root"] / "v26_native_q0_case_1.npz"
+    with np.load(path, allow_pickle=False) as archive:
+        arrays = {name: np.asarray(archive[name]).copy() for name in archive.files}
+    arrays["native_q0_total"][0] += 1.0e-3
+    record = _write_recovery_archive(path, arrays)
+    sidecar_path = path.with_suffix(".json")
+    sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
+    sidecar.update(record)
+    sidecar_path.write_text(json.dumps(sidecar), encoding="utf-8")
+    with pytest.raises(ValueError, match="comparison/leakage gates"):
+        _v26_native_case_recovery_readback(
+            repo_root=fixture["repo"], native_root=fixture["native_root"],
+            replay_root=fixture["replay_root"], prior_attempt_root=fixture["prior_attempt"],
+            recovery_identity=fixture["identity"], expected_run_id=fixture["run_id"],
+            expected_input_sha256=fixture["input_sha"], expected_physical_model_sha256=fixture["model_sha"],
+        )
+
+
 def _entry(mode_key, *, coupling_rows, coupling_values, projection_rows, projection_values):
     return SimpleNamespace(
         mode_key=mode_key,
@@ -238,6 +532,15 @@ def test_v26_checker_recomputes_native_cross_q_metrics_on_diagonal_scale(monkeyp
     replay_manifest_path = replay_root / "v26_saved_q_replay_manifest.json"
     replay_manifest_path.write_text(json.dumps(replay_manifest), encoding="utf-8")
     replay_sha = service._sha256_file(replay_manifest_path)
+    current_identity = {
+        "source_sha": "c" * 40,
+        "run_id": "fixture-run",
+        "physical_model_sha256": "d" * 64,
+        "campaign_window_sha256": selector["campaign_window_sha256"],
+        "producer_identity_sha256": producer_identity_sha,
+        "mode_manifest_sha256": "a" * 64,
+        "ordered_mode_key_sha256": "b" * 64,
+    }
 
     native_cases = {
         "q0_case_1": {
@@ -260,6 +563,7 @@ def test_v26_checker_recomputes_native_cross_q_metrics_on_diagonal_scale(monkeyp
             "case": name,
             "producer_identity_sha256": producer_identity_sha,
             "saved_replay_manifest_sha256": replay_sha,
+                "current_identity": current_identity,
             **record,
         }
         path.with_suffix(".json").write_text(json.dumps(sidecar), encoding="utf-8")
@@ -269,6 +573,7 @@ def test_v26_checker_recomputes_native_cross_q_metrics_on_diagonal_scale(monkeyp
         "status": "PASS_COMPLETE_Q0_NATIVE_CONSUMER",
         "producer_identity_sha256": producer_identity_sha,
         "saved_replay_manifest_sha256": replay_sha,
+        "current_identity": current_identity,
         "cases": native_records,
         "native_volume_apply_count": 6,
         "provider_sweep_count": 9,
@@ -288,6 +593,7 @@ def test_v26_checker_recomputes_native_cross_q_metrics_on_diagonal_scale(monkeyp
         "status": "PASS_COMPLETE_Q0_STREAM",
         "stop_stage": "selected_reference_q_consumer",
         "v26_selector_sha256": selector_sha,
+        "v26_current_identity": current_identity,
         "official_result": False,
         "factor_or_solve_built": False,
         "v26_artifact_binding": {

@@ -69,6 +69,70 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _find_v26_minus_d_failed_attempt(
+    run_family: Path,
+    *,
+    source_sha: str,
+    run_id: str,
+    input_sha256: str,
+    physical_model_sha256: str,
+) -> Path:
+    matches: list[Path] = []
+    for operation_path in run_family.glob("*/v26_selected_q_stage.json"):
+        attempt = operation_path.parent
+        try:
+            run_manifest = json.loads((attempt / "run_manifest.json").read_text(encoding="utf-8"))
+            run_summary = json.loads((attempt / "run_summary.json").read_text(encoding="utf-8"))
+            operation = json.loads(operation_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        resource = run_summary.get("resource_authority", {})
+        if (
+            run_manifest.get("source_sha") == source_sha
+            and run_manifest.get("run_id") == run_id
+            and run_manifest.get("input_sha256") == input_sha256
+            and run_manifest.get("physical_model_sha256") == physical_model_sha256
+            and run_summary.get("result_classification") == "WORKER_FAILED"
+            and resource.get("classification") == "WORKER_FAILED"
+            and operation.get("status") == "FAILED_V26_SELECTED_Q_GATES"
+            and operation.get("failure_type") == "KeyError"
+            and operation.get("failure_message") == "'minus_D'"
+            and operation.get("resource_blocker") is None
+            and operation.get("official_result") is False
+        ):
+            matches.append(attempt.resolve())
+    if len(matches) != 1:
+        raise RuntimeError(
+            f"V26 native recovery requires one exact prior minus_D leaf failure; found {len(matches)}"
+        )
+    return matches[0]
+
+
+def _retain_v26_footer_bindings(
+    operation: dict[str, Any],
+    *,
+    artifact_binding: Mapping[str, Any] | None,
+    recovery_binding: Mapping[str, Any] | None,
+    current_identity: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Keep completed V26 evidence identities when a later stage stops or fails."""
+    existing_artifact = operation.get("v26_artifact_binding")
+    if isinstance(artifact_binding, Mapping):
+        operation["v26_artifact_binding"] = {
+            **dict(artifact_binding),
+            **(dict(existing_artifact) if isinstance(existing_artifact, Mapping) else {}),
+        }
+    existing_recovery = operation.get("v26_native_recovery")
+    if isinstance(recovery_binding, Mapping):
+        operation["v26_native_recovery"] = {
+            **dict(recovery_binding),
+            **(dict(existing_recovery) if isinstance(existing_recovery, Mapping) else {}),
+        }
+    if isinstance(current_identity, Mapping):
+        operation["v26_current_identity"] = dict(current_identity)
+    return operation
+
+
 def _repo_path(root: Path, value: Any, label: str) -> Path:
     candidate = Path(str(value))
     if candidate.is_absolute():
@@ -1477,6 +1541,98 @@ def _run_v26_selected_q0_stage(
                 and native_manifest.get("native_volume_apply_count") == 6
                 and native_manifest.get("provider_sweep_count") == 9
             )
+            native_recovery_binding: dict[str, Any] | None = None
+            if (
+                not reuse_native
+                and not native_manifest_path.exists()
+                and stop_stage == "selected_reference_q_csr"
+                and all((native_root / f"v26_native_{name}.npz").is_file()
+                        and (native_root / f"v26_native_{name}.json").is_file()
+                        for name in ("q0_case_1", "q0_case_2", "q4_pair"))
+            ):
+                freeze_path = artifact_root / "main_source_freeze_receipt_v26_reader_fix.json"
+                freeze_receipt = json.loads(freeze_path.read_text(encoding="utf-8"))
+                prior_attempt = _find_v26_minus_d_failed_attempt(
+                    output_directory.parent,
+                    source_sha=str(freeze_receipt.get("source_sha", "")),
+                    run_id=str(preflight.get("run_id", "")),
+                    input_sha256=str(preflight.get("input_sha256", "")),
+                    physical_model_sha256=str(preflight.get("physical_model_sha256", "")),
+                )
+                from scripts.task40_v20_service_workflow import _v26_native_case_recovery_readback
+
+                checker_receipt = _v26_native_case_recovery_readback(
+                    repo_root=repo_root,
+                    native_root=native_root,
+                    replay_root=replay_root,
+                    prior_attempt_root=prior_attempt,
+                    recovery_identity=current_identity,
+                    expected_run_id=str(preflight.get("run_id", "")),
+                    expected_input_sha256=str(preflight.get("input_sha256", "")),
+                    expected_physical_model_sha256=str(preflight.get("physical_model_sha256", "")),
+                )
+                source_tag = str(source_sha)
+                checker_receipt_path = native_root / f"v26_native_action_recovery_check_{source_tag}.json"
+                recovery_manifest_path = native_root / f"v26_native_action_recovery_{source_tag}.json"
+                if checker_receipt_path.exists() or recovery_manifest_path.exists():
+                    raise FileExistsError("refusing to overwrite V26 native recovery evidence")
+                _write_json(checker_receipt_path, checker_receipt)
+                checker_sha = _sha256_file(checker_receipt_path)
+                recovery_manifest = {
+                    "schema": "task40extra.review_v26_native_action_recovery.v1",
+                    "status": "PASS_RECOVERED_THREE_NATIVE_CASES",
+                    "official_result": False,
+                    "producer_identity_sha256": current_identity["producer_identity_sha256"],
+                    "saved_replay_manifest_sha256": replay_sha,
+                    "native_current_identity": checker_receipt["original_native_current_identity"],
+                    "recovery_current_identity": dict(current_identity),
+                    "cases": checker_receipt["native_cases"],
+                    "native_volume_apply_count": None,
+                    "provider_sweep_count": None,
+                    "count_provenance": {
+                        "native_volume_apply_count": "SOURCE_DERIVED",
+                        "provider_sweep_count": "SOURCE_DERIVED",
+                    },
+                    "source_derived_counts": checker_receipt["historical_native_counts"],
+                    "elapsed_seconds": None,
+                    "elapsed_seconds_status": "UNKNOWN_NOT_PERSISTED_BEFORE_KEYERROR",
+                    "recomputed_comparisons": checker_receipt["recomputed_comparisons"],
+                    "recomputed_scaled_leakage": checker_receipt["recomputed_scaled_leakage"],
+                    "recovery_checker_receipt_path": str(checker_receipt_path),
+                    "recovery_checker_receipt_sha256": checker_sha,
+                    "prior_failed_attempt": checker_receipt["prior_failed_attempt"],
+                    "fresh_surface_integration": checker_receipt["fresh_surface_integration"],
+                }
+                _write_json(recovery_manifest_path, recovery_manifest)
+                native_manifest_path = recovery_manifest_path
+                native_manifest = recovery_manifest
+                reuse_native = True
+                native_recovery_binding = {
+                    "status": checker_receipt["status"],
+                    "manifest_path": str(recovery_manifest_path),
+                    "manifest_sha256": _sha256_file(recovery_manifest_path),
+                    "checker_receipt_path": str(checker_receipt_path),
+                    "checker_receipt_sha256": checker_sha,
+                    "native_evidence_source_sha": checker_receipt["source_sha_split"]["native_evidence_source_sha"],
+                    "recovery_source_sha": source_sha,
+                }
+            native_artifact_binding: dict[str, Any] | None = None
+            if reuse_native:
+                native_artifact_binding = {
+                    **replay_binding,
+                    "native_root": str(native_root),
+                    "native_manifest_path": str(native_manifest_path),
+                    "native_manifest_sha256": _sha256_file(native_manifest_path),
+                    "native_volume_apply_count": native_manifest.get("native_volume_apply_count"),
+                    "provider_sweep_count": native_manifest.get("provider_sweep_count"),
+                    "native_count_provenance": native_manifest.get("count_provenance", {}),
+                    "source_derived_counts": native_manifest.get("source_derived_counts", {}),
+                    "native_action_elapsed_seconds": native_manifest.get("elapsed_seconds"),
+                    "native_action_elapsed_seconds_status": native_manifest.get(
+                        "elapsed_seconds_status",
+                        "MEASURED" if native_manifest.get("elapsed_seconds") is not None else "UNKNOWN",
+                    ),
+                }
             operation = run_task40_v25_selected_q0_consumer(
                 simulation_config_3d_from_normalized(resolved_payload),
                 _v23_actual_axis_values(resolved_payload),
@@ -1500,26 +1656,38 @@ def _run_v26_selected_q0_stage(
                 saved_replay_root=replay_root,
                 native_output_root=native_root,
                 saved_native_root=native_root if reuse_native else None,
+                saved_native_manifest_path=native_manifest_path if reuse_native else None,
                 current_identity=current_identity,
                 perform_native_validation=not reuse_native,
             )
             existing_binding = operation.get("v26_artifact_binding")
             if not isinstance(existing_binding, Mapping):
-                try:
-                    native_facts = json.loads(native_manifest_path.read_text(encoding="utf-8"))
-                except (OSError, json.JSONDecodeError):
-                    native_facts = {}
-                existing_binding = {
-                    **replay_binding,
-                    "native_root": str(native_root),
-                    "native_manifest_path": str(native_manifest_path),
-                    "native_manifest_sha256": (
-                        _sha256_file(native_manifest_path) if native_manifest_path.is_file() else ""
-                    ),
-                    "native_volume_apply_count": native_facts.get("native_volume_apply_count", 0),
-                    "provider_sweep_count": native_facts.get("provider_sweep_count", 0),
-                    "native_action_elapsed_seconds": native_facts.get("elapsed_seconds", 0.0),
-                }
+                if native_artifact_binding is not None:
+                    existing_binding = native_artifact_binding
+                else:
+                    try:
+                        native_facts = json.loads(native_manifest_path.read_text(encoding="utf-8"))
+                    except (OSError, json.JSONDecodeError):
+                        native_facts = {}
+                    existing_binding = {
+                        **replay_binding,
+                        "native_root": str(native_root),
+                        "native_manifest_path": str(native_manifest_path),
+                        "native_manifest_sha256": (
+                            _sha256_file(native_manifest_path) if native_manifest_path.is_file() else ""
+                        ),
+                        "native_volume_apply_count": native_facts.get("native_volume_apply_count"),
+                        "provider_sweep_count": native_facts.get("provider_sweep_count"),
+                        "native_count_provenance": native_facts.get("count_provenance", {}),
+                        "source_derived_counts": native_facts.get("source_derived_counts", {}),
+                        "native_action_elapsed_seconds": native_facts.get("elapsed_seconds"),
+                        "native_action_elapsed_seconds_status": native_facts.get(
+                            "elapsed_seconds_status",
+                            "MEASURED" if native_facts.get("elapsed_seconds") is not None else "UNKNOWN",
+                        ),
+                    }
+            elif native_artifact_binding is not None:
+                existing_binding = {**native_artifact_binding, **dict(existing_binding)}
             operation = {
                 **dict(operation),
                 "v26_artifact_binding": dict(existing_binding),
@@ -1529,6 +1697,7 @@ def _run_v26_selected_q0_stage(
                 "v26_current_identity": current_identity,
                 "v26_replay_created_in_this_operation": replay_manifest is not None,
                 "v26_native_reused_from_prior_operation": reuse_native,
+                **({"v26_native_recovery": native_recovery_binding} if native_recovery_binding else {}),
             }
             if stop_stage == "selected_reference_q_csr" and operation.get("status") == "PASS_COMPLETE_Q0_CSR":
                 import numpy as np
@@ -1761,10 +1930,17 @@ def _run_v26_selected_q0_stage(
                 "factor_or_solve_built": False,
             }
         replay_binding = locals().get("replay_binding")
-        if isinstance(replay_binding, Mapping) and not isinstance(
-            operation.get("v26_artifact_binding"), Mapping
-        ):
-            operation["v26_artifact_binding"] = dict(replay_binding)
+        native_artifact_binding = locals().get("native_artifact_binding")
+        operation = _retain_v26_footer_bindings(
+            operation,
+            artifact_binding=(
+                native_artifact_binding
+                if isinstance(native_artifact_binding, Mapping)
+                else replay_binding if isinstance(replay_binding, Mapping) else None
+            ),
+            recovery_binding=locals().get("native_recovery_binding"),
+            current_identity=locals().get("current_identity"),
+        )
     except Exception as error:
         previous = locals().get("operation")
         if stop_stage == "selected_reference_q_csr" and isinstance(previous, Mapping) and previous.get("status") == "PASS_COMPLETE_Q0_CSR":
@@ -1832,10 +2008,17 @@ def _run_v26_selected_q0_stage(
                 "factor_or_solve_built": False,
             }
         replay_binding = locals().get("replay_binding")
-        if isinstance(replay_binding, Mapping) and not isinstance(
-            operation.get("v26_artifact_binding"), Mapping
-        ):
-            operation["v26_artifact_binding"] = dict(replay_binding)
+        native_artifact_binding = locals().get("native_artifact_binding")
+        operation = _retain_v26_footer_bindings(
+            operation,
+            artifact_binding=(
+                native_artifact_binding
+                if isinstance(native_artifact_binding, Mapping)
+                else replay_binding if isinstance(replay_binding, Mapping) else None
+            ),
+            recovery_binding=locals().get("native_recovery_binding"),
+            current_identity=locals().get("current_identity"),
+        )
     _write_json(operation_path, operation)
 
     op_status = str(operation.get("status", "FAILED_V26_SELECTED_Q_GATES"))

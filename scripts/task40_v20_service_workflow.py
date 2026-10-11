@@ -3697,6 +3697,345 @@ def _v26_array_sha256(array: Any) -> str:
     return hashlib.sha256(memoryview(value).cast("B")).hexdigest()
 
 
+def _v26_native_case_recovery_readback(
+    *,
+    repo_root: Path,
+    native_root: Path,
+    replay_root: Path,
+    prior_attempt_root: Path,
+    recovery_identity: Mapping[str, Any],
+    expected_run_id: str,
+    expected_input_sha256: str,
+    expected_physical_model_sha256: str,
+) -> dict[str, Any]:
+    """Independently qualify the one complete three-case V26 KeyError recovery."""
+    import math
+    import numpy as np
+    import zipfile
+
+    root = repo_root.resolve()
+    artifact_root = (root / V26_ARTIFACT_ROOT).resolve()
+    native_root = native_root.resolve()
+    replay_root = replay_root.resolve()
+    prior_attempt_root = prior_attempt_root.resolve()
+    if native_root != (artifact_root / "native_consumer").resolve():
+        raise ValueError("V26 recovery native root differs from the registered artifact root")
+    if replay_root != (artifact_root / "saved_replay").resolve():
+        raise ValueError("V26 recovery replay root differs from the registered artifact root")
+    if not prior_attempt_root.is_relative_to((root / "results").resolve()):
+        raise ValueError("V26 recovery failure attempt is outside results/")
+
+    def read_json(path: Path) -> dict[str, Any]:
+        value = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(value, dict):
+            raise ValueError(f"V26 recovery JSON is not an object: {path.name}")
+        return value
+
+    freeze_path = artifact_root / "main_source_freeze_receipt_v26_reader_fix.json"
+    freeze = read_json(freeze_path)
+    old_source_sha = str(freeze.get("source_sha", ""))
+    if (
+        freeze.get("schema") != "task40extra.review_v26_main_source_freeze.v1"
+        or freeze.get("worktree_clean_at_freeze") is not True
+        or len(old_source_sha) != 40
+        or recovery_identity.get("source_sha") == old_source_sha
+        or len(str(recovery_identity.get("source_sha", ""))) != 40
+        or recovery_identity.get("run_id") != expected_run_id
+        or recovery_identity.get("physical_model_sha256") != expected_physical_model_sha256
+    ):
+        raise ValueError("V26 recovery source split is not bound to the clean original native freeze")
+
+    failed_manifest_path = prior_attempt_root / "run_manifest.json"
+    failed_summary_path = prior_attempt_root / "run_summary.json"
+    failed_operation_path = prior_attempt_root / "v26_selected_q_stage.json"
+    failed_manifest = read_json(failed_manifest_path)
+    failed_summary = read_json(failed_summary_path)
+    failed_operation = read_json(failed_operation_path)
+    failed_resource = failed_summary.get("resource_authority", {})
+    if not isinstance(failed_resource, Mapping):
+        failed_resource = {}
+    if (
+        failed_manifest.get("source_sha") != old_source_sha
+        or failed_manifest.get("run_id") != expected_run_id
+        or failed_manifest.get("input_sha256") != expected_input_sha256
+        or failed_manifest.get("physical_model_sha256") != expected_physical_model_sha256
+        or failed_summary.get("status") != "finished"
+        or failed_summary.get("result_classification") != "WORKER_FAILED"
+        or failed_summary.get("exit_status") != 4
+        or failed_resource.get("classification") != "WORKER_FAILED"
+        or failed_operation.get("status") != "FAILED_V26_SELECTED_Q_GATES"
+        or failed_operation.get("failure_type") != "KeyError"
+        or failed_operation.get("failure_message") != "'minus_D'"
+        or failed_operation.get("official_result") is not False
+        or failed_operation.get("resource_blocker") is not None
+        or failed_operation.get("stop_stage") != "selected_reference_q_csr"
+    ):
+        raise ValueError("V26 recovery prior attempt is not the exact non-resource minus_D leaf failure")
+    if (native_root / "v26_native_action_manifest.json").exists():
+        raise FileExistsError("V26 recovery refuses to replace an existing native action manifest")
+
+    def identity_without_source(identity: Mapping[str, Any]) -> dict[str, Any]:
+        return {key: value for key, value in identity.items() if key != "source_sha"}
+
+    recovery_identity = dict(recovery_identity)
+    shared_identity = identity_without_source(recovery_identity)
+    identity_keys = (
+        "run_id", "physical_model_sha256", "campaign_window_sha256",
+        "producer_identity_sha256", "mode_manifest_sha256", "ordered_mode_key_sha256",
+    )
+    selector_path = artifact_root / "stage_inputs/selected_reference_q_csr/selected_operation.json"
+    selector = read_json(selector_path)
+    producer_identity = selector.get("producer_identity", {})
+    if not isinstance(producer_identity, Mapping):
+        raise ValueError("V26 recovery selector omits the producer identity")
+    producer_sha = hashlib.sha256(
+        json.dumps(producer_identity, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    replay_path = replay_root / "v26_saved_q_replay_manifest.json"
+    replay = read_json(replay_path)
+    replay_sha = _sha256_file(replay_path)
+    replay_identity = replay.get("current_identity", {})
+    if not isinstance(replay_identity, Mapping):
+        replay_identity = {}
+    if (
+        selector.get("schema") != "task40extra.review_v26_selected_operation.v1"
+        or selector.get("operation") != "V26_COMPLETE_Q0_CSR_AND_CONDITIONAL_FACTOR"
+        or selector.get("stop_stage") != "selected_reference_q_csr"
+        or selector.get("input_sha256") != expected_input_sha256
+        or not isinstance(selector.get("producer_identity"), Mapping)
+        or replay.get("schema") != "task40extra.review_v26_saved_q_replay.v1"
+        or replay.get("status") != "PASS_SAVED_STREAM_REPLAY_NO_NATIVE"
+        or replay.get("producer_identity") != producer_identity
+        or replay.get("producer_identity_sha256") != producer_sha
+        or replay.get("official_result") is not False
+        or replay.get("csr_built") is not False
+        or replay.get("factor_or_solve_built") is not False
+        or any(replay_identity.get(key) != recovery_identity.get(key) for key in identity_keys)
+        or replay.get("ordered_mode_key_sha256") != recovery_identity.get("ordered_mode_key_sha256")
+        or replay.get("mode_count_full_reference") != 32_060
+        or replay.get("q0_alias_count") != 4_076
+        or replay.get("q4_alias_count") != 3_856
+        or replay.get("selected_twist_alias_count") != 7_932
+    ):
+        raise ValueError("V26 recovery saved replay identity or scope is not compatible")
+
+    def load_archive(
+        path: Path,
+        *,
+        expected_bytes: Any,
+        expected_sha: Any,
+        array_hashes: Mapping[str, Any],
+        array_shapes: Mapping[str, Any],
+    ) -> dict[str, np.ndarray]:
+        if (
+            not path.is_relative_to(native_root if path.is_relative_to(native_root) else replay_root)
+            or not path.is_file()
+            or type(expected_bytes) is not int
+            or path.stat().st_size != expected_bytes
+            or _sha256_file(path) != expected_sha
+        ):
+            raise ValueError(f"V26 recovery archive identity failed: {path.name}")
+        arrays: dict[str, np.ndarray] = {}
+        with np.load(path, allow_pickle=False) as archive:
+            if set(archive.files) != set(array_hashes) or (
+                array_shapes and set(archive.files) != set(array_shapes)
+            ):
+                raise ValueError(f"V26 recovery array inventory differs: {path.name}")
+            for name in archive.files:
+                value = np.asarray(archive[name]).copy()
+                if (
+                    value.ndim != 1
+                    or value.dtype != np.dtype(np.complex128)
+                    or (array_shapes and list(value.shape) != array_shapes.get(name))
+                    or not np.isfinite(value).all()
+                    or _v26_array_sha256(value) != array_hashes.get(name)
+                ):
+                    raise ValueError(f"V26 recovery array failed raw hash/shape validation: {path.name}/{name}")
+                arrays[name] = value
+        return arrays
+
+    artifacts = replay.get("artifacts", {})
+    input_item = artifacts.get("inputs", {}) if isinstance(artifacts, Mapping) else {}
+    input_path = (replay_root / str(input_item.get("path", ""))).resolve()
+    input_sidecar = read_json(replay_root / "v26_saved_q_replay_inputs.json")
+    if (
+        input_sidecar.get("sha256") != input_item.get("sha256")
+        or input_sidecar.get("array_sha256") != input_item.get("array_sha256")
+        or input_sidecar.get("producer_identity_sha256") != producer_sha
+    ):
+        raise ValueError("V26 recovery saved input sidecar identity differs")
+    inputs = load_archive(
+        input_path,
+        expected_bytes=input_item.get("bytes"),
+        expected_sha=input_item.get("sha256"),
+        array_hashes=input_item.get("array_sha256", {}),
+        array_shapes=input_item.get("array_shapes", {}),
+    )
+    if (
+        set(inputs) != {"q0_case_1", "q0_case_2", "q4_pair"}
+        or any(not np.all(value != 0.0) for value in inputs.values())
+        or np.array_equal(inputs["q0_case_1"], inputs["q0_case_2"])
+    ):
+        raise ValueError("V26 recovery saved replay inputs are not complete, nonzero, distinct witnesses")
+
+    replay_cases: dict[str, dict[str, np.ndarray]] = {}
+    replay_case_records = replay.get("cases", {})
+    for case_name in ("q0_case_1", "q0_case_2", "q4_pair"):
+        item = artifacts.get(case_name, {})
+        record = replay_case_records.get(case_name, {})
+        case_path = (replay_root / str(item.get("path", ""))).resolve()
+        sidecar_path = (replay_root / str(item.get("manifest_path", ""))).resolve()
+        sidecar = read_json(sidecar_path)
+        if (
+            not sidecar_path.is_relative_to(replay_root)
+            or sidecar.get("sha256") != item.get("sha256")
+            or sidecar.get("array_sha256") != record.get("array_sha256")
+            or record.get("sha256") != item.get("sha256")
+            or record.get("producer_identity_sha256") != producer_sha
+        ):
+            raise ValueError(f"V26 recovery saved replay case sidecar differs: {case_name}")
+        replay_cases[case_name] = load_archive(
+            case_path,
+            expected_bytes=item.get("bytes"),
+            expected_sha=item.get("sha256"),
+            array_hashes=record.get("array_sha256", {}),
+            array_shapes=record.get("array_shapes", {}),
+        )
+
+    native_cases: dict[str, dict[str, np.ndarray]] = {}
+    native_records: dict[str, Any] = {}
+    native_identity: dict[str, Any] | None = None
+    for case_name in ("q0_case_1", "q0_case_2", "q4_pair"):
+        case_path = native_root / f"v26_native_{case_name}.npz"
+        sidecar_path = case_path.with_suffix(".json")
+        sidecar = read_json(sidecar_path)
+        current = sidecar.get("current_identity", {})
+        if not isinstance(current, Mapping):
+            raise ValueError(f"V26 recovery native case omits its original current identity: {case_name}")
+        if native_identity is None:
+            native_identity = dict(current)
+        if (
+            sidecar.get("schema") != "task40extra.review_v26_native_action_case.v1"
+            or sidecar.get("case") != case_name
+            or sidecar.get("path") != case_path.name
+            or sidecar.get("producer_identity_sha256") != producer_sha
+            or sidecar.get("saved_replay_manifest_sha256") != replay_sha
+            or dict(current) != native_identity
+            or current.get("source_sha") != old_source_sha
+            or any(current.get(key) != shared_identity.get(key) for key in identity_keys)
+        ):
+            raise ValueError(f"V26 recovery native case identity differs: {case_name}")
+        arrays = load_archive(
+            case_path,
+            expected_bytes=sidecar.get("bytes"),
+            expected_sha=sidecar.get("sha256"),
+            array_hashes=sidecar.get("array_sha256", {}),
+            array_shapes=sidecar.get("array_shapes", {}),
+        )
+        native_cases[case_name] = arrays
+        native_records[case_name] = sidecar
+    if native_identity is None:
+        raise ValueError("V26 recovery has no native case identities")
+
+    def relative_error(actual: np.ndarray, expected: np.ndarray, scale: np.ndarray | None = None) -> dict[str, float]:
+        if actual.shape != expected.shape or not np.isfinite(actual).all() or not np.isfinite(expected).all():
+            raise ValueError("V26 recovery comparison arrays differ in shape or finiteness")
+        absolute = float(np.linalg.norm(actual - expected))
+        denominator = (
+            float(np.linalg.norm(scale))
+            if scale is not None
+            else max(
+                float(np.linalg.norm(actual)),
+                float(np.linalg.norm(expected)),
+                np.finfo(float).tiny,
+            )
+        )
+        if not math.isfinite(denominator) or denominator <= 0.0:
+            raise ValueError("V26 recovery comparison scale is not finite and positive")
+        return {"absolute": absolute, "scale": denominator, "relative_to_component": absolute / denominator}
+
+    q0_1, q0_2, q4 = replay_cases["q0_case_1"], replay_cases["q0_case_2"], replay_cases["q4_pair"]
+    n0_1, n0_2, n4 = native_cases["q0_case_1"], native_cases["q0_case_2"], native_cases["q4_pair"]
+    comparisons = {
+        "q0_case_1": relative_error(q0_1["q0_total"], n0_1["native_q0_total"]),
+        "q0_case_2": relative_error(q0_2["q0_total"], n0_2["native_q0_total"]),
+        "q4_pair": relative_error(q4["q4_total"], n4["native_q4_total"]),
+        "volume": relative_error(q0_1["q0_volume"], n0_1["native_q0_volume"]),
+        "C": relative_error(q0_1["q0_C"], n0_1["native_q0_C"]),
+        "-D": relative_error(q0_1["q0_minus_D"], n0_1["native_q0_minus_D"]),
+        "Hhat": relative_error(q0_1["q0_Hhat"], n0_1["native_q0_Hhat"]),
+        "q0_to_q4_scaled": relative_error(
+            q0_1["q4_total_from_q0"], n0_1["native_q4_from_q0"], n0_1["native_q0_total"]
+        ),
+        "q4_to_q0_scaled": relative_error(
+            q4["q0_total_from_q4"], n4["native_q0_from_q4"], n4["native_q4_total"]
+        ),
+    }
+    norm_q0 = float(np.linalg.norm(n0_1["native_q0_total"]))
+    norm_q4 = float(np.linalg.norm(n4["native_q4_total"]))
+    if not math.isfinite(norm_q0) or not math.isfinite(norm_q4) or min(norm_q0, norm_q4) <= 0.0:
+        raise ValueError("V26 recovery native diagonal scales are not finite and positive")
+    leakage = {
+        "q0_to_q4": float(np.linalg.norm(q0_1["q4_total_from_q0"])) / norm_q0,
+        "q4_to_q0": float(np.linalg.norm(q4["q0_total_from_q4"])) / norm_q4,
+    }
+    limit = 1.0e-11
+    if (
+        any(row["relative_to_component"] > limit for row in comparisons.values())
+        or any(value > limit for value in leakage.values())
+    ):
+        raise ValueError("V26 recovery saved native cases fail the original 1e-11 comparison/leakage gates")
+
+    return {
+        "schema": "task40extra.review_v26_native_case_recovery_check.v1",
+        "status": "PASS_READONLY_THREE_CASE_RECOVERY",
+        "checker_passed": True,
+        "official_result": False,
+        "source_sha_split": {
+            "native_evidence_source_sha": old_source_sha,
+            "recovery_source_sha": str(recovery_identity.get("source_sha", "")),
+            "shared_mathematical_identity_keys": list(identity_keys),
+        },
+        "original_native_current_identity": dict(native_identity),
+        "recovery_current_identity": recovery_identity,
+        "producer_identity_sha256": producer_sha,
+        "saved_replay_manifest_path": str(replay_path),
+        "saved_replay_manifest_sha256": replay_sha,
+        "prior_failed_attempt": {
+            "path": str(prior_attempt_root),
+            "run_manifest_sha256": _sha256_file(failed_manifest_path),
+            "run_summary_sha256": _sha256_file(failed_summary_path),
+            "operation_sha256": _sha256_file(failed_operation_path),
+            "status": "WORKER_FAILED",
+            "failure_type": "KeyError",
+            "failure_message": "'minus_D'",
+        },
+        "native_cases": native_records,
+        "recomputed_comparisons": comparisons,
+        "recomputed_scaled_leakage": leakage,
+        "comparison_limit": limit,
+        "fresh_surface_integration": "NOT_RUN; reused hash-bound producer surface functionals",
+        "historical_native_counts": {
+            "native_volume_apply_count": {
+                "measured": None,
+                "source_derived": 6,
+                "classification": "SOURCE_DERIVED",
+                "source_sha": old_source_sha,
+            },
+            "provider_sweep_count": {
+                "measured": None,
+                "source_derived": 9,
+                "classification": "SOURCE_DERIVED",
+                "source_sha": old_source_sha,
+            },
+            "native_action_elapsed_seconds": {
+                "measured": None,
+                "classification": "UNKNOWN_NOT_PERSISTED_BEFORE_KEYERROR",
+            },
+        },
+    }
+
+
 def _v26_selected_q_readback_checks(
     *, output_directory: Path, partial: Mapping[str, Any], expected_stop_stage: str
 ) -> dict[str, bool]:
@@ -3929,11 +4268,18 @@ def _v26_selected_q_readback_checks(
 
     native_status = "NOT_RUN"
     if expected_stop_stage in {"selected_reference_q_consumer", "selected_reference_q_csr"}:
-        native_manifest_path = (native_root / "v26_native_action_manifest.json").resolve()
+        binding = operation.get("v26_artifact_binding", {})
+        binding = binding if isinstance(binding, Mapping) else {}
+        native_manifest_path = Path(
+            str(binding.get("native_manifest_path", native_root / "v26_native_action_manifest.json"))
+        ).resolve()
         try:
             native_manifest = json.loads(native_manifest_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             native_manifest = {}
+        native_recovery = operation.get("v26_native_recovery", {})
+        native_recovery = native_recovery if isinstance(native_recovery, Mapping) else {}
+        recovered_native = native_manifest.get("schema") == "task40extra.review_v26_native_action_recovery.v1"
         native_status = str(native_manifest.get("status", "MISSING"))
         if not native_manifest and status == "RESOURCE_CONTROLLED_STOP":
             blocker = operation.get("resource_blocker", {})
@@ -3979,20 +4325,91 @@ def _v26_selected_q_readback_checks(
             checks["v26_native_not_started_after_preserved_support_negative"] = negative_valid
             checks["v26_native_stage_status_matches_raw_comparisons"] = negative_valid
             return checks
-        binding = operation.get("v26_artifact_binding", {})
-        binding = binding if isinstance(binding, Mapping) else {}
         native_sha = _sha256_file(native_manifest_path) if native_manifest_path.is_file() else ""
+        native_identity = native_manifest.get(
+            "native_current_identity" if recovered_native else "current_identity", {}
+        )
+        recovery_identity = native_manifest.get("recovery_current_identity", {})
+        operation_identity = operation.get("v26_current_identity", {})
+        shared_identity_keys = (
+            "run_id", "physical_model_sha256", "campaign_window_sha256",
+            "producer_identity_sha256", "mode_manifest_sha256", "ordered_mode_key_sha256",
+        )
+        recovery_receipt_path = Path(str(native_recovery.get("checker_receipt_path", ""))).resolve()
+        try:
+            recovery_receipt = json.loads(recovery_receipt_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            recovery_receipt = {}
+        recovery_receipt_sha = (
+            _sha256_file(recovery_receipt_path) if recovery_receipt_path.is_file() else ""
+        )
+        recovery_receipt_ok = bool(
+            recovered_native
+            and recovery_receipt_path.is_relative_to(expected_native_root)
+            and recovery_receipt.get("schema") == "task40extra.review_v26_native_case_recovery_check.v1"
+            and recovery_receipt.get("status") == "PASS_READONLY_THREE_CASE_RECOVERY"
+            and recovery_receipt.get("checker_passed") is True
+            and recovery_receipt_sha == native_recovery.get("checker_receipt_sha256")
+            and recovery_receipt_sha == native_manifest.get("recovery_checker_receipt_sha256")
+            and recovery_receipt.get("original_native_current_identity") == native_identity
+            and recovery_receipt.get("recovery_current_identity") == operation_identity == recovery_identity
+            and recovery_identity.get("source_sha") != native_identity.get("source_sha")
+            and all(native_identity.get(key) == recovery_identity.get(key) for key in shared_identity_keys)
+        )
+        complete_stream = operation.get("complete_stream", {})
+        complete_stream = complete_stream if isinstance(complete_stream, Mapping) else {}
+        recorded = complete_stream.get("consumer_replay", {})
+        recorded = recorded if isinstance(recorded, Mapping) else {}
+        recovery_only_footer = bool(
+            recovered_native
+            and not recorded
+            and status in {"RESOURCE_CONTROLLED_STOP", "FAILED_V26_SELECTED_Q_GATES"}
+        )
+        if recovered_native and not recorded:
+            checks["v26_recovery_footer_has_identity_without_consumer_claim"] = bool(
+                recovery_only_footer
+                and operation.get("official_result") is False
+                and operation.get("v26_current_identity") == recovery_identity
+                and "complete_stream" not in operation
+                and operation.get("factor_or_solve_built") is False
+            )
         native_identity_ok = bool(
             native_root == expected_native_root
             and native_manifest_path.is_relative_to(expected_native_root)
-            and native_status == "PASS_COMPLETE_Q0_NATIVE_CONSUMER"
+            and (
+                (
+                    not recovered_native
+                    and native_status == "PASS_COMPLETE_Q0_NATIVE_CONSUMER"
+                    and native_identity == operation_identity
+                )
+                or (recovered_native and native_status == "PASS_RECOVERED_THREE_NATIVE_CASES" and recovery_receipt_ok)
+            )
             and native_manifest.get("producer_identity_sha256") == producer_identity_sha
             and native_manifest.get("saved_replay_manifest_sha256") == replay_sha
             and (not binding or binding.get("native_manifest_sha256") == native_sha)
-            and type(native_manifest.get("native_volume_apply_count")) is int
-            and native_manifest.get("native_volume_apply_count") == 6
-            and type(native_manifest.get("provider_sweep_count")) is int
-            and native_manifest.get("provider_sweep_count") == 9
+            and (
+                (
+                    not recovered_native
+                    and type(native_manifest.get("native_volume_apply_count")) is int
+                    and native_manifest.get("native_volume_apply_count") == 6
+                    and type(native_manifest.get("provider_sweep_count")) is int
+                    and native_manifest.get("provider_sweep_count") == 9
+                )
+                or (
+                    recovered_native
+                    and native_manifest.get("native_volume_apply_count") is None
+                    and native_manifest.get("provider_sweep_count") is None
+                    and native_manifest.get("elapsed_seconds") is None
+                    and native_manifest.get("elapsed_seconds_status") == "UNKNOWN_NOT_PERSISTED_BEFORE_KEYERROR"
+                    and native_manifest.get("count_provenance") == {
+                        "native_volume_apply_count": "SOURCE_DERIVED",
+                        "provider_sweep_count": "SOURCE_DERIVED",
+                    }
+                )
+            )
+        )
+        checks["v26_native_recovery_checker_receipt_bound"] = bool(
+            not recovered_native or recovery_receipt_ok
         )
         try:
             native_cases: dict[str, dict[str, np.ndarray]] = {}
@@ -4011,6 +4428,7 @@ def _v26_selected_q_readback_checks(
                     or sidecar.get("array_sha256") != item.get("array_sha256")
                     or sidecar.get("producer_identity_sha256") != producer_identity_sha
                     or sidecar.get("saved_replay_manifest_sha256") != replay_sha
+                    or sidecar.get("current_identity") != native_identity
                 ):
                     raise ValueError(f"V26 native case identity failed: {case_name}")
                 current: dict[str, np.ndarray] = {}
@@ -4044,7 +4462,11 @@ def _v26_selected_q_readback_checks(
                         raise ValueError("V26 native diagonal scale contains non-finite values")
                     scale_norm = float(np.linalg.norm(scale))
                 else:
-                    scale_norm = max(float(np.linalg.norm(left)), float(np.linalg.norm(right)))
+                    scale_norm = max(
+                        float(np.linalg.norm(left)),
+                        float(np.linalg.norm(right)),
+                        np.finfo(float).tiny,
+                    )
                 if not math.isfinite(scale_norm) or scale_norm <= 0.0:
                     raise ValueError("V26 comparison scale must be finite and strictly positive")
                 return {
@@ -4094,43 +4516,164 @@ def _v26_selected_q_readback_checks(
                 and leakage_04 <= 1.0e-11
                 and leakage_40 <= 1.0e-11
             )
-            recorded = operation.get("complete_stream", {}).get("consumer_replay", {})
-            recorded = recorded if isinstance(recorded, Mapping) else {}
             checks["v26_raw_native_comparisons_recomputed_at_scaled_1e_11"] = comparison_passed
-            checks["v26_native_apply_and_provider_sweep_counts_recorded"] = bool(
-                binding.get("native_volume_apply_count", native_manifest.get("native_volume_apply_count")) == 6
-                and binding.get("provider_sweep_count", native_manifest.get("provider_sweep_count")) == 9
+            recovery_comparison_map = {
+                "q0_case_1": "q0_case_1",
+                "q0_case_2": "q0_case_2",
+                "q4_case": "q4_pair",
+                "volume": "volume",
+                "C": "C",
+                "-D": "-D",
+                "Hhat": "Hhat",
+                "q0_to_q4_scaled": "q0_to_q4_scaled",
+                "q4_to_q0_scaled": "q4_to_q0_scaled",
+            }
+
+            def metric_matches_record(record: Any, calculated: Mapping[str, float]) -> bool:
+                if not isinstance(record, Mapping):
+                    return False
+                try:
+                    return all(
+                        math.isfinite(float(record[name]))
+                        and math.isclose(
+                            float(record[name]),
+                            float(calculated[name]),
+                            rel_tol=1.0e-6,
+                            abs_tol=1.0e-14,
+                        )
+                        for name in ("absolute", "scale", "relative_to_component")
+                    )
+                except (KeyError, TypeError, ValueError, OverflowError):
+                    return False
+
+            recovery_comparisons = recovery_receipt.get("recomputed_comparisons", {})
+            recovery_comparisons = recovery_comparisons if isinstance(recovery_comparisons, Mapping) else {}
+            recovery_leakage = recovery_receipt.get("recomputed_scaled_leakage", {})
+            recovery_leakage = recovery_leakage if isinstance(recovery_leakage, Mapping) else {}
+            recovery_metrics_match = bool(
+                recovered_native
+                and recovery_receipt_ok
+                and recovery_receipt.get("comparison_limit") == 1.0e-11
+                and set(recovery_comparisons) == set(recovery_comparison_map.values())
+                and all(
+                    metric_matches_record(
+                        recovery_comparisons[receipt_key],
+                        recomputed[calculated_key],
+                    )
+                    for calculated_key, receipt_key in recovery_comparison_map.items()
+                )
                 and math.isclose(
-                    float(binding.get("native_action_elapsed_seconds", native_manifest.get("elapsed_seconds", -1.0))),
-                    float(native_manifest.get("elapsed_seconds", -2.0)),
-                    rel_tol=1.0e-9,
-                    abs_tol=1.0e-12,
-                )
-            )
-            checks["v26_scaled_metrics_match_operation_record"] = bool(
-                math.isclose(
-                    float(recorded.get("q0_to_q4_scaled_error", {}).get("relative_to_component", math.inf)),
-                    recomputed["q0_to_q4_scaled"]["relative_to_component"],
-                    rel_tol=1.0e-6,
-                    abs_tol=1.0e-14,
+                    float(recovery_leakage.get("q0_to_q4", math.inf)), leakage_04,
+                    rel_tol=1.0e-6, abs_tol=1.0e-14,
                 )
                 and math.isclose(
-                    float(recorded.get("q4_to_q0_scaled_error", {}).get("relative_to_component", math.inf)),
-                    recomputed["q4_to_q0_scaled"]["relative_to_component"],
-                    rel_tol=1.0e-6,
-                    abs_tol=1.0e-14,
+                    float(recovery_leakage.get("q4_to_q0", math.inf)), leakage_40,
+                    rel_tol=1.0e-6, abs_tol=1.0e-14,
                 )
-                and math.isclose(float(recorded.get("q0_to_q4_leakage_ratio", math.inf)), leakage_04, rel_tol=1.0e-6, abs_tol=1.0e-14)
-                and math.isclose(float(recorded.get("q4_to_q0_leakage_ratio", math.inf)), leakage_40, rel_tol=1.0e-6, abs_tol=1.0e-14)
-                and recorded.get("cross_q_scale_q0_to_q4") == "native q0 diagonal output norm"
-                and recorded.get("cross_q_scale_q4_to_q0") == "native q4 diagonal output norm"
+                and native_manifest.get("recomputed_comparisons") == recovery_comparisons
+                and native_manifest.get("recomputed_scaled_leakage") == recovery_leakage
             )
+            if recovered_native:
+                checks["v26_native_recovery_checker_receipt_bound"] = bool(
+                    recovery_receipt_ok and recovery_metrics_match
+                )
+                checks["v26_native_manifest_and_case_arrays_hash_bound"] = bool(
+                    native_identity_ok and recovery_metrics_match
+                )
+            if recovered_native:
+                derived = native_manifest.get("source_derived_counts", {})
+                replay_counts = recorded.get("source_derived_counts")
+                if not isinstance(replay_counts, Mapping):
+                    replay_counts = recovery_receipt.get("historical_native_counts", {})
+                checks["v26_native_apply_and_provider_sweep_counts_recorded"] = bool(
+                    native_manifest.get("native_volume_apply_count") is None
+                    and native_manifest.get("provider_sweep_count") is None
+                    and binding.get("native_volume_apply_count") is None
+                    and binding.get("provider_sweep_count") is None
+                    and derived == replay_counts
+                    and derived == recovery_receipt.get("historical_native_counts")
+                    and derived.get("native_volume_apply_count", {}).get("measured") is None
+                    and derived.get("native_volume_apply_count", {}).get("source_derived") == 6
+                    and derived.get("provider_sweep_count", {}).get("measured") is None
+                    and derived.get("provider_sweep_count", {}).get("source_derived") == 9
+                    and derived.get("native_action_elapsed_seconds", {}).get("measured") is None
+                    and derived.get("native_action_elapsed_seconds", {}).get("classification")
+                    == "UNKNOWN_NOT_PERSISTED_BEFORE_KEYERROR"
+                    and (
+                        (
+                            recovery_only_footer
+                            and not recorded
+                            and "complete_stream" not in operation
+                        )
+                        or (
+                            bool(recorded)
+                            and recorded.get("native_volume_apply_count") is None
+                            and recorded.get("provider_sweep_count") is None
+                            and recorded.get("native_action_elapsed_seconds") is None
+                            and recorded.get("native_action_elapsed_seconds_status")
+                            == "UNKNOWN_NOT_PERSISTED_BEFORE_KEYERROR"
+                        )
+                    )
+                )
+            else:
+                checks["v26_native_apply_and_provider_sweep_counts_recorded"] = bool(
+                    binding.get("native_volume_apply_count", native_manifest.get("native_volume_apply_count")) == 6
+                    and binding.get("provider_sweep_count", native_manifest.get("provider_sweep_count")) == 9
+                    and math.isclose(
+                        float(binding.get("native_action_elapsed_seconds", native_manifest.get("elapsed_seconds", -1.0))),
+                        float(native_manifest.get("elapsed_seconds", -2.0)),
+                        rel_tol=1.0e-9,
+                        abs_tol=1.0e-12,
+                    )
+                )
+            if recovery_only_footer:
+                checks["v26_scaled_metrics_match_recovery_checker_receipt"] = recovery_metrics_match
+            else:
+                checks["v26_scaled_metrics_match_operation_record"] = bool(
+                    math.isclose(
+                        float(recorded.get("q0_to_q4_scaled_error", {}).get("relative_to_component", math.inf)),
+                        recomputed["q0_to_q4_scaled"]["relative_to_component"],
+                        rel_tol=1.0e-6,
+                        abs_tol=1.0e-14,
+                    )
+                    and math.isclose(
+                        float(recorded.get("q4_to_q0_scaled_error", {}).get("relative_to_component", math.inf)),
+                        recomputed["q4_to_q0_scaled"]["relative_to_component"],
+                        rel_tol=1.0e-6,
+                        abs_tol=1.0e-14,
+                    )
+                    and math.isclose(float(recorded.get("q0_to_q4_leakage_ratio", math.inf)), leakage_04, rel_tol=1.0e-6, abs_tol=1.0e-14)
+                    and math.isclose(float(recorded.get("q4_to_q0_leakage_ratio", math.inf)), leakage_40, rel_tol=1.0e-6, abs_tol=1.0e-14)
+                    and recorded.get("cross_q_scale_q0_to_q4") == "native q0 diagonal output norm"
+                    and recorded.get("cross_q_scale_q4_to_q0") == "native q4 diagonal output norm"
+                )
         except (OSError, ValueError, TypeError, KeyError, OverflowError, zipfile.BadZipFile):
             checks["v26_native_manifest_and_case_arrays_hash_bound"] = False
             checks["v26_raw_native_comparisons_recomputed_at_scaled_1e_11"] = False
             checks["v26_native_apply_and_provider_sweep_counts_recorded"] = False
+            checks["v26_native_recovery_checker_receipt_bound"] = False
             checks["v26_scaled_metrics_match_operation_record"] = False
-        if expected_stop_stage == "selected_reference_q_csr" and status == "PASS_COMPLETE_Q0_STREAM_CSR_NOT_BUILT":
+        if recovery_only_footer and status == "RESOURCE_CONTROLLED_STOP":
+            checks["v26_native_stage_status_matches_raw_comparisons"] = bool(
+                partial.get("status") == "controlled_stop"
+                and partial.get("outcome") == "RESOURCE_CONTROLLED_STOP"
+                and partial.get("q_coverage", {}).get("csr_status") == "NOT_BUILT"
+                and partial.get("q_coverage", {}).get("complete_streamed_consumer_count") == 0
+                and "complete_stream" not in operation
+                and checks.get("v26_raw_native_comparisons_recomputed_at_scaled_1e_11") is True
+                and checks.get("v26_native_recovery_checker_receipt_bound") is True
+            )
+        elif recovery_only_footer and status == "FAILED_V26_SELECTED_Q_GATES":
+            checks["v26_native_stage_status_matches_raw_comparisons"] = bool(
+                partial.get("status") == "failed"
+                and partial.get("outcome") == "STAGE_FAILED"
+                and partial.get("q_coverage", {}).get("csr_status") == "NOT_BUILT"
+                and partial.get("q_coverage", {}).get("complete_streamed_consumer_count") == 0
+                and "complete_stream" not in operation
+                and checks.get("v26_raw_native_comparisons_recomputed_at_scaled_1e_11") is True
+                and checks.get("v26_native_recovery_checker_receipt_bound") is True
+            )
+        elif expected_stop_stage == "selected_reference_q_csr" and status == "PASS_COMPLETE_Q0_STREAM_CSR_NOT_BUILT":
             checks["v26_native_stage_status_matches_raw_comparisons"] = bool(
                 partial.get("status") == "controlled_stop"
                 and partial.get("outcome") == "RESOURCE_CONTROLLED_STOP"
@@ -4520,6 +5063,24 @@ def _v26_selected_q_readback_checks(
                     and operation.get("factor_or_solve_built")
                     == factor_checkpoint.get("q_coverage", {}).get("numeric_factor_built")
                 )
+        elif expected_stop_stage == "selected_reference_q_csr" and recovery_only_footer and status == "RESOURCE_CONTROLLED_STOP":
+            checks["v26_native_recovery_csr_controlled_stop_is_explicit"] = bool(
+                partial.get("status") == "controlled_stop"
+                and partial.get("outcome") == "RESOURCE_CONTROLLED_STOP"
+                and partial.get("q_coverage", {}).get("csr_status") == "NOT_BUILT"
+                and partial.get("q_coverage", {}).get("complete_streamed_consumer_count") == 0
+                and "complete_stream" not in operation
+                and checks.get("v26_native_recovery_checker_receipt_bound") is True
+            )
+        elif expected_stop_stage == "selected_reference_q_csr" and recovery_only_footer and status == "FAILED_V26_SELECTED_Q_GATES":
+            checks["v26_native_recovery_csr_failure_is_explicit"] = bool(
+                partial.get("status") == "failed"
+                and partial.get("outcome") == "STAGE_FAILED"
+                and partial.get("q_coverage", {}).get("csr_status") == "NOT_BUILT"
+                and partial.get("q_coverage", {}).get("complete_streamed_consumer_count") == 0
+                and "complete_stream" not in operation
+                and checks.get("v26_native_recovery_checker_receipt_bound") is True
+            )
         elif expected_stop_stage == "selected_reference_q_csr":
             checks["v26_csr_controlled_stop_is_explicit"] = bool(
                 status == "PASS_COMPLETE_Q0_STREAM_CSR_NOT_BUILT"

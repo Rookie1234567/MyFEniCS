@@ -3001,41 +3001,27 @@ def test_v26_service_operation_routes_to_v26_stage_executor(monkeypatch, tmp_pat
     assert received["source_sha"] == "a" * 40
 
 
-def test_v26_resource_stop_footer_keeps_existing_saved_replay_binding(monkeypatch, tmp_path):
+def test_v26_resource_stop_footer_keeps_recovered_native_binding(monkeypatch, tmp_path):
     from src.io import input_validation
     from src.runners import task40_v20_stage_runner as runner
     from src.solvers import task40_v22_operator_probe as probe
     from src.solvers import task40_v25_selected_q0 as selected_q
+    from scripts import task40_v20_service_workflow as service_workflow
+    from src.test.test_task40_v25_selected_q0 import _v26_native_recovery_fixture
 
-    repo = tmp_path
+    fixture = _v26_native_recovery_fixture(tmp_path)
+    repo = fixture["repo"]
     fake_module_path = repo / "src/runners/task40_v20_stage_runner.py"
     monkeypatch.setattr(runner, "__file__", str(fake_module_path))
-    artifact_root = repo / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl"
+    monkeypatch.setattr(service_workflow, "ROOT", repo)
+    artifact_root = repo / service_workflow.V26_ARTIFACT_ROOT
     replay_root = artifact_root / "saved_replay"
-    replay_root.mkdir(parents=True)
     replay_manifest_path = replay_root / "v26_saved_q_replay_manifest.json"
-    replay_manifest_path.write_text('{"status":"fixture"}', encoding="utf-8")
-
+    native_root = fixture["native_root"]
+    prior_attempt = fixture["prior_attempt"]
     producer_root = repo / "producer"
-    producer_root.mkdir()
-    producer_identity = {
-        "producer_run_directory": "producer",
-        "producer_run_id": "fixture-producer",
-        "payloads": [],
-    }
-    input_sha = "a" * 64
     selector_path = artifact_root / "stage_inputs/selected_reference_q_csr/selected_operation.json"
-    selector_path.parent.mkdir(parents=True)
-    selector = {
-        "schema": "task40extra.review_v26_selected_operation.v1",
-        "operation": "V26_COMPLETE_Q0_CSR_AND_CONDITIONAL_FACTOR",
-        "campaign_window_sha256": "c" * 64,
-        "input_sha256": input_sha,
-        "model_profile": runner._V22_TARGET_OPERATOR_PROFILE,
-        "stop_stage": "selected_reference_q_csr",
-        "producer_identity": producer_identity,
-    }
-    selector_path.write_text(json.dumps(selector), encoding="utf-8")
+    selector = json.loads(selector_path.read_text(encoding="utf-8"))
     selector_sha = runner._sha256_file(selector_path)
     monkeypatch.setenv("TASK40_V26_SELECTOR_PATH", str(selector_path))
     monkeypatch.setenv("TASK40_V26_SELECTOR_SHA256", selector_sha)
@@ -3067,25 +3053,26 @@ def test_v26_resource_stop_footer_keeps_existing_saved_replay_binding(monkeypatc
     monkeypatch.setattr(selected_q, "run_task40_v25_selected_q0_consumer", stop_before_fe)
     monkeypatch.setattr(probe, "_resource_admission", blocked_admission)
     preflight = {
-        "run_id": "fixture-run",
-        "input_sha256": input_sha,
-        "physical_model_sha256": "b" * 64,
+        "run_id": fixture["run_id"],
+        "input_sha256": fixture["input_sha"],
+        "physical_model_sha256": fixture["model_sha"],
         "target_mode_inventory": {
-            "mode_manifest_sha256": "d" * 64,
-            "ordered_mode_key_sha256": "e" * 64,
+            "mode_count": 32_060,
+            "mode_manifest_sha256": fixture["identity"]["mode_manifest_sha256"],
+            "ordered_mode_key_sha256": fixture["identity"]["ordered_mode_key_sha256"],
         },
     }
-    output = repo / "run"
+    output = prior_attempt.parent / "recovered-resource-stop"
     output.mkdir()
     (output / "v20_stage_preflight.json").write_text(json.dumps(preflight), encoding="utf-8")
     modes = (SimpleNamespace(side="bottom", m=0, n=0, polarization="s"),)
     mode_rows = ({"mode_index": 0},)
 
     result = runner._run_v26_selected_q0_stage(
-        {"run_id": "fixture-run"},
+        {"run_id": fixture["run_id"]},
         output,
-        source_sha="f" * 40,
-        profile=runner._V22_TARGET_OPERATOR_PROFILE,
+        source_sha=fixture["identity"]["source_sha"],
+        profile=service_workflow.V26_TARGET_PROFILE,
         preflight=preflight,
         modes=modes,
         mode_rows=mode_rows,
@@ -3106,4 +3093,23 @@ def test_v26_resource_stop_footer_keeps_existing_saved_replay_binding(monkeypatc
     assert samples["after"]["status"] in {"available", "unavailable"}
     assert binding["saved_replay_manifest_path"] == str(replay_manifest_path)
     assert binding["saved_replay_manifest_sha256"] == runner._sha256_file(replay_manifest_path)
+    recovery_manifest_path = native_root / f"v26_native_action_recovery_{'f' * 40}.json"
+    checker_receipt_path = native_root / f"v26_native_action_recovery_check_{'f' * 40}.json"
+    assert binding["native_manifest_path"] == str(recovery_manifest_path)
+    assert binding["native_manifest_sha256"] == runner._sha256_file(recovery_manifest_path)
+    assert binding["native_volume_apply_count"] is None
+    assert binding["provider_sweep_count"] is None
+    assert binding["native_action_elapsed_seconds"] is None
+    assert binding["native_action_elapsed_seconds_status"] == "UNKNOWN_NOT_PERSISTED_BEFORE_KEYERROR"
+    assert operation["v26_native_recovery"]["manifest_path"] == str(recovery_manifest_path)
+    assert operation["v26_native_recovery"]["manifest_sha256"] == runner._sha256_file(recovery_manifest_path)
+    assert operation["v26_native_recovery"]["checker_receipt_path"] == str(checker_receipt_path)
+    assert operation["v26_current_identity"] == fixture["identity"]
     assert result["status"] == "controlled_stop"
+    partial = json.loads((output / "v20_partial_result.json").read_text(encoding="utf-8"))
+    checks = service_workflow._v26_selected_q_readback_checks(
+        output_directory=output,
+        partial=partial,
+        expected_stop_stage="selected_reference_q_csr",
+    )
+    assert all(checks.values()), checks

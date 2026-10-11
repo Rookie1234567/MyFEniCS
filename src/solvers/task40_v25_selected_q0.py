@@ -1915,14 +1915,34 @@ def _load_v26_native_action(
     *,
     producer_identity_sha256: str,
     replay_manifest_sha256: str,
+    manifest_path: str | Path | None = None,
+    recovery_identity: Mapping[str, Any] | None = None,
 ) -> tuple[dict[str, Any], dict[str, dict[str, np.ndarray]]]:
     """Reload native action checkpoints from raw arrays, verifying every sidecar and hash."""
     root = Path(native_root).resolve()
-    manifest_path = root / "v26_native_action_manifest.json"
+    manifest_path = (
+        Path(manifest_path).resolve()
+        if manifest_path is not None
+        else root / "v26_native_action_manifest.json"
+    )
+    if not manifest_path.is_relative_to(root):
+        raise ValueError("V26 native manifest path is outside the registered native root")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    standard_manifest = (
+        manifest.get("schema") == "task40extra.review_v26_native_action.v1"
+        and manifest.get("status") == "PASS_COMPLETE_Q0_NATIVE_CONSUMER"
+        and manifest.get("current_identity") == recovery_identity
+    )
+    recovered_manifest = (
+        manifest.get("schema") == "task40extra.review_v26_native_action_recovery.v1"
+        and manifest.get("status") == "PASS_RECOVERED_THREE_NATIVE_CASES"
+        and manifest.get("recovery_current_identity") == recovery_identity
+        and isinstance(manifest.get("native_current_identity"), Mapping)
+        and manifest.get("native_current_identity", {}).get("source_sha")
+        != manifest.get("recovery_current_identity", {}).get("source_sha")
+    )
     if (
-        manifest.get("schema") != "task40extra.review_v26_native_action.v1"
-        or manifest.get("status") != "PASS_COMPLETE_Q0_NATIVE_CONSUMER"
+        not (standard_manifest or recovered_manifest)
         or manifest.get("producer_identity_sha256") != producer_identity_sha256
         or manifest.get("saved_replay_manifest_sha256") != replay_manifest_sha256
     ):
@@ -1947,6 +1967,11 @@ def _load_v26_native_action(
             or sidecar.get("array_sha256") != item.get("array_sha256")
             or sidecar.get("producer_identity_sha256") != producer_identity_sha256
             or sidecar.get("saved_replay_manifest_sha256") != replay_manifest_sha256
+            or sidecar.get("current_identity") != (
+                manifest.get("native_current_identity")
+                if recovered_manifest
+                else manifest.get("current_identity")
+            )
         ):
             raise IOError(f"V26 native action case failed persisted identity readback: {case_name}")
         with np.load(path, allow_pickle=False) as archive:
@@ -1968,6 +1993,14 @@ def _load_v26_native_action(
                 current[name] = value
             loaded[case_name] = current
     return manifest, loaded
+
+
+def _native_q0_components_from_saved_case(case_arrays: Mapping[str, np.ndarray]) -> dict[str, np.ndarray]:
+    """Restore saved native component arrays under the live action's canonical keys."""
+    return {
+        name: np.asarray(case_arrays[f"native_q0_{name.replace('-', 'minus_')}"])
+        for name in ("volume", "C", "-D", "Hhat")
+    }
 
 
 def _mode_key(index: int, mode: Any) -> tuple[int, str, int, int, str]:
@@ -2209,6 +2242,7 @@ def run_task40_v25_selected_q0_consumer(
     saved_replay_root: str | Path | None = None,
     native_output_root: str | Path | None = None,
     saved_native_root: str | Path | None = None,
+    saved_native_manifest_path: str | Path | None = None,
     current_identity: Mapping[str, Any] | None = None,
     perform_native_validation: bool = True,
 ) -> dict[str, Any]:
@@ -3059,20 +3093,27 @@ def run_task40_v25_selected_q0_consumer(
                 saved_native_root,
                 producer_identity_sha256=producer_identity_sha256,
                 replay_manifest_sha256=replay_manifest_sha256,
+                manifest_path=saved_native_manifest_path,
+                recovery_identity=current_identity,
             )
             native_counters = {
-                "native_volume_apply_count": int(native_manifest.get("native_volume_apply_count", 0)),
-                "provider_sweep_count": int(native_manifest.get("provider_sweep_count", 0)),
+                "native_volume_apply_count": native_manifest.get("native_volume_apply_count"),
+                "provider_sweep_count": native_manifest.get("provider_sweep_count"),
             }
+            native_count_provenance = native_manifest.get("count_provenance", {})
+            native_action_elapsed_seconds = native_manifest.get("elapsed_seconds")
+            native_action_elapsed_seconds_status = native_manifest.get(
+                "elapsed_seconds_status",
+                "MEASURED" if native_action_elapsed_seconds is not None else "UNKNOWN",
+            )
             native_y1_q0 = native_loaded["q0_case_1"]["native_q0_total"]
             native_y1_q4 = native_loaded["q0_case_1"]["native_q4_from_q0"]
             native_y2_q0 = native_loaded["q0_case_2"]["native_q0_total"]
             native_y4_q0 = native_loaded["q4_pair"]["native_q0_from_q4"]
             native_y4_q4 = native_loaded["q4_pair"]["native_q4_total"]
-            native_y1_components = {
-                name: native_loaded["q0_case_1"][f"native_q0_{name}"]
-                for name in ("volume", "C", "minus_D", "Hhat")
-            }
+            native_y1_components = _native_q0_components_from_saved_case(
+                native_loaded["q0_case_1"]
+            )
             native_y4_components = {}
             native_case_records = dict(native_manifest["cases"])
         else:
@@ -3139,12 +3180,21 @@ def run_task40_v25_selected_q0_consumer(
                     counters=native_counters,
                 )
             native_action_elapsed_seconds = float(time.perf_counter() - native_call_started)
+            native_action_elapsed_seconds_status = "MEASURED"
+            native_count_provenance = {
+                "native_volume_apply_count": "MEASURED",
+                "provider_sweep_count": "MEASURED",
+            }
 
         if reuse_v25_producer:
             if perform_native_validation:
                 native_counters["provider_sweep_count"] = int(provider_sweeps["provider_sweep_count"])
             else:
-                native_action_elapsed_seconds = float(native_manifest.get("elapsed_seconds", 0.0))
+                native_action_elapsed_seconds = native_manifest.get("elapsed_seconds")
+                native_action_elapsed_seconds_status = native_manifest.get(
+                    "elapsed_seconds_status",
+                    "MEASURED" if native_action_elapsed_seconds is not None else "UNKNOWN",
+                )
 
         stream_error_1 = _relative_error(stream_y1["total"], native_y1_q0)
         stream_error_2 = _relative_error(stream_y2["total"], native_y2_q0)
@@ -3154,7 +3204,7 @@ def run_task40_v25_selected_q0_consumer(
         if reuse_v25_producer:
             native_volume = native_y1_components["volume"]
             native_c = native_y1_components["C"]
-            native_minus_d = native_y1_components["minus_D"]
+            native_minus_d = native_y1_components["-D"]
             native_h = native_y1_components["Hhat"]
             component_errors = {
                 "volume": _relative_error(stream_y1["volume"], native_volume),
@@ -3266,7 +3316,9 @@ def run_task40_v25_selected_q0_consumer(
                 "cases": native_case_records,
                 "native_volume_apply_count": int(native_counters["native_volume_apply_count"]),
                 "provider_sweep_count": int(native_counters["provider_sweep_count"]),
+                "count_provenance": native_count_provenance,
                 "elapsed_seconds": native_action_elapsed_seconds,
+                "elapsed_seconds_status": native_action_elapsed_seconds_status,
                 "elapsed_seconds_scope": "native q0 case1, q0 case2, and q4 pair; includes provider sweeps",
                 "saved_stream_reader_telemetry": reader_telemetry,
                 "raw_stream_comparison_passed": True,
@@ -3355,9 +3407,12 @@ def run_task40_v25_selected_q0_consumer(
                         "cross_q_scale_q0_to_q4": "native q0 diagonal output norm",
                         "cross_q_scale_q4_to_q0": "native q4 diagonal output norm",
                         "scaled_cross_q_error_limit": 1.0e-11,
-                        "native_volume_apply_count": int(native_counters["native_volume_apply_count"]),
-                        "provider_sweep_count": int(native_counters["provider_sweep_count"]),
+                        "native_volume_apply_count": native_counters["native_volume_apply_count"],
+                        "provider_sweep_count": native_counters["provider_sweep_count"],
                         "native_action_elapsed_seconds": native_action_elapsed_seconds,
+                        "native_action_elapsed_seconds_status": native_action_elapsed_seconds_status,
+                        "native_count_provenance": native_count_provenance,
+                        "source_derived_counts": native_manifest.get("source_derived_counts", {}),
                         "native_action_manifest_sha256": native_manifest["manifest_sha256"],
                     }
                     if reuse_v25_producer
@@ -3390,11 +3445,18 @@ def run_task40_v25_selected_q0_consumer(
                 ),
                 "saved_replay_manifest_sha256": replay_manifest_sha256,
                 "native_root": str(native_root),
-                "native_manifest_path": str(native_root / "v26_native_action_manifest.json"),
+                "native_manifest_path": str(
+                    Path(saved_native_manifest_path).resolve()
+                    if saved_native_manifest_path is not None
+                    else native_root / "v26_native_action_manifest.json"
+                ),
                 "native_manifest_sha256": str(native_manifest.get("manifest_sha256", "")),
-                "native_volume_apply_count": int(native_counters["native_volume_apply_count"]),
-                "provider_sweep_count": int(native_counters.get("provider_sweep_count", 0)),
+                "native_volume_apply_count": native_counters["native_volume_apply_count"],
+                "provider_sweep_count": native_counters["provider_sweep_count"],
                 "native_action_elapsed_seconds": native_action_elapsed_seconds,
+                "native_action_elapsed_seconds_status": native_action_elapsed_seconds_status,
+                "native_count_provenance": native_count_provenance,
+                "source_derived_counts": native_manifest.get("source_derived_counts", {}),
                 "mode_count_full_reference": len(generated_modes),
                 "q0_alias_count": int(len(aliases[0])),
                 "q4_alias_count": int(len(aliases[1])),
