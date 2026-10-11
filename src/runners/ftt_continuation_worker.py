@@ -9,6 +9,7 @@ from src.runners.ftt_bloch_worker import (
     point_field,
     training_options as scalar_options,
 )
+from src.postprocessing.ftt_common_wall import compare_common_wall
 
 ART = ROOT / "benchmarks/artifacts/task42extra/v43"
 CHAIN = BLOCH_CHAIN + (
@@ -18,6 +19,7 @@ CHAIN = BLOCH_CHAIN + (
     "src/runners/ftt_continuation_worker.py",
     "src/runners/ftt_continuation_joint.py",
     "src/runners/ftt_continuation_feedback.py",
+    "src/postprocessing/ftt_common_wall.py",
 )
 
 
@@ -65,6 +67,7 @@ PROFILE = CoreWorkerProfile(
     qualification=qualification,
     independent_field=point_field,
     training_options=training_options,
+    compare_postprocess=compare_common_wall,
 )
 
 

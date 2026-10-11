@@ -50,6 +50,7 @@ class CoreWorkerProfile:
     qualification: object = None
     independent_field: object = None
     training_options: object = None
+    compare_postprocess: object = None
 
 
 DEFAULT_PROFILE = CoreWorkerProfile()
@@ -200,7 +201,12 @@ def run_stage(manifest, artifact, marker, directory, profile=DEFAULT_PROFILE):
     if digest(profile.design) != manifest["design_sha256"]:
         raise ValueError("CORE_FROZEN_DESIGN_CHANGED")
     if spec["role"] == profile.compare_role:
-        return independent_compare(manifest, artifact, marker, directory, profile)
+        result = independent_compare(manifest, artifact, marker, directory, profile)
+        if profile.compare_postprocess is not None:
+            result["post_compare_record"] = profile.compare_postprocess(
+                manifest, artifact, marker, directory
+            )
+        return result
     if spec["role"] != profile.checks_role:
         qualification = json.loads(
             (profile.artifacts / profile.checks_stage / "result.json").read_text()
