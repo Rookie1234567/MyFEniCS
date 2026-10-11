@@ -1,5 +1,5 @@
 {
-  "as_of_utc": "2026-10-11T17:29:26.593975+00:00",
+  "as_of_utc": "2026-10-11T17:40:34.194944+00:00",
   "window": {
     "start_utc": "2026-10-11T13:00:55.333861+00:00",
     "start_monotonic": 1648650.1947354379,
@@ -13,20 +13,23 @@
     "scientific_loaded_limit_seconds": 39600,
     "review_commit": "6fcc95ea94b869d738c00c5f3e11c7025dd52f13",
     "total_limit_seconds": 50400,
-    "heavy_limit_seconds": 46800
+    "heavy_limit_seconds": 46800,
+    "closed": true,
+    "closed_utc": "2026-10-11T17:40:31.174440+00:00",
+    "closure_reason": "original H cap exhausted; saved partial arrays independently consumed; dependent I/field VERIFY not run"
   },
-  "T_research_current_window_elapsed_seconds": 16111.218548783101,
-  "current_known_disjoint_lower_seconds": 13134.562249855982,
-  "known_wrapper_seconds": 13131.404987561982,
+  "T_research_current_window_elapsed_seconds": 16778.81150920014,
+  "current_known_disjoint_lower_seconds": 13231.113316227129,
+  "known_wrapper_seconds": 13227.956053933129,
   "known_standalone_targeted_seconds": 3.157262294,
   "standalone_receipt": {
     "path": "tmp/task042/v74/metadata_setup_receipt.json",
     "bytes": 124,
     "sha256": "2a158f410b34c5684fdeae167b349a2a507c70922083ec804dcdf4fea3b6159a"
   },
-  "unsegmented_window_seconds": 2976.656298927119,
+  "unsegmented_window_seconds": 3547.6981929730105,
   "parent_history_known_unique_lower_seconds": 368681.67300891416,
-  "history_plus_current_known_wall_lower_seconds": 381816.2352587701,
+  "history_plus_current_known_wall_lower_seconds": 381912.78632514126,
   "runs": [
     {
       "role": "focused",
@@ -180,6 +183,23 @@
         "all_status_readable": true,
         "continuous_peak": false
       }
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v74/aux_post_01",
+      "source_sha": "b3ef516366f22c238a865be19aa3be3d1e192c46",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "elapsed_seconds": 5.3697858159430325,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 3,
+        "sampled_tree_peak_bytes": 148635648,
+        "ownswap_bytes": 0,
+        "actual_max_gap_seconds": 2.364317310974002,
+        "all_status_readable": true,
+        "continuous_peak": false
+      }
     }
   ],
   "wrapper_rows": [
@@ -328,6 +348,31 @@
       "scope": "full supervised auxiliary launch through cleanup; activation already completed"
     },
     {
+      "entry": "auxiliary_post01",
+      "receipt": {
+        "path": "tmp/task042/v74/auxiliary_post01/receipt.json",
+        "bytes": 609,
+        "sha256": "1d069ef4633b50e351b6f89a1eac6d2758cae8ef5e24b0a83d499182469b7026"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "post",
+        "01",
+        "python",
+        "tmp/task042/v74/document_once.py"
+      ],
+      "source_sha": "b3ef516366f22c238a865be19aa3be3d1e192c46",
+      "start_utc": "2026-10-11T17:35:13.242780+00:00",
+      "end_utc": "2026-10-11T17:36:49.793841+00:00",
+      "elapsed_seconds": 96.55106637114659,
+      "exit_code": 0,
+      "wrapper_sha256": "e495cb440068f49e55c192714c0077245b747c26fdabf933abb3bb46113084d2",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
       "entry": "auxiliary_postpartial01",
       "receipt": {
         "path": "tmp/task042/v74/auxiliary_postpartial01/receipt.json",
@@ -461,19 +506,23 @@
   "max_observed_ownswap_bytes": 0,
   "OOC_attempts": 0,
   "storage": {
-    "new_bytes": 1718851800,
-    "new_files": 4033,
-    "immutable_historical_bytes": 190893888665,
-    "task_deduplicated_bytes": 192612740465,
-    "free_bytes": 2709159084032,
+    "new_bytes": 1853266131,
+    "new_files": 5188,
+    "task_deduplicated_bytes": 192747256685,
+    "free_bytes": 2708990881792,
     "new_cap": 34359738368,
     "task_cap": 747324309504,
-    "evidence_reserve_bytes": 536870912
+    "evidence_reserve_bytes": 536870912,
+    "outside_v74_latest_health_inferred_bytes": 190893990554,
+    "outside_v74_scope": "latest health artifact total minus its V74 preparation scope; includes historical assets and potentially mutable shared metadata/cache, not a claim of immutability",
+    "new_bytes_method": "inode-aware measured V74-scoped inventory after tail archive",
+    "task_deduplicated_bytes_kind": "derived",
+    "task_deduplicated_bytes_method": "outside-V74 latest-health inferred subtotal plus measured V74-scoped bytes; no full historical rehash"
   },
   "action_counts": null,
   "KSP_attempts": null,
   "active": null,
-  "closed": false,
+  "closed": true,
   "global_fine_K_reads": 0,
   "global_fine_S_reads": 0,
   "global_fine_matrix_formations": 0,
@@ -497,5 +546,44 @@
     "derived_main_V_Z_vectors": 257,
     "derived_main_V_Z_bytes": 4841028816,
     "actual_RSS_is_separate": true
-  }
+  },
+  "status": "SETTLED_CLOSED",
+  "cleanup": {
+    "UTC": "2026-10-11T17:40:31.174440+00:00",
+    "active": null,
+    "live_matching_actors": [],
+    "all_recorded_descendants_cleared": true,
+    "own_lock_acquired_then_released": true,
+    "lock_path": "tmp/task042/task042_shared.lock",
+    "no_neighbour_signal_or_modify": true,
+    "KSP_attempts": 0,
+    "PC_numeric": 0,
+    "completed_macro_numeric": 881,
+    "all_saved_macro_factors_released": true
+  },
+  "last_window_observation": {
+    "start_utc": "2026-10-11T13:00:55.333861+00:00",
+    "start_monotonic": 1648650.1947354379,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "observed_utc": "2026-10-11T17:40:31.118470+00:00",
+    "observed_monotonic": 1665425.979337393,
+    "anchor": "first actual shell UTC; monotonic bound from paired same-boot clock, never reset",
+    "heavy_stop_utc": "2026-10-12T02:00:55.333861+00:00",
+    "deadline_utc": "2026-10-12T03:00:55.333861+00:00",
+    "total_window_seconds": 50400,
+    "scientific_loaded_limit_seconds": 39600,
+    "review_commit": "6fcc95ea94b869d738c00c5f3e11c7025dd52f13",
+    "total_limit_seconds": 50400,
+    "heavy_limit_seconds": 46800,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 16775.78460931778,
+    "heavy_remaining_seconds": 30024.21539068222,
+    "total_remaining_seconds": 33624.21539068222
+  },
+  "metadata_finalization_in_whole_elapsed_not_additive": true,
+  "finalization_known_seconds": 3.1062695819418877,
+  "storage_measured_after_tail_archive": true,
+  "Git_tail_receipt": "tmp/task042/v74/delivery_git_receipt.json",
+  "snapshot_scope": "through finalization; subsequent commit/push/delivery clock bound by ignored Git receipt"
 }

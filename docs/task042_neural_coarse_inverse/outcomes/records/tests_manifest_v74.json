@@ -15,5 +15,13 @@
   "final_stdout_count_matches_actual": true,
   "full_pytest": false,
   "CI": "NOT_RUN",
-  "GitHub_visual": "NOT_VERIFIED"
+  "GitHub_visual": "NOT_VERIFIED",
+  "documentation_status": "PASSED",
+  "documentation_source": "b3ef516366f22c238a865be19aa3be3d1e192c46",
+  "documentation_unittest_count": 15,
+  "documentation_receipt": {
+    "path": "tmp/task042/v74/aux_post_01/document_checks.json",
+    "bytes": 2650,
+    "sha256": "2e6df606c99f4c00190b8719efafe1cbf681e346811b82f37563373ee344c9aa"
+  }
 }
