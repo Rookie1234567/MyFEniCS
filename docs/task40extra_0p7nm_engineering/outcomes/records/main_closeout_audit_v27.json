@@ -1,0 +1,72 @@
+{
+  "campaign_observation": {
+    "accounting_record": {
+      "adjacent_interval": {
+        "budget_seconds": 1377.947095671,
+        "discrepancy_seconds": 137.11650409808567,
+        "elapsed_seconds": {
+          "boottime": 1240.8305915729143,
+          "monotonic": 1240.8305916509125,
+          "utc": 1377.947095671
+        },
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "tolerance_seconds": 12.408305916509125,
+        "utc_minus_monotonic_seconds": 137.1165040200874
+      },
+      "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6",
+      "bootstrap_charged_seconds": 362.311757244,
+      "campaign_window_sha256": "e806c514c8208ae7a887bdb6ddaaec25936c9204a3ccc34a4fb870ad0bb0010d",
+      "cumulative_charged_seconds": 21781.078776757447,
+      "cutoff_seconds": 20400.0,
+      "deadline_utc_ns": 1791747458000000000,
+      "label": "main_v27_admin_provenance_repair_and_publication",
+      "previous_sample": {
+        "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6",
+        "boottime": 1285149.860223574,
+        "monotonic": 1285149.86022271,
+        "utc_ns": 1791746261127575879
+      },
+      "sample": {
+        "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6",
+        "boottime": 1286390.690815147,
+        "monotonic": 1286390.690814361,
+        "utc_ns": 1791747639074671550
+      },
+      "schema": "task40extra.review_v10_campaign_accounting.v1",
+      "sequence": 45734,
+      "t0_utc_ns": 1791725858000000000,
+      "time_namespace_identity": {
+        "time": "time:[4026531834]",
+        "time_for_children": "time:[4026531834]"
+      }
+    },
+    "adjacent_charged_seconds": 1377.947095671,
+    "bootstrap_charged_seconds": 362.311757244,
+    "campaign_seconds": 21600.0,
+    "charged_seconds": 21781.078776757447,
+    "closeout_reserve_seconds": 1200.0,
+    "cumulative_charged_seconds": 21781.078776757447,
+    "deadline_utc_ns": 1791747458000000000,
+    "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl/campaign_window_v27.json",
+    "remaining_numerical_seconds": 0.0,
+    "sample": {
+      "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6",
+      "boottime": 1286390.690815147,
+      "monotonic": 1286390.690814361,
+      "utc_ns": 1791747639074671550
+    },
+    "schema": "task40extra.review_v10_campaign.v1",
+    "sha256": "e806c514c8208ae7a887bdb6ddaaec25936c9204a3ccc34a4fb870ad0bb0010d",
+    "t0_utc_ns": 1791725858000000000
+  },
+  "first_publication_sha": "f61e523b577b173689a05429b2a852868d277fd7",
+  "numeric_resumed": false,
+  "numerical_cutoff_enforced": true,
+  "publication_admin_after_total_deadline": true,
+  "publication_admin_overrun_seconds_at_snapshot": 181.07467155,
+  "reason": "主控审稿补齐donor/tests/历史失败口径；初次元数据脚本KeyError导致未完整修正，作为行政收口超时负记录保留",
+  "schema": "task40extra.review_v27_main_closeout_audit.v1",
+  "scientific_source_sha": "61530133bd02b18052e3ba64a5f78b87424c57f6",
+  "window_refreshed": false
+}

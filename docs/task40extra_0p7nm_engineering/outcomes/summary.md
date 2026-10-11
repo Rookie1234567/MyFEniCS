@@ -13,7 +13,11 @@ saved-only 表示从已有保存贡献构造矩阵，不重建有限元网格或
 
 data.npy 的9,232,978,816 B 是完整 shape 的预分配文件长度（含 header），不是写入比例。未来必须从零恢复数值填值。WSL global swap pswpin+239/pswpout+6,345 pages 无法归因，故不能称为全局 swap 为零。2 TB / 48 h 和目标最终精度未资格化。
 
-**下一步：**新窗口获得授权后，从原 donor arrays 与现有 pattern 清零续填；只在 COMPLETE_CSR 并完成 hash/open/native readback 后评估 q0 factor。当前 16 GiB cap 不满足 derived factor 对象账。ordinary solver default unchanged，本轮没有新的数值源码改动或提交/推送。
+## V27 源码与 donor 身份
+
+producer source `9d0f4dbfc730dd620b709d048e33e9da6c77520c` 生成 V25 保存贡献；V26 已接受科学 source 为 `f9093c87f81d52b75fbc156e562b3745df45ccf4`，结果 base 为 `399787abc991e0e30975bc694bd18a9a30c5470e`。V27 源码按阶段冻结为 `c1307939a028bdce491ef242ab1c13d70c05cc37`、`99429d69e29d2180892814d370a41dae2dc31c03`、`66d49273737ae1f8362e06e255f3b76565173cea`、`61530133bd02b18052e3ba64a5f78b87424c57f6`；最后一个 SHA 是本次正式运行使用的冻结源码。当前输入 SHA 为 `134ea5f08d5d5dbc366870f451ba0de0df5893c5cd73d227dac77f8a11aa2c0b`，window SHA 为 `e806c514c8208ae7a887bdb6ddaaec25936c9204a3ccc34a4fb870ad0bb0010d`，旧 window 未刷新。完整 donor 路径、大小和哈希（六个 producer payload、三个 V26 native NPZ、saved replay、恢复 manifest/checker 等）见 [operator compact](records/target_operator_probe_v27.json)；这些 V26 native case 是输入身份与恢复证据，不是 V27 新运行结果。
+
+**下一步：**新窗口获得授权后，从原 donor arrays 与现有 pattern 清零续填；只在 COMPLETE_CSR 并完成 hash/open/native readback 后评估 q0 factor。当前 16 GiB cap 不满足 derived factor 对象账。V27 冻结源码链包含数值源码改动；本次 terminal closeout 只整理文档与证据，没有额外改动数值源码，也没有改变 ordinary solver default。执行者未提交或推送，由主控负责分支发布；本轮没有合并 master。
 
 ## Selective merge 与下一步
 

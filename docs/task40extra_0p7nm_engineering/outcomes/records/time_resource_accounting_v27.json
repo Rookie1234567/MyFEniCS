@@ -6,6 +6,15 @@
     "task_swap_zero_does_not_imply_global_swap_zero": true,
     "terminal_gate": "fixed numerical campaign time cutoff; not numeric mismatch or factor resource failure"
   },
+  "main_admin_closeout_snapshot": {
+    "audit_path": "docs/task40extra_0p7nm_engineering/outcomes/records/main_closeout_audit_v27.json",
+    "cumulative_charged_seconds": 21781.078776757447,
+    "no_new_numeric_work": true,
+    "numerical_cutoff_enforced": true,
+    "publication_admin_overrun_seconds": 181.07467155,
+    "total_deadline_met_for_admin_publication": false,
+    "utc_ns": 1791747639074671550
+  },
   "resources": {
     "csr_payload_bytes_derived": 11544333940,
     "data_full_preallocation_file_bytes_including_npy_header": 9232978816,

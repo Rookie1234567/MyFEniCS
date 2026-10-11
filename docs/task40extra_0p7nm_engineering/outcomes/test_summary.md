@@ -1,15 +1,27 @@
-# Task40extra Review V27 定向验证与收口检查
+# Task40extra Review V27 分阶段定向验证与收口检查
 
-| 验证 | 命令 / 范围 | 结果 | 边界 |
+| 源码阶段 | 冻结 source SHA | 定向验证 | 结果与边界 |
 |---|---|---|---|
-| Qualified ABI preflight | activation、仓库 .venv、PETSc、MPI | PASS；complex128/int32/MPI1 | 环境检查，不是数值通过 |
-| clear-all continuation fixture | src/test/test_task40_v27_saved_q0.py::test_saved_q0_v17_build_persists_q0_only_structure_and_restartable_values | 1 passed in 0.39 s | 小 fixture 验证 partial pass 后清零重填、完成与 hash-bound reopen，不是原始 CSR/PDE |
-| 真实 pending manifest | 调用 open_saved_q0_csr_from_manifest | 按设计返回 ValueError，未打开大型数组 | 当前 artifact 被拒绝进入 factor |
-| required outer checker | outer_workflow_record 原始值 | returncode=null，pass=null | 不补写成通过 |
-| full V27 suite / full repo / MPI2/4 / Ruff / CI / native CSR readback / factor / KSP / PDE / RTA | 本轮 | NOT_RUN | 不外推为通过 |
+| saved-only q0 结构与 V20 路由 | `c1307939a028bdce491ef242ab1c13d70c05cc37` | `src/test/test_task40_v27_saved_q0.py` 与 `src/test/test_task40_v20_routes.py` | 69 passed、1 skipped；全仓套件未运行 |
+| bootstrap 依赖修复 | `99429d69e29d2180892814d370a41dae2dc31c03` | bootstrap 相关定向测试、compileall、diff check | 70 passed、1 skipped；compileall/diff check 通过 |
+| local-sector alias 修复 | `66d49273737ae1f8362e06e255f3b76565173cea` | alias 相关定向测试、compileall、diff check、真实 donor header 检查 | 14 passed；其余三项检查通过 |
+| NumPy 2.5.3 public NPY API 修复（本次正式运行冻结源码） | `61530133bd02b18052e3ba64a5f78b87424c57f6` | public API fixture、真实 donor header 检查 | 2 passed；真实 header 检查通过；该冻结源码的完整测试套件未运行 |
+| terminal closeout continuation fixture | `61530133bd02b18052e3ba64a5f78b87424c57f6` | clear-all restart fixture | 1 passed in 0.39 s；只验证小 fixture 的中断、清零重填、完成和 hash-bound reopen，不是原始 CSR/PDE |
+| 真实 pending manifest opener | 同上 | 对 live manifest 进行只读 open | 按设计返回 `ValueError`；未打开大型数组，当前 artifact 被拒绝进入 factor |
+| ABI preflight | 同上 | qualified activation、当前 `.venv`、PETSc、MPI | PASS；complex128/int32/MPI1，属于环境检查 |
 
-受控停止、fixture 通过与完整数值 CSR 是不同证据。本轮真实 numeric CSR 与 official R/T/A 没有完成。
+三个更早的启动/worker 失败也保留在 [workflow ledger](records/review_v27_incremental_workflow_ledger.json)，不计入测试通过数：source `c1307939...` 的 service `myfenics-case-20261011T150054-2318980.service` 在 worker 启动前因 `ModuleNotFoundError: No module named 'numpy'` 停止；source `99429d69...` 的 attempt `20261011T151232.017640Z` 因 `local_H` local/global dimension mismatch、exit 4 失败；source `66d49273...` 的 attempt `20261011T152858.906313Z` 因 private NumPy NPY API 不兼容、exit 4 失败，task swap peak 为 0。三次失败均保留为工程负结果；单一 campaign 账本没有记录可可靠分摊的单次费用，因此不推定每次费用。
 
+| 未运行项目 | 状态 |
+|---|---|
+| 最终冻结源码完整套件、full repository pytest | NOT_RUN |
+| MPI2/MPI4、Ruff、CI | NOT_RUN |
+| numeric CSR native readback、factor/KSP、target PDE、official R/T/A | NOT_RUN |
+| required outer checker | returncode=null，pass=null；不补写为通过 |
+
+受控停止、分阶段软件测试、closeout fixture 与完整数值 CSR 是不同证据类别。真实 numeric CSR 和 official R/T/A 没有完成。
+
+---
 # Task40extra Review V26 定向验证与文档合同
 
 | 验证 | source / 命令 / 回执 | 结果 | 证据边界 |
@@ -484,3 +496,5 @@ Native component-only receipt 的重算 Gate 数值、worker 失败位置、4 �
 | D checker与主控审计 | D independent partial checker；MAIN audit record | checker 34/34 为真但 partial；MAIN 重算 NPZ SHA、核对 checker与序列化 witness；未重新计算六类数值 | bounded internal y-edge panel only |
 
 没有运行 full repository pytest、MPI2/MPI4、Ruff、CI、full q construction、global factor/KSP、完整 PDE 或 official R/T/A。GitHub 页面获取遇到新提交 cache miss；线上渲染未确认，本地链接/表格结构检查不能替代它。后续新增数值运行需新的 review/window；本文档收口阶段不重启 B/C/D 数值计算。
+
+研发阶段分别有69/1skip、70/1skip、14及正式runtime2项结果，不能累加重复计数或声称整批未跑V27文件。收据/hash见 [source-bound测试记录](records/targeted_tests_v27.json)。

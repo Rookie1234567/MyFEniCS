@@ -24,6 +24,28 @@
     "standalone_factor_wrapper": "NOT_IMPLEMENTED"
   },
   "deadline_utc": "2026-10-11T19:37:38Z",
+  "engineering_startup_failures": [
+    {
+      "cost": "included in fixed campaign; per-attempt allocation UNKNOWN",
+      "reason": "python -S bootstrap imported NumPy",
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl/v27_user_service_bootstrap_failure.json",
+      "source_sha": "c1307939a028bdce491ef242ab1c13d70c05cc37",
+      "unit": "myfenics-case-20261011T150054-2318980.service",
+      "worker_started": false
+    },
+    {
+      "attempt_id": "20261011T151232.017640Z",
+      "cost": "included in fixed campaign; per-attempt allocation UNKNOWN",
+      "reason": "local_H 7932 sector aliases incorrectly compared to global 32060 modes",
+      "source_sha": "99429d69e29d2180892814d370a41dae2dc31c03"
+    },
+    {
+      "attempt_id": "20261011T152858.906313Z",
+      "cost": "included in fixed campaign; per-attempt allocation UNKNOWN",
+      "reason": "private NumPy _read_array_header absent in formal runtime",
+      "source_sha": "66d49273737ae1f8362e06e255f3b76565173cea"
+    }
+  ],
   "events": [
     {
       "kind": "frozen_source",
@@ -86,6 +108,12 @@
   ],
   "numeric_budget_seconds": 20400.0,
   "numeric_cutoff_utc": "2026-10-11T19:17:38Z",
+  "previous_v26_ledger": {
+    "cumulative_charged_seconds": 19205.672001498642,
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/campaign_accounting_v10.jsonl",
+    "preserved": true,
+    "sha256": "1ee33dcec8046c9343a0102ffb6ef9cdede8f885fb4d491c9a5e9ead635bf46e"
+  },
   "schema": "task40extra.review_v27_incremental_workflow_ledger.v1",
   "t0_utc": "2026-10-11T13:37:38Z",
   "unknowns_and_negative_results": {

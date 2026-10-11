@@ -1,4 +1,14 @@
 {
+  "formal_worker_abi": {
+    "MPI": 1,
+    "abi_receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+    "abi_receipt_sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426",
+    "int_type": "int32",
+    "math_threads": 1,
+    "numpy_version": "2.5.3",
+    "runtime_prefix": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+    "scalar_type": "complex128"
+  },
   "not_run": [
     "full repository pytest",
     "MPI2/MPI4",
@@ -37,6 +47,44 @@
     "python_executable": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/.venv/bin/python"
   },
   "schema": "task40extra.review_v27_targeted_tests.v1",
+  "source_bound_implementation_test_groups": [
+    {
+      "not_cumulative_test_count": true,
+      "passed": 69,
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl/main_source_freeze_receipt_v27_csr.json",
+      "receipt_sha256": "4d42c8b78af6e4452142c45252e03cc9bb1dffedfcf328519811b78ecb97b292",
+      "scope": "两个相关模块",
+      "skipped": 1,
+      "source_sha": "c1307939a028bdce491ef242ab1c13d70c05cc37"
+    },
+    {
+      "not_cumulative_test_count": true,
+      "passed": 70,
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl/main_source_freeze_receipt_v27_bootstrap_fix.json",
+      "receipt_sha256": "153c48f0c2def504d2abf0d72b3c1cb62c850055bd12c6f61126ada3d88f23ba",
+      "scope": "相关模块与python -S bootstrap",
+      "skipped": 1,
+      "source_sha": "99429d69e29d2180892814d370a41dae2dc31c03"
+    },
+    {
+      "not_cumulative_test_count": true,
+      "passed": 14,
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl/main_source_freeze_receipt_v27_local_alias_fix.json",
+      "receipt_sha256": "7abafc7ac27c2be695c5c59d74c95d1f0e1ba42333025411a794a391b5e3c33e",
+      "scope": "端口header与路由定向测试、真实header",
+      "skipped": 0,
+      "source_sha": "66d49273737ae1f8362e06e255f3b76565173cea"
+    },
+    {
+      "not_cumulative_test_count": true,
+      "passed": 2,
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl/main_source_freeze_receipt_v27_numpy_public_api_fix.json",
+      "receipt_sha256": "1ade87becaf0228610fcd8b705261fa22c92288fadb11fe79a5a8bac93e8770c",
+      "scope": "正式NumPy2.5.3公共header正反fixture、真实header",
+      "skipped": 0,
+      "source_sha": "61530133bd02b18052e3ba64a5f78b87424c57f6"
+    }
+  ],
   "source_sha": "61530133bd02b18052e3ba64a5f78b87424c57f6",
   "source_stage_results": [
     {
