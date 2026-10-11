@@ -20,9 +20,10 @@ def load_tetra_reference(path, *, scope_module=scope):
     if frozen is not None:extra['verification_inventory']={'path':str(frozen),'sha256':hashlib.sha256(frozen.read_bytes()).hexdigest()}
     resume=scope.window.TMP/(role+'_post_resume.json')
     if resume.exists():extra['postprocessing_resume']={'path':str(resume),'sha256':hashlib.sha256(resume.read_bytes()).hexdigest()}
+    solver=(scope.solver_for(role) if hasattr(scope,'solver_for') else {'degree':spec['degree'],'direct':'MUMPS','static_condensation':scope.method_for(role).get('static_condensation',False) if hasattr(scope,'method_for') else False})
     return RunSpecification(identity={'model_id':'task042_'+scope.NAMESPACE+'_full_tetra','run_id':item['run_id'],'batch':p['batch']},
         geometry=physical['geometry'],materials=physical['materials'],incidence=physical['incidence'],discretization=physical['discretization'],boundary=physical['boundary'],
-        method=scope.method_for(role) if hasattr(scope,'method_for') else {'kind':'FULL_UNCONDENSED_TETRA_N1CURL_PHASE_UFL'},solver={'degree':spec['degree'],'direct':'MUMPS','static_condensation':scope.method_for(role).get('static_condensation',False) if hasattr(scope,'method_for') else False},
+        method=scope.method_for(role) if hasattr(scope,'method_for') else {'kind':'FULL_UNCONDENSED_TETRA_N1CURL_PHASE_UFL'},solver=solver,
         execution={'mpi_size':1,'timeout_seconds':p['case_wall_seconds'][role],
             'planning_memory_gib':m['planning_gib'],'warning_memory_gib':m['warning_gib'],'terminate_memory_gib':m['sampled_stop_gib'],'require_zero_swap':True},
         output={'results_root':'results/task042'},derived={'stage':role,'preparation_scope':scope.NAMESPACE,'environment_mode':'fe','physical_case':spec['case'],
