@@ -41,7 +41,10 @@ def training_allowed(path, design, active, labelled):
         return True
     allowed = {(ROOT / e["path"]).resolve() for e in design["files"].values()}
     parent = design.get("parent_checkpoint")
-    if parent is not None and parent.get("input_kind") in ("unlabelled_complete_round4_boundary", "unlabelled_complete_round8_boundary"):
+    if parent is not None and parent.get("input_kind") in (
+        "unlabelled_complete_round4_boundary", "unlabelled_complete_round8_boundary",
+        "unlabelled_complete_round12_boundary",
+    ):
         allowed.add((ROOT / parent["path"]).resolve())
     if labelled:
         allowed.update(

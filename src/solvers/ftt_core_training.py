@@ -134,6 +134,7 @@ def run_core_training(
     execution_policy=None,
     joint_validation_callback=None,
     parent_importer=None,
+    coordinate_transform_factory=None,
 ):
     from src.solvers.ftt_core_continuation import (
         policy_for,
@@ -148,7 +149,14 @@ def run_core_training(
 
     continuation = execution_policy is not None
     width_run = continuation and execution_policy.get("schema") == "ftt.width-refinement-policy.v1"
-    if width_run:
+    coordinate_run = continuation and execution_policy.get("schema") == "ftt.feature-coordinate-policy.v1"
+    refined_run = width_run or coordinate_run
+    if coordinate_run:
+        from src.solvers.ftt_feature_coordinates import coordinate_policy
+        expected_policy = coordinate_policy(learned)
+        if coordinate_transform_factory is None:
+            raise ValueError("EXPLICIT_FEATURE_COORDINATE_FACTORY_REQUIRED")
+    elif width_run:
         from src.solvers.ftt_width_extension import width_policy
         expected_policy = width_policy(learned, extra=execution_policy["total_round_limit"] == 14)
     else:
@@ -204,6 +212,8 @@ def run_core_training(
     rounds = []
     last_hidden_optimizer = None
     resume_first = None
+    coordinate_records = {}
+    retained_coordinate_first = None
     checkpoint_dir = artifact / "checkpoints"
     pointer = checkpoint_dir / "current.json"
     pending_path = artifact / "pending_work.json"
@@ -242,6 +252,7 @@ def run_core_training(
         counts.update(state["metadata"]["counts"])
         costs.update(state["metadata"]["costs"])
         rounds = state["metadata"]["rounds"]
+        coordinate_records = deepcopy(state["metadata"].get("coordinate_transforms", {}))
         last_hidden_optimizer = state.get("last_completed_hidden_optimizer")
         if pending_path.exists():
             pending = json.loads(pending_path.read_text())
@@ -253,7 +264,7 @@ def run_core_training(
                     counts[key] += pending.get("counts", {}).get(key, 0)
                 if pending["kind"] == "core":
                     counts["core_visits"] += 1
-                    if width_run and pending.get("first_segment"):
+                    if refined_run and pending.get("first_segment"):
                         from src.io.neural_wave_campaign import digest
                         receipt = pending["first_segment"]
                         first_file = artifact / receipt["name"]
@@ -261,6 +272,8 @@ def run_core_training(
                             raise ValueError("CORE_RETAINED_FIRST_IDENTITY_MISMATCH")
                         with np.load(first_file, allow_pickle=False) as data:
                             resume_first = (data["delta"].copy(), receipt["record"])
+                            if coordinate_run:
+                                retained_coordinate_first = (data["solve_y"].copy(), receipt["coordinate_transform_sha256"])
                         counts["LSMR_iterations"] += receipt["record"]["iterations"]
                         counts["LSMR_unretained_iterations_upper_bound"] += pending.get("second_reserved_iterations", 0)
                     else:
@@ -410,6 +423,8 @@ def run_core_training(
                     for k, v in costs.items()
                 },
             )
+            if coordinate_run:
+                meta["coordinate_transforms"] = deepcopy(coordinate_records)
         state = capture(model, boundary, meta)
         state.update(
             c=c.copy(),
@@ -438,6 +453,15 @@ def run_core_training(
         costs["scalar_validation"] = (
             costs.get("scalar_validation", 0.0) + monotonic() - began
         )
+        if coordinate_run:
+            # Complete R14/R16 audits precede the optional extra-round decision.
+            # This returns booleans only and never changes the residual target.
+            if joint_validation_callback is None:
+                raise ValueError("FEATURE_COORDINATE_ROUND_REQUIRES_FULL_JOINT_AUDIT")
+            began = monotonic()
+            verdict = joint_validation_callback(final, c, r)
+            costs["joint_validation"] = costs.get("joint_validation", 0.0) + monotonic() - began
+            rounds[-1]["complete_joint_verdict"] = verdict
         rounds[-1]["isolated_validation_scalars"] = scalar
         if continuation:
             previous = (
@@ -445,13 +469,21 @@ def run_core_training(
                 if len(rounds) >= 3
                 else None
             )
-            if width_run:
+            if coordinate_run:
+                from src.solvers.ftt_feature_coordinates import coordinate_trend
+                parent_scalar = inherited["parent_checkpoint"]["parent_scalars"]
+                decision = coordinate_trend(number, scalar, parent_scalar, execution_policy)
+            elif width_run:
                 from src.solvers.ftt_width_extension import width_trend
                 decision = width_trend(number, scalar, execution_policy)
             else:
                 decision = trend_decision(number, scalar, previous, execution_policy, learned=learned)
             rounds[-1]["continuation_policy_decision"] = decision
             allowed = decision["allowed"]
+            if coordinate_run and rounds[-1]["complete_joint_verdict"]["joint_pass"]:
+                decision = dict(allowed=False, reason="M5_JOINT_GATE_PASS")
+                rounds[-1]["continuation_policy_decision"] = decision
+                allowed = False
         else:
             previous = rounds[-3]["native"] if len(rounds) >= 3 else None
             allowed = scalar_continuation(
@@ -529,6 +561,17 @@ def run_core_training(
         audit = action.audit(c)
         return max(audit["native_relative"], audit["augmented_relative"]) <= target
 
+    def active_work_limits():
+        extra_allowed = coordinate_run and any(
+            row.get("round") == 13 and row.get("continuation_policy_decision", {}).get("allowed")
+            for row in rounds
+        )
+        if coordinate_run and not extra_allowed:
+            return (execution_policy["initial_new_visit_limit"],
+                    execution_policy["initial_new_iteration_limit"],
+                    execution_policy["initial_new_hidden_call_limit"] if learned else 0)
+        return visit_limit, iteration_limit, execution_policy["new_hidden_call_limit"] if continuation else 20
+
     try:
         if continuation and position.get("joint_verification_pending"):
             verify_native_target()
@@ -563,9 +606,10 @@ def run_core_training(
             if position["phase"] == "core":
                 axis = order[position["axis_index"]]
                 charged = charged_iterations(new_work())
+                active_visits, active_iterations, _ = active_work_limits()
                 if (
-                    new_work()["core_visits"] >= visit_limit
-                    or charged >= iteration_limit
+                    new_work()["core_visits"] >= active_visits
+                    or charged >= active_iterations
                 ):
                     stop = "CORE_WORK_LIMIT"
                     break
@@ -577,6 +621,16 @@ def run_core_training(
                 op = ConditionalCoreAction(
                     model, mapping, action, axis, deadline=deadline - 20, marker=marker
                 )
+                coordinates = None
+                if coordinate_run:
+                    coordinate_began = monotonic()
+                    coordinates, receipt = coordinate_transform_factory(model, mapping, op)
+                    costs["coordinate_setup"] = costs.get("coordinate_setup",0.0) + monotonic()-coordinate_began
+                    coordinate_records[coordinates.sha256] = receipt
+                    if retained_coordinate_first is not None:
+                        y, sha = retained_coordinate_first
+                        coordinates.verify_retained(resume_first[0], y, sha)
+                        retained_coordinate_first = None
                 b = -r / action.bnorm
                 counts["core_visits"] += 1
                 began = monotonic()
@@ -587,25 +641,32 @@ def run_core_training(
                     previous_checkpoint_sha256=final["sha256"],
                     source_sha=binding["source_sha"],
                     started_monotonic=began,
-                    reserved_iterations=min(1200 if width_run else 300, iteration_limit - charged),
+                    reserved_iterations=min(1200 if refined_run else 300, active_iterations - charged),
                     completed_iterations="NOT_RETAINED",
                     counts={},
                     status="STARTED_NOT_COMMITTED",
                 )
+                if coordinate_run:
+                    pending["coordinate_transform"] = receipt
                 atomic_json(pending_path, pending)
                 marker("core_solve_begin", pending)
                 charged_counts = {key: 0 for key in op.counts}
                 inner_completed = False
                 try:
-                    if width_run:
+                    if refined_run:
                         from src.solvers.ftt_core_refinement import solve_refined
                         from src.io.neural_wave_campaign import digest
 
                         def persist_first(d, record, residual):
                             name = f"first_segment_r{position['round']}_a{axis}_{final['generation']}.npz"
-                            atomic_npz(artifact/name, delta=d, residual=residual, b=b)
+                            arrays = dict(delta=d, residual=residual, b=b)
+                            if coordinates is not None:
+                                arrays.update(solve_y=coordinates.last_solve_y, P=coordinates.matrix)
+                            atomic_npz(artifact/name, **arrays)
                             pending["first_segment"] = dict(name=name, sha256=digest(artifact/name),
                                 base_model_hash=op.identity, axis=axis, record=record)
+                            if coordinates is not None:
+                                pending["first_segment"]["coordinate_transform_sha256"] = coordinates.sha256
                             pending["counts"] = op.counts.copy()
                             pending["second_reserved_iterations"] = 900
                             atomic_json(pending_path, pending)
@@ -614,7 +675,7 @@ def run_core_training(
                         delta, inner = solve_refined(op, b,
                             iteration_allowance=pending["reserved_iterations"],
                             persist_first=persist_first, resume_first=resume_first,
-                            seconds_per_iteration=longest_pair)
+                            seconds_per_iteration=longest_pair, coordinate_transform=coordinates)
                         resume_first = None
                         counts["LSMR_unretained_iterations_upper_bound"] += inner["charged_unretained_iterations"]
                     else:
@@ -635,10 +696,17 @@ def run_core_training(
                     c, r, accepted = verify_and_apply_core(
                         model, mapping, action, op, delta, c
                     )
-                    if width_run and not accepted["accepted"] and inner["chosen_increment"] == "merged":
+                    if refined_run and not accepted["accepted"] and inner["chosen_increment"] == "merged":
                         with np.load(artifact/pending["first_segment"]["name"], allow_pickle=False) as retained:
                             c, r, accepted = verify_and_apply_core(model, mapping, action, op, retained["delta"], c)
                         inner["real_merged_writeback_rejected_first_fallback"] = True
+                        for key, value in inner["first_segment"].items():
+                            if key.startswith(("true_", "coordinate_")) or key in ("initial_adjoint_strict_zero", "parameter_increment_norm"):
+                                inner[key] = value
+                        inner["chosen_increment"] = "first"
+                        inner["inner_quality"] = "INNER_DIAGNOSTIC_SUFFICIENT" if (
+                            inner["initial_adjoint_strict_zero"] or inner["true_adjoint_residual_relative"] <= 1e-3
+                        ) else "INNER_ACCURACY_UNRESOLVED"
                     costs["real_acceptance"] += monotonic() - began
                     for k in ("K", "KH", "B", "BH"):
                         counts[k] += op.counts[k] - before_check_counts[k]
@@ -697,7 +765,7 @@ def run_core_training(
                         break
             if position["phase"] == "hidden":
                 calls_left = (
-                    execution_policy["new_hidden_call_limit"]
+                    active_work_limits()[2]
                     - new_work()["hidden_actual_calls"]
                     if continuation
                     else 20
@@ -847,6 +915,7 @@ def run_core_training(
         full_FE_Krylov_count=0,
         output_coefficients_in_checkpoint=True,
         actual_field_not_yet_independently_verified=True,
+        **(dict(coordinate_transforms=coordinate_records) if coordinate_run else {}),
         **(
             dict(
                 inherited_state=inherited,

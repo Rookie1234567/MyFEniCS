@@ -1,0 +1,5 @@
+schema_version = 15
+
+[neural_wave]
+stage = "v45_feature_coordinates_compare"
+design_sha256 = "43e68269855137f6d8f3b424198789f41bec4c5f8bbca50f28f525ef643748f7"

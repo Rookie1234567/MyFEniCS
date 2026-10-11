@@ -1,6 +1,8 @@
 """Thin Bloch opt-in profile; reuse the conditional trainer and durable chain."""
 
+import json
 import shlex
+import numpy as np
 
 from src.io.neural_wave_campaign import ROOT, digest
 from src.io.ftt_bloch_campaign import DESIGN, routes
@@ -31,7 +33,7 @@ def qualification(action, packet, design, marker, deadline):
     return actual_bloch_checks(action, packet, design, marker, deadline)
 
 
-def training_options(manifest, artifact, marker, directory, design, *, design_path=DESIGN, scoring_root=ART):
+def training_options(manifest, artifact, marker, directory, design, *, design_path=DESIGN, scoring_root=ART, reuse_saved_feedback=False):
     """Only strict scalar JSON crosses the separate reference-scoring boundary."""
     from src.runners.saved_field_supervision import run_checker
     from src.postprocessing.ftt_bloch_scalars import read_scalars
@@ -39,13 +41,31 @@ def training_options(manifest, artifact, marker, directory, design, *, design_pa
     def validate(number, checkpoint, c, r):
         key = f"{manifest['spec']['stage']}_round{number}_{checkpoint['generation']}"
         request_dir = directory / key
-        request_dir.mkdir(parents=True, exist_ok=False)
+        request_dir.mkdir(parents=True, exist_ok=reuse_saved_feedback)
         field = artifact / (key + "_unlabelled_field.npz")
-        atomic_npz(field, c=c, r=r)
+        if reuse_saved_feedback and field.exists():
+            with np.load(field, allow_pickle=False) as saved:
+                if not (np.array_equal(saved["c"], c) and np.array_equal(saved["r"], r)):
+                    raise ValueError("ISOLATED_SCALAR_SAVED_FIELD_CHANGED")
+        else:
+            atomic_npz(field, c=c, r=r)
         request = dict(round=number, field_path=str(field.relative_to(ROOT)), field_sha256=digest(field),
             boundary_sha256=checkpoint["sha256"], source_sha=manifest["source_sha"],
             design_sha256=manifest["design_sha256"], production_initialization_allowed=False)
-        atomic_json(request_dir / "request.json", request)
+        request_path = request_dir / "request.json"
+        if reuse_saved_feedback and request_path.exists():
+            if json.loads(request_path.read_text()) != request:
+                raise ValueError("ISOLATED_SCALAR_SAVED_REQUEST_CHANGED")
+            if (request_dir / "scalars.json").exists():
+                scalar = read_scalars(request_dir / "scalars.json", request)
+                summary = json.loads((request_dir / "supervision/supervised/summary.json").read_text())
+                if summary["classification"] != "COMPLETED" or summary["leader_exit_code"] != 0 or not summary["descendants_cleared"]:
+                    raise ValueError("ISOLATED_SCALAR_SAVED_SUPERVISION_NOT_QUALIFIED")
+                scalar["checker_peak_bytes"] = summary["sampled_process_tree_rss_peak_bytes"]
+                marker("isolated_reference_scalar_feedback_reused", scalar)
+                return scalar
+        else:
+            atomic_json(request_path, request)
         # Scoring arrays stay outside the training artifact and are denied by
         # the installed training firewall. Only this fixed-shape JSON is read.
         isolated = scoring_root / "isolated_reference_scoring" / key

@@ -66,8 +66,11 @@ def prepare(artifact, source_root, manifest):
     from src.io.ftt_campaign import load_files
     from src.runners.ftt_worker import load_arrays, ftt_abi
     from src.runners.ftt_bloch_worker import field_factory
-    width_run = manifest["spec"].get("campaign_version") == 44
-    if width_run:
+    version = manifest["spec"].get("campaign_version")
+    width_run = version in (44,45)
+    if version == 45:
+        from src.io.ftt_coordinate_campaign import DESIGN, routes
+    elif width_run:
         from src.io.ftt_width_campaign import DESIGN, routes
     from src.solvers.feinn_native import load_native
     from src.solvers.ftt_factored_moments import FactoredMomentMap
@@ -223,8 +226,11 @@ def saved_width_participation(initial, final, hidden_keys):
 def audit_saved_forks(artifact, source_root, design):
     import numpy as np
     from src.io.ftt_continuation_campaign import routes
-    width_run = design["campaign_version"] == 44
-    if width_run:
+    version = design["campaign_version"]
+    width_run = version in (44,45)
+    if version == 45:
+        from src.io.ftt_coordinate_campaign import routes
+    elif width_run:
         from src.io.ftt_width_campaign import routes
     from src.solvers.optimization_checkpoint import load_checkpoint
     from src.runners.ftt_bloch_worker import field_factory
@@ -234,7 +240,11 @@ def audit_saved_forks(artifact, source_root, design):
         ROOT / design["parent_checkpoint"]["path"],
         design["parent_checkpoint"]["sha256"],
     )
-    model = field_factory(design, "fttnn")
+    if version == 45:
+        from src.runners.ftt_width_worker import model_factory
+        model = model_factory(design,dict(hidden_width=32))
+    else:
+        model = field_factory(design, "fttnn")
     hidden_ids = {id(p) for p in hidden_parameters(model)}
     hidden_keys = [name for name, p in model.named_parameters() if id(p) in hidden_ids]
     buffer_keys = [name for name, _ in model.named_buffers()]
@@ -250,7 +260,7 @@ def audit_saved_forks(artifact, source_root, design):
         s1 = load_checkpoint(folder / "checkpoints" / final["name"], final["sha256"])
         initial_models.append(s0["model"])
         expected = parent["model"]
-        if width_run and s0["metadata"]["hidden_width"] == 32:
+        if version == 44 and s0["metadata"]["hidden_width"] == 32:
             from src.solvers.ftt_width_extension import widen_field
             model.load_state_dict(parent["model"], strict=True)
             expected = widen_field(model).state_dict()
@@ -300,7 +310,7 @@ def audit_saved_forks(artifact, source_root, design):
         if width_run:
             record.update(
                 all_initial_model_buffers_equal_function_preserving_import=same_model,
-                initial_architecture_equals_parent=s0["metadata"]["hidden_width"] == 16,
+                initial_architecture_equals_parent=s0["metadata"]["hidden_width"] == (32 if version == 45 else 16),
                 initial_c_r_pair=field_pairs,
                 final_hidden_bitwise_equal_initial_import=frozen,
                 hidden_delta_from_initial_import_norm=float(np.sqrt(delta2)),
@@ -309,7 +319,7 @@ def audit_saved_forks(artifact, source_root, design):
                     s0["model"][row["name"]].numel() for row in s0["parameter_order"]
                 ),
             )
-            if s0["metadata"]["hidden_width"] == 32:
+            if version == 44 and s0["metadata"]["hidden_width"] == 32:
                 record["expanded_parameter_participation"] = saved_width_participation(
                     s0, s1, hidden_keys
                 )
@@ -320,8 +330,11 @@ def audit_saved_forks(artifact, source_root, design):
                 hidden_delta_from_parent_norm=float(np.sqrt(delta2)),
             )
         records[route] = record
-    compared_models = initial_models[1:] if width_run else initial_models
-    same_forks = all(v.equal(compared_models[1][k]) for k, v in compared_models[0].items())
+    compared_models = initial_models[1:] if version == 44 else initial_models
+    same_forks = all(
+        all(v.equal(candidate[k]) for k, v in compared_models[0].items())
+        for candidate in compared_models[1:]
+    )
     if not same_forks:
         raise ValueError("SAVED_INITIAL_FORKS_DIFFERENT")
     atomic_json(
@@ -344,7 +357,9 @@ def audit_saved_forks(artifact, source_root, design):
 def compare_common_wall(manifest, artifact, marker, directory):
     from src.runners.saved_field_supervision import run_checker
     from src.io.ftt_continuation_campaign import DESIGN
-    if manifest["spec"].get("campaign_version") == 44:
+    if manifest["spec"].get("campaign_version") == 45:
+        from src.io.ftt_coordinate_campaign import DESIGN
+    elif manifest["spec"].get("campaign_version") == 44:
         from src.io.ftt_width_campaign import DESIGN
 
     output = artifact / "common_wall"
@@ -416,6 +431,6 @@ if __name__ == "__main__":
     artifact = ROOT / manifest["artifact"]
     prepare(
         artifact / "common_wall",
-        ROOT / ("benchmarks/artifacts/task42extra/v44" if manifest["spec"].get("campaign_version") == 44 else "benchmarks/artifacts/task42extra/v43"),
+        ROOT / f"benchmarks/artifacts/task42extra/v{manifest['spec'].get('campaign_version')}",
         manifest,
     )
