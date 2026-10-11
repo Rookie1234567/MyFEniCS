@@ -1,0 +1,219 @@
+{
+  "intake": {
+    "canonical_worktree": "/home/fenics/Projects/NN-Lab",
+    "branch": "task42_neural_coarse_inverse",
+    "intake_HEAD": "b393ec0c2be86270a72ebaac8a02a73d05cf7a83",
+    "review_commit": "6fcc95ea94b869d738c00c5f3e11c7025dd52f13",
+    "review_blob": "9f64f6565e2303bfc4a045497bf05bc4bdab0fcd",
+    "review_sha256": "cebaecfa7a6a75e0fca8bd6e937fc337cf06af4f67a3e4b463cdd6f93c6fea66",
+    "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+    "initial_clock_record": "tmp/task042/v74/initial_clock.json",
+    "identity_source": "actual initial git/process checks; safe fetch/ff and frozen first real UTC; source commits recorded separately by supervised manifests",
+    "active_actor_at_intake": false,
+    "scope": "V74 only; prior closed ledgers unchanged",
+    "historical_review_UTC_discrepancy": "see clock_provenance.json; no authority rewrite",
+    "notifications_to_neighbors": 0,
+    "subagents": 0,
+    "reset_cards": 0,
+    "merge": 0
+  },
+  "initial_clock": {
+    "start_utc": "2026-10-11T13:00:55.333861+00:00",
+    "start_monotonic": 1648650.1947354379,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "observed_utc": "2026-10-11T13:01:54.897866+00:00",
+    "observed_monotonic": 1648709.758740438,
+    "anchor": "first actual shell UTC; monotonic bound from paired same-boot clock, never reset",
+    "heavy_stop_utc": "2026-10-12T02:00:55.333861+00:00",
+    "deadline_utc": "2026-10-12T03:00:55.333861+00:00",
+    "total_window_seconds": 50400,
+    "scientific_loaded_limit_seconds": 39600,
+    "review_commit": "6fcc95ea94b869d738c00c5f3e11c7025dd52f13"
+  },
+  "clock_provenance": {
+    "status": "ACTUAL_GIT_CLOCK_RESOLVED_REVIEW_TIMESTAMP_DIFFERS",
+    "commit": "b393ec0c2be86270a72ebaac8a02a73d05cf7a83",
+    "Git_author_ISO": "2026-10-11T20:16:15+08:00",
+    "Git_committer_ISO": "2026-10-11T20:16:15+08:00",
+    "author_epoch": 1791720975,
+    "committer_epoch": 1791720975,
+    "raw_commit_header": "tree 51a464019b6a6d5276786bcd586c5283c823481e\nparent fdc6104c4124082298dd9b3d8a5b193966d68e0a\nauthor Jiahui Shen <90319617+Rookie1234567@users.noreply.github.com> 1791720975 +0800\ncommitter Jiahui Shen <90319617+Rookie1234567@users.noreply.github.com> 1791720975 +0800",
+    "review_claim_UTC": "2026-10-11T11:10:59Z",
+    "response_cost_snapshot_UTC": "2026-10-11T12:11:15.599935+00:00",
+    "delivery_UTC": "2026-10-11T12:18:06.092967+00:00",
+    "delivery_monotonic": 1646080.953669276,
+    "delivery_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "delivery_receipt_sha256": "8e7c248b8f6ff93ed2c4ee20d353d91b637619643bc575b519b1ad2acb4e66d3",
+    "conclusion": "Actual Git is12:16:15Z, after cost snapshot12:11:15Z and before delivery12:18:06Z. The11:10:59Z review claim does not match this commit header. Historical text is unchanged; costs use saved monotonic receipts, not UTC differences."
+  },
+  "run_sources": {
+    "PREFLIGHT": "c133795e69d8cecef9aa3e813c4c8df67b52cd87"
+  },
+  "all_attempt_sources": [
+    {
+      "role": "focused",
+      "classification": "COMPLETED",
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v74/aux_focused_02"
+    },
+    {
+      "role": "PREFLIGHT",
+      "classification": "COMPLETED",
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v74_harmonic_coarse_preflight_20261011T132751729272Z"
+    },
+    {
+      "role": "HARMONIC_PREPARE",
+      "classification": "WORKER_FAILED",
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v74_harmonic_coarse_prepare_20261011T133304075768Z"
+    },
+    {
+      "role": "pre",
+      "classification": "MONITORING_FAILED",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v74/aux_pre_03"
+    },
+    {
+      "role": "pre",
+      "classification": "COMPLETED",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v74/aux_pre_04"
+    },
+    {
+      "role": "HARMONIC_PREPARE",
+      "classification": "SIGNAL_STOP_SENDER_UNKNOWN",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v74_harmonic_coarse_prepare_20261011T152502830254Z"
+    },
+    {
+      "role": "post",
+      "classification": "WORKER_FAILED",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v74/aux_post_partial01"
+    },
+    {
+      "role": "pre",
+      "classification": "COMPLETED",
+      "source_sha": "3a9a0d2b4f03966d99d50b22e49a7adf6cd2dc28",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v74/aux_pre_05"
+    },
+    {
+      "role": "post",
+      "classification": "COMPLETED",
+      "source_sha": "3a9a0d2b4f03966d99d50b22e49a7adf6cd2dc28",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v74/aux_post_partial02"
+    }
+  ],
+  "formal_wrapper_entries": [
+    {
+      "entry": "HARMONIC_PREPARE_one_run01",
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "receipt": {
+        "path": "tmp/task042/v74/HARMONIC_PREPARE_one_run01/receipt.json",
+        "bytes": 769,
+        "sha256": "3f3bd48cdb3f1ad106791108ca31754e7591fc64960e49196913b6e44670b223"
+      }
+    },
+    {
+      "entry": "HARMONIC_PREPARE_one_run02",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "receipt": {
+        "path": "tmp/task042/v74/HARMONIC_PREPARE_one_run02/receipt.json",
+        "bytes": 769,
+        "sha256": "a45a1fd25e57a0ec449576212539b02c8a9afa5329567ef85950e23a28fcb3ec"
+      }
+    },
+    {
+      "entry": "PREFLIGHT_one_run01",
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "receipt": {
+        "path": "tmp/task042/v74/PREFLIGHT_one_run01/receipt.json",
+        "bytes": 773,
+        "sha256": "51658fbcdbe3010ea697b9f351835f2b8a87df1e7d87ac7c7c250f064c18ba87"
+      }
+    },
+    {
+      "entry": "PREFLIGHT_one_run02",
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "receipt": {
+        "path": "tmp/task042/v74/PREFLIGHT_one_run02/receipt.json",
+        "bytes": 771,
+        "sha256": "a592021697ff19786843b2b92aa9eda90c10e8c8dd89fac8e307882d69adcd31"
+      }
+    },
+    {
+      "entry": "auxiliary_focused01",
+      "source_sha": "f658c20a36af8921d954c2655f41e8adc71e1262",
+      "receipt": {
+        "path": "tmp/task042/v74/auxiliary_focused01/receipt.json",
+        "bytes": 623,
+        "sha256": "f0c5e13a5bf35ece0b0cc0111eb80e5205d510734ad4574c28c4265e26300608"
+      }
+    },
+    {
+      "entry": "auxiliary_focused02",
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "receipt": {
+        "path": "tmp/task042/v74/auxiliary_focused02/receipt.json",
+        "bytes": 623,
+        "sha256": "ce9527f36556b5646b5fa05816ea2ffa31c3e0c0e2f7bd7e647a4f1a40ae3b74"
+      }
+    },
+    {
+      "entry": "auxiliary_postpartial01",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "receipt": {
+        "path": "tmp/task042/v74/auxiliary_postpartial01/receipt.json",
+        "bytes": 622,
+        "sha256": "18b120ca363cf192863850b6754b8acaf3fd92c31f9392722bdc8b4721854ef7"
+      }
+    },
+    {
+      "entry": "auxiliary_postpartial02",
+      "source_sha": "3a9a0d2b4f03966d99d50b22e49a7adf6cd2dc28",
+      "receipt": {
+        "path": "tmp/task042/v74/auxiliary_postpartial02/receipt.json",
+        "bytes": 623,
+        "sha256": "4e302473dddbbc0d316ea4c0c3486bc2f9d06431b22a2dabcf62b10ef1710d3c"
+      }
+    },
+    {
+      "entry": "auxiliary_pre03",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "receipt": {
+        "path": "tmp/task042/v74/auxiliary_pre03/receipt.json",
+        "bytes": 598,
+        "sha256": "f2724f6cc48542061b04479af42a33c233a3ff8e3ecf3d92228e9c3a8bb2358f"
+      }
+    },
+    {
+      "entry": "auxiliary_pre04",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "receipt": {
+        "path": "tmp/task042/v74/auxiliary_pre04/receipt.json",
+        "bytes": 619,
+        "sha256": "1ca670db19003b800a219e6aac883fda4ed76fa2a4a4b0e8f218db03e4a37fad"
+      }
+    },
+    {
+      "entry": "auxiliary_pre05",
+      "source_sha": "3a9a0d2b4f03966d99d50b22e49a7adf6cd2dc28",
+      "receipt": {
+        "path": "tmp/task042/v74/auxiliary_pre05/receipt.json",
+        "bytes": 619,
+        "sha256": "6165819d71c056a069d416c416e4607f2c41be6ec884a3ef54fe4c8019e1fb47"
+      }
+    }
+  ],
+  "result_pointers": {
+    "PREFLIGHT": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v74/task042_v74_harmonic_coarse_preflight_20261011T132751729272Z/result.json",
+      "sha256": "f254ffc9474533d1425ac272e30c46609a14fada9cc3a76bb8c19b751e0ece55"
+    }
+  },
+  "document_HEAD": "3a9a0d2b4f03966d99d50b22e49a7adf6cd2dc28",
+  "actual_source_separate": true,
+  "old_evidence_unchanged": true,
+  "visual": "NOT_VERIFIED"
+}

@@ -1,0 +1,29 @@
+{
+  "parent_V70_packet_manifest_sha256": "9bef5add6398999c70c21c7f26a86833fc1eb46f98598c8503aa3c41743728da",
+  "parent_V70_BUILD_seconds": 9646.82648,
+  "parent_BUILD_included_global_S": true,
+  "geometry_packet_only_cold_seconds": null,
+  "old_V71_E0_not_used": true,
+  "old_E0_Galerkin_seconds_not_new_H_dependency": 2856.998,
+  "exact_selected_parent_prefix_seconds": null,
+  "complete_T_N1_seconds": null,
+  "I_prepared_start_T_N1_seconds": null,
+  "scientific_candidate_returned": false,
+  "first_base_completed_measured_seconds": 4210.528095266083,
+  "repeat_base_unfinished_wall_to_recorded_stop_seconds": 5505.524896143936,
+  "completed_second_base_duration": null,
+  "H_repeat_wrapper": {
+    "path": "tmp/task042/v74/HARMONIC_PREPARE_one_run02/receipt.json",
+    "bytes": 769,
+    "sha256": "a45a1fd25e57a0ec449576212539b02c8a9afa5329567ef85950e23a28fcb3ec"
+  },
+  "prediction_overrun": {
+    "path": "tmp/task042/v74/H_forecast_overrun_observation.json",
+    "bytes": 1530,
+    "sha256": "16997ff956086a231fc64043e44b58700c2069b2195c7697a166ed9a7b735477"
+  },
+  "unique_next_pilot": "same fixed harmonic candidate: exact grouped base Galerkin plus atomic base checkpoint, then complete existing macros/Galerkin before original fixed iteration under a new explicit contract",
+  "automatic_next_window": false,
+  "NN20": false,
+  "target_2TB48h": false
+}

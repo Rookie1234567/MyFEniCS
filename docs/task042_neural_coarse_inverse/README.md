@@ -1,3 +1,11 @@
+## Task042 V74：局部Maxwell齐次延拓
+
+| 固定对象 | 完整结果 | 边界与证据 |
+|---|---|---|
+| 0.7nm NOTCH、25576tet/p5/828；7068阶harmonic粗层+原38块RAS | H准备时限用尽，未进入完整迭代；true=unknown / NOT_RUN；strict=False | global fine K/S/LU0；局部/粗因子存在；[回应](response_v74.md) · [完整场与费用](outcomes/local_maxwell_harmonic_coarse_v74.md) |
+
+不减少细层空间；用每个宏内原Maxwell方程替换粗基内部形状。保留全部失败与费用，不授连续精度、NN20或2TB48h资格。
+
 ## Task042 V73：固定restart128与粗层反馈
 
 | 路线 / 范围 | 完整方程与同离散场 | 实际资源与边界 | 证据 |

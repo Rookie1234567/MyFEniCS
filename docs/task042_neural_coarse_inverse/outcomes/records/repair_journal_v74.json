@@ -1,0 +1,88 @@
+{
+  "rows": [
+    {
+      "root_cause": "V74 storage_limits dispatch omitted harmonic scope, inherited V51 storage cap",
+      "failed_source": "f658c20a36af8921d954c2655f41e8adc71e1262",
+      "attempt": "auxiliary_focused01",
+      "elapsed_seconds": 44.33391471696086,
+      "worker_started": false,
+      "PDE": 0,
+      "retained_returned": false,
+      "repair": "add explicit plan_record dispatch and live storage/memory/context regression",
+      "historical_failure_unchanged": true
+    },
+    {
+      "root_cause": "auxiliary called focused rather than pre; complete qualification receipt was not promoted to component pointer",
+      "failed_source": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "attempt": "PREFLIGHT_one_run01",
+      "elapsed_seconds": 0.35109689203090966,
+      "worker_started": false,
+      "PDE": 0,
+      "repair": "verify existing supervised PASSED tests and unchanged implementation hashes; publish standard hash-bound pointer without scientific replay",
+      "historical_failure_unchanged": true
+    },
+    {
+      "root_cause": "H case_remaining counts the active interval twice as unsegmented adaptation",
+      "failed_source": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "attempt": "HARMONIC_PREPARE_one_run01",
+      "elapsed_seconds": 6424.972261026036,
+      "worker_seconds": 6333.654460625956,
+      "macro_packets_completed": 881,
+      "worker_started": true,
+      "PDE": 0,
+      "retained_returned": false,
+      "repair": "remove live interval from unsegmented seconds and enforce total H time from original first clock; resume matching healthy macros only; charge repeated base Galerkin",
+      "historical_failure_unchanged": true
+    },
+    {
+      "root_cause": "targeted test command used HarmonicTraceTests rather than existing HarmonicTests",
+      "attempt": "clock_target_command01",
+      "elapsed_seconds": null,
+      "worker_started": false,
+      "PDE": 0,
+      "repair": "correct actual unittest class name; same unchanged test",
+      "historical_failure_unchanged": true
+    },
+    {
+      "root_cause": "auxiliary command provided a non-executable Python file without interpreter",
+      "attempt": "auxiliary_pre03",
+      "elapsed_seconds": 89.58325330284424,
+      "worker_started": false,
+      "PDE": 0,
+      "repair": "use qualified python -m benchmarks.qualify_harmonic_trace as actual supervised command",
+      "historical_failure_unchanged": true
+    },
+    {
+      "root_cause": "saved checker rejected its own supervised post consumer as an active scientific actor",
+      "attempt": "auxiliary_postpartial01",
+      "failed_source": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "failed_helper_sha256": "48e00935526b8c54679dc701888c30239cec307b9553772c2e78d8a78f323ee7",
+      "elapsed_seconds": 94.45303775579669,
+      "worker_seconds": 3.95945054711774,
+      "PDE": 0,
+      "retained_returned": false,
+      "repair": "require exact own post folder/role; still reject any scientific actor; consume unchanged saved packets",
+      "historical_failure_unchanged": true
+    },
+    {
+      "root_cause": "workflow duration was selected before admission and remained stale at worker launch",
+      "attempt": "HARMONIC_PREPARE_one_run02",
+      "failed_source": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "minimal_repair": "V74-only remaining allowance rechecked immediately before window.begin/supervise; new clamp regression",
+      "new_PDE": 0,
+      "old_failure_unchanged": true,
+      "actual_stop": "identity-checked explicit controller TERM at original elapsed14400.01277398318s"
+    },
+    {
+      "root_cause": "document renderer expected repair while one new clock record used minimal_repair",
+      "attempt": "metadata_writer01",
+      "failed_helper_sha256": "6f48e6fe9641b316802fe920796305dc070f3a3ae085d0c97aae4e22066516dd",
+      "error": "KeyError: 'repair'",
+      "worker_started": false,
+      "PDE": 0,
+      "elapsed_seconds": null,
+      "repair": "accept explicit minimal_repair field in renderer; preserve original repair records",
+      "historical_failure_unchanged": true
+    }
+  ]
+}

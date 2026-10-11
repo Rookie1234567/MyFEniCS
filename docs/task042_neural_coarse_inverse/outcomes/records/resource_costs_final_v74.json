@@ -1,0 +1,501 @@
+{
+  "as_of_utc": "2026-10-11T17:20:39.819480+00:00",
+  "window": {
+    "start_utc": "2026-10-11T13:00:55.333861+00:00",
+    "start_monotonic": 1648650.1947354379,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "observed_utc": "2026-10-11T13:01:54.897866+00:00",
+    "observed_monotonic": 1648709.758740438,
+    "anchor": "first actual shell UTC; monotonic bound from paired same-boot clock, never reset",
+    "heavy_stop_utc": "2026-10-12T02:00:55.333861+00:00",
+    "deadline_utc": "2026-10-12T03:00:55.333861+00:00",
+    "total_window_seconds": 50400,
+    "scientific_loaded_limit_seconds": 39600,
+    "review_commit": "6fcc95ea94b869d738c00c5f3e11c7025dd52f13",
+    "total_limit_seconds": 50400,
+    "heavy_limit_seconds": 46800
+  },
+  "T_research_current_window_elapsed_seconds": 15584.44516145112,
+  "current_known_disjoint_lower_seconds": 13134.562249855982,
+  "known_wrapper_seconds": 13131.404987561982,
+  "known_standalone_targeted_seconds": 3.157262294,
+  "standalone_receipt": {
+    "path": "tmp/task042/v74/metadata_setup_receipt.json",
+    "bytes": 124,
+    "sha256": "2a158f410b34c5684fdeae167b349a2a507c70922083ec804dcdf4fea3b6159a"
+  },
+  "unsegmented_window_seconds": 2449.882911595138,
+  "parent_history_known_unique_lower_seconds": 368681.67300891416,
+  "history_plus_current_known_wall_lower_seconds": 381816.2352587701,
+  "runs": [
+    {
+      "role": "focused",
+      "folder": "tmp/task042/v74/aux_focused_02",
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "elapsed_seconds": 4.909778753994033,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 8,
+        "sampled_tree_peak_bytes": 318574592,
+        "ownswap_bytes": 0,
+        "actual_max_gap_seconds": 0.7372494009323418,
+        "all_status_readable": true,
+        "continuous_peak": false
+      }
+    },
+    {
+      "role": "PREFLIGHT",
+      "folder": "results/task042/task042_v74_harmonic_coarse_preflight_20261011T132751729272Z",
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "elapsed_seconds": 191.41548537206836,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 263,
+        "sampled_tree_peak_bytes": 6455877632,
+        "ownswap_bytes": 0,
+        "actual_max_gap_seconds": 0.779793978203088,
+        "all_status_readable": true,
+        "continuous_peak": false
+      }
+    },
+    {
+      "role": "HARMONIC_PREPARE",
+      "folder": "results/task042/task042_v74_harmonic_coarse_prepare_20261011T133304075768Z",
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "elapsed_seconds": 6333.654460625956,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 7298,
+        "sampled_tree_peak_bytes": 9959628800,
+        "ownswap_bytes": 0,
+        "actual_max_gap_seconds": 2.826489167055115,
+        "all_status_readable": true,
+        "continuous_peak": false
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v74/aux_pre_03",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "classification": "MONITORING_FAILED",
+      "exit_code": null,
+      "elapsed_seconds": 0.0328999690245837,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 0,
+        "sampled_tree_peak_bytes": 0,
+        "ownswap_bytes": 0,
+        "actual_max_gap_seconds": 0,
+        "all_status_readable": true,
+        "continuous_peak": false
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v74/aux_pre_04",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "elapsed_seconds": 7.018329177051783,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 4,
+        "sampled_tree_peak_bytes": 234598400,
+        "ownswap_bytes": 0,
+        "actual_max_gap_seconds": 2.477387757971883,
+        "all_status_readable": true,
+        "continuous_peak": false
+      }
+    },
+    {
+      "role": "HARMONIC_PREPARE",
+      "folder": "results/task042/task042_v74_harmonic_coarse_prepare_20261011T152502830254Z",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "classification": "SIGNAL_STOP_SENDER_UNKNOWN",
+      "exit_code": -15,
+      "elapsed_seconds": 5711.905512288911,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 2446,
+        "sampled_tree_peak_bytes": 9761226752,
+        "ownswap_bytes": 0,
+        "actual_max_gap_seconds": 2.9449256712105125,
+        "all_status_readable": true,
+        "continuous_peak": false
+      }
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v74/aux_post_partial01",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "elapsed_seconds": 3.959467353997752,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 3,
+        "sampled_tree_peak_bytes": 143060992,
+        "ownswap_bytes": 0,
+        "actual_max_gap_seconds": 1.7636786350049078,
+        "all_status_readable": true,
+        "continuous_peak": false
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v74/aux_pre_05",
+      "source_sha": "3a9a0d2b4f03966d99d50b22e49a7adf6cd2dc28",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "elapsed_seconds": 7.0706364791840315,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 4,
+        "sampled_tree_peak_bytes": 219144192,
+        "ownswap_bytes": 0,
+        "actual_max_gap_seconds": 2.464086489053443,
+        "all_status_readable": true,
+        "continuous_peak": false
+      }
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v74/aux_post_partial02",
+      "source_sha": "3a9a0d2b4f03966d99d50b22e49a7adf6cd2dc28",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "elapsed_seconds": 17.089445521123707,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 8,
+        "sampled_tree_peak_bytes": 170786816,
+        "ownswap_bytes": 0,
+        "actual_max_gap_seconds": 2.8727742368355393,
+        "all_status_readable": true,
+        "continuous_peak": false
+      }
+    }
+  ],
+  "wrapper_rows": [
+    {
+      "entry": "HARMONIC_PREPARE_one_run01",
+      "receipt": {
+        "path": "tmp/task042/v74/HARMONIC_PREPARE_one_run01/receipt.json",
+        "bytes": 769,
+        "sha256": "3f3bd48cdb3f1ad106791108ca31754e7591fc64960e49196913b6e44670b223"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v74_harmonic_coarse_prepare.dat"
+      ],
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "start_utc": "2026-10-11T13:33:03.638973+00:00",
+      "end_utc": "2026-10-11T15:20:08.611211+00:00",
+      "elapsed_seconds": 6424.972261026036,
+      "exit_code": 3,
+      "input_sha256": "f2827ac5dabf6b7002461d0ab2cf9fa04ef88955965749a3a443b9c7baf97b03",
+      "wrapper_sha256": "e0029f4291a353e9ef34820adee17ef5f39ae8473223ef5b7c1615626eda1e8b",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "entry": "HARMONIC_PREPARE_one_run02",
+      "receipt": {
+        "path": "tmp/task042/v74/HARMONIC_PREPARE_one_run02/receipt.json",
+        "bytes": 769,
+        "sha256": "a45a1fd25e57a0ec449576212539b02c8a9afa5329567ef85950e23a28fcb3ec"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v74_harmonic_coarse_prepare.dat"
+      ],
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "start_utc": "2026-10-11T15:25:02.282599+00:00",
+      "end_utc": "2026-10-11T17:01:43.957442+00:00",
+      "elapsed_seconds": 5801.674869562965,
+      "exit_code": 3,
+      "input_sha256": "f2827ac5dabf6b7002461d0ab2cf9fa04ef88955965749a3a443b9c7baf97b03",
+      "wrapper_sha256": "e0029f4291a353e9ef34820adee17ef5f39ae8473223ef5b7c1615626eda1e8b",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "entry": "PREFLIGHT_one_run01",
+      "receipt": {
+        "path": "tmp/task042/v74/PREFLIGHT_one_run01/receipt.json",
+        "bytes": 773,
+        "sha256": "51658fbcdbe3010ea697b9f351835f2b8a87df1e7d87ac7c7c250f064c18ba87"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v74_harmonic_coarse_preflight.dat"
+      ],
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "start_utc": "2026-10-11T13:26:53.449606+00:00",
+      "end_utc": "2026-10-11T13:26:53.800677+00:00",
+      "elapsed_seconds": 0.35109689203090966,
+      "exit_code": 1,
+      "input_sha256": "813eeb07bb35c3ff3cfae0e52db86496e8bd11453671068706184980b1f762e7",
+      "wrapper_sha256": "e0029f4291a353e9ef34820adee17ef5f39ae8473223ef5b7c1615626eda1e8b",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "entry": "PREFLIGHT_one_run02",
+      "receipt": {
+        "path": "tmp/task042/v74/PREFLIGHT_one_run02/receipt.json",
+        "bytes": 771,
+        "sha256": "a592021697ff19786843b2b92aa9eda90c10e8c8dd89fac8e307882d69adcd31"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v74_harmonic_coarse_preflight.dat"
+      ],
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "start_utc": "2026-10-11T13:27:51.359512+00:00",
+      "end_utc": "2026-10-11T13:32:33.054212+00:00",
+      "elapsed_seconds": 281.6947158561088,
+      "exit_code": 0,
+      "input_sha256": "813eeb07bb35c3ff3cfae0e52db86496e8bd11453671068706184980b1f762e7",
+      "wrapper_sha256": "e0029f4291a353e9ef34820adee17ef5f39ae8473223ef5b7c1615626eda1e8b",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "entry": "auxiliary_focused01",
+      "receipt": {
+        "path": "tmp/task042/v74/auxiliary_focused01/receipt.json",
+        "bytes": 623,
+        "sha256": "f0c5e13a5bf35ece0b0cc0111eb80e5205d510734ad4574c28c4265e26300608"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "focused",
+        "01",
+        "python",
+        "-m",
+        "benchmarks.qualify_harmonic_trace"
+      ],
+      "source_sha": "f658c20a36af8921d954c2655f41e8adc71e1262",
+      "start_utc": "2026-10-11T13:19:48.356118+00:00",
+      "end_utc": "2026-10-11T13:20:32.690028+00:00",
+      "elapsed_seconds": 44.33391471696086,
+      "exit_code": 1,
+      "wrapper_sha256": "e495cb440068f49e55c192714c0077245b747c26fdabf933abb3bb46113084d2",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "entry": "auxiliary_focused02",
+      "receipt": {
+        "path": "tmp/task042/v74/auxiliary_focused02/receipt.json",
+        "bytes": 623,
+        "sha256": "ce9527f36556b5646b5fa05816ea2ffa31c3e0c0e2f7bd7e647a4f1a40ae3b74"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "focused",
+        "02",
+        "python",
+        "-m",
+        "benchmarks.qualify_harmonic_trace"
+      ],
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "start_utc": "2026-10-11T13:21:42.282698+00:00",
+      "end_utc": "2026-10-11T13:23:16.455258+00:00",
+      "elapsed_seconds": 94.17256796709262,
+      "exit_code": 0,
+      "wrapper_sha256": "e495cb440068f49e55c192714c0077245b747c26fdabf933abb3bb46113084d2",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "entry": "auxiliary_postpartial01",
+      "receipt": {
+        "path": "tmp/task042/v74/auxiliary_postpartial01/receipt.json",
+        "bytes": 622,
+        "sha256": "18b120ca363cf192863850b6754b8acaf3fd92c31f9392722bdc8b4721854ef7"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "post",
+        "partial01",
+        "python",
+        "tmp/task042/v74/check_saved_partial.py"
+      ],
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "start_utc": "2026-10-11T17:02:37.935167+00:00",
+      "end_utc": "2026-10-11T17:04:12.388198+00:00",
+      "elapsed_seconds": 94.45303775579669,
+      "exit_code": 1,
+      "wrapper_sha256": "e495cb440068f49e55c192714c0077245b747c26fdabf933abb3bb46113084d2",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "entry": "auxiliary_postpartial02",
+      "receipt": {
+        "path": "tmp/task042/v74/auxiliary_postpartial02/receipt.json",
+        "bytes": 623,
+        "sha256": "4e302473dddbbc0d316ea4c0c3486bc2f9d06431b22a2dabcf62b10ef1710d3c"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "post",
+        "partial02",
+        "python",
+        "tmp/task042/v74/check_saved_partial.py"
+      ],
+      "source_sha": "3a9a0d2b4f03966d99d50b22e49a7adf6cd2dc28",
+      "start_utc": "2026-10-11T17:09:15.350341+00:00",
+      "end_utc": "2026-10-11T17:11:02.276366+00:00",
+      "elapsed_seconds": 106.92602696293034,
+      "exit_code": 0,
+      "wrapper_sha256": "e495cb440068f49e55c192714c0077245b747c26fdabf933abb3bb46113084d2",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "entry": "auxiliary_pre03",
+      "receipt": {
+        "path": "tmp/task042/v74/auxiliary_pre03/receipt.json",
+        "bytes": 598,
+        "sha256": "f2724f6cc48542061b04479af42a33c233a3ff8e3ecf3d92228e9c3a8bb2358f"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "03",
+        "benchmarks/qualify_harmonic_trace.py"
+      ],
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "start_utc": "2026-10-11T15:21:16.944075+00:00",
+      "end_utc": "2026-10-11T15:22:46.527320+00:00",
+      "elapsed_seconds": 89.58325330284424,
+      "exit_code": 1,
+      "wrapper_sha256": "e495cb440068f49e55c192714c0077245b747c26fdabf933abb3bb46113084d2",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "entry": "auxiliary_pre04",
+      "receipt": {
+        "path": "tmp/task042/v74/auxiliary_pre04/receipt.json",
+        "bytes": 619,
+        "sha256": "1ca670db19003b800a219e6aac883fda4ed76fa2a4a4b0e8f218db03e4a37fad"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "04",
+        "python",
+        "-m",
+        "benchmarks.qualify_harmonic_trace"
+      ],
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "start_utc": "2026-10-11T15:23:03.895273+00:00",
+      "end_utc": "2026-10-11T15:24:40.283311+00:00",
+      "elapsed_seconds": 96.38802880514413,
+      "exit_code": 0,
+      "wrapper_sha256": "e495cb440068f49e55c192714c0077245b747c26fdabf933abb3bb46113084d2",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "entry": "auxiliary_pre05",
+      "receipt": {
+        "path": "tmp/task042/v74/auxiliary_pre05/receipt.json",
+        "bytes": 619,
+        "sha256": "6165819d71c056a069d416c416e4607f2c41be6ec884a3ef54fe4c8019e1fb47"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "05",
+        "python",
+        "-m",
+        "benchmarks.qualify_harmonic_trace"
+      ],
+      "source_sha": "3a9a0d2b4f03966d99d50b22e49a7adf6cd2dc28",
+      "start_utc": "2026-10-11T17:07:17.841291+00:00",
+      "end_utc": "2026-10-11T17:08:54.696489+00:00",
+      "elapsed_seconds": 96.85521471407264,
+      "exit_code": 0,
+      "wrapper_sha256": "e495cb440068f49e55c192714c0077245b747c26fdabf933abb3bb46113084d2",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    }
+  ],
+  "peak_sampled_tree_bytes": 9959628800,
+  "actual_max_sample_gap_seconds": 2.9449256712105125,
+  "nominal_sampling_seconds": 0.5,
+  "continuous_peak": false,
+  "max_observed_ownswap_bytes": 0,
+  "OOC_attempts": 0,
+  "storage": {
+    "new_bytes": 1718830215,
+    "new_files": 4031,
+    "immutable_historical_bytes": 190893888665,
+    "task_deduplicated_bytes": 192612718880,
+    "free_bytes": 2709186400256,
+    "new_cap": 34359738368,
+    "task_cap": 747324309504,
+    "evidence_reserve_bytes": 536870912
+  },
+  "action_counts": null,
+  "KSP_attempts": null,
+  "active": null,
+  "closed": false,
+  "global_fine_K_reads": 0,
+  "global_fine_S_reads": 0,
+  "global_fine_matrix_formations": 0,
+  "global_fine_numeric_count": 0,
+  "prepared_start": true,
+  "geometry_packet_only_cold_T_N1_seconds": null,
+  "qualified_solution_T_N1_seconds": null,
+  "unknowns": [
+    "continuous peak",
+    "unsegmented orthogonalization/BLAS and implementation",
+    "from-geometry packet-only cold construction",
+    "target distributed scaling"
+  ],
+  "production_speed_or_memory_gain": null,
+  "NN20": false,
+  "vector_scope": {
+    "trace_FE": 1176465,
+    "ports": 828,
+    "full_FE": 1943745,
+    "cell_internal": 767280,
+    "derived_main_V_Z_vectors": 257,
+    "derived_main_V_Z_bytes": 4841028816,
+    "actual_RSS_is_separate": true
+  }
+}

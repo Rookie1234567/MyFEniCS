@@ -1,0 +1,19 @@
+{
+  "focused": {
+    "path": "tmp/task042/v74/aux_pre_05/tests.json",
+    "bytes": 16741,
+    "sha256": "a76df2dbb8988cfe4c11625ffd62af7823aca8f6fca5113ade61acd9ec713fdd"
+  },
+  "focused_status": "PASSED",
+  "qualification": {
+    "path": "tmp/task042/v74/qualification.json",
+    "bytes": 14844,
+    "sha256": "63f932d2095a31fcd5025c261c6bd5e24ce6aee25d49679b5222e54d7cf1bc70"
+  },
+  "actual_unittest_count": 12,
+  "previous_source_qualification_stdout_had_legacy_10": true,
+  "final_stdout_count_matches_actual": true,
+  "full_pytest": false,
+  "CI": "NOT_RUN",
+  "GitHub_visual": "NOT_VERIFIED"
+}

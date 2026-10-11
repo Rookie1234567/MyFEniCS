@@ -1,0 +1,12 @@
+{
+  "status": "PENDING_FINAL_DOCUMENT_CHECK_AND_CLOSURE",
+  "UTC": "2026-10-11T17:25:15.790720+00:00",
+  "active": null,
+  "scientific_actors_exited": true,
+  "scientific_queue_frozen": true,
+  "KSP_count": 0,
+  "planned_I_numeric": 0,
+  "closure_receipt_will_be_replaced_after_actual_final_check": true,
+  "delivery_git_receipt": "tmp/task042/v74/delivery_git_receipt.json",
+  "no_automatic_next_window": true
+}

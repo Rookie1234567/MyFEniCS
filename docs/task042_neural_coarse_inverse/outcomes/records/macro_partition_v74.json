@@ -1,0 +1,93 @@
+{
+  "inventory": {
+    "skeleton_rows": 410790,
+    "interior_rows": 765675,
+    "macro_count": 960,
+    "maximum_J_rows": 2090,
+    "empty_macros": 0,
+    "exterior_rows": 42850,
+    "physical_exterior_in_skeleton": true,
+    "partition_complete": true,
+    "no_cross_macro_J_cell_contribution": true,
+    "removed_cell_internal_rows": 767280,
+    "parent_geometry_sha256": "644c2c2b8a176020413833283d0954a62ba1a97c53471a4566c2f3ea8c940421",
+    "p2_entity_columns": 6240,
+    "no_new_Z0_or_partition": true
+  },
+  "partition": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v74/task042_v74_harmonic_coarse_preflight_20261011T132751729272Z/macro_partition.npz",
+    "sha256": "b7d975207fb4b94c559f1bc82f16eeca010768af3a80523436c161031f3f1a1a",
+    "members": {
+      "owner": {
+        "shape": [
+          1176465
+        ],
+        "dtype": "int32",
+        "sha256": "12b6856b7559d14a774d9c61414940fcb298f3584558fa19cfedc80d13abb223"
+      },
+      "parent_cells": {
+        "shape": [
+          25576
+        ],
+        "dtype": "int32",
+        "sha256": "1c8bae0f8c210eb45737eea9c94c7238136e271035b1602884586f0277f0f43a"
+      },
+      "parent_geometry": {
+        "shape": [
+          960,
+          4,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "87c85f25b5f56b3a69c5f0b73acc3cdad7babdd59589ac4b4b631cc0f8151de5"
+      }
+    }
+  },
+  "producer": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v74/task042_v74_harmonic_coarse_preflight_20261011T132751729272Z/result.json",
+    "sha256": "f254ffc9474533d1425ac272e30c46609a14fada9cc3a76bb8c19b751e0ece55"
+  },
+  "original_Z0": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/sparse_Zgamma.npz",
+    "sha256": "536758160a20d38c5fc87781a192fd853d6f387164774181c12595d0daa3880e",
+    "members": {
+      "data": {
+        "shape": [
+          23529162
+        ],
+        "dtype": "complex128",
+        "sha256": "75c764eba06e75843b3d173af184e1c54c7ed3fb384f04b96ce8e153baab434b"
+      },
+      "indices": {
+        "shape": [
+          23529162
+        ],
+        "dtype": "int64",
+        "sha256": "3028cc43263e469477e3ead4a8d9a930ef5157056b0f64db7a106008bb3a5a1b"
+      },
+      "indptr": {
+        "shape": [
+          1176466
+        ],
+        "dtype": "int64",
+        "sha256": "3c5c66df7d9bcf3aff5073b0cf002aed483c0a91d607c10c48c2b50fc397b432"
+      },
+      "shape": {
+        "shape": [
+          2
+        ],
+        "dtype": "int64",
+        "sha256": "9768a402533701c31940a94d866216d40daae12043fc3d32918a0e432ef4c10d"
+      },
+      "parent_cells": {
+        "shape": [
+          25576
+        ],
+        "dtype": "int32",
+        "sha256": "1c8bae0f8c210eb45737eea9c94c7238136e271035b1602884586f0277f0f43a"
+      }
+    }
+  },
+  "no_RAS_repartition": true,
+  "new_macro_classification": true
+}

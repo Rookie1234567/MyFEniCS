@@ -1,0 +1,13 @@
+{
+  "pre_delivery": {
+    "inventory": {
+      "path": "benchmarks/artifacts/task042/v74/increment_evidence_v74/pre_delivery/inventory.json",
+      "bytes": 423646,
+      "sha256": "c3cd31206f500402be94cb5af7abd97e12979b998bac57f200e25eb7445e7401"
+    },
+    "entries": 1113
+  },
+  "final_tail_pending": true,
+  "scientific_arrays_copied": false,
+  "old_raw_unchanged": true
+}

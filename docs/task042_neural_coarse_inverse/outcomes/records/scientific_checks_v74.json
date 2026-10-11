@@ -1,0 +1,10 @@
+{
+  "joint_equation_pass": false,
+  "strict_pass": false,
+  "status": "NOT_RUN_H_UNQUALIFIED",
+  "saved_partial_checker": {
+    "path": "tmp/task042/v74/aux_post_partial02/partial_saved_checks.json",
+    "bytes": 1877778,
+    "sha256": "85207be88b294684158213a86a7a08e8db3ec551fbd57c4745ed28e683d3932a"
+  }
+}

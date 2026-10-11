@@ -1,0 +1,13 @@
+{
+  "status": "NOT_QUALIFIED_H_TIME_BLOCKED",
+  "qualification": [],
+  "coarse_matrix": null,
+  "coarse_symbolic": null,
+  "double_symbolic_sum_bytes": null,
+  "limit_bytes": 85899345920,
+  "pass_gate": false,
+  "port_base_aggregations_per_attempt": 1,
+  "global_fine_K_or_S_formations": 0,
+  "repeated_base_cost_charged": true,
+  "persistent_base_checkpoint_present": false
+}

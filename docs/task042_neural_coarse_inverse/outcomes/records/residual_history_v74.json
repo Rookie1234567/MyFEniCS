@@ -1,0 +1,16 @@
+{
+  "status": "NOT_RUN",
+  "reason": "H preparation not qualified within its original allowance",
+  "KSP_attempts": 0,
+  "global_iterations": 0,
+  "retained": null,
+  "full_FE": null,
+  "original_equation": null,
+  "six_fields": null,
+  "selected240": null,
+  "modes828": null,
+  "RTA": null,
+  "A_volume": null,
+  "numerical_nonconvergence": false,
+  "continuous_accuracy": false
+}

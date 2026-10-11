@@ -1,0 +1,74 @@
+{
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/solvers/harmonic_trace_coarse.py",
+        "src/solvers/harmonic_trace_scope.py",
+        "src/solvers/harmonic_trace_study.py",
+        "src/solvers/bounded_trace_pc.py",
+        "src/solvers/bounded_trace_study.py"
+      ],
+      "behavior": "explicit opt-in harmonic transfer and existing iterative protocol",
+      "tests": "src.test.test_harmonic_trace:12",
+      "fresh_PDE": "NOT_RUN",
+      "recommendation": "research-only until full Galerkin and full iterative field pass"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/port_preparation.py"
+      ],
+      "behavior": "V74-only storage/context and frozen remaining-time clamp; existing other namespace budgets unchanged",
+      "tests": "live storage/memory and launch-delay tests",
+      "fresh_PDE": "NOT_RUN_V74",
+      "recommendation": "review independently; no production numerical qualification implied"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/qualify_harmonic_trace.py",
+        "benchmarks/collect_harmonic_trace.py",
+        "benchmarks/collect_restart_feedback.py"
+      ],
+      "behavior": "explicit V74 saved checker scope; strict field checker depends on a complete candidate",
+      "tests": "12 focused tests plus saved partial-array consumer",
+      "recommendation": "research-only opt-in"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042_neural_coarse_inverse/response_v74.md",
+        "docs/task042_neural_coarse_inverse/outcomes/local_maxwell_harmonic_coarse_v74.md"
+      ],
+      "behavior": "partial preparation, original failures, all costs and NOT_RUN physics",
+      "recommendation": "evidence"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "input/task042_neural_coarse_inverse/harmonic_trace_v74.json",
+        "input/task042_neural_coarse_inverse/v74_*.dat"
+      ],
+      "behavior": "fixed closed campaign",
+      "recommendation": "no production default"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v74",
+        "tmp/task042/v74",
+        "results/task042/*v74*"
+      ],
+      "behavior": "ignored arrays/factors/host-specific logs; compact receipts link original bytes",
+      "recommendation": "stay ignored"
+    }
+  ],
+  "dependency_order": [
+    "opt-in numerical protocol",
+    "scoped runner",
+    "checker/config",
+    "compact evidence"
+  ],
+  "merge_approval": false
+}

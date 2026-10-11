@@ -1,0 +1,309 @@
+{
+  "actual_runs": [
+    {
+      "role": "focused",
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "classification": "COMPLETED",
+      "manifest": {
+        "path": "tmp/task042/v74/aux_focused_02/run_manifest.json",
+        "bytes": 16169,
+        "sha256": "c39489e9b726ba3068d00e6bf86462e7c5c8d114d717eff436d50ccbfec5c29d"
+      },
+      "implementation_binding_count": 128,
+      "original_input": null,
+      "resolved": null,
+      "physical_sha256": null,
+      "plan_sha256": null,
+      "MPI_size": 1,
+      "rank_cpus": [
+        3
+      ],
+      "planned_bytes": 2147483648,
+      "activation_mode": "fe",
+      "storage_limits": {
+        "new_storage_bytes": 34359738368,
+        "task_storage_bytes": 747324309504,
+        "free_bytes": 53687091200,
+        "evidence_reserve_bytes": 536870912
+      }
+    },
+    {
+      "role": "PREFLIGHT",
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "classification": "COMPLETED",
+      "manifest": {
+        "path": "results/task042/task042_v74_harmonic_coarse_preflight_20261011T132751729272Z/run_manifest.json",
+        "bytes": 16600,
+        "sha256": "e9cc6a5564bd5a35ddc2c4092a3dbcc3f2d1376acbc3c4ba5bb7257b6b2f2c36"
+      },
+      "implementation_binding_count": 128,
+      "original_input": {
+        "path": "results/task042/task042_v74_harmonic_coarse_preflight_20261011T132751729272Z/input_original.dat",
+        "bytes": 103,
+        "sha256": "813eeb07bb35c3ff3cfae0e52db86496e8bd11453671068706184980b1f762e7"
+      },
+      "resolved": {
+        "path": "results/task042/task042_v74_harmonic_coarse_preflight_20261011T132751729272Z/resolved_config.json",
+        "bytes": 8233,
+        "sha256": "cc9ee6d9ffc7c0979589cdccaabaf7752d27e0d580484523035e06b7a507f16b"
+      },
+      "physical_sha256": "df26b8cf28e1115bdb2eb9ac9b79e698596133305310d26c1d664f94e2c5be44",
+      "plan_sha256": "111aadedfebb0b768ecbc2e02a148be23e87c5f2ac00fc33c89a0fc9e12e69bd",
+      "MPI_size": 1,
+      "rank_cpus": [
+        1
+      ],
+      "planned_bytes": 68719476736,
+      "activation_mode": "fe",
+      "storage_limits": {
+        "new_storage_bytes": 34359738368,
+        "task_storage_bytes": 747324309504,
+        "free_bytes": 53687091200,
+        "evidence_reserve_bytes": 536870912
+      }
+    },
+    {
+      "role": "HARMONIC_PREPARE",
+      "source_sha": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+      "classification": "WORKER_FAILED",
+      "manifest": {
+        "path": "results/task042/task042_v74_harmonic_coarse_prepare_20261011T133304075768Z/run_manifest.json",
+        "bytes": 16610,
+        "sha256": "e303b8e7055114ede91171c0e5255e8717068052bb3b843582b381fde0698d04"
+      },
+      "implementation_binding_count": 128,
+      "original_input": {
+        "path": "results/task042/task042_v74_harmonic_coarse_prepare_20261011T133304075768Z/input_original.dat",
+        "bytes": 108,
+        "sha256": "f2827ac5dabf6b7002461d0ab2cf9fa04ef88955965749a3a443b9c7baf97b03"
+      },
+      "resolved": {
+        "path": "results/task042/task042_v74_harmonic_coarse_prepare_20261011T133304075768Z/resolved_config.json",
+        "bytes": 8243,
+        "sha256": "1afbfb59ba149715da783bf2e0b4ac4da76827e13dbb6d902975be3374ead146"
+      },
+      "physical_sha256": "df26b8cf28e1115bdb2eb9ac9b79e698596133305310d26c1d664f94e2c5be44",
+      "plan_sha256": "111aadedfebb0b768ecbc2e02a148be23e87c5f2ac00fc33c89a0fc9e12e69bd",
+      "MPI_size": 1,
+      "rank_cpus": [
+        1
+      ],
+      "planned_bytes": 103079215104,
+      "activation_mode": "fe",
+      "storage_limits": {
+        "new_storage_bytes": 34359738368,
+        "task_storage_bytes": 747324309504,
+        "free_bytes": 53687091200,
+        "evidence_reserve_bytes": 536870912
+      }
+    },
+    {
+      "role": "pre",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "classification": "MONITORING_FAILED",
+      "manifest": {
+        "path": "tmp/task042/v74/aux_pre_03/run_manifest.json",
+        "bytes": 16163,
+        "sha256": "589a51764047234015644cbaef0e686dd0eb37fd747d1d0cc652957cc296a880"
+      },
+      "implementation_binding_count": 128,
+      "original_input": null,
+      "resolved": null,
+      "physical_sha256": null,
+      "plan_sha256": null,
+      "MPI_size": 1,
+      "rank_cpus": [
+        0
+      ],
+      "planned_bytes": 2147483648,
+      "activation_mode": "fe",
+      "storage_limits": {
+        "new_storage_bytes": 34359738368,
+        "task_storage_bytes": 747324309504,
+        "free_bytes": 53687091200,
+        "evidence_reserve_bytes": 536870912
+      }
+    },
+    {
+      "role": "pre",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "classification": "COMPLETED",
+      "manifest": {
+        "path": "tmp/task042/v74/aux_pre_04/run_manifest.json",
+        "bytes": 16164,
+        "sha256": "035abb79e11ef610cfd1d6081735e1ef4d0005cb3b682dbb16a2136aeeb2a91b"
+      },
+      "implementation_binding_count": 128,
+      "original_input": null,
+      "resolved": null,
+      "physical_sha256": null,
+      "plan_sha256": null,
+      "MPI_size": 1,
+      "rank_cpus": [
+        0
+      ],
+      "planned_bytes": 2147483648,
+      "activation_mode": "fe",
+      "storage_limits": {
+        "new_storage_bytes": 34359738368,
+        "task_storage_bytes": 747324309504,
+        "free_bytes": 53687091200,
+        "evidence_reserve_bytes": 536870912
+      }
+    },
+    {
+      "role": "HARMONIC_PREPARE",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "classification": "SIGNAL_STOP_SENDER_UNKNOWN",
+      "manifest": {
+        "path": "results/task042/task042_v74_harmonic_coarse_prepare_20261011T152502830254Z/run_manifest.json",
+        "bytes": 16608,
+        "sha256": "1b7e9ae76d6358ac5ba333724d88a4a51e7614c3c6bcc80189c74cb82ce56d80"
+      },
+      "implementation_binding_count": 128,
+      "original_input": {
+        "path": "results/task042/task042_v74_harmonic_coarse_prepare_20261011T152502830254Z/input_original.dat",
+        "bytes": 108,
+        "sha256": "f2827ac5dabf6b7002461d0ab2cf9fa04ef88955965749a3a443b9c7baf97b03"
+      },
+      "resolved": {
+        "path": "results/task042/task042_v74_harmonic_coarse_prepare_20261011T152502830254Z/resolved_config.json",
+        "bytes": 8243,
+        "sha256": "1afbfb59ba149715da783bf2e0b4ac4da76827e13dbb6d902975be3374ead146"
+      },
+      "physical_sha256": "df26b8cf28e1115bdb2eb9ac9b79e698596133305310d26c1d664f94e2c5be44",
+      "plan_sha256": "111aadedfebb0b768ecbc2e02a148be23e87c5f2ac00fc33c89a0fc9e12e69bd",
+      "MPI_size": 1,
+      "rank_cpus": [
+        0
+      ],
+      "planned_bytes": 103079215104,
+      "activation_mode": "fe",
+      "storage_limits": {
+        "new_storage_bytes": 34359738368,
+        "task_storage_bytes": 747324309504,
+        "free_bytes": 53687091200,
+        "evidence_reserve_bytes": 536870912
+      }
+    },
+    {
+      "role": "post",
+      "source_sha": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+      "classification": "WORKER_FAILED",
+      "manifest": {
+        "path": "tmp/task042/v74/aux_post_partial01/run_manifest.json",
+        "bytes": 16165,
+        "sha256": "d1a3289d9fa7d9c0d53206eeb0befda9c888d1ea3009408744cf5f7e2e11f63d"
+      },
+      "implementation_binding_count": 128,
+      "original_input": null,
+      "resolved": null,
+      "physical_sha256": null,
+      "plan_sha256": null,
+      "MPI_size": 1,
+      "rank_cpus": [
+        0
+      ],
+      "planned_bytes": 2147483648,
+      "activation_mode": "fe",
+      "storage_limits": {
+        "new_storage_bytes": 34359738368,
+        "task_storage_bytes": 747324309504,
+        "free_bytes": 53687091200,
+        "evidence_reserve_bytes": 536870912
+      }
+    },
+    {
+      "role": "pre",
+      "source_sha": "3a9a0d2b4f03966d99d50b22e49a7adf6cd2dc28",
+      "classification": "COMPLETED",
+      "manifest": {
+        "path": "tmp/task042/v74/aux_pre_05/run_manifest.json",
+        "bytes": 16208,
+        "sha256": "6425b10dcf63de5ec504bc9ba8551c0d5e80397a4f77d027d62f9aac0affa39a"
+      },
+      "implementation_binding_count": 128,
+      "original_input": null,
+      "resolved": null,
+      "physical_sha256": null,
+      "plan_sha256": null,
+      "MPI_size": 1,
+      "rank_cpus": [
+        1
+      ],
+      "planned_bytes": 2147483648,
+      "activation_mode": "fe",
+      "storage_limits": {
+        "new_storage_bytes": 34359738368,
+        "task_storage_bytes": 747324309504,
+        "free_bytes": 53687091200,
+        "evidence_reserve_bytes": 536870912
+      }
+    },
+    {
+      "role": "post",
+      "source_sha": "3a9a0d2b4f03966d99d50b22e49a7adf6cd2dc28",
+      "classification": "COMPLETED",
+      "manifest": {
+        "path": "tmp/task042/v74/aux_post_partial02/run_manifest.json",
+        "bytes": 16209,
+        "sha256": "e3860f4206864515577a8988c7f40e258512d80d835bf8abcc97def31aeefdc3"
+      },
+      "implementation_binding_count": 128,
+      "original_input": null,
+      "resolved": null,
+      "physical_sha256": null,
+      "plan_sha256": null,
+      "MPI_size": 1,
+      "rank_cpus": [
+        0
+      ],
+      "planned_bytes": 2147483648,
+      "activation_mode": "fe",
+      "storage_limits": {
+        "new_storage_bytes": 34359738368,
+        "task_storage_bytes": 747324309504,
+        "free_bytes": 53687091200,
+        "evidence_reserve_bytes": 536870912
+      }
+    }
+  ],
+  "native_ABI": {
+    "path": "tmp/task042/v74/native_ABI.json",
+    "bytes": 1191,
+    "sha256": "2978f65c2acaec321252d6cc4cfe371096a90bfbf9a8f1a3a129c312ca1e40cc"
+  },
+  "contract": {
+    "path": "docs/task042_neural_coarse_inverse/review_report_v72.md",
+    "bytes": 21686,
+    "sha256": "cebaecfa7a6a75e0fca8bd6e937fc337cf06af4f67a3e4b463cdd6f93c6fea66"
+  },
+  "plan": {
+    "path": "input/task042_neural_coarse_inverse/harmonic_trace_v74.json",
+    "bytes": 14423,
+    "sha256": "111aadedfebb0b768ecbc2e02a148be23e87c5f2ac00fc33c89a0fc9e12e69bd"
+  },
+  "common_math_identity": {
+    "partition_sha256": "b7d975207fb4b94c559f1bc82f16eeca010768af3a80523436c161031f3f1a1a",
+    "Z0_sha256": "536758160a20d38c5fc87781a192fd853d6f387164774181c12595d0daa3880e",
+    "packet_sha256": "9bef5add6398999c70c21c7f26a86833fc1eb46f98598c8503aa3c41743728da",
+    "left_sha256": "ed8b1c592bd1ec4e557111ae0c0884fd3399003c8463580df4db27265ed0c29d",
+    "right_sha256": "ad141cedffb64c1571943e95f74c74829e4ac06485fdddac7b7e89f9f51eb000",
+    "mathematical_source_sha256": "4a6071bafc0448818f51615d3ef080981040d36ba49e2153df77991470a0d1d0"
+  },
+  "original_macro_source": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+  "incomplete_repeat_source": "0f36cce833b9bd063ca91a1af919d66c1753be0e",
+  "final_clamp_checker_source": "3a9a0d2b4f03966d99d50b22e49a7adf6cd2dc28",
+  "partial_checker_original_revision": {
+    "path": "tmp/task042/v74/check_saved_partial_revision01.py",
+    "bytes": 4644,
+    "sha256": "48e00935526b8c54679dc701888c30239cec307b9553772c2e78d8a78f323ee7"
+  },
+  "partial_checker_actual_final_revision": {
+    "path": "tmp/task042/v74/check_saved_partial.py",
+    "bytes": 4836,
+    "sha256": "68a70d3dba8f96be38cec032f8b42ff12c74d1dbdb25ee59f9909f3b9161ae78"
+  },
+  "source_vs_final_document_HEAD_separate": true,
+  "no_neighbor_worktree_import": true
+}
