@@ -31,7 +31,7 @@ def qualification(action, packet, design, marker, deadline):
     return actual_bloch_checks(action, packet, design, marker, deadline)
 
 
-def training_options(manifest, artifact, marker, directory, design):
+def training_options(manifest, artifact, marker, directory, design, *, design_path=DESIGN, scoring_root=ART):
     """Only strict scalar JSON crosses the separate reference-scoring boundary."""
     from src.runners.saved_field_supervision import run_checker
     from src.postprocessing.ftt_bloch_scalars import read_scalars
@@ -48,11 +48,12 @@ def training_options(manifest, artifact, marker, directory, design):
         atomic_json(request_dir / "request.json", request)
         # Scoring arrays stay outside the training artifact and are denied by
         # the installed training firewall. Only this fixed-shape JSON is read.
-        isolated = ART / "isolated_reference_scoring" / key
+        isolated = scoring_root / "isolated_reference_scoring" / key
         command = ["bash", "-lc", "source scripts/activate_task42extra.sh fe && exec python -m src.postprocessing.ftt_bloch_scalars "
                    + shlex.quote(str((request_dir / "request.json").relative_to(ROOT))) + " "
                    + shlex.quote(str(isolated.relative_to(ROOT))) + " "
-                   + shlex.quote(str((request_dir / "scalars.json").relative_to(ROOT)))]
+                   + shlex.quote(str((request_dir / "scalars.json").relative_to(ROOT)))
+                   + " --design " + shlex.quote(str(design_path.relative_to(ROOT)))]
         summary = run_checker(command, request_dir / "supervision", manifest["worker_stop_monotonic"], manifest["source_sha"])
         scalar = read_scalars(request_dir / "scalars.json", request)
         scalar["checker_peak_bytes"] = summary["sampled_process_tree_rss_peak_bytes"]

@@ -5,7 +5,6 @@ artifact directory which the training process cannot open.
 """
 
 import json
-import sys
 from pathlib import Path
 import numpy as np
 from src.io.neural_wave_campaign import ROOT, digest
@@ -30,8 +29,10 @@ def read_scalars(path, request):
     return value
 
 
-def score(request_file, isolated, scalar_file):
+def score(request_file, isolated, scalar_file, design_path=None):
     from src.io.ftt_bloch_campaign import DESIGN
+    if design_path is not None:
+        DESIGN = Path(design_path)
     from src.io.ftt_campaign import load_files
     from src.runners.ftt_worker import load_arrays, ftt_abi
     from src.solvers.feinn_native import load_native
@@ -85,4 +86,12 @@ def score(request_file, isolated, scalar_file):
 
 
 if __name__ == "__main__":
-    score(ROOT / sys.argv[1], ROOT / sys.argv[2], ROOT / sys.argv[3])
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("request")
+    parser.add_argument("isolated")
+    parser.add_argument("scalars")
+    parser.add_argument("--design")
+    args = parser.parse_args()
+    score(ROOT / args.request, ROOT / args.isolated, ROOT / args.scalars,
+          ROOT / args.design if args.design else None)

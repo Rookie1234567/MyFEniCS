@@ -1,0 +1,5 @@
+schema_version = 13
+
+[neural_wave]
+stage = "v43_bloch_resume_checks"
+design_sha256 = "5145a85f08bce5bdf6008c3451cfbc03aa05f40d0df5894a03cb521d15adb3d9"
