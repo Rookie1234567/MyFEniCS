@@ -131,7 +131,7 @@ V27 后续 q 投影才是本轮重点：对每个局部贡献 V，取稀疏 q �
 A_{q0,c} &= U_c^H(E_c^H S_c E_c)U_c,\\
 C_{q0,j} &= (U_t^H b_j)(e_j^T U_p),\\
 (-D)_{q0,j} &= -(U_p^H e_j)(d_j^T U_t),\\
-H_{q0} &= U_p^H\operatorname{diag}(h)U_p.
+H_{q0} &= U_p^H\mathrm{diag}(h)U_p.
 \end{aligned}
 ```
 
