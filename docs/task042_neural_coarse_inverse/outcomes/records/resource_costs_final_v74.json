@@ -1,5 +1,5 @@
 {
-  "as_of_utc": "2026-10-11T17:20:39.819480+00:00",
+  "as_of_utc": "2026-10-11T17:29:26.593975+00:00",
   "window": {
     "start_utc": "2026-10-11T13:00:55.333861+00:00",
     "start_monotonic": 1648650.1947354379,
@@ -15,7 +15,7 @@
     "total_limit_seconds": 50400,
     "heavy_limit_seconds": 46800
   },
-  "T_research_current_window_elapsed_seconds": 15584.44516145112,
+  "T_research_current_window_elapsed_seconds": 16111.218548783101,
   "current_known_disjoint_lower_seconds": 13134.562249855982,
   "known_wrapper_seconds": 13131.404987561982,
   "known_standalone_targeted_seconds": 3.157262294,
@@ -24,7 +24,7 @@
     "bytes": 124,
     "sha256": "2a158f410b34c5684fdeae167b349a2a507c70922083ec804dcdf4fea3b6159a"
   },
-  "unsegmented_window_seconds": 2449.882911595138,
+  "unsegmented_window_seconds": 2976.656298927119,
   "parent_history_known_unique_lower_seconds": 368681.67300891416,
   "history_plus_current_known_wall_lower_seconds": 381816.2352587701,
   "runs": [
@@ -461,11 +461,11 @@
   "max_observed_ownswap_bytes": 0,
   "OOC_attempts": 0,
   "storage": {
-    "new_bytes": 1718830215,
-    "new_files": 4031,
+    "new_bytes": 1718851800,
+    "new_files": 4033,
     "immutable_historical_bytes": 190893888665,
-    "task_deduplicated_bytes": 192612718880,
-    "free_bytes": 2709186400256,
+    "task_deduplicated_bytes": 192612740465,
+    "free_bytes": 2709159084032,
     "new_cap": 34359738368,
     "task_cap": 747324309504,
     "evidence_reserve_bytes": 536870912
