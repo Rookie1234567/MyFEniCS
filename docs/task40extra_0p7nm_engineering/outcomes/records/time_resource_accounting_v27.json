@@ -1,0 +1,78 @@
+{
+  "branch": "task40extra_0p7nm_engineering",
+  "interpretation": {
+    "numeric_data_hash": null,
+    "numeric_nonzero_and_exact_zero_counts": "UNKNOWN_INCOMPLETE",
+    "task_swap_zero_does_not_imply_global_swap_zero": true,
+    "terminal_gate": "fixed numerical campaign time cutoff; not numeric mismatch or factor resource failure"
+  },
+  "resources": {
+    "csr_payload_bytes_derived": 11544333940,
+    "data_full_preallocation_file_bytes_including_npy_header": 9232978816,
+    "dedicated_cgroup_memory_current_at_end_bytes": 11311919104,
+    "dedicated_cgroup_memory_limit_bytes": 17179869184,
+    "dedicated_cgroup_memory_peak_bytes": 13374246912,
+    "factor_admission_envelope_derived_bytes": 80884991404,
+    "factor_resource_is_measured": false,
+    "factor_source_plus_conversion_copy_lower_bound_derived_bytes": 23088667880,
+    "process_tree_rss_peak_bytes": 12962181120,
+    "task_cgroup_swap_gate_passed": true,
+    "task_cgroup_swap_peak_bytes": 0,
+    "task_process_tree_swap_peak_bytes": 0,
+    "wsl_global_swap_activity": {
+      "attribution": "UNRESOLVED_GLOBAL_ACTIVITY_CANNOT_BE_ATTRIBUTED",
+      "pswpin_pages_delta": 239,
+      "pswpout_pages_delta": 6345
+    }
+  },
+  "schema": "task40extra.review_v27_time_resource_accounting.v1",
+  "service": {
+    "descendants_cleared": true,
+    "leader_exit_code": 15,
+    "outer_required_checker_pass": null,
+    "outer_required_checker_returncode": null,
+    "remaining_children": [],
+    "service_exec_main_status": 3,
+    "service_parent_pid": 2321801,
+    "stop_reason": "PERFORMANCE_CONTROLLED_STOP",
+    "unit": "myfenics-case-20261011T153916-2321795.service",
+    "watchdog_root_pid": 2321839,
+    "worker_pid": 2321856,
+    "worker_start_ticks": 127336767
+  },
+  "source_commit": "61530133bd02b18052e3ba64a5f78b87424c57f6",
+  "source_sha": "61530133bd02b18052e3ba64a5f78b87424c57f6",
+  "time": {
+    "bootstrap_utc_seconds_conservatively_charged": 362.311757244,
+    "clock_policy": "conservative_realtime",
+    "last_persisted_cumulative_seconds": 20403.13168108645,
+    "last_persisted_label": "watchdog_start",
+    "last_persisted_sample_utc": "2026-10-11T19:17:41.127576Z",
+    "last_persisted_sequence": 45733,
+    "pre_anchor_monotonic_elapsed": "UNKNOWN",
+    "read_only_api_projected_cumulative_seconds_at_cutoff": 20405.10031591747,
+    "read_only_api_remaining_numerical_seconds_at_cutoff": 0.0,
+    "time_exceeded": {
+      "active_pc": false,
+      "solve": false,
+      "workflow": true
+    },
+    "time_gate_action": "enforce",
+    "v26_unsettled_interval": "UNKNOWN_RETAINED_UNMODIFIED",
+    "watchdog_clock_discrepancy_seconds": 1307.2680615138906,
+    "watchdog_terminal_elapsed_seconds": 11781.219660662813,
+    "watchdog_wall_monotonic_seconds": 11781.22002416011,
+    "watchdog_wall_utc_seconds": 13088.488085674,
+    "watchdog_worker_monotonic_seconds": 11781.29880986805
+  },
+  "window": {
+    "closeout_reserve_seconds": 1200.0,
+    "deadline_utc": "2026-10-11T19:37:38Z",
+    "numeric_budget_seconds": 20400.0,
+    "numeric_cutoff_utc": "2026-10-11T19:17:38Z",
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl/campaign_window_v27.json",
+    "refreshed": false,
+    "sha256": "e806c514c8208ae7a887bdb6ddaaec25936c9204a3ccc34a4fb870ad0bb0010d",
+    "t0_utc": "2026-10-11T13:37:38Z"
+  }
+}

@@ -1,3 +1,19 @@
+# Task40extra Review V27 项目进展：pattern 完整，数值填值由固定窗口控制停止
+
+V27 对原尺寸 parent target 对应的 regular-reference q0 复用保存贡献；没有重建 FE/MPC/native。完整 row structure、support routes、indptr 和 indices 已持久化，总计577,061,168个结构位置。它们表示系数写入位置，不代表系数都已算出。数值填值开始后到达 campaign cutoff，data文件仍未完成且没有可靠cursor；因此保留CSR_PENDING。下一步可以复用已有from-clear API续填，无需重建producer、FE、routes或columns。
+
+| 问题 | 本轮证据 | 结论 |
+|---|---|---|
+| 实际对象 | regular reference 272×2×14=7,616 cells，q0 shape 777,644×777,644 | 不是有缺口的完整 target 或 Ny=8 全解 |
+| 可恢复成果 | 3,428,612 routes；完整777,644行pattern；indptr/indices hashes | 可继续填值 |
+| 数值状态 | NUMERIC_FILL_INCOMPLETE；cursor=null；numeric nonzero/exact zero未知 | CSR_PENDING |
+| 停止/资源 | PERFORMANCE_CONTROLLED_STOP；tree RSS peak12,962,181,120 B；cgroup peak13,374,246,912 B；task swap0 | cutoff受控停；global swap归因未知 |
+| 下游资格 | factor/KSP/PDE/R/T/A和2 TB/48 h未运行 | 需要后续新窗口和资源安排 |
+
+pattern耗时2,106.867 s；worker monotonic区间11,781.299 s。clear-all fixture 1 passed，pending opener只读拒绝通过。详见 [Response V27](task40extra_0p7nm_engineering/response_v27.md)、[summary](task40extra_0p7nm_engineering/outcomes/summary.md)、[operator](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v27.json)、[resource ledger](task40extra_0p7nm_engineering/outcomes/records/time_resource_accounting_v27.json)、[workflow ledger](task40extra_0p7nm_engineering/outcomes/records/review_v27_incremental_workflow_ledger.json) 与 [handoff](task40extra_0p7nm_engineering/outcomes/target_stage_handoff_v27.md)。执行者不提交/推送，由主控审查发布。
+
+---
+
 # Task40extra Review V26 项目进展：q0 消费者和结构通过，CSR 被真实资源门阻止
 
 V26 的 parent target 是原尺寸 Ny=8/p6；本轮 q0/q4 消费者和行结构实际使用去掉 notch/void 的 regular reference（272×2×14=7,616 cells），不证明完整 target 几何的装配或求解。该范围内完成 selected q0 保存流回读、q0/q4 对角/泄漏比较与完整行结构。q0 两组不同非零输入回读误差为 `1.9112e-14`、`1.9038e-14`；q0→q4 与 q4→q0 leakage ratio 为 `2.4073e-16`、`2.3258e-16`。777,644 行的预分配结构位置数为 577,061,168，counts 与 offsets 校验一致；这不是数值 nnz 或完整矩阵。

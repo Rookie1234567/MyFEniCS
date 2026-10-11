@@ -7582,5 +7582,93 @@
         "sha256": "8f475134935a1f99ed04d6f60d0ccbe78a8690df1357a3e5d3c8a5f1140c8e28"
       }
     }
+  },
+  "review_v27_evidence_index": {
+    "attempt_id": "20261011T153931.649307Z",
+    "classification": "CONTROLLED_STOP_CSR_PENDING_AT_FIXED_NUMERICAL_CUTOFF",
+    "documents": {
+      "response_v27.md": "60c1d1fd699fd87868f57b7494a8acc81a6d83cfaa800f382380b13a8db60490",
+      "outcomes/summary.md": "9bda1327a5ac593f8b5879f9a44ac80508990e7887dd1c43fd09820e71d5a06a",
+      "outcomes/test_summary.md": "4a11182c92b30c79d277156c0de963395391a13a651ba1628301a154e80437a8",
+      "outcomes/target_stage_handoff_v27.md": "5d421312491d55303d840365e98fd7f450f2270aaeaadc25b81bf4e7938059f2",
+      "README.md": "3fbd0204a093d839196c9eb7d62433c3d9842ab102f51352671f038da59d24de"
+    },
+    "input_sha256": "134ea5f08d5d5dbc366870f451ba0de0df5893c5cd73d227dac77f8a11aa2c0b",
+    "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+    "raw_evidence": {
+      "campaign_accounting": {
+        "bytes": 52836349,
+        "full_file_hash": null,
+        "last_cumulative_seconds": 20403.13168108645,
+        "last_label": "watchdog_start",
+        "last_sequence": 45733,
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl/campaign_accounting_v10.jsonl"
+      },
+      "campaign_window": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl/campaign_window_v27.json",
+        "sha256": "e806c514c8208ae7a887bdb6ddaaec25936c9204a3ccc34a4fb870ad0bb0010d"
+      },
+      "csr_data": {
+        "bytes": 9232978816,
+        "completion": "INCOMPLETE_FULL_SHAPE_PREALLOCATION",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_data.npy",
+        "sha256": null
+      },
+      "csr_indices": {
+        "bytes": 2308244800,
+        "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indices.npy",
+        "sha256": "9279c5dbfb8921c61dc229ea6a99d30bb76f8b31d005076796d4504a1e7d0d6e"
+      },
+      "csr_indptr": {
+        "bytes": 3110708,
+        "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indptr.npy",
+        "sha256": "6d24828a2cd820601fedf92c5b6575fc2dd95a905c2533677f3a3367648a7819"
+      },
+      "csr_manifest": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_csr_manifest.json",
+        "sha256": "1ea707f3c201359c390b620a5122d0102f5b34bd74873b5f00e3a40b673b94de"
+      },
+      "outer_workflow_record": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl/service_runs/myfenics-case-20261011T153916-2321795/outer_workflow_record.json",
+        "required_checker_pass": null,
+        "required_checker_returncode": null,
+        "sha256": "9a556751dc000e8f14658e6dcd346d1dafba25369ab750c11a9d09a9f583ea30"
+      },
+      "row_structure": {
+        "bytes": 2121772,
+        "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_row_structure.npz",
+        "sha256": "56d344256ff60e73ec36ecd58d1aade6e6d7dac5164741de60f0631dc0407bda"
+      },
+      "run_summary": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/run_summary.json",
+        "sha256": "653b154fdc1b2cd09339b711b064bfefa24f777b8b42304b17eec8c53419f8a5"
+      },
+      "support_routes": {
+        "bytes": 1328558080,
+        "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_support_routes.sqlite3",
+        "route_count": 3428612,
+        "sha256": "a27d291a1bc41751b7a70f15bfef6cf1d1fc85aeb9ce4c01fd7f5153143186f1",
+        "support_descriptor_bytes": 1197050832
+      },
+      "watchdog_summary": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/watchdog/summary.json",
+        "sha256": "859a6c6dc0cf2806f338e5db43d609dcbbc71e1fa878bd83f7b8fce12825888e"
+      }
+    },
+    "records": {
+      "outcomes/records/target_operator_probe_v27.json": "a8c416e077225de0853e1e23531c3b5f948511cedc3af6297908db471c731ae1",
+      "outcomes/records/time_resource_accounting_v27.json": "af6e69e4e97aaa189c7c862856fe6979ecf3eefd416508a1049f67b6dab7724a",
+      "outcomes/records/review_v27_incremental_workflow_ledger.json": "d74e0ef5d7df6a049e6bffb4b796611e7e9958085fd65aa8fc658014fe2d6915",
+      "outcomes/records/targeted_tests_v27.json": "cfa5726fa8deb7a29adf523c6812e0d8168fb044399507097f3afa23d4390b61"
+    },
+    "repository_navigation_documents": {
+      "docs/README.md": "529a03d3fbd4a1dc2374653262bfe4773fc07dd8edf7d16ecda55bb196a193b3",
+      "docs/development_progress.md": "be0b5dc9363b7df425637e32ecaacaf681686d417723b84cfde2ca09b4163542"
+    },
+    "service_unit": "myfenics-case-20261011T153916-2321795.service",
+    "source_commit": "61530133bd02b18052e3ba64a5f78b87424c57f6",
+    "source_sha": "61530133bd02b18052e3ba64a5f78b87424c57f6",
+    "window_sha256": "e806c514c8208ae7a887bdb6ddaaec25936c9204a3ccc34a4fb870ad0bb0010d",
+    "workflow_case_run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22"
   }
 }

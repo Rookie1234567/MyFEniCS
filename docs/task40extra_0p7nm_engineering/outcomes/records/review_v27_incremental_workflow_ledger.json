@@ -1,0 +1,102 @@
+{
+  "accounting_scope_note": "All startup/worker attempts remain inside the single append-only V27 campaign accounting; per-attempt charges are not separately inferred where no bound interval was recorded.",
+  "append_only_campaign_accounting": {
+    "bootstrap_utc_debit_seconds": 362.311757244,
+    "cutoff_read_only_api_projection_seconds": 20405.10031591747,
+    "cutoff_read_only_api_remaining_numerical_seconds": 0.0,
+    "last_persisted_cumulative_seconds": 20403.13168108645,
+    "last_persisted_label": "watchdog_start",
+    "last_persisted_sample_utc": "2026-10-11T19:17:41.127576Z",
+    "last_persisted_sequence": 45733,
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v27_wsl/campaign_accounting_v10.jsonl",
+    "pre_anchor_monotonic": "UNKNOWN",
+    "projection_timestamp_in_raw_ledger": null,
+    "v26_unsettled_interval": "UNKNOWN_RETAINED_UNMODIFIED"
+  },
+  "branch": "task40extra_0p7nm_engineering",
+  "campaign": "task40extra_v27_saved_only_complete_q0_csr_and_factor_handoff",
+  "closeout_reserve_seconds": 1200.0,
+  "continuation": {
+    "complete_only_opener": "src.solvers.task40_v27_saved_q0.open_saved_q0_csr_from_manifest",
+    "factor_api": "src.solvers.task40_v10_p6_mumps.run_task40_v26_selected_q0_factor_lifecycle",
+    "fill_api": "src.solvers.task40_v27_saved_q0.fill_saved_q0_csr_values",
+    "requires_new_authorized_window": true,
+    "standalone_factor_wrapper": "NOT_IMPLEMENTED"
+  },
+  "deadline_utc": "2026-10-11T19:37:38Z",
+  "events": [
+    {
+      "kind": "frozen_source",
+      "source_commit": "61530133bd02b18052e3ba64a5f78b87424c57f6",
+      "source_sha": "61530133bd02b18052e3ba64a5f78b87424c57f6"
+    },
+    {
+      "attempt_id": "20261011T153931.649307Z",
+      "indices_sha256": "9279c5dbfb8921c61dc229ea6a99d30bb76f8b31d005076796d4504a1e7d0d6e",
+      "indptr_sha256": "6d24828a2cd820601fedf92c5b6575fc2dd95a905c2533677f3a3367648a7819",
+      "kind": "complete_pattern_persisted",
+      "routes_sha256": "a27d291a1bc41751b7a70f15bfef6cf1d1fc85aeb9ce4c01fd7f5153143186f1",
+      "row_structure_sha256": "56d344256ff60e73ec36ecd58d1aade6e6d7dac5164741de60f0631dc0407bda",
+      "structural_slots": 577061168
+    },
+    {
+      "contribution_cursor": null,
+      "data_sha256": null,
+      "kind": "numeric_fill_incomplete",
+      "restart_policy": "clear_all_values_before_each_numeric_pass",
+      "status": "NUMERIC_FILL_INCOMPLETE"
+    },
+    {
+      "descendants_cleared": true,
+      "kind": "controlled_cleanup",
+      "leader_exit": 15,
+      "reason": "PERFORMANCE_CONTROLLED_STOP",
+      "remaining_children": [],
+      "task_swap_peak_bytes": 0
+    },
+    {
+      "kind": "minimal_closeout_test",
+      "pending_opener_refusal": "confirmed read only",
+      "pytest": "1 passed in 0.39 s"
+    },
+    {
+      "failure": "ModuleNotFoundError: No module named numpy; selector donor binding failed before run directory creation",
+      "kind": "preserved_startup_failure",
+      "service": "myfenics-case-20261011T150054-2318980.service",
+      "source_sha": "c1307939a028bdce491ef242ab1c13d70c05cc37",
+      "worker_started": false
+    },
+    {
+      "attempt_id": "20261011T151232.017640Z",
+      "exit_code": 4,
+      "failure": "local_H local/global dimension mismatch",
+      "kind": "preserved_worker_failure",
+      "service": "myfenics-case-20261011T151216-2319592.service",
+      "source_sha": "99429d69e29d2180892814d370a41dae2dc31c03"
+    },
+    {
+      "attempt_id": "20261011T152858.906313Z",
+      "exit_code": 4,
+      "failure": "private NumPy NPY API incompatibility",
+      "kind": "preserved_worker_failure",
+      "service": "myfenics-case-20261011T152847-2321084.service",
+      "source_sha": "66d49273737ae1f8362e06e255f3b76565173cea",
+      "task_swap_peak_bytes": 0
+    }
+  ],
+  "numeric_budget_seconds": 20400.0,
+  "numeric_cutoff_utc": "2026-10-11T19:17:38Z",
+  "schema": "task40extra.review_v27_incremental_workflow_ledger.v1",
+  "t0_utc": "2026-10-11T13:37:38Z",
+  "unknowns_and_negative_results": {
+    "factor_ksp_pde_rta": "NOT_RUN",
+    "global_swap_attribution": "UNRESOLVED",
+    "native_readback": "NOT_RUN",
+    "numeric_nonzero_and_exact_zero_counts": "UNKNOWN",
+    "old_v26_records_preserved": true,
+    "outer_required_checker_pass": null,
+    "outer_required_checker_returncode": null
+  },
+  "window_refreshed": false,
+  "window_sha256": "e806c514c8208ae7a887bdb6ddaaec25936c9204a3ccc34a4fb870ad0bb0010d"
+}

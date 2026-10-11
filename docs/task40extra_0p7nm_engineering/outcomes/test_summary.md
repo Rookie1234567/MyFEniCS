@@ -1,3 +1,15 @@
+# Task40extra Review V27 定向验证与收口检查
+
+| 验证 | 命令 / 范围 | 结果 | 边界 |
+|---|---|---|---|
+| Qualified ABI preflight | activation、仓库 .venv、PETSc、MPI | PASS；complex128/int32/MPI1 | 环境检查，不是数值通过 |
+| clear-all continuation fixture | src/test/test_task40_v27_saved_q0.py::test_saved_q0_v17_build_persists_q0_only_structure_and_restartable_values | 1 passed in 0.39 s | 小 fixture 验证 partial pass 后清零重填、完成与 hash-bound reopen，不是原始 CSR/PDE |
+| 真实 pending manifest | 调用 open_saved_q0_csr_from_manifest | 按设计返回 ValueError，未打开大型数组 | 当前 artifact 被拒绝进入 factor |
+| required outer checker | outer_workflow_record 原始值 | returncode=null，pass=null | 不补写成通过 |
+| full V27 suite / full repo / MPI2/4 / Ruff / CI / native CSR readback / factor / KSP / PDE / RTA | 本轮 | NOT_RUN | 不外推为通过 |
+
+受控停止、fixture 通过与完整数值 CSR 是不同证据。本轮真实 numeric CSR 与 official R/T/A 没有完成。
+
 # Task40extra Review V26 定向验证与文档合同
 
 | 验证 | source / 命令 / 回执 | 结果 | 证据边界 |

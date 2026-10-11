@@ -1,0 +1,95 @@
+{
+  "not_run": [
+    "full repository pytest",
+    "MPI2/MPI4",
+    "Ruff",
+    "CI",
+    "numeric CSR native readback",
+    "factor/KSP",
+    "target PDE",
+    "official R/T/A"
+  ],
+  "preserved_pre_run_failures": [
+    {
+      "failure": "ModuleNotFoundError: No module named 'numpy' during selector donor binding before run directory creation; preserved",
+      "service": "myfenics-case-20261011T150054-2318980.service",
+      "source_sha": "c1307939a028bdce491ef242ab1c13d70c05cc37",
+      "worker_started": false
+    },
+    {
+      "attempt_id": "20261011T151232.017640Z",
+      "failure": "local_H local/global dimension mismatch; worker exit 4; preserved",
+      "service": "myfenics-case-20261011T151216-2319592.service",
+      "source_sha": "99429d69e29d2180892814d370a41dae2dc31c03"
+    },
+    {
+      "attempt_id": "20261011T152858.906313Z",
+      "failure": "private NumPy NPY API incompatibility; worker exit 4, task swap peak 0; preserved",
+      "service": "myfenics-case-20261011T152847-2321084.service",
+      "source_sha": "66d49273737ae1f8362e06e255f3b76565173cea"
+    }
+  ],
+  "qualified_abi": {
+    "activation": "_MYFENICS_WSL_QUALIFIED_ACTIVATION=1",
+    "mpi_size": 1,
+    "petsc_int_type": "int32",
+    "petsc_scalar_type": "complex128",
+    "python_executable": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/.venv/bin/python"
+  },
+  "schema": "task40extra.review_v27_targeted_tests.v1",
+  "source_sha": "61530133bd02b18052e3ba64a5f78b87424c57f6",
+  "source_stage_results": [
+    {
+      "base_sha": "06eb5ae5cdaaa6de0d4d805937a279f8d06e0351",
+      "full_repository_suite": "NOT_RUN",
+      "passed": 69,
+      "scope": "saved-only CSR and Task40 V20 routing tests",
+      "skipped": 1,
+      "source_sha": "c1307939a028bdce491ef242ab1c13d70c05cc37"
+    },
+    {
+      "base_sha": "c1307939a028bdce491ef242ab1c13d70c05cc37",
+      "compileall": "PASS",
+      "git_diff_check": "PASS",
+      "passed": 70,
+      "scope": "bootstrap dependency repair and related tests",
+      "skipped": 1,
+      "source_sha": "99429d69e29d2180892814d370a41dae2dc31c03"
+    },
+    {
+      "base_sha": "99429d69e29d2180892814d370a41dae2dc31c03",
+      "compileall": "PASS",
+      "git_diff_check": "PASS",
+      "passed": 14,
+      "real_donor_header_check": "PASS",
+      "scope": "local sector alias repair",
+      "source_sha": "66d49273737ae1f8362e06e255f3b76565173cea"
+    },
+    {
+      "base_sha": "66d49273737ae1f8362e06e255f3b76565173cea",
+      "full_source_suite": "NOT_RUN",
+      "passed": 2,
+      "real_donor_header_check": "PASS",
+      "scope": "NumPy 2.5.3 public API compatibility",
+      "source_sha": "61530133bd02b18052e3ba64a5f78b87424c57f6"
+    },
+    {
+      "elapsed_seconds": 0.39,
+      "passed": 1,
+      "scope": "closeout clear-all continuation fixture",
+      "source_sha": "61530133bd02b18052e3ba64a5f78b87424c57f6"
+    }
+  ],
+  "tests": [
+    {
+      "command": "python -m pytest -q src/test/test_task40_v27_saved_q0.py::test_saved_q0_v17_build_persists_q0_only_structure_and_restartable_values",
+      "result": "1 passed in 0.39 s",
+      "scope": "small fixture verifies interrupted numeric pass, clear-all restart, completion and hash-bound reopen; not raw CSR or PDE"
+    },
+    {
+      "command": "read-only open_saved_q0_csr_from_manifest on the live V27 manifest",
+      "result": "expected ValueError refusal",
+      "scope": "current incomplete manifest cannot enter factor opener; no large array opened"
+    }
+  ]
+}

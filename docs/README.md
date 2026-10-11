@@ -48,7 +48,7 @@
 | [`task035c_hybrid_channel_memory_closure/README.md`](task035c_hybrid_channel_memory_closure/README.md) | Task035c：修复 Full3D–Hybrid 离散 phase/traction 合同；p6/h10 六路径 12/12+12/12；static Hybrid M120 峰值下降31.89%，50%目标未达 |
 | [`task037c_hybrid_iterative_robustness/response_v3.md`](task037c_hybrid_iterative_robustness/response_v3.md) | Task037c白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5 的授权 research extension；M_robust=120，preferred RSS未过，不是production-qualified |
 | [`task038_input_driven_configuration/response_v1.md`](task038_input_driven_configuration/response_v1.md) | Task038：单一 `.dat` input-driven configuration；11 migrated/6 retained，ordinary数值算法不变；source-branch full pytest 1119 passed/48 skipped，integration full 由用户授权 controlled stop |
-| [`task40extra_0p7nm_engineering/README.md`](task40extra_0p7nm_engineering/README.md) | Task40extra Review V26：parent target 为原尺寸 Ny=8；本轮 q0/q4 数据来自 regular reference，保存流消费者与完整行结构通过；CSR在真实资源门前受控停止，PDE与official R/T/A未运行 |
+| [`task40extra_0p7nm_engineering/README.md`](task40extra_0p7nm_engineering/README.md) | Task40extra Review V27：regular-reference q0 pattern/routes/indptr/indices完整，numeric data在固定时间cutoff受控停止并保持CSR_PENDING；无FE/native rebuild，factor/PDE/R/T/A未运行 |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
@@ -217,7 +217,7 @@ Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcom
 | [`task039_extra_physical_multilevel/outcomes/summary.md`](task039_extra_physical_multilevel/outcomes/summary.md) | Task39 最终汇总及历史证据入口 |
 | [`task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_offline_comparison_v34.json`](task039_extra_physical_multilevel/outcomes/records/projection_layout_v31_offline_comparison_v34.json) | 已保存 V29/V30/V31 数组比较及文件哈希 |
 
-Task40extra 的活动执行分支为 task40extra_0p7nm_engineering。Review V26 是当前结果入口，V25–V24及更早记录保留为历史入口：
+Task40extra 的活动执行分支为 task40extra_0p7nm_engineering。Review V27 是当前结果入口，V26–V24及更早记录保留为历史入口：
 
 | 文件 | 用途 |
 |---|---|

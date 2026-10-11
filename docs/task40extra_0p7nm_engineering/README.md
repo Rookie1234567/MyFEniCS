@@ -1,4 +1,20 @@
-## Review V26 当前交付：完整 q0 消费者和行结构通过，CSR 在资源门前受控停止
+## Review V27 当前交付：q0 pattern 已保存，numeric CSR 在固定时间门限受控停止
+
+V27 复用了 V26 的保存流资格，以 q0-only saved contribution route 写出完整行列结构和路由；不重建 FE/MPC/native。777,644 行、577,061,168 个结构位置和 indices/indptr 均可恢复，但数值填值没有完成，manifest 是 NUMERIC_FILL_INCOMPLETE。data 文件是完整 shape 预分配，文件长度不能当作完成比例。
+
+watchdog 按原 campaign 数值 cutoff 受控停止并清场。factor、KSP、full target PDE 和 official R/T/A 未运行，2 TB / 48 h 未资格化。
+
+| 文件 | 内容 |
+|---|---|
+| [Review V27](review_report_v27.md) 与 [Response V27](response_v27.md) | saved-only q0 pattern、controlled stop、CSR_PENDING 与后续恢复 |
+| [V27 summary](outcomes/summary.md) 与 [test summary](outcomes/test_summary.md) | 当前阶段、负结果和测试 |
+| [operator compact](outcomes/records/target_operator_probe_v27.json) 与 [time/resource ledger](outcomes/records/time_resource_accounting_v27.json) | 数组身份、进程清理、时间/内存/swap |
+| [workflow ledger](outcomes/records/review_v27_incremental_workflow_ledger.json) 与 [run index](outcomes/records/run_index.json) | 固定窗口和 hash-bound 路径 |
+| [single-q handoff](outcomes/target_stage_handoff_v27.md) | from-clear fill API、complete-only opener 与现有 factor lifecycle |
+
+执行分支仍是 task40extra_0p7nm_engineering。执行者未提交或推送；主控集中审核和发布。
+
+## Review V26 历史交付：完整 q0 消费者和行结构通过，CSR 在资源门前受控停止
 
 V26 的 parent target 是原尺寸 Ny=8；本轮 selected q0/q4 消费者和行结构实际使用去除 notch/void 的 regular reference（7,616 cells），不代表完整 target 几何或 Ny=8 全解。该范围内完成保存流读回、q0/q4 双向泄漏检查与全行结构检查。CSR 在真实 host/tree 和专用 cgroup admission 前受控停止，所以 factor、KSP、全 q、PDE 与 official R/T/A 未运行；2 TB / 48 h 仍未资格化。worker exit 0 仅表示受监督 stage 正常停收，不是求解通过。
 

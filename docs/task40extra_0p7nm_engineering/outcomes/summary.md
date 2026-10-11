@@ -1,3 +1,32 @@
+# Task40extra Review V27：完整 q0 pattern 可恢复，数值 CSR 在时间门限受控停止
+
+saved-only 表示从已有保存贡献构造矩阵，不重建有限元网格或 native action。本轮完成 regular-reference q0 的行列位置，并开始填复数系数；固定 campaign cutoff 到达时数值 data 仍未完整，所以结果是 CSR_PENDING，而不是 CSR 或 PDE 通过。
+
+| 模型/阶段 | 方法目的 | measured 结果 | 状态 | 证据 |
+|---|---|---|---|---|
+| parent target | 原尺寸 50×25×140 nm、0.7 nm、真实非分离 Si/air、目标 Nx272/Ny8/Nz14/p6 | 本轮没有重新装配或求解 | NOT_RUN | [Response V27](response_v27.md) |
+| regular-reference q0 | 只用保存的 q0 map 与贡献，避免 FE/native 重建 | 272×2×14=7,616 cells；shape 777,644×777,644；重建计数0；完整结构 577,061,168 slots | pattern complete；数值 pending | [operator compact](records/target_operator_probe_v27.json) |
+| pattern/routes | 有界 tile 路由及排序列结构 | 3,428,612 routes；pattern measured 2,106.867 s；全部777,644行有结构 | 持久可恢复 | [handoff](target_stage_handoff_v27.md) |
+| data values | 预分配 complex128 文件后填贡献 | status NUMERIC_FILL_INCOMPLETE；cursor=null；numeric nonzero/exact-zero UNKNOWN；无完整 data hash | CSR_PENDING | [manifest compact](records/target_operator_probe_v27.json) |
+| 停止/资源 | 独立 watchdog 与固定 campaign 门限 | leader exit15、service wrapper exit3、descendants cleared；tree RSS peak12,962,181,120 B；cgroup peak13,374,246,912 B；task swap0 | PERFORMANCE_CONTROLLED_STOP | [time/resource ledger](records/time_resource_accounting_v27.json) |
+| factor/full field | complete-only opener、现有 selected-q0 lifecycle、target PDE 和输出 | 未运行；当前 pending manifest 会被 opener 拒绝 | NOT_RUN | [handoff](target_stage_handoff_v27.md) |
+
+data.npy 的9,232,978,816 B 是完整 shape 的预分配文件长度（含 header），不是写入比例。未来必须从零恢复数值填值。WSL global swap pswpin+239/pswpout+6,345 pages 无法归因，故不能称为全局 swap 为零。2 TB / 48 h 和目标最终精度未资格化。
+
+**下一步：**新窗口获得授权后，从原 donor arrays 与现有 pattern 清零续填；只在 COMPLETE_CSR 并完成 hash/open/native readback 后评估 q0 factor。当前 16 GiB cap 不满足 derived factor 对象账。ordinary solver default unchanged，本轮没有新的数值源码改动或提交/推送。
+
+## Selective merge 与下一步
+
+| 依赖组 | 数值行为是否改变 | 当前结论 |
+|---|---|---|
+| production numerical/core | source 61530133bd02b18052e3ba64a5f78b87424c57f6 有显式 research route | V27 scope 仍待 review，不升为 ordinary default |
+| reusable runner/watchdog | saved-only q0 路由受时间 cutoff 控制停止 | 不代表生产路径已资格化 |
+| checker/benchmark | clear-all fixture通过；live pending opener拒绝 | required checker returncode/pass仍为null |
+| compact evidence/docs | Response、operator/resource/workflow/test records与handoff | 交主控 review；执行者不commit/push |
+| do-not-merge | partial data.npy、raw arrays/logs、pending numeric CSR/factor | 大文件保持ignored，不进入Git |
+
+---
+
 # Task40extra Review V26 增量结果：q0 消费者与全行结构通过，CSR 资源 Gate 受控停止
 
 任务父目标为 0.7 nm 原尺寸三维非分离模型（50×25×140 nm、272×8×14=30,464 p6 单元、Ny=8）。但本轮 q0/q4 消费者与行结构实际运行在去除 notch/void 的 regular reference（272×2×14=7,616 cells）；parent physical-model SHA 不是该 q0 stage 使用完整目标几何的证明。V26 回读 q0 保存流并用 q4 检查配对对角与跨 q 泄漏。q0 单独不是完整 Ny=8 求解。
