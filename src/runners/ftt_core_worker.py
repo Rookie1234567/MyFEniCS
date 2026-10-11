@@ -54,6 +54,7 @@ class CoreWorkerProfile:
     route_model_factory: object = None
     reconstruction_model_factory: object = None
     learned_roles: tuple = ()
+    pass_qualification_to_training: bool = False
 
 
 DEFAULT_PROFILE = CoreWorkerProfile()
@@ -211,6 +212,7 @@ def run_stage(manifest, artifact, marker, directory, profile=DEFAULT_PROFILE):
                 manifest, artifact, marker, directory
             )
         return result
+    qualification = None
     if spec["role"] != profile.checks_role:
         qualification = json.loads(
             (profile.artifacts / profile.checks_stage / "result.json").read_text()
@@ -298,8 +300,9 @@ def run_stage(manifest, artifact, marker, directory, profile=DEFAULT_PROFILE):
         binding.update(hidden_width=model.hidden_width,
             hidden_real_parameters=sum(p.numel() for p in __import__("src.solvers.ftt_conditional_core", fromlist=["hidden_parameters"]).hidden_parameters(model)),
             actual_real_parameters=sum(p.numel() for p in model.parameters()))
+    qualification_argument = dict(qualification=qualification) if profile.pass_qualification_to_training else {}
     options = {} if profile.training_options is None else profile.training_options(
-        manifest, artifact, marker, directory, design)
+        manifest, artifact, marker, directory, design, **qualification_argument)
     result = run_core_training(
         action,
         packet,

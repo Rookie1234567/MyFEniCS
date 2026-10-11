@@ -19,15 +19,16 @@ def qualification(action, packet, design, marker, deadline):
     return qualify_coordinates(action, packet, design, marker, deadline)
 
 
-def training_options(manifest, artifact, marker, directory, design):
+def training_options(manifest, artifact, marker, directory, design, *, qualification=None):
     from src.solvers.ftt_feature_coordinates import FeatureCoordinateCache
     from src.runners.ftt_continuation_feedback import joint_callback
     options = scalar_options(manifest, artifact, marker, directory, design,
                              design_path=DESIGN, scoring_root=ART, reuse_saved_feedback=True)
     learned = manifest["spec"]["role"] == "W32_R12_FEATURE_SCALED_LEARNED"
     identity = manifest["spec"]["role"] == "W32_R12_IDENTITY_FROZEN"
-    qualified = json.loads((ART / "v45_feature_coordinates_checks/result.json").read_text())
-    cache = FeatureCoordinateCache(qualified["selected_tau"], identity=identity)
+    if qualification is None or not qualification["qualified"] or qualification["selected_tau"] not in (1e-6,1e-4):
+        raise ValueError("FEATURE_COORDINATE_QUALIFIED_OPTIONS_REQUIRED")
+    cache = FeatureCoordinateCache(qualification["selected_tau"], identity=identity)
     folder = artifact / "feature_coordinates"
     folder.mkdir(parents=True, exist_ok=True)
 
@@ -68,7 +69,8 @@ PROFILE = CoreWorkerProfile(design=DESIGN, artifacts=ART, route_pairs=routes,
     compare_role="feature_coordinates_compare", worker_module="src.runners.ftt_coordinate_worker",
     qualification=qualification, independent_field=point_field, training_options=training_options,
     route_model_factory=model_factory, reconstruction_model_factory=model_factory,
-    learned_roles=("W32_R12_FEATURE_SCALED_LEARNED",), compare_postprocess=comparison_record)
+    learned_roles=("W32_R12_FEATURE_SCALED_LEARNED",), compare_postprocess=comparison_record,
+    pass_qualification_to_training=True)
 
 if __name__ == "__main__":
     main(PROFILE)

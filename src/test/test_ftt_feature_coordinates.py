@@ -409,3 +409,35 @@ def test_actual_v45_launch_successful_psi_ignores_exhausted_legacy_observation_p
     assert calls[0][0][1]==16*2**30
     with pytest.raises(RuntimeError,match="OBSERVATION_BUDGET"):
         launch_stable_window(dict(campaign_version=30),tmp_path,16*2**30)
+
+
+def test_qualified_options_pass_before_firewall_without_broadening_file_access():
+    import subprocess
+    import sys
+    code="""
+import json,tempfile
+from pathlib import Path
+from src.io.ftt_coordinate_campaign import ROOT,DESIGN
+from src.runners.ftt_coordinate_worker import ART,training_options,PROFILE
+from src.runners.ftt_core_worker import install_unlabelled_firewall,DEFAULT_PROFILE
+d=json.loads(DESIGN.read_text())
+q=json.loads((ART/'v45_feature_coordinates_checks/result.json').read_text())
+assert q['qualified'] and q['selected_tau'] in (1e-6,1e-4)
+with tempfile.TemporaryDirectory(dir=ROOT/'tmp/task42extra/v45') as temp:
+    active=Path(temp)
+    install_unlabelled_firewall(d,active)
+    try:
+        (ART/'v45_feature_coordinates_checks/result.json').read_text()
+    except PermissionError:
+        pass
+    else:
+        raise AssertionError('qualification-file access was broadened')
+    manifest=dict(spec=dict(role='W32_R12_IDENTITY_FROZEN'))
+    options=training_options(manifest,active,lambda *_:None,active,d,qualification=q)
+    assert options['execution_policy']['inherited_rounds']==12
+    assert callable(options['coordinate_transform_factory'])
+    assert PROFILE.pass_qualification_to_training and not DEFAULT_PROFILE.pass_qualification_to_training
+print('qualified options passed; file isolation retained')
+"""
+    r=subprocess.run([sys.executable,"-c",code],capture_output=True,text=True)
+    assert r.returncode==0,r.stderr
