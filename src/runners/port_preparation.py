@@ -28,6 +28,16 @@ from src.runners.task042_shared import (
 from src.solvers.port_preparation_window import implementation_hashes, window
 
 
+def live_workflow_seconds(namespace, role, active_window, previously_admitted):
+    """V74 charges admission/setup delay against the same frozen allowance."""
+    if namespace != "v74":
+        return previously_admitted
+    seconds = min(previously_admitted, active_window.remaining(role))
+    if seconds <= 5:
+        raise RuntimeError("V74 original phase allowance exhausted before worker")
+    return seconds
+
+
 def storage_limits(namespace):
     if namespace in ("v50", "v51", "v52", "v53", "v54", "v55", "v56", "v57", "v58", "v59", "v60", "v61", "v62", "v63", "v64", "v65", "v66", "v67", "v68", "v69", "v70", "v71", "v72", "v73", "v74"):
         from src.solvers.phase_explicit_accuracy_scope import plan_record
@@ -794,6 +804,9 @@ def launch(
         # RunSpecification deliberately freezes nested mappings. Normalize the
         # live source envelope too: write_json converts a copy, while supervise
         # receives this object and must serialize its own final receipt.
+        seconds = live_workflow_seconds(namespace, role, window, seconds)
+        if namespace == "v74":
+            state["worker_workflow_budget_seconds"] = seconds
         state = _json_metadata(state)
         write_json(folder / "run_manifest.json", state)
         window.begin(role, folder, source)

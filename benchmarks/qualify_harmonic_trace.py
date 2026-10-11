@@ -1,6 +1,7 @@
 """Focused final-source qualification, without a scientific solve."""
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -28,7 +29,9 @@ def main():
         if r.returncode:
             write_json(folder/'tests.json',dict(status='FAILED',commands=rows));raise RuntimeError('V74 targeted failure: minimal repair')
     write_json(folder/'tests.json',dict(status='PASSED',commands=rows,implementation_hashes=implementation_hashes()))
-    print(json.dumps(dict(status='V74_TARGETED_PASSED',tests=10,commands=len(rows))))
+    match=re.search(r'Ran (\d+) tests?',(folder/'command0.stderr').read_text())
+    if match is None:raise RuntimeError('unittest count is not available from actual run')
+    print(json.dumps(dict(status='V74_TARGETED_PASSED',tests=int(match.group(1)),commands=len(rows))))
 
 
 if __name__=='__main__':main()

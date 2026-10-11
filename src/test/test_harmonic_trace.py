@@ -129,5 +129,15 @@ class HarmonicTests(unittest.TestCase):
             for i in range(12):action_charge('Q_harmonic',lambda:3,scope=scope)
             with self.assertRaisesRegex(RuntimeError,'qualification'):action_charge('D_physical',lambda:3,scope=scope)
 
+    def test_worker_budget_deducts_admission_delay_without_refresh(self):
+        from src.runners.port_preparation import live_workflow_seconds
+        window=SimpleNamespace(remaining=lambda role:54.)
+        self.assertEqual(live_workflow_seconds('v74','HARMONIC_PREPARE',window,100.),54.)
+        self.assertEqual(live_workflow_seconds('v74','HARMONIC_PREPARE',window,40.),40.)
+        exhausted=SimpleNamespace(remaining=lambda role:3.)
+        with self.assertRaisesRegex(RuntimeError,'original phase allowance exhausted'):
+            live_workflow_seconds('v74','HARMONIC_PREPARE',exhausted,100.)
+        self.assertEqual(live_workflow_seconds('v73','R128',exhausted,100.),100.)
+
 
 if __name__=='__main__':unittest.main()
