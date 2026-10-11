@@ -73,7 +73,7 @@ actual由旧逐点FTT再显式乘chi、完整q30/q60生成，producer为训练�
 
 各逻辑路径须归属已付V42学习前缀2920.6633467029314s，但项目账不再收费；另有必需网格/native/moments准备，不免费。loaded-packet新增费用、已付前缀、可复用准备、研发历史及完整冷N=1分开；冷N=1和项目精确历史累计仍UNKNOWN。没有同合格精度，所以不授NN20%资源收益。
 
-串行自身同时树RSS采样峰最大916746240B，约0.854GiB，非整机峰或峰值相加。numeric warn12/hard16GiB、规划12GiB、cache/AD1GiB、轻2GiB；CPU-only/MPI1/math及Torch intra/inter-op1、原PSI/CPU-SMT/系统及384GiB邻增长门未改，成功60s准入计墙钟。数值、测试及验收树swap/OOC0并清场；只读工具控制没有完整峰值测量，不虚构全机资源PASS。新global Maxwell/Gram因子、Gsolve、全FE Krylov和参考重求均0；隔离验收G仅稀疏乘法。
+数值阶段串行自身同时树RSS采样峰最大916746240B，约0.854GiB；含后续浏览器的已监督轻任务/数值树采样峰最大1100705792B，约1.025GiB，非整机峰或峰值相加。numeric warn12/hard16GiB、规划12GiB、cache/AD1GiB、轻2GiB；CPU-only/MPI1/math及Torch intra/inter-op1、原PSI/CPU-SMT/系统及384GiB邻增长门未改，成功60s准入计墙钟。数值、测试及验收树swap/OOC0并清场；只读工具控制没有完整峰值测量，不虚构全机资源PASS。新global Maxwell/Gram因子、Gsolve、全FE Krylov和参考重求均0；隔离验收G仅稀疏乘法。
 
 最小定向测试最终25项、Ruff/compileall通过，非full pytest、无CI声明。初始fixture错误把dummy截止设成60s，触发原保存预留守卫，两项失败保留；只将fixture截止改300s，未改变正式保护或数学门。最终比较辅助步骤的common_wall目录缺失使attempt1在健康FE审核之后失败；增加先建立目录、实际原子writer→重开回归，通过25项后以--attempt 2恢复缺失步骤。启动默认attempt1被已有阶段守卫拒绝，未启动重复worker；明确恢复沿原分配时钟。所有失败、修复、测试和等待计费。
 
@@ -88,3 +88,5 @@ actual由旧逐点FTT再显式乘chi、完整q30/q60生成，producer为训练�
 保留相对第4轮的实际场改善PARTIAL_LEARNED_FIELD_IMPROVEMENT_OBSERVED，也保留冻结控制的改善、较好的中期边界与最终退化。后续隐藏学习的边际结论仅针对本次固定相位/r8/native-EUC/LSMR300的有限续算，不排除所有NN或FTT。当前有限续算关闭；没有支持新神经生产候选或同严格精度20%资源收益的证据。保持FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED和NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE。
 
 0.7nm缩小pilot因LEARNED M5联合门未过而NOT_RUN，未注册空stage。没有监督fit/oracle、rank/seed/loss/载波/优化器扫描。原50×25×140nm、Si17/120nm、lambda0.7完整3D FE、decimal2e12B整机、ownswap/OOC0、172800s完整冷流程及原门仍未达成。本支只做神经，不恢复W0/W1、全口面、传统PC或主线接入，不给其他任务派活。旧M3600较好、Mfinal退化、D0成本否决/D1未运行、全部失败、UNKNOWN和费用永久保留。
+
+有限GitHub实际首屏检查及其限制见[呈现记录](records/render_check_v43.json)；发布尾段采集时连续窗口为6871.540424s，另列120s未保留初检的保守余量。[尾段费用](records/publication_tail_v43.json)保留检查、修复、网页与失败成本，最终commit/push/fetch及清场的结束时刻由ignored交付收据记录，不把采集截点冒充最后成本。

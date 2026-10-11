@@ -26,6 +26,20 @@
       "change": "Normalize only the four new compact V43 CSVs to LF; retain original new CSV bytes under ignored backup",
       "test": "All 956 data rows parsed before/after exactly identical; no numerical fields changed",
       "resume": "Restage compact CSV records and continue publication; no producer/checker recomputation"
+    },
+    {
+      "monotonic": 1611161.855903878,
+      "failure": "Closing metadata check passed all numerical bindings and Markdown parse, then git diff --check rejected a new blank EOF line in topic footer",
+      "hypothesis": "Footer append added two trailing newlines to the new topic",
+      "change": "Remove only the extra final newline; preserve original footer bytes under ignored backup",
+      "test": "Content before trailing newlines exactly identical; reparse only affected Markdown and lint",
+      "resume": "Reuse healthy numerical binding/source checks; no producer, physical checker or model reconstruction rerun",
+      "failed_light_summary": {
+        "path": "tmp/task42extra/v43/closing_guard/summary.json",
+        "bytes": 2000,
+        "sha256": "b70ba97d5ac72752b2135fee560d159420a3e8547e6f4adf03de337efdc43500"
+      },
+      "failed_supervised_s": 3.8899063048884273
     }
   ],
   "initial_failed_light_test": {

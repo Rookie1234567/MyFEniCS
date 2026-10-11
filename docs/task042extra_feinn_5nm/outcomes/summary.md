@@ -60,6 +60,8 @@
 
 <!-- TASK42EXTRA_V43_CURRENT_END -->
 
+发布尾段采集6871.540424s，原窗口/费用未重开，最终截止见ignored交付收据。[尾段费用](records/publication_tail_v43.json)、[有限实际呈现](records/render_check_v43.json)；只有首屏或服务错误的证据，不授全页视觉PASS。
+
 <!-- TASK42EXTRA_V42_CURRENT_BEGIN -->
 # 当前V42：固定相位、核心求解与隐藏增量分别裁决
 

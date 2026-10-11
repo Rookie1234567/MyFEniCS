@@ -76,11 +76,13 @@
 
 各逻辑路径须归属已付V42学习前缀2920.6633467029314s，但项目账不再收费；另有必需网格/native/moments准备，不免费。loaded-packet新增费用、已付前缀、可复用准备、研发历史及完整冷N=1分开；冷N=1和项目精确历史累计仍UNKNOWN。没有同合格精度，所以不授NN20%资源收益。
 
-串行自身同时树RSS采样峰最大916746240B，约0.854GiB，非整机峰或峰值相加。numeric warn12/hard16GiB、规划12GiB、cache/AD1GiB、轻2GiB；CPU-only/MPI1/math及Torch intra/inter-op1、原PSI/CPU-SMT/系统及384GiB邻增长门未改，成功60s准入计墙钟。数值、测试及验收树swap/OOC0并清场；只读工具控制没有完整峰值测量，不虚构全机资源PASS。新global Maxwell/Gram因子、Gsolve、全FE Krylov和参考重求均0；隔离验收G仅稀疏乘法。
+数值阶段串行自身同时树RSS采样峰最大916746240B，约0.854GiB；含后续浏览器的已监督轻任务/数值树采样峰最大1100705792B，约1.025GiB，非整机峰或峰值相加。numeric warn12/hard16GiB、规划12GiB、cache/AD1GiB、轻2GiB；CPU-only/MPI1/math及Torch intra/inter-op1、原PSI/CPU-SMT/系统及384GiB邻增长门未改，成功60s准入计墙钟。数值、测试及验收树swap/OOC0并清场；只读工具控制没有完整峰值测量，不虚构全机资源PASS。新global Maxwell/Gram因子、Gsolve、全FE Krylov和参考重求均0；隔离验收G仅稀疏乘法。
 
 最小定向测试最终25项、Ruff/compileall通过，非full pytest、无CI声明。初始fixture错误把dummy截止设成60s，触发原保存预留守卫，两项失败保留；只将fixture截止改300s，未改变正式保护或数学门。最终比较辅助步骤的common_wall目录缺失使attempt1在健康FE审核之后失败；增加先建立目录、实际原子writer→重开回归，通过25项后以--attempt 2恢复缺失步骤。启动默认attempt1被已有阶段守卫拒绝，未启动重复worker；明确恢复沿原分配时钟。所有失败、修复、测试和等待计费。
 
 健康reconstruction.json与verifier_result.json逐字hash未变，未重训或重做健康物理producer。pure保存checker恢复时重新从同一数组重算，其load_and_pairing_seconds重新计时，JSON hash变化；首版hash留存，首版计时字段原文NOT_RETAINED，不虚称字节一致。大数组/原PT保持原位ignored。用途false贯穿manifest/checkpoint/raw/compare/reopen，R/T/A因原残差未过只作diagnostic，绝不升级official。
+
+有限GitHub实际首屏检查及其限制见[呈现记录](outcomes/records/render_check_v43.json)；发布尾段采集时连续窗口为6871.540424s，另列120s未保留初检的保守余量。[尾段费用](outcomes/records/publication_tail_v43.json)保留检查、修复、网页与失败成本，最终commit/push/fetch及清场的结束时刻由ignored交付收据记录，不把采集截点冒充最后成本。
 
 ## 身份与证据
 

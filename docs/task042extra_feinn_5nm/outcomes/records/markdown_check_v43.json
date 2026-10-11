@@ -3,33 +3,33 @@
   "rows": [
     {
       "path": "docs/task042extra_feinn_5nm/response_v43.md",
-      "scope": "complete new selected page",
+      "scope": "complete selected new page",
       "result": {
         "path": "docs/task042extra_feinn_5nm/response_v43.md",
-        "sha256": "c801877c2178754295e376524d4359cb66d8b6401f461ae3e128894ed097a1ab",
+        "sha256": "fd9a53c370716e6faef1bd42d2921076b78d1e7630501559d3191f66b8de5d47",
         "checked_scope": "entire page",
         "markdown_tables": 3,
         "parsed_tables": 3,
         "math_fences": 0,
-        "links": 16
+        "links": 18
       }
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/bloch_ftt_trend_continuation_v43.md",
-      "scope": "complete new selected page",
+      "scope": "complete selected new page",
       "result": {
         "path": "docs/task042extra_feinn_5nm/outcomes/bloch_ftt_trend_continuation_v43.md",
-        "sha256": "30e9d438b20ddef6b0d9495ac0f04e34bb953f47866b16e0b7c71cd75dd6085f",
+        "sha256": "a73d518b07e1ec599a143785b7f49227c84bd4f850c4d84b630813b456e77b4c",
         "checked_scope": "entire page",
         "markdown_tables": 3,
         "parsed_tables": 3,
         "math_fences": 0,
-        "links": 15
+        "links": 17
       }
     },
     {
       "path": "docs/task042extra_feinn_5nm/review_report_v42.md",
-      "scope": "complete new selected page",
+      "scope": "complete selected new page",
       "result": {
         "path": "docs/task042extra_feinn_5nm/review_report_v42.md",
         "sha256": "1174e2d4d57eb16d29cf10f321ff1bc0264b3cc5d674de2fa8ef4288ea32b143",
@@ -58,12 +58,12 @@
       "scope": "new V43 section only",
       "result": {
         "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
-        "sha256": "80840602dca8e6763287c5a701d350ce40bf9dde158b4b858653e09bc68f496b",
+        "sha256": "62ee7e76a34991cac9a2aa4b3e3c61516d030403328112cc6f5b7dbcc0a16153",
         "checked_scope": "\u5f53\u524dV43\uff1aR4\u7eed\u7b97\u3001\u540c\u72b6\u6001\u63a7\u5236\u53ca\u5b8c\u6574\u6570\u503c\u5224\u5b9a",
         "markdown_tables": 3,
         "parsed_tables": 3,
         "math_fences": 0,
-        "links": 3
+        "links": 5
       }
     },
     {
@@ -121,5 +121,7 @@
   ],
   "historical_sections_byte_preserved": true,
   "scope": "new response/topic/current sections only; no historical rerender",
-  "GitHub_visual_status": "PENDING_FINITE_ACTUAL_VIEW_NOT_LOCAL_PARSER_PASS"
+  "GitHub_visual_status": "PARTIAL_SELECTED_VIEWPORTS_RESPONSE_SERVICE_ERROR_NOT_FULL_PAGE_PASS",
+  "healthy_numeric_and_source_bindings_reused_from_closing_guard": true,
+  "arrays_or_models_reloaded": false
 }

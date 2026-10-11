@@ -1,0 +1,60 @@
+{
+  "publication_sha": "b6e6a836e5e5bc5a44ea3bfe1c31756c818f75b3",
+  "attempts": [
+    {
+      "name": "review",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/34ccdfa87b6682812570ef23e12dc22a02542e9b/docs/task042extra_feinn_5nm/review_report_v42.md",
+      "published_sha": "34ccdfa87b6682812570ef23e12dc22a02542e9b",
+      "published_blob_sha256": "1174e2d4d57eb16d29cf10f321ff1bc0264b3cc5d674de2fa8ef4288ea32b143",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_s": 38.27784790308215,
+      "screenshot": "tmp/task42extra/v43/render_views/review/page.png",
+      "screenshot_sha256": "30f06f793b2e244a62b340af73c9b6bff9835da847f7ac6dd58a18e1b90ff9eb",
+      "actual_visual": "SELECTED_FIRST_VIEWPORT_READABLE",
+      "observed": "Review V42 heading, identity/code block, introduction, first two complete result/round tables are visibly rendered in GitHub Preview.",
+      "formula_scope": "Later formulas were outside the captured viewport; not visually verified.",
+      "full_page_visual_pass": false
+    },
+    {
+      "name": "response",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/b6e6a836e5e5bc5a44ea3bfe1c31756c818f75b3/docs/task042extra_feinn_5nm/response_v43.md",
+      "published_sha": "b6e6a836e5e5bc5a44ea3bfe1c31756c818f75b3",
+      "published_blob_sha256": "c801877c2178754295e376524d4359cb66d8b6401f461ae3e128894ed097a1ab",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_s": 2.080650782911107,
+      "screenshot": "tmp/task42extra/v43/render_views/response/page.png",
+      "screenshot_sha256": "10bcabc07a8cb031f136f58692ae82f93b78c12dd7f9c8e329a45aff7a46af52",
+      "actual_visual": "NOT_VERIFIED_GITHUB_SERVICE_ERROR",
+      "observed": "The captured page shows GitHub's unicorn service-error screen, not Response V43 content.",
+      "formula_scope": "No response text/table visually verified from this attempt.",
+      "full_page_visual_pass": false
+    },
+    {
+      "name": "continuation",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/b6e6a836e5e5bc5a44ea3bfe1c31756c818f75b3/docs/task042extra_feinn_5nm/outcomes/bloch_ftt_trend_continuation_v43.md",
+      "published_sha": "b6e6a836e5e5bc5a44ea3bfe1c31756c818f75b3",
+      "published_blob_sha256": "30e9d438b20ddef6b0d9495ac0f04e34bb953f47866b16e0b7c71cd75dd6085f",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_s": 9.416837193071842,
+      "screenshot": "tmp/task42extra/v43/render_views/continuation/page.png",
+      "screenshot_sha256": "3b29fecc7509ae33d94c5966fcdbddfa895b3cbcdb80415d5594b63ba1c2bd44",
+      "actual_visual": "SELECTED_FIRST_VIEWPORT_READABLE",
+      "observed": "Published topic heading, method/parent text, complete round4-8 table and the first part of the large physical-result table are visibly rendered.",
+      "formula_scope": "Remaining result-table rows, final sections and page tail were outside the viewport; not visually verified.",
+      "full_page_visual_pass": false
+    }
+  ],
+  "scope": "selected first viewport only; full text read independently from Git; unseen page/formula/table portions unverified",
+  "schema": "task42extra.v43.render.v1",
+  "overall": "PARTIAL_SELECTED_VIEWPORTS_RESPONSE_SERVICE_ERROR_NOT_FULL_PAGE_PASS",
+  "screenshots_actually_inspected": true,
+  "browser_tree_cleared": true,
+  "local_Markdown_parse_is_not_browser_visual_qualification": true,
+  "old_render_failures_preserved": true,
+  "retry_count": 0,
+  "no_numerical_producer_repeated_for_rendering": true,
+  "final_footer_not_in_published_visual_scope": true
+}
