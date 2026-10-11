@@ -261,7 +261,7 @@ def durable(spec, *, origin, attempt=1):
         management_supervised=True,
         allowed_scope=scope,
         socket_directory=root / "sockets"
-        if spec.get("campaign_version") in (32,33,34,35,36,38,39,40,41,42,43,44)
+        if spec.get("campaign_version") in (32,33,34,35,36,38,39,40,41,42,43,44,45)
         else None,
     )
 

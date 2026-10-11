@@ -374,3 +374,25 @@ def test_conditional_pilot_requires_actual_and_producer_joint_pass(tmp_path,monk
     decision=worker.comparison_record({},artifact,lambda *_:None,tmp_path)["coordinate_decision"]
     assert not decision["conditional_0p7_numerical_gate"]
     assert decision["conditional_0p7_requires_separate_safe_admission_and_10800s_remaining"]
+
+
+def test_actual_v45_durable_selects_short_task_socket_namespace(tmp_path,monkeypatch):
+    from time import monotonic
+    from src.runners import neural_wave_campaign as campaign
+    from src.io.neural_wave_campaign import load_wave
+    from src.io.ftt_coordinate_campaign import ROOT
+    root=tmp_path/"v45"
+    monkeypatch.setattr(campaign,"source_gate",lambda:"a"*40)
+    monkeypatch.setattr(campaign,"profile_paths",lambda _:dict(root=root,reserve=3600))
+    monkeypatch.setattr(campaign,"window",lambda _:dict(deadline_monotonic=monotonic()+43200))
+    monkeypatch.setattr("src.runners.neural_wave_dependencies.fresh_admission",lambda *a,**k:{})
+    monkeypatch.setattr("src.runners.w1_admission_scope.capture_scope",lambda _:dict(fixture=True))
+    calls=[]
+    def launch(*args,**kwargs):
+        calls.append(kwargs)
+        return kwargs
+    monkeypatch.setattr("src.runners.durable_terminal.launch_tmux",launch)
+    spec=load_wave(ROOT/"input/task042extra_feinn_5nm/v45_feature_coordinates_checks.dat")
+    result=campaign.durable(spec,origin=monotonic())
+    assert result["socket_directory"]==root/"sockets"
+    assert result["management_supervised"] and len(calls)==1
