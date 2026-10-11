@@ -7,6 +7,20 @@ import pytest
 from src.postprocessing.ftt_common_wall import select_common_wall
 
 
+def test_empty_output_namespace_atomic_record_and_reopen(tmp_path):
+    from src.postprocessing.ftt_common_wall import initialize_output
+    from src.solvers.neural_wave_greedy import atomic_json
+
+    path = tmp_path / "new_audit" / "common_wall"
+    assert not path.exists()
+    assert initialize_output(path) == path
+    atomic_json(path / "abi.json", {"qualified": True})
+    first = (path / "abi.json").read_bytes()
+    initialize_output(path)
+    assert (path / "abi.json").read_bytes() == first
+    assert json.loads(first)["qualified"]
+
+
 def example():
     histories = {
         "learned": [

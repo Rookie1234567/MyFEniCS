@@ -53,7 +53,15 @@ def select_common_wall(histories, indices):
     )
 
 
+def initialize_output(artifact):
+    """Establish the per-audit namespace before the first atomic record."""
+    artifact = Path(artifact)
+    artifact.mkdir(parents=True, exist_ok=True)
+    return artifact
+
+
 def prepare(artifact, source_root, manifest):
+    artifact = initialize_output(artifact)
     from src.io.ftt_continuation_campaign import DESIGN, routes
     from src.io.ftt_campaign import load_files
     from src.runners.ftt_worker import load_arrays, ftt_abi
