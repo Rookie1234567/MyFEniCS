@@ -1,3 +1,14 @@
+<!-- TASK42EXTRA_V44_CURRENT_BEGIN -->
+# 当前执行入口：V44神经宽度/内层研究完成
+
+本支只做神经。Review V43已实际完成同第8轮parent的三条第9—12轮及独立全场验收。加宽有有限精度改善，宽冻结终态略优于宽学习，三路线M5全门FAIL、无验证NN资源收益；内层尚未充分，不能把失败统一归因为网络太小。额外两轮/0.7nm未准入，不自动续扫。
+
+[Response V44](response_v44.md)、[当前summary](outcomes/summary.md)、[专题](outcomes/ftt_width_vs_optimization_v44.md)、[完整Gate](outcomes/records/full_numerical_gates_v44.json)、[原source/run/hash](outcomes/records/run_index_v44.json)、[费用](outcomes/records/resource_costs_v44.json)。保持FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED；目标lambda0.7原尺寸完整3D/decimal2e12B/172800s及原门未达。
+
+下方历史全文原样保留；旧“当前/下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V44_CURRENT_END -->
+
 <!-- TASK42EXTRA_V43_CURRENT_BEGIN -->
 # 当前V43：同态续算与隐藏边际消融完成
 

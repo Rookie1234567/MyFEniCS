@@ -1,0 +1,937 @@
+{
+  "schema": "task42extra.v44.use-policy.v1",
+  "raw_json_and_manifest_occurrences": 148,
+  "all_occurrences_strict_false": true,
+  "raw_json_bindings": [
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_and_inner_checks/result.json",
+      "sha256": "2b5b0f5e66e50dc7da5ee5b83f173c6e02723202a465aa60f45f1caf998974d4",
+      "bytes": 11382
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json",
+      "sha256": "ade386f8ed0178e5e037743e20673f1eb7fb62c4e495ddd4aaf0ed1d2ac1ba20",
+      "bytes": 68561
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json",
+      "sha256": "74d00629eba146453e942039e9df4b5b9fba0f2aecb0c433e95d14fe6884fa01",
+      "bytes": 68566
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json",
+      "sha256": "a5cd86c3402842e4813c02d848daf9d0990436576db1e2ba8e004ec8d04933b1",
+      "bytes": 68488
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json",
+      "sha256": "d529b3e9e6f21c1ef0913ba464d79daf72889cf70e8a8f50514ec09e8600dee6",
+      "bytes": 62046
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json",
+      "sha256": "60a521a1e6de47079acdd5d5084a265f5b3699615f7450d0b5e24575431a029b",
+      "bytes": 538740
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json",
+      "sha256": "1be56ae003364c4c1e84b0d7953ed63338a73843676d80a84c1f99b50f86d386",
+      "bytes": 54697
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/reconstruction.json",
+      "sha256": "13a3a034b15816c3d2fa4b2bb48fad6669c26db8fab6852c8636c5974cad671b",
+      "bytes": 5055
+    }
+  ],
+  "checkpoint_hash_verified_reopen": {
+    "parent_sha256": "ba2523341b7d1fa1cc339ea1b9544a7468e9fe7faa9dd2f93a8c000cad68e9f8",
+    "actual_initial_forks_bitwise_same": true,
+    "hidden_real_parameter_counts": {
+      "W16_REFINED_CORE_LEARNED": 912,
+      "W32_REFINED_CORE_LEARNED": 3360,
+      "W32_REFINED_CORE_FROZEN": 3360
+    },
+    "records": {
+      "W16_REFINED_CORE_LEARNED": {
+        "initial_checkpoint_sha256": "3fd4cbabb2318f3c36bc22b8aaa0760aac8cffa476accbc3e63f7a280c776fd8",
+        "final_checkpoint_sha256": "905feb40c50f143883ad9faa3514b96dc217e8134a136163005c2501cfbd06ab",
+        "initial_c_r_bitwise_equal_parent": true,
+        "initial_RNG_equal_parent": true,
+        "final_all_buffers_equal_parent": true,
+        "inherited_counts": {
+          "core_visits": 24,
+          "LSMR_iterations": 6905,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 24,
+          "effective_core_updates": 24,
+          "accepted_hidden_updates": 8,
+          "effective_hidden_updates": 8,
+          "hidden_actual_calls": 109,
+          "K": 6977,
+          "KH": 6977,
+          "B": 6953,
+          "BH": 6977,
+          "round_audits": 8,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "new_counts": {
+          "core_visits": 12,
+          "LSMR_iterations": 11680,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 12,
+          "effective_core_updates": 12,
+          "accepted_hidden_updates": 4,
+          "effective_hidden_updates": 4,
+          "hidden_actual_calls": 58,
+          "K": 11746,
+          "KH": 11756,
+          "B": 11734,
+          "BH": 11756,
+          "round_audits": 4,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "all_initial_model_buffers_equal_function_preserving_import": true,
+        "initial_architecture_equals_parent": true,
+        "initial_c_r_pair": {
+          "c": {
+            "numerator": 0.0,
+            "denominator": 16.781058956014736,
+            "relative": 0.0
+          },
+          "r": {
+            "numerator": 0.0,
+            "denominator": 0.12409101792241754,
+            "relative": 0.0
+          }
+        },
+        "final_hidden_bitwise_equal_initial_import": false,
+        "hidden_delta_from_initial_import_norm": 5.847961014200133e-05,
+        "hidden_real_parameter_count": 912,
+        "actual_real_parameter_count": 9072
+      },
+      "W32_REFINED_CORE_LEARNED": {
+        "initial_checkpoint_sha256": "9978f40158e9eeec58dac342f04e08be334ce334a51dacb3f588b223f5920626",
+        "final_checkpoint_sha256": "02109f3e8d8f5361bc1d7f3b16633e1d257017fd1cf3b808bba6aad4fa57708f",
+        "initial_c_r_bitwise_equal_parent": true,
+        "initial_RNG_equal_parent": true,
+        "final_all_buffers_equal_parent": true,
+        "inherited_counts": {
+          "core_visits": 24,
+          "LSMR_iterations": 6905,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 24,
+          "effective_core_updates": 24,
+          "accepted_hidden_updates": 8,
+          "effective_hidden_updates": 8,
+          "hidden_actual_calls": 109,
+          "K": 6977,
+          "KH": 6977,
+          "B": 6953,
+          "BH": 6977,
+          "round_audits": 8,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "new_counts": {
+          "core_visits": 12,
+          "LSMR_iterations": 12925,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 12,
+          "effective_core_updates": 12,
+          "accepted_hidden_updates": 4,
+          "effective_hidden_updates": 4,
+          "hidden_actual_calls": 28,
+          "K": 12994,
+          "KH": 13005,
+          "B": 12982,
+          "BH": 13005,
+          "round_audits": 4,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "all_initial_model_buffers_equal_function_preserving_import": true,
+        "initial_architecture_equals_parent": false,
+        "initial_c_r_pair": {
+          "c": {
+            "numerator": 0.0,
+            "denominator": 16.781058956014736,
+            "relative": 0.0
+          },
+          "r": {
+            "numerator": 0.0,
+            "denominator": 0.12409101792241754,
+            "relative": 0.0
+          }
+        },
+        "final_hidden_bitwise_equal_initial_import": false,
+        "hidden_delta_from_initial_import_norm": 2.7816372335021237e-06,
+        "hidden_real_parameter_count": 3360,
+        "actual_real_parameter_count": 19200,
+        "expanded_parameter_participation": {
+          "axes": {
+            "x": {
+              "old_hidden_real_parameters": 304,
+              "new_hidden_real_parameters": 816,
+              "new_output_real_parameters": 768,
+              "initial_new_output_weight_norm": 0.0,
+              "final_new_output_weight_norm": 3.0814476248853193,
+              "new_output_weight_change_norm": 3.0814476248853193,
+              "old_hidden_change_norm": 1.8700403171167179e-06,
+              "new_hidden_change_norm": 2.0414555932824495e-06,
+              "retained_new_hidden_gradient_norm": 1.1470861440700717,
+              "gradient_tensors_retained": 4,
+              "gradient_tensors_not_retained": 0,
+              "gradient_status": "RETAINED_CHECKPOINT_GRADIENT_BUFFERS"
+            },
+            "y": {
+              "old_hidden_real_parameters": 304,
+              "new_hidden_real_parameters": 816,
+              "new_output_real_parameters": 6144,
+              "initial_new_output_weight_norm": 0.0,
+              "final_new_output_weight_norm": 0.2740135682606929,
+              "new_output_weight_change_norm": 0.27401356826069295,
+              "old_hidden_change_norm": 9.630954345749763e-08,
+              "new_hidden_change_norm": 8.47305606081601e-08,
+              "retained_new_hidden_gradient_norm": 0.02627457264340514,
+              "gradient_tensors_retained": 4,
+              "gradient_tensors_not_retained": 0,
+              "gradient_status": "RETAINED_CHECKPOINT_GRADIENT_BUFFERS"
+            },
+            "z": {
+              "old_hidden_real_parameters": 304,
+              "new_hidden_real_parameters": 816,
+              "new_output_real_parameters": 768,
+              "initial_new_output_weight_norm": 0.0,
+              "final_new_output_weight_norm": 19.70811263125509,
+              "new_output_weight_change_norm": 19.708112631255098,
+              "old_hidden_change_norm": 1.480700031425021e-07,
+              "new_hidden_change_norm": 1.8583446915620447e-07,
+              "retained_new_hidden_gradient_norm": 0.13197305839533563,
+              "gradient_tensors_retained": 4,
+              "gradient_tensors_not_retained": 0,
+              "gradient_status": "RETAINED_CHECKPOINT_GRADIENT_BUFFERS"
+            }
+          },
+          "old_hidden_real_parameters": 912,
+          "new_hidden_real_parameters": 2448,
+          "gradient_scope": "Stored gradient buffers may originate from core-adjoint VJP or hidden optimization; no fresh final-state gradient computed and no hidden update inferred",
+          "new_network_forward_calls": 0,
+          "new_gradient_calls": 0
+        }
+      },
+      "W32_REFINED_CORE_FROZEN": {
+        "initial_checkpoint_sha256": "c3dc2b5306327dbc14feb1def8166e7e2296b7c5b8f9ad615c78600789b5b413",
+        "final_checkpoint_sha256": "3235f2c4bc10a2f10d0f73c1e8cff3fb1183e68116198b070a02cb7bc7ce0f42",
+        "initial_c_r_bitwise_equal_parent": true,
+        "initial_RNG_equal_parent": true,
+        "final_all_buffers_equal_parent": true,
+        "inherited_counts": {
+          "core_visits": 24,
+          "LSMR_iterations": 6905,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 24,
+          "effective_core_updates": 24,
+          "accepted_hidden_updates": 8,
+          "effective_hidden_updates": 8,
+          "hidden_actual_calls": 109,
+          "K": 6977,
+          "KH": 6977,
+          "B": 6953,
+          "BH": 6977,
+          "round_audits": 8,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "new_counts": {
+          "core_visits": 12,
+          "LSMR_iterations": 13823,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 12,
+          "effective_core_updates": 12,
+          "accepted_hidden_updates": 0,
+          "effective_hidden_updates": 0,
+          "hidden_actual_calls": 0,
+          "K": 13895,
+          "KH": 13907,
+          "B": 13883,
+          "BH": 13907,
+          "round_audits": 4,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "all_initial_model_buffers_equal_function_preserving_import": true,
+        "initial_architecture_equals_parent": false,
+        "initial_c_r_pair": {
+          "c": {
+            "numerator": 0.0,
+            "denominator": 16.781058956014736,
+            "relative": 0.0
+          },
+          "r": {
+            "numerator": 0.0,
+            "denominator": 0.12409101792241754,
+            "relative": 0.0
+          }
+        },
+        "final_hidden_bitwise_equal_initial_import": true,
+        "hidden_delta_from_initial_import_norm": 0.0,
+        "hidden_real_parameter_count": 3360,
+        "actual_real_parameter_count": 19200,
+        "expanded_parameter_participation": {
+          "axes": {
+            "x": {
+              "old_hidden_real_parameters": 304,
+              "new_hidden_real_parameters": 816,
+              "new_output_real_parameters": 768,
+              "initial_new_output_weight_norm": 0.0,
+              "final_new_output_weight_norm": 3.064904519016259,
+              "new_output_weight_change_norm": 3.0649045190162614,
+              "old_hidden_change_norm": 0.0,
+              "new_hidden_change_norm": 0.0,
+              "retained_new_hidden_gradient_norm": 0.13191912179958837,
+              "gradient_tensors_retained": 4,
+              "gradient_tensors_not_retained": 0,
+              "gradient_status": "RETAINED_CHECKPOINT_GRADIENT_BUFFERS"
+            },
+            "y": {
+              "old_hidden_real_parameters": 304,
+              "new_hidden_real_parameters": 816,
+              "new_output_real_parameters": 6144,
+              "initial_new_output_weight_norm": 0.0,
+              "final_new_output_weight_norm": 0.43159758487851685,
+              "new_output_weight_change_norm": 0.43159758487851685,
+              "old_hidden_change_norm": 0.0,
+              "new_hidden_change_norm": 0.0,
+              "retained_new_hidden_gradient_norm": 0.004748583954028922,
+              "gradient_tensors_retained": 4,
+              "gradient_tensors_not_retained": 0,
+              "gradient_status": "RETAINED_CHECKPOINT_GRADIENT_BUFFERS"
+            },
+            "z": {
+              "old_hidden_real_parameters": 304,
+              "new_hidden_real_parameters": 816,
+              "new_output_real_parameters": 768,
+              "initial_new_output_weight_norm": 0.0,
+              "final_new_output_weight_norm": 22.7839070810442,
+              "new_output_weight_change_norm": 22.783907081044212,
+              "old_hidden_change_norm": 0.0,
+              "new_hidden_change_norm": 0.0,
+              "retained_new_hidden_gradient_norm": 0.011221555200445023,
+              "gradient_tensors_retained": 4,
+              "gradient_tensors_not_retained": 0,
+              "gradient_status": "RETAINED_CHECKPOINT_GRADIENT_BUFFERS"
+            }
+          },
+          "old_hidden_real_parameters": 912,
+          "new_hidden_real_parameters": 2448,
+          "gradient_scope": "Stored gradient buffers may originate from core-adjoint VJP or hidden optimization; no fresh final-state gradient computed and no hidden update inferred",
+          "new_network_forward_calls": 0,
+          "new_gradient_calls": 0
+        }
+      }
+    },
+    "production_initialization_allowed": false,
+    "new_training_calls": 0,
+    "new_reference_solve_count": 0
+  },
+  "policy_rows": [
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_and_inner_checks/result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_and_inner_checks/result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_and_inner_checks/result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/rounds/1/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/rounds/3/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/rounds/5/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/rounds/7/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/rounds/9/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/rounds/11/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/checkpoint/metadata/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/checkpoint/metadata/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/checkpoint/metadata/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/checkpoint/metadata/rounds/1/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/checkpoint/metadata/rounds/3/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/checkpoint/metadata/rounds/5/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/checkpoint/metadata/rounds/7/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/checkpoint/metadata/rounds/9/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/result.json/checkpoint/metadata/rounds/11/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/rounds/1/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/rounds/3/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/rounds/5/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/rounds/7/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/rounds/9/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/rounds/11/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/checkpoint/metadata/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/checkpoint/metadata/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/checkpoint/metadata/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/checkpoint/metadata/rounds/1/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/checkpoint/metadata/rounds/3/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/checkpoint/metadata/rounds/5/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/checkpoint/metadata/rounds/7/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/checkpoint/metadata/rounds/9/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/result.json/checkpoint/metadata/rounds/11/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/rounds/1/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/rounds/3/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/rounds/5/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/rounds/7/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/rounds/9/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/rounds/11/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/checkpoint/metadata/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/checkpoint/metadata/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/checkpoint/metadata/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/checkpoint/metadata/rounds/1/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/checkpoint/metadata/rounds/3/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/checkpoint/metadata/rounds/5/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/checkpoint/metadata/rounds/7/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/checkpoint/metadata/rounds/9/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/result.json/checkpoint/metadata/rounds/11/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W16_REFINED_CORE_LEARNED/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W16_REFINED_CORE_LEARNED/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W16_REFINED_CORE_LEARNED/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W32_REFINED_CORE_LEARNED/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W32_REFINED_CORE_LEARNED/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W32_REFINED_CORE_LEARNED/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W32_REFINED_CORE_FROZEN/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W32_REFINED_CORE_FROZEN/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W32_REFINED_CORE_FROZEN/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W16_REFINED_CORE_LEARNED_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W16_REFINED_CORE_LEARNED_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W16_REFINED_CORE_LEARNED_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W32_REFINED_CORE_LEARNED_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W32_REFINED_CORE_LEARNED_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W32_REFINED_CORE_LEARNED_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W32_REFINED_CORE_FROZEN_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W32_REFINED_CORE_FROZEN_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/saved_checker/records/W32_REFINED_CORE_FROZEN_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/reconstruction/W16_REFINED_CORE_LEARNED/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/reconstruction/W32_REFINED_CORE_LEARNED/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/reconstruction/W32_REFINED_CORE_FROZEN/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/reconstruction/W16_REFINED_CORE_LEARNED_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/reconstruction/W32_REFINED_CORE_LEARNED_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/reconstruction/W32_REFINED_CORE_FROZEN_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/physics/records/REFERENCE/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/physics/records/W16_REFINED_CORE_LEARNED/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/physics/records/W16_REFINED_CORE_LEARNED_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/physics/records/W32_REFINED_CORE_LEARNED/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/physics/records/W32_REFINED_CORE_LEARNED_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/physics/records/W32_REFINED_CORE_FROZEN/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/physics/records/W32_REFINED_CORE_FROZEN_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W16_REFINED_CORE_LEARNED/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W16_REFINED_CORE_LEARNED/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W16_REFINED_CORE_LEARNED/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W16_REFINED_CORE_LEARNED_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W16_REFINED_CORE_LEARNED_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W16_REFINED_CORE_LEARNED_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W32_REFINED_CORE_LEARNED/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W32_REFINED_CORE_LEARNED/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W32_REFINED_CORE_LEARNED/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W32_REFINED_CORE_LEARNED_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W32_REFINED_CORE_LEARNED_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W32_REFINED_CORE_LEARNED_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W32_REFINED_CORE_FROZEN/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W32_REFINED_CORE_FROZEN/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W32_REFINED_CORE_FROZEN/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W32_REFINED_CORE_FROZEN_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W32_REFINED_CORE_FROZEN_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/comparisons/W32_REFINED_CORE_FROZEN_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/verifier_result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W16_REFINED_CORE_LEARNED/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W16_REFINED_CORE_LEARNED/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W16_REFINED_CORE_LEARNED/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W32_REFINED_CORE_LEARNED/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W32_REFINED_CORE_LEARNED/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W32_REFINED_CORE_LEARNED/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W32_REFINED_CORE_FROZEN/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W32_REFINED_CORE_FROZEN/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W32_REFINED_CORE_FROZEN/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W16_REFINED_CORE_LEARNED_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W16_REFINED_CORE_LEARNED_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W16_REFINED_CORE_LEARNED_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W32_REFINED_CORE_LEARNED_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W32_REFINED_CORE_LEARNED_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W32_REFINED_CORE_LEARNED_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W32_REFINED_CORE_FROZEN_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W32_REFINED_CORE_FROZEN_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json/records/W32_REFINED_CORE_FROZEN_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/reconstruction.json/W16_REFINED_CORE_LEARNED/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/reconstruction.json/W32_REFINED_CORE_LEARNED/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/reconstruction.json/W32_REFINED_CORE_FROZEN/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v44/durable/v44_w16_refined_learned_attempt1/run_manifest.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v44/durable/v44_w16_refined_learned_attempt1/run_manifest.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v44/durable/v44_w16_refined_learned_attempt1/run_manifest.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v44/durable/v44_w32_refined_frozen_attempt1/run_manifest.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v44/durable/v44_w32_refined_frozen_attempt1/run_manifest.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v44/durable/v44_w32_refined_frozen_attempt1/run_manifest.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v44/durable/v44_w32_refined_learned_attempt1/run_manifest.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v44/durable/v44_w32_refined_learned_attempt1/run_manifest.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v44/durable/v44_w32_refined_learned_attempt1/run_manifest.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v44/durable/v44_width_and_inner_checks_attempt1/run_manifest.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v44/durable/v44_width_and_inner_checks_attempt1/run_manifest.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v44/durable/v44_width_and_inner_checks_attempt1/run_manifest.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v44/durable/v44_width_independent_compare_attempt1/run_manifest.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v44/durable/v44_width_independent_compare_attempt1/run_manifest.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v44/durable/v44_width_independent_compare_attempt1/run_manifest.json/official_candidate_results",
+      "value": false
+    }
+  ],
+  "historical_wrong_flags_not_rewritten": true,
+  "original_new_comparison_already_false_no_corrective_seal_required": true,
+  "raw_arrays_or_numerical_fields_rewritten": false
+}

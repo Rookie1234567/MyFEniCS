@@ -1,3 +1,22 @@
+<!-- TASK42EXTRA_V44_CURRENT_BEGIN -->
+# Task42extra V44：内层补足及一次加宽已完成
+
+神经研究在同V43第8轮状态分叉，16/32宽及宽冻结三条均第12轮实际验收。宽度扩展保留初始物理场、rank8和原M5；完整网络重建/求积通过，原物理精度失败。
+
+| M5/5nm/p3/r8/N31968/40端口 | native R | 散射E | 散射H | 能量闭合 | 新增attempt/s | 联合Gate |
+|---|---|---|---|---|---|---|
+| 宽16学习 | 0.391639358503 | 0.107837273178 | 0.107930568412 | 0.0302399260155 | 5087.2445024 | FAIL |
+| 宽32学习 | 0.361290385199 | 0.0837766785225 | 0.0838326969727 | 0.0266238760746 | 5483.30524566 | FAIL |
+| 宽32冻结隐藏 | 0.359499231987 | 0.0823025669279 | 0.0823550720923 | 0.0263308364469 | 5760.15365775 | FAIL |
+
+宽学习比窄模型有限改善，宽冻结略好，隐藏学习净增益未证；两段内层仍有未充分，不能作所有NN容量排除。原公式/精度和lambda0.7原尺寸/decimal2e12B/172800s目标保持未达；无同精度20%资源收益。旧费用/FAIL/UNKNOWN保留，4545.7073295s必要学习前缀归属但不重复计项目账，冷N=1 UNKNOWN。只更新本支条目，不改变其他支线状态或分派任务。
+
+[回执](task042extra_feinn_5nm/response_v44.md)、[完整原量/功率/区域](task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v44.json)、[费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v44.json)、[source](task042extra_feinn_5nm/outcomes/records/run_index_v44.json)。
+
+下方历史全文原样保留；旧“当前/下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V44_CURRENT_END -->
+
 <!-- TASK42EXTRA_V43_CURRENT_BEGIN -->
 # Task42extra V43：M5同态学习/冻结有限续算总账
 

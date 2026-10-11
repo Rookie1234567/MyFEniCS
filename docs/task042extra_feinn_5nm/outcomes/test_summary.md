@@ -1,3 +1,18 @@
+<!-- TASK42EXTRA_V44_CURRENT_BEGIN -->
+# V44：真实宽度/两段资格与受影响保存态测试
+
+定向数学/恢复/角色测试最终43项通过，后续保存态元数据3项复验，其中2项新增、1项复用，最终覆盖45个不同case；不把多个修订与重复执行相加为唯一测试数。Ruff/compileall本地通过，无full pytest、安装或CI声明。真实宽度/三轴/隐藏FD/原网络重建短资格通过后才启动三条。各次JUnit、单核/线程/PSI、峰值和失败原文保留。
+
+初始pure设计读取错误触发Torch模块导入，改为ML-only局部导入后继续；小型不同尺度LSMR fixture原断言要求超出有限迭代精度的系数一致性，修成独立SVD目标及真伴随/非零奇异值前向误差界，不改正式LSMR或PDE门。原失败保留。随后保存态审核纠正宽16硬编码912和parent/扩展初态语义，增加实际维数、bitwise/数值配对和2448新增隐藏参数分区；梯度缓冲来源又按真实KH/VJP链修正。均最小修复、受影响targeted test、clean commit再继续，不重训任何健康路线、不重做健康参考或FE审核。原初检/部分开发精确耗时NOT_RETAINED，统一窗口真实计费，未借此重开预算。
+
+三个训练先资格、clean source，再串行运行；独立旧逐点q30/q60重建、FE compare-only、保存checker六份完整评分均完成。场精度FAIL与实现/求积通过分列，不能用45个case代替PDE门。新增参与只从保存PT读取，梯度来源更正不重算健康FE。
+
+[冻结43项与各轮JUnit](records/tests_v44.json)、[正式资格与受影响复验](records/formal_tests_and_qualification_v44.json)、[source/产物绑定](records/run_index_v44.json)、[完整Gate](records/full_numerical_gates_v44.json)。
+
+下方历史全文原样保留；旧“当前/下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V44_CURRENT_END -->
+
 <!-- TASK42EXTRA_V43_CURRENT_BEGIN -->
 # V43：parent恢复、执行政策与保存态比较定向验证
 

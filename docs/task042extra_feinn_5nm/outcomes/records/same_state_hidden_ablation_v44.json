@@ -1,0 +1,670 @@
+{
+  "schema": "task42extra.v44.ablation.v1",
+  "parent": {
+    "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_learned_continue/checkpoints/committed_000023.pt",
+    "sha256": "ba2523341b7d1fa1cc339ea1b9544a7468e9fe7faa9dd2f93a8c000cad68e9f8",
+    "bytes": 1895143,
+    "input_kind": "unlabelled_complete_round8_boundary",
+    "binding": {
+      "source_sha": "dce792d18a45a1c874c29dfa4a42a8052fffe40f",
+      "input_sha256": "1d13062170d1117ee531b1c0b341f3b2523ceb9f5d0d4d0d865773f91420deb4",
+      "design_sha256": "5145a85f08bce5bdf6008c3451cfbc03aa05f40d0df5894a03cb521d15adb3d9",
+      "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+      "model_kind": "fttnn",
+      "metric_kind": "native_euc",
+      "route": "BLOCH_FTTNN_R4_LEARNED_CONTINUE",
+      "phase_sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+    },
+    "inherited_rounds": 8,
+    "inherited_counts": {
+      "core_visits": 24,
+      "LSMR_iterations": 6905,
+      "LSMR_unretained_iterations_upper_bound": 0,
+      "accepted_core_updates": 24,
+      "effective_core_updates": 24,
+      "accepted_hidden_updates": 8,
+      "effective_hidden_updates": 8,
+      "hidden_actual_calls": 109,
+      "K": 6977,
+      "KH": 6977,
+      "B": 6953,
+      "BH": 6977,
+      "round_audits": 8,
+      "uncommitted_K": 0,
+      "uncommitted_KH": 0
+    },
+    "path_source": "outcomes/records/run_index_v43.json",
+    "parent_result_status": "NO_CONTINUED_JOINT_PROGRESS",
+    "required_parent_prefix_seconds": 4545.707329502931
+  },
+  "common_rounds": [
+    {
+      "total_round": 10,
+      "records": {
+        "W16_REFINED_CORE_LEARNED": {
+          "round": 9,
+          "native": 0.39900364833574875,
+          "start_native": 0.4193110164296097,
+          "relative_native_improvement": 0.04843032331174154,
+          "original_equation": {
+            "native_relative": 0.39900364833574875,
+            "augmented_relative": 0.39900364833574875,
+            "original_total_augmented_relative": 0.18900873094436527,
+            "port_absolute": 7.205577402028397e-19,
+            "port_full_rhs_relative": 2.4757860848599672e-18,
+            "port_operation_relative": 1.8653405560100836e-20,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 11.316557422497574,
+            "full_coefficient_norm": 16.51071486453244,
+            "port_unknown_norm": 0.27743679138751526,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 30,
+            "LSMR_iterations": 12570,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 30,
+            "effective_core_updates": 30,
+            "accepted_hidden_updates": 10,
+            "effective_hidden_updates": 10,
+            "hidden_actual_calls": 138,
+            "K": 12675,
+            "KH": 12680,
+            "B": 12645,
+            "BH": 12680,
+            "round_audits": 10,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 10,
+            "boundary_sha256": "748aea1d878eac2909fdcb99839d93e0eaf0e859e97c996ce70f423c5aaa694d",
+            "field_sha256": "741f7a97884f81b27238ecd73a53e001c92264a34571e0f1510d0f22db8e091c",
+            "source_sha": "a4c0d5e703eee8efe59740e706632eaeae2803e0",
+            "design_sha256": "76b240bce50e468c2252b990a9467dce41ab2e0ce478a928fa9c117054b01e69",
+            "native_relative": 0.39900364833574875,
+            "augmented_relative": 0.39900364833574875,
+            "scattered_E_relative": 0.10397819681572221,
+            "scattered_H_relative": 0.10411545348076189,
+            "scattered_curl_relative": 0.10411545348076189,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 437473280
+          },
+          "continuation_policy_decision": {
+            "allowed": true,
+            "reason": "ROUND10_DIAGNOSTIC_ONLY"
+          },
+          "predeclared_continuation_allowed": true
+        },
+        "W32_REFINED_CORE_LEARNED": {
+          "round": 9,
+          "native": 0.3714456367057969,
+          "start_native": 0.3732073563608367,
+          "relative_native_improvement": 0.00472048480560086,
+          "original_equation": {
+            "native_relative": 0.3714456367057969,
+            "augmented_relative": 0.3714456367057969,
+            "original_total_augmented_relative": 0.17595445229989948,
+            "port_absolute": 8.881857863947332e-16,
+            "port_full_rhs_relative": 3.051744347520953e-15,
+            "port_operation_relative": 2.3652226931378212e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 11.147106046522444,
+            "full_coefficient_norm": 16.255811976357137,
+            "port_unknown_norm": 0.2698284550739494,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 30,
+            "LSMR_iterations": 13909,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 30,
+            "effective_core_updates": 30,
+            "accepted_hidden_updates": 10,
+            "effective_hidden_updates": 10,
+            "hidden_actual_calls": 127,
+            "K": 14017,
+            "KH": 14023,
+            "B": 13987,
+            "BH": 14023,
+            "round_audits": 10,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 10,
+            "boundary_sha256": "3b88ed12875ca3917cc196b8e6ca6458b6d6d4641dc25c620b4fbe7e88a85776",
+            "field_sha256": "2e81967599a8bcfa6d0b51e4eab15c88e8c97fcaf0d839604cc972df646ffc2a",
+            "source_sha": "a4c0d5e703eee8efe59740e706632eaeae2803e0",
+            "design_sha256": "76b240bce50e468c2252b990a9467dce41ab2e0ce478a928fa9c117054b01e69",
+            "native_relative": 0.3714456367057969,
+            "augmented_relative": 0.3714456367057969,
+            "scattered_E_relative": 0.08804250826801505,
+            "scattered_H_relative": 0.08812098460219747,
+            "scattered_curl_relative": 0.08812098460219747,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 437235712
+          },
+          "continuation_policy_decision": {
+            "allowed": true,
+            "reason": "ROUND10_DIAGNOSTIC_ONLY"
+          },
+          "predeclared_continuation_allowed": true
+        },
+        "W32_REFINED_CORE_FROZEN": {
+          "round": 9,
+          "native": 0.3714340170308988,
+          "start_native": 0.3732073696753592,
+          "relative_native_improvement": 0.004751654947229515,
+          "original_equation": {
+            "native_relative": 0.3714340170308988,
+            "augmented_relative": 0.3714340170308988,
+            "original_total_augmented_relative": 0.17594894803942981,
+            "port_absolute": 1.375783926584764e-18,
+            "port_full_rhs_relative": 4.727097512343316e-18,
+            "port_operation_relative": 3.664334772934431e-20,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 11.145164533874368,
+            "full_coefficient_norm": 16.25297941877087,
+            "port_unknown_norm": 0.2697802704341649,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 30,
+            "LSMR_iterations": 13900,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 30,
+            "effective_core_updates": 30,
+            "accepted_hidden_updates": 8,
+            "effective_hidden_updates": 8,
+            "hidden_actual_calls": 109,
+            "K": 14008,
+            "KH": 14014,
+            "B": 13978,
+            "BH": 14014,
+            "round_audits": 10,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 10,
+            "boundary_sha256": "d933e3b194532ae8b7d576ad38e2ceb3dd0e46d23932abec45a6941a335597de",
+            "field_sha256": "324250c7e0fea210b604dd0b0410b011aad2c9734ff95fb4bf88089a2c8314ad",
+            "source_sha": "a4c0d5e703eee8efe59740e706632eaeae2803e0",
+            "design_sha256": "76b240bce50e468c2252b990a9467dce41ab2e0ce478a928fa9c117054b01e69",
+            "native_relative": 0.3714340170308988,
+            "augmented_relative": 0.3714340170308988,
+            "scattered_E_relative": 0.08780890614395669,
+            "scattered_H_relative": 0.0878878784053821,
+            "scattered_curl_relative": 0.0878878784053821,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 444985344
+          },
+          "continuation_policy_decision": {
+            "allowed": true,
+            "reason": "ROUND10_DIAGNOSTIC_ONLY"
+          },
+          "predeclared_continuation_allowed": true
+        }
+      }
+    },
+    {
+      "total_round": 12,
+      "records": {
+        "W16_REFINED_CORE_LEARNED": {
+          "round": 11,
+          "native": 0.3916393585087975,
+          "start_native": 0.3959139638582739,
+          "relative_native_improvement": 0.010796803699014184,
+          "original_equation": {
+            "native_relative": 0.3916393585087975,
+            "augmented_relative": 0.3916393585087975,
+            "original_total_augmented_relative": 0.18552025388330287,
+            "port_absolute": 8.881870540748619e-16,
+            "port_full_rhs_relative": 3.0517487031813638e-15,
+            "port_operation_relative": 2.2978929992495672e-17,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 11.358623475920403,
+            "full_coefficient_norm": 16.570246710945817,
+            "port_unknown_norm": 0.2776359446084214,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 36,
+            "LSMR_iterations": 18585,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 36,
+            "effective_core_updates": 36,
+            "accepted_hidden_updates": 12,
+            "effective_hidden_updates": 12,
+            "hidden_actual_calls": 167,
+            "K": 18723,
+            "KH": 18733,
+            "B": 18687,
+            "BH": 18733,
+            "round_audits": 12,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 12,
+            "boundary_sha256": "69942b5ff0894c8c500c8a3b08d62ca2626b568552d49d06ce8b42ff52a96d20",
+            "field_sha256": "4c6fc6e333f69acecb11897238e9bac044bf8b6d304c2ca62b47dcb39d73b2d1",
+            "source_sha": "a4c0d5e703eee8efe59740e706632eaeae2803e0",
+            "design_sha256": "76b240bce50e468c2252b990a9467dce41ab2e0ce478a928fa9c117054b01e69",
+            "native_relative": 0.3916393585087975,
+            "augmented_relative": 0.3916393585087975,
+            "scattered_E_relative": 0.10783727317832034,
+            "scattered_H_relative": 0.10793056841184914,
+            "scattered_curl_relative": 0.10793056841184914,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 437075968
+          },
+          "continuation_policy_decision": {
+            "allowed": false,
+            "reason": "AUTHORIZED_TOTAL_ROUND_LIMIT"
+          },
+          "predeclared_continuation_allowed": false
+        },
+        "W32_REFINED_CORE_LEARNED": {
+          "round": 11,
+          "native": 0.36129038520134216,
+          "start_native": 0.36539601973251956,
+          "relative_native_improvement": 0.011236122753014244,
+          "original_equation": {
+            "native_relative": 0.36129038520134216,
+            "augmented_relative": 0.36129038520134216,
+            "original_total_augmented_relative": 0.1711438917767459,
+            "port_absolute": 3.605619580375585e-18,
+            "port_full_rhs_relative": 1.23886571281291e-17,
+            "port_operation_relative": 9.650224626255288e-20,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 11.099178481562761,
+            "full_coefficient_norm": 16.18551183404513,
+            "port_unknown_norm": 0.26850184744149846,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 36,
+            "LSMR_iterations": 19830,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 36,
+            "effective_core_updates": 36,
+            "accepted_hidden_updates": 12,
+            "effective_hidden_updates": 12,
+            "hidden_actual_calls": 137,
+            "K": 19971,
+            "KH": 19982,
+            "B": 19935,
+            "BH": 19982,
+            "round_audits": 12,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 12,
+            "boundary_sha256": "53ca887e9b428422b3a1410284e04c1047ecf9aaa5c4888bf187929a968aa36b",
+            "field_sha256": "7c6b4db4a37e54a931c00432ce4cf0d1abdbda8a775d9a2be1c61f822c86df74",
+            "source_sha": "a4c0d5e703eee8efe59740e706632eaeae2803e0",
+            "design_sha256": "76b240bce50e468c2252b990a9467dce41ab2e0ce478a928fa9c117054b01e69",
+            "native_relative": 0.36129038520134216,
+            "augmented_relative": 0.36129038520134216,
+            "scattered_E_relative": 0.08377667852246189,
+            "scattered_H_relative": 0.0838326969726761,
+            "scattered_curl_relative": 0.0838326969726761,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 444719104
+          },
+          "continuation_policy_decision": {
+            "allowed": false,
+            "reason": "AUTHORIZED_TOTAL_ROUND_LIMIT"
+          },
+          "predeclared_continuation_allowed": false
+        },
+        "W32_REFINED_CORE_FROZEN": {
+          "round": 11,
+          "native": 0.3594992319900977,
+          "start_native": 0.36146705225795167,
+          "relative_native_improvement": 0.005443982392203442,
+          "original_equation": {
+            "native_relative": 0.3594992319900977,
+            "augmented_relative": 0.3594992319900977,
+            "original_total_augmented_relative": 0.17029541934598322,
+            "port_absolute": 3.497171221264038e-18,
+            "port_full_rhs_relative": 1.201603613825717e-17,
+            "port_operation_relative": 9.375017236464405e-20,
+            "augmented_rhs_norm": 0.29104200262261154,
+            "native_rhs_norm": 0.29104200262261154,
+            "slave_storage_max": 0.0,
+            "interior_coefficient_norm": 11.083130774572451,
+            "full_coefficient_norm": 16.1620166577701,
+            "port_unknown_norm": 0.268074915103788,
+            "strict_pass": false
+          },
+          "counts": {
+            "core_visits": 36,
+            "LSMR_iterations": 20728,
+            "LSMR_unretained_iterations_upper_bound": 0,
+            "accepted_core_updates": 36,
+            "effective_core_updates": 36,
+            "accepted_hidden_updates": 8,
+            "effective_hidden_updates": 8,
+            "hidden_actual_calls": 109,
+            "K": 20872,
+            "KH": 20884,
+            "B": 20836,
+            "BH": 20884,
+            "round_audits": 12,
+            "uncommitted_K": 0,
+            "uncommitted_KH": 0
+          },
+          "isolated_validation_scalars": {
+            "schema": "ftt.bloch-validation.scalars.v1",
+            "round": 12,
+            "boundary_sha256": "4a154e50d50e56eb98a948d65bd7048208dbdfd9b0808db82dbd0abb33939400",
+            "field_sha256": "f4711cad68c5ba39b29a23a367f8a0a3857b5bd3397357394760d87fa03cfedf",
+            "source_sha": "a4c0d5e703eee8efe59740e706632eaeae2803e0",
+            "design_sha256": "76b240bce50e468c2252b990a9467dce41ab2e0ce478a928fa9c117054b01e69",
+            "native_relative": 0.3594992319900977,
+            "augmented_relative": 0.3594992319900977,
+            "scattered_E_relative": 0.08230256692792161,
+            "scattered_H_relative": 0.082355072092289,
+            "scattered_curl_relative": 0.082355072092289,
+            "reference_feedback": "scalars_only",
+            "production_initialization_allowed": false,
+            "checker_peak_bytes": 436715520
+          },
+          "continuation_policy_decision": {
+            "allowed": false,
+            "reason": "AUTHORIZED_TOTAL_ROUND_LIMIT"
+          },
+          "predeclared_continuation_allowed": false
+        }
+      }
+    }
+  ],
+  "comparison_scope": "All inherit eight learning rounds; width/refinement and subsequent hidden learning are separated; W32 frozen is a marginal ablation, not an untrained traditional baseline",
+  "common_wall": {
+    "common_new_wall_seconds": 5084.637697573984,
+    "selected": {
+      "v44_w16_refined_learned": {
+        "elapsed_route_seconds": 5084.637697573984,
+        "kind": "round",
+        "checkpoint": {
+          "name": "committed_000022.pt",
+          "sha256": "e8b971f0378b49379359e31db3c172d083e17e7f2ee76574db71caf96562c10e",
+          "bytes": 1899047
+        },
+        "route": "W16_REFINED_CORE_LEARNED",
+        "checkpoint_path": "benchmarks/artifacts/task42extra/v44/v44_w16_refined_learned/checkpoints/committed_000022.pt",
+        "saved_field_pair": {
+          "c": {
+            "numerator": 0.0,
+            "denominator": 16.570246710945817,
+            "relative": 0.0
+          },
+          "r": {
+            "numerator": 0.0,
+            "denominator": 0.11398350320623535,
+            "relative": 0.0
+          }
+        },
+        "checkpoint_numerical_source": "a4c0d5e703eee8efe59740e706632eaeae2803e0",
+        "diagnostic_source": "e37590934ad2710d8d2c1c1f99ee7b0926d0b05d",
+        "counts": {
+          "core_visits": 36,
+          "LSMR_iterations": 18585,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 36,
+          "effective_core_updates": 36,
+          "accepted_hidden_updates": 12,
+          "effective_hidden_updates": 12,
+          "hidden_actual_calls": 167,
+          "K": 18723,
+          "KH": 18733,
+          "B": 18687,
+          "BH": 18733,
+          "round_audits": 12,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "new_counts": {
+          "core_visits": 12,
+          "LSMR_iterations": 11680,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 12,
+          "effective_core_updates": 12,
+          "accepted_hidden_updates": 4,
+          "effective_hidden_updates": 4,
+          "hidden_actual_calls": 58,
+          "K": 11746,
+          "KH": 11756,
+          "B": 11734,
+          "BH": 11756,
+          "round_audits": 4,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "position": {
+          "round": 12,
+          "axis_index": 0,
+          "phase": "core",
+          "complete_rounds": 12,
+          "slow_streak": 0,
+          "round_start_native": 0.3916393585087975
+        },
+        "request_path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/common_wall/v44_w16_refined_learned/request.json",
+        "scalars": {
+          "schema": "ftt.bloch-validation.scalars.v1",
+          "round": 12,
+          "boundary_sha256": "e8b971f0378b49379359e31db3c172d083e17e7f2ee76574db71caf96562c10e",
+          "field_sha256": "4c6fc6e333f69acecb11897238e9bac044bf8b6d304c2ca62b47dcb39d73b2d1",
+          "source_sha": "e37590934ad2710d8d2c1c1f99ee7b0926d0b05d",
+          "design_sha256": "76b240bce50e468c2252b990a9467dce41ab2e0ce478a928fa9c117054b01e69",
+          "native_relative": 0.3916393585087975,
+          "augmented_relative": 0.3916393585087975,
+          "scattered_E_relative": 0.10783727317832034,
+          "scattered_H_relative": 0.10793056841184914,
+          "scattered_curl_relative": 0.10793056841184914,
+          "reference_feedback": "scalars_only",
+          "production_initialization_allowed": false
+        }
+      },
+      "v44_w32_refined_learned": {
+        "elapsed_route_seconds": 4975.113160445122,
+        "kind": "core",
+        "checkpoint": {
+          "name": "committed_000018.pt",
+          "sha256": "2a74d76ca9674b0c1dc09b85081844c7b95e58cd34a166f45b1e059b5dd6a5d7",
+          "bytes": 2017348
+        },
+        "route": "W32_REFINED_CORE_LEARNED",
+        "checkpoint_path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/checkpoints/committed_000018.pt",
+        "saved_field_pair": {
+          "c": {
+            "numerator": 0.0,
+            "denominator": 16.228449136612877,
+            "relative": 0.0
+          },
+          "r": {
+            "numerator": 0.0,
+            "denominator": 0.10630945151150631,
+            "relative": 0.0
+          }
+        },
+        "checkpoint_numerical_source": "a4c0d5e703eee8efe59740e706632eaeae2803e0",
+        "diagnostic_source": "e37590934ad2710d8d2c1c1f99ee7b0926d0b05d",
+        "counts": {
+          "core_visits": 35,
+          "LSMR_iterations": 18630,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 35,
+          "effective_core_updates": 35,
+          "accepted_hidden_updates": 11,
+          "effective_hidden_updates": 11,
+          "hidden_actual_calls": 132,
+          "K": 18765,
+          "KH": 18775,
+          "B": 18730,
+          "BH": 18775,
+          "round_audits": 11,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "new_counts": {
+          "core_visits": 11,
+          "LSMR_iterations": 11725,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 11,
+          "effective_core_updates": 11,
+          "accepted_hidden_updates": 3,
+          "effective_hidden_updates": 3,
+          "hidden_actual_calls": 23,
+          "K": 11788,
+          "KH": 11798,
+          "B": 11777,
+          "BH": 11798,
+          "round_audits": 3,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "position": {
+          "round": 11,
+          "axis_index": 2,
+          "phase": "core",
+          "complete_rounds": 11,
+          "slow_streak": 0,
+          "round_start_native": 0.36539601973251956
+        },
+        "request_path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/common_wall/v44_w32_refined_learned/request.json",
+        "scalars": {
+          "schema": "ftt.bloch-validation.scalars.v1",
+          "round": 11,
+          "boundary_sha256": "2a74d76ca9674b0c1dc09b85081844c7b95e58cd34a166f45b1e059b5dd6a5d7",
+          "field_sha256": "7125ece05fab40bbf18adb0d1440d3c41af89593ddfe6c09ef37621f94da8f90",
+          "source_sha": "e37590934ad2710d8d2c1c1f99ee7b0926d0b05d",
+          "design_sha256": "76b240bce50e468c2252b990a9467dce41ab2e0ce478a928fa9c117054b01e69",
+          "native_relative": 0.3652718527000918,
+          "augmented_relative": 0.3652718527000918,
+          "scattered_E_relative": 0.08669464902978043,
+          "scattered_H_relative": 0.08675735673062406,
+          "scattered_curl_relative": 0.08675735673062406,
+          "reference_feedback": "scalars_only",
+          "production_initialization_allowed": false
+        }
+      },
+      "v44_w32_refined_frozen": {
+        "elapsed_route_seconds": 4819.121711757965,
+        "kind": "core",
+        "checkpoint": {
+          "name": "committed_000014.pt",
+          "sha256": "daef2fe3936a75f33741777076fc09be9f1a9c92efa4852e09362e85e4fde50f",
+          "bytes": 2065127
+        },
+        "route": "W32_REFINED_CORE_FROZEN",
+        "checkpoint_path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_frozen/checkpoints/committed_000014.pt",
+        "saved_field_pair": {
+          "c": {
+            "numerator": 0.0,
+            "denominator": 16.127660199122424,
+            "relative": 0.0
+          },
+          "r": {
+            "numerator": 0.0,
+            "denominator": 0.10514509358431823,
+            "relative": 0.0
+          }
+        },
+        "checkpoint_numerical_source": "a4c0d5e703eee8efe59740e706632eaeae2803e0",
+        "diagnostic_source": "e37590934ad2710d8d2c1c1f99ee7b0926d0b05d",
+        "counts": {
+          "core_visits": 34,
+          "LSMR_iterations": 18477,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 34,
+          "effective_core_updates": 34,
+          "accepted_hidden_updates": 8,
+          "effective_hidden_updates": 8,
+          "hidden_actual_calls": 109,
+          "K": 18609,
+          "KH": 18619,
+          "B": 18575,
+          "BH": 18619,
+          "round_audits": 11,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "new_counts": {
+          "core_visits": 10,
+          "LSMR_iterations": 11572,
+          "LSMR_unretained_iterations_upper_bound": 0,
+          "accepted_core_updates": 10,
+          "effective_core_updates": 10,
+          "accepted_hidden_updates": 0,
+          "effective_hidden_updates": 0,
+          "hidden_actual_calls": 0,
+          "K": 11632,
+          "KH": 11642,
+          "B": 11622,
+          "BH": 11642,
+          "round_audits": 3,
+          "uncommitted_K": 0,
+          "uncommitted_KH": 0
+        },
+        "position": {
+          "round": 11,
+          "axis_index": 1,
+          "phase": "core",
+          "complete_rounds": 11,
+          "slow_streak": 0,
+          "round_start_native": 0.36146705225795167
+        },
+        "request_path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/common_wall/v44_w32_refined_frozen/request.json",
+        "scalars": {
+          "schema": "ftt.bloch-validation.scalars.v1",
+          "round": 11,
+          "boundary_sha256": "daef2fe3936a75f33741777076fc09be9f1a9c92efa4852e09362e85e4fde50f",
+          "field_sha256": "dff7452aaadd5069fd46a3d84c873ce8545e1f36aa932d7b79afdeb0719044c4",
+          "source_sha": "e37590934ad2710d8d2c1c1f99ee7b0926d0b05d",
+          "design_sha256": "76b240bce50e468c2252b990a9467dce41ab2e0ce478a928fa9c117054b01e69",
+          "native_relative": 0.3612712001595791,
+          "augmented_relative": 0.3612712001595791,
+          "scattered_E_relative": 0.08016561332821859,
+          "scattered_H_relative": 0.08022816230775559,
+          "scattered_curl_relative": 0.08022816230775559,
+          "reference_feedback": "scalars_only",
+          "production_initialization_allowed": false
+        }
+      }
+    },
+    "selection_uses_reference": false,
+    "selection_rule": "Latest retained complete boundary at or before the lesser final committed new wall",
+    "reference_feedback": "scalars_only_after_routes_frozen",
+    "production_initialization_allowed": false,
+    "same_accuracy_resource_gain_qualified": false,
+    "no_reference_vector_returned_to_training": true,
+    "new_reference_solve_count": 0
+  },
+  "same_accuracy_resource_gain_qualified": false
+}

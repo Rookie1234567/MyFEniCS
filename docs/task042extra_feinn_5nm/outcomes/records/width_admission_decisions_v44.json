@@ -1,0 +1,20 @@
+{
+  "allowed": false,
+  "all_three_complete": true,
+  "reason": "NO_AUTHORIZED_EXTRA_SIGNAL",
+  "ratios": {
+    "native_relative": 0.9225078566661447,
+    "scattered_E_relative": 0.7768805353962839,
+    "scattered_H_relative": 0.7767280225261758
+  },
+  "additional_wall_authorized": false,
+  "checker_path": "benchmarks/artifacts/task42extra/v44/v44_width_independent_compare/saved_checker.json",
+  "checkpoints": {
+    "W16_REFINED_CORE_LEARNED": "905feb40c50f143883ad9faa3514b96dc217e8134a136163005c2501cfbd06ab",
+    "W32_REFINED_CORE_LEARNED": "02109f3e8d8f5361bc1d7f3b16633e1d257017fd1cf3b808bba6aad4fa57708f",
+    "W32_REFINED_CORE_FROZEN": "3235f2c4bc10a2f10d0f73c1e8cff3fb1183e68116198b070a02cb7bc7ce0f42"
+  },
+  "inherited_route_wall_not_reset": true,
+  "conditional_0p7_eligible": false,
+  "default_round12_results_preserved": true
+}

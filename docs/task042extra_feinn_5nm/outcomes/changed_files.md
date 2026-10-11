@@ -1,3 +1,22 @@
+<!-- TASK42EXTRA_V44_CURRENT_BEGIN -->
+# V44：最小宽度与内层补足、复用原训练和验收
+
+| 依赖组 | 实际变化 | 资格/边界 |
+|---|---|---|
+| research-only核心 | ftt_width_extension/core_refinement/qualification；原FTT及core trainer的opt-in维数、两段/保存 | 原默认16保留；实际资格和完整三路线FAIL，不升production |
+| runner/输入接线 | width_campaign/worker；schema14、五dat、原profile/政策/durable角色 | 不复制训练器或监督器；原资源保护不变 |
+| checker/postprocessing | common_wall动态维数、函数保持初态、保存参数参与/导数来源 | 旧逐点/FE/保存checker复用；健康数值原位保留 |
+| compact evidence/docs | 回执/专题/设计/36核心/960通道/432样点/费用/source与本支导航 | 保留旧失败、UNKNOWN及中期好态/终态退化 |
+| do-not-merge | 未合格研究配置、ignored大数组/PT及自动生产提升 | 无master/production许可；不自动0.7nm、rank或优化器扫描 |
+
+依赖顺序：原M5/native/moments与V43parent → opt-in宽度/两段数学 → schema/stage → targeted/clean source → 三对照 → 独立旧点值/FE/checker → compact/docs。源SHA按实际stage分开，后续文档HEAD不替换数值source。
+
+[run/source](records/run_index_v44.json)、[tests](records/formal_tests_and_qualification_v44.json)、[完整Gate](records/full_numerical_gates_v44.json)。
+
+下方历史全文原样保留；旧“当前/下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V44_CURRENT_END -->
+
 <!-- TASK42EXTRA_V43_CURRENT_BEGIN -->
 # V43：最小parent-fork政策、完整验收及证据
 

@@ -1,0 +1,46 @@
+{
+  "schema": "task42extra.v44.repairs.v1",
+  "repair_journal": [
+    {
+      "failure": "P0 pure design preparation imported ML Torch module",
+      "hypothesis": "Width policy was not import-separated from ML implementation",
+      "change": "Move Torch/model/optimizer imports inside ML-only width migration functions",
+      "test": "Pure schema import and targeted 42 tests passed",
+      "retry": "Prepare design once; no arrays or numerical producer restarted",
+      "elapsed_exact_s": "NOT_RETAINED"
+    },
+    {
+      "failure": "Scaled complex small SVD fixture expected coefficient/forward equality below finite LSMR stopping accuracy",
+      "hypothesis": "Fixture asserted exact linear solution despite prescribed finite inner tolerance",
+      "change": "Pair true LS objective and independent SVD; independently check forward error using true adjoint and nonzero singular value",
+      "test": "42 targeted tests passed with all original algorithm and PDE thresholds unchanged",
+      "retry": "Only targeted fixtures; no numerical producer restarted",
+      "elapsed_exact_s": "NOT_RETAINED"
+    },
+    {
+      "failure": "Saved fork audit reused width16 scalar count and parent-equality labels for the expanded model",
+      "hypothesis": "Historical continuation metadata did not distinguish parent architecture and function-preserving import",
+      "change": "Derive per-route actual inventories; separately record bitwise and numerical field pairs; count old/new hidden masks and retained gradients from frozen tensors only",
+      "test": "3 targeted writer/reopen, masks/gradient/order, frozen corruption and all-three decision cases; Ruff/compileall passed",
+      "retry": "Run only the new saved-state checks; all three training runs and healthy qualification unchanged",
+      "elapsed_exact_s": "NOT_RETAINED",
+      "targeted_guard": "tmp/task42extra/v44/post_guard_1/summary.json"
+    },
+    {
+      "failure": "Original saved-gradient annotation called every retained buffer the last optimizer derivative",
+      "hypothesis": "ConditionalCoreAction.KH calls full mapping VJP and writes gradient buffers also in frozen route",
+      "change": "Limit annotation to raw checkpoint gradient buffers that may originate from core adjoint or hidden optimization; preserve old record and add metadata-only reopen receipt",
+      "test": "3 affected saved-state fixture cases and Ruff/compileall passed; numerical/tensor fields required identical in followup",
+      "retry": "Reopen saved PT only; no new forward/A/AH/G or healthy numerical producer replay",
+      "elapsed_exact_s": "NOT_RETAINED",
+      "targeted_guard": "tmp/task42extra/v44/post_guard_2/summary.json"
+    }
+  ],
+  "initial_failed_light_test": {
+    "path": "tmp/task42extra/v44/targeted_guard_1/summary.json",
+    "sha256": "b98247b9b77de383aa1d54d421c13574baf40d44b698d10ea343ec854479aa04",
+    "bytes": 1987
+  },
+  "healthy_reference_or_training_or_FE_postprocessing_reexecuted": false,
+  "ordinary_default_changed": false
+}
