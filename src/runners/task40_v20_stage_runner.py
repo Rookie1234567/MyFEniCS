@@ -1268,6 +1268,7 @@ def _run_v26_selected_q0_stage(
         _v23_actual_axis_values,
     )
     from src.solvers.task40_v25_selected_q0 import (
+        _task_cgroup_memory_snapshot,
         run_task40_v25_selected_q0_consumer,
         run_task40_v26_saved_stream_replay,
     )
@@ -1333,12 +1334,23 @@ def _run_v26_selected_q0_stage(
                 "future_co_resident_reserve_bytes",
             )
         )
-        memory = _resource_admission(
-            stage,
-            requested,
-            resource_sample=_resource_snapshot,
-            require_task_cgroup=True,
-        )
+        sample_task_memory = stage == "task40_v25_selected_q0_pre_fe_and_surface_phase"
+        task_memory_before = _task_cgroup_memory_snapshot() if sample_task_memory else None
+        try:
+            memory = _resource_admission(
+                stage,
+                requested,
+                resource_sample=_resource_snapshot,
+                require_task_cgroup=True,
+            )
+        except _ProbeResourceBlocked as error:
+            if sample_task_memory:
+                error.facts["task_cgroup_memory_samples"] = {
+                    "phase": stage,
+                    "before": task_memory_before,
+                    "after": _task_cgroup_memory_snapshot(),
+                }
+            raise
         disk_required = int(facts.get("disk_payload_bytes", 0))
         disk_free = int(shutil.disk_usage(disk_root).free)
         disk_passed = disk_free >= disk_required + disk_reserve_bytes
@@ -1350,6 +1362,12 @@ def _run_v26_selected_q0_stage(
             "disk_gate_passed": disk_passed,
             "request_facts": dict(facts),
         }
+        if sample_task_memory:
+            record["task_cgroup_memory_samples"] = {
+                "phase": stage,
+                "before": task_memory_before,
+                "after": _task_cgroup_memory_snapshot(),
+            }
         resource_gates.append(record)
         if not disk_passed:
             blocker = {
@@ -1438,6 +1456,13 @@ def _run_v26_selected_q0_stage(
                     current_identity=current_identity,
                 )
             replay_sha = _sha256_file(replay_manifest_path)
+            replay_binding = {
+                "producer_identity": dict(producer_identity),
+                "producer_identity_sha256": current_identity["producer_identity_sha256"],
+                "saved_replay_root": str(replay_root),
+                "saved_replay_manifest_path": str(replay_manifest_path),
+                "saved_replay_manifest_sha256": replay_sha,
+            }
             native_manifest_path = native_root / "v26_native_action_manifest.json"
             native_manifest: Mapping[str, Any] = {}
             try:
@@ -1485,13 +1510,7 @@ def _run_v26_selected_q0_stage(
                 except (OSError, json.JSONDecodeError):
                     native_facts = {}
                 existing_binding = {
-                    "producer_identity": dict(producer_identity),
-                    "producer_identity_sha256": current_identity["producer_identity_sha256"],
-                    "saved_replay_root": str(replay_root),
-                    "saved_replay_manifest_path": str(replay_manifest_path),
-                    "saved_replay_manifest_sha256": (
-                        _sha256_file(replay_manifest_path) if replay_manifest_path.is_file() else ""
-                    ),
+                    **replay_binding,
                     "native_root": str(native_root),
                     "native_manifest_path": str(native_manifest_path),
                     "native_manifest_sha256": (
@@ -1741,6 +1760,11 @@ def _run_v26_selected_q0_stage(
                 "resource_blocker": {**dict(error.facts), "passed": False},
                 "factor_or_solve_built": False,
             }
+        replay_binding = locals().get("replay_binding")
+        if isinstance(replay_binding, Mapping) and not isinstance(
+            operation.get("v26_artifact_binding"), Mapping
+        ):
+            operation["v26_artifact_binding"] = dict(replay_binding)
     except Exception as error:
         previous = locals().get("operation")
         if stop_stage == "selected_reference_q_csr" and isinstance(previous, Mapping) and previous.get("status") == "PASS_COMPLETE_Q0_CSR":
@@ -1807,6 +1831,11 @@ def _run_v26_selected_q0_stage(
                 "failure_message": str(error),
                 "factor_or_solve_built": False,
             }
+        replay_binding = locals().get("replay_binding")
+        if isinstance(replay_binding, Mapping) and not isinstance(
+            operation.get("v26_artifact_binding"), Mapping
+        ):
+            operation["v26_artifact_binding"] = dict(replay_binding)
     _write_json(operation_path, operation)
 
     op_status = str(operation.get("status", "FAILED_V26_SELECTED_Q_GATES"))

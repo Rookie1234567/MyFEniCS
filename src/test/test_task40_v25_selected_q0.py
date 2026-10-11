@@ -348,7 +348,11 @@ def test_v26_checker_recomputes_native_cross_q_metrics_on_diagonal_scale(monkeyp
     assert all(checks.values()), checks
 
 
-def test_saved_surface_stream_preserves_nonzero_internal_values_and_drops_only_exact_zeros(tmp_path):
+def test_saved_surface_stream_preserves_nonzero_internal_values_and_drops_only_exact_zeros(
+    tmp_path, monkeypatch
+):
+    from src.solvers import task40_v25_selected_q0 as selected_q
+
     mode = SimpleNamespace(side="bottom", m=1, n=-1, polarization="s")
     path = tmp_path / "surface.bin"
     facts = _write_surface_functional_stream(
@@ -372,6 +376,14 @@ def test_saved_surface_stream_preserves_nonzero_internal_values_and_drops_only_e
     assert facts["internal_nonzero_entry_count"] == {"B": 0, "D": 1}
     raw = path.read_bytes()
     assert len(raw) == facts["bytes"]
+    advised_ranges = []
+    monkeypatch.setattr(
+        selected_q.os,
+        "posix_fadvise",
+        lambda fd, offset, length, advice: advised_ranges.append((fd, offset, length, advice)),
+        raising=False,
+    )
+    telemetry = selected_q._new_saved_stream_reader_telemetry()
 
     entries = list(
         _iter_saved_surface_functionals(
@@ -381,6 +393,7 @@ def test_saved_surface_stream_preserves_nonzero_internal_values_and_drops_only_e
             local_h=np.asarray([2.0]),
             mode_rows=tuple({"mode_index": index} for index in range(4)),
             interior_rows=np.asarray([3], dtype=np.int64),
+            reader_telemetry=telemetry,
         )
     )
     assert len(entries) == 1
@@ -388,6 +401,103 @@ def test_saved_surface_stream_preserves_nonzero_internal_values_and_drops_only_e
     np.testing.assert_array_equal(entries[0].coupling_values, [1.0, 2.0])
     np.testing.assert_array_equal(entries[0].projection_rows, [3])
     np.testing.assert_array_equal(entries[0].projection_values, [7.0])
+    assert len(advised_ranges) == 1
+    assert advised_ranges[0][1] % selected_q.os.sysconf("SC_PAGE_SIZE") == 0
+    assert telemetry["advice_calls"] == 1
+    assert telemetry["advised_bytes"] >= len(raw)
+    assert len(telemetry["samples"]) == 1
+    assert telemetry["samples"][0]["reader"] == "surface"
+    assert telemetry["samples"][0]["pass_completed"] is True
+    assert telemetry["samples"][0]["elapsed_seconds"] >= 0.0
+    assert "process_io_delta" in telemetry["samples"][0]
+
+    audit_advice_start = len(advised_ranges)
+    audit_telemetry = selected_q._new_saved_stream_reader_telemetry()
+    audit = selected_q._audit_saved_surface_functional_stream(
+        path,
+        selected_indices=np.asarray([3], dtype=np.int64),
+        local_modes=(mode,),
+        local_h=np.asarray([2.0]),
+        allowed_rows_by_side=(np.arange(10, dtype=np.int64), np.arange(10, dtype=np.int64)),
+        interior_rows=np.asarray([3], dtype=np.int64),
+        active_lookup=np.arange(10, dtype=np.int32),
+        active_rows=10,
+        allocation_gate=lambda _stage, _facts: {"passed": True},
+        reader_telemetry=audit_telemetry,
+    )
+    assert audit["bytes"] == len(raw)
+    assert len(advised_ranges) - audit_advice_start == 1
+    assert audit_telemetry["advice_calls"] == 1
+    assert audit_telemetry["samples"][0]["reader"] == "surface_audit"
+    assert audit_telemetry["samples"][0]["pass_completed"] is True
+    assert audit_telemetry["samples"][0]["elapsed_seconds"] >= 0.0
+
+    failed_telemetry = selected_q._new_saved_stream_reader_telemetry()
+    with pytest.raises(RuntimeError, match="reader failed"):
+        with selected_q._saved_stream_reader_sample("failed_surface", failed_telemetry):
+            raise RuntimeError("reader failed")
+    assert len(failed_telemetry["samples"]) == 1
+    assert failed_telemetry["samples"][0]["pass_completed"] is False
+
+
+def test_volume_stream_drops_only_consumed_ranges_and_records_reader_sample(tmp_path, monkeypatch):
+    import os
+    import struct
+
+    from src.solvers import task40_v25_selected_q0 as selected_q
+
+    path = tmp_path / "volume.bin"
+    with path.open("wb") as stream:
+        stream.write(b"TASK40V25Q0VOLUME\0")
+        stream.write(struct.pack("<II", 1, 1))
+        stream.write(struct.pack("<II", 1, 1))
+        np.asarray([2.0 + 0.0j], dtype="<c16").tofile(stream)
+        stream.write(struct.pack("<iiii", 0, 1, 1, 1))
+        np.asarray([0], dtype="<i4").tofile(stream)
+        np.asarray([0, 1], dtype="<i4").tofile(stream)
+        np.asarray([0], dtype="<i4").tofile(stream)
+        np.asarray([3.0 + 0.0j], dtype="<c16").tofile(stream)
+    advised_ranges = []
+    monkeypatch.setattr(
+        selected_q.os,
+        "posix_fadvise",
+        lambda fd, offset, length, advice: advised_ranges.append((fd, offset, length, advice)),
+        raising=False,
+    )
+    telemetry = selected_q._new_saved_stream_reader_telemetry()
+    result = selected_q._apply_persisted_volume_stream(
+        path,
+        np.asarray([4.0 + 0.0j], dtype=np.complex128),
+        active_rows=1,
+        allocation_gate=lambda _stage, _facts: {"passed": True},
+        reader_telemetry=telemetry,
+    )
+
+    np.testing.assert_array_equal(result, np.asarray([72.0 + 0.0j]))
+    assert len(advised_ranges) == 2
+    assert telemetry["advice_calls"] == 2
+    assert telemetry["samples"][0]["reader"] == "volume"
+    assert telemetry["samples"][0]["pass_completed"] is True
+    assert telemetry["samples"][0]["advised_bytes"] == telemetry["advised_bytes"]
+    assert telemetry["samples"][0]["elapsed_seconds"] >= 0.0
+    assert "task_cgroup_memory_before" in telemetry["samples"][0]
+    assert "task_cgroup_memory_after" in telemetry["samples"][0]
+
+
+def test_task_cgroup_memory_sample_never_falls_back_to_global_root(tmp_path):
+    from src.solvers.task40_v25_selected_q0 import _task_cgroup_memory_snapshot
+
+    (tmp_path / "memory.stat").write_text("anon 10\nfile 20\n", encoding="ascii")
+    deleted = _task_cgroup_memory_snapshot(
+        cgroup_membership="0::/user.slice/removed.service\n", cgroup_root=tmp_path
+    )
+    empty = _task_cgroup_memory_snapshot(cgroup_membership="", cgroup_root=tmp_path)
+    root_membership = _task_cgroup_memory_snapshot(cgroup_membership="0::/\n", cgroup_root=tmp_path)
+
+    assert deleted == {"status": "unavailable", "reason": "task_cgroup_path_deleted"}
+    assert empty["status"] == "unavailable"
+    assert root_membership["status"] == "unavailable"
+    assert "memory_stat_bytes" not in deleted
 
 
 def test_surface_stream_retains_incomplete_raw_prefix(tmp_path):

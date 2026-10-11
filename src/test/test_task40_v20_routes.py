@@ -2999,3 +2999,111 @@ def test_v26_service_operation_routes_to_v26_stage_executor(monkeypatch, tmp_pat
     assert received["modes"] is modes
     assert received["mode_rows"] is mode_rows
     assert received["source_sha"] == "a" * 40
+
+
+def test_v26_resource_stop_footer_keeps_existing_saved_replay_binding(monkeypatch, tmp_path):
+    from src.io import input_validation
+    from src.runners import task40_v20_stage_runner as runner
+    from src.solvers import task40_v22_operator_probe as probe
+    from src.solvers import task40_v25_selected_q0 as selected_q
+
+    repo = tmp_path
+    fake_module_path = repo / "src/runners/task40_v20_stage_runner.py"
+    monkeypatch.setattr(runner, "__file__", str(fake_module_path))
+    artifact_root = repo / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl"
+    replay_root = artifact_root / "saved_replay"
+    replay_root.mkdir(parents=True)
+    replay_manifest_path = replay_root / "v26_saved_q_replay_manifest.json"
+    replay_manifest_path.write_text('{"status":"fixture"}', encoding="utf-8")
+
+    producer_root = repo / "producer"
+    producer_root.mkdir()
+    producer_identity = {
+        "producer_run_directory": "producer",
+        "producer_run_id": "fixture-producer",
+        "payloads": [],
+    }
+    input_sha = "a" * 64
+    selector_path = artifact_root / "stage_inputs/selected_reference_q_csr/selected_operation.json"
+    selector_path.parent.mkdir(parents=True)
+    selector = {
+        "schema": "task40extra.review_v26_selected_operation.v1",
+        "operation": "V26_COMPLETE_Q0_CSR_AND_CONDITIONAL_FACTOR",
+        "campaign_window_sha256": "c" * 64,
+        "input_sha256": input_sha,
+        "model_profile": runner._V22_TARGET_OPERATOR_PROFILE,
+        "stop_stage": "selected_reference_q_csr",
+        "producer_identity": producer_identity,
+    }
+    selector_path.write_text(json.dumps(selector), encoding="utf-8")
+    selector_sha = runner._sha256_file(selector_path)
+    monkeypatch.setenv("TASK40_V26_SELECTOR_PATH", str(selector_path))
+    monkeypatch.setenv("TASK40_V26_SELECTOR_SHA256", selector_sha)
+    monkeypatch.setenv("TASK40_V26_PRODUCER_ROOT", str(producer_root))
+    monkeypatch.setenv("TASK40_V26_OPERATION", selector["operation"])
+
+    monkeypatch.setattr(
+        input_validation, "simulation_config_3d_from_normalized", lambda _payload: object()
+    )
+    monkeypatch.setattr(probe, "_v23_actual_axis_values", lambda _payload: {})
+    blocker_stage = "task40_v25_selected_q0_pre_fe_and_surface_phase"
+
+    def blocked_admission(stage, additional_bytes, **_kwargs):
+        raise probe._ProbeResourceBlocked(
+            stage,
+            {
+                "stage": stage,
+                "additional_object_upper_bound_bytes": int(additional_bytes),
+                "passed": False,
+            },
+        )
+
+    def stop_before_fe(*_args, **kwargs):
+        kwargs["allocation_gate"](
+            blocker_stage, {"additional_payload_bytes": 8 * 1024**3}
+        )
+        raise AssertionError("the resource gate should have stopped before FE")
+
+    monkeypatch.setattr(selected_q, "run_task40_v25_selected_q0_consumer", stop_before_fe)
+    monkeypatch.setattr(probe, "_resource_admission", blocked_admission)
+    preflight = {
+        "run_id": "fixture-run",
+        "input_sha256": input_sha,
+        "physical_model_sha256": "b" * 64,
+        "target_mode_inventory": {
+            "mode_manifest_sha256": "d" * 64,
+            "ordered_mode_key_sha256": "e" * 64,
+        },
+    }
+    output = repo / "run"
+    output.mkdir()
+    (output / "v20_stage_preflight.json").write_text(json.dumps(preflight), encoding="utf-8")
+    modes = (SimpleNamespace(side="bottom", m=0, n=0, polarization="s"),)
+    mode_rows = ({"mode_index": 0},)
+
+    result = runner._run_v26_selected_q0_stage(
+        {"run_id": "fixture-run"},
+        output,
+        source_sha="f" * 40,
+        profile=runner._V22_TARGET_OPERATOR_PROFILE,
+        preflight=preflight,
+        modes=modes,
+        mode_rows=mode_rows,
+        stop_stage="selected_reference_q_csr",
+    )
+
+    operation = json.loads((output / "v26_selected_q_stage.json").read_text(encoding="utf-8"))
+    binding = operation["v26_artifact_binding"]
+    assert operation["status"] == "RESOURCE_CONTROLLED_STOP"
+    assert operation["official_result"] is False
+    blocker = operation["resource_blocker"]
+    assert blocker["stage"] == blocker_stage
+    assert blocker["additional_object_upper_bound_bytes"] == 8 * 1024**3
+    assert blocker["passed"] is False
+    samples = blocker["task_cgroup_memory_samples"]
+    assert samples["phase"] == blocker_stage
+    assert samples["before"]["status"] in {"available", "unavailable"}
+    assert samples["after"]["status"] in {"available", "unavailable"}
+    assert binding["saved_replay_manifest_path"] == str(replay_manifest_path)
+    assert binding["saved_replay_manifest_sha256"] == runner._sha256_file(replay_manifest_path)
+    assert result["status"] == "controlled_stop"

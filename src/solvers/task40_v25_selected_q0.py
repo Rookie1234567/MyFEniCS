@@ -7,6 +7,7 @@ the full carrier or an all-q reference operator.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 import hashlib
 import json
 import os
@@ -100,18 +101,160 @@ def _drop_mmap_pages(array: Any, start: int, length: int) -> None:
             pass
 
 
-def _advise_file_drop(stream: Any, start: int, length: int) -> None:
-    if length <= 0 or not hasattr(os, "posix_fadvise"):
+def _task_cgroup_memory_snapshot(
+    *, cgroup_membership: str | None = None, cgroup_root: Path | None = None
+) -> dict[str, Any]:
+    """Read this process's cgroup v2 memory split without falling back to the host root."""
+    try:
+        membership = (
+            Path("/proc/self/cgroup").read_text(encoding="utf-8")
+            if cgroup_membership is None
+            else cgroup_membership
+        )
+    except OSError as error:
+        return {"status": "unavailable", "reason": f"cgroup_membership_read_failed:{type(error).__name__}"}
+    unified_path = next(
+        (line.split("::", 1)[1].strip() for line in membership.splitlines() if line.startswith("0::")),
+        "",
+    )
+    if not unified_path or unified_path == "/":
+        return {"status": "unavailable", "reason": "task_cgroup_membership_missing_or_root"}
+    root = Path("/sys/fs/cgroup") if cgroup_root is None else Path(cgroup_root)
+    try:
+        resolved_root = root.resolve()
+        relative = Path(unified_path.lstrip("/"))
+        if ".." in relative.parts:
+            return {"status": "unavailable", "reason": "task_cgroup_path_invalid"}
+        target = (resolved_root / relative).resolve()
+        if target == resolved_root or not target.is_relative_to(resolved_root):
+            return {"status": "unavailable", "reason": "task_cgroup_path_invalid"}
+        if not target.is_dir():
+            return {"status": "unavailable", "reason": "task_cgroup_path_deleted"}
+        memory_stat = {}
+        for line in (target / "memory.stat").read_text(encoding="ascii").splitlines():
+            fields = line.split()
+            if len(fields) == 2 and fields[0] in {
+                "anon", "file", "file_dirty", "file_writeback", "inactive_file",
+                "active_file", "shmem", "kernel", "pagetables",
+            }:
+                memory_stat[fields[0]] = int(fields[1])
+        current_path = target / "memory.current"
+        current = int(current_path.read_text(encoding="ascii").strip()) if current_path.is_file() else None
+    except (OSError, ValueError, TypeError) as error:
+        return {"status": "unavailable", "reason": f"task_cgroup_memory_read_failed:{type(error).__name__}"}
+    return {
+        "status": "available",
+        "cgroup_path": unified_path,
+        "memory_current_bytes": current,
+        "memory_stat_bytes": memory_stat,
+    }
+
+
+def _process_io_snapshot() -> dict[str, Any]:
+    try:
+        values = {}
+        for line in Path("/proc/self/io").read_text(encoding="ascii").splitlines():
+            key, separator, value = line.partition(":")
+            if separator and key in {"rchar", "read_bytes", "syscr"}:
+                values[key] = int(value.strip())
+    except (OSError, ValueError) as error:
+        return {"status": "unavailable", "reason": f"process_io_read_failed:{type(error).__name__}"}
+    return {"status": "available", **values}
+
+
+def _append_saved_stream_reader_sample(
+    reader: str,
+    telemetry: dict[str, Any],
+    before_memory: Mapping[str, Any],
+    before_io: Mapping[str, Any],
+    start: float,
+    advice_calls_before: int,
+    advised_bytes_before: int,
+    pass_completed: bool,
+) -> None:
+    after_memory = _task_cgroup_memory_snapshot()
+    after_io = _process_io_snapshot()
+    io_delta = {
+        key: after_io[key] - before_io[key]
+        for key in ("rchar", "read_bytes", "syscr")
+        if before_io.get("status") == "available"
+        and after_io.get("status") == "available"
+        and type(before_io.get(key)) is int
+        and type(after_io.get(key)) is int
+    }
+    telemetry.setdefault("samples", []).append({
+        "reader": reader,
+        "pass_completed": bool(pass_completed),
+        "elapsed_seconds": float(time.perf_counter() - start),
+        "advice_calls": int(telemetry.get("advice_calls", 0)) - advice_calls_before,
+        "advised_bytes": int(telemetry.get("advised_bytes", 0)) - advised_bytes_before,
+        "task_cgroup_memory_before": dict(before_memory),
+        "task_cgroup_memory_after": after_memory,
+        "process_io_before": dict(before_io),
+        "process_io_after": after_io,
+        "process_io_delta": io_delta,
+    })
+
+
+@contextmanager
+def _saved_stream_reader_sample(reader: str, telemetry: dict[str, Any] | None):
+    if telemetry is None:
+        yield
         return
+    start = time.perf_counter()
+    memory_before = _task_cgroup_memory_snapshot()
+    io_before = _process_io_snapshot()
+    advice_calls_before = int(telemetry.get("advice_calls", 0))
+    advised_bytes_before = int(telemetry.get("advised_bytes", 0))
+    pass_completed = False
+    try:
+        yield
+        pass_completed = True
+    finally:
+        _append_saved_stream_reader_sample(
+            reader,
+            telemetry,
+            memory_before,
+            io_before,
+            start,
+            advice_calls_before,
+            advised_bytes_before,
+            pass_completed,
+        )
+
+
+def _new_saved_stream_reader_telemetry() -> dict[str, Any]:
+    return {
+        "schema": "task40extra.review_v26_saved_stream_reader_telemetry.v1",
+        "sample_scope": "per-reader pass; task cgroup only, unavailable if /proc/self/cgroup path is absent/deleted",
+        "advice_policy": "POSIX_FADV_DONTNEED only for byte ranges already copied into owned arrays",
+        "advised_bytes_semantics": "successful page-aligned advice-range lengths; not measured memory released",
+        "advice_calls": 0,
+        "advised_bytes": 0,
+        "samples": [],
+    }
+
+
+def _advise_file_drop(
+    stream: Any, start: int, length: int, *, telemetry: dict[str, Any] | None = None
+) -> int:
+    if length <= 0 or not hasattr(os, "posix_fadvise"):
+        return 0
     option = getattr(os, "POSIX_FADV_DONTNEED", None)
-    if option is not None:
-        try:
-            page = os.sysconf("SC_PAGE_SIZE")
-            begin = start - start % page
-            end = ((start + length + page - 1) // page) * page
-            os.posix_fadvise(stream.fileno(), begin, end - begin, option)
-        except (OSError, ValueError, TypeError):
-            pass
+    if option is None:
+        return 0
+    try:
+        page = os.sysconf("SC_PAGE_SIZE")
+        begin = start - start % page
+        end = ((start + length + page - 1) // page) * page
+        os.posix_fadvise(stream.fileno(), begin, end - begin, option)
+    except (OSError, ValueError, TypeError):
+        return 0
+    advised = end - begin
+    if telemetry is not None:
+        telemetry["advice_calls"] = int(telemetry.get("advice_calls", 0)) + 1
+        telemetry["advised_bytes"] = int(telemetry.get("advised_bytes", 0)) + advised
+    return advised
 
 
 def _array_equal_chunked(left: Any, right: Any, *, chunk_bytes: int = 8 * 1024 * 1024) -> bool:
@@ -541,10 +684,14 @@ def _iter_saved_surface_functionals(
     interior_rows: np.ndarray,
     active_lookup: np.ndarray | None = None,
     active_rows: int | None = None,
+    reader_telemetry: dict[str, Any] | None = None,
 ):
     """Replay one original selected port functional from the framed raw stream."""
-    with path.open("rb") as stream:
+    with _saved_stream_reader_sample(
+        "surface", reader_telemetry
+    ), path.open("rb") as stream:
         for port, global_index_value in enumerate(selected_indices):
+            frame_start = stream.tell()
             header = stream.read(_SURFACE_STREAM_HEADER.size)
             if len(header) != _SURFACE_STREAM_HEADER.size:
                 raise IOError("saved selected-q surface stream ended before its mode inventory")
@@ -558,6 +705,8 @@ def _iter_saved_surface_functionals(
                 if value.size != int(count):
                     raise IOError("saved selected-q surface stream contains a truncated array")
                 arrays.append(value)
+            frame_length = stream.tell() - frame_start
+            _advise_file_drop(stream, frame_start, frame_length, telemetry=reader_telemetry)
             for rows_index, values_index in ((0, 1), (2, 3)):
                 rows = arrays[rows_index].astype(np.int64, copy=False)
                 values = arrays[values_index]
@@ -648,6 +797,7 @@ def _make_saved_v26_surface_provider(
     active_lookup: np.ndarray | None,
     active_rows: int,
     counters: dict[str, int],
+    reader_telemetry: dict[str, Any] | None = None,
 ):
     """Capture the finalized active-row count before action construction starts."""
     captured_active_rows = int(active_rows)
@@ -663,6 +813,7 @@ def _make_saved_v26_surface_provider(
             interior_rows=interior_rows,
             active_lookup=active_lookup,
             active_rows=captured_active_rows,
+            reader_telemetry=reader_telemetry,
         )
 
     return provider
@@ -679,6 +830,7 @@ def _audit_saved_surface_functional_stream(
     active_lookup: np.ndarray,
     active_rows: int,
     allocation_gate: Callable[[str, Mapping[str, Any]], Any],
+    reader_telemetry: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Validate the complete saved B/D stream against the freshly built local FE rows."""
     file_size = int(path.stat().st_size)
@@ -715,8 +867,11 @@ def _audit_saved_surface_functional_stream(
     nonzero_entries = {"B": 0, "D": 0}
     rows_by_side = {"bottom": 0, "top": 0}
     digest = hashlib.sha256()
-    with path.open("rb") as stream:
+    with _saved_stream_reader_sample(
+        "surface_audit", reader_telemetry
+    ), path.open("rb") as stream:
         for port, global_index_value in enumerate(selected_indices):
+            frame_start = stream.tell()
             header = stream.read(_SURFACE_STREAM_HEADER.size)
             if len(header) != _SURFACE_STREAM_HEADER.size:
                 raise IOError("saved V25 surface stream ended during row audit")
@@ -762,6 +917,7 @@ def _audit_saved_surface_functional_stream(
                         np.count_nonzero(is_internal & (values != 0.0))
                     )
                     rows_by_side[side] += count
+            _advise_file_drop(stream, frame_start, stream.tell() - frame_start, telemetry=reader_telemetry)
         if stream.read(1):
             raise IOError("saved V25 surface stream has trailing bytes after row audit")
     return {
@@ -936,6 +1092,7 @@ def _apply_persisted_volume_stream(
     *,
     active_rows: int,
     allocation_gate: Callable,
+    reader_telemetry: dict[str, Any] | None = None,
 ) -> np.ndarray:
     """Apply the saved shared-class Schur owner without consulting live cells."""
     layout = _scan_persisted_volume_stream(path)
@@ -955,7 +1112,9 @@ def _apply_persisted_volume_stream(
         "cell_mapping_payload_bytes": layout["mapping_payload_bytes"],
         "future_co_resident_reserve_bytes": 0,
     })
-    with path.open("rb") as stream:
+    with _saved_stream_reader_sample(
+        "volume", reader_telemetry
+    ), path.open("rb") as stream:
         if stream.read(len(b"TASK40V25Q0VOLUME\0")) != b"TASK40V25Q0VOLUME\0":
             raise IOError("saved q0 volume stream has an unknown header")
         class_count, cell_count = struct.unpack("<II", stream.read(8))
@@ -963,6 +1122,7 @@ def _apply_persisted_volume_stream(
         if int(class_count) != layout["class_count"] or int(cell_count) != layout["cell_count"]:
             raise IOError("saved q0 volume stream inventory changed between scan and load")
         for _ in range(class_count):
+            frame_start = stream.tell()
             header = stream.read(8)
             if len(header) != 8:
                 raise IOError("saved q0 volume stream ended inside class metadata")
@@ -975,8 +1135,10 @@ def _apply_persisted_volume_stream(
             if not np.isfinite(matrix).all():
                 raise ValueError("saved q0 volume class matrix contains non-finite values")
             classes.append(matrix)
+            _advise_file_drop(stream, frame_start, stream.tell() - frame_start, telemetry=reader_telemetry)
         result = np.zeros(active_rows, dtype=np.complex128)
         for _ in range(cell_count):
+            frame_start = stream.tell()
             header = stream.read(_CELL_STREAM_HEADER.size)
             if len(header) != _CELL_STREAM_HEADER.size:
                 raise IOError("saved q0 volume stream ended inside cell mapping metadata")
@@ -1009,6 +1171,7 @@ def _apply_persisted_volume_stream(
             local_trace = expansion @ active[active_ids]
             local_result = classes[int(class_id)] @ local_trace
             np.add.at(result, active_ids, expansion.conjugate().T @ local_result)
+            _advise_file_drop(stream, frame_start, stream.tell() - frame_start, telemetry=reader_telemetry)
             del active_ids, indptr, indices, values, expansion, local_trace, local_result
         if stream.read(1):
             raise IOError("saved q0 volume stream has trailing bytes")
@@ -1032,6 +1195,7 @@ def _apply_persisted_consumer(
     interior_rows: np.ndarray,
     trace_q_rows: int,
     allocation_gate: Callable,
+    reader_telemetry: dict[str, Any] | None = None,
 ) -> dict[str, np.ndarray]:
     """Reload and apply all persisted volume/port data in selected q coordinates."""
     reduced_input = np.asarray(input_map @ source, dtype=np.complex128).reshape(-1)
@@ -1040,7 +1204,11 @@ def _apply_persisted_consumer(
     if len(ports) != len(local_modes):
         raise ValueError("persisted q map port width differs from the complete alias inventory")
     volume_trace = _apply_persisted_volume_stream(
-        volume_stream_path, active, active_rows=active_rows, allocation_gate=allocation_gate
+        volume_stream_path,
+        active,
+        active_rows=active_rows,
+        allocation_gate=allocation_gate,
+        reader_telemetry=reader_telemetry,
     )
     c_trace = np.zeros(active_rows, dtype=np.complex128)
     d_ports = np.zeros(len(local_modes), dtype=np.complex128)
@@ -1053,6 +1221,7 @@ def _apply_persisted_consumer(
         interior_rows=interior_rows,
         active_lookup=active_lookup,
         active_rows=active_rows,
+        reader_telemetry=reader_telemetry,
     )):
         for rows_name, values_name, target in (
             ("coupling_rows", "coupling_values", c_trace),
@@ -1167,6 +1336,7 @@ def run_task40_v26_saved_stream_replay(
     producer = Path(producer_root).resolve()
     root.mkdir(parents=True, exist_ok=True)
     parent_started = time.perf_counter()
+    reader_telemetry = _new_saved_stream_reader_telemetry()
     profile = TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE
     if (
         not isinstance(producer_identity, Mapping)
@@ -1493,6 +1663,7 @@ def run_task40_v26_saved_stream_replay(
             interior_rows=empty_interior,
             trace_q_rows=trace_width,
             allocation_gate=allocation_gate,
+            reader_telemetry=reader_telemetry,
         )
         if case_name.startswith("q0_"):
             arrays = {
@@ -1572,6 +1743,7 @@ def run_task40_v26_saved_stream_replay(
         "each_case_output_saved_atomically_before_next_case": True,
         "native_volume_apply_count": 0,
         "provider_sweep_count": 0,
+        "saved_stream_reader_telemetry": reader_telemetry,
         "cases": case_records,
         "artifacts": artifacts,
         "elapsed_seconds_scope": "three saved-stream consumer passes and their per-case atomic persistence/readback, starting after full producer, map, lookup, H, and input validation/loading",
@@ -2112,6 +2284,7 @@ def run_task40_v25_selected_q0_consumer(
         replay_manifest, replay_artifact_paths = _load_v26_saved_replay_manifest(
             saved_replay_root, saved_producer_identity
         )
+    reader_telemetry = _new_saved_stream_reader_telemetry()
     if MPI.COMM_SELF.Get_size() != 1 or np.dtype(PETSc.ScalarType) != np.dtype(np.complex128):
         raise RuntimeError("selected q0 requires MPI1 complex128 PETSc")
     if np.dtype(PETSc.IntType) != np.dtype(np.int32):
@@ -2458,6 +2631,7 @@ def run_task40_v25_selected_q0_consumer(
                 active_lookup=loaded_lookup,
                 active_rows=active_trace_rows,
                 allocation_gate=allocation_gate,
+                reader_telemetry=reader_telemetry,
             )
             producer_payloads = {
                 str(item.get("path")): item
@@ -2570,6 +2744,7 @@ def run_task40_v25_selected_q0_consumer(
                 active_lookup=loaded_lookup if reuse_v25_producer else None,
                 active_rows=active_trace_rows,
                 counters=provider_sweeps,
+                reader_telemetry=reader_telemetry,
             )()
 
         direct_provider = P6GlobalDirectCarrierProvider(
@@ -2823,7 +2998,7 @@ def run_task40_v25_selected_q0_consumer(
                 active_rows=action.condensed.active_rows, local_modes=local_modes,
                 selected_indices=selected, local_h=local_h, mode_rows=mode_rows,
                 interior_rows=interior_rows, trace_q_rows=trace_q_rows,
-                allocation_gate=allocation_gate,
+                allocation_gate=allocation_gate, reader_telemetry=reader_telemetry,
             )
             stream_y2 = _apply_persisted_consumer(
                 input_map=q0_saved, output_map=q0_saved, other_output_map=q4_saved,
@@ -2832,7 +3007,7 @@ def run_task40_v25_selected_q0_consumer(
                 active_rows=action.condensed.active_rows, local_modes=local_modes,
                 selected_indices=selected, local_h=local_h, mode_rows=mode_rows,
                 interior_rows=interior_rows, trace_q_rows=trace_q_rows,
-                allocation_gate=allocation_gate,
+                allocation_gate=allocation_gate, reader_telemetry=reader_telemetry,
             )
             stream_replay_seconds = float(time.perf_counter() - stream_replay_started)
             rng4_real = np.random.default_rng(402504)
@@ -2851,7 +3026,7 @@ def run_task40_v25_selected_q0_consumer(
                 selected_indices=selected, local_h=local_h, mode_rows=mode_rows,
                 interior_rows=interior_rows,
                 trace_q_rows=int(q4_map.shape[1] - len(aliases[1])),
-                allocation_gate=allocation_gate,
+                allocation_gate=allocation_gate, reader_telemetry=reader_telemetry,
             )
         if (
             not np.all(x1 != 0)
@@ -3093,6 +3268,7 @@ def run_task40_v25_selected_q0_consumer(
                 "provider_sweep_count": int(native_counters["provider_sweep_count"]),
                 "elapsed_seconds": native_action_elapsed_seconds,
                 "elapsed_seconds_scope": "native q0 case1, q0 case2, and q4 pair; includes provider sweeps",
+                "saved_stream_reader_telemetry": reader_telemetry,
                 "raw_stream_comparison_passed": True,
                 "scaled_cross_q_comparison_limit": 1.0e-11,
             }
