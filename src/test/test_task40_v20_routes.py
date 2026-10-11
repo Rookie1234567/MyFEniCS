@@ -749,6 +749,73 @@ def _copy_current_campaign_snapshot(tmp_path):
     return window_copy, window_sha256
 
 
+def _install_qualified_task40_v10_abi_environment(monkeypatch):
+    from src.runners import task40_v10_abi
+
+    abi_root = Path(task40_v10_abi.__file__).resolve().parents[2]
+    receipt_path = (abi_root / task40_v10_abi._ABI_RECEIPT).resolve()
+    receipt = json.loads(receipt_path.read_bytes())
+    monkeypatch.setenv("_MYFENICS_CLOUD_ABI_MANIFEST", str(receipt_path))
+    monkeypatch.setenv("_MYFENICS_CLOUD_ABI_MANIFEST_SHA256", task40_v10_abi._ABI_RECEIPT_SHA256)
+    monkeypatch.setenv("_MYFENICS_CLOUD_QUALIFIED_ACTIVATION", "1")
+    monkeypatch.setenv("_MYFENICS_CLOUD_RUNTIME_PROFILE", "local_wsl2_authorized")
+    monkeypatch.setenv("_MYFENICS_CLOUD_QUALIFICATION_SCOPE", "imports_only_C1_FE_JIT_NOT_RUN")
+    monkeypatch.setenv("UCX_TLS", str(receipt["process_local_UCX_TLS"]))
+    for variable in task40_v10_abi._THREAD_VARIABLES:
+        monkeypatch.setenv(variable, "1")
+
+
+def _install_v14_fixture_abi(monkeypatch):
+    """Isolate V14 campaign-view routing from the service's frozen ABI gate."""
+    from src.runners import task40_v10_abi
+
+    def fixture_abi(*, profile_identity):
+        return {
+            "profile_identity": profile_identity,
+            "scalar": "complex128",
+            "integer": "int32",
+            "qualification": "no-FE V14 route fixture",
+        }
+
+    monkeypatch.setattr(task40_v10_abi, "qualified_task40_v10_abi", fixture_abi)
+
+
+def _install_fake_campaign_state(monkeypatch, *, remaining_seconds=12_345.0):
+    """Keep route tests independent of an immutable production window's wall clock."""
+    from src.runners import task40_v10_campaign
+    from src.runners.workflow_timebase import clock_sample
+
+    sample = clock_sample(include_boot_id=True)
+
+    def fake_read_state(_window, path=None, **_kwargs):
+        return {
+            "path": str(Path(path).resolve()) if path is not None else "fixture-accounting.jsonl",
+            "sample": dict(sample),
+            "remaining_numerical_seconds": float(remaining_seconds),
+            "read_only": True,
+            "fixture_clock": "synthetic positive remaining budget; production window/accounting untouched",
+        }
+
+    monkeypatch.setattr(task40_v10_campaign, "read_campaign_state", fake_read_state)
+
+    def fake_observe(window, *, label="campaign_observation"):
+        return {
+            "path": str(Path(window.path).resolve()),
+            "sha256": str(window.sha256),
+            "label": str(label),
+            "remaining_numerical_seconds": float(remaining_seconds),
+            "cumulative_charged_seconds": 0.0,
+            "adjacent_charged_seconds": 0.0,
+            "read_only": True,
+            "sample": dict(sample),
+            "fixture_clock": "synthetic positive observation; no campaign ledger write",
+        }
+
+    monkeypatch.setattr(task40_v10_campaign.FixedCampaignWindow, "observe", fake_observe)
+
+    _install_qualified_task40_v10_abi_environment(monkeypatch)
+
+
 @pytest.mark.parametrize("filename", V20_INPUTS)
 def test_v20_run_case_reaches_real_launcher_before_worker(
     filename, monkeypatch, tmp_path
@@ -760,6 +827,7 @@ def test_v20_run_case_reaches_real_launcher_before_worker(
     from src.solvers.task40_v20_registry import TASK40_V20_CASES_BY_PROFILE
 
     campaign_window, campaign_sha256 = _copy_current_campaign_snapshot(tmp_path)
+    _install_fake_campaign_state(monkeypatch)
     real_launcher = task038_launcher.launch_specification
     reached = {}
 
@@ -844,6 +912,7 @@ def test_v20_staged_input_selects_requested_stage_through_real_launcher_without_
     )
     assert stage_input.name == canonical.name
     campaign_window, campaign_sha256 = _copy_current_campaign_snapshot(tmp_path)
+    _install_fake_campaign_state(monkeypatch)
     real_launcher = task038_launcher.launch_specification
     reached = {}
 
@@ -2093,6 +2162,7 @@ def test_v20_e2_and_target_v14_runtime_use_fixed_v10_campaign_view_without_fe(
         sha256=window_sha,
         path=window_path,
         total_seconds=86_400.0,
+        closeout_seconds=600.0,
     )
     state = {
         "remaining_numerical_seconds": 12_345.0,
@@ -2140,6 +2210,7 @@ def test_v20_e2_and_target_v14_runtime_use_fixed_v10_campaign_view_without_fe(
         evidence_prefix=f"v20_{case.mesh_id.lower()}_campaign_fixture",
     )
 
+    _install_v14_fixture_abi(monkeypatch)
     abi = _abi_facts(profile_identity=profile_identity)
     payload = load_and_resolve(ROOT / case.input_path).as_jsonable()
     worker_contract = _candidate_contract(
@@ -2842,3 +2913,89 @@ def test_v25_selected_operation_selector_is_bound_to_input_and_window(tmp_path):
             stop_stage="target_operator_probe",
             repo_root=tmp_path,
         )
+
+
+def test_v26_selector_binds_consumer_stage_input_separately_from_saved_producer(monkeypatch, tmp_path):
+    from scripts import task40_v20_service_workflow as service
+
+    input_path = tmp_path / "new-consumer-stage.dat"
+    input_path.write_text("canonical V26 consumer variant\n", encoding="utf-8")
+    producer_identity = {
+        "producer_run_id": service.V26_PRODUCER_RUN_ID,
+        "verified_input_sha256": service.V26_VERIFIED_INPUT_SHA256,
+    }
+    assert service._sha256_file(input_path) != producer_identity["verified_input_sha256"]
+    monkeypatch.setattr(
+        service,
+        "verify_v26_saved_producer_metadata",
+        lambda **_kwargs: producer_identity,
+    )
+    stop_stage = "selected_reference_q_consumer"
+    selector_path = tmp_path / service.V26_ARTIFACT_ROOT / stop_stage / "selected_operation.json"
+    selector_path.parent.mkdir(parents=True)
+    selector = {
+        "schema": "task40extra.review_v26_selected_operation.v1",
+        "operation": service.V26_SELECTED_OPERATION_BY_STAGE[stop_stage],
+        "campaign_window_sha256": service.TASK40_V26_CAMPAIGN_SHA256,
+        "input_sha256": service._sha256_file(input_path),
+        "model_profile": service.V26_TARGET_PROFILE,
+        "stop_stage": stop_stage,
+        "producer_identity": producer_identity,
+    }
+    selector_path.write_text(json.dumps(selector), encoding="utf-8")
+
+    binding = service._bind_v26_selected_operation_selector(
+        selector_path,
+        input_path=input_path,
+        campaign_registration={
+            "version": "V26",
+            "sha256": service.TASK40_V26_CAMPAIGN_SHA256,
+        },
+        profile=service.V26_TARGET_PROFILE,
+        stop_stage=stop_stage,
+        repo_root=tmp_path,
+    )
+    assert binding["input_sha256"] == service._sha256_file(input_path)
+    assert binding["input_sha256"] != binding["producer_identity"]["verified_input_sha256"]
+
+    input_path.write_text("altered consumer input\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="selector or verified saved-producer identity"):
+        service._bind_v26_selected_operation_selector(
+            selector_path,
+            input_path=input_path,
+            campaign_registration={
+                "version": "V26",
+                "sha256": service.TASK40_V26_CAMPAIGN_SHA256,
+            },
+            profile=service.V26_TARGET_PROFILE,
+            stop_stage=stop_stage,
+            repo_root=tmp_path,
+        )
+
+
+def test_v26_service_operation_routes_to_v26_stage_executor(monkeypatch, tmp_path):
+    from src.runners import task40_v20_stage_runner as runner
+
+    stop_stage = "selected_reference_q_consumer"
+    payload = {"execution": {"task40_execution_stop_stage": stop_stage}}
+    modes = (SimpleNamespace(side="bottom", m=0, n=0, polarization="s"),)
+    mode_rows = ({"mode_index": 0},)
+    preflight = {"schema": "fixture", "target_mode_inventory": {}}
+    monkeypatch.setattr(runner, "_exact_case", lambda _payload: (runner._V22_TARGET_OPERATOR_PROFILE, "TARGET_ORIGINAL_NY8"))
+    monkeypatch.setattr(runner, "_preflight", lambda *_args, **_kwargs: (preflight, modes, mode_rows))
+    monkeypatch.setenv("TASK40_V26_OPERATION", "V26_SAVED_STREAM_NATIVE_CONSUMER")
+    received = {}
+
+    def fake_v26(*args, **kwargs):
+        received["args"] = args
+        received.update(kwargs)
+        return {"status": "stage_completed", "summary": {"v26": True}}
+
+    monkeypatch.setattr(runner, "_run_v26_selected_q0_stage", fake_v26)
+    result = runner.run_task40_v20_stage(payload, tmp_path / "run", source_sha="a" * 40)
+
+    assert result["summary"]["v26"] is True
+    assert received["stop_stage"] == stop_stage
+    assert received["modes"] is modes
+    assert received["mode_rows"] is mode_rows
+    assert received["source_sha"] == "a" * 40

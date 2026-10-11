@@ -12,6 +12,7 @@ from src.solvers.task40_v25_selected_q0 import (
     _iter_saved_surface_functionals,
     _q0_reference_surface_inventory,
     _q0_source_mode_rows_from_runtime_view,
+    _verify_bound_payload_files,
     _write_surface_functional_stream,
 )
 
@@ -25,6 +26,326 @@ def _entry(mode_key, *, coupling_rows, coupling_values, projection_rows, project
         projection_rows=np.asarray(projection_rows, dtype=np.int32),
         projection_values=np.asarray(projection_values, dtype=np.complex128),
     )
+
+
+def test_v26_saved_payload_binding_rejects_same_size_corrupt_payload(tmp_path):
+    payload = tmp_path / "producer.bin"
+    payload.write_bytes(b"good")
+    identity = {"producer.bin": {"bytes": 4, "sha256": hashlib.sha256(b"good").hexdigest()}}
+
+    paths, total_bytes, elapsed = _verify_bound_payload_files(
+        tmp_path, identity, ("producer.bin",)
+    )
+    assert paths == {"producer.bin": payload.resolve()}
+    assert total_bytes == 4
+    assert elapsed >= 0.0
+
+    payload.write_bytes(b"evil")
+    with pytest.raises(IOError, match="verified SHA-256"):
+        _verify_bound_payload_files(tmp_path, identity, ("producer.bin",))
+
+
+def test_v26_saved_producer_paths_and_pre_action_lookup_provider_need_no_fe(tmp_path, monkeypatch):
+    from src.solvers import task40_v25_selected_q0 as selected_q
+
+    producer_root = tmp_path / "old_producer"
+    output_root = tmp_path / "new_consumer"
+    producer_root.mkdir()
+    output_root.mkdir()
+    producer_asset = producer_root / "v25_selected_q0_map.npz"
+    producer_asset.write_bytes(b"saved map")
+    reference = selected_q._bound_consumer_artifact_reference(
+        producer_asset,
+        output_root=output_root,
+        producer_root=producer_root,
+    )
+    assert reference == {
+        "path": "v25_selected_q0_map.npz",
+        "root_binding": "saved_v25_producer_root",
+        "artifact_root": str(producer_root.resolve()),
+    }
+
+    lookup_path = producer_root / "v25_selected_q0_original_to_active_int32.npy"
+    np.save(lookup_path, np.asarray([0, -1, 1, -1, 2], dtype=np.int32), allow_pickle=False)
+    condensed = SimpleNamespace(
+        full_rows=5,
+        active_rows=3,
+        trace_constraints=SimpleNamespace(original_to_active={0: 0, 2: 1, 4: 2}),
+    )
+    action = None
+    gates = []
+    lookup, active_rows = selected_q._load_saved_v26_active_lookup(
+        lookup_path,
+        condensed_system=condensed,
+        expected_full_rows=5,
+        allocation_gate=lambda name, facts: gates.append((name, dict(facts))) or {"passed": True},
+    )
+    observed = {}
+
+    def fake_saved_functionals(*_args, **kwargs):
+        observed["active_rows"] = kwargs["active_rows"]
+        yield "raw saved functional"
+
+    monkeypatch.setattr(selected_q, "_iter_saved_surface_functionals", fake_saved_functionals)
+    counters = {"provider_sweep_count": 0}
+    provider = selected_q._make_saved_v26_surface_provider(
+        path=producer_asset,
+        selected_indices=np.asarray([0], dtype=np.int64),
+        local_modes=(SimpleNamespace(),),
+        local_h=np.asarray([1.0]),
+        mode_rows=({},),
+        interior_rows=np.empty(0, dtype=np.int64),
+        active_lookup=lookup,
+        active_rows=active_rows,
+        counters=counters,
+    )
+    assert list(provider()) == ["raw saved functional"]
+    assert action is None
+    assert active_rows == observed["active_rows"] == 3
+    assert counters["provider_sweep_count"] == 1
+    assert gates[0][0] == "task40_v26_saved_lookup_compare_with_fresh_local_mpc"
+
+
+def test_v26_cross_q_comparison_rejects_zero_or_nonfinite_native_diagonal_scale():
+    from src.solvers.task40_v25_selected_q0 import _relative_error_with_scale
+
+    zeros = np.zeros(2, dtype=np.complex128)
+    with pytest.raises(ValueError, match="strictly positive"):
+        _relative_error_with_scale(zeros, zeros, zeros)
+    with pytest.raises(ValueError, match="non-finite"):
+        _relative_error_with_scale(zeros, zeros, np.asarray([np.inf, 1.0j]))
+
+
+def test_v26_checker_recomputes_native_cross_q_metrics_on_diagonal_scale(monkeypatch, tmp_path):
+    from scripts import task40_v20_service_workflow as service
+
+    artifact_relative = Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl")
+    artifact_root = tmp_path / artifact_relative
+    replay_root = artifact_root / "saved_replay"
+    native_root = artifact_root / "native_consumer"
+    selector_path = artifact_root / "stage_inputs/selected_reference_q_consumer/selected_operation.json"
+    run_root = tmp_path / "run"
+    replay_root.mkdir(parents=True)
+    native_root.mkdir()
+    selector_path.parent.mkdir(parents=True)
+    run_root.mkdir()
+    monkeypatch.setattr(service, "ROOT", tmp_path)
+    monkeypatch.setattr(service, "V26_ARTIFACT_ROOT", artifact_relative)
+
+    producer_identity = {
+        "producer_run_id": service.V26_PRODUCER_RUN_ID,
+        "failure_index_sha256": service.V26_FAILURE_INDEX_SHA256,
+        "verified_input_sha256": service.V26_VERIFIED_INPUT_SHA256,
+        "payloads": [],
+    }
+    producer_identity_sha = hashlib.sha256(
+        json.dumps(producer_identity, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    input_sha = "e" * 64
+    selector = {
+        "schema": "task40extra.review_v26_selected_operation.v1",
+        "operation": service.V26_SELECTED_OPERATION_BY_STAGE["selected_reference_q_consumer"],
+        "campaign_window_sha256": service.TASK40_V26_CAMPAIGN_SHA256,
+        "input_sha256": input_sha,
+        "model_profile": service.V26_TARGET_PROFILE,
+        "stop_stage": "selected_reference_q_consumer",
+        "producer_identity": producer_identity,
+    }
+    selector_path.write_text(json.dumps(selector), encoding="utf-8")
+    selector_sha = service._sha256_file(selector_path)
+
+    def array_sha(value):
+        return hashlib.sha256(memoryview(np.asarray(value)).cast("B")).hexdigest()
+
+    def write_archive(path, arrays):
+        with path.open("wb") as stream:
+            np.savez_compressed(stream, **arrays)
+        return {
+            "path": path.name,
+            "bytes": path.stat().st_size,
+            "sha256": service._sha256_file(path),
+            "array_sha256": {name: array_sha(value) for name, value in arrays.items()},
+            "array_shapes": {name: list(np.asarray(value).shape) for name, value in arrays.items()},
+        }
+
+    q0_input_1 = np.asarray([1.0 + 1.0j, 2.0 - 1.0j], dtype=np.complex128)
+    q0_input_2 = np.asarray([0.5 - 0.5j, 1.5 + 2.0j], dtype=np.complex128)
+    q4_input = np.asarray([1.0 - 2.0j, 2.0 + 3.0j], dtype=np.complex128)
+    input_arrays = {"q0_case_1": q0_input_1, "q0_case_2": q0_input_2, "q4_pair": q4_input}
+    input_record = write_archive(replay_root / "v26_saved_q_replay_inputs.npz", input_arrays)
+    input_record["array_sha256"] = {name: array_sha(value) for name, value in input_arrays.items()}
+    (replay_root / "v26_saved_q_replay_inputs.json").write_text(
+        json.dumps({**input_record, "producer_identity_sha256": producer_identity_sha}), encoding="utf-8"
+    )
+
+    q0_diag_1 = np.asarray([3.0 + 1.0j, 4.0 - 1.0j], dtype=np.complex128)
+    q0_diag_2 = np.asarray([2.0 - 2.0j, 5.0 + 1.0j], dtype=np.complex128)
+    q4_diag = np.asarray([6.0 + 2.0j, 7.0 - 1.0j], dtype=np.complex128)
+    cross_04 = np.asarray([1.0e-13 + 0.0j, 0.0 + 0.0j], dtype=np.complex128)
+    cross_40 = np.asarray([2.0e-13 + 0.0j, 0.0 + 0.0j], dtype=np.complex128)
+    component_arrays = {
+        "q0_volume": np.asarray([1.0 + 0.0j, 1.5 + 0.0j], dtype=np.complex128),
+        "q0_C": np.asarray([0.5 + 0.0j, 0.25 + 0.0j], dtype=np.complex128),
+        "q0_minus_D": np.asarray([0.25 + 0.0j, 0.5 + 0.0j], dtype=np.complex128),
+        "q0_Hhat": np.asarray([1.25 + 1.0j, 1.75 - 1.0j], dtype=np.complex128),
+    }
+    replay_cases = {
+        "q0_case_1": {
+            "q0_total": q0_diag_1,
+            **component_arrays,
+            "q4_total_from_q0": cross_04,
+        },
+        "q0_case_2": {"q0_total": q0_diag_2, "q4_total_from_q0": cross_04 * 2.0},
+        "q4_pair": {"q4_total": q4_diag, "q0_total_from_q4": cross_40},
+    }
+    replay_cases_manifest = {}
+    replay_artifacts = {"inputs": input_record}
+    for name, arrays in replay_cases.items():
+        path = replay_root / f"{name}.npz"
+        record = write_archive(path, arrays)
+        sidecar = {**record, "producer_identity_sha256": producer_identity_sha}
+        (replay_root / f"{name}.json").write_text(json.dumps(sidecar), encoding="utf-8")
+        replay_cases_manifest[name] = {
+            **record,
+            "producer_identity_sha256": producer_identity_sha,
+            "input_sha256": input_record["array_sha256"][name],
+        }
+        replay_artifacts[name] = {**record, "manifest_path": f"{name}.json"}
+    replay_manifest = {
+        "schema": "task40extra.review_v26_saved_q_replay.v1",
+        "status": "PASS_SAVED_STREAM_REPLAY_NO_NATIVE",
+        "producer_identity": producer_identity,
+        "producer_identity_sha256": producer_identity_sha,
+        "preflight_mode_manifest_sha256": "a" * 64,
+        "ordered_mode_key_sha256": "b" * 64,
+        "mode_count_full_reference": 32_060,
+        "q0_alias_count": 4_076,
+        "q4_alias_count": 3_856,
+        "selected_twist_alias_count": 7_932,
+        "official_result": False,
+        "csr_built": False,
+        "factor_or_solve_built": False,
+        "native_comparison": "NOT_RUN_IN_THIS_STAGE",
+        "native_volume_apply_count": 0,
+        "provider_sweep_count": 0,
+        "inputs_saved_before_replay": True,
+        "each_case_output_saved_atomically_before_next_case": True,
+        "all_saved_inputs_nonzero": True,
+        "q0_inputs_distinct": True,
+        "artifacts": replay_artifacts,
+        "cases": replay_cases_manifest,
+    }
+    replay_manifest_path = replay_root / "v26_saved_q_replay_manifest.json"
+    replay_manifest_path.write_text(json.dumps(replay_manifest), encoding="utf-8")
+    replay_sha = service._sha256_file(replay_manifest_path)
+
+    native_cases = {
+        "q0_case_1": {
+            "native_q0_total": q0_diag_1,
+            "native_q4_from_q0": cross_04,
+            "native_q0_volume": component_arrays["q0_volume"],
+            "native_q0_C": component_arrays["q0_C"],
+            "native_q0_minus_D": component_arrays["q0_minus_D"],
+            "native_q0_Hhat": component_arrays["q0_Hhat"],
+        },
+        "q0_case_2": {"native_q0_total": q0_diag_2, "native_q4_from_q0": cross_04 * 2.0},
+        "q4_pair": {"native_q0_from_q4": cross_40, "native_q4_total": q4_diag},
+    }
+    native_records = {}
+    for name, arrays in native_cases.items():
+        path = native_root / f"v26_native_{name}.npz"
+        record = write_archive(path, arrays)
+        sidecar = {
+            "schema": "task40extra.review_v26_native_action_case.v1",
+            "case": name,
+            "producer_identity_sha256": producer_identity_sha,
+            "saved_replay_manifest_sha256": replay_sha,
+            **record,
+        }
+        path.with_suffix(".json").write_text(json.dumps(sidecar), encoding="utf-8")
+        native_records[name] = record
+    native_manifest = {
+        "schema": "task40extra.review_v26_native_action.v1",
+        "status": "PASS_COMPLETE_Q0_NATIVE_CONSUMER",
+        "producer_identity_sha256": producer_identity_sha,
+        "saved_replay_manifest_sha256": replay_sha,
+        "cases": native_records,
+        "native_volume_apply_count": 6,
+        "provider_sweep_count": 9,
+        "elapsed_seconds": 2.5,
+    }
+    native_manifest_path = native_root / "v26_native_action_manifest.json"
+    native_manifest_path.write_text(json.dumps(native_manifest), encoding="utf-8")
+    native_sha = service._sha256_file(native_manifest_path)
+
+    def scaled_metrics(left, right, scale):
+        absolute = float(np.linalg.norm(left - right))
+        scale_norm = float(np.linalg.norm(scale))
+        return {"absolute": absolute, "scale": scale_norm, "relative_to_component": absolute / scale_norm}
+
+    operation = {
+        "schema": "task40extra.review_v25_selected_reference_q0_consumer.v1",
+        "status": "PASS_COMPLETE_Q0_STREAM",
+        "stop_stage": "selected_reference_q_consumer",
+        "v26_selector_sha256": selector_sha,
+        "official_result": False,
+        "factor_or_solve_built": False,
+        "v26_artifact_binding": {
+            "producer_identity_sha256": producer_identity_sha,
+            "saved_replay_manifest_sha256": replay_sha,
+            "native_manifest_sha256": native_sha,
+            "native_volume_apply_count": 6,
+            "provider_sweep_count": 9,
+            "native_action_elapsed_seconds": 2.5,
+        },
+        "complete_stream": {
+            "consumer_replay": {
+                "q0_to_q4_scaled_error": scaled_metrics(cross_04, cross_04, q0_diag_1),
+                "q4_to_q0_scaled_error": scaled_metrics(cross_40, cross_40, q4_diag),
+                "cross_q_scale_q0_to_q4": "native q0 diagonal output norm",
+                "cross_q_scale_q4_to_q0": "native q4 diagonal output norm",
+                "q0_to_q4_leakage_ratio": float(np.linalg.norm(cross_04) / np.linalg.norm(q0_diag_1)),
+                "q4_to_q0_leakage_ratio": float(np.linalg.norm(cross_40) / np.linalg.norm(q4_diag)),
+            }
+        },
+    }
+    operation_path = run_root / "v26_selected_q_stage.json"
+    operation_path.write_text(json.dumps(operation), encoding="utf-8")
+    (run_root / "v20_stage_preflight.json").write_text(
+        json.dumps({"target_mode_inventory": {
+            "mode_count": 32_060,
+            "mode_manifest_sha256": "a" * 64,
+            "ordered_mode_key_sha256": "b" * 64,
+        }}),
+        encoding="utf-8",
+    )
+    partial = {
+        "schema": "task40extra.review_v20_partial_result.v2",
+        "status": "stage_completed",
+        "outcome": "STAGE_COMPLETED",
+        "profile": service.V26_TARGET_PROFILE,
+        "input_sha256": input_sha,
+        "official_result": False,
+        "q_coverage": {"factor_count": 0, "ksp_created": False, "pde_solved": False},
+        "v26_selected_q_stage": {
+            "operation_path": operation_path.name,
+            "operation_sha256": service._sha256_file(operation_path),
+            "operation_status": operation["status"],
+            "operation": operation,
+            "selector_path": str(selector_path),
+            "selector_sha256": selector_sha,
+            "producer_root": str(tmp_path / "producer"),
+            "saved_replay_root": str(replay_root),
+            "native_root": str(native_root),
+        },
+    }
+
+    checks = service._v26_selected_q_readback_checks(
+        output_directory=run_root,
+        partial=partial,
+        expected_stop_stage="selected_reference_q_consumer",
+    )
+    assert all(checks.values()), checks
 
 
 def test_saved_surface_stream_preserves_nonzero_internal_values_and_drops_only_exact_zeros(tmp_path):

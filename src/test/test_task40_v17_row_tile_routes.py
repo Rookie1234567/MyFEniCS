@@ -34,6 +34,25 @@ CASES = (
 )
 
 
+def _install_fake_campaign_state(monkeypatch, *, remaining_seconds=12_345.0):
+    """Use a positive test budget without rewriting the immutable V17 ledger."""
+    from src.runners import task40_v10_campaign
+    from src.runners.workflow_timebase import clock_sample
+
+    sample = clock_sample(include_boot_id=True)
+
+    def fake_read_state(_window, path=None, **_kwargs):
+        return {
+            "path": str(Path(path).resolve()) if path is not None else "fixture-accounting.jsonl",
+            "sample": dict(sample),
+            "remaining_numerical_seconds": float(remaining_seconds),
+            "read_only": True,
+            "fixture_clock": "synthetic positive remaining budget; production window/accounting untouched",
+        }
+
+    monkeypatch.setattr(task40_v10_campaign, "read_campaign_state", fake_read_state)
+
+
 @pytest.mark.parametrize("filename,profile_name,run_id,stage", CASES)
 def test_v17_profiles_configs_and_checker_inventory_are_exact(
     filename, profile_name, run_id, stage
@@ -688,6 +707,7 @@ def test_v17_v14_runtime_uses_existing_readonly_campaign_window_without_fe(
     monkeypatch.setenv("TASK40_V10_CAMPAIGN_WINDOW_SHA256", window.sha256)
     monkeypatch.setenv("TASK40_V10_CAMPAIGN_ACCOUNTING", str(accounting_path))
     monkeypatch.setenv("PHYSICAL_WATCHDOG_PHASE_PATH", str(tmp_path / "workflow_phase.json"))
+    _install_fake_campaign_state(monkeypatch)
 
     contract = profile_facts(profile_name)
     resources = contract["resources"]
@@ -773,6 +793,7 @@ def test_v18_v14_runtime_uses_existing_fixed_campaign_window_without_fe(
     monkeypatch.setenv("TASK40_V10_CAMPAIGN_WINDOW_SHA256", window.sha256)
     monkeypatch.setenv("TASK40_V10_CAMPAIGN_ACCOUNTING", str(accounting_path))
     monkeypatch.setenv("PHYSICAL_WATCHDOG_PHASE_PATH", str(tmp_path / "workflow_phase.json"))
+    _install_fake_campaign_state(monkeypatch)
 
     contract = profile_facts(TASK40_V18_P6_B0_Y8_PROFILE)
     resources = contract["resources"]
@@ -836,3 +857,47 @@ def test_v18_v14_runtime_rejects_wrong_scope_before_reading_campaign(
             batch_identity="task40_review_v18_wrong_scope",
             evidence_prefix="v18_runtime_negative",
         )
+
+
+def test_v17_q0_structure_checkpoint_precedes_int32_capacity_check(monkeypatch):
+    import numpy as np
+    from petsc4py import PETSc
+    from scipy import sparse
+
+    from src.solvers import task40_v10_p6_yorbit as yorbit
+
+    qmap = sparse.eye(3, format="csr", dtype=np.complex128)
+    qmap.indices = qmap.indices.astype(np.dtype(PETSc.IntType), copy=False)
+    qmap.indptr = qmap.indptr.astype(np.dtype(PETSc.IntType), copy=False)
+
+    class LayoutAction:
+        def iter_reduced_contribution_layouts(self, **_kwargs):
+            yield np.asarray([0, 1], dtype=np.int32), np.asarray([1], dtype=np.int32), "fixture"
+
+    checkpoint = {}
+
+    def record_structure(facts, row_counts, offsets):
+        checkpoint.update(facts=facts, row_counts=row_counts.copy(), offsets=offsets.copy())
+
+    def reject_after_checkpoint(_shape, _row_counts, _index_dtype):
+        assert checkpoint, "full row structure was not persisted before the index-width gate"
+        raise OverflowError("simulated PETSc.IntType NNZ/indptr capacity overflow")
+
+    monkeypatch.setattr(yorbit, "_v17_checked_row_tile_csr_layout", reject_after_checkpoint)
+    with pytest.raises(OverflowError, match="capacity overflow"):
+        yorbit._assemble_v17_row_tile_patterns(
+            LayoutAction(),
+            (qmap, qmap),
+            allocation_gate=lambda *_args, **_kwargs: None,
+            requested_blocks=((0, 0),),
+            structure_checkpoint=record_structure,
+        )
+
+    assert checkpoint["facts"]["shape"] == [3, 3]
+    assert checkpoint["facts"]["nnz"] == 2
+    assert checkpoint["facts"]["nnz_fits_petsc_int"] is True
+    assert checkpoint["facts"]["support_route_sha256"]
+    assert checkpoint["row_counts"].dtype == np.dtype(np.int64)
+    assert checkpoint["offsets"].dtype == np.dtype(np.int64)
+    assert checkpoint["row_counts"].tolist() == [1, 1, 0]
+    assert checkpoint["offsets"].tolist() == [0, 1, 2, 2]

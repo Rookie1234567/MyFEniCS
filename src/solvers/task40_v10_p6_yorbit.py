@@ -6,6 +6,7 @@ the reference inverse; no global dense FE operator is formed here.
 """
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Sequence
 
@@ -2078,6 +2079,10 @@ def _assemble_v17_row_tile_patterns(
     requested_blocks: tuple[tuple[int, int], ...] | None = None,
     disk_backed_directory: str | Path | None = None,
     disk_backed_stem: str = "v17_q",
+    structure_checkpoint: Callable[
+        [Mapping[str, Any], np.ndarray, np.ndarray], None
+    ]
+    | None = None,
 ) -> tuple[dict[tuple[int, int], sparse.csr_matrix], dict[str, Any], float]:
     """Build four sparse patterns from compact support descriptors and row routes.
 
@@ -2126,6 +2131,8 @@ def _assemble_v17_row_tile_patterns(
         )
     ):
         raise ValueError("V17 requested blocks must be a nonempty subset of the four q branches")
+    if structure_checkpoint is not None and block_keys != ((0, 0),):
+        raise ValueError("V17 structure checkpoints are restricted to the selected q0->q0 block")
     block_id = {(p, q): p * 2 + q for p, q in block_keys}
     shapes = {
         key: (int(q_maps[key[0]].shape[1]), int(q_maps[key[1]].shape[1]))
@@ -2209,6 +2216,34 @@ def _assemble_v17_row_tile_patterns(
                 raise RuntimeError(
                     "V17 compact route lookup requires an unbounded SQLite sort"
                 )
+
+            def support_route_identity() -> tuple[str, int, int, int]:
+                digest = hashlib.sha256()
+                support_count = 0
+                support_bytes = 0
+                for contribution_id, side, branch, raw_ids in connection.execute(
+                    "SELECT contribution_id, side, branch, ids "
+                    "FROM support ORDER BY contribution_id, side, branch"
+                ):
+                    ids = bytes(raw_ids)
+                    digest.update(b"S")
+                    for value in (contribution_id, branch, len(ids)):
+                        digest.update(int(value).to_bytes(8, "little", signed=True))
+                    digest.update(str(side).encode("ascii") + b"\0")
+                    digest.update(ids)
+                    support_count += 1
+                    support_bytes += len(ids)
+                route_count_identity = 0
+                for row in connection.execute(
+                    "SELECT block, tile, contribution_id, left_branch, left_offset, "
+                    "left_count, right_branch FROM routes "
+                    "ORDER BY block, tile, contribution_id"
+                ):
+                    digest.update(b"R")
+                    for value in row:
+                        digest.update(int(value).to_bytes(8, "little", signed=True))
+                    route_count_identity += 1
+                return digest.hexdigest(), support_count, support_bytes, route_count_identity
 
             def check_spool_space(stage: str) -> None:
                 nonlocal sqlite_peak_bytes, spool_minimum_free_bytes
@@ -2596,17 +2631,95 @@ def _assemble_v17_row_tile_patterns(
                         wide_indptr[row + 1] = count
                         rows_with_pattern += int(count > 0)
                     del pattern
-                total_nnz, csr_payload = _v17_checked_row_tile_csr_layout(
-                    shape, wide_indptr[1:], index_dtype
-                )
-                running = 0
-                for row in range(shape[0]):
-                    running += int(wide_indptr[row + 1])
-                    if running > index_limit:
-                        raise OverflowError(
-                            "V17 row-tile Python prefix exceeds PETSc.IntType"
+                if structure_checkpoint is None:
+                    checked_nnz, checked_payload = _v17_checked_row_tile_csr_layout(
+                        shape, wide_indptr[1:], index_dtype
+                    )
+                    running = 0
+                    for row in range(shape[0]):
+                        running += int(wide_indptr[row + 1])
+                        if running > index_limit:
+                            raise OverflowError(
+                                "V17 row-tile Python prefix exceeds PETSc.IntType"
+                            )
+                        wide_indptr[row + 1] = running
+                    total_nnz = int(checked_nnz)
+                    csr_payload = int(checked_payload)
+                else:
+                    allocation_gate(
+                        f"task40_v26_q0_row_structure_checkpoint/p{p}q{q}",
+                        {
+                            "additional_payload_bytes": 0,
+                            "workspace_bytes": int(wide_indptr.nbytes * 2),
+                            "row_count_dtype": np.dtype(np.int64).str,
+                            "wide_prefix_dtype": np.dtype(np.int64).str,
+                            "checkpoint_before_numeric_allocation": True,
+                        },
+                    )
+                    row_counts_wide = np.asarray(wide_indptr[1:], dtype=np.int64).copy()
+                    running = 0
+                    int64_limit = int(np.iinfo(np.int64).max)
+                    for row, count in enumerate(row_counts_wide):
+                        running += int(count)
+                        if running > int64_limit:
+                            raise OverflowError(
+                                "V17 wide row prefix exceeds int64 checkpoint capacity"
+                            )
+                        wide_indptr[row + 1] = running
+                    total_nnz = int(running)
+                    csr_payload = int(
+                        (shape[0] + 1) * index_dtype.itemsize
+                        + total_nnz
+                        * (index_dtype.itemsize + np.dtype(np.complex128).itemsize)
+                    )
+                    allocation_gate(
+                        f"task40_v26_q0_row_structure_checkpoint_hash/p{p}q{q}",
+                        {
+                            "additional_payload_bytes": 0,
+                            "workspace_bytes": int(sqlite_cache + max_descriptor_bytes),
+                            "support_descriptor_bytes_upper": int(max_descriptor_bytes),
+                            "support_route_identity_hashing": True,
+                        },
+                    )
+                    route_sha, support_record_count, support_bytes, route_identity_count = (
+                        support_route_identity()
+                    )
+                    structure_facts = {
+                        "schema": "task40extra.review_v26_selected_q0_row_structure_checkpoint.v1",
+                        "block": [p, q],
+                        "shape": [int(shape[0]), int(shape[1])],
+                        "row_count": int(shape[0]),
+                        "row_counts_dtype": np.dtype(np.int64).str,
+                        "wide_offsets_dtype": np.dtype(np.int64).str,
+                        "wide_offset_count": int(shape[0] + 1),
+                        "row_count_min": int(row_counts_wide.min()),
+                        "row_count_max": int(row_counts_wide.max()),
+                        "nnz": total_nnz,
+                        "wide_offsets_terminal": int(wide_indptr[-1]),
+                        "petsc_int_dtype": index_dtype.str,
+                        "petsc_int_max": index_limit,
+                        "nnz_fits_petsc_int": total_nnz <= index_limit,
+                        "required_csr_payload_bytes": csr_payload,
+                        "csr_payload_formula": "(rows+1)*index_bytes + nnz*(index_bytes+complex128_bytes)",
+                        "support_record_count": support_record_count,
+                        "support_descriptor_bytes": support_bytes,
+                        "support_route_record_count": route_identity_count,
+                        "support_route_sha256": route_sha,
+                        "route_reconstruction": "replay action.iter_reduced_contribution_layouts with the same q0 map and ROW_TILE_BOUNDED_CSR_V17 algorithm",
+                    }
+                    structure_checkpoint(
+                        structure_facts,
+                        row_counts_wide,
+                        np.asarray(wide_indptr, dtype=np.int64),
+                    )
+                    checked_nnz, checked_payload = _v17_checked_row_tile_csr_layout(
+                        shape, row_counts_wide, index_dtype
+                    )
+                    if checked_nnz != total_nnz or checked_payload != csr_payload:
+                        raise RuntimeError(
+                            "V17 wide row structure disagrees with checked CSR layout"
                         )
-                    wide_indptr[row + 1] = running
+                    del row_counts_wide
 
                 materialize_workspace = (
                     sqlite_cache
@@ -3069,6 +3182,10 @@ def _assemble_bounded_v17_row_tile_q_patterns(
     | None = None,
     disk_backed_directory: str | Path | None = None,
     disk_backed_stem: str = "v17_q",
+    structure_checkpoint: Callable[
+        [Mapping[str, Any], np.ndarray, np.ndarray], None
+    ]
+    | None = None,
 ) -> tuple[dict[tuple[int, int], sparse.csr_matrix], dict[str, Any]]:
     blocks, pattern_metadata, pattern_seconds = _assemble_v17_row_tile_patterns(
         action,
@@ -3077,6 +3194,7 @@ def _assemble_bounded_v17_row_tile_q_patterns(
         requested_blocks=requested_blocks,
         disk_backed_directory=disk_backed_directory,
         disk_backed_stem=disk_backed_stem,
+        structure_checkpoint=structure_checkpoint,
     )
     patterns = dict(pattern_metadata.pop("pattern_facts_by_block"))
     return _accumulate_bounded_q_pattern_values(

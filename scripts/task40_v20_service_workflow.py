@@ -47,6 +47,14 @@ from src.runners.task40_v10_campaign import (  # noqa: E402
     TASK40_V25_REVIEW_PATH,
     TASK40_V25_REVIEW_SHA256,
     TASK40_V25_STAGE_SCOPE,
+    TASK40_V26_CAMPAIGN_RECEIPT,
+    TASK40_V26_CAMPAIGN_RECEIPT_SHA256,
+    TASK40_V26_CAMPAIGN_SHA256,
+    TASK40_V26_CAMPAIGN_WINDOW,
+    TASK40_V26_REVIEW_COMMIT,
+    TASK40_V26_REVIEW_PATH,
+    TASK40_V26_REVIEW_SHA256,
+    TASK40_V26_STAGE_SCOPE,
     load_fixed_campaign_window,
 )
 
@@ -109,6 +117,39 @@ V25_SELECTED_OPERATION_BY_STAGE = {
 V25_ARTIFACT_ROOT = Path(
     "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v25_wsl"
 )
+V26_TARGET_PROFILE = V25_TARGET_PROFILE
+V26_STOP_STAGE_SCOPE = {
+    "selected_reference_q_build_only": "saved_stream_replay",
+    "selected_reference_q_consumer": "native_reference_consumer",
+    "selected_reference_q_csr": "complete_q0_csr",
+}
+V26_SELECTED_Q_STAGES = frozenset(V26_STOP_STAGE_SCOPE)
+V26_SELECTED_OPERATION_BY_STAGE = {
+    "selected_reference_q_build_only": "V26_SAVED_STREAM_REPLAY",
+    "selected_reference_q_consumer": "V26_SAVED_STREAM_NATIVE_CONSUMER",
+    "selected_reference_q_csr": "V26_COMPLETE_Q0_CSR_AND_CONDITIONAL_FACTOR",
+}
+V26_ARTIFACT_ROOT = Path(
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl"
+)
+V26_PRODUCER_RUN_RELATIVE = Path(
+    "results/task40extra_nonseparable_0p7nm/"
+    "task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/"
+    "20261011T053811.673002Z"
+)
+V26_FAILURE_INDEX_SHA256 = "c7f687e6054e0506d03d4443bfaede58bfa46d76476b5270844d3d792cb3f026"
+V26_PRODUCER_SOURCE_SHA = "9d0f4dbfc730dd620b709d048e33e9da6c77520c"
+V26_PRODUCER_RUN_ID = "task40extra_0p7nm_target_original_ny8_operator_probe_v22"
+V26_LEGACY_BAD_INPUT_SHA256 = "7c7fcc172968bb291d6834bac6f2d3b71b3f1a1efb836129f5dfb872082407"
+V26_VERIFIED_INPUT_SHA256 = "7c7fcc172968bb291d6834bac6c4f2d3b71b3f1a1efb836129f5dfb872082407"
+V26_PRODUCER_FILE_HASHES = {
+    "v25_selected_q0_surface_functionals.bin": (11230840064, "92fb011dc9bc551728079d10f8cd26e8810668b0ab5df78189c3466e2cbd4613"),
+    "v25_selected_q0_volume_classes.bin": (226645122, "f76b1dad7b863c0e4fc32ca7cdbd793436a22cc2386a59b79e6297eac94e390b"),
+    "v25_selected_q0_local_H_p.npy": (127040, "f79de1ec28568f9a1d05f4bd6743a497d9dcc729654cf0a04e56d92d912c5a21"),
+    "v25_selected_q0_original_to_active_int32.npy": (21009152, "f473037848f72d886ddb0a421d6240fe77788f799740168c234c9340ba1a963d"),
+    "v25_selected_q0_map.npz": (348496973, "cad0ea1d34c26cea53b07965d80b952733944a8003ee9aa09cf922e08bc71e20"),
+    "v25_selected_q4_map.npz": (348492573, "871e1a86715588fb6157fe5bbc96bf545d207629e4ad480eafd7ee4cd383a2f4"),
+}
 RUNTIME_PREFIX_RELATIVE = Path(
     "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
 )
@@ -199,7 +240,7 @@ def _resolve_service_campaign(
     profile: str,
     stop_stage: str,
 ) -> dict[str, Any]:
-    """Resolve a historical V19 or an exact, scoped V22/V23/V24/V25 window."""
+    """Resolve a historical window or an exact, scoped V22–V26 campaign."""
 
     supplied = campaign_path if campaign_path.is_absolute() else repo_root / campaign_path
     supplied = supplied.resolve()
@@ -218,6 +259,7 @@ def _resolve_service_campaign(
     v23_path = (repo_root / TASK40_V23_CAMPAIGN_WINDOW).resolve()
     v24_path = (repo_root / TASK40_V24_CAMPAIGN_WINDOW).resolve()
     v25_path = (repo_root / TASK40_V25_CAMPAIGN_WINDOW).resolve()
+    v26_path = (repo_root / TASK40_V26_CAMPAIGN_WINDOW).resolve()
     if supplied == v22_path:
         if profile != V22_TARGET_PROFILE:
             raise ValueError("the V22 campaign route is restricted to the registered Ny8 target")
@@ -295,8 +337,43 @@ def _resolve_service_campaign(
             raise ValueError("the V25 campaign registration receipt identity or scope changed")
         window = load_fixed_campaign_window(v25_path, require_current_boot=True)
         campaign_version = "V25"
+    elif supplied == v26_path:
+        if profile != V26_TARGET_PROFILE:
+            raise ValueError("the V26 campaign route is restricted to the registered Ny8 target")
+        stage_scope = V26_STOP_STAGE_SCOPE.get(stop_stage)
+        if stage_scope is None or stage_scope not in TASK40_V26_STAGE_SCOPE:
+            raise ValueError("the V26 service stop stage is outside its explicit campaign scope")
+        if _sha256_file(v26_path) != TASK40_V26_CAMPAIGN_SHA256:
+            raise ValueError("the registered V26 campaign window SHA changed")
+        receipt_path = (repo_root / TASK40_V26_CAMPAIGN_RECEIPT).resolve()
+        if (
+            not receipt_path.is_file()
+            or _sha256_file(receipt_path) != TASK40_V26_CAMPAIGN_RECEIPT_SHA256
+        ):
+            raise ValueError("the V26 campaign registration receipt is missing or changed")
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        if (
+            receipt.get("schema") != "task40extra.review_v26_campaign_registration.v1"
+            or receipt.get("manifest_path") != str(TASK40_V26_CAMPAIGN_WINDOW)
+            or receipt.get("manifest_sha256") != TASK40_V26_CAMPAIGN_SHA256
+            or receipt.get("review_sha") != TASK40_V26_REVIEW_COMMIT
+            or receipt.get("review_path") != TASK40_V26_REVIEW_PATH
+            or receipt.get("review_sha256") != TASK40_V26_REVIEW_SHA256
+            or receipt.get("stage_scope")
+            != [
+                "implementation", "targeted_tests", "saved_stream_replay",
+                "native_reference_consumer", "complete_q0_row_counts",
+                "complete_q0_csr", "selected_q0_factor_lifecycle", "checker",
+                "persistence_readback", "closeout",
+            ]
+            or receipt.get("registration_state")
+            != "REGISTERED_FOR_DEVELOPMENT; service/selector/stage/watchdog/required-checker qualification required before saved replay"
+        ):
+            raise ValueError("the V26 campaign registration receipt identity or scope changed")
+        window = load_fixed_campaign_window(v26_path, require_current_boot=True)
+        campaign_version = "V26"
     else:
-        raise ValueError("service campaign window is not a registered V19, V22, V23, V24, or V25 path")
+        raise ValueError("service campaign window is not a registered V19 or V22–V26 path")
     return {
         "path": window.path,
         "sha256": window.sha256,
@@ -500,8 +577,12 @@ def _validate_service_stage_input_variant(
         allowed_stage_roots.append(
             (repo_root / V25_ARTIFACT_ROOT / "stage_inputs").resolve()
         )
+    if stop_stage in V26_SELECTED_Q_STAGES:
+        allowed_stage_roots.append(
+            (repo_root / V26_ARTIFACT_ROOT / "stage_inputs").resolve()
+        )
     if not any(input_path.is_relative_to(path) for path in allowed_stage_roots):
-        raise ValueError("noncanonical V20/V25 stage input must live in its ignored stage_inputs artifact")
+        raise ValueError("noncanonical V20/V25/V26 stage input must live in its ignored stage_inputs artifact")
 
 
 
@@ -579,6 +660,87 @@ def prepare_v25_selected_q_input(
             "bash scripts/run_case_in_user_service.sh "
             f"{input_path} --task40-v10-campaign-window {TASK40_V25_CAMPAIGN_WINDOW} "
             f"--v25-selected-operation-selector {selector_path}"
+        ),
+    }
+
+
+def prepare_v26_selected_q_input(
+    stop_stage: str = "selected_reference_q_build_only",
+    repo_root: Path = ROOT,
+) -> dict[str, Any]:
+    """Create an ignored V26 stage/selector bound to the prior raw producer and this window."""
+    if stop_stage not in V26_SELECTED_Q_STAGES:
+        raise ValueError("V26 selected-q preparation requires a registered saved-consumer stage")
+    canonical_relative, _ = V20_INPUTS[V26_TARGET_PROFILE]
+    canonical_path = repo_root / canonical_relative
+    canonical_text = canonical_path.read_text(encoding="utf-8")
+    canonical_data = tomllib.loads(canonical_text)
+    if canonical_data.get("solver", {}).get("preconditioner") != V26_TARGET_PROFILE:
+        raise ValueError("V26 selected-q canonical input/profile identity changed")
+    campaign_path = (repo_root / TASK40_V26_CAMPAIGN_WINDOW).resolve()
+    if not campaign_path.is_file() or _sha256_file(campaign_path) != TASK40_V26_CAMPAIGN_SHA256:
+        raise ValueError("V26 selected-q preparation requires the frozen campaign window")
+    load_fixed_campaign_window(campaign_path, require_current_boot=True)
+    rendered = render_stage_input(canonical_text, stop_stage).encode("utf-8")
+    stage_directory = (repo_root / V26_ARTIFACT_ROOT / "stage_inputs" / stop_stage).resolve()
+    stage_directory.mkdir(parents=True, exist_ok=True)
+    input_path = stage_directory / canonical_path.name
+    selector_path = stage_directory / "selected_operation.json"
+    if input_path.exists():
+        if input_path.read_bytes() != rendered:
+            raise FileExistsError(f"refusing to replace different V26 stage input: {input_path}")
+    else:
+        with input_path.open("xb") as stream:
+            stream.write(rendered)
+            stream.flush()
+            os.fsync(stream.fileno())
+    producer_identity = verify_v26_saved_producer_metadata(
+        producer_root=repo_root / V26_PRODUCER_RUN_RELATIVE,
+        repo_root=repo_root,
+    )
+    selector = {
+        "schema": "task40extra.review_v26_selected_operation.v1",
+        "operation": V26_SELECTED_OPERATION_BY_STAGE[stop_stage],
+        "campaign_window_sha256": TASK40_V26_CAMPAIGN_SHA256,
+        "input_sha256": _sha256_bytes(rendered),
+        "model_profile": V26_TARGET_PROFILE,
+        "stop_stage": stop_stage,
+        "producer_identity": producer_identity,
+    }
+    selector_payload = (
+        json.dumps(selector, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+    ).encode("utf-8")
+    if selector_path.exists():
+        if selector_path.read_bytes() != selector_payload:
+            raise FileExistsError(f"refusing to replace different V26 selector: {selector_path}")
+    else:
+        with selector_path.open("xb") as stream:
+            stream.write(selector_payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+    for destination in (input_path, selector_path):
+        relative = destination.relative_to(repo_root.resolve())
+        ignored = subprocess.run(
+            ["git", "check-ignore", "-q", str(relative)], cwd=repo_root, check=False
+        )
+        if ignored.returncode != 0:
+            raise RuntimeError(f"V26 selected-q artifact is not git-ignored: {relative}")
+    return {
+        "schema": "task40extra.review_v26_selected_q_stage_input.v1",
+        "stop_stage": stop_stage,
+        "operation": V26_SELECTED_OPERATION_BY_STAGE[stop_stage],
+        "canonical_input_sha256": _sha256_file(canonical_path),
+        "stage_input_path": str(input_path),
+        "stage_input_sha256": _sha256_file(input_path),
+        "selector_path": str(selector_path),
+        "selector_sha256": _sha256_file(selector_path),
+        "producer_identity": producer_identity,
+        "campaign_window_path": str(campaign_path),
+        "campaign_window_sha256": TASK40_V26_CAMPAIGN_SHA256,
+        "launch_command": (
+            "bash scripts/run_case_in_user_service.sh "
+            f"{input_path} --task40-v10-campaign-window {TASK40_V26_CAMPAIGN_WINDOW} "
+            f"--v26-selected-operation-selector {selector_path}"
         ),
     }
 
@@ -944,6 +1106,33 @@ def _extract_v25_selected_operation_selector_arg(
     return cleaned, selected
 
 
+def _extract_v26_selected_operation_selector_arg(
+    case_args: list[str],
+) -> tuple[list[str], Path | None]:
+    """Remove the V26 selector before forwarding only the reviewed case args."""
+    cleaned: list[str] = []
+    selected: Path | None = None
+    index = 0
+    flag = "--v26-selected-operation-selector"
+    while index < len(case_args):
+        value = case_args[index]
+        if value == flag:
+            if selected is not None or index + 1 >= len(case_args):
+                raise ValueError("V26 selected-operation selector must appear once with a JSON path")
+            selected = Path(case_args[index + 1]).resolve()
+            index += 2
+            continue
+        if value.startswith(flag + "="):
+            if selected is not None:
+                raise ValueError("V26 selected-operation selector must appear only once")
+            selected = Path(value.split("=", 1)[1]).resolve()
+            index += 1
+            continue
+        cleaned.append(value)
+        index += 1
+    return cleaned, selected
+
+
 def _bind_v25_selected_operation_selector(
     selector_path: Path,
     *,
@@ -976,7 +1165,7 @@ def _bind_v25_selected_operation_selector(
         or selector.get("model_profile") != V25_TARGET_PROFILE
         or selector.get("stop_stage") != stop_stage
     ):
-        raise ValueError("V25 selected-operation selector differs from the frozen stage/input/window contract")
+        raise ValueError("V25 selected-operation selector differs from the frozen target contract (stage/input/window)")
     return {
         "selector_path": str(selector_path),
         "selector_sha256": _sha256_bytes(raw),
@@ -984,6 +1173,168 @@ def _bind_v25_selected_operation_selector(
         "stop_stage": stop_stage,
         "campaign_window_sha256": TASK40_V25_CAMPAIGN_SHA256,
         "input_sha256": _sha256_file(input_path),
+    }
+
+
+def verify_v26_saved_producer_metadata(
+    *, producer_root: Path, repo_root: Path = ROOT
+) -> dict[str, Any]:
+    """Rebind the malformed legacy field only after strict V25 producer cross-checks."""
+    producer_root = producer_root.resolve()
+    expected_root = (repo_root / V26_PRODUCER_RUN_RELATIVE).resolve()
+    if producer_root != expected_root or not producer_root.is_dir():
+        raise ValueError("V26 saved producer is not the exact registered V25 run directory")
+    index_path = producer_root / "v25_q0_failure_artifact_index.json"
+    if not index_path.is_file() or _sha256_file(index_path) != V26_FAILURE_INDEX_SHA256:
+        raise ValueError("V26 saved producer failure index identity changed")
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    run = index.get("run")
+    if not isinstance(run, Mapping):
+        raise ValueError("V26 saved producer index has no run identity")
+    malformed = run.get("input_sha256")
+    if malformed != V26_LEGACY_BAD_INPUT_SHA256 or len(str(malformed)) != 62:
+        raise ValueError("V26 legacy malformed input field differs from the preserved index record")
+    if (
+        run.get("run_id") != V26_PRODUCER_RUN_ID
+        or run.get("source_sha") != V26_PRODUCER_SOURCE_SHA
+        or run.get("relative_run_directory") != str(V26_PRODUCER_RUN_RELATIVE)
+    ):
+        raise ValueError("V26 saved producer source/run identity differs from the frozen V25 review")
+    support = {
+        str(item.get("path")): item
+        for item in index.get("supporting_records", [])
+        if isinstance(item, Mapping)
+    }
+    for name in ("input_sha256.txt", "physical_model_sha256.txt", "source_sha.txt", "run_manifest.json", "run_summary.json"):
+        item = support.get(name)
+        path = producer_root / name
+        if (
+            not isinstance(item, Mapping)
+            or not path.is_file()
+            or path.stat().st_size != item.get("bytes")
+            or _sha256_file(path) != item.get("sha256")
+        ):
+            raise ValueError(f"V26 saved producer metadata record failed its frozen hash: {name}")
+    run_manifest = json.loads((producer_root / "run_manifest.json").read_text(encoding="utf-8"))
+    resolved_path = producer_root / "resolved_config.json"
+    if (
+        not resolved_path.is_file()
+        or _sha256_file(resolved_path) != run.get("resolved_config_sha256")
+        or run_manifest.get("resolved_config_sha256") != run.get("resolved_config_sha256")
+        or run_manifest.get("input_sha256") != V26_VERIFIED_INPUT_SHA256
+        or run_manifest.get("source_sha") != V26_PRODUCER_SOURCE_SHA
+        or run_manifest.get("run_id") != V26_PRODUCER_RUN_ID
+        or run_manifest.get("physical_model_sha256") != run.get("physical_model_sha256")
+    ):
+        raise ValueError("V26 saved producer run manifest/resolved config cross-check failed")
+    resolved = json.loads(resolved_path.read_text(encoding="utf-8"))
+    resolved_provenance = resolved.get("provenance", {})
+    resolved_config_identity = run_manifest.get("resolved_config_sha256")
+    if (
+        _sha256_file(producer_root / "input_original.dat") != V26_VERIFIED_INPUT_SHA256
+        or (producer_root / "input_sha256.txt").read_text(encoding="ascii").strip()
+        != V26_VERIFIED_INPUT_SHA256
+        or (producer_root / "physical_model_sha256.txt").read_text(encoding="ascii").strip()
+        != run.get("physical_model_sha256")
+        or (producer_root / "source_sha.txt").read_text(encoding="ascii").strip()
+        != V26_PRODUCER_SOURCE_SHA
+        or resolved_provenance.get("input_sha256") != V26_VERIFIED_INPUT_SHA256
+        or resolved_provenance.get("physical_model_sha256") != run.get("physical_model_sha256")
+    ):
+        raise ValueError("V26 verified producer input identity differs across dat/support/resolved config")
+    manifest_input_path = Path(str(run_manifest.get("input_path", ""))).resolve()
+    expected_v25_input = (
+        repo_root / V25_ARTIFACT_ROOT / "stage_inputs" / "selected_reference_q_build_only"
+        / "target_original_ny8_operator_probe_v22.dat"
+    ).resolve()
+    if (
+        manifest_input_path != expected_v25_input
+        or not manifest_input_path.is_file()
+        or _sha256_file(manifest_input_path) != V26_VERIFIED_INPUT_SHA256
+    ):
+        raise ValueError("V26 actual executed V25 dat path/hash is not the exact frozen producer input")
+    if resolved_config_identity != _sha256_file(resolved_path):
+        raise ValueError("V26 resolved configuration identity is inconsistent")
+    payloads = []
+    artifact_records = {str(item.get("path")): item for item in index.get("data_artifacts", []) if isinstance(item, Mapping)}
+    for name, (size, digest) in V26_PRODUCER_FILE_HASHES.items():
+        item = artifact_records.get(name)
+        path = producer_root / name
+        if (
+            not isinstance(item, Mapping)
+            or item.get("bytes") != size
+            or item.get("sha256") != digest
+            or not path.is_file()
+            or path.stat().st_size != size
+            or _sha256_file(path) != digest
+        ):
+            raise ValueError(f"V26 saved producer payload metadata mismatch: {name}")
+        payloads.append({"path": name, "bytes": size, "sha256": digest})
+    return {
+        "producer_run_id": V26_PRODUCER_RUN_ID,
+        "producer_source_sha": V26_PRODUCER_SOURCE_SHA,
+        "producer_run_directory": str(V26_PRODUCER_RUN_RELATIVE),
+        "failure_index_path": str(V26_PRODUCER_RUN_RELATIVE / index_path.name),
+        "failure_index_sha256": V26_FAILURE_INDEX_SHA256,
+        "legacy_index_input_sha256": str(malformed),
+        "legacy_index_input_sha256_length": len(str(malformed)),
+        "verified_input_sha256": V26_VERIFIED_INPUT_SHA256,
+        "actual_v25_dat_sha256": _sha256_file(manifest_input_path),
+        "input_sha256_record_sha256": support["input_sha256.txt"]["sha256"],
+        "run_manifest_sha256": support["run_manifest.json"]["sha256"],
+        "resolved_config_sha256": resolved_config_identity,
+        "physical_model_sha256": run.get("physical_model_sha256"),
+        "metadata_repair_applied": "strict_cross_check_rebind_only; old failure index unchanged",
+        "payloads": payloads,
+    }
+
+
+def _bind_v26_selected_operation_selector(
+    selector_path: Path,
+    *,
+    input_path: Path,
+    campaign_registration: dict[str, Any],
+    profile: str,
+    stop_stage: str,
+    repo_root: Path,
+) -> dict[str, Any]:
+    selector_path = selector_path.resolve()
+    allowed_root = (repo_root / V26_ARTIFACT_ROOT).resolve()
+    if not selector_path.is_relative_to(allowed_root) or not selector_path.is_file():
+        raise ValueError("V26 selected-operation selector must be under its registered artifact directory")
+    expected_operation = V26_SELECTED_OPERATION_BY_STAGE.get(stop_stage)
+    if (
+        campaign_registration.get("version") != "V26"
+        or campaign_registration.get("sha256") != TASK40_V26_CAMPAIGN_SHA256
+        or profile != V26_TARGET_PROFILE
+        or expected_operation is None
+    ):
+        raise ValueError("V26 operation selector requires its exact registered stage/window")
+    selector = json.loads(selector_path.read_text(encoding="utf-8"))
+    metadata = verify_v26_saved_producer_metadata(
+        producer_root=repo_root / V26_PRODUCER_RUN_RELATIVE,
+        repo_root=repo_root,
+    )
+    if (
+        not isinstance(selector, dict)
+        or selector.get("schema") != "task40extra.review_v26_selected_operation.v1"
+        or selector.get("operation") != expected_operation
+        or selector.get("campaign_window_sha256") != TASK40_V26_CAMPAIGN_SHA256
+        or selector.get("input_sha256") != _sha256_file(input_path)
+        or selector.get("model_profile") != V26_TARGET_PROFILE
+        or selector.get("stop_stage") != stop_stage
+        or selector.get("producer_identity") != metadata
+    ):
+        raise ValueError("V26 selector or verified saved-producer identity differs from the frozen contract")
+    raw = selector_path.read_bytes()
+    return {
+        "selector_path": str(selector_path),
+        "selector_sha256": _sha256_bytes(raw),
+        "operation": str(selector["operation"]),
+        "stop_stage": stop_stage,
+        "campaign_window_sha256": TASK40_V26_CAMPAIGN_SHA256,
+        "input_sha256": _sha256_file(input_path),
+        "producer_identity": metadata,
     }
 
 
@@ -3339,6 +3690,858 @@ def _v25_selected_q0_readback_checks(
     return checks
 
 
+def _v26_array_sha256(array: Any) -> str:
+    import numpy as np
+
+    value = np.asarray(array)
+    return hashlib.sha256(memoryview(value).cast("B")).hexdigest()
+
+
+def _v26_selected_q_readback_checks(
+    *, output_directory: Path, partial: Mapping[str, Any], expected_stop_stage: str
+) -> dict[str, bool]:
+    """Independently bind V26 saved arrays and recompute scaled native comparisons."""
+    import math
+    import numpy as np
+    from scipy import sparse
+    import zipfile
+
+    root = output_directory.resolve()
+    stage_receipt = partial.get("v26_selected_q_stage", {})
+    stage_receipt = stage_receipt if isinstance(stage_receipt, Mapping) else {}
+    operation_path = (root / "v26_selected_q_stage.json").resolve()
+    try:
+        operation = json.loads(operation_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        operation = {}
+    status = str(operation.get("status", ""))
+    expected_operation = {
+        "selected_reference_q_build_only": "V26_SAVED_STREAM_REPLAY",
+        "selected_reference_q_consumer": "V26_SAVED_STREAM_NATIVE_CONSUMER",
+        "selected_reference_q_csr": "V26_COMPLETE_Q0_CSR_AND_CONDITIONAL_FACTOR",
+    }.get(expected_stop_stage)
+    checks: dict[str, bool] = {
+        "v26_stage_operation_identity_and_hash": bool(
+            operation_path.is_relative_to(root)
+            and operation_path.is_file()
+            and stage_receipt.get("operation_path") == operation_path.name
+            and stage_receipt.get("operation_sha256") == _sha256_file(operation_path)
+            and stage_receipt.get("operation_status") == status
+            and stage_receipt.get("selector_sha256") == operation.get("selector_sha256", operation.get("v26_selector_sha256"))
+            and operation.get("official_result") is False
+            and operation.get("stop_stage") == expected_stop_stage
+        ),
+        "v26_factor_scope_has_no_ksp_pde_or_official_result": bool(
+            operation.get("ksp_created") is not True
+            and operation.get("pde_solved") is not True
+            and partial.get("official_result") is False
+            and partial.get("q_coverage", {}).get("ksp_created") is False
+            and partial.get("q_coverage", {}).get("pde_solved") is False
+        ),
+    }
+    try:
+        preflight = json.loads((root / "v20_stage_preflight.json").read_text(encoding="utf-8"))
+        frozen_modes = preflight.get("target_mode_inventory", {})
+        frozen_modes = frozen_modes if isinstance(frozen_modes, Mapping) else {}
+    except (OSError, json.JSONDecodeError):
+        frozen_modes = {}
+
+    artifact_root = (ROOT / V26_ARTIFACT_ROOT).resolve()
+    replay_root = Path(str(stage_receipt.get("saved_replay_root", ""))).resolve()
+    native_root = Path(str(stage_receipt.get("native_root", ""))).resolve()
+    selector_path = Path(str(stage_receipt.get("selector_path", ""))).resolve()
+    selector_sha = str(stage_receipt.get("selector_sha256", ""))
+    try:
+        selector = json.loads(selector_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        selector = {}
+    producer_identity = selector.get("producer_identity", {})
+    producer_identity = producer_identity if isinstance(producer_identity, Mapping) else {}
+    producer_identity_sha = hashlib.sha256(
+        json.dumps(
+            producer_identity,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    selector_ok = bool(
+        selector_path.is_relative_to(artifact_root)
+        and selector_path.is_file()
+        and _sha256_file(selector_path) == selector_sha
+        and selector.get("schema") == "task40extra.review_v26_selected_operation.v1"
+        and selector.get("operation") == expected_operation
+        and selector.get("stop_stage") == expected_stop_stage
+        and selector.get("input_sha256") == partial.get("input_sha256")
+        and selector.get("model_profile") == partial.get("profile")
+        and isinstance(producer_identity.get("payloads"), list)
+        and producer_identity.get("failure_index_sha256") == V26_FAILURE_INDEX_SHA256
+        and producer_identity.get("verified_input_sha256") == V26_VERIFIED_INPUT_SHA256
+    )
+    checks["v26_selector_and_producer_identity_bound"] = selector_ok
+    checks["v26_preflight_inventory_is_complete"] = bool(
+        (root / "v20_stage_preflight.json").is_file()
+        and frozen_modes.get("mode_count") == 32_060
+        and len(str(frozen_modes.get("mode_manifest_sha256", ""))) == 64
+        and len(str(frozen_modes.get("ordered_mode_key_sha256", ""))) == 64
+    )
+
+    expected_replay_root = (artifact_root / "saved_replay").resolve()
+    expected_native_root = (artifact_root / "native_consumer").resolve()
+    replay_manifest_path = (replay_root / "v26_saved_q_replay_manifest.json").resolve()
+    try:
+        replay_manifest = json.loads(replay_manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        replay_manifest = {}
+    if (
+        expected_stop_stage == "selected_reference_q_build_only"
+        and not replay_manifest
+        and status == "RESOURCE_CONTROLLED_STOP"
+    ):
+        blocker = operation.get("resource_blocker", {})
+        blocker = blocker if isinstance(blocker, Mapping) else {}
+        no_outputs = not any(replay_root.glob("v26_saved_q_replay_*.npz")) and not replay_manifest_path.exists()
+        controlled_valid = bool(
+            partial.get("status") == "controlled_stop"
+            and partial.get("outcome") == "RESOURCE_CONTROLLED_STOP"
+            and isinstance(blocker.get("stage"), str)
+            and blocker.get("passed") is False
+            and replay_root == expected_replay_root
+            and no_outputs
+        )
+        checks["v26_saved_replay_manifest_identity_and_inventory"] = controlled_valid
+        checks["v26_saved_inputs_and_all_replay_arrays_hash_bound"] = controlled_valid
+        checks["v26_saved_replay_completed_before_fe"] = controlled_valid
+        checks["v26_replay_controlled_stop_has_no_science_outputs"] = controlled_valid
+        return checks
+    replay_sha = _sha256_file(replay_manifest_path) if replay_manifest_path.is_file() else ""
+    operation_replay_sha = (
+        operation.get("saved_replay_manifest_sha256")
+        if expected_stop_stage == "selected_reference_q_build_only"
+        else operation.get("v26_artifact_binding", {}).get("saved_replay_manifest_sha256")
+        if isinstance(operation.get("v26_artifact_binding"), Mapping)
+        else None
+    )
+    replay_identity_ok = bool(
+        replay_root == expected_replay_root
+        and replay_manifest_path.is_relative_to(expected_replay_root)
+        and replay_manifest.get("schema") == "task40extra.review_v26_saved_q_replay.v1"
+        and replay_manifest.get("status") == "PASS_SAVED_STREAM_REPLAY_NO_NATIVE"
+        and replay_manifest.get("producer_identity") == producer_identity
+        and replay_manifest.get("producer_identity_sha256") == producer_identity_sha
+        and operation_replay_sha == replay_sha
+        and replay_manifest.get("preflight_mode_manifest_sha256") == frozen_modes.get("mode_manifest_sha256")
+        and replay_manifest.get("ordered_mode_key_sha256") == frozen_modes.get("ordered_mode_key_sha256")
+        and replay_manifest.get("mode_count_full_reference") == 32_060
+        and replay_manifest.get("q0_alias_count") == 4_076
+        and replay_manifest.get("q4_alias_count") == 3_856
+        and replay_manifest.get("selected_twist_alias_count") == 7_932
+        and replay_manifest.get("official_result") is False
+        and replay_manifest.get("csr_built") is False
+        and replay_manifest.get("factor_or_solve_built") is False
+    )
+    checks["v26_saved_replay_manifest_identity_and_inventory"] = replay_identity_ok
+
+    arrays_by_case: dict[str, dict[str, np.ndarray]] = {}
+    try:
+        artifacts = replay_manifest.get("artifacts", {})
+        input_item = artifacts.get("inputs", {})
+        input_path = (replay_root / str(input_item.get("path", ""))).resolve()
+        input_sidecar_path = replay_root / "v26_saved_q_replay_inputs.json"
+        input_sidecar = json.loads(input_sidecar_path.read_text(encoding="utf-8"))
+        replay_artifacts_ok = bool(
+            input_path.is_relative_to(replay_root)
+            and input_path.is_file()
+            and type(input_item.get("bytes")) is int
+            and input_path.stat().st_size == input_item.get("bytes")
+            and _sha256_file(input_path) == input_item.get("sha256")
+            and input_sidecar.get("sha256") == input_item.get("sha256")
+            and input_sidecar.get("array_sha256") == input_item.get("array_sha256")
+        )
+        inputs: dict[str, np.ndarray] = {}
+        with np.load(input_path, allow_pickle=False) as archive:
+            required_inputs = {"q0_case_1", "q0_case_2", "q4_pair"}
+            if set(archive.files) != required_inputs:
+                raise ValueError("V26 input checkpoint case inventory differs")
+            for name in required_inputs:
+                value = np.asarray(archive[name]).copy()
+                if (
+                    value.ndim != 1
+                    or value.dtype != np.dtype(np.complex128)
+                    or not np.isfinite(value).all()
+                    or not np.all(value != 0.0)
+                    or _v26_array_sha256(value) != input_item.get("array_sha256", {}).get(name)
+                ):
+                    raise ValueError(f"V26 raw input array failed validation: {name}")
+                inputs[name] = value
+        if np.array_equal(inputs["q0_case_1"], inputs["q0_case_2"]):
+            raise ValueError("V26 q0 replay input vectors are not distinct")
+        for case_name in ("q0_case_1", "q0_case_2", "q4_pair"):
+            item = artifacts.get(case_name, {})
+            path = (replay_root / str(item.get("path", ""))).resolve()
+            sidecar_path = (replay_root / str(item.get("manifest_path", ""))).resolve()
+            case_doc = replay_manifest.get("cases", {}).get(case_name, {})
+            sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
+            replay_artifacts_ok = replay_artifacts_ok and bool(
+                path.is_relative_to(replay_root)
+                and sidecar_path.is_relative_to(replay_root)
+                and path.is_file()
+                and sidecar_path.is_file()
+                and type(item.get("bytes")) is int
+                and path.stat().st_size == item.get("bytes")
+                and _sha256_file(path) == item.get("sha256")
+                and sidecar.get("sha256") == item.get("sha256")
+                and case_doc.get("sha256") == item.get("sha256")
+                and case_doc.get("producer_identity_sha256") == producer_identity_sha
+            )
+            loaded: dict[str, np.ndarray] = {}
+            with np.load(path, allow_pickle=False) as archive:
+                hashes = case_doc.get("array_sha256", {})
+                shapes = case_doc.get("array_shapes", {})
+                if set(archive.files) != set(hashes) or set(archive.files) != set(shapes):
+                    raise ValueError(f"V26 replay case array inventory differs: {case_name}")
+                for name in archive.files:
+                    value = np.asarray(archive[name]).copy()
+                    if (
+                        value.ndim != 1
+                        or value.dtype != np.dtype(np.complex128)
+                        or list(value.shape) != shapes.get(name)
+                        or not np.isfinite(value).all()
+                        or _v26_array_sha256(value) != hashes.get(name)
+                    ):
+                        raise ValueError(f"V26 raw replay output failed validation: {case_name}/{name}")
+                    loaded[name] = value
+            arrays_by_case[case_name] = loaded
+        checks["v26_saved_inputs_and_all_replay_arrays_hash_bound"] = bool(replay_artifacts_ok)
+    except (OSError, ValueError, TypeError, KeyError, OverflowError, zipfile.BadZipFile):
+        inputs = {}
+        arrays_by_case = {}
+        checks["v26_saved_inputs_and_all_replay_arrays_hash_bound"] = False
+
+    checks["v26_saved_replay_completed_before_fe"] = bool(
+        replay_manifest.get("native_volume_apply_count") == 0
+        and replay_manifest.get("provider_sweep_count") == 0
+        and replay_manifest.get("inputs_saved_before_replay") is True
+        and replay_manifest.get("each_case_output_saved_atomically_before_next_case") is True
+        and replay_manifest.get("all_saved_inputs_nonzero") is True
+        and replay_manifest.get("q0_inputs_distinct") is True
+    )
+
+    native_status = "NOT_RUN"
+    if expected_stop_stage in {"selected_reference_q_consumer", "selected_reference_q_csr"}:
+        native_manifest_path = (native_root / "v26_native_action_manifest.json").resolve()
+        try:
+            native_manifest = json.loads(native_manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            native_manifest = {}
+        native_status = str(native_manifest.get("status", "MISSING"))
+        if not native_manifest and status == "RESOURCE_CONTROLLED_STOP":
+            blocker = operation.get("resource_blocker", {})
+            blocker = blocker if isinstance(blocker, Mapping) else {}
+            controlled_valid = bool(
+                partial.get("status") == "controlled_stop"
+                and partial.get("outcome") == "RESOURCE_CONTROLLED_STOP"
+                and isinstance(blocker.get("stage"), str)
+                and blocker.get("passed") is False
+                and partial.get("official_result") is False
+            )
+            checks["v26_native_not_started_under_explicit_resource_gate"] = controlled_valid
+            checks["v26_native_stage_status_matches_raw_comparisons"] = controlled_valid
+            return checks
+        if (
+            not native_manifest
+            and status == "PARTIAL_REFERENCE_NONZERO_INTERNAL_DTN_SUPPORT"
+        ):
+            raw = operation.get("raw_surface_stream", {})
+            raw = raw if isinstance(raw, Mapping) else {}
+            producer_root = Path(str(stage_receipt.get("producer_root", ""))).resolve()
+            surface_path = Path(str(raw.get("path", ""))).resolve()
+            payload = next(
+                (
+                    item
+                    for item in producer_identity.get("payloads", [])
+                    if isinstance(item, Mapping)
+                    and Path(str(item.get("path", ""))).name == surface_path.name
+                ),
+                {},
+            )
+            negative_valid = bool(
+                partial.get("status") == "failed"
+                and partial.get("outcome") == "STAGE_FAILED"
+                and operation.get("classification") == "RAW_PRODUCTION_SUPPORT_PRESERVED; DIRECT_ONLY_Q0_NOT_QUALIFIED"
+                and surface_path.is_relative_to(producer_root)
+                and surface_path.is_file()
+                and surface_path.stat().st_size == raw.get("bytes") == payload.get("bytes")
+                and raw.get("sha256") == payload.get("sha256")
+                and sum(raw.get("internal_nonzero_entry_count", {}).values()) > 0
+                and not any(native_root.glob("v26_native_*.npz"))
+            )
+            checks["v26_native_not_started_after_preserved_support_negative"] = negative_valid
+            checks["v26_native_stage_status_matches_raw_comparisons"] = negative_valid
+            return checks
+        binding = operation.get("v26_artifact_binding", {})
+        binding = binding if isinstance(binding, Mapping) else {}
+        native_sha = _sha256_file(native_manifest_path) if native_manifest_path.is_file() else ""
+        native_identity_ok = bool(
+            native_root == expected_native_root
+            and native_manifest_path.is_relative_to(expected_native_root)
+            and native_status == "PASS_COMPLETE_Q0_NATIVE_CONSUMER"
+            and native_manifest.get("producer_identity_sha256") == producer_identity_sha
+            and native_manifest.get("saved_replay_manifest_sha256") == replay_sha
+            and (not binding or binding.get("native_manifest_sha256") == native_sha)
+            and type(native_manifest.get("native_volume_apply_count")) is int
+            and native_manifest.get("native_volume_apply_count") == 6
+            and type(native_manifest.get("provider_sweep_count")) is int
+            and native_manifest.get("provider_sweep_count") == 9
+        )
+        try:
+            native_cases: dict[str, dict[str, np.ndarray]] = {}
+            native_case_records = native_manifest.get("cases", {})
+            for case_name in ("q0_case_1", "q0_case_2", "q4_pair"):
+                item = native_case_records.get(case_name, {})
+                path = (native_root / str(item.get("path", ""))).resolve()
+                sidecar_path = path.with_suffix(".json")
+                sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
+                if (
+                    not path.is_relative_to(native_root)
+                    or not path.is_file()
+                    or path.stat().st_size != item.get("bytes")
+                    or _sha256_file(path) != item.get("sha256")
+                    or sidecar.get("sha256") != item.get("sha256")
+                    or sidecar.get("array_sha256") != item.get("array_sha256")
+                    or sidecar.get("producer_identity_sha256") != producer_identity_sha
+                    or sidecar.get("saved_replay_manifest_sha256") != replay_sha
+                ):
+                    raise ValueError(f"V26 native case identity failed: {case_name}")
+                current: dict[str, np.ndarray] = {}
+                with np.load(path, allow_pickle=False) as archive:
+                    hashes = item.get("array_sha256", {})
+                    shapes = item.get("array_shapes", {})
+                    if set(archive.files) != set(hashes) or set(archive.files) != set(shapes):
+                        raise ValueError(f"V26 native case array inventory differs: {case_name}")
+                    for name in archive.files:
+                        value = np.asarray(archive[name]).copy()
+                        if (
+                            value.ndim != 1
+                            or value.dtype != np.dtype(np.complex128)
+                            or list(value.shape) != shapes.get(name)
+                            or not np.isfinite(value).all()
+                            or _v26_array_sha256(value) != hashes.get(name)
+                        ):
+                            raise ValueError(f"V26 native raw array failed validation: {case_name}/{name}")
+                        current[name] = value
+                native_cases[case_name] = current
+            checks["v26_native_manifest_and_case_arrays_hash_bound"] = native_identity_ok
+
+            def relative_error(left: np.ndarray, right: np.ndarray, scale: np.ndarray | None = None) -> dict[str, float]:
+                if left.shape != right.shape:
+                    raise ValueError("V26 comparison arrays have different shapes")
+                if not np.isfinite(left).all() or not np.isfinite(right).all():
+                    raise ValueError("V26 comparison arrays contain non-finite values")
+                absolute = float(np.linalg.norm(left - right))
+                if scale is not None:
+                    if not np.isfinite(scale).all():
+                        raise ValueError("V26 native diagonal scale contains non-finite values")
+                    scale_norm = float(np.linalg.norm(scale))
+                else:
+                    scale_norm = max(float(np.linalg.norm(left)), float(np.linalg.norm(right)))
+                if not math.isfinite(scale_norm) or scale_norm <= 0.0:
+                    raise ValueError("V26 comparison scale must be finite and strictly positive")
+                return {
+                    "absolute": absolute,
+                    "scale": scale_norm,
+                    "relative_to_component": absolute / scale_norm,
+                }
+
+            q0_saved_1 = arrays_by_case["q0_case_1"]
+            q0_saved_2 = arrays_by_case["q0_case_2"]
+            q4_saved = arrays_by_case["q4_pair"]
+            q0_native_1 = native_cases["q0_case_1"]
+            q0_native_2 = native_cases["q0_case_2"]
+            q4_native = native_cases["q4_pair"]
+            recomputed = {
+                "q0_case_1": relative_error(q0_saved_1["q0_total"], q0_native_1["native_q0_total"]),
+                "q0_case_2": relative_error(q0_saved_2["q0_total"], q0_native_2["native_q0_total"]),
+                "q4_case": relative_error(q4_saved["q4_total"], q4_native["native_q4_total"]),
+                "volume": relative_error(q0_saved_1["q0_volume"], q0_native_1["native_q0_volume"]),
+                "C": relative_error(q0_saved_1["q0_C"], q0_native_1["native_q0_C"]),
+                "-D": relative_error(q0_saved_1["q0_minus_D"], q0_native_1["native_q0_minus_D"]),
+                "Hhat": relative_error(q0_saved_1["q0_Hhat"], q0_native_1["native_q0_Hhat"]),
+                "q0_to_q4_scaled": relative_error(
+                    q0_saved_1["q4_total_from_q0"],
+                    q0_native_1["native_q4_from_q0"],
+                    q0_native_1["native_q0_total"],
+                ),
+                "q4_to_q0_scaled": relative_error(
+                    q4_saved["q0_total_from_q4"],
+                    q4_native["native_q0_from_q4"],
+                    q4_native["native_q4_total"],
+                ),
+            }
+            native_q0_diagonal_norm = float(np.linalg.norm(q0_native_1["native_q0_total"]))
+            native_q4_diagonal_norm = float(np.linalg.norm(q4_native["native_q4_total"]))
+            if (
+                not math.isfinite(native_q0_diagonal_norm)
+                or native_q0_diagonal_norm <= 0.0
+                or not math.isfinite(native_q4_diagonal_norm)
+                or native_q4_diagonal_norm <= 0.0
+            ):
+                raise ValueError("V26 native q0/q4 diagonal scales must be finite and strictly positive")
+            leakage_04 = float(np.linalg.norm(q0_saved_1["q4_total_from_q0"])) / native_q0_diagonal_norm
+            leakage_40 = float(np.linalg.norm(q4_saved["q0_total_from_q4"])) / native_q4_diagonal_norm
+            comparison_passed = bool(
+                all(value["relative_to_component"] <= 1.0e-11 for value in recomputed.values())
+                and leakage_04 <= 1.0e-11
+                and leakage_40 <= 1.0e-11
+            )
+            recorded = operation.get("complete_stream", {}).get("consumer_replay", {})
+            recorded = recorded if isinstance(recorded, Mapping) else {}
+            checks["v26_raw_native_comparisons_recomputed_at_scaled_1e_11"] = comparison_passed
+            checks["v26_native_apply_and_provider_sweep_counts_recorded"] = bool(
+                binding.get("native_volume_apply_count", native_manifest.get("native_volume_apply_count")) == 6
+                and binding.get("provider_sweep_count", native_manifest.get("provider_sweep_count")) == 9
+                and math.isclose(
+                    float(binding.get("native_action_elapsed_seconds", native_manifest.get("elapsed_seconds", -1.0))),
+                    float(native_manifest.get("elapsed_seconds", -2.0)),
+                    rel_tol=1.0e-9,
+                    abs_tol=1.0e-12,
+                )
+            )
+            checks["v26_scaled_metrics_match_operation_record"] = bool(
+                math.isclose(
+                    float(recorded.get("q0_to_q4_scaled_error", {}).get("relative_to_component", math.inf)),
+                    recomputed["q0_to_q4_scaled"]["relative_to_component"],
+                    rel_tol=1.0e-6,
+                    abs_tol=1.0e-14,
+                )
+                and math.isclose(
+                    float(recorded.get("q4_to_q0_scaled_error", {}).get("relative_to_component", math.inf)),
+                    recomputed["q4_to_q0_scaled"]["relative_to_component"],
+                    rel_tol=1.0e-6,
+                    abs_tol=1.0e-14,
+                )
+                and math.isclose(float(recorded.get("q0_to_q4_leakage_ratio", math.inf)), leakage_04, rel_tol=1.0e-6, abs_tol=1.0e-14)
+                and math.isclose(float(recorded.get("q4_to_q0_leakage_ratio", math.inf)), leakage_40, rel_tol=1.0e-6, abs_tol=1.0e-14)
+                and recorded.get("cross_q_scale_q0_to_q4") == "native q0 diagonal output norm"
+                and recorded.get("cross_q_scale_q4_to_q0") == "native q4 diagonal output norm"
+            )
+        except (OSError, ValueError, TypeError, KeyError, OverflowError, zipfile.BadZipFile):
+            checks["v26_native_manifest_and_case_arrays_hash_bound"] = False
+            checks["v26_raw_native_comparisons_recomputed_at_scaled_1e_11"] = False
+            checks["v26_native_apply_and_provider_sweep_counts_recorded"] = False
+            checks["v26_scaled_metrics_match_operation_record"] = False
+        if expected_stop_stage == "selected_reference_q_csr" and status == "PASS_COMPLETE_Q0_STREAM_CSR_NOT_BUILT":
+            checks["v26_native_stage_status_matches_raw_comparisons"] = bool(
+                partial.get("status") == "controlled_stop"
+                and partial.get("outcome") == "RESOURCE_CONTROLLED_STOP"
+                and checks.get("v26_raw_native_comparisons_recomputed_at_scaled_1e_11") is True
+            )
+        elif expected_stop_stage == "selected_reference_q_csr" and status == "RESOURCE_CONTROLLED_STOP_AFTER_Q0_CSR":
+            checks["v26_native_stage_status_matches_raw_comparisons"] = bool(
+                partial.get("status") == "controlled_stop"
+                and partial.get("outcome") == "RESOURCE_CONTROLLED_STOP"
+                and partial.get("q_coverage", {}).get("csr_status") == "BUILT"
+                and checks.get("v26_raw_native_comparisons_recomputed_at_scaled_1e_11") is True
+            )
+        elif expected_stop_stage == "selected_reference_q_csr" and status == "FAILED_Q0_FACTOR_LIFECYCLE":
+            checks["v26_native_stage_status_matches_raw_comparisons"] = bool(
+                partial.get("status") == "failed"
+                and partial.get("outcome") == "STAGE_FAILED"
+                and partial.get("failed_stage") == "q0_factor_lifecycle"
+                and partial.get("q_coverage", {}).get("csr_status") == "BUILT"
+                and checks.get("v26_raw_native_comparisons_recomputed_at_scaled_1e_11") is True
+            )
+        else:
+            checks["v26_native_stage_status_matches_raw_comparisons"] = bool(
+                partial.get("status") == "stage_completed"
+                and partial.get("outcome") == "STAGE_COMPLETED"
+                and status in ({"PASS_COMPLETE_Q0_CSR", "PASS_COMPLETE_Q0_CSR_AND_FACTOR"} if expected_stop_stage == "selected_reference_q_csr" else {"PASS_COMPLETE_Q0_STREAM"})
+                and checks.get("v26_raw_native_comparisons_recomputed_at_scaled_1e_11") is True
+            )
+        csr_complete_statuses = {
+            "PASS_COMPLETE_Q0_CSR",
+            "PASS_COMPLETE_Q0_CSR_AND_FACTOR",
+            "RESOURCE_CONTROLLED_STOP_AFTER_Q0_CSR",
+            "FAILED_Q0_FACTOR_LIFECYCLE",
+        }
+        if expected_stop_stage == "selected_reference_q_csr" and status in csr_complete_statuses:
+            tiles = operation.get("row_tile_store", {})
+            tiles = tiles if isinstance(tiles, Mapping) else {}
+            saved = operation.get("saved_artifacts", {})
+            saved = saved if isinstance(saved, Mapping) else {}
+            all_csr_files_valid = True
+            for item in saved.values():
+                if not isinstance(item, Mapping):
+                    all_csr_files_valid = False
+                    break
+                path = (root / str(item.get("path", ""))).resolve()
+                if not path.is_relative_to(root) or not path.is_file() or _sha256_file(path) != item.get("sha256"):
+                    all_csr_files_valid = False
+                    break
+            checks["v26_complete_q0_csr_artifacts_hash_bound"] = bool(
+                all_csr_files_valid
+                and tiles.get("complete_row_domain") is True
+                and tiles.get("complete_column_domain") is True
+                and tiles.get("row_count") == tiles.get("shape", [None])[0]
+                and operation.get("solve_ready") is False
+            )
+            checks["v26_wide_pre_csr_structure_checkpoint_preserved"] = bool(
+                (root / "v26_q0_preallocation_row_structure.npz").is_file()
+                and operation.get("csr_structure_checkpoint", {}).get("wide_int64_rows_and_offsets_preserved") is True
+                and operation.get("csr_structure_checkpoint", {}).get("sha256")
+                == _sha256_file(root / "v26_q0_preallocation_row_structure.npz")
+            )
+            csr_input_gate = next(
+                (
+                    row for row in stage_receipt.get("resource_gates", [])
+                    if isinstance(row, Mapping)
+                    and row.get("request_facts", {}).get("source_csr_payload_bytes_to_retain")
+                    == operation.get("matrix_identity", {}).get("csr_payload_bytes")
+                ),
+                {},
+            )
+            csr_input_admission = csr_input_gate.get("admission", {}) if isinstance(csr_input_gate, Mapping) else {}
+            resource_blocker = operation.get("resource_blocker", {})
+            resource_blocker = resource_blocker if isinstance(resource_blocker, Mapping) else {}
+            checks["v26_q0_csr_retention_resource_gate_passed"] = bool(
+                (
+                    csr_input_gate
+                    and csr_input_admission.get("task_cgroup_gate_passed") is True
+                    and csr_input_admission.get("process_tree_gate_passed") is True
+                    and csr_input_admission.get("disk_gate_passed") is True
+                )
+                or (
+                    status == "RESOURCE_CONTROLLED_STOP_AFTER_Q0_CSR"
+                    and operation.get("failed_stage") == "task40_v26_q0_factor_csr_input_retention"
+                    and resource_blocker.get("passed") is False
+                    and resource_blocker.get("additional_object_upper_bound_bytes")
+                    == operation.get("matrix_identity", {}).get("csr_payload_bytes")
+                )
+            )
+            factor_report = operation.get("factor_lifecycle", {})
+            factor_report = factor_report if isinstance(factor_report, Mapping) else {}
+            factor_path = Path(str(operation.get("factor_checkpoint", {}).get("path", ""))).resolve()
+            factor_hash = str(operation.get("factor_checkpoint", {}).get("sha256", ""))
+            try:
+                factor_checkpoint = json.loads(factor_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                factor_checkpoint = {}
+            factor_checkpoint_identity = bool(
+                factor_path.is_relative_to(root)
+                and factor_path.is_file()
+                and factor_hash
+                and _sha256_file(factor_path) == factor_hash
+                and factor_report.get("checkpoint_path") == str(factor_path)
+                and factor_report.get("checkpoint_sha256") == factor_hash
+                and factor_checkpoint.get("schema") == "task40extra.review_v26_selected_q0_factor_lifecycle.v1"
+                and factor_checkpoint.get("current_identity") == operation.get("v26_current_identity")
+                and factor_checkpoint.get("selected_q") == 0
+                and factor_checkpoint.get("factor_route") == "V26_SELECTED_Q0_ONLY; no fabricated q_count=1 profile"
+            )
+            factor_pass = status == "PASS_COMPLETE_Q0_CSR_AND_FACTOR"
+            factor_controlled = status == "RESOURCE_CONTROLLED_STOP_AFTER_Q0_CSR"
+            factor_failed = status == "FAILED_Q0_FACTOR_LIFECYCLE"
+            factor_phases = [row.get("phase") for row in factor_checkpoint.get("phases", []) if isinstance(row, Mapping)]
+            factor_gates = factor_checkpoint.get("resource_gates", [])
+            gate_by_stage = {
+                str(row.get("stage")): row
+                for row in factor_gates
+                if isinstance(row, Mapping)
+            }
+            conversion_facts = gate_by_stage.get("task40_v26_q0_factor_petsc_conversion", {}).get("request_facts", {})
+            symbolic_facts = gate_by_stage.get("task40_v26_q0_factor_symbolic", {}).get("request_facts", {})
+            numeric_facts = gate_by_stage.get("task40_v26_q0_factor_numeric", {}).get("request_facts", {})
+            conversion_seen = "task40_v26_q0_factor_petsc_conversion" in gate_by_stage
+            symbolic_seen = "task40_v26_q0_factor_symbolic" in gate_by_stage
+            numeric_seen = "task40_v26_q0_factor_numeric" in gate_by_stage
+            conversion_facts_ok = bool(
+                not conversion_seen
+                or (
+                    conversion_facts.get("symbolic_guard_bytes") == max(
+                        128 << 20,
+                        4 * int(conversion_facts.get("source_csr_payload_bytes_already_resident", -1)),
+                    )
+                    and conversion_facts.get("csr_to_petsc_conversion_workspace_bytes")
+                    == conversion_facts.get("source_csr_payload_bytes_already_resident")
+                    and conversion_facts.get("future_factor_vector_and_checker_reserve_bytes")
+                    == int(tiles.get("shape", [0])[0]) * 6 * np.dtype(np.complex128).itemsize
+                )
+            )
+            symbolic_facts_ok = bool(
+                not symbolic_seen
+                or (
+                    conversion_seen
+                    and symbolic_facts.get("symbolic_factorization_guard_bytes")
+                    == conversion_facts.get("symbolic_guard_bytes")
+                    and symbolic_facts.get("future_co_resident_reserve_bytes")
+                    == symbolic_facts.get("symbolic_factorization_guard_bytes")
+                    + symbolic_facts.get("vector_and_checker_reserve_bytes", 0)
+                    and symbolic_facts.get("vector_and_checker_reserve_bytes")
+                    == int(tiles.get("shape", [0])[0]) * 6 * np.dtype(np.complex128).itemsize
+                )
+            )
+            numeric_facts_ok = bool(
+                not numeric_seen
+                or (
+                    symbolic_seen
+                    and numeric_facts.get("numeric_factor_reserve_bytes_from_INFOG_16_17")
+                    == factor_checkpoint.get("symbolic_factor_reserve_bytes")
+                    and numeric_facts.get("future_co_resident_reserve_bytes")
+                    == factor_checkpoint.get("symbolic_factor_reserve_bytes")
+                    and type(numeric_facts.get("vector_and_checker_reserve_bytes")) is int
+                    and numeric_facts.get("vector_and_checker_reserve_bytes") > 0
+                    and numeric_facts.get("vector_and_checker_reserve_bytes")
+                    == int(tiles.get("shape", [0])[0]) * 6 * np.dtype(np.complex128).itemsize
+                    and numeric_facts.get("workspace_bytes")
+                    == numeric_facts.get("vector_and_checker_reserve_bytes")
+                )
+            )
+            resource_facts_ok = bool(
+                conversion_facts_ok
+                and symbolic_facts_ok
+                and numeric_facts_ok
+                and (not factor_pass or conversion_seen and symbolic_seen and numeric_seen)
+            )
+            probe = factor_checkpoint.get("fresh_factor_probe", {})
+            probe = probe if isinstance(probe, Mapping) else {}
+            rhs_solve = factor_checkpoint.get("separate_nonzero_q0_rhs_solve", {})
+            rhs_solve = rhs_solve if isinstance(rhs_solve, Mapping) else {}
+            cleanup = factor_checkpoint.get("cleanup", {})
+            cleanup = cleanup if isinstance(cleanup, Mapping) else {}
+            symbolic_info = factor_checkpoint.get("symbolic_mumps_evidence", {}).get("raw_infog", {})
+            numeric_info = factor_checkpoint.get("numeric_mumps_evidence", {}).get("raw_infog", {})
+            lifecycle_pass = bool(
+                factor_pass
+                and factor_checkpoint.get("status") == "PASS_Q0_FACTOR_PROBE_AND_RHS_SOLVE"
+                and factor_checkpoint_identity
+                and factor_checkpoint.get("petsc_scalar_type") == np.dtype(np.complex128).str
+                and factor_checkpoint.get("petsc_int_type") == np.dtype(np.int32).str
+                and factor_checkpoint.get("petsc_comm_size") == 1
+                and factor_checkpoint.get("mumps_controls_readback_before_symbolic")
+                == {"35": 0, "10": 0, "2": 0, "3": 6, "4": 2}
+                and type(symbolic_info.get("16")) is int
+                and symbolic_info.get("16") == symbolic_info.get("17")
+                and type(numeric_info.get("9")) is int
+                and type(numeric_info.get("19")) is int
+                and type(numeric_info.get("22")) is int
+                and probe.get("input_nonzero") is True
+                and probe.get("passed") is True
+                and type(probe.get("relative_full_true_residual")) in (float, int)
+                and probe.get("relative_full_true_residual") <= 1.0e-10
+                and rhs_solve.get("rhs_nonzero") is True
+                and rhs_solve.get("passed") is True
+                and type(rhs_solve.get("relative_full_true_residual")) in (float, int)
+                and rhs_solve.get("relative_full_true_residual") <= 1.0e-10
+                and cleanup.get("destroy_succeeded") is True
+                and cleanup.get("native_object_counts_after_destroy")
+                == {"matrices_current": 0, "factors_current": 0, "vectors_current": 0}
+                and factor_checkpoint.get("max_simultaneous_native_objects", {}).get("matrices") == 1
+                and factor_checkpoint.get("max_simultaneous_native_objects", {}).get("factors") == 1
+                and "cleanup_complete" in factor_phases
+                and resource_facts_ok
+            )
+            checks["v26_q0_exact_factor_checkpoint_hash_bound"] = factor_checkpoint_identity
+            checks["v26_q0_factor_resource_reserves_explicit"] = resource_facts_ok
+            checks["v26_q0_factor_probe_rhs_and_cleanup_verified"] = (lifecycle_pass and raw_vectors_ok) if factor_pass else bool(
+                factor_controlled
+                and factor_checkpoint_identity
+                and isinstance(operation.get("resource_blocker"), Mapping)
+                and operation.get("resource_blocker", {}).get("passed") is False
+                and cleanup.get("destroy_succeeded") is True
+                and factor_checkpoint.get("q_coverage", {}).get("numeric_factor_built") is not True
+            ) if factor_controlled else bool(
+                factor_failed
+                and factor_checkpoint_identity
+                and factor_checkpoint.get("status") in {
+                    "FAILED_Q0_FACTOR_LIFECYCLE",
+                    "FAILED_Q0_FACTOR_CLEANUP",
+                    "FAILED_Q0_FACTOR_CHECKPOINT",
+                }
+                and isinstance(factor_checkpoint.get("failure"), Mapping)
+            )
+            try:
+                csr_sha = hashlib.sha256()
+                csr_sha.update(b"csr")
+                csr_sha.update(np.asarray(tiles.get("shape"), dtype=np.int64).tobytes())
+                csr_sha.update(np.dtype(np.complex128).str.encode("ascii"))
+                arrays: dict[str, Any] = {}
+                for name in ("indptr", "indices", "data"):
+                    item = tiles.get("files", {}).get(name, {})
+                    path = (root / str(item.get("path", ""))).resolve()
+                    array = np.load(path, mmap_mode="r", allow_pickle=False)
+                    arrays[name] = array
+                    if _v26_array_sha256(array) != operation.get("matrix_identity", {}).get("csr_array_sha256", {}).get(name):
+                        raise ValueError(f"V26 factor input array hash differs: {name}")
+                    csr_sha.update(name.encode("ascii"))
+                    csr_sha.update(array.dtype.str.encode("ascii"))
+                    csr_sha.update(np.asarray(array.shape, dtype=np.int64).tobytes())
+                    csr_sha.update(memoryview(np.ascontiguousarray(array)).cast("B"))
+                source_csr_hash = csr_sha.hexdigest()
+                offsets = arrays["indptr"]
+                indices = arrays["indices"]
+                data = arrays["data"]
+                wide_structure = root / "v26_q0_preallocation_row_structure.npz"
+                with np.load(wide_structure, allow_pickle=False) as saved_structure:
+                    wide_counts = saved_structure["row_counts_int64"]
+                    wide_offsets = saved_structure["wide_offsets_int64"]
+                    structure_matches = bool(
+                        wide_counts.dtype == np.dtype(np.int64)
+                        and wide_offsets.dtype == np.dtype(np.int64)
+                        and wide_counts.shape == (int(tiles["shape"][0]),)
+                        and wide_offsets.shape == (int(tiles["shape"][0]) + 1,)
+                        and np.array_equal(np.diff(offsets).astype(np.int64), wide_counts)
+                        and np.array_equal(offsets.astype(np.int64), wide_offsets)
+                    )
+                source_hash_matches = bool(
+                    indices.dtype == np.dtype(np.int32)
+                    and offsets.dtype == np.dtype(np.int32)
+                    and data.dtype == np.dtype(np.complex128)
+                    and source_csr_hash == factor_checkpoint.get("source_csr_sha256")
+                    and structure_matches
+                )
+
+                def verify_factor_vectors(label: str, record: Mapping[str, Any]) -> bool:
+                    raw = record.get("raw_artifact", {})
+                    raw = raw if isinstance(raw, Mapping) else {}
+                    raw_path = (factor_path.parent / str(raw.get("path", ""))).resolve()
+                    raw_arrays: dict[str, np.ndarray] = {}
+                    if (
+                        not raw_path.is_relative_to(factor_path.parent)
+                        or not raw_path.is_file()
+                        or raw.get("bytes") != raw_path.stat().st_size
+                        or raw.get("sha256") != _sha256_file(raw_path)
+                        or raw.get("array_names") != ["input_x", "residual", "rhs", "solution"]
+                        or raw.get("native_vectors_destroyed_before_serialization") is not True
+                        or raw.get("native_vector_count_before_serialization") != 0
+                    ):
+                        return False
+                    with np.load(raw_path, allow_pickle=False) as archive:
+                        if set(archive.files) != {"input_x", "rhs", "solution", "residual"}:
+                            return False
+                        for name in archive.files:
+                            value = np.asarray(archive[name]).copy()
+                            if (
+                                value.ndim != 1
+                                or value.dtype != np.dtype(np.complex128)
+                                or value.shape != (int(tiles["shape"][0]),)
+                                or not np.isfinite(value).all()
+                                or _v26_array_sha256(value) != raw.get("array_sha256", {}).get(name)
+                            ):
+                                return False
+                            raw_arrays[name] = value
+                    if (
+                        not np.any(raw_arrays["input_x"] != 0.0)
+                        or not np.any(raw_arrays["rhs"] != 0.0)
+                    ):
+                        return False
+                    matrix = sparse.csr_matrix(
+                        (data, indices, offsets),
+                        shape=tuple(map(int, tiles["shape"])),
+                        copy=False,
+                    )
+                    rebuilt_rhs = np.asarray(matrix @ raw_arrays["input_x"], dtype=np.complex128)
+                    rebuilt_residual = np.asarray(matrix @ raw_arrays["solution"], dtype=np.complex128)
+                    rebuilt_residual -= raw_arrays["rhs"]
+                    if (
+                        not np.array_equal(rebuilt_rhs, raw_arrays["rhs"])
+                        or not np.array_equal(rebuilt_residual, raw_arrays["residual"])
+                    ):
+                        return False
+                    relative = float(
+                        np.linalg.norm(rebuilt_residual) / np.linalg.norm(raw_arrays["rhs"])
+                    )
+                    return bool(
+                        math.isfinite(relative)
+                        and relative <= 1.0e-10
+                        and math.isclose(
+                            relative,
+                            float(record.get("relative_full_true_residual", math.inf)),
+                            rel_tol=1.0e-8,
+                            abs_tol=1.0e-15,
+                        )
+                        and record.get("passed") is True
+                    )
+
+                solve_accounting = factor_checkpoint.get("solve_accounting", {})
+                solve_accounting = solve_accounting if isinstance(solve_accounting, Mapping) else {}
+                raw_case_records = {
+                    "fresh_factor_probe": probe,
+                    "separate_nonzero_q0_rhs_solve": rhs_solve,
+                }
+                raw_case_present = {
+                    label: isinstance(record.get("raw_artifact"), Mapping)
+                    for label, record in raw_case_records.items()
+                }
+                raw_case_checks = {
+                    label: verify_factor_vectors(label, record)
+                    for label, record in raw_case_records.items()
+                    if raw_case_present[label]
+                }
+                raw_vectors_ok = bool(
+                    all(raw_case_checks.values())
+                    and (
+                        (factor_pass and all(raw_case_present.values())
+                         and all(
+                             solve_accounting.get(label, {}).get("mat_solve_invoked") == 1
+                             and solve_accounting.get(label, {}).get("mat_solve_completed") == 1
+                             and solve_accounting.get(label, {}).get("mat_solve_failed") == 0
+                             for label in raw_case_records
+                         ))
+                        or (factor_controlled and not any(raw_case_present.values()))
+                        or factor_failed
+                    )
+                )
+                del arrays
+            except (OSError, ValueError, TypeError, KeyError, OverflowError):
+                source_hash_matches = False
+                raw_vectors_ok = False
+            checks["v26_q0_factor_input_hash_and_wide_structure_verified"] = source_hash_matches
+            checks["v26_q0_factor_raw_vectors_recomputed"] = raw_vectors_ok
+            if factor_pass:
+                checks["v26_factor_lifecycle_pass_matches_stage_status"] = bool(
+                    lifecycle_pass
+                    and partial.get("status") == "stage_completed"
+                    and partial.get("q_coverage", {}).get("factor_count") == 1
+                    and operation.get("factor_or_solve_built") is True
+                )
+            elif factor_controlled:
+                checks["v26_factor_lifecycle_pass_matches_stage_status"] = bool(
+                    checks["v26_q0_factor_probe_rhs_and_cleanup_verified"]
+                    and partial.get("status") == "controlled_stop"
+                    and partial.get("q_coverage", {}).get("factor_count") == 0
+                    and operation.get("factor_or_solve_built") is False
+                )
+            else:
+                checks["v26_factor_lifecycle_pass_matches_stage_status"] = bool(
+                    factor_failed
+                    and partial.get("status") == "failed"
+                    and partial.get("q_coverage", {}).get("factor_count")
+                    == int(factor_checkpoint.get("q_coverage", {}).get("numeric_factor_built") is True)
+                    and operation.get("factor_or_solve_built")
+                    == factor_checkpoint.get("q_coverage", {}).get("numeric_factor_built")
+                )
+        elif expected_stop_stage == "selected_reference_q_csr":
+            checks["v26_csr_controlled_stop_is_explicit"] = bool(
+                status == "PASS_COMPLETE_Q0_STREAM_CSR_NOT_BUILT"
+                and partial.get("status") == "controlled_stop"
+                and partial.get("q_coverage", {}).get("csr_status") == "NOT_BUILT"
+            )
+    else:
+        checks["v26_native_stage_explicitly_not_run"] = bool(
+            expected_stop_stage == "selected_reference_q_build_only"
+            and replay_manifest.get("native_comparison") == "NOT_RUN_IN_THIS_STAGE"
+            and replay_manifest.get("native_volume_apply_count") == 0
+            and replay_manifest.get("provider_sweep_count") == 0
+        )
+        checks["v26_build_only_stage_status_matches_replay"] = bool(
+            status == "PASS_SAVED_STREAM_REPLAY_NO_NATIVE"
+            and partial.get("status") == "stage_completed"
+            and partial.get("outcome") == "STAGE_COMPLETED"
+            and partial.get("q_coverage", {}).get("built_q_count") == 0
+        )
+    return checks
+
+
 def _check_partial_result(
     *,
     input_path: Path,
@@ -3378,6 +4581,8 @@ def _check_partial_result(
     v24_expected_accounting = v24_expected_window.with_name("campaign_accounting_v10.jsonl")
     v25_expected_window = (ROOT / TASK40_V25_CAMPAIGN_WINDOW).resolve()
     v25_expected_accounting = v25_expected_window.with_name("campaign_accounting_v10.jsonl")
+    v26_expected_window = (ROOT / TASK40_V26_CAMPAIGN_WINDOW).resolve()
+    v26_expected_accounting = v26_expected_window.with_name("campaign_accounting_v10.jsonl")
     q_only_receipt = (
         partial.get("schema") == "task40extra.review_v20_partial_result.v2"
         and partial.get("classification") == "TARGET_OPERATOR_PROBE_Q_ONLY_SUPPLEMENT"
@@ -3402,6 +4607,11 @@ def _check_partial_result(
         partial.get("schema") == "task40extra.review_v20_partial_result.v2"
         and expected_stop_stage in V25_SELECTED_Q_STAGES
         and isinstance(partial.get("selected_reference_q0_consumer"), Mapping)
+    )
+    v26_q_receipt = (
+        partial.get("schema") == "task40extra.review_v20_partial_result.v2"
+        and expected_stop_stage in V26_SELECTED_Q_STAGES
+        and isinstance(partial.get("v26_selected_q_stage"), Mapping)
     )
     q_only_supplement_identity = partial.get("q_only_supplement")
     q_only_supplement_identity = (
@@ -3456,6 +4666,12 @@ def _check_partial_result(
         or campaign_evidence.get("window_path") == str(v25_expected_window)
         or v25_volume_receipt
     )
+    v26_identity_claimed = (
+        probe_identity.get("schema") == "task40extra.review_v26_selected_q_stage.v1"
+        or campaign_evidence.get("window_sha256") == TASK40_V26_CAMPAIGN_SHA256
+        or campaign_evidence.get("window_path") == str(v26_expected_window)
+        or v26_q_receipt
+    )
     v25_controlled_stop_receipt = bool(
         v25_identity_claimed
         and partial.get("status") == "controlled_stop"
@@ -3475,6 +4691,19 @@ def _check_partial_result(
         and _sha256_file(ROOT / TASK40_V25_CAMPAIGN_RECEIPT)
         == TASK40_V25_CAMPAIGN_RECEIPT_SHA256
     )
+    v26_campaign_identity_valid = (
+        campaign_evidence.get("window_sha256") == TASK40_V26_CAMPAIGN_SHA256
+        and Path(str(campaign_evidence.get("window_path", ""))).resolve()
+        == v26_expected_window
+        and Path(str(campaign_evidence.get("accounting_path", ""))).resolve()
+        == v26_expected_accounting
+        and v26_expected_window.is_file()
+        and _sha256_file(v26_expected_window) == TASK40_V26_CAMPAIGN_SHA256
+        and v26_expected_accounting.is_file()
+        and (ROOT / TASK40_V26_CAMPAIGN_RECEIPT).is_file()
+        and _sha256_file(ROOT / TASK40_V26_CAMPAIGN_RECEIPT)
+        == TASK40_V26_CAMPAIGN_RECEIPT_SHA256
+    )
     expected_completed = STAGE_PREFIXES.get(expected_stop_stage)
     v2_receipt = partial.get("schema") == "task40extra.review_v20_partial_result.v2"
     if v2_receipt and expected_stop_stage in {
@@ -3486,6 +4715,20 @@ def _check_partial_result(
     actual_completed = partial.get("completed_stages")
     expected_completed_for_failure = None
     failed_stage = partial.get("failed_stage")
+    if v26_q_receipt and partial.get("status") == "controlled_stop":
+        v26_stage_receipt = partial.get("v26_selected_q_stage", {})
+        v26_stage_receipt = v26_stage_receipt if isinstance(v26_stage_receipt, Mapping) else {}
+        v26_operation_status = str(v26_stage_receipt.get("operation_status", ""))
+        if (
+            expected_stop_stage == "selected_reference_q_csr"
+            and v26_operation_status == "PASS_COMPLETE_Q0_STREAM_CSR_NOT_BUILT"
+        ):
+            expected_completed = ["preflight", "selected_reference_q_consumer"]
+        else:
+            expected_completed = ["preflight"]
+    elif v26_q_receipt and partial.get("status") == "failed":
+        expected_completed = ["preflight"]
+        expected_completed_for_failure = ["preflight"]
     if (
         partial.get("status") == "failed"
         and isinstance(expected_completed, list)
@@ -3528,6 +4771,10 @@ def _check_partial_result(
         checks["v25_execution_manifest_window_accounting_and_registration_bind"] = (
             v25_campaign_identity_valid
         )
+    if v26_identity_claimed:
+        checks["v26_execution_manifest_window_accounting_and_registration_bind"] = (
+            v26_campaign_identity_valid
+        )
     if expected_stop_stage in {"build_and_symbolic", "one_q_numeric"} and not v2_receipt:
         checks["target_heavy_authorization_remains_false"] = (
             input_data.get("execution", {}).get("task40_target_heavy_authorized") is False
@@ -3538,6 +4785,7 @@ def _check_partial_result(
         and not v24_cd_receipt
         and not v25_volume_receipt
         and not v25_q0_receipt
+        and not v26_q_receipt
         and not v25_controlled_stop_receipt
     ):
         from scripts.task40_v21_readonly_recheck import validate_stage_receipt_semantics
@@ -3777,6 +5025,60 @@ def _check_partial_result(
                 },
             }
         )
+    elif v26_q_receipt:
+        v26_stage = partial.get("stage_result", {})
+        v26_stage = v26_stage if isinstance(v26_stage, Mapping) else {}
+        v26_nested = partial.get("v26_selected_q_stage", {})
+        v26_nested = v26_nested if isinstance(v26_nested, Mapping) else {}
+        v26_status = str(v26_nested.get("operation_status", ""))
+        if expected_stop_stage == "selected_reference_q_build_only":
+            expected_v26_status = "PASS_SAVED_STREAM_REPLAY_NO_NATIVE"
+        elif expected_stop_stage == "selected_reference_q_consumer":
+            expected_v26_status = "PASS_COMPLETE_Q0_STREAM"
+        else:
+            expected_v26_status = "PASS_COMPLETE_Q0_CSR_AND_FACTOR"
+        v26_success = v26_status == expected_v26_status
+        v26_csr_built = v26_status in {
+            "PASS_COMPLETE_Q0_CSR",
+            "PASS_COMPLETE_Q0_CSR_AND_FACTOR",
+            "RESOURCE_CONTROLLED_STOP_AFTER_Q0_CSR",
+            "FAILED_Q0_FACTOR_LIFECYCLE",
+        }
+        v26_factor_built = bool(
+            v26_nested.get("operation", {}).get("factor_lifecycle", {})
+            .get("q_coverage", {}).get("numeric_factor_built") is True
+        )
+        v26_controlled = partial.get("status") == "controlled_stop"
+        checks.update(
+            {
+                "v26_selected_q_stage_and_scope": (
+                    partial.get("requested_stop_stage") == expected_stop_stage
+                    and v26_stage.get("probe_status") == v26_status
+                    and partial.get("status") == (
+                        "stage_completed" if v26_success else "controlled_stop" if v26_controlled else "failed"
+                    )
+                    and partial.get("official_result") is False
+                    and v26_nested.get("selector_sha256")
+                    == v26_nested.get("operation", {}).get("selector_sha256", v26_nested.get("operation", {}).get("v26_selector_sha256"))
+                ),
+                "v26_q_coverage_and_no_solve_scope": (
+                    partial.get("q_coverage", {}).get("built_q_count")
+                    == (1 if expected_stop_stage == "selected_reference_q_csr" and v26_csr_built else 0)
+                    and partial.get("q_coverage", {}).get("full_q_matrix_coverage")
+                    == ("1/8" if expected_stop_stage == "selected_reference_q_csr" and v26_csr_built else "0/8")
+                    and partial.get("q_coverage", {}).get("factor_count") == int(v26_factor_built)
+                    and partial.get("q_coverage", {}).get("pde_solved") is False
+                ),
+                **{
+                    name: passed
+                    for name, passed in _v26_selected_q_readback_checks(
+                        output_directory=numerical_output,
+                        partial=partial,
+                        expected_stop_stage=expected_stop_stage,
+                    ).items()
+                },
+            }
+        )
     elif v25_q0_receipt:
         q0_stage_result = partial.get("stage_result", {})
         q0_stage_result = q0_stage_result if isinstance(q0_stage_result, Mapping) else {}
@@ -3902,6 +5204,7 @@ def run_service(
     case_args, q_only_scan_directory = _extract_v23_q_only_scan_arg(case_args)
     case_args, v24_cd_selector_path = _extract_v24_cd_selector_arg(case_args)
     case_args, v25_selector_path = _extract_v25_selected_operation_selector_arg(case_args)
+    case_args, v26_selector_path = _extract_v26_selected_operation_selector_arg(case_args)
     input_path, campaign_path, stop_stage, data = _parse_case_arguments(case_args)
     canonical_relative, _supported = V20_INPUTS[data["solver"]["preconditioner"]]
     canonical_path = repo_root / canonical_relative
@@ -3932,10 +5235,20 @@ def run_service(
         campaign_registration.get("version") != "V25"
         or q_only_scan_directory is not None
         or v24_cd_selector_path is not None
+        or v26_selector_path is not None
     ):
         raise ValueError("V25 selected-operation selector cannot be combined with V23/V24 selectors")
     if campaign_registration.get("version") == "V25" and v25_selector_path is None:
         raise ValueError("V25 operations require their explicit selected-operation selector")
+    if v26_selector_path is not None and (
+        campaign_registration.get("version") != "V26"
+        or q_only_scan_directory is not None
+        or v24_cd_selector_path is not None
+        or v25_selector_path is not None
+    ):
+        raise ValueError("V26 selected-operation selector cannot be combined with V23/V24/V25 selectors")
+    if campaign_registration.get("version") == "V26" and v26_selector_path is None:
+        raise ValueError("V26 operations require their explicit selected-operation selector")
     q_only_binding = (
         _bind_v23_q_only_scan_checkpoint(
             q_only_scan_directory,
@@ -3973,6 +5286,18 @@ def run_service(
         if v25_selector_path is not None
         else None
     )
+    v26_binding = (
+        _bind_v26_selected_operation_selector(
+            v26_selector_path,
+            input_path=input_path,
+            campaign_registration=campaign_registration,
+            profile=str(data["solver"]["preconditioner"]),
+            stop_stage=stop_stage,
+            repo_root=repo_root,
+        )
+        if v26_selector_path is not None
+        else None
+    )
     fixed_campaign = Path(campaign_registration["path"])
     campaign_sha256 = str(campaign_registration["sha256"])
     branch = subprocess.check_output(["git", "branch", "--show-current"], cwd=repo_root, text=True).strip()
@@ -3981,7 +5306,9 @@ def run_service(
     if branch != "task40extra_0p7nm_engineering" or dirty.strip():
         raise RuntimeError("V20 user-service requires the frozen Task40 branch and clean source")
 
-    if campaign_registration.get("version") == "V25":
+    if campaign_registration.get("version") == "V26":
+        artifact_root = V26_ARTIFACT_ROOT
+    elif campaign_registration.get("version") == "V25":
         artifact_root = V25_ARTIFACT_ROOT
     elif campaign_registration.get("version") == "V24":
         artifact_root = V24_ARTIFACT_ROOT
@@ -4021,6 +5348,8 @@ def run_service(
         record["v24_bounded_port_reuse_volume_selector_binding"] = dict(v24_cd_binding)
     if v25_binding is not None:
         record["v25_selected_operation_selector_binding"] = dict(v25_binding)
+    if v26_binding is not None:
+        record["v26_selected_operation_selector_binding"] = dict(v26_binding)
     event_identity = {
         key: record[key]
         for key in (
@@ -4118,6 +5447,19 @@ def run_service(
                 {
                     "TASK40_V25_SELECTOR_PATH": str(v25_binding["selector_path"]),
                     "TASK40_V25_SELECTOR_SHA256": str(v25_binding["selector_sha256"]),
+                }
+            )
+        if v26_binding is not None:
+            environment.update(
+                {
+                    "TASK40_V26_SELECTOR_PATH": str(v26_binding["selector_path"]),
+                    "TASK40_V26_SELECTOR_SHA256": str(v26_binding["selector_sha256"]),
+                    "TASK40_V26_OPERATION": str(v26_binding["operation"]),
+                    "TASK40_V26_PRODUCER_ROOT": str(
+                        (repo_root / V26_PRODUCER_RUN_RELATIVE).resolve()
+                    ),
+                    "TASK40_V26_FAILURE_INDEX_SHA256": V26_FAILURE_INDEX_SHA256,
+                    "TASK40_V26_VERIFIED_INPUT_SHA256": V26_VERIFIED_INPUT_SHA256,
                 }
             )
 
@@ -4354,6 +5696,12 @@ def main(argv: list[str] | None = None) -> int:
         choices=sorted(V25_SELECTED_Q_STAGES),
         default="selected_reference_q_build_only",
     )
+    v26_prepare_parser = subparsers.add_parser("prepare-v26-selected-q-input")
+    v26_prepare_parser.add_argument(
+        "--stop-stage",
+        choices=sorted(V26_SELECTED_Q_STAGES),
+        default="selected_reference_q_build_only",
+    )
     partial_parser = subparsers.add_parser("check-partial")
     partial_parser.add_argument("--input", type=Path, required=True)
     partial_parser.add_argument("--summary", type=Path, required=True)
@@ -4375,6 +5723,16 @@ def main(argv: list[str] | None = None) -> int:
         print(
             json.dumps(
                 prepare_v25_selected_q_input(args.stop_stage),
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return 0
+    if args.command == "prepare-v26-selected-q-input":
+        print(
+            json.dumps(
+                prepare_v26_selected_q_input(args.stop_stage),
                 ensure_ascii=False,
                 sort_keys=True,
                 indent=2,

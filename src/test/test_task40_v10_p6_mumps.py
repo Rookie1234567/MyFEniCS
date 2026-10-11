@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ctypes
 import ctypes.util
+import hashlib
 import os
 from types import SimpleNamespace
 
@@ -14,6 +15,7 @@ from src.solvers.task40_v10_p6_mumps import (
     AllQExactMumps,
     OneQRefactorV19Mumps,
     full_p6_pre_release_output_inventory,
+    run_task40_v26_selected_q0_factor_lifecycle,
 )
 
 
@@ -54,6 +56,75 @@ def test_full_p6_residual_and_packet_budget_counts_only_co_resident_full_rows():
         "derived_native_residual",
         "native_identity_difference",
     ]
+
+
+def test_v26_selected_q0_factor_has_strict_probe_rhs_and_explicit_reserves(tmp_path):
+    matrix = sparse.csr_matrix(
+        np.array(
+            [
+                [4.0 + 0.3j, 1.0 - 0.2j, 0.0],
+                [0.5 + 0.1j, 3.5 + 0.2j, 0.2 - 0.1j],
+                [0.0, 0.7 + 0.2j, 2.5 - 0.4j],
+            ],
+            dtype=np.complex128,
+        )
+    )
+    original = (matrix.data.copy(), matrix.indices.copy(), matrix.indptr.copy())
+    gates = []
+    report = run_task40_v26_selected_q0_factor_lifecycle(
+        matrix,
+        allocation_gate=lambda stage, facts: gates.append((stage, dict(facts))) or {"passed": True},
+        checkpoint_directory=tmp_path,
+        current_identity={"test_source_sha": "a" * 64, "run_id": "v26-factor-unit"},
+    )
+
+    assert report["status"] == "PASS_Q0_FACTOR_PROBE_AND_RHS_SOLVE"
+    assert report["q_coverage"]["numeric_factor_built"] is True
+    assert report["fresh_factor_probe"]["input_nonzero"] is True
+    assert report["fresh_factor_probe"]["relative_full_true_residual"] <= 1.0e-10
+    assert report["separate_nonzero_q0_rhs_solve"]["rhs_nonzero"] is True
+    assert report["separate_nonzero_q0_rhs_solve"]["relative_full_true_residual"] <= 1.0e-10
+    assert report["cleanup"]["destroy_succeeded"] is True
+    assert report["max_simultaneous_native_objects"] == {
+        "matrices": 1,
+        "factors": 1,
+        "vectors": 2,
+    }
+    assert matrix.has_canonical_format
+    assert np.array_equal(matrix.data, original[0])
+    assert np.array_equal(matrix.indices, original[1])
+    assert np.array_equal(matrix.indptr, original[2])
+    assert report["checkpoint_sha256"]
+    assert (tmp_path / "v26_q0_factor_checkpoints.json").is_file()
+    assert report["solve_accounting"] == {
+        "fresh_factor_probe": {"mat_solve_invoked": 1, "mat_solve_completed": 1, "mat_solve_failed": 0},
+        "separate_nonzero_q0_rhs_solve": {"mat_solve_invoked": 1, "mat_solve_completed": 1, "mat_solve_failed": 0},
+    }
+    for label in ("fresh_factor_probe", "separate_nonzero_q0_rhs_solve"):
+        raw = report[label]["raw_artifact"]
+        raw_path = tmp_path / raw["path"]
+        assert raw["native_vectors_destroyed_before_serialization"] is True
+        assert raw["native_vector_count_before_serialization"] == 0
+        assert hashlib.sha256(raw_path.read_bytes()).hexdigest() == raw["sha256"]
+        with np.load(raw_path, allow_pickle=False) as archive:
+            x = archive["input_x"]
+            rhs = archive["rhs"]
+            solution = archive["solution"]
+            residual = archive["residual"]
+            assert np.array_equal(matrix @ x, rhs)
+            assert np.array_equal(matrix @ solution - rhs, residual)
+            assert np.linalg.norm(residual) / np.linalg.norm(rhs) <= 1.0e-10
+
+    conversion = next(facts for stage, facts in gates if stage.endswith("petsc_conversion"))
+    symbolic = next(facts for stage, facts in gates if stage.endswith("factor_symbolic"))
+    numeric = next(facts for stage, facts in gates if stage.endswith("factor_numeric"))
+    assert conversion["symbolic_guard_bytes"] == max(128 << 20, 4 * conversion["source_csr_payload_bytes_already_resident"])
+    assert conversion["csr_to_petsc_conversion_workspace_bytes"] == conversion["source_csr_payload_bytes_already_resident"]
+    assert conversion["future_factor_vector_and_checker_reserve_bytes"] == 6 * matrix.shape[0] * 16
+    assert symbolic["future_co_resident_reserve_bytes"] >= symbolic["symbolic_factorization_guard_bytes"]
+    assert numeric["numeric_factor_reserve_bytes_from_INFOG_16_17"] == report["symbolic_factor_reserve_bytes"]
+    assert numeric["vector_and_checker_reserve_bytes"] == 6 * matrix.shape[0] * 16
+    assert [stage.rsplit("_", 1)[-1] for stage, _facts in gates[-2:]] == ["destroy", "destroy"]
 
 
 def test_petsc_api_binds_loaded_petsc4py_runtime_even_if_system_discovery_is_wrong(monkeypatch):

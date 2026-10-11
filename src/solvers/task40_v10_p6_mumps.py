@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from hashlib import sha256
 import gc
+import json
+import os
 from time import perf_counter
 from typing import Any, Callable, Mapping, Sequence
 
@@ -27,6 +29,10 @@ from .task40_v10_p6_periodic_profile import (
 
 ALL_Q_RESIDENT = "ALL_Q_RESIDENT"
 ONE_Q_REFACTOR_V19 = "ONE_Q_REFACTOR_V19"
+
+# If native destruction fails, keep the Python owners reachable until process
+# exit.  A caller must not mistake a failed destroy for released MUMPS memory.
+_V26_UNCONFIRMED_NATIVE_OWNERS: list[tuple[str, Any]] = []
 
 
 def _sparse_content_sha256(matrix: sparse.spmatrix) -> str:
@@ -55,6 +61,462 @@ def _sparse_content_sha256(matrix: sparse.spmatrix) -> str:
 
 def _payload_bytes(csr: sparse.csr_matrix) -> int:
     return int(csr.data.nbytes + csr.indices.nbytes + csr.indptr.nbytes)
+
+
+def _v26_atomic_checkpoint(path, value: Mapping[str, Any]) -> None:
+    from pathlib import Path
+
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_name(target.name + ".tmp")
+    encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2).encode("utf-8")
+    with temporary.open("wb") as stream:
+        stream.write(encoded)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary, target)
+
+
+def run_task40_v26_selected_q0_factor_lifecycle(
+    matrix: sparse.csr_matrix,
+    *,
+    allocation_gate: Callable[[str, Mapping[str, Any]], Any],
+    checkpoint_directory,
+    current_identity: Mapping[str, Any],
+    event: Callable[[str, Mapping[str, Any]], None] | None = None,
+    _petsc_api: Any | None = None,
+    _factor_factory: Callable[[Any], Any] | None = None,
+) -> dict[str, Any]:
+    """Qualify one selected q0 exact MUMPS factor without an all-q profile.
+
+    This review-scoped route is deliberately separate from
+    :class:`OneQRefactorV19Mumps`: it accepts exactly one q0 CSR, reports only
+    q0 coverage, and never pretends the periodic profile has ``q_count=1``.
+    The factor is freshly probed, used for one separate nonzero RHS, then
+    destroyed before the function returns.
+    """
+    from pathlib import Path
+
+    from .fullspace_v17_p3_oracle import _MumpsFactor
+
+    if not callable(allocation_gate):
+        raise TypeError("V26 q0 factor lifecycle requires a live allocation gate")
+    if not isinstance(current_identity, Mapping) or not current_identity:
+        raise ValueError("V26 q0 factor lifecycle requires its stable operation identity")
+    root = Path(checkpoint_directory).resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = root / "v26_q0_factor_checkpoints.json"
+    started = perf_counter()
+    state: dict[str, Any] = {
+        "schema": "task40extra.review_v26_selected_q0_factor_lifecycle.v1",
+        "status": "RUNNING",
+        "current_identity": dict(current_identity),
+        "selected_q": 0,
+        "q_coverage": {"numeric_factor_attempted": False, "numeric_factor_built": False},
+        "solve_accounting": {
+            "fresh_factor_probe": {"mat_solve_invoked": 0, "mat_solve_completed": 0, "mat_solve_failed": 0},
+            "separate_nonzero_q0_rhs_solve": {"mat_solve_invoked": 0, "mat_solve_completed": 0, "mat_solve_failed": 0},
+        },
+        "phases": [],
+        "cleanup": {"status": "NOT_STARTED"},
+    }
+    factor = None
+    petsc_matrix = None
+    vectors: list[Any] = []
+    destroy_errors: list[dict[str, str]] = []
+    gate_records: list[dict[str, Any]] = []
+    native_counts = {"matrices_current": 0, "factors_current": 0, "vectors_current": 0}
+    max_counts = {"matrices": 0, "factors": 0, "vectors": 0}
+
+    def checkpoint(phase: str, facts: Mapping[str, Any] | None = None) -> None:
+        state["phase"] = phase
+        state["phases"].append({"phase": phase, "elapsed_seconds": float(perf_counter() - started), **dict(facts or {})})
+        state["simultaneous_native_objects_current"] = dict(native_counts)
+        state["max_simultaneous_native_objects"] = dict(max_counts)
+        state["resource_gates"] = list(gate_records)
+        _v26_atomic_checkpoint(checkpoint_path, state)
+
+    def update_counts() -> None:
+        native_counts.update(
+            matrices_current=int(petsc_matrix is not None),
+            factors_current=int(factor is not None),
+            vectors_current=len(vectors),
+        )
+        for key in max_counts:
+            max_counts[key] = max(max_counts[key], native_counts[f"{key}_current"])
+
+    def admit(stage: str, facts: Mapping[str, Any]) -> Mapping[str, Any]:
+        request = dict(facts)
+        row: dict[str, Any] = {"stage": stage, "request_facts": request, "admission": None}
+        gate_records.append(row)
+        state["resource_gates"] = list(gate_records)
+        record = allocation_gate(stage, request)
+        row["admission"] = dict(record) if isinstance(record, Mapping) else {"gate_return": record}
+        return row["admission"]
+
+    def sample_resources(stage: str) -> dict[str, Any]:
+        return dict(admit(stage, {
+            "additional_payload_bytes": 0,
+            "matrix_payload_bytes": 0,
+            "workspace_bytes": 0,
+            "future_co_resident_reserve_bytes": 0,
+            "selected_q": 0,
+            "native_object_counts": dict(native_counts),
+            "resource_sample_only": True,
+        }))
+
+    try:
+        if not sparse.isspmatrix_csr(matrix):
+            raise TypeError("V26 q0 factor input must be a SciPy CSR matrix")
+        if matrix.shape[0] != matrix.shape[1] or matrix.shape[0] <= 0:
+            raise ValueError("V26 q0 factor input must be nonempty and square")
+        if not matrix.has_canonical_format or not matrix.has_sorted_indices:
+            raise ValueError("V26 q0 factor input must have sorted unique CSR columns")
+        if np.dtype(matrix.dtype) != np.dtype(np.complex128):
+            raise TypeError("V26 q0 factor values must be complex128")
+        if np.dtype(matrix.indices.dtype) != np.dtype(np.int32) or np.dtype(matrix.indptr.dtype) != np.dtype(np.int32):
+            raise TypeError("V26 q0 factor CSR indices and offsets must be int32")
+        source_hash = _sparse_content_sha256(matrix)
+        payload_bytes = _payload_bytes(matrix)
+        if _petsc_api is None:
+            from petsc4py import PETSc as _petsc_api
+        if np.dtype(_petsc_api.ScalarType) != np.dtype(np.complex128) or np.dtype(_petsc_api.IntType) != np.dtype(np.int32):
+            raise RuntimeError("V26 q0 factor route requires PETSc complex128/int32")
+        comm_size = int(_petsc_api.COMM_SELF.getSize())
+        if comm_size != 1:
+            raise RuntimeError("V26 q0 factor route requires a one-rank PETSc communicator")
+        preflight = _petsc_csr_int_preflight(
+            matrix.shape, matrix.nnz, matrix.indptr, matrix.indices, _petsc_api.IntType
+        )
+        state.update({
+            "source_csr_sha256": source_hash,
+            "shape": [int(matrix.shape[0]), int(matrix.shape[1])],
+            "nnz": int(matrix.nnz),
+            "source_csr_payload_bytes": payload_bytes,
+            "petsc_csr_int_preflight": preflight,
+            "petsc_scalar_type": np.dtype(_petsc_api.ScalarType).str,
+            "petsc_int_type": np.dtype(_petsc_api.IntType).str,
+            "petsc_comm_size": comm_size,
+            "factor_backend": "PETSc MUMPS exact",
+            "factor_route": "V26_SELECTED_Q0_ONLY; no fabricated q_count=1 profile",
+            "mumps_control_profile": {"ICNTL(35)": 0, "ICNTL(10)": 0, "ICNTL(2)": 0, "ICNTL(3)": 6, "ICNTL(4)": 2},
+            "factor_probe_true_residual_limit": 1.0e-10,
+            "q0_rhs_true_residual_limit": 1.0e-10,
+        })
+        checkpoint("csr_identity_and_int32_preflight", {
+            "source_csr_hash_verified": True,
+            "wide_structure_checkpoint_required_before_narrowing": True,
+            "preflight": preflight,
+        })
+
+        conversion_bytes = payload_bytes
+        symbolic_guard_bytes = max(128 << 20, 4 * payload_bytes)
+        # Six full complex vectors bound the solve peak: input, RHS, two PETSc
+        # Vecs, copied solution, and true residual. Destroy both Vecs before
+        # raw-vector serialization/readback, leaving four arrays plus one
+        # streamed readback array within the same reserve.
+        vector_checker_reserve_bytes = int(matrix.shape[0]) * 6 * np.dtype(np.complex128).itemsize
+        conversion_admission = admit("task40_v26_q0_factor_petsc_conversion", {
+            "additional_payload_bytes": 0,
+            "matrix_payload_bytes": payload_bytes,
+            "workspace_bytes": conversion_bytes,
+            "future_co_resident_reserve_bytes": symbolic_guard_bytes + vector_checker_reserve_bytes,
+            "selected_q": 0,
+            "source_csr_payload_bytes_already_resident": payload_bytes,
+            "petsc_matrix_payload_upper_bytes": payload_bytes,
+            "csr_to_petsc_conversion_workspace_bytes": conversion_bytes,
+            "symbolic_guard_bytes": symbolic_guard_bytes,
+            "symbolic_guard_rule": "max(128 MiB, 4 * source CSR payload)",
+            "future_factor_vector_and_checker_reserve_bytes": vector_checker_reserve_bytes,
+            "source_csr_counted_in_current_resource_sample": True,
+        })
+        checkpoint("petsc_conversion_admitted", {"gate": dict(conversion_admission)})
+
+        indptr = np.asarray(matrix.indptr, dtype=_petsc_api.IntType).copy()
+        indices = np.asarray(matrix.indices, dtype=_petsc_api.IntType).copy()
+        values = np.asarray(matrix.data, dtype=_petsc_api.ScalarType).copy()
+        petsc_matrix = _petsc_api.Mat().createAIJ(
+            size=matrix.shape,
+            csr=(indptr, indices, values),
+            comm=_petsc_api.COMM_SELF,
+        )
+        update_counts()
+        petsc_matrix.assemble()
+        conversion_copy_bytes = int(indptr.nbytes + indices.nbytes + values.nbytes)
+        del indptr, indices, values
+        gc.collect()
+        checkpoint("petsc_matrix_created", {
+            "petsc_matrix_payload_upper_bytes": payload_bytes,
+            "conversion_arrays_payload_bytes": conversion_copy_bytes,
+            "conversion_arrays_released": True,
+        })
+
+        symbolic_admission = admit("task40_v26_q0_factor_symbolic", {
+            "additional_payload_bytes": 0,
+            "matrix_payload_bytes": 0,
+            "workspace_bytes": 0,
+            "future_co_resident_reserve_bytes": symbolic_guard_bytes + vector_checker_reserve_bytes,
+            "selected_q": 0,
+            "source_csr_payload_bytes_already_resident": payload_bytes,
+            "petsc_matrix_payload_bytes_already_resident": payload_bytes,
+            "symbolic_factorization_guard_bytes": symbolic_guard_bytes,
+            "vector_and_checker_reserve_bytes": vector_checker_reserve_bytes,
+            "already_resident_objects_are_in_current_rss_sample": True,
+        })
+        checkpoint("symbolic_admitted", {"gate": dict(symbolic_admission)})
+        factory = _factor_factory
+        if factory is None:
+            from src.runners.physical_p4_cell_condensed_v18 import _factor_factory_for_backend
+
+            factory = _factor_factory_for_backend("exact")
+        factor = factory(petsc_matrix)
+        update_counts()
+        controls = {index: int(factor.get_icntl(index)) for index in (35, 10, 2, 3, 4)}
+        expected_controls = {35: 0, 10: 0, 2: 0, 3: 6, 4: 2}
+        if controls != expected_controls:
+            raise RuntimeError(f"V26 q0 MUMPS control readback differs from exact backend defaults: {controls}")
+        factor.symbolic(petsc_matrix)
+        symbolic_info = factor.info(extra_indices=(16, 17, 22, 29), include_local=True)
+        symbolic_evidence = _mumps_native_evidence(symbolic_info, numeric_complete=False)
+        infog = symbolic_info.get("infog", {})
+        info16, info17 = infog.get("16"), infog.get("17")
+        if type(info16) is not int or type(info17) is not int or min(info16, info17) < 0 or info16 != info17:
+            raise RuntimeError("V26 q0 symbolic INFOG(16/17) estimates are unavailable or inconsistent")
+        numeric_reserve_bytes = int(1_000_000 * (1 + max(info16, info17)))
+        state["mumps_controls_readback_before_symbolic"] = {str(key): value for key, value in controls.items()}
+        state["symbolic_mumps_evidence"] = symbolic_evidence
+        state["symbolic_factor_reserve_bytes"] = numeric_reserve_bytes
+        checkpoint("symbolic_complete", {
+            "mumps_evidence": symbolic_evidence,
+            "symbolic_estimate_info_16": info16,
+            "symbolic_estimate_info_17": info17,
+            "numeric_factor_reserve_bytes": numeric_reserve_bytes,
+            "controls_before_symbolic": {str(key): value for key, value in controls.items()},
+        })
+
+        numeric_admission = admit("task40_v26_q0_factor_numeric", {
+            "additional_payload_bytes": 0,
+            "matrix_payload_bytes": 0,
+            "workspace_bytes": vector_checker_reserve_bytes,
+            "future_co_resident_reserve_bytes": numeric_reserve_bytes,
+            "selected_q": 0,
+            "source_csr_payload_bytes_already_resident": payload_bytes,
+            "petsc_matrix_payload_bytes_already_resident": payload_bytes,
+            "symbolic_factor_memory_in_current_rss_sample": True,
+            "numeric_factor_reserve_bytes_from_INFOG_16_17": numeric_reserve_bytes,
+            "vector_and_checker_reserve_bytes": vector_checker_reserve_bytes,
+            "reserve_not_double_counted_with_current_resident_objects": True,
+        })
+        checkpoint("numeric_admitted", {"gate": dict(numeric_admission)})
+        state["q_coverage"]["numeric_factor_attempted"] = True
+        factor.numeric(petsc_matrix)
+        state["q_coverage"]["numeric_factor_built"] = True
+        numeric_info = factor.info(extra_indices=(16, 17, 22, 29), include_local=True)
+        state["numeric_mumps_evidence"] = _mumps_native_evidence(numeric_info, numeric_complete=True)
+        checkpoint("numeric_factor_complete", {"mumps_evidence": state["numeric_mumps_evidence"]})
+
+        def solve_probe(label: str, seed: int) -> dict[str, Any]:
+            rng_real = np.random.default_rng(seed)
+            rng_imag = np.random.default_rng(seed + 1)
+            x = np.empty(matrix.shape[0], dtype=np.complex128)
+            x.real[:] = rng_real.standard_normal(matrix.shape[0])
+            x.imag[:] = rng_imag.standard_normal(matrix.shape[0])
+            x /= np.sqrt(2.0)
+            if not np.all(x != 0):
+                raise RuntimeError(f"V26 {label} witness vector unexpectedly contains zero")
+            rhs = np.asarray(matrix @ x, dtype=np.complex128)
+            if not np.isfinite(rhs).all() or not np.any(rhs != 0):
+                raise RuntimeError(f"V26 {label} witness RHS is zero")
+            rhs_vec = _petsc_api.Vec().createSeq(len(rhs), comm=_petsc_api.COMM_SELF)
+            vectors.append(rhs_vec)
+            update_counts()
+            solution_vec = _petsc_api.Vec().createSeq(len(rhs), comm=_petsc_api.COMM_SELF)
+            vectors.append(solution_vec)
+            update_counts()
+            rhs_vec.array[:] = rhs
+            accounting = state["solve_accounting"][label]
+            accounting["mat_solve_invoked"] += 1
+            if label == "fresh_factor_probe":
+                try:
+                    factor.solve(rhs_vec, solution_vec)
+                except BaseException:
+                    accounting["mat_solve_failed"] += 1
+                    raise
+            else:
+                solve_repeated = getattr(factor, "solve_repeated", None)
+                if not callable(solve_repeated):
+                    raise RuntimeError("exact MUMPS factor does not expose the qualified repeated solve route")
+                try:
+                    solve_repeated(rhs_vec, solution_vec)
+                except BaseException:
+                    accounting["mat_solve_failed"] += 1
+                    raise
+            accounting["mat_solve_completed"] += 1
+            solution = np.asarray(solution_vec.array, dtype=np.complex128).copy()
+            residual = np.asarray(matrix @ solution, dtype=np.complex128)
+            residual -= rhs
+            relative = float(np.linalg.norm(residual) / np.linalg.norm(rhs))
+            if not np.isfinite(relative):
+                raise RuntimeError(f"V26 {label} produced a non-finite full true residual")
+            from .task40_v25_selected_q0 import (
+                _array_sha256,
+                _file_sha256,
+                _save_npz_atomic,
+            )
+
+            # The residual and solution now exist as owned NumPy arrays. Drop
+            # PETSc's two full-size Vec allocations before serialization and
+            # readback so their scratch shares the declared six-vector reserve.
+            for vector in (solution_vec, rhs_vec):
+                try:
+                    vector.destroy()
+                except BaseException:
+                    _V26_UNCONFIRMED_NATIVE_OWNERS.append((f"{label}_Vec", vector))
+                    raise
+                else:
+                    vectors.remove(vector)
+                    update_counts()
+                    del vector
+                    gc.collect()
+            del solution_vec, rhs_vec
+            gc.collect()
+            update_counts()
+            if vectors:
+                raise RuntimeError(f"V26 {label} PETSc Vecs remain live before raw serialization")
+
+            raw_path = root / f"v26_q0_factor_{label}.npz"
+            raw_arrays = {
+                "input_x": x,
+                "rhs": rhs,
+                "solution": solution,
+                "residual": residual,
+            }
+            _save_npz_atomic(raw_path, **raw_arrays)
+            raw_hashes = {name: _array_sha256(value) for name, value in raw_arrays.items()}
+            with np.load(raw_path, allow_pickle=False) as saved:
+                if set(saved.files) != set(raw_arrays) or any(
+                    _array_sha256(saved[name]) != raw_hashes[name]
+                    for name in raw_arrays
+                ):
+                    raise IOError(f"V26 {label} raw vector checkpoint failed readback")
+            raw_artifact = {
+                "path": raw_path.name,
+                "bytes": int(raw_path.stat().st_size),
+                "sha256": _file_sha256(raw_path),
+                "array_sha256": raw_hashes,
+                "array_names": sorted(raw_arrays),
+                "dtype": np.dtype(np.complex128).str,
+                "size": int(matrix.shape[0]),
+                "native_vectors_destroyed_before_serialization": True,
+                "native_vector_count_before_serialization": len(vectors),
+            }
+            return {
+                "label": label,
+                "seed": int(seed),
+                "input_nonzero": True,
+                "rhs_nonzero": True,
+                "solution": "saved in hash-bound raw vector checkpoint",
+                "residual": "saved in hash-bound raw vector checkpoint",
+                "relative_full_true_residual": relative,
+                "residual_limit": 1.0e-10,
+                "passed": relative <= 1.0e-10,
+                "raw_artifact": raw_artifact,
+            }
+
+        probe = solve_probe("fresh_factor_probe", 260_001)
+        state["fresh_factor_probe"] = probe
+        checkpoint("fresh_factor_probe_complete", {"probe": probe})
+        if not probe["passed"]:
+            raise RuntimeError("V26 q0 fresh-factor probe failed the strict 1e-10 full true residual")
+        rhs_solve = solve_probe("separate_nonzero_q0_rhs_solve", 260_101)
+        state["separate_nonzero_q0_rhs_solve"] = rhs_solve
+        checkpoint("separate_nonzero_q0_rhs_solve_complete", {"rhs_solve": rhs_solve})
+        if not rhs_solve["passed"]:
+            raise RuntimeError("V26 q0 RHS solve failed the strict 1e-10 full true residual")
+        if _sparse_content_sha256(matrix) != source_hash:
+            raise RuntimeError("V26 q0 factor lifecycle mutated the saved source CSR")
+        state["status"] = "PASS_Q0_FACTOR_PROBE_AND_RHS_SOLVE"
+        checkpoint("factor_probe_and_rhs_solve_passed", {
+            "source_csr_identity_preserved": True,
+            "fresh_factor_probe": probe,
+            "separate_nonzero_q0_rhs_solve": rhs_solve,
+        })
+    except BaseException as error:
+        state["status"] = "FAILED_Q0_FACTOR_LIFECYCLE"
+        state["failure"] = {"type": type(error).__name__, "message": str(error)}
+        try:
+            checkpoint("factor_lifecycle_failed", state["failure"])
+        except BaseException:
+            pass
+        raise
+    finally:
+        state["cleanup"]["status"] = "IN_PROGRESS"
+        update_counts()
+        if factor is not None or petsc_matrix is not None:
+            try:
+                state["cleanup"]["resource_sample_before_destroy"] = sample_resources(
+                    "task40_v26_q0_factor_before_destroy"
+                )
+            except BaseException as error:
+                destroy_errors.append({"kind": "before_destroy_resource_sample", "type": type(error).__name__, "message": str(error)})
+        if factor is not None:
+            try:
+                factor.destroy()
+            except BaseException as error:
+                destroy_errors.append({"kind": "factor", "type": type(error).__name__, "message": str(error)})
+                _V26_UNCONFIRMED_NATIVE_OWNERS.append(("q0_factor_and_matrix", (factor, petsc_matrix)))
+            else:
+                factor = None
+                update_counts()
+                gc.collect()
+        if factor is None and petsc_matrix is not None:
+            try:
+                petsc_matrix.destroy()
+            except BaseException as error:
+                destroy_errors.append({"kind": "matrix", "type": type(error).__name__, "message": str(error)})
+                _V26_UNCONFIRMED_NATIVE_OWNERS.append(("q0_petsc_matrix", petsc_matrix))
+            else:
+                petsc_matrix = None
+                update_counts()
+                gc.collect()
+        for vector in list(vectors):
+            try:
+                vector.destroy()
+            except BaseException as error:
+                destroy_errors.append({"kind": "vector", "type": type(error).__name__, "message": str(error)})
+                _V26_UNCONFIRMED_NATIVE_OWNERS.append(("q0_vector", vector))
+            else:
+                vectors.remove(vector)
+                update_counts()
+                gc.collect()
+        try:
+            state["cleanup"]["resource_sample_after_destroy"] = sample_resources(
+                "task40_v26_q0_factor_after_destroy"
+            )
+        except BaseException as error:
+            destroy_errors.append({"kind": "after_destroy_resource_sample", "type": type(error).__name__, "message": str(error)})
+        state["cleanup"].update({
+            "destroy_errors": destroy_errors,
+            "destroy_succeeded": not destroy_errors and factor is None and petsc_matrix is None and not vectors,
+            "native_object_counts_after_destroy": dict(native_counts),
+        })
+        if destroy_errors and state.get("status") == "PASS_Q0_FACTOR_PROBE_AND_RHS_SOLVE":
+            state["status"] = "FAILED_Q0_FACTOR_CLEANUP"
+            state["failure"] = {"type": "RuntimeError", "message": "q0 factor lifecycle cleanup or resource sampling failed"}
+        state["elapsed_seconds"] = float(perf_counter() - started)
+        try:
+            checkpoint("cleanup_complete", state["cleanup"])
+        except BaseException:
+            # Preserve the last successfully fsynced phase checkpoint.
+            if state.get("status") == "PASS_Q0_FACTOR_PROBE_AND_RHS_SOLVE":
+                state["status"] = "FAILED_Q0_FACTOR_CHECKPOINT"
+                state["failure"] = {"type": "OSError", "message": "could not persist final q0 cleanup checkpoint"}
+
+    state["checkpoint_path"] = str(checkpoint_path)
+    state["checkpoint_sha256"] = sha256(checkpoint_path.read_bytes()).hexdigest() if checkpoint_path.is_file() else None
+    if state.get("status") != "PASS_Q0_FACTOR_PROBE_AND_RHS_SOLVE":
+        raise RuntimeError(str(state.get("failure", {"message": "V26 q0 factor lifecycle failed"})))
+    return state
 
 
 def _petsc_csr_int_preflight(

@@ -1058,6 +1058,7 @@ def _run_v25_selected_q0_stage(
         requested = int(facts.get("additional_payload_bytes", 0))
         requested += int(facts.get("matrix_payload_bytes", 0))
         requested += int(facts.get("workspace_bytes", 0))
+        requested += int(facts.get("future_co_resident_reserve_bytes", 0))
         memory = _resource_admission(
             stage,
             requested,
@@ -1246,6 +1247,699 @@ def _run_v25_selected_q0_stage(
     }
 
 
+def _run_v26_selected_q0_stage(
+    resolved_payload: Mapping[str, Any],
+    output_directory: Path,
+    *,
+    source_sha: str,
+    profile: str,
+    preflight: Mapping[str, Any],
+    modes: tuple[Any, ...] | None,
+    mode_rows: tuple[Mapping[str, Any], ...] | None,
+    stop_stage: str,
+) -> dict[str, Any]:
+    """Execute the V26 selector's saved replay, native consumer, or CSR stage."""
+    import shutil
+
+    from src.io.input_validation import simulation_config_3d_from_normalized
+    from src.solvers.task40_v22_operator_probe import (
+        _ProbeResourceBlocked,
+        _resource_admission,
+        _v23_actual_axis_values,
+    )
+    from src.solvers.task40_v25_selected_q0 import (
+        run_task40_v25_selected_q0_consumer,
+        run_task40_v26_saved_stream_replay,
+    )
+
+    if modes is None or mode_rows is None:
+        raise RuntimeError("V26 route requires the complete frozen preflight mode inventory")
+    expected_operation = {
+        "selected_reference_q_build_only": "V26_SAVED_STREAM_REPLAY",
+        "selected_reference_q_consumer": "V26_SAVED_STREAM_NATIVE_CONSUMER",
+        "selected_reference_q_csr": "V26_COMPLETE_Q0_CSR_AND_CONDITIONAL_FACTOR",
+    }.get(stop_stage)
+    selector_path = Path(os.environ.get("TASK40_V26_SELECTOR_PATH", "")).resolve()
+    selector_sha = os.environ.get("TASK40_V26_SELECTOR_SHA256", "")
+    producer_root = Path(os.environ.get("TASK40_V26_PRODUCER_ROOT", "")).resolve()
+    raw_operation = os.environ.get("TASK40_V26_OPERATION", "")
+    if (
+        expected_operation is None
+        or not selector_path.is_file()
+        or len(selector_sha) != 64
+        or _sha256_file(selector_path) != selector_sha
+        or raw_operation != expected_operation
+    ):
+        raise RuntimeError("V26 stage lacks its exact service-bound selector operation")
+    selector = json.loads(selector_path.read_text(encoding="utf-8"))
+    producer_identity = selector.get("producer_identity")
+    inventory = preflight.get("target_mode_inventory")
+    if not isinstance(producer_identity, Mapping) or not isinstance(inventory, Mapping):
+        raise RuntimeError("V26 selector or preflight omits its frozen producer/mode identity")
+    if (
+        selector.get("schema") != "task40extra.review_v26_selected_operation.v1"
+        or selector.get("operation") != expected_operation
+        or selector.get("stop_stage") != stop_stage
+        or selector.get("model_profile") != profile
+        or selector.get("input_sha256") != preflight.get("input_sha256")
+        or producer_identity.get("producer_run_directory") is None
+    ):
+        raise RuntimeError("V26 selector identity differs from the service-verified stage input")
+    mode_sha = inventory.get("mode_manifest_sha256")
+    key_sha = inventory.get("ordered_mode_key_sha256")
+    if not isinstance(mode_sha, str) or len(mode_sha) != 64 or not isinstance(key_sha, str) or len(key_sha) != 64:
+        raise RuntimeError("V26 route has no complete frozen mode-manifest/key identity")
+
+    repo_root = Path(__file__).resolve().parents[2]
+    artifact_root = (repo_root / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl").resolve()
+    replay_root = artifact_root / "saved_replay"
+    native_root = artifact_root / "native_consumer"
+    replay_root.mkdir(parents=True, exist_ok=True)
+    native_root.mkdir(parents=True, exist_ok=True)
+    if producer_root != (repo_root / str(producer_identity.get("producer_run_directory"))).resolve():
+        raise RuntimeError("V26 producer root differs from its service-bound producer identity")
+
+    resource_gates: list[dict[str, Any]] = []
+    disk_reserve_bytes = 1024**3
+    disk_root = replay_root if stop_stage == "selected_reference_q_build_only" else output_directory
+
+    def allocation_gate(stage: str, facts: Mapping[str, Any]) -> dict[str, Any]:
+        requested = sum(
+            int(facts.get(key, 0))
+            for key in (
+                "additional_payload_bytes",
+                "matrix_payload_bytes",
+                "workspace_bytes",
+                "future_co_resident_reserve_bytes",
+            )
+        )
+        memory = _resource_admission(
+            stage,
+            requested,
+            resource_sample=_resource_snapshot,
+            require_task_cgroup=True,
+        )
+        disk_required = int(facts.get("disk_payload_bytes", 0))
+        disk_free = int(shutil.disk_usage(disk_root).free)
+        disk_passed = disk_free >= disk_required + disk_reserve_bytes
+        record = {
+            **memory,
+            "disk_payload_bytes": disk_required,
+            "disk_free_bytes": disk_free,
+            "disk_reserve_bytes": disk_reserve_bytes,
+            "disk_gate_passed": disk_passed,
+            "request_facts": dict(facts),
+        }
+        resource_gates.append(record)
+        if not disk_passed:
+            blocker = {
+                "stage": stage,
+                "additional_object_upper_bound_bytes": requested,
+                "disk_payload_bytes": disk_required,
+                "disk_free_bytes": disk_free,
+                "disk_reserve_bytes": disk_reserve_bytes,
+                "disk_gate_passed": False,
+                "passed": False,
+            }
+            raise _ProbeResourceBlocked(stage, blocker)
+        return record
+
+    def resident_csr_admission(stage: str, payload_bytes: int) -> Mapping[str, Any]:
+        return allocation_gate(stage, {"additional_payload_bytes": int(payload_bytes)})
+
+    current_identity = {
+        "source_sha": source_sha,
+        "run_id": preflight.get("run_id"),
+        "physical_model_sha256": preflight.get("physical_model_sha256"),
+        "campaign_window_sha256": selector.get("campaign_window_sha256"),
+        "producer_identity_sha256": hashlib.sha256(
+            json.dumps(
+                producer_identity,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest(),
+        "mode_manifest_sha256": mode_sha,
+        "ordered_mode_key_sha256": key_sha,
+    }
+    operation_path = output_directory / "v26_selected_q_stage.json"
+    operation: dict[str, Any]
+    replay_manifest: Mapping[str, Any] | None = None
+    try:
+        if stop_stage == "selected_reference_q_build_only":
+            replay_manifest = run_task40_v26_saved_stream_replay(
+                simulation_config_3d_from_normalized(resolved_payload),
+                _v23_actual_axis_values(resolved_payload),
+                producer_root=producer_root,
+                producer_identity=producer_identity,
+                output_directory=replay_root,
+                allocation_gate=allocation_gate,
+                frozen_modes=modes,
+                frozen_mode_rows=mode_rows,
+                frozen_mode_manifest_sha256=mode_sha,
+                expected_ordered_mode_key_sha256=key_sha,
+                current_identity=current_identity,
+            )
+            operation = {
+                "schema": "task40extra.review_v26_selected_q_stage.v1",
+                "status": str(replay_manifest.get("status", "FAILED")),
+                "classification": str(replay_manifest.get("classification", "V26_SAVED_STREAM_REPLAY")),
+                "official_result": False,
+                "stop_stage": stop_stage,
+                "selector_sha256": selector_sha,
+                "current_identity": current_identity,
+                "mode_inventory": {
+                    "mode_count_full_reference": replay_manifest.get("mode_count_full_reference"),
+                    "q0_alias_count": replay_manifest.get("q0_alias_count"),
+                    "q4_alias_count": replay_manifest.get("q4_alias_count"),
+                    "selected_twist_alias_count": replay_manifest.get("selected_twist_alias_count"),
+                },
+                "saved_replay_root": str(replay_root),
+                "saved_replay_manifest_path": str(replay_root / "v26_saved_q_replay_manifest.json"),
+                "saved_replay_manifest_sha256": replay_manifest.get("manifest_sha256"),
+                "saved_replay": dict(replay_manifest),
+                "factor_or_solve_built": False,
+            }
+        else:
+            replay_manifest_path = replay_root / "v26_saved_q_replay_manifest.json"
+            if not replay_manifest_path.is_file():
+                replay_manifest = run_task40_v26_saved_stream_replay(
+                    simulation_config_3d_from_normalized(resolved_payload),
+                    _v23_actual_axis_values(resolved_payload),
+                    producer_root=producer_root,
+                    producer_identity=producer_identity,
+                    output_directory=replay_root,
+                    allocation_gate=allocation_gate,
+                    frozen_modes=modes,
+                    frozen_mode_rows=mode_rows,
+                    frozen_mode_manifest_sha256=mode_sha,
+                    expected_ordered_mode_key_sha256=key_sha,
+                    current_identity=current_identity,
+                )
+            replay_sha = _sha256_file(replay_manifest_path)
+            native_manifest_path = native_root / "v26_native_action_manifest.json"
+            native_manifest: Mapping[str, Any] = {}
+            try:
+                native_manifest = json.loads(native_manifest_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                pass
+            reuse_native = bool(
+                native_manifest.get("schema") == "task40extra.review_v26_native_action.v1"
+                and native_manifest.get("status") == "PASS_COMPLETE_Q0_NATIVE_CONSUMER"
+                and native_manifest.get("current_identity") == current_identity
+                and native_manifest.get("saved_replay_manifest_sha256") == replay_sha
+                and native_manifest.get("native_volume_apply_count") == 6
+                and native_manifest.get("provider_sweep_count") == 9
+            )
+            operation = run_task40_v25_selected_q0_consumer(
+                simulation_config_3d_from_normalized(resolved_payload),
+                _v23_actual_axis_values(resolved_payload),
+                output_directory=output_directory,
+                allocation_gate=allocation_gate,
+                resident_csr_admission=None,
+                frozen_modes=modes,
+                frozen_mode_rows=mode_rows,
+                frozen_mode_manifest_sha256=mode_sha,
+                expected_ordered_mode_key_sha256=key_sha,
+                physical_model_sha256=str(preflight.get("physical_model_sha256")),
+                build_csr=stop_stage == "selected_reference_q_csr",
+                structure_checkpoint_path=(
+                    output_directory / "v26_q0_preallocation_row_structure.npz"
+                    if stop_stage == "selected_reference_q_csr"
+                    else None
+                ),
+                structure_checkpoint_identity=current_identity,
+                saved_producer_root=producer_root,
+                saved_producer_identity=producer_identity,
+                saved_replay_root=replay_root,
+                native_output_root=native_root,
+                saved_native_root=native_root if reuse_native else None,
+                current_identity=current_identity,
+                perform_native_validation=not reuse_native,
+            )
+            existing_binding = operation.get("v26_artifact_binding")
+            if not isinstance(existing_binding, Mapping):
+                try:
+                    native_facts = json.loads(native_manifest_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    native_facts = {}
+                existing_binding = {
+                    "producer_identity": dict(producer_identity),
+                    "producer_identity_sha256": current_identity["producer_identity_sha256"],
+                    "saved_replay_root": str(replay_root),
+                    "saved_replay_manifest_path": str(replay_manifest_path),
+                    "saved_replay_manifest_sha256": (
+                        _sha256_file(replay_manifest_path) if replay_manifest_path.is_file() else ""
+                    ),
+                    "native_root": str(native_root),
+                    "native_manifest_path": str(native_manifest_path),
+                    "native_manifest_sha256": (
+                        _sha256_file(native_manifest_path) if native_manifest_path.is_file() else ""
+                    ),
+                    "native_volume_apply_count": native_facts.get("native_volume_apply_count", 0),
+                    "provider_sweep_count": native_facts.get("provider_sweep_count", 0),
+                    "native_action_elapsed_seconds": native_facts.get("elapsed_seconds", 0.0),
+                }
+            operation = {
+                **dict(operation),
+                "v26_artifact_binding": dict(existing_binding),
+                "stop_stage": stop_stage,
+                "v26_selector_sha256": selector_sha,
+                "v26_operation": expected_operation,
+                "v26_current_identity": current_identity,
+                "v26_replay_created_in_this_operation": replay_manifest is not None,
+                "v26_native_reused_from_prior_operation": reuse_native,
+            }
+            if stop_stage == "selected_reference_q_csr" and operation.get("status") == "PASS_COMPLETE_Q0_CSR":
+                import numpy as np
+                from scipy import sparse
+
+                from src.solvers.task40_v10_p6_mumps import (
+                    run_task40_v26_selected_q0_factor_lifecycle,
+                )
+
+                tile_store = operation.get("row_tile_store", {})
+                tile_store = tile_store if isinstance(tile_store, Mapping) else {}
+                matrix_identity = operation.get("matrix_identity", {})
+                matrix_identity = matrix_identity if isinstance(matrix_identity, Mapping) else {}
+                files = tile_store.get("files", {})
+                files = files if isinstance(files, Mapping) else {}
+                shape = tuple(map(int, tile_store.get("shape", ())))
+                nnz = int(tile_store.get("nnz", -1))
+                payload_bytes = int(matrix_identity.get("csr_payload_bytes", -1))
+                if (
+                    len(shape) != 2
+                    or shape[0] <= 0
+                    or shape[0] != shape[1]
+                    or nnz < 0
+                    or payload_bytes <= 0
+                    or set(("data", "indices", "indptr")) - set(files)
+                ):
+                    raise RuntimeError("V26 completed q0 CSR omits its complete row-tile identity")
+                structure_path = output_directory / "v26_q0_preallocation_row_structure.npz"
+                structure_manifest_path = structure_path.with_suffix(".json")
+                structure_record = operation.get("preallocation_row_structure", {})
+                structure_record = structure_record if isinstance(structure_record, Mapping) else {}
+                structure_artifact = structure_record.get("array_artifact", {})
+                structure_artifact = structure_artifact if isinstance(structure_artifact, Mapping) else {}
+                if (
+                    not structure_path.is_file()
+                    or not structure_manifest_path.is_file()
+                    or structure_artifact.get("sha256") != _sha256_file(structure_path)
+                    or structure_artifact.get("path") != structure_path.name
+                ):
+                    raise RuntimeError("V26 pre-CSR int64 row-count/offset checkpoint failed identity readback")
+                with np.load(structure_path, allow_pickle=False) as structure_archive:
+                    if set(structure_archive.files) != {"row_counts_int64", "wide_offsets_int64"}:
+                        raise RuntimeError("V26 pre-CSR structure checkpoint lacks both int64 arrays")
+                    row_counts_wide = np.asarray(structure_archive["row_counts_int64"])
+                    wide_offsets = np.asarray(structure_archive["wide_offsets_int64"])
+                    if (
+                        row_counts_wide.dtype != np.dtype(np.int64)
+                        or wide_offsets.dtype != np.dtype(np.int64)
+                        or row_counts_wide.shape != (shape[0],)
+                        or wide_offsets.shape != (shape[0] + 1,)
+                        or int(wide_offsets[0]) != 0
+                        or int(wide_offsets[-1]) != nnz
+                        or np.any(row_counts_wide < 0)
+                        or np.any(wide_offsets[1:] < wide_offsets[:-1])
+                        or int(max(shape[0], nnz, int(np.max(wide_offsets, initial=0)))) > np.iinfo(np.int32).max
+                    ):
+                        raise RuntimeError("V26 q0 pre-CSR wide structure failed int32-capacity verification")
+                allocation_gate("task40_v26_q0_factor_csr_input_retention", {
+                    "additional_payload_bytes": payload_bytes,
+                    "matrix_payload_bytes": 0,
+                    "workspace_bytes": 0,
+                    "future_co_resident_reserve_bytes": 0,
+                    "disk_payload_bytes": 0,
+                    "selected_q": 0,
+                    "source_csr_payload_bytes_to_retain": payload_bytes,
+                    "row_count": shape[0],
+                    "nnz": nnz,
+                    "wide_int64_structure_checkpoint_sha256": _sha256_file(structure_path),
+                    "wide_structure_checked_before_int32_csr_readback": True,
+                })
+                loaded_arrays: dict[str, np.ndarray] = {}
+                for name in ("indptr", "indices", "data"):
+                    item = files[name]
+                    if not isinstance(item, Mapping):
+                        raise RuntimeError(f"V26 q0 CSR file record is malformed: {name}")
+                    path = (output_directory / str(item.get("path", ""))).resolve()
+                    if (
+                        not path.is_relative_to(output_directory.resolve())
+                        or not path.is_file()
+                        or path.stat().st_size != item.get("bytes")
+                        or _sha256_file(path) != item.get("sha256")
+                    ):
+                        raise RuntimeError(f"V26 q0 CSR file hash failed readback: {name}")
+                    loaded_arrays[name] = np.load(path, allow_pickle=False)
+                indptr = loaded_arrays["indptr"]
+                indices = loaded_arrays["indices"]
+                data = loaded_arrays["data"]
+                if (
+                    indptr.dtype != np.dtype(np.int32)
+                    or indices.dtype != np.dtype(np.int32)
+                    or data.dtype != np.dtype(np.complex128)
+                    or indptr.shape != (shape[0] + 1,)
+                    or indices.shape != (nnz,)
+                    or data.shape != (nnz,)
+                    or int(indptr[0]) != 0
+                    or int(indptr[-1]) != nnz
+                    or not np.array_equal(np.diff(indptr).astype(np.int64), row_counts_wide)
+                    or not np.array_equal(indptr.astype(np.int64), wide_offsets)
+                ):
+                    raise RuntimeError("V26 q0 CSR arrays differ from the full wide pre-CSR row structure")
+                q0_csr = sparse.csr_matrix((data, indices, indptr), shape=shape, copy=False)
+                if not q0_csr.has_canonical_format or not q0_csr.has_sorted_indices:
+                    raise RuntimeError("V26 q0 saved CSR is not canonical sorted CSR")
+                factor_checkpoint_root = output_directory / "v26_q0_factor"
+                factor_checkpoint_root.mkdir(parents=True, exist_ok=True)
+                factor_checkpoint_path = factor_checkpoint_root / "v26_q0_factor_checkpoints.json"
+                try:
+                    factor_report = run_task40_v26_selected_q0_factor_lifecycle(
+                        q0_csr,
+                        allocation_gate=allocation_gate,
+                        checkpoint_directory=factor_checkpoint_root,
+                        current_identity=current_identity,
+                    )
+                except _ProbeResourceBlocked as error:
+                    factor_report = {
+                        "schema": "task40extra.review_v26_selected_q0_factor_lifecycle.v1",
+                        "status": "RESOURCE_CONTROLLED_STOP",
+                        "selected_q": 0,
+                        "failed_stage": error.stage,
+                        "resource_blocker": {"stage": error.stage, **dict(error.facts), "passed": False},
+                        "checkpoint_path": str(factor_checkpoint_path),
+                        "checkpoint_sha256": _sha256_file(factor_checkpoint_path)
+                        if factor_checkpoint_path.is_file() else None,
+                    }
+                except Exception as error:
+                    factor_report = {
+                        "schema": "task40extra.review_v26_selected_q0_factor_lifecycle.v1",
+                        "status": "FAILED_Q0_FACTOR_LIFECYCLE",
+                        "selected_q": 0,
+                        "failure_type": type(error).__name__,
+                        "failure_message": str(error),
+                        "checkpoint_path": str(factor_checkpoint_path),
+                        "checkpoint_sha256": _sha256_file(factor_checkpoint_path)
+                        if factor_checkpoint_path.is_file() else None,
+                    }
+                finally:
+                    del q0_csr, loaded_arrays, indptr, indices, data, row_counts_wide, wide_offsets
+                factor_report = dict(factor_report)
+                operation["factor_lifecycle"] = factor_report
+                operation["factor_or_solve_built"] = bool(
+                    factor_report.get("q_coverage", {}).get("numeric_factor_built") is True
+                )
+                operation["ksp_created"] = False
+                operation["pde_solved"] = False
+                operation["factor_checkpoint"] = {
+                    "path": str(factor_checkpoint_path),
+                    "sha256": _sha256_file(factor_checkpoint_path)
+                    if factor_checkpoint_path.is_file() else None,
+                }
+                if factor_report.get("status") == "PASS_Q0_FACTOR_PROBE_AND_RHS_SOLVE":
+                    operation["status"] = "PASS_COMPLETE_Q0_CSR_AND_FACTOR"
+                elif factor_report.get("status") == "RESOURCE_CONTROLLED_STOP":
+                    operation["status"] = "RESOURCE_CONTROLLED_STOP_AFTER_Q0_CSR"
+                    operation["failed_stage"] = factor_report.get("failed_stage")
+                    operation["resource_blocker"] = factor_report.get("resource_blocker")
+                else:
+                    operation["status"] = "FAILED_Q0_FACTOR_LIFECYCLE"
+                    operation["failed_stage"] = "q0_factor_lifecycle"
+                    operation["failure_type"] = factor_report.get("failure_type", "RuntimeError")
+                    operation["failure_message"] = factor_report.get("failure_message", "q0 factor lifecycle failed")
+                operation["csr_structure_checkpoint"] = {
+                    "path": structure_path.name,
+                    "sha256": _sha256_file(structure_path),
+                    "manifest_path": structure_manifest_path.name,
+                    "manifest_sha256": _sha256_file(structure_manifest_path),
+                    "wide_int64_rows_and_offsets_preserved": True,
+                }
+    except _ProbeResourceBlocked as error:
+        previous = locals().get("operation")
+        if stop_stage == "selected_reference_q_csr" and isinstance(previous, Mapping) and previous.get("status") == "PASS_COMPLETE_Q0_CSR":
+            factor_checkpoint_root = output_directory / "v26_q0_factor"
+            factor_checkpoint_root.mkdir(parents=True, exist_ok=True)
+            factor_checkpoint_path = factor_checkpoint_root / "v26_q0_factor_checkpoints.json"
+            if not factor_checkpoint_path.is_file():
+                _write_json(factor_checkpoint_path, {
+                    "schema": "task40extra.review_v26_selected_q0_factor_lifecycle.v1",
+                    "status": "RESOURCE_CONTROLLED_STOP",
+                    "current_identity": current_identity,
+                    "selected_q": 0,
+                    "factor_route": "V26_SELECTED_Q0_ONLY; no fabricated q_count=1 profile",
+                    "q_coverage": {"numeric_factor_attempted": False, "numeric_factor_built": False},
+                    "resource_gates": [{"stage": error.stage, "request_facts": {}, "admission": None}],
+                    "cleanup": {
+                        "status": "NOT_STARTED",
+                        "destroy_succeeded": True,
+                        "native_object_counts_after_destroy": {
+                            "matrices_current": 0, "factors_current": 0, "vectors_current": 0,
+                        },
+                    },
+                    "failure": {"type": type(error).__name__, "message": str(error)},
+                })
+            operation = {
+                **dict(previous),
+                "status": "RESOURCE_CONTROLLED_STOP_AFTER_Q0_CSR",
+                "failed_stage": error.stage,
+                "resource_blocker": {"stage": error.stage, **dict(error.facts), "passed": False},
+                "factor_lifecycle": {
+                    "schema": "task40extra.review_v26_selected_q0_factor_lifecycle.v1",
+                    "status": "RESOURCE_CONTROLLED_STOP",
+                    "selected_q": 0,
+                    "resource_blocker": {"stage": error.stage, **dict(error.facts), "passed": False},
+                    "checkpoint_path": str(factor_checkpoint_path.resolve()),
+                    "checkpoint_sha256": _sha256_file(factor_checkpoint_path),
+                },
+                "factor_checkpoint": {
+                    "path": str(factor_checkpoint_path.resolve()),
+                    "sha256": _sha256_file(factor_checkpoint_path),
+                },
+                "csr_structure_checkpoint": {
+                    "path": "v26_q0_preallocation_row_structure.npz",
+                    "sha256": _sha256_file(output_directory / "v26_q0_preallocation_row_structure.npz"),
+                    "manifest_path": "v26_q0_preallocation_row_structure.json",
+                    "manifest_sha256": _sha256_file(output_directory / "v26_q0_preallocation_row_structure.json"),
+                    "wide_int64_rows_and_offsets_preserved": True,
+                },
+                "factor_or_solve_built": False,
+                "ksp_created": False,
+                "pde_solved": False,
+            }
+        else:
+            operation = {
+                "schema": "task40extra.review_v26_selected_q_stage.v1",
+                "status": "RESOURCE_CONTROLLED_STOP",
+                "classification": "V26_LIVE_RESOURCE_ADMISSION_BLOCKED",
+                "official_result": False,
+                "stop_stage": stop_stage,
+                "selector_sha256": selector_sha,
+                "failed_stage": error.stage,
+                "resource_blocker": {**dict(error.facts), "passed": False},
+                "factor_or_solve_built": False,
+            }
+    except Exception as error:
+        previous = locals().get("operation")
+        if stop_stage == "selected_reference_q_csr" and isinstance(previous, Mapping) and previous.get("status") == "PASS_COMPLETE_Q0_CSR":
+            factor_checkpoint_root = output_directory / "v26_q0_factor"
+            factor_checkpoint_root.mkdir(parents=True, exist_ok=True)
+            factor_checkpoint_path = factor_checkpoint_root / "v26_q0_factor_checkpoints.json"
+            if not factor_checkpoint_path.is_file():
+                _write_json(factor_checkpoint_path, {
+                    "schema": "task40extra.review_v26_selected_q0_factor_lifecycle.v1",
+                    "status": "FAILED_Q0_FACTOR_LIFECYCLE",
+                    "current_identity": current_identity,
+                    "selected_q": 0,
+                    "factor_route": "V26_SELECTED_Q0_ONLY; no fabricated q_count=1 profile",
+                    "q_coverage": {"numeric_factor_attempted": False, "numeric_factor_built": False},
+                    "cleanup": {
+                        "status": "NOT_STARTED",
+                        "destroy_succeeded": True,
+                        "native_object_counts_after_destroy": {
+                            "matrices_current": 0, "factors_current": 0, "vectors_current": 0,
+                        },
+                    },
+                    "failure": {"type": type(error).__name__, "message": str(error)},
+                })
+            factor_report = {
+                "schema": "task40extra.review_v26_selected_q0_factor_lifecycle.v1",
+                "status": "FAILED_Q0_FACTOR_LIFECYCLE",
+                "selected_q": 0,
+                "failure_type": type(error).__name__,
+                "failure_message": str(error),
+                "checkpoint_path": str(factor_checkpoint_path.resolve()),
+                "checkpoint_sha256": _sha256_file(factor_checkpoint_path),
+            }
+            operation = {
+                **dict(previous),
+                "status": "FAILED_Q0_FACTOR_LIFECYCLE",
+                "failed_stage": "q0_factor_lifecycle",
+                "failure_type": type(error).__name__,
+                "failure_message": str(error),
+                "factor_lifecycle": factor_report,
+                "factor_checkpoint": {
+                    "path": str(factor_checkpoint_path.resolve()),
+                    "sha256": _sha256_file(factor_checkpoint_path),
+                },
+                "csr_structure_checkpoint": {
+                    "path": "v26_q0_preallocation_row_structure.npz",
+                    "sha256": _sha256_file(output_directory / "v26_q0_preallocation_row_structure.npz"),
+                    "manifest_path": "v26_q0_preallocation_row_structure.json",
+                    "manifest_sha256": _sha256_file(output_directory / "v26_q0_preallocation_row_structure.json"),
+                    "wide_int64_rows_and_offsets_preserved": True,
+                },
+                "factor_or_solve_built": False,
+                "ksp_created": False,
+                "pde_solved": False,
+            }
+        else:
+            operation = {
+                "schema": "task40extra.review_v26_selected_q_stage.v1",
+                "status": "FAILED_V26_SELECTED_Q_GATES",
+                "classification": "V26_SELECTED_Q_OPERATION_FAILED",
+                "official_result": False,
+                "stop_stage": stop_stage,
+                "selector_sha256": selector_sha,
+                "failure_type": type(error).__name__,
+                "failure_message": str(error),
+                "factor_or_solve_built": False,
+            }
+    _write_json(operation_path, operation)
+
+    op_status = str(operation.get("status", "FAILED_V26_SELECTED_Q_GATES"))
+    controlled = op_status == "RESOURCE_CONTROLLED_STOP" or (
+        stop_stage == "selected_reference_q_csr"
+        and op_status == "PASS_COMPLETE_Q0_STREAM_CSR_NOT_BUILT"
+    )
+    passed = (
+        op_status == "PASS_SAVED_STREAM_REPLAY_NO_NATIVE"
+        if stop_stage == "selected_reference_q_build_only"
+        else op_status in {"PASS_COMPLETE_Q0_STREAM", "PASS_COMPLETE_Q0_CSR", "PASS_COMPLETE_Q0_CSR_AND_FACTOR"}
+        if stop_stage == "selected_reference_q_csr"
+        else op_status == "PASS_COMPLETE_Q0_STREAM"
+    )
+    factor_status = operation.get("factor_lifecycle", {})
+    factor_status = factor_status if isinstance(factor_status, Mapping) else {}
+    csr_built = op_status in {
+        "PASS_COMPLETE_Q0_CSR",
+        "PASS_COMPLETE_Q0_CSR_AND_FACTOR",
+        "RESOURCE_CONTROLLED_STOP_AFTER_Q0_CSR",
+        "FAILED_Q0_FACTOR_LIFECYCLE",
+    }
+    csr_retained_controlled = (
+        stop_stage == "selected_reference_q_csr"
+        and op_status == "RESOURCE_CONTROLLED_STOP_AFTER_Q0_CSR"
+    )
+    if passed:
+        status, outcome = "stage_completed", "STAGE_COMPLETED"
+        completed = ["preflight", stop_stage]
+    elif controlled or csr_retained_controlled:
+        status, outcome = "controlled_stop", "RESOURCE_CONTROLLED_STOP"
+        completed = (
+            ["preflight", "selected_reference_q_consumer", "selected_reference_q_csr"]
+            if csr_retained_controlled
+            else ["preflight", "selected_reference_q_consumer"]
+            if stop_stage == "selected_reference_q_csr" and op_status != "RESOURCE_CONTROLLED_STOP"
+            else ["preflight"]
+        )
+    elif csr_built:
+        status, outcome = "failed", "STAGE_FAILED"
+        completed = ["preflight", "selected_reference_q_consumer", "selected_reference_q_csr"]
+    else:
+        status, outcome = "failed", "STAGE_FAILED"
+        completed = ["preflight"]
+
+    operation_sha = _sha256_file(operation_path)
+    receipt = {
+        "schema": "task40extra.review_v20_partial_result.v2",
+        "status": status,
+        "outcome": outcome,
+        "classification": (
+            "SELECTED_REFERENCE_Q_V26_SAVED_STREAM_REPLAY"
+            if stop_stage == "selected_reference_q_build_only"
+            else "SELECTED_REFERENCE_Q_V26_NATIVE_CONSUMER"
+            if stop_stage == "selected_reference_q_consumer"
+            else "SELECTED_REFERENCE_Q_V26_COMPLETE_CSR"
+        ),
+        "run_id": preflight.get("run_id"),
+        "profile": profile,
+        "source_sha": source_sha,
+        "input_sha256": preflight.get("input_sha256"),
+        "physical_model_sha256": preflight.get("physical_model_sha256"),
+        "requested_stop_stage": stop_stage,
+        "attempted_stages": ["preflight", stop_stage],
+        "completed_stages": completed,
+        "failed_stage": operation.get("failed_stage") if status == "failed" else None,
+        "stage_result": {"completed_stage": stop_stage if passed else None, "probe_status": op_status},
+        "v26_selected_q_stage": {
+            "operation_path": operation_path.name,
+            "operation_sha256": operation_sha,
+            "operation_status": op_status,
+            "operation": operation,
+            "selector_path": str(selector_path),
+            "selector_sha256": selector_sha,
+            "producer_root": str(producer_root),
+            "saved_replay_root": str(replay_root),
+            "native_root": str(native_root),
+            "resource_gates": resource_gates,
+        },
+        "q_coverage": {
+            "status": "KNOWN",
+            "expected_q_count": 8,
+            "built_q_count": 1 if csr_built else 0,
+            "full_q_matrix_coverage": "1/8" if csr_built else "0/8",
+            "complete_streamed_consumer_count": int(
+                stop_stage != "selected_reference_q_build_only"
+                and isinstance(operation.get("complete_stream"), Mapping)
+            ),
+            "selected_q": 0,
+            "paired_action_q": 4,
+            "csr_status": "BUILT" if csr_built else "NOT_BUILT",
+            "factor_count": int(factor_status.get("q_coverage", {}).get("numeric_factor_built") is True),
+            "factor_evicted_after_probe_and_rhs_solve": bool(
+                factor_status.get("cleanup", {}).get("destroy_succeeded") is True
+            ),
+            "max_simultaneous_factors": int(
+                factor_status.get("max_simultaneous_native_objects", {}).get("factors", 0)
+            ),
+            "ksp_created": False,
+            "pde_solved": False,
+            "reason": "V26 replays saved q0/q4 streams, validates native q0/q4 actions, builds only q0 CSR, and runs a fresh-probe plus one nonzero-RHS factor lifecycle only when all resource gates admit it; no KSP, PDE, or official R/T/A is produced.",
+        },
+        "resource_gate": operation.get("resource_blocker") if controlled else None,
+        "cleanup": {"status": "OPERATION_RETURNED", "owner_cleanup": "V26 stage operation finally block"},
+        "artifact_hashes": {
+            "v20_stage_preflight.json": {
+                "path": "v20_stage_preflight.json",
+                "sha256": _sha256_file(output_directory / "v20_stage_preflight.json"),
+            },
+            "v26_selected_q_stage.json": {
+                "path": operation_path.name,
+                "sha256": operation_sha,
+            },
+        },
+        "official_result": False,
+        "not_run": [
+            "all other q CSR",
+            *( [] if factor_status.get("q_coverage", {}).get("numeric_factor_built") is True else ["q0 factor"] ),
+            "KSP", "PDE", "official R/T/A",
+        ],
+        "full_field_release_allowed": False,
+    }
+    _write_json(output_directory / "v20_partial_result.json", receipt)
+    return {
+        "passed": passed or controlled,
+        "errors": [] if passed or controlled else [str(operation.get("failure_message", op_status))],
+        "official_result": False,
+        "status": status,
+        "summary": receipt,
+        "numerical_output_directory": str(output_directory),
+    }
+
+
 def run_task40_v20_stage(
     resolved_payload: Mapping[str, Any],
     run_directory: str | Path,
@@ -1263,6 +1957,26 @@ def run_task40_v20_stage(
     )
     _write_json(output_directory / "v20_stage_preflight.json", preflight)
     completed = ["preflight"]
+
+    if (
+        profile == _V22_TARGET_OPERATOR_PROFILE
+        and stop_stage in {
+            "selected_reference_q_build_only",
+            "selected_reference_q_consumer",
+            "selected_reference_q_csr",
+        }
+        and os.environ.get("TASK40_V26_OPERATION")
+    ):
+        return _run_v26_selected_q0_stage(
+            resolved_payload,
+            output_directory,
+            source_sha=source_sha,
+            profile=profile,
+            preflight=preflight,
+            modes=modes,
+            mode_rows=mode_rows,
+            stop_stage=stop_stage,
+        )
 
     if profile == _V22_TARGET_OPERATOR_PROFILE and stop_stage in {
         "selected_reference_q_consumer",
