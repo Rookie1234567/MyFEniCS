@@ -308,157 +308,31 @@
     "class_hot_hits": 63960,
     "boundary_aggregate": 1
   },
-  "arrays": [
-    {
-      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_trace_operator_preflight_20261011T010347954645Z/fixed0.npz",
-      "sha256": "be7300436a288f22f006a40e696c3b115a3f6d531958e712d00e788405d672a8",
-      "members": {
-        "input": {
-          "shape": [
-            1177293
-          ],
-          "dtype": "complex128",
-          "sha256": "c85827aca0445b486afda27fd0bfa036baaa914efface98966ac4dfe3d5b4d7d"
-        },
-        "output": {
-          "shape": [
-            1177293
-          ],
-          "dtype": "complex128",
-          "sha256": "4413f0e5b43b82996ae4f105096ea97a6bad9eab73ef7eed701c1b9aa8ab3834"
-        },
-        "reference": {
-          "shape": [
-            1177293
-          ],
-          "dtype": "complex128",
-          "sha256": "036738b161dd5258c7a335fc1e9de5948f04ffdd340483ee7c4a27da95ef1b69"
-        }
-      }
+  "arrays": {
+    "full_payload": {
+      "path": "benchmarks/artifacts/task042/v71/increment_evidence_v71/hot_operator_qualification_full_delivery.json",
+      "bytes": 9193,
+      "sha256": "f3ce7a12e95f41a338ece51f12ba5ccea7d7bfea123beefa1f268d5047c62ec2"
     },
-    {
-      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_trace_operator_preflight_20261011T010347954645Z/fixed1.npz",
-      "sha256": "192528fc5f629012982c4e7329e5a13838acc996228750cf9a4fe75ecc7c82db",
-      "members": {
-        "input": {
-          "shape": [
-            1177293
-          ],
-          "dtype": "complex128",
-          "sha256": "6ba257f65e8f2994ce5e211772afcaf079b1c5a1732e3de87be5a5f8bfd62a85"
-        },
-        "output": {
-          "shape": [
-            1177293
-          ],
-          "dtype": "complex128",
-          "sha256": "d5ffbf61730bf9321ed3def89560e0680f9daee54d2abea4d199e56c455a0606"
-        },
-        "reference": {
-          "shape": [
-            1177293
-          ],
-          "dtype": "complex128",
-          "sha256": "77c2198ac39ce6c12131d78897e307a976ad4dd88eaa045f1dc9926c3743974c"
-        }
-      }
-    }
-  ],
+    "json_pointer": "/arrays",
+    "same_packages_in": "array_inventory_v71.json"
+  },
   "nonzero_rhs_receipts": {
     "recovery": 0.0,
     "original_operation": 1.4652695960184805e-14,
     "internal_and_port_nonzero": true,
-    "original_witness_source": {
-      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v70/task042_v70_assembly_time_p5_prepare_20261010T142344843423Z/recovered_original_witness.npz",
-      "sha256": "7f2b0a1c6d095e2e3c9e3ffbccd9a4791c246cca8afc0e34fc06c3e4288c87c3",
-      "members": {
-        "retained": {
-          "shape": [
-            1177293,
-            2
-          ],
-          "dtype": "complex128",
-          "sha256": "5a0d2e1205301c667b5ce55d267309c2d7f5484275c76dcd3d18b51f59f282e5"
-        },
-        "full": {
-          "shape": [
-            1944573,
-            2
-          ],
-          "dtype": "complex128",
-          "sha256": "6d829a30f88f6b1ed4cb22734117d8fe7d2b1c8c29f004796b81679c8da0b40c"
-        },
-        "rhs": {
-          "shape": [
-            1944573
-          ],
-          "dtype": "complex128",
-          "sha256": "e7d8e0bbff952ffe185fa1d238bcabe50c83561c9639a600cf8061126b3b5f21"
-        },
-        "original_action": {
-          "shape": [
-            1944573,
-            2
-          ],
-          "dtype": "complex128",
-          "sha256": "f9b16daf65b27a1af5953c517af202bad2bcd85d733de459eac4d173a8e143af"
-        },
-        "original_residual": {
-          "shape": [
-            1944573,
-            2
-          ],
-          "dtype": "complex128",
-          "sha256": "a7e46b288659148c4cd9ce595cfed254c8ddabf313e530f0a94a4627b642f5d0"
-        },
-        "condensed_residual_lift": {
-          "shape": [
-            1944573,
-            2
-          ],
-          "dtype": "complex128",
-          "sha256": "c039b4fe510136c8bf54b3702917b72fa147b432504f7dec72d34ddb0e12b5ba"
-        }
-      }
-    },
     "recovery_identity": {
       "maximum_cell_operation_scaled": 4.482319126297694e-16,
       "pass_gate": true,
       "cells": 25576
     },
-    "arrays": {
-      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_trace_operator_preflight_20261011T010347954645Z/nonzero_rhs_witness.npz",
-      "sha256": "07aeeb56a084525090df7323f34753dd9b70d7effd6d7a434d01c473b83d9939",
-      "members": {
-        "trace": {
-          "shape": [
-            1177293
-          ],
-          "dtype": "complex128",
-          "sha256": "c85827aca0445b486afda27fd0bfa036baaa914efface98966ac4dfe3d5b4d7d"
-        },
-        "rhs": {
-          "shape": [
-            1944573
-          ],
-          "dtype": "complex128",
-          "sha256": "e7d8e0bbff952ffe185fa1d238bcabe50c83561c9639a600cf8061126b3b5f21"
-        },
-        "recovered": {
-          "shape": [
-            1944573
-          ],
-          "dtype": "complex128",
-          "sha256": "e337e824826b8c8be84e77591f7636b2cedb4d4b121c5b623b32f434b900480c"
-        },
-        "lifted": {
-          "shape": [
-            1944573
-          ],
-          "dtype": "complex128",
-          "sha256": "e0d82f28d4f48a8ece2b0cf6682040bff3e03066e9689146d4d97678d1a2edfe"
-        }
-      }
+    "array_and_parent_bindings": {
+      "full_payload": {
+        "path": "benchmarks/artifacts/task042/v71/increment_evidence_v71/hot_operator_qualification_full_delivery.json",
+        "bytes": 9193,
+        "sha256": "f3ce7a12e95f41a338ece51f12ba5ccea7d7bfea123beefa1f268d5047c62ec2"
+      },
+      "json_pointer": "/nonzero_rhs_receipts"
     }
   },
   "no_equation_qualified_physical_candidate": true,
@@ -467,5 +341,10 @@
     34.456206552
   ],
   "paired_production_speed_ratio": null,
-  "historical_and_new_timing_not_matched_full_runs": true
+  "historical_and_new_timing_not_matched_full_runs": true,
+  "complete_pre_compaction_payload": {
+    "path": "benchmarks/artifacts/task042/v71/increment_evidence_v71/hot_operator_qualification_full_delivery.json",
+    "bytes": 9193,
+    "sha256": "f3ce7a12e95f41a338ece51f12ba5ccea7d7bfea123beefa1f268d5047c62ec2"
+  }
 }

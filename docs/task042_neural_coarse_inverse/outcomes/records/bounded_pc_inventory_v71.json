@@ -36,64 +36,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 31190575,
-        "4": 402150,
-        "5": 1425,
-        "6": 838,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 766,
-        "17": 766,
-        "18": 0,
-        "19": 0,
-        "20": 31190575
+        "17": 766
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch00.npz",
-        "sha256": "68e1cf16b52cec76884db59797be1228cf254d9a76ec6754982d7c93600dbed5",
-        "members": {
-          "data": {
-            "shape": [
-              7684925
-            ],
-            "dtype": "complex128",
-            "sha256": "3f2600b677c259c7f0b4aba0568f203eeb7c8fcbdd0df16987cd4acb0989db44"
-          },
-          "indices": {
-            "shape": [
-              7684925
-            ],
-            "dtype": "int64",
-            "sha256": "ce12ed7db4bfdbb7a8c176c47e8d96c5fd90978536e6c10197542b5d9e831187"
-          },
-          "indptr": {
-            "shape": [
-              40126
-            ],
-            "dtype": "int64",
-            "sha256": "36c1823b4d386f90c3ac3c5abd3789cfed1b8f436db9555694f17b01185670c2"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "b533adca9507e06a259435f86eb9efc1b57c18e6c4c7e841482c1d72387d8c87"
-          }
-        }
+        "sha256": "68e1cf16b52cec76884db59797be1228cf254d9a76ec6754982d7c93600dbed5"
       },
       "numeric_calls": 0
     },
@@ -113,64 +66,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 60061950,
-        "4": 707190,
-        "5": 2405,
-        "6": 1390,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1474,
-        "17": 1474,
-        "18": 0,
-        "19": 0,
-        "20": 60061950
+        "17": 1474
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch01.npz",
-        "sha256": "e84abb17a3cc46a8784fc70819f1688bfcb6f1b1851a18de839ffca32be0e6d0",
-        "members": {
-          "data": {
-            "shape": [
-              13058900
-            ],
-            "dtype": "complex128",
-            "sha256": "8fdd848d9fa61201dd44952f9b5e6dcb58705e93adcbe7b818485c1254dda37e"
-          },
-          "indices": {
-            "shape": [
-              13058900
-            ],
-            "dtype": "int64",
-            "sha256": "fe17036c5f36d6ffdec35236d12ce914e070b369d658dba58169663c136863e3"
-          },
-          "indptr": {
-            "shape": [
-              66501
-            ],
-            "dtype": "int64",
-            "sha256": "c1e6e928a852e3b82712752004149374719e51741980cd7f04cf878c525f4d6c"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "779179aaa07de28a7a55978b203afaa8474ea5f3eab674143af552acabe71080"
-          }
-        }
+        "sha256": "e84abb17a3cc46a8784fc70819f1688bfcb6f1b1851a18de839ffca32be0e6d0"
       },
       "numeric_calls": 0
     },
@@ -190,64 +96,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 52587100,
-        "4": 674780,
-        "5": 1980,
-        "6": 1334,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1278,
-        "17": 1278,
-        "18": 0,
-        "19": 0,
-        "20": 52587100
+        "17": 1278
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch02.npz",
-        "sha256": "7fa37c84378953a4c1e9a60bdc6e0c3b2877057e1a610565b147729e221dfd15",
-        "members": {
-          "data": {
-            "shape": [
-              12427300
-            ],
-            "dtype": "complex128",
-            "sha256": "5df9ec6e7b2b72f91cce839f63e6bad119d6ca5820b71b0ee1fe998163c3ba61"
-          },
-          "indices": {
-            "shape": [
-              12427300
-            ],
-            "dtype": "int64",
-            "sha256": "3cfea276a014315ffa570df97e1cf535f3fa98e09529f20d9594c5108d86f8ea"
-          },
-          "indptr": {
-            "shape": [
-              63231
-            ],
-            "dtype": "int64",
-            "sha256": "211512489195523dbc28dd7c02ef26a6977a9b8ac3eee5d98b9f01cc1ae82433"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "1cf24a89bcc7a5e2cac4450a2b93bef34ced4cb096a3c1441d665792d4846d91"
-          }
-        }
+        "sha256": "7fa37c84378953a4c1e9a60bdc6e0c3b2877057e1a610565b147729e221dfd15"
       },
       "numeric_calls": 0
     },
@@ -267,64 +126,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 28842400,
-        "4": 381830,
-        "5": 1700,
-        "6": 807,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 712,
-        "17": 712,
-        "18": 0,
-        "19": 0,
-        "20": 28842400
+        "17": 712
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch03.npz",
-        "sha256": "b7236970687a3bab357a5055f6b330443bf1ea3ecc74728daab5cdf678f19212",
-        "members": {
-          "data": {
-            "shape": [
-              7123150
-            ],
-            "dtype": "complex128",
-            "sha256": "cec2c7296619500c48f7da3230ba0118064b2dc720c5528b170281aab99d3024"
-          },
-          "indices": {
-            "shape": [
-              7123150
-            ],
-            "dtype": "int64",
-            "sha256": "c0d7ceaff81c18dfb4e019bdff08900c0d5c6b3919376a968321f66c83e8aa6e"
-          },
-          "indptr": {
-            "shape": [
-              37481
-            ],
-            "dtype": "int64",
-            "sha256": "7c40f984af7af4b4e84eda45dd69113224859f6dfa2c18483b3821c0d385c06a"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "b2867f644bf7d1788c4e2f1faf6b0991fdd5ccd775957a2d6aa1b264f5f644e6"
-          }
-        }
+        "sha256": "b7236970687a3bab357a5055f6b330443bf1ea3ecc74728daab5cdf678f19212"
       },
       "numeric_calls": 0
     },
@@ -344,64 +156,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 36609125,
-        "4": 468560,
-        "5": 1540,
-        "6": 928,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 903,
-        "17": 903,
-        "18": 0,
-        "19": 0,
-        "20": 36609125
+        "17": 903
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch04.npz",
-        "sha256": "6b19f3e6f7ca59069388f8f0e95f35d3d238ecfd2712857a29ea7247c1f1dcc8",
-        "members": {
-          "data": {
-            "shape": [
-              8667825
-            ],
-            "dtype": "complex128",
-            "sha256": "23cbdabeea24551770587f2357fb98e96a4b9419b6f329537fd42effb83ec9a9"
-          },
-          "indices": {
-            "shape": [
-              8667825
-            ],
-            "dtype": "int64",
-            "sha256": "7ca6a112dbf9a54e227391a9ac3cc4439c23862cb9b1b8be53befa08df0d98cf"
-          },
-          "indptr": {
-            "shape": [
-              44816
-            ],
-            "dtype": "int64",
-            "sha256": "7a4a89e2c5b002db6a549fdeccddbc3eb148c030da6f02256a2d34d253ea7449"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "32988ca161f89af18176665c46974a4d51a0c62a247a8919f79c683e73b3d302"
-          }
-        }
+        "sha256": "6b19f3e6f7ca59069388f8f0e95f35d3d238ecfd2712857a29ea7247c1f1dcc8"
       },
       "numeric_calls": 0
     },
@@ -421,64 +186,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 42640700,
-        "4": 605490,
-        "5": 1715,
-        "6": 1239,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1066,
-        "17": 1066,
-        "18": 0,
-        "19": 0,
-        "20": 42640700
+        "17": 1066
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch05.npz",
-        "sha256": "de5d8162dade9149a15424cfd38915eaf65eeb9a549b441a5867fcc67b1790b5",
-        "members": {
-          "data": {
-            "shape": [
-              11313800
-            ],
-            "dtype": "complex128",
-            "sha256": "eea818b1b32820fdcf5e615e65ef18bb9e2464250a7fb9f5c6a201ea62772f39"
-          },
-          "indices": {
-            "shape": [
-              11313800
-            ],
-            "dtype": "int64",
-            "sha256": "cb41193cf26e9dda96b1a3cc11e74c90a822b786492b4d366d2eb6054d892b2a"
-          },
-          "indptr": {
-            "shape": [
-              57841
-            ],
-            "dtype": "int64",
-            "sha256": "c6d4c5b84e2429f7ad66018fed814597a29f762e96aef0e10d77f6d646022a4c"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "f6c6364815811cc579252669b7747f256dcb2db58fff9260e721ba8c94e1b769"
-          }
-        }
+        "sha256": "de5d8162dade9149a15424cfd38915eaf65eeb9a549b441a5867fcc67b1790b5"
       },
       "numeric_calls": 0
     },
@@ -498,64 +216,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 60722175,
-        "4": 726190,
-        "5": 2190,
-        "6": 1395,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1465,
-        "17": 1465,
-        "18": 0,
-        "19": 0,
-        "20": 60722175
+        "17": 1465
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch06.npz",
-        "sha256": "2bed710d7ea4927ac8909980ecab45238db5cdb8f39450e169cd8ece15ae41f6",
-        "members": {
-          "data": {
-            "shape": [
-              13360325
-            ],
-            "dtype": "complex128",
-            "sha256": "bb82b3aa7933097dde9f8e6ef27803b0f871bcf0cd8a42a96d66b4a0bf778d41"
-          },
-          "indices": {
-            "shape": [
-              13360325
-            ],
-            "dtype": "int64",
-            "sha256": "63d808e95704a2461845d6e2e9450cef835b2f9ecb226fce53df25fa8fd66e3f"
-          },
-          "indptr": {
-            "shape": [
-              67746
-            ],
-            "dtype": "int64",
-            "sha256": "1a4520cb860d51e4c3fb45452ef9faada516117b2d0e34abbe30af5dc482ec3e"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "b2af0366269221e52613b3684db36849d015662a150b2e017de7f38e87d67953"
-          }
-        }
+        "sha256": "2bed710d7ea4927ac8909980ecab45238db5cdb8f39450e169cd8ece15ae41f6"
       },
       "numeric_calls": 0
     },
@@ -575,64 +246,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 25606600,
-        "4": 346650,
-        "5": 1555,
-        "6": 725,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 642,
-        "17": 642,
-        "18": 0,
-        "19": 0,
-        "20": 25606600
+        "17": 642
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch07.npz",
-        "sha256": "ffef90e7c226791230406ea3aa1307e9b3a75e020ac796e7badec85260ca36e8",
-        "members": {
-          "data": {
-            "shape": [
-              6313550
-            ],
-            "dtype": "complex128",
-            "sha256": "a0ba2cf1f9b36fe043efd74589a19fc1b7001451e2f5bbfb03f5182174d764aa"
-          },
-          "indices": {
-            "shape": [
-              6313550
-            ],
-            "dtype": "int64",
-            "sha256": "ac1267c7994adbbccbf0fd549e31dca08433268436464f8e24c6f2a12083b6a9"
-          },
-          "indptr": {
-            "shape": [
-              33491
-            ],
-            "dtype": "int64",
-            "sha256": "7b169aa58d2c25eebba306a295c61a62e4ade992aa01ee50f24a7c6a9d134c3b"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "d152390e3f3e3cff09c8429ff74adb37dd99b8e586a08d924b3bf4e276b677bd"
-          }
-        }
+        "sha256": "ffef90e7c226791230406ea3aa1307e9b3a75e020ac796e7badec85260ca36e8"
       },
       "numeric_calls": 0
     },
@@ -652,64 +276,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 43510700,
-        "4": 516030,
-        "5": 1820,
-        "6": 981,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1034,
-        "17": 1034,
-        "18": 0,
-        "19": 0,
-        "20": 43510700
+        "17": 1034
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch08.npz",
-        "sha256": "5bc49e909f17cd72355a62d2284a982668f8631205f037722c0a426dcb2a23d9",
-        "members": {
-          "data": {
-            "shape": [
-              9252600
-            ],
-            "dtype": "complex128",
-            "sha256": "80fb7063389edcaf8cc3c2aad7de7bbc8eaede5615fad0b4d20c9abe488655e0"
-          },
-          "indices": {
-            "shape": [
-              9252600
-            ],
-            "dtype": "int64",
-            "sha256": "859f95bf5624ab8ad63bba50a9332626abd4145c51d96c8ecf052f70db861469"
-          },
-          "indptr": {
-            "shape": [
-              48131
-            ],
-            "dtype": "int64",
-            "sha256": "9141cff8d139f614022071594eda29c04e738d225c2859cf8f884eb809e16b46"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "6847ff967d983a354fe89f001abd90e224542af058ac4556f0171fef2792d51f"
-          }
-        }
+        "sha256": "5bc49e909f17cd72355a62d2284a982668f8631205f037722c0a426dcb2a23d9"
       },
       "numeric_calls": 0
     },
@@ -729,64 +306,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 32694550,
-        "4": 441290,
-        "5": 1590,
-        "6": 900,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 827,
-        "17": 827,
-        "18": 0,
-        "19": 0,
-        "20": 32694550
+        "17": 827
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch09.npz",
-        "sha256": "783aef59a22a0e8000189a8eb065e017f63983c91891e041540a07c1e7e71e1a",
-        "members": {
-          "data": {
-            "shape": [
-              8329350
-            ],
-            "dtype": "complex128",
-            "sha256": "edf3a82e814f07a5b192cffef4ada27ad23ffaf5bfc538807084a2d4ba15c2f1"
-          },
-          "indices": {
-            "shape": [
-              8329350
-            ],
-            "dtype": "int64",
-            "sha256": "6c437ddd9a0e19c7d0ee55fae6cc7041f23619442f0eb9aec81229254612ebeb"
-          },
-          "indptr": {
-            "shape": [
-              42831
-            ],
-            "dtype": "int64",
-            "sha256": "09d2a49396235972465df8ef9a3797a3b24a31c36f68c581282f92fc3b2522dc"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "74c88af9182eeedc8674f78a0e141f79be119af79a01768eb73d70df30544443"
-          }
-        }
+        "sha256": "783aef59a22a0e8000189a8eb065e017f63983c91891e041540a07c1e7e71e1a"
       },
       "numeric_calls": 0
     },
@@ -806,64 +336,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 51951675,
-        "4": 609100,
-        "5": 2405,
-        "6": 1191,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1248,
-        "17": 1248,
-        "18": 0,
-        "19": 0,
-        "20": 51951675
+        "17": 1248
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch10.npz",
-        "sha256": "c79330fbb50c0d9f3148c1ddb52c3d70cc9776dc3566a2c539dbe33e5c6d1e30",
-        "members": {
-          "data": {
-            "shape": [
-              11319825
-            ],
-            "dtype": "complex128",
-            "sha256": "d1a15dbc14e19ff6e547acc0379411a1b8593e199d94a0535e06c20237eab506"
-          },
-          "indices": {
-            "shape": [
-              11319825
-            ],
-            "dtype": "int64",
-            "sha256": "635eacf3b7e9eb13c9fcc0094c0de2cc0f0e37f00c371368355cafd96f73af2f"
-          },
-          "indptr": {
-            "shape": [
-              57436
-            ],
-            "dtype": "int64",
-            "sha256": "f0ad04a86eba1e5103e977f68a9282116e20a04ff78fbf469866458f96ba55e7"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "d7c7aa903b55d2157693be4582b6a036b6aef5480c8462cdda3f2127a483f708"
-          }
-        }
+        "sha256": "c79330fbb50c0d9f3148c1ddb52c3d70cc9776dc3566a2c539dbe33e5c6d1e30"
       },
       "numeric_calls": 0
     },
@@ -883,64 +366,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 19334200,
-        "4": 337320,
-        "5": 1070,
-        "6": 789,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 512,
-        "17": 512,
-        "18": 0,
-        "19": 0,
-        "20": 19334200
+        "17": 512
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch11.npz",
-        "sha256": "1ebd9835c7b8ed8df1b202f2586691186108dc62733035f36e088f51f24ff14d",
-        "members": {
-          "data": {
-            "shape": [
-              6749300
-            ],
-            "dtype": "complex128",
-            "sha256": "b96c58265c04bb3d0eec4074e49c2a4f756e00eb7da280477f07998c669f3df5"
-          },
-          "indices": {
-            "shape": [
-              6749300
-            ],
-            "dtype": "int64",
-            "sha256": "bbf7d824d565aa4ff5048a08976a667c81cf53f0dad26a3001fd24b9a052bc47"
-          },
-          "indptr": {
-            "shape": [
-              35391
-            ],
-            "dtype": "int64",
-            "sha256": "c162f1514bb885b964a40ba5312e795a15536999c352e7fa07a7431c0b6bd7dd"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "59392a9f1fd65339a38d6d03b621086baf51c9dcdb620476c613d3878ce682b0"
-          }
-        }
+        "sha256": "1ebd9835c7b8ed8df1b202f2586691186108dc62733035f36e088f51f24ff14d"
       },
       "numeric_calls": 0
     },
@@ -960,64 +396,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 60274225,
-        "4": 684970,
-        "5": 2200,
-        "6": 1242,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1417,
-        "17": 1417,
-        "18": 0,
-        "19": 0,
-        "20": 60274225
+        "17": 1417
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch12.npz",
-        "sha256": "722f3e6ab15aa2beb9271b69580809b1a3fe904ce79382564bfcbfbf522c1af1",
-        "members": {
-          "data": {
-            "shape": [
-              12247725
-            ],
-            "dtype": "complex128",
-            "sha256": "c696daa66e87215e3238f44a3974412b85a9e53dbadfff1bad0a6f08617bbd4f"
-          },
-          "indices": {
-            "shape": [
-              12247725
-            ],
-            "dtype": "int64",
-            "sha256": "505cf6ca796410d2f1cb453bf9b8c5b53777e4930f57e2746efc635a28d610e8"
-          },
-          "indptr": {
-            "shape": [
-              61936
-            ],
-            "dtype": "int64",
-            "sha256": "3ea17482e958b0f57bbd8919d8dedcb5e54ded1bb52a0226b52357e4659909f1"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "e5836511c0dddc38229b922764423aa8582a37e74de7a28a381d904ff630a69a"
-          }
-        }
+        "sha256": "722f3e6ab15aa2beb9271b69580809b1a3fe904ce79382564bfcbfbf522c1af1"
       },
       "numeric_calls": 0
     },
@@ -1037,64 +426,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 42681350,
-        "4": 499590,
-        "5": 2235,
-        "6": 960,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1044,
-        "17": 1044,
-        "18": 0,
-        "19": 0,
-        "20": 42681350
+        "17": 1044
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch13.npz",
-        "sha256": "edfacdd7cc31b96745336bf8966d72f2077e9b4325b360efb968825ce95c3b11",
-        "members": {
-          "data": {
-            "shape": [
-              8904500
-            ],
-            "dtype": "complex128",
-            "sha256": "84b77daa8d9e58a334071d9f80f7d85603d4983e7dbdab954705dd760f859852"
-          },
-          "indices": {
-            "shape": [
-              8904500
-            ],
-            "dtype": "int64",
-            "sha256": "fa2150a5b4d1cb057999ce0eb31d851e9946a9b111a638dc08f0afb25378a611"
-          },
-          "indptr": {
-            "shape": [
-              46501
-            ],
-            "dtype": "int64",
-            "sha256": "c1ac64275f5153f0e084f51cc1f87cd68e3934dbe1bfa952661ecb5cab73db33"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "d03d1f3ced38cbba5118eb098a97355891fe7268a6c0915f83447b2c67748799"
-          }
-        }
+        "sha256": "edfacdd7cc31b96745336bf8966d72f2077e9b4325b360efb968825ce95c3b11"
       },
       "numeric_calls": 0
     },
@@ -1114,64 +456,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 53056000,
-        "4": 590880,
-        "5": 2130,
-        "6": 1090,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1254,
-        "17": 1254,
-        "18": 0,
-        "19": 0,
-        "20": 53056000
+        "17": 1254
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch14.npz",
-        "sha256": "49dd40d6809964d95813868f7e244bbd03f04d3167dd99156095c851eac44593",
-        "members": {
-          "data": {
-            "shape": [
-              10498600
-            ],
-            "dtype": "complex128",
-            "sha256": "9101e57f3f76b0f5201c03fda002101050763a8d7702d30f6cc77f3ceaffda85"
-          },
-          "indices": {
-            "shape": [
-              10498600
-            ],
-            "dtype": "int64",
-            "sha256": "6b5afef3fd5eee6c444dd99e056f74877f8409e89419cd1e737599d46b20802e"
-          },
-          "indptr": {
-            "shape": [
-              54161
-            ],
-            "dtype": "int64",
-            "sha256": "910cab05bbad84d080b3f78fd6d3da021f71d889a9ed068c3af34528f7b85fd2"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "92d8eafaf2ef45863474d20d1da5d50506505fb7b7f26bd936d53edf9ccab02b"
-          }
-        }
+        "sha256": "49dd40d6809964d95813868f7e244bbd03f04d3167dd99156095c851eac44593"
       },
       "numeric_calls": 0
     },
@@ -1191,64 +486,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 56613550,
-        "4": 673480,
-        "5": 2175,
-        "6": 1300,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1394,
-        "17": 1394,
-        "18": 0,
-        "19": 0,
-        "20": 56613550
+        "17": 1394
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch15.npz",
-        "sha256": "404e477632a2e41ff7e46d8666f2cab558736ae6495e1696dd07e9167e831dce",
-        "members": {
-          "data": {
-            "shape": [
-              12628800
-            ],
-            "dtype": "complex128",
-            "sha256": "12b063f367d35f0ab40fd06274db9a266463daeb7359f904b5162084557872ab"
-          },
-          "indices": {
-            "shape": [
-              12628800
-            ],
-            "dtype": "int64",
-            "sha256": "b660edfc5b6fe6d573b087b3555c63a240d84377cca01aadb7489def1ef867f1"
-          },
-          "indptr": {
-            "shape": [
-              64311
-            ],
-            "dtype": "int64",
-            "sha256": "020aa4a389f68b0844b0cc325f9f9a2698968987e8e7f3d495311f3b70e8bde1"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "3002c3fc5e0212576f992aa3cbd397c54a7d8ef28ebaa342acd80be039bb2294"
-          }
-        }
+        "sha256": "404e477632a2e41ff7e46d8666f2cab558736ae6495e1696dd07e9167e831dce"
       },
       "numeric_calls": 0
     },
@@ -1268,64 +516,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 19700075,
-        "4": 317550,
-        "5": 1325,
-        "6": 703,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 513,
-        "17": 513,
-        "18": 0,
-        "19": 0,
-        "20": 19700075
+        "17": 513
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch16.npz",
-        "sha256": "210d345eea5116cd7381819684ca721ddfba71508b4ce042acc5258ecc71f9d5",
-        "members": {
-          "data": {
-            "shape": [
-              6161975
-            ],
-            "dtype": "complex128",
-            "sha256": "8ffc38c84f65557ba548fa6f58ec1f2a2e7d7d5fd3d46d423b9c13dca55fa6c1"
-          },
-          "indices": {
-            "shape": [
-              6161975
-            ],
-            "dtype": "int64",
-            "sha256": "b5075b8d8534b271b984bd3929540869b79b1046da653b1bf4ac66a02c8fac1f"
-          },
-          "indptr": {
-            "shape": [
-              32296
-            ],
-            "dtype": "int64",
-            "sha256": "ffa242f21ad984a3928a1578f1491fc0501612ddcf798814dd5590e2a244c52b"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "a878f141e65ea7f7ad13d572c0ce792001e17ad1f28cb120b1f8499782563a1d"
-          }
-        }
+        "sha256": "210d345eea5116cd7381819684ca721ddfba71508b4ce042acc5258ecc71f9d5"
       },
       "numeric_calls": 0
     },
@@ -1345,64 +546,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 52054100,
-        "4": 646120,
-        "5": 1940,
-        "6": 1209,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1273,
-        "17": 1273,
-        "18": 0,
-        "19": 0,
-        "20": 52054100
+        "17": 1273
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch17.npz",
-        "sha256": "1465fe7014535a7f1f9913ede238a5788c4ff62a85774a4aebd3c77cdbff452e",
-        "members": {
-          "data": {
-            "shape": [
-              11836050
-            ],
-            "dtype": "complex128",
-            "sha256": "869483231088dd8593f9ba9c3bf6f5aae64384418bdb8b1e24ae232fc93e2950"
-          },
-          "indices": {
-            "shape": [
-              11836050
-            ],
-            "dtype": "int64",
-            "sha256": "f90cd08112a338f8ba5e23817c8dd9828844e72ff3cf78a90e530ab6c1b6eb56"
-          },
-          "indptr": {
-            "shape": [
-              59941
-            ],
-            "dtype": "int64",
-            "sha256": "e7e2e560e879591a99f1c0cbd7935e966a444c8a715c07b46e460b7fa0def8c5"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "8f4490062176b6db504291181d2428dd169c1401baf9fe1e178dfd367faf7362"
-          }
-        }
+        "sha256": "1465fe7014535a7f1f9913ede238a5788c4ff62a85774a4aebd3c77cdbff452e"
       },
       "numeric_calls": 0
     },
@@ -1422,64 +576,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 36705625,
-        "4": 429490,
-        "5": 1935,
-        "6": 844,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 886,
-        "17": 886,
-        "18": 0,
-        "19": 0,
-        "20": 36705625
+        "17": 886
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch18.npz",
-        "sha256": "b1d3151f9da4525fcf99f3335024d1d57a34e8d5851062baa2c59438192810b8",
-        "members": {
-          "data": {
-            "shape": [
-              7730675
-            ],
-            "dtype": "complex128",
-            "sha256": "248855ce46a2a553d3af034dbd2f425ab80c1cc17307c3e06f443185a519ff13"
-          },
-          "indices": {
-            "shape": [
-              7730675
-            ],
-            "dtype": "int64",
-            "sha256": "d3f23347c0eb6c130402837a8020c802b7260f2ca698a76fe0ff193e433f77c6"
-          },
-          "indptr": {
-            "shape": [
-              40896
-            ],
-            "dtype": "int64",
-            "sha256": "cb9a8374741c3e729abfbd70ee1d73db21640e73bec4f2152f4323999d148ecc"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "ae794fb63b1f6bc0f8a731e34b7d10c68606c6ad30e96abff38f10bf62913378"
-          }
-        }
+        "sha256": "b1d3151f9da4525fcf99f3335024d1d57a34e8d5851062baa2c59438192810b8"
       },
       "numeric_calls": 0
     },
@@ -1499,64 +606,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 50176150,
-        "4": 572230,
-        "5": 1925,
-        "6": 1072,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1194,
-        "17": 1194,
-        "18": 0,
-        "19": 0,
-        "20": 50176150
+        "17": 1194
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch19.npz",
-        "sha256": "c0ad5f2a1c1b5eb18baebd36cbc2f9af7abd1558f584b911f0ad1ea0e0a5bfe1",
-        "members": {
-          "data": {
-            "shape": [
-              10343100
-            ],
-            "dtype": "complex128",
-            "sha256": "0c4c370bce16e307c31c55e7479be6376d3cb9cb9a0a66e19e583b167a8e689e"
-          },
-          "indices": {
-            "shape": [
-              10343100
-            ],
-            "dtype": "int64",
-            "sha256": "8c33c0ecbec367bcf4e36438fb5d0dcafc20d35bb6e8750964ae61bfb99958fd"
-          },
-          "indptr": {
-            "shape": [
-              53321
-            ],
-            "dtype": "int64",
-            "sha256": "afb6f005e12451948e2329c7193b27d397ff17ab3e40db375f38dccb9d6dfd93"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "6fb9a3bfcc5b64390185643474443270d866e8611e117a18ca181c72a3d017e6"
-          }
-        }
+        "sha256": "c0ad5f2a1c1b5eb18baebd36cbc2f9af7abd1558f584b911f0ad1ea0e0a5bfe1"
       },
       "numeric_calls": 0
     },
@@ -1576,64 +636,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 35752975,
-        "4": 472030,
-        "5": 1885,
-        "6": 958,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 890,
-        "17": 890,
-        "18": 0,
-        "19": 0,
-        "20": 35752975
+        "17": 890
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch20.npz",
-        "sha256": "c524088ce080ae743807b0a76b1b6a2d5cb52d5905d8e354e6e01195b6b7d384",
-        "members": {
-          "data": {
-            "shape": [
-              8956675
-            ],
-            "dtype": "complex128",
-            "sha256": "456fba03267d59a9a2eceeac2e1b69271767c95f5533f52864f9aba50ce93e33"
-          },
-          "indices": {
-            "shape": [
-              8956675
-            ],
-            "dtype": "int64",
-            "sha256": "24ef31354806e8ee9a144b22dd332c9c809b6471cf956475e3fff0884898001f"
-          },
-          "indptr": {
-            "shape": [
-              45956
-            ],
-            "dtype": "int64",
-            "sha256": "b68828947bb837ec84da47aaf44704fba6be7715464bc6dfbc5d46b26491ab58"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "3a6035cc71d90ea36527dc0e25696632e5cd349823a80d179800eb14947c89f3"
-          }
-        }
+        "sha256": "c524088ce080ae743807b0a76b1b6a2d5cb52d5905d8e354e6e01195b6b7d384"
       },
       "numeric_calls": 0
     },
@@ -1653,64 +666,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 52923175,
-        "4": 623480,
-        "5": 2035,
-        "6": 1206,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1305,
-        "17": 1305,
-        "18": 0,
-        "19": 0,
-        "20": 52923175
+        "17": 1305
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch21.npz",
-        "sha256": "8dd0c940b9a1d8f6c2da8f6651c634fbc71e8795b31ac6ec11506ee72655e1f1",
-        "members": {
-          "data": {
-            "shape": [
-              11333775
-            ],
-            "dtype": "complex128",
-            "sha256": "8a7fdf2e56ed21286a1d77ed9e9c23bf87abd4efcef419f2610b5a5bfbe9fda6"
-          },
-          "indices": {
-            "shape": [
-              11333775
-            ],
-            "dtype": "int64",
-            "sha256": "295627f111ef3042016c332dbe363b0c311bafb4371e6f8e8c325ebe00eee0d2"
-          },
-          "indptr": {
-            "shape": [
-              57536
-            ],
-            "dtype": "int64",
-            "sha256": "ecf8cae6b97c1a7fc4cfbb184b44722c85ac1b765d8c9eb320b59734405fd3a6"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "8d25cfc4cb59b8bbe7d5e4dd91457209dbb5c6146de2969bafb73587e60628f2"
-          }
-        }
+        "sha256": "8dd0c940b9a1d8f6c2da8f6651c634fbc71e8795b31ac6ec11506ee72655e1f1"
       },
       "numeric_calls": 0
     },
@@ -1730,64 +696,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 19949875,
-        "4": 326850,
-        "5": 1280,
-        "6": 757,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 525,
-        "17": 525,
-        "18": 0,
-        "19": 0,
-        "20": 19949875
+        "17": 525
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch22.npz",
-        "sha256": "74379b767e963e191aa33e76c45153d978f179beeebc212644b1b23972437f3f",
-        "members": {
-          "data": {
-            "shape": [
-              6448875
-            ],
-            "dtype": "complex128",
-            "sha256": "3b02ce42f311031a05af8e70b3c7abd157b3a6cb1fe4a5deed0f27902a7e1d67"
-          },
-          "indices": {
-            "shape": [
-              6448875
-            ],
-            "dtype": "int64",
-            "sha256": "efcfb54b43a462b39b336eb9b65839a843b5cbe2d38446fa933a0109cf2bfac8"
-          },
-          "indptr": {
-            "shape": [
-              33896
-            ],
-            "dtype": "int64",
-            "sha256": "8748e3f09d778bc6c5e5233ec1fda51c6da326ee943ee8ed7f690f706f8bf055"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "8860bcaa1a37dde49741d9fb51effa38363caeb1f809248e760cd3767dfbb908"
-          }
-        }
+        "sha256": "74379b767e963e191aa33e76c45153d978f179beeebc212644b1b23972437f3f"
       },
       "numeric_calls": 0
     },
@@ -1807,64 +726,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 59629875,
-        "4": 682290,
-        "5": 2320,
-        "6": 1253,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1432,
-        "17": 1432,
-        "18": 0,
-        "19": 0,
-        "20": 59629875
+        "17": 1432
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch23.npz",
-        "sha256": "ca3c5bb0821060576576289de3f413bca6ac211d186f1009e3f6c5744013eb66",
-        "members": {
-          "data": {
-            "shape": [
-              12308875
-            ],
-            "dtype": "complex128",
-            "sha256": "cf1ea6b60fbc85eb15f103b4c24d2e6aaceaa05df73c75f91ebf789a7078778c"
-          },
-          "indices": {
-            "shape": [
-              12308875
-            ],
-            "dtype": "int64",
-            "sha256": "afbd1c68453818d96abb3f9b72c8ba72e649a2e97c362e20c5c66acca4c1ecb4"
-          },
-          "indptr": {
-            "shape": [
-              62236
-            ],
-            "dtype": "int64",
-            "sha256": "0133d02eec821055b9f58953a70718fdd4a9863ca155cced09ce669ffdf8c2e1"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "3eb266c36d13bb8a2c74a19b3c0e0639c2f2b89f853427b7d494cc486a27db00"
-          }
-        }
+        "sha256": "ca3c5bb0821060576576289de3f413bca6ac211d186f1009e3f6c5744013eb66"
       },
       "numeric_calls": 0
     },
@@ -1884,64 +756,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 44281525,
-        "4": 507120,
-        "5": 1880,
-        "6": 973,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1055,
-        "17": 1055,
-        "18": 0,
-        "19": 0,
-        "20": 44281525
+        "17": 1055
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch24.npz",
-        "sha256": "cf84817cdbbda913dcfd655fd8980e64db75dd2403e3a7cdf37ded93be98be8b",
-        "members": {
-          "data": {
-            "shape": [
-              9028675
-            ],
-            "dtype": "complex128",
-            "sha256": "5ec7b8f664c1ba84734e2fb97d762474b6caf3d09db83c60994549a96ee400d2"
-          },
-          "indices": {
-            "shape": [
-              9028675
-            ],
-            "dtype": "int64",
-            "sha256": "cbea0cfa1a23f0b30ed5c10d3d5b898ffba82bb72b6897f84a565faf85ce0465"
-          },
-          "indptr": {
-            "shape": [
-              47256
-            ],
-            "dtype": "int64",
-            "sha256": "6fd82887e57c8ee55871b450f90cfc382aa61b7f73d2247c0f7d34f96426bc91"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "1045461677104ae8255dce3f58c282bf58c37ee8e84e95c68bb4085492deb5ce"
-          }
-        }
+        "sha256": "cf84817cdbbda913dcfd655fd8980e64db75dd2403e3a7cdf37ded93be98be8b"
       },
       "numeric_calls": 0
     },
@@ -1961,64 +786,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 49648250,
-        "4": 568700,
-        "5": 1860,
-        "6": 1065,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1204,
-        "17": 1204,
-        "18": 0,
-        "19": 0,
-        "20": 49648250
+        "17": 1204
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch25.npz",
-        "sha256": "261abd614a76fc10ccfb04ab430ac5b5c15821e6c66111b288439de8b28f26a0",
-        "members": {
-          "data": {
-            "shape": [
-              10299750
-            ],
-            "dtype": "complex128",
-            "sha256": "256ccc8af5bc574c39f13c25d868eb50beb518c1addca420d1889e6f730f9387"
-          },
-          "indices": {
-            "shape": [
-              10299750
-            ],
-            "dtype": "int64",
-            "sha256": "590ce3e15559fe55ef1d8a05e2406fe361dbe68e6613ae5bea3665f3809ec1dc"
-          },
-          "indptr": {
-            "shape": [
-              53111
-            ],
-            "dtype": "int64",
-            "sha256": "100a0478da7afaccd2bb65fe8edb4febf44b7900d92be43c699d25be72cfe847"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "3126ad6e03f352d9afb0c327486a6ed1874fdd45b2cbf9daeab761b87f819cc3"
-          }
-        }
+        "sha256": "261abd614a76fc10ccfb04ab430ac5b5c15821e6c66111b288439de8b28f26a0"
       },
       "numeric_calls": 0
     },
@@ -2038,64 +816,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 55402375,
-        "4": 693880,
-        "5": 1950,
-        "6": 1354,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1350,
-        "17": 1350,
-        "18": 0,
-        "19": 0,
-        "20": 55402375
+        "17": 1350
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch26.npz",
-        "sha256": "b6f78b23239557c0820ab712a21819d9cae3e09da226e4e52ce34d6772f80329",
-        "members": {
-          "data": {
-            "shape": [
-              13099425
-            ],
-            "dtype": "complex128",
-            "sha256": "33dcf3ab7ab115755b25d3171359a885bea2ad505e1cda5bf5fba2f04f41f3b3"
-          },
-          "indices": {
-            "shape": [
-              13099425
-            ],
-            "dtype": "int64",
-            "sha256": "4fbfda2a465257f7c4673fc82b81740f9aa3610b14d5ed722453fc77937ae003"
-          },
-          "indptr": {
-            "shape": [
-              66696
-            ],
-            "dtype": "int64",
-            "sha256": "9298ee89c368b64a221411f790fdec2438f4d4abfbea026d462c3d35b0ba91b8"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "aec43dfe2cf6567659dbf04e0e36630a8fc70a4798b83dd8e8f7f5729784bd8f"
-          }
-        }
+        "sha256": "b6f78b23239557c0820ab712a21819d9cae3e09da226e4e52ce34d6772f80329"
       },
       "numeric_calls": 0
     },
@@ -2115,64 +846,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 19747350,
-        "4": 318900,
-        "5": 1300,
-        "6": 731,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 515,
-        "17": 515,
-        "18": 0,
-        "19": 0,
-        "20": 19747350
+        "17": 515
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch27.npz",
-        "sha256": "43ebe1e94336cf8826200d8c4366280e063f3e4fe83870ebd338fae653eb09d0",
-        "members": {
-          "data": {
-            "shape": [
-              6348750
-            ],
-            "dtype": "complex128",
-            "sha256": "89c5d4033b990db40abb1d334ea6824d67c7d39b6f91eeb745e14d079b59d391"
-          },
-          "indices": {
-            "shape": [
-              6348750
-            ],
-            "dtype": "int64",
-            "sha256": "67aeebd3cbc9a7b392c31da28e6d5ca54f84b862abda6019c15b18915edb2efa"
-          },
-          "indptr": {
-            "shape": [
-              33271
-            ],
-            "dtype": "int64",
-            "sha256": "518bdbba8c92d4eb7a07ec69a3852eb593247e606a1b924402a0de61eaeb0453"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "b0c4a1de6d79e75db5089c68f5ca976a8b4d2cde92c04e3df62e400e84ebbc03"
-          }
-        }
+        "sha256": "43ebe1e94336cf8826200d8c4366280e063f3e4fe83870ebd338fae653eb09d0"
       },
       "numeric_calls": 0
     },
@@ -2192,64 +876,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 51531875,
-        "4": 635760,
-        "5": 2000,
-        "6": 1188,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1265,
-        "17": 1265,
-        "18": 0,
-        "19": 0,
-        "20": 51531875
+        "17": 1265
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch28.npz",
-        "sha256": "9612b26c2d97009e37204e84933597a035cd70be111c6a18ec05f2f19dd9937c",
-        "members": {
-          "data": {
-            "shape": [
-              11671925
-            ],
-            "dtype": "complex128",
-            "sha256": "791d4798e9ade92266292ffec17e0bef487a259735bd516448f0524718937af1"
-          },
-          "indices": {
-            "shape": [
-              11671925
-            ],
-            "dtype": "int64",
-            "sha256": "a6850862830ef3519d0a9e59bf935c2a951ef599ddbf88713311a6b33680493c"
-          },
-          "indptr": {
-            "shape": [
-              59146
-            ],
-            "dtype": "int64",
-            "sha256": "034152870b88c9c969dbd1a8f62015c1f5c4644e6054584451edefd62cdcc557"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "a767d64182e015d5efadc9da607b5e2c9fe9bd4a705720cc27e15b00f824cbfb"
-          }
-        }
+        "sha256": "9612b26c2d97009e37204e84933597a035cd70be111c6a18ec05f2f19dd9937c"
       },
       "numeric_calls": 0
     },
@@ -2269,64 +906,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 36925725,
-        "4": 439770,
-        "5": 1805,
-        "6": 885,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 924,
-        "17": 924,
-        "18": 0,
-        "19": 0,
-        "20": 36925725
+        "17": 924
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch29.npz",
-        "sha256": "d1d790a1d7fa5e59af9a14a4a86ef053062075fd20f9557e20be9d7954b9a0cb",
-        "members": {
-          "data": {
-            "shape": [
-              8072725
-            ],
-            "dtype": "complex128",
-            "sha256": "89391b2a085cbb74cfd04260d9a09afe67630c7b93696df954582d02aa8fe3ba"
-          },
-          "indices": {
-            "shape": [
-              8072725
-            ],
-            "dtype": "int64",
-            "sha256": "db3fe0a4d8279bff3297cf2d4a59786b6db4bb4602f932425a13ea47035bf1c1"
-          },
-          "indptr": {
-            "shape": [
-              42736
-            ],
-            "dtype": "int64",
-            "sha256": "a3cf07a9fa739b0fd0f4d1917f9ce396e557a4838427d89f24d2dbbe9c004c6f"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "8cad65be97b854f8ce6e00fec4a67ab84e27c999286c8f143af94a6f40604519"
-          }
-        }
+        "sha256": "d1d790a1d7fa5e59af9a14a4a86ef053062075fd20f9557e20be9d7954b9a0cb"
       },
       "numeric_calls": 0
     },
@@ -2346,64 +936,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 35214700,
-        "4": 443310,
-        "5": 1645,
-        "6": 896,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 856,
-        "17": 856,
-        "18": 0,
-        "19": 0,
-        "20": 35214700
+        "17": 856
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch30.npz",
-        "sha256": "75e16f63269b83802da56569541807010e287625344a857358717643c1da14aa",
-        "members": {
-          "data": {
-            "shape": [
-              8125000
-            ],
-            "dtype": "complex128",
-            "sha256": "090f92178ab5c87a33c8c22d02a6a20ea0cd5f0fe0c6f3ce8ad38888de655642"
-          },
-          "indices": {
-            "shape": [
-              8125000
-            ],
-            "dtype": "int64",
-            "sha256": "8281f4f6480c62568e446c3173bbf05cc9289163297d5b1bf3aecd66dc1e093f"
-          },
-          "indptr": {
-            "shape": [
-              42361
-            ],
-            "dtype": "int64",
-            "sha256": "dfef8de003013dd477abff54883a4bf2656b7483ec361378a73559ef71830975"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "f9e20fb78ff73b9b7acea9b4b4f62b00f275c6c0ef5d10776eea6148cc0420d2"
-          }
-        }
+        "sha256": "75e16f63269b83802da56569541807010e287625344a857358717643c1da14aa"
       },
       "numeric_calls": 0
     },
@@ -2423,64 +966,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 60516300,
-        "4": 726420,
-        "5": 2230,
-        "6": 1429,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1457,
-        "17": 1457,
-        "18": 0,
-        "19": 0,
-        "20": 60516300
+        "17": 1457
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch31.npz",
-        "sha256": "32a6314fcfdca8d4e0e3b9bb1a8b599649b29810997b02dc7f4753716e6f9156",
-        "members": {
-          "data": {
-            "shape": [
-              13384700
-            ],
-            "dtype": "complex128",
-            "sha256": "9d1604e77bd8333ff8dad735500501ad0ac34f07a7087807c6b9e1cd0aa99ebd"
-          },
-          "indices": {
-            "shape": [
-              13384700
-            ],
-            "dtype": "int64",
-            "sha256": "f314744eda397960480f2411a82acaaba5fb8f899907bf4724f623b43cc1574d"
-          },
-          "indptr": {
-            "shape": [
-              68101
-            ],
-            "dtype": "int64",
-            "sha256": "049bfbc706ad5ec99d419dcacf4cee73a3ae950098bb5ad28026e3a41162d60c"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "b84ea93d982dbc535c5ebe877e239d564f08517237c3e0efed753f37884ca4f5"
-          }
-        }
+        "sha256": "32a6314fcfdca8d4e0e3b9bb1a8b599649b29810997b02dc7f4753716e6f9156"
       },
       "numeric_calls": 0
     },
@@ -2500,64 +996,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 51011400,
-        "4": 663140,
-        "5": 1770,
-        "6": 1316,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1246,
-        "17": 1246,
-        "18": 0,
-        "19": 0,
-        "20": 51011400
+        "17": 1246
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch32.npz",
-        "sha256": "7ca534d49337f5261653fe6bdd34ed4be3abb205cf66ca6d55cb3e2866159911",
-        "members": {
-          "data": {
-            "shape": [
-              12422700
-            ],
-            "dtype": "complex128",
-            "sha256": "098ed2c58647471b69bd93ae84cf001300c2e9803256bf50d0e936262a8f6f7b"
-          },
-          "indices": {
-            "shape": [
-              12422700
-            ],
-            "dtype": "int64",
-            "sha256": "b69455836f01bfbf9d21a8386af06ca923c358e6f1b0191950876a87f7f59b43"
-          },
-          "indptr": {
-            "shape": [
-              63211
-            ],
-            "dtype": "int64",
-            "sha256": "a822fa93c65ef7e217d543bb4dcbd5d9da8ac9b0da8c8a53dcfc8e2d899019a3"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "b103644fcaefe72ef590798f10490343656481701098349b4e93ac8975c9e14f"
-          }
-        }
+        "sha256": "7ca534d49337f5261653fe6bdd34ed4be3abb205cf66ca6d55cb3e2866159911"
       },
       "numeric_calls": 0
     },
@@ -2577,64 +1026,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 31375600,
-        "4": 411050,
-        "5": 1845,
-        "6": 819,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 768,
-        "17": 768,
-        "18": 0,
-        "19": 0,
-        "20": 31375600
+        "17": 768
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch33.npz",
-        "sha256": "46ff3840dbe82d1c6e6b0e780dc0b53dad64501c030b0dd2d1cc84d8df71990a",
-        "members": {
-          "data": {
-            "shape": [
-              7536500
-            ],
-            "dtype": "complex128",
-            "sha256": "7fe2d2bd79c2d47f6676ca2b2bb70a20478c3c9c06bcc4458b54c9e2b173c4ea"
-          },
-          "indices": {
-            "shape": [
-              7536500
-            ],
-            "dtype": "int64",
-            "sha256": "3a19619a560c51e3ce04977496eb9ec4ff32c094d12e570ee1286cabfa5ffc0c"
-          },
-          "indptr": {
-            "shape": [
-              39321
-            ],
-            "dtype": "int64",
-            "sha256": "dd1bc6839ada4a508798edf70c5e946491600de814055b6cbf65aee888b38c57"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "eff46274049e8e367a4de83b958622ef176b55b385e9012fe5fdc82fb39608aa"
-          }
-        }
+        "sha256": "46ff3840dbe82d1c6e6b0e780dc0b53dad64501c030b0dd2d1cc84d8df71990a"
       },
       "numeric_calls": 0
     },
@@ -2654,64 +1056,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 37498625,
-        "4": 447330,
-        "5": 1765,
-        "6": 894,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 893,
-        "17": 893,
-        "18": 0,
-        "19": 0,
-        "20": 37498625
+        "17": 893
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch34.npz",
-        "sha256": "a9c5c0bf2adc45e25341673f5e545019ed2f329157575daff5ac7f61e2f9b44c",
-        "members": {
-          "data": {
-            "shape": [
-              8174425
-            ],
-            "dtype": "complex128",
-            "sha256": "0c6ebce86caa422662b0ece1163820005f72f0ba2802029bb323b245d091c594"
-          },
-          "indices": {
-            "shape": [
-              8174425
-            ],
-            "dtype": "int64",
-            "sha256": "81de7b5d4336e61b63e3871f294687267d838b9a4ba8e7b3b5d22908b063c066"
-          },
-          "indptr": {
-            "shape": [
-              42526
-            ],
-            "dtype": "int64",
-            "sha256": "e439c2dbcc2fcf9c791e675026ae64b21b67f8caf12a3731b92d9b59096a553d"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "90e21dc3b2627465eb60d75aea0b38fbea3df96a79e133512a07c0a023318010"
-          }
-        }
+        "sha256": "a9c5c0bf2adc45e25341673f5e545019ed2f329157575daff5ac7f61e2f9b44c"
       },
       "numeric_calls": 0
     },
@@ -2731,64 +1086,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 42541175,
-        "4": 603500,
-        "5": 1695,
-        "6": 1245,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1070,
-        "17": 1070,
-        "18": 0,
-        "19": 0,
-        "20": 42541175
+        "17": 1070
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch35.npz",
-        "sha256": "ee3ed1194dbfae9c957158ffda18bc3fda14fe1fba867507149fbdbd72b585c9",
-        "members": {
-          "data": {
-            "shape": [
-              11360175
-            ],
-            "dtype": "complex128",
-            "sha256": "3b99c0c21040ca9e91a4851652901a593341d76fa59b83404465cafea75665c1"
-          },
-          "indices": {
-            "shape": [
-              11360175
-            ],
-            "dtype": "int64",
-            "sha256": "a7dcc87f9e146900d59ad2431832e18923207ce9b04a41a438e3f22f5029d7e4"
-          },
-          "indptr": {
-            "shape": [
-              58156
-            ],
-            "dtype": "int64",
-            "sha256": "3c96bc5e4b51474112a95fe93b7a2bdad1a12a9e343f059a1af55fc0c7a01e04"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "fcc65eee7aae410bf34f34fc319514e89fb1dde96e138918b487af130c5a7c0d"
-          }
-        }
+        "sha256": "ee3ed1194dbfae9c957158ffda18bc3fda14fe1fba867507149fbdbd72b585c9"
       },
       "numeric_calls": 0
     },
@@ -2808,64 +1116,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 62800200,
-        "4": 739070,
-        "5": 2275,
-        "6": 1400,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 1498,
-        "17": 1498,
-        "18": 0,
-        "19": 0,
-        "20": 62800200
+        "17": 1498
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch36.npz",
-        "sha256": "21fe57f7f5df714208a78b9f8de415a76ac3fbed08ff8da6f44a9662e4f319c3",
-        "members": {
-          "data": {
-            "shape": [
-              13557300
-            ],
-            "dtype": "complex128",
-            "sha256": "a351875343572e44cc155137a82d587a3da273b31ce87ff7ca9977df8540f027"
-          },
-          "indices": {
-            "shape": [
-              13557300
-            ],
-            "dtype": "int64",
-            "sha256": "fecd59b9aaa321f1034c9727eb3b4ae76c4c876bbaf7cf16f4fc2d39d694a959"
-          },
-          "indptr": {
-            "shape": [
-              68681
-            ],
-            "dtype": "int64",
-            "sha256": "bdf67544154fb529d994bd993c5682b66eec01d259ea7114e25edb2085988774"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "ef9bb3e3f2c892222114015d93c3c83d3b0e15ef7fa941e6b27ba24a4c9317a7"
-          }
-        }
+        "sha256": "21fe57f7f5df714208a78b9f8de415a76ac3fbed08ff8da6f44a9662e4f319c3"
       },
       "numeric_calls": 0
     },
@@ -2885,64 +1146,17 @@
           "18": 0,
           "22": 0,
           "23": 0
-        },
-        "modified": false
+        }
       },
       "infog": {
         "1": 0,
-        "2": 0,
-        "3": 23802825,
-        "4": 314940,
-        "5": 1455,
-        "6": 682,
         "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
         "16": 605,
-        "17": 605,
-        "18": 0,
-        "19": 0,
-        "20": 23802825
+        "17": 605
       },
       "CSR": {
         "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/patch37.npz",
-        "sha256": "5907e6411a89dbed527d87cb5afb3d3c22f8a5635402a3d8f4248de4641e78f2",
-        "members": {
-          "data": {
-            "shape": [
-              5985825
-            ],
-            "dtype": "complex128",
-            "sha256": "6b22e1110c73e606f8ffa007f46e0be31335352ac30d50c0d500799a596267c8"
-          },
-          "indices": {
-            "shape": [
-              5985825
-            ],
-            "dtype": "int64",
-            "sha256": "e8302a40da39cbbdb8b6bcd14dfcc81270ab3515dcb9fb7bd4baf65676fd1c91"
-          },
-          "indptr": {
-            "shape": [
-              31966
-            ],
-            "dtype": "int64",
-            "sha256": "882bc388ede1b8d940009c16f8d78fa6e4ef401d20cfd0b1b42fd038b2c36d9a"
-          },
-          "shape": {
-            "shape": [
-              2
-            ],
-            "dtype": "int64",
-            "sha256": "43178922630efe23b99f8448b1641392d73d7827c03ae5508c85eed2a15741b7"
-          }
-        }
+        "sha256": "5907e6411a89dbed527d87cb5afb3d3c22f8a5635402a3d8f4248de4641e78f2"
       },
       "numeric_calls": 0
     }
@@ -2951,116 +1165,14 @@
     "independent_FE": 6240,
     "with_ports": 7068,
     "sparse_nnz": 23529162,
-    "witness": [
-      {
-        "cell": 0,
-        "parent": 0,
-        "permutation": 0,
-        "errors": {
-          "E": 1.566694268934773e-15,
-          "curl": 6.802519400471626e-15
-        }
+    "witness": {
+      "full_payload": {
+        "path": "benchmarks/artifacts/task042/v71/increment_evidence_v71/bounded_pc_inventory_full_delivery.json",
+        "bytes": 90372,
+        "sha256": "14502a65cd8219ac2bb349abe14b487f4b2d15433f8459f4cc45891ed5011d62"
       },
-      {
-        "cell": 1,
-        "parent": 1,
-        "permutation": 0,
-        "errors": {
-          "E": 2.1581140830331263e-15,
-          "curl": 5.3798442211323076e-15
-        }
-      },
-      {
-        "cell": 2,
-        "parent": 0,
-        "permutation": 29261,
-        "errors": {
-          "E": 1.5680732546856364e-15,
-          "curl": 2.98119476926653e-15
-        }
-      },
-      {
-        "cell": 3,
-        "parent": 0,
-        "permutation": 132800,
-        "errors": {
-          "E": 4.9616654460729755e-15,
-          "curl": 9.350090782025716e-15
-        }
-      },
-      {
-        "cell": 5,
-        "parent": 0,
-        "permutation": 169745,
-        "errors": {
-          "E": 4.384632775983912e-15,
-          "curl": 2.8967432909284092e-15
-        }
-      },
-      {
-        "cell": 6,
-        "parent": 0,
-        "permutation": 12362,
-        "errors": {
-          "E": 2.0416471270705982e-15,
-          "curl": 6.436262739200704e-15
-        }
-      },
-      {
-        "cell": 9,
-        "parent": 1,
-        "permutation": 215771,
-        "errors": {
-          "E": 1.5960884291156358e-15,
-          "curl": 3.8271850315872066e-14
-        }
-      },
-      {
-        "cell": 10,
-        "parent": 1,
-        "permutation": 16899,
-        "errors": {
-          "E": 1.034032564695921e-15,
-          "curl": 3.809482353567006e-15
-        }
-      },
-      {
-        "cell": 11,
-        "parent": 0,
-        "permutation": 91228,
-        "errors": {
-          "E": 9.865450066295432e-15,
-          "curl": 7.897068685129027e-15
-        }
-      },
-      {
-        "cell": 12,
-        "parent": 0,
-        "permutation": 231712,
-        "errors": {
-          "E": 5.3720727658707305e-15,
-          "curl": 2.4353631840313194e-15
-        }
-      },
-      {
-        "cell": 19,
-        "parent": 1,
-        "permutation": 45202,
-        "errors": {
-          "E": 1.105396423731134e-15,
-          "curl": 3.49354931754052e-14
-        }
-      },
-      {
-        "cell": 20,
-        "parent": 1,
-        "permutation": 235817,
-        "errors": {
-          "E": 2.18540189326871e-15,
-          "curl": 2.8181738773613986e-15
-        }
-      }
-    ],
+      "json_pointer": "/coarse/witness"
+    },
     "moment_interpolation": true,
     "owner_once": true,
     "dense_N_by_coarse": false,
@@ -3069,143 +1181,26 @@
   },
   "coarse_CSR": {
     "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/coarse_E0.npz",
-    "sha256": "3b28c55c724e4530c0c03a452f5419a62cdacf245db07806591f929b36f5232f",
-    "members": {
-      "data": {
-        "shape": [
-          3541640
-        ],
-        "dtype": "complex128",
-        "sha256": "240c02ab53768ccca27e3237bf75ef7b68dbd9ca73ab4a63562245008caec1a7"
-      },
-      "indices": {
-        "shape": [
-          3541640
-        ],
-        "dtype": "int64",
-        "sha256": "2b2333df6fe4ee8334964d9ff01a0a81c7363003e079417272de927ec6a3beae"
-      },
-      "indptr": {
-        "shape": [
-          7069
-        ],
-        "dtype": "int64",
-        "sha256": "908aa6d54ab3ca8567b596a4fce93034f02e8ce5e0b458c42eb3a0edbccdaa7f"
-      },
-      "shape": {
-        "shape": [
-          2
-        ],
-        "dtype": "int64",
-        "sha256": "fc7b0e057467aea1efd2ecbd9c9d104560da660c0e261b9c64f7b828ca029870"
-      }
-    }
+    "sha256": "3b28c55c724e4530c0c03a452f5419a62cdacf245db07806591f929b36f5232f"
   },
   "coarse_symbolic": {
-    "info": {
-      "infog": {
-        "1": 0,
-        "2": 0,
-        "3": 15578080,
-        "4": 56192,
-        "5": 1934,
-        "6": 40,
-        "7": 4,
-        "8": 100,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
-        "16": 401,
-        "17": 401,
-        "18": 0,
-        "19": 0,
-        "20": 15578080
-      },
-      "rinfog": {
-        "1": 19240108822.0,
-        "2": 0.0,
-        "3": 0.0,
-        "4": 0.0,
-        "5": 0.0,
-        "6": 0.0,
-        "7": 0.0,
-        "8": 0.0,
-        "9": 0.0,
-        "10": 0.0,
-        "11": 0.0,
-        "12": 0.0,
-        "13": 0.0,
-        "14": 0.0,
-        "15": 249.24928,
-        "16": 0.0,
-        "17": 14.46093,
-        "18": 14.458625,
-        "19": 0.0,
-        "20": 0.0
-      }
-    },
-    "controls": {
-      "icntl": {
-        "7": 7,
-        "10": 0,
-        "14": 20,
-        "18": 0,
-        "22": 0,
-        "23": 0
-      },
-      "modified": false
-    },
     "estimate_mb": 401,
     "double_bytes": 802000000,
     "rows": 7068,
     "nnz": 3541640,
-    "ordering": "external",
-    "numeric_calls": 0
+    "numeric_calls": 0,
+    "original_info": {
+      "full_payload": {
+        "path": "benchmarks/artifacts/task042/v71/increment_evidence_v71/bounded_pc_inventory_full_delivery.json",
+        "bytes": 90372,
+        "sha256": "14502a65cd8219ac2bb349abe14b487f4b2d15433f8459f4cc45891ed5011d62"
+      },
+      "json_pointer": "/coarse_symbolic"
+    }
   },
   "sparse_Z": {
     "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_bounded_pc_setup_20261011T011027326043Z/sparse_Zgamma.npz",
-    "sha256": "536758160a20d38c5fc87781a192fd853d6f387164774181c12595d0daa3880e",
-    "members": {
-      "data": {
-        "shape": [
-          23529162
-        ],
-        "dtype": "complex128",
-        "sha256": "75c764eba06e75843b3d173af184e1c54c7ed3fb384f04b96ce8e153baab434b"
-      },
-      "indices": {
-        "shape": [
-          23529162
-        ],
-        "dtype": "int64",
-        "sha256": "3028cc43263e469477e3ead4a8d9a930ef5157056b0f64db7a106008bb3a5a1b"
-      },
-      "indptr": {
-        "shape": [
-          1176466
-        ],
-        "dtype": "int64",
-        "sha256": "3c5c66df7d9bcf3aff5073b0cf002aed483c0a91d607c10c48c2b50fc397b432"
-      },
-      "shape": {
-        "shape": [
-          2
-        ],
-        "dtype": "int64",
-        "sha256": "9768a402533701c31940a94d866216d40daae12043fc3d32918a0e432ef4c10d"
-      },
-      "parent_cells": {
-        "shape": [
-          25576
-        ],
-        "dtype": "int32",
-        "sha256": "1c8bae0f8c210eb45737eea9c94c7238136e271035b1602884586f0277f0f43a"
-      }
-    }
+    "sha256": "536758160a20d38c5fc87781a192fd853d6f387164774181c12595d0daa3880e"
   },
   "independent_Galerkin": [
     {
@@ -3233,116 +1228,14 @@
       "pass_gate": true
     }
   ],
-  "coarse_component_moment_witness": [
-    {
-      "cell": 0,
-      "parent": 0,
-      "permutation": 0,
-      "errors": {
-        "E": 1.566694268934773e-15,
-        "curl": 6.802519400471626e-15
-      }
+  "coarse_component_moment_witness": {
+    "full_payload": {
+      "path": "benchmarks/artifacts/task042/v71/increment_evidence_v71/bounded_pc_inventory_full_delivery.json",
+      "bytes": 90372,
+      "sha256": "14502a65cd8219ac2bb349abe14b487f4b2d15433f8459f4cc45891ed5011d62"
     },
-    {
-      "cell": 1,
-      "parent": 1,
-      "permutation": 0,
-      "errors": {
-        "E": 2.1581140830331263e-15,
-        "curl": 5.3798442211323076e-15
-      }
-    },
-    {
-      "cell": 2,
-      "parent": 0,
-      "permutation": 29261,
-      "errors": {
-        "E": 1.5680732546856364e-15,
-        "curl": 2.98119476926653e-15
-      }
-    },
-    {
-      "cell": 3,
-      "parent": 0,
-      "permutation": 132800,
-      "errors": {
-        "E": 4.9616654460729755e-15,
-        "curl": 9.350090782025716e-15
-      }
-    },
-    {
-      "cell": 5,
-      "parent": 0,
-      "permutation": 169745,
-      "errors": {
-        "E": 4.384632775983912e-15,
-        "curl": 2.8967432909284092e-15
-      }
-    },
-    {
-      "cell": 6,
-      "parent": 0,
-      "permutation": 12362,
-      "errors": {
-        "E": 2.0416471270705982e-15,
-        "curl": 6.436262739200704e-15
-      }
-    },
-    {
-      "cell": 9,
-      "parent": 1,
-      "permutation": 215771,
-      "errors": {
-        "E": 1.5960884291156358e-15,
-        "curl": 3.8271850315872066e-14
-      }
-    },
-    {
-      "cell": 10,
-      "parent": 1,
-      "permutation": 16899,
-      "errors": {
-        "E": 1.034032564695921e-15,
-        "curl": 3.809482353567006e-15
-      }
-    },
-    {
-      "cell": 11,
-      "parent": 0,
-      "permutation": 91228,
-      "errors": {
-        "E": 9.865450066295432e-15,
-        "curl": 7.897068685129027e-15
-      }
-    },
-    {
-      "cell": 12,
-      "parent": 0,
-      "permutation": 231712,
-      "errors": {
-        "E": 5.3720727658707305e-15,
-        "curl": 2.4353631840313194e-15
-      }
-    },
-    {
-      "cell": 19,
-      "parent": 1,
-      "permutation": 45202,
-      "errors": {
-        "E": 1.105396423731134e-15,
-        "curl": 3.49354931754052e-14
-      }
-    },
-    {
-      "cell": 20,
-      "parent": 1,
-      "permutation": 235817,
-      "errors": {
-        "E": 2.18540189326871e-15,
-        "curl": 2.8181738773613986e-15
-      }
-    }
-  ],
+    "json_pointer": "/coarse_component_moment_witness"
+  },
   "capacity": {
     "local_double_bytes": 79520000000,
     "coarse_double_bytes": 802000000,
@@ -3597,5 +1490,18 @@
   "real_PC_apply_qualification": "NOT_RUN_AFTER_CAPACITY_REJECTION",
   "small_synthetic_PC_algebra_only": "PASS; not a real-factor qualification",
   "no_global_fine_K_S_factor": true,
-  "prior_local_internal_LU_reused": true
+  "prior_local_internal_LU_reused": true,
+  "complete_original_symbolic_and_array_inventory": {
+    "full_payload": {
+      "path": "benchmarks/artifacts/task042/v71/increment_evidence_v71/bounded_pc_inventory_full_delivery.json",
+      "bytes": 90372,
+      "sha256": "14502a65cd8219ac2bb349abe14b487f4b2d15433f8459f4cc45891ed5011d62"
+    },
+    "json_pointer": "/patches"
+  },
+  "complete_pre_compaction_payload": {
+    "path": "benchmarks/artifacts/task042/v71/increment_evidence_v71/bounded_pc_inventory_full_delivery.json",
+    "bytes": 90372,
+    "sha256": "14502a65cd8219ac2bb349abe14b487f4b2d15433f8459f4cc45891ed5011d62"
+  }
 }
