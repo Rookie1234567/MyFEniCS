@@ -67,7 +67,7 @@ def run_retained_fgmres(
             solution.copy(target)
         else:
             current.buildSolution(target)
-        if (terminal and last_evaluated_vector is not None and snapshots
+        if (last_evaluated_vector is not None and snapshots
                 and snapshots[-1]['iteration'] == iteration+iterations_consumed
                 and np.array_equal(target.array,last_evaluated_vector)):
             save_retained(int(iteration)+iterations_consumed,target)

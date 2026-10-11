@@ -94,11 +94,11 @@ class ReuseTests(unittest.TestCase):
         def action(v):o=v.duplicate();o.array[:]=A@v.array;return o
         def evaluate(t,r):return dict(true=float(np.linalg.norm(rhs.array-A@t.array)/np.linalg.norm(rhs.array)),identity=0.)
         policy=dict(original_key='true',physical_limits=dict(true=1e-6),identity_limits=dict(identity=1e-10))
-        saved=[];true_calls=[]
-        def true_action(v):true_calls.append(1);return action(v)
+        saved=[];true_calls=[];monitors=[]
+        def true_action(v):true_calls.append(v.array.copy());return action(v)
         try:
             result=run_retained_fgmres(rhs,action,lambda v:v.copy(),evaluate=evaluate,checkpoint=lambda *a:None,
-                append=lambda *a:None,seconds=lambda:0.,initial_vector=initial,iterations_consumed=32,
+                append=lambda name,row:monitors.append(row) if name=='monitor_residuals.jsonl' else None,seconds=lambda:0.,initial_vector=initial,iterations_consumed=32,
                 restart=2,max_it=8,residual_interval=2,candidate_rtol=1e-12,retained_tolerance=1e-12,
                 evaluation_policy=policy,true_action=true_action,save_retained=lambda i,v:saved.append((i,v.array.copy())))
             self.assertFalse(result['zero_start']);self.assertEqual(result['ksp_solve_count'],1)
@@ -106,6 +106,11 @@ class ReuseTests(unittest.TestCase):
             self.assertEqual(saved[0][0],32)
             self.assertEqual(result['cumulative_iterations'],32+result['iterations'])
             self.assertEqual(len(true_calls),result['explicit_action_count'])
+            # Real PETSc restart callbacks may repeat the same boundary state.
+            # Exact state/iteration matches must reuse the original audit.
+            states=[(r['iteration'],v.tobytes()) for r,v in zip(monitors,true_calls,strict=True)]
+            self.assertEqual(len(states),len(set(states)))
+            self.assertGreaterEqual(len(states),2)
             result['final_solution'].destroy()
         finally:rhs.destroy()
 
