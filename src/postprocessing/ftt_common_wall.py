@@ -207,14 +207,14 @@ def saved_width_participation(initial, final, hidden_keys):
             gradient_tensors_not_retained=missing,
             gradient_status=(
                 "NOT_RETAINED" if not retained else
-                "PARTIAL_NOT_RETAINED" if missing else "RETAINED_LAST_OPTIMIZER_DERIVATIVE"
+                "PARTIAL_NOT_RETAINED" if missing else "RETAINED_CHECKPOINT_GRADIENT_BUFFERS"
             ),
         )
     return dict(
         axes=axes,
         old_hidden_real_parameters=sum(row["old_hidden_real_parameters"] for row in axes.values()),
         new_hidden_real_parameters=sum(row["new_hidden_real_parameters"] for row in axes.values()),
-        gradient_scope="Stored last optimizer derivative; no fresh final-state gradient computed",
+        gradient_scope="Stored gradient buffers may originate from core-adjoint VJP or hidden optimization; no fresh final-state gradient computed and no hidden update inferred",
         new_network_forward_calls=0,
         new_gradient_calls=0,
     )

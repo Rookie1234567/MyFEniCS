@@ -373,6 +373,8 @@ def test_saved_width_participation_uses_actual_masks_and_retained_gradient():
     assert x["new_hidden_change_norm"] == pytest.approx(2e-3)
     assert x["old_hidden_change_norm"] == pytest.approx(3e-3)
     assert x["retained_new_hidden_gradient_norm"] == pytest.approx(4e-3)
+    assert x["gradient_status"] == "RETAINED_CHECKPOINT_GRADIENT_BUFFERS"
+    assert "core-adjoint VJP" in row["gradient_scope"]
     final["gradients"] = [None] * len(names)
     assert saved_width_participation(initial, final, keys)["axes"]["x"][
         "gradient_status"
