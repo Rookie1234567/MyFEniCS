@@ -10,6 +10,8 @@ import pytest
 
 from src.solvers.task40_v25_selected_q0 import (
     _iter_saved_surface_functionals,
+    _q0_reference_surface_inventory,
+    _q0_source_mode_rows_from_runtime_view,
     _write_surface_functional_stream,
 )
 
@@ -507,3 +509,258 @@ def test_v25_service_and_stage_runner_route_frozen_selected_q0(
     assert received["build_csr"] is build_csr
     assert result["summary"]["q_coverage"]["factor_count"] == 0
     assert result["summary"]["official_result"] is False
+
+
+def test_q0_runtime_plane_view_recovers_only_frozen_source_rows():
+    from src.solvers.fullspace_dtn_action import (
+        FULLSPACE_DTN_MANIFEST_SCHEMA,
+        FULLSPACE_DTN_PROFILE,
+        _canonical_json_bytes,
+    )
+
+    source_rows = [
+        {
+            "mode_index": 0,
+            "side": "bottom",
+            "m": 2,
+            "n": -1,
+            "polarization": "s",
+            "classification": "propagating",
+            "alpha": {"real": 1.25, "imag": 0.0},
+        },
+        {
+            "mode_index": 1,
+            "side": "top",
+            "m": 3,
+            "n": 1,
+            "polarization": "p",
+            "classification": "propagating",
+            "alpha": {"real": 2.5, "imag": 0.0},
+        },
+    ]
+    payload = {
+        "schema": FULLSPACE_DTN_MANIFEST_SCHEMA,
+        "profile": FULLSPACE_DTN_PROFILE,
+        "mode_count": len(source_rows),
+        "modes": source_rows,
+    }
+    source_sha = hashlib.sha256(_canonical_json_bytes(payload)).hexdigest()
+    runtime_rows = [
+        {**row, "reference_plane_nm": -10.0 if row["side"] == "bottom" else 130.0}
+        for row in source_rows
+    ]
+    modes = [
+        SimpleNamespace(side="bottom", m=2, n=-1, polarization="s"),
+        SimpleNamespace(side="top", m=3, n=1, polarization="p"),
+    ]
+
+    recovered, identity = _q0_source_mode_rows_from_runtime_view(
+        runtime_rows,
+        modes,
+        expected_manifest_sha256=source_sha,
+        boundary_planes_nm_by_side={"bottom": -10.0, "top": 130.0},
+    )
+
+    assert list(recovered) == source_rows
+    assert identity["source_manifest_sha256"] == source_sha
+    assert identity["runtime_view_added_only"] == "reference_plane_nm"
+    assert identity["runtime_mode_count_by_side"] == {"bottom": 1, "top": 1}
+
+    changed_other_field = [dict(row) for row in runtime_rows]
+    changed_other_field[1]["classification"] = "changed"
+    with pytest.raises(ValueError, match="frozen source manifest"):
+        _q0_source_mode_rows_from_runtime_view(
+            changed_other_field,
+            modes,
+            expected_manifest_sha256=source_sha,
+            boundary_planes_nm_by_side={"bottom": -10.0, "top": 130.0},
+        )
+
+    changed_plane = [dict(row) for row in runtime_rows]
+    changed_plane[0]["reference_plane_nm"] = -9.0
+    with pytest.raises(ValueError, match="actual boundary-plane context"):
+        _q0_source_mode_rows_from_runtime_view(
+            changed_plane,
+            modes,
+            expected_manifest_sha256=source_sha,
+            boundary_planes_nm_by_side={"bottom": -10.0, "top": 130.0},
+        )
+
+
+def test_q0_reference_inventory_routes_both_real_sides_through_native_mpc_adapter():
+    from src.solvers.task40_v22_operator_probe import _V22NativeFacetRule
+
+    def cell_corners(x0, y0, z0, dz=70.0):
+        x1, y1, z1 = x0 + 1.0, y0 + 1.0, z0 + dz
+        return np.asarray(
+            [
+                [x0, y0, z0],
+                [x1, y0, z0],
+                [x0, y1, z0],
+                [x1, y1, z0],
+                [x0, y0, z1],
+                [x1, y0, z1],
+                [x0, y1, z1],
+                [x1, y1, z1],
+            ],
+            dtype=np.float64,
+        )
+
+    class FakeIndexMap:
+        size_global = 2001
+        local_range = (0, 1764)
+        size_local = 1764
+        num_ghosts = 0
+        ghosts = np.empty(0, dtype=np.int32)
+        owners = np.empty(0, dtype=np.int32)
+
+        @staticmethod
+        def local_to_global(rows):
+            return np.asarray(rows, dtype=np.int32)
+
+    class FakeDofMap:
+        index_map = FakeIndexMap()
+
+        @staticmethod
+        def cell_dofs(cell_id):
+            return np.arange(882, dtype=np.int32) + int(cell_id) * 882
+
+    class FakeTopology:
+        dim = 3
+
+        @staticmethod
+        def create_entity_permutations():
+            return None
+
+        @staticmethod
+        def create_connectivity(_source, _target):
+            return None
+
+        @staticmethod
+        def index_map(_dimension):
+            return SimpleNamespace(size_local=2)
+
+        @staticmethod
+        def get_cell_permutation_info():
+            return np.asarray([0, 1], dtype=np.uint32)
+
+        @staticmethod
+        def connectivity(_source, _target):
+            return SimpleNamespace(
+                links=lambda facet: np.asarray(
+                    [0] if int(facet) == 10 else [1], dtype=np.int32
+                )
+            )
+
+    class FakeFacetTags:
+        indices = np.asarray([10, 11], dtype=np.int32)
+        values = np.asarray([1, 2], dtype=np.int32)
+
+        @staticmethod
+        def find(tag):
+            return np.asarray([10] if int(tag) == 1 else [11], dtype=np.int32)
+
+    bottom_points = cell_corners(0.0, 0.0, -10.0)
+    top_points = cell_corners(1.0, 0.0, 60.0)
+    mesh = SimpleNamespace(
+        topology=FakeTopology(),
+        geometry=SimpleNamespace(
+            dofmap=np.arange(16, dtype=np.int32).reshape(2, 8),
+            x=np.vstack((bottom_points, top_points)),
+        ),
+        comm=SimpleNamespace(size=1),
+    )
+    space = SimpleNamespace(
+        mesh=mesh,
+        dofmap=FakeDofMap(),
+        element=SimpleNamespace(needs_dof_transformations=False, space_dimension=882),
+    )
+    mesh_data = SimpleNamespace(facet_tags=FakeFacetTags())
+    cfg = SimpleNamespace(
+        mesh_axis_cell_counts=(1, 1, 2),
+        physical_z_min=-10.0,
+        physical_z_max=130.0,
+        tags=SimpleNamespace(z_min=1, z_max=2),
+    )
+
+    rows, support_groups, allowed_rows, permutation_info, inventory = (
+        _q0_reference_surface_inventory(mesh_data, space, cfg)
+    )
+    original_geometry_dofmap = mesh.geometry.dofmap
+    misordered_geometry_dofmap = original_geometry_dofmap.copy()
+    misordered_geometry_dofmap[0] = misordered_geometry_dofmap[0][
+        np.asarray([0, 2, 1, 3, 4, 6, 5, 7], dtype=np.int64)
+    ]
+    mesh.geometry.dofmap = misordered_geometry_dofmap
+    with pytest.raises(ValueError, match="actual geometry-dofmap vertex order"):
+        _q0_reference_surface_inventory(mesh_data, space, cfg)
+    mesh.geometry.dofmap = original_geometry_dofmap
+
+    assert [row["side"] for row in rows] == ["bottom", "top"]
+    assert np.array_equal(rows[0]["ordered_cell_coordinates_nm"], bottom_points)
+    assert [len(group) for group in support_groups] == [1, 1]
+    assert [len(group) for group in allowed_rows] == [882, 882]
+    assert [row["cell_permutation"] for row in rows] == [0, 1]
+    assert permutation_info.tolist() == [0, 1]
+    assert inventory["facet_count_by_side"] == {"bottom": 1, "top": 1}
+    assert inventory["cell_dofs_per_boundary_cell"] == 882
+
+    class FakePolynomial:
+        @staticmethod
+        def integral_native(*_args):
+            values = np.zeros((882, 2), dtype=np.complex128)
+            values[1, 0] = 2.0 + 1.0j
+            values[2, 1] = 3.0 - 1.0j
+            return values
+
+    rule = _V22NativeFacetRule(
+        space=space,
+        dof_index_map=FakeIndexMap(),
+        mapping_rows=rows,
+        permutation_info=permutation_info,
+        polynomial=FakePolynomial(),
+        quadrature_degree=160,
+        cfg=SimpleNamespace(
+            physical_z_min=-10.0,
+            physical_z_max=130.0,
+            tags=cfg.tags,
+        ),
+        mpc_expansions={
+            1: (np.asarray([2000], dtype=np.int64), np.asarray([0.5 + 0.25j]))
+        },
+    )
+    assemblers = rule.assemblers()
+    bottom_assembler = assemblers[("bottom", 0)]
+    top_assembler = assemblers[("top", 0)]
+    assert callable(bottom_assembler.assemble_entries)
+    assert bottom_assembler.boundary_tag == 1
+    assert top_assembler.boundary_tag == 2
+    assert bottom_assembler.quadrature_degree == top_assembler.quadrature_degree == 160
+
+    bottom_mode = SimpleNamespace(
+        side="bottom",
+        m=2,
+        n=-1,
+        polarization="s",
+        alpha=0.5 + 0.0j,
+        gamma=0.25 + 0.0j,
+        k_vector=np.asarray([0.5, 0.25, 1.0], dtype=np.complex128),
+    )
+    bottom_rows, bottom_values = bottom_assembler.assemble_entries(bottom_mode, None)
+    assert 1 not in bottom_rows
+    assert 2000 in bottom_rows
+    assert bottom_values[np.searchsorted(bottom_rows, 2000)] == 1.25 + 0.0j
+
+    top_mode = SimpleNamespace(
+        side="top",
+        m=3,
+        n=1,
+        polarization="p",
+        alpha=0.5 + 0.0j,
+        gamma=0.25 + 0.0j,
+        k_vector=np.asarray([0.5, 0.25, 1.0], dtype=np.complex128),
+    )
+    top_rows, top_values = top_assembler.assemble_entries(top_mode, None)
+    expected_phase = np.exp(0.5j)
+    assert 883 in top_rows
+    assert top_values[np.searchsorted(top_rows, 883)] == expected_phase * (2.0 + 1.0j)

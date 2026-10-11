@@ -132,28 +132,207 @@ def _save_npy(path: Path, array: Any) -> None:
     os.replace(temp, path)
 
 
-def _boundary_support_from_tags(mesh_data: Any, space: Any, cfg: Any):
-    """Build compact tagged-cell and allowed-row inventories without a carrier."""
+def _q0_source_mode_rows_from_runtime_view(
+    runtime_rows: tuple[Mapping[str, Any], ...] | list[Mapping[str, Any]],
+    modes: tuple[Any, ...] | list[Any],
+    *,
+    expected_manifest_sha256: str,
+    boundary_planes_nm_by_side: Mapping[str, float],
+) -> tuple[tuple[Mapping[str, Any], ...], dict[str, Any]]:
+    """Recover only the frozen source rows after verifying the runtime plane view."""
+    from .fullspace_dtn_action import (
+        FULLSPACE_DTN_MANIFEST_SCHEMA,
+        FULLSPACE_DTN_PROFILE,
+        _canonical_json_bytes,
+    )
+
+    if not runtime_rows or len(runtime_rows) != len(modes):
+        raise ValueError("q0 runtime mode rows differ from the complete frozen mode table")
+    source_rows: list[dict[str, Any]] = []
+    plane_counts = {"bottom": 0, "top": 0}
+    for index, (runtime_row, mode) in enumerate(zip(runtime_rows, modes, strict=True)):
+        if not isinstance(runtime_row, Mapping):
+            raise ValueError("q0 runtime mode view contains a non-mapping row")
+        side = str(runtime_row.get("side", ""))
+        if side not in plane_counts or side not in boundary_planes_nm_by_side:
+            raise ValueError("q0 runtime mode view contains an unsupported reference-plane side")
+        expected_plane = float(boundary_planes_nm_by_side[side])
+        runtime_plane = runtime_row.get("reference_plane_nm")
+        if (
+            isinstance(runtime_plane, bool)
+            or not isinstance(runtime_plane, (int, float))
+            or not np.isfinite(runtime_plane)
+            or float(runtime_plane) != expected_plane
+        ):
+            raise ValueError("q0 runtime reference plane differs from the actual boundary-plane context")
+        if (
+            int(runtime_row.get("mode_index", -1)) != index
+            or side != str(mode.side)
+            or int(runtime_row.get("m", 0)) != int(mode.m)
+            or int(runtime_row.get("n", 0)) != int(mode.n)
+            or str(runtime_row.get("polarization")) != str(mode.polarization)
+        ):
+            raise ValueError("q0 runtime mode row identity differs from the frozen ordered mode table")
+        source_row = dict(runtime_row)
+        del source_row["reference_plane_nm"]
+        if "reference_plane_nm" in source_row:
+            raise ValueError("q0 source row unexpectedly retains a runtime-only reference plane")
+        source_rows.append(source_row)
+        plane_counts[side] += 1
+
+    payload = {
+        "schema": FULLSPACE_DTN_MANIFEST_SCHEMA,
+        "profile": FULLSPACE_DTN_PROFILE,
+        "mode_count": len(source_rows),
+        "modes": source_rows,
+    }
+    source_sha256 = hashlib.sha256(_canonical_json_bytes(payload)).hexdigest()
+    if source_sha256 != str(expected_manifest_sha256):
+        raise ValueError(
+            "q0 runtime rows differ from the frozen source manifest after removing only reference_plane_nm"
+        )
+    planes = {
+        side: float(boundary_planes_nm_by_side[side])
+        for side in ("bottom", "top")
+    }
+    return tuple(source_rows), {
+        "source_manifest_sha256": source_sha256,
+        "runtime_view_added_only": "reference_plane_nm",
+        "runtime_reference_plane_nm_by_side": planes,
+        "runtime_mode_count_by_side": plane_counts,
+        "source_rows_match_after_plane_removal": True,
+    }
+
+
+def _q0_reference_surface_inventory(mesh_data: Any, space: Any, cfg: Any):
+    """Build exact native-rule rows from the actual local reference mesh."""
     mesh = space.mesh
-    mesh.topology.create_connectivity(2, 3)
-    facet_to_cell = mesh.topology.connectivity(2, 3)
-    owned = int(mesh.topology.index_map(3).size_local)
-    groups = []
-    allowed_rows = []
-    for tag in (cfg.tags.z_min, cfg.tags.z_max):
-        facets = np.asarray(mesh_data.facet_tags.find(int(tag)), dtype=np.int32)
-        cells = sorted({
-            int(cell)
-            for facet in facets
-            for cell in facet_to_cell.links(int(facet))
-            if int(cell) < owned
-        })
-        if not cells:
-            raise ValueError("tagged reference port has no adjacent local cells")
-        groups.append(np.asarray(cells, dtype=np.int32))
-        row_parts = [np.asarray(space.dofmap.cell_dofs(cell), dtype=np.int64) for cell in cells]
-        allowed_rows.append(np.unique(np.concatenate(row_parts)))
-    return tuple(groups), tuple(allowed_rows)
+    topology = mesh.topology
+    if int(topology.dim) != 3:
+        raise ValueError("q0 native surface mapping requires the actual three-dimensional reference mesh")
+    topology.create_entity_permutations()
+    topology.create_connectivity(2, 3)
+    facet_to_cell = topology.connectivity(2, 3)
+    owned_cells = int(topology.index_map(3).size_local)
+    geometry_dofmap = np.asarray(mesh.geometry.dofmap, dtype=np.int32)
+    geometry = np.asarray(mesh.geometry.x, dtype=np.float64)
+    permutation_info = np.asarray(topology.get_cell_permutation_info(), dtype=np.uint32)
+    if (
+        geometry_dofmap.shape != (owned_cells, 8)
+        or geometry.shape[1] != 3
+        or permutation_info.shape != (owned_cells,)
+    ):
+        raise ValueError("q0 actual reference mesh is not the registered affine hexahedral inventory")
+
+    axis_counts = tuple(int(value) for value in cfg.mesh_axis_cell_counts)
+    if len(axis_counts) != 3 or min(axis_counts) <= 0:
+        raise ValueError("q0 actual reference mesh axis-cell counts are invalid")
+    expected_facets_per_side = axis_counts[0] * axis_counts[1]
+    boundaries = (
+        ("bottom", int(cfg.tags.z_min), float(cfg.physical_z_min), False),
+        ("top", int(cfg.tags.z_max), float(cfg.physical_z_max), True),
+    )
+    mapping_rows: list[dict[str, Any]] = []
+    cells_by_side: dict[str, set[int]] = {"bottom": set(), "top": set()}
+    dofs_by_side: dict[str, list[np.ndarray]] = {"bottom": [], "top": []}
+    seen_facets: set[int] = set()
+    for side, tag, boundary_z, upper_face in boundaries:
+        facets = np.asarray(mesh_data.facet_tags.find(tag), dtype=np.int32).reshape(-1)
+        if (
+            len(facets) != expected_facets_per_side
+            or len(np.unique(facets)) != len(facets)
+        ):
+            raise ValueError(
+                f"q0 {side} boundary-facet coverage differs from the complete local reference plane"
+            )
+        for facet_id in sorted(map(int, facets)):
+            if facet_id in seen_facets:
+                raise ValueError("q0 reference facet was assigned to more than one port side")
+            seen_facets.add(facet_id)
+            adjacent = tuple(int(cell) for cell in facet_to_cell.links(facet_id))
+            if len(adjacent) != 1:
+                raise ValueError("q0 reference port facet must have exactly one local adjacent cell")
+            cell_id = adjacent[0]
+            if cell_id < 0 or cell_id >= owned_cells or cell_id in cells_by_side[side]:
+                raise ValueError("q0 reference facet has an invalid or duplicate adjacent cell")
+            points = np.asarray(geometry[geometry_dofmap[cell_id]], dtype=np.float64)
+            if points.shape != (8, 3) or not np.isfinite(points).all():
+                raise ValueError("q0 reference cell geometry is not eight finite hexahedral vertices")
+            lower = points.min(axis=0)
+            upper = points.max(axis=0)
+            if np.any(upper <= lower):
+                raise ValueError("q0 reference cell has nonpositive axis-aligned geometry")
+            ordered = np.asarray(
+                [
+                    [lower[0], lower[1], lower[2]],
+                    [upper[0], lower[1], lower[2]],
+                    [lower[0], upper[1], lower[2]],
+                    [upper[0], upper[1], lower[2]],
+                    [lower[0], lower[1], upper[2]],
+                    [upper[0], lower[1], upper[2]],
+                    [lower[0], upper[1], upper[2]],
+                    [upper[0], upper[1], upper[2]],
+                ],
+                dtype=np.float64,
+            )
+            if not np.array_equal(points, ordered):
+                raise ValueError(
+                    "q0 native facet rule requires the actual geometry-dofmap vertex order "
+                    "to match its canonical affine hexahedron order"
+                )
+            actual_plane = float(upper[2] if upper_face else lower[2])
+            if actual_plane != boundary_z:
+                raise ValueError("q0 reference facet tag does not match its physical boundary plane")
+            local_dofs = np.asarray(space.dofmap.cell_dofs(cell_id), dtype=np.int32)
+            if local_dofs.shape != (882,):
+                raise ValueError("q0 native facet rule requires all 882 p6 local cell rows")
+            widths = np.ascontiguousarray(upper - lower, dtype="<f8")
+            class_id = "reference-" + hashlib.sha256(widths.tobytes()).hexdigest()[:16]
+            mapping_rows.append(
+                {
+                    "side": side,
+                    "class_id": class_id,
+                    "cell_id": cell_id,
+                    "cell_permutation": int(permutation_info[cell_id]),
+                    "facet_id": facet_id,
+                    "cell_bounds_nm": np.column_stack((lower, upper)),
+                    "ordered_cell_coordinates_nm": points,
+                }
+            )
+            cells_by_side[side].add(cell_id)
+            dofs_by_side[side].append(local_dofs.astype(np.int64, copy=False))
+    if cells_by_side["bottom"] & cells_by_side["top"]:
+        raise ValueError("q0 bottom and top reference planes share a boundary-adjacent cell")
+
+    dof_index_map = space.dofmap.index_map
+    cell_dof_digest = hashlib.sha256()
+    for cell_id in range(owned_cells):
+        local_dofs = np.asarray(space.dofmap.cell_dofs(cell_id), dtype=np.int32)
+        global_dofs = np.ascontiguousarray(
+            dof_index_map.local_to_global(local_dofs)
+        )
+        cell_dof_digest.update(np.asarray([cell_id], dtype="<i8").tobytes())
+        cell_dof_digest.update(global_dofs.tobytes())
+    support_groups = tuple(
+        np.asarray(sorted(cells_by_side[side]), dtype=np.int32)
+        for side in ("bottom", "top")
+    )
+    allowed_rows = tuple(
+        np.unique(np.concatenate(dofs_by_side[side]))
+        for side in ("bottom", "top")
+    )
+    inventory = {
+        "facet_count_by_side": {
+            side: sum(row["side"] == side for row in mapping_rows)
+            for side in ("bottom", "top")
+        },
+        "boundary_cell_count_by_side": {
+            side: int(len(cells_by_side[side])) for side in ("bottom", "top")
+        },
+        "cell_dofs_per_boundary_cell": 882,
+        "cell_dofmap_sha256": cell_dof_digest.hexdigest(),
+    }
+    return tuple(mapping_rows), support_groups, allowed_rows, permutation_info, inventory
 
 
 def _is_in_sorted_rows(rows: np.ndarray, allowed: np.ndarray) -> np.ndarray:
@@ -786,13 +965,22 @@ def run_task40_v25_selected_q0_consumer(
     from .dtn_boundary_phase_gauge import (
         BOUNDARY_PLANE,
         assembly_projection_denominator,
-        build_gauge_assembly_context,
     )
+    from .directional_boundary import FacetPolynomial
     from .dtn_port_3d import _dtn_surface_quadrature_degree
-    from .fullspace_dtn_action import iter_fullspace_dtn_functionals_from_surface
-    from .fullspace_same_mesh_hcurl_pmg_physical import (
-        _build_split_volume_action,
-        _surface_assemblers,
+    from .fullspace_dtn_action import (
+        iter_fullspace_dtn_functionals_from_surface,
+    )
+    from .fullspace_same_mesh_hcurl_pmg_physical import _build_split_volume_action
+    from .task40_v20_mode_inventory import (
+        TARGET_MODE_MANIFEST_SHA256,
+        TARGET_REFERENCE_PLANES_NM,
+    )
+    from .task40_v22_operator_probe import (
+        _V22NativeFacetRule,
+        _build_v22_native_gauge_context,
+        _global_mpc_expansions,
+        _native_quadrature_identity,
     )
     from .fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
     from .hcurl_assembly_time_condensation import build_unconstrained_assembly_time_condensation
@@ -849,6 +1037,20 @@ def run_task40_v25_selected_q0_consumer(
         mode_rows,
         expected_ordered_mode_key_sha256=expected_ordered_mode_key_sha256,
         frozen_mode_keys=frozen_mode_keys,
+    )
+    if mode_sha != TARGET_MODE_MANIFEST_SHA256:
+        raise ValueError("q0 mode manifest SHA differs from the frozen source artifact")
+    runtime_planes = {
+        "bottom": float(regular_cfg.physical_z_min),
+        "top": float(regular_cfg.physical_z_max),
+    }
+    if runtime_planes != TARGET_REFERENCE_PLANES_NM:
+        raise ValueError("q0 actual configuration planes differ from the frozen mode-view planes")
+    source_mode_rows, source_manifest_identity = _q0_source_mode_rows_from_runtime_view(
+        mode_rows,
+        generated_modes,
+        expected_manifest_sha256=mode_sha,
+        boundary_planes_nm_by_side=runtime_planes,
     )
 
     contexts = build_task40_v10_sector_contexts(generated_modes, regular_cfg, global_axes)
@@ -941,6 +1143,105 @@ def run_task40_v25_selected_q0_consumer(
         local_cell_count = int(mesh_object.topology.index_map(3).size_local)
         if local_cell_count != int(profile.local_cell_count):
             raise ValueError("selected twist-0 mesh does not cover the complete 7,616-cell reference sector")
+        mesh_data = local_levels["mesh_data"]
+        side_facet_counts = {
+            "bottom": int(len(mesh_data.facet_tags.find(int(local_cfg.tags.z_min)))),
+            "top": int(len(mesh_data.facet_tags.find(int(local_cfg.tags.z_max)))),
+        }
+        finalized_mpc_slave_count = int(len(floquet.mpc.slaves))
+        finalized_mpc_master_count = int(len(floquet.mpc.masters.array))
+        native_inventory_bytes = (
+            sum(side_facet_counts.values()) * (2048 + 882 * 24)
+            + finalized_mpc_slave_count * 128
+            + finalized_mpc_master_count * 24
+        )
+        allocation_gate(
+            "task40_v25_q0_native_surface_inventory_and_mpc_closure",
+            {
+                "additional_payload_bytes": int(native_inventory_bytes),
+                "disk_payload_bytes": 0,
+                "reservation_kind": "admission estimate before native mapping/MPC materialization; not measured RSS",
+                "facet_count_by_side": side_facet_counts,
+                "local_dofs_per_boundary_cell": 882,
+                "finalized_mpc_slave_count": finalized_mpc_slave_count,
+                "finalized_mpc_master_count": finalized_mpc_master_count,
+                "quadrature_degree": int(qdegree),
+            },
+        )
+        (
+            mapping_rows,
+            support_groups,
+            allowed_rows_by_side,
+            permutation_info,
+            native_inventory,
+        ) = _q0_reference_surface_inventory(mesh_data, function_space, local_cfg)
+        support_rows = tuple({"bottom": 0, "top": 1}[str(mode.side)] for mode in local_modes)
+        dof_index_map = function_space.dofmap.index_map
+        boundary_cell_ids = sorted(
+            {int(row["cell_id"]) for row in mapping_rows}
+        )
+        boundary_global_rows = np.unique(
+            np.concatenate(
+                [
+                    np.asarray(
+                        dof_index_map.local_to_global(
+                            np.asarray(function_space.dofmap.cell_dofs(cell), dtype=np.int32)
+                        ),
+                        dtype=np.int64,
+                    )
+                    for cell in boundary_cell_ids
+                ]
+            )
+        )
+        mpc_expansions = _global_mpc_expansions(
+            floquet.mpc, dof_index_map, boundary_global_rows
+        )
+        compact_upper_rows = (
+            len(boundary_cell_ids) * 882
+            + sum(len(masters) for masters, _coefficients in mpc_expansions.values())
+        )
+        allocation_gate(
+            "task40_v25_q0_native_surface_compact_rows",
+            {
+                "additional_payload_bytes": int(
+                    compact_upper_rows
+                    * (
+                        np.dtype(PETSc.IntType).itemsize
+                        + np.dtype(np.int64).itemsize
+                        + 2 * np.dtype(np.complex128).itemsize
+                    )
+                ),
+                "disk_payload_bytes": 0,
+                "reservation_kind": "upper bound for native boundary row and finalized MPC master closure arrays",
+                "boundary_cell_count": len(boundary_cell_ids),
+                "boundary_global_row_count": int(len(boundary_global_rows)),
+                "finalized_mpc_expansion_slave_count": len(mpc_expansions),
+                "finalized_mpc_expansion_master_count": sum(
+                    len(masters) for masters, _coefficients in mpc_expansions.values()
+                ),
+            },
+        )
+        native_rule = _V22NativeFacetRule(
+            space=function_space,
+            dof_index_map=dof_index_map,
+            mapping_rows=mapping_rows,
+            permutation_info=permutation_info,
+            polynomial=FacetPolynomial(function_space.element.basix_element),
+            quadrature_degree=qdegree,
+            cfg=local_cfg,
+            mpc_expansions=mpc_expansions,
+        )
+        surface_assemblers = native_rule.assemblers()
+        native_quadrature_identity = _native_quadrature_identity(qdegree)
+        assembly_context = _build_v22_native_gauge_context(
+            space=function_space,
+            mesh_data=mesh_data,
+            mpc=floquet.mpc,
+            cfg=local_cfg,
+            quadrature_identity=native_quadrature_identity,
+            permutation_info=permutation_info,
+            cell_dofmap_sha256=native_inventory["cell_dofmap_sha256"],
+        )
         local_entities = collect_y_orbit_entities(
             function_space,
             floquet,
@@ -949,29 +1250,6 @@ def run_task40_v25_selected_q0_consumer(
             transform_bank=(transform_bank := YOrbitTransformBank(
                 mapping_limit=LIMITS["mapping"], allocation_gate=allocation_gate
             )),
-        )
-
-        support_groups, allowed_rows_by_side = _boundary_support_from_tags(
-            local_levels["mesh_data"], function_space, local_cfg
-        )
-        support_rows = tuple({"bottom": 0, "top": 1}[str(mode.side)] for mode in local_modes)
-        surface_assemblers = _surface_assemblers(
-            function_space,
-            local_levels["mesh_data"],
-            local_cfg,
-            qdegree,
-            jit_options=jit_options or SAME_MESH_JIT_OPTIONS,
-            dtn_phase_gauge=BOUNDARY_PLANE,
-            verify_dtn_quadrature=False,
-        )
-        assembly_context = build_gauge_assembly_context(
-            function_space,
-            local_levels["mesh_data"],
-            floquet.mpc,
-            local_cfg,
-            qdegree,
-            surface_assemblers,
-            phase_override=phase_override,
         )
         volume_action = _build_split_volume_action(
             local_levels["mesh_data"],
@@ -1033,7 +1311,7 @@ def run_task40_v25_selected_q0_consumer(
             phase_gauge=BOUNDARY_PLANE,
             assembly_context=assembly_context,
             mode_indices=tuple(map(int, selected)),
-            precomputed_mode_rows=mode_rows,
+            precomputed_mode_rows=source_mode_rows,
             precomputed_physical_manifest_sha256=mode_sha,
             audit=stream_audit,
         )
@@ -1047,6 +1325,20 @@ def run_task40_v25_selected_q0_consumer(
             interior_rows=interior_rows,
         )
         surface_stream_facts["generation_audit"] = stream_audit
+        surface_stream_facts["source_mode_manifest_identity"] = source_manifest_identity
+        surface_stream_facts["native_surface_adapter"] = {
+            "implementation": "_V22NativeFacetRule on the actual q0 regular-reference mesh",
+            "inventory": native_inventory,
+            "geometry_class_ids_by_side": {
+                side: list(native_rule.class_ids_by_side[side])
+                for side in ("bottom", "top")
+            },
+            "candidate_global_row_count": int(len(native_rule.candidate_rows)),
+            "candidate_global_rows_sha256": _array_sha256(native_rule.candidate_rows),
+            "finalized_mpc_expansion_slave_count": int(len(mpc_expansions)),
+            "native_quadrature_identity": native_quadrature_identity,
+            "assembly_stats": native_rule.assembly_stats,
+        }
         saved_paths["production_surface_functionals"] = surface_stream_path
         internal_B_nnz = int(surface_stream_facts["internal_nonzero_entry_count"]["B"])
         internal_D_nnz = int(surface_stream_facts["internal_nonzero_entry_count"]["D"])
@@ -1059,6 +1351,7 @@ def run_task40_v25_selected_q0_consumer(
                 "selected_q": 0,
                 "paired_q": 4,
                 "full_mode_manifest_sha256": mode_sha,
+                "source_mode_manifest_identity": source_manifest_identity,
                 "ordered_mode_key_sha256": computed_key_sha,
                 "actual_q0_alias_count": len(aliases[0]),
                 "actual_q4_alias_count": len(aliases[1]),
@@ -1787,6 +2080,7 @@ def run_task40_v25_selected_q0_consumer(
             "mode_inventory": {
                 "mode_count_full_reference": len(generated_modes),
                 "mode_manifest_sha256": mode_sha,
+                "source_mode_manifest_identity": source_manifest_identity,
                 "ordered_mode_key_sha256": computed_key_sha,
                 "q0_alias_count_actual": len(aliases[0]),
                 "q4_alias_count_actual": len(aliases[1]),
