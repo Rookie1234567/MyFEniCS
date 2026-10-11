@@ -237,6 +237,40 @@ def _p6_action_owner_bound(
     }
 
 
+def _frozen_cell_class_coverage(build_audit: Mapping[str, Any]) -> dict[str, Any]:
+    """Compare the condensed builder's actual audit fields with the frozen inventory."""
+    expected = {
+        "owned_cell_count_global": 30_464,
+        "raw_tensor_class_count_global_unique": 29,
+        "oriented_schur_class_count_sum": 60,
+    }
+    actual = {name: build_audit.get(name) for name in expected}
+    missing_fields = [name for name in expected if name not in build_audit]
+    mismatched_fields = {
+        name: {"expected": value, "actual": actual[name]}
+        for name, value in expected.items()
+        if name in build_audit and actual[name] != value
+    }
+    return {
+        "schema": "task40extra.review_v25_cell_class_coverage.v1",
+        "source": "condensed.build_audit",
+        "status": "PASS" if not missing_fields and not mismatched_fields else "FAILED",
+        "expected_counts": expected,
+        "actual_counts": actual,
+        "missing_fields": missing_fields,
+        "mismatched_fields": mismatched_fields,
+        "builder_audit_excerpt": {
+            name: build_audit.get(name)
+            for name in (
+                "raw_tensor_class_count_sum",
+                "raw_tensor_class_use_count_sum",
+                "retained_local_schur_class_count_sum",
+            )
+            if name in build_audit
+        },
+    }
+
+
 def run_complete_target_volume_action(
     *,
     cfg: Any,
@@ -343,12 +377,22 @@ def run_complete_target_volume_action(
         )
         if condensed.matrix is not None or condensed.retained_local_schur_by_class is None:
             raise RuntimeError("V25 volume condensation unexpectedly materialized a global matrix")
-        if (
-            condensed.build_audit.get("owned_cell_count_global") != 30_464
-            or condensed.build_audit.get("raw_class_count_global_unique") != 29
-            or condensed.build_audit.get("oriented_schur_class_count_sum") != 60
-        ):
-            raise ValueError("V25 complete target volume did not retain all frozen cell classes")
+        class_coverage = _frozen_cell_class_coverage(condensed.build_audit)
+        _atomic_write_json(
+            output_directory / "v25_cell_class_coverage.json",
+            class_coverage,
+        )
+        if class_coverage["status"] != "PASS":
+            detail = json.dumps(
+                {
+                    "actual_counts": class_coverage["actual_counts"],
+                    "missing_fields": class_coverage["missing_fields"],
+                    "mismatched_fields": class_coverage["mismatched_fields"],
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            raise ValueError(f"V25 complete target volume cell-class coverage mismatch: {detail}")
         map_audit = condensed.build_audit.get("compact_action_only_maps")
         if not isinstance(map_audit, Mapping) or map_audit.get("status") != "DERIVED_UPPER_BOUND":
             raise ValueError("V25 compact-map allocation gate did not produce a preflight receipt")

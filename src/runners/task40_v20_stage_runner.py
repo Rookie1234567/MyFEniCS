@@ -1126,6 +1126,7 @@ def run_task40_v20_stage(
                 "cleanup",
                 {"status": "UNKNOWN", "reason": "operator probe cleanup receipt unavailable"},
             ),
+            "failure_type": probe.get("failure_type"),
             "failure_message": probe.get("failure_message"),
             "resource_gate": probe.get("resource_blocker")
             if outcome == "RESOURCE_CONTROLLED_STOP"
@@ -1157,6 +1158,7 @@ def run_task40_v20_stage(
                     "v24_real_edge_volume_panel.json",
                     "v24_real_edge_volume_panel.npz",
                     "v25_complete_target_volume_action.json",
+                    "v25_cell_class_coverage.json",
                     "v25_volume_witness_case_0.json",
                     "v25_volume_witness_case_1.json",
                 )

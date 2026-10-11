@@ -3,13 +3,62 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from src.solvers.task40_v25_complete_volume import (
     _atomic_save_array,
+    _frozen_cell_class_coverage,
     _p6_action_owner_bound,
     _relative_error,
     _relative_error_between,
 )
+
+
+@pytest.fixture
+def condensation_builder_audit() -> dict[str, int]:
+    """The cell-class field names emitted by the actual condensation builder."""
+    return {
+        "owned_cell_count_global": 30_464,
+        "raw_tensor_class_count_global_unique": 29,
+        "raw_tensor_class_count_sum": 29,
+        "raw_tensor_class_use_count_sum": 30_464,
+        "oriented_schur_class_count_sum": 60,
+        "retained_local_schur_class_count_sum": 60,
+    }
+
+
+def test_frozen_cell_coverage_reads_actual_builder_audit_keys(
+    condensation_builder_audit: dict[str, int],
+) -> None:
+    coverage = _frozen_cell_class_coverage(condensation_builder_audit)
+    assert coverage["status"] == "PASS"
+    assert coverage["actual_counts"] == {
+        "owned_cell_count_global": 30_464,
+        "raw_tensor_class_count_global_unique": 29,
+        "oriented_schur_class_count_sum": 60,
+    }
+    assert coverage["missing_fields"] == []
+
+
+def test_frozen_cell_coverage_reports_a_missing_builder_field(
+    condensation_builder_audit: dict[str, int],
+) -> None:
+    del condensation_builder_audit["raw_tensor_class_count_global_unique"]
+    coverage = _frozen_cell_class_coverage(condensation_builder_audit)
+    assert coverage["status"] == "FAILED"
+    assert coverage["missing_fields"] == ["raw_tensor_class_count_global_unique"]
+
+
+def test_frozen_cell_coverage_reports_wrong_observed_count(
+    condensation_builder_audit: dict[str, int],
+) -> None:
+    condensation_builder_audit["oriented_schur_class_count_sum"] = 59
+    coverage = _frozen_cell_class_coverage(condensation_builder_audit)
+    assert coverage["status"] == "FAILED"
+    assert coverage["mismatched_fields"]["oriented_schur_class_count_sum"] == {
+        "expected": 60,
+        "actual": 59,
+    }
 
 
 def test_native_residual_metric_uses_residual_over_native_rhs() -> None:

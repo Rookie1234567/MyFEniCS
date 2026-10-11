@@ -5760,6 +5760,9 @@ def _run_probe(
             )
             facts["resource_gates"] = resource_gates + volume_resource_gates
             facts["status"] = operation_status
+            if operation_status != "PASS_COMPLETE_TARGET_VOLUME_ACTION":
+                facts["failure_type"] = operation.get("failure_type")
+                facts["failure_message"] = operation.get("failure_message")
             facts["failed_stage"] = (
                 None if operation_status == "PASS_COMPLETE_TARGET_VOLUME_ACTION"
                 else "target_operator_probe"
