@@ -1,0 +1,43 @@
+{
+  "schema": "TASK042_RESTART_FEEDBACK_V73",
+  "batch": "V73_RESTART_AND_COARSE_FEEDBACK",
+  "review_commit": "f1504cffd4bdcd7bfe025c0ff8e544298e1b7995",
+  "review_sha256": "3269e49b6004ccee1882de13db58e2fb01aa2ccf595c483d79ddf76c287a8243",
+  "stages": [
+    "PRECHECK",
+    "R128",
+    "B128",
+    "VERIFY_COST"
+  ],
+  "action_limit": 1600,
+  "iteration_limit": 256,
+  "iteration_seconds": 10800,
+  "restart": 128,
+  "numeric_qualification_seconds": 10800,
+  "numeric_future_minimum_bytes": 12884901888,
+  "new_storage_bytes": 34359738368,
+  "task_storage_bytes": 712964571136,
+  "free_bytes": 53687091200,
+  "evidence_reserve_bytes": 536870912,
+  "total_loaded_seconds": 36000,
+  "maximum_new_complete_solves": 2,
+  "case_wall_seconds": {
+    "PRECHECK": 3600,
+    "R128": 21600,
+    "B128": 21600,
+    "VERIFY_COST": 10800
+  },
+  "history_known_lower_seconds": 354820.6003592662,
+  "parent_plan": {
+    "path": "input/task042_neural_coarse_inverse/reused_trace_iterative_v72.json",
+    "sha256": "a3547640c20303bc1d63a503036ecd3328c377edb0ee7e10d14182edd39aaff7"
+  },
+  "reuse_qualification": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_reuse_admit_20261011T042133054087Z/result.json",
+    "sha256": "db39b64f7e0ccc44c3bbb7031b70f414c28917bf2fe5a768b15b66b2b5cfcb43"
+  },
+  "prior_failed_candidate": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_trace_fgmres_solve_20261011T042512619981Z/result.json",
+    "sha256": "706a8d4220b96cb73a5eafff48924b03d2af6041986dc3cfabcc6c1280f0bdac"
+  }
+}

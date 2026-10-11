@@ -231,8 +231,10 @@ def restrict(Z,r):return np.r_[Z.conj().T@r[:Z.shape[0]],r[Z.shape[0]:]]
 
 
 class BoundedTwoLevelPC:
-    def __init__(self,Z,patches,factors,coarse_factor,action):
+    def __init__(self,Z,patches,factors,coarse_factor,action,*,variant="additive"):
         self.Z=Z;self.patches=patches;self.factors=factors;self.coarse=coarse_factor;self.action=action
+        if variant not in ("additive","balanced"):raise ValueError("explicit two-level PC variant")
+        self.variant=variant
         self.calls=dict(apply=0,local_triangular=0,coarse_triangular=0,internal_original_action=0)
         self.seconds=dict(local=0.,coarse=0.,original=0.)
 
@@ -243,18 +245,34 @@ class BoundedTwoLevelPC:
         try:factor.solve_repeated(rhs,out);return out.array.copy()
         finally:rhs.destroy();out.destroy()
 
-    def __call__(self,r):
-        r=np.asarray(r);self.calls['apply']+=1;began=time.perf_counter()
-        z=prolong(self.Z,self.solve(self.coarse,restrict(self.Z,r)))
-        self.calls['coarse_triangular']+=1;self.seconds['coarse']+=time.perf_counter()-began
-        began=time.perf_counter();residual=r-self.action(z)
-        self.calls['internal_original_action']+=1;self.seconds['original']+=time.perf_counter()-began
-        began=time.perf_counter()
+    def coarse_apply(self,r):
+        started=time.perf_counter()
+        rhs=restrict(self.Z,r);solution=self.solve(self.coarse,rhs)
+        self.last_coarse=dict(rhs=rhs,solution=solution)
+        z=prolong(self.Z,solution)
+        self.calls['coarse_triangular']+=1;self.seconds['coarse']+=time.perf_counter()-started
+        return z
+
+    def original_apply(self,z):
+        started=time.perf_counter();out=self.action(z)
+        self.calls['internal_original_action']+=1;self.seconds['original']+=time.perf_counter()-started
+        return out
+
+    def local_apply(self,r):
+        started=time.perf_counter();z=np.zeros_like(r)
         for patch,factor in zip(self.patches,self.factors,strict=True):
-            ids=patch['ids'];v=self.solve(factor,residual[ids]);core=patch['core']
-            z[core]+=v[np.searchsorted(ids,core)];self.calls['local_triangular']+=1
-        self.seconds['local']+=time.perf_counter()-began
-        if not np.isfinite(z).all():raise FloatingPointError('fixed two-level PC nonfinite')
+            ids,core=patch['ids'],patch['core']
+            v=self.solve(factor,r[ids]);z[core]+=v[np.searchsorted(ids,core)]
+            self.calls['local_triangular']+=1
+        self.seconds['local']+=time.perf_counter()-started
+        return z
+
+    def __call__(self,r):
+        self.calls['apply']+=1
+        zc=self.coarse_apply(r);rc=r-self.original_apply(zc);v=self.local_apply(rc)
+        z=zc+v
+        if self.variant=='balanced':z-=self.coarse_apply(self.original_apply(v))
+        if not np.isfinite(z).all():raise FloatingPointError('bounded PC nonfinite')
         return z
 
     def destroy(self):

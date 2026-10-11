@@ -1,0 +1,5 @@
+schema_version = 1
+
+[task042_v73]
+stage = "PRECHECK"
+run_id = "task042_v73_reuse_preflight"

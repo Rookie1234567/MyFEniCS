@@ -16,7 +16,7 @@ def run_retained_fgmres(
     save_retained=lambda iteration, vector: None,
     restart=32, max_it=2048, residual_interval=8, candidate_rtol=1e-6,
     evaluation_policy=None, retained_tolerance=None, initial_vector=None,
-    iterations_consumed=0, true_action=None,
+    iterations_consumed=0, true_action=None, audit_identity=None,
 ):
     """Callbacks return owned action/PC vectors and plain evaluation facts."""
     from petsc4py import PETSc
@@ -177,6 +177,17 @@ def run_retained_fgmres(
 
         ksp.setConvergenceTest(convergence)
         ksp.setUp()
+        view_path=None
+        if audit_identity is not None:
+            from pathlib import Path
+            view_path=Path(audit_identity['directory'])/'KSP_view.txt'
+            viewer=PETSc.Viewer().createASCII(str(view_path),comm=rhs.getComm())
+            try:ksp.view(viewer)
+            finally:viewer.destroy()
+        configuration=dict(type=ksp.getType(),side=int(ksp.getPCSide()),norm=int(ksp.getNormType()),
+            restart=restart,tolerances=list(ksp.getTolerances()),initial_guess_nonzero=ksp.getInitialGuessNonzero(),
+            view_path=str(view_path) if view_path else None,audit_identity=audit_identity)
+        append('KSP_configuration.jsonl',configuration)
         started = perf_counter()
         ksp.solve(rhs, solution)
         ksp_monotonic = perf_counter() - started
@@ -195,7 +206,7 @@ def run_retained_fgmres(
             "explicit_action_count": len(snapshots), "elapsed_seconds": float(seconds()),
             "ksp_solve_monotonic_seconds": ksp_monotonic, "timings": timings,
             "ksp_create_count": 1, "ksp_solve_count": 1, "ksp_destroy_count": 0,
-            "restart": restart, "max_it": max_it, "zero_start": initial_vector is None,
+            "restart": restart, "max_it": max_it, "actual_KSP_configuration": configuration, "zero_start": initial_vector is None,
             "iterations_consumed_before_instance": iterations_consumed,
             "cumulative_iterations": iteration+iterations_consumed,
             "continuation_basis": "fresh KSP; previous Krylov basis not retained" if initial_vector is not None else None,

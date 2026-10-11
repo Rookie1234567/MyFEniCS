@@ -25,7 +25,8 @@ def action_charge(kind,operation,scope=scope):
     """Write-ahead upper/lower counters across stages and failed calls."""
     p=scope.window.TMP/'action_counts.json'
     counts=json.loads(p.read_text()) if p.exists() else dict(started=0,completed=0,by_kind={})
-    if counts['started']>=600:raise RuntimeError('V71 cumulative whole-action upper cap')
+    if counts['started']>=scope.plan_record()['action_limit']:raise RuntimeError('V71 cumulative whole-action upper cap')
+    if scope.NAMESPACE=='v73' and kind.startswith(('Q_','D_')) and sum(v for k,v in counts['by_kind'].items() if k.startswith(('Q_','D_')))>=32:raise RuntimeError('V73 qualification action cap')
     counts['started']+=1;counts['by_kind'][kind]=counts['by_kind'].get(kind,0)+1
     write_json(p,counts)
     out=operation();counts['completed']+=1;write_json(p,counts);return out
@@ -192,15 +193,15 @@ def pc_setup(folder,journal):
     return result
 
 
-def numeric_factors(record,journal,scope=scope,folder=None,workspace=None):
+def numeric_factors(record,journal,scope=scope,folder=None,workspace=None,clock_root=None):
     from .independent_tetra_study import petsc_matrix
     from .fullspace_v17_p3_oracle import _MumpsFactor
     from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
     allreceipts=record['matrices']+[record['coarse_matrix']]
     infos=record['analysis']+[record['coarse_symbolic']];factors=[];remaining=sum(r['double_bytes'] for r in infos)
-    reused=scope.NAMESPACE=='v72';started=time.monotonic();rows=[]
+    reused=scope.NAMESPACE in ('v72','v73');started=time.monotonic();rows=[]
     if reused:
-        clock=scope.window.TMP/'numeric_qualification_clock.json'
+        clock=((clock_root or folder)/'numeric_qualification_clock.json' if scope.NAMESPACE=='v73' else scope.window.TMP/'numeric_qualification_clock.json')
         boot=scope.window.snapshot()['boot_id']
         if clock.exists():
             saved=json.loads(clock.read_text())
@@ -223,7 +224,7 @@ def numeric_factors(record,journal,scope=scope,folder=None,workspace=None):
                 admitted=sample['swap_bytes']==0 and planned<=96*2**30
                 if reused:
                     from .reused_trace_admission import numeric_gate
-                    gate=numeric_gate(sample,remaining,workspace)
+                    gate=numeric_gate(sample,remaining,workspace,minimum_bytes=12*2**30 if scope.NAMESPACE=='v73' else 8*2**30)
                     planned=gate['planned_simultaneous_bytes'];admitted=gate['admitted']
                 journal.event('bounded_local_or_coarse_numeric_admission',index=j,tree=sample,remaining_double_symbolic=remaining,
                               future_workspace=workspace if reused else None,
@@ -259,38 +260,43 @@ def numeric_factors(record,journal,scope=scope,folder=None,workspace=None):
         raise
 
 
-def iterate(folder,journal,state,scope=scope):
+def iterate(folder,journal,state,scope=scope,role="ITERATE"):
     from petsc4py import PETSc
     from .physical_retained_fgmres import run_retained_fgmres
     from .tetra_coefficient_action import CoefficientFullAction
     from .independent_tetra_fields import complete_output
-    scope.require_stage('ITERATE');record=scope.iteration_record() if scope.NAMESPACE=='v72' else scope.stage('PC_SETUP')
-    s,b,oracle,a,full_rhs,left,right=setup_service('ITERATE',journal,scope=scope)
+    scope.require_stage(role);record=scope.iteration_record() if scope.NAMESPACE in ('v72','v73') else scope.stage('PC_SETUP')
+    feedback=scope.NAMESPACE=='v73';policy_plan=scope.plan_record();restart=policy_plan.get('restart',32)
+    iteration_seconds=policy_plan['iteration_seconds'];clock_root=scope.window.TMP/role if feedback else scope.window.TMP
+    clock_root.mkdir(exist_ok=True)
+    s,b,oracle,a,full_rhs,left,right=setup_service(role,journal,scope=scope)
     reduced=a.condense_rhs(full_rhs);bhat=left*reduced
     rhs_receipt=save_arrays(folder/'physical_RHS.npz',full_rhs=full_rhs,reduced_rhs=reduced,bhat=bhat,left=left,right=right)
     Z=csr_load(record['Z']);pa=checked_arrays(record['patch_arrays'])
     patches=[{k:pa[f'{j}_{k}'] for k in ('ids','core')} for j in range(record['patch_inventory']['patches'])]
     action=lambda v:action_charge('I_outer_scaled_trace',lambda:left*a.apply_trace(right*v),scope=scope)
-    pc_action=lambda v:action_charge('I_PC_internal_scaled_trace',lambda:left*a.apply_trace(right*v),scope=scope)
+    pc_kind='I_PC_internal_scaled_trace'
+    pc_action=lambda v:action_charge(pc_kind,lambda:left*a.apply_trace(right*v),scope=scope)
     true_action=lambda v:action_charge('I_explicit_true_scaled_trace',lambda:left*a.apply_trace(right*v),scope=scope)
     remaining=min(scope.window.snapshot()['heavy_remaining_seconds'],scope.window.case_remaining(active=True))
-    reused=scope.NAMESPACE=='v72'
+    reused=scope.NAMESPACE in ('v72','v73')
     independent=CoefficientFullAction(s,oracle,15);evaluations=[];counter=0
     if reused:
         from .reused_trace_admission import future_workspace
         workspace=future_workspace(len(bhat),len(full_rhs),s['P'].shape[0],
-            max(r['rows'] for r in record['analysis']),max(r['nnz'] for r in record['analysis']))
+            max(r['rows'] for r in record['analysis']),max(r['nnz'] for r in record['analysis']),
+            restart=restart,minimum_bytes=policy_plan.get('numeric_future_minimum_bytes',8*2**30))
         pref=scope.checked_json(scope.plan_record()['reuse_parents']['PREFLIGHT'])
         hot=max(pref['hot_seconds'])
         write_json(folder/'pre_PC_numeric_forecast.json',dict(measured_hot_seconds=hot,
             full_PC_seconds=None,numeric_qualification_cap_seconds=10800,output_reserve_seconds=4500,
-            remaining_seconds=remaining,admitted=remaining>=10800+4500+32*2*hot,
+            remaining_seconds=remaining,admitted=remaining>=10800+4500+restart*2*hot,
             prediction='unmeasured PC unknown; reserve numeric cap and at least one restart, not256 required'))
-        if remaining<10800+4500+32*2*hot:raise RuntimeError('V72 numeric plus restart/output time reserve')
+        if remaining<10800+4500+restart*2*hot:raise RuntimeError('V72 numeric plus restart/output time reserve')
         # At most two fixed action pairs on the freshly loaded original packet.
         ref=checked_arrays(parent(scope)['retained_action_witness']);pairs=[]
-        for j in range(2):
-            out=action_charge('I_reused_hot_pair',lambda:a.apply_trace(ref['inputs'][:,j]),scope=scope)
+        for j in range(1 if feedback else 2):
+            out=action_charge('Q_reused_hot_pair' if feedback else 'I_reused_hot_pair',lambda:a.apply_trace(ref['inputs'][:,j]),scope=scope)
             err=relative(out-ref['outputs'][:,j],ref['outputs'][:,j]);pairs.append(err)
             if err>1e-10:raise ValueError('V72 frozen original hot action pair')
         write_json(folder/'reused_hot_action_pairs.json',dict(errors=pairs,pass_gate=True,reference_field_reads=0))
@@ -304,7 +310,7 @@ def iterate(folder,journal,state,scope=scope):
             PC_numeric_uncertainty_reserve_seconds=3600,output_reserve_seconds=4500,remaining_seconds=remaining,
             admitted=remaining>=forecast+3600+4500))
         if remaining<forecast+3600+4500:raise RuntimeError('local/coarse numeric, iteration and full-output time admission')
-    local,coarse=numeric_factors(record,journal,scope=scope,folder=folder,workspace=workspace)
+    local,coarse=numeric_factors(record,journal,scope=scope,folder=folder,workspace=workspace,clock_root=clock_root)
     def evaluate(target,residual):
         nonlocal counter
         t=right*target.array;full=a.recover(t,full_rhs)
@@ -323,14 +329,21 @@ def iterate(folder,journal,state,scope=scope):
     # Two actual fixed PC calls. They are numerical interface tests, not
     # reference-driven choices and not a convergence requirement.
     pc_rows=[]
-    pc=BoundedTwoLevelPC(Z,patches,local,coarse,pc_action)
+    pc=BoundedTwoLevelPC(Z,patches,local,coarse,pc_action,variant='balanced' if role=='B128' else 'additive')
+    phase_counts={}
     # Immediate ownership protection includes all later vectors and witnesses.
     try:
+        if feedback and role=='R128':
+            from .trace_feedback_diagnostic import transfers
+            pc_kind='D_feedback_original'
+            transfers(pc,bhat,lambda v:action_charge('D_failed_residual_reconstruction',lambda:left*a.apply_trace(right*v),scope=scope),folder,scope)
+        phase_counts['after_diagnostic']=dict(pc.calls)
+        if feedback:pc_kind='Q_PC_original'
         rng=np.random.default_rng(7104)
         v=rng.normal(size=len(bhat))+1j*rng.normal(size=len(bhat));alpha=.3+.7j;first_output=None
         for j in range(2):
             if reused:
-                qualification_start=json.loads((scope.window.TMP/'numeric_qualification_clock.json').read_text())['start_monotonic']
+                qualification_start=json.loads((clock_root/'numeric_qualification_clock.json').read_text())['start_monotonic']
                 if time.monotonic()-qualification_start>=10800:raise RuntimeError('V72 numeric plus PC qualification cumulative3h cap')
             input_vector=v if j==0 else alpha*v;began=time.perf_counter();z=pc(input_vector)
             error=0. if j==0 else relative(z-alpha*first_output,alpha*first_output)
@@ -346,28 +359,31 @@ def iterate(folder,journal,state,scope=scope):
             if elapsed>10800:raise RuntimeError('V72 numeric plus PC qualification cumulative3h cap')
         remaining=min(scope.window.snapshot()['heavy_remaining_seconds'],scope.window.case_remaining(active=True))
         step_forecast=hot+max(r['seconds'] for r in pc_rows)
-        forecast=min(21600.,256*step_forecast+3600)
+        forecast=min(float(iteration_seconds),256*step_forecast+3600)
         write_json(folder/'iteration_forecast.json',dict(step_upper_seconds=step_forecast,iteration_upper_seconds=forecast,
-            output_reserve_seconds=4500,remaining_seconds=remaining,full256_observational_forecast_seconds=forecast,admitted=remaining>=(32*step_forecast+4500) if reused else remaining>=forecast+4500))
-        if remaining<(32*step_forecast+4500 if reused else forecast+4500):raise RuntimeError('restart and original/output reserve')
+            output_reserve_seconds=4500,remaining_seconds=remaining,full256_observational_forecast_seconds=forecast,admitted=remaining>=(restart*step_forecast+4500) if reused else remaining>=forecast+4500))
+        if remaining<(restart*step_forecast+4500 if reused else forecast+4500):raise RuntimeError('restart and original/output reserve')
+        phase_counts['after_qualification']=dict(pc.calls)
+        pc_kind='I_PC_internal_scaled_trace'
         start=time.monotonic();initial=None;iterations_consumed=0
         if reused:
-            clock=scope.window.TMP/'iteration_clock.json'
+            clock=clock_root/'iteration_clock.json'
             if clock.exists():start=json.loads(clock.read_text())['start_monotonic']
             else:write_json(clock,dict(start_monotonic=start,boot_id=scope.window.snapshot()['boot_id']))
             identity=dict(packet_sha256=a.receipt['sha256'],RHS_sha256=rhs_receipt['members']['bhat']['sha256'],
                 left_sha256=rhs_receipt['members']['left']['sha256'],right_sha256=rhs_receipt['members']['right']['sha256'])
-            resume=scope.window.TMP/'continuation.json'
+            resume=clock_root/'continuation.json'
             if resume.exists():
                 from .reused_trace_admission import continuation_state
                 meta=json.loads(resume.read_text());arrays=checked_arrays(meta['arrays'])
-                initial=continuation_state(arrays,dict(operator_identity=identity,bhat=bhat,left=left,right=right),meta)
+                initial=continuation_state(arrays,dict(operator_identity=identity,bhat=bhat,left=left,right=right),meta,
+                    namespace=scope.NAMESPACE,route=role if feedback else None,maximum_seconds=iteration_seconds)
                 iterations_consumed=meta['iterations_consumed']
         rhs=PETSc.Vec().createSeq(len(bhat),comm=PETSc.COMM_SELF);rhs.array[:]=bhat
         def save(iteration,vector):
             rec=save_arrays(folder/f'retained_{iteration:04d}.npz',scaled_retained=vector.array.copy(),trace=right*vector.array,**(dict(bhat=bhat,left=left,right=right) if reused else {}))
             write_json(folder/'latest_retained.json',dict(iteration=iteration,arrays=rec,RHS=rhs_receipt,local_packet=a.receipt,source=state))
-            if reused:write_json(scope.window.TMP/'continuation.json',dict(namespace='v72',operator_identity=identity,
+            if reused:write_json(clock_root/'continuation.json',dict(namespace=scope.NAMESPACE,route=role,operator_identity=identity,
                 arrays=rec,iterations_consumed=iteration,iteration_seconds_consumed=time.monotonic()-start,
                 source=state,Krylov_basis_retained=False))
         def append(name,row):
@@ -381,21 +397,24 @@ def iterate(folder,journal,state,scope=scope):
         policy=dict(original_key='true',physical_limits=dict(true=1e-6,native=1e-6,augmented=1e-6,port=1e-6),
             identity_limits=dict(MPC_identity=1e-10,rhs_q47_q63=1e-10,recovery_identity=1e-10,Schur_original_identity=1e-10))
         try:
+            if feedback:scope.begin_ksp(role,state)
             result=run_retained_fgmres(rhs,vector_action,vector_pc,evaluate=evaluate,
                 checkpoint=lambda iteration,vec,row:write_json(folder/'latest_original_gate.json',row),append=append,
-                seconds=lambda:time.monotonic()-start,save_retained=save,restart=32,max_it=256-iterations_consumed,residual_interval=32,
+                seconds=lambda:time.monotonic()-start,save_retained=save,restart=restart,max_it=256-iterations_consumed,residual_interval=32,
                 initial_vector=initial,iterations_consumed=iterations_consumed,
                 true_action=vector_true_action,
+                audit_identity=dict(directory=str(folder),route=role,source_sha=state['source_sha'],**identity) if feedback else None,
                 candidate_rtol=1e-11,retained_tolerance=1e-11,evaluation_policy=policy,
                 resource_sample=scope.window.require_live,
-                stop_requested=lambda:time.monotonic()-start>=21600 or scope.window.snapshot()['heavy_remaining_seconds']<=4500
-                    or scope.window.case_remaining(active=True)<=4500 or actions_started(scope)>=590)
+                stop_requested=lambda:time.monotonic()-start>=iteration_seconds or scope.window.snapshot()['heavy_remaining_seconds']<=4500
+                    or scope.window.case_remaining(active=True)<=4500 or actions_started(scope)>=policy_plan['action_limit']-(40 if feedback else 10))
             final=result.pop('final_solution');scaled_retained=final.array.copy();t=right*scaled_retained;final.destroy()
             returned=save_arrays(folder/'retained_returned.npz',scaled_retained=scaled_retained,trace_port=t,rhs=reduced,scaled_rhs=bhat,left=left,right=right)
             pending=dict(status='RECOVERY_PENDING',retained_returned=returned,RHS=rhs_receipt,local_packet=a.receipt,
                 source=state,spec=s['spec'],physical=s['physical'],boundary_arrays=parent(scope)['boundary_arrays'],mode_sha256=b['digest'],iteration=result)
             write_json(folder/'retained_audit_pending.json',pending)
-            write_json(scope.window.TMP/'scientific_queue_frozen.json',dict(retained=returned,source=state['source_sha'],no_more_solves=True))
+            if feedback:scope.freeze_candidate(role,returned,state)
+            else:write_json(scope.window.TMP/'scientific_queue_frozen.json',dict(retained=returned,source=state['source_sha'],no_more_solves=True))
         finally:rhs.destroy()
     finally:
         before=journal.event('all_local_coarse_factors_before_release')['RSS_bytes'];pc_calls=dict(pc.calls);pc_seconds=dict(pc.seconds)
@@ -403,6 +422,8 @@ def iterate(folder,journal,state,scope=scope):
         after=journal.event('all_local_coarse_factors_released')['RSS_bytes']
         write_json(folder/'factor_release_lifecycle.json',dict(before_RSS_bytes=before,after_RSS_bytes=after,RSS_decreased=after<before,
             global_fine_factor_count=0,local_numeric_count=len(patches),coarse_numeric_count=1))
+    phase_counts['after_KSP']=pc_calls
+    write_json(folder/'PC_phase_counts.json',phase_counts)
     with journal.measured('final_full_original_recovery_after_KSP_and_PC_release'):x=a.recover(t,full_rhs)
     arrays=save_arrays(folder/'solution.npz',x=x,u_independent=x[:a.n],u_native=s['P']@x[:a.n],port=x[a.n:],rhs=full_rhs,
         kappa=s['kappa'],masters=s['masters'],slaves=s['floquet'].mpc.slaves,P_data=s['P'].data,P_indices=s['P'].indices,P_indptr=s['P'].indptr,**s['geometry'])
@@ -460,3 +481,25 @@ def execute_reused(role,folder,state):
         from benchmarks.collect_bounded_trace import verify_reused
         return verify_reused(folder,journal)
     raise ValueError('V72 explicit one-run role')
+
+
+def execute_feedback(role,folder,state):
+    from . import restart_feedback_scope as active
+    budget=active.memory_budget(role)
+    if state.get('memory_budget')!=budget:raise ValueError('V73 resolved/live memory contract')
+    journal=Journal(folder,window_scope=active.window,planning_limit_bytes=budget['planning_gib']*2**30)
+    journal.source_state=state
+    if role=='PRECHECK':
+        from .reused_trace_admission import reuse_gate
+        old=active.checked_json(active.plan_record()['reuse_qualification'])
+        decision=reuse_gate(old['preparation_checks'],active.parent_preparation())
+        result=dict(decision,status='COMPLETED',immutable_qualification=active.plan_record()['reuse_qualification'],
+            parent_receipts=active.plan_record()['reuse_parents'],
+            local_numeric_count=0,coarse_numeric_count=0,new_partition_builds=0,new_interpolation_builds=0,
+            new_Galerkin_builds=0,new_original_actions=0,new_KSP_solves=0,source=state,timings=journal.timings)
+        write_json(folder/'reuse_admission.json',result);return result
+    if role in active.SOLVES:return iterate(folder,journal,state,scope=active,role=role)
+    if role=='VERIFY_COST':
+        from benchmarks.collect_restart_feedback import verify
+        return verify(folder,journal)
+    raise ValueError('V73 explicit one-run role')

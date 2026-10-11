@@ -217,28 +217,8 @@ def verify_reused(folder,journal):
     r=active.stage('ITERATE')
     if freeze['retained']['sha256']!=r['retained_returned']['sha256']:raise ValueError('V72 retained freeze identity')
     root=Path(json.loads((active.ARTIFACT/'ITERATE.json').read_text())['path']).parent
-    numeric=json.loads((root/'numeric_factor_progress.json').read_text());factor_scores=[]
-    for row in numeric['rows']:
-        a=checked_arrays(row['arrays'])
-        error=relative(a['residual'],a['input'])
-        # Recompute residual using the original local CSR, one block at a time.
-        from src.solvers.bounded_trace_pc import csr_load
-        A=csr_load(row['input']);original=A@a['output']-a['input']
-        mismatch=relative(original-a['residual'],a['input'])
-        gate=numeric_gate(row['admission']['tree'],row['admission']['remaining_double_symbolic_bytes'],row['admission']['future_workspace'])
-        controls=row['controls']['icntl'];expected=row['expected']['estimate_mb']
-        passed=gate['admitted'] and error<=1e-8 and mismatch<=1e-12 and np.isfinite(a['output']).all()
-        passed=bool(passed and controls['22']==0 and controls['23']==2*expected and row['info_after_numeric']['infog']['1']==0)
-        factor_scores.append(dict(index=row['index'],residual=error,recomputed_residual=relative(original,a['input']),
-            saved_residual_mismatch=mismatch,pass_gate=passed,numeric_admission=gate))
-        del a,A,original;gc.collect()
-    if len(factor_scores)!=39 or not all(row['pass_gate'] for row in factor_scores):
-        raise ValueError('V72 complete39 numeric/solve and memory qualification')
-    pc=json.loads((root/'live_PC_qualification.json').read_text());a,b=(checked_arrays(row['arrays']) for row in pc['rows'])
-    alpha=.3+.7j;pc_error=relative(b['output']-alpha*a['output'],alpha*a['output'])
-    pc_pass=pc_error<=1e-10 and np.isfinite(a['output']).all() and np.isfinite(b['output']).all()
-    if not pc_pass:raise ValueError('V72 saved actual PC finite/complex homogeneity')
-    del a,b;gc.collect()
+    qualifications=numeric_saved_check(root)
+    factor_scores=qualifications['factor_scores'];pc_error=qualifications['PC_saved_error']
     own=folder/'new';own.mkdir(exist_ok=True)
     check=action_charge('V_saved_public_original',lambda:saved_original(r,own,journal,body_q=15),scope=active)
     # Reference permission starts only here, after candidate freeze and actor exit.
@@ -252,3 +232,31 @@ def verify_reused(folder,journal):
         timings=journal.timings,calls=journal.calls,new_numeric_factors=0,new_complete_solves=0,
         continuum_accuracy=False,target_qualified=False,NN20=False)
     write_json(folder/'verification_scientific_result.json',result);return result
+
+
+def numeric_saved_check(root,*,minimum_bytes=8*2**30):
+    """Stream current numeric witnesses; do not reconstruct any preparation."""
+    from src.solvers.reused_trace_admission import numeric_gate
+    numeric=json.loads((root/'numeric_factor_progress.json').read_text());factor_scores=[]
+    for row in numeric['rows']:
+        a=checked_arrays(row['arrays'])
+        error=relative(a['residual'],a['input'])
+        # Recompute residual using the original local CSR, one block at a time.
+        from src.solvers.bounded_trace_pc import csr_load
+        A=csr_load(row['input']);original=A@a['output']-a['input']
+        mismatch=relative(original-a['residual'],a['input'])
+        gate=numeric_gate(row['admission']['tree'],row['admission']['remaining_double_symbolic_bytes'],row['admission']['future_workspace'],minimum_bytes=minimum_bytes)
+        controls=row['controls']['icntl'];expected=row['expected']['estimate_mb']
+        passed=gate['admitted'] and error<=1e-8 and mismatch<=1e-12 and np.isfinite(a['output']).all()
+        passed=bool(passed and controls['22']==0 and controls['23']==2*expected and row['info_after_numeric']['infog']['1']==0)
+        factor_scores.append(dict(index=row['index'],residual=error,recomputed_residual=relative(original,a['input']),
+            saved_residual_mismatch=mismatch,pass_gate=passed,numeric_admission=gate))
+        del a,A,original;gc.collect()
+    if len(factor_scores)!=39 or not all(row['pass_gate'] for row in factor_scores):
+        raise ValueError('V72 complete39 numeric/solve and memory qualification')
+    pc=json.loads((root/'live_PC_qualification.json').read_text());a,b=(checked_arrays(row['arrays']) for row in pc['rows'])
+    alpha=.3+.7j;pc_error=relative(b['output']-alpha*a['output'],alpha*a['output'])
+    pc_pass=pc_error<=1e-10 and np.isfinite(a['output']).all() and np.isfinite(b['output']).all()
+    if not pc_pass:raise ValueError('V72 saved actual PC finite/complex homogeneity')
+    del a,b;gc.collect()
+    return dict(factor_scores=factor_scores,PC_saved_error=pc_error,PC_saved_pass=bool(pc_pass))
