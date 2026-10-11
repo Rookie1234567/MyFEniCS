@@ -1,0 +1,94 @@
+{
+  "status": "PASSED",
+  "source_sha": "7ab90eaf4388f0a7f93e87fbfe11def2e4451583",
+  "command": [
+    "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "-m",
+    "unittest",
+    "-q",
+    "src.test.test_26_documentation_contract"
+  ],
+  "returncode": 0,
+  "repository_document_unittest_count": 15,
+  "scope": "single document suite plus new V72 links/tables/hash/JSON/suffix/counter check; no FE, arrays replay or factor",
+  "documents": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v72.md",
+      "bytes": 11574,
+      "sha256": "3cc41a94f20c4a3cbd05e0ce61d60f147dd23668a5b78267fe42e32b2d372463",
+      "new_local_links": 18,
+      "new_tables": 5
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/reused_trace_iterative_v72.md",
+      "bytes": 11426,
+      "sha256": "86b723a749f1718ed2234930b2a1bc9934f9dbecad3ac67d0661ea5cb4447fad",
+      "new_local_links": 18,
+      "new_tables": 5
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "bytes": 103582,
+      "sha256": "d0d3127a98170de89d30838d5b5b352e7d88e32eb627b2cc81e0a98278bb4e89",
+      "new_local_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "bytes": 162849,
+      "sha256": "5a6e35b0444196fecfab8f56dd50c809e8a6f55913355dd9a0fe8699e06fb369",
+      "new_local_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "bytes": 93616,
+      "sha256": "38a6b64e9e09586d0c651974a0b707154fb299162564d29d9534f4ddf06dba0b",
+      "new_local_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "bytes": 91101,
+      "sha256": "87f35433c02c58fcee34dfc3e8ea4575fcc22933eec62569cd3cf18063896b47",
+      "new_local_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/development_progress.md",
+      "bytes": 280040,
+      "sha256": "61230cd69dcfa30a4a662378d931722faffe4c4eb1aa5cc4c948bb4d8a4d822f",
+      "new_local_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "bytes": 318444,
+      "sha256": "f05f71db38a959054d991a8517d90daab91b6aa84a663dca4384ebe9bc6b89a2",
+      "new_local_links": 2,
+      "new_tables": 1
+    }
+  ],
+  "JSON_records": 21,
+  "old_navigation_suffixes_preserved": true,
+  "GitHub_exact_visual": "NOT_VERIFIED",
+  "CI": "NOT_RUN",
+  "new_original_actions": 0,
+  "new_numeric_factors": 0,
+  "new_KSP_solves": 0,
+  "end_utc": "2026-10-11T06:44:16.205405+00:00",
+  "elapsed_seconds": 0.32341427309438586,
+  "receipt": {
+    "path": "tmp/task042/v72/aux_post_01/document_checks.json",
+    "bytes": 2651,
+    "sha256": "305a5957cd26d13c329f40ea70a0167f616bed1207d2d0450ccb1feb28de466b"
+  },
+  "full_supervised_wrapper": {
+    "path": "tmp/task042/v72/auxiliary_post01/receipt.json",
+    "bytes": 609,
+    "sha256": "26969d974ba05a8143d2e1f4f389de13ad3d512d51abcbc55b3a82f4aa44b423"
+  },
+  "tested_response_outcome_navigation_bytes_unchanged_after": true,
+  "final_closed_metadata_JSON_parse_count": 22,
+  "final_closed_metadata_scope": "pure JSON parse after settlement; original response/outcome/navigation tested bytes unchanged; no repeated scientific consumption"
+}

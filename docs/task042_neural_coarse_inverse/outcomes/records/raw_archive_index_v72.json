@@ -4,5 +4,13 @@
     "bytes": 182323,
     "sha256": "68a6e372fb208c380d1102a6450b5a7349d63d4f68c06b7e3de1e2d76efd429d"
   },
-  "entries": 406
+  "entries": 406,
+  "final_tail": {
+    "inventory": {
+      "path": "benchmarks/artifacts/task042/v72/increment_evidence_v72/final_tail/inventory.json",
+      "bytes": 191110,
+      "sha256": "0ac03213d9c04fb34f7a8a2e07fb1aa7cce564199eba10ce2cd068dd6c769d1d"
+    },
+    "entries": 440
+  }
 }

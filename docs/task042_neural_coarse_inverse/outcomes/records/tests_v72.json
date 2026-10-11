@@ -575,6 +575,7 @@
   "final_source_tests": "latest aux_pre run after exact-state cache fix",
   "CI": "NOT_RUN",
   "full_pytest": "NOT_RUN_PER_CONTRACT",
-  "documentation_status": "PENDING_SINGLE_FINAL_CHECK",
-  "new_tests_not_production_counter_scope": true
+  "documentation_status": "PASSED",
+  "new_tests_not_production_counter_scope": true,
+  "documentation_source": "7ab90eaf4388f0a7f93e87fbfe11def2e4451583"
 }

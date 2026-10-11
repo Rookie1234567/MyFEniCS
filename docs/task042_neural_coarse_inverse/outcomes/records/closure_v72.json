@@ -1,6 +1,5 @@
 {
-  "status": "PENDING_FINAL_DOCUMENT_CHECK_AND_CLOSURE",
-  "active": null,
+  "status": "CLOSED",
   "window": {
     "start_utc": "2026-10-11T04:04:31+00:00",
     "start_monotonic": 1616465.95,
@@ -10,20 +9,49 @@
     "scientific_loaded_limit_seconds": 43200,
     "review_commit": "07d3f3d2aa6177cc015ac1a279900f7fbb14f4c7",
     "contract_HEAD": "07d3f3d2aa6177cc015ac1a279900f7fbb14f4c7",
-    "closed": false,
+    "closed": true,
     "first_work_start_never_refreshed": true,
     "first_observed_proc_uptime": 1616465.95,
     "start_monotonic_kind": "first actual tool /proc/uptime; conservative UTC to whole second",
     "heavy_stop_utc": "2026-10-11T17:04:31+00:00",
-    "deadline_utc": "2026-10-11T18:04:31+00:00"
+    "deadline_utc": "2026-10-11T18:04:31+00:00",
+    "closed_utc": "2026-10-11T06:46:17.147167+00:00",
+    "closure_reason": "authorized fixed queue complete; bounded result settled"
+  },
+  "cleanup": {
+    "UTC": "2026-10-11T06:46:17.147167+00:00",
+    "active": null,
+    "live_matching_actors": [],
+    "all_recorded_descendants_cleared": true,
+    "own_lock_acquired_then_released": true,
+    "lock_path": "tmp/task042/task042_shared.lock",
+    "no_neighbour_signal_or_modify": true,
+    "formal_KSP_solve_count": 1,
+    "all39_factors_destroyed": true
+  },
+  "final_actions": {
+    "started": 557,
+    "completed": 557,
+    "by_kind": {
+      "I_reused_hot_pair": 2,
+      "I_PC_internal_scaled_trace": 258,
+      "I_explicit_true_scaled_trace": 16,
+      "I_public_original": 16,
+      "I_outer_scaled_trace": 263,
+      "I_final_public_original": 1,
+      "V_saved_public_original": 1
+    }
   },
   "formal_KSP_count": 1,
   "candidate_count": 1,
-  "scientific_queue_frozen": {
-    "path": "tmp/task042/v72/scientific_queue_frozen.json",
-    "bytes": 1520,
-    "sha256": "e7a01bb585cdd4a09d31ab057721369638c55c771bfb4e874f480e3961f7b9de"
+  "numeric_count": 39,
+  "scientific_result": "scientific_checks_v72.json",
+  "no_automatic_next_window": true,
+  "final_document_receipt": {
+    "path": "tmp/task042/v72/aux_post_01/document_checks.json",
+    "bytes": 2651,
+    "sha256": "305a5957cd26d13c329f40ea70a0167f616bed1207d2d0450ccb1feb28de466b"
   },
-  "not_yet_claimed_closed": true,
-  "final_receipt_will_replace_this_new_record": true
+  "delivery_git_receipt": "tmp/task042/v72/delivery_git_receipt.json",
+  "actual_source_vs_document_HEAD": true
 }
