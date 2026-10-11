@@ -1910,3 +1910,16 @@ incident-specific orphan sampler 与大型 raw artifact 仍不合入。
 | 资格状态 | `prepared_waiting_dispatch_review` | 不登记为FE pass、收敛证明、完整物理资格或50×25 nm目标结果。W5用户决定延期；W2不延误W0.7 |
 
 逐attempt证据与测试SHA见 [V12 attempt compact](../results/task041_v12_a2_setup_public_bridge_scope_fix_fixturefix16_20261010T0814Z/v12_a2_test_attempts_compact.json)、[outcomes进度](task041_mpi1_shortwave_hybrid_capacity/outcomes/w0p7_inexact_pc_progress_v12.md)和[Response V14](task041_mpi1_shortwave_hybrid_capacity/response_v14.md)。
+
+### Task041 Review V12：W0.7 warm终态（2026-10-11）
+
+前一节记录的是启动前准备快照。该pilot随后实际运行一次并在模态求解拒绝处失败；不得继续沿用“not_run”作为当前consumer状态。
+
+| 注册模型 / 阶段 | 最新实测状态 | 资格和边界 |
+|---|---|---|
+| W0.7 reduced p6/h0.70/M400/MPI8；Invocation `62c3763e266345e0b094a4f3ba3ae19c` | H6后一次切到fixed physical BAL_H，最终32步reason -3，eta `0.47290220837766356`，可信iterate被策略拒绝；consumer `IMPLEMENTATION_FAILURE`，public rc3，finalizer `failed/service_boundary_failure` | 无outer收敛、最终五真残差、recovery或physics资格；不是资源cap停止 |
+| Finalizer与成员状态 | 7/12通过、5项失败；当时pre-exit成员和post-cgroup-only检查失败，policy检查缺public nested evidence。之后只读unit状态`MainPID=0/ControlGroup空`，工作进程清场 | 保留历史false项，之后全清不追溯覆盖；policy false不作为实际方法错配证据 |
+| Side64与向量保存 | side64 bottom/top均`trial_count=0`；首未达ordinal4和成功控制ordinal1各保存一次向量快照；末次ordinal13向量未保存但trusted iterate为true | 末次`not_saved_exception_no_trusted_snapshot`是异常兜底标签，不能说明无可信iterate |
+| 资源与计账 | tree RSS `53504184320 B`；job-cgroup history `51665588224 B`；唯一service wall `52356.221030979 s`；V5 234项，本Invocation一条 | cap `85899345920 B`未触发；W5依用户决定延期，W2未启动，不资格化50×25 nm/2 TB/48 h |
+
+详细原始source path/hash、finalizer各键、consumer residual、snapshot index/NPZ身份与唯一ledger entry见[Task041 V12 terminal compact](../results/task041_v12_w0p7_bounded_modal_backup_policy_only_run_20261010T085320Z/terminal_compact_v12.json)，SHA `77a5ab816d9d48103f8a31c6e9e2c8a50fef2a70e1606beac3919185169b04f5`。本场consumer终态为`IMPLEMENTATION_FAILURE`、public rc3、finalizer `failed/service_boundary_failure`；没有数值资格，不启动第二场或W2。W5仍按用户决定延期。

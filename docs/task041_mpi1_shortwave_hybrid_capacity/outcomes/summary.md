@@ -676,3 +676,19 @@ V12 要解决的问题是：旧 fixed-H6 模态内层在很少的迭代后就停
 | 结果 | dispatch、consumer、两侧numeric、outer、五项残差、recovery、E/H/RTA/A_volume、衍射均`not_run` | 这是准备阶段，不是FE pass、收敛结论或W0.7资格 |
 
 W5弱显著衍射通道按用户决定延期处理；W2不延误W0.7。当前没有启动授权或第二场安排；需等待主控审核该sealed package与下一次fresh启动门。50×25 nm、约2 TB及48 h完整目标尚未实现。
+
+## Task041 Review V12：唯一W0.7 warm场终态（2026-10-11）
+
+模态内层是外层线性求解器使用的近似“帮手”。本场已完成两侧因子和一次备选线性门，但最后一次模态求解虽拿到可信迭代向量，独立误差仍大于允许值；系统拒绝把它交给外层，因此没有合格的完整场。
+
+| 项目 | Measured/observed | 证据与边界 |
+|---|---|---|
+| 模型/运行身份 | W0.7 reduced p6/h0.70/M400/MPI8；Invocation `62c3763e266345e0b094a4f3ba3ae19c`；源码 `132e3b321f336916d55459b50be95729520ff0f4` | consumer raw、service finalizer与V5账目分别绑定，见终态compact |
+| 方法切换 | H6 primary后实际一次切换到fixed physical BAL_H；相同live side-factor handles核验通过，备选线性门通过 | 仅证明该反馈动作及因子复用检查发生，不代表外层或全场通过 |
+| 最终modal solve | 32步 / reason `-3`；`rhs_norm=0.2594808945363501`，独立残差 `0.12270908805805157`，relative eta `0.47290220837766356`，目标`1e-3`未达，允许PC上限`0.1`也未达；solver/total作用`32/33`，预算未耗尽 | 可信iterate且输入未变，但V12有界策略拒绝它。consumer `failure_stage_first=modal_inner_solve`；raw分类仍为`IMPLEMENTATION_FAILURE`，public rc3，finalizer `failed/service_boundary_failure`，controlled stop inactive |
+| 快照 | `first_unmet_target` ordinal4，eta`0.0048661796696292964`；`first_success_control` ordinal1，eta`0.0009056691677168769`；两份`[800]`复向量均有真实NPZ及SHA | 首未达配额已使用；末次ordinal13可信iterate没有独立NPZ。兜底状态`not_saved_exception_no_trusted_snapshot`是标签不准确，不等同于末次iterate不可信 |
+| finalizer五个false | service terminal正常、pre-exit成员清洁、public成功、modal policy匹配、post-cgroup仅finalizer | 其中policy检查因输入public summary缺少`setup.candidate_inventory`及`setup.full_formal.solve.inventory`而无法判定；consumer原始方法轨迹显示请求与实际切换相符。历史成员检查失败与后来MainPID0/ControlGroup空的live清场观察分开 |
+| outer/physics | 有progress至iteration 11，最后global true residual `0.062043088541883354`，决策`ITERATING`；side64 trial count为0 | 无outer收敛、最终五真残差、recovery、完整E/H、R/T/A、`A_volume`或衍射输出；无数值资格 |
+| 资源与服务计费 | process-tree RSS峰`53504184320 B`；专属job-cgroup history峰`51665588224 B`；唯一service-unit wall `52356.221030979 s`；V5 `234`项，本Invocation一条，ledger SHA `f307eab7c908eed21627c29360e5424a8d545c4b46b0b43c26f61b50ae466775` | 两峰的scope不同且分列；resource summary SHA `adef4e71a2b8b7939d0a604c0b6da3c0be4004aba7ca888e8701de3fb9047bf2`；低于80 GiB hard cap，不是资源停止。nested consumer/supervisor wall不另计 |
+
+结论仍是缩减pilot未完成。W5弱显著通道按用户决定延期并保留旧失败；W2未启动。`50×25 nm`、2 TB及48 h目标未取得证据。完整原始路径和字段映射见[hash-bound terminal compact](../../../results/task041_v12_w0p7_bounded_modal_backup_policy_only_run_20261010T085320Z/terminal_compact_v12.json)，SHA `77a5ab816d9d48103f8a31c6e9e2c8a50fef2a70e1606beac3919185169b04f5`。

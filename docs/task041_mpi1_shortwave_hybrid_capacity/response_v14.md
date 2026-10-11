@@ -54,3 +54,20 @@ small-matrix 合同只验证固定算法边界、同因子借用、有限停止�
 复用了同 CPU map、同 native stack 与同桥的 MPI8 ABI 记录；其 ABI 原测时源码 HEAD 是 `f4718519d8a244eae9ea87148422ade14771e534`，所以不称它测试了当前 V12 Python 源。ABI stdout SHA `e723181be00270fadf619e8f3903a05260495bfd9735ca44e6544ac34ab07099`，attempt SHA `b4d1d53b988fdc3e73c300b04b7888846c3593f6398e31bdbdffcb7ad8dcbb92`。当前源身份另由 39 条 HEAD/worktree 绑定及本轮分批合同测试覆盖。
 
 本包尚未启动。下一步须由主控审 sealed argv 并另行给出唯一 dispatch 裁定；当前只完成准备。W5弱显著衍射级按用户决定延期处理，保留原失败，不作为W0.7前置；W2不延误0.7主线。50×25 nm、约2 TB和48 h完整目标仍未完成或资格化。
+
+## V12 唯一 warm 场终态补记（2026-10-11）
+
+本节更新上文的准备态：Invocation `62c3763e266345e0b094a4f3ba3ae19c` 已运行并结束。两侧因子和一次 BAL_H 反馈线性样本已经完成；连接两侧的模态子求解最终没有把残差压到允许近似返回的范围，因此没有合格全场。
+
+| 项目 | 本场记录 | 解释与证据 |
+|---|---|---|
+| 终态分类 | consumer `IMPLEMENTATION_FAILURE`；public `task041_public_command_nonzero` / rc 3；finalizer `service_boundary_failure` / `failed`；`controlled_stop.active=false` | 保留原分类；modal 首次失败阶段为 `modal_inner_solve`，清理阶段为 `final_cleanup`。错误记录的 `observed_stage=top_construction_cleanup` 不覆盖首次失败阶段 |
+| 反馈与最终 modal solve | V12 policy 实际切换一次：`fixed_h6_modal_gmres_research` → `fixed_physical_balh_once_modal_gmres_research`；相同两侧因子句柄经核验。最终 solve 为 32 步、reason `-3`、solver/total MatMult `32/33`，`rhs_norm=0.2594808945363501`、独立 residual norm `0.12270908805805157`、relative eta `0.47290220837766356`、raw pass=false、`budget_exhausted=false` | iterate可信且输入未污染；eta 高于`0.1`的PC可用上限，策略拒绝该近似并抛错。不是资源门停止，也不是未得到可信 iterate |
+| outer 与物理输出 | 有 outer progress 至 iteration 11；末条 global/bottom/top/modal true residual 分别为 `0.062043088541883354 / 0.07364811812944605 / 0.03898362761015896 / 0.22925865297129536`，决策仍为 `ITERATING` | outer未收敛；最终五项残差、recovery、E/H、R/T/A、`A_volume`、完整衍射输出均未完成；official RTA=`not_run` |
+| side restart64 | bottom/top 都是 armed 状态，`capture_armed=false`、`pending=false`、`trial_count=0`、无trial record | side64对照没有执行，不是其容量拒绝或数值失败 |
+| finalizer检查 | 7/12 true、5/12 false：`service_terminal_normal`、`pre_exit_members_clean`、`public_result_completed`、`modal_solver_policy_matches_request`、`post_cgroup_finalizer_only` | 前退出时成员列表为 `[3843144,3843152]`，不同于只含预期主PID；post-I/O检查也记录了两个成员。之后只读复核时unit为`MainPID=0`、`ControlGroup`为空，已记录PID均不存在。后来全清不改写当时两项历史成员检查失败 |
+| policy匹配检查 | finalizer 的 `modal_solver_policy_matches_request=false` | public `summary.json`顶层有正确请求字符串，但没有检查器要求的`setup.candidate_inventory`和`setup.full_formal.solve.inventory`。consumer记录则显示同一policy、H6→physical方法历史和实际一次备选切换。因此这是finalizer输入缺少嵌套证据，不能据此断言实际方法错配 |
+| modal向量快照 | `first_unmet_target`一次，solve ordinal 4、owner rank 7、32步、eta `0.0048661796696292964`；`first_success_control`一次，ordinal 1、6步、eta `0.0009056691677168769`。两份各含`[800]`的`g/m/raw_residual`复向量并由index绑定SHA | 首次未达目标配额已使用且向量确实落盘。最后一次（累计solve 13）虽然`trusted_iterate=true`，却没有保存其向量；兜底标签`not_saved_exception_no_trusted_snapshot`将策略拒绝后的异常写成“没有可信快照”，措辞与已记录可信iterate不一致，不能当成iterate不可信的证据 |
+| wall、账目、资源 | 唯一service-unit wall `52356.221030979 s`；V5 ledger 234项，SHA `f307eab7c908eed21627c29360e5424a8d545c4b46b0b43c26f61b50ae466775`，本Invocation恰一条。process-tree RSS峰 `53504184320 B`；专属job-cgroup history峰 `51665588224 B` | 两种内存值来自不同authority/scope，分列，不相加。resource summary SHA `adef4e71a2b8b7939d0a604c0b6da3c0be4004aba7ca888e8701de3fb9047bf2`；两峰均未触发`85899345920 B` hard cap，资源不是本场停止原因 |
+
+本次outer确有迭代进度，但没有完成原方程门或物理恢复资格。W5弱显著通道按用户决定延期处理；本轮不启动W2。旧raw和ledger均未改；本节证据索引见[终态compact](../../results/task041_v12_w0p7_bounded_modal_backup_policy_only_run_20261010T085320Z/terminal_compact_v12.json)，SHA `77a5ab816d9d48103f8a31c6e9e2c8a50fef2a70e1606beac3919185169b04f5`。

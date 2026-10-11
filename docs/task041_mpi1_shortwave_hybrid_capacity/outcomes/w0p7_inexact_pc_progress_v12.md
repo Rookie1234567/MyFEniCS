@@ -48,3 +48,19 @@ config、public command、systemd argv、service parent/ExecStopPost 的路径�
 | 数值资格 | 未建立；本准备不能称 FE PASS 或 W0.7 完成 |
 
 下一步是主控审阅此包及之后需要的 fresh 启动门。本阶段不 dispatch。W5问题按用户决定延期处理，W2不延误W0.7主线；50×25 nm、2 TB与48 h目标仍在本记录之外，未完成。
+
+## Invocation 终态补记（2026-10-11）
+
+上文的“尚未启动”是warm准备时点记录；之后唯一Invocation `62c3763e266345e0b094a4f3ba3ae19c` 已执行。两侧P4 numeric与一次fixed physical BAL_H线性门完成，随后在模态PC solve拒绝一个可信但不够精确的返回；本场不是容量停止。
+
+| 终态项 | 实际值 | 范围说明 |
+|---|---|---|
+| classification | consumer `IMPLEMENTATION_FAILURE`；public rc3；finalizer `failed/service_boundary_failure`；controlled stop inactive | raw分类保持原值，不改写为受控停止 |
+| modal | 一次H6→fixed physical BAL_H切换后，末次32步、reason -3、eta `0.47290220837766356`、目标`1e-3`未达、PC上限`0.1`也未达；`budget_exhausted=false`、iterate可信、输入未改 | 数值策略拒绝；原错信息`observed_stage`不是首次错误阶段。最后快照兜底标签不准确，ordinal 13可信iterate未保存 |
+| 首次未达/成功快照 | ordinal4 的 `first_unmet_target` 与 ordinal1 的 `first_success_control` 均已各写一份，rank 7、shape `[800]`，索引列出`g/m/raw_residual` | first-unmet配额已用；末次solver向量未另存。详见compact里的index/NPZ路径和哈希 |
+| side64 | 两侧 `trial_count=0`、capture/pending=false、trial record缺失 | 未执行，不属于容量拒绝 |
+| 外层与物理 | outer有progress至iteration 11，最后global true residual `0.062043088541883354`，决策仍为`ITERATING` | 没有outer收敛、最终五残差、恢复或official物理结果 |
+| Finalizer | 7/12通过；5项失败分别是service normal、pre-exit members clean、public completed、modal policy match、post-cgroup finalizer-only | policy字段失败由public summary缺少嵌套candidate/full-formal证据导致；consumer实际策略/方法轨迹一致。历史成员检查失败保留，后来只读unit检查`MainPID=0/ControlGroup空`为另一个时点 |
+| 资源与计费 | tree RSS `53504184320 B`；专属cgroup history `51665588224 B`；service wall唯一 `52356.221030979 s`；V5 234项、本Invocation一次 | 资源低于80 GiB hard cap；无资源停止。详细身份与hash见[terminal compact](../../../results/task041_v12_w0p7_bounded_modal_backup_policy_only_run_20261010T085320Z/terminal_compact_v12.json)，SHA `77a5ab816d9d48103f8a31c6e9e2c8a50fef2a70e1606beac3919185169b04f5` |
+
+最终失败位置是可信正常KSP返回后，因`eta>0.1`而被策略拒绝；兜底字段`not_saved_exception_no_trusted_snapshot`没有准确表达“trusted iterate存在但最后向量未保存”。两种已有NPZ仍完整保留，raw/账目未变。W5依用户决定延期，W2不启动；本场不能作为outer/physics资格、目标`50×25 nm`、2 TB或48 h通过。

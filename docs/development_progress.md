@@ -3059,3 +3059,25 @@ host raw `9afef4e5aac0bdff309040984653965c9e680730f3ab43e9bb037e6884ea1a0a`及as
 ### 当前决定与未完成项
 
 本阶段完成实现、定向合同测试和启动准备；**没有dispatch**。待主控审核sealed argv和之后fresh门。目标50×25 nm、约2 TB整机与48 h全计算仍未完成。W5弱显著级按用户决定延期处理，旧失败保留；W2不延误W0.7主线。
+
+## 2026-10-11：V12 W0.7 warm唯一实算终态
+
+### 背景与基线
+
+Review V12允许fixed-H6模态内层最多32步，并在满足可信返回和固定触发条件时切换一次借用现有侧因子的fixed physical BAL_H。这样做是给外层一个有限继续机会，避免把内层残差误当作原方程通过；原五项真残差、恢复与物理门始终保持。实际运行source是`132e3b321f336916d55459b50be95729520ff0f4`，唯一Invocation为`62c3763e266345e0b094a4f3ba3ae19c`，模型为复用producer/QEP0的W0.7 reduced p6/h0.70/M400/MPI8。
+
+### 方法、结果与解释
+
+| 项目 | 结果 | 解释/证据身份 |
+|---|---|---|
+| 反馈路线 | H6 primary后真实切换一次physical BAL_H；同一组侧因子句柄保持，备选线性检查通过 | measured runtime route；不是最终外层资格 |
+| 最终模态子求解 | 正常KSP返回32步、reason -3、eta `0.47290220837766356`；raw pass false、`budget_exhausted=false`，trusted iterate true | eta超过PC允许上限0.1，因而策略拒绝近似；停止点是modal_inner_solve，不是资源门 |
+| 首未达向量与快照兜底 | 首次未达向量ordinal4已保存一次；成功对照ordinal1也已保存。末次ordinal13虽可信但未保存；`not_saved_exception_no_trusted_snapshot`来自通用异常兜底标签 | 两份索引NPZ确有`g/m/raw_residual`；最后兜底字段不应解释为末次向量不可信。详细array/index SHA见compact |
+| side64 | bottom/top trial_count均0、未捕获RHS、无trial record | not_run；不能说side64试过或容量拒绝 |
+| 外层与物理 | 最后记录outer iteration 11，global真残差`0.062043088541883354`且仍ITERATING | 没有outer收敛、完整五项残差、recovery或physics；无official RTA |
+
+### 服务终态、资源与负结果
+
+consumer原始分类为`IMPLEMENTATION_FAILURE`，public结果为`task041_public_command_nonzero` rc3，finalizer为`failed/service_boundary_failure`，`controlled_stop.active=false`。Finalizer为7/12项通过、5项失败。`modal_solver_policy_matches_request=false`是finalizer只读取的public `summary.json`没有nested candidate/full-formal实际solver字段；该文件顶层请求策略相符，而单独consumer记录显示同一policy及一次实际备选路线。此项是检查输入证据不足，不是观察到方法不一致。pre-exit成员检查当时因额外成员失败；post-IO当时也有两个成员。后来只读host检查为MainPID0、ControlGroup空、已记录PID不在进程表，当前清场与当时finalizer两项成员检查分别记录。
+
+唯一service-unit wall为`52356.221030979 s`，V5现234项、该Invocation恰一条，ledger SHA `f307eab7c908eed21627c29360e5424a8d545c4b46b0b43c26f61b50ae466775`。workflow进程树RSS峰`53504184320 B`与专属job-cgroup history峰`51665588224 B`分列；两者低于80 GiB hard cap。W5按用户决定延期，W2未启动；目标`50×25 nm`、2 TB和48 h未完成或资格化。source/raw路径、finalizer false键、各scope峰值和vector hashes见[terminal compact](../results/task041_v12_w0p7_bounded_modal_backup_policy_only_run_20261010T085320Z/terminal_compact_v12.json)，SHA `77a5ab816d9d48103f8a31c6e9e2c8a50fef2a70e1606beac3919185169b04f5`。

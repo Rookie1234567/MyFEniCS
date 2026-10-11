@@ -503,3 +503,7 @@ consumer接线pytest父wall总计`15.245187369175255 s`，三条按独立attempt
 | `fixturefix16_0814Z:serial` | 2 pass | 5.392439984 | 最后setup helper与显式public route回归 |
 
 各行只总结各自attempt，不把失败attempt里的部分pass并成最终源码整组通过。源SHA在每个attempt间变化，完整逐路径SHA不在此重复抄写，见compact。上述tiny wrapper/小矩阵合同不是真实FE，不产生物理资格，也不说明生产内层一定达到`1e-3`。V12最终源码commit为 `eca72c8b12e2b979f919cb5b69578ad99111fef0`；source binding包含34 runtime+5 test，SHA `ecfbf7c4650fa47951b8a5a727717b1edb68d428d75146dedc56bfbf1e8294bb`。
+
+## 2026-10-11：V12 唯一warm终态（非pytest）
+
+本次Invocation没有运行pytest，因此本文件既有测试attempt和旧阶段账目不因service结果改写。唯一service wall `52356.221030979 s` 已由finalizer写入V5 ledger；账本现234项、SHA `f307eab7c908eed21627c29360e5424a8d545c4b46b0b43c26f61b50ae466775`，该runroot/Invocation只出现一项。FE modal拒绝、finalizer、资源与快照索引见[Response V14终态补记](../response_v14.md)和[terminal compact](../../../results/task041_v12_w0p7_bounded_modal_backup_policy_only_run_20261010T085320Z/terminal_compact_v12.json)，compact SHA `77a5ab816d9d48103f8a31c6e9e2c8a50fef2a70e1606beac3919185169b04f5`。运行状态不是测试通过。
