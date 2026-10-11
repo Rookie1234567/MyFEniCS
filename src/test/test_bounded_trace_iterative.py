@@ -110,4 +110,72 @@ class BoundedTraceTests(unittest.TestCase):
         self.assertEqual(scope.plan_record()['action_limit'],600)
 
 
+    def test_saved_symbolic_rejection_is_not_a_solve_pass(self):
+        from benchmarks.collect_bounded_trace import symbolic_gate
+        import copy
+        def row(mb):
+            return dict(info={'infog':{'1':0,'16':mb,'17':mb}},controls={'icntl':{'22':0}},
+                        estimate_mb=mb,double_bytes=2*mb*1_000_000,numeric_calls=0,rows=10,nnz=100)
+        result=symbolic_gate([row(20000),row(20000)],row(1))
+        self.assertFalse(result['admitted']);self.assertGreater(result['excess_bytes'],0)
+        self.assertTrue(symbolic_gate([row(100)],row(1))['admitted'])
+        bad=copy.deepcopy(row(100));bad['double_bytes']=0
+        with self.assertRaisesRegex(ValueError,'raw symbolic'):symbolic_gate([bad],row(1))
+        with self.assertRaisesRegex(ValueError,'fixed total'):symbolic_gate([row(100)],row(1),limit_bytes=96*2**30)
+
+    def test_fixed_PC_order_nonadjoint40_ports_unique_core(self):
+        from src.solvers.bounded_trace_pc import BoundedTwoLevelPC
+        rng=np.random.default_rng(7121)
+        A=rng.normal(size=(44,44))+1j*rng.normal(size=(44,44))+50*np.eye(44)
+        Z=sparse.csr_matrix(rng.normal(size=(4,2))+1j*rng.normal(size=(4,2)))
+        J=sparse.block_diag((Z,sparse.eye(40))).toarray();E0=J.conj().T@A@J
+        patches=[dict(ids=np.array([0,1,2]),core=np.array([0,1])),dict(ids=np.array([1,2,3]),core=np.array([2,3]))]
+        class SmallFactor:
+            def __init__(self,matrix):self.matrix=matrix
+            def solve_repeated(self,rhs,out):out.array[:]=np.linalg.solve(self.matrix,rhs.array)
+            def destroy(self):self.matrix=None
+        pc=BoundedTwoLevelPC(Z,patches,[SmallFactor(A[np.ix_(p['ids'],p['ids'])]) for p in patches],SmallFactor(E0),lambda v:A@v)
+        r=rng.normal(size=44)+1j*rng.normal(size=44)
+        z0=J@np.linalg.solve(E0,J.conj().T@r);remaining=r-A@z0;expected=z0.copy()
+        for p in patches:
+            v=np.linalg.solve(A[np.ix_(p['ids'],p['ids'])],remaining[p['ids']])
+            expected[p['core']]+=v[np.searchsorted(p['ids'],p['core'])]
+        actual=pc(r);np.testing.assert_allclose(actual,expected,rtol=2e-12,atol=2e-12)
+        alpha=.3+.7j;np.testing.assert_allclose(pc(alpha*r),alpha*actual,rtol=2e-12,atol=2e-12)
+        self.assertEqual(pc.calls,dict(apply=2,local_triangular=4,coarse_triangular=2,internal_original_action=2))
+        np.testing.assert_allclose(actual[4:],z0[4:],rtol=2e-12,atol=2e-12)
+        pc.destroy()
+    
+    
+    def test_saved_owner_inventory_rejects_duplicate_writeback(self):
+        from benchmarks.collect_bounded_trace import owner_gate
+        a={}
+        for j in range(32):
+            for k,v in dict(ids=np.arange(64,dtype=np.int64),core=np.array([2*j,2*j+1]),
+                            core_cells=np.array([j]),halo_cells=np.array([j]),low=np.zeros(3),high=np.ones(3)).items():
+                a[f'{j}_{k}']=v
+        self.assertTrue(owner_gate(a,64,32)['all_trace_writeback_once'])
+        a['31_core']=np.array([0,63])
+        with self.assertRaisesRegex(ValueError,'writeback'):owner_gate(a,64,32)
+    
+    
+    def test_saved_Galerkin_checker_complex_ports_and_tampering(self):
+        from benchmarks.collect_bounded_trace import galerkin_gate,csr_inventory
+        rng=np.random.default_rng(7120)
+        Z=sparse.csr_matrix(rng.normal(size=(5,2))+1j*rng.normal(size=(5,2)))
+        J=sparse.block_diag((Z,sparse.eye(2))).toarray()
+        A=rng.normal(size=(7,7))+1j*rng.normal(size=(7,7));E0=J.conj().T@A@J
+        w=rng.normal(size=4)+1j*rng.normal(size=4);v=J@w;original=A@v
+        a=dict(w=w,Zw=v,original=original,pulled=J.conj().T@original,coarse_action=E0@w)
+        self.assertTrue(galerkin_gate(Z,E0,a)['pass_gate'])
+        a['pulled']=a['pulled'].copy();a['pulled'][-1]+=1
+        self.assertFalse(galerkin_gate(Z,E0,a)['pass_gate'])
+        record=dict(data=np.array([1,0],dtype=np.complex128),indices=np.array([0,1],dtype=np.int64),
+                    indptr=np.array([0,2],dtype=np.int64),shape=np.array([1,2],dtype=np.int64))
+        self.assertEqual(csr_inventory(record)['stored_entries'],2)
+        self.assertEqual(csr_inventory(record)['exact_nonzero'],1)
+        record['data'][0]=np.nan
+        with self.assertRaisesRegex(ValueError,'CSR inventory'):csr_inventory(record)
+
+
 if __name__=='__main__':unittest.main()
