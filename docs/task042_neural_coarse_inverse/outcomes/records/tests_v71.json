@@ -76,5 +76,7 @@
   "compile_paths": 11,
   "dat_count": 4,
   "real_PDE_not_in_test_pass": true,
-  "documentation_check": "records/documentation_checks_v71.json"
+  "documentation_check": "records/documentation_checks_v71.json",
+  "documentation_status": "PASSED",
+  "documentation_source": "c89b025722f68fb305e57b4d446a9f8ede0054e9"
 }

@@ -46,6 +46,14 @@
       "real_original_actions": 0,
       "new_factor_KSP": 0,
       "elapsed_known_failure_seconds": 0.105253522
+    },
+    {
+      "kind": "FINAL_METADATA_IMPORT",
+      "failure_receipt": "tmp/task042/v71/finalize_metadata01/failure.json",
+      "remedy": "Linux ps via standard library; no package/ABI install",
+      "new_original_actions": 0,
+      "new_factor_KSP": 0,
+      "failure_before_mutation": true
     }
   ],
   "ordinary_faults_do_not_cancel_trusted_independent_paths": true,
@@ -54,5 +62,7 @@
   "known_inclusive_repair_intervals_are_not_double_added": true,
   "conservative_repair_upper_bound_seconds": 1989.1412205680044,
   "repair_cap_seconds": 9000,
-  "no_third_blind_retry": true
+  "no_third_blind_retry": true,
+  "repair_time_upper_bound_including_unknowns": 6841.4167914278805,
+  "upper_bound_definition": "whole current R&D elapsed, including non-repair preparation; conservative bound below9000s"
 }

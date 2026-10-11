@@ -1,6 +1,6 @@
 {
-  "status": "SCIENCE_SETTLED_DELIVERY_NOT_YET_CLOSED",
-  "as_of_utc": "2026-10-11T02:17:42.461725+00:00",
+  "status": "SETTLED_CLOSED",
+  "as_of_utc": "2026-10-11T02:30:18.782378+00:00",
   "window": {
     "start_utc": "2026-10-11T00:37:53.636300+00:00",
     "start_monotonic": 1604068.497173262,
@@ -17,8 +17,8 @@
     "heavy_stop_utc": "2026-10-11T13:37:53.636300+00:00",
     "deadline_utc": "2026-10-11T14:37:53.636300+00:00"
   },
-  "whole_elapsed_including_implementation_wait_failures_IO_seconds": 5989.128388660029,
-  "known_disjoint_wrapper_seconds": 4185.470402150415,
+  "whole_elapsed_including_implementation_wait_failures_IO_seconds": 6745.226021716837,
+  "known_disjoint_wrapper_seconds": 4276.662291565444,
   "wrapper_rows": [
     {
       "entry": "PC_SETUP_one_run01",
@@ -214,15 +214,40 @@
       "exit_code": 0,
       "wrapper_sha256": "03b88d34235df53d6d70c14cfcacca50b973b038bf903cae3b683844b90051d7",
       "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "entry": "auxiliary_post01",
+      "receipt": {
+        "path": "tmp/task042/v71/auxiliary_post01/receipt.json",
+        "bytes": 609,
+        "sha256": "0ec21248b97ce0b8f334ce3ff6d08f68da6fabf4b9ba5d16642434a85b332ce5"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "post",
+        "01",
+        "python",
+        "tmp/task042/v71/document_once.py"
+      ],
+      "source_sha": "c89b025722f68fb305e57b4d446a9f8ede0054e9",
+      "start_utc": "2026-10-11T02:25:53.434193+00:00",
+      "end_utc": "2026-10-11T02:27:24.626083+00:00",
+      "elapsed_seconds": 91.19188941502944,
+      "exit_code": 0,
+      "wrapper_sha256": "03b88d34235df53d6d70c14cfcacca50b973b038bf903cae3b683844b90051d7",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
     }
   ],
   "initial_implementation_inclusive_wall_seconds": 1306.9613985680044,
   "initial_tests_nested_not_additive": true,
-  "known_research_wall_lower_seconds": 5492.431800718419,
-  "unassigned_wall_seconds": 496.6965879416093,
+  "known_research_wall_lower_seconds": 5584.859917099129,
+  "unassigned_wall_seconds": 1160.3661046177076,
   "loaded_CPU_seconds": null,
   "unassigned_wall_not_claimed_zero": true,
-  "original_controller_charged_loaded_seconds": 4185.470402150415,
+  "original_controller_charged_loaded_seconds": 4276.662291565444,
   "supervised_children_seconds": 3580.756596908439,
   "child_and_measured_subtimers_nested_do_not_add_to_wrappers": true,
   "P_disjoint_measured_subtimers": {
@@ -236,7 +261,7 @@
     "coarse_symbolic": 0.17003491008654237
   },
   "parent_history_known_unique_lower_seconds": 340487.167195462,
-  "history_plus_current_known_wall_lower_seconds": 345979.5989961804,
+  "history_plus_current_known_wall_lower_seconds": 346072.0271125611,
   "parent_V70_BUILD_seconds": 9646.826483891113,
   "parent_V70_prepared_SOLVE_seconds": 12666.547604534077,
   "parent_BUILD_and_SOLVE_already_in_history_once": true,
@@ -405,6 +430,28 @@
         "bytes": 19501,
         "sha256": "a475ff1729d7aaf7121caec1b3b0e2aa313091f30c1845a28f783e6218333b0a"
       }
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v71/aux_post_01",
+      "source_sha": "c89b025722f68fb305e57b4d446a9f8ede0054e9",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "supervised_child_seconds": 3.767791667021811,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 4,
+        "actual_max_gap_seconds": 1.248854662058875,
+        "sampled_tree_peak_bytes": 148316160,
+        "ownswap_bytes": 0,
+        "all_status_readable": true,
+        "continuous_peak": false
+      },
+      "summary": {
+        "path": "tmp/task042/v71/aux_post_01/summary.json",
+        "bytes": 18773,
+        "sha256": "22db6a623304ee6359d3837e50c673b3d30d3bbb9dd56c179ea7440f8cd39dbc"
+      }
     }
   ],
   "storage_as_of": 10027718099,
@@ -426,5 +473,102 @@
     "iteration and convergence",
     "fresh packet-only cost",
     "complete V71 T_N1"
-  ]
+  ],
+  "metadata_disjoint_lower_bounds": [
+    {
+      "receipt": {
+        "path": "tmp/task042/v71/delivery_records_receipt.json",
+        "bytes": 335,
+        "sha256": "c5f30ed6a0161ab083f11c87ee45765b40bcefb2771330f2344d276aae0517dd"
+      },
+      "known_inner_seconds": 0.8506907830014825,
+      "whole_subprocess_overhead": null
+    },
+    {
+      "receipt": {
+        "path": "tmp/task042/v71/metadata_docs_receipt.json",
+        "bytes": 218,
+        "sha256": "81408d06fcefceb89def81c434d94392b149c5fe800b32fdba010e41c6f57f47"
+      },
+      "known_inner_seconds": 0.013797243824228644,
+      "whole_subprocess_overhead": null
+    },
+    {
+      "receipt": {
+        "path": "tmp/task042/v71/metadata_compact_receipt.json",
+        "bytes": 171,
+        "sha256": "46dc3253a4379044cda187d068cf9153f7b9dab41b7ae2cd853411fa701bd240"
+      },
+      "known_inner_seconds": 0.016087241005152464,
+      "whole_subprocess_overhead": null
+    },
+    {
+      "receipt": {
+        "path": "tmp/task042/v71/metadata_delivery01/failure.json",
+        "bytes": 217,
+        "sha256": "a053702da7183926ee8729bb8c6cfcbd928b45a252f64d2aef7d3387fed5d9cc"
+      },
+      "known_tool_wall_seconds": 0.105253522
+    },
+    {
+      "receipt": {
+        "path": "tmp/task042/v71/finalize_metadata01/failure.json",
+        "bytes": 223,
+        "sha256": "08966de564ca1cceb966601deb889cd81f52b8ed286df94a826fdb1f5a1b333d"
+      },
+      "known_tool_wall_seconds": 0.157492542
+    }
+  ],
+  "known_metadata_seconds_lower": 1.2362269656808869,
+  "post_document_wrapper_included": true,
+  "active": null,
+  "closed": true,
+  "cleanup": {
+    "utc": "2026-10-11T02:30:18.779035+00:00",
+    "active": null,
+    "live_matching_actors": [],
+    "all_recorded_descendant_groups_cleared": true,
+    "own_lock_acquired_then_released": true,
+    "lock_path": "tmp/task042/task042_shared.lock",
+    "no_neighbor_signal_or_modify": true,
+    "heavy_actor_and_KSP_started": false
+  },
+  "last_window_observation": {
+    "start_utc": "2026-10-11T00:37:53.636300+00:00",
+    "start_monotonic": 1604068.497173262,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 46800,
+    "total_limit_seconds": 50400,
+    "scientific_loaded_limit_seconds": 43200,
+    "review_commit": "41ee5ea56e19de48bee71792cbcd7081ba6e755c",
+    "contract_HEAD": "41ee5ea56e19de48bee71792cbcd7081ba6e755c",
+    "closed": false,
+    "first_work_start_never_refreshed": true,
+    "first_observed_proc_uptime": 1604068.5,
+    "start_monotonic_kind": "backbound from live UTC/monotonic pair to first actual UTC",
+    "heavy_stop_utc": "2026-10-11T13:37:53.636300+00:00",
+    "deadline_utc": "2026-10-11T14:37:53.636300+00:00",
+    "observed_utc": "2026-10-11T02:30:18.769510+00:00",
+    "observed_monotonic": 1610813.630376631,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 6745.133209466934,
+    "heavy_remaining_seconds": 40054.866790533066,
+    "total_remaining_seconds": 43654.866790533066
+  },
+  "storage": {
+    "new_bytes": 10066776594,
+    "new_files": 1197,
+    "immutable_historical_bytes": 171140131952,
+    "task_deduplicated_bytes": 181206908546,
+    "free_bytes": 2812768694272,
+    "evidence_reserve_bytes": 536870912,
+    "new_cap": 34359738368,
+    "task_cap": 678604832768,
+    "no_old_full_hash_scan": true,
+    "scope": "immutable measured historical baseline plus sole-writer V71 inode inventory"
+  },
+  "finalize_metadata_known_seconds": 0.09290563385002315,
+  "delivery_git_and_final_remote_check_seconds": null,
+  "delivery_tail_fee_boundary": "as-of close metadata; git/push/remote included in final ignored delivery_git_receipt, not claimed zero"
 }

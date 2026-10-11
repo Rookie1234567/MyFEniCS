@@ -1,0 +1,52 @@
+{
+  "status": "CLOSED",
+  "window": {
+    "start_utc": "2026-10-11T00:37:53.636300+00:00",
+    "start_monotonic": 1604068.497173262,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 46800,
+    "total_limit_seconds": 50400,
+    "scientific_loaded_limit_seconds": 43200,
+    "review_commit": "41ee5ea56e19de48bee71792cbcd7081ba6e755c",
+    "contract_HEAD": "41ee5ea56e19de48bee71792cbcd7081ba6e755c",
+    "closed": true,
+    "first_work_start_never_refreshed": true,
+    "first_observed_proc_uptime": 1604068.5,
+    "start_monotonic_kind": "backbound from live UTC/monotonic pair to first actual UTC",
+    "heavy_stop_utc": "2026-10-11T13:37:53.636300+00:00",
+    "deadline_utc": "2026-10-11T14:37:53.636300+00:00",
+    "closed_utc": "2026-10-11T02:30:18.779035+00:00",
+    "closure_reason": "fixed total symbolic capacity rejection"
+  },
+  "cleanup": {
+    "utc": "2026-10-11T02:30:18.779035+00:00",
+    "active": null,
+    "live_matching_actors": [],
+    "all_recorded_descendant_groups_cleared": true,
+    "own_lock_acquired_then_released": true,
+    "lock_path": "tmp/task042/task042_shared.lock",
+    "no_neighbor_signal_or_modify": true,
+    "heavy_actor_and_KSP_started": false
+  },
+  "final_actions": {
+    "started": 8,
+    "completed": 8,
+    "by_kind": {
+      "O_fixed": 2,
+      "O_hot_timing": 3,
+      "O_rhs_identity": 1,
+      "P_Galerkin": 2
+    }
+  },
+  "formal_KSP_count": 0,
+  "candidate_count": 0,
+  "not_run_reason": "fixed symbolic sum80322000000 >68719476736B",
+  "final_document_receipt": {
+    "path": "tmp/task042/v71/aux_post_01/document_checks.json",
+    "bytes": 2650,
+    "sha256": "3f744f1d3957b4acf7cd31d5a81f8a611ec0feec8b39c07449050c74cc0d3777"
+  },
+  "final_resource_record": "resource_costs_final_v71.json",
+  "actual_source_vs_document_head": true,
+  "delivery_git_receipt": "tmp/task042/v71/delivery_git_receipt.json"
+}

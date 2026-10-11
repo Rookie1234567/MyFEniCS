@@ -167,6 +167,28 @@
         "bytes": 19501,
         "sha256": "a475ff1729d7aaf7121caec1b3b0e2aa313091f30c1845a28f783e6218333b0a"
       }
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v71/aux_post_01",
+      "source_sha": "c89b025722f68fb305e57b4d446a9f8ede0054e9",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "supervised_child_seconds": 3.767791667021811,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 4,
+        "actual_max_gap_seconds": 1.248854662058875,
+        "sampled_tree_peak_bytes": 148316160,
+        "ownswap_bytes": 0,
+        "all_status_readable": true,
+        "continuous_peak": false
+      },
+      "summary": {
+        "path": "tmp/task042/v71/aux_post_01/summary.json",
+        "bytes": 18773,
+        "sha256": "22db6a623304ee6359d3837e50c673b3d30d3bbb9dd56c179ea7440f8cd39dbc"
+      }
     }
   ],
   "wrappers": [
@@ -364,6 +386,31 @@
       "exit_code": 0,
       "wrapper_sha256": "03b88d34235df53d6d70c14cfcacca50b973b038bf903cae3b683844b90051d7",
       "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "entry": "auxiliary_post01",
+      "receipt": {
+        "path": "tmp/task042/v71/auxiliary_post01/receipt.json",
+        "bytes": 609,
+        "sha256": "0ec21248b97ce0b8f334ce3ff6d08f68da6fabf4b9ba5d16642434a85b332ce5"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "post",
+        "01",
+        "python",
+        "tmp/task042/v71/document_once.py"
+      ],
+      "source_sha": "c89b025722f68fb305e57b4d446a9f8ede0054e9",
+      "start_utc": "2026-10-11T02:25:53.434193+00:00",
+      "end_utc": "2026-10-11T02:27:24.626083+00:00",
+      "elapsed_seconds": 91.19188941502944,
+      "exit_code": 0,
+      "wrapper_sha256": "03b88d34235df53d6d70c14cfcacca50b973b038bf903cae3b683844b90051d7",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
     }
   ],
   "ITERATE": {
@@ -377,5 +424,7 @@
     "path": "tmp/task042/v71/scientific_queue_frozen.json",
     "bytes": 1946,
     "sha256": "05fb1095dccacee3ec506b3b228943b29709f85998b454fb8087b72709b65276"
-  }
+  },
+  "closed": true,
+  "active": null
 }

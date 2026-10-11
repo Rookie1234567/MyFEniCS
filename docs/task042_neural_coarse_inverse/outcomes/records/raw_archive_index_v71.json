@@ -9,5 +9,11 @@
   },
   "scientific_arrays_copied": false,
   "scientific_array_receipts_bound_by_O_P_V": true,
-  "tail_archive_pending": "final document auxiliary and cleanup live files retained with final tail inventory"
+  "tail_archive_pending": false,
+  "tail_inventory": {
+    "path": "benchmarks/artifacts/task042/v71/increment_evidence_v71/final_tail/inventory.json",
+    "bytes": 16157,
+    "sha256": "537b9c120c9cc1f8cff68d4f193f09aaa5af2188046c0f6d252a0dd4c4b56eb5"
+  },
+  "tail_item_count": 42
 }

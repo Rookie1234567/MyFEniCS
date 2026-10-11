@@ -68,5 +68,6 @@
   "old_generic_ledger_actions_field": 0,
   "authoritative_action_inventory": "action_counts.json write-ahead started/completed; generic ledger field is unused",
   "AH_qualified": false,
-  "not_factor_free": true
+  "not_factor_free": true,
+  "production_counter_scope": "actual 25576tet/p5/828 formal one-runs; tiny algebra fixtures are separately documented in tests_v71.json"
 }
