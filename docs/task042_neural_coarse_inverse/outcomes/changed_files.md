@@ -1,3 +1,11 @@
+# V71最小opt-in热作用/两层PC/迭代接线
+
+新热映射与局部/粗层数学进入src/solvers，复用原packet、native后端、physical_retained_fgmres、runner/监督/保存消费者。只增加显式namespace、内存与停止policy，ordinary默认不变。所有source先clean commit，最终checker独立复算库存和容量拒绝；没有复制大型runner或读取全局fine K/S。
+
+[依赖分组](records/selective_merge_manifest_v71.json) · [source与实际运行](records/source_bindings_v71.json)。PC/迭代研究路径未获完整PDE资格，不提升production默认、不merge；旧历史后缀完整保留，大数组ignored。
+
+---
+
 # V70最小装配时四面体provider
 
 新增packed DG0真实tet核、流式局部响应包与全局K前的early retained_provider；复用现有MUMPS/原式/完整输出，独立ACTION不读全局S。默认路径不变，局部数值核心在src；原历史保持，大数组ignored。

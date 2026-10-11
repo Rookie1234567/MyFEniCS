@@ -1,0 +1,72 @@
+{
+  "actual_global_action_counts": {
+    "started": 8,
+    "completed": 8,
+    "by_kind": {
+      "O_fixed": 2,
+      "O_hot_timing": 3,
+      "O_rhs_identity": 1,
+      "P_Galerkin": 2
+    }
+  },
+  "action_lower_bound": 8,
+  "action_upper_bound": 8,
+  "global_actions_limit": 600,
+  "qualification_target": 12,
+  "O": {
+    "trace_action": 6,
+    "local_lu_solve": 51664,
+    "global_K_reads": 0,
+    "global_S_reads": 0,
+    "global_FE_matrix_formations": 0,
+    "factors": 0,
+    "class_reads": 10660,
+    "class_bytes_read": 3513173560,
+    "boundary_C": 6,
+    "boundary_D": 6,
+    "map_reads": 400,
+    "map_hot_reads": 0,
+    "scatter_add": 153456,
+    "class_hot_hits": 63960,
+    "boundary_aggregate": 1
+  },
+  "P": {
+    "trace_action": 2,
+    "local_lu_solve": 512,
+    "global_K_reads": 0,
+    "global_S_reads": 0,
+    "global_FE_matrix_formations": 0,
+    "factors": 0,
+    "class_reads": 10660,
+    "class_bytes_read": 3513173560,
+    "boundary_C": 2,
+    "boundary_D": 2,
+    "map_reads": 400,
+    "map_hot_reads": 0,
+    "scatter_add": 51152,
+    "class_hot_hits": 21320,
+    "boundary_aggregate": 1
+  },
+  "V": {
+    "A": 0,
+    "AH": 0,
+    "factor": 0
+  },
+  "local_internal_triangular_calls": 52176,
+  "local_PC_triangular_calls": 0,
+  "coarse_triangular_calls": 0,
+  "local_PC_symbolic": 38,
+  "coarse_symbolic": 1,
+  "local_PC_numeric": 0,
+  "coarse_numeric": 0,
+  "global_fine_K_reads": 0,
+  "global_fine_S_reads": 0,
+  "global_fine_matrices_formed": 0,
+  "global_fine_numeric": 0,
+  "KSP_solve": 0,
+  "Arnoldi_steps": 0,
+  "old_generic_ledger_actions_field": 0,
+  "authoritative_action_inventory": "action_counts.json write-ahead started/completed; generic ledger field is unused",
+  "AH_qualified": false,
+  "not_factor_free": true
+}

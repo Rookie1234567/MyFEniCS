@@ -1,3 +1,15 @@
+# Task042 V71模型账追加
+
+| 固定模型 / 消费者 | 实际规模与费用 | 结果及具体阻塞 |
+|---|---|---|
+| 原0.7nm NOTCH局部packet热作用 | p5/25576tet/828，retained1177293；三热作用约1.22–1.32s | 两复向量FE/port运算差≤1e-10，组件PASS |
+| 几何两层PC准备 | 38块≤68680行，coarse7068；P3392.80855s，采样树峰8.79606247GiB | 双倍symbolic总74.8056918383GiB>64GiB；无numeric |
+| 完整RIGHT FGMRES / 六场 / RTA | 正式solve0、候选0、V/Z库0 | NOT_RUN_CAPACITY_BLOCKED，无新official RTA/连续/目标/NN20资格 |
+
+[独立checker](task042_neural_coarse_inverse/outcomes/records/scientific_checks_v71.json) · [同离散组件合同](task042_neural_coarse_inverse/outcomes/records/retained_iterative_contract_v71.json) · [全过程费用与未知](task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v71.json)。父局部LU仍存在，fine global factor0；局部/粗层numeric0不能写成迭代已通过。旧历史不改。
+
+---
+
 # Task042 V70模型账追加
 
 | 模型/消费者 | 原空间 | 实际方法与边界 |

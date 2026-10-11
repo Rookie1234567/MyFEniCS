@@ -1,3 +1,20 @@
+# V71：真实无细层全局矩阵准备，完整迭代未准入
+
+把局部响应按类批乘能减少反复读取，固定粗层加重叠局部块原本用于代替昂贵全局LU。实际构建和独立审核已完成；总因子内存估计超门，未启动迭代，也没有新的物理场/功率。
+
+| 同一0.7nm模型 / 方法 | measured数据 | 资格和成本边界 |
+|---|---|---|
+| 热接口作用，25576tet/p5/828 | FE/port差≤5.21847e-16/6.43620e-17；三热作用1.22402/1.23099/1.31844s | COMPONENT_PASS；不等于完整物理解 |
+| 38块局部主子块＋p2/828粗层 | 最大68680行；实际coarse7068；双倍symbolic80322000000B | 74.8056918383GiB>64GiB，CAPACITY_BLOCKED |
+| 正式numeric / KSP / 返回场 | 0 / 0 / 0 | 原式、六场、240点、828通道、RTA/吸收/能量NOT_RUN |
+| 本批作用 / P设置实测 | 8，[8,8]；P全段3392.80855s | 采样树峰8.79606247GiB、gap1.60104868s；没有配平完整T_N1收益 |
+
+历史完整解/连续精度FAIL不改；全局fine K/S/factor读入或形成0，有父局部内部LU，不能称factor-free、distributed、2TB48h或NN20。唯一下一pilot需新合同中把全部symbolic总预算作为事前分区准入，复用健康Z/E0后才运行同一FGMRES，本窗未自动执行。
+
+[回应](../response_v71.md) · [完整组件结果](bounded_trace_iterative_v71.md) · [独立checker](records/scientific_checks_v71.json) · [费用](records/resource_costs_final_v71.json)。
+
+---
+
 # V70：无完整K构建与完整物理解
 
 相同0.7nm/25576tet/p5/828：生产不形成或读取完整K，直接从单元核形成接口S；独立无S局部作用与完整场同离散再现、真实成本分列。全局LU仍存在，旧空间FAIL与历史费用保持，无NN/目标/merge资格。

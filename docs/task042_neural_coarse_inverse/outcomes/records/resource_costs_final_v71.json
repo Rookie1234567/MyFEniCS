@@ -1,0 +1,430 @@
+{
+  "status": "SCIENCE_SETTLED_DELIVERY_NOT_YET_CLOSED",
+  "as_of_utc": "2026-10-11T02:17:42.461725+00:00",
+  "window": {
+    "start_utc": "2026-10-11T00:37:53.636300+00:00",
+    "start_monotonic": 1604068.497173262,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 46800,
+    "total_limit_seconds": 50400,
+    "scientific_loaded_limit_seconds": 43200,
+    "review_commit": "41ee5ea56e19de48bee71792cbcd7081ba6e755c",
+    "contract_HEAD": "41ee5ea56e19de48bee71792cbcd7081ba6e755c",
+    "closed": false,
+    "first_work_start_never_refreshed": true,
+    "first_observed_proc_uptime": 1604068.5,
+    "start_monotonic_kind": "backbound from live UTC/monotonic pair to first actual UTC",
+    "heavy_stop_utc": "2026-10-11T13:37:53.636300+00:00",
+    "deadline_utc": "2026-10-11T14:37:53.636300+00:00"
+  },
+  "whole_elapsed_including_implementation_wait_failures_IO_seconds": 5989.128388660029,
+  "known_disjoint_wrapper_seconds": 4185.470402150415,
+  "wrapper_rows": [
+    {
+      "entry": "PC_SETUP_one_run01",
+      "receipt": {
+        "path": "tmp/task042/v71/PC_SETUP_one_run01/receipt.json",
+        "bytes": 762,
+        "sha256": "c50f57bc4cc501e6113e32d500f4802acc296a6078b736161a20b4679aa11697"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v71_bounded_pc_setup.dat"
+      ],
+      "source_sha": "ee13ea8419b2a6cb6f137d6d975135dfe1e510e5",
+      "start_utc": "2026-10-11T01:10:26.965116+00:00",
+      "end_utc": "2026-10-11T02:06:59.773648+00:00",
+      "elapsed_seconds": 3392.808550813934,
+      "exit_code": 0,
+      "input_sha256": "1c6b895aa71587871f713f9b3b97a709e3a2589f6332d782f0618529a21c23b0",
+      "wrapper_sha256": "f3a0fafb2f22a85f062af8e18c3032d7a58531070ea03a5fa38f98d906c53492",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "entry": "PREFLIGHT_one_run01",
+      "receipt": {
+        "path": "tmp/task042/v71/PREFLIGHT_one_run01/receipt.json",
+        "bytes": 771,
+        "sha256": "d54e7bc116671d81e4c45af810310eed8c000a701f47b0746af28a44689af3ab"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v71_trace_operator_preflight.dat"
+      ],
+      "source_sha": "d064028e4813e2f944a2b994e88f93c9a65f4806",
+      "start_utc": "2026-10-11T01:01:18.618993+00:00",
+      "end_utc": "2026-10-11T01:01:18.959466+00:00",
+      "elapsed_seconds": 0.3404861700255424,
+      "exit_code": 1,
+      "input_sha256": "231f1bab5ed1ac690df1afe2cf7091adf61f1f3f5af71fa892c82ec54e9c896c",
+      "wrapper_sha256": "f3a0fafb2f22a85f062af8e18c3032d7a58531070ea03a5fa38f98d906c53492",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "entry": "PREFLIGHT_one_run02",
+      "receipt": {
+        "path": "tmp/task042/v71/PREFLIGHT_one_run02/receipt.json",
+        "bytes": 770,
+        "sha256": "e0ef8c6a57502dcb4aa0507d816fff12e10e3724cfaaa2cc86212a22c3ec7987"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v71_trace_operator_preflight.dat"
+      ],
+      "source_sha": "d064028e4813e2f944a2b994e88f93c9a65f4806",
+      "start_utc": "2026-10-11T01:03:47.590351+00:00",
+      "end_utc": "2026-10-11T01:07:27.354733+00:00",
+      "elapsed_seconds": 219.7644063611515,
+      "exit_code": 0,
+      "input_sha256": "231f1bab5ed1ac690df1afe2cf7091adf61f1f3f5af71fa892c82ec54e9c896c",
+      "wrapper_sha256": "f3a0fafb2f22a85f062af8e18c3032d7a58531070ea03a5fa38f98d906c53492",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "entry": "VERIFY_COST_one_run01",
+      "receipt": {
+        "path": "tmp/task042/v71/VERIFY_COST_one_run01/receipt.json",
+        "bytes": 766,
+        "sha256": "a3d410f3b43443332341f1a7784a92bb12bbeedd93fda472275c7b18c1dd48fb"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v71_compare_verify_cost.dat"
+      ],
+      "source_sha": "a8d73e8b4bb45c0b37d65fa46c785121048150ab",
+      "start_utc": "2026-10-11T02:12:39.331322+00:00",
+      "end_utc": "2026-10-11T02:16:07.170567+00:00",
+      "elapsed_seconds": 207.83927900902927,
+      "exit_code": 0,
+      "input_sha256": "0842282eec461c7f3dfba8cab40dbb203c2c5f6b91a0f63892c127730d1eb29d",
+      "wrapper_sha256": "f3a0fafb2f22a85f062af8e18c3032d7a58531070ea03a5fa38f98d906c53492",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "entry": "auxiliary_TESTS01",
+      "receipt": {
+        "path": "tmp/task042/v71/auxiliary_TESTS01/receipt.json",
+        "bytes": 620,
+        "sha256": "1a4da5eb586ef07d5437eafce173b385101d06e69ba2b998ebaf56cd06d3b769"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "TESTS",
+        "01",
+        "python",
+        "-m",
+        "benchmarks.qualify_bounded_trace"
+      ],
+      "source_sha": "d064028e4813e2f944a2b994e88f93c9a65f4806",
+      "start_utc": "2026-10-11T00:59:26.687542+00:00",
+      "end_utc": "2026-10-11T01:00:57.779235+00:00",
+      "elapsed_seconds": 91.09170500421897,
+      "exit_code": 0,
+      "wrapper_sha256": "03b88d34235df53d6d70c14cfcacca50b973b038bf903cae3b683844b90051d7",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "entry": "auxiliary_pre01",
+      "receipt": {
+        "path": "tmp/task042/v71/auxiliary_pre01/receipt.json",
+        "bytes": 617,
+        "sha256": "7fcb58b3ae652577002c9fcd7c35db6bd23a67bab7cf750eba36c9438543f8a1"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "01",
+        "python",
+        "tmp/task042/v71/register_qualification.py"
+      ],
+      "source_sha": "d064028e4813e2f944a2b994e88f93c9a65f4806",
+      "start_utc": "2026-10-11T01:01:49.725941+00:00",
+      "end_utc": "2026-10-11T01:03:19.098815+00:00",
+      "elapsed_seconds": 89.37287750001997,
+      "exit_code": 0,
+      "wrapper_sha256": "03b88d34235df53d6d70c14cfcacca50b973b038bf903cae3b683844b90051d7",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "entry": "auxiliary_pre02",
+      "receipt": {
+        "path": "tmp/task042/v71/auxiliary_pre02/receipt.json",
+        "bytes": 617,
+        "sha256": "1323977d70d590783b3afdf75cbd2cec5f75565218debfef8cd2cae344f0206b"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "02",
+        "python",
+        "-m",
+        "benchmarks.qualify_bounded_trace"
+      ],
+      "source_sha": "ee13ea8419b2a6cb6f137d6d975135dfe1e510e5",
+      "start_utc": "2026-10-11T01:08:32.606604+00:00",
+      "end_utc": "2026-10-11T01:10:05.791759+00:00",
+      "elapsed_seconds": 93.1851703079883,
+      "exit_code": 0,
+      "wrapper_sha256": "03b88d34235df53d6d70c14cfcacca50b973b038bf903cae3b683844b90051d7",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "entry": "auxiliary_pre03",
+      "receipt": {
+        "path": "tmp/task042/v71/auxiliary_pre03/receipt.json",
+        "bytes": 618,
+        "sha256": "0beb0b63bb3986e28d30134a94f562bdfd64295242b3352942d5d3cf1ae2e54f"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "03",
+        "python",
+        "-m",
+        "benchmarks.qualify_bounded_trace"
+      ],
+      "source_sha": "a8d73e8b4bb45c0b37d65fa46c785121048150ab",
+      "start_utc": "2026-10-11T02:09:20.232904+00:00",
+      "end_utc": "2026-10-11T02:10:51.300829+00:00",
+      "elapsed_seconds": 91.06792698404752,
+      "exit_code": 0,
+      "wrapper_sha256": "03b88d34235df53d6d70c14cfcacca50b973b038bf903cae3b683844b90051d7",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    }
+  ],
+  "initial_implementation_inclusive_wall_seconds": 1306.9613985680044,
+  "initial_tests_nested_not_additive": true,
+  "known_research_wall_lower_seconds": 5492.431800718419,
+  "unassigned_wall_seconds": 496.6965879416093,
+  "loaded_CPU_seconds": null,
+  "unassigned_wall_not_claimed_zero": true,
+  "original_controller_charged_loaded_seconds": 4185.470402150415,
+  "supervised_children_seconds": 3580.756596908439,
+  "child_and_measured_subtimers_nested_do_not_add_to_wrappers": true,
+  "P_disjoint_measured_subtimers": {
+    "mesh_and_MPC": 54.541763628832996,
+    "checked_hot_load": 72.79654205287807,
+    "geometric_core_halo": 15.505038263974711,
+    "coarse_true_interpolation": 56.05374120105989,
+    "local_principal_assembly_and_IO": 153.20914441510104,
+    "local_symbolic": 18.211128015303984,
+    "coarse_Galerkin_assembly": 2856.998207557015,
+    "coarse_symbolic": 0.17003491008654237
+  },
+  "parent_history_known_unique_lower_seconds": 340487.167195462,
+  "history_plus_current_known_wall_lower_seconds": 345979.5989961804,
+  "parent_V70_BUILD_seconds": 9646.826483891113,
+  "parent_V70_prepared_SOLVE_seconds": 12666.547604534077,
+  "parent_BUILD_and_SOLVE_already_in_history_once": true,
+  "packet_only_cold_BUILD_seconds": null,
+  "V71_complete_T_N1_seconds": null,
+  "V71_complete_T_N1_status": "NOT_RUN_NO_COMPLETE_CANDIDATE",
+  "production_speed_or_peak_ratio": null,
+  "peak_sampled_tree_bytes": 9444700160,
+  "actual_max_sample_gap_seconds": 1.6010486809536815,
+  "nominal_sampling_seconds": 0.5,
+  "sampled_not_continuous_hard_peak": true,
+  "max_observed_ownswap_bytes": 0,
+  "OOC_attempts": 0,
+  "scope": "own V71 process-tree samples; shared workstation; estimates differ from sampled RSS",
+  "runs": [
+    {
+      "role": "TESTS",
+      "folder": "tmp/task042/v71/aux_TESTS_01",
+      "source_sha": "d064028e4813e2f944a2b994e88f93c9a65f4806",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "supervised_child_seconds": 5.633494341978803,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 6,
+        "actual_max_gap_seconds": 1.2892881520092487,
+        "sampled_tree_peak_bytes": 303366144,
+        "ownswap_bytes": 0,
+        "all_status_readable": true,
+        "continuous_peak": false
+      },
+      "summary": {
+        "path": "tmp/task042/v71/aux_TESTS_01/summary.json",
+        "bytes": 18806,
+        "sha256": "835a0579e5f1f9262ba890643ffecf6e2c50f6d89570abc414bf1dbce0041095"
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v71/aux_pre_01",
+      "source_sha": "d064028e4813e2f944a2b994e88f93c9a65f4806",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "supervised_child_seconds": 3.20023773284629,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 4,
+        "actual_max_gap_seconds": 1.1041113671381027,
+        "sampled_tree_peak_bytes": 142733312,
+        "ownswap_bytes": 0,
+        "all_status_readable": true,
+        "continuous_peak": false
+      },
+      "summary": {
+        "path": "tmp/task042/v71/aux_pre_01/summary.json",
+        "bytes": 18751,
+        "sha256": "ac7ef699a439f05813ce15e251c333f71e5651c91db082ad124bfe115fdeacd4"
+      }
+    },
+    {
+      "role": "PREFLIGHT",
+      "folder": "results/task042/task042_v71_trace_operator_preflight_20261011T010347954645Z",
+      "source_sha": "d064028e4813e2f944a2b994e88f93c9a65f4806",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "supervised_child_seconds": 132.39630721183494,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 105,
+        "actual_max_gap_seconds": 1.5135625510010868,
+        "sampled_tree_peak_bytes": 5748051968,
+        "ownswap_bytes": 0,
+        "all_status_readable": true,
+        "continuous_peak": false
+      },
+      "summary": {
+        "path": "results/task042/task042_v71_trace_operator_preflight_20261011T010347954645Z/run_summary.json",
+        "bytes": 19291,
+        "sha256": "775b80c950dc339278988904cb87c28c13792b02e7615d43261e47e5870fa222"
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v71/aux_pre_02",
+      "source_sha": "ee13ea8419b2a6cb6f137d6d975135dfe1e510e5",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "supervised_child_seconds": 5.785101155983284,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 6,
+        "actual_max_gap_seconds": 1.3537792030256242,
+        "sampled_tree_peak_bytes": 310464512,
+        "ownswap_bytes": 0,
+        "all_status_readable": true,
+        "continuous_peak": false
+      },
+      "summary": {
+        "path": "tmp/task042/v71/aux_pre_02/summary.json",
+        "bytes": 18832,
+        "sha256": "86e6fd4fe42ee6981ca0f7b88ef38cb538ac7a1a5d5a8646425bef27da19c57b"
+      }
+    },
+    {
+      "role": "PC_SETUP",
+      "folder": "results/task042/task042_v71_bounded_pc_setup_20261011T011027326043Z",
+      "source_sha": "ee13ea8419b2a6cb6f137d6d975135dfe1e510e5",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "supervised_child_seconds": 3305.7479543308727,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 2520,
+        "actual_max_gap_seconds": 1.6010486809536815,
+        "sampled_tree_peak_bytes": 9444700160,
+        "ownswap_bytes": 0,
+        "all_status_readable": true,
+        "continuous_peak": false
+      },
+      "summary": {
+        "path": "results/task042/task042_v71_bounded_pc_setup_20261011T011027326043Z/run_summary.json",
+        "bytes": 19315,
+        "sha256": "799a56bbec6eb69b6e56cf6c67d8d610bc1ecc5618b788acf1240a334161e946"
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v71/aux_pre_03",
+      "source_sha": "a8d73e8b4bb45c0b37d65fa46c785121048150ab",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "supervised_child_seconds": 5.845774878049269,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 6,
+        "actual_max_gap_seconds": 1.359857375966385,
+        "sampled_tree_peak_bytes": 315416576,
+        "ownswap_bytes": 0,
+        "all_status_readable": true,
+        "continuous_peak": false
+      },
+      "summary": {
+        "path": "tmp/task042/v71/aux_pre_03/summary.json",
+        "bytes": 18835,
+        "sha256": "35698ef5c00ba4749ac0f9b5b4749aca4ead91d9ea9c59b4a5ee594759d4206d"
+      }
+    },
+    {
+      "role": "VERIFY_COST",
+      "folder": "results/task042/task042_v71_compare_verify_cost_20261011T021239770272Z",
+      "source_sha": "a8d73e8b4bb45c0b37d65fa46c785121048150ab",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "supervised_child_seconds": 122.14772725687362,
+      "descendants_cleared": true,
+      "sampling": {
+        "sample_count": 94,
+        "actual_max_gap_seconds": 1.5726925621274859,
+        "sampled_tree_peak_bytes": 1541300224,
+        "ownswap_bytes": 0,
+        "all_status_readable": true,
+        "continuous_peak": false
+      },
+      "summary": {
+        "path": "results/task042/task042_v71_compare_verify_cost_20261011T021239770272Z/run_summary.json",
+        "bytes": 19501,
+        "sha256": "a475ff1729d7aaf7121caec1b3b0e2aa313091f30c1845a28f783e6218333b0a"
+      }
+    }
+  ],
+  "storage_as_of": 10027718099,
+  "new_increment_files": 899,
+  "new_storage_cap_bytes": 34359738368,
+  "task_storage_cap_bytes": 678604832768,
+  "free_bytes": 2814418808832,
+  "historical_storage_baseline_probe": {
+    "path": "tmp/task042/v71/probe_001.json",
+    "bytes": 155,
+    "sha256": "61f0ff057165be881cc868f4401870f90e22d91014354bd37b0ec7184f23a418"
+  },
+  "final_storage_and_cleanup_receipt": "tmp/task042/v71/delivery_cleanup.json (after closure)",
+  "no_historical_full_hash_scan": true,
+  "unknowns": [
+    "actual unsampled peak",
+    "CPU consumption and unscheduled intervals",
+    "local/coarse numeric pivot and apply cost",
+    "iteration and convergence",
+    "fresh packet-only cost",
+    "complete V71 T_N1"
+  ]
+}

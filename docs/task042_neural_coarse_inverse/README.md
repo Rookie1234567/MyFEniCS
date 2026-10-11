@@ -1,3 +1,11 @@
+# 当前入口：Review V69 / V71
+
+同0.7nm/25576tet/p5/828：原局部包的热作用和真实p2 Galerkin准备通过独立消费；全部38个local加coarse的双倍symbolic为74.8056918383GiB，超过固定64GiB，numeric/KSP均0。完整迭代解/六场/official RTA为NOT_RUN_CAPACITY_BLOCKED；不是不收敛、OOM或NN收益。
+
+[回应](response_v71.md) · [组件与完整资格边界](outcomes/bounded_trace_iterative_v71.md) · [retained合同](outcomes/records/retained_iterative_contract_v71.json) · [全部费用](outcomes/records/resource_costs_final_v71.json)。本窗完成交付后closed、清场暂停，不通知邻窗。
+
+---
+
 # 当前入口：Review V68 / V70
 
 相同0.7nm/25576tet/p5/828：生产不形成或读取完整K，直接从单元核形成接口S；独立无S局部作用与完整场同离散再现、真实成本分列。全局LU仍存在，旧空间FAIL与历史费用保持，无NN/目标/merge资格。

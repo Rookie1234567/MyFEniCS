@@ -1,0 +1,224 @@
+{
+  "P_components_seconds": {
+    "mesh_and_MPC": 54.541763628832996,
+    "checked_hot_load": 72.79654205287807,
+    "geometric_core_halo": 15.505038263974711,
+    "coarse_true_interpolation": 56.05374120105989,
+    "local_principal_assembly_and_IO": 153.20914441510104,
+    "local_symbolic": 18.211128015303984,
+    "coarse_Galerkin_assembly": 2856.998207557015,
+    "coarse_symbolic": 0.17003491008654237
+  },
+  "stage_whole_inclusive": [
+    {
+      "entry": "PC_SETUP_one_run01",
+      "receipt": {
+        "path": "tmp/task042/v71/PC_SETUP_one_run01/receipt.json",
+        "bytes": 762,
+        "sha256": "c50f57bc4cc501e6113e32d500f4802acc296a6078b736161a20b4679aa11697"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v71_bounded_pc_setup.dat"
+      ],
+      "source_sha": "ee13ea8419b2a6cb6f137d6d975135dfe1e510e5",
+      "start_utc": "2026-10-11T01:10:26.965116+00:00",
+      "end_utc": "2026-10-11T02:06:59.773648+00:00",
+      "elapsed_seconds": 3392.808550813934,
+      "exit_code": 0,
+      "input_sha256": "1c6b895aa71587871f713f9b3b97a709e3a2589f6332d782f0618529a21c23b0",
+      "wrapper_sha256": "f3a0fafb2f22a85f062af8e18c3032d7a58531070ea03a5fa38f98d906c53492",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "entry": "PREFLIGHT_one_run01",
+      "receipt": {
+        "path": "tmp/task042/v71/PREFLIGHT_one_run01/receipt.json",
+        "bytes": 771,
+        "sha256": "d54e7bc116671d81e4c45af810310eed8c000a701f47b0746af28a44689af3ab"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v71_trace_operator_preflight.dat"
+      ],
+      "source_sha": "d064028e4813e2f944a2b994e88f93c9a65f4806",
+      "start_utc": "2026-10-11T01:01:18.618993+00:00",
+      "end_utc": "2026-10-11T01:01:18.959466+00:00",
+      "elapsed_seconds": 0.3404861700255424,
+      "exit_code": 1,
+      "input_sha256": "231f1bab5ed1ac690df1afe2cf7091adf61f1f3f5af71fa892c82ec54e9c896c",
+      "wrapper_sha256": "f3a0fafb2f22a85f062af8e18c3032d7a58531070ea03a5fa38f98d906c53492",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "entry": "PREFLIGHT_one_run02",
+      "receipt": {
+        "path": "tmp/task042/v71/PREFLIGHT_one_run02/receipt.json",
+        "bytes": 770,
+        "sha256": "e0ef8c6a57502dcb4aa0507d816fff12e10e3724cfaaa2cc86212a22c3ec7987"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v71_trace_operator_preflight.dat"
+      ],
+      "source_sha": "d064028e4813e2f944a2b994e88f93c9a65f4806",
+      "start_utc": "2026-10-11T01:03:47.590351+00:00",
+      "end_utc": "2026-10-11T01:07:27.354733+00:00",
+      "elapsed_seconds": 219.7644063611515,
+      "exit_code": 0,
+      "input_sha256": "231f1bab5ed1ac690df1afe2cf7091adf61f1f3f5af71fa892c82ec54e9c896c",
+      "wrapper_sha256": "f3a0fafb2f22a85f062af8e18c3032d7a58531070ea03a5fa38f98d906c53492",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "entry": "VERIFY_COST_one_run01",
+      "receipt": {
+        "path": "tmp/task042/v71/VERIFY_COST_one_run01/receipt.json",
+        "bytes": 766,
+        "sha256": "a3d410f3b43443332341f1a7784a92bb12bbeedd93fda472275c7b18c1dd48fb"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v71_compare_verify_cost.dat"
+      ],
+      "source_sha": "a8d73e8b4bb45c0b37d65fa46c785121048150ab",
+      "start_utc": "2026-10-11T02:12:39.331322+00:00",
+      "end_utc": "2026-10-11T02:16:07.170567+00:00",
+      "elapsed_seconds": 207.83927900902927,
+      "exit_code": 0,
+      "input_sha256": "0842282eec461c7f3dfba8cab40dbb203c2c5f6b91a0f63892c127730d1eb29d",
+      "wrapper_sha256": "f3a0fafb2f22a85f062af8e18c3032d7a58531070ea03a5fa38f98d906c53492",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "entry": "auxiliary_TESTS01",
+      "receipt": {
+        "path": "tmp/task042/v71/auxiliary_TESTS01/receipt.json",
+        "bytes": 620,
+        "sha256": "1a4da5eb586ef07d5437eafce173b385101d06e69ba2b998ebaf56cd06d3b769"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "TESTS",
+        "01",
+        "python",
+        "-m",
+        "benchmarks.qualify_bounded_trace"
+      ],
+      "source_sha": "d064028e4813e2f944a2b994e88f93c9a65f4806",
+      "start_utc": "2026-10-11T00:59:26.687542+00:00",
+      "end_utc": "2026-10-11T01:00:57.779235+00:00",
+      "elapsed_seconds": 91.09170500421897,
+      "exit_code": 0,
+      "wrapper_sha256": "03b88d34235df53d6d70c14cfcacca50b973b038bf903cae3b683844b90051d7",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "entry": "auxiliary_pre01",
+      "receipt": {
+        "path": "tmp/task042/v71/auxiliary_pre01/receipt.json",
+        "bytes": 617,
+        "sha256": "7fcb58b3ae652577002c9fcd7c35db6bd23a67bab7cf750eba36c9438543f8a1"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "01",
+        "python",
+        "tmp/task042/v71/register_qualification.py"
+      ],
+      "source_sha": "d064028e4813e2f944a2b994e88f93c9a65f4806",
+      "start_utc": "2026-10-11T01:01:49.725941+00:00",
+      "end_utc": "2026-10-11T01:03:19.098815+00:00",
+      "elapsed_seconds": 89.37287750001997,
+      "exit_code": 0,
+      "wrapper_sha256": "03b88d34235df53d6d70c14cfcacca50b973b038bf903cae3b683844b90051d7",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "entry": "auxiliary_pre02",
+      "receipt": {
+        "path": "tmp/task042/v71/auxiliary_pre02/receipt.json",
+        "bytes": 617,
+        "sha256": "1323977d70d590783b3afdf75cbd2cec5f75565218debfef8cd2cae344f0206b"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "02",
+        "python",
+        "-m",
+        "benchmarks.qualify_bounded_trace"
+      ],
+      "source_sha": "ee13ea8419b2a6cb6f137d6d975135dfe1e510e5",
+      "start_utc": "2026-10-11T01:08:32.606604+00:00",
+      "end_utc": "2026-10-11T01:10:05.791759+00:00",
+      "elapsed_seconds": 93.1851703079883,
+      "exit_code": 0,
+      "wrapper_sha256": "03b88d34235df53d6d70c14cfcacca50b973b038bf903cae3b683844b90051d7",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "entry": "auxiliary_pre03",
+      "receipt": {
+        "path": "tmp/task042/v71/auxiliary_pre03/receipt.json",
+        "bytes": 618,
+        "sha256": "0beb0b63bb3986e28d30134a94f562bdfd64295242b3352942d5d3cf1ae2e54f"
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "03",
+        "python",
+        "-m",
+        "benchmarks.qualify_bounded_trace"
+      ],
+      "source_sha": "a8d73e8b4bb45c0b37d65fa46c785121048150ab",
+      "start_utc": "2026-10-11T02:09:20.232904+00:00",
+      "end_utc": "2026-10-11T02:10:51.300829+00:00",
+      "elapsed_seconds": 91.06792698404752,
+      "exit_code": 0,
+      "wrapper_sha256": "03b88d34235df53d6d70c14cfcacca50b973b038bf903cae3b683844b90051d7",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    }
+  ],
+  "history_cost_record": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v70.json",
+    "bytes": 150081,
+    "sha256": "ec31ea8f4253433d01bb19a30c81309cb9887cd123de6636a9603577fc4b3837"
+  },
+  "current_complete_T_N1": "NOT_RUN",
+  "prepared_start_O_and_P_measured": true,
+  "cache_OS_JIT_not_cleared": true,
+  "no_matched_full_cost_control": true,
+  "parent_packet_no_free_cost": true,
+  "current_optimization_is_deterministic_not_NN": true,
+  "NN20": false,
+  "threshold_NN_full_time_or_peak": 0.2,
+  "same_correctness_required": true,
+  "other_metric_must_comply": true
+}

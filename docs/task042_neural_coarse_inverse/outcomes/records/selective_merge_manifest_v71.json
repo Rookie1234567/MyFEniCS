@@ -1,0 +1,111 @@
+{
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/solvers/bounded_trace_pc.py",
+        "src/solvers/bounded_trace_scope.py",
+        "src/solvers/bounded_trace_study.py",
+        "src/solvers/hot_tetra_trace.py",
+        "src/solvers/physical_retained_fgmres.py"
+      ],
+      "numerical_behavior": "opt-in action/PC/iteration only; unchanged ordinary defaults",
+      "dependencies": [
+        "tetra_assembly_packet",
+        "existing native qualified MPI/PETSc",
+        "physical_retained_fgmres"
+      ],
+      "tests": "9 focused + actual O/Galerkin saved checks",
+      "fresh_PDE_evidence": "NOT_RUN",
+      "merge_recommendation": "do not promote unqualified iterative candidate; component review first"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "scripts/run_case.py",
+        "src/io/independent_tetra_reference.py",
+        "src/runners/port_preparation.py"
+      ],
+      "numerical_behavior": "explicit V71 namespace/budgets/policy, original defaults unchanged",
+      "dependencies": [
+        "src/solvers/bounded_trace_pc.py",
+        "src/solvers/bounded_trace_scope.py",
+        "src/solvers/bounded_trace_study.py",
+        "src/solvers/hot_tetra_trace.py",
+        "src/solvers/physical_retained_fgmres.py"
+      ],
+      "tests": "4 dat validate + actual O/P/V supervised source identity",
+      "fresh_PDE_evidence": "NOT_RUN",
+      "merge_recommendation": "after core interface review"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/collect_bounded_trace.py",
+        "benchmarks/qualify_bounded_trace.py",
+        "src/test/test_bounded_trace_iterative.py"
+      ],
+      "numerical_behavior": "saved field and resource decisions independently recomputed",
+      "dependencies": [
+        "src/solvers/bounded_trace_pc.py",
+        "src/solvers/bounded_trace_scope.py",
+        "src/solvers/bounded_trace_study.py",
+        "src/solvers/hot_tetra_trace.py",
+        "src/solvers/physical_retained_fgmres.py"
+      ],
+      "tests": "9 focused and real saved arrays consumer",
+      "fresh_PDE_evidence": "NOT_RUN",
+      "merge_recommendation": "after source/interface review"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "response_v71.md",
+        "outcomes/bounded_trace_iterative_v71.md",
+        "outcomes/records/*_v71.json"
+      ],
+      "numerical_behavior": "no solve",
+      "dependencies": [
+        "actual O/P/V receipts"
+      ],
+      "tests": "single compact documentation check",
+      "fresh_PDE_evidence": "NOT_RUN",
+      "merge_recommendation": "retain negative evidence"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "input/task042_neural_coarse_inverse/bounded_trace_iterative_v71.json",
+        "input/task042_neural_coarse_inverse/v71_bounded_pc_setup.dat",
+        "input/task042_neural_coarse_inverse/v71_compare_verify_cost.dat",
+        "input/task042_neural_coarse_inverse/v71_trace_fgmres_solve.dat",
+        "input/task042_neural_coarse_inverse/v71_trace_operator_preflight.dat"
+      ],
+      "numerical_behavior": "fixed candidate opt-in",
+      "dependencies": [
+        "src/solvers/bounded_trace_pc.py",
+        "src/solvers/bounded_trace_scope.py",
+        "src/solvers/bounded_trace_study.py",
+        "src/solvers/hot_tetra_trace.py",
+        "src/solvers/physical_retained_fgmres.py"
+      ],
+      "tests": "4 dat validation",
+      "fresh_PDE_evidence": "NOT_RUN",
+      "merge_recommendation": "research scope only"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v71",
+        "tmp/task042/v71",
+        "results/task042/*v71*"
+      ],
+      "numerical_behavior": "large arrays/raw/estimates; no default promotion",
+      "dependencies": [],
+      "tests": "hash-bound increment manifest",
+      "fresh_PDE_evidence": "NOT_RUN",
+      "merge_recommendation": "keep ignored"
+    }
+  ],
+  "merge_approved": false
+}

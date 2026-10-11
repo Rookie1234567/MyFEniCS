@@ -1,0 +1,28 @@
+{
+  "utc": "2026-10-11T02:17:42.461725+00:00",
+  "status": "NOT_RUN_CAPACITY_BLOCKED",
+  "O_component": "PASS",
+  "P_math": "PASS",
+  "P_resource": "FAIL",
+  "double_symbolic_sum_bytes": 80322000000,
+  "limit_bytes": 68719476736,
+  "global_action_counts": {
+    "started": 8,
+    "completed": 8,
+    "by_kind": {
+      "O_fixed": 2,
+      "O_hot_timing": 3,
+      "O_rhs_identity": 1,
+      "P_Galerkin": 2
+    }
+  },
+  "new_fine_global_K_S_factors": 0,
+  "new_P_numeric": 0,
+  "new_KSP": 0,
+  "new_fields": 0,
+  "independent_saved_consumer": "PASS",
+  "known_disjoint_wrapper_seconds": 4185.470402150415,
+  "peak_sampled_tree_bytes": 9444700160,
+  "actual_max_gap_seconds": 1.6010486809536815,
+  "no_zero_or_reference_candidate_fabricated": true
+}

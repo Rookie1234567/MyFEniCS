@@ -1,0 +1,80 @@
+{
+  "status": "PASSED",
+  "final_source": "a8d73e8b4bb45c0b37d65fa46c785121048150ab",
+  "commands": [
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "unittest",
+        "-q",
+        "src.test.test_bounded_trace_iterative"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+        "check",
+        "--select",
+        "E9,F63,F7,F82",
+        "src/solvers/hot_tetra_trace.py",
+        "src/solvers/bounded_trace_pc.py",
+        "src/solvers/bounded_trace_scope.py",
+        "src/solvers/bounded_trace_study.py",
+        "src/solvers/physical_retained_fgmres.py",
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py",
+        "src/io/independent_tetra_reference.py",
+        "benchmarks/qualify_bounded_trace.py",
+        "benchmarks/collect_bounded_trace.py",
+        "src/test/test_bounded_trace_iterative.py"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v71_bounded_pc_setup.dat",
+        "--validate-only"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v71_compare_verify_cost.dat",
+        "--validate-only"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v71_trace_fgmres_solve.dat",
+        "--validate-only"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v71_trace_operator_preflight.dat",
+        "--validate-only"
+      ],
+      "returncode": 0
+    }
+  ],
+  "targeted_unittest_count": 9,
+  "formal_CI": "NOT_RUN",
+  "full_repository_suite": "NOT_RUN",
+  "qualifier_receipt": "tmp/task042/v71/aux_pre_03/tests.json",
+  "compile_paths": 11,
+  "dat_count": 4,
+  "real_PDE_not_in_test_pass": true,
+  "documentation_check": "records/documentation_checks_v71.json"
+}

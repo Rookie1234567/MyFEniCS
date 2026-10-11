@@ -1,0 +1,471 @@
+{
+  "status": "COMPONENT_PASS",
+  "producer": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_trace_operator_preflight_20261011T010347954645Z/result.json",
+    "sha256": "b3eaf8b994f1c3ec29061e82adf77e0dd136114608790682a00c2d7f92d07cf0"
+  },
+  "independent": {
+    "errors": [
+      {
+        "FE": 5.21846573209117e-16,
+        "port": 4.2674313425360884e-17,
+        "full": 5.218465730960074e-16
+      },
+      {
+        "FE": 5.213114805299919e-16,
+        "port": 6.436201085772022e-17,
+        "full": 5.213114803900259e-16
+      }
+    ],
+    "nonzero_rhs": {
+      "recovery": 0.0,
+      "original_operation": 1.4652695960184805e-14,
+      "internal_rows": 767280,
+      "nonzero_internal_and_port": true
+    },
+    "pass_gate": true
+  },
+  "parent_O_reference": "V70 fixed complex ACTION and arbitrary nonzero-internal/port RHS; not physical reference field",
+  "cold_checked_initialization_seconds": 71.80036889808252,
+  "consecutive_three_hot_seconds": [
+    1.224020479945466,
+    1.2309863390401006,
+    1.3184389378875494
+  ],
+  "hot_cache_bytes": 4047298428,
+  "actual_interior_port_cells": [
+    0,
+    2,
+    3,
+    7,
+    8,
+    12,
+    15,
+    16,
+    17,
+    23,
+    25,
+    28,
+    29,
+    31,
+    32,
+    42,
+    44,
+    48,
+    50,
+    52,
+    53,
+    54,
+    63,
+    69,
+    71,
+    72,
+    78,
+    82,
+    83,
+    84,
+    95,
+    99,
+    105,
+    108,
+    112,
+    115,
+    121,
+    122,
+    123,
+    140,
+    144,
+    148,
+    156,
+    157,
+    164,
+    165,
+    170,
+    171,
+    186,
+    195,
+    199,
+    203,
+    211,
+    219,
+    223,
+    224,
+    245,
+    250,
+    259,
+    260,
+    270,
+    282,
+    287,
+    291,
+    323,
+    328,
+    338,
+    344,
+    346,
+    358,
+    365,
+    369,
+    381,
+    424,
+    429,
+    430,
+    455,
+    456,
+    463,
+    488,
+    506,
+    513,
+    514,
+    558,
+    569,
+    571,
+    595,
+    599,
+    647,
+    656,
+    658,
+    667,
+    679,
+    680,
+    681,
+    682,
+    725,
+    735,
+    754,
+    766,
+    848,
+    868,
+    870,
+    871,
+    873,
+    878,
+    886,
+    887,
+    888,
+    893,
+    894,
+    895,
+    946,
+    1109,
+    1118,
+    1119,
+    1121,
+    1127,
+    1128,
+    1130,
+    1131,
+    1138,
+    1139,
+    1140,
+    1141,
+    1142,
+    1143,
+    1144,
+    23449,
+    23648,
+    23773,
+    23847,
+    23914,
+    23945,
+    24029,
+    24091,
+    24109,
+    24124,
+    24205,
+    24253,
+    24260,
+    24282,
+    24291,
+    24372,
+    24408,
+    24422,
+    24429,
+    24437,
+    24450,
+    24529,
+    24559,
+    24571,
+    24579,
+    24583,
+    24594,
+    24595,
+    24666,
+    24699,
+    24710,
+    24712,
+    24713,
+    24726,
+    24728,
+    24729,
+    24795,
+    24807,
+    24823,
+    24832,
+    24835,
+    24843,
+    24845,
+    24846,
+    24907,
+    24909,
+    24918,
+    24920,
+    24932,
+    24936,
+    24950,
+    25007,
+    25015,
+    25030,
+    25032,
+    25036,
+    25043,
+    25044,
+    25071,
+    25098,
+    25105,
+    25106,
+    25116,
+    25118,
+    25125,
+    25143,
+    25156,
+    25183,
+    25189,
+    25191,
+    25196,
+    25211,
+    25218,
+    25238,
+    25243,
+    25248,
+    25252,
+    25269,
+    25280,
+    25292,
+    25298,
+    25304,
+    25305,
+    25313,
+    25326,
+    25343,
+    25347,
+    25350,
+    25364,
+    25373,
+    25384,
+    25388,
+    25390,
+    25397,
+    25408,
+    25419,
+    25422,
+    25424,
+    25437,
+    25444,
+    25453,
+    25455,
+    25461,
+    25470,
+    25479,
+    25481,
+    25491,
+    25496,
+    25500,
+    25503,
+    25508,
+    25515,
+    25521,
+    25529,
+    25532,
+    25535,
+    25540,
+    25545,
+    25548,
+    25554,
+    25557,
+    25560,
+    25563,
+    25568,
+    25569,
+    25571,
+    25574,
+    25575
+  ],
+  "calls": {
+    "trace_action": 6,
+    "local_lu_solve": 51664,
+    "global_K_reads": 0,
+    "global_S_reads": 0,
+    "global_FE_matrix_formations": 0,
+    "factors": 0,
+    "class_reads": 10660,
+    "class_bytes_read": 3513173560,
+    "boundary_C": 6,
+    "boundary_D": 6,
+    "map_reads": 400,
+    "map_hot_reads": 0,
+    "scatter_add": 153456,
+    "class_hot_hits": 63960,
+    "boundary_aggregate": 1
+  },
+  "arrays": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_trace_operator_preflight_20261011T010347954645Z/fixed0.npz",
+      "sha256": "be7300436a288f22f006a40e696c3b115a3f6d531958e712d00e788405d672a8",
+      "members": {
+        "input": {
+          "shape": [
+            1177293
+          ],
+          "dtype": "complex128",
+          "sha256": "c85827aca0445b486afda27fd0bfa036baaa914efface98966ac4dfe3d5b4d7d"
+        },
+        "output": {
+          "shape": [
+            1177293
+          ],
+          "dtype": "complex128",
+          "sha256": "4413f0e5b43b82996ae4f105096ea97a6bad9eab73ef7eed701c1b9aa8ab3834"
+        },
+        "reference": {
+          "shape": [
+            1177293
+          ],
+          "dtype": "complex128",
+          "sha256": "036738b161dd5258c7a335fc1e9de5948f04ffdd340483ee7c4a27da95ef1b69"
+        }
+      }
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_trace_operator_preflight_20261011T010347954645Z/fixed1.npz",
+      "sha256": "192528fc5f629012982c4e7329e5a13838acc996228750cf9a4fe75ecc7c82db",
+      "members": {
+        "input": {
+          "shape": [
+            1177293
+          ],
+          "dtype": "complex128",
+          "sha256": "6ba257f65e8f2994ce5e211772afcaf079b1c5a1732e3de87be5a5f8bfd62a85"
+        },
+        "output": {
+          "shape": [
+            1177293
+          ],
+          "dtype": "complex128",
+          "sha256": "d5ffbf61730bf9321ed3def89560e0680f9daee54d2abea4d199e56c455a0606"
+        },
+        "reference": {
+          "shape": [
+            1177293
+          ],
+          "dtype": "complex128",
+          "sha256": "77c2198ac39ce6c12131d78897e307a976ad4dd88eaa045f1dc9926c3743974c"
+        }
+      }
+    }
+  ],
+  "nonzero_rhs_receipts": {
+    "recovery": 0.0,
+    "original_operation": 1.4652695960184805e-14,
+    "internal_and_port_nonzero": true,
+    "original_witness_source": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v70/task042_v70_assembly_time_p5_prepare_20261010T142344843423Z/recovered_original_witness.npz",
+      "sha256": "7f2b0a1c6d095e2e3c9e3ffbccd9a4791c246cca8afc0e34fc06c3e4288c87c3",
+      "members": {
+        "retained": {
+          "shape": [
+            1177293,
+            2
+          ],
+          "dtype": "complex128",
+          "sha256": "5a0d2e1205301c667b5ce55d267309c2d7f5484275c76dcd3d18b51f59f282e5"
+        },
+        "full": {
+          "shape": [
+            1944573,
+            2
+          ],
+          "dtype": "complex128",
+          "sha256": "6d829a30f88f6b1ed4cb22734117d8fe7d2b1c8c29f004796b81679c8da0b40c"
+        },
+        "rhs": {
+          "shape": [
+            1944573
+          ],
+          "dtype": "complex128",
+          "sha256": "e7d8e0bbff952ffe185fa1d238bcabe50c83561c9639a600cf8061126b3b5f21"
+        },
+        "original_action": {
+          "shape": [
+            1944573,
+            2
+          ],
+          "dtype": "complex128",
+          "sha256": "f9b16daf65b27a1af5953c517af202bad2bcd85d733de459eac4d173a8e143af"
+        },
+        "original_residual": {
+          "shape": [
+            1944573,
+            2
+          ],
+          "dtype": "complex128",
+          "sha256": "a7e46b288659148c4cd9ce595cfed254c8ddabf313e530f0a94a4627b642f5d0"
+        },
+        "condensed_residual_lift": {
+          "shape": [
+            1944573,
+            2
+          ],
+          "dtype": "complex128",
+          "sha256": "c039b4fe510136c8bf54b3702917b72fa147b432504f7dec72d34ddb0e12b5ba"
+        }
+      }
+    },
+    "recovery_identity": {
+      "maximum_cell_operation_scaled": 4.482319126297694e-16,
+      "pass_gate": true,
+      "cells": 25576
+    },
+    "arrays": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_trace_operator_preflight_20261011T010347954645Z/nonzero_rhs_witness.npz",
+      "sha256": "07aeeb56a084525090df7323f34753dd9b70d7effd6d7a434d01c473b83d9939",
+      "members": {
+        "trace": {
+          "shape": [
+            1177293
+          ],
+          "dtype": "complex128",
+          "sha256": "c85827aca0445b486afda27fd0bfa036baaa914efface98966ac4dfe3d5b4d7d"
+        },
+        "rhs": {
+          "shape": [
+            1944573
+          ],
+          "dtype": "complex128",
+          "sha256": "e7d8e0bbff952ffe185fa1d238bcabe50c83561c9639a600cf8061126b3b5f21"
+        },
+        "recovered": {
+          "shape": [
+            1944573
+          ],
+          "dtype": "complex128",
+          "sha256": "e337e824826b8c8be84e77591f7636b2cedb4d4b121c5b623b32f434b900480c"
+        },
+        "lifted": {
+          "shape": [
+            1944573
+          ],
+          "dtype": "complex128",
+          "sha256": "e0d82f28d4f48a8ece2b0cf6682040bff3e03066e9689146d4d97678d1a2edfe"
+        }
+      }
+    }
+  },
+  "no_equation_qualified_physical_candidate": true,
+  "old_first_and_second_ACTION_seconds": [
+    101.378834659,
+    34.456206552
+  ],
+  "paired_production_speed_ratio": null,
+  "historical_and_new_timing_not_matched_full_runs": true
+}

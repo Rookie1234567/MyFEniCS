@@ -1,0 +1,58 @@
+{
+  "source_sha": "d064028e4813e2f944a2b994e88f93c9a65f4806",
+  "historical_failures_not_changed": true,
+  "rows": [
+    {
+      "kind": "static_checker",
+      "root": "closure after del considered undefined by Ruff",
+      "remedy": "explicit None release preserves closure validity",
+      "pure_compile_and_Ruff_pass": true,
+      "start_and_end_monotonic": "unknown: contained in initial_work_cost inclusive elapsed, not fabricated"
+    },
+    {
+      "kind": "ENTRY_FAILED_ZERO_ACTOR",
+      "root": "supervised TESTS does not register launcher pre qualification",
+      "failure_receipt": "tmp/task042/v71/PREFLIGHT_one_run01/receipt.json",
+      "remedy": "consume unchanged-source PASSED TESTS receipt under existing pre registration role; no test/PDE replay",
+      "registration_receipt": "tmp/task042/v71/auxiliary_pre01/receipt.json",
+      "full_domain_actions": 0,
+      "full_numeric": 0,
+      "known_start_UTC": "2026-10-11T01:01:18.618993+00:00",
+      "known_fix_registration_end_UTC": "2026-10-11T01:03:19.098815+00:00",
+      "inclusive_root_interval_seconds": 120.479822
+    }
+  ],
+  "additional_rows": [
+    {
+      "source": "ee13ea8419b2a6cb6f137d6d975135dfe1e510e5",
+      "kind": "PRE_P_GEOMETRY_AND_SPEC_REPAIR",
+      "detail": "canonical periodic entity before mean; coarse physical descriptor degree2; reserve final action audits",
+      "real_P_failure_replays": 0,
+      "elapsed_bound_seconds": 223.6,
+      "scope": "O launch return to P launch; includes qualification and commit, not added twice"
+    },
+    {
+      "source": "a8d73e8b4bb45c0b37d65fa46c785121048150ab",
+      "kind": "INDEPENDENT_SAVED_CONSUMER_COMPLETION",
+      "detail": "derive symbolic sum from INFOG; owner/CSR/full-vector/complex-dual inventory; 9 targeted checks",
+      "elapsed_bound_seconds": 338.1,
+      "scope": "P launch return to final pre03 return; includes tests and commit, nested",
+      "science_replays": 0
+    },
+    {
+      "kind": "DELIVERY_METADATA_SYNTAX",
+      "failure": "tmp/task042/v71/metadata_delivery01/failure.json",
+      "scope": "unmatched closing parenthesis before any scientific consumption; corrected once; metadata-only replay",
+      "real_original_actions": 0,
+      "new_factor_KSP": 0,
+      "elapsed_known_failure_seconds": 0.105253522
+    }
+  ],
+  "ordinary_faults_do_not_cancel_trusted_independent_paths": true,
+  "capacity_rejection_is_not_a_bug": true,
+  "measured_initial_static_fix_seconds": null,
+  "known_inclusive_repair_intervals_are_not_double_added": true,
+  "conservative_repair_upper_bound_seconds": 1989.1412205680044,
+  "repair_cap_seconds": 9000,
+  "no_third_blind_retry": true
+}

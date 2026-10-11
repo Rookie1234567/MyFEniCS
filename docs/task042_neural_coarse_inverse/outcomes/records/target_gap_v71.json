@@ -1,0 +1,24 @@
+{
+  "current": "same finite p5/828 iterative solve NOT_RUN_CAPACITY_BLOCKED",
+  "derived_retained_complex_vector_bytes": 18836688,
+  "derived_full_FE_plus_ports_vector_bytes": 31113168,
+  "derived_65_V_Z_primary_vector_bytes": 1224384720,
+  "actual_Krylov_primary_allocation_bytes": 0,
+  "actual_PC_factor_memory_bytes": null,
+  "symbolic_sum_estimate_bytes": 80322000000,
+  "hot_cache_measured_explicit_bytes": 4047298428,
+  "old_continuous_space_FAIL": {
+    "scatter_E_P6_L5": 0.000114449,
+    "scatter_H_P6_L5": 0.000123013,
+    "points240_max": 0.000956042,
+    "limit": 0.0001
+  },
+  "scope": "old values cited, not replayed or newly measured",
+  "target_2e12_memory_172800s": false,
+  "distributed_qualification": false,
+  "NN20": false,
+  "unique_next_pilot": "pre-register a geometric local factor partition using summed double symbolic <=64GiB before numeric; unchanged finite physics, halo, coarse and right FGMRES",
+  "next_not_executed_or_authorized_by_current_contract": true,
+  "row_only_split_did_not_suffice": true,
+  "other_possible_PC_convergence_and_cost": "unknown until a qualified numeric candidate exists"
+}

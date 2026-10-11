@@ -1,0 +1,30 @@
+{
+  "run_closures": {
+    "path": "benchmarks/artifacts/task042/v71/increment_evidence_v71/source_bindings.json",
+    "bytes": 39507,
+    "sha256": "2bd77e767676f83f6b118ffc82061904c14f9b1129c05a5a28c6fa228557f567"
+  },
+  "producer_sources": {
+    "O": "d064028e4813e2f944a2b994e88f93c9a65f4806",
+    "P": "ee13ea8419b2a6cb6f137d6d975135dfe1e510e5",
+    "V": "a8d73e8b4bb45c0b37d65fa46c785121048150ab"
+  },
+  "final_focused_source": "a8d73e8b4bb45c0b37d65fa46c785121048150ab",
+  "dirty_regression_receipt": {
+    "path": "tmp/task042/v71/checker_regression03.json",
+    "bytes": 675,
+    "sha256": "cd5aa795b525e05452d09e90c69037dbedee92c57a0ef493e8b5efde1b8c6fd4"
+  },
+  "dirty_regression_not_clean_source": true,
+  "formal_source_was_committed_clean": true,
+  "qualifier": {
+    "path": "tmp/task042/v71/qualification.json",
+    "bytes": 13350,
+    "sha256": "23d3e64ed79ec1d493061a84c72a4c9090bee2196865bc2e82fd8dea2c27ea0f"
+  },
+  "finalsource_tests": {
+    "path": "tmp/task042/v71/aux_pre_03/tests.json",
+    "bytes": 15248,
+    "sha256": "e1f2a986c5d9855e5095c430af8abc9deeea0b24ca57972f4d4a6e6fb2c9f82a"
+  }
+}

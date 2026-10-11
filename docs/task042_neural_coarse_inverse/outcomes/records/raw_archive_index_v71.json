@@ -1,0 +1,13 @@
+{
+  "status": "SEALED_SETTLED_SCIENCE_INCREMENT",
+  "raw_count": 184,
+  "source_count": 36,
+  "inventory": {
+    "path": "benchmarks/artifacts/task042/v71/increment_evidence_v71/raw_archive_inventory.json",
+    "bytes": 76141,
+    "sha256": "173b83f75a2b31d97b5724b1c9df66070f4377632de5f8335992cefece1a1ba2"
+  },
+  "scientific_arrays_copied": false,
+  "scientific_array_receipts_bound_by_O_P_V": true,
+  "tail_archive_pending": "final document auxiliary and cleanup live files retained with final tail inventory"
+}

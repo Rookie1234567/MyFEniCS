@@ -1,3 +1,11 @@
+# V71必要测试与实际保存消费
+
+最终数值checker source a8d73e8b4bb45c0b37d65fa46c785121048150ab：9项定点测试（复非Hermitian/非互伴40port、重复id累加、PC先粗后局部、owner、symbolic超限与篡改、CSR/Galerkin库存、显式FGMRES策略）及相关compile/Ruff、4个dat validate通过。真实O和P只读保存数组独立消费通过，但整体PC资源未准入，完整PDE未运行；小例KSP不计作正式solve。
+
+[最终测试身份](records/tests_v71.json) · [真实独立消费](records/scientific_checks_v71.json) · [一次文档检查](records/documentation_checks_v71.json)。无full pytest/CI、历史PDE或旧数组全审重放；GitHub视觉NOT_VERIFIED。
+
+---
+
 # V70必要验证追加
 
 最终数值source 0490af3085f32940787f0a02f0d801578ab87b73：5项非Hermitian/非零40port/早provider/真实pack键/可选header targeted测试，相关Ruff/compile和5项one-run dat validate通过；另两项分块库存/坏identity/半写定点测试通过，消费修复在d6cd48cf，未重放PDE。8个实际cell、新S完整恢复、两次独立ACTION和完整物理解另列，不以测试数代替科学Gate。全部失败保留，无full pytest/CI。

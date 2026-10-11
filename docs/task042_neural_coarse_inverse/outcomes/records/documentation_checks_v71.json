@@ -1,0 +1,14 @@
+{
+  "status": "PENDING_SINGLE_FINAL_CHECK",
+  "command": [
+    "python",
+    "-m",
+    "unittest",
+    "-q",
+    "src.test.test_26_documentation_contract"
+  ],
+  "final_local_file_link_hash_table_JSON_check": true,
+  "GitHub_exact_visual": "NOT_VERIFIED",
+  "CI": "NOT_RUN",
+  "no_PDE_replay_for_visual_or_metadata": true
+}

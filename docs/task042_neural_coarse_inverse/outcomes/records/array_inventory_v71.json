@@ -1,0 +1,13 @@
+{
+  "new_array_package_count": 46,
+  "receipts": {
+    "path": "benchmarks/artifacts/task042/v71/increment_evidence_v71/array_inventory.json",
+    "bytes": 87558,
+    "sha256": "b43f78102b15dc1dca0301af50e09e55a31658bfd1ee6c0a12e3ce342f5b18a0"
+  },
+  "independent_consumption": "formal VERIFY_COST checked file and member hashes, shapes/dtypes and numerical invariants",
+  "parent_assets_readonly": true,
+  "parent_array_receipts_in_authority": true,
+  "logical_member_count": 409,
+  "logical_member_count_definition": "sum of independent new NPZ package member inventories; not unique-owner RSS"
+}

@@ -1,3 +1,11 @@
+# Task042 V71：固定PC真实准备完成，总容量阻止完整迭代
+
+同0.7nm/25576tet/p5/828，热作用最大FE/port差5.21847e-16/6.43620e-17；真实38块与7068行粗Galerkin已保存、独立消费。全部双倍symbolic74.8056918383GiB超过64GiB，numeric/KSP/新场均0；完整迭代NOT_RUN_CAPACITY_BLOCKED，未称不收敛、NN收益或目标资格。P完整3392.80855s、采样树峰8.79606247GiB只是设置成本，不是完整解内存或生产速度比。
+
+[回应与唯一下一pilot](task042_neural_coarse_inverse/response_v71.md) · [实际全费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v71.json)。旧空间FAIL和历史费用保持，closed/清场/推送后暂停。
+
+---
+
 # Task042 V70：同一方程的无完整K构建
 
 相同0.7nm/25576tet/p5/828：生产不形成或读取完整K，直接从单元核形成接口S；独立无S局部作用与完整场同离散再现、真实成本分列。全局LU仍存在，旧空间FAIL与历史费用保持，无NN/目标/merge资格。

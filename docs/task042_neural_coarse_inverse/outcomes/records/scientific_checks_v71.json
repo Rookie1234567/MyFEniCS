@@ -1,0 +1,705 @@
+{
+  "producer": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v71/task042_v71_compare_verify_cost_20261011T021239770272Z/result.json",
+    "sha256": "e0bb6611e18c9594e22ffba23e084bedc0bf14c9db5e6fd94f5a46144bd0bc09"
+  },
+  "consumer_pass": true,
+  "preparation": {
+    "original_action": {
+      "errors": [
+        {
+          "FE": 5.21846573209117e-16,
+          "port": 4.2674313425360884e-17,
+          "full": 5.218465730960074e-16
+        },
+        {
+          "FE": 5.213114805299919e-16,
+          "port": 6.436201085772022e-17,
+          "full": 5.213114803900259e-16
+        }
+      ],
+      "nonzero_rhs": {
+        "recovery": 0.0,
+        "original_operation": 1.4652695960184805e-14,
+        "internal_rows": 767280,
+        "nonzero_internal_and_port": true
+      },
+      "pass_gate": true
+    },
+    "owner": {
+      "trace_rows": 1176465,
+      "patches": 38,
+      "all_trace_writeback_once": true,
+      "maximum_rows": 68680,
+      "overlap_row_sum": 1924510
+    },
+    "patch_matrices": [
+      {
+        "shape": [
+          40125,
+          40125
+        ],
+        "stored_entries": 7684925,
+        "exact_nonzero": 7684925,
+        "explicit_bytes": 184759208
+      },
+      {
+        "shape": [
+          66500,
+          66500
+        ],
+        "stored_entries": 13058900,
+        "exact_nonzero": 13058900,
+        "explicit_bytes": 313945608
+      },
+      {
+        "shape": [
+          63230,
+          63230
+        ],
+        "stored_entries": 12427300,
+        "exact_nonzero": 12427300,
+        "explicit_bytes": 298761048
+      },
+      {
+        "shape": [
+          37480,
+          37480
+        ],
+        "stored_entries": 7123150,
+        "exact_nonzero": 7123150,
+        "explicit_bytes": 171255448
+      },
+      {
+        "shape": [
+          44815,
+          44815
+        ],
+        "stored_entries": 8667825,
+        "exact_nonzero": 8667825,
+        "explicit_bytes": 208386328
+      },
+      {
+        "shape": [
+          57840,
+          57840
+        ],
+        "stored_entries": 11313800,
+        "exact_nonzero": 11313800,
+        "explicit_bytes": 271993928
+      },
+      {
+        "shape": [
+          67745,
+          67745
+        ],
+        "stored_entries": 13360325,
+        "exact_nonzero": 13360325,
+        "explicit_bytes": 321189768
+      },
+      {
+        "shape": [
+          33490,
+          33490
+        ],
+        "stored_entries": 6313550,
+        "exact_nonzero": 6313550,
+        "explicit_bytes": 151793128
+      },
+      {
+        "shape": [
+          48130,
+          48130
+        ],
+        "stored_entries": 9252600,
+        "exact_nonzero": 9252600,
+        "explicit_bytes": 222447448
+      },
+      {
+        "shape": [
+          42830,
+          42830
+        ],
+        "stored_entries": 8329350,
+        "exact_nonzero": 8329350,
+        "explicit_bytes": 200247048
+      },
+      {
+        "shape": [
+          57435,
+          57435
+        ],
+        "stored_entries": 11319825,
+        "exact_nonzero": 11319825,
+        "explicit_bytes": 272135288
+      },
+      {
+        "shape": [
+          35390,
+          35390
+        ],
+        "stored_entries": 6749300,
+        "exact_nonzero": 6749300,
+        "explicit_bytes": 162266328
+      },
+      {
+        "shape": [
+          61935,
+          61935
+        ],
+        "stored_entries": 12247725,
+        "exact_nonzero": 12247725,
+        "explicit_bytes": 294440888
+      },
+      {
+        "shape": [
+          46500,
+          46500
+        ],
+        "stored_entries": 8904500,
+        "exact_nonzero": 8904500,
+        "explicit_bytes": 214080008
+      },
+      {
+        "shape": [
+          54160,
+          54160
+        ],
+        "stored_entries": 10498600,
+        "exact_nonzero": 10498600,
+        "explicit_bytes": 252399688
+      },
+      {
+        "shape": [
+          64310,
+          64310
+        ],
+        "stored_entries": 12628800,
+        "exact_nonzero": 12628800,
+        "explicit_bytes": 303605688
+      },
+      {
+        "shape": [
+          32295,
+          32295
+        ],
+        "stored_entries": 6161975,
+        "exact_nonzero": 6161975,
+        "explicit_bytes": 148145768
+      },
+      {
+        "shape": [
+          59940,
+          59940
+        ],
+        "stored_entries": 11836050,
+        "exact_nonzero": 11836050,
+        "explicit_bytes": 284544728
+      },
+      {
+        "shape": [
+          40895,
+          40895
+        ],
+        "stored_entries": 7730675,
+        "exact_nonzero": 7730675,
+        "explicit_bytes": 185863368
+      },
+      {
+        "shape": [
+          53320,
+          53320
+        ],
+        "stored_entries": 10343100,
+        "exact_nonzero": 10343100,
+        "explicit_bytes": 248660968
+      },
+      {
+        "shape": [
+          45955,
+          45955
+        ],
+        "stored_entries": 8956675,
+        "exact_nonzero": 8956675,
+        "explicit_bytes": 215327848
+      },
+      {
+        "shape": [
+          57535,
+          57535
+        ],
+        "stored_entries": 11333775,
+        "exact_nonzero": 11333775,
+        "explicit_bytes": 272470888
+      },
+      {
+        "shape": [
+          33895,
+          33895
+        ],
+        "stored_entries": 6448875,
+        "exact_nonzero": 6448875,
+        "explicit_bytes": 155044168
+      },
+      {
+        "shape": [
+          62235,
+          62235
+        ],
+        "stored_entries": 12308875,
+        "exact_nonzero": 12308875,
+        "explicit_bytes": 295910888
+      },
+      {
+        "shape": [
+          47255,
+          47255
+        ],
+        "stored_entries": 9028675,
+        "exact_nonzero": 9028675,
+        "explicit_bytes": 217066248
+      },
+      {
+        "shape": [
+          53110,
+          53110
+        ],
+        "stored_entries": 10299750,
+        "exact_nonzero": 10299750,
+        "explicit_bytes": 247618888
+      },
+      {
+        "shape": [
+          66695,
+          66695
+        ],
+        "stored_entries": 13099425,
+        "exact_nonzero": 13099425,
+        "explicit_bytes": 314919768
+      },
+      {
+        "shape": [
+          33270,
+          33270
+        ],
+        "stored_entries": 6348750,
+        "exact_nonzero": 6348750,
+        "explicit_bytes": 152636168
+      },
+      {
+        "shape": [
+          59145,
+          59145
+        ],
+        "stored_entries": 11671925,
+        "exact_nonzero": 11671925,
+        "explicit_bytes": 280599368
+      },
+      {
+        "shape": [
+          42735,
+          42735
+        ],
+        "stored_entries": 8072725,
+        "exact_nonzero": 8072725,
+        "explicit_bytes": 194087288
+      },
+      {
+        "shape": [
+          42360,
+          42360
+        ],
+        "stored_entries": 8125000,
+        "exact_nonzero": 8125000,
+        "explicit_bytes": 195338888
+      },
+      {
+        "shape": [
+          68100,
+          68100
+        ],
+        "stored_entries": 13384700,
+        "exact_nonzero": 13384700,
+        "explicit_bytes": 321777608
+      },
+      {
+        "shape": [
+          63210,
+          63210
+        ],
+        "stored_entries": 12422700,
+        "exact_nonzero": 12422700,
+        "explicit_bytes": 298650488
+      },
+      {
+        "shape": [
+          39320,
+          39320
+        ],
+        "stored_entries": 7536500,
+        "exact_nonzero": 7536500,
+        "explicit_bytes": 181190568
+      },
+      {
+        "shape": [
+          42525,
+          42525
+        ],
+        "stored_entries": 8174425,
+        "exact_nonzero": 8174425,
+        "explicit_bytes": 196526408
+      },
+      {
+        "shape": [
+          58155,
+          58155
+        ],
+        "stored_entries": 11360175,
+        "exact_nonzero": 11360175,
+        "explicit_bytes": 273109448
+      },
+      {
+        "shape": [
+          68680,
+          68680
+        ],
+        "stored_entries": 13557300,
+        "exact_nonzero": 13557300,
+        "explicit_bytes": 325924648
+      },
+      {
+        "shape": [
+          31965,
+          31965
+        ],
+        "stored_entries": 5985825,
+        "exact_nonzero": 5985825,
+        "explicit_bytes": 143915528
+      }
+    ],
+    "Z": {
+      "shape": [
+        1176465,
+        6240
+      ],
+      "stored_entries": 23529162,
+      "exact_nonzero": 23529162,
+      "explicit_bytes": 574111616
+    },
+    "coarse_matrix": {
+      "shape": [
+        7068,
+        7068
+      ],
+      "stored_entries": 3541640,
+      "exact_nonzero": 3198847,
+      "explicit_bytes": 85055912
+    },
+    "galerkin": [
+      {
+        "scores": {
+          "prolong": 0.0,
+          "pullback": 0.0,
+          "saved_coarse_action": 0.0,
+          "FE": 1.4647005637452807e-15,
+          "port": 9.097017507066413e-16,
+          "full": 1.4646754264588403e-15,
+          "dual": 1.4804241068237858e-16
+        },
+        "pass_gate": true
+      },
+      {
+        "scores": {
+          "prolong": 0.0,
+          "pullback": 0.0,
+          "saved_coarse_action": 0.0,
+          "FE": 1.4973040007320897e-15,
+          "port": 1.1066692912339962e-15,
+          "full": 1.497286023777955e-15,
+          "dual": 2.4058104092119426e-16
+        },
+        "pass_gate": true
+      }
+    ],
+    "mathematics_pass": true,
+    "capacity": {
+      "local_double_bytes": 79520000000,
+      "coarse_double_bytes": 802000000,
+      "double_symbolic_sum_bytes": 80322000000,
+      "limit_bytes": 68719476736,
+      "admitted": false,
+      "excess_bytes": 11602523264,
+      "factors": [
+        {
+          "rows": 40125,
+          "nnz": 7684925,
+          "estimate_decimal_MB": 766,
+          "double_bytes": 1532000000
+        },
+        {
+          "rows": 66500,
+          "nnz": 13058900,
+          "estimate_decimal_MB": 1474,
+          "double_bytes": 2948000000
+        },
+        {
+          "rows": 63230,
+          "nnz": 12427300,
+          "estimate_decimal_MB": 1278,
+          "double_bytes": 2556000000
+        },
+        {
+          "rows": 37480,
+          "nnz": 7123150,
+          "estimate_decimal_MB": 712,
+          "double_bytes": 1424000000
+        },
+        {
+          "rows": 44815,
+          "nnz": 8667825,
+          "estimate_decimal_MB": 903,
+          "double_bytes": 1806000000
+        },
+        {
+          "rows": 57840,
+          "nnz": 11313800,
+          "estimate_decimal_MB": 1066,
+          "double_bytes": 2132000000
+        },
+        {
+          "rows": 67745,
+          "nnz": 13360325,
+          "estimate_decimal_MB": 1465,
+          "double_bytes": 2930000000
+        },
+        {
+          "rows": 33490,
+          "nnz": 6313550,
+          "estimate_decimal_MB": 642,
+          "double_bytes": 1284000000
+        },
+        {
+          "rows": 48130,
+          "nnz": 9252600,
+          "estimate_decimal_MB": 1034,
+          "double_bytes": 2068000000
+        },
+        {
+          "rows": 42830,
+          "nnz": 8329350,
+          "estimate_decimal_MB": 827,
+          "double_bytes": 1654000000
+        },
+        {
+          "rows": 57435,
+          "nnz": 11319825,
+          "estimate_decimal_MB": 1248,
+          "double_bytes": 2496000000
+        },
+        {
+          "rows": 35390,
+          "nnz": 6749300,
+          "estimate_decimal_MB": 512,
+          "double_bytes": 1024000000
+        },
+        {
+          "rows": 61935,
+          "nnz": 12247725,
+          "estimate_decimal_MB": 1417,
+          "double_bytes": 2834000000
+        },
+        {
+          "rows": 46500,
+          "nnz": 8904500,
+          "estimate_decimal_MB": 1044,
+          "double_bytes": 2088000000
+        },
+        {
+          "rows": 54160,
+          "nnz": 10498600,
+          "estimate_decimal_MB": 1254,
+          "double_bytes": 2508000000
+        },
+        {
+          "rows": 64310,
+          "nnz": 12628800,
+          "estimate_decimal_MB": 1394,
+          "double_bytes": 2788000000
+        },
+        {
+          "rows": 32295,
+          "nnz": 6161975,
+          "estimate_decimal_MB": 513,
+          "double_bytes": 1026000000
+        },
+        {
+          "rows": 59940,
+          "nnz": 11836050,
+          "estimate_decimal_MB": 1273,
+          "double_bytes": 2546000000
+        },
+        {
+          "rows": 40895,
+          "nnz": 7730675,
+          "estimate_decimal_MB": 886,
+          "double_bytes": 1772000000
+        },
+        {
+          "rows": 53320,
+          "nnz": 10343100,
+          "estimate_decimal_MB": 1194,
+          "double_bytes": 2388000000
+        },
+        {
+          "rows": 45955,
+          "nnz": 8956675,
+          "estimate_decimal_MB": 890,
+          "double_bytes": 1780000000
+        },
+        {
+          "rows": 57535,
+          "nnz": 11333775,
+          "estimate_decimal_MB": 1305,
+          "double_bytes": 2610000000
+        },
+        {
+          "rows": 33895,
+          "nnz": 6448875,
+          "estimate_decimal_MB": 525,
+          "double_bytes": 1050000000
+        },
+        {
+          "rows": 62235,
+          "nnz": 12308875,
+          "estimate_decimal_MB": 1432,
+          "double_bytes": 2864000000
+        },
+        {
+          "rows": 47255,
+          "nnz": 9028675,
+          "estimate_decimal_MB": 1055,
+          "double_bytes": 2110000000
+        },
+        {
+          "rows": 53110,
+          "nnz": 10299750,
+          "estimate_decimal_MB": 1204,
+          "double_bytes": 2408000000
+        },
+        {
+          "rows": 66695,
+          "nnz": 13099425,
+          "estimate_decimal_MB": 1350,
+          "double_bytes": 2700000000
+        },
+        {
+          "rows": 33270,
+          "nnz": 6348750,
+          "estimate_decimal_MB": 515,
+          "double_bytes": 1030000000
+        },
+        {
+          "rows": 59145,
+          "nnz": 11671925,
+          "estimate_decimal_MB": 1265,
+          "double_bytes": 2530000000
+        },
+        {
+          "rows": 42735,
+          "nnz": 8072725,
+          "estimate_decimal_MB": 924,
+          "double_bytes": 1848000000
+        },
+        {
+          "rows": 42360,
+          "nnz": 8125000,
+          "estimate_decimal_MB": 856,
+          "double_bytes": 1712000000
+        },
+        {
+          "rows": 68100,
+          "nnz": 13384700,
+          "estimate_decimal_MB": 1457,
+          "double_bytes": 2914000000
+        },
+        {
+          "rows": 63210,
+          "nnz": 12422700,
+          "estimate_decimal_MB": 1246,
+          "double_bytes": 2492000000
+        },
+        {
+          "rows": 39320,
+          "nnz": 7536500,
+          "estimate_decimal_MB": 768,
+          "double_bytes": 1536000000
+        },
+        {
+          "rows": 42525,
+          "nnz": 8174425,
+          "estimate_decimal_MB": 893,
+          "double_bytes": 1786000000
+        },
+        {
+          "rows": 58155,
+          "nnz": 11360175,
+          "estimate_decimal_MB": 1070,
+          "double_bytes": 2140000000
+        },
+        {
+          "rows": 68680,
+          "nnz": 13557300,
+          "estimate_decimal_MB": 1498,
+          "double_bytes": 2996000000
+        },
+        {
+          "rows": 31965,
+          "nnz": 5985825,
+          "estimate_decimal_MB": 605,
+          "double_bytes": 1210000000
+        },
+        {
+          "rows": 7068,
+          "nnz": 3541640,
+          "estimate_decimal_MB": 401,
+          "double_bytes": 802000000
+        }
+      ]
+    },
+    "PC_pass": false,
+    "total_patch_stored_entries": 374068350,
+    "numeric_counts": {
+      "local_numeric_count": 0,
+      "coarse_numeric_count": 0,
+      "global_fine_numeric_count": 0
+    },
+    "independent_array_consumption": true,
+    "new_original_actions": 0,
+    "new_factors": 0,
+    "new_KSP_solves": 0
+  },
+  "complete_iteration_and_equation_qualification": "NOT_RUN_CAPACITY_BLOCKED",
+  "full_equation": {
+    "status": "NOT_RUN",
+    "reason": "KSP was not started"
+  },
+  "complete_fields": {
+    "status": "NOT_RUN",
+    "reason": "no returned physical candidate"
+  },
+  "official_RTA": {
+    "status": "NOT_RUN",
+    "reason": "no equation-qualified candidate"
+  },
+  "candidate_count": 0,
+  "V70_full_field_read_count": 0,
+  "formal_KSP_solves": 0,
+  "independent_saved_checker_A_factor_KSP_counts": [
+    0,
+    0,
+    0
+  ],
+  "continuum_accuracy": false,
+  "target_qualified": false,
+  "NN20": false
+}
