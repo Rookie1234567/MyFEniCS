@@ -574,6 +574,48 @@ def _mode_key(index: int, mode: Any) -> tuple[int, str, int, int, str]:
     )
 
 
+def _validate_frozen_mode_identity(
+    generated_modes: tuple[Any, ...],
+    mode_rows: tuple[Mapping[str, Any], ...],
+    *,
+    expected_ordered_mode_key_sha256: str | None,
+    frozen_mode_keys: tuple[tuple[int, str, int, int, str], ...] | None = None,
+) -> tuple[tuple[tuple[int, str, int, int, str], ...], str]:
+    """Bind full indexed mode rows to the ledger's canonical ordered-key digest."""
+    if not generated_modes or len(mode_rows) != len(generated_modes):
+        raise ValueError("selected q0 frozen mode rows do not cover the complete preflight mode inventory")
+
+    mode_keys = tuple(_mode_key(index, mode) for index, mode in enumerate(generated_modes))
+    if frozen_mode_keys is not None and tuple(frozen_mode_keys) != mode_keys:
+        raise ValueError("regular-reference ordered mode keys differ from the frozen input inventory")
+    if any(
+        int(row.get("mode_index", -1)) != index
+        or str(row.get("side")) != str(mode.side)
+        or int(row.get("m", 0)) != int(mode.m)
+        or int(row.get("n", 0)) != int(mode.n)
+        or str(row.get("polarization")) != str(mode.polarization)
+        for index, (mode, row) in enumerate(zip(generated_modes, mode_rows, strict=True))
+    ):
+        raise ValueError("regular-reference preflight mode rows differ from the frozen ordered mode table")
+
+    # TARGET_LEDGER defines this digest over the ordered physical key only;
+    # mode_index remains bound above by the full ordered mode rows.
+    digest_keys = [
+        [str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)]
+        for mode in generated_modes
+    ]
+    payload = json.dumps(
+        digest_keys, ensure_ascii=False, separators=(",", ":")
+    ).encode("utf-8")
+    computed_key_sha = hashlib.sha256(payload).hexdigest()
+    if (
+        expected_ordered_mode_key_sha256 is None
+        or computed_key_sha != expected_ordered_mode_key_sha256
+    ):
+        raise ValueError("regular-reference mode-key identity differs from the frozen input key hash")
+    return mode_keys, computed_key_sha
+
+
 def _native_volume_apply(volume_action: Any, full_field: np.ndarray, comm: Any) -> np.ndarray:
     from petsc4py import PETSc
 
@@ -802,29 +844,12 @@ def run_task40_v25_selected_q0_consumer(
     generated_modes = tuple(frozen_modes)
     mode_rows = tuple(frozen_mode_rows)
     mode_sha = str(frozen_mode_manifest_sha256)
-    if not generated_modes or len(mode_rows) != len(generated_modes):
-        raise ValueError("selected q0 frozen mode rows do not cover the complete preflight mode inventory")
-    mode_keys = tuple(_mode_key(index, mode) for index, mode in enumerate(generated_modes))
-    frozen_keys = (
-        tuple(frozen_mode_keys)
-        if frozen_mode_keys is not None
-        else tuple(_mode_key(index, mode) for index, mode in enumerate(generated_modes))
+    mode_keys, computed_key_sha = _validate_frozen_mode_identity(
+        generated_modes,
+        mode_rows,
+        expected_ordered_mode_key_sha256=expected_ordered_mode_key_sha256,
+        frozen_mode_keys=frozen_mode_keys,
     )
-    if frozen_keys != mode_keys:
-        raise ValueError("regular-reference ordered mode keys differ from the frozen input inventory")
-    payload = json.dumps(mode_keys, separators=(",", ":"), ensure_ascii=True).encode("ascii")
-    computed_key_sha = hashlib.sha256(payload).hexdigest()
-    if expected_ordered_mode_key_sha256 is None or computed_key_sha != expected_ordered_mode_key_sha256:
-        raise ValueError("regular-reference mode-key identity differs from the frozen input key hash")
-    if any(
-        int(row.get("mode_index", -1)) != index
-        or str(row.get("side")) != str(mode.side)
-        or int(row.get("m", 0)) != int(mode.m)
-        or int(row.get("n", 0)) != int(mode.n)
-        or str(row.get("polarization")) != str(mode.polarization)
-        for index, (mode, row) in enumerate(zip(generated_modes, mode_rows, strict=True))
-    ):
-        raise ValueError("regular-reference preflight mode rows differ from the frozen ordered mode table")
 
     contexts = build_task40_v10_sector_contexts(generated_modes, regular_cfg, global_axes)
     context = next((row for row in contexts if 0 in row.global_q_indices), None)
@@ -1662,7 +1687,6 @@ def run_task40_v25_selected_q0_consumer(
             else:
                 resident_csr_facts = {**dict(resident_csr_facts), "status": "CSR_NOT_BUILT"}
 
-        key_payload = json.dumps(mode_keys, separators=(",", ":"), ensure_ascii=True).encode("ascii")
         selected_alias_rows = []
         for local_alias, global_index in enumerate(selected):
             branch = int(branches[local_alias])
@@ -1689,7 +1713,7 @@ def run_task40_v25_selected_q0_consumer(
                         "stage": "1_complete_regular_reference_mode_generation",
                         "mode_count": len(generated_modes),
                         "mode_manifest_sha256": mode_sha,
-                        "ordered_mode_key_sha256": hashlib.sha256(key_payload).hexdigest(),
+                        "ordered_mode_key_sha256": computed_key_sha,
                     },
                     {
                         "stage": "2_exact_ny8_bloch_q_assignment",
@@ -1724,7 +1748,7 @@ def run_task40_v25_selected_q0_consumer(
         identity = {
             "regular_reference_physical_model_sha256": physical_model_sha256,
             "regular_reference_mode_manifest_sha256": mode_sha,
-            "ordered_mode_key_sha256": hashlib.sha256(key_payload).hexdigest(),
+            "ordered_mode_key_sha256": computed_key_sha,
             "phase_gauge": BOUNDARY_PLANE,
             "phase_override": [[phase_override[0].real, phase_override[0].imag], [phase_override[1].real, phase_override[1].imag]],
             "reference_global_cell_axes": list(cell_axes),

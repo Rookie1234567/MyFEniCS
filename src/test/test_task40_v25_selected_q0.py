@@ -146,6 +146,73 @@ def test_direct_provider_uses_noncontiguous_original_mode_indices(monkeypatch):
     }
 
 
+def test_frozen_mode_identity_uses_ledger_digest_and_rejects_index_or_order_changes():
+    from src.solvers.task40_v25_selected_q0 import (
+        _mode_key,
+        _validate_frozen_mode_identity,
+    )
+
+    modes = (
+        SimpleNamespace(side="bottom", m=-1, n=0, polarization="s"),
+        SimpleNamespace(side="top", m=0, n=1, polarization="p"),
+        SimpleNamespace(side="bottom", m=2, n=-1, polarization="s"),
+    )
+    rows = tuple(
+        {
+            "mode_index": index,
+            "side": mode.side,
+            "m": mode.m,
+            "n": mode.n,
+            "polarization": mode.polarization,
+        }
+        for index, mode in enumerate(modes)
+    )
+    # Fixed digest of TARGET_LEDGER's ordered [side, m, n, polarization] payload.
+    ledger_digest = "9850c990f87337f9319b04daf5228039af18443832215ae9b867e2626a1cb56d"
+    full_keys = tuple(_mode_key(index, mode) for index, mode in enumerate(modes))
+
+    actual_keys, actual_digest = _validate_frozen_mode_identity(
+        modes,
+        rows,
+        expected_ordered_mode_key_sha256=ledger_digest,
+        frozen_mode_keys=full_keys,
+    )
+    assert actual_keys == full_keys
+    assert actual_digest == ledger_digest
+    assert all(key[0] == row["mode_index"] for key, row in zip(actual_keys, rows, strict=True))
+
+    bad_index_rows = (dict(rows[0]), {**rows[1], "mode_index": 2}, dict(rows[2]))
+    with pytest.raises(ValueError, match="preflight mode rows differ"):
+        _validate_frozen_mode_identity(
+            modes,
+            bad_index_rows,
+            expected_ordered_mode_key_sha256=ledger_digest,
+            frozen_mode_keys=full_keys,
+        )
+
+    reordered_modes = tuple(reversed(modes))
+    reordered_rows = tuple(
+        {
+            "mode_index": index,
+            "side": mode.side,
+            "m": mode.m,
+            "n": mode.n,
+            "polarization": mode.polarization,
+        }
+        for index, mode in enumerate(reordered_modes)
+    )
+    reordered_keys = tuple(
+        _mode_key(index, mode) for index, mode in enumerate(reordered_modes)
+    )
+    with pytest.raises(ValueError, match="mode-key identity differs"):
+        _validate_frozen_mode_identity(
+            reordered_modes,
+            reordered_rows,
+            expected_ordered_mode_key_sha256=ledger_digest,
+            frozen_mode_keys=reordered_keys,
+        )
+
+
 def _write_v25_q0_checker_fixture(output: Path):
     from scripts.task40_v20_service_workflow import _sha256_file
 
