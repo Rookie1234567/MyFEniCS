@@ -139,7 +139,9 @@ def macro_blocks(service,cell_indices,J,ZB,left,right):
     return A,AJQ,AQJ,columns
 
 
-def build_harmonic(service,Z0,owner,left,right,folder,journal,*,require_live):
+def build_harmonic(service,Z0,owner,left,right,folder,journal,*,require_live,
+                   base_provider=None,parent_folder=None,reuse_compatibility=None,
+                   future_reserve_bytes=None):
     """Direct bounded coarse accumulation; no global fine skeleton matrix."""
     from .bounded_trace_study import symbolic
     from .independent_tetra_study import petsc_matrix
@@ -151,11 +153,17 @@ def build_harmonic(service,Z0,owner,left,right,folder,journal,*,require_live):
     if len(np.unique(ZB.indices))!=Z0.shape[1]:raise ValueError('p2 entity column coverage lost on skeleton')
     skeleton=csr_save(folder/'skeleton.npz',ZB)
     with journal.measured('skeleton_local_Galerkin_with_port_base_once'):
-        base=coarse_galerkin(service,ZB,left,right)
+        base=(coarse_galerkin(service,ZB,left,right) if base_provider is None
+              else base_provider(service,ZB,left,right))
     coarse=petsc_matrix(base)
     from petsc4py import PETSc
     coarse.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR,False)
     del base;rows=[];lift_bytes=0;started=time.monotonic()
+    reused_count=0;new_numeric_count=0;legacy_numeric_count=0;recomputed_count=0
+    if parent_folder is not None:
+        if reuse_compatibility is None or not reuse_compatibility.get('pass_gate'):
+            raise ValueError('explicit mathematical compatibility required for parent lifts')
+        parent_folder=Path(parent_folder)
     by_parent=[[] for _ in range(int(owner.max())+1)]
     # Every cell containing a J degree is assigned from the qualified partition.
     for c,_,ids,_,_ in service.cell_records:
@@ -165,20 +173,34 @@ def build_harmonic(service,Z0,owner,left,right,folder,journal,*,require_live):
         for macro,cells in enumerate(by_parent):
             require_live()
             J=np.flatnonzero(owner==macro);record_path=folder/f'macro{macro:04d}.json'
+            from_parent=False
+            if not record_path.exists() and parent_folder is not None and (parent_folder/record_path.name).exists():
+                if macro not in reuse_compatibility['healthy_macro_ids']:
+                    raise ValueError('parent macro absent from validated compatibility receipt')
+                record_path=parent_folder/record_path.name;from_parent=True
             if record_path.exists():
                 old=__import__('json').loads(record_path.read_text());a=checked_arrays(old['lift'])
                 if not np.array_equal(a['rows'],J):raise ValueError('resumed macro row identity')
                 correction=checked_arrays(old['correction']);coarse.setValues(a['columns'],a['columns'],correction['values'],addv=__import__('petsc4py').PETSc.InsertMode.ADD_VALUES)
-                rows.append(old);lift_bytes+=sum(x.nbytes for x in a.values());continue
+                row=dict(old,reused_from=str(record_path),parent_producer_source=(reuse_compatibility['parent_producer_source'] if from_parent else None))
+                rows.append(row);lift_bytes+=sum(x.nbytes for x in a.values())
+                reused_count+=1
+                if from_parent:legacy_numeric_count+=old.get('numeric_count',0)
+                journal.event('healthy_harmonic_macro_reused',macro=macro,from_parent=from_parent,completed=len(rows),new_numeric_count=new_numeric_count)
+                continue
             if not len(J):rows.append(dict(macro=macro,rows=0,lift=None));continue
             with journal.measured('macro_local_prepare_'+str(macro)):
                 A,AJQ,AQJ,cols=macro_blocks(service,cells,J,ZB,left,right)
             info=symbolic(A,journal,'macro'+str(macro))
             sample=process_tree_snapshot(int(os.environ['TASK042_WATCHDOG_PARENT_PID']),'harmonic-macro-numeric',include_pss=False)
             workspace=A.data.nbytes+A.indices.nbytes+A.indptr.nbytes+AJQ.nbytes+AQJ.nbytes+AJQ.nbytes
-            planned=sample['rss_bytes']+info['double_bytes']+max(workspace,2*2**30)
+            future=(max(workspace,2*2**30) if future_reserve_bytes is None
+                    else max(future_reserve_bytes,AJQ.nbytes+16*len(J)*32))
+            planned=sample['rss_bytes']+info['double_bytes']+future
             admitted=info['double_bytes']<=8*2**30 and planned<=96*2**30 and sample['swap_bytes']==0
-            admission=dict(tree=sample,planned_simultaneous_bytes=planned,workspace_bytes=workspace,double_symbolic_bytes=info['double_bytes'],admitted=admitted)
+            admission=dict(tree=sample,planned_simultaneous_bytes=planned,workspace_bytes=workspace,
+                future_bytes=future,future_scope='future lift and bounded numeric/consumer reserve; resident matrices already in live RSS',
+                double_symbolic_bytes=info['double_bytes'],admitted=admitted)
             write_json(folder/'current_macro_admission.json',dict(macro=macro,admission=admission,analysis=info))
             if not admitted:raise MemoryError('bounded harmonic macro numeric admission')
             matrix=petsc_matrix(A);factor=_MumpsFactor(matrix);lift=np.empty_like(AJQ)
@@ -187,6 +209,7 @@ def build_harmonic(service,Z0,owner,left,right,folder,journal,*,require_live):
                 if max(int(factor.info()['infog'][str(k)]) for k in (16,17))!=info['estimate_mb']:raise ValueError('macro symbolic changed')
                 factor.set_memory_limit_mb(2*info['estimate_mb'])
                 with journal.measured('macro_numeric_'+str(macro)):factor.numeric(matrix)
+                new_numeric_count+=1
                 with journal.measured('macro_lift_columns_'+str(macro)):
                     for start in range(0,len(cols),16):
                         for j in range(start,min(start+16,len(cols))):lift[:,j]=-BoundedTwoLevelPC.solve(factor,AJQ[:,j])
@@ -206,7 +229,8 @@ def build_harmonic(service,Z0,owner,left,right,folder,journal,*,require_live):
             receipt=save_arrays(folder/f'lift{macro:04d}.npz',rows=J,columns=cols,values=lift)
             cor=save_arrays(folder/f'correction{macro:04d}.npz',values=correction)
             row=dict(macro=macro,rows=len(J),columns=len(cols),lift=receipt,correction=cor,analysis=info,
-                admission=admission,errors=errors,controls=controls,numeric_count=1,triangular_calls=len(cols),factor_released=True)
+                admission=admission,errors=errors,controls=controls,numeric_count=1,triangular_calls=len(cols),factor_released=True,
+                producer_source=getattr(journal,'source_state',{}).get('source_sha'))
             write_json(record_path,row);rows.append(row)
             write_json(folder/'progress.json',dict(completed=len(rows),saved_lift_bytes=lift_bytes,elapsed_seconds=time.monotonic()-started))
             del A,AJQ,AQJ,lift,correction;gc.collect()
@@ -215,6 +239,8 @@ def build_harmonic(service,Z0,owner,left,right,folder,journal,*,require_live):
     finally:coarse.destroy()
     manifest=dict(skeleton=skeleton,macros=rows,ports=service.m,coarse_rows=EH.shape[0],p2_columns=Z0.shape[1],
         saved_lift_bytes=lift_bytes,port_base_aggregations=1,global_fine_K_or_S_formations=0,
-        macro_numeric_count=sum(r.get('numeric_count',0) for r in rows))
+        macro_numeric_count=sum(r.get('numeric_count',0) for r in rows),
+        reused_count=reused_count,new_numeric_count=new_numeric_count,
+        recomputed_count=recomputed_count,legacy_numeric_count=legacy_numeric_count)
     write_json(folder/'manifest.json',manifest)
     return manifest,EH

@@ -9,7 +9,8 @@ from src.solvers.scattering_anchor import relative
 from src.runners.task042_shared import write_json
 
 
-def verify(folder,journal):
+def verify(folder,journal,*,scope_module=scope):
+    scope=scope_module
     H=scope.stage('HARMONIC_PREPARE');T=HarmonicTransfer.load(H['transfer']);EH=csr_load(H['coarse_matrix']);rows=[]
     owner=checked_arrays(H['partition']['partition'])['owner']
     for r in H['qualification']:
@@ -20,6 +21,10 @@ def verify(folder,journal):
             dual=float(abs(np.vdot(v,a['original'])-np.vdot(a['w'],y))/max(np.linalg.norm(v)*np.linalg.norm(a['original']),1e-300)))
         rows.append(e)
     mathematical=all(max(r.values())<=1e-10 for r in rows)
+    if 'independent_dual' in H:
+        a=checked_arrays(H['independent_dual']['arrays']);v=T.prolong(a['w']);r=T.restrict(a['r'])
+        error=float(abs(np.vdot(v,a['r'])-np.vdot(a['w'],r))/max(np.linalg.norm(v)*np.linalg.norm(a['r']),1e-300))
+        mathematical=mathematical and error<=1e-10 and relative(r-a['pulled'],r)<=1e-10
     if not mathematical:raise ValueError('saved harmonic Galerkin/full complex dual consumption')
     write_json(folder/'saved_harmonic_checks.json',dict(rows=rows,pass_gate=mathematical,coarse_rows=EH.shape[0]))
     from benchmarks.collect_restart_feedback import verify as shared

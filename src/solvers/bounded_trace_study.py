@@ -26,7 +26,7 @@ def action_charge(kind,operation,scope=scope):
     p=scope.window.TMP/'action_counts.json'
     counts=json.loads(p.read_text()) if p.exists() else dict(started=0,completed=0,by_kind={})
     if counts['started']>=scope.plan_record()['action_limit']:raise RuntimeError('V71 cumulative whole-action upper cap')
-    if scope.NAMESPACE in ('v73','v74') and kind.startswith(('Q_','D_')) and sum(v for k,v in counts['by_kind'].items() if k.startswith(('Q_','D_')))>=(12 if scope.NAMESPACE=='v74' else 32):raise RuntimeError('qualification action cap')
+    if scope.NAMESPACE in ('v73','v74','v75') and kind.startswith(('Q_','D_')) and sum(v for k,v in counts['by_kind'].items() if k.startswith(('Q_','D_')))>=(12 if scope.NAMESPACE in ('v74','v75') else 32):raise RuntimeError('qualification action cap')
     counts['started']+=1;counts['by_kind'][kind]=counts['by_kind'].get(kind,0)+1
     write_json(p,counts)
     out=operation();counts['completed']+=1;write_json(p,counts);return out
@@ -200,9 +200,9 @@ def numeric_factors(record,journal,scope=scope,folder=None,workspace=None,clock_
     from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
     allreceipts=record['matrices']+[record['coarse_matrix']]
     infos=record['analysis']+[record['coarse_symbolic']];factors=[];remaining=sum(r['double_bytes'] for r in infos)
-    reused=scope.NAMESPACE in ('v72','v73','v74');started=time.monotonic();rows=[]
+    reused=scope.NAMESPACE in ('v72','v73','v74','v75');started=time.monotonic();rows=[]
     if reused:
-        clock=((clock_root or folder)/'numeric_qualification_clock.json' if scope.NAMESPACE in ('v73','v74') else scope.window.TMP/'numeric_qualification_clock.json')
+        clock=((clock_root or folder)/'numeric_qualification_clock.json' if scope.NAMESPACE in ('v73','v74','v75') else scope.window.TMP/'numeric_qualification_clock.json')
         boot=scope.window.snapshot()['boot_id']
         if clock.exists():
             saved=json.loads(clock.read_text())
@@ -211,7 +211,7 @@ def numeric_factors(record,journal,scope=scope,folder=None,workspace=None,clock_
         else:write_json(clock,dict(start_monotonic=started,boot_id=boot))
     try:
         for j,(receipt,expected) in enumerate(zip(allreceipts,infos,strict=True)):
-            if reused and (time.monotonic()-started>=10800 or scope.window.snapshot()['heavy_remaining_seconds']<=4500):
+            if reused and ((scope.NAMESPACE!='v75' and time.monotonic()-started>=10800) or scope.window.snapshot()['heavy_remaining_seconds']<=(15300 if scope.NAMESPACE=='v75' else 4500)):
                 raise RuntimeError('V72 cumulative numeric/qualification or output reserve')
             A=csr_load(receipt);matrix=petsc_matrix(A);f=_MumpsFactor(matrix)
             try:
@@ -225,7 +225,7 @@ def numeric_factors(record,journal,scope=scope,folder=None,workspace=None,clock_
                 admitted=sample['swap_bytes']==0 and planned<=96*2**30
                 if reused:
                     from .reused_trace_admission import numeric_gate
-                    gate=numeric_gate(sample,remaining,workspace,minimum_bytes=12*2**30 if scope.NAMESPACE in ('v73','v74') else 8*2**30)
+                    gate=numeric_gate(sample,remaining,workspace,minimum_bytes=12*2**30 if scope.NAMESPACE in ('v73','v74','v75') else 8*2**30)
                     planned=gate['planned_simultaneous_bytes'];admitted=gate['admitted']
                 journal.event('bounded_local_or_coarse_numeric_admission',index=j,tree=sample,remaining_double_symbolic=remaining,
                               future_workspace=workspace if reused else None,
@@ -265,8 +265,8 @@ def iterate(folder,journal,state,scope=scope,role="ITERATE"):
     from petsc4py import PETSc
     from .physical_retained_fgmres import run_retained_fgmres
     from .tetra_coefficient_action import CoefficientFullAction
-    scope.require_stage(role);record=scope.iteration_record() if scope.NAMESPACE in ('v72','v73','v74') else scope.stage('PC_SETUP')
-    feedback=scope.NAMESPACE in ('v73','v74');policy_plan=scope.plan_record();restart=policy_plan.get('restart',32)
+    scope.require_stage(role);record=scope.iteration_record() if scope.NAMESPACE in ('v72','v73','v74','v75') else scope.stage('PC_SETUP')
+    feedback=scope.NAMESPACE in ('v73','v74','v75');policy_plan=scope.plan_record();restart=policy_plan.get('restart',32)
     iteration_seconds=policy_plan['iteration_seconds'];clock_root=scope.window.TMP/role if feedback else scope.window.TMP
     clock_root.mkdir(exist_ok=True)
     s,b,oracle,a,full_rhs,left,right=setup_service(role,journal,scope=scope)
@@ -274,7 +274,7 @@ def iterate(folder,journal,state,scope=scope,role="ITERATE"):
     rhs_receipt=save_arrays(folder/'physical_RHS.npz',full_rhs=full_rhs,reduced_rhs=reduced,bhat=bhat,left=left,right=right)
     Z=csr_load(record['Z']);pa=checked_arrays(record['patch_arrays'])
     transfer=None
-    if scope.NAMESPACE=='v74':
+    if scope.NAMESPACE in ('v74','v75'):
         from .harmonic_trace_coarse import HarmonicTransfer
         transfer=HarmonicTransfer.load(record['harmonic_transfer'])
     patches=[{k:pa[f'{j}_{k}'] for k in ('ids','core')} for j in range(record['patch_inventory']['patches'])]
@@ -283,7 +283,7 @@ def iterate(folder,journal,state,scope=scope,role="ITERATE"):
     pc_action=lambda v:action_charge(pc_kind,lambda:left*a.apply_trace(right*v),scope=scope)
     true_action=lambda v:action_charge('I_explicit_true_scaled_trace',lambda:left*a.apply_trace(right*v),scope=scope)
     remaining=min(scope.window.snapshot()['heavy_remaining_seconds'],scope.window.case_remaining(active=True))
-    reused=scope.NAMESPACE in ('v72','v73','v74')
+    reused=scope.NAMESPACE in ('v72','v73','v74','v75')
     independent=CoefficientFullAction(s,oracle,15);evaluations=[];counter=0
     if reused:
         from .reused_trace_admission import future_workspace
@@ -292,11 +292,18 @@ def iterate(folder,journal,state,scope=scope,role="ITERATE"):
             restart=restart,minimum_bytes=policy_plan.get('numeric_future_minimum_bytes',8*2**30))
         pref=scope.checked_json(scope.plan_record()['reuse_parents']['PREFLIGHT'])
         hot=max(pref['hot_seconds'])
-        write_json(folder/'pre_PC_numeric_forecast.json',dict(measured_hot_seconds=hot,
-            full_PC_seconds=None,numeric_qualification_cap_seconds=10800,output_reserve_seconds=4500,
-            remaining_seconds=remaining,admitted=remaining>=10800+4500+restart*2*hot,
-            prediction='unmeasured PC unknown; reserve numeric cap and at least one restart, not256 required'))
-        if remaining<10800+4500+restart*2*hot:raise RuntimeError('V72 numeric plus restart/output time reserve')
+        if scope.NAMESPACE=='v75':
+            from .durable_harmonic_scope import numeric_time_admission
+            decision=numeric_time_admission(remaining,policy_plan['forecast_numeric_upper_seconds'])
+            write_json(folder/'pre_PC_numeric_forecast.json',dict(decision,measured_hot_seconds=hot,
+                forecast_evidence=policy_plan['numeric_forecast_evidence'],prediction='measured previous39 plus declared margin; full KSP cap and output reserved'))
+            if not decision['admitted']:raise RuntimeError('V75 numeric upper plus full KSP/output reserve')
+        else:
+            write_json(folder/'pre_PC_numeric_forecast.json',dict(measured_hot_seconds=hot,
+                full_PC_seconds=None,numeric_qualification_cap_seconds=10800,output_reserve_seconds=4500,
+                remaining_seconds=remaining,admitted=remaining>=10800+4500+restart*2*hot,
+                prediction='unmeasured PC unknown; reserve numeric cap and at least one restart, not256 required'))
+            if remaining<10800+4500+restart*2*hot:raise RuntimeError('V72 numeric plus restart/output time reserve')
         # At most two fixed action pairs on the freshly loaded original packet.
         ref=checked_arrays(parent(scope)['retained_action_witness']);pairs=[]
         for j in range(1 if feedback else 2):
@@ -337,7 +344,7 @@ def iterate(folder,journal,state,scope=scope,role="ITERATE"):
     phase_counts={}
     # Immediate ownership protection includes all later vectors and witnesses.
     try:
-        if scope.NAMESPACE=='v74':
+        if scope.NAMESPACE in ('v74','v75'):
             pc_kind='D_harmonic_physical_transfer'
             began=time.perf_counter();zc=pc.coarse_apply(bhat);az=pc.original_apply(zc);r=bhat-az
             write_json(folder/'coarse_physical_transfer.json',dict(relative=relative(r,bhat),absolute=float(np.linalg.norm(r)),
@@ -354,7 +361,7 @@ def iterate(folder,journal,state,scope=scope,role="ITERATE"):
         for j in range(2):
             if reused:
                 qualification_start=json.loads((clock_root/'numeric_qualification_clock.json').read_text())['start_monotonic']
-                if time.monotonic()-qualification_start>=10800:raise RuntimeError('V72 numeric plus PC qualification cumulative3h cap')
+                if scope.NAMESPACE!='v75' and time.monotonic()-qualification_start>=10800:raise RuntimeError('V72 numeric plus PC qualification cumulative3h cap')
             input_vector=v if j==0 else alpha*v;began=time.perf_counter();z=pc(input_vector)
             error=0. if j==0 else relative(z-alpha*first_output,alpha*first_output)
             if j==0:first_output=z.copy()
@@ -365,14 +372,15 @@ def iterate(folder,journal,state,scope=scope,role="ITERATE"):
         if not PCpass:raise ValueError('fixed live PC finite/complex linearity')
         if reused:
             elapsed=time.monotonic()-qualification_start
-            write_json(folder/'numeric_PC_qualification_complete.json',dict(elapsed_seconds=elapsed,cap_seconds=10800,pass_gate=elapsed<=10800))
-            if elapsed>10800:raise RuntimeError('V72 numeric plus PC qualification cumulative3h cap')
+            write_json(folder/'numeric_PC_qualification_complete.json',dict(elapsed_seconds=elapsed,cap_seconds=None if scope.NAMESPACE=='v75' else 10800,pass_gate=scope.NAMESPACE=='v75' or elapsed<=10800))
+            if scope.NAMESPACE!='v75' and elapsed>10800:raise RuntimeError('V72 numeric plus PC qualification cumulative3h cap')
         remaining=min(scope.window.snapshot()['heavy_remaining_seconds'],scope.window.case_remaining(active=True))
         step_forecast=hot+max(r['seconds'] for r in pc_rows)
         forecast=min(float(iteration_seconds),256*step_forecast+3600)
+        needed=(iteration_seconds+4500 if scope.NAMESPACE=='v75' else restart*step_forecast+4500 if reused else forecast+4500)
         write_json(folder/'iteration_forecast.json',dict(step_upper_seconds=step_forecast,iteration_upper_seconds=forecast,
-            output_reserve_seconds=4500,remaining_seconds=remaining,full256_observational_forecast_seconds=forecast,admitted=remaining>=(restart*step_forecast+4500) if reused else remaining>=forecast+4500))
-        if remaining<(restart*step_forecast+4500 if reused else forecast+4500):raise RuntimeError('restart and original/output reserve')
+            output_reserve_seconds=4500,remaining_seconds=remaining,full256_observational_forecast_seconds=forecast,required_seconds=needed,admitted=remaining>=needed))
+        if remaining<needed:raise RuntimeError('full authorized KSP and original/output reserve')
         phase_counts['after_qualification']=dict(pc.calls)
         pc_kind='I_PC_internal_scaled_trace'
         start=time.monotonic();initial=None;iterations_consumed=0

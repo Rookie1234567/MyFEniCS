@@ -1,0 +1,5 @@
+schema_version = 1
+
+[task042_v75]
+stage = "HARMONIC_PREPARE"
+run_id = "task042_v75_harmonic_coarse_complete"
