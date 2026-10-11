@@ -272,9 +272,13 @@ def iterate(folder,journal,state,scope=scope,role="ITERATE"):
     s,b,oracle,a,full_rhs,left,right=setup_service(role,journal,scope=scope)
     reduced=a.condense_rhs(full_rhs);bhat=left*reduced
     rhs_receipt=save_arrays(folder/'physical_RHS.npz',full_rhs=full_rhs,reduced_rhs=reduced,bhat=bhat,left=left,right=right)
-    Z=csr_load(record['Z']);pa=checked_arrays(record['patch_arrays'])
+    pa=checked_arrays(record['patch_arrays'])
     transfer=None
-    if scope.NAMESPACE in ('v74','v75'):
+    if scope.NAMESPACE=='v75':
+        from .harmonic_trace_coarse import HarmonicTransfer
+        transfer=HarmonicTransfer.load(record['harmonic_transfer']);Z=transfer.skeleton
+    else:Z=csr_load(record['Z'])
+    if scope.NAMESPACE=='v74':
         from .harmonic_trace_coarse import HarmonicTransfer
         transfer=HarmonicTransfer.load(record['harmonic_transfer'])
     patches=[{k:pa[f'{j}_{k}'] for k in ('ids','core')} for j in range(record['patch_inventory']['patches'])]

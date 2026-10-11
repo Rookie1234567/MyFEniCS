@@ -82,6 +82,9 @@ def prepare(folder,journal,state):
     s,b,oracle,a,rhs,left,right=common.setup_service('HARMONIC_PREPARE',journal,scope=scope)
     checkpoint=scope.ARTIFACT/'harmonic_lifts';checkpoint.mkdir(exist_ok=True)
     compatibility=pref['compatibility'];identity=compatibility['mathematical_inputs']
+    ip=checkpoint/'identity.json'
+    if ip.exists() and json.loads(ip.read_text())!=identity:raise ValueError('V75 partial macro checkpoint inputs changed')
+    if not ip.exists():write_json(ip,identity)
     def live():scope.window.require_live()
     def base_provider(service,ZB,l,r):
         A,manifest=durable_base(service,ZB,l,r,scope.ARTIFACT/'base_blocks',journal,
