@@ -1,0 +1,12 @@
+{
+  "full_inventory": {
+    "path": "benchmarks/artifacts/task042/v73/increment_evidence_v73/new_array_receipts.json",
+    "bytes": 613940,
+    "sha256": "540febad2193d84d4aef8cb0af6f2543b3d40a9ff4881a695fa80af2fc61a6a3"
+  },
+  "unique_path_hash_receipts": 527,
+  "unique_current_paths": 527,
+  "logical_members": 909,
+  "payloads_remain_ignored": true,
+  "receipt_collection_not_itself_a_math_GATE": true
+}

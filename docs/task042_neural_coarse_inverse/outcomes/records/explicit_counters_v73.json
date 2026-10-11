@@ -1,0 +1,46 @@
+{
+  "global_action_lower": 1152,
+  "global_action_upper": 1153,
+  "by_kind": {
+    "Q_reused_hot_pair": 2,
+    "D_failed_residual_reconstruction": 1,
+    "D_feedback_original": 6,
+    "Q_PC_original": 6,
+    "I_explicit_true_scaled_trace": 16,
+    "I_public_original": 16,
+    "I_PC_internal_scaled_trace": 648,
+    "I_outer_scaled_trace": 454,
+    "I_final_public_original": 2,
+    "V_R128_public_original": 1,
+    "V_B128_public_original": 1
+  },
+  "KSP_attempts": {
+    "count": 2,
+    "rows": [
+      {
+        "role": "R128",
+        "source": "5e35ab9b1fac5e9e7101616db29a8fb7e4af39f2",
+        "monotonic": 1631869.110443226
+      },
+      {
+        "role": "B128",
+        "source": "5e35ab9b1fac5e9e7101616db29a8fb7e4af39f2",
+        "monotonic": 1637968.148235644
+      }
+    ]
+  },
+  "new_numeric": 78,
+  "global_fine_K_S_read_or_form": 0,
+  "global_fine_numeric": 0,
+  "parent_internal_LU_present": true,
+  "field_states": 2,
+  "formal_KSP_steps": 451,
+  "saved_candidate_steps": {
+    "R128": 256,
+    "B128": 192
+  },
+  "qualified_route_count": 0,
+  "all_failures_and_auxiliary_costs_preserved": true,
+  "aborted_before_kernel_actions": 1,
+  "reason": "B128 legacy per-instance limit rejected one outer action; upper remains charged"
+}

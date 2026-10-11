@@ -1,0 +1,93 @@
+{
+  "as_of_source_HEAD": "5d958cab1bacd167093f39abe390ced5cfcd8404",
+  "final_source_files": [
+    {
+      "path": "benchmarks/collect_bounded_trace.py",
+      "bytes": 18044,
+      "sha256": "2b24264363cc111fab3ab40f54d110542090af6d486d28e4d532449e03d30bfc"
+    },
+    {
+      "path": "benchmarks/collect_restart_feedback.py",
+      "bytes": 4389,
+      "sha256": "4dcbfc0e949523956957990fa7ea8db187f50ac2627ec4f9e96b03e773bac39d"
+    },
+    {
+      "path": "benchmarks/qualify_restart_feedback.py",
+      "bytes": 2257,
+      "sha256": "4d5aa0b3d924782537361fc162e711210c4e71910cc29f14dc8c75d140453cd3"
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/restart_feedback_v73.json",
+      "bytes": 1581,
+      "sha256": "58678b47fd1143a61a4cbff89b45f919bfee9c8d69efbb532ee7bf1bbcfd5923"
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v73_balanced128_solve.dat",
+      "bytes": 90,
+      "sha256": "0a0bf10041fc3e0882d397a17f66fc61a7d4a3e106850ed1f93ff1b374c86ce6"
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v73_compare_verify_cost.dat",
+      "bytes": 99,
+      "sha256": "b890126e24fabbe196946cf7e176da84c994766780698f4dec18a89429b242f5"
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v73_restart128_solve.dat",
+      "bytes": 89,
+      "sha256": "d40a1f24dab317e669a85d8fce2a2cd8f191a74f491aded5aa0becd43df97de9"
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v73_reuse_preflight.dat",
+      "bytes": 92,
+      "sha256": "90b2588fd8aeec590152b93edc737f1d8f59281140e19840d50afe4796dfcf64"
+    },
+    {
+      "path": "scripts/run_case.py",
+      "bytes": 23567,
+      "sha256": "dfe41165b7d48c703a17e208f4757c6412e7223b3ead4888d1aba8add0bc57bf"
+    },
+    {
+      "path": "src/runners/port_preparation.py",
+      "bytes": 54679,
+      "sha256": "5bba4d8f6244d5686515282c633948be3e6213bee56d0c8105755b7eaf394406"
+    },
+    {
+      "path": "src/solvers/bounded_trace_pc.py",
+      "bytes": 14929,
+      "sha256": "8ce97be29d56745531519efa368163c2435a07c4c5c39c8073b3d4638377501c"
+    },
+    {
+      "path": "src/solvers/bounded_trace_study.py",
+      "bytes": 41494,
+      "sha256": "65e88c5ff3e9405c5b8135dd08a76e775af776f5a5a8bcec2a7d31472e863789"
+    },
+    {
+      "path": "src/solvers/physical_retained_fgmres.py",
+      "bytes": 12342,
+      "sha256": "8bacc19ed335c8d080b732f90127ebaf74820a627a25b76ac5440e3e7042644e"
+    },
+    {
+      "path": "src/solvers/restart_feedback_scope.py",
+      "bytes": 5904,
+      "sha256": "17469827dcf9df064bcca81a977c7d7d573f21e2488265757d1fa75ccc4355d9"
+    },
+    {
+      "path": "src/solvers/reused_trace_admission.py",
+      "bytes": 3835,
+      "sha256": "2b2a36c03ba8a2bb9d84a246bd84f5502ca8e104d6d078b9080ea77804f04965"
+    },
+    {
+      "path": "src/solvers/trace_feedback_diagnostic.py",
+      "bytes": 3593,
+      "sha256": "197ba5308b791ade46740f8d291019dc5744c43443fa8b6c4adc6e897b56f208"
+    },
+    {
+      "path": "src/test/test_restart_feedback.py",
+      "bytes": 9886,
+      "sha256": "0678248ddfb6a60c1a0792cea18dfb78b7bc7f523afd03bc5c126701ab7c6ce6"
+    }
+  ],
+  "run_sources": "source_identity_v73.json",
+  "large_full_manifests": "run_index_v73.json",
+  "source_vs_document_HEAD_separate": true
+}

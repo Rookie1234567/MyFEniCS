@@ -1,3 +1,11 @@
+## Task042 V73：固定restart128与粗层反馈
+
+| 路线 / 范围 | 完整方程与同离散场 | 实际资源与边界 | 证据 |
+|---|---|---|---|
+| 0.7nm NOTCH、25576tet/p5/828；R128与条件B128 | R128 true=0.992693268155；B128 true=0.995072797554；strict=False | 78新local/coarse numeric；fine K/S/LU0；ownswap0；无NN/目标资格 | [回应](../response_v73.md) · [完整结果](restart_coarse_feedback_v73.md) |
+
+旧历史字节保留。长restart只改方向容量，反馈另查实际粗分量；有限测试不保证收敛。完整费用/峰/gap、双分母、修复和closed见本轮证据。
+
 ## Task042 V72：真实39因子与256步有界迭代
 
 | 模型 / 路线 | 方程与场结果 | measured规模 / 资源 | 证据 |

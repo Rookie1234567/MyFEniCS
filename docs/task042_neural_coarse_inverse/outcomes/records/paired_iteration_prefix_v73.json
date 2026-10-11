@@ -1,0 +1,100 @@
+{
+  "rows": [
+    {
+      "iteration": 0,
+      "R128": {
+        "true": 0.9999999999999999,
+        "schur_true_relative_residual": 1.0,
+        "solve_seconds": 72.90456327307038
+      },
+      "B128": {
+        "true": 0.9999999999999999,
+        "schur_true_relative_residual": 1.0,
+        "solve_seconds": 73.71241863397881
+      }
+    },
+    {
+      "iteration": 32,
+      "R128": {
+        "true": 0.998859209781315,
+        "schur_true_relative_residual": 0.9992099800856654,
+        "solve_seconds": 483.7865309230983
+      },
+      "B128": {
+        "true": 0.9993682210738092,
+        "schur_true_relative_residual": 0.9993682210738084,
+        "solve_seconds": 624.0311044149566
+      }
+    },
+    {
+      "iteration": 64,
+      "R128": {
+        "true": 0.996289103103161,
+        "schur_true_relative_residual": 0.9980216005334447,
+        "solve_seconds": 904.2703150310554
+      },
+      "B128": {
+        "true": 0.9983142800149348,
+        "schur_true_relative_residual": 0.9983142800149464,
+        "solve_seconds": 1184.4437499460764
+      }
+    },
+    {
+      "iteration": 96,
+      "R128": {
+        "true": 0.9943536864185791,
+        "schur_true_relative_residual": 0.9963253370497053,
+        "solve_seconds": 1333.694053165149
+      },
+      "B128": {
+        "true": 0.996863088614692,
+        "schur_true_relative_residual": 0.9968630886147042,
+        "solve_seconds": 1755.8738516240846
+      }
+    },
+    {
+      "iteration": 128,
+      "R128": {
+        "true": 0.9926752960935,
+        "schur_true_relative_residual": 0.9944188087575991,
+        "solve_seconds": 1772.9036449759733
+      },
+      "B128": {
+        "true": 0.9950727995199861,
+        "schur_true_relative_residual": 0.9950727995200052,
+        "solve_seconds": 2337.0612333570607
+      }
+    },
+    {
+      "iteration": 160,
+      "R128": {
+        "true": 0.9926752474503185,
+        "schur_true_relative_residual": 0.994418808512872,
+        "solve_seconds": 2188.7960893381387
+      },
+      "B128": {
+        "true": 0.9950727992093447,
+        "schur_true_relative_residual": 0.9950727992093655,
+        "solve_seconds": 2894.2335207480937
+      }
+    },
+    {
+      "iteration": 192,
+      "R128": {
+        "true": 0.9926758271130216,
+        "schur_true_relative_residual": 0.994418806852434,
+        "solve_seconds": 2610.979416351067
+      },
+      "B128": {
+        "true": 0.9950727975535251,
+        "schur_true_relative_residual": 0.9950727975535385,
+        "solve_seconds": 3458.098736939952
+      }
+    }
+  ],
+  "no_equal_per_step_cost_assumption": true,
+  "R128_PC_A_per_apply": 1,
+  "B128_PC_A_per_apply": 2,
+  "no_qualified_speed_ratio": true,
+  "field_reference_not_used_to_select_routes": true
+}

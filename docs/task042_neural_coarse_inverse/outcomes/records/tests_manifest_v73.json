@@ -1,0 +1,28 @@
+{
+  "focused": {
+    "path": "tmp/task042/v73/aux_pre_03/tests.json",
+    "bytes": 16573,
+    "sha256": "71b11db0bf0f608ef3b19dd917990eb21a49d7da80a2db7dd7c48cceafc794f9"
+  },
+  "initial_focused": {
+    "path": "tmp/task042/v73/aux_pre_01/tests.json",
+    "bytes": 16573,
+    "sha256": "0e481cfa7360ab182dd8fdd4aa480ab9fb8c48712f85af244da9247d54d0b76f"
+  },
+  "intermediate_focused": {
+    "path": "tmp/task042/v73/aux_pre_02/tests.json",
+    "bytes": 16573,
+    "sha256": "ea6c5f5f2bf8044f9f4cd64c281bebe9754d868e3827e534d0864e043f905b3b"
+  },
+  "focused_summary": {
+    "status": "PASSED"
+  },
+  "qualification": {
+    "path": "tmp/task042/v73/qualification.json",
+    "bytes": 14633,
+    "sha256": "909ce42b9946af5ab6605a97d21b8f104ee3fe15766e3dd4141716f3af9de89e"
+  },
+  "full_pytest": false,
+  "CI": "NOT_RUN",
+  "GitHub_visual": "NOT_VERIFIED"
+}

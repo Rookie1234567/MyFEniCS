@@ -1,0 +1,126 @@
+{
+  "precommit_Ruff": {
+    "utc": "2026-10-11T08:03:12.189420+00:00",
+    "stage": "precommit_critical_Ruff",
+    "result": "FAILED",
+    "root_cause": "optional restart/minimum parameters absent because exact edit signature differed",
+    "errors": [
+      "F821 restart",
+      "F821 minimum_bytes"
+    ],
+    "repair": "add two keyword parameters; keep V72 defaults",
+    "scientific_consumption": 0,
+    "elapsed_seconds": null,
+    "reason_unknown": "individual first edit/Ruff subprocess duration not separately captured; fixed window includes it"
+  },
+  "precommit_focused_failure": {
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "-q",
+      "src.test.test_restart_feedback.FeedbackTests.test_complex_nonhermitian_feedback_and_counts",
+      "src.test.test_restart_feedback.FeedbackTests.test_coarse_balance_does_not_guarantee_residual_decrease",
+      "src.test.test_restart_feedback.FeedbackTests.test_long_restart_workspace_and_rejections",
+      "src.test.test_restart_feedback.FeedbackTests.test_candidate_freeze_not_batch_freeze",
+      "src.test.test_restart_feedback.FeedbackTests.test_PC_factor_ownership_cleanup"
+    ],
+    "elapsed_seconds": 1.1363639060873538,
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "======================================================================\nFAIL: test_long_restart_workspace_and_rejections (src.test.test_restart_feedback.FeedbackTests.test_long_restart_workspace_and_rejections)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/fenics/Projects/NN-Lab/src/test/test_restart_feedback.py\", line 46, in test_long_restart_workspace_and_rejections\n    with self.assertRaises(ValueError):numeric_gate(dict(rss_bytes=0,swap_bytes=0),0,dict(reserved_bytes=8*2**30),minimum_bytes=12*2**30)\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 5 tests in 0.096s\n\nFAILED (failures=1)\n",
+    "scope": "small pure complex algebra/metadata; no numerical PDE/factor"
+  },
+  "precommit_focused_fixed": {
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "-q",
+      "src.test.test_restart_feedback.FeedbackTests.test_complex_nonhermitian_feedback_and_counts",
+      "src.test.test_restart_feedback.FeedbackTests.test_coarse_balance_does_not_guarantee_residual_decrease",
+      "src.test.test_restart_feedback.FeedbackTests.test_long_restart_workspace_and_rejections",
+      "src.test.test_restart_feedback.FeedbackTests.test_candidate_freeze_not_batch_freeze",
+      "src.test.test_restart_feedback.FeedbackTests.test_PC_factor_ownership_cleanup"
+    ],
+    "elapsed_seconds": 0.36160917789675295,
+    "returncode": 0,
+    "stdout": "",
+    "stderr": "----------------------------------------------------------------------\nRan 5 tests in 0.062s\n\nOK\n"
+  },
+  "new_formal_implementation_errors": [
+    {
+      "UTC": "2026-10-11T11:06:53.371938+00:00",
+      "error": "whole-interface action budget exhausted",
+      "source": "5e35ab9b1fac5e9e7101616db29a8fb7e4af39f2",
+      "failed": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v73/task042_v73_balanced128_solve_20261011T095129502056Z/result.json",
+        "sha256": "1a109445e09c15f289bc96c7070b1de94d32be090f3014132efe25b95d44c288"
+      },
+      "raw_stderr": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v73_balanced128_solve_20261011T095129502056Z/supervision/worker.log",
+        "sha256": "c5f9cbe8107764e770909fa7c3524bf19ba67dc60cdae2315b4c42638bb515bb"
+      },
+      "cause": "HotTracePacket constructor retained default600 instead of V73 campaign1600",
+      "KSP_attempts": 2,
+      "no_more_KSP": true,
+      "body_action_lower": 1149,
+      "body_action_upper": 1150,
+      "repair_start_monotonic": 1641808.233128974,
+      "consumer_only_selected_checkpoint": 192,
+      "fixed_source_sha": "1324147330a7c18c4ecc447cbef1ec3c6acd691e",
+      "targeted_receipt": "tmp/task042/v73/repair02_targeted.json"
+    },
+    {
+      "failed": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v73/task042_v73_balanced128_solve_20261011T111138481382Z/result.json",
+        "sha256": "06eb8ed0af7f265c2c3bcc9c071665448bed4333618197d13e111d9cdee79d91"
+      },
+      "root_cause": "parent reader rejects current tmp protocol path; own saved reader required",
+      "new_FE_actions": 0,
+      "new_numeric": 0,
+      "new_KSP": 0,
+      "stderr": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v73_balanced128_solve_20261011T111138481382Z/supervision/worker.log",
+        "sha256": "8cf0257a7c042512714a3e4b49d863bc24ad6718e0768b4957f0a9ecaedf88ad"
+      }
+    }
+  ],
+  "same_window_consumer_repair": {
+    "path": "tmp/task042/v73/repair02_targeted.json",
+    "bytes": 694,
+    "sha256": "b39e05493970f3fd19bcc45a59089e6c27ec6e3cdfdc70f77b0dfec9c01f442b"
+  },
+  "formal_KSP_not_restarted_after_two_attempts": true,
+  "metadata_observer_error": {
+    "UTC": "2026-10-11T10:04:37.003966+00:00",
+    "source": "5e35ab9b1fac5e9e7101616db29a8fb7e4af39f2",
+    "kind": "metadata observer only",
+    "exception": "KeyError: actual_fixed_RHS_residual",
+    "raw_stderr": "Traceback (most recent call last):\n  File <stdin>, line 7\nKeyError: actual_fixed_RHS_residual\n",
+    "cause": "observer guessed a row field name; live worker and source unchanged",
+    "scientific_replay": 0,
+    "numeric_replay": 0,
+    "KSP_replay": 0,
+    "fix": "read actual schema keys and original numeric record, retain independent saved checker",
+    "resolved": true
+  },
+  "actual_observer_stderr_from_tool_transcript": {
+    "path": "tmp/task042/v73/observer_failure01_stderr.txt",
+    "bytes": 150,
+    "sha256": "6545e88bdc917ddd547e7c51e238083c0ec3b35e883c5e29aa239776d58009ca"
+  },
+  "observer_initial_JSON_stderr_is_a_summary_not_literal": true,
+  "observer_scientific_replays": 0,
+  "old_failures_unchanged": true,
+  "second_consumer_reader_targeted": {
+    "path": "tmp/task042/v73/repair03_targeted.json",
+    "bytes": 518,
+    "sha256": "aa759e944052a9a6d7326eba36fe2bb9a189e276877a74edf5598ec62f47017e"
+  },
+  "metadata_observer_key_failure": {
+    "path": "tmp/task042/v73/metadata_observer_failure02.json",
+    "bytes": 259,
+    "sha256": "4a9baf3b01116c5f08e53f40bf015ba7cb0581142fd37d82e49532a01f7dd798"
+  }
+}

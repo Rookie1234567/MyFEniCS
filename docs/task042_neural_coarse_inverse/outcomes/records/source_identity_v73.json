@@ -1,0 +1,61 @@
+{
+  "intake": {
+    "observed_utc": "2026-10-11T08:10:18.855208+00:00",
+    "branch": "task42_neural_coarse_inverse",
+    "HEAD": "5e35ab9b1fac5e9e7101616db29a8fb7e4af39f2",
+    "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+    "review": "f1504cffd4bdcd7bfe025c0ff8e544298e1b7995",
+    "review_blob": "f33bfb1da4c034131c4d9a0a02d5e7916de709cc",
+    "review_SHA256": "3269e49b6004ccee1882de13db58e2fb01aa2ccf595c483d79ddf76c287a8243",
+    "canonical": "/home/fenics/Projects/NN-Lab",
+    "rules_and_authority": {
+      "AGENTS.md": "c20842f43aeecedd6c89f89afc5f602bce546e1245bcbeacd72dbec4ec92a19b",
+      "docs/repository_work_principles.md": "223c7883951eec6b79aca7c66472d315f547012bc34085534309b1bb0235a6d0",
+      "docs/task042_neural_coarse_inverse/task.md": "672c5e8a7da721f93eec2b84177f034fea9eaf76f06aa94e5a6808653d60a68b",
+      "docs/task042_neural_coarse_inverse/review_report_v71.md": "3269e49b6004ccee1882de13db58e2fb01aa2ccf595c483d79ddf76c287a8243",
+      "docs/task042_neural_coarse_inverse/response_v72.md": "3cc41a94f20c4a3cbd05e0ce61d60f147dd23668a5b78267fe42e32b2d372463"
+    },
+    "window": {
+      "start_utc": "2026-10-11T06:57:14.246493+00:00",
+      "start_monotonic": 1626829.107371871,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "heavy_limit_seconds": 39600,
+      "total_limit_seconds": 43200,
+      "scientific_loaded_limit_seconds": 36000,
+      "review_commit": "f1504cffd4bdcd7bfe025c0ff8e544298e1b7995",
+      "contract_HEAD": "f1504cffd4bdcd7bfe025c0ff8e544298e1b7995",
+      "first_work_start_never_refreshed": true,
+      "anchor": {
+        "schema": "task042_v73_initial_clock_v1",
+        "first_recovered_clock_utc": "2026-10-11T07:52:23.166964+00:00",
+        "first_recovered_monotonic": 1630138.027842871,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "window_start_utc": "2026-10-11T06:57:14.246493+00:00",
+        "window_start_monotonic": 1626829.107371871,
+        "window_seconds": 43200,
+        "heavy_stop_utc": "2026-10-11T17:57:14.246493+00:00",
+        "deadline_utc": "2026-10-11T18:57:14.246493+00:00",
+        "anchor_classification": "CONSERVATIVE_EARLIEST_BOUND",
+        "reason": "Initial V73 tool output was truncated during context recovery; exact first tool clock cannot be recovered. The previous V72 final delivery receipt is used as an earlier conservative bound, charging the entire intervening interval rather than resetting the window. No V73 numerical actor has started."
+      },
+      "heavy_stop_utc": "2026-10-11T17:57:14.246493+00:00",
+      "deadline_utc": "2026-10-11T18:57:14.246493+00:00"
+    },
+    "old_window_closed": true,
+    "scientific_source_clean": true,
+    "no_subagents": true,
+    "no_neighbor_notifications": true
+  },
+  "source_runs": {
+    "R128": "5e35ab9b1fac5e9e7101616db29a8fb7e4af39f2",
+    "B128": "5e35ab9b1fac5e9e7101616db29a8fb7e4af39f2"
+  },
+  "saved_consumer_sources": {
+    "R128": null,
+    "B128": "5d958cab1bacd167093f39abe390ced5cfcd8404"
+  },
+  "VERIFY_source": "5d958cab1bacd167093f39abe390ced5cfcd8404",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "parent_history_unchanged": true,
+  "visual": "NOT_VERIFIED"
+}
