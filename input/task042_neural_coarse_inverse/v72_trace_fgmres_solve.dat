@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v72]
+stage = "ITERATE"
+run_id = "task042_v72_trace_fgmres_solve"

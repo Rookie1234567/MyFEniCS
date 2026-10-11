@@ -189,3 +189,66 @@ def verify(folder,journal):
         timings=journal.timings,calls=journal.calls,new_numeric_factors=0,new_complete_solves=0,
         continuum_accuracy=False,target_qualified=False,NN20=False)
     write_json(folder/'verification_scientific_result.json',result);return result
+
+
+def verify_reused(folder,journal):
+    """V72 new capacity/factors/candidate; V71 math remains bound and immutable."""
+    from src.solvers import reused_trace_scope as active
+    from src.solvers.reused_trace_admission import reuse_gate, numeric_gate
+    from src.solvers import assembly_tetra_scope as reference
+    from src.solvers.bounded_trace_study import action_charge
+    from benchmarks.collect_frozen_local_h import saved_original
+    from benchmarks.check_independent_tetra import saved_pair
+    from benchmarks.collect_exact_tetra import strict_reproduction
+    from src.solvers.tetra_polynomial_difference import comparison
+    from src.solvers.independent_tetra_fields import selected_points
+    admission=active.stage('REUSE_ADMIT');P=active.parent_preparation()
+    decision=reuse_gate(admission['preparation_checks'],P)
+    if not decision['pass_gate']:raise ValueError('V72 independent reuse qualification')
+    frozen=active.verification_inventory_for('VERIFY_COST')
+    if frozen is None or journal.source_state.get('verification_inventory',{}).get('sha256')!=file_digest(frozen):
+        raise ValueError('V72 frozen unique consumer inventory')
+    freeze=json.loads(frozen.read_text())
+    if not freeze.get('retained'):
+        result=dict(status='COMPLETED',pass_gate=False,consumer_pass=True,admission=decision,
+            main_result='NO_RETURNED_CANDIDATE',reason=freeze.get('reason'),source=journal.source_state,
+            new_original_actions=0,new_numeric_factors=0,new_complete_solves=0)
+        write_json(folder/'verification_scientific_result.json',result);return result
+    r=active.stage('ITERATE')
+    if freeze['retained']['sha256']!=r['retained_returned']['sha256']:raise ValueError('V72 retained freeze identity')
+    root=Path(json.loads((active.ARTIFACT/'ITERATE.json').read_text())['path']).parent
+    numeric=json.loads((root/'numeric_factor_progress.json').read_text());factor_scores=[]
+    for row in numeric['rows']:
+        a=checked_arrays(row['arrays'])
+        error=relative(a['residual'],a['input'])
+        # Recompute residual using the original local CSR, one block at a time.
+        from src.solvers.bounded_trace_pc import csr_load
+        A=csr_load(row['input']);original=A@a['output']-a['input']
+        mismatch=relative(original-a['residual'],a['input'])
+        gate=numeric_gate(row['admission']['tree'],row['admission']['remaining_double_symbolic_bytes'],row['admission']['future_workspace'])
+        controls=row['controls']['icntl'];expected=row['expected']['estimate_mb']
+        passed=gate['admitted'] and error<=1e-8 and mismatch<=1e-12 and np.isfinite(a['output']).all()
+        passed=bool(passed and controls['22']==0 and controls['23']==2*expected and row['info_after_numeric']['infog']['1']==0)
+        factor_scores.append(dict(index=row['index'],residual=error,recomputed_residual=relative(original,a['input']),
+            saved_residual_mismatch=mismatch,pass_gate=passed,numeric_admission=gate))
+        del a,A,original;gc.collect()
+    if len(factor_scores)!=39 or not all(row['pass_gate'] for row in factor_scores):
+        raise ValueError('V72 complete39 numeric/solve and memory qualification')
+    pc=json.loads((root/'live_PC_qualification.json').read_text());a,b=(checked_arrays(row['arrays']) for row in pc['rows'])
+    alpha=.3+.7j;pc_error=relative(b['output']-alpha*a['output'],alpha*a['output'])
+    pc_pass=pc_error<=1e-10 and np.isfinite(a['output']).all() and np.isfinite(b['output']).all()
+    if not pc_pass:raise ValueError('V72 saved actual PC finite/complex homogeneity')
+    del a,b;gc.collect()
+    own=folder/'new';own.mkdir(exist_ok=True)
+    check=action_charge('V_saved_public_original',lambda:saved_original(r,own,journal,body_q=15),scope=active)
+    # Reference permission starts only here, after candidate freeze and actor exit.
+    parent=reference.stage('SOLVE');pair=comparison(parent,r,folder/'V70_V72',journal,coefficient_first=True)
+    independent=saved_pair(pair,parent,r,expected_points=selected_points(r['physical']));strict=strict_reproduction(pair)
+    if not independent['published_gate_matches_recalculation']:raise ValueError('V72 saved comparison decision')
+    result=dict(status='COMPLETED',pass_gate=check['pass_gate'] and strict['pass_gate'] and r['scientific_solve_pass'],
+        consumer_pass=True,admission=decision,factor_scores=factor_scores,PC_saved_error=pc_error,
+        independent_original=check,comparison=pair,strict_scores=strict,independent_pair=independent,
+        frozen_inventory=dict(path=str(frozen),sha256=file_digest(frozen)),source=journal.source_state,
+        timings=journal.timings,calls=journal.calls,new_numeric_factors=0,new_complete_solves=0,
+        continuum_accuracy=False,target_qualified=False,NN20=False)
+    write_json(folder/'verification_scientific_result.json',result);return result
