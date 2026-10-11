@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
 import struct
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -13,6 +15,7 @@ from src.solvers.task40_v27_saved_q0 import (
     SavedQ0ContributionAdapter,
     build_saved_q0_csr_structure,
     fill_saved_q0_csr_values,
+    inspect_saved_q0_input_headers,
     open_saved_q0_csr_from_manifest,
     preflight_saved_q0_csr,
 )
@@ -310,4 +313,105 @@ def test_saved_q0_v17_build_persists_q0_only_structure_and_restartable_values(
     assert reaches_memmap_owner(reopened.indices)
     assert reaches_memmap_owner(reopened.indptr)
     np.testing.assert_allclose(reopened.toarray(), expected, rtol=0.0, atol=1e-14)
+
+
+def _write_q0_header_inventory_fixture(tmp_path, *, local_h_size=12):
+    q0_map_path = tmp_path / "q0_map.npz"
+    active_lookup_path = tmp_path / "active_lookup.npy"
+    local_h_path = tmp_path / "local_H.npy"
+    row_witness_path = tmp_path / "row_witness.npz"
+    sparse.save_npz(q0_map_path, sparse.csr_matrix((22, 24), dtype=np.complex128))
+    np.save(active_lookup_path, np.zeros(30, dtype=np.int32))
+    np.save(local_h_path, np.ones(local_h_size, dtype=np.complex128))
+    np.savez_compressed(
+        row_witness_path,
+        row_counts_int64=np.zeros(24, dtype=np.int64),
+        wide_offsets_int64=np.zeros(25, dtype=np.int64),
+    )
+    profile = SimpleNamespace(
+        q_count=8,
+        replication_count=4,
+        local_y_cells=2,
+        local_trace_rows=10,
+        trace_rows_per_q=20,
+        local_storage_rows=30,
+        q_port_counts=(4, 5, 6, 7, 8, 9, 10, 11),
+        sector_port_counts=(12, 14, 16, 18),
+    )
+    return q0_map_path, active_lookup_path, local_h_path, row_witness_path, profile
+
+
+def test_v27_header_inventory_uses_q0_sector_aliases_and_preserves_full_mode_count(tmp_path):
+    q0_map_path, active_lookup_path, local_h_path, row_witness_path, profile = (
+        _write_q0_header_inventory_fixture(tmp_path)
+    )
+
+    inventory = inspect_saved_q0_input_headers(
+        q0_map_path=q0_map_path,
+        active_lookup_path=active_lookup_path,
+        local_h_path=local_h_path,
+        row_witness_path=row_witness_path,
+        profile=profile,
+        q_index=0,
+    )
+
+    assert inventory["sector_alias_q_indices"] == [0, 4]
+    assert inventory["sector_local_alias_count"] == 12
+    assert inventory["full_profile_mode_count"] == 60
+    assert inventory["expected_shapes"] == {
+        "q0_map": [22, 24],
+        "active_lookup": [30],
+        "local_H": [12],
+        "row_counts_int64": [24],
+        "wide_offsets_int64": [25],
+    }
+    assert inventory["payload_arrays_materialized"] is False
+
+
+def test_v27_header_inventory_rejects_full_q_mode_count_as_local_h_length(tmp_path):
+    q0_map_path, active_lookup_path, local_h_path, row_witness_path, profile = (
+        _write_q0_header_inventory_fixture(tmp_path, local_h_size=60)
+    )
+
+    with pytest.raises(ValueError, match='"local_H.shape"'):
+        inspect_saved_q0_input_headers(
+            q0_map_path=q0_map_path,
+            active_lookup_path=active_lookup_path,
+            local_h_path=local_h_path,
+            row_witness_path=row_witness_path,
+            profile=profile,
+            q_index=0,
+        )
+
+
+def test_v27_real_donor_npy_npz_headers_match_frozen_q0_profile():
+    donor_root_value = os.environ.get("TASK40_V27_DONOR_ROOT")
+    row_witness_value = os.environ.get("TASK40_V27_ROW_WITNESS_PATH")
+    if not donor_root_value or not row_witness_value:
+        pytest.skip("set Task40 V27 donor/header paths for the ignored-artifact integration check")
+
+    from src.solvers.task40_v10_p6_periodic_profile import (
+        TASK40_V22_P6_TARGET_ORIGINAL_NY8_PROFILE,
+    )
+
+    donor_root = Path(donor_root_value)
+    inventory = inspect_saved_q0_input_headers(
+        q0_map_path=donor_root / "v25_selected_q0_map.npz",
+        active_lookup_path=donor_root / "v25_selected_q0_original_to_active_int32.npy",
+        local_h_path=donor_root / "v25_selected_q0_local_H_p.npy",
+        row_witness_path=row_witness_value,
+        profile=TASK40_V22_P6_TARGET_ORIGINAL_NY8_PROFILE,
+        q_index=0,
+    )
+
+    assert inventory["sector_alias_q_indices"] == [0, 4]
+    assert inventory["sector_local_alias_count"] == 7932
+    assert inventory["full_profile_mode_count"] == 32060
+    assert inventory["expected_shapes"] == {
+        "q0_map": [1555068, 777644],
+        "active_lookup": [5252256],
+        "local_H": [7932],
+        "row_counts_int64": [777644],
+        "wide_offsets_int64": [777645],
+    }
 

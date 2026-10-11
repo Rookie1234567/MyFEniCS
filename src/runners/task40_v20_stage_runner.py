@@ -1578,6 +1578,19 @@ def _run_v27_saved_q0_stage(
             or _saved_q_sha256(witness_path) != witness.get("sha256")
         ):
             raise ValueError("V27 frozen complete-row witness is missing or changed")
+        from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
+        from src.solvers.task40_v27_saved_q0 import inspect_saved_q0_input_headers
+
+        periodic = TASK40_P6_PERIODIC_PROFILES[profile]
+        header_inventory = inspect_saved_q0_input_headers(
+            q0_map_path=q0_map_path,
+            active_lookup_path=lookup_path,
+            local_h_path=h_path,
+            row_witness_path=witness_path,
+            profile=periodic,
+            q_index=int(operation["q_map_branch"]),
+        )
+        operation["saved_input_header_inventory"] = header_inventory
         map_load_bytes = (
             q0_map_uncompressed_bytes + lookup_bytes + h_bytes + witness_bytes
         )
@@ -1592,20 +1605,22 @@ def _run_v27_saved_q0_stage(
                 "local_h_payload_bytes": h_bytes,
                 "complete_row_witness_payload_bytes": witness_bytes,
                 "q_map_count": 1,
+                "q_index": int(header_inventory["q_index"]),
+                "sector_index": int(header_inventory["sector_index"]),
+                "sector_local_alias_count": int(header_inventory["sector_local_alias_count"]),
+                "full_profile_mode_count": int(header_inventory["full_profile_mode_count"]),
                 "q4_map_loaded": False,
                 "mmap_or_file_cache_counted_as_memory": True,
             },
         )
 
-        from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
-
-        periodic = TASK40_P6_PERIODIC_PROFILES[profile]
         with np.load(witness_path, allow_pickle=False) as archive:
             if set(archive.files) != {"row_counts_int64", "wide_offsets_int64"}:
                 raise ValueError("V27 row witness has an unexpected field inventory")
             row_counts = np.asarray(archive["row_counts_int64"], dtype=np.int64)
             offsets = np.asarray(archive["wide_offsets_int64"], dtype=np.int64)
-        if row_counts.shape != (777_644,) or offsets.shape != (777_645,):
+        expected_q0_columns = int(header_inventory["expected_shapes"]["q0_map"][1])
+        if row_counts.shape != (expected_q0_columns,) or offsets.shape != (expected_q0_columns + 1,):
             raise ValueError("V27 frozen full q0 row witness has the wrong vector dimensions")
         if _file_sha256(q0_map_path) != payloads[q0_map_path.name]["sha256"]:
             raise ValueError("V27 q0 map changed after the service donor binding")
@@ -1614,12 +1629,12 @@ def _run_v27_saved_q0_stage(
             raise ValueError("V27 saved q0 map is not CSR")
         active_lookup = np.load(lookup_path, mmap_mode="r", allow_pickle=False)
         local_h = np.load(h_path, mmap_mode="r", allow_pickle=False)
+        expected_shapes = header_inventory["expected_shapes"]
         if (
-            q0_map.shape != (periodic.local_trace_rows + len(local_h), 777_644)
+            tuple(q0_map.shape) != tuple(expected_shapes["q0_map"])
             or q0_map.shape[0] != periodic.local_trace_rows + int(local_h.size)
-            or periodic.trace_rows_per_q + 4_076 != q0_map.shape[1]
-            or active_lookup.shape != (periodic.local_storage_rows,)
-            or local_h.shape != (sum(periodic.q_port_counts),)
+            or tuple(active_lookup.shape) != tuple(expected_shapes["active_lookup"])
+            or tuple(local_h.shape) != tuple(expected_shapes["local_H"])
         ):
             raise ValueError("V27 saved q0-only map/lookup/H dimensions differ from the frozen profile")
         with q0_map_path.open("rb") as stream:
@@ -1632,7 +1647,8 @@ def _run_v27_saved_q0_stage(
             q0_map=q0_map,
             active_rows=int(periodic.local_trace_rows),
             q0_trace_rows=int(periodic.trace_rows_per_q),
-            q0_port_rows=int(q0_map.shape[1] - periodic.trace_rows_per_q),
+            q0_port_rows=int(header_inventory["expected_shapes"]["q0_map"][1]
+                             - periodic.trace_rows_per_q),
             allocation_gate=allocation_gate,
             expected_cell_count=int(periodic.local_cell_count),
             expected_class_count=45,

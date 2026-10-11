@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import struct
 import tempfile
+import zipfile
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -30,6 +32,212 @@ from .task40_v25_selected_q0 import (
 _VOLUME_MAGIC = b"TASK40V25Q0VOLUME\0"
 _VOLUME_HEADER = struct.Struct("<II")
 _VOLUME_CLASS_HEADER = struct.Struct("<II")
+
+
+def _read_saved_npy_header(stream: Any) -> dict[str, Any]:
+    """Read a NumPy header without materializing the array payload."""
+    version = np.lib.format.read_magic(stream)
+    if version not in {(1, 0), (2, 0), (3, 0)}:
+        raise ValueError(f"unsupported saved q0 NPY format version: {version}")
+    shape, fortran_order, dtype = np.lib.format._read_array_header(stream, version)
+    dtype = np.dtype(dtype)
+    if dtype.hasobject or any(int(dimension) < 0 for dimension in shape):
+        raise ValueError("saved q0 NPY header contains an unsafe dtype or shape")
+    return {
+        "shape": [int(dimension) for dimension in shape],
+        "dtype": dtype.str,
+        "fortran_order": bool(fortran_order),
+    }
+
+
+def _read_saved_npz_headers(
+    path: str | Path,
+    *,
+    expected_members: set[str],
+    small_value_members: set[str] | frozenset[str] = frozenset(),
+) -> dict[str, dict[str, Any]]:
+    """Read NPZ member headers and, optionally, tiny metadata arrays only."""
+    result: dict[str, dict[str, Any]] = {}
+    with zipfile.ZipFile(path) as archive:
+        members = [item.filename for item in archive.infolist() if not item.is_dir()]
+        if len(members) != len(set(members)) or set(members) != expected_members:
+            raise ValueError(
+                "saved q0 NPZ member inventory differs from its frozen contract: "
+                f"{Path(path).name} has {sorted(members)}"
+            )
+        for member_name in sorted(expected_members):
+            with archive.open(member_name) as stream:
+                header = _read_saved_npy_header(stream)
+                if member_name in small_value_members:
+                    item_count = math.prod(header["shape"]) if header["shape"] else 1
+                    dtype = np.dtype(header["dtype"])
+                    byte_count = item_count * int(dtype.itemsize)
+                    if item_count > 2 or dtype.hasobject or byte_count > 16:
+                        raise ValueError(
+                            f"saved q0 NPZ metadata member is not a tiny fixed-width array: {member_name}"
+                        )
+                    payload = stream.read(byte_count)
+                    if len(payload) != byte_count:
+                        raise ValueError(f"saved q0 NPZ metadata member is truncated: {member_name}")
+                    if dtype.kind == "S":
+                        header["values"] = payload.decode("ascii").rstrip("\0")
+                    elif dtype.kind == "U":
+                        header["values"] = np.frombuffer(payload, dtype=dtype).tolist()
+                    else:
+                        header["values"] = [
+                            int(value)
+                            for value in np.frombuffer(payload, dtype=dtype).reshape(-1)
+                        ]
+                result[member_name] = header
+    return result
+
+
+def inspect_saved_q0_input_headers(
+    *,
+    q0_map_path: str | Path,
+    active_lookup_path: str | Path,
+    local_h_path: str | Path,
+    row_witness_path: str | Path,
+    profile: Any,
+    q_index: int,
+) -> dict[str, Any]:
+    """Validate the complete saved q0 input inventory from NPY/NPZ headers.
+
+    The H diagonal belongs to the q-sector aliases (for q0, q0 plus q4),
+    while the profile's full mode inventory remains all eight q blocks.
+    Only the small CSR ``shape.npy`` and ``format.npy`` payloads are read;
+    sparse values, lookup values, H values, and row-witness arrays stay unread.
+    """
+    q_port_counts = tuple(int(value) for value in profile.q_port_counts)
+    sector_port_counts = tuple(int(value) for value in profile.sector_port_counts)
+    q_count = int(profile.q_count)
+    replication_count = int(profile.replication_count)
+    local_y_cells = int(profile.local_y_cells)
+    q_index = int(q_index)
+    if (
+        q_count != len(q_port_counts)
+        or replication_count <= 0
+        or local_y_cells <= 0
+        or len(sector_port_counts) != replication_count
+        or len(q_port_counts) != local_y_cells * replication_count
+        or not 0 <= q_index < q_count
+    ):
+        raise ValueError("saved q0 dimension check received an inconsistent frozen profile or q index")
+
+    sector_index = q_index % replication_count
+    alias_q_indices = tuple(
+        sector_index + local_y_branch * replication_count
+        for local_y_branch in range(local_y_cells)
+    )
+    sector_alias_count = sum(q_port_counts[index] for index in alias_q_indices)
+    if sector_port_counts[sector_index] != sector_alias_count:
+        raise ValueError("frozen sector port inventory disagrees with its q-alias counts")
+    expected_map_shape = (
+        int(profile.local_trace_rows) + sector_alias_count,
+        int(profile.trace_rows_per_q) + q_port_counts[q_index],
+    )
+    expected_lookup_shape = (int(profile.local_storage_rows),)
+    expected_h_shape = (sector_alias_count,)
+    expected_row_count_shape = (expected_map_shape[1],)
+    expected_offset_shape = (expected_map_shape[1] + 1,)
+
+    map_headers = _read_saved_npz_headers(
+        q0_map_path,
+        expected_members={"data.npy", "indices.npy", "indptr.npy", "shape.npy", "format.npy"},
+        small_value_members={"shape.npy", "format.npy"},
+    )
+    with Path(active_lookup_path).open("rb") as stream:
+        lookup_header = _read_saved_npy_header(stream)
+    with Path(local_h_path).open("rb") as stream:
+        local_h_header = _read_saved_npy_header(stream)
+    row_headers = _read_saved_npz_headers(
+        row_witness_path,
+        expected_members={"row_counts_int64.npy", "wide_offsets_int64.npy"},
+    )
+
+    expected_dtypes = {
+        "complex128": np.dtype(np.complex128).str,
+        "int32": np.dtype(np.int32).str,
+        "int64": np.dtype(np.int64).str,
+    }
+    mismatches: dict[str, dict[str, Any]] = {}
+
+    def require(name: str, actual: Any, expected: Any) -> None:
+        if actual != expected:
+            mismatches[name] = {"actual": actual, "expected": expected}
+
+    require("q0_map.shape", map_headers["shape.npy"].get("values"), list(expected_map_shape))
+    require("q0_map.shape_header.shape", map_headers["shape.npy"]["shape"], [2])
+    require("q0_map.shape_header.dtype", map_headers["shape.npy"]["dtype"], expected_dtypes["int64"])
+    require("q0_map.format", map_headers["format.npy"].get("values"), "csr")
+    require("q0_map.format_header.shape", map_headers["format.npy"]["shape"], [])
+    require("q0_map.format_header.dtype", map_headers["format.npy"]["dtype"], np.dtype("S3").str)
+    require("q0_map.data.dtype", map_headers["data.npy"]["dtype"], expected_dtypes["complex128"])
+    require("q0_map.indices.dtype", map_headers["indices.npy"]["dtype"], expected_dtypes["int32"])
+    require("q0_map.indptr.dtype", map_headers["indptr.npy"]["dtype"], expected_dtypes["int32"])
+    require("q0_map.indptr.shape", map_headers["indptr.npy"]["shape"], [expected_map_shape[0] + 1])
+    require("q0_map.indices.shape", map_headers["indices.npy"]["shape"], map_headers["data.npy"]["shape"])
+    require("active_lookup.shape", lookup_header["shape"], list(expected_lookup_shape))
+    require("active_lookup.dtype", lookup_header["dtype"], expected_dtypes["int32"])
+    require("local_H.shape", local_h_header["shape"], list(expected_h_shape))
+    require("local_H.dtype", local_h_header["dtype"], expected_dtypes["complex128"])
+    for label, header in (
+        *((f"q0_map.{name}", value) for name, value in map_headers.items()),
+        ("active_lookup", lookup_header),
+        ("local_H", local_h_header),
+        ("row_counts_int64", row_headers["row_counts_int64.npy"]),
+        ("wide_offsets_int64", row_headers["wide_offsets_int64.npy"]),
+    ):
+        require(f"{label}.fortran_order", header["fortran_order"], False)
+    require(
+        "row_counts_int64.shape",
+        row_headers["row_counts_int64.npy"]["shape"],
+        list(expected_row_count_shape),
+    )
+    require(
+        "row_counts_int64.dtype",
+        row_headers["row_counts_int64.npy"]["dtype"],
+        expected_dtypes["int64"],
+    )
+    require(
+        "wide_offsets_int64.shape",
+        row_headers["wide_offsets_int64.npy"]["shape"],
+        list(expected_offset_shape),
+    )
+    require(
+        "wide_offsets_int64.dtype",
+        row_headers["wide_offsets_int64.npy"]["dtype"],
+        expected_dtypes["int64"],
+    )
+    if mismatches:
+        raise ValueError(
+            "V27 saved q0 NPY/NPZ header inventory mismatch: "
+            + json.dumps(mismatches, sort_keys=True)
+        )
+
+    return {
+        "schema": "task40extra.review_v27_saved_q0_header_inventory.v1",
+        "q_index": q_index,
+        "sector_index": sector_index,
+        "sector_alias_q_indices": list(alias_q_indices),
+        "full_profile_mode_count": sum(q_port_counts),
+        "sector_local_alias_count": sector_alias_count,
+        "expected_shapes": {
+            "q0_map": list(expected_map_shape),
+            "active_lookup": list(expected_lookup_shape),
+            "local_H": list(expected_h_shape),
+            "row_counts_int64": list(expected_row_count_shape),
+            "wide_offsets_int64": list(expected_offset_shape),
+        },
+        "headers": {
+            "q0_map": map_headers,
+            "active_lookup": lookup_header,
+            "local_H": local_h_header,
+            "row_counts_int64": row_headers["row_counts_int64.npy"],
+            "wide_offsets_int64": row_headers["wide_offsets_int64.npy"],
+        },
+        "payload_arrays_materialized": False,
+    }
 
 
 def _sha256_file(path: Path) -> str:
