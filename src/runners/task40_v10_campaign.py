@@ -179,6 +179,61 @@ TASK40_V24_PARENT_LEDGER = {
     "unsettled_interval": "UNKNOWN_RETAINED_UNMODIFIED",
     "administrative_closeout_overrun_preserved": True,
 }
+TASK40_V25_CAMPAIGN_WINDOW = (
+    Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v25_wsl")
+    / "campaign_window_v25.json"
+)
+TASK40_V25_CAMPAIGN_SHA256 = "a8ee7ab9970ece892d85f9313180438e88561f0bfc63b68acdb11f536400def7"
+TASK40_V25_CAMPAIGN_RECEIPT = (
+    Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v25_wsl")
+    / "registration_receipt_v25.json"
+)
+TASK40_V25_CAMPAIGN_RECEIPT_SHA256 = "7918bfb1885597227adbdfe344ac5be7891d22bacfb4be4f613d2b6b2b7b7fab"
+TASK40_V25_CAMPAIGN_SECONDS = 21_600.0
+TASK40_V25_CLOSEOUT_RESERVE_SECONDS = 1_200.0
+TASK40_V25_CAMPAIGN_ID = "task40extra_v25_complete_target_volume_and_selected_reference_q"
+TASK40_V25_REVIEW_COMMIT = "4a524251339e00ad481b29af61df4f4625ed2581"
+TASK40_V25_REVIEW_SHA256 = "087e6c80512418a0f71ccff83ad5c792b58b05a3f93adef59ec791d5bef5520e"
+TASK40_V25_REVIEW_PATH = "docs/task40extra_0p7nm_engineering/review_report_v25.md"
+TASK40_V25_SOURCE_AT_ENTRY = "c1a77d362d852d864668dcf5d43957880a6788df"
+TASK40_V25_STAGE_SCOPE = (
+    "implementation",
+    "targeted_tests",
+    "maps_owner_capacity",
+    "target_operator_probe",
+    "complete_target_volume_action",
+    "selected_reference_q_consumer",
+    "selected_reference_q_build_only",
+    "selected_reference_q_csr",
+    "reference_port_generation_projection",
+    "checker",
+    "persistence_readback",
+    "closeout",
+)
+TASK40_V25_FORBIDDEN_SCOPE = (
+    "all_target_q_csr",
+    "all_reference_q_csr",
+    "global_mumps_factor",
+    "target_symbolic",
+    "target_numeric",
+    "target_ksp",
+    "full_target_field",
+)
+TASK40_V25_PARENT_WINDOW = {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_window_v24.json",
+    "sha256": TASK40_V24_CAMPAIGN_SHA256,
+    "t0_utc": "2026-10-10T16:33:11Z",
+    "deadline_utc": "2026-10-10T22:33:11Z",
+    "verified_expired": True,
+}
+TASK40_V25_PARENT_LEDGER = {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl/campaign_accounting_v10.jsonl",
+    "sha256": "b8ac409260e344741f9f5a135f1a64ca217631a38f52e2224f2ea5f9ea968faa",
+    "last_sequence": 942,
+    "last_label": "main_v24_final_remote_publication_verified",
+    "last_persisted_cumulative_seconds": 16792.57081382109,
+    "unsettled_interval": "UNKNOWN_RETAINED_UNMODIFIED",
+}
 
 
 def _utc_ns(value: Any) -> int:
@@ -308,6 +363,45 @@ def _validate_v24_campaign_registration(
     ]
     if changed:
         raise ValueError(f"registered V24 campaign identity or scope changed: {changed}")
+
+
+def _validate_v25_campaign_registration(
+    resolved: Path, digest: str, payload: Mapping[str, Any]
+) -> None:
+    expected_path = (
+        Path(__file__).resolve().parents[2] / TASK40_V25_CAMPAIGN_WINDOW
+    ).resolve()
+    if resolved != expected_path:
+        raise ValueError("the V25 campaign window is not at its registered path")
+    if digest != TASK40_V25_CAMPAIGN_SHA256:
+        raise ValueError("the registered V25 campaign window SHA-256 changed")
+    expected_fields = {
+        "schema": CAMPAIGN_SCHEMA,
+        "campaign": TASK40_V25_CAMPAIGN_ID,
+        "authority": "User-authorized Review V25 sections 4,5,7 independent six-hour package",
+        "active_review_sha": TASK40_V25_REVIEW_COMMIT,
+        "active_review_path": TASK40_V25_REVIEW_PATH,
+        "active_review_sha256": TASK40_V25_REVIEW_SHA256,
+        "source_at_entry": TASK40_V25_SOURCE_AT_ENTRY,
+        "review_at_registration": TASK40_V25_REVIEW_COMMIT,
+        "t0_utc": "2026-10-11T00:38:41Z",
+        "deadline_utc": "2026-10-11T06:38:41Z",
+        "campaign_seconds": TASK40_V25_CAMPAIGN_SECONDS,
+        "closeout_reserve_seconds": TASK40_V25_CLOSEOUT_RESERVE_SECONDS,
+        "time_policy": CONSERVATIVE_REALTIME,
+        "stage_scope": list(TASK40_V25_STAGE_SCOPE),
+        "forbidden_scope": list(TASK40_V25_FORBIDDEN_SCOPE),
+        "window_refreshed": False,
+        "old_costs_and_unknowns_preserved": True,
+        "parent_window": TASK40_V25_PARENT_WINDOW,
+        "parent_ledger": TASK40_V25_PARENT_LEDGER,
+        "artifact_execution_identity_separate": True,
+    }
+    changed = [
+        key for key, value in expected_fields.items() if payload.get(key) != value
+    ]
+    if changed:
+        raise ValueError(f"registered V25 campaign identity or scope changed: {changed}")
 
 
 @dataclass(frozen=True)
@@ -562,9 +656,13 @@ def load_fixed_campaign_window(
     v24_path = (
         Path(__file__).resolve().parents[2] / TASK40_V24_CAMPAIGN_WINDOW
     ).resolve()
+    v25_path = (
+        Path(__file__).resolve().parents[2] / TASK40_V25_CAMPAIGN_WINDOW
+    ).resolve()
     is_v22 = resolved == v22_path
     is_v23 = resolved == v23_path
     is_v24 = resolved == v24_path
+    is_v25 = resolved == v25_path
     if is_v22:
         _validate_v22_campaign_registration(resolved, digest, payload)
         expected_total = TASK40_V22_CAMPAIGN_SECONDS
@@ -577,6 +675,10 @@ def load_fixed_campaign_window(
         _validate_v24_campaign_registration(resolved, digest, payload)
         expected_total = TASK40_V24_CAMPAIGN_SECONDS
         expected_closeout = TASK40_V24_CLOSEOUT_RESERVE_SECONDS
+    elif is_v25:
+        _validate_v25_campaign_registration(resolved, digest, payload)
+        expected_total = TASK40_V25_CAMPAIGN_SECONDS
+        expected_closeout = TASK40_V25_CLOSEOUT_RESERVE_SECONDS
     else:
         expected_total = CAMPAIGN_SECONDS
         expected_closeout = CLOSEOUT_RESERVE_SECONDS
@@ -673,6 +775,21 @@ __all__ = [
     "TASK40_V24_FORBIDDEN_SCOPE",
     "TASK40_V24_PARENT_WINDOW",
     "TASK40_V24_PARENT_LEDGER",
+    "TASK40_V25_CAMPAIGN_WINDOW",
+    "TASK40_V25_CAMPAIGN_SHA256",
+    "TASK40_V25_CAMPAIGN_RECEIPT",
+    "TASK40_V25_CAMPAIGN_RECEIPT_SHA256",
+    "TASK40_V25_CAMPAIGN_SECONDS",
+    "TASK40_V25_CLOSEOUT_RESERVE_SECONDS",
+    "TASK40_V25_CAMPAIGN_ID",
+    "TASK40_V25_REVIEW_COMMIT",
+    "TASK40_V25_REVIEW_SHA256",
+    "TASK40_V25_REVIEW_PATH",
+    "TASK40_V25_SOURCE_AT_ENTRY",
+    "TASK40_V25_STAGE_SCOPE",
+    "TASK40_V25_FORBIDDEN_SCOPE",
+    "TASK40_V25_PARENT_WINDOW",
+    "TASK40_V25_PARENT_LEDGER",
     "CampaignAccount",
     "FixedCampaignWindow",
     "TASK40_V10_CAMPAIGN_WINDOW",

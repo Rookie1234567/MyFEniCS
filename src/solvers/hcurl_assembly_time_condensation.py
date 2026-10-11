@@ -131,6 +131,28 @@ def _idx(values) -> np.ndarray:
     return np.fromiter(values, dtype=PETSc.IntType)
 
 
+def _checked_petsc_index_scalar(value: int, name: str) -> int:
+    """Check a wide Python count before it is used as a PETSc index."""
+
+    wide = int(value)
+    limits = np.iinfo(PETSc.IntType)
+    if wide < int(limits.min) or wide > int(limits.max):
+        raise OverflowError(f"{name}={wide} does not fit PETSc.IntType")
+    return wide
+
+
+def _checked_petsc_index_array(values: Any, name: str) -> np.ndarray:
+    """Convert wide integer rows only after proving every value fits PETSc."""
+
+    wide = np.asarray(values, dtype=np.int64)
+    limits = np.iinfo(PETSc.IntType)
+    if wide.size and (
+        int(wide.min()) < int(limits.min) or int(wide.max()) > int(limits.max)
+    ):
+        raise OverflowError(f"{name} contains values outside PETSc.IntType")
+    return np.asarray(wide, dtype=PETSc.IntType)
+
+
 @dataclass(frozen=True)
 class CellRecoveryMap:
     """Numbering and cached class identity needed for one owned cell."""
@@ -141,12 +163,132 @@ class CellRecoveryMap:
 
 
 @dataclass(frozen=True)
+class _DenseIndexMapping(Mapping[int, int]):
+    """Compact global-row lookup backed by one signed integer array."""
+
+    lookup: np.ndarray
+    item_count: int
+
+    def __getitem__(self, key: int) -> int:
+        if isinstance(key, bool) or not isinstance(key, (int, np.integer)):
+            raise KeyError(key)
+        row = int(key)
+        if row < 0 or row >= len(self.lookup):
+            raise KeyError(key)
+        value = int(self.lookup[row])
+        if value < 0:
+            raise KeyError(key)
+        return value
+
+    def __iter__(self):
+        return (int(row) for row in np.flatnonzero(self.lookup >= 0))
+
+    def __len__(self) -> int:
+        return int(self.item_count)
+
+
+@dataclass(frozen=True)
+class _CompactTraceExpansionMapping(Mapping[int, tuple[np.ndarray, np.ndarray]]):
+    """Identity-by-default trace expansion with CSR storage only for slaves."""
+
+    trace_rows: _DenseIndexMapping
+    active_rows: _DenseIndexMapping
+    slave_ordinals: np.ndarray
+    indptr: np.ndarray
+    indices: np.ndarray
+    coefficients: np.ndarray
+
+    def __getitem__(self, key: int) -> tuple[np.ndarray, np.ndarray]:
+        if isinstance(key, bool) or not isinstance(key, (int, np.integer)):
+            raise KeyError(key)
+        row = int(key)
+        if row < 0 or row >= len(self.active_rows.lookup):
+            raise KeyError(key)
+        active = self.active_rows.lookup[row]
+        if active >= 0:
+            return (
+                np.asarray([active], dtype=PETSc.IntType),
+                np.ones(1, dtype=np.complex128),
+            )
+        ordinal = self.slave_ordinals[row]
+        if ordinal < 0:
+            raise KeyError(key)
+        start, stop = int(self.indptr[ordinal]), int(self.indptr[ordinal + 1])
+        return self.indices[start:stop], self.coefficients[start:stop]
+
+    def __iter__(self):
+        return iter(self.trace_rows)
+
+    def __len__(self) -> int:
+        return len(self.trace_rows)
+
+    def expand_rows(
+        self, trace_original: np.ndarray
+    ) -> tuple[np.ndarray, sparse.csr_matrix, bool]:
+        rows_wide = np.asarray(trace_original, dtype=np.int64).reshape(-1)
+        rows = _checked_petsc_index_array(rows_wide, "compact trace expansion rows")
+        if rows.size and (
+            int(rows.min()) < 0 or int(rows.max()) >= len(self.active_rows.lookup)
+        ):
+            raise ValueError("compact trace expansion row lies outside the global space")
+        active = self.active_rows.lookup[rows].astype(PETSc.IntType, copy=False)
+        if np.all(active >= 0):
+            unique = np.unique(active)
+            columns = np.searchsorted(unique, active).astype(np.int32, copy=False)
+            identity = len(unique) == len(rows) and np.array_equal(active, unique)
+            if identity:
+                return unique, sparse.eye(len(rows), dtype=np.complex128, format="csr"), True
+            expansion = sparse.csr_matrix(
+                (
+                    np.ones(len(rows), dtype=np.complex128),
+                    (np.arange(len(rows), dtype=np.int32), columns),
+                ),
+                shape=(len(rows), len(unique)),
+            )
+            return unique, expansion, False
+
+        row_parts: list[np.ndarray] = []
+        id_parts: list[np.ndarray] = []
+        value_parts: list[np.ndarray] = []
+        identity = len(rows) > 0
+        for row_index, original in enumerate(rows):
+            active_id = int(self.active_rows.lookup[int(original)])
+            if active_id >= 0:
+                ids = np.asarray([active_id], dtype=PETSc.IntType)
+                values = np.ones(1, dtype=np.complex128)
+                if active_id != row_index:
+                    identity = False
+            else:
+                ordinal = int(self.slave_ordinals[int(original)])
+                if ordinal < 0:
+                    raise KeyError(int(original))
+                start, stop = int(self.indptr[ordinal]), int(self.indptr[ordinal + 1])
+                ids = self.indices[start:stop]
+                values = self.coefficients[start:stop]
+                identity = False
+            row_parts.append(np.full(len(ids), row_index, dtype=np.int32))
+            id_parts.append(np.asarray(ids, dtype=PETSc.IntType))
+            value_parts.append(np.asarray(values, dtype=np.complex128))
+        all_ids = np.concatenate(id_parts) if id_parts else np.empty(0, dtype=PETSc.IntType)
+        unique = np.unique(all_ids)
+        columns = np.searchsorted(unique, all_ids).astype(np.int32, copy=False)
+        row_ids = np.concatenate(row_parts) if row_parts else np.empty(0, dtype=np.int32)
+        values = np.concatenate(value_parts) if value_parts else np.empty(0, dtype=np.complex128)
+        expansion = sparse.csr_matrix(
+            (values, (row_ids, columns)), shape=(len(rows), len(unique))
+        )
+        expansion.sum_duplicates()
+        expansion.sort_indices()
+        return unique, expansion, identity and len(unique) == len(rows)
+
+
+@dataclass(frozen=True)
 class TraceConstraintMap:
     """Sparse full-trace to independent-trace expansion ``u_t = C_t q``."""
 
     owned_active_original_dofs: np.ndarray
-    original_to_active: dict[int, int]
-    expansion_by_original: dict[int, tuple[np.ndarray, np.ndarray]]
+    original_to_active: Mapping[int, int]
+    expansion_by_original: Mapping[int, tuple[np.ndarray, np.ndarray]]
     full_trace_rows: int
     active_rows: int
     slave_rows: int
@@ -215,7 +357,7 @@ class AssemblyTimeCondensedSystem:
 
     matrix: PETSc.Mat | None
     owned_trace_original_dofs: np.ndarray
-    original_to_trace: dict[int, int]
+    original_to_trace: Mapping[int, int]
     trace_constraints: TraceConstraintMap
     cell_recovery_maps: tuple[CellRecoveryMap, ...]
     interior_from_trace_by_class: dict[tuple[Any, ...], np.ndarray]
@@ -263,7 +405,9 @@ class AssemblyTimeCondensedSystem:
 def _owned_trace_numbering(
     function_space,
     local_cell_interior_dofs: tuple[np.ndarray, ...],
-) -> tuple[np.ndarray, dict[int, int], int, int]:
+    *,
+    compact: bool = False,
+) -> tuple[np.ndarray, Mapping[int, int], int, int]:
     dofmap = function_space.dofmap
     index_map = dofmap.index_map
     comm = function_space.mesh.comm
@@ -283,26 +427,43 @@ def _owned_trace_numbering(
     owned_trace = owned_full[~np.isin(owned_full, local_interior, assume_unique=True)]
     counts = comm.allgather(int(len(owned_trace)))
     trace_start = int(sum(counts[: comm.rank]))
-    packets = comm.allgather(
-        (
-            np.asarray(owned_trace, dtype=np.int64),
-            np.arange(
-                trace_start,
-                trace_start + len(owned_trace),
-                dtype=np.int64,
-            ),
-        )
-    )
-    mapping: dict[int, int] = {}
-    for originals, traces in packets:
-        mapping.update(
-            (int(original), int(trace))
-            for original, trace in zip(originals, traces, strict=True)
-        )
-    trace_rows = int(sum(counts))
     full_rows = int(index_map.size_global * dofmap.index_map_bs)
-    if len(mapping) != trace_rows:
-        raise RuntimeError("trace numbering is not globally unique")
+    trace_rows = int(sum(counts))
+    if compact:
+        _checked_petsc_index_scalar(full_rows, "full_rows")
+        _checked_petsc_index_scalar(trace_rows, "trace_rows")
+        _checked_petsc_index_scalar(trace_start, "trace_start")
+        if (
+            comm.size != 1
+            or full_start != 0
+            or full_end != full_rows
+            or trace_start != 0
+        ):
+            raise NotImplementedError("compact action-only row maps are qualified for MPI1 ownership")
+        lookup = np.full(full_rows, -1, dtype=PETSc.IntType)
+        lookup[owned_trace] = _checked_petsc_index_array(
+            np.arange(len(owned_trace), dtype=np.int64), "owned trace ordinals"
+        )
+        mapping: Mapping[int, int] = _DenseIndexMapping(lookup, trace_rows)
+    else:
+        packets = comm.allgather(
+            (
+                np.asarray(owned_trace, dtype=np.int64),
+                np.arange(
+                    trace_start,
+                    trace_start + len(owned_trace),
+                    dtype=np.int64,
+                ),
+            )
+        )
+        mapping = {}
+        for originals, traces in packets:
+            mapping.update(
+                (int(original), int(trace))
+                for original, trace in zip(originals, traces, strict=True)
+            )
+        if len(mapping) != trace_rows:
+            raise RuntimeError("trace numbering is not globally unique")
     return owned_trace, mapping, trace_rows, full_rows
 
 
@@ -361,6 +522,8 @@ def _trace_constraint_map(
     original_to_trace: dict[int, int],
     trace_rows: int,
     mpc,
+    *,
+    compact: bool = False,
 ) -> TraceConstraintMap:
     """Build an exact distributed trace-only MPC expansion.
 
@@ -371,6 +534,181 @@ def _trace_constraint_map(
 
     comm = function_space.mesh.comm
     index_map = function_space.dofmap.index_map
+    if compact:
+        if comm.size != 1:
+            raise NotImplementedError("compact action-only MPC maps are qualified for MPI1")
+        full_rows = int(index_map.size_global)
+        _checked_petsc_index_scalar(full_rows, "compact full_rows")
+        local_range = tuple(map(int, index_map.local_range))
+        if local_range != (0, full_rows):
+            raise ValueError("compact action-only maps require contiguous MPI1 global rows")
+        if mpc is not None and int(index_map.size_global) != int(
+            mpc.function_space.dofmap.index_map.size_global
+        ):
+            raise ValueError("MPC and assembly spaces have different global sizes")
+        if mpc is None:
+            active_lookup = np.full(full_rows, -1, dtype=PETSc.IntType)
+            active_lookup[owned_trace] = _checked_petsc_index_array(
+                np.arange(len(owned_trace), dtype=np.int64), "active trace ordinals"
+            )
+            active_map = _DenseIndexMapping(active_lookup, len(owned_trace))
+            empty_slaves = np.empty(0, dtype=PETSc.IntType)
+            expansions = _CompactTraceExpansionMapping(
+                trace_rows=original_to_trace, active_rows=active_map,
+                slave_ordinals=np.full(full_rows, -1, dtype=PETSc.IntType),
+                indptr=np.zeros(1, dtype=np.int64), indices=empty_slaves,
+                coefficients=np.empty(0, dtype=np.complex128),
+            )
+            return TraceConstraintMap(
+                owned_active_original_dofs=owned_trace.copy(),
+                original_to_active=active_map,
+                expansion_by_original=expansions,
+                full_trace_rows=trace_rows,
+                active_rows=trace_rows,
+                slave_rows=0,
+                owned_active_range=(0, len(owned_trace)),
+                build_audit={
+                    "schema_version": "task035b.trace-constraint-map.v1",
+                    "status": "compact_identity_no_mpc_constraints",
+                    "full_trace_rows": trace_rows,
+                    "active_rows": trace_rows,
+                    "slave_rows": 0,
+                    "compact_dense_index_bytes": int(active_lookup.nbytes),
+                    "constraint_applied_before_global_matrix_insertion": False,
+                },
+            )
+        local_slaves = np.unique(np.asarray(mpc.slaves, dtype=np.int64).reshape(-1))
+        owned_local_slaves = local_slaves[
+            (local_slaves >= 0) & (local_slaves < int(index_map.size_local))
+        ].astype(np.int32, copy=False)
+        slave_original = _checked_petsc_index_array(
+            index_map.local_to_global(owned_local_slaves), "MPC slave global rows"
+        ).reshape(-1)
+        if len(slave_original) and any(
+            int(row) not in original_to_trace for row in slave_original
+        ):
+            raise ValueError("assembly-time trace condensation found non-trace MPC slaves")
+        order = np.argsort(slave_original, kind="stable")
+        slave_original = np.ascontiguousarray(slave_original[order], dtype=PETSc.IntType)
+        owned_local_slaves = np.ascontiguousarray(owned_local_slaves[order], dtype=np.int32)
+        if len(slave_original) > 1 and np.any(slave_original[1:] == slave_original[:-1]):
+            raise ValueError("finalized MPC contains duplicate global slave rows")
+        owned_active = owned_trace[
+            ~np.isin(owned_trace, slave_original, assume_unique=False)
+        ]
+        _checked_petsc_index_scalar(len(owned_active), "active_rows")
+        _checked_petsc_index_scalar(len(slave_original), "slave_rows")
+        active_lookup = np.full(full_rows, -1, dtype=PETSc.IntType)
+        active_lookup[owned_active] = _checked_petsc_index_array(
+            np.arange(len(owned_active), dtype=np.int64), "active trace ordinals"
+        )
+        active_map = _DenseIndexMapping(active_lookup, len(owned_active))
+        slave_ordinals = np.full(full_rows, -1, dtype=PETSc.IntType)
+        slave_ordinals[slave_original] = _checked_petsc_index_array(
+            np.arange(len(slave_original), dtype=np.int64), "slave ordinals"
+        )
+
+        raw_coefficients, raw_offsets = mpc.coefficients()
+        coefficients = np.asarray(raw_coefficients, dtype=np.complex128).reshape(-1)
+        offsets = np.asarray(raw_offsets, dtype=np.int64).reshape(-1)
+        mpc_index_map = mpc.function_space.dofmap.index_map
+        indptr = np.empty(len(slave_original) + 1, dtype=np.int64)
+        indptr[0] = 0
+        index_parts: list[np.ndarray] = []
+        coefficient_parts: list[np.ndarray] = []
+        nnz = 0
+        raw_master_coefficient_count = 0
+        duplicate_master_terms_coalesced = 0
+        maximum_masters = 0
+        for ordinal, local_slave in enumerate(owned_local_slaves):
+            masters_local = np.asarray(
+                mpc.masters.links(int(local_slave)), dtype=np.int32
+            ).reshape(-1)
+            start, stop = int(offsets[int(local_slave)]), int(offsets[int(local_slave) + 1])
+            row_coefficients = coefficients[start:stop]
+            if len(masters_local) != len(row_coefficients) or not len(masters_local):
+                raise ValueError("MPC master and coefficient counts disagree")
+            masters_original = _checked_petsc_index_array(
+                mpc_index_map.local_to_global(masters_local), "MPC master global rows"
+            ).reshape(-1)
+            if len(masters_original) and (
+                int(masters_original.min()) < 0
+                or int(masters_original.max()) >= full_rows
+            ):
+                raise ValueError("MPC master global row lies outside the space")
+            if np.any(slave_ordinals[masters_original] >= 0):
+                raise NotImplementedError("compact trace expansion does not accept chained MPC rows")
+            active_ids = active_lookup[masters_original]
+            if np.any(active_ids < 0):
+                raise ValueError("MPC trace row references a non-trace or inactive master")
+            if not np.isfinite(row_coefficients).all():
+                raise ValueError("MPC trace coefficients must be finite")
+            raw_master_coefficient_count += len(active_ids)
+            merged_ids, inverse = np.unique(active_ids, return_inverse=True)
+            merged_coefficients = np.zeros(len(merged_ids), dtype=np.complex128)
+            np.add.at(merged_coefficients, inverse, row_coefficients)
+            duplicate_master_terms_coalesced += len(active_ids) - len(merged_ids)
+            nonzero = merged_coefficients != 0.0
+            merged_ids = merged_ids[nonzero]
+            merged_coefficients = merged_coefficients[nonzero]
+            index_parts.append(np.ascontiguousarray(merged_ids, dtype=PETSc.IntType))
+            coefficient_parts.append(
+                np.ascontiguousarray(merged_coefficients, dtype=np.complex128)
+            )
+            nnz += len(merged_ids)
+            if nnz > int(np.iinfo(np.int64).max):
+                raise OverflowError("compact MPC expansion nnz exceeds int64 indptr capacity")
+            indptr[ordinal + 1] = nnz
+            maximum_masters = max(maximum_masters, len(merged_ids))
+        indices = np.concatenate(index_parts) if index_parts else np.empty(0, dtype=PETSc.IntType)
+        expansion_coefficients = (
+            np.concatenate(coefficient_parts)
+            if coefficient_parts else np.empty(0, dtype=np.complex128)
+        )
+        if len(owned_active) + len(slave_original) != trace_rows:
+            raise ValueError("compact trace MPC rows do not close against the complete trace map")
+        expansions = _CompactTraceExpansionMapping(
+            trace_rows=original_to_trace,
+            active_rows=active_map,
+            slave_ordinals=slave_ordinals,
+            indptr=indptr,
+            indices=indices,
+            coefficients=expansion_coefficients,
+        )
+        return TraceConstraintMap(
+            owned_active_original_dofs=owned_active,
+            original_to_active=active_map,
+            expansion_by_original=expansions,
+            full_trace_rows=trace_rows,
+            active_rows=len(owned_active),
+            slave_rows=len(slave_original),
+            owned_active_range=(0, len(owned_active)),
+            build_audit={
+                "schema_version": "task035b.trace-constraint-map.v1",
+                "status": "compact_exact_mpc_trace_expansion_built",
+                "full_trace_rows": trace_rows,
+                "active_rows": len(owned_active),
+                "slave_rows": len(slave_original),
+                "maximum_masters_per_slave": maximum_masters,
+                "raw_master_coefficient_count": raw_master_coefficient_count,
+                "duplicate_master_terms_coalesced": duplicate_master_terms_coalesced,
+                "master_coefficients_with_exact_zero_sum_removed": (
+                    raw_master_coefficient_count
+                    - duplicate_master_terms_coalesced
+                    - int(nnz)
+                ),
+                "compact_dense_index_bytes": int(
+                    original_to_trace.lookup.nbytes
+                    + active_lookup.nbytes
+                    + slave_ordinals.nbytes
+                ),
+                "compact_slave_expansion_bytes": int(
+                    indptr.nbytes + indices.nbytes + expansion_coefficients.nbytes
+                ),
+                "constraint_applied_before_global_matrix_insertion": True,
+                "embedded_identity_slave_rows_allocated": False,
+            },
+        )
     if mpc is None:
         active_counts = comm.allgather(int(len(owned_trace)))
         active_start = int(sum(active_counts[: comm.rank]))
@@ -562,6 +900,11 @@ def _cell_trace_expansion(
     constraints: TraceConstraintMap,
 ) -> tuple[np.ndarray, sparse.csr_matrix, bool]:
     """Return unique active columns and the sparse local expansion matrix."""
+
+    if isinstance(constraints.expansion_by_original, _CompactTraceExpansionMapping):
+        return constraints.expansion_by_original.expand_rows(
+            np.asarray(trace_original, dtype=PETSc.IntType)
+        )
 
     active_blocks = [
         constraints.expansion_by_original[int(original)] for original in trace_original
@@ -1460,6 +1803,7 @@ def build_unconstrained_assembly_time_condensation(
     retain_local_schur_for_matrix_free: bool = False,
     share_identity_cache: bool = False,
     materialize_global_matrix: bool = True,
+    compact_action_only_maps: bool = False,
     geometry_tolerance: float = 1.0e-11,
     preserve_exact_geometry: bool = False,
     allocation_gate: Callable[[str, Mapping[str, Any]], None] | None = None,
@@ -1488,6 +1832,8 @@ def build_unconstrained_assembly_time_condensation(
         raise ValueError(
             "action-only condensation requires retained local Schur classes"
         )
+    if compact_action_only_maps and materialize_global_matrix:
+        raise ValueError("compact_action_only_maps is restricted to action-only condensation")
     appended_global_rows = int(appended_global_rows)
     mesh = function_space.mesh
     comm = mesh.comm
@@ -1525,19 +1871,74 @@ def build_unconstrained_assembly_time_condensation(
         assume_unique=True,
     )
 
+    compact_map_preflight: dict[str, Any] | None = None
+    if compact_action_only_maps:
+        if comm.size != 1:
+            raise NotImplementedError("compact action-only volume maps require MPI1")
+        full_rows_upper = int(dofmap.index_map.size_global)
+        index_bytes = int(np.dtype(PETSc.IntType).itemsize)
+        scalar_bytes = int(np.dtype(np.complex128).itemsize)
+        slave_count = 0
+        coefficient_count = 0
+        if mpc is not None:
+            slave_count = int(len(np.asarray(mpc.slaves).reshape(-1)))
+            mpc_coefficients, _mpc_offsets = mpc.coefficients()
+            coefficient_count = int(len(mpc_coefficients))
+        _checked_petsc_index_scalar(full_rows_upper, "compact full_rows")
+        row_maps_bytes = 3 * full_rows_upper * index_bytes
+        per_cell_index_bytes = owned_cells * (2 * dimension + len(interior_positions)) * index_bytes
+        slave_expansion_bytes = (
+            coefficient_count * (index_bytes + scalar_bytes)
+            + (slave_count + 1) * np.dtype(np.int64).itemsize
+        )
+        active_original_bytes = full_rows_upper * index_bytes
+        python_cell_metadata_bytes = owned_cells * 512
+        compact_map_preflight = {
+            "schema": "task40extra.review_v25_compact_volume_maps_preflight.v1",
+            "status": "DERIVED_UPPER_BOUND",
+            "mpi_size": int(comm.size),
+            "full_rows_upper": full_rows_upper,
+            "owned_cells": owned_cells,
+            "local_dofs_per_cell": dimension,
+            "interior_rows_per_cell": len(interior_positions),
+            "trace_rows_per_cell": len(trace_positions),
+            "finalized_slave_rows": slave_count,
+            "finalized_master_coefficients": coefficient_count,
+            "dense_row_map_bytes": row_maps_bytes,
+            "cell_index_and_recovery_map_bytes_upper": per_cell_index_bytes,
+            "slave_expansion_csr_bytes_upper": slave_expansion_bytes,
+            "active_original_rows_bytes_upper": active_original_bytes,
+            "python_cell_metadata_bytes_upper": python_cell_metadata_bytes,
+            "retained_numeric_bytes_upper": int(
+                row_maps_bytes
+                + per_cell_index_bytes
+                + slave_expansion_bytes
+                + active_original_bytes
+                + python_cell_metadata_bytes
+            ),
+            "workspace_bytes": int(
+                owned_cells * dimension * index_bytes
+                + owned_cells * len(interior_positions) * index_bytes
+                + 2 * full_rows_upper * index_bytes
+            ),
+            "scope": "compact MPI1 index maps, exact slave/master closure, local dofmaps and recovery-map owners; class caches and native callback vectors are gated separately",
+        }
+        if allocation_gate is not None:
+            allocation_gate("compact_action_only_maps_preflight", compact_map_preflight)
+
     local_cell_dofs: list[np.ndarray] = []
     local_interiors: list[np.ndarray] = []
     for cell in range(owned_cells):
         local = np.asarray(dofmap.cell_dofs(cell), dtype=np.int32)
-        original = np.asarray(
-            dofmap.index_map.local_to_global(local),
-            dtype=PETSc.IntType,
+        original = _checked_petsc_index_array(
+            dofmap.index_map.local_to_global(local), "cell global DoF rows"
         )
         local_cell_dofs.append(original)
         local_interiors.append(original[interior_positions])
     owned_trace, mapping, trace_rows, full_rows = _owned_trace_numbering(
         function_space,
         tuple(local_interiors),
+        compact=compact_action_only_maps,
     )
     trace_constraints = _trace_constraint_map(
         function_space,
@@ -1545,7 +1946,16 @@ def build_unconstrained_assembly_time_condensation(
         mapping,
         trace_rows,
         mpc,
+        compact=compact_action_only_maps,
     )
+    del local_interiors
+    if compact_map_preflight is not None:
+        compact_map_preflight["measured_trace_rows"] = int(trace_rows)
+        compact_map_preflight["measured_active_rows"] = int(trace_constraints.active_rows)
+        compact_map_preflight["measured_slave_rows"] = int(trace_constraints.slave_rows)
+        compact_map_preflight["trace_constraint_map_audit"] = dict(
+            trace_constraints.build_audit
+        )
     active_rows = trace_constraints.active_rows
     owned_active = trace_constraints.owned_active_original_dofs
     active_counts = tuple(comm.allgather(len(owned_active)))
@@ -1553,13 +1963,14 @@ def build_unconstrained_assembly_time_condensation(
     local_appended = appended_global_rows if comm.rank == comm.size - 1 else 0
     matrix_rows = active_rows + appended_global_rows
     cell_trace_data: list[tuple[np.ndarray, sparse.csr_matrix, bool]] = []
-    for original_dofs in local_cell_dofs:
-        cell_trace_data.append(
-            _cell_trace_expansion(
-                original_dofs[trace_positions],
-                trace_constraints,
+    if materialize_global_matrix:
+        for original_dofs in local_cell_dofs:
+            cell_trace_data.append(
+                _cell_trace_expansion(
+                    original_dofs[trace_positions],
+                    trace_constraints,
+                )
             )
-        )
     if materialize_global_matrix:
         preallocation_started = perf_counter()
         diagonal_nnz, off_diagonal_nnz, preallocation_audit = (
@@ -1874,8 +2285,8 @@ def build_unconstrained_assembly_time_condensation(
             rhs_trace_cache[class_key] = trace_from_interior_rhs
             residual_projection_cache[class_key] = interior_identity
         trace_original = original_dofs[trace_positions]
-        active_ids, local_expansion, identity_expansion = cell_trace_data[cell]
         if materialize_global_matrix:
+            active_ids, local_expansion, identity_expansion = cell_trace_data[cell]
             active_schur = _constrain_local_schur(
                 schur,
                 local_expansion,
@@ -1892,8 +2303,8 @@ def build_unconstrained_assembly_time_condensation(
             local_insert_seconds += perf_counter() - insert_started
         recovery_maps.append(
             CellRecoveryMap(
-                interior_original_dofs=original_dofs[interior_positions].copy(),
-                trace_original_dofs=trace_original.copy(),
+                interior_original_dofs=original_dofs[interior_positions],
+                trace_original_dofs=trace_original,
                 class_key=class_key,
             )
         )
@@ -2146,6 +2557,7 @@ def build_unconstrained_assembly_time_condensation(
             "trace_preallocation_seconds": preallocation_audit["build_seconds"],
             "trace_preallocation": preallocation_audit,
             "trace_constraints": trace_constraints.build_audit,
+            "compact_action_only_maps": compact_map_preflight,
             "total_build_seconds": float(
                 comm.allreduce(perf_counter() - started, op=MPI.MAX)
             ),

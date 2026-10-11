@@ -3733,6 +3733,7 @@ def _run_v23_original_ny8_q_port_tile(
         from src.runners.task40_v10_campaign import (
             TASK40_V23_CAMPAIGN_SHA256,
             TASK40_V24_CAMPAIGN_SHA256,
+            TASK40_V25_CAMPAIGN_SHA256,
         )
 
         campaign_before = _read_v22_campaign_state(root)
@@ -5445,6 +5446,7 @@ def _run_probe(
         from src.runners.task40_v10_campaign import (
             TASK40_V23_CAMPAIGN_SHA256,
             TASK40_V24_CAMPAIGN_SHA256,
+            TASK40_V25_CAMPAIGN_SHA256,
         )
 
         is_v23_campaign = (
@@ -5453,15 +5455,24 @@ def _run_probe(
         is_v24_campaign = (
             campaign_state_entry["campaign_window_sha256"] == TASK40_V24_CAMPAIGN_SHA256
         )
+        is_v25_campaign = (
+            campaign_state_entry["campaign_window_sha256"] == TASK40_V25_CAMPAIGN_SHA256
+        )
         if is_v23_campaign:
             facts["schema"] = "task40extra.review_v23_compact_boundary_operator_probe.v1"
             facts["q_coverage"] = _v23_q_coverage_record({"status": "NOT_RUN"})
         elif is_v24_campaign:
             facts["schema"] = "task40extra.review_v24_compact_boundary_operator_probe.v1"
             facts["q_coverage"] = _v23_q_coverage_record({"status": "NOT_RUN"})
+        elif is_v25_campaign:
+            facts["schema"] = "task40extra.review_v25_target_operator_probe.v1"
+            facts["q_coverage"] = _v23_q_coverage_record({"status": "NOT_RUN"})
         facts["campaign_window"] = {
             "campaign_version": (
-                "V24" if is_v24_campaign else "V23" if is_v23_campaign else "V22"
+                "V25" if is_v25_campaign
+                else "V24" if is_v24_campaign
+                else "V23" if is_v23_campaign
+                else "V22"
             ),
             "window_sha256": campaign_state_entry["campaign_window_sha256"],
             "read_only": True,
@@ -5516,7 +5527,7 @@ def _run_probe(
             TARGET_MODE_PHYSICAL_IDENTITY_SHA256 != _MODE_PHYSICAL_SHA256
         ):
             raise ValueError("installed and frozen target-mode physical identities differ")
-        if (
+        if not is_v25_campaign and (
             not isinstance(mode_inventory, Mapping)
             or len(mode_rows) != 32_060
             or len(modes) != 32_060
@@ -5627,6 +5638,135 @@ def _run_probe(
             ),
             "mpc_finalized": True,
         }
+        if is_v25_campaign:
+            selector_path_text = os.environ.get("TASK40_V25_SELECTOR_PATH")
+            selector_sha_expected = os.environ.get("TASK40_V25_SELECTOR_SHA256")
+            if not selector_path_text or not selector_sha_expected:
+                raise ValueError("V25 target operation requires its service-bound selector")
+            selector_path = Path(selector_path_text).resolve()
+            allowed_selector_root = (
+                root
+                / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v25_wsl"
+            ).resolve()
+            if (
+                not selector_path.is_relative_to(allowed_selector_root)
+                or not selector_path.is_file()
+                or _sha256_file(selector_path) != selector_sha_expected
+            ):
+                raise ValueError("V25 selector path or SHA differs from the service binding")
+            selector = json.loads(selector_path.read_text(encoding="utf-8"))
+            if (
+                not isinstance(selector, Mapping)
+                or selector.get("schema")
+                != "task40extra.review_v25_selected_operation.v1"
+                or selector.get("operation") != "COMPLETE_TARGET_VOLUME_ACTION"
+                or selector.get("campaign_window_sha256")
+                != campaign_state_entry["campaign_window_sha256"]
+                or selector.get("input_sha256") != preflight.get("input_sha256")
+                or selector.get("model_profile")
+                != "task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1"
+            ):
+                raise ValueError("V25 target operation selector differs from its frozen input/window")
+            operation_path = output_directory / "v25_complete_target_volume_action.json"
+            try:
+                from .task40_v25_complete_volume import (
+                    VolumeResourceBlocked,
+                    run_complete_target_volume_action,
+                )
+
+                volume_resource_gates: list[dict[str, Any]] = []
+
+                def volume_admission(stage: str, additional_bytes: int):
+                    record = _resource_admission(
+                        f"v25_complete_volume/{stage}",
+                        additional_bytes,
+                        resource_sample=resource_sample,
+                        require_task_cgroup=True,
+                    )
+                    volume_resource_gates.append(record)
+                    return record
+
+                operation = run_complete_target_volume_action(
+                    cfg=cfg,
+                    mesh_object=mesh_object,
+                    cell_tags=cell_tags,
+                    function_space=space,
+                    mpc=mpc,
+                    output_directory=output_directory,
+                    resource_admission=volume_admission,
+                )
+                operation.update(
+                    {
+                        "run_id": preflight.get("run_id"),
+                        "source_sha": preflight.get("source_sha"),
+                        "input_sha256": preflight.get("input_sha256"),
+                        "physical_model_sha256": preflight.get("physical_model_sha256"),
+                        "campaign_window_sha256": campaign_state_entry[
+                            "campaign_window_sha256"
+                        ],
+                        "selector_sha256": selector_sha_expected,
+                        "mpc_identity": mpc_identity,
+                    }
+                )
+            except VolumeResourceBlocked as error:
+                resource_gates.extend(volume_resource_gates)
+                raise _ProbeResourceBlocked(
+                    "target_operator_probe", error.facts
+                ) from error
+            except _ProbeResourceBlocked:
+                raise
+            except Exception as error:
+                operation = {
+                    "schema": "task40extra.review_v25_complete_target_volume_action.v1",
+                    "status": "FAILED_COMPLETE_TARGET_VOLUME_ACTION",
+                    "official_result": False,
+                    "failure_type": type(error).__name__,
+                    "failure_message": f"{type(error).__name__}: {error}",
+                    "run_id": preflight.get("run_id"),
+                    "source_sha": preflight.get("source_sha"),
+                    "input_sha256": preflight.get("input_sha256"),
+                    "physical_model_sha256": preflight.get("physical_model_sha256"),
+                    "campaign_window_sha256": campaign_state_entry[
+                        "campaign_window_sha256"
+                    ],
+                    "selector_sha256": selector_sha_expected,
+                    "resource_gates": volume_resource_gates,
+                    "partial_raw_evidence": [
+                        {
+                            "path": path.name,
+                            "sha256": _sha256_file(path),
+                            "bytes": path.stat().st_size,
+                        }
+                        for path in sorted(output_directory.glob("v25_volume_*"))
+                        if path.is_file()
+                    ],
+                    "official_R_T_A_created": False,
+                    "q_csr_created": False,
+                    "factor_created": False,
+                    "ksp_created": False,
+                    "pde_solved": False,
+                }
+            _write_json(operation_path, operation)
+            operation_status = str(operation.get("status", "FAILED"))
+            facts["v25_complete_target_volume_action"] = {
+                "path": operation_path.name,
+                "sha256": _sha256_file(operation_path),
+                "status": operation_status,
+            }
+            facts["mpc_identity"] = mpc_identity
+            facts["q_coverage"] = _v23_q_coverage_record({"status": "NOT_RUN"})
+            facts["q_coverage"]["reason"] = (
+                "V25 completed the independent full-grid volume action; no q CSR or factor was built"
+            )
+            facts["resource_gates"] = resource_gates + volume_resource_gates
+            facts["status"] = operation_status
+            facts["failed_stage"] = (
+                None if operation_status == "PASS_COMPLETE_TARGET_VOLUME_ACTION"
+                else "target_operator_probe"
+            )
+            completed.append("target_operator_probe")
+            return facts
+
         cell_dof_digest = hashlib.sha256()
         boundary_cell_dof_digest = hashlib.sha256()
         boundary_dof_count_by_side = {"bottom": 0, "top": 0}
@@ -7854,6 +7994,15 @@ def _run_probe(
             q_coverage=(
                 _v23_q_coverage_record(v23_q_tile_facts or {"status": "NOT_RUN"})
                 if is_v23_campaign
+                else {
+                    "status": "NOT_RUN_RESOURCE_GATE",
+                    "expected_q_count": 8,
+                    "built_q_count": 0,
+                    "full_q_matrix_coverage": "0/8",
+                    "volume_qualification": "NOT_RUN",
+                    "reason": "V25 raw witness disk admission stopped before the target-volume operation",
+                }
+                if is_v25_campaign
                 else {
                     "status": "NOT_RUN",
                     "expected_q_count": 8,

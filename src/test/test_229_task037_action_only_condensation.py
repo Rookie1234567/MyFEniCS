@@ -7,6 +7,10 @@ from petsc4py import PETSc
 
 import src.solvers.hcurl_assembly_time_condensation as condensation_module
 from src.solvers.hcurl_assembly_time_condensation import (
+    _checked_petsc_index_array,
+    _checked_petsc_index_scalar,
+    _DenseIndexMapping,
+    _CompactTraceExpansionMapping,
     cell_interior_schur_bilinear,
     condense_unconstrained_vector_to_active_trace,
     project_mpc_vector_to_active_trace,
@@ -21,6 +25,157 @@ def _fill_vector(vector: PETSc.Vec, offset: float = 0.0) -> None:
     values = np.arange(start, end, dtype=np.float64) + offset
     vector.getArray()[:] = values + 1j * (values + 1.0) / 13.0
     vector.assemble()
+
+
+def test_compact_mapping_checks_wide_petsc_indices_and_preserves_identity_mpc_rows():
+    max_index = int(np.iinfo(PETSc.IntType).max)
+    assert _checked_petsc_index_scalar(max_index, "max_index") == max_index
+    with pytest.raises(OverflowError, match="does not fit PETSc.IntType"):
+        _checked_petsc_index_scalar(max_index + 1, "max_index")
+
+    checked = _checked_petsc_index_array(np.asarray([0, 2], dtype=np.int64), "rows")
+    assert checked.dtype == np.dtype(PETSc.IntType)
+    trace = _DenseIndexMapping(np.asarray([0, 1, 2, 3], dtype=PETSc.IntType), 4)
+    active = _DenseIndexMapping(np.asarray([0, 1, -1, 2], dtype=PETSc.IntType), 3)
+    expansion = _CompactTraceExpansionMapping(
+        trace_rows=trace,
+        active_rows=active,
+        slave_ordinals=np.asarray([-1, -1, 0, -1], dtype=PETSc.IntType),
+        indptr=np.asarray([0, 2], dtype=np.int64),
+        indices=np.asarray([0, 2], dtype=PETSc.IntType),
+        coefficients=np.asarray([0.25 + 0.5j, 0.75 - 0.5j], dtype=np.complex128),
+    )
+    assert list(trace.values()) == [0, 1, 2, 3]
+    slave_ids, slave_values = expansion[2]
+    np.testing.assert_array_equal(slave_ids, [0, 2])
+    np.testing.assert_allclose(slave_values, [0.25 + 0.5j, 0.75 - 0.5j])
+    active_ids, expanded, identity = expansion.expand_rows(np.asarray([0, 2, 3]))
+    np.testing.assert_array_equal(active_ids, [0, 2])
+    np.testing.assert_allclose(
+        expanded.toarray(),
+        [[1.0, 0.0], [0.25 + 0.5j, 0.75 - 0.5j], [0.0, 1.0]],
+    )
+    assert identity is False
+    if max_index < int(np.iinfo(np.int64).max):
+        with pytest.raises(OverflowError, match="outside PETSc.IntType"):
+            expansion.expand_rows([max_index + 1])
+    with pytest.raises(KeyError):
+        expansion[4]
+    with pytest.raises(KeyError):
+        expansion[1.5]
+
+
+def test_compact_action_only_matches_legacy_mpc_action_and_recovery_with_duplicate_masters():
+    import dolfinx_mpc
+
+    from src.solvers.hcurl_cell_static_condensation import (
+        owned_hcurl_cell_interior_dofs,
+    )
+    from src.solvers.hcurl_assembly_time_condensation import (
+        recover_owned_cell_interiors,
+    )
+
+    _mesh, cell_tags, V, compiled = _build_fixture(MPI.COMM_SELF)
+    interior = np.concatenate(owned_hcurl_cell_interior_dofs(V))
+    trace = np.setdiff1d(
+        np.arange(int(V.dofmap.index_map.size_global), dtype=np.int64), interior
+    )
+    slave = int(trace[-1])
+    masters = np.asarray([trace[0], trace[1], trace[0]], dtype=np.int64)
+    coefficients = np.asarray(
+        [0.4 + 0.1j, -0.2 + 0.3j, 0.15 - 0.05j], dtype=np.complex128
+    )
+    mpc = dolfinx_mpc.MultiPointConstraint(V)
+    mpc.add_constraint(
+        V,
+        np.asarray([slave], dtype=np.int32),
+        masters,
+        coefficients,
+        np.asarray([0, 0, 0], dtype=np.int32),
+        np.asarray([0, 3], dtype=np.int32),
+    )
+    mpc.finalize()
+
+    common = {
+        "mpc": mpc,
+        "materialize_global_matrix": False,
+        "retain_local_schur_for_matrix_free": True,
+        "sum_duplicate_cell_integrals": True,
+    }
+    legacy = build_unconstrained_assembly_time_condensation(
+        compiled, V, cell_tags, **common
+    )
+    gate_records = []
+    compact = build_unconstrained_assembly_time_condensation(
+        compiled,
+        V,
+        cell_tags,
+        compact_action_only_maps=True,
+        allocation_gate=lambda stage, facts: gate_records.append((stage, dict(facts))),
+        **common,
+    )
+    legacy_action = compact_action = legacy_context = compact_context = None
+    source = legacy_result = compact_result = None
+    try:
+        assert gate_records and gate_records[0][0] == "compact_action_only_maps_preflight"
+        assert np.array_equal(
+            legacy.owned_trace_original_dofs, compact.owned_trace_original_dofs
+        )
+        assert dict(legacy.original_to_trace) == dict(compact.original_to_trace)
+        assert dict(legacy.trace_constraints.original_to_active) == dict(
+            compact.trace_constraints.original_to_active
+        )
+        legacy_ids, legacy_coeffs = legacy.trace_constraints.expansion_by_original[slave]
+        compact_ids, compact_coeffs = compact.trace_constraints.expansion_by_original[slave]
+        assert len(legacy_ids) == 3
+        assert len(compact_ids) == 2
+        legacy_effective: dict[int, complex] = {}
+        for active_id, coefficient in zip(legacy_ids, legacy_coeffs, strict=True):
+            legacy_effective[int(active_id)] = (
+                legacy_effective.get(int(active_id), 0.0j) + complex(coefficient)
+            )
+        compact_effective = {
+            int(active_id): complex(coefficient)
+            for active_id, coefficient in zip(compact_ids, compact_coeffs, strict=True)
+        }
+        assert compact_effective == pytest.approx(legacy_effective)
+
+        legacy_action, legacy_context = create_static_local_schur_action(legacy)
+        compact_action, compact_context = create_static_local_schur_action(compact)
+        source = legacy.create_active_vector()
+        local_values = np.arange(source.getLocalSize(), dtype=np.float64) + 0.25
+        source.getArray()[:] = local_values + 1j * (local_values[::-1] + 0.5) / 7.0
+        source.assemble()
+        legacy_result = legacy_action.createVecLeft()
+        compact_result = compact_action.createVecLeft()
+        legacy_action.mult(source, legacy_result)
+        compact_action.mult(source, compact_result)
+        difference = compact_result.copy()
+        difference.axpy(PETSc.ScalarType(-1.0), legacy_result)
+        assert difference.norm() <= 1.0e-12 * max(legacy_result.norm(), 1.0)
+        difference.destroy()
+
+        trace_values = np.asarray(source.getArray(readonly=True), dtype=np.complex128).copy()
+        legacy_recovery = recover_owned_cell_interiors(legacy, trace_values)
+        compact_recovery = recover_owned_cell_interiors(compact, trace_values)
+        assert len(legacy_recovery) == len(compact_recovery)
+        for (legacy_rows, legacy_values), (compact_rows, compact_values) in zip(
+            legacy_recovery, compact_recovery, strict=True
+        ):
+            np.testing.assert_array_equal(legacy_rows, compact_rows)
+            np.testing.assert_allclose(compact_values, legacy_values, rtol=1e-12, atol=1e-12)
+    finally:
+        for vector in (compact_result, legacy_result, source):
+            if vector is not None:
+                vector.destroy()
+        for context in (compact_context, legacy_context):
+            if context is not None:
+                context.destroy()
+        for action in (compact_action, legacy_action):
+            if action is not None:
+                action.destroy()
+        compact.destroy()
+        legacy.destroy()
 
 
 def _build_systems(comm, *, appended_rows: int = 0):

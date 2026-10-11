@@ -2755,3 +2755,90 @@ def test_partial_checker_cli_and_api_share_profile_q_count(tmp_path, capsys):
     assert code == 0, expected
     assert expected["profile_q_count"] == 8
     assert json.loads(output_path.read_text(encoding="utf-8")) == expected
+
+
+def test_v25_campaign_route_uses_unique_window_and_receipt():
+    from scripts import task40_v20_service_workflow as service
+
+    target = service._resolve_service_campaign(
+        service.ROOT,
+        service.TASK40_V25_CAMPAIGN_WINDOW,
+        profile=service.V25_TARGET_PROFILE,
+        stop_stage="target_operator_probe",
+    )
+    assert target["version"] == "V25"
+    assert target["sha256"] == service.TASK40_V25_CAMPAIGN_SHA256
+    assert target["stage_scope"] == "target_operator_probe"
+
+    with pytest.raises(ValueError, match="restricted to the registered Ny8 target"):
+        service._resolve_service_campaign(
+            service.ROOT,
+            service.TASK40_V25_CAMPAIGN_WINDOW,
+            profile="task40extra_v20_p6_y_orbit_e2_reference_v1",
+            stop_stage="target_operator_probe",
+        )
+    with pytest.raises(ValueError, match="outside its explicit campaign scope"):
+        service._resolve_service_campaign(
+            service.ROOT,
+            service.TASK40_V25_CAMPAIGN_WINDOW,
+            profile=service.V25_TARGET_PROFILE,
+            stop_stage="full",
+        )
+
+
+def test_v25_selected_operation_selector_is_bound_to_input_and_window(tmp_path):
+    from scripts import task40_v20_service_workflow as service
+
+    forwarded, selected = service._extract_v25_selected_operation_selector_arg(
+        ["case.dat", "--v25-selected-operation-selector", "selector.json", "--flag"]
+    )
+    assert forwarded == ["case.dat", "--flag"]
+    assert selected == Path("selector.json").resolve()
+    with pytest.raises(ValueError, match="must appear only once"):
+        service._extract_v25_selected_operation_selector_arg(
+            ["case.dat", "--v25-selected-operation-selector=a.json",
+             "--v25-selected-operation-selector=b.json"]
+        )
+
+    input_path = tmp_path / "target.dat"
+    input_path.write_text("registered V25 target input\n", encoding="utf-8")
+    selector_path = tmp_path / service.V25_ARTIFACT_ROOT / "selectors" / "target.json"
+    selector_path.parent.mkdir(parents=True)
+    selector = {
+        "schema": "task40extra.review_v25_selected_operation.v1",
+        "operation": "COMPLETE_TARGET_VOLUME_ACTION",
+        "campaign_window_sha256": service.TASK40_V25_CAMPAIGN_SHA256,
+        "input_sha256": service._sha256_file(input_path),
+        "model_profile": service.V25_TARGET_PROFILE,
+        "stop_stage": "target_operator_probe",
+    }
+    selector_path.write_text(json.dumps(selector), encoding="utf-8")
+    binding = service._bind_v25_selected_operation_selector(
+        selector_path,
+        input_path=input_path,
+        campaign_registration={
+            "version": "V25",
+            "sha256": service.TASK40_V25_CAMPAIGN_SHA256,
+        },
+        profile=service.V25_TARGET_PROFILE,
+        stop_stage="target_operator_probe",
+        repo_root=tmp_path,
+    )
+    assert binding["selector_path"] == str(selector_path.resolve())
+    assert binding["selector_sha256"] == service._sha256_file(selector_path)
+    assert binding["operation"] == "COMPLETE_TARGET_VOLUME_ACTION"
+
+    selector["input_sha256"] = "0" * 64
+    selector_path.write_text(json.dumps(selector), encoding="utf-8")
+    with pytest.raises(ValueError, match="differs from the frozen target contract"):
+        service._bind_v25_selected_operation_selector(
+            selector_path,
+            input_path=input_path,
+            campaign_registration={
+                "version": "V25",
+                "sha256": service.TASK40_V25_CAMPAIGN_SHA256,
+            },
+            profile=service.V25_TARGET_PROFILE,
+            stop_stage="target_operator_probe",
+            repo_root=tmp_path,
+        )

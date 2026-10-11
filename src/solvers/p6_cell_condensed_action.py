@@ -2978,6 +2978,32 @@ class P6CellCondensedAction:
             raise FloatingPointError("p6 local recovery returned non-finite values")
         return result
 
+    def correct_internal_storage(self, storage: Any, full_residual: Any) -> np.ndarray:
+        """Apply one same-LU correction to every cell's interior rows.
+
+        The trace stays fixed.  ``full_residual`` is ``b - A x`` from an
+        independent full-space action, so each cell solves only
+        ``A_ii delta_i = residual_i`` with the LU factors already retained by
+        the condensation.  MPC slave storage remains zero because only cell
+        interior rows are updated.
+        """
+        if self._destroyed:
+            raise RuntimeError("p6 cell-condensed action has been destroyed")
+        if self.condensed.comm.Get_size() != 1:
+            raise NotImplementedError("same-LU storage correction is currently MPI1-only")
+        current = np.array(self._full_array(storage, "full storage correction state"),
+                           dtype=np.complex128, copy=True)
+        residual = self._full_array(full_residual, "full storage correction residual")
+        for cell in self._cells:
+            rows = cell.original_interiors
+            if rows.size:
+                current[rows] += lu_solve(
+                    cell.interior_lu,
+                    np.asarray(residual[rows], dtype=np.complex128),
+                    check_finite=True,
+                )
+        return current
+
     def evaluate_native_residual(
         self,
         reduced_solution: Any,

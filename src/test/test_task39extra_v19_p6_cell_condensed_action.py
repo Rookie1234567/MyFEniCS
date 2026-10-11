@@ -132,6 +132,23 @@ def _problem() -> tuple[_FakeCondensed, dict[str, np.ndarray], P6CellCondensedAc
     return condensed, block, action
 
 
+def test_same_lu_internal_correction_updates_only_cell_interior_rows() -> None:
+    _condensed, block, action = _problem()
+    try:
+        storage = np.asarray([0.5 + 0.2j, -0.3 + 0.1j, 1.0 + 0.0j, 2.0 - 1.0j])
+        residual = np.asarray([0.2 + 0.1j, -0.4 + 0.3j, 9.0 + 2.0j, -1.0j])
+        corrected = action.correct_internal_storage(storage, residual)
+        np.testing.assert_allclose(
+            block["Vii"] @ (corrected[:2] - storage[:2]), residual[:2],
+            rtol=1.0e-13, atol=1.0e-13,
+        )
+        np.testing.assert_array_equal(corrected[2:], storage[2:])
+        assert np.all(np.isfinite(corrected))
+        assert block["Vii"].shape == (2, 2)
+    finally:
+        action.destroy()
+
+
 def test_absent_cached_port_blocks_match_explicit_zeros_without_dense_payload() -> None:
     condensed, block, seed_action = _problem()
     hp = seed_action._H_p.copy()

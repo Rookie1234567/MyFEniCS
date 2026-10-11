@@ -140,3 +140,26 @@ def test_v24_campaign_window_is_bound_to_its_exact_six_hour_registration():
         campaign._validate_v24_campaign_registration(
             path, window.sha256, changed_scope
         )
+
+
+def test_v25_campaign_window_is_bound_to_its_exact_six_hour_registration():
+    path = campaign.TASK40_V25_CAMPAIGN_WINDOW.resolve()
+    window = campaign.load_fixed_campaign_window(path, require_current_boot=False)
+
+    assert window.sha256 == campaign.TASK40_V25_CAMPAIGN_SHA256
+    assert window.total_seconds == campaign.TASK40_V25_CAMPAIGN_SECONDS
+    assert window.closeout_seconds == campaign.TASK40_V25_CLOSEOUT_RESERVE_SECONDS
+    assert window.payload["campaign"] == campaign.TASK40_V25_CAMPAIGN_ID
+    assert window.payload["source_at_entry"] == campaign.TASK40_V25_SOURCE_AT_ENTRY
+    assert window.payload["stage_scope"] == list(campaign.TASK40_V25_STAGE_SCOPE)
+    assert window.payload["forbidden_scope"] == list(campaign.TASK40_V25_FORBIDDEN_SCOPE)
+    assert window.payload["parent_window"] == campaign.TASK40_V25_PARENT_WINDOW
+    assert window.payload["parent_ledger"] == campaign.TASK40_V25_PARENT_LEDGER
+
+    with pytest.raises(ValueError, match="SHA-256 changed"):
+        campaign._validate_v25_campaign_registration(path, "0" * 64, window.payload)
+    changed_scope = dict(window.payload, stage_scope=["implementation"])
+    with pytest.raises(ValueError, match="identity or scope changed"):
+        campaign._validate_v25_campaign_registration(
+            path, window.sha256, changed_scope
+        )

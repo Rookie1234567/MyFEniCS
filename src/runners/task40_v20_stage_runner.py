@@ -1079,6 +1079,14 @@ def run_task40_v20_stage(
             outcome = "STAGE_COMPLETED"
             status = "stage_completed"
             classification = "TARGET_OPERATOR_PROBE_V24_REAL_EDGE_VOLUME_PANEL"
+        elif probe_status == "PASS_COMPLETE_TARGET_VOLUME_ACTION":
+            outcome = "STAGE_COMPLETED"
+            status = "stage_completed"
+            classification = "TARGET_OPERATOR_PROBE_V25_COMPLETE_TARGET_VOLUME_ACTION"
+        elif probe_status == "FAILED_COMPLETE_TARGET_VOLUME_ACTION":
+            outcome = "STAGE_FAILED"
+            status = "failed"
+            classification = "TARGET_OPERATOR_PROBE_V25_COMPLETE_TARGET_VOLUME_ACTION_FAILED"
         elif probe_status == "PLANNED_SCAN_HANDOFF_WITH_PARTIAL_Q_PORT_TILE":
             outcome = "PLANNED_HANDOFF"
             status = "planned_handoff"
@@ -1148,6 +1156,9 @@ def run_task40_v20_stage(
                     "v24_bounded_32_mode_provider_replay.npz",
                     "v24_real_edge_volume_panel.json",
                     "v24_real_edge_volume_panel.npz",
+                    "v25_complete_target_volume_action.json",
+                    "v25_volume_witness_case_0.json",
+                    "v25_volume_witness_case_1.json",
                 )
                 if (output_directory / name).is_file()
             },

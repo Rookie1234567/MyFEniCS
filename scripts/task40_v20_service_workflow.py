@@ -39,6 +39,14 @@ from src.runners.task40_v10_campaign import (  # noqa: E402
     TASK40_V24_REVIEW_SHA256,
     TASK40_V24_STAGE_SCOPE,
     TASK40_V24_PARENT_LEDGER,
+    TASK40_V25_CAMPAIGN_RECEIPT,
+    TASK40_V25_CAMPAIGN_RECEIPT_SHA256,
+    TASK40_V25_CAMPAIGN_SHA256,
+    TASK40_V25_CAMPAIGN_WINDOW,
+    TASK40_V25_REVIEW_COMMIT,
+    TASK40_V25_REVIEW_PATH,
+    TASK40_V25_REVIEW_SHA256,
+    TASK40_V25_STAGE_SCOPE,
     load_fixed_campaign_window,
 )
 
@@ -76,6 +84,14 @@ V24_STOP_STAGE_SCOPE = {
 }
 V24_ARTIFACT_ROOT = Path(
     "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v24_wsl"
+)
+V25_TARGET_PROFILE = V22_TARGET_PROFILE
+V25_STOP_STAGE_SCOPE = {
+    "preflight": "implementation",
+    "target_operator_probe": "target_operator_probe",
+}
+V25_ARTIFACT_ROOT = Path(
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v25_wsl"
 )
 RUNTIME_PREFIX_RELATIVE = Path(
     "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
@@ -164,7 +180,7 @@ def _resolve_service_campaign(
     profile: str,
     stop_stage: str,
 ) -> dict[str, Any]:
-    """Resolve a historical V19 or an exact, scoped V22/V23/V24 window."""
+    """Resolve a historical V19 or an exact, scoped V22/V23/V24/V25 window."""
 
     supplied = campaign_path if campaign_path.is_absolute() else repo_root / campaign_path
     supplied = supplied.resolve()
@@ -182,6 +198,7 @@ def _resolve_service_campaign(
     v22_path = (repo_root / TASK40_V22_CAMPAIGN_WINDOW).resolve()
     v23_path = (repo_root / TASK40_V23_CAMPAIGN_WINDOW).resolve()
     v24_path = (repo_root / TASK40_V24_CAMPAIGN_WINDOW).resolve()
+    v25_path = (repo_root / TASK40_V25_CAMPAIGN_WINDOW).resolve()
     if supplied == v22_path:
         if profile != V22_TARGET_PROFILE:
             raise ValueError("the V22 campaign route is restricted to the registered Ny8 target")
@@ -230,8 +247,37 @@ def _resolve_service_campaign(
             raise ValueError("the V24 campaign registration receipt identity or scope changed")
         window = load_fixed_campaign_window(v24_path, require_current_boot=True)
         campaign_version = "V24"
+    elif supplied == v25_path:
+        if profile != V25_TARGET_PROFILE:
+            raise ValueError("the V25 campaign route is restricted to the registered Ny8 target")
+        stage_scope = V25_STOP_STAGE_SCOPE.get(stop_stage)
+        if stage_scope is None or stage_scope not in TASK40_V25_STAGE_SCOPE:
+            raise ValueError("the V25 service stop stage is outside its explicit campaign scope")
+        if _sha256_file(v25_path) != TASK40_V25_CAMPAIGN_SHA256:
+            raise ValueError("the registered V25 campaign window SHA changed")
+        receipt_path = (repo_root / TASK40_V25_CAMPAIGN_RECEIPT).resolve()
+        if (
+            not receipt_path.is_file()
+            or _sha256_file(receipt_path) != TASK40_V25_CAMPAIGN_RECEIPT_SHA256
+        ):
+            raise ValueError("the V25 campaign registration receipt is missing or changed")
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        if (
+            receipt.get("schema") != "task40extra.review_v25_campaign_registration.v1"
+            or receipt.get("manifest_path") != str(TASK40_V25_CAMPAIGN_WINDOW)
+            or receipt.get("manifest_sha256") != TASK40_V25_CAMPAIGN_SHA256
+            or receipt.get("review_sha") != TASK40_V25_REVIEW_COMMIT
+            or receipt.get("review_path") != TASK40_V25_REVIEW_PATH
+            or receipt.get("review_sha256") != TASK40_V25_REVIEW_SHA256
+            or receipt.get("stage_scope") != list(TASK40_V25_STAGE_SCOPE)
+            or receipt.get("registration_state")
+            != "REGISTERED_FOR_DEVELOPMENT; campaign/service/worker/checker routing qualification required before FE"
+        ):
+            raise ValueError("the V25 campaign registration receipt identity or scope changed")
+        window = load_fixed_campaign_window(v25_path, require_current_boot=True)
+        campaign_version = "V25"
     else:
-        raise ValueError("service campaign window is not a registered V19, V22, V23, or V24 path")
+        raise ValueError("service campaign window is not a registered V19, V22, V23, V24, or V25 path")
     return {
         "path": window.path,
         "sha256": window.sha256,
@@ -767,6 +813,72 @@ def _extract_v24_cd_selector_arg(case_args: list[str]) -> tuple[list[str], Path 
         cleaned.append(value)
         index += 1
     return cleaned, selected
+
+
+def _extract_v25_selected_operation_selector_arg(
+    case_args: list[str],
+) -> tuple[list[str], Path | None]:
+    """Remove the explicit V25 operation selector before forwarding to run_case."""
+    cleaned: list[str] = []
+    selected: Path | None = None
+    index = 0
+    flag = "--v25-selected-operation-selector"
+    while index < len(case_args):
+        value = case_args[index]
+        if value == flag:
+            if selected is not None or index + 1 >= len(case_args):
+                raise ValueError("V25 selected-operation selector must appear once with a JSON path")
+            selected = Path(case_args[index + 1]).resolve()
+            index += 2
+            continue
+        if value.startswith(flag + "="):
+            if selected is not None:
+                raise ValueError("V25 selected-operation selector must appear only once")
+            selected = Path(value.split("=", 1)[1]).resolve()
+            index += 1
+            continue
+        cleaned.append(value)
+        index += 1
+    return cleaned, selected
+
+
+def _bind_v25_selected_operation_selector(
+    selector_path: Path,
+    *,
+    input_path: Path,
+    campaign_registration: dict[str, Any],
+    profile: str,
+    stop_stage: str,
+    repo_root: Path,
+) -> dict[str, str]:
+    """Bind the V25 target-volume action selector to its exact input/window."""
+    selector_path = selector_path.resolve()
+    allowed_root = (repo_root / V25_ARTIFACT_ROOT).resolve()
+    if not selector_path.is_relative_to(allowed_root) or not selector_path.is_file():
+        raise ValueError("V25 selected-operation selector must be under its registered artifact directory")
+    if (
+        campaign_registration.get("version") != "V25"
+        or campaign_registration.get("sha256") != TASK40_V25_CAMPAIGN_SHA256
+        or profile != V25_TARGET_PROFILE
+        or stop_stage != "target_operator_probe"
+    ):
+        raise ValueError("V25 operation selector requires the registered target probe/window")
+    raw = selector_path.read_bytes()
+    selector = json.loads(raw)
+    if not isinstance(selector, dict) or (
+        selector.get("schema") != "task40extra.review_v25_selected_operation.v1"
+        or selector.get("operation") != "COMPLETE_TARGET_VOLUME_ACTION"
+        or selector.get("campaign_window_sha256") != TASK40_V25_CAMPAIGN_SHA256
+        or selector.get("input_sha256") != _sha256_file(input_path)
+        or selector.get("model_profile") != V25_TARGET_PROFILE
+        or selector.get("stop_stage") != "target_operator_probe"
+    ):
+        raise ValueError("V25 selected-operation selector differs from the frozen target contract")
+    return {
+        "selector_path": str(selector_path),
+        "selector_sha256": _sha256_bytes(raw),
+        "operation": str(selector["operation"]),
+    }
 
 
 def _bind_v24_cd_selector(
@@ -2387,6 +2499,301 @@ def _v24_real_edge_panel_readback_checks(
     return checks
 
 
+def _v25_complete_volume_readback_checks(
+    *, output_directory: Path, probe: Mapping[str, Any], manifest: Mapping[str, Any]
+) -> dict[str, bool]:
+    """Verify V25 witness files and recompute every reported numerical gate."""
+    identity = probe.get("v25_complete_target_volume_action")
+    identity = identity if isinstance(identity, Mapping) else {}
+    campaign = manifest.get("task40_v20_campaign")
+    campaign = campaign if isinstance(campaign, Mapping) else {}
+    operation_path = output_directory / "v25_complete_target_volume_action.json"
+    if not operation_path.is_file():
+        return {"v25_complete_volume_operation_file_present": False}
+    operation = json.loads(operation_path.read_text(encoding="utf-8"))
+    checks: dict[str, bool] = {
+        "v25_operation_path_and_hash_match_probe": (
+            identity.get("path") == operation_path.name
+            and identity.get("sha256") == _sha256_file(operation_path)
+        ),
+        "v25_operation_identity_matches_run": (
+            operation.get("run_id") == manifest.get("run_id")
+            and operation.get("source_sha") == manifest.get("source_sha")
+            and operation.get("input_sha256") == manifest.get("input_sha256")
+            and operation.get("physical_model_sha256") == manifest.get("physical_model_sha256")
+            and operation.get("campaign_window_sha256") == campaign.get("window_sha256")
+        ),
+        "v25_no_full_q_factor_ksp_or_pde": (
+            operation.get("official_result") is False
+            and operation.get("full_q_matrix") is False
+            and operation.get("q_csr_created") is False
+            and operation.get("factor_created") is False
+            and operation.get("ksp_created") is False
+            and operation.get("pde_solved") is False
+            and operation.get("official_R_T_A_created") is False
+        ),
+    }
+    witnesses = operation.get("witnesses")
+    if operation.get("status") != "PASS_COMPLETE_TARGET_VOLUME_ACTION" and not witnesses:
+        raw_facts = operation.get("partial_raw_evidence", [])
+        raw_ok = isinstance(raw_facts, list)
+        for fact in raw_facts if isinstance(raw_facts, list) else []:
+            if not isinstance(fact, Mapping):
+                raw_ok = False
+                continue
+            path = (output_directory / str(fact.get("path", ""))).resolve()
+            raw_ok = bool(
+                raw_ok
+                and path.parent == output_directory.resolve()
+                and path.is_file()
+                and path.stat().st_size == fact.get("bytes")
+                and _sha256_file(path) == fact.get("sha256")
+            )
+        checks["v25_failure_cause_and_partial_raw_evidence_preserved"] = bool(
+            operation.get("status") == "FAILED_COMPLETE_TARGET_VOLUME_ACTION"
+            and isinstance(operation.get("failure_type"), str)
+            and isinstance(operation.get("failure_message"), str)
+            and raw_ok
+        )
+        return checks
+
+    target = operation.get("target_model", {})
+    target = target if isinstance(target, Mapping) else {}
+    checks["v25_exact_complete_target_inventory"] = (
+        target.get("cell_count") == 30_464
+        and target.get("p6_local_cell_dofs") == 882
+        and target.get("full_storage_rows") == 20_181_348
+        and target.get("independent_rows") == 19_897_344
+        and target.get("trace_rows") == 6_472_548
+        and target.get("active_trace_rows") == 6_188_544
+        and target.get("mpc_slave_rows") == 284_004
+        and operation.get("condensation", {}).get("global_matrix_materialized") is False
+    )
+    if not isinstance(witnesses, list) or len(witnesses) != 2:
+        checks["v25_two_complete_witnesses"] = False
+        return checks
+    checks["v25_two_complete_witnesses"] = True
+    cases_valid: list[bool] = []
+    for case, witness in enumerate(witnesses):
+        if not isinstance(witness, Mapping):
+            cases_valid.append(False)
+            continue
+        manifest_name = witness.get("case_manifest_path")
+        case_path = (output_directory / str(manifest_name or "")).resolve()
+        case_ok = bool(
+            case_path.parent == output_directory.resolve()
+            and case_path.is_file()
+            and _sha256_file(case_path) == witness.get("case_manifest_sha256")
+        )
+        case_doc = (
+            json.loads(case_path.read_text(encoding="utf-8")) if case_ok else {}
+        )
+        records = case_doc.get("raw_arrays", []) if isinstance(case_doc, Mapping) else []
+        arrays: dict[str, Any] = {}
+        if not isinstance(records, list):
+            case_ok = False
+            records = []
+
+        def array_hash(value: Any) -> str:
+            array = np.ascontiguousarray(np.asarray(value))
+            digest = hashlib.sha256()
+            digest.update(repr((array.shape, str(array.dtype))).encode("ascii"))
+            digest.update(memoryview(array).cast("B"))
+            return digest.hexdigest()
+
+        for record in records:
+            if not isinstance(record, Mapping):
+                case_ok = False
+                continue
+            raw_path = (output_directory / str(record.get("path", ""))).resolve()
+            if (
+                raw_path.parent != output_directory.resolve()
+                or not raw_path.is_file()
+                or raw_path.stat().st_size != record.get("bytes")
+                or _sha256_file(raw_path) != record.get("file_sha256")
+            ):
+                case_ok = False
+                continue
+            try:
+                array = np.load(raw_path, mmap_mode="r", allow_pickle=False)
+            except (OSError, ValueError):
+                case_ok = False
+                continue
+            label = raw_path.stem.removeprefix(f"v25_volume_case_{case}_")
+            if (
+                list(array.shape) != record.get("shape")
+                or str(array.dtype) != record.get("dtype")
+                or array_hash(array) != record.get("array_sha256")
+                or record.get("readback_verified") is not True
+            ):
+                case_ok = False
+            arrays[label] = array
+        expected_arrays = {
+            "trace_input", "storage_state", "native_rhs", "reduced_rhs",
+            "reduced_action", "recovered_storage", "native_recovered_action",
+            "native_residual", "slave_global_rows",
+            "internal_state_nonzero_counts_by_cell",
+            "internal_rhs_nonzero_counts_by_cell", "internal_rhs_norms_by_cell",
+        }
+        case_ok = case_ok and set(arrays) == expected_arrays
+        try:
+            trace = arrays["trace_input"]
+            state = arrays["storage_state"]
+            rhs = arrays["native_rhs"]
+            reduced_rhs = arrays["reduced_rhs"]
+            reduced_action = arrays["reduced_action"]
+            recovered = arrays["recovered_storage"]
+            native_applied = arrays["native_recovered_action"]
+            residual = arrays["native_residual"]
+            slaves = np.asarray(arrays["slave_global_rows"], dtype=np.int64)
+            state_cell_counts = np.asarray(
+                arrays["internal_state_nonzero_counts_by_cell"], dtype=np.int64
+            )
+            rhs_cell_counts = np.asarray(
+                arrays["internal_rhs_nonzero_counts_by_cell"], dtype=np.int64
+            )
+            rhs_cell_norms = np.asarray(arrays["internal_rhs_norms_by_cell"], dtype=np.float64)
+            cell_coverage = (
+                state_cell_counts.shape == (30_464,)
+                and rhs_cell_counts.shape == (30_464,)
+                and rhs_cell_norms.shape == (30_464,)
+                and int(np.count_nonzero(state_cell_counts))
+                == witness.get("nonzero_internal_cell_count")
+                and int(np.count_nonzero(rhs_cell_counts))
+                == witness.get("native_rhs_nonzero_internal_cell_count")
+                and array_hash(state_cell_counts)
+                == witness.get("internal_state_nonzero_counts_by_cell_sha256")
+                and array_hash(rhs_cell_counts)
+                == witness.get("native_rhs_nonzero_counts_by_cell_sha256")
+                and array_hash(rhs_cell_norms)
+                == witness.get("native_rhs_norms_by_cell_sha256")
+            )
+            if case == 1:
+                cell_coverage = bool(
+                    cell_coverage
+                    and np.all(state_cell_counts > 0)
+                    and np.all(rhs_cell_counts > 0)
+                    and np.all(rhs_cell_norms > 0.0)
+                )
+            slave_zero = bool(
+                slaves.ndim == 1
+                and len(slaves) == 284_004
+                and (not len(slaves) or np.all(slaves[1:] > slaves[:-1]))
+                and (not len(slaves)
+                     or (np.all(state[slaves] == 0.0)
+                         and np.all(rhs[slaves] == 0.0)
+                         and np.all(recovered[slaves] == 0.0)))
+            )
+
+            def norm_chunks(value: Any) -> float:
+                total = 0.0
+                flat = np.asarray(value).reshape(-1)
+                for start in range(0, len(flat), 1_000_000):
+                    part = flat[start : start + 1_000_000]
+                    total += float(np.vdot(part, part).real)
+                return float(np.sqrt(total))
+
+            def finite_chunks(value: Any) -> bool:
+                flat = np.asarray(value).reshape(-1)
+                return all(
+                    bool(np.all(np.isfinite(flat[start : start + 1_000_000])))
+                    for start in range(0, len(flat), 1_000_000)
+                )
+
+            def difference_relative(left: Any, right: Any) -> float:
+                error_square = 0.0
+                reference_square = 0.0
+                lhs = np.asarray(left).reshape(-1)
+                rhs_value = np.asarray(right).reshape(-1)
+                if lhs.shape != rhs_value.shape:
+                    return float("inf")
+                for start in range(0, len(lhs), 1_000_000):
+                    stop = min(start + 1_000_000, len(lhs))
+                    difference = lhs[start:stop] - rhs_value[start:stop]
+                    error_square += float(np.vdot(difference, difference).real)
+                    reference = rhs_value[start:stop]
+                    reference_square += float(np.vdot(reference, reference).real)
+                reference_norm = float(np.sqrt(reference_square))
+                return float(np.sqrt(error_square)) / reference_norm if reference_norm else float("inf")
+
+            action_relative = difference_relative(reduced_action, reduced_rhs)
+            forward_relative = difference_relative(recovered, state)
+            native_rhs_norm = norm_chunks(rhs)
+            native_relative = norm_chunks(residual) / native_rhs_norm if native_rhs_norm else float("inf")
+            numerical_pass = bool(
+                action_relative <= 1.0e-10
+                and native_relative <= 1.0e-10
+                and forward_relative <= 1.0e-11
+                and witness.get("native_packed_coefficients_within_bound") is True
+                and (case != 1 or cell_coverage)
+            )
+            expected_case_status = "PASS" if numerical_pass else "FAILED_NUMERICAL_GATE"
+            residual_equal = True
+            for start in range(0, len(rhs), 1_000_000):
+                stop = min(start + 1_000_000, len(rhs))
+                if not np.array_equal(
+                    rhs[start:stop] - native_applied[start:stop], residual[start:stop]
+                ):
+                    residual_equal = False
+                    break
+            case_ok = bool(
+                case_ok
+                and case_doc.get("case") == case
+                and case_doc.get("status") == expected_case_status
+                and witness.get("status") == expected_case_status
+                and trace.shape == (6_188_544,)
+                and state.shape == rhs.shape == recovered.shape == native_applied.shape == residual.shape == (20_181_348,)
+                and reduced_rhs.shape == reduced_action.shape == trace.shape
+                and finite_chunks(trace)
+                and finite_chunks(state)
+                and finite_chunks(rhs)
+                and finite_chunks(recovered)
+                and finite_chunks(residual)
+                and np.count_nonzero(trace) == 6_188_544
+                and array_hash(trace) == witness.get("active_trace_input_sha256")
+                and array_hash(state) == witness.get("full_storage_input_sha256")
+                and array_hash(rhs) == witness.get("native_rhs_sha256")
+                and case_doc.get("raw_arrays") == witness.get("raw_arrays")
+                and slaves.shape == (284_004,)
+                and (not len(slaves) or (int(slaves.min()) >= 0 and int(slaves.max()) < 20_181_348))
+                and array_hash(np.asarray(slaves, dtype="<i8"))
+                == target.get("mpc_slave_rows_sha256")
+                and cell_coverage
+                and slave_zero
+                and residual_equal
+                and ((action_relative <= 1.0e-10) == (case_doc.get("status") == "PASS"))
+                and ((native_relative <= 1.0e-10) or (case_doc.get("status") == "FAILED_NUMERICAL_GATE"))
+                and ((forward_relative <= 1.0e-11) or (case_doc.get("status") == "FAILED_NUMERICAL_GATE"))
+                and np.isclose(action_relative, witness.get("condensed_action_rhs_relative_error"), rtol=1e-12, atol=1e-15)
+                and np.isclose(native_relative, witness.get("native_volume_residual_relative"), rtol=1e-12, atol=1e-15)
+                and np.isclose(forward_relative, witness.get("recovery_forward_relative_error"), rtol=1e-12, atol=1e-15)
+                and np.isclose(native_rhs_norm, witness.get("native_rhs_norm"), rtol=1e-12, atol=1e-15)
+                and np.isclose(norm_chunks(residual), witness.get("native_volume_residual_norm"), rtol=1e-12, atol=1e-15)
+            )
+        except (KeyError, IndexError, TypeError, ValueError, OverflowError):
+            case_ok = False
+        finally:
+            for array in arrays.values():
+                mmap = getattr(array, "_mmap", None)
+                if mmap is not None:
+                    mmap.close()
+        cases_valid.append(bool(case_ok))
+    checks["v25_raw_array_hashes_and_readback_verified"] = all(cases_valid)
+    checks["v25_action_residual_and_forward_gates_recomputed"] = all(cases_valid)
+    checks["v25_second_case_covers_every_cell_state_and_native_rhs"] = (
+        bool(witnesses[1].get("all_cell_internal_nonzero_witness"))
+        and bool(witnesses[1].get("all_cell_internal_native_rhs_witness"))
+        and cases_valid[1]
+    )
+    checks["v25_operation_status_matches_case_evidence"] = bool(
+        (operation.get("status") == "PASS_COMPLETE_TARGET_VOLUME_ACTION"
+         and all(row.get("status") == "PASS" for row in witnesses))
+        or (operation.get("status") == "FAILED_COMPLETE_TARGET_VOLUME_ACTION"
+            and any(row.get("status") == "FAILED_NUMERICAL_GATE" for row in witnesses))
+    )
+    return checks
+
+
 def _check_partial_result(
     *,
     input_path: Path,
@@ -2424,6 +2831,8 @@ def _check_partial_result(
     v23_expected_accounting = v23_expected_window.with_name("campaign_accounting_v10.jsonl")
     v24_expected_window = (ROOT / TASK40_V24_CAMPAIGN_WINDOW).resolve()
     v24_expected_accounting = v24_expected_window.with_name("campaign_accounting_v10.jsonl")
+    v25_expected_window = (ROOT / TASK40_V25_CAMPAIGN_WINDOW).resolve()
+    v25_expected_accounting = v25_expected_window.with_name("campaign_accounting_v10.jsonl")
     q_only_receipt = (
         partial.get("schema") == "task40extra.review_v20_partial_result.v2"
         and partial.get("classification") == "TARGET_OPERATOR_PROBE_Q_ONLY_SUPPLEMENT"
@@ -2434,6 +2843,14 @@ def _check_partial_result(
         in {
             "TARGET_OPERATOR_PROBE_V24_BOUNDED_PORT_REUSE_VOLUME_SAMPLE",
             "TARGET_OPERATOR_PROBE_V24_REAL_EDGE_VOLUME_PANEL",
+        }
+    )
+    v25_volume_receipt = (
+        partial.get("schema") == "task40extra.review_v20_partial_result.v2"
+        and partial.get("classification")
+        in {
+            "TARGET_OPERATOR_PROBE_V25_COMPLETE_TARGET_VOLUME_ACTION",
+            "TARGET_OPERATOR_PROBE_V25_COMPLETE_TARGET_VOLUME_ACTION_FAILED",
         }
     )
     q_only_supplement_identity = partial.get("q_only_supplement")
@@ -2482,6 +2899,31 @@ def _check_partial_result(
         and (ROOT / TASK40_V24_CAMPAIGN_RECEIPT).is_file()
         and _sha256_file(ROOT / TASK40_V24_CAMPAIGN_RECEIPT)
         == TASK40_V24_CAMPAIGN_RECEIPT_SHA256
+    )
+    v25_identity_claimed = (
+        probe_identity.get("schema") == "task40extra.review_v25_target_operator_probe.v1"
+        or campaign_evidence.get("window_sha256") == TASK40_V25_CAMPAIGN_SHA256
+        or campaign_evidence.get("window_path") == str(v25_expected_window)
+        or v25_volume_receipt
+    )
+    v25_controlled_stop_receipt = bool(
+        v25_identity_claimed
+        and partial.get("status") == "controlled_stop"
+        and partial.get("outcome") == "RESOURCE_CONTROLLED_STOP"
+        and expected_stop_stage == "target_operator_probe"
+    )
+    v25_campaign_identity_valid = (
+        campaign_evidence.get("window_sha256") == TASK40_V25_CAMPAIGN_SHA256
+        and Path(str(campaign_evidence.get("window_path", ""))).resolve()
+        == v25_expected_window
+        and Path(str(campaign_evidence.get("accounting_path", ""))).resolve()
+        == v25_expected_accounting
+        and v25_expected_window.is_file()
+        and _sha256_file(v25_expected_window) == TASK40_V25_CAMPAIGN_SHA256
+        and v25_expected_accounting.is_file()
+        and (ROOT / TASK40_V25_CAMPAIGN_RECEIPT).is_file()
+        and _sha256_file(ROOT / TASK40_V25_CAMPAIGN_RECEIPT)
+        == TASK40_V25_CAMPAIGN_RECEIPT_SHA256
     )
     expected_completed = STAGE_PREFIXES.get(expected_stop_stage)
     v2_receipt = partial.get("schema") == "task40extra.review_v20_partial_result.v2"
@@ -2532,11 +2974,21 @@ def _check_partial_result(
         checks["v24_execution_manifest_window_and_accounting_bind"] = (
             v24_campaign_identity_valid
         )
+    if v25_identity_claimed:
+        checks["v25_execution_manifest_window_accounting_and_registration_bind"] = (
+            v25_campaign_identity_valid
+        )
     if expected_stop_stage in {"build_and_symbolic", "one_q_numeric"} and not v2_receipt:
         checks["target_heavy_authorization_remains_false"] = (
             input_data.get("execution", {}).get("task40_target_heavy_authorized") is False
         )
-    if v2_receipt and not q_only_receipt and not v24_cd_receipt:
+    if (
+        v2_receipt
+        and not q_only_receipt
+        and not v24_cd_receipt
+        and not v25_volume_receipt
+        and not v25_controlled_stop_receipt
+    ):
         from scripts.task40_v21_readonly_recheck import validate_stage_receipt_semantics
 
         semantic_checks = validate_stage_receipt_semantics(
@@ -2553,6 +3005,8 @@ def _check_partial_result(
             expected_campaign_window_sha256=(
                 TASK40_V24_CAMPAIGN_SHA256
                 if v24_identity_claimed
+                else TASK40_V25_CAMPAIGN_SHA256
+                if v25_identity_claimed
                 else TASK40_V23_CAMPAIGN_SHA256
                 if v23_identity_claimed
                 else None
@@ -2730,6 +3184,76 @@ def _check_partial_result(
                     ).items()
                 }
             )
+    elif v25_volume_receipt:
+        v25_stage_result = partial.get("stage_result")
+        v25_stage_result = v25_stage_result if isinstance(v25_stage_result, dict) else {}
+        v25_identity = probe_identity.get("v25_complete_target_volume_action")
+        v25_identity = v25_identity if isinstance(v25_identity, dict) else {}
+        v25_is_pass = partial.get("classification") == (
+            "TARGET_OPERATOR_PROBE_V25_COMPLETE_TARGET_VOLUME_ACTION"
+        )
+        expected_volume_status = (
+            "PASS_COMPLETE_TARGET_VOLUME_ACTION"
+            if v25_is_pass
+            else "FAILED_COMPLETE_TARGET_VOLUME_ACTION"
+        )
+        v25_q = partial.get("q_coverage", {})
+        v25_q = v25_q if isinstance(v25_q, dict) else {}
+        checks.update(
+            {
+                "v25_volume_receipt_classification_and_stage_status": (
+                    partial.get("status") == ("stage_completed" if v25_is_pass else "failed")
+                    and partial.get("outcome") == ("STAGE_COMPLETED" if v25_is_pass else "STAGE_FAILED")
+                    and v25_stage_result.get("probe_status") == expected_volume_status
+                    and probe_identity.get("status") == expected_volume_status
+                    and v25_identity.get("status") == expected_volume_status
+                ),
+                "v25_q_factor_and_pde_scope_is_accurate": (
+                    v25_q.get("built_q_count") == 0
+                    and v25_q.get("full_q_matrix_coverage") == "0/8"
+                    and v25_q.get("volume_qualification") == "NOT_RUN"
+                    and isinstance(v25_q.get("reason"), str)
+                    and "no q csr or factor was built"
+                    in str(v25_q.get("reason", "")).lower()
+                ),
+                **{
+                    name: passed
+                    for name, passed in _v25_complete_volume_readback_checks(
+                        output_directory=numerical_output,
+                        probe=probe_identity,
+                        manifest=manifest,
+                    ).items()
+                },
+            }
+        )
+    elif v25_controlled_stop_receipt:
+        blocker = partial.get("resource_gate")
+        blocker = blocker if isinstance(blocker, Mapping) else {}
+        probe_blocker = probe_identity.get("resource_blocker")
+        probe_blocker = probe_blocker if isinstance(probe_blocker, Mapping) else {}
+        checks.update(
+            {
+                "v25_disk_gate_is_a_controlled_stop": (
+                    probe_identity.get("status") == "RESOURCE_CONTROLLED_STOP"
+                    and probe_identity.get("failed_stage") is None
+                    and probe_identity.get("blocked_task_stage") == "target_operator_probe"
+                    and blocker == probe_blocker
+                    and blocker.get("stage") == "v25_two_case_atomic_raw_witness_persistence"
+                    and blocker.get("passed") is False
+                    and type(blocker.get("required_bytes_upper")) is int
+                    and type(blocker.get("available_bytes")) is int
+                    and blocker["available_bytes"] < blocker["required_bytes_upper"]
+                ),
+                "v25_disk_controlled_stop_did_not_start_numerical_witness": (
+                    not (numerical_output / "v25_complete_target_volume_action.json").exists()
+                ),
+                "v25_q_factor_and_pde_scope_is_accurate": (
+                    partial.get("q_coverage", {}).get("built_q_count") == 0
+                    and partial.get("q_coverage", {}).get("full_q_matrix_coverage") == "0/8"
+                    and partial.get("q_coverage", {}).get("volume_qualification") == "NOT_RUN"
+                ),
+            }
+        )
     if "geometry_inventory" in (partial.get("completed_stages") or []):
         checks["geometry_artifact_present"] = (
             numerical_output / "v20_geometry_inventory.json"
@@ -2793,6 +3317,7 @@ def run_service(
         case_args = case_args[1:]
     case_args, q_only_scan_directory = _extract_v23_q_only_scan_arg(case_args)
     case_args, v24_cd_selector_path = _extract_v24_cd_selector_arg(case_args)
+    case_args, v25_selector_path = _extract_v25_selected_operation_selector_arg(case_args)
     input_path, campaign_path, stop_stage, data = _parse_case_arguments(case_args)
     canonical_relative, _supported = V20_INPUTS[data["solver"]["preconditioner"]]
     canonical_path = repo_root / canonical_relative
@@ -2819,6 +3344,14 @@ def run_service(
         scan_directory=q_only_scan_directory,
         cd_selector_path=v24_cd_selector_path,
     )
+    if v25_selector_path is not None and (
+        campaign_registration.get("version") != "V25"
+        or q_only_scan_directory is not None
+        or v24_cd_selector_path is not None
+    ):
+        raise ValueError("V25 selected-operation selector cannot be combined with V23/V24 selectors")
+    if campaign_registration.get("version") == "V25" and v25_selector_path is None:
+        raise ValueError("V25 target probe requires its explicit selected-operation selector")
     q_only_binding = (
         _bind_v23_q_only_scan_checkpoint(
             q_only_scan_directory,
@@ -2844,6 +3377,18 @@ def run_service(
         if v24_cd_selector_path is not None
         else None
     )
+    v25_binding = (
+        _bind_v25_selected_operation_selector(
+            v25_selector_path,
+            input_path=input_path,
+            campaign_registration=campaign_registration,
+            profile=str(data["solver"]["preconditioner"]),
+            stop_stage=stop_stage,
+            repo_root=repo_root,
+        )
+        if v25_selector_path is not None
+        else None
+    )
     fixed_campaign = Path(campaign_registration["path"])
     campaign_sha256 = str(campaign_registration["sha256"])
     branch = subprocess.check_output(["git", "branch", "--show-current"], cwd=repo_root, text=True).strip()
@@ -2852,7 +3397,9 @@ def run_service(
     if branch != "task40extra_0p7nm_engineering" or dirty.strip():
         raise RuntimeError("V20 user-service requires the frozen Task40 branch and clean source")
 
-    if campaign_registration.get("version") == "V24":
+    if campaign_registration.get("version") == "V25":
+        artifact_root = V25_ARTIFACT_ROOT
+    elif campaign_registration.get("version") == "V24":
         artifact_root = V24_ARTIFACT_ROOT
     elif campaign_registration.get("version") == "V23":
         artifact_root = V23_ARTIFACT_ROOT
@@ -2888,6 +3435,8 @@ def run_service(
         record["old_v23_scan_artifact_binding"] = dict(q_only_binding)
     if v24_cd_binding is not None:
         record["v24_bounded_port_reuse_volume_selector_binding"] = dict(v24_cd_binding)
+    if v25_binding is not None:
+        record["v25_selected_operation_selector_binding"] = dict(v25_binding)
     event_identity = {
         key: record[key]
         for key in (
@@ -2978,6 +3527,13 @@ def run_service(
                     "TASK40_V24_CD_Q0_PARTIAL_CHECKER_SHA256": str(
                         v24_cd_binding["q0_partial_checker_sha256"]
                     ),
+                }
+            )
+        if v25_binding is not None:
+            environment.update(
+                {
+                    "TASK40_V25_SELECTOR_PATH": str(v25_binding["selector_path"]),
+                    "TASK40_V25_SELECTOR_SHA256": str(v25_binding["selector_sha256"]),
                 }
             )
 
