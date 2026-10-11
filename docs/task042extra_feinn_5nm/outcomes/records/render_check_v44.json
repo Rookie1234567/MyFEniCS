@@ -1,0 +1,92 @@
+{
+  "schema": "task42extra.v44.render.v1",
+  "overall": "PARTIAL_ACTUAL_FIRST_VIEWS_ONLY",
+  "pages": [
+    {
+      "name": "review",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/7075a2c0d86018c3500dc2815c2bcf9c2cc739ca/docs/task042extra_feinn_5nm/review_report_v43.md",
+      "published_sha": "7075a2c0d86018c3500dc2815c2bcf9c2cc739ca",
+      "published_blob_sha256": "e75bf41a2d4a9b455fff882d1fe182cc20b11eca152334ac8d3c8e94d76a5565",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_s": 34.82116453605704,
+      "screenshot": "tmp/task42extra/v44/render_views/review/page.png",
+      "screenshot_sha256": "de71664bac47cd6e04c985bf079c84bb650d5d6238bb818eee9211d1f6ce60e5",
+      "visual_observation": {
+        "name": "review",
+        "status": "SEEN_VIEWPORT_PASS_ONLY",
+        "actual_GitHub_preview_seen": true,
+        "seen": "Review V43 title, sections 0 and 1, complete first measured results table, section 1.1, and beginning of parent section 2; title, prose, code fences, links and table columns legible.",
+        "unverified": "Remaining parent text and sections 3 through 8, including function-preserving block formula and later tables; not a full-page or formula visual PASS."
+      },
+      "screenshot_binding": {
+        "path": "tmp/task42extra/v44/render_views/review/page.png",
+        "bytes": 1054024,
+        "sha256": "de71664bac47cd6e04c985bf079c84bb650d5d6238bb818eee9211d1f6ce60e5"
+      }
+    },
+    {
+      "name": "response",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6066f259eb0e3461a0475a07d181aaf8511faf1f/docs/task042extra_feinn_5nm/response_v44.md",
+      "published_sha": "6066f259eb0e3461a0475a07d181aaf8511faf1f",
+      "published_blob_sha256": "8c81378027b1d6f8c07e9b160d8eb009c751fdb7c4046ba73b9fa16128e48f21",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_s": 4.659962230129167,
+      "screenshot": "tmp/task42extra/v44/render_views/response/page.png",
+      "screenshot_sha256": "998644fb37cb4915ef06aa90eae8887584c5d620b7a42a0f36903d51dee5dae2",
+      "visual_observation": {
+        "name": "response",
+        "status": "SEEN_VIEWPORT_PASS_ONLY",
+        "actual_GitHub_preview_seen": true,
+        "seen": "Response V44 title, conclusion, explanatory paragraphs and first main results table through original G error; all five visible columns and actual numerical thresholds legible.",
+        "unverified": "Main table final cost/qualification rows and all later sections including round/common-wall/participation tables and publication tail; no full-page visual PASS."
+      },
+      "screenshot_binding": {
+        "path": "tmp/task42extra/v44/render_views/response/page.png",
+        "bytes": 743175,
+        "sha256": "998644fb37cb4915ef06aa90eae8887584c5d620b7a42a0f36903d51dee5dae2"
+      }
+    },
+    {
+      "name": "continuation",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6066f259eb0e3461a0475a07d181aaf8511faf1f/docs/task042extra_feinn_5nm/outcomes/ftt_width_vs_optimization_v44.md",
+      "published_sha": "6066f259eb0e3461a0475a07d181aaf8511faf1f",
+      "published_blob_sha256": "589facce73573777241e41f4d73b8dd8c1213286f88dfd1615331c7c2b09080e",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_s": 4.678552901139483,
+      "screenshot": "tmp/task42extra/v44/render_views/continuation/page.png",
+      "screenshot_sha256": "256d727be251a4031848842dbee02931aea1dc96ca79366df82290af0a9c01a7",
+      "visual_observation": {
+        "name": "continuation",
+        "status": "SEEN_VIEWPORT_PASS_ONLY",
+        "actual_GitHub_preview_seen": true,
+        "seen": "V44 topic title, scope, parent/width/inner-method explanatory section and beginning of full results table through power-difference rows; visible headers and columns legible.",
+        "unverified": "Remaining main table and sections 3 through 7 including later participation/cost/round tables; no full-page visual PASS."
+      },
+      "screenshot_binding": {
+        "path": "tmp/task42extra/v44/render_views/continuation/page.png",
+        "bytes": 808127,
+        "sha256": "256d727be251a4031848842dbee02931aea1dc96ca79366df82290af0a9c01a7"
+      }
+    }
+  ],
+  "exact_first_publication": "6066f259eb0e3461a0475a07d181aaf8511faf1f",
+  "full_pages_visual_qualified": false,
+  "scope": "three selected first viewports only; all text read separately from Git; unseen tails unverified",
+  "local_parser_not_browser_visual_pass": true,
+  "historical_render_failures_preserved": true,
+  "live_browser_tree_cleared": true,
+  "guard": {
+    "path": "tmp/task42extra/v44/render_guard/summary.json",
+    "bytes": 2427,
+    "sha256": "642ab6d68b86bcddff12bd8fd47ee5c00c7e96fed5c4a4a47bbaee2814c61b71"
+  },
+  "raw_attempts": {
+    "path": "tmp/task42extra/v44/render_views/attempts.json",
+    "bytes": 2151,
+    "sha256": "8e5f5df1928bf9d1d529b212a5b4bc7f6a899e2377b22b2847433c9e19737902"
+  },
+  "new_PDE_or_training": false
+}

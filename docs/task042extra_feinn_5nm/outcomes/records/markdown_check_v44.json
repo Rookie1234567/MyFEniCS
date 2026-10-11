@@ -6,12 +6,12 @@
       "scope": "complete selected new page",
       "result": {
         "path": "docs/task042extra_feinn_5nm/response_v44.md",
-        "sha256": "8c81378027b1d6f8c07e9b160d8eb009c751fdb7c4046ba73b9fa16128e48f21",
+        "sha256": "c46bc77545aad314d5ad6865cafe3fda8bac8b6a0525595431b97cce296743d1",
         "checked_scope": "entire page",
         "markdown_tables": 5,
         "parsed_tables": 5,
         "math_fences": 0,
-        "links": 19
+        "links": 23
       }
     },
     {
@@ -19,12 +19,12 @@
       "scope": "complete selected new page",
       "result": {
         "path": "docs/task042extra_feinn_5nm/outcomes/ftt_width_vs_optimization_v44.md",
-        "sha256": "589facce73573777241e41f4d73b8dd8c1213286f88dfd1615331c7c2b09080e",
+        "sha256": "6cc9f7f4432708f5e2445a27ef4a69abc30737806f24d02596d7a5fa69568969",
         "checked_scope": "entire page",
         "markdown_tables": 5,
         "parsed_tables": 5,
         "math_fences": 0,
-        "links": 18
+        "links": 22
       }
     },
     {
@@ -58,12 +58,12 @@
       "scope": "new V44 section only",
       "result": {
         "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
-        "sha256": "0a85f7388a4959a4d040837ecd7a3511fc4fc6142bac3fbe9cb0d750661e6ba1",
+        "sha256": "ab37dfed0a72b8df89e61241466dab720ba5d74ed6e51fda33ca11d6fbbac9ab",
         "checked_scope": "\u5f53\u524dV44\uff1a\u4e00\u6b2116\u219232\u6269\u5c55\u53ca\u4e09\u8def\u7ebf\u5b8c\u6574\u9a8c\u6536",
         "markdown_tables": 3,
         "parsed_tables": 3,
         "math_fences": 0,
-        "links": 20
+        "links": 24
       }
     },
     {
@@ -71,12 +71,12 @@
       "scope": "new V44 section only",
       "result": {
         "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
-        "sha256": "712f5a972e802995403866d62defe1b7ff234de235adc447dbd99937b88abf35",
+        "sha256": "0927818ca8e4cccdaa7b2ec28f15f778004a45fe3b3c96ea908c75a2b81656dd",
         "checked_scope": "V44\uff1a\u771f\u5b9e\u5bbd\u5ea6/\u4e24\u6bb5\u8d44\u683c\u4e0e\u53d7\u5f71\u54cd\u4fdd\u5b58\u6001\u6d4b\u8bd5",
         "markdown_tables": 0,
         "parsed_tables": 0,
         "math_fences": 0,
-        "links": 4
+        "links": 8
       }
     },
     {
@@ -121,5 +121,5 @@
   ],
   "historical_sections_byte_preserved": true,
   "scope": "new response/topic/current sections only; no historical rerender",
-  "GitHub_visual_status": "PENDING_FINITE_ACTUAL_VIEW_NOT_LOCAL_PARSER_PASS"
+  "GitHub_visual_status": "PARTIAL_ACTUAL_FIRST_VIEWS_ONLY"
 }
