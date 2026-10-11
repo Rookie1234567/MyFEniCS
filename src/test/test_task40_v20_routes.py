@@ -316,23 +316,71 @@ def test_v27_partial_checker_routes_controlled_and_completed_receipts(
     assert checked["checks"]["v27_execution_manifest_window_accounting_and_registration_bind"] is True
 
 
-def test_v27_owned_payload_hash_reuses_bounded_advise_reader(monkeypatch, tmp_path):
+def test_v27_owned_payload_hash_is_bounded_and_advises_consumed_file_pages(monkeypatch, tmp_path):
+    import hashlib
+    import os
+
     from scripts import task40_v20_service_workflow as service
-    from src.solvers import task40_v25_selected_q0 as saved_streams
 
     payload = tmp_path / "saved-payload.bin"
     payload.write_bytes(b"x" * (4 * 1024 * 1024 + 17))
-    expected = service._sha256_file(payload)
+    expected = hashlib.sha256(payload.read_bytes()).hexdigest()
     calls = []
-    original = saved_streams._advise_file_drop
+    original = os.posix_fadvise
 
-    def record_advice(stream, start, length, *, telemetry=None):
-        calls.append((start, length))
-        return original(stream, start, length, telemetry=telemetry)
+    def record_advice(fd, start, length, advice):
+        calls.append((start, length, advice))
+        return original(fd, start, length, advice)
 
-    monkeypatch.setattr(saved_streams, "_advise_file_drop", record_advice)
+    monkeypatch.setattr(service.os, "posix_fadvise", record_advice)
     assert service._sha256_owned_payload(payload) == expected
-    assert calls == [(0, 4 * 1024 * 1024), (4 * 1024 * 1024, 17)]
+    assert calls == [
+        (0, 4 * 1024 * 1024, os.POSIX_FADV_DONTNEED),
+        (4 * 1024 * 1024, os.sysconf("SC_PAGE_SIZE"), os.POSIX_FADV_DONTNEED),
+    ]
+
+
+def test_v27_owned_payload_hash_bootstrap_fallback_runs_without_site_packages(tmp_path):
+    import hashlib
+    import os
+    import subprocess
+    import sys
+
+    payload = tmp_path / "bootstrap-payload.bin"
+    payload.write_bytes(b"y" * (4 * 1024 * 1024 + 17))
+    expected = hashlib.sha256(payload.read_bytes()).hexdigest()
+    code = (
+        "import json, os, sys; calls=[]; "
+        "os.posix_fadvise=lambda fd, offset, length, advice: calls.append([offset, length]); "
+        "from pathlib import Path; "
+        "from scripts.task40_v20_service_workflow import (_sha256_owned_payload, "
+        "_resolve_service_campaign, ROOT, TASK40_V27_CAMPAIGN_WINDOW, V27_TARGET_PROFILE); "
+        "digest=_sha256_owned_payload(Path(sys.argv[1])); "
+        "route=_resolve_service_campaign(ROOT, TASK40_V27_CAMPAIGN_WINDOW, "
+        "profile=V27_TARGET_PROFILE, stop_stage='selected_reference_q_csr'); "
+        "print(json.dumps({'sha256': digest, 'advice': calls, 'numpy_loaded': 'numpy' in sys.modules, "
+        "'route_version': route['version'], 'route_sha256': route['sha256'], "
+        "'stage_scope': route['stage_scope']}))"
+    )
+    environment = os.environ.copy()
+    for name in ("PYTHONPATH", "PYTHONHOME", "VIRTUAL_ENV", "_MYFENICS_WSL_QUALIFIED_ACTIVATION"):
+        environment.pop(name, None)
+    result = subprocess.run(
+        [sys.executable, "-S", "-c", code, str(payload)],
+        cwd=ROOT,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    facts = json.loads(result.stdout)
+    assert facts["sha256"] == expected
+    assert facts["advice"] == [[0, 4 * 1024 * 1024], [4 * 1024 * 1024, 4096]]
+    assert facts["numpy_loaded"] is False
+    assert facts["route_version"] == "V27"
+    assert facts["route_sha256"] == "e806c514c8208ae7a887bdb6ddaaec25936c9204a3ccc34a4fb870ad0bb0010d"
+    assert facts["stage_scope"] == "complete_q0_numeric_csr"
 
 
 def test_v23_q_only_scan_selector_is_consumed_only_once():

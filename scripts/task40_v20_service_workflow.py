@@ -249,13 +249,24 @@ def _sha256_file(path: Path) -> str:
 
 
 def _sha256_owned_payload(path: Path) -> str:
-    """Hash donor data in bounded chunks and advise consumed file pages away."""
-    # Reuse V25's established bounded reader, which applies POSIX_FADV_DONTNEED
-    # only to exact file ranges already consumed into the digest. Ordinary
-    # service metadata remains on _sha256_file so this stays donor-scoped.
-    from src.solvers.task40_v25_selected_q0 import _file_sha256
-
-    return _file_sha256(path)
+    """Hash donor data in bounded stdlib chunks and drop consumed file pages."""
+    digest = hashlib.sha256()
+    position = 0
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(4 * 1024 * 1024), b""):
+            digest.update(block)
+            if hasattr(os, "posix_fadvise"):
+                advice = getattr(os, "POSIX_FADV_DONTNEED", None)
+                if advice is not None:
+                    try:
+                        page_size = os.sysconf("SC_PAGE_SIZE")
+                        begin = position - position % page_size
+                        end = ((position + len(block) + page_size - 1) // page_size) * page_size
+                        os.posix_fadvise(stream.fileno(), begin, end - begin, advice)
+                    except (OSError, ValueError, TypeError):
+                        pass
+            position += len(block)
+    return digest.hexdigest()
 
 
 def _profile_q_count(profile_identity: str) -> int:
