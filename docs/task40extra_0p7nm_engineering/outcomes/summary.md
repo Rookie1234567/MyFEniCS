@@ -1,3 +1,18 @@
+# Task40extra Review V25 增量结果：完整 target volume saved-recovery 通过，selected-q0 native consumer 因 SIGSEGV 未完成
+
+V25 研究对象是 0.7 nm 波长下的原尺寸三维 Maxwell target（272×8×14 cells，p6）。q 是 y 周期不同相位的 reference branch；本轮 q0 producer 同时保留其配对 q4 map。target volume 通过保存数据恢复覆盖完整网格，但这不等于构建全局 A6、因子或求解 PDE。
+
+| 项 | 模型与方法 | 实测结果 | 资格与边界 |
+|---|---|---|---|
+| 完整 target volume | 所有 30,464 cells；29 raw tensor classes、60 oriented Schur classes；完整 active trace RHS 与 full-storage recovery | saved-witness recovery `PASS`；两组 native volume residual 相对值 `6.0913e-14`、`1.4135e-15`；case 1 首次 forward recovery `1.6168e-11` 超 `1e-11` 限值，同一 LU 修正一次后为 `1.2502e-13` | 独立 saved-witness readback 11/11 检查通过；没有重跑 FE。S-only；无完整 A6、q、factor、KSP、PDE 或 official R/T/A。 |
+| q0 producer | frozen source `9d0f4dbfc730dd620b709d048e33e9da6c77520c`，selected reference q0 与配对 q4 map | surface stream 11,230,840,064 B；volume classes 226,645,122 B；q0/q4 maps 各约 348.5 MB，均有独立 SHA-256 | producer 数据已落盘；worker 随后 PETSc signal 11 / MPI_Abort 59。consumer replay manifest、两组输出与 native witness 均未写出，分类 `WORKER_FAILED`。 |
+| ownership repair | frozen source `ed83343df52f7c46df52d9daf4e4a3a28c8cdb5b` | `_native_volume_apply` 复制 action-owned reusable Vec，释放仅限本地 source Vec；q0 定向测试 11 passed | 修复原因与 SIGSEGV 相符，但 causal stack 未捕获；修复后 native qualification `NOT_RUN`。 |
+| 完整体积资源 | 第二次正式运行父区间 | 单调钟1804.2103085159324 s，保守收费1990.0629695745781 s；tree RSS7,449,296,896 B，cgroup11,029,651,456 B；task swap0 | 子阶段完整细分UNKNOWN，不减法猜测；原写出失败保留。 |
+| q0 worker resources | watchdog 与专用 task cgroup 分开记账 | tree RSS 峰 11,709,558,784 B；cgroup peak 13,548,032,000/17,179,869,184 B；task swap 峰 0；host global swap delta +1,087 pages in/+15,780 pages out | time/resource stop 均未发生；warning 不是 stop event；host swap 不能归因到该任务。 |
+| 工程总体资格 | 固定 V25 window，原 source 与新 repair source 分别绑定 | T0 `2026-10-11T00:38:41Z`；数值 cutoff `06:18:41Z`；总截止 `06:38:41Z` | 完整 q consumer、2 TB/48 h、production default 与 master merge 仍未资格化。 |
+
+q0 原始产物 hash、worker stderr、resource ledger 与失败分类见 [V25 operator compact](records/target_operator_probe_v25.json) 和 [time/resource ledger](records/time_resource_accounting_v25.json)。H_p 文档项已更正为**数值 1250.0、original mode index 10**；两者单位/意义不同。
+
 # Task40extra Review V22 增量结果：原尺寸全局 MPC descriptor 已记录，模式扫描部分完成
 
 | 阶段 | 模型与方法 | 实测结果 | 资源/资格边界 |
@@ -1103,7 +1118,7 @@ V24 先后冻结六个源码提交，从科学基线 84dce5a39eb34a259166f34e063
 
 | 阶段 | source / run | 实测和结果 | 资格边界 |
 |---|---|---|---|
-| B：q0 单模式端口 tile | source eca24be972a0eca1480b6f1f2fb9d745fb823718；20261010T170718.363692Z | mode [10,"top",-142,0,"s"]；top 侧全部 2,176 facets；q 端口库存 4,076 aliases，本次仅 alias column 0（original mode 10/local mode 2，H_p original index 1250）做一列 C、一行 −D 与 H 投影；real map 50,048×773,568、222,946 nnz；C/−D/H 投影误差 4.8436e-17 / 4.6905e-17 / 0，限值 1e-11 | 原 checker 有 2 项 raw readback 失败；offline postfix 22 项通过但状态 partial、未重跑 B；q 矩阵 0/8，volume/PDE/RTA 未运行；[q tile](records/q_tile_v24.json) |
+| B：q0 单模式端口 tile | source eca24be972a0eca1480b6f1f2fb9d745fb823718；20261010T170718.363692Z | mode [10,"top",-142,0,"s"]；top 侧全部 2,176 facets；q 端口库存 4,076 aliases，本次仅 alias column 0（original mode 10/local mode 2，H_p 数值 1250.0，original mode index 10）做一列 C、一行 −D 与 H 投影；real map 50,048×773,568、222,946 nnz；C/−D/H 投影误差 4.8436e-17 / 4.6905e-17 / 0，限值 1e-11 | 原 checker 有 2 项 raw readback 失败；offline postfix 22 项通过但状态 partial、未重跑 B；q 矩阵 0/8，volume/PDE/RTA 未运行；[q tile](records/q_tile_v24.json) |
 | C：端口复用与类别盘点 | source a233ac49f84269265ddc684d31cb9b790864b018；20261010T190956.343813Z | 32 模态；cold generate 6.768845 s；warm applies 0.482975/0.488801 s；释放后 regenerate 6.561613 s，apply 0.468682 s；cache 180,373,760 B；128/128 backing 生命周期释放；30,464 cells、29 raw/60 oriented classes | 独立 checker 22 项通过；类别 cache + cell metadata 估算 2,199,609,160 B，排除全局 constraints/maps/owner closures/full-q setup；未重跑 q0、无 full volume action |
 | D：真实内部 y-edge 体积 row panel | source 809d6a151eed7b4d0eca0430fee2782285e786e7；20261010T202439.437904Z | 8 个 y-edge 轨道×4 cells；每 cell 450 interior+432 trace rows；6 oriented classes；finalized MPC 触及 312 slave rows、8,688 active trace cols；V17 q row 48×8,688 / 417,024 nnz、误差 0；edge-self q×r 48×48 / 2,304 nnz、误差 1.32368e-16 | 这是器件内部 y-edge 体积面板，不是外部端口/边界 facet；非 edge-self q 列未投影。checker 34 项为真但 partial；主控审计未重新运行六类数值运算 |
 

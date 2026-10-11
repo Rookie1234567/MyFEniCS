@@ -1,3 +1,18 @@
+# Task40extra Review V25 测试与独立回读摘要
+
+| 验证 | source / 原始命令 | 结果 | 证据边界 |
+|---|---|---|---|
+| PETSc reusable-output ownership repair | frozen source `ed83343df52f7c46df52d9daf4e4a3a28c8cdb5b`；`python -m pytest -q src/test/test_task40_v25_selected_q0.py` | **11 passed in 0.74 s**；qualified activation，PETSc complex128/int32，MPI1 | fixture 连续两次调用同一个 action-owned output Vec；证明返回值是副本、borrowed Vec 未销毁、本地 source Vec 已销毁。修复后没有重跑 native q0。Receipt：`local_v25_wsl/main_q0_borrowed_vec_fix_validation_v25.json`。 |
+| ownership source static checks | 同一 receipt | `compileall PASS`、`git diff --check PASS`；Ruff `UNAVAILABLE_NOT_INSTALLED` | 不代表 CI、全仓 pytest 或新数值资格。 |
+| 完整 target-volume witness | science source `144134e4ccc70bf55cf7bc9a0c14835baad8bbea`；recovery source `11f6207ff866da30559e943a8eb4352089acb1b0` | 独立 saved-witness checker **11/11 true**；保存数据回读 `PASS` | recovery kind=`saved_raw_postprocess_only`；未重跑 FE；不是完整 A6/PDE。checker hash 与两个 case 的 measured residual 在 [V25 operator compact](records/target_operator_probe_v25.json)。 |
+| volume repair route / component fixtures | 主控 scoped receipt `main_volume_field_repair_validation_v25.json` | **17 scoped tests passed**；compileall、diff check PASS | broader report 是 74 passed、1 skipped、6 failed；六项失败与 expired campaign fixture / missing `closeout_seconds` 有关，保留负结果，不记作通过。 |
+| q0 worker | source `9d0f4dbfc730dd620b709d048e33e9da6c77520c` | `WORKER_FAILED`, PETSc SEGV，MPI Abort 59 | 不是 pytest 失败，也不是资源 Gate；stream producer 文件存在，但消费者/native replay receipt 不存在。 |
+| 全仓 / MPI2 / MPI4 / CI / Ruff / fresh q0 native | 本轮 | `NOT_RUN` | 不声称全仓、MPI、CI 或 ownership 修复后的 native 数值验证通过。 |
+
+固定窗口未重置：campaign SHA `a8ee7ab9970ece892d85f9313180438e88561f0bfc63b68acdb11f536400def7`；T0 `2026-10-11T00:38:41Z`，数值 cutoff `06:18:41Z`，总截止 `06:38:41Z`。执行者未 commit/push；主控集中处理。详见 [V25 run index](records/run_index.json) 与 [time/resource ledger](records/time_resource_accounting_v25.json)。
+
+---
+
 # Task40extra Review V22 定向测试与文档收口
 
 | 检查 | source / 命令 | 结果 | 证据边界 |

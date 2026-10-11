@@ -1,3 +1,16 @@
+# Task40extra Review V25 增量：完整原尺寸体积通过，完整q消费者仍待恢复
+
+单元凝聚先在每个网格单元内消去内部自由度，保留连接单元的trace；本轮首次对原尺寸全部单元验证这一体积作用和非零内部RHS恢复。它验证数值内核，不等于已求得电磁物理场。
+
+| 项 | 实际结果 | 时间/内存与限制 |
+|---|---|---|
+| 原尺寸 target volume | 30,464 cells、29 raw/60 oriented classes；两组独立原生RHS与保存数据恢复通过 | 单调钟1804.2103 s，保守1990.0630 s；整树RSS7,449,296,896 B/cgroup11,029,651,456 B；第二组初始forward1.6168e-11失败，同LU一次修正后1.2502e-13。 |
+| regular reference q0/q4 | 全surface/volume stream和maps保存；q0实际worker SEGV | 11.23GB surface stream、226.65MB volume stream；整树RSS11,709,558,784 B/cgroup13,548,032,000 B；task swap0，宿主swap活动另记。完整consumer/native/CSR未完成。 |
+| 修复和资源账 | 借用PETSc输出Vec不再由调用者销毁；11定向测试通过 | source ed83343df52f7c46df52d9daf4e4a3a28c8cdb5b；新native未复验。固定V25窗，seq14617收费20674.0876s，旧费用和unknown保留。 |
+| 下一依赖 | 受监督saved-stream读回与独立native见证，再评估完整q CSR容量 | 不重生成全stream，不将fixture/producer判作inverse或PDE通过；原尺寸2TB/48h NO-GO。 |
+
+[Response V25](task40extra_0p7nm_engineering/response_v25.md)、[科学记录](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v25.json)、[时间资源账](task40extra_0p7nm_engineering/outcomes/records/time_resource_accounting_v25.json)。仅追加本轮结果，以下历史保留。
+
 # Task40extra 当前模型登记：Review V21 端口几何映射完成，mode support与 E2 资源停止
 
 有限元把真实结构划成网格，再用 p6 基函数近似电磁场；q 是 y 周期边界上的相位子问题。V21 在 V20 保存的原尺寸 Ny=8 几何上做了零块表示、单面局部 action 和阶段回执修复，并只读复核了 E2 原始资源停点。

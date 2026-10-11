@@ -1,3 +1,20 @@
+## Review V25 当前交付：完整 target volume saved-recovery 通过，selected-q0 worker 失败
+
+V25 在固定新窗口内完成了原尺寸 30,464-cell target volume 作用与两组 saved-witness recovery；没有重跑 FE。selected-reference-q0 producer 已生成完整 surface/volume streams 和 q0/q4 maps，但 native consumer replay 在 PETSc SIGSEGV 前未写出。ownership 修复已冻结并通过定向测试；修复后 native qualification 未运行。2 TB / 48 h、完整 A6/PDE、production default 与 master merge 均未资格化。
+
+| 文件 | 内容 |
+|---|---|
+| [Review V25](review_report_v25.md) 与 [Response V25](response_v25.md) | 固定窗口、V25 完整体积结果、q0 负结果、ownership 修复和下一安全执行入口 |
+| [V25 outcomes summary](outcomes/summary.md) 与 [test summary](outcomes/test_summary.md) | 表格优先的两条主线结果、资源/时间口径、测试与未运行项 |
+| [V25 operator compact](outcomes/records/target_operator_probe_v25.json) | target-volume saved-recovery residuals、q0 worker failure、raw asset hashes 与 source 身份 |
+| [V25 time/resource ledger](outcomes/records/time_resource_accounting_v25.json) | 固定 T0/cutoff/deadline、watchdog monotonic、conservative wall clock、RSS/cgroup/task swap/host swap 分账 |
+| [V25 run index](outcomes/records/run_index.json) | 实际 attempt、冻结修复 source、window、checker 与文件 hash 索引 |
+| [q0 failure artifact index](../../results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_q0_failure_artifact_index.json) | ignored run 中六个完整 raw producer artifacts 和 resource/terminal record 的 hash 目录 |
+
+V25 使用 T0 `2026-10-11T00:38:41Z`，数值 cutoff `06:18:41Z`，总 deadline `06:38:41Z`；不刷新旧窗口。执行者不 commit/push，由主控完成最终审阅和发布。
+
+---
+
 ## Review V24 当前交付：q0 端口 tile、32 模态复用与真实内部 edge 面板
 
 V24 包含六个已冻结源码提交，科学基线为 84dce5a39eb34a259166f34e063312a2cd86ef0c，最终 source 为 809d6a151eed7b4d0eca0430fee2782285e786e7。B 是源码 eca24be… 上的 q0 单模式端口 tile；C 是源码 a233ac4… 上的 32 模态复用/类别盘点；D 是最终源码上的真实内部 y-edge 体积行面板。B/C/D 的 source、execution window、input、ABI 与 raw hashes 分开绑定。完整 q 仍 0/8，full volume action、PDE、official R/T/A 未运行；可选 single-q 因未闭合依赖保持 NOT_ADMITTED，不是资源失败。
