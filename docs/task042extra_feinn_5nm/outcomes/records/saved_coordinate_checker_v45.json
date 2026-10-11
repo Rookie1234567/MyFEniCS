@@ -1,0 +1,92 @@
+{
+  "schema": "task42extra.v45.saved-coordinates.v1",
+  "records": [
+    {
+      "stage": "v45_identity_frozen",
+      "coordinate_identity": "003523ee3024ef15617de8baa42c1abb8981fa0733b9e52c443d1e12c7c0d735",
+      "retained_directions": 33,
+      "inverse_relative": 0.0,
+      "construction_relative": 6.7880982276077e-16
+    },
+    {
+      "stage": "v45_identity_frozen",
+      "coordinate_identity": "1069303ae373f6010471b8af2c569b8c715104ecfa85d29ab30059aca2db330a",
+      "retained_directions": 33,
+      "inverse_relative": 0.0,
+      "construction_relative": 6.732063932194301e-16
+    },
+    {
+      "stage": "v45_identity_frozen",
+      "coordinate_identity": "fcc155081c4323bc019dcf331851810353f5e320fa614e772db9c0b2a01f070c",
+      "retained_directions": 33,
+      "inverse_relative": 0.0,
+      "construction_relative": 6.490047725993011e-16
+    },
+    {
+      "stage": "v45_feature_scaled_frozen",
+      "coordinate_identity": "2fc951c670a706f4631dc427a05bd2f4dda6b82e124f1484c8a756c7c0470a16",
+      "retained_directions": 33,
+      "inverse_relative": 7.00667043701976e-13,
+      "construction_relative": 0.0
+    },
+    {
+      "stage": "v45_feature_scaled_frozen",
+      "coordinate_identity": "a9ca1340c9bc5f86100f56c968adb47ca36c475df1b9b353ea291d9d36ef7a87",
+      "retained_directions": 33,
+      "inverse_relative": 8.181330230144722e-13,
+      "construction_relative": 0.0
+    },
+    {
+      "stage": "v45_feature_scaled_frozen",
+      "coordinate_identity": "cff3d76ad91f6a1d355d63c1e915b33e40a431b59faca0c8b1ec8bb6599cb115",
+      "retained_directions": 33,
+      "inverse_relative": 8.40715554011829e-13,
+      "construction_relative": 0.0
+    },
+    {
+      "stage": "v45_feature_scaled_learned",
+      "coordinate_identity": "024bb27f1d112fe8a32da5e91ccb4339aaab30fb79f1df00594bcdbcfff1ee7b",
+      "retained_directions": 33,
+      "inverse_relative": 9.052106449302987e-13,
+      "construction_relative": 0.0
+    },
+    {
+      "stage": "v45_feature_scaled_learned",
+      "coordinate_identity": "2fc951c670a706f4631dc427a05bd2f4dda6b82e124f1484c8a756c7c0470a16",
+      "retained_directions": 33,
+      "inverse_relative": 7.00667043701976e-13,
+      "construction_relative": 0.0
+    },
+    {
+      "stage": "v45_feature_scaled_learned",
+      "coordinate_identity": "6dc128c0d9b6d5e5b7487aa3019663b136c8f6ec44d2cd222531fa2096858fe9",
+      "retained_directions": 33,
+      "inverse_relative": 8.955198248351802e-13,
+      "construction_relative": 0.0
+    },
+    {
+      "stage": "v45_feature_scaled_learned",
+      "coordinate_identity": "a9ca1340c9bc5f86100f56c968adb47ca36c475df1b9b353ea291d9d36ef7a87",
+      "retained_directions": 33,
+      "inverse_relative": 8.181330230144722e-13,
+      "construction_relative": 0.0
+    },
+    {
+      "stage": "v45_feature_scaled_learned",
+      "coordinate_identity": "cff3d76ad91f6a1d355d63c1e915b33e40a431b59faca0c8b1ec8bb6599cb115",
+      "retained_directions": 33,
+      "inverse_relative": 8.40715554011829e-13,
+      "construction_relative": 0.0
+    },
+    {
+      "stage": "v45_feature_scaled_learned",
+      "coordinate_identity": "e1724d647aee172e4ae0e70c6697ae8ffe869850b30ae35e8ebd1d42cce6a922",
+      "retained_directions": 33,
+      "inverse_relative": 8.319017076169974e-13,
+      "construction_relative": 0.0
+    }
+  ],
+  "original_all_33_directions_preserved": true,
+  "reference_read": false,
+  "new_network_forward_or_PDE_or_factor": false
+}

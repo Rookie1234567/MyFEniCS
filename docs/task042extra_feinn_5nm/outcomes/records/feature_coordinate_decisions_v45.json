@@ -1,0 +1,60 @@
+{
+  "default_round14_results_preserved": true,
+  "actual_complete_rounds": {
+    "W32_R12_IDENTITY_FROZEN": 14,
+    "W32_R12_FEATURE_SCALED_FROZEN": 14,
+    "W32_R12_FEATURE_SCALED_LEARNED": 14
+  },
+  "learned_actual_and_producer_joint_pass": false,
+  "conditional_0p7_numerical_gate": false,
+  "conditional_0p7_requires_separate_safe_admission_and_10800s_remaining": true,
+  "same_accuracy_resource_gain_qualified": false,
+  "original_route_wall_not_reset": true,
+  "parent": {
+    "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/checkpoints/committed_000023.pt",
+    "sha256": "02109f3e8d8f5361bc1d7f3b16633e1d257017fd1cf3b808bba6aad4fa57708f",
+    "bytes": 2020100,
+    "input_kind": "unlabelled_complete_round12_boundary",
+    "binding": {
+      "source_sha": "a4c0d5e703eee8efe59740e706632eaeae2803e0",
+      "input_sha256": "7652f5be491297d5de713503d52c52af070f02e1bed8d7c229ec60e37bb2bc0c",
+      "design_sha256": "76b240bce50e468c2252b990a9467dce41ab2e0ce478a928fa9c117054b01e69",
+      "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+      "model_kind": "fttnn",
+      "metric_kind": "native_euc",
+      "route": "W32_REFINED_CORE_LEARNED",
+      "phase_sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+    },
+    "inherited_rounds": 12,
+    "inherited_counts": {
+      "core_visits": 36,
+      "LSMR_iterations": 19830,
+      "LSMR_unretained_iterations_upper_bound": 0,
+      "accepted_core_updates": 36,
+      "effective_core_updates": 36,
+      "accepted_hidden_updates": 12,
+      "effective_hidden_updates": 12,
+      "hidden_actual_calls": 137,
+      "K": 19971,
+      "KH": 19982,
+      "B": 19935,
+      "BH": 19982,
+      "round_audits": 12,
+      "uncommitted_K": 0,
+      "uncommitted_KH": 0
+    },
+    "path_source": "outcomes/records/run_index_v44.json",
+    "parent_record": "docs/task042extra_feinn_5nm/outcomes/records/conditional_core_routes_v44.json",
+    "parent_result_status": "AUTHORIZED_TOTAL_ROUND_LIMIT",
+    "required_parent_prefix_seconds": 10029.01257516597,
+    "parent_scalars": {
+      "native_relative": 0.36129038520134216,
+      "augmented_relative": 0.36129038520134216,
+      "scattered_E_relative": 0.08377667852246189,
+      "scattered_H_relative": 0.0838326969726761,
+      "scattered_curl_relative": 0.0838326969726761
+    }
+  },
+  "round14_scalar_and_full_joint_gates_before_extra_rounds": true
+}

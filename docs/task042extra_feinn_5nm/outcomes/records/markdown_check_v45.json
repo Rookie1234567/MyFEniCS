@@ -1,0 +1,125 @@
+{
+  "schema": "task42extra.v45.markdown.v1",
+  "rows": [
+    {
+      "path": "docs/task042extra_feinn_5nm/response_v45.md",
+      "scope": "complete selected new page",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/response_v45.md",
+        "sha256": "3e250e7aadd714a89ecd40e732fc78d73470c7458d334f84e32d05928d82a4c5",
+        "checked_scope": "entire page",
+        "markdown_tables": 9,
+        "parsed_tables": 9,
+        "math_fences": 2,
+        "links": 20
+      }
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/ftt_feature_coordinates_v45.md",
+      "scope": "complete selected new page",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/ftt_feature_coordinates_v45.md",
+        "sha256": "d9407cf847fe3748414f05c113eca68865f575ba7de3f83481003db2b6edb5e9",
+        "checked_scope": "entire page",
+        "markdown_tables": 9,
+        "parsed_tables": 9,
+        "math_fences": 2,
+        "links": 19
+      }
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v44.md",
+      "scope": "complete selected new page",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/review_report_v44.md",
+        "sha256": "43137a9dad7a6dca9420d8aad27500986eea837a1baf24921d54fa8ed081a421",
+        "checked_scope": "entire page",
+        "markdown_tables": 3,
+        "parsed_tables": 3,
+        "math_fences": 3,
+        "links": 9
+      }
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/README.md",
+      "scope": "new V45 section only",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/README.md",
+        "sha256": "5c07e43a80c419cfc5a6efa0bd94f5f9985884d1e2dba9b4887314a7cbf2214a",
+        "checked_scope": "\u5f53\u524d\u6267\u884c\u5165\u53e3\uff1aV45\u795e\u7ecf\u53f3\u5750\u6807\u7814\u7a76\u5b8c\u6210",
+        "markdown_tables": 0,
+        "parsed_tables": 0,
+        "math_fences": 0,
+        "links": 6
+      }
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "scope": "new V45 section only",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "sha256": "5ca278f644055abc419a9639cffd0144aa862bfa0ee0f6f8f5018f808a63e12b",
+        "checked_scope": "\u5f53\u524dV45\uff1a\u53f3\u5750\u6807/\u9690\u85cf\u6d88\u878d\u53ca\u5b8c\u6574\u573a\u9a8c\u6536",
+        "markdown_tables": 4,
+        "parsed_tables": 4,
+        "math_fences": 0,
+        "links": 21
+      }
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "scope": "new V45 section only",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "sha256": "23e28b1c90574b19a6978681304887ed7082779cf0f86681d3948f1aa29a131b",
+        "checked_scope": "V45\uff1a\u5c0f\u5750\u6807\u8d44\u683c\u3001\u53d7\u5f71\u54cd\u63a5\u7ebf\u53ca\u5b8c\u6574\u4fdd\u5b58checker",
+        "markdown_tables": 0,
+        "parsed_tables": 0,
+        "math_fences": 0,
+        "links": 4
+      }
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "scope": "new V45 section only",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "sha256": "b967686b20c799f1abc21d3fd887c313751f1e012e7407b34acb25c79e7a9a92",
+        "checked_scope": "V45\uff1a\u590d\u7528\u65e2\u6709\u6761\u4ef6\u8bad\u7ec3\u7684\u6709\u9650\u53f3\u5750\u6807\u7814\u7a76",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 3
+      }
+    },
+    {
+      "path": "docs/development_progress.md",
+      "scope": "new V45 section only",
+      "result": {
+        "path": "docs/development_progress.md",
+        "sha256": "09370b49bf162383ad5f928074552c58373c3378f615a591fc9003fd04c535ba",
+        "checked_scope": "Task42extra V45\uff1a\u53ef\u9006\u53f3\u5750\u6807\u4e0e\u9690\u85cf\u8fb9\u9645\u7814\u7a76\u5b8c\u6210",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 4
+      }
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "scope": "new V45 section only",
+      "result": {
+        "path": "docs/development_model_registry.md",
+        "sha256": "ead805cb1243c95cb1967ef9af7604e86593fbc86ba6b7c5cadbf8b52b5ed14f",
+        "checked_scope": "Task42extra V45\uff1a\u53ef\u9006\u53f3\u5750\u6807\u4e0e\u9690\u85cf\u8fb9\u9645\u7814\u7a76\u5b8c\u6210",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 4
+      }
+    }
+  ],
+  "historical_sections_byte_preserved": true,
+  "scope": "new response/topic/current sections only; no historical rerender",
+  "GitHub_visual_status": "PENDING_FINITE_ACTUAL_VIEW_NOT_LOCAL_PARSER_PASS"
+}

@@ -1,3 +1,22 @@
+<!-- TASK42EXTRA_V45_CURRENT_BEGIN -->
+# V45：复用既有条件训练的有限右坐标研究
+
+| 依赖组 | 实际变化 | 资格/限定 |
+|---|---|---|
+| research-only核心 | feature_coordinates/coordinate_qualification；原core_refinement/training opt-in坐标与R14策略 | P不删方向，原默认保留；M5联合FAIL，不升production |
+| runner/输入/保全 | coordinate_campaign/worker；schema15、五dat、已有profile/资源短socket/当前PSI分支 | 不复制训练器或watchdog，不放宽保护；健康产物复用 |
+| checker/后处理 | common_wall同宽同态；R14先完整独立审核，再固定趋势门 | 旧逐点/FE/saved checker重用；用途false，原分母保留 |
+| compact/docs | 资格/谱/原与变换坐标/完整场CSV/成本/source及当前导航 | 历史较好态、最终退化、失败和UNKNOWN保留 |
+| do-not-merge | 未合格研究配置、ignored大数组/PT与自动生产提升 | 无master/production许可，不自动0.7或任何扫描 |
+
+顺序：原M5/native/moments及R12 parent → 小可逆坐标/两段数学 → opt-in schema/runner → targeted/clean source → 三真实对照 → 独立点值/FE/checker/commonwall → compact/docs。后续文档SHA不冒充运行source。
+
+[run/source](records/run_index_v45.json)、[tests](records/formal_tests_and_qualification_v45.json)、[完整Gate](records/full_numerical_gates_v45.json)。
+
+下方历史全文原样保留；旧“当前/下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V45_CURRENT_END -->
+
 <!-- TASK42EXTRA_V44_CURRENT_BEGIN -->
 # V44：最小宽度与内层补足、复用原训练和验收
 

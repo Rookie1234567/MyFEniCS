@@ -1,3 +1,18 @@
+<!-- TASK42EXTRA_V45_CURRENT_BEGIN -->
+# V45：小坐标资格、受影响接线及完整保存checker
+
+本地定向测试保留41个不同通过case的JUnit并集，各修订边界分别绑定，不把重复执行相加。相关Ruff/compileall及五dat validate-only通过；不full pytest、不重装、不声明CI。小型P=I、复杂SVD、保留零奇异方向、错共轭/y冒充delta、恢复/回滚与标签负控，以及真实三个轴完整矩/旧逐点/非零隐藏FD先完成，再串行训练。
+
+静态接线先补精确R12无标签parent、完整R14审核先于追加轮次、健康隔离标量按身份复用。三次真实工程失败同批解决：长tmux路径在数值worker前失败，加入现有task-local短socket opt-in；内层PSI仍误读旧V30观察池，在保留60s原阈值下接通V45策略；原坐标首次尝试在无标签firewall后重复打开资格文件，改成传递worker已读的资格结果，不扩大训练文件白名单。每次均定位、最小修复、定向测试、clean实现commit后继续，失败费用及原文保留，未重复任何健康参考/算子或已完成训练前缀。
+
+tau1e-6的资格失败只依据实际写回数值，固定tau1e-4后备通过。旧失败未保存的数字不补造、不重放。最终保存checker/文档/网页问题只修受影响部分，不重做健康producer；用途false贯穿原raw/manifest/PT/compare/实际重开。
+
+[各次JUnit/source边界](records/formal_tests_and_qualification_v45.json)、[真实三轴资格](records/feature_coordinate_qualification_v45.json)、[实际source/run/hash](records/run_index_v45.json)、[完整六份Gate](records/full_numerical_gates_v45.json)。测试通过不能替代数值Gate。
+
+下方历史全文原样保留；旧“当前/下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V45_CURRENT_END -->
+
 <!-- TASK42EXTRA_V44_CURRENT_BEGIN -->
 # V44：真实宽度/两段资格与受影响保存态测试
 

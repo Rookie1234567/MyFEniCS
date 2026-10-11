@@ -1,3 +1,22 @@
+<!-- TASK42EXTRA_V45_CURRENT_BEGIN -->
+# Task42extra V45：可逆右坐标与隐藏边际研究完成
+
+同V44第12轮parent，三条神经对照保持19200参数、rank8、原物理方程；全33特征保留，固定稳定性后备tau1e-4。完整网络与物理门独立裁决。
+
+| M5/5nm/p3/r8/W32/N31968/40端口 | native R | 散射E | 散射H | 能量闭合 | 新增attempt/s | 联合门 |
+|---|---|---|---|---|---|---|
+| 原坐标冻结 | 0.358564816894 | 0.0824876972998 | 0.0825378133302 | 0.0265752297173 | 2759.38275311 | FAIL |
+| 特征缩放冻结 | 0.308415863303 | 0.0951988658107 | 0.0952137619547 | 0.0337764856799 | 3223.55754785 | FAIL |
+| 特征缩放学习 | 0.307111294905 | 0.0954707719011 | 0.0954861502846 | 0.0337863331068 | 3315.34105774 | FAIL |
+
+无有效解或同精度20%资源收益，内层仍有未充分，不作全网络容量证明。必要学习前缀10029.01257516597s归属、不重复计项目账，必要冷准备和冷N=1 UNKNOWN。原lambda0.7完整3D/decimal2e12B/172800s及原精度目标未达，旧FAIL/UNKNOWN/费用不改。只同步本支，不改变其他支线或派活。
+
+[回执](task042extra_feinn_5nm/response_v45.md)、[完整物理记录](task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v45.json)、[费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v45.json)、[source](task042extra_feinn_5nm/outcomes/records/run_index_v45.json)。
+
+下方历史全文原样保留；旧“当前/下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V45_CURRENT_END -->
+
 <!-- TASK42EXTRA_V44_CURRENT_BEGIN -->
 # Task42extra V44：内层补足及一次加宽已完成
 

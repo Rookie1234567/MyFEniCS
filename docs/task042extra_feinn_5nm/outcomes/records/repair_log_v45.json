@@ -1,0 +1,52 @@
+{
+  "schema": "task42extra.v45.repairs.v1",
+  "repair_journal": [
+    {
+      "kind": "STATIC_WIRING_GAP_FOUND_NOT_FORMAL_FAILURE",
+      "failure": "Round12 parent was absent from unlabelled training file allowlist",
+      "hypothesis": "Shared helper only knew R4/R8 imports",
+      "change": "Add exact R12 boundary kind; validate_parent still checks full source, hash, phase and unlabelled complete state",
+      "test": "Actual isolated file-open positive parent and four forbidden-label negatives",
+      "retry": "No formal producer has been launched"
+    },
+    {
+      "kind": "STATIC_WIRING_GAP_FOUND_NOT_FORMAL_FAILURE",
+      "failure": "R14 scalar trend alone did not complete full field acceptance before extra rounds",
+      "hypothesis": "Existing callback only ran full joint check at native target",
+      "change": "Coordinate opt-in completes scalar and independent full joint check at R14/R16 before fixed trend; unchanged residual target",
+      "test": "Actual small trainer runs six cores in correct order and full audit before decision; hidden frozen bitwise",
+      "retry": "No formal producer has been launched"
+    },
+    {
+      "kind": "RECOVERY_SCOPE_REPAIR_NOT_NUMERICAL_RETRY",
+      "failure": "A completed scalar audit could be repeated after downstream checker failure",
+      "hypothesis": "Old default required unique request directory on every call",
+      "change": "V45-only reuse with exact request, field and completed-supervision binding; old default unchanged",
+      "test": "Matching writer/reopen feedback reused; changed field rejected",
+      "retry": "No healthy producer was repeated"
+    },
+    {
+      "failure": "Actual launch failed before numerical worker: File name too long for tmux.sock",
+      "hypothesis": "V45 missing from existing short socket opt-in version list",
+      "change": "Add V45 to qualified task-local hashed socket directory selection, no new launcher or supervision",
+      "test": "Actual durable caller mocked small fixture plus existing short-socket lifecycle fixture",
+      "retry": "Use attempt2 under original stage allocation and campaign; no healthy producer rerun"
+    },
+    {
+      "failure": "Actual attempt2 terminal launcher rejected exhausted V30 successful-observation counter before worker",
+      "hypothesis": "Outer fresh CPU path opted into V45 but inner stable PSI branch still excluded version45",
+      "change": "Thin launch_stable_window keeps original60s thresholds, includesV45 current failed-wait policy and preserves legacyV30 budget behavior",
+      "test": "Actual inner-launch helper fixture with exhausted old counter plus old-default rejection",
+      "retry": "Attempt3 inherits first allocation; no numerical worker or healthy producer has run"
+    },
+    {
+      "failure": "Actual identity control rejected opening qualified result after unlabelled firewall; no core update started",
+      "hypothesis": "New training_options reopened A result while common worker had already loaded it before installing firewall",
+      "change": "Opt-in pass_qualification_to_training relays already-read qualified settings, no new training-file allowlist",
+      "test": "Actual isolated firewall rejects A-result reopening and four labels while in-memory options work; ordinary profile default false",
+      "retry": "Identity attempt2 from same R12 parent under original allocation; healthy A reused"
+    }
+  ],
+  "healthy_reference_or_training_or_FE_postprocessing_reexecuted": false,
+  "ordinary_default_changed": false
+}

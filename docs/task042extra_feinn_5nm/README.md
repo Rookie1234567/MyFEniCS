@@ -1,3 +1,14 @@
+<!-- TASK42EXTRA_V45_CURRENT_BEGIN -->
+# 当前执行入口：V45神经右坐标研究完成
+
+本支只做神经。三路线由同一第12轮学习状态分叉，原坐标冻结、可逆特征缩放冻结、同缩放继续隐藏学习均实际完成及独立验收；M5全门FAIL，无同精度NN资源收益。保留内层未充分和可逆性/实际读出限定，不作全网络容量排除。该固定配置收口，不自动扫描tau、rank、宽度、loss或PC，0.7nm未准入。
+
+[Response V45](response_v45.md)、[summary](outcomes/summary.md)、[专题](outcomes/ftt_feature_coordinates_v45.md)、[完整Gate](outcomes/records/full_numerical_gates_v45.json)、[source/hash](outcomes/records/run_index_v45.json)、[费用](outcomes/records/resource_costs_v45.json)。FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED保持，原lambda0.7完整3D/decimal2e12B/172800s及精度门未达。
+
+下方历史全文原样保留；旧“当前/下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V45_CURRENT_END -->
+
 <!-- TASK42EXTRA_V44_CURRENT_BEGIN -->
 # 当前执行入口：V44神经宽度/内层研究完成
 

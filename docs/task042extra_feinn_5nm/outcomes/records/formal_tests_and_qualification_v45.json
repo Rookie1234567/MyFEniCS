@@ -1,0 +1,349 @@
+{
+  "schema": "task42extra.v45.tests.v1",
+  "tests": [
+    {
+      "name": "targeted_01",
+      "JUnit": {
+        "path": "tmp/task42extra/v45/targeted_01/junit.xml",
+        "sha256": "e945b413fac1d4d9156a32b944b26f8b92358d01b4b6058a3c73c0b94441f7d9",
+        "bytes": 3737
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "26",
+          "time": "1.917",
+          "timestamp": "2026-10-11T19:17:34.338765",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "targeted_02",
+      "JUnit": {
+        "path": "tmp/task42extra/v45/targeted_02/junit.xml",
+        "sha256": "dc43494ef4a16ee7f899530ab11cafae61308d93f548534a941fb90802b42441",
+        "bytes": 4300
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "30",
+          "time": "2.760",
+          "timestamp": "2026-10-11T19:26:59.798155",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "final_checks",
+      "JUnit": {
+        "path": "tmp/task42extra/v45/final_checks/junit.xml",
+        "sha256": "0b4451b91a5261626577a24e20bbec11dc6e1978eb07feb66cc9288efeb2a361",
+        "bytes": 4300
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "30",
+          "time": "2.595",
+          "timestamp": "2026-10-11T19:29:12.559006",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "precommit_checks",
+      "JUnit": {
+        "path": "tmp/task42extra/v45/precommit_checks/junit.xml",
+        "sha256": "b1dc305b09b0c9c44b830f6c8afbd74e083b1b5bdc92552f04f8cb0469306835",
+        "bytes": 5096
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "36",
+          "time": "2.913",
+          "timestamp": "2026-10-11T19:31:40.249522",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "decision_checks",
+      "JUnit": {
+        "path": "tmp/task42extra/v45/decision_checks/junit.xml",
+        "sha256": "16431125aeeafda51f660975b26afb2b5bb8be2bc610dc372d0ef456e7a610b9",
+        "bytes": 499
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "2",
+          "time": "1.602",
+          "timestamp": "2026-10-11T19:33:51.053594",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "socket_repair_checks",
+      "JUnit": {
+        "path": "tmp/task42extra/v45/socket_repair_checks/junit.xml",
+        "sha256": "63754c74fb356625e03064a20a4cc2b9068c1c8ac179804ae38a279b9ca2ff5b",
+        "bytes": 494
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "2",
+          "time": "1.622",
+          "timestamp": "2026-10-11T19:38:45.584514",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "admission_wiring_checks",
+      "JUnit": {
+        "path": "tmp/task42extra/v45/admission_wiring_checks/junit.xml",
+        "sha256": "d7d98e9a24c7db1b8a9a686db4c7ea49c8f0f2df12b0b702f0908819d22adf7f",
+        "bytes": 643
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "3",
+          "time": "1.616",
+          "timestamp": "2026-10-11T19:42:08.063205",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "options_firewall_checks",
+      "JUnit": {
+        "path": "tmp/task42extra/v45/options_firewall_checks/junit.xml",
+        "sha256": "a8b8da72589f9bca0e7907408185b1de16fcd384a26f66d77f255c81ddc8e8eb",
+        "bytes": 655
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "3",
+          "time": "4.152",
+          "timestamp": "2026-10-11T19:56:52.735796",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    }
+  ],
+  "targeted_tests_only": true,
+  "final_unique_case_count_scope": "union of passed retained JUnit cases; source and qualification boundaries retained; repeats not added",
+  "final_unique_passed_case_count": 41,
+  "unique_passed_cases": [
+    {
+      "classname": "src.test.test_ftt_common_wall",
+      "name": "test_empty_output_namespace_atomic_record_and_reopen"
+    },
+    {
+      "classname": "src.test.test_ftt_common_wall",
+      "name": "test_post_compare_hook_is_opt_in_and_old_default_unchanged"
+    },
+    {
+      "classname": "src.test.test_ftt_common_wall",
+      "name": "test_shared_wall_latest_committed_state_and_no_label_selection"
+    },
+    {
+      "classname": "src.test.test_ftt_common_wall",
+      "name": "test_unretained_and_nonfinite_boundary_are_not_legal_partial_scores"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_nonzero_same_parent_two_forks_and_no_round4_rerun"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_actual_v45_durable_selects_short_task_socket_namespace"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_actual_v45_launch_successful_psi_ignores_exhausted_legacy_observation_pool"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_cache_axis_dependencies_and_restored_state"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_conditional_pilot_requires_actual_and_producer_joint_pass"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_fixed_extra_round_gate_and_initial_limits"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_identity_exact_old_segment_regression"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_new_schema_and_old_schema_reject_cross_identity"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_numeric_role_and_window_budget"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_qualified_options_pass_before_firewall_without_broadening_file_access"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_real_writeback_failure_restores_all_outputs"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_retained_two_segment_original_increment_and_identity"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_round12_parent_actual_file_firewall_and_forbidden_labels"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_round14_complete_audit_before_trend_and_hidden_freeze"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_scalar_consumer_reuses_only_matching_completed_feedback"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_small_complex_right_transform_and_independent_svd[duplicate]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_small_complex_right_transform_and_independent_svd[few_nodes]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_small_complex_right_transform_and_independent_svd[full]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_small_complex_right_transform_and_independent_svd[scaled]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[bias-0]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[bias-1]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[bias-2]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[complex-0]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[complex-1]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[complex-2]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[imaginary-0]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[imaginary-1]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[imaginary-2]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_saved_same_parent_forks_and_third_route_corruption"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_wrong_conjugate_and_y_as_delta_are_rejected"
+    },
+    {
+      "classname": "src.test.test_ftt_width",
+      "name": "test_refinement_stationarity_budget_and_interrupt"
+    },
+    {
+      "classname": "src.test.test_ftt_width",
+      "name": "test_saved_fork_inventory_and_bitwise_claims"
+    },
+    {
+      "classname": "src.test.test_ftt_width",
+      "name": "test_two_stage_matches_independent_small_svd[complex]"
+    },
+    {
+      "classname": "src.test.test_ftt_width",
+      "name": "test_two_stage_matches_independent_small_svd[duplicate]"
+    },
+    {
+      "classname": "src.test.test_ftt_width",
+      "name": "test_two_stage_matches_independent_small_svd[pureimag]"
+    },
+    {
+      "classname": "src.test.test_ftt_width",
+      "name": "test_two_stage_matches_independent_small_svd[scaled]"
+    },
+    {
+      "classname": "src.test.test_neural_wave_multiscale",
+      "name": "test_short_socket_is_opt_in_bound_to_unique_stage"
+    }
+  ],
+  "initial_failed_tests_retained": true,
+  "qualification": {
+    "path": "benchmarks/artifacts/task42extra/v45/v45_feature_coordinates_checks/result.json",
+    "sha256": "4f42e00ab196fe7a0f37c3f270f308baa1dcac1ab668a2dd93f103e8fe8a9f85",
+    "bytes": 33078
+  },
+  "parent_recovery": {
+    "path": "benchmarks/artifacts/task42extra/v45/v45_feature_coordinates_checks/result.json",
+    "sha256": "4f42e00ab196fe7a0f37c3f270f308baa1dcac1ab668a2dd93f103e8fe8a9f85",
+    "bytes": 33078
+  },
+  "original_field_producers_not_recomputed_for_policy_repair": true,
+  "full_repository_pytest": false,
+  "CI_claimed": false,
+  "reuse_boundary": "New opt-in Bloch and impacted conditional/structure tests; qualified native/moments/reference reused without re-solving"
+}

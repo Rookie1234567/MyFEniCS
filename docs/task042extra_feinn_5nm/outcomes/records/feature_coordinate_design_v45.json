@@ -1,0 +1,386 @@
+{
+  "schema": "task42extra.v45.design.v1",
+  "design": {
+    "schema": "ftt.feature-coordinate-design.v1",
+    "campaign_version": 45,
+    "authority_sha": "e0508555ffec6d13fad68b7516971c5899a09901",
+    "base_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+    "seed": 4213701,
+    "qualification_seed": 4214501,
+    "ranks": [
+      1,
+      8,
+      8,
+      1
+    ],
+    "model": {
+      "wavelength_nm": 5.0,
+      "geometry": {
+        "bounds_nm": [
+          [
+            -5,
+            5
+          ],
+          [
+            -3.75,
+            3.75
+          ],
+          [
+            -1.25,
+            8.75
+          ]
+        ],
+        "substrate_z_nm": 0,
+        "block_bounds_nm": [
+          [
+            -2.5,
+            2.5
+          ],
+          [
+            -3.75,
+            3.75
+          ],
+          [
+            0,
+            7.5
+          ]
+        ],
+        "notch_bounds_nm": [
+          [
+            0,
+            2.5
+          ],
+          [
+            -1.25,
+            1.25
+          ],
+          [
+            2.5,
+            5
+          ]
+        ],
+        "cells": [
+          8,
+          6,
+          8
+        ],
+        "step_nm": 1.25
+      },
+      "materials": {
+        "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "si_n": [
+          0.99396854453,
+          0.00435380777
+        ]
+      },
+      "incidence": {
+        "grazing_deg": 1.0,
+        "azimuth_deg": 0.0,
+        "polarization": "s",
+        "amplitude": 1.0,
+        "background": "layered"
+      },
+      "finite_element": {
+        "family": "N1curl",
+        "cell": "hexahedron",
+        "degree": 3,
+        "operator_quadrature_degree": 15
+      },
+      "boundary": {
+        "floquet_xy": true,
+        "dtn": "complete original auto_propagating Fourier-DtN",
+        "pml": false
+      },
+      "near_zero": {
+        "vector_denominator": "max(norm(reference), 1e-12*nonzero natural scale)",
+        "E_natural_scale": "incident amplitude 1 times sqrt(domain volume in nm^3)",
+        "scaled_curl_natural_scale": "same incident E scale",
+        "selected_E_scale": 1.0,
+        "selected_H_code_scale": 1.0,
+        "port_scale": "incident ordered amplitude norm",
+        "report_absolute_and_denominator": true,
+        "phase_fit": false
+      }
+    },
+    "native_identity": {
+      "mesh_coordinates_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+      "cell_tags_sha256": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+      "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e"
+    },
+    "files": {
+      "native": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/native.npz",
+        "sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215"
+      },
+      "moments_q30": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/moments_q30.npz",
+        "sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5"
+      },
+      "moments_q60": {
+        "path": "benchmarks/artifacts/task42extra/v30/v30_wave_checks/moments_q60.npz",
+        "sha256": "849f5bdebb5767dfdbedb005360196b1fddb1aa45db3bd3a3f121c2d1a6f9a56"
+      }
+    },
+    "reference": {
+      "path": "benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+      "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+    },
+    "gram": {
+      "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+      "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+    },
+    "point_batch": 512,
+    "cell_batch": 8,
+    "initial_core_normalization": "NOT_USED_EXACT_XAVIER_OR_NORMAL",
+    "neural_architecture": [
+      1,
+      32,
+      32,
+      [
+        48,
+        384,
+        48
+      ]
+    ],
+    "activation": "sin,sin,linear",
+    "real_parameters": {
+      "fttnn": 19200,
+      "chebtt": 9120
+    },
+    "chebyshev_degrees": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18
+    ],
+    "network_quadrature": [
+      30,
+      60
+    ],
+    "volume_DtN_degree": 15,
+    "training": {
+      "metric": "native_euc",
+      "from_zero": false,
+      "hidden_real_parameters": 3360,
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "benchmark_previously_seen": true,
+      "design_informed_by_reference_diagnostics": true,
+      "pde_only_solve": true,
+      "production_initialization_allowed": false,
+      "parent_import_only": true
+    },
+    "limits": {
+      "total_seconds": 43200,
+      "final_reserve_seconds": 3600,
+      "route_seconds": 7200
+    },
+    "ordinary_default_changed": false,
+    "old_wave_family_closed": true,
+    "teacher_and_old_weights_forbidden": true,
+    "campaign": "V45_FTT_FEATURE_COORDINATE_SOLVE",
+    "mapping_kind": "factored_exact_moments",
+    "core_solver": {
+      "method": "LSMR",
+      "damp": 0,
+      "atol": 1e-08,
+      "btol": 1e-08,
+      "conlim": 1000000000000.0,
+      "maxiter": 300
+    },
+    "hidden_solver": {
+      "method": "LBFGS",
+      "lr": 1,
+      "history_size": 10,
+      "line_search": "strong_wolfe",
+      "max_iter": 10,
+      "max_eval": 20,
+      "tolerance_grad": 1e-07,
+      "tolerance_change": 1e-09,
+      "actual_call_limit": 20
+    },
+    "axis_orders": [
+      [
+        2,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        2
+      ]
+    ],
+    "validation": {
+      "native_target": 1e-08,
+      "continuation_target_if_scalar_validation_fails": 1e-10
+    },
+    "authority": "docs/task042extra_feinn_5nm/review_report_v44.md",
+    "validation_used_for_stopping": true,
+    "production_initialization_allowed": false,
+    "phase_definition": {
+      "wavevector_nm_inverse": [
+        1.2564456695248023,
+        0.0,
+        0.0
+      ],
+      "origin_nm": [
+        0.0,
+        0.0,
+        3.75
+      ],
+      "coordinate_unit": "physical_nm",
+      "sign": 1,
+      "unfolded_incident_wavevector": true,
+      "phase_applied": "before_complete_moments_and_Piola",
+      "MPC_expansion_count": 1,
+      "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+      "sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+    },
+    "parent_checkpoint": {
+      "path": "benchmarks/artifacts/task42extra/v44/v44_w32_refined_learned/checkpoints/committed_000023.pt",
+      "sha256": "02109f3e8d8f5361bc1d7f3b16633e1d257017fd1cf3b808bba6aad4fa57708f",
+      "bytes": 2020100,
+      "input_kind": "unlabelled_complete_round12_boundary",
+      "binding": {
+        "source_sha": "a4c0d5e703eee8efe59740e706632eaeae2803e0",
+        "input_sha256": "7652f5be491297d5de713503d52c52af070f02e1bed8d7c229ec60e37bb2bc0c",
+        "design_sha256": "76b240bce50e468c2252b990a9467dce41ab2e0ce478a928fa9c117054b01e69",
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+        "model_kind": "fttnn",
+        "metric_kind": "native_euc",
+        "route": "W32_REFINED_CORE_LEARNED",
+        "phase_sha256": "32824e3063679681f77f6bb103fbb1ec9264f09f3441201407f6d0144cdc2ecc"
+      },
+      "inherited_rounds": 12,
+      "inherited_counts": {
+        "core_visits": 36,
+        "LSMR_iterations": 19830,
+        "LSMR_unretained_iterations_upper_bound": 0,
+        "accepted_core_updates": 36,
+        "effective_core_updates": 36,
+        "accepted_hidden_updates": 12,
+        "effective_hidden_updates": 12,
+        "hidden_actual_calls": 137,
+        "K": 19971,
+        "KH": 19982,
+        "B": 19935,
+        "BH": 19982,
+        "round_audits": 12,
+        "uncommitted_K": 0,
+        "uncommitted_KH": 0
+      },
+      "path_source": "outcomes/records/run_index_v44.json",
+      "parent_record": "docs/task042extra_feinn_5nm/outcomes/records/conditional_core_routes_v44.json",
+      "parent_result_status": "AUTHORIZED_TOTAL_ROUND_LIMIT",
+      "required_parent_prefix_seconds": 10029.01257516597,
+      "parent_scalars": {
+        "native_relative": 0.36129038520134216,
+        "augmented_relative": 0.36129038520134216,
+        "scattered_E_relative": 0.08377667852246189,
+        "scattered_H_relative": 0.0838326969726761,
+        "scattered_curl_relative": 0.0838326969726761
+      }
+    },
+    "execution_policies": {
+      "learned": {
+        "schema": "ftt.feature-coordinate-policy.v1",
+        "inherited_rounds": 12,
+        "total_round_limit": 16,
+        "new_round_limit": 4,
+        "new_visit_limit": 12,
+        "new_iteration_limit": 14400,
+        "new_hidden_call_limit": 80,
+        "scalar_rounds": [
+          14,
+          16
+        ],
+        "disable_historical_slow_streak": true,
+        "native_target": 1e-08,
+        "validation_feedback": "scalars_only",
+        "inner_refinement": true,
+        "conditional_extra_rounds_only": true,
+        "initial_new_visit_limit": 6,
+        "initial_new_iteration_limit": 7200,
+        "initial_new_hidden_call_limit": 40
+      },
+      "freeze": {
+        "schema": "ftt.feature-coordinate-policy.v1",
+        "inherited_rounds": 12,
+        "total_round_limit": 14,
+        "new_round_limit": 2,
+        "new_visit_limit": 6,
+        "new_iteration_limit": 7200,
+        "new_hidden_call_limit": 0,
+        "scalar_rounds": [
+          14
+        ],
+        "disable_historical_slow_streak": true,
+        "native_target": 1e-08,
+        "validation_feedback": "scalars_only",
+        "inner_refinement": true,
+        "conditional_extra_rounds_only": true,
+        "initial_new_visit_limit": 6,
+        "initial_new_iteration_limit": 7200,
+        "initial_new_hidden_call_limit": 40
+      }
+    },
+    "qualified_operator_record": {
+      "path": "benchmarks/artifacts/task42extra/v43/v43_bloch_resume_checks/result.json",
+      "sha256": "dc4577b155ad60368fa5d538b2cbdac0bc4ed6248a8e37839b1ce5698d5cd101",
+      "source_sha": "dce792d18a45a1c874c29dfa4a42a8052fffe40f",
+      "no_old_qualification_rerun": true
+    },
+    "core_refinement": {
+      "first": {
+        "atol": 1e-08,
+        "btol": 1e-08,
+        "maxiter": 300
+      },
+      "second": {
+        "atol": 1e-10,
+        "btol": 1e-10,
+        "maxiter": 900
+      },
+      "trigger_adjoint_ratio": 0.001,
+      "max_segments": 2,
+      "damp": 0,
+      "conlim": 1000000000000.0
+    },
+    "hidden_width": 32,
+    "coordinate_rule": {
+      "tau": 1e-06,
+      "stability_only_fallback_tau": 0.0001,
+      "feature_dimension": 33,
+      "directions_removed": 0,
+      "node_rule": "all_exact_unique_factored_nodes_sorted",
+      "residual_left_weight_changed": false,
+      "actual_delta": "P_y",
+      "adjoint": "P_conjugate_transpose_BH"
+    }
+  },
+  "binding": {
+    "path": "input/task042extra_feinn_5nm/design_v45.json",
+    "sha256": "43e68269855137f6d8f3b424198789f41bec4c5f8bbca50f28f525ef643748f7",
+    "bytes": 10273
+  },
+  "meaning": "Invertible right coordinates in the same output space; no left residual weighting, cutoff or ridge",
+  "selected_tau": 0.0001,
+  "all_33_feature_directions_retained": true
+}

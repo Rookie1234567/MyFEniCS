@@ -1,0 +1,78 @@
+{
+  "schema": "task42extra.v45.delivery.v1",
+  "declared_binding_count": 304,
+  "frozen_source_file_checks": 136,
+  "all_declared_arrays_and_source_hashes_pass": true,
+  "actual_and_producer_records": 6,
+  "original_vector_denominators_preserved": true,
+  "record_rows": {
+    "conditional_inner_solver_v45.csv": 18,
+    "full_40_complex_channels_v45.csv": 960,
+    "six_point_complex_fields_v45.csv": 432,
+    "power_and_energy_v45.csv": 6
+  },
+  "saved_coordinate_count": 12,
+  "production_initialization_allowed": false,
+  "reference_training": false,
+  "validation_used_for_stopping": true,
+  "numerical_sources": [
+    "811f3dd11fff774874a7415e0d55d13e9299c2f3",
+    "bda2ef6c5164a59390479662955e8cef358841db"
+  ],
+  "source_not_document_HEAD": true,
+  "end_to_end_use_flags_strict_false": true,
+  "strict_joint_gate": {
+    "W32_R12_IDENTITY_FROZEN": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    },
+    "W32_R12_FEATURE_SCALED_FROZEN": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    },
+    "W32_R12_FEATURE_SCALED_LEARNED": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    },
+    "W32_R12_IDENTITY_FROZEN_PRODUCER": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    },
+    "W32_R12_FEATURE_SCALED_FROZEN_PRODUCER": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    },
+    "W32_R12_FEATURE_SCALED_LEARNED_PRODUCER": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    }
+  },
+  "conditional_0p7": "NOT_RUN_LEARNED_JOINT_GATE_FAILED",
+  "same_accuracy_NN_gain": "NOT_VERIFIED",
+  "full_repository_pytest": false,
+  "CI_claimed": false
+}
