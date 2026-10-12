@@ -259,6 +259,7 @@ class RetainedCondensedRuntime:
         component_options: Mapping[str, Any] | None = None,
         profile_identity: str | None = None,
         functional_store_config: Mapping[str, Any] | None = None,
+        artifact_directory: Any | None = None,
         marker: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> "RetainedCondensedRuntime":
         from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
@@ -271,16 +272,23 @@ class RetainedCondensedRuntime:
         from src.solvers.physical_equivalent_fast import (
             build_packed_physical_action,
         )
-        from src.io.native_capacity_profile import V6_0P7_N0_P3_PROFILES
+        from src.io.native_capacity_profile import (
+            V6_0P7_N0_P3_PROFILES, V7_ANISO_N0_P4_PROFILES,
+        )
 
         if int(comm.size) != 1:
             raise ValueError("the D2 retained route is qualified for MPI1 only")
-        is_n0_profile = profile_identity in V6_0P7_N0_P3_PROFILES
-        if is_n0_profile and functional_store_config is None:
+        is_v7 = profile_identity in V7_ANISO_N0_P4_PROFILES
+        is_n0_profile = profile_identity in (V6_0P7_N0_P3_PROFILES | V7_ANISO_N0_P4_PROFILES)
+        if profile_identity in V6_0P7_N0_P3_PROFILES and functional_store_config is None:
             raise ValueError(
                 "the explicit N0 profile requires persistent p6/p3 functional stores"
             )
+        if is_v7 and functional_store_config is not None:
+            raise ValueError("V7 new mesh forbids inherited functional stores")
         coarse_degree = int(coarse_degree)
+        if is_v7 and coarse_degree != 4:
+            raise ValueError("V7 requires exact p4 condensation")
         options = dict(component_options or {})
         reuse_surface_vector = bool(options.get('reuse_dtn_surface_vector', False))
         surface_assembly_backend = options.get('dtn_surface_assembly_backend')
@@ -323,8 +331,8 @@ class RetainedCondensedRuntime:
             )
 
             if (
-                profile_identity not in V6_0P7_P3_HP_OPTIN_PROFILES
-                or coarse_degree != 3
+                profile_identity not in (V6_0P7_P3_HP_OPTIN_PROFILES | V7_ANISO_N0_P4_PROFILES)
+                or coarse_degree != (4 if is_v7 else 3)
                 or not reuse_surface_vector
                 or not release_component_cache
                 or not reuse_surface_geometry_cache
@@ -332,11 +340,11 @@ class RetainedCondensedRuntime:
             ):
                 raise ValueError(
                     'reused DtN surface vectors and last-use cache release are '
-                    'restricted to the explicit 0.7 nm p3 profile'
+                    'restricted to the explicit 0.7 nm p3 or V7 p4 profile'
                 )
             if surface_progress_interval != 1024:
                 raise ValueError(
-                    'the 0.7 nm p3 profile fixes sparse mode progress at 1024 modes'
+                    'the 0.7 nm profile fixes sparse mode progress at 1024 modes'
                 )
             expected_component_options = native_profile_facts(profile_identity)[
                 'component_options'
@@ -353,7 +361,7 @@ class RetainedCondensedRuntime:
             validate_weighted_moment_profile_selection(
                 surface_weighted_moment_contraction,
                 expected_moment_contraction,
-                allow_six_lane_optin=True,
+                allow_six_lane_optin=not is_v7,
             )
             if prepare_surface_trace_contraction is not bool(
                 expected_component_options.get(
@@ -407,11 +415,11 @@ class RetainedCondensedRuntime:
                     'p6': (
                         'q160_affine_hex_pointwise_weighted_legendre_component_pair_v1'
                     ),
-                    'p3': 'native_ffcx',
+                    f'p{coarse_degree}': 'native_ffcx',
                 }
                 if (
-                    profile_identity not in V6_0P7_P3_HP_OPTIN_PROFILES
-                    or coarse_degree != 3
+                    profile_identity not in (V6_0P7_P3_HP_OPTIN_PROFILES | V7_ANISO_N0_P4_PROFILES)
+                    or coarse_degree != (4 if is_v7 else 3)
                     or surface_assembly_backend is not None
                     or not isinstance(surface_assembly_backend_by_degree, Mapping)
                     or dict(surface_assembly_backend_by_degree) != expected_route
@@ -419,11 +427,11 @@ class RetainedCondensedRuntime:
                 ):
                     raise ValueError(
                         'the explicit 0.7 nm profile requires its exact p6-paired/'
-                        'p3-native surface backend route'
+                        f'p{coarse_degree}-native surface backend route'
                     )
                 surface_backend_by_degree = {
                     6: expected_route['p6'],
-                    3: None,
+                    coarse_degree: None,
                 }
             elif surface_assembly_backend_by_degree is not None:
                 raise ValueError(
@@ -476,7 +484,7 @@ class RetainedCondensedRuntime:
         quadrature_mode_inventory = None
         selected_parent_indices = None
         n0_inventory_artifacts = None
-        if profile_identity in V6_0P7_N0_P3_PROFILES:
+        if is_n0_profile:
             from src.solvers.fullspace_dtn_action import (
                 build_dynamic_mode_inventory,
                 build_n0_mode_inventory,
@@ -487,8 +495,12 @@ class RetainedCondensedRuntime:
                 build_n0_mode_inventory(quadrature_mode_inventory, cfg)
             )
             mode_inventory = active_inventory
+            inventory_directory = (artifact_directory if is_v7 else
+                functional_store_config["producer_provenance"]["output_directory"])
+            if inventory_directory is None:
+                raise ValueError("N0 metadata requires an explicit run artifact directory")
             n0_inventory_artifacts = _persist_n0_inventory(
-                functional_store_config["producer_provenance"]["output_directory"],
+                inventory_directory,
                 quadrature_mode_inventory, active_inventory,
                 operator_selection, selected_parent_indices,
             )
@@ -526,7 +538,11 @@ class RetainedCondensedRuntime:
             cfg, comm, (6, coarse_degree), include_positive_coefficients=True
         )
         n0_material_evidence = None
-        if is_n0_profile:
+        if is_v7:
+            from src.runners.v7_anisotropic_mesh_evidence import actual_v7_anisotropic_mesh_evidence
+            n0_material_evidence = actual_v7_anisotropic_mesh_evidence(levels, cfg)
+            notify("retained_v7_anisotropic_mesh_qa_complete", n0_material_evidence)
+        elif is_n0_profile:
             from src.runners.n0_port_material_evidence import (
                 actual_n0_y_material_evidence,
             )
@@ -624,6 +640,9 @@ class RetainedCondensedRuntime:
                 stage_callback=notify if reuse_surface_vector else None,
                 surface_progress_interval=surface_progress_interval,
             )
+            if is_v7 and (fine["dtn_quadrature_degree"] != 160
+                          or p4["dtn_quadrature_degree"] != 160):
+                raise ValueError("V7 p6/p4 must retain the parent inventory q160 rule")
             if sum_factorized_work:
                 if reuse_surface_vector:
                     notify(
@@ -648,7 +667,7 @@ class RetainedCondensedRuntime:
             if options.get('fast_complete_a4'):
                 if reuse_surface_vector:
                     notify(
-                        'retained_packed_a3_action_started',
+                        f'retained_packed_a{coarse_degree}_action_started',
                         {'mode_count': len(fine['modes']), 'mode_sha256': fine['mode_sha256']},
                     )
                 fast_a4 = build_packed_physical_action(
@@ -1556,20 +1575,28 @@ def run_retained_condensed_workflow(
     from pathlib import Path
     import json
     import time
-    from src.io.native_capacity_profile import V6_0P7_N0_P3_PROFILES
+    from src.io.native_capacity_profile import (
+        V6_0P7_N0_P3_PROFILES, V7_ANISO_N0_P4_PROFILES,
+    )
 
     profile_identity = str(payload["solver"]["preconditioner"])
-    is_n0_profile = profile_identity in V6_0P7_N0_P3_PROFILES
+    is_v7 = profile_identity in V7_ANISO_N0_P4_PROFILES
+    is_n0_profile = profile_identity in (V6_0P7_N0_P3_PROFILES | V7_ANISO_N0_P4_PROFILES)
     physical_residual_key = "A6_n0_relative" if is_n0_profile else "original_A6_relative"
     if is_n0_profile:
-        if setup_only or contract.get("execution_mode") != "pilot_16":
-            raise ValueError("N0 target requires the authorized 16-step pilot contract")
+        expected_execution = "full_solve" if is_v7 else "pilot_16"
+        if setup_only or contract.get("execution_mode") != expected_execution:
+            raise ValueError("N0 execution mode differs from its explicit profile")
+        if is_v7 and contract["outer"].get("planned_stop_iteration") is not None:
+            raise ValueError("V7 full solve cannot inherit a pilot stop")
         summary.update(
-            experiment="N0_PORT_FILTER_TARGET_PILOT",
+            experiment=("V7_ANISOTROPIC_N0_P4_FULL" if is_v7 else "N0_PORT_FILTER_TARGET_PILOT"),
+            execution_mode=expected_execution,
             operator_scope="n0_filtered_dtn_not_full_dtn",
             full_dtn_endpoint_check={
                 "status": "FULL_DTN_NOT_VERIFIED", "A6_full_relative": None,
-                "reason": "pilot endpoint has not been reached",
+                "reason": ("new mesh has no compatible full-DtN FE data; no old-mesh reuse"
+                           if is_v7 else "pilot endpoint has not been reached"),
             },
         )
 
@@ -1649,6 +1676,7 @@ def run_retained_condensed_workflow(
                 "absolute": absolute,
                 "rhs_norm": rhs_norm,
                 "finite": bool(np.isfinite(relative)),
+                "operator_scope": "A6_n0" if is_n0_profile else "original_A6",
             }
         finally:
             residual.destroy()
@@ -1734,6 +1762,7 @@ def run_retained_condensed_workflow(
             component_options=contract.get("component_options"),
             profile_identity=profile_identity,
             functional_store_config=store_config,
+            artifact_directory=directory,
         )
         if is_n0_profile:
             summary.update(
@@ -1745,10 +1774,13 @@ def run_retained_condensed_workflow(
             # Snapshot before the optional endpoint read changes store counters.
             summary["n0_functional_preparation"] = {
                 str(degree): {
+                    "dtn_quadrature_degree": int(build["dtn_quadrature_degree"]),
                     "carrier": dict(build["dtn_action"].carrier.audit),
-                    "store": build["dtn_action"].carrier.n0_parent_store.audit,
+                    "store": (build["dtn_action"].carrier.n0_parent_store.audit
+                              if build["dtn_action"].carrier.n0_parent_store is not None
+                              else {"status": "NOT_USED_NEW_MESH", "old_FE_reuse": False}),
                 }
-                for degree, build in ((6, runtime.fine), (3, runtime.p4))
+                for degree, build in ((6, runtime.fine), (coarse_degree, runtime.p4))
             }
             _atomic_json(directory / "physical_intermediate_summary.json", summary)
         if profile_identity in (V5_NATIVE_PROFILES | V6_NATIVE_PROFILES):
@@ -1800,6 +1832,15 @@ def run_retained_condensed_workflow(
             "postprocess_jit_release_before_factor": postprocess_jit_release,
             "p6_cache_before_setup": cache_before,
         }
+        if is_v7:
+            summary["v7_mesh_qa"] = runtime.fine["n0_y_material_evidence"]
+            summary["retained_runtime"]["coarse_operator"] = {
+                "degree": 4, "name": "A4", "residual_scope": "A4_n0",
+                "exact_per_cell_condensation": True,
+                "global_factor": "one_exact_MUMPS_factor",
+                "relative_residual_limit": 1.0e-10,
+                "maximum_extra_same_factor_refinements": 2,
+            }
         if runtime.coarse_degree == 3:
             summary["retained_runtime"]["coarse_operator"] = {
                 "degree": int(runtime.coarse_degree),
@@ -1839,8 +1880,13 @@ def run_retained_condensed_workflow(
         ledger.marker("retained_p4_factor_complete", p4_facts)
         if runtime.coarse_degree == 3:
             ledger.marker("retained_coarse_a3_factor_complete", p4_facts)
+        def scoped_coarse_append(name, facts):
+            if is_v7:
+                facts = dict(facts, operator_scope="A4_n0", coarse_degree=4, coarse_operator="A4")
+            ledger.append(name, facts)
+
         bridge = runtime.build_bal_h(
-            marker=ledger.marker, audit_append=ledger.append
+            marker=ledger.marker, audit_append=scoped_coarse_append
         )
         transfer_audit = dict(runtime.transfer_owner.audit)
         if "trace_map_policy" in transfer_audit:
@@ -1980,7 +2026,8 @@ def run_retained_condensed_workflow(
                 )
             finally:
                 full_field.destroy()
-                if not (is_n0_profile and row.get("solution_source") == "terminal_vec_sol"):
+                if not (profile_identity in V6_0P7_N0_P3_PROFILES
+                        and row.get("solution_source") == "terminal_vec_sol"):
                     last_evaluation["facts"] = None
 
         def evaluate(target: PETSc.Vec, reduced_residual: PETSc.Vec) -> Mapping[str, Any]:
@@ -2331,16 +2378,28 @@ def run_retained_condensed_workflow(
         if not summary["pre_release_a6"]["finite"] or summary["pre_release_a6"]["relative"] > 1.0e-6:
             raise RuntimeError("pre-release original A6 gate failed")
         pre_packet = directory / "pre_release_residual_packet.npz"
+        packet_action_key = "A6_n0_action" if is_v7 else "original_a6"
         pre_action = apply_owned(runtime.fine["physical_action"], saved_field)
         pre_residual = full_rhs.duplicate()
         try:
             full_rhs.copy(pre_residual)
             pre_residual.axpy(PETSc.ScalarType(-1.0), pre_action)
+            if is_v7:
+                from src.runners.v7_n0_output_audit import truncation_action_observation
+                summary["v7_truncation_action"] = truncation_action_observation(
+                    modes=runtime.fine["modes"],
+                    entries=runtime.fine["dtn_action"].carrier.entries,
+                    solution=saved_field.getArray(readonly=True),
+                    residual=pre_residual.getArray(readonly=True),
+                    rhs_norm=float(full_rhs.norm()),
+                    incident_projections=runtime.fine["incident_projections"],
+                )
+                ledger.marker("v7_tail20_operator_observation_complete", summary["v7_truncation_action"])
             np.savez(
                 pre_packet,
                 storage_solution=np.asarray(saved_field.getArray(readonly=True), dtype=np.complex128),
                 full_rhs=np.asarray(full_rhs.getArray(readonly=True), dtype=np.complex128),
-                original_a6=np.asarray(pre_action.getArray(readonly=True), dtype=np.complex128),
+                **{packet_action_key: np.asarray(pre_action.getArray(readonly=True), dtype=np.complex128)},
                 residual=np.asarray(pre_residual.getArray(readonly=True), dtype=np.complex128),
             )
         finally:
@@ -2350,6 +2409,8 @@ def run_retained_condensed_workflow(
             "filename": pre_packet.name,
             "sha256": hashlib.sha256(pre_packet.read_bytes()).hexdigest(),
             "recorded_before_release": True,
+            "action_array_key": packet_action_key,
+            "operator_scope": "A6_n0" if is_v7 else "original_A6",
             "storage_space": "full_p6_storage_with_exact_zero_MPC_slaves",
         }
         ledger.marker("retained_pre_release_packet_complete", summary["pre_release_residual_packet"])
@@ -2385,9 +2446,22 @@ def run_retained_condensed_workflow(
             directory / "numerical_output",
             canonical_export=canonical_export,
             export_all_port_modes=True,
+            active_port_outputs_only=is_v7,
         )
         summary["official_result"] = outputs
-        if profile_identity in (V5_NATIVE_PROFILES | V6_NATIVE_PROFILES):
+        if is_v7:
+            from src.runners.v7_n0_output_audit import saved_output_observation
+            summary["v7_output_audit"] = saved_output_observation(
+                directory / "numerical_output", outputs, cfg, summary["v7_truncation_action"]
+            )
+            _atomic_json(directory / "v7_diffraction_tail_and_scope.json", summary["v7_output_audit"])
+            summary["matched_reference"] = {
+                "status": "REFERENCE_AUTHORITY_LIMITED",
+                "reference_availability": "REFERENCE_NOT_AVAILABLE",
+                "reason": "no same-physical independent reference or mesh convergence",
+            }
+            summary["complete_solve"] = True
+        elif profile_identity in (V5_NATIVE_PROFILES | V6_NATIVE_PROFILES):
             summary["matched_reference"] = compare_retained_v5_output(
                 V6_BASE_PROFILES.get(profile_identity, profile_identity),
                 outputs,
@@ -2424,6 +2498,7 @@ def run_retained_condensed_workflow(
         summary["residual_arrays"] = {
             "filename": raw_path.name,
             "sha256": hashlib.sha256(raw_path.read_bytes()).hexdigest(),
+            "operator_scope": "A6_n0" if is_v7 else "original_A6",
             "operator_identity_sha256": operator_identity,
             "input_sha256": provenance["input_sha256"],
             "physical_model_sha256": provenance["physical_model_sha256"],

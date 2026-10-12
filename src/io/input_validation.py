@@ -625,6 +625,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 V5_R13_PROFILES,
                 V6_NATIVE_PROFILES,
                 V6_R13_ANCHOR_PROFILES,
+                V7_ANISO_N0_P4_PROFILES,
             )
             retained_profiles = V5_NATIVE_PROFILES | V6_NATIVE_PROFILES
             if "coarse_degree" in solver and preconditioner not in retained_profiles:
@@ -646,7 +647,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             if any(
                 discretization.get(key) is not None for key in frozen_mesh_fields
             ) and preconditioner not in (
-                V5_R13_PROFILES | V6_R13_ANCHOR_PROFILES
+                V5_R13_PROFILES | V6_R13_ANCHOR_PROFILES | V7_ANISO_N0_P4_PROFILES
             ):
                 raise _error(
                     "discretization",

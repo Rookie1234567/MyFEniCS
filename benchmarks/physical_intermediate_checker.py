@@ -469,7 +469,7 @@ def check_n0_target_pilot(directory: Path, summary: dict) -> dict:
     }
 
 
-def check_retained_v20(directory: Path, summary: dict) -> dict:
+def check_retained_v20(directory: Path, summary: dict, *, _v7_full=False) -> dict:
     """Check the opt-in retained V20 contract without legacy profile rules."""
 
     started = time.monotonic()
@@ -484,14 +484,21 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
     from src.io.native_capacity_profile import (
         V5_EXPECTED_MODE_COUNTS, V6_BASE_PROFILES,
         V5_NATIVE_PROFILES, V6_NATIVE_PROFILES, V6_P3_PROFILES, V6_0P7_N0_P3_PROFILES,
+        V7_ANISO_N0_P4_PROFILES,
     )
 
     identity = summary.get('profile', {}).get('identity')
+    is_v7 = identity in V7_ANISO_N0_P4_PROFILES
+    if is_v7 and not _v7_full:
+        from benchmarks.v7_anisotropic_n0_checker import check_v7_anisotropic_n0_full
+        return check_v7_anisotropic_n0_full(directory, summary)
+    if _v7_full and not is_v7:
+        raise ValueError('V7 checker requires its independent explicit profile')
     if identity in V6_0P7_N0_P3_PROFILES:
         return check_n0_target_pilot(directory, summary)
     is_v5 = identity in (V5_NATIVE_PROFILES | V6_NATIVE_PROFILES)
     p3_profile = identity in V6_P3_PROFILES
-    expected_mode_count = (
+    expected_mode_count = 572 if is_v7 else (
         V5_EXPECTED_MODE_COUNTS.get(V6_BASE_PROFILES.get(identity, identity))
         if is_v5
         else 600 if identity == 'dual_condensed_balh_native_5nm_v3'
@@ -559,7 +566,7 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
             'released_after_recovery' not in jit_release,
             'postprocess JIT holders were not released at the pre-factor boundary')
     setup_checks = retained_runtime.get('setup_checks', {})
-    fixed_vector_facts = setup_checks.get('mixed_original_A6_J', {}).get('fixed_vector_facts', {})
+    fixed_vector_facts = setup_checks.get('mixed_A6_n0_J' if is_v7 else 'mixed_original_A6_J', {}).get('fixed_vector_facts', {})
     require(set(fixed_vector_facts) == {'trace', 'port', 'mixed'},
             'retained setup trace/port/mixed algebra coverage is incomplete')
     for name, values in fixed_vector_facts.items():
@@ -573,7 +580,7 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
             setup_checks.get('bal_h', {}).get('actual_logical_call') is True and
             setup_checks.get('cache_content_and_unique_bytes_unchanged') is True,
             'same-object D3 setup/A6/J/BAL_H/cache checks are incomplete')
-    if str(identity).endswith('_v5'):
+    if str(identity).endswith('_v5') or is_v7:
         errors.extend(_retained_v5_aq_projection_errors(
             identity,
             summary.get('profile', {}),
@@ -613,17 +620,18 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
         require(hashlib.sha256(packet_path.read_bytes()).hexdigest() == packet.get('sha256'),
                 'pre-release residual packet hash mismatch')
         with np.load(packet_path, allow_pickle=False) as arrays:
-            required = ('storage_solution', 'full_rhs', 'original_a6', 'residual')
+            action_key = 'A6_n0_action' if is_v7 else 'original_a6'
+            required = ('storage_solution', 'full_rhs', action_key, 'residual')
             require(all(name in arrays for name in required),
                     'pre-release residual packet is missing a required vector')
             if all(name in arrays for name in required):
                 require(all(np.isfinite(arrays[name]).all() for name in required),
                         'pre-release residual packet contains non-finite values')
-                require(arrays['full_rhs'].shape == arrays['original_a6'].shape ==
+                require(arrays['full_rhs'].shape == arrays[action_key].shape ==
                         arrays['storage_solution'].shape == arrays['residual'].shape,
                         'pre-release residual packet vector shapes differ')
                 require(np.allclose(arrays['residual'],
-                                    arrays['full_rhs']-arrays['original_a6'],
+                                    arrays['full_rhs']-arrays[action_key],
                                     rtol=0.0, atol=0.0),
                         'pre-release residual packet is not full_rhs-original_a6')
     except Exception as exc:
@@ -1179,7 +1187,7 @@ def main(argv: list[str] | None = None) -> int:
         result = dict(classification='EVIDENCE_INCOMPLETE', reference_authority='PENDING_A4_not_compared',
                       gate_failures=[f'{type(exc).__name__}: {exc}'])
     (directory / 'checker.json').write_text(json.dumps(result, indent=2, allow_nan=False) + '\n')
-    return 0 if result['classification'] in ('DISCRETE_SOLVER_OUTPUT_PASS', 'REFERENCE_ONLY_PASS', 'BALANCED_OUTPUT_PASS', 'BALANCED_OUTPUT_AUTHORITY_LIMITED') else 2
+    return 0 if result['classification'] in ('DISCRETE_SOLVER_OUTPUT_PASS', 'REFERENCE_ONLY_PASS', 'BALANCED_OUTPUT_PASS', 'BALANCED_OUTPUT_AUTHORITY_LIMITED', 'ANISOTROPIC_N0_DISCRETE_PASS_AUTHORITY_LIMITED') else 2
 
 
 if __name__ == '__main__':

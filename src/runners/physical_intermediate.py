@@ -158,6 +158,34 @@ class WorkflowLedger:
         self.joint_cycle.clear()
 
 
+def validate_v7_functional_store_isolation(
+    profile_identity: str,
+    environ: Mapping[str, str] | None = None,
+) -> None:
+    """Reject inherited functional-store settings for the fresh V7 mesh.
+
+    V7 writes its N0 mode inventory beneath the run's artifact directory.  It
+    does not import parent FE functionals or consume the older V6 store
+    configuration, whose mesh/DOF identity is different.
+    """
+
+    from src.io.native_capacity_profile import V7_ANISO_N0_P4_PROFILES
+
+    if profile_identity not in V7_ANISO_N0_P4_PROFILES:
+        return
+    environment = os.environ if environ is None else environ
+    inherited = sorted(
+        key for key in environment
+        if key.startswith('TASK39EXTRA_FUNCTIONAL_STORE')
+    )
+    if inherited:
+        raise ValueError(
+            'V7 must use a fresh N0 inventory under artifact_directory; '
+            'functional-store configuration/parent environment is forbidden: '
+            + ', '.join(inherited)
+        )
+
+
 def run_physical_intermediate(
     payload: dict,
     directory: Path,
@@ -178,6 +206,9 @@ def run_physical_intermediate(
         )
         if errors:
             raise ValueError('; '.join(errors))
+    validate_v7_functional_store_isolation(
+        str(payload.get('solver', {}).get('preconditioner', ''))
+    )
     from mpi4py import MPI
     from petsc4py import PETSc
     from benchmarks.subreaper_watchdog import memory_envelope

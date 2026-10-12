@@ -1,0 +1,93 @@
+{
+  "schema": "task39extra.v7.priority-switch.v1",
+  "review_sha": "5f8356bbe3f751b1530bc174b3bb6b19096d1242",
+  "status": "OLD_TREE_CLEARED_NEW_FULL_SOLVE_IN_PREPARATION",
+  "old_run": {
+    "elapsed_seconds_at_snapshot": 11104.872794,
+    "execution_mode": "pilot_16",
+    "git_status_short": "",
+    "input_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/input/task39extra_para_workstation_capacity/v6_0p7nm_n0_p3_pilot16.dat",
+    "input_sha_actual": "74604258e1a00cce7f922c7545ef5affdf5e841a2ea65f0dc8d4b84f9d618820",
+    "input_sha_manifest": "74604258e1a00cce7f922c7545ef5affdf5e841a2ea65f0dc8d4b84f9d618820",
+    "physical_sha256": "965c5ad2c25b817b01dbe5eaab1ee557a3d5c84ea4913b620466bb13f0795e4e",
+    "resolved_sha256": "e9ab2724c408b0a289a330bf1beac4a0e4d8d80c99e2216eb60da31dfeab070f",
+    "run_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v6_interleave_0p7nm_p6h0p7_q3_n0_pilot16__full3d_iterative__mpi1__Mna/20261012T065422.607789Z",
+    "run_id": "v6_interleave_0p7nm_p6h0p7_q3_n0_pilot16",
+    "source_head": "4de49260ab5663b57a466760281227ae3bac46e1",
+    "source_sha_manifest": "4de49260ab5663b57a466760281227ae3bac46e1",
+    "start_time": "2026-10-12T06:54:22.607894+00:00"
+  },
+  "old_terminal": {
+    "classification": "USER_CONTROLLED_STOP",
+    "exit_status": 1,
+    "full_workflow_seconds": 11131.505397025961,
+    "watchdog_elapsed_seconds": 11131.425476781093,
+    "stage": "retained_forms_compiled",
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "sampled_tree_RSS_peak_bytes": 333521260544,
+    "sampled_tree_swap_peak_bytes": 0,
+    "numeric_and_KSP_not_completed": true
+  },
+  "signals": [
+    {
+      "boottime": 1724162.522168478,
+      "method": "pidfd_send_signal",
+      "pid": 221339,
+      "signal": "SIGTERM",
+      "start_ticks": 171368849,
+      "target": "guard_only",
+      "utc": "2026-10-12T09:59:27.661293+00:00"
+    },
+    {
+      "boottime": 1724162.62316821,
+      "method": "pidfd_send_signal",
+      "pid": 214984,
+      "signal": "SIGTERM",
+      "start_ticks": 171305606,
+      "target": "root_only",
+      "utc": "2026-10-12T09:59:27.762294+00:00"
+    }
+  ],
+  "guard_action": {
+    "action": "pending_pidfd_SIGTERM",
+    "pid": 221339,
+    "result": "SIGTERM sent exactly once through verified pidfd; exited before root signal",
+    "start_ticks": 171368849
+  },
+  "root_action": {
+    "action": "pending_one_pidfd_SIGTERM",
+    "pid": 214984,
+    "result": "SIGTERM sent exactly once through verified pidfd",
+    "start_ticks": 171305606
+  },
+  "preservation": {
+    "receipt": "tmp/p3_main_review/n0_v7_u0_pre_stop_receipt_20261012_v1.json",
+    "receipt_sha256": "2246d97fb6b42283edbb38b0614ec27957601f4125510b38af93180bf05ad841",
+    "run_summary": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v6_interleave_0p7nm_p6h0p7_q3_n0_pilot16__full3d_iterative__mpi1__Mna/20261012T065422.607789Z/run_summary.json",
+    "run_summary_sha256": "1e3f4acfa8e9dc76f3b694d496b16f0be38c7595772006b4cf74fa1651d2b239",
+    "payloads_or_NPZ_read": false,
+    "full_resources_rescanned": false,
+    "old_cached_FE_data_reusable_on_new_mesh": false,
+    "reason": "new anisotropic mesh changes DOF/MPC/orientation and numerical identities"
+  },
+  "new_target": {
+    "wavelength_nm": 0.7,
+    "axis_cell_counts": [
+      100,
+      2,
+      234
+    ],
+    "expected_hexahedra": 46800,
+    "fine_degree": 6,
+    "coarse_degree": 4,
+    "N0_modes": 572,
+    "parent_metadata_modes": 32060,
+    "surface_quadrature_degree": 160,
+    "execution_mode": "full_solve",
+    "RSS_hard_limit_bytes": 1950000000000,
+    "new_FE_run_started": false,
+    "full_DtN_status": "FULL_DTN_NOT_VERIFIED",
+    "authority": "AUTHORITY_LIMITED"
+  }
+}

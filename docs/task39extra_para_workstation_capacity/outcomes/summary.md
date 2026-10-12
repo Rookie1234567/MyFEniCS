@@ -1,5 +1,16 @@
 # 原生迁移与容量任务：执行结果总账
 
+## Review V7：切换至 46800-cell 准确 p4 完整求解（2026-10-12，启动前）
+
+| 项目 | 已确认事实 / 当前状态 | 边界 |
+|---|---|---|
+| 旧 N0 p3 run `20261012T065422.607789Z` | 按 V7 优先级受控停止，`USER_CONTROLLED_STOP`/exit1/后代清场；workflow11131.505397 s，RSS峰333521260544 B，任务swap0 | 最后阶段 `retained_forms_compiled/setup`，未完成 factor/KSP；旧 FE 缓存不能用于新网格 |
+| 新 0.7 nm Si 主场 | 独立 p6/p4、aniso/full profile 接线；轴计数100×2×234，预期46800 cells；572 N0通道和父清单q160 | U1 实现完成，联合纯/接口 58/58 通过；新 PDE 尚未启动；不先跑小场或旧波长 |
+| 运行及结果合同 | 准确 p4 单 MUMPS、BAL_H、FGMRES32/zero/max2048；完整 E/H/curl/振幅/RTA 与尾部诊断 | 16步不再是停止点；当前无新残差/RTA、48小时或内存容量结论 |
+| 资源及作用域 | RSS硬线1.95e12 B，PSS/USS off；CPU9/24、MPI1/math1、interleave0–1 | A6_n0 与 A6_full 分名；FULL_DTN_NOT_VERIFIED、AUTHORITY_LIMITED |
+
+见 [Response V7](../response_v7.md)、[本轮 outcome](urgent_anisotropic_0p7nm_v7.md)及[旧树终态/优先级切换](records/v7_priority_switch.json)。下文是各历史时点的记录，不覆盖 V7 新优先级。
+
 ## 最新补充授权：N0通道目标pilot准备（2026-10-12）
 
 本节更新到实现中、尚未启动新场的时点；下面历史章节中的未运行/资源限制是各自当时状态，不覆盖此次用户最新授权。

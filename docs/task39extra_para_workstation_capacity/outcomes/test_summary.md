@@ -97,3 +97,7 @@ checker no-deadline 修复提交为 `d64398cb1fecd90867071688dca94e501235cf7a`�
 | 资源与失败保留 | 单次资源审计1089/1089样本可读、parse error 0、warning 0、RSS峰2763333632 B、task swap0；PSS/USS关闭。v3 serializer failure及v4显式端口单次MatSolve失败均保留 | 不重扫资源日志；完整摘要与原件hash见S1 compact |
 
 全网格S2尚未启动；无0.7全场PDE、factor或setup/KSP资格。上述17项和4项纯测试未因本次文档更新重跑，未执行全库pytest或CI。
+
+## Review V7：正式场启动前必要接口检查（2026-10-12）
+
+联合六文件 pure/fake/接口检查 **58 passed / 2.70 s**，qualified PORD64/CPU9/math1；独立 full-solve/post-p6 守卫当前内容的纯测试已有 **15/15** 通过。py_compile 12 文件、新文件 Ruff、修改旧文件严重错误规则、diff-check 通过。实际轴/模式 metadata 核对 PASS；未创建网格、未跑小型 PDE、factor、全仓测试或 CI。实际 46800-cell QA 在唯一正式 setup 内执行。精确文件、命令与 hash 见 [V7 启动前测试](records/v7_prelaunch_interface_tests.json)。

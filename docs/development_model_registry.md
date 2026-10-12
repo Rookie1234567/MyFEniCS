@@ -1704,3 +1704,14 @@ canonical共享实体传递仅由显式V6_P3 profile启用：每个局部p3→p6
 | 新 `N0_PORT_FILTER_TARGET_PILOT` | metadata筛选/父积分身份及必要纯fake检查完成部分；旧p6/p3候选缓存路径分别572/148项 | 实现中、尚未启动；live缓存兼容/payload hash、新setup/factor/16步/RSS/残差仍待测；完整DtN为`FULL_DTN_NOT_VERIFIED` |
 
 当前落盘store来源的两场workflow累计52.9434 h；四场完整目标准备累计136.7351 h，属于不重叠workflow墙钟相加，不能命名为端口积分或CPU时间。最新资源合同RSS硬线为1.95e12 B、PSS/USS关闭；不据预测/swap/预计耗时自动停止。完整0.7 nm、48 h/2 TB及正式RTA资格未建立。原始路径/hash、各场状态和复用边界见[N0准备报告](task39extra_para_workstation_capacity/outcomes/n0_port_filter_preparation_20261012.md)及[JSON](task39extra_para_workstation_capacity/outcomes/records/n0_port_filter_preparation_20261012.json)。
+
+## 3.49 Task39extra_para：V7 切换为各向异性 N0 准确 p4 完整求解
+
+2026-10-12 用户要求暂停 530856-cell/p3 pilot，优先运行 0.7 nm Si、p6/p4、100×2×234=46800 个六面体、572 个 n=0 通道的完整求解。这里的 46800 是启动前轴计划，尚待唯一正式 setup 核对；不复用旧网格 FE 数组，不声明完整 DtN 或连续精度资格。
+
+| 模型 / run | 实际终态或当前阶段 | 资格边界 |
+|---|---|---|
+| 旧 N0 p3 `20261012T065422.607789Z`，source `4de49260ab5663b57a466760281227ae3bac46e1` | `USER_CONTROLLED_STOP`/exit1/后代清场；workflow11131.505397 s，采样整树 RSS 峰333521260544 B、task swap峰0；最后 `retained_forms_compiled/setup` | V7 优先级切换所致，未完成 numeric/KSP；保留全部缓存和旧记录，新网格不得直接复用 |
+| V7 0.7 nm p6/准确p4、572通道、full_solve | U1 独立 profile/input/mesh QA/输出与 checker 适配完成；纯/接口 58/58 通过，新 PDE `NOT_RUN` | FGMRES32/zero/max2048，无16步计划停；RSS硬线1.95e12 B；FULL_DTN_NOT_VERIFIED / AUTHORITY_LIMITED，48小时目标未建立 |
+
+原始身份与停止信号见 [V7 priority switch](task39extra_para_workstation_capacity/outcomes/records/v7_priority_switch.json)，新模型范围及后续实测见 [V7 outcome](task39extra_para_workstation_capacity/outcomes/urgent_anisotropic_0p7nm_v7.md)。

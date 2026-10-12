@@ -783,6 +783,7 @@ def recover_p0_outputs(
     bundle: Mapping[str, Any], solution: Any, output_dir: Path, *,
     canonical_export: Any | None = None,
     export_all_port_modes: bool = False,
+    active_port_outputs_only: bool = False,
 ) -> dict[str, Any]:
     """Recover E/H and compute the existing modal and diagnostic outputs."""
 
@@ -805,6 +806,12 @@ def recover_p0_outputs(
             aux,
             list(bundle["incident_projections"]),
         )
+        if active_port_outputs_only:
+            port_metrics.update(
+                operator_scope="A6_n0", full_dtn_status="FULL_DTN_NOT_VERIFIED",
+                parent_mode_count=32060, active_mode_count=572,
+                omitted_channel_values="NOT_COMPUTED",
+            )
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         canonical_facts = None if canonical_export is None else canonical_export(field, output_dir)
@@ -824,9 +831,23 @@ def recover_p0_outputs(
             incident_power=incident_power_3d(bundle["cfg"]),
             port_metrics=port_metrics,
         )
-        diffraction_metrics = compute_diffraction_orders_3d(
-            setup["mesh_data"], bundle["cfg"], field, output_dir
-        )
+        if active_port_outputs_only:
+            if not export_all_port_modes or len(bundle["modes"]) != 572 or any(
+                mode.n != 0 for mode in bundle["modes"]
+            ):
+                raise ValueError("active-only output requires the complete 572-mode N0 carrier")
+            diffraction_metrics = {
+                "status": "N0_ACTIVE_PORT_OUTPUT",
+                "diffraction_channel_count": len(bundle["modes"]),
+                "operator_scope": "A6_n0",
+                "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+                "omitted_channel_values": "NOT_COMPUTED",
+                "source": "dtn_port_diffraction_orders_3d.json",
+            }
+        else:
+            diffraction_metrics = compute_diffraction_orders_3d(
+                setup["mesh_data"], bundle["cfg"], field, output_dir
+            )
         facts = {
             "field_model": "total_field",
             "electric_finite": bool(np.all(np.isfinite(field.x.array))),

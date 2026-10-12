@@ -1,0 +1,47 @@
+{
+  "schema": "task39extra.v7.prelaunch-interface-validation.v1",
+  "utc": "2026-10-12T10:40:53.101196+00:00",
+  "base_sha": "5f8356bbe3f751b1530bc174b3bb6b19096d1242",
+  "scope": "pure/fake/interface and actual input metadata only; no mesh/PDE/factor",
+  "pytest": {
+    "command": "python -m pytest -q src/test/test_task39extra_v7_output_audit.py src/test/test_task39extra_v7_checker_contract.py src/test/test_task39extra_n0_runtime_wiring.py src/test/test_task39extra_n0_pilot_checker.py src/test/test_task39extra_n0_residual_naming.py src/test/test_task39extra_v7_anisotropic_n0.py",
+    "passed": 58,
+    "wall_seconds_reported": 2.7,
+    "activation": "scripts/activate_task39extra_pord64.sh with explicit task stack/overlay roots",
+    "cpu_affinity": [
+      9
+    ],
+    "math_threads": 1
+  },
+  "static": {
+    "py_compile": "PASS (12 affected/new Python files)",
+    "ruff_new_files": "PASS full enabled rules (6 new files)",
+    "ruff_legacy_modified": "PASS E9,F63,F7,F82; not full legacy lint",
+    "git_diff_check": "PASS"
+  },
+  "files": {
+    "benchmarks/physical_intermediate_checker.py": "73ab1e95ee0cd994f8a2856b0f9cbbd72bd490a649277e82f177215bb81c6976",
+    "benchmarks/v7_anisotropic_n0_checker.py": "2265a2e987a9e7beea84e44d61d075ecf1fded45156a499ff2f4871140732e07",
+    "src/io/input_validation.py": "a628e1537da6c7e4f9fb0bd02fa27e460935a0e938bea41bfa2159c4636e4ba9",
+    "src/io/native_capacity_profile.py": "1028597c6e793285fb044870ff6efe4865a422c7be963c9090cc63c3dfdca6fb",
+    "src/runners/physical_intermediate.py": "f7c1cd79353911079fb17e9780afd588a5afc6d0efeccd81b4aed3b9c3c902a4",
+    "src/runners/physical_retained_condensed_v20.py": "5e9f918ca0b6748ad81f4ea840297a471d700d647c9c494a4bcbd7eb0257aa1a",
+    "src/runners/v7_anisotropic_mesh_evidence.py": "b4983fd736f79432363fb95d838f96d32058c68307d085dde2dabbede8650a32",
+    "src/runners/v7_n0_output_audit.py": "c5da7c3043f2b9f6539622b581912f1faa979651c54f882cadc2b45cf7bb5e79",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py": "0879e7441d6a9b1a2417c893a84de817524dfd0c46f439565dd51e9c2b693d81",
+    "src/test/test_task39extra_v7_anisotropic_n0.py": "9d61583cc164c34757bff3e4d248d0708aebb60e595f83136456ba9e0dda7ad0",
+    "src/test/test_task39extra_v7_checker_contract.py": "1b1a4e24eb1474ddab55e5dc295f7cc7e3d9ff4834811e6bdf29db588e63366f",
+    "src/test/test_task39extra_v7_output_audit.py": "f820c864acfa0d962a6545e7833179e4f1cc870138d8cf060e300aed1f7ec908"
+  },
+  "guard": {
+    "path": "tmp/p3_main_review/run_p3_v7_aniso_n0_post_p6_completion_deadline_guard_20261012_v1.py",
+    "sha256": "ca3fd622f2c8168081b55b58c43b2703a596ecaa22cf4bb16aecebf5a42a30d9",
+    "pure_tests": 15,
+    "scope": "executor observed 12+3 current-content pure tests; not rerun in joint batch",
+    "trigger": "new run p6 port completion +24h until solve; full_solve only",
+    "launched": false
+  },
+  "actual_mesh_QA": "NOT_RUN; runs inside sole formal target",
+  "formal_run": "NOT_LAUNCHED",
+  "CI": "NOT_RUN"
+}

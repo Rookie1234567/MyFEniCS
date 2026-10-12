@@ -27,6 +27,17 @@ V5_EXPECTED_MODE_COUNTS = {
     'dual_condensed_balh_native_5nm_v5': 600,
     'dual_condensed_balh_native_2nm_v5': 3904,
 }
+V7_ANISO_N0_P4_PROFILE = 'dual_condensed_balh_native_0p7nm_aniso_n0_p4_full_v7'
+V7_ANISO_N0_P4_PROFILES = frozenset({V7_ANISO_N0_P4_PROFILE})
+V7_N0_PARENT_MODE_COUNT = 32060
+V7_N0_PARENT_MODE_SHA256 = (
+    '7f023c73d7b63379955642dd062e47ba7004f3cdf0accf42684286c4af71dbfb'
+)
+V7_N0_ACTIVE_MODE_COUNT = 572
+V7_N0_ACTIVE_MODE_SHA256 = (
+    '946e0d294b99cb7f44817c3649029942ac325f345eb1770caa566183d2b04f3b'
+)
+V7_RSS_HARD_LIMIT_BYTES = 1_950_000_000_000
 # Separate identities keep all V5 inputs and policies immutable.
 V6_BASE_PROFILES = {
     'dual_condensed_balh_native_13p5_p3_v6': 'dual_condensed_balh_native_13p5_q3_v5',
@@ -42,6 +53,8 @@ V6_BASE_PROFILES = {
     # q=160 while exposing only its n=0 operator rows.  It is not a full-DtN
     # profile and must never inherit the old 3904-mode 2 nm checker contract.
     'dual_condensed_balh_native_0p7nm_n0_p3_pilot16_v6': 'dual_condensed_balh_native_2nm_v5',
+    # Full-solve V7 anisotropic N0 route, using the existing exact p4 operator.
+    V7_ANISO_N0_P4_PROFILE: 'dual_condensed_balh_native_2nm_v5',
 }
 V6_0P7_N0_P3_PROFILES = frozenset(
     {'dual_condensed_balh_native_0p7nm_n0_p3_pilot16_v6'}
@@ -89,6 +102,7 @@ NATIVE_CASES['dual_condensed_balh_native_0p7nm_p3_pilot16_v6'] = (
 NATIVE_CASES['dual_condensed_balh_native_0p7nm_n0_p3_pilot16_v6'] = (
     0.7, (0.7,), None, None, None
 )
+NATIVE_CASES[V7_ANISO_N0_P4_PROFILE] = (0.7, (0.5,), None, None, None)
 NATIVE_PROFILES = tuple(NATIVE_CASES)
 RETAINED_CONDENSED_PROFILE = 'dual_condensed_balh_native_5nm_v3'
 V5_NATIVE_PROFILES = frozenset(V5_NATIVE_CASES)
@@ -185,6 +199,150 @@ USER_MATERIAL_METADATA = {
         'interpretation': 'complex refractive index n=1-delta+i*beta; epsilon=n*n',
     },
 }
+
+
+def _apply_v7_aniso_n0_p4_facts(facts: dict) -> None:
+    """Apply the explicit full-solve V7 route without inheriting N0 pilot/store policy."""
+
+    rss_cap = V7_RSS_HARD_LIMIT_BYTES
+    mode_selection = {
+        'schema': 'task39extra.dtn-mode-selection.v1',
+        'policy': 'n_equals_zero_both_ports_both_polarizations',
+        'parent_mode_count': V7_N0_PARENT_MODE_COUNT,
+        'parent_mode_sha256': V7_N0_PARENT_MODE_SHA256,
+        'active_mode_count': V7_N0_ACTIVE_MODE_COUNT,
+        'expected_active_mode_sha256': V7_N0_ACTIVE_MODE_SHA256,
+        'm_range_in_each_side_polarization': [-142, 0],
+        'quadrature_inventory': 'full_parent_modes',
+        'operator_scope': 'n0_filtered_dtn_not_full_dtn',
+    }
+    facts.update(
+        identity=V7_ANISO_N0_P4_PROFILE,
+        execution_mode='full_solve',
+        wavelength_nm=0.7,
+        allowed_mesh_targets_nm=[0.5],
+        operator_scope='n0_filtered_dtn_not_full_dtn',
+        functional_store_policy={
+            'enabled': False,
+            'parent_import': False,
+            'cross_mesh_fe_reuse': 'forbidden',
+            'configuration': 'not_used',
+            'fresh_n0_inventory_directory': 'runtime_artifact_directory',
+        },
+    )
+    facts['outer'].update(
+        ksp_type='fgmres', restart=32, max_iterations=2048,
+        initial_guess='zero', planned_stop_iteration=None,
+    )
+    facts['outer']['screen']['enabled'] = False
+    facts['resources'].update(
+        absolute_cap_bytes=rss_cap,
+        planning_cap_bytes=rss_cap,
+        rss_hard_limit_bytes=rss_cap,
+        rss_warning_bytes=1_170_000_000_000,
+        resource_stop_policy='measured_tree_rss_only_v3',
+        swap_policy='observe_only',
+        global_swap_delta_policy='observe_only',
+        stop_on_global_swap=False,
+        prediction_admission_policy='record_only',
+        memavailable_runtime_policy='observe_and_warn_only',
+        require_zero_swap=False,
+        pss_sampling_policy='disabled_by_profile',
+        pss_interval_seconds=None,
+        uss_sampling_policy='disabled_by_profile',
+        uss_interval_seconds=None,
+        concurrent_neighbor_authorized=False,
+    )
+    facts['campaign_authorization']['source'] = (
+        'Review V7 urgent anisotropic full-solve N0 p4 route'
+    )
+    facts['campaign_authorization']['execution_mode'] = 'full_solve'
+    facts['campaign_authorization']['resource_policy'] = {
+        'name': 'measured_tree_rss_only_v3',
+        'rss_hard_limit_bytes': rss_cap,
+        'rss_warning_bytes': 1_170_000_000_000,
+        'swap': 'observe_only',
+        'prediction': 'record_only',
+        'memavailable': 'observe_and_warn_only',
+        'pss_uss_sampling': 'disabled',
+        'icntl23': 0,
+    }
+    facts['campaign_authorization']['memory_override'] = {
+        'source': 'Review_V7_user_authorized_0p7nm_full_solve',
+        'whole_process_tree_rss_cap_bytes': rss_cap,
+        'parent_and_worker_cap_bytes': rss_cap,
+        'pss_uss_sampling': 'disabled',
+        'swap_prediction_eta': 'observe_only',
+        'time_limit_mode': 'none',
+    }
+    facts['campaign_authorization']['user_material'] = dict(
+        USER_MATERIAL_METADATA[0.7]
+    )
+    facts['campaign_authorization'].pop('two_nm_material', None)
+    facts['campaign_authorization'].pop('five_nm_material', None)
+    facts['native_execution'].update(
+        supervisor_cpu=9,
+        worker_cpu=24,
+        worker_cpus=[24],
+        mpi_size=1,
+        math_threads=1,
+        memory_policy='interleave_nodes0_1',
+        native_memory_policy='interleave_nodes0_1',
+    )
+    facts['component_options'].update(
+        reuse_dtn_surface_vector=True,
+        reuse_dtn_surface_geometry_cache=True,
+        dtn_surface_geometry_cache_limit_bytes=4 * 1024**3,
+        dtn_surface_weighted_moment_contraction=(
+            'q160_weighted_moment_x_then_y_v1'
+        ),
+        dtn_surface_prepare_trace_contraction=True,
+        dtn_component_cache_last_use_release=True,
+        dtn_mode_progress_interval=1024,
+        dtn_surface_assembly_backend_by_degree={
+            'p6': 'q160_affine_hex_pointwise_weighted_legendre_component_pair_v1',
+            'p4': 'native_ffcx',
+        },
+        dtn_mode_selection=mode_selection,
+    )
+    facts['component_options'].pop('dtn_surface_assembly_backend', None)
+    coarse_operator = {
+        'degree': 4,
+        'name': 'A4_n0',
+        'matrix': 'exact_per_cell_static_condensation_plus_selected_ports',
+        'inverse': 'one_exact_global_MUMPS_factor',
+        'relative_residual_limit': 1.0e-10,
+        'maximum_extra_same_factor_refinements': 2,
+        'operator_scope': 'n0_filtered_dtn_not_full_dtn',
+    }
+    facts['coarse_operator'] = dict(coarse_operator)
+    facts['backend']['coarse_operator'] = dict(coarse_operator)
+    facts['backend'].update(
+        original_a4='fused_original_volume_plus_complete_N0_DtN',
+        coarse_operator=dict(coarse_operator),
+    )
+    facts['backend'].pop('original_a3', None)
+    facts['backend'].pop('p4_compatibility_alias', None)
+    facts['retained_condensed_v20'].update(
+        coarse_degree=4,
+        coarse_operator=dict(coarse_operator),
+        same_mesh_trace_map_policy='basix_full_cell_interpolation_v1',
+        p4_internal_names_are_compatibility_aliases=False,
+        functional_store_policy='disabled_no_functional_store_config',
+        fresh_n0_inventory_directory='runtime_artifact_directory',
+        cross_mesh_fe_reuse=False,
+    )
+    facts['condensed_route'].update(
+        coarse_degree=4,
+        coarse_operator='A4_n0',
+        coarse='assembly_time_condensed_exact_A4_inverse',
+        p4='one exact global MUMPS factor on the selected N0 operator',
+        coarse_factor='one_exact_global_MUMPS_factor',
+        coarse_relative_residual_limit=1.0e-10,
+        coarse_max_refinements=2,
+        operator_scope='n0_filtered_dtn_not_full_dtn',
+        cross_mesh_fe_reuse=False,
+    )
 
 
 def native_profile_facts(identity):
@@ -286,6 +444,8 @@ def native_profile_facts(identity):
             original_a4='fused_original_volume_plus_complete_DtN',
             local_tensor='blocked_gram_original_FFCx_rules',
         )
+        if identity in V7_ANISO_N0_P4_PROFILES:
+            _apply_v7_aniso_n0_p4_facts(facts)
         if identity in V6_P3_PROFILES:
             coarse_operator = {
                 'degree': coarse_degree,
@@ -594,10 +754,142 @@ def native_profile_facts(identity):
     return facts
 
 
+def _validate_v7_aniso_n0_p4_case(config) -> None:
+    """Fail closed on the one reviewed V7 mesh, N0 operator, and full-solve input."""
+    from .input_loader import InputError
+
+    def require(section, key, expected):
+        actual = config.get(section, {}).get(key)
+        if actual != expected:
+            raise InputError(
+                f'{V7_ANISO_N0_P4_PROFILE} fixes {section}.{key}={expected!r}; '
+                f'got {actual!r}'
+            )
+
+    geometry_expected = {
+        'geometry_kind': 'rectangular_block_grating',
+        'period_x_nm': 50.0,
+        'period_y_nm': 25.0,
+        'z_min_nm': -10.0,
+        'z_max_nm': 130.0,
+        'interface_z_nm': 0.0,
+        'air_height_nm': 130.0,
+        'substrate_thickness_nm': 10.0,
+        'grating_width_x_nm': 17.0,
+        'grating_width_y_nm': 25.0,
+        'grating_height_nm': 120.0,
+    }
+    for key, value in geometry_expected.items():
+        require('geometry', key, value)
+    require('geometry', 'cell_notch', None)
+
+    for section, expected in (
+        ('materials', {
+            'n_air': (1.0, 0.0),
+            'mu_r': (1.0, 0.0),
+            'substrate_name': USER_MATERIAL_METADATA[0.7]['material'],
+            'grating_name': USER_MATERIAL_METADATA[0.7]['material'],
+            'n_substrate': MATERIALS[0.7],
+            'n_grating': MATERIALS[0.7],
+        }),
+        ('incidence', {
+            'wavelength_nm': 0.7,
+            'grazing_angle_deg': 1.0,
+            'azimuth_deg': 0.0,
+            'polarization': 's',
+            'electric_amplitude': 1.0,
+        }),
+        ('discretization', {
+            'nedelec_degree': 6,
+            'visualization_degree': 6,
+            'mesh_target_nm': 0.5,
+            'mesh_cell_type': 'hexahedron',
+            'mesh_spacing_mode': 'boundary_fitted',
+            'assembly_backend': 'standard_full',
+            'floquet_constraint_mode': 'auto',
+        }),
+        ('boundary', {
+            'use_floquet_x': True,
+            'use_floquet_y': True,
+            'vertical_boundary': 'dtn_port',
+            'scattering_background': 'layered',
+            'dtn_order_policy': 'auto_propagating',
+            'dtn_assembly': 'auxiliary',
+            'use_pml': False,
+        }),
+        ('method', {'kind': 'full3d_iterative'}),
+        ('solver', {
+            'linear_solver': 'iterative',
+            'ksp_type': 'fgmres',
+            'preconditioner': V7_ANISO_N0_P4_PROFILE,
+            'restart': 32,
+            'max_iterations': 2048,
+            'coarse_degree': 4,
+        }),
+        ('execution', {
+            'mpi_size': 1,
+            'time_limit_mode': 'none',
+            'timeout_seconds': None,
+            'require_zero_swap': False,
+            'native_memory_policy': 'interleave_nodes0_1',
+        }),
+    ):
+        for key, value in expected.items():
+            require(section, key, value)
+
+    discretization = config['discretization']
+    if tuple(discretization.get('mesh_axis_cell_counts') or ()) != (100, 2, 234):
+        raise InputError(
+            f'{V7_ANISO_N0_P4_PROFILE} fixes mesh_axis_cell_counts=[100, 2, 234]'
+        )
+    for key in (
+        'mesh_axis_x_values', 'mesh_axis_y_values', 'mesh_axis_z_values',
+        'mesh_axis_z_profile', 'mesh_plan_id', 'mesh_plan_sha256',
+    ):
+        if discretization.get(key) is not None:
+            raise InputError(
+                f'{V7_ANISO_N0_P4_PROFILE} derives axes from the exact count plan; '
+                f'{key} must be omitted'
+            )
+
+    execution = config['execution']
+    required_gib = V7_RSS_HARD_LIMIT_BYTES / 2**30
+    if execution.get('warning_memory_gib') != 1_170_000_000_000 / 2**30:
+        raise InputError(f'{V7_ANISO_N0_P4_PROFILE} fixes the 1.17e12-byte warning level')
+    for key in ('terminate_memory_gib', 'memory_limit_gb'):
+        if execution.get(key) != required_gib:
+            raise InputError(
+                f'{V7_ANISO_N0_P4_PROFILE} fixes {key} to the 1.95e12-byte RSS cap'
+            )
+
+    output_expected = {
+        'export_fields': True,
+        'export_diffraction_orders': True,
+        'export_canonical_vectors': True,
+        'export_modal_amplitudes': True,
+        'export_reference_planes': True,
+        'reference_plane_z_nm': (10.0, 30.0, 60.0, 90.0, 110.0),
+        'sample_count_x': 40,
+        'diffraction_sample_count_x': 24,
+        'diffraction_sample_count_y': 24,
+        'diffraction_order_max_m': 142,
+        'diffraction_order_max_n': 0,
+    }
+    for key, value in output_expected.items():
+        require('output', key, value)
+    if config.get('output', {}).get('sample_count_y', 0) < 4:
+        raise InputError(
+            f'{V7_ANISO_N0_P4_PROFILE} requires at least four full-3D reference y samples'
+        )
+
+
 def validate_native_case(config):
     """Validate only the campaign's frozen physical and numerical choices."""
     from .input_loader import InputError
     identity = config['solver']['preconditioner']
+    if identity in V7_ANISO_N0_P4_PROFILES:
+        _validate_v7_aniso_n0_p4_case(config)
+        return
     if identity in V6_NATIVE_PROFILES:
         from copy import deepcopy
         if config['execution'].get('native_memory_policy') != 'interleave_nodes0_1':
