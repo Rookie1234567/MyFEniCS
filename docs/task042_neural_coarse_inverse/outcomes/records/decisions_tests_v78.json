@@ -29,5 +29,13 @@
   "no_new_PC_coarse_mesh_JIT_training": true,
   "expensive_bad_field_outputs": "NOT_RUN_BY_FAIL_FAST_POLICY",
   "decision": "CLOSE_CURRENT_PC_TRIALS",
-  "unique_next_recommendation": "关闭当前PC试错；新研究须先有同物理方向、误差尺度及成本依据，不自动开下一窗口。"
+  "unique_next_recommendation": "关闭当前PC试错；新研究须先有同物理方向、误差尺度及成本依据，不自动开下一窗口。",
+  "documentation": {
+    "status": "PASSED",
+    "test_count": 15,
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v78/aux_post_docs01/document_checks.json",
+    "sha256": "97fc4065235abe098771ff88adc465abd014e9c0ebc255f34de4c6eed102fef6",
+    "suite_source": "728c49eb94190da5d42127916cebf00280dc91c6",
+    "final_settlement_bytes": "rechecked separately, no repeated unittest"
+  }
 }

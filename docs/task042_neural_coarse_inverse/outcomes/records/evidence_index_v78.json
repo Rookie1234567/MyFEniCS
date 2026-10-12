@@ -1,12 +1,12 @@
 {
   "increment_archive": {
-    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v78/increment_evidence/science_frozen/inventory.json",
-    "sha256": "3cf40ba78705f59ad840d42386cc14254e939212cab97c8b4b6ec813c50fa9c9",
-    "bytes": 64123
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v78/increment_evidence/delivery_tail/inventory.json",
+    "sha256": "fa1effbadae433f3e977f6019f0eece8f9514ef8245744836206fc6c8766a79d",
+    "bytes": 75230
   },
-  "metadata_versions": 127,
-  "new_array_files": 11,
-  "new_array_members": 61,
+  "metadata_versions": 145,
+  "new_array_files": 15,
+  "new_array_members": 81,
   "producers": {
     "PRECHECK": {
       "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v78/task042_v78_jacobi_reuse_preflight_20261012T085022756648Z/result.json",

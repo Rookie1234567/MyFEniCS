@@ -1,13 +1,20 @@
 {
-  "research_window_elapsed_seconds": 2334.9706272548065,
+  "research_window_elapsed_seconds": 2927.4515537780244,
   "Jacobi_apply_seconds": null,
   "ksp_seconds": 534.8595234630629,
   "attempt_wrapper_seconds": 875.79529662407,
   "science_prepared_pipeline_seconds": 1182.8032940530684,
-  "current_known_disjoint_command_lower_seconds": 1282.9018473853357,
+  "current_known_disjoint_command_lower_seconds": 1430.0879605205264,
   "history_known_lower_before_v78_seconds": 398753.7436606793,
-  "history_known_lower_including_current_seconds": 400036.64550806466,
+  "history_known_lower_including_current_seconds": 400183.83162119985,
   "disjoint_commands": [
+    {
+      "command": [
+        "final_namespace_storage_inventory"
+      ],
+      "elapsed_seconds": 45.033880040980875,
+      "scope": "measured namespace stat inventory only; import/startup UTC interval not retained"
+    },
     {
       "command": [
         "/home/fenics/Projects/NN-Lab/.venv/bin/python",
@@ -88,6 +95,35 @@
       "elapsed_seconds": 3.4707261491566896,
       "old_arrays_hashed": false,
       "scope": "current increment only, no FE"
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "post",
+        "docs01",
+        "python",
+        "tmp/task042/v78/document_once.py"
+      ],
+      "source_sha": "728c49eb94190da5d42127916cebf00280dc91c6",
+      "start_utc": "2026-10-12T09:17:02.671243+00:00",
+      "end_utc": "2026-10-12T09:18:38.079807+00:00",
+      "elapsed_seconds": 95.40857636812143,
+      "exit_code": 0,
+      "wrapper_sha256": "1f5159545d19a77b5dd58a83c7fb7ac5bc6ba5086809747dc754f59bef96f79d",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "command": [
+        "final_increment_metadata_all_new_array_inventory"
+      ],
+      "start_utc": "2026-10-12T09:20:11.801950+00:00",
+      "end_utc": "2026-10-12T09:20:18.545604+00:00",
+      "elapsed_seconds": 6.743656726088375,
+      "scope": "current increment only, no FE",
+      "old_arrays_hashed": false
     }
   ],
   "stage_timings": {
@@ -147,10 +183,17 @@
   "warning_gib": 80,
   "sampled_stop_gib": 96,
   "sampled_tree_peak_gib": 11.674724578857422,
-  "sample_count": 963,
+  "sample_count": 967,
   "max_sample_gap_seconds": 1.2248414009809494,
   "gap_source": "/home/fenics/Projects/NN-Lab/results/task042/task042_v78_verify_cost_20261012T090847337163Z/supervision/resources.jsonl",
   "resources": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v78/aux_post_docs01/supervision/resources.jsonl",
+      "peak_bytes": 151994368,
+      "swap_bytes": 0,
+      "samples": 4,
+      "maximum_gap_seconds": 0.9438130729831755
+    },
     {
       "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v78/aux_pre_focused01/supervision/resources.jsonl",
       "peak_bytes": 306462720,
@@ -201,5 +244,13 @@
   "complete_success_cold_N1_seconds": null,
   "success_cost_unknown_reason": "no same-correctness solution",
   "unwrapped_edit_git_startup_intervals_seconds": null,
-  "no_nested_timer_addition": true
+  "no_nested_timer_addition": true,
+  "final_storage_snapshot": {
+    "new_bytes": 1750646051,
+    "task_artifact_bytes": 214759898797,
+    "free_bytes": 2620278730752,
+    "reserve_bytes": 536870912,
+    "inventory_seconds": 45.033880040980875
+  },
+  "new_storage_limit_bytes": 8589934592
 }

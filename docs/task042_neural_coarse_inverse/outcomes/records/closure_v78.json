@@ -1,0 +1,86 @@
+{
+  "closed": true,
+  "active": null,
+  "own_lock_acquired_and_released": true,
+  "checks": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v78/aux_post_docs01/supervision/summary.json",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v78/aux_pre_focused01/supervision/summary.json",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v78/increment_evidence/science_frozen/results/task042/task042_v78_jacobi_uninterrupted_20261012T085248426320Z/supervision/summary.json",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v78/increment_evidence/science_frozen/results/task042/task042_v78_jacobi_reuse_preflight_20261012T085022756648Z/supervision/summary.json",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v78/increment_evidence/science_frozen/results/task042/task042_v78_verify_cost_20261012T090847337163Z/supervision/summary.json",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v78/increment_evidence/science_frozen/tmp/task042/v78/aux_pre_focused01/supervision/summary.json",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v78_jacobi_uninterrupted_20261012T085248426320Z/supervision/summary.json",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v78_jacobi_reuse_preflight_20261012T085022756648Z/supervision/summary.json",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v78_verify_cost_20261012T090847337163Z/supervision/summary.json",
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    }
+  ],
+  "clock": {
+    "start_utc": "2026-10-12T08:34:55.233232765+00:00",
+    "start_monotonic": 1719090.09,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_limit_seconds": 14400,
+    "heavy_limit_seconds": 12600,
+    "total_seconds": 12600,
+    "total_window_seconds": 14400,
+    "delivery_reserve_seconds": 1800,
+    "success_acceptance_reserve_seconds": 4500,
+    "closed": true,
+    "review_commit": "c126e154a7196cf427b4511a9e2e596fa5580993",
+    "review_sha256": "cb2f32ae7644c977ee05350f1ed0d9abc363d6ad340df96beb944aae722b7b84",
+    "first_probe_resolution_seconds": 0.01,
+    "historical_windows": "remain_closed",
+    "closed_utc": "2026-10-12T09:20:11.566832+00:00",
+    "closed_monotonic": 1721806.427715021,
+    "observed_utc": "2026-10-12T09:20:11.575281+00:00",
+    "observed_monotonic": 1721806.436147584,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 2716.3461475840304,
+    "heavy_remaining_seconds": 9883.65385241597,
+    "total_remaining_seconds": 11683.65385241597
+  },
+  "new_KSP_for_cleanup": 0,
+  "final_process_check": {
+    "observed_utc": "2026-10-12T09:22:16.510917+00:00",
+    "canonical": "/home/fenics/Projects/NN-Lab",
+    "Task042_scientific_actors": [],
+    "other_worktrees_not_inspected_or_modified": true
+  },
+  "source_sha": "a08d40f9845f481fa79abf6f8d7a48c99b956bcd",
+  "GitHub_visual": "NOT_VERIFIED"
+}

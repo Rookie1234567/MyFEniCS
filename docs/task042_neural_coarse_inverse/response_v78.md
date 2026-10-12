@@ -22,8 +22,8 @@
 |---|---|
 | KSP含检查 / 完整失败尝试wrapper | 534.859523 / 875.795297 s |
 | PRECHECK+主对照+独立VERIFY prepared链 | 1182.803294 s |
-| 当前不重叠命令/归档已知下界 | 1282.901847 s；编辑/Git等未包裹区间unknown |
-| 从首次工作至本次结算实时时钟 T_research | 2334.970627 s；包含读取/实现/等待/失败/IO，不与上行相加 |
+| 当前不重叠命令/归档已知下界 | 1430.087961 s；编辑/Git等未包裹区间unknown |
+| 从首次工作至本次结算实时时钟 T_research | 2927.451554 s；包含读取/实现/等待/失败/IO，不与上行相加 |
 | 采样整树峰 / 实际最大gap | 11.674725 GiB / 1.224841401 s；0.5s仅配置 |
 | 全域作用 / 新矩阵 / 新numeric | 140 / 0 / 0；作用上限400 |
 | 257条主向量库derived载荷 | 4.508559 GiB；不是RSS |
@@ -35,3 +35,5 @@ worktree=/home/fenics/Projects/NN-Lab；分支task42_neural_coarse_inverse；bas
 最终4项targeted小接线测试、2次合成KSP、相关compile/Ruff与3dat validate通过；未full pytest/CI/旧PDE。两项字符串编辑保护错误均在正式运行前定位修复，原stderr及失败保留，科学重放0；writer/JSON补消费协议未重解。[测试、修复和分流](outcomes/records/decisions_tests_v78.json)。文档一次15项紧凑合同检查，GitHub视觉NOT_VERIFIED。
 
 唯一下一建议：关闭当前PC试错；新研究须先有同物理方向、误差尺度及成本依据，不自动开下一窗口。 不merge、不通知邻窗口，不自动启动新批。
+
+最终结算：当前不重叠命令及增量归档已知下界1430.087961s；历史已知下界400183.831621s。最终存储快照新增1750646051B、Task去重214759898797B、free2620278730752B。15项文档检查通过；最终15个新数组包81成员的hash-bound清单见增量索引。ledger closed/active null、自有锁释放，无科学后代；精确文档HEAD/远端与实际交付时刻由Git交付收据绑定。
