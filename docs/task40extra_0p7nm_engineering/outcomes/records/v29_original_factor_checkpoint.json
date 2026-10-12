@@ -1,0 +1,2329 @@
+{
+  "cleanup": {
+    "destroy_errors": [],
+    "destroy_succeeded": true,
+    "native_object_counts_after_destroy": {
+      "factors_current": 0,
+      "matrices_current": 0,
+      "vectors_current": 0
+    },
+    "resource_sample_after_destroy": {
+      "additional_object_upper_bound_bytes": 0,
+      "current_process_cgroup": {
+        "dedicated_job_cgroup": true,
+        "member_count": 5,
+        "memory_current_bytes": 12075479040,
+        "memory_limit_bytes": 549755813888,
+        "memory_peak_bytes": 84891103232,
+        "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+        "readable": true,
+        "sample_scope": "current process cgroup; task-specific only when dedicated_job_cgroup is true",
+        "swap_current_bytes": 0
+      },
+      "current_process_tree_rss_bytes": 12027588608,
+      "disk_free_bytes": 2624224268288,
+      "disk_gate_passed": true,
+      "disk_payload_bytes": 0,
+      "disk_reserve_bytes": 1073741824,
+      "dynamic_process_tree_cap_bytes": 549707923456,
+      "explicit_process_tree_cap_bytes": 549755813888,
+      "first_original_stage_label": "task40_v26_q0_factor_after_destroy",
+      "host_effective_available_bytes": 2083197259776,
+      "host_gate_passed": true,
+      "last_original_stage_label": "task40_v26_q0_factor_after_destroy",
+      "maximum_additional_object_upper_bound_bytes": 0,
+      "maximum_disk_payload_bytes": 0,
+      "maximum_task_cgroup_memory_current_bytes": 12075479040,
+      "memory_envelope": {
+        "cgroup_limits": [
+          {
+            "current_bytes": 12075479040,
+            "limit_bytes": 549755813888,
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service"
+          }
+        ],
+        "effective_available_after_reserves_bytes": 537680334848,
+        "effective_available_bytes": 537680334848,
+        "effective_total_bytes": 549755813888,
+        "host_launch_available_bytes": 2014477783040,
+        "host_mem_available_bytes": 2083197259776,
+        "launch_cap_bytes": 537680334848,
+        "mem_available_bytes": 2083197259776,
+        "mem_total_bytes": 2163100385280,
+        "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "reserve_bytes": 68719476736,
+        "reserve_domains_separated": true,
+        "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+        "static_tree_cap_bytes": null,
+        "task_cgroup_available_bytes": 537680334848,
+        "task_cgroup_launch_available_bytes": 537680334848,
+        "task_cgroup_reserve_bytes": 0
+      },
+      "minimum_host_effective_available_bytes": 2083197259776,
+      "observation_count": 1,
+      "passed": true,
+      "physical_memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+      "process_tree_gate_passed": true,
+      "process_tree_snapshot": {
+        "all_status_readable": true,
+        "identity_complete": true,
+        "member_count": 1,
+        "scope": "current process and descendants sampled at admission"
+      },
+      "request_facts": {
+        "additional_payload_bytes": 0,
+        "future_co_resident_reserve_bytes": 0,
+        "matrix_payload_bytes": 0,
+        "native_object_counts": {
+          "factors_current": 0,
+          "matrices_current": 0,
+          "vectors_current": 0
+        },
+        "resource_sample_only": true,
+        "selected_q": 0,
+        "workspace_bytes": 0
+      },
+      "sample_scope": "instant host sample plus current-process cgroup sample and process historical max RSS; cgroup values are task-specific only for a dedicated job cgroup and are not a simultaneous process-tree peak",
+      "stage": "task40_v26_q0_factor_after_destroy",
+      "swap_gate_status": "PASS_ZERO_TASK_CGROUP_SWAP",
+      "task_cgroup_current_plus_additional_bytes": 12075479040,
+      "task_cgroup_gate_passed": true,
+      "task_cgroup_limit_minus_evidence_reserve_bytes": 549755813888,
+      "task_cgroup_memory_after": {
+        "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+        "memory_current_bytes": 12075479040,
+        "memory_stat_bytes": {
+          "active_file": 11544293376,
+          "anon": 449441792,
+          "file": 11572350976,
+          "file_dirty": 561152,
+          "file_writeback": 0,
+          "inactive_file": 26968064,
+          "kernel": 52662272,
+          "pagetables": 24432640,
+          "shmem": 1077248
+        },
+        "status": "available"
+      },
+      "task_cgroup_memory_before": {
+        "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+        "memory_current_bytes": 12075479040,
+        "memory_stat_bytes": {
+          "active_file": 11544293376,
+          "anon": 449441792,
+          "file": 11572350976,
+          "file_dirty": 561152,
+          "file_writeback": 0,
+          "inactive_file": 26968064,
+          "kernel": 52662272,
+          "pagetables": 24432640,
+          "shmem": 1077248
+        },
+        "status": "available"
+      },
+      "task_cgroup_required": true,
+      "v29_contract_resource_gate": {
+        "cgroup_current_bytes": 12075479040,
+        "cgroup_limit_bytes": 549755813888,
+        "host_effective_available_bytes": 2083197259776,
+        "host_reserve_bytes": 68719476736,
+        "passed": true,
+        "requested_additional_bytes": 0,
+        "task_memory_max_bytes": 549755813888
+      }
+    },
+    "resource_sample_before_destroy": {
+      "additional_object_upper_bound_bytes": 0,
+      "current_process_cgroup": {
+        "dedicated_job_cgroup": true,
+        "member_count": 5,
+        "memory_current_bytes": 73340047360,
+        "memory_limit_bytes": 549755813888,
+        "memory_peak_bytes": 84891103232,
+        "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+        "readable": true,
+        "sample_scope": "current process cgroup; task-specific only when dedicated_job_cgroup is true",
+        "swap_current_bytes": 0
+      },
+      "current_process_tree_rss_bytes": 73172611072,
+      "disk_free_bytes": 2624227131392,
+      "disk_gate_passed": true,
+      "disk_payload_bytes": 0,
+      "disk_reserve_bytes": 1073741824,
+      "dynamic_process_tree_cap_bytes": 549588377600,
+      "explicit_process_tree_cap_bytes": 549755813888,
+      "first_original_stage_label": "task40_v26_q0_factor_before_destroy",
+      "host_effective_available_bytes": 2021971345408,
+      "host_gate_passed": true,
+      "last_original_stage_label": "task40_v26_q0_factor_before_destroy",
+      "maximum_additional_object_upper_bound_bytes": 0,
+      "maximum_disk_payload_bytes": 0,
+      "maximum_task_cgroup_memory_current_bytes": 73340047360,
+      "memory_envelope": {
+        "cgroup_limits": [
+          {
+            "current_bytes": 73340047360,
+            "limit_bytes": 549755813888,
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service"
+          }
+        ],
+        "effective_available_after_reserves_bytes": 476415766528,
+        "effective_available_bytes": 476415766528,
+        "effective_total_bytes": 549755813888,
+        "host_launch_available_bytes": 1953251868672,
+        "host_mem_available_bytes": 2021971345408,
+        "launch_cap_bytes": 476415766528,
+        "mem_available_bytes": 2021971345408,
+        "mem_total_bytes": 2163100385280,
+        "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "reserve_bytes": 68719476736,
+        "reserve_domains_separated": true,
+        "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+        "static_tree_cap_bytes": null,
+        "task_cgroup_available_bytes": 476415766528,
+        "task_cgroup_launch_available_bytes": 476415766528,
+        "task_cgroup_reserve_bytes": 0
+      },
+      "minimum_host_effective_available_bytes": 2021971345408,
+      "observation_count": 1,
+      "passed": true,
+      "physical_memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+      "process_tree_gate_passed": true,
+      "process_tree_snapshot": {
+        "all_status_readable": true,
+        "identity_complete": true,
+        "member_count": 1,
+        "scope": "current process and descendants sampled at admission"
+      },
+      "request_facts": {
+        "additional_payload_bytes": 0,
+        "future_co_resident_reserve_bytes": 0,
+        "matrix_payload_bytes": 0,
+        "native_object_counts": {
+          "factors_current": 1,
+          "matrices_current": 1,
+          "vectors_current": 0
+        },
+        "resource_sample_only": true,
+        "selected_q": 0,
+        "workspace_bytes": 0
+      },
+      "sample_scope": "instant host sample plus current-process cgroup sample and process historical max RSS; cgroup values are task-specific only for a dedicated job cgroup and are not a simultaneous process-tree peak",
+      "stage": "task40_v26_q0_factor_before_destroy",
+      "swap_gate_status": "PASS_ZERO_TASK_CGROUP_SWAP",
+      "task_cgroup_current_plus_additional_bytes": 73340047360,
+      "task_cgroup_gate_passed": true,
+      "task_cgroup_limit_minus_evidence_reserve_bytes": 549755813888,
+      "task_cgroup_memory_after": {
+        "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+        "memory_current_bytes": 73340047360,
+        "memory_stat_bytes": {
+          "active_file": 11544293376,
+          "anon": 61594988544,
+          "file": 11572224000,
+          "file_dirty": 446464,
+          "file_writeback": 0,
+          "inactive_file": 26845184,
+          "kernel": 172326912,
+          "pagetables": 144101376,
+          "shmem": 1077248
+        },
+        "status": "available"
+      },
+      "task_cgroup_memory_before": {
+        "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+        "memory_current_bytes": 73340047360,
+        "memory_stat_bytes": {
+          "active_file": 11544293376,
+          "anon": 61594988544,
+          "file": 11572224000,
+          "file_dirty": 446464,
+          "file_writeback": 0,
+          "inactive_file": 26845184,
+          "kernel": 172326912,
+          "pagetables": 144101376,
+          "shmem": 1077248
+        },
+        "status": "available"
+      },
+      "task_cgroup_required": true,
+      "v29_contract_resource_gate": {
+        "cgroup_current_bytes": 73340047360,
+        "cgroup_limit_bytes": 549755813888,
+        "host_effective_available_bytes": 2021971345408,
+        "host_reserve_bytes": 68719476736,
+        "passed": true,
+        "requested_additional_bytes": 0,
+        "task_memory_max_bytes": 549755813888
+      }
+    },
+    "status": "IN_PROGRESS"
+  },
+  "current_identity": {
+    "campaign_window_sha256": "dcefcfbf476f09b388554afc81a65ea85951d4d6162b6dad8743766e6742c9a0",
+    "execution_campaign_window_sha256": "68b19c507106a7ad003a6c7121cb3ba4461ed569bd4706e221970d59126bbf1e",
+    "execution_contract_sha256": "4114d23deb54c7cfec38197fca6d6440368f7eae26b74eed4d6a4bb0e4905ef6",
+    "execution_selector_sha256": "aa57f05a797c03da48c85ca8ee10acfc44b29f5841f2c0cea715ea4cd8d9d11f",
+    "input_sha256": "134ea5f08d5d5dbc366870f451ba0de0df5893c5cd73d227dac77f8a11aa2c0b",
+    "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "native_qualification_sha256": "63babb2943b7e0f613a2c531afd09f931c4ee5504a345748c52f6ef38b0e9c81",
+    "ordered_mode_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+    "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+    "run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
+    "source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f"
+  },
+  "elapsed_seconds": 758.4101912819315,
+  "factor_backend": "PETSc MUMPS exact",
+  "factor_probe_true_residual_limit": 1e-10,
+  "factor_route": "V26_SELECTED_Q0_ONLY; no fabricated q_count=1 profile",
+  "fresh_factor_probe": {
+    "input_nonzero": true,
+    "label": "fresh_factor_probe",
+    "passed": true,
+    "raw_artifact": {
+      "array_names": [
+        "input_x",
+        "residual",
+        "rhs",
+        "solution"
+      ],
+      "array_sha256": {
+        "input_x": "2eeb7e4c9f40cb551025057398b976e594f3fe1d20bfb72f44bc06b5c3a3e1fb",
+        "residual": "7470364116a3903efa7c0de9a190a38b6f4bbb9af68f434312269cb7d64c8d0d",
+        "rhs": "9f4e1628d3d9c04f83c886b73bf9d52003f310cc2d7184c7acdc428dbe3f6ca3",
+        "solution": "3341a7b4fc682d8629bf2430e8b39114a20052eb8bfa8b5298b6c19e63dd9ced"
+      },
+      "bytes": 49770218,
+      "dtype": "<c16",
+      "native_vector_count_before_serialization": 0,
+      "native_vectors_destroyed_before_serialization": true,
+      "path": "v26_q0_factor_fresh_factor_probe.npz",
+      "sha256": "c737fadbb1df3a9ce1f9a9c5e1f23e9d8cade0e7bc1747769a02a21d13050b76",
+      "size": 777644
+    },
+    "relative_full_true_residual": 1.977628323114713e-14,
+    "residual": "saved in hash-bound raw vector checkpoint",
+    "residual_limit": 1e-10,
+    "rhs_nonzero": true,
+    "seed": 260001,
+    "solution": "saved in hash-bound raw vector checkpoint",
+    "timing_v29": {
+      "full_true_residual_seconds": 1.7300311280414462,
+      "native_call": "MatFactor.solve",
+      "native_solve_seconds": 17.5441528968513,
+      "parent_seconds": 22.0920130640734,
+      "petsc_rhs_vector_seconds": 0.014996312092989683,
+      "raw_persist_and_readback_seconds": 0.34934918908402324,
+      "rhs_construction_seconds": 1.744447760982439
+    }
+  },
+  "max_simultaneous_native_objects": {
+    "factors": 1,
+    "matrices": 1,
+    "vectors": 2
+  },
+  "mumps_control_profile": {
+    "ICNTL(10)": 0,
+    "ICNTL(2)": 0,
+    "ICNTL(3)": 6,
+    "ICNTL(35)": 0,
+    "ICNTL(4)": 2
+  },
+  "mumps_controls_readback_before_symbolic": {
+    "10": 0,
+    "2": 0,
+    "3": 6,
+    "35": 0,
+    "4": 2
+  },
+  "nnz": 577061168,
+  "numeric_mumps_evidence": {
+    "INFOG_19_allocated_bytes_upper": 63959000000,
+    "INFOG_22_used_bytes_upper": 55243000000,
+    "INFOG_9_corrected_entries_if_negative": 2599000000,
+    "INFOG_9_correction_source": "mumps_infog_9_negative_millions",
+    "memory_observation": {
+      "allocation_is_not_inferred_from_icntl23": true,
+      "infog19_allocated_bytes_upper": 63959000000,
+      "infog19_allocated_mb": 63958,
+      "infog22_used_bytes_upper": 55243000000,
+      "infog22_used_mb": 55242,
+      "raw_infog19_and_22": {
+        "19": 63958,
+        "22": 55242
+      },
+      "unit": "decimal_MB",
+      "unit_bytes": 1000000
+    },
+    "process_tree_rss_bytes": null,
+    "raw_infog": {
+      "1": 0,
+      "10": 11237284,
+      "11": 7324,
+      "12": 4980,
+      "13": 120,
+      "14": 0,
+      "15": 0,
+      "16": 63958,
+      "17": 63958,
+      "18": 63958,
+      "19": 63958,
+      "2": 0,
+      "20": -2599,
+      "22": 55242,
+      "29": -2599,
+      "3": -2599,
+      "4": 11237044,
+      "5": 7322,
+      "6": 6405,
+      "7": 5,
+      "8": 100,
+      "9": -2599
+    },
+    "raw_rinfog": {
+      "1": 8767040926550.0,
+      "10": 0.0,
+      "11": 0.0,
+      "12": 0.0,
+      "13": 0.0,
+      "14": 0.0,
+      "15": 41592.673024,
+      "16": 0.0,
+      "17": 41689.794434,
+      "18": 52447.077805,
+      "19": 2.251964046401823e-05,
+      "2": 8887155504.0,
+      "20": 2.251964046401823e-05,
+      "3": 8769321187497.0,
+      "4": 0.0,
+      "5": 0.0,
+      "6": 0.0,
+      "7": 0.0,
+      "8": 0.0,
+      "9": 0.0
+    }
+  },
+  "petsc_comm_size": 1,
+  "petsc_csr_int_preflight": {
+    "columns": 777644,
+    "nnz": 577061168,
+    "petsc_int_dtype": "<i4",
+    "petsc_int_max": 2147483647,
+    "rows": 777644
+  },
+  "petsc_int_type": "<i4",
+  "petsc_scalar_type": "<c16",
+  "phase": "cleanup_complete",
+  "phases": [
+    {
+      "elapsed_seconds": 29.228136955061927,
+      "phase": "csr_identity_and_int32_preflight",
+      "preflight": {
+        "columns": 777644,
+        "nnz": 577061168,
+        "petsc_int_dtype": "<i4",
+        "petsc_int_max": 2147483647,
+        "rows": 777644
+      },
+      "source_csr_hash_verified": true,
+      "wide_structure_checkpoint_required_before_narrowing": true
+    },
+    {
+      "elapsed_seconds": 29.266802033875138,
+      "gate": {
+        "additional_object_upper_bound_bytes": 69340657464,
+        "current_process_cgroup": {
+          "dedicated_job_cgroup": true,
+          "member_count": 5,
+          "memory_current_bytes": 11962556416,
+          "memory_limit_bytes": 549755813888,
+          "memory_peak_bytes": 11962556416,
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "readable": true,
+          "sample_scope": "current process cgroup; task-specific only when dedicated_job_cgroup is true",
+          "swap_current_bytes": 0
+        },
+        "current_process_tree_rss_bytes": 11912802304,
+        "disk_free_bytes": 2628260651008,
+        "disk_gate_passed": true,
+        "disk_payload_bytes": 0,
+        "disk_reserve_bytes": 1073741824,
+        "dynamic_process_tree_cap_bytes": 549706059776,
+        "explicit_process_tree_cap_bytes": 549755813888,
+        "first_original_stage_label": "task40_v26_q0_factor_petsc_conversion",
+        "host_effective_available_bytes": 2100821475328,
+        "host_gate_passed": true,
+        "last_original_stage_label": "task40_v26_q0_factor_petsc_conversion",
+        "maximum_additional_object_upper_bound_bytes": 69340657464,
+        "maximum_disk_payload_bytes": 0,
+        "maximum_task_cgroup_memory_current_bytes": 11962556416,
+        "memory_envelope": {
+          "cgroup_limits": [
+            {
+              "current_bytes": 11962556416,
+              "limit_bytes": 549755813888,
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service"
+            }
+          ],
+          "effective_available_after_reserves_bytes": 537793257472,
+          "effective_available_bytes": 537793257472,
+          "effective_total_bytes": 549755813888,
+          "host_launch_available_bytes": 2032101998592,
+          "host_mem_available_bytes": 2100821475328,
+          "launch_cap_bytes": 537793257472,
+          "mem_available_bytes": 2100821475328,
+          "mem_total_bytes": 2163100385280,
+          "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+          "reserve_bytes": 68719476736,
+          "reserve_domains_separated": true,
+          "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+          "static_tree_cap_bytes": null,
+          "task_cgroup_available_bytes": 537793257472,
+          "task_cgroup_launch_available_bytes": 537793257472,
+          "task_cgroup_reserve_bytes": 0
+        },
+        "minimum_host_effective_available_bytes": 2100821475328,
+        "observation_count": 1,
+        "passed": true,
+        "physical_memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "process_tree_gate_passed": true,
+        "process_tree_snapshot": {
+          "all_status_readable": true,
+          "identity_complete": true,
+          "member_count": 1,
+          "scope": "current process and descendants sampled at admission"
+        },
+        "request_facts": {
+          "additional_payload_bytes": 0,
+          "csr_to_petsc_conversion_workspace_bytes": 11544333940,
+          "future_co_resident_reserve_bytes": 46251989584,
+          "future_factor_vector_and_checker_reserve_bytes": 74653824,
+          "matrix_payload_bytes": 11544333940,
+          "petsc_matrix_payload_upper_bytes": 11544333940,
+          "selected_q": 0,
+          "source_csr_counted_in_current_resource_sample": true,
+          "source_csr_payload_bytes_already_resident": 11544333940,
+          "symbolic_guard_bytes": 46177335760,
+          "symbolic_guard_rule": "max(128 MiB, 4 * source CSR payload)",
+          "workspace_bytes": 11544333940
+        },
+        "sample_scope": "instant host sample plus current-process cgroup sample and process historical max RSS; cgroup values are task-specific only for a dedicated job cgroup and are not a simultaneous process-tree peak",
+        "stage": "task40_v26_q0_factor_petsc_conversion",
+        "swap_gate_status": "PASS_ZERO_TASK_CGROUP_SWAP",
+        "task_cgroup_current_plus_additional_bytes": 81303213880,
+        "task_cgroup_gate_passed": true,
+        "task_cgroup_limit_minus_evidence_reserve_bytes": 549755813888,
+        "task_cgroup_memory_after": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 11962556416,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 362086400,
+            "file": 11548307456,
+            "file_dirty": 1126400,
+            "file_writeback": 0,
+            "inactive_file": 2928640,
+            "kernel": 51568640,
+            "pagetables": 24170496,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_memory_before": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 11962556416,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 362086400,
+            "file": 11548307456,
+            "file_dirty": 1126400,
+            "file_writeback": 0,
+            "inactive_file": 2928640,
+            "kernel": 51568640,
+            "pagetables": 24170496,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_required": true,
+        "v29_contract_resource_gate": {
+          "cgroup_current_bytes": 11962556416,
+          "cgroup_limit_bytes": 549755813888,
+          "host_effective_available_bytes": 2100821475328,
+          "host_reserve_bytes": 68719476736,
+          "passed": true,
+          "requested_additional_bytes": 69340657464,
+          "task_memory_max_bytes": 549755813888
+        }
+      },
+      "phase": "petsc_conversion_admitted"
+    },
+    {
+      "conversion_arrays_payload_bytes": 11544333940,
+      "conversion_arrays_released": true,
+      "elapsed_seconds": 44.26561335707083,
+      "petsc_matrix_payload_upper_bytes": 11544333940,
+      "phase": "petsc_matrix_created"
+    },
+    {
+      "elapsed_seconds": 44.30150809790939,
+      "gate": {
+        "additional_object_upper_bound_bytes": 46251989584,
+        "current_process_cgroup": {
+          "dedicated_job_cgroup": true,
+          "member_count": 5,
+          "memory_current_bytes": 23542571008,
+          "memory_limit_bytes": 549755813888,
+          "memory_peak_bytes": 35106451456,
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "readable": true,
+          "sample_scope": "current process cgroup; task-specific only when dedicated_job_cgroup is true",
+          "swap_current_bytes": 0
+        },
+        "current_process_tree_rss_bytes": 23470780416,
+        "disk_free_bytes": 2627851399168,
+        "disk_gate_passed": true,
+        "disk_payload_bytes": 0,
+        "disk_reserve_bytes": 1073741824,
+        "dynamic_process_tree_cap_bytes": 549684023296,
+        "explicit_process_tree_cap_bytes": 549755813888,
+        "first_original_stage_label": "task40_v26_q0_factor_symbolic",
+        "host_effective_available_bytes": 2083855187968,
+        "host_gate_passed": true,
+        "last_original_stage_label": "task40_v26_q0_factor_symbolic",
+        "maximum_additional_object_upper_bound_bytes": 46251989584,
+        "maximum_disk_payload_bytes": 0,
+        "maximum_task_cgroup_memory_current_bytes": 23542571008,
+        "memory_envelope": {
+          "cgroup_limits": [
+            {
+              "current_bytes": 23542571008,
+              "limit_bytes": 549755813888,
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service"
+            }
+          ],
+          "effective_available_after_reserves_bytes": 526213242880,
+          "effective_available_bytes": 526213242880,
+          "effective_total_bytes": 549755813888,
+          "host_launch_available_bytes": 2015135711232,
+          "host_mem_available_bytes": 2083855187968,
+          "launch_cap_bytes": 526213242880,
+          "mem_available_bytes": 2083855187968,
+          "mem_total_bytes": 2163100385280,
+          "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+          "reserve_bytes": 68719476736,
+          "reserve_domains_separated": true,
+          "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+          "static_tree_cap_bytes": null,
+          "task_cgroup_available_bytes": 526213242880,
+          "task_cgroup_launch_available_bytes": 526213242880,
+          "task_cgroup_reserve_bytes": 0
+        },
+        "minimum_host_effective_available_bytes": 2083855187968,
+        "observation_count": 1,
+        "passed": true,
+        "physical_memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "process_tree_gate_passed": true,
+        "process_tree_snapshot": {
+          "all_status_readable": true,
+          "identity_complete": true,
+          "member_count": 1,
+          "scope": "current process and descendants sampled at admission"
+        },
+        "request_facts": {
+          "additional_payload_bytes": 0,
+          "already_resident_objects_are_in_current_rss_sample": true,
+          "future_co_resident_reserve_bytes": 46251989584,
+          "matrix_payload_bytes": 0,
+          "petsc_matrix_payload_bytes_already_resident": 11544333940,
+          "selected_q": 0,
+          "source_csr_payload_bytes_already_resident": 11544333940,
+          "symbolic_factorization_guard_bytes": 46177335760,
+          "vector_and_checker_reserve_bytes": 74653824,
+          "workspace_bytes": 0
+        },
+        "sample_scope": "instant host sample plus current-process cgroup sample and process historical max RSS; cgroup values are task-specific only for a dedicated job cgroup and are not a simultaneous process-tree peak",
+        "stage": "task40_v26_q0_factor_symbolic",
+        "swap_gate_status": "PASS_ZERO_TASK_CGROUP_SWAP",
+        "task_cgroup_current_plus_additional_bytes": 69794560592,
+        "task_cgroup_gate_passed": true,
+        "task_cgroup_limit_minus_evidence_reserve_bytes": 549755813888,
+        "task_cgroup_memory_after": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 23542571008,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 11918753792,
+            "file": 11548811264,
+            "file_dirty": 421888,
+            "file_writeback": 0,
+            "inactive_file": 3420160,
+            "kernel": 74203136,
+            "pagetables": 46788608,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_memory_before": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 23542571008,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 11918753792,
+            "file": 11548811264,
+            "file_dirty": 421888,
+            "file_writeback": 0,
+            "inactive_file": 3420160,
+            "kernel": 74207232,
+            "pagetables": 46788608,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_required": true,
+        "v29_contract_resource_gate": {
+          "cgroup_current_bytes": 23542571008,
+          "cgroup_limit_bytes": 549755813888,
+          "host_effective_available_bytes": 2083855187968,
+          "host_reserve_bytes": 68719476736,
+          "passed": true,
+          "requested_additional_bytes": 46251989584,
+          "task_memory_max_bytes": 549755813888
+        }
+      },
+      "phase": "symbolic_admitted"
+    },
+    {
+      "controls_before_symbolic": {
+        "10": 0,
+        "2": 0,
+        "3": 6,
+        "35": 0,
+        "4": 2
+      },
+      "elapsed_seconds": 63.80803809594363,
+      "mumps_evidence": {
+        "INFOG_19_allocated_bytes_upper": null,
+        "INFOG_22_used_bytes_upper": null,
+        "INFOG_9_corrected_entries_if_negative": null,
+        "INFOG_9_correction_source": null,
+        "memory_observation": null,
+        "process_tree_rss_bytes": null,
+        "raw_infog": {
+          "1": 0,
+          "10": 0,
+          "11": 0,
+          "12": 0,
+          "13": 0,
+          "14": 0,
+          "15": 0,
+          "16": 63958,
+          "17": 63958,
+          "18": 0,
+          "19": 0,
+          "2": 0,
+          "20": -2599,
+          "22": 0,
+          "29": 0,
+          "3": -2599,
+          "4": 11237044,
+          "5": 7322,
+          "6": 6405,
+          "7": 5,
+          "8": 100,
+          "9": 0
+        },
+        "raw_rinfog": {
+          "1": 8767040926550.0,
+          "10": 0.0,
+          "11": 0.0,
+          "12": 0.0,
+          "13": 0.0,
+          "14": 0.0,
+          "15": 41592.673024,
+          "16": 0.0,
+          "17": 21.954218,
+          "18": 21.953653,
+          "19": 0.0,
+          "2": 0.0,
+          "20": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0,
+          "8": 0.0,
+          "9": 0.0
+        }
+      },
+      "numeric_factor_reserve_bytes": 63959000000,
+      "phase": "symbolic_complete",
+      "symbolic_estimate_info_16": 63958,
+      "symbolic_estimate_info_17": 63958
+    },
+    {
+      "elapsed_seconds": 63.84872700506821,
+      "gate": {
+        "additional_object_upper_bound_bytes": 64033653824,
+        "current_process_cgroup": {
+          "dedicated_job_cgroup": true,
+          "member_count": 5,
+          "memory_current_bytes": 28199735296,
+          "memory_limit_bytes": 549755813888,
+          "memory_peak_bytes": 35106451456,
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "readable": true,
+          "sample_scope": "current process cgroup; task-specific only when dedicated_job_cgroup is true",
+          "swap_current_bytes": 0
+        },
+        "current_process_tree_rss_bytes": 28139835392,
+        "disk_free_bytes": 2627215237120,
+        "disk_gate_passed": true,
+        "disk_payload_bytes": 0,
+        "disk_reserve_bytes": 1073741824,
+        "dynamic_process_tree_cap_bytes": 549695913984,
+        "explicit_process_tree_cap_bytes": 549755813888,
+        "first_original_stage_label": "task40_v26_q0_factor_numeric",
+        "host_effective_available_bytes": 2078781599744,
+        "host_gate_passed": true,
+        "last_original_stage_label": "task40_v26_q0_factor_numeric",
+        "maximum_additional_object_upper_bound_bytes": 64033653824,
+        "maximum_disk_payload_bytes": 0,
+        "maximum_task_cgroup_memory_current_bytes": 28199735296,
+        "memory_envelope": {
+          "cgroup_limits": [
+            {
+              "current_bytes": 28199735296,
+              "limit_bytes": 549755813888,
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service"
+            }
+          ],
+          "effective_available_after_reserves_bytes": 521556078592,
+          "effective_available_bytes": 521556078592,
+          "effective_total_bytes": 549755813888,
+          "host_launch_available_bytes": 2010062123008,
+          "host_mem_available_bytes": 2078781599744,
+          "launch_cap_bytes": 521556078592,
+          "mem_available_bytes": 2078781599744,
+          "mem_total_bytes": 2163100385280,
+          "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+          "reserve_bytes": 68719476736,
+          "reserve_domains_separated": true,
+          "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+          "static_tree_cap_bytes": null,
+          "task_cgroup_available_bytes": 521556078592,
+          "task_cgroup_launch_available_bytes": 521556078592,
+          "task_cgroup_reserve_bytes": 0
+        },
+        "minimum_host_effective_available_bytes": 2078781599744,
+        "observation_count": 1,
+        "passed": true,
+        "physical_memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "process_tree_gate_passed": true,
+        "process_tree_snapshot": {
+          "all_status_readable": true,
+          "identity_complete": true,
+          "member_count": 1,
+          "scope": "current process and descendants sampled at admission"
+        },
+        "request_facts": {
+          "additional_payload_bytes": 0,
+          "future_co_resident_reserve_bytes": 63959000000,
+          "matrix_payload_bytes": 0,
+          "numeric_factor_reserve_bytes_from_INFOG_16_17": 63959000000,
+          "petsc_matrix_payload_bytes_already_resident": 11544333940,
+          "reserve_not_double_counted_with_current_resident_objects": true,
+          "selected_q": 0,
+          "source_csr_payload_bytes_already_resident": 11544333940,
+          "symbolic_factor_memory_in_current_rss_sample": true,
+          "vector_and_checker_reserve_bytes": 74653824,
+          "workspace_bytes": 74653824
+        },
+        "sample_scope": "instant host sample plus current-process cgroup sample and process historical max RSS; cgroup values are task-specific only for a dedicated job cgroup and are not a simultaneous process-tree peak",
+        "stage": "task40_v26_q0_factor_numeric",
+        "swap_gate_status": "PASS_ZERO_TASK_CGROUP_SWAP",
+        "task_cgroup_current_plus_additional_bytes": 92233389120,
+        "task_cgroup_gate_passed": true,
+        "task_cgroup_limit_minus_evidence_reserve_bytes": 549755813888,
+        "task_cgroup_memory_after": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 28199735296,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 16565248000,
+            "file": 11549556736,
+            "file_dirty": 208896,
+            "file_writeback": 0,
+            "inactive_file": 4173824,
+            "kernel": 83443712,
+            "pagetables": 55947264,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_memory_before": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 28199735296,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 16565231616,
+            "file": 11549556736,
+            "file_dirty": 208896,
+            "file_writeback": 0,
+            "inactive_file": 4173824,
+            "kernel": 83443712,
+            "pagetables": 55947264,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_required": true,
+        "v29_contract_resource_gate": {
+          "cgroup_current_bytes": 28199735296,
+          "cgroup_limit_bytes": 549755813888,
+          "host_effective_available_bytes": 2078781599744,
+          "host_reserve_bytes": 68719476736,
+          "passed": true,
+          "requested_additional_bytes": 64033653824,
+          "task_memory_max_bytes": 549755813888
+        }
+      },
+      "phase": "numeric_admitted"
+    },
+    {
+      "elapsed_seconds": 689.7137516939547,
+      "mumps_evidence": {
+        "INFOG_19_allocated_bytes_upper": 63959000000,
+        "INFOG_22_used_bytes_upper": 55243000000,
+        "INFOG_9_corrected_entries_if_negative": 2599000000,
+        "INFOG_9_correction_source": "mumps_infog_9_negative_millions",
+        "memory_observation": {
+          "allocation_is_not_inferred_from_icntl23": true,
+          "infog19_allocated_bytes_upper": 63959000000,
+          "infog19_allocated_mb": 63958,
+          "infog22_used_bytes_upper": 55243000000,
+          "infog22_used_mb": 55242,
+          "raw_infog19_and_22": {
+            "19": 63958,
+            "22": 55242
+          },
+          "unit": "decimal_MB",
+          "unit_bytes": 1000000
+        },
+        "process_tree_rss_bytes": null,
+        "raw_infog": {
+          "1": 0,
+          "10": 11237284,
+          "11": 7324,
+          "12": 4980,
+          "13": 120,
+          "14": 0,
+          "15": 0,
+          "16": 63958,
+          "17": 63958,
+          "18": 63958,
+          "19": 63958,
+          "2": 0,
+          "20": -2599,
+          "22": 55242,
+          "29": -2599,
+          "3": -2599,
+          "4": 11237044,
+          "5": 7322,
+          "6": 6405,
+          "7": 5,
+          "8": 100,
+          "9": -2599
+        },
+        "raw_rinfog": {
+          "1": 8767040926550.0,
+          "10": 0.0,
+          "11": 0.0,
+          "12": 0.0,
+          "13": 0.0,
+          "14": 0.0,
+          "15": 41592.673024,
+          "16": 0.0,
+          "17": 41689.794434,
+          "18": 52447.077805,
+          "19": 2.251964046401823e-05,
+          "2": 8887155504.0,
+          "20": 2.251964046401823e-05,
+          "3": 8769321187497.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0,
+          "8": 0.0,
+          "9": 0.0
+        }
+      },
+      "phase": "numeric_factor_complete"
+    },
+    {
+      "F_q": {
+        "boundary": "lifecycle entry after loaded matrix through first fresh MatSolve, full explicit true residual, and hash-bound raw readback; ends before second RHS and cleanup",
+        "fresh_probe_parent_seconds": 22.0920130640734,
+        "includes_eviction": false,
+        "includes_initial_loader": false,
+        "includes_second_rhs": false,
+        "parent_seconds": 711.8111886410043,
+        "status": "FRESH_PROBE_QUALIFIED"
+      },
+      "elapsed_seconds": 711.8112000520341,
+      "phase": "fresh_factor_probe_complete",
+      "probe": {
+        "input_nonzero": true,
+        "label": "fresh_factor_probe",
+        "passed": true,
+        "raw_artifact": {
+          "array_names": [
+            "input_x",
+            "residual",
+            "rhs",
+            "solution"
+          ],
+          "array_sha256": {
+            "input_x": "2eeb7e4c9f40cb551025057398b976e594f3fe1d20bfb72f44bc06b5c3a3e1fb",
+            "residual": "7470364116a3903efa7c0de9a190a38b6f4bbb9af68f434312269cb7d64c8d0d",
+            "rhs": "9f4e1628d3d9c04f83c886b73bf9d52003f310cc2d7184c7acdc428dbe3f6ca3",
+            "solution": "3341a7b4fc682d8629bf2430e8b39114a20052eb8bfa8b5298b6c19e63dd9ced"
+          },
+          "bytes": 49770218,
+          "dtype": "<c16",
+          "native_vector_count_before_serialization": 0,
+          "native_vectors_destroyed_before_serialization": true,
+          "path": "v26_q0_factor_fresh_factor_probe.npz",
+          "sha256": "c737fadbb1df3a9ce1f9a9c5e1f23e9d8cade0e7bc1747769a02a21d13050b76",
+          "size": 777644
+        },
+        "relative_full_true_residual": 1.977628323114713e-14,
+        "residual": "saved in hash-bound raw vector checkpoint",
+        "residual_limit": 1e-10,
+        "rhs_nonzero": true,
+        "seed": 260001,
+        "solution": "saved in hash-bound raw vector checkpoint",
+        "timing_v29": {
+          "full_true_residual_seconds": 1.7300311280414462,
+          "native_call": "MatFactor.solve",
+          "native_solve_seconds": 17.5441528968513,
+          "parent_seconds": 22.0920130640734,
+          "petsc_rhs_vector_seconds": 0.014996312092989683,
+          "raw_persist_and_readback_seconds": 0.34934918908402324,
+          "rhs_construction_seconds": 1.744447760982439
+        }
+      }
+    },
+    {
+      "S_q": {
+        "boundary": "second distinct RHS construction through MatSolveRepeated, full explicit true residual, and hash-bound raw persistence/readback",
+        "full_true_residual_seconds": 1.7380575339775532,
+        "includes_eviction": false,
+        "includes_factorization": false,
+        "native_MatSolveRepeated_seconds": 12.919099297141656,
+        "parent_seconds": 17.43339802394621,
+        "petsc_rhs_vector_seconds": 0.014936836902052164,
+        "raw_persist_and_readback_seconds": 0.3443717521149665,
+        "rhs_construction_seconds": 1.747465583961457,
+        "status": "REPEATED_RHS_SOLVE_RECORDED"
+      },
+      "elapsed_seconds": 729.2511338740587,
+      "phase": "separate_nonzero_q0_rhs_solve_complete",
+      "rhs_solve": {
+        "input_nonzero": true,
+        "label": "separate_nonzero_q0_rhs_solve",
+        "passed": true,
+        "raw_artifact": {
+          "array_names": [
+            "input_x",
+            "residual",
+            "rhs",
+            "solution"
+          ],
+          "array_sha256": {
+            "input_x": "6b512f3be1373760019b9034ff2d99936d1e0825322c9fe35a12bb204d0aa713",
+            "residual": "a3f46d0238c77d66eaa6fd510e950115997e3b211e1620cb04081ef3a0fcd886",
+            "rhs": "315b26ea75c026949a40e627319703f1611c34388ae32431e3a26de4d6f96848",
+            "solution": "d2de3a9b011f8a90d5b9c7931f9a43b62594e00db9d58f0a2eee9646047beb26"
+          },
+          "bytes": 49770218,
+          "dtype": "<c16",
+          "native_vector_count_before_serialization": 0,
+          "native_vectors_destroyed_before_serialization": true,
+          "path": "v26_q0_factor_separate_nonzero_q0_rhs_solve.npz",
+          "sha256": "30d747721243858c030a5a77f5bdff30cef2e4ffae0c7e13d03ac28fed46f191",
+          "size": 777644
+        },
+        "relative_full_true_residual": 1.6069609784650353e-14,
+        "residual": "saved in hash-bound raw vector checkpoint",
+        "residual_limit": 1e-10,
+        "rhs_nonzero": true,
+        "seed": 260101,
+        "solution": "saved in hash-bound raw vector checkpoint",
+        "timing_v29": {
+          "full_true_residual_seconds": 1.7380575339775532,
+          "native_call": "MatFactor.solve_repeated",
+          "native_solve_seconds": 12.919099297141656,
+          "parent_seconds": 17.43339802394621,
+          "petsc_rhs_vector_seconds": 0.014936836902052164,
+          "raw_persist_and_readback_seconds": 0.3443717521149665,
+          "rhs_construction_seconds": 1.747465583961457
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 754.5422217610758,
+      "fresh_factor_probe": {
+        "input_nonzero": true,
+        "label": "fresh_factor_probe",
+        "passed": true,
+        "raw_artifact": {
+          "array_names": [
+            "input_x",
+            "residual",
+            "rhs",
+            "solution"
+          ],
+          "array_sha256": {
+            "input_x": "2eeb7e4c9f40cb551025057398b976e594f3fe1d20bfb72f44bc06b5c3a3e1fb",
+            "residual": "7470364116a3903efa7c0de9a190a38b6f4bbb9af68f434312269cb7d64c8d0d",
+            "rhs": "9f4e1628d3d9c04f83c886b73bf9d52003f310cc2d7184c7acdc428dbe3f6ca3",
+            "solution": "3341a7b4fc682d8629bf2430e8b39114a20052eb8bfa8b5298b6c19e63dd9ced"
+          },
+          "bytes": 49770218,
+          "dtype": "<c16",
+          "native_vector_count_before_serialization": 0,
+          "native_vectors_destroyed_before_serialization": true,
+          "path": "v26_q0_factor_fresh_factor_probe.npz",
+          "sha256": "c737fadbb1df3a9ce1f9a9c5e1f23e9d8cade0e7bc1747769a02a21d13050b76",
+          "size": 777644
+        },
+        "relative_full_true_residual": 1.977628323114713e-14,
+        "residual": "saved in hash-bound raw vector checkpoint",
+        "residual_limit": 1e-10,
+        "rhs_nonzero": true,
+        "seed": 260001,
+        "solution": "saved in hash-bound raw vector checkpoint",
+        "timing_v29": {
+          "full_true_residual_seconds": 1.7300311280414462,
+          "native_call": "MatFactor.solve",
+          "native_solve_seconds": 17.5441528968513,
+          "parent_seconds": 22.0920130640734,
+          "petsc_rhs_vector_seconds": 0.014996312092989683,
+          "raw_persist_and_readback_seconds": 0.34934918908402324,
+          "rhs_construction_seconds": 1.744447760982439
+        }
+      },
+      "phase": "factor_probe_and_rhs_solve_passed",
+      "separate_nonzero_q0_rhs_solve": {
+        "input_nonzero": true,
+        "label": "separate_nonzero_q0_rhs_solve",
+        "passed": true,
+        "raw_artifact": {
+          "array_names": [
+            "input_x",
+            "residual",
+            "rhs",
+            "solution"
+          ],
+          "array_sha256": {
+            "input_x": "6b512f3be1373760019b9034ff2d99936d1e0825322c9fe35a12bb204d0aa713",
+            "residual": "a3f46d0238c77d66eaa6fd510e950115997e3b211e1620cb04081ef3a0fcd886",
+            "rhs": "315b26ea75c026949a40e627319703f1611c34388ae32431e3a26de4d6f96848",
+            "solution": "d2de3a9b011f8a90d5b9c7931f9a43b62594e00db9d58f0a2eee9646047beb26"
+          },
+          "bytes": 49770218,
+          "dtype": "<c16",
+          "native_vector_count_before_serialization": 0,
+          "native_vectors_destroyed_before_serialization": true,
+          "path": "v26_q0_factor_separate_nonzero_q0_rhs_solve.npz",
+          "sha256": "30d747721243858c030a5a77f5bdff30cef2e4ffae0c7e13d03ac28fed46f191",
+          "size": 777644
+        },
+        "relative_full_true_residual": 1.6069609784650353e-14,
+        "residual": "saved in hash-bound raw vector checkpoint",
+        "residual_limit": 1e-10,
+        "rhs_nonzero": true,
+        "seed": 260101,
+        "solution": "saved in hash-bound raw vector checkpoint",
+        "timing_v29": {
+          "full_true_residual_seconds": 1.7380575339775532,
+          "native_call": "MatFactor.solve_repeated",
+          "native_solve_seconds": 12.919099297141656,
+          "parent_seconds": 17.43339802394621,
+          "petsc_rhs_vector_seconds": 0.014936836902052164,
+          "raw_persist_and_readback_seconds": 0.3443717521149665,
+          "rhs_construction_seconds": 1.747465583961457
+        }
+      },
+      "source_csr_identity_preserved": true
+    },
+    {
+      "destroy_errors": [],
+      "destroy_succeeded": true,
+      "elapsed_seconds": 758.4101977220271,
+      "native_object_counts_after_destroy": {
+        "factors_current": 0,
+        "matrices_current": 0,
+        "vectors_current": 0
+      },
+      "phase": "cleanup_complete",
+      "resource_sample_after_destroy": {
+        "additional_object_upper_bound_bytes": 0,
+        "current_process_cgroup": {
+          "dedicated_job_cgroup": true,
+          "member_count": 5,
+          "memory_current_bytes": 12075479040,
+          "memory_limit_bytes": 549755813888,
+          "memory_peak_bytes": 84891103232,
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "readable": true,
+          "sample_scope": "current process cgroup; task-specific only when dedicated_job_cgroup is true",
+          "swap_current_bytes": 0
+        },
+        "current_process_tree_rss_bytes": 12027588608,
+        "disk_free_bytes": 2624224268288,
+        "disk_gate_passed": true,
+        "disk_payload_bytes": 0,
+        "disk_reserve_bytes": 1073741824,
+        "dynamic_process_tree_cap_bytes": 549707923456,
+        "explicit_process_tree_cap_bytes": 549755813888,
+        "first_original_stage_label": "task40_v26_q0_factor_after_destroy",
+        "host_effective_available_bytes": 2083197259776,
+        "host_gate_passed": true,
+        "last_original_stage_label": "task40_v26_q0_factor_after_destroy",
+        "maximum_additional_object_upper_bound_bytes": 0,
+        "maximum_disk_payload_bytes": 0,
+        "maximum_task_cgroup_memory_current_bytes": 12075479040,
+        "memory_envelope": {
+          "cgroup_limits": [
+            {
+              "current_bytes": 12075479040,
+              "limit_bytes": 549755813888,
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service"
+            }
+          ],
+          "effective_available_after_reserves_bytes": 537680334848,
+          "effective_available_bytes": 537680334848,
+          "effective_total_bytes": 549755813888,
+          "host_launch_available_bytes": 2014477783040,
+          "host_mem_available_bytes": 2083197259776,
+          "launch_cap_bytes": 537680334848,
+          "mem_available_bytes": 2083197259776,
+          "mem_total_bytes": 2163100385280,
+          "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+          "reserve_bytes": 68719476736,
+          "reserve_domains_separated": true,
+          "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+          "static_tree_cap_bytes": null,
+          "task_cgroup_available_bytes": 537680334848,
+          "task_cgroup_launch_available_bytes": 537680334848,
+          "task_cgroup_reserve_bytes": 0
+        },
+        "minimum_host_effective_available_bytes": 2083197259776,
+        "observation_count": 1,
+        "passed": true,
+        "physical_memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "process_tree_gate_passed": true,
+        "process_tree_snapshot": {
+          "all_status_readable": true,
+          "identity_complete": true,
+          "member_count": 1,
+          "scope": "current process and descendants sampled at admission"
+        },
+        "request_facts": {
+          "additional_payload_bytes": 0,
+          "future_co_resident_reserve_bytes": 0,
+          "matrix_payload_bytes": 0,
+          "native_object_counts": {
+            "factors_current": 0,
+            "matrices_current": 0,
+            "vectors_current": 0
+          },
+          "resource_sample_only": true,
+          "selected_q": 0,
+          "workspace_bytes": 0
+        },
+        "sample_scope": "instant host sample plus current-process cgroup sample and process historical max RSS; cgroup values are task-specific only for a dedicated job cgroup and are not a simultaneous process-tree peak",
+        "stage": "task40_v26_q0_factor_after_destroy",
+        "swap_gate_status": "PASS_ZERO_TASK_CGROUP_SWAP",
+        "task_cgroup_current_plus_additional_bytes": 12075479040,
+        "task_cgroup_gate_passed": true,
+        "task_cgroup_limit_minus_evidence_reserve_bytes": 549755813888,
+        "task_cgroup_memory_after": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 12075479040,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 449441792,
+            "file": 11572350976,
+            "file_dirty": 561152,
+            "file_writeback": 0,
+            "inactive_file": 26968064,
+            "kernel": 52662272,
+            "pagetables": 24432640,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_memory_before": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 12075479040,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 449441792,
+            "file": 11572350976,
+            "file_dirty": 561152,
+            "file_writeback": 0,
+            "inactive_file": 26968064,
+            "kernel": 52662272,
+            "pagetables": 24432640,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_required": true,
+        "v29_contract_resource_gate": {
+          "cgroup_current_bytes": 12075479040,
+          "cgroup_limit_bytes": 549755813888,
+          "host_effective_available_bytes": 2083197259776,
+          "host_reserve_bytes": 68719476736,
+          "passed": true,
+          "requested_additional_bytes": 0,
+          "task_memory_max_bytes": 549755813888
+        }
+      },
+      "resource_sample_before_destroy": {
+        "additional_object_upper_bound_bytes": 0,
+        "current_process_cgroup": {
+          "dedicated_job_cgroup": true,
+          "member_count": 5,
+          "memory_current_bytes": 73340047360,
+          "memory_limit_bytes": 549755813888,
+          "memory_peak_bytes": 84891103232,
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "readable": true,
+          "sample_scope": "current process cgroup; task-specific only when dedicated_job_cgroup is true",
+          "swap_current_bytes": 0
+        },
+        "current_process_tree_rss_bytes": 73172611072,
+        "disk_free_bytes": 2624227131392,
+        "disk_gate_passed": true,
+        "disk_payload_bytes": 0,
+        "disk_reserve_bytes": 1073741824,
+        "dynamic_process_tree_cap_bytes": 549588377600,
+        "explicit_process_tree_cap_bytes": 549755813888,
+        "first_original_stage_label": "task40_v26_q0_factor_before_destroy",
+        "host_effective_available_bytes": 2021971345408,
+        "host_gate_passed": true,
+        "last_original_stage_label": "task40_v26_q0_factor_before_destroy",
+        "maximum_additional_object_upper_bound_bytes": 0,
+        "maximum_disk_payload_bytes": 0,
+        "maximum_task_cgroup_memory_current_bytes": 73340047360,
+        "memory_envelope": {
+          "cgroup_limits": [
+            {
+              "current_bytes": 73340047360,
+              "limit_bytes": 549755813888,
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service"
+            }
+          ],
+          "effective_available_after_reserves_bytes": 476415766528,
+          "effective_available_bytes": 476415766528,
+          "effective_total_bytes": 549755813888,
+          "host_launch_available_bytes": 1953251868672,
+          "host_mem_available_bytes": 2021971345408,
+          "launch_cap_bytes": 476415766528,
+          "mem_available_bytes": 2021971345408,
+          "mem_total_bytes": 2163100385280,
+          "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+          "reserve_bytes": 68719476736,
+          "reserve_domains_separated": true,
+          "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+          "static_tree_cap_bytes": null,
+          "task_cgroup_available_bytes": 476415766528,
+          "task_cgroup_launch_available_bytes": 476415766528,
+          "task_cgroup_reserve_bytes": 0
+        },
+        "minimum_host_effective_available_bytes": 2021971345408,
+        "observation_count": 1,
+        "passed": true,
+        "physical_memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "process_tree_gate_passed": true,
+        "process_tree_snapshot": {
+          "all_status_readable": true,
+          "identity_complete": true,
+          "member_count": 1,
+          "scope": "current process and descendants sampled at admission"
+        },
+        "request_facts": {
+          "additional_payload_bytes": 0,
+          "future_co_resident_reserve_bytes": 0,
+          "matrix_payload_bytes": 0,
+          "native_object_counts": {
+            "factors_current": 1,
+            "matrices_current": 1,
+            "vectors_current": 0
+          },
+          "resource_sample_only": true,
+          "selected_q": 0,
+          "workspace_bytes": 0
+        },
+        "sample_scope": "instant host sample plus current-process cgroup sample and process historical max RSS; cgroup values are task-specific only for a dedicated job cgroup and are not a simultaneous process-tree peak",
+        "stage": "task40_v26_q0_factor_before_destroy",
+        "swap_gate_status": "PASS_ZERO_TASK_CGROUP_SWAP",
+        "task_cgroup_current_plus_additional_bytes": 73340047360,
+        "task_cgroup_gate_passed": true,
+        "task_cgroup_limit_minus_evidence_reserve_bytes": 549755813888,
+        "task_cgroup_memory_after": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 73340047360,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 61594988544,
+            "file": 11572224000,
+            "file_dirty": 446464,
+            "file_writeback": 0,
+            "inactive_file": 26845184,
+            "kernel": 172326912,
+            "pagetables": 144101376,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_memory_before": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 73340047360,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 61594988544,
+            "file": 11572224000,
+            "file_dirty": 446464,
+            "file_writeback": 0,
+            "inactive_file": 26845184,
+            "kernel": 172326912,
+            "pagetables": 144101376,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_required": true,
+        "v29_contract_resource_gate": {
+          "cgroup_current_bytes": 73340047360,
+          "cgroup_limit_bytes": 549755813888,
+          "host_effective_available_bytes": 2021971345408,
+          "host_reserve_bytes": 68719476736,
+          "passed": true,
+          "requested_additional_bytes": 0,
+          "task_memory_max_bytes": 549755813888
+        }
+      },
+      "status": "IN_PROGRESS"
+    }
+  ],
+  "q0_rhs_true_residual_limit": 1e-10,
+  "q_coverage": {
+    "numeric_factor_attempted": true,
+    "numeric_factor_built": true
+  },
+  "resource_gates": [
+    {
+      "admission": {
+        "additional_object_upper_bound_bytes": 69340657464,
+        "current_process_cgroup": {
+          "dedicated_job_cgroup": true,
+          "member_count": 5,
+          "memory_current_bytes": 11962556416,
+          "memory_limit_bytes": 549755813888,
+          "memory_peak_bytes": 11962556416,
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "readable": true,
+          "sample_scope": "current process cgroup; task-specific only when dedicated_job_cgroup is true",
+          "swap_current_bytes": 0
+        },
+        "current_process_tree_rss_bytes": 11912802304,
+        "disk_free_bytes": 2628260651008,
+        "disk_gate_passed": true,
+        "disk_payload_bytes": 0,
+        "disk_reserve_bytes": 1073741824,
+        "dynamic_process_tree_cap_bytes": 549706059776,
+        "explicit_process_tree_cap_bytes": 549755813888,
+        "first_original_stage_label": "task40_v26_q0_factor_petsc_conversion",
+        "host_effective_available_bytes": 2100821475328,
+        "host_gate_passed": true,
+        "last_original_stage_label": "task40_v26_q0_factor_petsc_conversion",
+        "maximum_additional_object_upper_bound_bytes": 69340657464,
+        "maximum_disk_payload_bytes": 0,
+        "maximum_task_cgroup_memory_current_bytes": 11962556416,
+        "memory_envelope": {
+          "cgroup_limits": [
+            {
+              "current_bytes": 11962556416,
+              "limit_bytes": 549755813888,
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service"
+            }
+          ],
+          "effective_available_after_reserves_bytes": 537793257472,
+          "effective_available_bytes": 537793257472,
+          "effective_total_bytes": 549755813888,
+          "host_launch_available_bytes": 2032101998592,
+          "host_mem_available_bytes": 2100821475328,
+          "launch_cap_bytes": 537793257472,
+          "mem_available_bytes": 2100821475328,
+          "mem_total_bytes": 2163100385280,
+          "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+          "reserve_bytes": 68719476736,
+          "reserve_domains_separated": true,
+          "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+          "static_tree_cap_bytes": null,
+          "task_cgroup_available_bytes": 537793257472,
+          "task_cgroup_launch_available_bytes": 537793257472,
+          "task_cgroup_reserve_bytes": 0
+        },
+        "minimum_host_effective_available_bytes": 2100821475328,
+        "observation_count": 1,
+        "passed": true,
+        "physical_memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "process_tree_gate_passed": true,
+        "process_tree_snapshot": {
+          "all_status_readable": true,
+          "identity_complete": true,
+          "member_count": 1,
+          "scope": "current process and descendants sampled at admission"
+        },
+        "request_facts": {
+          "additional_payload_bytes": 0,
+          "csr_to_petsc_conversion_workspace_bytes": 11544333940,
+          "future_co_resident_reserve_bytes": 46251989584,
+          "future_factor_vector_and_checker_reserve_bytes": 74653824,
+          "matrix_payload_bytes": 11544333940,
+          "petsc_matrix_payload_upper_bytes": 11544333940,
+          "selected_q": 0,
+          "source_csr_counted_in_current_resource_sample": true,
+          "source_csr_payload_bytes_already_resident": 11544333940,
+          "symbolic_guard_bytes": 46177335760,
+          "symbolic_guard_rule": "max(128 MiB, 4 * source CSR payload)",
+          "workspace_bytes": 11544333940
+        },
+        "sample_scope": "instant host sample plus current-process cgroup sample and process historical max RSS; cgroup values are task-specific only for a dedicated job cgroup and are not a simultaneous process-tree peak",
+        "stage": "task40_v26_q0_factor_petsc_conversion",
+        "swap_gate_status": "PASS_ZERO_TASK_CGROUP_SWAP",
+        "task_cgroup_current_plus_additional_bytes": 81303213880,
+        "task_cgroup_gate_passed": true,
+        "task_cgroup_limit_minus_evidence_reserve_bytes": 549755813888,
+        "task_cgroup_memory_after": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 11962556416,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 362086400,
+            "file": 11548307456,
+            "file_dirty": 1126400,
+            "file_writeback": 0,
+            "inactive_file": 2928640,
+            "kernel": 51568640,
+            "pagetables": 24170496,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_memory_before": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 11962556416,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 362086400,
+            "file": 11548307456,
+            "file_dirty": 1126400,
+            "file_writeback": 0,
+            "inactive_file": 2928640,
+            "kernel": 51568640,
+            "pagetables": 24170496,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_required": true,
+        "v29_contract_resource_gate": {
+          "cgroup_current_bytes": 11962556416,
+          "cgroup_limit_bytes": 549755813888,
+          "host_effective_available_bytes": 2100821475328,
+          "host_reserve_bytes": 68719476736,
+          "passed": true,
+          "requested_additional_bytes": 69340657464,
+          "task_memory_max_bytes": 549755813888
+        }
+      },
+      "request_facts": {
+        "additional_payload_bytes": 0,
+        "csr_to_petsc_conversion_workspace_bytes": 11544333940,
+        "future_co_resident_reserve_bytes": 46251989584,
+        "future_factor_vector_and_checker_reserve_bytes": 74653824,
+        "matrix_payload_bytes": 11544333940,
+        "petsc_matrix_payload_upper_bytes": 11544333940,
+        "selected_q": 0,
+        "source_csr_counted_in_current_resource_sample": true,
+        "source_csr_payload_bytes_already_resident": 11544333940,
+        "symbolic_guard_bytes": 46177335760,
+        "symbolic_guard_rule": "max(128 MiB, 4 * source CSR payload)",
+        "workspace_bytes": 11544333940
+      },
+      "stage": "task40_v26_q0_factor_petsc_conversion"
+    },
+    {
+      "admission": {
+        "additional_object_upper_bound_bytes": 46251989584,
+        "current_process_cgroup": {
+          "dedicated_job_cgroup": true,
+          "member_count": 5,
+          "memory_current_bytes": 23542571008,
+          "memory_limit_bytes": 549755813888,
+          "memory_peak_bytes": 35106451456,
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "readable": true,
+          "sample_scope": "current process cgroup; task-specific only when dedicated_job_cgroup is true",
+          "swap_current_bytes": 0
+        },
+        "current_process_tree_rss_bytes": 23470780416,
+        "disk_free_bytes": 2627851399168,
+        "disk_gate_passed": true,
+        "disk_payload_bytes": 0,
+        "disk_reserve_bytes": 1073741824,
+        "dynamic_process_tree_cap_bytes": 549684023296,
+        "explicit_process_tree_cap_bytes": 549755813888,
+        "first_original_stage_label": "task40_v26_q0_factor_symbolic",
+        "host_effective_available_bytes": 2083855187968,
+        "host_gate_passed": true,
+        "last_original_stage_label": "task40_v26_q0_factor_symbolic",
+        "maximum_additional_object_upper_bound_bytes": 46251989584,
+        "maximum_disk_payload_bytes": 0,
+        "maximum_task_cgroup_memory_current_bytes": 23542571008,
+        "memory_envelope": {
+          "cgroup_limits": [
+            {
+              "current_bytes": 23542571008,
+              "limit_bytes": 549755813888,
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service"
+            }
+          ],
+          "effective_available_after_reserves_bytes": 526213242880,
+          "effective_available_bytes": 526213242880,
+          "effective_total_bytes": 549755813888,
+          "host_launch_available_bytes": 2015135711232,
+          "host_mem_available_bytes": 2083855187968,
+          "launch_cap_bytes": 526213242880,
+          "mem_available_bytes": 2083855187968,
+          "mem_total_bytes": 2163100385280,
+          "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+          "reserve_bytes": 68719476736,
+          "reserve_domains_separated": true,
+          "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+          "static_tree_cap_bytes": null,
+          "task_cgroup_available_bytes": 526213242880,
+          "task_cgroup_launch_available_bytes": 526213242880,
+          "task_cgroup_reserve_bytes": 0
+        },
+        "minimum_host_effective_available_bytes": 2083855187968,
+        "observation_count": 1,
+        "passed": true,
+        "physical_memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "process_tree_gate_passed": true,
+        "process_tree_snapshot": {
+          "all_status_readable": true,
+          "identity_complete": true,
+          "member_count": 1,
+          "scope": "current process and descendants sampled at admission"
+        },
+        "request_facts": {
+          "additional_payload_bytes": 0,
+          "already_resident_objects_are_in_current_rss_sample": true,
+          "future_co_resident_reserve_bytes": 46251989584,
+          "matrix_payload_bytes": 0,
+          "petsc_matrix_payload_bytes_already_resident": 11544333940,
+          "selected_q": 0,
+          "source_csr_payload_bytes_already_resident": 11544333940,
+          "symbolic_factorization_guard_bytes": 46177335760,
+          "vector_and_checker_reserve_bytes": 74653824,
+          "workspace_bytes": 0
+        },
+        "sample_scope": "instant host sample plus current-process cgroup sample and process historical max RSS; cgroup values are task-specific only for a dedicated job cgroup and are not a simultaneous process-tree peak",
+        "stage": "task40_v26_q0_factor_symbolic",
+        "swap_gate_status": "PASS_ZERO_TASK_CGROUP_SWAP",
+        "task_cgroup_current_plus_additional_bytes": 69794560592,
+        "task_cgroup_gate_passed": true,
+        "task_cgroup_limit_minus_evidence_reserve_bytes": 549755813888,
+        "task_cgroup_memory_after": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 23542571008,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 11918753792,
+            "file": 11548811264,
+            "file_dirty": 421888,
+            "file_writeback": 0,
+            "inactive_file": 3420160,
+            "kernel": 74203136,
+            "pagetables": 46788608,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_memory_before": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 23542571008,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 11918753792,
+            "file": 11548811264,
+            "file_dirty": 421888,
+            "file_writeback": 0,
+            "inactive_file": 3420160,
+            "kernel": 74207232,
+            "pagetables": 46788608,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_required": true,
+        "v29_contract_resource_gate": {
+          "cgroup_current_bytes": 23542571008,
+          "cgroup_limit_bytes": 549755813888,
+          "host_effective_available_bytes": 2083855187968,
+          "host_reserve_bytes": 68719476736,
+          "passed": true,
+          "requested_additional_bytes": 46251989584,
+          "task_memory_max_bytes": 549755813888
+        }
+      },
+      "request_facts": {
+        "additional_payload_bytes": 0,
+        "already_resident_objects_are_in_current_rss_sample": true,
+        "future_co_resident_reserve_bytes": 46251989584,
+        "matrix_payload_bytes": 0,
+        "petsc_matrix_payload_bytes_already_resident": 11544333940,
+        "selected_q": 0,
+        "source_csr_payload_bytes_already_resident": 11544333940,
+        "symbolic_factorization_guard_bytes": 46177335760,
+        "vector_and_checker_reserve_bytes": 74653824,
+        "workspace_bytes": 0
+      },
+      "stage": "task40_v26_q0_factor_symbolic"
+    },
+    {
+      "admission": {
+        "additional_object_upper_bound_bytes": 64033653824,
+        "current_process_cgroup": {
+          "dedicated_job_cgroup": true,
+          "member_count": 5,
+          "memory_current_bytes": 28199735296,
+          "memory_limit_bytes": 549755813888,
+          "memory_peak_bytes": 35106451456,
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "readable": true,
+          "sample_scope": "current process cgroup; task-specific only when dedicated_job_cgroup is true",
+          "swap_current_bytes": 0
+        },
+        "current_process_tree_rss_bytes": 28139835392,
+        "disk_free_bytes": 2627215237120,
+        "disk_gate_passed": true,
+        "disk_payload_bytes": 0,
+        "disk_reserve_bytes": 1073741824,
+        "dynamic_process_tree_cap_bytes": 549695913984,
+        "explicit_process_tree_cap_bytes": 549755813888,
+        "first_original_stage_label": "task40_v26_q0_factor_numeric",
+        "host_effective_available_bytes": 2078781599744,
+        "host_gate_passed": true,
+        "last_original_stage_label": "task40_v26_q0_factor_numeric",
+        "maximum_additional_object_upper_bound_bytes": 64033653824,
+        "maximum_disk_payload_bytes": 0,
+        "maximum_task_cgroup_memory_current_bytes": 28199735296,
+        "memory_envelope": {
+          "cgroup_limits": [
+            {
+              "current_bytes": 28199735296,
+              "limit_bytes": 549755813888,
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service"
+            }
+          ],
+          "effective_available_after_reserves_bytes": 521556078592,
+          "effective_available_bytes": 521556078592,
+          "effective_total_bytes": 549755813888,
+          "host_launch_available_bytes": 2010062123008,
+          "host_mem_available_bytes": 2078781599744,
+          "launch_cap_bytes": 521556078592,
+          "mem_available_bytes": 2078781599744,
+          "mem_total_bytes": 2163100385280,
+          "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+          "reserve_bytes": 68719476736,
+          "reserve_domains_separated": true,
+          "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+          "static_tree_cap_bytes": null,
+          "task_cgroup_available_bytes": 521556078592,
+          "task_cgroup_launch_available_bytes": 521556078592,
+          "task_cgroup_reserve_bytes": 0
+        },
+        "minimum_host_effective_available_bytes": 2078781599744,
+        "observation_count": 1,
+        "passed": true,
+        "physical_memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "process_tree_gate_passed": true,
+        "process_tree_snapshot": {
+          "all_status_readable": true,
+          "identity_complete": true,
+          "member_count": 1,
+          "scope": "current process and descendants sampled at admission"
+        },
+        "request_facts": {
+          "additional_payload_bytes": 0,
+          "future_co_resident_reserve_bytes": 63959000000,
+          "matrix_payload_bytes": 0,
+          "numeric_factor_reserve_bytes_from_INFOG_16_17": 63959000000,
+          "petsc_matrix_payload_bytes_already_resident": 11544333940,
+          "reserve_not_double_counted_with_current_resident_objects": true,
+          "selected_q": 0,
+          "source_csr_payload_bytes_already_resident": 11544333940,
+          "symbolic_factor_memory_in_current_rss_sample": true,
+          "vector_and_checker_reserve_bytes": 74653824,
+          "workspace_bytes": 74653824
+        },
+        "sample_scope": "instant host sample plus current-process cgroup sample and process historical max RSS; cgroup values are task-specific only for a dedicated job cgroup and are not a simultaneous process-tree peak",
+        "stage": "task40_v26_q0_factor_numeric",
+        "swap_gate_status": "PASS_ZERO_TASK_CGROUP_SWAP",
+        "task_cgroup_current_plus_additional_bytes": 92233389120,
+        "task_cgroup_gate_passed": true,
+        "task_cgroup_limit_minus_evidence_reserve_bytes": 549755813888,
+        "task_cgroup_memory_after": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 28199735296,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 16565248000,
+            "file": 11549556736,
+            "file_dirty": 208896,
+            "file_writeback": 0,
+            "inactive_file": 4173824,
+            "kernel": 83443712,
+            "pagetables": 55947264,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_memory_before": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 28199735296,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 16565231616,
+            "file": 11549556736,
+            "file_dirty": 208896,
+            "file_writeback": 0,
+            "inactive_file": 4173824,
+            "kernel": 83443712,
+            "pagetables": 55947264,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_required": true,
+        "v29_contract_resource_gate": {
+          "cgroup_current_bytes": 28199735296,
+          "cgroup_limit_bytes": 549755813888,
+          "host_effective_available_bytes": 2078781599744,
+          "host_reserve_bytes": 68719476736,
+          "passed": true,
+          "requested_additional_bytes": 64033653824,
+          "task_memory_max_bytes": 549755813888
+        }
+      },
+      "request_facts": {
+        "additional_payload_bytes": 0,
+        "future_co_resident_reserve_bytes": 63959000000,
+        "matrix_payload_bytes": 0,
+        "numeric_factor_reserve_bytes_from_INFOG_16_17": 63959000000,
+        "petsc_matrix_payload_bytes_already_resident": 11544333940,
+        "reserve_not_double_counted_with_current_resident_objects": true,
+        "selected_q": 0,
+        "source_csr_payload_bytes_already_resident": 11544333940,
+        "symbolic_factor_memory_in_current_rss_sample": true,
+        "vector_and_checker_reserve_bytes": 74653824,
+        "workspace_bytes": 74653824
+      },
+      "stage": "task40_v26_q0_factor_numeric"
+    },
+    {
+      "admission": {
+        "additional_object_upper_bound_bytes": 0,
+        "current_process_cgroup": {
+          "dedicated_job_cgroup": true,
+          "member_count": 5,
+          "memory_current_bytes": 73340047360,
+          "memory_limit_bytes": 549755813888,
+          "memory_peak_bytes": 84891103232,
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "readable": true,
+          "sample_scope": "current process cgroup; task-specific only when dedicated_job_cgroup is true",
+          "swap_current_bytes": 0
+        },
+        "current_process_tree_rss_bytes": 73172611072,
+        "disk_free_bytes": 2624227131392,
+        "disk_gate_passed": true,
+        "disk_payload_bytes": 0,
+        "disk_reserve_bytes": 1073741824,
+        "dynamic_process_tree_cap_bytes": 549588377600,
+        "explicit_process_tree_cap_bytes": 549755813888,
+        "first_original_stage_label": "task40_v26_q0_factor_before_destroy",
+        "host_effective_available_bytes": 2021971345408,
+        "host_gate_passed": true,
+        "last_original_stage_label": "task40_v26_q0_factor_before_destroy",
+        "maximum_additional_object_upper_bound_bytes": 0,
+        "maximum_disk_payload_bytes": 0,
+        "maximum_task_cgroup_memory_current_bytes": 73340047360,
+        "memory_envelope": {
+          "cgroup_limits": [
+            {
+              "current_bytes": 73340047360,
+              "limit_bytes": 549755813888,
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service"
+            }
+          ],
+          "effective_available_after_reserves_bytes": 476415766528,
+          "effective_available_bytes": 476415766528,
+          "effective_total_bytes": 549755813888,
+          "host_launch_available_bytes": 1953251868672,
+          "host_mem_available_bytes": 2021971345408,
+          "launch_cap_bytes": 476415766528,
+          "mem_available_bytes": 2021971345408,
+          "mem_total_bytes": 2163100385280,
+          "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+          "reserve_bytes": 68719476736,
+          "reserve_domains_separated": true,
+          "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+          "static_tree_cap_bytes": null,
+          "task_cgroup_available_bytes": 476415766528,
+          "task_cgroup_launch_available_bytes": 476415766528,
+          "task_cgroup_reserve_bytes": 0
+        },
+        "minimum_host_effective_available_bytes": 2021971345408,
+        "observation_count": 1,
+        "passed": true,
+        "physical_memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "process_tree_gate_passed": true,
+        "process_tree_snapshot": {
+          "all_status_readable": true,
+          "identity_complete": true,
+          "member_count": 1,
+          "scope": "current process and descendants sampled at admission"
+        },
+        "request_facts": {
+          "additional_payload_bytes": 0,
+          "future_co_resident_reserve_bytes": 0,
+          "matrix_payload_bytes": 0,
+          "native_object_counts": {
+            "factors_current": 1,
+            "matrices_current": 1,
+            "vectors_current": 0
+          },
+          "resource_sample_only": true,
+          "selected_q": 0,
+          "workspace_bytes": 0
+        },
+        "sample_scope": "instant host sample plus current-process cgroup sample and process historical max RSS; cgroup values are task-specific only for a dedicated job cgroup and are not a simultaneous process-tree peak",
+        "stage": "task40_v26_q0_factor_before_destroy",
+        "swap_gate_status": "PASS_ZERO_TASK_CGROUP_SWAP",
+        "task_cgroup_current_plus_additional_bytes": 73340047360,
+        "task_cgroup_gate_passed": true,
+        "task_cgroup_limit_minus_evidence_reserve_bytes": 549755813888,
+        "task_cgroup_memory_after": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 73340047360,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 61594988544,
+            "file": 11572224000,
+            "file_dirty": 446464,
+            "file_writeback": 0,
+            "inactive_file": 26845184,
+            "kernel": 172326912,
+            "pagetables": 144101376,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_memory_before": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 73340047360,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 61594988544,
+            "file": 11572224000,
+            "file_dirty": 446464,
+            "file_writeback": 0,
+            "inactive_file": 26845184,
+            "kernel": 172326912,
+            "pagetables": 144101376,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_required": true,
+        "v29_contract_resource_gate": {
+          "cgroup_current_bytes": 73340047360,
+          "cgroup_limit_bytes": 549755813888,
+          "host_effective_available_bytes": 2021971345408,
+          "host_reserve_bytes": 68719476736,
+          "passed": true,
+          "requested_additional_bytes": 0,
+          "task_memory_max_bytes": 549755813888
+        }
+      },
+      "request_facts": {
+        "additional_payload_bytes": 0,
+        "future_co_resident_reserve_bytes": 0,
+        "matrix_payload_bytes": 0,
+        "native_object_counts": {
+          "factors_current": 1,
+          "matrices_current": 1,
+          "vectors_current": 0
+        },
+        "resource_sample_only": true,
+        "selected_q": 0,
+        "workspace_bytes": 0
+      },
+      "stage": "task40_v26_q0_factor_before_destroy"
+    },
+    {
+      "admission": {
+        "additional_object_upper_bound_bytes": 0,
+        "current_process_cgroup": {
+          "dedicated_job_cgroup": true,
+          "member_count": 5,
+          "memory_current_bytes": 12075479040,
+          "memory_limit_bytes": 549755813888,
+          "memory_peak_bytes": 84891103232,
+          "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "readable": true,
+          "sample_scope": "current process cgroup; task-specific only when dedicated_job_cgroup is true",
+          "swap_current_bytes": 0
+        },
+        "current_process_tree_rss_bytes": 12027588608,
+        "disk_free_bytes": 2624224268288,
+        "disk_gate_passed": true,
+        "disk_payload_bytes": 0,
+        "disk_reserve_bytes": 1073741824,
+        "dynamic_process_tree_cap_bytes": 549707923456,
+        "explicit_process_tree_cap_bytes": 549755813888,
+        "first_original_stage_label": "task40_v26_q0_factor_after_destroy",
+        "host_effective_available_bytes": 2083197259776,
+        "host_gate_passed": true,
+        "last_original_stage_label": "task40_v26_q0_factor_after_destroy",
+        "maximum_additional_object_upper_bound_bytes": 0,
+        "maximum_disk_payload_bytes": 0,
+        "maximum_task_cgroup_memory_current_bytes": 12075479040,
+        "memory_envelope": {
+          "cgroup_limits": [
+            {
+              "current_bytes": 12075479040,
+              "limit_bytes": 549755813888,
+              "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service"
+            }
+          ],
+          "effective_available_after_reserves_bytes": 537680334848,
+          "effective_available_bytes": 537680334848,
+          "effective_total_bytes": 549755813888,
+          "host_launch_available_bytes": 2014477783040,
+          "host_mem_available_bytes": 2083197259776,
+          "launch_cap_bytes": 537680334848,
+          "mem_available_bytes": 2083197259776,
+          "mem_total_bytes": 2163100385280,
+          "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+          "reserve_bytes": 68719476736,
+          "reserve_domains_separated": true,
+          "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+          "static_tree_cap_bytes": null,
+          "task_cgroup_available_bytes": 537680334848,
+          "task_cgroup_launch_available_bytes": 537680334848,
+          "task_cgroup_reserve_bytes": 0
+        },
+        "minimum_host_effective_available_bytes": 2083197259776,
+        "observation_count": 1,
+        "passed": true,
+        "physical_memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+        "process_tree_gate_passed": true,
+        "process_tree_snapshot": {
+          "all_status_readable": true,
+          "identity_complete": true,
+          "member_count": 1,
+          "scope": "current process and descendants sampled at admission"
+        },
+        "request_facts": {
+          "additional_payload_bytes": 0,
+          "future_co_resident_reserve_bytes": 0,
+          "matrix_payload_bytes": 0,
+          "native_object_counts": {
+            "factors_current": 0,
+            "matrices_current": 0,
+            "vectors_current": 0
+          },
+          "resource_sample_only": true,
+          "selected_q": 0,
+          "workspace_bytes": 0
+        },
+        "sample_scope": "instant host sample plus current-process cgroup sample and process historical max RSS; cgroup values are task-specific only for a dedicated job cgroup and are not a simultaneous process-tree peak",
+        "stage": "task40_v26_q0_factor_after_destroy",
+        "swap_gate_status": "PASS_ZERO_TASK_CGROUP_SWAP",
+        "task_cgroup_current_plus_additional_bytes": 12075479040,
+        "task_cgroup_gate_passed": true,
+        "task_cgroup_limit_minus_evidence_reserve_bytes": 549755813888,
+        "task_cgroup_memory_after": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 12075479040,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 449441792,
+            "file": 11572350976,
+            "file_dirty": 561152,
+            "file_writeback": 0,
+            "inactive_file": 26968064,
+            "kernel": 52662272,
+            "pagetables": 24432640,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_memory_before": {
+          "cgroup_path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261012T071907-236011.service",
+          "memory_current_bytes": 12075479040,
+          "memory_stat_bytes": {
+            "active_file": 11544293376,
+            "anon": 449441792,
+            "file": 11572350976,
+            "file_dirty": 561152,
+            "file_writeback": 0,
+            "inactive_file": 26968064,
+            "kernel": 52662272,
+            "pagetables": 24432640,
+            "shmem": 1077248
+          },
+          "status": "available"
+        },
+        "task_cgroup_required": true,
+        "v29_contract_resource_gate": {
+          "cgroup_current_bytes": 12075479040,
+          "cgroup_limit_bytes": 549755813888,
+          "host_effective_available_bytes": 2083197259776,
+          "host_reserve_bytes": 68719476736,
+          "passed": true,
+          "requested_additional_bytes": 0,
+          "task_memory_max_bytes": 549755813888
+        }
+      },
+      "request_facts": {
+        "additional_payload_bytes": 0,
+        "future_co_resident_reserve_bytes": 0,
+        "matrix_payload_bytes": 0,
+        "native_object_counts": {
+          "factors_current": 0,
+          "matrices_current": 0,
+          "vectors_current": 0
+        },
+        "resource_sample_only": true,
+        "selected_q": 0,
+        "workspace_bytes": 0
+      },
+      "stage": "task40_v26_q0_factor_after_destroy"
+    }
+  ],
+  "schema": "task40extra.review_v26_selected_q0_factor_lifecycle.v1",
+  "selected_q": 0,
+  "separate_nonzero_q0_rhs_solve": {
+    "input_nonzero": true,
+    "label": "separate_nonzero_q0_rhs_solve",
+    "passed": true,
+    "raw_artifact": {
+      "array_names": [
+        "input_x",
+        "residual",
+        "rhs",
+        "solution"
+      ],
+      "array_sha256": {
+        "input_x": "6b512f3be1373760019b9034ff2d99936d1e0825322c9fe35a12bb204d0aa713",
+        "residual": "a3f46d0238c77d66eaa6fd510e950115997e3b211e1620cb04081ef3a0fcd886",
+        "rhs": "315b26ea75c026949a40e627319703f1611c34388ae32431e3a26de4d6f96848",
+        "solution": "d2de3a9b011f8a90d5b9c7931f9a43b62594e00db9d58f0a2eee9646047beb26"
+      },
+      "bytes": 49770218,
+      "dtype": "<c16",
+      "native_vector_count_before_serialization": 0,
+      "native_vectors_destroyed_before_serialization": true,
+      "path": "v26_q0_factor_separate_nonzero_q0_rhs_solve.npz",
+      "sha256": "30d747721243858c030a5a77f5bdff30cef2e4ffae0c7e13d03ac28fed46f191",
+      "size": 777644
+    },
+    "relative_full_true_residual": 1.6069609784650353e-14,
+    "residual": "saved in hash-bound raw vector checkpoint",
+    "residual_limit": 1e-10,
+    "rhs_nonzero": true,
+    "seed": 260101,
+    "solution": "saved in hash-bound raw vector checkpoint",
+    "timing_v29": {
+      "full_true_residual_seconds": 1.7380575339775532,
+      "native_call": "MatFactor.solve_repeated",
+      "native_solve_seconds": 12.919099297141656,
+      "parent_seconds": 17.43339802394621,
+      "petsc_rhs_vector_seconds": 0.014936836902052164,
+      "raw_persist_and_readback_seconds": 0.3443717521149665,
+      "rhs_construction_seconds": 1.747465583961457
+    }
+  },
+  "shape": [
+    777644,
+    777644
+  ],
+  "simultaneous_native_objects_current": {
+    "factors_current": 0,
+    "matrices_current": 0,
+    "vectors_current": 0
+  },
+  "solve_accounting": {
+    "fresh_factor_probe": {
+      "mat_solve_completed": 1,
+      "mat_solve_failed": 0,
+      "mat_solve_invoked": 1
+    },
+    "separate_nonzero_q0_rhs_solve": {
+      "mat_solve_completed": 1,
+      "mat_solve_failed": 0,
+      "mat_solve_invoked": 1
+    }
+  },
+  "source_csr_payload_bytes": 11544333940,
+  "source_csr_sha256": "806b9bdf4cfcf137ed2bf5407edebc38e64f43ec8f0aa1bd151231e28a68f005",
+  "status": "PASS_Q0_FACTOR_PROBE_AND_RHS_SOLVE",
+  "symbolic_factor_reserve_bytes": 63959000000,
+  "symbolic_mumps_evidence": {
+    "INFOG_19_allocated_bytes_upper": null,
+    "INFOG_22_used_bytes_upper": null,
+    "INFOG_9_corrected_entries_if_negative": null,
+    "INFOG_9_correction_source": null,
+    "memory_observation": null,
+    "process_tree_rss_bytes": null,
+    "raw_infog": {
+      "1": 0,
+      "10": 0,
+      "11": 0,
+      "12": 0,
+      "13": 0,
+      "14": 0,
+      "15": 0,
+      "16": 63958,
+      "17": 63958,
+      "18": 0,
+      "19": 0,
+      "2": 0,
+      "20": -2599,
+      "22": 0,
+      "29": 0,
+      "3": -2599,
+      "4": 11237044,
+      "5": 7322,
+      "6": 6405,
+      "7": 5,
+      "8": 100,
+      "9": 0
+    },
+    "raw_rinfog": {
+      "1": 8767040926550.0,
+      "10": 0.0,
+      "11": 0.0,
+      "12": 0.0,
+      "13": 0.0,
+      "14": 0.0,
+      "15": 41592.673024,
+      "16": 0.0,
+      "17": 21.954218,
+      "18": 21.953653,
+      "19": 0.0,
+      "2": 0.0,
+      "20": 0.0,
+      "3": 0.0,
+      "4": 0.0,
+      "5": 0.0,
+      "6": 0.0,
+      "7": 0.0,
+      "8": 0.0,
+      "9": 0.0
+    }
+  },
+  "timings_v29": {
+    "F_q": {
+      "boundary": "lifecycle entry after loaded matrix through first fresh MatSolve, full explicit true residual, and hash-bound raw readback; ends before second RHS and cleanup",
+      "fresh_probe_parent_seconds": 22.0920130640734,
+      "includes_eviction": false,
+      "includes_initial_loader": false,
+      "includes_second_rhs": false,
+      "parent_seconds": 711.8111886410043,
+      "status": "FRESH_PROBE_QUALIFIED"
+    },
+    "S_q": {
+      "boundary": "second distinct RHS construction through MatSolveRepeated, full explicit true residual, and hash-bound raw persistence/readback",
+      "full_true_residual_seconds": 1.7380575339775532,
+      "includes_eviction": false,
+      "includes_factorization": false,
+      "native_MatSolveRepeated_seconds": 12.919099297141656,
+      "parent_seconds": 17.43339802394621,
+      "petsc_rhs_vector_seconds": 0.014936836902052164,
+      "raw_persist_and_readback_seconds": 0.3443717521149665,
+      "rhs_construction_seconds": 1.747465583961457,
+      "status": "REPEATED_RHS_SOLVE_RECORDED"
+    },
+    "cleanup": {
+      "native_destroy_seconds": 3.352983793010935,
+      "parent_seconds": 3.8633059221319854
+    },
+    "clock": "time.perf_counter",
+    "csr_to_petsc_conversion": {
+      "native_calls": [
+        "Mat.createAIJ",
+        "Mat.assemble"
+      ],
+      "native_seconds": 10.592528332024813,
+      "parent_seconds": 14.997011061990634
+    },
+    "eviction": {
+      "excluded_from_F_q": true,
+      "excluded_from_S_q": true,
+      "native_destroy_seconds": 3.352983793010935,
+      "parent_seconds": 3.8633059221319854
+    },
+    "fresh_factor_probe": {
+      "full_true_residual_seconds": 1.7300311280414462,
+      "native_call": "MatFactor.solve",
+      "native_solve_seconds": 17.5441528968513,
+      "parent_seconds": 22.0920130640734,
+      "petsc_rhs_vector_seconds": 0.014996312092989683,
+      "raw_persist_and_readback_seconds": 0.34934918908402324,
+      "rhs_construction_seconds": 1.744447760982439
+    },
+    "numeric_factorization": {
+      "native_call": "MatFactor.numeric",
+      "native_seconds": 625.776309879031,
+      "parent_seconds": 625.8626218819991
+    },
+    "separate_repeated_rhs_solve": {
+      "full_true_residual_seconds": 1.7380575339775532,
+      "native_call": "MatFactor.solve_repeated",
+      "native_solve_seconds": 12.919099297141656,
+      "parent_seconds": 17.43339802394621,
+      "petsc_rhs_vector_seconds": 0.014936836902052164,
+      "raw_persist_and_readback_seconds": 0.3443717521149665,
+      "rhs_construction_seconds": 1.747465583961457
+    },
+    "symbolic_factorization": {
+      "native_call": "MatFactor.symbolic",
+      "native_seconds": 19.370444834930822,
+      "parent_seconds": 19.504676178097725
+    },
+    "total_parent_seconds": 758.4101912819315
+  }
+}

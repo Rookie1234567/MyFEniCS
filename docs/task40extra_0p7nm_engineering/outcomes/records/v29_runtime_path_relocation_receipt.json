@@ -1,0 +1,16 @@
+{
+  "approved_root": "/home/fenics/Projects/laptop_share",
+  "backup_file": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/runtime_relocation_original_petsc_v29.cfg",
+  "created_utc": "2026-10-12T06:41:38.986604+00:00",
+  "file": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/petsc4py/lib/petsc.cfg",
+  "new_value": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+  "old_value": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+  "original_sha256": "63f16a545d3b78cbecf3f34e9b2bd4f751bb5c18d42488df65bbc07dfe1dda34",
+  "other_runtime_or_source_files_modified": false,
+  "preserves_PETSC_ARCH": true,
+  "reason": "The copied private runtime petsc4py config embedded the laptop runtime prefix. DOLFINx resolves libpetsc.so from petsc4py.get_config()[PETSC_DIR]; only the target copy was relocated so its existing PETSc 3.25.6 library resolves in the approved target root.",
+  "relocated_sha256": "fafe08af3f3164573182161e16a316aaefb2a91d3e2a63bbd12dba27ec89fa9f",
+  "schema": "task40-v29-runtime-relocation.v1",
+  "source_runtime_config_sha256": "63f16a545d3b78cbecf3f34e9b2bd4f751bb5c18d42488df65bbc07dfe1dda34",
+  "status": "TARGET_PRIVATE_RUNTIME_PATH_RELOCATION_ONLY"
+}

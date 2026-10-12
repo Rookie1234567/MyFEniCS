@@ -1,0 +1,532 @@
+{
+  "abi_qualification": {
+    "activation_check": {
+      "abi_manifest_sha256": "1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d",
+      "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/task40-v29-activation-20261012t064800.service",
+      "qualified_activation": "1",
+      "runtime_profile": "native_linux",
+      "status": "PASS",
+      "systemd_summary": "exit-code/status=0; service runtime 396ms; CPU 380ms; reported memory peak 508.0K; swap peak 0B.",
+      "unit": "task40-v29-activation-20261012t064800.service"
+    },
+    "first_attempt": {
+      "failure": "Copied petsc4py/lib/petsc.cfg referenced the original laptop PETSC_DIR, so DOLFINx could not find the PETSc shared library.",
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/abi_receipt_v29.json",
+      "receipt_sha256": "031e30b245066da6b9329b068549da14c26ce8c5116a249a9f8638224a8d97e7",
+      "status": "FAILED_IMPORT_SCALAR_MPI_API"
+    },
+    "fresh_receipt": {
+      "C1": "NOT_RUN",
+      "FE_action": "NOT_RUN",
+      "MPI": {
+        "extension_file": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/mpi4py/MPI.cpython-312-x86_64-linux-gnu.so",
+        "rank": 0,
+        "size": 1,
+        "version_summary": "MPICH 5.0.1"
+      },
+      "PDE_calls": 0,
+      "PETSc": {
+        "int_dtype": "int32",
+        "mumps_enabled": true,
+        "public_Mat_methods": {
+          "getMumpsIcntl": true,
+          "getMumpsInfo": true,
+          "getMumpsInfog": true,
+          "setMumpsIcntl": true,
+          "solve": true
+        },
+        "public_PC_methods": {
+          "getFactorMatrix": true,
+          "setFactorSetUpSolverType": true,
+          "setFactorSolverType": true,
+          "setOperators": true,
+          "setType": true,
+          "setUp": true
+        },
+        "scalar_dtype": "complex128",
+        "version": [
+          3,
+          25,
+          6
+        ],
+        "version_info": {
+          "authorinfo": [
+            "The PETSc Team",
+            "petsc-maint@mcs.anl.gov",
+            "https://petsc.org/"
+          ],
+          "date": "Sep 28, 2026",
+          "major": 3,
+          "minor": 25,
+          "release": true,
+          "subminor": 6
+        }
+      },
+      "basix_version": "0.10.0",
+      "dolfinx_mpc_version": "0.10.5",
+      "dolfinx_version": "0.10.0",
+      "executable": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+      "external_numerical_library_paths": [],
+      "factor_calls": 0,
+      "finished_utc": "2026-10-12T06:41:48Z",
+      "matrix_creation_calls": 0,
+      "old_ABI_inherited": false,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/abi_receipt_v29_attempt2.json",
+      "prefix": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+      "runtime_host": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "execution_platform": "native_linux",
+        "platform_release": "7.0.0-31-generic",
+        "platform_system": "Linux",
+        "runtime_profile": "native_linux",
+        "wsl2_detected": false
+      },
+      "runtime_profile": "native_linux",
+      "sha256": "1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d",
+      "started_utc": "2026-10-12T06:41:48Z",
+      "status": "IMPORT_SCALAR_MPI_API_PASS_NO_FE_ACTION",
+      "threads": {
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      }
+    },
+    "runtime_config_relocation_attempt": {
+      "file": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/petsc4py/lib/petsc.cfg",
+      "original_sha256": "63f16a545d3b78cbecf3f34e9b2bd4f751bb5c18d42488df65bbc07dfe1dda34",
+      "receipt_sha256": "dd80f4f24c95fb5f3ef3e33c3cee27d9c14df221e099377587c3191e356b01ed",
+      "relocated_sha256": "fafe08af3f3164573182161e16a316aaefb2a91d3e2a63bbd12dba27ec89fa9f",
+      "status": "TARGET_PRIVATE_RUNTIME_PATH_RELOCATION_ONLY"
+    },
+    "service_cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/task40-v29-abi-20261012t064500.service",
+    "status": "PASS_IMPORT_SCALAR_MPI_API_ONLY",
+    "systemd_summary": "exit-code/status=0; service runtime 626ms; CPU 609ms; reported memory peak 508.0K; swap peak 0B. The memory figure is retained verbatim as systemd output, not used as factor or host peak.",
+    "systemd_unit": "task40-v29-abi-20261012t064500.service"
+  },
+  "approved_root": "/home/fenics/Projects/laptop_share",
+  "bundle_sha256": "f9b82eea55d0299d93a688f2e4fa517aca4b58d643e9472888ad819ef1373bf6",
+  "expected_file_count": 39,
+  "factor_worker_started": false,
+  "finished_utc": "2026-10-12T06:35:14.372339+00:00",
+  "git_branch": "task40extra_0p7nm_engineering",
+  "git_head": "5bb1040ac0e18041cf4f0d055e02ab7070d18453",
+  "git_status_porcelain": "",
+  "implementation_source_sha": "45628068263181b83739ff80f4f34ffaa472e943",
+  "manifest_sha256": "a45a9e11e63579353c8e4ed009f38fcd4c9abac7a68ea63526e040c5870d5252",
+  "manifest_size_bytes": 8825,
+  "rows": [
+    {
+      "actual_sha256": "92fb011dc9bc551728079d10f8cd26e8810668b0ab5df78189c3466e2cbd4613",
+      "actual_size": 11230840064,
+      "expected_sha256": "92fb011dc9bc551728079d10f8cd26e8810668b0ab5df78189c3466e2cbd4613",
+      "expected_size": 11230840064,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_selected_q0_surface_functionals.bin",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "f76b1dad7b863c0e4fc32ca7cdbd793436a22cc2386a59b79e6297eac94e390b",
+      "actual_size": 226645122,
+      "expected_sha256": "f76b1dad7b863c0e4fc32ca7cdbd793436a22cc2386a59b79e6297eac94e390b",
+      "expected_size": 226645122,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_selected_q0_volume_classes.bin",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "f79de1ec28568f9a1d05f4bd6743a497d9dcc729654cf0a04e56d92d912c5a21",
+      "actual_size": 127040,
+      "expected_sha256": "f79de1ec28568f9a1d05f4bd6743a497d9dcc729654cf0a04e56d92d912c5a21",
+      "expected_size": 127040,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_selected_q0_local_H_p.npy",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "f473037848f72d886ddb0a421d6240fe77788f799740168c234c9340ba1a963d",
+      "actual_size": 21009152,
+      "expected_sha256": "f473037848f72d886ddb0a421d6240fe77788f799740168c234c9340ba1a963d",
+      "expected_size": 21009152,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_selected_q0_original_to_active_int32.npy",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "cad0ea1d34c26cea53b07965d80b952733944a8003ee9aa09cf922e08bc71e20",
+      "actual_size": 348496973,
+      "expected_sha256": "cad0ea1d34c26cea53b07965d80b952733944a8003ee9aa09cf922e08bc71e20",
+      "expected_size": 348496973,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_selected_q0_map.npz",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "871e1a86715588fb6157fe5bbc96bf545d207629e4ad480eafd7ee4cd383a2f4",
+      "actual_size": 348492573,
+      "expected_sha256": "871e1a86715588fb6157fe5bbc96bf545d207629e4ad480eafd7ee4cd383a2f4",
+      "expected_size": 348492573,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_selected_q4_map.npz",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "c7f687e6054e0506d03d4443bfaede58bfa46d76476b5270844d3d792cb3f026",
+      "actual_size": 3962,
+      "expected_sha256": "c7f687e6054e0506d03d4443bfaede58bfa46d76476b5270844d3d792cb3f026",
+      "expected_size": 3962,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_q0_failure_artifact_index.json",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "f1cceec04cdda5ed6369ca73b521ec4409019c9e65ba0ad9952492f0953aa0ba",
+      "actual_size": 7943,
+      "expected_sha256": "f1cceec04cdda5ed6369ca73b521ec4409019c9e65ba0ad9952492f0953aa0ba",
+      "expected_size": 7943,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/run_manifest.json",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "d7cdc2ac9045fb88da7fb7325e0c32ed8e6600215735dd64c38b8ec3931e9c34",
+      "actual_size": 15488,
+      "expected_sha256": "d7cdc2ac9045fb88da7fb7325e0c32ed8e6600215735dd64c38b8ec3931e9c34",
+      "expected_size": 15488,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/resolved_config.json",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "56fdd67f10a2696735ef555416983cdf549ddcabf7dc5532aa7877d452b85cb7",
+      "actual_size": 65,
+      "expected_sha256": "56fdd67f10a2696735ef555416983cdf549ddcabf7dc5532aa7877d452b85cb7",
+      "expected_size": 65,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/input_sha256.txt",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "865a74fa4a23e01a9e77842228f6970ee5bc8a598a5cfede8193589961054f7e",
+      "actual_size": 65,
+      "expected_sha256": "865a74fa4a23e01a9e77842228f6970ee5bc8a598a5cfede8193589961054f7e",
+      "expected_size": 65,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/physical_model_sha256.txt",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "84ecc57191b19977186b1a0b5748949a5eda50d08ef8644457a81a318f697057",
+      "actual_size": 41,
+      "expected_sha256": "84ecc57191b19977186b1a0b5748949a5eda50d08ef8644457a81a318f697057",
+      "expected_size": 41,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/source_sha.txt",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "8bcc164b2063f1485d4a0cc977c65457b65c2b6106fd6a3ce145142fc9c0264d",
+      "actual_size": 11489,
+      "expected_sha256": "8bcc164b2063f1485d4a0cc977c65457b65c2b6106fd6a3ce145142fc9c0264d",
+      "expected_size": 11489,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/run_summary.json",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "7c7fcc172968bb291d6834bac6c4f2d3b71b3f1a1efb836129f5dfb872082407",
+      "actual_size": 9264,
+      "expected_sha256": "7c7fcc172968bb291d6834bac6c4f2d3b71b3f1a1efb836129f5dfb872082407",
+      "expected_size": 9264,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/input_original.dat",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "7c7fcc172968bb291d6834bac6c4f2d3b71b3f1a1efb836129f5dfb872082407",
+      "actual_size": 9264,
+      "expected_sha256": "7c7fcc172968bb291d6834bac6c4f2d3b71b3f1a1efb836129f5dfb872082407",
+      "expected_size": 9264,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v25_wsl/stage_inputs/selected_reference_q_build_only/target_original_ny8_operator_probe_v22.dat",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "6e16ab0f0bae09e472d2806a71bdf28325f3ce768b089fe4a6521099e68b100f",
+      "actual_size": 16826,
+      "expected_sha256": "6e16ab0f0bae09e472d2806a71bdf28325f3ce768b089fe4a6521099e68b100f",
+      "expected_size": 16826,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/saved_replay/v26_saved_q_replay_manifest.json",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "e3760ec0f6a10b25178b655eea7edb49aad3943d06d54c4dc0ebe690fcef82ea",
+      "actual_size": 37324160,
+      "expected_sha256": "e3760ec0f6a10b25178b655eea7edb49aad3943d06d54c4dc0ebe690fcef82ea",
+      "expected_size": 37324160,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/saved_replay/v26_saved_q_replay_inputs.npz",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "fd87f943bc088b6cebec5db63ea1bb50e1f1bbd5df296b2415082604798217d7",
+      "actual_size": 124408014,
+      "expected_sha256": "fd87f943bc088b6cebec5db63ea1bb50e1f1bbd5df296b2415082604798217d7",
+      "expected_size": 124408014,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/saved_replay/v26_saved_q_replay_q0_case_1.npz",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "12ce965210d699b8a0456a52e2bbbd548f2dd7b3aac49243c66188ebe52f19a3",
+      "actual_size": 124408014,
+      "expected_sha256": "12ce965210d699b8a0456a52e2bbbd548f2dd7b3aac49243c66188ebe52f19a3",
+      "expected_size": 124408014,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/saved_replay/v26_saved_q_replay_q0_case_2.npz",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "1713631e533e883d10ab7c33a693b91febefcd823db16e38ecfac346048d169f",
+      "actual_size": 124408014,
+      "expected_sha256": "1713631e533e883d10ab7c33a693b91febefcd823db16e38ecfac346048d169f",
+      "expected_size": 124408014,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/saved_replay/v26_saved_q_replay_q4_pair.npz",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "d165378c26c87f5e3b576897c415647e0c32b6c96acb7955b0b43b274423ad88",
+      "actual_size": 74651898,
+      "expected_sha256": "d165378c26c87f5e3b576897c415647e0c32b6c96acb7955b0b43b274423ad88",
+      "expected_size": 74651898,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/native_consumer/v26_native_q0_case_1.npz",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "0d3f2b5ba43cdde971dd5b1767db4e9612258a3b63ae83b0be8502668c065dc5",
+      "actual_size": 24881638,
+      "expected_sha256": "0d3f2b5ba43cdde971dd5b1767db4e9612258a3b63ae83b0be8502668c065dc5",
+      "expected_size": 24881638,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/native_consumer/v26_native_q0_case_2.npz",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "5988fa0a25d2fd5b4940ac8fd161836e4478a879052ce16e7c8eac0298b8cd20",
+      "actual_size": 24881638,
+      "expected_sha256": "5988fa0a25d2fd5b4940ac8fd161836e4478a879052ce16e7c8eac0298b8cd20",
+      "expected_size": 24881638,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/native_consumer/v26_native_q4_pair.npz",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "6a558896fc0e83826081d9b418a89d4cd76d45207bf7dd4cd086c68df7c12265",
+      "actual_size": 10630,
+      "expected_sha256": "6a558896fc0e83826081d9b418a89d4cd76d45207bf7dd4cd086c68df7c12265",
+      "expected_size": 10630,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/native_consumer/v26_native_action_recovery_f9093c87f81d52b75fbc156e562b3745df45ccf4.json",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "e6b88c9eeb5e2314cdf427f4db76f67ca73aac162307d005d2ac22f455ce4ce2",
+      "actual_size": 10663,
+      "expected_sha256": "e6b88c9eeb5e2314cdf427f4db76f67ca73aac162307d005d2ac22f455ce4ce2",
+      "expected_size": 10663,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/native_consumer/v26_native_action_recovery_check_f9093c87f81d52b75fbc156e562b3745df45ccf4.json",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "b8241f8bf6e6d40c4238a0a01da90cc6e58e06a92b179d524a243fbe65deab69",
+      "actual_size": 12442866,
+      "expected_sha256": "b8241f8bf6e6d40c4238a0a01da90cc6e58e06a92b179d524a243fbe65deab69",
+      "expected_size": 12442866,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T111053.208174Z/v26_q0_preallocation_row_structure.npz",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "f42ab160f8fc3d5ad04026b8c9d13491d2685205d149a9e395fdd2be7e8bb64b",
+      "actual_size": 1957,
+      "expected_sha256": "f42ab160f8fc3d5ad04026b8c9d13491d2685205d149a9e395fdd2be7e8bb64b",
+      "expected_size": 1957,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T111053.208174Z/v26_q0_preallocation_row_structure.json",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "1ea707f3c201359c390b620a5122d0102f5b34bd74873b5f00e3a40b673b94de",
+      "actual_size": 18336,
+      "expected_sha256": "1ea707f3c201359c390b620a5122d0102f5b34bd74873b5f00e3a40b673b94de",
+      "expected_size": 18336,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_csr_manifest.json",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "ca3c8de9093fd1cfe9e17c8eb557cd2f96920a3ee110549f007e70835d4a2290",
+      "actual_size": 38314,
+      "expected_sha256": "ca3c8de9093fd1cfe9e17c8eb557cd2f96920a3ee110549f007e70835d4a2290",
+      "expected_size": 38314,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v28_q0_csr_continuation_manifest.json",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "63babb2943b7e0f613a2c531afd09f931c4ee5504a345748c52f6ef38b0e9c81",
+      "actual_size": 5785,
+      "expected_sha256": "63babb2943b7e0f613a2c531afd09f931c4ee5504a345748c52f6ef38b0e9c81",
+      "expected_size": 5785,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_native_qualification.json",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "457b946f8e08557d82df38683a884d25ff58413f17ad1bb7f7e04a7296698c27",
+      "actual_size": 9232978816,
+      "expected_sha256": "457b946f8e08557d82df38683a884d25ff58413f17ad1bb7f7e04a7296698c27",
+      "expected_size": 9232978816,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_data.npy",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "9279c5dbfb8921c61dc229ea6a99d30bb76f8b31d005076796d4504a1e7d0d6e",
+      "actual_size": 2308244800,
+      "expected_sha256": "9279c5dbfb8921c61dc229ea6a99d30bb76f8b31d005076796d4504a1e7d0d6e",
+      "expected_size": 2308244800,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indices.npy",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "6d24828a2cd820601fedf92c5b6575fc2dd95a905c2533677f3a3367648a7819",
+      "actual_size": 3110708,
+      "expected_sha256": "6d24828a2cd820601fedf92c5b6575fc2dd95a905c2533677f3a3367648a7819",
+      "expected_size": 3110708,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indptr.npy",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "304f3029e147ba0d4054efdf484757581a88b71a0ae60f6bea7235003eeac9ac",
+      "actual_size": 49770300,
+      "expected_sha256": "304f3029e147ba0d4054efdf484757581a88b71a0ae60f6bea7235003eeac9ac",
+      "expected_size": 49770300,
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_csr_readback.npz",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "87348ae347eb8112be1009e597a4642df6356549199074ae478edbfdc979a93c",
+      "actual_size": 10547,
+      "expected_sha256": "87348ae347eb8112be1009e597a4642df6356549199074ae478edbfdc979a93c",
+      "expected_size": 10547,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/stage_inputs/selected_reference_q_csr/q0_continuation.json",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "134ea5f08d5d5dbc366870f451ba0de0df5893c5cd73d227dac77f8a11aa2c0b",
+      "actual_size": 9257,
+      "expected_sha256": "134ea5f08d5d5dbc366870f451ba0de0df5893c5cd73d227dac77f8a11aa2c0b",
+      "expected_size": 9257,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/stage_inputs/selected_reference_q_csr/target_original_ny8_operator_probe_v22.dat",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "b00aeca7d9ef59697ac2d339035126644f23429c818f25a322b9e095628c565a",
+      "actual_size": 9242,
+      "expected_sha256": "b00aeca7d9ef59697ac2d339035126644f23429c818f25a322b9e095628c565a",
+      "expected_size": 9242,
+      "path": "input/task40extra_0p7nm_engineering/target_original_ny8_operator_probe_v22.dat",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "dcefcfbf476f09b388554afc81a65ea85951d4d6162b6dad8743766e6742c9a0",
+      "actual_size": 3823,
+      "expected_sha256": "dcefcfbf476f09b388554afc81a65ea85951d4d6162b6dad8743766e6742c9a0",
+      "expected_size": 3823,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/campaign_window_v28.json",
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "e2f4b5673918c3c94981b0596359fd46406a78fd48e2743ee72375a42093a58e",
+      "actual_size": 4282,
+      "expected_sha256": "e2f4b5673918c3c94981b0596359fd46406a78fd48e2743ee72375a42093a58e",
+      "expected_size": 4282,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/registration_receipt_v28.json",
+      "status": "PASS"
+    }
+  ],
+  "runtime_relocation": {
+    "approved_root": "/home/fenics/Projects/laptop_share",
+    "backup_file": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/runtime_relocation_original_petsc_v29.cfg",
+    "created_utc": "2026-10-12T06:41:38.986604+00:00",
+    "file": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib/python3.12/site-packages/petsc4py/lib/petsc.cfg",
+    "new_value": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+    "old_value": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+    "original_sha256": "63f16a545d3b78cbecf3f34e9b2bd4f751bb5c18d42488df65bbc07dfe1dda34",
+    "other_runtime_or_source_files_modified": false,
+    "preserves_PETSC_ARCH": true,
+    "reason": "The copied private runtime petsc4py config embedded the laptop runtime prefix. DOLFINx resolves libpetsc.so from petsc4py.get_config()[PETSC_DIR]; only the target copy was relocated so its existing PETSc 3.25.6 library resolves in the approved target root.",
+    "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/runtime_relocation_v29.json",
+    "receipt_sha256": "dd80f4f24c95fb5f3ef3e33c3cee27d9c14df221e099377587c3191e356b01ed",
+    "relocated_sha256": "fafe08af3f3164573182161e16a316aaefb2a91d3e2a63bbd12dba27ec89fa9f",
+    "schema": "task40-v29-runtime-relocation.v1",
+    "source_runtime_config_sha256": "63f16a545d3b78cbecf3f34e9b2bd4f751bb5c18d42488df65bbc07dfe1dda34",
+    "status": "TARGET_PRIVATE_RUNTIME_PATH_RELOCATION_ONLY"
+  },
+  "schema": "task40-v29-transfer-verification.v1",
+  "source_manifest_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_preparation/v29_transfer_manifest.tsv",
+  "started_utc": "2026-10-12T06:34:13.976821+00:00",
+  "status": "PASS",
+  "target_manifest_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/v29_transfer_manifest.tsv",
+  "transfer_accounting": {
+    "all_transfer_completed_no_later_than_utc": "2026-10-12T06:34:13.976821+00:00",
+    "approval_sha256": "c0bbd9f7d42ca51c1e3899f984a2d1aae6ea932c82eb2292d5a00157af030324",
+    "campaign_window": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/campaign_window_v29.json",
+      "sha256": "68b19c507106a7ad003a6c7121cb3ba4461ed569bd4706e221970d59126bbf1e"
+    },
+    "closeout_deadline_utc": "2026-10-12T11:49:12.144309894Z",
+    "factor_worker_started": false,
+    "first_rsync_started_utc": null,
+    "first_transfer_running_observed_utc": "2026-10-12T06:01:36.434003171Z",
+    "numeric_cutoff_utc": "2026-10-12T11:29:12.144309894Z",
+    "rsync": [
+      {
+        "bytes_per_second": 10998531.38,
+        "exit_code": 0,
+        "files": 39,
+        "literal_data_bytes": 24317309791,
+        "sha256_verification": "PASS 39/39; 24317319033 bytes",
+        "stage": "39_dependency_files",
+        "status": "COMPLETE",
+        "total_bytes_received": 907,
+        "total_bytes_sent": 24323251250,
+        "total_file_size_bytes": 24317319033,
+        "transferred_file_size_bytes": 24317319033
+      },
+      {
+        "bytes_per_second": 5991.33,
+        "exit_code": 0,
+        "files": 1,
+        "stage": "v29_transfer_manifest",
+        "status": "COMPLETE",
+        "total_bytes_received": 35,
+        "total_bytes_sent": 8952,
+        "total_file_size_bytes": 8825,
+        "transferred_file_size_bytes": 8825
+      },
+      {
+        "reason": "Approved target parent directory for runtime_prefix did not exist; receiver created no file.",
+        "rsync_error_code": 11,
+        "stage": "runtime_initial_attempt",
+        "status": "FAILED_RECOVERED"
+      },
+      {
+        "reason": "Rsync transport omitted the explicit SSH config; host alias did not resolve and zero bytes were received.",
+        "rsync_error_code": 255,
+        "stage": "runtime_alias_attempt",
+        "status": "FAILED_RECOVERED"
+      },
+      {
+        "bytes_per_second": 10843830.66,
+        "directories": 3400,
+        "exit_code": 0,
+        "files": 45904,
+        "literal_data_bytes": 2625158288,
+        "regular_files": 40657,
+        "speedup": 1.0,
+        "stage": "existing_private_runtime",
+        "status": "COMPLETE",
+        "symlinks": 1847,
+        "total_bytes_received": 801659,
+        "total_bytes_sent": 2628827275,
+        "total_file_size_bytes": 2625190071,
+        "transferred_file_size_bytes": 2625158288
+      }
+    ],
+    "shared_session_sample_is_not_task_peak": true,
+    "target_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "task_t0_utc": "2026-10-12T05:49:12.144309894Z",
+    "timing_note": "Exact initial rsync start and exact final runtime rsync completion timestamps were not captured; do not infer them. The completion bound is the subsequent target SHA verification start.",
+    "window_seed": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/v29_target_window_start.json",
+      "sha256": "fe0df3504b85ff31aeabaf247418faa35ba6dbe9bd075ad81dbcce2152bf7965"
+    }
+  },
+  "verified_bytes": 24317319033,
+  "verified_file_count": 39
+}

@@ -3666,3 +3666,18 @@ Selective merge 必须区分 shared numerical helper、Task40 opt-in runner/chec
 当前新增能力是严格只读消费已完成矩阵及其 native PASS，直接进入一次 q0 精确分解，省去重新装配和填值；代价是实际分解与保留因子所需时间/内存仍待测。主控只读核对 fenics-ws01 的专用空目录及系统资源，尚未传文件或启动服务。512 GiB task cap、64 GiB host reserve、task swap=0 与 6 h 固定窗口仍待一次资源包批准。主机当时 SwapUsed=20,787,200 B，任务 cgroup 未建，不能宣称任务或全机零 swap。保留 V28 完整 CSR/native 资格及所有旧资源停止；新 heavy T0=null，原尺寸精度/2 TB/48 h 仍 NOT_QUALIFIED。工程准备父区间当前保守下界 7,676.157756943 s，包含旧 4,008.5096 s，前缀/未计时子项 UNKNOWN，不重复相加。
 
 证据：[Response V29](task40extra_0p7nm_engineering/response_v29.md)、[operator](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v29.json)、[resource](task40extra_0p7nm_engineering/outcomes/records/time_resource_accounting_v29.json)、[执行交接](task40extra_0p7nm_engineering/outcomes/target_stage_handoff_v29.md)。
+
+
+## Task40extra Review V29 实际执行与独立数值收口（2026-10-12）
+
+此前本文件的 V29 “准备/未运行”段保留为批准前历史；当前实际结论以 response_v29 与原始小收据为准。
+
+| 实际范围 | 结果/成本 | 证据 |
+|---|---|---|
+| regular-reference q0 准确MUMPS factor-only | 777644²、577061168 slots；symbolic19.370445s/numeric625.776310s；完整Fq742.097546s | docs/task40extra_0p7nm_engineering/response_v29.md |
+| 同factor两个不同RHS | MatSolve17.544153s/repeated12.919099s；rho1.977628323e-14/1.606960978e-14 ≤1e-10 | 原run sourcebee9a1f0；数字worker236201 |
+| 独立审查 | metadata28PASS + saved-vector7PASS；两个RHS/residual全777644行bitwise重现；oldFAIL保留，无factor重跑 | outcomes/records/v29_published_receipt_index.json |
+| 同时资源 | cgroup84891103232B、treeRSS84767309824B，taskswap0，PSSnull；factor-only常驻仍unknown | 原独立watchdog与native checkpoint |
+| 原尺寸全目标 | all-q/targetKSP/A6与释放后残差/official场、mode精度、2TB/48h未资格；无自动新增case | 下一授权需实际各q与完整共驻账，优先准确因子ALL_Q_RESIDENT |
+
+执行仅在获批fenics-ws的/home/fenics/Projects/laptop_share内；cap512GiB/hostreserve64GiB，不变原MUMPS参数、master或ordinary default。保留两次数值前失败、首次checkerFAIL、runtime首次路径导入失败和全部历史费用/unknown。两级账本与command/ABI/window/approval原字节索引随同一Task40分支提交。

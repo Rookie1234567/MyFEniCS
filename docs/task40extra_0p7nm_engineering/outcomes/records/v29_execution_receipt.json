@@ -1,0 +1,370 @@
+{
+  "schema": "task40extra.review_v29_execution_receipt.v1",
+  "review_source_at_entry": "e85992c79d7e2b3f41cd1396ffb06edccdd93421",
+  "factor_run_source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f",
+  "current_checker_source_sha": "9a9a9d31f4aebf1564d5f09177c1d3481d64371f",
+  "branch": "task40extra_0p7nm_engineering",
+  "model": {
+    "scope": "regular-reference q0 factor-only; inherited V28 matrix; not the full non-separable Ny=8 target PDE",
+    "shape": [
+      777644,
+      777644
+    ],
+    "structural_slots": 577061168,
+    "csr_payload_bytes": 11544333940,
+    "scalar_type": "complex128",
+    "index_type": "int32",
+    "v28_native_qualification_sha256": "63babb2943b7e0f613a2c531afd09f931c4ee5504a345748c52f6ef38b0e9c81"
+  },
+  "authorization": {
+    "scope": "one q0 factor and two distinct nonzero test RHS only",
+    "task_memory_max_bytes": 549755813888,
+    "host_reserve_bytes": 68719476736,
+    "memory_swap_max_bytes": 0,
+    "mpi_ranks": 1,
+    "math_threads": 1,
+    "window_refreshed": false
+  },
+  "campaign_window": {
+    "name": "task40extra_v29_first_qualified_q0_factor_only",
+    "sha256": "68b19c507106a7ad003a6c7121cb3ba4461ed569bd4706e221970d59126bbf1e",
+    "t0_utc": "2026-10-12T05:49:12.144309894Z",
+    "numeric_cutoff_utc": "2026-10-12T11:29:12.144309894Z",
+    "deadline_utc": "2026-10-12T11:49:12.144309894Z",
+    "total_seconds": 21600,
+    "closeout_reserve_seconds": 1200
+  },
+  "target": {
+    "host_alias": "fenics-ws",
+    "hostname": "fenics-ws01",
+    "root": "/home/fenics/Projects/laptop_share",
+    "profile": "native_linux",
+    "petsc_version": "3.25.6",
+    "scalar_type": "complex128",
+    "index_type": "int32",
+    "mpi_ranks": 1,
+    "math_threads": 1
+  },
+  "run": {
+    "service_unit": "myfenics-case-20261012T071907-236011.service",
+    "run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
+    "worker_pid": 236201,
+    "classification": "Q0_FACTOR_AND_TWO_RHS_SOLVES_COMPLETED",
+    "service_parent_seconds": 834.1082977831829,
+    "lifecycle_parent_seconds": 758.410191282,
+    "F_q_seconds": 742.0975460591726,
+    "F_q_boundary": "cold q0 factor-cache miss starts at strict saved-manifest/qualification validation; includes initial CSR loader, conversion, symbolic, numeric, first MatSolve, full explicit true residual and fresh raw readback; ends before second RHS and eviction",
+    "symbolic_native_seconds": 19.370444835,
+    "numeric_native_seconds": 625.776309879,
+    "numeric_parent_seconds": 625.862621882,
+    "fresh_MatSolve_seconds": 17.544152897,
+    "fresh_probe_parent_seconds": 22.092013064,
+    "S_q_native_MatSolveRepeated_seconds": 12.919099297141656,
+    "second_rhs_parent_seconds": 17.43339802394621,
+    "fresh_residual": 1.977628323114713e-14,
+    "second_rhs_residual": 1.6069609784650353e-14,
+    "residual_threshold": 1e-10,
+    "native_objects_max": {
+      "factor": 1,
+      "matrix": 1,
+      "vectors": 2
+    },
+    "cleanup": "destroy succeeded; all native-object current counts zero",
+    "F_q_initial_loader_seconds": 30.286357418168336,
+    "F_q_after_loaded_matrix_seconds": 711.8111886410043,
+    "F_q_loader_components": {
+      "saved_csr_open_and_full_hash_seconds": 30.129881493,
+      "qualification_match_seconds": 0.120843992
+    },
+    "q0_checkpoint_total_parent_seconds": 758.4101912819315,
+    "eviction_parent_seconds": 3.8633059221319854,
+    "run_case_parent_seconds": 795.066189215,
+    "original_required_checker_parent_seconds": 2.138518414,
+    "attempt_id": "20261012T071945.212305Z",
+    "run_case_wrapper_pid": 236184,
+    "process_roles": {
+      "run_case_wrapper_pid": 236184,
+      "workflow_pid": 236018,
+      "mpiexec_pid": 236199,
+      "proxy_pid": 236200,
+      "numerical_worker_pid": 236201
+    },
+    "numerical_worker_pid": 236201
+  },
+  "memory": {
+    "task_cgroup_peak_bytes": 84891103232,
+    "task_swap_peak_bytes": 0,
+    "process_tree_rss_peak_bytes": 84767309824,
+    "rss_sample_before_destroy_bytes": 73172611072,
+    "process_tree_pss_peak_bytes": null,
+    "factor_resident_peak_bytes": null,
+    "mumps_infog19_allocation_upper_decimal_bytes": 63959000000,
+    "mumps_infog22_used_upper_decimal_bytes": 55243000000,
+    "process_tree_swap_peak_bytes": 0,
+    "process_tree_rss_peak_source": "run_summary.resource_authority; dedicated subreaper plus all descendants; complete identity coverage",
+    "rss_peak_vs_cgroup_interpretation": "Simultaneous process-tree RSS peak and dedicated cgroup historical peak are distinct scopes/times; do not subtract.",
+    "mumps_infog9_factor_entries_approx": 2599000000,
+    "mumps_infog9_interpretation": "INFOG9=-2599 is approximately 2.599 billion factor entries at million granularity; not bytes or decimal MB.",
+    "mumps_infog9_raw": -2599,
+    "mumps_factor_entries_approx": 2599000000,
+    "mumps_factor_entry_count_precision": "negative million-entry encoding; approximate, not bytes",
+    "factor_only_resident_peak_bytes": null
+  },
+  "attempt_history": [
+    {
+      "kind": "pre_factor_startup_failure",
+      "service_unit": "myfenics-case-20261012T065418-214945.service",
+      "source_sha": "5bb1040ac0e18041cf4f0d055e02ab7070d18453",
+      "parent_seconds": 32.873265343,
+      "failure": "ImportError: _resource_snapshot unavailable from src.solvers.task40_v22_operator_probe; no worker or numerical stage."
+    },
+    {
+      "kind": "pre_factor_dependency_admission_failure",
+      "service_unit": "myfenics-case-20261012T071007-227794.service",
+      "source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f",
+      "run_id": "20261012T071046.659698Z",
+      "parent_seconds": 42.121691599,
+      "failure": "Missing source-pinned mode identity files; wrapper exit 3, worker exit 4; stopped before numerical output with no partial footer. Approved supplemental deployment followed."
+    },
+    {
+      "kind": "q0_factor_and_two_rhs_solves",
+      "service_unit": "myfenics-case-20261012T071907-236011.service",
+      "source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f",
+      "run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
+      "worker_pid": 236201,
+      "service_parent_seconds": 834.108297783,
+      "attempt_id": "20261012T071945.212305Z",
+      "run_case_wrapper_pid": 236184,
+      "process_roles": {
+        "run_case_wrapper_pid": 236184,
+        "workflow_pid": 236018,
+        "mpiexec_pid": 236199,
+        "proxy_pid": 236200,
+        "numerical_worker_pid": 236201
+      }
+    },
+    {
+      "kind": "checker_only_replay",
+      "service_unit": "task40-v29-checker-fix02-main-20261012T090115.service",
+      "checker_source_sha": "9a9a9d31f4aebf1564d5f09177c1d3481d64371f",
+      "parent_seconds": 31.717409190023318,
+      "classification": "PARTIAL_RECEIPT_CHECKED; 28 identity/payload/window checks; not raw-vector residual recomputation"
+    },
+    {
+      "kind": "saved_vector_independent_residual_audit",
+      "service_unit": "task40-v29-factor-vectors-audit-20261012T091357.service",
+      "checker_source_sha": "9a9a9d31f4aebf1564d5f09177c1d3481d64371f",
+      "parent_seconds": 73.24024760699831,
+      "runtime_seconds": 70.66656271996908,
+      "classification": "PASS_READ_ONLY_SAVED_VECTOR_RESIDUAL_RECOMPUTATION"
+    }
+  ],
+  "original_checker_failure": {
+    "status": "FAIL",
+    "return_code": 2,
+    "outer_classification": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+    "outer_sha256": "277cd2ae2126e452dd8d3357d6476e88c92a361e15f00a5e551a4bc8d9ba6e45",
+    "partial_checker_sha256": "3321692553c25c4929e9ff8994194ea45fbee80a7e4dc6fd3e134e7bf7c86015",
+    "factor_checkpoint_sha256": "0b9f892ffc81ff44a3a6ce3fa4796fd41d12e21e414fbe3bbda0a27f1e7a26bd"
+  },
+  "checker_only_replay": {
+    "status": "PARTIAL_RECEIPT_CHECKED",
+    "checks_passed": 28,
+    "checks_total": 28,
+    "return_code": 0,
+    "full_pass": false,
+    "official_result": false,
+    "errors": [],
+    "audit_sha256": "349d617205cfb0cbd14da8f8259c808570a5ced2af948b7473bc74eed2773101",
+    "partial_checker_result_sha256": "dba872db491c05d53eedf7937d85b13f5e73c3fb5dc6063fdc673c09a94c2ec5",
+    "clock_events_sha256": "1b471fd0941f9cf796923256e3035650231e2c0b251aaa97c8a4256b4069390d",
+    "raw_output_sha256": "00a915a4b71bbca2db5a9dd942ce2b1ba26006dc12ab146d416f63baa55cecdc",
+    "watchdog_summary_sha256": "ee381a5a481058e286856fbb4a996491474c4fb9d22d161b16f1506b1908c447",
+    "artifact_directory": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/service_runs/task40-v29-checker-fix02-main-20261012T090115",
+    "parent_seconds": 31.717409190023318,
+    "tree_rss_peak_bytes": 190537728,
+    "cgroup_peak_bytes": 117538816,
+    "task_swap_peak_bytes": 0
+  },
+  "saved_vector_audit": {
+    "status": "PASS_READ_ONLY_SAVED_VECTOR_RESIDUAL_RECOMPUTATION",
+    "checks_passed": 7,
+    "checks_total": 7,
+    "result_sha256": "a1c223d6077e3c06af65350797c830e9d147e4c4e9bdb39edb514b3e0cb8cd26",
+    "service_unit": "task40-v29-factor-vectors-audit-20261012T091357.service",
+    "artifact_directory": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/service_runs/task40-v29-factor-vectors-audit-20261012T091357",
+    "runtime_seconds": 70.66656271996908,
+    "parent_seconds": 73.24024760699831,
+    "fresh_npz_sha256": "c737fadbb1df3a9ce1f9a9c5e1f23e9d8cade0e7bc1747769a02a21d13050b76",
+    "second_rhs_npz_sha256": "30d747721243858c030a5a77f5bdff30cef2e4ffae0c7e13d03ac28fed46f191",
+    "array_hashes_match": true,
+    "A_input_x_equals_saved_rhs_bitwise": true,
+    "A_solution_minus_rhs_equals_saved_residual_bitwise": true,
+    "fresh_residual": 1.977628323114713e-14,
+    "second_rhs_residual": 1.6069609784650353e-14,
+    "threshold": 1e-10,
+    "csr_three_hashes_unchanged": true,
+    "matvec_count": 4,
+    "backend_solves": 0,
+    "factor_calls": 0,
+    "fe_mpc_calls": 0,
+    "legacy_native_replays": 0,
+    "watchdog": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": [],
+      "tree_rss_peak_bytes": 11846586368,
+      "cgroup_peak_bytes": 11827720192,
+      "task_swap_peak_bytes": 0,
+      "pss_peak_bytes": null
+    }
+  },
+  "not_run": [
+    "q1-q7 factors and all-q factor residency/cycling",
+    "target KSP/PDE/full A6 residual",
+    "R00_s/R00_p/R00_total, R/T/A/A_volume, diffraction amplitudes",
+    "final target accuracy and 2 TB / 48 h qualification"
+  ],
+  "measured_parent_intervals": {
+    "successful_service_plus_two_review_parents_seconds": 939.06595458,
+    "pre_factor_failure_parents_seconds": 74.994956942,
+    "all_distinct_recorded_parent_intervals_seconds": 1014.060911522,
+    "continuous_cold_end_to_end": "UNKNOWN; interval sums exclude transfer/ABI work, engineering waits and necessary historical producer/pattern/fill work."
+  },
+  "published_original_receipts": {
+    "v29_approved_execution_contract_fix01.json": {
+      "path": "outcomes/records/v29_approved_execution_contract_fix01.json",
+      "bytes": 9558,
+      "sha256": "4114d23deb54c7cfec38197fca6d6440368f7eae26b74eed4d6a4bb0e4905ef6",
+      "copied_original_bytes": true
+    },
+    "v29_approved_factor_selector_fix01.json": {
+      "path": "outcomes/records/v29_approved_factor_selector_fix01.json",
+      "bytes": 3516,
+      "sha256": "aa57f05a797c03da48c85ca8ee10acfc44b29f5841f2c0cea715ea4cd8d9d11f",
+      "copied_original_bytes": true
+    },
+    "v29_approved_path_mapping_fix01.json": {
+      "path": "outcomes/records/v29_approved_path_mapping_fix01.json",
+      "bytes": 1125,
+      "sha256": "90cb0287f942a4d337bd906f05f36adf34885188734d15058c1919323674e3e8",
+      "copied_original_bytes": true
+    },
+    "v29_actual_campaign_window.json": {
+      "path": "outcomes/records/v29_actual_campaign_window.json",
+      "bytes": 2919,
+      "sha256": "68b19c507106a7ad003a6c7121cb3ba4461ed569bd4706e221970d59126bbf1e",
+      "copied_original_bytes": true
+    },
+    "v29_actual_native_abi_receipt.json": {
+      "path": "outcomes/records/v29_actual_native_abi_receipt.json",
+      "bytes": 11897,
+      "sha256": "1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d",
+      "copied_original_bytes": true
+    },
+    "v29_actual_transfer_receipt.json": {
+      "path": "outcomes/records/v29_actual_transfer_receipt.json",
+      "bytes": 28152,
+      "sha256": "b98c9a901a7fe935dee69aa2df2347dab280255f374befba0876529b34e2308b",
+      "copied_original_bytes": true
+    },
+    "v29_supplemental_dependency_receipt.json": {
+      "path": "outcomes/records/v29_supplemental_dependency_receipt.json",
+      "bytes": 5408,
+      "sha256": "c314ea12ca06391a7f938d28d1a631a2748ae4ac47f99118d0bf3d7349253751",
+      "copied_original_bytes": true
+    },
+    "v29_runtime_path_relocation_receipt.json": {
+      "path": "outcomes/records/v29_runtime_path_relocation_receipt.json",
+      "bytes": 1418,
+      "sha256": "dd80f4f24c95fb5f3ef3e33c3cee27d9c14df221e099377587c3191e356b01ed",
+      "copied_original_bytes": true
+    },
+    "v29_original_factor_checkpoint.json": {
+      "path": "outcomes/records/v29_original_factor_checkpoint.json",
+      "bytes": 96418,
+      "sha256": "0b9f892ffc81ff44a3a6ce3fa4796fd41d12e21e414fbe3bbda0a27f1e7a26bd",
+      "copied_original_bytes": true
+    },
+    "v29_original_failed_checker.json": {
+      "path": "outcomes/records/v29_original_failed_checker.json",
+      "bytes": 2325,
+      "sha256": "3321692553c25c4929e7ff8994194ea45fbee80a7e4dc6fd3e134e7bf7c86015",
+      "copied_original_bytes": true
+    },
+    "v29_original_factor_run_summary.json": {
+      "path": "outcomes/records/v29_original_factor_run_summary.json",
+      "bytes": 11555,
+      "sha256": "429cbeab07ef79c918665ff978278eaedc612cb3f4d37109c778dd7e41686f92",
+      "copied_original_bytes": true
+    },
+    "v29_metadata_checker_fix02_result.json": {
+      "path": "outcomes/records/v29_metadata_checker_fix02_result.json",
+      "bytes": 4065,
+      "sha256": "dba872db491c05d53eedf7937d85b13f5e73c3fb5dc6063fdc673c09a94c2ec5",
+      "copied_original_bytes": true
+    },
+    "v29_metadata_checker_fix02_parent.json": {
+      "path": "outcomes/records/v29_metadata_checker_fix02_parent.json",
+      "bytes": 15927,
+      "sha256": "349d617205cfb0cbd14da8f8259c808570a5ced2af948b7473bc74eed2773101",
+      "copied_original_bytes": true
+    },
+    "v29_saved_factor_vector_audit_result.json": {
+      "path": "outcomes/records/v29_saved_factor_vector_audit_result.json",
+      "bytes": 2829,
+      "sha256": "a1c223d6077e3c06af65350797c830e9d147e4c4e9bdb39edb514b3e0cb8cd26",
+      "copied_original_bytes": true
+    },
+    "v29_saved_factor_vector_audit_parent.json": {
+      "path": "outcomes/records/v29_saved_factor_vector_audit_parent.json",
+      "bytes": 12930,
+      "sha256": "ff8a4f6ea4d7ec333afbb374d4eed8f5df66dd7f6954a31159edaeafe991b6fd",
+      "copied_original_bytes": true
+    },
+    "v29_execution_closeout_observation.json": {
+      "path": "outcomes/records/v29_execution_closeout_observation.json",
+      "bytes": 1868,
+      "sha256": "8b5392469f392d819d692a9fead0a7d837e612037fdd42c8d560c8f13d1e929f",
+      "copied_original_bytes": true
+    },
+    "target_operator_probe_v29_preapproval_snapshot.json": {
+      "path": "outcomes/records/target_operator_probe_v29_preapproval_snapshot.json",
+      "sha256": "2f915e185068afa00c5741cfe6c63e4b0186ff34ce1527a7856d41bbd9d7fa69",
+      "bytes": 20466,
+      "historical_state_retained": true
+    },
+    "time_resource_accounting_v29_preapproval_snapshot.json": {
+      "path": "outcomes/records/time_resource_accounting_v29_preapproval_snapshot.json",
+      "sha256": "6dca8891cdf83da5e839cb00b1d85e5ebc3f1a09b5ca5d066a73e9cd58198e8c",
+      "bytes": 18357,
+      "historical_state_retained": true
+    },
+    "v29_execution_readiness_preapproval_snapshot.json": {
+      "path": "outcomes/records/v29_execution_readiness_preapproval_snapshot.json",
+      "sha256": "d3c50054a3e3f469cff56cd587f798636b385070783495a3111621a06bef593a",
+      "bytes": 15575,
+      "historical_state_retained": true
+    }
+  },
+  "independent_checks": {
+    "metadata_result": {
+      "path": "outcomes/records/v29_metadata_checker_fix02_result.json",
+      "bytes": 4065,
+      "sha256": "dba872db491c05d53eedf7937d85b13f5e73c3fb5dc6063fdc673c09a94c2ec5",
+      "copied_original_bytes": true
+    },
+    "metadata_checks": 28,
+    "numeric_result": {
+      "path": "outcomes/records/v29_saved_factor_vector_audit_result.json",
+      "bytes": 2829,
+      "sha256": "a1c223d6077e3c06af65350797c830e9d147e4c4e9bdb39edb514b3e0cb8cd26",
+      "copied_original_bytes": true
+    },
+    "numeric_checks": 7,
+    "CSR_matvec_count": 4,
+    "backend_MatSolve_or_factor_replay": 0,
+    "factor_source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f",
+    "checker_source_sha": "9a9a9d31f4aebf1564d5f09177c1d3481d64371f"
+  }
+}

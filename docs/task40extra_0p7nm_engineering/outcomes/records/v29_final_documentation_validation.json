@@ -1,0 +1,12 @@
+{
+  "schema": "task40extra.v29_final_documentation_validation.v1",
+  "scope": "JSON metrics/original-byte receipts/scoped indexes; repository documentation contract",
+  "source_code_sha": "9a9a9d31f4aebf1564d5f09177c1d3481d64371f",
+  "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_24_repository_work_principles.py",
+  "result": "22 passed in 0.13s",
+  "log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_preparation/main_final_documentation_tests_v29.log",
+  "log_sha256": "d7951a3108dffc4184370c8a48ea74683e7ecba5ff9225c2d0f400d27c86c3ba",
+  "ABI": "local qualified WSL complex128/int32; metadata only, not target FE/factor",
+  "CI": false,
+  "all_original_receipt_refs_byte_exact": true
+}

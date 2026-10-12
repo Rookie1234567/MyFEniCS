@@ -1,50 +1,70 @@
 # Task40extra Review V29 执行响应
 
-**V29 factor 没有开始。** 主控已冻结并远端回读源码 45628068263181b83739ff80f4f34ffaa472e943；Review 登记 source_at_entry 保持 e85992c79d7e2b3f41cd1396ffb06edccdd93421。本轮完成本机依赖与 strict factor-only 接线准备、修复冷启动/native profile 接线并通过定向软件验证；target service/worker 尚未启动。剩余资源/依赖包授权、目标 ABI/runtime 资格和固定窗口都未完成，故没有 F_q/S_q 或 factor/PDE 结果。
+**已完成 regular-reference q0 的准确分解、同一因子的两组不同 RHS 求解及独立保存数据复核。** 矩阵为 777,644 × 777,644、577,061,168 个结构槽；纯 CSR 载荷 11,544,333,940 B。它是原尺寸 regular-reference 的一个 q 分块；本轮没有求解真实非可分 target 的完整 Maxwell 场。
 
-## 首要数值与运行状态
+因子分解把矩阵整理成可反复回代的形式。第一次构建昂贵，同一因子上的第二次回代便宜；本轮实际测量两种成本，供下一步选择因子驻留方式。数学矩阵、MUMPS 配置和精度门没有改变。
 
-| 项目 | 本轮结果 | 解释 |
-|---|---|---|
-| 实际 factor / q coverage | NOT_RUN；没有 service、run_id、worker PID；factor count 0 | 只完成软件准备。 |
-| symbolic / numeric / MatSolve | 全部 NOT_RUN；本轮未调用 | V28 的早期 conversion resource stop 是历史结果；没有用同一 16 GiB 条件重试。 |
-| F_q | UNKNOWN / NOT_MEASURED | 字段已接线；正式计时需从 strict identity check 和初始 CSR loader开始，到首次真实因子资格结束。 |
-| S_q | UNKNOWN / NOT_MEASURED | 未来 S_q 的主指标取 native_MatSolveRepeated_seconds；第二组测试 RHS 的完整 parent、残差与 raw save/readback 另列。 |
-| fresh probe / 第二 RHS true residual | NOT_RUN | 没有新测试向量、解或残差 artifact。 |
-| factor 常驻/瞬时峰值 | UNKNOWN | 没有 Task40 cgroup 或 worker 进程峰值。 |
-| 物理输出 | NOT_RUN | R00_s/R00_p/R00_total、R/T/A/A_volume、diffraction、target A6 和 2 TB/48 h 均未资格化。 |
+| 阶段/指标 | 实测秒数 | 范围 |
+|---|---:|---|
+| CSR→PETSc conversion | native 10.592528；父段 14.997011 | 不重建 FE/CSR |
+| symbolic | native 19.370445；父段 19.504676 | 同一次因子 |
+| numeric | native 625.776310；父段 625.862622 | 仅数值分解 |
+| 完整 F_q | 742.097546059 | 从严格身份/初始 CSR loader 到 fresh factor 资格完成；包含 loader 30.286357418 |
+| F_q 中已加载矩阵后的父段 | 711.811188641 | 是上一行的子段，不重复相加 |
+| fresh MatSolve | native 17.544153；完整测试父段 22.092013 | 真残差 1.977628323114713e-14 ≤ 1e-10 |
+| S_q 同因子 MatSolveRepeated | 12.919099 | 第二不同种子 RHS；真残差 1.6069609784650353e-14 ≤ 1e-10 |
+| 第二 RHS 完整测试父段 | 17.433398 | 包含制造 RHS、Vec、回代、残差、保存/读回；不是纯业务求解时间 |
+| eviction | native destroy 3.352984；父段 3.863306 | 在 F_q、S_q 之外 |
+| lifecycle 总父段 | 758.410191 | 不含初始 loader；不是 F_q |
+| 原完整 service 父段 | 834.108298 | 包括入口身份/hash、run_case 795.066189 和旧失败 checker 2.138518 |
 
-V28 已接受的 regular-reference q0 CSR 身份保持不变：shape 777,644²，577,061,168 个结构槽，CSR payload 11,544,333,940 B；V28 保存 native PASS SHA-256 为 63babb2943b7e0f613a2c531afd09f931c4ee5504a345748c52f6ef38b0e9c81，四个完整 CSR 作用和独立保存输出复算最大相对误差为 1.9116580127738185e-14，门限 1e-11。此处的数值资格仍是 V28 产生的旧资格。V29 prepare --verify-only 已对 39 个依赖文件做全文件 SHA-256 读取，合计 24,317,319,033 B，其中包括 q0 CSR；这证明本机依赖字节与所需身份匹配，但没有重跑 native operator 对照。本轮文档收口没有重复这批大文件哈希。
+父子计时不重复相加。两次启动失败 32.873265、42.121692 秒，加原 service 834.108298、新 metadata checker 31.717409、saved-vector audit 73.240248，共 1,014.060912 秒，是互不重叠的已测服务父段和；**不是连续冷端到端时间**。传输、ABI、工程修复/等待及既有 producer/pattern/fill 未藏入 F_q。原准备父区间保守下界 7,676.157757 秒包含较早 4,008.509563 秒，不能重复计费；前缀和未记录子项仍 UNKNOWN。
 
-## 冷启动与 native Linux 修复
+## 资源与身份
 
-冷 systemd shell 的 V29 路径曾在激活数值环境前用 python -S 启动服务工作流，可能在项目数值模块导入处失败；外层合同检查也使用脚本路径从任意当前目录运行，无法稳定解析项目根包。本轮将两处标准库合同检查统一为先切到仓库根目录再执行 python3 -m src.runners.task40_v29_contract，随后才 source 现有 native activation，并让 runtime Python 使用已激活环境。
+| 口径 | 数值 | 解释 |
+|---|---:|---|
+| 任务 cgroup 历史峰值 | 84,891,103,232 B | 独立任务，不等于因子独占字节 |
+| 同时 process-tree RSS 峰值 | 84,767,309,824 B | subreaper 与全部后代；身份采样完整 |
+| Task swap 峰值 | 0 B | 独立 cgroup 与进程树均支持 |
+| PSS | null / DISABLED_BY_PROFILE | 未采样，不填 0 |
+| INFOG19 allocated 上界 | 63,959,000,000 B | raw=63958 decimal MB；包含后端口径，非独立 factor-only 驻留查询 |
+| INFOG22 used 上界 | 55,243,000,000 B | raw=55242 decimal MB；不以 used 绕资源门 |
+| INFOG9 | raw -2599；约 2.599e9 因子条目 | 百万粒度近似，**不是字节或 MB** |
+| 同时 native objects | factor 1、matrix 1、vectors 2 | 最终 destroy 成功、当前计数均归零；后代为空 |
 
-另一个真实接线错误是把目标 native Linux 环境送入 WSL activation 与 WSL marker 检查。V29 现在使用仓库已有 activate_native_complex.sh 的 native_linux profile，并用 qualified ABI manifest digest 作为运行身份；普通旧 WSL 分支未改。初始环境资格仍是 imports-only，不能当作 FE/JIT 已运行。
+峰值采样时刻不同，不相减归因。销毁前 RSS 样本 73,172,611,072 B 不是峰值；因子独立常驻、源 CSR/PETSc 共享 backing 的精确拆分仍 UNKNOWN。宿主初始已有 swap 20,787,200 B；Task swap=0 不代表整机历史 swap=0。早期复制在共享 session 中的观测不能作为独占任务峰值。
 
-F_q 的完整阶段边界现在在 operation receipt 中包含严格身份匹配和首次只读 CSR loader，随后为转换、symbolic、numeric、首次 MatSolve、完整 true residual 与 hash-bound raw readback，止于第二 RHS 和 eviction 前。S_q 主值取 MatSolveRepeated 原生调用时间；第二 RHS 构造、PETSc Vec 创建、完整 residual、raw 保存/回读分别列出，eviction 单独记账。这些字段目前是实现定义，尚无实测数。
+执行位置是用户批准的 `fenics-ws`（10.14.35.46）`/home/fenics/Projects/laptop_share`，其他项目未修改。固定 cap=549,755,813,888 B（512 GiB）、host reserve=68,719,476,736 B（64 GiB）、MemorySwapMax=0、MPI1/数学线程1；cap 未变成 ICNTL23。实际 native_linux ABI 为 PETSc 3.25.6/complex128/int32、MPICH 5.0.1；fresh receipt 哈希 `1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d`。仅目标 petsc.cfg 中旧绝对路径改为目标私有 prefix，原配置备份与初次导入失败均保留，未升级 ABI。
 
-## 定向验证
+Review source_at_entry=e85992c79d7e2b3f41cd1396ffb06edccdd93421；数值 source=bee9a1f0e33076e372607581f790bda3a4a0072f；checker source=9a9a9d31f4aebf1564d5f09177c1d3481d64371f。manifest run_id=`task40extra_0p7nm_target_original_ny8_operator_probe_v22`；attempt_id=`20261012T071945.212305Z`；service=`myfenics-case-20261012T071907-236011.service`。数值 worker PID 236201，mpiexec 236199/proxy 236200；run_case wrapper 236184、workflow 236018 分列。
 
-在本机资格化 WSL 测试环境完成 ABI preflight（Python 位于该 checkout .venv；PETSc 3.19.6、complex128/int32、MPI1；petsc4py/SLEPc/DOLFINx/mpi4py 均来自 Linux 路径），并通过：
+T0=2026-10-12T05:49:12.144309894Z，numeric cutoff=11:29:12.144309894Z，deadline=11:49:12.144309894Z；对应新加坡时间 13:49 开始、19:29 数值截止、19:49 收口截止。窗口从首次目标准备冻结，无刷新。实际工作包观测已收费 14,195.026549 秒（包含等待/修复/测试），是收口编辑前的快照，最后交付前同账观测收费 15444.751282536 秒（包含实现/传输/修复/测试/等待/审查），所有相关服务 MainPID=0。之后很小的 Git 提交/推送费用未单独实测，保留限制；服务子段不重复累加。
 
-- targeted pytest：**15 passed in 1.14 s**；
-- 改动 Python 文件 py_compile：通过；
-- bash -n scripts/run_case_in_user_service.sh：通过；
-- git diff --check：通过，随后源码由主控冻结并推送。
+## 独立检查与负结果
 
-文档合同组另有 **29 passed**；耗时与日志哈希见测试收据。这不是目标机 ABI 资格，不是 factor/RHS 数值测试，也不代表 full repository pytest、MPI2/4、Ruff 或 CI 通过。详细命令与日志 SHA-256 见 [定向测试收据](outcomes/records/targeted_tests_v29.json)。
+- 原 required checker exit 2，四项路径/窗口绑定 FAIL，outer 分类 CHECKER_FAILED_RAW_EVIDENCE_RETAINED；原文件没有改判或覆盖。修复将旧 V28 科学 window/CSR/PASS 与 V29 执行 window/source 分开，沿 approved resolver 读实际字节。
+- 新 metadata checker exit 0，28 项身份/payload/window 检查通过，父段 31.717409 秒；它本身不重算新 factor 的两组残差。
+- 另一个独立只读 numeric audit 对两组全部 777,644 行重算 `A@input_x` 和 `A@solution-rhs`；RHS/residual 均与保存数组逐位相同。NPZ 与各数组 hash 通过、三 CSR 文件 hash 未变，7 项通过。内部审计 70.666563 秒，服务父段 73.240248 秒，不双计；4 次新 factor 相关 CSR MatVec，backend MatSolve/factor/FE/MPC/旧 native replay 均为 0，后代清场与 task swap=0 通过。
 
-## 目标准备与资源边界
+新结果 `full_pass=false/official_result=false` 表示 Task40 整体目标仍未完成，不表示 q0 生命周期失败。新旧原始小收据原字节已发布在 [收据索引](outcomes/records/v29_published_receipt_index.json)，大 CSR、两组 NPZ 和 timeline 留在 ignored artifact。
 
-本机准备清单记录所需依赖 39/39 存在且 SHA 匹配，共 24,317,319,033 B；此项包含多个大型 CSR/producer payload，本次文档收口只引用已完成的 V29 prepare 收据，未重复读取或哈希这批大文件，也没有传输。目标机只读观察收据确认 /home/fenics/Projects/laptop_share 当时为空；这是空目录检查，不是 target runtime 资格。目标 ABI/runtime 仍未建立。运行时准备方案是从本机 benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix 复制到目标 laptop_share 下相同相对路径；此前 du 目录树观察为 2,625,190,071 B，但这不是精确传输字节数或内容 hash。复制仍待授权，之后必须在目标以 native_linux profile 对 PETSc 3.25.6 做新 ABI qualification；旧收据只作发现资料，不复用为 PASS。
+固定窗口内保留两次数值前失败：5bb1040 源的 `_resource_snapshot` 导入错误（没有 factor）；bee9a1f0 源的 pinned mode 文件漏部署（attempt 20261012T071046.659698Z，未 numeric）。后者补齐同范围两个身份文件并复核后续作；原 39 项 24,317,319,033 B 收据不改，补充 36,250,728 B 独立记录，41 项总 24,353,569,761 B。runtime regular transferred 2,625,158,288 B 单列；精确最初 rsync 起止未知，不能用后续观测相减猜时长。
 
-拟议的 task cap 512 GiB、host reserve 64 GiB、task swap 0、MPI1/线程1、6 小时窗口仍未获得执行批准或实际应用。目标机快照的 MemTotal 为 2,163,100,385,280 B、MemAvailable 为 1,413,713,145,856 B；host SwapTotal 为 8,589,930,496 B、SwapFree 为 8,569,143,296 B、SwapUsed 为 20,787,200 B。没有 Task40 dedicated cgroup，所以 task swap 保持 null，且这些主机快照不等同于 factor 峰值。当前 T0、deadline、服务、run_id 和 PID 都为空。
+## 下一步与最终目标边界
 
-记录的本地准备区间为 UTC 4,008.5096 s、monotonic 3,607.9524 s、boottime 3,607.9524 s；三种时钟分列，约 400.5572 s 的 UTC/monotonic 差异保持 UNKNOWN。此历史子区间包含在主控随后测得的同一父区间中：UTC 7,676.157756943 s、monotonic 6,952.337018444 s、boottime 6,952.3370187 s，保守取 7,676.157756943 s。端点为 2026-10-12T04:28:37.848919Z，仍是当前下界，final_closeout_complete=false；不能再加原 4,008.5096 s。此前未记录的准备前缀、后续少量收口及未单独计时子项保持 UNKNOWN。这些是工程准备成本，不是 factor 时间，新 heavy T0 尚未启动。
+当前单 q0 已在批准环境完成 conversion→symbolic→numeric→fresh probe→同因子第二 RHS→evict→独立审查；原 WSL 16 GiB 条件没有重复尝试。q1–q7、all-q resident、原尺寸 target KSP/A6/释放后残差、内部/端口恢复与 official R00_s/R00_p/R00_total、R/T/A/A_volume/衍射均未运行。本轮不能宣布原尺寸精度或 2 TB/48 h 达标。
 
-## 后续门
+下一唯一主候选是**在完整对象账允许时保留同样准确的全部 q 因子（ALL_Q_RESIDENT）**，减少 ONE_Q_REFACTOR_V19 在固定 8-q 循环中每次重新做 conversion/symbolic/numeric/fresh probe 的费用，数学逆不改。下一批需授权逐 q 建立其余实际 CSR/资格/因子与完整同时库存，含源 CSR、仍保留的 PETSc 输入、factor、target/reference FE/映射/局部 LU/port/inverse bank、构建暂存、Krylov/恢复/输出和系统余量；不以 q0×8 当实测。如果不足则评估固定保留高重建成本因子＋一个流转槽，小于 8 的普通 LRU 在固定循环可能每轮全 miss，不按槽数线性估计收益。
 
-当前实现已冻结到 45628068263181b83739ff80f4f34ffaa472e943。主控将询问一次剩余资源/依赖/runtime package 授权；获准后再准备目标 ABI 与路径并登记固定窗口。之后消费现有完整 CSR/native PASS，运行唯一 held factor-only 命令。命令不得提前启动。worker 启动后，按用户已授权范围发送一次 V26 service/run_id/source/worker PID 状态通知；当前没有 worker，因此不发该通知。
+48 h 账需包含必要首次 producer/pattern/CSR/JIT、每次实际重建 F_q 和业务回代 S_q、外层作用/投影/传递/局部恢复/augmentation、target/Krylov、输出及独立检查。当前 q0 数据足以表明重建与重复回代成本明显不同，无法代替其余 q、原尺寸收敛或最终网格/mode 精度证据。本轮不自动开启后续计算，不改 master/ordinary default。
 
-详见 [执行交接](outcomes/target_stage_handoff_v29.md)、[factor/准备记录](outcomes/records/target_operator_probe_v29.json)、[时间资源账](outcomes/records/time_resource_accounting_v29.json)、[就绪状态](outcomes/records/v29_execution_readiness.json)。
+## 软件验证与入口
+
+原准备 15 项 targeted PASS；import 修复的真实 resource fixture 1 PASS；checker focused 79 PASS/1 SKIP，随后仅 CSR containment-order leaf 1 PASS/5 deselected（没有冒称最终整组重跑）；新路径、错误 hash、两代 window 与越界反向验证保持拒绝。文档/JSON/引用的最终检查与日志单列在 [test summary](outcomes/test_summary.md)，不声称 CI/full pytest/MPI2/4/Ruff 通过。
+
+- [实际 q0 执行回执](outcomes/records/v29_execution_receipt.json)
+- [operator compact](outcomes/records/target_operator_probe_v29.json)、[资源/费用 compact](outcomes/records/time_resource_accounting_v29.json)
+- [metadata 原始 PASS](outcomes/records/v29_metadata_checker_fix02_result.json)、[保存向量原始 PASS](outcomes/records/v29_saved_factor_vector_audit_result.json)
+- [summary](outcomes/summary.md)、[run index](outcomes/records/run_index.json)、[真实命令与环境交接](outcomes/target_stage_handoff_v29.md)
+- [批准前原回应快照](outcomes/response_v29_preapproval_snapshot.md)：仅历史，不是当前状态。

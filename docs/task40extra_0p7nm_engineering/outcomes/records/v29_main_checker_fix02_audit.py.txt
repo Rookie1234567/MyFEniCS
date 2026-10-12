@@ -1,0 +1,19 @@
+import hashlib,json,os,pathlib,subprocess,sys,time
+root=pathlib.Path('/home/fenics/Projects/laptop_share');sys.path.insert(0,str(root))
+from scripts.task40_v20_service_workflow import _supervise_required_checker,_write_json_fsync
+out=pathlib.Path(sys.argv[1]);old=root/'benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/service_runs/myfenics-case-20261012T071907-236011'
+request=json.loads((old/'required_checker_supervision_request.json').read_bytes())
+case=root/'results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T071945.212305Z'
+protected={old/'outer_workflow_record.json':'277cd2ae2126e452dd8d3357d6476e88c92a361e15f00a5e551a4bc8d9ba6e45',old/'partial_checker_result.json':'3321692553c25c4929e7ff8994194ea45fbee80a7e4dc6fd3e134e7bf7c86015',case/'v28_q0_factor/v26_q0_factor_checkpoints.json':'0b9f892ffc81ff44a3a6ce3fa4796fd41d12e21e414fbe3bbda0a27f1e7a26bd'}
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+assert all(sha(p)==v for p,v in protected.items())
+head=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+assert head=='9a9a9d31f4aebf1564d5f09177c1d3481d64371f' and not subprocess.check_output(['git','status','--porcelain'],text=True).strip()
+cmd=request['command'][:];cmd[cmd.index('--output')+1]=str(out/'partial_checker_result.json')
+start=time.perf_counter();startutc=time.time_ns()
+rc,payload,details=_supervise_required_checker(command=cmd,checker_kind=request['checker_kind'],evidence_directory=out,runtime_prefix=pathlib.Path(request['runtime_prefix']),environment=dict(os.environ),repo_root=root,campaign_window=pathlib.Path(request['campaign_window']),campaign_sha256=request['campaign_sha256'],campaign_accounting=pathlib.Path(request['campaign_accounting']),source_state={'branch':'task40extra_0p7nm_engineering','source_sha':head,'clean':True},profile=request['profile'],events=[],event_log=out/'main_checker_clock_events.jsonl',event_identity={'checker_source_sha':head,'original_run_source_sha':'bee9a1f0e33076e372607581f790bda3a4a0072f','scope':'READ_ONLY_CHECKER_FIX02'})
+unchanged=all(sha(p)==v for p,v in protected.items())
+record={'schema':'task40extra.v29_main_independent_checker_audit.v1','checker_source_sha':head,'original_run_source_sha':'bee9a1f0e33076e372607581f790bda3a4a0072f','command':cmd,'helper_source_sha256':sha(pathlib.Path(__file__)),'started_utc_ns':startutc,'finished_utc_ns':time.time_ns(),'parent_monotonic_seconds':time.perf_counter()-start,'return_code':rc,'checker_passed':bool(payload and payload.get('checker_passed')),'old_evidence_unchanged':unchanged,'protected_hashes':{str(p):v for p,v in protected.items()},'factor_rerun':False,'scope':'READ_ONLY_ORIGINAL_SAVED_DATA','window_sha256':request['campaign_sha256'],'supervision_details':details,'new_checker_result_sha256':sha(out/'partial_checker_result.json') if (out/'partial_checker_result.json').is_file() else None}
+_write_json_fsync(out/'main_checker_audit_result.json',record)
+print(json.dumps({k:record[k] for k in ('checker_passed','return_code','parent_monotonic_seconds','old_evidence_unchanged','factor_rerun','new_checker_result_sha256')},ensure_ascii=False),flush=True)
+sys.exit(0 if rc==0 and record['checker_passed'] and unchanged else 2)

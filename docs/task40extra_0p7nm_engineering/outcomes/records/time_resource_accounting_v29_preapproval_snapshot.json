@@ -1,0 +1,231 @@
+{
+  "actual_factor_execution": {
+    "F_q_seconds": null,
+    "S_q_native_MatSolveRepeated_seconds": null,
+    "S_q_test_rhs_parent_seconds": null,
+    "classification": "NOT_RUN; no worker or factor was started",
+    "factor_resident_bytes": null,
+    "fresh_MatSolve_seconds": null,
+    "numeric_seconds": null,
+    "process_tree_rss_peak_bytes": null,
+    "run_id": null,
+    "service_started": false,
+    "symbolic_seconds": null,
+    "task_cgroup_created": false,
+    "task_cgroup_peak_bytes": null,
+    "task_swap_peak_bytes": null,
+    "worker_pid": null
+  },
+  "aggregate_local_cost_endpoint": {
+    "conservative_elapsed_seconds": 7676.157756943,
+    "contains_original_preparation_interval": true,
+    "do_not_add_original_preparation_elapsed_again": true,
+    "documentation_after_endpoint_seconds": "UNKNOWN; receipt is explicitly not the final closeout endpoint.",
+    "earlier_pre_anchor_cost": "UNKNOWN",
+    "elapsed_boottime_seconds": 6952.3370187,
+    "elapsed_monotonic_seconds": 6952.337018444,
+    "elapsed_utc_seconds": 7676.157756943,
+    "end_utc": "2026-10-12T04:28:37.848919+00:00",
+    "final_closeout_complete": false,
+    "interpretation": "This is one parent interval through 2026-10-12T04:28:37.848919Z. The earlier 4008.5096-second preparation receipt is inside this aggregate; do not sum them.",
+    "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/main_preapproval_current_cost_v29.json",
+    "receipt_sha256": "ca57505095d261777b5cb3daf696b3f34cec78e1663429892755339a7b5c15bb",
+    "scope": "All local preparation, source review/freeze/push, subsequent repair/tests and ongoing docs after original anchor; not factor time and not new heavy window",
+    "start_utc": "2026-10-12T02:20:41.691166+00:00",
+    "target_heavy_t0": null
+  },
+  "authorization": {
+    "campaign_window": false,
+    "factor_or_pde": false,
+    "target_resource_policy": false,
+    "transfer": false
+  },
+  "branch": "task40extra_0p7nm_engineering",
+  "campaign": {
+    "closeout_reserve_seconds_proposed": 1200,
+    "deadline_utc": null,
+    "numeric_cutoff_after_t0_seconds_proposed": 20400,
+    "status": "NO_V29_T0_OR_WINDOW_STARTED",
+    "t0_utc": null,
+    "total_window_seconds_proposed": 21600
+  },
+  "created_utc": "2026-10-12T04:31:31.106196Z",
+  "current_frozen_source_sha": "45628068263181b83739ff80f4f34ffaa472e943",
+  "dependency_preparation": {
+    "aggregate_endpoint_receipt_sha256": "ca57505095d261777b5cb3daf696b3f34cec78e1663429892755339a7b5c15bb",
+    "all_39_full_file_hashes_completed_during_v29_prepare": true,
+    "current_closeout_rehash": false,
+    "dependency_count": 39,
+    "full_file_sha256_hashes_performed": true,
+    "hashing_elapsed_seconds": 164.586,
+    "includes_complete_q0_csr_arrays": true,
+    "interpretation": "V29 prepare --verify-only performed the full 39-file read/hash. The current documentation closeout did not repeat it; file-byte identity is not a new native/numerical qualification.",
+    "manifest_path": "outcomes/records/v29_dependency_manifest.json",
+    "manifest_sha256": "b67c9e24ab4cec8b5862d4c1ce5defede35860cc03ba0ffb5363f852309156a9",
+    "missing_or_changed_count": 0,
+    "note": "Counts and bytes are copied from the completed local manifest, including large CSR/producer payloads.",
+    "rehash_in_this_closeout": false,
+    "status": "PASS_LOCAL_IDENTITIES",
+    "this_closeout_rehash": false,
+    "total_bytes": 24317319033,
+    "transfer_status": "NOT_AUTHORIZED"
+  },
+  "documentation_validation": {
+    "elapsed_seconds": 0.22,
+    "final_accounting_update_test_rerun": false,
+    "log_sha256": "1a399d84816e10d2701ac68fe1a2d5ebdfd4a58a982e601cc761f27317abcdcd",
+    "note": "29 documentation contract tests passed before this final factual accounting update. Per main closeout direction, no tests or large dependency hashes were repeated afterward.",
+    "pytest_passed": 29,
+    "scope": "Documentation/model-registry/retrospective contract tests only; not scientific execution.",
+    "status": "PASS_BEFORE_FINAL_ACCOUNTING_WORDING_UPDATE"
+  },
+  "implementation_snapshot_sha256": "ea8f67c174b5b5153d7563f0be50e8d98da0e46badd08a7c0fa92a61821b1b9f",
+  "local_preparation_interval": {
+    "aggregate_endpoint_receipt_sha256": "ca57505095d261777b5cb3daf696b3f34cec78e1663429892755339a7b5c15bb",
+    "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6",
+    "cpu_time_seconds": null,
+    "difference_interpretation": "UNKNOWN; clocks are kept separate and this is not factor runtime.",
+    "elapsed_boottime_seconds": 3607.952390601,
+    "elapsed_monotonic_seconds": 3607.952368552,
+    "elapsed_utc_seconds": 4008.509562591,
+    "finish_utc": "2026-10-12T03:27:30.200594+00:00",
+    "hashing_event_scope": "Already completed local dependency preparation; do not repeat its full hashes.",
+    "hashing_event_seconds": 164.586,
+    "host": "SK-20260601OSDE",
+    "scope": "Historical subinterval only, ending at 03:27:30Z; included in aggregate_local_cost_endpoint, not additive.",
+    "start_utc": "2026-10-12T02:20:41.691166+00:00",
+    "status": "MEASURED_FOR_RECORDED_INTERVAL_ONLY",
+    "utc_vs_monotonic_difference_seconds": 400.557194039
+  },
+  "proposed_resources_not_applied": {
+    "host_reserve_bytes": 68719476736,
+    "math_threads": 1,
+    "memory_swap_max_bytes": 0,
+    "mpi_ranks": 1,
+    "note": "Proposal only; no cgroup or cap was created.",
+    "task_memory_max_bytes": 549755813888
+  },
+  "schema": "task40extra.review_v29_time_resource_accounting.v1",
+  "source_at_entry": "e85992c79d7e2b3f41cd1396ffb06edccdd93421",
+  "source_freeze_receipt_sha256": "7a2a0bd98e3cd7fed9731b34082e2fbc11a1f55d8a8bbb88b87ac33a5c1ddaf4",
+  "target_host_readonly_snapshot": {
+    "MemAvailable_bytes": 1413713145856,
+    "MemTotal_bytes": 2163100385280,
+    "disk_free_bytes": 2681846722560,
+    "host": "fenics-ws01",
+    "host_SwapFree_bytes": 8569143296,
+    "host_SwapTotal_bytes": 8589930496,
+    "host_SwapUsed_bytes": 20787200,
+    "receipt_sha256": "5bddd5d774ace598751449d41e3df160a4a833e2aa7ab68985e399273040f4ff",
+    "root": "/home/fenics/Projects/laptop_share",
+    "root_status": "VERIFIED_EMPTY",
+    "scope": "Read-only snapshot; host swap exists. Not a Task40 dedicated cgroup or factor peak.",
+    "swap_interpretation": "Host swap total/free/used are separately recorded. No Task40 cgroup exists, so task swap remains null.",
+    "task_cgroup_cap": "NOT_SET",
+    "task_cgroup_swap_peak_bytes": null,
+    "utc": "2026-10-12T02:48:24.197817+00:00"
+  },
+  "target_proposed_data_copy_paths": [
+    {
+      "bytes_at_prepare": 9257,
+      "id": "science_input_dat",
+      "proposed_destination_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/stage_inputs/selected_reference_q_csr/target_original_ny8_operator_probe_v22.dat",
+      "proposed_destination_relative_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/stage_inputs/selected_reference_q_csr/target_original_ny8_operator_probe_v22.dat",
+      "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/stage_inputs/selected_reference_q_csr/target_original_ny8_operator_probe_v22.dat",
+      "source_relative_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/stage_inputs/selected_reference_q_csr/target_original_ny8_operator_probe_v22.dat",
+      "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+    },
+    {
+      "bytes_at_prepare": 9242,
+      "id": "canonical_template_dat",
+      "proposed_destination_path": "/home/fenics/Projects/laptop_share/input/task40extra_0p7nm_engineering/target_original_ny8_operator_probe_v22.dat",
+      "proposed_destination_relative_path": "input/task40extra_0p7nm_engineering/target_original_ny8_operator_probe_v22.dat",
+      "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/input/task40extra_0p7nm_engineering/target_original_ny8_operator_probe_v22.dat",
+      "source_relative_path": "input/task40extra_0p7nm_engineering/target_original_ny8_operator_probe_v22.dat",
+      "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+    },
+    {
+      "bytes_at_prepare": 11230840064,
+      "id": "producer_v25_selected_q0_surface_functionals",
+      "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_selected_q0_surface_functionals.bin",
+      "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_selected_q0_surface_functionals.bin",
+      "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_selected_q0_surface_functionals.bin",
+      "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_selected_q0_surface_functionals.bin",
+      "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+    },
+    {
+      "bytes_at_prepare": 18336,
+      "id": "original_v27_manifest",
+      "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_csr_manifest.json",
+      "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_csr_manifest.json",
+      "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_csr_manifest.json",
+      "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_csr_manifest.json",
+      "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+    },
+    {
+      "bytes_at_prepare": 38314,
+      "id": "continuation_manifest",
+      "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v28_q0_csr_continuation_manifest.json",
+      "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v28_q0_csr_continuation_manifest.json",
+      "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v28_q0_csr_continuation_manifest.json",
+      "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v28_q0_csr_continuation_manifest.json",
+      "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+    },
+    {
+      "bytes_at_prepare": 9232978816,
+      "id": "v28_csr_data",
+      "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_data.npy",
+      "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_data.npy",
+      "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_data.npy",
+      "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_data.npy",
+      "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+    },
+    {
+      "bytes_at_prepare": 2308244800,
+      "id": "v28_csr_indices",
+      "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indices.npy",
+      "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indices.npy",
+      "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indices.npy",
+      "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indices.npy",
+      "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+    },
+    {
+      "bytes_at_prepare": 3110708,
+      "id": "v28_csr_indptr",
+      "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indptr.npy",
+      "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indptr.npy",
+      "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indptr.npy",
+      "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indptr.npy",
+      "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+    },
+    {
+      "bytes_at_prepare": 5785,
+      "id": "native_qualification",
+      "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_native_qualification.json",
+      "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_native_qualification.json",
+      "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_native_qualification.json",
+      "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_native_qualification.json",
+      "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+    },
+    {
+      "bytes_at_prepare": 49770300,
+      "id": "v28_native_readback_outputs",
+      "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_csr_readback.npz",
+      "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_csr_readback.npz",
+      "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_csr_readback.npz",
+      "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_csr_readback.npz",
+      "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+    }
+  ],
+  "target_runtime_copy_plan": {
+    "destination_absolute_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+    "destination_relative_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+    "destination_root": "/home/fenics/Projects/laptop_share",
+    "size_scope": "Prior du tree observation only; not an exact transfer byte count or content hash.",
+    "source_absolute_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+    "source_du_tree_bytes": 2625190071,
+    "source_relative_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+    "status": "PENDING_USER_AUTHORIZATION_AND_COPY",
+    "target_runtime_requirement": "Copy only after approval; then create a fresh native_linux/PETSc 3.25.6 target ABI receipt. Do not reuse old target inventory/receipt as PASS."
+  }
+}

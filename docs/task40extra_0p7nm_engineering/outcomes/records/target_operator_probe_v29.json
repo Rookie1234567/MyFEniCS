@@ -1,7 +1,7 @@
 {
-  "authorization_status": "PENDING_USER_AUTHORIZATION",
+  "authorization_status": "APPROVED_FOR_ONE_Q0_FACTOR_ONLY_AND_COMPLETED",
   "branch": "task40extra_0p7nm_engineering",
-  "classification": "LOCAL_PREPARATION_COMPLETE_EXECUTION_HELD",
+  "classification": "Q0_FACTOR_AND_TWO_RHS_SOLVES_COMPLETED; SAVED_VECTOR_RESIDUAL_AUDIT_PASS; CHECKER_PARTIAL_RECEIPT_CHECKED; FULL_PHYSICS_NOT_RUN",
   "created_utc": "2026-10-12T04:31:31.105854Z",
   "csr": {
     "artifacts": {
@@ -85,23 +85,56 @@
     }
   },
   "factor_lifecycle": {
-    "F_q_boundary": "Cold cache miss from strict manifest/qualification identity check and initial read-only CSR loader through factor conversion, symbolic, numeric, first nonzero MatSolve, full true residual and raw readback; includes initial loader and ends before second RHS/eviction.",
-    "F_q_seconds": null,
+    "F_q_boundary": "Cold-cache miss includes initial CSR loader and strict qualification match through first fresh MatSolve, full explicit true residual and hash-bound raw readback.",
+    "F_q_seconds": 742.0975460591726,
     "S_q_metric": "native_MatSolveRepeated_seconds is the same-factor solve metric. The complete second-RHS test parent, RHS construction, Vec setup, residual, persistence/readback, and eviction are separately reported.",
-    "S_q_seconds": null,
-    "S_q_seconds_basis": "No factor run; therefore both native solve and test-parent timings are NOT_MEASURED.",
-    "factor_count": 0,
-    "factor_process_tree_or_cgroup_peak_bytes": null,
+    "S_q_seconds": 12.919099297,
+    "S_q_seconds_basis": "Native MatSolveRepeated for the second distinct RHS; complete second-RHS parent is 17.433398024 s.",
+    "factor_count": 1,
     "factor_resident_peak_bytes": null,
-    "fresh_probe_relative_residual": null,
-    "mat_solve_calls": 0,
-    "numeric_calls": 0,
-    "run_id": null,
-    "second_rhs_relative_residual": null,
-    "service_started": false,
-    "status": "NOT_RUN",
-    "symbolic_calls": 0,
-    "worker_pid": null
+    "fresh_probe_relative_residual": 1.977628323114713e-14,
+    "mat_solve_calls": 2,
+    "numeric_calls": 1,
+    "run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
+    "second_rhs_relative_residual": 1.6069609784650353e-14,
+    "service_started": true,
+    "status": "Q0_FACTOR_AND_TWO_RHS_SOLVES_COMPLETED; WORKER_AND_RAW_VECTOR_RESIDUALS_PASS",
+    "symbolic_calls": 1,
+    "worker_pid": 236201,
+    "service_unit": "myfenics-case-20261012T071907-236011.service",
+    "symbolic_seconds": 19.370444835,
+    "numeric_seconds": 625.776309879,
+    "fresh_MatSolve_seconds": 17.544152897,
+    "second_rhs_parent_seconds": 17.433398024,
+    "factor_lifecycle_parent_seconds": 758.410191282,
+    "task_cgroup_peak_bytes": 84891103232,
+    "task_swap_peak_bytes": 0,
+    "process_tree_rss_peak_bytes": 84767309824,
+    "process_tree_rss_sample_before_destroy_bytes": 73172611072,
+    "process_tree_pss_peak_bytes": null,
+    "native_objects_max": {
+      "factor": 1,
+      "matrix": 1,
+      "vectors": 2
+    },
+    "native_cleanup": "destroy succeeded; current factor/matrix/vector counts all zero",
+    "F_q_initial_loader_seconds": 30.286357418168336,
+    "F_q_after_loaded_matrix_seconds": 711.8111886410043,
+    "F_q_loader_components": {
+      "saved_csr_open_and_full_hash_seconds": 30.129881493,
+      "qualification_match_seconds": 0.120843992
+    },
+    "F_q_evidence": "v28_q0_continuation_stage.json timings_v29.F_q; raw identity/payload remains bound to V28 CSR.",
+    "attempt_id": "20261012T071945.212305Z",
+    "run_case_wrapper_pid": 236184,
+    "process_roles": {
+      "run_case_wrapper_pid": 236184,
+      "workflow_pid": 236018,
+      "mpiexec_pid": 236199,
+      "proxy_pid": 236200,
+      "numerical_worker_pid": 236201
+    },
+    "process_tree_rss_peak_source": "run_summary.json resource_authority.sampled_process_tree_rss_peak_bytes; all identities readable"
   },
   "identity": {
     "input_sha256": "134ea5f08d5d5dbc366870f451ba0de0df5893c5cd73d227dac77f8a11aa2c0b",
@@ -150,9 +183,7 @@
     "status": "PASS_IN_V28_NOT_RECOMPUTED_IN_V29"
   },
   "not_run": [
-    "q0 symbolic/numeric factorization",
-    "fresh factor probe and second RHS",
-    "all other q factors",
+    "q1-q7 factors and all-q factor residency/cycling",
     "target KSP/PDE/full A6 residual",
     "R00_s/R00_p/R00_total, R/T/A/A_volume, diffraction amplitudes",
     "target accuracy and 2 TB / 48 h qualification"
@@ -161,7 +192,7 @@
   "source_at_entry": "e85992c79d7e2b3f41cd1396ffb06edccdd93421",
   "source_freeze_receipt_sha256": "7a2a0bd98e3cd7fed9731b34082e2fbc11a1f55d8a8bbb88b87ac33a5c1ddaf4",
   "target_execution": {
-    "abi": "NOT_QUALIFIED",
+    "abi": "QUALIFIED_NATIVE_LINUX_PETSC_3_25_6_COMPLEX128_INT32",
     "execution_host": "fenics-ws",
     "execution_root": "/home/fenics/Projects/laptop_share",
     "observed_hostname": "fenics-ws01",
@@ -257,10 +288,17 @@
         "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
       }
     ],
-    "resource_and_window_authorized": false,
+    "resource_and_window_authorized": true,
     "root_receipt_sha256": "5bddd5d774ace598751449d41e3df160a4a833e2aa7ab68985e399273040f4ff",
     "root_status": "VERIFIED_EMPTY",
-    "runtime": "NOT_CREATED",
+    "runtime": {
+      "profile": "native_linux",
+      "petsc_version": "3.25.6",
+      "scalar_type": "complex128",
+      "index_type": "int32",
+      "mpi_ranks": 1,
+      "math_threads": 1
+    },
     "runtime_copy_plan": {
       "destination_absolute_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
       "destination_relative_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
@@ -273,14 +311,81 @@
       "target_runtime_requirement": "Copy only after approval; then create a fresh native_linux/PETSc 3.25.6 target ABI receipt. Do not reuse old target inventory/receipt as PASS."
     },
     "runtime_inventory_sha256": "0665dc67a5e39bdeec94a8feb099a1dbd4185fd3f19a12cdc06ec44b37939bef",
-    "service_started": false,
-    "transfer_authorized": false,
+    "service_started": true,
+    "transfer_authorized": true,
     "worker_state": {
-      "classification": "NO_WORKER_EXISTS; no V29 worker has been launched.",
-      "run_id": null,
-      "service_started": false,
-      "service_unit": null,
-      "worker_pid": null
+      "classification": "COMPLETED_Q0_FACTOR_AND_TWO_RHS_SOLVES",
+      "run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
+      "service_started": true,
+      "service_unit": "myfenics-case-20261012T071907-236011.service",
+      "worker_pid": 236201,
+      "source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f",
+      "attempt_id": "20261012T071945.212305Z",
+      "run_case_wrapper_pid": 236184,
+      "process_roles": {
+        "run_case_wrapper_pid": 236184,
+        "workflow_pid": 236018,
+        "mpiexec_pid": 236199,
+        "proxy_pid": 236200,
+        "numerical_worker_pid": 236201
+      }
     }
+  },
+  "actual_execution": {
+    "review_source_at_entry": "e85992c79d7e2b3f41cd1396ffb06edccdd93421",
+    "factor_run_source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f",
+    "current_checker_source_sha": "9a9a9d31f4aebf1564d5f09177c1d3481d64371f",
+    "window_sha256": "68b19c507106a7ad003a6c7121cb3ba4461ed569bd4706e221970d59126bbf1e",
+    "t0_utc": "2026-10-12T05:49:12.144309894Z",
+    "numeric_cutoff_utc": "2026-10-12T11:29:12.144309894Z",
+    "deadline_utc": "2026-10-12T11:49:12.144309894Z",
+    "window_refreshed": false,
+    "service_unit": "myfenics-case-20261012T071907-236011.service",
+    "run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
+    "worker_pid": 236201,
+    "checker": "28/28 identity/payload/window checks; full_pass=false; official_result=false",
+    "raw_saved_vector_audit": "PASS; 7/7 independent read-only checks",
+    "attempt_id": "20261012T071945.212305Z",
+    "run_case_wrapper_pid": 236184,
+    "process_roles": {
+      "run_case_wrapper_pid": 236184,
+      "workflow_pid": 236018,
+      "mpiexec_pid": 236199,
+      "proxy_pid": 236200,
+      "numerical_worker_pid": 236201
+    },
+    "process_tree_rss_peak_bytes": 84767309824,
+    "process_tree_pss_peak_bytes": null,
+    "process_tree_swap_peak_bytes": 0,
+    "process_tree_descendants_cleared": true
+  },
+  "raw_saved_vector_audit": {
+    "status": "PASS_READ_ONLY_SAVED_VECTOR_RESIDUAL_RECOMPUTATION",
+    "checks_passed": 7,
+    "checks_total": 7,
+    "result_sha256": "a1c223d6077e3c06af65350797c830e9d147e4c4e9bdb39edb514b3e0cb8cd26",
+    "runtime_seconds": 70.66656271996908,
+    "service_parent_seconds": 73.24024760699831,
+    "fresh_residual": 1.977628323114713e-14,
+    "second_rhs_residual": 1.6069609784650353e-14,
+    "threshold": 1e-10,
+    "saved_rhs_and_residual_bitwise_match": true,
+    "all_array_hashes_match": true,
+    "csr_three_array_hashes_unchanged": true,
+    "factor_calls": 0,
+    "backend_solves": 0,
+    "fe_mpc_calls": 0,
+    "legacy_native_replays": 0
+  },
+  "preapproval_snapshot": {
+    "path": "outcomes/records/target_operator_probe_v29_preapproval_snapshot.json",
+    "sha256": "2f915e185068afa00c5741cfe6c63e4b0186ff34ce1527a7856d41bbd9d7fa69"
+  },
+  "published_receipt_index": "outcomes/records/v29_published_receipt_index.json",
+  "actual_execution_receipt_sha256": "7b5e5dac5edafa4c3de46e7348b194a73f4aaa6004f58d56a8bff2559feff53e",
+  "published_original_receipts_index_sha256": "9ac9ee506734cb876363ae2e6dda79913f869052ce53accab86903b068d704c5",
+  "final_documentation_validation": {
+    "path": "outcomes/records/v29_final_documentation_validation.json",
+    "sha256": "989562c230a6f083bc7b3f65f6dbe73242d07533cceb0cbfc3181a61ca1574af"
   }
 }

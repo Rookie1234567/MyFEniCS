@@ -1,0 +1,98 @@
+{
+  "schema": "task40extra.v29.supplemental_dependency_receipt.v1",
+  "status": "SUPPLEMENTAL_HASH_PINNED_INPUTS_VERIFIED",
+  "reason": "V29 run_id 20261012T071046.659698Z stopped before numerical output because the existing Task38 adapter requires these source-pinned mode identity inputs; main approved this narrow data-deployment supplement.",
+  "source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f",
+  "source_branch": "task40extra_0p7nm_engineering",
+  "target_worktree_clean": true,
+  "execution_window": {
+    "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/campaign_window_v29.json",
+    "sha256": "68b19c507106a7ad003a6c7121cb3ba4461ed569bd4706e221970d59126bbf1e",
+    "refreshed": false
+  },
+  "approved_binding": {
+    "contract_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_preparation/execution_contract_v29_fix01.json",
+    "contract_sha256": "4114d23deb54c7cfec38197fca6d6440368f7eae26b74eed4d6a4bb0e4905ef6",
+    "selector_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_preparation/factor_only_selector_v29_fix01.json",
+    "selector_sha256": "aa57f05a797c03da48c85ca8ee10acfc44b29f5841f2c0cea715ea4cd8d9d11f"
+  },
+  "original_transfer": {
+    "dependency_count": 39,
+    "receipt_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/transfer_verification_v29.json",
+    "receipt_sha256": "b98c9a901a7fe935dee69aa2df2347dab280255f374befba0876529b34e2308b",
+    "modified": false
+  },
+  "supplement": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5",
+    "file_count": 2,
+    "total_bytes": 36250728,
+    "files": [
+      {
+        "relative_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+        "bytes": 36244923,
+        "sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+        "role": "Frozen ordered 32060-row original-size AUTO mode manifest; pinned by src/solvers/task40_v20_mode_inventory.py",
+        "target_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+        "target_bytes": 36244923,
+        "target_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+        "verified": "PASS"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_ledger.json",
+        "bytes": 5805,
+        "sha256": "8dd917dbb7252bfb0abca81213f3d3cba93cd1f35010a55cbf8c27e2f32ecd4a",
+        "role": "Frozen physical and ordered-inventory identity ledger; pinned by src/solvers/task40_v20_mode_inventory.py",
+        "target_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_ledger.json",
+        "target_bytes": 5805,
+        "target_sha256": "8dd917dbb7252bfb0abca81213f3d3cba93cd1f35010a55cbf8c27e2f32ecd4a",
+        "verified": "PASS"
+      }
+    ],
+    "loader_required_ignored_file_closure": "exactly the two fixed files above; generator_source_sha256 paths in target_ledger.json resolve to tracked files in the deployed source tree",
+    "generator_source_comparisons": [
+      {
+        "path": "src/common/modes_3d.py",
+        "recorded_sha256": "ba58ffd3ceccff21ddf968ad73573344b3856e1dbede78044bd9ba6921cc1383",
+        "target_sha256": "ba58ffd3ceccff21ddf968ad73573344b3856e1dbede78044bd9ba6921cc1383",
+        "tracked": true
+      },
+      {
+        "path": "src/solvers/fullspace_dtn_action.py",
+        "recorded_sha256": "fe762d247099d136437b9603bda54c0f706d819d445a8b40f6ae45751813476d",
+        "target_sha256": "a98e3916d0c0bf1b85f4b59d2540d18114a0b3e90a32ffeae4abafb9624cd44b",
+        "tracked": true
+      },
+      {
+        "path": "src/solvers/dtn_port_3d.py",
+        "recorded_sha256": "1cc3400b975eeb2b1b0c7cd7a35f0b4c8d8c2c1bb0a004a99e2ad24c7c521c00",
+        "target_sha256": "a165e5633fdf90d768fcc949ba617ecc6aae96ca54cf1d00852b1667e64b7bb3",
+        "tracked": true
+      },
+      {
+        "path": "benchmarks/run_task40_v5_target_ledger.py",
+        "recorded_sha256": "608e76abb7be1a4487378125154b0274f2f74c2b8cb21d86e50d8587af8e5d55",
+        "target_sha256": "608e76abb7be1a4487378125154b0274f2f74c2b8cb21d86e50d8587af8e5d55",
+        "tracked": true
+      }
+    ]
+  },
+  "validated_identity": {
+    "mode_manifest_schema": "fullspace-dtn.mode-manifest.v1",
+    "mode_manifest_profile": "full3d_scalable_v1",
+    "mode_count": 32060,
+    "target_mode_physical_identity_sha256": "a855565b82c1d88e84352dd355aec3531464261e5ab0df3e45de17e1879eaf1f",
+    "ordered_inventory_identity_sha256": "39b457c3f0b9d8db5f85a8f1482734513d48670c017d4c8060cae734bdcd0c12"
+  },
+  "originating_attempt": {
+    "run_id": "20261012T071046.659698Z",
+    "workflow_classification": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+    "factorization_started": false,
+    "raw_failure_preserved": true
+  },
+  "transfer_verification": {
+    "method": "scp over existing strict SSH config",
+    "target_verified_utc": "2026-10-12T07:18:18.442374+00:00",
+    "target_verified_monotonic_ns": 1714493303275897,
+    "target_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+  }
+}

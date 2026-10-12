@@ -24,46 +24,62 @@
     "documentation_closeout": {
       "passed": 29,
       "receipt": "outcomes/records/targeted_tests_v29.json",
-      "status": "PASS"
+      "status": "PASS_BEFORE_FINAL_FACTUAL_CLOSEOUT_UPDATE; RERUN_AFTER_EDIT"
     },
     "factor_or_pde": {
-      "status": "NOT_RUN"
+      "status": "Q0_FACTOR_AND_TWO_TEST_RHS_COMPLETED; ALL_Q_AND_TARGET_PDE_NOT_RUN"
     },
     "fixed_campaign_window_and_t0": {
-      "status": "NOT_CREATED",
-      "t0_utc": null
+      "status": "PASS_FIXED_WINDOW_USED_WITHOUT_REFRESH",
+      "t0_utc": "2026-10-12T05:49:12.144309894Z",
+      "window_sha256": "68b19c507106a7ad003a6c7121cb3ba4461ed569bd4706e221970d59126bbf1e"
     },
     "implementation_source_freeze_by_main": {
-      "status": "PASS_REMOTE_VERIFIED"
+      "status": "PASS_REMOTE_VERIFIED",
+      "factor_run_source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f",
+      "current_checker_source_sha": "9a9a9d31f4aebf1564d5f09177c1d3481d64371f"
     },
     "local_targeted_software_validation": {
       "receipt": "outcomes/records/targeted_tests_v29.json",
       "status": "PASS"
     },
     "service_or_worker_started": {
-      "status": "NO"
+      "status": "COMPLETED_Q0",
+      "service_unit": "myfenics-case-20261012T071907-236011.service",
+      "run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
+      "worker_pid": 236201,
+      "attempt_id": "20261012T071945.212305Z",
+      "run_case_wrapper_pid": 236184
     },
     "target_host_identity_and_empty_root": {
       "receipt_sha256": "5bddd5d774ace598751449d41e3df160a4a833e2aa7ab68985e399273040f4ff",
       "status": "PASS_READ_ONLY_ONLY"
     },
     "target_runtime_qualified": {
-      "old_runtime_receipt_reuse": "PROHIBITED",
-      "required_petsc_version": "3.25.6",
-      "required_profile": "native_linux",
-      "status": "PENDING_COPY_AND_FRESH_ABI_QUALIFICATION"
+      "status": "PASS_NATIVE_LINUX_PETSC_3_25_6_COMPLEX128_INT32_MPI1"
     },
     "target_transfer": {
-      "status": "NOT_AUTHORIZED"
+      "status": "APPROVED_DEPLOYMENT_COMPLETED"
     },
     "task_cap_host_reserve_swap_policy": {
-      "status": "PROPOSAL_NOT_APPROVED"
+      "status": "APPROVED_AND_APPLIED",
+      "task_memory_max_bytes": 549755813888,
+      "host_reserve_bytes": 68719476736,
+      "memory_swap_max_bytes": 0
+    },
+    "independent_checker_replay": {
+      "status": "PASS_PARTIAL_RECEIPT_CHECKED",
+      "checks_passed": 28,
+      "checks_total": 28,
+      "full_pass": false,
+      "official_result": false
+    },
+    "raw_saved_vector_residual_audit": {
+      "status": "PASS",
+      "checks_passed": 7,
+      "checks_total": 7,
+      "result_sha256": "a1c223d6077e3c06af65350797c830e9d147e4c4e9bdb39edb514b3e0cb8cd26"
     }
-  },
-  "held_launch_command": {
-    "generated_from_prepare_script": true,
-    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_preparation/factor_only_command_v29.sh.txt",
-    "status": "HELD_DO_NOT_RUN"
   },
   "implementation_snapshot_sha256": "ea8f67c174b5b5153d7563f0be50e8d98da0e46badd08a7c0fa92a61821b1b9f",
   "key_data_copy_paths": [
@@ -158,7 +174,7 @@
       "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
     }
   ],
-  "next_boundary": "After user approves the remaining resource/dependency/runtime package and the fixed window is registered; then consume the frozen source and issue one new T0.",
+  "next_boundary": "Review/explicit next-stage resource and scope authorization for actual remaining q inventory, residency and target pilot. This package is complete; no automatic additional heavy.",
   "runtime_copy_plan": {
     "destination_absolute_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
     "destination_relative_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
@@ -167,19 +183,47 @@
     "source_absolute_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
     "source_du_tree_bytes": 2625190071,
     "source_relative_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
-    "status": "PENDING_USER_AUTHORIZATION_AND_COPY",
+    "status": "ACTUAL_COPY_AND_FRESH_NATIVE_ABI_COMPLETED; PREAPPROVAL_PLAN_IN_SNAPSHOT",
     "target_runtime_requirement": "Copy only after approval; then create a fresh native_linux/PETSc 3.25.6 target ABI receipt. Do not reuse old target inventory/receipt as PASS."
   },
   "schema": "task40extra.review_v29_execution_readiness.v1",
   "source_at_entry": "e85992c79d7e2b3f41cd1396ffb06edccdd93421",
   "source_freeze_receipt_sha256": "7a2a0bd98e3cd7fed9731b34082e2fbc11a1f55d8a8bbb88b87ac33a5c1ddaf4",
-  "status": "SOURCE_FROZEN; EXECUTION_AUTHORIZATION_PENDING",
+  "status": "COMPLETED_SELECTED_Q0_FACTOR_AND_INDEPENDENT_SAVED_VECTOR_AUDIT; ALL_Q_TARGET_NOT_RUN",
   "worker_state": {
-    "classification": "NO_WORKER_EXISTS; no V29 worker has been launched.",
-    "run_id": null,
-    "service_started": false,
-    "service_unit": null,
-    "worker_pid": null
+    "classification": "Q0_FACTOR_AND_TWO_RHS_SOLVES_COMPLETED",
+    "run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
+    "service_started": true,
+    "service_unit": "myfenics-case-20261012T071907-236011.service",
+    "worker_pid": 236201,
+    "source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f",
+    "attempt_id": "20261012T071945.212305Z",
+    "run_case_wrapper_pid": 236184,
+    "process_roles": {
+      "run_case_wrapper_pid": 236184,
+      "workflow_pid": 236018,
+      "mpiexec_pid": 236199,
+      "proxy_pid": 236200,
+      "numerical_worker_pid": 236201
+    }
   },
-  "worker_status_notice": "No service, run_id or worker PID exists. One start notice remains authorized only after an actual worker starts."
+  "worker_status_notice": "One real numeric start reported and roles corrected: numerical236201/wrapper236184/workflow236018. Worker exited and native cleanup/descendants verified.",
+  "authorization_status": "USER_APPROVED_AND_APPLIED",
+  "execution_receipt": "outcomes/records/v29_execution_receipt.json",
+  "preapproval_snapshot": {
+    "path": "outcomes/records/v29_execution_readiness_preapproval_snapshot.json",
+    "sha256": "d3c50054a3e3f469cff56cd587f798636b385070783495a3111621a06bef593a"
+  },
+  "published_receipt_index": "outcomes/records/v29_published_receipt_index.json",
+  "actual_execution_receipt_sha256": "7b5e5dac5edafa4c3de46e7348b194a73f4aaa6004f58d56a8bff2559feff53e",
+  "recorded_launch_command": {
+    "generated_from_prepare_script": true,
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_preparation/factor_only_command_v29.sh.txt",
+    "status": "HELD_DO_NOT_RUN"
+  },
+  "published_original_receipts_index_sha256": "9ac9ee506734cb876363ae2e6dda79913f869052ce53accab86903b068d704c5",
+  "final_documentation_validation": {
+    "path": "outcomes/records/v29_final_documentation_validation.json",
+    "sha256": "989562c230a6f083bc7b3f65f6dbe73242d07533cceb0cbfc3181a61ca1574af"
+  }
 }

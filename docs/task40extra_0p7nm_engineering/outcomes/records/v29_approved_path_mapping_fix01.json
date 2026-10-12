@@ -1,0 +1,19 @@
+{
+  "schema": "task40extra.review_v29_path_mapping.v1",
+  "source_root": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering",
+  "execution_root": "/home/fenics/Projects/laptop_share",
+  "root_status": "DEPLOYED_FROM_APPROVED_EMPTY_ROOT; ORIGINAL_RECEIPT_RETAINED",
+  "root_verification_receipt": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/main_workstation_readonly_receipt_v29.json",
+  "root_verification_receipt_sha256": "5bddd5d774ace598751449d41e3df160a4a833e2aa7ab68985e399273040f4ff",
+  "transfer_status": "COMPLETE_VERIFIED",
+  "runtime_status": "FRESH_NATIVE_LINUX_ABI_PASS",
+  "heavy_status": "APPROVED_FACTOR_ONLY_READY",
+  "rules": {
+    "source_paths_must_resolve_under_source_root": true,
+    "destination_paths_must_resolve_under_execution_root": true,
+    "relative_layout_preserved": true,
+    "rewrite_immutable_v28_json": false,
+    "rewrite_method": "resolve_paths_in_memory_or_through_this_sidecar_only"
+  },
+  "execution_contract_sha256": "4114d23deb54c7cfec38197fca6d6440368f7eae26b74eed4d6a4bb0e4905ef6"
+}

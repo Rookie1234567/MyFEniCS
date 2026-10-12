@@ -1,15 +1,18 @@
-# Task40extra Review V29 定向软件验证
+# Task40extra Review V29 定向软件验证与checker复核
 
 | 验证 | source / 命令 / 回执 | 结果 | 证据边界 |
 |---|---|---|---|
-| 主控源码冻结 | source_at_entry e85992c79d7e2b3f41cd1396ffb06edccdd93421; current frozen source 45628068263181b83739ff80f4f34ffaa472e943; receipt local_v29_wsl/main_source_freeze_v29.json | 远端回读确认 | 只确认源码冻结与 push，不表示 target factor 已运行 |
-| 本地 ABI preflight | qualified local WSL activation；checkout .venv；PETSc 3.19.6 complex128/int32、MPI1 | PASS | 轻量测试栈，不是 target runtime 资格 |
-| V29 定向测试 | targeted_tests_v29.json；日志 SHA-256 949ebe3851c55cc26250c03210fbcda383894d3ed3a45f1ec87d321921ce5b87 | **15 passed in 1.14 s** | 冷 shell/native profile、路径绑定、资源门、V27/V28 路由和 V26 lifecycle fixture；无 factor/PDE |
-| 语法 / shell / whitespace | changed-file py_compile、bash -n scripts/run_case_in_user_service.sh、git diff --check | 全部 PASS | 不是全仓 compileall |
-| full repository / MPI2/MPI4 / Ruff / CI | 未运行 | NOT_RUN | Ruff 未安装；不声称 CI 通过 |
-| target factor / solver / PDE | service 未启动 | NOT_RUN | F_q、native S_q、第二 RHS parent、残差、factor memory 与 R/T/A 均无实测 |
+| V29 实现定向测试 | frozen source 45628068263181b83739ff80f4f34ffaa472e943；targeted_tests_v29.json | 15 passed in 1.14 s | 冷启动/native profile/身份路由与lifecycle fixtures；不含 target factor/PDE |
+| checker 修复前 focused suite | checker 源码最终叶子修复前；日志 SHA-256 9a2efc134843d70a3a5ce41026756541c93c8c1aa54476e864a750174e10658f | 79 passed、1 skipped | 最终叶子变更后没有重跑这组；不冒充 final-leaf 全组结果 |
+| 最终 checker 路径次序回归 | source 9a9a9d31f4aebf1564d5f09177c1d3481d64371f；python -m pytest -q src/test/test_task40_v28_q0_continuation.py -k checker_rejects_csr_path_escape_before_payload_hash；日志 SHA-256 9c6bd26e3d830b6d6db7309637aa7d6fc51a44e7dd140cb2a1239c0439711abc | 1 passed、5 deselected in 0.03 s | 最终叶子变更定向测试；不声称 broader suite 已重跑 |
+| 文档合同 | 四个 documentation/model-registry/retrospective/Markdown contract suites | 本次更新后重新运行，结果待回填 | 只核文档/记录合同，不含数值求解 |
+| required checker 原始运行 | q0 factor run 的原 checker receipt | exit 2，原始 outer failure 和 partial result 保留 | 不因新 checker-only replay 覆盖旧失败 |
+| checker-only 修复重放 | checker source 9a9a9d31f4aebf1564d5f09177c1d3481d64371f；main_checker_audit_result.json | PARTIAL_RECEIPT_CHECKED；28/28 identity/payload/window checks true；return 0；errors=[] | full_pass=false、official_result=false；这28项不是原始向量残差重算 |
+| saved-vector independent residual audit | 主控只读审计；结果 SHA-256 a1c223d6077e3c06af65350797c830e9d147e4c4e9bdb39edb514b3e0cb8cd26 | 7/7 checks PASS；两组 777,644 行 MatVec 与保存 RHS/residual 逐位相同；CSR三数组哈希未变 | 73.240 s service parent；4 CSR MatVec；factor/backend solve/FE-MPC/旧 native replay 均为 0 |
+| target ABI / factor execution | native Linux qualification 与固定窗口 q0 run | ABI PASS；factor 与两组 residual Gate 完成 | 不是 pytest；未运行 q1-q7 或 target PDE |
+| full repository pytest / MPI2 / MPI4 / Ruff / CI | 本轮 | NOT_RUN | 不声称全仓测试、MPI2/4、Ruff 或 CI 通过 |
 
-冻结代码文件快照 SHA-256：ea8f67c174b5b5153d7563f0be50e8d98da0e46badd08a7c0fa92a61821b1b9f。V29 prepare --verify-only 已完整读取并哈希 39 项依赖，共 24,317,319,033 B（包括 CSR）；本轮文档收口没有重复该 hash。该身份检查不等于 native/numeric qualification。最终文档合同组：29 passed；精确命令、耗时和日志 SHA-256 见 targeted_tests_v29.json。文档测试独立登记，不与这 15 项实现测试相加。
+不同源码阶段的 targeted 15 项、final leaf 1 项、旧 focused 79+1 和文档合同分别计数，不合并成一个通过数。V28 inherited CSR/native qualification 未重跑。
 
 ---
 
@@ -531,3 +534,8 @@ Native component-only receipt 的重算 Gate 数值、worker 失败位置、4 �
 没有运行 full repository pytest、MPI2/MPI4、Ruff、CI、full q construction、global factor/KSP、完整 PDE 或 official R/T/A。GitHub 页面获取遇到新提交 cache miss；线上渲染未确认，本地链接/表格结构检查不能替代它。后续新增数值运行需新的 review/window；本文档收口阶段不重启 B/C/D 数值计算。
 
 研发阶段分别有69/1skip、70/1skip、14及正式runtime2项结果，不能累加重复计数或声称整批未跑V27文件。收据/hash见 [source-bound测试记录](records/targeted_tests_v27.json)。
+
+
+## 主控最终文档与小凭据核验
+
+最终已校对的 V29 文档/JSON、小凭据原字节、明确 PID/INFOG 单位/Fq 与原记录一致；两项 repository documentation tests：**22 passed in 0.13s**。源代码是9a9a9d31，未重跑科学计算。日志及精确命令见 records/v29_final_documentation_validation.json；Git diff --check PASS，CI未运行。

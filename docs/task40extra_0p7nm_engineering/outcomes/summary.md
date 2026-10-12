@@ -1,32 +1,33 @@
-# Task40extra Review V29：源码已冻结，factor 启动仍待批准
+# Task40extra Review V29：q0 factor-only 完成，原尺寸 PDE 仍未资格化
 
-本轮消费的是 V28 已保存的 regular-reference q0 矩阵；它不是原尺寸 Ny8 target 的新求解。主控已冻结并远端回读接线修复，Review 登记 source_at_entry 保持 e85992c79d7e2b3f41cd1396ffb06edccdd93421，当前实现 source 为 45628068263181b83739ff80f4f34ffaa472e943。剩余目标资源/依赖包授权、目标 ABI/runtime 资格和固定窗口没有完成，因此没有启动 factor。
+V29 在用户批准的固定窗口内完成一场 regular-reference q0 分解和两组测试 RHS 求解。它复用 V28 完整 q0 CSR；不是 50×25×140 nm、30,464-cell Ny=8 目标模型的新场求解。主控对两组保存向量独立重算，逐位复现保存的 RHS 和 residual，7/7 audit checks 通过。checker 的 28 项身份/payload/window 检查也通过，但 full_pass=false 且 official_result=false；元数据检查与独立残差审计分开记。
 
 | 模型/阶段 | 方法与目的 | 状态 | 实测/已知结果 | 未知或未运行 |
 |---|---|---|---|---|
-| regular-reference q0 | 消费已有 V28 CSR/native PASS，测一次单 q 分解 | 输入资格沿用 | 777,644²；577,061,168 slots；payload 11,544,333,940 B；V28 最大相对误差 1.91166e-14 ≤ 1e-11 | V29 prepare 已完整读/hash 39 项依赖；文档收口未重做；未新做 native comparison |
-| V29 service 与 native profile 接线 | 在冷 shell 中先验证轻量合同，之后激活已有 native_linux runtime | 源码冻结；15 项 targeted tests PASS | source 45628068263181b83739ff80f4f34ffaa472e943 | target ABI 未资格 |
-| q0 factor | symbolic/numeric、首次 MatSolve 和真实残差 | NOT_RUN | 没有 service、run_id、worker PID | 分解、完整 residual、峰值、F_q 均 UNKNOWN |
-| 同因子重复求解 | 用同一已驻留因子做第二组 RHS | NOT_RUN | 计时字段已分开 | S_q/native_MatSolveRepeated 与第二 RHS parent 均未测 |
-| 原尺寸 Ny8 target | 真实 50×25×140 nm，Nx272/Ny8/Nz14/p6，30,464 cells | NOT_RUN | 无新 PDE | R/T/A、A_volume、衍射、A6 与 2 TB/48 h 未资格 |
+| regular-reference q0 | 消费 V28 已保存 CSR/native PASS，首次分解并对两组不同 RHS 求解 | q0 factor、worker residual Gate 与 raw-vector independent audit 完成 | 777,644²；577,061,168 slots；payload 11,544,333,940 B；numeric 625.776 s；完整 F_q 742.0975 s（含 loader；子段711.811 s）；S_q MatSolveRepeated 12.919 s；residual 1.9776283e-14、1.6069610e-14，门限 1e-10 | 其余 q、因子独立常驻与完整冷端到端仍未知 |
+| 原尺寸 Ny=8 target | 真实非可分三维 FE/MPC、all-q、KSP 和物理输出 | NOT_RUN | 原尺寸 50×25×140 nm、272×8×14、p6、30,464 cells | R/T/A/A_volume、衍射、A6、目标精度与 2 TB/48 h 均未资格 |
+| required checker | 读取保存的结果并重算身份/receipt 结论 | 原 checker FAIL 保留；checker-only 修复后 28/28 metadata checks PASS | 新结果 PARTIAL_RECEIPT_CHECKED，return 0，errors=[] | full_pass=false、official_result=false；28 项不覆盖 saved-vector residual recomputation |
 
-| 准备/授权门 | 当前状态 |
-|---|---|
-| 源码 | 主控冻结并远端确认；implementation snapshot SHA-256 ea8f67c174b5b5153d7563f0be50e8d98da0e46badd08a7c0fa92a61821b1b9f |
-| 依赖包 | 39/39 存在且哈希匹配，共 24,317,319,033 B；本轮不重哈希、不传输 |
-| 目标目录 | /home/fenics/Projects/laptop_share 只读核验为空；runtime 提案从本机 local_w0_wsl/runtime_prefix 复制至相同相对路径，du 树大小 2,625,190,071 B 仅作占用观察；复制及 native_linux/PETSc 3.25.6 新 qualification 待批 |
-| 资源/window | 512 GiB task cap、64 GiB host reserve、swap=0、MPI1/线程1、6h window 是待批准方案；T0=null |
-| 服务状态 | 未启动；service、run_id、worker PID 都为空 |
+V28 旧 CSR/native 资格没有重跑。V29 的分解时间不等于 cold full workflow；q0 service 父区间为 834.108 s，F_q 生命周期计时排除初始 CSR loader。分解服务 cgroup 峰为 84,891,103,232 B、task swap 0；process-tree RSS peak 和 PSS peak 未知，销毁前 RSS 73,172,611,072 B 只是一个样本。
 
 ## 两级时间与资源账
 
-| 层级 | 已记录数据 | 边界 |
+| 层级 | 已记录数据 | 口径 |
 |---|---|---|
-| 阶段成本 | 既有本地准备区间 UTC 4008.5096 s、monotonic 3607.9524 s、boottime 3607.9524 s；39 项/24,317,319,033 B 依赖全文件 hash 子区间 164.586 s；最终定向 pytest 1.14 s | 时钟分列；约 400.5572 s 差值 UNKNOWN。03:27:30Z 后修复/测试/文档没有完整独立账本。以上都不是 factor 时间。 |
-| campaign/window | 没有 V29 T0、deadline 或运行账本；6h 与 20,400 s 数值 cutoff 仅是提案 | 尚未创建 task cgroup，未转移文件或启动服务。 |
-| factor/resource | F_q、S_q、symbolic/numeric、MatSolve、residual、factor 常驻和 process-tree/cgroup 峰值均 null；host swap 快照 Total 8,589,930,496 B / Free 8,569,143,296 B / Used 20,787,200 B，task swap null | 没有真实因子调用；不能以 null 写成 0 s/0 B。 |
+| 工程准备 | 保守父区间 7,676.158 s，包含早期 4,008.510 s | 不重复相加；结束后的零碎收尾仍 UNKNOWN，不是 factor 时间 |
+| 固定窗口 | T0 2026-10-12T05:49:12.144309894Z；数值截止 11:29:12.144309894Z；deadline 11:49:12.144309894Z；未刷新 | 6 h 窗口，保留 1,200 s closeout reserve |
+| attempt/service/audit 父区间 | 前置导入失败 32.873 s；缺少 mode identity 失败 42.122 s；成功 q0 service 834.108 s；checker-only replay 31.717 s；独立 vector audit 73.240 s；合计 1,014.061 s | 不含未记录的窗口间隙；不再累加嵌套阶段计时 |
+| 数值阶段 | symbolic native 19.370 s；numeric native/parent 625.776/625.863 s；fresh native solve 17.544 s；second native repeated solve 12.919 s；完整第二 RHS parent 17.433 s | native 阶段包含于父区间，不应重复相加 |
+| Task40 factor 资源 | task cap 549,755,813,888 B；reserve 68,719,476,736 B；task swap cap/峰值 0；dedicated cgroup 历史峰 84,891,103,232 B | process-tree RSS peak 与 PSS peak未知；73,172,611,072 B 为销毁前 RSS sample；MUMPS INFOG 是 decimal MB 上界，不是同时进程峰 |
+| checker/vector audit 资源 | checker RSS/cgroup peak 190,537,728/117,538,816 B；vector audit RSS/cgroup peak 11,846,586,368/11,827,720,192 B；两者 swap 0 | 与 factor service 峰值分开登记；vector audit factor/backend solves 为 0 |
 
-[详细响应](../response_v29.md) · [factor 准备与身份](records/target_operator_probe_v29.json) · [时间资源账](records/time_resource_accounting_v29.json) · [软件测试](test_summary.md) · [handoff / held command](target_stage_handoff_v29.md)
+尝试历史、旧 checker 失败记录、factor checkpoint、raw NPZ 身份、窗口和证据 SHA-256 见 [执行回执](records/v29_execution_receipt.json)、[operator compact](records/target_operator_probe_v29.json) 与 [run index](records/run_index.json)。
+
+## 资格边界与后续
+
+主控的 checker-only 重放完成 28/28 身份、payload、窗口 metadata checks，return 0、errors=[]；旧 required checker exit 2 及原始失败记录不覆盖。独立 saved-vector residual audit 对两组 777,644 行向量逐位复现保存 RHS/residual，7/7 checks 通过。q1–q7、all-q residency/cycling、target KSP/PDE、official R/T/A、最终精度和 2 TB/48 h 都没有完成。下一阶段先按每个 distinct-q factor 和同时构造工作集评估驻留/切换方案；不以 q0×8 代替实测。
+
+[Response V29](../response_v29.md) · [operator](records/target_operator_probe_v29.json) · [time/resource ledger](records/time_resource_accounting_v29.json) · [readiness](records/v29_execution_readiness.json) · [execution receipt](records/v29_execution_receipt.json) · [test summary](test_summary.md) · [run index](records/run_index.json)
 
 ---
 

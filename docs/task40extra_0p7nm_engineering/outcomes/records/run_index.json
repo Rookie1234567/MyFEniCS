@@ -2,7 +2,7 @@
   "schema": "task40extra.run_index.v1",
   "branch": "task40extra_0p7nm_engineering",
   "repair_base_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
-  "current_code_sha": "45628068263181b83739ff80f4f34ffaa472e943",
+  "current_code_sha": "9a9a9d31f4aebf1564d5f09177c1d3481d64371f",
   "input": {
     "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat",
     "sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
@@ -2277,7 +2277,7 @@
       "validation": "15 passed in 1.14 s; changed-file py_compile, shell syntax, and git diff check PASS; source frozen and remotely verified."
     }
   ],
-  "last_formal_run_source_sha": "f9093c87f81d52b75fbc156e562b3745df45ccf4",
+  "last_formal_run_source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f",
   "review_v1_continuation": {
     "review": "docs/task40extra_0p7nm_engineering/review_report_v1.md",
     "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
@@ -7969,25 +7969,45 @@
       "dependency_hash_scope": "V29 prepare hashed all 39 dependencies/24,317,319,033 B in 164.586 s; later docs closeout did not repeat hashes.",
       "host_swap_scope": "SwapTotal/Free/Used are separated; task cgroup did not exist so task swap is null.",
       "post_correction_tests": "No tests rerun after these final factual wording/metadata updates, following main closeout direction.",
-      "runtime_copy": "Proposed local_w0_wsl/runtime_prefix to same relative path under laptop_share; du size 2,625,190,071 B is not transfer byte count/hash; fresh native_linux/PETSc 3.25.6 qualification is pending."
+      "runtime_copy": "Proposed local_w0_wsl/runtime_prefix to same relative path under laptop_share; du size 2,625,190,071 B is not transfer byte count/hash; fresh native_linux/PETSc 3.25.6 qualification is pending.",
+      "authorization_and_window": "User approval applied once to fixed q0 factor-only campaign; T0/deadline are recorded and window was not refreshed.",
+      "checker_scope": "28/28 checker checks bind identity/payload/window metadata. Separate raw-array audit passed 7/7 and recomputed saved residual vectors.",
+      "old_checker_failure": "Original return-code-2 checker and outer failure records remain unchanged and hash-bound.",
+      "local_closeout_tests": "Final documentation contract suite is rerun after this closeout edit; see test_summary.md and time_resource_accounting_v29.json."
     },
     "created_utc": "2026-10-12T04:22:38.727781Z",
-    "current_frozen_source_sha": "45628068263181b83739ff80f4f34ffaa472e943",
+    "current_frozen_source_sha": "9a9a9d31f4aebf1564d5f09177c1d3481d64371f",
     "documents": {
       "handoff": "outcomes/target_stage_handoff_v29.md",
       "model_registry": "../../development_model_registry.md",
       "repository_progress": "../../development_progress.md",
       "response": "../response_v29.md",
       "summary": "outcomes/summary.md",
-      "test_summary": "outcomes/test_summary.md"
+      "test_summary": "outcomes/test_summary.md",
+      "execution_receipt": "outcomes/records/v29_execution_receipt.json"
     },
     "formal_run": {
-      "classification": "NOT_RUN",
-      "factor_started": false,
+      "classification": "Q0_FACTOR_AND_TWO_RHS_SOLVES_COMPLETED; SAVED_VECTOR_AUDIT_PASS; CHECKER_PARTIAL_RECEIPT_CHECKED",
+      "factor_started": true,
       "official_result": false,
-      "run_id": null,
-      "service_started": false,
-      "worker_pid": null
+      "run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
+      "service_started": true,
+      "service_unit": "myfenics-case-20261012T071907-236011.service",
+      "worker_pid": 236201,
+      "factor_run_source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f",
+      "checker_source_sha": "9a9a9d31f4aebf1564d5f09177c1d3481d64371f",
+      "raw_vector_audit": "PASS; 7/7 checks",
+      "attempt_id": "20261012T071945.212305Z",
+      "run_case_wrapper_pid": 236184,
+      "process_roles": {
+        "run_case_wrapper_pid": 236184,
+        "workflow_pid": 236018,
+        "mpiexec_pid": 236199,
+        "proxy_pid": 236200,
+        "numerical_worker_pid": 236201
+      },
+      "process_tree_rss_peak_bytes": 84767309824,
+      "F_q_seconds": 742.0975460591726
     },
     "implementation_snapshot_sha256": "ea8f67c174b5b5153d7563f0be50e8d98da0e46badd08a7c0fa92a61821b1b9f",
     "inherited_v28_manifest_sha256": "ca3c8de9093fd1cfe9e17c8eb557cd2f96920a3ee110549f007e70835d4a2290",
@@ -8021,7 +8041,7 @@
         "sha256": "b67c9e24ab4cec8b5862d4c1ce5defede35860cc03ba0ffb5363f852309156a9"
       },
       "execution_contract": {
-        "authorization_status": "PENDING_USER_AUTHORIZATION",
+        "authorization_status": "PREPARATION CONTRACT RETAINED; APPROVED DEPLOYED CONTRACT AND WINDOW BOUND IN EXECUTION RECEIPT",
         "path": "outcomes/records/v29_execution_contract.json",
         "sha256": "ff2b5baca1a2fba692b0662d3960090bac034f5faf79849f9e2314a2cd0d1582"
       },
@@ -8138,14 +8158,17 @@
       "operator": "outcomes/records/target_operator_probe_v29.json",
       "source_snapshot": "outcomes/records/v29_source_snapshot.json",
       "targeted_tests": "outcomes/records/targeted_tests_v29.json",
-      "time_resource": "outcomes/records/time_resource_accounting_v29.json"
+      "time_resource": "outcomes/records/time_resource_accounting_v29.json",
+      "execution_receipt": "outcomes/records/v29_execution_receipt.json",
+      "raw_checker_artifact_directory": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/service_runs/task40-v29-checker-fix02-main-20261012T090115",
+      "raw_vector_audit_directory": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/service_runs/task40-v29-factor-vectors-audit-20261012T091357"
     },
     "review_sha256": "7a535053474bf864ed77dbf13f66aba1baf2172ff568738e10e2bc3d2266d51e",
     "schema": "task40extra.review_v29_evidence_index.v1",
-    "scope_note": "V29 source is frozen; the remaining user authorization for resources/dependency transfer/runtime/window is pending. No SSH transfer, target service, worker, factor, or new T0 occurred.",
+    "scope_note": "Approved V29 q0 factor-only run completed in the fixed window. Checker-only replay passed 28 identity/payload/window checks, but full_pass and official_result remain false. A separate read-only saved-vector audit passed 7/7 and independently reproduced both residual vectors. q1-q7, all-q residency, target PDE, R/T/A, target accuracy and 2 TB/48 h remain NOT_RUN/NOT_QUALIFIED.",
     "source_at_entry": "e85992c79d7e2b3f41cd1396ffb06edccdd93421",
     "source_freeze_receipt_sha256": "7a2a0bd98e3cd7fed9731b34082e2fbc11a1f55d8a8bbb88b87ac33a5c1ddaf4",
-    "status": "SOURCE_FROZEN_REMOTE_VERIFIED; EXECUTION_HELD",
+    "status": "Q0_FACTOR_AND_SAVED_VECTOR_AUDIT_PASS; CHECKER_PARTIAL_RECEIPT_CHECKED; ALL_Q_TARGET_NOT_RUN",
     "target": {
       "execution_root": "/home/fenics/Projects/laptop_share",
       "host_alias": "fenics-ws",
@@ -8153,24 +8176,51 @@
       "host_swap_total_bytes": 8589930496,
       "host_swap_used_bytes": 20787200,
       "hostname": "fenics-ws01",
-      "resource_policy_approved": false,
+      "resource_policy_approved": true,
       "root_receipt_sha256": "5bddd5d774ace598751449d41e3df160a4a833e2aa7ab68985e399273040f4ff",
-      "root_status": "VERIFIED_EMPTY_READ_ONLY",
-      "runtime_abi_qualified": false,
+      "root_status": "DEPLOYED_FOR_APPROVED_Q0_FACTOR_ONLY",
+      "runtime_abi_qualified": true,
       "runtime_inventory_sha256": "0665dc67a5e39bdeec94a8feb099a1dbd4185fd3f19a12cdc06ec44b37939bef",
-      "runtime_qualified": false,
+      "runtime_qualified": true,
       "runtime_receipt_reused_as_pass": false,
-      "t0_utc": null,
-      "task_swap_peak_bytes": null,
-      "transfer_authorized": false,
-      "window_created": false,
+      "t0_utc": "2026-10-12T05:49:12.144309894Z",
+      "task_swap_peak_bytes": 0,
+      "transfer_authorized": true,
+      "window_created": true,
       "worker_state": {
-        "classification": "NO_WORKER_EXISTS; no V29 worker has been launched.",
-        "run_id": null,
-        "service_started": false,
-        "service_unit": null,
-        "worker_pid": null
-      }
+        "classification": "Q0_FACTOR_AND_TWO_RHS_SOLVES_COMPLETED",
+        "run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
+        "service_started": true,
+        "service_unit": "myfenics-case-20261012T071907-236011.service",
+        "worker_pid": 236201,
+        "attempt_id": "20261012T071945.212305Z",
+        "run_case_wrapper_pid": 236184,
+        "process_roles": {
+          "run_case_wrapper_pid": 236184,
+          "workflow_pid": 236018,
+          "mpiexec_pid": 236199,
+          "proxy_pid": 236200,
+          "numerical_worker_pid": 236201
+        }
+      },
+      "window_refreshed": false
+    },
+    "raw_vector_audit": "PASS; 7/7 checks; result SHA-256 a1c223d6077e3c06af65350797c830e9d147e4c4e9bdb39edb514b3e0cb8cd26",
+    "published_original_receipts": {
+      "path": "outcomes/records/v29_published_receipt_index.json",
+      "sha256": "9ac9ee506734cb876363ae2e6dda79913f869052ce53accab86903b068d704c5"
+    },
+    "actual_execution_receipt": {
+      "path": "outcomes/records/v29_execution_receipt.json",
+      "sha256": "7b5e5dac5edafa4c3de46e7348b194a73f4aaa6004f58d56a8bff2559feff53e"
+    },
+    "final_delivery_cost": {
+      "path": "outcomes/records/v29_final_delivery_cost_observation.json",
+      "sha256": "33275353009e2d081ce686c3d7dfbe5e7e0c7d0606b0f010d6fe669115fb1b12"
+    },
+    "final_documentation_validation": {
+      "path": "outcomes/records/v29_final_documentation_validation.json",
+      "sha256": "989562c230a6f083bc7b3f65f6dbe73242d07533cceb0cbfc3181a61ca1574af"
     }
   }
 }

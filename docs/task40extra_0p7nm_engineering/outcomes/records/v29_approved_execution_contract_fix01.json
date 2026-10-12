@@ -1,0 +1,172 @@
+{
+  "authorization_status": "USER_APPROVED",
+  "automatic_fill_or_readback_fallback": false,
+  "branch": "task40extra_0p7nm_engineering",
+  "current_frozen_source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f",
+  "execution": {
+    "abi_receipt_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/abi_receipt_v29_attempt2.json",
+    "abi_receipt_sha256": "1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d",
+    "approved_path_mapping": {
+      "execution_root": "/home/fenics/Projects/laptop_share",
+      "immutable_json_rewrite": false,
+      "scope": "allowlisted V29 factor-only dependency paths and declared V29 outputs; no path outside these roots",
+      "source_root": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering",
+      "transfer_status": "COMPLETE_39_FILES_SHA256_VERIFIED"
+    },
+    "artifact_destinations": {
+      "campaign_accounting": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/campaign_accounting_v10.jsonl",
+      "campaign_window": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/campaign_window_v29.json",
+      "result_runs": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm",
+      "service_runs": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/service_runs"
+    },
+    "campaign_window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/campaign_window_v29.json",
+    "campaign_window_sha256": "68b19c507106a7ad003a6c7121cb3ba4461ed569bd4706e221970d59126bbf1e",
+    "execution_host": "fenics-ws",
+    "execution_root": "/home/fenics/Projects/laptop_share",
+    "host_identity": {
+      "address": "10.14.35.46",
+      "hostname": "fenics-ws01",
+      "identity_source": "actual_target_fresh_native_linux_ABI_and_MAIN_window",
+      "remote_user": "fenics",
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+    },
+    "index_type": "int32",
+    "jit_cache": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/jit_cache",
+    "resources": {
+      "task_memory_max_bytes": 549755813888,
+      "host_reserve_bytes": 68719476736,
+      "memory_swap_max_bytes": 0,
+      "mpi_ranks": 1,
+      "math_threads": 1
+    },
+    "runtime_prefix": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+    "scalar_type": "complex128",
+    "t0_utc": "2026-10-12T05:49:12.144309894Z",
+    "window": {
+      "closeout_reserve_seconds": 1200,
+      "numeric_cutoff_after_t0_seconds": 20400,
+      "t0_utc": "2026-10-12T05:49:12.144309894Z",
+      "total_seconds": 21600
+    },
+    "transfer_receipt_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/transfer_verification_v29.json",
+    "transfer_receipt_sha256": "b98c9a901a7fe935dee69aa2df2347dab280255f374befba0876529b34e2308b"
+  },
+  "factor_only": true,
+  "launch_status": "READY",
+  "master_merge": false,
+  "proposal": "Task40extra Review V29 first qualified q0 factor",
+  "proposal_limits": {
+    "auto_cap_increase": false,
+    "closeout_reserve_seconds": 1200,
+    "host_reserve_bytes": 68719476736,
+    "index_type": "int32",
+    "math_threads": 1,
+    "memory_swap_max_bytes": 0,
+    "mpi_ranks": 1,
+    "mumps_controls": {
+      "ICNTL_10": 0,
+      "ICNTL_2": 0,
+      "ICNTL_23": null,
+      "ICNTL_3": 6,
+      "ICNTL_35": 0,
+      "ICNTL_4": 2
+    },
+    "numeric_cutoff_after_t0_seconds": 20400,
+    "scalar_type": "complex128",
+    "task_memory_max_bytes": 549755813888,
+    "total_window_seconds": 21600
+  },
+  "proposed_target": {
+    "address": "10.14.35.46",
+    "execution_root": "/home/fenics/Projects/laptop_share",
+    "host_alias": "fenics-ws",
+    "observed_hostname": "fenics-ws01",
+    "remote_user": "fenics",
+    "resource_observation": {
+      "MemAvailable_bytes": 1413713145856,
+      "MemTotal_bytes": 2163100385280,
+      "SwapFree_bytes": 8569143296,
+      "SwapTotal_bytes": 8589930496,
+      "disk_free_bytes": 2681846722560,
+      "scope": "read-only snapshot; host swap exists and no task cgroup cap is set"
+    },
+    "root_status": "APPROVED_ROOT_DEPLOYED; INITIAL_EMPTY_RECEIPT_PRESERVED",
+    "transfer_authorized": true,
+    "workstation_readonly_receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/main_workstation_readonly_receipt_v29.json",
+    "workstation_readonly_receipt_sha256": "5bddd5d774ace598751449d41e3df160a4a833e2aa7ab68985e399273040f4ff"
+  },
+  "review_v29_commit": "e85992c79d7e2b3f41cd1396ffb06edccdd93421",
+  "review_v29_sha256": "7a535053474bf864ed77dbf13f66aba1baf2172ff568738e10e2bc3d2266d51e",
+  "runtime_copy_plan": {
+    "destination_absolute_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+    "destination_relative_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+    "destination_root": "/home/fenics/Projects/laptop_share",
+    "size_scope": "Prior du tree observation only; not an exact transfer byte count or content hash.",
+    "source_absolute_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+    "source_du_tree_bytes": 2625190071,
+    "source_relative_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+    "status": "COPIED; TARGET_PATH_RELOCATED_ONLY; FRESH_NATIVE_ABI_PASS",
+    "target_runtime_requirement": "Copy only after approval; then create a fresh native_linux/PETSc 3.25.6 target ABI receipt. Do not reuse old target inventory/receipt as PASS.",
+    "actual_transferred_regular_file_bytes": 2625158288,
+    "relocation_receipt_sha256": "dd80f4f24c95fb5f3ef3e33c3cee27d9c14df221e099377587c3191e356b01ed"
+  },
+  "schema": "task40extra.review_v29_execution_contract.v1",
+  "scientific_identity": {
+    "accepted_v26_source_sha": "f9093c87f81d52b75fbc156e562b3745df45ccf4",
+    "input_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/stage_inputs/selected_reference_q_csr/target_original_ny8_operator_probe_v22.dat",
+    "input_sha256": "134ea5f08d5d5dbc366870f451ba0de0df5893c5cd73d227dac77f8a11aa2c0b",
+    "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+    "policy": "reuse_existing_science_qualification_across_new_execution_identity",
+    "producer_source_sha": "9d0f4dbfc730dd620b709d048e33e9da6c77520c",
+    "v27_manifest_sha256": "1ea707f3c201359c390b620a5122d0102f5b34bd74873b5f00e3a40b673b94de",
+    "v27_pattern_source_sha": "61530133bd02b18052e3ba64a5f78b87424c57f6",
+    "v28_complete_manifest_sha256": "ca3c8de9093fd1cfe9e17c8eb557cd2f96920a3ee110549f007e70835d4a2290",
+    "v28_native_qualification_sha256": "63babb2943b7e0f613a2c531afd09f931c4ee5504a345748c52f6ef38b0e9c81",
+    "v28_numeric_source_sha": "c6624391d8f96e257d1efa914cb38821e2a87eb9",
+    "v28_readback_sha256": "304f3029e147ba0d4054efdf484757581a88b71a0ae60f6bea7235003eeac9ac",
+    "v28_window_sha256": "dcefcfbf476f09b388554afc81a65ea85951d4d6162b6dad8743766e6742c9a0"
+  },
+  "source_at_entry": "e85992c79d7e2b3f41cd1396ffb06edccdd93421",
+  "source_at_entry_scope": "Review V29 registration source; current implementation is separately bound by current_frozen_source_sha.",
+  "source_root_at_preparation": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering",
+  "user_approval": {
+    "scope": "V29_Q0_FACTOR_ONLY",
+    "statement": "批准，抓紧做",
+    "authority": "direct human approval in existing Task40 MAIN conversation",
+    "target_host": "fenics-ws",
+    "target_root": "/home/fenics/Projects/laptop_share",
+    "source_and_dependency_runtime_copy_authorized": true,
+    "resources": {
+      "task_memory_max_bytes": 549755813888,
+      "host_reserve_bytes": 68719476736,
+      "memory_swap_max_bytes": 0,
+      "mpi_ranks": 1,
+      "math_threads": 1
+    }
+  },
+  "implementation_source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f",
+  "main_audit": {
+    "authority": "existing Task40 MAIN; direct user approval: 批准，抓紧做",
+    "science_arrays_recomputed": false,
+    "ABI_receipt_reused_from_laptop": false,
+    "reviewed_dependency_count": 39,
+    "reviewed_dependency_bytes": 24317319033,
+    "window_refreshed": false,
+    "source_clean_at_deployment": true,
+    "task_swap_gate_required_for_factor": true,
+    "prior_transfer_shared_session_not_exclusive_task_peak": true,
+    "source_fix01": {
+      "source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f",
+      "scope": "correct provider import and one real resource-gate fixture",
+      "targeted_test_log_sha256": "db868401ab9ee0869d2216bc7d97be95a4820a47127bc017c80619238231259f",
+      "result": "1 passed; compile/bash-n/diff-check passed; no numerical or resource limits changed"
+    }
+  },
+  "previous_execution_contract": {
+    "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_preparation/execution_contract_v29.json",
+    "sha256": "7a2ca5d6b7c56bdc8e32d1acf698e7d056fb6805074beca87b5352cf6410152e",
+    "failed_service": "myfenics-case-20261012T065418-214945.service",
+    "failure": "wrong resource snapshot import; no factor worker created",
+    "old_costs_and_evidence_preserved": true
+  }
+}

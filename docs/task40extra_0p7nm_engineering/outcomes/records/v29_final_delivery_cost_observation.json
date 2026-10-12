@@ -1,0 +1,54 @@
+{
+  "schema": "task40extra.v29_final_delivery_cost_observation.v1",
+  "window_sha256": "68b19c507106a7ad003a6c7121cb3ba4461ed569bd4706e221970d59126bbf1e",
+  "window_refreshed": false,
+  "services_terminated": {
+    "myfenics-case-20261012T071907-236011.service": "MainPID=0\nActiveState=failed\nSubState=failed\n",
+    "task40-v29-checker-fix02-main-20261012T090115.service": "MainPID=0\nActiveState=inactive\nSubState=dead\n",
+    "task40-v29-factor-vectors-audit-20261012T091357.service": "MainPID=0\nActiveState=inactive\nSubState=dead\n"
+  },
+  "numerical_and_required_checks_complete": true,
+  "campaign_accounting": {
+    "schema": "task40extra.review_v10_campaign_accounting.v1",
+    "sequence": 2812,
+    "label": "MAIN_V29_FINAL_DELIVERY_BEFORE_GIT_PUSH",
+    "campaign_window_sha256": "68b19c507106a7ad003a6c7121cb3ba4461ed569bd4706e221970d59126bbf1e",
+    "t0_utc_ns": 1791784152144309894,
+    "deadline_utc_ns": 1791805752144309894,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "time_namespace_identity": {
+      "time": "time:[4026531834]",
+      "time_for_children": "time:[4026531834]"
+    },
+    "previous_sample": {
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "boottime": 1723342.031395573,
+      "monotonic": 1723342.031394084,
+      "utc_ns": 1791798347170529520
+    },
+    "sample": {
+      "monotonic": 1724591.756127194,
+      "boottime": 1724591.756128895,
+      "utc_ns": 1791799596895262815,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+    },
+    "adjacent_interval": {
+      "elapsed_seconds": {
+        "monotonic": 1249.7247331100516,
+        "boottime": 1249.7247333221603,
+        "utc": 1249.724733295
+      },
+      "budget_seconds": 1249.7247333221603,
+      "discrepancy_seconds": 2.1210871636867523e-07,
+      "tolerance_seconds": 12.497247333221603,
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": 1.8494847608963028e-07
+    },
+    "bootstrap_charged_seconds": 0.0,
+    "cumulative_charged_seconds": 15444.751282535584,
+    "cutoff_seconds": 20400.0
+  },
+  "observation_scope": "Final delivery before Git push; remaining tiny commit/push interval not separately measured; all old costs/unknown unchanged",
+  "new_heavy_authorized": false
+}

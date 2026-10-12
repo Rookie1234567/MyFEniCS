@@ -1,0 +1,50 @@
+{
+  "schema": "task40extra.v29_execution_closeout_observation.v1",
+  "factor_completed": true,
+  "independent_metadata_checker_completed": true,
+  "independent_numeric_saved_vectors_completed": true,
+  "final_git_documentation_pending": true,
+  "window_sha256": "68b19c507106a7ad003a6c7121cb3ba4461ed569bd4706e221970d59126bbf1e",
+  "window_refreshed": false,
+  "accounting": {
+    "schema": "task40extra.review_v10_campaign_accounting.v1",
+    "sequence": 2811,
+    "label": "MAIN_V29_NUMERICAL_AND_REQUIRED_AUDITS_COMPLETED_FINAL_DOCUMENTATION",
+    "campaign_window_sha256": "68b19c507106a7ad003a6c7121cb3ba4461ed569bd4706e221970d59126bbf1e",
+    "t0_utc_ns": 1791784152144309894,
+    "deadline_utc_ns": 1791805752144309894,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "time_namespace_identity": {
+      "time": "time:[4026531834]",
+      "time_for_children": "time:[4026531834]"
+    },
+    "previous_sample": {
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "boottime": 1721505.634456528,
+      "monotonic": 1721505.634456102,
+      "utc_ns": 1791796510773590110
+    },
+    "sample": {
+      "monotonic": 1723342.031394084,
+      "boottime": 1723342.031395573,
+      "utc_ns": 1791798347170529520,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+    },
+    "adjacent_interval": {
+      "elapsed_seconds": {
+        "monotonic": 1836.3969379819464,
+        "boottime": 1836.396939045051,
+        "utc": 1836.39693941
+      },
+      "budget_seconds": 1836.39693941,
+      "discrepancy_seconds": 1.4280535651778337e-06,
+      "tolerance_seconds": 18.36396939045051,
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": 1.4280535651778337e-06
+    },
+    "bootstrap_charged_seconds": 0.0,
+    "cumulative_charged_seconds": 14195.026549213424,
+    "cutoff_seconds": 20400.0
+  }
+}

@@ -1,0 +1,32 @@
+import argparse,hashlib,json,math,pathlib,subprocess,sys,time
+import numpy as np
+root=pathlib.Path('/home/fenics/Projects/laptop_share');sys.path.insert(0,str(root))
+from src.runners.task40_v29_contract import require_authorized_contract,require_authorized_selector,approved_path_resolver
+from src.solvers.task40_v27_saved_q0 import open_saved_q0_csr_from_manifest
+from scripts.task40_v20_service_workflow import _v26_array_sha256,_write_json_fsync
+p=argparse.ArgumentParser();p.add_argument('--output',required=True);args=p.parse_args();start=time.perf_counter()
+prep=root/'benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_preparation'
+c,ch=require_authorized_contract(prep/'execution_contract_v29_fix01.json',expected_sha256='4114d23deb54c7cfec38197fca6d6440368f7eae26b74eed4d6a4bb0e4905ef6',current_root=root)
+s,sh=require_authorized_selector(prep/'factor_only_selector_v29_fix01.json',expected_sha256='aa57f05a797c03da48c85ca8ee10acfc44b29f5841f2c0cea715ea4cd8d9d11f',contract_path=prep/'execution_contract_v29_fix01.json',contract_sha256=ch,contract=c)
+resolve=approved_path_resolver(c);mf=resolve(s['manifest_path'])
+def sha(f):
+ h=hashlib.sha256()
+ with pathlib.Path(f).open('rb') as stream:
+  while b:=stream.read(8*1024*1024):h.update(b)
+ return h.hexdigest()
+assert sha(mf)==s['manifest_sha256']
+case=root/'results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T071945.212305Z'
+cp=case/'v28_q0_factor/v26_q0_factor_checkpoints.json';assert sha(cp)=='0b9f892ffc81ff44a3a6ce3fa4796fd41d12e21e414fbe3bbda0a27f1e7a26bd';state=json.loads(cp.read_bytes())
+A,m=open_saved_q0_csr_from_manifest(mf,path_resolver=resolve);rows=A.shape[0];records={};checks={'manifest_and_checkpoint_hashes':True,'full_shape':A.shape==(777644,777644),'CSR_dtype':A.dtype==np.dtype(np.complex128) and A.indices.dtype==np.dtype(np.int32)};matvecs=0
+for label in ('fresh_factor_probe','separate_nonzero_q0_rhs_solve'):
+ rec=state[label];raw=rec['raw_artifact'];f=(cp.parent/raw['path']).resolve();assert f.is_relative_to(cp.parent) and f.stat().st_size==raw['bytes'] and sha(f)==raw['sha256']
+ with np.load(f,allow_pickle=False) as z:
+  assert set(z.files)=={'input_x','rhs','solution','residual'};v={k:np.array(z[k],copy=True) for k in z.files}
+ assert all(x.dtype==np.dtype(np.complex128) and x.shape==(rows,) and np.isfinite(x).all() and _v26_array_sha256(x)==raw['array_sha256'][k] for k,x in v.items())
+ rhs=A@v['input_x'];e=A@v['solution']-v['rhs'];matvecs+=2;rho=float(np.linalg.norm(e)/np.linalg.norm(v['rhs']))
+ ok=bool(np.any(v['input_x']!=0) and np.any(v['rhs']!=0) and np.array_equal(rhs,v['rhs']) and np.array_equal(e,v['residual']) and math.isfinite(rho) and rho<=1e-10 and math.isclose(rho,rec['relative_full_true_residual'],rel_tol=1e-8,abs_tol=1e-15))
+ checks[label]=ok;records[label]={'seed':rec['seed'],'raw_path':str(f),'raw_sha256':raw['sha256'],'array_hashes_verified':True,'rows_evaluated':rows,'rhs_bitwise_reproduced':bool(np.array_equal(rhs,v['rhs'])),'residual_bitwise_reproduced':bool(np.array_equal(e,v['residual'])),'relative_full_true_residual':rho,'limit':1e-10,'passed':ok}
+checks['distinct_nonzero_RHS']=state['fresh_factor_probe']['seed']!=state['separate_nonzero_q0_rhs_solve']['seed'] and state['fresh_factor_probe']['raw_artifact']['array_sha256']['rhs']!=state['separate_nonzero_q0_rhs_solve']['raw_artifact']['array_sha256']['rhs']
+source_hashes={k:sha(resolve(m['csr_artifacts'][k]['path'])) for k in ('indptr','indices','data')};checks['source_CSR_content_unchanged']=all(source_hashes[k]==m['csr_artifacts'][k]['sha256'] for k in source_hashes)
+r={'schema':'task40extra.v29_independent_saved_factor_vectors.v1','checker_passed':all(checks.values()),'status':'PASS_SAVED_FACTOR_RAW_VECTORS' if all(checks.values()) else 'FAIL_SAVED_FACTOR_RAW_VECTORS','official_result':False,'full_pass':False,'checks':checks,'cases':records,'CSR_shape':list(A.shape),'CSR_stored_slots':A.nnz,'source_CSR_sha256':source_hashes,'CSR_manifest_sha256':s['manifest_sha256'],'factor_checkpoint_sha256':sha(cp),'factor_source_sha':'bee9a1f0e33076e372607581f790bda3a4a0072f','checker_source_sha':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'audit_script_sha256':sha(pathlib.Path(__file__)),'CSR_matvecs':matvecs,'old_native_matvecs_replayed':0,'backend_MatSolve_calls':0,'factor_builds':0,'FE_MPC_rebuilds':0,'parent_seconds':time.perf_counter()-start,'window_sha256':c['execution']['campaign_window_sha256']}
+_write_json_fsync(pathlib.Path(args.output),r);print(json.dumps(r,ensure_ascii=False));sys.exit(0 if r['checker_passed'] else 2)
