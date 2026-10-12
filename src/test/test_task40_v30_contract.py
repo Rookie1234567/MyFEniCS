@@ -573,6 +573,8 @@ def _v30_full_stage_fixture(root: Path, source_sha: str):
 def _set_v30_contract_environment(
     monkeypatch: pytest.MonkeyPatch, root: Path, contract_path: Path
 ) -> None:
+    from scripts import task40_v20_service_workflow as service
+
     contract_sha = _sha(contract_path)
     window_path = root / contract_module.V30_WINDOW_RELATIVE
     resources = contract_module.V30_RESOURCES
@@ -580,13 +582,30 @@ def _set_v30_contract_environment(
         "TASK40_V30_STRICT_EXECUTION": "1",
         "TASK40_V30_CONTRACT_PATH": str(contract_path),
         "TASK40_V30_CONTRACT_SHA256": contract_sha,
-        "TASK40_V30_EXECUTION_WINDOW_PATH": str(window_path.resolve()),
+        "TASK40_V30_EXECUTION_WINDOW_PATH": service._v30_environment_window_path(
+            {"path": window_path}
+        ),
         "TASK40_V30_EXECUTION_WINDOW_SHA256": _sha(window_path),
         "TASK40_V30_TASK_MEMORY_MAX_BYTES": str(resources["task_memory_max_bytes"]),
         "TASK40_V30_HOST_RESERVE_BYTES": str(resources["host_reserve_bytes"]),
         "TASK40_V30_MEMORY_SWAP_MAX_BYTES": str(resources["memory_swap_max_bytes"]),
     }.items():
         monkeypatch.setenv(key, value)
+
+
+def test_v30_service_exports_registered_relative_contract_window_as_absolute(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    from scripts import task40_v20_service_workflow as service
+
+    root, _contract_path, payload = _contract_fixture(tmp_path, monkeypatch)
+    contract_window_path = payload["execution"]["campaign_window_path"]
+    assert not Path(contract_window_path).is_absolute()
+    registered_path = root / contract_window_path
+
+    assert service._v30_environment_window_path({"path": registered_path}) == str(
+        registered_path.resolve()
+    )
 
 
 def test_v30_dispatcher_passes_authorized_copy_through_real_worker_before_runtime_boundary(

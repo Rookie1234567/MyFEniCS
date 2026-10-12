@@ -565,6 +565,11 @@ def _resolve_service_campaign(
     }
 
 
+def _v30_environment_window_path(campaign_registration: Mapping[str, Any]) -> str:
+    """Export the validated service campaign path in its absolute form."""
+    return str(Path(campaign_registration["path"]).resolve())
+
+
 def _unified_cgroup_membership(pid: int | str = "self") -> str | None:
     try:
         lines = Path(f"/proc/{pid}/cgroup").read_text(encoding="utf-8").splitlines()
@@ -8627,7 +8632,7 @@ def run_service(
             "contract_path": str(v30_contract_path.resolve()),
             "contract_sha256": str(v30_contract_sha256),
             "contract": v30_contract,
-            "execution_window_path": str(v30_contract["execution"]["campaign_window_path"]),
+            "execution_window_path": _v30_environment_window_path(campaign_registration),
             "execution_window_sha256": str(v30_contract["execution"]["campaign_window_sha256"]),
             "q0_donor": dict(v30_contract["preparation"]["accepted_q0_donor"]),
             "q_csr_worklist": list(v30_contract["preparation"]["q_csr_worklist"]),
