@@ -1,0 +1,30 @@
+{
+  "production_numerical_core": [],
+  "reusable_runner_watchdog": [
+    "src/solvers/controlled_trace_study.py",
+    "src/runners/port_preparation.py",
+    "scripts/run_case.py"
+  ],
+  "checker_benchmark": [
+    "benchmarks/qualify_uninterrupted_jacobi.py",
+    "src/test/test_uninterrupted_jacobi.py"
+  ],
+  "compact_evidence_docs": [
+    "response_v78.md",
+    "outcomes/uninterrupted_jacobi_v78.md",
+    "outcomes/records/*_v78.json"
+  ],
+  "research_only": [
+    "src/solvers/uninterrupted_jacobi_scope.py",
+    "src/solvers/uninterrupted_jacobi_study.py",
+    "input/task042_neural_coarse_inverse/v78_*.dat"
+  ],
+  "do_not_merge": [
+    "benchmarks/artifacts/task042/v78",
+    "tmp/task042/v78",
+    "unqualified PC/solver as ordinary default"
+  ],
+  "merge_approved": false,
+  "tests": "targeted+actual fresh Jacobi failure",
+  "numerical_behavior": "original PC/action unchanged; scheduling opt-in only"
+}

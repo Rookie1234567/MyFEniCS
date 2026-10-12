@@ -1,0 +1,33 @@
+{
+  "final_targeted_tests": 4,
+  "small_complex_synthetic_KSP": 2,
+  "compile_and_Ruff": "PASSED",
+  "dat_validate": 3,
+  "focused_receipt": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v78/auxiliary_prefocused01/receipt.json",
+    "sha256": "eb1cf1bce5bb91b75347e41dd2bcb6cab40d3a29a1f8db3e197f8719c17b7f84",
+    "bytes": 632
+  },
+  "tests": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v78/aux_pre_focused01/tests.json",
+    "sha256": "2853dc8eb895b75b2058f7044a2cda4092c42bd8e5f6a8efc53e9866498683de",
+    "bytes": 16956
+  },
+  "repairs": [
+    {
+      "root_cause": "newest run_case marker is first if branch, not elif; string guard rejected before run_case write",
+      "classification": "ordinary entry metadata",
+      "scientific_replay": 0,
+      "repair": "register marker tuple and explicit first branch, old branches unchanged",
+      "raw_stderr": "AssertionError"
+    }
+  ],
+  "scientific_replays": 0,
+  "full_pytest": "NOT_RUN_BY_CONTRACT",
+  "CI": "NOT_VERIFIED",
+  "GitHub_visual": "NOT_VERIFIED",
+  "no_new_PC_coarse_mesh_JIT_training": true,
+  "expensive_bad_field_outputs": "NOT_RUN_BY_FAIL_FAST_POLICY",
+  "decision": "CLOSE_CURRENT_PC_TRIALS",
+  "unique_next_recommendation": "关闭当前PC试错；新研究须先有同物理方向、误差尺度及成本依据，不自动开下一窗口。"
+}

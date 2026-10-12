@@ -1,0 +1,205 @@
+{
+  "research_window_elapsed_seconds": 2334.9706272548065,
+  "Jacobi_apply_seconds": null,
+  "ksp_seconds": 534.8595234630629,
+  "attempt_wrapper_seconds": 875.79529662407,
+  "science_prepared_pipeline_seconds": 1182.8032940530684,
+  "current_known_disjoint_command_lower_seconds": 1282.9018473853357,
+  "history_known_lower_before_v78_seconds": 398753.7436606793,
+  "history_known_lower_including_current_seconds": 400036.64550806466,
+  "disjoint_commands": [
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "focused01",
+        "python",
+        "-m",
+        "benchmarks.qualify_uninterrupted_jacobi"
+      ],
+      "source_sha": "a08d40f9845f481fa79abf6f8d7a48c99b956bcd",
+      "start_utc": "2026-10-12T08:48:25.644083+00:00",
+      "end_utc": "2026-10-12T08:50:02.271910+00:00",
+      "elapsed_seconds": 96.62782718311064,
+      "exit_code": 0,
+      "wrapper_sha256": "1f5159545d19a77b5dd58a83c7fb7ac5bc6ba5086809747dc754f59bef96f79d",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v78_jacobi_reuse_preflight.dat"
+      ],
+      "source_sha": "a08d40f9845f481fa79abf6f8d7a48c99b956bcd",
+      "start_utc": "2026-10-12T08:50:22.418823+00:00",
+      "end_utc": "2026-10-12T08:51:58.368204+00:00",
+      "elapsed_seconds": 95.9493972810451,
+      "exit_code": 0,
+      "input_sha256": "07756b1b868ce07de9a7ffdce40c35a82699467b999d4ab0184afde122410423",
+      "wrapper_sha256": "a9705bd53160d0ccdac2f969c29df9e301e12c13eaf154e8db707ffe204fdd76",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v78_jacobi_uninterrupted.dat"
+      ],
+      "source_sha": "a08d40f9845f481fa79abf6f8d7a48c99b956bcd",
+      "start_utc": "2026-10-12T08:52:48.129658+00:00",
+      "end_utc": "2026-10-12T09:07:23.924928+00:00",
+      "elapsed_seconds": 875.79529662407,
+      "exit_code": 0,
+      "input_sha256": "fd669e97c9a64953af6826cd6a3b90131506bb3cb25ff88f8ff135dbc7622110",
+      "wrapper_sha256": "a9705bd53160d0ccdac2f969c29df9e301e12c13eaf154e8db707ffe204fdd76",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v78_verify_cost.dat"
+      ],
+      "source_sha": "a08d40f9845f481fa79abf6f8d7a48c99b956bcd",
+      "start_utc": "2026-10-12T09:08:46.990770+00:00",
+      "end_utc": "2026-10-12T09:12:18.049351+00:00",
+      "elapsed_seconds": 211.05860014795326,
+      "exit_code": 0,
+      "input_sha256": "00be6763b9244827db70c94b31f581eceb38834f3e569ecbce1e7905d87a6651",
+      "wrapper_sha256": "a9705bd53160d0ccdac2f969c29df9e301e12c13eaf154e8db707ffe204fdd76",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "command": [
+        "increment_metadata_and_new_array_headers"
+      ],
+      "start_utc": "2026-10-12T09:13:46.280627+00:00",
+      "end_utc": "2026-10-12T09:13:49.751348+00:00",
+      "elapsed_seconds": 3.4707261491566896,
+      "old_arrays_hashed": false,
+      "scope": "current increment only, no FE"
+    }
+  ],
+  "stage_timings": {
+    "tetra_mesh_materials_full_periodic_space": 45.342400080990046,
+    "cold_checked_local_packet_hot_maps_and_boundary_aggregate": 63.1466444269754,
+    "independent_COEFFICIENT_FIRST_PUBLIC_BASIX_body_q15_triangle63": 207.03381099645048,
+    "final_full_original_recovery_after_KSP_and_PC_release": 17.922628823900595
+  },
+  "PC_calls": {
+    "apply": 128,
+    "local_triangular": 0,
+    "coarse_triangular": 0
+  },
+  "PC_seconds": {
+    "local": 0.0,
+    "coarse": 0.0
+  },
+  "counters": {
+    "started": 140,
+    "completed": 140,
+    "by_kind": {
+      "I_explicit_true_scaled_trace": 5,
+      "I_public_original": 5,
+      "I_outer_scaled_trace": 128,
+      "I_final_public_original": 1,
+      "V_J128_CONTINUOUS_public_original": 1
+    }
+  },
+  "fine_action_cap": 400,
+  "KSP_attempts": {
+    "count": 1,
+    "rows": [
+      {
+        "role": "J128_CONTINUOUS",
+        "source": "a08d40f9845f481fa79abf6f8d7a48c99b956bcd",
+        "monotonic": 1720396.807163487,
+        "basis_lost": false
+      }
+    ]
+  },
+  "new_numeric_factors": 0,
+  "global_fine_K_reads": 0,
+  "global_fine_S_reads": 0,
+  "global_fine_factors": 0,
+  "local_coarse_CSR_reads": 0,
+  "new_diagonal_constructions": 0,
+  "factor_release": {
+    "before_RSS_bytes": 7197159424,
+    "after_RSS_bytes": 7197159424,
+    "RSS_decreased": false,
+    "numeric_count": 0,
+    "local_numeric_count": 0,
+    "coarse_numeric_count": 0,
+    "global_fine_factor_count": 0
+  },
+  "planning_gib": 64,
+  "warning_gib": 80,
+  "sampled_stop_gib": 96,
+  "sampled_tree_peak_gib": 11.674724578857422,
+  "sample_count": 963,
+  "max_sample_gap_seconds": 1.2248414009809494,
+  "gap_source": "/home/fenics/Projects/NN-Lab/results/task042/task042_v78_verify_cost_20261012T090847337163Z/supervision/resources.jsonl",
+  "resources": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v78/aux_pre_focused01/supervision/resources.jsonl",
+      "peak_bytes": 306462720,
+      "swap_bytes": 0,
+      "samples": 6,
+      "maximum_gap_seconds": 1.0843464510980994
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v78_jacobi_uninterrupted_20261012T085248426320Z/supervision/resources.jsonl",
+      "peak_bytes": 12535640064,
+      "swap_bytes": 0,
+      "samples": 827,
+      "maximum_gap_seconds": 1.2077594678848982
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v78_jacobi_reuse_preflight_20261012T085022756648Z/supervision/resources.jsonl",
+      "peak_bytes": 413925376,
+      "swap_bytes": 0,
+      "samples": 6,
+      "maximum_gap_seconds": 1.1137900401372463
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v78_verify_cost_20261012T090847337163Z/supervision/resources.jsonl",
+      "peak_bytes": 3979587584,
+      "swap_bytes": 0,
+      "samples": 124,
+      "maximum_gap_seconds": 1.2248414009809494
+    }
+  ],
+  "configured_sample_seconds": 0.5,
+  "continuous_peak_bytes": null,
+  "swap_bytes": 0,
+  "OOC_bytes": 0,
+  "GPU_bytes": 0,
+  "vector_bank_257_payload_bytes": 4841028816,
+  "payload_is_not_RSS": true,
+  "parent_diagonal_qualification": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_minimal_preflight_20261012T031947966696Z/result.json",
+    "sha256": "b5ba8e46169f35183833133f08d9425e87f0321fd473baf06482dcdfe2372573"
+  },
+  "parent_packet_qualification": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v70/task042_v70_assembly_time_p5_prepare_20261010T142344843423Z/local_packet/manifest.json",
+    "sha256": "9bef5add6398999c70c21c7f26a86833fc1eb46f98598c8503aa3c41743728da",
+    "bytes": 4172648576
+  },
+  "parent_packet_and_global_S_shared_prepare_seconds": 8766.78132127109,
+  "packet_only_cold_prepare_seconds": null,
+  "complete_success_cold_N1_seconds": null,
+  "success_cost_unknown_reason": "no same-correctness solution",
+  "unwrapped_edit_git_startup_intervals_seconds": null,
+  "no_nested_timer_addition": true
+}

@@ -1,3 +1,7 @@
+## V78定点验证
+
+最终4项targeted、2个小合成KSP、compile/Ruff、3dat通过；连续回调和128步停止/继续均验证，无真实PDE调度测试。15项文档检查与最终字节复验见[记录](records/decisions_tests_v78.json)，GitHub视觉NOT_VERIFIED。旧测试原文保留。
+
 ## V77新增验证
 
 10项面核/符号/周期分类/halo-only/显式strategy/库存负例targeted及相关Ruff/compile、4dat validate通过；两个实际patch作用和唯一保存数组VERIFY通过，原方程效果FAIL。文档合同一次检查见[本批tests](records/tests_manifest_v77.json)。未运行full pytest/CI，不重做旧PDE。

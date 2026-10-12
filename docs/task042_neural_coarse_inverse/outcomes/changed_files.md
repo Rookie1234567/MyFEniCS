@@ -1,3 +1,7 @@
+## V78改动范围
+
+新增薄Jacobi复用scope/study与3dat；controlled runner显式iteration_policy，历史默认不变。统一launcher/监督namespace及小KSP测试；未修改原作用、材料、FE、PC数学或旧证据。研究路径仍opt-in，不建议合并失败求解能力。
+
 ## V77增量
 
 新增物理子域三角阻抗小核、V77 scope/薄队列与保存数组checker；既有controlled study仅增加显式pc_factory/scope，runner仅注册opt-in。生产默认和原算子不变，新PC效果失败。四输入、全部紧凑证据/负结果见[依赖组](records/selective_merge_manifest_v77.json)。无历史改写或邻支迁移。
