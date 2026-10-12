@@ -3408,6 +3408,7 @@ def _accumulate_bounded_q_pattern_values(
     | None = None,
     projection_method: str = "dense_support_tiles",
     direct_hhat: bool = False,
+    direct_hhat_q_index: int = 0,
 ) -> tuple[dict[tuple[int, int], sparse.csr_matrix], dict[str, Any]]:
     import time
 
@@ -3430,6 +3431,8 @@ def _accumulate_bounded_q_pattern_values(
         raise ValueError(f"unknown bounded q projection method: {projection_method}")
     if direct_hhat and projection_method != "sparse_local":
         raise ValueError("the V28 direct H path requires its sparse local projection method")
+    if type(direct_hhat_q_index) is not int or direct_hhat_q_index < 0:
+        raise ValueError("direct-H selected q index must be an explicit nonnegative integer")
 
     def bounded_projection_gate(label: str, facts: Mapping[str, Any]) -> None:
         nonlocal projection_support_discovery_gate_count
@@ -3465,28 +3468,36 @@ def _accumulate_bounded_q_pattern_values(
 
     direct_hhat_facts: dict[str, Any] | None = None
     if direct_hhat:
-        if block_keys != ((0, 0),) or not callable(
-            getattr(action, "q0_hhat_sparse_term", None)
-        ):
-            raise ValueError("V28 direct H requires one saved q0 CSR and its adapter hook")
+        selected_hhat = getattr(action, "selected_hhat_sparse_term", None)
+        if not callable(selected_hhat) and direct_hhat_q_index == 0:
+            selected_hhat = getattr(action, "q0_hhat_sparse_term", None)
+        if block_keys != ((0, 0),) or not callable(selected_hhat):
+            raise ValueError("direct H requires one selected CSR and its sparse adapter hook")
         hhat_started = time.perf_counter()
-        hhat_term = action.q0_hhat_sparse_term(allocation_gate=bounded_contribution_gate)
+        hhat_term = selected_hhat(allocation_gate=bounded_contribution_gate)
         hhat_projection_seconds = time.perf_counter() - hhat_started
         hhat_accumulation_seconds = _accumulate_v28_sparse_hhat_term(
             blocks[(0, 0)],
             hhat_term,
-            row_offset=int(action.q0_trace_rows),
+            row_offset=int(
+                getattr(
+                    action,
+                    "selected_hhat_trace_rows",
+                    getattr(action, "q0_trace_rows", -1),
+                )
+            ),
             allocation_gate=bounded_projection_gate,
-            label="ports/Hhat/direct_sparse_q0",
+            label=f"ports/Hhat/direct_sparse_q{direct_hhat_q_index}",
         )
         direct_hhat_facts = {
             "operation_count": 1,
+            "selected_q_index": direct_hhat_q_index,
             "port_count": int(getattr(action, "port_count", 0)),
             "stored_term_nnz": int(hhat_term.nnz),
             "term_shape": list(hhat_term.shape),
             "local_projection_seconds": hhat_projection_seconds,
             "global_sparse_accumulation_seconds": hhat_accumulation_seconds,
-            "formula": "U_p^H diag(h) U_p using the saved q0 port map",
+            "formula": "U_p^H diag(h) U_p using the selected q port map",
         }
         projection_seconds += hhat_projection_seconds
         accumulation_seconds += hhat_accumulation_seconds
@@ -3501,7 +3512,7 @@ def _accumulate_bounded_q_pattern_values(
                 None,
                 None,
                 hhat_term.data,
-                "ports/Hhat/direct_sparse_q0",
+                f"ports/Hhat/direct_sparse_q{direct_hhat_q_index}",
                 {
                     "generation_seconds": hhat_projection_seconds,
                     "projection_seconds": 0.0,
@@ -3632,7 +3643,12 @@ def _accumulate_bounded_q_pattern_values(
         "numeric_contribution_count": contribution_count,
         "numeric_contribution_pass_count": 1,
         "hhat_numeric_contribution_count": hhat_contribution_count,
-        "direct_hhat_sparse_q0": direct_hhat_facts,
+        "direct_hhat_sparse_q0": (
+            direct_hhat_facts if direct_hhat and direct_hhat_q_index == 0 else None
+        ),
+        "direct_hhat_sparse_selected_q": (
+            direct_hhat_facts if direct_hhat and direct_hhat_q_index != 0 else None
+        ),
         "numeric_contribution_count_including_direct_hhat": int(
             contribution_count + (1 if direct_hhat else 0)
         ),
