@@ -246,9 +246,10 @@ def _legacy_fixture(root: Path):
     current_window = "e" * 64
     mode_manifest_sha = "f" * 64
     donor_identity_sha = "9" * 64
+    donor_input_sha = "0" * 64
     runtime_identity = _runtime_identity(donor_map, donor_h)
     legacy_identity = {
-        "input_sha256": runtime_identity["scientific_input_sha256"],
+        "input_sha256": donor_input_sha,
         "physical_model_sha256": "8" * 64,
         "run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
         "campaign_window_sha256": old_window,
@@ -274,7 +275,7 @@ def _legacy_fixture(root: Path):
         "status": "PASS_COMPLETE_Q0_CSR_NATIVE_READBACK",
         "source_identity": {
             "source_sha": old_source,
-            "input_sha256": runtime_identity["scientific_input_sha256"],
+            "input_sha256": donor_input_sha,
             "physical_model_sha256": legacy_identity["physical_model_sha256"],
             "run_id": legacy_identity["run_id"],
             "campaign_window_sha256": old_window,
@@ -356,9 +357,11 @@ def _legacy_fixture(root: Path):
         },
     )
     legacy_expected = {
-        "input_sha256": runtime_identity["scientific_input_sha256"],
+        "input_sha256": donor_input_sha,
         "physical_model_sha256": legacy_identity["physical_model_sha256"],
         "mode_manifest_sha256": mode_manifest_sha,
+        "manifest_sha256": _sha(manifest_path),
+        "native_qualification_sha256": _sha(native_qualification_path),
     }
     return donor_map, donor_h, active_lookup, runtime_identity, execution, legacy_expected, selector_path
 
@@ -367,6 +370,7 @@ def test_q0_import_reuses_original_v28_verifier_and_keeps_old_window_separate(tm
     donor_map, donor_h, active_lookup, identity, execution, legacy, selector_path = _legacy_fixture(tmp_path)
     gates: list = []
     provider = _provider(tmp_path, selector_path, gates)
+    assert identity["scientific_input_sha256"] != legacy["input_sha256"]
     actual, receipt = provider.load(
         0,
         0,

@@ -16,6 +16,10 @@ V30_Q_CSR_SELECTOR_SCHEMA = "task40extra.review_v30_qualified_q_csr_selector.v1"
 V30_Q_CSR_MANIFEST_SCHEMA = "task40extra.review_v30_q_csr.v1"
 V30_Q_CSR_NATIVE_SCHEMA = "task40extra.review_v30_q_csr_native_qualification.v1"
 V30_Q0_LEGACY_IMPORT_SCHEMA = "task40extra.review_v30_q0_legacy_donor_import.v1"
+# Accepted V28 q0 donor fingerprints are separate from the current V30 run.
+V28_Q0_DONOR_INPUT_SHA256 = "134ea5f08d5d5dbc366870f451ba0de0df5893c5cd73d227dac77f8a11aa2c0b"
+V28_Q0_CSR_MANIFEST_SHA256 = "ca3c8de9093fd1cfe9e17c8eb557cd2f96920a3ee110549f007e70835d4a2290"
+V28_Q0_NATIVE_QUALIFICATION_SHA256 = "63babb2943b7e0f613a2c531afd09f931c4ee5504a345748c52f6ef38b0e9c81"
 _OPERATOR_IDENTITY_KEYS = (
     "scientific_input_sha256",
     "profile_identity_sha256",
@@ -278,12 +282,21 @@ class QualifiedQCSRProvider:
             raise ValueError("CSR manifest hash changed")
         manifest = _read_json(manifest_path)
         legacy_q0 = manifest.get("schema") == "task40extra.review_v28_saved_q0_csr.v1"
+        if legacy_q0:
+            if not isinstance(expected_legacy_q0_identity, Mapping):
+                raise ValueError("q0 import needs independently pinned V28 donor fingerprints")
+            if manifest_sha != expected_legacy_q0_identity.get("manifest_sha256"):
+                raise ValueError("V28 q0 donor is not the independently accepted manifest")
         qualification_path = self._bound_json(qualification_record, "native qualification")
         qualification_sha = _require_sha(
             qualification_record.get("sha256"), "native_qualification.sha256"
         )
         if _sha256_file(qualification_path) != qualification_sha:
             raise ValueError("qualification hash changed")
+        if legacy_q0 and qualification_sha != expected_legacy_q0_identity.get(
+            "native_qualification_sha256"
+        ):
+            raise ValueError("V28 q0 donor is not the independently accepted native qualification")
         qualification = _read_json(qualification_path)
 
         legacy_receipt: dict[str, Any] | None = None
@@ -504,11 +517,16 @@ class QualifiedQCSRProvider:
         if expected_legacy_identity is None or current_active_lookup is None:
             raise ValueError("q0 import needs independently computed physical/mode and active-lookup identity")
         legacy_identity = dict(expected_legacy_identity)
-        for field in ("input_sha256", "physical_model_sha256", "mode_manifest_sha256"):
+        for field in (
+            "input_sha256",
+            "physical_model_sha256",
+            "mode_manifest_sha256",
+            "manifest_sha256",
+            "native_qualification_sha256",
+        ):
             _require_sha(legacy_identity.get(field), f"expected_legacy_q0_identity.{field}")
         if (
-            old.get("input_sha256") != identity["scientific_input_sha256"]
-            or old.get("input_sha256") != legacy_identity["input_sha256"]
+            old.get("input_sha256") != legacy_identity["input_sha256"]
             or old.get("physical_model_sha256") != legacy_identity["physical_model_sha256"]
             or old.get("mode_manifest_sha256") != legacy_identity["mode_manifest_sha256"]
             or old.get("ordered_mode_key_sha256") != identity["ordered_mode_sha256"]
@@ -538,7 +556,7 @@ class QualifiedQCSRProvider:
             input_sha256=str(old["input_sha256"]),
             physical_model_sha256=str(legacy_identity["physical_model_sha256"]),
             run_id=str(old["run_id"]),
-            campaign_window_sha256=execution["window_sha256"],
+            campaign_window_sha256=matrix_source["window_sha256"],
             mode_manifest_sha256=str(legacy_identity["mode_manifest_sha256"]),
             ordered_mode_key_sha256=str(old["ordered_mode_key_sha256"]),
             sha256_file=_sha256_file,

@@ -32,6 +32,42 @@ _PORT_CLOSURE_LIMIT = 1.0e-8
 _IDENTITY_LIMIT = 1.0e-10
 
 
+def _task40_v30_q_csr_provider(
+    binding: Mapping[str, Any] | None,
+    *,
+    repo_root: str | Path,
+    allocation_gate: Any,
+):
+    if binding is None:
+        return None
+    if (
+        not isinstance(binding, Mapping)
+        or binding.get("schema") != "task40extra.review_v30_q_csr_worker_binding.v1"
+        or set(binding) != {"schema", "selector_path", "selector_sha256"}
+    ):
+        raise ValueError("V30 worker needs the exact frozen q-CSR selector binding")
+    root = Path(repo_root).resolve()
+    selector = Path(str(binding["selector_path"]))
+    if not selector.is_absolute():
+        selector = root / selector
+    selector = selector.resolve()
+    artifact_roots = (
+        (root / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl").resolve(),
+        (root / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation").resolve(),
+    )
+    if not any(selector.is_relative_to(path) for path in artifact_roots):
+        raise ValueError("V30 q-CSR selector is outside the registered campaign artifact roots")
+    from src.solvers.task40_v30_qualified_q_csr import QualifiedQCSRProvider
+
+    return QualifiedQCSRProvider(
+        selector,
+        selector_sha256=str(binding["selector_sha256"]),
+        repo_root=root,
+        path_resolver=lambda path: Path(path),
+        allocation_gate=allocation_gate,
+    )
+
+
 def _task40_sector_port_vectors(
     mode_indices: Any,
     *,
@@ -4680,6 +4716,8 @@ def run_task40_v10_p6_reference_worker(
     profile_identity: str | None = None,
     share_transform_bank: bool = False,
     stop_after_stage: str | None = None,
+    v30_q_csr_binding: Mapping[str, Any] | None = None,
+    v30_factor_config: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run a frozen Task40 p6 case with one live four-q periodic reference."""
 
@@ -4790,6 +4828,27 @@ def run_task40_v10_p6_reference_worker(
         )
     )
     is_v17 = q_assembly_strategy == TASK40_Q_ASSEMBLY_ROW_TILE_V17
+    v30_enabled = v30_q_csr_binding is not None or v30_factor_config is not None
+    if v30_enabled and (
+        v30_q_csr_binding is None
+        or v30_factor_config is None
+        or not is_v20
+        or v20_case is None
+        or v20_case.mesh_id != "TARGET_ORIGINAL_NY8"
+        or factor_lifecycle_strategy != TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
+        or not is_v17
+        or not is_v15
+        or stop_after_stage is not None
+    ):
+        raise ValueError(
+            "V30 worker requires target Ny8, V15 row-tile, AllQ resident, selector and factor config"
+        )
+    if v30_enabled and (
+        v30_factor_config.get("schema")
+        != "task40extra.review_v30_all_q_factor_bank.v1"
+        or not isinstance(v30_factor_config.get("output_directory"), str)
+    ):
+        raise ValueError("V30 worker factor configuration is not a frozen AllQ packet contract")
     if q_assembly_strategy not in Q_ASSEMBLY_STRATEGIES:
         raise ValueError(f"unsupported Task40 q assembly strategy: {q_assembly_strategy!r}")
     if not task40_q_assembly_strategy_is_allowed(
@@ -4961,6 +5020,8 @@ def run_task40_v10_p6_reference_worker(
     worker_result: dict[str, Any] | None = None
     v20_stage_facts: dict[str, Any] | None = None
     v20_stage_factors: Any | None = None
+    qualified_q_csr_provider = None
+    qualified_q_csr_identity: dict[str, Any] | None = None
     try:
         runtime = _V14Runtime(
             directory,
@@ -5352,6 +5413,19 @@ def run_task40_v10_p6_reference_worker(
             runtime.marker("v10_strict_allocation_admission_complete", admission)
             return admission
 
+        qualified_q_csr_provider = _task40_v30_q_csr_provider(
+            v30_q_csr_binding,
+            repo_root=_repo_root(),
+            allocation_gate=allocation_gate,
+        )
+        if qualified_q_csr_provider is not None:
+            summary["v30_q_csr_selector"] = {
+                "selector_path": str(qualified_q_csr_provider.selector_path),
+                "selector_sha256": qualified_q_csr_provider.selector_sha256,
+                "profile": qualified_q_csr_provider.profile,
+                "selected_q_indices": sorted(qualified_q_csr_provider.entries),
+            }
+
         support_groups, support_rows, _support_facts = _boundary_support(target_bundle)
         compiled_target = fem.form(
             target_bundle["volume_action"].bilinear_form,
@@ -5731,6 +5805,56 @@ def run_task40_v10_p6_reference_worker(
                     expected_receipt_sha256=expected_receipt_sha256,
                 )
 
+        if qualified_q_csr_provider is not None:
+            provenance = resolved_payload.get("provenance", {})
+            campaign_identity = summary.get("campaign_authority", {})
+            if (
+                not isinstance(provenance, Mapping)
+                or not isinstance(campaign_identity, Mapping)
+                or not isinstance(v20_mode_metadata, Mapping)
+            ):
+                raise ValueError("V30 q-CSR injection lacks input, campaign, or frozen mode identity")
+            input_sha256 = str(provenance.get("input_sha256", ""))
+            physical_sha256 = str(provenance.get("physical_model_sha256", ""))
+            mode_manifest_sha256 = str(target_bundle["mode_sha256"])
+            ordered_mode_key_sha256 = str(
+                v20_mode_metadata.get("ordered_mode_key_sha256", "")
+            )
+            window_sha256 = str(campaign_identity.get("campaign_window_sha256", ""))
+            if any(
+                len(value) != 64
+                or any(char not in "0123456789abcdef" for char in value)
+                for value in (
+                    input_sha256,
+                    physical_sha256,
+                    mode_manifest_sha256,
+                    ordered_mode_key_sha256,
+                    window_sha256,
+                )
+            ):
+                raise ValueError("V30 q-CSR runtime identity has an invalid SHA-256 field")
+            from src.solvers.task40_v30_qualified_q_csr import (
+                V28_Q0_CSR_MANIFEST_SHA256,
+                V28_Q0_DONOR_INPUT_SHA256,
+                V28_Q0_NATIVE_QUALIFICATION_SHA256,
+            )
+
+            qualified_q_csr_identity = {
+                "scientific_input_sha256": input_sha256,
+                "ordered_mode_key_sha256": ordered_mode_key_sha256,
+                "execution_identity": {
+                    "source_sha": source_sha,
+                    "window_sha256": window_sha256,
+                },
+                "legacy_q0_identity": {
+                    "input_sha256": V28_Q0_DONOR_INPUT_SHA256,
+                    "physical_model_sha256": physical_sha256,
+                    "mode_manifest_sha256": mode_manifest_sha256,
+                    "manifest_sha256": V28_Q0_CSR_MANIFEST_SHA256,
+                    "native_qualification_sha256": V28_Q0_NATIVE_QUALIFICATION_SHA256,
+                },
+            }
+
         reference = build_task40_v10_p6_reference_inverse(
             cfg,
             axes,
@@ -5746,6 +5870,14 @@ def run_task40_v10_p6_reference_worker(
             factor_lifecycle_strategy=factor_lifecycle_strategy,
             operator_qualification_reuse=operator_qualification_reuse,
             mode_inventory=v20_mode_inventory,
+            qualified_q_csr_provider=qualified_q_csr_provider,
+            qualified_q_csr_identity=qualified_q_csr_identity,
+            v30_factor_config=v30_factor_config,
+            factor_output_directory=(
+                str(v30_factor_config["output_directory"])
+                if v30_factor_config is not None
+                else None
+            ),
         )
         if stop_after_stage is not None:
             factors = reference["factors"]

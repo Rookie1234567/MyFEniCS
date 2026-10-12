@@ -1297,13 +1297,28 @@ def _resource_snapshot() -> dict[str, Any]:
 
 
 def _exact_case(resolved: Mapping[str, Any]) -> tuple[str, str]:
-    from src.geometry.task40_nonseparable_plan import TASK40_COMPARISON_GROUP
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_COMPARISON_GROUP,
+        TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,
+        TASK40_Q_ASSEMBLY_ROW_TILE_V17,
+        TASK40_V15_REFERENCE_PC_STRATEGY,
+        TASK40_V19_FACTOR_LIFECYCLE_STRATEGY,
+    )
     from src.solvers.task40_v20_registry import task40_v20_case
 
     solver = resolved.get("solver", {})
     execution = resolved.get("execution", {})
     profile = solver.get("preconditioner")
     run_id = resolved.get("run_id")
+    v30_requested = (
+        "task40_v30_q_csr_binding" in execution
+        or "task40_v30_factor_bank_config" in execution
+    )
+    expected_factor_lifecycle = (
+        TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
+        if v30_requested
+        else TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
+    )
     try:
         case = task40_v20_case(profile=str(profile))
     except ValueError:
@@ -1313,10 +1328,19 @@ def _exact_case(resolved: Mapping[str, Any]) -> tuple[str, str]:
         or run_id != case.run_id
         or resolved.get("comparison_group") != TASK40_COMPARISON_GROUP
         or resolved.get("method", {}).get("kind") != "full3d_iterative"
-        or solver.get("task40_reference_pc_strategy")
-        != "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15"
-        or solver.get("task40_q_assembly_strategy") != "ROW_TILE_BOUNDED_CSR_V17"
-        or solver.get("task40_factor_lifecycle_strategy") != "ONE_Q_REFACTOR_V19"
+        or solver.get("task40_reference_pc_strategy") != TASK40_V15_REFERENCE_PC_STRATEGY
+        or solver.get("task40_q_assembly_strategy") != TASK40_Q_ASSEMBLY_ROW_TILE_V17
+        or solver.get("task40_factor_lifecycle_strategy") != expected_factor_lifecycle
+        or (
+            v30_requested
+            and (
+                case.mesh_id != "TARGET_ORIGINAL_NY8"
+                or execution.get("task40_execution_stop_stage") != "full"
+                or not execution.get("task40_target_heavy_authorized")
+                or not isinstance(execution.get("task40_v30_q_csr_binding"), Mapping)
+                or not isinstance(execution.get("task40_v30_factor_bank_config"), Mapping)
+            )
+        )
         or execution.get("task40_execution_stop_stage") not in case.allowed_stop_stages
         or resolved.get("derived", {}).get("physical_intermediate_profile", {}).get(
             "identity"
@@ -4482,6 +4506,61 @@ def run_task40_v20_stage(
             mode_rows=mode_rows,
             stop_stage=stop_stage,
         )
+
+    v30_q_csr_binding = resolved_payload["execution"].get("task40_v30_q_csr_binding")
+    v30_factor_config = resolved_payload["execution"].get("task40_v30_factor_bank_config")
+    if v30_q_csr_binding is not None or v30_factor_config is not None:
+        if (
+            mesh_id != "TARGET_ORIGINAL_NY8"
+            or stop_stage != "full"
+            or not resolved_payload["execution"].get("task40_target_heavy_authorized")
+            or not isinstance(v30_q_csr_binding, Mapping)
+            or not isinstance(v30_factor_config, Mapping)
+        ):
+            raise ValueError("V30 service route requires the exact authorized target full-stage package")
+        from src.runners.task40_v10_worker import run_task40_v10_p6_reference_worker
+
+        try:
+            worker_result = run_task40_v10_p6_reference_worker(
+                resolved_payload,
+                output_directory,
+                source_sha=source_sha,
+                profile_identity=profile,
+                share_transform_bank=True,
+                v30_q_csr_binding=v30_q_csr_binding,
+                v30_factor_config=v30_factor_config,
+            )
+            receipt = {
+                "schema": "task40extra.review_v30_worker_service_receipt.v1",
+                "status": str(worker_result.get("status", "completed")),
+                "requested_stage": stop_stage,
+                "profile": profile,
+                "run_id": preflight["run_id"],
+                "source_sha": source_sha,
+                "input_sha256": preflight["input_sha256"],
+                "q_csr_selector": dict(v30_q_csr_binding),
+                "factor_bank_schema": v30_factor_config.get("schema"),
+                "worker_status": worker_result.get("status"),
+                "official_result": bool(worker_result.get("official_result", False)),
+            }
+        except BaseException as error:
+            receipt = {
+                "schema": "task40extra.review_v30_worker_service_receipt.v1",
+                "status": "failed",
+                "requested_stage": stop_stage,
+                "profile": profile,
+                "run_id": preflight["run_id"],
+                "source_sha": source_sha,
+                "input_sha256": preflight["input_sha256"],
+                "q_csr_selector": dict(v30_q_csr_binding),
+                "failure_type": type(error).__name__,
+                "failure_message": str(error),
+                "official_result": False,
+            }
+            _write_json(output_directory / "v30_worker_service_receipt.json", receipt)
+            raise
+        _write_json(output_directory / "v30_worker_service_receipt.json", receipt)
+        return {**dict(worker_result), "v30_service_receipt": receipt}
 
     if profile == _V22_TARGET_OPERATOR_PROFILE and stop_stage == "target_operator_probe":
         from src.solvers.task40_v22_operator_probe import (

@@ -7,6 +7,7 @@ the reference inverse; no global dense FE operator is formed here.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Sequence
@@ -3735,6 +3736,120 @@ def _assemble_bounded_v17_row_tile_q_patterns(
     )
 
 
+def assemble_task40_v10_selected_sector_blocks(
+    action: Any,
+    coordinates: TwoCellBranchCoordinates,
+    context: Task40V10SectorContext,
+    *,
+    selected_global_q_indices: Sequence[int],
+    allocation_gate: Callable[[str, Mapping[str, Any]], None],
+    assembly_strategy: str = Q_ASSEMBLY_LEGACY,
+) -> tuple[dict[int, sparse.csr_matrix], dict[str, Any]]:
+    """Build only requested diagonal q blocks, leaving accepted q owners untouched."""
+    import time
+
+    if not callable(allocation_gate):
+        raise TypeError("selected-q assembly requires the live allocation gate")
+    if assembly_strategy not in {
+        Q_ASSEMBLY_LEGACY,
+        Q_ASSEMBLY_BOUNDED_V16,
+        Q_ASSEMBLY_ROW_TILE_V17,
+    }:
+        raise ValueError("selected-q production supports only legacy, V16, or row-tile V17")
+    selected = tuple(sorted(set(map(int, selected_global_q_indices))))
+    if not selected or not set(selected) <= set(map(int, context.global_q_indices)):
+        raise ValueError("selected global q indices must be a nonempty subset of this twist")
+    branch_by_q = {int(q): branch for branch, q in enumerate(context.global_q_indices)}
+    requested = tuple((branch_by_q[q], branch_by_q[q]) for q in selected)
+    started = time.perf_counter()
+    q_maps = tuple(
+        coordinates.q_map(branch, allocation_gate=allocation_gate)
+        for branch in (0, 1)
+    )
+    if assembly_strategy == Q_ASSEMBLY_ROW_TILE_V17:
+        blocks, audit = _assemble_bounded_v17_row_tile_q_patterns(
+            action,
+            q_maps,
+            allocation_gate=allocation_gate,
+            requested_blocks=requested,
+        )
+    elif assembly_strategy == Q_ASSEMBLY_BOUNDED_V16:
+        patterns: dict[str, Any] = {}
+        blocks = {}
+        pattern_started = time.perf_counter()
+        for branch, _ in requested:
+            key = (branch, branch)
+            matrix, facts = _assemble_v16_bitset_pattern(
+                action, q_maps, key, allocation_gate=allocation_gate
+            )
+            blocks[key] = matrix
+            patterns[f"{branch}{branch}"] = facts
+        blocks, audit = _accumulate_bounded_q_pattern_values(
+            action,
+            q_maps,
+            blocks,
+            allocation_gate=allocation_gate,
+            assembly_strategy=Q_ASSEMBLY_BOUNDED_V16,
+            pattern_algorithm="one_full_shape_row_bitset_for_each_requested_diagonal_q_block",
+            patterns=patterns,
+            pattern_seconds=time.perf_counter() - pattern_started,
+        )
+    else:
+        blocks = {
+            key: sparse.csr_matrix(
+                (q_maps[p].shape[1], q_maps[q].shape[1]), dtype=np.complex128
+            )
+            for key in requested
+            for p, q in (key,)
+        }
+        contribution_count = projection_count = 0
+        for rows, columns, values, label in action.iter_reduced_contributions(
+            allocation_gate=allocation_gate
+        ):
+            contribution_count += 1
+            for p, q in requested:
+                term = project_reduced_contribution(
+                    q_maps[p],
+                    q_maps[q],
+                    rows,
+                    columns,
+                    values,
+                    allocation_gate=allocation_gate,
+                    label=f"{label}/selected_q{int(context.global_q_indices[p])}",
+                )
+                blocks[p, q] = (blocks[p, q] + term).tocsr()
+                projection_count += 1
+                del term
+        for matrix in blocks.values():
+            matrix.sum_duplicates()
+            matrix.sort_indices()
+        audit = {
+            "assembly_strategy": Q_ASSEMBLY_LEGACY,
+            "numeric_contribution_count": contribution_count,
+            "projection_call_count": projection_count,
+        }
+    result: dict[int, sparse.csr_matrix] = {}
+    for q_index in selected:
+        branch = branch_by_q[q_index]
+        matrix = blocks[(branch, branch)]
+        if (
+            matrix.shape != (q_maps[branch].shape[1], q_maps[branch].shape[1])
+            or matrix.dtype != np.dtype(np.complex128)
+            or not matrix.has_canonical_format
+            or not np.isfinite(matrix.data).all()
+        ):
+            raise ValueError(f"selected q={q_index} production returned an invalid CSR")
+        result[q_index] = matrix
+    return result, {
+        **dict(audit),
+        "twist_index": int(context.twist_index),
+        "selected_global_q_indices": list(selected),
+        "unselected_q_csr_rebuilt": False,
+        "fourier_diagonalization_gate": "DEFERRED_TO_NATIVE_QUALIFICATION",
+        "assembly_total_seconds": float(time.perf_counter() - started),
+    }
+
+
 def assemble_task40_v10_sector_blocks(
     action: Any,
     coordinates: TwoCellBranchCoordinates,
@@ -4256,6 +4371,139 @@ def _local_condensation_row_facts(local_system: Any) -> dict[str, int]:
     }
 
 
+def _task40_v30_profile_identity_sha256(profile: Any) -> str:
+    identity = profile.identity()
+    if not isinstance(identity, Mapping):
+        raise TypeError("V30 q-CSR reuse requires a mapping-valued profile identity")
+    canonical = json.dumps(
+        dict(identity), ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def _task40_v30_ordered_mode_key_sha256(modes: Sequence[Any]) -> str:
+    keys = [
+        [str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)]
+        for mode in modes
+    ]
+    payload = json.dumps(keys, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _task40_v30_active_lookup(condensed_system: Any, allocation_gate: Callable) -> np.ndarray:
+    full_rows = int(condensed_system.full_rows)
+    int32_max = np.iinfo(np.int32).max
+    allocation_gate(
+        "task40_v30_q0_runtime_active_lookup",
+        {
+            "additional_payload_bytes": full_rows * np.dtype(np.int32).itemsize,
+            "workspace_bytes": 0,
+            "full_rows": full_rows,
+            "mapping_source": "fresh finalized condensation trace_constraints.original_to_active",
+        },
+    )
+    lookup = np.full(full_rows, -1, dtype=np.int32)
+    for original, active_index in condensed_system.trace_constraints.original_to_active.items():
+        original = int(original)
+        active_index = int(active_index)
+        if not 0 <= original < full_rows or not 0 <= active_index <= int32_max:
+            raise ValueError("current q0 original-to-active lookup exceeds its int32 row domain")
+        lookup[original] = active_index
+    return lookup
+
+
+def _task40_v30_load_sector_q_csr_pair(
+    provider: Any,
+    *,
+    action: Any,
+    coordinates: Any,
+    context: Any,
+    local_h: np.ndarray,
+    profile: Any,
+    global_bundle: Mapping[str, Any],
+    mode_inventory: tuple[Any, Any, Any],
+    runtime_identity: Mapping[str, Any],
+    allocation_gate: Callable,
+) -> tuple[dict[int, sparse.csr_matrix], dict[str, Any]]:
+    import time
+
+    from .task40_v30_qualified_q_csr import (
+        _array_sha256 as v30_array_sha256,
+        _csr_sha256 as v30_csr_sha256,
+    )
+
+    load_started = time.perf_counter()
+    allocation_gate(
+        f"task40_v30_twist{context.twist_index}_original_h_identity",
+        {
+            "additional_payload_bytes": int(len(local_h) * np.dtype(np.complex128).itemsize),
+            "workspace_bytes": 0,
+            "canonical_dtype": np.dtype(np.complex128).str,
+        },
+    )
+    canonical_h = np.ascontiguousarray(local_h, dtype=np.complex128)
+    execution_identity = dict(runtime_identity["execution_identity"])
+    expected_q0_identity = dict(runtime_identity["legacy_q0_identity"])
+    expected_mode_manifest_sha = str(mode_inventory[2])
+    if (
+        str(global_bundle["mode_sha256"]) != expected_mode_manifest_sha
+        or expected_q0_identity.get("mode_manifest_sha256") != expected_mode_manifest_sha
+    ):
+        raise ValueError("current physical mode manifest differs from the frozen V20/V28 identity")
+    ordered_mode_key_sha = _task40_v30_ordered_mode_key_sha256(tuple(global_bundle["modes"]))
+    profile_sha = _task40_v30_profile_identity_sha256(profile)
+    sector_matrices = {}
+    qualified_receipts = []
+    for branch, raw_q in enumerate(context.global_q_indices):
+        q_index = int(raw_q)
+        q_map = coordinates.q_map(branch, allocation_gate=allocation_gate)
+        operator_identity = {
+            "scientific_input_sha256": str(runtime_identity["scientific_input_sha256"]),
+            "profile_identity_sha256": profile_sha,
+            "ordered_mode_sha256": ordered_mode_key_sha,
+            "q_map_sha256": v30_csr_sha256(q_map),
+            "original_h_sha256": v30_array_sha256(
+                canonical_h,
+                np.dtype(np.complex128),
+                f"twist{context.twist_index} original H",
+            ),
+        }
+        active_lookup = (
+            _task40_v30_active_lookup(action.condensed, allocation_gate)
+            if q_index == 0
+            else None
+        )
+        matrix, receipt = provider.load(
+            q_index,
+            int(context.twist_index),
+            expected_operator_identity=operator_identity,
+            expected_execution_identity=execution_identity,
+            expected_q_map=q_map,
+            expected_original_h=canonical_h,
+            expected_legacy_q0_identity=(expected_q0_identity if q_index == 0 else None),
+            expected_q0_active_lookup=active_lookup,
+        )
+        expected_shape = (int(q_map.shape[1]), int(q_map.shape[1]))
+        if matrix.shape != expected_shape:
+            raise ValueError(
+                f"qualified q={q_index} CSR shape {matrix.shape} != runtime {expected_shape}"
+            )
+        sector_matrices[q_index] = matrix
+        qualified_receipts.append(receipt)
+        del q_map, active_lookup
+    del canonical_h
+    return sector_matrices, {
+        "assembly_strategy": "V30_QUALIFIED_CSR_PROVIDER",
+        "qualified_q_csr_loaded": True,
+        "q_indices": sorted(sector_matrices),
+        "native_operator_requalification_performed": False,
+        "qualification_receipts": qualified_receipts,
+        "numeric_contribution_count": 0,
+        "qualified_read_seconds": float(time.perf_counter() - load_started),
+        "assembly_scope": "read-only qualified CSR load; no local numeric refill",
+    }
+
+
 def build_task40_v10_p6_reference_inverse(
     cfg: Any,
     axes: Mapping[str, tuple[float, ...]],
@@ -4276,6 +4524,8 @@ def build_task40_v10_p6_reference_inverse(
     mode_inventory: tuple[Any, Any, Any] | None = None,
     v30_factor_config: Mapping[str, Any] | None = None,
     factor_output_directory: str | None = None,
+    qualified_q_csr_provider: Any | None = None,
+    qualified_q_csr_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build the regular p6 inverse, or run a bounded no-factor q-assembly pair."""
     from mpi4py import MPI
@@ -4372,6 +4622,7 @@ def build_task40_v10_p6_reference_inverse(
         "inverse": None,
         "transform_bank": transform_bank,
         "transform_bank_receipt": None,
+        "qualified_q_csr_receipts": [],
     }
     try:
         regular_cfg = __import__("dataclasses").replace(
@@ -4400,6 +4651,51 @@ def build_task40_v10_p6_reference_inverse(
             profile = TASK40_V10_P6_PROFILE
         if not isinstance(profile, Task40V10P6PeriodicProfile):
             raise TypeError("p6 reference builder requires a Task40 periodic case profile")
+        if qualified_q_csr_provider is not None:
+            if q_assembly_comparison_only:
+                raise ValueError("V30 qualified CSR injection cannot run in assembly-comparison mode")
+            if not isinstance(qualified_q_csr_identity, Mapping):
+                raise ValueError("V30 qualified CSR injection requires independent runtime identities")
+            expected_q_indices = set(range(int(profile.q_count)))
+            if (
+                qualified_q_csr_provider.profile != profile.name
+                or set(qualified_q_csr_provider.entries) != expected_q_indices
+            ):
+                raise ValueError("V30 selector must match the profile and contain every q exactly once")
+            for key in (
+                "scientific_input_sha256",
+                "execution_identity",
+                "legacy_q0_identity",
+                "ordered_mode_key_sha256",
+            ):
+                if key not in qualified_q_csr_identity:
+                    raise ValueError(f"V30 runtime identity omits {key}")
+            if mode_inventory is None or len(mode_inventory) != 3:
+                raise ValueError("V30 q-CSR reuse requires the frozen V20 mode inventory")
+            frozen_modes, frozen_mode_rows, _frozen_manifest_sha = mode_inventory
+            if (
+                _task40_v30_ordered_mode_key_sha256(modes)
+                != _task40_v30_ordered_mode_key_sha256(tuple(frozen_modes))
+                or _task40_v30_ordered_mode_key_sha256(modes)
+                != hashlib.sha256(
+                    json.dumps(
+                        [
+                            [
+                                str(row["side"]),
+                                int(row["m"]),
+                                int(row["n"]),
+                                str(row["polarization"]),
+                            ]
+                            for row in frozen_mode_rows
+                        ],
+                        ensure_ascii=False,
+                        separators=(",", ":"),
+                    ).encode("utf-8")
+                ).hexdigest()
+                or _task40_v30_ordered_mode_key_sha256(modes)
+                != qualified_q_csr_identity["ordered_mode_key_sha256"]
+            ):
+                raise ValueError("current ordered mode keys differ from the frozen V20 inventory")
         if (
             profile.name == TASK40_V18_P6_B0_Y8_PROFILE.name
             and q_assembly_comparison_only
@@ -4668,7 +4964,23 @@ def build_task40_v10_p6_reference_inverse(
                 global_h=global_h,
                 allocation_gate=allocation_gate,
             )
-            if q_assembly_comparison_only:
+            if qualified_q_csr_provider is not None:
+                sector_matrices, block_audit = _task40_v30_load_sector_q_csr_pair(
+                    qualified_q_csr_provider,
+                    action=action,
+                    coordinates=coordinates,
+                    context=context,
+                    local_h=local_h,
+                    profile=profile,
+                    global_bundle=global_bundle,
+                    mode_inventory=mode_inventory,
+                    runtime_identity=qualified_q_csr_identity,
+                    allocation_gate=allocation_gate,
+                )
+                owner["qualified_q_csr_receipts"].extend(
+                    block_audit["qualification_receipts"]
+                )
+            elif q_assembly_comparison_only:
                 block_audit = compare_task40_v10_sector_assembly(
                     action,
                     coordinates,

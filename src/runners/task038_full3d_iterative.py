@@ -106,13 +106,38 @@ def run_full3d_iterative(
 
     v20_case = TASK40_V20_CASES_BY_PROFILE.get(profile)
     if v20_case is not None:
+        execution = resolved_payload.get("execution", {})
+        v30_requested = (
+            "task40_v30_q_csr_binding" in execution
+            or "task40_v30_factor_bank_config" in execution
+        )
         if (
             resolved_payload.get("run_id") != v20_case.run_id
             or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
             or stage != v20_case.solver_stage
             or reference_pc_strategy != TASK40_V15_REFERENCE_PC_STRATEGY
             or q_assembly_strategy != TASK40_Q_ASSEMBLY_ROW_TILE_V17
-            or factor_lifecycle_strategy != TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
+            or factor_lifecycle_strategy
+            != (
+                TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
+                if v30_requested
+                else TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
+            )
+            or (
+                v30_requested
+                and (
+                    v20_case.mesh_id != "TARGET_ORIGINAL_NY8"
+                    or stage != v20_case.solver_stage
+                    or resolved_payload.get("execution", {}).get(
+                        "task40_execution_stop_stage"
+                    ) != "full"
+                    or not resolved_payload.get("execution", {}).get(
+                        "task40_target_heavy_authorized"
+                    )
+                    or not isinstance(execution.get("task40_v30_q_csr_binding"), Mapping)
+                    or not isinstance(execution.get("task40_v30_factor_bank_config"), Mapping)
+                )
+            )
         ):
             raise ValueError("Task40 V20 dispatcher rejected a mismatched case/profile/strategy")
         from .task40_v20_stage_runner import run_task40_v20_stage
