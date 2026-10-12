@@ -40,3 +40,5 @@ SMR首输入的实际残差比0.419787242309，旧固定和约60.713044；最优
 唯一下一建议：停止这组组合微调；若另立完整合同，只研究与已失败主子块Dirichlet/RAS不同的物理阻抗局部传输及有分辨依据的波动空间，先证明它对同RHS能产生优于廉价Jacobi的有效全局方向及可核算成本。本轮不实施、不自动开V77、不通知邻窗口、不merge。
 
 [紧凑专题](outcomes/baseline_residual_minimization_v76.md) · [决策与修复](outcomes/records/decisions_repairs_v76.json) · [接口契约](outcomes/records/retained_iterative_contract_v76.json)。科学冻结与费用快照实际UTC：2026-10-12T05:01:13.509996+00:00；最终交付时刻由最终Git收据记录。
+
+最终结算UTC 2026-10-12T05:15:37.590387+00:00：已知不重叠wrapper/增量归档费用 5442.469386690s（包括失败与尾部文档补消费），研究实时时长 8191.785677s；新去重存储 5612798460B，Task累计 202405766642B，free 2671173070848B。ledger closed/active null、后代清场及自有锁释放已核实。先前费用为阶段快照，此段及最终费用记录为当前完整下界；unknown保持，未重复相加父费用。

@@ -1,0 +1,98 @@
+{
+  "status": "PASSED",
+  "source_sha": "ad0f7ffaa8e9b001eca1c3bc446f3d8909c49874",
+  "command": [
+    "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "-m",
+    "unittest",
+    "-q",
+    "src.test.test_26_documentation_contract"
+  ],
+  "returncode": 0,
+  "repository_document_unittest_count": 15,
+  "document_unittest_reused_from": "/home/fenics/Projects/NN-Lab/tmp/task042/v76/aux_post_docs01",
+  "documents": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v76.md",
+      "bytes": 6350,
+      "sha256": "13aa46783a2f7f5f3d02902ee2b2ab51503d8997e700f8b5ed84c096bcca4f0f",
+      "new_links": 8,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/baseline_residual_minimization_v76.md",
+      "bytes": 3302,
+      "sha256": "7f4746aeffeb0f6fcbcff6d5adc8a5273a50621f345d174ecfea880ab1d4b16a",
+      "new_links": 7,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "bytes": 106184,
+      "sha256": "c076b309367cccd20f5193b3b5d767ab7e74e69be408c13e6120e3d5540fda25",
+      "new_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "bytes": 165439,
+      "sha256": "f74d4b89a3217ccbf5afb9f3aacfd84af99072e6cfb6a1a4b519bd6f5f22302c",
+      "new_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "bytes": 96206,
+      "sha256": "8af77ba1667b4d12f681ac3f2b30073bd23031a6c4fdc6438a738b9df2e1d886",
+      "new_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "bytes": 93691,
+      "sha256": "47b29108561cc14de618e6496ef5b7f7836dcb7530f272e98848bc53ee2f45b4",
+      "new_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/development_progress.md",
+      "bytes": 282882,
+      "sha256": "0af365a4b8c00b6bed411db7dab9b2d556284feee4a60a0da893b046015d5811",
+      "new_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "bytes": 321286,
+      "sha256": "e87a7393be800d50b0ba5cefd1d377ce4e67f8e4699468cc561f99ff91018bae",
+      "new_links": 2,
+      "new_tables": 1
+    }
+  ],
+  "JSON_records": 15,
+  "old_navigation_suffixes_preserved": true,
+  "scope": "One document suite plus V76 increment links/tables/hash/schema/outcome/counter checks; no FE/array replay",
+  "GitHub_exact_visual": "NOT_VERIFIED",
+  "CI": "NOT_RUN",
+  "new_original_actions": 0,
+  "new_numeric_factors": 0,
+  "new_KSP_solves": 0,
+  "end_utc": "2026-10-12T05:11:38.530205+00:00",
+  "elapsed_seconds": 0.04149840911850333,
+  "original_suite_source_and_bytes": "ad0f7ffaa8e9b001eca1c3bc446f3d8909c49874; aux_post_docs01/documentation.stderr, 15passed, no suite replay",
+  "tail_failure_preserved": "aux_post_docs01/supervision/worker.log",
+  "final_delivered_document_bytes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v76.md",
+      "sha256": "c923d1a1eede89ed38f3e1502a100eeb39ec38c957b63f4e702e46ab1dd37994",
+      "bytes": 6812
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/baseline_residual_minimization_v76.md",
+      "sha256": "68bfd9a7818dbf5c6547e6ee2d5883fd34547a3b712fec5ff3a20caeb0324310",
+      "bytes": 3764
+    }
+  ],
+  "final_tail_structure_pass": true,
+  "final_fee_tail_new_original_actions": 0
+}

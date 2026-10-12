@@ -7,5 +7,11 @@
   "metadata_versions": 234,
   "old_payload_copy": false,
   "first_archive_failed_partial_preserved": "benchmarks/artifacts/task042/v76/increment_evidence/science_frozen",
-  "no_scientific_replay": true
+  "no_scientific_replay": true,
+  "final_tail": {
+    "path": "benchmarks/artifacts/task042/v76/increment_evidence/delivery_tail/inventory.json",
+    "bytes": 12094,
+    "sha256": "e026838e5cb5bbac37cc5e81ed6f1d6fa7a42c24a883160da5c1e6cac47e66ca"
+  },
+  "final_tail_entries": 34
 }

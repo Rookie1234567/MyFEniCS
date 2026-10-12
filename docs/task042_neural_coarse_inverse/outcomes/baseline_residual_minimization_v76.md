@@ -24,3 +24,5 @@ Jacobi两段实际总1073.140750s；SMR单case2401.451390s且未更有效。不�
 新作用次数、全部command费用/峰/gap、源码与原始增量归档、ordinary修复和最终closed状态由[费用](records/resource_costs_v76.json)、[效果曲线](records/residual_history_v76.json)、[PC证据](records/operator_PC_checks_v76.json)、[决策/修复](records/decisions_repairs_v76.json)绑定。旧partial归档未覆盖，无PDE重放；GitHub视觉NOT_VERIFIED。
 
 下一项仅建议在新合同下改变局部传输/波动空间的稳定性机制，先对同RHS核算相对Jacobi的真实收益；当前不实施、不开新窗口、不通知邻支。有限失败不证明所有Maxwell迭代不可能；旧空间精度FAIL、原尺寸0.7nm/2TB48h及NN20仍未资格。
+
+最终结算UTC 2026-10-12T05:15:37.590387+00:00：已知不重叠wrapper/增量归档费用 5442.469386690s（包括失败与尾部文档补消费），研究实时时长 8191.785677s；新去重存储 5612798460B，Task累计 202405766642B，free 2671173070848B。ledger closed/active null、后代清场及自有锁释放已核实。先前费用为阶段快照，此段及最终费用记录为当前完整下界；unknown保持，未重复相加父费用。

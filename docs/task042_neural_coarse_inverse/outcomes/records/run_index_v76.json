@@ -1,0 +1,37 @@
+{
+  "roles": {
+    "B0": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_identity_control_20261012T032730919078Z/result.json",
+      "sha256": "4df1613fa11a96123b829a466c6aea7ae7eb91960cd4c24ad3e0db35e42fbbd4"
+    },
+    "BJ": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_jacobi_control_20261012T033658874092Z/result.json",
+      "sha256": "57955155b1e6b17f60681360d5bc2badfb22031637745fd9d488191c5e21312b"
+    },
+    "PRECHECK": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_minimal_preflight_20261012T031947966696Z/result.json",
+      "sha256": "b5ba8e46169f35183833133f08d9425e87f0321fd473baf06482dcdfe2372573"
+    },
+    "PROMOTED": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_promoted_control_continue_20261012T034641798728Z/result.json",
+      "sha256": "f5bc5b82f5699467d8f687638765ad89738e2dfcad2c7035d04297b16f756248"
+    },
+    "SMR": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_residual_minimized_solve_20261012T040054824899Z/result.json",
+      "sha256": "34529a380701e80aa39ef5cc02bfe1166022e25352480b9ef995db62c0d6884b"
+    },
+    "VERIFY_COST": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_verify_cost_20261012T044220474297Z/result.json",
+      "sha256": "1744587e56de10e4a4e38bd5cf89935559ce62b99ad91868224e118ecf3f1f4e"
+    }
+  },
+  "scientific_queue_frozen": {
+    "path": "tmp/task042/v76/scientific_queue_frozen.json",
+    "bytes": 10347,
+    "sha256": "4a120a166db89b74f6bd143545a96bad54f520ef586eb0bf8edef6aba8bc674d"
+  },
+  "four_KSP_calls": true,
+  "six_one_run_stages": true,
+  "new_PDE_after_freeze": 0,
+  "final_ledger_closed": true
+}

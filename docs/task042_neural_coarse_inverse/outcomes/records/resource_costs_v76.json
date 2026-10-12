@@ -43,6 +43,20 @@
       "nested_cost_not_added": true
     },
     {
+      "path": "tmp/task042/v76/auxiliary_postdocs01/receipt.json",
+      "seconds": 96.97673567105085,
+      "source": "ad0f7ffaa8e9b001eca1c3bc446f3d8909c49874",
+      "exit_code": 1,
+      "nested_cost_not_added": true
+    },
+    {
+      "path": "tmp/task042/v76/auxiliary_postdocs02/receipt.json",
+      "seconds": 95.8260241409298,
+      "source": "ad0f7ffaa8e9b001eca1c3bc446f3d8909c49874",
+      "exit_code": 0,
+      "nested_cost_not_added": true
+    },
+    {
       "path": "tmp/task042/v76/auxiliary_prefocused01/receipt.json",
       "seconds": 100.16540576284751,
       "source": "32e298ad0c69a65149269f882b191b99d2e0428f",
@@ -71,7 +85,7 @@
       "nested_cost_not_added": true
     }
   ],
-  "known_disjoint_wrapper_seconds": 5249.666626878083,
+  "known_disjoint_wrapper_seconds": 5442.469386690063,
   "case_rows": [
     {
       "role": "B0",
@@ -248,14 +262,34 @@
       "actual_max_gap_seconds": 1.3651855119969696,
       "configured_interval_seconds": 0.5,
       "continuous_peak": "unknown"
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v76/aux_post_docs01",
+      "samples": 4,
+      "sampled_tree_peak_bytes": 149037056,
+      "ownswap_peak_bytes": 0,
+      "actual_max_gap_seconds": 1.188063673907891,
+      "configured_interval_seconds": 0.5,
+      "continuous_peak": "unknown"
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v76/aux_post_docs02",
+      "samples": 4,
+      "sampled_tree_peak_bytes": 117407744,
+      "ownswap_peak_bytes": 0,
+      "actual_max_gap_seconds": 1.0062045329250395,
+      "configured_interval_seconds": 0.5,
+      "continuous_peak": "unknown"
     }
   ],
   "sampled_tree_peak_bytes": 44510863360,
   "actual_max_gap_seconds": 1.3672962291166186,
   "ownswap_peak_bytes": 0,
   "historical_known_lower_seconds": 390402.36851941183,
-  "known_historical_plus_current_lower_seconds": 395652.0351462899,
-  "research_elapsed_seconds": 7327.627623672131,
+  "known_historical_plus_current_lower_seconds": 395844.8379061019,
+  "research_elapsed_seconds": 8191.785676600179,
   "research_wall_includes_implementation_wait_IO": true,
   "N1_qualified_solution_seconds": null,
   "parent_packet_Z_E0_preparation_cost": "not free; unchanged V70/V71 prefix, no comparable fresh complete solution",
@@ -305,5 +339,16 @@
     ]
   },
   "new_storage_bytes": 17179869184,
-  "task_storage_cap_bytes": 747324309504
+  "task_storage_cap_bytes": 747324309504,
+  "actual_storage": {
+    "new_bytes": 5612798460,
+    "task_artifact_bytes": 202405766642,
+    "free_bytes": 2671173070848,
+    "reserve_bytes": 536870912
+  },
+  "final_settlement_utc": "2026-10-12T05:15:37.590387+00:00",
+  "ledger_closed": true,
+  "active": null,
+  "shared_task_lock_acquired_and_released": true,
+  "unknown_fee_intervals": "partial first archive and unobserved manual/static/Git overhead unknown; all covered by first-clock research wall, not zero"
 }

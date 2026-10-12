@@ -795,6 +795,16 @@
         "fix": "resolve pointer and archive destination before relative_to",
         "scientific_replays": 0,
         "partial_fee_seconds": "unknown; first-work research wall includes it"
+      },
+      {
+        "root": "documentation helper copied previous harmonic inventory names",
+        "failure": "FileNotFoundError harmonic_completion_v76.json after all15 unittests and current links/tables passed",
+        "helper_sha256_before": "ef592345d68164b32acebbdd5d1291b5481f3be75ce8b4715869564aebdb9a93",
+        "source_sha": "ad0f7ffaa8e9b001eca1c3bc446f3d8909c49874",
+        "raw_log": "tmp/task042/v76/aux_post_docs01/supervision/worker.log",
+        "fee_seconds": 96.97673567105085,
+        "fix": "consume actual V76 rows/action/call/output policy; reuse first15 suite unchanged bytes",
+        "scientific_replays": 0
       }
     ],
     "ordinary_uncommitted_local_test": "10 methods passed; final-source supervised test repeated after actual change",
