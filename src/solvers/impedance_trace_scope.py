@@ -138,7 +138,7 @@ def implementation_hashes():
     names=list(prior.implementation_hashes())+[str(PLAN.relative_to(ROOT)),
         'src/solvers/impedance_trace_scope.py','src/solvers/impedance_trace_study.py',
         'src/solvers/physical_impedance_patch.py','src/solvers/controlled_trace_study.py',
-        'benchmarks/qualify_impedance_trace.py','benchmarks/collect_controlled_trace.py',
+        'benchmarks/qualify_impedance_trace.py','benchmarks/collect_controlled_trace.py','benchmarks/check_impedance_patch.py',
         'src/test/test_physical_impedance_patch.py']
     return {n:hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in sorted(set(names))}
 

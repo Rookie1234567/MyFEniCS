@@ -30,7 +30,13 @@ def verify(folder, journal, *, scope=scope):
         if record['strategy'] == 'PHYSICAL_IMPEDANCE':
             from benchmarks.collect_bounded_trace import numeric_saved_check
             producer=Path(json.loads((scope.ARTIFACT/(role+'.json')).read_text())['path']).parent
-            strategy_check=numeric_saved_check(producer,minimum_bytes=12*2**30,check_linear_PC=False)
+            from benchmarks.check_impedance_patch import saved_preparation_check
+            prepared_check=saved_preparation_check(scope)
+            factor_check=numeric_saved_check(producer,minimum_bytes=12*2**30,check_linear_PC=False)
+            pc_values=checked_arrays(__import__('json').loads((producer/'live_PC_qualification.json').read_text())['arrays'])
+            pc_error=relative(pc_values['second']-pc_values['alpha']*pc_values['first'],pc_values['alpha']*pc_values['first'])
+            if pc_error>1e-10: raise ValueError('independent impedance PC complex linearity')
+            strategy_check=dict(preparation=prepared_check,factors=factor_check,complex_linearity=pc_error,pass_gate=True)
         if record['strategy'] == 'SMR':
             from benchmarks.collect_bounded_trace import numeric_saved_check
             root = Path(scope.ARTIFACT/(role+'.json'))

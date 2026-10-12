@@ -73,5 +73,18 @@ class PhysicalImpedanceTests(unittest.TestCase):
         self.assertEqual(scoped_tetra_memory('v77','ITERATE')['sampled_stop_gib'],128)
         self.assertEqual(storage_limits('v77')['new_storage_bytes'],24*2**30)
 
+    def test_saved_checker_recomputes_bad_claim(self):
+        from benchmarks.check_impedance_patch import patch_witness
+        A=sparse.eye(3,dtype=complex,format='csr');v=np.array([1+1j,2,-1j])
+        data=dict(input=v,matrix_action=v.copy(),independent=v.copy(),body=.7*v,surface=.3*v,excluded_outside_body=.2*v,pass_gate=True)
+        self.assertTrue(patch_witness(data,A)['pass_gate'])
+        data['matrix_action'][0]+=1
+        self.assertFalse(patch_witness(data,A)['pass_gate'])
+
+    def test_saved_checker_missing_inventory_rejected(self):
+        from benchmarks.check_impedance_patch import patch_witness
+        with self.assertRaisesRegex(ValueError,'inventory'):
+            patch_witness({},sparse.eye(3,format='csr'))
+
 
 if __name__=='__main__':unittest.main()

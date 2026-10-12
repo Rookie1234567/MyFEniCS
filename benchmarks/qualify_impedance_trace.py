@@ -19,7 +19,7 @@ def main():
     paths=['src/solvers/impedance_trace_scope.py','src/solvers/impedance_trace_study.py',
         'src/solvers/physical_impedance_patch.py','src/solvers/controlled_trace_study.py',
         'src/solvers/physical_retained_fgmres.py','src/runners/port_preparation.py','scripts/run_case.py',
-        'benchmarks/collect_controlled_trace.py','benchmarks/qualify_impedance_trace.py',
+        'benchmarks/collect_controlled_trace.py','benchmarks/check_impedance_patch.py','benchmarks/qualify_impedance_trace.py',
         'src/test/test_physical_impedance_patch.py']
     for p in paths:compile((scope.ROOT/p).read_bytes(),p,'exec')
     commands=[[sys.executable,'-m','unittest','-q','src.test.test_physical_impedance_patch'],
