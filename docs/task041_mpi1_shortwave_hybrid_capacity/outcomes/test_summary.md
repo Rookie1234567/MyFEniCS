@@ -1,5 +1,56 @@
 # Test and evidence summary
 
+## 2026-10-12/13：V13 A/B/C合同、serial清场合同与MPI8 ABI预资格
+
+本表聚合各个已批准attempt，不把跨源码版本的分批结果说成同一SHA上的一次全组通过。V13让固定BAL_H近似作用B贯穿LDU预条件器；这些测试验证实现合同和小型registered FE路径，不替代正式W0.7全模型的原方程及物理结果。
+
+| 阶段 | 冻结selector/参数范围 | 实际结果 | 源码、环境和证据入口 |
+|---|---|---|---|
+| A serial | 23 selectors / 45参数 | 分批合计43 passed、2个MPI2-only参数serial skip；skip不计pass，后续MPI2阶段负责对应覆盖 | 各attempt的源码与环境由各自`source_hashes_before_after.json`绑定。A覆盖表封存于071636Z：[覆盖表](../../../results/task041_v13_A_B_mpi2_review_prep_20261012T071636Z/A_serial_selector_coverage.md)、[JSON](../../../results/task041_v13_A_B_mpi2_review_prep_20261012T071636Z/A_serial_selector_coverage.json)。它记录当时的A分批覆盖；后续B/C和源码变化按各自证据，旧表不改写。其他入口：[冻结清单](../../../results/task041_v13_bounded_static_validation_20261011T072210Z/run_serial_gate.py)、[17项剩余批次](../../../results/task041_v13_numa1_A_remaining_serial_20261012T044347Z/serial/pytest.argv.json)、[最终8项批次](../../../results/task041_v13_A_serial_final8_20261012T064555Z/serial/pytest.argv.json)、[V12公开route两参数](../../../results/task041_v13_v12_public_routes_serial_20261012T064053Z/serial/pytest.attempt.json)、[test352服务修订后17参数](../../../results/task041_v13_A_test352_finalizer_17_service_fix_serial_20261012T070500Z/serial/pytest.attempt.json) |
+| B MPI2 | 8 selectors / 14参数定义，每rank执行；跨两个获批段补齐，其中包含A serial skip的MPI2-only timing/canonicalization参数 | 28 rank-cases覆盖14个参数在两rank的执行，不写成28个独立用例。audit-counter单项与其余7-selector批次分别验收；rank-to-summary不可归属处保持`not_persisted` | [audit-counter MPI2定向回归](../../../results/task041_v13_q_counter_mismatch_retest_20261012T081735Z/mpi2/pytest.attempt.json)（该audit-counter节点另有serial通过证据，见A/B attempt记录；它不是MPI2-only timing参数）、[其余7项attempt](../../../results/task041_v13_B_mpi2_retry_20261012T093637Z/mpi2/pytest.attempt.json)、[B manifest/source绑定](../../../results/task041_v13_B_mpi2_retry_20261012T093637Z/manifest.json)；此前B首批错误与ABI拒绝raw保留，不计入通过 |
+| C serial | 1 selector：`test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu` | registered `entity_closure`小FE完整断言通过一次 | [entity-closure serial attempt](../../../results/task041_v13_C_entity_closure_keyfix_serial_attempt_20261012T125524Z/serial_c/pytest.attempt.json)；CPU14，旧的显式`membind=1`，不等于后续MPI2 default-policy环境 |
+| C MPI2 | 同一1 selector；两个rank各运行一次 | `rc=0`，2 rank-cases；父wall`153.515994687099 s`唯一计账。合并stdout含两条`1 passed`摘要但无rank标签，不能断言其rank分别对应哪条摘要 | [attempt](../../../results/task041_v13_C_cpu_wait_retry_mpi2_attempt_20261012T142650Z/mpi2_c/pytest.attempt.json)、[source map](../../../results/task041_v13_C_cpu_wait_retry_mpi2_attempt_20261012T142650Z/mpi2_c/source_hashes_before_after.json)、[ABI](../../../results/task041_v13_C_cpu_wait_retry_mpi2_attempt_20261012T142650Z/mpi2_c/native_abi.attempt.json)、[host final rescan](../../../results/task041_v13_C_cpu_wait_retry_mpi2_attempt_20261012T142650Z/mpi2_host_final_rescan.json)、[输出SHA清单](../../../results/task041_v13_C_cpu_wait_retry_mpi2_attempt_20261012T142650Z/OUTPUT_SHA256SUMS.json) |
+| V13 serial清场/服务合同 | 两attempt共30个节点：首段3个清场模拟节点通过；remaining段27项通过 | 首attempt第4个setup-boundary节点因test351 fixture未接收`include_blis`失败，原raw保留；只修fixture签名后在27项attempt通过。mock合同不等于真实OS/MPI8清场 | [首attempt与失败stdout](../../../results/task041_v13_owned_session_serial_contract_attempt_20261012T195835Z/serial/pytest.attempt.json)、[剩余27项attempt](../../../results/task041_v13_owned_session_serial_remaining_attempt_20261012T200713Z/serial/pytest.attempt.json)、[输出SHA清单](../../../results/task041_v13_owned_session_serial_remaining_attempt_20261012T200713Z/OUTPUT_SHA256SUMS.json) |
+| MPI8 ABI-only预资格 | 8/8 rank通过production rank qualification/native ABI；无pytest、无数值worker | 固定CPU`[10,11,14,15,16,17,18,19]`，default/unbound、有效节点`[0,1]`、六线程变量、complex128/Int32/原生桥均通过；dirty-map预资格，不是formal warm | [ABI attempt](../../../results/task041_v13_mpi8_abi_rank_qualification_attempt_20261012T215842Z/native_abi.attempt.json)、[33项输出清单](../../../results/task041_v13_mpi8_abi_rank_qualification_attempt_20261012T215842Z/OUTPUT_SHA256SUMS.txt)、[post-shell rescan](../../../results/task041_v13_mpi8_abi_rank_qualification_post_shell_identity_20261012T232030Z/post_shell_identity_rescan.json) |
+
+首段serial父wall为`6.377355428179726 s`（含3 passed及随后test351 fixture失败），remaining父wall为`10.62438608892262 s`（27 passed）；两次各唯一写入V5。跨两attempt的30项现均有通过覆盖，失败attempt仍保留。MPI8 ABI-only父wall`2.1766278869472444 s`不计入V5。当前live V5为264项、SHA `17376a6343ac65f359f059ad632e9a305ce28a60c683164f6a16539ee6e767ce`；其中C MPI2章节记录的261→262及SHA `64fd8d5...`是当时账目快照，不是当前账目。此次四份文档变更发生在ABI-only运行之后：ABI运行时21路径map下通过，当前map仅文档字节有后续变化，正式warm仍需clean HEAD重绑。
+
+### 源码版本与策略分界
+
+对照044347Z原19路径map，C MPI2 attempt运行时包含6项获批变化（service、test347、test349、test350、test351、test352），其余13项当时一致；六个SHA和改动缘由见[summary当前阶段源码表](summary.md)。A/B不是一次运行在这六个delta上的整组；以各attempt的source receipt为准。C serial与C MPI2也不能合并环境身份：serial曾显式`membind=1`，最终MPI2是用户后来授权的内存default/unbound策略。本次四份文档更新在该attempt之后，仅更改文档字节，不更改已测solver/workflow/test源码或运行时source receipt。
+
+用户明确取消内存节点绑定后，MPI2 ABI改为核实进程policy为`default`、`Mems_allowed_list`与有效cgroup memory-node集合相符；本次两rank均通过，CPU为14/18、complex128/Int32、原生库桥和6线程均通过。cpuset控制器没有在中间cgroup分支启用，ABI通过沿实际祖先继承路径读取effective节点集合完成核对。node1至少80 GiB只用于资源准入，不是N1页面放置合同；双节点合计reserve 384 GiB、hard/warning/W 80/72/8 GiB不变。此前的NUMA mapping缺失只表明探针没有关联到目标mapping，不证明页面落在错误节点。早期CPU14忙碌导致的资源拒绝也不是数值失败；错误attempt和原raw均保留。
+
+在C MPI2 attempt结束时，V5从261项增至262项，SHA从`e019ab5aa12c47247ee1d32001825fa32a5cea4b4b88072a8270f4943db4900f`变为`64fd8d5ffc3a62aa4e49a8058e81e5701aa0a1107269c35bcae50cf1d2396ec4`。该attempt的pytest父wall唯一新增`153.515994687099 s`；attempt ID只出现一次，resource/ABI不计费。此处为历史阶段收口账目，当前264项见本页顶部。账目、输出哈希、两rank会话清场和rank摘要限制见C MPI2 [V5 receipt](../../../results/task041_v13_C_cpu_wait_retry_mpi2_attempt_20261012T142650Z/v5_append_receipt.json)、[execution summary](../../../results/task041_v13_C_cpu_wait_retry_mpi2_attempt_20261012T142650Z/execution_result_summary.json)。
+
+### 必须保留的失败边界
+
+| 观察 | 纠正与当前含义 |
+|---|---|
+| 早期C fixture使用legacy support policy，和registered W0.7的`entity_closure`不一致；后续残差读取字段也不符合cell-condensed producer的`relative_residual` schema | 仅修正test347 fixture调用和读取键；entity-closure registered C serial/MPI2通过。不能据此说legacy数值实现已修复 |
+| 旧触页probe报告目标mapping未出现在`numa_maps` | 缺证据不能推断实际页面位于错误NUMA节点；取消绑定后页位置不再是ABI门 |
+| default-policy ABI早期拒绝 | 叶cgroup缺少`cpuset.mems.effective`是控制器未在该分支启用；派生probe修正继承解析后，本次fresh MPI2 ABI通过。它证明当前ABI合同，不倒推旧观测的实际页面分布 |
+| CPU14负载高于原准入阈值 | 当次resource gate拒绝；后续满足门后才创建新OUT执行。不是测试数值失败，也未修改阈值或移动CPU |
+| V12 warm | 保留32步modal失败、eta`0.47290220837766356`高于0.1拒绝线、outer四项残差高于`5e-9`且无physics结果；V13 tiny测试通过不重写正式场负结果。详细数值、finalizer和嵌套成本见[summary V12部分](summary.md#2026-10-11v12-bounded-modal-策略-w07-warm-终态负结果) |
+
+本阶段到V13合同、tiny FE资格及MPI8 ABI-only预资格。正式W0.7 p6/h0.70/M400 MPI8 warm/pilot、QEP、完整outer/恢复、最终五残差、全场、R/T/A、A_volume、衍射与physics仍未完成；不依据组件测试或ABI结果启动dispatch。已有资格差额与入口见[V13阶段记录](w0p7_consistent_block_pc_v13.md)。
+
+## 2026-10-11：V12 terminal snapshot tiny合同测试（资源授权偏离，非FE）
+
+原80 GiB preflight在pytest启动前被node0门拒绝：`MemFree-reserve=30738620416 B < 85899345920 B`；该attempt没有ABI或pytest。随后已启动的tiny-only runner使用2 GiB hard cap/1.5 GiB warning；用户撤回较低测试合同后，检查时serial和MPI2两个pytest父进程都已结束。撤回消息的精确到达时间`not_persisted`；对话顺序为runner已启动、用户撤回、随后状态检查发现两组均已完成。不得把下面的测试pass称为原80 GiB门通过。
+
+| attempt | 实际pytest结果与UTC start/end | pytest父wall（V5唯一计费） | 资源合同与证据 |
+|---|---|---:|---|
+| serial `task041_v12_terminal_snapshot_tiny2g_serial_mpi2_20261011T022543Z:serial:pytest` | 3 passed；真实wrapper终态快照、mutation/eta拒绝与三槽writer；2026-10-11T02:26:49.574762Z–02:26:53.903667Z | `4.32886230899021 s` | test-only hard/warning `2147483648/1610612736 B`；stdout SHA `6358547f05d4463298570575307bb9eeecc9d46c8ad6c80f19179c641ada62a1`；[attempt](../../../results/task041_v12_terminal_snapshot_tiny2g_serial_mpi2_20261011T022543Z/serial/pytest.attempt.json) |
+| MPI2 `task041_v12_terminal_snapshot_tiny2g_serial_mpi2_20261011T022543Z:mpi2:pytest` | 真实wrapper快照selector，两rank各1 passed；2026-10-11T02:26:59.476258Z–02:27:01.628731Z | `2.152451662812382 s` | 同一test-only hard/warning；stdout SHA `25b48ca3eac866633dda86e092220df66def90303ca80b1dcb979a0035541555`；[attempt](../../../results/task041_v12_terminal_snapshot_tiny2g_serial_mpi2_20261011T022543Z/mpi2/pytest.attempt.json) |
+| 合计与权限边界 | 两个实际pytest父attempt合计`6.481313971802592 s`，各记一次；不重复计ABI或MPI rank wall | V5在该历史阶段从234增至236项，阶段收口SHA `e6d0862ace587bd3f2d75853442c8c7e1ea8e7a844472ac57ace4287316f4442`；这不是当前V5 | [V5 append receipt](../../../results/task041_v12_terminal_snapshot_tiny2g_serial_mpi2_20261011T022543Z/v5_ledger_append_receipt.json) SHA `df19b33c2da81fdce08565704d9e2403351ecea1c17ee155e1526053db6a6fca`；[execution authority receipt](../../../results/task041_v12_terminal_snapshot_tiny2g_serial_mpi2_20261011T022543Z/execution_authority_receipt.json) SHA `f4b2a16c286b26674b90ba63a48363dad41ad6fd135e3f4e9b9a4a6e2e5f5397`记录资源合同偏离 |
+
+两attempt均绑定同一组冻结文件SHA：solver `8d78804853add84bd840b1413cc921ce49cbc55de19aefd75c6ee2d7ef50495e`、workflow `c834d69e9115fd19f9c4ffead0cb5ad73fdad66db8479247569d8030e6101cbf`、test350 `ae88f1f4c6f0cc9e9e0256e9266dba71c685017273e7474b0a4af5748e7845eb`、test351 `2d5245ca50eef4f78c29b2ca2a9a5d062663c4b6e98f40fb5e86afa0dcda08fb`；各attempt前后源码hash记录未变。
+
+三份原始snapshot文件与index的原路径、stat和字节均保留；mtime证明文件是在MPI2父attempt内产生。正确归档在[MPI2 snapshot archive](../../../results/task041_v12_terminal_snapshot_tiny2g_serial_mpi2_20261011T022543Z/mpi2/modal_snapshot_archive/)：first-unmet SHA `c6b66f4e0bc449361a834fc10f6b5c1a4f7aeb452f3c5c1b82aa9584d55c97ea`，first-success SHA `f780679679f275c46dc884a106b6831d1983a6f347594db6a2172595bb80f52a`，terminal-normal-reject SHA `383ba8f786d5cd7f6949b96805ff165ae4ca636f3155cd874ef3c25c0579eded`，index SHA `5249fd1da7460db22a2649b54f648b1cb87ee574ea594dc76ef4e45b99f341d3`；归档更正receipt SHA `27899f58081d255944295232933163f6e8fd50a489a1d35467c83d3f2a31ae07`。原serial阶段误标receipt仍保留并被更正记录引用，没有改写原attempt或raw。
+
+这些是tiny wrapper/writer行为测试，不是正式80 GiB资源资格、W0.7 FE或物理结果。`29373698048 B`是该历史检查点的node0单点样本，不能代表当前资源状态；后来用户授权改为双节点合计reserve并取消内存绑定。后续default-policy测试另走fresh双样本/ABI门，不能回写此处2 GiB授权偏离。
+
 ## 2026-10-10：W0.7 warm runtime terminal（非pytest）
 
 Invocation `45a94a21808643a0b446c357c39fa48c` 是正式warm consumer，不是测试attempt，因此本节不增加pytest/V5测试wall。两侧P4 numeric/admission与固定物理BAL_H反馈的8次线性样本通过；固定物理BAL_H反馈方法的第一次modal solve中，GMRES达到`max_it=8`且未收敛（KSP reason `-3`），显式relative residual `0.01916530113811127 > 0.001`。未触发独立S_H MatMult调用预算拒绝（8/9，上限9/10，`budget_exhausted=false`）。consumer RHS/迭代向量未持久化。consumer为`IMPLEMENTATION_FAILURE`、public rc3、finalizer `failed/service_boundary_failure` 9/11；唯一service wall `3697.345224675 s`沿V5已有runroot行计一次，ledger 212项/SHA `632d802cc33112da7cdd44e05ad3ff06438ea70f9ba05d5639766a0a5600a2c5`。outer/最终残差/recovery/physics未完成；组件测试不能替代该生产数值结果。完整证据见[Response V13](../response_v13.md)和[terminal compact](../../../results/task041_v11_w0p7_fixed_physical_balh_once_warm_retry_run_20261009T235026Z/terminal_compact_v1.json)（SHA `f5eeefa92c9c32df5eb556d8f9574cad06a92bf2ac7993d707b9a310f8cc331e`）。

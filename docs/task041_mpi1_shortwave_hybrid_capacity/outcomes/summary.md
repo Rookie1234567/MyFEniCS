@@ -1,6 +1,64 @@
 # Task041 outcomes summary
 
-## 2026-10-10：W0.7 fixed physical BAL_H warm retry（最新终态）
+## 当前阶段：V13 A/B/C、serial合同与MPI8 ABI预资格（2026-10-13）
+
+通俗地说，V13把原来要反复做的内层求解改成一个固定的BAL_H近似作用，并把它一致地用于LDU预条件器；当前证据证明了实现合同和一个小型注册有限元例子能工作。另有30个serial清场/服务合同节点通过，以及MPI8原生ABI-only预资格通过；这些结果不代表目标W0.7大算例已经收敛或通过物理验收。当前live V5为264项、SHA `17376a6343ac65f359f059ad632e9a305ce28a60c683164f6a16539ee6e767ce`；MPI8 ABI不属于pytest账目。
+
+| 组 | 冻结范围与结果 | 环境和证据边界 | 入口 |
+|---|---|---|---|
+| A serial | 23 selectors、45参数；分批43 passed、2个MPI2-only参数serial skip。skip不是pass | 多个attempt/源码快照；每attempt source receipt为准，不是最终SHA单次全组通过 | [原冻结runner](../../../results/task041_v13_bounded_static_validation_20261011T072210Z/run_serial_gate.py)、[071636Z封存的A覆盖表](../../../results/task041_v13_A_B_mpi2_review_prep_20261012T071636Z/A_serial_selector_coverage.md)、[覆盖表JSON](../../../results/task041_v13_A_B_mpi2_review_prep_20261012T071636Z/A_serial_selector_coverage.json)、[A剩余17项attempt](../../../results/task041_v13_numa1_A_remaining_serial_20261012T044347Z/serial/pytest.attempt.json)、[最终8项attempt](../../../results/task041_v13_A_serial_final8_20261012T064555Z/serial/pytest.attempt.json)、[test352 17参数attempt](../../../results/task041_v13_A_test352_finalizer_17_service_fix_serial_20261012T070500Z/serial/pytest.attempt.json)；覆盖表冻结于071636Z，后续B/C和源码变更按各自receipt核对，旧表不改写 |
+| B MPI2 | 8 selectors、14个参数定义在两rank执行，分段覆盖28 rank-cases；其中包含A serial中skip的MPI2-only timing/canonicalization参数。audit-counter单项与其余7 selector分批验收 | 不把rank-cases叫独立测试；合并stdout中无法映射到rank的部分继续`not_persisted`；早期ABI拒绝和测试负结果保留 | [audit-counter补全](../../../results/task041_v13_q_counter_mismatch_retest_20261012T081735Z/)、[其余7项MPI2 attempt](../../../results/task041_v13_B_mpi2_retry_20261012T093637Z/mpi2/pytest.attempt.json)、[B来源/manifest](../../../results/task041_v13_B_mpi2_retry_20261012T093637Z/manifest.json) |
+| C registered tiny FE | `test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu`在entity-closure路由下serial通过一次、MPI2通过一次。最新MPI2 `rc=0`、1 selector/2 rank-cases、父wall`153.515994687099 s` | serial attempt使用旧的`membind=1`；最终MPI2按用户后续指示使用default/unbound内存策略。最新合并stdout无rank标签，不推断每rank各自summary | [MPI2执行摘要](../../../results/task041_v13_C_cpu_wait_retry_mpi2_attempt_20261012T142650Z/execution_result_summary.json)、[pytest attempt](../../../results/task041_v13_C_cpu_wait_retry_mpi2_attempt_20261012T142650Z/mpi2_c/pytest.attempt.json)、[输出SHA清单](../../../results/task041_v13_C_cpu_wait_retry_mpi2_attempt_20261012T142650Z/OUTPUT_SHA256SUMS.json)，清单SHA `f9bcdc0045418fd60f21b938493a5c12bb5828375fefe851b881e61f1b1ba779` |
+
+最新C MPI2 attempt通过新的resource双样本门和default-policy两rank native ABI；CPU分别为14/18，complex128、Int32、精确桥、六线程和允许内存节点集合检查通过。cgroup分支未启用cpuset控制器，ABI记录了沿继承链读取祖先`cpuset.mems.effective`的来源；两rank策略均为default，页节点分布不作为门。当前小测试资源合同仍为hard/warning/W=`80/72/8 GiB`、node0+node1合计reserve `384 GiB`，node1至少`80 GiB`只代表资源可用性，不代表页面绑定。CPU资源门曾有一次拒绝，之后等到所选CPU满足既有门才重走新OUT；该拒绝不是数值失败。旧`numa_maps`探针找不到mapping也不能证明页面落错节点。历史失败和错误收据均保留。
+
+| C MPI2 attempt运行时的源码身份 | SHA256 | 与044347Z原19路径冻结map的关系 |
+|---|---|---|
+| `src/runners/task041_service.py` | `c7670e4030c92ff98a2302d1725736e2141f283e374bf4facac3f3aaab31985d` | 6项批准delta之一 |
+| `src/test/test_347_task041_balh_physical_operator.py` | `2c77d6d0e058723e54182ce7affc1cc19061e7a70e05c9c8a0ad6023d72c82a1` | 6项批准delta之一 |
+| `src/test/test_349_task041_balh_side_inverse.py` | `c298046ec4165c4c23505384cd945d4e1158a590b1b12da048f01dd238e5585a` | 6项批准delta之一 |
+| `src/test/test_350_task041_balh_block_ldu.py` | `070db620498aae86c9373ce3a25350141084c6aa9eaaa061df37455c88d07cca` | 6项批准delta之一 |
+| `src/test/test_351_task041_balh_public_workflow.py` | `6654c10200a67d52d4a92a905b3b6d4d9c5eacc5e6ca75c6ad038b2e31771973` | 6项批准delta之一 |
+| `src/test/test_352_task041_service_boundary.py` | `9f87a77c487fc33e715d81a6bdd6498a5765c1d960dc865af34fbf5839667bdb` | 6项批准delta之一 |
+| 其余13路径 | 逐项hash保存在attempt source map | 与原冻结map一致；A/B各阶段仍以自己的attempt map为准 |
+
+六个delta的时间顺序和具体内容见[Response V15](../response_v15.md)及[V13阶段记录](w0p7_consistent_block_pc_v13.md)。A/B/C跨多个批准attempt，源码身份随test fixture、route与service修复逐步变化；不能声称整个测试矩阵都在当前最终19路径map上一次运行。四份本文档目前进行的是本次运行之后的文档收口；文档hash变化不改变solver、workflow或test源，不回写运行时source receipt。完整19项运行时映射见[C MPI2 source receipt](../../../results/task041_v13_C_cpu_wait_retry_mpi2_attempt_20261012T142650Z/mpi2_c/source_hashes_before_after.json)。
+
+本次C MPI2输出共78项，逐项核验SHA清单通过。C MPI2 attempt收口时V5由261项增加到262项；新增pytest attempt ID恰一次，唯一计费`153.515994687099 s`，该历史阶段SHA为`64fd8d5ffc3a62aa4e49a8058e81e5701aa0a1107269c35bcae50cf1d2396ec4`，不代表当前账目。ABI和资源门不计入pytest wall。rank-to-summary attribution及wrapper/driver/observer start ticks分别按原receipt保留其`not_persisted`边界；两MPI launcher会话与登记进程清场检查通过。C MPI2之后另有MPI8 ABI-only预资格，但没有正式warm、pilot dispatch、QEP、全场、五项最终残差、恢复、physics或R/T/A结果，详见下节。
+
+### 后续serial合同与MPI8 ABI-only预资格（2026-10-12/13）
+
+| 项目 | 实际结果与费用 | 证据边界 |
+|---|---|---|
+| owned-session与setup-boundary serial合同 | 首attempt先通过3个清场合同节点，随后test351 setup-boundary fixture因lambda未接收`include_blis`而失败；该失败保留，父wall`6.377355428179726 s`。fixture只补显式关键字参数后，remaining attempt的27项全部通过，父wall`10.62438608892262 s`。两条pytest父wall各唯一计账，最终30个合同节点覆盖通过 | [首attempt](../../../results/task041_v13_owned_session_serial_contract_attempt_20261012T195835Z/serial/pytest.attempt.json)、[首stdout](../../../results/task041_v13_owned_session_serial_contract_attempt_20261012T195835Z/serial/pytest.stdout.log)、[修复后27项attempt](../../../results/task041_v13_owned_session_serial_remaining_attempt_20261012T200713Z/serial/pytest.attempt.json)、[完整输出SHA清单](../../../results/task041_v13_owned_session_serial_remaining_attempt_20261012T200713Z/OUTPUT_SHA256SUMS.json)。这些mock/合同测试不证明真实OS或MPI8清场 |
+| MPI8 native ABI-only预资格 | 8/8 rank的production rank资格与ABI检查通过；parent wall`2.1766278869472444 s`，不计V5。没有pytest、FE或数值worker | [attempt](../../../results/task041_v13_mpi8_abi_rank_qualification_attempt_20261012T215842Z/native_abi.attempt.json)、[33项输出清单](../../../results/task041_v13_mpi8_abi_rank_qualification_attempt_20261012T215842Z/OUTPUT_SHA256SUMS.txt)、[post-shell身份复扫](../../../results/task041_v13_mpi8_abi_rank_qualification_post_shell_identity_20261012T232030Z/post_shell_identity_rescan.json)；固定CPU`[10,11,14,15,16,17,18,19]`，default/unbound、有效节点`[0,1]`、六线程变量、complex128、Int32与原生桥均通过；rank身份和owned/outer session清空已核 |
+
+ABI是在21路径dirty-map身份下完成的预资格，不是clean source或warm资格。当前工作树HEAD仍为`cbc0233b098374375a96ddc725c283e107591f6f`、index clean、branch/upstream `0/0`，但21项工作树改动尚未提交；本轮又只改了4份文档字节。因此最终clean HEAD/source map仍`pending_rebind`。静态warm候选和21路径依赖分组见[ignored准备包](../../../results/task041_v13_final_docs_warm_candidate_review_20261012T232650Z/README.md)。
+
+V13实现代码与注册路由现有的范围、尚缺的正式pilot证据以及下一步独立审查项见[V13阶段记录](w0p7_consistent_block_pc_v13.md)。下面V12的node0-only资源行和failure是2026-10-11运行时合同的历史事实，不代表用户随后授权的双节点合计reserve/default-memory测试策略，也不被本次tiny FE结果改写。
+
+## 2026-10-11：V12 bounded modal 策略 W0.7 warm 终态（负结果）
+
+通俗地说，两侧P4因子已经算好，但把两侧连接起来的模态子求解没有把残差降到要求，因此没有得到合格全场；本场不是内存门停止。
+
+| 范围 | 实测结果 | 资格边界 |
+|---|---|---|
+| 身份 | Invocation `62c3763e266345e0b094a4f3ba3ae19c`；运行source `132e3b321f336916d55459b50be95729520ff0f4`；W0.7 reduced、p6/h0.70/M400/MPI8；QEP=0 | 仅该warm reduced场；不是50×25 nm/full cold场 |
+| 终态 | consumer `IMPLEMENTATION_FAILURE`，public rc3，finalizer `failed/service_boundary_failure`；`controlled_stop.active=false` | 保留原分类；不是容量停止 |
+| modal末次solve | 32步达到`max_it=32`仍未收敛；KSP reason `-3`；RHS范数`0.2594808945363501`，残差范数`0.12270908805805157`，相对残差`0.47290220837766356 > rtol=0.001`且也高于PC拒绝线`eta=0.1`；`pc_usable=false`、`raw_residual_pass=false`、`budget_exhausted=false` | 已用一次backup；单独未达target本身不等于拒绝，实际eta也超过0.1；达到迭代上限但没有触发独立MatMult预算拒绝；失败向量未持久化 |
+| modal累计账 | `solve_count=13`、`not_converged_count=10`、S_H evaluation `379`、solver/total MatMult `366/379`、constraint-LU solve attempts `0`；bottom/top modal-feedback apply各`74`（action记录口径），每侧PC-side apply `first=12/delta=11` | 这些计数按记录scope解释，不跨rank重复求和；first exception时间戳`not_persisted` |
+| 46条side记录 | `balh_side_rhs_audits.jsonl`全部`phase=outer`，bottom/top各23行；iterations `2377/2543`，P4 backsolve `9672/10371`，refinement `4918/5285`；writer-local elapsed合计`24442.670603273204/23791.9599934218 s` | elapsed是嵌套的writer-local计时，不与彼此或服务wall相加，也不表示精确outer迭代号 |
+| 同clock区间 | `solve_started=1940.718479`至首次`factor_release=52342.123709`，区间`50401.405230 s`；consumer wall `52344.079503898975 s`；finalizer唯一service wall `52356.221030979 s` | solve至清理入口的同clock区间嵌在consumer/service wall内，不等于纯outer时间，不可与嵌套side elapsed求和；consumer/service wall不重复记账 |
+| outer与side64 | outer记录到iteration 11但终态仍`ITERATING`；末次四项为global `0.062043088541883354`、bottom `0.07364811812944605`、top `0.03898362761015896`、modal `0.22925865297129536`，均远高于原`5e-9`门；side64 `capture_armed=false`、`pending=false`、`trial_count=0` | 没有outer收敛、最终五残差、恢复、完整E/H、R/T/A、A_volume、衍射或physics；side64未执行 |
+| 资源与finalizer | tree RSS峰`53504184320 B`；专属cgroup峰`51665588224 B`，均低于hard cap `85899345920 B`；warning/W为`77309411328/8589934592 B`，node0 floor `412316860416 B`；finalizer 7/12 true，五项false为`service_terminal_normal`、`pre_exit_members_clean`、`public_result_completed`、`modal_solver_policy_matches_request`、`post_cgroup_finalizer_only` | 非资源停止。历史pre-exit成员检查为false；之后只读unit检查`MainPID=0`、`ControlGroup`空且进程已清，不能回写历史检查；缺候选/setup证据按缺失处理 |
+| 快照与raw | 原consumer末次快照记录`not_saved_exception_no_trusted_snapshot`；两份早期快照保留。后续tiny writer合同在独立pytest attempt中生成first-unmet、first-success与terminal normal-reject三槽文件 | 新测试不回填或修改本场raw；异常路径的可信末次向量保存仍未证明 |
+| 唯一账目 | 本Invocation `52356.221030979 s`仅按runroot在V5记一次；V12运行时ledger记录234项。该历史阶段收口时，V5因后续两条tiny pytest增至236项，SHA `e6d0862ace587bd3f2d75853442c8c7e1ea8e7a844472ac57ace4287316f4442` | pytest父wall另列；不叠加consumer、side、ABI或finalizer子阶段wall；该236项是历史阶段账目，不是当前V5 |
+
+46行记录见[side RHS audits](../../../results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261010T094813.437664Z/consumer/numerical_output/balh_side_rhs_audits.jsonl)；原字段见[consumer summary](../../../results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261010T094813.437664Z/consumer/consumer_summary.json)。runroot [terminal compact](../../../results/task041_v12_w0p7_bounded_modal_backup_policy_only_run_20261010T085320Z/terminal_compact_v12.json) SHA `77a5ab816d9d48103f8a31c6e9e2c8a50fef2a70e1606beac3919185169b04f5`；raw分类与ledger不改。完整上下文见[Response V14](../response_v14.md)。
+
+本次modal、outer和physics负结果不因后续tiny测试通过而改变。以下是V12运行和其审查期的历史资源口径：原80 GiB preflight按当时node0 MemFree-reserve门拒绝；`29373698048 B`也是当时主控只读样本，不是当前资源样本。后续用户将reserve语义改为node0+node1合计384 GiB并取消显式内存绑定；当前default-policy测试的资源要求见本节顶部。V12曾发生的2 GiB测试授权偏离仍保留，不构成正式80 GiB资格。W5按用户决定延期处理；W2不用于绕开V12 modal阻塞。
+
+## 2026-10-10：W0.7 fixed physical BAL_H warm retry（前一场历史终态）
 
 | 范围 | 实测结果 | 资格边界 |
 |---|---|---|
@@ -685,10 +743,10 @@ W5弱显著衍射通道按用户决定延期处理；W2不延误W0.7。当前没
 |---|---|---|
 | 模型/运行身份 | W0.7 reduced p6/h0.70/M400/MPI8；Invocation `62c3763e266345e0b094a4f3ba3ae19c`；源码 `132e3b321f336916d55459b50be95729520ff0f4` | consumer raw、service finalizer与V5账目分别绑定，见终态compact |
 | 方法切换 | H6 primary后实际一次切换到fixed physical BAL_H；相同live side-factor handles核验通过，备选线性门通过 | 仅证明该反馈动作及因子复用检查发生，不代表外层或全场通过 |
-| 最终modal solve | 32步 / reason `-3`；`rhs_norm=0.2594808945363501`，独立残差 `0.12270908805805157`，relative eta `0.47290220837766356`，目标`1e-3`未达，允许PC上限`0.1`也未达；solver/total作用`32/33`，预算未耗尽 | 可信iterate且输入未变，但V12有界策略拒绝它。consumer `failure_stage_first=modal_inner_solve`；raw分类仍为`IMPLEMENTATION_FAILURE`，public rc3，finalizer `failed/service_boundary_failure`，controlled stop inactive |
+| 最终modal solve | 32步 / reason `-3`；`rhs_norm=0.2594808945363501`，独立残差 `0.12270908805805157`，relative eta `0.47290220837766356`；高于目标`1e-3`且高于V12近似PC拒绝线`0.1`，solver/total作用`32/33`，未触发MatMult调用预算拒绝 | 可信iterate且输入未变，但V12有界策略拒绝它。consumer `failure_stage_first=modal_inner_solve`；raw分类仍为`IMPLEMENTATION_FAILURE`，public rc3，finalizer `failed/service_boundary_failure`，controlled stop inactive |
 | 快照 | `first_unmet_target` ordinal4，eta`0.0048661796696292964`；`first_success_control` ordinal1，eta`0.0009056691677168769`；两份`[800]`复向量均有真实NPZ及SHA | 首未达配额已使用；末次ordinal13可信iterate没有独立NPZ。兜底状态`not_saved_exception_no_trusted_snapshot`是标签不准确，不等同于末次iterate不可信 |
 | finalizer五个false | service terminal正常、pre-exit成员清洁、public成功、modal policy匹配、post-cgroup仅finalizer | 其中policy检查因输入public summary缺少`setup.candidate_inventory`及`setup.full_formal.solve.inventory`而无法判定；consumer原始方法轨迹显示请求与实际切换相符。历史成员检查失败与后来MainPID0/ControlGroup空的live清场观察分开 |
-| outer/physics | 有progress至iteration 11，最后global true residual `0.062043088541883354`，决策`ITERATING`；side64 trial count为0 | 无outer收敛、最终五真残差、recovery、完整E/H、R/T/A、`A_volume`或衍射输出；无数值资格 |
+| outer/physics | 有progress至iteration 11，最后global/bottom/top/modal true residual分别为`0.062043088541883354`、`0.07364811812944605`、`0.03898362761015896`、`0.22925865297129536`，均高于原`5e-9`门；决策`ITERATING`；side64 trial count为0 | 无outer收敛、最终五真残差、recovery、完整E/H、R/T/A、`A_volume`或衍射输出；无数值资格 |
 | 资源与服务计费 | process-tree RSS峰`53504184320 B`；专属job-cgroup history峰`51665588224 B`；唯一service-unit wall `52356.221030979 s`；V5 `234`项，本Invocation一条，ledger SHA `f307eab7c908eed21627c29360e5424a8d545c4b46b0b43c26f61b50ae466775` | 两峰的scope不同且分列；resource summary SHA `adef4e71a2b8b7939d0a604c0b6da3c0be4004aba7ca888e8701de3fb9047bf2`；低于80 GiB hard cap，不是资源停止。nested consumer/supervisor wall不另计 |
 
 结论仍是缩减pilot未完成。W5弱显著通道按用户决定延期并保留旧失败；W2未启动。`50×25 nm`、2 TB及48 h目标未取得证据。完整原始路径和字段映射见[hash-bound terminal compact](../../../results/task041_v12_w0p7_bounded_modal_backup_policy_only_run_20261010T085320Z/terminal_compact_v12.json)，SHA `77a5ab816d9d48103f8a31c6e9e2c8a50fef2a70e1606beac3919185169b04f5`。
