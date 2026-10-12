@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 from types import SimpleNamespace
 
 import numpy as np
@@ -114,7 +115,10 @@ def test_v30_reference_first_control_flow_passes_frozen_identity_and_sector_buil
     assert result["trace_rows_by_q"] == {0: 773568, 4: 773568}
 
 
-def test_v30_service_accepts_real_canonical_full_variant_only_with_exact_overrides(tmp_path):
+@pytest.mark.parametrize("source_qualified_attempt", [False, True])
+def test_v30_service_accepts_real_canonical_full_variant_only_with_exact_overrides(
+    tmp_path, source_qualified_attempt
+):
     from scripts import task40_v20_service_workflow as service
 
     assert service._v30_q0_csr_shape(
@@ -125,24 +129,36 @@ def test_v30_service_accepts_real_canonical_full_variant_only_with_exact_overrid
 
     canonical_path = ROOT / "input/task40extra_0p7nm_engineering/target_original_ny8_resource_pilot_v20.dat"
     canonical_text = canonical_path.read_text(encoding="utf-8")
-    selector = tmp_path / service.V30_ARTIFACT_ROOT / "selector_v30.json"
+    source_sha = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+    ).strip()
+    artifact_attempt = service.V30_ARTIFACT_ROOT
+    if source_qualified_attempt:
+        artifact_attempt = artifact_attempt / "attempts" / source_sha
+    selector = tmp_path / artifact_attempt / "q0_selector_v30_partial.json"
     selector.parent.mkdir(parents=True)
     selector.write_text(
         json.dumps(
             {
                 "schema": "task40extra.review_v30_qualified_q_csr_selector.v1",
                 "profile": service.V30_TARGET_PROFILE,
-                "q_csr_entries": [{"q_index": 0, "twist_index": 0}],
+                "q_csr_entries": [
+                    {
+                        "q_index": 0,
+                        "twist_index": 0,
+                        "execution_identity": {"source_sha": source_sha},
+                    }
+                ],
             }
         )
         + "\n",
         encoding="utf-8",
     )
-    stage_root = tmp_path / service.V30_ARTIFACT_ROOT / "stage_inputs/full"
+    stage_root = tmp_path / artifact_attempt / "stage_inputs/full"
     stage_root.mkdir(parents=True)
     stage_path = stage_root / canonical_path.name
     selector_rel = selector.relative_to(tmp_path).as_posix()
-    output_rel = (tmp_path / service.V30_ARTIFACT_ROOT / "factor_bank").relative_to(tmp_path).as_posix()
+    output_rel = (tmp_path / artifact_attempt / "factor_bank").relative_to(tmp_path).as_posix()
     selector_sha = _sha(selector)
     rendered = service.render_stage_input(canonical_text, "full")
     overrides = (
@@ -157,6 +173,106 @@ def test_v30_service_accepts_real_canonical_full_variant_only_with_exact_overrid
         "task40_target_heavy_authorized = false\n", overrides, 1
     )
     stage_path.write_text(rendered, encoding="utf-8")
+
+    from src.io.input_validation import load_and_resolve
+
+    canonical_resolved = load_and_resolve(canonical_path).as_jsonable()
+    staged_resolved = load_and_resolve(stage_path).as_jsonable()
+    expected_selector = {
+        "schema": "task40extra.review_v30_q_csr_worker_binding.v1",
+        "selector_path": selector_rel,
+        "selector_sha256": selector_sha,
+    }
+    expected_factor = {
+        "schema": "task40extra.review_v30_all_q_factor_bank.v1",
+        "output_directory": output_rel,
+        "require_two_strict_rhs": True,
+    }
+    for field in (
+        "geometry",
+        "materials",
+        "incidence",
+        "discretization",
+        "boundary",
+        "method",
+        "solver",
+        "output",
+        "derived",
+    ):
+        assert staged_resolved[field] == canonical_resolved[field]
+    for field in (
+        "schema_version",
+        "model_id",
+        "run_id",
+        "comparison_group",
+        "dimension",
+    ):
+        assert staged_resolved[field] == canonical_resolved[field]
+    expected_execution = dict(canonical_resolved["execution"])
+    expected_execution.update(
+        {
+            "task40_execution_stop_stage": "full",
+            "task40_target_heavy_authorized": True,
+            "task40_v30_q_csr_binding": expected_selector,
+            "task40_v30_factor_bank_config": expected_factor,
+        }
+    )
+    assert staged_resolved["execution"] == expected_execution
+
+    invalid_inputs = (
+        (
+            rendered.replace(
+                f'selector_sha256 = "{selector_sha}" }}',
+                f'selector_sha256 = "{selector_sha}", extra = true }}',
+                1,
+            ),
+            "exactly schema, selector_path, and selector_sha256",
+        ),
+        (
+            rendered.replace(selector_sha, "A" * 64, 1),
+            "64 lowercase hexadecimal characters",
+        ),
+        (
+            rendered.replace(
+                f'selector_path = "{selector_rel}"',
+                'selector_path = "../selector.json"',
+                1,
+            ),
+            "selector and factor-bank paths must be the exact legacy V30 pair or the same-source V30 attempt pair",
+        ),
+        (
+            rendered.replace("require_two_strict_rhs = true", "require_two_strict_rhs = false", 1),
+            "must be the TOML boolean true",
+        ),
+        (
+            rendered.replace(
+                'task40_target_heavy_authorized = true\n',
+                'task40_target_heavy_authorized = false\n',
+                1,
+            ),
+            "explicitly authorized full original-size target profile",
+        ),
+        (
+            rendered.replace(
+                'task40_v30_factor_bank_config = { schema = '
+                '"task40extra.review_v30_all_q_factor_bank.v1", '
+                f'output_directory = "{output_rel}", require_two_strict_rhs = true }}\n',
+                "",
+                1,
+            ),
+            "V30 requires both",
+        ),
+        (
+            rendered.replace("\n[output]", "\nunregistered_v30_escape = true\n\n[output]", 1),
+            "unknown field",
+        ),
+    )
+    for index, (invalid_text, expected_error) in enumerate(invalid_inputs):
+        assert invalid_text != rendered
+        invalid_path = stage_root / f"invalid_{index}_{canonical_path.name}"
+        invalid_path.write_text(invalid_text, encoding="utf-8")
+        with pytest.raises(ValueError, match=expected_error):
+            load_and_resolve(invalid_path)
 
     parsed_path, _campaign, stop_stage, data = service._parse_case_arguments(
         [

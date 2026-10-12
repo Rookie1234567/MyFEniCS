@@ -1439,6 +1439,36 @@ FIELD_SPECS: Final = (
         constraints=("V20 target-only opt-in; does not qualify full-field output",),
     ),
     _f(
+        "execution.task40_v30_q_csr_binding",
+        "table",
+        "none",
+        ("full3d_iterative",),
+        "V30 全 q 参考逆执行中选定 q CSR 的版本化 selector 绑定",
+        "V30 q CSR worker selector binding",
+        '{ schema = "task40extra.review_v30_q_csr_worker_binding.v1", selector_path = '
+        '"benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl/'
+        'q0_selector_v30_partial.json", selector_sha256 = "<64 lowercase hex>" }',
+        constraints=(
+            "exact V30 schema and keys; exact legacy or same-source attempt selector path and SHA-256; "
+            "only the explicitly authorized full target profile",
+        ),
+    ),
+    _f(
+        "execution.task40_v30_factor_bank_config",
+        "table",
+        "none",
+        ("full3d_iterative",),
+        "V30 全 q 参考逆因子组输出目录及严格双 RHS 资格要求",
+        "V30 all-q resident factor-bank policy",
+        '{ schema = "task40extra.review_v30_all_q_factor_bank.v1", output_directory = '
+        '"benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl/factor_bank", '
+        "require_two_strict_rhs = true }",
+        constraints=(
+            "exact V30 schema and keys; exact legacy or same-source attempt factor-bank path; "
+            "require_two_strict_rhs must be true; only the explicitly authorized full target profile",
+        ),
+    ),
+    _f(
         "execution.task40_component_resume_manifest_path",
         "path",
         "repo-relative",

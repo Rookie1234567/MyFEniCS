@@ -769,13 +769,21 @@ def _validate_service_stage_input_variant(
             expected_data["execution"].pop(name, None)
         if actual_base != expected_data:
             raise ValueError("V30 stage input changes fields outside its exact target-operation bindings")
-        if input_path.name != canonical_path.name or not any(
-            input_path.is_relative_to(root / "stage_inputs") for root in v30_roots
-        ):
-            raise ValueError("V30 full input must be a same-basename file under its ignored stage_inputs root")
+        if input_path.name != canonical_path.name:
+            raise ValueError("V30 full input must retain the canonical DAT basename")
         from src.runners.task40_v30_contract import require_v30_input_identity
 
-        require_v30_input_identity(canonical_path, input_path, repo_root=repo_root)
+        expected_source_sha = None
+        if (repo_root / ".git").exists():
+            expected_source_sha = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=repo_root, text=True
+            ).strip()
+        require_v30_input_identity(
+            canonical_path,
+            input_path,
+            repo_root=repo_root,
+            expected_source_sha=expected_source_sha,
+        )
         return
     resume_path = execution.get("task40_component_resume_manifest_path")
     resume_sha256 = execution.get("task40_component_resume_manifest_sha256")
@@ -1223,6 +1231,7 @@ def prepare_v30_full_input(repo_root: Path = ROOT) -> dict[str, Any]:
         raise RuntimeError("V30 prepare requires the frozen clean Task40 execution branch")
 
     artifact_root = (root / V30_ARTIFACT_ROOT_RELATIVE).resolve()
+    attempt_root = artifact_root / "attempts" / source_sha
     old_contract_path = artifact_root / "execution_contract_v30.json"
     contract_path = artifact_root / "execution_contract_v30_fix01.json"
     if (
@@ -1351,7 +1360,7 @@ def prepare_v30_full_input(repo_root: Path = ROOT) -> dict[str, Any]:
         "manifest_sha256": V28_Q0_CSR_MANIFEST_SHA256,
         "native_qualification_sha256": V28_Q0_NATIVE_QUALIFICATION_SHA256,
     }
-    selector_path = artifact_root / "q0_selector_v30_partial.json"
+    selector_path = attempt_root / "q0_selector_v30_partial.json"
     selector_relative = selector_path.relative_to(root).as_posix()
     selector = {
         "schema": V30_Q_CSR_SELECTOR_SCHEMA,
@@ -1386,8 +1395,8 @@ def prepare_v30_full_input(repo_root: Path = ROOT) -> dict[str, Any]:
     }
     selector_bytes = (json.dumps(selector, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode()
     selector_sha = hashlib.sha256(selector_bytes).hexdigest()
-    input_path = artifact_root / "stage_inputs" / "full" / canonical_path.name
-    factor_directory = artifact_root / "factor_bank"
+    input_path = attempt_root / "stage_inputs" / "full" / canonical_path.name
+    factor_directory = attempt_root / "factor_bank"
     rendered = render_stage_input(canonical_text, "full")
     overrides = (
         "task40_target_heavy_authorized = true\n"
@@ -1402,7 +1411,12 @@ def prepare_v30_full_input(repo_root: Path = ROOT) -> dict[str, Any]:
     staged_bytes = rendered.replace(authorization_line, overrides, 1).encode("utf-8")
     write_ignored_immutable(selector_path, selector_bytes)
     write_ignored_immutable(input_path, staged_bytes)
-    identity = require_v30_input_identity(canonical_path, input_path, repo_root=root)
+    identity = require_v30_input_identity(
+        canonical_path,
+        input_path,
+        repo_root=root,
+        expected_source_sha=source_sha,
+    )
     if identity["staged_input_sha256"] != hashlib.sha256(staged_bytes).hexdigest():
         raise V30ContractError("V30 staged DAT changed while preparing the input")
 

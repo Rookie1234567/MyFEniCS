@@ -103,6 +103,7 @@ def require_v30_input_identity(
     staged_input_path: str | Path,
     *,
     repo_root: str | Path,
+    expected_source_sha: str | None = None,
 ) -> dict[str, str]:
     """Bind V30 science to the immutable canonical DAT and retain the raw stage hash."""
     root = Path(repo_root).resolve()
@@ -118,11 +119,35 @@ def require_v30_input_identity(
         (root / V30_ARTIFACT_ROOT_RELATIVE).resolve(),
         (root / V30_PREPARATION_ROOT_RELATIVE).resolve(),
     )
-    if staged.name != canonical.name or not any(
-        staged.is_relative_to(artifact_root / "stage_inputs")
-        for artifact_root in artifact_roots
-    ):
-        raise V30ContractError("V30 staged input must be a same-name ignored stage input")
+    stage_root: Path | None = None
+    for artifact_root in artifact_roots:
+        if staged == artifact_root / "stage_inputs" / "full" / canonical.name:
+            stage_root = artifact_root
+            break
+    attempt_source_sha: str | None = None
+    current_artifact_root = (root / V30_ARTIFACT_ROOT_RELATIVE).resolve()
+    if stage_root is None:
+        try:
+            relative_stage = staged.relative_to(current_artifact_root)
+        except ValueError:
+            relative_stage = Path()
+        if (
+            len(relative_stage.parts) == 5
+            and relative_stage.parts[0] == "attempts"
+            and re.fullmatch(r"[0-9a-f]{40}", relative_stage.parts[1])
+            and relative_stage.parts[2:] == ("stage_inputs", "full", canonical.name)
+        ):
+            attempt_source_sha = relative_stage.parts[1]
+            stage_root = current_artifact_root / "attempts" / attempt_source_sha
+    if stage_root is None:
+        raise V30ContractError(
+            "V30 staged input must use the exact legacy path or source-qualified attempt path"
+        )
+    if expected_source_sha is not None:
+        if not re.fullmatch(r"[0-9a-f]{40}", expected_source_sha):
+            raise V30ContractError("V30 expected source SHA is malformed")
+        if attempt_source_sha is not None and attempt_source_sha != expected_source_sha:
+            raise V30ContractError("V30 staged attempt path does not match the current source SHA")
 
     canonical_data = tomllib.loads(canonical.read_text(encoding="utf-8"))
     staged_data = tomllib.loads(staged.read_text(encoding="utf-8"))
@@ -160,15 +185,24 @@ def require_v30_input_identity(
     ):
         raise V30ContractError("V30 staged input has malformed selector/factor overrides")
 
-    def rooted_override_path(raw: str, label: str) -> Path:
-        supplied = Path(raw)
-        candidate = (supplied if supplied.is_absolute() else root / supplied).resolve()
-        if not any(candidate.is_relative_to(artifact_root) for artifact_root in artifact_roots):
-            raise V30ContractError(f"V30 {label} escaped its ignored artifact roots")
-        return candidate
-
-    selector_path = rooted_override_path(str(selector["selector_path"]), "selector")
-    output_directory = rooted_override_path(str(factor["output_directory"]), "factor output")
+    selector_value = selector.get("selector_path")
+    output_value = factor.get("output_directory")
+    if (
+        not isinstance(selector_value, str)
+        or Path(selector_value).is_absolute()
+        or not isinstance(output_value, str)
+        or Path(output_value).is_absolute()
+    ):
+        raise V30ContractError("V30 selector and factor paths must be repo-relative")
+    selector_path = (root / selector_value).resolve()
+    output_directory = (root / output_value).resolve()
+    if (
+        selector_path != stage_root / "q0_selector_v30_partial.json"
+        or output_directory != stage_root / "factor_bank"
+    ):
+        raise V30ContractError(
+            "V30 selector, stage input, and factor-bank paths must share one exact artifact attempt"
+        )
     if not selector_path.is_file() or sha256_file(selector_path) != selector["selector_sha256"]:
         raise V30ContractError("V30 q0 selector is missing or changed")
     selector_data = json.loads(selector_path.read_text(encoding="utf-8"))
@@ -185,7 +219,21 @@ def require_v30_input_identity(
         or not output_directory.name
     ):
         raise V30ContractError("V30 preparation selector must contain only the qualified q0 entry")
-    return {
+    selector_execution = entries[0].get("execution_identity")
+    if attempt_source_sha is not None:
+        if (
+            not isinstance(selector_execution, Mapping)
+            or selector_execution.get("source_sha") != attempt_source_sha
+        ):
+            raise V30ContractError(
+                "V30 selector execution identity does not match its source-qualified attempt path"
+            )
+    if expected_source_sha is not None and (
+        not isinstance(selector_execution, Mapping)
+        or selector_execution.get("source_sha") != expected_source_sha
+    ):
+        raise V30ContractError("V30 selector is not qualified for the current source SHA")
+    identity = {
         "canonical_input_path": str(canonical),
         "canonical_input_sha256": canonical_sha,
         "scientific_input_sha256": canonical_sha,
@@ -194,6 +242,9 @@ def require_v30_input_identity(
         "selector_path": str(selector_path),
         "selector_sha256": str(selector["selector_sha256"]),
     }
+    if attempt_source_sha is not None:
+        identity["source_sha"] = attempt_source_sha
+    return identity
 
 
 def _rooted_path(root: Path, value: str | Path, label: str) -> Path:

@@ -53,6 +53,21 @@ _V31_AUTHORIZED_FRESH_RUN_ID = (
 _V31_AUTHORIZED_FRESH_COMPARISON_GROUP = (
     "review_v29_evidence_and_projection_v31_user_authorized_fresh_20260929"
 )
+_TASK40_V30_TARGET_PROFILE = "task40extra_v20_p6_y_orbit_target_original_ny8_v1"
+_TASK40_V30_Q_CSR_BINDING_SCHEMA = (
+    "task40extra.review_v30_q_csr_worker_binding.v1"
+)
+_TASK40_V30_FACTOR_BANK_SCHEMA = "task40extra.review_v30_all_q_factor_bank.v1"
+_TASK40_V30_ARTIFACT_ROOT = (
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl"
+)
+_TASK40_V30_PREPARATION_ROOT = (
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation"
+)
+_TASK40_V30_LEGACY_ROOTS = (
+    _TASK40_V30_ARTIFACT_ROOT,
+    _TASK40_V30_PREPARATION_ROOT,
+)
 
 
 def _error(path: str, message: str) -> InputError:
@@ -95,7 +110,11 @@ def _parse_default(spec: Any) -> Any:
 def _parse_value(spec: Any, value: Any) -> Any:
     path = spec.key
     value_type = spec.value_type
-    if value_type == "integer":
+    if value_type == "table":
+        if not isinstance(value, Mapping):
+            raise _error(path, "expected a TOML inline table")
+        result: Any = _plain(value)
+    elif value_type == "integer":
         if isinstance(value, bool) or not isinstance(value, int):
             raise _error(path, "expected an integer; boolean is not an integer")
         result: Any = int(value)
@@ -171,6 +190,106 @@ def _applicable(spec: Any, dimension: int, method: str) -> bool:
         or f"{dimension}d" in spec.applicability
         or method in spec.applicability
     )
+
+
+def _validate_task40_v30_execution_fields(config: Mapping[str, Any]) -> None:
+    execution = config["execution"]
+    selector_key = "task40_v30_q_csr_binding"
+    factor_key = "task40_v30_factor_bank_config"
+    v30_keys = {selector_key, factor_key}
+    supplied = v30_keys.intersection(execution)
+    if not supplied:
+        return
+    if supplied != v30_keys:
+        raise _error(
+            "execution",
+            "V30 requires both task40_v30_q_csr_binding and "
+            "task40_v30_factor_bank_config",
+        )
+    if (
+        config["dimension"] != 3
+        or config["method"].get("kind") != "full3d_iterative"
+        or config["solver"].get("preconditioner") != _TASK40_V30_TARGET_PROFILE
+        or execution.get("task40_execution_stop_stage") != "full"
+        or execution.get("task40_target_heavy_authorized") is not True
+    ):
+        raise _error(
+            f"execution.{selector_key}",
+            "V30 bindings require the explicitly authorized full original-size target profile",
+        )
+
+    selector = execution[selector_key]
+    selector_fields = {"schema", "selector_path", "selector_sha256"}
+    if set(selector) != selector_fields:
+        raise _error(
+            f"execution.{selector_key}",
+            "must contain exactly schema, selector_path, and selector_sha256",
+        )
+    if selector["schema"] != _TASK40_V30_Q_CSR_BINDING_SCHEMA:
+        raise _error(
+            f"execution.{selector_key}.schema",
+            f"must equal {_TASK40_V30_Q_CSR_BINDING_SCHEMA!r}",
+        )
+    selector_path = selector["selector_path"]
+    if not isinstance(selector_path, str):
+        raise _error(f"execution.{selector_key}.selector_path", "must be a string path")
+    selector_sha256 = selector["selector_sha256"]
+    if not isinstance(selector_sha256, str) or not re.fullmatch(
+        r"[0-9a-f]{64}", selector_sha256
+    ):
+        raise _error(
+            f"execution.{selector_key}.selector_sha256",
+            "must be 64 lowercase hexadecimal characters",
+        )
+
+    factor = execution[factor_key]
+    factor_fields = {"schema", "output_directory", "require_two_strict_rhs"}
+    if set(factor) != factor_fields:
+        raise _error(
+            f"execution.{factor_key}",
+            "must contain exactly schema, output_directory, and require_two_strict_rhs",
+        )
+    if factor["schema"] != _TASK40_V30_FACTOR_BANK_SCHEMA:
+        raise _error(
+            f"execution.{factor_key}.schema",
+            f"must equal {_TASK40_V30_FACTOR_BANK_SCHEMA!r}",
+        )
+    output_directory = factor["output_directory"]
+    if not isinstance(output_directory, str):
+        raise _error(
+            f"execution.{factor_key}.output_directory",
+            "must be a string path",
+        )
+    legacy_path_pair = any(
+        selector_path == f"{root}/q0_selector_v30_partial.json"
+        and output_directory == f"{root}/factor_bank"
+        for root in _TASK40_V30_LEGACY_ROOTS
+    )
+    attempt_selector = re.fullmatch(
+        rf"{re.escape(_TASK40_V30_ARTIFACT_ROOT)}/attempts/([0-9a-f]{{40}})/"
+        r"q0_selector_v30_partial\.json",
+        selector_path,
+    )
+    attempt_factor = re.fullmatch(
+        rf"{re.escape(_TASK40_V30_ARTIFACT_ROOT)}/attempts/([0-9a-f]{{40}})/factor_bank",
+        output_directory,
+    )
+    attempt_path_pair = (
+        attempt_selector is not None
+        and attempt_factor is not None
+        and attempt_selector.group(1) == attempt_factor.group(1)
+    )
+    if not (legacy_path_pair or attempt_path_pair):
+        raise _error(
+            f"execution.{selector_key}.selector_path",
+            "selector and factor-bank paths must be the exact legacy V30 pair or "
+            "the same-source V30 attempt pair",
+        )
+    if factor["require_two_strict_rhs"] is not True:
+        raise _error(
+            f"execution.{factor_key}.require_two_strict_rhs",
+            "must be the TOML boolean true",
+        )
 
 
 def _validate_root(document: Mapping[str, Any]) -> None:
@@ -410,6 +529,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
     output = config["output"]
     kind = method["kind"]
     geometry_kind = geometry["geometry_kind"]
+
+    _validate_task40_v30_execution_fields(config)
 
     if dimension == 2:
         if not kind.startswith("2d_"):
