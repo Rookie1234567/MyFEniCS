@@ -1899,6 +1899,9 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
     from src.solvers import physical_balanced_side_inverse as side_inverse_module
     from src.solvers.petsc_lu_stage import StagedFactorRejected
 
+    for name in task041_balh_workflow.TASK041_V13_REQUIRED_THREAD_ENVIRONMENT:
+        monkeypatch.setenv(name, "1")
+
     real_stage_factory_builder = worker._build_task041_w0p7_stage_factory
 
     legacy_paths = (
@@ -1952,6 +1955,9 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
         "supervisor_root_pid": 1234,
     }
     stage_factory = lambda **_kwargs: None
+    stage_factory.v13_fresh_authority_callback = lambda *_args, **_kwargs: {
+        "status": "fixture_callback_present"
+    }
     stage_factory_binding = {
         "schema": "task041.w0p7.factor_stage_factory_binding.fixture.v1",
         "bridge_sha256": "a" * 64,
@@ -2066,7 +2072,9 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
 
     def fake_stage_factory(path, **kwargs):
         stage_binding_calls.append((Path(path), kwargs))
-        return stage_factory, stage_factory_binding
+        binding = dict(stage_factory_binding)
+        binding["expected_rank_cpus"] = list(kwargs["expected_rank_cpus"])
+        return stage_factory, binding
 
     def capture_rank0_json(path, payload, _comm):
         if Path(path).name == "consumer_summary.json":
@@ -2088,7 +2096,11 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
     monkeypatch.setattr(
         worker, "_run_task041_balh_candidate_setup", run_real_candidate_setup
     )
-    monkeypatch.setattr(worker, "_environment_snapshot", lambda: {"test": True})
+    monkeypatch.setattr(
+        worker,
+        "_environment_snapshot",
+        lambda *, include_blis=False: {"test": True},
+    )
     monkeypatch.setattr(worker, "_write_rank_pid_affinity", lambda *_a, **_k: None)
     monkeypatch.setattr(worker, "_memavailable_bytes", lambda: 10**15)
     monkeypatch.setattr(worker, "_write_rank0_json", capture_rank0_json)
@@ -2286,6 +2298,54 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
     )
     assert modal_feedback_bindings[-2:] == [None, None]
     assert len(operator_boundary_calls) == 3
+    assert forbidden_side_build_calls == []
+
+    v13_policy_id = "task041_v13_consistent_fixed_balh_modal_surrogate"
+    with pytest.raises(CandidateOperatorBoundaryReached):
+        worker.run_task041_consumer(
+            input_path=pilot_path,
+            packet_manifest=manifest_path,
+            packet_identity=identity_path,
+            packet_manifest_sha256="d" * 64,
+            run_directory=tmp_path / "pilot_v13_policy_setup_boundary",
+            source_sha=source_sha,
+            candidate=True,
+            comm=comm,
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            fixed_h6_modal_gmres_research=True,
+            p4_refinement_target_tolerance=5.0e-13,
+            expected_rank_cpus=task041_balh_workflow.TASK041_V13_MPI8_RANK_CPUS,
+            modal_solver_policy=v13_policy_id,
+        )
+    v13_helper_args, v13_helper_kwargs = candidate_setup_calls[-1]
+    del v13_helper_args
+    assert v13_helper_kwargs["modal_solver_policy"] == v13_policy_id
+    assert v13_helper_kwargs["modal_feedback_method"] is None
+    assert v13_helper_kwargs["modal_feedback_binding"] is None
+    assert callable(v13_helper_kwargs["modal_snapshot_callback"])
+    assert callable(
+        getattr(
+            v13_helper_kwargs["factor_stage_factory"],
+            "v13_fresh_authority_callback",
+            None,
+        )
+    )
+    assert tuple(fixed_h6_binding_calls[-2][0]["expected_rank_cpus"]) == (
+        task041_balh_workflow.TASK041_V13_MPI8_RANK_CPUS
+    )
+    assert stage_binding_calls[-1][1]["expected_rank_cpus"] == (
+        task041_balh_workflow.TASK041_V13_MPI8_RANK_CPUS
+    )
+    assert all(
+        call[0].get("modal_solver_policy") == v13_policy_id
+        and call[1]["modal_solver_policy"]["policy_id"] == v13_policy_id
+        and call[1]["mode_count"] == 400
+        for call in fixed_h6_binding_calls[-2:]
+    )
+    assert modal_feedback_bindings[-2:] == [None, None]
+    assert len(operator_boundary_calls) == 4
     assert forbidden_side_build_calls == []
 
     # Drive an actual StagedFactorRejected through the production exact-side
@@ -3170,6 +3230,14 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
             None,
             "task041_v12_bounded_inexact_modal_once_backup",
         ),
+        (
+            "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat",
+            TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+            5.0e-13,
+            "validated_producer_root",
+            None,
+            "task041_v13_consistent_fixed_balh_modal_surrogate",
+        ),
     ),
     ids=(
         "13p5nm-new-profile",
@@ -3181,6 +3249,7 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
         "w0p7nm-explicit-fixed-physical-balh-method",
         "w0p7nm-explicit-v12-modal-policy",
         "w0p7nm-explicit-v12-once-backup-policy",
+        "w0p7nm-explicit-v13-consistent-modal-policy",
     ),
 )
 def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
@@ -3196,6 +3265,11 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
 ):
     from benchmarks.task041_balh_workflow import (
         TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+        TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+        TASK041_V13_MEMORY_POLICY,
+        TASK041_V13_MPI8_RANK_CPUS,
+        TASK041_V13_REQUIRED_THREAD_ENVIRONMENT,
+        TASK041_V13_RESOURCE_HEADROOM_POLICY,
         build_task041_balh_mode_prep_command,
         task041_fixed_h6_modal_gmres_binding,
         task041_fixed_h6_packet_source_binding,
@@ -3204,6 +3278,10 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     from benchmarks.task041_legacy_native_packet import (
         TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
     )
+
+    if modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID:
+        for name in TASK041_V13_REQUIRED_THREAD_ENVIRONMENT:
+            monkeypatch.setenv(name, "1")
 
     input_path = REPOSITORY_ROOT / "input/official/task041/side_balh" / input_name
     specification = _specification(input_path)
@@ -3216,7 +3294,11 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         if model_id == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
         else tuple(range(1, 9))
     )
-    rank_cpus = (12, 10, 17, 11, 16, 13, 15, 14)
+    rank_cpus = (
+        TASK041_V13_MPI8_RANK_CPUS
+        if modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+        else (12, 10, 17, 11, 16, 13, 15, 14)
+    )
     cpu_argument = ",".join(str(cpu) for cpu in rank_cpus)
     resource_policy = task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
     descriptor = None
@@ -3240,7 +3322,7 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         modal_solver_policy=modal_solver_policy,
     )
     if modal_solver_policy is not None:
-        with pytest.raises(ValueError, match="V12 modal policy requires"):
+        with pytest.raises(ValueError, match="bounded modal policy requires pure fixed-H6"):
             task041_fixed_h6_modal_gmres_binding(
                 TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
                 enabled=True,
@@ -3253,7 +3335,7 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
                 expected_rank_cpus=rank_cpus,
                 modal_solver_policy=modal_solver_policy,
             )
-        with pytest.raises(ValueError, match="V12 modal policy requires"):
+        with pytest.raises(ValueError, match="bounded modal policy requires pure fixed-H6"):
             task041_fixed_h6_modal_gmres_binding(
                 model_id,
                 enabled=True,
@@ -3300,6 +3382,22 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
             supervision_payload["fixed_h6_modal_gmres_research"] = fixed_binding
         if modal_solver_policy is not None:
             supervision_payload["modal_solver_policy"] = modal_solver_policy
+        if modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID:
+            supervision_payload.update(
+                {
+                    "memory_policy": TASK041_V13_MEMORY_POLICY,
+                    "membind_node": None,
+                    "resource_headroom_policy": dict(
+                        TASK041_V13_RESOURCE_HEADROOM_POLICY
+                    ),
+                    "required_thread_environment": dict(
+                        TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+                    ),
+                    "parent_environment_threads": dict(
+                        TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+                    ),
+                }
+            )
         if source_binding["source_type"] == "validated_producer_root":
             registered = task041_balh_service_contract(model_id)
             supervision_payload["producer_execution"] = (
@@ -3488,6 +3586,19 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         assert launch_manifest["fixed_h6_modal_gmres_research"][
             "modal_solver_policy"
         ]["policy_id"] == modal_solver_policy
+    if modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID:
+        assert launch_manifest["memory_policy"] == TASK041_V13_MEMORY_POLICY
+        assert "membind_node" in launch_manifest
+        assert launch_manifest["membind_node"] is None
+        assert launch_manifest["resource_headroom_policy"] == (
+            TASK041_V13_RESOURCE_HEADROOM_POLICY
+        )
+        assert launch_manifest["required_thread_environment"] == (
+            TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+        )
+        assert launch_manifest["environment_threads"] == (
+            TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+        )
     if source_binding is None:
         assert "packet_source_binding" not in launch_manifest
     else:
@@ -3524,6 +3635,19 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         "fixed_h6_modal_gmres_research": True,
         "expected_rank_cpus": list(rank_cpus),
     }
+    if modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID:
+        service_config.update(
+            {
+                "memory_policy": TASK041_V13_MEMORY_POLICY,
+                "membind_node": None,
+                "resource_headroom_policy": dict(
+                    TASK041_V13_RESOURCE_HEADROOM_POLICY
+                ),
+                "required_thread_environment": dict(
+                    TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+                ),
+            }
+        )
     if source_binding is not None:
         service_config["packet_source_binding"] = source_binding
     if modal_feedback_method is not None:
@@ -3559,6 +3683,20 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
                 ],
                 "fixed_h6_modal_gmres_research": True,
                 "expected_rank_cpus": list(rank_cpus),
+                **(
+                    {
+                        "memory_policy": TASK041_V13_MEMORY_POLICY,
+                        "membind_node": None,
+                        "resource_headroom_policy": dict(
+                            TASK041_V13_RESOURCE_HEADROOM_POLICY
+                        ),
+                        "required_thread_environment": dict(
+                            TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+                        ),
+                    }
+                    if modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+                    else {}
+                ),
                 "packet_source_binding": source_binding,
                 **(
                     {"modal_feedback_method": modal_feedback_method}
@@ -3642,8 +3780,15 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         cpu_argument,
         "--report-bindings",
     ]
-    assert worker_command[8:10] == ["numactl", "--membind=0"]
-    assert worker_command[10] == str(Path(sys.executable))
+    if modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID:
+        assert worker_command[8] == str(Path(sys.executable))
+        assert not any(
+            token == "--membind" or token.startswith("--membind=")
+            for token in worker_command
+        )
+    else:
+        assert worker_command[8:10] == ["numactl", "--membind=0"]
+        assert worker_command[10] == str(Path(sys.executable))
     worker_args = worker_command[worker_command.index("--worker") :]
     parsed_worker = task041_balh_workflow._parser().parse_args(worker_args)
     assert parsed_worker.task041_fixed_h6_modal_gmres_research is True
@@ -3883,6 +4028,25 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         assert service_contract["memory_cap_bytes"] == 80 * 2**30
         assert service_contract["warning_memory_bytes"] == 72 * 2**30
         assert service_contract["runtime_reserve_bytes"] == 384 * 2**30
+    if modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID:
+        assert service_contract["memory_policy"] == TASK041_V13_MEMORY_POLICY
+        assert service_contract["membind_node"] is None
+        assert service_contract["required_thread_environment"] == (
+            TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+        )
+        assert service_contract["resource_headroom_policy"] == (
+            TASK041_V13_RESOURCE_HEADROOM_POLICY
+        )
+        for key, bad_value in (
+            ("memory_policy", "registered_node_binding"),
+            ("membind_node", 0),
+            ("required_thread_environment", {"OMP_NUM_THREADS": "1"}),
+            ("resource_headroom_policy", {}),
+        ):
+            bad_config = copy.deepcopy(service_config)
+            bad_config[key] = bad_value
+            with pytest.raises(service.Task041ServiceError):
+                resolve_service_contract(config=bad_config)
     fixed_binding = service_contract["fixed_h6_modal_gmres_research"]
     assert fixed_binding["method"] == "fixed_h6_modal_gmres_research"
     assert fixed_binding["expected_rank_cpus"] == list(rank_cpus)
@@ -3941,7 +4105,10 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         resolved_policy = fixed_binding["modal_solver_policy"]
         assert service_contract["modal_solver_policy"] == modal_solver_policy
         assert resolved_policy["policy_id"] == modal_solver_policy
-        if modal_solver_policy == "task041_v12_bounded_inexact_modal_once_backup":
+        if modal_solver_policy in {
+            "task041_v12_bounded_inexact_modal",
+            "task041_v12_bounded_inexact_modal_once_backup",
+        }:
             h6_method = "fixed_h6_modal_gmres_research"
             no_switch_audit = {
                 "requested": False,
@@ -3985,7 +4152,7 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         }
         assert service._modal_solver_policy_matches_request(
             service_contract, policy_result
-        ) is True
+        ) is (modal_solver_policy != "task041_v13_consistent_fixed_balh_modal_surrogate")
         policy_result["setup"]["full_formal"]["solve"]["inventory"][
             "fixed_h6_modal_solver"
         ]["modal_solver_policy"] = {"policy_id": "tampered"}
@@ -7312,6 +7479,32 @@ def test_task041_v12_modal_snapshot_writer_binds_owner_vectors_and_limits_record
         packet_manifest_sha256=manifest_sha,
         consumer_binding=consumer_binding,
     )
+    terminal_payload = payload(
+        "terminal_normal_reject", raw_pass=False, eta=0.25
+    )
+    terminal_payload.update(
+        status="ksp_not_converged",
+        input_unchanged=True,
+        normal_return_rejection_reason="ksp_not_converged",
+        final_residual_norm=0.25,
+        final_relative_residual=0.25,
+        pc_usable=False,
+        approximate_return_decision={"status": "rejected", "pc_usable": False},
+    )
+    terminal_vectors = {
+        "g": vectors["g"].copy(),
+        "m": vectors["m"].copy() * (0.75 - 0.1j),
+        "raw_residual": vectors["raw_residual"].copy() * (1.5 + 0.2j),
+    }
+    terminal_payload.update(terminal_vectors)
+    terminal = _write_task041_modal_inner_snapshot(
+        run_root,
+        terminal_payload,
+        source_sha=source_sha,
+        identity=identity,
+        packet_manifest_sha256=manifest_sha,
+        consumer_binding=consumer_binding,
+    )
     index_path = run_root / second["index_path"]
     index = json.loads(index_path.read_text(encoding="utf-8"))
     assert index["source_sha"] == source_sha
@@ -7321,7 +7514,11 @@ def test_task041_v12_modal_snapshot_writer_binds_owner_vectors_and_limits_record
     assert index["vector_definitions"]["raw_residual"] == (
         "independent unscaled g minus S_tilde times m; may be non-finite when untrusted"
     )
-    assert set(index["records"]) == {"first_unmet_target", "first_success_control"}
+    assert set(index["records"]) == {
+        "first_unmet_target",
+        "first_success_control",
+        "terminal_normal_reject",
+    }
     assert index["records"]["first_unmet_target"]["vector_fields"] == [
         "g",
         "m",
@@ -7336,10 +7533,35 @@ def test_task041_v12_modal_snapshot_writer_binds_owner_vectors_and_limits_record
     assert index["records"]["first_success_control"]["metadata"]["pc_usable"] is True
     second_path = run_root / second["path"]
     assert hashlib.sha256(second_path.read_bytes()).hexdigest() == second["sha256"]
+    terminal_path = run_root / terminal["path"]
+    assert terminal["path"].endswith("terminal_normal_reject.npz")
+    assert hashlib.sha256(terminal_path.read_bytes()).hexdigest() == terminal["sha256"]
+    terminal_record = index["records"]["terminal_normal_reject"]
+    assert terminal_record["metadata"]["status"] == "ksp_not_converged"
+    assert terminal_record["metadata"]["trusted_iterate"] is True
+    assert terminal_record["metadata"]["input_unchanged"] is True
+    assert terminal_record["metadata"]["raw_residual_pass"] is False
+    assert terminal_record["metadata"]["normal_return_rejection_reason"] == (
+        "ksp_not_converged"
+    )
+    assert terminal_record["metadata"]["final_relative_residual"] == 0.25
+    assert terminal_record["metadata"]["pc_usable"] is False
+    with np.load(terminal_path, allow_pickle=False) as archive:
+        for key, expected in terminal_vectors.items():
+            np.testing.assert_array_equal(archive[key], expected)
     with pytest.raises(FileExistsError, match="modal snapshot already exists"):
         _write_task041_modal_inner_snapshot(
             run_root,
             payload("first_success_control", raw_pass=True, eta=5.0e-4),
+            source_sha=source_sha,
+            identity=identity,
+            packet_manifest_sha256=manifest_sha,
+            consumer_binding=consumer_binding,
+        )
+    with pytest.raises(FileExistsError, match="modal snapshot already exists"):
+        _write_task041_modal_inner_snapshot(
+            run_root,
+            terminal_payload,
             source_sha=source_sha,
             identity=identity,
             packet_manifest_sha256=manifest_sha,

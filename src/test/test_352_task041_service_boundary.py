@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -37,6 +38,129 @@ MODEL = "task041_13p5nm_balh_hybrid_iterative_p6h10_m120_mpi8"
 SOURCE_SHA = "a" * 40
 INVOCATION_ID = "s1c4-test-invocation"
 UNIT = "task041-s1c4-test.service"
+
+
+def test_task041_modal_policy_binding_stays_outside_numerical_imports():
+    child = r'''
+import json
+import sys
+
+def deny_process_creation(event, _args):
+    if event in {"subprocess.Popen", "os.system", "os.fork", "os.posix_spawn"}:
+        raise RuntimeError("metadata binding attempted to start a child process")
+
+sys.addaudithook(deny_process_creation)
+
+from benchmarks import task041_balh_workflow as workflow
+from src.solvers import task041_modal_policy as policy
+
+common = dict(
+    enabled=True,
+    candidate=True,
+    mpi_size=8,
+    mode_count=400,
+    p4_inverse_backend="cell_condensed",
+    p4_refinement_target_tolerance=5.0e-13,
+    task041_resource_policy=workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE,
+    expected_rank_cpus=tuple(range(10, 18)),
+)
+v13_common = dict(
+    common,
+    expected_rank_cpus=workflow.TASK041_V13_MPI8_RANK_CPUS,
+)
+model_id = workflow.TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+default = workflow.task041_fixed_h6_modal_gmres_binding(model_id, **common)
+v12 = workflow.task041_fixed_h6_modal_gmres_binding(
+    model_id,
+    modal_solver_policy=policy.TASK041_V12_MODAL_SOLVER_POLICY_ID,
+    **common,
+)
+v13 = workflow.task041_fixed_h6_modal_gmres_binding(
+    model_id,
+    modal_solver_policy=policy.TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+    **v13_common,
+)
+if "modal_solver_policy" in default:
+    raise AssertionError("legacy fixed-H6 binding gained a policy")
+if "memory_policy" in default or "membind_node" in default:
+    raise AssertionError("legacy fixed-H6 binding changed memory semantics")
+if v12["modal_solver_policy"]["policy_id"] != policy.TASK041_V12_MODAL_SOLVER_POLICY_ID:
+    raise AssertionError("V12 policy binding mismatch")
+if "memory_policy" in v12 or "membind_node" in v12:
+    raise AssertionError("V12 binding changed its historical memory contract")
+if v13["modal_solver_policy"]["policy_id"] != policy.TASK041_V13_CONSISTENT_MODAL_POLICY_ID:
+    raise AssertionError("V13 policy binding mismatch")
+if v13["memory_policy"] != workflow.TASK041_V13_MEMORY_POLICY:
+    raise AssertionError("V13 memory policy mismatch")
+if "membind_node" not in v13 or v13["membind_node"] is not None:
+    raise AssertionError("V13 did not explicitly resolve unbound memory")
+if v13["expected_rank_cpus"] != list(workflow.TASK041_V13_MPI8_RANK_CPUS):
+    raise AssertionError("V13 frozen MPI8 CPU map mismatch")
+if v13["required_thread_environment"] != workflow.TASK041_V13_REQUIRED_THREAD_ENVIRONMENT:
+    raise AssertionError("V13 required thread environment mismatch")
+if v13["resource_headroom_policy"] != workflow.TASK041_V13_RESOURCE_HEADROOM_POLICY:
+    raise AssertionError("V13 aggregate resource policy mismatch")
+try:
+    workflow.task041_fixed_h6_modal_gmres_binding(
+        model_id,
+        modal_solver_policy=policy.TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+        **common,
+    )
+except ValueError:
+    pass
+else:
+    raise AssertionError("V13 accepted the legacy/test CPU map")
+wrong = dict(v13["modal_solver_policy"])
+wrong["outer_threshold"] = 1.0e-8
+try:
+    policy.resolve_task041_modal_solver_policy(wrong)
+except ValueError:
+    pass
+else:
+    raise AssertionError("modified policy contract was accepted")
+
+for name in (
+    "mpi4py",
+    "petsc4py",
+    "slepc4py",
+    "dolfinx",
+    "src.solvers.hybrid_fem_modal_block_ldu",
+):
+    if name in sys.modules:
+        raise AssertionError(f"metadata binding imported numerical module: {name}")
+print(json.dumps({"default": True, "v12": True, "v13": True}))
+'''
+    result = subprocess.run(
+        [sys.executable, "-c", child],
+        cwd=Path(__file__).resolve().parents[2],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert json.loads(result.stdout) == {
+        "default": True,
+        "v12": True,
+        "v13": True,
+    }
+
+    from src.solvers import hybrid_fem_modal_block_ldu as numerical_core
+    from src.solvers import task041_modal_policy as pure_policy
+
+    assert (
+        numerical_core.resolve_task041_modal_solver_policy
+        is pure_policy.resolve_task041_modal_solver_policy
+    )
+    for name in (
+        "TASK041_V12_MODAL_SOLVER_POLICY_ID",
+        "TASK041_V12_MODAL_BACKUP_POLICY_ID",
+        "TASK041_V12_MODAL_BACKUP_QUALIFICATION_METHOD",
+        "TASK041_V13_CONSISTENT_MODAL_POLICY_ID",
+        "_TASK041_V12_MODAL_SOLVER_POLICY",
+        "_TASK041_V12_MODAL_BACKUP_POLICY",
+        "_TASK041_V13_CONSISTENT_MODAL_POLICY",
+    ):
+        assert getattr(numerical_core, name) is getattr(pure_policy, name)
 
 
 def _write_ledger(path: Path, used: float = 100.0) -> None:
@@ -1508,3 +1632,1365 @@ def test_finalize_accepts_only_bound_controlled_stop(
         assert result["status"] == "failed"
         assert result["result_classification"] == "service_boundary_failure"
         assert result["controlled_stop"]["active"] is False
+
+
+def test_v12_policy_finalizer_follows_exact_inner_artifact_chain_and_stays_unknown(
+    tmp_path: Path,
+):
+    from src.io.input_validation import task041_balh_service_contract
+
+    policy = "task041_v12_bounded_inexact_modal_once_backup"
+    source_sha = "c" * 40
+    invocation_id = "v12-layered-policy-fixture"
+    unit = "task041-v12-layered-policy-fixture.service"
+    model_id = "task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot"
+    runtime_contract = dict(task041_balh_service_contract(model_id))
+    root = (tmp_path / "service-root").resolve()
+    inner = (tmp_path / "inner-run").resolve()
+    consumer_root = inner / "consumer"
+    (root / "log").mkdir(parents=True)
+    consumer_root.mkdir(parents=True)
+    fixed_binding = {
+        "method": "fixed_h6_modal_gmres_research",
+        "model_id": model_id,
+        "modal_solver_policy": {"policy_id": policy},
+    }
+    launch = {
+        "schema": service.LAUNCH_SCHEMA,
+        "unit": unit,
+        "model_id": model_id,
+        "source_sha": source_sha,
+        "invocation_id": invocation_id,
+        "supervision_root": str(root),
+        "modal_solver_policy": policy,
+        "fixed_h6_modal_gmres_research": fixed_binding,
+    }
+    launch_path = root / "launch_manifest.json"
+    launch_path.write_text(json.dumps(launch, sort_keys=True) + "\n")
+    launch_sha = supervisor._sha256_file(launch_path)
+    supervision_record = {
+        "path": str(launch_path),
+        "sha256": launch_sha,
+        "invocation_id": invocation_id,
+        "source_sha": source_sha,
+        "modal_solver_policy": policy,
+        "fixed_h6_modal_gmres_research": fixed_binding,
+    }
+    consumer_summary = {
+        "schema": "task041.side_balh.candidate_consumer.v1",
+        "run_directory": str(consumer_root),
+        "source_sha": source_sha,
+        "modal_solver_policy": policy,
+        "fixed_h6_modal_gmres_research": fixed_binding,
+        "failure_evidence": {
+            "side_rhs_audits": {
+                "modal_inner_solver": {"method": "fixed_physical_balh_once"}
+            }
+        },
+    }
+    consumer_path = consumer_root / "consumer_summary.json"
+    consumer_bytes = json.dumps(consumer_summary, sort_keys=True).encode()
+    consumer_path.write_bytes(consumer_bytes)
+    consumer_artifact = {
+        "path": str(consumer_path),
+        "bytes": len(consumer_bytes),
+        "sha256": hashlib.sha256(consumer_bytes).hexdigest(),
+    }
+    supervisor_summary = {
+        "schema": "task041.public.supervisor.v1",
+        "run_directory": str(inner),
+        "output_directory": str(inner),
+        "source_sha": source_sha,
+        "modal_solver_policy": policy,
+        "fixed_h6_modal_gmres_research": fixed_binding,
+        "supervision_record": supervision_record,
+        "service_contract": runtime_contract,
+        "consumer": {"summary_artifact": consumer_artifact},
+    }
+    run_summary = dict(supervisor_summary)
+    run_manifest = {
+        "source_sha": source_sha,
+        "modal_solver_policy": policy,
+        "fixed_h6_modal_gmres_research": fixed_binding,
+        "supervision_record": supervision_record,
+        "model_id": model_id,
+        "output_directory": str(inner),
+    }
+    supervisor._write_json(inner / "supervisor_summary.json", supervisor_summary)
+    supervisor._write_json(inner / "run_summary.json", run_summary)
+    supervisor._write_json(inner / "run_manifest.json", run_manifest)
+    supervisor._write_json(
+        consumer_root / "factor_inventory.json",
+        {
+            "schema": "task041.side_balh.candidate_factor_inventory.v1",
+            "candidate_inventory": {},
+        },
+    )
+    public_command = ["python", "scripts/run_case.py", "input.dat"]
+    public_stdout = {
+        **supervisor_summary,
+        "summary": str(inner / "run_summary.json"),
+        "manifest": str(inner / "run_manifest.json"),
+    }
+    public_stdout_path = root / "log" / "public_command_stdout.txt"
+    public_stdout_path.write_text(json.dumps(public_stdout, sort_keys=True) + "\n")
+    outer_summary = {
+        "schema": "task041.supervised_public_command.v1",
+        "supervision_root": str(root),
+        "model_id": model_id,
+        "modal_solver_policy": policy,
+        "launch_manifest": {"path": str(launch_path), "sha256": launch_sha},
+        "phase_result": {
+            "stdout": str(public_stdout_path),
+            "argv": public_command,
+        },
+    }
+    contract = {
+        "unit": unit,
+        "model_id": model_id,
+        "modal_solver_policy": policy,
+        "fixed_h6_modal_gmres_research": fixed_binding,
+    }
+    kwargs = {
+        "supervision_root": root,
+        "launch_manifest": launch,
+        "sealed_public_command": public_command,
+        "expected_source_sha": source_sha,
+        "terminal_invocation_id": invocation_id,
+        "expected_unit": unit,
+    }
+
+    # The exact layer chain is present, but the historical V12 payload has no
+    # candidate inventory or setup evidence to establish the requested method.
+    assert service._modal_solver_policy_matches_request(
+        contract, outer_summary, **kwargs
+    ) is False
+
+
+def test_v13_resume_owner_records_allow_empty_rank_but_require_global_nonzero_x():
+    empty_sha = hashlib.sha256(b"").hexdigest()
+    assert supervisor._v13_sha256_text(empty_sha)
+    rows = [
+        {
+            "rank": 0,
+            "x_range": [0, 0],
+            "f_range": [0, 0],
+            "solution_local_norm_before_resume": 0.0,
+        },
+        {
+            "rank": 1,
+            "x_range": [0, 2],
+            "f_range": [0, 2],
+            "solution_local_norm_before_resume": 1.25,
+        },
+    ]
+    for range_key in ("x_range", "f_range"):
+        assert supervisor._v13_owner_ranges_cover(
+            rows, range_key=range_key, global_size=2, rank_count=2
+        )
+    assert supervisor._v13_global_owner_norms_valid(
+        rows,
+        rank_count=2,
+        norm_key="solution_local_norm_before_resume",
+    )
+    rows[1]["solution_local_norm_before_resume"] = 0.0
+    assert not supervisor._v13_global_owner_norms_valid(
+        rows,
+        rank_count=2,
+        norm_key="solution_local_norm_before_resume",
+    )
+
+
+def test_v13_finite_stop_rhs_reader_uses_its_rank_local_binding_source():
+    rhs_hashes = [hashlib.sha256(f"rhs-{rank}".encode()).hexdigest() for rank in range(2)]
+    finite_stop_rows = [
+        {
+            "rank": rank,
+            "rhs_local_sha256_before": digest,
+            "rhs_local_sha256_after": digest,
+        }
+        for rank, digest in enumerate(rhs_hashes)
+    ]
+    candidate_rows = [dict(row) for row in finite_stop_rows]
+    valid, observed = supervisor._v13_original_rhs_binding_sources_agree(
+        rank_count=2,
+        original_rows=None,
+        finite_stop_rows=finite_stop_rows,
+        restart_candidate_rows=candidate_rows,
+    )
+    assert valid is True
+    assert observed == dict(enumerate(rhs_hashes))
+    candidate_rows[1]["rhs_local_sha256_after"] = hashlib.sha256(
+        b"different original rhs"
+    ).hexdigest()
+    valid, observed = supervisor._v13_original_rhs_binding_sources_agree(
+        rank_count=2,
+        original_rows=None,
+        finite_stop_rows=finite_stop_rows,
+        restart_candidate_rows=candidate_rows,
+    )
+    assert valid is False
+    assert observed is None
+
+
+def _v13_rank_runtime_fixture():
+    expected_cpus = list(task041_balh_workflow.TASK041_V13_MPI8_RANK_CPUS)
+    binding = task041_balh_workflow.task041_fixed_h6_modal_gmres_binding(
+        task041_balh_workflow.TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+        enabled=True,
+        candidate=True,
+        mpi_size=8,
+        mode_count=400,
+        p4_inverse_backend="cell_condensed",
+        p4_refinement_target_tolerance=5.0e-13,
+        task041_resource_policy=task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        expected_rank_cpus=expected_cpus,
+        modal_solver_policy=(
+            "task041_v13_consistent_fixed_balh_modal_surrogate"
+        ),
+    )
+    session_id = 1900
+    required_threads = dict(
+        task041_balh_workflow.TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+    )
+    resource_policy = dict(
+        task041_balh_workflow.TASK041_V13_RESOURCE_HEADROOM_POLICY
+    )
+    cgroup_identity = {"path": "/user.slice/task041-v13-fixture.scope"}
+    ranks = []
+    for rank, cpu in enumerate(expected_cpus):
+        ranks.append(
+            {
+                "rank": rank,
+                "evidence": {
+                    "rank_identity": {
+                        "pid": 2001 + rank,
+                        "ppid": 1800,
+                        "pgid": 1800,
+                        "sid": session_id,
+                        "starttime_ticks": 10001 + rank,
+                        "current_cpu": cpu,
+                        "sched_getaffinity": [cpu],
+                        "cpu_topology": [
+                            {"os_cpu": cpu, "socket": 0, "numa_nodes": [0]}
+                        ],
+                    },
+                    "task_policy": {
+                        "status": "measured",
+                        "mode": 0,
+                        "policy": "default",
+                    },
+                    "memory_scope": {
+                        "status": "measured",
+                        "pass": True,
+                        "allowed_nodes_match": True,
+                        "cgroup_identity_stable": True,
+                        "proc_allowed_nodes": [0, 1],
+                        "effective_nodes": [0, 1],
+                        "cgroup_identity_before": cgroup_identity,
+                        "cgroup_identity_after": cgroup_identity,
+                    },
+                    "math_thread_environment": {
+                        "status": "measured",
+                        "all_one": True,
+                        "variables": dict(required_threads),
+                    },
+                },
+            }
+        )
+    return binding, {
+        "rank_numa_evidence": [
+            {
+                "schema": "task041.rank_numa_stage.v1",
+                "stage": "startup",
+                "collective_status": "measured",
+                "qualification": {
+                    "status": "passed",
+                    "memory_policy": "system_default_unbound",
+                    "membind_node": None,
+                    "page_placement_semantics": "observation_only",
+                    "expected_rank_cpus": expected_cpus,
+                    "required_thread_environment": required_threads,
+                    "resource_headroom_policy": resource_policy,
+                },
+                "ranks": ranks,
+            }
+        ]
+    }, {
+        "schema": "task041.owned_session_cleanup.v1",
+        "session_id": session_id,
+        "status": "empty",
+        "empty": True,
+        "members": [],
+        "unreadable": [],
+        "inspection": "full_visible_proc_session_scan_after_owned_launcher_wait",
+    }
+
+
+def _owned_session_snapshot_fixture(session_id, members, *, unreadable=None):
+    rows = [dict(member) for member in members]
+    unreadable_rows = list(unreadable or [])
+    empty = not rows and not unreadable_rows
+    return {
+        "schema": "task041.owned_session_cleanup.v1",
+        "session_id": session_id,
+        "status": "empty" if empty else "members_remain" if rows else "unknown",
+        "empty": empty,
+        "members": rows,
+        "unreadable": unreadable_rows,
+        "inspection": "full_visible_proc_session_scan_after_owned_launcher_wait",
+    }
+
+
+def _owned_session_member(pid, ppid, pgid, session_id, start_ticks):
+    return {
+        "pid": pid,
+        "ppid": ppid,
+        "pgid": pgid,
+        "sid": session_id,
+        "start_ticks": start_ticks,
+    }
+
+
+def _owned_session_leader(session_id):
+    return {
+        "schema": "task041.owned_session_leader.v1",
+        "status": "measured",
+        "pid": session_id,
+        "ppid": 1,
+        "pgid": session_id,
+        "sid": session_id,
+        "start_ticks": 1200,
+    }
+
+
+def test_v13_owned_session_cleanup_targets_rank_groups_after_launcher_group_gone():
+    session_id = 900
+    members = [
+        _owned_session_member(901, 1, 920, session_id, 1301),
+        _owned_session_member(902, 1, 930, session_id, 1302),
+    ]
+    state = {"members": [dict(member) for member in members], "now": 0.0}
+    signals = []
+
+    def snapshot_reader(requested_session_id):
+        assert requested_session_id == session_id
+        return _owned_session_snapshot_fixture(session_id, state["members"])
+
+    def signal_group(pgid, sig):
+        signals.append((pgid, sig))
+        if (sig == supervisor.signal.SIGTERM and pgid == 920) or (
+            sig == supervisor.signal.SIGKILL
+        ):
+            state["members"] = [
+                member for member in state["members"] if member["pgid"] != pgid
+            ]
+
+    def sleep(seconds):
+        state["now"] += seconds
+
+    result = supervisor._terminate_owned_session_members(
+        session_id,
+        _owned_session_snapshot_fixture(session_id, members),
+        leader_identity=_owned_session_leader(session_id),
+        grace_seconds=0.1,
+        snapshot_reader=snapshot_reader,
+        signal_process_group=signal_group,
+        monotonic=lambda: state["now"],
+        sleep=sleep,
+    )
+
+    assert [member["pid"] for member in result["initial_snapshot"]["members"]] == [
+        901,
+        902,
+    ]
+    assert {member["pgid"] for member in result["initial_snapshot"]["members"]} == {
+        920,
+        930,
+    }
+    assert signals == [
+        (920, supervisor.signal.SIGTERM),
+        (930, supervisor.signal.SIGTERM),
+        (930, supervisor.signal.SIGKILL),
+    ]
+    assert result["sigkill_required"] is True
+    assert result["verified_empty"] is True
+    assert result["final_snapshot"]["status"] == "empty"
+
+
+def test_v13_owned_session_cleanup_unknown_or_unowned_never_signals():
+    session_id = 900
+    member = _owned_session_member(901, 1, 920, session_id, 1301)
+    signals = []
+
+    def signal_group(pgid, sig):
+        signals.append((pgid, sig))
+
+    unreadable = _owned_session_snapshot_fixture(
+        session_id, [], unreadable=[{"path": "/proc", "error": "PermissionError"}]
+    )
+    live = _owned_session_snapshot_fixture(session_id, [member])
+    unknown = supervisor._terminate_owned_session_members(
+        session_id,
+        live,
+        leader_identity=_owned_session_leader(session_id),
+        snapshot_reader=lambda _sid: unreadable,
+        signal_process_group=signal_group,
+    )
+    assert unknown["status"] == "unknown"
+    assert unknown["verified_empty"] is False
+    assert signals == []
+
+    unowned = supervisor._terminate_owned_session_members(
+        session_id,
+        live,
+        leader_identity=None,
+        snapshot_reader=lambda _sid: live,
+        signal_process_group=signal_group,
+    )
+    assert unowned["status"] == "unknown"
+    assert unowned["verified_empty"] is False
+    assert signals == []
+
+
+def test_v13_run_phase_records_residual_session_cleanup_without_replacing_error(
+    tmp_path, monkeypatch
+):
+    session_id = 900
+    residual = _owned_session_snapshot_fixture(
+        session_id,
+        [
+            _owned_session_member(901, 1, 920, session_id, 1301),
+            _owned_session_member(902, 1, 930, session_id, 1302),
+        ],
+    )
+    empty = _owned_session_snapshot_fixture(session_id, [])
+    snapshots = iter((residual, residual, empty))
+    cleanup_calls = []
+    leader = _owned_session_leader(session_id)
+
+    class ExitedLauncher:
+        pid = session_id
+
+        def poll(self):
+            return 17
+
+        def wait(self):
+            return 17
+
+    monkeypatch.setattr(
+        supervisor,
+        "_owned_session_leader_identity",
+        lambda pid: leader if pid == session_id else {},
+    )
+    monkeypatch.setattr(
+        supervisor,
+        "_owned_session_snapshot",
+        lambda sid: next(snapshots) if sid == session_id else {},
+    )
+
+    def cleanup(sid, initial_snapshot, *, leader_identity, **_kwargs):
+        cleanup_calls.append((sid, initial_snapshot, leader_identity))
+        return {
+            "schema": "task041.owned_session_termination.v1",
+            "session_id": sid,
+            "status": "empty",
+            "verified_empty": True,
+            "initial_snapshot": dict(initial_snapshot),
+            "final_snapshot": empty,
+            "signal_attempts": [],
+        }
+
+    monkeypatch.setattr(supervisor, "_terminate_owned_session_members", cleanup)
+    log_root = tmp_path / "log"
+    marker_root = tmp_path / "markers"
+    memory_root = tmp_path / "memory"
+    log_root.mkdir()
+    marker_root.mkdir()
+    memory_root.mkdir()
+    partial = {}
+
+    with pytest.raises(supervisor.Task041SupervisorError) as caught:
+        supervisor._run_phase(
+            "mpi2",
+            ["fake-launcher"],
+            tmp_path / "phase",
+            log_root=log_root,
+            environment={},
+            repository_root=tmp_path,
+            workflow_started=0.0,
+            popen_factory=lambda *_args, **_kwargs: ExitedLauncher(),
+            sample_factory=lambda _pid: {},
+            terminate_factory=lambda _process: {},
+            monotonic=lambda: 1.0,
+            sleep=lambda _seconds: None,
+            poll_interval=0.1,
+            memory_stages_path=memory_root / "stages.jsonl",
+            marker_path=marker_root / "markers.jsonl",
+            process_group_gone=lambda _pid: True,
+            partial_phase_results=partial,
+            require_owned_session_empty=True,
+        )
+
+    assert caught.value.stage == "mpi2_owned_session_cleanup"
+    assert len(cleanup_calls) == 1
+    assert cleanup_calls[0][0] == session_id
+    assert {row["pgid"] for row in cleanup_calls[0][1]["members"]} == {920, 930}
+    assert cleanup_calls[0][2] == leader
+    assert partial["mpi2"]["owned_session_termination"]["verified_empty"] is True
+    assert partial["mpi2"]["owned_session_cleanup"]["status"] == "empty"
+
+
+def test_v13_initial_resource_gate_requires_aggregate_and_node1_availability():
+    gib = 2**30
+    valid = supervisor._task041_v13_initial_resource_gate_record(
+        384 * gib, 80 * gib
+    )
+    assert valid["pass"] is True
+    assert valid["aggregate_memfree_bytes"] == 464 * gib
+    assert valid["node1_is_availability_only_not_memory_binding"] is True
+    assert not supervisor._task041_v13_initial_resource_gate_record(
+        383 * gib, 80 * gib
+    )["pass"]
+    assert not supervisor._task041_v13_initial_resource_gate_record(
+        385 * gib, 79 * gib
+    )["pass"]
+    assert not supervisor._task041_v13_initial_resource_gate_record(
+        None, 80 * gib
+    )["pass"]
+
+
+def test_v13_rank_runtime_recomputes_default_scope_threads_and_session():
+    binding, summary, cleanup = _v13_rank_runtime_fixture()
+    assert supervisor._task041_v13_rank_runtime_evidence(
+        summary,
+        expected_binding=binding,
+        owned_session_cleanup=cleanup,
+    )["pass"] is True
+
+    bad_policy = json.loads(json.dumps(summary))
+    bad_policy["rank_numa_evidence"][0]["ranks"][0]["evidence"][
+        "task_policy"
+    ]["mode"] = 2
+    assert supervisor._task041_v13_rank_runtime_evidence(
+        bad_policy, expected_binding=binding, owned_session_cleanup=cleanup
+    )["pass"] is False
+
+    bad_nodes = json.loads(json.dumps(summary))
+    bad_nodes["rank_numa_evidence"][0]["ranks"][0]["evidence"][
+        "memory_scope"
+    ]["proc_allowed_nodes"] = []
+    assert supervisor._task041_v13_rank_runtime_evidence(
+        bad_nodes, expected_binding=binding, owned_session_cleanup=cleanup
+    )["pass"] is False
+
+    mismatched_scope = json.loads(json.dumps(summary))
+    mismatched_scope["rank_numa_evidence"][0]["ranks"][0]["evidence"][
+        "memory_scope"
+    ]["effective_nodes"] = [0]
+    assert supervisor._task041_v13_rank_runtime_evidence(
+        mismatched_scope, expected_binding=binding, owned_session_cleanup=cleanup
+    )["pass"] is False
+
+    bad_threads = json.loads(json.dumps(summary))
+    del bad_threads["rank_numa_evidence"][0]["ranks"][0]["evidence"][
+        "math_thread_environment"
+    ]["variables"]["BLIS_NUM_THREADS"]
+    assert supervisor._task041_v13_rank_runtime_evidence(
+        bad_threads, expected_binding=binding, owned_session_cleanup=cleanup
+    )["pass"] is False
+
+    wrong_thread = json.loads(json.dumps(summary))
+    wrong_thread["rank_numa_evidence"][0]["ranks"][0]["evidence"][
+        "math_thread_environment"
+    ]["variables"]["MKL_NUM_THREADS"] = "2"
+    assert supervisor._task041_v13_rank_runtime_evidence(
+        wrong_thread, expected_binding=binding, owned_session_cleanup=cleanup
+    )["pass"] is False
+
+    bad_session = dict(cleanup, members=[{"pid": 2001, "sid": 1900}])
+    assert supervisor._task041_v13_rank_runtime_evidence(
+        summary, expected_binding=binding, owned_session_cleanup=bad_session
+    )["pass"] is False
+
+
+def test_v13_outer_reader_recomputes_B_delta_W_and_external_gate_set():
+    phase = "outer_restart32_workspace"
+    phase_reports = {
+        "outer_PC_with_retained_workspaces": {
+            "known_additional_bytes_by_rank": [10, 10],
+            "additional_temporary_bytes_by_rank": [2, 3],
+            "additional_replicated_bytes_by_rank": [1, 1],
+            "additional_bytes_by_rank": [13, 14],
+        },
+        "outer_original_A_true_residual": {
+            "known_additional_bytes_by_rank": [10, 10],
+            "additional_temporary_bytes_by_rank": [5, 4],
+            "additional_replicated_bytes_by_rank": [1, 1],
+            "additional_bytes_by_rank": [16, 15],
+        },
+    }
+    selected_phase = "outer_original_A_true_residual"
+    additional = [16, 15]
+    gib = 2**30
+    cap = 85_899_345_920
+    reserve = 8_589_934_592
+    floor = 412_316_860_416
+    fresh = 2_000_000_000
+    required = sum(additional) + reserve
+    node0_free = floor + required + 100
+    node1_free = 80 * gib + sum(additional)
+    aggregate_free = node0_free + node1_free
+    host_available = floor + required + 200
+    cgroup_headroom = required + 300
+    projected = fresh + required
+    sample_sha = "b" * 64
+    report = {
+        "phase": phase,
+        "target_restart": 32,
+        "known_additional_bytes_by_rank": [10, 10],
+        "additional_temporary_bytes_by_rank": [5, 4],
+        "additional_replicated_bytes_by_rank": [1, 1],
+        "phase_memory_projection": {
+            "phase_reports": phase_reports,
+            "phase_total_bytes": {
+                "outer_PC_with_retained_workspaces": 27,
+                "outer_original_A_true_residual": 31,
+            },
+            "selected_phase": selected_phase,
+            "selected_phase_payload_bytes": 31,
+        },
+    }
+    request_sha = hashlib.sha256(
+        json.dumps(
+            report, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode()
+    ).hexdigest()
+    external = {
+        "bound_fresh_supervisor_sample": True,
+        "tree_cgroup_and_all_mpi_ranks": True,
+        "initial_aggregate_memfree_gate": True,
+        "initial_node1_memfree_gate": True,
+        "aggregate_floor_headroom": True,
+        "node1_phase_headroom": True,
+        "host_floor_headroom": True,
+        "cgroup_ancestor_headroom": True,
+        "case_cap_projection": True,
+        "sample_cost_contract": True,
+    }
+    payload = {
+        "phase": phase,
+        "request_sha256": request_sha,
+        "invocation_id": "outer-reader-fixture",
+        "source_sha": "c" * 40,
+        "unit": "task041-v13-outer-reader-fixture.service",
+        "sample_row_sha256": sample_sha,
+        "sample_root_pid": 999,
+        "resource_B_bytes": fresh,
+        "node0_memfree_bytes": node0_free,
+        "node1_memfree_bytes": node1_free,
+        "aggregate_memfree_bytes": aggregate_free,
+        "aggregate_memfree_reserve_bytes": floor,
+        "aggregate_floor_headroom_bytes": aggregate_free - floor,
+        "node1_phase_additional_bytes": sum(additional),
+        "node1_headroom_after_phase_additional_bytes": (
+            node1_free - sum(additional)
+        ),
+        "initial_resource_gate": {
+            "required": False,
+            "source": "supervisor_resource_preflight",
+            "initial_aggregate_memfree_minimum_bytes": 464 * gib,
+            "initial_node1_memfree_minimum_bytes": 80 * gib,
+        },
+        "selected_memory_phase": selected_phase,
+        "rank_pids": [101, 102],
+        "selected_memory_phase_payload_bytes": sum(additional),
+        "additional_bytes_by_rank": additional,
+        "cap_bytes": cap,
+        "W_policy_reserve_bytes": reserve,
+        "floor_bytes": floor,
+        "host_available_bytes": host_available,
+        "host_headroom_after_aggregate_reserve_bytes": host_available - floor,
+        "cgroup_limit_state": "finite",
+        "cgroup_headroom_bytes": cgroup_headroom,
+        "projected_B_plus_delta_plus_W_bytes": projected,
+    }
+    receipt_sha = hashlib.sha256(
+        json.dumps(
+            payload, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode()
+    ).hexdigest()
+    authority = {
+        "schema": "task041.v13.modal_builder_admission.v1",
+        "phase": phase,
+        "status": "pass",
+        "decision": "continue",
+        "request_sha256": request_sha,
+        "authority_receipt_payload": payload,
+        "authority_receipt_sha256": receipt_sha,
+        "fresh_job_authority_bytes": fresh,
+        "cap_bytes": cap,
+        "W_policy_reserve_bytes": reserve,
+        "floor_bytes": floor,
+        "additional_bytes_by_rank": additional,
+        "additional_temporary_bytes_by_rank": [5, 4],
+        "additional_replicated_bytes_by_rank": [1, 1],
+        "selected_memory_phase": selected_phase,
+        "selected_memory_phase_payload_bytes": sum(additional),
+        "external_resource_gates": external,
+        "sample_row_sha256": sample_sha,
+        "sample_age_seconds": 0.5,
+        "root_pid": 999,
+        "rank_pids": [101, 102],
+        "node0_memfree_bytes": node0_free,
+        "node1_memfree_bytes": node1_free,
+        "aggregate_memfree_bytes": aggregate_free,
+        "aggregate_memfree_reserve_bytes": floor,
+        "aggregate_floor_headroom_bytes": aggregate_free - floor,
+        "node1_phase_additional_bytes": sum(additional),
+        "node1_headroom_after_phase_additional_bytes": (
+            node1_free - sum(additional)
+        ),
+        "host_available_bytes": host_available,
+        "host_headroom_after_aggregate_reserve_bytes": host_available - floor,
+        "cgroup_headroom_bytes": cgroup_headroom,
+        "cgroup_limit_state": "finite",
+        "projected_B_plus_delta_plus_W_bytes": projected,
+        "cost_assessment": {
+            "scope": "outer_ksp_workspace_admission",
+            "status": "workspace_model_valid",
+            "target_restart": 32,
+            "W_policy_reserve_bytes": reserve,
+            "target_is_elapsed_stop": False,
+        },
+    }
+    assert supervisor._v13_outer_authority_pass_matches_report(
+        phase, report, authority, rank_count=2
+    )
+    bad_B = dict(authority, fresh_job_authority_bytes=fresh + 1)
+    assert not supervisor._v13_outer_authority_pass_matches_report(
+        phase, report, bad_B, rank_count=2
+    )
+    bad_receipt_B = {
+        **authority,
+        "authority_receipt_payload": {
+            **payload,
+            "resource_B_bytes": fresh + 1,
+        },
+    }
+    assert not supervisor._v13_outer_authority_pass_matches_report(
+        phase, report, bad_receipt_B, rank_count=2
+    )
+    bad_delta = dict(authority, additional_bytes_by_rank=[17, 15])
+    assert not supervisor._v13_outer_authority_pass_matches_report(
+        phase, report, bad_delta, rank_count=2
+    )
+    missing_external = dict(authority, external_resource_gates={})
+    assert not supervisor._v13_outer_authority_pass_matches_report(
+        phase, report, missing_external, rank_count=2
+    )
+    bad_request_hash = dict(authority, request_sha256="0" * 64)
+    assert not supervisor._v13_outer_authority_pass_matches_report(
+        phase, report, bad_request_hash, rank_count=2
+    )
+    bad_receipt_hash = dict(authority, authority_receipt_sha256="0" * 64)
+    assert not supervisor._v13_outer_authority_pass_matches_report(
+        phase, report, bad_receipt_hash, rank_count=2
+    )
+    refused = dict(authority, status="refused", decision="stop")
+    assert not supervisor._v13_outer_authority_pass_matches_report(
+        phase, report, refused, rank_count=2
+    )
+
+
+def test_v13_outer_policy_without_actual_solve_record_stays_not_persisted():
+    evidence = supervisor._task041_v13_outer_control_evidence(
+        None, expected_rank_count=8
+    )
+    assert evidence["status"] == "not_persisted"
+    assert evidence["pass"] is None
+
+
+@pytest.mark.parametrize(
+    "tamper",
+    (
+        None,
+        "policy",
+        "method",
+        "source",
+        "invocation",
+        "path",
+        "bytes",
+        "sha",
+        "side_apply_count",
+        "resource_cap",
+        "modal_count",
+        "modal_shape",
+        "modal_column_count",
+        "missing_column",
+        "duplicate_column",
+        "boundary_terminal",
+        "crossed_boundary_without_evidence",
+    ),
+    ids=(
+        "complete-v13-chain",
+        "policy-mismatch",
+        "actual-method-mismatch",
+        "consumer-source-mismatch",
+        "invocation-mismatch",
+        "inner-summary-path-mismatch",
+        "consumer-byte-count-mismatch",
+        "consumer-sha-mismatch",
+        "nonzero-borrowed-side-call",
+        "resource-contract-mismatch",
+        "modal-count-does-not-match-sealed-mode-count",
+        "modal-schur-shape-mismatch",
+        "completed-modal-column-count-mismatch",
+        "missing-modal-column",
+        "duplicate-modal-column",
+        "converged-at-iteration-48-without-restart-observation",
+        "continued-past-iteration-48-without-window-evidence",
+    ),
+)
+def test_v13_policy_finalizer_requires_complete_actual_chain_and_consumer_evidence(
+    tmp_path: Path, tamper: str | None
+):
+    model_id = task041_balh_workflow.TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+    policy_id = "task041_v13_consistent_fixed_balh_modal_surrogate"
+    method = "task041_v13_consistent_fixed_balh_modal_surrogate"
+    source_sha = "d" * 40
+    invocation_id = "v13-layered-policy-fixture"
+    unit = "task041-v13-layered-policy-fixture.service"
+    root = (tmp_path / "service-root").resolve()
+    inner = (tmp_path / "inner-run").resolve()
+    consumer_root = inner / "consumer"
+    (root / "log").mkdir(parents=True)
+    consumer_root.mkdir(parents=True)
+    fixed_binding = task041_balh_workflow.task041_fixed_h6_modal_gmres_binding(
+        model_id,
+        enabled=True,
+        candidate=True,
+        mpi_size=8,
+        mode_count=400,
+        p4_inverse_backend="cell_condensed",
+        p4_refinement_target_tolerance=5.0e-13,
+        task041_resource_policy=(
+            task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+        ),
+        expected_rank_cpus=task041_balh_workflow.TASK041_V13_MPI8_RANK_CPUS,
+        modal_solver_policy=policy_id,
+    )
+    assert isinstance(fixed_binding, dict)
+    rank_binding, rank_summary, owned_session_cleanup = (
+        _v13_rank_runtime_fixture()
+    )
+    assert rank_binding == fixed_binding
+    v13_metadata = {
+        "memory_policy": task041_balh_workflow.TASK041_V13_MEMORY_POLICY,
+        "membind_node": None,
+        "resource_headroom_policy": dict(
+            task041_balh_workflow.TASK041_V13_RESOURCE_HEADROOM_POLICY
+        ),
+        "required_thread_environment": dict(
+            task041_balh_workflow.TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+        ),
+        "environment_threads": dict(
+            task041_balh_workflow.TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+        ),
+    }
+    policy_binding = fixed_binding["modal_solver_policy"]
+    from src.solvers.hybrid_fem_modal_block_ldu import (
+        _v13_modal_schur_diagnostic_fields,
+    )
+
+    modal_count = 2 * fixed_binding["mode_count"]
+    build_audit = {
+        "formula": "S_B=C-LBG",
+        "full_owner_matrix_pages_materialized_before_sample_gate": True,
+        "sample_columns_written_directly_to_final_matrix": list(range(8)),
+        "remaining_columns_applied_once": list(range(8, modal_count)),
+    }
+    actual_v13 = {
+        "schema": "task041.v13.consistent_modal_surrogate.v1",
+        "policy_id": policy_id,
+        "method": method,
+        "operator": "V13 S_B=C-LBG with the same fixed approximate B in modal and LDU terms",
+        **_v13_modal_schur_diagnostic_fields(modal_count, build_audit),
+        "modal_ksp_handle_count": 0,
+        "modal_ksp_solve_count": 0,
+        "owner_lu_factor_count_local": 1,
+        "borrowed_action_identity": {"not_owned": True},
+        "side_operation_deltas": {
+            side: {"apply_count": 0, "total_iterations": 0}
+            for side in ("bottom", "top")
+        },
+        "last_original_modal_row": {
+            "equation": "extract_modal_rows(A_original @ pc_output) - r_modal",
+            "finite": True,
+            "tolerance": 1.0e-10,
+            "relative_backward_error": 5.0e-11,
+        },
+        "fixed_physical_balh_actions": {
+            side: {
+                "method": "fixed_physical_balh_once",
+                "operator_identity": "borrowed_fixed_physical_balh_active_trace",
+            }
+            for side in ("bottom", "top")
+        },
+        "feedback_method": None,
+        "modal_solver_policy": policy_binding,
+    }
+    candidate_inventory = {
+        "modal_inner_method": method,
+        "modal_actual_method": method,
+        "modal_actual_solver_inventory_key": (
+            "task041_v13_consistent_modal_surrogate"
+        ),
+        "v13_actual_solver_inventory": actual_v13,
+        "modal_solver_policy": policy_binding,
+        "v13_same_B_objects_for_all_LDU_terms_and_modal_Schur": True,
+        "v13_modal_ksp_solve_count": 0,
+        "v13_modal_ksp_handle_count": 0,
+        "v13_side_solver_entry_zero_supported": True,
+        "v13_fixed_physical_balh_action_identity": "fixed_physical_balh_once",
+        "v13_pc_apply_count": 1,
+        "borrowed_side_inverse_inventory_by_side": {
+            side: {"p4_factor_count": 1, "direct_factor_count": 1}
+            for side in ("bottom", "top")
+        },
+    }
+    if tamper == "method":
+        actual_v13["method"] = "fixed_h6_modal_gmres_research"
+    elif tamper == "side_apply_count":
+        actual_v13["side_operation_deltas"]["bottom"]["apply_count"] = 1
+    elif tamper == "modal_count":
+        actual_v13["modal_count"] = 799
+    elif tamper == "modal_shape":
+        actual_v13["modal_schur_shape"] = [800, 799]
+    elif tamper == "modal_column_count":
+        actual_v13["modal_schur_column_count"] = 799
+    elif tamper == "missing_column":
+        actual_v13["build_audit"]["remaining_columns_applied_once"].pop()
+    elif tamper == "duplicate_column":
+        actual_v13["build_audit"]["remaining_columns_applied_once"][0] = 7
+    consumer_summary = {
+        "schema": "task041.side_balh.candidate_consumer.v1",
+        "run_directory": str(consumer_root),
+        "source_sha": "e" * 40 if tamper == "source" else source_sha,
+        "status": "task041_consumer_completed",
+        "classification": "TASK041_CONSUMER_PASS",
+        "qualification_method": (
+            "task041_v13_consistent_fixed_balh_modal_surrogate_with_original_outer_fgmres"
+        ),
+        "fixed_h6_modal_gmres_research": fixed_binding,
+        "modal_solver_policy": policy_id,
+        "modal_feedback_binding": None,
+        "setup": {
+            "candidate_inventory": candidate_inventory,
+            "full_formal": {
+                "solve": {
+                    "inventory": {
+                        "task041_v13_consistent_modal_surrogate": actual_v13,
+                        "modal_solver_policy": policy_binding,
+                    }
+                }
+            },
+        },
+        "gates": {"pass": True},
+        "lifecycle": {},
+        "markers": {"observed": []},
+        "process_group_gone": True,
+        **v13_metadata,
+    }
+    consumer_summary["rank_numa_evidence"] = rank_summary["rank_numa_evidence"]
+    v13_initial_gate = supervisor._task041_v13_initial_resource_gate_record(
+        384 * 2**30, 80 * 2**30
+    )
+    assert v13_initial_gate["pass"] is True
+    rank_count = 8
+    hard_cap = 85_899_345_920
+    reserve = 8_589_934_592
+    floor = 412_316_860_416
+    fresh_B = 10_000_000_000
+    phase_name = "outer_PC_with_retained_workspaces"
+    known_by_rank = [16] * rank_count
+    zeros_by_rank = [0] * rank_count
+    delta_by_rank = list(known_by_rank)
+    required = sum(delta_by_rank) + reserve
+    node0_free = floor + required + 100
+    node1_free = 80 * 2**30 + sum(delta_by_rank)
+    aggregate_free = node0_free + node1_free
+    host_available = floor + required + 200
+    cgroup_headroom = required + 300
+    sample_sha = "a" * 64
+    outer_report = {
+        "phase": "outer_restart32_workspace",
+        "target_restart": 32,
+        "known_additional_bytes_by_rank": known_by_rank,
+        "additional_temporary_bytes_by_rank": zeros_by_rank,
+        "additional_replicated_bytes_by_rank": zeros_by_rank,
+        "phase_memory_projection": {
+            "phase_reports": {
+                phase_name: {
+                    "known_additional_bytes_by_rank": known_by_rank,
+                    "additional_temporary_bytes_by_rank": zeros_by_rank,
+                    "additional_replicated_bytes_by_rank": zeros_by_rank,
+                    "additional_bytes_by_rank": delta_by_rank,
+                }
+            },
+            "phase_total_bytes": {phase_name: sum(delta_by_rank)},
+            "selected_phase": phase_name,
+            "selected_phase_payload_bytes": sum(delta_by_rank),
+        },
+    }
+    outer_request_sha = hashlib.sha256(
+        json.dumps(outer_report, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+    ).hexdigest()
+    outer_projected = fresh_B + required
+    rank_pids = list(range(1001, 1001 + rank_count))
+    outer_receipt_payload = {
+        "phase": "outer_restart32_workspace",
+        "request_sha256": outer_request_sha,
+        "invocation_id": invocation_id,
+        "source_sha": source_sha,
+        "unit": unit,
+        "sample_row_sha256": sample_sha,
+        "sample_root_pid": 999,
+        "rank_pids": rank_pids,
+        "resource_B_bytes": fresh_B,
+        "node0_memfree_bytes": node0_free,
+        "node1_memfree_bytes": node1_free,
+        "aggregate_memfree_bytes": aggregate_free,
+        "aggregate_memfree_reserve_bytes": floor,
+        "aggregate_floor_headroom_bytes": aggregate_free - floor,
+        "node1_phase_additional_bytes": sum(delta_by_rank),
+        "node1_headroom_after_phase_additional_bytes": (
+            node1_free - sum(delta_by_rank)
+        ),
+        "initial_resource_gate": {
+            "required": False,
+            "source": "supervisor_resource_preflight",
+            "initial_aggregate_memfree_minimum_bytes": 464 * 2**30,
+            "initial_node1_memfree_minimum_bytes": 80 * 2**30,
+        },
+        "selected_memory_phase": phase_name,
+        "selected_memory_phase_payload_bytes": sum(delta_by_rank),
+        "additional_bytes_by_rank": delta_by_rank,
+        "cap_bytes": hard_cap,
+        "W_policy_reserve_bytes": reserve,
+        "floor_bytes": floor,
+        "host_available_bytes": host_available,
+        "host_headroom_after_aggregate_reserve_bytes": host_available - floor,
+        "cgroup_limit_state": "finite",
+        "cgroup_headroom_bytes": cgroup_headroom,
+        "projected_B_plus_delta_plus_W_bytes": outer_projected,
+    }
+    outer_authority = {
+        "schema": "task041.v13.modal_builder_admission.v1",
+        "phase": "outer_restart32_workspace",
+        "status": "pass",
+        "decision": "continue",
+        "request_sha256": outer_request_sha,
+        "authority_receipt_payload": outer_receipt_payload,
+        "authority_receipt_sha256": hashlib.sha256(
+            json.dumps(
+                outer_receipt_payload,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode()
+        ).hexdigest(),
+        "fresh_job_authority_bytes": fresh_B,
+        "cap_bytes": hard_cap,
+        "W_policy_reserve_bytes": reserve,
+        "floor_bytes": floor,
+        "additional_bytes_by_rank": delta_by_rank,
+        "additional_temporary_bytes_by_rank": zeros_by_rank,
+        "additional_replicated_bytes_by_rank": zeros_by_rank,
+        "selected_memory_phase": phase_name,
+        "selected_memory_phase_payload_bytes": sum(delta_by_rank),
+        "external_resource_gates": {
+            key: True
+            for key in (
+                "bound_fresh_supervisor_sample",
+                "tree_cgroup_and_all_mpi_ranks",
+                "initial_aggregate_memfree_gate",
+                "initial_node1_memfree_gate",
+                "aggregate_floor_headroom",
+                "node1_phase_headroom",
+                "host_floor_headroom",
+                "cgroup_ancestor_headroom",
+                "case_cap_projection",
+                "sample_cost_contract",
+            )
+        },
+        "sample_row_sha256": sample_sha,
+        "sample_age_seconds": 0.5,
+        "root_pid": 999,
+        "rank_pids": rank_pids,
+        "node0_memfree_bytes": node0_free,
+        "node1_memfree_bytes": node1_free,
+        "aggregate_memfree_bytes": aggregate_free,
+        "aggregate_memfree_reserve_bytes": floor,
+        "aggregate_floor_headroom_bytes": aggregate_free - floor,
+        "node1_phase_additional_bytes": sum(delta_by_rank),
+        "node1_headroom_after_phase_additional_bytes": (
+            node1_free - sum(delta_by_rank)
+        ),
+        "host_available_bytes": host_available,
+        "host_headroom_after_aggregate_reserve_bytes": host_available - floor,
+        "cgroup_headroom_bytes": cgroup_headroom,
+        "cgroup_limit_state": "finite",
+        "projected_B_plus_delta_plus_W_bytes": outer_projected,
+        "cost_assessment": {
+            "scope": "outer_ksp_workspace_admission",
+            "status": "workspace_model_valid",
+            "target_restart": 32,
+            "W_policy_reserve_bytes": reserve,
+            "target_is_elapsed_stop": False,
+        },
+    }
+    consumer_summary["setup"]["full_formal"]["solve"][
+        "task041_v13_outer_control"
+    ] = {
+        "schema": "task041.v13.outer_control.v1",
+        "policy_id": policy_id,
+        "enabled": True,
+        "initial_restart": 32,
+        "configured_max_it": 128,
+        "final_restart": 32,
+        "total_iterations": 4,
+        "restart64_trial_count": 0,
+        "total_wall_seconds": 1.25,
+        "cumulative_pc_apply_count": 4,
+        "cumulative_bottom_action_apply_count": 4,
+        "cumulative_top_action_apply_count": 4,
+        "restart_history": [
+            {"iteration": 0, "restart": 32, "reason": "initial"}
+        ],
+        "initial_restart32_workspace_report": outer_report,
+        "initial_restart32_authority": outer_authority,
+        "restart64_evidence": None,
+        "restart64_decision": None,
+        "finite_stop_windows": [],
+        "finite_stop": None,
+    }
+    if tamper in {"boundary_terminal", "crossed_boundary_without_evidence"}:
+        outer_control = consumer_summary["setup"]["full_formal"]["solve"][
+            "task041_v13_outer_control"
+        ]
+        solve_record = consumer_summary["setup"]["full_formal"]["solve"]
+        terminal_residuals = {
+            "reported_relative_residual": 1.0e-9,
+            "global_true_relative_residual": 1.1e-9,
+            "bottom_true_relative_residual": 1.2e-9,
+            "top_true_relative_residual": 1.3e-9,
+            "modal_true_relative_residual": 1.4e-9,
+        }
+        if tamper == "boundary_terminal":
+            terminal_reason = 2  # Synthetic PETSc-positive convergence reason.
+            terminal_iteration = 48
+            terminal_decision = "CONVERGED_RTOL"
+            terminal_pass = True
+        else:
+            terminal_reason = -3
+            terminal_iteration = 49
+            terminal_decision = "DIVERGED_MAX_IT"
+            terminal_pass = False
+            terminal_residuals["global_true_relative_residual"] = 1.0e-3
+        outer_control.update(
+            {
+                "total_iterations": terminal_iteration,
+                "final_reason": terminal_reason,
+                "final_reason_name": terminal_decision,
+            }
+        )
+        solve_record.update(
+            {
+                "ksp_type": "fgmres",
+                "iterations": terminal_iteration,
+                "max_it": 128,
+                "converged_reason": terminal_reason,
+                "pass": terminal_pass,
+                "postsolve": {
+                    **terminal_residuals,
+                    "threshold": 5.0e-9,
+                    "reason": terminal_reason,
+                    "decision": terminal_decision,
+                    "all_finite_nonnegative": True,
+                    "pass": terminal_pass,
+                },
+            }
+        )
+    consumer_bytes = json.dumps(consumer_summary, sort_keys=True).encode()
+    consumer_path = consumer_root / "consumer_summary.json"
+    consumer_path.write_bytes(consumer_bytes)
+    consumer_artifact = {
+        "path": str(consumer_path),
+        "bytes": len(consumer_bytes),
+        "sha256": hashlib.sha256(consumer_bytes).hexdigest(),
+    }
+    if tamper == "bytes":
+        consumer_artifact["bytes"] += 1
+    elif tamper == "sha":
+        consumer_artifact["sha256"] = "0" * 64
+
+    launch_path = root / "launch_manifest.json"
+    launch = {
+        "schema": service.LAUNCH_SCHEMA,
+        "unit": unit,
+        "model_id": model_id,
+        "source_sha": source_sha,
+        "invocation_id": invocation_id,
+        "supervision_root": str(root),
+        "modal_solver_policy": policy_id,
+        "fixed_h6_modal_gmres_research": fixed_binding,
+        **v13_metadata,
+        "parent_environment_threads": dict(
+            task041_balh_workflow.TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+        ),
+    }
+    launch_path.write_text(json.dumps(launch, sort_keys=True) + "\n")
+    launch_sha = supervisor._sha256_file(launch_path)
+    supervision_record = {
+        "path": str(launch_path),
+        "sha256": launch_sha,
+        "invocation_id": "wrong-invocation" if tamper == "invocation" else invocation_id,
+        "source_sha": source_sha,
+        "modal_solver_policy": policy_id,
+        "fixed_h6_modal_gmres_research": fixed_binding,
+    }
+    registered_contract = dict(task041_balh_service_contract(model_id))
+    registered_contract.update(
+        {
+            key: value
+            for key, value in v13_metadata.items()
+            if key != "environment_threads"
+        }
+    )
+    if tamper == "resource_cap":
+        registered_contract["memory_cap_bytes"] += 1
+    supervisor_summary = {
+        "schema": "task041.public.supervisor.v1",
+        "run_directory": str(inner),
+        "output_directory": str(inner),
+        "source_sha": source_sha,
+        "modal_solver_policy": policy_id,
+        "fixed_h6_modal_gmres_research": fixed_binding,
+        **v13_metadata,
+        "supervision_record": supervision_record,
+        "service_contract": registered_contract,
+        "consumer": {"summary_artifact": consumer_artifact},
+        "v13_initial_aggregate_resource_gate": v13_initial_gate,
+        "phase_results": {
+            "consumer": {
+                "owned_session_id": owned_session_cleanup["session_id"],
+                "owned_session_cleanup": owned_session_cleanup,
+            }
+        },
+    }
+    run_summary = dict(supervisor_summary)
+    run_manifest = {
+        "source_sha": source_sha,
+        "modal_solver_policy": policy_id,
+        "fixed_h6_modal_gmres_research": fixed_binding,
+        **v13_metadata,
+        "supervision_record": supervision_record,
+        "model_id": model_id,
+        "output_directory": str(inner),
+    }
+    supervisor._write_json(inner / "supervisor_summary.json", supervisor_summary)
+    supervisor._write_json(inner / "run_summary.json", run_summary)
+    supervisor._write_json(inner / "run_manifest.json", run_manifest)
+    public_command = ["python", "scripts/run_case.py", "input.dat"]
+    public_stdout = {
+        **supervisor_summary,
+        "summary": str(inner / "run_summary.json"),
+        "manifest": str(inner / "run_manifest.json"),
+    }
+    if tamper == "policy":
+        public_stdout["modal_solver_policy"] = "task041_v12_bounded_inexact_modal"
+    elif tamper == "path":
+        public_stdout["summary"] = str(inner / "wrong_summary.json")
+    public_stdout_path = root / "log" / "public_command_stdout.txt"
+    public_stdout_path.write_text(json.dumps(public_stdout, sort_keys=True) + "\n")
+    outer_summary = {
+        "schema": "task041.supervised_public_command.v1",
+        "supervision_root": str(root),
+        "model_id": model_id,
+        "modal_solver_policy": policy_id,
+        "fixed_h6_modal_gmres_research": fixed_binding,
+        **v13_metadata,
+        "resolved_memory_policy": {
+            "policy": task041_balh_workflow.TASK041_V13_MEMORY_POLICY,
+            "membind_node": None,
+            "source": "resolved_fixed_h6_modal_gmres_research_binding",
+        },
+        "launch_manifest": {"path": str(launch_path), "sha256": launch_sha},
+        "phase_result": {"stdout": str(public_stdout_path), "argv": public_command},
+    }
+    contract = {
+        "unit": unit,
+        "model_id": model_id,
+        "modal_solver_policy": policy_id,
+        "fixed_h6_modal_gmres_research": fixed_binding,
+    }
+    kwargs = {
+        "supervision_root": root,
+        "launch_manifest": launch,
+        "sealed_public_command": public_command,
+        "expected_source_sha": source_sha,
+        "terminal_invocation_id": invocation_id,
+        "expected_unit": unit,
+    }
+    if tamper in {None, "boundary_terminal"}:
+        checked = supervisor._consumer_result(
+            consumer_root,
+            expected_fixed_h6_modal_gmres_research=True,
+            expected_modal_solver_policy=policy_id,
+            expected_fixed_h6_binding=fixed_binding,
+            owned_session_cleanup=owned_session_cleanup,
+        )
+        assert checked["fixed_h6_method_validation"]["pass"] is True
+        assert checked["v13_outer_control_validation"]["pass"] is True
+        if tamper == "boundary_terminal":
+            assert checked["v13_outer_control_validation"][
+                "restart64_terminal_boundary_accepted"
+            ] is True
+        assert service._modal_solver_policy_matches_request(
+            contract, outer_summary, **kwargs
+        ) is True
+    elif tamper == "crossed_boundary_without_evidence":
+        checked = supervisor._consumer_result(
+            consumer_root,
+            expected_fixed_h6_modal_gmres_research=True,
+            expected_modal_solver_policy=policy_id,
+            expected_fixed_h6_binding=fixed_binding,
+            owned_session_cleanup=owned_session_cleanup,
+        )
+        assert checked["v13_outer_control_validation"]["pass"] is False
+        assert any(
+            error == "outer_crossed_restart_boundary_without_window_evidence"
+            for error in checked["v13_outer_control_validation"]["errors"]
+        )
+        assert service._modal_solver_policy_matches_request(
+            contract, outer_summary, **kwargs
+        ) is False
+    else:
+        assert service._modal_solver_policy_matches_request(
+            contract, outer_summary, **kwargs
+        ) is False
+
+    # The finalizer passes the same invocation context for the legacy default;
+    # a None request must remain on the old no-policy path.
+    assert service._modal_solver_policy_matches_request(
+        {"model_id": model_id, "modal_solver_policy": None},
+        {"modal_solver_policy": None, "setup": {}},
+        **kwargs,
+    ) is True
+
+    public_stdout["summary"] = str(inner / "supervisor_summary.json")
+    public_stdout_path.write_text(json.dumps(public_stdout, sort_keys=True) + "\n")
+    assert service._modal_solver_policy_matches_request(
+        contract, outer_summary, **kwargs
+    ) is False

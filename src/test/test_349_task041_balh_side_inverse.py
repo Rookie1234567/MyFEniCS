@@ -4489,6 +4489,32 @@ def test_fixed_physical_q_real_cell_inverse_audits_exact_solve_branches(
         )
         assert q_audit["factor_solve_call_delta"] == sum(expected_deltas)
         assert p4.inverse.solve_count == sum(expected_deltas)
+        fixed_q_work = action.audit["fixed_q_actual_work_cumulative"]
+        assert fixed_q_work["mathematical_correction_steps_requested"] == 1
+        assert fixed_q_work[
+            "mathematical_correction_steps_completed_with_valid_q_audit"
+        ] == 1
+        assert fixed_q_work["successful_q_audit_count"] == 1
+        assert fixed_q_work["successful_factor_solve_delta_total"] == sum(
+            expected_deltas
+        )
+        assert fixed_q_work["failed_q_attempt_count"] == 0
+        for step_name, expected_delta, expected_status in zip(
+            ("initial", "correction_1"),
+            expected_deltas,
+            expected_statuses,
+            strict=True,
+        ):
+            step = fixed_q_work["factor_solve_deltas_by_step"][
+                "initial" if step_name == "initial" else "correction"
+            ]
+            assert step["audited_q_count"] == 1
+            assert step["factor_solve_delta_total"] == expected_delta
+            assert step["direct_zero_status_audited_q_count"] == 1
+            assert step["direct_zero_status_missing_q_count"] == 0
+            assert step["direct_zero_count"] == int(
+                expected_status == "ZERO_RHS_DIRECT_ZERO"
+            )
         assert apply_kwargs == [
             {"diagnostic_correction_steps": 1, "timing": None}
         ]
@@ -4557,6 +4583,19 @@ def test_fixed_physical_q_real_cell_inverse_full_action_global_zero_records_all_
         assert audit["last_q_factor_solve_deltas"] == [0, 0]
         assert audit["last_q_factor_step_solve_deltas"] == [[0, 0], [0, 0]]
         assert audit["mathematical_p4_correction_steps_per_q"] == 1
+        fixed_q_work = audit["fixed_q_actual_work_cumulative"]
+        assert fixed_q_work["mathematical_correction_steps_requested"] == 2
+        assert fixed_q_work[
+            "mathematical_correction_steps_completed_with_valid_q_audit"
+        ] == 2
+        assert fixed_q_work["successful_q_audit_count"] == 2
+        assert fixed_q_work["successful_factor_solve_delta_total"] == 0
+        for step_name in ("initial", "correction"):
+            step = fixed_q_work["factor_solve_deltas_by_step"][step_name]
+            assert step["audited_q_count"] == 2
+            assert step["factor_solve_delta_total"] == 0
+            assert step["direct_zero_status_audited_q_count"] == 2
+            assert step["direct_zero_count"] == 2
         q_audits = audit["last_q_solve_audits"]
         assert len(q_audits) == 2
         assert all(
@@ -4604,7 +4643,11 @@ def test_fixed_physical_q_real_cell_inverse_rejects_audit_counter_mismatch() -> 
     inverse, owned = _fixed_q_real_cell_condensed_fixture()
     p4 = owned["p4_factor"]
     action = inverse.create_fixed_physical_balh_active_trace_action()
-    source_values = np.asarray([0.25 + 0.5j, -0.125 + 0.375j], dtype=np.complex128)
+    source_pair = (0.25 + 0.5j, -0.125 + 0.375j)
+    source_values = np.asarray(
+        [source_pair[index % 2] for index in range(int(p4.full_rows))],
+        dtype=np.complex128,
+    )
     source = _new_vector(p4.physical_action.matrix, source_values)
     cell_inverse = p4.inverse
     original_apply = cell_inverse.apply

@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import copy
+import hashlib
 import json
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
+from dolfinx import fem
 from mpi4py import MPI
 from petsc4py import PETSc
 
@@ -13,10 +17,24 @@ from src.common.config_3d import (
     ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
     SimulationConfig3D,
 )
+from src.coupling.hybrid_internal_modes import build_hybrid_internal_mode_coupling
 from src.geometry.hybrid_local_mesh import build_hybrid_local_mesh
+from src.modes.cross_section_spaces import (
+    build_cross_section_spaces,
+    build_matching_cross_section,
+)
 from src.solvers.dtn_port_3d import _augmented_vec_from_base
 from src.solvers.hcurl_assembly_time_condensation import (
     recover_owned_cell_interiors,
+)
+from src.solvers.hybrid_fem_modal_block_ldu import (
+    TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+    HybridAugmentedLayout,
+    create_side_balh_block_ldu_preconditioner,
+    resolve_task041_modal_solver_policy,
+)
+from src.solvers.hybrid_fem_modal_iterative import (
+    create_hybrid_assembled_block_action,
 )
 from src.solvers.hybrid_local_dtn import assemble_hybrid_local_dtn_system
 from src.solvers.hybrid_local_dtn_action import (
@@ -779,6 +797,1054 @@ def h1e_real_side_systems():
     finally:
         for system in systems.values():
             system.destroy()
+
+
+def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
+    h1e_real_side_systems,
+) -> None:
+    """Exercise V13 on real condensed P6 sides with analytic, non-QEP modes.
+
+    The twelve fixture modes are assembled as complex FEM fields on the
+    matched cross-section. They are deliberately small analytic test modes,
+    not QEP modes and not evidence for the M400 pilot. The fresh-authority
+    callback below only lets this unit fixture traverse the builder contract;
+    its synthetic receipt is explicitly not a host/resource qualification.
+    MPI2 ownership is exercised here when selected; the separate test349
+    fixture remains the empty-owner branch evidence.
+    """
+    comm = MPI.COMM_WORLD
+    import os
+    from pathlib import Path
+
+    capture_opt_in = os.environ.get("TASK041_V13_CAPTURE_FIRST_TOP_Q_ROW", "")
+    if capture_opt_in not in {"", "1"}:
+        raise RuntimeError("first-top-Q capture opt-in must be unset or exactly 1")
+    diagnostic_enabled = capture_opt_in == "1"
+    capture_dir = os.environ.get("TASK041_V13_CAPTURE_DIR", "")
+    if diagnostic_enabled and int(comm.size) != 1:
+        raise RuntimeError("first-top-Q row capture is serial-only")
+    if diagnostic_enabled and not capture_dir:
+        raise RuntimeError("TASK041_V13_CAPTURE_DIR is required for capture")
+    capture_output_dir = None
+    if diagnostic_enabled:
+        results_root = (Path(__file__).resolve().parents[2] / "results").resolve()
+        capture_output_dir = Path(capture_dir).resolve()
+        if not capture_output_dir.is_relative_to(results_root) or capture_output_dir.exists():
+            raise RuntimeError("capture directory must be fresh under ignored results/")
+    systems = h1e_real_side_systems
+    cfg = systems["bottom"].cfg
+    cross_section = build_matching_cross_section(cfg, "stage4_xy", comm=comm)
+    spaces = build_cross_section_spaces(
+        cross_section, transverse_degree=int(cfg.nedelec_degree)
+    )
+    mode_vectors: list[PETSc.Vec] = []
+    inverses: dict[str, object] = {}
+    p4_gate_records: dict[str, list[dict[str, object]]] = {
+        "bottom": [],
+        "top": [],
+    }
+    p4_apply_originals: dict[str, tuple[object, object]] = {}
+    coupling = None
+    original_operator = None
+    original_action_context = None
+    ldu = None
+    inputs: list[PETSc.Vec] = []
+    outputs: dict[str, PETSc.Vec] = {}
+    authority_calls: list[dict[str, object]] = []
+
+    beta = complex(
+        np.sqrt(
+            (cfg.k0 * complex(cfg.n_air)) ** 2
+            - cfg.kx**2
+            - cfg.ky**2
+            + 0.0j
+        )
+    )
+    positive_basis = None
+    negative_basis = None
+
+    def analytic_basis(direction: str) -> SimpleNamespace:
+        modes = []
+        for index in range(6):
+            component = index // 3
+            power = index % 3
+            trace = fem.Function(spaces.transverse)
+
+            def field(x, *, selected_component=component, selected_power=power):
+                values = np.zeros((2, x.shape[1]), dtype=PETSc.ScalarType)
+                phase = np.exp(1j * (cfg.kx * x[0] + cfg.ky * x[1]))
+                axis = selected_component
+                coordinate = np.asarray(x[axis], dtype=np.float64)
+                period = (
+                    cfg.period_x if selected_component == 0 else cfg.period_y
+                )
+                periodic_harmonic = np.exp(
+                    2j * np.pi * selected_power * coordinate / period
+                )
+                values[selected_component, :] = (
+                    (1.0 + 0.07j * (selected_power + 1))
+                    * phase
+                    * periodic_harmonic
+                )
+                return values
+
+            trace.interpolate(field)
+            trace.x.scatter_forward()
+            mixed = fem.Function(spaces.mixed)
+            mixed.x.array[:] = 0.0
+            mixed.x.array[spaces.transverse_to_mixed] = trace.x.array
+            mixed.x.scatter_forward()
+            vector = mixed.x.petsc_vec.duplicate()
+            mixed.x.petsc_vec.copy(vector)
+            mode_vectors.append(vector)
+            modes.append(
+                SimpleNamespace(
+                    beta=beta if direction == "forward" else -beta,
+                    right=SimpleNamespace(right_full=vector),
+                    left_full=vector,
+                    direction=direction,
+                    passive_branch_valid=True,
+                )
+            )
+        return SimpleNamespace(modes=modes, groups=())
+
+    try:
+        positive_basis = analytic_basis("forward")
+        negative_basis = analytic_basis("backward")
+        coupling = build_hybrid_internal_mode_coupling(
+            cfg,
+            spaces,
+            positive_basis,
+            negative_basis,
+            systems["bottom"],
+            systems["top"],
+            length_nm=1.0,
+        )
+        assert coupling.mode_count_per_direction == 6
+        assert coupling.internal_equation_count == 12
+        assert coupling.positive_projection_identity_error <= 1.0e-9
+        assert np.linalg.matrix_rank(coupling.negative_trace_to_positive) == 6
+        for side in ("bottom", "top"):
+            inverses[side] = build_side_balanced_inverse(
+                systems[side],
+                detailed_timing=True,
+                p4_inverse_backend="cell_condensed",
+                support_policy="entity_closure",
+            )
+            assert inverses[side].diagnostics["p4_inverse_backend"] == (
+                "cell_condensed"
+            )
+            assert (
+                inverses[side]._owner_transfer.audit["support_policy"]
+                == "entity_closure"
+            )
+            assert inverses[side].diagnostics["p4_factor_created_count"] == 1
+            p4_factor = inverses[side]._p4_factor
+            original_apply = p4_factor.apply
+            p4_apply_originals[side] = (p4_factor, original_apply)
+
+            def capture_real_p4_apply(
+                *args,
+                side_name=side,
+                factor=p4_factor,
+                apply=original_apply,
+                **kwargs,
+            ):
+                result = apply(*args, **kwargs)
+                p4_gate_records[side_name].append(
+                    dict(factor.diagnostics["last_solve"])
+                )
+                return result
+
+            p4_factor.apply = capture_real_p4_apply
+
+        columns = [0, 1, 3, 5, 6, 7, 9, 11]
+        roles = {
+            str(column): [
+                "head" if index in (0, 4) else "interior",
+                (
+                    "bottom_positive_unattenuated"
+                    if column < 6
+                    else "top_negative_unattenuated"
+                ),
+            ]
+            for index, column in enumerate(columns)
+        }
+        contract = {
+            "columns": columns,
+            "mode_count_per_direction": 6,
+            "roles": roles,
+        }
+        contract_sha256 = hashlib.sha256(
+            json.dumps(contract, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+
+        def fixture_control_only_not_resource_qualification(
+            phase: str, report: dict[str, object]
+        ) -> dict[str, object]:
+            projection = report["phase_memory_projection"]
+            selected_phase = projection["selected_phase"]
+            selected = projection["phase_reports"][selected_phase]
+            known = list(selected["known_additional_bytes_by_rank"])
+            temporary = list(selected["additional_temporary_bytes_by_rank"])
+            replicated = list(selected["additional_replicated_bytes_by_rank"])
+            additional = [
+                known[rank] + temporary[rank] + replicated[rank]
+                for rank in range(comm.size)
+            ]
+            request_sha256 = hashlib.sha256(
+                json.dumps(
+                    report,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                ).encode()
+            ).hexdigest()
+            # These values are only a deterministic test-control response.
+            # They do not represent measured memory, an external gate, or a
+            # production resource-admission result.
+            payload = {
+                "phase": phase,
+                "request_sha256": request_sha256,
+                "fixture_only": "not_a_resource_qualification",
+            }
+            receipt_sha256 = hashlib.sha256(
+                json.dumps(
+                    payload,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                ).encode()
+            ).hexdigest()
+            response = {
+                "schema": "task041.v13.modal_builder_admission.v1",
+                "phase": phase,
+                "status": "pass",
+                "decision": "continue",
+                "request_sha256": request_sha256,
+                "authority_receipt_payload": payload,
+                "authority_receipt_sha256": receipt_sha256,
+                "fresh_job_authority_bytes": 0,
+                "cap_bytes": 1_000_000_000_000_000,
+                "W_policy_reserve_bytes": 0,
+                "additional_bytes_by_rank": additional,
+                "additional_temporary_bytes_by_rank": temporary,
+                "additional_replicated_bytes_by_rank": replicated,
+                "selected_memory_phase": selected_phase,
+                "selected_memory_phase_payload_bytes": sum(additional),
+                "projected_B_plus_delta_plus_W_bytes": sum(additional),
+                "external_resource_gates": {
+                    "fixture_only_not_a_resource_qualification": True
+                },
+                "cost_assessment": {
+                    "scope": "fixture_control_only",
+                    "status": "not_a_resource_qualification",
+                    "target_is_elapsed_stop": False,
+                },
+            }
+            authority_calls.append(
+                {
+                    "phase": phase,
+                    "response_scope": "fixture_only_not_a_resource_qualification",
+                }
+            )
+            return response
+
+        layout = HybridAugmentedLayout.build(
+            systems["bottom"], systems["top"], coupling.internal_equation_count
+        )
+        original_operator, original_action_context = (
+            create_hybrid_assembled_block_action(
+                systems["bottom"], systems["top"], coupling
+            )
+        )
+        pre_builder_side = {
+            side: {
+                "apply_count": int(inverse.diagnostics["apply_count"]),
+                "total_iterations": int(
+                    inverse.diagnostics["total_iterations"]
+                ),
+                "factor_solve_count": int(
+                    inverse._p4_factor.inverse.solve_count
+                ),
+                "p4_gate_record_count": len(p4_gate_records[side]),
+            }
+            for side, inverse in inverses.items()
+        }
+        ldu = create_side_balh_block_ldu_preconditioner(
+            layout,
+            systems["bottom"],
+            systems["top"],
+            coupling,
+            inverses["bottom"],
+            inverses["top"],
+            sampled_columns=columns,
+            sampled_column_roles=roles,
+            sampled_column_contract_sha256=contract_sha256,
+            fixed_h6_modal_gmres_research=True,
+            modal_solver_policy=resolve_task041_modal_solver_policy(
+                TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+            ),
+            v13_fresh_authority_callback=(
+                fixture_control_only_not_resource_qualification
+            ),
+        )
+        post_builder_side = {
+            side: {
+                "apply_count": int(inverse.diagnostics["apply_count"]),
+                "total_iterations": int(
+                    inverse.diagnostics["total_iterations"]
+                ),
+                "factor_solve_count": int(
+                    inverse._p4_factor.inverse.solve_count
+                ),
+                "p4_gate_record_count": len(p4_gate_records[side]),
+            }
+            for side, inverse in inverses.items()
+        }
+        builder_p4_gates = {
+            side: p4_gate_records[side][
+                pre_builder_side[side]["p4_gate_record_count"] :
+            ]
+            for side in ("bottom", "top")
+        }
+        builder_action_work = {
+            side: copy.deepcopy(
+                (ldu.bottom_action if side == "bottom" else ldu.top_action)
+                .audit["fixed_q_actual_work_cumulative"]
+            )
+            for side in ("bottom", "top")
+        }
+        builder_action_apply_count = {
+            side: int(
+                (ldu.bottom_action if side == "bottom" else ldu.top_action)
+                .audit["apply_count"]
+            )
+            for side in ("bottom", "top")
+        }
+        ldu.bind_v13_original_global_operator(original_operator)
+        assert ldu.bottom_action is ldu.action_modal_schur_system.bottom_action
+        assert ldu.top_action is ldu.action_modal_schur_system.top_action
+        assert ldu.bottom_action._side_inverse is inverses["bottom"]
+        assert ldu.top_action._side_inverse is inverses["top"]
+        modal_system = ldu.action_modal_schur_system
+        modal_audit = modal_system.diagnostics
+        assert modal_audit["modal_schur_column_count"] == 12
+        assert modal_audit["modal_ksp_handle_count"] == 0
+        assert modal_audit["modal_ksp_solve_count"] == 0
+        assert modal_system.build_audit[
+            "sample_columns_written_directly_to_final_matrix"
+        ] == columns
+        assert modal_system.build_audit["remaining_columns_applied_once"] == [
+            2,
+            4,
+            8,
+            10,
+        ]
+        assert [row["phase"] for row in authority_calls] == [
+            "before_dense_allocation",
+            "after_eight_columns",
+        ]
+        assert all(
+            row["response_scope"] == "fixture_only_not_a_resource_qualification"
+            for row in authority_calls
+        )
+
+        def make_input(seed: float) -> PETSc.Vec:
+            vector = layout.create_vector()
+            first, last = (int(value) for value in vector.getOwnershipRange())
+            rows = np.arange(first, last, dtype=np.float64)
+            vector.getArray()[:] = np.asarray(
+                seed + 0.017 * rows + 1j * (0.23 - 0.011 * rows),
+                dtype=PETSc.ScalarType,
+            )
+            vector.assemble()
+            inputs.append(vector)
+            return vector
+
+        x = make_input(0.2)
+        y = make_input(-0.35)
+        x_values = np.asarray(x.getArray(readonly=True)).copy()
+        y_values = np.asarray(y.getArray(readonly=True)).copy()
+        alpha = 0.3 - 0.4j
+        combined = x.duplicate()
+        x.copy(combined)
+        combined.axpy(PETSc.ScalarType(1.0), y)
+        scaled = x.duplicate()
+        x.copy(scaled)
+        scaled.scale(PETSc.ScalarType(alpha))
+        repeated_x = x.copy()
+        zero = layout.create_vector()
+        zero.set(0.0)
+        zero.assemble()
+        near_zero = x.copy()
+        near_zero.scale(PETSc.ScalarType(1.0e-12))
+        inputs.extend((combined, scaled, repeated_x, zero, near_zero))
+
+        def apply_full_pc(name: str, source: PETSc.Vec) -> PETSc.Vec:
+            before = np.asarray(source.getArray(readonly=True)).copy()
+            target = layout.create_vector()
+            if diagnostic_enabled:
+                try:
+                    ldu.apply(None, source, target)
+                    np.testing.assert_array_equal(
+                        np.asarray(source.getArray(readonly=True)), before
+                    )
+                    row_gate = ldu.action_modal_schur_system.diagnostics[
+                        "last_original_modal_row"
+                    ]
+                    assert row_gate["status"] == "passed"
+                    assert row_gate["scope"] == (
+                        "original_global_modal_row_after_full_PC_output"
+                    )
+                    assert row_gate["tolerance"] == 1.0e-10
+                except BaseException as error:
+                    try:
+                        capture_state["source_unchanged_on_failure"] = bool(
+                            np.array_equal(
+                                np.asarray(source.getArray(readonly=True)), before
+                            )
+                        )
+                    except BaseException as source_check_error:  # noqa: BLE001
+                        capture_state["source_unchanged_check_error"] = type(
+                            source_check_error
+                        ).__name__
+                        capture_state["source_unchanged_check_error_message"] = (
+                            bounded_error_message(source_check_error)
+                        )
+                    try:
+                        target.destroy()
+                    except BaseException as cleanup_error:  # noqa: BLE001
+                        capture_state["target_cleanup_error"] = type(cleanup_error).__name__
+                        capture_state["target_cleanup_error_message"] = (
+                            bounded_error_message(cleanup_error)
+                        )
+                    capture_state["full_pc_exception"] = exception_record(error)
+                    raise
+            else:
+                ldu.apply(None, source, target)
+                np.testing.assert_array_equal(
+                    np.asarray(source.getArray(readonly=True)), before
+                )
+                row_gate = ldu.action_modal_schur_system.diagnostics[
+                    "last_original_modal_row"
+                ]
+                assert row_gate["status"] == "passed"
+                assert row_gate["scope"] == "original_global_modal_row_after_full_PC_output"
+                assert row_gate["tolerance"] == 1.0e-10
+            outputs[name] = target
+            return target
+
+        capture_state: dict[str, object] = {
+            "schema": "task041.v13.first_top_q_row_capture.v1",
+            "status": "not_reached",
+            "enabled": diagnostic_enabled,
+            "capture_byte_limit": 1 << 20,
+            "capture_byte_limit_scope": (
+                "logical captured array bytes plus serialized row artifact bytes; "
+                "the final manifest uses a 4096-byte reserve; excludes Python "
+                "object overhead and transient serialization memory"
+            ),
+        }
+
+        def exception_record(error: BaseException) -> dict[str, str]:
+            return {
+                "type": type(error).__name__,
+                "message": bounded_error_message(error),
+            }
+
+        def bounded_error_message(error: BaseException, limit: int = 256) -> str:
+            try:
+                message = str(error)
+            except BaseException as message_error:  # noqa: BLE001
+                message = f"<message unavailable: {type(message_error).__name__}>"
+            return message[:limit]
+
+        def vector_binding(vector: PETSc.Vec) -> dict[str, object]:
+            values = np.ascontiguousarray(vector.getArray(readonly=True))
+            return {
+                "global_size": int(vector.getSize()),
+                "local_size": int(vector.getLocalSize()),
+                "ownership_range": [int(v) for v in vector.getOwnershipRange()],
+                "dtype": str(values.dtype),
+                "nbytes": int(values.nbytes),
+                "sha256": hashlib.sha256(values.view(np.uint8)).hexdigest(),
+            }
+
+        def complex_pairs(values: np.ndarray) -> list[list[float]]:
+            return [
+                [float(v.real), float(v.imag)]
+                for v in np.asarray(values, dtype=np.complex128).reshape(-1)
+            ]
+
+        def capture_worst_row(**packet: object) -> dict[str, object]:
+            """Capture one complete serial row group; never raise into the hook."""
+            try:
+                ids = np.asarray(packet["ids"])
+                values = np.asarray(packet["values"])
+                ranks = np.asarray(packet["source_ranks"])
+                owner = int(packet["owner_rank"])
+                if (
+                    int(comm.size) != 1
+                    or ids.dtype != np.dtype(np.uint64)
+                    or values.dtype != np.dtype(np.complex128)
+                    or ranks.dtype != np.dtype(np.int32)
+                    or ids.ndim != 1
+                    or values.shape != ids.shape
+                    or ranks.shape != ids.shape
+                ):
+                    raise ValueError("serial owner packet shape or dtype is unsupported")
+
+                worst = None
+                start = 0
+                while start < ids.size:
+                    stop = start + 1
+                    while stop < ids.size and ids[stop] == ids[start]:
+                        stop += 1
+                    reference = next(
+                        (i for i in range(start, stop) if int(ranks[i]) == owner),
+                        None,
+                    )
+                    if reference is None:
+                        raise ValueError("row has no canonical owner candidate")
+                    reference_value = complex(values[reference])
+                    row_differences = np.abs(values[start:stop] - reference_value)
+                    if not np.isfinite(row_differences).all():
+                        raise ValueError("row candidate defect is non-finite")
+                    row_max = float(np.max(row_differences))
+                    row_arg = start + int(np.argmax(row_differences))
+                    candidate = (row_max, int(ids[start]), start, stop, reference, row_arg)
+                    if worst is None or (
+                        -candidate[0], candidate[1], candidate[5]
+                    ) < (-worst[0], worst[1], worst[5]):
+                        worst = candidate
+                    start = stop
+                if worst is None:
+                    raise ValueError("owner packet is empty")
+                defect, row_id, first, last, reference, worst_arg = worst
+                count = int(last - first)
+                row_summary = {
+                    "row_id": row_id,
+                    "candidate_count": count,
+                    "reference_position": reference - first,
+                    "reference_value": [
+                        float(values[reference].real), float(values[reference].imag)
+                    ],
+                    "worst_candidate_position": worst_arg - first,
+                    "measured_absolute_defect": defect,
+                    "matches_previous_scalar": defect == 1.3520610761878294e-11,
+                    "limit": 1.0e-11,
+                }
+                capture_state["selected_row_summary"] = row_summary
+
+                candidate_array_bytes = count * 28  # uint64 IDs, complex128 values, int32 ranks
+                preliminary = candidate_array_bytes + 65536 + count * 2400
+                if preliminary > (1 << 20):
+                    capture_state.update(
+                        status="capture_incomplete",
+                        reason="candidate_group_exceeds_1MiB_bound",
+                        candidate_array_nbytes=candidate_array_bytes,
+                        total_capture_upper_bound=preliminary,
+                    )
+                    return {"status": "capture_incomplete"}
+
+                emitted_ids = np.asarray(packet["emitted_ids"])
+                emitted_values = np.asarray(packet["emitted_values"])
+                emitted_positions = [
+                    i for i, value in enumerate(emitted_ids) if int(value) == row_id
+                ]
+                if len(emitted_positions) != count:
+                    raise ValueError("selected row does not map to all emissions")
+
+                transfer = packet["transfer"]
+                origin_specs = []
+                origin_array_bytes = 0
+                origin_scalars = 0
+                offset = 0
+                for record_index, record in enumerate(transfer._records):
+                    for local_position, value in enumerate(record["fine_global"]):
+                        if int(value) != row_id:
+                            continue
+                        packet_position = offset + local_position
+                        if packet_position != emitted_positions[len(origin_specs)]:
+                            raise ValueError("record and packet order do not agree")
+                        if "compact_transfer" in record:
+                            raise ValueError("compact transfer row cannot be captured exactly")
+                        coarse_local = np.asarray(record["coarse_local"])
+                        coarse_global = np.asarray(record["coarse_global"])
+                        matrix_row = np.asarray(record["matrix"][local_position])
+                        work_values = np.asarray(
+                            transfer._coarse_work.x.array[coarse_local]
+                        )
+                        origin_array_bytes += sum(
+                            array.nbytes
+                            for array in (coarse_local, coarse_global, matrix_row, work_values)
+                        )
+                        origin_scalars += 3 + 6 * int(coarse_local.size)
+                        origin_specs.append(
+                            (record_index, local_position, packet_position)
+                        )
+                    offset += len(record["fine_global"])
+                if len(origin_specs) != count:
+                    raise ValueError("candidate origin count is incomplete")
+
+                arrays_nbytes = candidate_array_bytes + origin_array_bytes
+                json_upper = 65536 + count * 2048 + (5 * count + origin_scalars) * 64
+                if arrays_nbytes + json_upper + 4096 > (1 << 20):
+                    capture_state.update(
+                        status="capture_incomplete",
+                        reason="row_with_origins_exceeds_1MiB_bound",
+                        candidate_count=count,
+                        array_nbytes=arrays_nbytes,
+                        total_capture_upper_bound=arrays_nbytes + json_upper + 4096,
+                    )
+                    return {"status": "capture_incomplete"}
+
+                group_values = values[first:last].copy()
+                if not np.array_equal(group_values, emitted_values[emitted_positions]):
+                    raise ValueError("emitted values do not preserve packet order")
+                origins = []
+                for record_index, local_position, packet_position in origin_specs:
+                    record = transfer._records[record_index]
+                    coarse_local = np.asarray(record["coarse_local"])
+                    coarse_global = np.asarray(record["coarse_global"])
+                    origins.append(
+                        {
+                            "record": record_index,
+                            "local_position": local_position,
+                            "packet_position": packet_position,
+                            "fine_local": int(record["fine_local"][local_position]),
+                            "fine_global": row_id,
+                            "authority": bool(record["authority"][local_position]),
+                            "coarse_local": coarse_local.tolist(),
+                            "coarse_global": coarse_global.tolist(),
+                            "matrix_row": complex_pairs(record["matrix"][local_position]),
+                            "coarse_work_input": complex_pairs(
+                                transfer._coarse_work.x.array[coarse_local]
+                            ),
+                        }
+                    )
+                attempts = {
+                    name: (
+                        {
+                            "status": "exception",
+                            "type": str(attempt["exception_type"])[:128],
+                            "message": bounded_error_message(
+                                attempt["exception_message"]
+                            ),
+                        }
+                        if "exception_type" in attempt
+                        else {
+                            "status": "returned",
+                            "global_defect": float(attempt["result"][2]),
+                            "packet_rows": int(attempt["result"][3]),
+                        }
+                    )
+                    for name, attempt in packet["attempts"].items()
+                }
+                source = packet["source"]
+                payload = {
+                    "rank": 0,
+                    "size": 1,
+                    "selected_variant": transfer.execution_variant,
+                    "support_policy": transfer.audit["support_policy"],
+                    "local_transfer": {
+                        key: transfer.local_transfer.audit[key]
+                        for key in (
+                            "pair_fine_to_coarse",
+                            "shape",
+                            "fine_lagrange_variant",
+                            "coarse_lagrange_variant",
+                            "support_policy",
+                        )
+                    },
+                    "fine_ranges": [list(map(int, r)) for r in transfer.fine_ranges],
+                    "coarse_ranges": [list(map(int, r)) for r in transfer.coarse_ranges],
+                    "source_layout_sha256": vector_binding(source),
+                    "outer_x_layout_sha256": capture_state["outer_x"],
+                    "row_summary": row_summary,
+                    "packet_group_range": [first, last],
+                    "packet_order": "row ID, source rank, stable local record order",
+                    "candidate_ids_uint64": ids[first:last].tolist(),
+                    "candidate_values_complex128_pairs": complex_pairs(group_values),
+                    "candidate_source_ranks_int32": ranks[first:last].tolist(),
+                    "candidate_origins": origins,
+                    "resolver_attempts": attempts,
+                    "hook_row_hints": {
+                        "max_local_rows": int(transfer._diagnostic_context["max_local_rows"]),
+                        "max_global_rows": int(transfer._diagnostic_context["max_global_rows"]),
+                        "enforced": False,
+                    },
+                    "extra_hook_work": (
+                        "packet precheck; ordinary selected resolver once; diagnostic "
+                        "alternate resolver once (one extra resolver pass); callback "
+                        "agreement collective; one owner-packet scan"
+                    ),
+                    "array_nbytes": arrays_nbytes,
+                    "capture_byte_limit": 1 << 20,
+                    "capture_byte_limit_scope": capture_state[
+                        "capture_byte_limit_scope"
+                    ],
+                }
+                encoded = json.dumps(
+                    payload, sort_keys=True, separators=(",", ":"), allow_nan=False
+                ).encode()
+                if arrays_nbytes + len(encoded) + 4096 > (1 << 20):
+                    capture_state.update(
+                        status="capture_incomplete",
+                        reason="serialized_row_exceeds_1MiB_bound",
+                        candidate_count=count,
+                        array_nbytes=arrays_nbytes,
+                        total_capture_bytes=arrays_nbytes + len(encoded) + 4096,
+                    )
+                    return {"status": "capture_incomplete"}
+                capture_state.update(
+                    status="capture_complete",
+                    candidate_count=count,
+                    array_nbytes=arrays_nbytes,
+                    serialized_payload_bytes=len(encoded),
+                    total_capture_upper_bound=arrays_nbytes + len(encoded) + 4096,
+                    payload=payload,
+                )
+                return {"status": "capture_complete"}
+            except BaseException as error:  # noqa: BLE001
+                capture_state.update(
+                    status="capture_incomplete",
+                    reason="capture_callback_error",
+                    capture_error_type=type(error).__name__,
+                    capture_error_message=bounded_error_message(error),
+                )
+                return {"status": "capture_incomplete"}
+
+        def persist_capture(outcome: str, error: BaseException | None = None) -> None:
+            if capture_state["status"] == "not_reached":
+                capture_state["status"] = "capture_not_reached"
+            if error is not None:
+                capture_state["original_exception"] = exception_record(error)
+            capture_state["outcome"] = outcome
+            capture_state["transfer_diagnostic"] = (
+                inverses["top"]._owner_transfer.last_diagnostic
+            )
+            row = json.dumps(
+                capture_state, sort_keys=True, separators=(",", ":"), allow_nan=False
+            ).encode()
+            logical_arrays = int(capture_state.get("array_nbytes", 0))
+            if (
+                (logical_arrays if capture_state.get("payload") is not None else 0)
+                + len(row)
+                + 4096
+                > (1 << 20)
+            ):
+                capture_state.update(
+                    status="capture_incomplete",
+                    reason="final_envelope_exceeds_1MiB_bound",
+                    payload=None,
+                    discarded_payload_array_nbytes=logical_arrays,
+                    array_nbytes=0,
+                    serialized_payload_bytes=0,
+                )
+                logical_arrays = 0
+                row = json.dumps(
+                    capture_state, sort_keys=True, separators=(",", ":"), allow_nan=False
+                ).encode()
+            if len(row) + 4096 > (1 << 20) or capture_output_dir is None:
+                raise ValueError("capture summary cannot be safely persisted")
+            capture_output_dir.mkdir(parents=True, exist_ok=False)
+            row_path = capture_output_dir / "rank0_transfer_row_capture.json"
+            with row_path.open("xb") as stream:
+                stream.write(row)
+            manifest = json.dumps(
+                {
+                    "path": row_path.name,
+                    "bytes": len(row),
+                    "sha256": hashlib.sha256(row).hexdigest(),
+                    "status": capture_state["status"],
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+            if logical_arrays + len(row) + len(manifest) > (1 << 20):
+                raise ValueError("capture files exceed 1 MiB")
+            with (capture_output_dir / "manifest.json").open("xb") as stream:
+                stream.write(manifest)
+
+        if diagnostic_enabled:
+            capture_state["outer_x"] = vector_binding(x)
+            top_transfer = inverses["top"]._owner_transfer
+            if top_transfer.execution_variant != "legacy":
+                raise RuntimeError("diagnostic requires the existing legacy resolver")
+            original_apply = top_transfer.apply_primal
+            armed = True
+
+            def capture_first_top_q(source: PETSc.Vec, *, timing=None):
+                nonlocal armed
+                if not armed:
+                    return original_apply(source, timing=timing)
+                armed = False
+                capture_state["first_top_transfer_entered"] = True
+                with top_transfer.diagnostic_context(capture_worst_row):
+                    return original_apply(source, timing=timing)
+
+            top_transfer.apply_primal = capture_first_top_q
+            try:
+                fx = apply_full_pc("x", x)
+            except BaseException as error:
+                try:
+                    persist_capture("first_full_pc_failed", error)
+                except BaseException as write_error:  # noqa: BLE001
+                    try:
+                        error.add_note(
+                            "capture persistence failed without replacing original: "
+                            f"{type(write_error).__name__}: "
+                            f"{bounded_error_message(write_error)}"
+                        )
+                    except BaseException as note_error:  # noqa: BLE001
+                        capture_state["write_error_note_failure"] = type(note_error).__name__
+                raise
+            else:
+                try:
+                    persist_capture("first_full_pc_returned")
+                except Exception as error:  # noqa: BLE001
+                    pytest.fail(f"capture persistence failed: {type(error).__name__}: {error}")
+                pytest.skip("diagnostic stops after the first full-PC action")
+            finally:
+                top_transfer.apply_primal = original_apply
+        else:
+            fx = apply_full_pc("x", x)
+        fy = apply_full_pc("y", y)
+        fxy = apply_full_pc("x_plus_y", combined)
+        falpha = apply_full_pc("alpha_x", scaled)
+        frepeat = apply_full_pc("repeat_x", repeated_x)
+        fzero = apply_full_pc("zero", zero)
+        fnear = apply_full_pc("near_zero", near_zero)
+
+        def assert_linear_relation(
+            name: str,
+            actual: PETSc.Vec,
+            terms: tuple[tuple[complex, PETSc.Vec], ...],
+            *,
+            tolerance: float = 1.0e-10,
+        ) -> dict[str, float]:
+            expected = actual.duplicate()
+            expected.set(0.0)
+            for coefficient, vector in terms:
+                expected.axpy(PETSc.ScalarType(coefficient), vector)
+            difference = actual.duplicate()
+            actual.copy(difference)
+            difference.axpy(PETSc.ScalarType(-1.0), expected)
+            try:
+                absolute_error = float(difference.norm())
+                scale = float(expected.norm())
+                scaled_error = (
+                    absolute_error / scale
+                    if scale > 0.0
+                    else (0.0 if absolute_error == 0.0 else float("inf"))
+                )
+                error_record = {
+                    "absolute_error": absolute_error,
+                    "reference_scale": scale,
+                    "scaled_error": scaled_error,
+                    "scaled_error_limit": tolerance,
+                    "absolute_error_limit": tolerance * scale,
+                }
+                linearity_records[name] = error_record
+                assert (
+                    np.isfinite(absolute_error)
+                    and np.isfinite(scaled_error)
+                    and absolute_error <= tolerance * scale
+                    and scaled_error <= tolerance
+                )
+                return error_record
+            finally:
+                difference.destroy()
+                expected.destroy()
+
+        linearity_records: dict[str, dict[str, float]] = {}
+        assert_linear_relation("x_plus_y", fxy, ((1.0, fx), (1.0, fy)))
+        assert_linear_relation("alpha_x", falpha, ((alpha, fx),))
+        assert_linear_relation("repeat_x", frepeat, ((1.0, fx),))
+        assert float(fzero.norm()) == 0.0
+        near_zero_record = assert_linear_relation(
+            "near_zero", fnear, ((1.0e-12, fx),)
+        )
+        assert near_zero_record["reference_scale"] > 0.0
+        assert near_zero_record["absolute_error"] <= near_zero_record[
+            "absolute_error_limit"
+        ]
+        assert near_zero_record["scaled_error"] <= 1.0e-10
+        np.testing.assert_array_equal(
+            np.asarray(x.getArray(readonly=True)), x_values
+        )
+        np.testing.assert_array_equal(
+            np.asarray(y.getArray(readonly=True)), y_values
+        )
+
+        for side, inverse in inverses.items():
+            action = ldu.bottom_action if side == "bottom" else ldu.top_action
+            work = action.audit["fixed_q_actual_work_cumulative"]
+            p4_solve_count = int(inverse._p4_factor.inverse.solve_count)
+            built_work = builder_action_work[side]
+            builder_solve_delta = (
+                post_builder_side[side]["factor_solve_count"]
+                - pre_builder_side[side]["factor_solve_count"]
+            )
+            outer_solve_delta = (
+                p4_solve_count - post_builder_side[side]["factor_solve_count"]
+            )
+            cumulative_solve_delta = (
+                p4_solve_count - pre_builder_side[side]["factor_solve_count"]
+            )
+            outer_apply_delta = (
+                int(action.audit["apply_count"])
+                - builder_action_apply_count[side]
+            )
+            builder_apply_count = builder_action_apply_count[side]
+            assert builder_solve_delta >= 0
+            assert outer_solve_delta >= 0
+            assert outer_apply_delta >= 0
+            assert cumulative_solve_delta == builder_solve_delta + outer_solve_delta
+            assert built_work["successful_factor_solve_delta_total"] == (
+                builder_solve_delta
+            )
+            assert built_work["mathematical_correction_steps_requested"] == (
+                2 * builder_apply_count
+            )
+            assert work["successful_factor_solve_delta_total"] == (
+                cumulative_solve_delta
+            )
+            assert (
+                work["successful_factor_solve_delta_total"]
+                - built_work["successful_factor_solve_delta_total"]
+                == outer_solve_delta
+            )
+            assert (
+                work["mathematical_correction_steps_requested"]
+                - built_work["mathematical_correction_steps_requested"]
+                == 2 * outer_apply_delta
+            )
+            assert work["mathematical_correction_steps_requested"] == (
+                2 * int(action.audit["apply_count"])
+            )
+            assert (
+                work["successful_q_audit_count"]
+                - built_work["successful_q_audit_count"]
+                == 2 * outer_apply_delta
+            )
+            assert (
+                work["mathematical_correction_steps_completed_with_valid_q_audit"]
+                - built_work[
+                    "mathematical_correction_steps_completed_with_valid_q_audit"
+                ]
+                == 2 * outer_apply_delta
+            )
+            assert work["q_attempts_missing_complete_audit"] == built_work[
+                "q_attempts_missing_complete_audit"
+            ] == 0
+            assert work[
+                "mathematical_correction_steps_completed_with_valid_q_audit"
+            ] == work["successful_q_audit_count"]
+            assert work["mathematical_correction_steps_requested"] == work[
+                "successful_q_audit_count"
+            ]
+            assert work["q_attempts_missing_complete_audit"] == 0
+            assert work["failed_q_attempt_count"] == 0
+            assert sum(
+                int(gate["backsolve_count"]) for gate in builder_p4_gates[side]
+            ) == builder_solve_delta
+            post_builder_p4_gates = p4_gate_records[side][
+                post_builder_side[side]["p4_gate_record_count"] :
+            ]
+            assert sum(
+                int(gate["backsolve_count"]) for gate in post_builder_p4_gates
+            ) == outer_solve_delta
+            for p4_gate in p4_gate_records[side]:
+                assert p4_gate["physical_gate_passed"] is True
+                assert p4_gate["augmented_gate_passed"] is True
+                assert p4_gate["residual_tolerance"] == 1.0e-10
+                assert p4_gate["physical_relative_residual"] <= 1.0e-10
+                assert p4_gate["relative_residual"] <= 1.0e-10
+            for step_name in ("initial", "correction"):
+                step = work["factor_solve_deltas_by_step"][step_name]
+                built_step = built_work["factor_solve_deltas_by_step"][step_name]
+                assert step["audited_q_count"] == work["successful_q_audit_count"]
+                assert (
+                    step["audited_q_count"] - built_step["audited_q_count"]
+                    == 2 * outer_apply_delta
+                )
+                assert (
+                    step["factor_solve_delta_total"]
+                    - built_step["factor_solve_delta_total"]
+                    >= 0
+                )
+                assert step["direct_zero_status_audited_q_count"] + step[
+                    "direct_zero_status_missing_q_count"
+                ] == step["audited_q_count"]
+                assert step["direct_zero_status_missing_q_count"] == 0
+                assert (
+                    step["direct_zero_status_audited_q_count"]
+                    - built_step["direct_zero_status_audited_q_count"]
+                    == 2 * outer_apply_delta
+                )
+                assert (
+                    step["direct_zero_status_missing_q_count"]
+                    - built_step["direct_zero_status_missing_q_count"]
+                    == 0
+                )
+                assert 0 <= step["direct_zero_count"] <= step[
+                    "direct_zero_status_audited_q_count"
+                ]
+            assert sum(
+                work["factor_solve_deltas_by_step"][name][
+                    "factor_solve_delta_total"
+                ]
+                - built_work["factor_solve_deltas_by_step"][name][
+                    "factor_solve_delta_total"
+                ]
+                for name in ("initial", "correction")
+            ) == outer_solve_delta
+            p4_last_solve = inverse._p4_factor.diagnostics["last_solve"]
+            assert p4_last_solve["physical_gate_passed"] is True
+            assert p4_last_solve["augmented_gate_passed"] is True
+            assert p4_last_solve["residual_tolerance"] == 1.0e-10
+            current = inverse.diagnostics
+            assert current["apply_count"] == pre_builder_side[side]["apply_count"] == 0
+            assert current["total_iterations"] == pre_builder_side[side]["total_iterations"] == 0
+            assert post_builder_side[side]["apply_count"] == pre_builder_side[side]["apply_count"]
+            assert post_builder_side[side]["total_iterations"] == pre_builder_side[side]["total_iterations"]
+            assert current["p4_factor_live"] == 1
+            assert current["nested_iterative_ksp_count"] == 1
+        final_modal_audit = ldu.action_modal_schur_system.diagnostics
+        assert final_modal_audit["modal_ksp_handle_count"] == 0
+        assert final_modal_audit["modal_ksp_solve_count"] == 0
+    finally:
+        if ldu is not None:
+            ldu.destroy()
+        if original_operator is not None:
+            original_operator.destroy()
+        if original_action_context is not None:
+            original_action_context.destroy()
+        if ldu is not None:
+            # Destruction of the LDU/action wrappers must not own the factors.
+            for inverse in inverses.values():
+                diagnostics = inverse.diagnostics
+                assert diagnostics["p4_factor_live"] == 1
+                assert diagnostics["nested_iterative_ksp_count"] == 1
+        if coupling is not None:
+            coupling.destroy()
+        for side, inverse in inverses.items():
+            factor = inverse._p4_factor
+            original = p4_apply_originals.get(side)
+            if factor is not None and original is not None:
+                original_factor, original_apply = original
+                assert factor is original_factor
+                factor.apply = original_apply
+            inverse.destroy()
+        for vector in outputs.values():
+            vector.destroy()
+        for vector in inputs:
+            vector.destroy()
+        for vector in mode_vectors:
+            vector.destroy()
 
 
 def test_task041_h1e_real_fe_side_inverse_is_sequential_and_owned(

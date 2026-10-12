@@ -8,6 +8,8 @@ import hashlib
 import inspect
 import json
 import linecache
+import os
+from collections.abc import Mapping
 from types import SimpleNamespace
 from typing import Any
 
@@ -2179,6 +2181,7 @@ def test_side_balh_fixed_physical_action_matches_dense_and_borrows_factors() -> 
             side: inverse._p4_factor.solve_count
             for side, inverse in zip(("bottom", "top"), side_inverses, strict=True)
         }
+        fixed_q_work_before = action.audit["fixed_q_actual_work_cumulative"]
         fx = apply_active(x)
         fy = apply_active(y)
         fxy = apply_active(x + y)
@@ -2204,6 +2207,69 @@ def test_side_balh_fixed_physical_action_matches_dense_and_borrows_factors() -> 
                 assert inverse._p4_factor.solve_count == factor_counts_before[side]
             assert inverse.diagnostics["apply_count"] == side_apply_counts_before[side]
         assert action.audit["last_q_factor_solve_deltas"] == [2, 2]
+        fixed_q_work = action.audit["fixed_q_actual_work_cumulative"]
+        q_calls_in_this_scope = 4 * 2
+        assert (
+            fixed_q_work["mathematical_correction_steps_requested"]
+            - fixed_q_work_before["mathematical_correction_steps_requested"]
+            == q_calls_in_this_scope
+        )
+        assert fixed_q_work[
+            "mathematical_correction_steps_completed_with_valid_q_audit"
+        ] - fixed_q_work_before[
+            "mathematical_correction_steps_completed_with_valid_q_audit"
+        ] == q_calls_in_this_scope
+        assert (
+            fixed_q_work["successful_q_audit_count"]
+            - fixed_q_work_before["successful_q_audit_count"]
+            == q_calls_in_this_scope
+        )
+        assert (
+            fixed_q_work["q_attempts_missing_complete_audit"]
+            - fixed_q_work_before["q_attempts_missing_complete_audit"]
+            == 0
+        )
+        assert (
+            fixed_q_work["successful_factor_solve_delta_total"]
+            - fixed_q_work_before["successful_factor_solve_delta_total"]
+            == 16
+        )
+        assert (
+            fixed_q_work["failed_q_attempt_count"]
+            - fixed_q_work_before["failed_q_attempt_count"]
+            == 0
+        )
+        for step_name in ("initial", "correction"):
+            step_work = fixed_q_work["factor_solve_deltas_by_step"][step_name]
+            step_work_before = fixed_q_work_before["factor_solve_deltas_by_step"][
+                step_name
+            ]
+            audited_q_delta = (
+                step_work["audited_q_count"] - step_work_before["audited_q_count"]
+            )
+            assert audited_q_delta == q_calls_in_this_scope
+            assert (
+                step_work["factor_solve_delta_total"]
+                - step_work_before["factor_solve_delta_total"]
+                == 8
+            )
+            assert (
+                step_work["direct_zero_status_audited_q_count"]
+                - step_work_before["direct_zero_status_audited_q_count"]
+                + step_work["direct_zero_status_missing_q_count"]
+                - step_work_before["direct_zero_status_missing_q_count"]
+                == audited_q_delta
+            )
+            assert (
+                0
+                <= step_work["direct_zero_count"]
+                - step_work_before["direct_zero_count"]
+                <= step_work["direct_zero_status_audited_q_count"]
+                - step_work_before["direct_zero_status_audited_q_count"]
+            )
+        assert "not the fixed mathematical correction-step count" in fixed_q_work[
+            "p4_refinement_counter_semantics"
+        ]
         assert action.audit["p4_refinement_target_tolerance_used"] is None
         assert action.audit["ordinary_side_refinement_target_tolerance"] == 5.0e-13
         assert action.audit["physical_residual_gate"] == 1.0e-10
@@ -2241,6 +2307,45 @@ def test_side_balh_fixed_physical_action_matches_dense_and_borrows_factors() -> 
         assert side_inverses[0]._h6._destroyed is False
         assert action.audit["last_balh_coupling"]["status"] == "ACTION_FAILED"
         assert action.audit["last_balh_coupling"]["live_after_cleanup"] == 0
+        failed_q_work = action.audit["fixed_q_actual_work_cumulative"]
+        assert (
+            failed_q_work["mathematical_correction_steps_requested"]
+            - fixed_q_work["mathematical_correction_steps_requested"]
+            == 1
+        )
+        assert failed_q_work[
+            "mathematical_correction_steps_completed_with_valid_q_audit"
+        ] == fixed_q_work[
+            "mathematical_correction_steps_completed_with_valid_q_audit"
+        ]
+        assert failed_q_work["successful_q_audit_count"] == fixed_q_work[
+            "successful_q_audit_count"
+        ]
+        assert failed_q_work["failed_q_attempt_count"] - fixed_q_work[
+            "failed_q_attempt_count"
+        ] == 1
+        assert failed_q_work["q_attempts_missing_complete_audit"] - fixed_q_work[
+            "q_attempts_missing_complete_audit"
+        ] == 1
+        assert failed_q_work["successful_factor_solve_delta_total"] == fixed_q_work[
+            "successful_factor_solve_delta_total"
+        ]
+        assert failed_q_work[
+            "failed_live_factor_backsolve_delta_unknown_count"
+        ] == fixed_q_work["failed_live_factor_backsolve_delta_unknown_count"]
+        failed_q_attempt = failed_q_work["last_failed_q_attempt"]
+        assert failed_q_attempt["mathematical_correction_steps_requested"] == 1
+        assert failed_q_attempt["mathematical_correction_steps_completed"] is None
+        assert failed_q_attempt[
+            "mathematical_correction_steps_completed_with_valid_q_audit"
+        ] == 0
+        assert failed_q_attempt["live_factor_backsolve_delta"] == 0
+        assert failed_q_attempt["factor_solve_deltas_by_step"] is None
+        assert failed_q_attempt["direct_zero_status_by_step"] is None
+        assert failed_q_attempt["exact_zero_audit_status"] == (
+            "not_available_for_failed_q_attempt"
+        )
+        assert failed_q_attempt["successful_q_audit_count_includes_attempt"] is False
 
         context.destroy()
         assert context.inventory["fixed_physical_balh_modal_solver"]["destroyed"] is True
@@ -2254,6 +2359,2539 @@ def test_side_balh_fixed_physical_action_matches_dense_and_borrows_factors() -> 
         for vector in vectors:
             vector.destroy()
         _destroy_side_block_fixture(fixture)
+
+
+def test_v13_factory_passes_the_same_fixed_b_actions_to_modal_and_ldu(
+    monkeypatch,
+) -> None:
+    """Exercise the real V13 factory selector and its action identities.
+
+    Only the dense Schur builder is replaced so this remains a selector and
+    ownership fixture.  The factory creates the real fixed physical actions
+    and the real LDU context; it must route those exact objects to both sides.
+    """
+
+    fixture = _fixed_h6_side_block_fixture()
+    context = None
+    original_operator = None
+    row_source = None
+    row_target = None
+    captured: dict[str, object] = {}
+    inverses = {
+        "bottom": fixture["bottom_inverse"],
+        "top": fixture["top_inverse"],
+    }
+    counts_before = {
+        side: {
+            key: int(inverse.diagnostics[key])
+            for key in ("apply_count", "total_iterations")
+        }
+        for side, inverse in inverses.items()
+    }
+
+    def make_v13_system(
+        coupling,
+        bottom_action,
+        top_action,
+        *,
+        modal_owner,
+        **kwargs,
+    ):
+        del kwargs
+        captured["bottom_action"] = bottom_action
+        captured["top_action"] = top_action
+        captured["modal_owner"] = modal_owner
+        owner = int(modal_owner)
+        rank = MPI.COMM_WORLD.rank
+        modal_constraint = np.asarray(
+            internal_modal_constraint_matrix(coupling), dtype=np.complex128
+        )
+        fixture_modal_count = int(modal_constraint.shape[0])
+        schur = (
+            np.eye(fixture_modal_count, dtype=np.complex128)
+            if rank == owner
+            else None
+        )
+        lu = (
+            np.eye(fixture_modal_count, dtype=np.complex128)
+            if rank == owner
+            else None
+        )
+        pivots = (
+            np.arange(fixture_modal_count, dtype=np.int32)
+            if rank == owner
+            else None
+        )
+        baseline = {
+            side: block_ldu._v13_side_operation_counts(action)
+            for side, action in (
+                ("bottom", bottom_action),
+                ("top", top_action),
+            )
+        }
+        assert all(isinstance(value, dict) for value in baseline.values())
+        system = block_ldu.Task041V13ConsistentModalSurrogateSystem(
+            modal_schur=schur,
+            modal_constraint=modal_constraint,
+            lu=lu,
+            pivots=pivots,
+            modal_owner=owner,
+            comm=MPI.COMM_WORLD,
+            condition=None,
+            storage_plan={"fixture": "factory-selector-only"},
+            build_audit={
+                "fixture": "factory-selector-only; real V13 builder not exercised",
+                "full_owner_matrix_pages_materialized_before_sample_gate": True,
+                "sample_columns_written_directly_to_final_matrix": list(
+                    range(fixture_modal_count)
+                ),
+                "remaining_columns_applied_once": [],
+                "side_solver_entry_zero_supported": True,
+            },
+            bottom_action=bottom_action,
+            top_action=top_action,
+            side_operation_baseline=baseline,
+        )
+        system.record_side_operation_counts(
+            {
+                side: block_ldu._v13_side_operation_counts(action)
+                for side, action in (
+                    ("bottom", bottom_action),
+                    ("top", top_action),
+                )
+            }
+        )
+        return system
+
+    monkeypatch.setattr(
+        block_ldu,
+        "build_task041_v13_consistent_modal_surrogate",
+        make_v13_system,
+    )
+    columns, roles, contract_sha = _sample_contract()
+    policy = block_ldu.resolve_task041_modal_solver_policy(
+        block_ldu.TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+    )
+    try:
+        context = block_ldu.create_side_balh_block_ldu_preconditioner(
+            fixture["layout"],
+            fixture["bottom"],
+            fixture["top"],
+            fixture["coupling"],
+            inverses["bottom"],
+            inverses["top"],
+            sampled_columns=columns,
+            sampled_column_roles=roles,
+            sampled_column_contract_sha256=contract_sha,
+            fixed_h6_modal_gmres_research=True,
+            modal_solver_policy=policy,
+            v13_fresh_authority_callback=lambda _phase, _report: {},
+        )
+        bottom_b = captured["bottom_action"]
+        top_b = captured["top_action"]
+        assert context.bottom_action is bottom_b
+        assert context.top_action is top_b
+        assert context.action_modal_schur_system.bottom_action is bottom_b
+        assert context.action_modal_schur_system.top_action is top_b
+        assert context.bottom_action is not inverses["bottom"]
+        assert context.top_action is not inverses["top"]
+        assert context.inventory["v13_same_B_objects_for_schur_and_LDU"] is True
+        assert context.inventory["side_solver_entry_zero_supported"] is True
+        assert context.inventory["modal_block_condition"] is None
+        assert context.inventory["modal_block_condition_status"] == "not_measured"
+        assert context.inventory["v13_side_operation_deltas"] == {
+            "bottom": {"apply_count": 0, "total_iterations": 0},
+            "top": {"apply_count": 0, "total_iterations": 0},
+        }
+        for side, inverse in inverses.items():
+            after = inverse.diagnostics
+            assert {
+                key: int(after[key])
+                for key in ("apply_count", "total_iterations")
+            } == counts_before[side]
+        assert bottom_b.audit["apply_count"] == 0
+        assert top_b.audit["apply_count"] == 0
+
+        # The independent original-A modal-row check must scale an exact-zero
+        # row by its uncancelled side and modal terms, not by their cancelled
+        # sum.  The same factory-created context is used for the near-zero RHS
+        # case, where the scale must remain ||r_modal|| without a unit floor.
+        layout = fixture["layout"]
+        side_index = int(
+            layout.map_bottom(np.asarray([0], dtype=PETSc.IntType))[0]
+        )
+        modal_index = int(
+            layout.map_modal(np.asarray([0], dtype=PETSc.IntType))[0]
+        )
+        cancelling_term = 2.0**-20
+        original_dense = np.zeros(
+            (layout.global_size, layout.global_size), dtype=np.complex128
+        )
+        original_dense[modal_index, side_index] = cancelling_term
+        original_dense[modal_index, modal_index] = -cancelling_term
+        row_source = layout.create_vector()
+        row_target = layout.create_vector()
+        original_operator = _matrix_from_dense(
+            row_source, row_target, original_dense
+        )
+        context.bind_v13_original_global_operator(original_operator)
+
+        target_values = np.zeros(layout.global_size, dtype=np.complex128)
+        target_values[side_index] = 1.0
+        target_values[modal_index] = 1.0
+        _set_vector(row_target, target_values)
+        _set_vector(row_source, np.zeros(layout.global_size, dtype=np.complex128))
+        context._check_v13_original_modal_row(row_source, row_target)
+        exact_zero_row = context.action_modal_schur_system.diagnostics[
+            "last_original_modal_row"
+        ]
+        assert exact_zero_row["rhs_exact_zero"] is True
+        assert exact_zero_row["original_A_modal_row_matmult_count"] == 2
+        assert exact_zero_row["original_A_modal_side_term_norm"] == pytest.approx(
+            cancelling_term
+        )
+        assert exact_zero_row[
+            "original_A_modal_constraint_term_norm"
+        ] == pytest.approx(cancelling_term)
+        assert exact_zero_row["scale"] == pytest.approx(2.0 * cancelling_term)
+        assert exact_zero_row["residual_norm"] == 0.0
+        assert exact_zero_row["relative_backward_error"] == 0.0
+
+        near_zero_action = 2.0**-40
+        near_zero_fraction = 2.0**-34
+        if MPI.COMM_WORLD.rank == layout.modal_owner:
+            original_operator.setValue(
+                modal_index,
+                modal_index,
+                PETSc.ScalarType(-cancelling_term + near_zero_action),
+            )
+        original_operator.assemble()
+        near_zero_rhs = near_zero_action * (1.0 - near_zero_fraction)
+        near_zero_source = np.zeros(layout.global_size, dtype=np.complex128)
+        near_zero_source[modal_index] = near_zero_rhs
+        _set_vector(row_source, near_zero_source)
+        context._check_v13_original_modal_row(row_source, row_target)
+        near_zero_row = context.action_modal_schur_system.diagnostics[
+            "last_original_modal_row"
+        ]
+        assert near_zero_row["rhs_exact_zero"] is False
+        assert near_zero_row["original_A_modal_row_matmult_count"] == 1
+        assert near_zero_row["original_A_modal_side_term_norm"] is None
+        assert near_zero_row["original_A_modal_constraint_term_norm"] is None
+        assert near_zero_row["scale"] == pytest.approx(abs(near_zero_rhs))
+        assert 0.0 < near_zero_row["scale"] < 1.0e-10
+        assert near_zero_row["relative_backward_error"] == pytest.approx(
+            near_zero_fraction, rel=1.0e-5
+        )
+    finally:
+        if context is not None and not context._destroyed:
+            context.destroy()
+        if original_operator is not None:
+            original_operator.destroy()
+        for vector in (row_source, row_target):
+            if vector is not None:
+                vector.destroy()
+        for action in (captured.get("bottom_action"), captured.get("top_action")):
+            if action is not None and not action.audit["destroyed"]:
+                action.destroy()
+        _destroy_side_block_fixture(fixture)
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2,
+    reason="rank-local V13 timing canonicalization requires an MPI2 fixture",
+)
+def test_v13_sample_admission_report_hash_uses_canonical_rank_times() -> None:
+    """Different local durations produce one shared admission request hash."""
+
+    comm = MPI.COMM_WORLD
+    report = block_ldu._v13_canonicalize_rank_elapsed(
+        comm,
+        {
+            "method": block_ldu.TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+            "sample_columns_written_to_final_matrix": list(range(8)),
+            "remaining_column_count": 12,
+        },
+        metric="assembly",
+        local_elapsed_seconds=0.25 + 0.5 * comm.rank,
+    )
+    assert report["assembly_elapsed_seconds_max_rank"] == pytest.approx(0.75)
+    assert report["assembly_elapsed_seconds_by_rank"] == [
+        {"rank": 0, "elapsed_seconds": 0.25},
+        {"rank": 1, "elapsed_seconds": 0.75},
+    ]
+    reports = comm.allgather(report)
+    assert all(candidate == reports[0] for candidate in reports)
+    request_hashes = [
+        hashlib.sha256(
+            json.dumps(candidate, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        for candidate in reports
+    ]
+    assert len(set(request_hashes)) == 1
+
+
+def test_v13_restart_loss_uses_complete_dynamic_denominator_windows() -> None:
+    """Synthetic rows check V13 window selection and denominator provenance."""
+
+    keys = (
+        "global_true_relative_residual",
+        "bottom_true_relative_residual",
+        "top_true_relative_residual",
+        "modal_true_relative_residual",
+    )
+    threshold = float(block_ldu._TASK041_V13_CONSISTENT_MODAL_POLICY["outer_threshold"])
+
+    def row(iteration: int, values: Mapping[str, float]) -> dict[str, Any]:
+        components = {
+            "global": {"original_rhs_norm": 4.0, "floor": 1.0e-30},
+            "bottom": {
+                "rhs_block_norm": 1.0,
+                "A_x_block_norm": 2.0 + 0.01 * iteration,
+                "coupling_block_norm": 0.5,
+                "floor": 1.0e-30,
+            },
+            "top": {
+                "rhs_block_norm": 1.0,
+                "A_x_block_norm": 1.5 + 0.005 * iteration,
+                "coupling_block_norm": 0.25,
+                "floor": 1.0e-30,
+            },
+            "modal": {
+                "rhs_modal_norm": 1.0,
+                "bottom_projection_norm": 1.25 + 0.003 * iteration,
+                "top_projection_norm": 1.5,
+                "modal_constraint_action_norm": 2.0 + 0.002 * iteration,
+                "floor": 1.0e-30,
+            },
+        }
+        metric = {
+            "global": keys[0],
+            "bottom": keys[1],
+            "top": keys[2],
+            "modal": keys[3],
+        }
+        scope = {
+            "global": "original_rhs_norm_for_this_solve",
+            "bottom": "recomputed_from_this_true_residual_row",
+            "top": "recomputed_from_this_true_residual_row",
+            "modal": "recomputed_from_this_true_residual_row",
+        }
+        operands = {
+            name: {
+                "numerator_norm": float(values[metric[name]])
+                * max(parts.values()),
+                "denominator_norm": max(parts.values()),
+                "denominator_components": parts,
+                "denominator_scope": scope[name],
+            }
+            for name, parts in components.items()
+        }
+        return {
+            "iteration": iteration,
+            **{key: float(value) for key, value in values.items()},
+            "true_residual_operands": {
+                "scope": "one_true_residual_snapshot_row",
+                **operands,
+            },
+        }
+
+    def history(case: str) -> dict[int, dict[str, Any]]:
+        result = {}
+        for iteration in range(16, 49):
+            fraction = (iteration - 16) / 16.0
+            if case == "pre_progress_then_stall":
+                values = (
+                    {
+                        keys[0]: 1.0 - 0.30 * fraction,
+                        keys[1]: 0.8 - 0.16 * fraction,
+                        keys[2]: 0.8 * threshold,
+                        keys[3]: 0.6 - 0.12 * fraction,
+                    }
+                    if iteration <= 32
+                    else {
+                        keys[0]: 0.7,
+                        keys[1]: 0.64,
+                        keys[2]: 0.8 * threshold,
+                        keys[3]: 0.48,
+                    }
+                )
+                if iteration in {24, 40}:
+                    values[keys[0]] += 0.2
+            elif case == "no_pre_progress":
+                values = (
+                    {
+                        keys[0]: 0.5 - 0.01 * fraction,
+                        keys[1]: 0.7,
+                        keys[2]: 0.6,
+                        keys[3]: 0.4,
+                    }
+                    if iteration <= 32
+                    else {
+                        keys[0]: 0.49,
+                        keys[1]: 0.7,
+                        keys[2]: 0.6,
+                        keys[3]: 0.4,
+                    }
+                )
+                if iteration == 24:
+                    values[keys[0]] += 0.2
+            else:
+                post_fraction = max(0.0, (iteration - 32) / 16.0)
+                values = (
+                    {
+                        keys[0]: 1.0 - 0.30 * fraction,
+                        keys[1]: 0.9 - 0.1 * fraction,
+                        keys[2]: 0.8,
+                        keys[3]: 0.7,
+                    }
+                    if iteration <= 32
+                    else {
+                        keys[0]: 0.7,
+                        keys[1]: 0.8 - 0.12 * post_fraction,
+                        keys[2]: 0.8,
+                        keys[3]: 0.7,
+                    }
+                )
+            result[iteration] = row(iteration, values)
+        return result
+
+    accepted = block_ldu._task041_v13_outer_restart_loss_evidence(
+        history("pre_progress_then_stall"), threshold=threshold
+    )
+    assert accepted["clear_restart_loss"] is True
+    assert len(accepted["pre_window_samples"]) == 17
+    assert len(accepted["post_window_samples"]) == 17
+    assert keys[2] not in accepted["required_unpassed_metrics_at_boundary"]
+    assert accepted["denominator_basis"]["bottom_top_modal"] == (
+        "existing per-row component-max formula with operands retained per sample"
+    )
+    assert accepted["post_window_samples"][0]["true_residual_operands"]["bottom"][
+        "denominator_norm"
+    ] != accepted["post_window_samples"][-1]["true_residual_operands"]["bottom"][
+        "denominator_norm"
+    ]
+
+    no_progress = block_ldu._task041_v13_outer_restart_loss_evidence(
+        history("no_pre_progress"), threshold=threshold
+    )
+    assert no_progress["pre_restart_global_progress_at_least_10_percent"] is False
+    assert no_progress["clear_restart_loss"] is False
+
+    improving_block = block_ldu._task041_v13_outer_restart_loss_evidence(
+        history("post_block_progress"), threshold=threshold
+    )
+    assert improving_block["clear_restart_loss"] is False
+    assert keys[1] in improving_block["unpassed_blocks_with_sustained_effective_progress"]
+
+    accepted_history = history("pre_progress_then_stall")
+    boundary_values = {
+        key: float(accepted_history[32][key]) for key in keys
+    }
+    finite_window = block_ldu._task041_v13_outer_best_window(
+        boundary_values,
+        [accepted_history[index] for index in range(33, 49)],
+        start_iteration=32,
+        end_iteration=48,
+        threshold=threshold,
+    )
+    assert finite_window["status"] == "complete"
+    assert len(finite_window["samples"]) == 16
+    assert all(
+        sample["true_residual_operands"]["bottom"]["denominator_scope"]
+        == "recomputed_from_this_true_residual_row"
+        for sample in finite_window["samples"]
+    )
+    corrupted_history = copy.deepcopy(accepted_history)
+    corrupted_history[40]["true_residual_operands"]["bottom"][
+        "denominator_components"
+    ]["A_x_block_norm"] += 1.0
+    corrupted = block_ldu._task041_v13_outer_restart_loss_evidence(
+        corrupted_history, threshold=threshold
+    )
+    assert corrupted["clear_restart_loss"] is False
+    assert corrupted["evidence_status"] == (
+        "missing_complete_pre_or_post_true_residual_window"
+    )
+
+
+@pytest.mark.parametrize(
+    "scenario",
+    (
+        "restart64_pass",
+        "restart64_fresh_cap_refusal",
+        "finite_stop_after_restart64_control_injection",
+    ),
+)
+def test_v13_solve_entry_resumes_same_ksp_with_nonzero_x_and_total_limit(
+    monkeypatch, scenario: str
+) -> None:
+    """Exercise V13 safe-boundary branches through the real outer solve entry.
+
+    This is a 64-row PETSc control-path fixture, not an FE or natural
+    restart-loss result.  Its explicitly isolated workspace-report substitute
+    records the real Vec ownership but does not qualify the production builder
+    workspace model.  The spectral diagonal keeps ordinary restarted
+    FGMRES active through the injected iteration-48 safe boundary; the real
+    solve function then either resumes that same KSP at restart 64 or continues
+    at restart 32 after a field-bound synthetic cap refusal.  The finite-stop
+    case injects only the two-window stalled decision after restart64; it does
+    not claim naturally stalled FE behavior or production resource authority.
+    """
+
+    comm = MPI.COMM_WORLD
+    side_size = 31
+    modal_count = 2
+    modal_owner = comm.size - 1
+    local_side_size = side_size // comm.size + int(
+        comm.rank < side_size % comm.size
+    )
+    owned_matrices: list[PETSc.Mat] = []
+    owned_vectors: list[PETSc.Vec] = []
+    result = None
+    context = None
+
+    def diagonal_matrix(values: np.ndarray) -> PETSc.Mat:
+        template = PETSc.Vec().createMPI(
+            (local_side_size, side_size), comm=comm
+        )
+        try:
+            dense = np.diag(np.asarray(values, dtype=np.complex128))
+            matrix = _matrix_from_dense(template, template, dense)
+        finally:
+            template.destroy()
+        owned_matrices.append(matrix)
+        return matrix
+
+    bottom_diagonal = np.geomspace(1.0, 1.0e5, side_size)
+    top_diagonal = np.geomspace(1.5, 1.5e5, side_size)
+    bottom_matrix = diagonal_matrix(bottom_diagonal)
+    top_matrix = diagonal_matrix(top_diagonal)
+    bottom_rhs_template = bottom_matrix.createVecRight()
+    top_rhs_template = top_matrix.createVecRight()
+    owned_vectors.extend((bottom_rhs_template, top_rhs_template))
+    bottom_system = SimpleNamespace(
+        A=bottom_matrix,
+        b=bottom_rhs_template,
+        global_size=side_size,
+        local_mesh=SimpleNamespace(mesh=SimpleNamespace(comm=comm)),
+    )
+    top_system = SimpleNamespace(
+        A=top_matrix,
+        b=top_rhs_template,
+        global_size=side_size,
+        local_mesh=SimpleNamespace(mesh=SimpleNamespace(comm=comm)),
+    )
+    layout = HybridAugmentedLayout.build(bottom_system, top_system, modal_count)
+
+    modal_row_local = 1 if comm.rank == modal_owner else 0
+    modal_template = PETSc.Vec().createMPI(
+        (modal_row_local, 1), comm=comm
+    )
+    bottom_col = bottom_matrix.createVecRight()
+    top_col = top_matrix.createVecRight()
+    bottom_row = bottom_matrix.createVecLeft()
+    top_row = top_matrix.createVecLeft()
+    owned_vectors.extend((modal_template, bottom_col, top_col, bottom_row, top_row))
+
+    def zero_coupling_matrix(
+        row_template: PETSc.Vec,
+        column_template: PETSc.Vec,
+        rows: int,
+        columns: int,
+    ) -> PETSc.Mat:
+        matrix = _matrix_from_dense(
+            row_template,
+            column_template,
+            np.zeros((rows, columns), dtype=np.complex128),
+        )
+        owned_matrices.append(matrix)
+        return matrix
+
+    bottom_projection = zero_coupling_matrix(
+        modal_template, bottom_col, 1, side_size
+    )
+    top_projection = zero_coupling_matrix(modal_template, top_col, 1, side_size)
+    bottom_positive = zero_coupling_matrix(bottom_row, modal_template, side_size, 1)
+    bottom_negative = zero_coupling_matrix(bottom_row, modal_template, side_size, 1)
+    top_positive = zero_coupling_matrix(top_row, modal_template, side_size, 1)
+    top_negative = zero_coupling_matrix(top_row, modal_template, side_size, 1)
+    coupling = SimpleNamespace(
+        mode_count_per_direction=1,
+        internal_equation_count=modal_count,
+        bottom=SimpleNamespace(
+            projection=bottom_projection,
+            positive_traction=bottom_positive,
+            negative_traction=bottom_negative,
+            modal_rhs_correction=np.zeros(1, dtype=np.complex128),
+        ),
+        top=SimpleNamespace(
+            projection=top_projection,
+            positive_traction=top_positive,
+            negative_traction=top_negative,
+            modal_rhs_correction=np.zeros(1, dtype=np.complex128),
+        ),
+        propagation=SimpleNamespace(
+            forward=SimpleNamespace(factors=np.ones(1, dtype=np.complex128)),
+            backward=SimpleNamespace(factors=np.ones(1, dtype=np.complex128)),
+        ),
+        negative_trace_to_positive=np.zeros((1, 1), dtype=np.complex128),
+    )
+
+    class BorrowedIdentitySideAction:
+        def __init__(self, operator: PETSc.Mat) -> None:
+            self.operator = operator
+            self.apply_count = 0
+            self.destroyed = False
+            self._side_inverse = SimpleNamespace(
+                diagnostics={
+                    "apply_count": 0,
+                    "total_iterations": 0,
+                    "direct_factor_count": 0,
+                    "p4_factor_count": 0,
+                    "nested_iterative_ksp_count": 0,
+                    "destroyed": False,
+                }
+            )
+
+        def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+            source.copy(target)
+            self.apply_count += 1
+
+        def diagnostics(self) -> dict[str, Any]:
+            return {
+                "apply_count": self.apply_count,
+                "direct_factor_count": 0,
+                "base_factor_count": 0,
+                "p4_factor_count": 0,
+                "nested_iterative_ksp_count": 0,
+                "destroyed": self.destroyed,
+            }
+
+        def destroy(self) -> None:
+            self.destroyed = True
+
+    bottom_action = BorrowedIdentitySideAction(bottom_matrix)
+    top_action = BorrowedIdentitySideAction(top_matrix)
+    side_baseline = {
+        "bottom": block_ldu._v13_side_operation_counts(bottom_action),
+        "top": block_ldu._v13_side_operation_counts(top_action),
+    }
+    assert all(isinstance(value, dict) for value in side_baseline.values())
+
+    cap = 85_899_345_920
+    reserve = 8_589_934_592
+    floor = 412_316_860_416
+    rank_pids = comm.allgather(int(os.getpid()))
+    external_keys = {
+        "bound_fresh_supervisor_sample",
+        "tree_cgroup_and_all_mpi_ranks",
+        "node0_floor_headroom",
+        "host_floor_headroom",
+        "cgroup_ancestor_headroom",
+        "case_cap_projection",
+        "sample_cost_contract",
+    }
+
+    def synthetic_resource_receipt(
+        phase: str, report: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        projection = report["phase_memory_projection"]
+        selected_phase = projection["selected_phase"]
+        selected = projection["phase_reports"][selected_phase]
+        additional = list(selected["additional_bytes_by_rank"])
+        temporary = list(selected["additional_temporary_bytes_by_rank"])
+        replicated = list(selected["additional_replicated_bytes_by_rank"])
+        known = list(selected["known_additional_bytes_by_rank"])
+        delta = sum(additional)
+        cap_refusal = (
+            scenario == "restart64_fresh_cap_refusal"
+            and phase == "outer_restart64_workspace"
+        )
+        fresh = (
+            cap - reserve - delta + 1
+            if cap_refusal
+            else 1_000_000_000
+        )
+        projected = fresh + delta + reserve
+        required = delta + reserve
+        gate_status = "refused" if cap_refusal else "pass"
+        gate_decision = "stop" if cap_refusal else "continue"
+        gate_reasons = (
+            ["fresh_B_plus_delta_plus_W_exceeds_case_cap"]
+            if cap_refusal
+            else []
+        )
+        root_pid = rank_pids[0]
+        sample_sha = "e" * 64
+        request_sha = hashlib.sha256(
+            json.dumps(
+                dict(report), sort_keys=True, separators=(",", ":"), allow_nan=False
+            ).encode()
+        ).hexdigest()
+        payload = {
+            "phase": phase,
+            "request_sha256": request_sha,
+            "resource_B_bytes": fresh,
+            "node0_memfree_bytes": floor + required + 1_000_000_000,
+            "host_available_bytes": floor + required + 1_000_000_000,
+            "node0_headroom_after_floor_bytes": required + 1_000_000_000,
+            "host_headroom_after_floor_bytes": required + 1_000_000_000,
+            "sample_root_pid": root_pid,
+            "rank_pids": rank_pids,
+            "sample_row_sha256": sample_sha,
+            "invocation_id": "synthetic-v13-outer-resume",
+            "source_sha": "b" * 64,
+            "unit": "synthetic-v13-outer-resume.service",
+            "cap_bytes": cap,
+            "W_policy_reserve_bytes": reserve,
+            "floor_bytes": floor,
+            "cgroup_limit_state": "max_or_unlimited",
+            "cgroup_headroom_bytes": None,
+            "selected_memory_phase": selected_phase,
+            "selected_memory_phase_payload_bytes": delta,
+            "additional_bytes_by_rank": additional,
+            "projected_B_plus_delta_plus_W_bytes": projected,
+            "status": gate_status,
+            "decision": gate_decision,
+            "reasons": gate_reasons,
+        }
+        receipt_sha = hashlib.sha256(
+            json.dumps(
+                payload, sort_keys=True, separators=(",", ":"), allow_nan=False
+            ).encode()
+        ).hexdigest()
+        return {
+            "schema": "task041.v13.modal_builder_admission.v1",
+            "phase": phase,
+            "request_sha256": request_sha,
+            "status": gate_status,
+            "decision": gate_decision,
+            "reasons": gate_reasons,
+            "authority_receipt_payload": payload,
+            "authority_receipt_sha256": receipt_sha,
+            "root_pid": root_pid,
+            "rank_pids": rank_pids,
+            "sample_row_sha256": sample_sha,
+            "sample_age_seconds": 0.25,
+            "fresh_job_authority_bytes": fresh,
+            "cap_bytes": cap,
+            "W_policy_reserve_bytes": reserve,
+            "floor_bytes": floor,
+            "node0_memfree_bytes": payload["node0_memfree_bytes"],
+            "host_available_bytes": payload["host_available_bytes"],
+            "node0_headroom_after_floor_bytes": payload[
+                "node0_headroom_after_floor_bytes"
+            ],
+            "host_headroom_after_floor_bytes": payload[
+                "host_headroom_after_floor_bytes"
+            ],
+            "cgroup_limit_state": "max_or_unlimited",
+            "cgroup_headroom_bytes": None,
+            "selected_memory_phase": selected_phase,
+            "selected_memory_phase_payload_bytes": delta,
+            "known_additional_bytes_by_rank": known,
+            "additional_bytes_by_rank": additional,
+            "additional_temporary_bytes_by_rank": temporary,
+            "additional_replicated_bytes_by_rank": replicated,
+            "projected_B_plus_delta_plus_W_bytes": projected,
+            "external_resource_gates": {
+                key: key != "case_cap_projection" or not cap_refusal
+                for key in sorted(external_keys)
+            },
+            "cost_assessment": {
+                "scope": "outer_ksp_workspace_admission",
+                "status": (
+                    "case_cap_refused"
+                    if cap_refusal
+                    else "workspace_model_valid"
+                ),
+                "target_restart": int(report["target_restart"]),
+                "W_policy_reserve_bytes": reserve,
+                "target_is_elapsed_stop": False,
+            },
+        }
+
+    modal_schur = np.eye(modal_count, dtype=np.complex128)
+    if comm.rank == modal_owner:
+        owner_schur = modal_schur.copy()
+        owner_lu = modal_schur.copy()
+        owner_pivots = np.arange(modal_count, dtype=np.int32)
+    else:
+        owner_schur = owner_lu = owner_pivots = None
+    modal_system = block_ldu.Task041V13ConsistentModalSurrogateSystem(
+        modal_schur=owner_schur,
+        modal_constraint=modal_schur,
+        lu=owner_lu,
+        pivots=owner_pivots,
+        modal_owner=modal_owner,
+        comm=comm,
+        condition=1.0,
+        storage_plan={"fixture": "outer KSP continuation only"},
+        build_audit={
+            "full_owner_matrix_pages_materialized_before_sample_gate": True,
+            "sample_columns_written_directly_to_final_matrix": [0, 1],
+            "remaining_columns_applied_once": [],
+            "side_solver_entry_zero_supported": True,
+        },
+        bottom_action=bottom_action,
+        top_action=top_action,
+        side_operation_baseline=side_baseline,
+        fresh_authority_callback=synthetic_resource_receipt,
+    )
+    context = block_ldu.HybridBlockLduPreconditioner(
+        layout,
+        bottom_system,
+        top_system,
+        coupling,
+        bottom_action,
+        top_action,
+        modal_system,
+    )
+
+    total = layout.global_size
+    full_diagonal = np.ones(total, dtype=np.complex128)
+    full_diagonal[layout.map_bottom(np.arange(side_size, dtype=PETSc.IntType))] = (
+        bottom_diagonal
+    )
+    full_diagonal[layout.map_top(np.arange(side_size, dtype=PETSc.IntType))] = (
+        top_diagonal
+    )
+    full_operator_template = layout.create_vector()
+    full_operator = _matrix_from_dense(
+        full_operator_template,
+        full_operator_template,
+        np.diag(full_diagonal),
+    )
+    full_operator_template.destroy()
+    owned_matrices.append(full_operator)
+    rhs = full_operator.createVecLeft()
+    owned_vectors.append(rhs)
+    first, last = (int(value) for value in rhs.getOwnershipRange())
+    rhs.getArray()[:] = np.asarray(
+        [1.0 + 0.0j for _ in range(first, last)], dtype=PETSc.ScalarType
+    )
+    rhs.assemble()
+    rhs_before = np.asarray(rhs.getArray(readonly=True)).copy()
+    rhs_global_norm_before = float(rhs.norm())
+
+    def isolated_workspace_report(
+        operator: PETSc.Mat,
+        report_rhs: PETSc.Vec,
+        solution_vector: PETSc.Vec,
+        _context: Any,
+        report_comm: Any,
+        *,
+        phase: str,
+    ) -> dict[str, Any]:
+        rank_rows = report_comm.allgather(
+            {
+                "rank": int(report_comm.rank),
+                "operator_size": [int(value) for value in operator.getSize()],
+                "rhs_local_entries": int(report_rhs.getLocalSize()),
+                "solution_local_entries": int(solution_vector.getLocalSize()),
+            }
+        )
+        rank_count = int(report_comm.size)
+        target_restart = 32 if phase == "outer_restart32_workspace" else 64
+        zeros = [0] * rank_count
+        phase_name = "test_only_control_workspace_placeholder"
+        phase_report = {
+            "known_additional_bytes_by_rank": list(zeros),
+            "additional_temporary_bytes_by_rank": list(zeros),
+            "additional_replicated_bytes_by_rank": list(zeros),
+            "additional_bytes_by_rank": list(zeros),
+        }
+        return {
+            "phase": phase,
+            "target_restart": target_restart,
+            "test_coverage": (
+                "control-path-only synthetic resource report; actual Vec layouts "
+                "recorded, production builder/PC workspace not qualified"
+            ),
+            "actual_vec_layouts_by_rank": rank_rows,
+            "known_additional_bytes_by_rank": list(zeros),
+            "additional_temporary_bytes_by_rank": list(zeros),
+            "additional_replicated_bytes_by_rank": list(zeros),
+            "phase_memory_projection": {
+                "selected_phase": phase_name,
+                "selected_phase_payload_bytes": 0,
+                "phase_total_bytes": {phase_name: 0},
+                "phase_reports": {phase_name: phase_report},
+            },
+        }
+
+    monkeypatch.setattr(
+        block_ldu,
+        "_task041_v13_outer_restart_workspace_report",
+        isolated_workspace_report,
+    )
+
+    def injected_restart_candidate(_history, *, threshold):
+        return {
+            "rule_id": "synthetic_restart_candidate_for_same_ksp_control_path",
+            "clear_restart_loss": True,
+            "evidence_status": "synthetic_trigger_injected_not_numerically_qualified",
+            "threshold": float(threshold),
+        }
+
+    monkeypatch.setattr(
+        block_ldu,
+        "_task041_v13_outer_restart_loss_evidence",
+        injected_restart_candidate,
+    )
+    if scenario == "finite_stop_after_restart64_control_injection":
+        actual_window_evaluator = block_ldu._task041_v13_outer_best_window
+
+        def inject_complete_stalled_window(
+            baseline: Mapping[str, float],
+            samples: list[Mapping[str, Any]],
+            *,
+            start_iteration: int,
+            end_iteration: int,
+            threshold: float,
+        ) -> dict[str, Any]:
+            record = actual_window_evaluator(
+                baseline,
+                samples,
+                start_iteration=start_iteration,
+                end_iteration=end_iteration,
+                threshold=threshold,
+            )
+            if start_iteration >= 48 and record.get("status") == "complete":
+                record["stalled"] = True
+                record["control_only_decision_injection"] = (
+                    "two_complete_post_restart_windows_stalled"
+                )
+            return record
+
+        monkeypatch.setattr(
+            block_ldu,
+            "_task041_v13_outer_best_window",
+            inject_complete_stalled_window,
+        )
+    try:
+        result = block_ldu.solve_hybrid_block_ldu_iterative(
+            full_operator,
+            rhs,
+            context,
+            config=block_ldu.HybridBlockLduIterativeConfig(
+                restart=32,
+                max_it=(96 if scenario == "finite_stop_after_restart64_control_injection" else 64),
+                threshold=5.0e-9,
+                ksp_type="fgmres",
+            ),
+        )
+        control = result.inventory["task041_v13_outer_control"]
+        decision = control["restart64_decision"]
+        assert control["initial_restart"] == 32
+        assert result.iterations == control["total_iterations"]
+        assert result.converged_reason == control["final_reason"]
+        total_limit = (
+            96
+            if scenario == "finite_stop_after_restart64_control_injection"
+            else 64
+        )
+        assert 48 < result.iterations <= total_limit
+        assert decision["candidate"]["observed_at_iteration"] == 48
+        assert decision["candidate"]["evidence"]["evidence_status"] == (
+            "synthetic_trigger_injected_not_numerically_qualified"
+        )
+        if scenario == "restart64_fresh_cap_refusal":
+            assert decision["status"] == "restart64_refused_continue_restart32"
+            assert decision["authority_status"] == "refused"
+            assert decision["restart_before"] == 32
+            assert decision["restart_selected"] is False
+            refusal_payload = control["restart64_authority"][
+                "authority_receipt_payload"
+            ]
+            assert refusal_payload["status"] == "refused"
+            assert refusal_payload["decision"] == "stop"
+            assert refusal_payload["cap_bytes"] == cap
+            assert refusal_payload["projected_B_plus_delta_plus_W_bytes"] == (
+                cap + 1
+            )
+            assert (
+                refusal_payload["resource_B_bytes"]
+                + refusal_payload["selected_memory_phase_payload_bytes"]
+                + refusal_payload["W_policy_reserve_bytes"]
+                == refusal_payload["projected_B_plus_delta_plus_W_bytes"]
+            )
+            assert refusal_payload["reasons"] == [
+                "fresh_B_plus_delta_plus_W_exceeds_case_cap"
+            ]
+            assert control["restart64_authority"]["decision"] == "stop"
+            assert control["restart64_authority"]["external_resource_gates"][
+                "case_cap_projection"
+            ] is False
+            assert control["restart64_trial_count"] == 0
+            assert control["final_restart"] == 32
+            assert control["restart_history"][-1]["reason"] == (
+                "restart64_fresh_authority_refused_continue_same_ksp_at_48"
+            )
+        else:
+            assert decision["status"] == "restart64_selected_once"
+            assert control["restart64_trial_count"] == 1
+            assert control["final_restart"] == 64
+        resume_rows = decision["same_ksp_nonzero_x_resume"]
+        assert len(resume_rows) == comm.size
+        assert all(
+            row["same_ksp_object_retained"]
+            and row["same_pc_context_retained"]
+            and row["initial_guess_nonzero_requested"]
+            and row["solution_local_sha256_before"]
+            == row["solution_local_sha256_after_setup"]
+            and row["rhs_local_sha256_before"]
+            == row["rhs_local_sha256_before_resume"]
+            and row["solution_local_norm_before_resume"] > 0.0
+            and row["initial_guess_nonzero_readback"] is True
+            and row["remaining_total_iterations_before_resume"]
+            == total_limit - 48
+            for row in resume_rows
+        )
+        resume_work = decision["same_ksp_nonzero_x_resume_work"]
+        assert resume_work["iterations_after_resume"] == result.iterations
+        assert resume_work["local_iteration_count_after_resume"] == (
+            result.iterations - 48
+        )
+        assert 0 < resume_work["local_iteration_count_after_resume"] <= (
+            total_limit - 48
+        )
+        assert resume_work["max_it_remaining_after_resume"] == (
+            total_limit - result.iterations
+        )
+        assert resume_work["elapsed_seconds_after_resume"] > 0.0
+        local_resume_row = resume_rows[comm.rank]
+        assert all(
+            resume_work[after_key] >= local_resume_row[before_key]
+            for after_key, before_key in (
+                (
+                    "cumulative_pc_apply_count_after_resume",
+                    "cumulative_pc_apply_count_before_resume",
+                ),
+                (
+                    "cumulative_bottom_action_apply_count_after_resume",
+                    "cumulative_bottom_action_apply_count_before_resume",
+                ),
+                (
+                    "cumulative_top_action_apply_count_after_resume",
+                    "cumulative_top_action_apply_count_before_resume",
+                ),
+            )
+        )
+        independent_residual = rhs.duplicate()
+        try:
+            full_operator.mult(result.solution, independent_residual)
+            independent_residual.scale(PETSc.ScalarType(-1.0))
+            independent_residual.axpy(PETSc.ScalarType(1.0), rhs)
+            independent_relative = float(independent_residual.norm()) / max(
+                rhs_global_norm_before, np.finfo(float).tiny
+            )
+            assert np.isfinite(independent_relative)
+            assert np.isclose(
+                independent_relative,
+                result.postsolve_audit["global_true_relative_residual"],
+                rtol=1.0e-10,
+                atol=1.0e-14,
+            )
+        finally:
+            independent_residual.destroy()
+        assert np.array_equal(
+            np.asarray(rhs.getArray(readonly=True)), rhs_before
+        )
+        # The V13 LDU context owns and destroys each action adapter (and its
+        # adapter work vectors).  These identity doubles hold a borrowed
+        # operator/inverse-state placeholder but no P4 handle, so this only
+        # checks wrapper cleanup and that the borrowed fixture objects remain
+        # usable; it does not qualify production P4 lifetime.
+        assert bottom_action.destroyed is True
+        assert top_action.destroyed is True
+        assert bottom_action.operator.getSize() == (side_size, side_size)
+        assert top_action.operator.getSize() == (side_size, side_size)
+        assert bottom_action._side_inverse.diagnostics["destroyed"] is False
+        assert top_action._side_inverse.diagnostics["destroyed"] is False
+        assert decision["same_ksp_nonzero_x_resume_work"][
+            "cumulative_pc_apply_count_after_resume"
+        ] == control["cumulative_pc_apply_count"]
+        assert decision["same_ksp_nonzero_x_resume_work"][
+            "cumulative_bottom_action_apply_count_after_resume"
+        ] == control["cumulative_bottom_action_apply_count"]
+        assert decision["same_ksp_nonzero_x_resume_work"][
+            "cumulative_top_action_apply_count_after_resume"
+        ] == control["cumulative_top_action_apply_count"]
+        if scenario == "finite_stop_after_restart64_control_injection":
+            finite_stop = control["finite_stop"]
+            assert finite_stop["schema"] == "task041.v13.outer_finite_stop.v1"
+            assert finite_stop["status"] == (
+                "two_consecutive_complete_16_step_windows_stalled"
+            )
+            assert finite_stop["iterations_at_stop"] == 80
+            assert finite_stop["configured_max_it"] == 96
+            assert finite_stop["max_it_reached"] is False
+            assert finite_stop["converged"] is False
+            assert finite_stop["reason_code"] == int(
+                PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT
+            )
+            assert finite_stop["reason_code"] < 0
+            assert result.converged_reason == finite_stop["reason_code"]
+            assert result.iterations == 80
+            assert result.postsolve_audit["pass"] is False
+            assert finite_stop["current_trusted_solution_retained"] is True
+            assert finite_stop["original_rhs_unchanged"] is True
+            assert finite_stop["original_rhs_norm_at_solve_entry"] == pytest.approx(
+                rhs_global_norm_before
+            )
+            retained_rows = finite_stop["rank_local_solution_rhs_binding"][
+                "records"
+            ]
+            assert len(retained_rows) == comm.size
+            assert [row["rank"] for row in retained_rows] == list(range(comm.size))
+            assert all(
+                row["solution_finite"] is True
+                and row["rhs_unchanged"] is True
+                and len(row["solution_local_sha256"]) == 64
+                and row["rhs_local_sha256_before"]
+                == row["rhs_local_sha256_after"]
+                for row in retained_rows
+            )
+            assert finite_stop["post_stop_true_residuals"] == pytest.approx(
+                {
+                    key: result.postsolve_audit[key]
+                    for key in (
+                        "reported_relative_residual",
+                        "global_true_relative_residual",
+                        "bottom_true_relative_residual",
+                        "top_true_relative_residual",
+                        "modal_true_relative_residual",
+                    )
+                }
+            )
+            assert len(finite_stop["windows"]) == 2
+            assert all(
+                window["control_only_decision_injection"]
+                == "two_complete_post_restart_windows_stalled"
+                for window in finite_stop["windows"]
+            )
+            assert control["total_wall_seconds"] > 0.0
+            assert control["cumulative_pc_apply_count"] == result.inventory[
+                "pc_apply_count"
+            ]
+            assert result.inventory["pc_apply_count"] > 0
+    finally:
+        if result is not None:
+            result.destroy()
+        elif context is not None and not context._destroyed:
+            context.destroy()
+        for vector in owned_vectors:
+            vector.destroy()
+        for matrix in owned_matrices:
+            matrix.destroy()
+
+
+def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
+    monkeypatch,
+) -> None:
+    """Run the tiny V13 build, owner LU, full PC, and independent A modal row."""
+
+    from benchmarks import task041_exact_side_workflow as exact_side
+    from src.io.input_validation import (
+        TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
+        TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
+        TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES,
+    )
+
+    comm = MPI.COMM_WORLD
+    side_size = 6
+    modal_per_side = 6
+    internal_count = 2 * modal_per_side
+    side_fixture = _fixed_h6_side_block_fixture()
+    owned_matrices: list[PETSc.Mat] = []
+    side_actions = []
+    system = context = None
+    original_operator = source = target = None
+    outer_workspace_rhs = outer_workspace_solution = None
+
+    def dense_matrix(
+        rows: int,
+        columns: int,
+        entries: Mapping[tuple[int, int], complex],
+        *,
+        local_rows: int | None = None,
+        local_columns: int | None = None,
+    ) -> PETSc.Mat:
+        row = PETSc.Vec().createMPI(
+            (rows // comm.size if local_rows is None else local_rows, rows),
+            comm=comm,
+        )
+        column = PETSc.Vec().createMPI(
+            (
+                columns // comm.size if local_columns is None else local_columns,
+                columns,
+            ),
+            comm=comm,
+        )
+        values = np.zeros((rows, columns), dtype=np.complex128)
+        for (row_index, column_index), value in entries.items():
+            values[row_index, column_index] = value
+        matrix = _matrix_from_dense(row, column, values)
+        row.destroy()
+        column.destroy()
+        owned_matrices.append(matrix)
+        return matrix
+
+    # The real V13 builder's workspace inventory reads these P4 layout
+    # descriptors.  This fixture deliberately uses _IdentityP4 rather than a
+    # cell-condensed P4 factor, so provide only matching full/coarse identity
+    # matrices and an empty recovery-map list; no FE cells or P4 solve audit is
+    # being modeled here.  The full matrix aliases the existing _FullAction
+    # matrix, which remains owned by the side fixture.  Each coarse matrix is
+    # owned by this test's owned_matrices cleanup below.
+    for side in ("bottom", "top"):
+        side_layout = side_fixture[side].static_condensation.condensed
+        full_rows = int(side_layout.full_rows)
+        coarse_rows = int(side_layout.active_rows)
+        p4_factor = side_fixture[f"{side}_owned"]["p4_factor"]
+        full_action = side_fixture[f"{side}_owned"]["full_action"]
+        full_matrix = full_action.matrix
+        assert int(p4_factor.size) == full_rows
+        assert full_matrix.getSize() == (full_rows, full_rows)
+        assert full_matrix.getLocalSize() == (
+            full_rows // comm.size,
+            full_rows // comm.size,
+        )
+        coarse_matrix = dense_matrix(
+            coarse_rows,
+            coarse_rows,
+            {(index, index): 1.0 for index in range(coarse_rows)},
+        )
+        assert coarse_matrix.getSize() == (coarse_rows, coarse_rows)
+        assert coarse_matrix.getLocalSize() == (
+            int(side_layout.owned_active_rows),
+            int(side_layout.owned_active_rows),
+        )
+        p4_factor.physical_action.matrix = full_matrix
+        p4_factor.inverse = SimpleNamespace(
+            condensed=SimpleNamespace(
+                matrix=coarse_matrix,
+                cell_recovery_maps=(),
+            )
+        )
+        assert p4_factor.physical_action.matrix is full_action.matrix
+        assert p4_factor.inverse.condensed.matrix is coarse_matrix
+        assert p4_factor.inverse.condensed.cell_recovery_maps == ()
+
+    class CountingAction:
+        def __init__(self, operator: PETSc.Mat, side_inverse: SideBalancedInverse):
+            self.operator = operator
+            self._side_inverse = side_inverse
+            self.audit = {"apply_count": 0, "destroyed": False}
+
+        def apply(self, rhs: PETSc.Vec, result: PETSc.Vec) -> None:
+            self.operator.mult(rhs, result)
+            self.audit["apply_count"] += 1
+
+        def diagnostics(self) -> dict[str, int]:
+            return {
+                "apply_count": int(self.audit["apply_count"]),
+                "direct_factor_count": 0,
+            }
+
+        def destroy(self) -> None:
+            self.audit["destroyed"] = True
+
+    bottom_operator = dense_matrix(
+        side_size,
+        side_size,
+        {
+            (0, 0): 1.0 + 0.2j,
+            (0, 1): 0.3 - 0.1j,
+            (1, 0): -0.2 + 0.15j,
+            (1, 1): 1.4 - 0.1j,
+            (2, 2): 0.9 + 0.3j,
+            (3, 3): 1.2 - 0.25j,
+            (4, 4): 0.85 + 0.12j,
+            (5, 5): 1.05 - 0.18j,
+        },
+    )
+    top_operator = dense_matrix(
+        side_size,
+        side_size,
+        {
+            (0, 0): 1.1 - 0.1j,
+            (0, 1): -0.25 + 0.2j,
+            (1, 0): 0.4 + 0.05j,
+            (1, 1): 1.3 + 0.15j,
+            (2, 2): 1.0 - 0.2j,
+            (3, 3): 0.8 + 0.1j,
+            (4, 4): 1.15 + 0.08j,
+            (5, 5): 0.92 - 0.14j,
+        },
+    )
+    bottom_B = dense_matrix(
+        side_size,
+        side_size,
+        {
+            (0, 0): 0.6 - 0.2j,
+            (0, 1): 0.15 + 0.3j,
+            (1, 0): -0.1 + 0.05j,
+            (1, 1): 0.8 + 0.1j,
+            (2, 2): 1.1 + 0.05j,
+            (3, 3): 0.7 - 0.3j,
+            (4, 4): 0.9 + 0.16j,
+            (5, 5): 1.02 - 0.11j,
+        },
+    )
+    top_B = dense_matrix(
+        side_size,
+        side_size,
+        {
+            (0, 0): 0.75 + 0.1j,
+            (0, 1): -0.2 + 0.25j,
+            (1, 0): 0.12 - 0.08j,
+            (1, 1): 0.65 - 0.15j,
+            (2, 2): 1.2 + 0.2j,
+            (3, 3): 0.95 - 0.05j,
+            (4, 4): 0.88 + 0.2j,
+            (5, 5): 1.08 - 0.09j,
+        },
+    )
+    # The fixed B actions are complex non-Hermitian and intentionally differ
+    # from the exact side-operator inverses.
+    exact_bottom_inverse = np.linalg.inv(_gather_matrix(bottom_operator))
+    exact_top_inverse = np.linalg.inv(_gather_matrix(top_operator))
+    assert not np.allclose(_gather_matrix(bottom_B), exact_bottom_inverse)
+    assert not np.allclose(_gather_matrix(top_B), exact_top_inverse)
+    assert not np.allclose(
+        _gather_matrix(bottom_B), _gather_matrix(bottom_B).conj().T
+    )
+    assert not np.allclose(_gather_matrix(top_B), _gather_matrix(top_B).conj().T)
+    bottom_action = CountingAction(bottom_B, side_fixture["bottom_inverse"])
+    top_action = CountingAction(top_B, side_fixture["top_inverse"])
+    side_actions = [bottom_action, top_action]
+    projection_entries = {
+        (index, index): 1.0 + 0.1j * (index + 1)
+        for index in range(modal_per_side)
+    }
+    projection_entries[(0, 1)] = -0.2 + 0.3j
+    traction_entries = {
+        (index, index): 0.8 + 0.05j * (index + 1)
+        for index in range(modal_per_side)
+    }
+    traction_entries[(1, 0)] = 0.1 - 0.25j
+    modal_owner_local = modal_per_side if comm.rank == comm.size - 1 else 0
+    bottom_projection = dense_matrix(
+        modal_per_side,
+        side_size,
+        projection_entries,
+        local_rows=modal_owner_local,
+        local_columns=side_size // comm.size,
+    )
+    top_projection = dense_matrix(
+        modal_per_side,
+        side_size,
+        {(row, col): value * (0.9 - 0.1j) for (row, col), value in projection_entries.items()},
+        local_rows=modal_owner_local,
+        local_columns=side_size // comm.size,
+    )
+    bottom_positive = dense_matrix(
+        side_size,
+        modal_per_side,
+        traction_entries,
+        local_rows=side_size // comm.size,
+        local_columns=modal_owner_local,
+    )
+    bottom_negative = dense_matrix(
+        side_size,
+        modal_per_side,
+        {(row, col): value * (0.7 + 0.2j) for (row, col), value in traction_entries.items()},
+        local_rows=side_size // comm.size,
+        local_columns=modal_owner_local,
+    )
+    top_positive = dense_matrix(
+        side_size,
+        modal_per_side,
+        {(row, col): value * (0.6 - 0.15j) for (row, col), value in traction_entries.items()},
+        local_rows=side_size // comm.size,
+        local_columns=modal_owner_local,
+    )
+    top_negative = dense_matrix(
+        side_size,
+        modal_per_side,
+        {(row, col): value * (1.1 + 0.05j) for (row, col), value in traction_entries.items()},
+        local_rows=side_size // comm.size,
+        local_columns=modal_owner_local,
+    )
+    for matrix in (
+        bottom_operator,
+        top_operator,
+        bottom_B,
+        top_B,
+        bottom_projection,
+        top_projection,
+        bottom_positive,
+        bottom_negative,
+        top_positive,
+        top_negative,
+    ):
+        matrix.setOption(PETSc.Mat.Option.SYMMETRIC, False)
+    blocks = {
+        "bottom": SimpleNamespace(
+            projection=bottom_projection,
+            positive_traction=bottom_positive,
+            negative_traction=bottom_negative,
+            positive_interior_correction=(
+                0.013 + 0.004j
+            ) * np.eye(modal_per_side, dtype=np.complex128),
+            negative_interior_correction=(
+                0.002 - 0.003j
+            ) * np.eye(modal_per_side, dtype=np.complex128),
+            modal_rhs_correction=np.zeros(modal_per_side, dtype=np.complex128),
+        ),
+        "top": SimpleNamespace(
+            projection=top_projection,
+            positive_traction=top_positive,
+            negative_traction=top_negative,
+            positive_interior_correction=(
+                -0.003 + 0.002j
+            ) * np.eye(modal_per_side, dtype=np.complex128),
+            negative_interior_correction=(
+                0.009 + 0.001j
+            ) * np.eye(modal_per_side, dtype=np.complex128),
+            modal_rhs_correction=np.zeros(modal_per_side, dtype=np.complex128),
+        ),
+    }
+    coupling = SimpleNamespace(
+        mode_count_per_direction=modal_per_side,
+        internal_equation_count=internal_count,
+        bottom=blocks["bottom"],
+        top=blocks["top"],
+        propagation=SimpleNamespace(
+            forward=SimpleNamespace(
+                factors=np.asarray([1.0 + 0.1j] * modal_per_side)
+            ),
+            backward=SimpleNamespace(
+                factors=np.asarray([0.9 - 0.05j] * modal_per_side)
+            ),
+        ),
+        negative_trace_to_positive=np.asarray(
+            np.diag([0.95 + 0.02j] * modal_per_side), dtype=np.complex128
+        ),
+    )
+    sample_offsets = [0, 1, modal_per_side // 2, modal_per_side - 1]
+    columns = [
+        *sample_offsets,
+        *(modal_per_side + offset for offset in sample_offsets),
+    ]
+    roles = {
+        str(column): [
+            "head" if column in {0, modal_per_side, 2 * modal_per_side - 1} else "interior",
+            (
+                "bottom_positive_unattenuated"
+                if column < modal_per_side
+                else "top_negative_unattenuated"
+            ),
+        ]
+        for column in columns
+    }
+    contract = {
+        "columns": columns,
+        "mode_count_per_direction": modal_per_side,
+        "roles": roles,
+    }
+    contract_sha = hashlib.sha256(
+        json.dumps(contract, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    fresh_reports = []
+    fresh_responses = []
+    markers = []
+    authority_request_hashes = []
+    rank_pids = comm.allgather(int(os.getpid()))
+    sample_root_pid = 913579
+    supervisor_binding = {
+        "invocation_id": "v13-builder-fixture-invocation",
+        "source_sha": "b" * 64,
+        "unit": "v13-builder-fixture.service",
+        "launch_manifest_sha256": "c" * 64,
+        "supervisor_root_pid": sample_root_pid,
+    }
+    monitor_sample = {
+        **supervisor_binding,
+        "sample_root_pid": sample_root_pid,
+        "file_age_seconds": 0.25,
+        "phase": "public_command",
+        "sample_role": "phase_running",
+        "sample_row_sha256": "d" * 64,
+    }
+    raw_sample = {
+        "process_tree": {
+            "all_status_readable": True,
+            "rss_bytes": 1_000_000,
+            "pids": [sample_root_pid, *rank_pids],
+        },
+        "job_cgroup": {
+            "dedicated_job_cgroup": True,
+            "memory_current_bytes": 2_000_000,
+            "ancestor_hard_limit_state": "max_or_unlimited",
+            "ancestor_memory_headroom_bytes": None,
+        },
+        "host_memory": {"mem_available_bytes": 1_000_000_000_000},
+        "memory_authority_bytes": 2_000_000,
+    }
+    monkeypatch.setattr(
+        exact_side,
+        "_task041_latest_supervisor_memory_sample",
+        lambda _binding: dict(monitor_sample),
+    )
+    monkeypatch.setattr(exact_side, "_resource_snapshot", lambda _pid: raw_sample)
+    monkeypatch.setattr(
+        exact_side, "_task041_node0_memfree_bytes", lambda: 1_000_000_000_000
+    )
+    v13_limits = {
+        "hard_memory_bytes": TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
+        "process_tree_rss_warning_bytes": TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES,
+        "min_memavailable_bytes": TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
+    }
+
+    def authority(phase, report):
+        fresh_reports.append((phase, dict(report)))
+        request_hash = hashlib.sha256(
+            json.dumps(
+                report,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode()
+        ).hexdigest()
+        authority_request_hashes.append(request_hash)
+        request_hash_rows = comm.allgather(request_hash)
+        assert len(set(request_hash_rows)) == 1
+        result = exact_side._task041_v13_fresh_authority_callback(
+            phase,
+            report,
+            comm=comm,
+            supervisor_memory_binding=supervisor_binding,
+            limits=v13_limits,
+        )
+        fresh_responses.append(result)
+        return result
+
+    def marker(name, detail):
+        markers.append((name, dict(detail)))
+
+    bottom_D = _gather_matrix(bottom_operator)
+    top_D = _gather_matrix(top_operator)
+    bottom_B_dense = _gather_matrix(bottom_B)
+    top_B_dense = _gather_matrix(top_B)
+    bottom_projection_dense = _gather_matrix(bottom_projection)
+    top_projection_dense = _gather_matrix(top_projection)
+    bottom_positive_dense = _gather_matrix(bottom_positive)
+    bottom_negative_dense = _gather_matrix(bottom_negative)
+    top_positive_dense = _gather_matrix(top_positive)
+    top_negative_dense = _gather_matrix(top_negative)
+    forward = np.asarray(coupling.propagation.forward.factors, dtype=np.complex128)
+    backward = np.asarray(coupling.propagation.backward.factors, dtype=np.complex128)
+    negative_map = np.asarray(
+        coupling.negative_trace_to_positive, dtype=np.complex128
+    )
+    identity = np.eye(modal_per_side, dtype=np.complex128)
+    bottom_correction = np.hstack(
+        (
+            coupling.bottom.positive_interior_correction,
+            coupling.bottom.negative_interior_correction @ np.diag(backward),
+        )
+    )
+    top_correction = np.hstack(
+        (
+            coupling.top.positive_interior_correction @ np.diag(forward),
+            coupling.top.negative_interior_correction,
+        )
+    )
+    # This is the original A modal block written from its defining blocks,
+    # independently of the production helper that builds C for S_B.
+    original_C = np.block(
+        [
+            [-identity, -(negative_map @ np.diag(backward))],
+            [-np.diag(forward), -negative_map],
+        ]
+    ) + np.vstack((bottom_correction, top_correction))
+    np.testing.assert_allclose(
+        internal_modal_constraint_matrix(coupling), original_C, rtol=0.0, atol=0.0
+    )
+    original_G_bottom = np.hstack(
+        (bottom_positive_dense, bottom_negative_dense @ np.diag(backward))
+    )
+    original_G_top = np.hstack(
+        (top_positive_dense @ np.diag(forward), top_negative_dense)
+    )
+
+    def original_operator_for(layout: HybridAugmentedLayout) -> PETSc.Mat:
+        """Assemble full original [D G; L C] on the actual augmented layout."""
+
+        dense = np.zeros((layout.global_size, layout.global_size), dtype=np.complex128)
+        bottom_indices = layout.map_bottom(
+            np.arange(side_size, dtype=PETSc.IntType)
+        )
+        top_indices = layout.map_top(np.arange(side_size, dtype=PETSc.IntType))
+        modal_indices = layout.map_modal(
+            np.arange(internal_count, dtype=PETSc.IntType)
+        )
+        dense[np.ix_(bottom_indices, bottom_indices)] = bottom_D
+        dense[np.ix_(top_indices, top_indices)] = top_D
+        dense[np.ix_(bottom_indices, modal_indices)] = original_G_bottom
+        dense[np.ix_(top_indices, modal_indices)] = original_G_top
+        dense[np.ix_(modal_indices[:modal_per_side], bottom_indices)] = (
+            bottom_projection_dense
+        )
+        dense[np.ix_(modal_indices[modal_per_side:], top_indices)] = (
+            top_projection_dense
+        )
+        dense[np.ix_(modal_indices, modal_indices)] = original_C
+        row_template = layout.create_vector()
+        column_template = layout.create_vector()
+        try:
+            matrix = _matrix_from_dense(row_template, column_template, dense)
+        finally:
+            row_template.destroy()
+            column_template.destroy()
+        owned_matrices.append(matrix)
+        return matrix
+
+    def assert_full_original_action(
+        layout: HybridAugmentedLayout,
+        operator: PETSc.Mat,
+        value: PETSc.Vec,
+    ) -> None:
+        bottom_indices = layout.map_bottom(
+            np.arange(side_size, dtype=PETSc.IntType)
+        )
+        top_indices = layout.map_top(np.arange(side_size, dtype=PETSc.IntType))
+        modal_indices = layout.map_modal(
+            np.arange(internal_count, dtype=PETSc.IntType)
+        )
+        values = _gather_vector(value)
+        expected = np.zeros(layout.global_size, dtype=np.complex128)
+        expected[bottom_indices] = (
+            bottom_D @ values[bottom_indices]
+            + original_G_bottom @ values[modal_indices]
+        )
+        expected[top_indices] = (
+            top_D @ values[top_indices]
+            + original_G_top @ values[modal_indices]
+        )
+        expected[modal_indices] = (
+            np.concatenate(
+                (
+                    bottom_projection_dense @ values[bottom_indices],
+                    top_projection_dense @ values[top_indices],
+                )
+            )
+            + original_C @ values[modal_indices]
+        )
+        action = operator.createVecLeft()
+        try:
+            operator.mult(value, action)
+            np.testing.assert_allclose(
+                _gather_vector(action), expected, rtol=1.0e-13, atol=1.0e-13
+            )
+        finally:
+            action.destroy()
+
+    layout = HybridAugmentedLayout.build(
+        SimpleNamespace(
+            A=bottom_operator,
+            global_size=side_size,
+            local_mesh=SimpleNamespace(mesh=SimpleNamespace(comm=comm)),
+        ),
+        SimpleNamespace(
+            A=top_operator,
+            global_size=side_size,
+            local_mesh=SimpleNamespace(mesh=SimpleNamespace(comm=comm)),
+        ),
+        internal_count,
+    )
+    try:
+        system = block_ldu.build_task041_v13_consistent_modal_surrogate(
+            coupling,
+            bottom_action,
+            top_action,
+            modal_owner=comm.size - 1,
+            sampled_columns=columns,
+            sampled_column_roles=roles,
+            sampled_column_contract_sha256=contract_sha,
+            original_augmented_local_size=layout.local_size,
+            fresh_authority_callback=authority,
+            marker_callback=marker,
+        )
+        assert (system.lu is not None) == (comm.rank == comm.size - 1)
+        assert (system.pivots is not None) == (comm.rank == comm.size - 1)
+        audit = system.build_audit
+        assert audit["sample_columns_written_directly_to_final_matrix"] == columns
+        assert audit["full_owner_matrix_pages_materialized_before_sample_gate"] is True
+        remaining_columns = sorted(set(range(internal_count)) - set(columns))
+        assert len(columns) == 8
+        assert audit["remaining_columns_applied_once"] == remaining_columns
+        assert len(remaining_columns) == 4
+        assert audit["assembly_B_apply_count_by_side"] == {
+            "bottom": internal_count,
+            "top": internal_count,
+        }
+        assert audit["independent_action_validation"]["B_apply_count_by_side"] == {
+            "bottom": 7,
+            "top": 7,
+        }
+        assert audit["independent_action_validation"]["inputs"] == [
+            "x",
+            "y",
+            "complex_homogeneity",
+            "additivity",
+            "repeat_x",
+            "zero",
+            "near_zero",
+        ]
+        assert audit["independent_action_validation"]["covers_all_modal_components"] is True
+        assert audit["independent_action_validation"][
+            "uses_validated_constraint_storage"
+        ] is True
+        assert len(audit["independent_action_validation"]["relative_errors"]) == 7
+        phase_snapshots = audit["actual_work_phase_snapshots"]
+        assert tuple(phase_snapshots) == (
+            "before_build",
+            "after_eight_columns",
+            "after_all_columns",
+            "after_independent_validation",
+        )
+        phase_apply_counts = {
+            "before_build": 0,
+            "after_eight_columns": 8,
+            "after_all_columns": internal_count,
+            "after_independent_validation": internal_count + 7,
+        }
+        for phase, expected_count in phase_apply_counts.items():
+            phase_record = phase_snapshots[phase]
+            assert phase_record["rank_count"] == comm.size
+            assert len(phase_record["rank_rows"]) == comm.size
+            for row in phase_record["rank_rows"]:
+                assert row["actions"]["bottom"]["action_apply_count"] == expected_count
+                assert row["actions"]["top"]["action_apply_count"] == expected_count
+                # This fixture substitutes only the action implementation; it
+                # has no P4 solver audit and must not invent one.
+                assert row["actions"]["bottom"][
+                    "shared_side_inverse_callback_counts"
+                ] is None
+                assert row["actions"]["top"][
+                    "shared_side_inverse_callback_counts"
+                ] is None
+                assert row["actions"]["bottom"][
+                    "fixed_q_actual_work_cumulative"
+                ] is None
+                assert row["actions"]["top"][
+                    "fixed_q_actual_work_cumulative"
+                ] is None
+        for phase, expected_delta in (
+            ("after_eight_columns", 8),
+            ("after_all_columns", len(remaining_columns)),
+            ("after_independent_validation", 7),
+        ):
+            for row in phase_snapshots[phase]["rank_rows"]:
+                deltas = row["action_work_delta_since_previous_phase"]
+                assert deltas["bottom"]["action_apply_count"] == expected_delta
+                assert deltas["top"]["action_apply_count"] == expected_delta
+        phase_markers = {name: detail for name, detail in markers}
+        assert phase_markers["v13_modal_sample8_complete"][
+            "sample_column_count"
+        ] == 8
+        complete_marker = phase_markers["v13_modal_schur_columns_complete"]
+        assert complete_marker["phase"] == "after_all_columns"
+        assert complete_marker["rank_count"] == comm.size
+        complete_rows = complete_marker["rank_rows"]
+        assert len(complete_rows) == comm.size
+        assert [row["rank"] for row in complete_rows] == list(range(comm.size))
+        for row in complete_rows:
+            assert row["completed_column_count"] == internal_count
+            assert row["remaining_column_count"] == 0
+        assert all(
+            record["input_unchanged"]
+            and record["finite"]
+            and record["relative_error_vs_owner_S_B"] <= 1.0e-10
+            for record in audit["independent_action_validation"]["input_records"]
+        )
+        for record in audit["independent_action_validation"]["input_records"]:
+            if record["algebra_identity_applicable"]:
+                absolute = record["algebra_identity_absolute_error"]
+                relative = record["algebra_identity_relative_error"]
+                assert absolute is not None and relative is not None
+                assert np.isfinite(absolute) and np.isfinite(relative)
+            else:
+                assert record["algebra_identity_absolute_error"] is None
+                assert record["algebra_identity_relative_error"] is None
+        assert set(
+            audit["independent_action_validation"]["complex_linearity_errors"]
+        ) == {
+            "complex_homogeneity",
+            "additivity",
+            "repeat_x",
+            "zero",
+            "near_zero",
+        }
+        expected_schur = original_C - np.vstack(
+            (
+                bottom_projection_dense @ bottom_B_dense @ original_G_bottom,
+                top_projection_dense @ top_B_dense @ original_G_top,
+            )
+        )
+        if comm.rank == comm.size - 1:
+            np.testing.assert_allclose(
+                system.modal_schur, expected_schur, rtol=1.0e-12, atol=1.0e-12
+            )
+        assert [phase for phase, _ in fresh_reports] == [
+            "before_dense_allocation",
+            "after_eight_columns",
+        ]
+        reports_by_rank = comm.allgather(fresh_reports)
+        assert all(rows == reports_by_rank[0] for rows in reports_by_rank)
+        assert len(set(authority_request_hashes)) == 2
+        for response in fresh_responses:
+            receipt_payload = response["authority_receipt_payload"]
+            assert hashlib.sha256(
+                json.dumps(
+                    receipt_payload,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                ).encode()
+            ).hexdigest() == response["authority_receipt_sha256"]
+        sample_report = fresh_reports[1][1]
+        malformed_rank_report = copy.deepcopy(sample_report)
+        if comm.rank == 0:
+            malformed_rank_report["rank_local_nonfinite_probe"] = float("nan")
+        malformed_report_error = None
+        try:
+            exact_side._task041_v13_fresh_authority_callback(
+                "after_eight_columns",
+                malformed_rank_report,
+                comm=comm,
+                supervisor_memory_binding=supervisor_binding,
+                limits=v13_limits,
+            )
+        except Exception as exc:  # noqa: BLE001 - each rank records the same refusal
+            malformed_report_error = f"{type(exc).__name__}: {exc}"
+        malformed_report_errors = comm.allgather(malformed_report_error)
+        assert len(set(malformed_report_errors)) == 1
+        assert isinstance(malformed_report_errors[0], str)
+        assert "V13 authority report is unbindable" in malformed_report_errors[0]
+        assert "rank 0" in malformed_report_errors[0]
+        assert sample_report["sample_column_count"] == 8
+        assert sample_report["remaining_column_count"] == len(remaining_columns)
+        assert all(
+            row["bottom_B_apply_count"] == 8
+            and row["top_B_apply_count"] == 8
+            for row in sample_report["rank_local_sample_work"]
+        )
+        assert sample_report["assembly_elapsed_seconds_max_rank"] == max(
+            row["elapsed_seconds"]
+            for row in sample_report["assembly_elapsed_seconds_by_rank"]
+        )
+        assert len(sample_report["assembly_elapsed_seconds_by_rank"]) == comm.size
+        assert sample_report["phase"] == "after_eight_columns"
+        assert sample_report["remaining_projected_work_scopes"] == {
+            "remaining_matrix_columns": len(remaining_columns),
+            "independent_full_complex_action_checks": 7,
+        }
+        assert sample_report["remaining_projected_B_apply_count_by_side"] == {
+            "bottom": len(remaining_columns) + 7,
+            "top": len(remaining_columns) + 7,
+        }
+        assert sample_report["full_run_cost_target_seconds"] == 172800
+        assert sample_report["full_run_cost_target_semantics"] == (
+            "planning_target_only_no_elapsed_stop"
+        )
+        assert all(
+            response["status"] == "pass"
+            and response["external_resource_gates"]["sample_cost_contract"] is True
+            and response["cost_assessment"]["target_is_elapsed_stop"] is False
+            for response in fresh_responses
+        )
+        assert fresh_responses[0]["cost_assessment"]["status"] == "not_yet_sampled"
+        assert fresh_responses[0]["cost_assessment"]["decision"] == (
+            "continue_to_eight_column_sample_if_resource_gates_pass"
+        )
+        assert fresh_responses[1]["cost_assessment"]["status"] == (
+            "sample_projection_valid"
+        )
+        assert fresh_responses[1]["cost_assessment"]["decision"] == (
+            "continue_if_resource_gates_pass"
+        )
+        assert any(
+            value > 0
+            for value in sample_report["workspace_inventory"][
+                "additional_temporary_petcs_and_cell_numpy_bytes_by_rank"
+            ]
+        )
+        assert any(
+            value > 0
+            for value in sample_report["workspace_inventory"][
+                "additional_replicated_numpy_bytes_by_rank"
+            ]
+        )
+        bad_cost_report = copy.deepcopy(sample_report)
+        bad_cost_report["remaining_projected_B_apply_count_by_side"]["top"] -= 1
+        refused_cost = exact_side._task041_v13_fresh_authority_callback(
+            "after_eight_columns",
+            bad_cost_report,
+            comm=comm,
+            supervisor_memory_binding=supervisor_binding,
+            limits=v13_limits,
+        )
+        assert refused_cost["status"] == "refused"
+        assert refused_cost["decision"] == "stop"
+        assert refused_cost["external_resource_gates"]["sample_cost_contract"] is False
+        assert refused_cost["cost_assessment"]["decision"] == (
+            "refuse_incomplete_cost_evidence"
+        )
+        assert refused_cost["cost_assessment"]["reasons"]
+        unaffordable_builder = copy.deepcopy(sample_report)
+        projected = float(
+            unaffordable_builder["remaining_projected_seconds"]
+        )
+        target_elapsed = 172800.0 - projected
+        assembly_rows = unaffordable_builder[
+            "assembly_elapsed_seconds_by_rank"
+        ]
+        slowest_rank = max(
+            assembly_rows, key=lambda row: row["elapsed_seconds"]
+        )["rank"]
+        assembly_rows[slowest_rank]["elapsed_seconds"] = target_elapsed
+        unaffordable_builder["assembly_elapsed_seconds_max_rank"] = target_elapsed
+        unaffordable_builder["estimated_builder_seconds_at_sample"] = (
+            target_elapsed + projected
+        )
+        refused_48h = exact_side._task041_v13_fresh_authority_callback(
+            "after_eight_columns",
+            unaffordable_builder,
+            comm=comm,
+            supervisor_memory_binding=supervisor_binding,
+            limits=v13_limits,
+        )
+        assert refused_48h["status"] == "refused"
+        assert refused_48h["cost_assessment"]["target_is_elapsed_stop"] is False
+        assert refused_48h["cost_assessment"]["decision"] == (
+            "refuse_remaining_columns_builder_projection_at_or_above_172800_seconds"
+        )
+        assert (
+            "sampled_builder_projection_at_or_above_172800_second_planning_target"
+            in refused_48h["cost_assessment"]["reasons"]
+        )
+        assert refused_48h["cost_assessment"]["first_eight_max_rank_seconds"] == (
+            sample_report["max_rank_sample_seconds"]
+        )
+        refused_receipt = refused_48h["authority_receipt_payload"]
+        assert hashlib.sha256(
+            json.dumps(
+                refused_receipt,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode()
+        ).hexdigest() == refused_48h["authority_receipt_sha256"]
+        assert audit["setup_work_counts"]["owner_lu_factorization_attempts"] == 1
+        assert audit["setup_work_counts"]["owner_lu_repeat_solve_attempts"] == 2
+        assert audit["setup_work_counts"][
+            "owner_original_schur_rhs_residual_checks"
+        ] == 2
+        assert audit["owner_original_schur_rhs_residual_pass"] is True
+        assert audit["owner_original_schur_rhs_input_unchanged"] == [True, True]
+        assert all(
+            value <= 1.0e-10
+            for value in audit["owner_original_schur_rhs_residuals"]
+        )
+        assert audit["setup_work_counts"]["outer_PC_calls"] == 0
+        assert audit["setup_work_counts"]["modal_KSP_solves"] == 0
+        assert len(markers) > 0
+
+        context = block_ldu.HybridBlockLduPreconditioner(
+            layout,
+            SimpleNamespace(A=bottom_operator),
+            SimpleNamespace(A=top_operator),
+            coupling,
+            bottom_action,
+            top_action,
+            system,
+        )
+        system = None
+        original_operator = original_operator_for(layout)
+        outer_workspace_rhs = original_operator.createVecRight()
+        outer_workspace_solution = original_operator.createVecRight()
+        outer_restart32_report = block_ldu._task041_v13_outer_restart_workspace_report(
+            original_operator,
+            outer_workspace_rhs,
+            outer_workspace_solution,
+            context,
+            comm,
+            phase="outer_restart32_workspace",
+        )
+        assert exact_side._task041_v13_sample_cost_errors(
+            "outer_restart32_workspace", outer_restart32_report, comm.size
+        ) == []
+        assert outer_restart32_report[
+            "original_A_binding_vecs_are_already_in_fresh_B"
+        ] is False
+        outer_restart32_authority = (
+            context.action_modal_schur_system.authorize_outer_workspace(
+                "outer_restart32_workspace", outer_restart32_report
+            )
+        )
+        assert outer_restart32_authority["status"] == "pass"
+        context.bind_v13_original_global_operator(original_operator)
+        outer_restart64_report = block_ldu._task041_v13_outer_restart_workspace_report(
+            original_operator,
+            outer_workspace_rhs,
+            outer_workspace_solution,
+            context,
+            comm,
+            phase="outer_restart64_workspace",
+        )
+        assert exact_side._task041_v13_sample_cost_errors(
+            "outer_restart64_workspace", outer_restart64_report, comm.size
+        ) == []
+        assert outer_restart64_report[
+            "original_A_binding_vecs_are_already_in_fresh_B"
+        ] is True
+        outer_restart64_authority = (
+            context.action_modal_schur_system.authorize_outer_workspace(
+                "outer_restart64_workspace", outer_restart64_report
+            )
+        )
+        assert outer_restart64_authority["status"] == "pass"
+        for outer_phase, outer_report, outer_authority in (
+            (
+                "outer_restart32_workspace",
+                outer_restart32_report,
+                outer_restart32_authority,
+            ),
+            (
+                "outer_restart64_workspace",
+                outer_restart64_report,
+                outer_restart64_authority,
+            ),
+        ):
+            assert block_ldu._task041_v13_outer_workspace_pass_resource_contract_valid(
+                outer_phase,
+                outer_report,
+                outer_authority,
+                rank_count=comm.size,
+            )
+            bad_B = copy.deepcopy(outer_authority)
+            bad_B["fresh_job_authority_bytes"] += 1
+            assert not block_ldu._task041_v13_outer_workspace_pass_resource_contract_valid(
+                outer_phase, outer_report, bad_B, rank_count=comm.size
+            )
+            bad_delta = copy.deepcopy(outer_authority)
+            bad_delta["additional_bytes_by_rank"][0] += 1
+            assert not block_ldu._task041_v13_outer_workspace_pass_resource_contract_valid(
+                outer_phase, outer_report, bad_delta, rank_count=comm.size
+            )
+            missing_external = copy.deepcopy(outer_authority)
+            missing_external["external_resource_gates"] = {}
+            assert not block_ldu._task041_v13_outer_workspace_pass_resource_contract_valid(
+                outer_phase, outer_report, missing_external, rank_count=comm.size
+            )
+        source = layout.create_vector()
+        target = layout.create_vector()
+        bottom_indices = layout.map_bottom(
+            np.arange(side_size, dtype=PETSc.IntType)
+        )
+        top_indices = layout.map_top(np.arange(side_size, dtype=PETSc.IntType))
+        modal_indices = layout.map_modal(
+            np.arange(internal_count, dtype=PETSc.IntType)
+        )
+        side_bottom_rhs = np.asarray(
+            [0.4 + 0.2j, -0.1 + 0.3j, 0.2 - 0.15j, 0.07 + 0.11j, -0.2j, 0.13],
+            dtype=np.complex128,
+        )
+        side_top_rhs = np.asarray(
+            [-0.1 + 0.3j, 0.08 - 0.12j, 0.15 + 0.07j, -0.22j, 0.03 + 0.09j, 0.17],
+            dtype=np.complex128,
+        )
+
+        def set_source(modal_rhs: np.ndarray, *, side_scale: float = 1.0) -> None:
+            input_values = np.zeros(layout.global_size, dtype=np.complex128)
+            input_values[bottom_indices] = side_scale * side_bottom_rhs
+            input_values[top_indices] = side_scale * side_top_rhs
+            input_values[modal_indices] = np.asarray(modal_rhs, dtype=np.complex128)
+            _set_vector(source, input_values)
+
+        set_source(np.asarray([0.2 - 0.15j] + [0.0j] * (internal_count - 1)))
+        source_before = _gather_vector(source)
+        context.apply(None, source, target)
+        np.testing.assert_array_equal(_gather_vector(source), source_before)
+        assert_full_original_action(layout, original_operator, target)
+        modal_system = context.action_modal_schur_system
+        row_record = modal_system.diagnostics["last_original_modal_row"]
+        assert row_record["status"] == "passed"
+        assert row_record["original_A_modal_row_matmult_count"] == 1
+        expected_build_and_first_pc_calls = internal_count + 7 + 2
+        assert bottom_action.audit["apply_count"] == expected_build_and_first_pc_calls
+        assert top_action.audit["apply_count"] == expected_build_and_first_pc_calls
+        assert modal_system.diagnostics["solve_count"] == 1
+        lu_solve_counts = comm.allgather(
+            modal_system.diagnostics["owner_lu_solve_count"]
+        )
+        assert lu_solve_counts == [0] * (comm.size - 1) + [1]
+
+        # The complete V13 LDU action, not only its old fixed-H6 or
+        # fixed-Q component, must remain a repeatable complex-linear map.
+        # Reuse this same built context and its owner LU for every assertion.
+        linear_rhs_x = layout.create_vector()
+        linear_rhs_y = layout.create_vector()
+        linear_rhs_sum = layout.create_vector()
+        linear_out_x = layout.create_vector()
+        linear_out_y = layout.create_vector()
+        linear_out_sum = layout.create_vector()
+        linear_out_repeat = layout.create_vector()
+        try:
+            x_values = np.asarray(
+                [0.07 - 0.03j * index for index in range(layout.global_size)],
+                dtype=np.complex128,
+            )
+            y_values = np.asarray(
+                [-0.02j + 0.011 * index for index in range(layout.global_size)],
+                dtype=np.complex128,
+            )
+            alpha = 0.31 - 0.47j
+            _set_vector(linear_rhs_x, x_values)
+            _set_vector(linear_rhs_y, y_values)
+            _set_vector(linear_rhs_sum, x_values + y_values)
+            linear_rhs_x_before = _gather_vector(linear_rhs_x)
+            linear_rhs_y_before = _gather_vector(linear_rhs_y)
+            context.apply(None, linear_rhs_x, linear_out_x)
+            context.apply(None, linear_rhs_y, linear_out_y)
+            context.apply(None, linear_rhs_sum, linear_out_sum)
+            context.apply(None, linear_rhs_x, linear_out_repeat)
+            np.testing.assert_allclose(
+                _gather_vector(linear_out_sum),
+                _gather_vector(linear_out_x) + _gather_vector(linear_out_y),
+                rtol=2.0e-12,
+                atol=2.0e-12,
+            )
+            # A separate complex homogeneity check rules out conjugate-linear
+            # behavior in the full LDU application.
+            _set_vector(linear_rhs_sum, alpha * x_values)
+            context.apply(None, linear_rhs_sum, linear_out_sum)
+            np.testing.assert_allclose(
+                _gather_vector(linear_out_sum),
+                alpha * _gather_vector(linear_out_x),
+                rtol=2.0e-12,
+                atol=2.0e-12,
+            )
+            np.testing.assert_allclose(
+                _gather_vector(linear_out_repeat),
+                _gather_vector(linear_out_x),
+                rtol=0.0,
+                atol=0.0,
+            )
+            np.testing.assert_array_equal(
+                _gather_vector(linear_rhs_x), linear_rhs_x_before
+            )
+            np.testing.assert_array_equal(
+                _gather_vector(linear_rhs_y), linear_rhs_y_before
+            )
+            assert modal_system.diagnostics["modal_ksp_solve_count"] == 0
+            assert modal_system.diagnostics["side_solver_entry_zero_supported"] is True
+            assert modal_system.diagnostics["side_operation_deltas"] == {
+                "bottom": {"apply_count": 0, "total_iterations": 0},
+                "top": {"apply_count": 0, "total_iterations": 0},
+            }
+
+            # A finite LU result that solves the mutated RHS must still be
+            # rejected: residual success cannot excuse input mutation.
+            original_lu_solve = block_ldu.lu_solve
+
+            def mutate_rhs_then_solve(factor, rhs, **kwargs):
+                rhs[0] += 1.0e-7 + 2.0e-7j
+                return original_lu_solve(factor, rhs, **kwargs)
+
+            mutation_rhs = np.asarray(
+                [0.2 - 0.1j * index for index in range(internal_count)],
+                dtype=np.complex128,
+            )
+            mutation_rhs_before = mutation_rhs.copy()
+            monkeypatch.setattr(block_ldu, "lu_solve", mutate_rhs_then_solve)
+            try:
+                with pytest.raises(FloatingPointError, match="a-g residual gate"):
+                    modal_system.solve(mutation_rhs)
+            finally:
+                monkeypatch.setattr(block_ldu, "lu_solve", original_lu_solve)
+            mutation_record = modal_system.diagnostics["last_solve"]
+            assert mutation_record["status"] == "rejected"
+            assert mutation_record["residual_passed"] is True
+            assert mutation_record["input_unchanged"] is False
+            assert mutation_record["trusted_iterate"] is False
+            mutation_by_rank = comm.allgather(
+                not np.array_equal(mutation_rhs, mutation_rhs_before)
+            )
+            assert mutation_by_rank == [False] * (comm.size - 1) + [True]
+
+            # The all-input-zero case is distinct from a nonzero side input
+            # whose original modal row cancels exactly to zero.
+            _set_vector(linear_rhs_sum, np.zeros(layout.global_size))
+            context.apply(None, linear_rhs_sum, linear_out_sum)
+            np.testing.assert_array_equal(
+                _gather_vector(linear_out_sum),
+                np.zeros(layout.global_size, dtype=np.complex128),
+            )
+            np.testing.assert_array_equal(
+                _gather_vector(linear_rhs_sum),
+                np.zeros(layout.global_size, dtype=np.complex128),
+            )
+        finally:
+            for vector in (
+                linear_out_repeat,
+                linear_out_sum,
+                linear_out_y,
+                linear_out_x,
+                linear_rhs_sum,
+                linear_rhs_y,
+                linear_rhs_x,
+            ):
+                vector.destroy()
+
+        # Nonzero side and modal terms cancel to an exact-zero modal RHS.
+        set_source(
+            np.zeros(internal_count, dtype=np.complex128), side_scale=1.0e-9
+        )
+        source_before = _gather_vector(source)
+        context.apply(None, source, target)
+        zero_record = modal_system.diagnostics["last_original_modal_row"]
+        assert zero_record["rhs_exact_zero"] is True
+        assert zero_record["original_A_modal_row_matmult_count"] == 2
+        assert zero_record["original_A_modal_side_term_norm"] > 0.0
+        assert zero_record["original_A_modal_constraint_term_norm"] > 0.0
+        assert zero_record["scale"] == pytest.approx(
+            zero_record["original_A_modal_side_term_norm"]
+            + zero_record["original_A_modal_constraint_term_norm"]
+        )
+        assert zero_record["relative_backward_error"] <= 1.0e-10
+        np.testing.assert_array_equal(_gather_vector(source), source_before)
+        assert_full_original_action(layout, original_operator, target)
+
+        near_rhs = np.zeros(internal_count, dtype=np.complex128)
+        near_rhs[0] = 1.0e-12
+        near_rhs[1] = (1.0 - 2.0**-34) * 1.0e-12j
+        set_source(near_rhs, side_scale=1.0e-9)
+        near_source_before = _gather_vector(source)
+        context.apply(None, source, target)
+        near_record = modal_system.diagnostics["last_original_modal_row"]
+        assert near_record["rhs_exact_zero"] is False
+        assert near_record["original_A_modal_row_matmult_count"] == 1
+        assert near_record["scale"] == pytest.approx(np.linalg.norm(near_rhs))
+        assert 0.0 < near_record["scale"] < 1.0e-10
+        assert near_record["relative_backward_error"] <= 1.0e-10
+        np.testing.assert_array_equal(_gather_vector(source), near_source_before)
+        assert_full_original_action(layout, original_operator, target)
+
+        set_source(np.zeros(internal_count, dtype=np.complex128), side_scale=1.0e-9)
+        context.apply(None, source, target)
+        assert modal_system.diagnostics["last_original_modal_row"]["status"] == "passed"
+        assert abs(_gather_vector(target)[modal_indices[0]]) > 0.0
+
+        # Exercise the actual full original A with right FGMRES and this same
+        # fixed block-LDU context as its Python preconditioner.  The final
+        # acceptance check recomputes A*x-f independently of KSP's estimate.
+        exact_solution = layout.create_vector()
+        outer_rhs = original_operator.createVecLeft()
+        outer_solution = original_operator.createVecRight()
+        outer_residual = outer_rhs.duplicate()
+        outer_ksp = PETSc.KSP().create(comm)
+
+        class BorrowedV13BlockLduPc:
+            def apply(self, _pc, pc_source, pc_target):
+                context.apply(_pc, pc_source, pc_target)
+
+            def destroy(self, _pc=None):
+                return None
+
+        outer_pc_context = BorrowedV13BlockLduPc()
+        try:
+            exact_values = np.asarray(
+                [0.17 + 0.013j * index for index in range(layout.global_size)],
+                dtype=np.complex128,
+            )
+            _set_vector(exact_solution, exact_values)
+            original_operator.mult(exact_solution, outer_rhs)
+            outer_rhs_before = _gather_vector(outer_rhs)
+            outer_ksp.setOperators(original_operator)
+            outer_ksp.setType(PETSc.KSP.Type.FGMRES)
+            outer_ksp.setGMRESRestart(layout.global_size)
+            outer_ksp.setPCSide(PETSc.PC.Side.RIGHT)
+            outer_ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
+            outer_ksp.setInitialGuessNonzero(False)
+            outer_ksp.setTolerances(
+                rtol=5.0e-9,
+                atol=0.0,
+                max_it=2 * layout.global_size,
+            )
+            outer_pc = outer_ksp.getPC()
+            outer_pc.setType(PETSc.PC.Type.PYTHON)
+            outer_pc.setPythonContext(outer_pc_context)
+            outer_ksp.setUp()
+            outer_ksp.solve(outer_rhs, outer_solution)
+            original_operator.mult(outer_solution, outer_residual)
+            outer_residual.axpy(PETSc.ScalarType(-1.0), outer_rhs)
+            outer_rhs_norm = float(outer_rhs.norm())
+            outer_true_relative = float(outer_residual.norm()) / outer_rhs_norm
+            assert int(outer_ksp.getConvergedReason()) > 0
+            assert np.isfinite(outer_true_relative)
+            assert outer_true_relative <= 5.0e-9
+            np.testing.assert_array_equal(_gather_vector(outer_rhs), outer_rhs_before)
+            assert context.inventory["pc_apply_count"] > 0
+            assert (
+                modal_system.diagnostics["last_original_modal_row"]["status"]
+                == "passed"
+            )
+        finally:
+            outer_ksp.destroy()
+            for vector in (
+                outer_residual,
+                outer_solution,
+                outer_rhs,
+                exact_solution,
+            ):
+                vector.destroy()
+
+        # A wrong modal-block sign and a wrong side channel are both rejected
+        # by the independently assembled original-global-A row after a full PC.
+        if comm.rank == layout.modal_owner:
+            original_operator.setValue(
+                int(modal_indices[0]),
+                int(modal_indices[0]),
+                PETSc.ScalarType(-original_C[0, 0]),
+            )
+        original_operator.assemble()
+        with pytest.raises(FloatingPointError, match="original global modal-row"):
+            context.apply(None, source, target)
+        wrong_sign_record = modal_system.diagnostics["last_original_modal_row"]
+        assert wrong_sign_record["status"] == "rejected"
+        assert wrong_sign_record["relative_backward_error"] > 1.0e-10
+
+        if comm.rank == layout.modal_owner:
+            original_operator.setValue(
+                int(modal_indices[0]),
+                int(modal_indices[0]),
+                PETSc.ScalarType(original_C[0, 0]),
+            )
+        original_operator.assemble()
+        context.apply(None, source, target)
+        assert modal_system.diagnostics["last_original_modal_row"]["status"] == "passed"
+        if comm.rank == layout.modal_owner:
+            original_operator.setValue(
+                int(modal_indices[0]),
+                int(bottom_indices[0]),
+                PETSc.ScalarType(0.0),
+            )
+            original_operator.setValue(
+                int(modal_indices[0]),
+                int(top_indices[0]),
+                PETSc.ScalarType(bottom_projection_dense[0, 0] + 0.37j),
+            )
+        original_operator.assemble()
+        with pytest.raises(FloatingPointError, match="original global modal-row"):
+            context.apply(None, source, target)
+        wrong_channel_record = modal_system.diagnostics["last_original_modal_row"]
+        assert wrong_channel_record["status"] == "rejected"
+        assert wrong_channel_record["relative_backward_error"] > 1.0e-10
+
+        context.destroy()
+        context = None
+        assert bottom_action.audit["destroyed"] is True
+        assert top_action.audit["destroyed"] is True
+        assert bottom_operator.getSize() == (side_size, side_size)
+        assert top_operator.getSize() == (side_size, side_size)
+        for side in ("bottom", "top"):
+            inverse = side_fixture[f"{side}_inverse"]
+            assert inverse.diagnostics["destroyed"] is False
+            assert inverse._p4_factor.destroy_count == 0
+            assert inverse._h6._destroyed is False
+
+        # A full-complex input must expose a channel/order error that is not
+        # visible when checking only retained sample basis columns.
+        wrong_bottom_action = CountingAction(bottom_B, side_fixture["bottom_inverse"])
+        wrong_top_action = CountingAction(top_B, side_fixture["top_inverse"])
+        side_actions.extend((wrong_bottom_action, wrong_top_action))
+        original_apply = block_ldu.HybridActionModalSchurApply.apply
+        wrong_probe = np.asarray(
+            np.arange(1, internal_count + 1, dtype=np.float64)
+            + 1j * (np.arange(internal_count, 0, -1, dtype=np.float64) + 0.5),
+            dtype=np.complex128,
+        )
+
+        def wrong_full_action(action, modal):
+            result = original_apply(action, modal)
+            if np.array_equal(modal, wrong_probe):
+                result = result.copy()
+                result[-1] += 0.125 - 0.0625j
+            return result
+
+        with monkeypatch.context() as localized:
+            localized.setattr(
+                block_ldu.HybridActionModalSchurApply,
+                "apply",
+                wrong_full_action,
+            )
+            with pytest.raises(
+                ValueError,
+                match="independent full-complex action validation rejected x",
+            ):
+                block_ldu.build_task041_v13_consistent_modal_surrogate(
+                    coupling,
+                    wrong_bottom_action,
+                    wrong_top_action,
+                    modal_owner=comm.size - 1,
+                    sampled_columns=columns,
+                    sampled_column_roles=roles,
+                    sampled_column_contract_sha256=contract_sha,
+                    original_augmented_local_size=layout.local_size,
+                    fresh_authority_callback=authority,
+                )
+        assert wrong_bottom_action.audit["apply_count"] == internal_count + 1
+        assert wrong_top_action.audit["apply_count"] == internal_count + 1
+
+        # A true singular Schur matrix must be rejected by the unmocked owner
+        # factorization, rather than hidden by a regularization or mock LU.
+        zero_bottom = dense_matrix(side_size, side_size, {})
+        zero_top = dense_matrix(side_size, side_size, {})
+        zero_bottom_action = CountingAction(
+            zero_bottom, side_fixture["bottom_inverse"]
+        )
+        zero_top_action = CountingAction(zero_top, side_fixture["top_inverse"])
+        side_actions.extend((zero_bottom_action, zero_top_action))
+        singular_coupling = copy.copy(coupling)
+        singular_coupling.bottom = SimpleNamespace(
+            **{
+                key: getattr(coupling.bottom, key)
+                for key in (
+                    "projection",
+                    "positive_traction",
+                    "negative_traction",
+                    "modal_rhs_correction",
+                )
+            },
+            positive_interior_correction=np.zeros(
+                (modal_per_side, modal_per_side), dtype=np.complex128
+            ),
+            negative_interior_correction=np.zeros(
+                (modal_per_side, modal_per_side), dtype=np.complex128
+            ),
+        )
+        singular_coupling.top = SimpleNamespace(
+            **{
+                key: getattr(coupling.top, key)
+                for key in (
+                    "projection",
+                    "positive_traction",
+                    "negative_traction",
+                    "modal_rhs_correction",
+                )
+            },
+            positive_interior_correction=np.zeros(
+                (modal_per_side, modal_per_side), dtype=np.complex128
+            ),
+            negative_interior_correction=np.zeros(
+                (modal_per_side, modal_per_side), dtype=np.complex128
+            ),
+        )
+        singular_coupling.propagation = SimpleNamespace(
+            forward=SimpleNamespace(factors=np.ones(modal_per_side, dtype=np.complex128)),
+            backward=SimpleNamespace(factors=np.ones(modal_per_side, dtype=np.complex128)),
+        )
+        singular_coupling.negative_trace_to_positive = np.eye(
+            modal_per_side, dtype=np.complex128
+        )
+        with pytest.raises(ValueError, match="owner Schur factorization rejected"):
+            block_ldu.build_task041_v13_consistent_modal_surrogate(
+                singular_coupling,
+                zero_bottom_action,
+                zero_top_action,
+                modal_owner=comm.size - 1,
+                sampled_columns=columns,
+                sampled_column_roles=roles,
+                sampled_column_contract_sha256=contract_sha,
+                original_augmented_local_size=layout.local_size,
+                fresh_authority_callback=authority,
+            )
+        assert zero_bottom_action.audit["apply_count"] == internal_count + 7
+        assert zero_top_action.audit["apply_count"] == internal_count + 7
+
+        # Two repeatable but deliberately wrong owner solutions must fail the
+        # original S_B a-g gate before a ready system can be returned.
+        original_lu_solve = block_ldu.lu_solve
+
+        def repeatable_wrong_lu_solve(_factor, rhs, **_kwargs):
+            return np.zeros_like(rhs, dtype=np.complex128)
+
+        refused_markers: list[tuple[str, dict[str, Any]]] = []
+        with monkeypatch.context() as localized:
+            localized.setattr(
+                block_ldu, "lu_solve", repeatable_wrong_lu_solve
+            )
+            with pytest.raises(
+                ValueError,
+                match="owner Schur factorization rejected:.*S_B a-g residual gate failed",
+            ):
+                block_ldu.build_task041_v13_consistent_modal_surrogate(
+                    coupling,
+                    bottom_action,
+                    top_action,
+                    modal_owner=comm.size - 1,
+                    sampled_columns=columns,
+                    sampled_column_roles=roles,
+                    sampled_column_contract_sha256=contract_sha,
+                    original_augmented_local_size=layout.local_size,
+                    fresh_authority_callback=authority,
+                    marker_callback=lambda name, detail: refused_markers.append(
+                        (name, dict(detail))
+                    ),
+                )
+        assert block_ldu.lu_solve is original_lu_solve
+        refusal_rows = [
+            detail
+            for name, detail in refused_markers
+            if name == "v13_modal_schur_lu_refused"
+        ]
+        assert len(refusal_rows) == 1
+        refusal = refusal_rows[0]
+        assert refusal["original_schur_rhs_residual_pass"] is False
+        assert refusal["original_schur_rhs_relative_residuals"] == [1.0, 1.0]
+        assert refusal["setup_work_counts"]["owner_repeat_lu_solve_attempts"] == 2
+        assert refusal["setup_work_counts"][
+            "owner_original_schur_rhs_residual_checks"
+        ] == 2
+        refusal_marker_counts = comm.allgather(len(refusal_rows))
+        assert refusal_marker_counts == [1] * comm.size
+    finally:
+        if context is not None and not context._destroyed:
+            context.destroy()
+        if system is not None and not system._destroyed:
+            system.destroy()
+        if original_operator is not None:
+            # It is already present in owned_matrices; destroy it in the common
+            # matrix cleanup below so every PETSc handle is released once.
+            original_operator = None
+        for vector in (
+            source,
+            target,
+            outer_workspace_rhs,
+            outer_workspace_solution,
+        ):
+            if vector is not None:
+                vector.destroy()
+        for action in side_actions:
+            action.destroy()
+        _destroy_side_block_fixture(side_fixture)
+        # The P4 identity doubles borrow their full/coarse layout matrices.
+        # Their fixture-owned factors are now destroyed; release the local
+        # coarse matrices only after their borrowers are gone.
+        for matrix in owned_matrices:
+            matrix.destroy()
 
 
 def test_fixed_physical_action_is_rejected_by_unselected_or_mixed_modal_method() -> None:
@@ -2771,7 +5409,7 @@ def test_task041_v12_modal_policy_is_bounded_and_keeps_legacy_defaults():
 def test_v12_modal_wrapper_extends_legacy_budget_and_writes_solver_snapshot(
     tmp_path,
 ):
-    """Exercise KSP, approximate-PC decision and the real owner snapshot writer.
+    """Exercise KSP policy returns and all three real owner snapshot slots.
 
     The 40x40 complex non-Hermitian Schur action is deliberately injected at
     the modal action boundary; the production wrapper, PETSc KSP, C-LU PC,
@@ -2921,6 +5559,46 @@ def test_v12_modal_wrapper_extends_legacy_budget_and_writes_solver_snapshot(
 
         # A later unmet solve must not replace the first owner snapshot.
         policy_system.solve(hard_rhs.copy())
+        terminal_constraint = np.asarray(
+            internal_modal_constraint_matrix(coupling), dtype=np.complex128
+        )
+        terminal_schur_diagonal = np.geomspace(1.0e-12, 1.0e12, 40) * np.exp(
+            1j * np.linspace(-0.2, 0.25, 40)
+        )
+        terminal_schur = np.diag(terminal_schur_diagonal) @ terminal_constraint
+        assert np.isfinite(terminal_schur).all()
+        _set_v12_test_schur(policy_system, terminal_schur)
+        terminal_rhs = np.ones(40, dtype=np.complex128)
+        terminal_rhs_before = terminal_rhs.copy()
+        with pytest.raises(RuntimeError, match="did not converge"):
+            policy_system.solve(terminal_rhs)
+        terminal = dict(policy_system.diagnostics["last_solve"])
+        assert terminal["trusted_iterate"] is True
+        assert terminal["input_unchanged"] is True
+        assert terminal["raw_residual_pass"] is False
+        assert terminal["final_relative_residual"] > 0.1
+        assert terminal["pc_usable"] is False
+        assert terminal["status"] not in {
+            "converged",
+            "INNER_TARGET_NOT_MET_APPROX_RETURN",
+            "PRIMARY_MODAL_TARGET_NOT_MET_BACKUP_ELIGIBLE",
+        }
+        assert terminal["status"] in {
+            "ksp_not_converged",
+            "final_residual_failed",
+        }
+        assert terminal["approximate_return_decision"]["status"] == "rejected"
+        assert np.array_equal(terminal_rhs, terminal_rhs_before)
+        assert policy_system.diagnostics[
+            "terminal_normal_reject_snapshot_saved"
+        ] is True
+        assert set(terminal["snapshot_records"]) == {"terminal_normal_reject"}
+        assert terminal["snapshot_record"] == terminal["snapshot_records"][
+            "terminal_normal_reject"
+        ]
+        terminal_path = run_root / terminal["snapshot_record"]["path"]
+        terminal_snapshot_sha = terminal["snapshot_record"]["sha256"]
+
         index_path = run_root / "numerical_output/modal_inner_snapshots/index.json"
         owner_record = None
         if MPI.COMM_WORLD.rank == owner:
@@ -2928,6 +5606,7 @@ def test_v12_modal_wrapper_extends_legacy_budget_and_writes_solver_snapshot(
             assert set(index["records"]) == {
                 "first_unmet_target",
                 "first_success_control",
+                "terminal_normal_reject",
             }
             with np.load(first_path, allow_pickle=False) as archive:
                 g = np.asarray(archive["g"], dtype=np.complex128)
@@ -2940,20 +5619,58 @@ def test_v12_modal_wrapper_extends_legacy_budget_and_writes_solver_snapshot(
                 - float(first_unmet["final_residual_norm"])
             )
             after_sha = hashlib.sha256(first_path.read_bytes()).hexdigest()
+            with np.load(terminal_path, allow_pickle=False) as archive:
+                terminal_g = np.asarray(archive["g"], dtype=np.complex128)
+                terminal_m = np.asarray(archive["m"], dtype=np.complex128)
+                terminal_raw = np.asarray(
+                    archive["raw_residual"], dtype=np.complex128
+                )
+            terminal_residual = terminal_g - terminal_schur @ terminal_m
+            terminal_response_error = float(
+                np.linalg.norm(terminal_raw - terminal_residual)
+            )
+            terminal_residual_norm_error = abs(
+                float(np.linalg.norm(terminal_raw))
+                - float(terminal["final_residual_norm"])
+            )
+            terminal_after_sha = hashlib.sha256(
+                terminal_path.read_bytes()
+            ).hexdigest()
+            terminal_metadata = index["records"]["terminal_normal_reject"][
+                "metadata"
+            ]
+            terminal_metadata_check = (
+                terminal_metadata["status"] == terminal["status"],
+                terminal_metadata["input_unchanged"] is True,
+                terminal_metadata["final_residual_evaluated"] is True,
+                terminal_metadata["ksp_reason"] == terminal["ksp_reason"],
+            )
             owner_record = (
                 first_snapshot_sha_before_repeat,
                 after_sha,
                 len(index["records"]),
                 response_error,
                 residual_norm_error,
+                terminal_response_error,
+                terminal_residual_norm_error,
+                terminal_after_sha,
+                terminal_metadata_check,
             )
         owner_record = MPI.COMM_WORLD.bcast(owner_record, root=owner)
         assert owner_record[0] == owner_record[1]
-        assert owner_record[2] == 2
+        assert owner_record[2] == 3
         assert owner_record[3] <= 1.0e-12 * max(float(np.linalg.norm(hard_rhs)), 1.0)
         assert owner_record[4] <= 1.0e-10 * max(
             float(first_unmet["final_residual_norm"]), 1.0
         )
+        assert owner_record[5] <= 1.0e-12 * max(
+            float(np.linalg.norm(terminal_rhs_before)), 1.0
+        )
+        assert owner_record[6] <= 1.0e-10 * max(
+            float(terminal["final_residual_norm"]), 1.0
+        )
+        assert owner_record[7] == terminal_snapshot_sha
+        assert all(owner_record[8])
     finally:
         for system in systems:
             system.destroy()
@@ -2977,7 +5694,10 @@ def test_v12_modal_wrapper_rejects_input_mutation_and_eta_above_bound():
             bundles[1]["adapter"],
             modal_owner=owner,
             modal_solver_policy=policy_id,
-            snapshot_callback=lambda _payload: {"status": "test_snapshot"},
+            snapshot_callback=lambda payload: {
+                "status": "test_snapshot",
+                "snapshot_kind": payload["snapshot_kind"],
+            },
         )
         _set_v12_test_schur(system, schur)
         systems.append(system)
@@ -3011,6 +5731,10 @@ def test_v12_modal_wrapper_rejects_input_mutation_and_eta_above_bound():
         assert mutation_record["pc_usable"] is False
         assert mutation_record["normal_return_rejection_reason"]
         assert not np.array_equal(rhs, original_rhs)
+        assert (
+            system.diagnostics["terminal_normal_reject_snapshot_saved"] is False
+        )
+        assert "snapshot_records" not in mutation_record
 
         # Use a deliberately ill-conditioned, finite test Schur action so the
         # real wrapper reaches eta>0.1 after its bounded KSP solve.  The right
@@ -3037,6 +5761,19 @@ def test_v12_modal_wrapper_rejects_input_mutation_and_eta_above_bound():
         assert bad_eta["final_relative_residual"] > 0.1
         assert bad_eta["pc_usable"] is False
         assert bad_eta["approximate_return_decision"]["status"] == "rejected"
+        assert bad_eta["trusted_iterate"] is True
+        assert bad_eta["input_unchanged"] is True
+        assert bad_eta_system.diagnostics[
+            "terminal_normal_reject_snapshot_saved"
+        ] is True
+        assert bad_eta["snapshot_record"]["status"] == "test_snapshot"
+        assert bad_eta["snapshot_record"]["snapshot_kind"] == (
+            "terminal_normal_reject"
+        )
+        assert set(bad_eta["snapshot_records"]) == {
+            "first_unmet_target",
+            "terminal_normal_reject",
+        }
 
         # Positive KSP reason with an independently missed raw target is
         # explicitly injected here; it is wrapper-path evidence, not a natural
@@ -3097,6 +5834,12 @@ def test_v12_modal_wrapper_rejects_input_mutation_and_eta_above_bound():
                 "policy_exception_rejection_reason"
             ] == "exception_prevented_a_usable_V12_modal_return"
             assert failure_record["final_residual_evaluated"] is False
+            assert (
+                failing.diagnostics[
+                    "terminal_normal_reject_snapshot_saved"
+                ]
+                is False
+            )
     finally:
         for system in systems:
             system.destroy()
