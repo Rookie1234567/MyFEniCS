@@ -84,6 +84,53 @@ def _geometry_identity_policy_for_profile(profile_identity: str) -> str:
     return "raw_unrounded"
 
 
+def _persist_n0_inventory(directory, parent_inventory, active_inventory, selection, indices):
+    """Save full metadata and the exact selection before expensive FE work."""
+    from pathlib import Path
+    from src.solvers.fullspace_dtn_action import (
+        FULLSPACE_DTN_MANIFEST_SCHEMA, FULLSPACE_DTN_PROFILE, _canonical_json_bytes,
+    )
+
+    root = Path(directory)
+    artifacts = {}
+    for label, inventory in (("parent", parent_inventory), ("active", active_inventory)):
+        _modes, rows, expected_sha = inventory
+        encoded = _canonical_json_bytes({
+            "schema": FULLSPACE_DTN_MANIFEST_SCHEMA,
+            "profile": FULLSPACE_DTN_PROFILE,
+            "mode_count": len(rows), "modes": rows,
+        })
+        digest = hashlib.sha256(encoded).hexdigest()
+        if digest != expected_sha:
+            raise ValueError(f"N0 {label} inventory bytes differ from the live manifest")
+        path = root / f"n0_{label}_mode_manifest.json"
+        with path.open("xb") as stream:
+            stream.write(encoded)
+        artifacts[label] = {"filename": path.name, "sha256": digest, "bytes": len(encoded)}
+    old_to_new = [-1] * len(parent_inventory[1])
+    for new, old in enumerate(indices):
+        old_to_new[old] = new
+    def key(row):
+        return [row["side"], int(row["m"]), int(row["n"]), row["polarization"]]
+    mapping = {
+        "schema": "task39extra.n0-mode-index-map.v1", "selection": selection,
+        "selected_parent_indices": list(indices), "old_to_new": old_to_new,
+        "retained_keys": [key(row) for row in active_inventory[1]],
+        "omitted_keys": [key(row) for index, row in enumerate(parent_inventory[1])
+                         if old_to_new[index] == -1],
+        "omitted_values_policy": "not measured; never filled with zero",
+    }
+    encoded = _canonical_json_bytes(mapping)
+    path = root / "n0_mode_index_map.json"
+    with path.open("xb") as stream:
+        stream.write(encoded)
+    artifacts["index_map"] = {
+        "filename": path.name, "sha256": hashlib.sha256(encoded).hexdigest(),
+        "bytes": len(encoded),
+    }
+    return artifacts
+
+
 def _failure_diagnostic_jsonable(value: Any) -> Any:
     """Serialize failure diagnostics without placing arrays/nonfinite floats in JSON."""
 
@@ -179,6 +226,8 @@ class RetainedCondensedRuntime:
     p4_terms: Mapping[int, Any]
     mode_count: int
     mode_sha256: str
+    operator_selection: Mapping[str, Any] | None = None
+    selected_parent_indices: tuple[int, ...] | None = None
     coarse_degree: int = 4
     sum_factorized_work: bool = False
     pc_physical: dict[str, Any] | None = None
@@ -222,9 +271,15 @@ class RetainedCondensedRuntime:
         from src.solvers.physical_equivalent_fast import (
             build_packed_physical_action,
         )
+        from src.io.native_capacity_profile import V6_0P7_N0_P3_PROFILES
 
         if int(comm.size) != 1:
             raise ValueError("the D2 retained route is qualified for MPI1 only")
+        is_n0_profile = profile_identity in V6_0P7_N0_P3_PROFILES
+        if is_n0_profile and functional_store_config is None:
+            raise ValueError(
+                "the explicit N0 profile requires persistent p6/p3 functional stores"
+            )
         coarse_degree = int(coarse_degree)
         options = dict(component_options or {})
         reuse_surface_vector = bool(options.get('reuse_dtn_surface_vector', False))
@@ -320,6 +375,10 @@ class RetainedCondensedRuntime:
                     'disk_reserve_bytes',
                     'producer_provenance',
                 }
+                from src.io.native_capacity_profile import V6_0P7_N0_P3_PROFILES
+
+                if profile_identity in V6_0P7_N0_P3_PROFILES:
+                    required_store_keys.add('parent_compatibility')
                 if required_store_keys.difference(functional_store_config):
                     raise ValueError('functional-store configuration is incomplete')
                 from pathlib import Path
@@ -413,6 +472,42 @@ class RetainedCondensedRuntime:
                     "resolved profile does not explicitly enable canonical P3 traces"
                 )
         notify = (lambda name, facts: marker(name, dict(facts))) if marker else (lambda *_: None)
+        operator_selection = None
+        quadrature_mode_inventory = None
+        selected_parent_indices = None
+        n0_inventory_artifacts = None
+        if profile_identity in V6_0P7_N0_P3_PROFILES:
+            from src.solvers.fullspace_dtn_action import (
+                build_dynamic_mode_inventory,
+                build_n0_mode_inventory,
+            )
+
+            quadrature_mode_inventory = build_dynamic_mode_inventory(cfg)
+            active_inventory, operator_selection, selected_parent_indices = (
+                build_n0_mode_inventory(quadrature_mode_inventory, cfg)
+            )
+            mode_inventory = active_inventory
+            n0_inventory_artifacts = _persist_n0_inventory(
+                functional_store_config["producer_provenance"]["output_directory"],
+                quadrature_mode_inventory, active_inventory,
+                operator_selection, selected_parent_indices,
+            )
+            notify(
+                "retained_n0_operator_selection_complete",
+                {
+                    "profile_identity": str(profile_identity),
+                    "operator_selection": dict(operator_selection),
+                    "selected_parent_index_count": len(selected_parent_indices),
+                    "inventory_artifacts": n0_inventory_artifacts,
+                },
+            )
+            if functional_store_config is not None:
+                functional_store_config = dict(functional_store_config)
+                functional_store_config["operator_selection"] = dict(
+                    operator_selection
+                )
+        else:
+            mode_inventory = None
         if surface_assembly_backend_by_degree is not None:
             notify(
                 'retained_surface_backend_route_selected',
@@ -430,6 +525,17 @@ class RetainedCondensedRuntime:
         levels = _build_same_mesh_levels(
             cfg, comm, (6, coarse_degree), include_positive_coefficients=True
         )
+        n0_material_evidence = None
+        if is_n0_profile:
+            from src.runners.n0_port_material_evidence import (
+                actual_n0_y_material_evidence,
+            )
+
+            n0_material_evidence = actual_n0_y_material_evidence(levels, cfg)
+            notify(
+                "retained_n0_y_material_evidence_complete",
+                n0_material_evidence,
+            )
         shared_mesh_facts = {"degrees": [6, coarse_degree]}
         if coarse_degree == 3:
             shared_mesh_facts.update(
@@ -463,6 +569,10 @@ class RetainedCondensedRuntime:
             levels,
             cfg,
             6,
+            mode_inventory=mode_inventory,
+            quadrature_mode_inventory=quadrature_mode_inventory,
+            operator_selection=operator_selection,
+            selected_parent_indices=selected_parent_indices,
             volume_quadrature_metadata=volume_quadrature_metadata,
             reuse_surface_vector=reuse_surface_vector,
             surface_assembly_backend=surface_backend_by_degree[6],
@@ -475,6 +585,22 @@ class RetainedCondensedRuntime:
             stage_callback=notify if reuse_surface_vector else None,
             surface_progress_interval=surface_progress_interval,
         )
+        if is_n0_profile:
+            fine["n0_y_material_evidence"] = n0_material_evidence
+            fine["operator_selection"] = dict(operator_selection)
+            fine["quadrature_mode_count"] = len(quadrature_mode_inventory[0])
+            fine["quadrature_mode_sha256"] = str(quadrature_mode_inventory[2])
+            fine["selected_parent_indices"] = selected_parent_indices
+            fine["n0_inventory_artifacts"] = n0_inventory_artifacts
+            from src.solvers.dtn_port_3d import _incident_projection_onto_top_mode
+            selected_set = set(selected_parent_indices)
+            fine["n0_omitted_incident_rhs_zero"] = all(
+                _incident_projection_onto_top_mode(mode, cfg) == 0j
+                for index, mode in enumerate(quadrature_mode_inventory[0])
+                if index not in selected_set
+            )
+            if not fine["n0_omitted_incident_rhs_zero"]:
+                raise ValueError("N0 omitted incident RHS is not exactly zero")
         p4 = None
         pc_physical = None
         fast_a4 = None
@@ -484,6 +610,9 @@ class RetainedCondensedRuntime:
                 cfg,
                 coarse_degree,
                 mode_inventory=(fine["modes"], fine["mode_rows"], fine["mode_sha256"]),
+                quadrature_mode_inventory=quadrature_mode_inventory,
+                operator_selection=operator_selection,
+                selected_parent_indices=selected_parent_indices,
                 volume_quadrature_metadata=volume_quadrature_metadata,
                 reuse_surface_vector=reuse_surface_vector,
                 surface_assembly_backend=surface_backend_by_degree[coarse_degree],
@@ -648,6 +777,12 @@ class RetainedCondensedRuntime:
                 p4_terms=p4_terms,
                 mode_count=len(fine["modes"]),
                 mode_sha256=str(fine["mode_sha256"]),
+                operator_selection=(
+                    dict(operator_selection) if is_n0_profile else None
+                ),
+                selected_parent_indices=(
+                    tuple(selected_parent_indices) if is_n0_profile else None
+                ),
                 coarse_degree=coarse_degree,
                 sum_factorized_work=bool(sum_factorized_work),
                 pc_physical=pc_physical,
@@ -1421,6 +1556,22 @@ def run_retained_condensed_workflow(
     from pathlib import Path
     import json
     import time
+    from src.io.native_capacity_profile import V6_0P7_N0_P3_PROFILES
+
+    profile_identity = str(payload["solver"]["preconditioner"])
+    is_n0_profile = profile_identity in V6_0P7_N0_P3_PROFILES
+    physical_residual_key = "A6_n0_relative" if is_n0_profile else "original_A6_relative"
+    if is_n0_profile:
+        if setup_only or contract.get("execution_mode") != "pilot_16":
+            raise ValueError("N0 target requires the authorized 16-step pilot contract")
+        summary.update(
+            experiment="N0_PORT_FILTER_TARGET_PILOT",
+            operator_scope="n0_filtered_dtn_not_full_dtn",
+            full_dtn_endpoint_check={
+                "status": "FULL_DTN_NOT_VERIFIED", "A6_full_relative": None,
+                "reason": "pilot endpoint has not been reached",
+            },
+        )
 
     if contract.get("execution_mode") == "h6_only":
         from .physical_positive_setup_scope import run_positive_setup_scope
@@ -1469,7 +1620,7 @@ def run_retained_condensed_workflow(
     recovery_packets = directory / "retained_recovery_packets"
     recovery_packets.mkdir(exist_ok=True)
     last_checkpoint = {-1}
-    last_evaluation: dict[str, Any] = {"facts": None}
+    last_evaluation: dict[str, Any] = {"facts": None, "sequence": 0}
 
     def _storage_vector(values: np.ndarray):
         space = runtime.fine["setup"]["spaces"][6]
@@ -1520,7 +1671,7 @@ def run_retained_condensed_workflow(
         """Map the native evaluator schema to the runner/checker schema."""
 
         return {
-            "original_A6_relative": float(raw_facts["native_residual_relative"]),
+            physical_residual_key: float(raw_facts["native_residual_relative"]),
             "port_closure_relative": float(raw_facts["port_residual_relative"]),
             "internal_residual_relative": float(raw_facts["internal_residual_relative"]),
             "native_identity_relative": float(raw_facts["native_identity_relative"]),
@@ -1584,6 +1735,22 @@ def run_retained_condensed_workflow(
             profile_identity=profile_identity,
             functional_store_config=store_config,
         )
+        if is_n0_profile:
+            summary.update(
+                operator_selection=dict(runtime.operator_selection),
+                n0_inventory_artifacts=runtime.fine["n0_inventory_artifacts"],
+                n0_y_material_evidence=runtime.fine["n0_y_material_evidence"],
+                n0_omitted_incident_rhs_zero=runtime.fine["n0_omitted_incident_rhs_zero"],
+            )
+            # Snapshot before the optional endpoint read changes store counters.
+            summary["n0_functional_preparation"] = {
+                str(degree): {
+                    "carrier": dict(build["dtn_action"].carrier.audit),
+                    "store": build["dtn_action"].carrier.n0_parent_store.audit,
+                }
+                for degree, build in ((6, runtime.fine), (3, runtime.p4))
+            }
+            _atomic_json(directory / "physical_intermediate_summary.json", summary)
         if profile_identity in (V5_NATIVE_PROFILES | V6_NATIVE_PROFILES):
             summary["provenance"] = {
                 "input_sha256": provenance["input_sha256"],
@@ -1643,6 +1810,8 @@ def run_retained_condensed_workflow(
                 "maximum_extra_same_factor_refinements": 2,
                 "p4_internal_fields_are_compatibility_aliases": True,
             }
+            if is_n0_profile:
+                summary["retained_runtime"]["coarse_operator"]["residual_scope"] = "A3_n0"
             trace_map_policy = str(
                 (runtime.component_options or {}).get(
                     "same_mesh_trace_map_policy", "basix_full_cell_interpolation_v1"
@@ -1741,7 +1910,7 @@ def run_retained_condensed_workflow(
                 checkpoints / f"iteration_{iteration:06d}",
                 vector,
                 iteration=iteration,
-                explicit_true_residual=float(row["original_A6_relative"]),
+                explicit_true_residual=float(row[physical_residual_key]),
                 input_identity_sha256=provenance["input_sha256"],
                 operator_identity_sha256=operator_identity,
                 physical_model_sha256=provenance["physical_model_sha256"],
@@ -1765,7 +1934,7 @@ def run_retained_condensed_workflow(
                     full_checkpoints / f"iteration_{iteration:06d}",
                     full_field,
                     iteration=iteration,
-                    explicit_true_residual=float(row["original_A6_relative"]),
+                    explicit_true_residual=float(row[physical_residual_key]),
                     input_identity_sha256=provenance["input_sha256"],
                     operator_identity_sha256=operator_identity,
                     physical_model_sha256=provenance["physical_model_sha256"],
@@ -1793,7 +1962,9 @@ def run_retained_condensed_workflow(
                     "full_checkpoint": full_facts,
                     "storage_solution_sha256": hashlib.sha256(storage_values.tobytes()).hexdigest(),
                     "storage_solution_shape": [int(item) for item in storage_values.shape],
-                    "original_A6_relative": float(row["original_A6_relative"]),
+                    physical_residual_key: float(row[physical_residual_key]),
+                    "physical_residual_key": physical_residual_key,
+                    "operator_scope": row.get("operator_scope", "original_full_dtn"),
                     "port_closure_relative": float(row["port_closure_relative"]),
                     "internal_residual_relative": float(row["internal_residual_relative"]),
                     "native_identity_relative": float(row["native_identity_relative"]),
@@ -1809,7 +1980,8 @@ def run_retained_condensed_workflow(
                 )
             finally:
                 full_field.destroy()
-                last_evaluation["facts"] = None
+                if not (is_n0_profile and row.get("solution_source") == "terminal_vec_sol"):
+                    last_evaluation["facts"] = None
 
         def evaluate(target: PETSc.Vec, reduced_residual: PETSc.Vec) -> Mapping[str, Any]:
             # The raw recovery arrays belong only to the current evaluation.
@@ -1824,8 +1996,10 @@ def run_retained_condensed_workflow(
                 reduced_residual=reduced_residual,
             )
             last_evaluation["facts"] = facts
+            last_evaluation["sequence"] += 1
             return {
                 **_mapped_native_residual_facts(facts),
+                "native_evaluation_sequence": int(last_evaluation["sequence"]),
                 "native_rhs_norm": float(facts["native_rhs_norm"]),
                 "port_operation_scale": float(facts["port_operation_scale"]),
                 "internal_operation_scale": float(facts["internal_operation_scale"]),
@@ -1951,6 +2125,9 @@ def run_retained_condensed_workflow(
             "cache_after_setup": cache_after_setup,
             "cache_content_and_unique_bytes_unchanged": cache_setup_unchanged,
         }
+        if is_n0_profile:
+            setup_checks["mixed_A6_n0_J"] = setup_checks.pop("mixed_original_A6_J")
+            setup_checks["operator_scope"] = "n0_filtered_dtn_not_full_dtn"
         if aq_projection_check is not None:
             setup_checks["native_aq_projection"] = aq_projection_check
         summary["retained_runtime"]["setup_checks"] = setup_checks
@@ -2059,6 +2236,7 @@ def run_retained_condensed_workflow(
             stop_requested=lambda: ledger.stop_signal is not None,
             save_retained=save_retained,
             planned_stop_iteration=contract["outer"].get("planned_stop_iteration"),
+            physical_residual_key=physical_residual_key,
         )
         solve_summary = {
             key: value for key, value in result.items() if key != "final_solution"
@@ -2090,6 +2268,35 @@ def run_retained_condensed_workflow(
                 final_native_A6_relative=float(result["final_true_residual"]),
                 p4_factor_counts=dict(runtime.p4_ledger._factor_counts()),
                 qa_and_outer_share_one_factor=True, zero_start=True)
+            if is_n0_profile:
+                from src.runners.n0_full_dtn_endpoint import observe_full_dtn_endpoint
+
+                pilot_facts["A6_n0_relative"] = pilot_facts.pop("final_native_A6_relative")
+                packet = last_evaluation.get("facts")
+                if (not isinstance(packet, Mapping)
+                        or last_evaluation["sequence"] != result["final_evaluation"].get(
+                            "native_evaluation_sequence")):
+                    raise RuntimeError("N0 endpoint requires the same final native evaluation packet")
+                carrier = runtime.fine["dtn_action"].carrier
+                ledger.marker("n0_full_dtn_endpoint_observation_started", {
+                    "iteration": int(result["iterations"]), "new_FE_assembly": False,
+                })
+                summary["full_dtn_endpoint_check"] = observe_full_dtn_endpoint(
+                    parent_store=carrier.n0_parent_store,
+                    active_entries=carrier.entries,
+                    selected_parent_indices=runtime.fine["selected_parent_indices"],
+                    storage_solution=packet["storage_solution"],
+                    n0_residual=packet["native_residual"],
+                    native_rhs_norm=packet["native_rhs_norm"],
+                    iteration=result["iterations"],
+                    omitted_incident_rhs_zero=runtime.fine["n0_omitted_incident_rhs_zero"],
+                )
+                ledger.marker("n0_full_dtn_endpoint_observation_complete",
+                              summary["full_dtn_endpoint_check"])
+                _atomic_json(directory / "n0_full_dtn_endpoint_observation.json",
+                             summary["full_dtn_endpoint_check"])
+                last_evaluation["facts"] = None
+                del packet
             summary.update(status="PILOT_COMPLETED_NOT_SOLVER_QUALIFICATION",
                 execution_mode="pilot_16", complete_solve=False,
                 result_classification="pilot_16", pilot_facts=pilot_facts,
@@ -2097,6 +2304,16 @@ def run_retained_condensed_workflow(
                 elapsed_monotonic_seconds=time.monotonic()-ledger.started)
             ledger.marker("PILOT_COMPLETED_NOT_SOLVER_QUALIFICATION", pilot_facts)
             _atomic_json(directory / "physical_intermediate_summary.json", summary)
+            if is_n0_profile:
+                from benchmarks.physical_intermediate_checker import check_n0_target_pilot
+
+                checker = check_n0_target_pilot(directory, summary)
+                summary["n0_pilot_record_checker"] = checker
+                summary["physical_checker_status"] = "NOT_RUN_PILOT_RECORD_AUDIT_ONLY"
+                _atomic_json(directory / "n0_pilot_record_checker.json", checker)
+                _atomic_json(directory / "physical_intermediate_summary.json", summary)
+                if not checker["pilot_evidence_complete"]:
+                    raise RuntimeError("N0 pilot evidence audit failed: " + "; ".join(checker["gate_failures"]))
             return dict(passed=True, result_classification="pilot_16", complete_solve=False,
                 errors=[], summary=str(directory / "physical_intermediate_summary.json"))
         if result["status"] != "TRUE_RESIDUAL_PASS":

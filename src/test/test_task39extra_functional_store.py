@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import importlib.util
 import json
-import copy
 import shutil
 import subprocess
 import sys
@@ -29,6 +29,8 @@ from src.solvers.dtn_port_3d import (
 from src.solvers.fullspace_dtn_action import (
     FULLSPACE_DTN_MANIFEST_SCHEMA,
     FULLSPACE_DTN_PROFILE,
+    FullspaceDtnCarrier,
+    FullspaceDtnModeFunctional,
     _dtn_component_phase_key,
     _remaining_dtn_component_phase_uses,
 )
@@ -41,9 +43,10 @@ from src.solvers.fullspace_dtn_functional_store import (
     P6_NUMERICAL_IDENTITY_SCHEMA,
     P6_SURFACE_PROVIDER_SCHEMA,
     PortFunctionalShardStore,
+    _n0_remapped_mode_identity_matches,
     _surface_form_identities,
-    build_surface_functional_numerical_identity,
     _validate_p6_context_descriptor,
+    build_surface_functional_numerical_identity,
 )
 from src.solvers.fullspace_surface_legendre import (
     SURFACE_COMPONENT_PAIR_BACKEND,
@@ -2098,3 +2101,295 @@ def test_store_enforces_single_writer_and_separate_degree_roots(tmp_path):
     assert p6.identity_sha256 != p3.identity_sha256
     p3.close()
     p6.close()
+
+
+def test_n0_parent_identity_is_normalized_but_import_returns_raw_carrier_identity(
+    tmp_path,
+):
+    parent_identity = _mode_identity(7, "p")
+    active_identity = copy.deepcopy(parent_identity)
+    active_identity["mode_index"] = 0
+    assert _n0_remapped_mode_identity_matches(
+        parent_identity, active_identity, 0
+    )
+    changed = copy.deepcopy(active_identity)
+    changed["alpha"] += 1.0e-15j
+    assert not _n0_remapped_mode_identity_matches(parent_identity, changed, 0)
+
+    parent_root = tmp_path / "parent"
+    shard = parent_root / "functional_00000007"
+    shard.mkdir(parents=True)
+    arrays = {
+        "coupling_rows": np.asarray([0, 2], dtype=np.int64),
+        "coupling_values": np.asarray([1.0 + 0.25j, -0.5j], dtype=np.complex128),
+        "projection_rows": np.asarray([1, 3], dtype=np.int64),
+        "projection_values": np.asarray([0.75 - 0.5j, 0.125j], dtype=np.complex128),
+        "normalization_h": np.asarray([1.25], dtype=np.float64),
+    }
+    payload_path = shard / "payload.npz"
+    np.savez(payload_path, **arrays)
+    payload_sha, payload_bytes, _ = functional_store_module._sha256_file(payload_path)
+    parent_identity_json = functional_store_module._json_safe(parent_identity)
+    manifest = {
+        "schema": functional_store_module.SHARD_SCHEMA,
+        "mode_index": 7,
+        "mode_key": functional_store_module._json_safe(
+            functional_store_module._mode_key_from_identity(parent_identity_json)
+        ),
+        "mode_identity": parent_identity_json,
+        "numerical_identity_sha256": "a" * 64,
+        "payload_filename": "payload.npz",
+        "arrays": {
+            key: functional_store_module._array_descriptor(value)
+            for key, value in arrays.items()
+        },
+        "max_shard_working_bytes": 32 * 1024**2,
+        "uncompressed_payload_bytes": sum(
+            int(value.nbytes) for value in arrays.values()
+        ),
+        "uncompressed_npz_member_bytes_cap": sum(
+            int(value.nbytes) for value in arrays.values()
+        )
+        + 16 * 1024,
+        "serialized_bytes": payload_bytes,
+        "payload_sha256": payload_sha,
+    }
+    (shard / "manifest.json").write_bytes(
+        functional_store_module._canonical_json_bytes(manifest)
+    )
+
+    store = object.__new__(PortFunctionalShardStore)
+    store.root = tmp_path / "active"
+    store._mode_identities = (functional_store_module._json_safe(active_identity),)
+    store._raw_mode_identities = (active_identity,)
+    store._max_shard_working_bytes = 32 * 1024**2
+    store._row_dtype = np.dtype(np.int64)
+    store._ownership_range = (0, 4)
+    store._slave_rows = np.empty(0, dtype=np.int64)
+    store._next_index = 0
+    store._parent_import_state = {
+        "root": parent_root,
+        "identity_sha256": "a" * 64,
+        "parent_rows": tuple(parent_identity_json for _ in range(8)),
+        "selected_parent_indices": (7,),
+    }
+    store._parent_import_facts = {
+        "configured": True,
+        "status": "PARENT_COMPATIBLE",
+        "attempted_count": 0,
+        "imported_count": 0,
+        "fallback_count": 0,
+        "fallback_reasons": [],
+        "omitted_fallback_reason_count": 0,
+        "timing_seconds": {
+            "parent_manifest_read_seconds": 0.0,
+            "parent_payload_hash_seconds": 0.0,
+            "parent_payload_read_seconds": 0.0,
+            "parent_active_store_commit_seconds": 0.0,
+        },
+    }
+    store.timing_seconds = {"active_store_commit_seconds": 0.0}
+    commits = []
+
+    def commit(functional, *, mode_index):
+        commits.append((functional, mode_index))
+        store._next_index += 1
+
+    store.commit = commit
+    imported = store.try_import_compatible_parent_functional(0)
+    assert imported is not None, store._parent_import_facts["fallback_reasons"]
+    assert imported["mode_identity"] == active_identity
+    assert isinstance(imported["mode_identity"]["alpha"], complex)
+    assert isinstance(imported["mode_identity"]["rayleigh_tolerance"], float)
+    assert len(commits) == 1 and commits[0][1] == 0
+
+    entry = FullspaceDtnModeFunctional(
+        mode_key=tuple(imported["mode_key"]),
+        coupling_rows=imported["coupling_rows"],
+        coupling_values=imported["coupling_values"],
+        projection_rows=imported["projection_rows"],
+        projection_values=imported["projection_values"],
+        normalization_h=imported["normalization_h"],
+        mode_identity=imported["mode_identity"],
+    )
+    carrier = FullspaceDtnCarrier(
+        [entry],
+        global_rows=4,
+        ownership_range=(0, 4),
+        slave_rows=(),
+    )
+    expected_manifest = {
+        "schema": FULLSPACE_DTN_MANIFEST_SCHEMA,
+        "profile": FULLSPACE_DTN_PROFILE,
+        "mode_count": 1,
+        "modes": [active_identity],
+    }
+    assert carrier.mode_manifest_sha256 == hashlib.sha256(
+        _mode_json_bytes(expected_manifest)
+    ).hexdigest()
+
+
+def test_n0_parent_mapping_import_commits_reads_and_preserves_carrier_identity(tmp_path):
+    parent_modes = _mode_identities()
+    parent = _store(tmp_path / "parent-real", parent_modes)
+    parent.commit(_functional(0, parent_modes), mode_index=0)
+    parent.commit(_functional(1, parent_modes), mode_index=1)
+    parent_identity_sha = parent._identity_sha256
+    parent.close()
+
+    active_identity = copy.deepcopy(parent_modes[1])
+    active_identity["mode_index"] = 0
+    active_modes = (active_identity,)
+    active = _store(
+        tmp_path / "active-real",
+        active_modes,
+        identity=_numerical_identity(active_modes),
+    )
+    active._parent_import_state = {
+        "root": parent.root,
+        "identity_sha256": parent_identity_sha,
+        "parent_rows": tuple(
+            functional_store_module._json_safe(dict(row)) for row in parent_modes
+        ),
+        "selected_parent_indices": (1,),
+    }
+
+    imported = active.try_import_compatible_parent_functional(0)
+    assert imported is not None
+    assert imported["mode_identity"] == active_identity
+    assert isinstance(imported["mode_identity"]["alpha"], complex)
+    assert isinstance(imported["mode_identity"]["rayleigh_tolerance"], float)
+    restored = active.restore_prefix()
+    assert len(restored) == 1
+    assert restored[0]["mode_identity"] == active_identity
+    carrier = FullspaceDtnCarrier(
+        [
+            FullspaceDtnModeFunctional(
+                mode_key=tuple(restored[0]["mode_key"]),
+                coupling_rows=restored[0]["coupling_rows"],
+                coupling_values=restored[0]["coupling_values"],
+                projection_rows=restored[0]["projection_rows"],
+                projection_values=restored[0]["projection_values"],
+                normalization_h=restored[0]["normalization_h"],
+                mode_identity=restored[0]["mode_identity"],
+            )
+        ],
+        global_rows=120,
+        ownership_range=(100, 120),
+        slave_rows=(105,),
+        n0_parent_store=parent,
+    )
+    expected_manifest = {
+        "schema": FULLSPACE_DTN_MANIFEST_SCHEMA,
+        "profile": FULLSPACE_DTN_PROFILE,
+        "mode_count": 1,
+        "modes": [active_identity],
+    }
+    assert carrier.mode_manifest_sha256 == hashlib.sha256(
+        _mode_json_bytes(expected_manifest)
+    ).hexdigest()
+    assert carrier.n0_parent_store is parent
+    with pytest.raises(AttributeError):
+        carrier.n0_parent_store = None
+    audit = active.audit
+    assert audit["timing_seconds"]["active_store_commit_seconds"] > 0.0
+    parent_timing = audit["parent_import"]["timing_seconds"]
+    for key in (
+        "parent_manifest_read_seconds",
+        "parent_payload_hash_seconds",
+        "parent_payload_read_seconds",
+        "parent_active_store_commit_seconds",
+    ):
+        assert float.fromhex(parent_timing[key]["float64_hex"]) > 0.0
+    assert parent_timing["parent_fallback_fe_assembly_seconds"] == {
+        "float64_hex": 0.0.hex()
+    }
+    active.record_n0_parent_fallback_assembly_seconds(0.125)
+    assert (
+        active.audit["parent_import"]["timing_seconds"][
+            "parent_fallback_fe_assembly_seconds"
+        ]
+        == {"float64_hex": 0.125.hex()}
+    )
+    active.close()
+
+
+def test_n0_parent_payload_fallback_is_per_active_mode_and_active_commit_errors_escape():
+    store = object.__new__(PortFunctionalShardStore)
+    store._next_index = 0
+    store._parent_import_state = {
+        "root": Path("/optional-parent"),
+        "identity_sha256": "a" * 64,
+        "parent_rows": tuple({} for _ in range(31)),
+        "selected_parent_indices": (10, 20, 30),
+    }
+    store._parent_import_facts = {
+        "configured": True,
+        "status": "PARENT_COMPATIBLE",
+        "attempted_count": 0,
+        "imported_count": 0,
+        "fallback_count": 0,
+        "fallback_reasons": [],
+        "omitted_fallback_reason_count": 0,
+        "timing_seconds": {
+            "parent_manifest_read_seconds": 0.0,
+            "parent_payload_hash_seconds": 0.0,
+            "parent_payload_read_seconds": 0.0,
+            "parent_active_store_commit_seconds": 0.0,
+        },
+    }
+    store.timing_seconds = {"active_store_commit_seconds": 0.0}
+    attempts = []
+    store._read_compatible_parent_functional = lambda *_args: (
+        (_ for _ in ()).throw(ValueError("corrupt optional parent shard"))
+        if len(attempts) == 0
+        else {"mode_index": len(attempts)}
+    )
+    commits = []
+
+    def commit(functional, *, mode_index):
+        commits.append((functional, mode_index))
+        store._next_index += 1
+
+    store.commit = commit
+    first = store.try_import_compatible_parent_functional(0)
+    assert first is None
+    assert store._parent_import_facts["fallback_count"] == 1
+    # The active carrier assembles and commits the missing mode at this point.
+    store.commit({"assembled": 0}, mode_index=0)
+    attempts.append(0)
+    second = store.try_import_compatible_parent_functional(1)
+    assert second == {"mode_index": 1}
+    assert [index for _functional, index in commits] == [0, 1]
+    assert store._parent_import_facts["imported_count"] == 1
+
+    failing = object.__new__(PortFunctionalShardStore)
+    failing._next_index = 0
+    failing._parent_import_state = {
+        "root": Path("/optional-parent"),
+        "identity_sha256": "a" * 64,
+        "parent_rows": tuple({} for _ in range(11)),
+        "selected_parent_indices": (10,),
+    }
+    failing._parent_import_facts = {
+        "configured": True,
+        "status": "PARENT_COMPATIBLE",
+        "attempted_count": 0,
+        "imported_count": 0,
+        "fallback_count": 0,
+        "fallback_reasons": [],
+        "omitted_fallback_reason_count": 0,
+        "timing_seconds": {
+            "parent_manifest_read_seconds": 0.0,
+            "parent_payload_hash_seconds": 0.0,
+            "parent_payload_read_seconds": 0.0,
+            "parent_active_store_commit_seconds": 0.0,
+        },
+    }
+    failing.timing_seconds = {"active_store_commit_seconds": 0.0}
+    failing._read_compatible_parent_functional = lambda *_args: {"valid": True}
+    failing.commit = lambda *_args, **_kwargs: (_ for _ in ()).throw(
+        OSError("active store disk failure")
+    )
+    with pytest.raises(OSError, match="active store disk failure"):
+        failing.try_import_compatible_parent_functional(0)

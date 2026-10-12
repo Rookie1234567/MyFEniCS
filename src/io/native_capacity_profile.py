@@ -38,9 +38,19 @@ V6_BASE_PROFILES = {
     'dual_condensed_balh_native_5nm_p3_v6': 'dual_condensed_balh_native_5nm_v5',
     'dual_condensed_balh_native_2nm_p3_pilot16_v6': 'dual_condensed_balh_native_2nm_v5',
     'dual_condensed_balh_native_0p7nm_p3_pilot16_v6': 'dual_condensed_balh_native_2nm_v5',
+    # This separately named route keeps the full 0.7 nm parent inventory for
+    # q=160 while exposing only its n=0 operator rows.  It is not a full-DtN
+    # profile and must never inherit the old 3904-mode 2 nm checker contract.
+    'dual_condensed_balh_native_0p7nm_n0_p3_pilot16_v6': 'dual_condensed_balh_native_2nm_v5',
 }
+V6_0P7_N0_P3_PROFILES = frozenset(
+    {'dual_condensed_balh_native_0p7nm_n0_p3_pilot16_v6'}
+)
 V6_0P7_P3_HP_OPTIN_PROFILES = frozenset(
-    {'dual_condensed_balh_native_0p7nm_p3_pilot16_v6'}
+    {
+        'dual_condensed_balh_native_0p7nm_p3_pilot16_v6',
+        *V6_0P7_N0_P3_PROFILES,
+    }
 )
 V6_NATIVE_PROFILES = frozenset(V6_BASE_PROFILES)
 V6_P3_PROFILES = frozenset(
@@ -49,6 +59,7 @@ V6_P3_PROFILES = frozenset(
         'dual_condensed_balh_native_5nm_p3_v6',
         'dual_condensed_balh_native_2nm_p3_pilot16_v6',
         'dual_condensed_balh_native_0p7nm_p3_pilot16_v6',
+        *V6_0P7_N0_P3_PROFILES,
     }
 )
 V6_R13_ANCHOR_PROFILES = frozenset({'dual_condensed_balh_native_13p5_p3_v6'})
@@ -57,6 +68,7 @@ V6_PILOT16_PROFILES = frozenset(
         'dual_condensed_balh_native_2nm_pilot16_v6',
         'dual_condensed_balh_native_2nm_p3_pilot16_v6',
         'dual_condensed_balh_native_0p7nm_p3_pilot16_v6',
+        *V6_0P7_N0_P3_PROFILES,
     }
 )
 V6_COARSE_DEGREES = {
@@ -72,6 +84,9 @@ NATIVE_CASES.update(
 )
 NATIVE_CASES.update({identity: NATIVE_CASES[base] for identity, base in V6_BASE_PROFILES.items()})
 NATIVE_CASES['dual_condensed_balh_native_0p7nm_p3_pilot16_v6'] = (
+    0.7, (0.7,), None, None, None
+)
+NATIVE_CASES['dual_condensed_balh_native_0p7nm_n0_p3_pilot16_v6'] = (
     0.7, (0.7,), None, None, None
 )
 NATIVE_PROFILES = tuple(NATIVE_CASES)
@@ -239,6 +254,22 @@ def native_profile_facts(identity):
                 hp_storage_policy='exact_carrier_diagonal',
                 hlocal_omission_policy='only_omitted_H_is_structural_zero',
             )
+            if identity in V6_0P7_N0_P3_PROFILES:
+                facts['component_options']['dtn_mode_selection'] = {
+                    'schema': 'task39extra.dtn-mode-selection.v1',
+                    'policy': 'n_equals_zero_both_ports_both_polarizations',
+                    'parent_mode_count': 32060,
+                    'parent_mode_sha256': (
+                        '7f023c73d7b63379955642dd062e47ba7004f3cdf0accf42684286c4af71dbfb'
+                    ),
+                    'active_mode_count': 572,
+                    'expected_active_mode_sha256': (
+                        '946e0d294b99cb7f44817c3649029942ac325f345eb1770caa566183d2b04f3b'
+                    ),
+                    'm_range_in_each_side_polarization': [-142, 0],
+                    'quadrature_inventory': 'full_parent_modes',
+                    'operator_scope': 'n0_filtered_dtn_not_full_dtn',
+                }
             material_facts = USER_MATERIAL_METADATA[0.7]
             facts['campaign_authorization']['user_material'] = dict(material_facts)
             facts['campaign_authorization'].pop('two_nm_material', None)
@@ -608,6 +639,13 @@ def validate_native_case(config):
                 raise InputError(f'{identity} fixes solver.ksp_type=fgmres')
             if config['execution'].get('timeout_seconds') is not None:
                 raise InputError(f'{identity} fixes execution.timeout_seconds=None')
+            if identity in V6_0P7_N0_P3_PROFILES:
+                if config['solver'].get('restart') != 32 or config['solver'].get('max_iterations') != 2048:
+                    raise InputError(f'{identity} fixes restart=32 and max_iterations=2048')
+                if config['output'].get('export_all_port_modes', False):
+                    raise InputError(
+                        f'{identity} does not claim or export a full-DtN mode result'
+                    )
             return
         legacy = deepcopy(config)
         legacy['solver']['preconditioner'] = V6_BASE_PROFILES[identity]

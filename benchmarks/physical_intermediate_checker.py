@@ -316,6 +316,159 @@ def _retained_full_reference_required(identity):
     }
 
 
+def check_n0_target_pilot(directory: Path, summary: dict) -> dict:
+    """Audit the filtered pilot's small records without qualifying a full solve.
+
+    This does not read full-field arrays or independently recompute A6.  The
+    recorded N0 residual and the optional full-DtN endpoint observation retain
+    separate names even if either happens to be below the solver threshold.
+    """
+
+    started = time.monotonic()
+    errors = []
+
+    def require(condition, message):
+        if not condition:
+            errors.append(message)
+
+    def finite_nonnegative(value):
+        return isinstance(value, (int, float)) and np.isfinite(value) and value >= 0
+
+    def records(name):
+        try:
+            with (directory / name).open(encoding='utf-8') as stream:
+                return [json.loads(line) for line in stream if line.strip()]
+        except (OSError, ValueError) as exc:
+            errors.append(f'{name}: {type(exc).__name__}: {exc}')
+            return []
+
+    scope = 'n0_filtered_dtn_not_full_dtn'
+    require(summary.get('experiment') == 'N0_PORT_FILTER_TARGET_PILOT',
+            'N0 experiment identity is missing')
+    require(summary.get('operator_scope') == scope, 'N0 operator scope is missing')
+    require(summary.get('status') == 'PILOT_COMPLETED_NOT_SOLVER_QUALIFICATION'
+            and summary.get('execution_mode') == 'pilot_16'
+            and summary.get('complete_solve') is False,
+            'N0 result is not the authorized pilot terminal state')
+    require(summary.get('official_result') is None
+            and summary.get('rta_status') == 'NOT_RUN',
+            'N0 pilot must not claim official R/T/A')
+    selection = summary.get('operator_selection', {})
+    expected_selection = {
+        'schema': 'task39extra.dtn-mode-selection.v1',
+        'policy': 'n_equals_zero_both_ports_both_polarizations',
+        'parent_mode_count': 32060,
+        'parent_mode_sha256':
+            '7f023c73d7b63379955642dd062e47ba7004f3cdf0accf42684286c4af71dbfb',
+        'active_mode_count': 572,
+        'active_mode_sha256':
+            '946e0d294b99cb7f44817c3649029942ac325f345eb1770caa566183d2b04f3b',
+        'selected_parent_indices_sha256':
+            'f423721c90fe6259f9d9ea9f514aa9c5f1abdd7723ffd49fac64c79af03c56b2',
+        'side_polarization_counts':
+            {'bottom_p': 143, 'bottom_s': 143, 'top_p': 143, 'top_s': 143},
+        'm_range_in_each_side_polarization': [-142, 0],
+        'quadrature_inventory': 'full_parent_modes',
+        'operator_scope': scope,
+    }
+    for key, expected in expected_selection.items():
+        require(selection.get(key) == expected, f'N0 selection mismatch: {key}')
+
+    solve = summary.get('solve', {})
+    final = solve.get('final_evaluation', {})
+    iterations = solve.get('iterations', -1)
+    require(solve.get('physical_residual_key') == 'A6_n0_relative'
+            and solve.get('operator_scope') == scope, 'N0 solve residual is unscoped')
+    require(solve.get('restart') == 32 and solve.get('max_it') == 2048
+            and solve.get('planned_stop_iteration') == 16
+            and solve.get('zero_start') is True, 'N0 outer solve contract differs')
+    require(solve.get('screen_enabled') is False
+            and solve.get('time_policy') == 'observe_only'
+            and solve.get('time_gate_evaluated') is False,
+            'N0 solve progress/time contract differs')
+    require(all(solve.get(key) == 1 for key in
+                ('ksp_create_count', 'ksp_solve_count', 'ksp_destroy_count')),
+            'N0 pilot did not record exactly one KSP lifecycle')
+    relative = final.get('A6_n0_relative')
+    require(finite_nonnegative(relative), 'N0 final residual is missing/nonfinite')
+    require(isinstance(iterations, int) and 0 <= iterations <= 16,
+            'N0 pilot exceeded its iteration budget or has no iteration count')
+    require(iterations == 16 or (
+        solve.get('status') == 'TRUE_RESIDUAL_PASS'
+        and final.get('physical_residual_pass') is True
+        and finite_nonnegative(relative) and relative <= 1e-6),
+        'N0 pilot ended early without its own physical residual gate')
+    require(solve.get('final_true_residual') == relative,
+            'N0 final reported residual differs from final evaluation')
+    require('original_A6_relative' not in final, 'N0 final uses the full-DtN alias')
+    require('final_native_A6_relative' not in summary.get('pilot_facts', {}),
+            'N0 pilot uses the ambiguous final-native-A6 alias')
+
+    monitors = records('monitor_residuals.jsonl')
+    require(bool(monitors), 'N0 monitor residual evidence is missing')
+    for row in monitors:
+        require('original_A6_relative' not in row
+                and row.get('physical_residual_key') == 'A6_n0_relative'
+                and row.get('operator_scope') == scope
+                and finite_nonnegative(row.get('A6_n0_relative')),
+                'N0 monitor residual name/scope/value differs')
+    if monitors:
+        require(monitors[-1].get('iteration') == iterations
+                and monitors[-1].get('A6_n0_relative') == relative,
+                'N0 final monitor differs from solve summary')
+
+    factor = solve.get('p4_factor_counts', {})
+    require(factor.get('symbolic_calls') == factor.get('numeric_calls') == 1,
+            'N0 QA/pilot did not share one accurate A3 factor')
+    require(summary.get('pilot_facts', {}).get('qa_and_outer_share_one_factor') is True,
+            'N0 same-factor QA/pilot evidence is missing')
+    decisions = records('p4_decisions.jsonl')
+    require(bool(decisions), 'N0 A3 return evidence is missing')
+    for number, decision in enumerate(decisions, 1):
+        require(decision.get('logical_apply') == number
+                and decision.get('coarse_degree') == 3
+                and decision.get('coarse_operator') == 'A3',
+                'N0 coarse decision identity/order differs')
+        rows = decision.get('rows', [])
+        require(len(rows) <= 3, 'N0 A3 exceeded two same-factor refinements')
+        if not rows:
+            require(decision.get('status') == 'P4_ZERO_RHS_DIRECT_ZERO'
+                    and decision.get('rhs_norm') == 0, 'N0 empty A3 decision lacks zero RHS')
+        else:
+            require(all(finite_nonnegative(row.get('relative_residual')) for row in rows),
+                    'N0 A3 decision has nonfinite residual')
+            value = rows[-1].get('relative_residual')
+            require(finite_nonnegative(value) and value <= 1e-10,
+                    'N0 A3 final return residual exceeds 1e-10')
+            require(all(row.get('port_closure', {}).get('status') == 'PASS' for row in rows),
+                    'N0 A3 port closure failed')
+        counts = decision.get('factor_counts', {})
+        require(counts.get('symbolic_calls') == counts.get('numeric_calls') == 1,
+                'N0 A3 decision refactored or lacks factor identity')
+
+    full = summary.get('full_dtn_endpoint_check', {})
+    require(isinstance(full, dict) and isinstance(full.get('status'), str),
+            'N0 full-DtN endpoint status is missing')
+    if isinstance(full, dict) and full.get('status') == 'FULL_DTN_NOT_VERIFIED':
+        require(full.get('A6_full_relative') is None,
+                'Unverified full-DtN residual must not be fabricated')
+    return {
+        'classification': ('N0_PILOT_EVIDENCE_BLOCKED' if errors else
+            'N0_PORT_FILTER_PILOT_EVIDENCE_COMPLETE_NOT_SOLVER_QUALIFICATION'),
+        'pilot_evidence_complete': not errors,
+        'independent_output_gates_passed': False,
+        'full_dtn_qualified': False,
+        'official_rta_qualified': False,
+        'gate_failures': errors,
+        'raw_facts': {'operator_scope': scope, 'operator_selection': selection,
+            'iterations': iterations, 'A6_n0_relative': relative,
+            'full_dtn_endpoint_observation': full,
+            'residual_scope': 'record audit only; no independent full-field recomputation'},
+        'checker_seconds': time.monotonic() - started,
+        'resource_authority': 'separate enclosing parent verdict required',
+    }
+
+
 def check_retained_v20(directory: Path, summary: dict) -> dict:
     """Check the opt-in retained V20 contract without legacy profile rules."""
 
@@ -330,10 +483,12 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
     from src.io.physical_intermediate_profile import profile_facts
     from src.io.native_capacity_profile import (
         V5_EXPECTED_MODE_COUNTS, V6_BASE_PROFILES,
-        V5_NATIVE_PROFILES, V6_NATIVE_PROFILES, V6_P3_PROFILES,
+        V5_NATIVE_PROFILES, V6_NATIVE_PROFILES, V6_P3_PROFILES, V6_0P7_N0_P3_PROFILES,
     )
 
     identity = summary.get('profile', {}).get('identity')
+    if identity in V6_0P7_N0_P3_PROFILES:
+        return check_n0_target_pilot(directory, summary)
     is_v5 = identity in (V5_NATIVE_PROFILES | V6_NATIVE_PROFILES)
     p3_profile = identity in V6_P3_PROFILES
     expected_mode_count = (

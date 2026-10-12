@@ -14,10 +14,23 @@ def run_retained_fgmres(
     rhs, action, pc, *, evaluate, checkpoint, append, seconds,
     resource_sample=lambda: None, stop_requested=lambda: False,
     save_retained=lambda iteration, vector: None, planned_stop_iteration=None,
+    physical_residual_key="original_A6_relative",
 ):
-    """Callbacks return owned action/PC vectors and plain evaluation facts."""
+    """Callbacks return owned action/PC vectors and plain evaluation facts.
+
+    ``physical_residual_key`` names the equation evaluated by the callback;
+    it does not change the norm, convergence thresholds or Krylov algorithm.
+    An explicit N0 caller must not label its residual as the full DtN one.
+    """
     if planned_stop_iteration not in (None, 16):
         raise ValueError("only the explicit Review V6 16-step pilot is qualified")
+    if physical_residual_key not in ("original_A6_relative", "A6_n0_relative"):
+        raise ValueError("unsupported physical residual equation key")
+    residual_identity = (
+        {"physical_residual_key": physical_residual_key,
+         "operator_scope": "n0_filtered_dtn_not_full_dtn"}
+        if physical_residual_key == "A6_n0_relative" else {}
+    )
     from petsc4py import PETSc
     from .fullspace_memory_first_krylov import _ActionContext, _PCContext
 
@@ -88,19 +101,21 @@ def run_retained_fgmres(
             timings["physical_evaluation_seconds"] += perf_counter() - started
         finally:
             applied.destroy(); residual.destroy()
-        keys = ("original_A6_relative", "port_closure_relative",
+        if physical_residual_key == "A6_n0_relative" and "original_A6_relative" in facts:
+            raise ValueError("N0 evaluation must not expose ambiguous original_A6_relative")
+        keys = (physical_residual_key, "port_closure_relative",
                 "internal_residual_relative", "native_identity_relative", "schur_port_identity_relative")
         if not np.isfinite(schur_relative) or any(
                 not np.isfinite(float(facts[k])) or float(facts[k]) < 0 for k in keys):
             raise FloatingPointError("nonfinite or negative recovered residual measure")
-        physical_pass = (facts["original_A6_relative"] <= 1e-6
+        physical_pass = (facts[physical_residual_key] <= 1e-6
                          and facts["port_closure_relative"] <= 1e-8
                          and facts["internal_residual_relative"] <= 1e-10
                          and facts["native_identity_relative"] <= 1e-10
                          and facts["schur_port_identity_relative"] <= 1e-10)
-        row = {**facts, "iteration": int(iteration),
+        row = {**facts, **residual_identity, "iteration": int(iteration),
                "schur_true_relative_residual": schur_relative,
-               "explicit_true_residual": float(facts["original_A6_relative"]),
+               "explicit_true_residual": float(facts[physical_residual_key]),
                "reported_schur_relative": float(reported) / rhs_norm,
                "solve_seconds": float(seconds()), "physical_residual_pass": physical_pass,
                "solution_source": "terminal_vec_sol" if current is None else "live_buildSolution"}
@@ -178,7 +193,8 @@ def run_retained_fgmres(
         if status == "TRUE_RESIDUAL_PASS" and not final["physical_residual_pass"]:
             status = "FINAL_PHYSICAL_RESIDUAL_GATE_FAIL"
         result = {"final_solution": solution.copy(), "final_evaluation": final,
-            "final_true_residual": final["original_A6_relative"], "iterations": iteration,
+            **residual_identity,
+            "final_true_residual": final[physical_residual_key], "iterations": iteration,
             "reason": reason, "status": status, "snapshots": snapshots,
             "matvec_count": ac.matvec_count, "pc_apply_count": pcc.apply_count,
             "explicit_action_count": len(snapshots), "elapsed_seconds": float(seconds()),

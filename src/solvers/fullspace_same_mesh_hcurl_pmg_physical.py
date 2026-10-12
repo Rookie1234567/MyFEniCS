@@ -9,6 +9,7 @@ physical KSP.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
@@ -149,6 +150,9 @@ def build_same_mesh_physical_action(
     degree: int,
     *,
     mode_inventory: tuple[Any, Any, Any] | None = None,
+    quadrature_mode_inventory: tuple[Any, Any, Any] | None = None,
+    operator_selection: Mapping[str, Any] | None = None,
+    selected_parent_indices: tuple[int, ...] | None = None,
     jit_options: Mapping[str, Any] | None = None,
     volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
     reuse_surface_vector: bool = False,
@@ -290,7 +294,82 @@ def build_same_mesh_physical_action(
     if not modes or len(mode_rows) != len(modes):
         raise ValueError("same-mesh physical mode inventory is incomplete")
     options = SAME_MESH_JIT_OPTIONS if jit_options is None else jit_options
-    qdegree = _dtn_surface_quadrature_degree(cfg, list(modes))
+    if quadrature_mode_inventory is None:
+        if operator_selection is not None:
+            raise ValueError(
+                "operator selection requires its explicit parent quadrature inventory"
+            )
+        if selected_parent_indices is not None:
+            raise ValueError(
+                "selected parent indices require an operator selection identity"
+            )
+        quadrature_modes = modes
+        quadrature_mode_count = len(modes)
+        quadrature_mode_sha = mode_sha
+        parent_mode_rows = tuple(mode_rows)
+    else:
+        if len(quadrature_mode_inventory) != 3:
+            raise ValueError("quadrature_mode_inventory must contain modes, rows, and SHA")
+        quadrature_modes, quadrature_rows, quadrature_mode_sha = quadrature_mode_inventory
+        quadrature_modes = tuple(quadrature_modes)
+        quadrature_rows = tuple(quadrature_rows)
+        parent_mode_rows = tuple(quadrature_rows)
+        quadrature_mode_sha = str(quadrature_mode_sha)
+        if not quadrature_modes or len(quadrature_modes) != len(quadrature_rows):
+            raise ValueError("quadrature parent inventory is incomplete")
+        if operator_selection is None:
+            raise ValueError("a distinct quadrature inventory requires an operator selection identity")
+        if (
+            int(operator_selection.get("parent_mode_count", -1)) != len(quadrature_modes)
+            or operator_selection.get("parent_mode_sha256") != quadrature_mode_sha
+            or int(operator_selection.get("active_mode_count", -1)) != len(modes)
+            or operator_selection.get("active_mode_sha256") != mode_sha
+        ):
+            raise ValueError("active and quadrature inventories do not match operator selection")
+        if selected_parent_indices is None:
+            raise ValueError("operator selection requires its exact parent index map")
+        selected_parent_indices = tuple(int(index) for index in selected_parent_indices)
+        if (
+            len(selected_parent_indices) != len(modes)
+            or any(
+                index < 0 or index >= len(quadrature_modes)
+                for index in selected_parent_indices
+            )
+            or any(
+                right <= left
+                for left, right in pairwise(selected_parent_indices)
+            )
+        ):
+            raise ValueError("operator selection parent indices are invalid")
+        expected_parent_indices = tuple(
+            index
+            for index, row in enumerate(parent_mode_rows)
+            if int(row.get("n", -1)) == 0
+        )
+        if selected_parent_indices != expected_parent_indices:
+            raise ValueError("operator selection indices are not the live n=0 rows")
+        for active_index, parent_index in enumerate(selected_parent_indices):
+            parent_row = dict(parent_mode_rows[parent_index])
+            parent_row["mode_index"] = active_index
+            if parent_row != dict(mode_rows[active_index]):
+                raise ValueError(
+                    "active mode row differs from its selected parent mode row"
+                )
+        import hashlib
+        import json
+
+        index_sha = hashlib.sha256(
+            json.dumps(
+                list(selected_parent_indices),
+                ensure_ascii=True,
+                allow_nan=False,
+                separators=(",", ":"),
+            ).encode("ascii")
+        ).hexdigest()
+        if index_sha != operator_selection.get("selected_parent_indices_sha256"):
+            raise ValueError("operator selection parent-index hash differs")
+        quadrature_mode_count = len(quadrature_modes)
+    qdegree = _dtn_surface_quadrature_degree(cfg, list(quadrature_modes))
     if surface_weighted_moment_contraction is not None:
         from .fullspace_surface_legendre import validate_weighted_moment_contraction
 
@@ -353,8 +432,10 @@ def build_same_mesh_physical_action(
                 "physical_surface_carrier_build_started",
                 {
                     "space_degree": degree,
-                    "mode_count": int(len(modes)),
-                    "mode_sha256": str(mode_sha),
+            "mode_count": int(len(modes)),
+            "mode_sha256": str(mode_sha),
+            "quadrature_mode_count": int(quadrature_mode_count),
+            "quadrature_mode_sha256": str(quadrature_mode_sha),
                     "scratch_vectors_shared_across_forms": 1,
                 },
             )
@@ -371,6 +452,13 @@ def build_same_mesh_physical_action(
             progress_interval=surface_progress_interval,
             quadrature_degree=qdegree,
             functional_store_config=functional_store_config,
+            operator_selection=operator_selection,
+            parent_mode_rows=(
+                parent_mode_rows if operator_selection is not None else None
+            ),
+            selected_parent_indices=(
+                selected_parent_indices if operator_selection is not None else None
+            ),
         )
         if reuse_surface_vector and stage_callback is not None:
             completion_facts = {

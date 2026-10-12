@@ -245,17 +245,33 @@ def run_physical_intermediate(
     contract = profile_facts(identity)
     functional_store_config = None
     functional_store_config_sha256 = None
+    functional_store_config_schema = None
     functional_store_config_path = os.environ.get(
         'TASK39EXTRA_FUNCTIONAL_STORE_CONFIG'
     )
+    from src.io.native_capacity_profile import V6_0P7_N0_P3_PROFILES
+    is_n0_profile = identity in V6_0P7_N0_P3_PROFILES
+    if is_n0_profile and not functional_store_config_path:
+        raise ValueError(
+            'the explicit N0 profile requires its functional-store configuration'
+        )
     if functional_store_config_path:
-        from src.io.native_capacity_profile import V6_0P7_P3_HP_OPTIN_PROFILES
+        from src.io.native_capacity_profile import (
+            V6_0P7_P3_HP_OPTIN_PROFILES,
+        )
         from src.io.resolved_config import canonical_json_bytes
 
-        if identity not in V6_0P7_P3_HP_OPTIN_PROFILES:
+        if identity not in (
+            V6_0P7_P3_HP_OPTIN_PROFILES | V6_0P7_N0_P3_PROFILES
+        ):
             raise ValueError(
-                'functional-store persistence is restricted to the explicit 0.7 nm p3 profile'
+                'functional-store persistence is restricted to explicit 0.7 nm p3 profiles'
             )
+        functional_store_config_schema = (
+            'task39extra.port-functional-store-config.n0.v2'
+            if is_n0_profile
+            else 'task39extra.port-functional-store-config.v1'
+        )
         config_path = Path(functional_store_config_path)
         if not config_path.is_absolute() or config_path.is_symlink() or not config_path.is_file():
             raise ValueError('functional-store config must be an absolute regular file')
@@ -274,13 +290,20 @@ def run_physical_intermediate(
             'max_total_disk_bytes',
             'disk_reserve_bytes',
         }
+        if is_n0_profile:
+            required_store_config_keys.add('parent_compatibility')
         if (
             not isinstance(store_document, dict)
             or set(store_document) != required_store_config_keys
-            or store_document.get('schema')
-            != 'task39extra.port-functional-store-config.v1'
+            or store_document.get('schema') != functional_store_config_schema
         ):
             raise ValueError('functional-store config schema or fields differ')
+        if is_n0_profile and not isinstance(
+            store_document.get('parent_compatibility'), dict
+        ):
+            raise ValueError(
+                'N0 functional-store config needs its reviewed parent compatibility mapping'
+            )
         store_root = Path(store_document['root'])
         if not store_root.is_absolute() or store_root.is_symlink():
             raise ValueError('functional-store root must be absolute and not a symlink')
@@ -315,7 +338,7 @@ def run_physical_intermediate(
                'time_limit_mode': 'none' if workflow_limit is None and solve_limit is None else 'bounded'}
     if functional_store_config is not None:
         summary['functional_store_request'] = {
-            'schema': 'task39extra.port-functional-store-config.v1',
+            'schema': functional_store_config_schema,
             'config_path': str(config_path),
             'config_sha256': functional_store_config_sha256,
             'root': str(functional_store_config['root']),
@@ -326,6 +349,10 @@ def run_physical_intermediate(
                 functional_store_config['max_total_disk_bytes']
             ),
             'disk_reserve_bytes': int(functional_store_config['disk_reserve_bytes']),
+            'parent_compatibility': (
+                functional_store_config.get('parent_compatibility')
+                if is_n0_profile else None
+            ),
             'producer_output_directory': str(directory.resolve()),
             'numerical_identity_source': 'actual run source/input/physical identity',
             'resolved_config_sha256': functional_store_config[

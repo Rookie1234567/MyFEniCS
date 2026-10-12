@@ -27,6 +27,14 @@ FULLSPACE_DTN_PROFILE = "full3d_scalable_v1"
 FULLSPACE_DTN_BATCH_SIZE = 8
 FULLSPACE_DTN_MANIFEST_SCHEMA = "fullspace-dtn.mode-manifest.v1"
 _SURFACE_PROGRESS_MAX_INTERVAL_SECONDS = 300.0
+N0_PARENT_MODE_COUNT = 32060
+N0_PARENT_MODE_SHA256 = (
+    "7f023c73d7b63379955642dd062e47ba7004f3cdf0accf42684286c4af71dbfb"
+)
+N0_ACTIVE_MODE_COUNT = 572
+N0_EXPECTED_ACTIVE_MODE_SHA256 = (
+    "946e0d294b99cb7f44817c3649029942ac325f345eb1770caa566183d2b04f3b"
+)
 
 _MODE_IDENTITY_FIELDS = frozenset(
     {
@@ -179,6 +187,90 @@ def build_dynamic_mode_inventory(
     return modes, manifest, digest
 
 
+def build_n0_mode_inventory(
+    parent_inventory: tuple[Sequence[Any], Sequence[Mapping[str, Any]], str],
+    cfg: Any,
+) -> tuple[
+    tuple[tuple[Any, ...], tuple[Mapping[str, Any], ...], str],
+    dict[str, Any],
+    tuple[int, ...],
+]:
+    """Return the active N0 inventory, its selection identity, and parent indices.
+
+    The caller retains the full parent inventory separately as the quadrature
+    authority. Filtering is an operator change, so both parent and active
+    ordered manifest identities are carried in ``selection``.
+    """
+
+    parent_modes, parent_rows, parent_sha = parent_inventory
+    parent_modes = tuple(parent_modes)
+    parent_rows = tuple(parent_rows)
+    parent_sha = str(parent_sha)
+    if (
+        len(parent_modes) != N0_PARENT_MODE_COUNT
+        or len(parent_rows) != N0_PARENT_MODE_COUNT
+        or parent_sha != N0_PARENT_MODE_SHA256
+    ):
+        raise ValueError("N0 selection requires the exact full 32060-mode parent inventory")
+    if any(
+        not isinstance(row, Mapping)
+        or int(row.get("mode_index", -1)) != index
+        or int(row.get("n", 999999)) != int(mode.n)
+        or str(row.get("side")) != str(mode.side)
+        or str(row.get("polarization")) != str(mode.polarization)
+        or int(row.get("m", 999999)) != int(mode.m)
+        for index, (mode, row) in enumerate(zip(parent_modes, parent_rows, strict=True))
+    ):
+        raise ValueError("N0 parent mode rows do not bind the live mode objects")
+    parent_indices = tuple(
+        index for index, row in enumerate(parent_rows) if int(row["n"]) == 0
+    )
+    if len(parent_indices) != N0_ACTIVE_MODE_COUNT:
+        raise ValueError("N0 parent selection did not produce exactly 572 modes")
+    active_modes = tuple(parent_modes[index] for index in parent_indices)
+    per_group: Counter[tuple[str, str]] = Counter(
+        (str(mode.side), str(mode.polarization)) for mode in active_modes
+    )
+    expected_groups = {
+        (side, polarization): 143
+        for side in ("bottom", "top")
+        for polarization in ("s", "p")
+    }
+    if dict(per_group) != expected_groups:
+        raise ValueError("N0 selection must contain 143 modes per side/polarization")
+    for side in ("bottom", "top"):
+        for polarization in ("s", "p"):
+            orders = {
+                int(mode.m)
+                for mode in active_modes
+                if str(mode.side) == side and str(mode.polarization) == polarization
+            }
+            if orders != set(range(-142, 1)):
+                raise ValueError("N0 selection m orders must be exactly -142 through 0")
+    active_rows, _encoded, active_sha = build_ordered_mode_manifest(active_modes, cfg)
+    if active_sha != N0_EXPECTED_ACTIVE_MODE_SHA256:
+        raise ValueError("N0 active manifest differs from the independently reviewed identity")
+    index_payload = _canonical_json_bytes(list(parent_indices))
+    selection = {
+        "schema": "task39extra.dtn-mode-selection.v1",
+        "policy": "n_equals_zero_both_ports_both_polarizations",
+        "parent_mode_count": N0_PARENT_MODE_COUNT,
+        "parent_mode_sha256": parent_sha,
+        "active_mode_count": len(active_modes),
+        "active_mode_sha256": active_sha,
+        "expected_active_mode_sha256": N0_EXPECTED_ACTIVE_MODE_SHA256,
+        "selected_parent_indices_sha256": hashlib.sha256(index_payload).hexdigest(),
+        "side_polarization_counts": {
+            f"{side}_{polarization}": 143
+            for side, polarization in sorted(expected_groups)
+        },
+        "m_range_in_each_side_polarization": [-142, 0],
+        "quadrature_inventory": "full_parent_modes",
+        "operator_scope": "n0_filtered_dtn_not_full_dtn",
+    }
+    return (active_modes, active_rows, active_sha), selection, parent_indices
+
+
 def _sparse_entries(
     rows: Any,
     values: Any,
@@ -230,6 +322,7 @@ class FullspaceDtnCarrier:
         slave_rows: Any = (),
         batch_size: int = FULLSPACE_DTN_BATCH_SIZE,
         comm: MPI.Intracomm | None = None,
+        n0_parent_store: Any | None = None,
     ) -> None:
         self._comm = MPI.COMM_SELF if comm is None else comm
         self._global_rows = int(global_rows)
@@ -297,6 +390,7 @@ class FullspaceDtnCarrier:
             "modes": manifest_rows,
         }
         self._entries = tuple(normalized)
+        self._n0_parent_store = n0_parent_store
         self._mode_manifest = _canonical_json_bytes(manifest)
         self._mode_manifest_sha256 = hashlib.sha256(self._mode_manifest).hexdigest()
         slave_array = np.unique(np.asarray(slave_rows, dtype=PETSc.IntType).reshape(-1))
@@ -331,6 +425,12 @@ class FullspaceDtnCarrier:
     @property
     def entries(self) -> tuple[FullspaceDtnModeFunctional, ...]:
         return self._entries
+
+    @property
+    def n0_parent_store(self) -> Any | None:
+        """Read-only handle for the closed, validated N0 parent store."""
+
+        return self._n0_parent_store
 
     @property
     def mode_manifest_bytes(self) -> bytes:
@@ -633,6 +733,9 @@ def build_fullspace_dtn_carrier_from_surface(
     progress_interval: int = 1024,
     quadrature_degree: int | None = None,
     functional_store_config: Mapping[str, Any] | None = None,
+    operator_selection: Mapping[str, Any] | None = None,
+    parent_mode_rows: Sequence[Mapping[str, Any]] | None = None,
+    selected_parent_indices: Sequence[int] | None = None,
 ) -> FullspaceDtnCarrier:
     """Build the carrier from the current MPC-reduced surface functionals."""
 
@@ -778,6 +881,7 @@ def build_fullspace_dtn_carrier_from_surface(
                 functional_store_config["max_total_disk_bytes"]
             ),
             disk_reserve_bytes=int(functional_store_config["disk_reserve_bytes"]),
+            operator_selection=operator_selection,
         )
         try:
             for stored in functional_store.restore_prefix():
@@ -791,6 +895,28 @@ def build_fullspace_dtn_carrier_from_surface(
                         normalization_h=float(stored["normalization_h"]),
                         mode_identity=stored["mode_identity"],
                     )
+                )
+            if operator_selection is not None:
+                if parent_mode_rows is None or selected_parent_indices is None:
+                    raise ValueError(
+                        "N0 store import requires the live parent rows and selected indices"
+                    )
+                parent_compatibility = functional_store_config.get(
+                    "parent_compatibility"
+                )
+                if parent_compatibility is None:
+                    functional_store.disable_parent_import(
+                        "no reviewed parent compatibility mapping was configured"
+                    )
+                else:
+                    functional_store.prepare_compatible_parent_import(
+                        parent_compatibility,
+                        parent_mode_rows,
+                        selected_parent_indices,
+                    )
+            elif parent_mode_rows is not None or selected_parent_indices is not None:
+                raise ValueError(
+                    "parent import metadata requires an explicit N0 operator selection"
                 )
         except Exception:
             functional_store.close()
@@ -893,32 +1019,59 @@ def build_fullspace_dtn_carrier_from_surface(
         for index in range(resume_prefix_count, len(modes)):
             mode = modes[index]
             key = _dtn_component_phase_key(mode)
-            components = components_for(mode)
-            combine_started = (
-                time.perf_counter()
-                if workspace is not None and workspace.timing_totals is not None
+            stored_functional = (
+                functional_store.try_import_compatible_parent_functional(index)
+                if functional_store is not None and operator_selection is not None
                 else None
             )
-            projection_rows, projection_values = _combine_owned_entries(
-                components,
-                (mode.e_vector[0], mode.e_vector[1]),
-                comm=comm,
-            )
-            from .dtn_port_3d import _mode_projection_denominator, _traction_vector
-
-            denominator = _mode_projection_denominator(mode, cfg)
-            traction = _traction_vector(mode, cfg)
-            coupling_rows, coupling_values = _combine_owned_entries(
-                components,
-                (-traction[0], -traction[1]),
-                comm=comm,
-            )
-            if combine_started is not None:
-                workspace.timing_totals["carrier_combine_seconds"] += (
-                    time.perf_counter() - combine_started
+            if stored_functional is not None:
+                entry = FullspaceDtnModeFunctional(
+                    mode_key=tuple(stored_functional["mode_key"]),
+                    coupling_rows=stored_functional["coupling_rows"],
+                    coupling_values=stored_functional["coupling_values"],
+                    projection_rows=stored_functional["projection_rows"],
+                    projection_values=stored_functional["projection_values"],
+                    normalization_h=float(stored_functional["normalization_h"]),
+                    mode_identity=stored_functional["mode_identity"],
                 )
-            entries.append(
-                FullspaceDtnModeFunctional(
+                components = None
+            else:
+                fallback_assembly_started = (
+                    time.perf_counter()
+                    if functional_store is not None and operator_selection is not None
+                    else None
+                )
+                try:
+                    components = components_for(mode)
+                finally:
+                    if fallback_assembly_started is not None:
+                        functional_store.record_n0_parent_fallback_assembly_seconds(
+                            time.perf_counter() - fallback_assembly_started
+                        )
+                combine_started = (
+                    time.perf_counter()
+                    if workspace is not None and workspace.timing_totals is not None
+                    else None
+                )
+                projection_rows, projection_values = _combine_owned_entries(
+                    components,
+                    (mode.e_vector[0], mode.e_vector[1]),
+                    comm=comm,
+                )
+                from .dtn_port_3d import _mode_projection_denominator, _traction_vector
+
+                denominator = _mode_projection_denominator(mode, cfg)
+                traction = _traction_vector(mode, cfg)
+                coupling_rows, coupling_values = _combine_owned_entries(
+                    components,
+                    (-traction[0], -traction[1]),
+                    comm=comm,
+                )
+                if combine_started is not None:
+                    workspace.timing_totals["carrier_combine_seconds"] += (
+                        time.perf_counter() - combine_started
+                    )
+                entry = FullspaceDtnModeFunctional(
                     mode_key=(int(index), str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)),
                     coupling_rows=coupling_rows,
                     coupling_values=_readonly(coupling_values, np.dtype(np.complex128)),
@@ -929,9 +1082,15 @@ def build_fullspace_dtn_carrier_from_surface(
                     normalization_h=float(denominator),
                     mode_identity=manifest_rows[index],
                 )
-            )
-            if functional_store is not None:
-                functional_store.commit(entries[-1], mode_index=index)
+                if functional_store is not None:
+                    commit_started = time.perf_counter()
+                    try:
+                        functional_store.commit(entry, mode_index=index)
+                    finally:
+                        functional_store.record_active_store_commit_seconds(
+                            time.perf_counter() - commit_started
+                        )
+            entries.append(entry)
             if remaining_uses is not None:
                 remaining_uses[key] -= 1
                 if remaining_uses[key] == 0:
@@ -941,7 +1100,8 @@ def build_fullspace_dtn_carrier_from_surface(
                         context.release_mode(mode)
                 # The carrier arrays are copies from concatenate; no cached
                 # component array is needed after this mode's two combines.
-                del components
+                if components is not None:
+                    del components
             completed = index + 1
             time_due = False
             if last_progress_time is not None:
@@ -1004,6 +1164,11 @@ def build_fullspace_dtn_carrier_from_surface(
             slave_rows=slave_rows,
             batch_size=FULLSPACE_DTN_BATCH_SIZE,
             comm=comm,
+            n0_parent_store=(
+                functional_store
+                if functional_store is not None and operator_selection is not None
+                else None
+            ),
         )
         if normalization_started is not None:
             workspace.timing_totals["carrier_normalize_validate_seconds"] += (

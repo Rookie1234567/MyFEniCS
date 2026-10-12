@@ -1,5 +1,7 @@
 # V6收口后追加p3候选：执行回应
 
+2026-10-12补记：用户授权将完整0.7 nm目标端口清单按`n==0`筛成572项，并保持完整三维FE、p6→p3/准确A3及16步pilot。旧32060通道准备已受控停止并清场；新路径仍在实现与必要纯/fake核验，**新run尚未启动**。RSS硬线按最后更正为**1.95e12 B**。详见[N0准备报告](outcomes/n0_port_filter_preparation_20261012.md)与[hash-bound小型记录](outcomes/records/n0_port_filter_preparation_20261012.json)。本条不改写下述历史结论，不将N0算子的残差冒充原完整DtN残差。
+
 本回应记录用户在Review V6收口后追加的“细层p6、粗修正p3”候选，不新建或伪称Review V7，也不回写V6历史结论。p3粗修正使用实际A3离散与准确MUMPS因子。已完成的18-cell组件只运行三次固定完整PC见证，没有外层FGMRES迭代；拟议正式5 nm路线才会由right FGMRES(32)求解p6凝聚trace加全部600个port空间。原完整未凝聚p6 A6继续用于full residual与相关核验，Aq、模式和物理门限保留。
 
 ## 本轮状态

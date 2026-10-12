@@ -1,5 +1,18 @@
 # 原生迁移与容量任务：执行结果总账
 
+## 最新补充授权：N0通道目标pilot准备（2026-10-12）
+
+本节更新到实现中、尚未启动新场的时点；下面历史章节中的未运行/资源限制是各自当时状态，不覆盖此次用户最新授权。
+
+| 项目 | 已确认事实 | 边界 |
+|---|---|---|
+| 旧完整0.7 nm准备 | `20261011T070335.458824Z` 已按授权受控停止，exit1/后代清场；workflow78277.660374 s，RSS峰726530977792 B、任务swap0；p6完成32060，p3最后marker8367、落盘目录快照8380 | 未进入KSP、没有求解资格；保留原始失败/停止 |
+| 新N0清单 | 真实metadata严格 `n==0` 得572项，top/bottom × s/p各143，m=-142…0；端口积分维持父清单q160 | 不是前572项，不把省略通道称为实测零 |
+| 复用候选 | 旧p6所需572项、p3所需148项文件路径存在 | 仅存在性；正式复用仍核payload及live FE/DOF/MPC身份 |
+| 新目标合同 | 完整530856-cell p6/h0.7目标、准确A3/MUMPS、BAL_H、FGMRES32、单factor QA+16步；RSS **1.95e12 B**，PSS/USS关闭 | 新run尚未启动；新setup/factor/迭代耗时、实际RSS和残差unknown |
+
+旧成本、模式hash、实现中证据及独立残差命名见[N0准备报告](n0_port_filter_preparation_20261012.md)和[JSON](records/n0_port_filter_preparation_20261012.json)。`A6_n0`与原32060通道`A6_full`必须分列；目前 `FULL_DTN_NOT_VERIFIED`，不宣称正式R/T/A、完整0.7 nm或48小时目标通过。
+
 ## V6收口后新增：0.7 nm p6→p3 S1有界组件（2026-10-05）
 
 用户最新授权将V6中“0.7 nm仅metadata规划”的范围限制扩展为实际p3候选验证；不改写task/review历史，也不新造Review V7。本条只记录72-cell/16-mode真实FE/MPC组件，不是全530856-cell、32060-mode的h0.7精度或收敛资格。运行源为base `c70ce2976e163421beb749b7003b015a3d22c5da`上的已接受WIP patch，不能把base HEAD单独称为本场完整source。

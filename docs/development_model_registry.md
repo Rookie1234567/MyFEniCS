@@ -1692,3 +1692,15 @@ canonical共享实体传递仅由显式V6_P3 profile启用：每个局部p3→p6
 ## 3.47 Task39extra_para：0.7 nm p3 S1有界组件（V6后用户追加授权）
 
 用户追加授权把此前仅做0.7 nm metadata规划的限制扩展到有界p3 FE/MPC验证；不改写V6 review/task，也不是全模型资格。S1在72 cells（9个真实h0.7细cell）和16个传播mode上通过固定PC组件见证，运行源是base `c70ce2976e163421beb749b7003b015a3d22c5da`上的WIP patch。fine p6 action/global DOF为51060；准确A3增广行3472、未凝聚全行6954。单次MatSolve API端口初解`1.1280721128506167e-10`真实超限，允许的一次同因子外部校正后`1.7034136500666543e-12`；三次完整PC的C1/C2均PASS，factor symbolic/numeric/solve/logical=`1/1/9/7`。Bi/Di约1e-13，仅舍入量级。RSS峰`2763333632 B`、tree swap0、PSS/USS关闭。状态为`S1_COMPONENT_PASS_NOT_FULL_MODEL_QUALIFICATION`；全场0.7精度、材料/网格精度、收敛、48h与2TB资格仍unknown。S1 compact及主审receipt见[outcome record](task39extra_para_workstation_capacity/outcomes/records/p3_0p7_s1_component_v1.json)。S2全530856 cells/32060 modes setup+16步仅准备包待审，尚未启动。
+
+
+## 3.48 Task39extra_para：完整0.7 nm准备停止与N0目标pilot准备（2026-10-12）
+
+用户授权只筛选端口边界的衍射通道，保留完整三维530856-cell p6/h0.7模型和准确p3/A3粗修正。真实metadata从32060项按`n==0`得到572项（top/bottom × s/p各143，m=-142…0），端口积分仍q160；这会改变DtN算子，因此`A6_n0`残差与原32060通道`A6_full`残差分列，省略通道不填成实测零。
+
+| 模型 / 状态 | 已有实测 | 尚未取得 |
+|---|---|---|
+| 旧完整0.7 nm准备，run `20261011T070335.458824Z`，source `2e72ce0df34a8781dca3d44d6fcaee2b7b6f3150` | `USER_CONTROLLED_STOP/exit1`，后代清场；workflow78277.660374 s，采样整树RSS峰726530977792 B、task swap0；p6已完成32060通道，p3最后marker8367/落盘目录快照8380 | 未进入KSP，无求解/正式RTA资格 |
+| 新 `N0_PORT_FILTER_TARGET_PILOT` | metadata筛选/父积分身份及必要纯fake检查完成部分；旧p6/p3候选缓存路径分别572/148项 | 实现中、尚未启动；live缓存兼容/payload hash、新setup/factor/16步/RSS/残差仍待测；完整DtN为`FULL_DTN_NOT_VERIFIED` |
+
+当前落盘store来源的两场workflow累计52.9434 h；四场完整目标准备累计136.7351 h，属于不重叠workflow墙钟相加，不能命名为端口积分或CPU时间。最新资源合同RSS硬线为1.95e12 B、PSS/USS关闭；不据预测/swap/预计耗时自动停止。完整0.7 nm、48 h/2 TB及正式RTA资格未建立。原始路径/hash、各场状态和复用边界见[N0准备报告](task39extra_para_workstation_capacity/outcomes/n0_port_filter_preparation_20261012.md)及[JSON](task39extra_para_workstation_capacity/outcomes/records/n0_port_filter_preparation_20261012.json)。

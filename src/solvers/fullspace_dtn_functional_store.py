@@ -34,6 +34,22 @@ SERIALIZATION_SCRATCH_BOUND_BYTES = 16 * 1024**2
 _HASH_BLOCK_BYTES = 1024**2
 _MAX_UFCX_FORM_SIGNATURE_BYTES = 4096
 _MAX_MANIFEST_BYTES = 1024**2
+N0_PARENT_COMPATIBILITY_SCHEMA = "task39extra.n0-parent-store-compatibility.v1"
+N0_PARENT_MODE_COUNT = 32060
+N0_PARENT_MODE_SHA256 = (
+    "7f023c73d7b63379955642dd062e47ba7004f3cdf0accf42684286c4af71dbfb"
+)
+N0_PARENT_COMPATIBLE_IMPLEMENTATION_FILES = frozenset(
+    {
+        "src/io/input_validation.py",
+        "src/io/native_capacity_profile.py",
+        "src/runners/physical_intermediate.py",
+        "src/runners/physical_retained_condensed_v20.py",
+        "src/solvers/fullspace_dtn_action.py",
+        "src/solvers/fullspace_dtn_functional_store.py",
+        "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+    }
+)
 _SHARD_NAME = re.compile(r"^functional_(\d{8})$")
 _TEMP_NAME = re.compile(r"^\.tmp_functional_\d{8}_[0-9a-f]{32}$")
 _ARRAY_KEYS = (
@@ -839,6 +855,137 @@ def _sha256_file(path: Path) -> tuple[str, int, float]:
     return digest.hexdigest(), size, time.perf_counter() - started
 
 
+def _validate_operator_selection_identity(selection: Any, mode_identity: Mapping[str, Any]) -> dict[str, Any]:
+    if not isinstance(selection, Mapping):
+        raise TypeError("functional-store operator selection must be a mapping")
+    value = _json_safe(dict(selection))
+    required = {
+        "schema",
+        "policy",
+        "parent_mode_count",
+        "parent_mode_sha256",
+        "active_mode_count",
+        "active_mode_sha256",
+        "expected_active_mode_sha256",
+        "selected_parent_indices_sha256",
+        "side_polarization_counts",
+        "m_range_in_each_side_polarization",
+        "quadrature_inventory",
+        "operator_scope",
+    }
+    if set(value) != required:
+        raise ValueError("functional-store N0 operator selection fields differ")
+    expected_groups = {
+        "bottom_p": 143,
+        "bottom_s": 143,
+        "top_p": 143,
+        "top_s": 143,
+    }
+    if (
+        value.get("schema") != "task39extra.dtn-mode-selection.v1"
+        or value.get("policy") != "n_equals_zero_both_ports_both_polarizations"
+        or value.get("parent_mode_count") != 32060
+        or value.get("parent_mode_sha256")
+        != "7f023c73d7b63379955642dd062e47ba7004f3cdf0accf42684286c4af71dbfb"
+        or value.get("active_mode_count") != 572
+        or int(mode_identity.get("count", -1)) != 572
+        or value.get("active_mode_sha256")
+        != "946e0d294b99cb7f44817c3649029942ac325f345eb1770caa566183d2b04f3b"
+        or value.get("active_mode_sha256")
+        != mode_identity.get("ordered_manifest_sha256")
+        or value.get("expected_active_mode_sha256")
+        != "946e0d294b99cb7f44817c3649029942ac325f345eb1770caa566183d2b04f3b"
+        or value.get("side_polarization_counts") != expected_groups
+        or value.get("m_range_in_each_side_polarization") != [-142, 0]
+        or value.get("quadrature_inventory") != "full_parent_modes"
+        or value.get("operator_scope") != "n0_filtered_dtn_not_full_dtn"
+        or not re.fullmatch(
+            r"[0-9a-f]{64}", str(value.get("selected_parent_indices_sha256", ""))
+        )
+        or not re.fullmatch(r"[0-9a-f]{64}", str(value.get("active_mode_sha256", "")))
+    ):
+        raise ValueError("functional-store N0 operator selection identity is malformed")
+    return value
+
+
+def _validate_n0_parent_compatibility_contract(
+    compatibility: Any,
+) -> dict[str, Any]:
+    if not isinstance(compatibility, Mapping):
+        raise TypeError("N0 parent-store compatibility must be a mapping")
+    value = _json_safe(dict(compatibility))
+    required = {
+        "schema",
+        "parent_source_sha256",
+        "parent_resolved_config_sha256",
+        "parent_input_sha256",
+        "parent_physical_model_sha256",
+        "parent_mode_count",
+        "parent_mode_sha256",
+        "allowed_implementation_file_changes",
+        "stores",
+    }
+    if set(value) != required:
+        raise ValueError("N0 parent-store compatibility fields differ")
+    expected_hashes = (
+        "parent_source_sha256",
+        "parent_resolved_config_sha256",
+        "parent_input_sha256",
+        "parent_physical_model_sha256",
+        "parent_mode_sha256",
+    )
+    if any(not re.fullmatch(r"[0-9a-f]{40,64}", str(value[key])) for key in expected_hashes):
+        raise ValueError("N0 parent-store compatibility hash is malformed")
+    if (
+        value.get("schema") != N0_PARENT_COMPATIBILITY_SCHEMA
+        or value.get("parent_source_sha256")
+        != "2e72ce0df34a8781dca3d44d6fcaee2b7b6f3150"
+        or value.get("parent_resolved_config_sha256")
+        != "ca13bffb6636a8278c2aaca5ba00f849e806702c3e29eee892aa9637424d5179"
+        or value.get("parent_input_sha256")
+        != "3be4d0b12713f2cef4b7c90c97024b286d3ea8a7bd4d343b2178792f0121d480"
+        or value.get("parent_physical_model_sha256")
+        != "965c5ad2c25b817b01dbe5eaab1ee557a3d5c84ea4913b620466bb13f0795e4e"
+        or value.get("parent_mode_count") != N0_PARENT_MODE_COUNT
+        or value.get("parent_mode_sha256") != N0_PARENT_MODE_SHA256
+        or value.get("allowed_implementation_file_changes")
+        != sorted(N0_PARENT_COMPATIBLE_IMPLEMENTATION_FILES)
+    ):
+        raise ValueError("N0 parent-store compatibility is outside the reviewed mapping")
+    stores = value.get("stores")
+    if not isinstance(stores, Mapping) or set(stores) != {"3", "6"}:
+        raise ValueError("N0 compatibility must bind both parent degree stores")
+    for degree in ("3", "6"):
+        entry = stores[degree]
+        if not isinstance(entry, Mapping) or set(entry) != {
+            "root",
+            "numerical_identity_sha256",
+        }:
+            raise ValueError(f"N0 parent p{degree} store binding is malformed")
+        root = Path(str(entry["root"]))
+        if (
+            not root.is_absolute()
+            or _path_has_symlink_component(root)
+            or not re.fullmatch(
+                r"[0-9a-f]{64}", str(entry["numerical_identity_sha256"])
+            )
+        ):
+            raise ValueError(f"N0 parent p{degree} store path/hash is invalid")
+    return value
+
+
+def _n0_remapped_mode_identity_matches(
+    parent_mode_identity: Mapping[str, Any],
+    active_mode_identity: Mapping[str, Any],
+    active_index: int,
+) -> bool:
+    """Compare parent and active mode physics in the store's canonical form."""
+
+    remapped = _json_safe(dict(parent_mode_identity))
+    remapped["mode_index"] = int(active_index)
+    return remapped == _json_safe(dict(active_mode_identity))
+
+
 def _validate_identity(identity: Mapping[str, Any]) -> dict[str, Any]:
     missing = _REQUIRED_IDENTITY_KEYS.difference(identity)
     if missing:
@@ -899,7 +1046,12 @@ def _validate_identity(identity: Mapping[str, Any]) -> dict[str, Any]:
         r"[0-9a-f]{64}", mode_sha
     ):
         raise ValueError("functional-store ordered mode identity is malformed")
-    return _json_safe(dict(identity))
+    normalized = _json_safe(dict(identity))
+    if "operator_selection" in normalized:
+        normalized["operator_selection"] = _validate_operator_selection_identity(
+            normalized["operator_selection"], normalized["modes"]
+        )
+    return normalized
 
 
 def _validate_p6_surface_provider_descriptor(provider: Any) -> None:
@@ -1002,8 +1154,9 @@ def build_surface_functional_numerical_identity(
     mode_count: int,
     mode_manifest_sha256: str,
     surface_assemblers: Mapping[tuple[str, int], Any],
-    compiled_surface_assemblers: Mapping[tuple[str, int], Any] | None = None,
     mpc: Any,
+    compiled_surface_assemblers: Mapping[tuple[str, int], Any] | None = None,
+    operator_selection: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build a strict live identity without retaining another mesh-sized copy."""
 
@@ -1270,26 +1423,29 @@ def build_surface_functional_numerical_identity(
         }
         identity_schema = P3_NUMERICAL_IDENTITY_SCHEMA
 
-    return _validate_identity(
-        {
-            "schema": identity_schema,
-            "source_sha256": source,
-            "resolved_config_sha256": resolved_sha,
-            "implementation_file_sha256": _implementation_file_sha256(),
-            "input_sha256": input_sha,
-            "physical_model_sha256": physical_sha,
-            "backend": str(backend),
-            "degree": int(degree),
-            "mesh": mesh_identity,
-            "dof_mpc": dof_mpc_identity,
-            "modes": {
-                "count": int(mode_count),
-                "ordered_manifest_sha256": mode_sha,
-            },
-            "quadrature": quadrature_identity,
-            "abi": _live_abi_identity(mesh),
-        }
-    )
+    identity = {
+        "schema": identity_schema,
+        "source_sha256": source,
+        "resolved_config_sha256": resolved_sha,
+        "implementation_file_sha256": _implementation_file_sha256(),
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "backend": str(backend),
+        "degree": int(degree),
+        "mesh": mesh_identity,
+        "dof_mpc": dof_mpc_identity,
+        "modes": {
+            "count": int(mode_count),
+            "ordered_manifest_sha256": mode_sha,
+        },
+        "quadrature": quadrature_identity,
+        "abi": _live_abi_identity(mesh),
+    }
+    if operator_selection is not None:
+        identity["operator_selection"] = _validate_operator_selection_identity(
+            operator_selection, identity["modes"]
+        )
+    return _validate_identity(identity)
 
 
 class PortFunctionalShardStore:
@@ -1399,6 +1555,23 @@ class PortFunctionalShardStore:
         ):
             raise ValueError("functional-store storage budgets are invalid")
         self._test_fault_hook = _test_fault_hook
+        self._parent_import_state: dict[str, Any] | None = None
+        self._parent_import_facts: dict[str, Any] = {
+            "configured": False,
+            "status": "NOT_CONFIGURED",
+            "attempted_count": 0,
+            "imported_count": 0,
+            "fallback_count": 0,
+            "fallback_reasons": [],
+            "omitted_fallback_reason_count": 0,
+            "timing_seconds": {
+                "parent_manifest_read_seconds": 0.0,
+                "parent_payload_hash_seconds": 0.0,
+                "parent_payload_read_seconds": 0.0,
+                "parent_active_store_commit_seconds": 0.0,
+                "parent_fallback_fe_assembly_seconds": 0.0,
+            },
+        }
         self._lock_stream = None
         self._next_index = 0
         self._committed_disk_bytes = 0
@@ -1406,6 +1579,7 @@ class PortFunctionalShardStore:
         self.timing_seconds = {
             "restore_read_seconds": 0.0,
             "restore_hash_seconds": 0.0,
+            "active_store_commit_seconds": 0.0,
             "payload_write_seconds": 0.0,
             "payload_hash_seconds": 0.0,
             "payload_fsync_seconds": 0.0,
@@ -1429,8 +1603,9 @@ class PortFunctionalShardStore:
         mode_identities: Sequence[Mapping[str, Any]],
         mode_manifest_sha256: str,
         surface_assemblers: Mapping[tuple[str, int], Any],
-        compiled_surface_assemblers: Mapping[tuple[str, int], Any] | None = None,
         mpc: Any,
+        compiled_surface_assemblers: Mapping[tuple[str, int], Any] | None = None,
+        operator_selection: Mapping[str, Any] | None = None,
         ownership_range: tuple[int, int],
         slave_rows: np.ndarray,
         row_dtype: Any,
@@ -1450,8 +1625,9 @@ class PortFunctionalShardStore:
             mode_count=len(mode_identities),
             mode_manifest_sha256=mode_manifest_sha256,
             surface_assemblers=surface_assemblers,
-            compiled_surface_assemblers=compiled_surface_assemblers,
             mpc=mpc,
+            compiled_surface_assemblers=compiled_surface_assemblers,
+            operator_selection=operator_selection,
         )
         return cls(
             root,
@@ -1651,6 +1827,7 @@ class PortFunctionalShardStore:
             "serialization_scratch_bound_bytes": SERIALIZATION_SCRATCH_BOUND_BYTES,
             "producer_provenance_is_not_numerical_identity": True,
             "timing_seconds": dict(self.timing_seconds),
+            "parent_import": _json_safe(self._parent_import_facts),
         }
 
     def _shard_paths(self, index: int) -> tuple[Path, Path, Path]:
@@ -1874,8 +2051,483 @@ class PortFunctionalShardStore:
             restored.append(functional)
         return restored
 
+    def _compatible_parent_identity(
+        self, compatibility: Mapping[str, Any]
+    ) -> tuple[Path, dict[str, Any], str]:
+        compatibility = _validate_n0_parent_compatibility_contract(compatibility)
+        if "operator_selection" not in self._identity:
+            raise ValueError("parent-store import is restricted to explicit N0 identities")
+        degree = str(int(self._identity["degree"]))
+        binding = compatibility["stores"][degree]
+        root = Path(binding["root"])
+        if not root.is_dir() or root.is_symlink():
+            raise ValueError("N0 parent functional-store root is unavailable")
+        identity_path = root / "identity.json"
+        if identity_path.is_symlink() or not identity_path.is_file():
+            raise ValueError("N0 parent functional-store identity is unavailable")
+        before = identity_path.stat()
+        if before.st_size > _MAX_MANIFEST_BYTES:
+            raise ValueError("N0 parent functional-store identity exceeds its bound")
+        raw = identity_path.read_bytes()
+        after = identity_path.stat()
+        if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) != (
+            after.st_dev,
+            after.st_ino,
+            after.st_size,
+            after.st_mtime_ns,
+        ):
+            raise ValueError("N0 parent identity changed while it was read")
+        try:
+            document = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError("N0 parent functional-store identity is malformed") from exc
+        if (
+            not isinstance(document, Mapping)
+            or set(document)
+            != {
+                "schema",
+                "numerical_identity",
+                "numerical_identity_sha256",
+                "mode_count",
+            }
+            or raw != _canonical_json_bytes(document)
+            or document.get("schema") != STORE_SCHEMA
+        ):
+            raise ValueError("N0 parent functional-store identity schema differs")
+        parent_identity = _validate_identity(document["numerical_identity"])
+        parent_identity_sha = hashlib.sha256(
+            _canonical_json_bytes(parent_identity)
+        ).hexdigest()
+        if (
+            parent_identity_sha != binding["numerical_identity_sha256"]
+            or document.get("numerical_identity_sha256") != parent_identity_sha
+            or int(document.get("mode_count", -1))
+            != int(compatibility["parent_mode_count"])
+        ):
+            raise ValueError("N0 parent numerical identity hash/count differs")
+        for field in (
+            "source_sha256",
+            "resolved_config_sha256",
+            "input_sha256",
+            "physical_model_sha256",
+        ):
+            if parent_identity.get(field) != compatibility[f"parent_{field}"]:
+                raise ValueError(f"N0 parent {field} differs from the pinned mapping")
+        for field in (
+            "schema",
+            "physical_model_sha256",
+            "backend",
+            "degree",
+            "mesh",
+            "dof_mpc",
+            "quadrature",
+            "abi",
+        ):
+            if parent_identity.get(field) != self._identity.get(field):
+                raise ValueError(f"N0 parent and active {field} identities differ")
+        parent_modes = parent_identity.get("modes", {})
+        active_selection = self._identity["operator_selection"]
+        if (
+            int(parent_modes.get("count", -1))
+            != int(compatibility["parent_mode_count"])
+            or parent_modes.get("ordered_manifest_sha256")
+            != compatibility["parent_mode_sha256"]
+            or active_selection.get("parent_mode_count")
+            != int(parent_modes.get("count", -1))
+            or active_selection.get("parent_mode_sha256")
+            != parent_modes.get("ordered_manifest_sha256")
+        ):
+            raise ValueError("N0 parent mode identity differs from the reviewed mapping")
+        old_implementation = parent_identity["implementation_file_sha256"]
+        active_implementation = self._identity["implementation_file_sha256"]
+        if set(old_implementation) != set(active_implementation):
+            raise ValueError("N0 parent implementation identity key set changed")
+        changed_files = {
+            name
+            for name, old_digest in old_implementation.items()
+            if active_implementation[name] != old_digest
+        }
+        if not changed_files.issubset(N0_PARENT_COMPATIBLE_IMPLEMENTATION_FILES):
+            raise ValueError("N0 parent implementation changes exceed the allowlist")
+        if not Path(root / "writer.lock").is_file():
+            raise ValueError("N0 parent store writer-lock provenance is missing")
+        return root, parent_identity, parent_identity_sha
+
+    def _read_compatible_parent_functional(
+        self,
+        parent_root: Path,
+        parent_identity_sha256: str,
+        parent_index: int,
+        parent_mode_identity: Mapping[str, Any],
+        active_index: int | None,
+    ) -> dict[str, Any] | None:
+        directory = parent_root / f"functional_{int(parent_index):08d}"
+        manifest_path = directory / "manifest.json"
+        payload_path = directory / "payload.npz"
+        if any(path.is_symlink() for path in (directory, manifest_path, payload_path)):
+            raise ValueError("N0 parent functional shard may not contain symlinks")
+        present = tuple(path.exists() for path in (directory, manifest_path, payload_path))
+        if not any(present):
+            return None
+        if not all(present) or not directory.is_dir() or not manifest_path.is_file() or not payload_path.is_file():
+            raise ValueError(f"N0 parent functional shard {parent_index} is incomplete")
+        manifest_before = manifest_path.stat()
+        if manifest_before.st_size > _MAX_MANIFEST_BYTES:
+            raise ValueError("N0 parent shard manifest exceeds its bound")
+        manifest_started = time.perf_counter()
+        raw_manifest = manifest_path.read_bytes()
+        manifest_after = manifest_path.stat()
+        if (manifest_before.st_dev, manifest_before.st_ino, manifest_before.st_size, manifest_before.st_mtime_ns) != (
+            manifest_after.st_dev,
+            manifest_after.st_ino,
+            manifest_after.st_size,
+            manifest_after.st_mtime_ns,
+        ):
+            raise ValueError("N0 parent shard manifest changed while it was read")
+        try:
+            manifest = json.loads(raw_manifest.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError("N0 parent shard manifest is malformed") from exc
+        self._parent_import_facts["timing_seconds"][
+            "parent_manifest_read_seconds"
+        ] += time.perf_counter() - manifest_started
+        parent_mode_identity = _json_safe(dict(parent_mode_identity))
+        if (
+            not isinstance(manifest, Mapping)
+            or raw_manifest != _canonical_json_bytes(manifest)
+            or manifest.get("schema") != SHARD_SCHEMA
+            or int(manifest.get("mode_index", -1)) != int(parent_index)
+            or manifest.get("numerical_identity_sha256") != parent_identity_sha256
+            or manifest.get("mode_identity") != parent_mode_identity
+            or manifest.get("mode_key")
+            != _json_safe(_mode_key_from_identity(parent_mode_identity))
+            or manifest.get("payload_filename") != "payload.npz"
+        ):
+            raise ValueError(f"N0 parent shard {parent_index} mode identity differs")
+        payload_before = payload_path.stat()
+        expected_size = int(manifest.get("serialized_bytes", -1))
+        if expected_size <= 0 or payload_before.st_size != expected_size:
+            raise ValueError("N0 parent payload size differs from its manifest")
+        payload_sha, payload_size, hash_seconds = _sha256_file(payload_path)
+        self._parent_import_facts["timing_seconds"][
+            "parent_payload_hash_seconds"
+        ] += float(hash_seconds)
+        payload_after = payload_path.stat()
+        if (payload_before.st_dev, payload_before.st_ino, payload_before.st_size, payload_before.st_mtime_ns) != (
+            payload_after.st_dev,
+            payload_after.st_ino,
+            payload_after.st_size,
+            payload_after.st_mtime_ns,
+        ):
+            raise ValueError("N0 parent payload changed while it was hashed")
+        if (
+            payload_size != expected_size
+            or payload_sha != manifest.get("payload_sha256")
+            or payload_size > self._max_shard_working_bytes
+        ):
+            raise ValueError("N0 parent payload hash or size differs")
+        self._validate_npz_headers(payload_path, manifest)
+        payload_read_started = time.perf_counter()
+        try:
+            with np.load(payload_path, allow_pickle=False) as archive:
+                arrays = {key: archive[key] for key in _ARRAY_KEYS}
+        except (OSError, ValueError, BadZipFile) as exc:
+            raise ValueError("N0 parent payload cannot be decoded") from exc
+        self._parent_import_facts["timing_seconds"][
+            "parent_payload_read_seconds"
+        ] += time.perf_counter() - payload_read_started
+        for key, array in arrays.items():
+            descriptor = manifest["arrays"][key]
+            if (
+                array.dtype.str != descriptor["dtype"]
+                or list(array.shape) != descriptor["shape"]
+                or int(array.nbytes) != int(descriptor["nbytes"])
+                or array.dtype.hasobject
+            ):
+                raise ValueError(f"N0 parent payload array {key} differs")
+        if active_index is None:
+            functional_identity = dict(parent_mode_identity)
+            functional_index = int(parent_index)
+        else:
+            active_identity = self._mode_identities[int(active_index)]
+            if not _n0_remapped_mode_identity_matches(
+                parent_mode_identity, active_identity, int(active_index)
+            ):
+                raise ValueError("N0 parent and active mode physics differ")
+            functional_identity = self._raw_mode_identities[int(active_index)]
+            functional_index = int(active_index)
+        functional = {
+            "mode_key": _mode_key_from_identity(functional_identity),
+            "mode_identity": dict(functional_identity),
+            "coupling_rows": arrays["coupling_rows"],
+            "coupling_values": arrays["coupling_values"],
+            "projection_rows": arrays["projection_rows"],
+            "projection_values": arrays["projection_values"],
+            "normalization_h": float(arrays["normalization_h"][0]),
+        }
+        self._validate_functional(
+            functional,
+            functional_index,
+            expected_mode_identity=(
+                parent_mode_identity if active_index is None else None
+            ),
+        )
+        for array in arrays.values():
+            array.flags.writeable = False
+        return functional
+
+    def prepare_compatible_parent_import(
+        self,
+        compatibility: Mapping[str, Any],
+        parent_mode_identities: Sequence[Mapping[str, Any]],
+        selected_parent_indices: Sequence[int],
+    ) -> None:
+        """Bind optional parent reuse after validating active N0 mode identity."""
+
+        parent_rows = tuple(_json_safe(dict(row)) for row in parent_mode_identities)
+        selected = tuple(int(index) for index in selected_parent_indices)
+        if (
+            len(parent_rows) != N0_PARENT_MODE_COUNT
+            or len(selected) != len(self._mode_identities)
+            or any(index < 0 or index >= len(parent_rows) for index in selected)
+            or any(right <= left for left, right in pairwise(selected))
+        ):
+            raise ValueError("N0 parent import mode mapping is invalid")
+        selection = self._identity.get("operator_selection")
+        index_sha = hashlib.sha256(_canonical_json_bytes(list(selected))).hexdigest()
+        if (
+            selection is None
+            or index_sha != selection.get("selected_parent_indices_sha256")
+            or selection.get("parent_mode_sha256") != N0_PARENT_MODE_SHA256
+            or len(selected) != len(self._mode_identities)
+        ):
+            raise ValueError("N0 parent import selection identity differs")
+        if any(
+            not _n0_remapped_mode_identity_matches(
+                parent_rows[parent_index], self._raw_mode_identities[active_index], active_index
+            )
+            for active_index, parent_index in enumerate(selected)
+        ):
+            raise ValueError("N0 selected parent rows differ from active mode identity")
+
+        self._parent_import_facts.update(
+            configured=True,
+            status="PARENT_CHECK_PENDING",
+            selected_mode_count=len(selected),
+        )
+        try:
+            parent_root, parent_identity, parent_identity_sha = (
+                self._compatible_parent_identity(compatibility)
+            )
+            if (
+                int(parent_identity["modes"]["count"]) != len(parent_rows)
+                or parent_identity["modes"]["ordered_manifest_sha256"]
+                != N0_PARENT_MODE_SHA256
+            ):
+                raise ValueError(
+                    "N0 live parent mode rows differ from the pinned parent manifest"
+                )
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            self._parent_import_facts["status"] = "PARENT_NOT_REUSABLE"
+            self._record_parent_import_fallback(
+                None, None, "parent_identity_incompatible", exc
+            )
+            self._parent_import_state = None
+            return
+        self._parent_import_state = {
+            "root": parent_root,
+            "identity_sha256": parent_identity_sha,
+            "parent_rows": parent_rows,
+            "selected_parent_indices": selected,
+        }
+        self._parent_import_facts["status"] = "PARENT_COMPATIBLE"
+
+    def disable_parent_import(self, reason: str) -> None:
+        """Record that optional parent reuse was intentionally unavailable."""
+
+        self._parent_import_state = None
+        self._parent_import_facts.update(
+            configured=False,
+            status="PARENT_REUSE_NOT_CONFIGURED",
+            disabled_reason=str(reason)[:240],
+        )
+
+    def n0_parent_store_inventory_facts(self) -> dict[str, Any]:
+        """Inspect only parent shard names; never read payloads or hashes."""
+
+        state = self._parent_import_state
+        if state is None:
+            return {
+                "status": "PARENT_NOT_REUSABLE",
+                "expected_mode_count": N0_PARENT_MODE_COUNT,
+                "committed_shard_count": None,
+                "contiguous_prefix_count": None,
+                "complete": False,
+            }
+        root = Path(state["root"])
+        indices: set[int] = set()
+        for entry in root.iterdir():
+            match = _SHARD_NAME.fullmatch(entry.name)
+            if match is None:
+                continue
+            if entry.is_symlink() or not entry.is_dir():
+                return {
+                    "status": "PARENT_SHARD_INVENTORY_INVALID",
+                    "expected_mode_count": len(state["parent_rows"]),
+                    "committed_shard_count": len(indices),
+                    "contiguous_prefix_count": None,
+                    "complete": False,
+                    "reason": "shard_entry_is_not_a_regular_directory",
+                }
+            index = int(match.group(1))
+            if index >= len(state["parent_rows"]):
+                return {
+                    "status": "PARENT_SHARD_INVENTORY_INVALID",
+                    "expected_mode_count": len(state["parent_rows"]),
+                    "committed_shard_count": len(indices) + 1,
+                    "contiguous_prefix_count": None,
+                    "complete": False,
+                    "reason": "shard_index_exceeds_parent_inventory",
+                }
+            indices.add(index)
+        prefix = 0
+        while prefix in indices:
+            prefix += 1
+        expected = len(state["parent_rows"])
+        complete = prefix == expected and len(indices) == expected
+        facts = {
+            "status": "PARENT_STORE_COMPLETE" if complete else "PARENT_STORE_INCOMPLETE",
+            "expected_mode_count": expected,
+            "committed_shard_count": len(indices),
+            "contiguous_prefix_count": prefix,
+            "first_missing_mode_index": None if complete else prefix,
+            "complete": complete,
+            "payloads_opened": 0,
+            "payload_hashes_computed": 0,
+        }
+        self._parent_import_facts["endpoint_inventory"] = dict(facts)
+        return facts
+
+    def record_n0_parent_fallback_assembly_seconds(self, seconds: float) -> None:
+        value = float(seconds)
+        if not np.isfinite(value) or value < 0.0:
+            raise ValueError("parent fallback FE assembly time must be finite and nonnegative")
+        self._parent_import_facts["timing_seconds"][
+            "parent_fallback_fe_assembly_seconds"
+        ] += value
+
+    def record_active_store_commit_seconds(self, seconds: float) -> None:
+        value = float(seconds)
+        if not np.isfinite(value) or value < 0.0:
+            raise ValueError("active store commit time must be finite and nonnegative")
+        self.timing_seconds["active_store_commit_seconds"] += value
+
+    def read_n0_parent_functional_for_endpoint(
+        self, parent_index: int
+    ) -> dict[str, Any] | None:
+        """Read and validate one full-parent shard for the one endpoint check."""
+
+        state = self._parent_import_state
+        if state is None:
+            return None
+        parent_index = int(parent_index)
+        rows = state["parent_rows"]
+        if parent_index < 0 or parent_index >= len(rows):
+            raise IndexError("N0 endpoint parent index is outside the bound inventory")
+        return self._read_compatible_parent_functional(
+            state["root"],
+            state["identity_sha256"],
+            parent_index,
+            rows[parent_index],
+            None,
+        )
+
+    def _record_parent_import_fallback(
+        self,
+        active_index: int | None,
+        parent_index: int | None,
+        category: str,
+        exc: BaseException | None = None,
+    ) -> None:
+        self._parent_import_facts["fallback_count"] += 1
+        record = {
+            "active_index": active_index,
+            "parent_index": parent_index,
+            "category": str(category),
+        }
+        if exc is not None:
+            record["reason"] = f"{type(exc).__name__}: {exc}"[:240]
+        reasons = self._parent_import_facts["fallback_reasons"]
+        if len(reasons) < 16:
+            reasons.append(record)
+        else:
+            self._parent_import_facts["omitted_fallback_reason_count"] += 1
+        if self._parent_import_facts["status"] == "PARENT_COMPATIBLE":
+            self._parent_import_facts["status"] = "PARTIAL_PARENT_REUSE"
+
+    def try_import_compatible_parent_functional(
+        self, active_index: int
+    ) -> dict[str, Any] | None:
+        """Read one optional parent shard; caller assembles when reuse is unavailable.
+
+        New-store validation and commit failures are intentionally outside the
+        parent-read fallback boundary and remain fatal.
+        """
+
+        active_index = int(active_index)
+        if active_index != self._next_index:
+            raise ValueError("N0 parent import must follow the active store index")
+        self._parent_import_facts["attempted_count"] += 1
+        state = self._parent_import_state
+        if state is None:
+            self._record_parent_import_fallback(
+                active_index, None, "parent_reuse_unavailable"
+            )
+            return None
+        selected = state["selected_parent_indices"]
+        if active_index < 0 or active_index >= len(selected):
+            raise ValueError("N0 active import index is outside the selected modes")
+        parent_index = selected[active_index]
+        try:
+            functional = self._read_compatible_parent_functional(
+                state["root"],
+                state["identity_sha256"],
+                parent_index,
+                state["parent_rows"][parent_index],
+                active_index,
+            )
+        except (OSError, ValueError, TypeError, KeyError, EOFError, BadZipFile) as exc:
+            self._record_parent_import_fallback(
+                active_index, parent_index, "selected_parent_payload_invalid", exc
+            )
+            return None
+        if functional is None:
+            self._record_parent_import_fallback(
+                active_index, parent_index, "selected_parent_payload_missing"
+            )
+            return None
+        # This writes only the new active store. A write/identity/disk failure
+        # here must not be mistaken for an optional parent-cache miss.
+        commit_started = time.perf_counter()
+        self.commit(functional, mode_index=active_index)
+        commit_elapsed = time.perf_counter() - commit_started
+        self.record_active_store_commit_seconds(commit_elapsed)
+        self._parent_import_facts["timing_seconds"][
+            "parent_active_store_commit_seconds"
+        ] += commit_elapsed
+        self._parent_import_facts["imported_count"] += 1
+        if self._parent_import_facts["fallback_count"]:
+            self._parent_import_facts["status"] = "PARTIAL_PARENT_REUSE"
+        else:
+            self._parent_import_facts["status"] = "PARENT_REUSE_ACTIVE"
+        return functional
+
     def _validate_functional(
-        self, functional: Any, index: int
+        self,
+        functional: Any,
+        index: int,
+        *,
+        expected_mode_identity: Mapping[str, Any] | None = None,
     ) -> dict[str, np.ndarray]:
         def field(name: str) -> Any:
             if isinstance(functional, Mapping):
@@ -1890,7 +2542,11 @@ class PortFunctionalShardStore:
             except AttributeError as exc:
                 raise ValueError(f"functional shard is missing field {name!r}") from exc
 
-        expected_identity = self._mode_identities[index]
+        expected_identity = (
+            self._mode_identities[index]
+            if expected_mode_identity is None
+            else _json_safe(dict(expected_mode_identity))
+        )
         identity = _json_safe(dict(field("mode_identity")))
         key = tuple(field("mode_key"))
         if (
@@ -1975,11 +2631,27 @@ class PortFunctionalShardStore:
             raise ValueError(
                 "functional shards must commit as one contiguous mode prefix"
             )
+
+        def field(name: str) -> Any:
+            if isinstance(functional, Mapping):
+                try:
+                    return functional[name]
+                except KeyError as exc:
+                    raise ValueError(
+                        f"functional shard is missing field {name!r}"
+                    ) from exc
+            try:
+                return getattr(functional, name)
+            except AttributeError as exc:
+                raise ValueError(
+                    f"functional shard is missing field {name!r}"
+                ) from exc
+
         arrays = self._validate_functional(functional, index)
         npz_arrays = {
             **arrays,
             "normalization_h": np.asarray(
-                [float(functional.normalization_h)], dtype=np.float64
+                [float(field("normalization_h"))], dtype=np.float64
             ),
         }
         descriptors = {
@@ -1989,8 +2661,8 @@ class PortFunctionalShardStore:
         manifest = {
             "schema": SHARD_SCHEMA,
             "mode_index": index,
-            "mode_key": _json_safe(tuple(functional.mode_key)),
-            "mode_identity": _json_safe(dict(functional.mode_identity)),
+            "mode_key": _json_safe(tuple(field("mode_key"))),
+            "mode_identity": _json_safe(dict(field("mode_identity"))),
             "numerical_identity_sha256": self._identity_sha256,
             "producer_provenance": self._producer_provenance,
             "payload_filename": "payload.npz",
