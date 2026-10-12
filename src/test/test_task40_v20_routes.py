@@ -163,6 +163,43 @@ def test_v27_service_operation_routes_to_saved_q0_stage_executor(monkeypatch, tm
     assert received["source_sha"] == "a" * 40
 
 
+def test_v28_service_operation_routes_to_v28_saved_q0_continuation(monkeypatch, tmp_path):
+    from src.runners import task40_v20_stage_runner as runner
+
+    stop_stage = "selected_reference_q_csr"
+    payload = {"execution": {"task40_execution_stop_stage": stop_stage}}
+    modes = (SimpleNamespace(side="bottom", m=0, n=0, polarization="s"),)
+    mode_rows = ({"mode_index": 0},)
+    preflight = {"schema": "fixture", "target_mode_inventory": {}}
+    monkeypatch.setattr(
+        runner,
+        "_exact_case",
+        lambda _payload: (runner._V22_TARGET_OPERATOR_PROFILE, "TARGET_ORIGINAL_NY8"),
+    )
+    monkeypatch.setattr(
+        runner, "_preflight", lambda *_args, **_kwargs: (preflight, modes, mode_rows)
+    )
+    monkeypatch.delenv("TASK40_V26_OPERATION", raising=False)
+    monkeypatch.delenv("TASK40_V27_OPERATION", raising=False)
+    monkeypatch.setenv("TASK40_V28_OPERATION", "V28_EXISTING_MANIFEST_Q0_CONTINUATION")
+    received = {}
+
+    def fake_v28(*args, **kwargs):
+        received["args"] = args
+        received.update(kwargs)
+        return {"status": "in_progress", "summary": {"v28": True}}
+
+    monkeypatch.setattr(runner, "_run_v27_saved_q0_stage", fake_v28)
+    result = runner.run_task40_v20_stage(payload, tmp_path / "run", source_sha="d" * 40)
+
+    assert result["summary"]["v28"] is True
+    assert received["stop_stage"] == stop_stage
+    assert received["modes"] is modes
+    assert received["mode_rows"] is mode_rows
+    assert received["source_sha"] == "d" * 40
+    assert received["v28_continuation"] is True
+
+
 def test_v27_selector_binds_fixed_donor_and_execution_window(monkeypatch, tmp_path):
     from scripts import task40_v20_service_workflow as service
 

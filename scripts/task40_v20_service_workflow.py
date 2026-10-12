@@ -63,6 +63,18 @@ from src.runners.task40_v10_campaign import (  # noqa: E402
     TASK40_V27_REVIEW_PATH,
     TASK40_V27_REVIEW_SHA256,
     TASK40_V27_STAGE_SCOPE,
+    TASK40_V28_CAMPAIGN_RECEIPT,
+    TASK40_V28_CAMPAIGN_RECEIPT_SHA256,
+    TASK40_V28_CAMPAIGN_SHA256,
+    TASK40_V28_CAMPAIGN_WINDOW,
+    TASK40_V28_FORBIDDEN_SCOPE,
+    TASK40_V28_PARENT_LEDGER,
+    TASK40_V28_PARENT_WINDOW,
+    TASK40_V28_REVIEW_COMMIT,
+    TASK40_V28_REVIEW_PATH,
+    TASK40_V28_REVIEW_SHA256,
+    TASK40_V28_SOURCE_AT_ENTRY,
+    TASK40_V28_STAGE_SCOPE,
     load_fixed_campaign_window,
 )
 
@@ -153,6 +165,27 @@ V27_SELECTED_OPERATION_BY_STAGE = {
 }
 V27_REPLAY_ROOT = V26_ARTIFACT_ROOT / "saved_replay"
 V27_NATIVE_ROOT = V26_ARTIFACT_ROOT / "native_consumer"
+V28_ARTIFACT_ROOT = Path(
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl"
+)
+V28_TARGET_PROFILE = V27_TARGET_PROFILE
+V28_STOP_STAGE_SCOPE = {
+    "selected_reference_q_csr": "existing_manifest_continuation",
+}
+V28_SELECTED_Q_STAGES = frozenset(V28_STOP_STAGE_SCOPE)
+V28_CONTINUATION_OPERATION = "V28_EXISTING_MANIFEST_Q0_CONTINUATION"
+V28_CONTINUATION_POLICY = (
+    "auto_manifest_state: pending_or_incomplete=fill_then_native_readback_then_factor_preflight; "
+    "complete_without_matching_native_pass=readback_then_factor_preflight; "
+    "complete_with_matching_native_pass=factor_preflight_only"
+)
+V28_PATTERN_MANIFEST_RELATIVE = Path(
+    "results/task40extra_nonseparable_0p7nm/"
+    "task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/"
+    "20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_csr_manifest.json"
+)
+V28_PATTERN_MANIFEST_SHA256 = "1ea707f3c201359c390b620a5122d0102f5b34bd74873b5f00e3a40b673b94de"
+V28_CONTINUATION_MANIFEST_NAME = "task40_v28_q0_csr_continuation_manifest.json"
 V27_REPLAY_MANIFEST_SHA256 = "6e16ab0f0bae09e472d2806a71bdf28325f3ce768b089fe4a6521099e68b100f"
 V27_NATIVE_RECOVERY_TAG = "f9093c87f81d52b75fbc156e562b3745df45ccf4"
 V27_NATIVE_RECOVERY_SHA256 = "6a558896fc0e83826081d9b418a89d4cd76d45207bf7dd4cd086c68df7c12265"
@@ -293,7 +326,7 @@ def _resolve_service_campaign(
     profile: str,
     stop_stage: str,
 ) -> dict[str, Any]:
-    """Resolve a historical window or an exact, scoped V22–V26 campaign."""
+    """Resolve a historical window or an exact, scoped Task40 campaign."""
 
     supplied = campaign_path if campaign_path.is_absolute() else repo_root / campaign_path
     supplied = supplied.resolve()
@@ -314,6 +347,7 @@ def _resolve_service_campaign(
     v25_path = (repo_root / TASK40_V25_CAMPAIGN_WINDOW).resolve()
     v26_path = (repo_root / TASK40_V26_CAMPAIGN_WINDOW).resolve()
     v27_path = (repo_root / TASK40_V27_CAMPAIGN_WINDOW).resolve()
+    v28_path = (repo_root / TASK40_V28_CAMPAIGN_WINDOW).resolve()
     if supplied == v22_path:
         if profile != V22_TARGET_PROFILE:
             raise ValueError("the V22 campaign route is restricted to the registered Ny8 target")
@@ -457,8 +491,41 @@ def _resolve_service_campaign(
             raise ValueError("the V27 campaign registration receipt identity or scope changed")
         window = load_fixed_campaign_window(v27_path, require_current_boot=True)
         campaign_version = "V27"
+    elif supplied == v28_path:
+        if profile != V28_TARGET_PROFILE:
+            raise ValueError("the V28 continuation route is restricted to the registered Ny8 target")
+        stage_scope = V28_STOP_STAGE_SCOPE.get(stop_stage)
+        if stage_scope is None or stage_scope not in TASK40_V28_STAGE_SCOPE:
+            raise ValueError("the V28 service stop stage is outside its explicit campaign scope")
+        if _sha256_file(v28_path) != TASK40_V28_CAMPAIGN_SHA256:
+            raise ValueError("the registered V28 campaign window SHA changed")
+        receipt_path = (repo_root / TASK40_V28_CAMPAIGN_RECEIPT).resolve()
+        if (
+            not receipt_path.is_file()
+            or _sha256_file(receipt_path) != TASK40_V28_CAMPAIGN_RECEIPT_SHA256
+        ):
+            raise ValueError("the V28 campaign registration receipt is missing or changed")
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        if (
+            receipt.get("schema") != "task40extra.review_v28_campaign_registration.v1"
+            or receipt.get("manifest_path") != str(TASK40_V28_CAMPAIGN_WINDOW)
+            or receipt.get("manifest_sha256") != TASK40_V28_CAMPAIGN_SHA256
+            or receipt.get("review_sha") != TASK40_V28_REVIEW_COMMIT
+            or receipt.get("review_path") != TASK40_V28_REVIEW_PATH
+            or receipt.get("review_sha256") != TASK40_V28_REVIEW_SHA256
+            or receipt.get("source_at_entry") != TASK40_V28_SOURCE_AT_ENTRY
+            or receipt.get("stage_scope") != list(TASK40_V28_STAGE_SCOPE)
+            or receipt.get("forbidden_scope") != list(TASK40_V28_FORBIDDEN_SCOPE)
+            or receipt.get("parent_window") != TASK40_V28_PARENT_WINDOW
+            or receipt.get("parent_ledger") != TASK40_V28_PARENT_LEDGER
+            or receipt.get("registration_state")
+            != "REGISTERED_FOR_DEVELOPMENT; service/selector/worker/watchdog/checker route qualification required before formal worker"
+        ):
+            raise ValueError("the V28 campaign registration receipt identity or scope changed")
+        window = load_fixed_campaign_window(v28_path, require_current_boot=True)
+        campaign_version = "V28"
     else:
-        raise ValueError("service campaign window is not a registered V19 or V22–V27 path")
+        raise ValueError("service campaign window is not a registered V19 or V22–V28 path")
     return {
         "path": window.path,
         "sha256": window.sha256,
@@ -669,6 +736,10 @@ def _validate_service_stage_input_variant(
     if stop_stage in V27_SELECTED_Q_STAGES:
         allowed_stage_roots.append(
             (repo_root / V27_ARTIFACT_ROOT / "stage_inputs").resolve()
+        )
+    if stop_stage in V28_SELECTED_Q_STAGES:
+        allowed_stage_roots.append(
+            (repo_root / V28_ARTIFACT_ROOT / "stage_inputs").resolve()
         )
     if not any(input_path.is_relative_to(path) for path in allowed_stage_roots):
         raise ValueError("noncanonical V20/V25/V26 stage input must live in its ignored stage_inputs artifact")
@@ -904,6 +975,107 @@ def prepare_v27_saved_q0_input(
             "bash scripts/run_case_in_user_service.sh "
             f"{input_path} --task40-v10-campaign-window {TASK40_V27_CAMPAIGN_WINDOW} "
             f"--v27-saved-q0-selector {selector_path}"
+        ),
+    }
+
+
+def prepare_v28_q0_continuation_input(
+    stop_stage: str = "selected_reference_q_csr",
+    repo_root: Path = ROOT,
+) -> dict[str, Any]:
+    """Bind the V28 service input to the immutable V27 pattern and V26 donor."""
+    if stop_stage not in V28_SELECTED_Q_STAGES:
+        raise ValueError("V28 preparation only supports the existing-manifest q0 continuation")
+    campaign_path = (repo_root / TASK40_V28_CAMPAIGN_WINDOW).resolve()
+    receipt_path = (repo_root / TASK40_V28_CAMPAIGN_RECEIPT).resolve()
+    if (
+        not campaign_path.is_file()
+        or _sha256_file(campaign_path) != TASK40_V28_CAMPAIGN_SHA256
+        or not receipt_path.is_file()
+        or _sha256_file(receipt_path) != TASK40_V28_CAMPAIGN_RECEIPT_SHA256
+    ):
+        raise ValueError("V28 preparation requires its immutable window and registration receipt")
+    load_fixed_campaign_window(campaign_path, require_current_boot=True)
+    pattern_path = (repo_root / V28_PATTERN_MANIFEST_RELATIVE).resolve()
+    if (
+        not pattern_path.is_file()
+        or _sha256_file(pattern_path) != V28_PATTERN_MANIFEST_SHA256
+    ):
+        raise ValueError("V28 preparation requires the exact incomplete V27 q0 pattern")
+    pattern = json.loads(pattern_path.read_text(encoding="utf-8"))
+    if (
+        pattern.get("schema") != "task40extra.review_v27_saved_q0_csr.v1"
+        or pattern.get("status") != "NUMERIC_FILL_INCOMPLETE"
+        or pattern.get("shape") != [777_644, 777_644]
+        or pattern.get("stored_structural_slots") != 577_061_168
+        or pattern.get("csr_artifacts", {}).get("data", {}).get("sha256") is not None
+    ):
+        raise ValueError("V27 pattern is not the reviewed incomplete numeric continuation input")
+    canonical_relative, _ = V20_INPUTS[V28_TARGET_PROFILE]
+    canonical_path = repo_root / canonical_relative
+    canonical_text = canonical_path.read_text(encoding="utf-8")
+    canonical_data = tomllib.loads(canonical_text)
+    if canonical_data.get("solver", {}).get("preconditioner") != V28_TARGET_PROFILE:
+        raise ValueError("V28 continuation canonical input/profile identity changed")
+    donor_import = verify_v27_v26_donor_import(repo_root=repo_root)
+    rendered = render_stage_input(canonical_text, stop_stage).encode("utf-8")
+    stage_directory = (
+        repo_root / V28_ARTIFACT_ROOT / "stage_inputs" / stop_stage
+    ).resolve()
+    stage_directory.mkdir(parents=True, exist_ok=True)
+    input_path = stage_directory / canonical_path.name
+    selector_path = stage_directory / "q0_continuation.json"
+    continuation_path = pattern_path.with_name(V28_CONTINUATION_MANIFEST_NAME)
+    selector = {
+        "schema": "task40extra.review_v28_q0_continuation_operation.v1",
+        "operation": V28_CONTINUATION_OPERATION,
+        "campaign_window_sha256": TASK40_V28_CAMPAIGN_SHA256,
+        "input_sha256": _sha256_bytes(rendered),
+        "model_profile": V28_TARGET_PROFILE,
+        "stop_stage": stop_stage,
+        "donor_import": donor_import,
+        "pattern_manifest_path": str(pattern_path),
+        "pattern_manifest_sha256": V28_PATTERN_MANIFEST_SHA256,
+        "continuation_manifest_path": str(continuation_path),
+        "continuation_policy": V28_CONTINUATION_POLICY,
+    }
+    selector_payload = (
+        json.dumps(selector, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+    ).encode("utf-8")
+    for destination, payload in ((input_path, rendered), (selector_path, selector_payload)):
+        relative = destination.relative_to(repo_root.resolve())
+        ignored = subprocess.run(
+            ["git", "check-ignore", "-q", str(relative)], cwd=repo_root, check=False
+        )
+        if ignored.returncode != 0:
+            raise RuntimeError(f"V28 selected-q artifact is not git-ignored: {relative}")
+        if destination.exists():
+            if destination.read_bytes() != payload:
+                raise FileExistsError(f"refusing to replace different V28 artifact: {destination}")
+        else:
+            with destination.open("xb") as stream:
+                stream.write(payload)
+                stream.flush()
+                os.fsync(stream.fileno())
+    return {
+        "schema": "task40extra.review_v28_q0_continuation_stage_input.v1",
+        "stop_stage": stop_stage,
+        "operation": V28_CONTINUATION_OPERATION,
+        "canonical_input_sha256": _sha256_file(canonical_path),
+        "stage_input_path": str(input_path),
+        "stage_input_sha256": _sha256_file(input_path),
+        "selector_path": str(selector_path),
+        "selector_sha256": _sha256_file(selector_path),
+        "donor_import": donor_import,
+        "pattern_manifest_path": str(pattern_path),
+        "pattern_manifest_sha256": V28_PATTERN_MANIFEST_SHA256,
+        "continuation_manifest_path": str(continuation_path),
+        "campaign_window_path": str(campaign_path),
+        "campaign_window_sha256": TASK40_V28_CAMPAIGN_SHA256,
+        "launch_command": (
+            "bash scripts/run_case_in_user_service.sh "
+            f"{input_path} --task40-v10-campaign-window {TASK40_V28_CAMPAIGN_WINDOW} "
+            f"--v28-q0-continuation-selector {selector_path}"
         ),
     }
 
@@ -1323,6 +1495,33 @@ def _extract_v27_saved_q0_selector_arg(
     return cleaned, selected
 
 
+def _extract_v28_q0_continuation_selector_arg(
+    case_args: list[str],
+) -> tuple[list[str], Path | None]:
+    """Remove the one V28 existing-manifest continuation selector."""
+    cleaned: list[str] = []
+    selected: Path | None = None
+    index = 0
+    flag = "--v28-q0-continuation-selector"
+    while index < len(case_args):
+        value = case_args[index]
+        if value == flag:
+            if selected is not None or index + 1 >= len(case_args):
+                raise ValueError("V28 q0 continuation selector must appear once with a JSON path")
+            selected = Path(case_args[index + 1]).resolve()
+            index += 2
+            continue
+        if value.startswith(flag + "="):
+            if selected is not None:
+                raise ValueError("V28 q0 continuation selector must appear only once")
+            selected = Path(value.split("=", 1)[1]).resolve()
+            index += 1
+            continue
+        cleaned.append(value)
+        index += 1
+    return cleaned, selected
+
+
 def _bind_v25_selected_operation_selector(
     selector_path: Path,
     *,
@@ -1718,6 +1917,67 @@ def _bind_v27_saved_q0_selector(
         "input_sha256": _sha256_file(input_path),
         "donor_import": donor_import,
         "producer_root": str((repo_root / V26_PRODUCER_RUN_RELATIVE).resolve()),
+    }
+
+
+def _bind_v28_q0_continuation_selector(
+    selector_path: Path,
+    *,
+    input_path: Path,
+    campaign_registration: dict[str, Any],
+    profile: str,
+    stop_stage: str,
+    repo_root: Path,
+) -> dict[str, Any]:
+    selector_path = selector_path.resolve()
+    allowed_root = (repo_root / V28_ARTIFACT_ROOT).resolve()
+    pattern_path = (repo_root / V28_PATTERN_MANIFEST_RELATIVE).resolve()
+    continuation_path = pattern_path.with_name(V28_CONTINUATION_MANIFEST_NAME)
+    if not selector_path.is_relative_to(allowed_root) or not selector_path.is_file():
+        raise ValueError("V28 q0 continuation selector must be under its registered artifact directory")
+    if (
+        campaign_registration.get("version") != "V28"
+        or campaign_registration.get("sha256") != TASK40_V28_CAMPAIGN_SHA256
+        or profile != V28_TARGET_PROFILE
+        or stop_stage not in V28_SELECTED_Q_STAGES
+    ):
+        raise ValueError("V28 selector requires its exact registered stage and window")
+    if (
+        not pattern_path.is_file()
+        or _sha256_file(pattern_path) != V28_PATTERN_MANIFEST_SHA256
+    ):
+        raise ValueError("V28 continuation requires the unchanged V27 pattern manifest")
+    selector = json.loads(selector_path.read_text(encoding="utf-8"))
+    donor_import = verify_v27_v26_donor_import(repo_root=repo_root)
+    if (
+        not isinstance(selector, dict)
+        or selector.get("schema") != "task40extra.review_v28_q0_continuation_operation.v1"
+        or selector.get("operation") != V28_CONTINUATION_OPERATION
+        or selector.get("campaign_window_sha256") != TASK40_V28_CAMPAIGN_SHA256
+        or selector.get("input_sha256") != _sha256_file(input_path)
+        or selector.get("model_profile") != V28_TARGET_PROFILE
+        or selector.get("stop_stage") != stop_stage
+        or selector.get("donor_import") != donor_import
+        or Path(str(selector.get("pattern_manifest_path", ""))).resolve() != pattern_path
+        or selector.get("pattern_manifest_sha256") != V28_PATTERN_MANIFEST_SHA256
+        or Path(str(selector.get("continuation_manifest_path", ""))).resolve()
+        != continuation_path
+        or selector.get("continuation_policy") != V28_CONTINUATION_POLICY
+    ):
+        raise ValueError("V28 selector or V27 donor/pattern identity differs from its frozen contract")
+    raw = selector_path.read_bytes()
+    return {
+        "selector_path": str(selector_path),
+        "selector_sha256": _sha256_bytes(raw),
+        "operation": V28_CONTINUATION_OPERATION,
+        "stop_stage": stop_stage,
+        "campaign_window_sha256": TASK40_V28_CAMPAIGN_SHA256,
+        "input_sha256": _sha256_file(input_path),
+        "donor_import": donor_import,
+        "producer_root": str((repo_root / V26_PRODUCER_RUN_RELATIVE).resolve()),
+        "pattern_manifest_path": str(pattern_path),
+        "pattern_manifest_sha256": V28_PATTERN_MANIFEST_SHA256,
+        "continuation_manifest_path": str(continuation_path),
     }
 
 
@@ -5812,6 +6072,198 @@ def _v27_saved_q0_readback_checks(
     return checks
 
 
+def _v28_saved_q0_continuation_checks(
+    *,
+    output_directory: Path,
+    partial: Mapping[str, Any],
+    expected_stop_stage: str,
+) -> dict[str, bool]:
+    """Classify V28 in-progress cutoffs and verify reused/complete CSR identities."""
+    checks: dict[str, bool] = {}
+    stage = partial.get("v28_q0_continuation", {})
+    stage = stage if isinstance(stage, Mapping) else {}
+    operation = stage.get("operation", {})
+    operation = operation if isinstance(operation, Mapping) else {}
+    status = str(operation.get("status", ""))
+    operation_path = output_directory / str(stage.get("operation_path", ""))
+    selector_path = Path(str(stage.get("selector_path", ""))).resolve()
+    manifest_path = Path(str(operation.get("csr_manifest_path", operation.get("continuation_manifest_path", "")))).resolve()
+    pattern_path = (ROOT / V28_PATTERN_MANIFEST_RELATIVE).resolve()
+    try:
+        selector = json.loads(selector_path.read_text(encoding="utf-8"))
+        pattern = json.loads(pattern_path.read_text(encoding="utf-8"))
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.is_file() else {}
+        donor = operation.get("donor_import_identity", {})
+        donor = donor if isinstance(donor, Mapping) else {}
+        inventory = operation.get("saved_only_preflight", {})
+        inventory = inventory if isinstance(inventory, Mapping) else {}
+        execution = operation.get("current_execution_identity", {})
+        execution = execution if isinstance(execution, Mapping) else {}
+        donor_sha = hashlib.sha256(
+            json.dumps(donor, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        selector_sha = _sha256_file(selector_path)
+        checks["v28_selector_current_window_and_donor_bind"] = bool(
+            selector.get("schema") == "task40extra.review_v28_q0_continuation_operation.v1"
+            and selector.get("operation") == V28_CONTINUATION_OPERATION
+            and selector.get("stop_stage") == expected_stop_stage
+            and selector.get("campaign_window_sha256") == TASK40_V28_CAMPAIGN_SHA256
+            and selector.get("donor_import") == donor
+            and stage.get("selector_sha256") == operation.get("selector_sha256") == selector_sha
+            and stage.get("donor_import_identity_sha256") == operation.get("donor_import_identity_sha256") == donor_sha
+            and execution.get("campaign_window_sha256") == TASK40_V28_CAMPAIGN_SHA256
+        )
+        checks["v28_selector_manifest_state_dispatch_policy_bound"] = bool(
+            selector.get("continuation_policy") == V28_CONTINUATION_POLICY
+        )
+        checks["v28_operation_receipt_hash_bound"] = bool(
+            operation.get("schema") == "task40extra.review_v28_q0_continuation_stage.v1"
+            and operation.get("operation") == V28_CONTINUATION_OPERATION
+            and operation.get("stop_stage") == expected_stop_stage
+            and operation_path.is_file()
+            and operation_path.resolve().is_relative_to(output_directory.resolve())
+            and stage.get("operation_sha256") == _sha256_file(operation_path)
+            and operation.get("official_result") is False
+            and operation.get("saved_only_no_fe_or_native_rebuild") is True
+        )
+        checks["v28_campaign_window_registration_and_pattern_freeze_bind"] = bool(
+            selector.get("pattern_manifest_path") == str(pattern_path)
+            and selector.get("pattern_manifest_sha256") == V28_PATTERN_MANIFEST_SHA256
+            and pattern_path.is_file()
+            and _sha256_file(pattern_path) == V28_PATTERN_MANIFEST_SHA256
+            and pattern.get("status") == "NUMERIC_FILL_INCOMPLETE"
+            and partial.get("official_result") is False
+        )
+        checks["v28_original_v27_manifest_unchanged_and_pattern_reused"] = bool(
+            pattern_path == (ROOT / V28_PATTERN_MANIFEST_RELATIVE).resolve()
+            and pattern.get("schema") == "task40extra.review_v27_saved_q0_csr.v1"
+            and operation.get("source_pattern_reused") is True
+            and operation.get("pattern_manifest_sha256") == V28_PATTERN_MANIFEST_SHA256
+            and manifest.get("schema") == "task40extra.review_v28_saved_q0_csr.v1"
+            and manifest.get("original_pattern_manifest", {}).get("sha256") == V28_PATTERN_MANIFEST_SHA256
+            and manifest.get("continuation_event", {}).get("old_manifest_modified") is False
+            and manifest.get("continuation_event", {}).get("full_csr_copy_created") is False
+            and manifest.get("continuation_event", {}).get("data_restart_policy")
+            == "clear_all_values_before_each_numeric_pass"
+        )
+        progress_path = output_directory / "v28_q0_numeric_progress.json"
+        progress = json.loads(progress_path.read_text(encoding="utf-8")) if progress_path.is_file() else {}
+        count_map = progress.get("completed_work_items_by_component", {})
+        expected_map = progress.get("expected_work_items_by_component", {})
+        count_values = [int(count_map.get(name, -1)) for name in ("Hhat", "volume", "surface")]
+        expected_values = [int(expected_map.get(name, -1)) for name in ("Hhat", "volume", "surface")]
+        progress_ok = bool(
+            progress.get("schema") == "task40extra.review_v28_q0_numeric_progress.v1"
+            and progress.get("restart_policy") == "clear_all_values_before_each_numeric_pass; progress_is_not_a_cursor"
+            and progress.get("progress_is_not_a_restart_cursor") is True
+            and all(value >= 0 for value in count_values)
+            and all(value >= count for value, count in zip(expected_values, count_values, strict=True))
+            and progress.get("completed_contribution_count") == sum(count_values)
+            and (sum(count_values) == 0 or isinstance(progress.get("last_completed_label"), str))
+            and isinstance(progress.get("resource_gate_records"), list)
+            and isinstance(progress.get("component_parent_wall_seconds"), Mapping)
+            and isinstance(progress.get("component_child_seconds"), Mapping)
+            and progress.get("read_and_constraint_split") is not None
+            and "task_cgroup_anon_bytes" in progress
+            and "task_cgroup_file_bytes" in progress
+            and "task_cgroup_file_dirty_bytes" in progress
+            and "data_zero_and_flush_seconds" in progress
+            and "data_hash_seconds" in progress
+        )
+        manifest_status = manifest.get("status")
+        if status.endswith("_IN_PROGRESS"):
+            checks["v28_cutoff_partial_progress_is_classified_without_claiming_completion"] = bool(
+                partial.get("status") == "in_progress"
+                and partial.get("outcome") == "IN_PROGRESS"
+                and partial.get("completed_stages")
+                == (["preflight", expected_stop_stage] if manifest_status == "COMPLETE_CSR" else ["preflight"])
+                and partial.get("q_coverage", {}).get("built_q_count")
+                == int(manifest_status == "COMPLETE_CSR")
+                and progress_ok
+                and manifest_status in {
+                    "STRUCTURE_COMPLETE_VALUES_PENDING",
+                    "NUMERIC_FILL_INCOMPLETE",
+                    "COMPLETE_CSR",
+                }
+                and operation.get("complete_numeric_csr") is (manifest_status == "COMPLETE_CSR")
+            )
+        else:
+            checks["v28_progress_receipt_schema_and_success_only_counts"] = bool(
+                progress_ok
+                or progress.get("status") in {"NUMERIC_FILL_COMPLETED", "READBACK_IN_PROGRESS"}
+                or not progress_path.exists() and status.startswith("PASS_COMPLETE_Q0_CSR")
+            )
+        csr_hashes_ok = False
+        csr_artifacts = manifest.get("csr_artifacts", {})
+        if isinstance(csr_artifacts, Mapping) and manifest_status == "COMPLETE_CSR":
+            csr_hashes_ok = True
+            for name in ("indptr", "indices", "data"):
+                record = csr_artifacts.get(name, {})
+                record = record if isinstance(record, Mapping) else {}
+                path = Path(str(record.get("path", ""))).resolve()
+                if (
+                    not path.is_relative_to(manifest_path.parent.resolve())
+                    or not path.is_file()
+                    or path.stat().st_size != record.get("bytes")
+                    or _sha256_owned_payload(path) != record.get("sha256")
+                ):
+                    csr_hashes_ok = False
+                    break
+        checks["v28_complete_csr_requires_all_three_payload_hashes"] = bool(
+            (manifest_status != "COMPLETE_CSR" and not operation.get("complete_numeric_csr"))
+            or (
+                csr_hashes_ok
+                and operation.get("complete_numeric_csr") is True
+                and operation.get("csr_status") == "COMPLETE_CSR"
+                and operation.get("csr_manifest_sha256") == _sha256_file(manifest_path)
+            )
+        )
+        qualification_binding = None
+        if manifest_status == "COMPLETE_CSR" and manifest.get("native_qualification"):
+            from src.runners.task40_v20_stage_runner import _load_matching_v28_native_qualification
+
+            qualification_binding = _load_matching_v28_native_qualification(
+                repo_root=ROOT,
+                manifest_path=manifest_path,
+                manifest=manifest,
+                expected_pattern_path=pattern_path,
+                expected_pattern_sha256=V28_PATTERN_MANIFEST_SHA256,
+                donor_identity_sha256=donor_sha,
+                input_sha256=str(partial.get("input_sha256", "")),
+                physical_model_sha256=str(partial.get("physical_model_sha256", "")),
+                run_id=str(partial.get("run_id", "")),
+                campaign_window_sha256=TASK40_V28_CAMPAIGN_SHA256,
+                mode_manifest_sha256=str(execution.get("mode_manifest_sha256", "")),
+                ordered_mode_key_sha256=str(execution.get("ordered_mode_key_sha256", "")),
+                sha256_file=_sha256_file,
+            )
+        checks["v28_native_qualification_remains_bound_to_complete_csr"] = bool(
+            manifest_status != "COMPLETE_CSR"
+            or not manifest.get("native_qualification")
+            or qualification_binding is not None
+        )
+        if qualification_binding is not None:
+            qpath, qualification = qualification_binding
+            operation_qualification = operation.get("native_qualification_receipt", {})
+            operation_qualification = operation_qualification if isinstance(operation_qualification, Mapping) else {}
+            checks["v28_native_pass_receipt_keeps_old_source_window_and_current_factor_identity"] = bool(
+                operation.get("native_readback_skipped") is not True
+                or (
+                    operation_qualification.get("path") == str(qpath)
+                    and operation_qualification.get("sha256") == _sha256_file(qpath)
+                    and operation.get("native_qualification_original_source_identity")
+                    == qualification.get("source_identity")
+                    and operation.get("factor_execution_identity", {}).get("source_sha")
+                    == operation.get("current_execution_identity", {}).get("source_sha")
+                    and operation.get("factor_execution_identity", {}).get("campaign_window_sha256")
+                    == TASK40_V28_CAMPAIGN_SHA256
+                )
+            )
+    except Exception:
+        return {**checks, "v28_continuation_evidence_readable": False}
+    return checks
+
+
 def _check_partial_result(
     *,
     input_path: Path,
@@ -5855,6 +6307,8 @@ def _check_partial_result(
     v26_expected_accounting = v26_expected_window.with_name("campaign_accounting_v10.jsonl")
     v27_expected_window = (ROOT / TASK40_V27_CAMPAIGN_WINDOW).resolve()
     v27_expected_accounting = v27_expected_window.with_name("campaign_accounting_v10.jsonl")
+    v28_expected_window = (ROOT / TASK40_V28_CAMPAIGN_WINDOW).resolve()
+    v28_expected_accounting = v28_expected_window.with_name("campaign_accounting_v10.jsonl")
     q_only_receipt = (
         partial.get("schema") == "task40extra.review_v20_partial_result.v2"
         and partial.get("classification") == "TARGET_OPERATOR_PROBE_Q_ONLY_SUPPLEMENT"
@@ -5889,6 +6343,11 @@ def _check_partial_result(
         partial.get("schema") == "task40extra.review_v20_partial_result.v2"
         and expected_stop_stage in V27_SELECTED_Q_STAGES
         and isinstance(partial.get("v27_saved_q0_stage"), Mapping)
+    )
+    v28_q_receipt = (
+        partial.get("schema") == "task40extra.review_v20_partial_result.v2"
+        and expected_stop_stage in V28_SELECTED_Q_STAGES
+        and isinstance(partial.get("v28_q0_continuation"), Mapping)
     )
     q_only_supplement_identity = partial.get("q_only_supplement")
     q_only_supplement_identity = (
@@ -5959,6 +6418,16 @@ def _check_partial_result(
         or campaign_evidence.get("window_path") == str(v27_expected_window)
         or v27_q_receipt
     )
+    v28_stage = partial.get("v28_q0_continuation", {})
+    v28_stage = v28_stage if isinstance(v28_stage, Mapping) else {}
+    v28_operation = v28_stage.get("operation", {})
+    v28_operation = v28_operation if isinstance(v28_operation, Mapping) else {}
+    v28_identity_claimed = (
+        v28_operation.get("schema") == "task40extra.review_v28_q0_continuation_stage.v1"
+        or campaign_evidence.get("window_sha256") == TASK40_V28_CAMPAIGN_SHA256
+        or campaign_evidence.get("window_path") == str(v28_expected_window)
+        or v28_q_receipt
+    )
     v25_controlled_stop_receipt = bool(
         v25_identity_claimed
         and partial.get("status") == "controlled_stop"
@@ -6004,9 +6473,22 @@ def _check_partial_result(
         and _sha256_file(ROOT / TASK40_V27_CAMPAIGN_RECEIPT)
         == TASK40_V27_CAMPAIGN_RECEIPT_SHA256
     )
+    v28_campaign_identity_valid = (
+        campaign_evidence.get("window_sha256") == TASK40_V28_CAMPAIGN_SHA256
+        and Path(str(campaign_evidence.get("window_path", ""))).resolve()
+        == v28_expected_window
+        and Path(str(campaign_evidence.get("accounting_path", ""))).resolve()
+        == v28_expected_accounting
+        and v28_expected_window.is_file()
+        and _sha256_file(v28_expected_window) == TASK40_V28_CAMPAIGN_SHA256
+        and v28_expected_accounting.is_file()
+        and (ROOT / TASK40_V28_CAMPAIGN_RECEIPT).is_file()
+        and _sha256_file(ROOT / TASK40_V28_CAMPAIGN_RECEIPT)
+        == TASK40_V28_CAMPAIGN_RECEIPT_SHA256
+    )
     expected_completed = STAGE_PREFIXES.get(expected_stop_stage)
     v2_receipt = partial.get("schema") == "task40extra.review_v20_partial_result.v2"
-    if v27_q_receipt:
+    if v27_q_receipt or v28_q_receipt:
         expected_completed = None
     if v2_receipt and expected_stop_stage in {
         "target_operator_probe", "build_and_symbolic", "one_q_numeric"
@@ -6081,6 +6563,10 @@ def _check_partial_result(
         checks["v27_execution_manifest_window_accounting_and_registration_bind"] = (
             v27_campaign_identity_valid
         )
+    if v28_identity_claimed:
+        checks["v28_execution_manifest_window_accounting_and_registration_bind"] = (
+            v28_campaign_identity_valid
+        )
     if expected_stop_stage in {"build_and_symbolic", "one_q_numeric"} and not v2_receipt:
         checks["target_heavy_authorization_remains_false"] = (
             input_data.get("execution", {}).get("task40_target_heavy_authorized") is False
@@ -6093,6 +6579,7 @@ def _check_partial_result(
         and not v25_q0_receipt
         and not v26_q_receipt
         and not v27_q_receipt
+        and not v28_q_receipt
         and not v25_controlled_stop_receipt
     ):
         from scripts.task40_v21_readonly_recheck import validate_stage_receipt_semantics
@@ -6328,6 +6815,71 @@ def _check_partial_result(
                         output_directory=numerical_output,
                         probe=probe_identity,
                         manifest=manifest,
+                    ).items()
+                },
+            }
+        )
+    elif v28_q_receipt:
+        v28_result = partial.get("stage_result", {})
+        v28_result = v28_result if isinstance(v28_result, Mapping) else {}
+        v28_status = str(v28_stage.get("operation_status", ""))
+        v28_complete_csr = v28_operation.get("complete_numeric_csr") is True
+        v28_factor_built = v28_operation.get("factor_or_solve_built") is True
+        v28_passed = v28_status in {
+            "PASS_COMPLETE_Q0_CSR",
+            "PASS_COMPLETE_Q0_CSR_AND_FACTOR",
+        }
+        v28_controlled = v28_status.startswith(
+            ("RESOURCE_CONTROLLED_STOP", "PERFORMANCE_CONTROLLED_STOP")
+        )
+        expected_partial_status = (
+            "stage_completed"
+            if v28_passed
+            else "controlled_stop"
+            if v28_controlled
+            else "in_progress"
+            if v28_status.endswith("_IN_PROGRESS")
+            else "failed"
+        )
+        expected_completed_v28 = (
+            ["preflight", expected_stop_stage]
+            if v28_complete_csr
+            else ["preflight"]
+        )
+        operation_path = numerical_output / str(v28_stage.get("operation_path", ""))
+        checks.update(
+            {
+                "v28_stage_identity_and_cutoff_classification": bool(
+                    partial.get("requested_stop_stage") == expected_stop_stage
+                    and v28_operation.get("schema") == "task40extra.review_v28_q0_continuation_stage.v1"
+                    and v28_operation.get("operation") == V28_CONTINUATION_OPERATION
+                    and v28_operation.get("stop_stage") == expected_stop_stage
+                    and v28_result.get("probe_status") == v28_status
+                    and partial.get("status") == expected_partial_status
+                    and partial.get("completed_stages") == expected_completed_v28
+                    and partial.get("official_result") is False
+                    and operation_path.is_file()
+                    and operation_path.resolve().is_relative_to(numerical_output.resolve())
+                    and _sha256_file(operation_path) == v28_stage.get("operation_sha256")
+                    and v28_operation.get("selector_sha256") == v28_stage.get("selector_sha256")
+                ),
+                "v28_q_coverage_and_factor_scope_are_accurate": bool(
+                    partial.get("q_coverage", {}).get("built_q_count")
+                    == int(v28_complete_csr)
+                    and partial.get("q_coverage", {}).get("full_q_matrix_coverage")
+                    == ("1/8" if v28_complete_csr else "0/8")
+                    and partial.get("q_coverage", {}).get("factor_count")
+                    == int(v28_factor_built)
+                    and partial.get("q_coverage", {}).get("pde_solved") is False
+                    and v28_operation.get("ksp_created") is False
+                    and v28_operation.get("pde_solved") is False
+                ),
+                **{
+                    name: passed
+                    for name, passed in _v28_saved_q0_continuation_checks(
+                        output_directory=numerical_output,
+                        partial=partial,
+                        expected_stop_stage=expected_stop_stage,
                     ).items()
                 },
             }
@@ -6569,6 +7121,7 @@ def run_service(
     case_args, v25_selector_path = _extract_v25_selected_operation_selector_arg(case_args)
     case_args, v26_selector_path = _extract_v26_selected_operation_selector_arg(case_args)
     case_args, v27_selector_path = _extract_v27_saved_q0_selector_arg(case_args)
+    case_args, v28_selector_path = _extract_v28_q0_continuation_selector_arg(case_args)
     input_path, campaign_path, stop_stage, data = _parse_case_arguments(case_args)
     canonical_relative, _supported = V20_INPUTS[data["solver"]["preconditioner"]]
     canonical_path = repo_root / canonical_relative
@@ -6623,6 +7176,17 @@ def run_service(
         raise ValueError("V27 saved-q0 selector cannot be combined with V23–V26 selectors")
     if campaign_registration.get("version") == "V27" and v27_selector_path is None:
         raise ValueError("V27 operations require their explicit saved-q0 selector")
+    if v28_selector_path is not None and (
+        campaign_registration.get("version") != "V28"
+        or q_only_scan_directory is not None
+        or v24_cd_selector_path is not None
+        or v25_selector_path is not None
+        or v26_selector_path is not None
+        or v27_selector_path is not None
+    ):
+        raise ValueError("V28 continuation selector cannot be combined with V23–V27 selectors")
+    if campaign_registration.get("version") == "V28" and v28_selector_path is None:
+        raise ValueError("V28 operations require their explicit q0 continuation selector")
     q_only_binding = (
         _bind_v23_q_only_scan_checkpoint(
             q_only_scan_directory,
@@ -6684,6 +7248,18 @@ def run_service(
         if v27_selector_path is not None
         else None
     )
+    v28_binding = (
+        _bind_v28_q0_continuation_selector(
+            v28_selector_path,
+            input_path=input_path,
+            campaign_registration=campaign_registration,
+            profile=str(data["solver"]["preconditioner"]),
+            stop_stage=stop_stage,
+            repo_root=repo_root,
+        )
+        if v28_selector_path is not None
+        else None
+    )
     fixed_campaign = Path(campaign_registration["path"])
     campaign_sha256 = str(campaign_registration["sha256"])
     branch = subprocess.check_output(["git", "branch", "--show-current"], cwd=repo_root, text=True).strip()
@@ -6692,7 +7268,9 @@ def run_service(
     if branch != "task40extra_0p7nm_engineering" or dirty.strip():
         raise RuntimeError("V20 user-service requires the frozen Task40 branch and clean source")
 
-    if campaign_registration.get("version") == "V27":
+    if campaign_registration.get("version") == "V28":
+        artifact_root = V28_ARTIFACT_ROOT
+    elif campaign_registration.get("version") == "V27":
         artifact_root = V27_ARTIFACT_ROOT
     elif campaign_registration.get("version") == "V26":
         artifact_root = V26_ARTIFACT_ROOT
@@ -6740,6 +7318,8 @@ def run_service(
         record["v26_selected_operation_selector_binding"] = dict(v26_binding)
     if v27_binding is not None:
         record["v27_saved_q0_selector_binding"] = dict(v27_binding)
+    if v28_binding is not None:
+        record["v28_q0_continuation_selector_binding"] = dict(v28_binding)
     event_identity = {
         key: record[key]
         for key in (
@@ -6859,6 +7439,25 @@ def run_service(
                     "TASK40_V27_SELECTOR_SHA256": str(v27_binding["selector_sha256"]),
                     "TASK40_V27_OPERATION": str(v27_binding["operation"]),
                     "TASK40_V27_PRODUCER_ROOT": str(v27_binding["producer_root"]),
+                }
+            )
+        if v28_binding is not None:
+            environment.update(
+                {
+                    "TASK40_V28_SELECTOR_PATH": str(v28_binding["selector_path"]),
+                    "TASK40_V28_SELECTOR_SHA256": str(v28_binding["selector_sha256"]),
+                    "TASK40_V28_OPERATION": str(v28_binding["operation"]),
+                    "TASK40_V28_CAMPAIGN_WINDOW_SHA256": TASK40_V28_CAMPAIGN_SHA256,
+                    "TASK40_V28_PRODUCER_ROOT": str(v28_binding["producer_root"]),
+                    "TASK40_V28_PATTERN_MANIFEST_PATH": str(
+                        v28_binding["pattern_manifest_path"]
+                    ),
+                    "TASK40_V28_PATTERN_MANIFEST_SHA256": str(
+                        v28_binding["pattern_manifest_sha256"]
+                    ),
+                    "TASK40_V28_CONTINUATION_MANIFEST_PATH": str(
+                        v28_binding["continuation_manifest_path"]
+                    ),
                 }
             )
 
@@ -7107,6 +7706,12 @@ def main(argv: list[str] | None = None) -> int:
         choices=sorted(V27_SELECTED_Q_STAGES),
         default="selected_reference_q_csr",
     )
+    v28_prepare_parser = subparsers.add_parser("prepare-v28-q0-continuation-input")
+    v28_prepare_parser.add_argument(
+        "--stop-stage",
+        choices=sorted(V28_SELECTED_Q_STAGES),
+        default="selected_reference_q_csr",
+    )
     partial_parser = subparsers.add_parser("check-partial")
     partial_parser.add_argument("--input", type=Path, required=True)
     partial_parser.add_argument("--summary", type=Path, required=True)
@@ -7148,6 +7753,16 @@ def main(argv: list[str] | None = None) -> int:
         print(
             json.dumps(
                 prepare_v27_saved_q0_input(args.stop_stage),
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return 0
+    if args.command == "prepare-v28-q0-continuation-input":
+        print(
+            json.dumps(
+                prepare_v28_q0_continuation_input(args.stop_stage),
                 ensure_ascii=False,
                 sort_keys=True,
                 indent=2,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 import hashlib
 import json
 import os
@@ -144,6 +144,497 @@ def _repo_path(root: Path, value: Any, label: str) -> Path:
     except ValueError as error:
         raise ValueError(f"V20 component resume {label} escapes the repository") from error
     return candidate
+
+
+def _saved_q0_resource_gate_key(stage: str) -> str:
+    """Bound repeated cell/port/projection gate records to semantic groups."""
+    for prefix, key in (
+        ("task40_v27_saved_q0/volume/cell/", "saved_q0/volume/cell"),
+        ("task40_v27_saved_q0/direct/C/provider/", "saved_q0/surface/C"),
+        ("task40_v27_saved_q0/direct/-D/provider/", "saved_q0/surface/minus_D"),
+        ("task40_v28_q_projection_support_discovery/", "q0_projection/support_discovery"),
+        ("task40_v28_q_projection_support/", "q0_projection/support"),
+        ("task40_v28_q_hhat_sparse_scatter/", "q0_H/sparse_scatter"),
+    ):
+        if stage.startswith(prefix):
+            return key
+    return stage
+
+
+def _make_saved_q0_allocation_gate(
+    *,
+    output_directory: Path,
+    disk_reserve_bytes: int,
+    resource_admission: Callable[..., Mapping[str, Any]],
+    resource_sample: Callable[[], Mapping[str, Any]],
+    cgroup_snapshot: Callable[[], Mapping[str, Any]],
+    blocked_exception: type[Exception],
+    disk_usage: Callable[[Path], Any],
+) -> tuple[
+    Callable[[str, Mapping[str, Any]], dict[str, Any]],
+    dict[str, dict[str, Any]],
+    Callable[[], list[dict[str, Any]]],
+    dict[str, Any],
+]:
+    """Create the exact saved-q0 admission callback and its bounded evidence store."""
+    records: dict[str, dict[str, Any]] = {}
+    timing = {"calls": 0, "seconds": 0.0}
+
+    def remember(stage: str, record: dict[str, Any], *, failed: bool) -> None:
+        key = _saved_q0_resource_gate_key(stage)
+        record["stage"] = key
+        record.setdefault("first_original_stage_label", stage)
+        record["last_original_stage_label"] = stage
+        if failed:
+            record.setdefault("original_failure_stage_label", stage)
+        previous = records.get(key)
+        if previous is None:
+            records[key] = record
+            return
+        previous["observation_count"] = int(previous.get("observation_count", 1)) + 1
+        previous["passed"] = bool(previous.get("passed", True) and record.get("passed", False))
+        previous["maximum_additional_object_upper_bound_bytes"] = max(
+            int(previous.get("maximum_additional_object_upper_bound_bytes", 0)),
+            int(record.get("maximum_additional_object_upper_bound_bytes", 0)),
+        )
+        previous["maximum_disk_payload_bytes"] = max(
+            int(previous.get("maximum_disk_payload_bytes", 0)),
+            int(record.get("maximum_disk_payload_bytes", 0)),
+        )
+        previous["last_request_facts"] = record.get("request_facts")
+        previous["last_host_effective_available_bytes"] = record.get(
+            "host_effective_available_bytes",
+            record.get("memory_admission", {}).get("host_effective_available_bytes"),
+        )
+        previous["last_original_stage_label"] = stage
+        minimum_available = record.get(
+            "host_effective_available_bytes",
+            record.get("memory_admission", {}).get("host_effective_available_bytes"),
+        )
+        if type(minimum_available) is int:
+            previous["minimum_host_effective_available_bytes"] = min(
+                int(previous.get("minimum_host_effective_available_bytes", minimum_available)),
+                minimum_available,
+            )
+        previous["maximum_task_cgroup_memory_current_bytes"] = max(
+            int(previous.get("maximum_task_cgroup_memory_current_bytes", 0)),
+            int(record.get("maximum_task_cgroup_memory_current_bytes", 0)),
+        )
+        if failed:
+            previous.setdefault("original_failure_stage_label", stage)
+            previous["last_failure_facts"] = record.get(
+                "failure_facts", record.get("memory_admission")
+            )
+
+    def allocation_gate(stage: str, facts: Mapping[str, Any]) -> dict[str, Any]:
+        import time
+
+        started = time.perf_counter()
+        timing["calls"] = int(timing["calls"]) + 1
+        requested = sum(
+            int(facts.get(key, 0))
+            for key in (
+                "additional_payload_bytes",
+                "matrix_payload_bytes",
+                "workspace_bytes",
+                "future_co_resident_reserve_bytes",
+            )
+        )
+        before = dict(cgroup_snapshot())
+        try:
+            memory = dict(resource_admission(
+                stage,
+                requested,
+                resource_sample=resource_sample,
+                require_task_cgroup=True,
+            ))
+        except blocked_exception as error:
+            after = dict(cgroup_snapshot())
+            failure_facts = dict(getattr(error, "facts", {}))
+            failure_memory = failure_facts.get("memory_envelope", {})
+            failure_memory = failure_memory if isinstance(failure_memory, Mapping) else {}
+            record = {
+                "passed": False,
+                "observation_count": 1,
+                "request_facts": dict(facts),
+                "memory_admission": failure_facts,
+                "failure_facts": failure_facts,
+                "maximum_additional_object_upper_bound_bytes": requested,
+                "maximum_disk_payload_bytes": int(facts.get("disk_payload_bytes", 0)),
+                "task_cgroup_memory_before": before,
+                "task_cgroup_memory_after": after,
+                "maximum_task_cgroup_memory_current_bytes": max(
+                    int(before.get("memory_current_bytes", 0) or 0),
+                    int(after.get("memory_current_bytes", 0) or 0),
+                ),
+                "minimum_host_effective_available_bytes": failure_facts.get(
+                    "host_effective_available_bytes",
+                    failure_memory.get("host_effective_available_bytes"),
+                ),
+            }
+            remember(stage, record, failed=True)
+            timing["seconds"] = float(
+                timing["seconds"] + time.perf_counter() - started
+            )
+            raise
+        disk_required = int(facts.get("disk_payload_bytes", 0))
+        disk_free = int(disk_usage(output_directory).free)
+        disk_passed = disk_free >= disk_required + int(disk_reserve_bytes)
+        after = dict(cgroup_snapshot())
+        record = {
+            **memory,
+            "passed": disk_passed,
+            "observation_count": 1,
+            "maximum_additional_object_upper_bound_bytes": requested,
+            "maximum_disk_payload_bytes": disk_required,
+            "disk_payload_bytes": disk_required,
+            "disk_free_bytes": disk_free,
+            "disk_reserve_bytes": int(disk_reserve_bytes),
+            "disk_gate_passed": disk_passed,
+            "request_facts": dict(facts),
+            "task_cgroup_memory_before": before,
+            "task_cgroup_memory_after": after,
+            "minimum_host_effective_available_bytes": memory.get(
+                "host_effective_available_bytes"
+            ),
+            "maximum_task_cgroup_memory_current_bytes": max(
+                int(before.get("memory_current_bytes", 0) or 0),
+                int(after.get("memory_current_bytes", 0) or 0),
+            ),
+        }
+        if not disk_passed:
+            record["failure_facts"] = {
+                "stage": stage,
+                "additional_object_upper_bound_bytes": requested,
+                "disk_payload_bytes": disk_required,
+                "disk_free_bytes": disk_free,
+                "disk_reserve_bytes": int(disk_reserve_bytes),
+                "disk_gate_passed": False,
+                "passed": False,
+            }
+        remember(stage, record, failed=not disk_passed)
+        timing["seconds"] = float(
+            timing["seconds"] + time.perf_counter() - started
+        )
+        if not disk_passed:
+            raise blocked_exception(
+                stage,
+                {
+                    "stage": stage,
+                    "additional_object_upper_bound_bytes": requested,
+                    "disk_payload_bytes": disk_required,
+                    "disk_free_bytes": disk_free,
+                    "disk_reserve_bytes": int(disk_reserve_bytes),
+                    "disk_gate_passed": False,
+                    "passed": False,
+                },
+            )
+        return record
+
+    def record_list() -> list[dict[str, Any]]:
+        return list(records.values())
+
+    return allocation_gate, records, record_list, timing
+
+
+def _v28_continuation_action(status: str, native_qualification_matches: bool) -> str:
+    if status in {"STRUCTURE_COMPLETE_VALUES_PENDING", "NUMERIC_FILL_INCOMPLETE"}:
+        return "fill_and_readback"
+    if status == "COMPLETE_CSR":
+        return "factor_only" if native_qualification_matches else "readback_and_factor"
+    raise ValueError(f"unsupported V28 continuation manifest state: {status}")
+
+
+def _v28_readback_receipt_passes(readback: Mapping[str, Any]) -> bool:
+    if readback.get("all_gates_passed") is not True:
+        return False
+    try:
+        limit = float(readback["relative_error_limit"])
+        if not 0.0 < limit <= 1.0e-11:
+            return False
+        errors = [
+            float(readback[name]["relative"])
+            for name in (
+                "q0_case_1_full_csr_vs_native_total",
+                "q0_case_2_full_csr_vs_native_total",
+                "q0_case_1_trace_plus_port_vs_full_csr",
+            )
+        ]
+        components = readback["q0_case_1_csr_trace_port_masked_components_vs_native"]
+        if not isinstance(components, Mapping) or set(components) != {
+            "volume", "minus_D", "C", "Hhat"
+        }:
+            return False
+        for item in components.values():
+            if not isinstance(item, Mapping):
+                return False
+            errors.append(float(item["active_block"]["relative"]))
+            errors.append(float(item["native_off_block_relative"]))
+        return all(np.isfinite(value) and 0.0 <= value <= limit for value in errors)
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
+def _load_matching_v28_native_qualification(
+    *,
+    repo_root: Path,
+    manifest_path: Path,
+    manifest: Mapping[str, Any],
+    expected_pattern_path: Path,
+    expected_pattern_sha256: str,
+    donor_identity_sha256: str,
+    input_sha256: str,
+    physical_model_sha256: str,
+    run_id: str,
+    campaign_window_sha256: str,
+    mode_manifest_sha256: str,
+    ordered_mode_key_sha256: str,
+    sha256_file: Callable[[Path], str],
+) -> tuple[Path, dict[str, Any]] | None:
+    """Return only a hash-bound, same-donor native PASS usable for factor-only continuation."""
+    artifact_roots = (
+        (repo_root / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl").resolve(),
+        (repo_root / "results/task40extra_nonseparable_0p7nm").resolve(),
+    )
+    record = manifest.get("native_qualification")
+    if not isinstance(record, Mapping):
+        return None
+    path = Path(str(record.get("path", ""))).resolve()
+    if (
+        not any(path.is_relative_to(root) for root in artifact_roots)
+        or not path.is_file()
+        or record.get("status") != "PASS_COMPLETE_Q0_CSR_NATIVE_READBACK"
+        or record.get("sha256") != sha256_file(path)
+    ):
+        return None
+    try:
+        qualification = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    artifacts = manifest.get("csr_artifacts", {})
+    if not isinstance(artifacts, Mapping):
+        return None
+    expected_hashes = {
+        name: item.get("sha256")
+        for name, item in artifacts.items()
+        if name in {"indptr", "indices", "data"} and isinstance(item, Mapping)
+    }
+    identity = qualification.get("source_identity", {})
+    identity = identity if isinstance(identity, Mapping) else {}
+    pattern = qualification.get("original_pattern_manifest", {})
+    pattern = pattern if isinstance(pattern, Mapping) else {}
+    readback = qualification.get("readback", {})
+    readback = readback if isinstance(readback, Mapping) else {}
+    readback_record = qualification.get("readback_artifact", {})
+    readback_record = readback_record if isinstance(readback_record, Mapping) else {}
+    readback_path_value = Path(str(readback_record.get("path", "")))
+    readback_path = (
+        readback_path_value.resolve()
+        if readback_path_value.is_absolute()
+        else (path.parent / readback_path_value).resolve()
+    )
+    if (
+        qualification.get("schema") != "task40extra.review_v28_q0_native_qualification.v1"
+        or qualification.get("status") != "PASS_COMPLETE_Q0_CSR_NATIVE_READBACK"
+        or qualification.get("donor_identity_sha256") != donor_identity_sha256
+        or identity.get("input_sha256") != input_sha256
+        or identity.get("physical_model_sha256") != physical_model_sha256
+        or identity.get("run_id") != run_id
+        or not isinstance(identity.get("campaign_window_sha256"), str)
+        or len(str(identity.get("campaign_window_sha256"))) != 64
+        or identity.get("mode_manifest_sha256") != mode_manifest_sha256
+        or identity.get("ordered_mode_key_sha256") != ordered_mode_key_sha256
+        or qualification.get("campaign_window_sha256")
+        != identity.get("campaign_window_sha256")
+        or not isinstance(qualification.get("campaign_window_sha256"), str)
+        or len(str(qualification.get("campaign_window_sha256"))) != 64
+        or qualification.get("csr_manifest_path") != str(manifest_path.resolve())
+        or set(expected_hashes) != {"indptr", "indices", "data"}
+        or any(not isinstance(value, str) or len(value) != 64 for value in expected_hashes.values())
+        or qualification.get("csr_artifact_hashes") != expected_hashes
+        or qualification.get("csr_shape") != manifest.get("shape")
+        or qualification.get("stored_structural_slots") != manifest.get("stored_structural_slots")
+        or Path(str(pattern.get("path", ""))).resolve() != expected_pattern_path.resolve()
+        or pattern.get("sha256") != expected_pattern_sha256
+        or not _v28_readback_receipt_passes(readback)
+        or readback_record.get("sha256") is None
+        or not any(readback_path.is_relative_to(root) for root in artifact_roots)
+        or not readback_path.is_file()
+        or readback_path.stat().st_size != readback_record.get("bytes")
+        or sha256_file(readback_path) != readback_record.get("sha256")
+        or readback.get("csr_readback_artifact") != dict(readback_record)
+    ):
+        return None
+    return path, dict(qualification)
+
+
+def _write_v28_continuation_footer(
+    *,
+    output_directory: Path,
+    operation_path: Path,
+    manifest_path: Path,
+    progress_path: Path,
+    operation: dict[str, Any],
+    stop_stage: str,
+    profile: str,
+    source_sha: str,
+    preflight: Mapping[str, Any],
+    selector_path: Path,
+    selector_sha: str,
+    donor_identity_sha256: str,
+    resource_gate_records: Callable[[], list[dict[str, Any]]],
+) -> dict[str, Any]:
+    """Persist a V28 continuation result, including a partial/factor-only attempt."""
+    operation["resource_gates"] = resource_gate_records()
+    operation["saved_only_no_fe_or_native_rebuild"] = True
+    _write_json(operation_path, operation)
+    operation_sha = _sha256_file(operation_path)
+    status_code = str(operation.get("status", "FAILED_V28_Q0_CONTINUATION"))
+    complete_csr = operation.get("complete_numeric_csr") is True
+    factor_built = operation.get("factor_or_solve_built") is True
+    factor_report = operation.get("factor_lifecycle", {})
+    factor_report = factor_report if isinstance(factor_report, Mapping) else {}
+    controlled = status_code.startswith(
+        ("RESOURCE_CONTROLLED_STOP", "PERFORMANCE_CONTROLLED_STOP")
+    )
+    passed = status_code in {
+        "PASS_COMPLETE_Q0_CSR",
+        "PASS_COMPLETE_Q0_CSR_AND_FACTOR",
+    }
+    if passed:
+        partial_status, outcome = "stage_completed", "STAGE_COMPLETED"
+        completed = ["preflight", stop_stage]
+    elif controlled:
+        partial_status, outcome = "controlled_stop", "RESOURCE_CONTROLLED_STOP"
+        completed = ["preflight", stop_stage] if complete_csr else ["preflight"]
+    elif status_code.endswith("_IN_PROGRESS"):
+        partial_status, outcome = "in_progress", "IN_PROGRESS"
+        completed = ["preflight", stop_stage] if complete_csr else ["preflight"]
+    else:
+        partial_status, outcome = "failed", "STAGE_FAILED"
+        completed = ["preflight", stop_stage] if complete_csr else ["preflight"]
+    manifest_value: dict[str, Any] = {}
+    if manifest_path.is_file():
+        try:
+            manifest_value = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            manifest_value = {}
+    artifact_hashes: dict[str, Any] = {}
+    preflight_path = output_directory / "v20_stage_preflight.json"
+    if preflight_path.is_file():
+        artifact_hashes[preflight_path.name] = {
+            "path": preflight_path.name,
+            "sha256": _sha256_file(preflight_path),
+        }
+    artifact_hashes[operation_path.name] = {
+        "path": operation_path.name,
+        "sha256": operation_sha,
+    }
+    for label, path in ((manifest_path.name, manifest_path), (progress_path.name, progress_path)):
+        if path.is_file():
+            artifact_hashes[label] = {
+                "path": (
+                    str(path.relative_to(output_directory))
+                    if path.is_relative_to(output_directory)
+                    else str(path)
+                ),
+                "sha256": _sha256_file(path),
+            }
+    qualification_record = operation.get("native_qualification_receipt", {})
+    qualification_record = (
+        qualification_record if isinstance(qualification_record, Mapping) else {}
+    )
+    for label, record in (
+        ("native_qualification", qualification_record),
+        ("readback", operation.get("csr_readback_artifact", {})),
+    ):
+        if not isinstance(record, Mapping) or not record.get("path"):
+            continue
+        candidate = Path(str(record["path"]))
+        if candidate.is_absolute():
+            path = candidate.resolve()
+        elif label == "readback" and qualification_record.get("path"):
+            path = (Path(str(qualification_record["path"])).resolve().parent / candidate).resolve()
+        else:
+            path = (output_directory / candidate).resolve()
+        if path.is_file():
+            artifact_hashes[label] = {
+                "path": str(path),
+                "bytes": path.stat().st_size,
+                "sha256": _sha256_file(path),
+            }
+    receipt = {
+        "schema": "task40extra.review_v20_partial_result.v2",
+        "status": partial_status,
+        "outcome": outcome,
+        "classification": "SELECTED_REFERENCE_Q_V28_EXISTING_MANIFEST_CONTINUATION",
+        "run_id": preflight.get("run_id"),
+        "profile": profile,
+        "source_sha": source_sha,
+        "input_sha256": preflight.get("input_sha256"),
+        "physical_model_sha256": preflight.get("physical_model_sha256"),
+        "requested_stop_stage": stop_stage,
+        "attempted_stages": ["preflight", stop_stage],
+        "completed_stages": completed,
+        "failed_stage": operation.get("failed_stage") if not passed else None,
+        "stage_result": {
+            "completed_stage": stop_stage if passed else None,
+            "probe_status": status_code,
+        },
+        "v28_q0_continuation": {
+            "operation_path": operation_path.name,
+            "operation_sha256": operation_sha,
+            "operation_status": status_code,
+            "operation": operation,
+            "selector_path": str(selector_path),
+            "selector_sha256": selector_sha,
+            "donor_import_identity_sha256": donor_identity_sha256,
+            "resource_gates": resource_gate_records(),
+        },
+        "q_coverage": {
+            "status": "KNOWN" if complete_csr else "IN_PROGRESS" if partial_status == "in_progress" else "KNOWN",
+            "expected_q_count": 8,
+            "built_q_count": int(complete_csr),
+            "full_q_matrix_coverage": "1/8" if complete_csr else "0/8",
+            "selected_q": 0,
+            "paired_action_q": 4,
+            "csr_status": manifest_value.get("status", "NOT_CREATED"),
+            "factor_count": int(factor_built),
+            "factor_attempt_status": factor_report.get("status", "NOT_RUN"),
+            "factor_evicted_after_probe_and_rhs_solve": bool(
+                factor_report.get("cleanup", {}).get("destroy_succeeded") is True
+            ),
+            "max_simultaneous_factors": int(
+                factor_report.get("max_simultaneous_native_objects", {}).get("factors", 0)
+            ),
+            "ksp_created": False,
+            "pde_solved": False,
+            "reason": (
+                "V28 reuses the frozen V27 pattern and data backing; it fills/qualifies q0 only and does not create a KSP or produce official R/T/A."
+            ),
+        },
+        "resource_gate": operation.get("resource_blocker") if controlled else None,
+        "cleanup": {
+            "status": "OPERATION_RETURNED",
+            "owner_cleanup": "V28 existing-manifest continuation",
+        },
+        "artifact_hashes": artifact_hashes,
+        "official_result": False,
+        "not_run": ["all other q CSR", "KSP", "target PDE", "official R/T/A"],
+        "not_completed": [] if factor_report.get("status") == "PASS_Q0_FACTOR_PROBE_AND_RHS_SOLVE" else ["q0 factor lifecycle"],
+        "full_field_release_allowed": False,
+    }
+    _write_json(output_directory / "v20_partial_result.json", receipt)
+    return {
+        "passed": passed or controlled,
+        "errors": [] if passed or controlled else [
+            str(operation.get("failure_message", status_code))
+        ],
+        "official_result": False,
+        "status": partial_status,
+        "summary": receipt,
+        "numerical_output_directory": str(output_directory),
+    }
 
 
 def _validate_component_resume_input_identity(
@@ -1321,10 +1812,12 @@ def _run_v27_saved_q0_stage(
     modes: tuple[Any, ...] | None,
     mode_rows: tuple[Mapping[str, Any], ...] | None,
     stop_stage: str,
+    v28_continuation: bool = False,
 ) -> dict[str, Any]:
     """Build/read back only the frozen saved q0 CSR; no FE or native rebuild."""
     import gc
     import shutil
+    import time
     import zipfile
 
     from scipy import sparse
@@ -1343,6 +1836,7 @@ def _run_v27_saved_q0_stage(
         SavedQ0ContributionAdapter,
         _sha256_file as _saved_q_sha256,
         build_saved_q0_csr_structure,
+        create_v28_saved_q0_csr_continuation_manifest,
         fill_saved_q0_csr_values,
         open_saved_q0_csr_from_manifest,
         preflight_saved_q0_csr,
@@ -1350,25 +1844,35 @@ def _run_v27_saved_q0_stage(
 
     if stop_stage != "selected_reference_q_csr" or modes is None or mode_rows is None:
         raise RuntimeError("V27 route only accepts the registered q0 CSR stop with frozen mode inventory")
-    selector_path = Path(os.environ.get("TASK40_V27_SELECTOR_PATH", "")).resolve()
-    selector_sha = os.environ.get("TASK40_V27_SELECTOR_SHA256", "")
-    raw_operation = os.environ.get("TASK40_V27_OPERATION", "")
-    expected_operation = "V27_SAVED_ONLY_COMPLETE_Q0_CSR"
+    selector_prefix = "TASK40_V28" if v28_continuation else "TASK40_V27"
+    selector_path = Path(os.environ.get(f"{selector_prefix}_SELECTOR_PATH", "")).resolve()
+    selector_sha = os.environ.get(f"{selector_prefix}_SELECTOR_SHA256", "")
+    raw_operation = os.environ.get(f"{selector_prefix}_OPERATION", "")
+    expected_operation = (
+        "V28_EXISTING_MANIFEST_Q0_CONTINUATION"
+        if v28_continuation
+        else "V27_SAVED_ONLY_COMPLETE_Q0_CSR"
+    )
     if (
         raw_operation != expected_operation
         or not selector_path.is_file()
         or len(selector_sha) != 64
         or _sha256_file(selector_path) != selector_sha
     ):
-        raise RuntimeError("V27 route lacks its service-bound selector and operation identity")
+        raise RuntimeError("saved q0 route lacks its service-bound selector and operation identity")
     selector = json.loads(selector_path.read_text(encoding="utf-8"))
+    expected_selector_schema = (
+        "task40extra.review_v28_q0_continuation_operation.v1"
+        if v28_continuation
+        else "task40extra.review_v27_saved_q0_operation.v1"
+    )
     donor_import = selector.get("donor_import")
     producer_identity = (
         donor_import.get("producer_identity") if isinstance(donor_import, Mapping) else None
     )
     inventory = preflight.get("target_mode_inventory")
     if (
-        selector.get("schema") != "task40extra.review_v27_saved_q0_operation.v1"
+        selector.get("schema") != expected_selector_schema
         or selector.get("operation") != expected_operation
         or selector.get("stop_stage") != stop_stage
         or selector.get("model_profile") != profile
@@ -1378,19 +1882,35 @@ def _run_v27_saved_q0_stage(
         or not isinstance(inventory, Mapping)
         or selector.get("campaign_window_sha256") is None
     ):
-        raise RuntimeError("V27 selector or preflight omits its fixed donor/window/mode identity")
+        raise RuntimeError("saved q0 selector or preflight omits its fixed donor/window/mode identity")
+    if v28_continuation:
+        pattern_manifest_path = Path(
+            os.environ.get("TASK40_V28_PATTERN_MANIFEST_PATH", "")
+        ).resolve()
+        continuation_manifest_path = Path(
+            os.environ.get("TASK40_V28_CONTINUATION_MANIFEST_PATH", "")
+        ).resolve()
+        if (
+            selector.get("pattern_manifest_path") != str(pattern_manifest_path)
+            or selector.get("pattern_manifest_sha256")
+            != os.environ.get("TASK40_V28_PATTERN_MANIFEST_SHA256")
+            or selector.get("continuation_manifest_path") != str(continuation_manifest_path)
+            or selector.get("campaign_window_sha256")
+            != os.environ.get("TASK40_V28_CAMPAIGN_WINDOW_SHA256")
+        ):
+            raise RuntimeError("V28 worker pattern, continuation, or campaign binding changed")
     mode_sha = inventory.get("mode_manifest_sha256")
     key_sha = inventory.get("ordered_mode_key_sha256")
     if not isinstance(mode_sha, str) or len(mode_sha) != 64 or not isinstance(key_sha, str) or len(key_sha) != 64:
-        raise RuntimeError("V27 route has no complete frozen mode-manifest/key identity")
+        raise RuntimeError("saved q0 route has no complete frozen mode-manifest/key identity")
 
     repo_root = Path(__file__).resolve().parents[2]
-    producer_root = Path(os.environ.get("TASK40_V27_PRODUCER_ROOT", "")).resolve()
+    producer_root = Path(os.environ.get(f"{selector_prefix}_PRODUCER_ROOT", "")).resolve()
     expected_producer_root = (
         repo_root / str(producer_identity.get("producer_run_directory", ""))
     ).resolve()
     if not producer_root.is_dir() or producer_root != expected_producer_root:
-        raise RuntimeError("V27 producer root differs from its service-bound read-only donor identity")
+        raise RuntimeError("saved q0 producer root differs from its service-bound read-only donor identity")
     replay_root = (
         repo_root / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/saved_replay"
     ).resolve()
@@ -1398,94 +1918,17 @@ def _run_v27_saved_q0_stage(
         repo_root / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/native_consumer"
     ).resolve()
     disk_reserve_bytes = 1024**3
-    resource_gates: list[dict[str, Any]] = []
-
-    def allocation_gate(stage: str, facts: Mapping[str, Any]) -> dict[str, Any]:
-        requested = sum(
-            int(facts.get(key, 0))
-            for key in (
-                "additional_payload_bytes",
-                "matrix_payload_bytes",
-                "workspace_bytes",
-                "future_co_resident_reserve_bytes",
-            )
+    allocation_gate, resource_gates_by_stage, resource_gate_records, resource_gate_timing = (
+        _make_saved_q0_allocation_gate(
+            output_directory=output_directory,
+            disk_reserve_bytes=disk_reserve_bytes,
+            resource_admission=_resource_admission,
+            resource_sample=_resource_snapshot,
+            cgroup_snapshot=_task_cgroup_memory_snapshot,
+            blocked_exception=_ProbeResourceBlocked,
+            disk_usage=shutil.disk_usage,
         )
-        before = _task_cgroup_memory_snapshot()
-        try:
-            memory = _resource_admission(
-                stage,
-                requested,
-                resource_sample=_resource_snapshot,
-                require_task_cgroup=True,
-            )
-        except _ProbeResourceBlocked as error:
-            record = {
-                "stage": stage,
-                "passed": False,
-                "request_facts": dict(facts),
-                "memory_admission": dict(error.facts),
-                "task_cgroup_memory_before": before,
-                "task_cgroup_memory_after": _task_cgroup_memory_snapshot(),
-            }
-            resource_gates.append(record)
-            raise
-        disk_required = int(facts.get("disk_payload_bytes", 0))
-        disk_free = int(shutil.disk_usage(output_directory).free)
-        disk_passed = disk_free >= disk_required + disk_reserve_bytes
-        gate_key = stage
-        for repeated in (
-            ("task40_v27_saved_q0/volume/cell/", "task40_v27_saved_q0/volume/cell"),
-            ("task40_v27_saved_q0/direct/C/provider/", "task40_v27_saved_q0/direct/C/provider"),
-            ("task40_v27_saved_q0/direct/-D/provider/", "task40_v27_saved_q0/direct/-D/provider"),
-        ):
-            if stage.startswith(repeated[0]):
-                gate_key = repeated[1]
-                break
-        record = {
-            **memory,
-            "stage": gate_key,
-            "passed": disk_passed,
-            "observation_count": 1,
-            "maximum_additional_object_upper_bound_bytes": requested,
-            "maximum_disk_payload_bytes": disk_required,
-            "disk_payload_bytes": disk_required,
-            "disk_free_bytes": disk_free,
-            "disk_reserve_bytes": disk_reserve_bytes,
-            "disk_gate_passed": disk_passed,
-            "request_facts": dict(facts),
-            "task_cgroup_memory_before": before,
-            "task_cgroup_memory_after": _task_cgroup_memory_snapshot(),
-        }
-        previous = next((item for item in resource_gates if item.get("stage") == gate_key), None)
-        if previous is None:
-            resource_gates.append(record)
-        else:
-            previous["observation_count"] = int(previous.get("observation_count", 0)) + 1
-            previous["maximum_additional_object_upper_bound_bytes"] = max(
-                int(previous.get("maximum_additional_object_upper_bound_bytes", 0)), requested
-            )
-            previous["maximum_disk_payload_bytes"] = max(
-                int(previous.get("maximum_disk_payload_bytes", 0)), disk_required
-            )
-            previous["last_host_effective_available_bytes"] = memory.get(
-                "host_effective_available_bytes"
-            )
-            previous["last_current_process_cgroup"] = memory.get("current_process_cgroup")
-        if not disk_passed:
-            raise _ProbeResourceBlocked(
-                stage,
-                {
-                    "stage": stage,
-                    "additional_object_upper_bound_bytes": requested,
-                    "disk_payload_bytes": disk_required,
-                    "disk_free_bytes": disk_free,
-                    "disk_reserve_bytes": disk_reserve_bytes,
-                    "disk_gate_passed": False,
-                    "passed": False,
-                },
-            )
-        return record
-
+    )
     current_identity = {
         "source_sha": source_sha,
         "run_id": preflight.get("run_id"),
@@ -1500,24 +1943,39 @@ def _run_v27_saved_q0_stage(
     ).hexdigest()
     source_identity = {
         "donor_identity": dict(donor_import),
-        "execution_identity": current_identity,
+        "execution_identity": dict(current_identity),
         "donor_identity_sha256": donor_identity_sha,
     }
-    operation_path = output_directory / "v27_saved_q0_stage.json"
     partial_path = output_directory / "v20_partial_result.json"
+    if v28_continuation:
+        operation_path = output_directory / "v28_q0_continuation_stage.json"
+        csr_root = pattern_manifest_path.parent
+        manifest_path = continuation_manifest_path
+    else:
+        operation_path = output_directory / "v27_saved_q0_stage.json"
+        csr_root = output_directory / "v27_q0_csr"
+        manifest_path = csr_root / "task40_v27_q0_csr_manifest.json"
     if operation_path.exists() or partial_path.exists():
-        raise FileExistsError("refusing to replace existing V27 operation or partial receipt")
+        raise FileExistsError("refusing to replace an existing saved q0 operation or partial receipt")
 
     operation: dict[str, Any] = {
-        "schema": "task40extra.review_v27_saved_q0_stage.v1",
-        "status": "FAILED_V27_SAVED_Q0",
-        "classification": "V27_SAVED_ONLY_Q0_CSR",
+        "schema": (
+            "task40extra.review_v28_q0_continuation_stage.v1"
+            if v28_continuation
+            else "task40extra.review_v27_saved_q0_stage.v1"
+        ),
+        "status": "V28_CONTINUATION_STARTED" if v28_continuation else "FAILED_V27_SAVED_Q0",
+        "classification": (
+            "V28_EXISTING_MANIFEST_Q0_CONTINUATION"
+            if v28_continuation
+            else "V27_SAVED_ONLY_Q0_CSR"
+        ),
         "official_result": False,
         "stop_stage": stop_stage,
         "selector_path": str(selector_path),
         "selector_sha256": selector_sha,
         "operation": expected_operation,
-        "current_execution_identity": current_identity,
+        "current_execution_identity": dict(current_identity),
         "donor_import_identity_sha256": donor_identity_sha,
         "donor_import_identity": dict(donor_import),
         "source_identity": source_identity,
@@ -1528,9 +1986,181 @@ def _run_v27_saved_q0_stage(
         "ksp_created": False,
         "pde_solved": False,
     }
-    csr_root = output_directory / "v27_q0_csr"
-    manifest_path = csr_root / "task40_v27_q0_csr_manifest.json"
+    if v28_continuation:
+        operation.update(
+            {
+                "pattern_manifest_path": str(pattern_manifest_path),
+                "pattern_manifest_sha256": str(
+                    os.environ.get("TASK40_V28_PATTERN_MANIFEST_SHA256", "")
+                ),
+                "continuation_manifest_path": str(manifest_path),
+                "source_pattern_reused": True,
+                "formal_numeric_fill_started": False,
+            }
+        )
+        _write_json(operation_path, operation)
+
+    def continue_v28_factor_only_if_qualified() -> dict[str, Any] | None:
+        if not v28_continuation or not manifest_path.is_file():
+            return None
+        existing = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if existing.get("status") != "COMPLETE_CSR":
+            operation["continuation_action"] = _v28_continuation_action(
+                str(existing.get("status", "")), False
+            )
+            return None
+        qualification_binding = _load_matching_v28_native_qualification(
+            repo_root=repo_root,
+            manifest_path=manifest_path,
+            manifest=existing,
+            expected_pattern_path=pattern_manifest_path,
+            expected_pattern_sha256=os.environ["TASK40_V28_PATTERN_MANIFEST_SHA256"],
+            donor_identity_sha256=donor_identity_sha,
+            input_sha256=str(preflight.get("input_sha256", "")),
+            physical_model_sha256=str(preflight.get("physical_model_sha256", "")),
+            run_id=str(preflight.get("run_id", "")),
+            campaign_window_sha256=str(selector["campaign_window_sha256"]),
+            mode_manifest_sha256=mode_sha,
+            ordered_mode_key_sha256=key_sha,
+            sha256_file=_sha256_file,
+        )
+        action = _v28_continuation_action(
+            "COMPLETE_CSR", qualification_binding is not None
+        )
+        operation["continuation_action"] = action
+        if qualification_binding is None:
+            operation["existing_native_qualification_rejected_or_missing"] = True
+            return None
+
+        qualification_path, qualification = qualification_binding
+        artifact_records = existing.get("csr_artifacts", {})
+        artifact_records = artifact_records if isinstance(artifact_records, Mapping) else {}
+        csr_payload_bytes = sum(
+            int(item.get("bytes", 0))
+            for item in artifact_records.values()
+            if isinstance(item, Mapping)
+        )
+        allocation_gate(
+            "task40_v28_q0_existing_qualified_csr_factor_input",
+            {
+                "additional_payload_bytes": csr_payload_bytes,
+                "matrix_payload_bytes": 0,
+                "workspace_bytes": 8 * 1024 * 1024,
+                "future_co_resident_reserve_bytes": 0,
+                "disk_payload_bytes": 0,
+                "complete_csr_payload_bytes": csr_payload_bytes,
+                "read_only_memory_map": True,
+                "qualification_sha256": _sha256_file(qualification_path),
+                "all_three_csr_array_hashes_bound": True,
+            },
+        )
+        q0_csr, completed_manifest = open_saved_q0_csr_from_manifest(manifest_path)
+        qualification_sha = _sha256_file(qualification_path)
+        current_identity["native_qualification_sha256"] = qualification_sha
+        operation["current_execution_identity"] = dict(current_identity)
+        operation.update(
+            {
+                "continuation_action": "factor_only",
+                "numeric_fill_skipped": True,
+                "native_readback_skipped": True,
+                "factor_only_continuation": True,
+                "csr_manifest_path": str(manifest_path),
+                "csr_manifest_sha256": _sha256_file(manifest_path),
+                "csr_status": "COMPLETE_CSR",
+                "complete_numeric_csr": True,
+                "csr_artifacts": dict(completed_manifest["csr_artifacts"]),
+                "stored_structural_slots": int(completed_manifest["stored_structural_slots"]),
+                "numeric_facts": dict(completed_manifest["numeric_pass"]["numeric_facts"]),
+                "csr_readback": dict(qualification["readback"]),
+                "csr_readback_artifact": dict(qualification["readback_artifact"]),
+                "native_qualification_receipt": {
+                    "path": str(qualification_path),
+                    "sha256": qualification_sha,
+                    "status": qualification["status"],
+                },
+                "native_qualification_original_source_identity": dict(
+                    qualification["source_identity"]
+                ),
+                "factor_execution_identity": dict(current_identity),
+            }
+        )
+        factor_root = output_directory / "v28_q0_factor"
+        factor_checkpoint_path = factor_root / "v26_q0_factor_checkpoints.json"
+        try:
+            from src.solvers.task40_v10_p6_mumps import (
+                run_task40_v26_selected_q0_factor_lifecycle,
+            )
+
+            factor_report = run_task40_v26_selected_q0_factor_lifecycle(
+                q0_csr,
+                allocation_gate=allocation_gate,
+                checkpoint_directory=factor_root,
+                current_identity=current_identity,
+            )
+        except _ProbeResourceBlocked as error:
+            factor_report = {
+                "schema": "task40extra.review_v26_selected_q0_factor_lifecycle.v1",
+                "status": "RESOURCE_CONTROLLED_STOP",
+                "selected_q": 0,
+                "failed_stage": error.stage,
+                "resource_blocker": {"stage": error.stage, **dict(error.facts), "passed": False},
+                "checkpoint_path": str(factor_checkpoint_path),
+                "checkpoint_sha256": _sha256_file(factor_checkpoint_path)
+                if factor_checkpoint_path.is_file() else None,
+            }
+        except Exception as error:
+            factor_report = {
+                "schema": "task40extra.review_v26_selected_q0_factor_lifecycle.v1",
+                "status": "FAILED_Q0_FACTOR_LIFECYCLE",
+                "selected_q": 0,
+                "failure_type": type(error).__name__,
+                "failure_message": str(error),
+                "checkpoint_path": str(factor_checkpoint_path),
+                "checkpoint_sha256": _sha256_file(factor_checkpoint_path)
+                if factor_checkpoint_path.is_file() else None,
+            }
+        factor_built = bool(
+            factor_report.get("q_coverage", {}).get("numeric_factor_built") is True
+        )
+        operation["factor_lifecycle"] = factor_report
+        operation["factor_or_solve_built"] = factor_built
+        operation["factor_checkpoint"] = {
+            "path": str(factor_checkpoint_path),
+            "sha256": _sha256_file(factor_checkpoint_path)
+            if factor_checkpoint_path.is_file() else None,
+        }
+        if factor_report.get("status") == "PASS_Q0_FACTOR_PROBE_AND_RHS_SOLVE":
+            operation["status"] = "PASS_COMPLETE_Q0_CSR_AND_FACTOR"
+        elif factor_report.get("status") == "RESOURCE_CONTROLLED_STOP":
+            operation["status"] = "RESOURCE_CONTROLLED_STOP_AFTER_Q0_CSR"
+            operation["failed_stage"] = factor_report.get("failed_stage")
+            operation["resource_blocker"] = factor_report.get("resource_blocker")
+        else:
+            operation["status"] = "FAILED_Q0_FACTOR_LIFECYCLE"
+            operation["failed_stage"] = "q0_factor_lifecycle"
+            operation["failure_type"] = factor_report.get("failure_type")
+            operation["failure_message"] = factor_report.get("failure_message")
+        operation["factor_lifecycle_executed_without_adapter_or_native_readback"] = True
+        return _write_v28_continuation_footer(
+            output_directory=output_directory,
+            operation_path=operation_path,
+            manifest_path=manifest_path,
+            progress_path=output_directory / "v28_q0_numeric_progress.json",
+            operation=operation,
+            stop_stage=stop_stage,
+            profile=profile,
+            source_sha=source_sha,
+            preflight=preflight,
+            selector_path=selector_path,
+            selector_sha=selector_sha,
+            donor_identity_sha256=donor_identity_sha,
+            resource_gate_records=resource_gate_records,
+        )
+
     try:
+        factor_only_result = continue_v28_factor_only_if_qualified()
+        if factor_only_result is not None:
+            return factor_only_result
         payloads = {
             str(item.get("path")): item
             for item in producer_identity.get("payloads", [])
@@ -1639,6 +2269,7 @@ def _run_v27_saved_q0_stage(
             raise ValueError("V27 saved q0-only map/lookup/H dimensions differ from the frozen profile")
         with q0_map_path.open("rb") as stream:
             _advise_file_drop(stream, 0, q0_map_path.stat().st_size)
+        reader_telemetry: dict[str, Any] = {"advice_calls": 0, "advised_bytes": 0}
         adapter = SavedQ0ContributionAdapter(
             volume_stream_path=volume_path,
             surface_stream_path=surface_path,
@@ -1652,6 +2283,7 @@ def _run_v27_saved_q0_stage(
             allocation_gate=allocation_gate,
             expected_cell_count=int(periodic.local_cell_count),
             expected_class_count=45,
+            reader_telemetry=reader_telemetry,
         )
         csr_preflight = preflight_saved_q0_csr(
             adapter,
@@ -1661,7 +2293,7 @@ def _run_v27_saved_q0_stage(
         )
         operation["saved_only_preflight"] = {
             **dict(csr_preflight),
-            "live_resource_gates": list(resource_gates),
+            "live_resource_gates": resource_gate_records(),
             "source_map_identity": {
                 "path": str(q0_map_path),
                 "bytes": int(q0_map_path.stat().st_size),
@@ -1669,27 +2301,329 @@ def _run_v27_saved_q0_stage(
                 "loaded_q_maps": ["q0"],
             },
         }
-        blocks, structure_manifest, manifest_path = build_saved_q0_csr_structure(
-            adapter,
-            output_directory=csr_root,
-            expected_row_counts=row_counts,
-            expected_offsets=offsets,
-            allocation_gate=allocation_gate,
-            source_identity=source_identity,
-        )
-        del blocks
-        q0_csr, completed_manifest = fill_saved_q0_csr_values(
-            adapter,
-            manifest_path=manifest_path,
-            allocation_gate=allocation_gate,
-            source_identity=source_identity,
-        )
+        progress_path = output_directory / "v28_q0_numeric_progress.json"
+        progress_state: dict[str, Any] | None = None
+        progress_last_write = 0.0
+        progress_last_component: str | None = None
+        if v28_continuation:
+            progress_state = {
+                "schema": "task40extra.review_v28_q0_numeric_progress.v1",
+                "status": "IN_PROGRESS",
+                "source_identity": current_identity,
+                "continuation_manifest_path": str(manifest_path),
+                "restart_policy": "clear_all_values_before_each_numeric_pass; progress_is_not_a_cursor",
+                "completed_work_items_by_component": {"Hhat": 0, "volume": 0, "surface": 0},
+                "expected_work_items_by_component": {
+                    "Hhat": 1,
+                    "volume": int(adapter.volume_layout["cell_count"]),
+                    "surface": int(
+                        adapter.surface_nonempty_b_count
+                        + adapter.surface_nonempty_d_count
+                    ),
+                },
+                "component_parent_wall_seconds": {"Hhat": 0.0, "volume": 0.0, "surface": 0.0},
+                "component_child_seconds": {"Hhat": 0.0, "volume": 0.0, "surface": 0.0},
+                "contribution_generation_seconds": 0.0,
+                "projection_seconds": 0.0,
+                "scatter_seconds": 0.0,
+                "resource_gate_calls": 0,
+                "resource_gate_seconds": 0.0,
+                "read_and_constraint_split": "not separately instrumented; combined contribution_generation_seconds is measured",
+                "data_zero_and_flush_seconds": None,
+                "data_hash_seconds": None,
+                "contribution_value_bytes_completed": 0,
+                "completed_contribution_count": 0,
+                "last_completed_label": None,
+            }
+
+            component_started_at: dict[str, float] = {}
+
+            def persist_v28_progress(
+                rows: np.ndarray | None,
+                columns: np.ndarray | None,
+                values: np.ndarray | None,
+                label: str,
+                timings: Mapping[str, float],
+            ) -> None:
+                nonlocal progress_last_write, progress_last_component
+                if progress_state is None:
+                    return
+                if label.startswith("ports/Hhat/"):
+                    component = "Hhat"
+                elif label.startswith("volume/cell/"):
+                    component = "volume"
+                else:
+                    component = "surface"
+                counts = progress_state["completed_work_items_by_component"]
+                counts[component] = int(counts[component]) + 1
+                progress_state["completed_contribution_count"] = int(
+                    progress_state["completed_contribution_count"]
+                ) + 1
+                progress_state["last_completed_label"] = label
+                progress_state["contribution_value_bytes_completed"] = int(
+                    progress_state["contribution_value_bytes_completed"]
+                ) + (int(values.nbytes) if values is not None else 0)
+                component_child = progress_state["component_child_seconds"]
+                component_child[component] = float(
+                    component_child[component]
+                    + sum(float(value) for value in timings.values())
+                )
+                generation_seconds = float(timings.get("generation_seconds", 0.0))
+                progress_state["contribution_generation_seconds"] = float(
+                    progress_state["contribution_generation_seconds"]
+                    + generation_seconds
+                )
+                progress_state["projection_seconds"] = float(
+                    progress_state["projection_seconds"]
+                    + float(timings.get("projection_seconds", 0.0))
+                )
+                progress_state["scatter_seconds"] = float(
+                    progress_state["scatter_seconds"]
+                    + float(timings.get("accumulation_seconds", 0.0))
+                )
+                now = time.monotonic()
+                component_started_at.setdefault(
+                    component,
+                    now - sum(float(value) for value in timings.values()),
+                )
+                progress_state["component_parent_wall_seconds"][component] = float(
+                    now - component_started_at[component]
+                )
+                boundary = progress_last_component != component
+                if boundary or now - progress_last_write >= 60.0:
+                    memory = _resource_snapshot()
+                    cgroup = memory.get("current_process_cgroup", {})
+                    try:
+                        resident_pages = int(
+                            Path("/proc/self/statm")
+                            .read_text(encoding="ascii")
+                            .split()[1]
+                        )
+                        rss_bytes = resident_pages * int(os.sysconf("SC_PAGE_SIZE"))
+                    except (OSError, ValueError, IndexError):
+                        rss_bytes = None
+                    expected = progress_state["expected_work_items_by_component"]
+                    eta: dict[str, float | None] = {}
+                    remaining: dict[str, int] = {}
+                    for key, total in expected.items():
+                        done = int(counts[key])
+                        remaining[key] = max(0, int(total) - done)
+                        seconds = float(
+                            progress_state["component_parent_wall_seconds"][key]
+                        )
+                        eta[key] = remaining[key] * seconds / done if done > 0 else None
+                    cgroup_stat = cgroup.get("memory_stat_bytes", {}) if isinstance(cgroup, Mapping) else {}
+                    progress_state.update(
+                        {
+                            "current_component": component,
+                            "component_boundary_transition": (
+                                None
+                                if progress_last_component is None
+                                else {"from": progress_last_component, "to": component}
+                            ),
+                            "remaining_work_items_by_component": remaining,
+                            "linear_component_eta_seconds": eta,
+                            "eta_uncertainty": (
+                                "per-component mean only; excludes hashing, readback, factor, and service closeout"
+                            ),
+                            "current_process_rss_bytes": rss_bytes,
+                            "current_process_cgroup": cgroup,
+                            "task_swap_current_bytes": (
+                                cgroup.get("swap_current_bytes")
+                                if isinstance(cgroup, Mapping)
+                                else None
+                            ),
+                            "host_memory_available_bytes": memory.get(
+                                "host_memory_available_bytes"
+                            ),
+                            "task_cgroup_anon_bytes": cgroup_stat.get("anon") if isinstance(cgroup_stat, Mapping) else None,
+                            "task_cgroup_file_bytes": cgroup_stat.get("file") if isinstance(cgroup_stat, Mapping) else None,
+                            "task_cgroup_file_dirty_bytes": cgroup_stat.get("file_dirty") if isinstance(cgroup_stat, Mapping) else None,
+                            "saved_reader_advice_calls": int(reader_telemetry.get("advice_calls", 0)),
+                            "saved_reader_advised_bytes": int(reader_telemetry.get("advised_bytes", 0)),
+                            "resource_gate_records": resource_gate_records(),
+                            "resource_gate_calls": int(resource_gate_timing["calls"]),
+                            "resource_gate_seconds": float(resource_gate_timing["seconds"]),
+                            "progress_is_not_a_restart_cursor": True,
+                            "resource_gate_count": len(resource_gates_by_stage),
+                        }
+                    )
+                    _write_json(progress_path, progress_state)
+                    persist_v28_checkpoint()
+                    progress_last_write = now
+                    progress_last_component = component
+
+            def persist_v28_checkpoint() -> None:
+                if not v28_continuation or progress_state is None:
+                    return
+                if not str(operation.get("status", "")).endswith("_IN_PROGRESS"):
+                    operation["status"] = "V28_NUMERIC_FILL_IN_PROGRESS"
+                _write_json(progress_path, progress_state)
+                operation["numeric_progress"] = dict(progress_state)
+                operation["resource_gates"] = resource_gate_records()
+                operation["resource_gate_timing"] = dict(resource_gate_timing)
+                operation["progress_is_not_restart_cursor"] = True
+                _write_v28_continuation_footer(
+                    output_directory=output_directory,
+                    operation_path=operation_path,
+                    manifest_path=manifest_path,
+                    progress_path=progress_path,
+                    operation=operation,
+                    stop_stage=stop_stage,
+                    profile=profile,
+                    source_sha=source_sha,
+                    preflight=preflight,
+                    selector_path=selector_path,
+                    selector_sha=selector_sha,
+                    donor_identity_sha256=donor_identity_sha,
+                    resource_gate_records=resource_gate_records,
+                )
+
+            def persist_v28_fill_phase(phase: str, facts: Mapping[str, Any]) -> None:
+                if progress_state is None:
+                    return
+                progress_state["last_fill_phase"] = phase
+                progress_state["last_fill_phase_facts"] = dict(facts)
+                if phase == "data_zeroed_and_flushed":
+                    progress_state["data_zero_and_flush_seconds"] = facts.get("elapsed_seconds")
+                    progress_state["data_zeroed_bytes"] = facts.get("bytes")
+                elif phase == "data_hash_progress":
+                    progress_state["data_hash_bytes_processed"] = facts.get("bytes_processed")
+                    progress_state["data_hash_elapsed_seconds"] = facts.get("elapsed_seconds")
+                elif phase == "data_sha256_complete":
+                    progress_state["data_hash_seconds"] = facts.get("elapsed_seconds")
+                    progress_state["data_hash_bytes"] = facts.get("bytes")
+                    progress_state["data_sha256"] = facts.get("sha256")
+                progress_state["resource_gate_records"] = resource_gate_records()
+                progress_state["resource_gate_calls"] = int(resource_gate_timing["calls"])
+                progress_state["resource_gate_seconds"] = float(resource_gate_timing["seconds"])
+                cgroup = _task_cgroup_memory_snapshot()
+                stat = cgroup.get("memory_stat_bytes", {}) if isinstance(cgroup, Mapping) else {}
+                progress_state["task_cgroup_anon_bytes"] = stat.get("anon") if isinstance(stat, Mapping) else None
+                progress_state["task_cgroup_file_bytes"] = stat.get("file") if isinstance(stat, Mapping) else None
+                progress_state["task_cgroup_file_dirty_bytes"] = stat.get("file_dirty") if isinstance(stat, Mapping) else None
+                _write_json(progress_path, progress_state)
+                persist_v28_checkpoint()
+
+        if v28_continuation:
+            if (
+                not pattern_manifest_path.is_file()
+                or _saved_q_sha256(pattern_manifest_path)
+                != os.environ.get("TASK40_V28_PATTERN_MANIFEST_SHA256")
+            ):
+                raise ValueError("V28 source V27 pattern manifest changed before continuation")
+            if manifest_path.exists():
+                continuation_manifest = json.loads(
+                    manifest_path.read_text(encoding="utf-8")
+                )
+                if (
+                    continuation_manifest.get("schema")
+                    != "task40extra.review_v28_saved_q0_csr.v1"
+                    or continuation_manifest.get("original_pattern_manifest", {}).get(
+                        "sha256"
+                    )
+                    != os.environ.get("TASK40_V28_PATTERN_MANIFEST_SHA256")
+                    or continuation_manifest.get("source_identity", {}).get(
+                        "donor_identity"
+                    )
+                    != donor_import
+                ):
+                    raise ValueError("existing V28 continuation manifest identity changed")
+            else:
+                continuation_manifest, _ = create_v28_saved_q0_csr_continuation_manifest(
+                    pattern_manifest_path=pattern_manifest_path,
+                    continuation_manifest_path=manifest_path,
+                    expected_pattern_manifest_sha256=os.environ[
+                        "TASK40_V28_PATTERN_MANIFEST_SHA256"
+                    ],
+                    current_execution_identity=current_identity,
+                    donor_identity=donor_import,
+                )
+            structure_manifest = json.loads(
+                pattern_manifest_path.read_text(encoding="utf-8")
+            )
+            operation["continuation_manifest_status_at_entry"] = continuation_manifest.get(
+                "status"
+            )
+            operation["continuation_action"] = _v28_continuation_action(
+                str(continuation_manifest.get("status", "")),
+                operation.get("continuation_action") == "factor_only",
+            )
+            operation["original_pattern_manifest_sha256_verified"] = True
+            operation["data_reuse_event"] = dict(
+                continuation_manifest.get("continuation_event", {})
+            )
+            operation["formal_numeric_fill_started"] = False
+            _write_json(operation_path, operation)
+            if continuation_manifest.get("status") == "COMPLETE_CSR":
+                operation["status"] = "V28_NATIVE_READBACK_IN_PROGRESS"
+                progress_state["status"] = "READBACK_IN_PROGRESS"
+                operation["continuation_action"] = "readback_and_factor"
+                _write_json(progress_path, progress_state)
+                persist_v28_checkpoint()
+                q0_csr, completed_manifest = open_saved_q0_csr_from_manifest(
+                    manifest_path
+                )
+                operation["numeric_fill_skipped"] = True
+            else:
+                progress_state["status"] = "READY_TO_CLEAR_AND_FILL"
+                progress_state["resource_gate_records"] = resource_gate_records()
+                progress_state["resource_gate_calls"] = int(resource_gate_timing["calls"])
+                progress_state["resource_gate_seconds"] = float(resource_gate_timing["seconds"])
+                cgroup = _task_cgroup_memory_snapshot()
+                cgroup_stat = cgroup.get("memory_stat_bytes", {}) if isinstance(cgroup, Mapping) else {}
+                progress_state["task_cgroup_anon_bytes"] = cgroup_stat.get("anon") if isinstance(cgroup_stat, Mapping) else None
+                progress_state["task_cgroup_file_bytes"] = cgroup_stat.get("file") if isinstance(cgroup_stat, Mapping) else None
+                progress_state["task_cgroup_file_dirty_bytes"] = cgroup_stat.get("file_dirty") if isinstance(cgroup_stat, Mapping) else None
+                _write_json(progress_path, progress_state)
+                operation["status"] = "V28_NUMERIC_FILL_IN_PROGRESS"
+                operation["formal_numeric_fill_started"] = False
+                persist_v28_checkpoint()
+                operation["formal_numeric_fill_started"] = True
+                _write_json(operation_path, operation)
+                progress_state["status"] = "CLEARING_AND_FILLING"
+                persist_v28_checkpoint()
+                q0_csr, completed_manifest = fill_saved_q0_csr_values(
+                    adapter,
+                    manifest_path=manifest_path,
+                    allocation_gate=allocation_gate,
+                    source_identity=source_identity,
+                    projection_method="sparse_local",
+                    direct_hhat=True,
+                    contribution_completed_observer=persist_v28_progress,
+                    phase_observer=persist_v28_fill_phase,
+                )
+                if progress_state is not None:
+                    progress_state["status"] = "NUMERIC_FILL_COMPLETED"
+                    progress_state["continuation_manifest_sha256"] = _sha256_file(
+                        manifest_path
+                    )
+                    _write_json(progress_path, progress_state)
+                    persist_v28_checkpoint()
+        else:
+            blocks, structure_manifest, manifest_path = build_saved_q0_csr_structure(
+                adapter,
+                output_directory=csr_root,
+                expected_row_counts=row_counts,
+                expected_offsets=offsets,
+                allocation_gate=allocation_gate,
+                source_identity=source_identity,
+            )
+            del blocks
+            q0_csr, completed_manifest = fill_saved_q0_csr_values(
+                adapter,
+                manifest_path=manifest_path,
+                allocation_gate=allocation_gate,
+                source_identity=source_identity,
+            )
         del q0_csr
         gc.collect()
         csr_artifacts = completed_manifest.get("csr_artifacts", {})
         csr_artifacts = csr_artifacts if isinstance(csr_artifacts, Mapping) else {}
         allocation_gate(
-            "task40_v27_q0_csr_manifest_readback",
+            "task40_v28_q0_csr_manifest_readback"
+            if v28_continuation
+            else "task40_v27_q0_csr_manifest_readback",
             {
                 "additional_payload_bytes": 0,
                 "workspace_bytes": 8 * 1024 * 1024,
@@ -1708,7 +2642,27 @@ def _run_v27_saved_q0_stage(
         operation["csr_manifest_sha256"] = _sha256_file(manifest_path)
         operation["csr_status"] = completed_manifest["status"]
         operation["csr_structure_status"] = structure_manifest["status"]
+        if completed_manifest.get("status") == "COMPLETE_CSR":
+            operation["complete_numeric_csr"] = True
+            operation["csr_artifacts"] = dict(completed_manifest["csr_artifacts"])
+            operation["stored_structural_slots"] = int(
+                completed_manifest["stored_structural_slots"]
+            )
+            operation["numeric_facts"] = dict(
+                completed_manifest["numeric_pass"]["numeric_facts"]
+            )
+            operation["numeric_fill_skipped"] = bool(
+                operation.get("numeric_fill_skipped")
+            )
+            if v28_continuation and progress_state is not None:
+                progress_state["status"] = "READBACK_IN_PROGRESS"
+                persist_v28_checkpoint()
 
+        readback_started = time.perf_counter()
+        if v28_continuation and progress_state is not None:
+            progress_state["readback_started"] = True
+            progress_state["readback_matvec_seconds"] = {}
+            persist_v28_checkpoint()
         replay_artifacts = donor_import.get("saved_replay_manifest", {}).get("artifacts", {})
         input_record = replay_artifacts.get("inputs") if isinstance(replay_artifacts, Mapping) else None
         input_path = Path(str(input_record.get("path", ""))).resolve() if isinstance(input_record, Mapping) else Path()
@@ -1807,11 +2761,23 @@ def _run_v27_saved_q0_stage(
             scale = max(float(np.linalg.norm(left)), float(np.linalg.norm(right)), np.finfo(float).tiny)
             return {"absolute": absolute, "scale": scale, "relative": absolute / scale}
 
+        matvec_started = time.perf_counter()
         full1 = np.asarray(q0_csr @ x1)
+        if v28_continuation and progress_state is not None:
+            progress_state["readback_matvec_seconds"]["case_1_full"] = float(
+                time.perf_counter() - matvec_started
+            )
+            persist_v28_checkpoint()
         _drop_mmap_pages(q0_csr.data, 0, q0_csr.data.nbytes)
         _drop_mmap_pages(q0_csr.indices, 0, q0_csr.indices.nbytes)
         _drop_mmap_pages(q0_csr.indptr, 0, q0_csr.indptr.nbytes)
+        matvec_started = time.perf_counter()
         full2 = np.asarray(q0_csr @ x2)
+        if v28_continuation and progress_state is not None:
+            progress_state["readback_matvec_seconds"]["case_2_full"] = float(
+                time.perf_counter() - matvec_started
+            )
+            persist_v28_checkpoint()
         _drop_mmap_pages(q0_csr.data, 0, q0_csr.data.nbytes)
         _drop_mmap_pages(q0_csr.indices, 0, q0_csr.indices.nbytes)
         _drop_mmap_pages(q0_csr.indptr, 0, q0_csr.indptr.nbytes)
@@ -1819,11 +2785,23 @@ def _run_v27_saved_q0_stage(
         x1_trace[trace_rows:] = 0.0
         x1_port = x1.copy()
         x1_port[:trace_rows] = 0.0
+        matvec_started = time.perf_counter()
         trace_only = np.asarray(q0_csr @ x1_trace)
+        if v28_continuation and progress_state is not None:
+            progress_state["readback_matvec_seconds"]["case_1_trace_only"] = float(
+                time.perf_counter() - matvec_started
+            )
+            persist_v28_checkpoint()
         _drop_mmap_pages(q0_csr.data, 0, q0_csr.data.nbytes)
         _drop_mmap_pages(q0_csr.indices, 0, q0_csr.indices.nbytes)
         _drop_mmap_pages(q0_csr.indptr, 0, q0_csr.indptr.nbytes)
+        matvec_started = time.perf_counter()
         port_only = np.asarray(q0_csr @ x1_port)
+        if v28_continuation and progress_state is not None:
+            progress_state["readback_matvec_seconds"]["case_1_port_only"] = float(
+                time.perf_counter() - matvec_started
+            )
+            persist_v28_checkpoint()
         _drop_mmap_pages(q0_csr.data, 0, q0_csr.data.nbytes)
         _drop_mmap_pages(q0_csr.indices, 0, q0_csr.indices.nbytes)
         _drop_mmap_pages(q0_csr.indptr, 0, q0_csr.indptr.nbytes)
@@ -1850,11 +2828,14 @@ def _run_v27_saved_q0_stage(
             error["active_block"]["relative"]
             for error in component_errors.values()
         ] + [error["native_off_block_relative"] for error in component_errors.values()]
-        readback_path = output_directory / "v27_q0_csr_readback.npz"
+        readback_stem = "v28_q0_csr_readback" if v28_continuation else "v27_q0_csr_readback"
+        readback_path = output_directory / f"{readback_stem}.npz"
         if readback_path.exists():
-            raise FileExistsError("refusing to overwrite V27 q0 CSR readback outputs")
+            raise FileExistsError("refusing to overwrite saved q0 CSR readback outputs")
         allocation_gate(
-            "task40_v27_q0_csr_readback_persistence",
+            "task40_v28_q0_csr_readback_persistence"
+            if v28_continuation
+            else "task40_v27_q0_csr_readback_persistence",
             {
                 "disk_payload_bytes": int(4 * vector_bytes),
                 "additional_payload_bytes": 0,
@@ -1863,7 +2844,7 @@ def _run_v27_saved_q0_stage(
                 "atomic_write": True,
             },
         )
-        temporary_readback = output_directory / ".v27_q0_csr_readback.tmp"
+        temporary_readback = output_directory / f".{readback_stem}.tmp"
         with temporary_readback.open("xb") as stream:
             np.savez(
                 stream,
@@ -1906,16 +2887,68 @@ def _run_v27_saved_q0_stage(
             "no_second_adapter_contribution_pass": True,
         }
         if readback["all_gates_passed"] is not True:
-            raise ValueError("V27 complete q0 CSR or component native readback exceeded 1e-11")
+            raise ValueError("complete q0 CSR or component native readback exceeded 1e-11")
         operation["csr_readback"] = readback
         operation["csr_readback_artifact"] = readback_artifact
+        if v28_continuation and progress_state is not None:
+            progress_state["readback_parent_wall_seconds"] = float(
+                time.perf_counter() - readback_started
+            )
+            progress_state["readback_completed"] = True
+            persist_v28_checkpoint()
         operation["status"] = "PASS_COMPLETE_Q0_CSR"
-        operation["classification"] = "V27_COMPLETE_Q0_CSR_NATIVE_READBACK"
+        operation["classification"] = (
+            "V28_COMPLETE_Q0_CSR_NATIVE_READBACK"
+            if v28_continuation
+            else "V27_COMPLETE_Q0_CSR_NATIVE_READBACK"
+        )
         operation["csr_artifacts"] = dict(completed_manifest["csr_artifacts"])
         operation["stored_structural_slots"] = int(completed_manifest["stored_structural_slots"])
         operation["numeric_facts"] = dict(completed_manifest["numeric_pass"]["numeric_facts"])
         operation["complete_numeric_csr"] = True
         operation["factor_or_solve_built"] = False
+        if v28_continuation:
+            qualification_path = output_directory / "v28_q0_native_qualification.json"
+            qualification = {
+                "schema": "task40extra.review_v28_q0_native_qualification.v1",
+                "status": "PASS_COMPLETE_Q0_CSR_NATIVE_READBACK",
+                "source_identity": current_identity,
+                "donor_identity_sha256": donor_identity_sha,
+                "campaign_window_sha256": selector["campaign_window_sha256"],
+                "original_pattern_manifest": {
+                    "path": str(pattern_manifest_path),
+                    "sha256": os.environ["TASK40_V28_PATTERN_MANIFEST_SHA256"],
+                },
+                "csr_manifest_path": str(manifest_path),
+                "csr_artifact_hashes": {
+                    name: item.get("sha256")
+                    for name, item in completed_manifest["csr_artifacts"].items()
+                },
+                "csr_shape": list(q0_csr.shape),
+                "stored_structural_slots": int(q0_csr.nnz),
+                "readback": readback,
+                "readback_artifact": readback_artifact,
+                "qualification_gates_passed_at": _resource_snapshot(),
+            }
+            if qualification_path.exists():
+                raise FileExistsError("refusing to overwrite a prior V28 native qualification receipt")
+            _write_json(qualification_path, qualification)
+            qualification_sha = _sha256_file(qualification_path)
+            completed_manifest["native_qualification"] = {
+                "path": str(qualification_path),
+                "sha256": qualification_sha,
+                "status": qualification["status"],
+                "csr_artifact_hashes": dict(qualification["csr_artifact_hashes"]),
+            }
+            _write_json(manifest_path, completed_manifest)
+            operation["native_qualification_receipt"] = {
+                "path": str(qualification_path),
+                "sha256": qualification_sha,
+                "status": qualification["status"],
+            }
+            operation["csr_manifest_sha256"] = _sha256_file(manifest_path)
+            current_identity["native_qualification_sha256"] = qualification_sha
+            _write_json(operation_path, operation)
         del native1, native2, component_sum, full1, full2, trace_only, port_only
         del x1, x2, x1_trace, x1_port
         del adapter, q0_map, active_lookup, local_h, row_counts, offsets
@@ -1933,10 +2966,48 @@ def _run_v27_saved_q0_stage(
             "allocator_or_file_cache_remains_counted": True,
         }
 
-        factor_root = output_directory / "v27_q0_factor"
+        factor_root = output_directory / (
+            "v28_q0_factor" if v28_continuation else "v27_q0_factor"
+        )
         factor_checkpoint_path = factor_root / "v26_q0_factor_checkpoints.json"
         try:
             from src.solvers.task40_v10_p6_mumps import run_task40_v26_selected_q0_factor_lifecycle
+
+            if v28_continuation:
+                qualification_record = operation.get("native_qualification_receipt", {})
+                qualification_record = (
+                    qualification_record
+                    if isinstance(qualification_record, Mapping)
+                    else {}
+                )
+                qualification_path = Path(
+                    str(qualification_record.get("path", ""))
+                ).resolve()
+                if (
+                    not qualification_path.is_relative_to(output_directory)
+                    or not qualification_path.is_file()
+                    or _sha256_file(qualification_path)
+                    != qualification_record.get("sha256")
+                ):
+                    raise ValueError("V28 factor continuation requires a matching native PASS receipt")
+                qualification = json.loads(
+                    qualification_path.read_text(encoding="utf-8")
+                )
+                if (
+                    qualification.get("status")
+                    != "PASS_COMPLETE_Q0_CSR_NATIVE_READBACK"
+                    or qualification.get("csr_artifact_hashes")
+                    != {
+                        name: item.get("sha256")
+                        for name, item in completed_manifest["csr_artifacts"].items()
+                    }
+                    or qualification.get("campaign_window_sha256")
+                    != selector["campaign_window_sha256"]
+                ):
+                    raise ValueError("V28 native PASS receipt does not qualify this CSR and window")
+                current_identity["native_qualification_sha256"] = str(
+                    qualification_record["sha256"]
+                )
 
             factor_report = run_task40_v26_selected_q0_factor_lifecycle(
                 q0_csr,
@@ -2002,7 +3073,11 @@ def _run_v27_saved_q0_stage(
                     if existing_manifest
                     else "RESOURCE_CONTROLLED_STOP_BEFORE_CSR"
                 ),
-                "classification": "V27_LIVE_RESOURCE_ADMISSION_BLOCKED",
+                "classification": (
+                    "V28_LIVE_RESOURCE_ADMISSION_BLOCKED"
+                    if v28_continuation
+                    else "V27_LIVE_RESOURCE_ADMISSION_BLOCKED"
+                ),
                 "failed_stage": error.stage,
                 "resource_blocker": {"stage": error.stage, **dict(error.facts), "passed": False},
                 "csr_manifest_path": str(manifest_path) if manifest_path.is_file() else None,
@@ -2020,8 +3095,12 @@ def _run_v27_saved_q0_stage(
                 pass
         operation.update(
             {
-                "status": "FAILED_V27_SAVED_Q0",
-                "classification": "V27_SAVED_ONLY_Q0_CSR_FAILED",
+                "status": "FAILED_V28_Q0_CONTINUATION" if v28_continuation else "FAILED_V27_SAVED_Q0",
+                "classification": (
+                    "V28_EXISTING_MANIFEST_Q0_CSR_FAILED"
+                    if v28_continuation
+                    else "V27_SAVED_ONLY_Q0_CSR_FAILED"
+                ),
                 "failed_stage": operation.get("failed_stage", "saved_only_q0_csr"),
                 "failure_type": type(error).__name__,
                 "failure_message": str(error),
@@ -2032,19 +3111,26 @@ def _run_v27_saved_q0_stage(
             }
         )
 
-    operation["resource_gates"] = list(resource_gates)
+    operation["resource_gates"] = resource_gate_records()
     operation["saved_only_no_fe_or_native_rebuild"] = True
     _write_json(operation_path, operation)
     status_code = str(operation.get("status"))
     csr_built = bool(operation.get("complete_numeric_csr"))
     factor_built = bool(operation.get("factor_or_solve_built"))
-    controlled = status_code.startswith("RESOURCE_CONTROLLED_STOP")
+    controlled = status_code.startswith(
+        ("RESOURCE_CONTROLLED_STOP", "PERFORMANCE_CONTROLLED_STOP")
+    )
     passed = status_code in {"PASS_COMPLETE_Q0_CSR", "PASS_COMPLETE_Q0_CSR_AND_FACTOR"}
     if passed:
         partial_status, outcome = "stage_completed", "STAGE_COMPLETED"
         completed = ["preflight", "selected_reference_q_csr"]
     elif controlled:
-        partial_status, outcome = "controlled_stop", "RESOURCE_CONTROLLED_STOP"
+        partial_status = "controlled_stop"
+        outcome = (
+            "PERFORMANCE_CONTROLLED_STOP"
+            if status_code.startswith("PERFORMANCE_CONTROLLED_STOP")
+            else "RESOURCE_CONTROLLED_STOP"
+        )
         completed = ["preflight", "selected_reference_q_csr"] if csr_built else ["preflight"]
     else:
         partial_status, outcome = "failed", "STAGE_FAILED"
@@ -2054,7 +3140,11 @@ def _run_v27_saved_q0_stage(
         "schema": "task40extra.review_v20_partial_result.v2",
         "status": partial_status,
         "outcome": outcome,
-        "classification": "SELECTED_REFERENCE_Q_V27_SAVED_ONLY_COMPLETE_CSR",
+        "classification": (
+            "SELECTED_REFERENCE_Q_V28_EXISTING_MANIFEST_CONTINUATION"
+            if v28_continuation
+            else "SELECTED_REFERENCE_Q_V27_SAVED_ONLY_COMPLETE_CSR"
+        ),
         "run_id": preflight.get("run_id"),
         "profile": profile,
         "source_sha": source_sha,
@@ -2065,7 +3155,7 @@ def _run_v27_saved_q0_stage(
         "completed_stages": completed,
         "failed_stage": operation.get("failed_stage") if not passed else None,
         "stage_result": {"completed_stage": stop_stage if passed else None, "probe_status": status_code},
-        "v27_saved_q0_stage": {
+        ("v28_q0_continuation" if v28_continuation else "v27_saved_q0_stage"): {
             "operation_path": operation_path.name,
             "operation_sha256": operation_sha,
             "operation_status": status_code,
@@ -2073,7 +3163,7 @@ def _run_v27_saved_q0_stage(
             "selector_path": str(selector_path),
             "selector_sha256": selector_sha,
             "donor_import_identity_sha256": donor_identity_sha,
-            "resource_gates": resource_gates,
+            "resource_gates": resource_gate_records(),
         },
         "q_coverage": {
             "status": "KNOWN",
@@ -2092,10 +3182,18 @@ def _run_v27_saved_q0_stage(
             ),
             "ksp_created": False,
             "pde_solved": False,
-            "reason": "V27 imports the frozen V26 donor read-only, constructs only the q0 saved-data CSR, and stops at the first live resource gate; it does not create a KSP, solve the target PDE, or produce official R/T/A.",
+            "reason": (
+                "V28 imports the frozen V26 donor read-only, reuses the V27 q0 pattern and data backing, "
+                "fills and qualifies only q0, and does not create a KSP, solve the target PDE, or produce official R/T/A."
+                if v28_continuation
+                else "V27 imports the frozen V26 donor read-only, constructs only the q0 saved-data CSR, and stops at the first live resource gate; it does not create a KSP, solve the target PDE, or produce official R/T/A."
+            ),
         },
         "resource_gate": operation.get("resource_blocker") if controlled else None,
-        "cleanup": {"status": "OPERATION_RETURNED", "owner_cleanup": "V27 saved-only stage operation"},
+        "cleanup": {
+            "status": "OPERATION_RETURNED",
+            "owner_cleanup": "V28 existing-manifest continuation" if v28_continuation else "V27 saved-only stage operation",
+        },
         "artifact_hashes": {
             "v20_stage_preflight.json": {
                 "path": "v20_stage_preflight.json",
@@ -2105,11 +3203,25 @@ def _run_v27_saved_q0_stage(
             **(
                 {
                     manifest_path.name: {
-                        "path": str(manifest_path.relative_to(output_directory)),
+                        "path": (
+                            str(manifest_path.relative_to(output_directory))
+                            if manifest_path.is_relative_to(output_directory)
+                            else str(manifest_path)
+                        ),
                         "sha256": _sha256_file(manifest_path),
                     }
                 }
                 if manifest_path.is_file()
+                else {}
+            ),
+            **(
+                {
+                    progress_path.name: {
+                        "path": progress_path.name,
+                        "sha256": _sha256_file(progress_path),
+                    }
+                }
+                if v28_continuation and progress_path.is_file()
                 else {}
             ),
             **(
@@ -2996,6 +4108,23 @@ def run_task40_v20_stage(
     )
     _write_json(output_directory / "v20_stage_preflight.json", preflight)
     completed = ["preflight"]
+
+    if (
+        profile == _V22_TARGET_OPERATOR_PROFILE
+        and stop_stage == "selected_reference_q_csr"
+        and os.environ.get("TASK40_V28_OPERATION")
+    ):
+        return _run_v27_saved_q0_stage(
+            resolved_payload,
+            output_directory,
+            source_sha=source_sha,
+            profile=profile,
+            preflight=preflight,
+            modes=modes,
+            mode_rows=mode_rows,
+            stop_stage=stop_stage,
+            v28_continuation=True,
+        )
 
     if (
         profile == _V22_TARGET_OPERATOR_PROFILE

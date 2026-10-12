@@ -1228,8 +1228,23 @@ def _pattern_block_shapes(q_maps):
 
 
 def _selected_csr_nnz(matrix: sparse.csr_matrix, rows: np.ndarray) -> int:
+    selected = np.asarray(rows)
+    if (
+        selected.ndim != 1
+        or selected.dtype.kind not in "iu"
+        or (selected.size and (int(selected.min()) < 0 or int(selected.max()) >= matrix.shape[0]))
+    ):
+        raise ValueError("selected CSR row inventory is invalid")
+    if not selected.size:
+        return 0
     indptr = matrix.indptr
-    return sum(int(indptr[int(row) + 1] - indptr[int(row)]) for row in rows)
+    return int(
+        np.sum(
+            indptr[selected.astype(np.intp, copy=False) + 1]
+            - indptr[selected.astype(np.intp, copy=False)],
+            dtype=np.int64,
+        )
+    )
 
 
 def _accumulate_term_into_pattern(
@@ -1423,7 +1438,8 @@ def _assemble_preallocated_q_patterns(
             rows, columns, values, label = next(contribution_iterator)
         except StopIteration:
             break
-        contribution_generation_seconds += time.perf_counter() - generation_started
+        generation_seconds = time.perf_counter() - generation_started
+        contribution_generation_seconds += generation_seconds
         numeric_contribution_count += 1
         for p in (0, 1):
             for q in (0, 1):
@@ -1760,6 +1776,121 @@ def _accumulate_v16_projection_tile(
     return time.perf_counter() - started
 
 
+def _accumulate_v28_sparse_hhat_term(
+    target: sparse.csr_matrix,
+    term: sparse.csr_matrix,
+    *,
+    row_offset: int,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None],
+    label: str,
+) -> float:
+    """Scatter a sparse q0 H block into the preallocated full CSR pattern."""
+    import time
+
+    row_offset = int(row_offset)
+    if (
+        not sparse.isspmatrix_csr(term)
+        or not term.has_canonical_format
+        or not term.has_sorted_indices
+        or term.dtype != np.dtype(np.complex128)
+        or not target.has_canonical_format
+        or term.shape[0] != term.shape[1]
+        or row_offset < 0
+        or row_offset + term.shape[0] > target.shape[0]
+        or row_offset + term.shape[1] > target.shape[1]
+        or target.shape[0] != target.shape[1]
+    ):
+        raise ValueError("V28 sparse H block cannot be scattered into the q0 CSR")
+    row_counts = np.diff(term.indptr)
+    maximum_row_nnz = int(row_counts.max(initial=0))
+    scatter_workspace = (
+        maximum_row_nnz
+        * (int(term.indices.dtype.itemsize) + int(target.indices.dtype.itemsize) + 32)
+        + 256
+    )
+    allocation_gate(
+        "task40_v28_q_hhat_sparse_scatter/" + label,
+        {
+            "additional_payload_bytes": 0,
+            "workspace_bytes": scatter_workspace,
+            "term_nnz": int(term.nnz),
+            "maximum_term_row_nnz": maximum_row_nnz,
+            "q0_target_pattern_preallocated": True,
+            "global_csr_reallocation": False,
+        },
+    )
+    started = time.perf_counter()
+    for local_row in range(term.shape[0]):
+        start, stop = int(term.indptr[local_row]), int(term.indptr[local_row + 1])
+        if start == stop:
+            continue
+        global_row = row_offset + local_row
+        target_start = int(target.indptr[global_row])
+        target_stop = int(target.indptr[global_row + 1])
+        target_columns = target.indices[target_start:target_stop]
+        global_columns = term.indices[start:stop].astype(np.int64, copy=False) + row_offset
+        positions = np.searchsorted(target_columns, global_columns)
+        if (
+            np.any(positions >= len(target_columns))
+            or not np.array_equal(target_columns[positions], global_columns)
+        ):
+            raise ValueError(f"V28 q0 CSR pattern omits sparse H support at {label}")
+        target.data[target_start + positions] += term.data[start:stop]
+    return time.perf_counter() - started
+
+
+def _accumulate_v28_c_projection_tile(
+    target: sparse.csr_matrix,
+    projected: np.ndarray,
+    row_support_ids: np.ndarray,
+    column_support_ids: np.ndarray,
+    *,
+    label: str,
+) -> float:
+    """Vector-search bounded C support pairs and scatter unique CSR slots."""
+    import time
+
+    if projected.shape != (len(row_support_ids), len(column_support_ids)):
+        raise ValueError("V28 C projection tile and support dimensions differ")
+    started = time.perf_counter()
+    local_rows, local_columns = np.nonzero(projected)
+    if not local_rows.size:
+        return time.perf_counter() - started
+    if not target.indices.size:
+        raise ValueError(f"V28 q bitset pattern omitted a C projected value at {label}")
+    global_rows = row_support_ids[local_rows].astype(np.int64, copy=False)
+    global_columns = column_support_ids[local_columns].astype(np.int64, copy=False)
+    row_starts = target.indptr[global_rows].astype(np.int64, copy=False)
+    row_stops = target.indptr[global_rows + 1].astype(np.int64, copy=False)
+    lower = row_starts.copy()
+    upper = row_stops.copy()
+    max_row_nnz = int(np.max(row_stops - row_starts, initial=0))
+    max_steps = max(1, int(max_row_nnz + 1).bit_length())
+    for _ in range(max_steps):
+        active = lower < upper
+        if not np.any(active):
+            break
+        middle = (lower + upper) // 2
+        safe_middle = np.where(active, middle, 0)
+        middle_columns = target.indices[safe_middle].astype(np.int64, copy=False)
+        move_right = active & (middle_columns < global_columns)
+        move_left = active & ~move_right
+        lower[move_right] = middle[move_right] + 1
+        upper[move_left] = middle[move_left]
+    valid = lower < row_stops
+    found = np.zeros(lower.shape, dtype=np.bool_)
+    found[valid] = (
+        target.indices[lower[valid]].astype(np.int64, copy=False)
+        == global_columns[valid]
+    )
+    if not np.all(found):
+        raise ValueError(f"V28 q bitset pattern omitted a C projected value at {label}")
+    if np.unique(lower).size != lower.size:
+        raise RuntimeError(f"V28 C support produced duplicate CSR destinations at {label}")
+    target.data[lower] += projected[local_rows, local_columns]
+    return time.perf_counter() - started
+
+
 def _project_accumulate_v16(
     target: sparse.csr_matrix,
     left: sparse.csr_matrix,
@@ -1927,7 +2058,7 @@ def _project_accumulate_v16(
             "projection_left_product_count": row_tile_count,
             "projection_live_output_tile_peak": 1,
             "projection_dense_workspace_upper_bytes": dense_workspace,
-            "projection_sparse_slice_temporary_upper_bytes": left_payload + right_payload,
+            "projection_sparse_slice_temporary_upper_bytes": 2 * (left_payload + right_payload),
             "projection_algorithm": "exact_support_tiles_preserving_LH_V_then_VR_association",
             "includes_left_conjugate_copy": True,
             "includes_matmul_intermediate_and_local_term_temporaries": True,
@@ -1959,6 +2090,260 @@ def _project_accumulate_v16(
                 label=label,
             )
             # The helper's frame releases row views before the owning tile is freed.
+            del projected
+        del left_product
+
+    projection_seconds = time.perf_counter() - projection_started - accumulation_seconds
+    del left_rows, right_rows, left_support_ids, right_support_ids
+    return projection_seconds, accumulation_seconds, max(support_discovery_stage, staging)
+
+
+def _project_accumulate_v28_sparse(
+    target: sparse.csr_matrix,
+    left: sparse.csr_matrix,
+    right: sparse.csr_matrix,
+    rows: np.ndarray,
+    columns: np.ndarray,
+    values: np.ndarray,
+    *,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None],
+    label: str,
+) -> tuple[float, float, int]:
+    """Project exact local contributions through CSR maps without dense maps."""
+    import time
+
+    rows = np.asarray(rows)
+    columns = np.asarray(columns)
+    values = np.asarray(values)
+    if (
+        rows.ndim != 1
+        or columns.ndim != 1
+        or rows.dtype.kind not in "iu"
+        or columns.dtype.kind not in "iu"
+        or values.shape != (len(rows), len(columns))
+        or values.dtype != np.dtype(np.complex128)
+        or not np.isfinite(values).all()
+        or (len(rows) and (int(rows.min()) < 0 or int(rows.max()) >= left.shape[0]))
+        or (len(columns) and (int(columns.min()) < 0 or int(columns.max()) >= right.shape[0]))
+    ):
+        raise ValueError(f"invalid V28 sparse q0 contribution {label}")
+    if target.shape != (left.shape[1], right.shape[1]) or not target.has_canonical_format:
+        raise ValueError("V28 target CSR is not canonical or shape matched")
+
+    left_nnz = _selected_csr_nnz(left, rows)
+    right_nnz = _selected_csr_nnz(right, columns)
+    index_bytes = max(
+        int(left.indices.dtype.itemsize),
+        int(right.indices.dtype.itemsize),
+        int(target.indices.dtype.itemsize),
+    )
+    left_payload = left_nnz * (int(left.data.dtype.itemsize) + int(left.indices.dtype.itemsize))
+    left_payload += (len(rows) + 1) * int(left.indptr.dtype.itemsize)
+    right_payload = right_nnz * (int(right.data.dtype.itemsize) + int(right.indices.dtype.itemsize))
+    right_payload += (len(columns) + 1) * int(right.indptr.dtype.itemsize)
+    support_discovery_scratch = 4 * (left_nnz + right_nnz) * index_bytes
+    support_discovery_scratch += 2 * (left_nnz + right_nnz) * 8
+    support_discovery_stage = (
+        int(values.nbytes)
+        + _v16_layout_array_bytes(rows, columns)
+        + left_payload
+        + right_payload
+        + support_discovery_scratch
+        + V16_PROJECTION_OVERHEAD_RESERVE_BYTES
+    )
+    if support_discovery_stage > V16_Q_STAGING_BUDGET_BYTES:
+        raise V16StagingLimitError(
+            f"v28_sparse_projection_support_discovery/{label}",
+            support_discovery_stage,
+            V16_Q_STAGING_BUDGET_BYTES,
+        )
+    allocation_gate(
+        "task40_v28_q_projection_support_discovery/" + label,
+        {
+            "additional_payload_bytes": 0,
+            "workspace_bytes": support_discovery_stage,
+            "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+            "staging_live_bytes_upper": support_discovery_stage,
+            "selected_left_nnz": left_nnz,
+            "selected_right_nnz": right_nnz,
+            "selected_csr_payload_bytes": left_payload + right_payload,
+            "unique_sort_index_scratch_upper_bytes": support_discovery_scratch,
+            "projection_algorithm": "exact_sparse_csr_by_dense_products_on_selected_support",
+        },
+    )
+
+    projection_started = time.perf_counter()
+    left_rows = left[rows, :].tocsr()
+    right_rows = right[columns, :].tocsr()
+    left_support_ids = np.unique(left_rows.indices)
+    right_support_ids = np.unique(right_rows.indices)
+    left_support = int(left_support_ids.size)
+    right_support = int(right_support_ids.size)
+    if not left_support or not right_support:
+        return time.perf_counter() - projection_started, 0.0, support_discovery_stage
+
+    # Direct C and -D contributions are rank one in local coordinates. Keep
+    # their exact sparse support and use the ordinary transpose on the right
+    # side of -D; only the left q action is conjugated.
+    is_c = label.startswith("direct/C/provider/")
+    is_minus_d = label.startswith("direct/-D/provider/")
+    if is_c or is_minus_d:
+        if is_c and values.shape[1] != 1:
+            raise ValueError(f"V28 C contribution is not a single port column: {label}")
+        if is_minus_d and values.shape[0] != 1:
+            raise ValueError(f"V28 -D contribution is not a single port row: {label}")
+
+    row_index_scratch_per_column = (
+        3 * np.dtype(np.intp).itemsize
+        + index_bytes
+        + int(target.indices.dtype.itemsize)
+        + 1
+        + 32
+    )
+
+    def projection_stage(row_tile_support: int, column_tile_support: int) -> tuple[int, int]:
+        # Sparse-by-dense products retain one local product and one output
+        # tile; CSR slice and transpose workspace are bounded by selected CSR.
+        dense_workspace = 16 * (
+            row_tile_support * len(columns)
+            + row_tile_support * column_tile_support
+        )
+        row_index_scratch = column_tile_support * row_index_scratch_per_column + 128
+        sparse_slice_temporary = 2 * (left_payload + right_payload)
+        c_scatter_workspace = (
+            192 * row_tile_support * column_tile_support if is_c else 0
+        )
+        return (
+            support_discovery_stage
+            + sparse_slice_temporary
+            + dense_workspace
+            + row_index_scratch
+            + c_scatter_workspace,
+            dense_workspace,
+        )
+
+    row_tile_support = min(left_support, 4096) if is_c else left_support
+    if projection_stage(row_tile_support, 1)[0] <= V16_Q_STAGING_BUDGET_BYTES:
+        low, high = 1, right_support
+        while low < high:
+            middle = (low + high + 1) // 2
+            if projection_stage(row_tile_support, middle)[0] <= V16_Q_STAGING_BUDGET_BYTES:
+                low = middle
+            else:
+                high = middle - 1
+        column_tile_support = low
+    else:
+        low, high = 1, left_support
+        while low < high:
+            middle = (low + high + 1) // 2
+            if projection_stage(middle, 1)[0] <= V16_Q_STAGING_BUDGET_BYTES:
+                low = middle
+            else:
+                high = middle - 1
+        row_tile_support = low
+        low, high = 1, right_support
+        while low < high:
+            middle = (low + high + 1) // 2
+            if projection_stage(row_tile_support, middle)[0] <= V16_Q_STAGING_BUDGET_BYTES:
+                low = middle
+            else:
+                high = middle - 1
+        column_tile_support = low
+
+    staging, dense_workspace = projection_stage(row_tile_support, column_tile_support)
+    if staging > V16_Q_STAGING_BUDGET_BYTES:
+        raise V16StagingLimitError(
+            f"v28_sparse_projection/{label}", staging, V16_Q_STAGING_BUDGET_BYTES
+        )
+    row_tile_count = (left_support + row_tile_support - 1) // row_tile_support
+    column_tile_count = (right_support + column_tile_support - 1) // column_tile_support
+    allocation_gate(
+        "task40_v28_q_projection_support/" + label,
+        {
+            "additional_payload_bytes": 0,
+            "workspace_bytes": staging,
+            "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+            "staging_live_bytes_upper": staging,
+            "support_discovery_workspace_bytes": support_discovery_stage,
+            "selected_left_nnz": left_nnz,
+            "selected_right_nnz": right_nnz,
+            "left_support_count": left_support,
+            "right_support_count": right_support,
+            "projection_row_tile_support": row_tile_support,
+            "projection_column_tile_support": column_tile_support,
+            "projection_row_tile_count": row_tile_count,
+            "projection_column_tile_count": column_tile_count,
+            "projection_tile_count": row_tile_count * column_tile_count,
+            "projection_dense_workspace_upper_bytes": dense_workspace,
+            "projection_sparse_slice_temporary_upper_bytes": left_payload + right_payload,
+            "projection_c_vector_search_workspace_upper_bytes": (
+                192 * row_tile_support * column_tile_support if is_c else 0
+            ),
+            "projection_algorithm": (
+                "direct_sparse_rank_one_C_minus_D_scatter"
+                if is_c or is_minus_d
+                else "exact_sparse_csr_by_dense_LH_V_and_VR"
+            ),
+            "right_projection_uses_plain_transpose": bool(is_minus_d),
+            "target_csr_is_preallocated_and_not_staging": True,
+        },
+    )
+
+    accumulation_seconds = 0.0
+    for row_start in range(0, left_support, row_tile_support):
+        row_stop = min(row_start + row_tile_support, left_support)
+        row_support_ids_tile = left_support_ids[row_start:row_stop]
+        left_tile = left_rows[:, row_support_ids_tile].tocsr()
+        left_product = None
+        if not is_minus_d:
+            left_product = np.asarray(left_tile.getH() @ values, dtype=np.complex128)
+        del left_tile
+
+        for column_start in range(0, right_support, column_tile_support):
+            column_stop = min(column_start + column_tile_support, right_support)
+            column_support_ids_tile = right_support_ids[column_start:column_stop]
+            right_tile = right_rows[:, column_support_ids_tile].tocsr()
+            if is_c:
+                if left_product is None:
+                    raise RuntimeError("V28 C projection lost its left sparse product")
+                if right_tile.shape[0] != 1 or not np.array_equal(
+                    right_tile.indices,
+                    np.arange(len(column_support_ids_tile), dtype=right_tile.indices.dtype),
+                ):
+                    raise ValueError(f"V28 C sparse port support is malformed: {label}")
+                projected = left_product * right_tile.data[None, :]
+            elif is_minus_d:
+                if left_rows.shape[0] != 1 or not np.array_equal(
+                    left_rows.indices, left_support_ids
+                ):
+                    raise ValueError(f"V28 -D sparse port support is malformed: {label}")
+                right_product = np.asarray(
+                    (right_tile.transpose() @ values.transpose()).transpose(),
+                    dtype=np.complex128,
+                )
+                left_factors = np.conjugate(left_rows.data[row_start:row_stop])
+                projected = left_factors[:, None] * right_product
+                del right_product, left_factors
+            else:
+                if left_product is None:
+                    raise RuntimeError("V28 sparse projection lost its left sparse product")
+                projected = np.asarray(
+                    (right_tile.transpose() @ left_product.transpose()).transpose(),
+                    dtype=np.complex128,
+                )
+            del right_tile
+            scatter = (
+                _accumulate_v28_c_projection_tile
+                if is_c
+                else _accumulate_v16_projection_tile
+            )
+            accumulation_seconds += scatter(
+                target,
+                projected,
+                row_support_ids_tile,
+                column_support_ids_tile,
+                label=label,
+            )
             del projected
         del left_product
 
@@ -3015,6 +3400,13 @@ def _accumulate_bounded_q_pattern_values(
     pattern_metadata: Mapping[str, Any] | None = None,
     contribution_observer: Callable[[np.ndarray, np.ndarray, np.ndarray, str], None]
     | None = None,
+    contribution_completed_observer: Callable[
+        [np.ndarray | None, np.ndarray | None, np.ndarray | None, str, Mapping[str, float]],
+        None,
+    ]
+    | None = None,
+    projection_method: str = "dense_support_tiles",
+    direct_hhat: bool = False,
 ) -> tuple[dict[tuple[int, int], sparse.csr_matrix], dict[str, Any]]:
     import time
 
@@ -3033,6 +3425,10 @@ def _accumulate_bounded_q_pattern_values(
     projection_tile_count = 0
     projection_left_product_count = 0
     block_keys = tuple(blocks)
+    if projection_method not in {"dense_support_tiles", "sparse_local"}:
+        raise ValueError(f"unknown bounded q projection method: {projection_method}")
+    if direct_hhat and projection_method != "sparse_local":
+        raise ValueError("the V28 direct H path requires its sparse local projection method")
 
     def bounded_projection_gate(label: str, facts: Mapping[str, Any]) -> None:
         nonlocal projection_support_discovery_gate_count
@@ -3066,12 +3462,60 @@ def _accumulate_bounded_q_pattern_values(
             },
         )
 
-    contribution_iterator = iter(
-        action.iter_reduced_contributions(
-            allocation_gate=bounded_contribution_gate,
-            hhat_block_columns=V16_HHAT_BLOCK_COLUMNS,
+    direct_hhat_facts: dict[str, Any] | None = None
+    if direct_hhat:
+        if block_keys != ((0, 0),) or not callable(
+            getattr(action, "q0_hhat_sparse_term", None)
+        ):
+            raise ValueError("V28 direct H requires one saved q0 CSR and its adapter hook")
+        hhat_started = time.perf_counter()
+        hhat_term = action.q0_hhat_sparse_term(allocation_gate=bounded_contribution_gate)
+        hhat_projection_seconds = time.perf_counter() - hhat_started
+        hhat_accumulation_seconds = _accumulate_v28_sparse_hhat_term(
+            blocks[(0, 0)],
+            hhat_term,
+            row_offset=int(action.q0_trace_rows),
+            allocation_gate=bounded_projection_gate,
+            label="ports/Hhat/direct_sparse_q0",
         )
-    )
+        direct_hhat_facts = {
+            "operation_count": 1,
+            "port_count": int(getattr(action, "port_count", 0)),
+            "stored_term_nnz": int(hhat_term.nnz),
+            "term_shape": list(hhat_term.shape),
+            "local_projection_seconds": hhat_projection_seconds,
+            "global_sparse_accumulation_seconds": hhat_accumulation_seconds,
+            "formula": "U_p^H diag(h) U_p using the saved q0 port map",
+        }
+        projection_seconds += hhat_projection_seconds
+        accumulation_seconds += hhat_accumulation_seconds
+        numeric_staging_peak = max(
+            numeric_staging_peak,
+            int(getattr(hhat_term, "data", np.empty(0)).nbytes)
+            + int(getattr(hhat_term, "indices", np.empty(0)).nbytes)
+            + int(getattr(hhat_term, "indptr", np.empty(0)).nbytes),
+        )
+        if contribution_completed_observer is not None:
+            contribution_completed_observer(
+                None,
+                None,
+                hhat_term.data,
+                "ports/Hhat/direct_sparse_q0",
+                {
+                    "generation_seconds": hhat_projection_seconds,
+                    "projection_seconds": 0.0,
+                    "accumulation_seconds": hhat_accumulation_seconds,
+                },
+            )
+        del hhat_term
+
+    iterator_kwargs: dict[str, Any] = {
+        "allocation_gate": bounded_contribution_gate,
+        "hhat_block_columns": V16_HHAT_BLOCK_COLUMNS,
+    }
+    if direct_hhat:
+        iterator_kwargs["include_hhat"] = False
+    contribution_iterator = iter(action.iter_reduced_contributions(**iterator_kwargs))
     while True:
         generation_started = time.perf_counter()
         try:
@@ -3084,8 +3528,15 @@ def _accumulate_bounded_q_pattern_values(
             hhat_contribution_count += 1
         if contribution_observer is not None:
             contribution_observer(rows, columns, values, str(label))
+        contribution_projection_seconds = 0.0
+        contribution_accumulation_seconds = 0.0
         for p, q in block_keys:
-            projection_s, accumulation_s, staging_peak = _project_accumulate_v16(
+            projector = (
+                _project_accumulate_v28_sparse
+                if projection_method == "sparse_local"
+                else _project_accumulate_v16
+            )
+            projection_s, accumulation_s, staging_peak = projector(
                 blocks[p, q],
                 q_maps[p],
                 q_maps[q],
@@ -3097,9 +3548,23 @@ def _accumulate_bounded_q_pattern_values(
             )
             projection_seconds += projection_s
             accumulation_seconds += accumulation_s
+            contribution_projection_seconds += projection_s
+            contribution_accumulation_seconds += accumulation_s
             numeric_staging_peak = max(numeric_staging_peak, staging_peak)
             projection_call_count += 1
             accumulation_call_count += 1
+        if contribution_completed_observer is not None:
+            contribution_completed_observer(
+                rows,
+                columns,
+                values,
+                str(label),
+                {
+                    "generation_seconds": float(generation_seconds),
+                    "projection_seconds": float(contribution_projection_seconds),
+                    "accumulation_seconds": float(contribution_accumulation_seconds),
+                },
+            )
         del rows, columns, values
 
     stored_pattern_slots = {
@@ -3165,6 +3630,10 @@ def _accumulate_bounded_q_pattern_values(
         "numeric_contribution_count": contribution_count,
         "numeric_contribution_pass_count": 1,
         "hhat_numeric_contribution_count": hhat_contribution_count,
+        "direct_hhat_sparse_q0": direct_hhat_facts,
+        "numeric_contribution_count_including_direct_hhat": int(
+            contribution_count + (1 if direct_hhat else 0)
+        ),
         "local_projection_call_count": projection_call_count,
         "global_sparse_accumulation_call_count": accumulation_call_count,
         "projection_support_discovery_gate_count": projection_support_discovery_gate_count,
@@ -3172,6 +3641,7 @@ def _accumulate_bounded_q_pattern_values(
         "projection_tile_count": projection_tile_count,
         "projection_left_product_count": projection_left_product_count,
         "projection_association": "each bounded output-row tile computes L^H @ V once before its R output-column tiles",
+        "projection_method": projection_method,
         "numeric_projection_and_accumulation_seconds": numeric_parent_seconds,
         "contribution_generation_seconds": float(contribution_generation_seconds),
         "local_projection_seconds": float(projection_seconds),

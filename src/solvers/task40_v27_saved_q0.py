@@ -436,6 +436,8 @@ class SavedQ0ContributionAdapter:
         self.maximum_surface_b_count = 0
         self.maximum_surface_d_count = 0
         self.maximum_surface_frame_entries = 0
+        self.surface_nonempty_b_count = 0
+        self.surface_nonempty_d_count = 0
         self.mode_indices = self._scan_surface_headers()
         self.expected_cell_count = expected_cell_count
         self.expected_class_count = expected_class_count
@@ -526,6 +528,8 @@ class SavedQ0ContributionAdapter:
                     self.maximum_surface_frame_entries,
                     int(b_count) + int(d_count),
                 )
+                self.surface_nonempty_b_count += int(int(b_count) > 0)
+                self.surface_nonempty_d_count += int(int(d_count) > 0)
                 payload_bytes = (int(b_count) + int(d_count)) * 20
                 stream.seek(payload_bytes, os.SEEK_CUR)
                 if stream.tell() > file_size:
@@ -729,6 +733,7 @@ class SavedQ0ContributionAdapter:
         *,
         allocation_gate: Callable[[str, Mapping[str, Any]], None],
         hhat_block_columns: int | None = None,
+        include_hhat: bool = True,
     ):
         """Yield exact complex128 q0-source blocks one bounded contribution at a time."""
         from .hcurl_assembly_time_condensation import _constrain_local_schur
@@ -750,18 +755,19 @@ class SavedQ0ContributionAdapter:
                 "q_map_branch": 0,
             })
 
-        ports = np.arange(self.active_rows, self.reduced_rows, dtype=np.int32)
-        for start in range(0, self.port_count, width):
-            stop = min(start + width, self.port_count)
-            block_width = stop - start
-            label = f"ports/Hhat/{start}:{stop}"
-            payload = 16 * self.port_count * block_width
-            gate(label, payload, 4 * (self.port_count + block_width))
-            hhat = np.zeros((self.port_count, block_width), dtype=np.complex128)
-            diagonal_rows = np.arange(start, stop, dtype=np.int64)
-            hhat[diagonal_rows, np.arange(block_width, dtype=np.int64)] = self.local_h[start:stop]
-            yield self._checked(ports, ports[start:stop], hhat, label)
-            del diagonal_rows, hhat
+        if include_hhat:
+            ports = np.arange(self.active_rows, self.reduced_rows, dtype=np.int32)
+            for start in range(0, self.port_count, width):
+                stop = min(start + width, self.port_count)
+                block_width = stop - start
+                label = f"ports/Hhat/{start}:{stop}"
+                payload = 16 * self.port_count * block_width
+                gate(label, payload, 4 * (self.port_count + block_width))
+                hhat = np.zeros((self.port_count, block_width), dtype=np.complex128)
+                diagonal_rows = np.arange(start, stop, dtype=np.int64)
+                hhat[diagonal_rows, np.arange(block_width, dtype=np.int64)] = self.local_h[start:stop]
+                yield self._checked(ports, ports[start:stop], hhat, label)
+                del diagonal_rows, hhat
 
         with self.volume_stream_path.open("rb") as stream:
             class_count, cell_count, _ = self._volume_stream_start(stream)
@@ -866,6 +872,68 @@ class SavedQ0ContributionAdapter:
                 yield self._checked(port_row, d_rows, block, label)
                 del port_row, block
             del b_rows, b_values, d_rows, d_values
+
+    def q0_hhat_sparse_term(
+        self,
+        *,
+        allocation_gate: Callable[[str, Mapping[str, Any]], None],
+    ) -> sparse.csr_matrix:
+        """Build only the saved q0 port block U_p^H diag(h) U_p."""
+        if not callable(allocation_gate):
+            raise ValueError("saved q0 H projection requires the live allocation gate")
+        row_start = self.active_rows
+        row_stop = self.reduced_rows
+        row_nnz = np.diff(self.q0_map.indptr[row_start : row_stop + 1]).astype(
+            np.int64, copy=False
+        )
+        map_nnz = int(row_nnz.sum(dtype=np.int64))
+        product_nnz_upper = int(np.dot(row_nnz, row_nnz))
+        index_bytes = int(self.q0_map.indices.dtype.itemsize)
+        row_map_bytes = map_nnz * (
+            int(self.q0_map.data.dtype.itemsize) + index_bytes
+        ) + (self.port_count + 1) * int(self.q0_map.indptr.dtype.itemsize)
+        output_bytes_upper = product_nnz_upper * (
+            int(np.dtype(np.complex128).itemsize) + index_bytes
+        ) + (self.q0_port_rows + 1) * int(self.q0_map.indptr.dtype.itemsize)
+        workspace = (
+            3 * row_map_bytes
+            + 3 * output_bytes_upper
+            + 16 * map_nnz
+            + int(row_nnz.nbytes)
+        )
+        allocation_gate(
+            "task40_v28_saved_q0_hhat_sparse_term",
+            {
+                "matrix_payload_bytes": int(output_bytes_upper),
+                "workspace_bytes": int(workspace),
+                "saved_port_map_nnz": map_nnz,
+                "uncoalesced_product_nnz_upper": product_nnz_upper,
+                "saved_port_map_copy_bytes_upper": row_map_bytes,
+                "hhat_term_bytes_upper": output_bytes_upper,
+                "formula": "U_p^H diag(h) U_p",
+                "no_local_port_by_64_dense_hhat_blocks": True,
+            },
+        )
+        port_map = self.q0_map[row_start:row_stop, self.q0_trace_rows :].tocsr()
+        if int(port_map.nnz) != map_nnz:
+            raise RuntimeError("saved q0 port map support changed during H projection")
+        weighted = port_map.copy()
+        per_entry_h = np.repeat(self.local_h, np.diff(port_map.indptr))
+        np.multiply(weighted.data, per_entry_h, out=weighted.data)
+        del per_entry_h
+        term = (port_map.getH() @ weighted).tocsr()
+        term.sum_duplicates()
+        term.sort_indices()
+        if (
+            term.shape != (self.q0_port_rows, self.q0_port_rows)
+            or not term.has_canonical_format
+            or not term.has_sorted_indices
+            or term.dtype != np.dtype(np.complex128)
+            or not np.isfinite(term.data).all()
+        ):
+            raise RuntimeError("saved q0 sparse H term is not finite canonical CSR")
+        del port_map, weighted, row_nnz
+        return term
 
 
 def _adapter_source_bindings(
@@ -1076,14 +1144,127 @@ def build_saved_q0_csr_structure(
     return blocks, manifest, manifest_path
 
 
+def create_v28_saved_q0_csr_continuation_manifest(
+    *,
+    pattern_manifest_path: str | Path,
+    continuation_manifest_path: str | Path,
+    expected_pattern_manifest_sha256: str,
+    current_execution_identity: Mapping[str, Any],
+    donor_identity: Mapping[str, Any],
+) -> tuple[dict[str, Any], Path]:
+    """Create an append-only V28 manifest over the V27 pattern and data file."""
+    pattern_path = Path(pattern_manifest_path).resolve()
+    continuation_path = Path(continuation_manifest_path).resolve()
+    if continuation_path.parent != pattern_path.parent:
+        raise ValueError("V28 continuation manifest must share the V27 CSR array directory")
+    if continuation_path.exists():
+        raise FileExistsError("refusing to replace an existing V28 continuation manifest")
+    if (
+        len(str(expected_pattern_manifest_sha256)) != 64
+        or _sha256_file(pattern_path) != expected_pattern_manifest_sha256
+    ):
+        raise ValueError("V27 pattern manifest hash differs from the reviewed handoff")
+    original = json.loads(pattern_path.read_text(encoding="utf-8"))
+    if (
+        original.get("schema") != "task40extra.review_v27_saved_q0_csr.v1"
+        or original.get("status") != "NUMERIC_FILL_INCOMPLETE"
+        or original.get("stored_structural_slots") != 577_061_168
+        or tuple(original.get("shape", ())) != (777_644, 777_644)
+        or not isinstance(original.get("source_identity"), Mapping)
+        or original["source_identity"].get("donor_identity") != dict(donor_identity)
+    ):
+        raise ValueError("V27 saved q0 pattern is not the reviewed incomplete donor structure")
+    artifacts = original.get("csr_artifacts")
+    if not isinstance(artifacts, Mapping) or set(artifacts) != {"indptr", "indices", "data"}:
+        raise ValueError("V27 saved q0 pattern has a malformed CSR artifact inventory")
+    for name, expected_bytes in (
+        ("indptr", 3_110_708),
+        ("indices", 2_308_244_800),
+        ("data", 9_232_978_816),
+    ):
+        record = artifacts.get(name)
+        if not isinstance(record, Mapping):
+            raise ValueError(f"V27 CSR {name} record is malformed")
+        artifact = Path(str(record.get("path", ""))).resolve()
+        if (
+            not artifact.is_relative_to(pattern_path.parent)
+            or not artifact.is_file()
+            or artifact.stat().st_size != expected_bytes
+            or record.get("bytes") != expected_bytes
+        ):
+            raise ValueError(f"V27 CSR {name} artifact path or size differs from the handoff")
+        if name == "data":
+            if record.get("sha256") is not None:
+                raise ValueError("V27 data already has a hash and cannot be treated as an incomplete work file")
+        elif (
+            not isinstance(record.get("sha256"), str)
+            or len(str(record.get("sha256"))) != 64
+            or _sha256_file(artifact) != record.get("sha256")
+        ):
+            raise ValueError(f"V27 CSR {name} structure artifact hash changed")
+    manifest = {
+        "schema": "task40extra.review_v28_saved_q0_csr.v1",
+        "status": "NUMERIC_FILL_INCOMPLETE",
+        "shape": list(original["shape"]),
+        "stored_structural_slots": int(original["stored_structural_slots"]),
+        "csr_index_dtype": original["csr_index_dtype"],
+        "csr_data_dtype": original["csr_data_dtype"],
+        "csr_payload_bytes": int(original["csr_payload_bytes"]),
+        "q_map_count": 1,
+        "q_map_branch": 0,
+        "saved_only_no_fe_or_native_rebuild": True,
+        "source_identity": dict(original["source_identity"]),
+        "source_bindings": dict(original["source_bindings"]),
+        "current_execution_identity": dict(current_execution_identity),
+        "donor_identity_sha256": hashlib.sha256(
+            json.dumps(donor_identity, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest(),
+        "original_pattern_manifest": {
+            "path": str(pattern_path),
+            "bytes": int(pattern_path.stat().st_size),
+            "sha256": str(expected_pattern_manifest_sha256),
+            "schema": original["schema"],
+            "status_at_import": original["status"],
+        },
+        "row_structure_artifact": dict(original["row_structure_artifact"]),
+        "csr_artifacts": {name: dict(record) for name, record in artifacts.items()},
+        "support_routes": dict(original["support_routes"]),
+        "pattern_facts": dict(original["pattern_facts"]),
+        "pattern_metadata": dict(original["pattern_metadata"]),
+        "row_count_witness_matches": bool(original["row_count_witness_matches"]),
+        "continuation_event": {
+            "action": "reuse_v27_indptr_indices_and_unhashed_incomplete_data",
+            "original_data_status": "NUMERIC_FILL_INCOMPLETE; sha256 null",
+            "data_restart_policy": "clear_all_values_before_each_numeric_pass",
+            "old_manifest_modified": False,
+            "full_csr_copy_created": False,
+        },
+        "native_qualification": None,
+        "numeric_pass": {
+            "restart_policy": "clear_all_values_before_each_numeric_pass",
+            "contribution_cursor": None,
+            "started": False,
+            "complete": False,
+        },
+    }
+    _atomic_json(continuation_path, manifest)
+    return manifest, continuation_path
+
+
 def fill_saved_q0_csr_values(
     adapter: SavedQ0ContributionAdapter,
     *,
     manifest_path: str | Path,
     allocation_gate: Callable[[str, Mapping[str, Any]], Any],
     source_identity: Mapping[str, Any],
+    projection_method: str = "dense_support_tiles",
+    direct_hhat: bool = False,
+    contribution_completed_observer: Callable[..., None] | None = None,
+    phase_observer: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> tuple[sparse.csr_matrix, dict[str, Any]]:
     """Fill or restart the q0 numeric pass without adding onto partial values."""
+    import time
+
     from .task40_v10_p6_yorbit import (
         Q_ASSEMBLY_ROW_TILE_V17,
         _accumulate_bounded_q_pattern_values,
@@ -1091,13 +1272,16 @@ def fill_saved_q0_csr_values(
 
     path = Path(manifest_path).resolve()
     manifest = json.loads(path.read_text(encoding="utf-8"))
-    if manifest.get("schema") != "task40extra.review_v27_saved_q0_csr.v1":
-        raise ValueError("V27 q0 numeric continuation manifest has an unknown schema")
+    if manifest.get("schema") not in {
+        "task40extra.review_v27_saved_q0_csr.v1",
+        "task40extra.review_v28_saved_q0_csr.v1",
+    }:
+        raise ValueError("saved q0 numeric continuation manifest has an unknown schema")
     if manifest.get("status") not in {
         "STRUCTURE_COMPLETE_VALUES_PENDING",
         "NUMERIC_FILL_INCOMPLETE",
     }:
-        raise ValueError("V27 q0 numeric continuation is not in a resumable state")
+        raise ValueError("saved q0 numeric continuation is not in a resumable state")
     if (
         not isinstance(manifest.get("source_identity"), Mapping)
         or manifest["source_identity"].get("donor_identity")
@@ -1107,7 +1291,7 @@ def fill_saved_q0_csr_values(
         or manifest.get("q_map_count") != 1
         or manifest.get("q_map_branch") != 0
     ):
-        raise ValueError("V27 q0 continuation source identity differs from its structure")
+        raise ValueError("saved q0 continuation source identity differs from its structure")
     csr_artifacts = manifest.get("csr_artifacts", {})
     indptr_path = Path(csr_artifacts.get("indptr", {}).get("path", ""))
     indices_path = Path(csr_artifacts.get("indices", {}).get("path", ""))
@@ -1120,7 +1304,7 @@ def fill_saved_q0_csr_values(
         (structure_path, structure_record),
     ):
         if not artifact.is_file() or _sha256_file(artifact) != record.get("sha256"):
-            raise ValueError(f"V27 q0 continuation structure artifact changed: {artifact.name}")
+            raise ValueError(f"saved q0 continuation structure artifact changed: {artifact.name}")
     indptr = np.load(indptr_path, mmap_mode="r+", allow_pickle=False)
     indices = np.load(indices_path, mmap_mode="r+", allow_pickle=False)
     data = np.load(data_path, mmap_mode="r+", allow_pickle=False)
@@ -1136,7 +1320,7 @@ def fill_saved_q0_csr_values(
         or int(indptr[-1]) != len(indices)
         or not np.array_equal(indptr.astype(np.int64), checkpoint_offsets)
     ):
-        raise ValueError("V27 q0 numeric continuation arrays disagree with the saved structure")
+        raise ValueError("saved q0 numeric continuation arrays disagree with the saved structure")
     matrix = sparse.csr_matrix(
         (data, indices, indptr),
         shape=(adapter.q0_map.shape[1], adapter.q0_map.shape[1]),
@@ -1148,7 +1332,7 @@ def fill_saved_q0_csr_values(
     ):
         raise RuntimeError("SciPy q0 CSR wrapper detached from its disk-backed arrays")
     if not matrix.has_canonical_format or not matrix.has_sorted_indices:
-        raise ValueError("V27 q0 numeric continuation CSR columns are not sorted and unique")
+        raise ValueError("saved q0 numeric continuation CSR columns are not sorted and unique")
     manifest["status"] = "NUMERIC_FILL_INCOMPLETE"
     manifest["numeric_pass"] = {
         "restart_policy": "clear_all_values_before_each_numeric_pass",
@@ -1156,9 +1340,16 @@ def fill_saved_q0_csr_values(
         "started": True,
     }
     _atomic_json(path, manifest)
+    clear_started = time.perf_counter()
     for start in range(0, len(data), 1 << 20):
         data[start : start + (1 << 20)] = 0.0
     data.flush()
+    clear_elapsed = time.perf_counter() - clear_started
+    if phase_observer is not None:
+        phase_observer(
+            "data_zeroed_and_flushed",
+            {"elapsed_seconds": float(clear_elapsed), "bytes": int(data.nbytes)},
+        )
     pattern_facts = dict(manifest["pattern_facts"])
     blocks, numeric_facts = _accumulate_bounded_q_pattern_values(
         adapter,
@@ -1174,13 +1365,29 @@ def fill_saved_q0_csr_values(
             manifest["pattern_metadata"].get("pattern_seconds", 0.0)
         ),
         pattern_metadata=manifest["pattern_metadata"],
+        projection_method=projection_method,
+        direct_hhat=direct_hhat,
+        contribution_completed_observer=contribution_completed_observer,
     )
     matrix = blocks[(0, 0)]
     if not np.shares_memory(data, matrix.data):
-        raise RuntimeError("V27 numeric accumulator detached from the persistent data array")
+        raise RuntimeError("saved q0 numeric accumulator detached from the persistent data array")
+    flush_started = time.perf_counter()
     data.flush()
+    if phase_observer is not None:
+        phase_observer(
+            "numeric_contributions_flushed",
+            {
+                "elapsed_seconds": float(time.perf_counter() - flush_started),
+                "contribution_generation_seconds": numeric_facts.get(
+                    "contribution_generation_seconds"
+                ),
+                "projection_seconds": numeric_facts.get("local_projection_seconds"),
+                "scatter_seconds": numeric_facts.get("global_sparse_accumulation_seconds"),
+            },
+        )
     if not matrix.has_canonical_format or not matrix.has_sorted_indices:
-        raise RuntimeError("V27 q0 numeric pass changed the canonical CSR structure")
+        raise RuntimeError("saved q0 numeric pass changed the canonical CSR structure")
     numeric_facts = dict(numeric_facts)
     numeric_facts["stored_structural_slots"] = int(matrix.nnz)
     numeric_facts["numeric_nonzero_entries"] = int(
@@ -1196,10 +1403,47 @@ def fill_saved_q0_csr_values(
         "complete": True,
         "numeric_facts": numeric_facts,
     }
-    manifest["csr_artifacts"]["data"]["sha256"] = _sha256_file(data_path)
+    hash_started = time.perf_counter()
+    if phase_observer is None:
+        data_sha256 = _sha256_file(data_path)
+    else:
+        digest = hashlib.sha256()
+        bytes_processed = 0
+        last_progress = time.monotonic()
+        with data_path.open("rb") as stream:
+            while True:
+                block = stream.read(8 * 1024 * 1024)
+                if not block:
+                    break
+                digest.update(block)
+                _advise_file_drop(stream, bytes_processed, len(block))
+                bytes_processed += len(block)
+                now = time.monotonic()
+                if now - last_progress >= 60.0:
+                    phase_observer(
+                        "data_hash_progress",
+                        {
+                            "bytes_processed": int(bytes_processed),
+                            "bytes_total": int(data_path.stat().st_size),
+                            "elapsed_seconds": float(now - hash_started),
+                        },
+                    )
+                    last_progress = now
+        data_sha256 = digest.hexdigest()
+    hash_elapsed = time.perf_counter() - hash_started
+    manifest["csr_artifacts"]["data"]["sha256"] = data_sha256
     manifest["csr_artifacts"]["data"]["initially_zeroed"] = True
     manifest["numeric_fill_identity"] = dict(source_identity)
     _atomic_json(path, manifest)
+    if phase_observer is not None:
+        phase_observer(
+            "data_sha256_complete",
+            {
+                "elapsed_seconds": float(hash_elapsed),
+                "bytes": int(data_path.stat().st_size),
+                "sha256": data_sha256,
+            },
+        )
     return matrix, manifest
 
 
@@ -1210,7 +1454,10 @@ def open_saved_q0_csr_from_manifest(
     path = Path(manifest_path).resolve()
     manifest = json.loads(path.read_text(encoding="utf-8"))
     if (
-        manifest.get("schema") != "task40extra.review_v27_saved_q0_csr.v1"
+        manifest.get("schema") not in {
+            "task40extra.review_v27_saved_q0_csr.v1",
+            "task40extra.review_v28_saved_q0_csr.v1",
+        }
         or manifest.get("status") != "COMPLETE_CSR"
         or manifest.get("q_map_count") != 1
         or manifest.get("q_map_branch") != 0
