@@ -34,6 +34,49 @@ def test_explicit_tree_cap_reuses_current_rss_without_double_counting():
     ) == 7 * 1024**3
 
 
+def test_v29_reserves_host_and_task_cgroup_capacity_as_separate_domains(
+    monkeypatch,
+):
+    import benchmarks.subreaper_watchdog as watchdog
+
+    cgroup = Path("/sys/fs/cgroup/task")
+    values = {
+        cgroup / "memory.max": "1000",
+        cgroup / "memory.current": "950",
+        Path("/sys/fs/cgroup/memory.max"): "max",
+    }
+    monkeypatch.setattr(
+        watchdog,
+        "wsl_memory_snapshot",
+        lambda: {"mem_total_bytes": 20_000, "mem_available_bytes": 10_000},
+    )
+    monkeypatch.setattr(watchdog, "current_cgroup_path", lambda: cgroup)
+    monkeypatch.setattr(
+        watchdog.Path,
+        "is_file",
+        lambda path: path in values,
+    )
+    monkeypatch.setattr(
+        watchdog.Path,
+        "read_text",
+        lambda path, *args, **kwargs: values[path],
+    )
+
+    envelope = watchdog.memory_envelope(
+        watchdog.PHYSICAL_MEMORY_PRESSURE_POLICY,
+        host_reserve_bytes=1_000,
+        task_cgroup_reserve_bytes=0,
+    )
+
+    assert envelope["host_mem_available_bytes"] == 10_000
+    assert envelope["task_cgroup_available_bytes"] == 50
+    assert envelope["host_launch_available_bytes"] == 9_000
+    assert envelope["task_cgroup_launch_available_bytes"] == 50
+    assert envelope["effective_available_after_reserves_bytes"] == 50
+    assert envelope["launch_cap_bytes"] == min(9_000, 50)
+    assert envelope["reserve_domains_separated"] is True
+
+
 def test_cli_forwards_physical_memory_and_profile_sampling_policies(
     monkeypatch, tmp_path, capsys
 ):

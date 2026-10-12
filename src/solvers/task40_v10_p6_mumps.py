@@ -118,6 +118,27 @@ def run_task40_v26_selected_q0_factor_lifecycle(
             "separate_nonzero_q0_rhs_solve": {"mat_solve_invoked": 0, "mat_solve_completed": 0, "mat_solve_failed": 0},
         },
         "phases": [],
+        "timings_v29": {
+            "clock": "time.perf_counter",
+            "csr_to_petsc_conversion": {"parent_seconds": None, "native_seconds": None},
+            "symbolic_factorization": {"parent_seconds": None, "native_seconds": None},
+            "numeric_factorization": {"parent_seconds": None, "native_seconds": None},
+            "fresh_factor_probe": {},
+            "separate_repeated_rhs_solve": {},
+            "F_q": {
+                "status": "NOT_STARTED",
+                "parent_seconds": None,
+                "includes_initial_loader": False,
+                "boundary": "lifecycle entry after the matrix object is loaded through fresh probe qualification, before second RHS and eviction",
+            },
+            "S_q": {
+                "status": "NOT_STARTED",
+                "parent_seconds": None,
+                "includes_factorization": False,
+                "boundary": "second distinct RHS construction through repeated MatSolve, full residual, and raw persistence/readback; excludes eviction",
+            },
+            "cleanup": {"parent_seconds": None, "native_destroy_seconds": 0.0},
+        },
         "cleanup": {"status": "NOT_STARTED"},
     }
     factor = None
@@ -232,9 +253,11 @@ def run_task40_v26_selected_q0_factor_lifecycle(
         })
         checkpoint("petsc_conversion_admitted", {"gate": dict(conversion_admission)})
 
+        conversion_parent_started = perf_counter()
         indptr = np.asarray(matrix.indptr, dtype=_petsc_api.IntType).copy()
         indices = np.asarray(matrix.indices, dtype=_petsc_api.IntType).copy()
         values = np.asarray(matrix.data, dtype=_petsc_api.ScalarType).copy()
+        conversion_native_started = perf_counter()
         petsc_matrix = _petsc_api.Mat().createAIJ(
             size=matrix.shape,
             csr=(indptr, indices, values),
@@ -242,9 +265,15 @@ def run_task40_v26_selected_q0_factor_lifecycle(
         )
         update_counts()
         petsc_matrix.assemble()
+        conversion_native_seconds = float(perf_counter() - conversion_native_started)
         conversion_copy_bytes = int(indptr.nbytes + indices.nbytes + values.nbytes)
         del indptr, indices, values
         gc.collect()
+        state["timings_v29"]["csr_to_petsc_conversion"] = {
+            "parent_seconds": float(perf_counter() - conversion_parent_started),
+            "native_seconds": conversion_native_seconds,
+            "native_calls": ["Mat.createAIJ", "Mat.assemble"],
+        }
         checkpoint("petsc_matrix_created", {
             "petsc_matrix_payload_upper_bytes": payload_bytes,
             "conversion_arrays_payload_bytes": conversion_copy_bytes,
@@ -264,6 +293,7 @@ def run_task40_v26_selected_q0_factor_lifecycle(
             "already_resident_objects_are_in_current_rss_sample": True,
         })
         checkpoint("symbolic_admitted", {"gate": dict(symbolic_admission)})
+        symbolic_parent_started = perf_counter()
         factory = _factor_factory
         if factory is None:
             from src.runners.physical_p4_cell_condensed_v18 import _factor_factory_for_backend
@@ -275,7 +305,9 @@ def run_task40_v26_selected_q0_factor_lifecycle(
         expected_controls = {35: 0, 10: 0, 2: 0, 3: 6, 4: 2}
         if controls != expected_controls:
             raise RuntimeError(f"V26 q0 MUMPS control readback differs from exact backend defaults: {controls}")
+        symbolic_native_started = perf_counter()
         factor.symbolic(petsc_matrix)
+        symbolic_native_seconds = float(perf_counter() - symbolic_native_started)
         symbolic_info = factor.info(extra_indices=(16, 17, 22, 29), include_local=True)
         symbolic_evidence = _mumps_native_evidence(symbolic_info, numeric_complete=False)
         infog = symbolic_info.get("infog", {})
@@ -286,6 +318,11 @@ def run_task40_v26_selected_q0_factor_lifecycle(
         state["mumps_controls_readback_before_symbolic"] = {str(key): value for key, value in controls.items()}
         state["symbolic_mumps_evidence"] = symbolic_evidence
         state["symbolic_factor_reserve_bytes"] = numeric_reserve_bytes
+        state["timings_v29"]["symbolic_factorization"] = {
+            "parent_seconds": float(perf_counter() - symbolic_parent_started),
+            "native_seconds": symbolic_native_seconds,
+            "native_call": "MatFactor.symbolic",
+        }
         checkpoint("symbolic_complete", {
             "mumps_evidence": symbolic_evidence,
             "symbolic_estimate_info_16": info16,
@@ -309,13 +346,23 @@ def run_task40_v26_selected_q0_factor_lifecycle(
         })
         checkpoint("numeric_admitted", {"gate": dict(numeric_admission)})
         state["q_coverage"]["numeric_factor_attempted"] = True
+        numeric_parent_started = perf_counter()
+        numeric_native_started = perf_counter()
         factor.numeric(petsc_matrix)
+        numeric_native_seconds = float(perf_counter() - numeric_native_started)
         state["q_coverage"]["numeric_factor_built"] = True
         numeric_info = factor.info(extra_indices=(16, 17, 22, 29), include_local=True)
         state["numeric_mumps_evidence"] = _mumps_native_evidence(numeric_info, numeric_complete=True)
+        state["timings_v29"]["numeric_factorization"] = {
+            "parent_seconds": float(perf_counter() - numeric_parent_started),
+            "native_seconds": numeric_native_seconds,
+            "native_call": "MatFactor.numeric",
+        }
         checkpoint("numeric_factor_complete", {"mumps_evidence": state["numeric_mumps_evidence"]})
 
         def solve_probe(label: str, seed: int) -> dict[str, Any]:
+            parent_started = perf_counter()
+            rhs_started = perf_counter()
             rng_real = np.random.default_rng(seed)
             rng_imag = np.random.default_rng(seed + 1)
             x = np.empty(matrix.shape[0], dtype=np.complex128)
@@ -327,6 +374,8 @@ def run_task40_v26_selected_q0_factor_lifecycle(
             rhs = np.asarray(matrix @ x, dtype=np.complex128)
             if not np.isfinite(rhs).all() or not np.any(rhs != 0):
                 raise RuntimeError(f"V26 {label} witness RHS is zero")
+            rhs_construction_seconds = float(perf_counter() - rhs_started)
+            vector_creation_started = perf_counter()
             rhs_vec = _petsc_api.Vec().createSeq(len(rhs), comm=_petsc_api.COMM_SELF)
             vectors.append(rhs_vec)
             update_counts()
@@ -334,8 +383,10 @@ def run_task40_v26_selected_q0_factor_lifecycle(
             vectors.append(solution_vec)
             update_counts()
             rhs_vec.array[:] = rhs
+            vector_creation_seconds = float(perf_counter() - vector_creation_started)
             accounting = state["solve_accounting"][label]
             accounting["mat_solve_invoked"] += 1
+            native_solve_started = perf_counter()
             if label == "fresh_factor_probe":
                 try:
                     factor.solve(rhs_vec, solution_vec)
@@ -351,13 +402,16 @@ def run_task40_v26_selected_q0_factor_lifecycle(
                 except BaseException:
                     accounting["mat_solve_failed"] += 1
                     raise
+            native_solve_seconds = float(perf_counter() - native_solve_started)
             accounting["mat_solve_completed"] += 1
+            residual_started = perf_counter()
             solution = np.asarray(solution_vec.array, dtype=np.complex128).copy()
             residual = np.asarray(matrix @ solution, dtype=np.complex128)
             residual -= rhs
             relative = float(np.linalg.norm(residual) / np.linalg.norm(rhs))
             if not np.isfinite(relative):
                 raise RuntimeError(f"V26 {label} produced a non-finite full true residual")
+            residual_seconds = float(perf_counter() - residual_started)
             from .task40_v25_selected_q0 import (
                 _array_sha256,
                 _file_sha256,
@@ -391,6 +445,7 @@ def run_task40_v26_selected_q0_factor_lifecycle(
                 "solution": solution,
                 "residual": residual,
             }
+            persistence_started = perf_counter()
             _save_npz_atomic(raw_path, **raw_arrays)
             raw_hashes = {name: _array_sha256(value) for name, value in raw_arrays.items()}
             with np.load(raw_path, allow_pickle=False) as saved:
@@ -399,6 +454,7 @@ def run_task40_v26_selected_q0_factor_lifecycle(
                     for name in raw_arrays
                 ):
                     raise IOError(f"V26 {label} raw vector checkpoint failed readback")
+            raw_persistence_seconds = float(perf_counter() - persistence_started)
             raw_artifact = {
                 "path": raw_path.name,
                 "bytes": int(raw_path.stat().st_size),
@@ -410,6 +466,21 @@ def run_task40_v26_selected_q0_factor_lifecycle(
                 "native_vectors_destroyed_before_serialization": True,
                 "native_vector_count_before_serialization": len(vectors),
             }
+            timing = {
+                "parent_seconds": float(perf_counter() - parent_started),
+                "native_solve_seconds": native_solve_seconds,
+                "native_call": "MatFactor.solve" if label == "fresh_factor_probe" else "MatFactor.solve_repeated",
+                "rhs_construction_seconds": rhs_construction_seconds,
+                "petsc_rhs_vector_seconds": vector_creation_seconds,
+                "full_true_residual_seconds": residual_seconds,
+                "raw_persist_and_readback_seconds": raw_persistence_seconds,
+            }
+            timing_key = (
+                "fresh_factor_probe"
+                if label == "fresh_factor_probe"
+                else "separate_repeated_rhs_solve"
+            )
+            state["timings_v29"][timing_key] = timing
             return {
                 "label": label,
                 "seed": int(seed),
@@ -420,17 +491,40 @@ def run_task40_v26_selected_q0_factor_lifecycle(
                 "relative_full_true_residual": relative,
                 "residual_limit": 1.0e-10,
                 "passed": relative <= 1.0e-10,
+                "timing_v29": timing,
                 "raw_artifact": raw_artifact,
             }
 
         probe = solve_probe("fresh_factor_probe", 260_001)
         state["fresh_factor_probe"] = probe
-        checkpoint("fresh_factor_probe_complete", {"probe": probe})
+        state["timings_v29"]["F_q"] = {
+            "status": "FRESH_PROBE_QUALIFIED" if probe["passed"] else "FRESH_PROBE_FAILED",
+            "parent_seconds": float(perf_counter() - started),
+            "includes_initial_loader": False,
+            "includes_second_rhs": False,
+            "includes_eviction": False,
+            "boundary": "lifecycle entry after loaded matrix through first fresh MatSolve, full explicit true residual, and hash-bound raw readback; ends before second RHS and cleanup",
+            "fresh_probe_parent_seconds": probe["timing_v29"]["parent_seconds"],
+        }
+        checkpoint("fresh_factor_probe_complete", {"probe": probe, "F_q": state["timings_v29"]["F_q"]})
         if not probe["passed"]:
             raise RuntimeError("V26 q0 fresh-factor probe failed the strict 1e-10 full true residual")
         rhs_solve = solve_probe("separate_nonzero_q0_rhs_solve", 260_101)
         state["separate_nonzero_q0_rhs_solve"] = rhs_solve
-        checkpoint("separate_nonzero_q0_rhs_solve_complete", {"rhs_solve": rhs_solve})
+        repeated_timing = dict(rhs_solve["timing_v29"])
+        state["timings_v29"]["S_q"] = {
+            "status": "REPEATED_RHS_SOLVE_RECORDED",
+            "parent_seconds": repeated_timing["parent_seconds"],
+            "includes_factorization": False,
+            "includes_eviction": False,
+            "boundary": "second distinct RHS construction through MatSolveRepeated, full explicit true residual, and hash-bound raw persistence/readback",
+            "native_MatSolveRepeated_seconds": repeated_timing["native_solve_seconds"],
+            "rhs_construction_seconds": repeated_timing["rhs_construction_seconds"],
+            "petsc_rhs_vector_seconds": repeated_timing["petsc_rhs_vector_seconds"],
+            "full_true_residual_seconds": repeated_timing["full_true_residual_seconds"],
+            "raw_persist_and_readback_seconds": repeated_timing["raw_persist_and_readback_seconds"],
+        }
+        checkpoint("separate_nonzero_q0_rhs_solve_complete", {"rhs_solve": rhs_solve, "S_q": state["timings_v29"]["S_q"]})
         if not rhs_solve["passed"]:
             raise RuntimeError("V26 q0 RHS solve failed the strict 1e-10 full true residual")
         if _sparse_content_sha256(matrix) != source_hash:
@@ -443,6 +537,13 @@ def run_task40_v26_selected_q0_factor_lifecycle(
         })
     except BaseException as error:
         state["status"] = "FAILED_Q0_FACTOR_LIFECYCLE"
+        if state["timings_v29"]["F_q"]["status"] == "NOT_STARTED":
+            state["timings_v29"]["F_q"].update(
+                status="INCOMPLETE_BEFORE_FRESH_QUALIFICATION",
+                parent_seconds=float(perf_counter() - started),
+            )
+        if state["timings_v29"]["S_q"]["status"] == "NOT_STARTED":
+            state["timings_v29"]["S_q"]["status"] = "NOT_REACHED_OR_INCOMPLETE"
         state["failure"] = {"type": type(error).__name__, "message": str(error)}
         try:
             checkpoint("factor_lifecycle_failed", state["failure"])
@@ -450,6 +551,7 @@ def run_task40_v26_selected_q0_factor_lifecycle(
             pass
         raise
     finally:
+        cleanup_parent_started = perf_counter()
         state["cleanup"]["status"] = "IN_PROGRESS"
         update_counts()
         if factor is not None or petsc_matrix is not None:
@@ -461,7 +563,13 @@ def run_task40_v26_selected_q0_factor_lifecycle(
                 destroy_errors.append({"kind": "before_destroy_resource_sample", "type": type(error).__name__, "message": str(error)})
         if factor is not None:
             try:
-                factor.destroy()
+                destroy_started = perf_counter()
+                try:
+                    factor.destroy()
+                finally:
+                    state["timings_v29"]["cleanup"]["native_destroy_seconds"] += float(
+                        perf_counter() - destroy_started
+                    )
             except BaseException as error:
                 destroy_errors.append({"kind": "factor", "type": type(error).__name__, "message": str(error)})
                 _V26_UNCONFIRMED_NATIVE_OWNERS.append(("q0_factor_and_matrix", (factor, petsc_matrix)))
@@ -471,7 +579,13 @@ def run_task40_v26_selected_q0_factor_lifecycle(
                 gc.collect()
         if factor is None and petsc_matrix is not None:
             try:
-                petsc_matrix.destroy()
+                destroy_started = perf_counter()
+                try:
+                    petsc_matrix.destroy()
+                finally:
+                    state["timings_v29"]["cleanup"]["native_destroy_seconds"] += float(
+                        perf_counter() - destroy_started
+                    )
             except BaseException as error:
                 destroy_errors.append({"kind": "matrix", "type": type(error).__name__, "message": str(error)})
                 _V26_UNCONFIRMED_NATIVE_OWNERS.append(("q0_petsc_matrix", petsc_matrix))
@@ -481,7 +595,13 @@ def run_task40_v26_selected_q0_factor_lifecycle(
                 gc.collect()
         for vector in list(vectors):
             try:
-                vector.destroy()
+                destroy_started = perf_counter()
+                try:
+                    vector.destroy()
+                finally:
+                    state["timings_v29"]["cleanup"]["native_destroy_seconds"] += float(
+                        perf_counter() - destroy_started
+                    )
             except BaseException as error:
                 destroy_errors.append({"kind": "vector", "type": type(error).__name__, "message": str(error)})
                 _V26_UNCONFIRMED_NATIVE_OWNERS.append(("q0_vector", vector))
@@ -504,6 +624,16 @@ def run_task40_v26_selected_q0_factor_lifecycle(
             state["status"] = "FAILED_Q0_FACTOR_CLEANUP"
             state["failure"] = {"type": "RuntimeError", "message": "q0 factor lifecycle cleanup or resource sampling failed"}
         state["elapsed_seconds"] = float(perf_counter() - started)
+        state["timings_v29"]["cleanup"]["parent_seconds"] = float(
+            perf_counter() - cleanup_parent_started
+        )
+        state["timings_v29"]["eviction"] = {
+            "parent_seconds": state["timings_v29"]["cleanup"]["parent_seconds"],
+            "native_destroy_seconds": state["timings_v29"]["cleanup"]["native_destroy_seconds"],
+            "excluded_from_F_q": True,
+            "excluded_from_S_q": True,
+        }
+        state["timings_v29"]["total_parent_seconds"] = state["elapsed_seconds"]
         try:
             checkpoint("cleanup_complete", state["cleanup"])
         except BaseException:

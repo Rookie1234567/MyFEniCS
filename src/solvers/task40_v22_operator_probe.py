@@ -364,6 +364,9 @@ def _resource_admission(
     process_tree: Mapping[str, Any] | None = None,
     memory_policy_sample: Mapping[str, Any] | None = None,
     require_task_cgroup: bool | None = None,
+    explicit_process_tree_cap_bytes: int | None = None,
+    host_reserve_bytes: int | None = None,
+    task_cgroup_reserve_bytes: int | None = None,
 ) -> dict[str, Any]:
     from benchmarks.subreaper_watchdog import (
         PHYSICAL_MEMORY_PRESSURE_POLICY,
@@ -375,6 +378,13 @@ def _resource_admission(
     additional_bytes = int(additional_bytes)
     if additional_bytes < 0:
         raise ValueError("resource admission additional bytes must be nonnegative")
+    explicit_tree_cap = (
+        _EXPLICIT_PROCESS_TREE_CAP_BYTES
+        if explicit_process_tree_cap_bytes is None
+        else int(explicit_process_tree_cap_bytes)
+    )
+    if explicit_tree_cap <= 0:
+        raise ValueError("resource admission process-tree cap must be positive")
     snapshot = dict(resource_sample())
     snapshot["current_process_rss_bytes"] = _memory_snapshot(
         lambda: snapshot
@@ -388,9 +398,63 @@ def _resource_admission(
     else:
         process_tree = dict(process_tree)
     if memory_policy_sample is None:
-        memory_policy_sample = memory_envelope(PHYSICAL_MEMORY_PRESSURE_POLICY)
+        memory_policy_sample = memory_envelope(
+            PHYSICAL_MEMORY_PRESSURE_POLICY,
+            host_reserve_bytes=host_reserve_bytes,
+            task_cgroup_reserve_bytes=task_cgroup_reserve_bytes,
+        )
     else:
         memory_policy_sample = dict(memory_policy_sample)
+        if host_reserve_bytes is not None:
+            reserve = int(host_reserve_bytes)
+            if reserve < 0:
+                raise ValueError("resource admission host reserve must be nonnegative")
+            memory_policy_sample["reserve_bytes"] = reserve
+            if task_cgroup_reserve_bytes is None:
+                memory_policy_sample["launch_cap_bytes"] = int(
+                    memory_policy_sample["effective_available_bytes"]
+                ) - reserve
+                memory_policy_sample["reserve_reason"] = "explicit V29 execution contract host reserve"
+            else:
+                task_reserve = int(task_cgroup_reserve_bytes)
+                if task_reserve < 0:
+                    raise ValueError("resource admission task-cgroup reserve must be nonnegative")
+                host_available_for_split = int(
+                    memory_policy_sample.get(
+                        "host_mem_available_bytes",
+                        memory_policy_sample["effective_available_bytes"],
+                    )
+                )
+                cgroup_values = snapshot.get("current_process_cgroup", {})
+                cgroup_values = cgroup_values if isinstance(cgroup_values, Mapping) else {}
+                cgroup_available_for_split = int(
+                    memory_policy_sample.get(
+                        "task_cgroup_available_bytes",
+                        max(
+                            0,
+                            int(cgroup_values.get("memory_limit_bytes", 0))
+                            - int(cgroup_values.get("memory_current_bytes", 0)),
+                        ),
+                    )
+                )
+                memory_policy_sample["task_cgroup_reserve_bytes"] = task_reserve
+                memory_policy_sample["reserve_domains_separated"] = True
+                memory_policy_sample["host_launch_available_bytes"] = max(
+                    0, host_available_for_split - reserve
+                )
+                memory_policy_sample["task_cgroup_launch_available_bytes"] = max(
+                    0, cgroup_available_for_split - task_reserve
+                )
+                memory_policy_sample["effective_available_after_reserves_bytes"] = min(
+                    memory_policy_sample["host_launch_available_bytes"],
+                    memory_policy_sample["task_cgroup_launch_available_bytes"],
+                )
+                memory_policy_sample["launch_cap_bytes"] = memory_policy_sample[
+                    "effective_available_after_reserves_bytes"
+                ]
+                memory_policy_sample["reserve_reason"] = (
+                    "V29 separate host and task-cgroup resource domains"
+                )
 
     tree_rss = process_tree.get("rss_bytes")
     tree_authoritative = bool(
@@ -401,10 +465,10 @@ def _resource_admission(
     dynamic_cap = None
     if tree_authoritative:
         dynamic_cap = runtime_tree_cap(
-            _EXPLICIT_PROCESS_TREE_CAP_BYTES,
+            explicit_tree_cap,
             int(tree_rss),
             memory_policy_sample,
-            explicit_tree_cap_bytes=_EXPLICIT_PROCESS_TREE_CAP_BYTES,
+            explicit_tree_cap_bytes=explicit_tree_cap,
             memory_policy=PHYSICAL_MEMORY_PRESSURE_POLICY,
         )
     cgroup = snapshot.get("current_process_cgroup", {})
@@ -412,8 +476,20 @@ def _resource_admission(
         cgroup = {}
     cgroup_current = cgroup.get("memory_current_bytes")
     cgroup_limit = cgroup.get("memory_limit_bytes")
-    cgroup_reserve = int(memory_policy_sample.get("reserve_bytes", 0))
-    host_available = memory_policy_sample.get("effective_available_bytes")
+    cgroup_reserve = (
+        int(memory_policy_sample.get("reserve_bytes", 0))
+        if task_cgroup_reserve_bytes is None
+        else int(task_cgroup_reserve_bytes)
+    )
+    if cgroup_reserve < 0:
+        raise ValueError("resource admission task-cgroup reserve must be nonnegative")
+    host_available = (
+        memory_policy_sample.get("host_mem_available_bytes")
+        if task_cgroup_reserve_bytes is not None
+        else memory_policy_sample.get("effective_available_bytes")
+    )
+    if type(host_available) is not int:
+        host_available = memory_policy_sample.get("effective_available_bytes")
     host_reserve = int(memory_policy_sample.get("reserve_bytes", 0))
     needs_task_cgroup = (
         additional_bytes >= 512 * 2**20
@@ -447,7 +523,7 @@ def _resource_admission(
     facts = {
         "stage": stage,
         "additional_object_upper_bound_bytes": additional_bytes,
-        "explicit_process_tree_cap_bytes": _EXPLICIT_PROCESS_TREE_CAP_BYTES,
+        "explicit_process_tree_cap_bytes": explicit_tree_cap,
         "dynamic_process_tree_cap_bytes": dynamic_cap,
         "current_process_tree_rss_bytes": tree_rss,
         "process_tree_snapshot": {

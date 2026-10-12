@@ -39,7 +39,12 @@ PHYSICAL_MEMORY_PRESSURE_POLICY = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
 PHYSICAL_MEMORY_EVIDENCE_RESERVE_BYTES = 128 * 1024**2
 
 
-def memory_envelope(memory_policy: str = LEGACY_MEMORY_POLICY) -> dict:
+def memory_envelope(
+    memory_policy: str = LEGACY_MEMORY_POLICY,
+    *,
+    host_reserve_bytes: int | None = None,
+    task_cgroup_reserve_bytes: int | None = None,
+) -> dict:
     if memory_policy not in {
         LEGACY_MEMORY_POLICY,
         PHYSICAL_MEMORY_PRESSURE_POLICY,
@@ -49,6 +54,8 @@ def memory_envelope(memory_policy: str = LEGACY_MEMORY_POLICY) -> dict:
     total, available = memory["mem_total_bytes"], memory["mem_available_bytes"]
     if total is None or available is None:
         raise RuntimeError("physical memory authority unavailable")
+    host_available = int(available)
+    task_cgroup_available = None
     ancestors = []
     path = current_cgroup_path()
     while path is not None and path.is_relative_to('/sys/fs/cgroup'):
@@ -58,25 +65,80 @@ def memory_envelope(memory_policy: str = LEGACY_MEMORY_POLICY) -> dict:
             if raw != 'max':
                 limit, used = int(raw), int(current.read_text())
                 total = min(total, limit)
-                available = min(available, max(0, limit - used))
+                cgroup_available = max(0, limit - used)
+                available = min(available, cgroup_available)
+                task_cgroup_available = (
+                    cgroup_available
+                    if task_cgroup_available is None
+                    else min(task_cgroup_available, cgroup_available)
+                )
                 ancestors.append({'path': str(path), 'limit_bytes': limit, 'current_bytes': used})
         if path == Path('/sys/fs/cgroup'):
             break
         path = path.parent
     if memory_policy == PHYSICAL_MEMORY_PRESSURE_POLICY:
-        reserve = PHYSICAL_MEMORY_EVIDENCE_RESERVE_BYTES
-        launch_cap = available - reserve
-        reserve_reason = (
-            "small watchdog/evidence-write reserve; no legacy 4GiB or "
-            "15-percent reserve"
+        reserve = (
+            PHYSICAL_MEMORY_EVIDENCE_RESERVE_BYTES
+            if host_reserve_bytes is None
+            else int(host_reserve_bytes)
         )
+        if reserve < 0:
+            raise ValueError("host reserve must be nonnegative")
+        if task_cgroup_reserve_bytes is None:
+            launch_cap = available - reserve
+            task_cgroup_reserve = reserve
+            reserve_reason = (
+                "small watchdog/evidence-write reserve; no legacy 4GiB or "
+                "15-percent reserve"
+            )
+            split_reserve_domains = False
+        else:
+            task_cgroup_reserve = int(task_cgroup_reserve_bytes)
+            if task_cgroup_reserve < 0:
+                raise ValueError("task cgroup reserve must be nonnegative")
+            task_available = (
+                host_available
+                if task_cgroup_available is None
+                else int(task_cgroup_available)
+            )
+            host_room = max(0, host_available - reserve)
+            task_room = max(0, task_available - task_cgroup_reserve)
+            launch_cap = min(host_room, task_room)
+            reserve_reason = (
+                "V29 separate domains: host MemAvailable minus host reserve; "
+                "task/ancestor cgroup remaining minus task-cgroup reserve"
+            )
+            split_reserve_domains = True
         static_tree_cap = None
     else:
-        reserve = max(4 * 1024**3, int(.15 * total))
+        reserve = (
+            max(4 * 1024**3, int(.15 * total))
+            if host_reserve_bytes is None
+            else int(host_reserve_bytes)
+        )
+        if reserve < 0:
+            raise ValueError("host reserve must be nonnegative")
         launch_cap = min(12_000_000_000, available - reserve)
+        task_cgroup_reserve = reserve
+        split_reserve_domains = False
         reserve_reason = "legacy max(4GiB,0.15*effective_total) reserve"
         static_tree_cap = 12_000_000_000
+    if task_cgroup_available is None:
+        task_cgroup_available = host_available
     return {**memory, 'effective_total_bytes': total,
+            'effective_available_bytes': available, 'host_mem_available_bytes': host_available,
+            'task_cgroup_available_bytes': int(task_cgroup_available),
+            'host_launch_available_bytes': max(0, host_available - reserve),
+            'task_cgroup_reserve_bytes': (
+                task_cgroup_reserve if split_reserve_domains else None
+            ),
+            'task_cgroup_launch_available_bytes': (
+                max(0, int(task_cgroup_available) - task_cgroup_reserve)
+                if split_reserve_domains
+                else None
+            ),
+            'reserve_domains_separated': split_reserve_domains,
+            'effective_available_after_reserves_bytes': max(0, int(launch_cap)),
             'effective_available_bytes': available, 'reserve_bytes': reserve,
             'launch_cap_bytes': launch_cap,
             'memory_policy': memory_policy,
@@ -202,11 +264,16 @@ def runtime_tree_cap(start_cap_bytes: int, process_tree_rss_bytes: int,
         PHYSICAL_MEMORY_PRESSURE_POLICY,
     }:
         raise ValueError(f"unsupported watchdog memory policy: {memory_policy!r}")
-    current_capacity = (
-        int(process_tree_rss_bytes)
-        + int(envelope['effective_available_bytes'])
-        - int(envelope['reserve_bytes'])
-    )
+    if envelope.get('reserve_domains_separated') is True:
+        current_capacity = int(process_tree_rss_bytes) + int(
+            envelope['effective_available_after_reserves_bytes']
+        )
+    else:
+        current_capacity = (
+            int(process_tree_rss_bytes)
+            + int(envelope['effective_available_bytes'])
+            - int(envelope['reserve_bytes'])
+        )
     if memory_policy == PHYSICAL_MEMORY_PRESSURE_POLICY:
         # V23 keeps a live available-memory limit; a caller may additionally
         # impose a fixed absolute RSS ceiling for a separately reviewed campaign.
@@ -241,6 +308,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               campaign_window_sha256: str | None = None,
               campaign_accounting_path: Path | None = None,
               require_job_cgroup_zero_swap: bool = False,
+              host_reserve_bytes: int | None = None,
+              task_cgroup_reserve_bytes: int | None = None,
               tree_accounting_root_pid: int | None = None) -> dict:
     """Supervise one command, with an explicit workflow wall budget."""
     try:
@@ -366,8 +435,32 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
     if _children():
         raise RuntimeError('watchdog must be a dedicated parent with no existing children')
     directory.mkdir(parents=True, exist_ok=False)
-    envelope = memory_envelope(memory_policy)
+    envelope = memory_envelope(
+        memory_policy,
+        host_reserve_bytes=host_reserve_bytes,
+        task_cgroup_reserve_bytes=task_cgroup_reserve_bytes,
+    )
     dynamic_cap = int(envelope['launch_cap_bytes'])
+    if task_cgroup_reserve_bytes is not None:
+        initial_tree = process_tree_snapshot(
+            tree_accounting_root_pid if tree_accounting_root_pid is not None else os.getpid(),
+            'watchdog_initial_resource_gate',
+            pss_sampling_policy=pss_sampling_policy,
+        )
+        initial_tree_rss = initial_tree.get('rss_bytes')
+        if (
+            initial_tree.get('all_status_readable') is not True
+            or initial_tree.get('identity_complete') is not True
+            or type(initial_tree_rss) is not int
+        ):
+            raise RuntimeError("V29 initial process-tree memory authority is unavailable")
+        dynamic_cap = runtime_tree_cap(
+            int(tree_cap_bytes) if tree_cap_bytes is not None else dynamic_cap,
+            int(initial_tree_rss),
+            envelope,
+            explicit_tree_cap_bytes=tree_cap_bytes,
+            memory_policy=memory_policy,
+        )
     cap = (
         min(dynamic_cap, int(tree_cap_bytes))
         if tree_cap_bytes is not None
@@ -379,7 +472,11 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
             'dynamic_launch_cap_bytes': dynamic_cap,
             'launch_cap_bytes': cap,
             'tree_cap_bytes': int(tree_cap_bytes),
-            'cap_policy': 'min(dynamic_memory_envelope, explicit_tree_cap)',
+            'cap_policy': (
+                'min(split_domain_dynamic_process_tree_cap, explicit_tree_cap)'
+                if task_cgroup_reserve_bytes is not None
+                else 'min(dynamic_memory_envelope, explicit_tree_cap)'
+            ),
         }
     if cap <= 0:
         raise RuntimeError('no safe launch memory budget')
@@ -528,7 +625,11 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                     and isinstance(member.get('pid'), int)
                     and isinstance(member.get('start_ticks'), int)
                 )
-                current = memory_envelope(memory_policy)
+                current = memory_envelope(
+                    memory_policy,
+                    host_reserve_bytes=host_reserve_bytes,
+                    task_cgroup_reserve_bytes=task_cgroup_reserve_bytes,
+                )
                 elapsed = time.monotonic() - started
                 phase = json.loads(phase_path.read_text()) if phase_path is not None and phase_path.exists() else {}
                 solve_observed = None

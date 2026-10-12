@@ -420,6 +420,37 @@ TASK40_V28_PARENT_LEDGER = {
     "unsettled_interval": "UNKNOWN_RETAINED_UNMODIFIED",
     "old_ledger_preserved": True,
 }
+TASK40_V29_CAMPAIGN_WINDOW = (
+    Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl")
+    / "campaign_window_v29.json"
+)
+TASK40_V29_CAMPAIGN_SECONDS = 21_600.0
+TASK40_V29_CLOSEOUT_RESERVE_SECONDS = 1_200.0
+TASK40_V29_CAMPAIGN_ID = "task40extra_v29_first_qualified_q0_factor_only"
+TASK40_V29_REVIEW_COMMIT = "e85992c79d7e2b3f41cd1396ffb06edccdd93421"
+TASK40_V29_REVIEW_SHA256 = "7a535053474bf864ed77dbf13f66aba1baf2172ff568738e10e2bc3d2266d51e"
+TASK40_V29_REVIEW_PATH = "docs/task40extra_0p7nm_engineering/review_report_v29.md"
+TASK40_V29_STAGE_SCOPE = (
+    "authorized_target_preparation_and_dependency_import",
+    "strict_existing_q0_factor_only",
+    "conversion",
+    "symbolic",
+    "numeric",
+    "fresh_nonzero_rhs_true_residual",
+    "second_nonzero_rhs_repeated_solve",
+    "evict_and_cleanup",
+    "checker",
+    "closeout",
+)
+TASK40_V29_FORBIDDEN_SCOPE = (
+    "producer_FE_MPC_native_rebuild",
+    "routes_pattern_fill_or_readback_rebuild",
+    "all_q_factorization",
+    "target_PDE_or_official_R_T_A",
+    "automatic_cap_increase",
+    "OOC_BLR_ordering_or_pivot_changes",
+    "master_merge",
+)
 
 
 def _utc_ns(value: Any) -> int:
@@ -724,6 +755,55 @@ def _validate_v28_campaign_registration(
         raise ValueError(f"registered V28 campaign identity or scope changed: {changed}")
 
 
+def _validate_v29_campaign_registration(
+    resolved: Path, digest: str, payload: Mapping[str, Any]
+) -> None:
+    expected_path = (
+        Path(__file__).resolve().parents[2] / TASK40_V29_CAMPAIGN_WINDOW
+    ).resolve()
+    if resolved != expected_path:
+        raise ValueError("the V29 campaign window is not at its registered path")
+    expected_fields = {
+        "schema": CAMPAIGN_SCHEMA,
+        "campaign": TASK40_V29_CAMPAIGN_ID,
+        "authority": "User-authorized Review V29 first qualified q0 factor execution",
+        "active_review_sha": TASK40_V29_REVIEW_COMMIT,
+        "active_review_path": TASK40_V29_REVIEW_PATH,
+        "active_review_sha256": TASK40_V29_REVIEW_SHA256,
+        "review_at_registration": TASK40_V29_REVIEW_COMMIT,
+        "campaign_seconds": TASK40_V29_CAMPAIGN_SECONDS,
+        "closeout_reserve_seconds": TASK40_V29_CLOSEOUT_RESERVE_SECONDS,
+        "time_policy": CONSERVATIVE_REALTIME,
+        "stage_scope": list(TASK40_V29_STAGE_SCOPE),
+        "forbidden_scope": list(TASK40_V29_FORBIDDEN_SCOPE),
+        "window_refreshed": False,
+        "old_costs_and_unknowns_preserved": True,
+        "artifact_execution_identity_separate": True,
+    }
+    changed = [
+        key for key, value in expected_fields.items() if payload.get(key) != value
+    ]
+    source_at_entry = payload.get("source_at_entry")
+    if not isinstance(source_at_entry, str) or not re.fullmatch(
+        r"[0-9a-f]{40,64}", source_at_entry
+    ):
+        changed.append("source_at_entry")
+    approval = payload.get("user_approval")
+    approval_sha = hashlib.sha256(
+        json.dumps(
+            approval, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+    ).hexdigest()
+    if not isinstance(approval, Mapping) or approval.get("scope") != "V29_Q0_FACTOR_ONLY":
+        changed.append("user_approval_scope")
+    if payload.get("user_approval_sha256") != approval_sha:
+        changed.append("user_approval_sha256")
+    if payload.get("t0_utc") == "2026-10-11T23:24:00Z":
+        changed.append("t0_utc_reuses_v28")
+    if changed:
+        raise ValueError(f"registered V29 campaign identity or scope changed: {changed}")
+
+
 @dataclass(frozen=True)
 class FixedCampaignWindow:
     path: Path
@@ -988,6 +1068,9 @@ def load_fixed_campaign_window(
     v28_path = (
         Path(__file__).resolve().parents[2] / TASK40_V28_CAMPAIGN_WINDOW
     ).resolve()
+    v29_path = (
+        Path(__file__).resolve().parents[2] / TASK40_V29_CAMPAIGN_WINDOW
+    ).resolve()
     is_v22 = resolved == v22_path
     is_v23 = resolved == v23_path
     is_v24 = resolved == v24_path
@@ -995,6 +1078,7 @@ def load_fixed_campaign_window(
     is_v26 = resolved == v26_path
     is_v27 = resolved == v27_path
     is_v28 = resolved == v28_path
+    is_v29 = resolved == v29_path
     if is_v22:
         _validate_v22_campaign_registration(resolved, digest, payload)
         expected_total = TASK40_V22_CAMPAIGN_SECONDS
@@ -1023,6 +1107,10 @@ def load_fixed_campaign_window(
         _validate_v28_campaign_registration(resolved, digest, payload)
         expected_total = TASK40_V28_CAMPAIGN_SECONDS
         expected_closeout = TASK40_V28_CLOSEOUT_RESERVE_SECONDS
+    elif is_v29:
+        _validate_v29_campaign_registration(resolved, digest, payload)
+        expected_total = TASK40_V29_CAMPAIGN_SECONDS
+        expected_closeout = TASK40_V29_CLOSEOUT_RESERVE_SECONDS
     else:
         expected_total = CAMPAIGN_SECONDS
         expected_closeout = CLOSEOUT_RESERVE_SECONDS
@@ -1179,6 +1267,15 @@ __all__ = [
     "TASK40_V28_FORBIDDEN_SCOPE",
     "TASK40_V28_PARENT_WINDOW",
     "TASK40_V28_PARENT_LEDGER",
+    "TASK40_V29_CAMPAIGN_WINDOW",
+    "TASK40_V29_CAMPAIGN_SECONDS",
+    "TASK40_V29_CLOSEOUT_RESERVE_SECONDS",
+    "TASK40_V29_CAMPAIGN_ID",
+    "TASK40_V29_REVIEW_COMMIT",
+    "TASK40_V29_REVIEW_SHA256",
+    "TASK40_V29_REVIEW_PATH",
+    "TASK40_V29_STAGE_SCOPE",
+    "TASK40_V29_FORBIDDEN_SCOPE",
     "CampaignAccount",
     "FixedCampaignWindow",
     "TASK40_V10_CAMPAIGN_WINDOW",

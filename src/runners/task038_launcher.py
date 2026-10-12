@@ -150,10 +150,23 @@ def _validate_source_sha(value: str) -> str:
 
 
 def _environment_identity() -> dict[str, Any]:
+    if os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1":
+        from src.runners.task40_v29_contract import qualified_activation_identity
+
+        activation_identity = qualified_activation_identity(os.environ)
+    else:
+        activation_identity = os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION")
     return {
         "python_executable": os.path.abspath(sys.executable),
         "platform": platform.platform(),
-        "qualified_activation": os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION"),
+        "qualified_activation": activation_identity,
+        "runtime_profile": (
+            "native_linux"
+            if os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1"
+            else "local_wsl2_authorized"
+            if activation_identity == "1"
+            else None
+        ),
     }
 
 
@@ -6600,13 +6613,56 @@ def launch_specification(
                                 physical_resources['pc_hard_seconds']
                             )
                     if task40_campaign_profile:
-                        jit_source = Path(
-                            str(physical_resources["qualified_jit_cache_source"])
+                        v29_watchdog_resources = None
+                        if os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1":
+                            from src.runners.task40_v29_contract import (
+                                require_authorized_contract,
+                                require_authorized_selector,
+                            )
+
+                            repo_root = Path(__file__).resolve().parents[2]
+                            v29_contract, v29_contract_sha = require_authorized_contract(
+                                os.environ["TASK40_V29_CONTRACT_PATH"],
+                                expected_sha256=os.environ["TASK40_V29_CONTRACT_SHA256"],
+                                current_root=repo_root,
+                            )
+                            require_authorized_selector(
+                                os.environ["TASK40_V29_SELECTOR_PATH"],
+                                expected_sha256=os.environ["TASK40_V29_SELECTOR_SHA256"],
+                                contract_path=os.environ["TASK40_V29_CONTRACT_PATH"],
+                                contract_sha256=v29_contract_sha,
+                                contract=v29_contract,
+                            )
+                            if (
+                                campaign_window is None
+                                or Path(str(v29_contract["execution"]["campaign_window_path"])).resolve()
+                                != campaign_window.path.resolve()
+                                or v29_contract["execution"]["campaign_window_sha256"]
+                                != campaign_window.sha256
+                            ):
+                                raise InputError(
+                                    "V29 launcher campaign window differs from its approved contract"
+                                )
+                            v29_watchdog_resources = v29_contract["execution"]["resources"]
+                        jit_source = (
+                            Path(str(v29_contract["execution"]["jit_cache"]))
+                            if v29_watchdog_resources is not None
+                            else Path(str(physical_resources["qualified_jit_cache_source"]))
                         )
-                        if not jit_source.is_absolute():
+                        if not jit_source.is_absolute() and v29_watchdog_resources is None:
                             jit_source = (
                                 Path(__file__).resolve().parents[2] / jit_source
                             ).resolve()
+                        jit_cache_origin = (
+                            "V29 factor-only execution; no FE/JIT compilation is in scope"
+                            if v29_watchdog_resources is not None
+                            else physical_resources["qualified_jit_cache_origin"]
+                        )
+                        jit_expected_compiler_events = (
+                            0
+                            if v29_watchdog_resources is not None
+                            else physical_resources["qualified_jit_expected_compiler_event_count"]
+                        )
                         watchdog_kwargs.update(
                             stop_on_global_swap=False,
                             allow_swap_observation=False,
@@ -6622,7 +6678,17 @@ def launch_specification(
                                 physical_resources["pss_sampling_policy"]
                             ),
                             tree_cap_bytes=int(
-                                physical_resources["process_tree_rss_cap_bytes"]
+                                v29_watchdog_resources["task_memory_max_bytes"]
+                                if v29_watchdog_resources is not None
+                                else physical_resources["process_tree_rss_cap_bytes"]
+                            ),
+                            host_reserve_bytes=(
+                                int(v29_watchdog_resources["host_reserve_bytes"])
+                                if v29_watchdog_resources is not None
+                                else None
+                            ),
+                            task_cgroup_reserve_bytes=(
+                                0 if v29_watchdog_resources is not None else None
                             ),
                             allow_physical_pressure_tree_cap=True,
                             require_job_cgroup_zero_swap=True,
@@ -6644,13 +6710,9 @@ def launch_specification(
                                     physical_resources["pss_sampling_policy"]
                                 ),
                                 "PHYSICAL_QUALIFIED_JIT_CACHE_SOURCE": str(jit_source),
-                                "PHYSICAL_QUALIFIED_JIT_CACHE_ORIGIN": str(
-                                    physical_resources["qualified_jit_cache_origin"]
-                                ),
+                                "PHYSICAL_QUALIFIED_JIT_CACHE_ORIGIN": str(jit_cache_origin),
                                 "PHYSICAL_QUALIFIED_JIT_EXPECTED_COMPILER_EVENTS": str(
-                                    physical_resources[
-                                        "qualified_jit_expected_compiler_event_count"
-                                    ]
+                                    jit_expected_compiler_events
                                 ),
                                 "XDG_CACHE_HOME": str(jit_source),
                             }

@@ -1449,6 +1449,8 @@ def fill_saved_q0_csr_values(
 
 def open_saved_q0_csr_from_manifest(
     manifest_path: str | Path,
+    *,
+    path_resolver: Callable[[str | Path], Path] | None = None,
 ) -> tuple[sparse.csr_matrix, dict[str, Any]]:
     """Reopen the completed q0 CSR payloads from their saved manifest."""
     path = Path(manifest_path).resolve()
@@ -1473,7 +1475,12 @@ def open_saved_q0_csr_from_manifest(
         record = artifacts.get(name)
         if not isinstance(record, Mapping):
             raise ValueError(f"V27 q0 CSR manifest is missing its {name} artifact")
-        artifact_path = Path(str(record.get("path", ""))).resolve()
+        raw_artifact_path = Path(str(record.get("path", "")))
+        artifact_path = (
+            path_resolver(raw_artifact_path)
+            if path_resolver is not None
+            else raw_artifact_path.resolve()
+        )
         if (
             not artifact_path.is_relative_to(path.parent)
             or not artifact_path.is_file()

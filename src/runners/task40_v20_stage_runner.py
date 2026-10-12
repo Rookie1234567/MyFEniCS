@@ -390,6 +390,7 @@ def _load_matching_v28_native_qualification(
     mode_manifest_sha256: str,
     ordered_mode_key_sha256: str,
     sha256_file: Callable[[Path], str],
+    path_resolver: Callable[[str | Path], Path] | None = None,
 ) -> tuple[Path, dict[str, Any]] | None:
     """Return only a hash-bound, same-donor native PASS usable for factor-only continuation."""
     artifact_roots = (
@@ -399,7 +400,12 @@ def _load_matching_v28_native_qualification(
     record = manifest.get("native_qualification")
     if not isinstance(record, Mapping):
         return None
-    path = Path(str(record.get("path", ""))).resolve()
+    raw_qualification_path = Path(str(record.get("path", "")))
+    path = (
+        path_resolver(raw_qualification_path)
+        if path_resolver is not None
+        else raw_qualification_path.resolve()
+    )
     if (
         not any(path.is_relative_to(root) for root in artifact_roots)
         or not path.is_file()
@@ -428,10 +434,25 @@ def _load_matching_v28_native_qualification(
     readback_record = qualification.get("readback_artifact", {})
     readback_record = readback_record if isinstance(readback_record, Mapping) else {}
     readback_path_value = Path(str(readback_record.get("path", "")))
-    readback_path = (
-        readback_path_value.resolve()
-        if readback_path_value.is_absolute()
-        else (path.parent / readback_path_value).resolve()
+    if readback_path_value.is_absolute():
+        readback_path = (
+            path_resolver(readback_path_value)
+            if path_resolver is not None
+            else readback_path_value.resolve()
+        )
+    else:
+        readback_path = (path.parent / readback_path_value).resolve()
+    raw_pattern_path = Path(str(pattern.get("path", "")))
+    mapped_pattern_path = (
+        path_resolver(raw_pattern_path)
+        if path_resolver is not None
+        else raw_pattern_path.resolve()
+    )
+    raw_csr_manifest_path = Path(str(qualification.get("csr_manifest_path", "")))
+    mapped_csr_manifest_path = (
+        path_resolver(raw_csr_manifest_path)
+        if path_resolver is not None
+        else raw_csr_manifest_path.resolve()
     )
     if (
         qualification.get("schema") != "task40extra.review_v28_q0_native_qualification.v1"
@@ -448,13 +469,13 @@ def _load_matching_v28_native_qualification(
         != identity.get("campaign_window_sha256")
         or not isinstance(qualification.get("campaign_window_sha256"), str)
         or len(str(qualification.get("campaign_window_sha256"))) != 64
-        or qualification.get("csr_manifest_path") != str(manifest_path.resolve())
+        or mapped_csr_manifest_path != manifest_path.resolve()
         or set(expected_hashes) != {"indptr", "indices", "data"}
         or any(not isinstance(value, str) or len(value) != 64 for value in expected_hashes.values())
         or qualification.get("csr_artifact_hashes") != expected_hashes
         or qualification.get("csr_shape") != manifest.get("shape")
         or qualification.get("stored_structural_slots") != manifest.get("stored_structural_slots")
-        or Path(str(pattern.get("path", ""))).resolve() != expected_pattern_path.resolve()
+        or mapped_pattern_path != expected_pattern_path.resolve()
         or pattern.get("sha256") != expected_pattern_sha256
         or not _v28_readback_receipt_passes(readback)
         or readback_record.get("sha256") is None
@@ -1325,13 +1346,24 @@ def _preflight(
         or len(str(provenance.get("physical_model_sha256", ""))) != 64
     ):
         raise ValueError("V20 preflight requires complete source/input/physical-model identities")
+    if os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1":
+        from src.runners.task40_v29_contract import qualified_activation_identity
+
+        activation_identity = qualified_activation_identity(os.environ)
+        expected_profile = "native_linux"
+    else:
+        activation_identity = os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION")
+        expected_profile = "local_wsl2_authorized"
     if (
-        os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1"
+        activation_identity is None
+        or (expected_profile == "local_wsl2_authorized" and activation_identity != "1")
         or MPI.COMM_WORLD.size != 1
         or np.dtype(PETSc.ScalarType) != np.dtype(np.complex128)
         or np.dtype(PETSc.IntType) != np.dtype(np.int32)
     ):
-        raise RuntimeError("V20 preflight requires qualified WSL MPI1 complex128/int32 ABI")
+        raise RuntimeError(
+            f"V20 preflight requires qualified {expected_profile} MPI1 complex128/int32 ABI"
+        )
     inventory = profile_facts(profile)
     if (
         inventory.get("run_id") != resolved.get("run_id")
@@ -1345,7 +1377,8 @@ def _preflight(
     if mesh_id == "TARGET_ORIGINAL_NY8":
         modes, rows, _mode_sha, mode_facts = load_v20_target_mode_inventory(resolved)
     environment = {
-        "qualified_activation": os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION"),
+        "qualified_activation": activation_identity,
+        "runtime_profile": expected_profile,
         "python_executable": sys.executable,
         "petsc_scalar_type": str(PETSc.ScalarType),
         "petsc_int_type": str(PETSc.IntType),
@@ -1813,6 +1846,7 @@ def _run_v27_saved_q0_stage(
     mode_rows: tuple[Mapping[str, Any], ...] | None,
     stop_stage: str,
     v28_continuation: bool = False,
+    v29_strict_factor_only: bool = False,
 ) -> dict[str, Any]:
     """Build/read back only the frozen saved q0 CSR; no FE or native rebuild."""
     import gc
@@ -1841,6 +1875,35 @@ def _run_v27_saved_q0_stage(
         open_saved_q0_csr_from_manifest,
         preflight_saved_q0_csr,
     )
+
+    v29_contract = None
+    v29_selector = None
+    v29_resolve_path = None
+    v29_contract_sha256 = None
+    v29_selector_sha256 = None
+    if v29_strict_factor_only:
+        from src.runners.task40_v29_contract import (
+            approved_path_resolver,
+            require_authorized_contract,
+            require_authorized_selector,
+            require_strict_factor_only_status,
+        )
+
+        contract_path = Path(os.environ.get("TASK40_V29_CONTRACT_PATH", ""))
+        strict_selector_path = Path(os.environ.get("TASK40_V29_SELECTOR_PATH", ""))
+        v29_contract, v29_contract_sha256 = require_authorized_contract(
+            contract_path,
+            expected_sha256=os.environ.get("TASK40_V29_CONTRACT_SHA256"),
+            current_root=Path(__file__).resolve().parents[2],
+        )
+        v29_selector, v29_selector_sha256 = require_authorized_selector(
+            strict_selector_path,
+            expected_sha256=os.environ.get("TASK40_V29_SELECTOR_SHA256"),
+            contract_path=contract_path,
+            contract_sha256=v29_contract_sha256,
+            contract=v29_contract,
+        )
+        v29_resolve_path = approved_path_resolver(v29_contract)
 
     if stop_stage != "selected_reference_q_csr" or modes is None or mode_rows is None:
         raise RuntimeError("V27 route only accepts the registered q0 CSR stop with frozen mode inventory")
@@ -1890,11 +1953,37 @@ def _run_v27_saved_q0_stage(
         continuation_manifest_path = Path(
             os.environ.get("TASK40_V28_CONTINUATION_MANIFEST_PATH", "")
         ).resolve()
+        if v29_strict_factor_only:
+            strict_pattern = v29_resolve_path(v29_selector.get("pattern_manifest_path", ""))
+            strict_manifest = v29_resolve_path(v29_selector.get("manifest_path", ""))
+            strict_qualification = v29_resolve_path(v29_selector.get("qualification_path", ""))
+            if (
+                strict_pattern != pattern_manifest_path
+                or strict_manifest != continuation_manifest_path
+                or strict_qualification
+                != Path(os.environ.get("TASK40_V29_QUALIFICATION_PATH", "")).resolve()
+                or v29_selector.get("manifest_sha256")
+                != os.environ.get("TASK40_V29_COMPLETE_MANIFEST_SHA256")
+                or v29_selector.get("qualification_sha256")
+                != os.environ.get("TASK40_V29_NATIVE_PASS_SHA256")
+            ):
+                raise RuntimeError("V29 worker strict selector path/hash binding differs from its service envelope")
+            selector_pattern_path = v29_resolve_path(selector.get("pattern_manifest_path", ""))
+            selector_continuation_path = v29_resolve_path(
+                selector.get("continuation_manifest_path", "")
+            )
+        else:
+            selector_pattern_path = Path(
+                str(selector.get("pattern_manifest_path", ""))
+            ).resolve()
+            selector_continuation_path = Path(
+                str(selector.get("continuation_manifest_path", ""))
+            ).resolve()
         if (
-            selector.get("pattern_manifest_path") != str(pattern_manifest_path)
+            selector_pattern_path != pattern_manifest_path
             or selector.get("pattern_manifest_sha256")
             != os.environ.get("TASK40_V28_PATTERN_MANIFEST_SHA256")
-            or selector.get("continuation_manifest_path") != str(continuation_manifest_path)
+            or selector_continuation_path != continuation_manifest_path
             or selector.get("campaign_window_sha256")
             != os.environ.get("TASK40_V28_CAMPAIGN_WINDOW_SHA256")
         ):
@@ -1918,17 +2007,87 @@ def _run_v27_saved_q0_stage(
         repo_root / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v26_wsl/native_consumer"
     ).resolve()
     disk_reserve_bytes = 1024**3
+    resource_admission_for_gate = _resource_admission
+    if v29_strict_factor_only:
+        def resource_admission_for_gate(stage, additional_bytes, **kwargs):
+            resources = v29_contract["execution"]["resources"]
+            return _resource_admission(
+                stage,
+                additional_bytes,
+                explicit_process_tree_cap_bytes=int(resources["task_memory_max_bytes"]),
+                host_reserve_bytes=int(resources["host_reserve_bytes"]),
+                task_cgroup_reserve_bytes=0,
+                **kwargs,
+            )
+
     allocation_gate, resource_gates_by_stage, resource_gate_records, resource_gate_timing = (
         _make_saved_q0_allocation_gate(
             output_directory=output_directory,
             disk_reserve_bytes=disk_reserve_bytes,
-            resource_admission=_resource_admission,
+            resource_admission=resource_admission_for_gate,
             resource_sample=_resource_snapshot,
             cgroup_snapshot=_task_cgroup_memory_snapshot,
             blocked_exception=_ProbeResourceBlocked,
             disk_usage=shutil.disk_usage,
         )
     )
+    if v29_strict_factor_only:
+        from src.runners.task40_v29_contract import (
+            V29ContractError,
+            validate_live_resource_contract,
+        )
+
+        base_allocation_gate = allocation_gate
+
+        def allocation_gate(stage: str, facts: Mapping[str, Any]) -> dict[str, Any]:
+            result = base_allocation_gate(stage, facts)
+            cgroup = result.get("current_process_cgroup", {})
+            cgroup = cgroup if isinstance(cgroup, Mapping) else {}
+            requested = sum(
+                int(facts.get(name, 0))
+                for name in (
+                    "additional_payload_bytes",
+                    "matrix_payload_bytes",
+                    "workspace_bytes",
+                    "future_co_resident_reserve_bytes",
+                )
+            )
+            try:
+                if cgroup.get("dedicated_job_cgroup") is not True or cgroup.get("swap_current_bytes") != 0:
+                    raise V29ContractError("V29 requires a dedicated zero-swap task cgroup")
+                validate_live_resource_contract(
+                    v29_contract,
+                    cgroup_limit_bytes=int(cgroup["memory_limit_bytes"]),
+                    cgroup_current_bytes=int(cgroup["memory_current_bytes"]),
+                    host_effective_available_bytes=int(result["host_effective_available_bytes"]),
+                    additional_request_bytes=requested,
+                )
+            except (V29ContractError, KeyError, TypeError, ValueError) as error:
+                raise _ProbeResourceBlocked(
+                    stage,
+                    {
+                        "stage": stage,
+                        "v29_contract_resource_gate": False,
+                        "task_memory_max_bytes": v29_contract["execution"]["resources"]["task_memory_max_bytes"],
+                        "host_reserve_bytes": v29_contract["execution"]["resources"]["host_reserve_bytes"],
+                        "requested_additional_bytes": requested,
+                        "cgroup_snapshot": dict(cgroup),
+                        "host_effective_available_bytes": result.get("host_effective_available_bytes"),
+                        "reason": str(error),
+                        "passed": False,
+                    },
+                ) from error
+            result["v29_contract_resource_gate"] = {
+                "passed": True,
+                "task_memory_max_bytes": v29_contract["execution"]["resources"]["task_memory_max_bytes"],
+                "host_reserve_bytes": v29_contract["execution"]["resources"]["host_reserve_bytes"],
+                "requested_additional_bytes": requested,
+                "cgroup_limit_bytes": cgroup["memory_limit_bytes"],
+                "cgroup_current_bytes": cgroup["memory_current_bytes"],
+                "host_effective_available_bytes": result["host_effective_available_bytes"],
+            }
+            return result
+
     current_identity = {
         "source_sha": source_sha,
         "run_id": preflight.get("run_id"),
@@ -1938,6 +2097,12 @@ def _run_v27_saved_q0_stage(
         "mode_manifest_sha256": mode_sha,
         "ordered_mode_key_sha256": key_sha,
     }
+    if v29_strict_factor_only:
+        current_identity["execution_campaign_window_sha256"] = str(
+            os.environ.get("TASK40_V29_EXECUTION_WINDOW_SHA256", "")
+        )
+        current_identity["execution_contract_sha256"] = str(v29_contract_sha256)
+        current_identity["execution_selector_sha256"] = str(v29_selector_sha256)
     donor_identity_sha = hashlib.sha256(
         json.dumps(donor_import, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
@@ -2001,14 +2166,40 @@ def _run_v27_saved_q0_stage(
         _write_json(operation_path, operation)
 
     def continue_v28_factor_only_if_qualified() -> dict[str, Any] | None:
-        if not v28_continuation or not manifest_path.is_file():
+        if not v28_continuation:
+            return None
+        v29_factor_only_prepare_started = (
+            time.perf_counter() if v29_strict_factor_only else None
+        )
+        if not manifest_path.is_file():
+            if v29_strict_factor_only:
+                raise RuntimeError(
+                    "V29 strict factor-only refused before adapter/fill/readback: "
+                    f"COMPLETE_CSR manifest is missing at {manifest_path}"
+                )
             return None
         existing = json.loads(manifest_path.read_text(encoding="utf-8"))
         if existing.get("status") != "COMPLETE_CSR":
+            if v29_strict_factor_only:
+                raise RuntimeError(
+                    "V29 strict factor-only refused before adapter/fill/readback: "
+                    f"manifest.status expected COMPLETE_CSR, got {existing.get('status')!r} "
+                    f"at {manifest_path}"
+                )
             operation["continuation_action"] = _v28_continuation_action(
                 str(existing.get("status", "")), False
             )
             return None
+        if v29_strict_factor_only and (
+            _sha256_file(manifest_path) != v29_selector.get("manifest_sha256")
+            or manifest_path.resolve()
+            != v29_resolve_path(v29_selector.get("manifest_path", ""))
+        ):
+            raise RuntimeError(
+                "V29 strict factor-only refused before adapter/fill/readback: "
+                f"COMPLETE_CSR manifest path/hash differs at {manifest_path}"
+            )
+        qualification_match_started = time.perf_counter()
         qualification_binding = _load_matching_v28_native_qualification(
             repo_root=repo_root,
             manifest_path=manifest_path,
@@ -2023,16 +2214,39 @@ def _run_v27_saved_q0_stage(
             mode_manifest_sha256=mode_sha,
             ordered_mode_key_sha256=key_sha,
             sha256_file=_sha256_file,
+            path_resolver=v29_resolve_path if v29_strict_factor_only else None,
         )
+        qualification_match_seconds = float(time.perf_counter() - qualification_match_started)
         action = _v28_continuation_action(
             "COMPLETE_CSR", qualification_binding is not None
         )
         operation["continuation_action"] = action
         if qualification_binding is None:
             operation["existing_native_qualification_rejected_or_missing"] = True
+            if v29_strict_factor_only:
+                native_record = existing.get("native_qualification", {})
+                native_record = native_record if isinstance(native_record, Mapping) else {}
+                raise RuntimeError(
+                    "V29 strict factor-only refused before adapter/fill/readback: "
+                    "matching native PASS is missing or failed identity checks; "
+                    f"manifest={manifest_path}; qualification={native_record.get('path')!r}; "
+                    f"qualification_sha256={native_record.get('sha256')!r}"
+                )
             return None
 
         qualification_path, qualification = qualification_binding
+        if v29_strict_factor_only:
+            require_strict_factor_only_status(existing, qualification)
+        if v29_strict_factor_only and (
+            qualification_path.resolve()
+            != v29_resolve_path(v29_selector.get("qualification_path", ""))
+            or _sha256_file(qualification_path)
+            != v29_selector.get("qualification_sha256")
+        ):
+            raise RuntimeError(
+                "V29 strict factor-only refused before adapter/fill/readback: "
+                "matching native PASS differs from the approved selector"
+            )
         artifact_records = existing.get("csr_artifacts", {})
         artifact_records = artifact_records if isinstance(artifact_records, Mapping) else {}
         csr_payload_bytes = sum(
@@ -2054,7 +2268,19 @@ def _run_v27_saved_q0_stage(
                 "all_three_csr_array_hashes_bound": True,
             },
         )
-        q0_csr, completed_manifest = open_saved_q0_csr_from_manifest(manifest_path)
+        saved_csr_open_started = time.perf_counter()
+        q0_csr, completed_manifest = open_saved_q0_csr_from_manifest(
+            manifest_path,
+            path_resolver=v29_resolve_path if v29_strict_factor_only else None,
+        )
+        saved_csr_open_seconds = float(time.perf_counter() - saved_csr_open_started)
+        if v29_strict_factor_only:
+            operation["timings_v29"] = {
+                "qualification_match_full_identity_parent_seconds": qualification_match_seconds,
+                "saved_csr_open_and_full_hash_parent_seconds": saved_csr_open_seconds,
+                "csr_arrays_are_read_only_mmap": True,
+                "csr_payload_bytes_hashed": csr_payload_bytes,
+            }
         qualification_sha = _sha256_file(qualification_path)
         current_identity["native_qualification_sha256"] = qualification_sha
         operation["current_execution_identity"] = dict(current_identity)
@@ -2083,6 +2309,21 @@ def _run_v27_saved_q0_stage(
                 ),
                 "factor_execution_identity": dict(current_identity),
             }
+        )
+        if v29_strict_factor_only:
+            operation["v29_strict_factor_only_binding"] = {
+                "contract_sha256": v29_contract_sha256,
+                "selector_sha256": v29_selector_sha256,
+                "execution_window_sha256": os.environ.get(
+                    "TASK40_V29_EXECUTION_WINDOW_SHA256"
+                ),
+                "strict_policy": "COMPLETE_AND_MATCHING_V28_NATIVE_PASS_REQUIRED",
+                "fallback_disabled": True,
+            }
+        v29_initial_loader_parent_seconds = (
+            float(time.perf_counter() - v29_factor_only_prepare_started)
+            if v29_factor_only_prepare_started is not None
+            else None
         )
         factor_root = output_directory / "v28_q0_factor"
         factor_checkpoint_path = factor_root / "v26_q0_factor_checkpoints.json"
@@ -2122,6 +2363,48 @@ def _run_v27_saved_q0_stage(
         factor_built = bool(
             factor_report.get("q_coverage", {}).get("numeric_factor_built") is True
         )
+        if v29_strict_factor_only:
+            lifecycle_timings = factor_report.get("timings_v29", {})
+            lifecycle_timings = lifecycle_timings if isinstance(lifecycle_timings, Mapping) else {}
+            lifecycle_fq = lifecycle_timings.get("F_q", {})
+            lifecycle_fq = lifecycle_fq if isinstance(lifecycle_fq, Mapping) else {}
+            initial_loader_timings = operation.get("timings_v29", {})
+            initial_loader_timings = (
+                initial_loader_timings if isinstance(initial_loader_timings, Mapping) else {}
+            )
+            lifecycle_fq_seconds = lifecycle_fq.get("parent_seconds")
+            loader_seconds = v29_initial_loader_parent_seconds
+            operation["timings_v29"]["F_q"] = {
+                "status": lifecycle_fq.get("status", "NOT_RECORDED"),
+                "parent_seconds": (
+                    float(loader_seconds) + float(lifecycle_fq_seconds)
+                    if isinstance(loader_seconds, (int, float))
+                    and isinstance(lifecycle_fq_seconds, (int, float))
+                    else None
+                ),
+                "includes_initial_loader": True,
+                "initial_loader_parent_seconds": loader_seconds,
+                "initial_loader_subphases": {
+                    "qualification_match_full_identity_parent_seconds": initial_loader_timings.get(
+                        "qualification_match_full_identity_parent_seconds"
+                    ),
+                    "saved_csr_open_and_full_hash_parent_seconds": initial_loader_timings.get(
+                        "saved_csr_open_and_full_hash_parent_seconds"
+                    ),
+                    "initial_loader_total_boundary": "from strict COMPLETE/PASS manifest entry through read-only mmap and full CSR file hash; includes intervening identity checks and resource admission",
+                },
+                "factor_lifecycle_through_fresh_qualification_parent_seconds": lifecycle_fq_seconds,
+                "boundary": "cold q0 factor-cache miss starts at strict saved-manifest/qualification validation; includes initial CSR loader, conversion, symbolic, numeric, first MatSolve, full explicit true residual and fresh raw readback; ends before second RHS and eviction",
+                "second_rhs_and_eviction_included": False,
+            }
+            operation["timings_v29"]["S_q"] = lifecycle_timings.get("S_q", {
+                "status": "NOT_RECORDED",
+                "parent_seconds": None,
+            })
+            operation["timings_v29"]["eviction"] = lifecycle_timings.get("eviction", {
+                "parent_seconds": None,
+                "status": "NOT_RECORDED",
+            })
         operation["factor_lifecycle"] = factor_report
         operation["factor_or_solve_built"] = factor_built
         operation["factor_checkpoint"] = {
@@ -2161,6 +2444,10 @@ def _run_v27_saved_q0_stage(
         factor_only_result = continue_v28_factor_only_if_qualified()
         if factor_only_result is not None:
             return factor_only_result
+        if v29_strict_factor_only:
+            raise RuntimeError(
+                "V29 strict factor-only refused before adapter/fill/readback: no qualified continuation returned"
+            )
         payloads = {
             str(item.get("path")): item
             for item in producer_identity.get("payloads", [])
@@ -4108,6 +4395,24 @@ def run_task40_v20_stage(
     )
     _write_json(output_directory / "v20_stage_preflight.json", preflight)
     completed = ["preflight"]
+
+    if (
+        profile == _V22_TARGET_OPERATOR_PROFILE
+        and stop_stage == "selected_reference_q_csr"
+        and os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1"
+    ):
+        return _run_v27_saved_q0_stage(
+            resolved_payload,
+            output_directory,
+            source_sha=source_sha,
+            profile=profile,
+            preflight=preflight,
+            modes=modes,
+            mode_rows=mode_rows,
+            stop_stage=stop_stage,
+            v28_continuation=True,
+            v29_strict_factor_only=True,
+        )
 
     if (
         profile == _V22_TARGET_OPERATOR_PROFILE

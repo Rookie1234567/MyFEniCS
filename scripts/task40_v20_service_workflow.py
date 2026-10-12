@@ -12,7 +12,7 @@ import re
 import subprocess
 import sys
 import tomllib
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -75,6 +75,7 @@ from src.runners.task40_v10_campaign import (  # noqa: E402
     TASK40_V28_REVIEW_SHA256,
     TASK40_V28_SOURCE_AT_ENTRY,
     TASK40_V28_STAGE_SCOPE,
+    TASK40_V29_CAMPAIGN_WINDOW,
     load_fixed_campaign_window,
 )
 
@@ -167,6 +168,12 @@ V27_REPLAY_ROOT = V26_ARTIFACT_ROOT / "saved_replay"
 V27_NATIVE_ROOT = V26_ARTIFACT_ROOT / "native_consumer"
 V28_ARTIFACT_ROOT = Path(
     "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl"
+)
+V29_ARTIFACT_ROOT = Path(
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl"
+)
+V29_PREPARATION_ROOT = Path(
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_preparation"
 )
 V28_TARGET_PROFILE = V27_TARGET_PROFILE
 V28_STOP_STAGE_SCOPE = {
@@ -348,6 +355,7 @@ def _resolve_service_campaign(
     v26_path = (repo_root / TASK40_V26_CAMPAIGN_WINDOW).resolve()
     v27_path = (repo_root / TASK40_V27_CAMPAIGN_WINDOW).resolve()
     v28_path = (repo_root / TASK40_V28_CAMPAIGN_WINDOW).resolve()
+    v29_path = (repo_root / TASK40_V29_CAMPAIGN_WINDOW).resolve()
     if supplied == v22_path:
         if profile != V22_TARGET_PROFILE:
             raise ValueError("the V22 campaign route is restricted to the registered Ny8 target")
@@ -524,8 +532,14 @@ def _resolve_service_campaign(
             raise ValueError("the V28 campaign registration receipt identity or scope changed")
         window = load_fixed_campaign_window(v28_path, require_current_boot=True)
         campaign_version = "V28"
+    elif supplied == v29_path:
+        if profile != V28_TARGET_PROFILE or stop_stage not in V28_SELECTED_Q_STAGES:
+            raise ValueError("the V29 campaign route is restricted to existing q0 factor-only continuation")
+        window = load_fixed_campaign_window(v29_path, require_current_boot=True)
+        stage_scope = "existing_manifest_continuation_factor_only"
+        campaign_version = "V29"
     else:
-        raise ValueError("service campaign window is not a registered V19 or V22–V28 path")
+        raise ValueError("service campaign window is not a registered V19 or V22–V29 path")
     return {
         "path": window.path,
         "sha256": window.sha256,
@@ -1270,13 +1284,29 @@ def _intervals(events: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list
 
 
 def _activation_environment(
-    repo_root: Path, runtime_prefix: Path, abi_receipt: Path, jit_cache: Path
+    repo_root: Path,
+    runtime_prefix: Path,
+    abi_receipt: Path,
+    jit_cache: Path,
+    *,
+    runtime_profile: str | None = None,
 ) -> tuple[dict[str, str], str, int, str]:
-    command = (
-        'set -euo pipefail; cd -- "$1"; '
-        'source scripts/task40_fresh_c1/activate_local_wsl_complex.sh "$2" "$3" "$4"; '
-        'env -0'
-    )
+    if runtime_profile == "native_linux":
+        command = (
+            'set -euo pipefail; cd -- "$1"; '
+            'unset _MYFENICS_WSL_QUALIFIED_ACTIVATION; '
+            'source scripts/task40_fresh_c1/activate_native_complex.sh '
+            '"$2" "$3" "$4" native_linux; '
+            'env -0'
+        )
+    elif runtime_profile is None:
+        command = (
+            'set -euo pipefail; cd -- "$1"; '
+            'source scripts/task40_fresh_c1/activate_local_wsl_complex.sh "$2" "$3" "$4"; '
+            'env -0'
+        )
+    else:
+        raise ValueError(f"unsupported Task40 V29 runtime profile: {runtime_profile}")
     argv = [
         "/usr/bin/bash",
         "-lc",
@@ -1293,12 +1323,20 @@ def _activation_environment(
         if item and b"=" in item:
             key, value = item.split(b"=", 1)
             environment[key.decode()] = value.decode(errors="surrogateescape")
+    if runtime_profile == "native_linux" and completed.returncode == 0:
+        environment["TASK40_V29_STRICT_FACTOR_ONLY"] = "1"
     return (
         environment,
         " ".join(argv),
         int(completed.returncode),
         completed.stderr.decode("utf-8", errors="replace"),
     )
+
+
+def _qualified_activation_identity(environment: Mapping[str, str]) -> str | None:
+    from src.runners.task40_v29_contract import qualified_activation_identity
+
+    return qualified_activation_identity(environment)
 
 
 def _abi_preflight(
@@ -1522,6 +1560,230 @@ def _extract_v28_q0_continuation_selector_arg(
     return cleaned, selected
 
 
+def _extract_v29_path_arg(case_args: list[str], flag: str) -> tuple[list[str], Path | None]:
+    """Remove one V29 path argument before forwarding case args to run_case."""
+    cleaned: list[str] = []
+    selected: Path | None = None
+    index = 0
+    while index < len(case_args):
+        value = case_args[index]
+        if value == flag:
+            if selected is not None or index + 1 >= len(case_args):
+                raise ValueError(f"{flag} must appear once with a path")
+            selected = Path(case_args[index + 1]).resolve()
+            index += 2
+            continue
+        if value.startswith(flag + "="):
+            if selected is not None:
+                raise ValueError(f"{flag} must appear only once")
+            selected = Path(value.split("=", 1)[1]).resolve()
+            index += 1
+            continue
+        cleaned.append(value)
+        index += 1
+    return cleaned, selected
+
+
+def _map_v29_paths_in_value(value: Any, resolver: Callable[[str | Path], Path]) -> Any:
+    """Map only absolute paths rooted in the canonical source tree, in-memory."""
+    if isinstance(value, Mapping):
+        return {key: _map_v29_paths_in_value(item, resolver) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_map_v29_paths_in_value(item, resolver) for item in value]
+    if isinstance(value, str) and Path(value).is_absolute():
+        try:
+            return str(resolver(value))
+        except ValueError:
+            return value
+    return value
+
+
+def _bind_v29_factor_only_selector(
+    selector_path: Path,
+    contract_path: Path,
+    *,
+    input_path: Path,
+    campaign_registration: Mapping[str, Any],
+    profile: str,
+    stop_stage: str,
+    repo_root: Path,
+) -> dict[str, Any]:
+    """Bind the exact V29 contract and immutable V28 factor-only science input."""
+    from src.runners.task40_v29_contract import (
+        V29_STRICT_POLICY,
+        approved_path_resolver,
+        require_authorized_contract,
+        require_authorized_selector,
+        require_strict_factor_only_status,
+    )
+    from src.runners.task40_v20_stage_runner import _load_matching_v28_native_qualification
+
+    contract, contract_sha = require_authorized_contract(
+        contract_path,
+        current_root=repo_root,
+    )
+    selector, selector_sha = require_authorized_selector(
+        selector_path,
+        expected_sha256=None,
+        contract_path=contract_path,
+        contract_sha256=contract_sha,
+        contract=contract,
+    )
+    resolver = approved_path_resolver(contract)
+    if (
+        selector.get("policy") != V29_STRICT_POLICY
+        or campaign_registration.get("version") != "V29"
+        or campaign_registration.get("sha256") != contract["execution"]["campaign_window_sha256"]
+        or profile != V28_TARGET_PROFILE
+        or stop_stage not in V28_SELECTED_Q_STAGES
+    ):
+        raise ValueError("V29 strict selector requires its exact approved factor-only profile/window/stage")
+    mapped_input_path = resolver(selector.get("input_path", ""))
+    if mapped_input_path != input_path.resolve() or selector.get("input_sha256") != _sha256_file(input_path):
+        raise ValueError("V29 stage DAT differs from the frozen V28 scientific input identity")
+    science = contract.get("scientific_identity", {})
+    if (
+        not isinstance(science, Mapping)
+        or science.get("input_sha256") != selector.get("input_sha256")
+        or science.get("v28_complete_manifest_sha256") != selector.get("manifest_sha256")
+        or science.get("v28_native_qualification_sha256") != selector.get("qualification_sha256")
+        or science.get("v28_window_sha256") != selector.get("qualified_window_sha256")
+    ):
+        raise ValueError("V29 execution contract and factor-only selector disagree on immutable science identity")
+
+    old_selector_path = resolver(selector.get("immutable_v28_selector_path", ""))
+    old_selector_sha = selector.get("immutable_v28_selector_sha256")
+    if not old_selector_path.is_file() or _sha256_file(old_selector_path) != old_selector_sha:
+        raise ValueError("V29 immutable V28 selector is missing or changed")
+    old_selector = json.loads(old_selector_path.read_text(encoding="utf-8"))
+    donor_import = verify_v27_v26_donor_import(
+        repo_root=repo_root,
+        path_resolver=resolver,
+    )
+    stored_donor = old_selector.get("donor_import")
+    mapped_donor = _map_v29_paths_in_value(stored_donor, resolver)
+    donor_sha = hashlib.sha256(
+        json.dumps(stored_donor, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    pattern_path = (repo_root / V28_PATTERN_MANIFEST_RELATIVE).resolve()
+    continuation_path = pattern_path.with_name(V28_CONTINUATION_MANIFEST_NAME)
+    if (
+        old_selector.get("schema") != "task40extra.review_v28_q0_continuation_operation.v1"
+        or old_selector.get("campaign_window_sha256") != TASK40_V28_CAMPAIGN_SHA256
+        or old_selector.get("input_sha256") != _sha256_file(input_path)
+        or old_selector.get("model_profile") != V28_TARGET_PROFILE
+        or old_selector.get("stop_stage") != stop_stage
+        or mapped_donor != donor_import
+        or donor_sha != selector.get("qualified_donor_identity_sha256")
+        or resolver(old_selector.get("pattern_manifest_path", "")) != pattern_path
+        or old_selector.get("pattern_manifest_sha256") != V28_PATTERN_MANIFEST_SHA256
+        or resolver(old_selector.get("continuation_manifest_path", "")) != continuation_path
+        or old_selector.get("continuation_policy") != V28_CONTINUATION_POLICY
+    ):
+        raise ValueError("V29 old V28 donor/pattern selector no longer matches its read-only dependencies")
+
+    manifest_path = resolver(selector.get("manifest_path", ""))
+    qualification_path = resolver(selector.get("qualification_path", ""))
+    if (
+        manifest_path != continuation_path
+        or not manifest_path.is_file()
+        or _sha256_file(manifest_path) != selector.get("manifest_sha256")
+        or not qualification_path.is_file()
+        or _sha256_file(qualification_path) != selector.get("qualification_sha256")
+    ):
+        raise ValueError("V29 COMPLETE CSR or native PASS is missing or differs from the frozen hash")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    qualification = json.loads(qualification_path.read_text(encoding="utf-8"))
+    require_strict_factor_only_status(manifest, qualification)
+    qualified = _load_matching_v28_native_qualification(
+        repo_root=repo_root,
+        manifest_path=manifest_path,
+        manifest=manifest,
+        expected_pattern_path=pattern_path,
+        expected_pattern_sha256=V28_PATTERN_MANIFEST_SHA256,
+        donor_identity_sha256=donor_sha,
+        input_sha256=str(selector["input_sha256"]),
+        physical_model_sha256=str(selector["physical_model_sha256"]),
+        run_id=str(selector["run_id"]),
+        campaign_window_sha256=str(selector["qualified_window_sha256"]),
+        mode_manifest_sha256=str(selector.get("qualified_mode_manifest_sha256", "")),
+        ordered_mode_key_sha256=str(selector.get("qualified_ordered_mode_key_sha256", "")),
+        sha256_file=_sha256_file,
+        path_resolver=resolver,
+    )
+    if qualified is None or qualified[0] != qualification_path:
+        raise ValueError("V29 native PASS failed the existing complete q0 qualification matcher")
+    return {
+        "selector_path": str(selector_path.resolve()),
+        "selector_sha256": selector_sha,
+        "contract_path": str(contract_path.resolve()),
+        "contract_sha256": contract_sha,
+        "immutable_v28_selector_path": str(old_selector_path),
+        "immutable_v28_selector_sha256": str(old_selector_sha),
+        "operation": V28_CONTINUATION_OPERATION,
+        "stop_stage": stop_stage,
+        "campaign_window_sha256": str(campaign_registration["sha256"]),
+        "qualified_window_sha256": str(selector["qualified_window_sha256"]),
+        "input_sha256": str(selector["input_sha256"]),
+        "donor_identity_sha256": donor_sha,
+        "producer_root": str((repo_root / V26_PRODUCER_RUN_RELATIVE).resolve()),
+        "pattern_manifest_path": str(pattern_path),
+        "pattern_manifest_sha256": V28_PATTERN_MANIFEST_SHA256,
+        "continuation_manifest_path": str(continuation_path),
+        "manifest_sha256": str(selector["manifest_sha256"]),
+        "qualification_path": str(qualification_path),
+        "qualification_sha256": str(selector["qualification_sha256"]),
+        "execution_window_path": str(contract["execution"]["campaign_window_path"]),
+        "execution_window_sha256": str(contract["execution"]["campaign_window_sha256"]),
+        "contract": contract,
+    }
+
+
+def _v29_live_resource_gate(contract: Mapping[str, Any], *, stage: str) -> dict[str, Any]:
+    """Require the live task cgroup and host reserve to match V29 authorization."""
+    from src.runners.task40_v29_contract import (
+        V29ContractError,
+        validate_live_resource_contract,
+    )
+    from src.solvers.task40_v22_operator_probe import _resource_admission, _resource_snapshot
+
+    admission = _resource_admission(
+        stage,
+        0,
+        resource_sample=_resource_snapshot,
+        require_task_cgroup=True,
+        explicit_process_tree_cap_bytes=int(
+            contract["execution"]["resources"]["task_memory_max_bytes"]
+        ),
+        host_reserve_bytes=int(contract["execution"]["resources"]["host_reserve_bytes"]),
+        task_cgroup_reserve_bytes=0,
+    )
+    cgroup = admission.get("current_process_cgroup", {})
+    if not isinstance(cgroup, Mapping) or (
+        cgroup.get("dedicated_job_cgroup") is not True
+        or cgroup.get("swap_current_bytes") != 0
+    ):
+        raise V29ContractError(f"{stage}: dedicated zero-swap systemd task cgroup is unavailable")
+    validate_live_resource_contract(
+        contract,
+        cgroup_limit_bytes=int(cgroup["memory_limit_bytes"]),
+        cgroup_current_bytes=int(cgroup["memory_current_bytes"]),
+        host_effective_available_bytes=int(admission["host_effective_available_bytes"]),
+        additional_request_bytes=0,
+    )
+    return {
+        "stage": stage,
+        "passed": True,
+        "task_memory_max_bytes": int(contract["execution"]["resources"]["task_memory_max_bytes"]),
+        "host_reserve_bytes": int(contract["execution"]["resources"]["host_reserve_bytes"]),
+        "memory_swap_max_bytes": int(contract["execution"]["resources"]["memory_swap_max_bytes"]),
+        "cgroup_limit_bytes": int(cgroup["memory_limit_bytes"]),
+        "cgroup_current_bytes": int(cgroup["memory_current_bytes"]),
+        "host_effective_available_bytes": int(admission["host_effective_available_bytes"]),
+        "resource_admission": admission,
+    }
+
+
 def _bind_v25_selected_operation_selector(
     selector_path: Path,
     *,
@@ -1566,7 +1828,10 @@ def _bind_v25_selected_operation_selector(
 
 
 def verify_v26_saved_producer_metadata(
-    *, producer_root: Path, repo_root: Path = ROOT
+    *,
+    producer_root: Path,
+    repo_root: Path = ROOT,
+    path_resolver: Callable[[str | Path], Path] | None = None,
 ) -> dict[str, Any]:
     """Rebind the malformed legacy field only after strict V25 producer cross-checks."""
     producer_root = producer_root.resolve()
@@ -1631,7 +1896,12 @@ def verify_v26_saved_producer_metadata(
         or resolved_provenance.get("physical_model_sha256") != run.get("physical_model_sha256")
     ):
         raise ValueError("V26 verified producer input identity differs across dat/support/resolved config")
-    manifest_input_path = Path(str(run_manifest.get("input_path", ""))).resolve()
+    raw_manifest_input_path = Path(str(run_manifest.get("input_path", "")))
+    manifest_input_path = (
+        path_resolver(raw_manifest_input_path)
+        if path_resolver is not None
+        else raw_manifest_input_path.resolve()
+    )
     expected_v25_input = (
         repo_root / V25_ARTIFACT_ROOT / "stage_inputs" / "selected_reference_q_build_only"
         / "target_original_ny8_operator_probe_v22.dat"
@@ -1678,11 +1948,17 @@ def verify_v26_saved_producer_metadata(
     }
 
 
-def verify_v27_v26_donor_import(*, repo_root: Path = ROOT) -> dict[str, Any]:
+def verify_v27_v26_donor_import(
+    *,
+    repo_root: Path = ROOT,
+    path_resolver: Callable[[str | Path], Path] | None = None,
+) -> dict[str, Any]:
     """Bind V27 to the already-passed V26 saved replay/native recovery evidence."""
     producer_root = (repo_root / V26_PRODUCER_RUN_RELATIVE).resolve()
     producer_identity = verify_v26_saved_producer_metadata(
-        producer_root=producer_root, repo_root=repo_root
+        producer_root=producer_root,
+        repo_root=repo_root,
+        path_resolver=path_resolver,
     )
     replay_root = (repo_root / V27_REPLAY_ROOT).resolve()
     replay_path = replay_root / "v26_saved_q_replay_manifest.json"
@@ -2263,8 +2539,8 @@ def _run_required_checker_supervision(request: dict[str, Any]) -> dict[str, Any]
     evidence_directory = Path(request["evidence_directory"])
     runtime_prefix = Path(request["runtime_prefix"])
     environment = dict(os.environ)
-    activation_marker = environment.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION")
-    if request.get("activation_marker") != activation_marker:
+    activation_marker = _qualified_activation_identity(environment)
+    if activation_marker is None or request.get("activation_marker") != activation_marker:
         raise RuntimeError("required checker supervisor activation identity differs")
     numeric_environment = request.get("numeric_environment", {})
     if not isinstance(numeric_environment, dict):
@@ -2288,15 +2564,55 @@ def _run_required_checker_supervision(request: dict[str, Any]) -> dict[str, Any]
     campaign_accounting = Path(request["campaign_accounting"])
     source_state = dict(request["source_state"])
     profile = str(request["profile"])
+    v29_watchdog_gate = None
+    v29_contract = None
+    if environment.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1":
+        from src.runners.task40_v29_contract import (
+            require_authorized_contract,
+            require_authorized_selector,
+        )
 
-    if environment.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1":
-        raise RuntimeError("required checker supervisor lacks qualified activation")
+        contract, contract_sha = require_authorized_contract(
+            environment["TASK40_V29_CONTRACT_PATH"],
+            expected_sha256=environment["TASK40_V29_CONTRACT_SHA256"],
+            current_root=repo_root,
+        )
+        require_authorized_selector(
+            environment["TASK40_V29_SELECTOR_PATH"],
+            expected_sha256=environment["TASK40_V29_SELECTOR_SHA256"],
+            contract_path=environment["TASK40_V29_CONTRACT_PATH"],
+            contract_sha256=contract_sha,
+            contract=contract,
+        )
+        if (
+            Path(str(contract["execution"]["campaign_window_path"])).resolve()
+            != campaign_window.resolve()
+            or contract["execution"]["campaign_window_sha256"] != campaign_sha256
+        ):
+            raise RuntimeError("V29 watchdog campaign binding differs from the approved execution window")
+        if request.get("v29_resource_gate", {}).get("passed") is not True:
+            raise RuntimeError("V29 watchdog request lacks a passing parent resource-contract check")
+        v29_watchdog_gate = _v29_live_resource_gate(
+            contract,
+            stage="v29_checker_watchdog_child_entry",
+        )
+    elif request.get("v29_resource_gate") is not None:
+        raise RuntimeError("V29 watchdog resource receipt was supplied without strict V29 mode")
+
+    if _qualified_activation_identity(environment) is None:
+        raise RuntimeError("required checker supervisor lacks a qualified runtime profile")
     if not os.path.samefile(sys.executable, runtime_prefix / "bin/python"):
         raise RuntimeError("required checker supervisor is not using the qualified interpreter")
 
     resources = profile_facts(profile)["resources"]
     if resources.get("watchdog_memory_policy") != PHYSICAL_MEMORY_PRESSURE_POLICY:
         raise ValueError("V20 checker watchdog policy differs from the qualified physical-pressure policy")
+    watchdog_tree_cap_bytes = int(resources["process_tree_rss_cap_bytes"])
+    watchdog_host_reserve_bytes = None
+    if v29_contract is not None:
+        approved_resources = v29_contract["execution"]["resources"]
+        watchdog_tree_cap_bytes = int(approved_resources["task_memory_max_bytes"])
+        watchdog_host_reserve_bytes = int(approved_resources["host_reserve_bytes"])
     workflow_limit_seconds = float(resources["workflow_seconds"])
     watchdog_directory = evidence_directory / "required_checker_watchdog"
     worker_environment = dict(environment)
@@ -2310,7 +2626,9 @@ def _run_required_checker_supervision(request: dict[str, Any]) -> dict[str, Any]
             ),
             "PHYSICAL_WATCHDOG_PSS_POLICY": str(resources["pss_sampling_policy"]),
             "XDG_CACHE_HOME": str(
-                (repo_root / QUALIFIED_JIT_RELATIVE).resolve()
+                Path(str(v29_contract["execution"]["jit_cache"])).resolve()
+                if v29_contract is not None
+                else (repo_root / QUALIFIED_JIT_RELATIVE).resolve()
             ),
         }
     )
@@ -2325,7 +2643,9 @@ def _run_required_checker_supervision(request: dict[str, Any]) -> dict[str, Any]
         time_policy=V14_TIME_POLICY_ENFORCE,
         memory_policy=str(resources["watchdog_memory_policy"]),
         pss_sampling_policy=str(resources["pss_sampling_policy"]),
-        tree_cap_bytes=int(resources["process_tree_rss_cap_bytes"]),
+        tree_cap_bytes=watchdog_tree_cap_bytes,
+        host_reserve_bytes=watchdog_host_reserve_bytes,
+        task_cgroup_reserve_bytes=(0 if v29_contract is not None else None),
         allow_physical_pressure_tree_cap=True,
         require_job_cgroup_zero_swap=True,
         campaign_window_path=campaign_window,
@@ -2372,6 +2692,7 @@ def _run_required_checker_supervision(request: dict[str, Any]) -> dict[str, Any]
         "leader_exit_code": exit_code,
         "returncode": return_code,
         "payload": payload if isinstance(payload, dict) else None,
+        "v29_contract_resource_gate": v29_watchdog_gate,
         "supervision": {
             "profile_workflow_limit_seconds": workflow_limit_seconds,
             "campaign_closeout_reserve_seconds": int(
@@ -2381,7 +2702,8 @@ def _run_required_checker_supervision(request: dict[str, Any]) -> dict[str, Any]
             "campaign_accounting_path": str(campaign_accounting),
             "memory_policy": resources["watchdog_memory_policy"],
             "pss_sampling_policy": resources["pss_sampling_policy"],
-            "process_tree_rss_cap_bytes": resources["process_tree_rss_cap_bytes"],
+            "process_tree_rss_cap_bytes": watchdog_tree_cap_bytes,
+            "host_reserve_bytes": watchdog_host_reserve_bytes,
             "zero_swap_required": True,
             "service_cgroup_membership": service_cgroup_membership,
             "process_tree_root_pid": tree_accounting_root_pid,
@@ -2415,8 +2737,37 @@ def _supervise_required_checker(
 ) -> tuple[int, dict[str, Any] | None, dict[str, Any]]:
     """Launch the watchdog from the qualified interpreter, away from the -S parent."""
 
-    if environment.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1":
-        raise RuntimeError("V20 user-service did not receive the qualified activation marker")
+    if _qualified_activation_identity(environment) is None:
+        raise RuntimeError("V20 user-service did not receive a qualified runtime profile")
+    v29_resource_gate = None
+    if environment.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1":
+        from src.runners.task40_v29_contract import (
+            require_authorized_contract,
+            require_authorized_selector,
+        )
+
+        contract, contract_sha = require_authorized_contract(
+            environment["TASK40_V29_CONTRACT_PATH"],
+            expected_sha256=environment["TASK40_V29_CONTRACT_SHA256"],
+            current_root=repo_root,
+        )
+        require_authorized_selector(
+            environment["TASK40_V29_SELECTOR_PATH"],
+            expected_sha256=environment["TASK40_V29_SELECTOR_SHA256"],
+            contract_path=environment["TASK40_V29_CONTRACT_PATH"],
+            contract_sha256=contract_sha,
+            contract=contract,
+        )
+        if (
+            Path(str(contract["execution"]["campaign_window_path"])).resolve()
+            != campaign_window.resolve()
+            or contract["execution"]["campaign_window_sha256"] != campaign_sha256
+        ):
+            raise RuntimeError("V29 checker watchdog campaign window differs from its approved contract")
+        v29_resource_gate = _v29_live_resource_gate(
+            contract,
+            stage="v29_before_required_checker_watchdog",
+        )
     request_path = evidence_directory / "required_checker_supervision_request.json"
     response_path = evidence_directory / "required_checker_supervision_response.json"
     stdout_path = evidence_directory / "required_checker_supervisor_stdout.raw.txt"
@@ -2436,9 +2787,7 @@ def _supervise_required_checker(
         "checker_kind": checker_kind,
         "evidence_directory": str(evidence_directory),
         "runtime_prefix": str(runtime_prefix),
-        "activation_marker": environment.get(
-            "_MYFENICS_WSL_QUALIFIED_ACTIVATION"
-        ),
+        "activation_marker": _qualified_activation_identity(environment),
         "numeric_environment": {
             key: environment[key]
             for key in numeric_setting_names
@@ -2453,6 +2802,7 @@ def _supervise_required_checker(
         "source_state": source_state,
         "profile": profile,
         "response_path": str(response_path),
+        "v29_resource_gate": v29_resource_gate,
     }
     _write_json_fsync(request_path, request)
     supervisor_command = [
@@ -2490,9 +2840,7 @@ def _supervise_required_checker(
     details["qualified_supervisor"] = {
         "command": supervisor_command,
         "returncode": int(child.returncode),
-        "activation_marker": environment.get(
-            "_MYFENICS_WSL_QUALIFIED_ACTIVATION"
-        ),
+        "activation_marker": _qualified_activation_identity(environment),
         "request_path": str(request_path),
         "request_sha256": _sha256_file(request_path),
         "response_path": str(response_path),
@@ -2511,8 +2859,10 @@ def _supervise_required_checker(
 def _run_required_checker_supervision_request(request_path: Path) -> int:
     request = json.loads(request_path.read_text(encoding="utf-8"))
     runtime_prefix = Path(request["runtime_prefix"])
-    if os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1":
-        raise RuntimeError("required checker supervisor child lacks qualified activation")
+    if _qualified_activation_identity(os.environ) is None:
+        raise RuntimeError("required checker supervisor child lacks a qualified runtime profile")
+    if request.get("activation_marker") != _qualified_activation_identity(os.environ):
+        raise RuntimeError("required checker supervisor child runtime profile differs from request")
     if not os.path.samefile(sys.executable, runtime_prefix / "bin/python"):
         raise RuntimeError("required checker supervisor child interpreter identity differs")
     if int(request["service_parent_pid"]) != os.getppid():
@@ -7063,6 +7413,94 @@ def _check_partial_result(
         checks["local_components_artifact_present"] = (
             numerical_output / "v20_local_port_components.json"
         ).is_file()
+    if os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1":
+        try:
+            from src.runners.task40_v29_contract import (
+                V29_STRICT_POLICY,
+                require_authorized_contract,
+                require_authorized_selector,
+                require_strict_factor_only_status,
+            )
+
+            contract_path = Path(os.environ["TASK40_V29_CONTRACT_PATH"])
+            selector_path = Path(os.environ["TASK40_V29_SELECTOR_PATH"])
+            contract, contract_sha = require_authorized_contract(
+                contract_path,
+                expected_sha256=os.environ["TASK40_V29_CONTRACT_SHA256"],
+                current_root=ROOT,
+            )
+            selector, selector_sha = require_authorized_selector(
+                selector_path,
+                expected_sha256=os.environ["TASK40_V29_SELECTOR_SHA256"],
+                contract_path=contract_path,
+                contract_sha256=contract_sha,
+                contract=contract,
+            )
+            operation_path = numerical_output / str(v28_stage.get("operation_path", ""))
+            operation_on_disk = (
+                json.loads(operation_path.read_text(encoding="utf-8"))
+                if operation_path.is_file()
+                else {}
+            )
+            binding = operation_on_disk.get("v29_strict_factor_only_binding", {})
+            binding = binding if isinstance(binding, Mapping) else {}
+            factor_identity = operation_on_disk.get("factor_execution_identity", {})
+            factor_identity = factor_identity if isinstance(factor_identity, Mapping) else {}
+            campaign_binding = manifest.get("task40_v20_campaign", {})
+            campaign_binding = campaign_binding if isinstance(campaign_binding, Mapping) else {}
+            native_receipt = operation_on_disk.get("native_qualification_receipt", {})
+            native_receipt = native_receipt if isinstance(native_receipt, Mapping) else {}
+            require_strict_factor_only_status(
+                {"status": operation_on_disk.get("csr_status")},
+                {"status": native_receipt.get("status")},
+            )
+            strict_action = (
+                operation_on_disk.get("continuation_action") == "factor_only"
+                and operation_on_disk.get("factor_only_continuation") is True
+                and operation_on_disk.get("numeric_fill_skipped") is True
+                and operation_on_disk.get("native_readback_skipped") is True
+                and operation_on_disk.get("factor_lifecycle_executed_without_adapter_or_native_readback") is True
+                and binding.get("fallback_disabled") is True
+                and binding.get("strict_policy") == V29_STRICT_POLICY
+                and operation_on_disk.get("adapter_created") is not True
+                and operation_on_disk.get("numeric_fill_started") is not True
+                and operation_on_disk.get("native_readback_started") is not True
+            )
+            checks.update(
+                {
+                    "v29_contract_hash_matches_service_envelope": (
+                        contract_sha == os.environ["TASK40_V29_CONTRACT_SHA256"]
+                        and binding.get("contract_sha256") == contract_sha
+                    ),
+                    "v29_selector_hash_matches_service_envelope": (
+                        selector_sha == os.environ["TASK40_V29_SELECTOR_SHA256"]
+                        and binding.get("selector_sha256") == selector_sha
+                    ),
+                    "v29_complete_manifest_and_native_pass_preserved": (
+                        operation_on_disk.get("csr_status") == "COMPLETE_CSR"
+                        and native_receipt.get("status") == "PASS_COMPLETE_Q0_CSR_NATIVE_READBACK"
+                        and native_receipt.get("sha256") == selector.get("qualification_sha256")
+                    ),
+                    "v29_factor_only_route_has_no_auto_fallback": strict_action,
+                    "v29_new_execution_window_bound": (
+                        binding.get("execution_window_sha256")
+                        == contract["execution"]["campaign_window_sha256"]
+                        == campaign_binding.get("window_sha256")
+                        == factor_identity.get("execution_campaign_window_sha256")
+                    ),
+                }
+            )
+        except Exception as error:
+            checks.update(
+                {
+                    "v29_contract_hash_matches_service_envelope": False,
+                    "v29_selector_hash_matches_service_envelope": False,
+                    "v29_complete_manifest_and_native_pass_preserved": False,
+                    "v29_factor_only_route_has_no_auto_fallback": False,
+                    "v29_new_execution_window_bound": False,
+                    "v29_contract_check_error": f"{type(error).__name__}: {error}",
+                }
+            )
     status = str(partial.get("status", ""))
     checks["partial_status_not_full_pass"] = status != "PASS" and partial.get("official_result") is not True
     checker_passed = all(checks.values())
@@ -7116,6 +7554,37 @@ def run_service(
 ) -> int:
     if case_args and case_args[0] == "--":
         case_args = case_args[1:]
+    case_args, v29_contract_path = _extract_v29_path_arg(
+        case_args, "--task40-v29-execution-contract"
+    )
+    case_args, v29_selector_path = _extract_v29_path_arg(
+        case_args, "--task40-v29-factor-only-selector"
+    )
+    v29_entry_sample = (
+        clock_sample(include_boot_id=True)
+        if v29_contract_path is not None and v29_selector_path is not None
+        else None
+    )
+    v29_contract: dict[str, Any] | None = None
+    v29_contract_sha256: str | None = None
+    if (v29_contract_path is None) != (v29_selector_path is None):
+        raise ValueError("V29 execution contract and factor-only selector must be supplied together")
+    if v29_contract_path is not None:
+        from src.runners.task40_v29_contract import require_authorized_contract
+
+        v29_contract, v29_contract_sha256 = require_authorized_contract(
+            v29_contract_path,
+            current_root=repo_root,
+        )
+        if any(
+            value == "--task40-v10-campaign-window"
+            or value.startswith("--task40-v10-campaign-window=")
+            for value in case_args
+        ):
+            raise ValueError("V29 execution contract supplies its own fixed campaign window")
+        case_args.extend(
+            ["--task40-v10-campaign-window", str(v29_contract["execution"]["campaign_window_path"])]
+        )
     case_args, q_only_scan_directory = _extract_v23_q_only_scan_arg(case_args)
     case_args, v24_cd_selector_path = _extract_v24_cd_selector_arg(case_args)
     case_args, v25_selector_path = _extract_v25_selected_operation_selector_arg(case_args)
@@ -7142,6 +7611,12 @@ def run_service(
         profile=str(data["solver"]["preconditioner"]),
         stop_stage=stop_stage,
     )
+    if v29_contract_path is not None and (
+        campaign_registration.get("version") != "V29"
+        or Path(campaign_registration["path"]).resolve()
+        != Path(str(v29_contract["execution"]["campaign_window_path"])).resolve()
+    ):
+        raise ValueError("V29 campaign window differs from the approved execution contract")
     _validate_v24_q_only_selector(
         campaign_registration,
         stop_stage=stop_stage,
@@ -7187,6 +7662,18 @@ def run_service(
         raise ValueError("V28 continuation selector cannot be combined with V23–V27 selectors")
     if campaign_registration.get("version") == "V28" and v28_selector_path is None:
         raise ValueError("V28 operations require their explicit q0 continuation selector")
+    if campaign_registration.get("version") == "V29" and (
+        v29_selector_path is None
+        or v29_contract_path is None
+        or any(
+            item is not None
+            for item in (
+                q_only_scan_directory, v24_cd_selector_path, v25_selector_path,
+                v26_selector_path, v27_selector_path, v28_selector_path,
+            )
+        )
+    ):
+        raise ValueError("V29 operations require only the approved contract and strict factor-only selector")
     q_only_binding = (
         _bind_v23_q_only_scan_checkpoint(
             q_only_scan_directory,
@@ -7260,6 +7747,32 @@ def run_service(
         if v28_selector_path is not None
         else None
     )
+    v29_binding = (
+        _bind_v29_factor_only_selector(
+            v29_selector_path,
+            v29_contract_path,
+            input_path=input_path,
+            campaign_registration=campaign_registration,
+            profile=str(data["solver"]["preconditioner"]),
+            stop_stage=stop_stage,
+            repo_root=repo_root,
+        )
+        if v29_selector_path is not None and v29_contract_path is not None
+        else None
+    )
+    if v29_binding is not None:
+        v28_binding = {
+            "selector_path": v29_binding["immutable_v28_selector_path"],
+            "selector_sha256": v29_binding["immutable_v28_selector_sha256"],
+            "operation": V28_CONTINUATION_OPERATION,
+            "stop_stage": stop_stage,
+            "campaign_window_sha256": TASK40_V28_CAMPAIGN_SHA256,
+            "input_sha256": v29_binding["input_sha256"],
+            "producer_root": v29_binding["producer_root"],
+            "pattern_manifest_path": v29_binding["pattern_manifest_path"],
+            "pattern_manifest_sha256": v29_binding["pattern_manifest_sha256"],
+            "continuation_manifest_path": v29_binding["continuation_manifest_path"],
+        }
     fixed_campaign = Path(campaign_registration["path"])
     campaign_sha256 = str(campaign_registration["sha256"])
     branch = subprocess.check_output(["git", "branch", "--show-current"], cwd=repo_root, text=True).strip()
@@ -7268,7 +7781,9 @@ def run_service(
     if branch != "task40extra_0p7nm_engineering" or dirty.strip():
         raise RuntimeError("V20 user-service requires the frozen Task40 branch and clean source")
 
-    if campaign_registration.get("version") == "V28":
+    if campaign_registration.get("version") == "V29":
+        artifact_root = V29_ARTIFACT_ROOT
+    elif campaign_registration.get("version") == "V28":
         artifact_root = V28_ARTIFACT_ROOT
     elif campaign_registration.get("version") == "V27":
         artifact_root = V27_ARTIFACT_ROOT
@@ -7286,6 +7801,22 @@ def run_service(
     evidence_directory.mkdir(parents=True, exist_ok=False)
     events: list[dict[str, Any]] = []
     event_log = evidence_directory / "outer_clock_events.jsonl"
+    if v29_entry_sample is not None:
+        entry_event = {
+            "label": "v29_true_service_entry_before_contract_input_selector_and_donor_hashes",
+            "sample": v29_entry_sample,
+            "identity": {
+                "unit": unit,
+                "contract_path": str(v29_contract_path),
+                "selector_path": str(v29_selector_path),
+                "scope": "clock starts before V29 contract/input/selector/donor validation",
+            },
+        }
+        events.append(entry_event)
+        with event_log.open("ab") as stream:
+            stream.write(json.dumps(entry_event, sort_keys=True, separators=(",", ":")).encode() + b"\n")
+            stream.flush()
+            os.fsync(stream.fileno())
     record: dict[str, Any] = {
         "schema": "task40extra.review_v20_user_service_workflow.v1",
         "unit": unit,
@@ -7308,6 +7839,8 @@ def run_service(
         "run_case_argv": [str(runtime_prefix / "bin/python"), "scripts/run_case.py", *case_args],
         "evidence_directory": str(evidence_directory),
     }
+    if v29_entry_sample is not None:
+        record["v29_true_service_entry_clock"] = v29_entry_sample
     if q_only_binding is not None:
         record["old_v23_scan_artifact_binding"] = dict(q_only_binding)
     if v24_cd_binding is not None:
@@ -7320,6 +7853,12 @@ def run_service(
         record["v27_saved_q0_selector_binding"] = dict(v27_binding)
     if v28_binding is not None:
         record["v28_q0_continuation_selector_binding"] = dict(v28_binding)
+    if v29_binding is not None:
+        record["v29_strict_factor_only_binding"] = {
+            key: value for key, value in v29_binding.items() if key != "contract"
+        }
+        record["v29_contract_sha256"] = v29_binding["contract_sha256"]
+        record["v29_selector_sha256"] = v29_binding["selector_sha256"]
     event_identity = {
         key: record[key]
         for key in (
@@ -7332,8 +7871,15 @@ def run_service(
             "campaign_window_sha256",
             "abi_receipt_sha256",
             "stop_stage",
+            *( ["v29_contract_sha256", "v29_selector_sha256"] if v29_binding is not None else [] ),
         )
     }
+    if v29_binding is not None:
+        event_identity.update(
+            v29_contract_sha256=v29_binding["contract_sha256"],
+            v29_selector_sha256=v29_binding["selector_sha256"],
+            v29_execution_window_sha256=v29_binding["execution_window_sha256"],
+        )
     record["outer_clock_events_path"] = str(event_log)
     _append_clock_event(
         events, "user_service_parent_before_activation", event_log, event_identity
@@ -7344,7 +7890,11 @@ def run_service(
     try:
         _append_clock_event(events, "activation_started", event_log, event_identity)
         environment, activation_command, activation_code, activation_stderr = _activation_environment(
-            repo_root, runtime_prefix, abi_receipt, jit_cache
+            repo_root,
+            runtime_prefix,
+            abi_receipt,
+            jit_cache,
+            runtime_profile="native_linux" if v29_binding is not None else None,
         )
         _append_clock_event(events, "activation_finished", event_log, event_identity)
         record["activation_command"] = activation_command
@@ -7358,8 +7908,10 @@ def run_service(
             raise RuntimeError(
                 "qualified activation failed: " + activation_stderr[-4000:]
             )
-        if environment.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1":
-            raise RuntimeError("V20 user-service did not receive the qualified activation marker")
+        activation_identity = _qualified_activation_identity(environment)
+        if activation_identity is None:
+            raise RuntimeError("V20 user-service did not receive a qualified runtime profile")
+        record["qualified_runtime_identity"] = activation_identity
         if q_only_binding is not None:
             environment.update(
                 {
@@ -7460,6 +8012,31 @@ def run_service(
                     ),
                 }
             )
+        if v29_binding is not None:
+            environment.update(
+                {
+                    "TASK40_V29_STRICT_FACTOR_ONLY": "1",
+                    "TASK40_V29_CONTRACT_PATH": v29_binding["contract_path"],
+                    "TASK40_V29_CONTRACT_SHA256": v29_binding["contract_sha256"],
+                    "TASK40_V29_SELECTOR_PATH": v29_binding["selector_path"],
+                    "TASK40_V29_SELECTOR_SHA256": v29_binding["selector_sha256"],
+                    "TASK40_V29_EXECUTION_WINDOW_PATH": v29_binding["execution_window_path"],
+                    "TASK40_V29_EXECUTION_WINDOW_SHA256": v29_binding["execution_window_sha256"],
+                    "TASK40_V29_QUALIFIED_DONOR_IDENTITY_SHA256": v29_binding["donor_identity_sha256"],
+                    "TASK40_V29_QUALIFICATION_PATH": v29_binding["qualification_path"],
+                    "TASK40_V29_COMPLETE_MANIFEST_SHA256": v29_binding["manifest_sha256"],
+                    "TASK40_V29_NATIVE_PASS_SHA256": v29_binding["qualification_sha256"],
+                    "TASK40_V29_TASK_MEMORY_MAX_BYTES": str(
+                        v29_binding["contract"]["execution"]["resources"]["task_memory_max_bytes"]
+                    ),
+                    "TASK40_V29_HOST_RESERVE_BYTES": str(
+                        v29_binding["contract"]["execution"]["resources"]["host_reserve_bytes"]
+                    ),
+                    "TASK40_V29_MEMORY_SWAP_MAX_BYTES": str(
+                        v29_binding["contract"]["execution"]["resources"]["memory_swap_max_bytes"]
+                    ),
+                }
+            )
 
         abi_command, abi_code, abi_stdout, abi_stderr = _abi_preflight(
             runtime_prefix, environment, repo_root
@@ -7478,22 +8055,45 @@ def run_service(
         abi = json.loads(abi_stdout)
         record["abi_preflight"] = abi
 
+        if v29_binding is not None:
+            _append_clock_event(events, "v29_live_resource_gate_started", event_log, event_identity)
+            record["v29_live_resource_gate"] = _v29_live_resource_gate(
+                v29_binding["contract"],
+                stage="v29_service_before_worker_start",
+            )
+            _append_clock_event(events, "v29_live_resource_gate_finished", event_log, event_identity)
+
         _append_clock_event(events, "run_case_started", event_log, event_identity)
         case_command = record["run_case_argv"]
-        run_case_result = subprocess.run(
-            case_command,
-            cwd=repo_root,
-            env=environment,
-            capture_output=True,
-            text=True,
-        )
-        run_case_code = int(run_case_result.returncode)
+        if v29_binding is not None:
+            run_case_process = subprocess.Popen(
+                case_command,
+                cwd=repo_root,
+                env=environment,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            record["worker_pid"] = int(run_case_process.pid)
+            run_case_stdout, run_case_stderr = run_case_process.communicate()
+            run_case_code = int(run_case_process.returncode)
+        else:
+            run_case_result = subprocess.run(
+                case_command,
+                cwd=repo_root,
+                env=environment,
+                capture_output=True,
+                text=True,
+            )
+            run_case_stdout = run_case_result.stdout
+            run_case_stderr = run_case_result.stderr
+            run_case_code = int(run_case_result.returncode)
         _append_clock_event(events, "run_case_finished", event_log, event_identity)
         (evidence_directory / "run_case_stdout.raw.txt").write_text(
-            run_case_result.stdout, encoding="utf-8"
+            run_case_stdout, encoding="utf-8"
         )
         (evidence_directory / "run_case_stderr.raw.txt").write_text(
-            run_case_result.stderr, encoding="utf-8"
+            run_case_stderr, encoding="utf-8"
         )
         record["run_case_stdout_path"] = str(evidence_directory / "run_case_stdout.raw.txt")
         record["run_case_stderr_path"] = str(evidence_directory / "run_case_stderr.raw.txt")
@@ -7507,7 +8107,7 @@ def run_service(
                 f"run_case returned {run_case_code}",
                 run_case_code,
             )
-        run_case_payload = _parse_run_case_result(run_case_result.stdout)
+        run_case_payload = _parse_run_case_result(run_case_stdout)
         summary_path = Path(str(run_case_payload["summary"])).resolve()
         manifest_path = Path(str(run_case_payload["manifest"])).resolve()
         run_directory = Path(str(run_case_payload["run_directory"])).resolve()
@@ -7645,6 +8245,20 @@ def run_service(
         record["clock_samples"] = events
         record["nonoverlapping_parent_intervals"] = intervals
         record["clock_errors"] = clock_errors
+        if v29_entry_sample is not None and events:
+            try:
+                record["v29_true_entry_to_parent_closeout_interval"] = checked_interval(
+                    v29_entry_sample,
+                    events[-1]["sample"],
+                    policy=CONSERVATIVE_REALTIME,
+                )
+                record["v29_parent_cost_includes_preflight_hashes"] = True
+            except (KeyError, TypeError, ValueError, RuntimeError) as error:
+                record["v29_true_entry_to_parent_closeout_error"] = {
+                    "type": type(error).__name__,
+                    "message": str(error),
+                }
+                clock_errors.append(f"V29 true-entry parent interval: {type(error).__name__}: {error}")
         record["outer_clock_passed"] = bool(
             not clock_errors
             and not record.get("clock_persistence_error")

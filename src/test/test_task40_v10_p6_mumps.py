@@ -84,6 +84,20 @@ def test_v26_selected_q0_factor_has_strict_probe_rhs_and_explicit_reserves(tmp_p
     assert report["fresh_factor_probe"]["relative_full_true_residual"] <= 1.0e-10
     assert report["separate_nonzero_q0_rhs_solve"]["rhs_nonzero"] is True
     assert report["separate_nonzero_q0_rhs_solve"]["relative_full_true_residual"] <= 1.0e-10
+    timings = report["timings_v29"]
+    assert timings["F_q"]["status"] == "FRESH_PROBE_QUALIFIED"
+    assert timings["F_q"]["includes_initial_loader"] is False
+    assert timings["F_q"]["includes_second_rhs"] is False
+    assert timings["F_q"]["includes_eviction"] is False
+    assert timings["F_q"]["parent_seconds"] >= timings["fresh_factor_probe"]["parent_seconds"]
+    assert timings["S_q"]["status"] == "REPEATED_RHS_SOLVE_RECORDED"
+    assert timings["S_q"]["includes_factorization"] is False
+    assert timings["S_q"]["includes_eviction"] is False
+    assert timings["S_q"]["native_MatSolveRepeated_seconds"] == timings[
+        "separate_repeated_rhs_solve"
+    ]["native_solve_seconds"]
+    assert timings["eviction"]["excluded_from_F_q"] is True
+    assert timings["eviction"]["excluded_from_S_q"] is True
     assert report["cleanup"]["destroy_succeeded"] is True
     assert report["max_simultaneous_native_objects"] == {
         "matrices": 1,
