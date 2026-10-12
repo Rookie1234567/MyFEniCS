@@ -1,0 +1,97 @@
+{
+  "status": "PASSED",
+  "source_sha": "f098be68bf14224390883722b8b7eb7f633b20f5",
+  "command": [
+    "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "-m",
+    "unittest",
+    "-q",
+    "src.test.test_26_documentation_contract"
+  ],
+  "returncode": 0,
+  "repository_document_unittest_count": 15,
+  "documents": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v75.md",
+      "bytes": 13959,
+      "sha256": "d81f38c64776038652bdb89ab36386920c961c13a0fa26a4b028386f417992b4",
+      "new_links": 18,
+      "new_tables": 7
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/durable_harmonic_completion_v75.md",
+      "bytes": 13828,
+      "sha256": "7fb04a22cbae5c71ba8d1ff41d2675abed7af25b7b97454fc57bcb8ce7394cd3",
+      "new_links": 18,
+      "new_tables": 7
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "bytes": 105553,
+      "sha256": "29a3edd6439be1de4485ebe459b77b3460e0207812048c7fa369192f64abafff",
+      "new_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "bytes": 164802,
+      "sha256": "2af43c28bc221f10ffe2c1a1fee33b2d1d79e87cf70d1cd94c3ee85e97220591",
+      "new_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "bytes": 95569,
+      "sha256": "431775b40c38cb08b037c4062e46ad183296ab65623f4107aa96c5a2888ceb8c",
+      "new_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "bytes": 93054,
+      "sha256": "cac7e5e9cd6a5f7430b723e263990d5e6f49fea2a42a460885084b770c1e58c3",
+      "new_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/development_progress.md",
+      "bytes": 282191,
+      "sha256": "70f0f7ec267c5b7de81a0944021fb2c730b23155999cd0ccc265f048d512a90e",
+      "new_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "bytes": 320595,
+      "sha256": "fe99ee0b79e513fd678c4f355c16b89b61b2a04559fb07a4aa517cbfd2d7252c",
+      "new_links": 2,
+      "new_tables": 1
+    }
+  ],
+  "JSON_records": 22,
+  "old_navigation_suffixes_preserved": true,
+  "scope": "One document suite plus V75 increment links/tables/hash/schema/outcome/counter checks; no FE/array replay",
+  "GitHub_exact_visual": "NOT_VERIFIED",
+  "CI": "NOT_RUN",
+  "new_original_actions": 0,
+  "new_numeric_factors": 0,
+  "new_KSP_solves": 0,
+  "end_utc": "2026-10-12T02:20:21.008241+00:00",
+  "elapsed_seconds": 0.39050927106291056,
+  "receipt": {
+    "path": "tmp/task042/v75/aux_post_02/document_checks.json",
+    "bytes": 2603,
+    "sha256": "863c3aa64aa0336cee305e51a876bc2e70a843aa59264778b6ae0e685ba792a0"
+  },
+  "supervised_wrapper": {
+    "path": "tmp/task042/v75/auxiliary_post02/receipt.json",
+    "bytes": 609,
+    "sha256": "8b59addf39b933b15aa75ea3a55d962aabff3a1fc6fb99ae6c7ce7ba949c9ca3"
+  },
+  "failed_unstarted_document_attempt": {
+    "path": "tmp/task042/v75/auxiliary_post01/receipt.json",
+    "bytes": 618,
+    "sha256": "9b0f83b36dfd9f8529135ba97237fba80ff06975d357b83768ce9f9662a54928"
+  },
+  "tested_document_bytes_unchanged": true
+}

@@ -22,5 +22,17 @@
   "full_pytest": false,
   "CI": "NOT_RUN",
   "GitHub_visual": "NOT_VERIFIED",
-  "documentation_status": "PENDING_ONCE_AFTER_FINAL_DOC_BYTES"
+  "documentation_status": "PASSED",
+  "documentation_source": "f098be68bf14224390883722b8b7eb7f633b20f5",
+  "documentation_unittest_count": 15,
+  "documentation_receipt": {
+    "path": "tmp/task042/v75/aux_post_02/document_checks.json",
+    "bytes": 2603,
+    "sha256": "863c3aa64aa0336cee305e51a876bc2e70a843aa59264778b6ae0e685ba792a0"
+  },
+  "failed_document_launcher_preserved": {
+    "path": "tmp/task042/v75/aux_post_01/summary.json",
+    "bytes": 21243,
+    "sha256": "2546c3a87067fc73f47a24d46313cefbc98813400a2ca73a4bc7b0d52378e0d1"
+  }
 }

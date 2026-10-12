@@ -1,9 +1,60 @@
 {
-  "status": "PENDING_FINAL_DOCUMENT_CHECK",
-  "active": null,
-  "science_queue_frozen": true,
-  "new_scientific_work_finished": true,
-  "science_equation_pass": false,
-  "strict": false,
-  "delivery_git_receipt": "tmp/task042/v75/delivery_git_receipt.json"
+  "status": "CLOSED",
+  "window": {
+    "start_utc": "2026-10-11T23:23:19+00:00",
+    "start_monotonic": 1685993.860888462,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "paired_utc": "2026-10-11T23:24:17.900121+00:00",
+    "paired_monotonic": 1686052.761009462,
+    "anchor": "first actual tool UTC at second precision; monotonic reconstructed from paired same-boot realtime; first-clock precision at most one second; never reset",
+    "intake_HEAD": "11b3011f97587877adf58814e36b83d0e099c6e9",
+    "review_commit": "02703c5ce56a18b134b50eded39645cb422a0d95",
+    "total_window_seconds": 43200,
+    "total_limit_seconds": 43200,
+    "heavy_limit_seconds": 39600,
+    "scientific_loaded_limit_seconds": 39600,
+    "heavy_stop_utc": "2026-10-12T10:23:19+00:00",
+    "deadline_utc": "2026-10-12T11:23:19+00:00",
+    "closed": true,
+    "closed_utc": "2026-10-12T02:24:42.354933+00:00",
+    "closure_reason": "Full256-step fixed harmonic+38RAS candidate independently audited negative; no extension or parameter change"
+  },
+  "cleanup": {
+    "UTC": "2026-10-12T02:24:42.354933+00:00",
+    "active": null,
+    "live_Task042_actors": [],
+    "all_recorded_descendants_cleared": true,
+    "own_lock_acquired_then_released": true,
+    "lock_path": "tmp/task042/task042_shared.lock",
+    "no_neighbor_signal_or_modify": true,
+    "KSP_attempts": 1,
+    "iterations": 256,
+    "new_macro_numeric": 79,
+    "legacy_macro_numeric_reused": 881,
+    "recomputed_macros": 0,
+    "new_PC_RAS_numeric": 38,
+    "new_coarse_numeric": 1,
+    "all_new_macro_and_PC_factors_released": true,
+    "qualified_equation": false,
+    "strict_same_discrete": false
+  },
+  "actual_science_source": "6009967437ed5853ddd9f5f71780f3cf00c32bbd",
+  "counter_source": {
+    "actions_lower": 539,
+    "actions_upper": 539,
+    "KSP_lower": 1,
+    "KSP_upper": 1,
+    "iterations_lower": 256,
+    "iterations_upper": 256,
+    "source": "completed action_counts.json and formal KSP_attempts.json; failed document launcher started no child"
+  },
+  "global_fine_K_S_LU": 0,
+  "full_scientific_qualification": false,
+  "final_document_receipt": {
+    "path": "tmp/task042/v75/aux_post_02/document_checks.json",
+    "bytes": 2603,
+    "sha256": "863c3aa64aa0336cee305e51a876bc2e70a843aa59264778b6ae0e685ba792a0"
+  },
+  "delivery_git_receipt": "tmp/task042/v75/delivery_git_receipt.json",
+  "no_automatic_next_window": true
 }

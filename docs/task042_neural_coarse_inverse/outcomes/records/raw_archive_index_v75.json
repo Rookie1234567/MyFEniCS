@@ -7,7 +7,15 @@
     },
     "entries": 589
   },
-  "final_tail_pending": true,
+  "final_tail_pending": false,
   "scientific_arrays_copied": false,
-  "old_raw_unchanged": true
+  "old_raw_unchanged": true,
+  "final_tail": {
+    "inventory": {
+      "path": "benchmarks/artifacts/task042/v75/increment_evidence_v75/final_tail/inventory.json",
+      "bytes": 267827,
+      "sha256": "ebd806592655e581f6b4bed041d8f44fbe6b670a7b9aec91bc2ac279fc9e28eb"
+    },
+    "entries": 622
+  }
 }

@@ -34,7 +34,7 @@
   ],
   "located_software_repairs": [
     "Ignored delivery helper had one extra parenthesis; fixed and only its compile repeated",
-    "Remove unsupported separator from aux command; sys.argv[4:] is passed verbatim to supervisor"
+    "Aux launcher received unsupported separator; remove separator and start only the previously unstarted documentation check"
   ],
   "preventive_C1": "durable base, old881 math receipt, single scope/counters",
   "preventive_C2": "persist macro identity; share one skeleton owner inPC",
