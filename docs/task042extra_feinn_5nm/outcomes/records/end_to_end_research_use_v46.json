@@ -1,0 +1,439 @@
+{
+  "schema": "task42extra.v46.use-policy.v1",
+  "all_occurrences_strict_false": true,
+  "raw_json_and_manifest_occurrences": 94,
+  "policy_rows": [
+    {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_checks_attempt1/run_manifest.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_checks_attempt1/run_manifest.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_checks_attempt1/run_manifest.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_compare_attempt1/run_manifest.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_compare_attempt1/run_manifest.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_compare_attempt1/run_manifest.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_frozen_attempt1/run_manifest.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_frozen_attempt1/run_manifest.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_frozen_attempt1/run_manifest.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_learned_attempt1/run_manifest.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_learned_attempt1/run_manifest.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_learned_attempt1/run_manifest.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_prepare_attempt1/run_manifest.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_prepare_attempt1/run_manifest.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "tmp/task42extra/v46/durable/v46_residual_branch_prepare_attempt1/run_manifest.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_checks/result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_checks/result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_checks/result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_prepare/result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_prepare/result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_prepare/result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_learned/result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_learned/result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_learned/result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_learned/result.json/rounds/1/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_learned/result.json/rounds/3/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_learned/result.json/checkpoint/metadata/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_learned/result.json/checkpoint/metadata/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_learned/result.json/checkpoint/metadata/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_learned/result.json/checkpoint/metadata/rounds/1/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_learned/result.json/checkpoint/metadata/rounds/3/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_frozen/result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_frozen/result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_frozen/result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_frozen/result.json/rounds/1/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_frozen/result.json/rounds/3/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_frozen/result.json/checkpoint/metadata/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_frozen/result.json/checkpoint/metadata/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_frozen/result.json/checkpoint/metadata/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_frozen/result.json/checkpoint/metadata/rounds/1/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_frozen/result.json/checkpoint/metadata/rounds/3/isolated_validation_scalars/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json/saved_checker/records/RESIDUAL_FTT_R8_LEARNED/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json/saved_checker/records/RESIDUAL_FTT_R8_LEARNED/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json/saved_checker/records/RESIDUAL_FTT_R8_LEARNED/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json/saved_checker/records/RESIDUAL_FTT_R8_FROZEN/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json/saved_checker/records/RESIDUAL_FTT_R8_FROZEN/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json/saved_checker/records/RESIDUAL_FTT_R8_FROZEN/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json/saved_checker/records/RESIDUAL_FTT_R8_LEARNED_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json/saved_checker/records/RESIDUAL_FTT_R8_LEARNED_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json/saved_checker/records/RESIDUAL_FTT_R8_LEARNED_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json/saved_checker/records/RESIDUAL_FTT_R8_FROZEN_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json/saved_checker/records/RESIDUAL_FTT_R8_FROZEN_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json/saved_checker/records/RESIDUAL_FTT_R8_FROZEN_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/reconstruction/RESIDUAL_FTT_R8_LEARNED/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/reconstruction/RESIDUAL_FTT_R8_FROZEN/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/reconstruction/RESIDUAL_FTT_R8_LEARNED_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/reconstruction/RESIDUAL_FTT_R8_FROZEN_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/physics/records/REFERENCE/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/physics/records/RESIDUAL_FTT_R8_LEARNED/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/physics/records/RESIDUAL_FTT_R8_LEARNED_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/physics/records/RESIDUAL_FTT_R8_FROZEN/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/physics/records/RESIDUAL_FTT_R8_FROZEN_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/comparisons/RESIDUAL_FTT_R8_LEARNED/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/comparisons/RESIDUAL_FTT_R8_LEARNED/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/comparisons/RESIDUAL_FTT_R8_LEARNED/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/comparisons/RESIDUAL_FTT_R8_LEARNED_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/comparisons/RESIDUAL_FTT_R8_LEARNED_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/comparisons/RESIDUAL_FTT_R8_LEARNED_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/comparisons/RESIDUAL_FTT_R8_FROZEN/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/comparisons/RESIDUAL_FTT_R8_FROZEN/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/comparisons/RESIDUAL_FTT_R8_FROZEN/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/comparisons/RESIDUAL_FTT_R8_FROZEN_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/comparisons/RESIDUAL_FTT_R8_FROZEN_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/comparisons/RESIDUAL_FTT_R8_FROZEN_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/saved_checker.json/records/RESIDUAL_FTT_R8_LEARNED/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/saved_checker.json/records/RESIDUAL_FTT_R8_LEARNED/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/saved_checker.json/records/RESIDUAL_FTT_R8_LEARNED/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/saved_checker.json/records/RESIDUAL_FTT_R8_FROZEN/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/saved_checker.json/records/RESIDUAL_FTT_R8_FROZEN/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/saved_checker.json/records/RESIDUAL_FTT_R8_FROZEN/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/saved_checker.json/records/RESIDUAL_FTT_R8_LEARNED_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/saved_checker.json/records/RESIDUAL_FTT_R8_LEARNED_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/saved_checker.json/records/RESIDUAL_FTT_R8_LEARNED_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/saved_checker.json/records/RESIDUAL_FTT_R8_FROZEN_PRODUCER/pde_only_solver_qualified",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/saved_checker.json/records/RESIDUAL_FTT_R8_FROZEN_PRODUCER/official_candidate_results",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/saved_checker.json/records/RESIDUAL_FTT_R8_FROZEN_PRODUCER/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/reconstruction.json/RESIDUAL_FTT_R8_LEARNED/production_initialization_allowed",
+      "value": false
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/reconstruction.json/RESIDUAL_FTT_R8_FROZEN/production_initialization_allowed",
+      "value": false
+    }
+  ],
+  "raw_json_bindings": [
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_checks/result.json",
+      "sha256": "e43e5914d20f0c94db478714683a0a4dab8d5a69de98f0b6342525d27afadb27",
+      "bytes": 14796
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_prepare/result.json",
+      "sha256": "27c1289582b4b8d96a8508fe92031bf761c6def050c74ed7d12e8540c1864e9e",
+      "bytes": 4912
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_learned/result.json",
+      "sha256": "59d2de2ec50dc3f1da5b22dcd45c5c2ff3ab5c7efaff7a107a631f9c29ff2fb8",
+      "bytes": 44685
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_frozen/result.json",
+      "sha256": "285d78e733495739ec717a9fbc5906c2506ba169760530c72d85dd301b8b4e21",
+      "bytes": 44619
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/result.json",
+      "sha256": "d0980b857fcdc7270a883afb699751fc5c0a3484a8d752814b678982cd4cf28f",
+      "bytes": 42283
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/verifier_result.json",
+      "sha256": "5a68979feeaf3a40c7978a880d34d74fc390590df4236404142b5b383c4d343a",
+      "bytes": 418620
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/saved_checker.json",
+      "sha256": "2a8ed02cd7608a2b90f1997836719e431395703ce35b70184637ce0c46706c54",
+      "bytes": 36883
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/reconstruction.json",
+      "sha256": "117e4698516ce11f82a6836e5b6fe2e357151a4cef2732f45b04349e8e230458",
+      "bytes": 6981
+    },
+    {
+      "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_compare/residual_branch_decision.json",
+      "sha256": "5c609b426e54bcaf70d9ad430ba0997ecdc2c88df4695fc9dcb8194368066189",
+      "bytes": 258
+    }
+  ],
+  "actual_checkpoint_metadata_reopened_and_validated": true,
+  "actual_model_proof": {
+    "path": "tmp/task42extra/v46/actual_model_proof.json",
+    "sha256": "508a3276c28b562d25b84b7fe947a551ba9840a163ea3f78ab7a14becb3d90a3",
+    "bytes": 6210
+  },
+  "numerical_arrays_or_fields_rewritten": false,
+  "original_action_f_modified": false,
+  "all_failed_residual_powers_diagnostic": true
+}

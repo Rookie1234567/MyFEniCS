@@ -1,0 +1,39 @@
+{
+  "schema": "task42extra.v46.repairs.v1",
+  "journal": [
+    {
+      "kind": "STATIC_RECORD_NORMALIZER_AMBIGUITY",
+      "failure": "legacy native_trial used training action norm(g); original and training denominators needed explicit names",
+      "hypothesis": "numeric equations and qualified prepared arrays unchanged; correct history serialization and manifest binding only",
+      "change": [
+        "src/solvers/ftt_residual_branch.py",
+        "src/solvers/ftt_core_training.py",
+        "src/runners/neural_wave_campaign.py",
+        "src/test/test_ftt_residual_branch.py"
+      ],
+      "targeted_junit": "tmp/task42extra/v46/normalizer_record_tests_01/junit.xml",
+      "junit_sha256": "489b70ff2f0622db523cfe4111d5dc360f6613b754d204fe11440820fd4b25f6",
+      "qualification_reused": true,
+      "fixed_g_regenerated": false,
+      "prior_formal_source": "9022141a43e60d2e1a926a04003e076ea04497b8",
+      "monotonic": 1698406.398563882
+    },
+    {
+      "kind": "DOCUMENT_RECEIPT_SELF_LINK_BOOTSTRAP",
+      "failure": "Markdown checker reached response self-link before markdown_check_v46.json existed",
+      "failure_log": {
+        "path": "tmp/task42extra/v46/delivery_check_01/watchdog/worker.log",
+        "sha256": "b8de188d726fb2b40578ff1ae07d64a85a971691f4d9ad213c66531d275bc465"
+      },
+      "hypothesis": "declared artifact/source bindings, original gates and use policy had passed; only Markdown receipt creation order was wrong",
+      "minimal_change": "create explicitly NOT_RUN receipt before checking its self-link; targeted Markdown-only rerun",
+      "healthy_numeric_and_source_gate_reused": true,
+      "PDE_recomputed": 0,
+      "targeted_check": "tmp/task42extra/v46/markdown_retry_01",
+      "monotonic": 1719793.584602041
+    }
+  ],
+  "healthy_base_g_or_reference_recomputed_for_record_or_web_error": false,
+  "ordinary_default_changed": false,
+  "prior_compact_receipt_sha256": "1e41d658e60d3c9ae3f1caafde717174be2bf000e3cba50fe8aa60a941204ba1"
+}

@@ -1,3 +1,29 @@
+<!-- TASK42EXTRA_V46_CURRENT_BEGIN -->
+# 当前Task42extra V46：实际残差增量有限改善、原全门FAIL
+
+**本批实际神经残差增量和同态冻结控制已完整执行并验收，四份actual/producer原联合门均FAIL。修正非零且可独立重建，原残差与散射场相对基场都有有限改善；仍远离原门及研究强信号。学习隐藏层没有显示相对冻结控制的有效净收益。本具体加性配置收口，0.7nm pilot未准入；不自动增加第三网或另开窗口。**
+
+研究对象仍为原Si/air非可分三维M5：lambda5nm、8×6×8=384hex、h1.25nm、p3、31968独立复FE与40端口、34050完整FE行；双Floquet/完整DtN、材料、A/f、背景/相位、体/DtN q15、网络q30/独立q60不变。全局A的NNZ为NOT_ASSEMBLED（matrix-free作用），不是矩阵全零。p/h/M/MPI固定，只研究一份新完整神经修正。
+
+| 路线 | 末态原R / 散射E / 散射H | 相对冻结基场改善百分比 R/E/H | 隐藏相对共同修正初态变化范数 |
+|---|---|---|---|
+| 学习修正隐藏层 | 0.34634593953 / 0.0646210654522 / 0.0646528880296 | 3.40771787638 / 21.6597534329 / 21.6687655985 | 5.47531795873e-07 |
+| 冻结修正隐藏层 | 0.346325842741 / 0.0645635958293 / 0.0645954888578 | 3.41332266197 / 21.7294239714 / 21.7383084776 | 0 |
+
+保留旧场并加一个独立完整神经电场，解决单网络参数路径停滞的研究假设。修正严格零起步而方向非零，两路线同态分叉，仅学习路线更新隐藏层。两条均产生可独立重建的非零修正，原R及E/H相对冻结基场改善，但仍远离1e-6/1e-4原门和1e-3强信号；隐藏总变化5.4753e-7、控制0，无有效学习净收益或同精度成本优势。P=I、原A/f/DtN/材料保持，无全FE完成器或新全局因子。
+
+LEARNED实际及producer原M5联合门均FAIL，故0.7nm缩小三维pilot为NOT_RUN_LEARNED_M5_JOINT_GATE_FAILED，未建立空输入，也未迁移或缩放参考系数。失败原因是数值原门未过，不是额外时间、内存或前端限制。剩余时间不允许绕过准入。研究强信号还要求原R≤1e-3、散射E/H各≤1e-3与完整稳定性，本批均未达到。
+
+保持FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED；没有同严格精度20%NN资源收益。下一步只等待对此有限负结果的审阅，不自动续训/增宽/增rank/改loss/加PC，不恢复旧谱或oracle。原尺寸0.7nm的任意非可分3D目标仍需独立授权且有证据的新方案。
+
+两条各6轮/18核心，实际训练attempt共18245.4711074s；同时自身树采样最高935538688B，swap/OOC0。必要旧基场前缀12788.395328277858s不重复收费；完整冷N=1 UNKNOWN。117不同定向case与真实资格通过，不full pytest或CI声明。数值source 0b8fb32fbf180b5dc775dac6642f27cd198afa60，交付HEAD分开。
+
+[Response](task042extra_feinn_5nm/response_v46.md)、[专题](task042extra_feinn_5nm/outcomes/ftt_one_residual_branch_v46.md)、[Gate](task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v46.json)、[费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v46.json)、[source](task042extra_feinn_5nm/outcomes/records/run_index_v46.json)。
+
+下方历史全文原样保留；旧“当前/下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V46_CURRENT_END -->
+
 <!-- TASK42EXTRA_V45_CURRENT_BEGIN -->
 # Task42extra V45：可逆右坐标与隐藏边际研究完成
 

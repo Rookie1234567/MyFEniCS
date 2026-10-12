@@ -1,0 +1,261 @@
+{
+  "schema": "task42extra.v46.publication-tail.v1",
+  "unique_window": {
+    "campaign": "V46_FTT_ONE_RESIDUAL_BRANCH",
+    "version": 46,
+    "origin_monotonic": 1694664.736324035,
+    "origin_utc": "2026-10-12T01:47:49.875460+00:00",
+    "budget_s": 43200,
+    "final_reserve_s": 3600,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "single_window": true,
+    "first_readonly_head": "9b4832e79cc57e852c7a70f32c527d7b41e2b348",
+    "initial_state": "NOT_STARTED_NO_V46_DIRECTORY_OR_RUN",
+    "initial_inspection_exact_cost_s": "NOT_RETAINED",
+    "initial_inspection_conservative_allowance_s": 300.0,
+    "authority_publication": "5a48c802486875ac628e6e710b5caf240769248b",
+    "deadline_monotonic": 1737864.736324035
+  },
+  "numerical_cost_binding": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v46.json",
+    "sha256": "21fbc4b5e5ae952c3d45c2a99c8d6d7203c1f8f093c4943766b565adaf1a7347",
+    "bytes": 11820
+  },
+  "snapshots": [
+    {
+      "label": "PRE_NUMERICAL_PACKAGE_PUBLICATION",
+      "recorded_UTC": "2026-10-12T08:43:45.295420+00:00",
+      "monotonic": 1719620.041382499,
+      "conservative_elapsed_s": 24955.305058463942,
+      "remaining_s": 18244.694941536058,
+      "original_window_not_reopened": true,
+      "deadline_not_exceeded": true,
+      "observed_HEAD": "0b8fb32fbf180b5dc775dac6642f27cd198afa60",
+      "branch": "task42extra_feinn_5nm",
+      "source_sha": "0b8fb32fbf180b5dc775dac6642f27cd198afa60",
+      "observed_tracking_ref": "refs/remotes/origin/task42extra_feinn_5nm",
+      "observed_tracking_SHA": "5a48c802486875ac628e6e710b5caf240769248b",
+      "ahead": 2,
+      "behind": 0,
+      "worktree_clean": false,
+      "tracked_or_nonignored_untracked_status": [
+        "M docs/development_model_registry.md",
+        " M docs/development_progress.md",
+        " M docs/task042extra_feinn_5nm/README.md",
+        " M docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        " M docs/task042extra_feinn_5nm/outcomes/summary.md",
+        " M docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "?? docs/task042extra_feinn_5nm/outcomes/ftt_one_residual_branch_v46.md",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/channel_and_norm_definitions_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/conditional_inner_solver_v46.csv",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/formal_tests_and_qualification_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/full_40_complex_channels_v46.csv",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/hidden_updates_and_rounds_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/isolated_scalar_continuation_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/power_and_energy_v46.csv",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/render_check_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/repair_log_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/residual_branch_design_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/residual_branch_qualification_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/residual_branch_routes_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/run_index_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/same_state_hidden_ablation_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/six_point_complex_fields_v46.csv",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/two_segment_core_refinement_v46.json",
+        "?? docs/task042extra_feinn_5nm/response_v46.md"
+      ],
+      "default_upstream_fetch_mapping": "COMMON_REMOTE_CONFIG_OMITS_TASK42EXTRA; explicit tracking ref and ephemeral mapping used; shared config unchanged",
+      "canonical_common_git_dir": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+      "canonical_worktree_registration": "worktree /home/fenics/Projects/NN-Lab-V2\nHEAD 0b8fb32fbf180b5dc775dac6642f27cd198afa60\nbranch refs/heads/task42extra_feinn_5nm",
+      "cleanup": {
+        "own_active_tree": [],
+        "numerical_lock": "FREE",
+        "formal_stages": [
+          {
+            "stage": "v46_residual_branch_checks_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_compare_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_frozen_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_learned_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_prepare_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          }
+        ]
+      },
+      "new_bounded_light_since_result_collection": [
+        {
+          "name": "collection_docs_01",
+          "binding": {
+            "path": "tmp/task42extra/v46/collection_docs_01/summary.json",
+            "sha256": "28c2a0ebc898b4b01c44b6a19e59351736f041f741e585c61f10ed9eb7e4b2a0",
+            "bytes": 1992
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 90845184,
+          "swap_bytes": 0,
+          "supervised_s": 4.493972955970094,
+          "mandatory_PSI_s": 60.00178039795719
+        }
+      ],
+      "new_light_supervised_sum_s": 4.493972955970094,
+      "new_light_PSI_sum_s": 60.00178039795719,
+      "sum_not_double_charged_to_monotonic_window": true,
+      "OOC_bytes": 0,
+      "numerical_recomputation_for_document_or_render": 0,
+      "unretained_nonformal_activity_breakdown": "NOT_RETAINED; all calendar time remains charged to single window"
+    },
+    {
+      "label": "NUMERICAL_PACKAGE_VALIDATED",
+      "recorded_UTC": "2026-10-12T08:50:16.527795+00:00",
+      "monotonic": 1720011.265184904,
+      "conservative_elapsed_s": 25346.528860868886,
+      "remaining_s": 17853.471139131114,
+      "original_window_not_reopened": true,
+      "deadline_not_exceeded": true,
+      "observed_HEAD": "0b8fb32fbf180b5dc775dac6642f27cd198afa60",
+      "branch": "task42extra_feinn_5nm",
+      "source_sha": "0b8fb32fbf180b5dc775dac6642f27cd198afa60",
+      "observed_tracking_ref": "refs/remotes/origin/task42extra_feinn_5nm",
+      "observed_tracking_SHA": "5a48c802486875ac628e6e710b5caf240769248b",
+      "ahead": 2,
+      "behind": 0,
+      "worktree_clean": false,
+      "tracked_or_nonignored_untracked_status": [
+        "M docs/development_model_registry.md",
+        " M docs/development_progress.md",
+        " M docs/task042extra_feinn_5nm/README.md",
+        " M docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        " M docs/task042extra_feinn_5nm/outcomes/summary.md",
+        " M docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "?? docs/task042extra_feinn_5nm/outcomes/ftt_one_residual_branch_v46.md",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/channel_and_norm_definitions_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/conditional_inner_solver_v46.csv",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/delivery_check_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/end_to_end_research_use_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/formal_tests_and_qualification_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/full_40_complex_channels_v46.csv",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/hidden_updates_and_rounds_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/isolated_scalar_continuation_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/markdown_check_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/power_and_energy_v46.csv",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/publication_tail_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/render_check_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/repair_log_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/residual_branch_design_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/residual_branch_qualification_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/residual_branch_routes_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/run_index_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/same_state_hidden_ablation_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v46.json",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/six_point_complex_fields_v46.csv",
+        "?? docs/task042extra_feinn_5nm/outcomes/records/two_segment_core_refinement_v46.json",
+        "?? docs/task042extra_feinn_5nm/response_v46.md"
+      ],
+      "default_upstream_fetch_mapping": "COMMON_REMOTE_CONFIG_OMITS_TASK42EXTRA; explicit tracking ref and ephemeral mapping used; shared config unchanged",
+      "canonical_common_git_dir": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+      "canonical_worktree_registration": "worktree /home/fenics/Projects/NN-Lab-V2\nHEAD 0b8fb32fbf180b5dc775dac6642f27cd198afa60\nbranch refs/heads/task42extra_feinn_5nm",
+      "cleanup": {
+        "own_active_tree": [],
+        "numerical_lock": "FREE",
+        "formal_stages": [
+          {
+            "stage": "v46_residual_branch_checks_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_compare_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_frozen_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_learned_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_prepare_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          }
+        ]
+      },
+      "new_bounded_light_since_result_collection": [
+        {
+          "name": "collection_docs_01",
+          "binding": {
+            "path": "tmp/task42extra/v46/collection_docs_01/summary.json",
+            "sha256": "28c2a0ebc898b4b01c44b6a19e59351736f041f741e585c61f10ed9eb7e4b2a0",
+            "bytes": 1992
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 90845184,
+          "swap_bytes": 0,
+          "supervised_s": 4.493972955970094,
+          "mandatory_PSI_s": 60.00178039795719
+        },
+        {
+          "name": "delivery_check_01",
+          "binding": {
+            "path": "tmp/task42extra/v46/delivery_check_01/summary.json",
+            "sha256": "c1acbae245011d319577bb446a18bd96989e5d80228642cb69afc0f170632c16",
+            "bytes": 1997
+          },
+          "classification": "WORKER_FAILED",
+          "own_tree_peak_bytes": 137584640,
+          "swap_bytes": 0,
+          "supervised_s": 4.554134191945195,
+          "mandatory_PSI_s": 60.00176017009653
+        },
+        {
+          "name": "markdown_retry_01",
+          "binding": {
+            "path": "tmp/task42extra/v46/markdown_retry_01/summary.json",
+            "sha256": "0df9bbea1e69148fb95438bb59f70cf42c6d92d6fe2d15ad1c676eff6e0ec805",
+            "bytes": 1980
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 70385664,
+          "swap_bytes": 0,
+          "supervised_s": 1.921732387971133,
+          "mandatory_PSI_s": 60.0017715820577
+        }
+      ],
+      "new_light_supervised_sum_s": 10.969839535886422,
+      "new_light_PSI_sum_s": 180.00531215011142,
+      "sum_not_double_charged_to_monotonic_window": true,
+      "OOC_bytes": 0,
+      "numerical_recomputation_for_document_or_render": 0,
+      "unretained_nonformal_activity_breakdown": "NOT_RETAINED; all calendar time remains charged to single window"
+    }
+  ],
+  "production_merge": false,
+  "only_allowed_push": "git push origin HEAD:refs/heads/task42extra_feinn_5nm",
+  "final_commit_sha_rule": "A commit cannot contain its own SHA; final pushed HEAD/0:0/clean is reported after final metadata commit in tmp/task42extra/v46/final_publication_receipt.json and the user response."
+}

@@ -1,3 +1,29 @@
+<!-- TASK42EXTRA_V46_CURRENT_BEGIN -->
+# V46：残差接线、非零方向及独立双网验收
+
+本地定向测试JUnit并集117个不同通过case；重复执行不累加。C1前最终116项通过，随后分母日志修复的44项定向复验包含一个新case，合计117。Ruff、compileall、五dat validate-only及diff检查通过；没有full pytest、重装或CI声明。
+
+正式checks/prepare在C1 source 9022141a43e60d2e1a926a04003e076ea04497b8通过。随后只修legacy native_trial日志语义和manifest的prepared身份：正式native_trial明确为原norm(f)分母，训练native_trial另名保存norm(g)。这次是静态记录歧义，没有数值方程变更、没有失败PDE或g重算。44项复验后clean提交C2 0b8fb32fbf180b5dc775dac6642f27cd198afa60，直接继续学习、冻结与compare。所有健康基场、参考、g、资格和准备保留；不用日志修复解释完整场误差。原修复日志在[repair_log_v46.json](records/repair_log_v46.json)。
+
+资格覆盖复杂非Hermitian残差符号/分母、非零背景端口、冻结/深拷贝无别名、严格零修正及非零z方向、三轴纯虚/复伴随和非零隐藏FD、先加点值再完整矩、缓存失效与wrong-base/g/hash/phase/partial恢复负控。真实M5首次z方向范数20.6340220961；三轴9见证最大adjoint配对6.445e-15、旧点值配对2.245e-15、原A配对1.554e-13，均≤1e-10；非零隐藏FD稳定段误差均≤1e-5。重复背景端口负控差0.47684290868，说明错误相加会被拒绝。每项原数值和JUnit名称均保留。
+
+| 独立评分对象 | 原方程 | 完整场/点/40通道 | 功率/吸收/能量 | 重建/MPC/端口 | 求积稳定 | 联合 |
+|---|---|---|---|---|---|---|
+| RESIDUAL_FTT_R8_LEARNED | FAIL | FAIL | FAIL | PASS | PASS | FAIL |
+| RESIDUAL_FTT_R8_FROZEN | FAIL | FAIL | FAIL | PASS | PASS | FAIL |
+| RESIDUAL_FTT_R8_LEARNED_PRODUCER | FAIL | FAIL | FAIL | PASS | PASS | FAIL |
+| RESIDUAL_FTT_R8_FROZEN_PRODUCER | FAIL | FAIL | FAIL | PASS | PASS | FAIL |
+
+测试通过与数值通过分开；独立检查从原字段重算，四份原门均FAIL。模型保存态核验另证基网/buffers/RNG不变、控制隐藏层严格不变；未重算健康g或参考。
+
+[本地JUnit/source](records/formal_tests_and_qualification_v46.json)、[真实资格](records/residual_branch_qualification_v46.json)、[保存态proof](records/same_state_hidden_ablation_v46.json)、[完整Gate](records/full_numerical_gates_v46.json)。
+
+下方历史全文原样保留；旧“当前/下一步”不构成新授权。
+
+发布阶段的定向检查在已通过原字段/source核对后，因markdown_check_v46.json自引用收据尚不存在而失败。失败日志、4.554s受监督用时及60s准入保留；先建立明确NOT_RUN的bootstrap收据，再只复验八个新页/当前段及历史保留，不重算健康原门或PDE。此修复只涉及本地发布顺序。
+
+<!-- TASK42EXTRA_V46_CURRENT_END -->
+
 <!-- TASK42EXTRA_V45_CURRENT_BEGIN -->
 # V45：小坐标资格、受影响接线及完整保存checker
 

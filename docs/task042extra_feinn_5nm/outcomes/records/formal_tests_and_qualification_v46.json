@@ -1,0 +1,692 @@
+{
+  "schema": "task42extra.v46.tests.v1",
+  "tests": [
+    {
+      "name": "final_targeted_tests_01",
+      "binding": {
+        "path": "tmp/task42extra/v46/final_targeted_tests_01/junit.xml",
+        "sha256": "1ff2c7ceb48965d5efa25524d1f12313dc131d61da20c064698dc00b03f0d20c",
+        "bytes": 16201
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "116",
+          "time": "7.576",
+          "timestamp": "2026-10-12T10:34:01.167009",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "ml_tests_01",
+      "binding": {
+        "path": "tmp/task42extra/v46/ml_tests_01/junit.xml",
+        "sha256": "d8bf6e902dc9b6a5fcaf51cfcb681d9b7ff5894a2825d28b6983e57bc96daf08",
+        "bytes": 14664
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "105",
+          "time": "7.786",
+          "timestamp": "2026-10-12T10:30:55.656462",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "normalizer_record_tests_01",
+      "binding": {
+        "path": "tmp/task42extra/v46/normalizer_record_tests_01/junit.xml",
+        "sha256": "489b70ff2f0622db523cfe4111d5dc360f6613b754d204fe11440820fd4b25f6",
+        "bytes": 6381
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "44",
+          "time": "1.443",
+          "timestamp": "2026-10-12T10:48:50.556393",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    },
+    {
+      "name": "pure_tests_01",
+      "binding": {
+        "path": "tmp/task42extra/v46/pure_tests_01/junit.xml",
+        "sha256": "85e4aa769a975bac249104602a3dd7424e41c4f389581958ba1720649af9c6ce",
+        "bytes": 1759
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "11",
+          "time": "0.268",
+          "timestamp": "2026-10-12T10:27:19.534921",
+          "hostname": "fenics-ws01"
+        }
+      ]
+    }
+  ],
+  "unique_passed_case_count": 117,
+  "passed_cases": [
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_actual_hidden_transaction_and_fixed_outputs[accept]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_actual_hidden_transaction_and_fixed_outputs[call_limit]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_actual_hidden_transaction_and_fixed_outputs[exception]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_actual_hidden_transaction_and_fixed_outputs[reject]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_actual_label_opens_rejected_in_isolated_process"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_atomic_core_position_restore_and_reopen"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_complete_original_moment_conditional_action_and_fallback[box-chebtt]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_complete_original_moment_conditional_action_and_fallback[box-fttnn]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_complete_original_moment_conditional_action_and_fallback[permuted-chebtt]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_complete_original_moment_conditional_action_and_fallback[permuted-fttnn]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_complete_original_moment_conditional_action_and_fallback[skew-chebtt]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_complete_original_moment_conditional_action_and_fallback[skew-fttnn]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_complex_linear_adjoint_layout[0-chebtt]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_complex_linear_adjoint_layout[0-fttnn]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_complex_linear_adjoint_layout[1-chebtt]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_complex_linear_adjoint_layout[1-fttnn]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_complex_linear_adjoint_layout[2-chebtt]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_complex_linear_adjoint_layout[2-fttnn]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_lsmr_small_complex_svd[duplicate]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_lsmr_small_complex_svd[full]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_lsmr_small_complex_svd[nonhermitian]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_lsmr_small_complex_svd[scales]"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_only_hidden_parameters_and_zero_initialization"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_rejected_full_model_step_rolls_back"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_research_comparison_policy_does_not_change_numerical_fields"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_saved_checker_output_namespace_is_unique_per_recovery"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_saved_research_policy_writer_preserves_failed_report_and_reopen"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_schema_labels_and_modified_solver_rejected"
+    },
+    {
+      "classname": "src.test.test_ftt_conditional_core",
+      "name": "test_stale_base_rejected"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_atomic_interruption_preserves_complete_state"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_axes_pending_and_inherited_budgets"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_diagnostic_and_absolute_round_cap_and_refinement"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_explicit_v43_inputs_resources_and_label_firewall"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_four_new_rounds_ignore_old_stagnation_and_preserve_frozen_hidden"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_joint_feedback_strict_bool_identity_and_no_vector"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_loss_only_field_only_nonfinite_negative_are_not_trend_pass[values0]"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_loss_only_field_only_nonfinite_negative_are_not_trend_pass[values1]"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_loss_only_field_only_nonfinite_negative_are_not_trend_pass[values2]"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_loss_only_field_only_nonfinite_negative_are_not_trend_pass[values3]"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_nonzero_same_parent_two_forks_and_no_round4_rerun"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_old_policy_stays_false_new_trend_is_eligible"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_parent_rejects_wrong_or_incomplete_state[buffer]"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_parent_rejects_wrong_or_incomplete_state[counter]"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_parent_rejects_wrong_or_incomplete_state[hash]"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_parent_rejects_wrong_or_incomplete_state[label]"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_parent_rejects_wrong_or_incomplete_state[partial]"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_parent_rejects_wrong_or_incomplete_state[phase]"
+    },
+    {
+      "classname": "src.test.test_ftt_core_continuation",
+      "name": "test_pending_scalar_recovery_and_source_guard"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_actual_v45_durable_selects_short_task_socket_namespace"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_actual_v45_launch_successful_psi_ignores_exhausted_legacy_observation_pool"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_cache_axis_dependencies_and_restored_state"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_conditional_pilot_requires_actual_and_producer_joint_pass"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_fixed_extra_round_gate_and_initial_limits"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_identity_exact_old_segment_regression"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_new_schema_and_old_schema_reject_cross_identity"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_numeric_role_and_window_budget"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_qualified_options_pass_before_firewall_without_broadening_file_access"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_real_writeback_failure_restores_all_outputs"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_retained_two_segment_original_increment_and_identity"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_round12_parent_actual_file_firewall_and_forbidden_labels"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_round14_complete_audit_before_trend_and_hidden_freeze"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_scalar_consumer_reuses_only_matching_completed_feedback"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_small_complex_right_transform_and_independent_svd[duplicate]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_small_complex_right_transform_and_independent_svd[few_nodes]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_small_complex_right_transform_and_independent_svd[full]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_small_complex_right_transform_and_independent_svd[scaled]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[bias-0]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[bias-1]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[bias-2]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[complex-0]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[complex-1]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[complex-2]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[imaginary-0]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[imaginary-1]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_axis_old_point_map_and_complex_adjoint[imaginary-2]"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_three_saved_same_parent_forks_and_third_route_corruption"
+    },
+    {
+      "classname": "src.test.test_ftt_feature_coordinates",
+      "name": "test_wrong_conjugate_and_y_as_delta_are_rejected"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_branch",
+      "name": "test_core_history_original_residual_matches_full_physical_equation"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_branch",
+      "name": "test_diagnostic_rounds_do_not_reapply_old_point_one_screen[2]"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_branch",
+      "name": "test_diagnostic_rounds_do_not_reapply_old_point_one_screen[4]"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_branch",
+      "name": "test_exact_residual_identity_original_norm_and_rhs_immutable"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_branch",
+      "name": "test_nonhermitian_complex_adjoint_unchanged"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_branch",
+      "name": "test_residual_stage_uses_current_window_and_failure_pool"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_branch",
+      "name": "test_true_combined_fields_and_wrong_g_sign_rejected"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_branch",
+      "name": "test_wrong_base_rhs_or_normalizer_binding_rejected[bnorm_original]"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_branch",
+      "name": "test_wrong_base_rhs_or_normalizer_binding_rejected[bnorm_train]"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_branch",
+      "name": "test_wrong_base_rhs_or_normalizer_binding_rejected[c_base_sha256]"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_branch",
+      "name": "test_wrong_base_rhs_or_normalizer_binding_rejected[original_rhs_sha256]"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_branch",
+      "name": "test_wrong_base_rhs_or_normalizer_binding_rejected[training_rhs_sha256]"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_ml",
+      "name": "test_correction_parameter_version_invalidates_cache_without_base_pollution"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_ml",
+      "name": "test_deep_copy_frozen_base_zero_correction_and_nonzero_z_direction"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_ml",
+      "name": "test_independent_two_point_networks_sum_with_phase_once"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_ml",
+      "name": "test_nonzero_correction_hidden_complex_loss_finite_difference"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_ml",
+      "name": "test_saved_composite_state_rejects_wrong_or_repeated_branch[base_RNG]"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_ml",
+      "name": "test_saved_composite_state_rejects_wrong_or_repeated_branch[base_model]"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_ml",
+      "name": "test_saved_composite_state_rejects_wrong_or_repeated_branch[base_model_hash]"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_ml",
+      "name": "test_saved_composite_state_rejects_wrong_or_repeated_branch[c_base]"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_ml",
+      "name": "test_saved_composite_state_rejects_wrong_or_repeated_branch[c_combined]"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_ml",
+      "name": "test_saved_composite_state_rejects_wrong_or_repeated_branch[g]"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_ml",
+      "name": "test_saved_composite_state_rejects_wrong_or_repeated_branch[model]"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_ml",
+      "name": "test_saved_composite_state_rejects_wrong_or_repeated_branch[r_original]"
+    },
+    {
+      "classname": "src.test.test_ftt_residual_ml",
+      "name": "test_saved_composite_state_rejects_wrong_or_repeated_branch[residual_branch_identity]"
+    },
+    {
+      "classname": "src.test.test_ftt_structure",
+      "name": "test_cache_parameter_buffer_trial_restore_and_scatter_repeated_nodes"
+    },
+    {
+      "classname": "src.test.test_ftt_structure",
+      "name": "test_complete_finite_sum_real_adjoint_and_fallback[box-chebtt]"
+    },
+    {
+      "classname": "src.test.test_ftt_structure",
+      "name": "test_complete_finite_sum_real_adjoint_and_fallback[box-fttnn]"
+    },
+    {
+      "classname": "src.test.test_ftt_structure",
+      "name": "test_complete_finite_sum_real_adjoint_and_fallback[permuted-chebtt]"
+    },
+    {
+      "classname": "src.test.test_ftt_structure",
+      "name": "test_complete_finite_sum_real_adjoint_and_fallback[permuted-fttnn]"
+    },
+    {
+      "classname": "src.test.test_ftt_structure",
+      "name": "test_complete_finite_sum_real_adjoint_and_fallback[skew-chebtt]"
+    },
+    {
+      "classname": "src.test.test_ftt_structure",
+      "name": "test_complete_finite_sum_real_adjoint_and_fallback[skew-fttnn]"
+    },
+    {
+      "classname": "src.test.test_ftt_structure",
+      "name": "test_complete_old_measurements_reused_without_reexecuting_producer"
+    },
+    {
+      "classname": "src.test.test_ftt_structure",
+      "name": "test_full_constraint_chain_has_two_nonunit_phases_once"
+    },
+    {
+      "classname": "src.test.test_ftt_structure",
+      "name": "test_inherited_full_Adam_to_fresh_LBFGS_budget_and_atomic_state"
+    },
+    {
+      "classname": "src.test.test_ftt_structure",
+      "name": "test_noncommuting_complex_chain_direction_and_wrong_conjugate"
+    },
+    {
+      "classname": "src.test.test_ftt_structure",
+      "name": "test_shared_entities_keep_every_finite_sum_and_all_small_coefficients"
+    },
+    {
+      "classname": "src.test.test_ftt_structure",
+      "name": "test_structural_float64_and_original_timebase_do_not_reset"
+    },
+    {
+      "classname": "src.test.test_ftt_structure",
+      "name": "test_structure_schema_isolation_and_parent_binding"
+    },
+    {
+      "classname": "src.test.test_ftt_structure",
+      "name": "test_v39_admission_never_spends_expired_v30_observation_pool"
+    }
+  ],
+  "repeats_not_added": true,
+  "initial_source_receipt": {
+    "source_parent_sha": "5a48c802486875ac628e6e710b5caf240769248b",
+    "source_file_sha256": {
+      "input/task042extra_feinn_5nm/design_v46.json": "e6187f3bd04389777e24af27dd7b38a9c829728bac2ab6cbd4142c37c0fd5e1b",
+      "input/task042extra_feinn_5nm/v46_residual_branch_checks.dat": "d3b54f49b5c36b510a97f5efa781c8e8d609d4148c001f0d4efe69dfa570c3cf",
+      "input/task042extra_feinn_5nm/v46_residual_branch_compare.dat": "ee2001ab4e2d03ebbe52b0750043f02da3debc0b7ed06edf34297ce35abf7474",
+      "input/task042extra_feinn_5nm/v46_residual_branch_frozen.dat": "d3b12ccc6906298053f452f4fbcac46d2f46d37b6e5ea7dd2e3b5e49d5c1a7d6",
+      "input/task042extra_feinn_5nm/v46_residual_branch_learned.dat": "848bc516bdc45624d47ef3109bf4a21116c9f6889f5b2f1fe1919a97afc1a4ad",
+      "input/task042extra_feinn_5nm/v46_residual_branch_prepare.dat": "9bdb236bfaf6fceed18411e62dd77b92f3ab8f28b90a22541a4d7d63910d6e45",
+      "src/io/ftt_residual_campaign.py": "3ae0384cb2e127bcbd4dd9751b4861e505764ccdebf20bf86a9896cd7dd292ff",
+      "src/io/neural_wave_campaign.py": "9155330f91b07fd8824b9de88942eefa22a2a9bd36a873f8b58f13c7f3415a66",
+      "src/postprocessing/ftt_verification.py": "5a8bda0140c1aad1f8b2faddbe66b6a0d8b004c9cfd27a0ad29156a288ebacab",
+      "src/runners/block_wave_admission.py": "1685b55748fc5db4742d689620e5e8a6b08433ecde4f599170b3ce7837d4e365",
+      "src/runners/ftt_continuation_joint.py": "60b87fdca3ec0da54e635e00cd8a89094de1e7b6752b1ff432ccd9dbad3c7387",
+      "src/runners/ftt_core_worker.py": "5124411b39cc1b341da24f97f3865524db3217a91cb830be4357a77436ddc05b",
+      "src/runners/ftt_residual_worker.py": "92940730f330b7eb56b42d46ec1c55bcc9af37515a39c16d9c3e32bad2649020",
+      "src/runners/ftt_worker.py": "4d0ec4def6dba3a4e451c4910d69e884f0e490ca20411491a0a3f4bd592c9fc8",
+      "src/runners/neural_wave_campaign.py": "5f42a337f1bb1fa3d9633310f1a7e51168b1a3eddaef2bdb7866cbe5fcd386fc",
+      "src/runners/neural_wave_dependencies.py": "bfe741e49fa0e19dc8c16bd4ad12aad625e4230276be23cd61952e637c261851",
+      "src/solvers/ftt_core_training.py": "289d53bc72f3e5acbda2467cf7395ac62e1ad007a3f9b9bd22311d97004874b8",
+      "src/solvers/ftt_residual_branch.py": "fa804c4216c35d99b94bd3989ea2862dcb60128f5ecaf5367c7396b6851c1c9d",
+      "src/solvers/ftt_residual_io.py": "c6de2be29fe2bea07dd1ad183047bfb5d02db5035e6fe0bbb974d39cf320d180",
+      "src/solvers/ftt_residual_qualification.py": "d085551a2249c5186bae50f5738161665808a28d41c5edd8e7e475c968dc65c9",
+      "src/test/test_ftt_residual_branch.py": "6810066c8a4b08dd9290bd05f2511154978a93dbf1b1b78aa5fb47815744ad14",
+      "src/test/test_ftt_residual_ml.py": "2a8d0fee8a1e80924aff749d2c9861d0a27df6dadc56b9ec34df953d26425f01"
+    },
+    "pytest_passed": 116,
+    "junit_sha256": "1ff2c7ceb48965d5efa25524d1f12313dc131d61da20c064698dc00b03f0d20c",
+    "static_checks": [
+      {
+        "command": [
+          "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+          "-m",
+          "ruff",
+          "check",
+          "src/io/neural_wave_campaign.py",
+          "src/postprocessing/ftt_verification.py",
+          "src/runners/block_wave_admission.py",
+          "src/runners/ftt_continuation_joint.py",
+          "src/runners/ftt_core_worker.py",
+          "src/runners/ftt_worker.py",
+          "src/runners/neural_wave_campaign.py",
+          "src/runners/neural_wave_dependencies.py",
+          "src/solvers/ftt_core_training.py",
+          "src/io/ftt_residual_campaign.py",
+          "src/runners/ftt_residual_worker.py",
+          "src/solvers/ftt_residual_branch.py",
+          "src/solvers/ftt_residual_io.py",
+          "src/solvers/ftt_residual_qualification.py",
+          "src/test/test_ftt_residual_branch.py",
+          "src/test/test_ftt_residual_ml.py"
+        ],
+        "returncode": 0,
+        "stdout": "All checks passed!\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+          "-m",
+          "compileall",
+          "-q",
+          "src/io/neural_wave_campaign.py",
+          "src/postprocessing/ftt_verification.py",
+          "src/runners/block_wave_admission.py",
+          "src/runners/ftt_continuation_joint.py",
+          "src/runners/ftt_core_worker.py",
+          "src/runners/ftt_worker.py",
+          "src/runners/neural_wave_campaign.py",
+          "src/runners/neural_wave_dependencies.py",
+          "src/solvers/ftt_core_training.py",
+          "src/io/ftt_residual_campaign.py",
+          "src/runners/ftt_residual_worker.py",
+          "src/solvers/ftt_residual_branch.py",
+          "src/solvers/ftt_residual_io.py",
+          "src/solvers/ftt_residual_qualification.py",
+          "src/test/test_ftt_residual_branch.py",
+          "src/test/test_ftt_residual_ml.py"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    ],
+    "validation": [
+      {
+        "path": "input/task042extra_feinn_5nm/v46_residual_branch_checks.dat",
+        "returncode": 0,
+        "stdout": "{\"campaign_version\": 46, \"case\": \"M5\", \"design_sha256\": \"e6187f3bd04389777e24af27dd7b38a9c829728bac2ab6cbd4142c37c0fd5e1b\", \"hidden_width\": 32, \"input\": \"input/task042extra_feinn_5nm/v46_residual_branch_checks.dat\", \"input_sha256\": \"d3b54f49b5c36b510a97f5efa781c8e8d609d4148c001f0d4efe69dfa570c3cf\", \"mapping_kind\": \"factored_exact_moments\", \"max_seconds\": 3600, \"metric_kind\": \"native_euc\", \"mode\": \"ml\", \"model_kind\": null, \"role\": \"residual_branch_checks\", \"schema\": \"ftt.one-residual-one-run.v1\", \"stage\": \"v46_residual_branch_checks\"}\n",
+        "stderr": ""
+      },
+      {
+        "path": "input/task042extra_feinn_5nm/v46_residual_branch_compare.dat",
+        "returncode": 0,
+        "stdout": "{\"campaign_version\": 46, \"case\": \"M5\", \"design_sha256\": \"e6187f3bd04389777e24af27dd7b38a9c829728bac2ab6cbd4142c37c0fd5e1b\", \"hidden_width\": 32, \"input\": \"input/task042extra_feinn_5nm/v46_residual_branch_compare.dat\", \"input_sha256\": \"ee2001ab4e2d03ebbe52b0750043f02da3debc0b7ed06edf34297ce35abf7474\", \"mapping_kind\": \"factored_exact_moments\", \"max_seconds\": 3600, \"metric_kind\": \"native_euc\", \"mode\": \"pure\", \"model_kind\": null, \"role\": \"residual_branch_compare\", \"schema\": \"ftt.one-residual-one-run.v1\", \"stage\": \"v46_residual_branch_compare\"}\n",
+        "stderr": ""
+      },
+      {
+        "path": "input/task042extra_feinn_5nm/v46_residual_branch_frozen.dat",
+        "returncode": 0,
+        "stdout": "{\"campaign_version\": 46, \"case\": \"M5\", \"design_sha256\": \"e6187f3bd04389777e24af27dd7b38a9c829728bac2ab6cbd4142c37c0fd5e1b\", \"hidden_width\": 32, \"input\": \"input/task042extra_feinn_5nm/v46_residual_branch_frozen.dat\", \"input_sha256\": \"d3b12ccc6906298053f452f4fbcac46d2f46d37b6e5ea7dd2e3b5e49d5c1a7d6\", \"mapping_kind\": \"factored_exact_moments\", \"max_seconds\": 10800, \"metric_kind\": \"native_euc\", \"mode\": \"ml\", \"model_kind\": \"fttnn\", \"role\": \"RESIDUAL_FTT_R8_FROZEN\", \"schema\": \"ftt.one-residual-one-run.v1\", \"stage\": \"v46_residual_branch_frozen\"}\n",
+        "stderr": ""
+      },
+      {
+        "path": "input/task042extra_feinn_5nm/v46_residual_branch_learned.dat",
+        "returncode": 0,
+        "stdout": "{\"campaign_version\": 46, \"case\": \"M5\", \"design_sha256\": \"e6187f3bd04389777e24af27dd7b38a9c829728bac2ab6cbd4142c37c0fd5e1b\", \"hidden_width\": 32, \"input\": \"input/task042extra_feinn_5nm/v46_residual_branch_learned.dat\", \"input_sha256\": \"848bc516bdc45624d47ef3109bf4a21116c9f6889f5b2f1fe1919a97afc1a4ad\", \"mapping_kind\": \"factored_exact_moments\", \"max_seconds\": 10800, \"metric_kind\": \"native_euc\", \"mode\": \"ml\", \"model_kind\": \"fttnn\", \"role\": \"RESIDUAL_FTT_R8_LEARNED\", \"schema\": \"ftt.one-residual-one-run.v1\", \"stage\": \"v46_residual_branch_learned\"}\n",
+        "stderr": ""
+      },
+      {
+        "path": "input/task042extra_feinn_5nm/v46_residual_branch_prepare.dat",
+        "returncode": 0,
+        "stdout": "{\"campaign_version\": 46, \"case\": \"M5\", \"design_sha256\": \"e6187f3bd04389777e24af27dd7b38a9c829728bac2ab6cbd4142c37c0fd5e1b\", \"hidden_width\": 32, \"input\": \"input/task042extra_feinn_5nm/v46_residual_branch_prepare.dat\", \"input_sha256\": \"9bdb236bfaf6fceed18411e62dd77b92f3ab8f28b90a22541a4d7d63910d6e45\", \"mapping_kind\": \"factored_exact_moments\", \"max_seconds\": 600, \"metric_kind\": \"native_euc\", \"mode\": \"ml\", \"model_kind\": null, \"role\": \"residual_branch_prepare\", \"schema\": \"ftt.one-residual-one-run.v1\", \"stage\": \"v46_residual_branch_prepare\"}\n",
+        "stderr": ""
+      }
+    ]
+  },
+  "qualified_real_M5": {
+    "path": "benchmarks/artifacts/task42extra/v46/v46_residual_branch_checks/result.json",
+    "sha256": "e43e5914d20f0c94db478714683a0a4dab8d5a69de98f0b6342525d27afadb27",
+    "bytes": 14796
+  },
+  "full_repository_pytest": false,
+  "CI_claimed": false,
+  "qualified_native_moments_reference_and_base_reused": true
+}

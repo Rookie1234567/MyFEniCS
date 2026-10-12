@@ -1,0 +1,216 @@
+{
+  "schema": "task42extra.v46.selective-manifest.v1",
+  "base_SHA": "5a48c802486875ac628e6e710b5caf240769248b",
+  "numerical_source_SHA": "0b8fb32fbf180b5dc775dac6642f27cd198afa60",
+  "production_merge_approved": false,
+  "groups": {
+    "production numerical/core": [],
+    "reusable runner/watchdog": [
+      {
+        "path": "src/io/ftt_residual_campaign.py",
+        "sha256": "3ae0384cb2e127bcbd4dd9751b4861e505764ccdebf20bf86a9896cd7dd292ff",
+        "changes_numerical_behavior_in_opt_in_research": false,
+        "production_default_changed": false
+      },
+      {
+        "path": "src/io/neural_wave_campaign.py",
+        "sha256": "9155330f91b07fd8824b9de88942eefa22a2a9bd36a873f8b58f13c7f3415a66",
+        "changes_numerical_behavior_in_opt_in_research": false,
+        "production_default_changed": false
+      },
+      {
+        "path": "src/runners/block_wave_admission.py",
+        "sha256": "1685b55748fc5db4742d689620e5e8a6b08433ecde4f599170b3ce7837d4e365",
+        "changes_numerical_behavior_in_opt_in_research": false,
+        "production_default_changed": false
+      },
+      {
+        "path": "src/runners/ftt_core_worker.py",
+        "sha256": "5124411b39cc1b341da24f97f3865524db3217a91cb830be4357a77436ddc05b",
+        "changes_numerical_behavior_in_opt_in_research": false,
+        "production_default_changed": false
+      },
+      {
+        "path": "src/runners/ftt_residual_worker.py",
+        "sha256": "92940730f330b7eb56b42d46ec1c55bcc9af37515a39c16d9c3e32bad2649020",
+        "changes_numerical_behavior_in_opt_in_research": false,
+        "production_default_changed": false
+      },
+      {
+        "path": "src/runners/ftt_worker.py",
+        "sha256": "4d0ec4def6dba3a4e451c4910d69e884f0e490ca20411491a0a3f4bd592c9fc8",
+        "changes_numerical_behavior_in_opt_in_research": false,
+        "production_default_changed": false
+      },
+      {
+        "path": "src/runners/neural_wave_campaign.py",
+        "sha256": "3f85a5b39e3c5e92c242cbec9a76940706f10563d78fba192dc92109bf41a62d",
+        "changes_numerical_behavior_in_opt_in_research": false,
+        "production_default_changed": false
+      },
+      {
+        "path": "src/runners/neural_wave_dependencies.py",
+        "sha256": "bfe741e49fa0e19dc8c16bd4ad12aad625e4230276be23cd61952e637c261851",
+        "changes_numerical_behavior_in_opt_in_research": false,
+        "production_default_changed": false
+      }
+    ],
+    "checker/benchmark": [
+      {
+        "path": "src/postprocessing/ftt_verification.py",
+        "sha256": "5a8bda0140c1aad1f8b2faddbe66b6a0d8b004c9cfd27a0ad29156a288ebacab",
+        "changes_numerical_behavior_in_opt_in_research": true,
+        "production_default_changed": false
+      },
+      {
+        "path": "src/runners/ftt_continuation_joint.py",
+        "sha256": "60b87fdca3ec0da54e635e00cd8a89094de1e7b6752b1ff432ccd9dbad3c7387",
+        "changes_numerical_behavior_in_opt_in_research": false,
+        "production_default_changed": false
+      },
+      {
+        "path": "src/test/test_ftt_residual_branch.py",
+        "sha256": "124398c8bf6feb83d8fdaa2b6142f30946f3b073935c6ef35079422d71a67ee8",
+        "changes_numerical_behavior_in_opt_in_research": false,
+        "production_default_changed": false
+      },
+      {
+        "path": "src/test/test_ftt_residual_ml.py",
+        "sha256": "2a8d0fee8a1e80924aff749d2c9861d0a27df6dadc56b9ec34df953d26425f01",
+        "changes_numerical_behavior_in_opt_in_research": false,
+        "production_default_changed": false
+      }
+    ],
+    "compact evidence/docs": [
+      {
+        "path": "docs/task042extra_feinn_5nm/response_v46.md"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/ftt_one_residual_branch_v46.md"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/records/*_v46.*"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/README.md"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/{summary,test_summary,changed_files}.md"
+      },
+      {
+        "path": "docs/development_progress.md"
+      },
+      {
+        "path": "docs/development_model_registry.md"
+      }
+    ],
+    "research-only": [
+      {
+        "path": "input/task042extra_feinn_5nm/design_v46.json",
+        "sha256": "e6187f3bd04389777e24af27dd7b38a9c829728bac2ab6cbd4142c37c0fd5e1b",
+        "changes_numerical_behavior_in_opt_in_research": true,
+        "production_default_changed": false
+      },
+      {
+        "path": "input/task042extra_feinn_5nm/v46_residual_branch_checks.dat",
+        "sha256": "d3b54f49b5c36b510a97f5efa781c8e8d609d4148c001f0d4efe69dfa570c3cf",
+        "changes_numerical_behavior_in_opt_in_research": true,
+        "production_default_changed": false
+      },
+      {
+        "path": "input/task042extra_feinn_5nm/v46_residual_branch_compare.dat",
+        "sha256": "ee2001ab4e2d03ebbe52b0750043f02da3debc0b7ed06edf34297ce35abf7474",
+        "changes_numerical_behavior_in_opt_in_research": true,
+        "production_default_changed": false
+      },
+      {
+        "path": "input/task042extra_feinn_5nm/v46_residual_branch_frozen.dat",
+        "sha256": "d3b12ccc6906298053f452f4fbcac46d2f46d37b6e5ea7dd2e3b5e49d5c1a7d6",
+        "changes_numerical_behavior_in_opt_in_research": true,
+        "production_default_changed": false
+      },
+      {
+        "path": "input/task042extra_feinn_5nm/v46_residual_branch_learned.dat",
+        "sha256": "848bc516bdc45624d47ef3109bf4a21116c9f6889f5b2f1fe1919a97afc1a4ad",
+        "changes_numerical_behavior_in_opt_in_research": true,
+        "production_default_changed": false
+      },
+      {
+        "path": "input/task042extra_feinn_5nm/v46_residual_branch_prepare.dat",
+        "sha256": "9bdb236bfaf6fceed18411e62dd77b92f3ab8f28b90a22541a4d7d63910d6e45",
+        "changes_numerical_behavior_in_opt_in_research": true,
+        "production_default_changed": false
+      },
+      {
+        "path": "src/solvers/ftt_core_training.py",
+        "sha256": "9c5a95ecfc2cdbbe5819089d8bafdf13f86a5621d8cd19e8fdffdf1d2bcb9e42",
+        "changes_numerical_behavior_in_opt_in_research": true,
+        "production_default_changed": false
+      },
+      {
+        "path": "src/solvers/ftt_residual_branch.py",
+        "sha256": "ede8866c87f5f1cfbb8a4c21ce3baf5dc89f9fa73657c3f53b66e2698189c75d",
+        "changes_numerical_behavior_in_opt_in_research": true,
+        "production_default_changed": false
+      },
+      {
+        "path": "src/solvers/ftt_residual_io.py",
+        "sha256": "c6de2be29fe2bea07dd1ad183047bfb5d02db5035e6fe0bbb974d39cf320d180",
+        "changes_numerical_behavior_in_opt_in_research": true,
+        "production_default_changed": false
+      },
+      {
+        "path": "src/solvers/ftt_residual_qualification.py",
+        "sha256": "d085551a2249c5186bae50f5738161665808a28d41c5edd8e7e475c968dc65c9",
+        "changes_numerical_behavior_in_opt_in_research": true,
+        "production_default_changed": false
+      }
+    ],
+    "do-not-merge": [
+      {
+        "path": "benchmarks/artifacts/task42extra/v46",
+        "reason": "ignored large PT/arrays; only hash-bound evidence published"
+      },
+      {
+        "path": "tmp/task42extra/v46",
+        "reason": "ignored supervision, local receipts and finite publishing helpers"
+      },
+      {
+        "path": "unqualified research configuration as production default",
+        "reason": "four original joint gates FAIL; no merge authorization"
+      }
+    ]
+  },
+  "dependencies": [
+    {
+      "order": 1,
+      "group": "research-only",
+      "requires": "original V45 round14 base / same original native and q30 moments",
+      "tests": "117 unique local targeted cases; fresh actual residual qualification",
+      "fresh_PDE": "checks PASS; learned/frozen original joint FAIL"
+    },
+    {
+      "order": 2,
+      "group": "reusable runner/watchdog",
+      "requires": "opt-in residual action / original CoreWorkerProfile / existing durable ABI and health",
+      "tests": "five dat validate-only; impacted profile/regression tests",
+      "fresh_PDE": "all five serial stages COMPLETED and descendants cleared"
+    },
+    {
+      "order": 3,
+      "group": "checker/benchmark",
+      "requires": "atomic dual model boundaries / independent old pointwise map / original same-p3 reference read-only",
+      "tests": "complex pairing / FD / zero / no alias / restore negative controls",
+      "fresh_PDE": "four actual/producer scores; reconstruction/MPC/ports/quadrature PASS; physical accuracy FAIL"
+    },
+    {
+      "order": 4,
+      "group": "compact evidence/docs",
+      "requires": "closed run/index / original raw checker / model proof / resource receipts",
+      "tests": "saved raw-field gate recomputation; finite bindings and Markdown contracts",
+      "fresh_PDE": "reuse exact qualified source-bound measurements; none rerun for docs"
+    }
+  ],
+  "research_negative_can_be_kept_as_evidence": true,
+  "production_core_group_empty_because_no_qualified_new_default": true
+}

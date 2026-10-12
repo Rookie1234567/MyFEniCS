@@ -1,0 +1,60 @@
+{
+  "schema": "task42extra.v46.delivery.v1",
+  "declared_binding_count": 225,
+  "frozen_source_file_checks": 138,
+  "all_declared_arrays_and_source_hashes_pass": true,
+  "actual_and_producer_records": 4,
+  "strict_joint_gate": {
+    "RESIDUAL_FTT_R8_LEARNED": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    },
+    "RESIDUAL_FTT_R8_FROZEN": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    },
+    "RESIDUAL_FTT_R8_LEARNED_PRODUCER": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    },
+    "RESIDUAL_FTT_R8_FROZEN_PRODUCER": {
+      "equation": false,
+      "field": false,
+      "power": false,
+      "complete_model_MPC_port": true,
+      "quadrature": true,
+      "joint": false
+    }
+  },
+  "record_rows": {
+    "conditional_inner_solver_v46.csv": 36,
+    "full_40_complex_channels_v46.csv": 640,
+    "six_point_complex_fields_v46.csv": 288,
+    "power_and_energy_v46.csv": 4
+  },
+  "source_not_document_HEAD": true,
+  "numerical_sources": [
+    "0b8fb32fbf180b5dc775dac6642f27cd198afa60",
+    "9022141a43e60d2e1a926a04003e076ea04497b8"
+  ],
+  "complete_dual_network_reopen_verified": true,
+  "original_vector_denominators_preserved": true,
+  "reference_used_for_training": false,
+  "production_initialization_allowed": false,
+  "conditional_0p7": "NOT_RUN_LEARNED_M5_JOINT_GATE_FAILED",
+  "same_accuracy_NN_gain": "NOT_VERIFIED",
+  "full_repository_pytest": false,
+  "CI_claimed": false
+}

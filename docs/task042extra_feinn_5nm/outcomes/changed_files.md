@@ -1,3 +1,27 @@
+<!-- TASK42EXTRA_V46_CURRENT_BEGIN -->
+# V46：单份残差神经修正的依赖组
+
+| 依赖组 | 实际变化/行为 | 依赖、测试、fresh证据与顺序 |
+|---|---|---|
+| production numerical/core | 无合格production新默认；仅opt-in residual view、双模型/恢复与原训练钩子 | residual_branch/io/qualification → core_training/checkpoint/mapping；117本地定向与fresh M5 checks；原门FAIL，不提升production |
+| reusable runner/watchdog | 复用CoreWorkerProfile/既有durable/watchdog；新增schema16 profile及五输入 | campaign → worker → action adapter → source/prepare manifest；五dat validate及串行fresh五阶段；资源阈值未放宽 |
+| checker/benchmark | 旧独立点值支持双网先加后矩；FE compare-only与saved checker复用 | verification/checkpoint points、隔离joint反馈；actual/prod四份fresh审核，原参考只读；功率diagnostic |
+| compact evidence/docs | 本批完整Gate、40复通道、六点、成本、修复、source和当前入口 | 依赖两完整路线及compare；原字段独立重算；后续文档SHA不冒充数值source |
+| research-only | 固定基场+一份W32/r8加性修正及学习/冻结消融 | 有有限改善但完整FAIL、无强信号；不作为默认/生产初始化，独立神经研究配置关闭 |
+| do-not-merge | ignored PT/大数组、未资格化研究默认、自动0.7/第三网络/历史扫描 | 没有production/master merge许可；不把研究负结果升production |
+
+审阅发布5a48c802486875ac628e6e710b5caf240769248b，结果基线9b4832e79cc57e852c7a70f32c527d7b41e2b348，原任务base fbac3d8777fcfd897d93b898cb9f460f79ddd6ff。资格/prepare source=9022141a43e60d2e1a926a04003e076ea04497b8；两路线/compare source=0b8fb32fbf180b5dc775dac6642f27cd198afa60；后续交付HEAD只代表文档与证据提交，不替代数值source。
+
+设计SHA256 e6187f3bd04389777e24af27dd7b38a9c829728bac2ab6cbd4142c37c0fd5e1b。固定g/c0档72755ea06625041b36e6bcd1aca91e05632fc455c07d14cfeb6e8d58c2e22a53（1023476B）；共同零修正/冻结基网档da1b586fa6c93f2e681dc3b10d4001f339eeefae8f1a59abe63a4715535b1002（354241B）。g数组hash9ee7039a391203426452e4bd45ca92aae2d48a55257d4acfa1febb609ccba528、c0数组hashcda595e3bc687219e6a2b0d8b8a1bf95418f97d47fe2b4f001c1f4be560a3214、原f数组hashea17da9735541104f770ec58390a71c99bd26c53fb09ff85e2b7ffe4b68e575f分别保存。只有FE compare-only读取原同p3参考0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7；训练、model proof和compact writer均不读参考系数。
+
+证据入口：[原run/source/hash](records/run_index_v46.json)、[资格/准备](records/residual_branch_qualification_v46.json)、[两路线/检查点](records/residual_branch_routes_v46.json)、[双网冻结与隐藏消融](records/same_state_hidden_ablation_v46.json)、[内层36核心](records/conditional_inner_solver_v46.csv)、[隐藏/轮次](records/hidden_updates_and_rounds_v46.json)、[隔离标量](records/isolated_scalar_continuation_v46.json)、[完整四份Gate](records/full_numerical_gates_v46.json)、[功率/能量](records/power_and_energy_v46.csv)、[四类40复通道](records/full_40_complex_channels_v46.csv)、[六点复场](records/six_point_complex_fields_v46.csv)、[范数/相位/通道定义](records/channel_and_norm_definitions_v46.json)、[测试](records/formal_tests_and_qualification_v46.json)、[成本](records/resource_costs_v46.json)。大型PT、mesh与矩阵留在ignored artifact；轻量记录逐项hash绑定。
+
+五dat通过同一个durable入口顺序执行，wrapper选择资格化环境并调用scripts/run_case.py。全程CPU-only/MPI1/math1/Torch intra/inter1；ML CPU Torch2.7.1、网络float64/complex128；FE PETSc complex128/int64、DOLFINx/Basix0.10来自同一Linux ABI。成功进程组均清场，未改变其他工作树或生产分支。GitHub实际呈现及最终推送/清场在后续发布尾段单列，本地Markdown检查不能冒充视觉PASS。
+
+下方历史全文原样保留；旧“当前/下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V46_CURRENT_END -->
+
 <!-- TASK42EXTRA_V45_CURRENT_BEGIN -->
 # V45：复用既有条件训练的有限右坐标研究
 

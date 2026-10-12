@@ -1,3 +1,16 @@
+<!-- TASK42EXTRA_V46_CURRENT_BEGIN -->
+# 当前执行入口：V46单份神经修正已完整验收
+
+**本批实际神经残差增量和同态冻结控制已完整执行并验收，四份actual/producer原联合门均FAIL。修正非零且可独立重建，原残差与散射场相对基场都有有限改善；仍远离原门及研究强信号。学习隐藏层没有显示相对冻结控制的有效净收益。本具体加性配置收口，0.7nm pilot未准入；不自动增加第三网或另开窗口。**
+
+研究对象仍为原Si/air非可分三维M5：lambda5nm、8×6×8=384hex、h1.25nm、p3、31968独立复FE与40端口、34050完整FE行；双Floquet/完整DtN、材料、A/f、背景/相位、体/DtN q15、网络q30/独立q60不变。全局A的NNZ为NOT_ASSEMBLED（matrix-free作用），不是矩阵全零。p/h/M/MPI固定，只研究一份新完整神经修正。
+
+[Review V45](review_report_v45.md)、[Response V46](response_v46.md)、[summary](outcomes/summary.md)、[完整专题](outcomes/ftt_one_residual_branch_v46.md)、[四份原Gate](outcomes/records/full_numerical_gates_v46.json)、[source/hash](outcomes/records/run_index_v46.json)、[费用](outcomes/records/resource_costs_v46.json)。两条各6新轮、18核心，学习/冻结原R约0.34635/0.34633；非零修正可重建，原门和强信号未达。基网逐位不变，0.7nm未准入，完整冷N=1 UNKNOWN。
+
+下方历史全文原样保留；旧“当前/下一步”不构成新授权。
+
+<!-- TASK42EXTRA_V46_CURRENT_END -->
+
 <!-- TASK42EXTRA_V45_CURRENT_BEGIN -->
 # 当前执行入口：V45神经右坐标研究完成
 
