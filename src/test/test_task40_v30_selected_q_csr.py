@@ -405,9 +405,9 @@ def test_disk_backed_q4_fill_and_finalize_keep_pattern_arrays_in_place(tmp_path)
     csr_outputs = {name: np.asarray(matrix @ value) for name, value in inputs.items()}
     native_outputs = {name: value.copy() for name, value in csr_outputs.items()}
     components = {
-        "volume": native_outputs["case1_full"].copy(),
+        "volume": native_outputs["case1_trace_only"].copy(),
         "minus_D": np.zeros(3, dtype=np.complex128),
-        "C": np.zeros(3, dtype=np.complex128),
+        "C": native_outputs["case1_port_only"].copy(),
         "Hhat": np.zeros(3, dtype=np.complex128),
     }
     paired_leakage = {
