@@ -3438,3 +3438,303 @@ def test_v26_resource_stop_footer_keeps_recovered_native_binding(monkeypatch, tm
         expected_stop_stage="selected_reference_q_csr",
     )
     assert all(checks.values()), checks
+
+
+
+
+def _v29_checker_context_fixture(tmp_path, monkeypatch):
+    import hashlib
+
+    from scripts import task40_v20_service_workflow as service
+    from src.runners import task40_v29_contract
+
+    source_root = (tmp_path / "canonical").resolve()
+    execution_root = (tmp_path / "approved").resolve()
+    execution_root.mkdir()
+    monkeypatch.setattr(service, "ROOT", execution_root)
+
+    def write(path, payload):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(payload)
+        return path
+
+    def write_json(path, value):
+        return write(path, (json.dumps(value, sort_keys=True) + "\n").encode())
+
+    def canonical(relative):
+        return source_root / relative
+
+    def target(source):
+        return execution_root / Path(source).relative_to(source_root)
+
+    def sha(path):
+        return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+    input_source = canonical(Path("benchmarks/v29/selected.dat"))
+    input_target = target(input_source)
+    write(input_target, b"frozen V28 scientific input")
+    input_sha = sha(input_target)
+    physical_sha = "b" * 64
+
+    old_window_source = canonical(service.TASK40_V28_CAMPAIGN_WINDOW)
+    old_window_target = target(old_window_source)
+    write_json(old_window_target, {"window": "V28 science"})
+    old_window_sha = sha(old_window_target)
+
+    pattern_source = canonical(service.V28_PATTERN_MANIFEST_RELATIVE)
+    pattern_target = target(pattern_source)
+    write(pattern_target, b"frozen V27 pattern")
+    pattern_sha = sha(pattern_target)
+    manifest_source = canonical(Path("results/v29-fixture/v28-manifest.json"))
+    manifest_target = target(manifest_source)
+    qualification_source = canonical(Path("results/v29-fixture/v28-native-pass.json"))
+    qualification_target = target(qualification_source)
+    write(qualification_target, b"native PASS receipt")
+    qualification_sha = sha(qualification_target)
+    write_json(
+        manifest_target,
+        {"native_qualification": {"path": str(qualification_source), "sha256": qualification_sha}},
+    )
+    manifest_sha = sha(manifest_target)
+    old_selector_source = canonical(Path("benchmarks/v28/selector.json"))
+    old_selector_target = target(old_selector_source)
+    write(old_selector_target, b"immutable V28 selector")
+    old_selector_sha = sha(old_selector_target)
+
+    new_window = execution_root / service.TASK40_V29_CAMPAIGN_WINDOW
+    write_json(new_window, {"window": "V29 execution"})
+    new_window_sha = sha(new_window)
+    accounting = new_window.with_name("campaign_accounting_v10.jsonl")
+    write(accounting, b"registered window\n")
+    contract_path = execution_root / service.V29_PREPARATION_ROOT / "contract.json"
+    selector_path = execution_root / service.V29_PREPARATION_ROOT / "selector.json"
+    sidecar_source = canonical(service.V29_PREPARATION_ROOT / "path_mapping.json")
+    sidecar_path = target(sidecar_source)
+
+    contract = {
+        "execution": {
+            "execution_root": str(execution_root),
+            "approved_path_mapping": {
+                "source_root": str(source_root),
+                "execution_root": str(execution_root),
+            },
+            "campaign_window_path": str(new_window),
+            "campaign_window_sha256": new_window_sha,
+        },
+        "scientific_identity": {
+            "input_sha256": input_sha,
+            "v28_complete_manifest_sha256": manifest_sha,
+            "v28_native_qualification_sha256": qualification_sha,
+            "v27_manifest_sha256": pattern_sha,
+            "v28_window_sha256": old_window_sha,
+        },
+    }
+    write_json(contract_path, contract)
+    contract_sha = sha(contract_path)
+    selector = {
+        "execution_contract_path": str(service.V29_PREPARATION_ROOT / "contract.json"),
+        "execution_contract_sha256": contract_sha,
+        "path_mapping_sidecar": str(sidecar_source),
+        "input_path": str(input_source),
+        "input_sha256": input_sha,
+        "manifest_path": str(manifest_source),
+        "manifest_sha256": manifest_sha,
+        "continuation_manifest_path": str(manifest_source),
+        "qualification_path": str(qualification_source),
+        "qualification_sha256": qualification_sha,
+        "immutable_v28_selector_path": str(old_selector_source),
+        "immutable_v28_selector_sha256": old_selector_sha,
+        "pattern_manifest_path": str(pattern_source),
+        "pattern_manifest_sha256": pattern_sha,
+        "qualified_window_sha256": old_window_sha,
+        "physical_model_sha256": physical_sha,
+        "policy": "COMPLETE_AND_MATCHING_V28_NATIVE_PASS_REQUIRED",
+        "operation": "EXISTING_COMPLETE_Q0_CSR_FACTOR_ONLY",
+    }
+    write_json(selector_path, selector)
+    selector_sha = sha(selector_path)
+    write_json(
+        sidecar_path,
+        {
+            "source_root": str(source_root),
+            "execution_root": str(execution_root),
+            "root_status": "explanatory deployment label",
+            "execution_contract_sha256": contract_sha,
+            "rules": {"rewrite_immutable_v28_json": False},
+        },
+    )
+
+    run_id = "fixture_v29_run"
+    run_source_sha = "a" * 40
+    run_manifest = {
+        "run_id": run_id,
+        "source_sha": run_source_sha,
+        "input_path": str(input_source),
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "task40_v20_campaign": {
+            "window_path": str(new_window),
+            "window_sha256": new_window_sha,
+            "accounting_path": str(accounting),
+        },
+    }
+    run_summary = {"run_id": run_id, "source_sha": run_source_sha}
+    numerical_output = execution_root / "results/v29-fixture/numerical"
+    operation_path = numerical_output / "operation.json"
+    identity = {
+        "source_sha": run_source_sha,
+        "run_id": run_id,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "campaign_window_sha256": old_window_sha,
+        "execution_campaign_window_sha256": new_window_sha,
+        "execution_contract_sha256": contract_sha,
+        "execution_selector_sha256": selector_sha,
+    }
+    operation = {
+        "run_id": run_id,
+        "csr_manifest_path": str(manifest_source),
+        "factor_execution_identity": dict(identity),
+        "current_execution_identity": dict(identity),
+        "v29_strict_factor_only_binding": {
+            "contract_sha256": contract_sha,
+            "selector_sha256": selector_sha,
+            "execution_window_sha256": new_window_sha,
+        },
+    }
+    write_json(operation_path, operation)
+    partial = {
+        "run_id": run_id,
+        "source_sha": run_source_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "v28_q0_continuation": {
+            "operation_path": operation_path.name,
+            "operation_sha256": sha(operation_path),
+            "selector_path": str(old_selector_source),
+            "selector_sha256": old_selector_sha,
+        },
+    }
+    partial_path = numerical_output / "v20_partial_result.json"
+    write_json(partial_path, partial)
+    manifest_path = execution_root / "results/v29-fixture/run_manifest.json"
+    summary_path = execution_root / "results/v29-fixture/run_summary.json"
+    write_json(manifest_path, run_manifest)
+    write_json(summary_path, run_summary)
+
+    def resolver(path):
+        return task40_v29_contract.resolve_approved_path(
+            path, source_root=source_root, execution_root=execution_root
+        )
+
+    def load_contract(path, *, expected_sha256, current_root):
+        assert Path(current_root).resolve() == execution_root
+        assert sha(path) == expected_sha256
+        return json.loads(Path(path).read_text(encoding="utf-8")), expected_sha256
+
+    def load_selector(path, *, expected_sha256, contract_path, contract_sha256, contract):
+        assert sha(path) == expected_sha256
+        value = json.loads(Path(path).read_text(encoding="utf-8"))
+        assert resolver(value["execution_contract_path"]) == Path(contract_path).resolve()
+        assert value["execution_contract_sha256"] == contract_sha256
+        return value, expected_sha256
+
+    monkeypatch.setattr(task40_v29_contract, "approved_path_resolver", lambda _contract: resolver)
+    monkeypatch.setattr(task40_v29_contract, "require_authorized_contract", load_contract)
+    monkeypatch.setattr(task40_v29_contract, "require_authorized_selector", load_selector)
+    monkeypatch.setattr(
+        service.subprocess, "check_output", lambda *_args, **_kwargs: "f" * 40 + "\n"
+    )
+    for name, value in {
+        "TASK40_V29_STRICT_FACTOR_ONLY": "1",
+        "TASK40_V29_CONTRACT_PATH": str(contract_path),
+        "TASK40_V29_CONTRACT_SHA256": contract_sha,
+        "TASK40_V29_SELECTOR_PATH": str(selector_path),
+        "TASK40_V29_SELECTOR_SHA256": selector_sha,
+    }.items():
+        monkeypatch.setenv(name, value)
+    return {
+        "service": service,
+        "context_args": {
+            "input_path": input_target,
+            "summary_path": summary_path,
+            "manifest_path": manifest_path,
+            "numerical_output": numerical_output,
+            "manifest": run_manifest,
+            "run_summary": run_summary,
+            "partial": partial,
+        },
+        "input_target": input_target,
+        "old_window_target": old_window_target,
+        "selector_path": selector_path,
+        "selector": selector,
+        "operation_path": operation_path,
+        "manifest": run_manifest,
+        "sidecar_path": sidecar_path,
+        "run_source_sha": run_source_sha,
+    }
+
+
+def test_v29_partial_checker_context_binds_approved_paths_and_both_windows(
+    tmp_path, monkeypatch
+):
+    fixture = _v29_checker_context_fixture(tmp_path, monkeypatch)
+    context = fixture["service"]._v29_partial_checker_context(**fixture["context_args"])
+
+    assert all(context["identity_checks"].values()), context["identity_checks"]
+    assert context["run_source_sha"] == fixture["run_source_sha"]
+    assert context["checker_source_sha"] == "f" * 40
+    assert context["path_resolver"](fixture["selector"]["manifest_path"]).is_relative_to(
+        fixture["service"].ROOT
+    )
+    assert context["raw_file_hashes"]["v29_path_mapping_sidecar"]
+
+
+@pytest.mark.parametrize(
+    "tamper", ["input_hash", "path_escape", "old_window_hash", "science_window", "execution_window", "sidecar"]
+)
+def test_v29_partial_checker_context_fails_closed_on_path_hash_or_window_tampering(
+    tmp_path, monkeypatch, tamper
+):
+    import hashlib
+
+    fixture = _v29_checker_context_fixture(tmp_path, monkeypatch)
+    service = fixture["service"]
+    if tamper == "input_hash":
+        fixture["input_target"].write_bytes(b"changed input")
+    elif tamper == "path_escape":
+        selector = dict(fixture["selector"])
+        selector["qualification_path"] = str(tmp_path / "outside" / "pass.json")
+        fixture["selector_path"].write_text(json.dumps(selector), encoding="utf-8")
+        monkeypatch.setenv(
+            "TASK40_V29_SELECTOR_SHA256",
+            hashlib.sha256(fixture["selector_path"].read_bytes()).hexdigest(),
+        )
+    elif tamper == "old_window_hash":
+        fixture["old_window_target"].write_bytes(b"changed V28 window")
+    elif tamper == "science_window":
+        operation = json.loads(fixture["operation_path"].read_text(encoding="utf-8"))
+        operation["factor_execution_identity"]["campaign_window_sha256"] = "0" * 64
+        operation["current_execution_identity"]["campaign_window_sha256"] = "0" * 64
+        fixture["operation_path"].write_text(json.dumps(operation), encoding="utf-8")
+        fixture["context_args"]["partial"]["v28_q0_continuation"]["operation_sha256"] = hashlib.sha256(
+            fixture["operation_path"].read_bytes()
+        ).hexdigest()
+    elif tamper == "execution_window":
+        fixture["manifest"]["task40_v20_campaign"]["window_sha256"] = "1" * 64
+    elif tamper == "sidecar":
+        sidecar = json.loads(fixture["sidecar_path"].read_text(encoding="utf-8"))
+        sidecar["execution_contract_sha256"] = "2" * 64
+        fixture["sidecar_path"].write_text(json.dumps(sidecar), encoding="utf-8")
+
+    if tamper in {"science_window", "execution_window"}:
+        context = service._v29_partial_checker_context(**fixture["context_args"])
+        key = (
+            "v29_old_v28_science_window_preserved"
+            if tamper == "science_window"
+            else "v29_execution_manifest_window_accounting_and_registration_bind"
+        )
+        assert context["identity_checks"][key] is False
+    else:
+        with pytest.raises(ValueError):
+            service._v29_partial_checker_context(**fixture["context_args"])

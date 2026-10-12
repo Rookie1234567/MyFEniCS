@@ -1598,6 +1598,205 @@ def _map_v29_paths_in_value(value: Any, resolver: Callable[[str | Path], Path]) 
     return value
 
 
+def _resolve_v29_checker_path(
+    value: str | Path,
+    *,
+    resolver: Callable[[str | Path], Path],
+    execution_root: Path,
+) -> Path:
+    """Resolve a saved V28 path into the approved V29 tree, rejecting every other root."""
+    supplied = Path(value)
+    if supplied.is_absolute():
+        mapped = Path(_map_v29_paths_in_value(str(supplied), resolver))
+    else:
+        mapped = resolver(supplied)
+    if not mapped.is_absolute():
+        mapped = execution_root / mapped
+    resolved = mapped.resolve()
+    if not resolved.is_relative_to(execution_root):
+        raise ValueError(f"V29 checker path escapes its approved execution root: {value}")
+    return resolved
+
+
+def _v29_partial_checker_context(
+    *,
+    input_path: Path,
+    summary_path: Path,
+    manifest_path: Path,
+    numerical_output: Path,
+    manifest: Mapping[str, Any],
+    run_summary: Mapping[str, Any],
+    partial: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Bind the V29 checker caller, its source, and the two campaign windows."""
+    from src.runners.task40_v29_contract import (
+        approved_path_resolver,
+        require_authorized_contract,
+        require_authorized_selector,
+    )
+
+    env = os.environ
+    root = ROOT.resolve()
+    contract_path = Path(env["TASK40_V29_CONTRACT_PATH"]).resolve()
+    selector_path = Path(env["TASK40_V29_SELECTOR_PATH"]).resolve()
+    if not contract_path.is_relative_to(root) or not selector_path.is_relative_to(root):
+        raise ValueError("V29 contract and selector must remain under the execution root")
+    contract, contract_sha = require_authorized_contract(
+        contract_path, expected_sha256=env["TASK40_V29_CONTRACT_SHA256"], current_root=root
+    )
+    selector, selector_sha = require_authorized_selector(
+        selector_path,
+        expected_sha256=env["TASK40_V29_SELECTOR_SHA256"],
+        contract_path=contract_path,
+        contract_sha256=contract_sha,
+        contract=contract,
+    )
+    execution, science = contract["execution"], contract["scientific_identity"]
+    source_root = Path(str(execution["approved_path_mapping"]["source_root"])).resolve()
+    resolver = approved_path_resolver(contract)
+    resolve = lambda value: _resolve_v29_checker_path(
+        value, resolver=resolver, execution_root=root
+    )
+    callers = [input_path.resolve(), summary_path.resolve(), manifest_path.resolve(), numerical_output.resolve()]
+    if any(not path.is_relative_to(root) for path in callers):
+        raise ValueError("V29 checker caller path escapes the execution root")
+
+    paths = {
+        "input": resolve(selector.get("input_path", "")),
+        "manifest": resolve(selector.get("manifest_path", "")),
+        "qualification": resolve(selector.get("qualification_path", "")),
+        "pattern": resolve(selector.get("pattern_manifest_path", "")),
+        "immutable_selector": resolve(selector.get("immutable_v28_selector_path", "")),
+        "old_window": resolve(source_root / TASK40_V28_CAMPAIGN_WINDOW),
+        "sidecar": resolve(selector.get("path_mapping_sidecar", "")),
+    }
+    for label, field, digest in (
+        ("input", "input_sha256", science["input_sha256"]),
+        ("manifest", "manifest_sha256", science["v28_complete_manifest_sha256"]),
+    ):
+        target = paths[label]
+        if selector.get(field) != digest or not target.is_file() or _sha256_file(target) != digest:
+            raise ValueError(f"V29 checker {label} differs from its frozen hash")
+    if (
+        selector.get("qualification_sha256") != science["v28_native_qualification_sha256"]
+        or selector.get("pattern_manifest_sha256") != science["v27_manifest_sha256"]
+        or selector.get("qualified_window_sha256") != science["v28_window_sha256"]
+        or paths["input"] != callers[0]
+        or paths["manifest"] != resolve(selector.get("continuation_manifest_path", ""))
+        or not paths["old_window"].is_file()
+        or _sha256_file(paths["old_window"]) != science["v28_window_sha256"]
+    ):
+        raise ValueError("V29 caller or immutable V28 evidence differs from its approved identity")
+
+    sidecar = json.loads(paths["sidecar"].read_text(encoding="utf-8"))
+    if (
+        sidecar.get("source_root") != str(source_root)
+        or sidecar.get("execution_root") != str(root)
+        or sidecar.get("execution_contract_sha256") != contract_sha
+        or sidecar.get("rules", {}).get("rewrite_immutable_v28_json") is not False
+    ):
+        raise ValueError("V29 path-mapping sidecar differs from its approved path contract")
+
+    stage = partial.get("v28_q0_continuation", {})
+    stage = stage if isinstance(stage, Mapping) else {}
+    partial_path = callers[3] / "v20_partial_result.json"
+    operation_path = (callers[3] / str(stage.get("operation_path", ""))).resolve()
+    if (
+        not operation_path.is_relative_to(callers[3])
+        or not operation_path.is_file()
+        or stage.get("operation_sha256") != _sha256_file(operation_path)
+    ):
+        raise ValueError("V29 factor operation path or hash differs from the partial footer")
+    operation = json.loads(operation_path.read_text(encoding="utf-8"))
+    if (
+        resolve(stage.get("selector_path", "")) != paths["immutable_selector"]
+        or stage.get("selector_sha256") != selector.get("immutable_v28_selector_sha256")
+        or resolve(operation.get("csr_manifest_path", operation.get("continuation_manifest_path", "")))
+        != paths["manifest"]
+    ):
+        raise ValueError("V29 factor operation differs from the frozen V28 selector or manifest")
+    factor = operation.get("factor_execution_identity", {})
+    factor = factor if isinstance(factor, Mapping) else {}
+    current = operation.get("current_execution_identity", {})
+    current = current if isinstance(current, Mapping) else {}
+    binding = operation.get("v29_strict_factor_only_binding", {})
+    binding = binding if isinstance(binding, Mapping) else {}
+    run_id, run_source = manifest.get("run_id"), str(manifest.get("source_sha", ""))
+    source_ok = bool(
+        re.fullmatch(r"[0-9a-f]{40,64}", run_source)
+        and partial.get("source_sha") == factor.get("source_sha") == current.get("source_sha") == run_source
+        and partial.get("run_id") == operation.get("run_id", run_id) == run_id
+        and factor.get("run_id", run_id) == current.get("run_id", run_id) == run_id
+        and partial.get("input_sha256") == manifest.get("input_sha256")
+        == factor.get("input_sha256") == current.get("input_sha256") == selector.get("input_sha256")
+        and resolve(manifest.get("input_path", "")) == paths["input"]
+        and partial.get("physical_model_sha256") == manifest.get("physical_model_sha256")
+        == factor.get("physical_model_sha256") == current.get("physical_model_sha256")
+        == selector.get("physical_model_sha256")
+        and factor.get("execution_contract_sha256") == current.get("execution_contract_sha256")
+        == binding.get("contract_sha256") == contract_sha
+        and factor.get("execution_selector_sha256") == current.get("execution_selector_sha256")
+        == binding.get("selector_sha256") == selector_sha
+        and run_summary.get("run_id") in (None, run_id)
+        and run_summary.get("source_sha") in (None, run_source)
+    )
+    window = Path(str(execution["campaign_window_path"])).resolve()
+    accounting = window.with_name("campaign_accounting_v10.jsonl")
+    campaign = manifest.get("task40_v20_campaign", {})
+    campaign = campaign if isinstance(campaign, Mapping) else {}
+    execution_window_ok = bool(
+        window.is_relative_to(root)
+        and window.is_file()
+        and _sha256_file(window) == execution["campaign_window_sha256"]
+        and campaign.get("window_path") == str(window)
+        and campaign.get("window_sha256") == execution["campaign_window_sha256"]
+        and Path(str(campaign.get("accounting_path", ""))).resolve() == accounting
+        and accounting.is_file()
+        and binding.get("execution_window_sha256") == factor.get("execution_campaign_window_sha256")
+        == current.get("execution_campaign_window_sha256") == execution["campaign_window_sha256"]
+    )
+    science_window_ok = bool(
+        factor.get("campaign_window_sha256") == current.get("campaign_window_sha256")
+        == science["v28_window_sha256"]
+    )
+    hashes = {
+        "v29_contract": contract_sha,
+        "v29_selector": selector_sha,
+        "v29_path_mapping_sidecar": _sha256_file(paths["sidecar"]),
+        "v29_execution_window": _sha256_file(window),
+        "v28_input": _sha256_file(callers[0]),
+        "v28_manifest": _sha256_file(paths["manifest"]),
+        "v28_old_window": science["v28_window_sha256"],
+        "partial_result": _sha256_file(partial_path),
+        "factor_operation": _sha256_file(operation_path),
+        "run_summary": _sha256_file(callers[1]),
+        "run_manifest": _sha256_file(callers[2]),
+    }
+    checker_source_sha = subprocess.check_output(
+        ["git", "-C", str(root), "rev-parse", "HEAD"], text=True
+    ).strip()
+    checker_file_sha = _sha256_file(Path(__file__))
+    hashes["checker_service_source"] = checker_file_sha
+    return {
+        "selector": selector,
+        "contract_sha256": contract_sha,
+        "selector_sha256": selector_sha,
+        "path_resolver": resolve,
+        "pattern_path": paths["pattern"],
+        "qualification_path": paths["qualification"],
+        "operation": operation,
+        "run_source_sha": run_source,
+        "checker_source_sha": checker_source_sha,
+        "checker_source_file_sha256": checker_file_sha,
+        "raw_file_hashes": hashes,
+        "identity_checks": {
+            "v29_caller_source_and_root_bound": source_ok,
+            "v29_old_v28_science_window_preserved": science_window_ok,
+            "v29_execution_manifest_window_accounting_and_registration_bind": execution_window_ok,
+        },
+    }
+
+
 def _bind_v29_factor_only_selector(
     selector_path: Path,
     contract_path: Path,
@@ -6428,6 +6627,10 @@ def _v28_saved_q0_continuation_checks(
     output_directory: Path,
     partial: Mapping[str, Any],
     expected_stop_stage: str,
+    path_resolver: Callable[[str | Path], Path] | None = None,
+    expected_pattern_path: Path | None = None,
+    expected_qualification_path: Path | None = None,
+    artifact_hashes: dict[str, str] | None = None,
 ) -> dict[str, bool]:
     """Classify V28 in-progress cutoffs and verify reused/complete CSR identities."""
     checks: dict[str, bool] = {}
@@ -6437,13 +6640,36 @@ def _v28_saved_q0_continuation_checks(
     operation = operation if isinstance(operation, Mapping) else {}
     status = str(operation.get("status", ""))
     operation_path = output_directory / str(stage.get("operation_path", ""))
-    selector_path = Path(str(stage.get("selector_path", ""))).resolve()
-    manifest_path = Path(str(operation.get("csr_manifest_path", operation.get("continuation_manifest_path", "")))).resolve()
-    pattern_path = (ROOT / V28_PATTERN_MANIFEST_RELATIVE).resolve()
+    selector_path = (
+        path_resolver(stage.get("selector_path", ""))
+        if path_resolver is not None
+        else Path(str(stage.get("selector_path", ""))).resolve()
+    )
+    raw_manifest_path = operation.get(
+        "csr_manifest_path", operation.get("continuation_manifest_path", "")
+    )
+    manifest_path = (
+        path_resolver(raw_manifest_path)
+        if path_resolver is not None
+        else Path(str(raw_manifest_path)).resolve()
+    )
+    pattern_path = (
+        expected_pattern_path.resolve()
+        if expected_pattern_path is not None
+        else (ROOT / V28_PATTERN_MANIFEST_RELATIVE).resolve()
+    )
     try:
         selector = json.loads(selector_path.read_text(encoding="utf-8"))
         pattern = json.loads(pattern_path.read_text(encoding="utf-8"))
         manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.is_file() else {}
+        selector_sha = _sha256_file(selector_path)
+        if artifact_hashes is not None:
+            artifact_hashes.update(
+                {
+                    "v28_selector": selector_sha,
+                    "v28_pattern_manifest": _sha256_file(pattern_path),
+                }
+            )
         donor = operation.get("donor_import_identity", {})
         donor = donor if isinstance(donor, Mapping) else {}
         inventory = operation.get("saved_only_preflight", {})
@@ -6453,7 +6679,6 @@ def _v28_saved_q0_continuation_checks(
         donor_sha = hashlib.sha256(
             json.dumps(donor, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest()
-        selector_sha = _sha256_file(selector_path)
         checks["v28_selector_current_window_and_donor_bind"] = bool(
             selector.get("schema") == "task40extra.review_v28_q0_continuation_operation.v1"
             and selector.get("operation") == V28_CONTINUATION_OPERATION
@@ -6478,7 +6703,11 @@ def _v28_saved_q0_continuation_checks(
             and operation.get("saved_only_no_fe_or_native_rebuild") is True
         )
         checks["v28_campaign_window_registration_and_pattern_freeze_bind"] = bool(
-            selector.get("pattern_manifest_path") == str(pattern_path)
+            (
+                path_resolver(selector.get("pattern_manifest_path", ""))
+                if path_resolver is not None
+                else Path(str(selector.get("pattern_manifest_path", ""))).resolve()
+            ) == pattern_path
             and selector.get("pattern_manifest_sha256") == V28_PATTERN_MANIFEST_SHA256
             and pattern_path.is_file()
             and _sha256_file(pattern_path) == V28_PATTERN_MANIFEST_SHA256
@@ -6551,13 +6780,22 @@ def _v28_saved_q0_continuation_checks(
             for name in ("indptr", "indices", "data"):
                 record = csr_artifacts.get(name, {})
                 record = record if isinstance(record, Mapping) else {}
-                path = Path(str(record.get("path", ""))).resolve()
+                path = (
+                    path_resolver(record.get("path", ""))
+                    if path_resolver is not None
+                    else Path(str(record.get("path", ""))).resolve()
+                )
                 if (
                     not path.is_relative_to(manifest_path.parent.resolve())
                     or not path.is_file()
                     or path.stat().st_size != record.get("bytes")
-                    or _sha256_owned_payload(path) != record.get("sha256")
                 ):
+                    csr_hashes_ok = False
+                    break
+                actual_hash = _sha256_owned_payload(path)
+                if artifact_hashes is not None:
+                    artifact_hashes[f"v28_csr_{name}"] = actual_hash
+                if actual_hash != record.get("sha256"):
                     csr_hashes_ok = False
                     break
         checks["v28_complete_csr_requires_all_three_payload_hashes"] = bool(
@@ -6587,20 +6825,34 @@ def _v28_saved_q0_continuation_checks(
                 mode_manifest_sha256=str(execution.get("mode_manifest_sha256", "")),
                 ordered_mode_key_sha256=str(execution.get("ordered_mode_key_sha256", "")),
                 sha256_file=_sha256_file,
+                path_resolver=path_resolver,
             )
         checks["v28_native_qualification_remains_bound_to_complete_csr"] = bool(
             manifest_status != "COMPLETE_CSR"
             or not manifest.get("native_qualification")
-            or qualification_binding is not None
+            or (
+                qualification_binding is not None
+                and (
+                    expected_qualification_path is None
+                    or qualification_binding[0] == expected_qualification_path
+                )
+            )
         )
         if qualification_binding is not None:
             qpath, qualification = qualification_binding
+            if artifact_hashes is not None:
+                artifact_hashes["v28_native_qualification"] = _sha256_file(qpath)
             operation_qualification = operation.get("native_qualification_receipt", {})
             operation_qualification = operation_qualification if isinstance(operation_qualification, Mapping) else {}
+            operation_qualification_path = (
+                path_resolver(operation_qualification.get("path", ""))
+                if path_resolver is not None
+                else Path(str(operation_qualification.get("path", ""))).resolve()
+            )
             checks["v28_native_pass_receipt_keeps_old_source_window_and_current_factor_identity"] = bool(
                 operation.get("native_readback_skipped") is not True
                 or (
-                    operation_qualification.get("path") == str(qpath)
+                    operation_qualification_path == qpath
                     and operation_qualification.get("sha256") == _sha256_file(qpath)
                     and operation.get("native_qualification_original_source_identity")
                     == qualification.get("source_identity")
@@ -6644,6 +6896,21 @@ def _check_partial_result(
             "error": "no official packet or V20 partial footer exists; preserve run/watchdog raw evidence",
         }
     partial = json.loads(partial_path.read_text(encoding="utf-8"))
+    v29_context = None
+    v29_context_error = None
+    if os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1":
+        try:
+            v29_context = _v29_partial_checker_context(
+                input_path=input_path,
+                summary_path=summary_path,
+                manifest_path=manifest_path,
+                numerical_output=numerical_output,
+                manifest=manifest,
+                run_summary=run_summary,
+                partial=partial,
+            )
+        except Exception as error:
+            v29_context_error = f"{type(error).__name__}: {error}"
     campaign_evidence = manifest.get("task40_v20_campaign")
     campaign_evidence = campaign_evidence if isinstance(campaign_evidence, dict) else {}
     probe_identity = partial.get("target_operator_probe")
@@ -6914,7 +7181,7 @@ def _check_partial_result(
         checks["v27_execution_manifest_window_accounting_and_registration_bind"] = (
             v27_campaign_identity_valid
         )
-    if v28_identity_claimed:
+    if v28_identity_claimed and os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") != "1":
         checks["v28_execution_manifest_window_accounting_and_registration_bind"] = (
             v28_campaign_identity_valid
         )
@@ -7231,6 +7498,12 @@ def _check_partial_result(
                         output_directory=numerical_output,
                         partial=partial,
                         expected_stop_stage=expected_stop_stage,
+                        path_resolver=(v29_context["path_resolver"] if v29_context else None),
+                        expected_pattern_path=(v29_context["pattern_path"] if v29_context else None),
+                        expected_qualification_path=(
+                            v29_context["qualification_path"] if v29_context else None
+                        ),
+                        artifact_hashes=(v29_context["raw_file_hashes"] if v29_context else None),
                     ).items()
                 },
             }
@@ -7418,37 +7691,17 @@ def _check_partial_result(
         try:
             from src.runners.task40_v29_contract import (
                 V29_STRICT_POLICY,
-                require_authorized_contract,
-                require_authorized_selector,
                 require_strict_factor_only_status,
             )
 
-            contract_path = Path(os.environ["TASK40_V29_CONTRACT_PATH"])
-            selector_path = Path(os.environ["TASK40_V29_SELECTOR_PATH"])
-            contract, contract_sha = require_authorized_contract(
-                contract_path,
-                expected_sha256=os.environ["TASK40_V29_CONTRACT_SHA256"],
-                current_root=ROOT,
-            )
-            selector, selector_sha = require_authorized_selector(
-                selector_path,
-                expected_sha256=os.environ["TASK40_V29_SELECTOR_SHA256"],
-                contract_path=contract_path,
-                contract_sha256=contract_sha,
-                contract=contract,
-            )
-            operation_path = numerical_output / str(v28_stage.get("operation_path", ""))
-            operation_on_disk = (
-                json.loads(operation_path.read_text(encoding="utf-8"))
-                if operation_path.is_file()
-                else {}
-            )
+            if v29_context is None:
+                raise ValueError(v29_context_error or "V29 checker identity context is unavailable")
+            selector = v29_context["selector"]
+            contract_sha = v29_context["contract_sha256"]
+            selector_sha = v29_context["selector_sha256"]
+            operation_on_disk = v29_context["operation"]
             binding = operation_on_disk.get("v29_strict_factor_only_binding", {})
             binding = binding if isinstance(binding, Mapping) else {}
-            factor_identity = operation_on_disk.get("factor_execution_identity", {})
-            factor_identity = factor_identity if isinstance(factor_identity, Mapping) else {}
-            campaign_binding = manifest.get("task40_v20_campaign", {})
-            campaign_binding = campaign_binding if isinstance(campaign_binding, Mapping) else {}
             native_receipt = operation_on_disk.get("native_qualification_receipt", {})
             native_receipt = native_receipt if isinstance(native_receipt, Mapping) else {}
             require_strict_factor_only_status(
@@ -7467,6 +7720,7 @@ def _check_partial_result(
                 and operation_on_disk.get("numeric_fill_started") is not True
                 and operation_on_disk.get("native_readback_started") is not True
             )
+            checks.update(v29_context["identity_checks"])
             checks.update(
                 {
                     "v29_contract_hash_matches_service_envelope": (
@@ -7483,11 +7737,14 @@ def _check_partial_result(
                         and native_receipt.get("sha256") == selector.get("qualification_sha256")
                     ),
                     "v29_factor_only_route_has_no_auto_fallback": strict_action,
-                    "v29_new_execution_window_bound": (
-                        binding.get("execution_window_sha256")
-                        == contract["execution"]["campaign_window_sha256"]
-                        == campaign_binding.get("window_sha256")
-                        == factor_identity.get("execution_campaign_window_sha256")
+                    "v29_path_mapping_sidecar_hash_bound": all(
+                        isinstance(value, str) and len(value) == 64
+                        for value in (
+                            v29_context["raw_file_hashes"].get("v29_contract"),
+                            v29_context["raw_file_hashes"].get("v29_selector"),
+                            v29_context["raw_file_hashes"].get("v29_path_mapping_sidecar"),
+                            v29_context["raw_file_hashes"].get("v29_execution_window"),
+                        )
                     ),
                 }
             )
@@ -7498,7 +7755,10 @@ def _check_partial_result(
                     "v29_selector_hash_matches_service_envelope": False,
                     "v29_complete_manifest_and_native_pass_preserved": False,
                     "v29_factor_only_route_has_no_auto_fallback": False,
-                    "v29_new_execution_window_bound": False,
+                    "v29_caller_source_and_root_bound": False,
+                    "v29_old_v28_science_window_preserved": False,
+                    "v29_execution_manifest_window_accounting_and_registration_bind": False,
+                    "v29_path_mapping_sidecar_hash_bound": False,
                     "v29_contract_check_error": f"{type(error).__name__}: {error}",
                 }
             )
@@ -7520,6 +7780,15 @@ def _check_partial_result(
         "checks": checks,
         "errors": [key for key, passed in checks.items() if not passed],
         "raw_evidence_preserved": True,
+        **(
+            {
+                "checker_source_sha": v29_context["checker_source_sha"],
+                "original_run_source_sha": v29_context["run_source_sha"],
+                "raw_file_hashes": v29_context["raw_file_hashes"],
+            }
+            if v29_context is not None
+            else {}
+        ),
     }
 
 

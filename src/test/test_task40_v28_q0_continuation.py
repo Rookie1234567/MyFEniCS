@@ -349,3 +349,112 @@ def test_v28_completed_observer_runs_after_direct_h_volume_and_surface_scatter()
     assert audit["numeric_contribution_count"] == 2
     assert audit["hhat_numeric_contribution_count"] == 0
     assert audit["numeric_contribution_count_including_direct_hhat"] == 3
+
+
+def test_v28_checker_rejects_csr_path_escape_before_payload_hash(tmp_path, monkeypatch):
+    from scripts import task40_v20_service_workflow as service
+
+    monkeypatch.setattr(service, "ROOT", tmp_path)
+    monkeypatch.setattr(service, "V28_PATTERN_MANIFEST_RELATIVE", Path("pattern.json"))
+    pattern = tmp_path / "pattern.json"
+    pattern.write_text(
+        json.dumps({"schema": "task40extra.review_v27_saved_q0_csr.v1", "status": "NUMERIC_FILL_INCOMPLETE"}),
+        encoding="utf-8",
+    )
+    pattern_sha = _sha(pattern)
+    monkeypatch.setattr(service, "V28_PATTERN_MANIFEST_SHA256", pattern_sha)
+
+    outside = tmp_path / "outside" / "indptr.bin"
+    outside.parent.mkdir()
+    outside.write_bytes(b"x")
+    manifest_path = tmp_path / "csr" / "manifest.json"
+    manifest_path.parent.mkdir()
+    manifest = {
+        "schema": "task40extra.review_v28_saved_q0_csr.v1",
+        "status": "COMPLETE_CSR",
+        "shape": [1, 1],
+        "stored_structural_slots": 1,
+        "original_pattern_manifest": {"sha256": pattern_sha},
+        "continuation_event": {
+            "old_manifest_modified": False,
+            "full_csr_copy_created": False,
+            "data_restart_policy": "clear_all_values_before_each_numeric_pass",
+        },
+        "csr_artifacts": {
+            name: {
+                "path": str(outside),
+                "bytes": outside.stat().st_size,
+                "sha256": _sha(outside),
+            }
+            for name in ("indptr", "indices", "data")
+        },
+    }
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    stop_stage = "fixture_stop"
+    donor = {}
+    donor_sha = hashlib.sha256(json.dumps(donor, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    selector_path = tmp_path / "selector.json"
+    selector = {
+        "schema": "task40extra.review_v28_q0_continuation_operation.v1",
+        "operation": service.V28_CONTINUATION_OPERATION,
+        "stop_stage": stop_stage,
+        "campaign_window_sha256": service.TASK40_V28_CAMPAIGN_SHA256,
+        "donor_import": donor,
+        "continuation_policy": service.V28_CONTINUATION_POLICY,
+        "pattern_manifest_path": str(pattern),
+        "pattern_manifest_sha256": pattern_sha,
+    }
+    selector_path.write_text(json.dumps(selector), encoding="utf-8")
+    selector_sha = _sha(selector_path)
+    operation = {
+        "schema": "task40extra.review_v28_q0_continuation_stage.v1",
+        "operation": service.V28_CONTINUATION_OPERATION,
+        "status": "PASS_COMPLETE_Q0_CSR",
+        "stop_stage": stop_stage,
+        "selector_sha256": selector_sha,
+        "donor_import_identity": donor,
+        "donor_import_identity_sha256": donor_sha,
+        "current_execution_identity": {"campaign_window_sha256": service.TASK40_V28_CAMPAIGN_SHA256},
+        "csr_manifest_path": str(manifest_path),
+        "csr_manifest_sha256": _sha(manifest_path),
+        "csr_status": "COMPLETE_CSR",
+        "complete_numeric_csr": True,
+        "official_result": False,
+        "saved_only_no_fe_or_native_rebuild": True,
+        "source_pattern_reused": True,
+        "pattern_manifest_sha256": pattern_sha,
+    }
+    output = tmp_path / "output"
+    output.mkdir()
+    operation_path = output / "operation.json"
+    operation_path.write_text(json.dumps(operation), encoding="utf-8")
+    partial = {
+        "official_result": False,
+        "v28_q0_continuation": {
+            "operation": operation,
+            "operation_path": operation_path.name,
+            "operation_sha256": _sha(operation_path),
+            "selector_path": str(selector_path),
+            "selector_sha256": selector_sha,
+            "donor_import_identity_sha256": donor_sha,
+        },
+    }
+    hash_calls = []
+    original_hash = service._sha256_owned_payload
+
+    def track_payload_hash(path):
+        hash_calls.append(Path(path))
+        return original_hash(path)
+
+    monkeypatch.setattr(service, "_sha256_owned_payload", track_payload_hash)
+    hashes = {}
+    checks = service._v28_saved_q0_continuation_checks(
+        output_directory=output,
+        partial=partial,
+        expected_stop_stage=stop_stage,
+        artifact_hashes=hashes,
+    )
+
+    assert checks["v28_complete_csr_requires_all_three_payload_hashes"] is False
+    assert hash_calls == []
+    assert not any(key.startswith("v28_csr_") for key in hashes)
