@@ -146,3 +146,5 @@ LEARNED实际及producer原M5联合门均FAIL，故0.7nm缩小三维pilot为NOT_
 五dat通过同一个durable入口顺序执行，wrapper选择资格化环境并调用scripts/run_case.py。全程CPU-only/MPI1/math1/Torch intra/inter1；ML CPU Torch2.7.1、网络float64/complex128；FE PETSc complex128/int64、DOLFINx/Basix0.10来自同一Linux ABI。成功进程组均清场，未改变其他工作树或生产分支。GitHub实际呈现及最终推送/清场在后续发布尾段单列，本地Markdown检查不能冒充视觉PASS。
 
 发布阶段的定向检查在已通过原字段/source核对后，因markdown_check_v46.json自引用收据尚不存在而失败。失败日志、4.554s受监督用时及60s准入保留；先建立明确NOT_RUN的bootstrap收据，再只复验八个新页/当前段及历史保留，不重算健康原门或PDE。此修复只涉及本地发布顺序。
+
+数值完整包已先推送ca122c6a3e944b7782ebdd3e5635f41bf77acb3a，并精确fetch同分支确认0/0、clean。随后真实GitHub两页1440×5200视口检查通过，专题两条新公式、关键结果/隐藏/趋势/原门表正常呈现；未截取的尾段及其他页为NOT_VERIFIED，不授全文视觉PASS。浏览器轻阶段19.729s、同时自身树峰1066500096B、swap0，与正式数值峰935538688B分开；没有重算健康PDE。最终元数据提交不改变数值source，最后完整HEAD/0:0/clean与自身清场由最终推送后收据及用户交付报告给出。

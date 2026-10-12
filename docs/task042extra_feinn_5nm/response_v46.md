@@ -113,3 +113,5 @@ LEARNED实际及producer原M5联合门均FAIL，故0.7nm缩小三维pilot为NOT_
 建议仅依赖顺序审阅：residual数学与恢复 → 原trainer opt-in钩子 → schema/profile/输入与独立双网读出 → tests → compact/docs。无生产合入建议或授权。完整专题及公式/六点/通道解释见[ftt_one_residual_branch_v46.md](outcomes/ftt_one_residual_branch_v46.md)。[最终绑定核对](outcomes/records/delivery_check_v46.json)、[端到端研究用途](outcomes/records/end_to_end_research_use_v46.json)、[本地文档合同](outcomes/records/markdown_check_v46.json)、[发布/清场尾段](outcomes/records/publication_tail_v46.json)与[实际呈现状态](outcomes/records/render_check_v46.json)单列。实际GitHub呈现未取得前只记NOT_VERIFIED，不把本地解析当视觉PASS；精确最终HEAD、tracking与clean在推送尾段记录并对用户报告。
 
 发布阶段的定向检查在已通过原字段/source核对后，因markdown_check_v46.json自引用收据尚不存在而失败。失败日志、4.554s受监督用时及60s准入保留；先建立明确NOT_RUN的bootstrap收据，再只复验八个新页/当前段及历史保留，不重算健康原门或PDE。此修复只涉及本地发布顺序。
+
+数值完整包已先推送ca122c6a3e944b7782ebdd3e5635f41bf77acb3a，并精确fetch同分支确认0/0、clean。随后真实GitHub两页1440×5200视口检查通过，专题两条新公式、关键结果/隐藏/趋势/原门表正常呈现；未截取的尾段及其他页为NOT_VERIFIED，不授全文视觉PASS。浏览器轻阶段19.729s、同时自身树峰1066500096B、swap0，与正式数值峰935538688B分开；没有重算健康PDE。最终元数据提交不改变数值source，最后完整HEAD/0:0/clean与自身清场由最终推送后收据及用户交付报告给出。

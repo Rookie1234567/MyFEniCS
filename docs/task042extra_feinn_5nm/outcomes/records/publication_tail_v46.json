@@ -253,6 +253,254 @@
       "OOC_bytes": 0,
       "numerical_recomputation_for_document_or_render": 0,
       "unretained_nonformal_activity_breakdown": "NOT_RETAINED; all calendar time remains charged to single window"
+    },
+    {
+      "label": "NUMERICAL_PACKAGE_PUSHED_AND_VIEW_CAPTURED",
+      "recorded_UTC": "2026-10-12T08:56:42.086515+00:00",
+      "monotonic": 1720396.818104175,
+      "conservative_elapsed_s": 25732.081780139823,
+      "remaining_s": 17467.918219860177,
+      "original_window_not_reopened": true,
+      "deadline_not_exceeded": true,
+      "observed_HEAD": "ca122c6a3e944b7782ebdd3e5635f41bf77acb3a",
+      "branch": "task42extra_feinn_5nm",
+      "source_sha": "0b8fb32fbf180b5dc775dac6642f27cd198afa60",
+      "observed_tracking_ref": "refs/remotes/origin/task42extra_feinn_5nm",
+      "observed_tracking_SHA": "ca122c6a3e944b7782ebdd3e5635f41bf77acb3a",
+      "ahead": 0,
+      "behind": 0,
+      "worktree_clean": true,
+      "tracked_or_nonignored_untracked_status": [],
+      "default_upstream_fetch_mapping": "COMMON_REMOTE_CONFIG_OMITS_TASK42EXTRA; explicit tracking ref and ephemeral mapping used; shared config unchanged",
+      "canonical_common_git_dir": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+      "canonical_worktree_registration": "worktree /home/fenics/Projects/NN-Lab-V2\nHEAD ca122c6a3e944b7782ebdd3e5635f41bf77acb3a\nbranch refs/heads/task42extra_feinn_5nm",
+      "cleanup": {
+        "own_active_tree": [],
+        "numerical_lock": "FREE",
+        "formal_stages": [
+          {
+            "stage": "v46_residual_branch_checks_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_compare_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_frozen_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_learned_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_prepare_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          }
+        ]
+      },
+      "new_bounded_light_since_result_collection": [
+        {
+          "name": "collection_docs_01",
+          "binding": {
+            "path": "tmp/task42extra/v46/collection_docs_01/summary.json",
+            "sha256": "28c2a0ebc898b4b01c44b6a19e59351736f041f741e585c61f10ed9eb7e4b2a0",
+            "bytes": 1992
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 90845184,
+          "swap_bytes": 0,
+          "supervised_s": 4.493972955970094,
+          "mandatory_PSI_s": 60.00178039795719
+        },
+        {
+          "name": "delivery_check_01",
+          "binding": {
+            "path": "tmp/task42extra/v46/delivery_check_01/summary.json",
+            "sha256": "c1acbae245011d319577bb446a18bd96989e5d80228642cb69afc0f170632c16",
+            "bytes": 1997
+          },
+          "classification": "WORKER_FAILED",
+          "own_tree_peak_bytes": 137584640,
+          "swap_bytes": 0,
+          "supervised_s": 4.554134191945195,
+          "mandatory_PSI_s": 60.00176017009653
+        },
+        {
+          "name": "markdown_retry_01",
+          "binding": {
+            "path": "tmp/task42extra/v46/markdown_retry_01/summary.json",
+            "sha256": "0df9bbea1e69148fb95438bb59f70cf42c6d92d6fe2d15ad1c676eff6e0ec805",
+            "bytes": 1980
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 70385664,
+          "swap_bytes": 0,
+          "supervised_s": 1.921732387971133,
+          "mandatory_PSI_s": 60.0017715820577
+        },
+        {
+          "name": "render_check_01",
+          "binding": {
+            "path": "tmp/task42extra/v46/render_check_01/summary.json",
+            "sha256": "5cbf2ce9416a743fcdd8ea091725818fa60cc2a4e0b390bd895a5eb73bbf8775",
+            "bytes": 2224
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 1066500096,
+          "swap_bytes": 0,
+          "supervised_s": 19.729376441100612,
+          "mandatory_PSI_s": 60.001773594878614
+        }
+      ],
+      "new_light_supervised_sum_s": 30.699215976987034,
+      "new_light_PSI_sum_s": 240.00708574499004,
+      "sum_not_double_charged_to_monotonic_window": true,
+      "OOC_bytes": 0,
+      "numerical_recomputation_for_document_or_render": 0,
+      "all_observed_serial_formal_and_light_tree_peak_bytes": 1066500096,
+      "overall_peak_scope": "max of serial sampled simultaneous own-tree peaks; browser light and numerical stages distinguished; not whole-host/cgroup exact peak",
+      "unretained_nonformal_activity_breakdown": "NOT_RETAINED; all calendar time remains charged to single window"
+    },
+    {
+      "label": "FINAL_METADATA_VALIDATED",
+      "recorded_UTC": "2026-10-12T09:01:27.189312+00:00",
+      "monotonic": 1720681.915062331,
+      "conservative_elapsed_s": 26017.1787382958,
+      "remaining_s": 17182.8212617042,
+      "original_window_not_reopened": true,
+      "deadline_not_exceeded": true,
+      "observed_HEAD": "ca122c6a3e944b7782ebdd3e5635f41bf77acb3a",
+      "branch": "task42extra_feinn_5nm",
+      "source_sha": "0b8fb32fbf180b5dc775dac6642f27cd198afa60",
+      "observed_tracking_ref": "refs/remotes/origin/task42extra_feinn_5nm",
+      "observed_tracking_SHA": "ca122c6a3e944b7782ebdd3e5635f41bf77acb3a",
+      "ahead": 0,
+      "behind": 0,
+      "worktree_clean": false,
+      "tracked_or_nonignored_untracked_status": [
+        "M docs/task042extra_feinn_5nm/README.md",
+        " M docs/task042extra_feinn_5nm/outcomes/ftt_one_residual_branch_v46.md",
+        " M docs/task042extra_feinn_5nm/outcomes/records/markdown_check_v46.json",
+        " M docs/task042extra_feinn_5nm/outcomes/records/publication_tail_v46.json",
+        " M docs/task042extra_feinn_5nm/outcomes/records/render_check_v46.json",
+        " M docs/task042extra_feinn_5nm/response_v46.md"
+      ],
+      "default_upstream_fetch_mapping": "COMMON_REMOTE_CONFIG_OMITS_TASK42EXTRA; explicit tracking ref and ephemeral mapping used; shared config unchanged",
+      "canonical_common_git_dir": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+      "canonical_worktree_registration": "worktree /home/fenics/Projects/NN-Lab-V2\nHEAD ca122c6a3e944b7782ebdd3e5635f41bf77acb3a\nbranch refs/heads/task42extra_feinn_5nm",
+      "cleanup": {
+        "own_active_tree": [],
+        "numerical_lock": "FREE",
+        "formal_stages": [
+          {
+            "stage": "v46_residual_branch_checks_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_compare_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_frozen_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_learned_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v46_residual_branch_prepare_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          }
+        ]
+      },
+      "new_bounded_light_since_result_collection": [
+        {
+          "name": "collection_docs_01",
+          "binding": {
+            "path": "tmp/task42extra/v46/collection_docs_01/summary.json",
+            "sha256": "28c2a0ebc898b4b01c44b6a19e59351736f041f741e585c61f10ed9eb7e4b2a0",
+            "bytes": 1992
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 90845184,
+          "swap_bytes": 0,
+          "supervised_s": 4.493972955970094,
+          "mandatory_PSI_s": 60.00178039795719
+        },
+        {
+          "name": "delivery_check_01",
+          "binding": {
+            "path": "tmp/task42extra/v46/delivery_check_01/summary.json",
+            "sha256": "c1acbae245011d319577bb446a18bd96989e5d80228642cb69afc0f170632c16",
+            "bytes": 1997
+          },
+          "classification": "WORKER_FAILED",
+          "own_tree_peak_bytes": 137584640,
+          "swap_bytes": 0,
+          "supervised_s": 4.554134191945195,
+          "mandatory_PSI_s": 60.00176017009653
+        },
+        {
+          "name": "markdown_final_01",
+          "binding": {
+            "path": "tmp/task42extra/v46/markdown_final_01/summary.json",
+            "sha256": "4db6f4f79dee7a6c4da8c0df9ae09936cb5f7e987cb45c4450d90d445fd5737c",
+            "bytes": 1981
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 70467584,
+          "swap_bytes": 0,
+          "supervised_s": 2.0038637209217995,
+          "mandatory_PSI_s": 60.001850470900536
+        },
+        {
+          "name": "markdown_retry_01",
+          "binding": {
+            "path": "tmp/task42extra/v46/markdown_retry_01/summary.json",
+            "sha256": "0df9bbea1e69148fb95438bb59f70cf42c6d92d6fe2d15ad1c676eff6e0ec805",
+            "bytes": 1980
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 70385664,
+          "swap_bytes": 0,
+          "supervised_s": 1.921732387971133,
+          "mandatory_PSI_s": 60.0017715820577
+        },
+        {
+          "name": "render_check_01",
+          "binding": {
+            "path": "tmp/task42extra/v46/render_check_01/summary.json",
+            "sha256": "5cbf2ce9416a743fcdd8ea091725818fa60cc2a4e0b390bd895a5eb73bbf8775",
+            "bytes": 2224
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 1066500096,
+          "swap_bytes": 0,
+          "supervised_s": 19.729376441100612,
+          "mandatory_PSI_s": 60.001773594878614
+        }
+      ],
+      "new_light_supervised_sum_s": 32.703079697908834,
+      "new_light_PSI_sum_s": 300.00893621589057,
+      "sum_not_double_charged_to_monotonic_window": true,
+      "OOC_bytes": 0,
+      "numerical_recomputation_for_document_or_render": 0,
+      "all_observed_serial_formal_and_light_tree_peak_bytes": 1066500096,
+      "overall_peak_scope": "max of serial sampled simultaneous own-tree peaks; browser light and numerical stages distinguished; not whole-host/cgroup exact peak",
+      "unretained_nonformal_activity_breakdown": "NOT_RETAINED; all calendar time remains charged to single window"
     }
   ],
   "production_merge": false,

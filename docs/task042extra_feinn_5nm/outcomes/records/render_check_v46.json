@@ -1,7 +1,67 @@
 {
   "schema": "task42extra.v46.render.v1",
-  "overall": "NOT_VERIFIED_PENDING_FINITE_PUBLISHED_VIEW",
-  "scope": "two new published response/topic pages; local parser is not visual verification",
+  "overall": "PARTIAL_VISUAL_PASS_SELECTED_PUBLISHED_VIEWPORTS",
+  "prior_receipt_sha256": "e542539cb09a20111c77fadf930a70cde9791a173ed201988421a91fbc1e79bb",
+  "published_commit": "ca122c6a3e944b7782ebdd3e5635f41bf77acb3a",
+  "attempts": [
+    {
+      "name": "response",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ca122c6a3e944b7782ebdd3e5635f41bf77acb3a/docs/task042extra_feinn_5nm/response_v46.md",
+      "published_sha": "ca122c6a3e944b7782ebdd3e5635f41bf77acb3a",
+      "published_blob_sha256": "bce6536d27e83b284f79e0f239f77b283b85d03ceebee4de5b18d3749316257c",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_s": 12.340185794048011,
+      "screenshot": "tmp/task42extra/v46/render_views/response/page.png",
+      "screenshot_sha256": "bb6d6e50ca40c5d466d6b65bcdfc555bdddbf56ca312835c3a73eda5d7bf2845",
+      "visual_result": "PASS_SELECTED_PUBLISHED_VIEWPORT",
+      "visible_tables_aligned": true,
+      "raw_LaTeX_leak_seen": false,
+      "missing_rendered_document": false,
+      "visible_sections": [
+        "result table",
+        "four gate table",
+        "ablation",
+        "round history",
+        "cost table",
+        "tests and source beginning"
+      ]
+    },
+    {
+      "name": "topic",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ca122c6a3e944b7782ebdd3e5635f41bf77acb3a/docs/task042extra_feinn_5nm/outcomes/ftt_one_residual_branch_v46.md",
+      "published_sha": "ca122c6a3e944b7782ebdd3e5635f41bf77acb3a",
+      "published_blob_sha256": "cd34355c7188ee1d609122d4c904fd1290244a6e9d95e90779e8ed7d75d94f16",
+      "returncode": 0,
+      "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+      "elapsed_s": 5.111678306944668,
+      "screenshot": "tmp/task42extra/v46/render_views/topic/page.png",
+      "screenshot_sha256": "339bc3ceea3368d4b86fc7ed6fbaa5b34923381c1a73584525de8d836f0954c5",
+      "visual_result": "PASS_SELECTED_PUBLISHED_VIEWPORT",
+      "visible_tables_aligned": true,
+      "raw_LaTeX_leak_seen": false,
+      "missing_rendered_document": false,
+      "both_new_math_blocks_visible_and_rendered": true,
+      "visible_sections": [
+        "result table",
+        "fixed base and two math blocks",
+        "hidden updates",
+        "round history",
+        "four gate table",
+        "research boundary"
+      ]
+    }
+  ],
+  "source_visual_checks": "actual local images viewed, including original-resolution topic image",
+  "scope": "two 1440x5200 viewports from the published ca122c6a package; unseen tails and other pages NOT_VERIFIED",
+  "new_topic_math_blocks_verified": 2,
+  "full_page_visual_PASS": false,
+  "other_current_pages_visual": "NOT_VERIFIED",
   "numeric_publication_precedes_web": true,
-  "healthy_numerical_recomputation": 0
+  "healthy_numerical_recomputation": 0,
+  "browser_resource_summary": {
+    "path": "tmp/task42extra/v46/render_check_01/summary.json",
+    "sha256": "5cbf2ce9416a743fcdd8ea091725818fa60cc2a4e0b390bd895a5eb73bbf8775"
+  },
+  "screenshot_references_hash_bound_not_committed": true
 }

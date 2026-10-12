@@ -9,6 +9,8 @@
 
 下方历史全文原样保留；旧“当前/下一步”不构成新授权。
 
+发布状态：数值包已推送、两关键页有限实际呈现通过；其他尾段未验证。[发布尾段](outcomes/records/publication_tail_v46.json)、[实际呈现范围](outcomes/records/render_check_v46.json)。
+
 <!-- TASK42EXTRA_V46_CURRENT_END -->
 
 <!-- TASK42EXTRA_V45_CURRENT_BEGIN -->
