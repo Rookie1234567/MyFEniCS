@@ -369,6 +369,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               campaign_window_sha256: str | None = None,
               campaign_accounting_path: Path | None = None,
               require_job_cgroup_zero_swap: bool = False,
+              require_cgroup_memory_details: bool = False,
               host_reserve_bytes: int | None = None,
               task_cgroup_reserve_bytes: int | None = None,
               tree_accounting_root_pid: int | None = None) -> dict:
@@ -428,6 +429,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
         raise ValueError(
             'Task40 job cgroup zero-swap enforcement cannot be disabled by observation mode'
         )
+    if type(require_cgroup_memory_details) is not bool:
+        raise TypeError('require_cgroup_memory_details must be a bool')
     if external_guard is not None and not callable(external_guard):
         raise TypeError('external_guard must be callable when supplied')
     if active_pc_seconds is not None and (
@@ -500,6 +503,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
         memory_policy,
         host_reserve_bytes=host_reserve_bytes,
         task_cgroup_reserve_bytes=task_cgroup_reserve_bytes,
+        require_cgroup_memory_details=require_cgroup_memory_details,
     )
     dynamic_cap = int(envelope['launch_cap_bytes'])
     if task_cgroup_reserve_bytes is not None:
@@ -690,6 +694,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                     memory_policy,
                     host_reserve_bytes=host_reserve_bytes,
                     task_cgroup_reserve_bytes=task_cgroup_reserve_bytes,
+                    require_cgroup_memory_details=require_cgroup_memory_details,
                 )
                 elapsed = time.monotonic() - started
                 phase = json.loads(phase_path.read_text()) if phase_path is not None and phase_path.exists() else {}

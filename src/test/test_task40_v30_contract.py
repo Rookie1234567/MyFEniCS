@@ -506,6 +506,311 @@ def _contract_fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     return root, contract_path, payload
 
 
+def _v30_full_stage_fixture(root: Path, source_sha: str):
+    from scripts import task40_v20_service_workflow as service
+    from src.io.input_validation import load_and_resolve
+
+    canonical = root / contract_module.V30_CANONICAL_INPUT_RELATIVE
+    canonical.parent.mkdir(parents=True, exist_ok=True)
+    canonical.write_bytes(
+        (ROOT / contract_module.V30_CANONICAL_INPUT_RELATIVE).read_bytes()
+    )
+    attempt = (
+        root
+        / contract_module.V30_ARTIFACT_ROOT_RELATIVE
+        / "attempts"
+        / source_sha
+    )
+    selector = attempt / "q0_selector_v30_partial.json"
+    selector.parent.mkdir(parents=True, exist_ok=True)
+    selector.write_text(
+        json.dumps(
+            {
+                "schema": "task40extra.review_v30_qualified_q_csr_selector.v1",
+                "profile": service.V30_TARGET_PROFILE,
+                "q_csr_entries": [
+                    {
+                        "q_index": 0,
+                        "twist_index": 0,
+                        "execution_identity": {"source_sha": source_sha},
+                    }
+                ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    staged = attempt / "stage_inputs/full" / canonical.name
+    staged.parent.mkdir(parents=True, exist_ok=True)
+    selector_relative = selector.relative_to(root).as_posix()
+    output_relative = (attempt / "factor_bank").relative_to(root).as_posix()
+    rendered = service.render_stage_input(canonical.read_text(encoding="utf-8"), "full")
+    overrides = (
+        "task40_target_heavy_authorized = true\n"
+        "task40_v30_q_csr_binding = { schema = "
+        '"task40extra.review_v30_q_csr_worker_binding.v1", '
+        f'selector_path = "{selector_relative}", selector_sha256 = "{_sha(selector)}" }}\n'
+        "task40_v30_factor_bank_config = { schema = "
+        '"task40extra.review_v30_all_q_factor_bank.v1", '
+        f'output_directory = "{output_relative}", require_two_strict_rhs = true }}\n'
+    )
+    rendered = rendered.replace(
+        "task40_target_heavy_authorized = false\n", overrides, 1
+    )
+    staged.write_text(rendered, encoding="utf-8")
+    return canonical, staged, selector, load_and_resolve(staged)
+
+
+def _set_v30_contract_environment(
+    monkeypatch: pytest.MonkeyPatch, root: Path, contract_path: Path
+) -> None:
+    contract_sha = _sha(contract_path)
+    window_path = root / contract_module.V30_WINDOW_RELATIVE
+    resources = contract_module.V30_RESOURCES
+    for key, value in {
+        "TASK40_V30_STRICT_EXECUTION": "1",
+        "TASK40_V30_CONTRACT_PATH": str(contract_path),
+        "TASK40_V30_CONTRACT_SHA256": contract_sha,
+        "TASK40_V30_EXECUTION_WINDOW_PATH": str(window_path.resolve()),
+        "TASK40_V30_EXECUTION_WINDOW_SHA256": _sha(window_path),
+        "TASK40_V30_TASK_MEMORY_MAX_BYTES": str(resources["task_memory_max_bytes"]),
+        "TASK40_V30_HOST_RESERVE_BYTES": str(resources["host_reserve_bytes"]),
+        "TASK40_V30_MEMORY_SWAP_MAX_BYTES": str(resources["memory_swap_max_bytes"]),
+    }.items():
+        monkeypatch.setenv(key, value)
+
+
+def test_v30_dispatcher_passes_authorized_private_all_q_copy_through_stage_to_worker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    from src.runners import task038_full3d_iterative as dispatcher
+    from src.runners import task40_v10_worker, task40_v20_stage_runner
+
+    root, contract_path, _ = _contract_fixture(tmp_path, monkeypatch)
+    source_sha = "a" * 40
+    _canonical, _staged, _selector, resolved = _v30_full_stage_fixture(
+        root, source_sha
+    )
+    _set_v30_contract_environment(monkeypatch, root, contract_path)
+    monkeypatch.setattr(
+        dispatcher,
+        "__file__",
+        str(root / "src/runners/task038_full3d_iterative.py"),
+    )
+    monkeypatch.setattr(
+        task40_v20_stage_runner,
+        "__file__",
+        str(root / "src/runners/task40_v20_stage_runner.py"),
+    )
+    preflight = {
+        "run_id": resolved.as_jsonable()["run_id"],
+        "input_sha256": resolved.input_sha256,
+        "physical_model_sha256": resolved.physical_model_sha256,
+    }
+    monkeypatch.setattr(
+        task40_v20_stage_runner,
+        "_preflight",
+        lambda *_args, **_kwargs: (dict(preflight), None, None),
+    )
+    captured: dict[str, object] = {}
+
+    def fake_worker(payload, _run_directory, **kwargs):
+        captured["payload_strategy"] = payload["solver"][
+            "task40_factor_lifecycle_strategy"
+        ]
+        captured["requested"] = kwargs["v30_requested_factor_lifecycle_strategy"]
+        captured["effective"] = kwargs["v30_effective_factor_lifecycle_strategy"]
+        captured["worker_strategy"] = (
+            task40_v10_worker._resolve_v30_worker_factor_lifecycle_strategy(
+                payload,
+                v30_enabled=True,
+                requested_strategy=kwargs[
+                    "v30_requested_factor_lifecycle_strategy"
+                ],
+                effective_strategy=kwargs[
+                    "v30_effective_factor_lifecycle_strategy"
+                ],
+            )
+        )
+        return {"status": "fixture_no_fe", "official_result": False}
+
+    monkeypatch.setattr(
+        task40_v10_worker, "run_task40_v10_p6_reference_worker", fake_worker
+    )
+    outcome = dispatcher.run_full3d_iterative(
+        resolved.as_jsonable(), tmp_path / "run", source_sha=source_sha
+    )
+
+    assert outcome["status"] == "fixture_no_fe"
+    assert resolved.solver["task40_factor_lifecycle_strategy"] == "ONE_Q_REFACTOR_V19"
+    assert captured == {
+        "payload_strategy": "ALL_Q_RESIDENT",
+        "requested": "ONE_Q_REFACTOR_V19",
+        "effective": "ALL_Q_RESIDENT",
+        "worker_strategy": "ALL_Q_RESIDENT",
+    }
+    preflight_receipt = json.loads(
+        (tmp_path / "run/v20_stage_preflight.json").read_text(encoding="utf-8")
+    )
+    assert preflight_receipt["v30_factor_lifecycle_authority"] == {
+        "requested": "ONE_Q_REFACTOR_V19",
+        "effective": "ALL_Q_RESIDENT",
+    }
+
+
+def test_v30_launcher_passes_approved_resources_to_watchdog_without_fe(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    from src.runners import task038_launcher, task40_v10_campaign
+    from benchmarks import subreaper_watchdog
+
+    root, contract_path, _ = _contract_fixture(tmp_path, monkeypatch)
+    source_sha = "b" * 40
+    _canonical, staged, _selector, specification = _v30_full_stage_fixture(
+        root, source_sha
+    )
+    _set_v30_contract_environment(monkeypatch, root, contract_path)
+    monkeypatch.setattr(
+        task038_launcher,
+        "__file__",
+        str(root / "src/runners/task038_launcher.py"),
+    )
+    window_path = root / contract_module.V30_WINDOW_RELATIVE
+    window_sha = _sha(window_path)
+
+    def observe(label):
+        return {
+            "label": label,
+            "remaining_numerical_seconds": 42_000.0,
+            "elapsed_seconds": 0.0,
+        }
+
+    campaign_window = SimpleNamespace(
+        path=window_path,
+        sha256=window_sha,
+        t0_utc_ns=1,
+        deadline_utc_ns=43_200_000_000_000,
+        total_seconds=43_200.0,
+        closeout_seconds=1_200.0,
+        observe=observe,
+    )
+    monkeypatch.setattr(
+        task40_v10_campaign,
+        "load_fixed_campaign_window",
+        lambda _path: campaign_window,
+    )
+    run_directory = tmp_path / "launcher-run"
+
+    def timestamp_directory(*_args, **_kwargs):
+        run_directory.mkdir(parents=True, exist_ok=True)
+        return run_directory
+
+    monkeypatch.setattr(
+        task038_launcher,
+        "_timestamp_directory",
+        timestamp_directory,
+    )
+    monkeypatch.setattr(
+        task038_launcher, "current_cgroup_path", lambda: Path("/fake/task40.service")
+    )
+    monkeypatch.setattr(
+        task038_launcher, "_is_v28_user_service_cgroup", lambda _path: True
+    )
+    monkeypatch.setattr(
+        task038_launcher,
+        "_physical_source_gate",
+        lambda *_args, **_kwargs: {
+            "source_sha": source_sha,
+            "tracked_and_nonignored_untracked_clean": True,
+        },
+    )
+    monkeypatch.setattr(
+        task038_launcher,
+        "build_execution_plan",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            adapter_available=True, argv=("fixture-no-fe-worker",), contract_probe=False
+        ),
+    )
+    captured: dict[str, object] = {}
+
+    def fake_supervise(_argv, _directory, **kwargs):
+        captured.update(kwargs)
+        return {
+            "leader_exit_code": 0,
+            "classification": "COMPLETED",
+            "launch_envelope": {"effective_total_bytes": 1},
+            "memory_scope": "fixture subreaper and descendants",
+            "descendants_cleared": True,
+            "process_tree_swap_gate_enforced": True,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "job_cgroup_swap_gate_enforced": True,
+            "job_cgroup_swap": {"passed": True},
+        }
+
+    monkeypatch.setattr(subreaper_watchdog, "supervise", fake_supervise)
+    result = task038_launcher.launch_specification(
+        specification, source_sha=source_sha, task40_v10_campaign_window=window_path
+    )
+
+    assert result["result_classification"] == "worker_exit0"
+    assert captured["tree_cap_bytes"] == contract_module.V30_RESOURCES[
+        "task_memory_max_bytes"
+    ]
+    assert captured["host_reserve_bytes"] == contract_module.V30_RESOURCES[
+        "host_reserve_bytes"
+    ]
+    assert captured["task_cgroup_reserve_bytes"] == 0
+    assert captured["require_job_cgroup_zero_swap"] is True
+    assert captured["require_cgroup_memory_details"] is True
+    worker_environment = captured["worker_environment"]
+    assert worker_environment["TASK40_V30_CONTRACT_SHA256"] == _sha(contract_path)
+    assert worker_environment["TASK40_V30_EXECUTION_WINDOW_PATH"] == str(
+        window_path.resolve()
+    )
+    assert specification.as_jsonable()["provenance"]["source_path"] == str(staged)
+
+
+@pytest.mark.parametrize("require_details", [False, True])
+def test_subreaper_supervise_forwards_cgroup_detail_policy_before_worker_start(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, require_details: bool
+):
+    from benchmarks import subreaper_watchdog
+
+    class MemoryEnvelopeReached(Exception):
+        pass
+
+    captured: dict[str, object] = {}
+
+    def capture_memory_envelope(policy, **kwargs):
+        captured.update(policy=policy, kwargs=kwargs)
+        raise MemoryEnvelopeReached
+
+    monkeypatch.setattr(
+        subreaper_watchdog.ctypes,
+        "CDLL",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            prctl=lambda *_prctl_args: 0
+        ),
+    )
+    monkeypatch.setattr(subreaper_watchdog, "_children", lambda: [])
+    monkeypatch.setattr(
+        subreaper_watchdog, "memory_envelope", capture_memory_envelope
+    )
+    kwargs = {"require_cgroup_memory_details": True} if require_details else {}
+
+    with pytest.raises(MemoryEnvelopeReached):
+        subreaper_watchdog.supervise(
+            ["fixture-no-worker"],
+            tmp_path / f"watchdog-{require_details}",
+            wall_seconds=1.0,
+            interval=0.1,
+            grace_seconds=0.1,
+            **kwargs,
+        )
+
+    assert captured["kwargs"]["require_cgroup_memory_details"] is require_details
+
+
 def test_v30_contract_validates_target_window_resources_and_q0_preparation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):

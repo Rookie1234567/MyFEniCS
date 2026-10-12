@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 from copy import deepcopy
 import json
+import os
 from pathlib import Path
 import re
 import socket
@@ -410,6 +411,127 @@ def require_authorized_contract(
     if contract_path.parent.resolve() != (root / V30_WINDOW_RELATIVE).resolve().parent:
         raise V30ContractError("V30 execution contract must be colocated with its target window")
     return contract, digest
+
+
+def require_v30_all_q_route(
+    resolved_payload: Mapping[str, Any],
+    *,
+    source_sha: str,
+    repo_root: str | Path,
+    environment: Mapping[str, str] | None = None,
+) -> dict[str, Any] | None:
+    """Authorize the V30 runtime-only AllQ strategy normalization.
+
+    The staged DAT deliberately retains its V19 request.  Only a fully bound
+    V30 target contract may map that request to the effective AllQ bank route.
+    """
+
+    execution = resolved_payload.get("execution", {})
+    if not isinstance(execution, Mapping):
+        return None
+    has_selector = "task40_v30_q_csr_binding" in execution
+    has_factor = "task40_v30_factor_bank_config" in execution
+    if not has_selector and not has_factor:
+        return None
+    env = os.environ if environment is None else environment
+    if not has_selector or not has_factor:
+        raise V30ContractError("V30 AllQ route requires both explicit V30 execution bindings")
+    if env.get("TASK40_V30_STRICT_EXECUTION") != "1":
+        raise V30ContractError("V30 AllQ route requires strict approved-contract mode")
+
+    contract_path = env.get("TASK40_V30_CONTRACT_PATH", "")
+    contract_sha_env = env.get("TASK40_V30_CONTRACT_SHA256", "")
+    contract, contract_sha = require_authorized_contract(
+        contract_path,
+        expected_sha256=contract_sha_env,
+        current_root=repo_root,
+    )
+    approved_execution = contract["execution"]
+    resources = approved_execution["resources"]
+    root = Path(repo_root).resolve()
+    expected_environment = {
+        "TASK40_V30_EXECUTION_WINDOW_PATH": str(
+            (root / Path(str(approved_execution["campaign_window_path"]))).resolve()
+        ),
+        "TASK40_V30_EXECUTION_WINDOW_SHA256": str(
+            approved_execution["campaign_window_sha256"]
+        ),
+        "TASK40_V30_TASK_MEMORY_MAX_BYTES": str(resources["task_memory_max_bytes"]),
+        "TASK40_V30_HOST_RESERVE_BYTES": str(resources["host_reserve_bytes"]),
+        "TASK40_V30_MEMORY_SWAP_MAX_BYTES": str(resources["memory_swap_max_bytes"]),
+    }
+    if any(env.get(key) != value for key, value in expected_environment.items()):
+        raise V30ContractError("V30 AllQ route environment differs from the frozen execution contract")
+
+    selector = execution.get("task40_v30_q_csr_binding")
+    factor = execution.get("task40_v30_factor_bank_config")
+    if (
+        not isinstance(selector, Mapping)
+        or not isinstance(factor, Mapping)
+        or set(selector) != {"schema", "selector_path", "selector_sha256"}
+        or set(factor) != {"schema", "output_directory", "require_two_strict_rhs"}
+        or selector.get("schema")
+        != "task40extra.review_v30_q_csr_worker_binding.v1"
+        or factor.get("schema") != "task40extra.review_v30_all_q_factor_bank.v1"
+        or factor.get("require_two_strict_rhs") is not True
+        or execution.get("task40_execution_stop_stage") != "full"
+        or execution.get("task40_target_heavy_authorized") is not True
+    ):
+        raise V30ContractError("V30 AllQ route fields or full-target scope are not exact")
+
+    solver = resolved_payload.get("solver", {})
+    method = resolved_payload.get("method", {})
+    if not isinstance(solver, Mapping) or not isinstance(method, Mapping):
+        raise V30ContractError("V30 AllQ route lacks solver or method identity")
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_COMPARISON_GROUP,
+        TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,
+        TASK40_Q_ASSEMBLY_ROW_TILE_V17,
+        TASK40_V15_REFERENCE_PC_STRATEGY,
+        TASK40_V19_FACTOR_LIFECYCLE_STRATEGY,
+    )
+    from src.solvers.task40_v20_registry import task40_v20_case
+
+    try:
+        case = task40_v20_case(profile=str(solver.get("preconditioner", "")))
+    except ValueError as error:
+        raise V30ContractError("V30 AllQ route has an unknown target profile") from error
+    if (
+        case.mesh_id != "TARGET_ORIGINAL_NY8"
+        or resolved_payload.get("run_id") != case.run_id
+        or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
+        or method.get("kind") != "full3d_iterative"
+        or solver.get("stage") != case.solver_stage
+        or solver.get("task40_reference_pc_strategy") != TASK40_V15_REFERENCE_PC_STRATEGY
+        or solver.get("task40_q_assembly_strategy") != TASK40_Q_ASSEMBLY_ROW_TILE_V17
+        or solver.get("task40_factor_lifecycle_strategy")
+        != TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
+    ):
+        raise V30ContractError(
+            "V30 AllQ normalization is limited to the exact Ny8 V20/V15 row-tile V19-request route"
+        )
+
+    provenance = resolved_payload.get("provenance", {})
+    staged_path = provenance.get("source_path") if isinstance(provenance, Mapping) else None
+    if not isinstance(staged_path, str) or not staged_path:
+        raise V30ContractError("V30 AllQ route lacks staged-input provenance")
+    input_identity = require_v30_input_identity(
+        root / V30_CANONICAL_INPUT_RELATIVE,
+        staged_path,
+        repo_root=root,
+        expected_source_sha=source_sha,
+    )
+    if input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
+        raise V30ContractError("V30 AllQ route staged input hash differs from provenance")
+    return {
+        "requested_factor_lifecycle_strategy": TASK40_V19_FACTOR_LIFECYCLE_STRATEGY,
+        "effective_factor_lifecycle_strategy": TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,
+        "contract_path": str(Path(contract_path).resolve()),
+        "contract_sha256": contract_sha,
+        "execution_window_sha256": str(approved_execution["campaign_window_sha256"]),
+        "input_identity": dict(input_identity),
+        "contract": contract,
+    }
 
 
 def qualified_activation_identity(environment: Mapping[str, str]) -> str | None:

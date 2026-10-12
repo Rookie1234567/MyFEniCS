@@ -4420,8 +4420,29 @@ def run_task40_v20_stage(
     run_directory: str | Path,
     *,
     source_sha: str,
+    v30_requested_factor_lifecycle_strategy: str | None = None,
+    v30_effective_factor_lifecycle_strategy: str | None = None,
 ) -> dict[str, Any]:
     """Run only the explicitly selected V20 stage, failing closed at each gate."""
+
+    execution = resolved_payload.get("execution", {})
+    v30_requested = isinstance(execution, Mapping) and (
+        "task40_v30_q_csr_binding" in execution
+        or "task40_v30_factor_bank_config" in execution
+    )
+    if v30_requested:
+        if (
+            v30_requested_factor_lifecycle_strategy != "ONE_Q_REFACTOR_V19"
+            or v30_effective_factor_lifecycle_strategy != "ALL_Q_RESIDENT"
+            or resolved_payload.get("solver", {}).get("task40_factor_lifecycle_strategy")
+            != v30_effective_factor_lifecycle_strategy
+        ):
+            raise ValueError("V30 stage requires the dispatcher-authorized V19-to-AllQ strategy binding")
+    elif (
+        v30_requested_factor_lifecycle_strategy is not None
+        or v30_effective_factor_lifecycle_strategy is not None
+    ):
+        raise ValueError("V30 factor-lifecycle binding is forbidden outside a V30 route")
 
     profile, mesh_id = _exact_case(resolved_payload)
     stop_stage = str(resolved_payload["execution"]["task40_execution_stop_stage"])
@@ -4430,6 +4451,11 @@ def run_task40_v20_stage(
     preflight, modes, mode_rows = _preflight(
         resolved_payload, source_sha=source_sha, profile=profile, mesh_id=mesh_id
     )
+    if v30_requested:
+        preflight["v30_factor_lifecycle_authority"] = {
+            "requested": v30_requested_factor_lifecycle_strategy,
+            "effective": v30_effective_factor_lifecycle_strategy,
+        }
     _write_json(output_directory / "v20_stage_preflight.json", preflight)
     completed = ["preflight"]
 
@@ -4573,6 +4599,12 @@ def run_task40_v20_stage(
                 share_transform_bank=True,
                 v30_q_csr_binding=v30_q_csr_binding,
                 v30_factor_config=v30_factor_config,
+                v30_requested_factor_lifecycle_strategy=(
+                    v30_requested_factor_lifecycle_strategy
+                ),
+                v30_effective_factor_lifecycle_strategy=(
+                    v30_effective_factor_lifecycle_strategy
+                ),
             )
             receipt = {
                 "schema": "task40extra.review_v30_worker_service_receipt.v1",
@@ -4587,6 +4619,10 @@ def run_task40_v20_stage(
                 "v30_input_identity": dict(v30_input_identity),
                 "q_csr_selector": dict(v30_q_csr_binding),
                 "factor_bank_schema": v30_factor_config.get("schema"),
+                "factor_lifecycle_strategy": {
+                    "requested": v30_requested_factor_lifecycle_strategy,
+                    "effective": v30_effective_factor_lifecycle_strategy,
+                },
                 "execution_contract_path": str(v30_contract_path.resolve()),
                 "execution_contract_sha256": v30_contract_sha,
                 "execution_window_sha256": str(
@@ -4617,6 +4653,10 @@ def run_task40_v20_stage(
                 "staged_input_sha256": v30_input_identity["staged_input_sha256"],
                 "v30_input_identity": dict(v30_input_identity),
                 "q_csr_selector": dict(v30_q_csr_binding),
+                "factor_lifecycle_strategy": {
+                    "requested": v30_requested_factor_lifecycle_strategy,
+                    "effective": v30_effective_factor_lifecycle_strategy,
+                },
                 "failure_type": type(error).__name__,
                 "failure_message": str(error),
                 "official_result": False,

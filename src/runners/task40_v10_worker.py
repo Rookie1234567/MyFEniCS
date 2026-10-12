@@ -5357,6 +5357,35 @@ def _candidate_contract(
     }
 
 
+def _resolve_v30_worker_factor_lifecycle_strategy(
+    resolved_payload: Mapping[str, Any],
+    *,
+    v30_enabled: bool,
+    requested_strategy: str | None,
+    effective_strategy: str | None,
+) -> str:
+    """Require the authorized V30 copy to carry AllQ while preserving its raw request."""
+
+    raw_strategy = str(
+        resolved_payload.get("solver", {}).get(
+            "task40_factor_lifecycle_strategy", "ALL_Q_RESIDENT"
+        )
+    )
+    if v30_enabled:
+        if (
+            requested_strategy != "ONE_Q_REFACTOR_V19"
+            or effective_strategy != "ALL_Q_RESIDENT"
+            or raw_strategy != effective_strategy
+        ):
+            raise ValueError(
+                "V30 worker requires the dispatcher's V19-request/AllQ-effective binding"
+            )
+        return effective_strategy
+    if requested_strategy is not None or effective_strategy is not None:
+        raise ValueError("V30 factor-lifecycle binding is forbidden outside a V30 worker route")
+    return raw_strategy
+
+
 def run_task40_v10_p6_reference_worker(
     resolved_payload: Mapping[str, Any],
     run_directory: str | Path,
@@ -5367,6 +5396,8 @@ def run_task40_v10_p6_reference_worker(
     stop_after_stage: str | None = None,
     v30_q_csr_binding: Mapping[str, Any] | None = None,
     v30_factor_config: Mapping[str, Any] | None = None,
+    v30_requested_factor_lifecycle_strategy: str | None = None,
+    v30_effective_factor_lifecycle_strategy: str | None = None,
 ) -> dict[str, Any]:
     """Run a frozen Task40 p6 case with one live four-q periodic reference."""
 
@@ -5420,6 +5451,14 @@ def run_task40_v10_p6_reference_worker(
         if v30_input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
             raise ValueError("V30 worker raw stage SHA differs from run provenance")
         scientific_input_sha256 = v30_input_identity["scientific_input_sha256"]
+
+    v30_enabled = v30_q_csr_binding is not None or v30_factor_config is not None
+    effective_factor_lifecycle_strategy = _resolve_v30_worker_factor_lifecycle_strategy(
+        resolved_payload,
+        v30_enabled=v30_enabled,
+        requested_strategy=v30_requested_factor_lifecycle_strategy,
+        effective_strategy=v30_effective_factor_lifecycle_strategy,
+    )
 
     from mpi4py import MPI
     from petsc4py import PETSc
@@ -5514,11 +5553,7 @@ def run_task40_v10_p6_reference_worker(
         raise ValueError(f"unsupported Task40 reference-PC strategy: {reference_pc_strategy!r}")
     is_v13 = reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
     is_v15 = reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
-    factor_lifecycle_strategy = str(
-        resolved_payload.get("solver", {}).get(
-            "task40_factor_lifecycle_strategy", TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
-        )
-    )
+    factor_lifecycle_strategy = effective_factor_lifecycle_strategy
     if factor_lifecycle_strategy not in {ALL_Q_RESIDENT, ONE_Q_REFACTOR_V19}:
         raise ValueError(f"unsupported Task40 factor lifecycle strategy: {factor_lifecycle_strategy!r}")
     is_v19 = factor_lifecycle_strategy == ONE_Q_REFACTOR_V19
@@ -5528,7 +5563,6 @@ def run_task40_v10_p6_reference_worker(
         )
     )
     is_v17 = q_assembly_strategy == TASK40_Q_ASSEMBLY_ROW_TILE_V17
-    v30_enabled = v30_q_csr_binding is not None or v30_factor_config is not None
     if v30_enabled and (
         v30_q_csr_binding is None
         or v30_factor_config is None

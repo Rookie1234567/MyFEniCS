@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 import os
 from pathlib import Path
 from typing import Any, Mapping
@@ -107,22 +108,29 @@ def run_full3d_iterative(
     v20_case = TASK40_V20_CASES_BY_PROFILE.get(profile)
     if v20_case is not None:
         execution = resolved_payload.get("execution", {})
-        v30_requested = (
+        v30_route = None
+        if (
             "task40_v30_q_csr_binding" in execution
             or "task40_v30_factor_bank_config" in execution
-        )
+        ):
+            from src.runners.task40_v30_contract import require_v30_all_q_route
+
+            source_sha = _kwargs.get("source_sha")
+            if not isinstance(source_sha, str):
+                raise ValueError("V30 dispatcher requires the actual frozen source SHA")
+            v30_route = require_v30_all_q_route(
+                resolved_payload,
+                source_sha=source_sha,
+                repo_root=Path(__file__).resolve().parents[2],
+            )
+        v30_requested = v30_route is not None
         if (
             resolved_payload.get("run_id") != v20_case.run_id
             or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
             or stage != v20_case.solver_stage
             or reference_pc_strategy != TASK40_V15_REFERENCE_PC_STRATEGY
             or q_assembly_strategy != TASK40_Q_ASSEMBLY_ROW_TILE_V17
-            or factor_lifecycle_strategy
-            != (
-                TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
-                if v30_requested
-                else TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
-            )
+            or factor_lifecycle_strategy != TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
             or (
                 v30_requested
                 and (
@@ -142,10 +150,26 @@ def run_full3d_iterative(
             raise ValueError("Task40 V20 dispatcher rejected a mismatched case/profile/strategy")
         from .task40_v20_stage_runner import run_task40_v20_stage
 
+        dispatch_payload = resolved_payload
+        stage_kwargs: dict[str, Any] = {}
+        if v30_route is not None:
+            dispatch_payload = deepcopy(dict(resolved_payload))
+            dispatch_payload["solver"]["task40_factor_lifecycle_strategy"] = v30_route[
+                "effective_factor_lifecycle_strategy"
+            ]
+            stage_kwargs = {
+                "v30_requested_factor_lifecycle_strategy": v30_route[
+                    "requested_factor_lifecycle_strategy"
+                ],
+                "v30_effective_factor_lifecycle_strategy": v30_route[
+                    "effective_factor_lifecycle_strategy"
+                ],
+            }
         return run_task40_v20_stage(
-            resolved_payload,
+            dispatch_payload,
             Path(run_directory),
             source_sha=_kwargs["source_sha"],
+            **stage_kwargs,
         )
 
     if factor_lifecycle_strategy == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY:

@@ -6614,6 +6614,12 @@ def launch_specification(
                             )
                     if task40_campaign_profile:
                         v29_watchdog_resources = None
+                        v29_contract = None
+                        v30_watchdog_resources = None
+                        v30_contract = None
+                        v30_strict = os.environ.get("TASK40_V30_STRICT_EXECUTION") == "1"
+                        if v30_strict and os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1":
+                            raise InputError("V29 and V30 strict launcher contracts cannot be combined")
                         if os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1":
                             from src.runners.task40_v29_contract import (
                                 require_authorized_contract,
@@ -6644,22 +6650,69 @@ def launch_specification(
                                     "V29 launcher campaign window differs from its approved contract"
                                 )
                             v29_watchdog_resources = v29_contract["execution"]["resources"]
+                        if v30_strict:
+                            from src.runners.task40_v30_contract import require_authorized_contract
+
+                            repo_root = Path(__file__).resolve().parents[2]
+                            v30_contract, v30_contract_sha = require_authorized_contract(
+                                os.environ.get("TASK40_V30_CONTRACT_PATH", ""),
+                                expected_sha256=os.environ.get("TASK40_V30_CONTRACT_SHA256"),
+                                current_root=repo_root,
+                            )
+                            approved_execution = v30_contract["execution"]
+                            approved_resources = approved_execution["resources"]
+                            approved_window_path = (
+                                repo_root
+                                / Path(str(approved_execution["campaign_window_path"]))
+                            ).resolve()
+                            if (
+                                campaign_window is None
+                                or approved_window_path != campaign_window.path.resolve()
+                                or approved_execution["campaign_window_sha256"]
+                                != campaign_window.sha256
+                                or v30_contract_sha
+                                != os.environ.get("TASK40_V30_CONTRACT_SHA256")
+                                or os.environ.get("TASK40_V30_EXECUTION_WINDOW_PATH")
+                                != str(approved_window_path)
+                                or os.environ.get("TASK40_V30_EXECUTION_WINDOW_SHA256")
+                                != str(approved_execution["campaign_window_sha256"])
+                                or os.environ.get("TASK40_V30_TASK_MEMORY_MAX_BYTES")
+                                != str(approved_resources["task_memory_max_bytes"])
+                                or os.environ.get("TASK40_V30_HOST_RESERVE_BYTES")
+                                != str(approved_resources["host_reserve_bytes"])
+                                or os.environ.get("TASK40_V30_MEMORY_SWAP_MAX_BYTES")
+                                != str(approved_resources["memory_swap_max_bytes"])
+                            ):
+                                raise InputError(
+                                    "V30 launcher resources/window differ from the approved contract"
+                                )
+                            v30_watchdog_resources = approved_resources
                         jit_source = (
-                            Path(str(v29_contract["execution"]["jit_cache"]))
+                            Path(str(v30_contract["execution"]["jit_cache"]))
+                            if v30_watchdog_resources is not None
+                            else Path(str(v29_contract["execution"]["jit_cache"]))
                             if v29_watchdog_resources is not None
                             else Path(str(physical_resources["qualified_jit_cache_source"]))
                         )
-                        if not jit_source.is_absolute() and v29_watchdog_resources is None:
+                        if (
+                            not jit_source.is_absolute()
+                            and v29_watchdog_resources is None
+                            and v30_watchdog_resources is None
+                        ):
                             jit_source = (
                                 Path(__file__).resolve().parents[2] / jit_source
                             ).resolve()
                         jit_cache_origin = (
-                            "V29 factor-only execution; no FE/JIT compilation is in scope"
+                            "V30 approved target execution contract"
+                            if v30_watchdog_resources is not None
+                            else "V29 factor-only execution; no FE/JIT compilation is in scope"
                             if v29_watchdog_resources is not None
                             else physical_resources["qualified_jit_cache_origin"]
                         )
                         jit_expected_compiler_events = (
-                            0
+                            physical_resources["qualified_jit_expected_compiler_event_count"]
+                            if v30_watchdog_resources is not None
+                            else 0
                             if v29_watchdog_resources is not None
                             else physical_resources["qualified_jit_expected_compiler_event_count"]
                         )
@@ -6678,20 +6731,32 @@ def launch_specification(
                                 physical_resources["pss_sampling_policy"]
                             ),
                             tree_cap_bytes=int(
-                                v29_watchdog_resources["task_memory_max_bytes"]
+                                v30_watchdog_resources["task_memory_max_bytes"]
+                                if v30_watchdog_resources is not None
+                                else v29_watchdog_resources["task_memory_max_bytes"]
                                 if v29_watchdog_resources is not None
                                 else physical_resources["process_tree_rss_cap_bytes"]
                             ),
                             host_reserve_bytes=(
-                                int(v29_watchdog_resources["host_reserve_bytes"])
+                                int(v30_watchdog_resources["host_reserve_bytes"])
+                                if v30_watchdog_resources is not None
+                                else int(v29_watchdog_resources["host_reserve_bytes"])
                                 if v29_watchdog_resources is not None
                                 else None
                             ),
                             task_cgroup_reserve_bytes=(
-                                0 if v29_watchdog_resources is not None else None
+                                0
+                                if v30_watchdog_resources is not None
+                                or v29_watchdog_resources is not None
+                                else None
                             ),
                             allow_physical_pressure_tree_cap=True,
                             require_job_cgroup_zero_swap=True,
+                            **(
+                                {"require_cgroup_memory_details": True}
+                                if v30_watchdog_resources is not None
+                                else {}
+                            ),
                         )
                         watchdog_environment = dict(
                             watchdog_kwargs.get("worker_environment", {})
@@ -6717,6 +6782,33 @@ def launch_specification(
                                 "XDG_CACHE_HOME": str(jit_source),
                             }
                         )
+                        if v30_watchdog_resources is not None:
+                            watchdog_environment.update(
+                                {
+                                    "TASK40_V30_STRICT_EXECUTION": "1",
+                                    "TASK40_V30_CONTRACT_PATH": os.environ[
+                                        "TASK40_V30_CONTRACT_PATH"
+                                    ],
+                                    "TASK40_V30_CONTRACT_SHA256": os.environ[
+                                        "TASK40_V30_CONTRACT_SHA256"
+                                    ],
+                                    "TASK40_V30_EXECUTION_WINDOW_PATH": str(
+                                        campaign_window.path.resolve()
+                                    ),
+                                    "TASK40_V30_EXECUTION_WINDOW_SHA256": str(
+                                        campaign_window.sha256
+                                    ),
+                                    "TASK40_V30_TASK_MEMORY_MAX_BYTES": str(
+                                        v30_watchdog_resources["task_memory_max_bytes"]
+                                    ),
+                                    "TASK40_V30_HOST_RESERVE_BYTES": str(
+                                        v30_watchdog_resources["host_reserve_bytes"]
+                                    ),
+                                    "TASK40_V30_MEMORY_SWAP_MAX_BYTES": str(
+                                        v30_watchdog_resources["memory_swap_max_bytes"]
+                                    ),
+                                }
+                            )
                         watchdog_kwargs["worker_environment"] = watchdog_environment
                         watchdog_kwargs.update(
                             campaign_window_path=campaign_window.path,
