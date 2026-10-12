@@ -17,6 +17,7 @@ def run_retained_fgmres(
     restart=32, max_it=2048, residual_interval=8, candidate_rtol=1e-6,
     evaluation_policy=None, retained_tolerance=None, initial_vector=None,
     iterations_consumed=0, true_action=None, audit_identity=None,
+    evaluation_iterations=(), retained_observation_iterations=(), effect_check=None,
 ):
     """Callbacks return owned action/PC vectors and plain evaluation facts."""
     from petsc4py import PETSc
@@ -155,7 +156,21 @@ def run_retained_fgmres(
             if not np.isfinite(reported):
                 status = "NONFINITE_KRYLOV_RESIDUAL"
                 return int(PETSc.KSP.ConvergedReason.DIVERGED_NANORINF)
-            if iteration % residual_interval == 0 or reported / rhs_norm <= candidate_rtol or stop or exhausted:
+            cumulative = iteration + iterations_consumed
+            if (cumulative in retained_observation_iterations
+                    and cumulative not in evaluation_iterations
+                    and not (stop or exhausted or reported / rhs_norm <= candidate_rtol)):
+                current.buildSolution(target)
+                applied = (action if true_action is None else true_action)(target)
+                residual = rhs.copy()
+                try:
+                    residual.axpy(-1, applied)
+                    append('retained_only_observations.jsonl', dict(iteration=cumulative,
+                        schur_true_relative_residual=float(residual.norm()) / rhs_norm,
+                        original_audit='NOT_REQUESTED_AT_THIS_OBSERVATION'))
+                finally:
+                    applied.destroy(); residual.destroy()
+            if iteration % residual_interval == 0 or cumulative in evaluation_iterations or reported / rhs_norm <= candidate_rtol or stop or exhausted:
                 row = snapshot(iteration, current, reported, terminal=stop or exhausted)
                 if stop:
                     status = "USER_CONTROLLED_STOP"
@@ -170,6 +185,12 @@ def run_retained_fgmres(
                 if identity_fail:
                     status = "RECOVERY_IDENTITY_GATE_FAIL"
                     return int(PETSc.KSP.ConvergedReason.DIVERGED_BREAKDOWN)
+                if effect_check is not None:
+                    decision = effect_check(row)
+                    append('effect_gates.jsonl', decision)
+                    if decision['evaluated'] and not decision['pass_gate']:
+                        status = 'EFFECT_GATE_STOP'
+                        return int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
             if exhausted:
                 status = "ITERATION_BUDGET_EXHAUSTED"
                 return int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
@@ -213,7 +234,8 @@ def run_retained_fgmres(
             "zero_start_scope": "retained unknowns; full field includes internal particular solution",
             "retained_local_size": sizes[0], "retained_global_size": sizes[1],
             "residual_interval": residual_interval, "checkpoint_interval": 32,
-            "screen_enabled": False, "screen_policy": "v19_fullspace_progress_observed_only",
+            "screen_enabled": effect_check is not None,
+            "screen_policy": "explicit_pre_registered_effect_points" if effect_check is not None else "v19_fullspace_progress_observed_only",
             "evaluation_policy": evaluation_policy, "retained_target": retained_tolerance,
             "time_policy": "observe_only" if evaluation_policy is None else "explicit_stop_requested",
             "time_gate_evaluated": evaluation_policy is not None}

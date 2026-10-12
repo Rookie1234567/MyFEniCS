@@ -1,0 +1,5 @@
+schema_version = 1
+
+[task042_v76]
+stage = "PROMOTED"
+run_id = "task042_v76_promoted_control_continue"

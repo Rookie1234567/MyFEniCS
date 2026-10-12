@@ -1,0 +1,71 @@
+{
+  "review_commit": "3f40d40f55c798f55d07c413a6492241db59a6ad",
+  "review_sha256": "bf8ebef0ffe73cd3444a69062be1deb986d57dc5e905212bd2c74ba942ff1318",
+  "batch": "V76_CONTROLLED_BASELINES_AND_RESIDUAL_MINIMIZATION",
+  "stages": [
+    "PRECHECK",
+    "B0",
+    "BJ",
+    "SMR",
+    "PROMOTED",
+    "VERIFY_COST"
+  ],
+  "new_storage_bytes": 17179869184,
+  "task_storage_bytes": 747324309504,
+  "free_bytes": 53687091200,
+  "evidence_reserve_bytes": 536870912,
+  "action_limit": 1800,
+  "iteration_limit": 256,
+  "restart": 128,
+  "iteration_seconds": 10800,
+  "maximum_new_complete_solves": 4,
+  "numeric_future_minimum_bytes": 12884901888,
+  "factor_double_symbolic_sum_bytes": 85899345920,
+  "total_window_seconds": 21600,
+  "total_loaded_seconds": 19800,
+  "case_wall_seconds": {
+    "PRECHECK": 19800,
+    "B0": 19800,
+    "BJ": 19800,
+    "SMR": 19800,
+    "PROMOTED": 19800,
+    "VERIFY_COST": 19800
+  },
+  "memory_profiles": {
+    "default": {
+      "planning_gib": 64,
+      "warning_gib": 80,
+      "sampled_stop_gib": 96,
+      "neighbor_growth_gib": 384,
+      "extra_cache_workspace_gib": 2
+    },
+    "SMR": {
+      "planning_gib": 96,
+      "warning_gib": 112,
+      "sampled_stop_gib": 128,
+      "neighbor_growth_gib": 384,
+      "extra_cache_workspace_gib": 2
+    }
+  },
+  "memory_budget": {
+    "planning_gib": 64,
+    "warning_gib": 80,
+    "sampled_stop_gib": 96,
+    "neighbor_growth_gib": 384,
+    "extra_cache_workspace_gib": 2
+  },
+  "history_known_lower_seconds": 390402.36851941183,
+  "reuse_qualification": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_reuse_admit_20261011T042133054087Z/result.json",
+    "sha256": "db39b64f7e0ccc44c3bbb7031b70f414c28917bf2fe5a768b15b66b2b5cfcb43"
+  },
+  "forecast_numeric_upper_seconds": 3600,
+  "effect_points": {
+    "32": 0.5,
+    "64": 0.1,
+    "128": 0.001
+  },
+  "simple_control_combined_seconds": 1800,
+  "implementation_seconds": 3600,
+  "repair_seconds": 1800
+}

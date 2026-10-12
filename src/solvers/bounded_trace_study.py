@@ -200,9 +200,10 @@ def numeric_factors(record,journal,scope=scope,folder=None,workspace=None,clock_
     from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
     allreceipts=record['matrices']+[record['coarse_matrix']]
     infos=record['analysis']+[record['coarse_symbolic']];factors=[];remaining=sum(r['double_bytes'] for r in infos)
-    reused=scope.NAMESPACE in ('v72','v73','v74','v75');started=time.monotonic();rows=[]
+    numeric_policy=getattr(scope,'numeric_policy',None)
+    reused=scope.NAMESPACE in ('v72','v73','v74','v75') or numeric_policy is not None;started=time.monotonic();rows=[]
     if reused:
-        clock=((clock_root or folder)/'numeric_qualification_clock.json' if scope.NAMESPACE in ('v73','v74','v75') else scope.window.TMP/'numeric_qualification_clock.json')
+        clock=((clock_root or folder)/'numeric_qualification_clock.json' if scope.NAMESPACE in ('v73','v74','v75') or numeric_policy is not None else scope.window.TMP/'numeric_qualification_clock.json')
         boot=scope.window.snapshot()['boot_id']
         if clock.exists():
             saved=json.loads(clock.read_text())
@@ -211,7 +212,9 @@ def numeric_factors(record,journal,scope=scope,folder=None,workspace=None,clock_
         else:write_json(clock,dict(start_monotonic=started,boot_id=boot))
     try:
         for j,(receipt,expected) in enumerate(zip(allreceipts,infos,strict=True)):
-            if reused and ((scope.NAMESPACE!='v75' and time.monotonic()-started>=10800) or scope.window.snapshot()['heavy_remaining_seconds']<=(15300 if scope.NAMESPACE=='v75' else 4500)):
+            numeric_cap=numeric_policy['seconds'] if numeric_policy is not None else 10800
+            reserve=numeric_policy['output_reserve_seconds'] if numeric_policy is not None else 15300 if scope.NAMESPACE=='v75' else 4500
+            if reused and (((numeric_policy is not None or scope.NAMESPACE!='v75') and time.monotonic()-started>=numeric_cap) or scope.window.snapshot()['heavy_remaining_seconds']<=reserve):
                 raise RuntimeError('V72 cumulative numeric/qualification or output reserve')
             A=csr_load(receipt);matrix=petsc_matrix(A);f=_MumpsFactor(matrix)
             try:
@@ -225,7 +228,7 @@ def numeric_factors(record,journal,scope=scope,folder=None,workspace=None,clock_
                 admitted=sample['swap_bytes']==0 and planned<=96*2**30
                 if reused:
                     from .reused_trace_admission import numeric_gate
-                    gate=numeric_gate(sample,remaining,workspace,minimum_bytes=12*2**30 if scope.NAMESPACE in ('v73','v74','v75') else 8*2**30)
+                    gate=numeric_gate(sample,remaining,workspace,minimum_bytes=numeric_policy['minimum_workspace_bytes'] if numeric_policy is not None else 12*2**30 if scope.NAMESPACE in ('v73','v74','v75') else 8*2**30)
                     planned=gate['planned_simultaneous_bytes'];admitted=gate['admitted']
                 journal.event('bounded_local_or_coarse_numeric_admission',index=j,tree=sample,remaining_double_symbolic=remaining,
                               future_workspace=workspace if reused else None,
@@ -450,7 +453,8 @@ def iterate(folder,journal,state,scope=scope,role="ITERATE"):
     x,pending=finish_retained_recovery(folder,journal,state,s=s,b=b,independent=independent,a=a,
         full_rhs=full_rhs,t=t,pending=pending,pc_calls=pc_calls,pc_seconds=pc_seconds,scope=scope)
     a=independent=Z=local=coarse=transfer=None;gc.collect();journal.event('unneeded_exact_operator_cache_released_before_fields')
-    return finish_retained_fields(folder,journal,state,s,b,x,pending)
+    return finish_retained_fields(folder,journal,state,s,b,x,pending,
+        fail_fast=getattr(scope,'fail_fast_fields',False))
 
 
 def finish_retained_recovery(folder,journal,state,*,s,b,independent,a,full_rhs,t,pending,pc_calls,pc_seconds,scope):
@@ -467,10 +471,20 @@ def finish_retained_recovery(folder,journal,state,*,s,b,independent,a,full_rhs,t
     return x,pending
 
 
-def finish_retained_fields(folder,journal,state,s,b,x,pending):
+def finish_retained_fields(folder,journal,state,s,b,x,pending,*,fail_fast=False):
     """Shared field tail, after the caller has released every operator owner."""
     from .independent_tetra_fields import complete_output
     aud=pending['audit']
+    if fail_fast and not pending['iteration']['final_evaluation']['solve_gate_pass']:
+        result=dict(pending,status='COMPLETED',output={'official':False,
+            'classification':'NOT_RUN_BY_FAIL_FAST_POLICY'},accuracy=None,
+            deployment_complete=False,pipeline_complete=True,scientific_solve_pass=False,
+            physical_output_status='NOT_RUN_BY_FAIL_FAST_POLICY',source=state,
+            physical_output_reason='ORIGINAL_TRUE_ABOVE_1E_MINUS2' if aud['true']>1e-2 else 'UNQUALIFIED_DIAGNOSTIC_OUTPUT_NOT_REQUESTED',
+            timings=journal.timings,calls=journal.calls,prepared_start=True,
+            global_fine_K_reads=0,global_fine_S_reads=0)
+        write_json(folder/'complete_scientific_result.json',result)
+        return result
     output,accuracy=complete_output(s,b,x,folder,journal)
     output['official']=bool(aud['pass_gate']);output['classification']='OFFICIAL_EQUATION_QUALIFIED' if aud['pass_gate'] else 'DIAGNOSTIC_ONLY_EQUATION_FAIL'
     write_json(folder/'field_output_classification.json',dict(official=output['official'],classification=output['classification']))
