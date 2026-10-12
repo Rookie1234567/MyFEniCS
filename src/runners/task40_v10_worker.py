@@ -5407,58 +5407,6 @@ def run_task40_v10_p6_reference_worker(
     scientific_input_sha256 = str(
         provenance.get("input_sha256", "") if isinstance(provenance, Mapping) else ""
     )
-    if v30_q_csr_binding is not None or v30_factor_config is not None:
-        if os.environ.get("TASK40_V30_STRICT_EXECUTION") != "1":
-            raise RuntimeError("V30 worker requires the approved target-native execution contract")
-        from src.runners.task40_v30_contract import require_authorized_contract
-
-        v30_contract, v30_contract_sha = require_authorized_contract(
-            os.environ.get("TASK40_V30_CONTRACT_PATH", ""),
-            expected_sha256=os.environ.get("TASK40_V30_CONTRACT_SHA256"),
-            current_root=Path(__file__).resolve().parents[2],
-        )
-        execution = v30_contract["execution"]
-        resources = execution["resources"]
-        if (
-            os.environ.get("TASK40_V30_EXECUTION_WINDOW_PATH")
-            != str(Path(execution["campaign_window_path"]).resolve())
-            or os.environ.get("TASK40_V30_EXECUTION_WINDOW_SHA256")
-            != execution["campaign_window_sha256"]
-            or os.environ.get("TASK40_V30_TASK_MEMORY_MAX_BYTES")
-            != str(resources["task_memory_max_bytes"])
-            or os.environ.get("TASK40_V30_HOST_RESERVE_BYTES")
-            != str(resources["host_reserve_bytes"])
-            or os.environ.get("TASK40_V30_MEMORY_SWAP_MAX_BYTES")
-            != str(resources["memory_swap_max_bytes"])
-            or not v30_contract_sha
-        ):
-            raise RuntimeError("V30 worker environment differs from its frozen execution contract")
-        from src.runners.task40_v30_contract import (
-            V30_CANONICAL_INPUT_RELATIVE,
-            require_v30_input_identity,
-        )
-
-        if not isinstance(provenance, Mapping):
-            raise ValueError("V30 worker input provenance is missing")
-        staged_input_path = provenance.get("source_path")
-        if not isinstance(staged_input_path, str) or not staged_input_path:
-            raise ValueError("V30 worker provenance omits the staged DAT path")
-        v30_input_identity = require_v30_input_identity(
-            Path(__file__).resolve().parents[2] / V30_CANONICAL_INPUT_RELATIVE,
-            staged_input_path,
-            repo_root=Path(__file__).resolve().parents[2],
-        )
-        if v30_input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
-            raise ValueError("V30 worker raw stage SHA differs from run provenance")
-        scientific_input_sha256 = v30_input_identity["scientific_input_sha256"]
-
-    v30_enabled = v30_q_csr_binding is not None or v30_factor_config is not None
-    effective_factor_lifecycle_strategy = _resolve_v30_worker_factor_lifecycle_strategy(
-        resolved_payload,
-        v30_enabled=v30_enabled,
-        requested_strategy=v30_requested_factor_lifecycle_strategy,
-        effective_strategy=v30_effective_factor_lifecycle_strategy,
-    )
 
     from mpi4py import MPI
     from petsc4py import PETSc
@@ -5553,36 +5501,17 @@ def run_task40_v10_p6_reference_worker(
         raise ValueError(f"unsupported Task40 reference-PC strategy: {reference_pc_strategy!r}")
     is_v13 = reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
     is_v15 = reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
-    factor_lifecycle_strategy = effective_factor_lifecycle_strategy
-    if factor_lifecycle_strategy not in {ALL_Q_RESIDENT, ONE_Q_REFACTOR_V19}:
-        raise ValueError(f"unsupported Task40 factor lifecycle strategy: {factor_lifecycle_strategy!r}")
-    is_v19 = factor_lifecycle_strategy == ONE_Q_REFACTOR_V19
+    factor_lifecycle_strategy = str(
+        resolved_payload.get("solver", {}).get(
+            "task40_factor_lifecycle_strategy", ALL_Q_RESIDENT
+        )
+    )
     q_assembly_strategy = str(
         resolved_payload.get("solver", {}).get(
             "task40_q_assembly_strategy", Q_ASSEMBLY_LEGACY
         )
     )
     is_v17 = q_assembly_strategy == TASK40_Q_ASSEMBLY_ROW_TILE_V17
-    if v30_enabled and (
-        v30_q_csr_binding is None
-        or v30_factor_config is None
-        or not is_v20
-        or v20_case is None
-        or v20_case.mesh_id != "TARGET_ORIGINAL_NY8"
-        or factor_lifecycle_strategy != TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
-        or not is_v17
-        or not is_v15
-        or stop_after_stage is not None
-    ):
-        raise ValueError(
-            "V30 worker requires target Ny8, V15 row-tile, AllQ resident, selector and factor config"
-        )
-    if v30_enabled and (
-        v30_factor_config.get("schema")
-        != "task40extra.review_v30_all_q_factor_bank.v1"
-        or not isinstance(v30_factor_config.get("output_directory"), str)
-    ):
-        raise ValueError("V30 worker factor configuration is not a frozen AllQ packet contract")
     if q_assembly_strategy not in Q_ASSEMBLY_STRATEGIES:
         raise ValueError(f"unsupported Task40 q assembly strategy: {q_assembly_strategy!r}")
     if not task40_q_assembly_strategy_is_allowed(
@@ -5617,6 +5546,86 @@ def run_task40_v10_p6_reference_worker(
         from src.solvers.task40_v20_registry import task40_v20_case
 
         v20_case = task40_v20_case(profile=profile_identity)
+
+    if v30_q_csr_binding is not None or v30_factor_config is not None:
+        if os.environ.get("TASK40_V30_STRICT_EXECUTION") != "1":
+            raise RuntimeError("V30 worker requires the approved target-native execution contract")
+        from src.runners.task40_v30_contract import require_authorized_contract
+
+        repo_root = Path(__file__).resolve().parents[2]
+        v30_contract, v30_contract_sha = require_authorized_contract(
+            os.environ.get("TASK40_V30_CONTRACT_PATH", ""),
+            expected_sha256=os.environ.get("TASK40_V30_CONTRACT_SHA256"),
+            current_root=repo_root,
+        )
+        execution = v30_contract["execution"]
+        resources = execution["resources"]
+        expected_window_path = Path(execution["campaign_window_path"]).resolve()
+        if (
+            os.environ.get("TASK40_V30_EXECUTION_WINDOW_PATH")
+            != str(expected_window_path)
+            or os.environ.get("TASK40_V30_EXECUTION_WINDOW_SHA256")
+            != execution["campaign_window_sha256"]
+            or os.environ.get("TASK40_V30_TASK_MEMORY_MAX_BYTES")
+            != str(resources["task_memory_max_bytes"])
+            or os.environ.get("TASK40_V30_HOST_RESERVE_BYTES")
+            != str(resources["host_reserve_bytes"])
+            or os.environ.get("TASK40_V30_MEMORY_SWAP_MAX_BYTES")
+            != str(resources["memory_swap_max_bytes"])
+            or not v30_contract_sha
+        ):
+            raise RuntimeError("V30 worker environment differs from its frozen execution contract")
+        from src.runners.task40_v30_contract import (
+            V30_CANONICAL_INPUT_RELATIVE,
+            require_v30_input_identity,
+        )
+
+        if not isinstance(provenance, Mapping):
+            raise ValueError("V30 worker input provenance is missing")
+        staged_input_path = provenance.get("source_path")
+        if not isinstance(staged_input_path, str) or not staged_input_path:
+            raise ValueError("V30 worker provenance omits the staged DAT path")
+        v30_input_identity = require_v30_input_identity(
+            repo_root / V30_CANONICAL_INPUT_RELATIVE,
+            staged_input_path,
+            repo_root=repo_root,
+        )
+        if v30_input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
+            raise ValueError("V30 worker raw stage SHA differs from run provenance")
+        scientific_input_sha256 = v30_input_identity["scientific_input_sha256"]
+
+    v30_enabled = v30_q_csr_binding is not None or v30_factor_config is not None
+    effective_factor_lifecycle_strategy = _resolve_v30_worker_factor_lifecycle_strategy(
+        resolved_payload,
+        v30_enabled=v30_enabled,
+        requested_strategy=v30_requested_factor_lifecycle_strategy,
+        effective_strategy=v30_effective_factor_lifecycle_strategy,
+    )
+    factor_lifecycle_strategy = effective_factor_lifecycle_strategy
+    if factor_lifecycle_strategy not in {ALL_Q_RESIDENT, ONE_Q_REFACTOR_V19}:
+        raise ValueError(f"unsupported Task40 factor lifecycle strategy: {factor_lifecycle_strategy!r}")
+    is_v19 = factor_lifecycle_strategy == ONE_Q_REFACTOR_V19
+    if v30_enabled and (
+        v30_q_csr_binding is None
+        or v30_factor_config is None
+        or not is_v20
+        or v20_case is None
+        or v20_case.mesh_id != "TARGET_ORIGINAL_NY8"
+        or factor_lifecycle_strategy != TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
+        or not is_v17
+        or not is_v15
+        or stop_after_stage is not None
+    ):
+        raise ValueError(
+            "V30 worker requires target Ny8, V15 row-tile, AllQ resident, selector and factor config"
+        )
+    if v30_enabled and (
+        v30_factor_config.get("schema")
+        != "task40extra.review_v30_all_q_factor_bank.v1"
+        or not isinstance(v30_factor_config.get("output_directory"), str)
+    ):
+        raise ValueError("V30 worker factor configuration is not a frozen AllQ packet contract")
+
     if stop_after_stage is not None:
         from src.solvers.task40_v20_registry import V20_STOP_STAGES
 

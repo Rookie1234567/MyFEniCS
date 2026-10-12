@@ -394,10 +394,19 @@ def test_v30_q4_reuses_real_v26_witness_and_support_receipts_read_only():
     assert support["producer_identity_sha256"] == donor["producer_identity_sha256"]
 
 
-def _contract_fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def _contract_fixture(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    absolute_window_path: bool = False,
+):
     root = tmp_path / "target"
     root.mkdir()
-    window_relative = Path("v30/window.json")
+    window_relative = (
+        root / "v30/window.json"
+        if absolute_window_path
+        else Path("v30/window.json")
+    )
     runtime_relative = Path("runtime")
     abi_relative = Path("abi/receipt.json")
     jit_relative = Path("jit")
@@ -580,13 +589,17 @@ def _set_v30_contract_environment(
         monkeypatch.setenv(key, value)
 
 
-def test_v30_dispatcher_passes_authorized_private_all_q_copy_through_stage_to_worker(
+def test_v30_dispatcher_passes_authorized_copy_through_real_worker_before_runtime_boundary(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     from src.runners import task038_full3d_iterative as dispatcher
     from src.runners import task40_v10_worker, task40_v20_stage_runner
+    from src.runners import physical_p4_schur_v14
+    from src.io import input_validation
 
-    root, contract_path, _ = _contract_fixture(tmp_path, monkeypatch)
+    root, contract_path, _ = _contract_fixture(
+        tmp_path, monkeypatch, absolute_window_path=True
+    )
     source_sha = "a" * 40
     _canonical, _staged, _selector, resolved = _v30_full_stage_fixture(
         root, source_sha
@@ -602,6 +615,11 @@ def test_v30_dispatcher_passes_authorized_private_all_q_copy_through_stage_to_wo
         "__file__",
         str(root / "src/runners/task40_v20_stage_runner.py"),
     )
+    monkeypatch.setattr(
+        task40_v10_worker,
+        "__file__",
+        str(root / "src/runners/task40_v10_worker.py"),
+    )
     preflight = {
         "run_id": resolved.as_jsonable()["run_id"],
         "input_sha256": resolved.input_sha256,
@@ -612,47 +630,68 @@ def test_v30_dispatcher_passes_authorized_private_all_q_copy_through_stage_to_wo
         "_preflight",
         lambda *_args, **_kwargs: (dict(preflight), None, None),
     )
-    captured: dict[str, object] = {}
+    class RuntimeBoundaryReached(Exception):
+        pass
 
-    def fake_worker(payload, _run_directory, **kwargs):
+    captured: dict[str, object] = {}
+    real_worker = task40_v10_worker.run_task40_v10_p6_reference_worker
+
+    def observed_worker(payload, run_directory, **kwargs):
         captured["payload_strategy"] = payload["solver"][
             "task40_factor_lifecycle_strategy"
         ]
         captured["requested"] = kwargs["v30_requested_factor_lifecycle_strategy"]
         captured["effective"] = kwargs["v30_effective_factor_lifecycle_strategy"]
-        captured["worker_strategy"] = (
-            task40_v10_worker._resolve_v30_worker_factor_lifecycle_strategy(
-                payload,
-                v30_enabled=True,
-                requested_strategy=kwargs[
-                    "v30_requested_factor_lifecycle_strategy"
-                ],
-                effective_strategy=kwargs[
-                    "v30_effective_factor_lifecycle_strategy"
-                ],
-            )
-        )
-        return {"status": "fixture_no_fe", "official_result": False}
+        return real_worker(payload, run_directory, **kwargs)
+
+    def stop_at_runtime(*args, **kwargs):
+        captured["runtime_args"] = args
+        captured["runtime_kwargs"] = kwargs
+        raise RuntimeBoundaryReached
 
     monkeypatch.setattr(
-        task40_v10_worker, "run_task40_v10_p6_reference_worker", fake_worker
+        task40_v10_worker, "run_task40_v10_p6_reference_worker", observed_worker
     )
-    outcome = dispatcher.run_full3d_iterative(
-        resolved.as_jsonable(), tmp_path / "run", source_sha=source_sha
+    monkeypatch.setattr(physical_p4_schur_v14, "_V14Runtime", stop_at_runtime)
+    monkeypatch.setattr(
+        input_validation,
+        "simulation_config_3d_from_normalized",
+        lambda *_args, **_kwargs: pytest.fail(
+            "worker crossed the runtime boundary into FE configuration"
+        ),
     )
+    with pytest.raises(RuntimeBoundaryReached):
+        dispatcher.run_full3d_iterative(
+            resolved.as_jsonable(), tmp_path / "run", source_sha=source_sha
+        )
 
-    assert outcome["status"] == "fixture_no_fe"
     assert resolved.solver["task40_factor_lifecycle_strategy"] == "ONE_Q_REFACTOR_V19"
-    assert captured == {
-        "payload_strategy": "ALL_Q_RESIDENT",
-        "requested": "ONE_Q_REFACTOR_V19",
-        "effective": "ALL_Q_RESIDENT",
-        "worker_strategy": "ALL_Q_RESIDENT",
-    }
+    assert captured["payload_strategy"] == "ALL_Q_RESIDENT"
+    assert captured["requested"] == "ONE_Q_REFACTOR_V19"
+    assert captured["effective"] == "ALL_Q_RESIDENT"
+    runtime_kwargs = captured["runtime_kwargs"]
+    assert runtime_kwargs["fixed_process_tree_cap_bytes"] == contract_module.V30_RESOURCES[
+        "task_memory_max_bytes"
+    ]
+    assert runtime_kwargs["host_reserve_bytes"] == contract_module.V30_RESOURCES[
+        "host_reserve_bytes"
+    ]
+    assert runtime_kwargs["task_cgroup_reserve_bytes"] == 0
+    assert runtime_kwargs["require_cgroup_memory_details"] is True
     preflight_receipt = json.loads(
         (tmp_path / "run/v20_stage_preflight.json").read_text(encoding="utf-8")
     )
     assert preflight_receipt["v30_factor_lifecycle_authority"] == {
+        "requested": "ONE_Q_REFACTOR_V19",
+        "effective": "ALL_Q_RESIDENT",
+    }
+    worker_receipt = json.loads(
+        (tmp_path / "run/v30_worker_service_receipt.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert worker_receipt["failure_type"] == "RuntimeBoundaryReached"
+    assert worker_receipt["factor_lifecycle_strategy"] == {
         "requested": "ONE_Q_REFACTOR_V19",
         "effective": "ALL_Q_RESIDENT",
     }
