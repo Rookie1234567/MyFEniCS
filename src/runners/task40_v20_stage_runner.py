@@ -1370,7 +1370,20 @@ def _preflight(
         or len(str(provenance.get("physical_model_sha256", ""))) != 64
     ):
         raise ValueError("V20 preflight requires complete source/input/physical-model identities")
-    if os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1":
+    if os.environ.get("TASK40_V30_STRICT_EXECUTION") == "1":
+        from src.runners.task40_v30_contract import (
+            qualified_activation_identity,
+            require_authorized_contract,
+        )
+
+        activation_identity = qualified_activation_identity(os.environ)
+        require_authorized_contract(
+            os.environ.get("TASK40_V30_CONTRACT_PATH", ""),
+            expected_sha256=os.environ.get("TASK40_V30_CONTRACT_SHA256"),
+            current_root=Path(__file__).resolve().parents[2],
+        )
+        expected_profile = "native_linux"
+    elif os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1":
         from src.runners.task40_v29_contract import qualified_activation_identity
 
         activation_identity = qualified_activation_identity(os.environ)
@@ -4518,6 +4531,22 @@ def run_task40_v20_stage(
             or not isinstance(v30_factor_config, Mapping)
         ):
             raise ValueError("V30 service route requires the exact authorized target full-stage package")
+        if os.environ.get("TASK40_V30_STRICT_EXECUTION") != "1":
+            raise RuntimeError("V30 worker route requires the approved V30 service contract")
+        from src.runners.task40_v30_contract import require_authorized_contract
+
+        v30_contract_path = Path(os.environ.get("TASK40_V30_CONTRACT_PATH", ""))
+        v30_contract, v30_contract_sha = require_authorized_contract(
+            v30_contract_path,
+            expected_sha256=os.environ.get("TASK40_V30_CONTRACT_SHA256"),
+            current_root=Path(__file__).resolve().parents[2],
+        )
+        if (
+            v30_contract_sha != os.environ.get("TASK40_V30_CONTRACT_SHA256")
+            or os.environ.get("TASK40_V30_EXECUTION_WINDOW_SHA256")
+            != v30_contract["execution"]["campaign_window_sha256"]
+        ):
+            raise RuntimeError("V30 worker contract/window environment differs from the validated contract")
         from src.runners.task40_v10_worker import run_task40_v10_p6_reference_worker
 
         try:
@@ -4540,6 +4569,20 @@ def run_task40_v20_stage(
                 "input_sha256": preflight["input_sha256"],
                 "q_csr_selector": dict(v30_q_csr_binding),
                 "factor_bank_schema": v30_factor_config.get("schema"),
+                "execution_contract_path": str(v30_contract_path.resolve()),
+                "execution_contract_sha256": v30_contract_sha,
+                "execution_window_sha256": str(
+                    v30_contract["execution"]["campaign_window_sha256"]
+                ),
+                "accepted_q0_donor_identity_sha256": str(
+                    v30_contract["preparation"]["accepted_q0_donor"]["identity_sha256"]
+                ),
+                "pending_q_csr_worklist": list(
+                    v30_contract["preparation"]["q_csr_worklist"]
+                ),
+                "final_all_q_selector_required_at": str(
+                    v30_contract["preparation"]["final_all_q_selector_required_at"]
+                ),
                 "worker_status": worker_result.get("status"),
                 "official_result": bool(worker_result.get("official_result", False)),
             }

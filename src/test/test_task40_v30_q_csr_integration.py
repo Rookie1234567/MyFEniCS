@@ -81,6 +81,14 @@ def test_v30_sector_adapter_binds_actual_twist_maps_h_modes_and_q0_lookup():
             return sparse.csr_matrix(np.asarray([[q_index + 1j]], dtype=np.complex128)), {
                 "q_index": q_index,
                 "twist_index": twist_index,
+                "csr_manifest_sha256": f"{q_index + 1:064x}",
+                "native_qualification_sha256": f"{q_index + 9:064x}",
+                "qualification_kind": (
+                    "LEGACY_QUALIFICATION_IMPORTED_OPERATOR_BINDINGS_DERIVED"
+                    if q_index == 0
+                    else "V30_NATIVE_PASS"
+                ),
+                "qualification_status": "PASS",
             }
 
     condensed = SimpleNamespace(
@@ -123,6 +131,10 @@ def test_v30_sector_adapter_binds_actual_twist_maps_h_modes_and_q0_lookup():
     assert provider.calls[1][2]["expected_q0_active_lookup"] is None
     assert audit["native_operator_requalification_performed"] is False
     assert [row["q_index"] for row in audit["qualification_receipts"]] == [0, 4]
+    assert [row["qualification_kind"] for row in audit["qualification_receipts"]] == [
+        "LEGACY_QUALIFICATION_IMPORTED_OPERATOR_BINDINGS_DERIVED",
+        "V30_NATIVE_PASS",
+    ]
 
 
 def _v30_service_payload(tmp_path):
@@ -189,10 +201,29 @@ def test_v30_dispatcher_routes_to_reviewed_service(monkeypatch, tmp_path):
 
 def test_v30_service_stubs_worker_with_frozen_selector_and_factor_config(monkeypatch, tmp_path):
     from src.runners import task40_v20_stage_runner as runner
+    from src.runners import task40_v30_contract
 
     payload = _v30_service_payload(tmp_path)
     case_profile = payload["solver"]["preconditioner"]
     captured = {}
+    contract_sha = "e" * 64
+    contract = {
+        "execution": {"campaign_window_sha256": "f" * 64},
+        "preparation": {
+            "accepted_q0_donor": {"identity_sha256": "a" * 64},
+            "q_csr_worklist": [{"q": 4, "twist_index": 0}],
+            "final_all_q_selector_required_at": "P3_all_q_resident_factor_bank",
+        },
+    }
+    monkeypatch.setenv("TASK40_V30_STRICT_EXECUTION", "1")
+    monkeypatch.setenv("TASK40_V30_CONTRACT_PATH", str(tmp_path / "contract.json"))
+    monkeypatch.setenv("TASK40_V30_CONTRACT_SHA256", contract_sha)
+    monkeypatch.setenv("TASK40_V30_EXECUTION_WINDOW_SHA256", "f" * 64)
+    monkeypatch.setattr(
+        task40_v30_contract,
+        "require_authorized_contract",
+        lambda *_args, **_kwargs: (contract, contract_sha),
+    )
     monkeypatch.setattr(
         runner,
         "_preflight",

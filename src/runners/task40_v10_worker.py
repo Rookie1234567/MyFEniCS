@@ -59,12 +59,535 @@ def _task40_v30_q_csr_provider(
         raise ValueError("V30 q-CSR selector is outside the registered campaign artifact roots")
     from src.solvers.task40_v30_qualified_q_csr import QualifiedQCSRProvider
 
+    path_resolver = _task40_v30_artifact_path_resolver(root)
+
     return QualifiedQCSRProvider(
         selector,
         selector_sha256=str(binding["selector_sha256"]),
         repo_root=root,
-        path_resolver=lambda path: Path(path),
+        path_resolver=path_resolver,
         allocation_gate=allocation_gate,
+    )
+
+
+def _task40_v30_artifact_path_resolver(repo_root: str | Path):
+    """Map only canonical Task40 source paths into the current approved root."""
+    from src.runners.task40_v29_contract import SOURCE_ROOT, resolve_approved_path
+
+    root = Path(repo_root).resolve()
+
+    def resolve(raw_path: str | Path) -> Path:
+        supplied = Path(raw_path)
+        candidate = (root / supplied).resolve(strict=False) if not supplied.is_absolute() else supplied.resolve(strict=False)
+        if candidate.is_relative_to(root):
+            return candidate
+        return resolve_approved_path(
+            candidate,
+            source_root=SOURCE_ROOT,
+            execution_root=root,
+        )
+
+    return resolve
+
+
+def _task40_v30_open_saved_q4_source(
+    *,
+    contract: Mapping[str, Any],
+    repo_root: str | Path,
+    profile: Any,
+    current_q0_map: Any,
+    current_q4_map: Any,
+    current_local_h: np.ndarray,
+    allocation_gate: Any,
+) -> tuple[Any, Any, dict[str, Any]]:
+    """Open the hash-bound twist-0 V25 producer stream for a distinct q4 CSR."""
+    from scipy import sparse
+    from src.runners.task40_v29_contract import sha256_file
+    from src.runners.task40_v10_campaign import TASK40_V25_CAMPAIGN_SHA256
+    from src.solvers.task40_v27_saved_q0 import SavedQ0ContributionAdapter
+    from src.solvers.task40_v30_qualified_q_csr import _csr_sha256
+
+    root = Path(repo_root).resolve()
+    preparation = contract.get("preparation")
+    donor = preparation.get("accepted_q0_donor") if isinstance(preparation, Mapping) else None
+    if not isinstance(donor, Mapping):
+        raise ValueError("V30 contract omits the accepted twist-0 producer donor")
+    manifest_path = (root / str(donor.get("manifest_relative_path", ""))).resolve()
+    if (
+        not manifest_path.is_relative_to(root)
+        or not manifest_path.is_file()
+        or sha256_file(manifest_path) != donor.get("manifest_sha256")
+    ):
+        raise ValueError("V30 accepted q0 continuation manifest is missing or changed")
+    continuation = json.loads(manifest_path.read_text(encoding="utf-8"))
+    numeric_fill = continuation.get("numeric_fill_identity")
+    donor_identity = (
+        numeric_fill.get("donor_identity")
+        if isinstance(numeric_fill, Mapping)
+        else None
+    )
+    producer = (
+        donor_identity.get("producer_identity")
+        if isinstance(donor_identity, Mapping)
+        else None
+    )
+    producer_identity_sha256 = (
+        donor_identity.get("producer_identity_sha256")
+        if isinstance(donor_identity, Mapping)
+        else None
+    )
+    if (
+        continuation.get("schema") != "task40extra.review_v28_saved_q0_csr.v1"
+        or continuation.get("status") != "COMPLETE_CSR"
+        or not isinstance(producer, Mapping)
+        or not isinstance(producer_identity_sha256, str)
+        or producer.get("producer_source_sha")
+        != "9d0f4dbfc730dd620b709d048e33e9da6c77520c"
+    ):
+        raise ValueError("V30 twist-0 saved producer identity differs from the accepted V25 source")
+    raw_run_root = Path(str(producer.get("producer_run_directory", "")))
+    producer_root = (
+        raw_run_root.resolve()
+        if raw_run_root.is_absolute()
+        else (root / raw_run_root).resolve()
+    )
+    if not producer_root.is_relative_to(root):
+        producer_root = _task40_v30_artifact_path_resolver(root)(producer_root)
+    try:
+        producer_root.relative_to(root)
+    except ValueError as exc:
+        raise ValueError("V30 saved twist-0 producer escaped the execution root") from exc
+    payload_rows = producer.get("payloads")
+    if not isinstance(payload_rows, list):
+        raise ValueError("V30 accepted producer omits its payload hash inventory")
+    payloads = {}
+    for row in payload_rows:
+        if not isinstance(row, Mapping) or not isinstance(row.get("path"), str):
+            raise ValueError("V30 accepted producer payload identity is malformed")
+        name = Path(row["path"]).name
+        if name in payloads:
+            raise ValueError("V30 accepted producer contains duplicate payload basenames")
+        payloads[name] = dict(row)
+    required_names = {
+        "v25_selected_q0_surface_functionals.bin",
+        "v25_selected_q0_volume_classes.bin",
+        "v25_selected_q0_local_H_p.npy",
+        "v25_selected_q0_original_to_active_int32.npy",
+        "v25_selected_q0_map.npz",
+        "v25_selected_q4_map.npz",
+    }
+    if not required_names <= set(payloads):
+        raise ValueError("V30 accepted producer is missing q4 source, map, H, or lookup evidence")
+    allocation_gate(
+        "task40_v30_q4_saved_twist0_producer_hash_readback",
+        {
+            "additional_payload_bytes": 0,
+            "workspace_bytes": 4 * 1024**2,
+            "producer_payload_bytes": sum(int(payloads[name].get("bytes", -1)) for name in required_names),
+            "streaming_sha256": True,
+            "producer_identity_sha256": producer_identity_sha256,
+        },
+    )
+    paths = {}
+    for name in sorted(required_names):
+        row = payloads[name]
+        relative = Path(str(row["path"]))
+        path = (producer_root / relative).resolve()
+        if not path.is_relative_to(root) or not path.is_file():
+            raise ValueError(f"V30 accepted q4 producer payload is unavailable: {name}")
+        if int(row.get("bytes", -1)) != path.stat().st_size or sha256_file(path) != row.get("sha256"):
+            raise ValueError(f"V30 accepted q4 producer payload changed: {name}")
+        paths[name] = path
+
+    q4_map = sparse.load_npz(paths["v25_selected_q4_map.npz"]).tocsr()
+    if _csr_sha256(q4_map) != _csr_sha256(current_q4_map):
+        raise ValueError("saved q4 map differs from this live twist-0 branch map")
+    saved_h = np.load(paths["v25_selected_q0_local_H_p.npy"], mmap_mode="r", allow_pickle=False)
+    expected_h = np.asarray(current_local_h, dtype=np.complex128)
+    if saved_h.dtype != np.dtype(np.complex128) or not np.array_equal(saved_h, expected_h):
+        raise ValueError("saved twist-0 H differs from the live sector's original H")
+    active_lookup = np.load(
+        paths["v25_selected_q0_original_to_active_int32.npy"],
+        mmap_mode="r",
+        allow_pickle=False,
+    )
+    source = SavedQ0ContributionAdapter(
+        volume_stream_path=paths["v25_selected_q0_volume_classes.bin"],
+        surface_stream_path=paths["v25_selected_q0_surface_functionals.bin"],
+        active_lookup=active_lookup,
+        local_h=saved_h,
+        q0_map=current_q0_map,
+        active_rows=int(profile.local_trace_rows),
+        q0_trace_rows=int(profile.trace_rows_per_q),
+        q0_port_rows=int(profile.q_port_counts[0]),
+        allocation_gate=allocation_gate,
+    )
+    producer_facts = {
+        "kind": "accepted_v25_twist0_saved_producer",
+        "producer_run_id": producer.get("producer_run_id"),
+        "producer_source_sha": producer["producer_source_sha"],
+        "producer_input_sha256": producer.get("verified_input_sha256"),
+        "producer_physical_model_sha256": producer.get("physical_model_sha256"),
+        "producer_identity_sha256": producer_identity_sha256,
+        "producer_window_sha256": TASK40_V25_CAMPAIGN_SHA256,
+        "payload_sha256": {name: payloads[name]["sha256"] for name in sorted(required_names)},
+        "q4_map_sha256": _csr_sha256(q4_map),
+    }
+    return source, q4_map, producer_facts
+
+
+def _task40_v30_trace_rows_by_q(
+    coordinates: Any,
+    profile: Any,
+    q_maps_by_q: Mapping[int, Any],
+    sector_q_indices: tuple[int, int],
+) -> dict[int, int]:
+    """Bind each sector map's trace split to coordinate width and registered port rows."""
+
+    q_indices = tuple(int(q) for q in sector_q_indices)
+    port_counts = tuple(getattr(profile, "q_port_counts", ()))
+    trace_rows = int(getattr(coordinates, "width", 0))
+    if len(q_indices) != 2 or len(set(q_indices)) != 2 or trace_rows <= 0:
+        raise ValueError("V30 sector trace split needs two q branches and positive coordinate width")
+    result = {q: trace_rows for q in q_indices}
+    for q in q_indices:
+        if q < 0 or q >= len(port_counts) or q not in q_maps_by_q:
+            raise ValueError("V30 sector trace split is outside the registered q profile")
+        q_map = q_maps_by_q[q]
+        if int(q_map.shape[1]) - trace_rows != int(port_counts[q]):
+            raise ValueError(
+                f"V30 q={q} map columns do not match coordinate trace width plus registered ports"
+            )
+    return result
+
+
+def _task40_v30_q4_direct_hhat_evidence(
+    *, repo_root: str | Path, producer_facts: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Reuse the accepted twist-0 V26 internal B/D support audit for q4 direct-H."""
+
+    from src.runners.task40_v29_contract import sha256_file
+
+    root = Path(repo_root).resolve()
+    compact_path = root / "docs/task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v26.json"
+    compact = json.loads(compact_path.read_text(encoding="utf-8"))
+    reference = compact.get("raw_evidence", {}).get("selected_q_stage", {})
+    if not isinstance(reference, Mapping):
+        raise ValueError("V30 q4 direct-H has no pinned V26 support-stage reference")
+    stage_path = Path(str(reference.get("path", "")))
+    stage_path = (stage_path if stage_path.is_absolute() else root / stage_path).resolve()
+    resolve_path = _task40_v30_artifact_path_resolver(root)
+    stage_path = resolve_path(stage_path)
+    if not stage_path.is_file() or sha256_file(stage_path) != reference.get("sha256"):
+        raise ValueError("V26 twist-0 support-stage receipt is missing or changed")
+    stage = json.loads(stage_path.read_text(encoding="utf-8"))
+    surface = stage.get("complete_stream", {}).get("surface_functionals", {})
+    counts = surface.get("internal_nonzero_entry_count", {})
+    expected_surface_sha = producer_facts.get("payload_sha256", {}).get(
+        "v25_selected_q0_surface_functionals.bin"
+    )
+    stage_identity = stage.get("v26_current_identity", {})
+    if (
+        stage.get("schema") != "task40extra.review_v25_selected_reference_q0_consumer.v1"
+        or stage.get("status") != "PASS_COMPLETE_Q0_STREAM_CSR_NOT_BUILT"
+        or surface.get("numeric_internal_support_empty") is not True
+        or counts != {"B": 0, "D": 0}
+        or surface.get("producer_identity_sha256")
+        != producer_facts.get("producer_identity_sha256")
+        or surface.get("sha256") != expected_surface_sha
+        or stage_identity.get("producer_identity_sha256")
+        != producer_facts.get("producer_identity_sha256")
+    ):
+        raise ValueError("accepted V26 twist-0 receipt does not prove empty internal B/D support")
+    return {
+        "numeric_internal_support_empty": True,
+        "internal_B_nnz": 0,
+        "internal_D_nnz": 0,
+        "support_receipt_path": str(stage_path),
+        "support_receipt_sha256": reference["sha256"],
+        "support_receipt_source_sha": stage_identity.get("source_sha"),
+        "surface_stream_path": surface.get("path"),
+        "surface_stream_sha256": surface.get("sha256"),
+        "producer_identity_sha256": producer_facts.get("producer_identity_sha256"),
+    }
+
+
+def _task40_v30_open_saved_q4_native_witness(
+    *,
+    contract: Mapping[str, Any],
+    repo_root: str | Path,
+    operator_identity: Mapping[str, Any],
+    current_execution_identity: Mapping[str, Any],
+    input_sha256: str,
+    physical_model_sha256: str,
+    mode_manifest_sha256: str,
+    ordered_mode_key_sha256: str,
+    allocation_gate: Any,
+) -> dict[str, Any]:
+    """Read back the accepted V26 q4/q0 witness without rebuilding its old native actions."""
+
+    from src.runners.task40_v29_contract import sha256_file
+    from src.solvers.task40_v25_selected_q0 import (
+        _load_v26_native_action,
+        _load_v26_saved_replay_manifest,
+    )
+
+    root = Path(repo_root).resolve()
+    preparation = contract.get("preparation")
+    donor = preparation.get("accepted_q0_donor") if isinstance(preparation, Mapping) else None
+    if not isinstance(donor, Mapping):
+        raise ValueError("V30 q4 native reuse lacks the registered V28 donor")
+    continuation_path = (root / str(donor.get("manifest_relative_path", ""))).resolve()
+    if (
+        not continuation_path.is_relative_to(root)
+        or not continuation_path.is_file()
+        or sha256_file(continuation_path) != donor.get("manifest_sha256")
+    ):
+        raise ValueError("V30 q4 native reuse V28 manifest is missing or changed")
+    continuation = json.loads(continuation_path.read_text(encoding="utf-8"))
+    fill = continuation.get("numeric_fill_identity")
+    donor_identity = fill.get("donor_identity") if isinstance(fill, Mapping) else None
+    fill_execution = fill.get("execution_identity") if isinstance(fill, Mapping) else None
+    if not isinstance(donor_identity, Mapping) or not isinstance(fill_execution, Mapping):
+        raise ValueError("V28 q4 donor omits its accepted V26 native/replay identity")
+    for field, expected in (
+        ("input_sha256", input_sha256),
+        ("physical_model_sha256", physical_model_sha256),
+        ("mode_manifest_sha256", mode_manifest_sha256),
+        ("ordered_mode_key_sha256", ordered_mode_key_sha256),
+    ):
+        if fill_execution.get(field) != expected:
+            raise ValueError(f"V26 native witness {field} differs from the live V30 operator")
+    producer_identity = donor_identity.get("producer_identity")
+    producer_identity_sha256 = donor_identity.get("producer_identity_sha256")
+    native_ref = donor_identity.get("native_recovery_manifest")
+    checker_ref = donor_identity.get("native_recovery_checker")
+    replay_ref = donor_identity.get("saved_replay_manifest")
+    native_cases_ref = donor_identity.get("native_cases")
+    if (
+        not isinstance(producer_identity, Mapping)
+        or not isinstance(producer_identity_sha256, str)
+        or not all(isinstance(item, Mapping) for item in (native_ref, checker_ref, replay_ref, native_cases_ref))
+    ):
+        raise ValueError("V28 donor has no complete native recovery provenance")
+    resolve_path = _task40_v30_artifact_path_resolver(root)
+    native_path = resolve_path(str(native_ref.get("path", "")))
+    checker_path = resolve_path(str(checker_ref.get("path", "")))
+    replay_path = resolve_path(str(replay_ref.get("path", "")))
+    for label, path, record in (
+        ("native recovery", native_path, native_ref),
+        ("native checker", checker_path, checker_ref),
+        ("saved replay", replay_path, replay_ref),
+    ):
+        if (
+            not path.is_file()
+            or sha256_file(path) != record.get("sha256")
+            or record.get("status") not in (
+                "PASS_RECOVERED_THREE_NATIVE_CASES",
+                "PASS_READONLY_THREE_CASE_RECOVERY",
+                "PASS_SAVED_STREAM_REPLAY_NO_NATIVE",
+            )
+        ):
+            raise ValueError(f"V26 {label} evidence is missing or differs from V28")
+    recovery_manifest = json.loads(native_path.read_text(encoding="utf-8"))
+    checker_recorded_path = resolve_path(
+        str(recovery_manifest.get("recovery_checker_receipt_path", ""))
+    )
+    if (
+        recovery_manifest.get("schema")
+        != "task40extra.review_v26_native_action_recovery.v1"
+        or recovery_manifest.get("status") != "PASS_RECOVERED_THREE_NATIVE_CASES"
+        or checker_recorded_path != checker_path
+        or recovery_manifest.get("recovery_checker_receipt_sha256")
+        != checker_ref.get("sha256")
+    ):
+        raise ValueError("V26 recovery manifest does not bind the accepted independent checker")
+    checker = json.loads(checker_path.read_text(encoding="utf-8"))
+    recovery_identity = recovery_manifest.get("recovery_current_identity")
+    if (
+        checker.get("schema") != "task40extra.review_v26_native_case_recovery_check.v1"
+        or checker.get("status") != "PASS_READONLY_THREE_CASE_RECOVERY"
+        or checker.get("checker_passed") is not True
+        or checker.get("producer_identity_sha256") != producer_identity_sha256
+        or checker.get("saved_replay_manifest_sha256") != replay_ref.get("sha256")
+        or checker.get("recovery_current_identity") != recovery_identity
+    ):
+        raise ValueError("V26 independent read-only native recovery checker did not pass")
+    replay_payload = replay_ref.get("artifacts", {})
+    if not isinstance(replay_payload, Mapping):
+        raise ValueError("V28 saved replay reference omits its artifact inventory")
+    estimated_read_bytes = sum(
+        int(item.get("bytes", 0))
+        for item in list(native_cases_ref.values()) + list(replay_payload.values())
+        if isinstance(item, Mapping)
+    )
+    allocation_gate(
+        "task40_v30_q4_v26_saved_native_witness_readback",
+        {
+            "additional_payload_bytes": estimated_read_bytes,
+            "workspace_bytes": 64 * 1024**2,
+            "native_manifest_sha256": native_ref.get("sha256"),
+            "replay_manifest_sha256": replay_ref.get("sha256"),
+            "checker_sha256": checker_ref.get("sha256"),
+            "read_only": True,
+        },
+    )
+    native_manifest, native_loaded = _load_v26_native_action(
+        native_path.parent,
+        producer_identity_sha256=producer_identity_sha256,
+        replay_manifest_sha256=str(replay_ref.get("sha256", "")),
+        manifest_path=native_path,
+        recovery_identity=recovery_identity,
+    )
+    replay_manifest, replay_paths = _load_v26_saved_replay_manifest(
+        replay_path.parent, producer_identity
+    )
+    if (
+        native_manifest.get("manifest_sha256") != native_ref.get("sha256")
+        or replay_manifest.get("manifest_sha256") != replay_ref.get("sha256")
+        or native_manifest.get("recovery_checker_receipt_sha256") != checker_ref.get("sha256")
+    ):
+        raise ValueError("V26 loader readback differs from the V28 pinned native/replay evidence")
+    for case_name, compact in native_cases_ref.items():
+        actual = native_manifest.get("cases", {}).get(case_name)
+        if not isinstance(actual, Mapping) or any(
+            actual.get(key) != compact.get(key)
+            for key in ("bytes", "sha256", "array_sha256", "array_shapes")
+        ) or Path(str(actual.get("path", ""))).name != Path(str(compact.get("path", ""))).name:
+            raise ValueError(f"V26 native case differs from the V28 compact: {case_name}")
+    input_path = replay_paths["inputs"]
+    with np.load(input_path, allow_pickle=False) as archive:
+        q4_input = np.asarray(archive["q4_pair"]).copy()
+        q0_input = np.asarray(archive["q0_case_1"]).copy()
+    q4_case = native_loaded["q4_pair"]
+    q0_case = native_loaded["q0_case_1"]
+    arrays = {
+        "case1_full_input": q4_input,
+        "case1_full_output": q4_case["native_q4_total"],
+        "selected_to_peer_cross": q4_case["native_q0_from_q4"],
+        "peer_case1_input": q0_input,
+        "peer_case1_output": q0_case["native_q0_total"],
+        "peer_to_selected_cross": q0_case["native_q4_from_q0"],
+    }
+    replay_inputs_sidecar = json.loads(input_path.with_suffix(".json").read_text(encoding="utf-8"))
+    input_current_identity = replay_inputs_sidecar.get("current_identity", {})
+    native_current_identity = native_manifest.get("native_current_identity", {})
+    replay_input_record = replay_manifest["artifacts"]["inputs"]
+    array_references = {}
+    for name, (path, artifact, array_name, source_sha) in {
+        "case1_full_input": (
+            input_path, replay_input_record, "q4_pair", input_current_identity.get("source_sha")
+        ),
+        "peer_case1_input": (
+            input_path, replay_input_record, "q0_case_1", input_current_identity.get("source_sha")
+        ),
+        "case1_full_output": (
+            native_path.parent / native_manifest["cases"]["q4_pair"]["path"],
+            native_manifest["cases"]["q4_pair"], "native_q4_total", native_current_identity.get("source_sha")
+        ),
+        "selected_to_peer_cross": (
+            native_path.parent / native_manifest["cases"]["q4_pair"]["path"],
+            native_manifest["cases"]["q4_pair"], "native_q0_from_q4", native_current_identity.get("source_sha")
+        ),
+        "peer_case1_output": (
+            native_path.parent / native_manifest["cases"]["q0_case_1"]["path"],
+            native_manifest["cases"]["q0_case_1"], "native_q0_total", native_current_identity.get("source_sha")
+        ),
+        "peer_to_selected_cross": (
+            native_path.parent / native_manifest["cases"]["q0_case_1"]["path"],
+            native_manifest["cases"]["q0_case_1"], "native_q4_from_q0", native_current_identity.get("source_sha")
+        ),
+    }.items():
+        value = np.asarray(arrays[name])
+        array_sha256 = hashlib.sha256(
+            np.ascontiguousarray(value).view(np.uint8)
+        ).hexdigest()
+        array_references[name] = {
+            "path": str(path),
+            "artifact_sha256": artifact.get("sha256"),
+            "array_name": array_name,
+            "array_sha256": array_sha256,
+            "artifact_source_sha": source_sha,
+            "recovery_source_sha": recovery_identity.get("source_sha"),
+            "producer_identity_sha256": producer_identity_sha256,
+        }
+    native_manifest["original_manifest_path"] = str(native_path)
+    native_manifest["original_recovery_checker_receipt_path"] = str(
+        native_manifest.get("recovery_checker_receipt_path", "")
+    )
+    native_manifest["recovery_checker_receipt_path"] = str(checker_path)
+    replay_manifest["original_manifest_path"] = str(replay_path)
+    return {
+        "schema": "task40extra.review_v30_selected_q_saved_native_reuse.v1",
+        "operator_identity": dict(operator_identity),
+        "current_identity": dict(recovery_identity),
+        "expected_current_identity": dict(current_execution_identity),
+        "native_manifest": native_manifest,
+        "native_manifest_sha256": native_ref["sha256"],
+        "saved_replay_manifest": replay_manifest,
+        "saved_replay_manifest_sha256": replay_ref["sha256"],
+        "producer_identity_sha256": producer_identity_sha256,
+        "donor_verifier_receipt": checker,
+        "donor_verifier_receipt_path": str(checker_path),
+        "donor_verifier_receipt_sha256": checker_ref["sha256"],
+        "array_references": array_references,
+        "arrays": {
+            name: {
+                "value": np.asarray(value),
+                "sha256": array_references[name]["array_sha256"],
+            }
+            for name, value in arrays.items()
+        },
+    }
+
+
+def _task40_v30_sector_builder_inputs(
+    *,
+    global_bundle: Mapping[str, Any],
+    mode_inventory: tuple[Any, Any, str],
+    coordinates: Any,
+    profile: Any,
+    q_maps_by_q: Mapping[int, Any],
+    sector_q_indices: tuple[int, int],
+) -> dict[str, Any]:
+    """Bind the reference mode identity and per-q trace split passed to CSR builders."""
+
+    if (
+        not isinstance(global_bundle, Mapping)
+        or not isinstance(mode_inventory, tuple)
+        or len(mode_inventory) != 3
+        or str(global_bundle.get("mode_sha256", "")) != str(mode_inventory[2])
+    ):
+        raise ValueError("V30 reference sector mode identity differs from its frozen inventory")
+    return {
+        "mode_manifest_sha256": str(mode_inventory[2]),
+        "trace_rows_by_q": _task40_v30_trace_rows_by_q(
+            coordinates, profile, q_maps_by_q, sector_q_indices
+        ),
+    }
+
+
+def _task40_v30_build_target_after_reference(
+    *,
+    reference_owner: Mapping[str, Any],
+    regular_checks: Mapping[str, Any],
+    mode_inventory: tuple[Any, Any, str],
+    target_builder: Any,
+) -> Any:
+    """Build the target only after the reference passed and supplied frozen modes."""
+
+    if not callable(target_builder) or regular_checks.get("passed") is not True:
+        raise ValueError("V30 target construction requires a qualified regular reference")
+    bundle = reference_owner.get("global_bundle")
+    if (
+        not isinstance(bundle, Mapping)
+        or not isinstance(mode_inventory, tuple)
+        or len(mode_inventory) != 3
+        or str(bundle.get("mode_sha256", "")) != str(mode_inventory[2])
+    ):
+        raise ValueError("V30 qualified reference does not carry the frozen physical mode identity")
+    return target_builder(
+        reference_owner=reference_owner, mode_inventory=mode_inventory
     )
 
 
@@ -1810,10 +2333,78 @@ def _regular_inverse_gate_facts(
     }
 
 
+def _task40_v30_mixed_reference_rhs_cases(
+    *,
+    independent_row_count: int,
+    interior_rows: np.ndarray,
+    original_h: np.ndarray,
+) -> tuple[tuple[str, np.ndarray, np.ndarray], ...]:
+    """Build two deterministic RHS pairs with FE and every port channel active."""
+    count = int(independent_row_count)
+    rows = np.asarray(interior_rows, dtype=np.int64)
+    h = np.asarray(original_h, dtype=np.float64)
+    if (
+        count <= 0
+        or rows.ndim != 1
+        or len(rows) == 0
+        or np.any(rows < 0)
+        or np.any(rows >= count)
+        or len(np.unique(rows)) != len(rows)
+        or h.ndim != 1
+        or len(h) == 0
+        or not np.isfinite(h).all()
+        or np.any(h <= 0.0)
+    ):
+        raise ValueError("V30 mixed FE/port RHS requires valid interior rows and original H")
+
+    rng_full = np.random.default_rng(40103027)
+    full_fe = (
+        rng_full.standard_normal(count) + 1j * rng_full.standard_normal(count)
+    ).astype(np.complex128)
+    rng_interior = np.random.default_rng(40103028)
+    interior_fe = np.zeros(count, dtype=np.complex128)
+    interior_fe[rows] = (
+        rng_interior.standard_normal(len(rows))
+        + 1j * rng_interior.standard_normal(len(rows))
+    )
+
+    mode_index = np.arange(len(h), dtype=np.float64) + 1.0
+    full_amplitudes = (
+        1.0 + 0.2 * np.sin(0.17 * mode_index)
+        + 1j * (0.8 + 0.15 * np.cos(0.11 * mode_index))
+    )
+    interior_amplitudes = (
+        0.9 + 0.17 * np.cos(0.13 * mode_index)
+        + 1j * (1.1 + 0.12 * np.sin(0.07 * mode_index))
+    )
+    full_ports = np.asarray(h * full_amplitudes, dtype=np.complex128)
+    interior_ports = np.asarray(h * interior_amplitudes, dtype=np.complex128)
+    cases = (
+        ("mixed_generic_fe_and_all_mode_port_rhs", full_fe, full_ports),
+        ("mixed_interior_fe_and_all_mode_port_rhs", interior_fe, interior_ports),
+    )
+    if any(
+        not np.isfinite(fe).all()
+        or not np.isfinite(ports).all()
+        or not np.any(fe)
+        or not np.all(ports != 0.0)
+        for _, fe, ports in cases
+    ):
+        raise RuntimeError("V30 mixed FE/port RHS construction produced a zero or invalid input")
+    if np.array_equal(full_fe, interior_fe) or np.array_equal(full_ports, interior_ports):
+        raise RuntimeError("V30 mixed FE/port RHS pairs must be distinct")
+    return cases
+
+
 def _regular_inverse_checks_schema(
-    profile: Any, reference_pc_strategy: str = "STRICT_ONLY"
+    profile: Any,
+    reference_pc_strategy: str = "STRICT_ONLY",
+    *,
+    include_mixed_fe_port_cases: bool = False,
 ) -> str:
     """Select the established regular-inverse metadata schema by profile."""
+    if include_mixed_fe_port_cases:
+        return "task40extra.review_v30_reference_inverse_checks.v1"
     if reference_pc_strategy == "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15":
         return "task40extra.review_v15_p6_regular_inverse_checks.v1"
     if reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13":
@@ -1836,8 +2427,9 @@ def _verify_regular_inverse(
     _frozen_scales: Mapping[str, Any] | None = None,
     _candidate_label: str = "initial",
     _allow_correction: bool = True,
+    include_mixed_fe_port_cases: bool = False,
 ) -> dict[str, Any]:
-    """Check complete regular FE/port recovery with the live four-q factors."""
+    """Check complete regular FE/port recovery with the profile's live all-q factors."""
 
     from src.solvers.augmented_reference_correction import (
         BOUNDED_INEXACT_REFERENCE_PC,
@@ -1885,12 +2477,33 @@ def _verify_regular_inverse(
     physical_storage = np.asarray(physical_rhs.array_r, dtype=np.complex128).copy()
     if physical_storage.shape != (layout.full_rows,):
         raise ValueError("regular physical RHS does not match the full p6 storage layout")
-    case_names = (
+    base_case_names = (
         "generic_full_independent",
         f"interior_only_all_{profile.global_interior_rows}",
         "nonzero_all_mode_port_rhs",
         "physical_regular_incident_rhs",
     )
+    mixed_cases: tuple[tuple[str, np.ndarray, np.ndarray], ...] = ()
+    if include_mixed_fe_port_cases:
+        allocation_gate(
+            "task40_v30_mixed_reference_rhs_preflight",
+            {
+                "additional_payload_bytes": int(
+                    16 * (2 * n + 2 * profile.mode_count)
+                ),
+                "workspace_bytes": int(64 * (n + profile.mode_count)),
+                "mixed_case_count": 2,
+                "both_fe_and_all_port_channels_nonzero": True,
+                "all_q_profile_count": int(profile.q_count),
+            },
+        )
+        mixed_cases = _task40_v30_mixed_reference_rhs_cases(
+            independent_row_count=n,
+            interior_rows=_runtime_interior_rows(reference),
+            original_h=h,
+        )
+    case_names = base_case_names + tuple(name for name, _, _ in mixed_cases)
+    mixed_cases_by_name = {name: (fe, ports) for name, fe, ports in mixed_cases}
     if reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15:
         selected_names = case_names if _case_filter is None else (_case_filter,)
         if any(name not in case_names for name in selected_names):
@@ -1922,8 +2535,11 @@ def _verify_regular_inverse(
                     + 1j * np.cos(0.047 * (np.arange(profile.mode_count, dtype=np.float64) + 1.0))
                 ).astype(np.complex128)
                 cases_list.append((name, np.zeros(n, dtype=np.complex128), (h * amplitudes).astype(np.complex128), zero_full))
-            else:
+            elif case_index == 3:
                 cases_list.append((name, physical_storage[independent].copy(), zero_ports, physical_storage))
+            else:
+                fe_case, ports_case = mixed_cases_by_name[name]
+                cases_list.append((name, fe_case, ports_case, zero_full))
         cases = tuple(cases_list)
     else:
         rng = np.random.default_rng(40102027)
@@ -1947,6 +2563,12 @@ def _verify_regular_inverse(
             ("nonzero_all_mode_port_rhs", np.zeros(n, dtype=np.complex128), port_rhs, np.zeros(layout.full_rows, dtype=np.complex128)),
             ("physical_regular_incident_rhs", physical_storage[independent].copy(), np.zeros(profile.mode_count, dtype=np.complex128), physical_storage),
         )
+        if mixed_cases:
+            mixed_zero_full = np.zeros(layout.full_rows, dtype=np.complex128)
+            cases += tuple(
+                (name, fe_case, ports_case, mixed_zero_full)
+                for name, fe_case, ports_case in mixed_cases
+            )
         if _case_filter is not None:
             cases = tuple(row for row in cases if row[0] == _case_filter)
             if len(cases) != 1:
@@ -2784,6 +3406,7 @@ def _verify_regular_inverse(
                         _frozen_scales=current_scales,
                         _candidate_label="corrected_v15",
                         _allow_correction=False,
+                        include_mixed_fe_port_cases=include_mixed_fe_port_cases,
                     )
                     corrected_row = corrected_checks["cases"][0]
                     candidate_rows.append(corrected_row)
@@ -2935,6 +3558,7 @@ def _verify_regular_inverse(
                         _frozen_scales=current_scales,
                         _candidate_label="corrected_v13",
                         _allow_correction=False,
+                        include_mixed_fe_port_cases=include_mixed_fe_port_cases,
                     )
                     corrected_row = corrected_checks["cases"][0]
                     candidate_rows.append(corrected_row)
@@ -3073,10 +3697,20 @@ def _verify_regular_inverse(
         if row.get("v19_saved_v18_startup_comparison") is not None
     }
     return {
-        "schema": _regular_inverse_checks_schema(profile, reference_pc_strategy),
+        "schema": _regular_inverse_checks_schema(
+            profile,
+            reference_pc_strategy,
+            include_mixed_fe_port_cases=include_mixed_fe_port_cases,
+        ),
         "profile": profile.identity(),
         "cases": records,
         "case_count": len(records),
+        "required_case_names": list(case_names),
+        "observed_case_names": [str(row["name"]) for row in records],
+        "case_coverage_passed": (
+            len(records) == len(case_names)
+            and {str(row["name"]) for row in records} == set(case_names)
+        ),
         "all_q_exercised_per_case": True,
         "all_four_q_exercised_per_case": profile.q_count == 4,
         "interior_rows_exercised_per_case": profile.global_interior_rows,
@@ -3108,7 +3742,11 @@ def _verify_regular_inverse(
             if v19_saved_v18_reference is not None
             else None
         ),
-        "passed": len(records) == 4 and all(row["passed"] for row in records),
+        "passed": (
+            len(records) == len(case_names)
+            and {str(row["name"]) for row in records} == set(case_names)
+            and all(row["passed"] for row in records)
+        ),
     }
 
 
@@ -4721,6 +5359,34 @@ def run_task40_v10_p6_reference_worker(
 ) -> dict[str, Any]:
     """Run a frozen Task40 p6 case with one live four-q periodic reference."""
 
+    v30_contract = None
+    if v30_q_csr_binding is not None or v30_factor_config is not None:
+        if os.environ.get("TASK40_V30_STRICT_EXECUTION") != "1":
+            raise RuntimeError("V30 worker requires the approved target-native execution contract")
+        from src.runners.task40_v30_contract import require_authorized_contract
+
+        v30_contract, v30_contract_sha = require_authorized_contract(
+            os.environ.get("TASK40_V30_CONTRACT_PATH", ""),
+            expected_sha256=os.environ.get("TASK40_V30_CONTRACT_SHA256"),
+            current_root=Path(__file__).resolve().parents[2],
+        )
+        execution = v30_contract["execution"]
+        resources = execution["resources"]
+        if (
+            os.environ.get("TASK40_V30_EXECUTION_WINDOW_PATH")
+            != str(Path(execution["campaign_window_path"]).resolve())
+            or os.environ.get("TASK40_V30_EXECUTION_WINDOW_SHA256")
+            != execution["campaign_window_sha256"]
+            or os.environ.get("TASK40_V30_TASK_MEMORY_MAX_BYTES")
+            != str(resources["task_memory_max_bytes"])
+            or os.environ.get("TASK40_V30_HOST_RESERVE_BYTES")
+            != str(resources["host_reserve_bytes"])
+            or os.environ.get("TASK40_V30_MEMORY_SWAP_MAX_BYTES")
+            != str(resources["memory_swap_max_bytes"])
+            or not v30_contract_sha
+        ):
+            raise RuntimeError("V30 worker environment differs from its frozen execution contract")
+
     from mpi4py import MPI
     from petsc4py import PETSc
     from dolfinx import fem
@@ -4955,6 +5621,24 @@ def run_task40_v10_p6_reference_worker(
         else "v11_p6_grid"
     )
     contract = profile_facts(profile_identity)
+    runtime_contract = contract
+    if v30_contract is not None:
+        runtime_contract = copy.deepcopy(contract)
+        v30_execution = v30_contract["execution"]
+        runtime_resources = runtime_contract["resources"]
+        runtime_resources.update(
+            {
+                "process_tree_rss_cap_bytes": int(
+                    v30_execution["resources"]["task_memory_max_bytes"]
+                ),
+                "host_reserve_bytes": int(v30_execution["resources"]["host_reserve_bytes"]),
+                "memory_swap_max_bytes": 0,
+                "workflow_seconds": float(v30_execution["window"]["total_seconds"]),
+                "campaign_closeout_reserve_seconds": float(
+                    v30_execution["window"]["closeout_reserve_seconds"]
+                ),
+            }
+        )
     summary: dict[str, Any] = {
         "schema": (
             "task40extra.review_v20_one_q_row_tile_p6_reference_worker_summary.v1"
@@ -5004,6 +5688,10 @@ def run_task40_v10_p6_reference_worker(
     target_fast_bundle = None
     target_action = None
     target_condensed = None
+    mode_identity: dict[str, Any] = {}
+    mode_inventory_preflight: dict[str, Any] = {}
+    target_backend_facts: dict[str, Any] = {}
+    target_identity_cache_audit: dict[str, Any] = {}
     reference = None
     rhs = None
     physical_rhs = None
@@ -5023,10 +5711,21 @@ def run_task40_v10_p6_reference_worker(
     qualified_q_csr_provider = None
     qualified_q_csr_identity: dict[str, Any] | None = None
     try:
+        runtime_resource_overrides = {}
+        if v30_contract is not None:
+            v30_resources = v30_contract["execution"]["resources"]
+            runtime_resource_overrides = {
+                "fixed_process_tree_cap_bytes": int(
+                    v30_resources["task_memory_max_bytes"]
+                ),
+                "host_reserve_bytes": int(v30_resources["host_reserve_bytes"]),
+                "task_cgroup_reserve_bytes": 0,
+                "require_cgroup_memory_details": True,
+            }
         runtime = _V14Runtime(
             directory,
             stage,
-            contract,
+            runtime_contract,
             root=_repo_root(),
             source_sha=source_sha,
             batch_identity=(
@@ -5050,6 +5749,7 @@ def run_task40_v10_p6_reference_worker(
             ),
             evidence_prefix=evidence_prefix,
             require_zero_swap=True,
+            **runtime_resource_overrides,
         )
         summary["abi"] = _abi_facts(
             profile_identity=profile_identity,
@@ -5083,92 +5783,6 @@ def run_task40_v10_p6_reference_worker(
             "y": tuple(map(float, axis_plan.y_values)),
             "z": tuple(map(float, axis_plan.z_values)),
         }
-        runtime.set_phase("assembly")
-        runtime.marker(
-            "v10_candidate_target_mesh_started",
-            {
-                "cell_axes": list(cfg.mesh_axis_cell_counts_requested or ()),
-                "axes": {key: list(value) for key, value in axes.items()},
-                "target_keeps_air_void": True,
-                "degrees": [6],
-                "positive_hierarchy": False,
-            },
-        )
-        target_levels = _build_same_mesh_levels(
-            cfg, MPI.COMM_SELF, (6,), include_positive_coefficients=False
-        )
-        target_bundle = build_same_mesh_physical_action(
-            target_levels,
-            cfg,
-            6,
-            mode_inventory=v20_mode_inventory,
-            jit_options=SAME_MESH_JIT_OPTIONS,
-            dtn_phase_gauge=BOUNDARY_PLANE,
-            verify_dtn_quadrature=True,
-        )
-        if len(target_bundle["modes"]) != periodic_profile.mode_count:
-            raise ValueError(
-                f"{case_label} target must retain all "
-                f"{periodic_profile.mode_count} physical modes"
-            )
-        if tuple(map(int, cfg.mesh_axis_cell_counts_requested or ())) != periodic_profile.global_cell_axes:
-            raise ValueError(f"{case_label} resolved mesh axes differ from its p6 profile")
-
-        regular_cfg = __import__("dataclasses").replace(
-            cfg,
-            air_void_box_nm=None,
-            cell_notch=None,
-            geometry_identity=f"{cfg.geometry_identity}.regular_reference_identity_probe",
-        )
-        if v20_mode_inventory is None:
-            target_inventory = build_dynamic_mode_inventory(cfg)
-            reference_inventory = build_dynamic_mode_inventory(regular_cfg)
-        else:
-            target_inventory = v20_mode_inventory
-            reference_inventory = v20_mode_inventory
-        target_inventory_keys = tuple(
-            (index, str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
-            for index, mode in enumerate(target_inventory[0])
-        )
-        reference_inventory_keys = tuple(
-            (index, str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
-            for index, mode in enumerate(reference_inventory[0])
-        )
-        mode_inventory_preflight = {
-            "target_physical_mode_sha256": str(target_inventory[2]),
-            "reference_physical_mode_sha256": str(reference_inventory[2]),
-            "target_mode_count": len(target_inventory[0]),
-            "reference_mode_count": len(reference_inventory[0]),
-            "ordered_mode_keys_equal": target_inventory_keys == reference_inventory_keys,
-            "ordered_physical_mode_sha_equal": target_inventory[2] == reference_inventory[2],
-            "target_carrier_physical_generator_sha256": str(
-                getattr(target_bundle["dtn_action"].carrier,
-                        "physical_generator_manifest_sha256", "")
-            ),
-            "target_carrier_assembly_manifest_sha256": str(
-                target_bundle["dtn_action"].carrier.mode_manifest_sha256
-            ),
-            **(
-                {"frozen_mode_source_lineage": v20_mode_metadata}
-                if v20_mode_metadata is not None
-                else {}
-            ),
-        }
-        if not (
-            mode_inventory_preflight["ordered_mode_keys_equal"]
-            and mode_inventory_preflight["ordered_physical_mode_sha_equal"]
-            and mode_inventory_preflight["target_mode_count"] == periodic_profile.mode_count
-            and mode_inventory_preflight["reference_mode_count"] == periodic_profile.mode_count
-            and mode_inventory_preflight["target_carrier_physical_generator_sha256"]
-            == target_inventory[2]
-            and target_bundle.get("physical_generator_manifest_sha256") == target_inventory[2]
-        ):
-            raise ValueError(
-                "target and regular ordered physical mode identity preflight failed: "
-                f"{mode_inventory_preflight}"
-            )
-        runtime.sample("v10_candidate_target_mesh_and_operator_complete")
-
         def allocation_gate(label: str, facts: Mapping[str, Any]) -> dict[str, Any]:
             nonlocal allocation_gate_invocation_count
             allocation_gate_invocation_count += 1
@@ -5293,7 +5907,11 @@ def run_task40_v10_p6_reference_worker(
                 future = phase_bytes
             headroom = 128 << 20
             live = runtime.sample(f"v10_{label}_strict_admission")
-            profile_cap = int(contract["resources"]["process_tree_rss_cap_bytes"])
+            profile_cap = int(
+                v30_contract["execution"]["resources"]["task_memory_max_bytes"]
+                if v30_contract is not None
+                else contract["resources"]["process_tree_rss_cap_bytes"]
+            )
             cap = min(profile_cap, int(live["launch_cap_bytes"]))
             untouched_workspace = int(checked.get("workspace_untouched_reserve_bytes", 0))
             envelope = live.get("memory_envelope")
@@ -5413,6 +6031,244 @@ def run_task40_v10_p6_reference_worker(
             runtime.marker("v10_strict_allocation_admission_complete", admission)
             return admission
 
+        def identity_gate(reference_bundle: Mapping[str, Any], reference_levels: Mapping[str, Any]):
+            if target_bundle is None or target_levels is None:
+                raise RuntimeError("target physical identity cannot be checked before target construction")
+            mode_identity.update(
+                _validate_reference_physical_identity(
+                    target_bundle, target_levels, reference_bundle, reference_levels
+                )
+            )
+
+        def build_target_context(
+            reference_owner: Mapping[str, Any] | None = None,
+            mode_inventory: tuple[Any, Any, str] | None = None,
+        ) -> None:
+            nonlocal target_levels, target_bundle, target_condensed, target_action, target_fast_bundle
+            nonlocal target_identity_cache_audit, mode_inventory_preflight, target_backend_facts
+            if mode_inventory is not None and mode_inventory != v20_mode_inventory:
+                raise ValueError("V30 target builder received a different frozen mode inventory")
+            runtime.set_phase("assembly")
+            runtime.marker(
+                "v10_candidate_target_mesh_started",
+                {
+                    "cell_axes": list(cfg.mesh_axis_cell_counts_requested or ()),
+                    "axes": {key: list(value) for key, value in axes.items()},
+                    "target_keeps_air_void": True,
+                    "degrees": [6],
+                    "positive_hierarchy": False,
+                },
+            )
+            target_levels = _build_same_mesh_levels(
+                cfg, MPI.COMM_SELF, (6,), include_positive_coefficients=False
+            )
+            target_bundle = build_same_mesh_physical_action(
+                target_levels,
+                cfg,
+                6,
+                mode_inventory=v20_mode_inventory,
+                jit_options=SAME_MESH_JIT_OPTIONS,
+                dtn_phase_gauge=BOUNDARY_PLANE,
+                verify_dtn_quadrature=True,
+            )
+            if len(target_bundle["modes"]) != periodic_profile.mode_count:
+                raise ValueError(
+                    f"{case_label} target must retain all "
+                    f"{periodic_profile.mode_count} physical modes"
+                )
+            if tuple(map(int, cfg.mesh_axis_cell_counts_requested or ())) != periodic_profile.global_cell_axes:
+                raise ValueError(f"{case_label} resolved mesh axes differ from its p6 profile")
+
+            regular_cfg = __import__("dataclasses").replace(
+                cfg,
+                air_void_box_nm=None,
+                cell_notch=None,
+                geometry_identity=f"{cfg.geometry_identity}.regular_reference_identity_probe",
+            )
+            if v20_mode_inventory is None:
+                target_inventory = build_dynamic_mode_inventory(cfg)
+                reference_inventory = build_dynamic_mode_inventory(regular_cfg)
+            else:
+                target_inventory = v20_mode_inventory
+                reference_inventory = v20_mode_inventory
+            target_inventory_keys = tuple(
+                (index, str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
+                for index, mode in enumerate(target_inventory[0])
+            )
+            reference_inventory_keys = tuple(
+                (index, str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
+                for index, mode in enumerate(reference_inventory[0])
+            )
+            mode_inventory_preflight = {
+                "target_physical_mode_sha256": str(target_inventory[2]),
+                "reference_physical_mode_sha256": str(reference_inventory[2]),
+                "target_mode_count": len(target_inventory[0]),
+                "reference_mode_count": len(reference_inventory[0]),
+                "ordered_mode_keys_equal": target_inventory_keys == reference_inventory_keys,
+                "ordered_physical_mode_sha_equal": target_inventory[2] == reference_inventory[2],
+                "target_carrier_physical_generator_sha256": str(
+                    getattr(target_bundle["dtn_action"].carrier,
+                            "physical_generator_manifest_sha256", "")
+                ),
+                "target_carrier_assembly_manifest_sha256": str(
+                    target_bundle["dtn_action"].carrier.mode_manifest_sha256
+                ),
+                **(
+                    {"frozen_mode_source_lineage": v20_mode_metadata}
+                    if v20_mode_metadata is not None
+                    else {}
+                ),
+            }
+            if not (
+                mode_inventory_preflight["ordered_mode_keys_equal"]
+                and mode_inventory_preflight["ordered_physical_mode_sha_equal"]
+                and mode_inventory_preflight["target_mode_count"] == periodic_profile.mode_count
+                and mode_inventory_preflight["reference_mode_count"] == periodic_profile.mode_count
+                and mode_inventory_preflight["target_carrier_physical_generator_sha256"]
+                == target_inventory[2]
+                and target_bundle.get("physical_generator_manifest_sha256") == target_inventory[2]
+            ):
+                raise ValueError(
+                    "target and regular ordered physical mode identity preflight failed: "
+                    f"{mode_inventory_preflight}"
+                )
+            if reference_owner is not None:
+                identity_gate(reference_owner["global_bundle"], reference_owner["global_levels"])
+            runtime.sample("v10_candidate_target_mesh_and_operator_complete")
+
+            support_groups, support_rows, _support_facts = _boundary_support(target_bundle)
+            compiled_target = fem.form(
+                target_bundle["volume_action"].bilinear_form,
+                jit_options=dict(SAME_MESH_JIT_OPTIONS),
+            )
+            target_condensed = build_unconstrained_assembly_time_condensation(
+                compiled_target,
+                target_levels["spaces"][6],
+                target_levels["mesh_data"].cell_tags,
+                mpc=target_levels["floquets"][6].mpc,
+                appended_global_rows=len(target_bundle["dtn_action"].carrier.entries),
+                appended_support_owned_cell_groups=support_groups,
+                appended_support_group_by_row=support_rows,
+                sum_duplicate_cell_integrals=True,
+                strict_local_checks=True,
+                materialize_global_matrix=False,
+                retain_local_schur_for_matrix_free=True,
+                share_identity_cache=is_v16 or is_v17,
+                preserve_exact_geometry=True,
+                allocation_gate=allocation_gate,
+            )
+            target_identity_cache_audit = {
+                key: target_condensed.build_audit.get(key)
+                for key in (
+                    "identity_cache_mode",
+                    "identity_cache_readonly",
+                    "identity_cache_class_count_local",
+                    "identity_cache_bytes_local",
+                    "retained_local_schur_bytes_local",
+                    "retained_local_schur_class_count_local",
+                )
+            }
+            target_action = build_p6_cell_condensed_action_from_carrier(
+                target_condensed,
+                target_bundle["dtn_action"].carrier,
+                owns_condensed=True,
+                port_coupling_mode="cached",
+                port_block_layout=RESEARCH_PORT_LAYOUT,
+                original_port_block=DiagonalOriginalPortBlock.from_carrier(
+                    target_bundle["dtn_action"].carrier.entries
+                ),
+            )
+            if is_v16 or is_v17:
+                owner_version = "v17_row_tile" if is_v17 else "v16"
+                owner_key = "v17_target_owner_inventory" if is_v17 else "v16_target_owner_inventory"
+                owner_marker = (
+                    "v17_row_tile_target_condensed_action_owner_inventory"
+                    if is_v17
+                    else "v16_target_condensed_action_owner_inventory"
+                )
+                owner_sample = (
+                    "v17_row_tile_target_condensed_action_complete"
+                    if is_v17
+                    else "v16_target_condensed_action_complete"
+                )
+                target_owner_inventory = {
+                    "schema": f"task40extra.review_{owner_version}_target_owner_inventory.v1",
+                    "target_condensation_identity_cache": target_identity_cache_audit,
+                    "target_action_buffer_inventory": dict(target_action.buffer_inventory),
+                    "identity_cache_scope": (
+                        "one read-only real identity per target interior shape; local LU, recovery, "
+                        "and Schur buffers remain their separately counted owners"
+                    ),
+                    "source_owner": "target_condensed transferred to target_action.condensed",
+                }
+                summary[owner_key] = target_owner_inventory
+                runtime.marker(owner_marker, target_owner_inventory)
+                runtime.sample(owner_sample)
+            target_condensed = None
+            _validate_target_p6_inventory(target_action.condensed, periodic_profile)
+            if reference_owner is not None:
+                actual_rows = int(target_action.condensed.full_rows)
+                reference_rows = int(reference_owner["full_layout"].full_rows)
+                planned_rows = int(periodic_profile.global_storage_rows)
+                if actual_rows != reference_rows or actual_rows != planned_rows:
+                    raise ValueError(
+                        "V30 actual target storage rows differ from the reserved reference plan: "
+                        f"actual={actual_rows}, reference={reference_rows}, planned={planned_rows}"
+                    )
+                row_identity = {
+                    "schema": "task40extra.review_v30_target_reference_row_identity.v1",
+                    "actual_target_full_storage_rows": actual_rows,
+                    "planned_target_full_storage_rows": planned_rows,
+                    "reference_full_storage_rows": reference_rows,
+                    "planned_target_rows_match_reference": planned_rows == reference_rows,
+                    "actual_target_rows_match_reference": actual_rows == reference_rows,
+                    "actual_matches_planned": actual_rows == planned_rows,
+                    "qualified_after_target_build": True,
+                }
+                reference_owner["full_storage_dimensions"].update(
+                    target_full_storage_rows=actual_rows,
+                    actual_target_full_storage_rows=actual_rows,
+                    planned_target_full_storage_rows=planned_rows,
+                    planned_target_rows_match_reference=planned_rows == reference_rows,
+                    actual_target_rows_match_reference=actual_rows == reference_rows,
+                    target_reference_rows_match=actual_rows == reference_rows,
+                    target_budget_status="ACTUAL_TARGET_ROWS_RECORDED",
+                )
+                factor_audit = reference_owner["factors"].audit
+                factor_audit["actual_target_row_identity_check"] = row_identity
+                summary["v30_target_reference_row_identity"] = row_identity
+                runtime.marker("task40_v30_target_reference_rows_qualified", row_identity)
+            target_fast_bundle = build_packed_physical_action(
+                {"levels": target_levels, "fine": target_bundle},
+                cfg,
+                contiguous_work=True,
+                preallocated_work=False,
+                sum_factorized_work=True,
+                reuse_projection_work=False,
+                shared_contractions=False,
+                fuse_components=True,
+                degree=6,
+            )
+            fast_facts = dict(target_fast_bundle["facts"])
+            if (
+                fast_facts.get("sum_factorized_work") is not True
+                or fast_facts.get("fuse_components") is not True
+                or fast_facts.get("backend") != "fused_sum_factorized_split_volume"
+            ):
+                raise ValueError("candidate target backend did not build the qualified fused sum-factorized action")
+            target_backend_facts = {
+                "identity": "isotropic_sum_factorized_n1e_v26",
+                "component_execution": "fused_sum_factorized_split_volume",
+                "selected_for_target_backend_evaluation": True,
+                "same_target_forms_and_dtn_carrier": True,
+                "physical_action_facts": fast_facts,
+                "initial_physical_action_audit": dict(target_fast_bundle["physical_action"].audit),
+            }
+
+
+        if v30_contract is None:
+            build_target_context()
+
         qualified_q_csr_provider = _task40_v30_q_csr_provider(
             v30_q_csr_binding,
             repo_root=_repo_root(),
@@ -5425,111 +6281,6 @@ def run_task40_v10_p6_reference_worker(
                 "profile": qualified_q_csr_provider.profile,
                 "selected_q_indices": sorted(qualified_q_csr_provider.entries),
             }
-
-        support_groups, support_rows, _support_facts = _boundary_support(target_bundle)
-        compiled_target = fem.form(
-            target_bundle["volume_action"].bilinear_form,
-            jit_options=dict(SAME_MESH_JIT_OPTIONS),
-        )
-        target_condensed = build_unconstrained_assembly_time_condensation(
-            compiled_target,
-            target_levels["spaces"][6],
-            target_levels["mesh_data"].cell_tags,
-            mpc=target_levels["floquets"][6].mpc,
-            appended_global_rows=len(target_bundle["dtn_action"].carrier.entries),
-            appended_support_owned_cell_groups=support_groups,
-            appended_support_group_by_row=support_rows,
-            sum_duplicate_cell_integrals=True,
-            strict_local_checks=True,
-            materialize_global_matrix=False,
-            retain_local_schur_for_matrix_free=True,
-            share_identity_cache=is_v16 or is_v17,
-            preserve_exact_geometry=True,
-            allocation_gate=allocation_gate,
-        )
-        target_identity_cache_audit = {
-            key: target_condensed.build_audit.get(key)
-            for key in (
-                "identity_cache_mode",
-                "identity_cache_readonly",
-                "identity_cache_class_count_local",
-                "identity_cache_bytes_local",
-                "retained_local_schur_bytes_local",
-                "retained_local_schur_class_count_local",
-            )
-        }
-        target_action = build_p6_cell_condensed_action_from_carrier(
-            target_condensed,
-            target_bundle["dtn_action"].carrier,
-            owns_condensed=True,
-            port_coupling_mode="cached",
-            port_block_layout=RESEARCH_PORT_LAYOUT,
-            original_port_block=DiagonalOriginalPortBlock.from_carrier(
-                target_bundle["dtn_action"].carrier.entries
-            ),
-        )
-        if is_v16 or is_v17:
-            owner_version = "v17_row_tile" if is_v17 else "v16"
-            owner_key = "v17_target_owner_inventory" if is_v17 else "v16_target_owner_inventory"
-            owner_marker = (
-                "v17_row_tile_target_condensed_action_owner_inventory"
-                if is_v17
-                else "v16_target_condensed_action_owner_inventory"
-            )
-            owner_sample = (
-                "v17_row_tile_target_condensed_action_complete"
-                if is_v17
-                else "v16_target_condensed_action_complete"
-            )
-            target_owner_inventory = {
-                "schema": f"task40extra.review_{owner_version}_target_owner_inventory.v1",
-                "target_condensation_identity_cache": target_identity_cache_audit,
-                "target_action_buffer_inventory": dict(target_action.buffer_inventory),
-                "identity_cache_scope": (
-                    "one read-only real identity per target interior shape; local LU, recovery, "
-                    "and Schur buffers remain their separately counted owners"
-                ),
-                "source_owner": "target_condensed transferred to target_action.condensed",
-            }
-            summary[owner_key] = target_owner_inventory
-            runtime.marker(owner_marker, target_owner_inventory)
-            runtime.sample(owner_sample)
-        target_condensed = None
-        _validate_target_p6_inventory(target_action.condensed, periodic_profile)
-        target_fast_bundle = build_packed_physical_action(
-            {"levels": target_levels, "fine": target_bundle},
-            cfg,
-            contiguous_work=True,
-            preallocated_work=False,
-            sum_factorized_work=True,
-            reuse_projection_work=False,
-            shared_contractions=False,
-            fuse_components=True,
-            degree=6,
-        )
-        fast_facts = dict(target_fast_bundle["facts"])
-        if (
-            fast_facts.get("sum_factorized_work") is not True
-            or fast_facts.get("fuse_components") is not True
-            or fast_facts.get("backend") != "fused_sum_factorized_split_volume"
-        ):
-            raise ValueError("candidate target backend did not build the qualified fused sum-factorized action")
-        target_backend_facts = {
-            "identity": "isotropic_sum_factorized_n1e_v26",
-            "component_execution": "fused_sum_factorized_split_volume",
-            "selected_for_target_backend_evaluation": True,
-            "same_target_forms_and_dtn_carrier": True,
-            "physical_action_facts": fast_facts,
-            "initial_physical_action_audit": dict(target_fast_bundle["physical_action"].audit),
-        }
-        mode_identity: dict[str, Any] = {}
-
-        def identity_gate(reference_bundle: Mapping[str, Any], reference_levels: Mapping[str, Any]):
-            mode_identity.update(
-                _validate_reference_physical_identity(
-                    target_bundle, target_levels, reference_bundle, reference_levels
-                )
-            )
 
         def load_numeric_checkpoint(path: Path, q: int) -> dict[str, Any]:
             if not path.is_file():
@@ -5800,7 +6551,7 @@ def run_task40_v10_p6_reference_worker(
                             "physical_model_sha256", ""
                         )
                     ),
-                    target_mode_sha256=str(target_bundle["mode_sha256"]),
+                    target_mode_sha256=str(v20_mode_inventory[2]),
                     abi_identity=summary["abi"],
                     expected_receipt_sha256=expected_receipt_sha256,
                 )
@@ -5812,11 +6563,15 @@ def run_task40_v10_p6_reference_worker(
                 not isinstance(provenance, Mapping)
                 or not isinstance(campaign_identity, Mapping)
                 or not isinstance(v20_mode_metadata, Mapping)
+                or v20_mode_inventory is None
+                or len(v20_mode_inventory) != 3
             ):
                 raise ValueError("V30 q-CSR injection lacks input, campaign, or frozen mode identity")
             input_sha256 = str(provenance.get("input_sha256", ""))
             physical_sha256 = str(provenance.get("physical_model_sha256", ""))
-            mode_manifest_sha256 = str(target_bundle["mode_sha256"])
+            if v20_mode_inventory is None or len(v20_mode_inventory) != 3:
+                raise ValueError("V30 reference-first q-CSR binding lacks the frozen mode inventory")
+            mode_manifest_sha256 = str(v20_mode_inventory[2])
             ordered_mode_key_sha256 = str(
                 v20_mode_metadata.get("ordered_mode_key_sha256", "")
             )
@@ -5855,16 +6610,195 @@ def run_task40_v10_p6_reference_worker(
                 },
             }
 
+        qualified_q_csr_coverage_phase = "all_q"
+        qualified_q_csr_preparer = None
+        if qualified_q_csr_provider is not None:
+            preparation = v30_contract.get("preparation", {})
+            worklist = preparation.get("q_csr_worklist") if isinstance(preparation, Mapping) else None
+            if not isinstance(worklist, list) or not worklist:
+                raise ValueError("V30 contract has no approved q CSR preparation worklist")
+            approved_preparation_q = {0}
+            for row in worklist:
+                if not isinstance(row, Mapping) or type(row.get("q")) is not int:
+                    raise ValueError("V30 q CSR preparation worklist is malformed")
+                approved_preparation_q.add(int(row["q"]))
+            if not set(qualified_q_csr_provider.entries) <= approved_preparation_q:
+                raise ValueError("V30 selector includes a q outside the accepted donor and worklist")
+            qualified_q_csr_coverage_phase = "sector_preparation_subset"
+            q4_source_cache: dict[str, Any] = {}
+
+            def prepare_v30_sector_q_csr(
+                *,
+                provider,
+                action,
+                volume_action,
+                coordinates,
+                context,
+                local_h,
+                profile,
+                global_bundle,
+                local_bundle,
+                mode_inventory,
+                q_indices,
+                available_sector_matrices,
+                runtime_identity,
+                allocation_gate,
+            ):
+                from src.solvers.task40_v30_selected_q_csr import (
+                    LiveP6SelectedQContributionSource,
+                    prepare_selected_q_csr_sector,
+                    selected_q_operator_identity,
+                )
+
+                sector_qs = tuple(map(int, context.global_q_indices))
+                q_maps_by_q = {
+                    q: coordinates.q_map(branch, allocation_gate=allocation_gate)
+                    for branch, q in enumerate(sector_qs)
+                }
+                sources_by_q = {}
+                matrix_source_identity_by_q = {}
+                producer_identity_by_q = {}
+                current_h = np.asarray(local_h, dtype=np.complex128)
+                donor_facts = None
+                if 4 in q_indices:
+                    if context.twist_index != 0 or sector_qs != (0, 4):
+                        raise ValueError("V30 q4 saved donor may only serve the real twist-0 pair")
+                    if not q4_source_cache:
+                        source, saved_q4_map, producer_facts = _task40_v30_open_saved_q4_source(
+                            contract=v30_contract,
+                            repo_root=_repo_root(),
+                            profile=profile,
+                            current_q0_map=q_maps_by_q[0],
+                            current_q4_map=q_maps_by_q[4],
+                            current_local_h=current_h,
+                            allocation_gate=allocation_gate,
+                        )
+                        q4_source_cache.update(
+                            source=source,
+                            q4_map=saved_q4_map,
+                            producer_facts=producer_facts,
+                        )
+                    q_maps_by_q[4] = q4_source_cache["q4_map"]
+                    sources_by_q[4] = q4_source_cache["source"]
+                    donor_facts = q4_source_cache["producer_facts"]
+                    matrix_source_identity_by_q[4] = dict(
+                        runtime_identity["execution_identity"]
+                    )
+                    producer_identity_by_q[4] = dict(donor_facts)
+                live_source = LiveP6SelectedQContributionSource(action, current_h)
+                for q in q_indices:
+                    if int(q) == 4:
+                        continue
+                    sources_by_q[int(q)] = live_source
+                    matrix_source_identity_by_q[int(q)] = dict(
+                        runtime_identity["execution_identity"]
+                    )
+                    producer_identity_by_q[int(q)] = {
+                        "kind": "live_same_mesh_twist_sector_action",
+                        "twist_index": int(context.twist_index),
+                        "sector_q_indices": list(sector_qs),
+                        "source_sha": runtime_identity["execution_identity"]["source_sha"],
+                        "window_sha256": runtime_identity["execution_identity"][
+                            "window_sha256"
+                        ],
+                        "ordered_mode_manifest_sha256": sector_builder_inputs[
+                            "mode_manifest_sha256"
+                        ],
+                        "original_h_sha256": _sha256_bytes(
+                            np.ascontiguousarray(current_h).view(np.uint8).tobytes()
+                        ),
+                    }
+                if v20_mode_inventory is None:
+                    raise ValueError("V30 sector callback lacks the frozen mode inventory")
+                sector_builder_inputs = _task40_v30_sector_builder_inputs(
+                    global_bundle=global_bundle,
+                    mode_inventory=v20_mode_inventory,
+                    coordinates=coordinates,
+                    profile=profile,
+                    q_maps_by_q=q_maps_by_q,
+                    sector_q_indices=sector_qs,
+                )
+                operator_identity_by_q = {
+                    int(q): selected_q_operator_identity(
+                        scientific_input_sha256=str(
+                            runtime_identity["scientific_input_sha256"]
+                        ),
+                        profile_identity=profile.identity(),
+                        ordered_modes=tuple(global_bundle["modes"]),
+                        q_map=q_maps_by_q[int(q)],
+                        original_h=current_h,
+                    )
+                    for q in q_indices
+                }
+                saved_native_witness_by_q = {}
+                direct_hhat_evidence_by_q = {}
+                if 4 in map(int, q_indices):
+                    direct_hhat_evidence_by_q[4] = _task40_v30_q4_direct_hhat_evidence(
+                        repo_root=_repo_root(),
+                        producer_facts=donor_facts,
+                    )
+                    saved_native_witness_by_q[4] = _task40_v30_open_saved_q4_native_witness(
+                        contract=v30_contract,
+                        repo_root=_repo_root(),
+                        operator_identity=operator_identity_by_q[4],
+                        current_execution_identity=runtime_identity["execution_identity"],
+                        input_sha256=str(runtime_identity["scientific_input_sha256"]),
+                        physical_model_sha256=physical_sha256,
+                        mode_manifest_sha256=str(v20_mode_inventory[2]),
+                        ordered_mode_key_sha256=ordered_mode_key_sha256,
+                        allocation_gate=allocation_gate,
+                    )
+                matrices, audit = prepare_selected_q_csr_sector(
+                    sources_by_q=sources_by_q,
+                    q_maps_by_q=q_maps_by_q,
+                    sector_q_indices=sector_qs,
+                    twist_index=int(context.twist_index),
+                    trace_rows_by_q=sector_builder_inputs["trace_rows_by_q"],
+                    selected_q_indices=tuple(map(int, q_indices)),
+                    action=action,
+                    volume_action=volume_action,
+                    comm=action.condensed.comm,
+                    available_sector_matrices=available_sector_matrices,
+                    allocation_gate=allocation_gate,
+                    profile=str(profile.name),
+                    profile_identity=profile.identity(),
+                    ordered_modes=tuple(global_bundle["modes"]),
+                    original_h=current_h,
+                    scientific_input_sha256=str(
+                        runtime_identity["scientific_input_sha256"]
+                    ),
+                    operator_identity_by_q=operator_identity_by_q,
+                    matrix_source_identity_by_q=matrix_source_identity_by_q,
+                    execution_identity=dict(runtime_identity["execution_identity"]),
+                    producer_identity_by_q=producer_identity_by_q,
+                    saved_native_witness_by_q=saved_native_witness_by_q,
+                    direct_hhat_evidence_by_q=direct_hhat_evidence_by_q,
+                    output_directory=(
+                        Path(str(v30_factor_config["output_directory"])) / "selected_q"
+                    ),
+                )
+                if donor_facts is not None:
+                    audit["q4_saved_producer_identity"] = donor_facts
+                    audit["q4_direct_hhat_support_evidence"] = direct_hhat_evidence_by_q[4]
+                return matrices, audit
+
+            qualified_q_csr_preparer = prepare_v30_sector_q_csr
+
         reference = build_task40_v10_p6_reference_inverse(
             cfg,
             axes,
             allocation_gate=allocation_gate,
             profile=periodic_profile,
             event=reference_event,
-            identity_gate=identity_gate,
+            identity_gate=identity_gate if v30_contract is None else None,
             jit_options=SAME_MESH_JIT_OPTIONS,
             share_transform_bank=share_transform_bank,
-            target_full_storage_rows=int(target_action.condensed.full_rows),
+            target_full_storage_rows=(
+                int(target_action.condensed.full_rows) if target_action is not None else None
+            ),
+            planned_target_full_storage_rows=(
+                int(periodic_profile.global_storage_rows) if v30_contract is not None else None
+            ),
             reference_pc_strategy=reference_pc_strategy,
             q_assembly_strategy=q_assembly_strategy,
             factor_lifecycle_strategy=factor_lifecycle_strategy,
@@ -5872,6 +6806,8 @@ def run_task40_v10_p6_reference_worker(
             mode_inventory=v20_mode_inventory,
             qualified_q_csr_provider=qualified_q_csr_provider,
             qualified_q_csr_identity=qualified_q_csr_identity,
+            qualified_q_csr_coverage_phase=qualified_q_csr_coverage_phase,
+            qualified_q_csr_preparer=qualified_q_csr_preparer,
             v30_factor_config=v30_factor_config,
             factor_output_directory=(
                 str(v30_factor_config["output_directory"])
@@ -5879,6 +6815,10 @@ def run_task40_v10_p6_reference_worker(
                 else None
             ),
         )
+        if qualified_q_csr_provider is not None:
+            summary["v30_all_q_selector"] = reference.get(
+                "qualified_q_csr_final_selector"
+            )
         if stop_after_stage is not None:
             factors = reference["factors"]
             v20_stage_factors = factors
@@ -6025,7 +6965,7 @@ def run_task40_v10_p6_reference_worker(
                 "numerical_output_directory": str(output_directory),
             }
             return worker_result
-        if not mode_identity:
+        if v30_contract is None and not mode_identity:
             raise RuntimeError("regular p6 physical identity callback did not run before q factors")
         mapping_identity = _mapping_identity(reference)
         ref_rhs, ref_rhs_facts = build_physical_rhs(reference["global_bundle"])
@@ -6036,6 +6976,7 @@ def run_task40_v10_p6_reference_worker(
             ref_rhs_facts,
             allocation_gate=allocation_gate,
             reference_pc_strategy=reference_pc_strategy,
+            include_mixed_fe_port_cases=v30_contract is not None,
         )
         ref_rhs.destroy()
         ref_rhs = None
@@ -6043,6 +6984,16 @@ def run_task40_v10_p6_reference_worker(
             raise ValueError("complete regular p6 inverse checks did not pass")
         reference["regular_inverse_checks"] = regular_checks
         runtime.marker("v10_regular_reference_inverse_qualified", regular_checks)
+
+        if v30_contract is not None:
+            _task40_v30_build_target_after_reference(
+                reference_owner=reference,
+                regular_checks=regular_checks,
+                mode_inventory=v20_mode_inventory,
+                target_builder=build_target_context,
+            )
+        if not mode_identity:
+            raise RuntimeError("regular p6 physical identity did not pass before the target pilot")
 
         physical_rhs, rhs_facts = build_physical_rhs(target_bundle)
         rhs_norm = float(physical_rhs.norm())

@@ -327,6 +327,10 @@ class _V14Runtime:
         batch_identity: str = "review_v14",
         evidence_prefix: str = "v14",
         require_zero_swap: bool = True,
+        fixed_process_tree_cap_bytes: int | None = None,
+        host_reserve_bytes: int | None = None,
+        task_cgroup_reserve_bytes: int | None = None,
+        require_cgroup_memory_details: bool = False,
     ) -> None:
         self.directory = directory
         self.stage = stage
@@ -336,6 +340,33 @@ class _V14Runtime:
         self.batch_identity = str(batch_identity)
         self.evidence_prefix = str(evidence_prefix)
         self.require_zero_swap = bool(require_zero_swap)
+        for value, name in (
+            (fixed_process_tree_cap_bytes, "fixed_process_tree_cap_bytes"),
+            (host_reserve_bytes, "host_reserve_bytes"),
+            (task_cgroup_reserve_bytes, "task_cgroup_reserve_bytes"),
+        ):
+            if value is not None and type(value) is not int:
+                raise TypeError(f"{name} must be an integer when provided")
+        if fixed_process_tree_cap_bytes is not None and fixed_process_tree_cap_bytes <= 0:
+            raise ValueError("fixed process-tree cap must be positive")
+        if host_reserve_bytes is not None and host_reserve_bytes < 0:
+            raise ValueError("host reserve must be nonnegative")
+        if task_cgroup_reserve_bytes is not None and task_cgroup_reserve_bytes < 0:
+            raise ValueError("task cgroup reserve must be nonnegative")
+        if type(require_cgroup_memory_details) is not bool:
+            raise TypeError("require_cgroup_memory_details must be a boolean")
+        if require_cgroup_memory_details and (
+            fixed_process_tree_cap_bytes is None
+            or host_reserve_bytes is None
+            or task_cgroup_reserve_bytes is None
+        ):
+            raise ValueError(
+                "strict cgroup memory details require the fixed V30 resource package"
+            )
+        self.fixed_process_tree_cap_bytes = fixed_process_tree_cap_bytes
+        self.host_reserve_bytes_override = host_reserve_bytes
+        self.task_cgroup_reserve_bytes_override = task_cgroup_reserve_bytes
+        self.require_cgroup_memory_details = require_cgroup_memory_details
         if not self.batch_identity or not self.evidence_prefix:
             raise ValueError("runtime batch identity and evidence prefix are required")
         self.events_path = directory / f"{self.evidence_prefix}_events.jsonl"
@@ -1043,19 +1074,74 @@ class _V14Runtime:
             self.parent_pid, self._phase, None,
             pss_sampling_policy=self.pss_sampling_policy,
         )
-        envelope = memory_envelope(self.memory_policy)
-        dynamic_cap = (
-            int(value["rss_bytes"])
-            + int(envelope["effective_available_bytes"])
+        envelope_arguments = {}
+        if self.host_reserve_bytes_override is not None:
+            envelope_arguments["host_reserve_bytes"] = self.host_reserve_bytes_override
+        if self.task_cgroup_reserve_bytes_override is not None:
+            envelope_arguments["task_cgroup_reserve_bytes"] = (
+                self.task_cgroup_reserve_bytes_override
+            )
+        if self.require_cgroup_memory_details:
+            envelope_arguments["require_cgroup_memory_details"] = True
+        envelope = memory_envelope(self.memory_policy, **envelope_arguments)
+        incremental_headroom = (
+            int(envelope["effective_available_after_reserves_bytes"])
+            if envelope.get("reserve_domains_separated") is True
+            else int(envelope["effective_available_bytes"])
             - int(envelope["reserve_bytes"])
         )
-        cap = dynamic_cap if self.physical_memory_pressure else min(self.parent_cap, dynamic_cap)
+        dynamic_cap = int(value["rss_bytes"]) + incremental_headroom
+        cap_candidates = [dynamic_cap]
+        if self.parent_cap is not None:
+            cap_candidates.append(int(self.parent_cap))
+        if self.fixed_process_tree_cap_bytes is not None:
+            cap_candidates.append(self.fixed_process_tree_cap_bytes)
+        cap = min(cap_candidates)
+        cgroup_limit_matches_contract = True
+        cgroup_memory_details_complete = True
+        if self.require_cgroup_memory_details:
+            cgroup_limits = envelope.get("cgroup_limits", [])
+            cgroup_stats = envelope.get("cgroup_memory_stats", [])
+            cgroup_limit_matches_contract = any(
+                int(item.get("limit_bytes", -1)) == self.fixed_process_tree_cap_bytes
+                for item in cgroup_limits
+                if isinstance(item, Mapping)
+            )
+            cgroup_memory_details_complete = bool(cgroup_stats) and all(
+                isinstance(item, Mapping)
+                and all(
+                    type(item.get(name)) is int
+                    for name in (
+                        "current_bytes",
+                        "anon_bytes",
+                        "file_bytes",
+                        "file_dirty_bytes",
+                    )
+                )
+                for item in cgroup_stats
+            )
+        if envelope.get("reserve_domains_separated") is True:
+            reserve_violation = (
+                int(envelope["host_mem_available_bytes"])
+                < int(envelope["reserve_bytes"])
+                or int(envelope["task_cgroup_available_bytes"])
+                < int(envelope["task_cgroup_reserve_bytes"] or 0)
+            )
+        else:
+            reserve_violation = (
+                int(envelope["effective_available_bytes"])
+                < int(envelope["reserve_bytes"])
+            )
         value.update(
             {
                 "label": label,
                 "memory_envelope": envelope,
                 "launch_cap_bytes": cap,
                 "parent_tree_cap_bytes": self.parent_cap,
+                "fixed_process_tree_cap_bytes": self.fixed_process_tree_cap_bytes,
+                "dynamic_launch_cap_bytes": dynamic_cap,
+                "v30_cgroup_limit_matches_fixed_cap": cgroup_limit_matches_contract,
+                "v30_cgroup_memory_details_complete": cgroup_memory_details_complete,
                 "inventory_memory_cap_bytes": self.inventory_cap,
                 "inventory_used_bytes": self.inventory_used_bytes,
                 "inventory_peak_bytes": self.inventory_peak_bytes,
@@ -1066,7 +1152,9 @@ class _V14Runtime:
                     "require_zero_swap" if self.require_zero_swap else "observe_only"
                 ),
                 "cap_policy": (
-                    "current_tree_rss+available-reserve; no startup/static cap"
+                    "min(v30_fixed_process_tree_cap,current_tree_rss+host/cgroup_headroom_after_reserves)"
+                    if self.fixed_process_tree_cap_bytes is not None
+                    else "current_tree_rss+available-reserve; no startup/static cap"
                     if self.physical_memory_pressure
                     else "min(parent_tree_cap,current_tree_rss+available-reserve)"
                 ),
@@ -1082,7 +1170,9 @@ class _V14Runtime:
         if enforce and (
             not value["all_status_readable"]
             or (self.require_zero_swap and int(value["swap_bytes"]) != 0)
-            or int(envelope["effective_available_bytes"]) < int(envelope["reserve_bytes"])
+            or reserve_violation
+            or not cgroup_limit_matches_contract
+            or not cgroup_memory_details_complete
             or int(value["rss_bytes"]) >= cap
             or (
                 self.inventory_cap is not None

@@ -4440,6 +4440,7 @@ def _task40_v30_load_sector_q_csr_pair(
     mode_inventory: tuple[Any, Any, Any],
     runtime_identity: Mapping[str, Any],
     allocation_gate: Callable,
+    selected_q_indices: set[int] | None = None,
 ) -> tuple[dict[int, sparse.csr_matrix], dict[str, Any]]:
     import time
 
@@ -4470,8 +4471,15 @@ def _task40_v30_load_sector_q_csr_pair(
     profile_sha = _task40_v30_profile_identity_sha256(profile)
     sector_matrices = {}
     qualified_receipts = []
+    selector_entries = []
+    sector_q_indices = set(map(int, context.global_q_indices))
+    selected_q_indices = sector_q_indices if selected_q_indices is None else set(selected_q_indices)
+    if not selected_q_indices <= sector_q_indices:
+        raise ValueError("V30 sector selector requested q values outside the actual twist")
     for branch, raw_q in enumerate(context.global_q_indices):
         q_index = int(raw_q)
+        if q_index not in selected_q_indices:
+            continue
         q_map = coordinates.q_map(branch, allocation_gate=allocation_gate)
         operator_identity = {
             "scientific_input_sha256": str(runtime_identity["scientific_input_sha256"]),
@@ -4506,14 +4514,29 @@ def _task40_v30_load_sector_q_csr_pair(
             )
         sector_matrices[q_index] = matrix
         qualified_receipts.append(receipt)
+        source_entry = dict(provider.entries[q_index])
+        selector_entries.append(
+            {
+                **source_entry,
+                "manifest_status": "COMPLETE_CSR",
+                "qualification_status": "PASS",
+                "qualification_kind": receipt["qualification_kind"],
+                "source_qualification_status": receipt["qualification_status"],
+                "manifest_sha256": receipt["csr_manifest_sha256"],
+                "native_qualification_sha256": receipt[
+                    "native_qualification_sha256"
+                ],
+            }
+        )
         del q_map, active_lookup
     del canonical_h
     return sector_matrices, {
         "assembly_strategy": "V30_QUALIFIED_CSR_PROVIDER",
-        "qualified_q_csr_loaded": True,
+        "qualified_q_csr_loaded": bool(sector_matrices),
         "q_indices": sorted(sector_matrices),
         "native_operator_requalification_performed": False,
         "qualification_receipts": qualified_receipts,
+        "selector_entries": selector_entries,
         "numeric_contribution_count": 0,
         "qualified_read_seconds": float(time.perf_counter() - load_started),
         "assembly_scope": "read-only qualified CSR load; no local numeric refill",
@@ -4542,6 +4565,8 @@ def build_task40_v10_p6_reference_inverse(
     factor_output_directory: str | None = None,
     qualified_q_csr_provider: Any | None = None,
     qualified_q_csr_identity: Mapping[str, Any] | None = None,
+    qualified_q_csr_coverage_phase: str = "all_q",
+    qualified_q_csr_preparer: Callable[..., tuple[Mapping[int, sparse.csr_matrix], Mapping[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     """Build the regular p6 inverse, or run a bounded no-factor q-assembly pair."""
     from mpi4py import MPI
@@ -4639,6 +4664,7 @@ def build_task40_v10_p6_reference_inverse(
         "transform_bank": transform_bank,
         "transform_bank_receipt": None,
         "qualified_q_csr_receipts": [],
+        "qualified_q_csr_selector_entries": [],
     }
     try:
         regular_cfg = __import__("dataclasses").replace(
@@ -4673,11 +4699,19 @@ def build_task40_v10_p6_reference_inverse(
             if not isinstance(qualified_q_csr_identity, Mapping):
                 raise ValueError("V30 qualified CSR injection requires independent runtime identities")
             expected_q_indices = set(range(int(profile.q_count)))
+            if qualified_q_csr_provider.profile != profile.name:
+                raise ValueError("V30 selector profile differs from the registered q profile")
+            coverage = qualified_q_csr_provider.require_coverage(
+                expected_q_indices, phase=qualified_q_csr_coverage_phase
+            )
             if (
-                qualified_q_csr_provider.profile != profile.name
-                or set(qualified_q_csr_provider.entries) != expected_q_indices
+                qualified_q_csr_coverage_phase == "sector_preparation_subset"
+                and not callable(qualified_q_csr_preparer)
             ):
-                raise ValueError("V30 selector must match the profile and contain every q exactly once")
+                raise ValueError(
+                    "V30 partial selector coverage requires a sector-boundary q preparation callback"
+                )
+            owner["qualified_q_csr_coverage"] = coverage
             for key in (
                 "scientific_input_sha256",
                 "execution_identity",
@@ -4992,10 +5026,64 @@ def build_task40_v10_p6_reference_inverse(
                     mode_inventory=mode_inventory,
                     runtime_identity=qualified_q_csr_identity,
                     allocation_gate=allocation_gate,
+                    selected_q_indices=(
+                        set(map(int, context.global_q_indices))
+                        & set(qualified_q_csr_provider.entries)
+                    ),
                 )
                 owner["qualified_q_csr_receipts"].extend(
                     block_audit["qualification_receipts"]
                 )
+                owner["qualified_q_csr_selector_entries"].extend(
+                    block_audit["selector_entries"]
+                )
+                missing_sector_q = set(map(int, context.global_q_indices)) - set(sector_matrices)
+                if missing_sector_q:
+                    if (
+                        qualified_q_csr_coverage_phase != "sector_preparation_subset"
+                        or not callable(qualified_q_csr_preparer)
+                    ):
+                        raise ValueError(
+                            "V30 all-q selector is incomplete at the actual sector boundary"
+                        )
+                    prepared_matrices, preparation_audit = qualified_q_csr_preparer(
+                        provider=qualified_q_csr_provider,
+                        action=action,
+                        volume_action=local_bundle["volume_action"],
+                        coordinates=coordinates,
+                        context=context,
+                        local_h=local_h,
+                        profile=profile,
+                        global_bundle=global_bundle,
+                        local_bundle=local_bundle,
+                        mode_inventory=mode_inventory,
+                        q_indices=tuple(sorted(missing_sector_q)),
+                        available_sector_matrices=sector_matrices,
+                        runtime_identity=qualified_q_csr_identity,
+                        allocation_gate=allocation_gate,
+                    )
+                    prepared_matrices = dict(prepared_matrices)
+                    if set(prepared_matrices) != missing_sector_q:
+                        raise ValueError(
+                            "V30 sector preparer did not return exactly its missing q matrices"
+                        )
+                    if (
+                        not isinstance(preparation_audit, Mapping)
+                        or preparation_audit.get("all_complete_native_pass") is not True
+                    ):
+                        raise ValueError(
+                            "V30 sector preparer lacks saved COMPLETE CSR and independent native PASS evidence"
+                        )
+                    sector_matrices.update(prepared_matrices)
+                    owner["qualified_q_csr_selector_entries"].extend(
+                        dict(row)
+                        for row in preparation_audit.get("selector_entries", ())
+                    )
+                    block_audit = {
+                        **block_audit,
+                        "sector_preparation": dict(preparation_audit),
+                        "q_indices": sorted(sector_matrices),
+                    }
             elif q_assembly_comparison_only:
                 block_audit = compare_task40_v10_sector_assembly(
                     action,
@@ -5071,6 +5159,27 @@ def build_task40_v10_p6_reference_inverse(
         required_q = set(range(profile.q_count))
         if not q_assembly_comparison_only and set(all_q_matrices) != required_q:
             raise ValueError("p6 twist sectors did not produce every profile q matrix")
+        if (
+            qualified_q_csr_provider is not None
+            and qualified_q_csr_coverage_phase == "sector_preparation_subset"
+        ):
+            if not isinstance(factor_output_directory, str) or not factor_output_directory:
+                raise ValueError(
+                    "V30 all-q selector publication requires the approved factor output directory"
+                )
+            from .task40_v30_selected_q_csr import publish_v30_q_selector
+
+            selector_facts = publish_v30_q_selector(
+                Path(factor_output_directory) / "task40_v30_all_q_selector.json",
+                profile=profile.name,
+                entries=owner["qualified_q_csr_selector_entries"],
+                q_count=int(profile.q_count),
+            )
+            if selector_facts.get("all_q_complete_native_pass") is not True:
+                raise RuntimeError("V30 final selector did not verify complete all-q evidence")
+            owner["qualified_q_csr_final_selector"] = selector_facts
+            if event is not None:
+                event("task40_v30_all_q_selector_complete", selector_facts)
         if (
             event is not None
             and not q_assembly_comparison_only

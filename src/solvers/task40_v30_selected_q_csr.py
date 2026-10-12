@@ -160,6 +160,36 @@ class SavedSelectedQContributionView:
         return term
 
 
+class LiveP6SelectedQContributionSource:
+    """Expose one live sector action through the selected-q source interface."""
+
+    def __init__(self, action: Any, local_h: np.ndarray) -> None:
+        active_rows = int(action.condensed.active_rows)
+        reduced_rows = int(action.reduced_size)
+        port_count = int(action.condensed.appended_rows)
+        h = np.ascontiguousarray(local_h, dtype=np.complex128)
+        if (
+            active_rows <= 0
+            or reduced_rows != active_rows + port_count
+            or h.shape != (port_count,)
+            or not np.isfinite(h).all()
+            or not callable(getattr(action, "iter_reduced_contribution_layouts", None))
+            or not callable(getattr(action, "iter_reduced_contributions", None))
+        ):
+            raise ValueError("live selected-q source does not expose one complete reduced sector")
+        self.action = action
+        self.active_rows = active_rows
+        self.reduced_rows = reduced_rows
+        self.port_count = port_count
+        self.local_h = h
+
+    def iter_reduced_contribution_layouts(self, **kwargs: Any):
+        yield from self.action.iter_reduced_contribution_layouts(**kwargs)
+
+    def iter_reduced_contributions(self, **kwargs: Any):
+        yield from self.action.iter_reduced_contributions(**kwargs)
+
+
 def require_direct_hhat_evidence(evidence: Mapping[str, Any]) -> dict[str, Any]:
     """Permit the saved direct-H shortcut only with the recorded empty B/D gate."""
     facts = dict(evidence)
@@ -479,9 +509,16 @@ def fill_saved_selected_q_values(
         not np.shares_memory(data_owner, filled.data)
         or not filled.has_canonical_format
         or not filled.has_sorted_indices
-        or not np.isfinite(filled.data).all()
     ):
         raise RuntimeError("selected q numeric pass detached or corrupted its disk-backed CSR")
+    from .task40_v30_qualified_q_csr import _require_csr
+
+    try:
+        _require_csr(filled, "selected q numeric CSR")
+    except ValueError as exc:
+        raise RuntimeError(
+            "selected q numeric pass detached or corrupted its disk-backed CSR"
+        ) from exc
     return filled, {
         **dict(audit),
         "q_index": q_index,
@@ -710,6 +747,40 @@ def _checked_saved_native_vector(
         "mode_manifest_sha256",
         "ordered_mode_key_sha256",
     )
+    if donor_receipt.get("schema") == "task40extra.review_v26_native_case_recovery_check.v1":
+        receipt_path = Path(str(witness.get("donor_verifier_receipt_path", "")))
+        receipt_sha = witness.get("donor_verifier_receipt_sha256")
+        receipt_valid = (
+            donor_receipt.get("status") == "PASS_READONLY_THREE_CASE_RECOVERY"
+            and donor_receipt.get("checker_passed") is True
+            and isinstance(donor_identity, Mapping)
+            and donor_receipt.get("recovery_current_identity") == dict(donor_identity)
+            and donor_receipt.get("producer_identity_sha256")
+            == witness.get("producer_identity_sha256")
+            and donor_receipt.get("saved_replay_manifest_sha256")
+            == witness.get("saved_replay_manifest_sha256")
+            and donor_receipt.get("original_native_current_identity")
+            == native_manifest.get("native_current_identity")
+            and native_manifest.get("recovery_checker_receipt_sha256") == receipt_sha
+            and Path(str(native_manifest.get("recovery_checker_receipt_path", ""))).resolve()
+            == receipt_path.resolve()
+            and isinstance(receipt_sha, str)
+            and receipt_path.is_file()
+            and _sha256_file(receipt_path) == receipt_sha
+        )
+    else:
+        receipt_valid = (
+            donor_receipt.get("schema") == "task40extra.review_v26_native_donor_readback.v1"
+            and donor_receipt.get("status") == "PASS"
+            and donor_receipt.get("native_manifest_sha256")
+            == witness.get("native_manifest_sha256")
+            and donor_receipt.get("saved_replay_manifest_sha256")
+            == witness.get("saved_replay_manifest_sha256")
+            and donor_receipt.get("producer_identity_sha256")
+            == witness.get("producer_identity_sha256")
+            and donor_receipt.get("donor_current_identity")
+            == (dict(donor_identity) if isinstance(donor_identity, Mapping) else {})
+        )
     if (
         native_schema not in {
             "task40extra.review_v26_native_action.v1",
@@ -725,13 +796,7 @@ def _checked_saved_native_vector(
         != witness.get("saved_replay_manifest_sha256")
         or not isinstance(native_identity, Mapping)
         or not isinstance(donor_identity, Mapping)
-        or donor_receipt.get("schema") != "task40extra.review_v26_native_donor_readback.v1"
-        or donor_receipt.get("status") != "PASS"
-        or donor_receipt.get("native_manifest_sha256") != witness.get("native_manifest_sha256")
-        or donor_receipt.get("saved_replay_manifest_sha256")
-        != witness.get("saved_replay_manifest_sha256")
-        or donor_receipt.get("producer_identity_sha256") != witness.get("producer_identity_sha256")
-        or donor_receipt.get("donor_current_identity") != dict(donor_identity)
+        or not receipt_valid
         or (
             native_schema == "task40extra.review_v26_native_action.v1"
             and dict(native_identity) != dict(donor_identity)
@@ -804,6 +869,10 @@ def run_selected_q_native_actions(
     saved_native_witness: Mapping[str, Any] | None = None,
     expected_operator_identity: Mapping[str, Any] | None = None,
     expected_current_identity: Mapping[str, Any] | None = None,
+    native_stage_callback: Callable[
+        [str, Mapping[str, np.ndarray], Mapping[str, Any]], Mapping[str, Any] | None
+    ] | None = None,
+    native_stage_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run four CSR actions, reusing identity-bound V26 witnesses when supplied."""
     from .task40_v25_selected_q0 import (
@@ -826,6 +895,25 @@ def run_selected_q_native_actions(
     peer_q_index = q_indices[peer_branch]
     selected_map = q_maps[branch]
     peer_map = q_maps[peer_branch]
+    if native_stage_callback is not None and not callable(native_stage_callback):
+        raise TypeError("V30 native stage persistence callback must be callable")
+    native_stage_records: dict[str, dict[str, Any]] = {}
+
+    def persist_stage(
+        name: str,
+        arrays: Mapping[str, np.ndarray],
+        metadata: Mapping[str, Any],
+    ) -> None:
+        if native_stage_callback is None:
+            return
+        saved = native_stage_callback(
+            name,
+            arrays,
+            {**dict(native_stage_identity or {}), **dict(metadata)},
+        )
+        if isinstance(saved, Mapping):
+            native_stage_records[name] = dict(saved)
+
     _checked_selected_map(selected_map, local_rows=int(action.reduced_size))
     _checked_selected_map(peer_map, local_rows=int(action.reduced_size))
     if matrix.shape != (selected_map.shape[1], selected_map.shape[1]):
@@ -923,6 +1011,7 @@ def run_selected_q_native_actions(
             expected_operator_identity=expected_operator_identity or {},
             expected_current_identity=expected_current_identity or {},
         )
+        peer_input = reused_peer_input
     else:
         inputs = {
             "case1_full": _nonzero_complex_vector(
@@ -934,10 +1023,37 @@ def run_selected_q_native_actions(
         }
         reused_case1 = reused_selected_cross = None
         reused_peer_input = reused_peer_diagonal = reused_peer_cross = None
+        peer_input = _nonzero_complex_vector(
+            int(peer_map.shape[1]), 301201 + peer_q_index + seed_offset
+        )
     inputs["case1_trace_only"] = np.zeros_like(inputs["case1_full"])
     inputs["case1_trace_only"][:selected_trace_rows] = inputs["case1_full"][:selected_trace_rows]
     inputs["case1_port_only"] = np.zeros_like(inputs["case1_full"])
     inputs["case1_port_only"][selected_trace_rows:] = inputs["case1_full"][selected_trace_rows:]
+    reused_array_references = (
+        dict(saved_native_witness.get("array_references", {}))
+        if reuse_saved_native and isinstance(saved_native_witness, Mapping)
+        else {}
+    )
+    fresh_input_arrays = dict(inputs)
+    if reuse_saved_native:
+        # The old V26 full input stays in its original replay artifact.
+        fresh_input_arrays.pop("case1_full", None)
+    else:
+        fresh_input_arrays["paired_peer_full"] = peer_input
+    persist_stage(
+        "inputs_ready",
+        fresh_input_arrays,
+        {
+            "input_names": sorted(inputs),
+            "paired_peer_input_present": True,
+            "reused_artifacts": {
+                key: reused_array_references[key]
+                for key in ("case1_full_input", "peer_case1_input")
+                if key in reused_array_references
+            },
+        },
+    )
 
     native_outputs: dict[str, np.ndarray] = {}
     native_components_case1: dict[str, np.ndarray]
@@ -973,6 +1089,29 @@ def run_selected_q_native_actions(
             ).reshape(-1)
             for key, value in reduced_components.items()
         }
+        persist_stage(
+            "case1_complete",
+            {
+                f"component_case1_{name}": value
+                for name, value in native_components_case1.items()
+            },
+            {
+                "native_total_and_paired_leakage_reused": True,
+                "component_array_sha256": {
+                    name: _raw_vector_sha256(value)
+                    for name, value in native_components_case1.items()
+                },
+                "reused_artifacts": {
+                    key: reused_array_references[key]
+                    for key in (
+                        "case1_full_input",
+                        "case1_full_output",
+                        "selected_to_peer_cross",
+                    )
+                    if key in reused_array_references
+                },
+            },
+        )
         component_total = sum(
             (native_components_case1[key] for key in ("volume", "minus_D", "C", "Hhat")),
             np.zeros(matrix.shape[0], dtype=np.complex128),
@@ -984,6 +1123,22 @@ def run_selected_q_native_actions(
         peer_diagonal = reused_peer_diagonal
         peer_cross_to_selected = reused_peer_cross
         peer_cross_from_selected = reused_selected_cross
+        persist_stage(
+            "peer_case1_complete",
+            {},
+            {
+                "native_peer_action_reused": True,
+                "reused_artifacts": {
+                    key: reused_array_references[key]
+                    for key in (
+                        "peer_case1_input",
+                        "peer_case1_output",
+                        "peer_to_selected_cross",
+                    )
+                    if key in reused_array_references
+                },
+            },
+        )
     else:
         allocation_gate(
             f"task40_v30_q{selected_q_index}_native_case1_with_components",
@@ -1015,8 +1170,20 @@ def run_selected_q_native_actions(
         }
         native_outputs["case1_full"] = out0 if branch == 0 else out1
         peer_cross_from_selected = out1 if branch == 0 else out0
-        peer_input = _nonzero_complex_vector(
-            int(peer_map.shape[1]), 301201 + peer_q_index + seed_offset
+        persist_stage(
+            "case1_complete",
+            {
+                "case1_full_output": native_outputs["case1_full"],
+                "selected_to_peer_cross": peer_cross_from_selected,
+                **{
+                    f"component_case1_{name}": value
+                    for name, value in native_components_case1.items()
+                },
+            },
+            {
+                "native_total_and_components_fresh": True,
+                "selected_input_sha256": _raw_vector_sha256(inputs["case1_full"]),
+            },
         )
         allocation_gate(
             f"task40_v30_q{selected_q_index}_native_peer_direction",
@@ -1044,6 +1211,17 @@ def run_selected_q_native_actions(
         peer_out0, peer_out1, _peer_reduced = peer_result
         peer_diagonal = peer_out0 if peer_branch == 0 else peer_out1
         peer_cross_to_selected = peer_out0 if branch == 0 else peer_out1
+        persist_stage(
+            "peer_case1_complete",
+            {
+                "peer_case1_diagonal": peer_diagonal,
+                "peer_to_selected_cross": peer_cross_to_selected,
+            },
+            {
+                "native_peer_action_fresh": True,
+                "peer_input_sha256": _raw_vector_sha256(peer_input),
+            },
+        )
 
     trace_native = sum(
         (native_components_case1[key] for key in ("volume", "minus_D")),
@@ -1081,6 +1259,17 @@ def run_selected_q_native_actions(
     case2_out0, case2_out1, _case2_reduced = case2_result
     native_outputs["case2_full"] = case2_out0 if branch == 0 else case2_out1
     peer_case2 = case2_out1 if branch == 0 else case2_out0
+    persist_stage(
+        "case2_complete",
+        {
+            "case2_full_output": native_outputs["case2_full"],
+            "peer_case2_cross": peer_case2,
+        },
+        {
+            "case2_input_sha256": _raw_vector_sha256(inputs["case2_full"]),
+            "native_action_complete": True,
+        },
+    )
     peer_matrix_error = None
     if peer_matrix is not None:
         if peer_matrix.shape != (peer_map.shape[1], peer_map.shape[1]):
@@ -1088,12 +1277,6 @@ def run_selected_q_native_actions(
         peer_matrix_error = _relative_error(peer_matrix @ peer_input, peer_diagonal)
         if peer_matrix_error > _NATIVE_LIMIT:
             raise ValueError("peer q CSR/native action differs during the pair leakage check")
-    csr_outputs = selected_q_csr_actions(
-        matrix,
-        inputs,
-        allocation_gate=allocation_gate,
-        q_index=selected_q_index,
-    )
     leakage = {
         "q_to_peer": {
             "input_q": selected_q_index,
@@ -1111,6 +1294,40 @@ def run_selected_q_native_actions(
             "peer_csr_native_relative": peer_matrix_error,
         },
     }
+    paired_native_arrays = {
+        "case1_full_output": native_outputs["case1_full"],
+        "case1_trace_only_output": native_outputs["case1_trace_only"],
+        "case1_port_only_output": native_outputs["case1_port_only"],
+        "case2_full_output": native_outputs["case2_full"],
+        "peer_case1_diagonal": peer_diagonal,
+        "selected_to_peer_cross": peer_cross_from_selected,
+        "peer_to_selected_cross": peer_cross_to_selected,
+        "peer_case2_cross": peer_case2,
+        **{
+            f"component_case1_{name}": value
+            for name, value in native_components_case1.items()
+        },
+    }
+    persist_stage(
+        "paired_witness_ready",
+        {},
+        {
+            "paired_leakage": leakage,
+            "native_array_sha256": {
+                name: _raw_vector_sha256(value)
+                for name, value in paired_native_arrays.items()
+            },
+            "stage_records": native_stage_records,
+            "reused_artifacts": reused_array_references,
+            "qualification_follows_this_record": True,
+        },
+    )
+    csr_outputs = selected_q_csr_actions(
+        matrix,
+        inputs,
+        allocation_gate=allocation_gate,
+        q_index=selected_q_index,
+    )
     receipt = qualify_selected_q_native(
         matrix=matrix,
         inputs=inputs,
@@ -1146,6 +1363,7 @@ def run_selected_q_native_actions(
         "paired_peer_native_cross": peer_cross_to_selected,
         "paired_selected_native_cross": peer_cross_from_selected,
         "paired_peer_case2_cross": peer_case2,
+        "native_stage_records": native_stage_records,
     }
 
 
@@ -1169,6 +1387,142 @@ def _save_array(path: Path, value: np.ndarray) -> dict[str, Any]:
     }
 
 
+def _persist_v30_native_stage(
+    *,
+    output_directory: str | Path,
+    q_index: int,
+    twist_index: int,
+    stage: str,
+    arrays: Mapping[str, np.ndarray],
+    metadata: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Atomically preserve one completed native stage and its original identities."""
+    from .task40_v25_selected_q0 import _save_npz_atomic, _write_json
+
+    if (
+        type(q_index) is not int
+        or q_index < 0
+        or type(twist_index) is not int
+        or twist_index < 0
+        or not stage.replace("_", "").isalnum()
+    ):
+        raise ValueError("V30 native stage needs safe q, twist, and stage identities")
+    root = Path(output_directory).resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    stem = f"task40_v30_q{q_index}_twist{twist_index}_native_{stage}"
+    array_path = root / f"{stem}.npz"
+    sidecar_path = root / f"{stem}.json"
+    if array_path.exists() or sidecar_path.exists():
+        raise FileExistsError(f"refusing to replace V30 native stage evidence: {stem}")
+    checked: dict[str, np.ndarray] = {}
+    for name, raw in arrays.items():
+        if not name.replace("_", "").isalnum():
+            raise ValueError("V30 native stage has an unsafe array name")
+        value = np.asarray(raw)
+        if value.ndim != 1 or value.dtype != np.dtype(np.complex128) or not np.isfinite(value).all():
+            raise ValueError(f"V30 native stage array {name} must be a finite complex128 vector")
+        checked[name] = value
+    if checked:
+        _save_npz_atomic(array_path, **checked)
+    payload = {
+        "schema": "task40extra.review_v30_selected_q_native_stage.v1",
+        "status": "STAGE_COMPLETE",
+        "stage": stage,
+        "q_index": q_index,
+        "twist_index": twist_index,
+        "metadata": dict(metadata),
+        "array_artifact": (
+            {
+                "path": str(array_path),
+                "bytes": int(array_path.stat().st_size),
+                "sha256": _sha256_file(array_path),
+            }
+            if checked
+            else None
+        ),
+        "array_names": sorted(checked),
+        "array_shapes": {name: list(value.shape) for name, value in checked.items()},
+        "array_sha256": {
+            name: _raw_vector_sha256(value) for name, value in checked.items()
+        },
+    }
+    _write_json(sidecar_path, payload)
+    payload["sidecar_path"] = str(sidecar_path)
+    payload["sidecar_sha256"] = _sha256_file(sidecar_path)
+    return payload
+
+
+def _persist_v30_numeric_pending(
+    *,
+    matrix: sparse.csr_matrix,
+    pattern_record: Mapping[str, Any],
+    numeric_facts: Mapping[str, Any],
+    output_directory: str | Path,
+    profile: str,
+    q_index: int,
+    twist_index: int,
+    operator_identity: Mapping[str, Any],
+    matrix_source_identity: Mapping[str, Any],
+    execution_identity: Mapping[str, Any],
+    producer_identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Record the filled CSR independently before any native qualification."""
+    from .task40_v25_selected_q0 import _write_json
+
+    if numeric_facts.get("numeric_fill_complete") is not True:
+        raise ValueError("V30 pending record requires a completed numeric fill")
+    root = Path(output_directory).resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    path = root / f"task40_v30_q{q_index}_twist{twist_index}_numeric_pending.json"
+    if path.exists():
+        raise FileExistsError("refusing to replace an existing V30 numeric-pending record")
+    artifacts: dict[str, dict[str, Any]] = {}
+    pattern_artifacts = dict(pattern_record.get("csr_artifacts", {}))
+    if set(pattern_artifacts) != {"data", "indices", "indptr"}:
+        raise ValueError("V30 numeric-pending record needs all three pattern CSR arrays")
+    for name in ("data", "indices", "indptr"):
+        row = pattern_artifacts[name]
+        artifact = Path(str(row.get("path", ""))).resolve()
+        if not artifact.is_file():
+            raise FileNotFoundError(f"V30 numeric-pending CSR array is missing: {name}")
+        digest = _sha256_file(artifact)
+        if name != "data" and digest != row.get("sha256"):
+            raise IOError(f"V30 numeric fill changed structural array {name}")
+        live_path = _array_memmap_path(getattr(matrix, name))
+        if live_path is None or live_path.resolve() != artifact:
+            raise ValueError(f"V30 numeric-pending {name} is not the saved pattern backing array")
+        artifacts[name] = {
+            "path": str(artifact),
+            "bytes": int(artifact.stat().st_size),
+            "sha256": digest,
+            "pattern_sha256": row.get("sha256"),
+            "numeric_fill_changed_data": bool(
+                name == "data" and digest != row.get("sha256")
+            ),
+        }
+    payload = {
+        "schema": "task40extra.review_v30_q_csr_numeric_pending.v1",
+        "status": "NUMERIC_COMPLETE_NATIVE_PENDING",
+        "profile": profile,
+        "q_index": q_index,
+        "twist_index": twist_index,
+        "shape": list(matrix.shape),
+        "stored_structural_slots": int(matrix.nnz),
+        "operator_identity": dict(operator_identity),
+        "matrix_source_identity": dict(matrix_source_identity),
+        "execution_identity": dict(execution_identity),
+        "producer_identity": dict(producer_identity),
+        "pattern_record": dict(pattern_record),
+        "numeric_fill_facts": dict(numeric_facts),
+        "csr_artifacts": artifacts,
+        "csr_content_sha256": _csr_sha256(matrix),
+    }
+    _write_json(path, payload)
+    payload["record_path"] = str(path)
+    payload["record_sha256"] = _sha256_file(path)
+    return payload
+
+
 def finalize_selected_q_csr(
     *,
     matrix: sparse.csr_matrix,
@@ -1190,7 +1544,11 @@ def finalize_selected_q_csr(
     producer_identity: Mapping[str, Any],
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     """Freeze a COMPLETE selected-q CSR and its separate independent native PASS."""
-    from .task40_v30_qualified_q_csr import _require_sha, _require_source_sha
+    from .task40_v30_qualified_q_csr import (
+        _require_csr,
+        _require_sha,
+        _require_source_sha,
+    )
 
     root = Path(output_directory).resolve()
     if (
@@ -1205,9 +1563,14 @@ def finalize_selected_q_csr(
         or matrix.indptr.dtype != np.dtype(np.int32)
         or not matrix.has_canonical_format
         or not matrix.has_sorted_indices
-        or not np.isfinite(matrix.data).all()
     ):
         raise ValueError("selected-q finalizer requires a finite canonical complex128/int32 CSR")
+    try:
+        _require_csr(matrix, "selected-q final CSR")
+    except ValueError as exc:
+        raise ValueError(
+            "selected-q finalizer requires a finite canonical complex128/int32 CSR"
+        ) from exc
     if (
         native_result.get("status") != "PASS"
         or native_result.get("four_complete_csr_actions_passed") is not True
@@ -1405,6 +1768,263 @@ def finalize_selected_q_csr(
     return manifest, qualification, selector_entry
 
 
+def prepare_selected_q_csr_sector(
+    *,
+    sources_by_q: Mapping[int, Any],
+    q_maps_by_q: Mapping[int, sparse.csr_matrix],
+    sector_q_indices: tuple[int, int],
+    twist_index: int,
+    trace_rows_by_q: Mapping[int, int],
+    selected_q_indices: Sequence[int],
+    action: Any,
+    volume_action: Any,
+    comm: Any,
+    available_sector_matrices: Mapping[int, sparse.csr_matrix],
+    allocation_gate: Callable[[str, Mapping[str, Any]], Any],
+    profile: str,
+    profile_identity: Mapping[str, Any],
+    ordered_modes: Sequence[Any],
+    original_h: np.ndarray,
+    scientific_input_sha256: str,
+    operator_identity_by_q: Mapping[int, Mapping[str, Any]],
+    matrix_source_identity_by_q: Mapping[int, Mapping[str, Any]],
+    execution_identity: Mapping[str, Any],
+    producer_identity_by_q: Mapping[int, Mapping[str, Any]],
+    output_directory: str | Path,
+    saved_native_witness_by_q: Mapping[int, Mapping[str, Any]] | None = None,
+    direct_hhat_evidence_by_q: Mapping[int, Mapping[str, Any]] | None = None,
+) -> tuple[dict[int, sparse.csr_matrix], dict[str, Any]]:
+    """Produce only missing q values and persist each with an independent native gate."""
+    sector_qs = tuple(int(q) for q in sector_q_indices)
+    selected = tuple(int(q) for q in selected_q_indices)
+    if (
+        len(sector_qs) != 2
+        or sector_qs[0] == sector_qs[1]
+        or type(twist_index) is not int
+        or twist_index < 0
+        or len(set(selected)) != len(selected)
+        or not selected
+        or not set(selected) <= set(sector_qs)
+        or set(sources_by_q) != set(selected)
+        or set(q_maps_by_q) != set(sector_qs)
+        or set(trace_rows_by_q) != set(sector_qs)
+        or set(operator_identity_by_q) != set(selected)
+        or set(matrix_source_identity_by_q) != set(selected)
+        or set(producer_identity_by_q) != set(selected)
+        or not callable(allocation_gate)
+    ):
+        raise ValueError("V30 sector preparation must bind exactly its real missing q branches")
+    saved_witnesses = {
+        int(q): value for q, value in (saved_native_witness_by_q or {}).items()
+    }
+    direct_hhat_evidence = {
+        int(q): value for q, value in (direct_hhat_evidence_by_q or {}).items()
+    }
+    if (
+        not set(saved_witnesses) <= set(selected)
+        or any(q != 4 for q in saved_witnesses)
+        or (saved_witnesses and (sector_qs != (0, 4) or twist_index != 0))
+        or not set(direct_hhat_evidence) <= set(selected)
+        or any(q != 4 for q in direct_hhat_evidence)
+    ):
+        raise ValueError("V30 V26 witness/support reuse is restricted to the accepted q4/q0 twist-0 pair")
+    matrices = {int(q): matrix for q, matrix in available_sector_matrices.items()}
+    if (
+        not set(matrices) <= set(sector_qs)
+        or set(matrices).intersection(selected)
+        or set(matrices).union(selected) != set(sector_qs)
+    ):
+        raise ValueError(
+            "V30 sector preparation must pair every missing q with its real provider or newly selected peer"
+        )
+    output_root = Path(output_directory).resolve()
+    q_maps = tuple(q_maps_by_q[q] for q in sector_qs)
+    prepared: dict[int, sparse.csr_matrix] = {}
+    pattern_records: dict[int, dict[str, Any]] = {}
+    numeric_facts_by_q: dict[int, dict[str, Any]] = {}
+    numeric_pending_by_q: dict[int, dict[str, Any]] = {}
+    for q_index in selected:
+        q_map = q_maps_by_q[q_index]
+        q_directory = output_root / f"q{q_index}_twist{twist_index}"
+        matrix, _view, pattern_record = build_saved_selected_q_pattern(
+            sources_by_q[q_index],
+            q_map,
+            q_index=q_index,
+            twist_index=twist_index,
+            trace_rows=int(trace_rows_by_q[q_index]),
+            output_directory=q_directory,
+            allocation_gate=allocation_gate,
+        )
+        matrix, numeric_facts = fill_saved_selected_q_values(
+            sources_by_q[q_index],
+            matrix,
+            q_map,
+            q_index=q_index,
+            twist_index=twist_index,
+            trace_rows=int(trace_rows_by_q[q_index]),
+            allocation_gate=allocation_gate,
+            direct_hhat=q_index in direct_hhat_evidence,
+            direct_hhat_evidence=direct_hhat_evidence.get(q_index),
+        )
+        numeric_pending_by_q[q_index] = _persist_v30_numeric_pending(
+            matrix=matrix,
+            pattern_record=pattern_record,
+            numeric_facts=numeric_facts,
+            output_directory=q_directory,
+            profile=profile,
+            q_index=q_index,
+            twist_index=twist_index,
+            operator_identity=operator_identity_by_q[q_index],
+            matrix_source_identity=matrix_source_identity_by_q[q_index],
+            execution_identity=execution_identity,
+            producer_identity=producer_identity_by_q[q_index],
+        )
+        prepared[q_index] = matrix
+        matrices[q_index] = matrix
+        pattern_records[q_index] = pattern_record
+        numeric_facts_by_q[q_index] = numeric_facts
+
+    selector_entries = []
+    native_facts = {}
+    for q_index in selected:
+        branch = sector_qs.index(q_index)
+        peer_q_index = sector_qs[1 - branch]
+        peer_matrix = matrices.get(peer_q_index)
+        if peer_matrix is None:
+            raise ValueError("V30 native qualification requires the actual paired-sector CSR")
+        operator_identity = dict(operator_identity_by_q[q_index])
+        actual_operator_identity = selected_q_operator_identity(
+            scientific_input_sha256=scientific_input_sha256,
+            profile_identity=profile_identity,
+            ordered_modes=ordered_modes,
+            q_map=q_maps_by_q[q_index],
+            original_h=original_h,
+        )
+        if operator_identity != actual_operator_identity:
+            raise ValueError("V30 prepared q operator identity differs from its actual sector map/H")
+        native_stage_records: dict[str, dict[str, Any]] = {}
+
+        def persist_native_stage(
+            stage: str,
+            arrays: Mapping[str, np.ndarray],
+            metadata: Mapping[str, Any],
+        ) -> Mapping[str, Any]:
+            record = _persist_v30_native_stage(
+                output_directory=output_root / f"q{q_index}_twist{twist_index}",
+                q_index=q_index,
+                twist_index=twist_index,
+                stage=stage,
+                arrays=arrays,
+                metadata={
+                    "operator_identity": dict(operator_identity),
+                    "matrix_source_identity": dict(matrix_source_identity_by_q[q_index]),
+                    "execution_identity": dict(execution_identity),
+                    "producer_identity": dict(producer_identity_by_q[q_index]),
+                    "numeric_pending_record": numeric_pending_by_q[q_index],
+                    **dict(metadata),
+                },
+            )
+            native_stage_records[stage] = dict(record)
+            return record
+
+        try:
+            native_result = run_selected_q_native_actions(
+                action=action,
+                volume_action=volume_action,
+                comm=comm,
+                q_maps=q_maps,
+                q_indices=sector_qs,
+                trace_rows_by_q=trace_rows_by_q,
+                selected_q_index=q_index,
+                twist_index=twist_index,
+                matrix=prepared[q_index],
+                allocation_gate=allocation_gate,
+                peer_matrix=peer_matrix,
+                saved_native_witness=saved_witnesses.get(q_index),
+                expected_operator_identity=operator_identity,
+                expected_current_identity=execution_identity,
+                native_stage_callback=persist_native_stage,
+                native_stage_identity={
+                    "numeric_pending_path": numeric_pending_by_q[q_index].get("record_path"),
+                    "numeric_pending_sha256": numeric_pending_by_q[q_index].get("record_sha256"),
+                },
+            )
+        except Exception as exc:
+            from .task40_v25_selected_q0 import _write_json
+
+            failure_path = (
+                output_root
+                / f"q{q_index}_twist{twist_index}"
+                / f"task40_v30_q{q_index}_twist{twist_index}_native_failure.json"
+            )
+            if failure_path.exists():
+                raise FileExistsError(
+                    f"refusing to overwrite existing V30 native failure evidence: {failure_path}"
+                ) from exc
+            _write_json(
+                failure_path,
+                {
+                    "schema": "task40extra.review_v30_selected_q_native_failure.v1",
+                    "status": "NATIVE_FAILED_AFTER_NUMERIC_COMPLETE",
+                    "q_index": q_index,
+                    "twist_index": twist_index,
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc),
+                    "numeric_pending_record": numeric_pending_by_q[q_index],
+                    "native_stage_records": native_stage_records,
+                    "saved_native_array_references": dict(
+                        saved_witnesses.get(q_index, {}).get("array_references", {})
+                    ),
+                },
+            )
+            raise
+        _manifest, qualification, entry = finalize_selected_q_csr(
+            matrix=prepared[q_index],
+            pattern_record=pattern_records[q_index],
+            numeric_facts=numeric_facts_by_q[q_index],
+            native_result=native_result,
+            output_directory=output_root / f"q{q_index}_twist{twist_index}",
+            profile=profile,
+            q_index=q_index,
+            twist_index=twist_index,
+            q_map=q_maps_by_q[q_index],
+            original_h=original_h,
+            profile_identity=profile_identity,
+            ordered_modes=ordered_modes,
+            scientific_input_sha256=scientific_input_sha256,
+            operator_identity=operator_identity,
+            matrix_source_identity=matrix_source_identity_by_q[q_index],
+            execution_identity=execution_identity,
+            producer_identity=producer_identity_by_q[q_index],
+        )
+        if qualification.get("status") != "PASS" or entry.get("manifest_status") != "COMPLETE_CSR":
+            raise RuntimeError("V30 selected q did not persist COMPLETE CSR and native PASS")
+        selector_entries.append(entry)
+        native_facts[str(q_index)] = {
+            "status": qualification["status"],
+            "four_complete_csr_actions_passed": qualification[
+                "four_complete_csr_actions_passed"
+            ],
+            "paired_sector_leakage_passed": qualification["paired_sector_leakage_passed"],
+            "maximum_relative_error": qualification["maximum_relative_error"],
+            "csr_manifest_sha256": entry["manifest_sha256"],
+            "native_qualification_sha256": entry["native_qualification_sha256"],
+            "numeric_pending_path": numeric_pending_by_q[q_index]["record_path"],
+            "numeric_pending_sha256": numeric_pending_by_q[q_index]["record_sha256"],
+            "native_stage_records": native_stage_records,
+        }
+    return prepared, {
+        "selected_q_indices": list(selected),
+        "pattern_facts_by_q": pattern_records,
+        "numeric_facts_by_q": numeric_facts_by_q,
+        "numeric_pending_by_q": numeric_pending_by_q,
+        "native_facts_by_q": native_facts,
+        "selector_entries": selector_entries,
+        "all_complete_native_pass": len(selector_entries) == len(selected)
+        and all(row.get("qualification_status") == "PASS" for row in selector_entries),
+    }
+
+
 def make_v30_q_selector(
     *, profile: str, entries: Sequence[Mapping[str, Any]], q_count: int
 ) -> dict[str, Any]:
@@ -1432,4 +2052,26 @@ def make_v30_q_selector(
         "schema": V30_SELECTED_Q_SELECTOR_SCHEMA,
         "profile": profile,
         "q_csr_entries": sorted(rows, key=lambda row: int(row["q_index"])),
+    }
+
+
+def publish_v30_q_selector(
+    path: str | Path,
+    *,
+    profile: str,
+    entries: Sequence[Mapping[str, Any]],
+    q_count: int,
+) -> dict[str, Any]:
+    """Atomically publish the final selector only after every q has COMPLETE evidence."""
+    destination = Path(path).resolve()
+    if destination.exists():
+        raise FileExistsError("refusing to replace an existing V30 all-q selector")
+    payload = make_v30_q_selector(profile=profile, entries=entries, q_count=q_count)
+    _atomic_json(destination, payload)
+    return {
+        "path": str(destination),
+        "bytes": int(destination.stat().st_size),
+        "sha256": _sha256_file(destination),
+        "q_count": int(q_count),
+        "all_q_complete_native_pass": True,
     }

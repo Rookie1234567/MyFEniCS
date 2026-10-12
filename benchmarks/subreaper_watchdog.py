@@ -44,6 +44,7 @@ def memory_envelope(
     *,
     host_reserve_bytes: int | None = None,
     task_cgroup_reserve_bytes: int | None = None,
+    require_cgroup_memory_details: bool = False,
 ) -> dict:
     if memory_policy not in {
         LEGACY_MEMORY_POLICY,
@@ -57,13 +58,57 @@ def memory_envelope(
     host_available = int(available)
     task_cgroup_available = None
     ancestors = []
+    cgroup_memory_stats = []
     path = current_cgroup_path()
     while path is not None and path.is_relative_to('/sys/fs/cgroup'):
         maximum, current = path / 'memory.max', path / 'memory.current'
+        raw_limit = None
+        used = None
         if maximum.is_file():
-            raw = maximum.read_text().strip()
-            if raw != 'max':
-                limit, used = int(raw), int(current.read_text())
+            raw_limit = maximum.read_text().strip()
+            if current.is_file():
+                used = int(current.read_text())
+        stat_values = None
+        stat_path = path / 'memory.stat'
+        if require_cgroup_memory_details and raw_limit is not None:
+            if raw_limit != 'max' and (used is None or not stat_path.is_file()):
+                raise RuntimeError(
+                    f"required cgroup memory details are unreadable at {path}"
+                )
+            if used is not None and stat_path.is_file():
+                stat_values = {}
+                for line in stat_path.read_text(encoding='ascii').splitlines():
+                    fields = line.split()
+                    if len(fields) == 2 and fields[0] in {'anon', 'file', 'file_dirty'}:
+                        try:
+                            stat_values[fields[0]] = int(fields[1])
+                        except ValueError as exc:
+                            raise RuntimeError(
+                                f"invalid cgroup memory.stat value at {path}"
+                            ) from exc
+            if raw_limit != 'max' and (
+                stat_values is None
+                or set(stat_values) != {'anon', 'file', 'file_dirty'}
+            ):
+                raise RuntimeError(
+                    f"required anon/file/file_dirty counters are missing at {path}"
+                )
+            if stat_values is not None:
+                cgroup_memory_stats.append(
+                    {
+                        'path': str(path),
+                        'limit_bytes': None if raw_limit == 'max' else int(raw_limit),
+                        'current_bytes': used,
+                        'anon_bytes': stat_values['anon'],
+                        'file_bytes': stat_values['file'],
+                        'file_dirty_bytes': stat_values['file_dirty'],
+                    }
+                )
+        if maximum.is_file():
+            if raw_limit != 'max':
+                limit = int(raw_limit)
+                if used is None:
+                    raise RuntimeError(f"cgroup memory.current is unreadable at {path}")
                 total = min(total, limit)
                 cgroup_available = max(0, limit - used)
                 available = min(available, cgroup_available)
@@ -72,7 +117,20 @@ def memory_envelope(
                     if task_cgroup_available is None
                     else min(task_cgroup_available, cgroup_available)
                 )
-                ancestors.append({'path': str(path), 'limit_bytes': limit, 'current_bytes': used})
+                ancestor = {'path': str(path), 'limit_bytes': limit, 'current_bytes': used}
+                if require_cgroup_memory_details:
+                    if stat_values is None:
+                        raise RuntimeError(
+                            f"required cgroup memory.stat counters are missing at {path}"
+                        )
+                    ancestor.update(
+                        {
+                            'anon_bytes': stat_values['anon'],
+                            'file_bytes': stat_values['file'],
+                            'file_dirty_bytes': stat_values['file_dirty'],
+                        }
+                    )
+                ancestors.append(ancestor)
         if path == Path('/sys/fs/cgroup'):
             break
         path = path.parent
@@ -125,7 +183,7 @@ def memory_envelope(
         static_tree_cap = 12_000_000_000
     if task_cgroup_available is None:
         task_cgroup_available = host_available
-    return {**memory, 'effective_total_bytes': total,
+    result = {**memory, 'effective_total_bytes': total,
             'effective_available_bytes': available, 'host_mem_available_bytes': host_available,
             'task_cgroup_available_bytes': int(task_cgroup_available),
             'host_launch_available_bytes': max(0, host_available - reserve),
@@ -145,6 +203,9 @@ def memory_envelope(
             'reserve_reason': reserve_reason,
             'static_tree_cap_bytes': static_tree_cap,
             'cgroup_limits': ancestors}
+    if require_cgroup_memory_details:
+        result['cgroup_memory_stats'] = cgroup_memory_stats
+    return result
 
 
 def _children() -> dict[int, tuple[int, int]]:

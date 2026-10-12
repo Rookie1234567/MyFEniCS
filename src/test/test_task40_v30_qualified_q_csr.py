@@ -316,8 +316,10 @@ def _legacy_fixture(root: Path):
         "saved_only_no_fe_or_native_rebuild": True,
         "source_identity": source_identity,
         "numeric_fill_identity": {
-            "source_sha": old_source,
-            "campaign_window_sha256": old_window,
+            "execution_identity": {
+                "source_sha": old_source,
+                "campaign_window_sha256": old_window,
+            },
             "donor_identity": donor,
         },
         "csr_artifacts": csr_artifacts,
@@ -391,6 +393,26 @@ def test_q0_import_reuses_original_v28_verifier_and_keeps_old_window_separate(tm
     assert receipt["maximum_relative_error"] is None
     assert gates[-1][0] == "task40_v30_q0_csr_open"
     assert any(name == "task40_v30_legacy_q0_map_h_identity" for name, _ in gates)
+
+
+def test_selector_coverage_is_strict_by_default_and_explicit_for_sector_preparation(tmp_path):
+    *_donor, selector_path = _legacy_fixture(tmp_path)
+    provider = _provider(tmp_path, selector_path)
+
+    with pytest.raises(ValueError, match="all-q phase requires"):
+        provider.require_coverage(set(range(8)), phase="all_q")
+
+    preparation = provider.require_coverage(
+        set(range(8)), phase="sector_preparation_subset"
+    )
+    assert preparation == {
+        "phase": "sector_preparation_subset",
+        "required_q_indices": list(range(8)),
+        "available_q_indices": [0],
+        "complete_coverage": False,
+    }
+    with pytest.raises(ValueError, match="explicit phase"):
+        provider.require_coverage(set(range(8)), phase="implicit_partial")
 
 
 def test_q0_map_import_requires_identity_proof_if_row_or_column_numbering_changes():

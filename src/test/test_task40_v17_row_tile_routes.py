@@ -561,6 +561,31 @@ def test_v18_row_tile_checker_covers_all_eight_q_branches(tmp_path: Path):
     assert result["covered_q"] == list(range(8))
 
 
+def test_v20_target_ny8_row_tile_checker_uses_registered_profile_kind(tmp_path: Path):
+    from src.runners.task40_v10_output_checker import _verify_v17_row_tile_assembly_summary
+    from src.solvers.task40_v20_registry import TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE
+
+    summary = {
+        "q_assembly_strategy": "ROW_TILE_BOUNDED_CSR_V17",
+        "profile": TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
+        "source_sha": "c" * 40,
+        "reference_audit_snapshot": {
+            "sector_audits_before_destroy": [
+                _valid_v17_sector([0, 1]),
+                _valid_v17_sector([2, 3]),
+                _valid_v17_sector([4, 5]),
+                _valid_v17_sector([6, 7]),
+            ]
+        },
+    }
+
+    result = _verify_v17_row_tile_assembly_summary(tmp_path, summary)
+    assert result["passed"] is True
+    assert result["schema"] == "task40extra.review_v17_row_tile_assembly_checker.v1"
+    assert result["sector_count"] == 4
+    assert result["covered_q"] == list(range(8))
+
+
 def test_v18_operator_checker_recomputes_64_block_and_eight_schur_gates():
     import hashlib
     import json

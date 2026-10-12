@@ -194,6 +194,33 @@ class QualifiedQCSRProvider:
                 raise ValueError("V30 selector q indices must be unique nonnegative integers")
             self.entries[row["q_index"]] = dict(row)
 
+    def require_coverage(self, required_q_indices: set[int], *, phase: str) -> dict[str, Any]:
+        """Check selector coverage under an explicit preparation or all-q phase."""
+        required = set(required_q_indices)
+        available = set(self.entries)
+        if (
+            not required
+            or any(type(q) is not int or q < 0 for q in required)
+            or phase not in {"all_q", "sector_preparation_subset"}
+        ):
+            raise ValueError("V30 q selector coverage needs a valid explicit phase and q inventory")
+        if phase == "all_q" and available != required:
+            raise ValueError(
+                "V30 all-q phase requires the selector to cover every registered q exactly once"
+            )
+        if phase == "sector_preparation_subset" and (
+            not available or not available <= required
+        ):
+            raise ValueError(
+                "V30 sector-preparation selector must be a nonempty subset of the registered q inventory"
+            )
+        return {
+            "phase": phase,
+            "required_q_indices": sorted(required),
+            "available_q_indices": sorted(available),
+            "complete_coverage": available == required,
+        }
+
     def _resolve(self, raw_path: str | Path, base: Path | None = None) -> Path:
         candidate = Path(raw_path)
         if not candidate.is_absolute():
@@ -504,9 +531,15 @@ class QualifiedQCSRProvider:
         ):
             raise ValueError("only the registered V28 q0 donor may use legacy import")
         fill = manifest.get("numeric_fill_identity")
-        if not isinstance(fill, Mapping) or self._run_identity(
-            {"source_sha": fill.get("source_sha"), "window_sha256": fill.get("campaign_window_sha256")},
-            "V28 numeric_fill_identity",
+        fill_execution = (
+            fill.get("execution_identity") if isinstance(fill, Mapping) else None
+        )
+        if not isinstance(fill_execution, Mapping) or self._run_identity(
+            {
+                "source_sha": fill_execution.get("source_sha"),
+                "window_sha256": fill_execution.get("campaign_window_sha256"),
+            },
+            "V28 numeric_fill_identity.execution_identity",
         ) != dict(matrix_source):
             raise ValueError("V28 q0 matrix source/window identity differs from its original fill")
 

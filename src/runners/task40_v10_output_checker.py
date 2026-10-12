@@ -181,7 +181,8 @@ def _verify_v17_row_tile_assembly_summary(
     profile_inventory = _registered_v15_profile_inventory(profile_identity)
     q_count = int(profile_inventory["q_count"])
     sector_count = len(profile_inventory["sector_port_counts"])
-    is_ny8 = profile_identity in TASK40_V18_P6_PROFILES
+    is_v18 = profile_identity in TASK40_V18_P6_PROFILES
+    is_ny8 = is_v18
     if profile_identity in TASK40_V20_V22_P6_PROFILES:
         from src.solvers.task40_v20_registry import task40_v20_case
 

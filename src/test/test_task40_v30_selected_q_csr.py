@@ -474,3 +474,149 @@ def test_disk_backed_q4_fill_and_finalize_keep_pattern_arrays_in_place(tmp_path)
     assert manifest["pattern_csr_artifacts"]["data"]["sha256"] == old_data_hash
     assert manifest["csr_artifacts"]["data"]["sha256"] != old_data_hash
     assert all(row["reused_in_place"] for row in manifest["csr_backing_identity"].values())
+
+
+def test_sector_preparation_refuses_a_missing_peer_before_building_any_q(tmp_path) -> None:
+    from types import SimpleNamespace
+
+    from src.solvers.task40_v30_selected_q_csr import prepare_selected_q_csr_sector
+
+    q_map = sparse.eye(2, dtype=np.complex128, format="csr")
+    q_map.indices = q_map.indices.astype(np.int32)
+    q_map.indptr = q_map.indptr.astype(np.int32)
+    with pytest.raises(ValueError, match="pair every missing q"):
+        prepare_selected_q_csr_sector(
+            sources_by_q={4: object()},
+            q_maps_by_q={0: q_map, 4: q_map},
+            sector_q_indices=(0, 4),
+            twist_index=0,
+            trace_rows_by_q={0: 1, 4: 1},
+            selected_q_indices=(4,),
+            action=SimpleNamespace(),
+            volume_action=SimpleNamespace(),
+            comm=SimpleNamespace(),
+            available_sector_matrices={},
+            allocation_gate=lambda *_args: None,
+            profile="fixture",
+            profile_identity={},
+            ordered_modes=(),
+            original_h=np.ones(1, dtype=np.complex128),
+            scientific_input_sha256="1" * 64,
+            operator_identity_by_q={4: {}},
+            matrix_source_identity_by_q={4: {}},
+            execution_identity={"source_sha": "a" * 40, "window_sha256": "b" * 64},
+            producer_identity_by_q={4: {}},
+            output_directory=tmp_path / "selected-q",
+        )
+    assert not (tmp_path / "selected-q").exists()
+
+
+def test_native_failure_keeps_numeric_pending_and_atomic_stage_evidence(tmp_path, monkeypatch):
+    from src.solvers import task40_v30_selected_q_csr as selected_q
+
+    base = np.asarray(
+        [
+            [4.0 + 0.1j, 0.2 + 0j, 0.1j, 0.0],
+            [0.2 + 0j, 5.0 - 0.1j, 0.0, 0.2j],
+            [0.1j, 0.0, 1.0 + 0j, 0.3],
+            [0.0, 0.2j, 0.3, 2.0 + 0j],
+        ],
+        dtype=np.complex128,
+    )
+    q4_map = sparse.csr_matrix(
+        np.asarray(
+            [[1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 0, 1j]],
+            dtype=np.complex128,
+        )
+    )
+    q0_map = sparse.csr_matrix(
+        np.asarray(
+            [[1, 0], [0, 1], [0, 0], [0, 0]], dtype=np.complex128
+        )
+    )
+    mode = SimpleNamespace(side="top", m=0, n=0, polarization="s")
+    profile_identity = {"name": "selected-q-failure-fixture", "trace_rows": 2}
+    input_sha = "7" * 64
+    original_h = np.asarray([2.0, 3.0], dtype=np.complex128)
+    operator_identity = selected_q_operator_identity(
+        scientific_input_sha256=input_sha,
+        profile_identity=profile_identity,
+        ordered_modes=(mode,),
+        q_map=q4_map,
+        original_h=original_h,
+    )
+    output = tmp_path / "selected-q"
+
+    def fail_after_first_stage(**kwargs):
+        kwargs["native_stage_callback"](
+            "inputs_ready",
+            {"case2_full_input": np.asarray([1 + 2j, 2 + 3j, 3 + 4j], dtype=np.complex128)},
+            {"test_native_failure": True},
+        )
+        raise RuntimeError("injected q4 native failure")
+
+    monkeypatch.setattr(selected_q, "run_selected_q_native_actions", fail_after_first_stage)
+    with pytest.raises(RuntimeError, match="injected q4 native failure"):
+        selected_q.prepare_selected_q_csr_sector(
+            sources_by_q={4: _ToySavedContributions(base)},
+            q_maps_by_q={0: q0_map, 4: q4_map},
+            sector_q_indices=(0, 4),
+            twist_index=0,
+            trace_rows_by_q={0: 1, 4: 2},
+            selected_q_indices=(4,),
+            action=SimpleNamespace(condensed=SimpleNamespace(comm=object())),
+            volume_action=object(),
+            comm=object(),
+            available_sector_matrices={
+                0: sparse.eye(2, dtype=np.complex128, format="csr")
+            },
+            allocation_gate=lambda *_args: None,
+            profile="selected-q-failure-fixture",
+            profile_identity=profile_identity,
+            ordered_modes=(mode,),
+            original_h=original_h,
+            scientific_input_sha256=input_sha,
+            operator_identity_by_q={4: operator_identity},
+            matrix_source_identity_by_q={
+                4: {"source_sha": "a" * 40, "window_sha256": "b" * 64}
+            },
+            execution_identity={"source_sha": "c" * 40, "window_sha256": "d" * 64},
+            producer_identity_by_q={4: {"kind": "fixture"}},
+            output_directory=output,
+        )
+
+    q_directory = output / "q4_twist0"
+    pending_path = q_directory / "task40_v30_q4_twist0_numeric_pending.json"
+    stage_path = q_directory / "task40_v30_q4_twist0_native_inputs_ready.json"
+    failure_path = q_directory / "task40_v30_q4_twist0_native_failure.json"
+    pending = json.loads(pending_path.read_text(encoding="utf-8"))
+    stage = json.loads(stage_path.read_text(encoding="utf-8"))
+    failure = json.loads(failure_path.read_text(encoding="utf-8"))
+    assert pending["status"] == "NUMERIC_COMPLETE_NATIVE_PENDING"
+    assert stage["status"] == "STAGE_COMPLETE"
+    assert stage["metadata"]["test_native_failure"] is True
+    assert failure["status"] == "NATIVE_FAILED_AFTER_NUMERIC_COMPLETE"
+    assert failure["error_message"] == "injected q4 native failure"
+    assert failure["numeric_pending_record"]["record_sha256"]
+    assert not (q_directory / "task40_v30_q4_twist0_csr_manifest.json").exists()
+
+
+def test_final_all_q_selector_cannot_publish_an_incomplete_inventory(tmp_path) -> None:
+    from src.solvers.task40_v30_selected_q_csr import publish_v30_q_selector
+
+    path = tmp_path / "all-q-selector.json"
+    entry = {
+        "q_index": 0,
+        "manifest_status": "COMPLETE_CSR",
+        "qualification_status": "PASS",
+        "manifest_sha256": "a" * 64,
+        "native_qualification_sha256": "b" * 64,
+    }
+    with pytest.raises(ValueError, match="every q"):
+        publish_v30_q_selector(
+            path,
+            profile="fixture",
+            entries=(entry,),
+            q_count=8,
+        )
+    assert not path.exists()
