@@ -76,7 +76,7 @@ def solver_for(role):
 
 def saved_json(receipt):
     path = __import__('pathlib').Path(receipt['path']).resolve()
-    if not path.is_relative_to(ARTIFACT) or hashlib.sha256(path.read_bytes()).hexdigest() != receipt['sha256']:
+    if not any(path.is_relative_to(root) for root in (ARTIFACT, window.TMP)) or hashlib.sha256(path.read_bytes()).hexdigest() != receipt['sha256']:
         raise ValueError('V76 saved-consumer identity')
     return json.loads(path.read_text())
 

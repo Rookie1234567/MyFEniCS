@@ -243,8 +243,42 @@ def execute(role, folder, state):
         planning_limit_bytes=scope.memory_budget(role)['planning_gib']*2**30)
     journal.source_state = state
     if role == 'PRECHECK': return precheck(folder, journal)
-    if role in scope.SOLVES: return iterate(role, folder, journal, state)
+    if role in scope.SOLVES:
+        if state.get('postprocessing_resume'):
+            return consume_returned(role, folder, journal, state)
+        return iterate(role, folder, journal, state)
     if role == 'VERIFY_COST':
         from benchmarks.collect_controlled_trace import verify
         return verify(folder, journal)
     raise ValueError('V76 explicit one-run role')
+
+
+def consume_returned(role, folder, journal, state):
+    """A legal returned vector is consumed without a factor or another KSP."""
+    from .tetra_coefficient_action import CoefficientFullAction
+    meta = scope.saved_json(state['postprocessing_resume'])
+    if (meta['mode'] != 'RETURNED_VECTOR_ONLY' or meta['role'] != role
+            or meta['new_KSP_solves'] != 0 or meta['new_numeric_factors'] != 0):
+        raise ValueError('V76 returned-only protocol')
+    p = scope.saved_json(meta['producer_pending'])
+    if (p['physical'] != scope.physical_for(role)
+            or p['local_packet']['sha256'] != scope.plan_record()['prepared_parent']['local_packet']['sha256']):
+        raise ValueError('returned-only physical/packet identity')
+    values = checked_arrays(p['retained_returned'])
+    s, b, oracle, a, rhs, left, right = common.setup_service(role, journal, scope=scope)
+    for name, expected in [('scaled_rhs', left*a.condense_rhs(rhs)), ('left', left), ('right', right)]:
+        if not np.array_equal(values[name], expected):
+            raise ValueError('returned-only fixed RHS and coordinate identity')
+    t = right*values['scaled_retained']
+    if not np.array_equal(t, values['trace_port']):
+        raise ValueError('returned-only full trace/port')
+    pending = dict(p, new_complete_solves=0, new_numeric_factors=0,
+        prior_numeric_factors=p['new_numeric_factors'], iteration_source=p['source'],
+        consumer_source=state, saved_returned_only=True)
+    independent = CoefficientFullAction(s, oracle, 15)
+    x, pending = common.finish_retained_recovery(folder, journal, state, s=s, b=b,
+        independent=independent, a=a, full_rhs=rhs, t=t, pending=pending,
+        pc_calls=p.get('pc_calls', {'unknown_after_return': True}),
+        pc_seconds=p.get('pc_seconds', {'missing_after_return': None}), scope=scope)
+    a = independent = None; gc.collect()
+    return common.finish_retained_fields(folder, journal, state, s, b, x, pending, fail_fast=True)

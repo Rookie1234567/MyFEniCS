@@ -129,5 +129,13 @@ class ResidualMinimizationTests(unittest.TestCase):
             self.assertEqual(r['physical_output_status'],'NOT_RUN_BY_FAIL_FAST_POLICY')
             self.assertFalse(r['output']['official'])
 
+    def test_saved_return_dispatch_never_enters_iteration(self):
+        from unittest.mock import patch
+        from src.solvers import controlled_trace_study as study
+        role='BJ';state={'memory_budget':study.scope.memory_budget(role),'postprocessing_resume':{'synthetic':True}}
+        with tempfile.TemporaryDirectory() as t, patch.object(study,'Journal') as J, patch.object(study,'iterate',side_effect=AssertionError('no repeated KSP')), patch.object(study,'consume_returned',return_value={'saved_only':True}) as consumer:
+            r=study.execute(role,Path(t),state)
+            self.assertTrue(r['saved_only']);consumer.assert_called_once()
+
 
 if __name__=='__main__':unittest.main()

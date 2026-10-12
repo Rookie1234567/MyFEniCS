@@ -26,6 +26,40 @@ def verify(folder, journal):
                 or identity['retained']['sha256'] != record['retained_returned']['sha256']):
             raise ValueError('frozen final coefficient/retained identity')
         own = folder/role; own.mkdir(exist_ok=True)
+        strategy_check = None
+        if record['strategy'] == 'SMR':
+            from benchmarks.collect_bounded_trace import numeric_saved_check
+            root = Path(scope.ARTIFACT/(role+'.json'))
+            root = Path(json.loads(root.read_text())['path']).parent
+            factors = numeric_saved_check(root, minimum_bytes=12*2**30, check_linear_PC=False)
+            facts = []
+            logs = [json.loads(line) for line in (root/'SMR_calls.jsonl').read_text().splitlines()]
+            for i in (1, 2):
+                p = root/f'SMR_directions_{i}.npz'
+                expected_hash = frozen['SMR_witnesses'][str(i)]['sha256']
+                if __import__('hashlib').sha256(p.read_bytes()).hexdigest() != expected_hash:
+                    raise ValueError('SMR frozen qualification direction bytes')
+                with np.load(p, allow_pickle=False) as a:
+                    v, D, W, z = (a[k] for k in ('input', 'directions', 'images', 'correction'))
+                norms = np.linalg.norm(W, axis=0)
+                scales = np.where(norms==0, 1., norms)
+                coefficients, _, rank, _ = np.linalg.lstsq(W/scales, v, rcond=1e-12)
+                optimum = float(np.linalg.norm(v-W@(coefficients/scales)))
+                row = logs[i-1]
+                saved_weights = np.asarray(row['weights_real'])+1j*np.asarray(row['weights_imag'])
+                image = W@saved_weights
+                residual = float(np.linalg.norm(v-image))
+                bound = min(float(np.linalg.norm(v)), float(np.linalg.norm(v-W[:,1])),
+                    float(np.linalg.norm(v-W[:,1]-W[:,2])), optimum)
+                operation = relative(D@saved_weights-z, np.abs(D)@np.abs(saved_weights))
+                protected = (residual <= bound+1e-10*max(np.linalg.norm(v)+np.linalg.norm(image),1e-300)
+                    and operation <= 1e-10 and row['operation_scaled_defect'] <= 1e-10)
+                if not protected: raise ValueError('independent saved SMR feasible-direction protection')
+                facts.append(dict(input_index=i, rank=int(rank), actual_saved_relative=row['actual_relative'],
+                    recomputed_prediction_relative=residual/np.linalg.norm(v),
+                    direction_combination_operation=operation, pass_gate=bool(protected)))
+            strategy_check = dict(factors=factors, SMR=facts,
+                additive_linearity_gate_applied=False, pass_gate=True)
         s, values, field = restored(record, journal)
         boundary = load_boundary(s, record['boundary_arrays'], record['mode_sha256'], 'q63')
         action = CoefficientFullAction(s, boundary, 15)
@@ -40,6 +74,7 @@ def verify(folder, journal):
             arrays=arrays, complete_coefficients_verified=True,
             equation_qualified=qualified,
             expensive_physics='NOT_RUN_BY_FAIL_FAST_POLICY', strict_pass=False)
+        if strategy_check is not None: row['strategy_check'] = strategy_check
         if operation > 1e-10:
             raise ValueError('saved full original-operation mismatch')
         if record.get('physical_output_status') != 'NOT_RUN_BY_FAIL_FAST_POLICY':

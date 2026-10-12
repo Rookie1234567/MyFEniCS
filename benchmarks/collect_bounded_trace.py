@@ -234,7 +234,7 @@ def verify_reused(folder,journal):
     write_json(folder/'verification_scientific_result.json',result);return result
 
 
-def numeric_saved_check(root,*,minimum_bytes=8*2**30):
+def numeric_saved_check(root,*,minimum_bytes=8*2**30,check_linear_PC=True):
     """Stream current numeric witnesses; do not reconstruct any preparation."""
     from src.solvers.reused_trace_admission import numeric_gate
     numeric=json.loads((root/'numeric_factor_progress.json').read_text());factor_scores=[]
@@ -254,6 +254,9 @@ def numeric_saved_check(root,*,minimum_bytes=8*2**30):
         del a,A,original;gc.collect()
     if len(factor_scores)!=39 or not all(row['pass_gate'] for row in factor_scores):
         raise ValueError('V72 complete39 numeric/solve and memory qualification')
+    if not check_linear_PC:
+        return dict(factor_scores=factor_scores,PC_saved_error=None,
+            PC_saved_pass=None,PC_qualification='independent nonlinear strategy consumer')
     pc=json.loads((root/'live_PC_qualification.json').read_text());a,b=(checked_arrays(row['arrays']) for row in pc['rows'])
     alpha=.3+.7j;pc_error=relative(b['output']-alpha*a['output'],alpha*a['output'])
     pc_pass=pc_error<=1e-10 and np.isfinite(a['output']).all() and np.isfinite(b['output']).all()
