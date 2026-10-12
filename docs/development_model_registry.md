@@ -1,3 +1,13 @@
+## Task042 V77模型总账增量
+
+| 模型/计算方法（measured） | 方程/物理资格 | 资源/费用入口 |
+|---|---|---|
+| 缩尺0.7nm NOTCH、25576tet/p5/828；真实halo阻抗38块＋7068粗层 RIGHT FGMRES | 32步原true0.917996、接口0.919290；效果FAIL，完整原式可信；无official六场/功率 | [响应/费用](task042_neural_coarse_inverse/response_v77.md) · [全记录](task042_neural_coarse_inverse/outcomes/physical_impedance_patch_v77.md) |
+
+局部LU成功不是完整场，fixed配置关闭；ownswap/OOC0，fine K/S/factor0，父内部/局部/粗因子存在。历史连续精度FAIL、NN20和原尺寸2TB48h未资格均保持。
+
+---
+
 ## Task042 V76：控制与残差最小化收口
 
 | 同0.7nm/25576tet/p5/828（measured） | 实际结论 | 证据 |

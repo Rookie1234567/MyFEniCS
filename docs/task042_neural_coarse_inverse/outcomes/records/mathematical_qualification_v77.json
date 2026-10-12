@@ -1,0 +1,295 @@
+{
+  "preparation": {
+    "pass_gate": true,
+    "patches": [
+      {
+        "index": 0,
+        "halo_cells": 754,
+        "rows": 40125,
+        "nnz": 7533825
+      },
+      {
+        "index": 1,
+        "halo_cells": 1314,
+        "rows": 66500,
+        "nnz": 12987100
+      },
+      {
+        "index": 2,
+        "halo_cells": 1248,
+        "rows": 63230,
+        "nnz": 12337600
+      },
+      {
+        "index": 3,
+        "halo_cells": 696,
+        "rows": 37480,
+        "nnz": 6972500
+      },
+      {
+        "index": 4,
+        "halo_cells": 854,
+        "rows": 44815,
+        "nnz": 8506475
+      },
+      {
+        "index": 5,
+        "halo_cells": 1134,
+        "rows": 57840,
+        "nnz": 11226000
+      },
+      {
+        "index": 6,
+        "halo_cells": 1343,
+        "rows": 67745,
+        "nnz": 13265275
+      },
+      {
+        "index": 7,
+        "halo_cells": 610,
+        "rows": 33490,
+        "nnz": 6137750
+      },
+      {
+        "index": 8,
+        "halo_cells": 896,
+        "rows": 48130,
+        "nnz": 8972450
+      },
+      {
+        "index": 9,
+        "halo_cells": 832,
+        "rows": 42830,
+        "nnz": 8251900
+      },
+      {
+        "index": 10,
+        "halo_cells": 1142,
+        "rows": 57435,
+        "nnz": 11271225
+      },
+      {
+        "index": 11,
+        "halo_cells": 668,
+        "rows": 35390,
+        "nnz": 6667000
+      },
+      {
+        "index": 12,
+        "halo_cells": 1220,
+        "rows": 61935,
+        "nnz": 12066525
+      },
+      {
+        "index": 13,
+        "halo_cells": 862,
+        "rows": 46500,
+        "nnz": 8639850
+      },
+      {
+        "index": 14,
+        "halo_cells": 1024,
+        "rows": 54160,
+        "nnz": 10218500
+      },
+      {
+        "index": 15,
+        "halo_cells": 1262,
+        "rows": 64310,
+        "nnz": 12490000
+      },
+      {
+        "index": 16,
+        "halo_cells": 609,
+        "rows": 32295,
+        "nnz": 6079275
+      },
+      {
+        "index": 17,
+        "halo_cells": 1178,
+        "rows": 59940,
+        "nnz": 11656500
+      },
+      {
+        "index": 18,
+        "halo_cells": 740,
+        "rows": 40895,
+        "nnz": 7457875
+      },
+      {
+        "index": 19,
+        "halo_cells": 1012,
+        "rows": 53320,
+        "nnz": 10089350
+      },
+      {
+        "index": 20,
+        "halo_cells": 898,
+        "rows": 45955,
+        "nnz": 8895425
+      },
+      {
+        "index": 21,
+        "halo_cells": 1143,
+        "rows": 57535,
+        "nnz": 11283275
+      },
+      {
+        "index": 22,
+        "halo_cells": 639,
+        "rows": 33895,
+        "nnz": 6379175
+      },
+      {
+        "index": 23,
+        "halo_cells": 1226,
+        "rows": 62235,
+        "nnz": 12125775
+      },
+      {
+        "index": 24,
+        "halo_cells": 871,
+        "rows": 47255,
+        "nnz": 8742325
+      },
+      {
+        "index": 25,
+        "halo_cells": 1010,
+        "rows": 53110,
+        "nnz": 10065200
+      },
+      {
+        "index": 26,
+        "halo_cells": 1310,
+        "rows": 66695,
+        "nnz": 12962875
+      },
+      {
+        "index": 27,
+        "halo_cells": 629,
+        "rows": 33270,
+        "nnz": 6275250
+      },
+      {
+        "index": 28,
+        "halo_cells": 1160,
+        "rows": 59145,
+        "nnz": 11483475
+      },
+      {
+        "index": 29,
+        "halo_cells": 771,
+        "rows": 42735,
+        "nnz": 7775775
+      },
+      {
+        "index": 30,
+        "halo_cells": 796,
+        "rows": 42360,
+        "nnz": 7953450
+      },
+      {
+        "index": 31,
+        "halo_cells": 1347,
+        "rows": 68100,
+        "nnz": 13311150
+      },
+      {
+        "index": 32,
+        "halo_cells": 1247,
+        "rows": 63210,
+        "nnz": 12329100
+      },
+      {
+        "index": 33,
+        "halo_cells": 737,
+        "rows": 39320,
+        "nnz": 7368100
+      },
+      {
+        "index": 34,
+        "halo_cells": 802,
+        "rows": 42525,
+        "nnz": 8006775
+      },
+      {
+        "index": 35,
+        "halo_cells": 1138,
+        "rows": 58155,
+        "nnz": 11270625
+      },
+      {
+        "index": 36,
+        "halo_cells": 1361,
+        "rows": 68680,
+        "nnz": 13444250
+      },
+      {
+        "index": 37,
+        "halo_cells": 577,
+        "rows": 31965,
+        "nnz": 5818275
+      }
+    ],
+    "independent_patch_pairs": [
+      {
+        "index": 36,
+        "matrix_saved_action": 0.0,
+        "independent_operation": 6.900612049186952e-15,
+        "body_surface_sum": 0.0,
+        "excluded_outside_norm": 45756.50593806865,
+        "pass_gate": true,
+        "q13_q15_per_face_producer_maximum": 5.219030002094272e-15,
+        "q13_q15_independent_check": "whole new q13 CSR against saved PUBLIC_BASIX/q15 body and surface"
+      },
+      {
+        "index": 0,
+        "matrix_saved_action": 0.0,
+        "independent_operation": 7.366564668907735e-15,
+        "body_surface_sum": 0.0,
+        "excluded_outside_norm": 47067.4326565706,
+        "pass_gate": true,
+        "q13_q15_per_face_producer_maximum": 5.5853962531770745e-15,
+        "q13_q15_independent_check": "whole new q13 CSR against saved PUBLIC_BASIX/q15 body and surface"
+      }
+    ],
+    "new_double_symbolic_total_bytes": 72838000000,
+    "global_fine_matrix_reads": 0,
+    "new_numeric_factors": 0
+  },
+  "PC_complex_linearity": 7.713474560061414e-13,
+  "factor_count": 39,
+  "maximum_recomputed_factor_residual": 1.388704853226079e-10,
+  "maximum_saved_factor_residual_mismatch": 0.0,
+  "all_factor_gate_pass": true,
+  "original_vector_consumer_difference": 0.0,
+  "body_and_impedance_pass": true,
+  "full_physical_equation_pass": false,
+  "independent_full_original": {
+    "true": 0.917996117703256,
+    "native": 0.917996117703256,
+    "augmented": 0.919289520719306,
+    "port": 0.0005128220096125218,
+    "full_augmented": 0.9192896197685352,
+    "direct_target": false,
+    "rhs_q47_q63": 1.3692700863640344e-15,
+    "MPC_identity": 2.370874055551693e-18,
+    "absolute_residual": 0.9823497467600663,
+    "original_rhs_norm": 1.068596583313331,
+    "backend": "PUBLIC_BASIX_COEFFICIENT_FIRST_Q15_TRIANGLE63",
+    "body_consumption": {
+      "seconds": 37.24845951702446,
+      "q": 15,
+      "cells": 25576,
+      "columns": 1,
+      "reference_table_bytes": 4315952,
+      "full_vector_workspace_bytes": 94459440,
+      "algorithm": "COEFFICIENT_FIRST_PUBLIC_BASIX_VECTOR",
+      "production_matrix_reads": 0
+    },
+    "closed_physical_residual_norm": 0.9809675148725996,
+    "projected_port_norm": 0.8892294547289942,
+    "pass_gate": false
+  },
+  "consumer_source": "1a972d11cd5d0b97549549d9e3895edf8e147d05"
+}

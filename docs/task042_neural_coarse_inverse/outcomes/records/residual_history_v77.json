@@ -1,0 +1,467 @@
+{
+  "iterations": [
+    {
+      "iteration": 0,
+      "ksp_instance_iteration": 0,
+      "reported_schur_relative": 1.0,
+      "outer_matvec_count": 0,
+      "outer_pc_count": 0,
+      "solve_seconds": 0.13569981907494366,
+      "step_wall_seconds": null,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 1,
+      "ksp_instance_iteration": 1,
+      "reported_schur_relative": 0.955173865455467,
+      "outer_matvec_count": 1,
+      "outer_pc_count": 1,
+      "solve_seconds": 86.08708230801858,
+      "step_wall_seconds": 85.95138248894364,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 2,
+      "ksp_instance_iteration": 2,
+      "reported_schur_relative": 0.9499520727935682,
+      "outer_matvec_count": 2,
+      "outer_pc_count": 2,
+      "solve_seconds": 97.96681066788733,
+      "step_wall_seconds": 11.87972835986875,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 3,
+      "ksp_instance_iteration": 3,
+      "reported_schur_relative": 0.9452373363077489,
+      "outer_matvec_count": 3,
+      "outer_pc_count": 3,
+      "solve_seconds": 109.74181943386793,
+      "step_wall_seconds": 11.775008765980601,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 4,
+      "ksp_instance_iteration": 4,
+      "reported_schur_relative": 0.9415363105488456,
+      "outer_matvec_count": 4,
+      "outer_pc_count": 4,
+      "solve_seconds": 121.16457728599198,
+      "step_wall_seconds": 11.42275785212405,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 5,
+      "ksp_instance_iteration": 5,
+      "reported_schur_relative": 0.9397167183430407,
+      "outer_matvec_count": 5,
+      "outer_pc_count": 5,
+      "solve_seconds": 132.59470233903266,
+      "step_wall_seconds": 11.430125053040683,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 6,
+      "ksp_instance_iteration": 6,
+      "reported_schur_relative": 0.9362294922827106,
+      "outer_matvec_count": 6,
+      "outer_pc_count": 6,
+      "solve_seconds": 144.0365509169642,
+      "step_wall_seconds": 11.441848577931523,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 7,
+      "ksp_instance_iteration": 7,
+      "reported_schur_relative": 0.9333504532267359,
+      "outer_matvec_count": 7,
+      "outer_pc_count": 7,
+      "solve_seconds": 155.54139619297348,
+      "step_wall_seconds": 11.504845276009291,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 8,
+      "ksp_instance_iteration": 8,
+      "reported_schur_relative": 0.9310561344219278,
+      "outer_matvec_count": 8,
+      "outer_pc_count": 8,
+      "solve_seconds": 167.27264834102243,
+      "step_wall_seconds": 11.731252148048952,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 9,
+      "ksp_instance_iteration": 9,
+      "reported_schur_relative": 0.928630308183168,
+      "outer_matvec_count": 9,
+      "outer_pc_count": 9,
+      "solve_seconds": 178.96600643801503,
+      "step_wall_seconds": 11.693358096992597,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 10,
+      "ksp_instance_iteration": 10,
+      "reported_schur_relative": 0.9268288940981205,
+      "outer_matvec_count": 10,
+      "outer_pc_count": 10,
+      "solve_seconds": 190.51950598694384,
+      "step_wall_seconds": 11.553499548928812,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 11,
+      "ksp_instance_iteration": 11,
+      "reported_schur_relative": 0.9256576246668425,
+      "outer_matvec_count": 11,
+      "outer_pc_count": 11,
+      "solve_seconds": 202.12301821401343,
+      "step_wall_seconds": 11.603512227069587,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 12,
+      "ksp_instance_iteration": 12,
+      "reported_schur_relative": 0.9246127188142362,
+      "outer_matvec_count": 12,
+      "outer_pc_count": 12,
+      "solve_seconds": 213.7588237489108,
+      "step_wall_seconds": 11.635805534897372,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 13,
+      "ksp_instance_iteration": 13,
+      "reported_schur_relative": 0.9239431841258188,
+      "outer_matvec_count": 13,
+      "outer_pc_count": 13,
+      "solve_seconds": 225.80360030708835,
+      "step_wall_seconds": 12.044776558177546,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 14,
+      "ksp_instance_iteration": 14,
+      "reported_schur_relative": 0.9232442622769346,
+      "outer_matvec_count": 14,
+      "outer_pc_count": 14,
+      "solve_seconds": 237.11772878700867,
+      "step_wall_seconds": 11.314128479920328,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 15,
+      "ksp_instance_iteration": 15,
+      "reported_schur_relative": 0.9229024822184205,
+      "outer_matvec_count": 15,
+      "outer_pc_count": 15,
+      "solve_seconds": 248.82279254402965,
+      "step_wall_seconds": 11.70506375702098,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 16,
+      "ksp_instance_iteration": 16,
+      "reported_schur_relative": 0.9222499100967645,
+      "outer_matvec_count": 16,
+      "outer_pc_count": 16,
+      "solve_seconds": 260.42705709906295,
+      "step_wall_seconds": 11.604264555033296,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 17,
+      "ksp_instance_iteration": 17,
+      "reported_schur_relative": 0.9220428651537651,
+      "outer_matvec_count": 17,
+      "outer_pc_count": 17,
+      "solve_seconds": 273.75657626986504,
+      "step_wall_seconds": 13.329519170802087,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 18,
+      "ksp_instance_iteration": 18,
+      "reported_schur_relative": 0.9215032543222174,
+      "outer_matvec_count": 18,
+      "outer_pc_count": 18,
+      "solve_seconds": 285.2720516389236,
+      "step_wall_seconds": 11.51547536905855,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 19,
+      "ksp_instance_iteration": 19,
+      "reported_schur_relative": 0.9210193313243669,
+      "outer_matvec_count": 19,
+      "outer_pc_count": 19,
+      "solve_seconds": 297.1880805620458,
+      "step_wall_seconds": 11.916028923122212,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 20,
+      "ksp_instance_iteration": 20,
+      "reported_schur_relative": 0.9206403072569538,
+      "outer_matvec_count": 20,
+      "outer_pc_count": 20,
+      "solve_seconds": 308.7700395800639,
+      "step_wall_seconds": 11.581959018018097,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 21,
+      "ksp_instance_iteration": 21,
+      "reported_schur_relative": 0.9202295694068678,
+      "outer_matvec_count": 21,
+      "outer_pc_count": 21,
+      "solve_seconds": 320.44379516504705,
+      "step_wall_seconds": 11.673755584983155,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 22,
+      "ksp_instance_iteration": 22,
+      "reported_schur_relative": 0.9201172848653767,
+      "outer_matvec_count": 22,
+      "outer_pc_count": 22,
+      "solve_seconds": 332.0276477539446,
+      "step_wall_seconds": 11.583852588897571,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 23,
+      "ksp_instance_iteration": 23,
+      "reported_schur_relative": 0.9200070014702953,
+      "outer_matvec_count": 23,
+      "outer_pc_count": 23,
+      "solve_seconds": 344.05418539699167,
+      "step_wall_seconds": 12.02653764304705,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 24,
+      "ksp_instance_iteration": 24,
+      "reported_schur_relative": 0.9199822906911441,
+      "outer_matvec_count": 24,
+      "outer_pc_count": 24,
+      "solve_seconds": 355.99345815205015,
+      "step_wall_seconds": 11.939272755058482,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 25,
+      "ksp_instance_iteration": 25,
+      "reported_schur_relative": 0.9199481938288089,
+      "outer_matvec_count": 25,
+      "outer_pc_count": 25,
+      "solve_seconds": 367.59388160402887,
+      "step_wall_seconds": 11.600423451978713,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 26,
+      "ksp_instance_iteration": 26,
+      "reported_schur_relative": 0.9199164142951359,
+      "outer_matvec_count": 26,
+      "outer_pc_count": 26,
+      "solve_seconds": 379.49092483799905,
+      "step_wall_seconds": 11.89704323397018,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 27,
+      "ksp_instance_iteration": 27,
+      "reported_schur_relative": 0.9198060952801469,
+      "outer_matvec_count": 27,
+      "outer_pc_count": 27,
+      "solve_seconds": 391.1535678280052,
+      "step_wall_seconds": 11.662642990006134,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 28,
+      "ksp_instance_iteration": 28,
+      "reported_schur_relative": 0.9197535106599415,
+      "outer_matvec_count": 28,
+      "outer_pc_count": 28,
+      "solve_seconds": 403.0635950888973,
+      "step_wall_seconds": 11.910027260892093,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 29,
+      "ksp_instance_iteration": 29,
+      "reported_schur_relative": 0.9197104976638321,
+      "outer_matvec_count": 29,
+      "outer_pc_count": 29,
+      "solve_seconds": 414.6340482009109,
+      "step_wall_seconds": 11.570453112013638,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 30,
+      "ksp_instance_iteration": 30,
+      "reported_schur_relative": 0.9195279053627422,
+      "outer_matvec_count": 30,
+      "outer_pc_count": 30,
+      "solve_seconds": 426.49179351190105,
+      "step_wall_seconds": 11.85774531099014,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 31,
+      "ksp_instance_iteration": 31,
+      "reported_schur_relative": 0.9194220518742418,
+      "outer_matvec_count": 31,
+      "outer_pc_count": 31,
+      "solve_seconds": 438.4653351069428,
+      "step_wall_seconds": 11.973541595041752,
+      "timebase": "monotonic_from_solve_start"
+    },
+    {
+      "iteration": 32,
+      "ksp_instance_iteration": 32,
+      "reported_schur_relative": 0.9192895914082098,
+      "outer_matvec_count": 32,
+      "outer_pc_count": 32,
+      "solve_seconds": 450.5344024130609,
+      "step_wall_seconds": 12.069067306118086,
+      "timebase": "monotonic_from_solve_start"
+    }
+  ],
+  "effect_gates": [
+    {
+      "iteration": 0,
+      "original_true": 0.9999999999999999,
+      "retained_true": 1.0,
+      "rho": 1.0,
+      "limit": null,
+      "evaluated": false,
+      "pass_gate": true
+    },
+    {
+      "iteration": 32,
+      "original_true": 0.917996117703256,
+      "retained_true": 0.9192895914082035,
+      "rho": 0.9192895914082035,
+      "limit": 0.3,
+      "evaluated": true,
+      "pass_gate": false
+    }
+  ],
+  "final_original": {
+    "true": 0.917996117703256,
+    "native": 0.917996117703256,
+    "augmented": 0.919289520719306,
+    "port": 0.0005128220096125218,
+    "full_augmented": 0.9192896197685352,
+    "direct_target": false,
+    "rhs_q47_q63": 1.3692700863640344e-15,
+    "MPC_identity": 2.370874055551693e-18,
+    "absolute_residual": 0.9823497467600663,
+    "original_rhs_norm": 1.068596583313331,
+    "backend": "PUBLIC_BASIX_COEFFICIENT_FIRST_Q15_TRIANGLE63",
+    "body_consumption": {
+      "seconds": 36.877828567055985,
+      "q": 15,
+      "cells": 25576,
+      "columns": 1,
+      "reference_table_bytes": 4315952,
+      "full_vector_workspace_bytes": 94459440,
+      "algorithm": "COEFFICIENT_FIRST_PUBLIC_BASIX_VECTOR",
+      "production_matrix_reads": 0
+    },
+    "closed_physical_residual_norm": 0.9809675148725996,
+    "projected_port_norm": 0.8892294547289942,
+    "pass_gate": false,
+    "recovery_identity": 5.109320011162148e-16,
+    "Schur_original_identity": 1.3853889338231239e-15,
+    "iteration": 32,
+    "ksp_instance_iteration": 32,
+    "schur_true_relative_residual": 0.9192895914082035,
+    "explicit_true_residual": 0.917996117703256,
+    "reported_schur_relative": 0.9192895914082098,
+    "solve_seconds": 521.8569361630362,
+    "physical_residual_pass": false,
+    "solve_gate_pass": false,
+    "solution_source": "live_buildSolution"
+  },
+  "KSP": {
+    "status": "EFFECT_GATE_STOP",
+    "restart": 128,
+    "max_it": 256,
+    "actual_KSP_configuration": {
+      "type": "fgmres",
+      "side": 1,
+      "norm": 2,
+      "restart": 128,
+      "tolerances": [
+        0.0,
+        0.0,
+        10000.0,
+        256
+      ],
+      "initial_guess_nonzero": false,
+      "view_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v77/task042_v77_impedance_trace_solve_20261012T064514895138Z/KSP_view.txt",
+      "audit_identity": {
+        "directory": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v77/task042_v77_impedance_trace_solve_20261012T064514895138Z",
+        "route": "ITERATE",
+        "strategy": "PHYSICAL_IMPEDANCE",
+        "source_sha": "a1c46fb3ef5e22336d10e4d0b3b9ec9ffb2a0311",
+        "packet_sha256": "9bef5add6398999c70c21c7f26a86833fc1eb46f98598c8503aa3c41743728da",
+        "RHS": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v77/task042_v77_impedance_trace_solve_20261012T064514895138Z/physical_RHS.npz",
+          "sha256": "48b155fe651d5d16a552a7909cf615d52d5247288121d652cef735d378527109",
+          "members": {
+            "full_rhs": {
+              "shape": [
+                1944573
+              ],
+              "dtype": "complex128",
+              "sha256": "a96b58bf66f8b889e5812670989cc41ae15dd745e4751374f41fe5c610172389"
+            },
+            "reduced_rhs": {
+              "shape": [
+                1177293
+              ],
+              "dtype": "complex128",
+              "sha256": "178dc0c55cf2deb504c214a526db461e0b0624a957457a7b9c35efda14b099ee"
+            },
+            "bhat": {
+              "shape": [
+                1177293
+              ],
+              "dtype": "complex128",
+              "sha256": "4c5d6b918f358863b9a324dd2de2f1635f7422c8c06f91e850b5d34030c7fc80"
+            },
+            "left": {
+              "shape": [
+                1177293
+              ],
+              "dtype": "complex128",
+              "sha256": "1587eab07700a6579dca059fe6b86fb3cf26ca6bd9766f639718a4edffa09404"
+            },
+            "right": {
+              "shape": [
+                1177293
+              ],
+              "dtype": "complex128",
+              "sha256": "01d0f4639777f76d9cd1b46a2567ecc9a4962f7d8747d5ad8b081aad8a5caf62"
+            }
+          }
+        }
+      }
+    },
+    "ksp_solve_count": 1,
+    "ksp_create_count": 1,
+    "ksp_destroy_count": 1,
+    "matvec_count": 32,
+    "pc_apply_count": 32,
+    "explicit_action_count": 2,
+    "zero_start": true
+  },
+  "denominator": "original physical RHS and frozen scaled RHS; no renormalization",
+  "no_tail": true
+}

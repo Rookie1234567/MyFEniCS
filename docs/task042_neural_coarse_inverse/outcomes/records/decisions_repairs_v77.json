@@ -1,0 +1,47 @@
+{
+  "repairs": [
+    {
+      "classification": "IMPLEMENTATION_INDENTATION_ERROR",
+      "first_failure": "targeted test explicit factory import; IndentationError port_preparation.py line942; 8 tests 7pass/1error; Ruff parser errors from same root cause",
+      "source_working_sha256": "18ea02354af23d740e09042d117aacdbd6fe6be5c971b185c02360f55a3b533d",
+      "clock": 1711154.256799663,
+      "fix": "replace incorrectly nested namespace insertion with correctly indented explicit strategy dispatch",
+      "scientific_consumption": 0,
+      "known_test_seconds": 0.689,
+      "other_seconds": null
+    },
+    {
+      "classification": "TEST_INVOCATION_ACTIVATION_ERROR",
+      "cause": "file edit shell used pure activation before PETSc test; int32 rejected int64 IDs; formal scientific ABI unchanged",
+      "fix": "use qualified fe activation and preflight before targeted tests",
+      "raw_stderr": "tmp/task042/v77/targeted02.stderr",
+      "scientific_actor_consumption": 0
+    },
+    {
+      "classification": "METADATA_INSPECTION_TYPE_ERROR",
+      "error": "run_summary.samples is integer, not a list; TypeError int not subscriptable",
+      "fix": "read existing resources.jsonl for gap; no PDE/qualification change",
+      "scientific_replay": 0
+    },
+    {
+      "classification": "DELIVERY_SCHEMA_ERROR",
+      "error": "array receipt has no bytes key; KeyError in delivery writer",
+      "fix": "obtain actual NPZ storage from file stat and explicit CSR payload from validated shapes",
+      "raw_stderr": "tmp/task042/v77/delivery_write.stderr",
+      "scientific_replay": 0
+    }
+  ],
+  "scientific_replays": 0,
+  "stopped_at": 32,
+  "failed_gate": "rho32<=0.30",
+  "rho": 0.9192895914082035,
+  "candidate_closed": true,
+  "no_additional_configuration": true,
+  "NOT_RUN": {
+    "iterations64_128_256": "32-step effect gate failed",
+    "six_fields_240_modes_RTA_Avolume": "original residual >1e-2, fail-fast policy",
+    "reference_field_scoring": "not equation-qualified; no V70 field leakage",
+    "new_training": "not authorized"
+  },
+  "next": "close fixed impedance configuration; require independent evidence for a genuinely different propagation/coarse mechanism before another solver pilot"
+}

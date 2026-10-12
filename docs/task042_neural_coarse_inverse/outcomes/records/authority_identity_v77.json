@@ -1,0 +1,38 @@
+{
+  "actual_check": {
+    "utc": "2026-10-12T06:12:59.519671+00:00",
+    "monotonic": 1710574.380556943,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+  },
+  "branch": "task42_neural_coarse_inverse",
+  "entry_HEAD": "7af6cec9ae28634dd60e9af989018db513e19443",
+  "review_HEAD": "fc02a8612f1aa31b2c52366cc645acee6b5f8daf",
+  "report_sha256": "a112034d6842a7bca8dc8a309bcdbff35ae3436efd38be16798468d86a96880c",
+  "canonical": "/home/fenics/Projects/NN-Lab",
+  "no_own_actor": true,
+  "prior_closed": true,
+  "window_anchor": {
+    "utc": "2026-10-12T05:20:03.689514+00:00",
+    "monotonic": 1707398.550401817,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "classification": "CONSERVATIVE_EARLIER_BOUND",
+    "reason": "Initial V77 read-only probe clock not retained; use durable preceding delivery clock, charge unknown interval rather than reset",
+    "total_seconds": 21600,
+    "loaded_seconds": 19800
+  },
+  "review_blob": "75d30e21d2fa4f317bf4a780defdc315cc498979",
+  "ABI": {
+    "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "activation": "1",
+    "native": "1",
+    "scalar": "<class 'numpy.complex128'>",
+    "integer": "<class 'numpy.int64'>",
+    "MPI": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+    "PETSc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+    "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+    "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+    "src": "/home/fenics/Projects/NN-Lab/src/__init__.py",
+    "OMP": "1"
+  },
+  "prior_windows_closed": true
+}

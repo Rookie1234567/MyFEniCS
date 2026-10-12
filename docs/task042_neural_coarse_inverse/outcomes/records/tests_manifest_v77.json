@@ -1,0 +1,117 @@
+{
+  "final_tests": [
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "unittest",
+        "-q",
+        "src.test.test_physical_impedance_patch"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+        "check",
+        "--select",
+        "E9,F63,F7,F82",
+        "src/solvers/impedance_trace_scope.py",
+        "src/solvers/impedance_trace_study.py",
+        "src/solvers/physical_impedance_patch.py",
+        "src/solvers/controlled_trace_study.py",
+        "src/solvers/physical_retained_fgmres.py",
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py",
+        "benchmarks/collect_controlled_trace.py",
+        "benchmarks/check_impedance_patch.py",
+        "benchmarks/qualify_impedance_trace.py",
+        "src/test/test_physical_impedance_patch.py"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v77_impedance_patch_preflight.dat",
+        "--validate-only"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v77_impedance_patch_prepare.dat",
+        "--validate-only"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v77_impedance_trace_solve.dat",
+        "--validate-only"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v77_verify_cost.dat",
+        "--validate-only"
+      ],
+      "returncode": 0
+    }
+  ],
+  "targeted_method_count": 10,
+  "status": "PASSED",
+  "actual_implementation_source": "1a972d11cd5d0b97549549d9e3895edf8e147d05",
+  "compile": true,
+  "Ruff": "E9,F63,F7,F82",
+  "dat_validate": 4,
+  "raw_tests": {
+    "path": "tmp/task042/v77/aux_pre_focused02/tests.json",
+    "sha256": "3060ed7d6c14374b21b6dd873765483e8248906362dd3f79095c7539c4850b86",
+    "bytes": 16901
+  },
+  "prior_failures_preserved": [
+    {
+      "classification": "IMPLEMENTATION_INDENTATION_ERROR",
+      "first_failure": "targeted test explicit factory import; IndentationError port_preparation.py line942; 8 tests 7pass/1error; Ruff parser errors from same root cause",
+      "source_working_sha256": "18ea02354af23d740e09042d117aacdbd6fe6be5c971b185c02360f55a3b533d",
+      "clock": 1711154.256799663,
+      "fix": "replace incorrectly nested namespace insertion with correctly indented explicit strategy dispatch",
+      "scientific_consumption": 0,
+      "known_test_seconds": 0.689,
+      "other_seconds": null
+    },
+    {
+      "classification": "TEST_INVOCATION_ACTIVATION_ERROR",
+      "cause": "file edit shell used pure activation before PETSc test; int32 rejected int64 IDs; formal scientific ABI unchanged",
+      "fix": "use qualified fe activation and preflight before targeted tests",
+      "raw_stderr": "tmp/task042/v77/targeted02.stderr",
+      "scientific_actor_consumption": 0
+    },
+    {
+      "classification": "METADATA_INSPECTION_TYPE_ERROR",
+      "error": "run_summary.samples is integer, not a list; TypeError int not subscriptable",
+      "fix": "read existing resources.jsonl for gap; no PDE/qualification change",
+      "scientific_replay": 0
+    },
+    {
+      "classification": "DELIVERY_SCHEMA_ERROR",
+      "error": "array receipt has no bytes key; KeyError in delivery writer",
+      "fix": "obtain actual NPZ storage from file stat and explicit CSR payload from validated shapes",
+      "raw_stderr": "tmp/task042/v77/delivery_write.stderr",
+      "scientific_replay": 0
+    }
+  ],
+  "full_pytest": false,
+  "CI": "NOT_RUN",
+  "documentation_tests": "PENDING_FINAL_BYTES",
+  "GitHub_visual": "NOT_VERIFIED"
+}

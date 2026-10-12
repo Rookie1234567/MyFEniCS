@@ -1,0 +1,29 @@
+{
+  "status": "EFFECTIVENESS_FAIL_FIXED_CONFIGURATION_CLOSED",
+  "formal_pass": false,
+  "strict_pass": false,
+  "full_fields": "NOT_RUN_BY_FAIL_FAST_POLICY",
+  "official": false,
+  "steps": 32,
+  "rho": 0.9192895914082035,
+  "original": {
+    "true": 0.917996117703256,
+    "native": 0.917996117703256,
+    "augmented": 0.919289520719306,
+    "port": 0.0005128220096125218,
+    "MPC_identity": 2.370874055551693e-18,
+    "rhs_q47_q63": 1.3692700863640344e-15,
+    "direct_target": false
+  },
+  "retained": 0.9192895914082035,
+  "identity": {
+    "recovery_identity": 5.109320011162148e-16,
+    "Schur_original_identity": 1.3853889338231239e-15
+  },
+  "old_Jacobi32_original": 0.38882658638976825,
+  "old_Jacobi32_wrapper_seconds": 526.9664626230951,
+  "beats_Jacobi": false,
+  "NN_training": 0,
+  "target_qualified": false,
+  "continuum_accuracy": "HISTORICAL_FAIL_UNCHANGED"
+}

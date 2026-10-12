@@ -1,0 +1,31 @@
+{
+  "stages": {
+    "PRECHECK": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v77/task042_v77_impedance_patch_preflight_20261012T062742436556Z/result.json",
+      "sha256": "2aa817a83dec19904ecf49573921bfe54f0261064c8af07cccf44555891bd371"
+    },
+    "PREPARE": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v77/task042_v77_impedance_patch_prepare_20261012T063258811700Z/result.json",
+      "sha256": "6c8a47c8ad8b6e5c98859633acd1e029e29c865611f049928a2feb1c4aae2dc8"
+    },
+    "ITERATE": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v77/task042_v77_impedance_trace_solve_20261012T064514895138Z/result.json",
+      "sha256": "61124a3315646fab9736c77c2b543e68e86008e0a1ef638b927280d5c0a8f326"
+    },
+    "VERIFY_COST": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v77/task042_v77_verify_cost_20261012T071338049355Z/result.json",
+      "sha256": "f345adbd0392a571358c6890b7f5ae65077e7f67925965cad9b14de7c8d8d9d5"
+    }
+  },
+  "raw_archive": {
+    "path": "benchmarks/artifacts/task042/v77/increment_evidence/science_frozen/inventory.json",
+    "sha256": "925a6f501367652221738e7fa291e94ad35878958b49c08e8b69e4823e2b3ed3",
+    "bytes": 180105
+  },
+  "scientific_queue": {
+    "path": "tmp/task042/v77/scientific_queue_frozen.json",
+    "sha256": "0938a20f5f0281cd097ce03181dde4e33cca60144a6cf0378862e8ac8354e6e1",
+    "bytes": 3562
+  },
+  "only_current_increment": true
+}

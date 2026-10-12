@@ -1,0 +1,59 @@
+{
+  "dependency_groups": [
+    {
+      "group": "research-only numerical/core",
+      "files": [
+        "src/solvers/controlled_trace_study.py",
+        "src/solvers/impedance_trace_scope.py",
+        "src/solvers/impedance_trace_study.py",
+        "src/solvers/physical_impedance_patch.py"
+      ],
+      "behavior": "opt-in halo-only body/triangle mass and explicit PC factory; field failed; not production",
+      "tests": "10 targeted + actual two patch checks + full original32",
+      "merge": "NOT_APPROVED"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py"
+      ],
+      "behavior": "explicit V77 scope/resource/source gates; defaults unchanged",
+      "tests": "4 dat validators",
+      "merge": "review required"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/check_impedance_patch.py",
+        "benchmarks/collect_controlled_trace.py",
+        "benchmarks/qualify_impedance_trace.py",
+        "src/test/test_physical_impedance_patch.py"
+      ],
+      "behavior": "saved arrays recomputed without factor/PDE",
+      "tests": "negative inventory and bad-claim fixtures + independent VERIFY",
+      "merge": "review required"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "response_v77.md",
+        "outcomes/physical_impedance_patch_v77.md",
+        "outcomes/records/*_v77.json"
+      ],
+      "behavior": "negative scientific result and complete costs",
+      "merge": "review required"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "ignored full arrays/local CSR/logs",
+        "old research branch bulk"
+      ],
+      "behavior": "kept local and hash-bound; no branch merge",
+      "merge": false
+    }
+  ],
+  "order": "core -> runner -> checker -> compact docs only after explicit review",
+  "ordinary_default": "UNCHANGED"
+}

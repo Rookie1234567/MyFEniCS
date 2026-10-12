@@ -1,3 +1,13 @@
+## V77：真实阻抗局部问题，仍无合格场
+
+| 固定0.7nm NOTCH/p5/828，measured | 完整结果 | 证据 |
+|---|---|---|
+| halo-only体＋真实三角阻抗，38块/7068粗层 | 1 KSP/32步；原true0.917996、rho0.919290，0.30效果门FAIL；关闭固定配置 | [回应](../response_v77.md) · [成本/数学/原式](physical_impedance_patch_v77.md) |
+
+局部新数学通过不代表传播足够；完整系数和独立原式已保存。六场/240点/模式评分/RTA/吸收因bad-field政策NOT_RUN，official=False。全部父费用与历史精度FAIL保持，不自动新窗。
+
+---
+
 ## Task042 V76：控制与残差最小化收口
 
 | 同0.7nm/25576tet/p5/828（measured） | 实际结论 | 证据 |

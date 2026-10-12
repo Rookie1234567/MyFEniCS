@@ -1,0 +1,275 @@
+{
+  "original": 0.917996117703256,
+  "retained": 0.9192895914082035,
+  "augmented": 0.919289520719306,
+  "port": 0.0005128220096125218,
+  "steps": 32,
+  "ksp_seconds": 521.8665658209939,
+  "current_known_disjoint_command_lower_seconds": 2784.094849091489,
+  "science_prepared_pipeline_seconds": 2580.1448811311275,
+  "solve_complete_attempt_seconds": 1272.6331101399846,
+  "numeric_phase_seconds": 353.8852972181048,
+  "numeric_only_children_seconds": 207.35137875378132,
+  "sample_peak_gib": 37.08041000366211,
+  "max_sample_gap_seconds": 1.3337102860677987,
+  "swap_bytes": 0.0,
+  "resource_samples": 2223,
+  "new_patch_nnz": 368317250,
+  "patch_payload_bytes": 8855010992,
+  "patch_NPZ_file_bytes": 8855048764,
+  "factor_double_gib": 67.83567368984222,
+  "maximum_numeric_plan_gib": 87.4531854391098,
+  "raw_new_array_files": 88,
+  "raw_new_array_members": 334,
+  "disjoint_commands": [
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v77_impedance_trace_solve.dat"
+      ],
+      "source_sha": "a1c46fb3ef5e22336d10e4d0b3b9ec9ffb2a0311",
+      "start_utc": "2026-10-12T06:45:14.549330+00:00",
+      "end_utc": "2026-10-12T07:06:27.182423+00:00",
+      "elapsed_seconds": 1272.6331101399846,
+      "exit_code": 0,
+      "input_sha256": "3121fbd4593ae1e4102b0df96ec187923c60b42b70c2307423eef6e7fac397a8",
+      "wrapper_sha256": "daae5da245ee9c2e0eb64a6e7c6fb3aa9dee04f57d78ca8e7253b583e931abf7",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v77_impedance_patch_preflight.dat"
+      ],
+      "source_sha": "a1c46fb3ef5e22336d10e4d0b3b9ec9ffb2a0311",
+      "start_utc": "2026-10-12T06:27:42.103338+00:00",
+      "end_utc": "2026-10-12T06:32:32.256266+00:00",
+      "elapsed_seconds": 290.15295189316384,
+      "exit_code": 0,
+      "input_sha256": "c25ea8115742f74f8fd92f37370dc7602728c385195e57e42a28efc4011f6fbc",
+      "wrapper_sha256": "daae5da245ee9c2e0eb64a6e7c6fb3aa9dee04f57d78ca8e7253b583e931abf7",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v77_impedance_patch_prepare.dat"
+      ],
+      "source_sha": "a1c46fb3ef5e22336d10e4d0b3b9ec9ffb2a0311",
+      "start_utc": "2026-10-12T06:32:58.471155+00:00",
+      "end_utc": "2026-10-12T06:44:33.515909+00:00",
+      "elapsed_seconds": 695.0447764920536,
+      "exit_code": 0,
+      "input_sha256": "9268faa61e92f458954fde272097c602dae19767af25931623b6a466bedb6613",
+      "wrapper_sha256": "daae5da245ee9c2e0eb64a6e7c6fb3aa9dee04f57d78ca8e7253b583e931abf7",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v77_verify_cost.dat"
+      ],
+      "source_sha": "1a972d11cd5d0b97549549d9e3895edf8e147d05",
+      "start_utc": "2026-10-12T07:13:37.690317+00:00",
+      "end_utc": "2026-10-12T07:19:00.004341+00:00",
+      "elapsed_seconds": 322.31404260592535,
+      "exit_code": 0,
+      "input_sha256": "76c029940b5ce0526fb5c4d1d2fb3cf71c58d89d5abb14605bae816efb607fe0",
+      "wrapper_sha256": "daae5da245ee9c2e0eb64a6e7c6fb3aa9dee04f57d78ca8e7253b583e931abf7",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects",
+      "received_signals": []
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "focused01",
+        "python",
+        "-m",
+        "benchmarks.qualify_impedance_trace"
+      ],
+      "source_sha": "a1c46fb3ef5e22336d10e4d0b3b9ec9ffb2a0311",
+      "start_utc": "2026-10-12T06:25:18.282223+00:00",
+      "end_utc": "2026-10-12T06:27:00.629009+00:00",
+      "elapsed_seconds": 102.34679530421272,
+      "exit_code": 0,
+      "wrapper_sha256": "50d605d31c2e6d822f038668e59eec45d393eb50836095ead231f91842d57705",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "focused02",
+        "python",
+        "-m",
+        "benchmarks.qualify_impedance_trace"
+      ],
+      "source_sha": "1a972d11cd5d0b97549549d9e3895edf8e147d05",
+      "start_utc": "2026-10-12T07:09:54.869604+00:00",
+      "end_utc": "2026-10-12T07:11:36.472763+00:00",
+      "elapsed_seconds": 101.60317265614867,
+      "exit_code": 0,
+      "wrapper_sha256": "50d605d31c2e6d822f038668e59eec45d393eb50836095ead231f91842d57705",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    }
+  ],
+  "resources": [
+    {
+      "path": "results/task042/task042_v77_impedance_patch_prepare_20261012T063258811700Z/supervision/resources.jsonl",
+      "samples": 621,
+      "max_gap_seconds": 1.2341778499539942,
+      "peak_bytes": 9710493696
+    },
+    {
+      "path": "results/task042/task042_v77_verify_cost_20261012T071338049355Z/supervision/resources.jsonl",
+      "samples": 222,
+      "max_gap_seconds": 1.3337102860677987,
+      "peak_bytes": 4094201856
+    },
+    {
+      "path": "results/task042/task042_v77_impedance_trace_solve_20261012T064514895138Z/supervision/resources.jsonl",
+      "samples": 1161,
+      "max_gap_seconds": 1.3235281861852854,
+      "peak_bytes": 39814787072
+    },
+    {
+      "path": "results/task042/task042_v77_impedance_patch_preflight_20261012T062742436556Z/supervision/resources.jsonl",
+      "samples": 205,
+      "max_gap_seconds": 1.1876307630445808,
+      "peak_bytes": 9525698560
+    },
+    {
+      "path": "tmp/task042/v77/aux_pre_focused01/supervision/resources.jsonl",
+      "samples": 7,
+      "max_gap_seconds": 1.0891222550999373,
+      "peak_bytes": 298680320
+    },
+    {
+      "path": "tmp/task042/v77/aux_pre_focused02/supervision/resources.jsonl",
+      "samples": 7,
+      "max_gap_seconds": 1.1788585148751736,
+      "peak_bytes": 309669888
+    }
+  ],
+  "gap_source": "results/task042/task042_v77_verify_cost_20261012T071338049355Z/supervision/resources.jsonl",
+  "counters": {
+    "started": 73,
+    "completed": 73,
+    "by_kind": {
+      "I_PC_original": 34,
+      "I_explicit_true_scaled_trace": 3,
+      "I_public_original": 2,
+      "I_outer_scaled_trace": 32,
+      "I_final_public_original": 1,
+      "V_ITERATE_public_original": 1
+    }
+  },
+  "patch_only_original_action_checks": 2,
+  "all_original_checks_conservative_upper": 75,
+  "fine_action_cap": 800,
+  "KSP_attempts": {
+    "count": 1,
+    "rows": [
+      {
+        "role": "ITERATE",
+        "source": "a1c46fb3ef5e22336d10e4d0b3b9ec9ffb2a0311",
+        "monotonic": 1713142.916823551
+      }
+    ]
+  },
+  "new_numeric_factors": 39,
+  "local_numeric": 38,
+  "coarse_numeric": 1,
+  "pc_calls": {
+    "apply": 34,
+    "local_triangular": 1292,
+    "coarse_triangular": 34,
+    "internal_original_action": 34
+  },
+  "pc_seconds": {
+    "local": 289.3309104440268,
+    "coarse": 18.785588458180428,
+    "original": 44.179527438944206
+  },
+  "factor_release": {
+    "before_RSS_bytes": 37912133632,
+    "after_RSS_bytes": 7813861376,
+    "RSS_decreased": true,
+    "numeric_count": 39,
+    "local_numeric_count": 38,
+    "coarse_numeric_count": 1,
+    "global_fine_factor_count": 0
+  },
+  "global_fine_K_reads": 0,
+  "global_fine_S_reads": 0,
+  "global_fine_factors": 0,
+  "new_Z0_or_E0": 0,
+  "factor_symbolic_decimal_MB_rule": true,
+  "warning_gib": 112,
+  "sampled_stop_gib": 128,
+  "planning_gib": 96,
+  "numeric_data_scope": "simultaneous process-tree sampled RSS; unique array payload separate; backend allocations not RSS",
+  "sampling_config_seconds": 0.5,
+  "continuous_peak_bytes": null,
+  "OOC_bytes": 0,
+  "GPU_bytes": 0,
+  "MPI": 1,
+  "math": 1,
+  "parent_prefix": {
+    "V71_Z0_E0_core_distinct_measured_seconds": {
+      "fixed_geometric_core_and_periodic_tet_halo": 15.505038263974711,
+      "true_p2_to_fine_trace_moment_interpolation": 56.05374120105989,
+      "local_and_complete_port_Galerkin_assembly": 2856.998207557015,
+      "bounded_coarse_symbolic": 0.17003491008654237
+    },
+    "V71_prefix_sum_seconds": 2928.7270219321363,
+    "V70_packet_and_global_S_shared_prepare_seconds": 8766.78132127109,
+    "packet_only_cold_prepare_seconds": null,
+    "reason": "V70 shared loop includes global-S work; no packet-only paired cold timing, do not invent subtraction",
+    "historical_prefix_already_counted": true,
+    "old_failed_costs_preserved": true
+  },
+  "history_known_lower_before_v77_seconds": 395844.8379061019,
+  "history_known_lower_including_current_seconds": 398628.9327551934,
+  "complete_success_cold_N1_seconds": null,
+  "reason": "no correct solution or full successful output; attempted pipeline timing is measured, fresh packet-only portion unknown",
+  "additional_unwrapped_edit_git_archive_intervals_seconds": null,
+  "window": {
+    "start_utc": "2026-10-12T05:20:03.689514+00:00",
+    "start_monotonic": 1707398.550401817,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "first_work": "CONSERVATIVE_EARLIER_BOUND",
+    "anchor_reason": "Initial V77 read-only probe clock not retained; use durable preceding delivery clock, charge unknown interval rather than reset",
+    "total_seconds": 21600,
+    "delivery_reserve_seconds": 1800,
+    "success_acceptance_reserve_seconds": 4500,
+    "total_window_seconds": 21600,
+    "total_limit_seconds": 21600,
+    "heavy_limit_seconds": 19800,
+    "scientific_loaded_limit_seconds": 19800,
+    "closed": false,
+    "review_commit": "fc02a8612f1aa31b2c52366cc645acee6b5f8daf",
+    "intake_HEAD": "fc02a8612f1aa31b2c52366cc645acee6b5f8daf",
+    "deadline_utc": "2026-10-12T11:20:03.689514+00:00",
+    "heavy_stop_utc": "2026-10-12T10:50:03.689514+00:00"
+  },
+  "no_nested_sum": true
+}

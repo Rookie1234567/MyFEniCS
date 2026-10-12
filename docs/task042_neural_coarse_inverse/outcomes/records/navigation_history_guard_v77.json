@@ -1,0 +1,30 @@
+{
+  "old": {
+    "docs/task042_neural_coarse_inverse/README.md": {
+      "bytes": 106184,
+      "sha256": "c076b309367cccd20f5193b3b5d767ab7e74e69be408c13e6120e3d5540fda25"
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md": {
+      "bytes": 165439,
+      "sha256": "f74d4b89a3217ccbf5afb9f3aacfd84af99072e6cfb6a1a4b519bd6f5f22302c"
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md": {
+      "bytes": 96206,
+      "sha256": "8af77ba1667b4d12f681ac3f2b30073bd23031a6c4fdc6438a738b9df2e1d886"
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md": {
+      "bytes": 93691,
+      "sha256": "47b29108561cc14de618e6496ef5b7f7836dcb7530f272e98848bc53ee2f45b4"
+    },
+    "docs/development_progress.md": {
+      "bytes": 282882,
+      "sha256": "0af365a4b8c00b6bed411db7dab9b2d556284feee4a60a0da893b046015d5811"
+    },
+    "docs/development_model_registry.md": {
+      "bytes": 321286,
+      "sha256": "e87a7393be800d50b0ba5cefd1d377ce4e67f8e4699468cc561f99ff91018bae"
+    }
+  },
+  "prefix_only": true,
+  "old_task_review_response_raw_unchanged": true
+}

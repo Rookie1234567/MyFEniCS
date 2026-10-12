@@ -1,3 +1,9 @@
+## Task042 V77：改变局部波动边界的有界试验
+
+为区别全域主子块与真正子域方程，沿原38区域只累加halo体作用并加固定三角切向阻抗，粗层保持。两块独立作用与38个新symbolic、39numeric通过；实际32步原残差0.917996，未超过廉价Jacobi32的0.388827，0.30门失败，配置关闭。完整系数/原式保存，按bad-field政策不生成昂贵假物理表。父费用不免费，无NN收益、连续精度或2TB48h资格；下一机制须独立新证据，不自动开V78。见[回应](task042_neural_coarse_inverse/response_v77.md)与[费用/原式](task042_neural_coarse_inverse/outcomes/physical_impedance_patch_v77.md)。
+
+---
+
 ## Task042 V76：控制与残差最小化收口
 
 | 同0.7nm/25576tet/p5/828（measured） | 实际结论 | 证据 |

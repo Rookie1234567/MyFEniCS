@@ -1,3 +1,9 @@
+## V77新增验证
+
+10项面核/符号/周期分类/halo-only/显式strategy/库存负例targeted及相关Ruff/compile、4dat validate通过；两个实际patch作用和唯一保存数组VERIFY通过，原方程效果FAIL。文档合同一次检查见[本批tests](records/tests_manifest_v77.json)。未运行full pytest/CI，不重做旧PDE。
+
+---
+
 ## Task042 V76：控制与残差最小化收口
 
 | 同0.7nm/25576tet/p5/828（measured） | 实际结论 | 证据 |
