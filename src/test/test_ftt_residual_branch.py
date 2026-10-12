@@ -93,6 +93,23 @@ def test_nonhermitian_complex_adjoint_unchanged():
     assert np.vdot(v.apply(x), y) == pytest.approx(np.vdot(x, v.apply(y, adjoint=True)))
 
 
+def test_core_history_original_residual_matches_full_physical_equation():
+    a = MatrixAction()
+    base = np.array([0.2j, 1 + 0j])
+    d = np.array([0.1j, 0.3 + 0j])
+    view = ResidualTrainingAction(a, base)
+    r = a.A @ d - view.f
+    loss = np.linalg.norm(r) ** 2 / (2 * view.bnorm**2)
+    row = view.diagnostics(
+        dict(native_trial=np.linalg.norm(r) / view.bnorm, trial_loss=loss)
+    )
+    assert row["native_trial"] == pytest.approx(a.audit(base + d)["native_relative"])
+    assert row["training_native_trial"] != pytest.approx(row["native_trial"])
+    assert row["original_trial_loss"] == pytest.approx(
+        np.linalg.norm(a.A @ (base + d) - a.f) ** 2 / (2 * a.bnorm**2)
+    )
+
+
 @pytest.mark.parametrize("number", [2, 4])
 def test_diagnostic_rounds_do_not_reapply_old_point_one_screen(number):
     s = {

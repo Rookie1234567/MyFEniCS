@@ -593,6 +593,18 @@ def launch(spec):
             if spec.get("campaign_version") in (43, 44, 45, 46):
                 d = json.loads(profile["design"].read_text())
                 manifest.update(parent_checkpoint=d["base_checkpoint"] if spec["campaign_version"]==46 else d["parent_checkpoint"], execution_policies=d["execution_policies"])
+                if spec["campaign_version"] == 46:
+                    manifest["residual_branch_rule"] = d["branch_rule"]
+                    prepared = profile["artifacts"] / "v46_residual_branch_checks/result.json"
+                    if prepared.exists():
+                        qualified = json.loads(prepared.read_text())
+                        receipt = qualified["prepared_branch"]
+                        manifest["fixed_residual_branch"] = {
+                            k: receipt[k] for k in ("files", "fixed_fields_identity", "base_model_hash", "correction_model_hash")
+                        }
+                        manifest["fixed_residual_branch"]["qualification_source_sha"] = qualified["source_sha"]
+                    elif spec["role"] != "residual_branch_checks":
+                        raise ValueError("RESIDUAL_QUALIFIED_FIXED_FIELDS_REQUIRED")
             atomic_json(directory / "run_manifest.json", manifest)
             atomic_json(artifact / f"run_manifest_{directory.name}.json", manifest)
             shutil.copyfile(ROOT / spec["input"], directory / "input_original.dat")

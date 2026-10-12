@@ -389,6 +389,8 @@ def run_core_training(
     final = None
 
     def emit(row):
+        if residual_run:
+            row = residual_context.view.diagnostics(row)
         row.update(
             source_sha=binding["source_sha"],
             elapsed_route_seconds=monotonic() - binding["route_origin_monotonic"],

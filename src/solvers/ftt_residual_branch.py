@@ -101,6 +101,23 @@ class ResidualTrainingAction:
     def original_relative(self, r_training):
         return float(np.linalg.norm(r_training) / self.original_bnorm)
 
+    def diagnostics(self, record):
+        """Name the training loss and original residual separately in history."""
+        result = dict(record)
+        ratio = self.bnorm / self.original_bnorm
+        result.update(
+            loss_denominator="norm_fixed_g",
+            bnorm_train=self.bnorm,
+            bnorm_original=self.original_bnorm,
+        )
+        for name in ("old_loss", "trial_loss"):
+            if name in record:
+                result["original_" + name] = record[name] * ratio**2
+        if "native_trial" in record:
+            result["training_native_trial"] = record["native_trial"]
+            result["native_trial"] = record["native_trial"] * ratio
+        return result
+
     def audit(self, c_delta):
         return self.physical.audit(self.combined(c_delta))
 
