@@ -75,6 +75,16 @@ TASK041_SHORTWAVE_CONSUMER_PROFILE = (
     "task041_3nm_exact_side_hybrid_iterative_consumer"
 )
 TASK041_CONSUMER_PHASE = "consumer"
+TASK041_V13_MODAL_POLICY_ID = "task041_v13_consistent_fixed_balh_modal_surrogate"
+TASK041_V13_MEMORY_POLICY = "system_default_unbound"
+TASK041_V13_THREAD_ENV_NAMES = (
+    "OMP_NUM_THREADS",
+    "OPENBLAS_NUM_THREADS",
+    "MKL_NUM_THREADS",
+    "VECLIB_MAXIMUM_THREADS",
+    "NUMEXPR_NUM_THREADS",
+    "BLIS_NUM_THREADS",
+)
 TASK041_W0P7_STAGE_BRIDGE_PATH_ENV = "TASK041_W0P7_STAGE_BRIDGE_PATH"
 TASK041_INPUT = "input/official/task041/5nm_p6h4_m480_mpi1.dat"
 TASK041_WARNING_MEMORY_BYTES = 192 * 2**30
@@ -812,7 +822,7 @@ def _module_path(name: str) -> str | None:
     return None
 
 
-def _environment_snapshot() -> dict[str, Any]:
+def _environment_snapshot(*, include_blis: bool = False) -> dict[str, Any]:
     executable_entry = Path(os.path.abspath(sys.executable))
     executable_target = executable_entry.resolve()
     prefix = Path(sys.prefix).resolve()
@@ -829,7 +839,7 @@ def _environment_snapshot() -> dict[str, Any]:
         "MKL_NUM_THREADS",
         "VECLIB_MAXIMUM_THREADS",
         "NUMEXPR_NUM_THREADS",
-    )
+    ) + (("BLIS_NUM_THREADS",) if include_blis else ())
     threads = {name: os.environ.get(name) for name in thread_names}
     scalar_type = str(np.dtype(PETSc.ScalarType))
     int_type = str(np.dtype(PETSc.IntType))
@@ -861,7 +871,9 @@ def _environment_snapshot() -> dict[str, Any]:
     return snapshot
 
 
-def task041_inner_mpi_environment(environment: Mapping[str, str]) -> dict[str, str]:
+def task041_inner_mpi_environment(
+    environment: Mapping[str, str], *, include_blis: bool = False
+) -> dict[str, str]:
     """Prepare a copied environment for a future inner MPI process."""
 
     thread_names = (
@@ -870,7 +882,7 @@ def task041_inner_mpi_environment(environment: Mapping[str, str]) -> dict[str, s
         "MKL_NUM_THREADS",
         "VECLIB_MAXIMUM_THREADS",
         "NUMEXPR_NUM_THREADS",
-    )
+    ) + (("BLIS_NUM_THREADS",) if include_blis else ())
     cleaned = {
         key: value
         for key, value in environment.items()
@@ -1461,6 +1473,144 @@ def _task041_node0_memfree_bytes() -> int:
                 return int(fields[0]) * 1024
             break
     raise Task041ModePrepError("node0 MemFree is unavailable or malformed")
+
+
+def _task041_node_memfree_bytes(node: int) -> int:
+    if type(node) is not int or node < 0:
+        raise Task041ModePrepError("NUMA node index is invalid")
+    for line in Path(f"/sys/devices/system/node/node{node}/meminfo").read_text().splitlines():
+        if line.startswith(f"Node {node} MemFree:"):
+            fields = line.split(":", 1)[1].split()
+            if len(fields) == 2 and fields[1] == "kB":
+                return int(fields[0]) * 1024
+            break
+    raise Task041ModePrepError(
+        f"node{node} MemFree is unavailable or malformed"
+    )
+
+
+def _task041_v13_external_headroom_check(
+    *,
+    required_bytes: int | None,
+    phase_additional_bytes: int | None,
+    node0_free_bytes: int | None,
+    node1_free_bytes: int | None,
+    host_available_bytes: int | None,
+    floor_bytes: int,
+    cgroup_limit_state: str | None,
+    cgroup_headroom_bytes: int | None,
+    initial_gate_required: bool = False,
+) -> tuple[dict[str, Any], list[str]]:
+    """Recompute V13 aggregate-reserve and node1 incremental headroom."""
+
+    expected_floor = TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES
+    expected_initial_aggregate = expected_floor + (
+        TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES
+    )
+    required_known = type(required_bytes) is int and required_bytes >= 0
+    additional_known = (
+        type(phase_additional_bytes) is int and phase_additional_bytes >= 0
+    )
+    nodes_known = (
+        type(node0_free_bytes) is int
+        and node0_free_bytes >= 0
+        and type(node1_free_bytes) is int
+        and node1_free_bytes >= 0
+    )
+    host_known = type(host_available_bytes) is int and host_available_bytes >= 0
+    aggregate_free = (
+        node0_free_bytes + node1_free_bytes if nodes_known else None
+    )
+    aggregate_headroom = (
+        aggregate_free - expected_floor if aggregate_free is not None else None
+    )
+    node1_headroom = (
+        node1_free_bytes - phase_additional_bytes
+        if type(node1_free_bytes) is int and additional_known
+        else None
+    )
+    host_headroom = (
+        host_available_bytes - expected_floor if host_known else None
+    )
+    initial_aggregate_pass = bool(
+        not initial_gate_required
+        or (
+            aggregate_free is not None
+            and aggregate_free >= expected_initial_aggregate
+        )
+    )
+    initial_node1_pass = bool(
+        not initial_gate_required
+        or (
+            type(node1_free_bytes) is int
+            and node1_free_bytes >= TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES
+        )
+    )
+    external = {
+        "initial_aggregate_memfree_gate": initial_aggregate_pass,
+        "initial_node1_memfree_gate": initial_node1_pass,
+        "aggregate_floor_headroom": bool(
+            required_known
+            and aggregate_headroom is not None
+            and aggregate_headroom >= required_bytes
+        ),
+        "node1_phase_headroom": bool(
+            additional_known
+            and node1_headroom is not None
+            and node1_headroom >= 0
+        ),
+        "host_floor_headroom": bool(
+            required_known
+            and host_headroom is not None
+            and host_headroom >= required_bytes
+        ),
+        "cgroup_ancestor_headroom": False,
+    }
+    errors: list[str] = []
+    if floor_bytes != expected_floor:
+        errors.append("V13 aggregate reserve differs from frozen 384 GiB")
+    if not required_known or not additional_known or not nodes_known or not host_known:
+        errors.append("V13 aggregate/node/host free-memory evidence is missing")
+    if not initial_aggregate_pass:
+        errors.append("initial aggregate MemFree is below 464 GiB or unknown")
+    if not initial_node1_pass:
+        errors.append("initial node1 MemFree is below 80 GiB or unknown")
+    if not external["aggregate_floor_headroom"]:
+        errors.append("aggregate MemFree minus 384 GiB does not cover phase increment plus W")
+    if not external["node1_phase_headroom"]:
+        errors.append("node1 MemFree does not cover this phase increment")
+    if not external["host_floor_headroom"]:
+        errors.append("host MemAvailable reserve headroom is insufficient or unknown")
+
+    if cgroup_limit_state == "max_or_unlimited":
+        external["cgroup_ancestor_headroom"] = required_known
+    elif (
+        cgroup_limit_state == "finite"
+        and type(cgroup_headroom_bytes) is int
+        and cgroup_headroom_bytes >= 0
+    ):
+        external["cgroup_ancestor_headroom"] = bool(
+            required_known and cgroup_headroom_bytes >= required_bytes
+        )
+    if not external["cgroup_ancestor_headroom"]:
+        errors.append("cgroup ancestor headroom is insufficient or unknown")
+    return {
+        "node0_memfree_bytes": node0_free_bytes,
+        "node1_memfree_bytes": node1_free_bytes,
+        "aggregate_memfree_bytes": aggregate_free,
+        "aggregate_memfree_reserve_bytes": expected_floor,
+        "aggregate_floor_headroom_bytes": aggregate_headroom,
+        "node1_phase_additional_bytes": phase_additional_bytes,
+        "node1_headroom_after_phase_additional_bytes": node1_headroom,
+        "host_available_bytes": host_available_bytes,
+        "host_headroom_after_aggregate_reserve_bytes": host_headroom,
+        "initial_gate_required": initial_gate_required,
+        "initial_aggregate_memfree_minimum_bytes": expected_initial_aggregate,
+        "initial_node1_memfree_minimum_bytes": (
+            TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES
+        ),
+        "external_resource_gates": external,
+    }, errors
 
 
 def _task041_infog_positive_int(
@@ -2812,6 +2962,810 @@ def _task041_w0p7_external_headroom_check(
     return node0_headroom, host_headroom, bool(cgroup_room), external_errors
 
 
+def _task041_v13_resource_from(raw: Mapping[str, Any]) -> dict[str, Any]:
+    """Normalize the existing tree/cgroup sample used by the V13 gate."""
+
+    tree, cgroup, host = (
+        raw.get("process_tree"),
+        raw.get("job_cgroup"),
+        raw.get("host_memory"),
+    )
+    if not isinstance(tree, Mapping) or not isinstance(cgroup, Mapping):
+        raise Task041ModePrepError("whole-job tree/cgroup authority is unreadable")
+    tree_rss = tree.get("rss_bytes")
+    cgroup_current = cgroup.get("memory_current_bytes")
+    authority = raw.get("memory_authority_bytes")
+    if (
+        tree.get("all_status_readable") is not True
+        or cgroup.get("dedicated_job_cgroup") is not True
+        or type(tree_rss) is not int
+        or type(cgroup_current) is not int
+        or authority != max(tree_rss, cgroup_current)
+    ):
+        raise Task041ModePrepError("whole-job tree/cgroup authority is incomplete")
+    return {
+        "B_bytes": max(tree_rss, cgroup_current),
+        "tree_rss_bytes": tree_rss,
+        "tree_pids": tree.get("pids"),
+        "cgroup_current_bytes": cgroup_current,
+        "cgroup_headroom_bytes": cgroup.get("ancestor_memory_headroom_bytes"),
+        "cgroup_limit_state": cgroup.get("ancestor_hard_limit_state"),
+        "host_available_bytes": host.get("mem_available_bytes")
+        if isinstance(host, Mapping)
+        else None,
+    }
+
+
+def _task041_v13_sample_cost_errors(
+    phase: str, report: Mapping[str, Any], comm_size: int
+) -> list[str]:
+    if phase in {"outer_restart32_workspace", "outer_restart64_workspace"}:
+        errors: list[str] = []
+        rank_rows = report.get("outer_restart_workspace_by_rank")
+        target_restart = 32 if phase == "outer_restart32_workspace" else 64
+        restart32_in_fresh_b = target_restart == 64
+        if (
+            report.get("phase") != phase
+            or report.get("target_restart") != target_restart
+            or report.get("workspace_model")
+            != "petsc-3.19.6-fgmres-v-z-scalar-pointer-plus-live-phase-inventory-v1"
+            or not isinstance(rank_rows, list)
+            or len(rank_rows) != comm_size
+            or [row.get("rank") for row in rank_rows if isinstance(row, Mapping)]
+            != list(range(comm_size))
+        ):
+            return ["outer workspace report identity/rank rows are invalid"]
+        if (
+            report.get("restart32_workspace_is_already_in_fresh_B")
+            is not restart32_in_fresh_b
+            or report.get("restart32_workspace_is_charged_as_new")
+            is restart32_in_fresh_b
+            or report.get("original_A_binding_vecs_are_already_in_fresh_B")
+            is not restart32_in_fresh_b
+        ):
+            errors.append("outer restart residency/charge statement is inconsistent")
+
+        rank_phases: list[dict[str, int]] = []
+        for row in rank_rows:
+            if not isinstance(row, Mapping):
+                errors.append("outer workspace rank row is malformed")
+                continue
+            local_rows = row.get("operator_local_rows")
+            local_columns = row.get("operator_local_columns")
+            scalar_bytes = row.get("complex_scalar_bytes")
+            pointer_bytes = row.get("pointer_bytes")
+            integer_bytes = row.get("PETSc_integer_bytes")
+            if (
+                type(local_rows) is not int
+                or local_rows < 0
+                or type(local_columns) is not int
+                or local_columns < 0
+                or scalar_bytes != 16
+                or type(pointer_bytes) is not int
+                or pointer_bytes <= 0
+                or integer_bytes != 4
+            ):
+                errors.append("outer workspace local Vec/ABI dimensions are invalid")
+                continue
+
+            def workspace(
+                restart: int,
+                *,
+                row_local_rows: int = local_rows,
+                row_local_columns: int = local_columns,
+                row_scalar_bytes: int = scalar_bytes,
+                row_pointer_bytes: int = pointer_bytes,
+                row_integer_bytes: int = integer_bytes,
+            ) -> tuple[int, dict[str, int]]:
+                gmres_slots = restart + 4
+                fgmres_slots = restart + 2
+                vector_entries = (
+                    gmres_slots * row_local_rows
+                    + fgmres_slots * row_local_columns
+                )
+                scalar_slots = (
+                    (restart + 2) * (restart + 1)
+                    + (restart + 1) * (restart + 1)
+                    + (restart + 2)
+                    + (restart + 1)
+                    + (restart + 1)
+                    + restart
+                    + 2 * (restart + 2)
+                )
+                pointer_slots = gmres_slots + fgmres_slots
+                integer_slots = restart + 4
+                details = {
+                    "gmres_vector_slots": gmres_slots,
+                    "fgmres_preconditioned_vector_slots": fgmres_slots,
+                    "vector_payload_bytes": vector_entries * row_scalar_bytes,
+                    "scalar_array_slots": scalar_slots,
+                    "scalar_payload_bytes": scalar_slots * row_scalar_bytes,
+                    "pointer_table_slots": pointer_slots,
+                    "pointer_table_bytes": pointer_slots * row_pointer_bytes,
+                    "PETSc_integer_workspace_slots": integer_slots,
+                    "PETSc_integer_workspace_bytes": integer_slots * row_integer_bytes,
+                }
+                details["workspace_bytes"] = sum(
+                    details[key]
+                    for key in (
+                        "vector_payload_bytes",
+                        "scalar_payload_bytes",
+                        "pointer_table_bytes",
+                        "PETSc_integer_workspace_bytes",
+                    )
+                )
+                return details["workspace_bytes"], details
+
+            restart32, details32 = workspace(32)
+            restart64, details64 = workspace(64)
+            bind_entries = local_rows + 2 * local_columns
+            bind_bytes = bind_entries * scalar_bytes
+            bottom_rows = row.get("true_residual_bottom_local_rows")
+            top_rows = row.get("true_residual_top_local_rows")
+            modal_count = row.get("modal_count")
+            modal_owner = row.get("modal_owner")
+            if (
+                any(type(value) is not int or value < 0 for value in (bottom_rows, top_rows, modal_count))
+                or type(modal_owner) is not int
+            ):
+                errors.append("outer original-A/modal local layouts are incomplete")
+                continue
+            residual_entries = local_rows + 4 * (bottom_rows + top_rows)
+            residual_bytes = residual_entries * scalar_bytes
+            residual_modal_slots = 4 + (3 if row.get("rank") == modal_owner else 0)
+            residual_modal_bytes = residual_modal_slots * modal_count * scalar_bytes
+            modal_row_slots = 5 + (3 if row.get("rank") == modal_owner else 0)
+            modal_row_bytes = modal_row_slots * modal_count * scalar_bytes
+            if (
+                row.get("restart32_KSP_workspace_components") != details32
+                or row.get("restart64_KSP_workspace_components") != details64
+                or row.get("restart32_workspace_bytes") != restart32
+                or row.get("restart64_workspace_bytes") != restart64
+                or row.get("target_restart") != target_restart
+                or row.get("original_A_binding_vec_entries") != bind_entries
+                or row.get("original_A_binding_vec_bytes") != bind_bytes
+                or row.get("true_residual_PETSc_vec_entries") != residual_entries
+                or row.get("true_residual_PETSc_vec_bytes") != residual_bytes
+                or row.get("true_residual_modal_array_slots") != residual_modal_slots
+                or row.get("true_residual_modal_array_bytes") != residual_modal_bytes
+                or row.get("original_A_modal_row_callback_array_slots") != modal_row_slots
+                or row.get("original_A_modal_row_callback_array_bytes") != modal_row_bytes
+            ):
+                errors.append("outer workspace per-rank source formula is inconsistent")
+                continue
+            ksp_bytes = restart32 if target_restart == 32 else restart64
+            known = ksp_bytes + (0 if restart32_in_fresh_b else bind_bytes)
+            rank_phases.append(
+                {
+                    "known": known,
+                    "pc_temporary": int(row["builder_outer_PC_phase_temporary_bytes"]),
+                    "pc_replicated": int(row["builder_outer_PC_phase_replicated_bytes"])
+                    + modal_row_bytes,
+                    "residual_temporary": residual_bytes,
+                    "residual_replicated": residual_modal_bytes,
+                }
+            )
+
+        if len(rank_phases) != comm_size:
+            return errors + ["outer workspace rank phase inventory is incomplete"]
+        projection = report.get("phase_memory_projection")
+        phase_reports = (
+            projection.get("phase_reports") if isinstance(projection, Mapping) else None
+        )
+        phase_totals = (
+            projection.get("phase_total_bytes") if isinstance(projection, Mapping) else None
+        )
+        phase_names = (
+            "outer_PC_with_retained_workspaces",
+            "outer_original_A_true_residual",
+        )
+        if (
+            not isinstance(projection, Mapping)
+            or projection.get("scope")
+            != "max_simultaneous_KSP_plus_PC_or_original_A_residual_phase"
+            or not isinstance(phase_reports, Mapping)
+            or set(phase_reports) != set(phase_names)
+            or not isinstance(phase_totals, Mapping)
+        ):
+            return errors + ["outer simultaneous-phase projection is incomplete"]
+
+        expected_totals: dict[str, int] = {}
+        for phase_name in phase_names:
+            phase_report = phase_reports.get(phase_name)
+            if not isinstance(phase_report, Mapping):
+                errors.append(f"outer workspace lacks {phase_name}")
+                continue
+            names = (
+                ("known", "pc_temporary", "pc_replicated")
+                if phase_name == "outer_PC_with_retained_workspaces"
+                else ("known", "residual_temporary", "residual_replicated")
+            )
+            fields = {
+                "known": "known_additional_bytes_by_rank",
+                "pc_temporary": "additional_temporary_bytes_by_rank",
+                "pc_replicated": "additional_replicated_bytes_by_rank",
+                "residual_temporary": "additional_temporary_bytes_by_rank",
+                "residual_replicated": "additional_replicated_bytes_by_rank",
+            }
+            arrays = {
+                name: [item[name] for item in rank_phases] for name in names
+            }
+            expected_rank_bytes = [
+                sum(arrays[name][rank] for name in names)
+                for rank in range(comm_size)
+            ]
+            if any(
+                phase_report.get(fields[name]) != arrays[name] for name in names
+            ) or phase_report.get("additional_bytes_by_rank") != expected_rank_bytes:
+                errors.append(
+                    f"outer phase payload does not match {phase_name} source counts"
+                )
+            expected_totals[phase_name] = sum(expected_rank_bytes)
+        if dict(phase_totals) != expected_totals:
+            errors.append("outer phase totals do not match per-rank payloads")
+        if not expected_totals:
+            return errors + ["outer phase totals are empty"]
+        selected_phase = max(expected_totals, key=expected_totals.get)
+        selected_report = phase_reports.get(selected_phase)
+        if not isinstance(selected_report, Mapping):
+            return errors + ["selected outer phase payload is absent"]
+        if (
+            projection.get("selected_phase") != selected_phase
+            or projection.get("selected_phase_payload_bytes")
+            != expected_totals[selected_phase]
+            or report.get("known_additional_bytes_by_rank")
+            != selected_report.get("known_additional_bytes_by_rank")
+            or report.get("additional_bytes_by_rank")
+            != selected_report.get("additional_bytes_by_rank")
+            or report.get("additional_temporary_bytes_by_rank")
+            != selected_report.get("additional_temporary_bytes_by_rank")
+            or report.get("additional_replicated_bytes_by_rank")
+            != selected_report.get("additional_replicated_bytes_by_rank")
+            or report.get("target_restart_workspace_bytes_by_rank")
+            != [
+                row.get(f"restart{target_restart}_workspace_bytes")
+                for row in rank_rows
+            ]
+        ):
+            errors.append("outer selected simultaneous-phase projection is inconsistent")
+        if report.get("builder_outer_PC_known_additions_reused_as_delta") is not False:
+            errors.append("builder retained bytes must remain in fresh B, not be re-added")
+        if report.get("unitemized_allocator_and_MPI_scratch") != (
+            "unknown; W_policy_reserve_is_applied_separately"
+        ):
+            errors.append("unitemized allocator/MPI scratch must remain separate from W")
+        return errors
+    if phase != "after_eight_columns":
+        return []
+    errors: list[str] = []
+    if report.get("phase") != phase or report.get("sample_column_count") != 8:
+        errors.append("after-eight report does not identify exactly eight sampled columns")
+    rank_rows = report.get("rank_local_sample_work")
+    if (
+        not isinstance(rank_rows, list)
+        or len(rank_rows) != comm_size
+        or [row.get("rank") for row in rank_rows if isinstance(row, Mapping)]
+        != list(range(comm_size))
+    ):
+        errors.append("first-eight per-rank sample rows are incomplete")
+        rank_rows = []
+    elapsed_values = []
+    for row in rank_rows:
+        if not isinstance(row, Mapping):
+            errors.append("first-eight sample row is malformed")
+            continue
+        elapsed = row.get("elapsed_seconds")
+        if (
+            type(elapsed) not in (int, float)
+            or not math.isfinite(float(elapsed))
+            or float(elapsed) < 0.0
+            or row.get("bottom_B_apply_count") != 8
+            or row.get("top_B_apply_count") != 8
+        ):
+            errors.append("first-eight elapsed time or B apply counts are invalid")
+        else:
+            elapsed_values.append(float(elapsed))
+    sample_max = report.get("max_rank_sample_seconds")
+    remaining = report.get("remaining_column_count")
+    scopes = report.get("remaining_projected_work_scopes")
+    applies = report.get("remaining_projected_B_apply_count_by_side")
+    projected = report.get("remaining_projected_seconds")
+    if (
+        type(remaining) is not int
+        or remaining < 0
+        or not isinstance(scopes, Mapping)
+        or scopes.get("remaining_matrix_columns") != remaining
+        or scopes.get("independent_full_complex_action_checks") != 7
+        or applies
+        != {"bottom": remaining + 7, "top": remaining + 7}
+        or not elapsed_values
+        or type(sample_max) not in (int, float)
+        or not math.isfinite(float(sample_max))
+        or not math.isclose(float(sample_max), max(elapsed_values), rel_tol=0.0, abs_tol=1.0e-12)
+        or type(projected) not in (int, float)
+        or not math.isfinite(float(projected))
+        or not math.isclose(
+            float(projected), float(sample_max) * (remaining + 7) / 8.0,
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-12,
+        )
+    ):
+        errors.append("remaining V13 construction/action cost projection is incomplete")
+    assembly_rows = report.get("assembly_elapsed_seconds_by_rank")
+    assembly_max = report.get("assembly_elapsed_seconds_max_rank")
+    if (
+        not isinstance(assembly_rows, list)
+        or len(assembly_rows) != comm_size
+        or [row.get("rank") for row in assembly_rows if isinstance(row, Mapping)]
+        != list(range(comm_size))
+        or any(
+            not isinstance(row, Mapping)
+            or type(row.get("elapsed_seconds")) not in (int, float)
+            or not math.isfinite(float(row["elapsed_seconds"]))
+            or float(row["elapsed_seconds"]) < 0.0
+            for row in assembly_rows
+        )
+        or type(assembly_max) not in (int, float)
+        or not math.isfinite(float(assembly_max))
+        or not isinstance(assembly_rows, list)
+        or not assembly_rows
+        or not math.isclose(
+            float(assembly_max),
+            max(float(row["elapsed_seconds"]) for row in assembly_rows),
+            rel_tol=0.0,
+            abs_tol=1.0e-12,
+        )
+    ):
+        errors.append("canonical all-rank elapsed rows are incomplete")
+    estimated_total = report.get("estimated_builder_seconds_at_sample")
+    if (
+        type(estimated_total) not in (int, float)
+        or not math.isfinite(float(estimated_total))
+        or float(estimated_total) < 0.0
+        or report.get("full_run_cost_target_seconds") != 172800
+        or report.get("full_run_cost_target_semantics")
+        != "planning_target_only_no_elapsed_stop"
+    ):
+        errors.append("builder estimate or non-stopping 48-hour target metadata is invalid")
+    elif (
+        type(assembly_max) in (int, float)
+        and math.isfinite(float(assembly_max))
+        and type(projected) in (int, float)
+        and math.isfinite(float(projected))
+        and not math.isclose(
+            float(estimated_total),
+            float(assembly_max) + float(projected),
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-12,
+        )
+    ):
+        errors.append("builder estimate is not based on the canonical max-rank elapsed row")
+    elif float(estimated_total) >= 172800.0:
+        # Refuse only at the completed eight-column boundary; this is not an
+        # elapsed-time stop for a running builder.
+        errors.append(
+            "sampled_builder_projection_at_or_above_172800_second_planning_target"
+        )
+    return errors
+
+
+def _task041_v13_fresh_authority_callback(
+    phase: str,
+    report: Mapping[str, Any],
+    *,
+    comm: MPI.Intracomm,
+    supervisor_memory_binding: Mapping[str, Any],
+    limits: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Run the production rank-0 fresh-resource and two-phase V13 cost gate."""
+
+    # Bind the report collectively before rank 0 performs resource work or any
+    # rank enters the response broadcast.  A malformed value on one rank must
+    # not make rank 0 fail while re-serializing inside the exception handler.
+    report_sha256 = None
+    report_error = None
+    try:
+        report_json = json.dumps(
+            dict(report), sort_keys=True, separators=(",", ":"), allow_nan=False
+        )
+        report_sha256 = hashlib.sha256(report_json.encode()).hexdigest()
+    except Exception as exc:  # noqa: BLE001 - report validity is agreed below
+        report_error = f"{type(exc).__name__}: {exc}"
+    report_identities = comm.allgather((report_error, report_sha256))
+    report_failures = [
+        f"rank {rank}: {error}"
+        for rank, (error, _digest) in enumerate(report_identities)
+        if error is not None
+    ]
+    report_digests = [
+        digest for error, digest in report_identities if error is None
+    ]
+    if report_failures or len(report_digests) != comm.size:
+        raise Task041ModePrepError(
+            "V13 authority report is unbindable: " + "; ".join(report_failures)
+        )
+    if len(set(report_digests)) != 1:
+        raise Task041ModePrepError(
+            "V13 authority report differs across ranks and is unbindable"
+        )
+    assert report_sha256 is not None
+
+    rank_pids = comm.allgather(int(os.getpid()))
+    response = None
+    if comm.rank == 0:
+        try:
+            monitor = _task041_latest_supervisor_memory_sample(
+                supervisor_memory_binding
+            )
+            root_pid = monitor.get("sample_root_pid")
+            age = monitor.get("file_age_seconds")
+            resource = _task041_v13_resource_from(_resource_snapshot(root_pid))
+            node0_free = _task041_node_memfree_bytes(0)
+            node1_free = _task041_node_memfree_bytes(1)
+            cap = limits.get("hard_memory_bytes")
+            warning = limits.get("process_tree_rss_warning_bytes")
+            floor = limits.get("min_memavailable_bytes")
+            cost_errors = _task041_v13_sample_cost_errors(
+                phase, report, int(comm.size)
+            )
+            projection = report.get("phase_memory_projection")
+            if not isinstance(projection, Mapping):
+                raise Task041ModePrepError("V13 phase memory projection is missing")
+            phase_reports = projection.get("phase_reports")
+            phase_totals = projection.get("phase_total_bytes")
+            selected_phase = projection.get("selected_phase")
+            if (
+                not isinstance(phase_reports, Mapping)
+                or not isinstance(phase_totals, Mapping)
+                or selected_phase not in phase_reports
+            ):
+                raise Task041ModePrepError("V13 phase memory projection is malformed")
+            recomputed_totals = {}
+            for name, components in phase_reports.items():
+                if not isinstance(components, Mapping):
+                    raise Task041ModePrepError("V13 phase memory row is malformed")
+                component_names = (
+                    "known_additional_bytes_by_rank",
+                    "additional_temporary_bytes_by_rank",
+                    "additional_replicated_bytes_by_rank",
+                )
+                component_rows = [components.get(key) for key in component_names]
+                if any(
+                    not isinstance(values, list)
+                    or len(values) != int(comm.size)
+                    or any(type(value) is not int or value < 0 for value in values)
+                    for values in component_rows
+                ):
+                    raise Task041ModePrepError("V13 per-phase payload rows are invalid")
+                phase_additional = [
+                    sum(values[rank] for values in component_rows)
+                    for rank in range(int(comm.size))
+                ]
+                if components.get("additional_bytes_by_rank") != phase_additional:
+                    raise Task041ModePrepError("V13 phase payload total is inconsistent")
+                recomputed_totals[name] = sum(phase_additional)
+            max_phase = max(recomputed_totals, key=recomputed_totals.get)
+            selected = phase_reports[max_phase]
+            selected_keys = (
+                "known_additional_bytes_by_rank",
+                "additional_temporary_bytes_by_rank",
+                "additional_replicated_bytes_by_rank",
+            )
+            if (
+                selected_phase != max_phase
+                or dict(phase_totals) != recomputed_totals
+                or any(report.get(key) != selected.get(key) for key in selected_keys)
+            ):
+                raise Task041ModePrepError("V13 selected phase is not the largest payload")
+            known, temporary, replicated = (
+                list(report[key]) for key in selected_keys
+            )
+            additional = [
+                known[rank] + temporary[rank] + replicated[rank]
+                for rank in range(int(comm.size))
+            ]
+            if phase not in {
+                "before_dense_allocation",
+                "after_eight_columns",
+                "outer_restart32_workspace",
+                "outer_restart64_workspace",
+            }:
+                raise Task041ModePrepError("V13 allocation phase is not registered")
+            if phase == "after_eight_columns" and report.get("phase") != phase:
+                raise Task041ModePrepError("V13 cost report phase does not match gate")
+            if (
+                type(cap) is not int
+                or type(warning) is not int
+                or type(floor) is not int
+                or cap != TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES
+                or warning != TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES
+                or floor != TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES
+                or len(additional) != int(comm.size)
+            ):
+                raise Task041ModePrepError(
+                    "V13 allocation report or frozen memory contract is incomplete"
+                )
+            reserve = cap - warning
+            required = sum(additional) + reserve
+            headroom, headroom_errors = _task041_v13_external_headroom_check(
+                required_bytes=required,
+                phase_additional_bytes=sum(additional),
+                node0_free_bytes=node0_free,
+                node1_free_bytes=node1_free,
+                host_available_bytes=resource.get("host_available_bytes"),
+                floor_bytes=floor,
+                cgroup_limit_state=resource.get("cgroup_limit_state"),
+                cgroup_headroom_bytes=resource.get("cgroup_headroom_bytes"),
+                initial_gate_required=False,
+            )
+            aggregate_headroom = headroom.get("aggregate_floor_headroom_bytes")
+            host_headroom = headroom.get(
+                "host_headroom_after_aggregate_reserve_bytes"
+            )
+            rank_tree_pass = bool(
+                type(root_pid) is int
+                and root_pid == supervisor_memory_binding.get("supervisor_root_pid")
+                and _task041_resource_tree_covers_ranks(
+                    resource.get("tree_pids"), root_pid, rank_pids
+                )
+            )
+            monitor_pass = bool(
+                monitor.get("invocation_id")
+                == supervisor_memory_binding.get("invocation_id")
+                and monitor.get("source_sha")
+                == supervisor_memory_binding.get("source_sha")
+                and monitor.get("unit") == supervisor_memory_binding.get("unit")
+                and monitor.get("launch_manifest_sha256")
+                == supervisor_memory_binding.get("launch_manifest_sha256")
+                and monitor.get("phase") == "public_command"
+                and monitor.get("sample_role") == "phase_running"
+                and type(age) in (int, float)
+                and 0 <= float(age) <= 2.0
+            )
+            cap_pass = resource["B_bytes"] + required <= cap
+            external_headroom_gates = headroom["external_resource_gates"]
+            external = {
+                "bound_fresh_supervisor_sample": monitor_pass,
+                "tree_cgroup_and_all_mpi_ranks": rank_tree_pass,
+                **external_headroom_gates,
+                "case_cap_projection": cap_pass,
+                "sample_cost_contract": not cost_errors,
+            }
+            reasons = list(headroom_errors) + cost_errors
+            if not monitor_pass:
+                reasons.append("bound supervisor memory sample is stale or mismatched")
+            if not rank_tree_pass:
+                reasons.append("fresh process tree does not contain this MPI rank set")
+            if not cap_pass:
+                reasons.append(
+                    f"fresh B + stage increment + W={resource['B_bytes'] + required} exceeds cap={cap}"
+                )
+            request_sha = report_sha256
+            receipt_payload = {
+                "phase": phase,
+                "request_sha256": request_sha,
+                "invocation_id": supervisor_memory_binding.get("invocation_id"),
+                "source_sha": supervisor_memory_binding.get("source_sha"),
+                "unit": supervisor_memory_binding.get("unit"),
+                "sample_row_sha256": monitor.get("sample_row_sha256"),
+                "sample_root_pid": root_pid,
+                "rank_pids": list(rank_pids),
+                "resource_B_bytes": resource.get("B_bytes"),
+                "node0_memfree_bytes": node0_free,
+                "node1_memfree_bytes": node1_free,
+                "aggregate_memfree_bytes": headroom.get(
+                    "aggregate_memfree_bytes"
+                ),
+                "aggregate_memfree_reserve_bytes": headroom.get(
+                    "aggregate_memfree_reserve_bytes"
+                ),
+                "aggregate_floor_headroom_bytes": aggregate_headroom,
+                "node1_phase_additional_bytes": sum(additional),
+                "node1_headroom_after_phase_additional_bytes": headroom.get(
+                    "node1_headroom_after_phase_additional_bytes"
+                ),
+                "initial_resource_gate": {
+                    "required": False,
+                    "source": "supervisor_resource_preflight",
+                    "initial_aggregate_memfree_minimum_bytes": headroom.get(
+                        "initial_aggregate_memfree_minimum_bytes"
+                    ),
+                    "initial_node1_memfree_minimum_bytes": headroom.get(
+                        "initial_node1_memfree_minimum_bytes"
+                    ),
+                },
+                "selected_memory_phase": selected_phase,
+                "selected_memory_phase_payload_bytes": sum(additional),
+                "additional_bytes_by_rank": list(additional),
+                "cap_bytes": cap,
+                "W_policy_reserve_bytes": reserve,
+                "floor_bytes": floor,
+                "host_available_bytes": resource.get("host_available_bytes"),
+                "host_headroom_after_aggregate_reserve_bytes": host_headroom,
+                "cgroup_limit_state": resource.get("cgroup_limit_state"),
+                "cgroup_headroom_bytes": resource.get("cgroup_headroom_bytes"),
+                "projected_B_plus_delta_plus_W_bytes": (
+                    resource.get("B_bytes", 0) + required
+                ),
+            }
+            receipt_sha = hashlib.sha256(
+                json.dumps(
+                    receipt_payload,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                ).encode()
+            ).hexdigest()
+            passed = all(value is True for value in external.values())
+            response = {
+                "schema": "task041.v13.modal_builder_admission.v1",
+                "phase": phase,
+                "status": "pass" if passed else "refused",
+                "decision": "continue" if passed else "stop",
+                "request_sha256": request_sha,
+                "authority_receipt_sha256": receipt_sha,
+                "authority_receipt_payload": receipt_payload,
+                "fresh_job_authority_bytes": resource["B_bytes"],
+                "cap_bytes": cap,
+                "W_policy_reserve_bytes": reserve,
+                "floor_bytes": floor,
+                "additional_bytes_by_rank": additional,
+                "additional_temporary_bytes_by_rank": temporary,
+                "additional_replicated_bytes_by_rank": replicated,
+                "selected_memory_phase": selected_phase,
+                "selected_memory_phase_payload_bytes": sum(additional),
+                "node0_memfree_bytes": node0_free,
+                "node1_memfree_bytes": node1_free,
+                "aggregate_memfree_bytes": headroom.get(
+                    "aggregate_memfree_bytes"
+                ),
+                "aggregate_memfree_reserve_bytes": headroom.get(
+                    "aggregate_memfree_reserve_bytes"
+                ),
+                "aggregate_floor_headroom_bytes": aggregate_headroom,
+                "node1_phase_additional_bytes": sum(additional),
+                "node1_headroom_after_phase_additional_bytes": headroom.get(
+                    "node1_headroom_after_phase_additional_bytes"
+                ),
+                "external_resource_gates": external,
+                "reasons": reasons,
+                "sample_row_sha256": monitor.get("sample_row_sha256"),
+                "sample_age_seconds": float(age),
+                "root_pid": root_pid,
+                "rank_pids": list(rank_pids),
+                "tree_rss_bytes": resource["tree_rss_bytes"],
+                "cgroup_memory_current_bytes": resource["cgroup_current_bytes"],
+                "host_available_bytes": resource["host_available_bytes"],
+                "host_headroom_after_aggregate_reserve_bytes": host_headroom,
+                "cgroup_headroom_bytes": resource["cgroup_headroom_bytes"],
+                "cgroup_limit_state": resource["cgroup_limit_state"],
+                "projected_B_plus_delta_plus_W_bytes": resource["B_bytes"] + required,
+                "cost_assessment": (
+                    {
+                        "scope": "outer_ksp_workspace_admission",
+                        "status": "workspace_model_valid"
+                        if not cost_errors
+                        else "refused",
+                        "decision": (
+                            "allow_initial_restart32_if_resource_gates_pass"
+                            if phase == "outer_restart32_workspace"
+                            else "allow_restart64_if_resource_gates_pass"
+                        )
+                        if not cost_errors
+                        else "refuse_incomplete_workspace_evidence",
+                        "target_restart": report.get("target_restart"),
+                        "reasons": cost_errors,
+                        "existing_restart32_workspace_bytes_by_rank": report.get(
+                            "existing_restart32_workspace_bytes_by_rank"
+                        ),
+                        "target_restart_workspace_bytes_by_rank": report.get(
+                            "target_restart_workspace_bytes_by_rank"
+                        ),
+                        "simultaneous_transition_bytes_by_rank": report.get(
+                            "transition_simultaneous_workspace_bytes_by_rank"
+                        ),
+                        "unitemized_allocator_and_MPI_scratch": report.get(
+                            "unitemized_allocator_and_MPI_scratch"
+                        ),
+                        "W_policy_reserve_bytes": reserve,
+                        "target_is_elapsed_stop": False,
+                    }
+                    if phase in {
+                        "outer_restart32_workspace",
+                        "outer_restart64_workspace",
+                    }
+                    else {
+                        "scope": "sampled_builder_projection_only",
+                        "status": (
+                            "not_yet_sampled"
+                            if phase == "before_dense_allocation"
+                            else "sample_projection_valid"
+                            if not cost_errors
+                            else "refused"
+                        ),
+                        "decision": (
+                            "continue_to_eight_column_sample_if_resource_gates_pass"
+                            if phase == "before_dense_allocation"
+                            else "refuse_remaining_columns_builder_projection_at_or_above_172800_seconds"
+                            if "sampled_builder_projection_at_or_above_172800_second_planning_target"
+                            in cost_errors
+                            else "continue_if_resource_gates_pass"
+                            if not cost_errors
+                            else "refuse_incomplete_cost_evidence"
+                        ),
+                        "reasons": cost_errors,
+                        "first_eight_max_rank_seconds": report.get(
+                            "max_rank_sample_seconds"
+                        ),
+                        "remaining_builder_projection_seconds": report.get(
+                            "remaining_projected_seconds"
+                        ),
+                        "builder_total_at_sample_seconds": report.get(
+                            "estimated_builder_seconds_at_sample"
+                        ),
+                        "owner_LU_and_outer_solve": "not_measured",
+                        "full_run_target_seconds": 172800,
+                        "target_is_elapsed_stop": False,
+                        "target_scope": "whole_run_planning_target_not_builder_timeout",
+                    }
+                ),
+            }
+        except Exception as exc:  # noqa: BLE001 - all ranks receive the same refusal
+            request_sha = report_sha256
+            reason = f"{type(exc).__name__}: {exc}"
+            receipt_payload = {
+                "phase": phase,
+                "request_sha256": request_sha,
+                "refusal_reason": reason,
+                "invocation_id": supervisor_memory_binding.get("invocation_id"),
+                "source_sha": supervisor_memory_binding.get("source_sha"),
+                "unit": supervisor_memory_binding.get("unit"),
+            }
+            receipt_sha = hashlib.sha256(
+                json.dumps(
+                    receipt_payload,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                ).encode()
+            ).hexdigest()
+            size = int(comm.size)
+            known = report.get("known_additional_bytes_by_rank")
+            temporary = report.get("additional_temporary_bytes_by_rank")
+            replicated = report.get("additional_replicated_bytes_by_rank")
+            arrays = (known, temporary, replicated)
+            normalized = [
+                list(values)
+                if isinstance(values, list)
+                and len(values) == size
+                and all(type(value) is int and value >= 0 for value in values)
+                else [0] * size
+                for values in arrays
+            ]
+            additional = [sum(values[rank] for values in normalized) for rank in range(size)]
+            response = {
+                "schema": "task041.v13.modal_builder_admission.v1",
+                "phase": phase,
+                "status": "refused",
+                "decision": "stop",
+                "request_sha256": request_sha,
+                "authority_receipt_sha256": receipt_sha,
+                "authority_receipt_payload": receipt_payload,
+                "fresh_job_authority_bytes": 0,
+                "cap_bytes": int(limits.get("hard_memory_bytes") or 0),
+                "W_policy_reserve_bytes": 0,
+                "additional_bytes_by_rank": additional,
+                "additional_temporary_bytes_by_rank": normalized[1],
+                "additional_replicated_bytes_by_rank": normalized[2],
+                "external_resource_gates": {"fresh_sample_valid": False},
+                "reasons": [reason],
+            }
+    response = comm.bcast(response, root=0)
+    if not isinstance(response, Mapping):
+        raise Task041ModePrepError("V13 authority callback returned no shared receipt")
+    return dict(response)
+
+
 def _build_task041_w0p7_stage_factory(
     extension_path: str | Path,
     *,
@@ -2819,6 +3773,7 @@ def _build_task041_w0p7_stage_factory(
     comm: MPI.Intracomm,
     limits: Mapping[str, Any],
     expected_rank_cpus: Sequence[int],
+    memory_policy: str | None,
     marker_callback: Callable[[str, Mapping[str, Any]], None],
     failure_evidence: dict[str, Any],
 ) -> tuple[Callable[..., Any], dict[str, Any]]:
@@ -2890,41 +3845,16 @@ def _build_task041_w0p7_stage_factory(
         or len(set(expected_rank_cpus)) != 8
     ):
         raise Task041ModePrepError("staged factors require the frozen MPI8 CPU map")
+    if memory_policy not in (None, TASK041_V13_MEMORY_POLICY):
+        raise Task041ModePrepError("unsupported W0.7 staged-factor memory policy")
+    v13_default_memory = memory_policy == TASK041_V13_MEMORY_POLICY
 
     icntl14_by_stage = {
         identity: row["icntl14"]
         for identity, row in _TASK041_W0P7_STAGE_HISTORY.items()
     }
 
-    def resource_from(raw: Mapping[str, Any]) -> dict[str, Any]:
-        tree, cg, host = (
-            raw.get("process_tree"),
-            raw.get("job_cgroup"),
-            raw.get("host_memory"),
-        )
-        if not isinstance(tree, Mapping) or not isinstance(cg, Mapping):
-            raise Task041ModePrepError("whole-job tree/cgroup authority is unreadable")
-        tree_rss, cgroup_current = tree.get("rss_bytes"), cg.get("memory_current_bytes")
-        authority = raw.get("memory_authority_bytes")
-        if (
-            tree.get("all_status_readable") is not True
-            or cg.get("dedicated_job_cgroup") is not True
-            or type(tree_rss) is not int
-            or type(cgroup_current) is not int
-            or authority != max(tree_rss, cgroup_current)
-        ):
-            raise Task041ModePrepError("whole-job tree/cgroup authority is incomplete")
-        return {
-            "B_bytes": max(tree_rss, cgroup_current),
-            "tree_rss_bytes": tree_rss,
-            "tree_pids": tree.get("pids"),
-            "cgroup_current_bytes": cgroup_current,
-            "cgroup_headroom_bytes": cg.get("ancestor_memory_headroom_bytes"),
-            "cgroup_limit_state": cg.get("ancestor_hard_limit_state"),
-            "host_available_bytes": host.get("mem_available_bytes")
-            if isinstance(host, Mapping)
-            else None,
-        }
+    resource_from = _task041_v13_resource_from
 
     def stage_gate(context: Mapping[str, Any]) -> bool:
         stage, identity = context.get("stage"), context.get("stage_identity")
@@ -2937,7 +3867,11 @@ def _build_task041_w0p7_stage_factory(
             measured = resource_from(_resource_snapshot(pid))
             measured["root_pid"] = pid
             measured["sampled_unix_seconds"] = time.time()
-            return measured, _task041_node0_memfree_bytes()
+            node0_free = _task041_node0_memfree_bytes()
+            measured["node0_memfree_bytes"] = node0_free
+            if v13_default_memory:
+                measured["node1_memfree_bytes"] = _task041_node_memfree_bytes(1)
+            return measured, node0_free
 
         if comm.rank == 0:
             try:
@@ -2965,6 +3899,11 @@ def _build_task041_w0p7_stage_factory(
         numeric_cleanup_before = resource_cleanup["numeric_cleanup_before"]
         cleanup = resource_cleanup["cleanup"]
         node0_free = resource_cleanup["node0_free"]
+        node1_free = (
+            resource.get("node1_memfree_bytes")
+            if v13_default_memory and isinstance(resource, Mapping)
+            else None
+        )
 
         matrix = context.get("source_matrix_inventory")
         row_range = matrix.get("row_ownership") if isinstance(matrix, Mapping) else None
@@ -3239,6 +4178,12 @@ def _build_task041_w0p7_stage_factory(
                 }
         root_record = next((row for row in ranks if row.get("rank") == 0), {})
         resource = root_record.get("resource")
+        if v13_default_memory:
+            node1_free = (
+                resource.get("node1_memfree_bytes")
+                if isinstance(resource, Mapping)
+                else None
+            )
         monitor = root_record.get("supervisor_log_sample")
         tree_pids = resource.get("tree_pids") if isinstance(resource, Mapping) else None
         rank_pids = [row.get("pid") for row in ranks]
@@ -3249,6 +4194,10 @@ def _build_task041_w0p7_stage_factory(
             and type(resource.get("tree_rss_bytes")) is int
             and type(resource.get("cgroup_current_bytes")) is int
             and type(resource.get("host_available_bytes")) is int
+            and (
+                not v13_default_memory
+                or type(resource.get("node1_memfree_bytes")) is int
+            )
             and isinstance(tree_pids, list)
             and all(type(pid) is int for pid in tree_pids)
             and type(root_record.get("monitor_root_pid")) is int
@@ -3395,19 +4344,40 @@ def _build_task041_w0p7_stage_factory(
             if type(screened_peak) is not int or type(b_live) is not int
             else max(0, screened_peak - b_live)
         )
-        (
-            node0_headroom,
-            host_headroom,
-            _,
-            external_headroom_errors,
-        ) = _task041_w0p7_external_headroom_check(
-            required_bytes=required,
-            node0_free_bytes=node0_free,
-            host_available_bytes=host_available,
-            floor_bytes=int(floor),
-            cgroup_limit_state=cgroup_state if cgroup_known else None,
-            cgroup_headroom_bytes=cgroup_headroom,
-        )
+        v13_headroom = None
+        if v13_default_memory:
+            v13_headroom, external_headroom_errors = (
+                _task041_v13_external_headroom_check(
+                    required_bytes=required,
+                    phase_additional_bytes=estimate_bytes,
+                    node0_free_bytes=node0_free,
+                    node1_free_bytes=node1_free,
+                    host_available_bytes=host_available,
+                    floor_bytes=int(floor) if type(floor) is int else -1,
+                    cgroup_limit_state=cgroup_state if cgroup_known else None,
+                    cgroup_headroom_bytes=cgroup_headroom,
+                )
+            )
+            aggregate_headroom = v13_headroom.get(
+                "aggregate_floor_headroom_bytes"
+            )
+            host_headroom = v13_headroom.get(
+                "host_headroom_after_aggregate_reserve_bytes"
+            )
+        else:
+            (
+                node0_headroom,
+                host_headroom,
+                _,
+                external_headroom_errors,
+            ) = _task041_w0p7_external_headroom_check(
+                required_bytes=required,
+                node0_free_bytes=node0_free,
+                host_available_bytes=host_available,
+                floor_bytes=int(floor),
+                cgroup_limit_state=cgroup_state if cgroup_known else None,
+                cgroup_headroom_bytes=cgroup_headroom,
+            )
         reasons = []
         if not rank_pass or not stage_pass:
             reasons.append("rank_or_stage_identity_mismatch")
@@ -3563,9 +4533,39 @@ def _build_task041_w0p7_stage_factory(
             "factor_lifecycle_pass": bool(live_pass and release_pass),
             "authority": "one rank-0 sample: max(supervisor-root process-tree RSS, dedicated job cgroup memory.current)",
             "resource_snapshot": resource,
+            "memory_policy": (
+                memory_policy
+                if v13_default_memory
+                else "registered_node0_binding"
+            ),
             "node0_free_bytes": node0_free,
-            "host_headroom_after_floor_bytes": host_headroom,
-            "node0_headroom_after_floor_bytes": node0_headroom,
+            "node1_free_bytes": node1_free,
+            "aggregate_memfree_bytes": (
+                v13_headroom.get("aggregate_memfree_bytes")
+                if isinstance(v13_headroom, Mapping)
+                else None
+            ),
+            **(
+                {
+                    "aggregate_floor_headroom_bytes": aggregate_headroom,
+                    "aggregate_memfree_reserve_bytes": floor,
+                    "node1_phase_additional_bytes": estimate_bytes,
+                    "node1_headroom_after_phase_additional_bytes": (
+                        v13_headroom.get(
+                            "node1_headroom_after_phase_additional_bytes"
+                        )
+                        if isinstance(v13_headroom, Mapping)
+                        else None
+                    ),
+                    "host_headroom_after_aggregate_reserve_bytes": host_headroom,
+                }
+                if v13_default_memory
+                else {
+                    "host_headroom_after_floor_bytes": host_headroom,
+                    "node0_headroom_after_floor_bytes": node0_headroom,
+                }
+            ),
+            "v13_resource_headroom_validation": v13_headroom,
             "top_cleanup": (
                 {
                     "before": root_record.get("before_cleanup"),
@@ -3669,6 +4669,17 @@ def _build_task041_w0p7_stage_factory(
         pord_source_model_identity=W0P7_PORD_SOURCE_MODEL_ID,
         pord_source_model_audit_sha256=W0P7_PORD_SOURCE_MODEL_AUDIT_SHA256,
     )
+
+    def v13_fresh_authority_callback(
+        phase: str, report: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        return _task041_v13_fresh_authority_callback(
+            phase,
+            report,
+            comm=comm,
+            supervisor_memory_binding=supervisor_memory_binding,
+            limits=limits,
+        )
 
     def gated_stage_factory(
         matrix: Any,
@@ -4185,6 +5196,9 @@ def _build_task041_w0p7_stage_factory(
         return dict(decision)
 
     gated_stage_factory.side_restart64_memory_gate = side_restart64_memory_gate
+    gated_stage_factory.v13_fresh_authority_callback = (
+        v13_fresh_authority_callback
+    )
 
     return gated_stage_factory, {
         "bridge_path": str(bridge_path),
@@ -4325,10 +5339,14 @@ def _write_task041_modal_inner_snapshot(
     packet_manifest_sha256: str,
     consumer_binding: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
-    """Write one bounded modal-owner vector snapshot and its small hash index."""
+    """Write one of three bounded modal-owner vector snapshots and its hash index."""
 
     kind = payload.get("snapshot_kind")
-    if kind not in {"first_unmet_target", "first_success_control"}:
+    if kind not in {
+        "first_unmet_target",
+        "first_success_control",
+        "terminal_normal_reject",
+    }:
         raise ValueError("unsupported modal inner snapshot kind")
     arrays = {
         name: np.asarray(payload.get(name), dtype=np.complex128)
@@ -4422,6 +5440,7 @@ def _write_task041_modal_inner_snapshot(
         or index.get("packet_manifest_sha256") != packet_manifest_sha256
         or index.get("consumer_binding") != _jsonable(consumer_binding)
         or not isinstance(index.get("records"), dict)
+        or len(index["records"]) >= 3
         or kind in index["records"]
     ):
         raise ValueError("modal snapshot index identity/kind is already bound")
@@ -8553,9 +9572,13 @@ def _run_task041_balh_candidate_setup(
             raise Task041ModePrepError(str(exc)) from exc
     if (resolved_modal_solver_policy is None) != (modal_snapshot_callback is None):
         raise Task041ModePrepError(
-            "V12 modal policy and owner snapshot callback must be selected together"
+            "registered modal policy and owner snapshot callback must be selected together"
         )
     if resolved_modal_solver_policy is not None:
+        v13_policy_selected = (
+            resolved_modal_solver_policy.get("policy_id")
+            == "task041_v13_consistent_fixed_balh_modal_surrogate"
+        )
         expected_pord_source = {
             "identity": W0P7_PORD_SOURCE_MODEL_ID,
             "audit_path": W0P7_PORD_SOURCE_MODEL_AUDIT_PATH,
@@ -8580,6 +9603,19 @@ def _run_task041_balh_candidate_setup(
             or p4_inverse_backend != "cell_condensed"
             or p4_refinement_target_tolerance != 5.0e-13
             or task041_resource_policy != "task041_v8_swap_observe_continue"
+            or (
+                v13_policy_selected
+                and (
+                    not callable(modal_snapshot_callback)
+                    or not callable(
+                        getattr(
+                            factor_stage_factory,
+                            "v13_fresh_authority_callback",
+                            None,
+                        )
+                    )
+                )
+            )
             or any(
                 (
                     p4_response_correction_steps != 0,
@@ -8601,7 +9637,7 @@ def _run_task041_balh_candidate_setup(
             )
         ):
             raise Task041ModePrepError(
-                "V12 bounded modal policy is limited to the registered pure fixed-H6 "
+                "bounded modal policy is limited to the registered pure fixed-H6 "
                 "W0.7 matched-cell PORD candidate without conflicting diagnostics"
             )
     backup_policy_selected = bool(
@@ -16950,6 +17986,34 @@ def _run_task041_balh_candidate_setup(
                 release_before_recovery=release_before_recovery,
             )
         )
+        v13_policy_requested = (
+            isinstance(resolved_modal_solver_policy, Mapping)
+            and resolved_modal_solver_policy.get("policy_id")
+            == "task041_v13_consistent_fixed_balh_modal_surrogate"
+        )
+        v13_solver_inventory = None
+        v13_solver_inventory_key = None
+        v13_preconditioner_inventory = None
+        if v13_policy_requested:
+            formal_solve = formal_result.get("solve")
+            formal_inventory = (
+                formal_solve.get("inventory")
+                if isinstance(formal_solve, Mapping)
+                else None
+            )
+            v13_solver_inventory = (
+                formal_inventory.get("task041_v13_consistent_modal_surrogate")
+                if isinstance(formal_inventory, Mapping)
+                else None
+            )
+            if not isinstance(v13_solver_inventory, Mapping):
+                raise Task041ModePrepError(
+                    "V13 completed formal solve has no actual consistent-modal inventory"
+                )
+            v13_preconditioner_inventory = formal_inventory
+            v13_solver_inventory_key = (
+                "task041_v13_consistent_modal_surrogate"
+            )
         v12_backup_solver_inventory = None
         v12_backup_solver_key = None
         if (
@@ -17001,7 +18065,9 @@ def _run_task041_balh_candidate_setup(
             "status": str(formal_result.get("status")),
             "qualification_scope": qualification_scope,
             "qualification_method": (
-                "task041_v12_h6_primary_once_physical_backup_with_original_outer_fgmres"
+                "task041_v13_consistent_fixed_balh_modal_surrogate_with_original_outer_fgmres"
+                if v13_policy_requested
+                else "task041_v12_h6_primary_once_physical_backup_with_original_outer_fgmres"
                 if modal_solver_policy
                 == "task041_v12_bounded_inexact_modal_once_backup"
                 else "fixed_physical_balh_once_modal_gmres_research_with_original_outer_fgmres"
@@ -17082,7 +18148,9 @@ def _run_task041_balh_candidate_setup(
             )
         if fixed_h6_modal_gmres_research:
             modal_solver_inventory_key = (
-                "fixed_physical_balh_modal_solver"
+                "task041_v13_consistent_modal_surrogate"
+                if v13_policy_requested
+                else "fixed_physical_balh_modal_solver"
                 if fixed_physical_balh_selected
                 else "fixed_h6_modal_solver"
             )
@@ -17161,6 +18229,71 @@ def _run_task041_balh_candidate_setup(
                             ),
                         }
                         if v12_backup_solver_inventory is not None
+                        else {}
+                    ),
+                    **(
+                        {
+                            "modal_actual_solver_inventory_key": (
+                                v13_solver_inventory_key
+                            ),
+                            "modal_actual_method": v13_solver_inventory.get(
+                                "method"
+                            ),
+                            "v13_actual_solver_inventory": _jsonable(
+                                dict(v13_solver_inventory)
+                            ),
+                            "v13_method_identity": (
+                                "task041_v13_consistent_fixed_balh_modal_surrogate"
+                            ),
+                            "v13_same_B_objects_for_all_LDU_terms_and_modal_Schur": (
+                                v13_preconditioner_inventory.get(
+                                    "v13_same_B_objects_for_schur_and_LDU"
+                                )
+                            ),
+                            "v13_modal_ksp_solve_count": (
+                                v13_preconditioner_inventory.get(
+                                    "v13_modal_ksp_solve_count"
+                                )
+                            ),
+                            "v13_modal_ksp_handle_count": (
+                                v13_solver_inventory.get(
+                                    "modal_ksp_handle_count"
+                                )
+                            ),
+                            "v13_pc_apply_count": (
+                                v13_preconditioner_inventory.get("pc_apply_count")
+                            ),
+                            "borrowed_side_inverse_inventory_by_side": {
+                                side: dict(diagnostics)
+                                for side, diagnostics in side_diagnostics_before.items()
+                            },
+                            "v13_side_solver_entry_zero_supported": (
+                                v13_preconditioner_inventory.get(
+                                    "v13_side_solver_entry_zero_supported"
+                                )
+                            ),
+                            "v13_side_operation_deltas": (
+                                v13_preconditioner_inventory.get(
+                                    "v13_side_operation_deltas"
+                                )
+                            ),
+                            "v13_borrowed_direct_factor_count": (
+                                v13_preconditioner_inventory.get(
+                                    "borrowed_direct_factor_count"
+                                )
+                            ),
+                            "v13_p4_factor_count": (
+                                v13_preconditioner_inventory.get(
+                                    "p4_factor_count"
+                                )
+                            ),
+                            "v13_fixed_physical_balh_action_identity": (
+                                v13_preconditioner_inventory.get(
+                                    "fixed_physical_balh_action_identity"
+                                )
+                            ),
+                        }
+                        if v13_solver_inventory is not None
                         else {}
                     ),
                 }
@@ -17331,6 +18464,10 @@ def run_task041_consumer(
         TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
         TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
         TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        TASK041_V13_MEMORY_POLICY,
+        TASK041_V13_MPI8_RANK_CPUS,
+        TASK041_V13_REQUIRED_THREAD_ENVIRONMENT,
+        TASK041_V13_RESOURCE_HEADROOM_POLICY,
         task041_balh_formal_physical_volume_context_factory,
         task041_fixed_h6_modal_gmres_binding,
         task041_fixed_h6_packet_source_binding,
@@ -17378,6 +18515,40 @@ def run_task041_consumer(
         )
     except (TypeError, ValueError) as exc:
         raise Task041ModePrepError(str(exc)) from exc
+    v13_default_memory = (
+        modal_solver_policy == TASK041_V13_MODAL_POLICY_ID
+    )
+    if v13_default_memory and (
+        fixed_h6_binding is None
+        or fixed_h6_binding.get("memory_policy") != TASK041_V13_MEMORY_POLICY
+        or "membind_node" not in fixed_h6_binding
+        or fixed_h6_binding.get("membind_node") is not None
+        or tuple(fixed_h6_binding.get("expected_rank_cpus", ()))
+        != TASK041_V13_MPI8_RANK_CPUS
+    ):
+        raise Task041ModePrepError(
+            "V13 resolved memory/CPU binding is not the frozen default-policy MPI8 contract"
+        )
+    v13_required_threads = (
+        {name: "1" for name in TASK041_V13_THREAD_ENV_NAMES}
+        if v13_default_memory
+        else None
+    )
+    v13_observed_consumer_threads = (
+        {name: os.environ.get(name) for name in TASK041_V13_THREAD_ENV_NAMES}
+        if v13_default_memory
+        else None
+    )
+    if v13_default_memory and (
+        fixed_h6_binding.get("required_thread_environment")
+        != v13_required_threads
+        or fixed_h6_binding.get("resource_headroom_policy")
+        != TASK041_V13_RESOURCE_HEADROOM_POLICY
+        or v13_observed_consumer_threads != v13_required_threads
+    ):
+        raise Task041ModePrepError(
+            "V13 consumer actual six-thread environment or resource policy differs from its binding"
+        )
     fixed_h6_packet_source_binding = None
     fixed_h6_is_w0p7_pilot = (
         fixed_h6_binding is not None
@@ -17955,6 +19126,20 @@ def run_task041_consumer(
             "recovery": 0,
         },
     }
+    if v13_default_memory:
+        result.update(
+            {
+                "memory_policy": TASK041_V13_MEMORY_POLICY,
+                "membind_node": None,
+                "resource_headroom_policy": dict(
+                    fixed_h6_binding["resource_headroom_policy"]
+                ),
+                "required_thread_environment": dict(v13_required_threads or {}),
+                "environment_threads": dict(
+                    v13_observed_consumer_threads or {}
+                ),
+            }
+        )
     if performance_contract is not None:
         result["performance_profile"] = performance_contract
         if side_setup_schedule is not None:
@@ -18167,6 +19352,9 @@ def run_task041_consumer(
                 qualification_errors,
             )
             rank_numa_evidence_path = root / "rank_numa_evidence.jsonl"
+            rank_numa_process_identities: dict[
+                int, tuple[int, int, int, int, int]
+            ] = {}
 
             def record_rank_numa(
                 stage: str,
@@ -18178,6 +19366,18 @@ def run_task041_consumer(
                     stage,
                     arrays,
                     include_probe=stage == 'startup',
+                    include_memory_scope=v13_default_memory,
+                    thread_environment_names=(
+                        TASK041_V13_THREAD_ENV_NAMES
+                        if v13_default_memory
+                        else (
+                            "OMP_NUM_THREADS",
+                            "OPENBLAS_NUM_THREADS",
+                            "MKL_NUM_THREADS",
+                            "VECLIB_MAXIMUM_THREADS",
+                            "NUMEXPR_NUM_THREADS",
+                        )
+                    ),
                 )
                 if detail is not None:
                     local['stage_detail'] = dict(detail)
@@ -18213,6 +19413,16 @@ def run_task041_consumer(
                     previous_identities=rank_numa_identities,
                     require_startup_probe=stage == 'startup',
                     expected_rank_cpus=rank_numa_expected_cpus,
+                    expected_memory_policy=(
+                        TASK041_V13_MEMORY_POLICY
+                        if v13_default_memory
+                        else None
+                    ),
+                    previous_process_identities=(
+                        rank_numa_process_identities
+                        if v13_default_memory
+                        else None
+                    ),
                 )
                 all_stage_errors = comm.allgather(stage_errors)
                 merged_errors = sorted(
@@ -18232,7 +19442,29 @@ def run_task041_consumer(
                     'errors': merged_errors or None,
                     'policy': rank_cpu_policy,
                     'expected_rank_cpus': list(rank_numa_expected_cpus),
+                    'memory_policy': (
+                        TASK041_V13_MEMORY_POLICY
+                        if v13_default_memory
+                        else 'registered_legacy_memory_binding'
+                    ),
+                    'page_placement_semantics': (
+                        'observation_only'
+                        if v13_default_memory
+                        else 'node0_qualification'
+                    ),
                 }
+                if v13_default_memory:
+                    qualification.update(
+                        {
+                            'membind_node': None,
+                            'required_thread_environment': dict(
+                                TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+                            ),
+                            'resource_headroom_policy': dict(
+                                TASK041_V13_RESOURCE_HEADROOM_POLICY
+                            ),
+                        }
+                    )
                 raw_payload = dict(payload)
                 payload = dict(raw_payload)
                 payload['qualification'] = qualification
@@ -18259,9 +19491,17 @@ def run_task041_consumer(
                         int(identity['pid']),
                         int(identity['starttime_ticks']),
                     )
+                    if v13_default_memory:
+                        rank_numa_process_identities[int(item['rank'])] = (
+                            int(identity['pid']),
+                            int(identity['ppid']),
+                            int(identity['pgid']),
+                            int(identity['sid']),
+                            int(identity['starttime_ticks']),
+                        )
 
             rank_numa_stage_callback = record_rank_numa
-        environment = _environment_snapshot()
+        environment = _environment_snapshot(include_blis=v13_default_memory)
         result["environment"] = environment
         if contract["balh"]:
             _write_rank_pid_affinity(
@@ -18590,6 +19830,11 @@ def run_task041_consumer(
                         comm=comm,
                         limits=contract["limits"],
                         expected_rank_cpus=rank_numa_expected_cpus,
+                        memory_policy=(
+                            fixed_h6_binding.get("memory_policy")
+                            if isinstance(fixed_h6_binding, Mapping)
+                            else None
+                        ),
                         marker_callback=callback,
                         failure_evidence=candidate_failure_evidence,
                     )
@@ -19010,7 +20255,10 @@ def run_task041_consumer(
                             modal_solver_key = observed_keys[0]
                         else:
                             modal_solver_key = (
-                                "fixed_physical_balh_modal_solver"
+                                "task041_v13_consistent_modal_surrogate"
+                                if modal_solver_policy
+                                == "task041_v13_consistent_fixed_balh_modal_surrogate"
+                                else "fixed_physical_balh_modal_solver"
                                 if modal_feedback_binding is not None
                                 else "fixed_h6_modal_solver"
                             )
@@ -19022,6 +20270,43 @@ def run_task041_consumer(
                         last_solve = modal_inner.get("last_solve")
                         if not isinstance(last_solve, Mapping):
                             return None
+                        if (
+                            modal_solver_key
+                            == "task041_v13_consistent_modal_surrogate"
+                        ):
+                            return _jsonable(
+                                {
+                                    "scope": (
+                                        "task041_v13_consistent_modal_surrogate_"
+                                        "snapshot_before_side_release"
+                                    ),
+                                    "solver_inventory_key": modal_solver_key,
+                                    "diagnostics_source": (
+                                        "retained V13 owner-LU and original-modal-row diagnostics"
+                                    ),
+                                    "read_point": (
+                                        "retained_context_bundle_diagnostics_before_"
+                                        "total_side_release"
+                                    ),
+                                    "actual_solver_inventory": dict(modal_inner),
+                                    "preconditioner_inventory": {
+                                        key: context_inventory.get(key)
+                                        for key in (
+                                            "modal_block_name",
+                                            "modal_schur_materialized",
+                                            "modal_schur_column_count",
+                                            "same_B_objects_for_all_LDU_terms_and_modal_Schur",
+                                            "modal_ksp_solve_count",
+                                            "modal_ksp_handle_count",
+                                            "side_solver_entry_zero_supported",
+                                            "side_operation_deltas",
+                                            "borrowed_direct_factor_count",
+                                            "p4_factor_count",
+                                        )
+                                        if key in context_inventory
+                                    },
+                                }
+                            )
                         scalar_keys = (
                             "method",
                             "rtol",
@@ -19213,6 +20498,63 @@ def run_task041_consumer(
                 )
             except BaseException as exc:
                 nonlocal first_failure_stage, first_exception
+                candidate_context = kwargs.get("context")
+                if (
+                    modal_solver_policy
+                    == "task041_v13_consistent_fixed_balh_modal_surrogate"
+                ):
+                    v13_failure_record: dict[str, Any] = {
+                        "schema": "task041.v13.modal_policy_failure_evidence.v1",
+                        "requested_policy_id": modal_solver_policy,
+                        "actual_solver_inventory_key": None,
+                        "actual_solver_inventory": None,
+                        "candidate_inventory": None,
+                        "evidence_status": "candidate_context_unavailable",
+                    }
+                    if candidate_context is not None:
+                        try:
+                            context_inventory = candidate_context.inventory
+                            v13_actual = (
+                                context_inventory.get(
+                                    "task041_v13_consistent_modal_surrogate"
+                                )
+                                if isinstance(context_inventory, Mapping)
+                                else None
+                            )
+                            if isinstance(context_inventory, Mapping):
+                                v13_failure_record.update(
+                                    {
+                                        "actual_solver_inventory_key": (
+                                            "task041_v13_consistent_modal_surrogate"
+                                            if isinstance(v13_actual, Mapping)
+                                            else None
+                                        ),
+                                        "actual_solver_inventory": (
+                                            _jsonable(dict(v13_actual))
+                                            if isinstance(v13_actual, Mapping)
+                                            else None
+                                        ),
+                                        "candidate_inventory": _jsonable(
+                                            dict(context_inventory)
+                                        ),
+                                        "evidence_status": (
+                                            "actual_v13_solver_observed"
+                                            if isinstance(v13_actual, Mapping)
+                                            else "actual_v13_solver_missing"
+                                        ),
+                                    }
+                                )
+                        except Exception as evidence_error:  # noqa: BLE001 - keep the primary solver failure
+                            v13_failure_record["evidence_status"] = (
+                                "actual_evidence_read_failed"
+                            )
+                            v13_failure_record["evidence_error"] = {
+                                "type": type(evidence_error).__name__,
+                                "message": str(evidence_error)[:240],
+                            }
+                    candidate_failure_evidence[
+                        "v13_modal_solver_policy"
+                    ] = v13_failure_record
                 if first_failure_stage is None:
                     first_failure_stage = current_stage
                     candidate_context = kwargs.get("context")
@@ -19223,6 +20565,7 @@ def run_task041_consumer(
                                 [
                                     inventory.get(key)
                                     for key in (
+                                        "task041_v13_consistent_modal_surrogate",
                                         "fixed_h6_modal_solver",
                                         "fixed_physical_balh_modal_solver",
                                     )
@@ -19253,6 +20596,7 @@ def run_task041_consumer(
                                 "modal_action_failed",
                                 "ksp_callback_failed",
                                 "zero_rhs_failed",
+                                "rejected",
                             }:
                                 first_failure_stage = "modal_inner_solve"
                         except Exception as classification_error:  # noqa: BLE001
@@ -20305,6 +21649,7 @@ def _parser() -> argparse.ArgumentParser:
         choices=(
             "task041_v12_bounded_inexact_modal",
             "task041_v12_bounded_inexact_modal_once_backup",
+            "task041_v13_consistent_fixed_balh_modal_surrogate",
         ),
         default=None,
     )

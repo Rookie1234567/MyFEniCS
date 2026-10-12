@@ -10,6 +10,7 @@ second resource gate is implemented here.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -27,6 +28,10 @@ from benchmarks.task041_balh_workflow import (
     TASK041_REPRESENTATIVE_RHS_SCOPE,
     TASK041_SCHUR_SPEED_V2_PROFILE,
     TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+    TASK041_V13_MEMORY_POLICY,
+    TASK041_V13_REQUIRED_THREAD_ENVIRONMENT,
+    TASK041_V13_RESOURCE_HEADROOM_POLICY,
     load_task041_representative_rhs_manifest,
     task041_is_explicit_p4_backend_pair,
     task041_p4_backend_pair_identity,
@@ -143,6 +148,7 @@ def _fixed_h6_service_binding(
             not in {
                 "task041_v12_bounded_inexact_modal",
                 "task041_v12_bounded_inexact_modal_once_backup",
+                "task041_v13_consistent_fixed_balh_modal_surrogate",
             }
             or len(modal_solver_policy_positions) != 1
         ):
@@ -172,6 +178,11 @@ def _fixed_h6_service_binding(
         )
     try:
         from benchmarks.task041_balh_workflow import (
+            TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+            TASK041_V13_MEMORY_POLICY,
+            TASK041_V13_MPI8_RANK_CPUS,
+            TASK041_V13_REQUIRED_THREAD_ENVIRONMENT,
+            TASK041_V13_RESOURCE_HEADROOM_POLICY,
             task041_fixed_h6_modal_gmres_binding,
             task041_parse_expected_rank_cpus,
         )
@@ -201,6 +212,34 @@ def _fixed_h6_service_binding(
             modal_feedback_method=configured_modal_feedback_method,
             modal_solver_policy=configured_modal_solver_policy,
         )
+        if configured_modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID:
+            if (
+                config.get("memory_policy") != TASK041_V13_MEMORY_POLICY
+                or "membind_node" not in config
+                or config.get("membind_node") is not None
+                or config.get("resource_headroom_policy")
+                != TASK041_V13_RESOURCE_HEADROOM_POLICY
+                or config.get("required_thread_environment")
+                != TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+                or any(
+                    token == "--membind"
+                    or token.startswith("--membind=")
+                    for token in command
+                )
+                or binding is None
+                or binding.get("memory_policy") != TASK041_V13_MEMORY_POLICY
+                or "membind_node" not in binding
+                or binding.get("membind_node") is not None
+                or binding.get("required_thread_environment")
+                != TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+                or binding.get("resource_headroom_policy")
+                != TASK041_V13_RESOURCE_HEADROOM_POLICY
+            ):
+                raise ValueError(
+                    "V13 service config/public argv must resolve system-default unbound memory"
+                )
+            if tuple(configured_cpus or ()) != TASK041_V13_MPI8_RANK_CPUS:
+                raise ValueError("V13 service config must use the frozen MPI8 CPU map")
     except (KeyError, TypeError, ValueError) as exc:
         raise Task041ServiceError(str(exc)) from exc
     incompatible_flags = (
@@ -445,6 +484,19 @@ def _service_contract(
             resolved_contract["post_start_document_allowlist"] = sorted(
                 supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
             )
+            if configured_modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID:
+                resolved_contract.update(
+                    {
+                        "memory_policy": TASK041_V13_MEMORY_POLICY,
+                        "membind_node": None,
+                        "resource_headroom_policy": dict(
+                            TASK041_V13_RESOURCE_HEADROOM_POLICY
+                        ),
+                        "required_thread_environment": dict(
+                            TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+                        ),
+                    }
+                )
         if packet_source_binding is not None:
             resolved_contract["packet_source_binding"] = packet_source_binding
             from benchmarks.task041_balh_workflow import (
@@ -636,13 +688,432 @@ def _modal_feedback_method_matches_request(
 
 
 def _modal_solver_policy_matches_request(
-    contract: Mapping[str, Any], public_result: Any
+    contract: Mapping[str, Any],
+    public_result: Any,
+    *,
+    supervision_root: Path | None = None,
+    launch_manifest: Mapping[str, Any] | None = None,
+    sealed_public_command: list[str] | None = None,
+    expected_source_sha: str | None = None,
+    terminal_invocation_id: str | None = None,
+    expected_unit: str | None = None,
 ) -> bool:
-    """Check the sealed policy against both candidate and actual solver records."""
+    """Check policy against the actual consumer bound to this service invocation."""
 
     requested = contract.get("modal_solver_policy")
     if not isinstance(public_result, Mapping):
         return False
+
+    strict_chain_requested = requested is not None and any(
+        value is not None
+        for value in (
+            supervision_root,
+            launch_manifest,
+            sealed_public_command,
+            expected_source_sha,
+            terminal_invocation_id,
+        )
+    )
+    if strict_chain_requested:
+        try:
+            if (
+                requested
+                not in {
+                    "task041_v12_bounded_inexact_modal",
+                    "task041_v12_bounded_inexact_modal_once_backup",
+                    "task041_v13_consistent_fixed_balh_modal_surrogate",
+                }
+                or supervision_root is None
+                or not isinstance(launch_manifest, Mapping)
+                or sealed_public_command is None
+                or not isinstance(expected_source_sha, str)
+                or not expected_source_sha
+                or not isinstance(terminal_invocation_id, str)
+                or not terminal_invocation_id
+                or not isinstance(expected_unit, str)
+                or not expected_unit
+            ):
+                return False
+            root = supervision_root.resolve(strict=True)
+            launch_path = root / "launch_manifest.json"
+            public_path = root / "log" / "public_command_stdout.txt"
+            launch_sha = supervisor._sha256_file(launch_path)
+            stored_launch = supervisor._read_json(launch_path)
+            launch_metadata = public_result.get("launch_manifest")
+            public_phase = public_result.get("phase_result")
+            if not isinstance(public_phase, Mapping):
+                return False
+            if (
+                public_result.get("schema")
+                != "task041.supervised_public_command.v1"
+                or Path(str(public_result.get("supervision_root", ""))).resolve()
+                != root
+                or public_result.get("modal_solver_policy") != requested
+                or public_result.get("model_id") != contract.get("model_id")
+                or not isinstance(launch_metadata, Mapping)
+                or not isinstance(stored_launch, Mapping)
+                or dict(stored_launch) != dict(launch_manifest)
+                or Path(str(launch_metadata.get("path", ""))).resolve()
+                != launch_path.resolve()
+                or launch_metadata.get("sha256") != launch_sha
+                or not isinstance(launch_manifest, Mapping)
+                or launch_manifest.get("supervision_root") != str(root)
+                or launch_manifest.get("source_sha") != expected_source_sha
+                or launch_manifest.get("unit") != expected_unit
+                or launch_manifest.get("invocation_id") != terminal_invocation_id
+                or launch_manifest.get("modal_solver_policy") != requested
+                or launch_manifest.get("model_id") != contract.get("model_id")
+                or launch_manifest.get("fixed_h6_modal_gmres_research")
+                != dict(contract.get("fixed_h6_modal_gmres_research", {}))
+                or (
+                    requested == TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+                    and (
+                        public_result.get("resolved_memory_policy")
+                        != {
+                            "policy": TASK041_V13_MEMORY_POLICY,
+                            "membind_node": None,
+                            "source": "resolved_fixed_h6_modal_gmres_research_binding",
+                        }
+                        or public_result.get("memory_policy")
+                        != TASK041_V13_MEMORY_POLICY
+                        or "membind_node" not in public_result
+                        or public_result.get("membind_node") is not None
+                        or public_result.get("resource_headroom_policy")
+                        != dict(TASK041_V13_RESOURCE_HEADROOM_POLICY)
+                        or public_result.get("required_thread_environment")
+                        != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
+                        or public_result.get("environment_threads")
+                        != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
+                        or launch_manifest.get("memory_policy")
+                        != TASK041_V13_MEMORY_POLICY
+                        or "membind_node" not in launch_manifest
+                        or launch_manifest.get("membind_node") is not None
+                        or launch_manifest.get("resource_headroom_policy")
+                        != dict(TASK041_V13_RESOURCE_HEADROOM_POLICY)
+                        or launch_manifest.get("required_thread_environment")
+                        != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
+                        or launch_manifest.get("parent_environment_threads")
+                        != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
+                    )
+                )
+                or Path(str(public_phase.get("stdout", ""))).resolve()
+                != public_path.resolve()
+                or public_phase.get("argv") != sealed_public_command
+            ):
+                return False
+
+            public_bytes = public_path.read_bytes()
+            public_stdout = json.loads(public_bytes)
+            if not isinstance(public_stdout, Mapping):
+                return False
+            if requested == TASK041_V13_CONSISTENT_MODAL_POLICY_ID and (
+                public_stdout.get("memory_policy") != TASK041_V13_MEMORY_POLICY
+                or "membind_node" not in public_stdout
+                or public_stdout.get("membind_node") is not None
+                or public_stdout.get("resource_headroom_policy")
+                != dict(TASK041_V13_RESOURCE_HEADROOM_POLICY)
+                or public_stdout.get("required_thread_environment")
+                != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
+                or public_stdout.get("environment_threads")
+                != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
+            ):
+                return False
+            inner_root_value = public_stdout.get("run_directory")
+            if not isinstance(inner_root_value, str) or not Path(
+                inner_root_value
+            ).is_absolute():
+                return False
+            inner_root = Path(inner_root_value).resolve(strict=True)
+            run_summary_path = inner_root / "run_summary.json"
+            run_manifest_path = inner_root / "run_manifest.json"
+            supervisor_summary_path = inner_root / "supervisor_summary.json"
+            if (
+                public_stdout.get("run_directory") != str(inner_root)
+                or Path(str(public_stdout.get("summary", ""))).resolve()
+                != run_summary_path.resolve()
+                or Path(str(public_stdout.get("manifest", ""))).resolve()
+                != run_manifest_path.resolve()
+            ):
+                return False
+            run_summary, run_summary_error = _read_closed_json(run_summary_path)
+            run_manifest, run_manifest_error = _read_closed_json(run_manifest_path)
+            inner_supervisor, inner_supervisor_error = _read_closed_json(
+                supervisor_summary_path
+            )
+            if (
+                run_summary_error is not None
+                or run_manifest_error is not None
+                or inner_supervisor_error is not None
+                or not isinstance(run_summary, Mapping)
+                or not isinstance(run_manifest, Mapping)
+                or not isinstance(inner_supervisor, Mapping)
+            ):
+                return False
+
+            fixed_binding = contract.get("fixed_h6_modal_gmres_research")
+            if not isinstance(fixed_binding, Mapping):
+                return False
+            owned_session_cleanup = None
+            if requested == "task041_v13_consistent_fixed_balh_modal_surrogate":
+                initial_gate = inner_supervisor.get(
+                    "v13_initial_aggregate_resource_gate"
+                )
+                if (
+                    not isinstance(initial_gate, Mapping)
+                    or initial_gate.get("schema")
+                    != "task041.v13.initial_aggregate_resource_gate.v1"
+                    or initial_gate.get("status") != "measured"
+                    or initial_gate.get("pass") is not True
+                    or type(initial_gate.get("node0_memfree_bytes")) is not int
+                    or type(initial_gate.get("node1_memfree_bytes")) is not int
+                    or type(initial_gate.get("aggregate_memfree_bytes")) is not int
+                    or initial_gate.get("aggregate_memfree_bytes")
+                    != initial_gate["node0_memfree_bytes"]
+                    + initial_gate["node1_memfree_bytes"]
+                    or initial_gate.get("aggregate_reserve_bytes") != 384 * 2**30
+                    or initial_gate.get("initial_aggregate_memfree_minimum_bytes")
+                    != 464 * 2**30
+                    or initial_gate.get("initial_node1_memfree_minimum_bytes")
+                    != 80 * 2**30
+                    or initial_gate["aggregate_memfree_bytes"] < 464 * 2**30
+                    or initial_gate["node1_memfree_bytes"] < 80 * 2**30
+                    or initial_gate.get(
+                        "node1_is_availability_only_not_memory_binding"
+                    )
+                    is not True
+                ):
+                    return False
+                phase_results = inner_supervisor.get("phase_results")
+                consumer_phase = (
+                    phase_results.get("consumer")
+                    if isinstance(phase_results, Mapping)
+                    else None
+                )
+                owned_session_cleanup = (
+                    consumer_phase.get("owned_session_cleanup")
+                    if isinstance(consumer_phase, Mapping)
+                    else None
+                )
+                if (
+                    not isinstance(consumer_phase, Mapping)
+                    or type(consumer_phase.get("owned_session_id")) is not int
+                    or not isinstance(owned_session_cleanup, Mapping)
+                    or owned_session_cleanup.get("session_id")
+                    != consumer_phase.get("owned_session_id")
+                    or owned_session_cleanup.get("inspection")
+                    != "full_visible_proc_session_scan_after_owned_launcher_wait"
+                ):
+                    return False
+            registered_contract = task041_balh_service_contract(
+                str(contract.get("model_id", ""))
+            )
+            if not isinstance(registered_contract, Mapping):
+                return False
+            resource_contract_fields = (
+                "contract_kind",
+                "contract_id",
+                "profile_id",
+                "case_id",
+                "model_id",
+                "scope",
+                "memory_cap_bytes",
+                "warning_memory_bytes",
+                "memory_cap_source",
+                "memory_gate_source",
+                "planning_ceiling_bytes",
+                "planning_ceiling_source",
+                "runtime_reserve_bytes",
+                "mpi_size",
+                "cpu_set",
+                "math_threads",
+                "swap_limit_bytes",
+                "phase_budgets_seconds",
+                "active_consumer_phase",
+                "active_consumer_budget_seconds",
+                "batch_budget_seconds",
+                "compute_wall_unlimited",
+                "time_stop",
+                "ledger",
+                "budget_semantics",
+            )
+
+            def registered_resource_contract_matches(value: Any) -> bool:
+                return bool(
+                    isinstance(value, Mapping)
+                    and all(
+                        key in registered_contract
+                        and value.get(key) == registered_contract[key]
+                        for key in resource_contract_fields
+                    )
+                )
+
+            def v13_service_contract_matches(value: Any) -> bool:
+                return bool(
+                    isinstance(value, Mapping)
+                    and value.get("memory_policy") == TASK041_V13_MEMORY_POLICY
+                    and "membind_node" in value
+                    and value.get("membind_node") is None
+                    and value.get("resource_headroom_policy")
+                    == dict(TASK041_V13_RESOURCE_HEADROOM_POLICY)
+                    and value.get("required_thread_environment")
+                    == dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
+                )
+
+            expected_supervision = {
+                "path": str(launch_path),
+                "sha256": launch_sha,
+                "invocation_id": terminal_invocation_id,
+                "source_sha": expected_source_sha,
+            }
+
+            def supervision_record_matches(record: Any) -> bool:
+                return bool(
+                    isinstance(record, Mapping)
+                    and all(record.get(key) == value for key, value in expected_supervision.items())
+                    and record.get("modal_solver_policy") == requested
+                    and record.get("fixed_h6_modal_gmres_research")
+                    == dict(fixed_binding)
+                )
+
+            for document in (public_stdout, run_summary, run_manifest, inner_supervisor):
+                if (
+                    document.get("source_sha") != expected_source_sha
+                    or document.get("modal_solver_policy") != requested
+                    or document.get("fixed_h6_modal_gmres_research")
+                    != dict(fixed_binding)
+                    or not supervision_record_matches(
+                        document.get("supervision_record")
+                    )
+                ):
+                    return False
+            if (
+                run_summary.get("run_directory") != str(inner_root)
+                or run_summary.get("output_directory") != str(inner_root)
+                or inner_supervisor.get("run_directory") != str(inner_root)
+                or run_manifest.get("output_directory") != str(inner_root)
+                or run_manifest.get("model_id") != contract.get("model_id")
+                or public_stdout.get("schema") != "task041.public.supervisor.v1"
+                or public_result.get("modal_solver_policy") != requested
+            ):
+                return False
+            inner_contract = run_summary.get("service_contract")
+            supervisor_contract = inner_supervisor.get("service_contract")
+            if (
+                not registered_resource_contract_matches(inner_contract)
+                or not registered_resource_contract_matches(supervisor_contract)
+                or (
+                    requested == TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+                    and (
+                        not v13_service_contract_matches(inner_contract)
+                        or not v13_service_contract_matches(supervisor_contract)
+                    )
+                )
+            ):
+                return False
+            if requested == TASK041_V13_CONSISTENT_MODAL_POLICY_ID:
+                for document in (
+                    run_summary,
+                    run_manifest,
+                    inner_supervisor,
+                ):
+                    if (
+                        document.get("memory_policy")
+                        != TASK041_V13_MEMORY_POLICY
+                        or "membind_node" not in document
+                        or document.get("membind_node") is not None
+                        or document.get("resource_headroom_policy")
+                        != dict(TASK041_V13_RESOURCE_HEADROOM_POLICY)
+                        or document.get("required_thread_environment")
+                        != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
+                        or document.get("environment_threads")
+                        != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
+                    ):
+                        return False
+
+            consumer_root = inner_root / "consumer"
+            consumer_path = consumer_root / "consumer_summary.json"
+            consumer_artifact = (
+                inner_supervisor.get("consumer", {}).get("summary_artifact")
+                if isinstance(inner_supervisor.get("consumer"), Mapping)
+                else None
+            )
+            public_consumer_artifact = (
+                public_stdout.get("consumer", {}).get("summary_artifact")
+                if isinstance(public_stdout.get("consumer"), Mapping)
+                else None
+            )
+            if (
+                not isinstance(consumer_artifact, Mapping)
+                or dict(public_consumer_artifact or {}) != dict(consumer_artifact)
+                or Path(str(consumer_artifact.get("path", ""))).resolve()
+                != consumer_path.resolve()
+                or not consumer_path.is_file()
+            ):
+                return False
+            consumer_bytes = consumer_path.read_bytes()
+            consumer_sha = hashlib.sha256(consumer_bytes).hexdigest()
+            if (
+                consumer_artifact.get("bytes") != len(consumer_bytes)
+                or consumer_artifact.get("sha256") != consumer_sha
+            ):
+                return False
+            consumer_summary = json.loads(consumer_bytes)
+            if (
+                not isinstance(consumer_summary, Mapping)
+                or consumer_summary.get("schema")
+                != "task041.side_balh.candidate_consumer.v1"
+                or consumer_summary.get("run_directory") != str(consumer_root)
+                or consumer_summary.get("source_sha") != expected_source_sha
+                or consumer_summary.get("modal_solver_policy") != requested
+                or consumer_summary.get("fixed_h6_modal_gmres_research")
+                != dict(fixed_binding)
+                or (
+                    requested == TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+                    and (
+                        consumer_summary.get("memory_policy")
+                        != TASK041_V13_MEMORY_POLICY
+                        or "membind_node" not in consumer_summary
+                        or consumer_summary.get("membind_node") is not None
+                        or consumer_summary.get("environment_threads")
+                        != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
+                        or consumer_summary.get("required_thread_environment")
+                        != dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
+                        or consumer_summary.get("resource_headroom_policy")
+                        != dict(TASK041_V13_RESOURCE_HEADROOM_POLICY)
+                    )
+                )
+            ):
+                return False
+
+            checked = supervisor._consumer_result(
+                consumer_root,
+                expected_fixed_h6_modal_gmres_research=True,
+                expected_modal_feedback_method=contract.get(
+                    "modal_feedback_method"
+                ),
+                expected_modal_solver_policy=requested,
+                expected_fixed_h6_binding=fixed_binding,
+                owned_session_cleanup=owned_session_cleanup,
+            )
+            validation = checked.get("fixed_h6_method_validation")
+            if requested == "task041_v13_consistent_fixed_balh_modal_surrogate":
+                outer_validation = checked.get("v13_outer_control_validation")
+                rank_validation = checked.get("v13_rank_runtime_validation")
+                if (
+                    not isinstance(outer_validation, Mapping)
+                    or outer_validation.get("pass") is not True
+                    or not isinstance(rank_validation, Mapping)
+                    or rank_validation.get("pass") is not True
+                ):
+                    return False
+            return bool(
+                isinstance(validation, Mapping)
+                and validation.get("pass") is True
+                and validation.get("expected_modal_solver_policy") == requested
+            )
+        except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+            return False
+
     setup = public_result.get("setup")
     candidate = (
         setup.get("candidate_inventory") if isinstance(setup, Mapping) else None
@@ -1321,6 +1792,30 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
         "startup_elapsed_seconds": unit_elapsed,
         "time_stop_policy": dict(contract["time_stop"]),
     }
+    if (
+        isinstance(fixed_h6_binding, Mapping)
+        and contract.get("modal_solver_policy")
+        == TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+    ):
+        required_threads = dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
+        observed_parent_threads = {
+            name: os.environ.get(name) for name in required_threads
+        }
+        if observed_parent_threads != required_threads:
+            raise Task041ServiceError(
+                "V13 service parent must already run with all six thread controls set to 1"
+            )
+        launch.update(
+            {
+                "memory_policy": TASK041_V13_MEMORY_POLICY,
+                "membind_node": None,
+                "resource_headroom_policy": dict(
+                    TASK041_V13_RESOURCE_HEADROOM_POLICY
+                ),
+                "required_thread_environment": required_threads,
+                "parent_environment_threads": observed_parent_threads,
+            }
+        )
     if contract.get("compute_wall_unlimited") is True:
         launch["contract_kind"] = contract["contract_kind"]
         if contract.get("case_id") is not None:
@@ -1731,6 +2226,22 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             expected_policy = contract.get("modal_solver_policy")
             if expected_policy is not None:
                 expected["modal_solver_policy"] = expected_policy
+                if expected_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID:
+                    expected.update(
+                        {
+                            "memory_policy": TASK041_V13_MEMORY_POLICY,
+                            "membind_node": None,
+                            "resource_headroom_policy": dict(
+                                TASK041_V13_RESOURCE_HEADROOM_POLICY
+                            ),
+                            "required_thread_environment": dict(
+                                TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+                            ),
+                            "parent_environment_threads": dict(
+                                TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+                            ),
+                        }
+                    )
             elif "modal_solver_policy" in launch:
                 raise Task041ServiceError(
                     "service launch declares an unrequested modal solver policy"
@@ -1880,7 +2391,14 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
         contract, public
     )
     modal_solver_policy_match = _modal_solver_policy_matches_request(
-        contract, public
+        contract,
+        public,
+        supervision_root=root,
+        launch_manifest=launch,
+        sealed_public_command=public_command,
+        expected_source_sha=str(config["source_sha"]),
+        terminal_invocation_id=str(terminal.get("INVOCATION_ID", "")),
+        expected_unit=str(config["unit"]),
     )
     public_ok = bool(
         isinstance(public, Mapping)

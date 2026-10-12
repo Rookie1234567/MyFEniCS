@@ -117,6 +117,7 @@ def _parser() -> argparse.ArgumentParser:
         choices=(
             "task041_v12_bounded_inexact_modal",
             "task041_v12_bounded_inexact_modal_once_backup",
+            "task041_v13_consistent_fixed_balh_modal_surrogate",
         ),
         default=None,
     )

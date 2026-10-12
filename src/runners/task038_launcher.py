@@ -3710,6 +3710,10 @@ def launch_specification(
     ):
         try:
             from benchmarks.task041_balh_workflow import (
+                TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+                TASK041_V13_MEMORY_POLICY,
+                TASK041_V13_REQUIRED_THREAD_ENVIRONMENT,
+                TASK041_V13_RESOURCE_HEADROOM_POLICY,
                 task041_fixed_h6_modal_gmres_binding,
                 task041_fixed_h6_packet_source_binding,
             )
@@ -4138,6 +4142,38 @@ def launch_specification(
             )
         manifest["modal_solver_policy"] = modal_solver_policy
         _write_json(run_directory / "run_manifest.json", manifest)
+        if modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID:
+            required_threads = dict(TASK041_V13_REQUIRED_THREAD_ENVIRONMENT)
+            observed_threads = {
+                name: os.environ.get(name) for name in required_threads
+            }
+            if (
+                fixed_h6_binding is None
+                or fixed_h6_binding.get("memory_policy")
+                != TASK041_V13_MEMORY_POLICY
+                or "membind_node" not in fixed_h6_binding
+                or fixed_h6_binding.get("membind_node") is not None
+                or fixed_h6_binding.get("resource_headroom_policy")
+                != TASK041_V13_RESOURCE_HEADROOM_POLICY
+                or fixed_h6_binding.get("required_thread_environment")
+                != required_threads
+                or observed_threads != required_threads
+            ):
+                raise InputError(
+                    "V13 run manifest cannot bind a mismatched memory/thread policy"
+                )
+            manifest.update(
+                {
+                    "memory_policy": TASK041_V13_MEMORY_POLICY,
+                    "membind_node": None,
+                    "resource_headroom_policy": dict(
+                        TASK041_V13_RESOURCE_HEADROOM_POLICY
+                    ),
+                    "required_thread_environment": required_threads,
+                    "environment_threads": observed_threads,
+                }
+            )
+            _write_json(run_directory / "run_manifest.json", manifest)
     elif fixed_h6_binding is not None and "modal_solver_policy" in fixed_h6_binding:
         raise InputError(
             "fixed-H6 binding contains an unrequested modal solver policy"

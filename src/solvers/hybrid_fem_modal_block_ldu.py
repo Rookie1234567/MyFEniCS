@@ -7,6 +7,7 @@ import hashlib
 import json
 import math
 import time
+import warnings
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -14,7 +15,7 @@ from typing import Any
 import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
-from scipy.linalg import lu_factor, lu_solve, solve_triangular
+from scipy.linalg import LinAlgWarning, lu_factor, lu_solve, solve_triangular
 from scipy.linalg import qr as pivoted_qr
 
 from ..coupling.hybrid_internal_modes import HybridInternalModeCoupling
@@ -23,6 +24,16 @@ from .hybrid_fem_modal_augmented_direct import (
     internal_modal_constraint_matrix,
 )
 from .hybrid_fem_modal_schur_direct import modal_coupling_action
+from .task041_modal_policy import (
+    _TASK041_V12_MODAL_BACKUP_POLICY,
+    _TASK041_V12_MODAL_SOLVER_POLICY,  # noqa: F401 - compatibility re-export
+    _TASK041_V13_CONSISTENT_MODAL_POLICY,
+    TASK041_V12_MODAL_BACKUP_POLICY_ID,
+    TASK041_V12_MODAL_BACKUP_QUALIFICATION_METHOD,  # noqa: F401 - compatibility re-export
+    TASK041_V12_MODAL_SOLVER_POLICY_ID,  # noqa: F401 - compatibility re-export
+    TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+    resolve_task041_modal_solver_policy,
+)
 
 __all__ = (
     "HybridActionModalSchurApply",
@@ -30,7 +41,9 @@ __all__ = (
     "HybridBlockLduIterativeConfig",
     "HybridBlockLduIterativeResult",
     "HybridBlockLduPreconditioner",
+    "Task041V13ConsistentModalSurrogateSystem",
     "build_hybrid_action_modal_schur",
+    "build_task041_v13_consistent_modal_surrogate",
     "create_action_block_ldu_preconditioner",
     "create_research_exact_side_lu_block_ldu_preconditioner",
     "create_side_balh_block_ldu_preconditioner",
@@ -52,109 +65,6 @@ _MODAL_SOLVE_TRACE_SOLVE_LIMIT = 2
 _MODAL_SOLVE_TRACE_EVALUATION_LIMIT = 16
 _MODAL_SOLVE_TRACE_HISTORY_LIMIT = 4
 _MODAL_SOLVE_TRACE_JSON_LIMIT_BYTES = 640 * 1024
-TASK041_V12_MODAL_SOLVER_POLICY_ID = "task041_v12_bounded_inexact_modal"
-TASK041_V12_MODAL_BACKUP_POLICY_ID = (
-    "task041_v12_bounded_inexact_modal_once_backup"
-)
-TASK041_V12_MODAL_BACKUP_QUALIFICATION_METHOD = (
-    "task041_v12_h6_primary_once_physical_backup_with_original_outer_fgmres"
-)
-_TASK041_V12_MODAL_SOLVER_POLICY = {
-    "policy_id": TASK041_V12_MODAL_SOLVER_POLICY_ID,
-    "target_rtol": 1.0e-3,
-    "max_it": 32,
-    "restart": 32,
-    "solver_matmult_limit": 34,
-    "total_matmult_limit_including_final": 35,
-    "approximate_return_eta_max": 0.1,
-    "accepted_normal_return_conditions": (
-        "runtime_DIVERGED_ITS_at_max_it_or_positive_reason_with_raw_target_miss"
-    ),
-    "raw_reason_and_residual_preserved": True,
-}
-_TASK041_V12_MODAL_BACKUP_POLICY = {
-    **_TASK041_V12_MODAL_SOLVER_POLICY,
-    "policy_id": TASK041_V12_MODAL_BACKUP_POLICY_ID,
-    "primary_method": "fixed_h6_modal_gmres_research",
-    "backup_method": "fixed_physical_balh_once_modal_gmres_research",
-    "maximum_backup_switches": 1,
-    "backup_triggers": [
-        "normal_trusted_primary_return_eta_above_0.1",
-        "two_consecutive_eight_step_outer_true_residual_windows_each_improve_less_than_10_percent",
-    ],
-    "backup_safety_boundary": (
-        "after_completed_modal_KSP_before_next_modal_KSP_entry"
-    ),
-    "outer_stagnation_window_steps": 8,
-    "outer_stagnation_window_improvement_max": 0.10,
-    "outer_stagnation_residual_gate_threshold": 5.0e-9,
-    "outer_stagnation_metrics": [
-        "global_true_relative_residual",
-        "bottom_true_relative_residual",
-        "top_true_relative_residual",
-        "modal_true_relative_residual",
-    ],
-    "backup_borrows_existing_side_factors": True,
-    "backup_requires_same_fixed_physical_linearity_gate": True,
-    "side_restart64_trial": {
-        "enabled_by_default": False,
-        "status": "registered_once_trial_requires_live_fresh_authority_callback",
-        "requires_measured_restart32_stagnation_and_outer_stagnation": True,
-        "restart32_stagnation_windows": 2,
-        "restart32_window_steps": 32,
-        "restart32_window_improvement_max": 0.10,
-        "max_it": 128,
-        "restart": 64,
-        "orthogonalization": "modified_gram_schmidt",
-        "maximum_trials": 1,
-        "requires_fresh_memory_gate": True,
-        "selection_rule": (
-            "same_rhs_eta64_at_most_0.9_eta32_and_max_rank_trial_wall_with_one_setup_not_higher"
-            "_and_log_residual_reduction_per_wall_not_lower"
-        ),
-        "restart64_source_workspace": {
-            "restart32_ksp_destroyed_before_restart64_gate": True,
-            "petsc_vec_offset": 2,
-            "gmres_owned_vectors": "offset+2+restart",
-            "fgmres_preconditioned_vectors": "gmres_owned_vectors-offset",
-            "basis_vec_layout": "operator-local-rows",
-            "preconditioned_vec_layout": "operator-local-columns",
-            "auxiliary_vec_layout": "per-rank max(operator-local-rows,operator-local-columns)",
-            "trial_solution_vectors": 1,
-            "simultaneous_true_residual_vectors": {
-                "operator_output_row_layout": 1,
-                "original_rhs_copy_column_layout": 1,
-            },
-            "captured_rhs_in_fresh_B": True,
-            "additional_scalar_arrays": "Hessenberg/Givens plus conservative SVD arrays and nrs",
-            "complex_scalar_bytes": 16,
-        },
-        "restart32_restore_workspace": {
-            "fresh_gate_after_restart64_trial_and_candidate_rhs_are_destroyed": True,
-            "restart": 32,
-            "basis_vec_layout": "operator-local-rows",
-            "preconditioned_vec_layout": "operator-local-columns",
-            "auxiliary_vec_layout": "per-rank max(operator-local-rows,operator-local-columns)",
-            "future_apply_output_vectors": 1,
-            "simultaneous_true_residual_vectors": {
-                "operator_output_row_layout": 1,
-                "original_rhs_copy_column_layout": 1,
-            },
-            "captured_rhs_in_fresh_B": False,
-            "additional_scalar_arrays": "Hessenberg/Givens plus conservative SVD arrays and nrs",
-            "complex_scalar_bytes": 16,
-        },
-    },
-    "post_backup_stop": {
-        "enabled": True,
-        "requires_one_backup_used": True,
-        "requires_side_trial_resolved": True,
-        "finite_stagnation_stop_requires_two_complete_post_trial_eight_step_windows": True,
-        "restore_workspace_capacity_refusal_is_an_immediate_safe_boundary_stop": True,
-        "maximum_unpassed_global_and_block_improvement": 0.10,
-        "reason_class": "runtime_supported_non_success_with_separate_policy_stop_reason",
-    },
-}
 
 
 def _task041_v12_capacity_gate_has_byte_refusal(gate: Any) -> bool:
@@ -498,33 +408,6 @@ def _task041_v12_capacity_gate_has_byte_refusal(gate: Any) -> bool:
     ):
         return False
     return bool(screened > cap or expected_shortages)
-
-
-def resolve_task041_modal_solver_policy(
-    value: str | Mapping[str, Any] | None,
-) -> dict[str, Any] | None:
-    """Resolve one sealed V12 modal policy without changing legacy defaults."""
-
-    if value is None:
-        return None
-    policies = {
-        TASK041_V12_MODAL_SOLVER_POLICY_ID: _TASK041_V12_MODAL_SOLVER_POLICY,
-        TASK041_V12_MODAL_BACKUP_POLICY_ID: _TASK041_V12_MODAL_BACKUP_POLICY,
-    }
-    if isinstance(value, str):
-        policy = policies.get(value)
-        if policy is None:
-            raise ValueError("unsupported Task041 modal solver policy")
-        return dict(policy)
-    if not isinstance(value, Mapping):
-        raise TypeError(
-            "Task041 modal solver policy must be a registered id or mapping"
-        )
-    policy_id = value.get("policy_id")
-    policy = policies.get(policy_id) if isinstance(policy_id, str) else None
-    if policy is None or dict(value) != policy:
-        raise ValueError("Task041 modal solver policy does not match V12")
-    return dict(policy)
 
 
 def _task041_modal_policy_allows_backup(policy: Mapping[str, Any] | None) -> bool:
@@ -978,9 +861,122 @@ def _action_diagnostics(action: Any) -> dict[str, Any]:
     diagnostics = getattr(action, "diagnostics", None)
     if callable(diagnostics):
         diagnostics = diagnostics()
-    if not isinstance(diagnostics, dict):
-        raise TypeError("Borrowed action must expose diagnostics.")
+    if diagnostics is None:
+        diagnostics = getattr(action, "audit", None)
+        if callable(diagnostics):
+            diagnostics = diagnostics()
+    if not isinstance(diagnostics, Mapping):
+        raise TypeError("Borrowed action must expose diagnostics or audit.")
     return dict(diagnostics)
+
+
+_V13_SHARED_ACTION_COUNTERS = (
+    "pc",
+    "Q",
+    "p4_backsolve",
+    "p4_refinement",
+    "H6",
+    "A6",
+    "J",
+    "JH",
+    "P",
+    "PH_audit",
+    "PH_total",
+)
+_V13_FIXED_Q_ACTION_COUNTERS = (
+    "mathematical_correction_steps_requested",
+    "mathematical_correction_steps_completed_with_valid_q_audit",
+    "successful_q_audit_count",
+    "q_attempts_missing_complete_audit",
+    "successful_factor_solve_delta_total",
+    "failed_q_attempt_count",
+    "failed_live_factor_backsolve_delta_total",
+    "failed_live_factor_backsolve_delta_unknown_count",
+)
+
+
+def _v13_action_work_snapshot(action: Any) -> dict[str, Any]:
+    """Capture only rank-local cumulative action/callback counters."""
+
+    diagnostics = _action_diagnostics(action)
+    shared = diagnostics.get("shared_side_inverse_callback_counts")
+    if isinstance(shared, Mapping):
+        shared_counts = {
+            key: shared.get(key)
+            for key in _V13_SHARED_ACTION_COUNTERS
+            if key in shared
+        }
+    else:
+        shared_counts = None
+    fixed_q = diagnostics.get("fixed_q_actual_work_cumulative")
+    if isinstance(fixed_q, Mapping):
+        fixed_q_counts = {
+            key: fixed_q.get(key)
+            for key in _V13_FIXED_Q_ACTION_COUNTERS
+            if key in fixed_q
+        }
+        step_counts = fixed_q.get("factor_solve_deltas_by_step")
+        if isinstance(step_counts, Mapping):
+            fixed_q_counts["factor_solve_deltas_by_step"] = {
+                step: {
+                    key: value
+                    for key, value in fields.items()
+                    if key
+                    in {
+                        "audited_q_count",
+                        "factor_solve_delta_total",
+                        "direct_zero_status_audited_q_count",
+                        "direct_zero_count",
+                        "direct_zero_status_missing_q_count",
+                    }
+                }
+                for step, fields in step_counts.items()
+                if step in {"initial", "correction"}
+                and isinstance(fields, Mapping)
+            }
+    else:
+        fixed_q_counts = None
+    return {
+        "action_apply_count": diagnostics.get("apply_count"),
+        "shared_side_inverse_callback_counts": shared_counts,
+        "shared_counter_scope": diagnostics.get(
+            "shared_side_inverse_callback_counter_scope"
+        ),
+        "fixed_q_actual_work_cumulative": fixed_q_counts,
+    }
+
+
+def _v13_numeric_counter_delta(before: Any, after: Any) -> Any:
+    """Subtract comparable integer counters while leaving unknowns explicit."""
+
+    if (
+        isinstance(before, int)
+        and not isinstance(before, bool)
+        and isinstance(after, int)
+        and not isinstance(after, bool)
+    ):
+        return int(after) - int(before)
+    if isinstance(before, Mapping) and isinstance(after, Mapping):
+        delta = {
+            key: _v13_numeric_counter_delta(value, after[key])
+            for key, value in before.items()
+            if key in after
+        }
+        return delta or None
+    return None
+
+
+def _v13_action_work_delta(
+    before: Mapping[str, Any], after: Mapping[str, Any]
+) -> dict[str, Any]:
+    return {
+        key: _v13_numeric_counter_delta(before.get(key), after.get(key))
+        for key in (
+            "action_apply_count",
+            "shared_side_inverse_callback_counts",
+            "fixed_q_actual_work_cumulative",
+        )
+    }
 
 
 def _action_apply_count(action: Any) -> int | None:
@@ -1275,28 +1271,2681 @@ class HybridActionModalSchurSystem:
         self._destroyed = True
 
 
+def _v13_modal_schur_diagnostic_fields(
+    modal_count: int, build_audit: Mapping[str, Any]
+) -> dict[str, Any]:
+    if type(modal_count) is not int or modal_count <= 0:
+        raise ValueError("V13 modal Schur diagnostics require a positive size")
+    if not isinstance(build_audit, Mapping):
+        raise TypeError("V13 modal Schur diagnostics require the builder audit")
+    sample_columns = build_audit.get(
+        "sample_columns_written_directly_to_final_matrix"
+    )
+    remaining_columns = build_audit.get("remaining_columns_applied_once")
+    if not isinstance(sample_columns, list) or not isinstance(
+        remaining_columns, list
+    ):
+        raise TypeError("V13 builder audit is missing its modal column lists")
+    completed_columns = [*sample_columns, *remaining_columns]
+    if (
+        any(type(column) is not int for column in completed_columns)
+        or len(completed_columns) != modal_count
+        or len(set(completed_columns)) != modal_count
+        or set(completed_columns) != set(range(modal_count))
+    ):
+        raise ValueError(
+            "V13 builder audit must cover every modal Schur column exactly once"
+        )
+    return {
+        "modal_count": modal_count,
+        "modal_schur_materialized": (
+            build_audit.get("full_owner_matrix_pages_materialized_before_sample_gate")
+            is True
+        ),
+        "modal_schur_shape": [modal_count, modal_count],
+        "modal_schur_column_count": len(completed_columns),
+        "build_audit": dict(build_audit),
+    }
+
+
+def _task041_v13_outer_workspace_pass_resource_contract_valid(
+    phase: str,
+    report: Mapping[str, Any],
+    response: Mapping[str, Any],
+    *,
+    rank_count: int,
+) -> bool:
+    """Recompute the frozen byte gate before accepting an outer-workspace pass."""
+
+    expected_restart = 32 if phase == "outer_restart32_workspace" else 64
+    expected_external_keys = {
+        "bound_fresh_supervisor_sample",
+        "tree_cgroup_and_all_mpi_ranks",
+        "node0_floor_headroom",
+        "host_floor_headroom",
+        "cgroup_ancestor_headroom",
+        "case_cap_projection",
+        "sample_cost_contract",
+    }
+    hard_cap = 85_899_345_920
+    reserve = 8_589_934_592
+    floor = 412_316_860_416
+
+    def strict_integer_vector(value: Any) -> bool:
+        return bool(
+            isinstance(value, list)
+            and len(value) == rank_count
+            and all(type(item) is int and item >= 0 for item in value)
+        )
+
+    projection = report.get("phase_memory_projection")
+    reports = projection.get("phase_reports") if isinstance(projection, Mapping) else None
+    totals = projection.get("phase_total_bytes") if isinstance(projection, Mapping) else None
+    if not isinstance(reports, Mapping) or not reports or not isinstance(totals, Mapping):
+        return False
+    if any(type(value) is not int or value < 0 for value in totals.values()):
+        return False
+    recomputed_totals: dict[str, int] = {}
+    recomputed_by_phase: dict[str, list[int]] = {}
+    for name, components in reports.items():
+        if not isinstance(components, Mapping):
+            return False
+        fields = (
+            "known_additional_bytes_by_rank",
+            "additional_temporary_bytes_by_rank",
+            "additional_replicated_bytes_by_rank",
+        )
+        arrays = [components.get(key) for key in fields]
+        if any(
+            not isinstance(values, list)
+            or len(values) != rank_count
+            or any(type(value) is not int or value < 0 for value in values)
+            for values in arrays
+        ):
+            return False
+        per_rank = [sum(values[rank] for values in arrays) for rank in range(rank_count)]
+        if (
+            not strict_integer_vector(components.get("additional_bytes_by_rank"))
+            or components.get("additional_bytes_by_rank") != per_rank
+        ):
+            return False
+        recomputed_by_phase[str(name)] = per_rank
+        recomputed_totals[str(name)] = sum(per_rank)
+    if dict(totals) != recomputed_totals:
+        return False
+    selected_phase = max(recomputed_totals, key=recomputed_totals.get)
+    selected = reports[selected_phase]
+    selected_additional = recomputed_by_phase[selected_phase]
+    payload = response.get("authority_receipt_payload")
+    external = response.get("external_resource_gates")
+    if not isinstance(payload, Mapping) or not isinstance(external, Mapping):
+        return False
+    if not strict_integer_vector(response.get("additional_bytes_by_rank")):
+        return False
+    if not isinstance(payload.get("rank_pids"), list) or any(
+        type(pid) is not int or pid <= 0 for pid in payload["rank_pids"]
+    ):
+        return False
+    if (
+        set(external) != expected_external_keys
+        or any(value is not True for value in external.values())
+        or report.get("phase") != phase
+        or report.get("target_restart") != expected_restart
+        or projection.get("selected_phase") != selected_phase
+        or type(projection.get("selected_phase_payload_bytes")) is not int
+        or projection.get("selected_phase_payload_bytes") != sum(selected_additional)
+        or response.get("selected_memory_phase") != selected_phase
+        or payload.get("selected_memory_phase") != selected_phase
+        or report.get("known_additional_bytes_by_rank")
+        != selected.get("known_additional_bytes_by_rank")
+        or report.get("additional_temporary_bytes_by_rank")
+        != selected.get("additional_temporary_bytes_by_rank")
+        or report.get("additional_replicated_bytes_by_rank")
+        != selected.get("additional_replicated_bytes_by_rank")
+        or not strict_integer_vector(report.get("known_additional_bytes_by_rank"))
+        or not strict_integer_vector(report.get("additional_temporary_bytes_by_rank"))
+        or not strict_integer_vector(report.get("additional_replicated_bytes_by_rank"))
+        or response.get("additional_bytes_by_rank") != selected_additional
+        or not strict_integer_vector(response.get("additional_temporary_bytes_by_rank"))
+        or not strict_integer_vector(response.get("additional_replicated_bytes_by_rank"))
+        or response.get("selected_memory_phase_payload_bytes") != sum(selected_additional)
+        or response.get("additional_temporary_bytes_by_rank")
+        != selected.get("additional_temporary_bytes_by_rank")
+        or response.get("additional_replicated_bytes_by_rank")
+        != selected.get("additional_replicated_bytes_by_rank")
+    ):
+        return False
+    fresh = response.get("fresh_job_authority_bytes")
+    cap = response.get("cap_bytes")
+    applied_reserve = response.get("W_policy_reserve_bytes")
+    node0_free = response.get("node0_memfree_bytes")
+    host_available = response.get("host_available_bytes")
+    node0_after_floor = response.get("node0_headroom_after_floor_bytes")
+    host_after_floor = response.get("host_headroom_after_floor_bytes")
+    cgroup_state = response.get("cgroup_limit_state")
+    cgroup_headroom = response.get("cgroup_headroom_bytes")
+    required = sum(selected_additional) + reserve
+    projected = fresh + required if type(fresh) is int else None
+    if (
+        type(fresh) is not int
+        or fresh <= 0
+        or type(cap) is not int
+        or cap != hard_cap
+        or type(applied_reserve) is not int
+        or applied_reserve != reserve
+        or type(response.get("floor_bytes")) is not int
+        or response.get("floor_bytes") != floor
+        or type(payload.get("resource_B_bytes")) is not int
+        or payload.get("resource_B_bytes") != fresh
+        or type(payload.get("node0_memfree_bytes")) is not int
+        or payload.get("node0_memfree_bytes") != node0_free
+        or type(payload.get("host_available_bytes")) is not int
+        or payload.get("host_available_bytes") != host_available
+        or type(payload.get("node0_headroom_after_floor_bytes")) is not int
+        or payload.get("node0_headroom_after_floor_bytes") != node0_after_floor
+        or type(payload.get("host_headroom_after_floor_bytes")) is not int
+        or payload.get("host_headroom_after_floor_bytes") != host_after_floor
+        or type(payload.get("sample_root_pid")) is not int
+        or payload.get("sample_root_pid") != response.get("root_pid")
+        or payload.get("rank_pids") != response.get("rank_pids")
+        or payload.get("sample_row_sha256") != response.get("sample_row_sha256")
+        or payload.get("request_sha256") != response.get("request_sha256")
+        or not isinstance(payload.get("invocation_id"), str)
+        or not payload.get("invocation_id")
+        or not isinstance(payload.get("source_sha"), str)
+        or not payload.get("source_sha")
+        or not isinstance(payload.get("unit"), str)
+        or not payload.get("unit")
+        or payload.get("phase") != phase
+        or payload.get("cap_bytes") != cap
+        or payload.get("W_policy_reserve_bytes") != applied_reserve
+        or payload.get("floor_bytes") != floor
+        or payload.get("cgroup_limit_state") != cgroup_state
+        or (
+            cgroup_state == "finite"
+            and type(payload.get("cgroup_headroom_bytes")) is not int
+        )
+        or payload.get("cgroup_headroom_bytes") != cgroup_headroom
+        or payload.get("selected_memory_phase") != selected_phase
+        or type(payload.get("selected_memory_phase_payload_bytes")) is not int
+        or payload.get("selected_memory_phase_payload_bytes")
+        != sum(selected_additional)
+        or not strict_integer_vector(payload.get("additional_bytes_by_rank"))
+        or payload.get("additional_bytes_by_rank") != selected_additional
+        or payload.get("projected_B_plus_delta_plus_W_bytes") != projected
+        or response.get("phase") != phase
+        or type(response.get("root_pid")) is not int
+        or not isinstance(response.get("rank_pids"), list)
+        or len(response["rank_pids"]) != rank_count
+        or any(type(pid) is not int or pid <= 0 for pid in response["rank_pids"])
+        or len(set(response["rank_pids"])) != rank_count
+        or not isinstance(response.get("sample_row_sha256"), str)
+        or len(response["sample_row_sha256"]) != 64
+        or any(
+            character not in "0123456789abcdef"
+            for character in response["sample_row_sha256"]
+        )
+        or not isinstance(response.get("sample_age_seconds"), (int, float))
+        or isinstance(response.get("sample_age_seconds"), bool)
+        or not math.isfinite(float(response["sample_age_seconds"]))
+        or not 0.0 <= float(response["sample_age_seconds"]) <= 2.0
+        or type(node0_free) is not int
+        or type(host_available) is not int
+        or node0_after_floor != node0_free - floor
+        or host_after_floor != host_available - floor
+        or response.get("projected_B_plus_delta_plus_W_bytes") != projected
+        or projected is None
+        or projected > cap
+    ):
+        return False
+    if node0_after_floor < required or host_after_floor < required:
+        return False
+    if cgroup_state == "finite":
+        if (
+            type(cgroup_headroom) is not int
+            or cgroup_headroom < required
+            or type(payload.get("cgroup_headroom_bytes")) is not int
+        ):
+            return False
+    elif cgroup_state == "max_or_unlimited":
+        if cgroup_headroom is not None:
+            return False
+    else:
+        return False
+    cost = response.get("cost_assessment")
+    return bool(
+        isinstance(cost, Mapping)
+        and cost.get("scope") == "outer_ksp_workspace_admission"
+        and cost.get("status") == "workspace_model_valid"
+        and cost.get("target_restart") == expected_restart
+        and cost.get("W_policy_reserve_bytes") == reserve
+        and cost.get("target_is_elapsed_stop") is False
+        and response.get("projected_B_plus_delta_plus_W_bytes")
+        == fresh + sum(selected_additional) + applied_reserve
+    )
+
+
+class Task041V13ConsistentModalSurrogateSystem:
+    """Owner-LU solve for the V13 Schur built from the fixed approximate B.
+
+    ``modal_constraint`` is replicated because it is also used to check the
+    original modal row after each complete block-LDU application.  The Schur
+    matrix and its LU are retained only by ``modal_owner``.  Side actions are
+    borrowed and are never destroyed here.
+    """
+
+    method = TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+    requires_right_fgmres = True
+
+    def __init__(
+        self,
+        *,
+        modal_schur: np.ndarray | None,
+        modal_constraint: np.ndarray,
+        lu: np.ndarray | None,
+        pivots: np.ndarray | None,
+        modal_owner: int,
+        comm: Any,
+        condition: float | None,
+        storage_plan: Mapping[str, Any],
+        build_audit: Mapping[str, Any],
+        bottom_action: Any,
+        top_action: Any,
+        side_operation_baseline: Mapping[str, Mapping[str, int]] | None,
+        fresh_authority_callback: Callable[
+            [str, Mapping[str, Any]], Mapping[str, Any]
+        ] | None = None,
+        snapshot_callback: Callable[[Mapping[str, Any]], Mapping[str, Any] | None]
+        | None = None,
+    ) -> None:
+        self.modal_schur = modal_schur
+        self.modal_constraint = np.asarray(modal_constraint, dtype=np.complex128)
+        self.lu = lu
+        self.pivots = pivots
+        self.modal_owner = int(modal_owner)
+        self.comm = comm
+        self.rank = int(comm.rank)
+        self.modal_count = int(self.modal_constraint.shape[0])
+        self.condition = None if condition is None else float(condition)
+        self.storage_plan = dict(storage_plan)
+        self.build_audit = dict(build_audit)
+        self._modal_schur_diagnostic_fields = _v13_modal_schur_diagnostic_fields(
+            self.modal_count, self.build_audit
+        )
+        self.bottom_action = bottom_action
+        self.top_action = top_action
+        self.side_operation_baseline = (
+            None
+            if side_operation_baseline is None
+            else {
+                side: dict(counts)
+                for side, counts in side_operation_baseline.items()
+            }
+        )
+        self._fresh_authority_callback = fresh_authority_callback
+        self._snapshot_callback = snapshot_callback
+        self._destroyed = False
+        self._solve_count = 0
+        self._owner_lu_solve_count = 0
+        self._last_solve: dict[str, Any] | None = None
+        self._last_original_modal_row: dict[str, Any] | None = None
+        self._side_operation_after = (
+            None
+            if self.side_operation_baseline is None
+            else {
+                side: dict(counts)
+                for side, counts in self.side_operation_baseline.items()
+            }
+        )
+        self._modal_ksp_handle = None
+        self._modal_ksp_solve_call_count = 0
+        self._outer_workspace_admissions: dict[str, dict[str, Any]] = {}
+        self._array_bytes = {
+            "modal_constraint_bytes": int(self.modal_constraint.nbytes),
+            "modal_schur_bytes": (
+                0 if self.modal_schur is None else int(self.modal_schur.nbytes)
+            ),
+            "lu_bytes": 0 if self.lu is None else int(self.lu.nbytes),
+            "pivots_bytes": 0 if self.pivots is None else int(self.pivots.nbytes),
+        }
+        if self.modal_constraint.shape != (self.modal_count, self.modal_count):
+            raise ValueError("V13 modal constraint has an invalid shape.")
+        if (self.rank == self.modal_owner) != (self.modal_schur is not None):
+            raise ValueError("V13 Schur storage must exist only on the modal owner.")
+        if (self.rank == self.modal_owner) != (self.lu is not None):
+            raise ValueError("V13 LU storage must exist only on the modal owner.")
+        if (self.rank == self.modal_owner) != (self.pivots is not None):
+            raise ValueError("V13 pivot storage must exist only on the modal owner.")
+
+    def authorize_outer_workspace(
+        self, phase: str, report: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        """Ask the bound authority before allocating an outer KSP workspace."""
+
+        local_error = None
+        response: dict[str, Any] | None = None
+        request_sha256 = None
+        try:
+            if self._destroyed:
+                raise RuntimeError("V13 modal surrogate is destroyed")
+            if phase not in {
+                "outer_restart32_workspace",
+                "outer_restart64_workspace",
+            }:
+                raise ValueError("V13 outer workspace phase is not registered")
+            if not callable(self._fresh_authority_callback):
+                raise TypeError("V13 outer workspace has no bound fresh authority callback")
+            canonical = json.dumps(
+                dict(report), sort_keys=True, separators=(",", ":"), allow_nan=False
+            )
+            request_sha256 = hashlib.sha256(canonical.encode()).hexdigest()
+        except Exception as exc:  # noqa: BLE001 - agree before the callback collective
+            local_error = f"{type(exc).__name__}: {exc}"
+        request_rows = self.comm.allgather((local_error, request_sha256))
+        request_errors = [
+            f"rank {rank}: {error}"
+            for rank, (error, _digest) in enumerate(request_rows)
+            if error is not None
+        ]
+        request_digests = [
+            digest for error, digest in request_rows if error is None
+        ]
+        if request_errors or len(request_digests) != int(self.comm.size):
+            raise RuntimeError(
+                "V13 outer restart report is unbindable: "
+                + "; ".join(request_errors)
+            )
+        if len(set(request_digests)) != 1:
+            raise RuntimeError("V13 outer restart report differs across ranks")
+        assert request_sha256 is not None
+
+        try:
+            raw_response = self._fresh_authority_callback(
+                phase, dict(report)
+            )
+            if not isinstance(raw_response, Mapping):
+                raise TypeError("V13 outer restart authority returned no record")
+            response = dict(raw_response)
+            payload = response.get("authority_receipt_payload")
+            if not isinstance(payload, Mapping):
+                raise TypeError("V13 outer restart authority receipt payload is absent")
+            receipt_sha = hashlib.sha256(
+                json.dumps(
+                    dict(payload),
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                ).encode()
+            ).hexdigest()
+            if (
+                response.get("schema") != "task041.v13.modal_builder_admission.v1"
+                or response.get("phase") != phase
+                or response.get("request_sha256") != request_sha256
+                or response.get("authority_receipt_sha256") != receipt_sha
+                or payload.get("phase") != phase
+                or payload.get("request_sha256") != request_sha256
+                or response.get("status") not in {"pass", "refused"}
+                or response.get("decision") not in {"continue", "stop"}
+                or response.get("decision")
+                != ("continue" if response.get("status") == "pass" else "stop")
+            ):
+                raise ValueError("V13 outer restart authority receipt is not bound")
+            if response.get("status") == "pass" and (
+                response.get("decision") != "continue"
+                or not _task041_v13_outer_workspace_pass_resource_contract_valid(
+                    phase,
+                    report,
+                    response,
+                    rank_count=int(self.comm.size),
+                )
+            ):
+                raise ValueError(
+                    "V13 outer restart pass fails recomputed fresh B/delta/W/floor evidence"
+                )
+            response_json = json.dumps(
+                response, sort_keys=True, separators=(",", ":"), allow_nan=False
+            )
+        except Exception as exc:  # noqa: BLE001 - collective result checked below
+            local_error = f"{type(exc).__name__}: {exc}"
+            response_json = None
+        response_rows = self.comm.allgather((local_error, response_json))
+        response_errors = [
+            f"rank {rank}: {error}"
+            for rank, (error, _payload) in enumerate(response_rows)
+            if error is not None
+        ]
+        response_payloads = [
+            payload for error, payload in response_rows if error is None
+        ]
+        if response_errors or len(response_payloads) != int(self.comm.size):
+            raise RuntimeError(
+                "V13 outer restart authority validation failed: "
+                + "; ".join(response_errors)
+            )
+        if len(set(response_payloads)) != 1:
+            raise RuntimeError("V13 outer restart authority differs across ranks")
+        assert response is not None
+        self._outer_workspace_admissions[phase] = dict(response)
+        return dict(response)
+
+    def solve(self, rhs: np.ndarray) -> np.ndarray:
+        local_error = None
+        values = None
+        digest = None
+        try:
+            if self._destroyed:
+                raise RuntimeError("V13 modal surrogate has been destroyed")
+            values = np.asarray(rhs, dtype=np.complex128)
+            if values.shape != (self.modal_count,) or not np.all(np.isfinite(values)):
+                raise ValueError("V13 modal Schur RHS has invalid shape or values")
+            digest = hashlib.sha256(
+                np.ascontiguousarray(values).tobytes()
+            ).hexdigest()
+        except Exception as exc:  # noqa: BLE001 - collect local error before the RHS collective
+            local_error = f"{type(exc).__name__}: {exc}"
+        preflight = self.comm.allgather(
+            (local_error, digest, int(self.modal_owner))
+        )
+        errors = [
+            f"rank {rank}: {error}"
+            for rank, (error, _hash, _owner) in enumerate(preflight)
+            if error is not None
+        ]
+        hashes = [value_hash for _error, value_hash, _owner in preflight]
+        owners = [owner for _error, _hash, owner in preflight]
+        if (
+            errors
+            or len(set(hashes)) != 1
+            or hashes[0] is None
+            or len(set(owners)) != 1
+            or not 0 <= owners[0] < self.comm.size
+        ):
+            detail = "; ".join(errors) if errors else (
+                "replicated g or owner identity differs by rank"
+            )
+            raise ValueError(f"V13 collective S_B RHS preflight rejected: {detail}")
+        payload = None
+        if self.rank == self.modal_owner:
+            try:
+                if self.modal_schur is None or self.lu is None or self.pivots is None:
+                    raise RuntimeError("V13 owner Schur/LU storage is unavailable")
+                solution = np.asarray(
+                    lu_solve((self.lu, self.pivots), values, check_finite=True),
+                    dtype=np.complex128,
+                )
+                residual = np.asarray(
+                    self.modal_schur @ solution - values, dtype=np.complex128
+                )
+                matrix_norm = float(np.linalg.norm(self.modal_schur, ord="fro"))
+                solution_norm = float(np.linalg.norm(solution))
+                rhs_norm = float(np.linalg.norm(values))
+                residual_norm = float(np.linalg.norm(residual))
+                scale = rhs_norm if rhs_norm > 0.0 else matrix_norm * solution_norm
+                relative = (
+                    residual_norm / scale
+                    if scale > 0.0
+                    else (0.0 if residual_norm == 0.0 else float("inf"))
+                )
+                residual_passed = bool(
+                    np.all(np.isfinite(solution))
+                    and np.all(np.isfinite(residual))
+                    and np.isfinite(relative)
+                    and relative <= 1.0e-10
+                )
+                self._owner_lu_solve_count += 1
+                input_unchanged = hashlib.sha256(
+                    np.ascontiguousarray(values).tobytes()
+                ).hexdigest() == digest
+                trusted_iterate = bool(
+                    input_unchanged
+                    and np.all(np.isfinite(values))
+                    and np.all(np.isfinite(solution))
+                    and np.all(np.isfinite(residual))
+                    and np.isfinite(relative)
+                )
+                passed = bool(residual_passed and trusted_iterate)
+                record = {
+                    "status": "passed" if passed else "rejected",
+                    "equation": "S_B a - g",
+                    "residual_norm": residual_norm,
+                    "scale": scale,
+                    "relative_backward_error": relative,
+                    "tolerance": 1.0e-10,
+                    "residual_passed": residual_passed,
+                    "matrix_norm_frobenius": matrix_norm,
+                    "rhs_norm": rhs_norm,
+                    "solution_norm": solution_norm,
+                    "owner_lu_solve_count": self._owner_lu_solve_count,
+                    "owner_rank": self.modal_owner,
+                    "trusted_iterate": trusted_iterate,
+                    "input_unchanged": input_unchanged,
+                }
+                if not passed and trusted_iterate and self._snapshot_callback is not None:
+                    try:
+                        snapshot_record = self._snapshot_callback(
+                            {
+                                "snapshot_kind": "terminal_normal_reject",
+                                "g": values.copy(),
+                                "m": solution.copy(),
+                                "raw_residual": residual * -1.0,
+                                "trusted_iterate": True,
+                                "scalar_history": [],
+                                "policy_id": TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+                                "method": self.method,
+                                "solve_record": dict(record),
+                            }
+                        )
+                        record["snapshot_record"] = (
+                            None
+                            if snapshot_record is None
+                            else dict(snapshot_record)
+                        )
+                    except Exception as exc:  # noqa: BLE001 - retain the numerical reject and writer error
+                        record["snapshot_error"] = {
+                            "type": type(exc).__name__,
+                            "message": str(exc)[:240],
+                        }
+                payload = {
+                    "solution": solution,
+                    "record": record,
+                    "error": None,
+                }
+            except Exception as exc:  # noqa: BLE001 - broadcast owner solve failure to every rank
+                payload = {
+                    "solution": None,
+                    "record": None,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+        payload = self.comm.bcast(payload, root=self.modal_owner)
+        self._solve_count += 1
+        if not isinstance(payload, Mapping) or payload.get("error") is not None:
+            message = (
+                "owner returned no solve record"
+                if not isinstance(payload, Mapping)
+                else str(payload.get("error"))
+            )
+            raise RuntimeError(f"V13 owner LU solve failed: {message}")
+        solution = np.asarray(payload.get("solution"), dtype=np.complex128)
+        record = payload.get("record")
+        if not isinstance(record, Mapping):
+            raise FloatingPointError("V13 S_B owner returned no numerical record")
+        self._last_solve = dict(record)
+        if solution.shape != (self.modal_count,) or not np.all(np.isfinite(solution)):
+            raise FloatingPointError("V13 S_B owner returned an invalid iterate")
+        if record.get("status") != "passed":
+            snapshot_error = record.get("snapshot_error")
+            suffix = (
+                ""
+                if not isinstance(snapshot_error, Mapping)
+                else "; terminal snapshot failed: "
+                + str(snapshot_error.get("message", "unknown writer error"))
+            )
+            raise FloatingPointError(
+                "V13 S_B a-g residual gate rejected the solve" + suffix
+            )
+        return solution.copy()
+
+    def record_original_modal_row(self, record: Mapping[str, Any]) -> None:
+        if self._destroyed:
+            raise RuntimeError("V13 modal surrogate has been destroyed")
+        self._last_original_modal_row = dict(record)
+
+    def record_side_operation_counts(
+        self, counts: Mapping[str, Mapping[str, int]]
+    ) -> None:
+        if set(counts) != {"bottom", "top"}:
+            raise ValueError("V13 side-operation audit must contain both sides")
+        self._side_operation_after = {
+            side: {key: int(value) for key, value in counts[side].items()}
+            for side in ("bottom", "top")
+        }
+
+    @staticmethod
+    def _side_operation_deltas(
+        baseline: Mapping[str, Mapping[str, int]] | None,
+        after: Mapping[str, Mapping[str, int]] | None,
+    ) -> dict[str, dict[str, int]] | None:
+        if baseline is None or after is None:
+            return None
+        if set(baseline) != {"bottom", "top"} or set(after) != {"bottom", "top"}:
+            return None
+        result = {}
+        for side in ("bottom", "top"):
+            keys = ("apply_count", "total_iterations")
+            if any(key not in baseline[side] or key not in after[side] for key in keys):
+                return None
+            result[side] = {
+                key: int(after[side][key]) - int(baseline[side][key])
+                for key in keys
+            }
+        return result
+
+    def _actual_action_work_diagnostics(self) -> dict[str, Any]:
+        """Expose rank-local cumulative counters at this outer/final read."""
+
+        snapshots = self.build_audit.get("actual_work_phase_snapshots")
+        before_phase = (
+            snapshots.get("before_build") if isinstance(snapshots, Mapping) else None
+        )
+        setup_phase = (
+            snapshots.get("after_independent_validation")
+            if isinstance(snapshots, Mapping)
+            else None
+        )
+
+        def side_snapshot(phase: Any, side: str) -> Mapping[str, Any] | None:
+            if not isinstance(phase, Mapping):
+                return None
+            rows = phase.get("rank_rows")
+            if not isinstance(rows, (list, tuple)) or self.rank >= len(rows):
+                return None
+            row = rows[self.rank]
+            actions = row.get("actions") if isinstance(row, Mapping) else None
+            value = actions.get(side) if isinstance(actions, Mapping) else None
+            return value if isinstance(value, Mapping) else None
+
+        current = {
+            "bottom": _v13_action_work_snapshot(self.bottom_action),
+            "top": _v13_action_work_snapshot(self.top_action),
+        }
+        since_builder = {}
+        since_setup = {}
+        for side in ("bottom", "top"):
+            baseline = side_snapshot(before_phase, side)
+            setup = side_snapshot(setup_phase, side)
+            since_builder[side] = (
+                None
+                if baseline is None
+                else _v13_action_work_delta(baseline, current[side])
+            )
+            since_setup[side] = (
+                None
+                if setup is None
+                else _v13_action_work_delta(setup, current[side])
+            )
+        return {
+            "scope": (
+                "rank-local existing side callback counters plus fixed-Q audit; "
+                "do not sum replicated/global counts across ranks or add fixed-Q "
+                "factor deltas to the shared P4 backsolve counter"
+            ),
+            "observation_boundary": "this diagnostics/inventory read; finalizer must persist its final read",
+            "current_by_side": current,
+            "delta_since_builder_begin_by_side": since_builder,
+            "delta_since_independent_validation_by_side": since_setup,
+        }
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        owner_bytes = (
+            sum(
+                int(self._array_bytes[key])
+                for key in ("modal_schur_bytes", "lu_bytes", "pivots_bytes")
+            )
+            if self.rank == self.modal_owner
+            else 0
+        )
+        side_operation_deltas = self._side_operation_deltas(
+            self.side_operation_baseline, self._side_operation_after
+        )
+        side_operation_zero = bool(
+            side_operation_deltas is not None
+            and all(
+                count == 0
+                for side_counts in side_operation_deltas.values()
+                for count in side_counts.values()
+            )
+        )
+        return {
+            "schema": "task041.v13.consistent_modal_surrogate.v1",
+            "policy_id": TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+            "method": TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+            "rank": self.rank,
+            "modal_owner": self.modal_owner,
+            **self._modal_schur_diagnostic_fields,
+            "modal_schur_local_bytes": int(self._array_bytes["modal_schur_bytes"]),
+            **self._array_bytes,
+            "owner_factor_local_bytes": (
+                int(self._array_bytes["lu_bytes"])
+                + int(self._array_bytes["pivots_bytes"])
+            ),
+            "owner_retained_modal_bytes": owner_bytes,
+            "owner_storage_plan": dict(self.storage_plan),
+            "condition": self.condition,
+            "modal_linear_solver": "owner_local_scipy_lu",
+            "modal_ksp_handle_count": int(self._modal_ksp_handle is not None),
+            "modal_ksp_solve_count": int(self._modal_ksp_solve_call_count),
+            "owner_lu_factor_count_local": int(self.lu is not None),
+            "modal_ksp_call_scope": "no_modal_ksp_object; owner_local_scipy_lu",
+            "side_operation_baseline": (
+                None
+                if self.side_operation_baseline is None
+                else {
+                    side: dict(counts)
+                    for side, counts in self.side_operation_baseline.items()
+                }
+            ),
+            "side_operation_after": (
+                None
+                if self._side_operation_after is None
+                else {
+                    side: dict(counts)
+                    for side, counts in self._side_operation_after.items()
+                }
+            ),
+            "side_operation_deltas": side_operation_deltas,
+            "side_solver_entry_zero_supported": side_operation_zero,
+            "actual_action_work": self._actual_action_work_diagnostics(),
+            "owner_lu_solve_count": self._owner_lu_solve_count,
+            "solve_count": self._solve_count,
+            "last_solve": (
+                None if self._last_solve is None else dict(self._last_solve)
+            ),
+            "last_original_modal_row": (
+                None
+                if self._last_original_modal_row is None
+                else dict(self._last_original_modal_row)
+            ),
+            "borrowed_action_identity": {
+                "bottom_id": id(self.bottom_action),
+                "top_id": id(self.top_action),
+                "not_owned": True,
+            },
+            "destroyed": self._destroyed,
+        }
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self.modal_schur = None
+        self.modal_constraint = None
+        self.lu = None
+        self.pivots = None
+        self._destroyed = True
+
+
+def _v13_canonicalize_rank_elapsed(
+    comm: MPI.Intracomm,
+    report: Mapping[str, Any],
+    *,
+    metric: str,
+    local_elapsed_seconds: float,
+) -> dict[str, Any]:
+    """Return one identical, hashable report containing every rank's timing."""
+
+    local_row = {
+        "rank": int(comm.rank),
+        "elapsed_seconds": float(local_elapsed_seconds),
+    }
+    rank_rows = comm.allgather(local_row)
+    if (
+        len(rank_rows) != comm.size
+        or [row.get("rank") for row in rank_rows] != list(range(comm.size))
+        or any(
+            not np.isfinite(row.get("elapsed_seconds", float("nan")))
+            or row["elapsed_seconds"] < 0.0
+            for row in rank_rows
+        )
+    ):
+        raise ValueError(f"V13 {metric} elapsed-time rows are invalid")
+    canonical = dict(report)
+    canonical[f"{metric}_elapsed_seconds_max_rank"] = max(
+        float(row["elapsed_seconds"]) for row in rank_rows
+    )
+    canonical[f"{metric}_elapsed_seconds_by_rank"] = [
+        {
+            "rank": int(row["rank"]),
+            "elapsed_seconds": float(row["elapsed_seconds"]),
+        }
+        for row in rank_rows
+    ]
+    return canonical
+
+
+def _v13_matrix_local_sizes(matrix: Any, name: str) -> tuple[int, int]:
+    if not isinstance(matrix, PETSc.Mat):
+        raise TypeError(f"V13 memory inventory requires PETSc Mat {name}")
+    rows, columns = matrix.getLocalSize()
+    values = (int(rows), int(columns))
+    if any(value < 0 for value in values):
+        raise ValueError(f"V13 memory inventory has negative local size for {name}")
+    return values
+
+
+def _v13_local_workspace_inventory(
+    coupling: HybridInternalModeCoupling,
+    bottom_action: Any,
+    top_action: Any,
+    *,
+    original_augmented_local_size: int,
+    internal_count: int,
+    owner: int,
+    comm: MPI.Intracomm,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Count the V13 setup's actual local PETSc vector layouts without allocating Vecs.
+
+    The returned peak is a source-derived slot count over the nested call graph:
+    one modal-column action, its two traction products, the full-space BAL_H
+    recurrence, its condensed P4 RHS/solve/result vectors, the later LDU work
+    vectors, and the three retained original-A validation vectors.  Side KSPs
+    have already run KSPSetUp in SideBalancedInverse.__init__; their work bases
+    are resident in the fresh sample and are recorded separately, not charged
+    again as transient Vecs.
+    """
+
+    scalar_bytes = int(np.dtype(PETSc.ScalarType).itemsize)
+    if scalar_bytes != np.dtype(np.complex128).itemsize:
+        raise ValueError("V13 local workspace model requires complex128 PETSc Vecs")
+    if (
+        isinstance(original_augmented_local_size, bool)
+        or not isinstance(original_augmented_local_size, int)
+        or original_augmented_local_size < 0
+    ):
+        raise ValueError("V13 original-A local Vec size is invalid")
+
+    local_error = None
+    local_row: dict[str, Any] = {"rank": int(comm.rank)}
+    try:
+        side_rows: dict[str, dict[str, Any]] = {}
+        persistent_ldu_entries = 0
+        action_workspace_entries: list[int] = []
+        preexisting_h6_entries = 0
+        for side, action in (("bottom", bottom_action), ("top", top_action)):
+            inverse = getattr(action, "_side_inverse", None)
+            if inverse is None or getattr(inverse, "_destroyed", True):
+                raise RuntimeError(f"V13 {side} fixed-B action has no live side inverse")
+            operator = _action_operator(action)
+            operator_left, operator_right = _v13_matrix_local_sizes(
+                operator, f"{side}.active_operator"
+            )
+            full_action = getattr(inverse, "_full_action", None)
+            full_matrix = getattr(full_action, "matrix", None)
+            full_left, full_right = _v13_matrix_local_sizes(
+                full_matrix, f"{side}.full_P6_action"
+            )
+            p4_factor = getattr(inverse, "_p4_factor", None)
+            p4_inverse = getattr(p4_factor, "inverse", None)
+            condensed = getattr(p4_inverse, "condensed", None)
+            condensed_matrix = getattr(condensed, "matrix", None)
+            coarse_left, coarse_right = _v13_matrix_local_sizes(
+                condensed_matrix, f"{side}.condensed_P4_matrix"
+            )
+            p4_physical_action = getattr(p4_factor, "physical_action", None)
+            p4_physical_matrix = getattr(p4_physical_action, "matrix", None)
+            p4_full_left, p4_full_right = _v13_matrix_local_sizes(
+                p4_physical_matrix, f"{side}.P4_physical_action"
+            )
+            projection = (
+                coupling.bottom.projection if side == "bottom" else coupling.top.projection
+            )
+            projection_left, projection_right = _v13_matrix_local_sizes(
+                projection, f"{side}.projection"
+            )
+            block = coupling.bottom if side == "bottom" else coupling.top
+            positive_left, positive_right = _v13_matrix_local_sizes(
+                block.positive_traction, f"{side}.positive_traction"
+            )
+            negative_left, negative_right = _v13_matrix_local_sizes(
+                block.negative_traction, f"{side}.negative_traction"
+            )
+            if (
+                positive_left != negative_left
+                or positive_right != negative_right
+                or coarse_left != coarse_right
+            ):
+                raise ValueError(f"V13 {side} work-vector layouts are incompatible")
+
+            # modal_coupling_action keeps both right inputs and both left
+            # products until the sum is formed.  The nested peak then includes
+            # its returned traction, the caller's response/projection Vecs,
+            # full_source plus six simultaneously live recurrence Vecs, the
+            # active extraction target, and the coarse RHS/reduced/solve/output
+            # Vecs in P4CellCondensedInverse.apply.
+            modal_coupling_peak = (
+                positive_right + negative_right + positive_left + negative_left
+            )
+            # P4CellCondensedExactFactor.apply has two relevant live-vector
+            # phases.  _residual_state holds its input RHS, current solution,
+            # effective RHS, action output, residual, and augmented residual.
+            # During the one correction solve it holds the original RHS,
+            # current solution, residual input, correction output, plus the
+            # condensed reduced RHS and factor solution.  These layouts come
+            # from the actual P4 physical and condensed matrices respectively;
+            # the P4 inverse itself creates no separate full-layout residual.
+            p4_full_peak = max(p4_full_left, p4_full_right)
+            p4_initial_inverse_peak = (
+                2 * p4_full_peak + coarse_left + coarse_right
+            )
+            p4_residual_state_peak = 6 * p4_full_peak
+            p4_correction_inverse_peak = (
+                4 * p4_full_peak + coarse_left + coarse_right
+            )
+            p4_q_call_peak = max(
+                p4_initial_inverse_peak,
+                p4_residual_state_peak,
+                p4_correction_inverse_peak,
+            )
+            nested_balh_peak = (
+                positive_left
+                + operator_left
+                + projection_left
+                + full_right
+                + 6 * full_left
+                + operator_left
+                + p4_q_call_peak
+            )
+            action_workspace_entries.append(max(modal_coupling_peak, nested_balh_peak))
+
+            # These two vectors are allocated by FixedH6ActiveTraceAction at
+            # factory creation, before both fresh-authority checkpoints.
+            preexisting_h6_entries += 2 * full_left
+
+            # HybridBlockLduPreconditioner.__init__ retains, per side, RHS,
+            # first, delta, coupling, projection, and positive/negative
+            # traction source/target Vecs.  Count each actual layout once.
+            persistent_ldu_entries += (
+                operator_right
+                + 3 * operator_left
+                + projection_left
+                + positive_right
+                + negative_right
+                + positive_left
+                + negative_left
+            )
+            side_rows[side] = {
+                "active_operator_local_left_entries": operator_left,
+                "active_operator_local_right_entries": operator_right,
+                "positive_traction_local_left_entries": positive_left,
+                "positive_traction_local_right_entries": positive_right,
+                "negative_traction_local_left_entries": negative_left,
+                "negative_traction_local_right_entries": negative_right,
+                "projection_local_left_entries": projection_left,
+                "projection_local_right_entries": projection_right,
+                "full_P6_action_local_left_entries": full_left,
+                "full_P6_action_local_right_entries": full_right,
+                "condensed_P4_local_left_entries": coarse_left,
+                "condensed_P4_local_right_entries": coarse_right,
+                "P4_physical_full_local_left_entries": p4_full_left,
+                "P4_physical_full_local_right_entries": p4_full_right,
+                "P4_Q_call_peak_vec_entries": p4_q_call_peak,
+                "P4_Q_call_peak_components": {
+                    "initial_inverse": p4_initial_inverse_peak,
+                    "residual_state": p4_residual_state_peak,
+                    "one_correction_inverse": p4_correction_inverse_peak,
+                },
+                "P4_Q_call_known_vector_roles": {
+                    "initial_inverse": [
+                        "P4 full RHS",
+                        "condensed reduced RHS",
+                        "condensed factor solution",
+                        "P4 full returned solution",
+                    ],
+                    "residual_state": [
+                        "P4 full RHS",
+                        "P4 full current solution",
+                        "P4 full effective RHS",
+                        "P4 full action output",
+                        "P4 full residual",
+                        "P4 full augmented residual",
+                    ],
+                    "one_correction_inverse": [
+                        "P4 full RHS",
+                        "P4 full current solution",
+                        "P4 full residual input",
+                        "P4 full correction output",
+                        "condensed reduced RHS",
+                        "condensed factor solution",
+                    ],
+                    "inverse_internal_full_residual_vec": False,
+                },
+                "modal_coupling_peak_vec_entries": modal_coupling_peak,
+                "nested_fixed_B_peak_vec_entries": nested_balh_peak,
+                "preexisting_FixedH6_work_vec_entries": 2 * full_left,
+            }
+
+        # Each side recovers cells serially.  Record both layouts and take the
+        # largest simultaneously live cell scratch across the two sides; an
+        # owner with no cells is valid and contributes zero for that side.
+        recovery_rows: dict[str, Any] = {}
+        max_cell_scratch_entries = 0
+        max_cell_shape = None
+        max_cell_side = None
+        for side, action in (("bottom", bottom_action), ("top", top_action)):
+            inverse = getattr(action, "_side_inverse", None)
+            p4_factor = getattr(inverse, "_p4_factor", None)
+            p4_inverse = getattr(p4_factor, "inverse", None)
+            recovery_system = getattr(p4_inverse, "condensed", None)
+            cells = getattr(recovery_system, "cell_recovery_maps", None)
+            if not isinstance(cells, (list, tuple)):
+                raise TypeError(f"V13 {side} P4 recovery cell inventory is unavailable")
+            side_max_entries = 0
+            side_max_shape = None
+            for cell in cells:
+                interior_count = len(cell.interior_original_dofs)
+                trace_count = len(cell.trace_original_dofs)
+                entries = 3 * interior_count + 2 * trace_count
+                if entries > side_max_entries:
+                    side_max_entries = entries
+                    side_max_shape = {
+                        "interior_rows": int(interior_count),
+                        "trace_rows": int(trace_count),
+                    }
+            recovery_rows[side] = {
+                "local_cell_count": len(cells),
+                "max_cell_scratch_numpy_entries": int(side_max_entries),
+                "max_cell_shape": side_max_shape,
+            }
+            if side_max_entries > max_cell_scratch_entries:
+                max_cell_scratch_entries = side_max_entries
+                max_cell_shape = side_max_shape
+                max_cell_side = side
+
+        local_row.update(
+            {
+                "side_layouts": side_rows,
+                "persistent_LDU_work_vec_entries": int(persistent_ldu_entries),
+                "original_A_validation_vec_entries": int(
+                    3 * original_augmented_local_size
+                ),
+                "persistent_modal_rhs_and_solution_numpy_entries": int(
+                    2 * internal_count
+                ),
+                "B_action_peak_vec_entries": int(max(action_workspace_entries)),
+                "preexisting_FixedH6_work_vec_entries": int(
+                    preexisting_h6_entries
+                ),
+                "max_local_cell_recovery_numpy_entries": int(
+                    max_cell_scratch_entries
+                ),
+                "max_local_cell_shape": max_cell_shape,
+                "max_local_cell_recovery_side": max_cell_side,
+                "local_cell_recovery_by_side": recovery_rows,
+                "replicated_modal_numpy_peak_entries": int(8 * internal_count),
+                "full_action_validation_numpy_peak_entries": int(
+                    14 * internal_count
+                ),
+                "owner_modal_LU_solve_temporary_numpy_entries": int(
+                    4 * internal_count if comm.rank == owner else 0
+                ),
+            }
+        )
+    except Exception as exc:  # noqa: BLE001 - synchronize rank-local layout failures
+        local_error = f"{type(exc).__name__}: {exc}"
+    local_row["error"] = local_error
+    rank_rows = comm.allgather(local_row)
+    failures = [
+        f"rank {row['rank']}: {row['error']}"
+        for row in rank_rows
+        if row.get("error") is not None
+    ]
+    if failures:
+        raise ValueError("V13 local workspace inventory rejected: " + "; ".join(failures))
+
+    temporary_bytes = [
+        int(
+            scalar_bytes
+            * (
+                row["B_action_peak_vec_entries"]
+                + row["max_local_cell_recovery_numpy_entries"]
+            )
+        )
+        for row in rank_rows
+    ]
+    replicated_column_bytes = [
+        int(scalar_bytes * row["replicated_modal_numpy_peak_entries"])
+        for row in rank_rows
+    ]
+    full_validation_bytes = [
+        int(scalar_bytes * row["full_action_validation_numpy_peak_entries"])
+        for row in rank_rows
+    ]
+    owner_lu_temporary_bytes = [
+        int(scalar_bytes * row["owner_modal_LU_solve_temporary_numpy_entries"])
+        for row in rank_rows
+    ]
+    new_persistent_bytes = [
+        int(
+            scalar_bytes
+            * (
+                row["persistent_LDU_work_vec_entries"]
+                + row["original_A_validation_vec_entries"]
+                + row["persistent_modal_rhs_and_solution_numpy_entries"]
+            )
+        )
+        for row in rank_rows
+    ]
+    inventory = {
+        "source": "PETSc Mat local sizes plus V13/P4/LDU allocation call graph",
+        "scalar_bytes": scalar_bytes,
+        "rank_rows": [
+            {key: value for key, value in row.items() if key != "error"}
+            for row in rank_rows
+        ],
+        "additional_temporary_petcs_and_cell_numpy_bytes_by_rank": temporary_bytes,
+        "additional_replicated_modal_column_numpy_bytes_by_rank": replicated_column_bytes,
+        "additional_full_action_validation_numpy_bytes_by_rank": full_validation_bytes,
+        "additional_replicated_numpy_bytes_by_rank": [
+            max(replicated_column_bytes[rank], full_validation_bytes[rank])
+            for rank in range(comm.size)
+        ],
+        "additional_owner_modal_LU_solve_temporary_numpy_bytes_by_rank": owner_lu_temporary_bytes,
+        "future_persistent_LDU_and_original_A_vec_bytes_by_rank": new_persistent_bytes,
+        "preexisting_FixedH6_work_vecs_already_in_fresh_B": True,
+        "side_KSP_SetUp_completed_before_V13_builder": True,
+        "side_KSP_basis_bytes": "already present in fresh B; not charged again",
+        "scope_limit": (
+            "known PETSc Vec and bounded one-cell NumPy scratch; Python/MPI allocator headers "
+            "remain policy uncertainty, not represented as zero"
+        ),
+    }
+    return rank_rows, inventory
+
+
+def build_task041_v13_consistent_modal_surrogate(
+    coupling: HybridInternalModeCoupling,
+    bottom_action: Any,
+    top_action: Any,
+    *,
+    modal_owner: int,
+    sampled_columns: Sequence[int],
+    sampled_column_roles: Mapping[str, Sequence[str]],
+    sampled_column_contract_sha256: str,
+    original_augmented_local_size: int,
+    fresh_authority_callback: Callable[
+        [str, Mapping[str, Any]], Mapping[str, Any]
+    ] | None,
+    snapshot_callback: Callable[[Mapping[str, Any]], Mapping[str, Any] | None]
+    | None = None,
+    owner_storage_limit_bytes: int = 268_435_456,
+    marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+) -> Task041V13ConsistentModalSurrogateSystem:
+    """Build ``S_B=C-LBG`` once, retaining the eight registered columns.
+
+    The default historical builder is deliberately untouched.  V13 applies
+    each borrowed fixed approximate B side action once per matrix column; seven
+    fixed full-complex action checks are a separately costed setup scope.
+    """
+    comm = _action_operator(bottom_action).getComm().tompi4py()
+    modal_count = int(coupling.mode_count_per_direction)
+    internal_count = 2 * modal_count
+    contract = None
+    owner = None
+    local_error = None
+    try:
+        owner = int(modal_owner)
+        top_comm = _action_operator(top_action).getComm().tompi4py()
+        if MPI.Comm.Compare(comm, top_comm) not in (MPI.IDENT, MPI.CONGRUENT):
+            raise ValueError("bottom/top V13 action communicators differ")
+        if not 0 <= owner < comm.size:
+            raise ValueError("V13 modal owner is outside the communicator")
+        if type(owner_storage_limit_bytes) is not int or owner_storage_limit_bytes <= 0:
+            raise ValueError("V13 owner storage limit must be a positive integer")
+        if not callable(fresh_authority_callback):
+            raise TypeError("V13 requires a sealed fresh-authority callback")
+        contract = _sampled_modal_column_contract(
+            sampled_columns,
+            sampled_column_roles,
+            sampled_column_contract_sha256,
+            internal_count,
+            modal_count,
+        )
+        if contract is None or len(contract["columns"]) != 8:
+            raise ValueError("V13 requires exactly eight sealed Schur columns")
+        offsets = (0, 1, modal_count // 2, modal_count - 1)
+        expected_columns = [
+            *offsets,
+            *(modal_count + offset for offset in offsets),
+        ]
+        if contract["columns"] != expected_columns:
+            raise ValueError(
+                "V13 sample columns do not match the frozen positive/negative order"
+            )
+        role_rows = contract["roles"]
+        bottom_columns = [
+            column
+            for column in contract["columns"]
+            if "bottom_positive_unattenuated" in role_rows[str(column)]
+        ]
+        top_columns = [
+            column
+            for column in contract["columns"]
+            if "top_negative_unattenuated" in role_rows[str(column)]
+        ]
+        if (
+            bottom_columns != expected_columns[:4]
+            or top_columns != expected_columns[4:]
+        ):
+            raise ValueError(
+                "V13 requires four positive-bottom and four negative-top columns"
+            )
+    except Exception as exc:  # noqa: BLE001 - agree on local contract errors before allocation
+        local_error = f"{type(exc).__name__}: {exc}"
+    local_identity = {
+        "error": local_error,
+        "modal_owner": owner,
+        "internal_count": internal_count,
+        "sample_columns": None if contract is None else list(contract["columns"]),
+        "sample_sha256": (
+            None if contract is None else contract.get("sha256")
+        ),
+        "owner_storage_limit_bytes": owner_storage_limit_bytes,
+    }
+    identities = comm.allgather(local_identity)
+    failures = [
+        f"rank {rank}: {row['error']}"
+        for rank, row in enumerate(identities)
+        if row.get("error") is not None
+    ]
+    normalized = [
+        {key: value for key, value in row.items() if key != "error"}
+        for row in identities
+    ]
+    if failures or any(row != normalized[0] for row in normalized[1:]):
+        reason = "; ".join(failures) if failures else "rank-local V13 inputs differ"
+        raise ValueError(f"V13 collective construction preflight rejected: {reason}")
+    assert contract is not None
+    columns = list(contract["columns"])
+    owner = int(identities[0]["modal_owner"])
+    _workspace_rank_rows, workspace_inventory = _v13_local_workspace_inventory(
+        coupling,
+        bottom_action,
+        top_action,
+        original_augmented_local_size=original_augmented_local_size,
+        internal_count=internal_count,
+        owner=owner,
+        comm=comm,
+    )
+    dense_bytes = int(np.dtype(np.complex128).itemsize * internal_count**2)
+    pivot_bytes = int(np.dtype(np.int32).itemsize * internal_count)
+    # These are simultaneous dense NumPy-array payloads by builder phase.  The
+    # maximum covers the C construction copies, retained C/S_B, owner LU plus
+    # its factorization copy and pivots. PETSc vectors and B-action temporaries
+    # are counted separately from their actual local matrix layouts below.
+    storage_phases = {
+        "constraint_build_peak_bytes": 4 * dense_bytes,
+        "lu_factorization_peak_bytes": 4 * dense_bytes + pivot_bytes,
+        "final_modal_constraint_bytes": dense_bytes,
+        "final_owner_schur_bytes": dense_bytes,
+        "final_owner_lu_bytes": dense_bytes,
+        "owner_pivots_bytes": pivot_bytes,
+        "owner_storage_limit_bytes": owner_storage_limit_bytes,
+    }
+    estimated_owner_peak = max(
+        int(storage_phases["constraint_build_peak_bytes"]),
+        int(storage_phases["lu_factorization_peak_bytes"]),
+    )
+    storage_phases["estimated_owner_peak_bytes"] = estimated_owner_peak
+    storage_phases["estimate_scope"] = "derived_dense_arrays_not_RSS_or_LU_peak"
+    temporary_by_rank = list(
+        workspace_inventory[
+            "additional_temporary_petcs_and_cell_numpy_bytes_by_rank"
+        ]
+    )
+    replicated_by_rank = list(
+        workspace_inventory["additional_replicated_modal_column_numpy_bytes_by_rank"]
+    )
+    full_validation_replicated_by_rank = list(
+        workspace_inventory["additional_full_action_validation_numpy_bytes_by_rank"]
+    )
+    owner_lu_temporary_by_rank = list(
+        workspace_inventory[
+            "additional_owner_modal_LU_solve_temporary_numpy_bytes_by_rank"
+        ]
+    )
+    future_persistent_by_rank = list(
+        workspace_inventory[
+            "future_persistent_LDU_and_original_A_vec_bytes_by_rank"
+        ]
+    )
+
+    def phase_memory_projection(*, after_eight_columns: bool) -> dict[str, Any]:
+        phase_components: dict[str, dict[str, list[int]]] = {}
+        zero = [0] * comm.size
+        if after_eight_columns:
+            phase_components["remaining_column_actions"] = {
+                "known_additional_bytes_by_rank": zero.copy(),
+                "additional_temporary_bytes_by_rank": temporary_by_rank,
+                "additional_replicated_bytes_by_rank": replicated_by_rank,
+            }
+            phase_components["independent_full_complex_action_validation"] = {
+                "known_additional_bytes_by_rank": zero.copy(),
+                "additional_temporary_bytes_by_rank": temporary_by_rank,
+                "additional_replicated_bytes_by_rank": full_validation_replicated_by_rank,
+            }
+            factor_known = [0] * comm.size
+            factor_known[owner] = max(0, estimated_owner_peak - 2 * dense_bytes)
+            phase_components["owner_factorization_after_sample"] = {
+                "known_additional_bytes_by_rank": factor_known,
+                "additional_temporary_bytes_by_rank": zero.copy(),
+                "additional_replicated_bytes_by_rank": zero.copy(),
+            }
+            repeat_known = [0] * comm.size
+            repeat_known[owner] = dense_bytes + pivot_bytes
+            repeat_temporary = [0] * comm.size
+            repeat_temporary[owner] = owner_lu_temporary_by_rank[owner]
+            phase_components["owner_LU_repeat_after_sample"] = {
+                "known_additional_bytes_by_rank": repeat_known,
+                "additional_temporary_bytes_by_rank": repeat_temporary,
+                "additional_replicated_bytes_by_rank": zero.copy(),
+            }
+            retained_known = [0] * comm.size
+            retained_known[owner] = dense_bytes + pivot_bytes
+            retained_known = [
+                retained_known[rank] + future_persistent_by_rank[rank]
+                for rank in range(comm.size)
+            ]
+            phase_components["retained_LDU_and_original_A_vectors"] = {
+                "known_additional_bytes_by_rank": retained_known,
+                "additional_temporary_bytes_by_rank": zero.copy(),
+                "additional_replicated_bytes_by_rank": zero.copy(),
+            }
+            runtime_known = list(retained_known)
+            runtime_temporary = list(temporary_by_rank)
+            runtime_replicated = list(replicated_by_rank)
+            phase_components["outer_PC_with_retained_workspaces"] = {
+                "known_additional_bytes_by_rank": runtime_known,
+                "additional_temporary_bytes_by_rank": runtime_temporary,
+                "additional_replicated_bytes_by_rank": runtime_replicated,
+            }
+            modal_solve_temporary = list(owner_lu_temporary_by_rank)
+            phase_components["outer_PC_modal_LU_with_retained_arrays"] = {
+                "known_additional_bytes_by_rank": list(retained_known),
+                "additional_temporary_bytes_by_rank": modal_solve_temporary,
+                "additional_replicated_bytes_by_rank": zero.copy(),
+            }
+        else:
+            phase_components["constraint_construction"] = {
+                "known_additional_bytes_by_rank": [4 * dense_bytes] * comm.size,
+                "additional_temporary_bytes_by_rank": zero.copy(),
+                "additional_replicated_bytes_by_rank": zero.copy(),
+            }
+            column_known = [dense_bytes] * comm.size
+            column_known[owner] += dense_bytes
+            phase_components["sample_and_remaining_columns"] = {
+                "known_additional_bytes_by_rank": column_known,
+                "additional_temporary_bytes_by_rank": temporary_by_rank,
+                "additional_replicated_bytes_by_rank": replicated_by_rank,
+            }
+            validation_known = list(column_known)
+            phase_components["independent_full_complex_action_validation"] = {
+                "known_additional_bytes_by_rank": validation_known,
+                "additional_temporary_bytes_by_rank": temporary_by_rank,
+                "additional_replicated_bytes_by_rank": full_validation_replicated_by_rank,
+            }
+            factor_known = [dense_bytes] * comm.size
+            factor_known[owner] = estimated_owner_peak
+            phase_components["owner_factorization"] = {
+                "known_additional_bytes_by_rank": factor_known,
+                "additional_temporary_bytes_by_rank": zero.copy(),
+                "additional_replicated_bytes_by_rank": zero.copy(),
+            }
+            repeat_known = [dense_bytes] * comm.size
+            repeat_known[owner] = 3 * dense_bytes + pivot_bytes
+            repeat_temporary = [0] * comm.size
+            repeat_temporary[owner] = owner_lu_temporary_by_rank[owner]
+            phase_components["owner_LU_repeat_solves"] = {
+                "known_additional_bytes_by_rank": repeat_known,
+                "additional_temporary_bytes_by_rank": repeat_temporary,
+                "additional_replicated_bytes_by_rank": zero.copy(),
+            }
+            retained_known = [dense_bytes] * comm.size
+            retained_known[owner] = 3 * dense_bytes + pivot_bytes
+            retained_known = [
+                retained_known[rank] + future_persistent_by_rank[rank]
+                for rank in range(comm.size)
+            ]
+            phase_components["retained_LDU_and_original_A_vectors"] = {
+                "known_additional_bytes_by_rank": retained_known,
+                "additional_temporary_bytes_by_rank": zero.copy(),
+                "additional_replicated_bytes_by_rank": zero.copy(),
+            }
+            runtime_known = list(retained_known)
+            runtime_temporary = list(temporary_by_rank)
+            runtime_replicated = list(replicated_by_rank)
+            phase_components["outer_PC_with_retained_workspaces"] = {
+                "known_additional_bytes_by_rank": runtime_known,
+                "additional_temporary_bytes_by_rank": runtime_temporary,
+                "additional_replicated_bytes_by_rank": runtime_replicated,
+            }
+            phase_components["outer_PC_modal_LU_with_retained_arrays"] = {
+                "known_additional_bytes_by_rank": list(retained_known),
+                "additional_temporary_bytes_by_rank": list(owner_lu_temporary_by_rank),
+                "additional_replicated_bytes_by_rank": zero.copy(),
+            }
+
+        totals = {}
+        for name, components in phase_components.items():
+            total_by_rank = [
+                components["known_additional_bytes_by_rank"][rank]
+                + components["additional_temporary_bytes_by_rank"][rank]
+                + components["additional_replicated_bytes_by_rank"][rank]
+                for rank in range(comm.size)
+            ]
+            components["additional_bytes_by_rank"] = total_by_rank
+            totals[name] = sum(total_by_rank)
+        selected = max(phase_components, key=lambda name: totals[name])
+        result = {
+            "scope": "source_counted_simultaneous_array_payload_by_phase_not_RSS",
+            "already_live_C_and_owner_S_after_sample_are_in_fresh_B": bool(
+                after_eight_columns
+            ),
+            "phase_reports": phase_components,
+            "phase_total_bytes": totals,
+            "selected_phase": selected,
+            **phase_components[selected],
+        }
+        return result
+
+    before_memory_projection = phase_memory_projection(after_eight_columns=False)
+    owner_storage_pass = estimated_owner_peak <= owner_storage_limit_bytes
+    if not comm.allreduce(owner_storage_pass, op=MPI.LAND):
+        raise MemoryError(
+            "V13 owner-local 256MiB storage policy refused before dense allocation: "
+            f"estimated_dense_array_payload={estimated_owner_peak}, "
+            f"limit={owner_storage_limit_bytes}"
+        )
+
+    def collective_authority_gate(
+        phase: str, report: Mapping[str, Any]
+    ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+        local_report_error = None
+        local_report_digest = None
+        try:
+            canonical_report = json.dumps(
+                dict(report),
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            )
+            local_report_digest = hashlib.sha256(
+                canonical_report.encode()
+            ).hexdigest()
+        except Exception as exc:  # noqa: BLE001 - agree before callback/bcast
+            local_report_error = f"{type(exc).__name__}: {exc}"
+        report_identities = comm.allgather(
+            (local_report_error, local_report_digest)
+        )
+        report_failures = [
+            f"rank {rank}: {error}"
+            for rank, (error, _digest) in enumerate(report_identities)
+            if error is not None
+        ]
+        report_digests = [
+            digest for error, digest in report_identities if error is None
+        ]
+        if report_failures or len(report_digests) != comm.size:
+            raise MemoryError(
+                f"V13 {phase} report is unbindable: "
+                + "; ".join(report_failures)
+            )
+        if len(set(report_digests)) != 1:
+            raise MemoryError(
+                f"V13 {phase} report differs across ranks and is unbindable"
+            )
+        report_digest = report_digests[0]
+        local_response = None
+        callback_error = None
+        try:
+            assert callable(fresh_authority_callback)
+            local_response = fresh_authority_callback(phase, dict(report))
+            if not isinstance(local_response, Mapping):
+                raise TypeError("fresh-authority callback must return a mapping")
+            local_response = dict(local_response)
+        except Exception as exc:  # noqa: BLE001 - callback errors must be rank-consistent
+            callback_error = f"{type(exc).__name__}: {exc}"
+        gathered = comm.allgather((callback_error, local_response))
+        callback_failures = [
+            f"rank {rank}: {error}"
+            for rank, (error, _response) in enumerate(gathered)
+            if error is not None
+        ]
+        responses = [response for _error, response in gathered]
+        if callback_failures or any(not isinstance(row, Mapping) for row in responses):
+            details = "; ".join(callback_failures) or "callback result missing on a rank"
+            raise MemoryError(f"V13 {phase} collective authority callback failed: {details}")
+        typed = [dict(row) for row in responses]
+        def valid_receipt(row: Mapping[str, Any]) -> bool:
+            payload = row.get("authority_receipt_payload")
+            if not isinstance(payload, Mapping):
+                return False
+            try:
+                digest = hashlib.sha256(
+                    json.dumps(
+                        dict(payload),
+                        sort_keys=True,
+                        separators=(",", ":"),
+                        allow_nan=False,
+                    ).encode()
+                ).hexdigest()
+            except (TypeError, ValueError):
+                return False
+            return bool(
+                digest == row.get("authority_receipt_sha256")
+                and payload.get("phase") == phase
+                and payload.get("request_sha256") == report_digest
+            )
+
+        receipt_ids = [row.get("authority_receipt_sha256") for row in typed]
+        response_valid = not any(
+            row.get("schema") != "task041.v13.modal_builder_admission.v1"
+            or row.get("phase") != phase
+            or row.get("status") not in {"pass", "refused"}
+            or row.get("decision") not in {"continue", "stop"}
+            or row.get("request_sha256") != report_digest
+            or not isinstance(row.get("authority_receipt_sha256"), str)
+            or len(row["authority_receipt_sha256"]) != 64
+            or not valid_receipt(row)
+            for row in typed
+        ) and len(set(receipt_ids)) == 1
+        if not response_valid:
+            if marker_callback is not None:
+                marker_callback(
+                    "v13_modal_authority_refused",
+                    {
+                        "phase": phase,
+                        "status": "refused",
+                        "reason": "authority_receipt_missing_or_not_recomputable",
+                        "report": dict(report),
+                        "rank_admission_records": typed,
+                    },
+                )
+            raise MemoryError(f"V13 {phase} authority/admission was not unanimous")
+        statuses = {row.get("status") for row in typed}
+        decisions = {row.get("decision") for row in typed}
+        if statuses == {"refused"} and decisions == {"stop"}:
+            reasons = typed[0].get("reasons")
+            if marker_callback is not None:
+                marker_callback(
+                    "v13_modal_authority_refused",
+                    {
+                        "phase": phase,
+                        "status": "refused",
+                        "report": dict(report),
+                        "rank_admission_records": typed,
+                        "authority_receipt_payload": typed[0].get(
+                            "authority_receipt_payload"
+                        ),
+                        "authority_receipt_sha256": typed[0].get(
+                            "authority_receipt_sha256"
+                        ),
+                    },
+                )
+            raise MemoryError(
+                f"V13 {phase} fresh authority refused: "
+                + ("; ".join(map(str, reasons)) if isinstance(reasons, list) else "unknown reason")
+            )
+        if statuses != {"pass"} or decisions != {"continue"}:
+            raise MemoryError(f"V13 {phase} authority decision differs across ranks")
+        common_fields = (
+            "fresh_job_authority_bytes",
+            "cap_bytes",
+            "W_policy_reserve_bytes",
+            "additional_bytes_by_rank",
+            "additional_temporary_bytes_by_rank",
+            "additional_replicated_bytes_by_rank",
+            "selected_memory_phase",
+            "selected_memory_phase_payload_bytes",
+            "cost_assessment",
+            "external_resource_gates",
+        )
+        if any(
+            any(row.get(key) != typed[0].get(key) for key in common_fields)
+            for row in typed[1:]
+        ):
+            raise MemoryError("V13 fresh resource contract differs across ranks")
+        gate = typed[0]
+        fresh = gate.get("fresh_job_authority_bytes")
+        cap = gate.get("cap_bytes")
+        reserve = gate.get("W_policy_reserve_bytes")
+        additional = gate.get("additional_bytes_by_rank")
+        temporary = gate.get("additional_temporary_bytes_by_rank")
+        replicated = gate.get("additional_replicated_bytes_by_rank")
+        external = gate.get("external_resource_gates")
+        known = report.get("known_additional_bytes_by_rank")
+        projection = report.get("phase_memory_projection")
+        if (
+            any(type(value) is not int or value < 0 for value in (fresh, reserve))
+            or type(cap) is not int
+            or cap <= 0
+            or not isinstance(additional, list)
+            or len(additional) != comm.size
+            or any(type(value) is not int or value < 0 for value in additional)
+            or not isinstance(temporary, list)
+            or len(temporary) != comm.size
+            or any(type(value) is not int or value < 0 for value in temporary)
+            or not isinstance(replicated, list)
+            or len(replicated) != comm.size
+            or any(type(value) is not int or value < 0 for value in replicated)
+            or not isinstance(external, Mapping)
+            or not external
+            or any(value is not True for value in external.values())
+            or not isinstance(known, list)
+            or len(known) != comm.size
+            or any(type(value) is not int or value < 0 for value in known)
+            or not isinstance(projection, Mapping)
+            or not isinstance(projection.get("phase_reports"), Mapping)
+            or projection.get("selected_phase")
+            not in projection.get("phase_reports", {})
+            or any(
+                additional[rank]
+                != known[rank] + temporary[rank] + replicated[rank]
+                for rank in range(comm.size)
+            )
+        ):
+            raise MemoryError(
+                f"V13 {phase} fresh authority is incomplete or omits known storage"
+            )
+        phase_reports = projection.get("phase_reports")
+        phase_totals = projection.get("phase_total_bytes")
+        if not isinstance(phase_reports, Mapping) or not isinstance(phase_totals, Mapping):
+            raise TypeError(f"V13 {phase} phase memory projection is incomplete")
+        recomputed_totals = {}
+        for phase_name, components in phase_reports.items():
+            if not isinstance(components, Mapping):
+                raise TypeError(f"V13 {phase} has a malformed phase row")
+            component_rows = [
+                components.get("known_additional_bytes_by_rank"),
+                components.get("additional_temporary_bytes_by_rank"),
+                components.get("additional_replicated_bytes_by_rank"),
+            ]
+            if any(
+                not isinstance(values, list)
+                or len(values) != comm.size
+                or any(type(value) is not int or value < 0 for value in values)
+                for values in component_rows
+            ):
+                raise MemoryError(f"V13 {phase} phase component rows are invalid")
+            phase_additional = [
+                sum(values[rank] for values in component_rows)
+                for rank in range(comm.size)
+            ]
+            if components.get("additional_bytes_by_rank") != phase_additional:
+                raise MemoryError(f"V13 {phase} phase total does not match components")
+            recomputed_totals[phase_name] = sum(phase_additional)
+        selected_phase = max(recomputed_totals, key=recomputed_totals.get)
+        selected = phase_reports[selected_phase]
+        selected_additional = [
+            sum(
+                selected[key][rank]
+                for key in (
+                    "known_additional_bytes_by_rank",
+                    "additional_temporary_bytes_by_rank",
+                    "additional_replicated_bytes_by_rank",
+                )
+            )
+            for rank in range(comm.size)
+        ]
+        if (
+            projection.get("selected_phase") != selected_phase
+            or dict(phase_totals) != recomputed_totals
+            or any(
+                report.get(key) != selected.get(key)
+                for key in (
+                    "known_additional_bytes_by_rank",
+                    "additional_temporary_bytes_by_rank",
+                    "additional_replicated_bytes_by_rank",
+                )
+            )
+            or additional != selected_additional
+            or gate.get("selected_memory_phase") != selected_phase
+            or gate.get("selected_memory_phase_payload_bytes") != sum(selected_additional)
+            or any(
+                gate.get(response_key) != report.get(report_key)
+                for response_key, report_key in (
+                    ("additional_temporary_bytes_by_rank", "additional_temporary_bytes_by_rank"),
+                    ("additional_replicated_bytes_by_rank", "additional_replicated_bytes_by_rank"),
+                )
+            )
+        ):
+            raise MemoryError(f"V13 {phase} selected phase is not the largest forecast")
+        projected = fresh + sum(additional) + reserve
+        if projected > cap:
+            raise MemoryError(
+                f"V13 {phase} full-job authority gate refused: "
+                f"fresh+rank_delta+W={projected} > cap={cap}"
+            )
+        gate["recomputed_projected_authority_bytes"] = projected
+        gate["known_modal_storage_bytes_by_rank"] = list(known)
+        return gate, typed
+
+    authority_record, _authority_rank_records = collective_authority_gate(
+        "before_dense_allocation",
+        {
+            "owner": owner,
+            "modal_count_per_direction": modal_count,
+            "internal_modal_count": internal_count,
+            "known_additional_bytes_by_rank": list(
+                before_memory_projection["known_additional_bytes_by_rank"]
+            ),
+            "additional_temporary_bytes_by_rank": list(
+                before_memory_projection["additional_temporary_bytes_by_rank"]
+            ),
+            "additional_replicated_bytes_by_rank": list(
+                before_memory_projection["additional_replicated_bytes_by_rank"]
+            ),
+            "phase_memory_projection": before_memory_projection,
+            "workspace_inventory": workspace_inventory,
+            "owner_local_storage_limit_bytes": owner_storage_limit_bytes,
+            "estimate_scope": (
+                "max simultaneous source-counted array payload by phase; "
+                "allocator/MPI uncertainty remains in W"
+            ),
+        },
+    )
+    build_started = time.perf_counter()
+
+    side_operation_baseline = {
+        "bottom": _v13_side_operation_counts(bottom_action),
+        "top": _v13_side_operation_counts(top_action),
+    }
+    local_side_counters_valid = all(
+        isinstance(value, Mapping)
+        and set(value) == {"apply_count", "total_iterations"}
+        for value in side_operation_baseline.values()
+    )
+    if not comm.allreduce(local_side_counters_valid, op=MPI.LAND):
+        raise RuntimeError(
+            "V13 requires real SideBalancedInverse apply/iteration counters before construction"
+        )
+
+    bottom_before = int(_action_diagnostics(bottom_action).get("apply_count", 0))
+    top_before = int(_action_diagnostics(top_action).get("apply_count", 0))
+    actual_work_phase_snapshots: dict[str, dict[str, Any]] = {}
+    previous_work_rank_rows: list[dict[str, Any]] | None = None
+
+    def remember_actual_work_phase(
+        phase: str, rank_rows: Sequence[Mapping[str, Any]]
+    ) -> dict[str, Any]:
+        nonlocal previous_work_rank_rows
+        rows = [dict(row) for row in rank_rows]
+        previous_by_rank = (
+            {}
+            if previous_work_rank_rows is None
+            else {
+                int(row["rank"]): row
+                for row in previous_work_rank_rows
+            }
+        )
+        for row in rows:
+            rank = int(row["rank"])
+            previous = previous_by_rank.get(rank)
+            previous_actions = (
+                previous.get("actions")
+                if isinstance(previous, Mapping)
+                else None
+            )
+            current_actions = row.get("actions")
+            if not isinstance(previous_actions, Mapping) or not isinstance(
+                current_actions, Mapping
+            ):
+                row["action_work_delta_since_previous_phase"] = None
+                continue
+            row["action_work_delta_since_previous_phase"] = {
+                side: (
+                    None
+                    if not isinstance(previous_actions.get(side), Mapping)
+                    or not isinstance(current_actions.get(side), Mapping)
+                    else _v13_action_work_delta(
+                        previous_actions[side], current_actions[side]
+                    )
+                )
+                for side in ("bottom", "top")
+            }
+        phase_record = {
+            "phase": phase,
+            "rank_count": int(comm.size),
+            "elapsed_seconds_scope": "rank-local interval since previous recorded phase",
+            "max_rank_elapsed_seconds": max(
+                (float(row.get("elapsed_seconds", 0.0)) for row in rows),
+                default=0.0,
+            ),
+            "max_rank_builder_elapsed_seconds": max(
+                (float(row.get("builder_elapsed_seconds", 0.0)) for row in rows),
+                default=0.0,
+            ),
+            "rank_rows": rows,
+            "counter_scope": (
+                "rank-local action/callback snapshots and deltas; do not multiply "
+                "or sum replicated/global values across ranks"
+            ),
+        }
+        actual_work_phase_snapshots[phase] = phase_record
+        previous_work_rank_rows = rows
+        return phase_record
+
+    def collect_actual_work_phase(
+        phase: str,
+        *,
+        local_elapsed_seconds: float,
+        extra: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        local_row = {
+            "rank": int(comm.rank),
+            "elapsed_seconds": float(local_elapsed_seconds),
+            "builder_elapsed_seconds": float(time.perf_counter() - build_started),
+            "actions": {
+                "bottom": _v13_action_work_snapshot(bottom_action),
+                "top": _v13_action_work_snapshot(top_action),
+            },
+        }
+        if extra:
+            local_row.update(dict(extra))
+        rows = comm.allgather(local_row)
+        return remember_actual_work_phase(phase, rows)
+
+    before_build_work_phase = collect_actual_work_phase(
+        "before_build", local_elapsed_seconds=0.0
+    )
+    constraint = None
+    local_constraint_error = None
+    constraint_digest = None
+    try:
+        constraint = np.asarray(
+            internal_modal_constraint_matrix(coupling), dtype=np.complex128
+        )
+        if (
+            constraint.shape != (internal_count, internal_count)
+            or not np.all(np.isfinite(constraint))
+        ):
+            raise ValueError("V13 modal constraint has invalid shape or values")
+        constraint_digest = hashlib.sha256(
+            np.ascontiguousarray(constraint).tobytes()
+        ).hexdigest()
+    except Exception as exc:  # noqa: BLE001 - synchronize constraint validation
+        local_constraint_error = f"{type(exc).__name__}: {exc}"
+    constraint_rows = comm.allgather((local_constraint_error, constraint_digest))
+    constraint_failures = [
+        f"rank {rank}: {error}"
+        for rank, (error, _digest) in enumerate(constraint_rows)
+        if error is not None
+    ]
+    constraint_hashes = [digest for _error, digest in constraint_rows]
+    if (
+        constraint_failures
+        or any(value != constraint_hashes[0] for value in constraint_hashes[1:])
+        or constraint_hashes[0] is None
+    ):
+        detail = "; ".join(constraint_failures) or "C differs by rank"
+        raise ValueError(f"V13 collective modal-constraint preflight rejected: {detail}")
+    assert constraint is not None
+    schur = None
+    local_schur_error = None
+    try:
+        if comm.rank == owner:
+            schur = np.empty((internal_count, internal_count), dtype=np.complex128)
+            # Fault every page before the after-eight fresh-RSS checkpoint;
+            # np.empty alone does not make untouched columns resident.
+            schur.fill(np.complex128(0.0))
+    except Exception as exc:  # noqa: BLE001 - synchronize owner allocation failure
+        local_schur_error = f"{type(exc).__name__}: {exc}"
+    schur_errors = comm.allgather(local_schur_error)
+    schur_failures = [
+        f"rank {rank}: {error}"
+        for rank, error in enumerate(schur_errors)
+        if error is not None
+    ]
+    if schur_failures:
+        raise MemoryError("V13 owner Schur allocation failed; " + "; ".join(schur_failures))
+    remaining = [column for column in range(internal_count) if column not in columns]
+    if marker_callback is not None:
+        marker_callback(
+            "v13_modal_schur_build_begin",
+            {
+                "method": TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+                "owner": owner,
+                "sample_columns_retained_in_final_matrix": list(columns),
+                "remaining_columns_built_once": len(remaining),
+                "owner_storage_plan": dict(storage_phases),
+                "fresh_authority": authority_record,
+                "actual_work_phase": before_build_work_phase,
+            },
+        )
+
+    def assemble_column(column: int) -> None:
+        bottom_column = _build_action_modal_contribution(
+            "bottom", coupling, bottom_action, modal_count, columns=(column,)
+        )[:, 0]
+        top_column = _build_action_modal_contribution(
+            "top", coupling, top_action, modal_count, columns=(column,)
+        )[:, 0]
+        assembled = np.asarray(
+            constraint[:, column] - bottom_column - top_column,
+            dtype=np.complex128,
+        )
+        local_finite = bool(np.all(np.isfinite(assembled)))
+        if not comm.allreduce(local_finite, op=MPI.LAND):
+            raise FloatingPointError(
+                f"V13 S_B column {column} is non-finite on at least one rank"
+            )
+        if comm.rank == owner:
+            assert schur is not None
+            schur[:, column] = assembled
+
+    sample_started = time.perf_counter()
+    for column in columns:
+        assemble_column(column)
+    first_eight_local_seconds = float(time.perf_counter() - sample_started)
+    sample_rank_rows = comm.allgather(
+        {
+            "rank": int(comm.rank),
+            "elapsed_seconds": first_eight_local_seconds,
+            "builder_elapsed_seconds": float(time.perf_counter() - build_started),
+            "bottom_B_apply_count": int(
+                _action_diagnostics(bottom_action).get("apply_count", 0)
+            )
+            - bottom_before,
+            "top_B_apply_count": int(
+                _action_diagnostics(top_action).get("apply_count", 0)
+            )
+            - top_before,
+            "actions": {
+                "bottom": _v13_action_work_snapshot(bottom_action),
+                "top": _v13_action_work_snapshot(top_action),
+            },
+        }
+    )
+    after_eight_work_phase = remember_actual_work_phase(
+        "after_eight_columns", sample_rank_rows
+    )
+    max_rank_sample_seconds = max(
+        float(row["elapsed_seconds"]) for row in sample_rank_rows
+    )
+    remaining = [column for column in range(internal_count) if column not in columns]
+    independent_action_count = 7
+    projected_remaining_seconds = max_rank_sample_seconds * (
+        len(remaining) + independent_action_count
+    ) / len(columns)
+    sample_cost_report = {
+        "phase": "after_eight_columns",
+        "method": TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+        "sample_columns_written_to_final_matrix": list(columns),
+        "sample_column_count": len(columns),
+        "max_rank_sample_seconds": max_rank_sample_seconds,
+        "rank_local_sample_work": sample_rank_rows,
+        "actual_work_phase": after_eight_work_phase,
+        "remaining_column_count": len(remaining),
+        "remaining_projected_B_apply_count_by_side": {
+            "bottom": len(remaining) + independent_action_count,
+            "top": len(remaining) + independent_action_count,
+        },
+        "remaining_projected_work_scopes": {
+            "remaining_matrix_columns": len(remaining),
+            "independent_full_complex_action_checks": independent_action_count,
+        },
+        "remaining_projected_seconds": projected_remaining_seconds,
+        "estimated_builder_seconds_at_sample": None,
+        "remaining_cost_model": (
+            "linear_projection_from_measured_first_eight_for_remaining_columns_and_"
+            "seven_full_complex_action_checks; owner_LU_and_outer_solve_not_measured"
+        ),
+        "full_run_cost_target_seconds": 172800,
+        "full_run_cost_target_semantics": "planning_target_only_no_elapsed_stop",
+    }
+    sample_cost_report["estimated_builder_seconds_at_sample"] = (
+        float(time.perf_counter() - build_started) + projected_remaining_seconds
+    )
+    after_memory_projection = phase_memory_projection(after_eight_columns=True)
+    sample_cost_report["known_additional_bytes_by_rank"] = list(
+        after_memory_projection["known_additional_bytes_by_rank"]
+    )
+    sample_cost_report["additional_temporary_bytes_by_rank"] = list(
+        after_memory_projection["additional_temporary_bytes_by_rank"]
+    )
+    sample_cost_report["additional_replicated_bytes_by_rank"] = list(
+        after_memory_projection["additional_replicated_bytes_by_rank"]
+    )
+    sample_cost_report["phase_memory_projection"] = after_memory_projection
+    sample_cost_report["workspace_inventory"] = workspace_inventory
+    sample_cost_report["additional_memory_basis"] = {
+        "fresh_sample_includes": (
+            "replicated C and the full allocated owner S_B; neither is charged again"
+        ),
+        "selected_phase": after_memory_projection["selected_phase"],
+        "workspace_inventory_source": workspace_inventory["source"],
+        "future_persistent_LDU_and_original_A_vec_bytes_by_rank": list(
+            future_persistent_by_rank
+        ),
+        "unknown_allocator_MPI_headers_and_library_scratch": (
+            "not set to zero; retained as policy uncertainty in W"
+        ),
+        "scope": "phase maximum of known simultaneous payload, not an RSS bound",
+    }
+    sample_cost_report = _v13_canonicalize_rank_elapsed(
+        comm,
+        sample_cost_report,
+        metric="assembly",
+        local_elapsed_seconds=float(time.perf_counter() - build_started),
+    )
+    sample_cost_report["estimated_builder_seconds_at_sample"] = (
+        float(sample_cost_report["assembly_elapsed_seconds_max_rank"])
+        + projected_remaining_seconds
+    )
+    if marker_callback is not None:
+        marker_callback("v13_modal_sample8_complete", sample_cost_report)
+    try:
+        sample_admission, sample_admission_rank_rows = collective_authority_gate(
+            "after_eight_columns", sample_cost_report
+        )
+    except Exception as exc:
+        if marker_callback is not None:
+            marker_callback(
+                "v13_modal_sample8_refused",
+                {
+                    **sample_cost_report,
+                    "status": "refused",
+                    "error": f"{type(exc).__name__}: {exc}",
+                },
+            )
+        raise
+    if marker_callback is not None:
+        marker_callback(
+            "v13_modal_sample8_admitted",
+            {
+                **sample_cost_report,
+                "admission": sample_admission,
+                "rank_admission_records": sample_admission_rank_rows,
+            },
+        )
+    remaining_interval_started = time.perf_counter()
+    remaining_completed = 0
+    for column in remaining:
+        assemble_column(column)
+        remaining_completed += 1
+        completed_columns = len(columns) + remaining_completed
+        if completed_columns % 32 == 0 and completed_columns < internal_count:
+            progress_phase = collect_actual_work_phase(
+                f"after_column_{completed_columns}",
+                local_elapsed_seconds=(
+                    time.perf_counter() - remaining_interval_started
+                ),
+                extra={
+                    "completed_column_count": completed_columns,
+                    "remaining_column_count": internal_count - completed_columns,
+                    "progress_interval": "every_32_total_columns_after_sample8",
+                },
+            )
+            if marker_callback is not None:
+                marker_callback("v13_modal_schur_columns_progress", progress_phase)
+            remaining_interval_started = time.perf_counter()
+    after_all_columns_work_phase = collect_actual_work_phase(
+        "after_all_columns",
+        local_elapsed_seconds=time.perf_counter() - remaining_interval_started,
+        extra={
+            "completed_column_count": len(columns) + remaining_completed,
+            "remaining_column_count": 0,
+        },
+    )
+    if marker_callback is not None:
+        marker_callback(
+            "v13_modal_schur_columns_complete",
+            after_all_columns_work_phase,
+        )
+    bottom_after_assembly = int(
+        _action_diagnostics(bottom_action).get("apply_count", 0)
+    )
+    top_after_assembly = int(_action_diagnostics(top_action).get("apply_count", 0))
+    expected_columns = internal_count
+    if (
+        bottom_after_assembly - bottom_before != expected_columns
+        or top_after_assembly - top_before != expected_columns
+    ):
+        raise RuntimeError("V13 must apply the same B once for each Schur column")
+
+    action = HybridActionModalSchurApply(
+        coupling,
+        bottom_action,
+        top_action,
+        modal_constraint=constraint,
+    )
+    if action.modal_constraint is not constraint:
+        action.destroy()
+        raise RuntimeError("V13 independent action did not borrow the validated C block")
+    validation_errors: list[float] = []
+    validation_records: list[dict[str, Any]] = []
+    validation_started = time.perf_counter()
+    indices = np.arange(1, internal_count + 1, dtype=np.float64)
+    x = np.asarray(indices + 1j * (indices[::-1] + 0.5), dtype=np.complex128)
+    y = np.asarray(0.3 * indices[::-1] - 0.2 + 1j * (0.17 * indices + 0.1), dtype=np.complex128)
+    alpha = np.complex128(0.37 - 0.21j)
+    probes = [
+        ("x", x),
+        ("y", y),
+        ("complex_homogeneity", alpha * x),
+        ("additivity", x + y),
+        ("repeat_x", x.copy()),
+        ("zero", np.zeros(internal_count, dtype=np.complex128)),
+        ("near_zero", 1.0e-12 * x),
+    ]
+    input_hashes = [
+        hashlib.sha256(np.ascontiguousarray(values).tobytes()).hexdigest()
+        for _name, values in probes
+    ]
+    if any(row != input_hashes for row in comm.allgather(input_hashes)):
+        raise ValueError("V13 full-vector validation inputs differ across ranks")
+    x_observed = None
+    y_observed = None
+    algebra_errors: dict[str, float] = {}
+    try:
+        for probe_index, (name, probe) in enumerate(probes):
+            input_hash_before = hashlib.sha256(
+                np.ascontiguousarray(probe).tobytes()
+            ).hexdigest()
+            observed = np.asarray(action.apply(probe), dtype=np.complex128)
+            unchanged = (
+                hashlib.sha256(np.ascontiguousarray(probe).tobytes()).hexdigest()
+                == input_hash_before
+            )
+            owner_result = schur @ probe if comm.rank == owner else None
+            reference = np.asarray(comm.bcast(owner_result, root=owner), dtype=np.complex128)
+            difference = observed - reference
+            denominator = float(np.linalg.norm(reference))
+            error = float(np.linalg.norm(difference))
+            relative = (
+                error / denominator
+                if denominator > 0.0
+                else (0.0 if error == 0.0 else float("inf"))
+            )
+            relation_error = None
+            relation_relative = None
+            if name == "complex_homogeneity" and x_observed is not None:
+                expected_relation = alpha * x_observed
+            elif name == "additivity" and x_observed is not None and y_observed is not None:
+                expected_relation = x_observed + y_observed
+            elif name == "repeat_x" and x_observed is not None:
+                expected_relation = x_observed
+            elif name == "near_zero" and x_observed is not None:
+                expected_relation = 1.0e-12 * x_observed
+            elif name in {"zero", "x", "y"}:
+                expected_relation = None
+            else:
+                raise RuntimeError(f"V13 full-vector relation input is out of order: {name}")
+            if expected_relation is not None:
+                relation_denominator = float(np.linalg.norm(expected_relation))
+                relation_error = float(
+                    np.linalg.norm(observed - expected_relation)
+                )
+                relation_relative = (
+                    relation_error / relation_denominator
+                    if relation_denominator > 0.0
+                    else (
+                        0.0 if relation_error == 0.0 else float("inf")
+                    )
+                )
+                algebra_errors[name] = relation_relative
+            else:
+                if name == "zero":
+                    expected_relation = np.zeros_like(observed)
+                    relation_denominator = 0.0
+                    relation_error = float(np.linalg.norm(observed))
+                    relation_relative = (
+                        0.0 if relation_error == 0.0 else float("inf")
+                    )
+                    algebra_errors["zero"] = relation_relative
+            local_pass = bool(
+                np.all(np.isfinite(observed))
+                and np.all(np.isfinite(reference))
+                and unchanged
+                and np.isfinite(relative)
+                and relative <= 1.0e-10
+                and (
+                    relation_relative is None
+                    or (
+                        np.isfinite(relation_relative)
+                        and relation_relative <= 1.0e-10
+                    )
+                )
+                and (name != "zero" or np.count_nonzero(observed) == 0)
+            )
+            if not comm.allreduce(local_pass, op=MPI.LAND):
+                raise ValueError(
+                    f"V13 independent full-complex action validation rejected {name}"
+                )
+            validation_errors.append(relative)
+            validation_records.append(
+                {
+                    "input": name,
+                    "input_sha256": input_hashes[probe_index],
+                    "relative_error_vs_owner_S_B": relative,
+                    "algebra_identity_absolute_error": relation_error,
+                    "algebra_identity_relative_error": relation_relative,
+                    "algebra_identity_applicable": relation_error is not None,
+                    "input_unchanged": unchanged,
+                    "finite": bool(
+                        np.all(np.isfinite(observed))
+                        and np.all(np.isfinite(reference))
+                    ),
+                }
+            )
+            if name == "x":
+                x_observed = observed.copy()
+            elif name == "y":
+                y_observed = observed.copy()
+            del owner_result, reference, difference, expected_relation, observed
+    finally:
+        action.destroy()
+    after_independent_validation_work_phase = collect_actual_work_phase(
+        "after_independent_validation",
+        local_elapsed_seconds=time.perf_counter() - validation_started,
+        extra={
+            "validated_full_complex_input_count": len(probes),
+            "scope": "independent_full_complex_action_setup; not outer application",
+        },
+    )
+    if marker_callback is not None:
+        marker_callback(
+            "v13_modal_independent_validation_complete",
+            after_independent_validation_work_phase,
+        )
+    bottom_after_validation = int(
+        _action_diagnostics(bottom_action).get("apply_count", 0)
+    )
+    top_after_validation = int(
+        _action_diagnostics(top_action).get("apply_count", 0)
+    )
+    expected_validation = len(probes)
+    if (
+        bottom_after_validation - bottom_after_assembly != expected_validation
+        or top_after_validation - top_after_assembly != expected_validation
+    ):
+        raise RuntimeError("V13 independent validation action count is inconsistent")
+    side_operation_after_setup = {
+        "bottom": _v13_side_operation_counts(bottom_action),
+        "top": _v13_side_operation_counts(top_action),
+    }
+    side_operation_deltas = {}
+    for side in ("bottom", "top"):
+        before = side_operation_baseline[side]
+        after = side_operation_after_setup[side]
+        if before is None or after is None:
+            side_operation_deltas[side] = None
+        else:
+            side_operation_deltas[side] = {
+                key: int(after[key]) - int(before[key])
+                for key in ("apply_count", "total_iterations")
+            }
+    local_side_zero = bool(
+        all(
+            isinstance(counts, Mapping)
+            and all(value == 0 for value in counts.values())
+            for counts in side_operation_deltas.values()
+        )
+    )
+    if not comm.allreduce(local_side_zero, op=MPI.LAND):
+        raise RuntimeError(
+            "V13 Schur assembly/validation entered a borrowed SideBalancedInverse"
+        )
+
+    owner_lu = None
+    owner_pivots = None
+    owner_payload = None
+    owner_lu_factorization_attempts = 0
+    owner_lu_repeat_solve_attempts = 0
+    owner_lu_original_residual_checks = 0
+    repeat_error = None
+    first_residual_relative = None
+    second_residual_relative = None
+    first_input_unchanged = None
+    second_input_unchanged = None
+    lu_residual_pass = False
+    if comm.rank == owner:
+        try:
+            if schur is None or not np.all(np.isfinite(schur)):
+                raise ValueError("V13 owner Schur matrix is unavailable or non-finite")
+            owner_lu_factorization_attempts += 1
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", LinAlgWarning)
+                owner_lu, owner_pivots = lu_factor(schur, check_finite=True)
+            owner_lu = np.asarray(owner_lu, dtype=np.complex128)
+            owner_pivots = np.asarray(owner_pivots, dtype=np.int32)
+            diagonal = np.abs(np.diag(owner_lu))
+            if (
+                not np.all(np.isfinite(owner_lu))
+                or not np.all(np.isfinite(owner_pivots))
+                or diagonal.size != internal_count
+                or np.any(diagonal == 0.0)
+            ):
+                raise ValueError("V13 owner Schur LU is singular or non-finite")
+            rhs = np.arange(1, internal_count + 1, dtype=np.complex128)
+            rhs_before = rhs.copy()
+            owner_lu_repeat_solve_attempts += 1
+            first_rhs = rhs.copy()
+            first = lu_solve((owner_lu, owner_pivots), first_rhs, check_finite=True)
+            first_input_unchanged = bool(np.array_equal(first_rhs, rhs_before))
+            owner_lu_repeat_solve_attempts += 1
+            second_rhs = rhs.copy()
+            second = lu_solve((owner_lu, owner_pivots), second_rhs, check_finite=True)
+            second_input_unchanged = bool(np.array_equal(second_rhs, rhs_before))
+            repeat_error = float(
+                np.linalg.norm(first - second) / max(float(np.linalg.norm(first)), _TINY)
+            )
+            rhs_norm = float(np.linalg.norm(rhs_before))
+            if not np.isfinite(rhs_norm) or rhs_norm <= 0.0:
+                raise ValueError("V13 owner LU validation RHS is invalid")
+            first_residual = np.asarray(schur @ first - rhs_before)
+            second_residual = np.asarray(schur @ second - rhs_before)
+            first_residual_relative = float(np.linalg.norm(first_residual) / rhs_norm)
+            second_residual_relative = float(np.linalg.norm(second_residual) / rhs_norm)
+            owner_lu_original_residual_checks = 2
+            lu_residual_pass = bool(
+                np.isfinite(first).all()
+                and np.isfinite(second).all()
+                and np.isfinite(first_residual).all()
+                and np.isfinite(second_residual).all()
+                and first_input_unchanged
+                and second_input_unchanged
+                and np.isfinite(first_residual_relative)
+                and np.isfinite(second_residual_relative)
+                and first_residual_relative <= 1.0e-10
+                and second_residual_relative <= 1.0e-10
+                and np.array_equal(rhs, rhs_before)
+            )
+            if not np.isfinite(repeat_error) or repeat_error > 1.0e-13:
+                raise ValueError("V13 owner LU repeat-solve gate failed")
+            if not lu_residual_pass:
+                raise ValueError(
+                    "V13 owner LU original S_B a-g residual gate failed: "
+                    f"first={first_residual_relative!r}, "
+                    f"second={second_residual_relative!r}, "
+                    f"first_input_unchanged={first_input_unchanged}, "
+                    f"second_input_unchanged={second_input_unchanged}"
+                )
+            owner_payload = {
+                "status": "ready",
+                "condition": None,
+                "repeat_error": repeat_error,
+                "original_schur_rhs_relative_residuals": [
+                    first_residual_relative,
+                    second_residual_relative,
+                ],
+                "original_schur_rhs_residual_tolerance": 1.0e-10,
+                "original_schur_rhs_residual_pass": True,
+                "original_schur_rhs_input_unchanged": [
+                    first_input_unchanged,
+                    second_input_unchanged,
+                ],
+                "owner_lu_factorization_attempts": owner_lu_factorization_attempts,
+                "owner_lu_repeat_solve_attempts": owner_lu_repeat_solve_attempts,
+                "owner_lu_original_residual_checks": owner_lu_original_residual_checks,
+                "error": None,
+            }
+        except Exception as exc:  # noqa: BLE001 - owner LU rejection is broadcast below
+            owner_lu = None
+            owner_pivots = None
+            owner_payload = {
+                "status": "rejected",
+                "condition": None,
+                "repeat_error": repeat_error,
+                "original_schur_rhs_residual_tolerance": 1.0e-10,
+                "original_schur_rhs_residual_pass": lu_residual_pass,
+                "original_schur_rhs_input_unchanged": [
+                    first_input_unchanged,
+                    second_input_unchanged,
+                ],
+                "owner_lu_factorization_attempts": owner_lu_factorization_attempts,
+                "owner_lu_repeat_solve_attempts": owner_lu_repeat_solve_attempts,
+                "owner_lu_original_residual_checks": owner_lu_original_residual_checks,
+                "original_schur_rhs_relative_residuals": [
+                    first_residual_relative,
+                    second_residual_relative,
+                ],
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+    owner_payload = comm.bcast(owner_payload, root=owner)
+    if (
+        not isinstance(owner_payload, Mapping)
+        or owner_payload.get("status") != "ready"
+        or owner_payload.get("error") is not None
+    ):
+        error = "owner factorization returned no record"
+        if isinstance(owner_payload, Mapping):
+            error = str(owner_payload.get("error"))
+            if marker_callback is not None:
+                marker_callback(
+                    "v13_modal_schur_lu_refused",
+                    {
+                        "method": TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+                        "owner": owner,
+                        "status": "refused",
+                        "error": error,
+                        "setup_work_counts": {
+                            "scope": "owner_setup_not_outer_iterations",
+                            "owner_rank": owner,
+                            "owner_LU_factorization_attempts": owner_payload.get(
+                                "owner_lu_factorization_attempts"
+                            ),
+                            "owner_repeat_lu_solve_attempts": owner_payload.get(
+                                "owner_lu_repeat_solve_attempts"
+                            ),
+                            "owner_original_schur_rhs_residual_checks": owner_payload.get(
+                                "owner_lu_original_residual_checks"
+                            ),
+                            "outer_PC_and_LDU_work": "not_run_during_builder_setup",
+                        },
+                        "lu_repeat_error": owner_payload.get("repeat_error"),
+                        "original_schur_rhs_relative_residuals": owner_payload.get(
+                            "original_schur_rhs_relative_residuals"
+                        ),
+                        "original_schur_rhs_residual_tolerance": 1.0e-10,
+                        "original_schur_rhs_residual_pass": owner_payload.get(
+                            "original_schur_rhs_residual_pass"
+                        ),
+                        "original_schur_rhs_input_unchanged": owner_payload.get(
+                            "original_schur_rhs_input_unchanged"
+                        ),
+                    },
+                )
+        raise ValueError(f"V13 owner Schur factorization rejected: {error}")
+    lu = owner_lu if comm.rank == owner else None
+    pivots = owner_pivots if comm.rank == owner else None
+    if marker_callback is not None:
+        marker_callback(
+            "v13_modal_schur_ready",
+            {
+                "method": TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+                "owner": owner,
+                "sample_columns_retained_in_final_matrix": list(columns),
+                "remaining_columns_built_once": len(remaining),
+                "assembly_B_apply_count_by_side": {
+                    "bottom": bottom_after_assembly - bottom_before,
+                    "top": top_after_assembly - top_before,
+                },
+                "independent_validation_B_apply_count_by_side": {
+                    "bottom": bottom_after_validation - bottom_after_assembly,
+                    "top": top_after_validation - top_after_assembly,
+                },
+                "actual_work_phase_snapshots": actual_work_phase_snapshots,
+                "independent_validation_max_relative_error": max(
+                    validation_errors, default=0.0
+                ),
+                "condition": owner_payload["condition"],
+                "lu_repeat_error": float(owner_payload["repeat_error"]),
+                "owner_original_schur_rhs_residuals": list(
+                    owner_payload["original_schur_rhs_relative_residuals"]
+                ),
+                "owner_original_schur_rhs_residual_tolerance": 1.0e-10,
+                "owner_original_schur_rhs_residual_pass": True,
+                "owner_original_schur_rhs_input_unchanged": list(
+                    owner_payload["original_schur_rhs_input_unchanged"]
+                ),
+                "setup_work_counts": {
+                    "scope": "owner_setup_not_outer_iterations",
+                    "owner_rank": owner,
+                    "owner_LU_factorization_attempts": owner_payload[
+                        "owner_lu_factorization_attempts"
+                    ],
+                    "owner_repeat_lu_solve_attempts": owner_payload[
+                        "owner_lu_repeat_solve_attempts"
+                    ],
+                    "owner_original_schur_rhs_residual_checks": owner_payload[
+                        "owner_lu_original_residual_checks"
+                    ],
+                    "independent_full_action_B_apply_count_by_side": {
+                        "bottom": bottom_after_validation - bottom_after_assembly,
+                        "top": top_after_validation - top_after_assembly,
+                    },
+                    "outer_PC_and_LDU_work": "not_run_during_builder_setup",
+                },
+                "owner_storage_plan": dict(storage_phases),
+                "build_seconds": float(time.perf_counter() - build_started),
+                "validation_seconds": float(
+                    time.perf_counter() - validation_started
+                ),
+            },
+        )
+    build_audit = {
+        "formula": "S_B=C-LBG",
+        "B_definition": "fixed approximate physical BAL_H action; not D inverse",
+        "sample_contract": dict(contract),
+        "sample_columns_written_directly_to_final_matrix": list(columns),
+        "full_owner_matrix_pages_materialized_before_sample_gate": True,
+        "remaining_columns_applied_once": list(remaining),
+        "assembly_B_apply_count_by_side": {
+            "bottom": bottom_after_assembly - bottom_before,
+            "top": top_after_assembly - top_before,
+        },
+        "independent_action_validation": {
+            "scope": "separate_setup_scope",
+            "uses_validated_constraint_storage": True,
+            "inputs": [name for name, _values in probes],
+            "covers_all_modal_components": True,
+            "B_apply_count_by_side": {
+                "bottom": bottom_after_validation - bottom_after_assembly,
+                "top": top_after_validation - top_after_assembly,
+            },
+            "relative_errors": validation_errors,
+            "input_records": validation_records,
+            "complex_linearity_errors": algebra_errors,
+            "tolerance": 1.0e-10,
+            "pass": True,
+        },
+        "owner_storage_plan": dict(storage_phases),
+        "workspace_inventory": workspace_inventory,
+        "initial_phase_memory_projection": before_memory_projection,
+        "side_operation_baseline": side_operation_baseline,
+        "side_operation_after_setup": side_operation_after_setup,
+        "side_operation_deltas": side_operation_deltas,
+        "side_solver_entry_zero_supported": local_side_zero,
+        "fresh_authority_gate": authority_record,
+        "sample8_cost_report": sample_cost_report,
+        "sample8_admission": sample_admission,
+        "condition": (
+            None
+            if owner_payload["condition"] is None
+            else float(owner_payload["condition"])
+        ),
+        "lu_repeat_error": float(owner_payload["repeat_error"]),
+        "owner_original_schur_rhs_residuals": list(
+            owner_payload["original_schur_rhs_relative_residuals"]
+        ),
+        "owner_original_schur_rhs_residual_tolerance": 1.0e-10,
+        "owner_original_schur_rhs_residual_pass": True,
+        "owner_original_schur_rhs_input_unchanged": list(
+            owner_payload["original_schur_rhs_input_unchanged"]
+        ),
+        "setup_work_counts": {
+            "scope": "builder_setup_only_not_outer_solve",
+            "owner_rank": owner,
+            "owner_lu_factorization_attempts": owner_payload[
+                "owner_lu_factorization_attempts"
+            ],
+            "owner_lu_repeat_solve_attempts": owner_payload[
+                "owner_lu_repeat_solve_attempts"
+            ],
+            "owner_original_schur_rhs_residual_checks": owner_payload[
+                "owner_lu_original_residual_checks"
+            ],
+            "independent_full_action_validation_B_apply_count_by_side": {
+                "bottom": bottom_after_validation - bottom_after_assembly,
+                "top": top_after_validation - top_after_assembly,
+            },
+            "Schur_column_assembly_B_apply_count_by_side": {
+                "bottom": bottom_after_assembly - bottom_before,
+                "top": top_after_assembly - top_before,
+            },
+            "outer_PC_calls": 0,
+            "modal_KSP_solves": 0,
+        },
+        "actual_work_phase_snapshots": actual_work_phase_snapshots,
+        "actual_work_counter_semantics": {
+            "side_callback_counts": (
+                "rank-local SideBalancedInverse._count_snapshot deltas; "
+                "p4_refinement retains sum(max(actual_backsolves-1,0)) per Q callback"
+            ),
+            "fixed_q_math_and_factor_counts": (
+                "separate per-Q mathematical request/completion, initial/correction "
+                "factor deltas, and exact-zero statuses from FixedPhysical action audits"
+            ),
+            "aggregation": (
+                "phase rows preserve each rank; no rank multiplication or summing "
+                "replicated counts"
+            ),
+            "cross_counter_rule": (
+                "fixed-Q factor deltas are detail for shared p4_backsolve and must "
+                "not be added to that callback counter"
+            ),
+        },
+    }
+    system = Task041V13ConsistentModalSurrogateSystem(
+        modal_schur=schur,
+        modal_constraint=constraint,
+        lu=lu,
+        pivots=pivots,
+        modal_owner=owner,
+        comm=comm,
+        condition=(
+            None
+            if owner_payload["condition"] is None
+            else float(owner_payload["condition"])
+        ),
+        storage_plan=storage_phases,
+        build_audit=build_audit,
+        bottom_action=bottom_action,
+        top_action=top_action,
+        side_operation_baseline=side_operation_baseline,
+        fresh_authority_callback=fresh_authority_callback,
+        snapshot_callback=snapshot_callback,
+    )
+    system.record_side_operation_counts(side_operation_after_setup)
+    system_side_deltas = system._side_operation_deltas(
+        system.side_operation_baseline, system._side_operation_after
+    )
+    if system_side_deltas != side_operation_deltas or not local_side_zero:
+        system.destroy()
+        raise RuntimeError(
+            "V13 recorded side counters differ from the measured setup counters"
+        )
+    return system
+
+
 @dataclass
 class HybridActionModalSchurApply:
     """Apply one modal Schur action without assembling its columns.
 
-    The side actions and coupling are borrowed.  This object does not assert
-    that they define a fixed linear map: adaptive side actions may make each
-    call nonlinear or call-dependent, so this is not itself a PETSc Mat/KSP.
+    The side actions and coupling are borrowed.  A supplied modal constraint is
+    borrowed as well; otherwise the historical path builds its own copy.  This
+    object does not assert that the side actions define a fixed linear map:
+    adaptive actions may make each call nonlinear or call-dependent, so this
+    is not itself a PETSc Mat/KSP.
     """
 
     coupling: HybridInternalModeCoupling
     bottom_action: Any
     top_action: Any
-    modal_constraint: np.ndarray = field(init=False, repr=False)
+    modal_constraint: np.ndarray | None = field(default=None, repr=False)
     _destroyed: bool = field(default=False, init=False, repr=False)
     _modal_constraint_matvec_count: int = field(default=0, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self.mode_count = int(self.coupling.mode_count_per_direction)
         self.modal_count = 2 * self.mode_count
-        self.modal_constraint = np.asarray(
-            internal_modal_constraint_matrix(self.coupling), dtype=np.complex128
-        )
+        if self.modal_constraint is None:
+            self.modal_constraint = np.asarray(
+                internal_modal_constraint_matrix(self.coupling), dtype=np.complex128
+            )
+        else:
+            self.modal_constraint = np.asarray(
+                self.modal_constraint, dtype=np.complex128
+            )
         if self.modal_constraint.shape != (self.modal_count, self.modal_count):
             raise ValueError("Modal constraint has the wrong shape.")
 
@@ -1417,6 +4066,7 @@ class _FixedH6ModalKrylovSystem:
         self._snapshot_callback = snapshot_callback
         self._first_unmet_snapshot_saved = False
         self._success_control_snapshot_saved = False
+        self._terminal_normal_reject_snapshot_saved = False
         self._outer_pc_apply_index: int | None = None
         self._iteration_scalar_history: list[dict[str, float | int]] = []
         self._rhs_input_sha256: str | None = None
@@ -3439,6 +6089,11 @@ class _FixedH6ModalKrylovSystem:
                     "policy_id": self.modal_solver_policy["policy_id"],
                     "policy": dict(self.modal_solver_policy),
                     "method": self.method,
+                    "status": (
+                        None
+                        if self._last_solve is None
+                        else self._last_solve.get("status")
+                    ),
                     "modal_solve_ordinal": self._solve_count + 1,
                     "outer_pc_apply_index": self._outer_pc_apply_index,
                     "modal_owner": self._modal_owner,
@@ -3451,6 +6106,32 @@ class _FixedH6ModalKrylovSystem:
                     "trusted_iterate": bool(
                         self._last_solve is not None
                         and self._last_solve.get("trusted_iterate") is True
+                    ),
+                    "input_unchanged": (
+                        None
+                        if self._last_solve is None
+                        else self._last_solve.get("input_unchanged")
+                    ),
+                    "normal_return_rejection_reason": (
+                        None
+                        if self._last_solve is None
+                        else self._last_solve.get(
+                            "normal_return_rejection_reason"
+                        )
+                    ),
+                    "final_residual_norm": (
+                        None
+                        if self._last_solve is None
+                        else self._last_solve.get("final_residual_norm")
+                    ),
+                    "final_relative_residual": (
+                        None
+                        if self._last_solve is None
+                        else self._last_solve.get("final_relative_residual")
+                    ),
+                    "final_residual_evaluated": (
+                        self._last_solve is not None
+                        and self._last_solve.get("final_residual_evaluated") is True
                     ),
                     "approximate_return_decision": (
                         None
@@ -4022,10 +6703,10 @@ class _FixedH6ModalKrylovSystem:
                     and approximate_decision.get("pc_usable") is True
                 )
             )
-        snapshot_kind = None
+        snapshot_kinds: list[str] = []
         if self.modal_solver_policy is not None:
             if not raw_pass and not self._first_unmet_snapshot_saved:
-                snapshot_kind = "first_unmet_target"
+                snapshot_kinds.append("first_unmet_target")
             elif (
                 trusted_iterate
                 and status == "converged"
@@ -4033,7 +6714,19 @@ class _FixedH6ModalKrylovSystem:
                 and rhs_norm > 0.0
                 and not self._success_control_snapshot_saved
             ):
-                snapshot_kind = "first_success_control"
+                snapshot_kinds.append("first_success_control")
+            terminal_normal_reject = bool(
+                status not in {
+                    "converged",
+                    "INNER_TARGET_NOT_MET_APPROX_RETURN",
+                    "PRIMARY_MODAL_TARGET_NOT_MET_BACKUP_ELIGIBLE",
+                }
+                and trusted_iterate is True
+                and input_unchanged is True
+                and not self._terminal_normal_reject_snapshot_saved
+            )
+            if terminal_normal_reject:
+                snapshot_kinds.append("terminal_normal_reject")
         if self.modal_solver_policy is not None:
             pc_usable = bool(self._last_solve.get("pc_usable") is True)
             normal_return_record = (
@@ -4045,7 +6738,7 @@ class _FixedH6ModalKrylovSystem:
                 bool(trusted_iterate),
                 bool(input_unchanged),
                 pc_usable,
-                snapshot_kind,
+                tuple(snapshot_kinds),
                 bool(
                     isinstance(backup_decision, Mapping)
                     and backup_decision.get("eligible") is True
@@ -4059,20 +6752,33 @@ class _FixedH6ModalKrylovSystem:
                 raise RuntimeError(
                     "V12 modal normal-return decision differs across ranks"
                 )
-        if snapshot_kind is not None:
-            snapshot_record = self._persist_normal_return_snapshot(
-                kind=snapshot_kind,
-                reason=reason,
-                iterations=iterations,
-                relative=relative,
-                raw_residual_pass=raw_pass,
-                rhs_norm=rhs_norm,
+        if snapshot_kinds:
+            snapshot_records = {}
+            for snapshot_kind in snapshot_kinds:
+                snapshot_record = self._persist_normal_return_snapshot(
+                    kind=snapshot_kind,
+                    reason=reason,
+                    iterations=iterations,
+                    relative=relative,
+                    raw_residual_pass=raw_pass,
+                    rhs_norm=rhs_norm,
+                )
+                snapshot_records[snapshot_kind] = snapshot_record
+                if snapshot_kind == "first_unmet_target":
+                    self._first_unmet_snapshot_saved = True
+                elif snapshot_kind == "first_success_control":
+                    self._success_control_snapshot_saved = True
+                elif snapshot_kind == "terminal_normal_reject":
+                    self._terminal_normal_reject_snapshot_saved = True
+            preferred_snapshot_kind = (
+                "terminal_normal_reject"
+                if "terminal_normal_reject" in snapshot_records
+                else next(iter(snapshot_records))
             )
-            if snapshot_kind == "first_unmet_target":
-                self._first_unmet_snapshot_saved = True
-            else:
-                self._success_control_snapshot_saved = True
-            self._last_solve["snapshot_record"] = snapshot_record
+            self._last_solve["snapshot_record"] = snapshot_records[
+                preferred_snapshot_kind
+            ]
+            self._last_solve["snapshot_records"] = snapshot_records
         elif self.modal_solver_policy is not None and not trusted_iterate:
             self._last_solve["snapshot_record"] = {
                 "status": "not_saved_untrusted_iterate_or_raw_residual"
@@ -4223,6 +6929,9 @@ class _FixedH6ModalKrylovSystem:
             "last_solve": None if last_solve is None else dict(last_solve),
             "first_unmet_snapshot_saved": self._first_unmet_snapshot_saved,
             "success_control_snapshot_saved": self._success_control_snapshot_saved,
+            "terminal_normal_reject_snapshot_saved": (
+                self._terminal_normal_reject_snapshot_saved
+            ),
             "backup_switches": int(self._backup_switches),
             "backup_switch_audit": dict(self._backup_switch_audit),
             "post_backup_stop_record": (
@@ -7295,7 +10004,11 @@ def build_hybrid_action_modal_schur(
         )
         else float("inf")
     )
-    if rank != internal_count or not np.isfinite(condition) or condition > 1.0e12:
+    if (
+        rank != internal_count
+        or not np.isfinite(condition)
+        or condition * np.finfo(np.float64).eps >= 1.0
+    ):
         raise ValueError("Action modal Schur is not a finite full-rank system.")
     lu, pivots = lu_factor(first, check_finite=True)
     if not np.all(np.isfinite(lu)) or not np.all(np.isfinite(pivots)):
@@ -7408,6 +10121,7 @@ class HybridBlockLduPreconditioner:
             HybridActionModalSchurSystem
             | HybridActionModalSchurAndersonSystem
             | _FixedH6ModalGmresResearchBundle
+            | Task041V13ConsistentModalSurrogateSystem
         ),
         research_inventory: dict[str, Any] | None = None,
         dynamic_side_inventory: bool = False,
@@ -7433,12 +10147,46 @@ class HybridBlockLduPreconditioner:
             )
             else None
         )
+        self._v13_pc_side_apply_counts = (
+            {
+                side: {"first": 0, "delta": 0}
+                for side in ("bottom", "top")
+            }
+            if isinstance(
+                action_modal_schur_system,
+                Task041V13ConsistentModalSurrogateSystem,
+            )
+            else None
+        )
+        self._v13_side_operation_baseline = None
+        if self._v13_pc_side_apply_counts is not None:
+            recorded_baseline = getattr(
+                action_modal_schur_system,
+                "side_operation_baseline",
+                None,
+            )
+            self._v13_side_operation_baseline = (
+                {
+                    side: dict(counts)
+                    for side, counts in recorded_baseline.items()
+                }
+                if isinstance(recorded_baseline, Mapping)
+                else {
+                    "bottom": _v13_side_operation_counts(bottom_action),
+                    "top": _v13_side_operation_counts(top_action),
+                }
+            )
         self.modal_schur = getattr(action_modal_schur_system, "modal_schur", None)
         self.modal_count = int(action_modal_schur_system.modal_count)
         self.defer_action_modal_schur_release = False
         self._modal_solve_trace_handoff: list[dict[str, Any]] | None = None
         self._action_modal_schur_released = False
         self._destroyed = False
+        self._v13_original_operator = None
+        self._v13_original_operator_action = None
+        self._v13_original_operator_side_only = None
+        self._v13_original_operator_modal_only = None
+        self._v13_original_modal_row_callback = None
         self.mode_count = int(coupling.mode_count_per_direction)
         self._bottom_rhs = bottom_system.A.createVecRight()
         self._top_rhs = top_system.A.createVecRight()
@@ -7483,6 +10231,16 @@ class HybridBlockLduPreconditioner:
 
     @property
     def direct_factor_count(self) -> int:
+        if isinstance(
+            self.action_modal_schur_system,
+            Task041V13ConsistentModalSurrogateSystem,
+        ):
+            return sum(
+                _direct_factor_count(
+                    dict(action._side_inverse.diagnostics)
+                )
+                for action in (self.bottom_action, self.top_action)
+            )
         return _direct_factor_count(
             _action_diagnostics(self.bottom_action)
         ) + _direct_factor_count(_action_diagnostics(self.top_action))
@@ -7515,14 +10273,26 @@ class HybridBlockLduPreconditioner:
         fixed_h6_modal = isinstance(
             self.action_modal_schur_system, _FixedH6ModalGmresResearchBundle
         )
+        v13_modal = isinstance(
+            self.action_modal_schur_system,
+            Task041V13ConsistentModalSurrogateSystem,
+        )
         nonmaterialized_modal = on_demand_modal or fixed_h6_modal
+        v13_condition_unmeasured = (
+            v13_modal and self.action_modal_schur_system.condition is None
+        )
         system_diagnostics = self.action_modal_schur_system.diagnostics
         result = {
             "global_A_materialized": False,
             "direct_factor_count": bottom_direct + top_direct,
             "borrowed_direct_factor_count": bottom_direct + top_direct,
             "borrowed_ilu_factor_count": bottom_ilu + top_ilu,
-            "pc_owned_local_factor_count": 0,
+            "pc_owned_local_factor_count": int(
+                v13_modal
+                and self.action_modal_schur_system.rank
+                == self.action_modal_schur_system.modal_owner
+                and self.action_modal_schur_system.lu is not None
+            ),
             "bottom_direct_factor_count": bottom_direct,
             "top_direct_factor_count": top_direct,
             "bottom_ilu_factor_count": bottom_ilu,
@@ -7542,15 +10312,21 @@ class HybridBlockLduPreconditioner:
                     else "fixed_physical_balh_once_on_demand_modal_gmres"
                 )
                 if fixed_h6_modal
+                else TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+                if v13_modal
                 else "approximate_action_schur"
             ),
             "modal_block_condition": (
                 None
-                if nonmaterialized_modal
+                if nonmaterialized_modal or v13_condition_unmeasured
                 else float(self.action_modal_schur_system.condition)
             ),
             "modal_block_condition_status": (
-                "not_measured" if fixed_h6_modal else "measured" if not on_demand_modal else None
+                "not_measured"
+                if fixed_h6_modal or v13_modal
+                else "measured"
+                if not on_demand_modal
+                else None
             ),
             "modal_schur": None if nonmaterialized_modal else system_diagnostics,
             "action_modal_schur_released": bool(self._action_modal_schur_released),
@@ -7731,6 +10507,72 @@ class HybridBlockLduPreconditioner:
                     }
                 )
             result[whole_run_key] = whole_run_work
+        if v13_modal:
+            bottom_inverse = getattr(self.bottom_action, "_side_inverse", None)
+            top_inverse = getattr(self.top_action, "_side_inverse", None)
+            if bottom_inverse is None or top_inverse is None:
+                raise RuntimeError("V13 LDU actions lost their borrowed side inverses")
+            bottom_inverse_diagnostics = dict(bottom_inverse.diagnostics)
+            top_inverse_diagnostics = dict(top_inverse.diagnostics)
+            same_b = (
+                self.action_modal_schur_system.bottom_action is self.bottom_action
+                and self.action_modal_schur_system.top_action is self.top_action
+            )
+            if not same_b:
+                raise RuntimeError(
+                    "V13 modal Schur and LDU apply do not share the same B objects"
+                )
+            result.update(
+                {
+                    "modal_actual_method": TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+                    "modal_solver_policy": TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+                    "task041_v13_consistent_modal_surrogate": system_diagnostics,
+                    "bottom_direct_factor_count": int(
+                        bottom_inverse_diagnostics.get("direct_factor_count", 0)
+                    ),
+                    "top_direct_factor_count": int(
+                        top_inverse_diagnostics.get("direct_factor_count", 0)
+                    ),
+                    "direct_factor_count": int(
+                        bottom_inverse_diagnostics.get("direct_factor_count", 0)
+                    )
+                    + int(top_inverse_diagnostics.get("direct_factor_count", 0)),
+                    "borrowed_direct_factor_count": int(
+                        bottom_inverse_diagnostics.get("direct_factor_count", 0)
+                    )
+                    + int(top_inverse_diagnostics.get("direct_factor_count", 0)),
+                    "p4_factor_count": int(
+                        bottom_inverse_diagnostics.get("p4_factor_count", 0)
+                    )
+                    + int(top_inverse_diagnostics.get("p4_factor_count", 0)),
+                    "nested_iterative_ksp_count": int(
+                        bottom_inverse_diagnostics.get("nested_iterative_ksp_count", 0)
+                    )
+                    + int(top_inverse_diagnostics.get("nested_iterative_ksp_count", 0)),
+                    "borrowed_side_inverse_inventory_by_side": {
+                        "bottom": bottom_inverse_diagnostics,
+                        "top": top_inverse_diagnostics,
+                    },
+                    "v13_same_B_objects_for_schur_and_LDU": True,
+                    "v13_pc_side_apply_counts": {
+                        side: dict(values)
+                        for side, values in self._v13_pc_side_apply_counts.items()
+                    },
+                    "v13_side_operation_baseline": {
+                        side: dict(values)
+                        for side, values in self._v13_side_operation_baseline.items()
+                    },
+                    "v13_modal_ksp_solve_count": system_diagnostics[
+                        "modal_ksp_solve_count"
+                    ],
+                    "v13_side_solver_entry_zero_supported": system_diagnostics[
+                        "side_solver_entry_zero_supported"
+                    ],
+                    "v13_side_operation_deltas": system_diagnostics[
+                        "side_operation_deltas"
+                    ],
+                }
+            )
         if self._research_inventory is not None:
             result.update(self._research_inventory)
         if (
@@ -7861,6 +10703,351 @@ class HybridBlockLduPreconditioner:
             readonly=True
         ) + self._top_negative_target.getArray(readonly=True)
 
+    @staticmethod
+    def _fixed_action_side_ksp_iterations(action: Any) -> int | None:
+        inverse = getattr(action, "_side_inverse", None)
+        if inverse is None:
+            return None
+        diagnostics = getattr(inverse, "diagnostics", None)
+        if not isinstance(diagnostics, Mapping):
+            return None
+        value = diagnostics.get("total_iterations")
+        return (
+            int(value)
+            if isinstance(value, (int, np.integer))
+            and not isinstance(value, (bool, np.bool_))
+            and int(value) >= 0
+            else None
+        )
+
+    def set_v13_original_modal_row_callback(
+        self,
+        callback: Callable[
+            [PETSc.Vec, PETSc.Vec],
+            tuple[
+                np.ndarray,
+                np.ndarray,
+                np.ndarray | None,
+                np.ndarray | None,
+                int,
+            ],
+        ],
+        *,
+        operator_identity: str,
+    ) -> None:
+        if not isinstance(
+            self.action_modal_schur_system,
+            Task041V13ConsistentModalSurrogateSystem,
+        ):
+            raise TypeError("Original modal-row callback is V13-only")
+        if not callable(callback) or not operator_identity:
+            raise TypeError("V13 requires an identified original-A modal-row callback")
+        self._v13_original_modal_row_callback = callback
+        self._v13_original_operator_identity = str(operator_identity)
+
+    def bind_v13_original_global_operator(self, operator: PETSc.Mat) -> None:
+        """Bind the original full operator used by the outer FGMRES solve."""
+
+        if not isinstance(
+            self.action_modal_schur_system,
+            Task041V13ConsistentModalSurrogateSystem,
+        ):
+            return
+        comm = self.layout.comm
+        local_error = None
+        try:
+            if not isinstance(operator, PETSc.Mat):
+                raise TypeError("V13 original operator must be a PETSc Mat")
+            rows, columns = (int(value) for value in operator.getSize())
+            if rows != self.layout.global_size or columns != self.layout.global_size:
+                raise ValueError("V13 original operator does not match the LDU layout")
+            relation = MPI.Comm.Compare(comm, operator.getComm().tompi4py())
+            if relation not in (MPI.IDENT, MPI.CONGRUENT):
+                raise ValueError("V13 original operator communicator differs")
+        except Exception as exc:  # noqa: BLE001 - synchronize binding validation errors
+            local_error = f"{type(exc).__name__}: {exc}"
+        errors = comm.allgather(local_error)
+        failures = [
+            f"rank {rank}: {error}"
+            for rank, error in enumerate(errors)
+            if error is not None
+        ]
+        if failures:
+            raise ValueError(
+                "V13 original global operator binding rejected; "
+                + "; ".join(failures)
+            )
+        original_action = operator.createVecLeft()
+        side_only = operator.createVecRight()
+        modal_only = operator.createVecRight()
+        expected_range = (
+            int(self.layout.combined_offsets[comm.rank]),
+            int(self.layout.combined_offsets[comm.rank] + self.layout.local_size),
+        )
+        vector_errors = []
+        for label, vector in (
+            ("original action", original_action),
+            ("side-only input", side_only),
+            ("modal-only input", modal_only),
+        ):
+            actual_range = tuple(int(value) for value in vector.getOwnershipRange())
+            if (
+                int(vector.getSize()) != self.layout.global_size
+                or actual_range != expected_range
+            ):
+                vector_errors.append(
+                    f"{label} layout {actual_range}/{vector.getSize()} "
+                    f"does not match {expected_range}/{self.layout.global_size}"
+                )
+        layout_errors = comm.allgather(vector_errors)
+        layout_failures = [
+            f"rank {rank}: {error}"
+            for rank, errors in enumerate(layout_errors)
+            for error in errors
+        ]
+        if layout_failures:
+            for vector in (original_action, side_only, modal_only):
+                vector.destroy()
+            raise ValueError(
+                "V13 original operator vector layout rejected; "
+                + "; ".join(layout_failures)
+            )
+        self._v13_original_operator = operator
+        self._v13_original_operator_action = original_action
+        self._v13_original_operator_side_only = side_only
+        self._v13_original_operator_modal_only = modal_only
+        operator_identity = str(int(operator.handle))
+
+        def original_modal_row(
+            source: PETSc.Vec, target: PETSc.Vec
+        ) -> tuple[
+            np.ndarray,
+            np.ndarray,
+            np.ndarray | None,
+            np.ndarray | None,
+            int,
+        ]:
+            local_values = None
+            if comm.rank == self.layout.modal_owner:
+                source_local = np.asarray(
+                    source.getArray(readonly=True), dtype=np.complex128
+                )
+                rhs_values = source_local[self.layout.local_modal_slice].copy()
+                local_values = rhs_values
+            rhs_values = np.asarray(
+                comm.bcast(local_values, root=self.layout.modal_owner),
+                dtype=np.complex128,
+            )
+            if bool(np.all(rhs_values == 0.0)):
+                target_local = np.asarray(
+                    target.getArray(readonly=True), dtype=np.complex128
+                )
+                side_values = self._v13_original_operator_side_only.getArray()
+                modal_values = self._v13_original_operator_modal_only.getArray()
+                side_values[:] = target_local
+                side_values[self.layout.local_modal_slice] = 0.0
+                modal_values[:] = 0.0
+                modal_values[self.layout.local_modal_slice] = target_local[
+                    self.layout.local_modal_slice
+                ]
+                self._v13_original_operator_side_only.assemble()
+                self._v13_original_operator_modal_only.assemble()
+                operator.mult(
+                    self._v13_original_operator_side_only, original_action
+                )
+                side_local = np.asarray(
+                    original_action.getArray(readonly=True), dtype=np.complex128
+                )
+                side_term = (
+                    side_local[self.layout.local_modal_slice].copy()
+                    if comm.rank == self.layout.modal_owner
+                    else None
+                )
+                operator.mult(
+                    self._v13_original_operator_modal_only, original_action
+                )
+                modal_local = np.asarray(
+                    original_action.getArray(readonly=True), dtype=np.complex128
+                )
+                modal_term = (
+                    modal_local[self.layout.local_modal_slice].copy()
+                    if comm.rank == self.layout.modal_owner
+                    else None
+                )
+                side_term, modal_term = comm.bcast(
+                    (side_term, modal_term), root=self.layout.modal_owner
+                )
+                side_term = np.asarray(side_term, dtype=np.complex128)
+                modal_term = np.asarray(modal_term, dtype=np.complex128)
+                return (
+                    side_term + modal_term,
+                    rhs_values,
+                    side_term,
+                    modal_term,
+                    2,
+                )
+
+            operator.mult(target, original_action)
+            action_local = np.asarray(
+                original_action.getArray(readonly=True), dtype=np.complex128
+            )
+            action_values = (
+                action_local[self.layout.local_modal_slice].copy()
+                if comm.rank == self.layout.modal_owner
+                else None
+            )
+            action_values = np.asarray(
+                comm.bcast(action_values, root=self.layout.modal_owner),
+                dtype=np.complex128,
+            )
+            return (
+                np.asarray(action_values, dtype=np.complex128),
+                rhs_values,
+                None,
+                None,
+                1,
+            )
+
+        self.set_v13_original_modal_row_callback(
+            original_modal_row,
+            operator_identity=f"PETSc.Mat.handle:{operator_identity}",
+        )
+
+    def _check_v13_original_modal_row(
+        self, source: PETSc.Vec, target: PETSc.Vec
+    ) -> None:
+        system = self.action_modal_schur_system
+        if not isinstance(system, Task041V13ConsistentModalSurrogateSystem):
+            return
+        callback = self._v13_original_modal_row_callback
+        if not callable(callback):
+            raise RuntimeError(  # noqa: TRY004 - the V13 action is missing from object state
+                "V13 full-PC output has no independently bound original-A modal-row action"
+            )
+        local_error = None
+        action_values = rhs_values = side_term = modal_term = None
+        original_matmult_count = None
+        try:
+            (
+                action_values,
+                rhs_values,
+                side_term,
+                modal_term,
+                original_matmult_count,
+            ) = callback(source, target)
+            action_values = np.asarray(action_values, dtype=np.complex128)
+            rhs_values = np.asarray(rhs_values, dtype=np.complex128)
+            expected_shape = (self.layout.modal_count,)
+            if (
+                action_values.shape != expected_shape
+                or rhs_values.shape != expected_shape
+                or not np.all(np.isfinite(action_values))
+                or not np.all(np.isfinite(rhs_values))
+            ):
+                raise ValueError("original-A modal row callback returned invalid values")
+            if bool(np.all(rhs_values == 0.0)):
+                side_term = np.asarray(side_term, dtype=np.complex128)
+                modal_term = np.asarray(modal_term, dtype=np.complex128)
+                if (
+                    side_term.shape != expected_shape
+                    or modal_term.shape != expected_shape
+                    or not np.all(np.isfinite(side_term))
+                    or not np.all(np.isfinite(modal_term))
+                    or int(original_matmult_count) != 2
+                ):
+                    raise ValueError(
+                        "exact-zero original modal row lacks its two uncancelled terms"
+                    )
+            elif (
+                side_term is not None
+                or modal_term is not None
+                or int(original_matmult_count) != 1
+            ):
+                raise ValueError(
+                    "nonzero original modal row must use one full-operator action"
+                )
+        except Exception as exc:  # noqa: BLE001 - synchronize modal-row evaluation failures
+            local_error = f"{type(exc).__name__}: {exc}"
+        callback_errors = self.layout.comm.allgather(local_error)
+        failures = [
+            f"rank {rank}: {error}"
+            for rank, error in enumerate(callback_errors)
+            if error is not None
+        ]
+        if failures:
+            raise FloatingPointError(
+                "V13 original-A modal row evaluation failed; " + "; ".join(failures)
+            )
+        assert action_values is not None and rhs_values is not None
+        residual = np.asarray(action_values - rhs_values, dtype=np.complex128)
+        rhs_norm = float(np.linalg.norm(rhs_values))
+        action_norm = float(np.linalg.norm(action_values))
+        residual_norm = float(np.linalg.norm(residual))
+        zero_rhs = bool(np.all(rhs_values == 0.0))
+        side_term_norm = (
+            float(np.linalg.norm(side_term)) if zero_rhs else None
+        )
+        modal_term_norm = (
+            float(np.linalg.norm(modal_term)) if zero_rhs else None
+        )
+        # For an exact-zero modal RHS, scale by the uncancelled terms
+        # L z_side and C a.  Scaling by their sum would reduce the denominator
+        # to the roundoff-sized residual and reject a valid cancellation.
+        scale = (
+            side_term_norm + modal_term_norm if zero_rhs else rhs_norm
+        )
+        relative = (
+            residual_norm / scale
+            if scale > 0.0
+            else (0.0 if residual_norm == 0.0 else float("inf"))
+        )
+        finite = bool(
+            np.all(np.isfinite(action_values))
+            and np.all(np.isfinite(rhs_values))
+            and np.all(np.isfinite(residual))
+            and np.isfinite(relative)
+        )
+        local_record = {
+            "equation": "extract_modal_rows(A_original @ pc_output) - r_modal",
+            "status": "passed" if finite and relative <= 1.0e-10 else "rejected",
+            "operator_identity": self._v13_original_operator_identity,
+            "rhs_norm": rhs_norm,
+            "rhs_exact_zero": zero_rhs,
+            "original_A_modal_action_norm": action_norm,
+            "original_A_modal_side_term_norm": side_term_norm,
+            "original_A_modal_constraint_term_norm": modal_term_norm,
+            "original_A_modal_row_matmult_count": int(original_matmult_count),
+            "scale": scale,
+            "residual_norm": residual_norm,
+            "relative_backward_error": relative,
+            "tolerance": 1.0e-10,
+            "finite": finite,
+        }
+        comm = self.layout.comm
+        records = comm.allgather(local_record)
+        passed = bool(
+            len(records) == comm.size
+            and all(
+                isinstance(record, Mapping)
+                and record.get("status") == "passed"
+                for record in records
+            )
+        )
+        normalized = dict(local_record)
+        normalized.update(
+            {
+                "collective_pass": passed,
+                "rank_count": int(comm.size),
+                "scope": "original_global_modal_row_after_full_PC_output",
+            }
+        )
+        system.record_original_modal_row(normalized)
+        if not passed:
+            raise FloatingPointError(
+                "V13 original global modal-row residual gate rejected: "
+                f"relative={relative:.6e}, limit=1.000000e-10"
+            )
+
     def apply(self, _pc: PETSc.PC | None, source: PETSc.Vec, target: PETSc.Vec) -> None:
         if self._destroyed:
             raise RuntimeError("Block-LDU preconditioner has been destroyed")
@@ -7876,6 +11063,9 @@ class HybridBlockLduPreconditioner:
             self._bottom_first, self._bottom_projection
         )
         self.coupling.top.projection.mult(self._top_first, self._top_projection)
+        if self._v13_pc_side_apply_counts is not None:
+            self._v13_pc_side_apply_counts["bottom"]["first"] += 1
+            self._v13_pc_side_apply_counts["top"]["first"] += 1
         self._modal_rhs[:] = modal
         self._modal_rhs[: self.mode_count] -= _replicated_modal_values(
             self._bottom_projection
@@ -7899,6 +11089,30 @@ class HybridBlockLduPreconditioner:
             self._fixed_h6_pc_side_apply_counts["top"]["delta"] += 1
         self._bottom_first.axpy(PETSc.ScalarType(-1.0), self._bottom_delta)
         self._top_first.axpy(PETSc.ScalarType(-1.0), self._top_delta)
+        if self._v13_pc_side_apply_counts is not None:
+            self._v13_pc_side_apply_counts["bottom"]["delta"] += 1
+            self._v13_pc_side_apply_counts["top"]["delta"] += 1
+            current = {
+                "bottom": _v13_side_operation_counts(self.bottom_action),
+                "top": _v13_side_operation_counts(self.top_action),
+            }
+            if any(value is None for value in current.values()):
+                raise RuntimeError("V13 could not read actual borrowed side counters")
+            deltas = {}
+            for side in ("bottom", "top"):
+                baseline = self._v13_side_operation_baseline[side]
+                observed = current[side]
+                if baseline is None or observed is None:
+                    raise RuntimeError("V13 side-operation baseline is unavailable")
+                deltas[side] = {
+                    key: int(observed[key]) - int(baseline[key])
+                    for key in ("apply_count", "total_iterations")
+                }
+                if any(delta != 0 for delta in deltas[side].values()):
+                    raise RuntimeError(
+                        f"V13 fixed B unexpectedly entered the {side} side solver"
+                    )
+            self.action_modal_schur_system.record_side_operation_counts(current)
         target_local = target.getArray()
         target_local[self.layout.local_bottom_slice] = self._bottom_first.getArray(
             readonly=True
@@ -7908,6 +11122,7 @@ class HybridBlockLduPreconditioner:
         )
         if self.layout.comm.rank == self.layout.modal_owner:
             target_local[self.layout.local_modal_slice] = self._modal_solution
+        self._check_v13_original_modal_row(source, target)
         self._pc_apply_count += 1
         self._pc_apply_seconds += time.perf_counter() - started
 
@@ -7948,8 +11163,29 @@ class HybridBlockLduPreconditioner:
             self._bottom_rhs,
         ):
             vector.destroy()
+        if isinstance(
+            self.action_modal_schur_system,
+            Task041V13ConsistentModalSurrogateSystem,
+        ):
+            for action in (self.bottom_action, self.top_action):
+                destroy = getattr(action, "destroy", None)
+                if callable(destroy):
+                    destroy()
         if not self.defer_action_modal_schur_release:
             self.release_deferred_action_modal_schur()
+        if self._v13_original_operator_action is not None:
+            self._v13_original_operator_action.destroy()
+            self._v13_original_operator_action = None
+        for name in (
+            "_v13_original_operator_side_only",
+            "_v13_original_operator_modal_only",
+        ):
+            vector = getattr(self, name)
+            if vector is not None:
+                vector.destroy()
+                setattr(self, name, None)
+        self._v13_original_operator = None
+        self._v13_original_modal_row_callback = None
         self._destroyed = True
 
 
@@ -8077,6 +11313,23 @@ def _check_on_demand_modal_sample_repeat(
             },
         )
     return diagnostics
+
+
+def _v13_side_operation_counts(action: Any) -> dict[str, int] | None:
+    """Read the borrowed side inverse's real apply/iteration counters."""
+
+    inverse = getattr(action, "_side_inverse", None)
+    diagnostics = getattr(inverse, "diagnostics", None)
+    if not isinstance(diagnostics, Mapping):
+        return None
+    apply_count = diagnostics.get("apply_count")
+    iterations = diagnostics.get("total_iterations")
+    if any(
+        type(value) is not int or value < 0
+        for value in (apply_count, iterations)
+    ):
+        return None
+    return {"apply_count": apply_count, "total_iterations": iterations}
 
 
 _FIXED_H6_FEEDBACK_GATE_TOLERANCE = 1.0e-10
@@ -8694,6 +11947,9 @@ def create_side_balh_block_ldu_preconditioner(
     modal_solver_policy: Mapping[str, Any] | None = None,
     modal_snapshot_callback: Callable[[Mapping[str, Any]], Mapping[str, Any] | None]
     | None = None,
+    v13_fresh_authority_callback: Callable[
+        [str, Mapping[str, Any]], Mapping[str, Any]
+    ] | None = None,
 ) -> HybridBlockLduPreconditioner:
     """Build the sampled Schur or one explicitly selected BAL_H research path.
 
@@ -8781,6 +12037,23 @@ def create_side_balh_block_ldu_preconditioner(
             "Fixed-H6 modal GMRES research is mutually exclusive with all "
             "Anderson modal-inner options."
         )
+    v13_modal_policy = bool(
+        isinstance(modal_solver_policy, Mapping)
+        and modal_solver_policy.get("policy_id")
+        == TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+    )
+    if v13_modal_policy and (
+        not fixed_h6_modal_gmres_research
+        or fixed_h6_modal_feedback_method is not None
+        or not sampled_columns
+        or not isinstance(sampled_column_roles, Mapping)
+        or not sampled_column_contract_sha256
+        or not callable(v13_fresh_authority_callback)
+    ):
+        raise ValueError(
+            "V13 requires explicit fixed-H6 research, no second feedback selector, "
+            "its sealed eight-column contract, and a fresh-authority callback"
+        )
     if complex_qr_research and not use_anderson_modal_inner:
         raise ValueError(
             "Complex QR research requires the on-demand Anderson modal inner."
@@ -8808,6 +12081,8 @@ def create_side_balh_block_ldu_preconditioner(
     modal_action = None
     fixed_h6_solver = None
     fixed_h6_adapters: list[Any] = []
+    ldu_bottom_action = bottom_side_inverse
+    ldu_top_action = top_side_inverse
     try:
         if use_anderson_modal_inner:
             modal_action = HybridActionModalSchurApply(
@@ -8851,6 +12126,104 @@ def create_side_balh_block_ldu_preconditioner(
                     "reason": "modal_schur_lu_not_constructed",
                 },
                 "early_sample_gate": early_sample_gate,
+            }
+        elif fixed_h6_modal_gmres_research and v13_modal_policy:
+            from .physical_balanced_side_inverse import (
+                FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD,
+                FixedPhysicalBalancedActiveTraceAction,
+            )
+
+            original_side_actions = {
+                "bottom": bottom_side_inverse,
+                "top": top_side_inverse,
+            }
+            bottom_v13_action = (
+                bottom_side_inverse.create_fixed_physical_balh_active_trace_action()
+            )
+            fixed_h6_adapters.append(bottom_v13_action)
+            top_v13_action = (
+                top_side_inverse.create_fixed_physical_balh_active_trace_action()
+            )
+            fixed_h6_adapters.append(top_v13_action)
+            if any(
+                not isinstance(action, FixedPhysicalBalancedActiveTraceAction)
+                or action.method != FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD
+                for action in (bottom_v13_action, top_v13_action)
+            ):
+                raise TypeError("V13 requires the registered fixed physical B actions")
+            ldu_bottom_action = bottom_v13_action
+            ldu_top_action = top_v13_action
+            modal_system = build_task041_v13_consistent_modal_surrogate(
+                coupling,
+                bottom_v13_action,
+                top_v13_action,
+                modal_owner=layout.modal_owner,
+                sampled_columns=sampled_columns,
+                sampled_column_roles=sampled_column_roles,
+                sampled_column_contract_sha256=sampled_column_contract_sha256,
+                original_augmented_local_size=layout.local_size,
+                fresh_authority_callback=v13_fresh_authority_callback,
+                snapshot_callback=modal_snapshot_callback,
+                marker_callback=marker_callback,
+            )
+            v13_diagnostics = modal_system.diagnostics
+            v13_side_deltas = v13_diagnostics.get("side_operation_deltas")
+            if v13_diagnostics.get("side_solver_entry_zero_supported") is not True:
+                raise RuntimeError(
+                    "V13 Schur setup did not preserve the borrowed side operation counters"
+                )
+            research_inventory = {
+                "research_only": True,
+                "preconditioner_identity": TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+                "modal_actual_method": TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+                "modal_block_name": TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+                "modal_solver_policy": dict(modal_solver_policy),
+                "fixed_h6_modal_gmres_research": True,
+                "fixed_physical_balh_once_requested": True,
+                "modal_feedback_method": None,
+                "borrowed_side_actions": True,
+                "same_B_objects_for_all_LDU_terms_and_modal_Schur": True,
+                "global_direct_factor_count": 0,
+                "global_hybrid_direct_factor_count": 0,
+                "p6_factor_count": 0,
+                "modal_schur_materialized": True,
+                "modal_schur_column_count": int(modal_system.modal_count),
+                "modal_ksp_solve_count": v13_diagnostics[
+                    "modal_ksp_solve_count"
+                ],
+                "modal_ksp_handle_count": v13_diagnostics[
+                    "modal_ksp_handle_count"
+                ],
+                "side_inverse_apply_count_delta_by_side": {
+                    side: counts["apply_count"]
+                    for side, counts in v13_side_deltas.items()
+                },
+                "side_inverse_iteration_delta_by_side": {
+                    side: counts["total_iterations"]
+                    for side, counts in v13_side_deltas.items()
+                },
+                "side_solver_entry_zero_supported": v13_diagnostics[
+                    "side_solver_entry_zero_supported"
+                ],
+                "early_sample_gate": dict(modal_system.build_audit),
+                "side_operation_baseline": dict(
+                    v13_diagnostics["side_operation_baseline"]
+                ),
+                "side_inverse_inventory_by_side": {
+                    side: dict(inverse.diagnostics)
+                    for side, inverse in original_side_actions.items()
+                },
+                "borrowed_direct_factor_count": sum(
+                    int(inverse.diagnostics.get("direct_factor_count", 0))
+                    for inverse in original_side_actions.values()
+                ),
+                "p4_factor_count": sum(
+                    int(inverse.diagnostics.get("p4_factor_count", 0))
+                    for inverse in original_side_actions.values()
+                ),
+                "fixed_physical_balh_action_identity": (
+                    FIXED_PHYSICAL_BALH_MODAL_FEEDBACK_METHOD
+                ),
             }
         elif fixed_h6_modal_gmres_research:
             original_side_actions = {
@@ -8983,11 +12356,11 @@ def create_side_balh_block_ldu_preconditioner(
             bottom_system,
             top_system,
             coupling,
-            bottom_side_inverse,
-            top_side_inverse,
+            ldu_bottom_action,
+            ldu_top_action,
             modal_system,
             research_inventory=research_inventory,
-            dynamic_side_inventory=True,
+            dynamic_side_inventory=not v13_modal_policy,
         )
     except BaseException:
         if modal_system is not None:
@@ -9230,6 +12603,8 @@ def _true_residual_metrics(
     rhs: PETSc.Vec,
     solution: PETSc.Vec,
     context: HybridBlockLduPreconditioner,
+    *,
+    audit: dict[str, Any] | None = None,
 ) -> tuple[float, dict[str, float]]:
     residual = rhs.duplicate()
     operator.mult(solution, residual)
@@ -9254,32 +12629,108 @@ def _true_residual_metrics(
             solution_bottom, context._bottom_projection
         )
         context.coupling.top.projection.mult(solution_top, context._top_projection)
+        bottom_rhs_norm = float(rhs_bottom.norm())
+        bottom_action_norm = float(bottom_value.norm())
+        bottom_coupling_norm = float(context._bottom_coupling.norm())
         bottom_scale = max(
-            float(rhs_bottom.norm()),
-            float(bottom_value.norm()),
-            float(context._bottom_coupling.norm()),
+            bottom_rhs_norm,
+            bottom_action_norm,
+            bottom_coupling_norm,
             1.0e-30,
         )
+        top_rhs_norm = float(rhs_top.norm())
+        top_action_norm = float(top_value.norm())
+        top_coupling_norm = float(context._top_coupling.norm())
         top_scale = max(
-            float(rhs_top.norm()),
-            float(top_value.norm()),
-            float(context._top_coupling.norm()),
+            top_rhs_norm,
+            top_action_norm,
+            top_coupling_norm,
             1.0e-30,
         )
         modal_constraint = context.modal_constraint
+        modal_rhs_norm = float(np.linalg.norm(rhs_modal))
+        bottom_projection_norm = float(
+            np.linalg.norm(_replicated_modal_values(context._bottom_projection))
+        )
+        top_projection_norm = float(
+            np.linalg.norm(_replicated_modal_values(context._top_projection))
+        )
+        modal_constraint_action_norm = float(
+            np.linalg.norm(modal_constraint @ solution_modal)
+        )
         modal_scale = max(
-            float(np.linalg.norm(rhs_modal)),
-            float(np.linalg.norm(_replicated_modal_values(context._bottom_projection))),
-            float(np.linalg.norm(_replicated_modal_values(context._top_projection))),
-            float(np.linalg.norm(modal_constraint @ solution_modal)),
+            modal_rhs_norm,
+            bottom_projection_norm,
+            top_projection_norm,
+            modal_constraint_action_norm,
             1.0e-30,
         )
+        global_numerator = float(residual.norm())
+        global_rhs_norm = float(rhs.norm())
+        global_denominator = max(global_rhs_norm, _TINY)
+        bottom_numerator = float(residual_bottom.norm())
+        top_numerator = float(residual_top.norm())
+        modal_numerator = float(np.linalg.norm(residual_modal))
         block = {
-            "bottom": float(residual_bottom.norm() / bottom_scale),
-            "top": float(residual_top.norm() / top_scale),
-            "modal": float(np.linalg.norm(residual_modal) / modal_scale),
+            "bottom": float(bottom_numerator / bottom_scale),
+            "top": float(top_numerator / top_scale),
+            "modal": float(modal_numerator / modal_scale),
         }
-        global_relative = float(residual.norm() / max(float(rhs.norm()), _TINY))
+        global_relative = float(global_numerator / global_denominator)
+        if audit is not None:
+            audit.clear()
+            audit.update(
+                {
+                    "scope": "one_true_residual_snapshot_row",
+                    "global": {
+                        "numerator_norm": global_numerator,
+                        "denominator_norm": global_denominator,
+                        "denominator_components": {
+                            "original_rhs_norm": global_rhs_norm,
+                            "floor": float(_TINY),
+                        },
+                        "formula": "||A*x-f||/max(||f||,_TINY)",
+                        "denominator_scope": "original_rhs_norm_for_this_solve",
+                    },
+                    "bottom": {
+                        "numerator_norm": bottom_numerator,
+                        "denominator_norm": float(bottom_scale),
+                        "denominator_components": {
+                            "rhs_block_norm": bottom_rhs_norm,
+                            "A_x_block_norm": bottom_action_norm,
+                            "coupling_block_norm": bottom_coupling_norm,
+                            "floor": 1.0e-30,
+                        },
+                        "formula": "||r_bottom||/max(||f_bottom||,||A_bottom*x_bottom||,||coupling_bottom||,1e-30)",
+                        "denominator_scope": "recomputed_from_this_true_residual_row",
+                    },
+                    "top": {
+                        "numerator_norm": top_numerator,
+                        "denominator_norm": float(top_scale),
+                        "denominator_components": {
+                            "rhs_block_norm": top_rhs_norm,
+                            "A_x_block_norm": top_action_norm,
+                            "coupling_block_norm": top_coupling_norm,
+                            "floor": 1.0e-30,
+                        },
+                        "formula": "||r_top||/max(||f_top||,||A_top*x_top||,||coupling_top||,1e-30)",
+                        "denominator_scope": "recomputed_from_this_true_residual_row",
+                    },
+                    "modal": {
+                        "numerator_norm": modal_numerator,
+                        "denominator_norm": float(modal_scale),
+                        "denominator_components": {
+                            "rhs_modal_norm": modal_rhs_norm,
+                            "bottom_projection_norm": bottom_projection_norm,
+                            "top_projection_norm": top_projection_norm,
+                            "modal_constraint_action_norm": modal_constraint_action_norm,
+                            "floor": 1.0e-30,
+                        },
+                        "formula": "||r_modal||/max(||f_modal||,||P_bottom*x_bottom||,||P_top*x_top||,||C*x_modal||,1e-30)",
+                        "denominator_scope": "recomputed_from_this_true_residual_row",
+                    },
+                }
+            )
     finally:
         top_value.destroy()
         bottom_value.destroy()
@@ -9292,6 +12743,788 @@ def _true_residual_metrics(
         rhs_bottom.destroy()
         residual.destroy()
     return global_relative, block
+
+
+def _task041_v13_outer_restart_workspace_report(
+    operator: PETSc.Mat,
+    rhs: PETSc.Vec,
+    solution: PETSc.Vec,
+    context: HybridBlockLduPreconditioner,
+    comm: Any,
+    *,
+    phase: str,
+) -> dict[str, Any]:
+    """Compare simultaneous KSP+PC and KSP+true-residual payload phases.
+
+    The initial report is made before the original-A validation Vecs and the
+    outer KSP are set up, so both are charged as new.  At restart 64, those
+    original-A Vecs and the V13 context are already resident in the fresh
+    authority sample; only the new KSP workspace and concurrent scratch are
+    added.  PC/B scratch is taken from the builder's existing
+    ``outer_PC_with_retained_workspaces`` object inventory.  Its forecasted
+    retained objects are not charged a second time because they are in the
+    current fresh B; its per-apply scratch is included in the PC phase.
+    """
+
+    if phase not in {"outer_restart32_workspace", "outer_restart64_workspace"}:
+        raise ValueError("V13 outer workspace phase is not registered")
+    target_restart = 32 if phase == "outer_restart32_workspace" else 64
+    restart32_already_in_fresh_b = phase == "outer_restart64_workspace"
+    original_a_binding_already_in_fresh_b = restart32_already_in_fresh_b
+    local_error = None
+    local_row: dict[str, Any] | None = None
+    try:
+        if (
+            np.dtype(PETSc.ScalarType) != np.dtype(np.complex128)
+            or np.dtype(PETSc.IntType).itemsize != 4
+        ):
+            raise RuntimeError("V13 outer workspace model requires complex128/Int32")
+        local_rows = int(rhs.getLocalSize())
+        local_columns = int(solution.getLocalSize())
+        if (
+            local_rows < 0
+            or local_columns < 0
+            or int(rhs.getSize()) != int(operator.getSize()[0])
+            or int(solution.getSize()) != int(operator.getSize()[1])
+        ):
+            raise ValueError("V13 outer Vec ownership does not match the operator")
+        pointer_bytes = int(np.dtype(np.uintp).itemsize)
+        integer_bytes = int(np.dtype(PETSc.IntType).itemsize)
+
+        def workspace_components(restart: int) -> dict[str, int]:
+            # PETSc 3.19.6 FGMRES setup allocates the GMRES row-vector table
+            # (m+4 slots) and FGMRES preconditioned-vector table (m+2 slots).
+            # The previous eight-slot lump mixed these KSP objects with
+            # caller-owned PC and true-residual scratch; keep those separately
+            # below so each simultaneous phase is counted once.
+            gmres_vector_slots = restart + 4
+            fgmres_preconditioned_slots = restart + 2
+            vector_entries = (
+                gmres_vector_slots * local_rows
+                + fgmres_preconditioned_slots * local_columns
+            )
+            scalar_components = {
+                "hh": (restart + 2) * (restart + 1),
+                "hes": (restart + 1) * (restart + 1),
+                "rs": restart + 2,
+                "cc": restart + 1,
+                "ss": restart + 1,
+                "nrs": restart,
+                # Retain the pre-existing conservative two auxiliary
+                # (m+2)-scalar tables as explicit payload, not as Vec slots.
+                "conservative_auxiliary": 2 * (restart + 2),
+            }
+            scalar_count = (
+                sum(scalar_components.values())
+            )
+            pointer_count = gmres_vector_slots + fgmres_preconditioned_slots
+            work_integer_slots = restart + 4
+            return {
+                "gmres_vector_slots": gmres_vector_slots,
+                "fgmres_preconditioned_vector_slots": fgmres_preconditioned_slots,
+                "vector_payload_bytes": (
+                    vector_entries * np.dtype(PETSc.ScalarType).itemsize
+                ),
+                "scalar_array_slots": scalar_count,
+                "scalar_payload_bytes": (
+                    scalar_count * np.dtype(PETSc.ScalarType).itemsize
+                ),
+                "pointer_table_slots": pointer_count,
+                "pointer_table_bytes": pointer_count * pointer_bytes,
+                "PETSc_integer_workspace_slots": work_integer_slots,
+                "PETSc_integer_workspace_bytes": work_integer_slots * integer_bytes,
+                "workspace_bytes": (
+                    vector_entries * np.dtype(PETSc.ScalarType).itemsize
+                    + scalar_count * np.dtype(PETSc.ScalarType).itemsize
+                    + pointer_count * pointer_bytes
+                    + work_integer_slots * integer_bytes
+                ),
+            }
+
+        restart32_components = workspace_components(32)
+        restart64_components = workspace_components(64)
+        restart32_bytes = int(restart32_components["workspace_bytes"])
+        restart64_bytes = int(restart64_components["workspace_bytes"])
+
+        system = getattr(context, "action_modal_schur_system", None)
+        if not isinstance(system, Task041V13ConsistentModalSurrogateSystem):
+            raise TypeError("V13 outer workspace requires its actual modal system")
+        build_audit = system.build_audit
+        workspace_inventory = build_audit.get("workspace_inventory")
+        inventory_rows = (
+            workspace_inventory.get("rank_rows")
+            if isinstance(workspace_inventory, Mapping)
+            else None
+        )
+        sample_cost = build_audit.get("sample8_cost_report")
+        sample_projection = (
+            sample_cost.get("phase_memory_projection")
+            if isinstance(sample_cost, Mapping)
+            else None
+        )
+        sample_phase_reports = (
+            sample_projection.get("phase_reports")
+            if isinstance(sample_projection, Mapping)
+            else None
+        )
+        builder_pc_phase = (
+            sample_phase_reports.get("outer_PC_with_retained_workspaces")
+            if isinstance(sample_phase_reports, Mapping)
+            else None
+        )
+        if (
+            not isinstance(inventory_rows, list)
+            or len(inventory_rows) != int(comm.size)
+            or not isinstance(builder_pc_phase, Mapping)
+        ):
+            raise ValueError("V13 builder did not retain its outer-PC phase inventory")
+
+        def rank_bytes(field: str) -> list[int]:
+            values = builder_pc_phase.get(field)
+            if (
+                not isinstance(values, list)
+                or len(values) != int(comm.size)
+                or any(type(value) is not int or value < 0 for value in values)
+            ):
+                raise ValueError(f"V13 builder outer-PC inventory lacks {field}")
+            return list(values)
+
+        builder_pc_known = rank_bytes("known_additional_bytes_by_rank")
+        builder_pc_temporary = rank_bytes("additional_temporary_bytes_by_rank")
+        builder_pc_replicated = rank_bytes("additional_replicated_bytes_by_rank")
+        rank_inventory = inventory_rows[int(comm.rank)]
+        if (
+            not isinstance(rank_inventory, Mapping)
+            or int(rank_inventory.get("rank", -1)) != int(comm.rank)
+        ):
+            raise ValueError("V13 builder workspace inventory rank is incomplete")
+        layout_rows = rank_inventory.get("side_layouts")
+        if not isinstance(layout_rows, Mapping):
+            raise TypeError("V13 builder side-layout inventory is absent")
+        bottom_layout = layout_rows.get("bottom")
+        top_layout = layout_rows.get("top")
+        if not isinstance(bottom_layout, Mapping) or not isinstance(top_layout, Mapping):
+            raise TypeError("V13 builder side layout rows are incomplete")
+        bottom_rows = int(bottom_layout["active_operator_local_left_entries"])
+        top_rows = int(top_layout["active_operator_local_left_entries"])
+        modal_count = int(context.layout.modal_count)
+        original_bind_entries = local_rows + 2 * local_columns
+        if int(rank_inventory.get("original_A_validation_vec_entries", -1)) != (
+            original_bind_entries
+        ):
+            raise ValueError(
+                "V13 original-A Vec layouts differ from the builder's validated layout"
+            )
+        scalar_bytes = int(np.dtype(PETSc.ScalarType).itemsize)
+        original_bind_bytes = original_bind_entries * scalar_bytes
+        # _true_residual_metrics holds one full residual, the three rhs/residual/
+        # solution bottom+top splits, and two side-A values concurrently.
+        residual_petcs_entries = (
+            local_rows + 4 * (bottom_rows + top_rows)
+        )
+        residual_petcs_bytes = residual_petcs_entries * scalar_bytes
+        modal_owner = int(context.layout.modal_owner)
+        # Three split() results remain live.  On the owner, each split also
+        # makes a local modal copy before its replicated broadcast result.
+        residual_modal_array_slots = 3 + (3 if int(comm.rank) == modal_owner else 0)
+        # The denominator calculation additionally materializes one modal
+        # projection/constraint product at a time while the split results live.
+        residual_modal_array_slots += 1
+        residual_modal_bytes = residual_modal_array_slots * modal_count * scalar_bytes
+        # The exact-zero original-A modal-row check can hold rhs, two uncancelled
+        # terms, their sum/residual, and owner-local copies.  Count the source-
+        # visible worst branch separately from the builder's B-action inventory.
+        modal_row_callback_slots = 5 + (3 if int(comm.rank) == modal_owner else 0)
+        modal_row_callback_bytes = modal_row_callback_slots * modal_count * scalar_bytes
+
+        workspace = restart32_components if target_restart == 32 else restart64_components
+        ksp_bytes = int(workspace["workspace_bytes"])
+        new_bind_bytes = (
+            0 if original_a_binding_already_in_fresh_b else original_bind_bytes
+        )
+        known_common = ksp_bytes + new_bind_bytes
+        pc_temporary = int(builder_pc_temporary[int(comm.rank)])
+        pc_replicated = (
+            int(builder_pc_replicated[int(comm.rank)]) + modal_row_callback_bytes
+        )
+        residual_temporary = residual_petcs_bytes
+        residual_replicated = residual_modal_bytes
+        pc_phase_rank_bytes = known_common + pc_temporary + pc_replicated
+        residual_phase_rank_bytes = (
+            known_common + residual_temporary + residual_replicated
+        )
+        local_row = {
+            "rank": int(comm.rank),
+            "operator_local_rows": local_rows,
+            "operator_local_columns": local_columns,
+            "complex_scalar_bytes": scalar_bytes,
+            "pointer_bytes": pointer_bytes,
+            "PETSc_integer_bytes": integer_bytes,
+            "restart32_KSP_workspace_components": restart32_components,
+            "restart64_KSP_workspace_components": restart64_components,
+            "restart32_workspace_bytes": restart32_bytes,
+            "restart64_workspace_bytes": restart64_bytes,
+            "builder_outer_PC_phase_known_bytes_not_readded": int(
+                builder_pc_known[int(comm.rank)]
+            ),
+            "builder_outer_PC_phase_temporary_bytes": pc_temporary,
+            "builder_outer_PC_phase_replicated_bytes": int(
+                builder_pc_replicated[int(comm.rank)]
+            ),
+            "original_A_binding_vec_entries": original_bind_entries,
+            "original_A_binding_vec_bytes": original_bind_bytes,
+            "original_A_binding_already_in_fresh_B": (
+                original_a_binding_already_in_fresh_b
+            ),
+            "true_residual_bottom_local_rows": bottom_rows,
+            "true_residual_top_local_rows": top_rows,
+            "true_residual_PETSc_vec_entries": residual_petcs_entries,
+            "true_residual_PETSc_vec_bytes": residual_petcs_bytes,
+            "true_residual_modal_array_slots": residual_modal_array_slots,
+            "true_residual_modal_array_bytes": residual_modal_bytes,
+            "original_A_modal_row_callback_array_slots": modal_row_callback_slots,
+            "original_A_modal_row_callback_array_bytes": modal_row_callback_bytes,
+            "target_restart": target_restart,
+            "modal_count": modal_count,
+            "modal_owner": modal_owner,
+            "PC_phase_additional_bytes": pc_phase_rank_bytes,
+            "original_A_residual_phase_additional_bytes": residual_phase_rank_bytes,
+            "selected_phase_additional_bytes": max(
+                pc_phase_rank_bytes, residual_phase_rank_bytes
+            ),
+        }
+    except Exception as exc:  # noqa: BLE001 - synchronize local Vec/model errors
+        local_error = f"{type(exc).__name__}: {exc}"
+    rows = comm.allgather((local_error, local_row))
+    errors = [
+        f"rank {rank}: {error}"
+        for rank, (error, _row) in enumerate(rows)
+        if error is not None
+    ]
+    rank_rows = [row for error, row in rows if error is None]
+    if errors or len(rank_rows) != int(comm.size):
+        raise RuntimeError(
+            "V13 outer restart workspace model failed collectively: "
+            + "; ".join(errors)
+        )
+    if [row.get("rank") for row in rank_rows] != list(range(int(comm.size))):
+        raise RuntimeError("V13 outer restart workspace rank order is invalid")
+    global_rows = sum(int(row["operator_local_rows"]) for row in rank_rows)
+    global_columns = sum(int(row["operator_local_columns"]) for row in rank_rows)
+    matrix_rows, matrix_columns = map(int, operator.getSize())
+    if global_rows != matrix_rows or global_columns != matrix_columns:
+        raise RuntimeError("V13 outer restart Vec ownership is incomplete")
+    known = [
+        int(row["restart32_workspace_bytes"] if target_restart == 32 else row["restart64_workspace_bytes"])
+        + (
+            0
+            if original_a_binding_already_in_fresh_b
+            else int(row["original_A_binding_vec_bytes"])
+        )
+        for row in rank_rows
+    ]
+    phase_reports = {
+        "outer_PC_with_retained_workspaces": {
+            "known_additional_bytes_by_rank": known,
+            "additional_temporary_bytes_by_rank": [
+                int(row["builder_outer_PC_phase_temporary_bytes"])
+                for row in rank_rows
+            ],
+            "additional_replicated_bytes_by_rank": [
+                int(row["builder_outer_PC_phase_replicated_bytes"])
+                + int(row["original_A_modal_row_callback_array_bytes"])
+                for row in rank_rows
+            ],
+        },
+        "outer_original_A_true_residual": {
+            "known_additional_bytes_by_rank": known,
+            "additional_temporary_bytes_by_rank": [
+                int(row["true_residual_PETSc_vec_bytes"]) for row in rank_rows
+            ],
+            "additional_replicated_bytes_by_rank": [
+                int(row["true_residual_modal_array_bytes"]) for row in rank_rows
+            ],
+        },
+    }
+    for components in phase_reports.values():
+        components["additional_bytes_by_rank"] = [
+            components["known_additional_bytes_by_rank"][rank]
+            + components["additional_temporary_bytes_by_rank"][rank]
+            + components["additional_replicated_bytes_by_rank"][rank]
+            for rank in range(int(comm.size))
+        ]
+    phase_totals = {
+        name: sum(components["additional_bytes_by_rank"])
+        for name, components in phase_reports.items()
+    }
+    selected_phase = max(phase_totals, key=phase_totals.get)
+    selected = phase_reports[selected_phase]
+    additional = list(selected["additional_bytes_by_rank"])
+    selected_known = list(selected["known_additional_bytes_by_rank"])
+    temporary = list(selected["additional_temporary_bytes_by_rank"])
+    replicated = list(selected["additional_replicated_bytes_by_rank"])
+    total = sum(additional)
+    return {
+        "phase": phase,
+        "target_restart": target_restart,
+        "workspace_model": (
+            "petsc-3.19.6-fgmres-v-z-scalar-pointer-plus-live-phase-inventory-v1"
+        ),
+        "workspace_model_scope": (
+            "source-derived countable slots plus exact builder PC/B inventory and "
+            "V13 original-A temporary layouts; not an RSS upper bound"
+        ),
+        "restart32_workspace_is_already_in_fresh_B": (
+            restart32_already_in_fresh_b
+        ),
+        "restart32_workspace_is_charged_as_new": not restart32_already_in_fresh_b,
+        "original_A_binding_vecs_are_already_in_fresh_B": (
+            original_a_binding_already_in_fresh_b
+        ),
+        "builder_outer_PC_phase_source": (
+            "modal_system.build_audit.sample8_cost_report.phase_memory_projection."
+            "phase_reports.outer_PC_with_retained_workspaces"
+        ),
+        "builder_outer_PC_known_additions_reused_as_delta": False,
+        "builder_outer_PC_temporary_and_replicated_payload_reused": True,
+        "outer_restart_workspace_by_rank": rank_rows,
+        "existing_restart32_workspace_bytes_by_rank": [
+            int(row["restart32_workspace_bytes"])
+            if restart32_already_in_fresh_b
+            else 0
+            for row in rank_rows
+        ],
+        "restart64_workspace_bytes_by_rank": [
+            int(row["restart64_workspace_bytes"]) for row in rank_rows
+        ],
+        "target_restart_workspace_bytes_by_rank": [
+            int(row["restart32_workspace_bytes"] if target_restart == 32 else row["restart64_workspace_bytes"])
+            for row in rank_rows
+        ],
+        "known_additional_bytes_by_rank": selected_known,
+        "additional_bytes_by_rank": additional,
+        "additional_temporary_bytes_by_rank": temporary,
+        "additional_replicated_bytes_by_rank": replicated,
+        "unitemized_allocator_and_MPI_scratch": (
+            "unknown; W_policy_reserve_is_applied_separately"
+        ),
+        "original_A_binding_vec_bytes_by_rank": [
+            int(row["original_A_binding_vec_bytes"]) for row in rank_rows
+        ],
+        "true_residual_PETSc_vec_bytes_by_rank": [
+            int(row["true_residual_PETSc_vec_bytes"]) for row in rank_rows
+        ],
+        "true_residual_modal_array_bytes_by_rank": [
+            int(row["true_residual_modal_array_bytes"]) for row in rank_rows
+        ],
+        "phase_memory_projection": {
+            "scope": "max_simultaneous_KSP_plus_PC_or_original_A_residual_phase",
+            "phase_reports": phase_reports,
+            "phase_total_bytes": phase_totals,
+            "selected_phase": selected_phase,
+            "selected_phase_payload_bytes": total,
+        },
+    }
+
+
+def _task041_v13_true_residual_operands_match(
+    audit: Any, residual_values: Mapping[str, float]
+) -> bool:
+    """Check each recorded ratio against its existing row-local denominator."""
+
+    if (
+        not isinstance(audit, Mapping)
+        or audit.get("scope") != "one_true_residual_snapshot_row"
+    ):
+        return False
+    specifications = {
+        "global": (
+            "global_true_relative_residual",
+            "original_rhs_norm_for_this_solve",
+            {"original_rhs_norm", "floor"},
+        ),
+        "bottom": (
+            "bottom_true_relative_residual",
+            "recomputed_from_this_true_residual_row",
+            {"rhs_block_norm", "A_x_block_norm", "coupling_block_norm", "floor"},
+        ),
+        "top": (
+            "top_true_relative_residual",
+            "recomputed_from_this_true_residual_row",
+            {"rhs_block_norm", "A_x_block_norm", "coupling_block_norm", "floor"},
+        ),
+        "modal": (
+            "modal_true_relative_residual",
+            "recomputed_from_this_true_residual_row",
+            {
+                "rhs_modal_norm",
+                "bottom_projection_norm",
+                "top_projection_norm",
+                "modal_constraint_action_norm",
+                "floor",
+            },
+        ),
+    }
+    for section, (metric, expected_scope, expected_components) in specifications.items():
+        record = audit.get(section)
+        components = (
+            record.get("denominator_components")
+            if isinstance(record, Mapping)
+            else None
+        )
+        if (
+            not isinstance(record, Mapping)
+            or record.get("denominator_scope") != expected_scope
+            or not isinstance(components, Mapping)
+            or not expected_components.issubset(components)
+        ):
+            return False
+        try:
+            numerator = float(record["numerator_norm"])
+            denominator = float(record["denominator_norm"])
+            component_values = [float(components[name]) for name in expected_components]
+            recomputed_denominator = max(component_values)
+            recomputed_ratio = numerator / denominator
+            observed_ratio = float(residual_values[metric])
+        except (KeyError, TypeError, ValueError, OverflowError, ZeroDivisionError):
+            return False
+        if (
+            not np.isfinite(numerator)
+            or numerator < 0.0
+            or not np.isfinite(denominator)
+            or denominator <= 0.0
+            or any(
+                not np.isfinite(component) or component < 0.0
+                for component in component_values
+            )
+            or not np.isclose(
+                denominator, recomputed_denominator, rtol=1.0e-12, atol=0.0
+            )
+            or not np.isclose(
+                observed_ratio, recomputed_ratio, rtol=1.0e-12, atol=0.0
+            )
+        ):
+            return False
+    return True
+
+
+def _task041_v13_outer_restart_loss_evidence(
+    history_by_iteration: Mapping[int, Mapping[str, Any]], *, threshold: float
+) -> dict[str, Any]:
+    """Compare equal 16-step true-residual windows before and after restart.
+
+    This is a predeclared progress-loss heuristic, not a convergence theorem.
+    Residuals use the existing full true-residual formulas: global residuals
+    are divided by the original RHS norm, while each block denominator is
+    recomputed from that row's existing RHS/action/coupling terms.  Those
+    operands are retained with every sample.  A restart is only a candidate when
+    the pre-window made material global progress and the post-window does not
+    make material progress on the global residual or any still-unpassed block.
+    """
+
+    keys = (
+        "global_true_relative_residual",
+        "bottom_true_relative_residual",
+        "top_true_relative_residual",
+        "modal_true_relative_residual",
+    )
+    pre_iterations = tuple(range(16, 33))
+    post_iterations = tuple(range(32, 49))
+    pre_rows = [history_by_iteration.get(index) for index in pre_iterations]
+    post_rows = [history_by_iteration.get(index) for index in post_iterations]
+    pre_baseline = history_by_iteration.get(16)
+    boundary = history_by_iteration.get(32)
+    minimum_progress = float(
+        _TASK041_V13_CONSISTENT_MODAL_POLICY[
+            "outer_restart_loss_minimum_progress_fraction"
+        ]
+    )
+    threshold_value = float(threshold)
+
+    def sample_rows(
+        iterations: Sequence[int], rows: Sequence[Mapping[str, Any] | None]
+    ) -> list[dict[str, Any]]:
+        output = []
+        for iteration, row in zip(iterations, rows, strict=True):
+            if not isinstance(row, Mapping):
+                continue
+            values = {}
+            for key in keys:
+                try:
+                    values[key] = float(row[key])
+                except (KeyError, TypeError, ValueError, OverflowError):
+                    values = {}
+                    break
+            row_audit = row.get("true_residual_operands")
+            if values and _task041_v13_true_residual_operands_match(
+                row_audit, values
+            ):
+                output.append(
+                    {
+                        "iteration": iteration,
+                        "residuals": values,
+                        "true_residual_operands": dict(row_audit),
+                    }
+                )
+        return output
+
+    pre_samples = sample_rows(pre_iterations, pre_rows)
+    post_samples = sample_rows(post_iterations, post_rows)
+
+    def incomplete(status: str) -> dict[str, Any]:
+        return {
+            "rule_id": _TASK041_V13_CONSISTENT_MODAL_POLICY[
+                "outer_restart_loss_evidence_rule"
+            ],
+            "boundary_iteration": 32,
+            "pre_window": [16, 32],
+            "post_window": [32, 48],
+            "steps_per_window": 16,
+            "minimum_progress_fraction": minimum_progress,
+            "denominator_basis": {
+                "global": "original_rhs_norm_for_this_solve",
+                "bottom_top_modal": (
+                    "existing per-row component-max formula with operands retained per sample"
+                ),
+            },
+            "pre_window_baseline_iteration": 16,
+            "restart_boundary_baseline_iteration": 32,
+            "pre_window_samples": pre_samples,
+            "post_window_samples": post_samples,
+            "clear_restart_loss": False,
+            "evidence_status": status,
+        }
+
+    if (
+        len(pre_samples) != len(pre_iterations)
+        or len(post_samples) != len(post_iterations)
+        or not isinstance(boundary, Mapping)
+        or not isinstance(pre_baseline, Mapping)
+    ):
+        return incomplete("missing_complete_pre_or_post_true_residual_window")
+
+    pre_values = [item["residuals"] for item in pre_samples]
+    post_values = [item["residuals"] for item in post_samples]
+    finite = all(
+        np.isfinite(value) and value >= 0.0
+        for values in (*pre_values, *post_values)
+        for value in values.values()
+    ) and np.isfinite(threshold_value) and threshold_value >= 0.0
+    if not finite:
+        return incomplete("nonfinite_or_negative_true_residual_or_threshold")
+
+    pre_baseline_values = {
+        key: float(pre_baseline[key]) for key in keys
+    }
+    boundary_values = {key: float(boundary[key]) for key in keys}
+    required = [
+        key
+        for key in keys
+        if key == "global_true_relative_residual"
+        or boundary_values[key] > threshold_value
+    ]
+
+    pre_best = {key: min(row[key] for row in pre_values) for key in keys}
+    post_best = {key: min(row[key] for row in post_values) for key in keys}
+
+    def improvement_fraction(baseline: float, best: float) -> float | None:
+        if baseline < 0.0 or best < 0.0 or best > baseline:
+            return None
+        if baseline == 0.0:
+            return 0.0
+        return float((baseline - best) / baseline)
+
+    pre_improvement = {
+        key: improvement_fraction(pre_baseline_values[key], pre_best[key])
+        for key in keys
+    }
+    post_improvement = {
+        key: improvement_fraction(boundary_values[key], post_best[key])
+        for key in keys
+    }
+    if any(value is None for value in (*pre_improvement.values(), *post_improvement.values())):
+        return incomplete("invalid_window_baseline_or_best_relationship")
+
+    pre_global_improvement = pre_improvement["global_true_relative_residual"]
+    pre_global_progress = bool(
+        pre_global_improvement is not None
+        and pre_global_improvement >= minimum_progress
+    )
+    post_unpassed_improvements = {
+        key: post_improvement[key] for key in required
+    }
+    post_is_stalled = all(
+        value is not None and value < minimum_progress
+        for value in post_unpassed_improvements.values()
+    )
+    no_unpassed_block_effective_improvement = all(
+        key == "global_true_relative_residual"
+        or (
+            post_improvement[key] is not None
+            and post_improvement[key] < minimum_progress
+        )
+        for key in required
+    )
+    clear = bool(
+        pre_global_progress
+        and post_is_stalled
+        and no_unpassed_block_effective_improvement
+    )
+    return {
+        "rule_id": _TASK041_V13_CONSISTENT_MODAL_POLICY[
+            "outer_restart_loss_evidence_rule"
+        ],
+        "boundary_iteration": 32,
+        "pre_window": [16, 32],
+        "post_window": [32, 48],
+        "steps_per_window": 16,
+        "minimum_progress_fraction": minimum_progress,
+        "denominator_basis": {
+            "global": "original_rhs_norm_for_this_solve",
+            "bottom_top_modal": (
+                "existing per-row component-max formula with operands retained per sample"
+            ),
+        },
+        "pre_window_baseline_iteration": 16,
+        "restart_boundary_baseline_iteration": 32,
+        "required_unpassed_metrics_at_boundary": required,
+        "pre_window_baseline_by_metric": pre_baseline_values,
+        "pre_window_best_by_metric": pre_best,
+        "pre_window_improvement_fraction_by_metric": pre_improvement,
+        "restart_boundary_baseline_by_metric": boundary_values,
+        "post_window_best_by_metric": post_best,
+        "post_window_improvement_fraction_by_metric": post_improvement,
+        "pre_restart_global_progress_at_least_10_percent": pre_global_progress,
+        "post_restart_global_and_unpassed_blocks_below_10_percent": post_is_stalled,
+        "unpassed_blocks_with_sustained_effective_progress": [
+            key
+            for key in required
+            if key != "global_true_relative_residual"
+            and post_improvement[key] is not None
+            and post_improvement[key] >= minimum_progress
+        ],
+        "pre_window_samples": pre_samples,
+        "post_window_samples": post_samples,
+        "clear_restart_loss": clear,
+        "evidence_status": "evaluated",
+        "evidence_interpretation": (
+            "heuristic_candidate_only; not_a_convergence_theorem"
+        ),
+    }
+
+
+def _task041_v13_merge_running_best(
+    previous: Mapping[str, float], current: Mapping[str, float]
+) -> dict[str, float]:
+    """Never raise a stalled-window baseline after a worse full window."""
+
+    keys = (
+        "global_true_relative_residual",
+        "bottom_true_relative_residual",
+        "top_true_relative_residual",
+        "modal_true_relative_residual",
+    )
+    return {
+        key: min(float(previous[key]), float(current[key])) for key in keys
+    }
+
+
+def _task041_v13_outer_best_window(
+    baseline: Mapping[str, float],
+    samples: Sequence[Mapping[str, Any]],
+    *,
+    start_iteration: int,
+    end_iteration: int,
+    threshold: float,
+) -> dict[str, Any]:
+    """Summarize one exact 16-step window using its best true residuals."""
+
+    keys = (
+        "global_true_relative_residual",
+        "bottom_true_relative_residual",
+        "top_true_relative_residual",
+        "modal_true_relative_residual",
+    )
+    if (
+        end_iteration - start_iteration != 16
+        or len(samples) != 16
+        or any(
+            int(row.get("iteration", -1)) != start_iteration + offset + 1
+            for offset, row in enumerate(samples)
+        )
+    ):
+        return {
+            "start_iteration": int(start_iteration),
+            "end_iteration": int(end_iteration),
+            "status": "incomplete_true_residual_window",
+            "stalled": False,
+        }
+    values = [
+        {key: float(row[key]) for key in keys} for row in samples
+    ]
+    denominator_records: list[dict[str, Any]] = []
+    for row, residual_values in zip(samples, values, strict=True):
+        row_audit = row.get("true_residual_operands")
+        if not _task041_v13_true_residual_operands_match(
+            row_audit, residual_values
+        ):
+            return {
+                "start_iteration": int(start_iteration),
+                "end_iteration": int(end_iteration),
+                "status": "missing_or_inconsistent_true_residual_denominator_operands",
+                "stalled": False,
+            }
+        denominator_records.append(dict(row_audit))
+    if any(
+        not np.isfinite(value) or value < 0.0
+        for row in values
+        for value in row.values()
+    ):
+        return {
+            "start_iteration": int(start_iteration),
+            "end_iteration": int(end_iteration),
+            "status": "invalid_true_residual_window",
+            "stalled": False,
+        }
+    best = {key: min(row[key] for row in values) for key in keys}
+    end = dict(values[-1])
+    improvement: dict[str, float | None] = {}
+    for key in keys:
+        base = float(baseline[key])
+        if base <= 0.0:
+            improvement[key] = 0.0 if best[key] == 0.0 else None
+        else:
+            fraction = (base - best[key]) / base
+            improvement[key] = float(fraction) if np.isfinite(fraction) else None
+    unmet = [key for key in keys if end[key] > float(threshold)]
+    stalled = bool(
+        unmet
+        and all(
+            improvement[key] is not None and float(improvement[key]) < 0.10
+            for key in unmet
+        )
+    )
+    return {
+        "start_iteration": int(start_iteration),
+        "end_iteration": int(end_iteration),
+        "status": "complete",
+        "baseline_best_by_metric": dict(baseline),
+        "best_by_metric": best,
+        "end_by_metric": end,
+        "improvement_fraction_by_metric": improvement,
+        "unmet_metrics_at_end": unmet,
+        "stalled": stalled,
+        "sample_count": 16,
+        "interpretation": "predeclared_16_step_best_residual_stagnation_heuristic",
+        "samples": [
+            {
+                "iteration": int(row["iteration"]),
+                "residuals": values[index],
+                "true_residual_operands": denominator_records[index],
+            }
+            for index, row in enumerate(samples)
+        ],
+    }
 
 
 def solve_hybrid_block_ldu_iterative(
@@ -9321,7 +13554,63 @@ def solve_hybrid_block_ldu_iterative(
     history_cache: dict[int, dict[str, Any]] = {}
     history_evaluations = 0
     started = time.perf_counter()
+    outer_comm = operator.getComm().tompi4py()
     rhs_norm = max(float(rhs.norm()), _TINY)
+    v13_modal_system = (
+        context.action_modal_schur_system
+        if isinstance(
+            context.action_modal_schur_system,
+            Task041V13ConsistentModalSurrogateSystem,
+        )
+        else None
+    )
+    v13_outer_enabled = v13_modal_system is not None
+    if v13_outer_enabled and (
+        str(config.ksp_type).lower() != "fgmres"
+        or float(config.threshold)
+        != float(_TASK041_V13_CONSISTENT_MODAL_POLICY["outer_threshold"])
+    ):
+        raise ValueError(
+            "V13 outer solve requires the original right-FGMRES and 5e-9 residual gate"
+        )
+    current_outer_restart = (
+        int(_TASK041_V13_CONSISTENT_MODAL_POLICY["outer_restart_initial"])
+        if v13_outer_enabled
+        else int(config.restart)
+    )
+    outer_krylov_origin = 0
+    outer_iteration_offset = 0
+    v13_seen_iterations: set[int] = set()
+    v13_window_records: list[dict[str, Any]] = []
+    v13_window_baseline: dict[str, float] | None = None
+    v13_window_segment_start = 32
+    v13_consecutive_stalled_windows = 0
+    v13_restart64_pending: dict[str, Any] | None = None
+    v13_finite_stop_pending: dict[str, Any] | None = None
+    v13_outer_control: dict[str, Any] = {
+        "schema": "task041.v13.outer_control.v1",
+        "policy_id": TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+        "enabled": bool(v13_outer_enabled),
+        "initial_restart": int(current_outer_restart),
+        "configured_max_it": int(config.max_it),
+        "final_restart": int(current_outer_restart),
+        "restart64_trial_count": 0,
+        "restart_history": [
+            {"iteration": 0, "restart": int(current_outer_restart), "reason": "initial"}
+        ]
+        if v13_outer_enabled
+        else [],
+        "restart64_evidence": None,
+        "restart64_authority": None,
+        "finite_stop_windows": v13_window_records,
+        "finite_stop": None,
+        "residual_samples": [],
+        "workspace_unknowns": (
+            "allocator/MPI scratch remain represented only by the independent policy W"
+            if v13_outer_enabled
+            else None
+        ),
+    }
     modal_bundle_for_stop = context.action_modal_schur_system
     backup_policy_for_stop = (
         isinstance(modal_bundle_for_stop, _FixedH6ModalGmresResearchBundle)
@@ -9333,6 +13622,13 @@ def solve_hybrid_block_ldu_iterative(
     rhs_local_sha256_at_entry = None
     if backup_policy_for_stop:
         rhs_local_sha256_at_entry = hashlib.sha256(
+            np.ascontiguousarray(
+                np.asarray(rhs.getArray(readonly=True), dtype=np.complex128)
+            ).tobytes()
+        ).hexdigest()
+    v13_rhs_local_sha256_at_entry = None
+    if v13_outer_enabled:
+        v13_rhs_local_sha256_at_entry = hashlib.sha256(
             np.ascontiguousarray(
                 np.asarray(rhs.getArray(readonly=True), dtype=np.complex128)
             ).tobytes()
@@ -9353,8 +13649,15 @@ def solve_hybrid_block_ldu_iterative(
             current_solution = monitor_solution
         else:
             current_solution = current.buildSolution(monitor_solution)
+        residual_operand_audit: dict[str, Any] | None = (
+            {} if v13_outer_enabled else None
+        )
         global_true, block = _true_residual_metrics(
-            operator, rhs, current_solution, context
+            operator,
+            rhs,
+            current_solution,
+            context,
+            audit=residual_operand_audit,
         )
         inventory = context.inventory
         row = {
@@ -9371,6 +13674,34 @@ def solve_hybrid_block_ldu_iterative(
             "top_action_apply_count": int(inventory["top_action_apply_count"]),
             "elapsed_seconds": float(time.perf_counter() - started),
         }
+        if v13_outer_enabled:
+            row["true_residual_operands"] = residual_operand_audit
+            relative_iteration = int(iteration) - int(outer_krylov_origin)
+            is_registered_checkpoint = int(iteration) in {1, 4, 8, 16, 32}
+            is_restart_boundary = bool(
+                relative_iteration > 0
+                and relative_iteration % int(current_outer_restart) == 0
+            )
+            row["task041_v13_outer_checkpoint"] = bool(
+                is_registered_checkpoint or is_restart_boundary
+            )
+            row["task041_v13_restart_boundary"] = (
+                bool(is_restart_boundary)
+            )
+            row["task041_v13_effective_restart"] = int(current_outer_restart)
+            if is_registered_checkpoint or is_restart_boundary or int(iteration) == 48:
+                local_solution = np.asarray(
+                    current_solution.getArray(readonly=True), dtype=np.complex128
+                )
+                row["solution_local_sha256"] = hashlib.sha256(
+                    np.ascontiguousarray(local_solution).tobytes()
+                ).hexdigest()
+                row["solution_ownership_range"] = [
+                    int(value) for value in current_solution.getOwnershipRange()
+                ]
+                row["solution_finite_local"] = bool(
+                    np.isfinite(local_solution).all()
+                )
         modal_inner = inventory.get("modal_inner_solver")
         if isinstance(modal_inner, dict):
             last_inner = modal_inner.get("last_solve") or {}
@@ -9419,11 +13750,243 @@ def solve_hybrid_block_ldu_iterative(
         history.append(row)
         history_cache[int(iteration)] = row
         history_evaluations += 1
-        if progress_callback is not None:
+        if progress_callback is not None and (
+            not v13_outer_enabled or current is None
+        ):
             progress_callback(dict(row))
         return row
 
+    def observe_v13_outer_row(row: Mapping[str, Any]) -> dict[str, Any] | None:
+        nonlocal v13_window_baseline, v13_consecutive_stalled_windows
+        nonlocal v13_restart64_pending, v13_finite_stop_pending
+        if not v13_outer_enabled:
+            return None
+        iteration = int(row["iteration"])
+        if iteration in v13_seen_iterations:
+            return None
+        v13_seen_iterations.add(iteration)
+        residual_fields = (
+            "global_true_relative_residual",
+            "bottom_true_relative_residual",
+            "top_true_relative_residual",
+            "modal_true_relative_residual",
+        )
+        residuals = {key: float(row[key]) for key in residual_fields}
+        if any(not np.isfinite(value) or value < 0.0 for value in residuals.values()):
+            return None
+        if row.get("task041_v13_outer_checkpoint") is True:
+            v13_outer_control["residual_samples"].append(
+                {
+                    "iteration": iteration,
+                    "residuals": dict(residuals),
+                    "true_residual_operands": dict(
+                        row["true_residual_operands"]
+                    ),
+                    "elapsed_seconds": float(row["elapsed_seconds"]),
+                    "pc_apply_count": int(row["pc_apply_count"]),
+                    "bottom_action_apply_count": int(
+                        row["bottom_action_apply_count"]
+                    ),
+                    "top_action_apply_count": int(row["top_action_apply_count"]),
+                }
+            )
+        threshold = float(
+            _TASK041_V13_CONSISTENT_MODAL_POLICY["outer_threshold"]
+        )
+        if iteration == 32:
+            v13_window_baseline = dict(residuals)
+
+        if (
+            iteration == 48
+            and v13_restart64_pending is None
+            and v13_outer_control.get("restart64_decision_resolved") is not True
+        ):
+            evidence = _task041_v13_outer_restart_loss_evidence(
+                history_cache, threshold=threshold
+            )
+            restart_loss = bool(evidence["clear_restart_loss"])
+            signature = json.dumps(
+                evidence, sort_keys=True, separators=(",", ":"), allow_nan=False
+            )
+            signatures = outer_comm.allgather(signature)
+            if any(value != signatures[0] for value in signatures[1:]):
+                raise RuntimeError(
+                    "V13 outer restart-loss evidence differs across ranks"
+                )
+            v13_outer_control["restart64_evidence"] = evidence
+            if restart_loss:
+                v13_restart64_pending = {
+                    "status": "restart64_candidate_at_safe_boundary",
+                    "evidence": evidence,
+                    "observed_at_iteration": iteration,
+                }
+                row["task041_v13_outer_checkpoint"] = True
+                row["task041_v13_restart_transition_boundary"] = True
+                if not any(
+                    int(item.get("iteration", -1)) == iteration
+                    for item in v13_outer_control["residual_samples"]
+                ):
+                    v13_outer_control["residual_samples"].append(
+                        {
+                            "iteration": iteration,
+                            "residuals": dict(residuals),
+                            "true_residual_operands": dict(
+                                row["true_residual_operands"]
+                            ),
+                            "elapsed_seconds": float(row["elapsed_seconds"]),
+                            "pc_apply_count": int(row["pc_apply_count"]),
+                            "bottom_action_apply_count": int(
+                                row["bottom_action_apply_count"]
+                            ),
+                            "top_action_apply_count": int(
+                                row["top_action_apply_count"]
+                            ),
+                            "solution_local_sha256": row.get(
+                                "solution_local_sha256"
+                            ),
+                        }
+                    )
+                return dict(v13_restart64_pending)
+            v13_outer_control["restart64_decision_resolved"] = True
+            v13_outer_control["restart64_decision"] = {
+                "status": "retained_restart32_no_clear_restart_loss",
+                "evidence": evidence,
+            }
+
+        if (
+            iteration > v13_window_segment_start
+            and (iteration - v13_window_segment_start) % 16 == 0
+            and v13_window_baseline is not None
+            and v13_outer_control.get("restart64_decision_resolved") is True
+            and v13_restart64_pending is None
+        ):
+            start_iteration = iteration - 15
+            boundary_iteration = iteration - 16
+            boundary_row = history_cache.get(boundary_iteration)
+            samples = [
+                history_cache.get(index)
+                for index in range(start_iteration, iteration + 1)
+            ]
+            if not isinstance(boundary_row, Mapping) or not all(
+                isinstance(sample, Mapping) for sample in samples
+            ):
+                record = {
+                    "start_iteration": boundary_iteration,
+                    "end_iteration": iteration,
+                    "status": "incomplete_true_residual_window",
+                    "stalled": False,
+                }
+                v13_window_records.append(record)
+                v13_consecutive_stalled_windows = 0
+                return None
+            record = _task041_v13_outer_best_window(
+                v13_window_baseline,
+                [sample for sample in samples if isinstance(sample, Mapping)],
+                start_iteration=iteration - 16,
+                end_iteration=iteration,
+                threshold=threshold,
+            )
+            if record.get("status") != "complete":
+                v13_window_records.append(record)
+                v13_consecutive_stalled_windows = 0
+                return None
+            boundary_values = {
+                key: float(boundary_row[key])
+                for key in residual_fields
+            }
+            if any(
+                not np.isfinite(value) or value < 0.0
+                for value in boundary_values.values()
+            ):
+                record = {
+                    "start_iteration": boundary_iteration,
+                    "end_iteration": iteration,
+                    "status": "invalid_shared_window_boundary",
+                    "stalled": False,
+                }
+                v13_window_records.append(record)
+                v13_consecutive_stalled_windows = 0
+                return None
+            record["start_boundary_iteration"] = boundary_iteration
+            record["start_boundary_true_residuals"] = boundary_values
+            best = dict(record["best_by_metric"])
+            stalled = bool(record["stalled"])
+            canonical = json.dumps(
+                record, sort_keys=True, separators=(",", ":"), allow_nan=False
+            )
+            window_signatures = outer_comm.allgather(canonical)
+            if any(value != window_signatures[0] for value in window_signatures[1:]):
+                raise RuntimeError("V13 outer 16-step window differs across ranks")
+            v13_window_records.append(record)
+            v13_window_records[:] = v13_window_records[-4:]
+            v13_consecutive_stalled_windows = (
+                v13_consecutive_stalled_windows + 1 if stalled else 0
+            )
+            v13_window_baseline = _task041_v13_merge_running_best(
+                v13_window_baseline, best
+            )
+            record["running_best_after_window"] = dict(v13_window_baseline)
+            if v13_consecutive_stalled_windows >= 2:
+                v13_finite_stop_pending = {
+                    "schema": "task041.v13.outer_finite_stop.v1",
+                    "status": "two_consecutive_complete_16_step_windows_stalled",
+                    "stop_reason": "task041_v13_outer_best_residual_stagnation_after_restart_decision",
+                    "reason_name": "DIVERGED_MAX_IT",
+                    "reason_code": int(
+                        PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT
+                    ),
+                    "runtime_reason_source": (
+                        "petsc4py.PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT"
+                    ),
+                    "configured_max_it": int(config.max_it),
+                    "iterations_at_stop": iteration,
+                    "max_it_reached": False,
+                    "converged": False,
+                    "restart64_trial_count": int(
+                        v13_outer_control["restart64_trial_count"]
+                    ),
+                    "windows": [dict(item) for item in v13_window_records[-2:]],
+                    "original_rhs_norm_at_solve_entry": float(rhs_norm),
+                    "current_ksp_iterate_available": True,
+                    "retained_solution_checkpoint": (
+                        "Task039 retained_solution_checkpoint -> owner-sharded packet"
+                    ),
+                }
+                return dict(v13_finite_stop_pending)
+        return None
+
     try:
+        if v13_outer_enabled:
+            initial_workspace_report = _task041_v13_outer_restart_workspace_report(
+                operator,
+                rhs,
+                solution,
+                context,
+                outer_comm,
+                phase="outer_restart32_workspace",
+            )
+            initial_workspace_authority = (
+                v13_modal_system.authorize_outer_workspace(
+                    "outer_restart32_workspace", initial_workspace_report
+                )
+            )
+            v13_outer_control["initial_restart32_workspace_report"] = (
+                initial_workspace_report
+            )
+            v13_outer_control["initial_restart32_authority"] = (
+                initial_workspace_authority
+            )
+            if initial_workspace_authority.get("status") != "pass":
+                raise MemoryError(
+                    "V13 initial restart-32 workspace was refused by the fresh resource gate: "
+                    + "; ".join(
+                        map(
+                            str,
+                            initial_workspace_authority.get("reasons", []),
+                        )
+                    )
+                )
+        context.bind_v13_original_global_operator(operator)
         snapshot(0, 1.0 if rhs_norm > _TINY else 0.0, None)
         ksp.setOperators(operator)
         ksp.setType(
@@ -9431,7 +13994,7 @@ def solve_hybrid_block_ldu_iterative(
             if str(config.ksp_type).lower() == "gmres"
             else PETSc.KSP.Type.FGMRES
         )
-        ksp.setGMRESRestart(int(config.restart))
+        ksp.setGMRESRestart(int(current_outer_restart))
         ksp.setPCSide(PETSc.PC.Side.RIGHT)
         ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
         ksp.setInitialGuessNonzero(False)
@@ -9447,7 +14010,15 @@ def solve_hybrid_block_ldu_iterative(
         def convergence_test(
             current: PETSc.KSP, iteration: int, residual_norm: float
         ) -> int:
-            row = snapshot(int(iteration), float(residual_norm) / rhs_norm, current)
+            if v13_outer_enabled and outer_iteration_offset > 0 and int(iteration) == 0:
+                # The resumed KSP starts from the retained nonzero x at the
+                # prior global iteration.  Reusing that row as a new local
+                # iteration-zero decision would replay the safe-stop reason.
+                return int(PETSc.KSP.ConvergedReason.ITERATING)
+            global_iteration = int(outer_iteration_offset) + int(iteration)
+            row = snapshot(
+                global_iteration, float(residual_norm) / rhs_norm, current
+            )
             if row.get("multimetric_decision") == "ITERATING":
                 modal_bundle = context.action_modal_schur_system
                 if isinstance(
@@ -9499,16 +14070,570 @@ def solve_hybrid_block_ldu_iterative(
                                 "multimetric_decision"
                             ]
                         return int(policy_stop["reason_code"])
+                if v13_outer_enabled:
+                    observation = observe_v13_outer_row(row)
+                    if isinstance(observation, Mapping):
+                        if observation.get("status") == (
+                            "restart64_candidate_at_safe_boundary"
+                        ):
+                            v13_outer_control["restart64_safe_boundary"] = dict(
+                                observation
+                            )
+                            row["task041_v13_restart64_safe_boundary"] = dict(
+                                observation
+                            )
+                            row["multimetric_decision"] = (
+                                "V13_RESTART64_SAFE_BOUNDARY"
+                            )
+                            row["multimetric_reason"] = int(
+                                PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT
+                            )
+                            if history:
+                                history[-1].update(row)
+                            if progress_callback is not None:
+                                progress_callback(dict(row))
+                            return int(
+                                PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT
+                            )
+                        if observation.get("schema") == (
+                            "task041.v13.outer_finite_stop.v1"
+                        ):
+                            v13_outer_control["finite_stop"] = dict(observation)
+                            row["task041_v13_outer_finite_stop"] = dict(
+                                observation
+                            )
+                            row["multimetric_decision"] = (
+                                "V13_FINITE_STAGNATION_STOP"
+                            )
+                            row["multimetric_reason"] = int(
+                                observation["reason_code"]
+                            )
+                            if history:
+                                history[-1].update(row)
+                            if progress_callback is not None:
+                                progress_callback(dict(row))
+                            return int(observation["reason_code"])
+            if (
+                v13_outer_enabled
+                and int(iteration) > 0
+                and progress_callback is not None
+            ):
+                progress_callback(dict(row))
             return int(row["multimetric_reason"])
 
         ksp.setConvergenceTest(convergence_test)
         ksp.solve(rhs, solution)
         iterations = int(ksp.getIterationNumber())
         reason = int(ksp.getConvergedReason())
+        if v13_restart64_pending is not None:
+            safe_boundary = dict(v13_restart64_pending)
+            evidence = safe_boundary.get("evidence")
+            if not isinstance(evidence, Mapping):
+                raise RuntimeError("V13 restart candidate is missing its window evidence")
+            local_boundary_error = None
+            local_boundary_row = None
+            try:
+                local_x = np.asarray(
+                    solution.getArray(readonly=True), dtype=np.complex128
+                )
+                local_f = np.asarray(rhs.getArray(readonly=True), dtype=np.complex128)
+                if not np.isfinite(local_x).all() or not np.isfinite(local_f).all():
+                    raise ValueError("outer restart safe-boundary x/f is non-finite")
+                rhs_sha_after = hashlib.sha256(
+                    np.ascontiguousarray(local_f).tobytes()
+                ).hexdigest()
+                if rhs_sha_after != v13_rhs_local_sha256_at_entry:
+                    raise ValueError("original V13 outer RHS changed before restart")
+                local_boundary_row = {
+                    "rank": int(outer_comm.rank),
+                    "x_range": [int(value) for value in solution.getOwnershipRange()],
+                    "f_range": [int(value) for value in rhs.getOwnershipRange()],
+                    "solution_global_size": int(solution.getSize()),
+                    "rhs_global_size": int(rhs.getSize()),
+                    "solution_local_sha256": hashlib.sha256(
+                        np.ascontiguousarray(local_x).tobytes()
+                    ).hexdigest(),
+                    "solution_local_norm": float(np.linalg.norm(local_x)),
+                    "rhs_local_sha256_before": v13_rhs_local_sha256_at_entry,
+                    "rhs_local_sha256_after": rhs_sha_after,
+                    "solution_finite": True,
+                    "rhs_finite": True,
+                    "runtime_ksp_object_id": id(ksp),
+                    "runtime_pc_context_object_id": id(
+                        ksp.getPC().getPythonContext()
+                    ),
+                    "elapsed_seconds_at_boundary": float(
+                        time.perf_counter() - started
+                    ),
+                    "cumulative_pc_apply_count_at_boundary": int(
+                        context.inventory.get("pc_apply_count", 0)
+                    ),
+                    "cumulative_bottom_action_apply_count_at_boundary": int(
+                        context.inventory.get("bottom_action_apply_count", 0)
+                    ),
+                    "cumulative_top_action_apply_count_at_boundary": int(
+                        context.inventory.get("top_action_apply_count", 0)
+                    ),
+                }
+                checkpoint_row = history_cache.get(int(iterations))
+                if (
+                    not isinstance(checkpoint_row, Mapping)
+                    or checkpoint_row.get("solution_finite_local") is not True
+                    or local_boundary_row["solution_local_sha256"]
+                    != checkpoint_row.get("solution_local_sha256")
+                ):
+                    raise ValueError(
+                        "outer safe-boundary x differs from its true-residual sample"
+                    )
+            except Exception as exc:  # noqa: BLE001 - agree before fresh gate
+                local_boundary_error = f"{type(exc).__name__}: {exc}"
+            boundary_rows = outer_comm.allgather(
+                (local_boundary_error, local_boundary_row)
+            )
+            boundary_errors = [
+                f"rank {rank}: {error}"
+                for rank, (error, _row) in enumerate(boundary_rows)
+                if error is not None
+            ]
+            if boundary_errors:
+                raise RuntimeError(
+                    "V13 restart safe-boundary x/f validation failed: "
+                    + "; ".join(boundary_errors)
+                )
+            retained_rank_rows = [row for _error, row in boundary_rows]
+            if [row.get("rank") for row in retained_rank_rows] != list(
+                range(int(outer_comm.size))
+            ):
+                raise RuntimeError("V13 restart safe-boundary rank records are incomplete")
+            local_x_ranges = [row["x_range"] for row in retained_rank_rows]
+            local_f_ranges = [row["f_range"] for row in retained_rank_rows]
+            for ranges, global_size in (
+                (local_x_ranges, int(solution.getSize())),
+                (local_f_ranges, int(rhs.getSize())),
+            ):
+                if (
+                    not ranges
+                    or ranges[0][0] != 0
+                    or ranges[-1][1] != global_size
+                    or any(
+                        ranges[index][1] != ranges[index + 1][0]
+                        for index in range(len(ranges) - 1)
+                    )
+                ):
+                    raise RuntimeError(
+                        "V13 restart safe-boundary owner ranges are not contiguous"
+                    )
+            safe_boundary["trusted_x_f_owner_records"] = retained_rank_rows
+            safe_boundary["original_rhs_norm"] = float(rhs_norm)
+            safe_boundary["iterations_before_restart"] = int(iterations)
+            fresh_report = _task041_v13_outer_restart_workspace_report(
+                operator,
+                rhs,
+                solution,
+                context,
+                outer_comm,
+                phase="outer_restart64_workspace",
+            )
+            authority = v13_modal_system.authorize_outer_workspace(
+                "outer_restart64_workspace", fresh_report
+            )
+            v13_outer_control["restart64_authority"] = dict(authority)
+            v13_outer_control["restart64_workspace_report"] = fresh_report
+            candidate_selected = authority.get("status") == "pass"
+            if authority.get("status") not in {"pass", "refused"}:
+                raise RuntimeError("V13 restart authority returned an invalid status")
+            decision_row = {
+                "candidate": safe_boundary,
+                "authority_status": authority.get("status"),
+                "authority_receipt_sha256": authority.get(
+                    "authority_receipt_sha256"
+                ),
+                "restart_selected": bool(candidate_selected),
+                "restart_before": int(current_outer_restart),
+            }
+            decision_signature = json.dumps(
+                decision_row,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            )
+            decision_signatures = outer_comm.allgather(decision_signature)
+            if any(value != decision_signatures[0] for value in decision_signatures[1:]):
+                raise RuntimeError("V13 restart64 decision differs across ranks")
+            if candidate_selected:
+                if int(current_outer_restart) != 32 or int(iterations) != 48:
+                    raise RuntimeError("V13 restart64 trial is outside the first safe window")
+                from .physical_balanced_side_inverse import (
+                    _configure_gmres_restart_trial,
+                    _live_gmres_restart,
+                )
+
+                pc_context_before = ksp.getPC().getPythonContext()
+                if pc_context_before is not context or context._destroyed:
+                    raise RuntimeError(
+                        "V13 restart64 cannot preserve the live borrowed PC/factors"
+                    )
+                ksp.setGMRESRestart(64)
+                mgs_setup = _configure_gmres_restart_trial(ksp)
+                ksp.setUp()
+                if (
+                    _live_gmres_restart(ksp) != 64
+                    or str(ksp.getType()).lower() != "fgmres"
+                    or ksp.getPCSide() != PETSc.PC.Side.RIGHT
+                    or ksp.getPC().getPythonContext() is not context
+                    or context._destroyed
+                ):
+                    raise RuntimeError(
+                        "V13 restart64 changed the KSP/PC identity or failed readback"
+                    )
+                current_outer_restart = 64
+                v13_outer_control["restart64_trial_count"] = 1
+                v13_outer_control["restart_history"].append(
+                    {
+                        "iteration": int(iterations),
+                        "restart": 64,
+                        "reason": (
+                            "complete_16_to_32_global_progress_then_32_to_48_"
+                            "global_and_unpassed_block_stagnation_with_fresh_gate_passed"
+                        ),
+                        "evidence_rule_id": evidence.get("rule_id"),
+                        "orthogonalization": dict(mgs_setup),
+                        "initial_guess_nonzero": True,
+                        "restart_boundary_iteration": int(iterations),
+                        "configured_total_max_it": int(config.max_it),
+                        "remaining_total_iterations_before_resume": int(
+                            config.max_it
+                        )
+                        - int(iterations),
+                    }
+                )
+                v13_outer_control["restart64_decision"] = {
+                    "status": "restart64_selected_once",
+                    **decision_row,
+                    "mgs_setup": dict(mgs_setup),
+                }
+            else:
+                v13_outer_control["restart_history"].append(
+                    {
+                        "iteration": int(iterations),
+                        "restart": 32,
+                        "reason": "restart64_fresh_authority_refused_continue_same_ksp_at_48",
+                        "evidence_rule_id": evidence.get("rule_id"),
+                        "restart_boundary_iteration": int(iterations),
+                        "configured_total_max_it": int(config.max_it),
+                        "remaining_total_iterations_before_resume": int(
+                            config.max_it
+                        )
+                        - int(iterations),
+                        "authority_receipt_sha256": authority.get(
+                            "authority_receipt_sha256"
+                        ),
+                    }
+                )
+                v13_outer_control["restart64_decision"] = {
+                    "status": "restart64_refused_continue_restart32",
+                    **decision_row,
+                }
+            resume_error = None
+            resume_row = None
+            try:
+                ksp.setInitialGuessNonzero(True)
+                initial_guess_nonzero_readback = bool(
+                    ksp.getInitialGuessNonzero()
+                )
+                if not initial_guess_nonzero_readback:
+                    raise RuntimeError(
+                        "V13 same-KSP resume did not retain the nonzero initial guess"
+                    )
+                local_x = np.asarray(
+                    solution.getArray(readonly=True), dtype=np.complex128
+                )
+                local_f = np.asarray(rhs.getArray(readonly=True), dtype=np.complex128)
+                expected_x_hash = retained_rank_rows[int(outer_comm.rank)][
+                    "solution_local_sha256"
+                ]
+                actual_x_hash = hashlib.sha256(
+                    np.ascontiguousarray(local_x).tobytes()
+                ).hexdigest()
+                actual_f_hash = hashlib.sha256(
+                    np.ascontiguousarray(local_f).tobytes()
+                ).hexdigest()
+                if (
+                    not np.isfinite(local_x).all()
+                    or actual_x_hash != expected_x_hash
+                    or actual_f_hash != v13_rhs_local_sha256_at_entry
+                ):
+                    raise ValueError(
+                        "same-KSP resume changed the retained trusted x or original f"
+                    )
+                resume_row = {
+                    "rank": int(outer_comm.rank),
+                    "x_range": [int(value) for value in solution.getOwnershipRange()],
+                    "f_range": [int(value) for value in rhs.getOwnershipRange()],
+                    "solution_global_size": int(solution.getSize()),
+                    "rhs_global_size": int(rhs.getSize()),
+                    "solution_local_sha256_before": expected_x_hash,
+                    "solution_local_sha256_after_setup": actual_x_hash,
+                    "solution_local_norm_before_resume": float(
+                        np.linalg.norm(local_x)
+                    ),
+                    "rhs_local_sha256_before": v13_rhs_local_sha256_at_entry,
+                    "rhs_local_sha256_before_resume": actual_f_hash,
+                    "solution_finite": True,
+                    "rhs_finite": bool(np.isfinite(local_f).all()),
+                    "runtime_ksp_object_id_before_restart": int(
+                        retained_rank_rows[int(outer_comm.rank)][
+                            "runtime_ksp_object_id"
+                        ]
+                    ),
+                    "runtime_ksp_object_id_after_setup": id(ksp),
+                    "runtime_pc_context_object_id_before_restart": int(
+                        retained_rank_rows[int(outer_comm.rank)][
+                            "runtime_pc_context_object_id"
+                        ]
+                    ),
+                    "runtime_pc_context_object_id_after_setup": id(
+                        ksp.getPC().getPythonContext()
+                    ),
+                    "same_ksp_object_retained": bool(
+                        id(ksp)
+                        == int(
+                            retained_rank_rows[int(outer_comm.rank)][
+                                "runtime_ksp_object_id"
+                            ]
+                        )
+                    ),
+                    "same_pc_context_retained": bool(
+                        ksp.getPC().getPythonContext() is context
+                        and id(ksp.getPC().getPythonContext())
+                        == int(
+                            retained_rank_rows[int(outer_comm.rank)][
+                                "runtime_pc_context_object_id"
+                            ]
+                        )
+                    ),
+                    "initial_guess_nonzero_requested": True,
+                    "initial_guess_nonzero_readback": initial_guess_nonzero_readback,
+                    "cumulative_iteration_offset": int(iterations),
+                    "local_iteration_count_before_resume": int(
+                        ksp.getIterationNumber()
+                    ),
+                    "remaining_total_iterations_before_resume": int(
+                        config.max_it
+                    )
+                    - int(iterations),
+                    "elapsed_seconds_before_resume": float(
+                        time.perf_counter() - started
+                    ),
+                    "cumulative_pc_apply_count_before_resume": int(
+                        context.inventory.get("pc_apply_count", 0)
+                    ),
+                    "cumulative_bottom_action_apply_count_before_resume": int(
+                        context.inventory.get("bottom_action_apply_count", 0)
+                    ),
+                    "cumulative_top_action_apply_count_before_resume": int(
+                        context.inventory.get("top_action_apply_count", 0)
+                    ),
+                    "borrowed_actions_still_live": all(
+                        not bool(_action_diagnostics(action).get("destroyed"))
+                        for action in (context.bottom_action, context.top_action)
+                    ),
+                }
+            except Exception as exc:  # noqa: BLE001 - agree before resumed solve
+                resume_error = f"{type(exc).__name__}: {exc}"
+            resume_rows = outer_comm.allgather((resume_error, resume_row))
+            resume_errors = [
+                f"rank {rank}: {error}"
+                for rank, (error, _row) in enumerate(resume_rows)
+                if error is not None
+            ]
+            if resume_errors:
+                raise RuntimeError(
+                    "V13 same-KSP resume lost trusted x/f: "
+                    + "; ".join(resume_errors)
+                )
+            resume_facts = [row for _error, row in resume_rows]
+            if [row.get("rank") for row in resume_facts] != list(
+                range(int(outer_comm.size))
+            ):
+                raise RuntimeError("V13 same-KSP resume rank records are incomplete")
+            v13_outer_control["restart64_decision"][
+                "same_ksp_nonzero_x_resume"
+            ] = resume_facts
+            v13_outer_control["restart64_decision_resolved"] = True
+            v13_restart64_pending = None
+            outer_iteration_offset = int(iterations)
+            outer_krylov_origin = int(iterations)
+            v13_window_segment_start = int(iterations)
+            boundary_row = history_cache.get(int(iterations))
+            if not isinstance(boundary_row, Mapping):
+                raise RuntimeError("V13 restart transition has no saved residual boundary")
+            v13_window_baseline = {
+                key: float(boundary_row[key])
+                for key in (
+                    "global_true_relative_residual",
+                    "bottom_true_relative_residual",
+                    "top_true_relative_residual",
+                    "modal_true_relative_residual",
+                )
+            }
+            v13_consecutive_stalled_windows = 0
+            v13_outer_control.setdefault("observation_segments", []).append(
+                {
+                    "start_iteration": int(iterations),
+                    "restart": int(current_outer_restart),
+                    "baseline_true_residuals": dict(v13_window_baseline),
+                    "reason": "restart64_gate_resolved_and_same_ksp_resumed",
+                }
+            )
+            remaining = int(config.max_it) - int(iterations)
+            if remaining <= 0:
+                raise RuntimeError(
+                    "V13 restart boundary has no remaining configured outer iterations"
+                )
+            ksp.setTolerances(
+                rtol=float(config.threshold), atol=0.0, max_it=remaining
+            )
+            ksp.solve(rhs, solution)
+            reason = int(ksp.getConvergedReason())
+            iterations = int(outer_iteration_offset) + int(ksp.getIterationNumber())
+            if iterations > int(config.max_it):
+                raise RuntimeError("V13 segmented outer iterations exceeded total max_it")
+            v13_outer_control["restart64_decision"][
+                "same_ksp_nonzero_x_resume_work"
+            ] = {
+                "iterations_after_resume": int(iterations),
+                "local_iteration_count_after_resume": int(
+                    ksp.getIterationNumber()
+                ),
+                "max_it_remaining_after_resume": int(config.max_it) - int(iterations),
+                "elapsed_seconds_after_resume": float(
+                    time.perf_counter() - started
+                ),
+                "cumulative_pc_apply_count_after_resume": int(
+                    context.inventory.get("pc_apply_count", 0)
+                ),
+                "cumulative_bottom_action_apply_count_after_resume": int(
+                    context.inventory.get("bottom_action_apply_count", 0)
+                ),
+                "cumulative_top_action_apply_count_after_resume": int(
+                    context.inventory.get("top_action_apply_count", 0)
+                ),
+            }
+        if v13_finite_stop_pending is not None:
+            if reason != int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT):
+                raise RuntimeError("V13 finite stop returned an unexpected KSP reason")
+            v13_finite_stop_pending["iterations_at_stop"] = int(iterations)
+            v13_finite_stop_pending["max_it_reached"] = bool(
+                int(iterations) >= int(config.max_it)
+            )
+            if v13_finite_stop_pending["max_it_reached"]:
+                raise RuntimeError("V13 finite stop collided with the configured max_it")
         reported = float(ksp.getResidualNorm()) / rhs_norm
-        if iterations not in history_cache:
+        if int(iterations) not in history_cache:
             snapshot(iterations, reported, None)
         solution.copy(retained_solution)
+        if v13_finite_stop_pending is not None:
+            local_x = np.asarray(
+                retained_solution.getArray(readonly=True), dtype=np.complex128
+            )
+            local_f = np.asarray(rhs.getArray(readonly=True), dtype=np.complex128)
+            local_x_sha = hashlib.sha256(
+                np.ascontiguousarray(local_x).tobytes()
+            ).hexdigest()
+            local_f_sha = hashlib.sha256(
+                np.ascontiguousarray(local_f).tobytes()
+            ).hexdigest()
+            local_retention = {
+                "rank": int(outer_comm.rank),
+                "solution_range": [
+                    int(value) for value in retained_solution.getOwnershipRange()
+                ],
+                "rhs_range": [int(value) for value in rhs.getOwnershipRange()],
+                "solution_global_size": int(retained_solution.getSize()),
+                "rhs_global_size": int(rhs.getSize()),
+                "solution_local_sha256": local_x_sha,
+                "solution_local_norm": float(np.linalg.norm(local_x)),
+                "rhs_local_sha256_before": v13_rhs_local_sha256_at_entry,
+                "rhs_local_sha256_after": local_f_sha,
+                "solution_finite": bool(np.isfinite(local_x).all()),
+                "rhs_unchanged": local_f_sha == v13_rhs_local_sha256_at_entry,
+            }
+            retained_rows = sorted(
+                outer_comm.allgather(local_retention),
+                key=lambda value: value.get("rank", -1),
+            )
+            retained_pass = bool(
+                len(retained_rows) == int(outer_comm.size)
+                and [row.get("rank") for row in retained_rows]
+                == list(range(int(outer_comm.size)))
+                and all(
+                    row.get("solution_finite") is True
+                    and row.get("rhs_unchanged") is True
+                    and isinstance(row.get("solution_local_sha256"), str)
+                    and len(row["solution_local_sha256"]) == 64
+                    for row in retained_rows
+                )
+                and all(
+                    retained_rows[index]["solution_range"][1]
+                    == retained_rows[index + 1]["solution_range"][0]
+                    and retained_rows[index]["rhs_range"][1]
+                    == retained_rows[index + 1]["rhs_range"][0]
+                    for index in range(len(retained_rows) - 1)
+                )
+                and retained_rows[0]["solution_range"][0] == 0
+                and retained_rows[-1]["solution_range"][1]
+                == int(retained_solution.getSize())
+                and retained_rows[0]["rhs_range"][0] == 0
+                and retained_rows[-1]["rhs_range"][1] == int(rhs.getSize())
+            )
+            retained_flags = outer_comm.allgather(retained_pass)
+            if not retained_pass or any(
+                value is not retained_flags[0] for value in retained_flags
+            ):
+                raise RuntimeError(
+                    "V13 finite stop could not retain trusted owner-sharded x and original f"
+                )
+            v13_finite_stop_pending.update(
+                {
+                    "iterations_at_stop": int(iterations),
+                    "current_trusted_solution_retained": True,
+                    "original_rhs_unchanged": True,
+                    "original_rhs_norm_at_solve_entry": float(rhs_norm),
+                    "original_rhs_global_size": int(rhs.getSize()),
+                    "rank_local_solution_rhs_binding": {
+                        "scope": "owner-sharded hashes/ranges; vectors are not gathered",
+                        "records": retained_rows,
+                    },
+                    "post_stop_true_residuals_pending": True,
+                    "result_checkpoint_path": (
+                        "Task039 retained_solution_checkpoint -> owner-sharded packet"
+                    ),
+                }
+            )
+            v13_outer_control["finite_stop"] = dict(v13_finite_stop_pending)
+        elif v13_outer_enabled:
+            local_f = np.asarray(rhs.getArray(readonly=True), dtype=np.complex128)
+            local_rhs_after = hashlib.sha256(
+                np.ascontiguousarray(local_f).tobytes()
+            ).hexdigest()
+            local_facts = {
+                "rank": int(outer_comm.rank),
+                "rhs_sha256_before": v13_rhs_local_sha256_at_entry,
+                "rhs_sha256_after": local_rhs_after,
+                "rhs_finite": bool(np.isfinite(local_f).all()),
+            }
+            rhs_facts = sorted(
+                outer_comm.allgather(local_facts), key=lambda value: value["rank"]
+            )
+            if any(
+                row.get("rhs_finite") is not True
+                or row.get("rhs_sha256_before") != row.get("rhs_sha256_after")
+                for row in rhs_facts
+            ):
+                raise RuntimeError("V13 outer solve changed or invalidated the original RHS")
+            v13_outer_control["original_rhs_unchanged"] = True
+            v13_outer_control["original_rhs_rank_bindings"] = rhs_facts
         post_global, post_block = _true_residual_metrics(
             operator, rhs, retained_solution, context
         )
@@ -9525,6 +14650,40 @@ def solve_hybrid_block_ldu_iterative(
             max_it=config.max_it,
             threshold=config.threshold,
         )
+        if v13_finite_stop_pending is not None:
+            v13_finite_stop_pending.update(
+                {
+                    "post_stop_true_residuals": dict(post_values),
+                    "post_stop_original_residual_pass": bool(
+                        post_decision["positive"]
+                    ),
+                    "post_stop_all_finite_nonnegative": bool(
+                        post_decision["all_finite_nonnegative"]
+                    ),
+                }
+            )
+            v13_finite_stop_pending.pop("post_stop_true_residuals_pending", None)
+            v13_outer_control["finite_stop"] = dict(v13_finite_stop_pending)
+        if v13_outer_enabled:
+            v13_outer_control.update(
+                {
+                    "final_restart": int(current_outer_restart),
+                    "total_iterations": int(iterations),
+                    "total_wall_seconds": float(time.perf_counter() - started),
+                    "final_reason": int(reason),
+                    "final_reason_name": str(post_decision["decision"]),
+                    "all_residual_history_rows": len(history),
+                    "cumulative_pc_apply_count": int(
+                        context.inventory.get("pc_apply_count", 0)
+                    ),
+                    "cumulative_bottom_action_apply_count": int(
+                        context.inventory.get("bottom_action_apply_count", 0)
+                    ),
+                    "cumulative_top_action_apply_count": int(
+                        context.inventory.get("top_action_apply_count", 0)
+                    ),
+                }
+            )
         post_pass = bool(reason > 0 and post_decision["positive"])
         policy_stop_record = next(
             (
@@ -9539,7 +14698,9 @@ def solve_hybrid_block_ldu_iterative(
             "identity": post_decision["identity"],
             "ksp_type": actual_ksp_type,
             "threshold": float(config.threshold),
-            "restart": int(config.restart),
+            "restart": int(
+                current_outer_restart if v13_outer_enabled else config.restart
+            ),
             "explicit_recomputed_residuals": dict(post_values),
             "decision": post_decision["decision"],
             "reason": reason,
@@ -9547,6 +14708,8 @@ def solve_hybrid_block_ldu_iterative(
             "max_true_residual": post_decision["max_true_residual"],
             "pass": post_pass,
         }
+        if v13_outer_enabled:
+            postsolve["task041_v13_outer_control"] = dict(v13_outer_control)
         if policy_stop_record is not None:
             if (
                 reason != policy_stop_record.get("reason_code")
@@ -9665,7 +14828,16 @@ def solve_hybrid_block_ldu_iterative(
                 }
             )
         inventory = dict(context.inventory)
-        inventory.update({"ksp_type": actual_ksp_type, "restart": int(config.restart)})
+        inventory.update(
+            {
+                "ksp_type": actual_ksp_type,
+                "restart": int(
+                    current_outer_restart if v13_outer_enabled else config.restart
+                ),
+            }
+        )
+        if v13_outer_enabled:
+            inventory["task041_v13_outer_control"] = dict(v13_outer_control)
         if policy_stop_record is not None:
             inventory["task041_v12_policy_stop"] = dict(policy_stop_record)
         release = {
@@ -9692,7 +14864,9 @@ def solve_hybrid_block_ldu_iterative(
         timing = {
             "total_seconds": float(time.perf_counter() - started),
             "ksp_type": actual_ksp_type,
-            "restart": float(config.restart),
+            "restart": float(
+                current_outer_restart if v13_outer_enabled else config.restart
+            ),
             "max_it": float(config.max_it),
             "threshold": float(config.threshold),
             "history_evaluation_count": float(history_evaluations),

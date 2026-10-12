@@ -79,6 +79,33 @@ TASK041_P4_W0P7_PILOT_TARGET_SCOPE = (
     TASK041_BALH_W0P7NM_P6_PILOT_P4_TARGET_SCOPE
 )
 TASK041_V8_SWAP_OBSERVE_CONTINUE = "task041_v8_swap_observe_continue"
+TASK041_V13_CONSISTENT_MODAL_POLICY_ID = (
+    "task041_v13_consistent_fixed_balh_modal_surrogate"
+)
+TASK041_V13_MEMORY_POLICY = "system_default_unbound"
+TASK041_V13_MPI8_RANK_CPUS = (10, 11, 14, 15, 16, 17, 18, 19)
+TASK041_V13_REQUIRED_THREAD_ENVIRONMENT = {
+    name: "1"
+    for name in (
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "VECLIB_MAXIMUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+        "BLIS_NUM_THREADS",
+    )
+}
+TASK041_V13_AGGREGATE_MEMFREE_RESERVE_BYTES = 384 * 2**30
+TASK041_V13_INITIAL_AGGREGATE_MEMFREE_BYTES = 464 * 2**30
+TASK041_V13_INITIAL_NODE1_MEMFREE_BYTES = 80 * 2**30
+TASK041_V13_RESOURCE_HEADROOM_POLICY = {
+    "schema": "task041.v13.aggregate_resource_headroom.v1",
+    "aggregate_memfree_reserve_bytes": TASK041_V13_AGGREGATE_MEMFREE_RESERVE_BYTES,
+    "initial_aggregate_memfree_minimum_bytes": TASK041_V13_INITIAL_AGGREGATE_MEMFREE_BYTES,
+    "initial_node1_memfree_minimum_bytes": TASK041_V13_INITIAL_NODE1_MEMFREE_BYTES,
+    "runtime_aggregate_headroom": "aggregate_memfree_minus_reserve_covers_phase_additional_plus_W",
+    "runtime_node1_headroom": "node1_memfree_covers_phase_additional_only",
+}
 TASK041_V8_REVIEW_PATH = (
     "docs/task041_mpi1_shortwave_hybrid_capacity/review_report_v8.md"
 )
@@ -813,6 +840,7 @@ def task041_fixed_h6_modal_gmres_binding(
         None,
         "task041_v12_bounded_inexact_modal",
         "task041_v12_bounded_inexact_modal_once_backup",
+        "task041_v13_consistent_fixed_balh_modal_surrogate",
     ):
         raise ValueError("unsupported Task041 modal solver policy")
     if modal_solver_policy is not None and (
@@ -821,7 +849,7 @@ def task041_fixed_h6_modal_gmres_binding(
         or model_id != TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
     ):
         raise ValueError(
-            "the V12 modal policy requires pure fixed-H6 on the registered W0.7 pilot"
+            "the bounded modal policy requires pure fixed-H6 on the registered W0.7 pilot"
         )
     if not enabled:
         if model_id == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID:
@@ -893,6 +921,12 @@ def task041_fixed_h6_modal_gmres_binding(
         raise ValueError(
             "fixed-H6 research requires an explicit frozen expected_rank_cpus map"
         )
+    if modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID and (
+        supplied_cpus != TASK041_V13_MPI8_RANK_CPUS
+    ):
+        raise ValueError(
+            "V13 requires the frozen MPI8 CPU map [10,11,14,15,16,17,18,19]"
+        )
     binding = {
         "method": "fixed_h6_modal_gmres_research",
         "model_id": model_id,
@@ -912,12 +946,25 @@ def task041_fixed_h6_modal_gmres_binding(
     if modal_feedback_method is not None:
         binding["modal_feedback_method"] = modal_feedback_method
     if modal_solver_policy is not None:
-        from src.solvers.hybrid_fem_modal_block_ldu import (
+        from src.solvers.task041_modal_policy import (
             resolve_task041_modal_solver_policy,
         )
 
         binding["modal_solver_policy"] = resolve_task041_modal_solver_policy(
             modal_solver_policy
+        )
+    if modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID:
+        binding.update(
+            {
+                "memory_policy": TASK041_V13_MEMORY_POLICY,
+                "membind_node": None,
+                "required_thread_environment": dict(
+                    TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
+                ),
+                "resource_headroom_policy": dict(
+                    TASK041_V13_RESOURCE_HEADROOM_POLICY
+                ),
+            }
         )
     return binding
 
@@ -1696,6 +1743,10 @@ def build_task041_balh_candidate_consumer_command(
         membind_node=(
             "0"
             if p4_backend_pair
+            else None
+            if fixed_h6_binding is not None
+            and fixed_h6_binding.get("modal_solver_policy", {}).get("policy_id")
+            == TASK041_V13_CONSISTENT_MODAL_POLICY_ID
             else task041_balh_membind_node(str(normalized["model_id"]))
         ),
     )
@@ -2244,6 +2295,7 @@ def _parser() -> argparse.ArgumentParser:
         choices=(
             "task041_v12_bounded_inexact_modal",
             "task041_v12_bounded_inexact_modal_once_backup",
+            "task041_v13_consistent_fixed_balh_modal_surrogate",
         ),
         default=None,
     )

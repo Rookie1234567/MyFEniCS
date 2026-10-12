@@ -11311,6 +11311,17 @@ def _run_v7_h4_exact_side_full_formal(
             source="v7_full_formal_outer_solution",
         )
         postsolve = dict(iterative.postsolve_audit)
+        v13_outer_control = postsolve.get("task041_v13_outer_control")
+        reported_restart = (
+            int(v13_outer_control["final_restart"])
+            if isinstance(v13_outer_control, Mapping)
+            and type(v13_outer_control.get("final_restart")) is int
+            else (
+                config_restart
+                if iterative_config is not None
+                else int(postsolve.get("restart", 10))
+            )
+        )
         solve_report = {
             "status": "completed" if postsolve.get("pass") is True else "failed",
             "pass": bool(postsolve.get("pass") is True),
@@ -11319,11 +11330,7 @@ def _run_v7_h4_exact_side_full_formal(
                 if iterative_config is not None
                 else postsolve.get("ksp_type", "gmres")
             ),
-            "restart": (
-                config_restart
-                if iterative_config is not None
-                else int(postsolve.get("restart", 10))
-            ),
+            "restart": reported_restart,
             "max_it": (
                 config_max_it if iterative_config is not None else V3_7_MAX_IT
             ),
@@ -11348,6 +11355,8 @@ def _run_v7_h4_exact_side_full_formal(
                     ),
                 }
             )
+        if isinstance(v13_outer_control, Mapping):
+            solve_report["task041_v13_outer_control"] = dict(v13_outer_control)
         _emit_marker(
             marker_callback,
             "outer_solve_ready",

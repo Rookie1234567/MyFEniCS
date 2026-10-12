@@ -1277,6 +1277,32 @@ class FixedPhysicalBalancedActiveTraceAction(FixedH6ActiveTraceAction):
         self._last_q_factor_solve_deltas: tuple[int, ...] = ()
         self._last_q_factor_step_solve_deltas: tuple[tuple[int, int], ...] = ()
         self._last_q_solve_audits: tuple[dict[str, Any], ...] = ()
+        self._fixed_q_math_correction_steps_requested = 0
+        self._fixed_q_math_correction_steps_completed = 0
+        self._fixed_q_completed_audit_count = 0
+        self._fixed_q_audit_missing_count = 0
+        self._fixed_q_success_factor_solve_delta_total = 0
+        self._fixed_q_failed_attempt_count = 0
+        self._fixed_q_failed_factor_solve_delta_total = 0
+        self._fixed_q_failed_factor_solve_delta_unknown_count = 0
+        self._fixed_q_last_failed_attempt: dict[str, Any] | None = None
+        self._fixed_q_factor_solve_deltas_by_step = {
+            "initial": {
+                "audited_q_count": 0,
+                "factor_solve_delta_total": 0,
+                "direct_zero_status_audited_q_count": 0,
+                "direct_zero_count": 0,
+                "direct_zero_status_missing_q_count": 0,
+            },
+            "correction": {
+                "audited_q_count": 0,
+                "factor_solve_delta_total": 0,
+                "direct_zero_status_audited_q_count": 0,
+                "direct_zero_count": 0,
+                "direct_zero_status_missing_q_count": 0,
+            },
+        }
+        self._last_shared_side_inverse_callback_counts: dict[str, Any] | None = None
         self._a6_apply_count = 0
         self._h6_apply_count = 0
         self._h6_matrix_mult_count = 0
@@ -1299,6 +1325,47 @@ class FixedPhysicalBalancedActiveTraceAction(FixedH6ActiveTraceAction):
             raise RuntimeError("fixed physical BAL_H side inverse was destroyed")
         return owner
 
+    def _shared_side_inverse_callback_counts(self) -> dict[str, Any] | None:
+        """Return the existing rank-local callback counters without relabeling them."""
+
+        owner = self._side_inverse
+        if owner is not None and not owner._destroyed:
+            snapshot = owner._count_snapshot()
+            self._last_shared_side_inverse_callback_counts = dict(snapshot)
+        snapshot = self._last_shared_side_inverse_callback_counts
+        if snapshot is None:
+            return None
+        return dict(snapshot)
+
+    def _record_completed_q_audit(
+        self, q_audit: Mapping[str, Any], step_deltas: tuple[int, int], delta: int
+    ) -> None:
+        self._fixed_q_completed_audit_count += 1
+        self._fixed_q_math_correction_steps_completed += int(
+            q_audit["mathematical_correction_steps"]
+        )
+        self._fixed_q_success_factor_solve_delta_total += int(delta)
+        history = q_audit.get("inverse_apply_history")
+        history_rows = (
+            tuple(history)
+            if isinstance(history, (list, tuple))
+            else None
+        )
+        for index, step_name in enumerate(("initial", "correction")):
+            step = self._fixed_q_factor_solve_deltas_by_step[step_name]
+            step["audited_q_count"] += 1
+            step["factor_solve_delta_total"] += int(step_deltas[index])
+            if history_rows is None or len(history_rows) != 2:
+                step["direct_zero_status_missing_q_count"] += 1
+                continue
+            status = history_rows[index].get("status")
+            if status not in {"ZERO_RHS_DIRECT_ZERO", "SOLVE_COMPLETED"}:
+                step["direct_zero_status_missing_q_count"] += 1
+                continue
+            step["direct_zero_status_audited_q_count"] += 1
+            if status == "ZERO_RHS_DIRECT_ZERO":
+                step["direct_zero_count"] += 1
+
     def _apply_a6(self, source: PETSc.Vec) -> PETSc.Vec:
         result = self._owner()._apply_a6_callback(source)
         self._a6_apply_count += 1
@@ -1315,6 +1382,7 @@ class FixedPhysicalBalancedActiveTraceAction(FixedH6ActiveTraceAction):
         if factor is None:
             raise RuntimeError("fixed physical BAL_H P4 factor was destroyed")
         before = _p4_solve_count(factor)
+        self._fixed_q_math_correction_steps_requested += 1
         owner._last_fixed_q_solve_audit = None
         result = None
         try:
@@ -1369,7 +1437,37 @@ class FixedPhysicalBalancedActiveTraceAction(FixedH6ActiveTraceAction):
                 != tuple(step_deltas)
             ):
                 raise RuntimeError("fixed physical BAL_H per-Q audit is inconsistent")
-        except BaseException:
+        except BaseException as exc:
+            self._fixed_q_failed_attempt_count += 1
+            after_failure = None
+            delta_failure = None
+            try:
+                after_failure = _p4_solve_count(factor)
+                candidate_delta = after_failure - before
+                if candidate_delta >= 0:
+                    delta_failure = int(candidate_delta)
+                    self._fixed_q_failed_factor_solve_delta_total += delta_failure
+                else:
+                    self._fixed_q_failed_factor_solve_delta_unknown_count += 1
+            except BaseException:  # noqa: BLE001 - retain the original P4 failure
+                self._fixed_q_failed_factor_solve_delta_unknown_count += 1
+            self._fixed_q_audit_missing_count += 1
+            self._fixed_q_last_failed_attempt = {
+                "mathematical_correction_steps_requested": 1,
+                "mathematical_correction_steps_completed": None,
+                "mathematical_correction_steps_completed_with_valid_q_audit": 0,
+                "mathematical_correction_completion_status": (
+                    "not_persisted_after_exception"
+                ),
+                "factor_solve_count_before": int(before),
+                "factor_solve_count_after": after_failure,
+                "live_factor_backsolve_delta": delta_failure,
+                "factor_solve_deltas_by_step": None,
+                "direct_zero_status_by_step": None,
+                "exact_zero_audit_status": "not_available_for_failed_q_attempt",
+                "successful_q_audit_count_includes_attempt": False,
+                "error_type": type(exc).__name__,
+            }
             vectors = result if isinstance(result, tuple) else (result,)
             released: set[int] = set()
             for vector in vectors:
@@ -1380,6 +1478,7 @@ class FixedPhysicalBalancedActiveTraceAction(FixedH6ActiveTraceAction):
                     except BaseException:  # noqa: BLE001, S110 - preserve solve-count failure
                         pass
             raise
+        self._record_completed_q_audit(q_audit, tuple(step_deltas), delta)
         self._last_q_factor_solve_deltas = (
             *self._last_q_factor_solve_deltas,
             delta,
@@ -1533,6 +1632,55 @@ class FixedPhysicalBalancedActiveTraceAction(FixedH6ActiveTraceAction):
                     for q_audit in self._last_q_solve_audits
                 ],
                 "mathematical_p4_correction_steps_per_q": 1,
+                "fixed_q_actual_work_cumulative": {
+                    "scope": (
+                        "this FixedPhysicalBalancedActiveTraceAction instance; "
+                        "rank-local; do not sum replicated/global counts across ranks"
+                    ),
+                    "mathematical_correction_steps_requested": int(
+                        self._fixed_q_math_correction_steps_requested
+                    ),
+                    "mathematical_correction_steps_completed_with_valid_q_audit": int(
+                        self._fixed_q_math_correction_steps_completed
+                    ),
+                    "successful_q_audit_count": int(
+                        self._fixed_q_completed_audit_count
+                    ),
+                    "q_attempts_missing_complete_audit": int(
+                        self._fixed_q_audit_missing_count
+                    ),
+                    "successful_factor_solve_delta_total": int(
+                        self._fixed_q_success_factor_solve_delta_total
+                    ),
+                    "failed_q_attempt_count": int(
+                        self._fixed_q_failed_attempt_count
+                    ),
+                    "failed_live_factor_backsolve_delta_total": int(
+                        self._fixed_q_failed_factor_solve_delta_total
+                    ),
+                    "failed_live_factor_backsolve_delta_unknown_count": int(
+                        self._fixed_q_failed_factor_solve_delta_unknown_count
+                    ),
+                    "factor_solve_deltas_by_step": {
+                        key: dict(value)
+                        for key, value in self._fixed_q_factor_solve_deltas_by_step.items()
+                    },
+                    "last_failed_q_attempt": (
+                        None
+                        if self._fixed_q_last_failed_attempt is None
+                        else dict(self._fixed_q_last_failed_attempt)
+                    ),
+                    "p4_refinement_counter_semantics": (
+                        "legacy SideBalancedInverse counter: sum of max(actual_backsolves-1,0) "
+                        "per Q callback; it is not the fixed mathematical correction-step count"
+                    ),
+                    "shared_callback_counters_are_not_additive_to_step_deltas": True,
+                },
+                "shared_side_inverse_callback_counts": self._shared_side_inverse_callback_counts(),
+                "shared_side_inverse_callback_counter_scope": (
+                    "rank-local existing SideBalancedInverse._count_snapshot; "
+                    "p4_refinement retains max(actual_backsolves-1,0) semantics"
+                ),
                 "last_q_factor_solve_count_scope": (
                     "local side factor counter; each initial/correction inverse "
                     "call records its status and exact solve delta"
@@ -1553,6 +1701,7 @@ class FixedPhysicalBalancedActiveTraceAction(FixedH6ActiveTraceAction):
     def destroy(self) -> None:
         if self._destroyed:
             return
+        self._shared_side_inverse_callback_counts()
         self._physical_balh = None
         self._side_inverse = None
         super().destroy()
