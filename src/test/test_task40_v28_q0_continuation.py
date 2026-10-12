@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -259,3 +260,92 @@ def test_v28_actual_saved_q0_allocation_gate_is_semantically_bounded(tmp_path):
     hhat = store["q0_H/sparse_scatter"]
     assert hhat["passed"] is False
     assert hhat["original_failure_stage_label"] == "task40_v28_q_hhat_sparse_scatter/port/7"
+
+
+def test_v28_completed_observer_runs_after_direct_h_volume_and_surface_scatter():
+    import numpy as np
+    from scipy import sparse
+
+    from src.solvers.task40_v10_p6_yorbit import (
+        _accumulate_bounded_q_pattern_values,
+    )
+
+    indices = np.asarray([0, 1, 0, 1], dtype=np.int32)
+    target = sparse.csr_matrix(
+        (
+            np.zeros(4, dtype=np.complex128),
+            indices,
+            np.asarray([0, 2, 4], dtype=np.int32),
+        ),
+        shape=(2, 2),
+    )
+    blocks = {(0, 0): target}
+    identity = sparse.eye(2, format="csr", dtype=np.complex128)
+    expected = {
+        "ports/Hhat/direct_sparse_q0": ((1, 1), 7.0 + 2.0j),
+        "volume/cell/0": ((0, 0), 2.0 + 1.0j),
+        "surface/facet/0": ((1, 0), 3.0 - 4.0j),
+    }
+
+    class Action:
+        q0_trace_rows = 1
+        port_count = 1
+
+        def q0_hhat_sparse_term(self, *, allocation_gate):
+            allocation_gate("fixture/hhat", {"matrix_payload_bytes": 16})
+            return sparse.csr_matrix(
+                np.asarray([[7.0 + 2.0j]], dtype=np.complex128)
+            )
+
+        def iter_reduced_contributions(self, **kwargs):
+            assert kwargs["include_hhat"] is False
+            yield (
+                np.asarray([0], dtype=np.int32),
+                np.asarray([0], dtype=np.int32),
+                np.asarray([[2.0 + 1.0j]], dtype=np.complex128),
+                "volume/cell/0",
+            )
+            yield (
+                np.asarray([1], dtype=np.int32),
+                np.asarray([0], dtype=np.int32),
+                np.asarray([[3.0 - 4.0j]], dtype=np.complex128),
+                "surface/facet/0",
+            )
+
+    completed = []
+
+    def observe_completed(rows, columns, values, label, timings):
+        assert set(timings) == {
+            "generation_seconds",
+            "projection_seconds",
+            "accumulation_seconds",
+        }
+        assert all(math.isfinite(value) and value >= 0.0 for value in timings.values())
+        coordinate, value = expected[label]
+        assert blocks[(0, 0)][coordinate] == value
+        if label == "ports/Hhat/direct_sparse_q0":
+            assert rows is None and columns is None
+            np.testing.assert_array_equal(values, np.asarray([7.0 + 2.0j]))
+        else:
+            assert rows is not None and columns is not None and values is not None
+        completed.append(label)
+
+    result, audit = _accumulate_bounded_q_pattern_values(
+        Action(),
+        (identity,),
+        blocks,
+        allocation_gate=lambda _label, _facts: None,
+        assembly_strategy="fixture",
+        pattern_algorithm="fixture",
+        patterns={},
+        pattern_seconds=0.0,
+        contribution_completed_observer=observe_completed,
+        projection_method="sparse_local",
+        direct_hhat=True,
+    )
+
+    assert result is blocks
+    assert completed == list(expected)
+    assert audit["numeric_contribution_count"] == 2
+    assert audit["hhat_numeric_contribution_count"] == 0
+    assert audit["numeric_contribution_count_including_direct_hhat"] == 3

@@ -3522,7 +3522,8 @@ def _accumulate_bounded_q_pattern_values(
             rows, columns, values, label = next(contribution_iterator)
         except StopIteration:
             break
-        contribution_generation_seconds += time.perf_counter() - generation_started
+        generation_seconds = time.perf_counter() - generation_started
+        contribution_generation_seconds += generation_seconds
         contribution_count += 1
         if str(label).startswith("ports/Hhat"):
             hhat_contribution_count += 1
