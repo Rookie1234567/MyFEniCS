@@ -1,0 +1,5 @@
+schema_version = 1
+
+[task042_v78]
+stage = "J128_CONTINUOUS"
+run_id = "task042_v78_jacobi_uninterrupted"

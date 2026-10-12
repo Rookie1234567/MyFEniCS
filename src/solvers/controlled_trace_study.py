@@ -68,7 +68,22 @@ def precheck(folder, journal):
     return result
 
 
-def iterate(role, folder, journal, state, *, scope=scope, pc_factory=None, strategy=None):
+def iteration_options(role, strategy, consumed, scope, explicit=None):
+    """Explicit scheduling overrides, with historical entry semantics unchanged."""
+    options = dict(restart=128, max_it=32 if role in ('B0', 'BJ') else 256-consumed,
+        residual_interval=256,
+        evaluation_iterations=(0, 1, 16, 32, 64, 128) if strategy=='SMR' else (0, 32, 64, 128),
+        retained_observation_iterations=(16,) if strategy!='SMR' else (),
+        effect_check=lambda row: getattr(scope,'effect_check',effect_gate)(
+            row['iteration'], row['true'], row['schur_true_relative_residual']))
+    if explicit is not None:
+        if set(explicit) != set(options):
+            raise ValueError('complete explicit retained scheduling policy')
+        options.update(explicit)
+    return options
+
+
+def iterate(role, folder, journal, state, *, scope=scope, pc_factory=None, strategy=None, iteration_policy=None):
     from petsc4py import PETSc
     from .tetra_coefficient_action import CoefficientFullAction
     from .physical_retained_fgmres import run_retained_fgmres
@@ -193,18 +208,15 @@ def iterate(role, folder, journal, state, *, scope=scope, pc_factory=None, strat
             physical_limits=dict(true=1e-6, native=1e-6, augmented=1e-6, port=1e-6),
             identity_limits=dict(MPC_identity=1e-10, rhs_q47_q63=1e-10,
                 recovery_identity=1e-10, Schur_original_identity=1e-10))
-        limit = 32 if role in ('B0', 'BJ') else 256-consumed
+        scheduling = iteration_options(role, strategy, consumed, scope, iteration_policy)
         scope.begin_ksp(role, state)
         result = run_retained_fgmres(rhs,
             vec_operation(lambda v: original('I_outer_scaled_trace', v)), vec_operation(pc),
             evaluate=evaluate, checkpoint=lambda i, v, row: write_json(folder/'latest_original_gate.json', row),
             append=append, seconds=lambda: time.monotonic()-start,
-            save_retained=save, restart=128, max_it=limit, residual_interval=256,
+            save_retained=save, **scheduling,
             initial_vector=initial, iterations_consumed=consumed,
             true_action=vec_operation(lambda v: original('I_explicit_true_scaled_trace', v)),
-            evaluation_iterations=(0, 1, 16, 32, 64, 128) if strategy=='SMR' else (0, 32, 64, 128),
-            retained_observation_iterations=(16,) if strategy!='SMR' else (),
-            effect_check=lambda row: getattr(scope,'effect_check',effect_gate)(row['iteration'], row['true'], row['schur_true_relative_residual']),
             candidate_rtol=1e-11, retained_tolerance=1e-11, evaluation_policy=policy,
             audit_identity=dict(directory=str(folder), route=role, strategy=strategy,
                 source_sha=state['source_sha'], packet_sha256=a.receipt['sha256'], RHS=rhs_receipt),
