@@ -1094,7 +1094,7 @@ def _install_v14_fixture_abi(monkeypatch):
     """Isolate V14 campaign-view routing from the service's frozen ABI gate."""
     from src.runners import task40_v10_abi
 
-    def fixture_abi(*, profile_identity):
+    def fixture_abi(*, profile_identity, **_kwargs):
         return {
             "profile_identity": profile_identity,
             "scalar": "complex128",

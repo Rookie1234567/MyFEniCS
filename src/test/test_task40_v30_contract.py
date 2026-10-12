@@ -599,24 +599,29 @@ def _install_v30_native_abi_receipt_fixture(
     contract_path: Path,
     payload: dict[str, object],
 ) -> tuple[Path, str]:
-    from types import ModuleType
-
     from benchmarks import task40_runtime_profile
     from src.runners import task40_v10_abi
+    from mpi4py import MPI
+    from petsc4py import PETSc
+    import dolfinx
 
     execution = payload["execution"]
     assert isinstance(execution, dict)
     prefix = root / str(execution["runtime_prefix"])
     receipt_path = root / str(execution["abi_receipt_path"])
     extension_path = prefix / "lib/python3.12/site-packages/mpi4py/MPI.cpython-312-x86_64-linux-gnu.so"
-    module_facts = {
-        "numpy": {"version": "2.5.3", "file": str(prefix / "lib/python3.12/site-packages/numpy/__init__.py")},
-        "scipy": {"version": "1.18.1", "file": str(prefix / "lib/python3.12/site-packages/scipy/__init__.py")},
-        "mpi4py": {"version": "4.1.2", "file": str(prefix / "lib/python3.12/site-packages/mpi4py/__init__.py")},
-        "petsc4py": {"version": "3.25.6", "file": str(prefix / "lib/python3.12/site-packages/petsc4py/__init__.py")},
-        "basix": {"version": "0.10.0", "file": str(prefix / "lib/python3.12/site-packages/basix/__init__.py")},
-        "ufl": {"version": "2025.2.1", "file": str(prefix / "lib/python3.12/site-packages/ufl/__init__.py")},
+    module_names = ("numpy", "scipy", "mpi4py", "petsc4py", "basix", "ufl")
+    module_objects = {
+        name: task40_v10_abi.importlib.import_module(name) for name in module_names
     }
+    module_facts = {}
+    for name, module in module_objects.items():
+        module_path = prefix / "lib/python3.12/site-packages" / name / "__init__.py"
+        module_facts[name] = {
+            "version": getattr(module, "__version__", None),
+            "file": str(module_path),
+        }
+    monkeypatch.setattr(MPI, "__file__", str(extension_path))
     runtime_host = {
         "runtime_profile": "native_linux",
         "execution_platform": "native_linux",
@@ -636,15 +641,15 @@ def _install_v30_native_abi_receipt_fixture(
         "old_ABI_inherited": False,
         "prefix": str(prefix),
         "PETSc": {
-            "scalar_dtype": "complex128",
-            "int_dtype": "int32",
-            "version": [3, 25, 6],
+            "scalar_dtype": np.dtype(PETSc.ScalarType).name,
+            "int_dtype": np.dtype(PETSc.IntType).name,
+            "version": list(PETSc.Sys.getVersion()),
         },
         "MPI": {
-            "library_version": "fixture native MPI library",
+            "library_version": MPI.Get_library_version(),
             "extension_file": str(extension_path),
         },
-        "dolfinx_default_scalar_dtype": "complex128",
+        "dolfinx_default_scalar_dtype": np.dtype(dolfinx.default_scalar_type).name,
         "process_local_UCX_TLS": "self",
         "modules": module_facts,
         "source_sha256": "c" * 64,
@@ -659,55 +664,32 @@ def _install_v30_native_abi_receipt_fixture(
     monkeypatch.setattr(
         task40_v10_abi, "__file__", str(root / "src/runners/task40_v10_abi.py")
     )
-    monkeypatch.setattr(task40_v10_abi.sys, "executable", str(prefix / "bin/python"))
-    monkeypatch.setattr(task40_v10_abi.sys, "prefix", str(prefix))
+    monkeypatch.setattr(
+        task40_v10_abi,
+        "sys",
+        SimpleNamespace(executable=str(prefix / "bin/python"), prefix=str(prefix)),
+    )
     monkeypatch.setattr(
         task40_runtime_profile,
         "current_runtime_identity",
         lambda _profile, **_kwargs: runtime_host,
     )
-
-    live_modules = {
+    live_module_facts = {
         name: SimpleNamespace(__file__=facts["file"], __version__=facts["version"])
         for name, facts in module_facts.items()
     }
     import_module = task40_v10_abi.importlib.import_module
 
     def import_fixture_module(name, *args, **kwargs):
-        if name in live_modules:
-            return live_modules[name]
+        if name in live_module_facts:
+            return live_module_facts[name]
         return import_module(name, *args, **kwargs)
 
     monkeypatch.setattr(
-        task40_v10_abi.importlib, "import_module", import_fixture_module
+        task40_v10_abi,
+        "importlib",
+        SimpleNamespace(import_module=import_fixture_module),
     )
-    mpi_api = ModuleType("mpi4py.MPI")
-    mpi_api.__file__ = str(extension_path)
-    mpi_api.Get_library_version = lambda: "fixture native MPI library"
-    mpi_api.COMM_WORLD = SimpleNamespace(
-        Get_size=lambda: 1,
-        Get_rank=lambda: 0,
-    )
-    mpi_package = ModuleType("mpi4py")
-    mpi_package.__file__ = module_facts["mpi4py"]["file"]
-    mpi_package.MPI = mpi_api
-    monkeypatch.setitem(__import__("sys").modules, "mpi4py", mpi_package)
-    monkeypatch.setitem(__import__("sys").modules, "mpi4py.MPI", mpi_api)
-
-    petsc_api = ModuleType("petsc4py.PETSc")
-    petsc_api.ScalarType = np.complex128
-    petsc_api.IntType = np.int32
-    petsc_api.Sys = SimpleNamespace(getVersion=lambda: [3, 25, 6])
-    petsc_package = ModuleType("petsc4py")
-    petsc_package.__file__ = module_facts["petsc4py"]["file"]
-    petsc_package.PETSc = petsc_api
-    monkeypatch.setitem(__import__("sys").modules, "petsc4py", petsc_package)
-    monkeypatch.setitem(__import__("sys").modules, "petsc4py.PETSc", petsc_api)
-
-    dolfinx_module = ModuleType("dolfinx")
-    dolfinx_module.__file__ = str(prefix / "lib/python3.12/site-packages/dolfinx/__init__.py")
-    dolfinx_module.default_scalar_type = np.complex128
-    monkeypatch.setitem(__import__("sys").modules, "dolfinx", dolfinx_module)
 
     _set_v30_contract_environment(monkeypatch, root, contract_path)
     contract_sha256 = _sha(contract_path)
@@ -792,14 +774,16 @@ def test_v30_dispatcher_passes_contract_receipt_through_runtime_and_abi_before_f
     from src.runners import task40_v10_campaign, task40_v10_worker, task40_v20_stage_runner
     from src.runners import physical_p4_schur_v14
     from src.io import input_validation
+    from src.geometry import mesh_builder_3d
     from src.io.physical_intermediate_profile import profile_facts
+    from src.solvers import task40_v20_mode_inventory
     from src.runners.workflow_timebase import clock_sample
 
     root, contract_path, payload = _contract_fixture(
         tmp_path, monkeypatch, absolute_window_path=True
     )
     source_sha = "a" * 40
-    _canonical, _staged, _selector, resolved = _v30_full_stage_fixture(
+    canonical, _staged, _selector, resolved = _v30_full_stage_fixture(
         root, source_sha
     )
     _set_v30_contract_environment(monkeypatch, root, contract_path)
@@ -817,6 +801,9 @@ def test_v30_dispatcher_passes_contract_receipt_through_runtime_and_abi_before_f
         task40_v10_worker,
         "__file__",
         str(root / "src/runners/task40_v10_worker.py"),
+    )
+    _receipt_path, receipt_sha256 = _install_v30_native_abi_receipt_fixture(
+        monkeypatch, root, contract_path, payload
     )
     monkeypatch.setattr(physical_p4_schur_v14, "_repo_root", lambda: root)
     preflight = {
@@ -873,12 +860,18 @@ def test_v30_dispatcher_passes_contract_receipt_through_runtime_and_abi_before_f
             "PHYSICAL_WATCHDOG_MEMORY_POLICY", resources["watchdog_memory_policy"]
         )
 
-    class FEConfigurationBoundaryReached(Exception):
+    class MeshAndFEBoundaryReached(Exception):
         pass
 
     captured: dict[str, object] = {}
     real_worker = task40_v10_worker.run_task40_v10_p6_reference_worker
     real_runtime_init = physical_p4_schur_v14._V14Runtime.__init__
+    real_abi_facts = physical_p4_schur_v14._abi_facts
+    real_candidate_contract = task40_v10_worker._candidate_contract
+    real_config_builder = input_validation.simulation_config_3d_from_normalized
+    canonical_config = real_config_builder(
+        input_validation.load_and_resolve(canonical).as_jsonable()
+    )
 
     def observed_worker(payload, run_directory, **kwargs):
         captured["payload_strategy"] = payload["solver"][
@@ -898,7 +891,7 @@ def test_v30_dispatcher_passes_contract_receipt_through_runtime_and_abi_before_f
         captured.setdefault("runtime_samples", []).append(label)
         return {}
 
-    def capture_abi_facts(
+    def observe_abi_facts(
         *,
         profile_identity,
         v30_contract_path=None,
@@ -907,23 +900,44 @@ def test_v30_dispatcher_passes_contract_receipt_through_runtime_and_abi_before_f
         captured["abi_profile"] = profile_identity
         captured["abi_contract_path"] = v30_contract_path
         captured["abi_contract_sha256"] = v30_contract_sha256
-        return {
-            "profile_identity": profile_identity,
-            "receipt_path": payload["execution"]["abi_receipt_path"],
-            "receipt_sha256": payload["execution"]["abi_receipt_sha256"],
-            "runtime_profile": "native_linux",
-        }
+        facts = real_abi_facts(
+            profile_identity=profile_identity,
+            v30_contract_path=v30_contract_path,
+            v30_contract_sha256=v30_contract_sha256,
+        )
+        captured["abi_facts"] = facts
+        return facts
 
-    def stop_before_fe(*_args, **_kwargs):
-        raise FEConfigurationBoundaryReached
+    def observe_candidate_contract(*args, **kwargs):
+        authority = real_candidate_contract(*args, **kwargs)
+        captured["candidate_authority"] = authority
+        captured["candidate_kwargs"] = kwargs
+        return authority
+
+    def build_config_before_mesh(normalized):
+        config = real_config_builder(normalized)
+        captured["config"] = config
+        captured["config_matches_canonical"] = (
+            config.as_jsonable() == canonical_config.as_jsonable()
+        )
+        return config
+
+    def fixture_mode_inventory(normalized):
+        assert normalized["solver"]["preconditioner"] == resolved.solver[
+            "preconditioner"
+        ]
+        captured["mode_inventory_preflight"] = True
+        return (), (), "f" * 64, {"schema": "no-fe-fixture"}
+
+    def stop_before_mesh_or_fe(*_args, **_kwargs):
+        captured["mesh_fe_boundary"] = "_stage4_axis_plan"
+        raise MeshAndFEBoundaryReached
 
     monkeypatch.setattr(
         task40_v10_worker, "run_task40_v10_p6_reference_worker", observed_worker
     )
     monkeypatch.setattr(
-        task40_v10_worker,
-        "_candidate_contract",
-        lambda *_args, **_kwargs: {"fixture": "continue only through ABI setup"},
+        task40_v10_worker, "_candidate_contract", observe_candidate_contract
     )
     monkeypatch.setattr(
         physical_p4_schur_v14._V14Runtime, "__init__", observed_runtime_init
@@ -931,9 +945,21 @@ def test_v30_dispatcher_passes_contract_receipt_through_runtime_and_abi_before_f
     monkeypatch.setattr(
         physical_p4_schur_v14._V14Runtime, "sample", no_resource_sample
     )
-    monkeypatch.setattr(physical_p4_schur_v14, "_abi_facts", capture_abi_facts)
-    monkeypatch.setattr(input_validation, "simulation_config_3d_from_normalized", stop_before_fe)
-    with pytest.raises(FEConfigurationBoundaryReached):
+    monkeypatch.setattr(physical_p4_schur_v14, "_abi_facts", observe_abi_facts)
+    monkeypatch.setattr(
+        input_validation,
+        "simulation_config_3d_from_normalized",
+        build_config_before_mesh,
+    )
+    monkeypatch.setattr(
+        task40_v20_mode_inventory,
+        "load_v20_target_mode_inventory",
+        fixture_mode_inventory,
+    )
+    monkeypatch.setattr(
+        mesh_builder_3d, "_stage4_axis_plan", stop_before_mesh_or_fe
+    )
+    with pytest.raises(MeshAndFEBoundaryReached):
         dispatcher.run_full3d_iterative(
             resolved.as_jsonable(), tmp_path / "run", source_sha=source_sha
         )
@@ -950,6 +976,31 @@ def test_v30_dispatcher_passes_contract_receipt_through_runtime_and_abi_before_f
     assert captured["abi_profile"] == resolved.solver["preconditioner"]
     assert Path(str(captured["abi_contract_path"])).resolve() == contract_path.resolve()
     assert captured["abi_contract_sha256"] == _sha(contract_path)
+    assert captured["abi_facts"]["runtime_profile"] == "native_linux"
+    assert captured["abi_facts"]["receipt_sha256"] == receipt_sha256
+    assert captured["candidate_kwargs"]["v30_contract"] == payload
+    assert captured["candidate_kwargs"][
+        "v30_effective_factor_lifecycle_strategy"
+    ] == "ALL_Q_RESIDENT"
+    assert all(captured["candidate_authority"]["checks"].values())
+    assert captured["candidate_authority"]["checks"][
+        "v30_target_ny8_v15_v17_all_q_binding"
+    ] is True
+    assert captured["config_matches_canonical"] is True
+    assert captured["mode_inventory_preflight"] is True
+    assert captured["mesh_fe_boundary"] == "_stage4_axis_plan"
+
+    from src.io.physical_intermediate_profile import TASK40_V20_P6_E2_PROFILE
+
+    with pytest.raises(ValueError, match="authorized target Ny8 V15/V17 AllQ route"):
+        real_candidate_contract(
+            resolved.as_jsonable(),
+            profile_facts(resolved.solver["preconditioner"]),
+            captured["runtime_instance"],
+            profile_identity=TASK40_V20_P6_E2_PROFILE,
+            v30_contract=payload,
+            v30_effective_factor_lifecycle_strategy="ALL_Q_RESIDENT",
+        )
     runtime_kwargs = captured["runtime_kwargs"]
     assert runtime_kwargs["fixed_process_tree_cap_bytes"] == contract_module.V30_RESOURCES[
         "task_memory_max_bytes"
@@ -971,7 +1022,7 @@ def test_v30_dispatcher_passes_contract_receipt_through_runtime_and_abi_before_f
             encoding="utf-8"
         )
     )
-    assert worker_receipt["failure_type"] == "FEConfigurationBoundaryReached"
+    assert worker_receipt["failure_type"] == "MeshAndFEBoundaryReached"
     assert worker_receipt["factor_lifecycle_strategy"] == {
         "requested": "ONE_Q_REFACTOR_V19",
         "effective": "ALL_Q_RESIDENT",

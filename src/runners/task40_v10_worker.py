@@ -5065,6 +5065,8 @@ def _candidate_contract(
     runtime: Any,
     *,
     profile_identity: str,
+    v30_contract: Mapping[str, Any] | None = None,
+    v30_effective_factor_lifecycle_strategy: str | None = None,
 ) -> dict[str, Any]:
     from src.geometry.task40_nonseparable_plan import (
         TASK40_B0_P6_CANDIDATE_RUN_ID,
@@ -5105,6 +5107,7 @@ def _candidate_contract(
         TASK40_V16_P6_E1_PROFILE,
         TASK40_V17_P6_B0_PROFILE,
         TASK40_V18_P6_B0_Y8_PROFILE,
+        TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
         TASK40_V20_V22_P6_PROFILES,
         TASK40_V17_P6_GX560_PROFILE,
         TASK40_V17_P6_E1_PROFILE,
@@ -5214,6 +5217,56 @@ def _candidate_contract(
         from src.solvers.task40_v20_registry import task40_v20_case
 
         v20_case = task40_v20_case(profile=profile_identity)
+    v30_route_requested = (
+        v30_contract is not None
+        or v30_effective_factor_lifecycle_strategy is not None
+    )
+    v30_route_passed = not v30_route_requested
+    v30_identity = None
+    if v30_route_requested:
+        if v30_contract is None or v30_effective_factor_lifecycle_strategy is None:
+            raise ValueError("V30 candidate contract requires both validated bindings")
+        from src.runners.task40_v30_contract import require_authorized_contract
+
+        authorized_contract, _ = require_authorized_contract(
+            os.environ.get("TASK40_V30_CONTRACT_PATH", ""),
+            expected_sha256=os.environ.get("TASK40_V30_CONTRACT_SHA256"),
+            current_root=Path(__file__).resolve().parents[2],
+        )
+        if authorized_contract != v30_contract:
+            raise ValueError("V30 candidate contract differs from the validated worker binding")
+        v30_execution = authorized_contract["execution"]
+        v30_window = v30_execution["window"]
+        v30_window_path = Path(v30_execution["campaign_window_path"])
+        if not v30_window_path.is_absolute():
+            v30_window_path = Path(v30_execution["execution_root"]) / v30_window_path
+        v30_route_passed = bool(
+            profile_identity == TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE
+            and is_v20
+            and v20_case is not None
+            and v20_case.mesh_id == "TARGET_ORIGINAL_NY8"
+            and is_v15
+            and is_v17
+            and factor_lifecycle_strategy == TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
+            and v30_effective_factor_lifecycle_strategy
+            == TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
+            and isinstance(campaign, Mapping)
+            and isinstance(shared, Mapping)
+            and Path(str(campaign.get("window_path", ""))).resolve()
+            == v30_window_path.resolve()
+            and v30_execution["campaign_window_sha256"]
+            == campaign.get("window_sha256")
+            == shared.get("campaign_window_sha256")
+            and v30_window["total_seconds"] == campaign_seconds
+            and v30_window["closeout_reserve_seconds"]
+            == closeout_reserve_seconds
+        )
+        if not v30_route_passed:
+            raise ValueError(
+                "V30 candidate contract requires the authorized target Ny8 V15/V17 AllQ route"
+            )
+        assert v20_case is not None
+        v30_identity = (v20_case.run_id, v20_case.solver_stage, 16.0)
     v19_identity = (
         (v20_case.run_id, v20_case.solver_stage, 16.0)
         if v20_case is not None
@@ -5224,7 +5277,9 @@ def _candidate_contract(
         else None
     )
     expected_identity = (
-        v19_identity
+        v30_identity
+        if v30_route_requested
+        else v19_identity
         if is_v19
         else v18_identity
         if v18_identity is not None
@@ -5318,6 +5373,7 @@ def _candidate_contract(
             == resolved.get("derived", {}).get("physical_intermediate_profile", {}).get("scope")
             and resolved.get("derived", {}).get("physical_intermediate_profile") == contract
         ),
+        "v30_target_ny8_v15_v17_all_q_binding": v30_route_passed,
     }
     failed = [key for key, passed in checks.items() if not passed]
     if failed:
@@ -5841,7 +5897,16 @@ def run_task40_v10_p6_reference_worker(
             ),
         )
         summary["campaign_authority"] = _candidate_contract(
-            resolved_payload, contract, runtime, profile_identity=profile_identity
+            resolved_payload,
+            contract,
+            runtime,
+            profile_identity=profile_identity,
+            v30_contract=v30_contract,
+            v30_effective_factor_lifecycle_strategy=(
+                effective_factor_lifecycle_strategy
+                if v30_contract is not None
+                else None
+            ),
         )
         summary["time_policy"] = runtime.time_policy
         summary["time_policy_facts"] = dict(runtime.time_policy_facts)
