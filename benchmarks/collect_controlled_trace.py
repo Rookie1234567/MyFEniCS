@@ -11,7 +11,7 @@ from src.solvers.scattering_anchor import relative, save_arrays
 from src.solvers.scattering_anchor_checks import checked_arrays
 
 
-def verify(folder, journal):
+def verify(folder, journal, *, scope=scope):
     from src.solvers.bounded_trace_study import action_charge
     from src.solvers.tetra_coefficient_action import CoefficientFullAction
     from src.solvers.independent_tetra_study import load_boundary
@@ -27,6 +27,10 @@ def verify(folder, journal):
             raise ValueError('frozen final coefficient/retained identity')
         own = folder/role; own.mkdir(exist_ok=True)
         strategy_check = None
+        if record['strategy'] == 'PHYSICAL_IMPEDANCE':
+            from benchmarks.collect_bounded_trace import numeric_saved_check
+            producer=Path(json.loads((scope.ARTIFACT/(role+'.json')).read_text())['path']).parent
+            strategy_check=numeric_saved_check(producer,minimum_bytes=12*2**30,check_linear_PC=False)
         if record['strategy'] == 'SMR':
             from benchmarks.collect_bounded_trace import numeric_saved_check
             root = Path(scope.ARTIFACT/(role+'.json'))

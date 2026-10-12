@@ -1,0 +1,5 @@
+schema_version = 1
+
+[task042_v77]
+stage = "PREPARE"
+run_id = "task042_v77_impedance_patch_prepare"

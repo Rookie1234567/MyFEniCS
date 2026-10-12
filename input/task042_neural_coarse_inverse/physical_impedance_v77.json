@@ -1,0 +1,79 @@
+{
+  "review_commit": "fc02a8612f1aa31b2c52366cc645acee6b5f8daf",
+  "review_sha256": "a112034d6842a7bca8dc8a309bcdbff35ae3436efd38be16798468d86a96880c",
+  "batch": "V77_PHYSICAL_IMPEDANCE_PATCH_PILOT",
+  "stages": [
+    "PRECHECK",
+    "PREPARE",
+    "ITERATE",
+    "VERIFY_COST"
+  ],
+  "new_storage_bytes": 25769803776,
+  "task_storage_bytes": 747324309504,
+  "free_bytes": 53687091200,
+  "evidence_reserve_bytes": 536870912,
+  "action_limit": 800,
+  "iteration_limit": 256,
+  "restart": 128,
+  "iteration_seconds": 7200,
+  "maximum_new_complete_solves": 1,
+  "numeric_future_minimum_bytes": 12884901888,
+  "factor_double_symbolic_sum_bytes": 85899345920,
+  "total_window_seconds": 21600,
+  "total_loaded_seconds": 19800,
+  "case_wall_seconds": {
+    "PRECHECK": 19800,
+    "PREPARE": 19800,
+    "ITERATE": 19800,
+    "VERIFY_COST": 19800
+  },
+  "memory_profiles": {
+    "default": {
+      "planning_gib": 64,
+      "warning_gib": 80,
+      "sampled_stop_gib": 96,
+      "neighbor_growth_gib": 384,
+      "extra_cache_workspace_gib": 2
+    },
+    "impedance": {
+      "planning_gib": 96,
+      "warning_gib": 112,
+      "sampled_stop_gib": 128,
+      "neighbor_growth_gib": 384,
+      "extra_cache_workspace_gib": 2
+    }
+  },
+  "memory_budget": {
+    "planning_gib": 64,
+    "warning_gib": 80,
+    "sampled_stop_gib": 96,
+    "neighbor_growth_gib": 384,
+    "extra_cache_workspace_gib": 2
+  },
+  "history_known_lower_seconds": 395844.8379061019,
+  "reuse_qualification": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v72/task042_v72_reuse_admit_20261011T042133054087Z/result.json",
+    "sha256": "db39b64f7e0ccc44c3bbb7031b70f414c28917bf2fe5a768b15b66b2b5cfcb43"
+  },
+  "forecast_numeric_upper_seconds": 3600,
+  "effect_points": {
+    "32": 0.3,
+    "64": 0.1,
+    "128": 0.001
+  },
+  "repair_seconds": 3600,
+  "impedance": {
+    "coefficient": "-i*k0*sqrt(epsilon/mu), passive branch",
+    "body": "saved halo_cells only",
+    "boundary": "periodic quotient artificial plus physical z",
+    "facet_q": [
+      13,
+      15
+    ],
+    "fixed_patch_count": 38,
+    "rows_cap": 80000,
+    "coarse_rows": 7068,
+    "facet_cache_bytes": 2147483648,
+    "workspace_bytes": 2147483648
+  }
+}

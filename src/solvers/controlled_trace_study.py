@@ -68,7 +68,7 @@ def precheck(folder, journal):
     return result
 
 
-def iterate(role, folder, journal, state):
+def iterate(role, folder, journal, state, *, scope=scope, pc_factory=None, strategy=None):
     from petsc4py import PETSc
     from .tetra_coefficient_action import CoefficientFullAction
     from .physical_retained_fgmres import run_retained_fgmres
@@ -82,7 +82,7 @@ def iterate(role, folder, journal, state):
     def original(kind, v):
         return common.action_charge(kind, lambda: left*a.apply_trace(right*v), scope=scope)
     pc = None; numeric_count = 0
-    strategy = role
+    strategy = role if strategy is None else strategy
     initial = None; consumed = 0
     if role == 'PROMOTED':
         decision = json.loads((scope.window.TMP/'route_decision.json').read_text())
@@ -93,7 +93,11 @@ def iterate(role, folder, journal, state):
                 raise ValueError('promoted same RHS and coordinate identity')
         initial = values['scaled_retained']; consumed = prior['iteration']['cumulative_iterations']
         strategy = decision['promoted_role']
-    if strategy in ('B0', 'BJ'):
+    if pc_factory is not None:
+        pc, numeric_count = pc_factory(folder=folder,journal=journal,state=state,
+            setup=s,boundary=b,packet=a,full_rhs=full_rhs,left=left,right=right,
+            scaled_rhs=bhat,original=original)
+    elif strategy in ('B0', 'BJ'):
         inverse = None
         if strategy == 'BJ':
             diag = checked_arrays(scope.stage('PRECHECK')['diagonal'])
@@ -200,14 +204,14 @@ def iterate(role, folder, journal, state):
             true_action=vec_operation(lambda v: original('I_explicit_true_scaled_trace', v)),
             evaluation_iterations=(0, 1, 16, 32, 64, 128) if strategy=='SMR' else (0, 32, 64, 128),
             retained_observation_iterations=(16,) if strategy!='SMR' else (),
-            effect_check=lambda row: effect_gate(row['iteration'], row['true'], row['schur_true_relative_residual']),
+            effect_check=lambda row: getattr(scope,'effect_check',effect_gate)(row['iteration'], row['true'], row['schur_true_relative_residual']),
             candidate_rtol=1e-11, retained_tolerance=1e-11, evaluation_policy=policy,
             audit_identity=dict(directory=str(folder), route=role, strategy=strategy,
                 source_sha=state['source_sha'], packet_sha256=a.receipt['sha256'], RHS=rhs_receipt),
             resource_sample=scope.window.require_live,
-            stop_requested=lambda: scope.ksp_seconds()+time.monotonic()-start >= 10800
+            stop_requested=lambda: scope.ksp_seconds()+time.monotonic()-start >= scope.plan_record()['iteration_seconds']
                 or scope.window.snapshot()['heavy_remaining_seconds'] <= 4500
-                or common.actions_started(scope) >= 1760)
+                or common.actions_started(scope) >= scope.plan_record()['action_limit']-40)
         final = result.pop('final_solution'); values = final.array.copy(); final.destroy()
         t = right*values
         returned = save_arrays(folder/'retained_returned.npz', scaled_retained=values,
@@ -253,7 +257,7 @@ def execute(role, folder, state):
     raise ValueError('V76 explicit one-run role')
 
 
-def consume_returned(role, folder, journal, state):
+def consume_returned(role, folder, journal, state, *, scope=scope):
     """A legal returned vector is consumed without a factor or another KSP."""
     from .tetra_coefficient_action import CoefficientFullAction
     meta = scope.saved_json(state['postprocessing_resume'])
