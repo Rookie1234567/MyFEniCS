@@ -1,0 +1,16 @@
+{
+  "schema": "task42extra.v45.render.v1",
+  "overall": "NOT_VERIFIED_WINDOW_EXHAUSTED",
+  "actual_browser_started": false,
+  "reason": "Original unique campaign deadline expired before final remote delivery; no new budget",
+  "requested_pages": [
+    "review_report_v44.md",
+    "response_v45.md",
+    "outcomes/ftt_feature_coordinates_v45.md"
+  ],
+  "report_clarification": "d300a9bd3006f9a20a0434bf59c2ac6dd76d07fe",
+  "full_pages_visual_qualified": false,
+  "local_parser_is_not_visual_PASS": true,
+  "historical_render_failures_preserved": true,
+  "new_PDE_or_training": false
+}

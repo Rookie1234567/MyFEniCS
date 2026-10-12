@@ -1,0 +1,120 @@
+{
+  "schema": "task42extra.v45.publication-tail.v1",
+  "original_authority": "e0508555ffec6d13fad68b7516971c5899a09901",
+  "clarification": "d300a9bd3006f9a20a0434bf59c2ac6dd76d07fe",
+  "already_completed_unpushed_result": "f5ca9bbb886b4093796ecd189eb84677ce9985a3",
+  "allowed_document_only_same_branch_merge": "60058507530e075aa8960537e2e4c5de3f0425b6",
+  "first_result_commit_time": "2026-10-11T23:07:33+08:00",
+  "first_result_commit_elapsed_from_UTC_s": 14651.232308,
+  "first_commit_elapsed_kind": "DERIVED_FROM_RECORDED_UTC_NOT_MEASURED_SUBSTAGE",
+  "first_completed_result_commit_before_deadline": true,
+  "numerical_sources": [
+    "811f3dd11fff774874a7415e0d55d13e9299c2f3",
+    "bda2ef6c5164a59390479662955e8cef358841db"
+  ],
+  "unique_window": {
+    "campaign": "V45_FTT_FEATURE_COORDINATE_SOLVE",
+    "version": 45,
+    "origin_monotonic": 1641596.628556335,
+    "origin_utc": "2026-10-11T11:03:21.767692+00:00",
+    "budget_s": 43200,
+    "final_reserve_s": 3600,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "single_window": true,
+    "first_readonly_head": "110a31769d4295159bea083c332c3f5abcede7ec",
+    "initial_state": "NOT_STARTED_NO_V45_DIRECTORY_OR_RUN",
+    "initial_inspection_exact_cost_s": "NOT_RETAINED",
+    "authority_publication": "e0508555ffec6d13fad68b7516971c5899a09901",
+    "deadline_monotonic": 1684796.628556335
+  },
+  "accounting_cutoff_monotonic": 1691969.955703778,
+  "accounting_cutoff_utc": "2026-10-12T01:02:55.103142+00:00",
+  "campaign_elapsed_at_cutoff_s": 50373.32714744285,
+  "remaining_at_cutoff_s": -7173.3271474428475,
+  "original_window_reopened": false,
+  "new_research_budget_s": 0,
+  "whole_campaign_within_unique_window": false,
+  "process_window_status": "WINDOW_EXPIRED_BEFORE_FINAL_DELIVERY",
+  "frozen_initial_collection_elapsed_s": 13619.187559505925,
+  "tail_since_initial_collection_s": 36754.13958793692,
+  "unattributed_calendar_gap_reason": "NOT_RETAINED",
+  "calendar_wait_kept_in_elapsed_cost": true,
+  "formal_attempt_total_s": 10341.737580361776,
+  "final_commit_push_fetch_not_complete_at_this_cutoff": true,
+  "final_receipt": "tmp/task42extra/v45/delivery_receipt.json",
+  "logical_parent_prefix_s": 10029.01257516597,
+  "parent_prefix_not_double_charged": true,
+  "historical_project_exact_cumulative": "UNKNOWN",
+  "complete_cold_N1": "UNKNOWN",
+  "retained_independent_G_matvec_records": [
+    {
+      "binding": {
+        "path": "benchmarks/artifacts/task42extra/v45/v45_feature_coordinates_compare/saved_checker.json",
+        "bytes": 54763,
+        "sha256": "244c95cf9b589d795413f9e98b0dc9d4e29a5bc2b446075b7a302140d14d9909"
+      },
+      "count": 7
+    },
+    {
+      "binding": {
+        "path": "benchmarks/artifacts/task42extra/v45/isolated_joint_verification/v45_feature_scaled_frozen_joint_8/saved_checker.json",
+        "bytes": 19031,
+        "sha256": "bf1900264862259bf496394e0007523bb4c51d994f79620ed40843d400d1e115"
+      },
+      "count": 3
+    },
+    {
+      "binding": {
+        "path": "benchmarks/artifacts/task42extra/v45/isolated_joint_verification/v45_feature_scaled_learned_joint_10/saved_checker.json",
+        "bytes": 19047,
+        "sha256": "32a3ce0ff0ea672abd47fa4c6d9ebf3d17ce7b114e465b9c1385dd96a51ca621"
+      },
+      "count": 3
+    },
+    {
+      "binding": {
+        "path": "benchmarks/artifacts/task42extra/v45/isolated_joint_verification/v45_identity_frozen_joint_8/saved_checker.json",
+        "bytes": 19005,
+        "sha256": "fe5442c0c859cffeaf3c97258fe559b340d4ef87722a9aad7cb002e3d431eeb2"
+      },
+      "count": 3
+    }
+  ],
+  "total_retained_independent_G_matvec_count": 16,
+  "publication_failure": {
+    "worker_error": "KeyError: 'budget_seconds'",
+    "actual_budget_key": "budget_s",
+    "failed_writer": {
+      "path": "tmp/task42extra/v45/finish_publication.py",
+      "bytes": 8143,
+      "sha256": "023882afc67ed889a197a82a3e745eb2d785ff2e9f946e9c643bac6a3ad22f8d"
+    },
+    "worker_log": {
+      "path": "tmp/task42extra/v45/late_metadata_guard/watchdog/worker.log",
+      "bytes": 336,
+      "sha256": "04ea0493f89f6bdad3a26126eaf57218c4091d4639368af77d91bdd010a1bede"
+    },
+    "guard_summary": {
+      "path": "tmp/task42extra/v45/late_metadata_guard/watchdog/summary.json",
+      "bytes": 2287,
+      "sha256": "26d3511b27b6ca78d83876eed13c235d0c9991dcfbe03177248e8ef5edbcfe2e"
+    },
+    "guard_classification": "STORAGE_CONTROLLED_STOP",
+    "guard_elapsed_s": 2.26289838203229,
+    "guard_descendants_cleared": true,
+    "historical_artifact_bytes": 56142835545,
+    "artifact_limit_bytes": 21474836480,
+    "disk_free_bytes": 2693747183616,
+    "old_artifacts_deleted": false,
+    "resource_PASS_claimed": false
+  },
+  "repair_scope": "missing compact publication metadata only; no numerical or storage-budget change",
+  "new_training_or_FE_or_reference_solve": false,
+  "new_Global_Gram_or_Maxwell_factor": false,
+  "full_FE_Krylov": false,
+  "healthy_producers_or_reference_recomputed": false,
+  "source_input_or_environment_changed": false,
+  "other_branch_or_worktree_mutated": false,
+  "neighbor_notification_sent": false,
+  "GitHub_actual_visual": "NOT_VERIFIED_WINDOW_EXHAUSTED"
+}

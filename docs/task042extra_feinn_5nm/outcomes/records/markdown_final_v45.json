@@ -1,0 +1,293 @@
+{
+  "schema": "task42extra.v45.final-docs.v1",
+  "status": "LOCAL_MARKDOWN_PASS",
+  "rows": [
+    {
+      "binding": {
+        "path": "docs/task042extra_feinn_5nm/response_v45.md",
+        "bytes": 24925,
+        "sha256": "f70f9023e45193b331c51149e42b0826a10baaa428234f78b23f1e95b4a93544"
+      },
+      "scope": "changed selected page only",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/response_v45.md",
+        "sha256": "f70f9023e45193b331c51149e42b0826a10baaa428234f78b23f1e95b4a93544",
+        "checked_scope": "entire page",
+        "markdown_tables": 9,
+        "parsed_tables": 9,
+        "math_fences": 2,
+        "links": 26
+      }
+    },
+    {
+      "binding": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/ftt_feature_coordinates_v45.md",
+        "bytes": 22472,
+        "sha256": "f2e97931238ff6595457109bc36f324ff36c98f0fa71d3174fafcd28dbbc24e8"
+      },
+      "scope": "changed selected page only",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/ftt_feature_coordinates_v45.md",
+        "sha256": "f2e97931238ff6595457109bc36f324ff36c98f0fa71d3174fafcd28dbbc24e8",
+        "checked_scope": "entire page",
+        "markdown_tables": 9,
+        "parsed_tables": 9,
+        "math_fences": 2,
+        "links": 23
+      }
+    },
+    {
+      "binding": {
+        "path": "docs/task042extra_feinn_5nm/review_report_v44.md",
+        "bytes": 27779,
+        "sha256": "378692e6069970681677c620ffd3ed74c08a1767b3c7a3452a9cc66e8aa7ec00"
+      },
+      "scope": "changed selected page only",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/review_report_v44.md",
+        "sha256": "378692e6069970681677c620ffd3ed74c08a1767b3c7a3452a9cc66e8aa7ec00",
+        "checked_scope": "entire page",
+        "markdown_tables": 5,
+        "parsed_tables": 5,
+        "math_fences": 3,
+        "links": 12
+      }
+    },
+    {
+      "binding": {
+        "path": "docs/task042extra_feinn_5nm/README.md",
+        "bytes": 75633,
+        "sha256": "b82f23f3b0ee79d1aa161ca1494736319e1ee87a42541f7da76878bec9a098d1"
+      },
+      "scope": "V45 current section only",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/README.md",
+        "sha256": "b82f23f3b0ee79d1aa161ca1494736319e1ee87a42541f7da76878bec9a098d1",
+        "checked_scope": "当前执行入口：V45神经右坐标研究完成",
+        "markdown_tables": 0,
+        "parsed_tables": 0,
+        "math_fences": 0,
+        "links": 10
+      }
+    },
+    {
+      "binding": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "bytes": 194504,
+        "sha256": "7610ea888dbce570016f0c759f5976c1ce9a680baba752dbcba66833ecb81f36"
+      },
+      "scope": "V45 current section only",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "sha256": "7610ea888dbce570016f0c759f5976c1ce9a680baba752dbcba66833ecb81f36",
+        "checked_scope": "当前V45：右坐标/隐藏消融及完整场验收",
+        "markdown_tables": 4,
+        "parsed_tables": 4,
+        "math_fences": 0,
+        "links": 27
+      }
+    },
+    {
+      "binding": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "bytes": 77446,
+        "sha256": "b79d935b576a1436aabf97c92bd4b330053ed77bce88999db5371cc79ff80382"
+      },
+      "scope": "V45 current section only",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "sha256": "b79d935b576a1436aabf97c92bd4b330053ed77bce88999db5371cc79ff80382",
+        "checked_scope": "V45：小坐标资格、受影响接线及完整保存checker",
+        "markdown_tables": 0,
+        "parsed_tables": 0,
+        "math_fences": 0,
+        "links": 10
+      }
+    },
+    {
+      "binding": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "bytes": 72977,
+        "sha256": "ece8bea321c55796a1fa517836593ba37eff089146f2d327c073dadfc6d73edc"
+      },
+      "scope": "V45 current section only",
+      "result": {
+        "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "sha256": "ece8bea321c55796a1fa517836593ba37eff089146f2d327c073dadfc6d73edc",
+        "checked_scope": "V45：复用既有条件训练的有限右坐标研究",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 7
+      }
+    },
+    {
+      "binding": {
+        "path": "docs/development_progress.md",
+        "bytes": 270209,
+        "sha256": "6f60aef64f398113ca5d3d1fd7366f53340be990a823bc48ca283e48b2e4a841"
+      },
+      "scope": "V45 current section only",
+      "result": {
+        "path": "docs/development_progress.md",
+        "sha256": "6f60aef64f398113ca5d3d1fd7366f53340be990a823bc48ca283e48b2e4a841",
+        "checked_scope": "Task42extra V45：可逆右坐标与隐藏边际研究完成",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 5
+      }
+    },
+    {
+      "binding": {
+        "path": "docs/development_model_registry.md",
+        "bytes": 324260,
+        "sha256": "55f1278b2f95df86525ab40087f49c388b58ed2d60e244a74c87f95f5fc7518f"
+      },
+      "scope": "V45 current section only",
+      "result": {
+        "path": "docs/development_model_registry.md",
+        "sha256": "55f1278b2f95df86525ab40087f49c388b58ed2d60e244a74c87f95f5fc7518f",
+        "checked_scope": "Task42extra V45：可逆右坐标与隐藏边际研究完成",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 5
+      }
+    }
+  ],
+  "publication_tail": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/publication_tail_v45.json",
+    "bytes": 5151,
+    "sha256": "a46fd6838e32643ba003c8267f245dba4a46e6cac72ec66f17adc5275d1f0b67"
+  },
+  "render_check": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/render_check_v45.json",
+    "bytes": 584,
+    "sha256": "8047ee2fe24c28cc423747fabe0baec8b6a3162e99fbb7a16e2500e313864090"
+  },
+  "raw_numerical_record": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v45.json",
+    "bytes": 80795,
+    "sha256": "8b67baca473e25b6df3d015f8c14151b04f4710d186d4ebe445127f643a13ac0"
+  },
+  "original_residual_recalculation": {
+    "W32_R12_IDENTITY_FROZEN": {
+      "values": {
+        "native_relative": 0.35856481689419895,
+        "augmented_relative": 0.35856481689419895,
+        "independent_total_relative": 0.169852785269355
+      },
+      "threshold": 1e-06,
+      "equation_pass": false,
+      "joint_pass": false,
+      "reason": "original equation required conjunct independently fails; no recorded status used"
+    },
+    "W32_R12_FEATURE_SCALED_FROZEN": {
+      "values": {
+        "native_relative": 0.3084158633027381,
+        "augmented_relative": 0.3084158633027381,
+        "independent_total_relative": 0.1460971376304193
+      },
+      "threshold": 1e-06,
+      "equation_pass": false,
+      "joint_pass": false,
+      "reason": "original equation required conjunct independently fails; no recorded status used"
+    },
+    "W32_R12_FEATURE_SCALED_LEARNED": {
+      "values": {
+        "native_relative": 0.3071112949052658,
+        "augmented_relative": 0.3071112949052658,
+        "independent_total_relative": 0.14547916128292385
+      },
+      "threshold": 1e-06,
+      "equation_pass": false,
+      "joint_pass": false,
+      "reason": "original equation required conjunct independently fails; no recorded status used"
+    },
+    "W32_R12_IDENTITY_FROZEN_PRODUCER": {
+      "values": {
+        "native_relative": 0.3585648168982204,
+        "augmented_relative": 0.3585648168982204,
+        "independent_total_relative": 0.1698527852712633
+      },
+      "threshold": 1e-06,
+      "equation_pass": false,
+      "joint_pass": false,
+      "reason": "original equation required conjunct independently fails; no recorded status used"
+    },
+    "W32_R12_FEATURE_SCALED_FROZEN_PRODUCER": {
+      "values": {
+        "native_relative": 0.30841586319015607,
+        "augmented_relative": 0.30841586319015607,
+        "independent_total_relative": 0.1460971375770899
+      },
+      "threshold": 1e-06,
+      "equation_pass": false,
+      "joint_pass": false,
+      "reason": "original equation required conjunct independently fails; no recorded status used"
+    },
+    "W32_R12_FEATURE_SCALED_LEARNED_PRODUCER": {
+      "values": {
+        "native_relative": 0.3071112949949547,
+        "augmented_relative": 0.3071112949949547,
+        "independent_total_relative": 0.14547916132540925
+      },
+      "threshold": 1e-06,
+      "equation_pass": false,
+      "joint_pass": false,
+      "reason": "original equation required conjunct independently fails; no recorded status used"
+    }
+  },
+  "scalar_metadata_only_no_numerical_solver_replay": true,
+  "historical_bytes_preserved": true,
+  "numerical_sources_unchanged": true,
+  "existing_unique_targeted_cases": 41,
+  "existing_tests_reused": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/formal_tests_and_qualification_v45.json",
+    "bytes": 11275,
+    "sha256": "6cfcfa535e547241020edc6bbebe4a2a5e9aa234773011bc38036d5b49d23412"
+  },
+  "local_parser_not_visual_PASS": true,
+  "full_pytest_or_CI_claimed": false,
+  "original_failed_publication_preserved": true,
+  "window_reopened": false,
+  "final_saved_checkpoint_identity_checks": [
+    {
+      "route": "W32_R12_IDENTITY_FROZEN",
+      "binding": {
+        "path": "benchmarks/artifacts/task42extra/v45/v45_identity_frozen/checkpoints/committed_000010.pt",
+        "sha256": "0121d04be3ae7c8fdaed1fefe23462c378dc81fa841ee0751040c7800d2b4978",
+        "bytes": 2029380
+      },
+      "measured_sha256_matches": true
+    },
+    {
+      "route": "W32_R12_FEATURE_SCALED_FROZEN",
+      "binding": {
+        "path": "benchmarks/artifacts/task42extra/v45/v45_feature_scaled_frozen/checkpoints/committed_000010.pt",
+        "sha256": "3c7668f5649b99a7247a42e559d8b628c828006b309bc064bdd2a11c1ad99999",
+        "bytes": 2024004
+      },
+      "measured_sha256_matches": true
+    },
+    {
+      "route": "W32_R12_FEATURE_SCALED_LEARNED",
+      "binding": {
+        "path": "benchmarks/artifacts/task42extra/v45/v45_feature_scaled_learned/checkpoints/committed_000012.pt",
+        "sha256": "8e64c9072ec41898c60830b5a3f165a23db9ccbd5b9c036c7f13cd2628c6531a",
+        "bytes": 1974675
+      },
+      "measured_sha256_matches": true
+    }
+  ],
+  "tracking": {
+    "configured_remote": "origin",
+    "configured_merge": "refs/heads/task42extra_feinn_5nm",
+    "explicit_tracking_ref": "refs/remotes/origin/task42extra_feinn_5nm",
+    "default_upstream_resolution": "UNAVAILABLE_SHARED_FETCH_REFSPEC_EXCLUDES_BRANCH",
+    "per_command_explicit_fetch_mapping_resolves_upstream": true,
+    "shared_origin_configuration_changed": false
+  },
+  "last_publication_metadata_cpu": 1
+}

@@ -1,5 +1,8 @@
 # Response V45：右坐标三对照与完整场验收完成，M5联合FAIL
 
+**2026-10-12唯一V45发布接续：** 三路线与完整独立验收已完成，没有重新计算。初次结果提交f5ca9bbb886b4093796ecd189eb84677ce9985a3尚未推送；随后收到纯文档澄清d300a9bd3006f9a20a0434bf59c2ac6dd76d07fe，按Review V44 §0A.3在clean、无活跃run时普通合并同执行分支，保留双方历史。数值source仍为bda2ef6c5164a59390479662955e8cef358841db，没有以文档或merge HEAD替代。原43200s窗口未重开；接续时已耗尽，最终发布已超过原窗口，不能授整批时间预算PASS。未细分日历空档保留NOT_RETAINED，不称训练时间；数值尝试费用和原截点均保留。现在只做必要发布，不启动浏览器、测试或数值阶段。GitHub实际呈现NOT_VERIFIED_WINDOW_EXHAUSTED，原解析通过不能代替视觉证据。[发布尾段与等待账](outcomes/records/publication_tail_v45.json)、[呈现未运行](outcomes/records/render_check_v45.json)、[已有绑定/原门检查](outcomes/records/delivery_check_v45.json)、[端到端用途](outcomes/records/end_to_end_research_use_v45.json)。
+
+
 **可逆参数变换和后续隐藏学习分别完成实际对照；完整原方程与场门未达到。内层诊断、实际读出、物理精度和完整成本分别裁决，不授有效解或NN资源增益。**
 
 本轮把已经学习十二轮的同一个宽32、rank8网络分成三份。第一份沿用原输出坐标并冻结隐藏函数；第二份只用小矩阵重新表示输出增量，也冻结隐藏函数；第三份用相同变换并继续学习3360个隐藏实参数。重新表示坐标的目的，是让有限迭代更容易利用相互接近、尺度悬殊的函数；它不增加函数、改变原方程或重新衡量残差。小SVD、坐标转换、缓存及真实写回都要计费，收益仍需完整物理结果证实。
@@ -160,3 +163,11 @@ tau1e-6的资格失败只依据实际写回数值，固定tau1e-4后备通过。
 [冻结设计](outcomes/records/feature_coordinate_design_v45.json)、[parent/谱/可逆资格](outcomes/records/feature_coordinate_qualification_v45.json)、[实际各核完整谱/缓存身份](outcomes/records/operational_coordinate_spectra_v45.json)、[路线/PT](outcomes/records/conditional_core_routes_v45.json)、[原/变换坐标逐核](outcomes/records/conditional_inner_solver_v45.csv)、[两段原字段](outcomes/records/two_segment_core_refinement_v45.json)、[隐藏/轮次](outcomes/records/hidden_updates_and_rounds_v45.json)、[隔离标量](outcomes/records/isolated_scalar_continuation_v45.json)、[共同轮次/wall](outcomes/records/same_state_hidden_ablation_v45.json)、[完整Gate/区域/分母](outcomes/records/full_numerical_gates_v45.json)、[四类40复通道](outcomes/records/full_40_complex_channels_v45.csv)、[六点](outcomes/records/six_point_complex_fields_v45.csv)、[功率](outcomes/records/power_and_energy_v45.csv)、[定义](outcomes/records/channel_and_norm_definitions_v45.json)、[条件出口](outcomes/records/feature_coordinate_decisions_v45.json)、[run/source/hash](outcomes/records/run_index_v45.json)、[费用](outcomes/records/resource_costs_v45.json)、[定向tests](outcomes/records/formal_tests_and_qualification_v45.json)、[修复](outcomes/records/repair_log_v45.json)。
 
 [专题](outcomes/ftt_feature_coordinates_v45.md)。有限GitHub实际呈现另记录，未见页尾不授视觉通过；最终HEAD/tracking/ahead-behind/clean/自身清场由发布尾段和最终答复核对。仅推本分支，停止等待review，不通知隔壁或自动开下一批。
+
+## 2026-10-12 接手后的发布修复
+
+接手时三路线、独立验收及结果提交均已完成，同分支的 Review V44 澄清也已合并；本轮只补齐发布材料。原发布脚本把实际 `budget_s` 字段写成 `budget_seconds`，产生 `KeyError`，因此八处文档引用的发布时间账尚未生成。该次监督器同时记录 `STORAGE_CONTROLLED_STOP`：历史 artifact 总量为 56,142,835,545 B，超过其 20 GiB 检查口径，磁盘剩余 2,693,747,183,616 B。字段错误、存储分类及全部费用分别保留，不能将其改称数值失败或资源通过。
+
+此次采用正确字段补写 [发布时间账](outcomes/records/publication_tail_v45.json)，只核对改变页的本地结构、链接、历史字节与保存的原始残差，结果见 [最终文档检查](outcomes/records/markdown_final_v45.json)。保留既有 41 个不同定向测试、304 个产物绑定和 136 个源码文件的检查证据；没有新增训练、FE、参考求解或 pytest。原 43,200 s 窗口不重开，超窗、冷 N=1 的 UNKNOWN、三路线联合 FAIL 和网页呈现未验证均保持。没有删除历史 artifact 或改动存储预算；本次只产生轻量交付元数据，不授新的数值运行资格。
+
+本分支的 `remote=origin` 和 `merge=refs/heads/task42extra_feinn_5nm` 配置正确，但共享 origin 的持久 fetch refspec 未包含本分支，默认 `@{upstream}` 因此无法解析。按任务合同保留共享配置，使用精确 refspec 与 `refs/remotes/origin/task42extra_feinn_5nm` 核对实际 tracking；最终 HEAD、远端 SHA、ahead/behind 和 clean 状态写入 ignored 交付收据并在最终答复报告，不把默认 upstream 解析失败隐藏为通过。

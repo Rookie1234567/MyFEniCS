@@ -11,6 +11,12 @@ tau1e-6的资格失败只依据实际写回数值，固定tau1e-4后备通过。
 
 下方历史全文原样保留；旧“当前/下一步”不构成新授权。
 
+
+
+**2026-10-12唯一V45发布接续：** 三路线与完整独立验收已完成，没有重新计算。初次结果提交f5ca9bbb886b4093796ecd189eb84677ce9985a3尚未推送；随后收到纯文档澄清d300a9bd3006f9a20a0434bf59c2ac6dd76d07fe，按Review V44 §0A.3在clean、无活跃run时普通合并同执行分支，保留双方历史。数值source仍为bda2ef6c5164a59390479662955e8cef358841db，没有以文档或merge HEAD替代。原43200s窗口未重开；接续时已耗尽，最终发布已超过原窗口，不能授整批时间预算PASS。未细分日历空档保留NOT_RETAINED，不称训练时间；数值尝试费用和原截点均保留。现在只做必要发布，不启动浏览器、测试或数值阶段。GitHub实际呈现NOT_VERIFIED_WINDOW_EXHAUSTED，原解析通过不能代替视觉证据。[发布尾段与等待账](records/publication_tail_v45.json)、[呈现未运行](records/render_check_v45.json)、[已有绑定/原门检查](records/delivery_check_v45.json)、[端到端用途](records/end_to_end_research_use_v45.json)。
+
+接手后的发布检查只覆盖改变页的本地 Markdown、链接和历史保留，以及保存记录中的原残差；[最终收据](records/markdown_final_v45.json)与[发布时间账](records/publication_tail_v45.json)单列。既有 41 个不同定向 case 及 Ruff/compileall 证据复用，本次没有重新运行 pytest、训练或 FE；本地解析不能替代 GitHub 视觉检查，后者仍为 `NOT_VERIFIED_WINDOW_EXHAUSTED`。原发布脚本 `KeyError: 'budget_seconds'` 和同时发生的存储保护停止均保留。
+
 <!-- TASK42EXTRA_V45_CURRENT_END -->
 
 <!-- TASK42EXTRA_V44_CURRENT_BEGIN -->

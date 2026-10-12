@@ -15,6 +15,9 @@
 
 下方历史全文原样保留；旧“当前/下一步”不构成新授权。
 
+
+V45结果先完成并提交，重复消息后只发布、不重算。原43200s窗口已耗尽，最终交付超窗；时间预算不授PASS，冷N=1仍UNKNOWN。数值source未变、三条联合FAIL、0.7nm NOT_RUN。[发布尾账](task042extra_feinn_5nm/outcomes/records/publication_tail_v45.json)。
+
 <!-- TASK42EXTRA_V45_CURRENT_END -->
 
 <!-- TASK42EXTRA_V44_CURRENT_BEGIN -->
