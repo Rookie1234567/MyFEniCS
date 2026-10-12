@@ -87,16 +87,21 @@ def least_residual_weights(v, W, *, driver='gelsd'):
 
 class ResidualMinimizedPC:
     """Three input-dependent complex weights; deliberately not additive."""
-    def __init__(self, base, action, append=lambda row: None):
+    def __init__(self, base, action, append=lambda row: None, witness=lambda *args: None):
         self.base, self.action, self.append = base, action, append
+        self.witness = witness
         self.calls = base.calls
         self.calls.update(SMR_original_action=0, SMR_zero=0, SMR_retry=0)
         self.seconds = base.seconds
-        self.seconds.update(small_LS=0.)
+        self.seconds.update(small_LS=0., SMR_original=0.)
 
     def apply_original(self, v):
         self.calls['SMR_original_action'] += 1
-        return self.action(v)
+        began = time.perf_counter()
+        try:
+            return self.action(v)
+        finally:
+            self.seconds['SMR_original'] += time.perf_counter()-began
 
     def __call__(self, v):
         self.calls['apply'] += 1
@@ -140,6 +145,8 @@ class ResidualMinimizedPC:
             nonlinear_input_dependent_weights=True, reference_reads=0))
         if not valid:
             raise ValueError('SMR original-action residual protection failed')
+        if self.calls['apply'] <= 2:
+            self.witness(self.calls['apply'], v, D, W, z)
         return z
 
     def destroy(self):

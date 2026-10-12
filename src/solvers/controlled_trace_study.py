@@ -129,7 +129,9 @@ def iterate(role, folder, journal, state):
             def log_pc(row):
                 with (folder/'SMR_calls.jsonl').open('a') as f:
                     f.write(json.dumps(row, allow_nan=False)+'\n'); f.flush()
-            pc = ResidualMinimizedPC(base, lambda v: original('I_PC_original', v), log_pc)
+            pc = ResidualMinimizedPC(base, lambda v: original('I_PC_original', v), log_pc,
+                witness=lambda i,v,D,W,z: save_arrays(folder/f'SMR_directions_{i}.npz',
+                    input=v, directions=D, images=W, correction=z))
         except BaseException:
             base.destroy(); raise
         numeric_count = len(local)+1
