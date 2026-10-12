@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import argparse
+from copy import deepcopy
 import json
 from pathlib import Path
 import re
 import socket
 import sys
+import tomllib
 from typing import Any, Mapping
 
 from src.runners.task40_v10_campaign import (
@@ -32,12 +34,28 @@ V30_RUNTIME_RELATIVE = Path(
     "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix"
 )
 V30_ABI_RECEIPT_RELATIVE = Path(
-    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json"
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/abi_receipt_v29_attempt2.json"
 )
 V30_JIT_CACHE_RELATIVE = Path(
-    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit"
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/jit_cache"
 )
 V30_WINDOW_RELATIVE = TASK40_V30_TARGET_CAMPAIGN_WINDOW
+V30_CANONICAL_INPUT_RELATIVE = Path(
+    "input/task40extra_0p7nm_engineering/target_original_ny8_resource_pilot_v20.dat"
+)
+V30_CANONICAL_INPUT_SHA256 = "f6726d005713b586f1bccfbf6904dd64f3f1f31dd3b069607b55e9b430d294c7"
+V30_ARTIFACT_ROOT_RELATIVE = Path(
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl"
+)
+V30_OLD_EXECUTION_CONTRACT_SHA256 = "9153c2b2b7f32f16cbacca2a6275b16a273fe059f8e5328517ca10d9d97b78e6"
+V30_PREPARATION_ROOT_RELATIVE = Path(
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation"
+)
+V30_STAGE_OVERRIDE_KEYS = (
+    "task40_target_heavy_authorized",
+    "task40_v30_q_csr_binding",
+    "task40_v30_factor_bank_config",
+)
 V30_TARGET_HOST = "fenics-ws"
 V30_TARGET_HOSTNAME = "fenics-ws01"
 V30_TARGET_BOOT_ID = "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
@@ -78,6 +96,104 @@ V30_RESOURCES = {
 
 class V30ContractError(ValueError):
     """A V30 execution contract or live resource gate failed closed."""
+
+
+def require_v30_input_identity(
+    canonical_input_path: str | Path,
+    staged_input_path: str | Path,
+    *,
+    repo_root: str | Path,
+) -> dict[str, str]:
+    """Bind V30 science to the immutable canonical DAT and retain the raw stage hash."""
+    root = Path(repo_root).resolve()
+    canonical = Path(canonical_input_path).resolve(strict=True)
+    staged = Path(staged_input_path).resolve(strict=True)
+    canonical_sha = sha256_file(canonical)
+    if (
+        canonical.name != V30_CANONICAL_INPUT_RELATIVE.name
+        or canonical_sha != V30_CANONICAL_INPUT_SHA256
+    ):
+        raise V30ContractError("V30 canonical scientific input is missing or changed")
+    artifact_roots = (
+        (root / V30_ARTIFACT_ROOT_RELATIVE).resolve(),
+        (root / V30_PREPARATION_ROOT_RELATIVE).resolve(),
+    )
+    if staged.name != canonical.name or not any(
+        staged.is_relative_to(artifact_root / "stage_inputs")
+        for artifact_root in artifact_roots
+    ):
+        raise V30ContractError("V30 staged input must be a same-name ignored stage input")
+
+    canonical_data = tomllib.loads(canonical.read_text(encoding="utf-8"))
+    staged_data = tomllib.loads(staged.read_text(encoding="utf-8"))
+    expected = deepcopy(canonical_data)
+    expected_execution = expected.get("execution")
+    staged_execution = staged_data.get("execution")
+    if not isinstance(expected_execution, dict) or not isinstance(staged_execution, dict):
+        raise V30ContractError("V30 canonical/staged input omits its execution section")
+    expected_execution["task40_execution_stop_stage"] = "full"
+    actual_base = deepcopy(staged_data)
+    expected_base = deepcopy(expected)
+    actual_execution = actual_base["execution"]
+    expected_execution = expected_base["execution"]
+    if any(key not in actual_execution for key in V30_STAGE_OVERRIDE_KEYS):
+        raise V30ContractError("V30 staged input omits one of the three reviewed overrides")
+    for key in V30_STAGE_OVERRIDE_KEYS:
+        actual_execution.pop(key, None)
+        expected_execution.pop(key, None)
+    if actual_base != expected_base:
+        raise V30ContractError("V30 staged input changes fields beyond the reviewed full-stage overrides")
+
+    if staged_execution.get("task40_target_heavy_authorized") is not True:
+        raise V30ContractError("V30 staged input lacks the approved heavy-run override")
+    selector = staged_execution.get("task40_v30_q_csr_binding")
+    factor = staged_execution.get("task40_v30_factor_bank_config")
+    if (
+        not isinstance(selector, Mapping)
+        or set(selector) != {"schema", "selector_path", "selector_sha256"}
+        or selector.get("schema") != "task40extra.review_v30_q_csr_worker_binding.v1"
+        or not re.fullmatch(r"[0-9a-f]{64}", str(selector.get("selector_sha256", "")))
+        or not isinstance(factor, Mapping)
+        or set(factor) != {"schema", "output_directory", "require_two_strict_rhs"}
+        or factor.get("schema") != "task40extra.review_v30_all_q_factor_bank.v1"
+        or factor.get("require_two_strict_rhs") is not True
+    ):
+        raise V30ContractError("V30 staged input has malformed selector/factor overrides")
+
+    def rooted_override_path(raw: str, label: str) -> Path:
+        supplied = Path(raw)
+        candidate = (supplied if supplied.is_absolute() else root / supplied).resolve()
+        if not any(candidate.is_relative_to(artifact_root) for artifact_root in artifact_roots):
+            raise V30ContractError(f"V30 {label} escaped its ignored artifact roots")
+        return candidate
+
+    selector_path = rooted_override_path(str(selector["selector_path"]), "selector")
+    output_directory = rooted_override_path(str(factor["output_directory"]), "factor output")
+    if not selector_path.is_file() or sha256_file(selector_path) != selector["selector_sha256"]:
+        raise V30ContractError("V30 q0 selector is missing or changed")
+    selector_data = json.loads(selector_path.read_text(encoding="utf-8"))
+    entries = selector_data.get("q_csr_entries")
+    if (
+        selector_data.get("schema") != "task40extra.review_v30_qualified_q_csr_selector.v1"
+        or selector_data.get("profile")
+        != "task40extra_v20_p6_y_orbit_target_original_ny8_v1"
+        or not isinstance(entries, list)
+        or len(entries) != 1
+        or not isinstance(entries[0], Mapping)
+        or entries[0].get("q_index") != 0
+        or entries[0].get("twist_index") != 0
+        or not output_directory.name
+    ):
+        raise V30ContractError("V30 preparation selector must contain only the qualified q0 entry")
+    return {
+        "canonical_input_path": str(canonical),
+        "canonical_input_sha256": canonical_sha,
+        "scientific_input_sha256": canonical_sha,
+        "staged_input_path": str(staged),
+        "staged_input_sha256": sha256_file(staged),
+        "selector_path": str(selector_path),
+        "selector_sha256": str(selector["selector_sha256"]),
+    }
 
 
 def _rooted_path(root: Path, value: str | Path, label: str) -> Path:

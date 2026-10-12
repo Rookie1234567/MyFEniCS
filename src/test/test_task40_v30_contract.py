@@ -117,11 +117,27 @@ def test_v30_reference_first_control_flow_passes_frozen_identity_and_sector_buil
 def test_v30_service_accepts_real_canonical_full_variant_only_with_exact_overrides(tmp_path):
     from scripts import task40_v20_service_workflow as service
 
+    assert service._v30_q0_csr_shape(
+        [777_644, 777_644], (1_555_068, 777_644)
+    ) == [777_644, 777_644]
+    with pytest.raises(ValueError, match="q0 CSR shape"):
+        service._v30_q0_csr_shape([1_555_068, 777_644], (1_555_068, 777_644))
+
     canonical_path = ROOT / "input/task40extra_0p7nm_engineering/target_original_ny8_resource_pilot_v20.dat"
     canonical_text = canonical_path.read_text(encoding="utf-8")
     selector = tmp_path / service.V30_ARTIFACT_ROOT / "selector_v30.json"
     selector.parent.mkdir(parents=True)
-    selector.write_text('{"fixture":"hash-bound"}\n', encoding="utf-8")
+    selector.write_text(
+        json.dumps(
+            {
+                "schema": "task40extra.review_v30_qualified_q_csr_selector.v1",
+                "profile": service.V30_TARGET_PROFILE,
+                "q_csr_entries": [{"q_index": 0, "twist_index": 0}],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     stage_root = tmp_path / service.V30_ARTIFACT_ROOT / "stage_inputs/full"
     stage_root.mkdir(parents=True)
     stage_path = stage_root / canonical_path.name
@@ -160,6 +176,12 @@ def test_v30_service_accepts_real_canonical_full_variant_only_with_exact_overrid
         repo_root=tmp_path,
         v30_contract=True,
     )
+    identity = contract_module.require_v30_input_identity(
+        canonical_path, stage_path, repo_root=tmp_path
+    )
+    assert identity["scientific_input_sha256"] == _sha(canonical_path)
+    assert identity["staged_input_sha256"] == _sha(stage_path)
+    assert identity["scientific_input_sha256"] != identity["staged_input_sha256"]
 
     changed = dict(data)
     changed["geometry"] = dict(data["geometry"])
@@ -172,6 +194,7 @@ def test_v30_service_accepts_real_canonical_full_variant_only_with_exact_overrid
 
 
 def test_v30_q4_reuses_real_v26_witness_and_support_receipts_read_only():
+    from src.runners.task40_v10_campaign import TASK40_V28_CAMPAIGN_SHA256
     from src.runners.task40_v10_worker import (
         _task40_v30_open_saved_q4_native_witness,
         _task40_v30_q4_direct_hhat_evidence,
@@ -183,7 +206,9 @@ def test_v30_q4_reuses_real_v26_witness_and_support_receipts_read_only():
     fill = manifest["numeric_fill_identity"]
     donor = fill["donor_identity"]
     identity = fill["execution_identity"]
-    operator_identity = {"fixture_live_q4_map_and_H": "verified"}
+    operator_identity = {
+        "scientific_input_sha256": contract_module.V30_CANONICAL_INPUT_SHA256
+    }
     current_execution = {
         "source_sha": "a" * 40,
         "window_sha256": "b" * 64,
@@ -194,12 +219,18 @@ def test_v30_q4_reuses_real_v26_witness_and_support_receipts_read_only():
         repo_root=ROOT,
         operator_identity=operator_identity,
         current_execution_identity=current_execution,
-        input_sha256=identity["input_sha256"],
+        input_sha256=contract_module.V30_CANONICAL_INPUT_SHA256,
         physical_model_sha256=identity["physical_model_sha256"],
         mode_manifest_sha256=identity["mode_manifest_sha256"],
         ordered_mode_key_sha256=identity["ordered_mode_key_sha256"],
         allocation_gate=lambda label, facts: gate_records.append((label, facts)),
     )
+    assert witness["v28_fill_execution_identity"]["input_sha256"] == identity["input_sha256"]
+    assert witness["v28_fill_execution_identity"]["source_sha"] == identity["source_sha"]
+    assert witness["v28_fill_execution_identity"]["campaign_window_sha256"] == (
+        TASK40_V28_CAMPAIGN_SHA256
+    )
+    assert witness["v30_execution_identity"] == current_execution
     assert witness["saved_replay_manifest_sha256"] == donor["saved_replay_manifest"]["sha256"]
     assert witness["donor_verifier_receipt"]["schema"] == (
         "task40extra.review_v26_native_case_recovery_check.v1"

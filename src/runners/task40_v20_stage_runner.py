@@ -4547,6 +4547,21 @@ def run_task40_v20_stage(
             != v30_contract["execution"]["campaign_window_sha256"]
         ):
             raise RuntimeError("V30 worker contract/window environment differs from the validated contract")
+        from src.runners.task40_v30_contract import (
+            V30_CANONICAL_INPUT_RELATIVE,
+            require_v30_input_identity,
+        )
+
+        provenance = resolved_payload.get("provenance", {})
+        if not isinstance(provenance, Mapping) or not provenance.get("source_path"):
+            raise ValueError("V30 stage runner lacks the staged input provenance")
+        v30_input_identity = require_v30_input_identity(
+            Path(__file__).resolve().parents[2] / V30_CANONICAL_INPUT_RELATIVE,
+            str(provenance["source_path"]),
+            repo_root=Path(__file__).resolve().parents[2],
+        )
+        if v30_input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
+            raise ValueError("V30 stage runner raw stage SHA differs from its provenance")
         from src.runners.task40_v10_worker import run_task40_v10_p6_reference_worker
 
         try:
@@ -4567,6 +4582,9 @@ def run_task40_v20_stage(
                 "run_id": preflight["run_id"],
                 "source_sha": source_sha,
                 "input_sha256": preflight["input_sha256"],
+                "scientific_input_sha256": v30_input_identity["scientific_input_sha256"],
+                "staged_input_sha256": v30_input_identity["staged_input_sha256"],
+                "v30_input_identity": dict(v30_input_identity),
                 "q_csr_selector": dict(v30_q_csr_binding),
                 "factor_bank_schema": v30_factor_config.get("schema"),
                 "execution_contract_path": str(v30_contract_path.resolve()),
@@ -4595,6 +4613,9 @@ def run_task40_v20_stage(
                 "run_id": preflight["run_id"],
                 "source_sha": source_sha,
                 "input_sha256": preflight["input_sha256"],
+                "scientific_input_sha256": v30_input_identity["scientific_input_sha256"],
+                "staged_input_sha256": v30_input_identity["staged_input_sha256"],
+                "v30_input_identity": dict(v30_input_identity),
                 "q_csr_selector": dict(v30_q_csr_binding),
                 "failure_type": type(error).__name__,
                 "failure_message": str(error),

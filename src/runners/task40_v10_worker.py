@@ -327,6 +327,9 @@ def _task40_v30_open_saved_q4_native_witness(
     """Read back the accepted V26 q4/q0 witness without rebuilding its old native actions."""
 
     from src.runners.task40_v29_contract import sha256_file
+    from src.runners.task40_v10_campaign import TASK40_V28_CAMPAIGN_SHA256
+    from src.solvers.task40_v30_qualified_q_csr import V28_Q0_DONOR_INPUT_SHA256
+    import re
     from src.solvers.task40_v25_selected_q0 import (
         _load_v26_native_action,
         _load_v26_saved_replay_manifest,
@@ -350,8 +353,14 @@ def _task40_v30_open_saved_q4_native_witness(
     fill_execution = fill.get("execution_identity") if isinstance(fill, Mapping) else None
     if not isinstance(donor_identity, Mapping) or not isinstance(fill_execution, Mapping):
         raise ValueError("V28 q4 donor omits its accepted V26 native/replay identity")
+    if (
+        operator_identity.get("scientific_input_sha256") != input_sha256
+        or fill_execution.get("input_sha256") != V28_Q0_DONOR_INPUT_SHA256
+        or fill_execution.get("campaign_window_sha256") != TASK40_V28_CAMPAIGN_SHA256
+        or not re.fullmatch(r"[0-9a-f]{40}", str(fill_execution.get("source_sha", "")))
+    ):
+        raise ValueError("V26 native witness old V28 input/source/window identity differs from its pinned donor chain")
     for field, expected in (
-        ("input_sha256", input_sha256),
         ("physical_model_sha256", physical_model_sha256),
         ("mode_manifest_sha256", mode_manifest_sha256),
         ("ordered_mode_key_sha256", ordered_mode_key_sha256),
@@ -520,6 +529,8 @@ def _task40_v30_open_saved_q4_native_witness(
     return {
         "schema": "task40extra.review_v30_selected_q_saved_native_reuse.v1",
         "operator_identity": dict(operator_identity),
+        "v28_fill_execution_identity": dict(fill_execution),
+        "v30_execution_identity": dict(current_execution_identity),
         "current_identity": dict(recovery_identity),
         "expected_current_identity": dict(current_execution_identity),
         "native_manifest": native_manifest,
@@ -5360,6 +5371,11 @@ def run_task40_v10_p6_reference_worker(
     """Run a frozen Task40 p6 case with one live four-q periodic reference."""
 
     v30_contract = None
+    v30_input_identity = None
+    provenance = resolved_payload.get("provenance", {})
+    scientific_input_sha256 = str(
+        provenance.get("input_sha256", "") if isinstance(provenance, Mapping) else ""
+    )
     if v30_q_csr_binding is not None or v30_factor_config is not None:
         if os.environ.get("TASK40_V30_STRICT_EXECUTION") != "1":
             raise RuntimeError("V30 worker requires the approved target-native execution contract")
@@ -5386,6 +5402,24 @@ def run_task40_v10_p6_reference_worker(
             or not v30_contract_sha
         ):
             raise RuntimeError("V30 worker environment differs from its frozen execution contract")
+        from src.runners.task40_v30_contract import (
+            V30_CANONICAL_INPUT_RELATIVE,
+            require_v30_input_identity,
+        )
+
+        if not isinstance(provenance, Mapping):
+            raise ValueError("V30 worker input provenance is missing")
+        staged_input_path = provenance.get("source_path")
+        if not isinstance(staged_input_path, str) or not staged_input_path:
+            raise ValueError("V30 worker provenance omits the staged DAT path")
+        v30_input_identity = require_v30_input_identity(
+            Path(__file__).resolve().parents[2] / V30_CANONICAL_INPUT_RELATIVE,
+            staged_input_path,
+            repo_root=Path(__file__).resolve().parents[2],
+        )
+        if v30_input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
+            raise ValueError("V30 worker raw stage SHA differs from run provenance")
+        scientific_input_sha256 = v30_input_identity["scientific_input_sha256"]
 
     from mpi4py import MPI
     from petsc4py import PETSc
@@ -6543,9 +6577,7 @@ def run_task40_v10_p6_reference_worker(
                     candidate_q_matrices=candidate_q_matrices,
                     profile=profile,
                     source_sha=source_sha,
-                    input_sha256=str(
-                        resolved_payload.get("provenance", {}).get("input_sha256", "")
-                    ),
+                    input_sha256=scientific_input_sha256,
                     physical_model_sha256=str(
                         resolved_payload.get("provenance", {}).get(
                             "physical_model_sha256", ""
@@ -6567,7 +6599,7 @@ def run_task40_v10_p6_reference_worker(
                 or len(v20_mode_inventory) != 3
             ):
                 raise ValueError("V30 q-CSR injection lacks input, campaign, or frozen mode identity")
-            input_sha256 = str(provenance.get("input_sha256", ""))
+            input_sha256 = scientific_input_sha256
             physical_sha256 = str(provenance.get("physical_model_sha256", ""))
             if v20_mode_inventory is None or len(v20_mode_inventory) != 3:
                 raise ValueError("V30 reference-first q-CSR binding lacks the frozen mode inventory")

@@ -773,6 +773,9 @@ def _validate_service_stage_input_variant(
             input_path.is_relative_to(root / "stage_inputs") for root in v30_roots
         ):
             raise ValueError("V30 full input must be a same-basename file under its ignored stage_inputs root")
+        from src.runners.task40_v30_contract import require_v30_input_identity
+
+        require_v30_input_identity(canonical_path, input_path, repo_root=repo_root)
         return
     resume_path = execution.get("task40_component_resume_manifest_path")
     resume_sha256 = execution.get("task40_component_resume_manifest_sha256")
@@ -1159,6 +1162,286 @@ def prepare_v28_q0_continuation_input(
             f"{input_path} --task40-v10-campaign-window {TASK40_V28_CAMPAIGN_WINDOW} "
             f"--v28-q0-continuation-selector {selector_path}"
         ),
+    }
+
+
+def _v30_q0_csr_shape(donor_shape: Any, q0_map_shape: Any) -> list[int]:
+    """Use the donor CSR shape, not the rectangular local-to-q map shape."""
+    if (
+        not isinstance(donor_shape, list)
+        or len(donor_shape) != 2
+        or any(type(value) is not int or value <= 0 for value in donor_shape)
+        or not isinstance(q0_map_shape, tuple)
+        or len(q0_map_shape) != 2
+        or type(q0_map_shape[1]) is not int
+        or donor_shape != [q0_map_shape[1], q0_map_shape[1]]
+    ):
+        raise ValueError("V30 q0 CSR shape must be square and match the saved q-map column count")
+    return list(donor_shape)
+
+
+def prepare_v30_full_input(repo_root: Path = ROOT) -> dict[str, Any]:
+    """Prepare the hash-bound q0 import, corrected paths, and V30 full-stage DAT."""
+    import numpy as np
+    from scipy import sparse
+
+    from src.io.input_validation import load_and_resolve
+    from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
+    from src.runners.task40_v30_contract import (
+        V30_ABI_RECEIPT_RELATIVE,
+        V30_ARTIFACT_ROOT_RELATIVE,
+        V30_CANONICAL_INPUT_RELATIVE,
+        V30_CANONICAL_INPUT_SHA256,
+        V30_JIT_CACHE_RELATIVE,
+        V30_OLD_EXECUTION_CONTRACT_SHA256,
+        V30_Q0_DONOR,
+        V30_RUNTIME_RELATIVE,
+        V30ContractError,
+        require_authorized_contract,
+        require_v30_input_identity,
+    )
+    from src.solvers.task40_v20_mode_inventory import load_v20_target_mode_inventory
+    from src.solvers.task40_v30_qualified_q_csr import (
+        V28_Q0_CSR_MANIFEST_SHA256,
+        V28_Q0_DONOR_INPUT_SHA256,
+        V28_Q0_NATIVE_QUALIFICATION_SHA256,
+        V30_Q0_LEGACY_IMPORT_SCHEMA,
+        V30_Q_CSR_SELECTOR_SCHEMA,
+    )
+    from src.solvers.task40_v30_selected_q_csr import selected_q_operator_identity
+
+    root = Path(repo_root).resolve()
+    branch = subprocess.check_output(
+        ["git", "branch", "--show-current"], cwd=root, text=True
+    ).strip()
+    source_sha = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=root, text=True
+    ).strip()
+    if branch != "task40extra_0p7nm_engineering" or subprocess.check_output(
+        ["git", "status", "--porcelain"], cwd=root, text=True
+    ).strip():
+        raise RuntimeError("V30 prepare requires the frozen clean Task40 execution branch")
+
+    artifact_root = (root / V30_ARTIFACT_ROOT_RELATIVE).resolve()
+    old_contract_path = artifact_root / "execution_contract_v30.json"
+    contract_path = artifact_root / "execution_contract_v30_fix01.json"
+    if (
+        not old_contract_path.is_file()
+        or _sha256_file(old_contract_path) != V30_OLD_EXECUTION_CONTRACT_SHA256
+    ):
+        raise ValueError("V30 prepare requires the preserved hash-pinned original contract")
+    contract = json.loads(old_contract_path.read_text(encoding="utf-8"))
+    execution = contract.get("execution")
+    if not isinstance(execution, dict):
+        raise ValueError("V30 original execution contract omits execution fields")
+    supplied_runtime = Path(str(execution.get("runtime_prefix", "")))
+    supplied_runtime = (supplied_runtime if supplied_runtime.is_absolute() else root / supplied_runtime).resolve()
+    if supplied_runtime != (root / V30_RUNTIME_RELATIVE).resolve():
+        raise ValueError("V30 fix01 may only correct the approved ABI/JIT paths")
+    execution["abi_receipt_path"] = str((root / V30_ABI_RECEIPT_RELATIVE).resolve())
+    execution["jit_cache"] = str((root / V30_JIT_CACHE_RELATIVE).resolve())
+    contract_bytes = (json.dumps(contract, ensure_ascii=False, indent=2) + "\n").encode()
+
+    def write_ignored_immutable(path: Path, payload: bytes) -> None:
+        relative = path.resolve().relative_to(root).as_posix()
+        if subprocess.run(["git", "check-ignore", "-q", relative], cwd=root, check=False).returncode != 0:
+            raise RuntimeError(f"V30 preparation output is not git-ignored: {relative}")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path.exists():
+            if path.read_bytes() != payload:
+                raise FileExistsError(f"refusing to replace different V30 artifact: {path}")
+            return
+        with path.open("xb") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+
+    write_ignored_immutable(contract_path, contract_bytes)
+    fixed_contract, contract_sha = require_authorized_contract(
+        contract_path, current_root=root, current_hostname=socket.gethostname()
+    )
+    canonical_path = (root / V30_CANONICAL_INPUT_RELATIVE).resolve()
+    canonical_text = canonical_path.read_text(encoding="utf-8")
+    canonical_sha = _sha256_file(canonical_path)
+    if canonical_sha != V30_CANONICAL_INPUT_SHA256:
+        raise ValueError("V30 canonical scientific DAT SHA changed")
+
+    donor = V30_Q0_DONOR
+    donor_manifest_path = (root / donor["manifest_relative_path"]).resolve()
+    native_path = (root / donor["native_qualification_relative_path"]).resolve()
+    if (
+        _sha256_file(donor_manifest_path) != V28_Q0_CSR_MANIFEST_SHA256
+        or _sha256_file(native_path) != V28_Q0_NATIVE_QUALIFICATION_SHA256
+    ):
+        raise ValueError("V30 pinned V28 q0 manifest/native qualification changed")
+    donor_manifest = json.loads(donor_manifest_path.read_text(encoding="utf-8"))
+    native_qualification = json.loads(native_path.read_text(encoding="utf-8"))
+    fill = donor_manifest.get("numeric_fill_identity", {})
+    old_fill_identity = fill.get("execution_identity", {})
+    producer = fill.get("donor_identity", {}).get("producer_identity", {})
+    if (
+        donor_manifest.get("status") != "COMPLETE_CSR"
+        or donor_manifest.get("donor_identity_sha256") != donor["identity_sha256"]
+        or native_qualification.get("status") != donor["native_qualification_status"]
+        or old_fill_identity.get("input_sha256") != V28_Q0_DONOR_INPUT_SHA256
+        or not isinstance(producer, Mapping)
+        or not isinstance(old_fill_identity, Mapping)
+    ):
+        raise ValueError("V30 pinned V28 donor is not COMPLETE/PASS with the accepted old identity")
+    pattern_path = (root / V28_PATTERN_MANIFEST_RELATIVE).resolve()
+    pattern_sha = _sha256_file(pattern_path)
+    if (
+        pattern_sha != V28_PATTERN_MANIFEST_SHA256
+        or native_qualification.get("original_pattern_manifest", {}).get("sha256") != pattern_sha
+    ):
+        raise ValueError("V30 original q0 pattern manifest differs from the pinned V28 donor")
+
+    producer_run = (root / str(producer.get("producer_run_directory", ""))).resolve()
+    if not producer_run.is_relative_to(root):
+        raise ValueError("V30 q0 map/H producer escaped the approved repository root")
+    payloads = producer.get("payloads", [])
+    payload_by_name = {
+        Path(str(record.get("path", ""))).name: record
+        for record in payloads
+        if isinstance(record, Mapping)
+    }
+
+    def verified_payload(name: str) -> Path:
+        record = payload_by_name.get(name)
+        if not isinstance(record, Mapping):
+            raise ValueError(f"V30 q0 donor omits saved payload {name}")
+        path = (producer_run / str(record.get("path", ""))).resolve()
+        if (
+            not path.is_relative_to(root)
+            or not path.is_file()
+            or path.stat().st_size != record.get("bytes")
+            or _sha256_file(path) != record.get("sha256")
+        ):
+            raise ValueError(f"V30 saved q0 payload is missing or changed: {name}")
+        return path
+
+    q0_map = sparse.load_npz(verified_payload("v25_selected_q0_map.npz")).tocsr()
+    q0_csr_shape = _v30_q0_csr_shape(donor_manifest.get("shape"), q0_map.shape)
+    local_h = np.load(
+        verified_payload("v25_selected_q0_local_H_p.npy"), allow_pickle=False, mmap_mode="r"
+    )
+    verified_payload("v25_selected_q0_original_to_active_int32.npy")
+    resolved = load_and_resolve(canonical_path).as_jsonable()
+    modes, _rows, _mode_sha, _mode_facts = load_v20_target_mode_inventory(resolved)
+    profile = TASK40_P6_PERIODIC_PROFILES[V30_TARGET_PROFILE]
+    operator_identity = selected_q_operator_identity(
+        scientific_input_sha256=canonical_sha,
+        profile_identity=profile.identity(),
+        ordered_modes=modes,
+        q_map=q0_map,
+        original_h=local_h,
+    )
+    matrix_source = {
+        "source_sha": str(old_fill_identity.get("source_sha", "")),
+        "window_sha256": str(old_fill_identity.get("campaign_window_sha256", "")),
+    }
+    execution_identity = {
+        "source_sha": source_sha,
+        "window_sha256": str(fixed_contract["execution"]["campaign_window_sha256"]),
+    }
+    legacy_identity = {
+        "input_sha256": str(old_fill_identity["input_sha256"]),
+        "physical_model_sha256": str(old_fill_identity["physical_model_sha256"]),
+        "mode_manifest_sha256": str(old_fill_identity["mode_manifest_sha256"]),
+        "manifest_sha256": V28_Q0_CSR_MANIFEST_SHA256,
+        "native_qualification_sha256": V28_Q0_NATIVE_QUALIFICATION_SHA256,
+    }
+    selector_path = artifact_root / "q0_selector_v30_partial.json"
+    selector_relative = selector_path.relative_to(root).as_posix()
+    selector = {
+        "schema": V30_Q_CSR_SELECTOR_SCHEMA,
+        "profile": V30_TARGET_PROFILE,
+        "q_csr_entries": [
+            {
+                "q_index": 0,
+                "twist_index": 0,
+                "shape": q0_csr_shape,
+                "operator_identity": operator_identity,
+                "matrix_source_identity": matrix_source,
+                "execution_identity": execution_identity,
+                "csr_manifest": {
+                    "path": donor_manifest_path.relative_to(root).as_posix(),
+                    "sha256": V28_Q0_CSR_MANIFEST_SHA256,
+                },
+                "native_qualification": {
+                    "path": native_path.relative_to(root).as_posix(),
+                    "sha256": V28_Q0_NATIVE_QUALIFICATION_SHA256,
+                    "status": donor["native_qualification_status"],
+                },
+                "legacy_q0_import": {
+                    "schema": V30_Q0_LEGACY_IMPORT_SCHEMA,
+                    "v28_identity": legacy_identity,
+                    "original_pattern_manifest": {
+                        "path": pattern_path.relative_to(root).as_posix(),
+                        "sha256": pattern_sha,
+                    },
+                },
+            }
+        ],
+    }
+    selector_bytes = (json.dumps(selector, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode()
+    selector_sha = hashlib.sha256(selector_bytes).hexdigest()
+    input_path = artifact_root / "stage_inputs" / "full" / canonical_path.name
+    factor_directory = artifact_root / "factor_bank"
+    rendered = render_stage_input(canonical_text, "full")
+    overrides = (
+        "task40_target_heavy_authorized = true\n"
+        "task40_v30_q_csr_binding = { schema = \"task40extra.review_v30_q_csr_worker_binding.v1\", "
+        f"selector_path = \"{selector_relative}\", selector_sha256 = \"{selector_sha}\" }}\n"
+        "task40_v30_factor_bank_config = { schema = \"task40extra.review_v30_all_q_factor_bank.v1\", "
+        f"output_directory = \"{factor_directory.relative_to(root).as_posix()}\", require_two_strict_rhs = true }}\n"
+    )
+    authorization_line = "task40_target_heavy_authorized = false\n"
+    if rendered.count(authorization_line) != 1:
+        raise ValueError("V30 canonical DAT must contain one false heavy-run authorization line")
+    staged_bytes = rendered.replace(authorization_line, overrides, 1).encode("utf-8")
+    write_ignored_immutable(selector_path, selector_bytes)
+    write_ignored_immutable(input_path, staged_bytes)
+    identity = require_v30_input_identity(canonical_path, input_path, repo_root=root)
+    if identity["staged_input_sha256"] != hashlib.sha256(staged_bytes).hexdigest():
+        raise V30ContractError("V30 staged DAT changed while preparing the input")
+
+    checker_command = [
+        str((root / V30_RUNTIME_RELATIVE) / "bin/python"),
+        "scripts/task40_v20_service_workflow.py",
+        "check-partial",
+        "--input",
+        str(input_path),
+        "--summary",
+        "<RUN_DIR>/run_summary.json",
+        "--manifest",
+        "<RUN_DIR>/run_manifest.json",
+        "--numerical-output",
+        "<RUN_DIR>",
+        "--stop-stage",
+        "full",
+        "--output",
+        "<RUN_DIR>/partial_checker_result.json",
+    ]
+    return {
+        "schema": "task40extra.review_v30_full_input_preparation.v1",
+        "status": "READY_FOR_APPROVED_V30_SERVICE",
+        "source_sha": source_sha,
+        **identity,
+        "q0_map_sha256": operator_identity["q_map_sha256"],
+        "q0_original_h_sha256": operator_identity["original_h_sha256"],
+        "execution_contract_path": str(contract_path),
+        "execution_contract_sha256": contract_sha,
+        "campaign_window_path": str(fixed_contract["execution"]["campaign_window_path"]),
+        "campaign_window_sha256": str(fixed_contract["execution"]["campaign_window_sha256"]),
+        "campaign_window": dict(fixed_contract["execution"]["window"]),
+        "q0_donor_manifest_sha256": V28_Q0_CSR_MANIFEST_SHA256,
+        "q0_native_qualification_sha256": V28_Q0_NATIVE_QUALIFICATION_SHA256,
+        "service_command": (
+            "bash scripts/run_case_in_user_service.sh "
+            f"{input_path} --task40-v30-execution-contract {contract_path}"
+        ),
+        "checker_command_template": checker_command,
     }
 
 
@@ -7064,6 +7347,22 @@ def _check_partial_result(
     _, input_data = _read_case(input_path)
     profile_identity = str(input_data.get("solver", {}).get("preconditioner", ""))
     expected_q_count = _profile_q_count(profile_identity)
+    v30_input_identity = None
+    v30_input_identity_error = None
+    if profile_identity == V30_TARGET_PROFILE:
+        try:
+            from src.runners.task40_v30_contract import (
+                V30_CANONICAL_INPUT_RELATIVE,
+                require_v30_input_identity,
+            )
+
+            v30_input_identity = require_v30_input_identity(
+                ROOT / V30_CANONICAL_INPUT_RELATIVE,
+                input_path,
+                repo_root=ROOT,
+            )
+        except Exception as error:
+            v30_input_identity_error = f"{type(error).__name__}: {error}"
     partial_path = numerical_output / "v20_partial_result.json"
     if not partial_path.is_file():
         return {
@@ -7343,6 +7642,35 @@ def _check_partial_result(
             == expected_completed[len(expected_completed_for_failure)]
         ),
     }
+    if profile_identity == V30_TARGET_PROFILE:
+        recorded_identity = manifest.get("v30_input_identity")
+        contract_binding = manifest.get("v30_execution_contract_binding", {})
+        contract_identity = (
+            contract_binding.get("input_identity", {})
+            if isinstance(contract_binding, Mapping)
+            else {}
+        )
+        checks.update(
+            {
+                "v30_canonical_input_revalidated": v30_input_identity is not None,
+                "v30_raw_stage_sha_matches_manifest": bool(
+                    v30_input_identity is not None
+                    and manifest.get("input_sha256") == v30_input_identity["staged_input_sha256"]
+                    and manifest.get("canonical_input_sha256") == v30_input_identity["canonical_input_sha256"]
+                ),
+                "v30_scientific_input_sha_matches_canonical": bool(
+                    v30_input_identity is not None
+                    and manifest.get("scientific_input_sha256")
+                    == v30_input_identity["scientific_input_sha256"]
+                ),
+                "v30_service_identity_matches_checker": bool(
+                    v30_input_identity is not None
+                    and recorded_identity == v30_input_identity
+                    and contract_identity == v30_input_identity
+                ),
+                "v30_identity_error_absent": v30_input_identity_error is None,
+            }
+        )
     if v23_identity_claimed:
         checks["v23_manifest_campaign_window_and_accounting_bind"] = (
             v23_campaign_identity_valid
@@ -8086,6 +8414,7 @@ def run_service(
     canonical_relative, _supported = V20_INPUTS[data["solver"]["preconditioner"]]
     canonical_path = repo_root / canonical_relative
     canonical_text = canonical_path.read_text(encoding="utf-8")
+    v30_input_identity = None
     _validate_service_stage_input_variant(
         input_path,
         canonical_path,
@@ -8095,6 +8424,12 @@ def run_service(
         repo_root=repo_root,
         v30_contract=v30_contract is not None,
     )
+    if v30_contract is not None:
+        from src.runners.task40_v30_contract import require_v30_input_identity
+
+        v30_input_identity = require_v30_input_identity(
+            canonical_path, input_path, repo_root=repo_root
+        )
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", unit):
         raise ValueError("invalid systemd user-service unit name")
     campaign_registration = _resolve_service_campaign(
@@ -8283,6 +8618,7 @@ def run_service(
             "q0_donor": dict(v30_contract["preparation"]["accepted_q0_donor"]),
             "q_csr_worklist": list(v30_contract["preparation"]["q_csr_worklist"]),
             "final_all_q_selector_required_at": v30_contract["preparation"]["final_all_q_selector_required_at"],
+            "input_identity": dict(v30_input_identity or {}),
         }
         if v30_contract_path is not None and v30_contract is not None
         else None
@@ -8383,6 +8719,9 @@ def run_service(
         "run_case_argv": [str(runtime_prefix / "bin/python"), "scripts/run_case.py", *case_args],
         "evidence_directory": str(evidence_directory),
     }
+    if v30_input_identity is not None:
+        record["scientific_input_sha256"] = v30_input_identity["scientific_input_sha256"]
+        record["v30_input_identity"] = dict(v30_input_identity)
     if v29_entry_sample is not None:
         record["v29_true_service_entry_clock"] = v29_entry_sample
     if q_only_binding is not None:
@@ -8423,6 +8762,8 @@ def run_service(
             *( ["v30_execution_contract_binding"] if v30_binding is not None else [] ),
         )
     }
+    if v30_input_identity is not None:
+        event_identity["scientific_input_sha256"] = v30_input_identity["scientific_input_sha256"]
     if v29_binding is not None:
         event_identity.update(
             v29_contract_sha256=v29_binding["contract_sha256"],
@@ -8904,6 +9245,7 @@ def main(argv: list[str] | None = None) -> int:
         choices=sorted(V28_SELECTED_Q_STAGES),
         default="selected_reference_q_csr",
     )
+    subparsers.add_parser("prepare-v30-full-input")
     partial_parser = subparsers.add_parser("check-partial")
     partial_parser.add_argument("--input", type=Path, required=True)
     partial_parser.add_argument("--summary", type=Path, required=True)
@@ -8955,6 +9297,16 @@ def main(argv: list[str] | None = None) -> int:
         print(
             json.dumps(
                 prepare_v28_q0_continuation_input(args.stop_stage),
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return 0
+    if args.command == "prepare-v30-full-input":
+        print(
+            json.dumps(
+                prepare_v30_full_input(),
                 ensure_ascii=False,
                 sort_keys=True,
                 indent=2,
