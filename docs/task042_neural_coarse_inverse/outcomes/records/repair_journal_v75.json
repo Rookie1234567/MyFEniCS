@@ -14,10 +14,27 @@
       "KSP": 0,
       "not_additive_to_overlapping_actor_wall": true,
       "minimal_repair": "Remove one extra closing parenthesis; repeat only the two metadata compile calls"
+    },
+    {
+      "UTC": "2026-10-12T02:19:29.533341+00:00",
+      "source_sha": "b71cc1c116db30015befbddb2ea31f5de415edb7",
+      "classification": "MONITORING_FAILED",
+      "exception_type": "FileNotFoundError",
+      "exception_message": "[Errno 2] No such file or directory: '--'",
+      "elapsed_wrapper_seconds": 91.3373048750218,
+      "summary_path": "tmp/task042/v75/aux_post_01/summary.json",
+      "summary_sha256": "2546c3a87067fc73f47a24d46313cefbc98813400a2ca73a4bc7b0d52378e0d1",
+      "actual_document_tests_started": false,
+      "scientific_actions": 0,
+      "numeric": 0,
+      "KSP": 0,
+      "repair": "Remove unsupported separator from aux command; sys.argv[4:] is passed verbatim to supervisor",
+      "no_PDE_replay": true
     }
   ],
   "located_software_repairs": [
-    "Ignored delivery helper had one extra parenthesis; fixed and only its compile repeated"
+    "Ignored delivery helper had one extra parenthesis; fixed and only its compile repeated",
+    "Remove unsupported separator from aux command; sys.argv[4:] is passed verbatim to supervisor"
   ],
   "preventive_C1": "durable base, old881 math receipt, single scope/counters",
   "preventive_C2": "persist macro identity; share one skeleton owner inPC",

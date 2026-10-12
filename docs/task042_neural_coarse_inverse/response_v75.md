@@ -110,7 +110,7 @@ FGMRES solve含监控/检查3639.99508977s，嵌套PC三角解/作用/原式及I
 
 ## 修复边界、决定与交付
 
-C1完成基础持久化、旧881数学兼容、单一12hscope及计数；C2保存partial宏身份并消除PC重复骨架所有权。正式科学/资格命令未失败，交付metadata脚本一次多余括号的编译失败已留证并定点修复；无PDE重播，数值停滞不当bug。旧V74 failed/source/raw/cost均未改写；本次不是重开V74时钟。首次UTC2026-10-11T23:23:19Z，heavy-stop2026-10-12T10:23:19Z，交付截止11:23:19Z；同boot monotonic固定，无新阶段刷新。修复和未运行范围见[记录](outcomes/records/repair_journal_v75.json)。
+C1完成基础持久化、旧881数学兼容、单一12hscope及计数；C2保存partial宏身份并消除PC重复骨架所有权。正式科学/资格命令未失败，交付metadata脚本一次多余括号的编译失败已留证并定点修复；文档辅助启动另有一次多传--导致FileNotFoundError，检查进程尚未启动；已去掉分隔符，只补文档并保留91.337305s失败费用。无PDE重播，数值停滞不当bug。旧V74 failed/source/raw/cost均未改写；本次不是重开V74时钟。首次UTC2026-10-11T23:23:19Z，heavy-stop2026-10-12T10:23:19Z，交付截止11:23:19Z；同boot monotonic固定，无新阶段刷新。修复和未运行范围见[记录](outcomes/records/repair_journal_v75.json)。
 
 本批全部四个one-run角色实际完成，正式solve仅一次；未执行的是额外尾部、参数/空间扫描、NN训练和原尺寸PDE，因合同及固定负结果关闭，未写PASS。唯一下一建议：在新正式合同中评估一个真正不同、能处理波传播的粗校正机制，并仍以同一完整原方程验收；不要继续调这个harmonic+38RAS组合或再补尾部。本轮不自动立项或开V76。
 
