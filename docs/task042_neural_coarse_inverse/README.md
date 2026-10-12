@@ -1,3 +1,13 @@
+## Task042 V76：控制与残差最小化收口
+
+| 同0.7nm/25576tet/p5/828（measured） | 实际结论 | 证据 |
+|---|---|---|
+| B0/Jacobi/唯一3方向SMR | B0原true1.93461；Jacobi64原true0.34171；SMR64原true0.36008；64步0.1效果门未过，无合格场 | [回应](response_v76.md) · [紧凑专题](outcomes/baseline_residual_minimization_v76.md) |
+
+Jacobi有真实早期改善；SMR避免坏固定和但更昂贵。4次KSP/160新步，fine K/S/LU0；四完整系数/独立原式保存，昂贵失败场输出按政策NOT_RUN。关闭本组组合微调，不开新窗口、NN或邻支任务，旧历史保持。
+
+---
+
 ## Task042 V75：完整harmonic候选的真实负结果
 
 | 固定对象 / 实际迭代 | 方程与场 | 准备及资源边界 | 证据 |

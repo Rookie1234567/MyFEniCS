@@ -1,0 +1,89 @@
+{
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/solvers/trace_residual_minimization.py",
+        "src/solvers/physical_retained_fgmres.py",
+        "src/solvers/bounded_trace_study.py"
+      ],
+      "behavior": "opt-in complex diagonal/3-column nonlinear PC/effect observations; ordinary defaults unchanged",
+      "dependencies": [
+        "HotTracePacket",
+        "immutable local packet and original action"
+      ],
+      "tests": "11 targeted +4 actual KSP +independent saved checks",
+      "fresh_PDE": "V76 effect stops; no qualified physical solution",
+      "recommendation": "research only, no default promotion"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/solvers/controlled_trace_scope.py",
+        "src/solvers/controlled_trace_study.py",
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py"
+      ],
+      "behavior": "thin current scope/strategy, original protection retained; no new framework",
+      "dependencies": [
+        "generic run_case/supervision/activation"
+      ],
+      "tests": "scope/resource/dat and returned-only dispatch",
+      "fresh_PDE": "all6one-run stages with authorized branch order; no duplicate KSP",
+      "recommendation": "review interfaces separately"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/collect_controlled_trace.py",
+        "benchmarks/collect_bounded_trace.py",
+        "benchmarks/qualify_controlled_trace.py",
+        "src/test/test_trace_residual_minimization.py"
+      ],
+      "behavior": "saved original/numeric/nonlinear data consumption, old linear-PC path default preserved",
+      "dependencies": [
+        "PUBLIC_BASIX q15/q63",
+        "saved matrix/vector receipts"
+      ],
+      "tests": "actual final11 and independent4-state consistency",
+      "fresh_PDE": "no new factor/solve in VERIFY",
+      "recommendation": "candidate reusable checker; not solver qualification"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "response_v76.md",
+        "outcomes/baseline_residual_minimization_v76.md",
+        "outcomes/records/*_v76.json"
+      ],
+      "behavior": "negative results, complete costs, source bindings and guarded navigation",
+      "dependencies": [
+        "ignored V76 raw evidence and immutable parents"
+      ],
+      "tests": "one final documentation contract",
+      "recommendation": "preserve reviewed history"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "input/task042_neural_coarse_inverse/controlled_trace_v76.json",
+        "input/task042_neural_coarse_inverse/v76_*.dat"
+      ],
+      "behavior": "explicit scope and effect policy, no production default",
+      "dependencies": [
+        "same frozen physical problem"
+      ],
+      "recommendation": "remain Task042 until review"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v76",
+        "tmp/task042/v76"
+      ],
+      "behavior": "ignored large scientific arrays/runtime logs/temporary helpers",
+      "recommendation": "hash references only; no whole branch/master merge"
+    }
+  ],
+  "merge_approved": false
+}

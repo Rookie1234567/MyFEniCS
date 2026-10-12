@@ -1,0 +1,31 @@
+{
+  "review_commit": "3f40d40f55c798f55d07c413a6492241db59a6ad",
+  "review_blob": "3aa7d36e867b313062f748129c67872a5cf3acb9",
+  "review_sha256": "bf8ebef0ffe73cd3444a69062be1deb986d57dc5e905212bd2c74ba942ff1318",
+  "canonical": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "first_clock": {
+    "start_utc": "2026-10-12T02:59:05.812502871Z",
+    "start_monotonic": 1698940.67,
+    "monotonic_resolution_seconds": 0.01,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "first_work": "initial real clock plus branch/actor readonly checks",
+    "total_seconds": 21600,
+    "delivery_reserve_seconds": 1800,
+    "success_acceptance_reserve_seconds": 4500,
+    "deadline_utc": "2026-10-12T08:59:05.812502871Z",
+    "heavy_stop_utc": "2026-10-12T08:29:05.812502871Z"
+  },
+  "old_V75_closed": true,
+  "old_windows_unchanged": true,
+  "source_commit": "32e298ad0c69a65149269f882b191b99d2e0428f",
+  "neighbor_scope": {
+    "Task40_remote": "e85992c79d7e2b3f41cd1396ffb06edccdd93421",
+    "Task40_local_object": "NOT_AVAILABLE; no other branch fetch performed",
+    "Task40_authority_range": "engineering Review V28/q0 continuation per authoritative Review V74; no reference inverse/CSR duplication",
+    "Task42extra_remote": "5a48c802486875ac628e6e710b5caf240769248b",
+    "Task42extra_actual_neighbor_actor": "V46 residual branch in independent worktree; no imports, writes, commands or messages to that task",
+    "only_self_task_lock_and_cpu_admission": true
+  }
+}

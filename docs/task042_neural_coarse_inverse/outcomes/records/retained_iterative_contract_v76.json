@@ -1,0 +1,32 @@
+{
+  "physical": {
+    "mesh_sha256": "c470274ab6c64cee0b8eef09dbcdadadfac4c6ca229d7fc2b6e608ded62f540c",
+    "material_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "physical_sha256": "df26b8cf28e1115bdb2eb9ac9b79e698596133305310d26c1d664f94e2c5be44",
+    "packet_sha256": "9bef5add6398999c70c21c7f26a86833fc1eb46f98598c8503aa3c41743728da",
+    "kappa": [
+      8.94046081729244,
+      0.7821889682108057,
+      0
+    ],
+    "cells": 25576,
+    "degree": 5,
+    "modes": 828
+  },
+  "methods": [
+    "identity",
+    "complex_diagonal_Jacobi",
+    "three_direction_nonlinear_SMR"
+  ],
+  "FGMRES": "RIGHT/restart128",
+  "iteration_caps": 256,
+  "whole_action_cap": 1800,
+  "KSP_call_cap": 4,
+  "field_qualified": false,
+  "research_only": true,
+  "global_fine_K_S_or_factor": false,
+  "local_and_coarse_factors_present": true,
+  "interface_apply": "HotTracePacket exact class64",
+  "primal_dual_and_recovery": "immutable parent local_packet",
+  "next_authorization_required": true
+}

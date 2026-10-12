@@ -1,0 +1,626 @@
+{
+  "hot_action_error": 5.218465730960074e-16,
+  "diagonal": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_minimal_preflight_20261012T031947966696Z/complex_diagonal.npz",
+    "sha256": "4780b4031cc82cd806fadfb9202ad93b1f35de6088d582ffb5177f86eb54856c",
+    "members": {
+      "diagonal": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "b9e0295194077cfc47e39563aa45b0d2a8c507e789316057a70c67c3d8aeeec7"
+      },
+      "inverse": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "a99abe5463e6dcf50f0e55508a154f8933e9cfb2ad76503264e0ce42dcc5a067"
+      },
+      "witness": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "74d71ebde8aa0130d4bbbbc81ab6a8160d2ac952eec2f50aa5e15d45ad769bad"
+      },
+      "diagonal_action": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "f9844cd2c13067ca29d389053993649d82ad5439a2657aba64a3c8dd518853f4"
+      },
+      "left": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "1587eab07700a6579dca059fe6b86fb3cf26ca6bd9766f639718a4edffa09404"
+      },
+      "right": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "01d0f4639777f76d9cd1b46a2567ecc9a4962f7d8747d5ad8b081aad8a5caf62"
+      }
+    }
+  },
+  "diagonal_component_checks": [
+    {
+      "row": 1079455,
+      "operation_scaled": 0.0,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_minimal_preflight_20261012T031947966696Z/diagonal_component_1079455.npz",
+        "sha256": "ccf704966b648ea8e520f1850aff44b842183dce38eb098d4e8a665792bc967b",
+        "members": {
+          "input": {
+            "shape": [
+              1177293
+            ],
+            "dtype": "complex128",
+            "sha256": "f9101a1337aa6c8abd9f513205bd28413fc8f9d81dfd803d051301c8d2a1db99"
+          },
+          "action": {
+            "shape": [
+              1177293
+            ],
+            "dtype": "complex128",
+            "sha256": "934f336c7c5f4fac57d0cfa77f406b4b1f67791148b3405fc58035c0e420ef72"
+          }
+        }
+      }
+    },
+    {
+      "row": 1176465,
+      "operation_scaled": 0.0,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_minimal_preflight_20261012T031947966696Z/diagonal_component_1176465.npz",
+        "sha256": "aca216ca5c66f76d24f1f6a3e1b6d4c70a16edceba214272a582065f7fe4b4a1",
+        "members": {
+          "input": {
+            "shape": [
+              1177293
+            ],
+            "dtype": "complex128",
+            "sha256": "641d1675b02d4e334616435d43364473aef6abe8216cf664697980e693bee20f"
+          },
+          "action": {
+            "shape": [
+              1177293
+            ],
+            "dtype": "complex128",
+            "sha256": "36ca36ec21c2989c9f3af3ce237897414ce7300c96025822c49018c5f461275b"
+          }
+        }
+      }
+    }
+  ],
+  "exact_zero_diagonal_count": 0,
+  "routes": {
+    "B0": {
+      "actual_KSP": {
+        "type": "fgmres",
+        "side": 1,
+        "norm": 2,
+        "restart": 128,
+        "tolerances": [
+          0.0,
+          0.0,
+          10000.0,
+          32
+        ],
+        "initial_guess_nonzero": false,
+        "view_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_identity_control_20261012T032730919078Z/KSP_view.txt",
+        "audit_identity": {
+          "directory": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_identity_control_20261012T032730919078Z",
+          "route": "B0",
+          "strategy": "B0",
+          "source_sha": "f68af698a7fe42a0b3c79860ae934f690d056016",
+          "packet_sha256": "9bef5add6398999c70c21c7f26a86833fc1eb46f98598c8503aa3c41743728da",
+          "RHS": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_identity_control_20261012T032730919078Z/physical_RHS.npz",
+            "sha256": "48b155fe651d5d16a552a7909cf615d52d5247288121d652cef735d378527109",
+            "members": {
+              "full_rhs": {
+                "shape": [
+                  1944573
+                ],
+                "dtype": "complex128",
+                "sha256": "a96b58bf66f8b889e5812670989cc41ae15dd745e4751374f41fe5c610172389"
+              },
+              "reduced_rhs": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "178dc0c55cf2deb504c214a526db461e0b0624a957457a7b9c35efda14b099ee"
+              },
+              "bhat": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "4c5d6b918f358863b9a324dd2de2f1635f7422c8c06f91e850b5d34030c7fc80"
+              },
+              "left": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "1587eab07700a6579dca059fe6b86fb3cf26ca6bd9766f639718a4edffa09404"
+              },
+              "right": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "01d0f4639777f76d9cd1b46a2567ecc9a4962f7d8747d5ad8b081aad8a5caf62"
+              }
+            }
+          }
+        }
+      },
+      "release": {
+        "before_RSS_bytes": 7181688832,
+        "after_RSS_bytes": 7181688832,
+        "RSS_decreased": false,
+        "numeric_count": 0,
+        "local_numeric_count": 0,
+        "coarse_numeric_count": 0,
+        "global_fine_factor_count": 0
+      },
+      "PC_calls": {
+        "apply": 32,
+        "local_triangular": 0,
+        "coarse_triangular": 0
+      },
+      "PC_seconds": {
+        "local": 0.0,
+        "coarse": 0.0
+      },
+      "new_global_fine_K_S_or_factor": 0,
+      "PC_strategy": "B0"
+    },
+    "BJ": {
+      "actual_KSP": {
+        "type": "fgmres",
+        "side": 1,
+        "norm": 2,
+        "restart": 128,
+        "tolerances": [
+          0.0,
+          0.0,
+          10000.0,
+          32
+        ],
+        "initial_guess_nonzero": false,
+        "view_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_jacobi_control_20261012T033658874092Z/KSP_view.txt",
+        "audit_identity": {
+          "directory": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_jacobi_control_20261012T033658874092Z",
+          "route": "BJ",
+          "strategy": "BJ",
+          "source_sha": "f68af698a7fe42a0b3c79860ae934f690d056016",
+          "packet_sha256": "9bef5add6398999c70c21c7f26a86833fc1eb46f98598c8503aa3c41743728da",
+          "RHS": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_jacobi_control_20261012T033658874092Z/physical_RHS.npz",
+            "sha256": "48b155fe651d5d16a552a7909cf615d52d5247288121d652cef735d378527109",
+            "members": {
+              "full_rhs": {
+                "shape": [
+                  1944573
+                ],
+                "dtype": "complex128",
+                "sha256": "a96b58bf66f8b889e5812670989cc41ae15dd745e4751374f41fe5c610172389"
+              },
+              "reduced_rhs": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "178dc0c55cf2deb504c214a526db461e0b0624a957457a7b9c35efda14b099ee"
+              },
+              "bhat": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "4c5d6b918f358863b9a324dd2de2f1635f7422c8c06f91e850b5d34030c7fc80"
+              },
+              "left": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "1587eab07700a6579dca059fe6b86fb3cf26ca6bd9766f639718a4edffa09404"
+              },
+              "right": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "01d0f4639777f76d9cd1b46a2567ecc9a4962f7d8747d5ad8b081aad8a5caf62"
+              }
+            }
+          }
+        }
+      },
+      "release": {
+        "before_RSS_bytes": 7296077824,
+        "after_RSS_bytes": 7296077824,
+        "RSS_decreased": false,
+        "numeric_count": 0,
+        "local_numeric_count": 0,
+        "coarse_numeric_count": 0,
+        "global_fine_factor_count": 0
+      },
+      "PC_calls": {
+        "apply": 32,
+        "local_triangular": 0,
+        "coarse_triangular": 0
+      },
+      "PC_seconds": {
+        "local": 0.0,
+        "coarse": 0.0
+      },
+      "new_global_fine_K_S_or_factor": 0,
+      "PC_strategy": "BJ"
+    },
+    "PROMOTED": {
+      "actual_KSP": {
+        "type": "fgmres",
+        "side": 1,
+        "norm": 2,
+        "restart": 128,
+        "tolerances": [
+          0.0,
+          0.0,
+          10000.0,
+          224
+        ],
+        "initial_guess_nonzero": true,
+        "view_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_promoted_control_continue_20261012T034641798728Z/KSP_view.txt",
+        "audit_identity": {
+          "directory": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_promoted_control_continue_20261012T034641798728Z",
+          "route": "PROMOTED",
+          "strategy": "BJ",
+          "source_sha": "f68af698a7fe42a0b3c79860ae934f690d056016",
+          "packet_sha256": "9bef5add6398999c70c21c7f26a86833fc1eb46f98598c8503aa3c41743728da",
+          "RHS": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_promoted_control_continue_20261012T034641798728Z/physical_RHS.npz",
+            "sha256": "48b155fe651d5d16a552a7909cf615d52d5247288121d652cef735d378527109",
+            "members": {
+              "full_rhs": {
+                "shape": [
+                  1944573
+                ],
+                "dtype": "complex128",
+                "sha256": "a96b58bf66f8b889e5812670989cc41ae15dd745e4751374f41fe5c610172389"
+              },
+              "reduced_rhs": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "178dc0c55cf2deb504c214a526db461e0b0624a957457a7b9c35efda14b099ee"
+              },
+              "bhat": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "4c5d6b918f358863b9a324dd2de2f1635f7422c8c06f91e850b5d34030c7fc80"
+              },
+              "left": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "1587eab07700a6579dca059fe6b86fb3cf26ca6bd9766f639718a4edffa09404"
+              },
+              "right": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "01d0f4639777f76d9cd1b46a2567ecc9a4962f7d8747d5ad8b081aad8a5caf62"
+              }
+            }
+          }
+        }
+      },
+      "release": {
+        "before_RSS_bytes": 7386202112,
+        "after_RSS_bytes": 7386202112,
+        "RSS_decreased": false,
+        "numeric_count": 0,
+        "local_numeric_count": 0,
+        "coarse_numeric_count": 0,
+        "global_fine_factor_count": 0
+      },
+      "PC_calls": {
+        "apply": 32,
+        "local_triangular": 0,
+        "coarse_triangular": 0
+      },
+      "PC_seconds": {
+        "local": 0.0,
+        "coarse": 0.0
+      },
+      "new_global_fine_K_S_or_factor": 0,
+      "PC_strategy": "BJ"
+    },
+    "SMR": {
+      "actual_KSP": {
+        "type": "fgmres",
+        "side": 1,
+        "norm": 2,
+        "restart": 128,
+        "tolerances": [
+          0.0,
+          0.0,
+          10000.0,
+          256
+        ],
+        "initial_guess_nonzero": false,
+        "view_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_residual_minimized_solve_20261012T040054824899Z/KSP_view.txt",
+        "audit_identity": {
+          "directory": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_residual_minimized_solve_20261012T040054824899Z",
+          "route": "SMR",
+          "strategy": "SMR",
+          "source_sha": "fb403eeba4734bb931d4f72a8eae865286a2ecec",
+          "packet_sha256": "9bef5add6398999c70c21c7f26a86833fc1eb46f98598c8503aa3c41743728da",
+          "RHS": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v76/task042_v76_residual_minimized_solve_20261012T040054824899Z/physical_RHS.npz",
+            "sha256": "48b155fe651d5d16a552a7909cf615d52d5247288121d652cef735d378527109",
+            "members": {
+              "full_rhs": {
+                "shape": [
+                  1944573
+                ],
+                "dtype": "complex128",
+                "sha256": "a96b58bf66f8b889e5812670989cc41ae15dd745e4751374f41fe5c610172389"
+              },
+              "reduced_rhs": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "178dc0c55cf2deb504c214a526db461e0b0624a957457a7b9c35efda14b099ee"
+              },
+              "bhat": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "4c5d6b918f358863b9a324dd2de2f1635f7422c8c06f91e850b5d34030c7fc80"
+              },
+              "left": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "1587eab07700a6579dca059fe6b86fb3cf26ca6bd9766f639718a4edffa09404"
+              },
+              "right": {
+                "shape": [
+                  1177293
+                ],
+                "dtype": "complex128",
+                "sha256": "01d0f4639777f76d9cd1b46a2567ecc9a4962f7d8747d5ad8b081aad8a5caf62"
+              }
+            }
+          }
+        }
+      },
+      "release": {
+        "before_RSS_bytes": 41115295744,
+        "after_RSS_bytes": 8390254592,
+        "RSS_decreased": true,
+        "numeric_count": 39,
+        "local_numeric_count": 38,
+        "coarse_numeric_count": 1,
+        "global_fine_factor_count": 0
+      },
+      "PC_calls": {
+        "apply": 66,
+        "local_triangular": 2508,
+        "coarse_triangular": 66,
+        "internal_original_action": 0,
+        "SMR_original_action": 264,
+        "SMR_zero": 0,
+        "SMR_retry": 0
+      },
+      "PC_seconds": {
+        "local": 693.5215566442348,
+        "coarse": 46.10080438409932,
+        "original": 0.0,
+        "small_LS": 60.54953873739578,
+        "SMR_original": 322.908916644752
+      },
+      "new_global_fine_K_S_or_factor": 0,
+      "PC_strategy": "SMR",
+      "SMR_calls": {
+        "path": "benchmarks/artifacts/task042/v76/task042_v76_residual_minimized_solve_20261012T040054824899Z/SMR_calls.jsonl",
+        "sha256": "8b7f782527b72bec2d73deb6c186be063e21b2a0ce1232eb3ad8ef9c5736db22",
+        "bytes": 81812
+      },
+      "first_two_inputs": [
+        {
+          "column_norms": [
+            404.4415447473577,
+            1.190614424250071,
+            64.87930564792568
+          ],
+          "column_scales": [
+            404.4415447473577,
+            1.190614424250071,
+            64.87930564792568
+          ],
+          "rank": 3,
+          "rcond": 1e-12,
+          "singular_values": [
+            1.2263938026626018,
+            1.0000058837043773,
+            0.7042346720713084
+          ],
+          "candidates": [
+            {
+              "name": "LS",
+              "residual_norm": 0.4485832128500509
+            },
+            {
+              "name": "ZERO",
+              "residual_norm": 1.068596583313331
+            },
+            {
+              "name": "FIXED_COARSE_PLUS_LOCAL",
+              "residual_norm": 64.87775162329835
+            },
+            {
+              "name": "BEST_SINGLE_IDENTITY",
+              "residual_norm": 0.8854117020223576
+            },
+            {
+              "name": "BEST_SINGLE_COARSE",
+              "residual_norm": 0.46761691983587533
+            },
+            {
+              "name": "BEST_SINGLE_LOCAL",
+              "residual_norm": 1.0685965135182454
+            }
+          ],
+          "selected": "LS",
+          "predicted_residual_norm": 0.4485832128500509,
+          "weights_real": [
+            0.00037781473397769023,
+            0.7423431905512976,
+            3.977841002916912e-05
+          ],
+          "weights_imag": [
+            -9.911506213222302e-06,
+            -0.0040208485347404494,
+            1.2908988797197405e-05
+          ],
+          "driver": "gelsd",
+          "call": 1,
+          "rhs_norm": 1.068596583313331,
+          "actual_residual_norm": 0.44858321285004876,
+          "actual_relative": 0.41978724230911785,
+          "operation_scaled_defect": 8.036536226896307e-13,
+          "numerical_protection_pass": true,
+          "workspace_bound_bytes": 489753888,
+          "nonlinear_input_dependent_weights": true,
+          "reference_reads": 0
+        },
+        {
+          "column_norms": [
+            378.47916703358015,
+            1.1141851310804125,
+            60.71449849157924
+          ],
+          "column_scales": [
+            378.47916703358015,
+            1.1141851310804125,
+            60.71449849157924
+          ],
+          "rank": 3,
+          "rcond": 1e-12,
+          "singular_values": [
+            1.226393802662618,
+            1.0000058837043824,
+            0.7042346720712781
+          ],
+          "candidates": [
+            {
+              "name": "LS",
+              "residual_norm": 0.4197872423097021
+            },
+            {
+              "name": "ZERO",
+              "residual_norm": 1.0
+            },
+            {
+              "name": "FIXED_COARSE_PLUS_LOCAL",
+              "residual_norm": 60.713044224692226
+            },
+            {
+              "name": "BEST_SINGLE_IDENTITY",
+              "residual_norm": 0.8285743337088142
+            },
+            {
+              "name": "BEST_SINGLE_COARSE",
+              "residual_norm": 0.43759911564250115
+            },
+            {
+              "name": "BEST_SINGLE_LOCAL",
+              "residual_norm": 0.9999999346852821
+            }
+          ],
+          "selected": "LS",
+          "predicted_residual_norm": 0.4197872423097021,
+          "weights_real": [
+            0.0003778147339780974,
+            0.742343190550352,
+            3.977841003002967e-05
+          ],
+          "weights_imag": [
+            -9.911506213284344e-06,
+            -0.004020848534873281,
+            1.2908988800412511e-05
+          ],
+          "driver": "gelsd",
+          "call": 2,
+          "rhs_norm": 1.0,
+          "actual_residual_norm": 0.41978724230970155,
+          "actual_relative": 0.41978724230970155,
+          "operation_scaled_defect": 8.037550888693182e-13,
+          "numerical_protection_pass": true,
+          "workspace_bound_bytes": 489753888,
+          "nonlinear_input_dependent_weights": true,
+          "reference_reads": 0
+        }
+      ],
+      "maximum_protection_defect": 8.038872680304104e-13,
+      "maximum_workspace_bound_bytes": 489753888,
+      "SVD_ranks": [
+        3
+      ],
+      "factor_progress": {
+        "path": "benchmarks/artifacts/task042/v76/task042_v76_residual_minimized_solve_20261012T040054824899Z/numeric_factor_progress.json",
+        "sha256": "bd7df4443eb89a2f0c1f6e6068d3c4fb604ef400c2c0f5b539a4787526b94232",
+        "bytes": 309513
+      },
+      "factors": 39,
+      "factor_double_symbolic_bytes": 80322000000,
+      "maximum_numeric_plan_bytes": 101351183488,
+      "numeric_phase_seconds": 408.11685610190034,
+      "numeric_sum_seconds": 252.00742461369373,
+      "independent_nonlinear_checks": [
+        {
+          "input_index": 1,
+          "rank": 3,
+          "actual_saved_relative": 0.41978724230911785,
+          "recomputed_prediction_relative": 0.4197872423091199,
+          "direction_combination_operation": 0.0,
+          "pass_gate": true
+        },
+        {
+          "input_index": 2,
+          "rank": 3,
+          "actual_saved_relative": 0.41978724230970155,
+          "recomputed_prediction_relative": 0.4197872423097021,
+          "direction_combination_operation": 0.0,
+          "pass_gate": true
+        }
+      ],
+      "independent_factor_count": 39,
+      "all_independent_factors_pass": true,
+      "additive_linearity_gate_applied": false
+    }
+  },
+  "new_partition_Z_Galerkin_or_harmonic_builds": 0,
+  "old_PC_SETUP_pass_unchanged": false
+}

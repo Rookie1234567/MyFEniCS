@@ -1,0 +1,154 @@
+{
+  "routes": {
+    "B0": {
+      "original": {
+        "true": 1.9346076696740167,
+        "native": 1.9346076696740167,
+        "augmented": 0.34695945048553345,
+        "port": 0.991024496551536,
+        "full_augmented": 0.35112492707273807,
+        "direct_target": false,
+        "rhs_q47_q63": 1.3692700863640344e-15,
+        "MPC_identity": 3.1890872026781527e-25,
+        "absolute_residual": 0.37521089738607055,
+        "original_rhs_norm": 1.068596583313331,
+        "backend": "PUBLIC_BASIX_COEFFICIENT_FIRST_Q15_TRIANGLE63",
+        "body_consumption": {
+          "seconds": 36.58244575303979,
+          "q": 15,
+          "cells": 25576,
+          "columns": 1,
+          "reference_table_bytes": 4315952,
+          "full_vector_workspace_bytes": 94459440,
+          "algorithm": "COEFFICIENT_FIRST_PUBLIC_BASIX_VECTOR",
+          "production_matrix_reads": 0
+        },
+        "closed_physical_residual_norm": 2.067315145865422,
+        "projected_port_norm": 0.05814544518128816,
+        "pass_gate": false
+      },
+      "producer_consumer_operation": 0.0,
+      "complete_coefficients_verified": true,
+      "strict_pass": false,
+      "independent_receipt": {
+        "path": "benchmarks/artifacts/task042/v76/task042_v76_verify_cost_20261012T044220474297Z/B0/completed_independent_route.json",
+        "sha256": "18367fa6f61fc4496d725fb698889fd1d3bb660a7843822ea3e3012b97b592e8",
+        "bytes": 2128
+      }
+    },
+    "BJ": {
+      "original": {
+        "true": 0.38882658638976825,
+        "native": 0.38882658638976825,
+        "augmented": 0.3790913384357209,
+        "port": 0.05254018821742888,
+        "full_augmented": 0.3791025519241631,
+        "direct_target": false,
+        "rhs_q47_q63": 1.3692700863640344e-15,
+        "MPC_identity": 5.269013259938305e-25,
+        "absolute_residual": 0.4051076917115245,
+        "original_rhs_norm": 1.068596583313331,
+        "backend": "PUBLIC_BASIX_COEFFICIENT_FIRST_Q15_TRIANGLE63",
+        "body_consumption": {
+          "seconds": 36.86478699487634,
+          "q": 15,
+          "cells": 25576,
+          "columns": 1,
+          "reference_table_bytes": 4315952,
+          "full_vector_workspace_bytes": 94459440,
+          "algorithm": "COEFFICIENT_FIRST_PUBLIC_BASIX_VECTOR",
+          "production_matrix_reads": 0
+        },
+        "closed_physical_residual_norm": 0.4154987617174912,
+        "projected_port_norm": 0.05930381975360791,
+        "pass_gate": false
+      },
+      "producer_consumer_operation": 0.0,
+      "complete_coefficients_verified": true,
+      "strict_pass": false,
+      "independent_receipt": {
+        "path": "benchmarks/artifacts/task042/v76/task042_v76_verify_cost_20261012T044220474297Z/BJ/completed_independent_route.json",
+        "sha256": "295029c7b21531c7bf645a45288625591d24c122199d46b557bc3bec1afe69a6",
+        "bytes": 2129
+      }
+    },
+    "PROMOTED": {
+      "original": {
+        "true": 0.3417136001890551,
+        "native": 0.3417136001890551,
+        "augmented": 0.3394084118767866,
+        "port": 0.026742489842160096,
+        "full_augmented": 0.33941462195157895,
+        "direct_target": false,
+        "rhs_q47_q63": 1.3692700863640344e-15,
+        "MPC_identity": 1.820449700617883e-23,
+        "absolute_residual": 0.36269730534404343,
+        "original_rhs_norm": 1.068596583313331,
+        "backend": "PUBLIC_BASIX_COEFFICIENT_FIRST_Q15_TRIANGLE63",
+        "body_consumption": {
+          "seconds": 36.03917465987615,
+          "q": 15,
+          "cells": 25576,
+          "columns": 1,
+          "reference_table_bytes": 4315952,
+          "full_vector_workspace_bytes": 94459440,
+          "algorithm": "COEFFICIENT_FIRST_PUBLIC_BASIX_VECTOR",
+          "production_matrix_reads": 0
+        },
+        "closed_physical_residual_norm": 0.3651539856337221,
+        "projected_port_norm": 0.08204245401287719,
+        "pass_gate": false
+      },
+      "producer_consumer_operation": 0.0,
+      "complete_coefficients_verified": true,
+      "strict_pass": false,
+      "independent_receipt": {
+        "path": "benchmarks/artifacts/task042/v76/task042_v76_verify_cost_20261012T044220474297Z/PROMOTED/completed_independent_route.json",
+        "sha256": "54c5998bceb13635b828782a7b010c6359d64670e816087b17023f2bc12a6dd7",
+        "bytes": 2136
+      }
+    },
+    "SMR": {
+      "original": {
+        "true": 0.36007658295382156,
+        "native": 0.36007658295382156,
+        "augmented": 0.14526066210345379,
+        "port": 0.0014970705922027444,
+        "full_augmented": 0.14541305885090325,
+        "direct_target": false,
+        "rhs_q47_q63": 1.3692700863640344e-15,
+        "MPC_identity": 2.9567025372071463e-18,
+        "absolute_residual": 0.15538789785721577,
+        "original_rhs_norm": 1.068596583313331,
+        "backend": "PUBLIC_BASIX_COEFFICIENT_FIRST_Q15_TRIANGLE63",
+        "body_consumption": {
+          "seconds": 37.31729376222938,
+          "q": 15,
+          "cells": 25576,
+          "columns": 1,
+          "reference_table_bytes": 4315952,
+          "full_vector_workspace_bytes": 94459440,
+          "algorithm": "COEFFICIENT_FIRST_PUBLIC_BASIX_VECTOR",
+          "production_matrix_reads": 0
+        },
+        "closed_physical_residual_norm": 0.3847766062755936,
+        "projected_port_norm": 4.750750645289668,
+        "pass_gate": false
+      },
+      "producer_consumer_operation": 0.0,
+      "complete_coefficients_verified": true,
+      "strict_pass": false,
+      "independent_receipt": {
+        "path": "benchmarks/artifacts/task042/v76/task042_v76_verify_cost_20261012T044220474297Z/SMR/completed_independent_route.json",
+        "sha256": "f7b06920c2ab9312c9d62c56b01f751543c4dcaf915a3ffdef440397acff6968",
+        "bytes": 141277
+      }
+    }
+  },
+  "consumer_pass": true,
+  "qualification_consumer_source": "fb403eeba4734bb931d4f72a8eae865286a2ecec",
+  "original_backend": "COEFFICIENT_FIRST_PUBLIC_BASIX_Q15_TRIANGLE63",
+  "global_fine_matrix_reads": 0,
+  "new_numeric_or_KSP_in_VERIFY": 0,
+  "expensive_physics_not_recomputed": true
+}

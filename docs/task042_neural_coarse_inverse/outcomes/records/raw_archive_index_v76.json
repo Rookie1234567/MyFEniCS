@@ -1,0 +1,11 @@
+{
+  "science_increment": {
+    "path": "benchmarks/artifacts/task042/v76/increment_evidence/science_frozen02/inventory.json",
+    "sha256": "231f6e1e578543ae9bf6a9009ff1d85739f218b691d5cdf68d940fa3b226869f",
+    "bytes": 184992
+  },
+  "metadata_versions": 234,
+  "old_payload_copy": false,
+  "first_archive_failed_partial_preserved": "benchmarks/artifacts/task042/v76/increment_evidence/science_frozen",
+  "no_scientific_replay": true
+}

@@ -1,0 +1,71 @@
+{
+  "final_targeted_methods": 11,
+  "snapshots": [
+    {
+      "directory": "tmp/task042/v76/aux_pre_focused01",
+      "status": "PASSED",
+      "tests": {
+        "path": "tmp/task042/v76/aux_pre_focused01/tests.json",
+        "sha256": "6dff111845e82e5d2884d81f848337fb1965df64d5ba4567cad46d03d218c2b0",
+        "bytes": 17197
+      },
+      "stdout": {
+        "path": "tmp/task042/v76/aux_pre_focused01/command0.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stderr": {
+        "path": "tmp/task042/v76/aux_pre_focused01/command0.stderr",
+        "sha256": "744de8c5137fa1386cc85940a4c7f6e37285fcabae20893f8e92f0546b41978f",
+        "bytes": 98
+      },
+      "source": "32e298ad0c69a65149269f882b191b99d2e0428f"
+    },
+    {
+      "directory": "tmp/task042/v76/aux_pre_focused02",
+      "status": "PASSED",
+      "tests": {
+        "path": "tmp/task042/v76/aux_pre_focused02/tests.json",
+        "sha256": "f7f5868cebd5f91370c5c39daad888396ede55b17035bb3bb75f3a282fa39a45",
+        "bytes": 17197
+      },
+      "stdout": {
+        "path": "tmp/task042/v76/aux_pre_focused02/command0.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stderr": {
+        "path": "tmp/task042/v76/aux_pre_focused02/command0.stderr",
+        "sha256": "f43c42a200f285fc1f5a9fec45f1b4976478603fad13e195ea0794c52fb70291",
+        "bytes": 98
+      },
+      "source": "f68af698a7fe42a0b3c79860ae934f690d056016"
+    },
+    {
+      "directory": "tmp/task042/v76/aux_pre_focused03",
+      "status": "PASSED",
+      "tests": {
+        "path": "tmp/task042/v76/aux_pre_focused03/tests.json",
+        "sha256": "d89a71daee18968ae4e506cc095a45742049e9b6d8328deb16267c349eb98bb3",
+        "bytes": 17197
+      },
+      "stdout": {
+        "path": "tmp/task042/v76/aux_pre_focused03/command0.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stderr": {
+        "path": "tmp/task042/v76/aux_pre_focused03/command0.stderr",
+        "sha256": "cf539e5c5c5cbc0f50e105a396ef9d279ccabca7e5d9e9297b4c9b10b19d63b8",
+        "bytes": 98
+      },
+      "source": "fb403eeba4734bb931d4f72a8eae865286a2ecec"
+    }
+  ],
+  "only_relevant_tests": true,
+  "full_pytest_CI_MPI_extra": false,
+  "six_dat_validate": true,
+  "compile_and_related_Ruff": true,
+  "independent_saved_consumers": "VERIFY_COST source fb403eeba4734bb931d4f72a8eae865286a2ecec passed consistency, scientific pass False",
+  "initial_uncommitted_local10_test": "worktree snapshot, not formal clean scientific source"
+}

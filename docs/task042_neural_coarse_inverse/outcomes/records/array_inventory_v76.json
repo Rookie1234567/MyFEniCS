@@ -1,0 +1,16 @@
+{
+  "increment": {
+    "path": "benchmarks/artifacts/task042/v76/increment_evidence/science_frozen02/inventory.json",
+    "sha256": "231f6e1e578543ae9bf6a9009ff1d85739f218b691d5cdf68d940fa3b226869f",
+    "bytes": 184992
+  },
+  "full_new_manifest": {
+    "path": "benchmarks/artifacts/task042/v76/array_inventory_full_v76.json",
+    "sha256": "cd2f3fc19015557a164f8e5bcd95b931aa347bde2a78e34e8cc1f4b515a5c9be",
+    "bytes": 95785
+  },
+  "new_array_files": 82,
+  "logical_member_count": 355,
+  "all_large_payloads_ignored": true,
+  "raw_partial_preserved": "benchmarks/artifacts/task042/v76/increment_evidence/science_frozen"
+}
