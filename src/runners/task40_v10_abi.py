@@ -26,8 +26,21 @@ _THREAD_VARIABLES = (
 )
 
 
-def qualified_task40_v10_abi(*, profile_identity: str) -> dict[str, object]:
-    """Validate the approved local WSL receipt for an explicit V10 profile only."""
+def _rooted_contract_path(root: Path, value: object, label: str) -> Path:
+    supplied = Path(str(value))
+    candidate = (supplied if supplied.is_absolute() else root / supplied).resolve()
+    if not candidate.is_relative_to(root):
+        raise RuntimeError(f"Task40 V30 {label} escapes the approved execution root")
+    return candidate
+
+
+def qualified_task40_v10_abi(
+    *,
+    profile_identity: str,
+    v30_contract_path: str | Path | None = None,
+    v30_contract_sha256: str | None = None,
+) -> dict[str, object]:
+    """Validate the legacy WSL receipt or the strictly authorized V30 receipt."""
     from src.io.physical_intermediate_profile import (
         TASK40_V10_P4_CONTROL_PROFILE,
         TASK40_V10_P6_REFERENCE_PROFILE,
@@ -37,6 +50,7 @@ def qualified_task40_v10_abi(*, profile_identity: str) -> dict[str, object]:
         TASK40_V17_P6_PROFILES,
         TASK40_V18_P6_PROFILES,
         TASK40_V20_P6_PROFILES,
+        TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
     )
 
     if profile_identity not in (
@@ -54,29 +68,80 @@ def qualified_task40_v10_abi(*, profile_identity: str) -> dict[str, object]:
         )
 
     root = Path(__file__).resolve().parents[2]
-    prefix = (root / _RUNTIME_PREFIX).resolve()
-    receipt_path = (root / _ABI_RECEIPT).resolve()
+    strict_v30 = os.environ.get("TASK40_V30_STRICT_EXECUTION") == "1"
+    if strict_v30:
+        if profile_identity != TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE:
+            raise RuntimeError(
+                "Task40 V30 native ABI receipt is restricted to the approved target Ny8 profile"
+            )
+        if v30_contract_path is None or not v30_contract_sha256:
+            raise RuntimeError("Task40 V30 ABI gate requires its approved contract binding")
+        from src.runners.task40_v30_contract import require_authorized_contract
+
+        contract_path = Path(v30_contract_path)
+        contract_path = (
+            contract_path if contract_path.is_absolute() else root / contract_path
+        ).resolve()
+        configured_contract = Path(
+            os.environ.get("TASK40_V30_CONTRACT_PATH", "")
+        ).resolve()
+        configured_contract_sha256 = os.environ.get("TASK40_V30_CONTRACT_SHA256")
+        if (
+            contract_path != configured_contract
+            or v30_contract_sha256 != configured_contract_sha256
+        ):
+            raise RuntimeError("Task40 V30 ABI gate contract differs from the worker binding")
+        v30_contract, checked_contract_sha256 = require_authorized_contract(
+            contract_path,
+            expected_sha256=v30_contract_sha256,
+            current_root=root,
+        )
+        execution = v30_contract["execution"]
+        runtime_profile = str(execution["host_identity"]["runtime_profile"])
+        if runtime_profile != "native_linux":
+            raise RuntimeError("Task40 V30 ABI gate requires the approved native_linux profile")
+        prefix = _rooted_contract_path(root, execution["runtime_prefix"], "runtime prefix")
+        receipt_path = _rooted_contract_path(root, execution["abi_receipt_path"], "ABI receipt")
+        expected_receipt_sha256 = str(execution["abi_receipt_sha256"])
+        if checked_contract_sha256 != configured_contract_sha256:
+            raise RuntimeError("Task40 V30 ABI gate contract hash changed during validation")
+    else:
+        if v30_contract_path is not None or v30_contract_sha256 is not None:
+            raise RuntimeError("Task40 V30 ABI binding requires strict V30 execution mode")
+        prefix = (root / _RUNTIME_PREFIX).resolve()
+        receipt_path = (root / _ABI_RECEIPT).resolve()
+        expected_receipt_sha256 = _ABI_RECEIPT_SHA256
+        from benchmarks.task40_runtime_profile import LOCAL_WSL2_PROFILE
+
+        runtime_profile = LOCAL_WSL2_PROFILE
+
     try:
         receipt_bytes = receipt_path.read_bytes()
     except OSError as exc:
-        raise RuntimeError("Task40 V10 qualified ABI receipt is unavailable") from exc
+        receipt_label = "V30 approved" if strict_v30 else "V10 qualified"
+        raise RuntimeError(f"Task40 {receipt_label} ABI receipt is unavailable") from exc
     receipt_sha256 = hashlib.sha256(receipt_bytes).hexdigest()
-    if receipt_sha256 != _ABI_RECEIPT_SHA256:
-        raise RuntimeError("Task40 V10 qualified ABI receipt hash differs from the frozen receipt")
+    if receipt_sha256 != expected_receipt_sha256:
+        receipt_label = "V30 approved" if strict_v30 else "V10 qualified"
+        raise RuntimeError(f"Task40 {receipt_label} ABI receipt hash differs from its binding")
 
     configured_receipt = os.environ.get("_MYFENICS_CLOUD_ABI_MANIFEST")
     configured_sha256 = os.environ.get("_MYFENICS_CLOUD_ABI_MANIFEST_SHA256")
     if (
-        os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1"
+        (
+            os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1"
+            if not strict_v30
+            else os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") is not None
+        )
         or os.environ.get("_MYFENICS_CLOUD_QUALIFIED_ACTIVATION") != "1"
-        or os.environ.get("_MYFENICS_CLOUD_RUNTIME_PROFILE") != "local_wsl2_authorized"
+        or os.environ.get("_MYFENICS_CLOUD_RUNTIME_PROFILE") != runtime_profile
         or os.environ.get("_MYFENICS_CLOUD_QUALIFICATION_SCOPE")
         != "imports_only_C1_FE_JIT_NOT_RUN"
         or not configured_receipt
         or Path(configured_receipt).resolve() != receipt_path
         or configured_sha256 != receipt_sha256
     ):
-        raise RuntimeError("Task40 V10 activation or receipt binding differs from the approved local WSL profile")
+        raise RuntimeError("Task40 activation or ABI receipt binding differs from the approved profile")
 
     try:
         receipt = json.loads(receipt_bytes)
@@ -84,7 +149,7 @@ def qualified_task40_v10_abi(*, profile_identity: str) -> dict[str, object]:
         raise RuntimeError("Task40 V10 qualified ABI receipt is not valid JSON") from exc
     if (
         receipt.get("status") != "IMPORT_SCALAR_MPI_API_PASS_NO_FE_ACTION"
-        or receipt.get("runtime_profile") != "local_wsl2_authorized"
+        or receipt.get("runtime_profile") != runtime_profile
         or receipt.get("FE_action") != "NOT_RUN"
         or receipt.get("matrix_creation_calls") != 0
         or receipt.get("factor_calls") != 0
@@ -95,14 +160,18 @@ def qualified_task40_v10_abi(*, profile_identity: str) -> dict[str, object]:
 
     from benchmarks.task40_runtime_profile import (
         LOCAL_WSL2_PROFILE,
+        NATIVE_LINUX_PROFILE,
         validate_runtime_receipt,
     )
 
     host_binding = validate_runtime_receipt(
-        receipt, requested_profile=LOCAL_WSL2_PROFILE
+        receipt, requested_profile=runtime_profile
     )
-    if LOCAL_WSL2_PROFILE != "local_wsl2_authorized":
-        raise RuntimeError("Task40 V10 runtime profile constant changed unexpectedly")
+    if (
+        LOCAL_WSL2_PROFILE != "local_wsl2_authorized"
+        or NATIVE_LINUX_PROFILE != "native_linux"
+    ):
+        raise RuntimeError("Task40 runtime profile constants changed unexpectedly")
     if (
         Path(sys.executable).resolve() != (prefix / "bin/python").resolve()
         or Path(sys.prefix).resolve() != prefix
@@ -154,7 +223,7 @@ def qualified_task40_v10_abi(*, profile_identity: str) -> dict[str, object]:
     return {
         "qualification": "task40_v10_exact_profile_receipt_bound",
         "profile_identity": profile_identity,
-        "runtime_profile": LOCAL_WSL2_PROFILE,
+        "runtime_profile": runtime_profile,
         "runtime_host_binding": host_binding,
         "python_executable": str(Path(sys.executable).resolve()),
         "runtime_prefix": str(prefix),

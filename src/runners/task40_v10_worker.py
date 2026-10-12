@@ -5402,6 +5402,7 @@ def run_task40_v10_p6_reference_worker(
     """Run a frozen Task40 p6 case with one live four-q periodic reference."""
 
     v30_contract = None
+    v30_contract_sha = None
     v30_input_identity = None
     provenance = resolved_payload.get("provenance", {})
     scientific_input_sha256 = str(
@@ -5830,6 +5831,14 @@ def run_task40_v10_p6_reference_worker(
         )
         summary["abi"] = _abi_facts(
             profile_identity=profile_identity,
+            v30_contract_path=(
+                os.environ.get("TASK40_V30_CONTRACT_PATH")
+                if v30_contract is not None
+                else None
+            ),
+            v30_contract_sha256=(
+                v30_contract_sha if v30_contract is not None else None
+            ),
         )
         summary["campaign_authority"] = _candidate_contract(
             resolved_payload, contract, runtime, profile_identity=profile_identity
