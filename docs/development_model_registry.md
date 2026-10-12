@@ -2338,3 +2338,15 @@ V26 面向原尺寸 `50×25×140 nm`、`0.7 nm`、`272×8×14` p6 三维非分�
 | 全局资格 | 完整 q CSR `0/8`；factor/KSP/PDE/official R/T/A 均 `NOT_RUN` | 原尺寸 2 TB / 48 h、最终精度仍 `NOT_QUALIFIED`；ordinary default unchanged。 |
 
 证据入口：[Response V26](task40extra_0p7nm_engineering/response_v26.md)、[operator compact](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v26.json)、[time/resource ledger](task40extra_0p7nm_engineering/outcomes/records/time_resource_accounting_v26.json)、[incremental workflow ledger](task40extra_0p7nm_engineering/outcomes/records/review_v26_incremental_workflow_ledger.json)。campaign window 为 T0 `2026-10-11T07:10:58Z`、数值 cutoff `12:50:58Z`、deadline `13:10:58Z`，closeout reserve 1,200 s；receipt 的旧 600 s 标签不改变有效 Gate。V25 与更早历史记录保持不变。
+
+
+## Task40extra Review V29：完整 q0 factor-only 准备，实际分解尚未运行
+
+源码 `45628068263181b83739ff80f4f34ffaa472e943` 已由主控冻结并回读远端；Review 基准 `e85992c79d7e2b3f41cd1396ffb06edccdd93421`。V29 prepare 对 39 个必要文件完成一次全文件 SHA-256 核验，共 24,317,319,033 B；后续文档收口没有重复该扫描。15 项定向软件测试通过；这不是新 factor、FE 或物理结果。
+
+| 模型 / 阶段 | 已有数学资格 | V29 实际运行与边界 |
+|---|---|---|
+| 0.7 nm，regular-reference q0，272×2×14、7,616 cells、p6 | 沿用 V28 完整 777,644² CSR、577,061,168 slots 和四次 native 对照；数值 payload 11,544,333,940 B | strict factor-only、native Linux activation、资源/时钟及 F_q/S_q 接线已冻结；symbolic/numeric/MatSolve/F_q/S_q 未运行/未知 |
+| 原尺寸非可分 target，50×25×140 nm、272×8×14、p6 | 工程 pilot 的既有资格原样保留，不能把 q0 当全部八 q 或 target 解 | 新资源包尚待批准；其余 q、完整 target PDE、最终精度与 2 TB/48 h 均未获得新资格 |
+
+证据：[Response V29](task40extra_0p7nm_engineering/response_v29.md)、[operator](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v29.json)、[resource](task40extra_0p7nm_engineering/outcomes/records/time_resource_accounting_v29.json)、[执行交接](task40extra_0p7nm_engineering/outcomes/target_stage_handoff_v29.md)。

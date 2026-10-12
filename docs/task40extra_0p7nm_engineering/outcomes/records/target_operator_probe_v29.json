@@ -1,0 +1,286 @@
+{
+  "authorization_status": "PENDING_USER_AUTHORIZATION",
+  "branch": "task40extra_0p7nm_engineering",
+  "classification": "LOCAL_PREPARATION_COMPLETE_EXECUTION_HELD",
+  "created_utc": "2026-10-12T04:31:31.105854Z",
+  "csr": {
+    "artifacts": {
+      "data": {
+        "bytes": 9232978816,
+        "sha256": "457b946f8e08557d82df38683a884d25ff58413f17ad1bb7f7e04a7296698c27"
+      },
+      "indices": {
+        "bytes": 2308244800,
+        "sha256": "9279c5dbfb8921c61dc229ea6a99d30bb76f8b31d005076796d4504a1e7d0d6e"
+      },
+      "indptr": {
+        "bytes": 3110708,
+        "sha256": "6d24828a2cd820601fedf92c5b6575fc2dd95a905c2533677f3a3367648a7819"
+      }
+    },
+    "dtype": "complex128",
+    "index_dtype": "int32",
+    "payload_bytes": 11544333940,
+    "qualification_basis": "V28 required checker supplied the existing scientific/native qualification. V29 prepare --verify-only then streamed and SHA-256 hashed all 39 dependency files (24,317,319,033 B total, including the CSR arrays); this confirms byte identity but does not repeat the native comparison or create new numerical qualification. This documentation closeout did not rehash those files.",
+    "shape": [
+      777644,
+      777644
+    ],
+    "status": "INHERITED_COMPLETE_CSR; V29_FULL_DEPENDENCY_FILE_HASH_VERIFIED",
+    "stored_structural_slots": 577061168
+  },
+  "current_frozen_source_sha": "45628068263181b83739ff80f4f34ffaa472e943",
+  "dependency_reverification": {
+    "all_dependencies_full_file_sha256_read": true,
+    "count": 39,
+    "full_hash_interval_is_included_in_aggregate_endpoint": true,
+    "includes_q0_csr_arrays": true,
+    "main_current_cost_endpoint_sha256": "ca57505095d261777b5cb3daf696b3f34cec78e1663429892755339a7b5c15bb",
+    "manifest_path": "outcomes/records/v29_dependency_manifest.json",
+    "manifest_sha256": "b67c9e24ab4cec8b5862d4c1ce5defede35860cc03ba0ffb5363f852309156a9",
+    "missing_or_changed_count": 0,
+    "note": "The full V29 prepare hash is distinct from V28 native qualification and from any target-side copy verification.",
+    "prepare_hash_elapsed_seconds": 164.586,
+    "status": "PASS_LOCAL_IDENTITIES",
+    "this_closeout_rehash": false,
+    "total_bytes": 24317319033
+  },
+  "evidence": {
+    "dependency_manifest": {
+      "path": "outcomes/records/v29_dependency_manifest.json",
+      "sha256": "b67c9e24ab4cec8b5862d4c1ce5defede35860cc03ba0ffb5363f852309156a9"
+    },
+    "documentation_test_log": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_preparation/v29_documentation_pytest.log",
+      "sha256": "61a73421e4fee9eff1f6d61ba39680424441f26da4eca90505d43f8667900dda"
+    },
+    "execution_contract": {
+      "path": "outcomes/records/v29_execution_contract.json",
+      "sha256": "ff2b5baca1a2fba692b0662d3960090bac034f5faf79849f9e2314a2cd0d1582"
+    },
+    "freeze_receipt": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/main_source_freeze_v29.json",
+      "sha256": "7a2a0bd98e3cd7fed9731b34082e2fbc11a1f55d8a8bbb88b87ac33a5c1ddaf4"
+    },
+    "main_current_cost_endpoint": {
+      "end_utc": "2026-10-12T04:28:37.848919+00:00",
+      "final_closeout_complete": false,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/main_preapproval_current_cost_v29.json",
+      "sha256": "ca57505095d261777b5cb3daf696b3f34cec78e1663429892755339a7b5c15bb"
+    },
+    "source_snapshot": {
+      "path": "outcomes/records/v29_source_snapshot.json"
+    },
+    "target_root_readonly_receipt": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/main_workstation_readonly_receipt_v29.json",
+      "sha256": "5bddd5d774ace598751449d41e3df160a4a833e2aa7ab68985e399273040f4ff"
+    },
+    "target_runtime_inventory": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/main_target_system_runtime_inventory_v29.json",
+      "sha256": "0665dc67a5e39bdeec94a8feb099a1dbd4185fd3f19a12cdc06ec44b37939bef"
+    },
+    "targeted_tests": {
+      "path": "outcomes/records/targeted_tests_v29.json",
+      "sha256": "2af7810e8fa8f96b1fb99cab43d48e78ec39e3125af89d6ea6070ee134e1863e"
+    }
+  },
+  "factor_lifecycle": {
+    "F_q_boundary": "Cold cache miss from strict manifest/qualification identity check and initial read-only CSR loader through factor conversion, symbolic, numeric, first nonzero MatSolve, full true residual and raw readback; includes initial loader and ends before second RHS/eviction.",
+    "F_q_seconds": null,
+    "S_q_metric": "native_MatSolveRepeated_seconds is the same-factor solve metric. The complete second-RHS test parent, RHS construction, Vec setup, residual, persistence/readback, and eviction are separately reported.",
+    "S_q_seconds": null,
+    "S_q_seconds_basis": "No factor run; therefore both native solve and test-parent timings are NOT_MEASURED.",
+    "factor_count": 0,
+    "factor_process_tree_or_cgroup_peak_bytes": null,
+    "factor_resident_peak_bytes": null,
+    "fresh_probe_relative_residual": null,
+    "mat_solve_calls": 0,
+    "numeric_calls": 0,
+    "run_id": null,
+    "second_rhs_relative_residual": null,
+    "service_started": false,
+    "status": "NOT_RUN",
+    "symbolic_calls": 0,
+    "worker_pid": null
+  },
+  "identity": {
+    "input_sha256": "134ea5f08d5d5dbc366870f451ba0de0df5893c5cd73d227dac77f8a11aa2c0b",
+    "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+    "qualified_donor_identity_sha256": "5bcddb4ddc01d7092ec535eed1fab24a15add33f3f6c56b5aca4cb4f358e858c",
+    "review_v29_sha256": "7a535053474bf864ed77dbf13f66aba1baf2172ff568738e10e2bc3d2266d51e",
+    "v27_pattern_manifest_sha256": "1ea707f3c201359c390b620a5122d0102f5b34bd74873b5f00e3a40b673b94de",
+    "v28_complete_manifest_sha256": "ca3c8de9093fd1cfe9e17c8eb557cd2f96920a3ee110549f007e70835d4a2290",
+    "v28_native_qualification_sha256": "63babb2943b7e0f613a2c531afd09f931c4ee5504a345748c52f6ef38b0e9c81",
+    "v28_saved_readback_sha256": "304f3029e147ba0d4054efdf484757581a88b71a0ae60f6bea7235003eeac9ac",
+    "v28_selector_sha256": "87348ae347eb8112be1009e597a4642df6356549199074ae478edbfdc979a93c"
+  },
+  "implementation_snapshot_sha256": "ea8f67c174b5b5153d7563f0be50e8d98da0e46badd08a7c0fa92a61821b1b9f",
+  "model": {
+    "actual": "regular reference without notch/void; selected q0 only",
+    "cells": 7616,
+    "nx_ny_nz": [
+      272,
+      2,
+      14
+    ],
+    "parent_target": {
+      "cells": 30464,
+      "geometry": "true nonseparable Si/air",
+      "nx_ny_nz": [
+        272,
+        8,
+        14
+      ],
+      "pde_solved": false,
+      "size_nm": [
+        50,
+        25,
+        140
+      ]
+    },
+    "polynomial_degree": 6,
+    "rows": 777644,
+    "wavelength_nm": 0.7
+  },
+  "native_comparison": {
+    "independent_audit_receipt_sha256": "577dc063324a083cd285cceddb7cc60b1a4516cffb0149e3eb94af9e132a2469",
+    "maximum_relative_error": 1.9116580127738185e-14,
+    "relative_error_limit": 1e-11,
+    "scope": "Four full q0 CSR actions: two full, masked trace, and masked port.",
+    "status": "PASS_IN_V28_NOT_RECOMPUTED_IN_V29"
+  },
+  "not_run": [
+    "q0 symbolic/numeric factorization",
+    "fresh factor probe and second RHS",
+    "all other q factors",
+    "target KSP/PDE/full A6 residual",
+    "R00_s/R00_p/R00_total, R/T/A/A_volume, diffraction amplitudes",
+    "target accuracy and 2 TB / 48 h qualification"
+  ],
+  "schema": "task40extra.review_v29_q0_factor_preparation.v1",
+  "source_at_entry": "e85992c79d7e2b3f41cd1396ffb06edccdd93421",
+  "source_freeze_receipt_sha256": "7a2a0bd98e3cd7fed9731b34082e2fbc11a1f55d8a8bbb88b87ac33a5c1ddaf4",
+  "target_execution": {
+    "abi": "NOT_QUALIFIED",
+    "execution_host": "fenics-ws",
+    "execution_root": "/home/fenics/Projects/laptop_share",
+    "observed_hostname": "fenics-ws01",
+    "proposed_data_copy_paths": [
+      {
+        "bytes_at_prepare": 9257,
+        "id": "science_input_dat",
+        "proposed_destination_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/stage_inputs/selected_reference_q_csr/target_original_ny8_operator_probe_v22.dat",
+        "proposed_destination_relative_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/stage_inputs/selected_reference_q_csr/target_original_ny8_operator_probe_v22.dat",
+        "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/stage_inputs/selected_reference_q_csr/target_original_ny8_operator_probe_v22.dat",
+        "source_relative_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/stage_inputs/selected_reference_q_csr/target_original_ny8_operator_probe_v22.dat",
+        "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+      },
+      {
+        "bytes_at_prepare": 9242,
+        "id": "canonical_template_dat",
+        "proposed_destination_path": "/home/fenics/Projects/laptop_share/input/task40extra_0p7nm_engineering/target_original_ny8_operator_probe_v22.dat",
+        "proposed_destination_relative_path": "input/task40extra_0p7nm_engineering/target_original_ny8_operator_probe_v22.dat",
+        "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/input/task40extra_0p7nm_engineering/target_original_ny8_operator_probe_v22.dat",
+        "source_relative_path": "input/task40extra_0p7nm_engineering/target_original_ny8_operator_probe_v22.dat",
+        "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+      },
+      {
+        "bytes_at_prepare": 11230840064,
+        "id": "producer_v25_selected_q0_surface_functionals",
+        "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_selected_q0_surface_functionals.bin",
+        "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_selected_q0_surface_functionals.bin",
+        "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_selected_q0_surface_functionals.bin",
+        "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T053811.673002Z/v25_selected_q0_surface_functionals.bin",
+        "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+      },
+      {
+        "bytes_at_prepare": 18336,
+        "id": "original_v27_manifest",
+        "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_csr_manifest.json",
+        "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_csr_manifest.json",
+        "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_csr_manifest.json",
+        "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_csr_manifest.json",
+        "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+      },
+      {
+        "bytes_at_prepare": 38314,
+        "id": "continuation_manifest",
+        "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v28_q0_csr_continuation_manifest.json",
+        "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v28_q0_csr_continuation_manifest.json",
+        "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v28_q0_csr_continuation_manifest.json",
+        "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v28_q0_csr_continuation_manifest.json",
+        "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+      },
+      {
+        "bytes_at_prepare": 9232978816,
+        "id": "v28_csr_data",
+        "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_data.npy",
+        "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_data.npy",
+        "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_data.npy",
+        "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_data.npy",
+        "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+      },
+      {
+        "bytes_at_prepare": 2308244800,
+        "id": "v28_csr_indices",
+        "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indices.npy",
+        "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indices.npy",
+        "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indices.npy",
+        "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indices.npy",
+        "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+      },
+      {
+        "bytes_at_prepare": 3110708,
+        "id": "v28_csr_indptr",
+        "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indptr.npy",
+        "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indptr.npy",
+        "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indptr.npy",
+        "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indptr.npy",
+        "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+      },
+      {
+        "bytes_at_prepare": 5785,
+        "id": "native_qualification",
+        "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_native_qualification.json",
+        "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_native_qualification.json",
+        "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_native_qualification.json",
+        "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_native_qualification.json",
+        "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+      },
+      {
+        "bytes_at_prepare": 49770300,
+        "id": "v28_native_readback_outputs",
+        "proposed_destination_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_csr_readback.npz",
+        "proposed_destination_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_csr_readback.npz",
+        "source_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_csr_readback.npz",
+        "source_relative_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_csr_readback.npz",
+        "status": "PRESENT_AND_SHA256_VERIFIED_DURING_V29_PREPARE"
+      }
+    ],
+    "resource_and_window_authorized": false,
+    "root_receipt_sha256": "5bddd5d774ace598751449d41e3df160a4a833e2aa7ab68985e399273040f4ff",
+    "root_status": "VERIFIED_EMPTY",
+    "runtime": "NOT_CREATED",
+    "runtime_copy_plan": {
+      "destination_absolute_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+      "destination_relative_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+      "destination_root": "/home/fenics/Projects/laptop_share",
+      "size_scope": "Prior du tree observation only; not an exact transfer byte count or content hash.",
+      "source_absolute_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+      "source_du_tree_bytes": 2625190071,
+      "source_relative_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+      "status": "PENDING_USER_AUTHORIZATION_AND_COPY",
+      "target_runtime_requirement": "Copy only after approval; then create a fresh native_linux/PETSc 3.25.6 target ABI receipt. Do not reuse old target inventory/receipt as PASS."
+    },
+    "runtime_inventory_sha256": "0665dc67a5e39bdeec94a8feb099a1dbd4185fd3f19a12cdc06ec44b37939bef",
+    "service_started": false,
+    "transfer_authorized": false,
+    "worker_state": {
+      "classification": "NO_WORKER_EXISTS; no V29 worker has been launched.",
+      "run_id": null,
+      "service_started": false,
+      "service_unit": null,
+      "worker_pid": null
+    }
+  }
+}

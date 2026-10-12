@@ -1,0 +1,60 @@
+{
+  "activation": {
+    "environment": "qualified local WSL activation for lightweight tests only",
+    "module_roots": {
+      "dolfinx": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages",
+      "mpi4py": "/usr/lib/python3/dist-packages",
+      "petsc4py": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages",
+      "slepc4py": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages"
+    },
+    "mpi_size": 1,
+    "numpy": "1.26.4",
+    "petsc": "3.19.6",
+    "petsc_int_type": "int32",
+    "petsc_scalar_type": "complex128",
+    "python": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/.venv/bin/python",
+    "qualified_activation": true,
+    "scope": "Local test stack only; does not qualify the target runtime."
+  },
+  "created_utc": "2026-10-12T04:23:20.726398Z",
+  "current_frozen_source_sha": "45628068263181b83739ff80f4f34ffaa472e943",
+  "documentation_tests": {
+    "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py",
+    "elapsed_seconds": 0.22,
+    "failed": 0,
+    "log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_preparation/v29_documentation_pytest.log",
+    "log_sha256": "1a399d84816e10d2701ac68fe1a2d5ebdfd4a58a982e601cc761f27317abcdcd",
+    "passed": 29,
+    "result": "PASS",
+    "scope": "Documentation/model-registry/retrospective contracts; no numerical worker.",
+    "skipped": 0
+  },
+  "freeze_receipt_sha256": "7a2a0bd98e3cd7fed9731b34082e2fbc11a1f55d8a8bbb88b87ac33a5c1ddaf4",
+  "implementation_snapshot_sha256": "ea8f67c174b5b5153d7563f0be50e8d98da0e46badd08a7c0fa92a61821b1b9f",
+  "not_run": [
+    "full repository pytest",
+    "MPI2/MPI4",
+    "Ruff (not installed)",
+    "CI",
+    "target runtime qualification",
+    "factor lifecycle, PDE, official R/T/A"
+  ],
+  "other_checks": {
+    "bash_syntax": "PASS scripts/run_case_in_user_service.sh",
+    "git_diff_check": "PASS before source freeze",
+    "py_compile_changed_implementation_and_tests": "PASS",
+    "qualified_abi_preflight": "PASS; complex128/int32; all imported module paths Linux"
+  },
+  "schema": "task40extra.review_v29_targeted_tests.v1",
+  "source_at_entry": "e85992c79d7e2b3f41cd1396ffb06edccdd93421",
+  "tests": {
+    "command": "python -m pytest -q src/test/test_task40_v29_contract.py src/test/test_task40_v29_path_mapping.py src/test/test_354_subreaper_watchdog.py::test_v29_reserves_host_and_task_cgroup_capacity_as_separate_domains src/test/test_task40_v20_routes.py::test_v27_selector_binds_fixed_donor_and_execution_window src/test/test_task40_v20_routes.py::test_v27_service_operation_routes_to_saved_q0_stage_executor src/test/test_task40_v20_routes.py::test_v28_service_operation_routes_to_v28_saved_q0_continuation src/test/test_task40_v10_p6_mumps.py::test_v26_selected_q0_factor_has_strict_probe_rhs_and_explicit_reserves",
+    "elapsed_seconds": 1.14,
+    "failed": 0,
+    "log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_preparation/v29_targeted_pytest.log",
+    "log_sha256": "949ebe3851c55cc26250c03210fbcda383894d3ed3a45f1ec87d321921ce5b87",
+    "passed": 15,
+    "result": "PASS",
+    "skipped": 0
+  }
+}

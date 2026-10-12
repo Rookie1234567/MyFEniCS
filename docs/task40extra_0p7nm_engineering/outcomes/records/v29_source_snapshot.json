@@ -1,0 +1,91 @@
+{
+  "branch": "task40extra_0p7nm_engineering",
+  "captured_utc": "2026-10-12T04:21:55.522219Z",
+  "current_frozen_source_sha": "45628068263181b83739ff80f4f34ffaa472e943",
+  "files": [
+    {
+      "bytes": 52104,
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "9cebcd9c4ecf87c03b99d577d479d5375a3a4c8ba6ddba480298062f7958c077"
+    },
+    {
+      "bytes": 6081,
+      "path": "scripts/run_case_in_user_service.sh",
+      "sha256": "7d829c037c6d32aa81cc814ffb8c08cb6996f4f757b326c7bf68daaa0a773a5f"
+    },
+    {
+      "bytes": 418706,
+      "path": "scripts/task40_v20_service_workflow.py",
+      "sha256": "c4739053174e976e702cb1a4e02587c3a6de6a3d57d4858956c3730d37605ff1"
+    },
+    {
+      "bytes": 29826,
+      "path": "scripts/task40_v29_prepare.py",
+      "sha256": "bd5d986a080be812b0f1134f7fcdf13fe54c1b9ef9b58f86c6efeccecaac8ca5"
+    },
+    {
+      "bytes": 320714,
+      "path": "src/runners/task038_launcher.py",
+      "sha256": "6f2aa6f571b3fe4120afa95e0d562cc94b21e81754ad52c6e578c5595dac8c0a"
+    },
+    {
+      "bytes": 54536,
+      "path": "src/runners/task40_v10_campaign.py",
+      "sha256": "34cb4924e4debe1e3ae7a1bbe116d7732a267663c8a87cbe193e27e4c52ca88c"
+    },
+    {
+      "bytes": 238260,
+      "path": "src/runners/task40_v20_stage_runner.py",
+      "sha256": "e1068aad1b5604d656d82ac50c1d98bd905dbe5e54953c8a173e5bf28db2cbfd"
+    },
+    {
+      "bytes": 19570,
+      "path": "src/runners/task40_v29_contract.py",
+      "sha256": "166b4ac09d38d0050b0a71af9c6a954dea3257a999c81b7e0aac5edef368ee03"
+    },
+    {
+      "bytes": 128624,
+      "path": "src/solvers/task40_v10_p6_mumps.py",
+      "sha256": "7c4d04e697ea3809f15c0f0bceb1071454a66635afa47c80bdabe763bb5946f0"
+    },
+    {
+      "bytes": 400050,
+      "path": "src/solvers/task40_v22_operator_probe.py",
+      "sha256": "fed93193136276c657f3281ef68780d7c311411aab19df08e9ffb528bd73100b"
+    },
+    {
+      "bytes": 70869,
+      "path": "src/solvers/task40_v27_saved_q0.py",
+      "sha256": "15ea95af7a03143837214e64891a37d5227562e2a11550149fd1ca3bdc7777f4"
+    },
+    {
+      "bytes": 11818,
+      "path": "src/test/test_354_subreaper_watchdog.py",
+      "sha256": "9eda4dafb4e1dd3e417f2a8795391a6f5f739d6ec97fd9d887d333e272e9e00a"
+    },
+    {
+      "bytes": 31982,
+      "path": "src/test/test_task40_v10_p6_mumps.py",
+      "sha256": "f59de9c74b4cdca9644a54509f926adaca476aa9837fbc8afc2f00b764291b20"
+    },
+    {
+      "bytes": 11573,
+      "path": "src/test/test_task40_v29_contract.py",
+      "sha256": "6e30979a4ee6bdc489cd411928b4a334258c45979a693e6e5b196f388e955fb2"
+    },
+    {
+      "bytes": 8841,
+      "path": "src/test/test_task40_v29_path_mapping.py",
+      "sha256": "b1bb38b6cf7e5dd4fbc62845715af21d48d8e76a19cb86055009a894f5ef4b24"
+    }
+  ],
+  "hash_definition": "SHA-256 over canonical UTF-8 JSON of sorted path/bytes/SHA-256 records for the 15 changed or added .py/.sh files in the frozen commit range; excludes docs and ignored artifacts.",
+  "implementation_file_count": 15,
+  "implementation_snapshot_sha256": "ea8f67c174b5b5153d7563f0be50e8d98da0e46badd08a7c0fa92a61821b1b9f",
+  "schema": "task40extra.review_v29_working_tree_source_snapshot.v1",
+  "scope_note": "Review registration source remains e859; current corrected implementation is frozen and remotely verified at 456280. Existing CSR/native scientific identities and old campaign window remain unchanged.",
+  "source_at_entry": "e85992c79d7e2b3f41cd1396ffb06edccdd93421",
+  "source_freeze_receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/main_source_freeze_v29.json",
+  "source_freeze_receipt_sha256": "7a2a0bd98e3cd7fed9731b34082e2fbc11a1f55d8a8bbb88b87ac33a5c1ddaf4",
+  "status": "SOURCE_FROZEN_AND_REMOTE_VERIFIED"
+}

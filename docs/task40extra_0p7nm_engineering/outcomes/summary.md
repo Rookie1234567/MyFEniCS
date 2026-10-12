@@ -1,3 +1,35 @@
+# Task40extra Review V29：源码已冻结，factor 启动仍待批准
+
+本轮消费的是 V28 已保存的 regular-reference q0 矩阵；它不是原尺寸 Ny8 target 的新求解。主控已冻结并远端回读接线修复，Review 登记 source_at_entry 保持 e85992c79d7e2b3f41cd1396ffb06edccdd93421，当前实现 source 为 45628068263181b83739ff80f4f34ffaa472e943。剩余目标资源/依赖包授权、目标 ABI/runtime 资格和固定窗口没有完成，因此没有启动 factor。
+
+| 模型/阶段 | 方法与目的 | 状态 | 实测/已知结果 | 未知或未运行 |
+|---|---|---|---|---|
+| regular-reference q0 | 消费已有 V28 CSR/native PASS，测一次单 q 分解 | 输入资格沿用 | 777,644²；577,061,168 slots；payload 11,544,333,940 B；V28 最大相对误差 1.91166e-14 ≤ 1e-11 | V29 prepare 已完整读/hash 39 项依赖；文档收口未重做；未新做 native comparison |
+| V29 service 与 native profile 接线 | 在冷 shell 中先验证轻量合同，之后激活已有 native_linux runtime | 源码冻结；15 项 targeted tests PASS | source 45628068263181b83739ff80f4f34ffaa472e943 | target ABI 未资格 |
+| q0 factor | symbolic/numeric、首次 MatSolve 和真实残差 | NOT_RUN | 没有 service、run_id、worker PID | 分解、完整 residual、峰值、F_q 均 UNKNOWN |
+| 同因子重复求解 | 用同一已驻留因子做第二组 RHS | NOT_RUN | 计时字段已分开 | S_q/native_MatSolveRepeated 与第二 RHS parent 均未测 |
+| 原尺寸 Ny8 target | 真实 50×25×140 nm，Nx272/Ny8/Nz14/p6，30,464 cells | NOT_RUN | 无新 PDE | R/T/A、A_volume、衍射、A6 与 2 TB/48 h 未资格 |
+
+| 准备/授权门 | 当前状态 |
+|---|---|
+| 源码 | 主控冻结并远端确认；implementation snapshot SHA-256 ea8f67c174b5b5153d7563f0be50e8d98da0e46badd08a7c0fa92a61821b1b9f |
+| 依赖包 | 39/39 存在且哈希匹配，共 24,317,319,033 B；本轮不重哈希、不传输 |
+| 目标目录 | /home/fenics/Projects/laptop_share 只读核验为空；runtime 提案从本机 local_w0_wsl/runtime_prefix 复制至相同相对路径，du 树大小 2,625,190,071 B 仅作占用观察；复制及 native_linux/PETSc 3.25.6 新 qualification 待批 |
+| 资源/window | 512 GiB task cap、64 GiB host reserve、swap=0、MPI1/线程1、6h window 是待批准方案；T0=null |
+| 服务状态 | 未启动；service、run_id、worker PID 都为空 |
+
+## 两级时间与资源账
+
+| 层级 | 已记录数据 | 边界 |
+|---|---|---|
+| 阶段成本 | 既有本地准备区间 UTC 4008.5096 s、monotonic 3607.9524 s、boottime 3607.9524 s；39 项/24,317,319,033 B 依赖全文件 hash 子区间 164.586 s；最终定向 pytest 1.14 s | 时钟分列；约 400.5572 s 差值 UNKNOWN。03:27:30Z 后修复/测试/文档没有完整独立账本。以上都不是 factor 时间。 |
+| campaign/window | 没有 V29 T0、deadline 或运行账本；6h 与 20,400 s 数值 cutoff 仅是提案 | 尚未创建 task cgroup，未转移文件或启动服务。 |
+| factor/resource | F_q、S_q、symbolic/numeric、MatSolve、residual、factor 常驻和 process-tree/cgroup 峰值均 null；host swap 快照 Total 8,589,930,496 B / Free 8,569,143,296 B / Used 20,787,200 B，task swap null | 没有真实因子调用；不能以 null 写成 0 s/0 B。 |
+
+[详细响应](../response_v29.md) · [factor 准备与身份](records/target_operator_probe_v29.json) · [时间资源账](records/time_resource_accounting_v29.json) · [软件测试](test_summary.md) · [handoff / held command](target_stage_handoff_v29.md)
+
+---
+
 # Task40extra Review V28：完整 q0 数值矩阵与 native 对照通过
 
 CSR将稀疏矩阵的行起止、列号和值保存为三数组。V27只完成前两项；V28复用完整结构、从零填复数值，以精确稀疏投影减少零映射的工作。实际对象为7,616-cell regular-reference q0，仍需约11.5GB矩阵存储，原尺寸target PDE未求解。

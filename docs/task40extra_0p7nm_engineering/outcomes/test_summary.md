@@ -1,3 +1,18 @@
+# Task40extra Review V29 定向软件验证
+
+| 验证 | source / 命令 / 回执 | 结果 | 证据边界 |
+|---|---|---|---|
+| 主控源码冻结 | source_at_entry e85992c79d7e2b3f41cd1396ffb06edccdd93421; current frozen source 45628068263181b83739ff80f4f34ffaa472e943; receipt local_v29_wsl/main_source_freeze_v29.json | 远端回读确认 | 只确认源码冻结与 push，不表示 target factor 已运行 |
+| 本地 ABI preflight | qualified local WSL activation；checkout .venv；PETSc 3.19.6 complex128/int32、MPI1 | PASS | 轻量测试栈，不是 target runtime 资格 |
+| V29 定向测试 | targeted_tests_v29.json；日志 SHA-256 949ebe3851c55cc26250c03210fbcda383894d3ed3a45f1ec87d321921ce5b87 | **15 passed in 1.14 s** | 冷 shell/native profile、路径绑定、资源门、V27/V28 路由和 V26 lifecycle fixture；无 factor/PDE |
+| 语法 / shell / whitespace | changed-file py_compile、bash -n scripts/run_case_in_user_service.sh、git diff --check | 全部 PASS | 不是全仓 compileall |
+| full repository / MPI2/MPI4 / Ruff / CI | 未运行 | NOT_RUN | Ruff 未安装；不声称 CI 通过 |
+| target factor / solver / PDE | service 未启动 | NOT_RUN | F_q、native S_q、第二 RHS parent、残差、factor memory 与 R/T/A 均无实测 |
+
+冻结代码文件快照 SHA-256：ea8f67c174b5b5153d7563f0be50e8d98da0e46badd08a7c0fa92a61821b1b9f。V29 prepare --verify-only 已完整读取并哈希 39 项依赖，共 24,317,319,033 B（包括 CSR）；本轮文档收口没有重复该 hash。该身份检查不等于 native/numeric qualification。最终文档合同组：29 passed；精确命令、耗时和日志 SHA-256 见 targeted_tests_v29.json。文档测试独立登记，不与这 15 项实现测试相加。
+
+---
+
 # Task40extra Review V28：分源码的软件验证与完整矩阵回读
 
 | 阶段 / source | 命令或证据 | 真结果和边界 |
@@ -351,7 +366,7 @@ V6 PDE source=2374d0d556aed7a415202757daa2b94b76ad399b，postprocess source=fea2
 |---|---|
 | V4 compact JSON 与 artifact SHA | `PASS`；run index、接口包及两个原始分析 artifact 均可解析；接口 SHA、两项 artifact SHA 和 F3 source correction 均与索引一致 |
 | 本轮 Markdown 合同 | `PASS`；response/summary/test-summary、Task40 README、development_progress、development_model_registry 六份文档新增区共 23 个表格列数一致，新增相对链接目标均存在，`git diff --check` 通过；无独立多行公式 |
-| GitHub rendered view | `NOT_VERIFIED`；待推送后检查当前分支上的 summary/response 页面 | 缓存或页面不可读时如实保留未验证状态 |
+| GitHub rendered view | `NOT_VERIFIED`；待推送后检查当前分支上的 summary/response 页面；缓存或页面不可读时如实保留未验证状态 |
 | full repository pytest / MPI4 / Ruff / CI | `not_run`；不外推 |
 
 

@@ -3657,3 +3657,12 @@ D 有 450 interior rows 与 432 local trace rows/cell，触及 8,688 active trac
 B/C/D 分别绑定执行 window b6a3063404fdbfd88c1099f381c9fe64c09f9bf04e7e7a3871e5454dfa728358、同一 input/model 和 qualified WSL ABI（complex128/int32，MPI1）；B 另保留旧扫描 artifact window。D panel JSON 顶层没有 window 字段，该身份由 D outer workflow record 提供。可选 single-q 保持 NOT_ADMITTED，原因是 full volume action、complete selected-q streaming reference entry 和 full-stage 共驻容量未闭合，不是资源 Gate 失败；2 TB/48 h 仍 NOT_QUALIFIED。
 
 Selective merge 必须区分 shared numerical helper、Task40 opt-in runner/checker、compact/docs、research-only 内部 edge panel 与 ordinary default。普通 worker 没有接入完整 V24 action。详细 source 提交和选择边界见 [Response V24](task40extra_0p7nm_engineering/response_v24.md)；紧凑身份/数值证据见 [q tile](task40extra_0p7nm_engineering/outcomes/records/q_tile_v24.json)、[operator](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v24.json)、[support](task40extra_0p7nm_engineering/outcomes/records/production_support_v24.json)、[performance](task40extra_0p7nm_engineering/outcomes/records/performance_v24.json) 与 [run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。本次只完成文档 closeout，无新代码、数值运行、提交、推送或 master merge；ordinary default 不变，主控 review pending。
+
+
+## Task40extra Review V29：完整 q0 factor-only 准备，实际分解尚未运行
+
+源码 `45628068263181b83739ff80f4f34ffaa472e943` 已由主控冻结并回读远端；Review 基准 `e85992c79d7e2b3f41cd1396ffb06edccdd93421`。V29 prepare 对 39 个必要文件完成一次全文件 SHA-256 核验，共 24,317,319,033 B；后续文档收口没有重复该扫描。15 项定向软件测试通过；这不是新 factor、FE 或物理结果。
+
+当前新增能力是严格只读消费已完成矩阵及其 native PASS，直接进入一次 q0 精确分解，省去重新装配和填值；代价是实际分解与保留因子所需时间/内存仍待测。主控只读核对 fenics-ws01 的专用空目录及系统资源，尚未传文件或启动服务。512 GiB task cap、64 GiB host reserve、task swap=0 与 6 h 固定窗口仍待一次资源包批准。主机当时 SwapUsed=20,787,200 B，任务 cgroup 未建，不能宣称任务或全机零 swap。保留 V28 完整 CSR/native 资格及所有旧资源停止；新 heavy T0=null，原尺寸精度/2 TB/48 h 仍 NOT_QUALIFIED。工程准备父区间当前保守下界 7,676.157756943 s，包含旧 4,008.5096 s，前缀/未计时子项 UNKNOWN，不重复相加。
+
+证据：[Response V29](task40extra_0p7nm_engineering/response_v29.md)、[operator](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v29.json)、[resource](task40extra_0p7nm_engineering/outcomes/records/time_resource_accounting_v29.json)、[执行交接](task40extra_0p7nm_engineering/outcomes/target_stage_handoff_v29.md)。
