@@ -1,0 +1,19 @@
+{
+  "status": "FIXED_HARMONIC_38RAS_CLOSED_NEGATIVE",
+  "completed_roles": [
+    "PREFLIGHT",
+    "HARMONIC_PREPARE",
+    "HARMONIC",
+    "VERIFY_COST"
+  ],
+  "KSP_entered": true,
+  "KSP_attempts": 1,
+  "iterations": 256,
+  "original_true": 0.999209813226768,
+  "equation_pass": false,
+  "strict_pass": false,
+  "no_extra_tail_or_restart": true,
+  "no_new_candidate_or_V76": true,
+  "no_NN_training": true,
+  "only_next_recommendation": "Request one genuinely different wave-aware coarse mechanism with a fixed full-equation comparison; no further tuning or tail extension of harmonic+38RAS"
+}

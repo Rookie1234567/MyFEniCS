@@ -1,0 +1,70 @@
+{
+  "status": "MATHEMATICS_PASS",
+  "pass_gate": true,
+  "parent_producer_source": "c133795e69d8cecef9aa3e813c4c8df67b52cd87",
+  "pref_consumer_source": "48d5a09211d547a59a68c96e8cfd6ef75bd7d0f4",
+  "old_identity": {
+    "partition_sha256": "b7d975207fb4b94c559f1bc82f16eeca010768af3a80523436c161031f3f1a1a",
+    "Z0_sha256": "536758160a20d38c5fc87781a192fd853d6f387164774181c12595d0daa3880e",
+    "packet_sha256": "9bef5add6398999c70c21c7f26a86833fc1eb46f98598c8503aa3c41743728da",
+    "left_sha256": "ed8b1c592bd1ec4e557111ae0c0884fd3399003c8463580df4db27265ed0c29d",
+    "right_sha256": "ad141cedffb64c1571943e95f74c74829e4ac06485fdddac7b7e89f9f51eb000",
+    "mathematical_source_sha256": "4a6071bafc0448818f51615d3ef080981040d36ba49e2153df77991470a0d1d0"
+  },
+  "mathematical_inputs": {
+    "partition_sha256": "b7d975207fb4b94c559f1bc82f16eeca010768af3a80523436c161031f3f1a1a",
+    "Z0_sha256": "536758160a20d38c5fc87781a192fd853d6f387164774181c12595d0daa3880e",
+    "packet_sha256": "9bef5add6398999c70c21c7f26a86833fc1eb46f98598c8503aa3c41743728da",
+    "left_sha256": "ed8b1c592bd1ec4e557111ae0c0884fd3399003c8463580df4db27265ed0c29d",
+    "right_sha256": "ad141cedffb64c1571943e95f74c74829e4ac06485fdddac7b7e89f9f51eb000"
+  },
+  "formula_fingerprints": {
+    "HarmonicTransfer": "2f6468cdd99d69b44973f65fe154eb2138ca8293f0fc109ef67b32f8d994c5d6",
+    "local_extension": "221f05a3a94b5eef37228b68c65f4b565f62dd9ef16bf6b604b067f53f53757d",
+    "macro_blocks": "99f258074c3433b197e35ceb3be4788860d963b5894e79cc70bddbb6c46f40d8"
+  },
+  "full_parent_inventory": {
+    "path": "benchmarks/artifacts/task042/v75/task042_v75_harmonic_reuse_preflight_20261011T234102264384Z/reuse_compatibility.json",
+    "bytes": 289793,
+    "sha256": "4d9608f7468f77072d30deeaea47b12f0d53f5b893e04c22d2b622789f63b237"
+  },
+  "source_diff": {
+    "path": "tmp/task042/v75/reuse_source_changes.patch",
+    "bytes": 37382,
+    "sha256": "e8f1cafbaa3d68dcac27c74f0e95238e9390a85ff046b2ad2acaf6a71102e504"
+  },
+  "healthy_count": 881,
+  "witness_macro_ids": [
+    0,
+    121,
+    880
+  ],
+  "witness_errors": [
+    {
+      "macro": 0,
+      "local_relative": 4.925046239553396e-16,
+      "local_operation_scaled": 9.057198120993753e-17,
+      "correction_relative": 0.0
+    },
+    {
+      "macro": 121,
+      "local_relative": 6.525379391954619e-15,
+      "local_operation_scaled": 1.9736804334259922e-16,
+      "correction_relative": 0.0
+    },
+    {
+      "macro": 880,
+      "local_relative": 6.047645228720183e-16,
+      "local_operation_scaled": 1.0551229997847091e-16,
+      "correction_relative": 0.0
+    }
+  ],
+  "new_numeric_in_compatibility": 0,
+  "all_881_local_residuals_independently_recomputed": false,
+  "batch_pair": {
+    "path": "benchmarks/artifacts/task042/v75/task042_v75_harmonic_reuse_preflight_20261011T234102264384Z/fixed_batch_pair.json",
+    "bytes": 7672,
+    "sha256": "61155c91f9dd3df33369ff1410c9c0eb0a40b855ac5fb6899244761a49647867"
+  },
+  "original_V74_unchanged": true
+}

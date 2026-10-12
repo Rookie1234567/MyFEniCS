@@ -1,0 +1,26 @@
+{
+  "focused": {
+    "path": "tmp/task042/v75/aux_pre_02/tests.json",
+    "bytes": 17434,
+    "sha256": "c77a7a6be4c70951a93cd5ae11eda69db4c6b2f5fdba1658eee3c2b2a5eeee0a"
+  },
+  "qualification": {
+    "path": "tmp/task042/v75/qualification.json",
+    "bytes": 15628,
+    "sha256": "833ec2a2397535e574b76a7d53b567e9e4bd424fa90d4d11c72cd4d49e32e369"
+  },
+  "actual_unittest_count": 21,
+  "source_sha": "6009967437ed5853ddd9f5f71780f3cf00c32bbd",
+  "compile": true,
+  "Ruff": true,
+  "one_run_dat_validate_count": 4,
+  "prior_source_tests": {
+    "path": "tmp/task042/v75/aux_focused_01/tests.json",
+    "bytes": 17434,
+    "sha256": "fff834d190e807cc089207214cafb7888a0e484c2382070e71adefbfd3393a95"
+  },
+  "full_pytest": false,
+  "CI": "NOT_RUN",
+  "GitHub_visual": "NOT_VERIFIED",
+  "documentation_status": "PENDING_ONCE_AFTER_FINAL_DOC_BYTES"
+}

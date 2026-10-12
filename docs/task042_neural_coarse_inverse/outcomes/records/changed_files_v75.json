@@ -1,0 +1,25 @@
+{
+  "source_changes": [
+    "benchmarks/collect_harmonic_trace.py",
+    "benchmarks/qualify_durable_harmonic.py",
+    "input/task042_neural_coarse_inverse/durable_harmonic_v75.json",
+    "input/task042_neural_coarse_inverse/v75_compare_verify_cost.dat",
+    "input/task042_neural_coarse_inverse/v75_harmonic_coarse_complete.dat",
+    "input/task042_neural_coarse_inverse/v75_harmonic_reuse_preflight.dat",
+    "input/task042_neural_coarse_inverse/v75_harmonic_trace_fgmres.dat",
+    "scripts/run_case.py",
+    "src/runners/port_preparation.py",
+    "src/solvers/bounded_trace_study.py",
+    "src/solvers/durable_galerkin.py",
+    "src/solvers/durable_harmonic_scope.py",
+    "src/solvers/durable_harmonic_study.py",
+    "src/solvers/harmonic_trace_coarse.py",
+    "src/test/test_durable_harmonic.py"
+  ],
+  "source_base": "02703c5ce56a18b134b50eded39645cb422a0d95",
+  "docs_increment_glob": "docs/task042_neural_coarse_inverse/outcomes/records/*_v75.json",
+  "ordinary_default_unchanged": true,
+  "mathematics_in_src": true,
+  "shared_runner_not_copied": true,
+  "old_task_review_response_raw_unchanged": true
+}

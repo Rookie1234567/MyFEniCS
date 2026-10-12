@@ -1,0 +1,90 @@
+{
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/solvers/durable_galerkin.py",
+        "src/solvers/harmonic_trace_coarse.py",
+        "src/solvers/bounded_trace_study.py"
+      ],
+      "numerical_behavior": "Exact complex Galerkin and unchanged harmonic formula; opt-in durable base and shared owner",
+      "dependencies": [
+        "V70 packet",
+        "existing HarmonicTransfer/local_extension"
+      ],
+      "tests": "21 targeted including12 unchanged harmonic tests",
+      "fresh_PDE": "V75 actual256-step negative; no production numerical qualification",
+      "recommendation": "Research opt-in; do not promote failed PC"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/solvers/durable_harmonic_scope.py",
+        "src/solvers/durable_harmonic_study.py",
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py"
+      ],
+      "numerical_behavior": "Thin V75 scope dispatch; original supervisor/resource/math unchanged",
+      "dependencies": [
+        "durable exact Galerkin",
+        "qualified task activation"
+      ],
+      "tests": "scope/storage/count/deadline/numeric reserve fixtures +4dat validate",
+      "fresh_PDE": "Four actualone-run stages; no duplicate KSP",
+      "recommendation": "Review reusable lifecycle independently"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/collect_harmonic_trace.py",
+        "benchmarks/qualify_durable_harmonic.py",
+        "src/test/test_durable_harmonic.py"
+      ],
+      "numerical_behavior": "Independent saved Galerkin/dual and shared original/field comparison; no solver reimplementation",
+      "dependencies": [
+        "existing independent PUBLIC_BASIX and strict reproduction"
+      ],
+      "tests": "21 targeted, saved actualcase VERIFY",
+      "fresh_PDE": "Consumer completed; fixedcandidate equation/strict field fail",
+      "recommendation": "Reusable bounded checker"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042_neural_coarse_inverse/response_v75.md",
+        "docs/task042_neural_coarse_inverse/outcomes/durable_harmonic_completion_v75.md",
+        "docs/task042_neural_coarse_inverse/outcomes/records/*_v75.json"
+      ],
+      "numerical_behavior": "No numerical change; full negative evidence/cost/source pointers",
+      "tests": "One15test document suite +finalincrement bytes",
+      "recommendation": "Evidence only"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "input/task042_neural_coarse_inverse/durable_harmonic_v75.json",
+        "input/task042_neural_coarse_inverse/v75_*.dat"
+      ],
+      "numerical_behavior": "Frozen closed finitecase",
+      "tests": "4 real dat validations",
+      "recommendation": "No default orautomatic nextwindow"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v75",
+        "tmp/task042/v75",
+        "results/task042/*v75*"
+      ],
+      "numerical_behavior": "Large arrays/caches/host-specificraw ignored",
+      "recommendation": "Keep ignored; compact hash index only"
+    }
+  ],
+  "dependency_order": [
+    "opt-in core",
+    "scoped lifecycle",
+    "checker/config",
+    "compact evidence"
+  ],
+  "merge_approval": false
+}

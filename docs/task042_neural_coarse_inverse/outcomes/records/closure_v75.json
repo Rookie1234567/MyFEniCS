@@ -1,0 +1,9 @@
+{
+  "status": "PENDING_FINAL_DOCUMENT_CHECK",
+  "active": null,
+  "science_queue_frozen": true,
+  "new_scientific_work_finished": true,
+  "science_equation_pass": false,
+  "strict": false,
+  "delivery_git_receipt": "tmp/task042/v75/delivery_git_receipt.json"
+}

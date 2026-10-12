@@ -1,0 +1,23 @@
+{
+  "review_commit": "02703c5ce56a18b134b50eded39645cb422a0d95",
+  "review_blob": "06db2dbcccb7348c5fcb1095e4b1ad3376a0bc35",
+  "review_sha256": "ddb2de17355b384c241a0590fcd2f065ae36480c381e286a2af64727176a87e7",
+  "canonical": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "HEAD_at_metadata": "6009967437ed5853ddd9f5f71780f3cf00c32bbd",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "report_unchanged": true,
+  "initial_clock": {
+    "start_utc": "2026-10-11T23:23:19+00:00",
+    "start_monotonic": 1685993.860888462,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "paired_utc": "2026-10-11T23:24:17.900121+00:00",
+    "paired_monotonic": 1686052.761009462,
+    "anchor": "first actual tool UTC at second precision; monotonic reconstructed from paired same-boot realtime; first-clock precision at most one second; never reset",
+    "intake_HEAD": "11b3011f97587877adf58814e36b83d0e099c6e9",
+    "review_commit": "02703c5ce56a18b134b50eded39645cb422a0d95"
+  },
+  "original_window_unchanged": true,
+  "mathematical_reference_is_finite_not_target": true,
+  "neighbor_worktrees_untouched": true
+}

@@ -1,0 +1,13 @@
+{
+  "science_frozen": {
+    "inventory": {
+      "path": "benchmarks/artifacts/task042/v75/increment_evidence_v75/science_frozen/inventory.json",
+      "bytes": 258659,
+      "sha256": "d7cf9b2ed6487fc12271dfff15b299fa30f51437e2fd645855f15a89d17cb3a2"
+    },
+    "entries": 589
+  },
+  "final_tail_pending": true,
+  "scientific_arrays_copied": false,
+  "old_raw_unchanged": true
+}

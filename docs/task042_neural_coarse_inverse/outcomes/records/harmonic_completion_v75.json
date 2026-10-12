@@ -1,0 +1,98 @@
+{
+  "status": "COMPLETED",
+  "pass_gate": true,
+  "producer": {
+    "path": "benchmarks/artifacts/task042/v75/task042_v75_harmonic_coarse_complete_20261011T235047140247Z/result.json",
+    "bytes": 6594662,
+    "sha256": "5476d9777530764d19d224775646b52024f659116de2e654bb3a1bf4e8c3ab51"
+  },
+  "coarse_rows": 7068,
+  "skeleton": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v75/harmonic_lifts/skeleton.npz",
+    "sha256": "c665039b6f10724b7e21e6139ee0ad6c93fe3c19962faf3a756bdd703088a47c",
+    "members": {
+      "data": {
+        "shape": [
+          8215748
+        ],
+        "dtype": "complex128",
+        "sha256": "8b80425097a54bd6430167ea05e72b0d237b81706d04dbe362e563bf53a45996"
+      },
+      "indices": {
+        "shape": [
+          8215748
+        ],
+        "dtype": "int64",
+        "sha256": "b576de7353f188ac16946d8f0453881f8e958da00ccba8e9b53af37d2162db8b"
+      },
+      "indptr": {
+        "shape": [
+          1176466
+        ],
+        "dtype": "int64",
+        "sha256": "d953032c02495caa75b6a1203393633172e894a13b1bd92a814f16eb4d7968a3"
+      },
+      "shape": {
+        "shape": [
+          2
+        ],
+        "dtype": "int64",
+        "sha256": "9768a402533701c31940a94d866216d40daae12043fc3d32918a0e432ef4c10d"
+      }
+    }
+  },
+  "coarse_matrix": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v75/task042_v75_harmonic_coarse_complete_20261011T235047140247Z/coarse_EH.npz",
+    "sha256": "5b53d4c358f17681b151175a5c7e8b6cb869f700feba9b2b4b5c06d77271d30b",
+    "members": {
+      "data": {
+        "shape": [
+          3414472
+        ],
+        "dtype": "complex128",
+        "sha256": "770281294a5541369170b2f7683990414db383fced9c7b45fe408b7ad8dab25c"
+      },
+      "indices": {
+        "shape": [
+          3414472
+        ],
+        "dtype": "int64",
+        "sha256": "13a72dc5309d18c5471dded8e955ee67b1531f32d087914fec9caedc006c3df2"
+      },
+      "indptr": {
+        "shape": [
+          7069
+        ],
+        "dtype": "int64",
+        "sha256": "d801b7ffb86c875b78d719686053561af3ace295342879858485c853642fc53a"
+      },
+      "shape": {
+        "shape": [
+          2
+        ],
+        "dtype": "int64",
+        "sha256": "fc7b0e057467aea1efd2ecbd9c9d104560da660c0e261b9c64f7b828ca029870"
+      }
+    }
+  },
+  "reused_count": 881,
+  "legacy_numeric_count": 881,
+  "new_numeric_count": 79,
+  "recomputed_count": 0,
+  "total_macro_count": 960,
+  "saved_lift_payload_bytes": 1030762088,
+  "new_macro_manifest": {
+    "path": "benchmarks/artifacts/task042/v75/harmonic_lifts/manifest.json",
+    "bytes": 5839688,
+    "sha256": "d51211b38441ad3ecb329266aea759d2a2c0f71cc9925b7b2b18ec76bb6605d1"
+  },
+  "input_identity": {
+    "path": "benchmarks/artifacts/task042/v75/harmonic_lifts/identity.json",
+    "bytes": 434,
+    "sha256": "46993572f8b9736780856d52bfd869a7bb39d9d748aca3f813eab2e1afc3133b"
+  },
+  "all_macro_factors_released": true,
+  "new_global_fine_matrices": 0,
+  "new_global_fine_factors": 0,
+  "source_sha": "6009967437ed5853ddd9f5f71780f3cf00c32bbd"
+}

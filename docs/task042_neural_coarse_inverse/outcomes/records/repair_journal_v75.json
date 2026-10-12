@@ -1,0 +1,30 @@
+{
+  "failed_scientific_attempts": [],
+  "scientific_failure": "Ordinary nonconvergence at256; not a software bug",
+  "metadata_only_failures": [
+    {
+      "UTC": "2026-10-12T01:45:48.021898+00:00",
+      "source_sha": "6009967437ed5853ddd9f5f71780f3cf00c32bbd",
+      "affected_ignored_helper": "tmp/task042/v75/evidence_utils.py",
+      "failed_sha256": "03062d58dcdcc763c67d461d61a5080ebd1388940eff4b82adf62cd8f4a96260",
+      "failure": "SyntaxError unmatched closing parenthesis at line130",
+      "scope": "Delivery metadata helper compile only; scientific actor unchanged and still producing fields",
+      "scientific_actions": 0,
+      "numeric": 0,
+      "KSP": 0,
+      "not_additive_to_overlapping_actor_wall": true,
+      "minimal_repair": "Remove one extra closing parenthesis; repeat only the two metadata compile calls"
+    }
+  ],
+  "located_software_repairs": [
+    "Ignored delivery helper had one extra parenthesis; fixed and only its compile repeated"
+  ],
+  "preventive_C1": "durable base, old881 math receipt, single scope/counters",
+  "preventive_C2": "persist macro identity; share one skeleton owner inPC",
+  "no_science_replay": true,
+  "old_V74_failures_unchanged": true,
+  "source_commits": [
+    "48d5a09211d547a59a68c96e8cfd6ef75bd7d0f4",
+    "6009967437ed5853ddd9f5f71780f3cf00c32bbd"
+  ]
+}

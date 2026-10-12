@@ -1,0 +1,146 @@
+{
+  "pass_gate": true,
+  "qualifications": [
+    {
+      "Galerkin_relative": 1.6524637771663e-14,
+      "dual_operation_scaled": 1.0030121920332894e-16,
+      "homogeneous_relative": 1.2534704663137994e-14,
+      "homogeneous_absolute": 1.651322889442288e-10,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v75/task042_v75_harmonic_coarse_complete_20261011T235047140247Z/harmonic_witness0.npz",
+        "sha256": "b2d973b0e99a06be4580d6e3ae921916a472f3aec5900a1d55070fd8fbe11bd7",
+        "members": {
+          "w": {
+            "shape": [
+              7068
+            ],
+            "dtype": "complex128",
+            "sha256": "d73a93722d0b84d82087526e495ead90bb4d7e593a3602b7933da7a8895ac36f"
+          },
+          "prolonged": {
+            "shape": [
+              1177293
+            ],
+            "dtype": "complex128",
+            "sha256": "73ba31b1ba4391f8616cdc262879d16eaf8bbf7078e3699e2342056ae5112de7"
+          },
+          "original": {
+            "shape": [
+              1177293
+            ],
+            "dtype": "complex128",
+            "sha256": "d80720200c6ffe7f98e31381647ce12b005624f5b3d4db260e970062436a25ec"
+          },
+          "pulled": {
+            "shape": [
+              7068
+            ],
+            "dtype": "complex128",
+            "sha256": "0db47d90a6c08a0ba5480615b0853e5b4ab14daf3fdc84635c6aaad65ace161d"
+          },
+          "coarse_action": {
+            "shape": [
+              7068
+            ],
+            "dtype": "complex128",
+            "sha256": "13fd4d69add91bcb682659b60a375dbec7051aa40ad162bf443fc534ae3d6451"
+          }
+        }
+      },
+      "homogeneous_operation_scaled": 1.274128212877262e-16
+    },
+    {
+      "Galerkin_relative": 1.6570121873794706e-14,
+      "dual_operation_scaled": 8.238585549702706e-17,
+      "homogeneous_relative": 1.3491592570440773e-14,
+      "homogeneous_absolute": 1.7937322812100153e-10,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v75/task042_v75_harmonic_coarse_complete_20261011T235047140247Z/harmonic_witness1.npz",
+        "sha256": "67b52ead9d77ae1f0069f101ff97aa4d87106781e7d7d4ae997fb520e36ccb25",
+        "members": {
+          "w": {
+            "shape": [
+              7068
+            ],
+            "dtype": "complex128",
+            "sha256": "2b7ffe1029e80064e4b720aeb665dfa4bfcff63f05f004a7deb88e90fc432841"
+          },
+          "prolonged": {
+            "shape": [
+              1177293
+            ],
+            "dtype": "complex128",
+            "sha256": "c457ffff16f6bc013613fff1dfe49d89e8a5169198f5c536d6a5e7dd507d1cc5"
+          },
+          "original": {
+            "shape": [
+              1177293
+            ],
+            "dtype": "complex128",
+            "sha256": "0772626ad93592342ec50bb3d60006a015c4ed11570c1bfc4473766036612aa6"
+          },
+          "pulled": {
+            "shape": [
+              7068
+            ],
+            "dtype": "complex128",
+            "sha256": "d8df2d61aeba321fa98fe6ae1f058b258251dd51792e7c3f69550729717d6307"
+          },
+          "coarse_action": {
+            "shape": [
+              7068
+            ],
+            "dtype": "complex128",
+            "sha256": "85b9ced861f3eba5cf9cfa56f45089df8634e364bfdba9cc72587a318c37083d"
+          }
+        }
+      },
+      "homogeneous_operation_scaled": 1.3740636325628986e-16
+    }
+  ],
+  "independent_dual": {
+    "operation_scaled": 1.3785306217433186e-17,
+    "arrays": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v75/task042_v75_harmonic_coarse_complete_20261011T235047140247Z/independent_full_dual.npz",
+      "sha256": "25247e5eb1e5f854233de32c93eaed120c66fe639a443335d59bb7910657286f",
+      "members": {
+        "w": {
+          "shape": [
+            7068
+          ],
+          "dtype": "complex128",
+          "sha256": "6c69e33919f6df086bfe9f0e0cd172bdb36287fe8764372917f7e1f9d6109278"
+        },
+        "r": {
+          "shape": [
+            1177293
+          ],
+          "dtype": "complex128",
+          "sha256": "a20ab523c4f0ceb7769fa4aea4f2f950f0cc281f7595d27540afe2d0ffd53b5a"
+        },
+        "prolonged": {
+          "shape": [
+            1177293
+          ],
+          "dtype": "complex128",
+          "sha256": "5932561a9ddfc0348c9c0c73126b88af2ceb83fb14358a60f91134f2f1b02733"
+        },
+        "pulled": {
+          "shape": [
+            7068
+          ],
+          "dtype": "complex128",
+          "sha256": "141a825e681701cb4a6b6fa0f57fed434ffcc19f294f77b95a00265f43fbb016"
+        }
+      }
+    }
+  },
+  "true_global_columns": 2,
+  "seed": 7403,
+  "independent_dual_seed": 7404,
+  "full_source": {
+    "path": "benchmarks/artifacts/task042/v75/task042_v75_harmonic_coarse_complete_20261011T235047140247Z/harmonic_preparation.json",
+    "bytes": 6594340,
+    "sha256": "c0999c9d01c861a8a55e690a048f291d547b5acbd3eea0a04359ceb8eac83f1d"
+  }
+}

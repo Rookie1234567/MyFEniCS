@@ -1,3 +1,11 @@
+## Task042 V75：完整harmonic候选的真实负结果
+
+| 固定对象 / 实际迭代 | 方程与场 | 准备及资源边界 | 证据 |
+|---|---|---|---|
+| 0.7nm NOTCH、25576tet/p5/828；7068阶harmonic+38 RAS | RIGHT/restart128，256步；原true=0.999209813227；strict=False，功率diagnostic | 881旧宏复用+79新宏numeric，39PC numeric；fine K/S/LU0；ownswap/OOC0 | [回应](../response_v75.md) · [完整场与费用](durable_harmonic_completion_v75.md) |
+
+数学全域见证通过但残差近1，关闭这个固定组合，不延长尾部或改参数。全部系数/六场/240点/828通道已保存并独立审核；保留旧连续精度FAIL与父费用，不授NN20/2TB48h。基础Galerkin分块持久化，旧历史后缀逐字保留。
+
 ## Task042 V74：局部Maxwell齐次延拓
 
 | 固定对象 | 完整结果 | 边界与证据 |

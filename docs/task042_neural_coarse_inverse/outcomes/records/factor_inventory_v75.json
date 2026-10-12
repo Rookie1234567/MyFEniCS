@@ -1,0 +1,204 @@
+{
+  "PC_numeric": {
+    "path": "benchmarks/artifacts/task042/v75/task042_v75_harmonic_trace_fgmres_20261012T001705987952Z/numeric_factor_progress.json",
+    "bytes": 308905,
+    "sha256": "df16a4e1abcce75508a7f68b40ff2048192eef35fc82acf0ca1358ef1ef7f4e7"
+  },
+  "live_PC_qualification": {
+    "pass_gate": true,
+    "rows": [
+      {
+        "seconds": 14.311587735079229,
+        "arrays": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v75/task042_v75_harmonic_trace_fgmres_20261012T001705987952Z/PC0.npz",
+          "sha256": "dada99003609f0476c62e4720665c1a203b8c2053139c31fc315bcfc91567338",
+          "members": {
+            "input": {
+              "shape": [
+                1177293
+              ],
+              "dtype": "complex128",
+              "sha256": "97ebf729bf4fc96c96ed1479385d3fffff0938b2d88724fa004c46166ca89527"
+            },
+            "output": {
+              "shape": [
+                1177293
+              ],
+              "dtype": "complex128",
+              "sha256": "79ba73cc955a2c9372e9c97c9416cb7a4d4505aa472eb977aa537d38478911bb"
+            }
+          }
+        },
+        "finite": true,
+        "complex_linearity": 0.0
+      },
+      {
+        "seconds": 9.98852362902835,
+        "arrays": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v75/task042_v75_harmonic_trace_fgmres_20261012T001705987952Z/PC1.npz",
+          "sha256": "87c867cc0baa1194bec575038edd50caa616fc304678bc9c3c3ee581ea106d6c",
+          "members": {
+            "input": {
+              "shape": [
+                1177293
+              ],
+              "dtype": "complex128",
+              "sha256": "24eeec268e80e30be5bedb05207f54951ed416e32834370079022fe22004b59a"
+            },
+            "output": {
+              "shape": [
+                1177293
+              ],
+              "dtype": "complex128",
+              "sha256": "7534202c7fe2c23000f92c91fa22789a30ede98eee507b49846f3dabc228d80a"
+            }
+          }
+        },
+        "finite": true,
+        "complex_linearity": 6.879720383746521e-13
+      }
+    ],
+    "calls": {
+      "apply": 2,
+      "local_triangular": 76,
+      "coarse_triangular": 3,
+      "internal_original_action": 3
+    },
+    "linear_operator_frozen": true,
+    "reference_reads": 0
+  },
+  "phase_counts": {
+    "after_diagnostic": {
+      "apply": 0,
+      "local_triangular": 0,
+      "coarse_triangular": 1,
+      "internal_original_action": 1
+    },
+    "after_qualification": {
+      "apply": 2,
+      "local_triangular": 76,
+      "coarse_triangular": 3,
+      "internal_original_action": 3
+    },
+    "after_KSP": {
+      "apply": 258,
+      "local_triangular": 9804,
+      "coarse_triangular": 259,
+      "internal_original_action": 259
+    }
+  },
+  "calls": {
+    "apply": 258,
+    "local_triangular": 9804,
+    "coarse_triangular": 259,
+    "internal_original_action": 259
+  },
+  "seconds": {
+    "local": 2138.7848699998576,
+    "coarse": 179.940506615676,
+    "original": 269.61750249471515
+  },
+  "actual_KSP_configuration": {
+    "type": "fgmres",
+    "side": 1,
+    "norm": 2,
+    "restart": 128,
+    "tolerances": [
+      0.0,
+      0.0,
+      10000.0,
+      256
+    ],
+    "initial_guess_nonzero": false,
+    "view_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v75/task042_v75_harmonic_trace_fgmres_20261012T001705987952Z/KSP_view.txt",
+    "audit_identity": {
+      "directory": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v75/task042_v75_harmonic_trace_fgmres_20261012T001705987952Z",
+      "route": "HARMONIC",
+      "source_sha": "6009967437ed5853ddd9f5f71780f3cf00c32bbd",
+      "packet_sha256": "9bef5add6398999c70c21c7f26a86833fc1eb46f98598c8503aa3c41743728da",
+      "RHS_sha256": "4c5d6b918f358863b9a324dd2de2f1635f7422c8c06f91e850b5d34030c7fc80",
+      "left_sha256": "1587eab07700a6579dca059fe6b86fb3cf26ca6bd9766f639718a4edffa09404",
+      "right_sha256": "01d0f4639777f76d9cd1b46a2567ecc9a4962f7d8747d5ad8b081aad8a5caf62"
+    }
+  },
+  "KSP_view": {
+    "path": "benchmarks/artifacts/task042/v75/task042_v75_harmonic_trace_fgmres_20261012T001705987952Z/KSP_view.txt",
+    "bytes": 665,
+    "sha256": "13847203de26ab94bfd44c12ae255c10f6c640f13c39f4fbe996dab3b6df9fd9"
+  },
+  "release": {
+    "before_RSS_bytes": 41870245888,
+    "after_RSS_bytes": 9185259520,
+    "RSS_decreased": true,
+    "global_fine_factor_count": 0,
+    "local_numeric_count": 38,
+    "coarse_numeric_count": 1
+  },
+  "forecast": {
+    "remaining_seconds": 36141.5097424984,
+    "numeric_upper_seconds": 3600.0,
+    "KSP_upper_seconds": 10800,
+    "output_reserve_seconds": 4500,
+    "required_seconds": 18900.0,
+    "admitted": true,
+    "measured_hot_seconds": 1.3184389378875494,
+    "forecast_evidence": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v73/task042_v73_restart128_solve_20261011T080934335421Z/numeric_factor_progress.json",
+      "sha256": "bea83fbaacd341b29e9bf65dbe7a08bb825fd71f4a6cd90442224d06adb9a707",
+      "measured_numeric_sum_seconds": 230.14447969663888,
+      "measured_numeric_and_qualification_elapsed_seconds": 378.7758172780741,
+      "factor_count": 39,
+      "declared_upper_seconds": 3600,
+      "method": "previous39 actual numeric+qualification378.776s; at least4x plus1200s IO/setup allowance, rounded conservatively3600; new E_H factor remains unmeasured; not a hard bound"
+    },
+    "prediction": "measured previous39 plus declared margin; full KSP cap and output reserved"
+  },
+  "physical_transfer": {
+    "relative": 1.4320128766795532,
+    "absolute": 1.5302440672804656,
+    "operation_scaled": 0.5819141683143225,
+    "seconds": 2.833239012164995,
+    "arrays": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v75/task042_v75_harmonic_trace_fgmres_20261012T001705987952Z/coarse_physical_transfer.npz",
+      "sha256": "ecc1dc7a96d4945437ed2e2fe3a99d77917a9860b45ec63034da07b81f9b7e60",
+      "members": {
+        "rhs": {
+          "shape": [
+            1177293
+          ],
+          "dtype": "complex128",
+          "sha256": "4c5d6b918f358863b9a324dd2de2f1635f7422c8c06f91e850b5d34030c7fc80"
+        },
+        "coarse_correction": {
+          "shape": [
+            1177293
+          ],
+          "dtype": "complex128",
+          "sha256": "37d8eea56c9303f77ac610570f901abf4e1f3b43b2088daddac9942a0811ff6a"
+        },
+        "action": {
+          "shape": [
+            1177293
+          ],
+          "dtype": "complex128",
+          "sha256": "81f9a2916a98856d7480d3147ddf6cd3280446fd8942e799cff86bf5e29564c9"
+        },
+        "residual": {
+          "shape": [
+            1177293
+          ],
+          "dtype": "complex128",
+          "sha256": "375cd2688df39eaafe2049fdd47c90d81b96cfc431b5e6affc605d6ae20488f1"
+        }
+      }
+    }
+  },
+  "double_symbolic_sum_bytes": 80288000000,
+  "symbolic_cap_bytes": 85899345920,
+  "new_macro_numeric": 79,
+  "reused_macro_numeric": 881,
+  "new_RAS_numeric": 38,
+  "new_coarse_numeric": 1,
+  "all_global_fine_K_S_reads_or_formations": 0,
+  "global_fine_numeric": 0
+}
