@@ -201,6 +201,113 @@ def test_live_resource_gate_requires_the_same_cap_and_host_reserve():
         )
 
 
+def test_v29_live_resource_gate_uses_real_snapshot_and_admission(monkeypatch):
+    from benchmarks import (
+        subreaper_watchdog,
+        task034_wsl_resources,
+        task038_full3d_jit_staging,
+    )
+    from scripts import task40_v20_service_workflow as workflow
+    from src.solvers.task40_v22_operator_probe import _ProbeResourceBlocked
+
+    task_cap = 549_755_813_888
+    host_reserve = 68_719_476_736
+    host_available = 137_438_953_472
+    cgroup_current = 1_048_576
+    contract = {
+        "execution": {
+            "resources": {
+                "task_memory_max_bytes": task_cap,
+                "host_reserve_bytes": host_reserve,
+                "memory_swap_max_bytes": 0,
+            }
+        }
+    }
+
+    def set_live_samples(*, swap_current_bytes):
+        cgroup = {
+            "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/v29-test.scope",
+            "readable": True,
+            "dedicated_job_cgroup": True,
+            "member_count": 1,
+            "memory_current_bytes": cgroup_current,
+            "memory_peak_bytes": cgroup_current,
+            "memory_limit_bytes": task_cap,
+            "swap_current_bytes": swap_current_bytes,
+        }
+        monkeypatch.setattr(
+            task034_wsl_resources,
+            "cgroup_snapshot",
+            lambda pid="self": dict(cgroup),
+        )
+        monkeypatch.setattr(
+            task038_full3d_jit_staging,
+            "process_tree_snapshot",
+            lambda *args, **kwargs: {
+                "rss_bytes": 1_048_576,
+                "identity_complete": True,
+                "identity_count": 1,
+                "all_status_readable": True,
+            },
+        )
+
+        def memory_sample(
+            memory_policy, *, host_reserve_bytes, task_cgroup_reserve_bytes
+        ):
+            assert memory_policy == subreaper_watchdog.PHYSICAL_MEMORY_PRESSURE_POLICY
+            assert host_reserve_bytes == host_reserve
+            assert task_cgroup_reserve_bytes == 0
+            host_room = host_available - host_reserve
+            cgroup_room = task_cap - cgroup_current
+            launch_cap = min(host_room, cgroup_room)
+            return {
+                "mem_total_bytes": 1_099_511_627_776,
+                "mem_available_bytes": host_available,
+                "effective_total_bytes": 1_099_511_627_776,
+                "effective_available_bytes": host_available,
+                "host_mem_available_bytes": host_available,
+                "task_cgroup_available_bytes": cgroup_room,
+                "host_launch_available_bytes": host_room,
+                "task_cgroup_reserve_bytes": 0,
+                "task_cgroup_launch_available_bytes": cgroup_room,
+                "reserve_domains_separated": True,
+                "effective_available_after_reserves_bytes": launch_cap,
+                "reserve_bytes": host_reserve,
+                "launch_cap_bytes": launch_cap,
+                "memory_policy": memory_policy,
+            }
+
+        monkeypatch.setattr(subreaper_watchdog, "memory_envelope", memory_sample)
+
+    set_live_samples(swap_current_bytes=0)
+    result = workflow._v29_live_resource_gate(contract, stage="v29_fixture")
+    admission = result["resource_admission"]
+    cgroup = admission["current_process_cgroup"]
+    assert result["passed"] is True
+    assert result["task_memory_max_bytes"] == task_cap
+    assert result["host_reserve_bytes"] == host_reserve
+    assert result["memory_swap_max_bytes"] == 0
+    assert result["cgroup_limit_bytes"] == task_cap
+    assert result["cgroup_current_bytes"] == cgroup_current
+    assert result["host_effective_available_bytes"] == host_available
+    assert cgroup["readable"] is True
+    assert cgroup["dedicated_job_cgroup"] is True
+    assert cgroup["memory_limit_bytes"] == task_cap
+    assert cgroup["memory_current_bytes"] == cgroup_current
+    assert cgroup["swap_current_bytes"] == 0
+    assert admission["task_cgroup_gate_passed"] is True
+    assert admission["memory_envelope"]["reserve_bytes"] == host_reserve
+
+    set_live_samples(swap_current_bytes=1)
+    with pytest.raises(
+        _ProbeResourceBlocked,
+        match="resource admission blocked before v29_fixture",
+    ) as blocked:
+        workflow._v29_live_resource_gate(contract, stage="v29_fixture")
+    assert blocked.value.facts["current_process_cgroup"]["swap_current_bytes"] == 1
+    assert blocked.value.facts["task_cgroup_gate_passed"] is False
+
+
 def test_v29_campaign_loader_binds_new_t0_review_and_approval(tmp_path, monkeypatch):
     from src.runners import task40_v10_campaign as campaign
 

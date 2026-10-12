@@ -1745,7 +1745,8 @@ def _v29_live_resource_gate(contract: Mapping[str, Any], *, stage: str) -> dict[
         V29ContractError,
         validate_live_resource_contract,
     )
-    from src.solvers.task40_v22_operator_probe import _resource_admission, _resource_snapshot
+    from src.solvers.task40_v22_operator_probe import _resource_admission
+    from src.runners.task40_v20_stage_runner import _resource_snapshot
 
     admission = _resource_admission(
         stage,
