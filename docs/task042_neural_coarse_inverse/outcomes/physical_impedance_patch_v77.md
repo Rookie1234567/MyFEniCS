@@ -32,3 +32,5 @@ body只加入halo_cells，不能由旧CSR减/加项伪造。本批q13/q15生产�
 最终10项新增math/strategy/checker回归、Ruff/compile和4dat validate通过，文档合同一次运行；修复/未运行分类见[决策](records/decisions_repairs_v77.json)。普通错误仅补测试或消费，科学求解重放0。GitHub视觉NOT_VERIFIED；ordinary default不变，selective merge未批准。
 
 唯一下一pilot前提为不同传播/粗层机制的独立证据，保留Jacobi对照；不再投资本固定38块阻抗配置的系数、组合或restart扫描，不自动执行V78。
+
+最终费用结算：不重叠命令及本次增量归档已知下界2908.905755s；历史已知下界398753.743661s。新存储10601669767B、Task去重212902167815B、free2623838601216B；15项文档合同通过，最终全监督最大gap1.33371028607s。当前ledger closed/active null、自有锁释放，无后代；最终remote/完整SHA与交付实时时刻见Git交付收据。归档首轮和未包裹编辑/Git间隔仍unknown，不填0。

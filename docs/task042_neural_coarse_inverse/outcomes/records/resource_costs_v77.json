@@ -5,15 +5,15 @@
   "port": 0.0005128220096125218,
   "steps": 32,
   "ksp_seconds": 521.8665658209939,
-  "current_known_disjoint_command_lower_seconds": 2784.094849091489,
+  "current_known_disjoint_command_lower_seconds": 2908.9057545773685,
   "science_prepared_pipeline_seconds": 2580.1448811311275,
   "solve_complete_attempt_seconds": 1272.6331101399846,
   "numeric_phase_seconds": 353.8852972181048,
   "numeric_only_children_seconds": 207.35137875378132,
   "sample_peak_gib": 37.08041000366211,
   "max_sample_gap_seconds": 1.3337102860677987,
-  "swap_bytes": 0.0,
-  "resource_samples": 2223,
+  "swap_bytes": 0,
+  "resource_samples": 2227,
   "new_patch_nnz": 368317250,
   "patch_payload_bytes": 8855010992,
   "patch_NPZ_file_bytes": 8855048764,
@@ -129,6 +129,25 @@
       "exit_code": 0,
       "wrapper_sha256": "50d605d31c2e6d822f038668e59eec45d393eb50836095ead231f91842d57705",
       "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "post",
+        "docs01",
+        "python",
+        "tmp/task042/v77/document_once.py"
+      ],
+      "source_sha": "5f6ba280fc0ff795611ffbf97b126427ca95639a",
+      "start_utc": "2026-10-12T07:38:05.941323+00:00",
+      "end_utc": "2026-10-12T07:39:42.738482+00:00",
+      "elapsed_seconds": 96.79716815892607,
+      "exit_code": 0,
+      "wrapper_sha256": "50d605d31c2e6d822f038668e59eec45d393eb50836095ead231f91842d57705",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
     }
   ],
   "resources": [
@@ -155,6 +174,12 @@
       "samples": 205,
       "max_gap_seconds": 1.1876307630445808,
       "peak_bytes": 9525698560
+    },
+    {
+      "path": "tmp/task042/v77/aux_post_docs01/supervision/resources.jsonl",
+      "samples": 4,
+      "max_gap_seconds": 1.0625312039628625,
+      "peak_bytes": 146534400
     },
     {
       "path": "tmp/task042/v77/aux_pre_focused01/supervision/resources.jsonl",
@@ -248,7 +273,7 @@
     "old_failed_costs_preserved": true
   },
   "history_known_lower_before_v77_seconds": 395844.8379061019,
-  "history_known_lower_including_current_seconds": 398628.9327551934,
+  "history_known_lower_including_current_seconds": 398753.74366067926,
   "complete_success_cold_N1_seconds": null,
   "reason": "no correct solution or full successful output; attempted pipeline timing is measured, fresh packet-only portion unknown",
   "additional_unwrapped_edit_git_archive_intervals_seconds": null,
@@ -271,5 +296,14 @@
     "deadline_utc": "2026-10-12T11:20:03.689514+00:00",
     "heavy_stop_utc": "2026-10-12T10:50:03.689514+00:00"
   },
-  "no_nested_sum": true
+  "no_nested_sum": true,
+  "increment_archive_measured_seconds": 28.01373732695356,
+  "final_storage": {
+    "new_unique_inode_bytes": 10601669767,
+    "Task042_unique_inode_bytes": 212902167815,
+    "free_bytes": 2623838601216,
+    "new_limit_bytes": 25769803776,
+    "task_limit_bytes": 747324309504,
+    "free_minimum_bytes": 53687091200
+  }
 }

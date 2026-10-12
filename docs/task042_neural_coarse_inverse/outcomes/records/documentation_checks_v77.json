@@ -1,0 +1,140 @@
+{
+  "status": "PASSED",
+  "documents": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v77.md",
+      "bytes": 5127,
+      "sha256": "efee8e5ee669b8c12cc5430e7f26532c8d4609be05cbc2ad8228bf3b1c2c2ffc",
+      "new_links": 5,
+      "new_tables": 2
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/physical_impedance_patch_v77.md",
+      "bytes": 4009,
+      "sha256": "ce965844749a91d0bfa29e4976bc027d3c8b4822fd76b75af4fa7f5518015b6a",
+      "new_links": 5,
+      "new_tables": 2
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "bytes": 106687,
+      "sha256": "905ffb75988852d69fecb58c1b4d1eec1790363a84a8d22187f0b4394106b381",
+      "new_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "bytes": 166039,
+      "sha256": "bea785f9a5170a4100f1f7a11b4715f83034f04ee8afa5032bfb77a33825dc61",
+      "new_links": 2,
+      "new_tables": 1
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "bytes": 96557,
+      "sha256": "cf9b0202279a72cd4c812f2ce6eaa8d17d4e5953e2df2057797fbb4a41a03563",
+      "new_links": 1,
+      "new_tables": 0
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "bytes": 94061,
+      "sha256": "c8b894477be75e951d028a493bc2e701d007c5ddfd4ac1cb15243d51641ada52",
+      "new_links": 1,
+      "new_tables": 0
+    },
+    {
+      "path": "docs/development_progress.md",
+      "bytes": 283579,
+      "sha256": "9c7e4b1facbeb576b445e7e1632ee51db56416c571a8a6d795a09ee246cd89eb",
+      "new_links": 2,
+      "new_tables": 0
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "bytes": 321956,
+      "sha256": "3a915d98b003f660062826151370a48d4e074c3340edf5cb9d9758bb7d847aad",
+      "new_links": 2,
+      "new_tables": 1
+    }
+  ],
+  "JSON_records": 13,
+  "repository_document_unittest_count": 15,
+  "document_suite_source": "actual current source invocation",
+  "actual_source_sha": "5f6ba280fc0ff795611ffbf97b126427ca95639a",
+  "old_navigation_suffixes_preserved": true,
+  "GitHub_exact_visual": "NOT_VERIFIED",
+  "new_A": 0,
+  "new_numeric": 0,
+  "new_KSP": 0,
+  "final_bytes_check": {
+    "status": "PASSED",
+    "documents": [
+      {
+        "path": "docs/task042_neural_coarse_inverse/response_v77.md",
+        "bytes": 5577,
+        "sha256": "8e4fa3e86191bfc8027490722c8ccba0a511a8b73e40dd070563b51496973147",
+        "new_links": 5,
+        "new_tables": 2
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/physical_impedance_patch_v77.md",
+        "bytes": 4459,
+        "sha256": "1647dfc003163f547118132a52b049733ce7b8503c9a48ddd4f5ddbf9439f14c",
+        "new_links": 5,
+        "new_tables": 2
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/README.md",
+        "bytes": 106687,
+        "sha256": "905ffb75988852d69fecb58c1b4d1eec1790363a84a8d22187f0b4394106b381",
+        "new_links": 2,
+        "new_tables": 1
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+        "bytes": 166039,
+        "sha256": "bea785f9a5170a4100f1f7a11b4715f83034f04ee8afa5032bfb77a33825dc61",
+        "new_links": 2,
+        "new_tables": 1
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+        "bytes": 96557,
+        "sha256": "cf9b0202279a72cd4c812f2ce6eaa8d17d4e5953e2df2057797fbb4a41a03563",
+        "new_links": 1,
+        "new_tables": 0
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+        "bytes": 94061,
+        "sha256": "c8b894477be75e951d028a493bc2e701d007c5ddfd4ac1cb15243d51641ada52",
+        "new_links": 1,
+        "new_tables": 0
+      },
+      {
+        "path": "docs/development_progress.md",
+        "bytes": 283579,
+        "sha256": "9c7e4b1facbeb576b445e7e1632ee51db56416c571a8a6d795a09ee246cd89eb",
+        "new_links": 2,
+        "new_tables": 0
+      },
+      {
+        "path": "docs/development_model_registry.md",
+        "bytes": 321956,
+        "sha256": "3a915d98b003f660062826151370a48d4e074c3340edf5cb9d9758bb7d847aad",
+        "new_links": 2,
+        "new_tables": 1
+      }
+    ],
+    "JSON_records": 16,
+    "repository_document_unittest_count": 15,
+    "document_suite_source": "one actual suite before this tail-only metadata check",
+    "actual_source_sha": "5f6ba280fc0ff795611ffbf97b126427ca95639a",
+    "old_navigation_suffixes_preserved": true,
+    "GitHub_exact_visual": "NOT_VERIFIED",
+    "new_A": 0,
+    "new_numeric": 0,
+    "new_KSP": 0
+  }
+}

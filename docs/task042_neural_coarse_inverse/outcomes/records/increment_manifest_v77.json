@@ -1935,5 +1935,10 @@
     "src/solvers/impedance_trace_study.py",
     "src/solvers/physical_impedance_patch.py",
     "src/test/test_physical_impedance_patch.py"
-  ]
+  ],
+  "final_metadata_archive": {
+    "path": "benchmarks/artifacts/task042/v77/increment_evidence/delivery_tail/inventory.json",
+    "sha256": "0234ec107c5a08f7241c671898fe93da78f19fbf87ca5b673817d68f23af3301",
+    "bytes": 213528
+  }
 }

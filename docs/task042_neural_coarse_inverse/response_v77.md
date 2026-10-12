@@ -38,3 +38,5 @@
 普通缩进、测试activation和元数据类型错误同窗定点修复，均未造成PDE或factor重放；失败保留。最终10项targeted、相关Ruff/compile与4dat验证通过，最终文档一次紧凑检查见tests记录；无full pytest/CI。GitHub视觉NOT_VERIFIED。
 
 **唯一下一建议：关闭本固定阻抗配置；先取得不同传播/粗空间机制的独立证据，再集中立下一完整pilot，保留廉价Jacobi作对照。** 本窗不自动研究新机制、训练、通知邻窗口或开V78。交付后closed/active null、清场/锁释放、只push本分支，暂停等待review。
+
+最终费用结算：不重叠命令及本次增量归档已知下界2908.905755s；历史已知下界398753.743661s。新存储10601669767B、Task去重212902167815B、free2623838601216B；15项文档合同通过，最终全监督最大gap1.33371028607s。当前ledger closed/active null、自有锁释放，无后代；最终remote/完整SHA与交付实时时刻见Git交付收据。归档首轮和未包裹编辑/Git间隔仍unknown，不填0。

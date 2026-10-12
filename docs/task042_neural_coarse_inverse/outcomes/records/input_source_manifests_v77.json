@@ -1,0 +1,90 @@
+{
+  "PRECHECK": {
+    "input_original.dat": {
+      "path": "results/task042/task042_v77_impedance_patch_preflight_20261012T062742436556Z/input_original.dat",
+      "sha256": "c25ea8115742f74f8fd92f37370dc7602728c385195e57e42a28efc4011f6fbc",
+      "bytes": 102
+    },
+    "resolved_config.json": {
+      "path": "results/task042/task042_v77_impedance_patch_preflight_20261012T062742436556Z/resolved_config.json",
+      "sha256": "160ec310f063179a216b2426bd9364c197f5b6903d145c35dbea5ab80db56016",
+      "bytes": 8257
+    },
+    "run_manifest.json": {
+      "path": "results/task042/task042_v77_impedance_patch_preflight_20261012T062742436556Z/run_manifest.json",
+      "sha256": "e5216293aafc071c3e99e51a12f18e55f489627956d06456cf42f1c28177e504",
+      "bytes": 16976
+    },
+    "run_summary.json": {
+      "path": "results/task042/task042_v77_impedance_patch_preflight_20261012T062742436556Z/run_summary.json",
+      "sha256": "dc62f0c52d574eb6f2ea1c7c54c219b275530b20cb499d17c42a353c3b4931bd",
+      "bytes": 21084
+    }
+  },
+  "PREPARE": {
+    "input_original.dat": {
+      "path": "results/task042/task042_v77_impedance_patch_prepare_20261012T063258811700Z/input_original.dat",
+      "sha256": "9268faa61e92f458954fde272097c602dae19767af25931623b6a466bedb6613",
+      "bytes": 99
+    },
+    "resolved_config.json": {
+      "path": "results/task042/task042_v77_impedance_patch_prepare_20261012T063258811700Z/resolved_config.json",
+      "sha256": "6792a6cbe296fb21590d240e39d645137f5f7ec76df847bb3834d90c5fc27214",
+      "bytes": 8256
+    },
+    "run_manifest.json": {
+      "path": "results/task042/task042_v77_impedance_patch_prepare_20261012T063258811700Z/run_manifest.json",
+      "sha256": "360d57edca2a9d70e4cf0fbf87d52539e3383738b89417ddd18ef4415eeb2944",
+      "bytes": 16975
+    },
+    "run_summary.json": {
+      "path": "results/task042/task042_v77_impedance_patch_prepare_20261012T063258811700Z/run_summary.json",
+      "sha256": "bfb4adbdc7bfc28283859f30b573fd3496e7ccd77a53358fc53808a44ad8cd78",
+      "bytes": 21095
+    }
+  },
+  "ITERATE": {
+    "input_original.dat": {
+      "path": "results/task042/task042_v77_impedance_trace_solve_20261012T064514895138Z/input_original.dat",
+      "sha256": "3121fbd4593ae1e4102b0df96ec187923c60b42b70c2307423eef6e7fac397a8",
+      "bytes": 97
+    },
+    "resolved_config.json": {
+      "path": "results/task042/task042_v77_impedance_trace_solve_20261012T064514895138Z/resolved_config.json",
+      "sha256": "d989cc0dfffdddfba440f4d42ea602ee8b0f99e404010f28d4be60f089df8937",
+      "bytes": 8252
+    },
+    "run_manifest.json": {
+      "path": "results/task042/task042_v77_impedance_trace_solve_20261012T064514895138Z/run_manifest.json",
+      "sha256": "5a4fbd10f709e51a7f1cc7851835c13a5af5553127a714d2ecd67e27498bb9dd",
+      "bytes": 16978
+    },
+    "run_summary.json": {
+      "path": "results/task042/task042_v77_impedance_trace_solve_20261012T064514895138Z/run_summary.json",
+      "sha256": "edd2150858f8c7e32d0a24b71698eb9fd87186ebd96567e5fbbd1d522a295316",
+      "bytes": 21110
+    }
+  },
+  "VERIFY_COST": {
+    "input_original.dat": {
+      "path": "results/task042/task042_v77_verify_cost_20261012T071338049355Z/input_original.dat",
+      "sha256": "76c029940b5ce0526fb5c4d1d2fb3cf71c58d89d5abb14605bae816efb607fe0",
+      "bytes": 91
+    },
+    "resolved_config.json": {
+      "path": "results/task042/task042_v77_verify_cost_20261012T071338049355Z/resolved_config.json",
+      "sha256": "1970f06c2666b11070f1a7cb095cc4858bb35adad5e0d2eafa9b01367f94ca7f",
+      "bytes": 8451
+    },
+    "run_manifest.json": {
+      "path": "results/task042/task042_v77_verify_cost_20261012T071338049355Z/run_manifest.json",
+      "sha256": "27c0aebd0797f5600cd27134404af2c1e8441a63ad1c62bef9d6297c195490de",
+      "bytes": 17295
+    },
+    "run_summary.json": {
+      "path": "results/task042/task042_v77_verify_cost_20261012T071338049355Z/run_summary.json",
+      "sha256": "75ac19a52cdaee56840eada334ffade0e89ede9fc60d905c20d46621c8f34f46",
+      "bytes": 21400
+    }
+  }
+}

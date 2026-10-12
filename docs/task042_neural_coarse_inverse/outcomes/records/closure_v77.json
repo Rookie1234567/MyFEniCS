@@ -1,0 +1,33 @@
+{
+  "closed": true,
+  "active": null,
+  "all_actor_descendants_cleared": true,
+  "own_lock_observed_free_then_released": true,
+  "no_new_window": true,
+  "window": {
+    "start_utc": "2026-10-12T05:20:03.689514+00:00",
+    "start_monotonic": 1707398.550401817,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "first_work": "CONSERVATIVE_EARLIER_BOUND",
+    "anchor_reason": "Initial V77 read-only probe clock not retained; use durable preceding delivery clock, charge unknown interval rather than reset",
+    "total_seconds": 21600,
+    "delivery_reserve_seconds": 1800,
+    "success_acceptance_reserve_seconds": 4500,
+    "total_window_seconds": 21600,
+    "total_limit_seconds": 21600,
+    "heavy_limit_seconds": 19800,
+    "scientific_loaded_limit_seconds": 19800,
+    "closed": true,
+    "review_commit": "fc02a8612f1aa31b2c52366cc645acee6b5f8daf",
+    "intake_HEAD": "fc02a8612f1aa31b2c52366cc645acee6b5f8daf",
+    "deadline_utc": "2026-10-12T11:20:03.689514+00:00",
+    "heavy_stop_utc": "2026-10-12T10:50:03.689514+00:00",
+    "closed_utc": "2026-10-12T07:43:53.991826+00:00",
+    "closed_monotonic": 1716028.852730982,
+    "closure_reason": "one FGMRES failed rho32; full coefficients/original and unique VERIFY saved; documentation passed; no more configuration"
+  },
+  "source_science": "a1c46fb3ef5e22336d10e4d0b3b9ec9ffb2a0311",
+  "source_verify": "1a972d11cd5d0b97549549d9e3895edf8e147d05",
+  "scientific_queue_sha256": "0938a20f5f0281cd097ce03181dde4e33cca60144a6cf0378862e8ac8354e6e1",
+  "only_git_delivery_remaining": true
+}
