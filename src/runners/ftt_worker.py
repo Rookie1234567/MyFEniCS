@@ -50,6 +50,12 @@ def training_allowed(path, design, active, labelled):
         allowed.update(
             (ROOT / design[k]["path"]).resolve() for k in ("reference", "gram")
         )
+    if design.get("campaign_version") == 46:
+        base = design["base_checkpoint"]
+        if base["input_kind"] != "unlabelled_complete_round14_boundary":
+            return False
+        allowed.add((ROOT/base["path"]).resolve())
+        allowed.update((ROOT/name).resolve() for name in design["prepared_branch"]["files"].values())
     if path.is_relative_to(ROOT / "benchmarks/artifacts/task42extra"):
         return path in allowed or path.is_relative_to(active)
     if path.suffix in (".npz", ".pt", ".pth"):

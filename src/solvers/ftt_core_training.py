@@ -135,6 +135,7 @@ def run_core_training(
     joint_validation_callback=None,
     parent_importer=None,
     coordinate_transform_factory=None,
+    residual_context=None,
 ):
     from src.solvers.ftt_core_continuation import (
         policy_for,
@@ -148,10 +149,14 @@ def run_core_training(
     )
 
     continuation = execution_policy is not None
+    residual_run = residual_context is not None
     width_run = continuation and execution_policy.get("schema") == "ftt.width-refinement-policy.v1"
     coordinate_run = continuation and execution_policy.get("schema") == "ftt.feature-coordinate-policy.v1"
-    refined_run = width_run or coordinate_run
-    if coordinate_run:
+    refined_run = width_run or coordinate_run or residual_run
+    if residual_run:
+        from src.solvers.ftt_residual_branch import residual_policy
+        expected_policy = residual_policy(learned)
+    elif coordinate_run:
         from src.solvers.ftt_feature_coordinates import coordinate_policy
         expected_policy = coordinate_policy(learned)
         if coordinate_transform_factory is None:
@@ -161,15 +166,17 @@ def run_core_training(
         expected_policy = width_policy(learned, extra=execution_policy["total_round_limit"] == 14)
     else:
         expected_policy = policy_for(learned)
-    if continuation and (execution_policy != expected_policy or parent_checkpoint is None):
+    if continuation and (execution_policy != expected_policy or (parent_checkpoint is None and not residual_run)):
         raise ValueError("CORE_EXPLICIT_CONTINUATION_CONTRACT_REQUIRED")
+    if residual_run and (execution_policy != expected_policy or parent_checkpoint is not None):
+        raise ValueError("CORE_EXPLICIT_RESIDUAL_BRANCH_CONTRACT_REQUIRED")
     if parent_checkpoint is not None and not continuation:
         raise ValueError("CORE_PARENT_FORK_REQUIRES_OPT_IN_POLICY")
     binding = dict(binding)
     inherited = {}
     if continuation:
         binding.update(
-            parent_checkpoint_sha256=parent_checkpoint["sha256"],
+            parent_checkpoint_sha256=(residual_context.binding["base_checkpoint_sha256"] if residual_run else parent_checkpoint["sha256"]),
             execution_policy_sha256=identity(execution_policy),
         )
     artifact = Path(artifact)
@@ -208,6 +215,9 @@ def run_core_training(
         persistence=0.0,
         audit=0.0,
     )
+    if residual_run:
+        inherited = dict(inherited_counts=counts.copy(), inherited_costs=costs.copy(),
+                         inherited_rounds=0, frozen_base_prefix=residual_context.binding)
     history = []
     rounds = []
     last_hidden_optimizer = None
@@ -249,6 +259,8 @@ def run_core_training(
         ):
             raise ValueError("CORE_RESUME_LABEL_FORBIDDEN")
         restore(model, boundary, state)
+        if residual_run:
+            residual_context.verify_saved(state)
         counts.update(state["metadata"]["counts"])
         costs.update(state["metadata"]["costs"])
         rounds = state["metadata"]["rounds"]
@@ -316,7 +328,7 @@ def run_core_training(
         )
     else:
         store = CheckpointStore(checkpoint_dir)
-        if continuation:
+        if continuation and not residual_run:
             from src.io.neural_wave_campaign import ROOT
 
             parent_path = ROOT / parent_checkpoint["path"]
@@ -336,7 +348,7 @@ def run_core_training(
             )
         c = mapping.forward(model)
         r = action.apply(c) - action.f
-        if continuation:
+        if continuation and not residual_run:
             pair = dict(
                 c=relative_pair(c, np.asarray(state["c"])),
                 r=relative_pair(r, np.asarray(state["r"])),
@@ -349,6 +361,8 @@ def run_core_training(
             marker("parent_complete_boundary_imported", inherited)
         elif np.any(c):
             raise ValueError("STRICT_ZERO_SCATTERED_CORE_INITIALIZATION_REQUIRED")
+        if residual_run:
+            position["round_start_native"] = residual_context.view.original_relative(r)
     frozen_hidden = (
         [p.detach().clone() for p in hidden_parameters(model)]
         if continuation and not learned
@@ -431,6 +445,10 @@ def run_core_training(
             r=r.copy(),
             last_completed_hidden_optimizer=deepcopy(last_hidden_optimizer),
         )
+        if residual_run:
+            state["metadata"].update(c_kind="correction_coefficients", r_kind="A_delta_minus_fixed_g",
+                                      residual_branch=deepcopy(residual_context.binding))
+            state.update(residual_context.checkpoint_fields(c, r))
         final = store.save(state, pin=pin)
         atomic_json(artifact / "checkpoint_index.json", store.index())
         costs["persistence"] += monotonic() - began
@@ -469,7 +487,10 @@ def run_core_training(
                 if len(rounds) >= 3
                 else None
             )
-            if coordinate_run:
+            if residual_run:
+                from src.solvers.ftt_residual_branch import residual_trend
+                decision = residual_trend(number, scalar, execution_policy)
+            elif coordinate_run:
                 from src.solvers.ftt_feature_coordinates import coordinate_trend
                 parent_scalar = inherited["parent_checkpoint"]["parent_scalars"]
                 decision = coordinate_trend(number, scalar, parent_scalar, execution_policy)
@@ -556,7 +577,7 @@ def run_core_training(
 
     def at_native_target():
         target = position.get("native_target", 1e-8)
-        if np.linalg.norm(r) / action.bnorm > target:
+        if (residual_context.view.original_relative(r) if residual_run else np.linalg.norm(r) / action.bnorm) > target:
             return False
         audit = action.audit(c)
         return max(audit["native_relative"], audit["augmented_relative"]) <= target
@@ -830,7 +851,7 @@ def run_core_training(
                 a = action.audit(c)
                 costs["audit"] += monotonic() - began
                 counts["round_audits"] += 1
-                native = float(np.linalg.norm(r) / action.bnorm)
+                native = (residual_context.view.original_relative(r) if residual_run else float(np.linalg.norm(r) / action.bnorm))
                 decrease = (round_start_native - native) / max(
                     round_start_native, 1e-30
                 )
@@ -844,6 +865,7 @@ def run_core_training(
                         start_native=round_start_native,
                         relative_native_improvement=decrease,
                         original_equation=a,
+                        **(dict(training_native=float(np.linalg.norm(r)/action.bnorm)) if residual_run else {}),
                         counts=counts.copy(),
                     )
                 )
@@ -889,7 +911,11 @@ def run_core_training(
         # SIGKILL cannot execute this block. The guarantee is the previous fsync boundary.
         stream.close()
     final = save("final_committed")
-    atomic_npz(artifact / "frozen_field.npz", c=c, r=r)
+    if residual_run:
+        fields = residual_context.view.fields(c, r)
+        atomic_npz(artifact / "frozen_field.npz", c=fields["c_combined"], r=fields["r_original"], **fields)
+    else:
+        atomic_npz(artifact / "frozen_field.npz", c=c, r=r)
     return dict(
         binding,
         status=stop,
@@ -899,7 +925,8 @@ def run_core_training(
         rounds=rounds,
         checkpoint=final,
         original_equation=action.audit(c),
-        native=float(np.linalg.norm(r) / action.bnorm),
+        native=(residual_context.view.original_relative(r) if residual_run else float(np.linalg.norm(r) / action.bnorm)),
+        **(dict(training_native=float(np.linalg.norm(r)/action.bnorm), residual_branch=residual_context.binding) if residual_run else {}),
         model_parameter_hash=model_identity(model),
         position=position,
         learned_hidden_enabled=learned,

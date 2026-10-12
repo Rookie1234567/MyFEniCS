@@ -31,7 +31,7 @@ STAGES = {
 
 
 def profile_paths(spec):
-    if spec.get("campaign_version") in (31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42, 43, 44, 45):
+    if spec.get("campaign_version") in (31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42, 43, 44, 45, 46):
         version = spec["campaign_version"]
         root = ROOT / f"tmp/task42extra/v{version}"
         return dict(
@@ -67,6 +67,9 @@ def load_wave(path):
         data = tomllib.loads(raw.decode())
     except (UnicodeError, tomllib.TOMLDecodeError) as error:
         raise InputError(str(error)) from error
+    if data.get("schema_version") == 16:
+        from src.io.ftt_residual_campaign import load_residual
+        return load_residual(path, data, raw)
     if data.get("schema_version") == 15:
         from src.io.ftt_coordinate_campaign import load_coordinates
         return load_coordinates(path, data, raw)

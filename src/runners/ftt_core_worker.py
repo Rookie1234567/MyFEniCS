@@ -55,6 +55,11 @@ class CoreWorkerProfile:
     reconstruction_model_factory: object = None
     learned_roles: tuple = ()
     pass_qualification_to_training: bool = False
+    prepare_role: str = ""
+    prepare_stage: str = ""
+    preparation: object = None
+    training_adapter: object = None
+    checkpoint_field_factory: object = None
 
 
 DEFAULT_PROFILE = CoreWorkerProfile()
@@ -121,6 +126,7 @@ def subphase(directory, phase, profile=DEFAULT_PROFILE):
             model_factory=profile.model_factory,
             independent_field=profile.independent_field,
             candidate_model_factory=profile.reconstruction_model_factory,
+            checkpoint_field_factory=profile.checkpoint_field_factory,
         )
     elif phase == "compare":
         compare(
@@ -217,8 +223,12 @@ def run_stage(manifest, artifact, marker, directory, profile=DEFAULT_PROFILE):
         qualification = json.loads(
             (profile.artifacts / profile.checks_stage / "result.json").read_text()
         )
-        if not qualification["models"][spec["model_kind"]]["qualified"]:
+        if not qualification["models"][spec["model_kind"] or "fttnn"]["qualified"]:
             raise ValueError("CORE_ACTUAL_NEW_OPERATOR_NOT_QUALIFIED")
+        if profile.prepare_stage and spec["role"] != profile.prepare_role:
+            qualification["preparation"] = json.loads((profile.artifacts/profile.prepare_stage/"result.json").read_text())
+            if not qualification["preparation"]["qualified"]:
+                raise ValueError("CORE_PREPARED_BRANCH_NOT_QUALIFIED")
 
         label_checks = install_unlabelled_firewall(design, artifact)
         marker(
@@ -237,6 +247,8 @@ def run_stage(manifest, artifact, marker, directory, profile=DEFAULT_PROFILE):
     packet = load_arrays(files["moments_q30"])
     if (action.size, action.nc, action.np) != (31968, 384, 40):
         raise ValueError("CORE_ORIGINAL_M5_IDENTITY")
+    if spec["role"] == profile.prepare_role:
+        return profile.preparation(action, packet, design, marker, directory, artifact, qualification)
     if spec["role"] == profile.checks_role:
         from src.solvers.ftt_core_qualification import actual_checks
 
@@ -303,6 +315,10 @@ def run_stage(manifest, artifact, marker, directory, profile=DEFAULT_PROFILE):
     qualification_argument = dict(qualification=qualification) if profile.pass_qualification_to_training else {}
     options = {} if profile.training_options is None else profile.training_options(
         manifest, artifact, marker, directory, design, **qualification_argument)
+    if profile.training_adapter is not None:
+        action, model, extra_binding, options = profile.training_adapter(
+            action, packet, model, binding, options, design, qualification)
+        binding.update(extra_binding)
     result = run_core_training(
         action,
         packet,

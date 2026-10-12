@@ -211,6 +211,7 @@ def reconstruct(
     model_factory=None,
     independent_field=None,
     candidate_model_factory=None,
+    checkpoint_field_factory=None,
 ):
     from src.solvers.ftt_field import FTTField
     from src.solvers.ftt_moments import StreamingMomentMap
@@ -233,17 +234,21 @@ def reconstruct(
             source_root / stage / "checkpoints" / entry["name"], entry["sha256"]
         )
         validate_checkpoint_identity(state, candidate, model, fit)
+        model.load_state_dict(state["model"], strict=True)
+        if checkpoint_field_factory is None:
+            field = model if independent_field is None else independent_field(model)
+            saved, saved_r = state["c"], state["r"]
+        else:
+            field, saved, saved_r = checkpoint_field_factory(design, state, candidate, model)
         producer_file = source_root / stage / "frozen_field.npz"
         with np.load(producer_file, allow_pickle=False) as data:
-            if not np.array_equal(data["c"], state["c"]) or not np.array_equal(
-                data["r"], state["r"]
+            if not np.array_equal(data["c"], saved) or not np.array_equal(
+                data["r"], saved_r
             ):
                 raise ValueError("FTT_FROZEN_PRODUCER_AND_COMMITTED_STATE_MISMATCH")
-        model.load_state_dict(state["model"], strict=True)
-        field = model if independent_field is None else independent_field(model)
         c30 = StreamingMomentMap(packet).forward(field)
         c60 = StreamingMomentMap(high).forward(field)
-        saved = np.asarray(state["c"], dtype=np.complex128)
+        saved = np.asarray(saved, dtype=np.complex128)
         same = float(np.linalg.norm(c30 - saved) / max(np.linalg.norm(saved), 1e-30))
         drift = float(np.linalg.norm(c60 - c30) / max(np.linalg.norm(c30), 1e-30))
         adrift = float(np.linalg.norm(action.apply(c60 - c30)) / action.bnorm)
@@ -263,7 +268,11 @@ def reconstruct(
             reference_used_for_training=fit,
             pde_only_solve=not fit,
             production_initialization_allowed=False,
-            independent_point_phase=independent_field is not None,
+            independent_point_phase=independent_field is not None or checkpoint_field_factory is not None,
+            **(dict(actual_network_count=2, point_fields_summed_before_full_interpolation=True,
+                    frozen_base_model_hash=state["base_model_hash"],
+                    residual_branch_identity=state["residual_branch_identity"])
+               if checkpoint_field_factory is not None else {}),
         )
         atomic_npz(artifact / (name + ".npz"), c30=c30, c60=c60, saved=saved)
         result[name] = record

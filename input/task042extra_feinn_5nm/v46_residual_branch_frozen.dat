@@ -1,0 +1,5 @@
+schema_version = 16
+
+[neural_wave]
+stage = "v46_residual_branch_frozen"
+design_sha256 = "e6187f3bd04389777e24af27dd7b38a9c829728bac2ab6cbd4142c37c0fd5e1b"
