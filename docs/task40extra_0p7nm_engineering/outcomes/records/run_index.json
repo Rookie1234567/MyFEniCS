@@ -7680,5 +7680,279 @@
     "source_sha": "61530133bd02b18052e3ba64a5f78b87424c57f6",
     "window_sha256": "e806c514c8208ae7a887bdb6ddaaec25936c9204a3ccc34a4fb870ad0bb0010d",
     "workflow_case_run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22"
+  },
+  "review_v28_evidence_index": {
+    "workflow_case_run_id": "task40extra_0p7nm_target_original_ny8_operator_probe_v22",
+    "attempt_id": "20261012T002559.817050Z",
+    "service_unit": "myfenics-case-20261012T002548-2353316.service",
+    "source_sha": "c6624391d8f96e257d1efa914cb38821e2a87eb9",
+    "accepted_result_base_sha": "4e04f2fe2b3ea22e67cbd93ee1ffebfd66b50a79",
+    "review_at_entry_sha": "b52c8d47a9db7f4e9d7f6d134a7f307b8728a4ab",
+    "input_sha256": "134ea5f08d5d5dbc366870f451ba0de0df5893c5cd73d227dac77f8a11aa2c0b",
+    "physical_model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+    "window_sha256": "dcefcfbf476f09b388554afc81a65ea85951d4d6162b6dad8743766e6742c9a0",
+    "classification": "COMPLETE_Q0_CSR_NATIVE_PASS_WITH_RESOURCE_CONTROLLED_STOP_BEFORE_FACTOR",
+    "terminal_status": "RESOURCE_CONTROLLED_STOP_AFTER_Q0_CSR",
+    "official_result": false,
+    "identity_scope": "V28 fields identify current numeric evidence; pre-existing top-level and V1-V27 entries retain their historical snapshot values.",
+    "raw_evidence": {
+      "original_v27_manifest": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_csr_manifest.json",
+        "bytes": 18336,
+        "sha256": "1ea707f3c201359c390b620a5122d0102f5b34bd74873b5f00e3a40b673b94de"
+      },
+      "continuation_manifest": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v28_q0_csr_continuation_manifest.json",
+        "bytes": 38314,
+        "sha256": "ca3c8de9093fd1cfe9e17c8eb557cd2f96920a3ee110549f007e70835d4a2290"
+      },
+      "native_qualification": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_native_qualification.json",
+        "bytes": 5785,
+        "sha256": "63babb2943b7e0f613a2c531afd09f931c4ee5504a345748c52f6ef38b0e9c81"
+      },
+      "stage": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_continuation_stage.json",
+        "bytes": 198745,
+        "sha256": "b84e0602d0f5b17826366a1ff1cfb942e0b9a8bb271fe63a969b2c28c129153d"
+      },
+      "progress": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_numeric_progress.json",
+        "bytes": 59768,
+        "sha256": "81520c013ffeb9cd83f992a6d2fa4b85f7a22e1e96f6c0ab9354e76893556ac6"
+      },
+      "run_manifest": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/run_manifest.json",
+        "bytes": 7912,
+        "sha256": "9620ea1faee0b4af91001a10e070ae873ad84d1c0d2de883fe30034cc8db7d15"
+      },
+      "run_summary": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/run_summary.json",
+        "bytes": 11459,
+        "sha256": "ef8c7b9a603456a7a520be1391cba862cf4a6887bdf3863ab7010eac6d51de93"
+      },
+      "partial_result": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v20_partial_result.json",
+        "bytes": 307662,
+        "sha256": "82c2c70ee02308ee3630ae8fb8c2d6fff1cd589acfdce4674d42fe4a3ada41e7"
+      },
+      "watchdog": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/watchdog/summary.json",
+        "bytes": 9787,
+        "sha256": "9bba122f3241951687a4698e9ae3fb1bc5671687910bcdd22ee5bfcc655e3063"
+      },
+      "factor_checkpoints": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_factor/v26_q0_factor_checkpoints.json",
+        "bytes": 19195,
+        "sha256": "51c5133d67a6db8956b3240eae5e152f9fa321ab10b5e0f012f46d6821e3384d"
+      },
+      "partial_checker": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/service_runs/myfenics-case-20261012T002548-2353316/partial_checker_result.json",
+        "bytes": 1907,
+        "sha256": "1496151c55c72fcd5e77e48ef257d38a8c90a96929d31387e36710d71c5a6fdb"
+      },
+      "outer_workflow": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/service_runs/myfenics-case-20261012T002548-2353316/outer_workflow_record.json",
+        "bytes": 44645,
+        "sha256": "a5b07f4ddb3bd0619cf833f71646add54dee8397bd520d317365ed6ff87c802e"
+      },
+      "required_checker_watchdog": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/service_runs/myfenics-case-20261012T002548-2353316/required_checker_watchdog_summary.json",
+        "bytes": 9471,
+        "sha256": "d2b6ce740bde5cdb43aaf71531a839499b626b76a88ea4acc63d2283739dcdaf"
+      },
+      "abi_preflight": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/service_runs/myfenics-case-20261012T002548-2353316/abi_preflight_stdout.raw.txt",
+        "bytes": 1071,
+        "sha256": "afbc606b098997a2c32c66ec34d6beb047008b20581bffd57ba962a6d581394b"
+      },
+      "main_independent_audit": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/main_readonly_numeric_audit_v28.json",
+        "bytes": 4332,
+        "sha256": "577dc063324a083cd285cceddb7cc60b1a4516cffb0149e3eb94af9e132a2469"
+      },
+      "initial_freeze": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/main_source_freeze_receipt_v28.json",
+        "bytes": 5453,
+        "sha256": "7336ebcb4124d38fdf463746d8dc0299fbb575e2193c0432efb6733ef6d43a64"
+      },
+      "repair_freeze": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/main_repair_freeze_receipt_v28.json",
+        "bytes": 4034,
+        "sha256": "6a091e9d1497fc7f2b7c7a63afdbd497fd1e52ccb4398283a48cb84d7b45bb3b"
+      },
+      "window": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/campaign_window_v28.json",
+        "bytes": 3823,
+        "sha256": "dcefcfbf476f09b388554afc81a65ea85951d4d6162b6dad8743766e6742c9a0"
+      },
+      "registration": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/registration_receipt_v28.json",
+        "bytes": 4282,
+        "sha256": "e2f4b5673918c3c94981b0596359fd46406a78fd48e2743ee72375a42093a58e"
+      },
+      "selector": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/stage_inputs/selected_reference_q_csr/q0_continuation.json",
+        "bytes": 10547,
+        "sha256": "87348ae347eb8112be1009e597a4642df6356549199074ae478edbfdc979a93c"
+      },
+      "cgroup_samples": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/v28_attempt_20261012T002559.817050Z_cgroup_memory.jsonl",
+        "bytes": 20234,
+        "sha256": "9f617680367406d688f5300c0e0f93d7bec1237a22f4fb07343160977ab7b5d6"
+      },
+      "failed_attempt_partial": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T001226.307262Z/v20_partial_result.json",
+        "bytes": 151355,
+        "sha256": "af1bdcef8cdc070febd93a2059f474759bef7674f102519d31ec93956e29837e"
+      },
+      "failed_attempt_watchdog": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T001226.307262Z/watchdog/summary.json",
+        "bytes": 9773,
+        "sha256": "accde05f0e6912fc5b050dda1fe53f6307431d6e428623057b3b048495225f18"
+      },
+      "failed_attempt_outer": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/service_runs/myfenics-case-20261012T001211-2351488/outer_workflow_record.json",
+        "bytes": 44568,
+        "sha256": "6281f88983f285475ae6c707743c91c8aa35c55b5d273516707108d468d067a9"
+      },
+      "failed_attempt_checker": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/service_runs/myfenics-case-20261012T001211-2351488/partial_checker_result.json",
+        "bytes": 1810,
+        "sha256": "ec810fd3cff330f13baff1a68ff1c4aae4c834619a5f26700c030560d29e2228"
+      },
+      "initial_tests": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/v28_freeze_preflight.log",
+        "bytes": 2201,
+        "sha256": "7873d969b7ff387762407ba051e1613dc1269f5f2c46d59d4ea168e2fd6002fd"
+      },
+      "fixture_negative": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/v28_bugfix_targeted_pytest.log",
+        "bytes": 3833,
+        "sha256": "9bf8566b02fc2c950b1ff476f1a6ca1247b446e869bbbd007537d5a259cee45e"
+      },
+      "repair_tests": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/v28_bugfix_targeted_pytest_retry1.log",
+        "bytes": 98,
+        "sha256": "b59be68fb6adfb7d9fc7d91fadce2bc4dfc5c56c4256d1f498efef44320e1fa0"
+      },
+      "csr_data": {
+        "bytes": 9232978816,
+        "initially_zeroed": true,
+        "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_data.npy",
+        "sha256": "457b946f8e08557d82df38683a884d25ff58413f17ad1bb7f7e04a7296698c27"
+      },
+      "csr_indices": {
+        "bytes": 2308244800,
+        "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indices.npy",
+        "sha256": "9279c5dbfb8921c61dc229ea6a99d30bb76f8b31d005076796d4504a1e7d0d6e"
+      },
+      "csr_indptr": {
+        "bytes": 3110708,
+        "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261011T153931.649307Z/v27_q0_csr/task40_v27_q0_00_indptr.npy",
+        "sha256": "6d24828a2cd820601fedf92c5b6575fc2dd95a905c2533677f3a3367648a7819"
+      },
+      "saved_readback_outputs": {
+        "array_names": [
+          "q0_case_1_full",
+          "q0_case_2_full",
+          "q0_case_1_trace_only",
+          "q0_case_1_port_only"
+        ],
+        "bytes": 49770300,
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_operator_probe_v22__full3d_iterative__mpi1__Mna/20261012T002559.817050Z/v28_q0_csr_readback.npz",
+        "sha256": "304f3029e147ba0d4054efdf484757581a88b71a0ae60f6bea7235003eeac9ac"
+      },
+      "campaign_accounting_frozen_prefix": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v28_wsl/campaign_accounting_v10.jsonl",
+        "bytes": 5510250,
+        "sha256": "61ee07036f66b82ecd6e8b22c7006edfc6be9ba95814d70834ba16e4bbaa9aa5",
+        "hash_scope": "frozen byte prefix [0, bytes); read exactly bytes bytes when verifying; live ledger may append later",
+        "last_record": {
+          "adjacent_interval": {
+            "budget_seconds": 1639.838322929,
+            "discrepancy_seconds": 162.22280351504264,
+            "elapsed_seconds": {
+              "boottime": 1477.6155194139574,
+              "monotonic": 1477.6155200239737,
+              "utc": 1639.838322929
+            },
+            "policy": "conservative_realtime",
+            "policy_version": 1,
+            "tolerance_seconds": 14.776155200239737,
+            "utc_minus_monotonic_seconds": 162.22280290502636
+          },
+          "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6",
+          "bootstrap_charged_seconds": 324.654694973,
+          "campaign_window_sha256": "dcefcfbf476f09b388554afc81a65ea85951d4d6162b6dad8743766e6742c9a0",
+          "cumulative_charged_seconds": 7545.089796712956,
+          "cutoff_seconds": 20400.0,
+          "deadline_utc_ns": 1791782640000000000,
+          "label": "executor_v28_document_closeout",
+          "previous_sample": {
+            "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6",
+            "boottime": 1303763.922463235,
+            "monotonic": 1303763.922461928,
+            "utc_ns": 1791766945250768115
+          },
+          "sample": {
+            "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6",
+            "boottime": 1305241.537982649,
+            "monotonic": 1305241.537981952,
+            "utc_ns": 1791768585089091044
+          },
+          "schema": "task40extra.review_v10_campaign_accounting.v1",
+          "sequence": 4775,
+          "t0_utc_ns": 1791761040000000000,
+          "time_namespace_identity": {
+            "time": "time:[4026531834]",
+            "time_for_children": "time:[4026531834]"
+          }
+        },
+        "old_prefix_hash_verified": true,
+        "scope": "administrative documentation closeout; no numerical restart, no T0/deadline reset; shared wall-clock campaign charge, not CPU time"
+      }
+    },
+    "documents": {
+      "README.md": "a6490a55941e255905c91b52633192c76cca2c6ce60c60a85ac6508f9c10b157",
+      "response_v28.md": "1adbf07f8c4b5b41a16a25353c8e44b94dd8984c9e3dc8182071c1f111f1fcb9",
+      "outcomes/summary.md": "ea18d738524e7faf628b381493ea11c36f87a1a7a5c0215e01efb210156c7edd",
+      "outcomes/test_summary.md": "c3303f93ed3725998a3a66a710f8d0fb25f21832241b82d4400972cad38dd4fe",
+      "outcomes/target_stage_handoff_v28.md": "b8a775719b4c111ce42f79902f45805ac0d8b6a126e6e70c1bac6e28da7c3c83"
+    },
+    "records": {
+      "outcomes/records/target_operator_probe_v28.json": "01343ec69da26b4bd541a5f6ee7b7b33c13fbec5ed7d04a4bc0be75a7c783217",
+      "outcomes/records/time_resource_accounting_v28.json": "2a7d0e97f3d35c441c2ee2b5fcc913aa71860b62d16f52e53cb0071e7f40f8fb"
+    },
+    "repository_navigation_documents": {
+      "docs/README.md": "258e01963002abc04cc30ae8b3d70f6c3c8791c116ba56038292705f82f523b8",
+      "docs/development_progress.md": "62eb422e439cb8a2fbe0788086fea6f94c9c55241e3582a288e406ed556d2490",
+      "docs/development_model_registry.md": "208166f9c31583bce22392e6b717958df5f074078a9dce2e28c0b1a914c007f7"
+    },
+    "document_hash_scope": "exact pre-publication file bytes in this entry; index does not hash itself; later edits need a new snapshot",
+    "array_hash_scope": "full CSR and saved-output hashes inherited from completed required checker and independent audit; closeout rechecks sizes only",
+    "documentation_validation": {
+      "status": "PASS",
+      "scope": "one-off local documentation checks; only new/changed Markdown checked; no scientific tests or numerical computation",
+      "source_sha": "c6624391d8f96e257d1efa914cb38821e2a87eb9",
+      "json_parse_files": 3,
+      "raw_small_records_sha256_verified": 28,
+      "csr_hash_scope": "copied from COMPLETE manifest and already completed required checker; no new full-array hashing",
+      "csr_array_sizes_verified": 3,
+      "saved_output_size_verified": true,
+      "changed_markdown_files_checked": 8,
+      "local_link_targets_checked": 49,
+      "table_rows_checked": 188,
+      "fences": "PASS",
+      "handoff_shell_syntax_blocks": 3,
+      "git_diff_check": "PASS",
+      "only_authorized_documentation_changes": true,
+      "GitHub_rendered_view": "NOT_VERIFIED_PENDING_MAIN_PUBLICATION",
+      "CI": "NOT_CLAIMED",
+      "checked_utc": "2026-10-12T01:28:12.976125+00:00",
+      "temporary_check_correction": "One-off script first referenced manifest.artifacts; corrected to existing csr_artifacts. Initial KeyError changed no task files or numerical artifacts; corrected check passed.",
+      "ledger_prefix_preserved": true
+    },
+    "created_utc": "2026-10-12T01:29:45.103870+00:00"
   }
 }

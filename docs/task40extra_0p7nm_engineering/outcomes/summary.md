@@ -1,10 +1,120 @@
+# Task40extra Review V28：完整 q0 数值矩阵与 native 对照通过
+
+CSR将稀疏矩阵的行起止、列号和值保存为三数组。V27只完成前两项；V28复用完整结构、从零填复数值，以精确稀疏投影减少零映射的工作。实际对象为7,616-cell regular-reference q0，仍需约11.5GB矩阵存储，原尺寸target PDE未求解。
+
+## V28 一级账：模型、方法、运行与数值
+
+| 模型/阶段 | 目的和实际范围 | 结果与数据身份 | 状态 / 证据 |
+|---|---|---|---|
+| parent target | 50×25×140nm、0.7nm、真实非分离Si/air，Nx272/Ny8/Nz14/p6、30,464cells | 本轮不重建/求解 | NOT_RUN；[response](../response_v28.md) |
+| regular reference q0 | 去除notch/void；272×2×14=7,616cells；保存贡献→已有pattern | 777,644²；FE/MPC/native/producer/routes/pattern重建0 | COMPLETE_CSR；[operator](records/target_operator_probe_v28.json) |
+| 四次完整CSR作用 | 两个输入及trace/port分量对照已保存native | 最大1.91166e-14≤1e-11，measured | PASS；[交接](target_stage_handoff_v28.md) |
+| factor | 已有PASS后实时准入 | PETSc conversion前拒绝，actual factor未创建 | RESOURCE_CONTROLLED_STOP；[资源](records/time_resource_accounting_v28.json) |
+| 目标物理结果 | 全q、target场、原A6和物理/输出门 | R00_s/R00_p/R00_total、R/T/A/A_volume、衍射幅值NOT_RUN | 最终精度与2TB/48h NOT_QUALIFIED |
+
+| 身份 | 精确值 / 解释 |
+|---|---|
+| 分支 / result base | task40extra_0p7nm_engineering / 4e04f2fe2b3ea22e67cbd93ee1ffebfd66b50a79 |
+| 最终科学source | c6624391d8f96e257d1efa914cb38821e2a87eb9 |
+| attempt / service | 20261012T002559.817050Z / myfenics-case-20261012T002548-2353316.service |
+| manifest创建source | 52b435d2955c07b1890107b39939f8092ce954e8；旧身份保留，fill/qualification另绑c662 |
+| 固定window | dcefcfbf476f09b388554afc81a65ea85951d4d6162b6dad8743766e6742c9a0；T0 2026-10-11T23:24Z、cutoff2026-10-12T05:04Z、deadline05:24Z |
+| donor | V25 producer/V26 native-input/V27 pattern各自source/window不变，详见operator compact |
+
+| 方法 | 改变哪一步、为何需要 | 结果与代价 |
+|---|---|---|
+| existing-manifest AUTO | 从保存状态独立启动，避免重建完整结构 | pending填值、complete无PASS回读、complete有PASS factor准入 |
+| exact sparse projection | 稀疏映射参与局部乘法，维持复相位与多对一累加 | 无全局COO/所有cell投影缓存；完整CSR仍存储 |
+| H/C/−D专用路径 | H按实际U_p映射和h计算，−D保留普通转置与负号 | direct H实际1次，代替旧124块通用贡献；没有删物理通道 |
+| 语义资源gate记录 | 字典归并减少重复查找，保留次数、峰和原失败标签 | 62,737次gate约145.112s，时间嵌套，不再加到parent |
+| native资格先落盘 | 四次作用后保存输出与hash-bound PASS再评估factor | factor资源拒绝没有丢失矩阵资格 |
+
+| 实施/运行 | source | 真结果 |
+|---|---|---|
+| 首attempt001226 | 52b435d2 | NameError generation_seconds；clear/flush66.735125s；原失败保留 |
+| 计时修复 | c6624391 | 先赋值再completion callback；fixture最初错误key失败后修正，4项通过；clear-all重启 |
+| 成功attempt002559 | c6624391 | H1/1、volume7616/7616、surface15864/15864；共23,481成功回调 |
+| formal partial checker | c6624391 | 21/21 true、full_pass=false；实际核验全部CSR三hash |
+| 主控保存输出独立重算 | c6624391 | 最大1.9116580127738185e-14；新FE/native/refill/CSRmatvec0 |
+
+| 矩阵指标 | 实际值 | 口径 |
+|---|---|---|
+| rows / ports | 773,568 trace+4,076 q0 aliases=777,644 | 实际q0，非target full DoF |
+| stored / numeric nonzero / exact-zero | 577,061,168 /560,366,994 /16,694,174 | measured；exact-zero不压缩，原pattern保留 |
+| data / indices / indptr文件字节 | 9,232,978,816 /2,308,244,800 /3,110,708 | 含header；有效payload11,544,333,940 B |
+| 累计贡献值字节 | 31,725,788,352 B | 处理量，不是唯一存储或同时内存 |
+| pattern/数组身份 | indptr/indices与V27相同，data有完整新hash | 旧manifest仍incomplete；新manifest COMPLETE |
+
+| native比较 | 相对误差，限值1e-11 | 结果 |
+|---|---|---|
+| x1 / x2 total | 1.9116580127740397e-14 /1.9044249363689425e-14 | PASS |
+| volume / −D | 1.9115170598605398e-14 /4.0018002857899965e-15 | PASS |
+| C / Hhat | 1.0992641636347272e-15 /1.0985392495312836e-16 | PASS |
+| trace+port重组 / off-block | 2.8011401775529595e-16 /全部0 | PASS |
+
+独立主控审计只重算保存输出范数，最大值与worker浮点归约一致。当前progress字段readback_completed=true，但status仍READBACK_IN_PROGRESS、surface ETA仍57.583s；是过期状态，不代表当前阶段。完整manifest/资格/stage终态为准，原文件不改写。
+
+## V28 二级账：时间、内存、资源停止
+
+| 阶段 | monotonic/perf_counter秒 | UTC/保守预算秒 | 口径 |
+|---|---|---|---|
+| clear+initial flush / numeric parent | 52.559229 /734.323900 | 未分录 | 两阶段不重叠；numeric含贡献生成/投影/累加 |
+| data hash / readback parent | 50.957251 /286.435002 | 未分录 | 各自独立；readback内含4次matvec |
+| watchdog | 1251.751109 | UTC1392.471546 | 嵌套在run_case，不另加 |
+| outer run_case | 1254.529095 | 1395.251160 | 准备至factor拒绝 |
+| required checker | 60.846029 | 68.050427 | 与run_case不重叠 |
+| 已记录完整outer parent | 1316.226225 | 保守1464.152690；UTC1464.150476 | 含activation/ABI/run_case/checker/间隙，未记录systemd首尾UNKNOWN |
+
+generation/projection/scatter=203.372/278.819/136.587s嵌在734.324s内；4次matvec约48.573/76.712/76.211/76.272s嵌在286.435s内；gate145.112s重叠相关子项。H/volume/surface callback parent1.463/203.094/476.283s不是完整父分区。读取与约束未拆开，最终flush/部分验证保存也未独立计时，缺失项UNKNOWN。UTC正差run_case140.722s、checker7.204s保守计费，原因未证明。
+
+V27 pattern2106.866994s、routes3,428,612及相关I/O计数为继承元数据，本轮执行0；不能冒充V28耗时/吞吐。
+
+| 资源项 | 数值 | 身份/解释 |
+|---|---|---|
+| 同时treeRSS / dedicated cgroup峰 | 12,497,358,848 /13,044,125,696 B | measured；两口径分列；cap17,179,869,184 B |
+| task swap / PSS | tree/cgroup0 B；PSS null | PSS禁用，缺失值不回填 |
+| WSL-global swap | pswpin+60pages、pswpout0；host原有swap非零 | host全局，归因UNKNOWN |
+| adapter/maps释放后 | RSS414,957,568；cgroup12,303,282,176；file11,835,424,768 B | 文件页仍收费，非整CSR释放 |
+| current staging | generation167,923,712 /projection121,200,496 /combined167,923,712 B | 对象预算上界，均≤268,435,456；峰不相加 |
+| inherited max_staging_bytes | 98,244,536 B | V27 pattern字段，非V28全程最大 |
+| factor新增 / host可用 / 缺口 | 69,340,657,464 /4,873,007,104 /64,467,650,360 B | derived实时准入账 |
+| factor cgroup需求 / 扣reserve额度 / 缺口 | 81,647,519,544 /17,045,651,456 /64,601,868,088 B | derived；不与host缺口相加 |
+
+独立cgroup JSONL记录可用样本及teardown unavailable/null，anon/file/dirty按样本口径，范围见resource compact；不能把采样最大当生命周期峰。leader exit0、后代全清，exit0不代表PDE通过。factor的80,884,991,404 B保守envelope为当前布局派生值，actual factor峰值/time/INFOG UNKNOWN。
+
+| 负结果 / 未运行 | 原因与边界 |
+|---|---|
+| 首worker失败 | generation_seconds未赋值；首attempt保留，watchdog83.759734s、cgroup13,042,233,344 B、task swap0 |
+| fixture首次失败 | 读取错误audit key；1failed/3passed，改正后4passed；不删负日志 |
+| factor NOT_RUN | 在PETSc conversion前资源门拒绝，无symbolic/numeric/probe/RHS，非数值因子失败 |
+| 全q / target / physics | q0 reference作用资格不等于target场；RTA、原A6、精度和2TB48h未资格化 |
+| 测试范围 | 77/2skip初始source、4项修复source、formal checker21项；不累计为同一套测试，不声称fullrepo/MPI2/4/CI |
+| 历史成本和unknown | T0固定；修复相邻区间mono592.094932/保守660.610497s包含debug/test/协调/freeze，不叫纯编码时间；V27 null/行政超时保留 |
+
+## V28 按依赖组审阅与下一步
+
+| 依赖组 / 建议顺序 | 数值行为、文件依赖 | 验证 / 合并边界 |
+|---|---|---|
+| production numerical/core | src/solvers/task40_v10_p6_yorbit.py稀疏投影与task40_v27_saved_q0.py保存q0；相同数学算子 | 初始/修复fixture及完整q0native；本轮不提升production default |
+| reusable runner/watchdog | src/runners/task40_v10_campaign.py、task40_v20_stage_runner.py、scripts/task40_v20_service_workflow.py；依赖上述核心与既有service/ABI | 真资源门/partial receipt/清场通过；研究入口待review |
+| checker/benchmark | V28 continuation与route tests、partial checker依赖manifest/selector | 21/21正式检查、主控独立保存输出重算；先审绑定与范围 |
+| compact evidence/docs | response/operator/resource/handoff/index和两级总账 | 可优先审阅；准确保留历史身份和失败 |
+| research-only | 固定V28 window/profile、q0 AUTO continuation、full-structure factor预算 | 缺factor/PDE fresh evidence；不外推一般复twist/全q/2TB |
+| do-not-merge | 大CSR/routes/raw输出与未资格化默认路径 | ignored大文件不入Git；master未获批准 |
+
+下一步由主控安排已授权资源，消费现成CSR/PASS测一个完整q的cache-miss分解父成本F_q与业务RHS成本S_q；fresh probe若在父成本中不重复计，再按2TB共驻账选择精确因子驻留数量。当前16GiB相同条件不重试。Nx272/Ny8/Nz14/p6仍为工程pilot，最终精度/全过程48h待后续资格。
+
+证据：[Response V28](../response_v28.md)、[AUTO命令/manifest/PASS](target_stage_handoff_v28.md)、[operator](records/target_operator_probe_v28.json)、[resource](records/time_resource_accounting_v28.json)、[测试摘要](test_summary.md)、[run index](records/run_index.json)。以下历史章节记录对应时刻。
+
+---
+
 # Task40extra Review V27：完整 q0 pattern 可恢复，数值 CSR 在时间门限受控停止
 
 saved-only 表示从已有保存贡献构造矩阵，不重建有限元网格或 native action。本轮完成 regular-reference q0 的行列位置，并开始填复数系数；固定 campaign cutoff 到达时数值 data 仍未完整，所以结果是 CSR_PENDING，而不是 CSR 或 PDE 通过。
 
 | 模型/阶段 | 方法目的 | measured 结果 | 状态 | 证据 |
 |---|---|---|---|---|
-| parent target | 原尺寸 50×25×140 nm、0.7 nm、真实非分离 Si/air、目标 Nx272/Ny8/Nz14/p6 | 本轮没有重新装配或求解 | NOT_RUN | [Response V27](response_v27.md) |
+| parent target | 原尺寸 50×25×140 nm、0.7 nm、真实非分离 Si/air、目标 Nx272/Ny8/Nz14/p6 | 本轮没有重新装配或求解 | NOT_RUN | [Response V27](../response_v27.md) |
 | regular-reference q0 | 只用保存的 q0 map 与贡献，避免 FE/native 重建 | 272×2×14=7,616 cells；shape 777,644×777,644；重建计数0；完整结构 577,061,168 slots | pattern complete；数值 pending | [operator compact](records/target_operator_probe_v27.json) |
 | pattern/routes | 有界 tile 路由及排序列结构 | 3,428,612 routes；pattern measured 2,106.867 s；全部777,644行有结构 | 持久可恢复 | [handoff](target_stage_handoff_v27.md) |
 | data values | 预分配 complex128 文件后填贡献 | status NUMERIC_FILL_INCOMPLETE；cursor=null；numeric nonzero/exact-zero UNKNOWN；无完整 data hash | CSR_PENDING | [manifest compact](records/target_operator_probe_v27.json) |

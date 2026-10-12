@@ -1,3 +1,21 @@
+# Task40extra Review V28：分源码的软件验证与完整矩阵回读
+
+| 阶段 / source | 命令或证据 | 真结果和边界 |
+|---|---|---|
+| 初始52b435d2955c07b1890107b39939f8092ce954e8 | `python -m pytest -q src/test/test_task40_v28_q0_continuation.py src/test/test_task40_v20_routes.py src/test/test_task40_v27_saved_q0.py` | executor log77passed/2skipped in2.42s；main freeze另报2.54s；分列保留，不累加 |
+| ABI/public NPY/CLI | source-freeze receipt与v28_freeze_preflight.log | qualified venv NumPy1.26.4；formal runtime NumPy2.5.3、complex128/int32/MPI1；header3passed in0.19s；python -S CLI/compileall/diff check PASS |
+| 首真实attempt | 20261012T001226.307262Z/source52b435d2 | NameError generation_seconds；原失败与清零费用保留 |
+| 新completion fixture首次 | v28_bugfix_targeted_pytest.log | 1failed/3passed in0.55s，错误audit key；随后只修正fixture |
+| 修复c6624391d8f96e257d1efa914cb38821e2a87eb9 | v28_bugfix_targeted_pytest_retry1.log与repair freeze | 4passed in0.82s；compileall/diff check PASS；未重跑初始77项全组 |
+| 完整CSR/native | 20261012T002559.817050Z，4次完整CSR作用 | 所有total/分量/off-block/重组≤1e-11，最大约1.91e-14 |
+| required partial checker | 正式partial_checker_result.json | 21/21 true，full_pass=false；完整CSR三hash已实际核验 |
+| 主控独立审计 | main_readonly_numeric_audit_v28.json | 只读4输出/native/input重算最大1.9116580127738185e-14；新FE/native/refill/CSRmatvec0 |
+| 文档收口 | JSON、metadata hash、Markdown链接/表格、git diff --check | PASS：3份JSON、28个轻量raw hash、8份Markdown的49处本地链接/188行表格及fence、3段handoff命令bash -n；仅检查改动范围，无新增科学测试或计算 |
+
+source/命令、原始日志和精确hash见[operator raw索引](records/target_operator_probe_v28.json)与[resource/test账](records/time_resource_accounting_v28.json)。full repository pytest/MPI2/MPI4未运行；Ruff不可用未安装；CI不声称通过。GitHub rendered view待主控发布后核验，本地检查不冒充远端渲染。旧V27 checker null和全部历史负结果保留。
+
+---
+
 # Task40extra Review V27 分阶段定向验证与收口检查
 
 | 源码阶段 | 冻结 source SHA | 定向验证 | 结果与边界 |

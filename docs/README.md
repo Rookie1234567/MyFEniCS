@@ -48,7 +48,7 @@
 | [`task035c_hybrid_channel_memory_closure/README.md`](task035c_hybrid_channel_memory_closure/README.md) | Task035c：修复 Full3D–Hybrid 离散 phase/traction 合同；p6/h10 六路径 12/12+12/12；static Hybrid M120 峰值下降31.89%，50%目标未达 |
 | [`task037c_hybrid_iterative_robustness/response_v3.md`](task037c_hybrid_iterative_robustness/response_v3.md) | Task037c白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5 的授权 research extension；M_robust=120，preferred RSS未过，不是production-qualified |
 | [`task038_input_driven_configuration/response_v1.md`](task038_input_driven_configuration/response_v1.md) | Task038：单一 `.dat` input-driven configuration；11 migrated/6 retained，ordinary数值算法不变；source-branch full pytest 1119 passed/48 skipped，integration full 由用户授权 controlled stop |
-| [`task40extra_0p7nm_engineering/README.md`](task40extra_0p7nm_engineering/README.md) | Task40extra Review V27：regular-reference q0 pattern/routes/indptr/indices完整，numeric data在固定时间cutoff受控停止并保持CSR_PENDING；无FE/native rebuild，factor/PDE/R/T/A未运行 |
+| [`task40extra_0p7nm_engineering/README.md`](task40extra_0p7nm_engineering/README.md) | Task40extra Review V28：复用V27 pattern完成regular-reference q0数值CSR和四次native对照；factor在资源准入停止，target PDE/R/T/A未运行；AUTO续作命令和两级资源账已交付 |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |

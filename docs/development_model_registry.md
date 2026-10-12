@@ -2138,6 +2138,34 @@ A2R 测量前另有一次 `adapter_unavailable`（source f93edc8ae9e90c4ed07e375
 
 S6 优化只省掉取得对角项时不需要的计算；A2R 用额外矩阵及分解内存换取准确中间修正。RSS 为同期进程树采样峰值。两次 A2 均没有最终物理结果；初始 checkpoint 不能代替最终残差，成本受控停止不能推出不收敛定理。这是 13.5 nm 阶段记录，不代表 0.7 nm 已通过。来源、完整 SHA 和 hash 见 [Task39extra 运行索引](task039_extra_physical_multilevel/outcomes/records/run_index.json)，解释见 [阶段总结](task039_extra_physical_multilevel/outcomes/summary.md)。
 
+## Task40extra Review V28：完整 q0 数值矩阵、native 对照和 factor 资源停止
+
+本次heavy attempt `20261012T002559.817050Z`，科学source`c6624391d8f96e257d1efa914cb38821e2a87eb9`。q0是周期参考问题的单支路；通过保存贡献填满已有稀疏结构，再检验矩阵作用与native是否相同。V27的基线是pattern完整、numeric incomplete；V28复用其结构且无FE/native重建。实际参考模型为7,616cells，完整target仍为30,464cells非分离Si/air。
+
+### V28 一级模型账
+
+| 模型/目的 | rows、数值和比较 | 物理结果与分类 |
+|---|---|---|
+| regular-reference q0；272×2×14、p6、λ0.7nm | 777,644²；577,061,168 slots；560,366,994 numeric nonzero；16,694,174 exact-zero | COMPLETE_CSR；4次native最大1.91166e-14≤1e-11 |
+| 独立保存输出重算 | total/volume/C/−D/Hhat/重组/理论零最大1.9116580127738185e-14 | PASS；新增FE/native/fill/CSRmatvec0 |
+| q0 factor | 新增69,340,657,464 B vs host可新增4,873,007,104 B | PETSc转换前资源停止；factor/KSP/residual/INFOG未运行或未知 |
+| 原尺寸50×25×140nm，Nx272/Ny8/Nz14/p6 | 全q、target全场及最终精度无新证据 | R00_s/R00_p/R00_total、R/T/A/A_volume、衍射复幅值NOT_RUN；2TB/48h未资格化 |
+
+### V28 二级资源与生命周期账
+
+| 对象/区间 | 数值与数据身份 | 范围 |
+|---|---|---|
+| CSR | payload11,544,333,940 B；含header文件共11,544,334,324 B | 派生payload/实测文件大小，非进程峰值；共享backing，无整份拷贝 |
+| distinct数值阶段 | clear52.559、fill734.324、hash50.957、readback286.435s measured | 未覆盖全部准备/flush/保存；子项不再重复加 |
+| 完整已记录outer parent | mono1316.226225s、UTC1464.150476s、保守1464.152690s | 含activation/ABI/run_case/checker；watchdog嵌套；systemd未记首尾UNKNOWN |
+| treeRSS / cgroup峰 | 12,497,358,848 /13,044,125,696 B measured | 两种口径分开，PSS禁用/null |
+| task / host swap | task tree/cgroup0；WSL-global+60inpages/0outpages | host既有swap非零，global归因UNKNOWN |
+| adapter/maps释放后 | RSS414,957,568；cgroup12,303,282,176；file11,835,424,768 B | 文件页仍收费，无完整CSR已释放结论 |
+| factor预测与缺口 | 2B23,088,667,880 B；现行envelope80,884,991,404 B；host缺64,467,650,360 B、cgroup缺64,601,868,088 B | derived；缺口不相加；actual factor峰值/时间UNKNOWN |
+| 首失败 | NameError generation_seconds；clear66.735125s、watchdog83.759734s；cgroup13,042,233,344 B | 原attempt保留；同窗定向修复后clear-all，没有换数学模型 |
+
+下一步由主控安排已授权资源，取得完整单q factor父成本和业务RHS成本；当前16GiB不重试，不提升default或合master。[Response](task40extra_0p7nm_engineering/response_v28.md)、[operator](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v28.json)、[资源账](task40extra_0p7nm_engineering/outcomes/records/time_resource_accounting_v28.json)、[命令/manifest/PASS](task40extra_0p7nm_engineering/outcomes/target_stage_handoff_v28.md)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

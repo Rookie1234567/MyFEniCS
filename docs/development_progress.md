@@ -1,3 +1,24 @@
+# Task40extra Review V28：从完整结构推进到可复用的数值 q0 矩阵
+
+分支`task40extra_0p7nm_engineering`；结果基线`4e04f2fe2b3ea22e67cbd93ee1ffebfd66b50a79`；最终科学source`c6624391d8f96e257d1efa914cb38821e2a87eb9`。完整q0 CSR/native通过，factor资源准入停止，待review；ordinary default未改、未合master。
+
+V27已保存行列位置但在固定cutoff前没填完系数。V28用精确稀疏局部投影和现有AUTO续作，从保存贡献重填数值，避免FE/native/pattern重建。H按保存缩放计算、C/−D保持复数合同。收益是现成矩阵/资格可直接交给下一阶段；完整CSR仍约11.5GB，当前16GiB环境容纳不了既有factor转换和分析预算。
+
+| 实际对象/阶段 | 结果与成本 | 资格边界 |
+|---|---|---|
+| 7,616-cell regular-reference q0 | 777,644²；577,061,168 slots，560,366,994 numeric nonzero；4次native最大约1.91e-14≤1e-11 | COMPLETE_CSR+PASS；非30,464-cell target场 |
+| 原失败与修复 | 首source52b435d2计时callback NameError；c662先赋值后回调，clear-all续填；fixture错误key失败也保留 | 同窗修复，T0/历史费用不清零 |
+| 计时 | clear52.559、fill734.324、hash50.957、readback286.435s；outer parent mon1316.226/保守1464.153s | 子项不重复加；UTC正差保留；旧pattern2106.867s本轮未执行 |
+| 资源 | treeRSS12,497,358,848 B；cgroup13,044,125,696 B；task swap0，PSSnull | host既有swap及global+60inpages另记；释放adapter后file页仍收费 |
+| factor | 请求新增69,340,657,464 B；host缺64,467,650,360 B、cgroup缺64,601,868,088 B | 分开比较；转换前停止，actual factor峰值/时间UNKNOWN |
+| 验证 | 初始source77/2skip、修复source4项、formal partial checker21/21；主控保存输出独立重算PASS | 不累计为单一测试总数；无target物理或CI资格 |
+
+下一步由主控安排已授权资源，直接消费现成CSR/PASS实测一个q的cache-miss分解父成本及业务RHS，再按整机2TB共驻账选择可保留的相同精确因子数量。其余q、target接线、全场A6/恢复/输出、最终精度及48h全过程仍缺证据。同16GiB条件不重试。数值核心、runner/checker及compact/docs按依赖组审查，研究路径不提升production default。
+
+入口：[task](task40extra_0p7nm_engineering/task.md)、[review](task40extra_0p7nm_engineering/review_report_v28.md)、[response](task40extra_0p7nm_engineering/response_v28.md)、[summary](task40extra_0p7nm_engineering/outcomes/summary.md)、[AUTO命令](task40extra_0p7nm_engineering/outcomes/target_stage_handoff_v28.md)、[operator](task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v28.json)、[resource](task40extra_0p7nm_engineering/outcomes/records/time_resource_accounting_v28.json)、[核心实现](../src/solvers/task40_v27_saved_q0.py)。以下历史保持原分类。
+
+---
+
 # Task40extra Review V27 项目进展：pattern 完整，数值填值由固定窗口控制停止
 
 V27 对原尺寸 parent target 对应的 regular-reference q0 复用保存贡献；没有重建 FE/MPC/native。完整 row structure、support routes、indptr 和 indices 已持久化，总计577,061,168个结构位置。它们表示系数写入位置，不代表系数都已算出。数值填值开始后到达 campaign cutoff，data文件仍未完成且没有可靠cursor；因此保留CSR_PENDING。下一步可以复用已有from-clear API续填，无需重建producer、FE、routes或columns。

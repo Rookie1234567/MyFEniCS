@@ -1,3 +1,19 @@
+## Review V28 当前交付：完整 q0 CSR/native 通过，factor 资源准入停止
+
+7,616-cell regular-reference q0已完成777,644²、577,061,168-slot complex128/int32 CSR，四次native对照最大约1.91e-14≤1e-11。复用V27 pattern、FE/MPC/native/producer重建0；factor在PETSc转换前因内存准入停止。target PDE/R/T/A、最终精度与2TB/48h未资格化。
+
+| 入口 | 内容 |
+|---|---|
+| [Review V28](review_report_v28.md) / [Response V28](response_v28.md) | 合同、五项结论、原失败、测试与边界 |
+| [summary](outcomes/summary.md) / [test summary](outcomes/test_summary.md) | 两级模型/资源时钟与source-bound验证 |
+| [AUTO fill/readback/factor交接](outcomes/target_stage_handoff_v28.md) | 三状态、现成CSR/PASS、可复制命令和当前16GiB拒绝 |
+| [operator](outcomes/records/target_operator_probe_v28.json) / [resource](outcomes/records/time_resource_accounting_v28.json) | 完整数据身份、实际数值、内存缺口、父/子计时与旧进度解释 |
+| [run index](outcomes/records/run_index.json) | 追加V28的正式与独立审计证据hash |
+
+最终科学source `c6624391d8f96e257d1efa914cb38821e2a87eb9`。原manifest创建身份source52b435d2、旧donor身份、NameError与fixture失败保留。服务退出清场、task swap0；执行者不commit/push，由主控审查发布。以下为历史阶段。
+
+---
+
 ## Review V27 当前交付：q0 pattern 已保存，numeric CSR 在固定时间门限受控停止
 
 V27 复用了 V26 的保存流资格，以 q0-only saved contribution route 写出完整行列结构和路由；不重建 FE/MPC/native。777,644 行、577,061,168 个结构位置和 indices/indptr 均可恢复，但数值填值没有完成，manifest 是 NUMERIC_FILL_INCOMPLETE。data 文件是完整 shape 预分配，文件长度不能当作完成比例。
