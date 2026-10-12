@@ -10,7 +10,10 @@ import numpy as np
 import pytest
 from scipy import sparse
 
-from src.solvers.task40_v10_p6_periodic_profile import TASK40_V10_P6_PROFILE
+from src.solvers.task40_v10_p6_periodic_profile import (
+    TASK40_V10_P6_PROFILE,
+    TASK40_V18_P6_B0_Y8_PROFILE,
+)
 from src.solvers.task40_v10_p6_mumps import (
     AllQExactMumps,
     OneQRefactorV19Mumps,
@@ -298,6 +301,170 @@ def _one_q_test_matrices():
         q: sparse.csr_matrix(base + q * np.eye(3, dtype=np.complex128))
         for q in range(TASK40_V10_P6_PROFILE.q_count)
     }
+
+
+@pytest.mark.parametrize(
+    ("profile", "q_count"),
+    (
+        (TASK40_V10_P6_PROFILE, 4),
+        (TASK40_V18_P6_B0_Y8_PROFILE, 8),
+    ),
+    ids=("four-q", "eight-q"),
+)
+def test_v30_all_q_strictly_qualifies_two_rhs_and_persists_packets(
+    tmp_path, profile, q_count
+):
+    base = _one_q_test_matrices()[0]
+    matrices = {
+        q: (base + q * sparse.eye(3, dtype=np.complex128)).tocsr()
+        for q in range(q_count)
+    }
+    gates = []
+    v30_config = {
+        "schema": "task40extra.review_v30_all_q_factor_bank.v1",
+        "require_two_strict_rhs": True,
+        "second_rhs_formula": (
+            "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13"
+        ),
+        "output_directory": str(tmp_path),
+    }
+    with AllQExactMumps(
+        matrices,
+        allocation_gate=lambda name, facts: gates.append((name, dict(facts))) or {},
+        expected_shapes=(3,) * q_count,
+        profile=profile,
+        full_storage_rows=6,
+        actual_target_full_storage_rows=None,
+        planned_target_full_storage_rows=9,
+        v30_config=v30_config,
+    ) as factors:
+        assert factors.audit["strict_factor_qualification_required"] is True
+        assert factors.audit["all_q_fresh_probe_and_second_rhs_passed"] is True
+        expected_q = list(range(q_count))
+        assert factors.audit["symbolic_ready_q"] == expected_q
+        assert factors.audit["numeric_ready_q"] == expected_q
+        assert factors.audit["all_q_numeric_factors_strict_true_residual_passed"] is True
+
+        packet_records = []
+        for q, test in enumerate(factors.audit["factor_tests"]):
+            assert test["q"] == q
+            assert test["strict_passed"] is True
+            assert test["fresh_rhs"]["constructed_directly_not_from_csr_times_x"] is True
+            assert test["fresh_rhs"]["native_solve_attempted"] is True
+            assert test["fresh_rhs"]["native_solve_completed"] is True
+            assert test["second_rhs"]["rhs_all_entries_nonzero"] is True
+            assert test["second_rhs"]["rhs_distinct_from_direct_cos_sin_probe"] is True
+            assert test["second_rhs"]["native_solve_attempted"] is True
+            assert test["second_rhs"]["native_solve_completed"] is True
+            assert test["second_rhs"]["strict_passed"] is True
+            for packet in (test["fresh_rhs"]["packet"], test["second_rhs"]["packet"]):
+                packet_path = tmp_path / packet["path"].split("/")[-1]
+                assert packet["readback_verified"] is True
+                assert hashlib.sha256(packet_path.read_bytes()).hexdigest() == packet["sha256"]
+                packet_records.append(packet)
+            f_q = factors.audit["F_q_active_seconds_by_q"][str(q)]
+            assert np.isclose(
+                f_q,
+                factors.audit["q_symbolic_conversion_parent_seconds_by_q"][str(q)]
+                + factors.audit["q_numeric_fresh_parent_seconds_by_q"][str(q)],
+            )
+            assert np.isclose(
+                factors.audit["q_ready_span_seconds_by_q"][str(q)],
+                factors.audit["q_ready_elapsed_seconds_by_q"][str(q)]
+                - factors.audit["q_first_started_elapsed_seconds_by_q"][str(q)],
+                atol=1.0e-3,
+            )
+        assert len(packet_records) == 2 * q_count
+        assert len({packet["path"] for packet in packet_records}) == 2 * q_count
+
+        bank_admission = next(
+            facts for name, facts in gates
+            if name == "all_q_symbolic_before_any_numeric"
+        )
+        inventory = bank_admission["pre_release_recovery_output_inventory"]
+        assert inventory["reference_full_storage_rows"] == 6
+        assert inventory["planned_target_full_storage_rows"] == 9
+        assert inventory["actual_target_full_storage_rows"] is None
+        assert inventory["actual_target_and_reference_full_rows_match_required"] is False
+        assert bank_admission["full_storage_rows_for_future_recovery"] == 9
+        assert bank_admission["target_budget_status"] == (
+            "PLANNED_ROWS_RESERVED_ACTUAL_NOT_BUILT"
+        )
+
+        bank_parent = factors.audit["T_bank_parent_seconds"]
+        accounted = (
+            factors.audit["F_q_active_parent_seconds_total"]
+            + factors.audit["T_bank_second_rhs_parent_seconds_total"]
+            + factors.audit["T_bank_shared_seconds"]
+            + factors.audit["T_bank_unattributed_seconds"]
+        )
+        assert np.isclose(bank_parent, accounted, atol=1.0e-9)
+        assert abs(factors.audit["T_bank_accounting_closure_error_seconds"]) <= 1.0e-9
+
+        rhs = np.asarray([1.0 + 0.5j, -0.2 + 0.8j, 0.7 - 0.1j])
+        solution = factors.solve(2, rhs)
+        assert np.linalg.norm(matrices[2] @ solution - rhs) / np.linalg.norm(rhs) < 1.0e-10
+        assert factors.audit["S_q_native_solve_attempted_count_by_q"]["2"] == 1
+        assert factors.audit["S_q_native_solve_completed_count_by_q"]["2"] == 1
+        if q_count == 8:
+            assert factors.audit["all_four_factors_retained_simultaneously"] is False
+            assert factors.audit["all_four_numeric_factors_true_residual_passed"] is False
+            assert factors.audit["all_four_factor_objects_live_simultaneously"] is False
+
+
+def test_all_q_destroy_failure_retains_failed_q_owners_and_allows_retry():
+    matrices = _one_q_test_matrices()
+    backend = AllQExactMumps(
+        matrices,
+        allocation_gate=lambda _name, _facts: {},
+        expected_shapes=(3, 3, 3, 3),
+    )
+
+    class _DestroyFails:
+        def __init__(self, factor):
+            self.factor = factor
+            self.allow_destroy = False
+
+        def __getattr__(self, name):
+            return getattr(self.factor, name)
+
+        def destroy(self):
+            if not self.allow_destroy:
+                raise RuntimeError("synthetic native factor destroy failure")
+            return self.factor.destroy()
+
+    resident_factor = _DestroyFails(backend.factors[0])
+    resident_matrix = backend.matrices[0]
+    resident_csr = backend.csr_matrices[0]
+    backend.factors[0] = resident_factor
+    try:
+        with pytest.raises(RuntimeError, match="failed to destroy"):
+            backend.destroy()
+        assert backend.cleanup_failed is True
+        assert backend.destroyed is False
+        assert backend.factors == {0: resident_factor}
+        assert backend.matrices == {0: resident_matrix}
+        assert backend.csr_matrices == {0: resident_csr}
+        assert backend.source_matrices == {0: matrices[0]}
+        assert backend._unconfirmed_owner_tags == {f"all_q_{id(backend)}_factor_q0"}
+        assert len(backend.audit["cleanup_failures"]) == 1
+        with pytest.raises(RuntimeError, match="all live profile p6 q factors"):
+            backend.solve(0, np.ones(3, dtype=np.complex128))
+
+        resident_factor.allow_destroy = True
+        backend.destroy()
+        assert backend.destroyed is True
+        assert backend.cleanup_failed is False
+        assert backend.factors == {}
+        assert backend.matrices == {}
+        assert backend.csr_matrices == {}
+        assert backend.source_matrices == {}
+        assert backend._unconfirmed_owner_tags == set()
+        assert len(backend.audit["cleanup_failures"]) == 1
+    finally:
+        if not backend.destroyed:
+            resident_factor.allow_destroy = True
+            backend.destroy()
 
 
 def test_one_q_refactor_rebuilds_on_switch_and_keeps_full_q_solve_coverage():

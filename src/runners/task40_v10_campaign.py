@@ -451,6 +451,51 @@ TASK40_V29_FORBIDDEN_SCOPE = (
     "OOC_BLR_ordering_or_pivot_changes",
     "master_merge",
 )
+TASK40_V30_CAMPAIGN_WINDOW = (
+    Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation")
+    / "campaign_window_v30.json"
+)
+TASK40_V30_CAMPAIGN_SHA256 = "0730454198abcee55401331d74f24a667d0d52036f67e1be817a3426a8d381a7"
+TASK40_V30_TARGET_CAMPAIGN_WINDOW = (
+    Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl")
+    / "campaign_window_v30.json"
+)
+TASK40_V30_TARGET_CAMPAIGN_SHA256 = "15ef0f6dd4221d71e488b2c2930ad1dd05328b06b0ce78819d8402093c1e8320"
+TASK40_V30_TARGET_CLOCK_RECEIPT = (
+    Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation")
+    / "target_native_clock_receipt_v30.json"
+)
+TASK40_V30_TARGET_CLOCK_RECEIPT_SHA256 = "079a2031f16abe1d3eaf2a122801351670278d9007235b1705e0846e45920ae4"
+TASK40_V30_ENTRY_RECEIPT = (
+    Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation")
+    / "controller_entry_receipt_v30.json"
+)
+TASK40_V30_ENTRY_RECEIPT_SHA256 = "6c24c32f951415e361276f027cc920b4ae940c5b1e135d7a9dc034ed28bf1756"
+TASK40_V30_CAMPAIGN_SECONDS = 43_200.0
+TASK40_V30_CLOSEOUT_RESERVE_SECONDS = 1_200.0
+TASK40_V30_CAMPAIGN_ID = "task40extra_v30_all_q_reference_with_conditional_target_pilot"
+TASK40_V30_REVIEW_COMMIT = "8c05f1bf2aecd318ca3270ddfb0b787dcc3465e8"
+TASK40_V30_REVIEW_SHA256 = "d8fb7824c0a435b6528ab0c1132a0c86e2549dcf22441bfb88973f041f9f4d9e"
+TASK40_V30_REVIEW_PATH = "docs/task40extra_0p7nm_engineering/review_report_v30.md"
+TASK40_V30_SOURCE_AT_ENTRY = "8c05f1bf2aecd318ca3270ddfb0b787dcc3465e8"
+TASK40_V30_STAGE_SCOPE = (
+    "P0_contract_and_generic_entry",
+    "P1_q4_csr_native",
+    "P2_q1_q7_csr_native",
+    "P3_all_q_resident_factor_bank",
+    "P4_complete_reference_inverse",
+    "P5_conditional_target_pilot",
+    "P6_closeout",
+)
+TASK40_V30_FORBIDDEN_SCOPE = (
+    "automatic_cap_increase",
+    "window_refresh",
+    "parameter_or_accuracy_scan",
+    "MUMPS_or_ABI_change",
+    "OOC_or_BLR",
+    "unrelated_project_mutation",
+    "master_merge",
+)
 
 
 def _utc_ns(value: Any) -> int:
@@ -804,6 +849,146 @@ def _validate_v29_campaign_registration(
         raise ValueError(f"registered V29 campaign identity or scope changed: {changed}")
 
 
+def _validate_v30_campaign_registration(
+    resolved: Path, digest: str, payload: Mapping[str, Any]
+) -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    control_window_path = (repo_root / TASK40_V30_CAMPAIGN_WINDOW).resolve()
+    target_window_path = (repo_root / TASK40_V30_TARGET_CAMPAIGN_WINDOW).resolve()
+    is_target_window = resolved == target_window_path
+    if resolved not in {control_window_path, target_window_path}:
+        raise ValueError("the V30 campaign window is not at a registered control or target path")
+    expected_digest = (
+        TASK40_V30_TARGET_CAMPAIGN_SHA256 if is_target_window else TASK40_V30_CAMPAIGN_SHA256
+    )
+    changed: list[str] = []
+    if digest != expected_digest:
+        changed.append("campaign_window_sha256")
+    expected_fields = {
+        "schema": CAMPAIGN_SCHEMA,
+        "campaign": TASK40_V30_CAMPAIGN_ID,
+        "authority": "User-approved Review V30 sections 6.1 and 8 full execution package",
+        "active_review_sha": TASK40_V30_REVIEW_COMMIT,
+        "active_review_path": TASK40_V30_REVIEW_PATH,
+        "active_review_sha256": TASK40_V30_REVIEW_SHA256,
+        "source_at_entry": TASK40_V30_SOURCE_AT_ENTRY,
+        "review_at_registration": TASK40_V30_REVIEW_COMMIT,
+        "t0_utc": "2026-10-12T12:23:42.000Z",
+        "numeric_cutoff_utc": "2026-10-13T00:03:42.000Z",
+        "deadline_utc": "2026-10-13T00:23:42.000Z",
+        "campaign_seconds": TASK40_V30_CAMPAIGN_SECONDS,
+        "numeric_cutoff_seconds": 42_000.0,
+        "closeout_reserve_seconds": TASK40_V30_CLOSEOUT_RESERVE_SECONDS,
+        "time_policy": CONSERVATIVE_REALTIME,
+        "stage_scope": list(TASK40_V30_STAGE_SCOPE),
+        "forbidden_scope": list(TASK40_V30_FORBIDDEN_SCOPE),
+        "window_refreshed": False,
+        "old_costs_and_unknowns_preserved": True,
+        "artifact_execution_identity_separate": True,
+        "bootstrap_boottime_elapsed_seconds": None,
+    }
+    changed.extend(key for key, value in expected_fields.items() if payload.get(key) != value)
+    entry_receipt_path = (repo_root / TASK40_V30_ENTRY_RECEIPT).resolve()
+    if (
+        not entry_receipt_path.is_file()
+        or hashlib.sha256(entry_receipt_path.read_bytes()).hexdigest()
+        != TASK40_V30_ENTRY_RECEIPT_SHA256
+    ):
+        changed.append("controller_entry_receipt_identity")
+        controller_entry: Mapping[str, Any] = {}
+    else:
+        controller_entry = json.loads(entry_receipt_path.read_text(encoding="utf-8"))
+    approval = payload.get("user_approval")
+    registered_approval = controller_entry.get("user_approval")
+    if not isinstance(approval, Mapping) or not isinstance(registered_approval, Mapping) or dict(approval) != dict(registered_approval):
+        changed.append("user_approval_does_not_match_original_receipt")
+    elif (
+        approval.get("scope") != "V30_ALL_Q_REFERENCE_WITH_CONDITIONAL_TARGET_PILOT"
+        or approval.get("execution_host") != "fenics-ws"
+        or approval.get("execution_root") != "/home/fenics/Projects/laptop_share"
+        or approval.get("resources") != {
+            "task_memory_max_bytes": 1_649_267_441_664,
+            "host_reserve_bytes": 68_719_476_736,
+            "memory_swap_max_bytes": 0,
+            "mpi_ranks": 1,
+            "math_threads": 1,
+        }
+    ):
+        changed.append("user_approval_scope_or_resources")
+    else:
+        approval_sha = hashlib.sha256(
+            json.dumps(approval, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        if payload.get("user_approval_sha256") != approval_sha:
+            changed.append("user_approval_sha256")
+    parent_window = {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/campaign_window_v29.json",
+        "sha256": "68b19c507106a7ad003a6c7121cb3ba4461ed569bd4706e221970d59126bbf1e",
+        "t0_utc": "2026-10-12T05:49:12.144309894Z",
+        "deadline_utc": "2026-10-12T11:49:12.144309894Z",
+        "verified_expired": True,
+        "old_ledger_and_costs_preserved": True,
+    }
+    if payload.get("parent_window") != parent_window:
+        changed.append("prior_v29_window_binding")
+    if is_target_window:
+        target_receipt_path = (repo_root / TASK40_V30_TARGET_CLOCK_RECEIPT).resolve()
+        if (
+            not target_receipt_path.is_file()
+            or hashlib.sha256(target_receipt_path.read_bytes()).hexdigest()
+            != TASK40_V30_TARGET_CLOCK_RECEIPT_SHA256
+        ):
+            changed.append("target_native_clock_receipt_identity")
+            target_receipt: Mapping[str, Any] = {}
+        else:
+            target_receipt = json.loads(target_receipt_path.read_text(encoding="utf-8"))
+        target_identity = target_receipt.get("target", {})
+        if (
+            target_identity.get("host_alias") != "fenics-ws"
+            or target_identity.get("hostname") != "fenics-ws01"
+            or target_identity.get("root") != "/home/fenics/Projects/laptop_share"
+            or target_identity.get("source_head") != "9a9a9d31f4aebf1564d5f09177c1d3481d64371f"
+            or target_identity.get("runtime_profile") != "native_linux"
+            or target_identity.get("abi_receipt_sha256") != "1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d"
+        ):
+            changed.append("target_execution_identity")
+        expected_receipt_path = str(TASK40_V30_TARGET_CLOCK_RECEIPT.as_posix())
+        if payload.get("target_clock_receipt_path") != expected_receipt_path or payload.get("target_clock_receipt_sha256") != TASK40_V30_TARGET_CLOCK_RECEIPT_SHA256:
+            changed.append("target_clock_receipt_binding")
+        control_binding = {
+            "path": TASK40_V30_CAMPAIGN_WINDOW.as_posix(),
+            "sha256": TASK40_V30_CAMPAIGN_SHA256,
+            "host_boot_id": str(controller_entry.get("clock_sample", {}).get("boot_id", "")),
+            "scope": "local preparation only; not the target-native service window",
+        }
+        if payload.get("control_window") != control_binding:
+            changed.append("separate_control_window_binding")
+        raw_anchor = target_receipt.get("first_full_three_clock_sample", {})
+    else:
+        raw_sample = controller_entry.get("clock_sample", {})
+        raw_anchor = {
+            "utc_ns": int(raw_sample.get("utc_ns", -1)),
+            "monotonic": int(raw_sample.get("monotonic_ns", -1)) / 1e9,
+            "boottime": int(raw_sample.get("boottime_ns", -1)) / 1e9,
+            "boot_id": str(raw_sample.get("boot_id", "")),
+        }
+    if payload.get("first_full_three_clock_sample") != raw_anchor:
+        changed.append("entry_clock_anchor")
+    treatment = payload.get("bootstrap_time_treatment")
+    if (
+        not isinstance(treatment, str)
+        or "UTC elapsed" not in treatment
+        or "UNKNOWN" not in treatment
+        or "null is not zero" not in treatment
+        or "Never refresh T0" not in treatment
+        or (is_target_window and "target-native" not in treatment)
+        or (not is_target_window and "first preparation" not in treatment)
+    ):
+        changed.append("bootstrap_time_treatment")
+    if changed:
+        raise ValueError(f"registered V30 campaign identity or approval changed: {changed}")
+
+
 @dataclass(frozen=True)
 class FixedCampaignWindow:
     path: Path
@@ -1071,6 +1256,12 @@ def load_fixed_campaign_window(
     v29_path = (
         Path(__file__).resolve().parents[2] / TASK40_V29_CAMPAIGN_WINDOW
     ).resolve()
+    v30_path = (
+        Path(__file__).resolve().parents[2] / TASK40_V30_CAMPAIGN_WINDOW
+    ).resolve()
+    v30_target_path = (
+        Path(__file__).resolve().parents[2] / TASK40_V30_TARGET_CAMPAIGN_WINDOW
+    ).resolve()
     is_v22 = resolved == v22_path
     is_v23 = resolved == v23_path
     is_v24 = resolved == v24_path
@@ -1079,6 +1270,7 @@ def load_fixed_campaign_window(
     is_v27 = resolved == v27_path
     is_v28 = resolved == v28_path
     is_v29 = resolved == v29_path
+    is_v30 = resolved in {v30_path, v30_target_path}
     if is_v22:
         _validate_v22_campaign_registration(resolved, digest, payload)
         expected_total = TASK40_V22_CAMPAIGN_SECONDS
@@ -1111,6 +1303,10 @@ def load_fixed_campaign_window(
         _validate_v29_campaign_registration(resolved, digest, payload)
         expected_total = TASK40_V29_CAMPAIGN_SECONDS
         expected_closeout = TASK40_V29_CLOSEOUT_RESERVE_SECONDS
+    elif is_v30:
+        _validate_v30_campaign_registration(resolved, digest, payload)
+        expected_total = TASK40_V30_CAMPAIGN_SECONDS
+        expected_closeout = TASK40_V30_CLOSEOUT_RESERVE_SECONDS
     else:
         expected_total = CAMPAIGN_SECONDS
         expected_closeout = CLOSEOUT_RESERVE_SECONDS
@@ -1136,10 +1332,14 @@ def load_fixed_campaign_window(
     ):
         raise ValueError("the initial boot identity is malformed or inconsistent")
     bootstrap_utc = float(payload.get("bootstrap_utc_elapsed_seconds", -1.0))
-    bootstrap_boot = float(payload.get("bootstrap_boottime_elapsed_seconds", -1.0))
-    if min(bootstrap_utc, bootstrap_boot) < 0:
-        raise ValueError("campaign bootstrap accounting must be non-negative")
-    bootstrap = max(bootstrap_utc, bootstrap_boot)
+    bootstrap_boot_raw = payload.get("bootstrap_boottime_elapsed_seconds", -1.0)
+    if is_v30 and bootstrap_boot_raw is None:
+        bootstrap_boot = None
+    else:
+        bootstrap_boot = float(bootstrap_boot_raw)
+    if bootstrap_utc < 0 or (bootstrap_boot is not None and bootstrap_boot < 0):
+        raise ValueError("campaign bootstrap accounting must be non-negative when measured")
+    bootstrap = max(bootstrap_utc, bootstrap_boot if bootstrap_boot is not None else bootstrap_utc)
     if abs((anchor["utc_ns"] - t0_ns) / 1e9 - bootstrap_utc) > 1e-6:
         raise ValueError("the recorded UTC bootstrap debit does not match the immutable T0")
     if payload.get("bootstrap_time_treatment") is None:
@@ -1276,6 +1476,23 @@ __all__ = [
     "TASK40_V29_REVIEW_PATH",
     "TASK40_V29_STAGE_SCOPE",
     "TASK40_V29_FORBIDDEN_SCOPE",
+    "TASK40_V30_CAMPAIGN_WINDOW",
+    "TASK40_V30_CAMPAIGN_SHA256",
+    "TASK40_V30_TARGET_CAMPAIGN_WINDOW",
+    "TASK40_V30_TARGET_CAMPAIGN_SHA256",
+    "TASK40_V30_TARGET_CLOCK_RECEIPT",
+    "TASK40_V30_TARGET_CLOCK_RECEIPT_SHA256",
+    "TASK40_V30_ENTRY_RECEIPT",
+    "TASK40_V30_ENTRY_RECEIPT_SHA256",
+    "TASK40_V30_CAMPAIGN_SECONDS",
+    "TASK40_V30_CLOSEOUT_RESERVE_SECONDS",
+    "TASK40_V30_CAMPAIGN_ID",
+    "TASK40_V30_REVIEW_COMMIT",
+    "TASK40_V30_REVIEW_SHA256",
+    "TASK40_V30_REVIEW_PATH",
+    "TASK40_V30_SOURCE_AT_ENTRY",
+    "TASK40_V30_STAGE_SCOPE",
+    "TASK40_V30_FORBIDDEN_SCOPE",
     "CampaignAccount",
     "FixedCampaignWindow",
     "TASK40_V10_CAMPAIGN_WINDOW",

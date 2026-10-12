@@ -1,4 +1,7 @@
 from dataclasses import replace
+import hashlib
+import json
+from pathlib import Path
 
 import pytest
 
@@ -163,3 +166,66 @@ def test_v25_campaign_window_is_bound_to_its_exact_six_hour_registration():
         campaign._validate_v25_campaign_registration(
             path, window.sha256, changed_scope
         )
+
+
+def test_v30_window_preserves_unknown_boottime_and_requires_matching_boot(
+    tmp_path, monkeypatch
+):
+    repository = tmp_path / "checkout"
+    monkeypatch.setattr(
+        campaign, "__file__", str(repository / "src/runners/task40_v10_campaign.py")
+    )
+    target_relative = Path("benchmarks/artifacts/v30/campaign_window_v30.json")
+    monkeypatch.setattr(
+        campaign, "TASK40_V30_CAMPAIGN_WINDOW", Path("benchmarks/artifacts/v30/control.json")
+    )
+    monkeypatch.setattr(campaign, "TASK40_V30_TARGET_CAMPAIGN_WINDOW", target_relative)
+    monkeypatch.setattr(campaign, "_validate_v30_campaign_registration", lambda *args: None)
+
+    t0_utc = "2030-01-01T00:00:00Z"
+    t0_ns = campaign._utc_ns(t0_utc)
+    boot_id = "12345678-1234-1234-1234-123456789abc"
+    payload = {
+        "schema": campaign.CAMPAIGN_SCHEMA,
+        "window_refreshed": False,
+        "old_costs_and_unknowns_preserved": True,
+        "campaign_seconds": campaign.TASK40_V30_CAMPAIGN_SECONDS,
+        "time_policy": campaign.CONSERVATIVE_REALTIME,
+        "t0_utc": t0_utc,
+        "deadline_utc": "2030-01-01T12:00:00Z",
+        "first_full_three_clock_sample": {
+            "monotonic": 6.0,
+            "boottime": 5.0,
+            "utc_ns": t0_ns + 15_000_000_000,
+            "boot_id": boot_id,
+        },
+        "initial_boot_id": boot_id,
+        "bootstrap_utc_elapsed_seconds": 15.0,
+        "bootstrap_boottime_elapsed_seconds": None,
+        "bootstrap_time_treatment": "UTC elapsed; boottime UNKNOWN; null is not zero.",
+        "closeout_reserve_seconds": campaign.TASK40_V30_CLOSEOUT_RESERVE_SECONDS,
+    }
+    encoded = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    target_path = repository / target_relative
+    target_path.parent.mkdir(parents=True)
+    target_path.write_bytes(encoded)
+    monkeypatch.setattr(
+        campaign,
+        "TASK40_V30_TARGET_CAMPAIGN_SHA256",
+        hashlib.sha256(encoded).hexdigest(),
+    )
+
+    window = campaign.load_fixed_campaign_window(target_path, require_current_boot=False)
+    assert window.payload["bootstrap_boottime_elapsed_seconds"] is None
+    assert window.bootstrap_seconds == 15.0
+
+    monkeypatch.setattr(
+        campaign,
+        "clock_sample",
+        lambda **kwargs: {"boot_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"},
+    )
+    with pytest.raises(campaign.TimebaseInconsistency, match="boot identity changed"):
+        campaign.load_fixed_campaign_window(target_path)
+
+    monkeypatch.setattr(campaign, "clock_sample", lambda **kwargs: {"boot_id": boot_id})
+    assert campaign.load_fixed_campaign_window(target_path).anchor["boot_id"] == boot_id

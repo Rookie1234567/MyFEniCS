@@ -4267,12 +4267,15 @@ def build_task40_v10_p6_reference_inverse(
     jit_options: Mapping[str, Any] | None = None,
     share_transform_bank: bool = False,
     target_full_storage_rows: int | None = None,
+    planned_target_full_storage_rows: int | None = None,
     reference_pc_strategy: str = STRICT_ONLY,
     q_assembly_strategy: str = Q_ASSEMBLY_LEGACY,
     factor_lifecycle_strategy: str = "ALL_Q_RESIDENT",
     q_assembly_comparison_only: bool = False,
     operator_qualification_reuse: Callable[..., tuple[Mapping[str, Any], Mapping[str, Any]]] | None = None,
     mode_inventory: tuple[Any, Any, Any] | None = None,
+    v30_factor_config: Mapping[str, Any] | None = None,
+    factor_output_directory: str | None = None,
 ) -> dict[str, Any]:
     """Build the regular p6 inverse, or run a bounded no-factor q-assembly pair."""
     from mpi4py import MPI
@@ -4445,11 +4448,35 @@ def build_task40_v10_p6_reference_inverse(
             "target_full_storage_rows": (
                 None if target_full_storage_rows is None else int(target_full_storage_rows)
             ),
+            "actual_target_full_storage_rows": (
+                None if target_full_storage_rows is None else int(target_full_storage_rows)
+            ),
+            "planned_target_full_storage_rows": (
+                None
+                if planned_target_full_storage_rows is None
+                else int(planned_target_full_storage_rows)
+            ),
             "reference_full_storage_rows": int(full_layout.full_rows),
             "reference_independent_rows": int(len(global_entities.independent)),
+            "planned_target_rows_match_reference": (
+                planned_target_full_storage_rows is not None
+                and int(planned_target_full_storage_rows) == int(full_layout.full_rows)
+            ),
+            "actual_target_rows_match_reference": (
+                target_full_storage_rows is not None
+                and int(target_full_storage_rows) == int(full_layout.full_rows)
+            ),
             "target_reference_rows_match": (
                 target_full_storage_rows is not None
                 and int(target_full_storage_rows) == int(full_layout.full_rows)
+            ),
+            "target_budget_status": (
+                "PLANNED_ROWS_RESERVED_ACTUAL_NOT_BUILT"
+                if planned_target_full_storage_rows is not None
+                and target_full_storage_rows is None
+                else "ACTUAL_TARGET_ROWS_RECORDED"
+                if target_full_storage_rows is not None
+                else "NOT_QUALIFIED_NO_TARGET_ROW_BUDGET"
             ),
         }
         global_h = np.asarray(
@@ -4877,26 +4904,34 @@ def build_task40_v10_p6_reference_inverse(
             if factor_lifecycle_strategy == ONE_Q_REFACTOR_V19
             else AllQExactMumps
         )
-        factors = factor_backend(
-            all_q_matrices,
-            allocation_gate=allocation_gate,
-            event=event,
-            expected_shapes=expected_shapes,
-            profile=profile,
-            transform_bank=transform_bank,
-            inverse_borrowers={
+        factor_options = {
+            "allocation_gate": allocation_gate,
+            "event": event,
+            "expected_shapes": expected_shapes,
+            "profile": profile,
+            "transform_bank": transform_bank,
+            "inverse_borrowers": {
                 "global": global_entities,
                 **{
                     f"sector{index}": sector["entities"]
                     for index, sector in enumerate(sectors)
                 },
             },
-            full_storage_rows=int(full_layout.full_rows),
-            target_reference_rows_match=bool(
+            "full_storage_rows": int(full_layout.full_rows),
+            "reference_pc_strategy": reference_pc_strategy,
+        }
+        if factor_backend is AllQExactMumps:
+            factor_options.update(
+                actual_target_full_storage_rows=target_full_storage_rows,
+                planned_target_full_storage_rows=planned_target_full_storage_rows,
+                v30_config=v30_factor_config,
+                output_directory=factor_output_directory,
+            )
+        else:
+            factor_options["target_reference_rows_match"] = bool(
                 owner["full_storage_dimensions"]["target_reference_rows_match"]
-            ),
-            reference_pc_strategy=reference_pc_strategy,
-        )
+            )
+        factors = factor_backend(all_q_matrices, **factor_options)
         owner["factors"] = factors
         owner["inverse"] = CompleteTwoCellInverse(
             sectors,

@@ -59,6 +59,77 @@ def _sparse_content_sha256(matrix: sparse.spmatrix) -> str:
     return h.hexdigest()
 
 
+def _task40_v30_second_factor_probe_rhs(rows: int) -> np.ndarray:
+    """Return the frozen, distinct, everywhere-nonzero V30 factor RHS."""
+    if type(rows) is not int or rows <= 0:
+        raise ValueError("V30 second factor probe requires a positive row count")
+    index = np.arange(rows, dtype=np.int64)
+    rhs = np.empty(rows, dtype=np.complex128)
+    rhs.real[:] = 2.0 + (index % 17) / 17.0
+    rhs.imag[:] = 1.5 + (index % 13) / 13.0
+    return rhs
+
+
+def _array_sha256(array: np.ndarray) -> str:
+    values = np.ascontiguousarray(array)
+    digest = sha256()
+    digest.update(values.dtype.str.encode("ascii"))
+    digest.update(np.asarray(values.shape, dtype=np.int64).tobytes())
+    digest.update(memoryview(values).cast("B"))
+    return digest.hexdigest()
+
+
+def _persist_all_q_probe_packet(
+    directory,
+    *,
+    q: int,
+    label: str,
+    rhs: np.ndarray,
+    solution: np.ndarray,
+    residual: np.ndarray,
+) -> dict[str, Any]:
+    """Atomically save and verify the explicit RHS, solution, and residual."""
+    from pathlib import Path
+
+    root = Path(directory).resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    path = root / f"all_q_q{int(q)}_{label}.npz"
+    temporary = path.with_name(path.name + ".tmp")
+    arrays = {
+        "rhs": np.ascontiguousarray(rhs, dtype=np.complex128),
+        "solution": np.ascontiguousarray(solution, dtype=np.complex128),
+        "residual": np.ascontiguousarray(residual, dtype=np.complex128),
+    }
+    if path.exists() or temporary.exists():
+        raise FileExistsError(f"refusing to replace an existing AllQ V30 packet: {path}")
+    hashes = {name: _array_sha256(value) for name, value in arrays.items()}
+    with temporary.open("wb") as stream:
+        np.savez(stream, **arrays)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary, path)
+    with np.load(path, allow_pickle=False) as saved:
+        if set(saved.files) != set(arrays):
+            raise IOError(f"AllQ V30 packet member inventory changed: {path.name}")
+        for name in arrays:
+            if _array_sha256(saved[name]) != hashes[name]:
+                raise IOError(f"AllQ V30 packet readback hash mismatch: {path.name}/{name}")
+    digest = sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(4 * 1024 * 1024), b""):
+            digest.update(chunk)
+    return {
+        "path": str(path),
+        "bytes": int(path.stat().st_size),
+        "sha256": digest.hexdigest(),
+        "array_sha256": hashes,
+        "array_names": sorted(arrays),
+        "dtype": np.dtype(np.complex128).str,
+        "rows": int(len(rhs)),
+        "readback_verified": True,
+    }
+
+
 def _payload_bytes(csr: sparse.csr_matrix) -> int:
     return int(csr.data.nbytes + csr.indices.nbytes + csr.indptr.nbytes)
 
@@ -822,8 +893,14 @@ class AllQExactMumps:
                  transform_bank=None,
                  inverse_borrowers: Mapping[str, object] | None = None,
                  full_storage_rows: int | None = None,
-                 target_reference_rows_match: bool = False):
+                 actual_target_full_storage_rows: int | None = None,
+                 planned_target_full_storage_rows: int | None = None,
+                 target_reference_rows_match: bool | None = None,
+                 strict_factor_qualification: bool = False,
+                 v30_config: Mapping[str, Any] | None = None,
+                 output_directory=None):
         from petsc4py import PETSc
+        from pathlib import Path
         from src.runners.physical_p4_cell_condensed_v18 import _factor_factory_for_backend
 
         self.PETSc = PETSc
@@ -836,10 +913,66 @@ class AllQExactMumps:
             self.reference_pc_strategy, self.q_solve_limit
         )
         self.event = event or (lambda _name, _facts: None)
+        if v30_config is not None:
+            if not isinstance(v30_config, Mapping) or (
+                v30_config.get("schema")
+                != "task40extra.review_v30_all_q_factor_bank.v1"
+                or v30_config.get("require_two_strict_rhs") is not True
+                or v30_config.get("second_rhs_formula")
+                != "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13"
+            ):
+                raise ValueError("V30 AllQ factor configuration is incomplete or changed")
+            configured_directory = v30_config.get("output_directory")
+            if output_directory is not None and configured_directory is not None:
+                if Path(output_directory).resolve() != Path(configured_directory).resolve():
+                    raise ValueError("V30 AllQ packet directory differs from its contract")
+            output_directory = output_directory or configured_directory
+            strict_factor_qualification = True
+        self.v30_config = None if v30_config is None else dict(v30_config)
+        self.v30_enabled = self.v30_config is not None
+        self.checkpoint_directory = (
+            None if output_directory is None else Path(output_directory).resolve()
+        )
+        if v30_config is not None and self.checkpoint_directory is None:
+            raise ValueError("V30 AllQ qualification requires a packet output directory")
+        if self.checkpoint_directory is not None:
+            self.checkpoint_directory.mkdir(parents=True, exist_ok=True)
         self.transform_bank = transform_bank
         self.inverse_borrowers = dict(inverse_borrowers or {})
         self.full_storage_rows = None if full_storage_rows is None else int(full_storage_rows)
-        self.target_reference_rows_match = bool(target_reference_rows_match)
+        self.actual_target_full_storage_rows = (
+            None
+            if actual_target_full_storage_rows is None
+            else int(actual_target_full_storage_rows)
+        )
+        self.planned_target_full_storage_rows = (
+            None
+            if planned_target_full_storage_rows is None
+            else int(planned_target_full_storage_rows)
+        )
+        self.target_reference_rows_match = bool(
+            self.actual_target_full_storage_rows is not None
+            and self.full_storage_rows is not None
+            and self.actual_target_full_storage_rows == self.full_storage_rows
+        )
+        if (
+            target_reference_rows_match is not None
+            and bool(target_reference_rows_match) != self.target_reference_rows_match
+        ):
+            raise ValueError(
+                "target/reference row match must be derived from an actual target inventory"
+            )
+        if (
+            self.actual_target_full_storage_rows is not None
+            and self.actual_target_full_storage_rows < 0
+        ) or (
+            self.planned_target_full_storage_rows is not None
+            and self.planned_target_full_storage_rows <= 0
+        ):
+            raise ValueError("target full-storage row counts are invalid")
+        if type(strict_factor_qualification) is not bool:
+            raise TypeError("strict factor qualification must be an explicit boolean")
+        self.strict_factor_qualification = strict_factor_qualification
         if self.full_storage_rows is not None and self.full_storage_rows < 0:
             raise ValueError("future full-storage row count cannot be negative")
         for label, borrower in self.inverse_borrowers.items():
@@ -861,25 +994,72 @@ class AllQExactMumps:
         self._input_bindings = {}
         self.calls = 0
         self.destroyed = False
+        self.cleanup_failed = False
         self._max_simultaneous_factors = 0
+        self._business_solve_seconds_by_q = {q: 0.0 for q in range(profile.q_count)}
+        self._business_native_solve_seconds_by_q = {q: 0.0 for q in range(profile.q_count)}
+        self._business_native_solve_attempted_by_q = {q: 0 for q in range(profile.q_count)}
+        self._business_native_solve_completed_by_q = {q: 0 for q in range(profile.q_count)}
+        self._unconfirmed_owner_tags: set[str] = set()
         self.audit = {
             "backend": "PETSc MUMPS exact",
             "profile": profile.name,
             "reference_pc_strategy": self.reference_pc_strategy,
             "q_true_residual_admission_limit": self.q_solve_limit,
             "factor_probe_true_residual_limit": self.factor_probe_limit,
+            "strict_factor_qualification_required": self.strict_factor_qualification,
             "q_true_residual_strict_limit": 1.0e-10,
             "all_q_required": list(range(self.nq)),
             "all_q_factors_retained_simultaneously": False,
             "all_q_factor_objects_live_simultaneously": False,
             "all_q_numeric_factors_true_residual_passed": False,
             "all_q_numeric_factors_strict_true_residual_passed": False,
+            "all_q_second_rhs_strict_true_residual_passed": False,
+            "all_q_fresh_probe_and_second_rhs_passed": False,
+            "second_rhs_qualification": {
+                "schema": "task40extra.review_v30_all_q_second_rhs.v1",
+                "formula": "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13",
+                "all_entries_nonzero": True,
+                "distinct_from_direct_cos_sin_probe": True,
+                "true_residual_operator": "the complete original canonical CSR matrix for the same q",
+                "strict_limit": 1.0e-10,
+            },
             "factor_inputs": [],
             "factor_tests": [],
+            "second_rhs_tests": [],
+            "symbolic_ready_q": [],
+            "numeric_ready_q": [],
+            "F_q_active_seconds_by_q": {},
+            "q_symbolic_conversion_parent_seconds_by_q": {},
+            "q_numeric_fresh_parent_seconds_by_q": {},
+            "q_second_rhs_parent_seconds_by_q": {},
+            "q_ready_elapsed_seconds_by_q": {},
+            "q_first_started_elapsed_seconds_by_q": {},
+            "q_ready_span_seconds_by_q": {},
+            "T_bank_parent_seconds": None,
+            "T_bank_shared_seconds": 0.0,
+            "T_bank_unattributed_seconds": None,
+            "T_bank_accounting_closure_error_seconds": None,
+            "S_q_business_seconds_by_q": {str(q): 0.0 for q in range(profile.q_count)},
+            "S_q_native_solve_seconds_by_q": {str(q): 0.0 for q in range(profile.q_count)},
+            "S_q_native_solve_attempted_count_by_q": {
+                str(q): 0 for q in range(profile.q_count)
+            },
+            "S_q_native_solve_completed_count_by_q": {
+                str(q): 0 for q in range(profile.q_count)
+            },
+            "S_q_business_petsc_vector_seconds_by_q": {
+                str(q): 0.0 for q in range(profile.q_count)
+            },
+            "S_q_business_parent_seconds_total": 0.0,
+            "S_q_native_solve_parent_seconds_total": 0.0,
             "all_four_factors_retained_simultaneously": False,
             "all_four_factor_objects_live_simultaneously": False,
             "all_four_numeric_factors_true_residual_passed": False,
             "factors_live_count_current": 0,
+            "cleanup_status": "LIVE",
+            "cleanup_failures": [],
+            "cleanup_last_attempt_failures": [],
             "max_simultaneous_factors": 0,
             "factor_fill_bytes": None,
             "process_tree_peak_rss_bytes": None,
@@ -889,10 +1069,24 @@ class AllQExactMumps:
         }
         factory = _factor_factory_for_backend("exact")
         started = perf_counter()
+        q_ready_elapsed: dict[int, float] = {}
+        q_first_started: dict[int, float] = {}
+        q_symbolic_seconds: dict[int, float] = {}
+        q_numeric_fresh_seconds: dict[int, float] = {}
+        q_second_rhs_parent_seconds: dict[int, float] = {}
+        active_q: int | None = None
+        active_q_activity_started: float | None = None
+        active_q_phase: str | None = None
+        all_q_admission_started: float | None = None
+        all_q_admission_completed = False
         try:
             symbolic_states: dict[int, dict[str, object]] = {}
             symbolic_estimates: dict[int, int] = {}
             for q in range(self.nq):
+                q_first_started[q] = perf_counter()
+                active_q = int(q)
+                active_q_activity_started = q_first_started[q]
+                active_q_phase = "q_hash_conversion_symbolic"
                 source = matrices[q]
                 caller_hash = _sparse_content_sha256(source)
                 if (sparse.isspmatrix_csr(source)
@@ -1006,6 +1200,7 @@ class AllQExactMumps:
                     "symbolic_seconds": symbolic_seconds,
                     "symbolic_estimate_bytes": estimate_bytes,
                 }
+                self.audit["symbolic_ready_q"].append(int(q))
                 resident_after_symbolic = self._resident_factor_evidence(exclude_q=q)
                 self.gate("after_mumps_symbolic_before_numeric", {
                     "q": q,
@@ -1027,6 +1222,17 @@ class AllQExactMumps:
                     "symbolic_factor_workspace_bytes": None,
                     "process_tree_rss_bytes": None,
                 })
+                q_symbolic_seconds[q] = float(perf_counter() - q_first_started[q])
+                self.audit["q_symbolic_conversion_parent_seconds_by_q"][str(q)] = (
+                    q_symbolic_seconds[q]
+                )
+                self.audit["q_first_started_elapsed_seconds_by_q"][str(q)] = float(
+                    q_first_started[q] - started
+                )
+                active_q = None
+                active_q_activity_started = None
+                active_q_phase = None
+            all_q_admission_started = perf_counter()
             # Numeric MUMPS allocations are forbidden until every q branch has
             # completed symbolic analysis and the measured per-q estimates are
             # admitted together with retained Krylov and recovery workspace.
@@ -1073,8 +1279,15 @@ class AllQExactMumps:
                 int(bank_inverse_reserve["future_single_inverse_workspace_bytes"]),
                 legacy_inverse_workspace_bytes,
             )
-            full_rows = int(self.full_storage_rows or 0)
-            full_output_inventory = full_p6_pre_release_output_inventory(full_rows)
+            reference_full_rows = int(self.full_storage_rows or 0)
+            planned_target_rows = self.planned_target_full_storage_rows
+            future_recovery_rows = max(
+                reference_full_rows,
+                0 if planned_target_rows is None else planned_target_rows,
+            )
+            full_output_inventory = full_p6_pre_release_output_inventory(
+                future_recovery_rows
+            )
             future_full_p6_output_bytes = int(full_output_inventory["pre_release_peak_bytes"])
             ksp_plus_inverse_workspace = future_krylov_bytes + future_inverse_workspace_bytes
             full_output_plus_inverse_workspace = (
@@ -1100,10 +1313,32 @@ class AllQExactMumps:
                 "future_krylov_basis_bytes": future_krylov_basis_bytes,
                 "future_ksp_workspace_vector_bytes": future_ksp_workspace_bytes,
                 "future_full_p6_pre_release_recovery_output_bytes": future_full_p6_output_bytes,
-                "full_storage_rows_for_future_recovery": full_rows,
+                "full_storage_rows_for_future_recovery": future_recovery_rows,
+                "reference_full_storage_rows": reference_full_rows,
+                "planned_target_full_storage_rows": planned_target_rows,
+                "actual_target_full_storage_rows": self.actual_target_full_storage_rows,
+                "planned_target_rows_match_reference": (
+                    planned_target_rows is not None
+                    and planned_target_rows == reference_full_rows
+                ),
+                "actual_target_rows_match_reference": self.target_reference_rows_match,
+                "target_budget_status": (
+                    "PLANNED_ROWS_RESERVED_ACTUAL_NOT_BUILT"
+                    if planned_target_rows is not None
+                    and self.actual_target_full_storage_rows is None
+                    else "ACTUAL_TARGET_ROWS_RECORDED"
+                    if self.actual_target_full_storage_rows is not None
+                    else "NOT_QUALIFIED_NO_TARGET_ROW_BUDGET"
+                ),
                 "pre_release_recovery_output_inventory": {
                     **full_output_inventory,
-                    "actual_target_and_reference_full_rows_match_required": self.target_reference_rows_match,
+                    "reference_full_storage_rows": reference_full_rows,
+                    "planned_target_full_storage_rows": planned_target_rows,
+                    "actual_target_full_storage_rows": self.actual_target_full_storage_rows,
+                    "actual_target_and_reference_full_rows_match": self.target_reference_rows_match,
+                    "actual_target_and_reference_full_rows_match_required": (
+                        self.target_reference_rows_match
+                    ),
                 },
                 "future_inverse_payload_bytes": future_inverse_payload_bytes,
                 "future_inverse_single_operation_workspace_bytes": future_inverse_workspace_bytes,
@@ -1142,6 +1377,10 @@ class AllQExactMumps:
                     "separate post-release and official-output gates avoid summing mutually exclusive stages"
                 ),
             })
+            self.audit["T_bank_shared_seconds"] += float(
+                perf_counter() - all_q_admission_started
+            )
+            all_q_admission_completed = True
 
             for q in range(self.nq):
                 state = symbolic_states[q]
@@ -1157,6 +1396,10 @@ class AllQExactMumps:
                 symbolic_info = state["symbolic_info"]
                 symbolic_seconds = float(state["symbolic_seconds"])
                 n = self.row_counts[q]
+                q_numeric_fresh_started = perf_counter()
+                active_q = int(q)
+                active_q_activity_started = q_numeric_fresh_started
+                active_q_phase = "numeric_and_fresh_probe"
                 numeric_start = perf_counter()
                 factor.numeric(matrix)
                 numeric_seconds = perf_counter() - numeric_start
@@ -1183,13 +1426,47 @@ class AllQExactMumps:
                     "checkpoint_semantics": "per-q numeric INFOG checkpoint before the probe solve",
                 })
                 rhs = np.cos(.23*np.arange(n)) + 1j*np.sin(.37*np.arange(n))
-                solution = self._solve_once(q, rhs)
+                fresh_solve_timing: dict[str, Any] = {}
+                solution = self._solve_once(q, rhs, timing=fresh_solve_timing)
                 self._assert_input_identity(q, "after_probe_solve")
-                residual = float(np.linalg.norm(csr @ solution-rhs)/np.linalg.norm(rhs))
+                fresh_residual_vector = np.asarray(csr @ solution, dtype=np.complex128)
+                fresh_residual_vector -= rhs
+                rhs_norm = float(np.linalg.norm(rhs))
+                residual = float(np.linalg.norm(fresh_residual_vector) / rhs_norm)
                 strict_passed = bool(np.isfinite(residual) and residual <= 1.0e-10)
                 residual_passed = bool(
                     np.isfinite(residual) and residual <= self.factor_probe_limit
                 )
+                fresh_packet = None
+                fresh_rhs_sha256 = _array_sha256(rhs)
+                if self.v30_enabled:
+                    self.gate(
+                        "before_v30_fresh_rhs_packet",
+                        {
+                            "q": q,
+                            "additional_payload_bytes": 0,
+                            "workspace_bytes": 8 * 1024 * 1024,
+                            "disk_bytes_upper": int(rhs.nbytes + solution.nbytes + fresh_residual_vector.nbytes),
+                            "packet_arrays_already_live": ["rhs", "solution", "residual"],
+                        },
+                    )
+                    self.gate(
+                        "before_v30_fresh_rhs_packet_readback",
+                        {
+                            "q": q,
+                            "additional_payload_bytes": int(rhs.nbytes),
+                            "workspace_bytes": 8 * 1024 * 1024,
+                            "readback_materializes_one_complex128_vector_at_a_time": True,
+                        },
+                    )
+                    fresh_packet = _persist_all_q_probe_packet(
+                        self.checkpoint_directory,
+                        q=q,
+                        label="fresh_cos_sin_probe",
+                        rhs=rhs,
+                        solution=solution,
+                        residual=fresh_residual_vector,
+                    )
                 test = {
                     "q": q,
                     "rows": n,
@@ -1202,6 +1479,27 @@ class AllQExactMumps:
                     "admission_passed": residual_passed,
                     "bounded_inexact_only": bool(residual_passed and not strict_passed),
                     "reference_pc_strategy": self.reference_pc_strategy,
+                    "fresh_rhs": {
+                        "formula": "cos(0.23*i) + 1j*sin(0.37*i)",
+                        "identity_sha256": fresh_rhs_sha256,
+                        "constructed_directly_not_from_csr_times_x": True,
+                        "native_solve_seconds": fresh_solve_timing.get(
+                            "native_solve_seconds"
+                        ),
+                        "native_solve_attempted": fresh_solve_timing.get(
+                            "native_solve_attempted"
+                        ),
+                        "native_solve_completed": fresh_solve_timing.get(
+                            "native_solve_completed"
+                        ),
+                        "solve_parent_seconds_including_vector_lifecycle": fresh_solve_timing.get(
+                            "parent_seconds"
+                        ),
+                        "petsc_vector_creation_seconds": fresh_solve_timing.get(
+                            "petsc_vector_creation_seconds"
+                        ),
+                        "packet": fresh_packet,
+                    },
                     "symbolic_seconds": symbolic_seconds,
                     "numeric_seconds": numeric_seconds,
                     "ICNTL_10": factor.get_icntl(10),
@@ -1231,11 +1529,14 @@ class AllQExactMumps:
                     "process_tree_rss_bytes": None,
                     "checkpoint_semantics": "probe residual checkpoint before resource-gate evaluation",
                 })
-                if not residual_passed:
+                if not residual_passed or (
+                    self.strict_factor_qualification and not strict_passed
+                ):
                     raise ValueError(
                         f"q={q} exact MUMPS true residual failed under "
                         f"{self.reference_pc_strategy} factor probe: "
-                        f"{residual} > {self.factor_probe_limit}"
+                        f"{residual}; admission limit={self.factor_probe_limit}, "
+                        f"strict limit=1e-10 required={self.strict_factor_qualification}"
                     )
                 numeric_admission = self.gate("after_mumps_numeric_true_residual", {
                     "q": q,
@@ -1286,6 +1587,142 @@ class AllQExactMumps:
                     "native_metrics": native,
                     "resident_numeric_mumps_facts": self._resident_factor_evidence(),
                 })
+                q_numeric_fresh_seconds[q] = float(
+                    perf_counter() - q_numeric_fresh_started
+                )
+                self.audit["q_numeric_fresh_parent_seconds_by_q"][str(q)] = (
+                    q_numeric_fresh_seconds[q]
+                )
+                q_active_seconds = q_symbolic_seconds[q] + q_numeric_fresh_seconds[q]
+                self.audit["F_q_active_seconds_by_q"][str(q)] = q_active_seconds
+                active_q = None
+                active_q_activity_started = None
+                active_q_phase = None
+                if self.v30_enabled:
+                    del rhs, solution, fresh_residual_vector
+                    vector_bytes = int(n * np.dtype(np.complex128).itemsize)
+                    second_started = perf_counter()
+                    active_q = int(q)
+                    active_q_activity_started = second_started
+                    active_q_phase = "second_rhs"
+                    second_admission = self.gate(
+                        "before_v30_second_rhs_qualification",
+                        {
+                            "q": q,
+                            "additional_payload_bytes": int(5 * vector_bytes),
+                            "workspace_bytes": int(vector_bytes // 2),
+                            "live_vector_inventory_upper": [
+                                "second_rhs",
+                                "PETSc_rhs",
+                                "PETSc_solution",
+                                "numpy_solution_copy",
+                                "full_csr_residual",
+                            ],
+                            "planned_target_full_storage_rows": self.planned_target_full_storage_rows,
+                            "actual_target_full_storage_rows": self.actual_target_full_storage_rows,
+                        },
+                    )
+                    rhs_started = perf_counter()
+                    second_rhs = _task40_v30_second_factor_probe_rhs(int(n))
+                    if (
+                        not np.isfinite(second_rhs).all()
+                        or not np.all(second_rhs != 0.0)
+                        or not np.all(second_rhs.real > 1.0)
+                    ):
+                        raise RuntimeError("V30 pre-frozen second RHS is not distinct and nonzero")
+                    second_rhs_sha256 = _array_sha256(second_rhs)
+                    second_rhs_seconds = float(perf_counter() - rhs_started)
+                    second_solve_timing: dict[str, Any] = {}
+                    second_solution = self._solve_repeated_once(
+                        q, second_rhs, timing=second_solve_timing
+                    )
+                    residual_started = perf_counter()
+                    second_residual = np.asarray(
+                        csr @ second_solution, dtype=np.complex128
+                    )
+                    second_residual -= second_rhs
+                    second_residual_relative = float(
+                        np.linalg.norm(second_residual) / np.linalg.norm(second_rhs)
+                    )
+                    second_residual_seconds = float(perf_counter() - residual_started)
+                    second_strict_passed = bool(
+                        np.isfinite(second_residual_relative)
+                        and second_residual_relative <= 1.0e-10
+                    )
+                    packet_readback_gate = self.gate(
+                        "before_v30_second_rhs_packet_readback",
+                        {
+                            "q": q,
+                            "additional_payload_bytes": vector_bytes,
+                            "workspace_bytes": 8 * 1024 * 1024,
+                            "readback_materializes_one_complex128_vector_at_a_time": True,
+                        },
+                    )
+                    second_packet = _persist_all_q_probe_packet(
+                        self.checkpoint_directory,
+                        q=q,
+                        label="second_distinct_nonzero_rhs",
+                        rhs=second_rhs,
+                        solution=second_solution,
+                        residual=second_residual,
+                    )
+                    second_test = {
+                        "schema": "task40extra.review_v30_all_q_second_rhs_result.v1",
+                        "formula": "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13",
+                        "rhs_sha256": second_rhs_sha256,
+                        "rhs_all_entries_nonzero": True,
+                        "rhs_distinct_from_direct_cos_sin_probe": True,
+                        "rhs_constructed_directly_not_from_csr_times_x": True,
+                        "native_call": "MatFactor.solve_repeated",
+                        "rhs_construction_seconds": second_rhs_seconds,
+                        "native_solve_seconds": second_solve_timing.get(
+                            "native_solve_seconds"
+                        ),
+                        "native_solve_attempted": second_solve_timing.get(
+                            "native_solve_attempted"
+                        ),
+                        "native_solve_completed": second_solve_timing.get(
+                            "native_solve_completed"
+                        ),
+                        "solve_parent_seconds_including_vector_lifecycle": second_solve_timing.get(
+                            "parent_seconds"
+                        ),
+                        "petsc_vector_creation_seconds": second_solve_timing.get(
+                            "petsc_vector_creation_seconds"
+                        ),
+                        "full_csr_true_residual_seconds": second_residual_seconds,
+                        "relative_full_csr_true_residual": second_residual_relative,
+                        "strict_limit": 1.0e-10,
+                        "strict_passed": second_strict_passed,
+                        "resource_admission": second_admission,
+                        "packet_readback_resource_admission": packet_readback_gate,
+                        "packet": second_packet,
+                        "parent_seconds": float(perf_counter() - second_started),
+                    }
+                    q_second_rhs_parent_seconds[q] = float(second_test["parent_seconds"])
+                    self.audit["q_second_rhs_parent_seconds_by_q"][str(q)] = (
+                        q_second_rhs_parent_seconds[q]
+                    )
+                    test["second_rhs"] = second_test
+                    self.audit["second_rhs_tests"].append({"q": q, **second_test})
+                    self.event("task40_v30_all_q_second_rhs_complete", {
+                        "q": q,
+                        "caller_input_sha256": caller_hash,
+                        "factor_csr_sha256": csr_hash,
+                        **second_test,
+                    })
+                    del second_rhs, second_solution, second_residual
+                    if not second_strict_passed:
+                        raise ValueError(
+                            f"q={q} V30 second RHS full CSR residual "
+                            f"{second_residual_relative} exceeds 1e-10"
+                        )
+                    active_q_activity_started = perf_counter()
+                    active_q_phase = "q_ready_finalization"
+                else:
+                    active_q = int(q)
+                    active_q_activity_started = perf_counter()
+                    active_q_phase = "q_ready_finalization"
                 binding = self._input_bindings[q]
                 binding["caller_input_sha256_after"] = _sparse_content_sha256(source)
                 binding["factor_csr_sha256_after"] = _sparse_content_sha256(csr)
@@ -1326,13 +1763,120 @@ class AllQExactMumps:
                     "native_mumps": native,
                     **test,
                 })
+                q_activity_seconds = float(
+                    q_symbolic_seconds[q] + q_numeric_fresh_seconds[q]
+                )
+                q_ready_elapsed[q] = float(perf_counter() - started)
+                self.audit["q_ready_elapsed_seconds_by_q"][str(q)] = q_ready_elapsed[q]
+                q_ready_span = float(perf_counter() - q_first_started[q])
+                self.audit["q_ready_span_seconds_by_q"][str(q)] = q_ready_span
+                self.audit["numeric_ready_q"].append(int(q))
+                self.audit["numeric_ready_q"].sort()
+                self.event(
+                    "task40_v30_all_q_numeric_ready" if self.v30_enabled else "task40_v12_all_q_numeric_ready",
+                    {
+                        "q": q,
+                        "numeric_ready_q": list(self.audit["numeric_ready_q"]),
+                        "symbolic_ready_q": list(self.audit["symbolic_ready_q"]),
+                        "readiness_records_are_separate": True,
+                        "numeric_ready_is_subset_of_symbolic_ready": set(
+                            self.audit["numeric_ready_q"]
+                        ).issubset(self.audit["symbolic_ready_q"]),
+                        "F_q_active_seconds": q_activity_seconds,
+                        "q_ready_elapsed_seconds_from_T_bank_start": q_ready_elapsed[q],
+                        "q_ready_span_seconds_from_q_first_start": q_ready_span,
+                        "second_rhs_strict_passed": (
+                            test.get("second_rhs", {}).get("strict_passed")
+                            if self.v30_enabled
+                            else None
+                        ),
+                        "first_rhs_strict_passed": strict_passed,
+                    },
+                )
+                active_q = None
+                active_q_activity_started = None
+                active_q_phase = None
+            bank_parent_seconds = float(perf_counter() - started)
+            f_q_active_total = float(
+                sum(self.audit["F_q_active_seconds_by_q"].values())
+            )
+            second_rhs_parent_total = float(
+                sum(self.audit["q_second_rhs_parent_seconds_by_q"].values())
+            )
+            bank_shared_seconds = float(self.audit["T_bank_shared_seconds"])
+            bank_unattributed_seconds = max(
+                bank_parent_seconds
+                - f_q_active_total
+                - second_rhs_parent_total
+                - bank_shared_seconds,
+                0.0,
+            )
+            bank_closure_error = float(
+                bank_parent_seconds
+                - f_q_active_total
+                - second_rhs_parent_total
+                - bank_shared_seconds
+                - bank_unattributed_seconds
+            )
+            expected_q_indices = set(range(self.nq))
+            factor_test_q_indices = {
+                int(row["q"]) for row in self.audit["factor_tests"]
+            }
+            second_rhs_q_indices = {
+                int(row["q"]) for row in self.audit["second_rhs_tests"]
+            }
+            second_rhs_strict_passed = bool(
+                self.v30_enabled
+                and second_rhs_q_indices == expected_q_indices
+                and all(
+                    bool(row["strict_passed"])
+                    for row in self.audit["second_rhs_tests"]
+                )
+            )
+            dual_rhs_passed = bool(
+                self.v30_enabled
+                and set(self.audit["numeric_ready_q"]) == expected_q_indices
+                and factor_test_q_indices == expected_q_indices
+                and second_rhs_q_indices == expected_q_indices
+                and all(
+                    bool(row["strict_passed"])
+                    and bool(row.get("second_rhs", {}).get("strict_passed"))
+                    for row in self.audit["factor_tests"]
+                )
+            )
             self.audit.update(
-                setup_seconds=perf_counter()-started,
+                setup_seconds=bank_parent_seconds,
+                T_bank_parent_seconds=bank_parent_seconds,
+                T_bank_unattributed_seconds=bank_unattributed_seconds,
+                T_bank_accounting_closure_error_seconds=bank_closure_error,
+                T_bank_second_rhs_parent_seconds_total=second_rhs_parent_total,
+                F_q_active_parent_seconds_total=f_q_active_total,
+                symbolic_ready_q=sorted(map(int, self.audit["symbolic_ready_q"])),
+                numeric_ready_q=sorted(map(int, self.audit["numeric_ready_q"])),
+                all_q_symbolic_ready=(
+                    set(self.audit["symbolic_ready_q"]) == set(range(self.nq))
+                ),
+                all_q_numeric_ready=(
+                    set(self.audit["numeric_ready_q"]) == set(range(self.nq))
+                ),
+                all_q_second_rhs_strict_true_residual_passed=second_rhs_strict_passed,
+                all_q_fresh_probe_and_second_rhs_passed=dual_rhs_passed,
+                S_q_business_seconds_by_q={
+                    str(q): float(value)
+                    for q, value in self._business_solve_seconds_by_q.items()
+                },
+                S_q_business_parent_seconds_total=float(
+                    sum(self._business_solve_seconds_by_q.values())
+                ),
                 all_q_factors_retained_simultaneously=(
                     self._max_simultaneous_factors == self.nq
                     and len(self.factors) == self.nq
-                    and {int(row["q"]) for row in self.audit["factor_tests"]}
-                    == set(range(self.nq))
+                    and set(self.audit["numeric_ready_q"]) == set(range(self.nq))
+                    and factor_test_q_indices == expected_q_indices
+                    and (
+                        not self.v30_enabled
+                        or dual_rhs_passed
+                    )
                     and all(
                         np.isfinite(float(row["relative_true_residual"]))
                         and float(row["relative_true_residual"]) <= float(row["limit"])
@@ -1340,14 +1884,16 @@ class AllQExactMumps:
                     )
                 ),
                 all_q_numeric_factors_true_residual_passed=(
-                    {int(row["q"]) for row in self.audit["factor_tests"]}
-                    == set(range(self.nq))
+                    factor_test_q_indices == expected_q_indices
                     and all(bool(row["admission_passed"]) for row in self.audit["factor_tests"])
                 ),
                 all_q_numeric_factors_strict_true_residual_passed=(
                     {int(row["q"]) for row in self.audit["factor_tests"]}
                     == set(range(self.nq))
                     and all(bool(row["strict_passed"]) for row in self.audit["factor_tests"])
+                    and (
+                        not self.v30_enabled or second_rhs_strict_passed
+                    )
                 ),
                 all_q_factor_objects_live_simultaneously=(
                     self._max_simultaneous_factors == self.nq
@@ -1372,7 +1918,67 @@ class AllQExactMumps:
                     self.nq == 4 and self.audit["all_q_factor_objects_live_simultaneously"]
                 ),
             )
-        except BaseException:
+        except BaseException as setup_error:
+            if active_q is not None and active_q_activity_started is not None:
+                elapsed = float(perf_counter() - active_q_activity_started)
+                if active_q_phase == "q_hash_conversion_symbolic":
+                    q_symbolic_seconds[active_q] = elapsed
+                    self.audit["q_symbolic_conversion_parent_seconds_by_q"][
+                        str(active_q)
+                    ] = elapsed
+                elif active_q_phase == "numeric_and_fresh_probe":
+                    q_numeric_fresh_seconds[active_q] = elapsed
+                    self.audit["q_numeric_fresh_parent_seconds_by_q"][
+                        str(active_q)
+                    ] = elapsed
+                elif active_q_phase == "second_rhs":
+                    q_second_rhs_parent_seconds[active_q] = elapsed
+                    self.audit["q_second_rhs_parent_seconds_by_q"][
+                        str(active_q)
+                    ] = elapsed
+                if active_q in q_symbolic_seconds or active_q in q_numeric_fresh_seconds:
+                    partial_f_q = float(
+                        q_symbolic_seconds.get(active_q, 0.0)
+                        + q_numeric_fresh_seconds.get(active_q, 0.0)
+                    )
+                    self.audit["F_q_active_seconds_by_q"][str(active_q)] = partial_f_q
+                self.audit["failed_q_activity"] = {
+                    "q": int(active_q),
+                    "phase": active_q_phase,
+                    "phase_elapsed_seconds": elapsed,
+                    "failure_type": type(setup_error).__name__,
+                    "failure_message": str(setup_error),
+                    "numeric_ready_q": list(self.audit["numeric_ready_q"]),
+                    "symbolic_ready_q": list(self.audit["symbolic_ready_q"]),
+                }
+            bank_parent_seconds = float(perf_counter() - started)
+            if all_q_admission_started is not None and not all_q_admission_completed:
+                self.audit["T_bank_shared_seconds"] += float(
+                    perf_counter() - all_q_admission_started
+                )
+            f_q_active_total = float(
+                sum(self.audit["F_q_active_seconds_by_q"].values())
+            )
+            second_rhs_parent_total = float(
+                sum(self.audit["q_second_rhs_parent_seconds_by_q"].values())
+            )
+            bank_shared_seconds = float(self.audit["T_bank_shared_seconds"])
+            bank_unattributed_seconds = max(
+                bank_parent_seconds
+                - f_q_active_total
+                - second_rhs_parent_total
+                - bank_shared_seconds,
+                0.0,
+            )
+            self.audit["T_bank_parent_seconds"] = bank_parent_seconds
+            self.audit["T_bank_unattributed_seconds"] = bank_unattributed_seconds
+            self.audit["T_bank_accounting_closure_error_seconds"] = float(
+                bank_parent_seconds
+                - f_q_active_total
+                - second_rhs_parent_total
+                - bank_shared_seconds
+                - bank_unattributed_seconds
+            )
             try:
                 self.destroy()
             except BaseException:
@@ -1404,20 +2010,89 @@ class AllQExactMumps:
         if _sparse_content_sha256(self.csr_matrices[q]) != binding["factor_csr_sha256_before"]:
             raise RuntimeError(f"q={q} factor CSR changed during {stage}")
 
-    def _solve_once(self, q: int, rhs: np.ndarray) -> np.ndarray:
+    def _solve_once(
+        self, q: int, rhs: np.ndarray, *, timing: dict[str, Any] | None = None
+    ) -> np.ndarray:
         PETSc = self.PETSc
-        b = PETSc.Vec().createSeq(len(rhs), comm=PETSc.COMM_SELF)
-        x = b.duplicate()
+        parent_started = perf_counter()
+        b = None
+        x = None
+        native_seconds = 0.0
+        native_attempted = False
+        native_completed = False
         try:
+            vector_started = perf_counter()
+            b = PETSc.Vec().createSeq(len(rhs), comm=PETSc.COMM_SELF)
+            x = b.duplicate()
             b.array[:] = rhs
-            self.factors[q].solve(b, x)
+            vector_seconds = float(perf_counter() - vector_started)
+            native_attempted = True
+            native_started = perf_counter()
+            try:
+                self.factors[q].solve(b, x)
+                native_completed = True
+            finally:
+                native_seconds = float(perf_counter() - native_started)
             return x.array.copy()
         finally:
-            x.destroy()
-            b.destroy()
+            if x is not None:
+                x.destroy()
+            if b is not None:
+                b.destroy()
+            if timing is not None:
+                timing.update(
+                    parent_seconds=float(perf_counter() - parent_started),
+                    petsc_vector_creation_seconds=float(
+                        vector_seconds if "vector_seconds" in locals() else 0.0
+                    ),
+                    native_solve_seconds=native_seconds,
+                    native_solve_attempted=native_attempted,
+                    native_solve_completed=native_completed,
+                )
+
+    def _solve_repeated_once(
+        self, q: int, rhs: np.ndarray, *, timing: dict[str, Any] | None = None
+    ) -> np.ndarray:
+        """Call MatSolveRepeated for the V30 qualification RHS without A@x synthesis."""
+        PETSc = self.PETSc
+        parent_started = perf_counter()
+        b = None
+        x = None
+        native_seconds = 0.0
+        native_attempted = False
+        native_completed = False
+        try:
+            vector_started = perf_counter()
+            b = PETSc.Vec().createSeq(len(rhs), comm=PETSc.COMM_SELF)
+            x = b.duplicate()
+            b.array[:] = rhs
+            vector_seconds = float(perf_counter() - vector_started)
+            native_attempted = True
+            native_started = perf_counter()
+            try:
+                self.factors[q].solve_repeated(b, x)
+                native_completed = True
+            finally:
+                native_seconds = float(perf_counter() - native_started)
+            return x.array.copy()
+        finally:
+            if x is not None:
+                x.destroy()
+            if b is not None:
+                b.destroy()
+            if timing is not None:
+                timing.update(
+                    parent_seconds=float(perf_counter() - parent_started),
+                    petsc_vector_creation_seconds=float(
+                        vector_seconds if "vector_seconds" in locals() else 0.0
+                    ),
+                    native_solve_seconds=native_seconds,
+                    native_solve_attempted=native_attempted,
+                    native_solve_completed=native_completed,
+                )
 
     def solve(self, q: int, rhs: np.ndarray) -> np.ndarray:
-        if self.destroyed or set(self.factors) != set(range(self.nq)):
+        if self.destroyed or self.cleanup_failed or set(self.factors) != set(range(self.nq)):
             raise RuntimeError("all live profile p6 q factors are required")
         if type(q) is not int or q not in range(self.nq):
             raise ValueError(f"actual q branch index 0..{self.nq - 1} is required")
@@ -1425,21 +2100,64 @@ class AllQExactMumps:
         if values.shape != (self.row_counts[q],) or not np.isfinite(values).all():
             raise ValueError("complete finite q-branch RHS required")
         PETSc = self.PETSc
-        b = PETSc.Vec().createSeq(len(values), comm=PETSc.COMM_SELF)
-        x = b.duplicate()
+        started = perf_counter()
+        b = None
+        x = None
+        native_seconds = 0.0
+        native_attempted = False
+        native_completed = False
         try:
+            vector_started = perf_counter()
+            b = PETSc.Vec().createSeq(len(values), comm=PETSc.COMM_SELF)
+            x = b.duplicate()
             b.array[:] = values
-            self.factors[q].solve_repeated(b, x)
+            vector_seconds = float(perf_counter() - vector_started)
+            native_attempted = True
+            native_started = perf_counter()
+            try:
+                self.factors[q].solve_repeated(b, x)
+                native_completed = True
+            finally:
+                native_seconds = float(perf_counter() - native_started)
             self.calls += 1
             solution = x.array.copy()
         finally:
-            x.destroy()
-            b.destroy()
+            if x is not None:
+                x.destroy()
+            if b is not None:
+                b.destroy()
+            elapsed = float(perf_counter() - started)
+            self._business_solve_seconds_by_q[q] += elapsed
+            self._business_native_solve_seconds_by_q[q] += native_seconds
+            self._business_native_solve_attempted_by_q[q] += int(native_attempted)
+            self._business_native_solve_completed_by_q[q] += int(native_completed)
+            self.audit["S_q_business_seconds_by_q"][str(q)] = float(
+                self._business_solve_seconds_by_q[q]
+            )
+            self.audit["S_q_native_solve_seconds_by_q"][str(q)] = float(
+                self._business_native_solve_seconds_by_q[q]
+            )
+            self.audit["S_q_native_solve_attempted_count_by_q"][str(q)] = int(
+                self._business_native_solve_attempted_by_q[q]
+            )
+            self.audit["S_q_native_solve_completed_count_by_q"][str(q)] = int(
+                self._business_native_solve_completed_by_q[q]
+            )
+            self.audit["S_q_business_petsc_vector_seconds_by_q"][str(q)] = float(
+                self.audit["S_q_business_petsc_vector_seconds_by_q"].get(str(q), 0.0)
+                + (vector_seconds if "vector_seconds" in locals() else 0.0)
+            )
+            self.audit["S_q_business_parent_seconds_total"] = float(
+                sum(self._business_solve_seconds_by_q.values())
+            )
+            self.audit["S_q_native_solve_parent_seconds_total"] = float(
+                sum(self._business_native_solve_seconds_by_q.values())
+            )
         return solution
 
     def verify_all_input_identities(self, *, stage: str = "final") -> dict[int, bool]:
         """Hash retained caller and factor CSR inputs once at a run boundary."""
-        if self.destroyed:
+        if self.destroyed or self.cleanup_failed:
             raise RuntimeError("cannot verify q matrix identity after factor cleanup")
         verified = {}
         for q in sorted(self.factors):
@@ -1481,12 +2199,20 @@ class AllQExactMumps:
                 "factor_inventory_timing": (
                     "historical per-q input and residual-probe records captured as each q completed"
                 ),
-                "current_native_factor_inventory_by_q": self._resident_factor_evidence(),
+                "current_native_factor_inventory_by_q": None,
                 "current_native_factor_inventory_timing": (
                     "read from each still-live numeric factor immediately before the first destroy call"
                 ),
                 "destroy_not_yet_started": True,
             }
+            try:
+                self.audit["pre_destroy_live_inventory"][
+                    "current_native_factor_inventory_by_q"
+                ] = self._resident_factor_evidence()
+            except BaseException as exc:
+                self.audit["pre_destroy_live_inventory"][
+                    "native_factor_inventory_error"
+                ] = {"type": type(exc).__name__, "message": str(exc)}
             try:
                 self.event(
                     "task40_v12_mumps_all_q_live_before_destroy",
@@ -1496,29 +2222,98 @@ class AllQExactMumps:
                 self.audit["pre_destroy_snapshot_error"] = {
                     "type": type(exc).__name__, "message": str(exc)
                 }
-        errors = []
+        failures: list[dict[str, Any]] = []
+
+        def retain_owner(tag: str, owners: Any) -> None:
+            if tag not in self._unconfirmed_owner_tags:
+                _V26_UNCONFIRMED_NATIVE_OWNERS.append((tag, owners))
+                self._unconfirmed_owner_tags.add(tag)
+
+        def release_owner(tag: str) -> None:
+            if tag in self._unconfirmed_owner_tags:
+                _V26_UNCONFIRMED_NATIVE_OWNERS[:] = [
+                    row for row in _V26_UNCONFIRMED_NATIVE_OWNERS if row[0] != tag
+                ]
+                self._unconfirmed_owner_tags.remove(tag)
+
         for q in reversed(sorted(self.factors)):
-            factor = self.factors.pop(q)
+            factor = self.factors[q]
+            tag = f"all_q_{id(self)}_factor_q{q}"
             try:
                 destroy = getattr(factor, "destroy", None)
-                if callable(destroy):
-                    destroy()
+                if not callable(destroy):
+                    raise RuntimeError("live AllQ factor has no destroy method")
+                destroy()
             except BaseException as exc:
-                errors.append(exc)
+                failures.append({
+                    "q": int(q),
+                    "owner": "factor",
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                    "cleanup_continued_for_other_q": True,
+                })
+                retain_owner(
+                    tag,
+                    (
+                        factor,
+                        self.matrices.get(q),
+                        self.source_matrices.get(q),
+                        self.csr_matrices.get(q),
+                    ),
+                )
+            else:
+                self.factors.pop(q, None)
+                release_owner(tag)
             finally:
                 self._note_live_factor_count()
         for q in reversed(sorted(self.matrices)):
-            matrix = self.matrices.pop(q)
+            if q in self.factors:
+                continue
+            matrix = self.matrices[q]
+            tag = f"all_q_{id(self)}_matrix_q{q}"
             try:
-                matrix.destroy()
+                destroy = getattr(matrix, "destroy", None)
+                if not callable(destroy):
+                    raise RuntimeError("live AllQ PETSc matrix has no destroy method")
+                destroy()
             except BaseException as exc:
-                errors.append(exc)
-        self.destroyed = True
-        self.source_matrices.clear()
-        self.csr_matrices.clear()
-        self.matrices.clear()
-        self._input_bindings.clear()
+                failures.append({
+                    "q": int(q),
+                    "owner": "matrix",
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                    "cleanup_continued_for_other_q": True,
+                })
+                retain_owner(
+                    tag,
+                    (
+                        matrix,
+                        self.source_matrices.get(q),
+                        self.csr_matrices.get(q),
+                    ),
+                )
+            else:
+                self.matrices.pop(q, None)
+                release_owner(tag)
+                self.source_matrices.pop(q, None)
+                self.csr_matrices.pop(q, None)
+                self._input_bindings.pop(q, None)
+        owners_remain = bool(self.factors or self.matrices)
+        self.destroyed = not owners_remain
+        self.cleanup_failed = owners_remain or bool(failures)
+        if self.destroyed:
+            self.source_matrices.clear()
+            self.csr_matrices.clear()
+            self._input_bindings.clear()
         self.audit["factors_live_count_current"] = len(self.factors)
+        self.audit["matrices_live_count_current"] = len(self.matrices)
+        self.audit["cleanup_failures"].extend(failures)
+        self.audit["cleanup_last_attempt_failures"] = failures
+        self.audit["cleanup_status"] = (
+            "FAILED_LIVE_OWNERS_RETAINED" if self.cleanup_failed else "DESTROYED"
+        )
+        self.audit["unconfirmed_owner_tags"] = sorted(self._unconfirmed_owner_tags)
+        self.audit["destroyed"] = self.destroyed
         self.audit["max_simultaneous_factors"] = self._max_simultaneous_factors
         self.audit["all_q_factor_objects_live_simultaneously"] = (
             self._max_simultaneous_factors == self.nq
@@ -1528,8 +2323,11 @@ class AllQExactMumps:
         self.audit["all_four_factor_objects_live_simultaneously"] = (
             self.nq == 4 and self._max_simultaneous_factors == self.nq
         )
-        if errors:
-            raise RuntimeError(f"failed to destroy {len(errors)} PETSc/MUMPS objects") from errors[0]
+        if self.cleanup_failed:
+            raise RuntimeError(
+                f"failed to destroy {len(failures)} AllQ PETSc/MUMPS objects; "
+                "unconfirmed owners remain retained"
+            )
 
     def __enter__(self):
         return self
