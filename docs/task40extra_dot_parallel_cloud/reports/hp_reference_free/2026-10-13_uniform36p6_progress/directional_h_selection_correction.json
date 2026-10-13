@@ -1,0 +1,130 @@
+{
+  "schema": "hp.directional-h-selection-correction-addendum.v1",
+  "revision_recorded_utc": "2026-10-13T15:42:31.826598+00:00",
+  "applies_to_snapshot_utc": "2026-10-13T15:32:34.941042+00:00",
+  "snapshot_commit_sha": "335a2d8028422cd06e349be5aaf75bc9264b6fcc",
+  "original_four_snapshot_files_unchanged": true,
+  "pretrial_algorithm_revision": true,
+  "reason": "The shared max-over-directions hotspot weight can give a z split credit for x-panel defects. No z scientific map/native/PDE was executed. Use each h direction own restricted residual, with the same finite candidate inventory and actual independent-FE cost.",
+  "new_h_score": "For h direction d use score=sum(eta_squared(K,d) for source parents affected by its exact compatible closure)/delta_full_independent_FE_DOFs. Do not credit another direction residual to h_d. For a future eligible p candidate retain the previous max-over-directions priority, disclosed as a different heuristic; no p candidate is eligible in this allp6 state.",
+  "score_semantics": "A direction-aligned restricted weak-residual hotspot priority, not a dual norm on the full test space, true error, certified estimator or predicted PDE decrease.",
+  "selected_prospective_trial": "single_x_2",
+  "selected_trial_cells": 42,
+  "selected_trial_degrees": {
+    "6": 42
+  },
+  "selected_trial_independent_FE": 28224,
+  "selected_trial_condensed_rows": 9404,
+  "actual_PDE_or_acceptance": false,
+  "execution_status_at_revision": "PRETRIAL_PLAN_CHOSEN_ACTUAL_GATES_PENDING",
+  "old_z1_trial_scientific_execution_count": 0,
+  "selected_direction_hardcoded": false,
+  "historical_strategy_mature_or_fixed_from_start": false,
+  "scientific_rank_independent_of_budget": true,
+  "original_resource_and_acceptance_limits_unchanged": true,
+  "converged": false,
+  "source_solution_id": "7e377b2385080ec39a7cb965d862c1eda53dca5b211f5794806a64a7a44bd520",
+  "all11_directional_h_scores": [
+    {
+      "option": "single_x_2",
+      "axis": "x",
+      "cells": 42,
+      "delta_FE": 4032,
+      "directional_priority_mass": 0.07175619368662517,
+      "score": 1.7796675021484418e-05
+    },
+    {
+      "option": "single_x_3",
+      "axis": "x",
+      "cells": 42,
+      "delta_FE": 4032,
+      "directional_priority_mass": 0.07175471345746683,
+      "score": 1.7796307901157448e-05
+    },
+    {
+      "option": "single_x_1",
+      "axis": "x",
+      "cells": 42,
+      "delta_FE": 4032,
+      "directional_priority_mass": 0.049877103779889714,
+      "score": 1.2370313437472647e-05
+    },
+    {
+      "option": "single_x_4",
+      "axis": "x",
+      "cells": 42,
+      "delta_FE": 4032,
+      "directional_priority_mass": 0.04987538117315987,
+      "score": 1.2369886203660683e-05
+    },
+    {
+      "option": "single_x_0",
+      "axis": "x",
+      "cells": 42,
+      "delta_FE": 4032,
+      "directional_priority_mass": 0.04987023276124849,
+      "score": 1.2368609315785836e-05
+    },
+    {
+      "option": "single_x_5",
+      "axis": "x",
+      "cells": 42,
+      "delta_FE": 4032,
+      "directional_priority_mass": 0.04986953223440664,
+      "score": 1.2368435574009584e-05
+    },
+    {
+      "option": "single_z_1",
+      "axis": "z",
+      "cells": 48,
+      "delta_FE": 7776,
+      "directional_priority_mass": 1.1096592849796446e-05,
+      "score": 1.4270309734820531e-09
+    },
+    {
+      "option": "single_z_0",
+      "axis": "z",
+      "cells": 48,
+      "delta_FE": 7776,
+      "directional_priority_mass": 3.890626360372764e-10,
+      "score": 5.0033775210555096e-14
+    },
+    {
+      "option": "single_z_2",
+      "axis": "z",
+      "cells": 48,
+      "delta_FE": 7776,
+      "directional_priority_mass": 3.617942399912349e-10,
+      "score": 4.652703703590984e-14
+    },
+    {
+      "option": "single_y_1",
+      "axis": "y",
+      "cells": 54,
+      "delta_FE": 12096,
+      "directional_priority_mass": 6.772939198706593e-20,
+      "score": 5.599321427502144e-24
+    },
+    {
+      "option": "single_y_0",
+      "axis": "y",
+      "cells": 54,
+      "delta_FE": 12096,
+      "directional_priority_mass": 6.713962748141501e-20,
+      "score": 5.550564441254548e-24
+    }
+  ],
+  "sources": [
+    {
+      "path": "phase3_top_p6_hp_trial_selection_contract_v5.json",
+      "bytes": 4992,
+      "sha256": "7ad067a7daadd89488ed71e3d5e530c2e35963a103ddbfa22d9b75332872642e"
+    },
+    {
+      "path": "phase3_top_p6_actual_directional_h_ranking_v5.json",
+      "bytes": 88452,
+      "sha256": "e289e9af3fd2abb886c0e6f3657f12d0ee64d88b369c316c60b2d3aecaed0b1b"
+    }
+  ],
+  "validation": "Source byte hashes and complete eleven-row inventory checked; each score recomputed from its own-direction mass / added full independent FE rows; no scientific execution or result invented."
+}
