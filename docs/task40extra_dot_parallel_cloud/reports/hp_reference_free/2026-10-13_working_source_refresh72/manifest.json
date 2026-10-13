@@ -1,0 +1,27 @@
+{
+  "schema": "hp.compact-document-snapshot-manifest.v1",
+  "snapshot": "2026-10-13_working_source_refresh72",
+  "expected_parent_sha": "3b06a1e60ca1794e5094fc39652b4a325f83f9d4",
+  "group": "compact_evidence_docs",
+  "numerical_behavior_changed": false,
+  "production_merge_approval": false,
+  "dependency": "Existing completed local scalar evidence; previously published reports retained unchanged.",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 1365,
+      "sha256": "1ef66387f574bfdaf230d1ea5612c3417c5a9316782e27d3239cb7a1e8f83f6b"
+    },
+    {
+      "path": "current_state_report_zh.md",
+      "bytes": 7739,
+      "sha256": "2bde8883c78d690a20202a4040c4d24edaaed11c318f9a6ea50d6968261ca018"
+    },
+    {
+      "path": "current_state_summary.json",
+      "bytes": 33231,
+      "sha256": "44b6d12266d42d9ef3f57df5844f2ebb2b7a6f006428c5154820c41b7d0cd478"
+    }
+  ],
+  "self_hash_omitted_to_avoid_recursion": true
+}
