@@ -3314,6 +3314,76 @@ def _run_case_output_checker(
     ]
 
 
+def _v31_missing_numerical_output_is_bound_worker_failure(
+    *,
+    input_path: Path,
+    summary_path: Path,
+    manifest_path: Path,
+    numerical_path: Path,
+    repo_root: Path,
+    source_sha: str,
+    campaign_sha256: str,
+    campaign_window_path: Path,
+) -> bool:
+    """Accept absent V31 numerical output only for its exact recorded worker failure."""
+    root = repo_root.resolve()
+    window_path = (
+        campaign_window_path
+        if campaign_window_path.is_absolute()
+        else root / campaign_window_path
+    ).resolve()
+
+    def resolve_repo_path(path: Path) -> Path:
+        return (path if path.is_absolute() else root / path).resolve()
+
+    if (
+        numerical_path.exists()
+        or any(
+            not resolve_repo_path(path).is_relative_to(root)
+            for path in (input_path, summary_path, manifest_path, numerical_path)
+        )
+        or not input_path.is_file()
+        or not summary_path.is_file()
+        or not manifest_path.is_file()
+        or not window_path.is_relative_to(root)
+        or not window_path.is_file()
+        or _sha256_file(window_path) != campaign_sha256
+    ):
+        return False
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        expected_run_id, input_payload = _read_case(input_path)
+    except Exception:
+        return False
+    if not isinstance(summary, Mapping) or not isinstance(manifest, Mapping):
+        return False
+    campaign = manifest.get("task40_v20_campaign")
+    campaign = campaign if isinstance(campaign, Mapping) else {}
+    from src.runners.task40_v31_contract import V31_PROFILE
+
+    summary_numerical_path = resolve_repo_path(
+        Path(str(summary.get("numerical_output_directory", "")))
+    )
+    recorded_input_path = resolve_repo_path(Path(str(manifest.get("input_path", ""))))
+    recorded_window_path = resolve_repo_path(Path(str(campaign.get("window_path", ""))))
+    solver = input_payload.get("solver", {}) if isinstance(input_payload, Mapping) else {}
+    return bool(
+        summary.get("status") == "finished"
+        and summary.get("result_classification") == "WORKER_FAILED"
+        and summary.get("exit_status") == 4
+        and expected_run_id == "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
+        and summary.get("run_id") == manifest.get("run_id") == expected_run_id
+        and summary.get("source_sha") == manifest.get("source_sha") == source_sha
+        and summary.get("input_sha256") == manifest.get("input_sha256") == _sha256_file(input_path)
+        and recorded_input_path.resolve() == input_path.resolve()
+        and summary_numerical_path.resolve() == numerical_path.resolve()
+        and solver.get("preconditioner") == V31_PROFILE
+        and recorded_window_path == window_path
+        and campaign.get("window_sha256") == campaign_sha256
+    )
+
+
 def _task40_v30_closeout_checker_authorization(
     *,
     command: list[str],
@@ -3325,6 +3395,8 @@ def _task40_v30_closeout_checker_authorization(
     contract_sha256: str,
     source_state: Mapping[str, Any],
     profile: str,
+    allow_missing_numerical_output_for_v31_worker_failure: bool = False,
+    expected_campaign_window_path: Path | None = None,
 ) -> dict[str, Any]:
     """Bind only the two registered read-only checker commands to closeout time."""
     runtime = runtime_prefix.resolve() / "bin" / "python"
@@ -3385,11 +3457,27 @@ def _task40_v30_closeout_checker_authorization(
         input_path, summary_path, manifest_path, numerical_path, output_path = (
             resolve_run_path(values[index]) for index in (0, 1, 2, 3, 5)
         )
+        numerical_output_is_bound = numerical_path.is_dir()
+        if (
+            not numerical_output_is_bound
+            and allow_missing_numerical_output_for_v31_worker_failure
+            and expected_campaign_window_path is not None
+        ):
+            numerical_output_is_bound = _v31_missing_numerical_output_is_bound_worker_failure(
+                input_path=input_path,
+                summary_path=summary_path,
+                manifest_path=manifest_path,
+                numerical_path=numerical_path,
+                repo_root=root,
+                source_sha=str(source_state.get("source_sha", "")),
+                campaign_sha256=campaign_sha256,
+                campaign_window_path=expected_campaign_window_path,
+            )
         if (
             not input_path.is_file()
             or not summary_path.is_file()
             or not manifest_path.is_file()
-            or not numerical_path.is_dir()
+            or not numerical_output_is_bound
             or any(not path.is_relative_to(root) for path in (
                 input_path, summary_path, manifest_path, numerical_path
             ))
@@ -3452,6 +3540,8 @@ def _task40_v31_closeout_checker_authorization(
         contract_sha256=contract_sha,
         source_state=source_state,
         profile=profile,
+        allow_missing_numerical_output_for_v31_worker_failure=True,
+        expected_campaign_window_path=Path(str(window["window_path"])),
     )
     common["schema"] = "task40extra.review_v31_closeout_checker_authorization.v2"
     common["v31_contract_sha256"] = common.pop("v30_contract_sha256")

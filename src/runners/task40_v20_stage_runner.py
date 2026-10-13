@@ -4795,7 +4795,9 @@ def run_task40_v20_stage(
                     if v31_route
                     else None
                 ),
-                v31_q_csr_binding=(v31_q_csr_binding if v31_route else None),
+                v31_q_csr_binding=(
+                    v31_binding["q_csr_selector_binding"] if v31_route else None
+                ),
                 v31_factor_config=(
                     v31_binding["factor_bank_config"] if v31_route else None
                 ),

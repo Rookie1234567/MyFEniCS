@@ -911,6 +911,234 @@ def test_v31_all_q_dispatcher_keeps_its_contract_and_v30_route_disjoint(tmp_path
         )
 
 
+def test_v31_dispatcher_passes_normalized_selector_to_validation_only_worker(
+    tmp_path, monkeypatch
+):
+    from src.runners import task40_v10_worker, task40_v20_stage_runner
+    from src.runners import task40_v31_contract
+
+    contract, _binding, payload, environment, contract_sha = _v31_worker_fixture(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    run_source = contract["execution"]["run_source_sha"]
+    source_root = tmp_path / V31_ARTIFACT_ROOT_RELATIVE / f"source_{run_source}"
+    selector_path = source_root / "q_csr_selector_v31.json"
+    payload["solver"].update(
+        task40_reference_pc_strategy="V15_REFERENCE_PC_STRATEGY",
+        task40_q_assembly_strategy="Q_ASSEMBLY_ROW_TILE_V17",
+        task40_factor_lifecycle_strategy="ALL_Q_RESIDENT",
+    )
+    payload["execution"].update(
+        task40_v31_q_csr_binding={
+            "schema": V31_Q_CSR_BINDING_SCHEMA,
+            "selector_path": selector_path.relative_to(tmp_path).as_posix(),
+            "selector_sha256": "1" * 64,
+        },
+        task40_v31_factor_bank_config={
+            "schema": V31_FACTOR_BANK_SCHEMA,
+            "output_directory": (
+                V31_ARTIFACT_ROOT_RELATIVE / f"source_{run_source}" / "factor_bank"
+            ).as_posix(),
+            "require_two_strict_rhs": True,
+            "second_rhs_formula": "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13",
+        },
+    )
+    contract_path = Path(contract["execution"]["root"]) / V31_ARTIFACT_ROOT_RELATIVE / (
+        f"source_{run_source}/execution_contract_v31.approved.json"
+    )
+    environment["TASK40_V31_CONTRACT_PATH"] = str(contract_path)
+    environment["TASK40_V31_CONTRACT_SHA256"] = contract_sha
+    for name, value in environment.items():
+        monkeypatch.setenv(name, value)
+
+    monkeypatch.setattr(
+        task40_v31_contract,
+        "require_v31_execution_contract",
+        lambda *_args, **_kwargs: (contract, contract_sha),
+    )
+    monkeypatch.setattr(
+        task40_v31_contract,
+        "require_v31_input_identity",
+        lambda *_args, **_kwargs: {
+            "staged_input_sha256": "2" * 64,
+            "scientific_input_sha256": "3" * 64,
+        },
+    )
+    monkeypatch.setattr(
+        task40_v31_contract,
+        "validate_v31_worker_execution_binding",
+        lambda *_args, **_kwargs: {"fixture_binding_validated": True},
+    )
+    monkeypatch.setattr(task40_v20_stage_runner, "__file__", str(tmp_path / "src/runners/stage.py"))
+    monkeypatch.setattr(task40_v10_worker, "__file__", str(tmp_path / "src/runners/worker.py"))
+    monkeypatch.setattr(task40_v20_stage_runner, "_exact_case", lambda _payload: (V31_PROFILE, "TARGET_ORIGINAL_NY8"))
+    monkeypatch.setattr(
+        task40_v20_stage_runner,
+        "_preflight",
+        lambda *_args, **_kwargs: (
+            {"run_id": payload["run_id"], "input_sha256": "2" * 64},
+            [],
+            [],
+        ),
+    )
+    actual_worker = task40_v10_worker.run_task40_v10_p6_reference_worker
+
+    def validation_only_worker(*args, **kwargs):
+        kwargs["_v31_entry_validation_only"] = True
+        return actual_worker(*args, **kwargs)
+
+    monkeypatch.setattr(
+        task40_v10_worker,
+        "run_task40_v10_p6_reference_worker",
+        validation_only_worker,
+    )
+
+    result = task40_v20_stage_runner.run_task40_v20_stage(
+        payload,
+        tmp_path / "stage-output",
+        source_sha=run_source,
+        v31_requested_factor_lifecycle_strategy="ONE_Q_REFACTOR_V19",
+        v31_effective_factor_lifecycle_strategy="ALL_Q_RESIDENT",
+    )
+
+    assert result["status"] == "V31_ROUTE_VALIDATED_NO_FE_HOOKS"
+    assert result["fe_hooks_invoked"] is False
+    assert result["jit_hooks_invoked"] is False
+
+
+def test_v31_closeout_allows_missing_numerical_output_only_for_bound_failure(
+    tmp_path, monkeypatch
+):
+    from scripts import task40_v20_service_workflow as service
+    from src.runners import task40_v31_contract
+
+    root = tmp_path / "repo"
+    evidence = root / "benchmarks/artifacts/run-evidence"
+    evidence.mkdir(parents=True)
+    run_directory = root / "results" / "v31-attempt"
+    run_directory.mkdir(parents=True)
+    input_path = run_directory / "stage.dat"
+    input_path.write_text("fixture input\n", encoding="utf-8")
+    numerical_path = run_directory / "numerical-output"
+    summary_path = run_directory / "run_summary.json"
+    manifest_path = run_directory / "run_manifest.json"
+    source_sha = "b" * 40
+    input_sha = service._sha256_file(input_path)
+    run_id = "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
+    window_path = root / "campaign_window_v31.json"
+    window_path.write_text("approved fixture window\n", encoding="utf-8")
+    window_sha = service._sha256_file(window_path)
+    contract = {
+        "execution": {
+            "window": {"window_path": str(window_path), "window_sha256": window_sha}
+        }
+    }
+    monkeypatch.setattr(
+        task40_v31_contract,
+        "require_v31_execution_contract",
+        lambda *_args, **_kwargs: (contract, "d" * 64),
+    )
+    monkeypatch.setattr(
+        service,
+        "_read_case",
+        lambda _path: (run_id, {"solver": {"preconditioner": V31_PROFILE}}),
+    )
+    summary_path.write_text(
+        json.dumps(
+            {
+                "status": "finished",
+                "result_classification": "WORKER_FAILED",
+                "exit_status": 4,
+                "run_id": run_id,
+                "source_sha": source_sha,
+                "input_sha256": input_sha,
+                "numerical_output_directory": str(numerical_path),
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "run_id": run_id,
+                "source_sha": source_sha,
+                "input_sha256": input_sha,
+                "input_path": str(input_path),
+                "task40_v20_campaign": {
+                    "window_path": str(window_path),
+                    "window_sha256": window_sha,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    runtime = tmp_path / "runtime"
+    command = [
+        str(runtime / "bin/python"),
+        str(root / "scripts/task40_v20_service_workflow.py"),
+        "check-partial",
+        "--input",
+        str(input_path),
+        "--summary",
+        str(summary_path),
+        "--manifest",
+        str(manifest_path),
+        "--numerical-output",
+        str(numerical_path),
+        "--stop-stage",
+        "full",
+        "--output",
+        str(evidence / "partial_checker_result.json"),
+    ]
+    source_state = {"branch": "task40extra_0p7nm_engineering", "source_sha": source_sha, "clean": True}
+
+    authorization = service._task40_v31_closeout_checker_authorization(
+        command=command,
+        checker_kind="task40_v20_partial_receipt_checker",
+        runtime_prefix=runtime,
+        repo_root=root,
+        evidence_directory=evidence,
+        campaign_sha256=window_sha,
+        contract_path=root / "approved-contract.json",
+        source_state=source_state,
+        profile=V31_PROFILE,
+    )
+
+    assert authorization["schema"].endswith("authorization.v2")
+    assert authorization["input_paths"] == [
+        str(input_path.resolve()),
+        str(summary_path.resolve()),
+        str(manifest_path.resolve()),
+    ]
+    with pytest.raises(ValueError, match="paths are not bound"):
+        service._task40_v30_closeout_checker_authorization(
+            command=command,
+            checker_kind="task40_v20_partial_receipt_checker",
+            runtime_prefix=runtime,
+            repo_root=root,
+            evidence_directory=evidence,
+            campaign_sha256=window_sha,
+            contract_sha256="c" * 64,
+            source_state=source_state,
+            profile=V31_PROFILE,
+        )
+
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["result_classification"] = "worker_exit0"
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+    with pytest.raises(ValueError, match="paths are not bound"):
+        service._task40_v31_closeout_checker_authorization(
+            command=command,
+            checker_kind="task40_v20_partial_receipt_checker",
+            runtime_prefix=runtime,
+            repo_root=root,
+            evidence_directory=evidence,
+            campaign_sha256=window_sha,
+            contract_path=root / "approved-contract.json",
+            source_state=source_state,
+            profile=V31_PROFILE,
+        )
+
+
 def test_v31_closeout_supervisor_starts_samples_and_clears_fake_checker(
     tmp_path, monkeypatch
 ):
