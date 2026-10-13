@@ -55,7 +55,20 @@ def test_v7_profile_resolves_as_full_n0_p4_and_not_a_pilot():
     assert config["discretization"]["mesh_axis_cell_counts"] == [100, 2, 234]
     assert config["solver"]["coarse_degree"] == 4
     assert config["execution"]["time_limit_mode"] == "none"
+    assert V7_RSS_HARD_LIMIT_BYTES == 1_800_000_000_000
     assert config["execution"]["terminate_memory_gib"] == V7_RSS_HARD_LIMIT_BYTES / 2**30
+    assert config["execution"]["memory_limit_gb"] == V7_RSS_HARD_LIMIT_BYTES / 2**30
+    assert config["execution"]["terminate_memory_gib"] * 2**30 == V7_RSS_HARD_LIMIT_BYTES
+    assert config["execution"]["memory_limit_gb"] * 2**30 == V7_RSS_HARD_LIMIT_BYTES
+    assert facts["resources"]["absolute_cap_bytes"] == V7_RSS_HARD_LIMIT_BYTES
+    assert facts["resources"]["planning_cap_bytes"] == V7_RSS_HARD_LIMIT_BYTES
+    assert facts["resources"]["rss_hard_limit_bytes"] == V7_RSS_HARD_LIMIT_BYTES
+    assert facts["campaign_authorization"]["resource_policy"]["rss_hard_limit_bytes"] == (
+        V7_RSS_HARD_LIMIT_BYTES
+    )
+    memory_override = facts["campaign_authorization"]["memory_override"]
+    assert memory_override["whole_process_tree_rss_cap_bytes"] == V7_RSS_HARD_LIMIT_BYTES
+    assert memory_override["parent_and_worker_cap_bytes"] == V7_RSS_HARD_LIMIT_BYTES
     assert config["discretization"]["nedelec_degree"] == 6
     assert config["output"]["export_reference_planes"] is True
     assert config["output"]["sample_count_y"] >= 4
@@ -122,7 +135,8 @@ def test_v7_coefficient_policy_requires_the_explicit_profile_degree_and_option()
     [
         (("solver", "coarse_degree"), 3),
         (("discretization", "mesh_axis_cell_counts"), [100, 2, 233]),
-        (("execution", "terminate_memory_gib"), 1210.719347000122),
+        (("execution", "terminate_memory_gib"), 1816.079020500183),
+        (("execution", "memory_limit_gb"), 1816.079020500183),
         (("output", "export_reference_planes"), False),
         (("output", "sample_count_y"), 3),
         (("output", "diffraction_order_max_m"), 141),

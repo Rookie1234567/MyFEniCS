@@ -67,8 +67,8 @@ coarse_degree = 4
 mpi_size = 1
 time_limit_mode = "none"
 warning_memory_gib = 1089.6474123001099
-terminate_memory_gib = 1816.079020500183
-memory_limit_gb = 1816.079020500183
+terminate_memory_gib = 1676.3806343078613
+memory_limit_gb = 1676.3806343078613
 require_zero_swap = false
 native_memory_policy = "interleave_nodes0_1"
 

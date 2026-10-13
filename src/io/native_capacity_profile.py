@@ -40,7 +40,7 @@ V7_N0_ACTIVE_MODE_COUNT = 572
 V7_N0_ACTIVE_MODE_SHA256 = (
     '946e0d294b99cb7f44817c3649029942ac325f345eb1770caa566183d2b04f3b'
 )
-V7_RSS_HARD_LIMIT_BYTES = 1_950_000_000_000
+V7_RSS_HARD_LIMIT_BYTES = 1_800_000_000_000
 # Separate identities keep all V5 inputs and policies immutable.
 V6_BASE_PROFILES = {
     'dual_condensed_balh_native_13p5_p3_v6': 'dual_condensed_balh_native_13p5_q3_v5',
@@ -932,7 +932,8 @@ def _validate_v7_aniso_n0_p4_case(config) -> None:
     for key in ('terminate_memory_gib', 'memory_limit_gb'):
         if execution.get(key) != required_gib:
             raise InputError(
-                f'{V7_ANISO_N0_P4_PROFILE} fixes {key} to the 1.95e12-byte RSS cap'
+                f'{V7_ANISO_N0_P4_PROFILE} fixes {key} to the '
+                f'{V7_RSS_HARD_LIMIT_BYTES}-byte RSS cap'
             )
 
     output_expected = {
