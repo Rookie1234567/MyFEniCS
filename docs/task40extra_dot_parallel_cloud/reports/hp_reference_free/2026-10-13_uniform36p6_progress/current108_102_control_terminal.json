@@ -1,0 +1,625 @@
+{
+  "schema": "hp.reference-free.followon-small-report.v1",
+  "publication_state": "FROZEN_REPORT_SNAPSHOT",
+  "evidence_as_of_utc": "2026-10-13T22:35:13.590372+00:00",
+  "prior_immutable_report_commit": "14dd50f600bf2a23a60e6f6edc0892ec12dd7222",
+  "prior_report_preserved": true,
+  "scope": "Terminal108 and102 control attempts, current96 full192-x diagnostics, and scientific/resource limits through immutable ledger30. No further solver trial is running or authorized by this report.",
+  "accepted_working_source": {
+    "cells": 96,
+    "solution_id": "bfaa46668898d08979e1cd7381ce2d00d5e30709680e148d80dfcfc8eb6437d6",
+    "status": "EMPIRICALLY_QUALIFIED_WORKING_STEP",
+    "unchanged_by108_failures": true,
+    "converged": false,
+    "continuous_error_bound": false,
+    "first_additional_h_check72_to96": {
+      "reference_free": true,
+      "external_fine_reference_used": false,
+      "common_physical_piece_count": 96,
+      "official_deltas": {
+        "A_balance": {
+          "absolute_delta": 4.485269489151733e-09,
+          "new": 0.019505183613077848,
+          "old": 0.019505188098347337,
+          "signed_delta": -4.485269489151733e-09
+        },
+        "A_volume_total": {
+          "absolute_delta": 4.5979058511946835e-09,
+          "new": 0.01950518347140809,
+          "old": 0.01950518806931394,
+          "signed_delta": -4.5979058511946835e-09
+        },
+        "R00_total": {
+          "absolute_delta": 5.179967843549349e-08,
+          "new": 0.07376882154357414,
+          "old": 0.0737687697438957,
+          "signed_delta": 5.179967843549349e-08
+        },
+        "R_total": {
+          "absolute_delta": 5.179942255684189e-08,
+          "new": 0.07376891657224893,
+          "old": 0.07376886477282638,
+          "signed_delta": 5.179942255684189e-08
+        },
+        "T_total": {
+          "absolute_delta": 4.731415303993458e-08,
+          "new": 0.9067258998146732,
+          "old": 0.9067259471288263,
+          "signed_delta": -4.731415303993458e-08
+        },
+        "energy_closure_error_port_volume": {
+          "absolute_delta": 1.1263634469571571e-10,
+          "new": -1.4166978701268818e-10,
+          "old": -2.903344231697247e-11,
+          "signed_delta": -1.1263634469571571e-10
+        }
+      },
+      "relative_G_difference_over_old": {
+        "15": 1.004652763873567e-05,
+        "19": 1.0046527638890548e-05
+      },
+      "maximum_all80_modal_power_absolute_delta": 5.179967843549349e-08,
+      "observable_absolute_threshold": 0.0001,
+      "observable_engineering_check_pass": true,
+      "extra_h_observable_check_number": 1,
+      "convergence_certificate": false,
+      "automatic_G_tolerance_imposed": false
+    },
+    "second_independent_qualified_main_solution_after96_exists": false,
+    "wavelength_nm": 0.7,
+    "official_observables": {
+      "R_total": 0.07376891657224893,
+      "T_total": 0.9067258998146732,
+      "A_volume_total": 0.01950518347140809
+    },
+    "external_fine_reference_used": false,
+    "convergence_assessment": "The hp convergence acceptance conditions for this study have not yet been met; this is not a proof of nonconvergence."
+  },
+  "candidate108": {
+    "trial_role": "resource_bounded_coverage_validation_control",
+    "selected_primary": false,
+    "capture": {
+      "status": "PASS_CAPTURE_ONLY_TYPED_ARRAYS_UNION_CACHE_RESOURCES_AND_CLEANUP",
+      "cells": 108,
+      "rows": 24056,
+      "trace_rows": 23976,
+      "ports": 80,
+      "actual_nnz": 17656256,
+      "actual_union_nnz_upper": 21219328,
+      "capture_bytes_actual": 354342240,
+      "elapsed_seconds": 59.68121138300921,
+      "assembly_capture_only": true,
+      "linear_solve_success": false,
+      "field_recovery": false
+    },
+    "native_direct_attempts": [
+      {
+        "status": "CONFIRMED_NATIVE_FACTOR_FAILURE_ORIGINAL_CAPS_AND_CLEANUP",
+        "ordering": "COLAMD",
+        "elapsed_seconds": 112.7365755669889,
+        "factor_calls": 1,
+        "apply_calls": 0,
+        "first_native_diagnostic": "Can't expand MemType 1: jcol 20004",
+        "failure_interpretation": "Native expansion failed while the original6GiB AS ceiling was installed. Exact failed-allocation size and fault-time VmSize were not retained, so sampledRSS is not AS headroom or a proof of the exact underlying allocation cause.",
+        "peak_sampled_tree_RSS_bytes": 5123375104,
+        "solution_produced": false,
+        "original_AS_tree_caps_floors_zero_swap_and_cleanup_pass": true
+      },
+      {
+        "status": "CONFIRMED_NATIVE_FACTOR_FAILURE_ORIGINAL_CAPS_AND_CLEANUP",
+        "ordering": "COLAMD",
+        "elapsed_seconds": 131.7769441499986,
+        "factor_calls": 1,
+        "apply_calls": 0,
+        "first_native_diagnostic": "Can't expand MemType 1: jcol 23148",
+        "failure_interpretation": "Native expansion failed under the installed original6GiB AS ceiling after recorded saved CSR/RHS owners had ended. Exact failed-allocation size and fault-time VmSize were not retained, so sampledRSS is neither AS headroom nor proof of an exact allocation deficit.",
+        "peak_sampled_tree_RSS_bytes": 4024041472,
+        "solution_produced": false,
+        "original_AS_tree_caps_floors_zero_swap_and_cleanup_pass": true
+      }
+    ],
+    "second_native_attempt_factor_first": {
+      "original_saved_CSR_RHS_owner_count_before_factor": 0,
+      "original_saved_owner_weakrefs_dead_before_factor": true,
+      "PETSc_operator_bound_before_factor": false,
+      "native_allocator_release_claimed": false,
+      "same_COLAMD_ordering": true
+    },
+    "ilu_attempt01": {
+      "status": "CONFIRMED_PRE_FACTOR_NATIVE_VIEW_FORMAT_GATE_FAILURE_NOT_NUMERICAL_ILU_FAILURE",
+      "elapsed_seconds": 3.283023016003426,
+      "factor_calls": 0,
+      "apply_calls": 0,
+      "iterations": 0,
+      "numerical_ILU_trial_performed": false,
+      "final_explicit_residual": {
+        "absolute": 0.6891415543120595,
+        "denominator_floor": 1e-30,
+        "relative": 1.0,
+        "rhs_norm": 0.6891415543120595
+      },
+      "solution_produced": false,
+      "original_limits_and_zero_swap_and_cleanup_pass": true
+    },
+    "ilu_attempt02": {
+      "status": "CONFIRMED_ORIGINAL600S_TIME_LIMIT_NO_QUALIFIED_SOLUTION_FINAL_KSP_REASON_UNRECORDED",
+      "native_ILU1_natural_petsc_out_of_place_no_shift_setup_verified": true,
+      "setup_seconds": 233.5031968849944,
+      "elapsed_seconds": 601.0364836569934,
+      "original_wall_limit_seconds": 600,
+      "stop_reason": "TIME_LIMIT",
+      "outer_child_exit_code": -15,
+      "recorded_factor_calls_at_setup": 1,
+      "last_recorded_iteration": {
+        "iteration": 1782,
+        "reported_residual_norm": 0.6889644189375751
+      },
+      "last_stored_explicit_Ax_checkpoint": {
+        "explicit_residual": {
+          "absolute": 0.6889644189489884,
+          "denominator_floor": 1e-30,
+          "relative": 0.9997429622956812,
+          "rhs_norm": 0.6891415543120595
+        },
+        "iteration": 1728,
+        "source": "KSP.buildSolution_into_owned_scratch"
+      },
+      "checkpoint_is_not_a_final_residual": true,
+      "final_KSP_reason": null,
+      "final_explicit_Ax": null,
+      "final_iteration_count": null,
+      "complete_final_apply_diagnostics_persisted": false,
+      "normal_owner_cleanup_recorded": false,
+      "outer_process_cleanup_verified": true,
+      "outer_remaining_processes": [],
+      "peak_sampled_tree_RSS_bytes": 2577498112,
+      "original_AS_tree_caps_floors_zero_swap_and_artifact_cap_pass": true,
+      "solution_produced": false,
+      "independent_saved_Ax_or_recovery_performed": false,
+      "accepted_working_source_changed": false
+    },
+    "qualified_solution_exists": false,
+    "new_official_R_T_A_or_port_powers": false,
+    "convergence_claimed": false
+  },
+  "current96_full192x_test": {
+    "status": "PASS_SMALL_JSON_SCALAR_RESOURCE_TERMINAL_REVIEW",
+    "source_cells": 96,
+    "test_cells": 192,
+    "test_is_unsolved": true,
+    "source_solution_unchanged": true,
+    "all96_source_parents_bisected_in_x": true,
+    "q15_q19": true,
+    "bubble_squared_totals": {
+      "source_q15": 6.429019277409485e-05,
+      "source_q19": 6.429019277624978e-05
+    },
+    "coordinate_residual_norms": {
+      "15": {
+        "coordinate_norm_is_physical_dual_norm": false,
+        "full_coordinate_l2": 0.23116999659969853,
+        "interior_coordinate_l2": 0.2180121724105286,
+        "port_coordinate_l2": 1.7594470482736568e-14,
+        "trace_coordinate_l2": 0.07687821543679783
+      },
+      "19": {
+        "coordinate_norm_is_physical_dual_norm": false,
+        "full_coordinate_l2": 0.23116999662343263,
+        "interior_coordinate_l2": 0.21801217242790835,
+        "port_coordinate_l2": 1.7594470482736568e-14,
+        "trace_coordinate_l2": 0.07687821545887938
+      }
+    },
+    "coordinate_norm_is_physical_dual_norm": false,
+    "all81_trace_functionals_pass": true,
+    "q15_q19_action_qualification": {
+      "difference_coordinate_l2": 4.870447151073275e-10,
+      "difference_max_abs": 4.230999590923654e-11,
+      "entries_compared": 129104,
+      "fixed_action_scale": 0.5194453238395242,
+      "pass": true,
+      "roundoff_or_PDE_error_bound": false,
+      "scaled_l2": 9.376246021569606e-10,
+      "scaled_max_abs": 8.145226064698901e-11,
+      "unchanged_qualification_threshold": 1e-09
+    },
+    "y_z_full192_test_complete": false,
+    "rigorous_global_Riesz_or_continuous_error_bound": false,
+    "converged": false
+  },
+  "candidate102": {
+    "status": "CONFIRMED_NATIVE_FACTOR_FAILURE_ORIGINAL_CAPS_AND_CLEANUP",
+    "actual_terminal_result": "NATIVE_FACTOR_FAILURE_NO_QUALIFIED_SOLUTION",
+    "actual_solution_claimed": false,
+    "actual_working_acceptance_claimed": false,
+    "selection": "Top measured legal singleton x interval under q15/q19 restricted bubble-squared ranking",
+    "selected_interval_zero_based": 1,
+    "selected_bounds_original_model_units": [
+      0.21388888888888888,
+      0.42777777777777776
+    ],
+    "mesh_shape_if_realized": [
+      17,
+      2,
+      3
+    ],
+    "all_cells_degree": 6,
+    "source_parents_refined": 6,
+    "total_current_source_parents": 96,
+    "legal_singleton_count": 14,
+    "rankings": {
+      "15": [
+        1,
+        14,
+        3,
+        12,
+        15,
+        0,
+        2,
+        13,
+        6,
+        9,
+        5,
+        10,
+        7,
+        8
+      ],
+      "19": [
+        1,
+        14,
+        3,
+        12,
+        15,
+        0,
+        2,
+        13,
+        6,
+        9,
+        5,
+        10,
+        7,
+        8
+      ]
+    },
+    "restricted_bubble_squared_coverage": {
+      "15": 0.12498925222746532,
+      "19": 0.12498925222306784
+    },
+    "uncovered_restricted_bubble_squared_fraction": {
+      "15": 0.8750107477725346,
+      "19": 0.8750107477769322
+    },
+    "current_parent_fraction": 0.0625,
+    "spatial_x_and_volume_fraction": 0.0825,
+    "eight_coarse_strips_fraction": {
+      "15": 0.9998076057640578,
+      "19": 0.9998076057671877
+    },
+    "coverage_is_predicted_reduction": false,
+    "coverage_is_total_error_fraction": false,
+    "trace_and_ports_not_in_bubble_coverage": true,
+    "quadrature_span_is_not_rigorous_roundoff_or_PDE_errorbound": true,
+    "native_LU_fit_guaranteed": false,
+    "same192x_common_test_limitation": "192x bisects all96 parents; in102 selected strip this is the same grid as102, not uniform h/2 testing of102. Uniform x h/2 of102 requires204 cells.",
+    "actual_map_status": "PASS_ACTUAL102_FULLKEY_OWNERS_NEW_GEOMETRY_RESOURCE_METADATA_ONLY",
+    "actual_map_dimensions": {
+      "active_cell_interior_rows": 45900,
+      "actual_enumeration_performed": true,
+      "condensed_plus_fixed_auxiliary_rows": 22724,
+      "dimension_kind": "full_independent_fe_space_excluding_fixed_auxiliaries",
+      "fixed_auxiliary_rows": 80,
+      "independent_dofs": 68544,
+      "independent_trace_rows": 22644,
+      "unconstrained_active_rows": 72780
+    },
+    "actual_native_status": "PASS_COVERAGE102_SAMPLED_NATIVE_ONLY",
+    "native_qualification_scope": "Sampled native action only; not all-entry proof or PDE solve",
+    "actual_capture_status": "PASS_CAPTURE_ONLY_TYPED_ARRAYS_UNION_CACHE_RESOURCES_AND_CLEANUP",
+    "actual_capture": {
+      "cells": 102,
+      "rows": 22724,
+      "trace_rows": 22644,
+      "ports": 80,
+      "actual_nnz": 16675408,
+      "actual_union_nnz_upper": 20040832,
+      "capture_bytes_actual": 334662430
+    },
+    "actual_factor_attempt": {
+      "ordering": "COLAMD",
+      "factor_calls": 1,
+      "apply_calls": 0,
+      "elapsed_seconds": 119.19527190699591,
+      "first_native_diagnostic": "Can't expand MemType 1: jcol 22376",
+      "subsequent_exception": "MemoryError from SuperLU gstrf before PETSc A/b/KSP binding",
+      "failure_interpretation": "Native expansion failed under the installed original 6 GiB AS ceiling after recorded saved CSR/RHS owners had ended. Failed-allocation size and fault-time VmSize were not retained; sampled RSS does not establish AS headroom or an exact allocation deficit.",
+      "peak_sampled_tree_RSS_bytes": 3782160384,
+      "original_saved_owner_weakrefs_dead_before_factor": true,
+      "saved_operator_reloaded": false,
+      "same_saved_A_b_typed_identities_in_actual_PC_match_capture": true,
+      "original_AS_tree_caps_floors_zero_swap_and_cleanup_pass": true,
+      "owner_cleanup": {
+        "cleanup_failures": [],
+        "handle_states": {},
+        "lu_python_references_cleared": true,
+        "native_allocator_release_claimed": false,
+        "petsc_handles_zero": true
+      },
+      "solution_produced": false,
+      "actual_factor_first_owner_boundary": {
+        "PETSc_operator_bound": false,
+        "actual_process": {
+          "VmRSS": 453685248,
+          "VmSize": 842309632,
+          "VmSwap": 0
+        },
+        "measured_memory_subtraction_bytes": 0,
+        "native_allocator_release_claimed": false,
+        "original_saved_CSR_RHS_live_owner_count": 0
+      }
+    },
+    "factor_successfully_returned": false,
+    "field_recovery_performed": false,
+    "original_Ax_or_same192_solution_comparison_performed": false
+  },
+  "resource_policy": {
+    "scientific_process_AS_limit_bytes": 6442450944,
+    "process_tree_RSS_limit_bytes": 8589934592,
+    "zero_swap_required": true,
+    "limits_raised": false,
+    "measured_VmSize_or_RSS_subtraction_bytes": 0,
+    "sampled_RSS_is_AS_headroom": false,
+    "fault_time_VmSize_or_failed_native_allocation_size_known": false
+  },
+  "costs": {
+    "ledger_version": 30,
+    "ledger_updated_utc": "2026-10-13T22:35:13.590372+00:00",
+    "completed_supervised_stages": 122,
+    "stage_status_counts": {
+      "CHILD_FAILED": 21,
+      "CHILD_EXIT_ZERO": 100,
+      "CONTROLLED_STOP": 1
+    },
+    "completed_supervised_seconds": 10454.123406193954,
+    "successful_supervised_seconds": 8931.937500649969,
+    "failed_or_controlled_stop_supervised_seconds": 1522.1859055439854,
+    "preparation_and_waiting_separately_measured_seconds": null,
+    "stage_success_means_scientific_solution_success": false,
+    "scope": "phase3 residual diagnostics, qualification, and actual hotspot P/Hx trials; excludes frozen phase2 and archive",
+    "all108_completed_stages": [
+      {
+        "attempt": "phase3_coverage108_payload_map_attempt01",
+        "status": "CHILD_EXIT_ZERO",
+        "scientific_status": "PASS_ACTUAL108_MAP_PENDING_INDEPENDENT_TERMINAL",
+        "elapsed_seconds": 6.283372634003172,
+        "peak_rss_bytes": 559951872,
+        "cleanup_verified": true
+      },
+      {
+        "attempt": "phase3_coverage108_raw_attempt01",
+        "status": "CHILD_EXIT_ZERO",
+        "scientific_status": "PASS_108_NATIVE_SAMPLED_ACTION_9_CLASSES",
+        "elapsed_seconds": 9.064481044988497,
+        "peak_rss_bytes": 320151552,
+        "cleanup_verified": true
+      },
+      {
+        "attempt": "phase3_coverage108_capture_attempt01",
+        "status": "CHILD_EXIT_ZERO",
+        "scientific_status": "PASS_108_CAPTURE_PENDING_INDEPENDENT_ARRAY_TERMINAL",
+        "elapsed_seconds": 59.68121138300921,
+        "peak_rss_bytes": 2100785152,
+        "cleanup_verified": true
+      },
+      {
+        "attempt": "phase3_coverage108_offline_solve_attempt01",
+        "status": "CHILD_FAILED",
+        "scientific_status": "FAIL_NATIVE_COLAMD_EXPANSION_NO_X",
+        "elapsed_seconds": 112.7365755669889,
+        "peak_rss_bytes": 5123375104,
+        "cleanup_verified": true
+      },
+      {
+        "attempt": "phase3_coverage108_offline_solve_attempt02",
+        "status": "CHILD_FAILED",
+        "scientific_status": "FAIL_NATIVE_COLAMD_MEMORYERROR_FACTOR_FIRST_NO_X",
+        "elapsed_seconds": 131.7769441499986,
+        "peak_rss_bytes": 4024041472,
+        "cleanup_verified": true
+      },
+      {
+        "attempt": "phase3_coverage108_ilu_solve_attempt01",
+        "status": "CHILD_FAILED",
+        "scientific_status": "PRE_FACTOR_NATIVE_VIEW_PARSING_FAILURE_NO_FACTOR_NO_ITERATION",
+        "elapsed_seconds": 3.283023016003426,
+        "peak_rss_bytes": 834650112,
+        "cleanup_verified": true
+      },
+      {
+        "attempt": "phase3_coverage108_ilu_solve_attempt02",
+        "status": "CONTROLLED_STOP",
+        "scientific_status": "CONTROLLED_600S_STOP_NATIVE_ILU1_STAGNATED_NO_QUALIFIED_SOLUTION",
+        "elapsed_seconds": 601.0364836569934,
+        "peak_rss_bytes": 2577498112,
+        "cleanup_verified": true
+      }
+    ],
+    "all108_completed_supervised_seconds": 923.8620914519852,
+    "ilu02_setup_seconds_included_in_601second_stage_not_added_again": true,
+    "current96_test192_map_seconds": 9.29645158200583,
+    "current96_test192_residual_seconds": 348.4471779650048,
+    "all_listed_subtotals_already_in_cumulative_ledger": true,
+    "frozen_phase2_or_archive_added_again": false,
+    "all102_completed_stages": [
+      {
+        "attempt": "phase3_coverage102_payload_map_attempt01",
+        "status": "CHILD_EXIT_ZERO",
+        "scientific_status": "PASS_ACTUAL102_TOPOLOGY_MAP_ONLY",
+        "elapsed_seconds": 6.0318768069992075,
+        "peak_rss_bytes": 519000064,
+        "cleanup_verified": true
+      },
+      {
+        "attempt": "phase3_coverage102_raw_attempt01",
+        "status": "CHILD_EXIT_ZERO",
+        "scientific_status": "PASS102_NINE_RAW_CLASSES_SAMPLED_NATIVE_ACTION_ONLY",
+        "elapsed_seconds": 9.30551059100253,
+        "peak_rss_bytes": 330903552,
+        "cleanup_verified": true
+      },
+      {
+        "attempt": "phase3_coverage102_capture_attempt01",
+        "status": "CHILD_EXIT_ZERO",
+        "scientific_status": "CAPTURE_COMPLETE_PENDING_INDEPENDENT_ARRAY_UNION_REVIEW",
+        "elapsed_seconds": 54.12911096800235,
+        "peak_rss_bytes": 1958162432,
+        "cleanup_verified": true
+      },
+      {
+        "attempt": "phase3_coverage102_offline_solve_attempt01",
+        "status": "CHILD_FAILED",
+        "scientific_status": "NATIVE_SUPERLU_ALLOCATION_FAILURE_UNDER6GIB_AS_NO_QUALIFIED_SOLUTION",
+        "elapsed_seconds": 119.19527190699591,
+        "peak_rss_bytes": 3782160384,
+        "cleanup_verified": true
+      }
+    ],
+    "all102_completed_supervised_seconds": 188.661770273,
+    "observable102_preparation_orchestration_wallclock": {
+      "start_reported_conversation_utc": "2026-10-13T22:20:09Z",
+      "actual_map_dispatched_utc": "2026-10-13T22:23:44.121248+00:00",
+      "seconds": 215.121248,
+      "cpu_seconds": null,
+      "not_added_to_supervised_ledger": true,
+      "cannot_sum_with_stage_times_as_end_to_end_work_hours": true,
+      "source": "phase3_current102_orchestration_timeline.jsonl"
+    },
+    "coding_audit_waiting_unified_instrumentation": false,
+    "end_to_end_work_hours_claimed": false
+  },
+  "limitations": [
+    "108 capture success does not produce a108 solution.",
+    "The1728 explicit checkpoint is not a final residual; iteration1782 is the last log entry, not a verified final iteration count.",
+    "A600second cap covers whole ILU02 supervised stage including setup; no2000-step or normal-KSP-return claim.",
+    "The102 control covers only about12.4989 percent of the measured restricted bubble-squared mass, not total solution error or expected improvement.",
+    "No all-direction complete convergence study or rigorous continuous error bound.",
+    "102 map/native/capture succeeded, but fresh COLAMD did not return a factor; no qualified102 x or recovered field.",
+    "Only the first additional h comparison72 to96 has a qualified new main solution with observable and fixed-norm field checks; the second independent qualified main solution and broader validation remain missing.",
+    "AS and RSS are different measures. Peak RSS below8GiB does not establish RAM-only failure, AS headroom, or the number of additional bytes needed.",
+    "No unattended parameter sweep, reinstall, changed resource limit or further numerical run is authorized by this report."
+  ],
+  "finalization_pending": [],
+  "sources": [
+    {
+      "file": "phase3_coverage108_capture_terminal_review.json",
+      "bytes": 5563,
+      "sha256": "1c461d7524e2a227c6de3daa6ae6f26d6953f11f6a7dd65e2e4a67909f1dd3bb"
+    },
+    {
+      "file": "phase3_coverage108_capture_attempt01/result.json",
+      "bytes": 69613,
+      "sha256": "ec80f70660cbf047db23fdd236cd80d7f3bc64c272ab2d608fd512499f131770"
+    },
+    {
+      "file": "phase3_coverage108_offline_attempt01_negative_review.json",
+      "bytes": 3748,
+      "sha256": "1ddaad4399d32397af2c0f6d4aeba749f70ddddc813c422f0dc04803a49f156c"
+    },
+    {
+      "file": "phase3_coverage108_offline_attempt02_negative_review.json",
+      "bytes": 4439,
+      "sha256": "e3b4c4e16b51e4530cd901a834b7534c30b60b2e1abe1b2389ac4ae039146778"
+    },
+    {
+      "file": "phase3_coverage108_ilu_attempt01_negative_review.json",
+      "bytes": 3015,
+      "sha256": "63a5990c17dedcb1993cab393c3b01ad29c8697282b2953bbe8cc0be64740fa3"
+    },
+    {
+      "file": "phase3_coverage108_ilu_attempt02_negative_review.json",
+      "bytes": 4763,
+      "sha256": "d97092a6478472aadb733aa0d593ca570ffc0877af76b20436012dbb75c89584"
+    },
+    {
+      "file": "phase3_coverage108_ilu_solve_attempt02/linear_setup_complete.json",
+      "bytes": 5424,
+      "sha256": "a281e6683ea5a4e4ad51a5d4c07b90d90e79e902785ac20937fcf6860ba98f91"
+    },
+    {
+      "file": "phase3_current96_unsolved192_x_scalar_terminal_review.json",
+      "bytes": 6283,
+      "sha256": "cf468c07ae79a56e63f39fe72faffeff0306abb8ab8318fe8c12c8097861dc60"
+    },
+    {
+      "file": "phase3_current96_unsolved192_x_vector_stream_review.json",
+      "bytes": 12065,
+      "sha256": "7d040b2be2141b98c5f1316b1e17dcae900d9860faf93704384b52a04a4630b9"
+    },
+    {
+      "file": "phase3_current96_next102_static/static_study_v2.json",
+      "bytes": 112294,
+      "sha256": "6ba409d9ff88dc304dd05e33dc243d14d9d4c8e5790f29fbcca0356b9073fab1"
+    },
+    {
+      "file": "phase3_current96_next102_static/verification.json",
+      "bytes": 664,
+      "sha256": "340e73d23521c2844d815607d4c650d8e70bc983b1cc1c70623cb643ab8256a0"
+    },
+    {
+      "file": "phase3_current96_progress_report/summary.json",
+      "bytes": 19116,
+      "sha256": "07d424048a6f6a660c2006cfb0c4cbbf7b6c229543a1136e53986a7775892a93"
+    },
+    {
+      "file": "phase3_coverage102_payload_map_terminal_review.json",
+      "bytes": 16815,
+      "sha256": "faf39eab30b59a1ccb1a6d4ae626363f24367475ce8833bc4ea7cdc57bb28f57"
+    },
+    {
+      "file": "phase3_coverage102_raw_native_terminal_review.json",
+      "bytes": 6097,
+      "sha256": "41ff0adbed488e72140c3c34f459cd08b18cb2e2a6f006dda1a58f56eb7f54a8"
+    },
+    {
+      "file": "phase3_coverage102_capture_terminal_review.json",
+      "bytes": 5569,
+      "sha256": "3ba534905442c74ebe7425127b803abeb5cdb152ad005c556f1b5e3adf002ec0"
+    },
+    {
+      "file": "phase3_coverage102_capture_attempt01/result.json",
+      "bytes": 69864,
+      "sha256": "3f43f778988c826871df7aace21b09674ca79c731afe66e409f55bc803399159"
+    },
+    {
+      "file": "phase3_coverage102_offline_attempt01_negative_review.json",
+      "bytes": 4427,
+      "sha256": "c0d724b28d893b18984235cfbed1499e8a11f41af34b3f2ff271b76abe7a5383"
+    },
+    {
+      "file": "phase3_coverage102_offline_solve_attempt01/events.jsonl",
+      "bytes": 2816,
+      "sha256": "368529f6f1267e45459f8296fefdac691c503c10cda4467302b17ee0ba9990bf"
+    },
+    {
+      "file": "phase3_current102_orchestration_timeline.jsonl",
+      "bytes": 950,
+      "sha256": "789895eb6a114a803a3b39a647c511d86c8e18a7748b5a01d2e860260897bbbf"
+    },
+    {
+      "file": "phase3_execution_ledger_v30.json",
+      "bytes": 73500,
+      "sha256": "f37dcef03627df1556647f533763219e318c30eb02ccb37c780f308f7d0b7424"
+    }
+  ],
+  "frozen_utc": "2026-10-13T22:38:14.162976+00:00",
+  "execution_state": {
+    "scientific_process_count_at_report_freeze": 0,
+    "scientific_process_check_utc": "2026-10-13T22:37:13.023021+00:00",
+    "scope": "Existing runtime Python processes with hp_resume_20261013 scientific launch arguments",
+    "further_parameter_scan_running": false,
+    "next_numerical_execution_requires_user_decision": true
+  },
+  "next_options_requiring_user_decision": [
+    "Reassess and explicitly approve a different process-AS resource boundary after capacity analysis; success not guaranteed.",
+    "Choose a targeted, independently qualified robust preconditioner or solver route under explicit resource limits; success not guaranteed."
+  ]
+}
