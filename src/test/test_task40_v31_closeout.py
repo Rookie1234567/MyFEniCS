@@ -1008,8 +1008,11 @@ def test_v31_dispatcher_passes_normalized_selector_to_validation_only_worker(
 def test_v31_closeout_allows_missing_numerical_output_only_for_bound_failure(
     tmp_path, monkeypatch
 ):
+    from types import SimpleNamespace
+
+    from benchmarks import subreaper_watchdog as watchdog
     from scripts import task40_v20_service_workflow as service
-    from src.runners import task40_v31_contract
+    from src.runners import task40_v30_contract, task40_v31_contract
 
     root = tmp_path / "repo"
     evidence = root / "benchmarks/artifacts/run-evidence"
@@ -1083,7 +1086,7 @@ def test_v31_closeout_allows_missing_numerical_output_only_for_bound_failure(
         ),
         encoding="utf-8",
     )
-    runtime = tmp_path / "runtime"
+    runtime = Path(sys.executable).resolve().parent.parent
     command = [
         str(runtime / "bin/python"),
         str(root / "scripts/task40_v20_service_workflow.py"),
@@ -1121,6 +1124,80 @@ def test_v31_closeout_allows_missing_numerical_output_only_for_bound_failure(
         str(summary_path.resolve()),
         str(manifest_path.resolve()),
     ]
+
+    monkeypatch.setattr(Path, "cwd", classmethod(lambda _cls: root))
+
+    def fake_git(command, **_kwargs):
+        if command[:2] == ["git", "rev-parse"]:
+            output = source_sha
+        elif command[:3] == ["git", "branch", "--show-current"]:
+            output = source_state["branch"]
+        elif command[:2] == ["git", "status"]:
+            output = ""
+        else:
+            raise AssertionError(f"unexpected subprocess command: {command!r}")
+        return SimpleNamespace(stdout=output)
+
+    monkeypatch.setattr(watchdog.subprocess, "run", fake_git)
+    worker_environment = {
+        "TASK40_V31_STRICT_EXECUTION": "1",
+        "TASK40_V31_CONTRACT_SHA256": "d" * 64,
+        "TASK40_V31_CONTRACT_PATH": str(root / "approved-contract.json"),
+    }
+    campaign = SimpleNamespace(sha256=window_sha, path=window_path)
+    validated = watchdog._validate_campaign_closeout_authorization(
+        command=command,
+        campaign=campaign,
+        authorization=authorization,
+        worker_environment=worker_environment,
+    )
+    assert validated == authorization
+
+    bad_source_authorization = dict(authorization, source_sha="c" * 40)
+    with pytest.raises(ValueError, match="not bound to a V31 worker failure"):
+        watchdog._validate_campaign_closeout_authorization(
+            command=command,
+            campaign=campaign,
+            authorization=bad_source_authorization,
+            worker_environment=worker_environment,
+        )
+    bad_hash_authorization = dict(authorization)
+    bad_hash_authorization["input_sha256s"] = list(authorization["input_sha256s"])
+    bad_hash_authorization["input_sha256s"][1] = "0" * 64
+    with pytest.raises(ValueError, match="input hash changed"):
+        watchdog._validate_campaign_closeout_authorization(
+            command=command,
+            campaign=campaign,
+            authorization=bad_hash_authorization,
+            worker_environment=worker_environment,
+        )
+
+    v30_contract = {
+        "execution": {
+            "campaign_window_path": str(window_path),
+            "campaign_window_sha256": window_sha,
+        }
+    }
+    monkeypatch.setattr(
+        task40_v30_contract,
+        "require_authorized_contract",
+        lambda *_args, **_kwargs: (v30_contract, "d" * 64),
+    )
+    v30_authorization = dict(authorization)
+    v30_authorization["schema"] = "task40extra.review_v31_closeout_checker_authorization.v1"
+    v30_authorization["v30_contract_sha256"] = v30_authorization.pop("v31_contract_sha256")
+    with pytest.raises(ValueError, match="numerical output directory is missing"):
+        watchdog._validate_campaign_closeout_authorization(
+            command=command,
+            campaign=campaign,
+            authorization=v30_authorization,
+            worker_environment={
+                "TASK40_V30_STRICT_EXECUTION": "1",
+                "TASK40_V30_CONTRACT_SHA256": "d" * 64,
+                "TASK40_V30_CONTRACT_PATH": str(root / "approved-v30-contract.json"),
+            },
+        )
+
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     summary["source_sha"] = "c" * 40
     summary_path.write_text(json.dumps(summary), encoding="utf-8")

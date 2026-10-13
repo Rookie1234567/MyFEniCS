@@ -160,7 +160,9 @@ def _validate_campaign_closeout_authorization(
         input_paths = [str(Path(argv[index]).resolve()) for index in (4, 6, 8)]
         if any(not Path(path).is_relative_to(Path.cwd().resolve()) for path in input_paths):
             raise ValueError('partial checker inputs escaped the registered repository')
-        if not Path(argv[10]).resolve().is_dir():
+        numerical_path = Path(argv[10]).resolve()
+        numerical_output_missing = not numerical_path.is_dir()
+        if numerical_output_missing and contract_version != 31:
             raise ValueError('partial checker numerical output directory is missing')
         output_path = Path(argv[14]).resolve()
         if not output_path.is_relative_to(Path.cwd().resolve()):
@@ -180,6 +182,25 @@ def _validate_campaign_closeout_authorization(
             or hashlib.sha256(path.read_bytes()).hexdigest() != expected_sha
         ):
             raise ValueError('closeout checker input hash changed after service authorization')
+
+    if checker_kind == 'task40_v20_partial_receipt_checker' and numerical_output_missing:
+        from scripts.task40_v20_service_workflow import (
+            _v31_missing_numerical_output_is_bound_worker_failure,
+        )
+
+        if not _v31_missing_numerical_output_is_bound_worker_failure(
+            input_path=Path(argv[4]).resolve(),
+            summary_path=Path(argv[6]).resolve(),
+            manifest_path=Path(argv[8]).resolve(),
+            numerical_path=numerical_path,
+            repo_root=Path.cwd(),
+            source_sha=str(authorization['source_sha']),
+            campaign_sha256=str(campaign.sha256),
+            campaign_window_path=Path(str(window_path)),
+        ):
+            raise ValueError(
+                'missing partial checker numerical output is not bound to a V31 worker failure'
+            )
 
     source_head = subprocess.run(
         ['git', 'rev-parse', 'HEAD'], cwd=Path.cwd(), check=True, capture_output=True, text=True
