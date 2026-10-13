@@ -1,0 +1,24 @@
+{
+  "schema": "hp.hotspot-small-report-manifest.v1",
+  "date_UTC": "2026-10-13",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 1237,
+      "sha256": "995a5b8377d032ca8fa24f6fb955df9be077b9d1fff31a2d78a21417a0baa515",
+      "git_blob_sha1": "fc01b5c68c7ea5d82eb6dc273c2878197533f734"
+    },
+    {
+      "path": "hotspot_trials_report_zh.md",
+      "bytes": 5982,
+      "sha256": "bece1875d7d2afc841902ace05ca7d67fab16215a8f288d0f4ec8c21bc55b8e3",
+      "git_blob_sha1": "cbf528e7fc32dfb560743db673074be463c9e7f0"
+    },
+    {
+      "path": "hotspot_trials_summary.json",
+      "bytes": 14901,
+      "sha256": "76084de50996c49abab137a89a028e479c34f353e24b40013211bd78313c14a9",
+      "git_blob_sha1": "39d78f64fe4337b55e83a515ff0846843b0d62a6"
+    }
+  ]
+}
