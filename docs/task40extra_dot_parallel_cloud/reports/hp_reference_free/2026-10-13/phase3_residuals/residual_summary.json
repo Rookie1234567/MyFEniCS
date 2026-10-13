@@ -1,0 +1,106 @@
+{
+  "schema": "hp.phase3.exploratory-residual-summary.v1",
+  "rows": [
+    {
+      "axis": "x",
+      "status": "EXPLORATORY_RESIDUAL_MEASUREMENT_ORIGINAL_REPLAY_OUTCOMES_RETAINED",
+      "source_solution_id": "201156f0fe13e50ec0736df74312aaf31eaabd0c5044e3efd4bd0c842a6f3fdf",
+      "probe_solution_id": "3c6023a58b5f897b7b835e6867a460721cb75e1a8f1b40456f48eeea6f367e68",
+      "full_coordinate_rhs_relative": 15.408638731475497,
+      "S3_bubble_dual_sq": 4.505501060202611,
+      "S3_bubble_dual_norm": 2.122616559862523,
+      "own_probe_bubble_dual_sq": 1.4851075347775887e-21,
+      "own_carrier_relative_residual": 7.682747828989169e-10,
+      "original_extracted_raw_replay_gate_pass": false,
+      "direct_carrier_raw_replay_gate_pass": true,
+      "port_residual_absolute": 7.694568529817475e-14,
+      "top_central_pair_share": 0.30349209413834566,
+      "top_layer_six_share": 0.8044768070192949,
+      "elapsed_seconds": 49.580813640001,
+      "peak_tree_rss_bytes": 1298157568,
+      "diagnostics": {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase3_enriched_residual_x_attempt03/diagnostics.json",
+        "bytes": 117402,
+        "sha256": "31b242988e62292e458c4df10d701dd75f514b197df1535ff53d1deee28f27bb"
+      },
+      "summary": {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase3_enriched_residual_x_attempt03/summary.json",
+        "bytes": 1039,
+        "sha256": "11cef6c73a73ec0e9dafed97d388ef007de180afee66df7a8d735cb74fdf383a"
+      }
+    },
+    {
+      "axis": "y",
+      "status": "EXPLORATORY_RESIDUAL_MEASUREMENT_ORIGINAL_REPLAY_OUTCOMES_RETAINED",
+      "source_solution_id": "201156f0fe13e50ec0736df74312aaf31eaabd0c5044e3efd4bd0c842a6f3fdf",
+      "probe_solution_id": "92a86e54a20b82fee384dcd8624e0afb0a88b29aefeba99158f4766ed040f736",
+      "full_coordinate_rhs_relative": 6.350222521275367,
+      "S3_bubble_dual_sq": 3.232128718126297,
+      "S3_bubble_dual_norm": 1.797812203242123,
+      "own_probe_bubble_dual_sq": 1.4107829017821657e-23,
+      "own_carrier_relative_residual": 9.18770956598803e-11,
+      "original_extracted_raw_replay_gate_pass": true,
+      "direct_carrier_raw_replay_gate_pass": true,
+      "port_residual_absolute": 7.669548781517885e-14,
+      "top_central_pair_share": 0.3729180582176536,
+      "top_layer_six_share": 0.9999999999999999,
+      "elapsed_seconds": 49.084293305000756,
+      "peak_tree_rss_bytes": 1294159872,
+      "diagnostics": {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase3_enriched_residual_y_attempt03/diagnostics.json",
+        "bytes": 117846,
+        "sha256": "0ae7539417faa2e9876c3d0ad7640c25d29091d897385b79b4999503a3cbf8a6"
+      },
+      "summary": {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase3_enriched_residual_y_attempt03/summary.json",
+        "bytes": 1042,
+        "sha256": "892448d443e8dd0f96774eb1a68f6ab392128d1ccd8d73a3cd2b10a57b0c10f1"
+      }
+    },
+    {
+      "axis": "z",
+      "status": "EXPLORATORY_RESIDUAL_MEASUREMENT_ORIGINAL_REPLAY_OUTCOMES_RETAINED",
+      "source_solution_id": "201156f0fe13e50ec0736df74312aaf31eaabd0c5044e3efd4bd0c842a6f3fdf",
+      "probe_solution_id": "aed7cc15a896c7d44b48e6bed4040384820487d4af11ebad032ea80a67985b79",
+      "full_coordinate_rhs_relative": 4.497759133215929,
+      "S3_bubble_dual_sq": 2.5886356042260834,
+      "S3_bubble_dual_norm": 1.6089237409604233,
+      "own_probe_bubble_dual_sq": 1.5056742719084143e-22,
+      "own_carrier_relative_residual": 4.840086678842019e-10,
+      "original_extracted_raw_replay_gate_pass": true,
+      "direct_carrier_raw_replay_gate_pass": true,
+      "port_residual_absolute": 7.722165275243324e-14,
+      "top_central_pair_share": 0.37136442782909773,
+      "top_layer_six_share": 0.9998332065556292,
+      "elapsed_seconds": 53.36277290399448,
+      "peak_tree_rss_bytes": 1287491584,
+      "diagnostics": {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase3_enriched_residual_z_attempt03/diagnostics.json",
+        "bytes": 117672,
+        "sha256": "6b221dcaf0d26b53320a6d15102c0d3e07c45f1d1f233728babd497253f0922d"
+      },
+      "summary": {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase3_enriched_residual_z_attempt03/summary.json",
+        "bytes": 1041,
+        "sha256": "6ab29a09642a5c80c5e76bacaf3de9e79d11d81ee4f673c8c937aa5279c49d48"
+      }
+    }
+  ],
+  "fixed_G_identity": "f745dc2ae760f81aa0a4b375c515caab81b3df101370f57bb5efcdcc625b540a",
+  "cross_axis_metrics_summed": false,
+  "full_physical_dual_norm_computed": false,
+  "continuous_error_certificate": false,
+  "new_Maxwell_PDE_solves": 0,
+  "original_S3_changed": false,
+  "ledger": {
+    "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase3_execution_ledger.json",
+    "bytes": 3940,
+    "sha256": "861b9c54177fed0832a7ba2216cd2c79132cbc7fb2f42c04535c42087c10ceb3"
+  },
+  "localization": {
+    "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase3_residual_parent_summary_attempt01/parent_contributions.json",
+    "bytes": 55247,
+    "sha256": "9759ab39534d6f91c6246ec2da45783234de92251e7ddeb10402fcc6117ea09f"
+  },
+  "archive_status": "Phase2 three local packs retained; official upload outcome unknown after timeout. No retry performed. Phase3 files not part of frozen phase2 payload."
+}

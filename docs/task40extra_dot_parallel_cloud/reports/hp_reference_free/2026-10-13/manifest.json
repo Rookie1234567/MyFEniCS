@@ -1,0 +1,47 @@
+{
+  "schema": "hp.small-report-publication-manifest.v1",
+  "snapshot_date_UTC": "2026-10-13",
+  "repository": "Rookie1234567/MyFEniCS",
+  "branch": "task40extra_dot_parallel_cloud",
+  "remote_base_sha": "15713d3e09b63f65511c7b7f61fa043fdb23dca5",
+  "scientific_execution_head": "322e62e11a80969b3a35f0cbb08b25c11c539ea6",
+  "scope": "Five unchanged completed reports/summaries plus README; no raw arrays, binaries, archives, runtime or source changes; current trials excluded.",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 3165,
+      "sha256": "715472818821d1657e98991bbcc0c22638e64d0c136078cc70cca91356faf29d",
+      "git_blob_sha1": "b58512ca47e096d913878f616f0afc7f0fbec3f7"
+    },
+    {
+      "path": "phase2/phase2_report_zh.md",
+      "bytes": 21251,
+      "sha256": "a782e5f107d942bca5edc660a9ed77ea0a72d535753a9107e1a1c7ede11dccaf",
+      "git_blob_sha1": "095bb86fcfca192a35b51a7e9e6e4de18c04e10f"
+    },
+    {
+      "path": "phase2/phase2_results.json",
+      "bytes": 108409,
+      "sha256": "529f5283af3cac3ff245dafec6a1d7a6bbfa1eb1300f5108aeb5bf4fac7ab023",
+      "git_blob_sha1": "e5310b415369ea197e8f687649276e62c985d3b9"
+    },
+    {
+      "path": "phase2/phase2_summary_zh.md",
+      "bytes": 2238,
+      "sha256": "8619c53852d6cd7a7627cd72588c0ef6bd3d4b070ab062a406ae2aa68cb601b0",
+      "git_blob_sha1": "83f8c5714efa3a77ae5f8001b2a3cf43193fe278"
+    },
+    {
+      "path": "phase3_residuals/residual_findings_zh.md",
+      "bytes": 2762,
+      "sha256": "fc44e6fb4c84b38e19f5061b85ed7e03950c21a0423449be229002f3537ab299",
+      "git_blob_sha1": "5a5cf50d020c697e71e03809fe55036db907ad92"
+    },
+    {
+      "path": "phase3_residuals/residual_summary.json",
+      "bytes": 5347,
+      "sha256": "2894b8c465fd084e7f71b610359e8d16361b1176cfcffb801ba5591312eb4eb2",
+      "git_blob_sha1": "9d27e597ee4098f61223e05d2ef60dc8d623e26a"
+    }
+  ]
+}
