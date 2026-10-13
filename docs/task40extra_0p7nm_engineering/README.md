@@ -1,3 +1,5 @@
+> 最新执行结论：见 [response_v31](response_v31.md)。q4 完整数值矩阵已保存并 hash 回读一致，状态为 NUMERIC_COMPLETE_NATIVE_PENDING；固定窗口已到数值截止，后续 native/bank/target 未完成。以下历史 P0 状态保留，不代表目前仍未获批。
+
 ## Review V31 当前状态：P0 就绪，数值窗口待批准
 
 本轮只完成重型窗口前的合同、执行入口、重入与定向验证。新增 q 数值结果为 0；q4、八 q 因子驻留、完整 reference、目标 PDE、R/T/A 和 2 TB/48 h 仍未资格化。V31 固定窗口和 T0 仍为 PENDING；旧 V30 窗口及失败证据保持原样。

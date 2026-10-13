@@ -1,3 +1,17 @@
+# V31 窗口截止后的真实交接
+
+本轮已批准并实际运行，下面旧 P0 的 PENDING 文本仅为历史。数值截止已触发且服务后代已清空；不得重放旧 full service 命令开启新窗口。
+
+可复用的当前成果是 **q4 NUMERIC_COMPLETE_NATIVE_PENDING**（777424²，581086528 槽）。实际根、三数组及 pending 的完整 hash 见 [主控审计](records/review_v31_controller_closeout_audit.json)。q4 pending SHA256 为 `1938828321a57ee6eaaea0def485f73daddbd13432cc6ef8823d19bcc44640ad`，运行 source 为 `54cf6d367b07355c0ab08c8c10655ecac73cfc6a`，窗口 hash `57133ebfe54c109ca77af4e529df94708c29c2b4c79d301b862b01ee70cf8f56`。旧 donor source/window 保持原值。
+
+下一窗口需明确批准后按既有 prepare/selector 导入 pending 和跨窗 consumer 身份，跳过 pattern/fill；只补必要 twist0 owner 和 q4 native。当前没有全八 q CSR/native、live factor bank、完整 reference 或 target field；不能运行 factor-only 假称 q4 已资格化。历史 q0 完整资格仍有效。先修正/评估 owner 准备的真实耗时，再依次新 twist，不为了包装问题重放已完成数值。
+
+当前只读补检修复为 `c9c7f4af19917cbd2c0e4ecd5c0b167cab6752f5`。required checker 应使用原 input/summary/manifest/window 与原 run 的 numerical_output 定位，另写新补检输出；缺 footer 仍负。旧自动 checker 错误不得覆盖。精确已执行补检命令与结果记入本轮 run index；这份 handoff 不虚构尚未运行的下一窗口命令。
+
+---
+
+## 历史 P0 handoff
+
 # Review V31 P0 handoff
 
 P0 接线与定向测试已完成，交主控审核和源码冻结。生成本 handoff/test receipt 时，branch 为 `task40extra_0p7nm_engineering`，工作树含未提交 P0 修改，`HEAD=d7ffbfea952bc160742b18739369f2e3f656ee8e` 是 review 基线。主控随后集中冻结、提交/推送并回读真实 source SHA；源码文件 hash 已由 P0 compact 绑定。本交接没有启动 service、SSH、FE/JIT、payload 扫描、pattern/fill/native 或正式 q factor。

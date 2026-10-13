@@ -1,3 +1,11 @@
+# V31 截止收口验证
+
+P0 67 passed in 4.43s 和各普通入口 bug 定向验证按各自源码保留；最新 `test_v31_partial_checker_accepts_only_bound_campaign_cutoff_fixture` 为 **1 passed in 0.23s**，验证实际 watchdog 截止字段可进入只读收口、清场字段篡改拒绝；修复 source `c9c7f4af19917cbd2c0e4ecd5c0b167cab6752f5`。无 FE/JIT/PDE 重跑。
+
+主控对 q4 三数组完整 hash 回读全部一致，26.349861s；不将 hash 验证冒充 native 数值验证。原自动 checker 路径失败保留，补检另记收据。见[主控审计](records/review_v31_controller_closeout_audit.json)与[response_v31](../response_v31.md)。没有全仓/CI 声明。
+
+---
+
 # Review V30 检查与失败记录
 
 最终科学source为 `1e9109cb62343b13c850da03432def2109fee481`。以下是已发生的最小相关测试/入口检查，按各自日志和源码作用域保留；不把不同source的历史测试相加成当前全仓PASS，也不把fixture当科学资格。最终candidate实际配置fixture为5 passed in0.54s；native ABI为实际工作站complex128/int32/MPI1，与普通本机测试环境分列。

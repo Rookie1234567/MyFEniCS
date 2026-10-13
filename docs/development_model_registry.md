@@ -1,3 +1,7 @@
+## Task40extra V31 收口更新（2026-10-14，新加坡）
+
+新增 q4 完整数值 CSR：777424²、581086528 槽、11.624840260 GB 载荷，三数组 hash 回读一致；NUMERIC_COMPLETE_NATIVE_PENDING。保存构建父段17281.8227s，随后twist0原生owner准备到固定截止；服务worker约33786.4551s，treeRSS16.563810304GB、cgroup24.329441280GB、task swap0。独立native、全八q因子/参考/target均未完成，2TB/48h与最终精度未资格。不得与P0接口测试或旧q0 PASS混称。旧窗口/负结果/unknown不删。[回应与证据](task40extra_0p7nm_engineering/response_v31.md)。
+
 # Task40extra Review V30：实际运行和资格登记
 
 | 模型 / 证据 | 实际结果 | 可继承与未完成项 |

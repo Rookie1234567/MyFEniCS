@@ -1,0 +1,18 @@
+{
+  "review": "V31",
+  "scientific_source_sha": "54cf6d367b07355c0ab08c8c10655ecac73cfc6a",
+  "readonly_checker_source_sha": "c9c7f4af19917cbd2c0e4ecd5c0b167cab6752f5",
+  "run_timestamp": "20261013T114619.891762Z",
+  "audit_path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v31_controller_closeout_audit.json",
+  "audit_sha256": "fa188fd4583b949c61c8822527aee4cc17941255d58775e1b60c7080d435460f",
+  "historical_negative_results_preserved": true,
+  "schema": "task40extra.review_v31.target.v1",
+  "target_build": "NOT_RUN",
+  "target_KSP": "NOT_RUN",
+  "A6_true_residual": null,
+  "physical_outputs": null,
+  "RTA": null,
+  "final_accuracy": "NOT_QUALIFIED",
+  "cold_2TB_48h": "NOT_QUALIFIED",
+  "next": "Import q4 numeric pending without pattern/fill; finish independent twist0 native; then remaining twists and qualified resident bank in a newly authorized fixed window."
+}

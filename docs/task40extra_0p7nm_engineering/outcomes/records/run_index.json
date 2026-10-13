@@ -2316,6 +2316,20 @@
       "descendants_cleared": true,
       "raw_controller_audit": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v30_controller_audit.json",
       "original_status_preserved": true
+    },
+    {
+      "review": "V31",
+      "kind": "formal_service_attempt",
+      "unit": "myfenics-case-task40-v31-all-q-reference-54cf6d367b07.service",
+      "source_sha": "54cf6d367b07355c0ab08c8c10655ecac73cfc6a",
+      "run_id": "task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
+      "run_timestamp": "20261013T114619.891762Z",
+      "classification": "PERFORMANCE_CONTROLLED_STOP",
+      "exit_status": -9,
+      "q4_status": "NUMERIC_COMPLETE_NATIVE_PENDING",
+      "task_swap_zero": true,
+      "descendants_cleared": true,
+      "raw_controller_audit": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v31_controller_closeout_audit.json"
     }
   ],
   "ledger": {
@@ -2387,7 +2401,7 @@
       "validation": "15 passed in 1.14 s; changed-file py_compile, shell syntax, and git diff check PASS; source frozen and remotely verified."
     }
   ],
-  "last_formal_run_source_sha": "1e9109cb62343b13c850da03432def2109fee481",
+  "last_formal_run_source_sha": "54cf6d367b07355c0ab08c8c10655ecac73cfc6a",
   "review_v1_continuation": {
     "review": "docs/task40extra_0p7nm_engineering/review_report_v1.md",
     "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
@@ -8403,5 +8417,46 @@
     "new_t0_utc": null,
     "old_v30_window_and_negative_evidence_preserved": true,
     "source_freeze": "controller publication/readback after review; content identities are in the P0 evidence index"
+  },
+  "review_v31_closeout": {
+    "review": "V31",
+    "scientific_source_sha": "54cf6d367b07355c0ab08c8c10655ecac73cfc6a",
+    "readonly_checker_source_sha": "c9c7f4af19917cbd2c0e4ecd5c0b167cab6752f5",
+    "run_timestamp": "20261013T114619.891762Z",
+    "audit_path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v31_controller_closeout_audit.json",
+    "audit_sha256": "fa188fd4583b949c61c8822527aee4cc17941255d58775e1b60c7080d435460f",
+    "historical_negative_results_preserved": true,
+    "status": "TIME_CUTOFF_WITH_Q4_NUMERIC_PENDING",
+    "compacts": [
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v31.json",
+        "bytes": 11925,
+        "sha256": "540ef435b5831a451b0691f796ac66a2bfa736187889c77558f1e80f46f55aa7"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/time_resource_accounting_v31.json",
+        "bytes": 5608,
+        "sha256": "3fb4faea996b9497ff52988872aa7713aaed214d3261087586aa2ac6e6eee274"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/reference_qualification_v31.json",
+        "bytes": 1059,
+        "sha256": "88f8f28ea92f253f6478ac770e21a70d3982db824627615f889ffaab0aac7900"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/target_pilot_v31.json",
+        "bytes": 892,
+        "sha256": "b665cad996180ec549463f8133473c39eda358fa78e374eeb5e3f816f26edcc9"
+      }
+    ],
+    "checker_original_error": {
+      "result_file_exists": false,
+      "workflow_error": {
+        "message": "V30 partial checker paths are not bound to current run evidence",
+        "type": "ValueError"
+      },
+      "scientific_pass": false
+    },
+    "post_stop_readonly_checker": "PENDING_RECEIPT"
   }
 }

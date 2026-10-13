@@ -1,3 +1,17 @@
+# Task40extra Review V31：q4 数值 CSR 完成，待独立 native
+
+| 对象 | 本轮实测与状态 | 尚缺 |
+|---|---|---|
+| q4 saved-only CSR | 777424²、581086528 槽、11624840260 B；三数组重新 hash 全匹配 | NUMERIC_COMPLETE_NATIVE_PENDING，不是 native PASS |
+| q4 保存父段 | 17281.822695894 s；pattern 6066.3715 s、fill 7262.0784 s为内部子段 | 其余时间不以差额猜热点 |
+| 停止 | twist0 owner 准备期间固定截止；watchdog 33786.4551 s；完整后代清场 | 独立 native、其余 q、bank/reference/target 未完成 |
+| 资源 | 同时 tree RSS 16563810304 B；cgroup 24329441280 B；task swap0；PSS null | 不是 factor 容量或 2TB/48h 通过 |
+| 收口 | 原 checker 路径绑定失败保留；只读窄修另记源码和回执 | 不补造 footer，不重解 PDE |
+
+[正式回应](../response_v31.md) · [主控原始审计](records/review_v31_controller_closeout_audit.json) · [续作交接](handoff_v31.md)。以下历史 P0/旧轮次保持原文，不代表当前审批仍待办。
+
+---
+
 # Task40extra Review V31：P0 执行包就绪，新的数值窗口待批准
 
 V31 本轮完成窗口前的实现和接线验证。新 q 矩阵、正式 q 因子和新场均 **0**；旧 q0 的资格仍按 V28/V29 原身份保留。prepare 失败后的重试复用先前的三时钟 T0 和 window 字节，approved contract、launcher 与 campaign 校验均由真实接口在临时 fixture 中验收。fixture 的假 receipt/clock 不构成用户授权或真实窗口。
