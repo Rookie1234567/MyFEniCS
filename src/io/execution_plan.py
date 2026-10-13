@@ -166,19 +166,39 @@ def build_execution_plan(
         argv.append("--contract-probe")
     if setup_only:
         argv.append("--setup-only")
-    from .native_capacity_profile import NATIVE_PROFILES, native_profile_facts
+    from .native_capacity_profile import (
+        NATIVE_PROFILES,
+        V7_ANISO_N0_P4_PROFILES,
+        native_profile_facts,
+    )
     if specification.solver.get("preconditioner") in NATIVE_PROFILES:
-        profile_facts = native_profile_facts(
-            specification.solver["preconditioner"]
-        )
+        profile_identity = specification.solver["preconditioner"]
+        profile_facts = native_profile_facts(profile_identity)
         worker_cpu = profile_facts.get("native_execution", {}).get(
             "worker_cpu", 23
         )
         worker_cpus = profile_facts.get('native_execution', {}).get('worker_cpus', [worker_cpu])
-        argv = ["/usr/bin/taskset", "-c", ','.join(map(str, worker_cpus)),
-                *native_memory_policy_prefix(
-                    specification.execution.get("native_memory_policy")),
-                *argv]
+        taskset_prefix = (
+            "/usr/bin/taskset",
+            "-c",
+            ",".join(map(str, worker_cpus)),
+        )
+        memory_prefix = native_memory_policy_prefix(
+            specification.execution.get("native_memory_policy")
+        )
+        if profile_identity in V7_ANISO_N0_P4_PROFILES:
+            # Open MPI may replace the launcher affinity on the rank process.
+            # Put both policies inside the mpiexec command so the actual rank
+            # enters numactl first and taskset second, immediately before Python.
+            argv = [
+                *argv[:3],
+                *memory_prefix,
+                *taskset_prefix,
+                *argv[3:],
+            ]
+        else:
+            # Preserve the already-qualified placement for every other profile.
+            argv = [*taskset_prefix, *memory_prefix, *argv]
     return ExecutionPlan(
         argv=tuple(argv),
         shell=False,

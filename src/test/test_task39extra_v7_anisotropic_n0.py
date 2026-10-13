@@ -20,13 +20,18 @@ from src.io.native_capacity_profile import (
     V7_N0_ACTIVE_MODE_SHA256,
     V7_N0_PARENT_MODE_COUNT,
     V7_N0_PARENT_MODE_SHA256,
+    V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY,
     V7_RSS_HARD_LIMIT_BYTES,
     native_profile_facts,
     validate_native_case,
+    validate_same_mesh_coefficient_map_profile_binding,
 )
 from src.runners.physical_intermediate import validate_v7_functional_store_isolation
 from src.runners.v7_anisotropic_mesh_evidence import (
     actual_v7_anisotropic_mesh_evidence,
+)
+from src.solvers.fullspace_same_mesh_hcurl_pmg import (
+    V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY as TRANSFER_V7_P64_POLICY,
 )
 
 INPUT = (
@@ -69,10 +74,47 @@ def test_v7_profile_resolves_as_full_n0_p4_and_not_a_pilot():
     assert facts["retained_condensed_v20"]["same_mesh_trace_map_policy"] == (
         "basix_full_cell_interpolation_v1"
     )
+    policy = V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY
+    assert policy == TRANSFER_V7_P64_POLICY
+    assert facts["component_options"]["same_mesh_coefficient_map_policy"] == policy
+    assert facts["coarse_operator"]["same_mesh_coefficient_map_policy"] == policy
+    assert facts["backend"]["same_mesh_coefficient_map_policy"] == policy
+    assert facts["backend"]["coarse_operator"]["same_mesh_coefficient_map_policy"] == policy
+    assert facts["retained_condensed_v20"]["same_mesh_coefficient_map_policy"] == policy
+    assert facts["condensed_route"]["same_mesh_coefficient_map_policy"] == policy
+    assert validate_same_mesh_coefficient_map_profile_binding(
+        identity, 4, facts["component_options"]
+    ) == policy
     assert "same_mesh_trace_map_policy" not in facts["component_options"]
     assert facts["functional_store_policy"]["enabled"] is False
     assert facts["functional_store_policy"]["parent_import"] is False
     assert facts["functional_store_policy"]["cross_mesh_fe_reuse"] == "forbidden"
+
+
+def test_v7_coefficient_policy_requires_the_explicit_profile_degree_and_option():
+    options = native_profile_facts(V7_ANISO_N0_P4_PROFILE)["component_options"]
+    policy = V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY
+    with pytest.raises(ValueError, match="coarse degree 4"):
+        validate_same_mesh_coefficient_map_profile_binding(
+            V7_ANISO_N0_P4_PROFILE, 3, options
+        )
+    missing = dict(options)
+    missing.pop("same_mesh_coefficient_map_policy")
+    with pytest.raises(ValueError, match="explicitly select"):
+        validate_same_mesh_coefficient_map_profile_binding(
+            V7_ANISO_N0_P4_PROFILE, 4, missing
+        )
+    wrong = dict(options, same_mesh_coefficient_map_policy="unknown_policy")
+    with pytest.raises(ValueError, match="explicitly select"):
+        validate_same_mesh_coefficient_map_profile_binding(
+            V7_ANISO_N0_P4_PROFILE, 4, wrong
+        )
+    with pytest.raises(ValueError, match="restricted to the explicit V7 profile"):
+        validate_same_mesh_coefficient_map_profile_binding(
+            "dual_condensed_balh_native_5nm_v6",
+            4,
+            {"same_mesh_coefficient_map_policy": policy},
+        )
 
 
 @pytest.mark.parametrize(

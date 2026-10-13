@@ -166,6 +166,55 @@ def test_plan_preserves_a_symlinked_python_entrypoint(tmp_path):
     assert plan.executable != expected.resolve()
 
 
+def test_v7_native_placement_runs_inside_mpiexec_without_changing_v6(tmp_path):
+    v7 = load_and_resolve(
+        ROOT
+        / "input/task39extra_para_workstation_capacity/"
+        "v7_0p7nm_si_p6_hx0p5_hy12p5_hz0p6_q4_n0_full.dat"
+    )
+    v7_plan = build_execution_plan(
+        v7,
+        tmp_path / "v7",
+        source_sha="source-sha",
+        python_executable="/opt/qualified-python",
+        mpiexec_command="/usr/bin/mpiexec",
+    )
+    assert v7_plan.argv[:9] == (
+        "/usr/bin/mpiexec",
+        "-n",
+        "1",
+        "/usr/bin/numactl",
+        "--interleave=0,1",
+        "/usr/bin/taskset",
+        "-c",
+        "24",
+        "/opt/qualified-python",
+    )
+    assert v7_plan.argv[9:11] == ("-m", WORKER_MODULE)
+
+    v6 = load_and_resolve(
+        ROOT / "input/task39extra_para_workstation_capacity/v6_0p7nm_n0_p3_pilot16.dat"
+    )
+    v6_plan = build_execution_plan(
+        v6,
+        tmp_path / "v6",
+        source_sha="source-sha",
+        python_executable="/opt/qualified-python",
+        mpiexec_command="/usr/bin/mpiexec",
+    )
+    assert v6_plan.argv[:8] == (
+        "/usr/bin/taskset",
+        "-c",
+        "24",
+        "/usr/bin/numactl",
+        "--interleave=0,1",
+        "/usr/bin/mpiexec",
+        "-n",
+        "1",
+    )
+    assert v6_plan.argv[8:10] == ("/opt/qualified-python", "-m")
+
+
 def test_worker_contract_accepts_matching_resolved_and_manifest(tmp_path):
     _specification, _run_directory, kwargs = _contract_bundle(tmp_path)
     assert validate_worker_contract(**kwargs) == []

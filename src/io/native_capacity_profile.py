@@ -29,6 +29,9 @@ V5_EXPECTED_MODE_COUNTS = {
 }
 V7_ANISO_N0_P4_PROFILE = 'dual_condensed_balh_native_0p7nm_aniso_n0_p4_full_v7'
 V7_ANISO_N0_P4_PROFILES = frozenset({V7_ANISO_N0_P4_PROFILE})
+V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY = (
+    'v7_p64_T_transpose_reference_v1'
+)
 V7_N0_PARENT_MODE_COUNT = 32060
 V7_N0_PARENT_MODE_SHA256 = (
     '7f023c73d7b63379955642dd062e47ba7004f3cdf0accf42684286c4af71dbfb'
@@ -304,6 +307,9 @@ def _apply_v7_aniso_n0_p4_facts(facts: dict) -> None:
             'p4': 'native_ffcx',
         },
         dtn_mode_selection=mode_selection,
+        same_mesh_coefficient_map_policy=(
+            V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY
+        ),
     )
     facts['component_options'].pop('dtn_surface_assembly_backend', None)
     coarse_operator = {
@@ -314,12 +320,18 @@ def _apply_v7_aniso_n0_p4_facts(facts: dict) -> None:
         'relative_residual_limit': 1.0e-10,
         'maximum_extra_same_factor_refinements': 2,
         'operator_scope': 'n0_filtered_dtn_not_full_dtn',
+        'same_mesh_coefficient_map_policy': (
+            V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY
+        ),
     }
     facts['coarse_operator'] = dict(coarse_operator)
     facts['backend']['coarse_operator'] = dict(coarse_operator)
     facts['backend'].update(
         original_a4='fused_original_volume_plus_complete_N0_DtN',
         coarse_operator=dict(coarse_operator),
+        same_mesh_coefficient_map_policy=(
+            V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY
+        ),
     )
     facts['backend'].pop('original_a3', None)
     facts['backend'].pop('p4_compatibility_alias', None)
@@ -327,6 +339,9 @@ def _apply_v7_aniso_n0_p4_facts(facts: dict) -> None:
         coarse_degree=4,
         coarse_operator=dict(coarse_operator),
         same_mesh_trace_map_policy='basix_full_cell_interpolation_v1',
+        same_mesh_coefficient_map_policy=(
+            V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY
+        ),
         p4_internal_names_are_compatibility_aliases=False,
         functional_store_policy='disabled_no_functional_store_config',
         fresh_n0_inventory_directory='runtime_artifact_directory',
@@ -342,6 +357,9 @@ def _apply_v7_aniso_n0_p4_facts(facts: dict) -> None:
         coarse_max_refinements=2,
         operator_scope='n0_filtered_dtn_not_full_dtn',
         cross_mesh_fe_reuse=False,
+        same_mesh_coefficient_map_policy=(
+            V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY
+        ),
     )
 
 
@@ -752,6 +770,61 @@ def native_profile_facts(identity):
         if wavelength == 2.0:
             facts['campaign_authorization']['two_nm_material'] = user_material
     return facts
+
+
+def validate_same_mesh_coefficient_map_profile_binding(
+    profile_identity,
+    coarse_degree,
+    component_options,
+):
+    """Validate the explicit V7/coarse-P4/profile metadata policy binding."""
+
+    options = dict(component_options or {})
+    selected = options.get('same_mesh_coefficient_map_policy')
+    if profile_identity not in V7_ANISO_N0_P4_PROFILES:
+        if selected is not None:
+            raise ValueError(
+                'same-mesh coefficient map override is restricted to the explicit V7 profile'
+            )
+        return None
+
+    if int(coarse_degree) != 4:
+        raise ValueError('V7 coefficient map override requires coarse degree 4')
+    facts = native_profile_facts(profile_identity)
+    expected = V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY
+    sites = {
+        'component_options': facts['component_options'].get(
+            'same_mesh_coefficient_map_policy'
+        ),
+        'coarse_operator': facts['coarse_operator'].get(
+            'same_mesh_coefficient_map_policy'
+        ),
+        'backend': facts['backend'].get('same_mesh_coefficient_map_policy'),
+        'backend.coarse_operator': facts['backend']['coarse_operator'].get(
+            'same_mesh_coefficient_map_policy'
+        ),
+        'retained_condensed_v20': facts['retained_condensed_v20'].get(
+            'same_mesh_coefficient_map_policy'
+        ),
+        'condensed_route': facts['condensed_route'].get(
+            'same_mesh_coefficient_map_policy'
+        ),
+    }
+    if any(value != expected for value in sites.values()):
+        raise RuntimeError(
+            'V7 coefficient map metadata is inconsistent: '
+            + ', '.join(f'{key}={value!r}' for key, value in sites.items())
+        )
+    if selected != expected:
+        raise ValueError(
+            'V7 component_options must explicitly select the resolved '
+            'P64 coefficient map policy'
+        )
+    if facts['retained_condensed_v20'].get('same_mesh_trace_map_policy') != (
+        'basix_full_cell_interpolation_v1'
+    ):
+        raise RuntimeError('V7 coefficient policy must retain the qualified trace map')
+    return expected
 
 
 def _validate_v7_aniso_n0_p4_case(config) -> None:

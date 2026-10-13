@@ -20,14 +20,87 @@ from src.geometry.mesh_builder_3d import (
     _structured_hexa_mesh,
 )
 from src.solvers.fullspace_same_mesh_hcurl_pmg import (
+    DEFAULT_COEFFICIENT_MAP_POLICY,
+    DEFAULT_TRACE_MAP_POLICY,
+    V7_P64_COEFFICIENT_MAP_PROFILE,
+    V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY,
     build_same_mesh_hcurl_transfer,
 )
 from src.solvers.fullspace_same_mesh_hcurl_pmg_runtime import (
     OWNER_RUNTIME_SCHEMA,
+    SameMeshHcurlOwnerTransfer,
     _resolve_owner_candidates,
     build_same_mesh_hcurl_owner_transfer,
     explicit_owner_adjoint_audit_only,
 )
+
+
+def test_owner_rejects_candidate_policy_when_local_audit_is_default():
+    mesh = object()
+
+    def fake_space(degree):
+        return SimpleNamespace(
+            mesh=mesh,
+            element=SimpleNamespace(
+                basix_element=SimpleNamespace(degree=degree)
+            ),
+        )
+
+    local_default = SimpleNamespace(
+        audit={
+            "pair_fine_to_coarse": [6, 4],
+            "trace_map_policy": DEFAULT_TRACE_MAP_POLICY,
+            "coefficient_map_policy": DEFAULT_COEFFICIENT_MAP_POLICY,
+        }
+    )
+    with pytest.raises(ValueError, match="local transfer coefficient map policy"):
+        SameMeshHcurlOwnerTransfer(
+            fake_space(6),
+            None,
+            fake_space(4),
+            None,
+            local_default,
+            coefficient_map_policy=V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY,
+            profile_identity=V7_P64_COEFFICIENT_MAP_PROFILE,
+        )
+    local_wrong_profile = SimpleNamespace(
+        audit={
+            "pair_fine_to_coarse": [6, 4],
+            "trace_map_policy": DEFAULT_TRACE_MAP_POLICY,
+            "coefficient_map_policy": V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY,
+            "profile_identity": "another_profile",
+        }
+    )
+    with pytest.raises(ValueError, match="local transfer profile identity"):
+        SameMeshHcurlOwnerTransfer(
+            fake_space(6),
+            None,
+            fake_space(4),
+            None,
+            local_wrong_profile,
+            coefficient_map_policy=V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY,
+            profile_identity=V7_P64_COEFFICIENT_MAP_PROFILE,
+        )
+
+    local_v7 = SimpleNamespace(
+        audit={
+            "pair_fine_to_coarse": [6, 4],
+            "trace_map_policy": DEFAULT_TRACE_MAP_POLICY,
+            "coefficient_map_policy": V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY,
+            "profile_identity": V7_P64_COEFFICIENT_MAP_PROFILE,
+        }
+    )
+    with pytest.raises(ValueError, match="does not permit an overriding cell matrix provider"):
+        SameMeshHcurlOwnerTransfer(
+            fake_space(6),
+            None,
+            fake_space(4),
+            None,
+            local_v7,
+            cell_matrix_provider=lambda *_args: np.eye(1),
+            coefficient_map_policy=V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY,
+            profile_identity=V7_P64_COEFFICIENT_MAP_PROFILE,
+        )
 
 
 def _context(comm: MPI.Comm):

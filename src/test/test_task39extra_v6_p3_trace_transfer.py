@@ -15,8 +15,11 @@ import pytest
 
 from src.io.native_capacity_profile import native_profile_facts
 from src.solvers.fullspace_same_mesh_hcurl_pmg import (
+    DEFAULT_COEFFICIENT_MAP_POLICY,
     DEFAULT_TRACE_MAP_POLICY,
     V6_P3_CANONICAL_TRACE_MAP_POLICY,
+    V7_P64_COEFFICIENT_MAP_PROFILE,
+    V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY,
     _canonical_p63_trace_rows,
     _canonical_quadrilateral_n1e_transfer,
     _dof_functional_interpolation,
@@ -194,9 +197,91 @@ def test_v6_p3_policy_is_explicit_and_keeps_other_maps_unchanged():
     )
     default_p64 = build_same_mesh_hcurl_transfer(6, 4)
     assert np.array_equal(default_p64.matrix, baseline64)
-    with pytest.raises(ValueError, match="restricted to the explicit P6-to-P3"):
+    with pytest.raises(ValueError, match="restricted to the explicit P6-to-P3 policy"):
         build_same_mesh_hcurl_transfer(
             6, 4, trace_map_policy=V6_P3_CANONICAL_TRACE_MAP_POLICY
+        )
+
+
+@pytest.mark.parametrize("cell_info", (0, 576, 32769, 36873, 37449))
+def test_v7_p64_t_transpose_coefficient_map_matches_counterfactual(cell_info):
+    fine = _n1e(6)
+    coarse = _n1e(4)
+    reference = np.asarray(
+        basix.compute_interpolation_operator(coarse, fine), dtype=np.complex128
+    )
+    fine_transform = _dof_transform(fine, cell_info)
+    coarse_transform = _dof_transform(coarse, cell_info)
+
+    default = build_same_mesh_hcurl_transfer(
+        6, 4, fine_cell_info=cell_info, coarse_cell_info=cell_info
+    )
+    expected_default = fine_transform @ reference @ np.linalg.inv(coarse_transform)
+    assert default.audit["coefficient_map_policy"] == DEFAULT_COEFFICIENT_MAP_POLICY
+    np.testing.assert_array_equal(default.matrix, expected_default)
+
+    candidate = build_same_mesh_hcurl_transfer(
+        6,
+        4,
+        fine_cell_info=cell_info,
+        coarse_cell_info=cell_info,
+        coefficient_map_policy=V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY,
+        profile_identity=V7_P64_COEFFICIENT_MAP_PROFILE,
+    )
+    expected_candidate = np.linalg.solve(
+        fine_transform.T, reference @ coarse_transform.T
+    )
+    assert candidate.audit["profile_identity"] == V7_P64_COEFFICIENT_MAP_PROFILE
+    assert (
+        candidate.audit["coefficient_map_policy"]
+        == V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY
+    )
+    assert candidate.audit["coefficient_map_equation"] == (
+        "solve(target_T.T, Pref @ source_T.T)"
+    )
+    assert candidate.audit["coefficient_map_transform_note"] == (
+        "Basix T_apply constructs T; runtime coefficient action uses T.T"
+    )
+    np.testing.assert_array_equal(candidate.matrix, expected_candidate)
+    assert candidate.audit["gate_passed"] is True
+    assert candidate.audit["gate_failures"] == []
+    assert candidate.audit["edge_functional_relative"] <= 1.0e-11
+    assert candidate.audit["gradient_commuting_relative"] <= 1.0e-11
+    assert candidate.audit["curl_commuting_relative"] <= 1.0e-11
+    assert candidate.audit["adjoint_work_relative"] <= 1.0e-11
+
+    dual = np.arange(candidate.matrix.shape[0], dtype=np.float64).astype(np.complex128)
+    dual += 0.25j * dual[::-1]
+    np.testing.assert_array_equal(
+        candidate.apply_adjoint(dual), candidate.matrix.conj().T @ dual
+    )
+
+
+def test_v7_p64_coefficient_map_rejects_wrong_profile_pair_and_trace_override():
+    with pytest.raises(ValueError, match="explicit V7 profile identity"):
+        build_same_mesh_hcurl_transfer(
+            6,
+            4,
+            coefficient_map_policy=V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY,
+        )
+    with pytest.raises(ValueError, match="requires P6-to-P4 spaces"):
+        build_same_mesh_hcurl_transfer(
+            6,
+            3,
+            coefficient_map_policy=V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY,
+            profile_identity=V7_P64_COEFFICIENT_MAP_PROFILE,
+        )
+    with pytest.raises(ValueError, match="requires its explicit P64"):
+        build_same_mesh_hcurl_transfer(
+            6, 4, profile_identity=V7_P64_COEFFICIENT_MAP_PROFILE
+        )
+    with pytest.raises(ValueError, match="restricted to the explicit P6-to-P3"):
+        build_same_mesh_hcurl_transfer(
+            6,
+            4,
+            trace_map_policy=V6_P3_CANONICAL_TRACE_MAP_POLICY,
+            coefficient_map_policy=V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY,
+            profile_identity=V7_P64_COEFFICIENT_MAP_PROFILE,
         )
 
 

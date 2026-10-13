@@ -47,6 +47,72 @@ MATERIAL_HERMITIAN_LIMIT = 1.0e-12
 MATERIAL_ENERGY_LIMIT = 1.0e-9
 DEFAULT_TRACE_MAP_POLICY = "basix_full_cell_interpolation_v1"
 V6_P3_CANONICAL_TRACE_MAP_POLICY = "v6_p3_canonical_shared_trace_v1"
+DEFAULT_COEFFICIENT_MAP_POLICY = "basix_T_reference_inverse_T_v1"
+V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY = "v7_p64_T_transpose_reference_v1"
+V7_P64_COEFFICIENT_MAP_PROFILE = (
+    "dual_condensed_balh_native_0p7nm_aniso_n0_p4_full_v7"
+)
+
+
+def _validate_coefficient_map_selection(
+    policy: str,
+    pair: tuple[int, int],
+    profile_identity: str | None,
+) -> str:
+    policy = str(policy)
+    if policy not in {
+        DEFAULT_COEFFICIENT_MAP_POLICY,
+        V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY,
+    }:
+        raise ValueError(f"unsupported same-mesh coefficient map policy: {policy}")
+    if profile_identity == V7_P64_COEFFICIENT_MAP_PROFILE:
+        if pair != (6, 4):
+            raise ValueError("V7 coefficient map policy requires P6-to-P4 spaces")
+        if policy != V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY:
+            raise ValueError("V7 profile requires its explicit P64 coefficient map policy")
+    elif policy == V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY:
+        raise ValueError(
+            "V7 P64 coefficient map policy requires the explicit V7 profile identity"
+        )
+    if (
+        policy == V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY
+        and pair != (6, 4)
+    ):
+        raise ValueError("V7 coefficient map policy is restricted to P6-to-P4")
+    return policy
+
+
+def _orient_coefficient_map(
+    reference: np.ndarray,
+    target_transform: np.ndarray,
+    source_transform: np.ndarray,
+    *,
+    policy: str,
+    source_inverse: np.ndarray | None = None,
+) -> np.ndarray:
+    """Orient one reference coefficient map using the selected convention."""
+
+    if policy == DEFAULT_COEFFICIENT_MAP_POLICY:
+        # Keep the qualified default operation and multiplication order intact.
+        return np.ascontiguousarray(
+            target_transform
+            @ reference
+            @ (
+                _inverse(source_transform)
+                if source_inverse is None
+                else source_inverse
+            ),
+            dtype=np.complex128,
+        )
+    if policy == V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY:
+        return np.ascontiguousarray(
+            np.linalg.solve(
+                target_transform.T,
+                reference @ source_transform.T,
+            ),
+            dtype=np.complex128,
+        )
+    raise ValueError(f"unsupported same-mesh coefficient map policy: {policy}")
 
 
 def _relative(left: np.ndarray, right: np.ndarray) -> float:
@@ -547,6 +613,8 @@ def build_same_mesh_hcurl_transfer(
     coarse_cell_info: int = 0,
     fine_cell_info: int = 0,
     trace_map_policy: str = DEFAULT_TRACE_MAP_POLICY,
+    coefficient_map_policy: str = DEFAULT_COEFFICIENT_MAP_POLICY,
+    profile_identity: str | None = None,
 ) -> SameMeshHcurlTransfer:
     """Build and independently audit one fixed same-mesh N1E transfer."""
 
@@ -569,14 +637,32 @@ def build_same_mesh_hcurl_transfer(
         raise ValueError(
             "canonical shared trace transfer is restricted to the explicit P6-to-P3 policy"
         )
+    coefficient_map_policy = _validate_coefficient_map_selection(
+        coefficient_map_policy, pair, profile_identity
+    )
+    if (
+        coefficient_map_policy == V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY
+        and trace_map_policy != DEFAULT_TRACE_MAP_POLICY
+    ):
+        raise ValueError(
+            "V7 P64 coefficient map cannot be combined with a trace-map override"
+        )
     coarse_element = _n1e(coarse_degree)
     fine_element = _n1e(fine_degree)
     if coarse_element.map_type != fine_element.map_type:
         raise ValueError("same-mesh N1E elements have incompatible map types")
     coarse_transform = _dof_transform(coarse_element, coarse_cell_info)
     fine_transform = _dof_transform(fine_element, fine_cell_info)
-    coarse_inverse = _inverse(coarse_transform)
-    fine_inverse = _inverse(fine_transform)
+    coarse_inverse = (
+        _inverse(coarse_transform)
+        if coefficient_map_policy == DEFAULT_COEFFICIENT_MAP_POLICY
+        else None
+    )
+    fine_inverse = (
+        _inverse(fine_transform)
+        if coefficient_map_policy == DEFAULT_COEFFICIENT_MAP_POLICY
+        else None
+    )
 
     basix_interpolation = np.asarray(
         basix.compute_interpolation_operator(coarse_element, fine_element),
@@ -597,7 +683,13 @@ def build_same_mesh_hcurl_transfer(
             basix_interpolation,
         )
     matrix = np.ascontiguousarray(
-        fine_transform @ reference_interpolation @ coarse_inverse,
+        _orient_coefficient_map(
+            reference_interpolation,
+            fine_transform,
+            coarse_transform,
+            policy=coefficient_map_policy,
+            source_inverse=coarse_inverse,
+        ),
         dtype=np.complex128,
     )
 
@@ -605,7 +697,13 @@ def build_same_mesh_hcurl_transfer(
         coarse_element, fine_element
     )
     direct_matrix = np.ascontiguousarray(
-        fine_transform @ direct_reference @ coarse_inverse,
+        _orient_coefficient_map(
+            direct_reference,
+            fine_transform,
+            coarse_transform,
+            policy=coefficient_map_policy,
+            source_inverse=coarse_inverse,
+        ),
         dtype=np.complex128,
     )
 
@@ -617,19 +715,41 @@ def build_same_mesh_hcurl_transfer(
     )
     coarse_scalar_transform = _dof_transform(coarse_scalar, coarse_cell_info)
     fine_scalar_transform = _dof_transform(fine_scalar, fine_cell_info)
+    coarse_scalar_inverse = (
+        _inverse(coarse_scalar_transform)
+        if coefficient_map_policy == DEFAULT_COEFFICIENT_MAP_POLICY
+        else None
+    )
+    fine_scalar_inverse = (
+        _inverse(fine_scalar_transform)
+        if coefficient_map_policy == DEFAULT_COEFFICIENT_MAP_POLICY
+        else None
+    )
     scalar_map = np.ascontiguousarray(
-        fine_scalar_transform
-        @ scalar_interpolation
-        @ _inverse(coarse_scalar_transform),
+        _orient_coefficient_map(
+            scalar_interpolation,
+            fine_scalar_transform,
+            coarse_scalar_transform,
+            policy=coefficient_map_policy,
+            source_inverse=coarse_scalar_inverse,
+        ),
         dtype=np.complex128,
     )
     coarse_gradient = _gradient_functional_map(coarse_element, coarse_scalar)
     fine_gradient = _gradient_functional_map(fine_element, fine_scalar)
-    coarse_gradient = np.ascontiguousarray(
-        coarse_transform @ coarse_gradient @ _inverse(coarse_scalar_transform)
+    coarse_gradient = _orient_coefficient_map(
+        coarse_gradient,
+        coarse_transform,
+        coarse_scalar_transform,
+        policy=coefficient_map_policy,
+        source_inverse=coarse_scalar_inverse,
     )
-    fine_gradient = np.ascontiguousarray(
-        fine_transform @ fine_gradient @ _inverse(fine_scalar_transform)
+    fine_gradient = _orient_coefficient_map(
+        fine_gradient,
+        fine_transform,
+        fine_scalar_transform,
+        policy=coefficient_map_policy,
+        source_inverse=fine_scalar_inverse,
     )
 
     coarse_rt = _rt(coarse_degree)
@@ -640,17 +760,36 @@ def build_same_mesh_hcurl_transfer(
     )
     coarse_rt_transform = _dof_transform(coarse_rt, coarse_cell_info)
     fine_rt_transform = _dof_transform(fine_rt, fine_cell_info)
+    coarse_rt_inverse = (
+        _inverse(coarse_rt_transform)
+        if coefficient_map_policy == DEFAULT_COEFFICIENT_MAP_POLICY
+        else None
+    )
     rt_map = np.ascontiguousarray(
-        fine_rt_transform @ rt_interpolation @ _inverse(coarse_rt_transform),
+        _orient_coefficient_map(
+            rt_interpolation,
+            fine_rt_transform,
+            coarse_rt_transform,
+            policy=coefficient_map_policy,
+            source_inverse=coarse_rt_inverse,
+        ),
         dtype=np.complex128,
     )
     coarse_curl = _curl_functional_map(coarse_element, coarse_rt)
     fine_curl = _curl_functional_map(fine_element, fine_rt)
-    coarse_curl = np.ascontiguousarray(
-        coarse_rt_transform @ coarse_curl @ coarse_inverse
+    coarse_curl = _orient_coefficient_map(
+        coarse_curl,
+        coarse_rt_transform,
+        coarse_transform,
+        policy=coefficient_map_policy,
+        source_inverse=coarse_inverse,
     )
-    fine_curl = np.ascontiguousarray(
-        fine_rt_transform @ fine_curl @ fine_inverse
+    fine_curl = _orient_coefficient_map(
+        fine_curl,
+        fine_rt_transform,
+        fine_transform,
+        policy=coefficient_map_policy,
+        source_inverse=fine_inverse,
     )
 
     singular_values = np.linalg.svd(matrix, compute_uv=False)
@@ -682,6 +821,18 @@ def build_same_mesh_hcurl_transfer(
         "coarse_cell_info": int(coarse_cell_info),
         "fine_cell_info": int(fine_cell_info),
         "orientation_transform": "basix_FiniteElement_T_apply",
+        "profile_identity": profile_identity,
+        "coefficient_map_policy": coefficient_map_policy,
+        "coefficient_map_equation": (
+            "target_T @ Pref @ inverse(source_T)"
+            if coefficient_map_policy == DEFAULT_COEFFICIENT_MAP_POLICY
+            else "solve(target_T.T, Pref @ source_T.T)"
+        ),
+        "coefficient_map_transform_note": (
+            "Basix T_apply constructs T; runtime coefficient action uses T.T"
+            if coefficient_map_policy == V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY
+            else "qualified default Basix full-cell coefficient map"
+        ),
         "coarse_orientation_relative_identity": _relative(
             coarse_transform, np.eye(int(coarse_element.dim))
         ),
@@ -899,15 +1050,18 @@ def build_same_mesh_material_class(
 __all__ = [
     "ADJOINT_LIMIT",
     "CURL_LIMIT",
+    "DEFAULT_COEFFICIENT_MAP_POLICY",
     "EDGE_LIMIT",
     "GRADIENT_LIMIT",
     "LINEARITY_LIMIT",
     "MATERIAL_ENERGY_LIMIT",
     "MATERIAL_HERMITIAN_LIMIT",
     "REPEAT_LIMIT",
+    "SAME_MESH_EXTENDED_TRANSFER_PAIRS",
     "SAME_MESH_METHOD",
     "SAME_MESH_TRANSFER_PAIRS",
-    "SAME_MESH_EXTENDED_TRANSFER_PAIRS",
+    "V7_P64_COEFFICIENT_MAP_PROFILE",
+    "V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY",
     "SameMeshHcurlTransfer",
     "SameMeshMaterialResult",
     "build_same_mesh_hcurl_transfer",

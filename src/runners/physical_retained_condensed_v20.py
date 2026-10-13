@@ -230,6 +230,7 @@ class RetainedCondensedRuntime:
     selected_parent_indices: tuple[int, ...] | None = None
     coarse_degree: int = 4
     sum_factorized_work: bool = False
+    profile_identity: str | None = None
     pc_physical: dict[str, Any] | None = None
     fast_a4: dict[str, Any] | None = None
     component_options: Mapping[str, Any] | None = None
@@ -262,18 +263,22 @@ class RetainedCondensedRuntime:
         artifact_directory: Any | None = None,
         marker: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> "RetainedCondensedRuntime":
-        from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
-        from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
-            build_same_mesh_physical_action,
+        from src.io.native_capacity_profile import (
+            V6_0P7_N0_P3_PROFILES,
+            V7_ANISO_N0_P4_PROFILES,
+            validate_same_mesh_coefficient_map_profile_binding,
         )
         from src.solvers.fullspace_physical_intermediate_runtime import (
             fine_volume_quadrature_metadata,
         )
+        from src.solvers.fullspace_same_mesh_hcurl_pmg_global import (
+            _build_same_mesh_levels,
+        )
+        from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+            build_same_mesh_physical_action,
+        )
         from src.solvers.physical_equivalent_fast import (
             build_packed_physical_action,
-        )
-        from src.io.native_capacity_profile import (
-            V6_0P7_N0_P3_PROFILES, V7_ANISO_N0_P4_PROFILES,
         )
 
         if int(comm.size) != 1:
@@ -290,6 +295,9 @@ class RetainedCondensedRuntime:
         if is_v7 and coarse_degree != 4:
             raise ValueError("V7 requires exact p4 condensation")
         options = dict(component_options or {})
+        validate_same_mesh_coefficient_map_profile_binding(
+            profile_identity, coarse_degree, options
+        )
         reuse_surface_vector = bool(options.get('reuse_dtn_surface_vector', False))
         surface_assembly_backend = options.get('dtn_surface_assembly_backend')
         surface_assembly_backend_by_degree = options.get(
@@ -804,6 +812,7 @@ class RetainedCondensedRuntime:
                 ),
                 coarse_degree=coarse_degree,
                 sum_factorized_work=bool(sum_factorized_work),
+                profile_identity=profile_identity,
                 pc_physical=pc_physical,
                 fast_a4=fast_a4, component_options=options, coarse_timings=[],
             )
@@ -1121,18 +1130,24 @@ class RetainedCondensedRuntime:
 
         if self.p4_ledger is None or self.p4_inverse is None:
             raise RuntimeError("p4 symbolic/numeric must complete before BAL_H")
-        from src.solvers.fullspace_same_mesh_hcurl_pmg_runtime import (
-            build_same_mesh_hcurl_owner_transfer,
-        )
-        from src.solvers.fullspace_same_mesh_hcurl_pmg import (
-            DEFAULT_TRACE_MAP_POLICY,
-            V6_P3_CANONICAL_TRACE_MAP_POLICY,
+        from src.io.native_capacity_profile import (
+            validate_same_mesh_coefficient_map_profile_binding,
         )
         from src.solvers.fullspace_physical_intermediate_runtime import (
             AlgebraicOwnerTransfer,
         )
+        from src.solvers.fullspace_same_mesh_hcurl_pmg import (
+            DEFAULT_COEFFICIENT_MAP_POLICY,
+            DEFAULT_TRACE_MAP_POLICY,
+            V6_P3_CANONICAL_TRACE_MAP_POLICY,
+        )
+        from src.solvers.fullspace_same_mesh_hcurl_pmg_runtime import (
+            build_same_mesh_hcurl_owner_transfer,
+        )
         from src.solvers.physical_balanced_coupling import PhysicalBalancedCoupling
-        from src.solvers.physical_light_setup import build_light_h6_setup
+        from src.solvers.physical_light_setup import (
+            build_light_h6_setup,
+        )
         from dolfinx.la.petsc import create_vector
 
         positive = build_light_h6_setup(
@@ -1162,6 +1177,17 @@ class RetainedCondensedRuntime:
                 )
         elif trace_map_policy != DEFAULT_TRACE_MAP_POLICY:
             raise ValueError(f"unsupported configured trace map policy: {trace_map_policy}")
+        validate_same_mesh_coefficient_map_profile_binding(
+            self.profile_identity,
+            self.coarse_degree,
+            self.component_options,
+        )
+        coefficient_map_policy = str(
+            (self.component_options or {}).get(
+                "same_mesh_coefficient_map_policy",
+                DEFAULT_COEFFICIENT_MAP_POLICY,
+            )
+        )
         transfer_owner = build_same_mesh_hcurl_owner_transfer(
             self.levels["spaces"][6],
             self.levels["floquets"][6],
@@ -1170,9 +1196,14 @@ class RetainedCondensedRuntime:
             fixed_serial_owner_route=self.sum_factorized_work,
             optimized_owner_apply=self.sum_factorized_work,
             trace_map_policy=trace_map_policy,
+            coefficient_map_policy=coefficient_map_policy,
+            profile_identity=self.profile_identity,
         )
         self.transfer_owner = transfer_owner
-        if trace_map_policy == V6_P3_CANONICAL_TRACE_MAP_POLICY:
+        if (
+            trace_map_policy == V6_P3_CANONICAL_TRACE_MAP_POLICY
+            or coefficient_map_policy != DEFAULT_COEFFICIENT_MAP_POLICY
+        ):
             marker(
                 "retained_owner_transfer_complete",
                 dict(transfer_owner.audit),
