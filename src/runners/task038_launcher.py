@@ -150,9 +150,29 @@ def _base_manifest(
     }
     from src.io.native_capacity_profile import NATIVE_PROFILES, native_profile_facts
     native_identity = specification.solver.get('preconditioner')
+    from src.io.v7_balanced_diagnostic_contract import (
+        V7_DIAGNOSTIC_ENV,
+        launch_contract as v7_diagnostic_launch_contract,
+    )
+    diagnostic_environment_value = os.environ.get(V7_DIAGNOSTIC_ENV)
     if native_identity in NATIVE_PROFILES:
         profile = native_profile_facts(native_identity)
         manifest['execution_mode'] = profile.get('execution_mode', 'full_solve')
+        try:
+            observer_contract = v7_diagnostic_launch_contract(
+                profile=str(native_identity),
+                execution_mode=str(manifest['execution_mode']),
+                environment_value=diagnostic_environment_value,
+                source_sha=source_sha,
+                input_sha256=specification.input_sha256,
+                resolved_config_sha256=resolved_sha,
+                physical_model_sha256=specification.physical_model_sha256,
+                output_directory=run_directory,
+            )
+        except ValueError as exc:
+            raise InputError(str(exc)) from exc
+        if observer_contract is not None:
+            manifest['v7_balanced_failure_diagnostic'] = observer_contract
         if 'component_options' in profile:
             manifest['component_options'] = profile['component_options']
             from .math_backend_identity import component_factory_identity
@@ -236,7 +256,7 @@ def _base_manifest(
 
 
 def _initial_summary(manifest: dict[str, Any]) -> dict[str, Any]:
-    return {
+    summary = {
         "status": "launching",
         "result_classification": "not_run",
         "exit_status": None,
@@ -245,6 +265,11 @@ def _initial_summary(manifest: dict[str, Any]) -> dict[str, Any]:
         "numerical_output_directory": manifest["numerical_output_directory"],
         "resource_authority": {"status": "not_sampled"},
     }
+    if "v7_balanced_failure_diagnostic" in manifest:
+        summary["v7_balanced_failure_diagnostic_contract"] = dict(
+            manifest["v7_balanced_failure_diagnostic"]
+        )
+    return summary
 
 
 def _write_bootstrap(
@@ -417,6 +442,23 @@ def launch_specification(
         if source_sha is not None
         else _source_sha(Path(__file__).resolve().parents[2])
     )
+    from src.io.v7_balanced_diagnostic_contract import (
+        V7_DIAGNOSTIC_ENV,
+        diagnostic_requested as v7_diagnostic_requested,
+    )
+    try:
+        v7_diagnostic_enabled = v7_diagnostic_requested(
+            str(specification.solver.get('preconditioner', '')),
+            os.environ.get(V7_DIAGNOSTIC_ENV),
+        )
+    except ValueError as exc:
+        raise InputError(str(exc)) from exc
+    if v7_diagnostic_enabled and (
+        contract_probe or setup_only or pc_profile is not None
+    ):
+        raise InputError(
+            "V7 BAL_H diagnostic observer requires the standard full-solve run_case path"
+        )
     from src.io.physical_intermediate_profile import PROFILES
     from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, profile_facts
     from src.io.physical_balanced_profile import BALANCED_ROUTES
@@ -731,6 +773,10 @@ def launch_specification(
         "numerical_output_directory": str(run_directory / "numerical_output"),
         **result,
     }
+    if "v7_balanced_failure_diagnostic" in manifest:
+        summary["v7_balanced_failure_diagnostic_contract"] = dict(
+            manifest["v7_balanced_failure_diagnostic"]
+        )
     if setup_only:
         summary['execution_mode'] = 'setup_only'
         summary['setup_only'] = True

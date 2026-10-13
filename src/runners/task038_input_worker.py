@@ -59,6 +59,41 @@ def _load_and_validate_worker_payload(
     if resolved is None or resolved_bytes is None or manifest_value is None:
         return None, errors
 
+    # Validate the observer opt-in at the worker's real pre-FE payload gate.
+    # The runner repeats this check at its own entry as defense in depth; this
+    # first check prevents an enabled parent manifest from being silently
+    # ignored if the worker environment binding is lost.
+    try:
+        import os
+
+        from src.io.v7_balanced_diagnostic_contract import (
+            V7_DIAGNOSTIC_ENV,
+            validate_worker_binding,
+        )
+
+        solver_payload = resolved.get("solver")
+        profile_name = (
+            solver_payload.get("preconditioner")
+            if isinstance(solver_payload, dict)
+            else ""
+        )
+        observer_binding = validate_worker_binding(
+            manifest_value,
+            environment_value=os.environ.get(V7_DIAGNOSTIC_ENV),
+            profile=str(profile_name or ""),
+            source_sha=str(expected_source_sha),
+            input_sha256=str(expected_input_sha256),
+            resolved_config_sha256=str(expected_resolved_config_sha256),
+            physical_model_sha256=str(expected_physical_model_sha256),
+            output_directory=expected_output_path,
+        )
+        if observer_binding is not None:
+            observer = manifest_value.get("v7_balanced_failure_diagnostic")
+            if not isinstance(observer, dict) or observer != observer_binding:
+                errors.append("V7 observer binding differs from the validated parent manifest")
+    except (ValueError, TypeError, KeyError) as exc:
+        errors.append(f"V7 observer binding failed: {exc}")
+
     resolved_sha = hashlib.sha256(resolved_bytes).hexdigest()
     if resolved_sha != expected_resolved_config_sha256:
         errors.append("resolved config SHA does not match the launch contract")

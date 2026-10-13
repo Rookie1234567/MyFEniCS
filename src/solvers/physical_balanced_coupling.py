@@ -57,7 +57,7 @@ class PhysicalBalancedCoupling:
     the existing apply_owned/BorrowedActionAdapter before construction.
     Restriction is P^H on duals and returns an owned coarse vector.
     """
-    def __init__(self, action, coarse, smoother, restriction, *, route, checkpoint=lambda: None, inexact_ledger=None, level_identity=None):
+    def __init__(self, action, coarse, smoother, restriction, *, route, checkpoint=lambda: None, inexact_ledger=None, level_identity=None, failure_diagnostic=None):
         if route not in ROUTES:
             raise ValueError('unknown balanced route')
         self.A, self.C, self.S, self.PH = action, coarse, smoother, restriction
@@ -67,6 +67,8 @@ class PhysicalBalancedCoupling:
         if inexact_ledger is not None and route != 'BAL_H':
             raise ValueError('inexact ledger is qualified only for BAL_H')
         self.inexact_ledger, self.level_identity = inexact_ledger, level_identity
+        # Optional V7 observer; inert unless explicitly activated after setup QA.
+        self.failure_diagnostic = failure_diagnostic
 
     def apply(self, source):
         vectors = _OwnedVectors()
@@ -96,7 +98,7 @@ class PhysicalBalancedCoupling:
                 raise TypeError('balanced callback must return caller-owned output')
             return vectors.take(value)
 
-        def balance(residual, leading):
+        def balance(residual, leading, other=None, primal=None):
             # residual=leading-other; scale by actual participating coarse terms.
             counts['PH_audit'] += 2
             left = self.PH(leading)
@@ -109,9 +111,51 @@ class PhysicalBalancedCoupling:
                     scale += _norm(left)
                     relative = numerator/max(scale, np.finfo(float).tiny)
                     if not np.isfinite(relative) or relative > 1e-8:
-                        raise BalancedConstraintRejected(dict(norm=numerator,operation_scale=scale,
-                            relative=relative,limit=1e-8))
-                    return dict(norm=numerator, operation_scale=scale, relative=relative, limit=1e-8)
+                        rejection_facts = {
+                            "norm": numerator,
+                            "operation_scale": scale,
+                            "relative": relative,
+                            "limit": 1e-8,
+                        }
+                        error = BalancedConstraintRejected(rejection_facts)
+                        observer = self.failure_diagnostic
+                        if (observer is not None and self.route == 'BAL_H'
+                                and other is not None):
+                            try:
+                                observer.on_balance_rejection(
+                                    source=leading, actual_other=other, residual=residual,
+                                    primal=primal, ph_residual=defect,
+                                    facts=rejection_facts,
+                                    coupling_apply_attempt=int(self.attempted),
+                                    balance_gate_point=(
+                                        "BAL_H_initial_source_minus_A_structure_Pc_before_smoother"
+                                        if other is not None
+                                        else "non_initial_balance"
+                                    ),
+                                )
+                            except Exception as diagnostic_error:
+                                try:
+                                    observer.record_unexpected_error(diagnostic_error)
+                                except Exception:
+                                    pass
+                        raise error
+                    balance_facts = {
+                        "norm": numerator,
+                        "operation_scale": scale,
+                        "relative": relative,
+                        "limit": 1e-8,
+                    }
+                    observer = self.failure_diagnostic
+                    if (observer is not None and self.route == 'BAL_H'
+                            and other is not None):
+                        try:
+                            observer.on_balance_pass(balance_facts)
+                        except Exception as diagnostic_error:
+                            try:
+                                observer.record_unexpected_error(diagnostic_error)
+                            except Exception:
+                                pass
+                    return balance_facts
                 finally:
                     _destroy(defect)
             finally:
@@ -123,7 +167,7 @@ class PhysicalBalancedCoupling:
             u = call('A_structure', self.A, zc)
             rc = vectors.copy(source); _axpy(rc, -1, u)
             facts['initial'] = dict(q_norm=_norm(source), zc_norm=_norm(zc), Azc_norm=_norm(u),
-                                    rc_norm=_norm(rc), constraint=(balance(rc, source) if self.inexact_ledger is None else
+                                    rc_norm=_norm(rc), constraint=(balance(rc, source, other=u, primal=zc) if self.inexact_ledger is None else
                                                 {'policy': 'inexact_eps1_not_required_zero'}))
             vectors.drop(u)
             if self.route != 'PROJ_K6':
@@ -212,3 +256,11 @@ class PhysicalBalancedCoupling:
             facts['live_before_cleanup'] = len(vectors.values)
             vectors.close()
             facts['live_after_cleanup'] = len(vectors.values)
+            if self.failure_diagnostic is not None:
+                try:
+                    self.failure_diagnostic.release_pending_coarse()
+                except Exception as diagnostic_error:
+                    try:
+                        self.failure_diagnostic.record_unexpected_error(diagnostic_error)
+                    except Exception:
+                        pass

@@ -1115,6 +1115,7 @@ class RetainedCondensedRuntime:
         *,
         marker: Callable[[str, Mapping[str, Any]], None],
         audit_append: Callable[[str, Mapping[str, Any]], None] | None = None,
+        failure_diagnostic: Any | None = None,
     ) -> P6RetainedBALHBridge:
         """Attach existing H6, p6->p4 transfer, and exact p4 coarse inverse."""
 
@@ -1184,9 +1185,12 @@ class RetainedCondensedRuntime:
             rhs = transfer.apply_adjoint(source)
             ph_seconds = perf_counter()-started
             value = None
+            diagnostic_owns_value = False
             logical_before = self.p4_ledger.logical_apply_calls
             try:
                 value = self.p4_ledger.solve(rhs)
+                if failure_diagnostic is not None:
+                    diagnostic_owns_value = failure_diagnostic.hold_coarse(value)
                 audit = dict(self.p4_ledger.last_audit)
                 audit.update({
                     "logical_apply": int(self.p4_ledger.logical_apply_calls),
@@ -1213,7 +1217,7 @@ class RetainedCondensedRuntime:
                     audit_append("p4_decisions.jsonl", audit)
                 return result
             finally:
-                if value is not None:
+                if value is not None and not diagnostic_owns_value:
                     value.destroy()
                 rhs.destroy()
 
@@ -1230,6 +1234,22 @@ class RetainedCondensedRuntime:
             )
             return apply_owned(action, source)
 
+        if failure_diagnostic is not None:
+            # Packed physical bundles contain physical_action/volume_action,
+            # while the shared native DtN owner remains the authoritative
+            # component for this diagnostic decomposition.
+            from src.solvers.v7_balanced_failure_diagnostic import with_shared_dtn_owner
+
+            a4_fast_diagnostic = with_shared_dtn_owner(self.fast_a4, self.p4)
+            a6_fast_diagnostic = with_shared_dtn_owner(self.pc_physical, self.fine)
+            failure_diagnostic.configure(
+                restriction=transfer.apply_adjoint,
+                a4_fast=a4_fast_diagnostic,
+                a4_native=self.p4,
+                a6_fast=a6_fast_diagnostic,
+                a6_native=self.fine,
+            )
+
         coupling = PhysicalBalancedCoupling(
             physical,
             coarse,
@@ -1237,6 +1257,7 @@ class RetainedCondensedRuntime:
             transfer.apply_adjoint,
             route="BAL_H",
             checkpoint=lambda: None,
+            failure_diagnostic=failure_diagnostic,
         )
         self.bal_h = coupling
 
@@ -1574,6 +1595,7 @@ def run_retained_condensed_workflow(
 
     from pathlib import Path
     import json
+    import os
     import time
     from src.io.native_capacity_profile import (
         V6_0P7_N0_P3_PROFILES, V7_ANISO_N0_P4_PROFILES,
@@ -1583,6 +1605,50 @@ def run_retained_condensed_workflow(
     is_v7 = profile_identity in V7_ANISO_N0_P4_PROFILES
     is_n0_profile = profile_identity in (V6_0P7_N0_P3_PROFILES | V7_ANISO_N0_P4_PROFILES)
     physical_residual_key = "A6_n0_relative" if is_n0_profile else "original_A6_relative"
+    directory = Path(directory)
+    from src.io.v7_balanced_diagnostic_contract import (
+        V7_DIAGNOSTIC_ENV,
+        validate_worker_binding as validate_v7_diagnostic_binding,
+    )
+    diagnostic_environment_value = os.environ.get(V7_DIAGNOSTIC_ENV)
+    failure_diagnostic = None
+    diagnostic_launch_contract = None
+    run_manifest_path = directory / "run_manifest.json"
+    if diagnostic_environment_value is not None or run_manifest_path.exists():
+        try:
+            run_manifest = (
+                json.loads(run_manifest_path.read_text(encoding="utf-8"))
+                if run_manifest_path.exists()
+                else {}
+            )
+            observer_recorded = "v7_balanced_failure_diagnostic" in run_manifest
+            observer_requested = diagnostic_environment_value is not None or observer_recorded
+            if observer_requested:
+                if not is_v7 or diagnostic_environment_value != "1" or setup_only:
+                    raise ValueError(
+                        "V7 BAL_H diagnostic opt-in is valid only for a full V7 solve and value '1'"
+                    )
+                from src.io.resolved_config import canonical_json_bytes
+
+                resolved_config_sha256 = hashlib.sha256(
+                    canonical_json_bytes(payload) + b"\n"
+                ).hexdigest()
+                diagnostic_launch_contract = validate_v7_diagnostic_binding(
+                    run_manifest,
+                    environment_value=diagnostic_environment_value,
+                    profile=profile_identity,
+                    source_sha=str(source_sha),
+                    input_sha256=str(payload["provenance"]["input_sha256"]),
+                    resolved_config_sha256=resolved_config_sha256,
+                    physical_model_sha256=str(
+                        payload["provenance"]["physical_model_sha256"]
+                    ),
+                    output_directory=directory,
+                )
+                if diagnostic_launch_contract is None:
+                    raise ValueError("V7 diagnostic request did not produce a launch contract")
+        except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+            raise ValueError(f"V7 diagnostic launch/manifest binding failed: {exc}") from exc
     if is_n0_profile:
         expected_execution = "full_solve" if is_v7 else "pilot_16"
         if setup_only or contract.get("execution_mode") != expected_execution:
@@ -1632,12 +1698,12 @@ def run_retained_condensed_workflow(
         recover_p0_outputs,
     )
 
-    directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     runtime: RetainedCondensedRuntime | None = None
     full_rhs = None
     reduced_rhs = None
     result = None
+    failure_diagnostic = None
     saved_field = None
     release_facts = None
     checkpoints = directory / "retained_checkpoint_manifests"
@@ -1885,8 +1951,53 @@ def run_retained_condensed_workflow(
                 facts = dict(facts, operator_scope="A4_n0", coarse_degree=4, coarse_operator="A4")
             ledger.append(name, facts)
 
+        if diagnostic_launch_contract is not None:
+            from src.solvers.v7_balanced_failure_diagnostic import (
+                NUMERICAL_BASELINE_SOURCE_SHA,
+                V7BalancedFailureDiagnostic,
+            )
+
+            diagnostic_identity = {
+                "profile": profile_identity,
+                "execution_mode": str(contract["execution_mode"]),
+                "run_id": str(run_manifest["run_id"]),
+                "output_directory": str(directory.resolve()),
+                "source_sha": str(source_sha),
+                "diagnostic_implementation_source_sha": str(source_sha),
+                "numerical_baseline_source_sha": NUMERICAL_BASELINE_SOURCE_SHA,
+                "input_sha256": str(provenance["input_sha256"]),
+                "resolved_config_sha256": str(
+                    diagnostic_launch_contract["resolved_config_sha256"]
+                ),
+                "physical_model_sha256": str(
+                    provenance["physical_model_sha256"]
+                ),
+                "parent_mode_count": int(runtime.operator_selection["parent_mode_count"]),
+                "parent_mode_sha256": str(runtime.operator_selection["parent_mode_sha256"]),
+                "active_mode_count": int(runtime.mode_count),
+                "active_mode_sha256": str(runtime.mode_sha256),
+                "operator_scope": "n0_filtered_dtn_not_full_dtn",
+                "quadrature_degree": int(runtime.fine["dtn_quadrature_degree"]),
+                "p6_rows": int(runtime.p6_system.full_rows),
+                "p4_rows": int(runtime.p4_system.full_rows),
+                "outer_pc_attempt_limit": int(contract["outer"]["max_iterations"]),
+                "outer_restart": int(contract["outer"]["restart"]),
+                "new_factor_or_matsolve_added": False,
+            }
+            failure_diagnostic = V7BalancedFailureDiagnostic(
+                directory / "v7_balanced_failure_diagnostic",
+                identity=diagnostic_identity,
+                p4_rows=int(runtime.p4_system.full_rows),
+                p6_rows=int(runtime.p6_system.full_rows),
+                diagnostic_implementation_source_sha=str(source_sha),
+            )
+            summary["v7_balanced_failure_diagnostic_contract"] = dict(
+                diagnostic_launch_contract
+            )
         bridge = runtime.build_bal_h(
-            marker=ledger.marker, audit_append=scoped_coarse_append
+            marker=ledger.marker,
+            audit_append=scoped_coarse_append,
+            failure_diagnostic=failure_diagnostic,
         )
         transfer_audit = dict(runtime.transfer_owner.audit)
         if "trace_map_policy" in transfer_audit:
@@ -2224,7 +2335,44 @@ def run_retained_condensed_workflow(
                 "numerical_output_directory": str(directory / "numerical_output"),
             }
 
+        outer_pc_callback_ordinal = 0
+        setup_bridge_apply_count = int(bridge.apply_count)
+        setup_bal_h_callback_count = int(bridge.bal_h_count)
+
         def pc(source: PETSc.Vec) -> PETSc.Vec:
+            nonlocal outer_pc_callback_ordinal
+            outer_pc_callback_ordinal += 1
+            if failure_diagnostic is not None and failure_diagnostic.active:
+                apply_context = {
+                    "scope": "outer_pc",
+                    "outer_pc_callback_ordinal": int(outer_pc_callback_ordinal),
+                    "outer_bridge_apply_attempt_ordinal": int(
+                        bridge.apply_count - setup_bridge_apply_count + 1
+                    ),
+                    "bridge_apply_attempt_ordinal_including_setup_qa": int(
+                        bridge.apply_count + 1
+                    ),
+                    "outer_bal_h_callback_attempt_ordinal": int(
+                        runtime.bal_h.attempted - setup_bal_h_callback_count + 1
+                    ),
+                    "bal_h_callback_attempt_ordinal_including_setup_qa": int(
+                        runtime.bal_h.attempted + 1
+                    ),
+                    "setup_qa_bridge_apply_count_excluded_from_outer_ordinals": (
+                        setup_bridge_apply_count
+                    ),
+                    "setup_qa_bal_h_callback_count_excluded_from_outer_ordinals": (
+                        setup_bal_h_callback_count
+                    ),
+                    "fgmres_iteration": "NOT_EXPOSED_AT_PRECONDITIONER_CALLBACK",
+                    "balance_gate_point": (
+                        "BAL_H_initial_source_minus_A_structure_Pc_before_smoother"
+                    ),
+                }
+                try:
+                    failure_diagnostic.set_apply_context(apply_context)
+                except Exception as diagnostic_error:
+                    failure_diagnostic.record_unexpected_error(diagnostic_error)
             values = np.asarray(source.getArray(readonly=True), dtype=np.complex128).copy()
             p4_logical_before = int(runtime.p4_ledger.logical_apply_calls)
             p4_factor_before = dict(runtime.p4_ledger._factor_counts())
@@ -2266,6 +2414,29 @@ def run_retained_condensed_workflow(
                     }
                 )
                 ledger.append("pc_applies.jsonl", coupling_facts)
+
+        if failure_diagnostic is not None:
+            failure_diagnostic.activate(context={
+                "activation_stage": "after_setup_qa_before_outer_fgmres",
+                "workflow_phase_at_activation": str(ledger.phase),
+                "same_object_setup_qa_status": str(setup_checks["status"]),
+                "setup_qa_bridge_apply_count": setup_bridge_apply_count,
+                "setup_qa_bal_h_callback_count": setup_bal_h_callback_count,
+                "outer_pc_callbacks_at_activation": 0,
+                "setup_qa_not_counted_as_outer_apply": True,
+                "observer_does_not_stop_full_v7_solve_on_balance_pass": True,
+            })
+            try:
+                failure_diagnostic.persist()
+            except Exception as diagnostic_error:
+                failure_diagnostic.record_unexpected_error(diagnostic_error)
+            try:
+                ledger.marker(
+                    "v7_balanced_failure_observer_activated",
+                    failure_diagnostic.snapshot()["activation_context"],
+                )
+            except Exception as diagnostic_error:
+                failure_diagnostic.record_unexpected_error(diagnostic_error)
 
         ledger.set_phase("solve")
         solve_started = time.monotonic()
@@ -2544,6 +2715,28 @@ def run_retained_condensed_workflow(
         _atomic_json(directory / "physical_intermediate_summary.json", summary)
         raise
     finally:
+        if failure_diagnostic is not None:
+            try:
+                if not failure_diagnostic.rejection_seen:
+                    failure_diagnostic.finish_without_rejection(
+                        reason=(
+                            "workflow_finished_without_balance_rejection"
+                            if result is not None
+                            else "workflow_exited_before_balance_rejection"
+                        )
+                    )
+                summary["v7_balanced_failure_observer"] = failure_diagnostic.snapshot()
+                try:
+                    _atomic_json(directory / "physical_intermediate_summary.json", summary)
+                except Exception as diagnostic_error:
+                    failure_diagnostic.record_unexpected_error(diagnostic_error)
+            except Exception as diagnostic_error:
+                failure_diagnostic.record_unexpected_error(diagnostic_error)
+            finally:
+                try:
+                    failure_diagnostic.close()
+                except Exception as diagnostic_error:
+                    failure_diagnostic.record_unexpected_error(diagnostic_error)
         if result is not None:
             final = result.pop("final_solution", None)
             if final is not None:
