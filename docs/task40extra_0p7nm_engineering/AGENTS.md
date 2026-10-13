@@ -17,6 +17,8 @@
 - 若 exec 返回 ENOENT，先检查既有 `/bin/bash`、`login:false`、精确 workdir 和执行授权参数。
 - 修正调用参数后仍失败时，报告真实阻塞；不切换项目/窗口/主机，也不反复探针。
 - 每次接续读取用户本轮明确指定的最新 review、对应固定窗口记录、当前账本与最新 run index；不得从历史编号恢复旧批次。
+- 既有主控/执行者分工下，主控转达的用户最新 review 指令决定当前执行阶段；上下文压缩后先核对主控协调快照 `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_preparation/controller_active_scope_v31.json`。该快照仅定位当前 review/阶段，不替代用户指令或 review。
+- 当前接续为 Review V31 P0；旧 V30 消息发送授权或单次 service 批准不恢复已截止的 V30，也不批准新的 V31 重型窗口。P0 未就绪及新窗口未明确获批时，只在既有本机 canonical worktree 实现、定向测试和准备命令。
 - T0 和 deadline 永不刷新；历史费用、unknown 和负结果不得清零、覆盖或改写。
 - UTC 推导 elapsed/remaining 与 monotonic elapsed、资源耗时、费用扣款分开记录。
 - 一次只运行一个 heavy case；先过 ABI 与输入身份 Gate，W0 不通过时不启动 W1 FE/W2。

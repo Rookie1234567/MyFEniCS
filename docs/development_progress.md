@@ -3698,3 +3698,7 @@ Selective merge 必须区分 shared numerical helper、Task40 opt-in runner/chec
 | 原尺寸全目标 | all-q/targetKSP/A6与释放后残差/official场、mode精度、2TB/48h未资格；无自动新增case | 下一授权需实际各q与完整共驻账，优先准确因子ALL_Q_RESIDENT |
 
 执行仅在获批fenics-ws的/home/fenics/Projects/laptop_share内；cap512GiB/hostreserve64GiB，不变原MUMPS参数、master或ordinary default。保留两次数值前失败、首次checkerFAIL、runtime首次路径导入失败和全部历史费用/unknown。两级账本与command/ABI/window/approval原字节索引随同一Task40分支提交。
+
+## Task40extra Review V31 P0（2026-10-13）：重型窗口前准备完成，数值仍未启动
+
+本轮只收口 saved-first q4、COMPLETE/pending 与跨窗身份恢复、twist0 owner/q1-q5 callback、reference-only/target 分阶段准入、closeout/checker 和 strict/V15/RHS 计费接线。准备失败后重试沿用同一固定 T0 的小 fixture 与真实合同/launcher/campaign 验收通过；最终五个相关测试文件 67 passed。此处没有新增 q 矩阵、正式 q factor 或目标场，完整 reference、PDE、R/T/A 与 2 TB/48 h 仍未资格化。新 V31 窗口和 T0 仍 PENDING；V30 已到期且所有旧失败证据保留。源码哈希、raw logs、ABI 与双口径成本见 `docs/task40extra_0p7nm_engineering/outcomes/records/review_v31_controller_p0_audit.json` 及 `review_v31_p0_evidence_index.json`。

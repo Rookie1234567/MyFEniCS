@@ -8382,5 +8382,26 @@
       }
     ],
     "controller_audit_sha256": "588f5476552fa3dfdaf2e517e6ab8bcc0400b580ac97c98fbb1bac2cd2cc074f"
+  },
+  "review_v31_p0": {
+    "schema": "task40extra.review_v31_p0_run_index_entry.v1",
+    "status": "P0_READY_NEW_HEAVY_WINDOW_PENDING",
+    "review_base_head": "d7ffbfea952bc160742b18739369f2e3f656ee8e",
+    "response": "docs/task40extra_0p7nm_engineering/response_v31.md",
+    "handoff": "docs/task40extra_0p7nm_engineering/outcomes/handoff_v31.md",
+    "p0_evidence_index": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v31_p0_evidence_index.json",
+      "sha256": "4d75b3f952850e7805dcc2709e6a4cfbde036efbfc2584e31e6a9109096f996a"
+    },
+    "controller_p0_audit": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v31_controller_p0_audit.json",
+      "sha256": "bdac7617afa0dbd6699f436a6fb0fcbfb7c5bf9f55c5f90bd502dd7a132a1a62"
+    },
+    "final_targeted_tests": "67 passed in 4.43 s; local qualified ABI; not full repository/CI/scientific qualification",
+    "new_q_qualification": "NOT_RUN",
+    "new_heavy_approval": "PENDING",
+    "new_t0_utc": null,
+    "old_v30_window_and_negative_evidence_preserved": true,
+    "source_freeze": "controller publication/readback after review; content identities are in the P0 evidence index"
   }
 }

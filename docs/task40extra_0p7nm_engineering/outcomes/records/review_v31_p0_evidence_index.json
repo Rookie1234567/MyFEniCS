@@ -1,0 +1,209 @@
+{
+  "abi": {
+    "mpi_ranks": 1,
+    "petsc_int": "numpy.int32",
+    "petsc_scalar": "numpy.complex128",
+    "petsc_slepc_dolfinx_basix_mpi4py": "all loaded from the configured Linux runtime prefix",
+    "preflight": "PASS",
+    "python": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+    "qualified_activation_marker": "1",
+    "receipt": {
+      "bytes": 12729,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+      "sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426"
+    }
+  },
+  "controller_audit": {
+    "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v31_controller_p0_audit.json",
+    "sha256": "bdac7617afa0dbd6699f436a6fb0fcbfb7c5bf9f55c5f90bd502dd7a132a1a62"
+  },
+  "controller_checks": {
+    "bash_n_launcher": "PASS",
+    "full_repository_pytest": "NOT_RUN",
+    "git_diff_check": "PASS",
+    "prepare_v31_approved_help": "PASS",
+    "prepare_v31_p0_help": "PASS",
+    "qualified_ABI": "PASS_complex128_int32_MPI1",
+    "ruff": "NOT_AVAILABLE_NOT_INSTALLED"
+  },
+  "engineering_cost": {
+    "boottime_anchor": "UNKNOWN/not recorded at receipt",
+    "finish_monotonic_seconds": 1409557.305223176,
+    "finish_utc": "2026-10-13T09:20:04.682249+00:00",
+    "latest_observation_monotonic_seconds": 1409557.305223176,
+    "monotonic_span_seconds": 25345.811092270073,
+    "pre_receipt_exact_elapsed_seconds": "UNKNOWN_not_independently_anchored",
+    "previous_observation_monotonic_seconds": 1389881.012899151,
+    "progress_observation_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_preparation/p0_engineering_observations_v31.jsonl",
+    "receipt_anchor_monotonic_seconds": 1384211.494130906,
+    "receipt_anchor_utc": "2026-10-13T01:38:24.675291+00:00",
+    "semantics": "UTC and monotonic spans are reported separately; both include idle/session gaps and are not active work or CPU-time totals; do not reconcile or add them",
+    "utc_span_seconds": 27700.006958
+  },
+  "final_tests": {
+    "command": "python -m pytest -q src/test/test_task40_v10_p6_mumps.py src/test/test_task40_v30_qualified_q_csr.py src/test/test_task40_v30_selected_q_csr.py src/test/test_task40_v31_admission.py src/test/test_task40_v31_closeout.py",
+    "duration_seconds": 4.43,
+    "failed": 0,
+    "formal_FE_q_factor_PDE_run": false,
+    "includes_tiny_real_MUMPS_unit_test": true,
+    "passed": 67,
+    "raw_log": {
+      "bytes": 2248,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_preparation/test_final_targeted_20261013.log",
+      "sha256": "a70135c082be352369ff51d0f9df41e7626d602527e52ef89290428a173af5f6"
+    },
+    "successful_preparation_fixture_log": {
+      "bytes": 98,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_preparation/test_success_prepare_and_rhs_fixture_20261013.log",
+      "result": "2 passed; failure retry preserves first T0, then real pending builder/contract/launcher/campaign validation succeeds in pytest temp root",
+      "sha256": "80c0b39418b91e445fe987411688c18b51bdae9052e6a3d6b9243a7c8a3d267d"
+    }
+  },
+  "negative_test_attempts": {
+    "initial_failure_original_log": "overwritten when final passing run reused the same path; exact execution output recovered separately",
+    "recovered_execution_receipt": {
+      "bytes": 36712,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_preparation/controller_recovered_failure_transcripts.json",
+      "semantics": "execution-receipt copies reconstructed from commandExecution output; not original raw log bytes and not the original log hash",
+      "sha256": "98809a9742f444342c867305c41ee22cbfc1deaa4322d530fcd3f733e31b2081"
+    },
+    "second_failure_raw_log": {
+      "bytes": 5466,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_preparation/test_final_targeted_after_fixture_fix_20261013.log",
+      "result": "1 failed, 66 passed; fixture audit lacked per-q business counter maps; corrected before final run",
+      "sha256": "74a5de1683f66eae0a66bf6e55665866f349976eaf40cc1e6774dd1a0ce957cb"
+    }
+  },
+  "recorded_utc": "2026-10-13T09:20:04.682249+00:00",
+  "review": {
+    "base_head_at_evidence_capture": "d7ffbfea952bc160742b18739369f2e3f656ee8e",
+    "path": "docs/task40extra_0p7nm_engineering/review_report_v31.md",
+    "sha256": "d93625d435d4db47f2ae5ff2334558c17f4afec8523e63ee1cd2bc905eafe380"
+  },
+  "schema": "task40extra.review_v31_p0_evidence_index.v1",
+  "scope": "P0 implementation, fixtures, command preparation, source review handoff only",
+  "source_hash_manifest": {
+    "files": [
+      {
+        "bytes": 65423,
+        "path": "benchmarks/subreaper_watchdog.py",
+        "sha256": "e8304463f9aefa00ce30b6f98ac93827dd5b0a65f32f94f1f1831ac0de6eab70"
+      },
+      {
+        "bytes": 13338,
+        "path": "scripts/run_case_in_user_service.sh",
+        "sha256": "0bdd7bb5a461b9f7723ae243ccbe7ca21e9727f9916c41e867979c2c0056d942"
+      },
+      {
+        "bytes": 504425,
+        "path": "scripts/task40_v20_service_workflow.py",
+        "sha256": "6f9049478a4f7e52d0fbd376e6044d19b7f6a2353f984cdc729f9c8547c7f3cd"
+      },
+      {
+        "bytes": 54584,
+        "path": "src/io/input_schema.py",
+        "sha256": "4e46f87ad5981c4178c7b00023a89e4412cae8768f6c018704c73c0b1dbd2a1c"
+      },
+      {
+        "bytes": 168950,
+        "path": "src/io/input_validation.py",
+        "sha256": "03bd5b4b5601539acbe2da8831ed32f7bf907072b1fd6204ae47fe6fb4102938"
+      },
+      {
+        "bytes": 43155,
+        "path": "src/runners/task038_full3d_iterative.py",
+        "sha256": "e9807e598228706932e608886fb71b121c615d5f6cb8fbcd71c9d09d6592e25c"
+      },
+      {
+        "bytes": 73699,
+        "path": "src/runners/task40_v10_campaign.py",
+        "sha256": "5f08daad3cdd44685862896d1a675aa79a0450361adc5444cba9be1d568a6c18"
+      },
+      {
+        "bytes": 135842,
+        "path": "src/runners/task40_v10_output_checker.py",
+        "sha256": "b5715ad3d07714a1b10bd5a03eb636afed524728deb9cd999d02b8d53e6e9f5d"
+      },
+      {
+        "bytes": 475178,
+        "path": "src/runners/task40_v10_worker.py",
+        "sha256": "7e1096d496000422a7d37610a19a2f16787f09bbc53ed09cd15f1848df7457c6"
+      },
+      {
+        "bytes": 260220,
+        "path": "src/runners/task40_v20_stage_runner.py",
+        "sha256": "734fef2463159edab3a0109cea561b3f30571d958d93df86e61a0bc89993de0d"
+      },
+      {
+        "bytes": 72862,
+        "path": "src/runners/task40_v31_contract.py",
+        "sha256": "8de86001cf2e2fec5d7720dc48272ad97f34f14c6ebf37d1b4c16f2afb9bc3c7"
+      },
+      {
+        "bytes": 179234,
+        "path": "src/solvers/task40_v10_p6_mumps.py",
+        "sha256": "17abd65d6590fb22758a8f7c1bc933bc8797cf9b5a01dd4ce8669bae955a9705"
+      },
+      {
+        "bytes": 267015,
+        "path": "src/solvers/task40_v10_p6_yorbit.py",
+        "sha256": "cb482ccd909f9976149b20a8c5b0252199793dcd2acb0c55da63f29b32cc331f"
+      },
+      {
+        "bytes": 202137,
+        "path": "src/solvers/task40_v25_selected_q0.py",
+        "sha256": "fb719957e4589669392ebd5eb8a4a2ba4c4aabd08f9a5d62e9ecce0b6c07bb9e"
+      },
+      {
+        "bytes": 47530,
+        "path": "src/solvers/task40_v30_qualified_q_csr.py",
+        "sha256": "d1a509075115f7c2e09cb74e368a6c6e22219289ef1a7bd03a704a3c5696cfd0"
+      },
+      {
+        "bytes": 116957,
+        "path": "src/solvers/task40_v30_selected_q_csr.py",
+        "sha256": "056df43fb815bb363ba5ddbe145a248fc52e9cb39eef177900159fab2a27cadf"
+      },
+      {
+        "bytes": 45894,
+        "path": "src/test/test_task40_v10_p6_mumps.py",
+        "sha256": "f96ffc8fd3c7bb1b7bbf1bf6b32d4dd727db4960844264f9fb5a707c67b21c87"
+      },
+      {
+        "bytes": 21842,
+        "path": "src/test/test_task40_v30_qualified_q_csr.py",
+        "sha256": "aed5cce7a893a9af0319f4ac3d778addd7c0ae9715ad220109b5381d13f771be"
+      },
+      {
+        "bytes": 64165,
+        "path": "src/test/test_task40_v30_selected_q_csr.py",
+        "sha256": "7d799a19f41c576ab2b7e60dae5606bb2964b2d485e82f21b91f1005393bc7d7"
+      },
+      {
+        "bytes": 17139,
+        "path": "src/test/test_task40_v31_admission.py",
+        "sha256": "515283851ad4a29d178d225bbd3c62173dc695619df959d4b959d93de2b81680"
+      },
+      {
+        "bytes": 62538,
+        "path": "src/test/test_task40_v31_closeout.py",
+        "sha256": "f8c26c859ad7b2d3ae7afda82ef89c352b3b90f8adf5bc755808aef315d1d94e"
+      }
+    ],
+    "freeze_status": "controller review/publication supplies final commit SHA; content hashes above bind the P0 source files",
+    "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v31_controller_p0_audit.json",
+    "sha256": "bdac7617afa0dbd6699f436a6fb0fcbfb7c5bf9f55c5f90bd502dd7a132a1a62",
+    "source_file_count": 21
+  },
+  "window_and_science": {
+    "all_q_full_reference_target_pde_rta": "NOT_RUN",
+    "cold_2tb_48h": "NOT_QUALIFIED",
+    "fake_approval_receipt_and_clock": "pytest temporary fixture only; not real user authorization",
+    "new_heavy_approval": "PENDING",
+    "new_q_matrix_factor_or_field": "NONE",
+    "old_v30_window_and_failures_preserved": true,
+    "t0_utc": null,
+    "window_created_in_real_execution_root": false,
+    "window_refreshed": false
+  }
+}

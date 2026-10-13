@@ -44,6 +44,134 @@ def test_task40_v10_p6_profile_inventory_arithmetic():
         p.validate_runtime_inventory(bad)
 
 
+def test_allq_business_rhs_categories_keep_reference_correction_disjoint():
+    backend = object.__new__(AllQExactMumps)
+    backend.calls = 1
+    categories = (
+        "pc_initial_rhs_mat_solve_count",
+        "pc_augmentation_rhs_mat_solve_count",
+        "reference_correction_rhs_mat_solve_count",
+        "startup_rhs_mat_solve_count",
+        "other_validation_rhs_mat_solve_count",
+    )
+    backend.audit = {
+        "rhs_mat_solve_count": 0,
+        "rhs_mat_solve_count_by_category": dict.fromkeys(categories, 0),
+        "mat_solve_business_invoked_count_by_category_and_q": {
+            name: {"0": 0} for name in categories
+        },
+        "mat_solve_business_completed_count_by_category_and_q": {
+            name: {"0": 0} for name in categories
+        },
+        "mat_solve_business_failed_count_by_category_and_q": {
+            name: {"0": 0} for name in categories
+        },
+        "mat_solve_invoked_count_by_category": {
+            **dict.fromkeys(categories, 0),
+            "factor_fresh_probe_mat_solve_count": 0,
+            "factor_second_qualification_mat_solve_count": 0,
+        },
+        "mat_solve_completed_count_by_category": {
+            **dict.fromkeys(categories, 0),
+            "factor_fresh_probe_mat_solve_count": 0,
+            "factor_second_qualification_mat_solve_count": 0,
+        },
+        "mat_solve_failed_count_by_category": {
+            **dict.fromkeys(categories, 0),
+            "factor_fresh_probe_mat_solve_count": 0,
+            "factor_second_qualification_mat_solve_count": 0,
+        },
+        "qualification_mat_solve_native_seconds_by_category": {
+            "factor_fresh_probe_mat_solve_count": 0.0,
+            "factor_second_qualification_mat_solve_count": 0.0,
+        },
+        "backend_mat_solve_invoked_total": 0,
+        "backend_mat_solve_completed_total": 0,
+        "backend_mat_solve_failed_total": 0,
+        "mat_solve_total_identity_passed": True,
+    }
+
+    backend._record_business_solve(
+        "reference_correction_rhs_mat_solve_count", q=0, completed=True
+    )
+
+    assert backend.audit["rhs_mat_solve_count_by_category"][
+        "reference_correction_rhs_mat_solve_count"
+    ] == 1
+    assert backend.audit["rhs_mat_solve_count_by_category"][
+        "startup_rhs_mat_solve_count"
+    ] == 0
+    assert backend.audit["mat_solve_total_identity_passed"] is True
+
+
+def test_allq_qualification_solves_are_separate_from_business_calls_and_count_failures():
+    backend = object.__new__(AllQExactMumps)
+    backend.calls = 0
+    categories = (
+        "pc_initial_rhs_mat_solve_count",
+        "pc_augmentation_rhs_mat_solve_count",
+        "reference_correction_rhs_mat_solve_count",
+        "startup_rhs_mat_solve_count",
+        "other_validation_rhs_mat_solve_count",
+    )
+    backend.audit = {
+        "rhs_mat_solve_count": 0,
+        "rhs_mat_solve_count_by_category": dict.fromkeys(categories, 0),
+        "mat_solve_invoked_count_by_category": {
+            **dict.fromkeys(categories, 0),
+            "factor_fresh_probe_mat_solve_count": 0,
+            "factor_second_qualification_mat_solve_count": 0,
+        },
+        "mat_solve_completed_count_by_category": {
+            **dict.fromkeys(categories, 0),
+            "factor_fresh_probe_mat_solve_count": 0,
+            "factor_second_qualification_mat_solve_count": 0,
+        },
+        "mat_solve_failed_count_by_category": {
+            **dict.fromkeys(categories, 0),
+            "factor_fresh_probe_mat_solve_count": 0,
+            "factor_second_qualification_mat_solve_count": 0,
+        },
+        "qualification_mat_solve_native_seconds_by_category": {
+            "factor_fresh_probe_mat_solve_count": 0.0,
+            "factor_second_qualification_mat_solve_count": 0.0,
+        },
+        "backend_mat_solve_invoked_total": 0,
+        "backend_mat_solve_completed_total": 0,
+        "backend_mat_solve_failed_total": 0,
+        "mat_solve_total_identity_passed": True,
+    }
+
+    backend._record_qualification_mat_solve(
+        "factor_fresh_probe_mat_solve_count", completed=True, native_seconds=0.25
+    )
+    backend._record_qualification_mat_solve(
+        "factor_second_qualification_mat_solve_count",
+        completed=False,
+        native_seconds=0.5,
+    )
+
+    assert backend.calls == 0
+    assert backend.audit["rhs_mat_solve_count"] == 0
+    assert backend.audit["backend_mat_solve_invoked_total"] == 2
+    assert backend.audit["backend_mat_solve_completed_total"] == 1
+    assert backend.audit["backend_mat_solve_failed_total"] == 1
+    assert backend.audit["mat_solve_invoked_count_by_category"][
+        "factor_fresh_probe_mat_solve_count"
+    ] == 1
+    assert backend.audit["mat_solve_completed_count_by_category"][
+        "factor_fresh_probe_mat_solve_count"
+    ] == 1
+    assert backend.audit["mat_solve_failed_count_by_category"][
+        "factor_second_qualification_mat_solve_count"
+    ] == 1
+    assert backend.audit["qualification_mat_solve_native_seconds_by_category"] == {
+        "factor_fresh_probe_mat_solve_count": 0.25,
+        "factor_second_qualification_mat_solve_count": 0.5,
+    }
+    assert backend.audit["mat_solve_total_identity_passed"] is True
+
+
 def test_full_p6_residual_and_packet_budget_counts_only_co_resident_full_rows():
     inventory = full_p6_pre_release_output_inventory(100)
     assert inventory["evaluation_peak_vector_equivalents"] == 22
@@ -406,10 +534,40 @@ def test_v30_all_q_strictly_qualifies_two_rhs_and_persists_packets(
         assert np.linalg.norm(matrices[2] @ solution - rhs) / np.linalg.norm(rhs) < 1.0e-10
         assert factors.audit["S_q_native_solve_attempted_count_by_q"]["2"] == 1
         assert factors.audit["S_q_native_solve_completed_count_by_q"]["2"] == 1
+        business_categories = (
+            "pc_initial_rhs_mat_solve_count",
+            "pc_augmentation_rhs_mat_solve_count",
+            "reference_correction_rhs_mat_solve_count",
+            "startup_rhs_mat_solve_count",
+            "other_validation_rhs_mat_solve_count",
+        )
+        for index in range(q_count):
+            factors.solve(index, rhs, category=business_categories[index % len(business_categories)])
         if q_count == 8:
             assert factors.audit["all_four_factors_retained_simultaneously"] is False
             assert factors.audit["all_four_numeric_factors_true_residual_passed"] is False
             assert factors.audit["all_four_factor_objects_live_simultaneously"] is False
+
+    from src.runners.task40_v10_output_checker import _verify_v30_all_q_rhs_cost_categories
+
+    checked_costs = _verify_v30_all_q_rhs_cost_categories(
+        factors.audit, expected_q_count=q_count
+    )
+    assert checked_costs["passed"] is True
+    assert checked_costs["categories_are_disjoint_child_costs"] is True
+    assert set(checked_costs["parent_seconds_by_category"]) == set(business_categories)
+    assert sum(factors.audit["rhs_business_call_count_by_category"].values()) == 1 + q_count
+    assert factors.audit["rhs_business_timing_semantics"][
+        "timing_is_child_of_worker_pc_parent"
+    ] is True
+    bad_audit = {
+        **factors.audit,
+        "S_q_business_parent_seconds_total": (
+            factors.audit["S_q_business_parent_seconds_total"] + 1.0
+        ),
+    }
+    with pytest.raises(ValueError, match="disjoint categories"):
+        _verify_v30_all_q_rhs_cost_categories(bad_audit, expected_q_count=q_count)
 
 
 def test_all_q_destroy_failure_retains_failed_q_owners_and_allows_retry():

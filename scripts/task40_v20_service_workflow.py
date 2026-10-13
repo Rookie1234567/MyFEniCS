@@ -79,6 +79,7 @@ from src.runners.task40_v10_campaign import (  # noqa: E402
     TASK40_V29_CAMPAIGN_WINDOW,
     TASK40_V30_TARGET_CAMPAIGN_SHA256,
     TASK40_V30_TARGET_CAMPAIGN_WINDOW,
+    TASK40_V31_CAMPAIGN_WINDOW,
     TASK40_V30_STAGE_SCOPE,
     load_fixed_campaign_window,
 )
@@ -340,6 +341,7 @@ def _resolve_service_campaign(
     *,
     profile: str,
     stop_stage: str,
+    v31_contract: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Resolve a historical window or an exact, scoped Task40 campaign."""
 
@@ -365,6 +367,18 @@ def _resolve_service_campaign(
     v28_path = (repo_root / TASK40_V28_CAMPAIGN_WINDOW).resolve()
     v29_path = (repo_root / TASK40_V29_CAMPAIGN_WINDOW).resolve()
     v30_path = (repo_root / TASK40_V30_TARGET_CAMPAIGN_WINDOW).resolve()
+    if v31_contract is None:
+        v31_path = (repo_root / TASK40_V31_CAMPAIGN_WINDOW).resolve()
+    else:
+        from src.runners.task40_v31_contract import v31_source_artifact_relative
+
+        v31_window = v31_contract.get("execution", {}).get("window", {})
+        v31_entry_source = str(v31_window.get("source_at_entry", ""))
+        v31_path = (
+            repo_root
+            / v31_source_artifact_relative(v31_entry_source)
+            / "campaign_window_v31.json"
+        ).resolve()
     if supplied == v22_path:
         if profile != V22_TARGET_PROFILE:
             raise ValueError("the V22 campaign route is restricted to the registered Ny8 target")
@@ -555,8 +569,28 @@ def _resolve_service_campaign(
         window = load_fixed_campaign_window(v30_path, require_current_boot=True)
         stage_scope = list(TASK40_V30_STAGE_SCOPE)
         campaign_version = "V30"
+    elif supplied == v31_path:
+        if profile != "task40extra_v20_p6_y_orbit_target_original_ny8_v1" or stop_stage != "full":
+            raise ValueError("the V31 service route is restricted to the reviewed full Ny8 worker")
+        if v31_contract is None:
+            raise ValueError("the V31 campaign window requires its user-approved execution contract")
+        from src.runners.task40_v10_campaign import _validate_v31_campaign_registration
+
+        window = load_fixed_campaign_window(
+            v31_path, require_current_boot=True, v31_contract=v31_contract
+        )
+        _validate_v31_campaign_registration(
+            v31_path,
+            window.sha256,
+            window.payload,
+            v31_contract,
+        )
+        from src.runners.task40_v31_contract import V31_STAGE_SCOPE
+
+        stage_scope = list(V31_STAGE_SCOPE)
+        campaign_version = "V31"
     else:
-        raise ValueError("service campaign window is not a registered V19 or V22–V30 path")
+        raise ValueError("service campaign window is not a registered V19 or V22–V31 path")
     return {
         "path": window.path,
         "sha256": window.sha256,
@@ -725,6 +759,7 @@ def _validate_service_stage_input_variant(
     *,
     repo_root: Path,
     v30_contract: bool = False,
+    v31_contract: Mapping[str, Any] | None = None,
 ) -> None:
     """Validate the exact pre-run input variant accepted by ``run_service``."""
 
@@ -788,6 +823,63 @@ def _validate_service_stage_input_variant(
             input_path,
             repo_root=repo_root,
             expected_source_sha=expected_source_sha,
+        )
+        return
+    if v31_contract is not None:
+        from src.runners.task40_v31_contract import (
+            V31_FACTOR_BANK_SCHEMA,
+            V31_PROFILE,
+            V31_Q_CSR_BINDING_SCHEMA,
+            require_v31_input_identity,
+        )
+
+        contract_execution = v31_contract.get("execution")
+        source_freeze = v31_contract.get("source_freeze")
+        selector = execution.get("task40_v31_q_csr_binding")
+        factor = execution.get("task40_v31_factor_bank_config")
+        if (
+            data.get("run_id") != "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
+            or data.get("solver", {}).get("preconditioner") != V31_PROFILE
+            or stop_stage != "full"
+            or execution.get("task40_target_heavy_authorized") is not True
+            or not isinstance(contract_execution, Mapping)
+            or not isinstance(source_freeze, Mapping)
+            or not isinstance(selector, Mapping)
+            or selector.get("schema") != V31_Q_CSR_BINDING_SCHEMA
+            or not isinstance(factor, Mapping)
+            or factor.get("schema") != V31_FACTOR_BANK_SCHEMA
+        ):
+            raise ValueError("V31 execution contract is restricted to its exact full target case")
+        selector_path = Path(str(selector.get("selector_path", "")))
+        selector_path = (
+            selector_path if selector_path.is_absolute() else repo_root / selector_path
+        ).resolve()
+        contract_selector = Path(str(contract_execution.get("selector_path", "")))
+        contract_selector = (
+            contract_selector
+            if contract_selector.is_absolute()
+            else repo_root / contract_selector
+        ).resolve()
+        if (
+            selector_path != contract_selector
+            or selector.get("selector_sha256") != contract_execution.get("selector_sha256")
+        ):
+            raise ValueError("V31 stage selector differs from its approved execution contract")
+        expected_data = tomllib.loads(render_stage_input(canonical_text, stop_stage))
+        expected_execution = expected_data["execution"]
+        expected_execution["task40_target_heavy_authorized"] = True
+        expected_execution["task40_v31_q_csr_binding"] = dict(selector)
+        expected_execution["task40_v31_factor_bank_config"] = dict(factor)
+        if data != expected_data:
+            raise ValueError("V31 stage input changes fields outside its registered route")
+        if input_path.name != canonical_path.name:
+            raise ValueError("V31 full input must retain the canonical DAT basename")
+        require_v31_input_identity(
+            canonical_path,
+            input_path,
+            repo_root=repo_root,
+            source_sha=str(source_freeze.get("source_sha", "")),
+            selector_sha256=str(contract_execution.get("selector_sha256", "")),
         )
         return
     resume_path = execution.get("task40_component_resume_manifest_path")
@@ -1704,6 +1796,17 @@ def _activation_environment(
 
 
 def _qualified_activation_identity(environment: Mapping[str, str]) -> str | None:
+    if environment.get("TASK40_V31_STRICT_EXECUTION") == "1":
+        digest = environment.get("_MYFENICS_CLOUD_ABI_MANIFEST_SHA256", "")
+        if (
+            environment.get("_MYFENICS_CLOUD_QUALIFIED_ACTIVATION") == "1"
+            and environment.get("_MYFENICS_CLOUD_RUNTIME_PROFILE") == "native_linux"
+            and environment.get("_MYFENICS_CLOUD_QUALIFICATION_SCOPE")
+            == "imports_only_C1_FE_JIT_NOT_RUN"
+            and re.fullmatch(r"[0-9a-f]{64}", digest)
+        ):
+            return f"native_linux_imports_only:{digest}"
+        return None
     if environment.get("TASK40_V30_STRICT_EXECUTION") == "1":
         from src.runners.task40_v30_contract import qualified_activation_identity
 
@@ -1750,7 +1853,7 @@ print(json.dumps({
 
 
 def _parse_case_arguments(
-    case_args: list[str], *, v30_contract: bool = False
+    case_args: list[str], *, v30_contract: bool = False, v31_contract: bool = False
 ) -> tuple[Path, Path, str, dict[str, Any]]:
     if not case_args:
         raise ValueError("V20 service requires a .dat input")
@@ -1772,7 +1875,17 @@ def _parse_case_arguments(
         and isinstance(data.get("execution", {}).get("task40_v30_q_csr_binding"), Mapping)
         and isinstance(data.get("execution", {}).get("task40_v30_factor_bank_config"), Mapping)
     )
-    if stop_stage not in supported_stages | {"preflight"} and not v25_q_stage and not v30_full_case:
+    v31_full_case = (
+        v31_contract
+        and profile == "task40extra_v20_p6_y_orbit_target_original_ny8_v1"
+        and stop_stage == "full"
+        and data.get("execution", {}).get("task40_target_heavy_authorized") is True
+        and isinstance(data.get("execution", {}).get("task40_v31_q_csr_binding"), Mapping)
+        and isinstance(data.get("execution", {}).get("task40_v31_factor_bank_config"), Mapping)
+        and not isinstance(data.get("execution", {}).get("task40_v30_q_csr_binding"), Mapping)
+        and not isinstance(data.get("execution", {}).get("task40_v30_factor_bank_config"), Mapping)
+    )
+    if stop_stage not in supported_stages | {"preflight"} and not v25_q_stage and not v30_full_case and not v31_full_case:
         raise ValueError(f"unsupported user-service stop stage for {profile}: {stop_stage}")
     campaign: Path | None = None
     for index, arg in enumerate(case_args):
@@ -2403,6 +2516,50 @@ def _v30_live_resource_gate(contract: Mapping[str, Any], *, stage: str) -> dict[
         **result,
         "cgroup_limit_bytes": int(cgroup["memory_limit_bytes"]),
         "cgroup_swap_current_bytes": int(cgroup["swap_current_bytes"]),
+        "resource_admission": admission,
+    }
+
+
+def _v31_live_resource_gate(contract: Mapping[str, Any], *, stage: str) -> dict[str, Any]:
+    """Enforce V31's own fixed cgroup and host reserve contract."""
+    from src.runners.task40_v31_contract import V31ContractError, V31_RESOURCES
+    from src.solvers.task40_v22_operator_probe import _resource_admission
+    from src.runners.task40_v20_stage_runner import _resource_snapshot
+
+    execution = contract.get("execution")
+    resources = execution.get("resources") if isinstance(execution, Mapping) else None
+    if not isinstance(resources, Mapping) or dict(resources) != V31_RESOURCES:
+        raise V31ContractError("V31 live resource gate has no exact approved limits")
+    admission = _resource_admission(
+        stage,
+        0,
+        resource_sample=_resource_snapshot,
+        require_task_cgroup=True,
+        explicit_process_tree_cap_bytes=int(resources["task_memory_max_bytes"]),
+        host_reserve_bytes=int(resources["host_reserve_bytes"]),
+        task_cgroup_reserve_bytes=0,
+    )
+    cgroup = admission.get("current_process_cgroup", {})
+    if not isinstance(cgroup, Mapping) or cgroup.get("dedicated_job_cgroup") is not True:
+        raise V31ContractError(f"{stage}: dedicated V31 systemd task cgroup is unavailable")
+    if (
+        int(cgroup.get("memory_limit_bytes", -1)) != int(resources["task_memory_max_bytes"])
+        or int(cgroup.get("swap_current_bytes", -1)) != 0
+        or int(cgroup.get("memory_current_bytes", -1)) > int(resources["task_memory_max_bytes"])
+        or int(admission.get("host_effective_available_bytes", -1))
+        < int(resources["host_reserve_bytes"])
+    ):
+        raise V31ContractError(f"{stage}: V31 cgroup, zero-swap, or host-reserve gate failed")
+    return {
+        "stage": stage,
+        "passed": True,
+        "task_memory_max_bytes": int(resources["task_memory_max_bytes"]),
+        "host_reserve_bytes": int(resources["host_reserve_bytes"]),
+        "memory_swap_max_bytes": 0,
+        "cgroup_limit_bytes": int(cgroup["memory_limit_bytes"]),
+        "cgroup_current_bytes": int(cgroup["memory_current_bytes"]),
+        "cgroup_swap_current_bytes": int(cgroup["swap_current_bytes"]),
+        "host_effective_available_bytes": int(admission["host_effective_available_bytes"]),
         "resource_admission": admission,
     }
 
@@ -3139,15 +3296,166 @@ def _validate_v24_q_only_selector(
         raise ValueError("V24 C/D selector requires V24 target_operator_probe and its q-only scan checkpoint")
 
 
-def _run_case_output_checker(packet_path: Path, runtime_prefix: Path) -> list[str]:
+def _run_case_output_checker(
+    packet_path: Path,
+    runtime_prefix: Path,
+    *,
+    expected_channel_count: int = 700,
+) -> list[str]:
+    if type(expected_channel_count) is not int or expected_channel_count < 1:
+        raise ValueError("official checker requires the registered positive channel count")
     return [
         str(runtime_prefix / "bin/python"),
         "-m",
         "src.runners.task40_v10_output_checker",
         str(packet_path),
         "--expected-channel-count",
-        "700",
+        str(expected_channel_count),
     ]
+
+
+def _task40_v30_closeout_checker_authorization(
+    *,
+    command: list[str],
+    checker_kind: str,
+    runtime_prefix: Path,
+    repo_root: Path,
+    evidence_directory: Path,
+    campaign_sha256: str,
+    contract_sha256: str,
+    source_state: Mapping[str, Any],
+    profile: str,
+) -> dict[str, Any]:
+    """Bind only the two registered read-only checker commands to closeout time."""
+    runtime = runtime_prefix.resolve() / "bin" / "python"
+    root = repo_root.resolve()
+    evidence = evidence_directory.resolve()
+    argv = [str(value) for value in command]
+    if not argv or Path(argv[0]).resolve() != runtime.resolve():
+        raise ValueError("V30 closeout checker must use the qualified Python executable")
+    if source_state.get("clean") is not True or not source_state.get("source_sha"):
+        raise ValueError("V30 closeout checker requires a clean, source-bound service state")
+
+    def resolve_run_path(raw: str) -> Path:
+        supplied = Path(raw)
+        return (root / supplied).resolve() if not supplied.is_absolute() else supplied.resolve()
+
+    from src.io.physical_intermediate_profile import profile_facts
+
+    profile_gates = profile_facts(profile).get("gates", {})
+    expected_channel_count = profile_gates.get("all_original_modes_retained")
+    if type(expected_channel_count) is not int or expected_channel_count < 1:
+        raise ValueError("V30 profile has no frozen output channel count")
+    inputs: list[Path] = []
+    if checker_kind == "task40_v10_independent_output_checker":
+        if (
+            len(argv) != 6
+            or argv[1:3] != ["-m", "src.runners.task40_v10_output_checker"]
+            or argv[4:] != ["--expected-channel-count", str(expected_channel_count)]
+        ):
+            raise ValueError("V30 closeout command is not the registered official output checker")
+        packet = resolve_run_path(argv[3])
+        if (
+            packet.name != "v10_candidate_official_output.json"
+            or not packet.is_file()
+            or not packet.is_relative_to(root)
+        ):
+            raise ValueError("V30 output checker packet is outside the current repository evidence")
+        inputs.append(packet)
+    elif checker_kind == "task40_v20_partial_receipt_checker":
+        script = (root / "scripts" / "task40_v20_service_workflow.py").resolve()
+        if (
+            len(argv) != 15
+            or resolve_run_path(argv[1]) != script
+            or argv[2] != "check-partial"
+            or argv[3::2]
+            != [
+                "--input",
+                "--summary",
+                "--manifest",
+                "--numerical-output",
+                "--stop-stage",
+                "--output",
+            ]
+        ):
+            raise ValueError("V30 closeout command is not the registered partial-receipt checker")
+        values = argv[4::2]
+        if len(values) != 6 or values[4] != "full":
+            raise ValueError("V30 partial checker arguments are incomplete")
+        input_path, summary_path, manifest_path, numerical_path, output_path = (
+            resolve_run_path(values[index]) for index in (0, 1, 2, 3, 5)
+        )
+        if (
+            not input_path.is_file()
+            or not summary_path.is_file()
+            or not manifest_path.is_file()
+            or not numerical_path.is_dir()
+            or any(not path.is_relative_to(root) for path in (
+                input_path, summary_path, manifest_path, numerical_path
+            ))
+            or not output_path.is_relative_to(evidence)
+        ):
+            raise ValueError("V30 partial checker paths are not bound to current run evidence")
+        inputs.extend((input_path, summary_path, manifest_path))
+    else:
+        raise ValueError("checker kind is not eligible for the V30 closeout reserve")
+
+    command_sha256 = hashlib.sha256(
+        json.dumps(argv, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    ).hexdigest()
+    input_sha256s = [_sha256_file(path) for path in inputs]
+    return {
+        "schema": "task40extra.review_v31_closeout_checker_authorization.v1",
+        "phase": "closeout",
+        "purpose": "registered_read_only_required_checker",
+        "checker_kind": checker_kind,
+        "command_sha256": command_sha256,
+        "input_paths": [str(path) for path in inputs],
+        "input_sha256s": input_sha256s,
+        "expected_channel_count": expected_channel_count,
+        "campaign_window_sha256": campaign_sha256,
+        "v30_contract_sha256": contract_sha256,
+        "source_sha": str(source_state["source_sha"]),
+        "source_branch": str(source_state.get("branch", "")),
+        "source_clean": True,
+    }
+
+
+def _task40_v31_closeout_checker_authorization(
+    *,
+    command: list[str],
+    checker_kind: str,
+    runtime_prefix: Path,
+    repo_root: Path,
+    evidence_directory: Path,
+    campaign_sha256: str,
+    contract_path: Path,
+    source_state: Mapping[str, Any],
+    profile: str,
+) -> dict[str, Any]:
+    """Bind the read-only checker to a user-approved V31 contract and window."""
+    from src.runners.task40_v31_contract import require_v31_execution_contract
+
+    contract, contract_sha = require_v31_execution_contract(
+        contract_path, current_root=repo_root
+    )
+    window = contract["execution"]["window"]
+    if window.get("window_sha256") != campaign_sha256:
+        raise ValueError("V31 closeout checker window differs from its approved contract")
+    common = _task40_v30_closeout_checker_authorization(
+        command=command,
+        checker_kind=checker_kind,
+        runtime_prefix=runtime_prefix,
+        repo_root=repo_root,
+        evidence_directory=evidence_directory,
+        campaign_sha256=campaign_sha256,
+        contract_sha256=contract_sha,
+        source_state=source_state,
+        profile=profile,
+    )
+    common["schema"] = "task40extra.review_v31_closeout_checker_authorization.v2"
+    common["v31_contract_sha256"] = common.pop("v30_contract_sha256")
+    return common
 
 
 def _run_required_checker_supervision(request: dict[str, Any]) -> dict[str, Any]:
@@ -3191,6 +3499,10 @@ def _run_required_checker_supervision(request: dict[str, Any]) -> dict[str, Any]
     v29_contract = None
     v30_watchdog_gate = None
     v30_contract = None
+    v30_contract_sha = None
+    v31_watchdog_gate = None
+    v31_contract = None
+    v31_contract_sha = None
     if environment.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1":
         from src.runners.task40_v29_contract import (
             require_authorized_contract,
@@ -3247,6 +3559,67 @@ def _run_required_checker_supervision(request: dict[str, Any]) -> dict[str, Any]
     elif request.get("v30_resource_gate") is not None:
         raise RuntimeError("V30 watchdog resource receipt was supplied without strict V30 mode")
 
+    if environment.get("TASK40_V31_STRICT_EXECUTION") == "1":
+        if environment.get("TASK40_V30_STRICT_EXECUTION") == "1":
+            raise RuntimeError("V31 checker supervision cannot inherit V30 strict authorization")
+        from src.runners.task40_v31_contract import require_v31_execution_contract
+
+        v31_contract, v31_contract_sha = require_v31_execution_contract(
+            environment["TASK40_V31_CONTRACT_PATH"],
+            expected_sha256=environment["TASK40_V31_CONTRACT_SHA256"],
+            current_root=repo_root,
+        )
+        window = v31_contract["execution"]["window"]
+        if (
+            Path(str(window["window_path"])).resolve() != campaign_window.resolve()
+            or window["window_sha256"] != campaign_sha256
+            or v31_contract_sha != environment["TASK40_V31_CONTRACT_SHA256"]
+        ):
+            raise RuntimeError("V31 watchdog campaign binding differs from the approved window")
+        if request.get("v31_resource_gate", {}).get("passed") is not True:
+            raise RuntimeError("V31 watchdog request lacks a passing parent resource-contract check")
+        v31_watchdog_gate = _v31_live_resource_gate(
+            v31_contract, stage="v31_checker_watchdog_child_entry"
+        )
+    elif request.get("v31_resource_gate") is not None:
+        raise RuntimeError("V31 watchdog resource receipt was supplied without strict V31 mode")
+
+    campaign_phase = str(request.get("campaign_phase", "numeric"))
+    closeout_authorization = request.get("closeout_authorization")
+    if v31_contract is not None:
+        expected_closeout_authorization = _task40_v31_closeout_checker_authorization(
+            command=command,
+            checker_kind=checker_kind,
+            runtime_prefix=runtime_prefix,
+            repo_root=repo_root,
+            evidence_directory=evidence_directory,
+            campaign_sha256=campaign_sha256,
+            contract_path=Path(environment["TASK40_V31_CONTRACT_PATH"]),
+            source_state=source_state,
+            profile=profile,
+        )
+        if campaign_phase != "closeout" or closeout_authorization != expected_closeout_authorization:
+            raise RuntimeError("V31 checker closeout phase is not bound to its exact command and identities")
+    elif v30_contract is not None:
+        expected_closeout_authorization = _task40_v30_closeout_checker_authorization(
+            command=command,
+            checker_kind=checker_kind,
+            runtime_prefix=runtime_prefix,
+            repo_root=repo_root,
+            evidence_directory=evidence_directory,
+            campaign_sha256=campaign_sha256,
+            contract_sha256=str(v30_contract_sha),
+            source_state=source_state,
+            profile=profile,
+        )
+        if (
+            campaign_phase != "closeout"
+            or closeout_authorization != expected_closeout_authorization
+        ):
+            raise RuntimeError("V30 checker closeout phase is not bound to its exact command and identities")
+    elif campaign_phase != "numeric" or closeout_authorization is not None:
+        raise RuntimeError("closeout phase is unavailable without the authorized V30 checker contract")
+
     if _qualified_activation_identity(environment) is None:
         raise RuntimeError("required checker supervisor lacks a qualified runtime profile")
     if not os.path.samefile(sys.executable, runtime_prefix / "bin/python"):
@@ -3265,8 +3638,14 @@ def _run_required_checker_supervision(request: dict[str, Any]) -> dict[str, Any]
         approved_resources = v30_contract["execution"]["resources"]
         watchdog_tree_cap_bytes = int(approved_resources["task_memory_max_bytes"])
         watchdog_host_reserve_bytes = int(approved_resources["host_reserve_bytes"])
+    if v31_contract is not None:
+        approved_resources = v31_contract["execution"]["resources"]
+        watchdog_tree_cap_bytes = int(approved_resources["task_memory_max_bytes"])
+        watchdog_host_reserve_bytes = int(approved_resources["host_reserve_bytes"])
     workflow_limit_seconds = (
-        float(v30_contract["execution"]["window"]["numeric_cutoff_after_t0_seconds"])
+        float(v31_contract["execution"]["window"]["closeout_seconds"])
+        if v31_contract is not None
+        else float(v30_contract["execution"]["window"]["closeout_reserve_seconds"])
         if v30_contract is not None
         else float(resources["workflow_seconds"])
     )
@@ -3286,6 +3665,8 @@ def _run_required_checker_supervision(request: dict[str, Any]) -> dict[str, Any]
                 if v29_contract is not None
                 else Path(str(v30_contract["execution"]["jit_cache"])).resolve()
                 if v30_contract is not None
+                else Path(str(v31_contract["execution"]["jit_cache"])).resolve()
+                if v31_contract is not None
                 else (repo_root / QUALIFIED_JIT_RELATIVE).resolve()
             ),
         }
@@ -3304,13 +3685,15 @@ def _run_required_checker_supervision(request: dict[str, Any]) -> dict[str, Any]
         tree_cap_bytes=watchdog_tree_cap_bytes,
         host_reserve_bytes=watchdog_host_reserve_bytes,
         task_cgroup_reserve_bytes=(
-            0 if v29_contract is not None or v30_contract is not None else None
+            0 if v29_contract is not None or v30_contract is not None or v31_contract is not None else None
         ),
         allow_physical_pressure_tree_cap=True,
         require_job_cgroup_zero_swap=True,
         campaign_window_path=campaign_window,
         campaign_window_sha256=campaign_sha256,
         campaign_accounting_path=campaign_accounting,
+        campaign_phase=campaign_phase,
+        campaign_phase_authorization=closeout_authorization,
         worker_environment=worker_environment,
         source_state=source_state,
         tree_accounting_root_pid=tree_accounting_root_pid,
@@ -3354,10 +3737,15 @@ def _run_required_checker_supervision(request: dict[str, Any]) -> dict[str, Any]
         "payload": payload if isinstance(payload, dict) else None,
         "v29_contract_resource_gate": v29_watchdog_gate,
         "v30_contract_resource_gate": v30_watchdog_gate,
+        "v31_contract_resource_gate": v31_watchdog_gate,
         "supervision": {
+            "campaign_phase": campaign_phase,
+            "closeout_authorization": closeout_authorization,
             "profile_workflow_limit_seconds": workflow_limit_seconds,
             "campaign_closeout_reserve_seconds": int(
-                v30_contract["execution"]["window"]["closeout_reserve_seconds"]
+                v31_contract["execution"]["window"]["closeout_seconds"]
+                if v31_contract is not None
+                else v30_contract["execution"]["window"]["closeout_reserve_seconds"]
                 if v30_contract is not None
                 else resources["campaign_closeout_reserve_seconds"]
             ),
@@ -3403,6 +3791,9 @@ def _supervise_required_checker(
     if _qualified_activation_identity(environment) is None:
         raise RuntimeError("V20 user-service did not receive a qualified runtime profile")
     v29_resource_gate = None
+    v30_contract_sha = None
+    v31_resource_gate = None
+    v31_contract_sha = None
     if environment.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1":
         from src.runners.task40_v29_contract import (
             require_authorized_contract,
@@ -3451,6 +3842,56 @@ def _supervise_required_checker(
             contract,
             stage="v30_before_required_checker_watchdog",
         )
+        v30_contract_sha = contract_sha
+    if environment.get("TASK40_V31_STRICT_EXECUTION") == "1":
+        if environment.get("TASK40_V30_STRICT_EXECUTION") == "1":
+            raise RuntimeError("V31 checker watchdog cannot inherit V30 strict authorization")
+        from src.runners.task40_v31_contract import require_v31_execution_contract
+
+        contract, contract_sha = require_v31_execution_contract(
+            environment["TASK40_V31_CONTRACT_PATH"],
+            expected_sha256=environment["TASK40_V31_CONTRACT_SHA256"],
+            current_root=repo_root,
+        )
+        window = contract["execution"]["window"]
+        if (
+            Path(str(window["window_path"])).resolve() != campaign_window.resolve()
+            or window["window_sha256"] != campaign_sha256
+            or contract_sha != environment["TASK40_V31_CONTRACT_SHA256"]
+        ):
+            raise RuntimeError("V31 checker watchdog campaign window differs from its contract")
+        v31_resource_gate = _v31_live_resource_gate(
+            contract, stage="v31_before_required_checker_watchdog"
+        )
+        v31_contract_sha = contract_sha
+    campaign_phase = "numeric"
+    closeout_authorization = None
+    if v30_resource_gate is not None:
+        campaign_phase = "closeout"
+        closeout_authorization = _task40_v30_closeout_checker_authorization(
+            command=command,
+            checker_kind=checker_kind,
+            runtime_prefix=runtime_prefix,
+            repo_root=repo_root,
+            evidence_directory=evidence_directory,
+            campaign_sha256=campaign_sha256,
+            contract_sha256=str(v30_contract_sha),
+            source_state=source_state,
+            profile=profile,
+        )
+    elif v31_resource_gate is not None:
+        campaign_phase = "closeout"
+        closeout_authorization = _task40_v31_closeout_checker_authorization(
+            command=command,
+            checker_kind=checker_kind,
+            runtime_prefix=runtime_prefix,
+            repo_root=repo_root,
+            evidence_directory=evidence_directory,
+            campaign_sha256=campaign_sha256,
+            contract_path=Path(environment["TASK40_V31_CONTRACT_PATH"]),
+            source_state=source_state,
+            profile=profile,
+        )
     request_path = evidence_directory / "required_checker_supervision_request.json"
     response_path = evidence_directory / "required_checker_supervision_response.json"
     stdout_path = evidence_directory / "required_checker_supervisor_stdout.raw.txt"
@@ -3482,11 +3923,14 @@ def _supervise_required_checker(
         "campaign_window": str(campaign_window),
         "campaign_sha256": campaign_sha256,
         "campaign_accounting": str(campaign_accounting),
+        "campaign_phase": campaign_phase,
+        "closeout_authorization": closeout_authorization,
         "source_state": source_state,
         "profile": profile,
         "response_path": str(response_path),
         "v29_resource_gate": v29_resource_gate,
         "v30_resource_gate": v30_resource_gate,
+        "v31_resource_gate": v31_resource_gate,
     }
     _write_json_fsync(request_path, request)
     supervisor_command = [
@@ -7366,9 +7810,39 @@ def _check_partial_result(
     _, input_data = _read_case(input_path)
     profile_identity = str(input_data.get("solver", {}).get("preconditioner", ""))
     expected_q_count = _profile_q_count(profile_identity)
+    v31_binding = manifest.get("v31_execution_contract_binding")
+    v31_binding = v31_binding if isinstance(v31_binding, Mapping) else None
+    v31_input_identity = None
+    v31_input_identity_error = None
     v30_input_identity = None
     v30_input_identity_error = None
-    if profile_identity == V30_TARGET_PROFILE:
+    if profile_identity == V30_TARGET_PROFILE and v31_binding is not None:
+        try:
+            from src.runners.task40_v30_contract import (
+                V30_CANONICAL_INPUT_RELATIVE,
+            )
+            from src.runners.task40_v31_contract import require_v31_input_identity
+
+            selector_sha = v31_binding.get("selector_sha256")
+            selector_value = v31_binding.get("selector_path")
+            if not isinstance(selector_value, str) or not isinstance(selector_sha, str):
+                raise ValueError("V31 manifest binding omits its selector path or SHA")
+            selector_path = Path(selector_value)
+            if not selector_path.is_absolute():
+                selector_path = ROOT / selector_path
+            selector_path = selector_path.resolve(strict=True)
+            if _sha256_file(selector_path) != selector_sha:
+                raise ValueError("V31 selector bytes differ from the recorded selector SHA")
+            v31_input_identity = require_v31_input_identity(
+                ROOT / V30_CANONICAL_INPUT_RELATIVE,
+                input_path,
+                repo_root=ROOT,
+                source_sha=str(manifest.get("source_sha", "")),
+                selector_sha256=selector_sha,
+            )
+        except Exception as error:
+            v31_input_identity_error = f"{type(error).__name__}: {error}"
+    elif profile_identity == V30_TARGET_PROFILE:
         try:
             from src.runners.task40_v30_contract import (
                 V30_CANONICAL_INPUT_RELATIVE,
@@ -7661,7 +8135,37 @@ def _check_partial_result(
             == expected_completed[len(expected_completed_for_failure)]
         ),
     }
-    if profile_identity == V30_TARGET_PROFILE:
+    if profile_identity == V30_TARGET_PROFILE and v31_binding is not None:
+        recorded_identity = manifest.get("v31_input_identity")
+        binding_identity = v31_binding.get("input_identity")
+        selector_path = v31_binding.get("selector_path")
+        selector_sha = v31_binding.get("selector_sha256")
+        checks.update(
+            {
+                "v31_canonical_staged_input_revalidated": v31_input_identity is not None,
+                "v31_raw_stage_and_scientific_identity_match": bool(
+                    v31_input_identity is not None
+                    and isinstance(recorded_identity, Mapping)
+                    and isinstance(binding_identity, Mapping)
+                    and recorded_identity == v31_input_identity
+                    and binding_identity == v31_input_identity
+                    and manifest.get("input_sha256")
+                    == v31_input_identity["staged_input_sha256"]
+                    and partial.get("input_sha256")
+                    == v31_input_identity["staged_input_sha256"]
+                    and manifest.get("scientific_input_sha256")
+                    == v31_input_identity["scientific_input_sha256"]
+                    and v31_binding.get("run_source_sha")
+                    == manifest.get("source_sha")
+                    and v31_input_identity.get("source_sha")
+                    == manifest.get("source_sha")
+                    and isinstance(selector_path, str)
+                    and isinstance(selector_sha, str)
+                ),
+                "v31_input_identity_error_absent": v31_input_identity_error is None,
+            }
+        )
+    elif profile_identity == V30_TARGET_PROFILE:
         recorded_identity = manifest.get("v30_input_identity")
         contract_binding = manifest.get("v30_execution_contract_binding", {})
         contract_identity = (
@@ -8291,6 +8795,77 @@ def _check_partial_result(
                     "v29_contract_check_error": f"{type(error).__name__}: {error}",
                 }
             )
+    v31_reference_product_recheck = None
+    v31_reference_product_error = None
+    v31_audit_status = "NOT_APPLICABLE"
+    v31_worker_summary = None
+    if v31_binding is not None:
+        worker_summary_path = numerical_output / "task40_v10_p6_candidate_summary.json"
+        if not worker_summary_path.is_file():
+            v31_audit_status = "NOT_RUN_WORKER_SUMMARY_ABSENT"
+        else:
+            try:
+                loaded_worker_summary = json.loads(
+                    worker_summary_path.read_text(encoding="utf-8")
+                )
+                if not isinstance(loaded_worker_summary, Mapping):
+                    raise ValueError("V31 worker summary root must be an object")
+                v31_worker_summary = loaded_worker_summary
+            except Exception as error:
+                v31_audit_status = "FAILED_WORKER_SUMMARY_INVALID"
+                v31_reference_product_error = f"{type(error).__name__}: {error}"
+            if v31_worker_summary is not None:
+                v31_snapshot = v31_worker_summary.get("reference_audit_snapshot")
+                v31_regular_checks = v31_worker_summary.get("regular_inverse_checks")
+                if v31_snapshot is None:
+                    if v31_regular_checks is not None:
+                        v31_audit_status = "FAILED_REFERENCE_PRODUCT_MISSING_AFTER_REFERENCE_CHECKS"
+                        v31_reference_product_error = (
+                            "regular inverse checks exist but the V31 reference snapshot is absent"
+                        )
+                    else:
+                        v31_audit_status = "NOT_RUN_REFERENCE_NOT_COMPLETE"
+                else:
+                    try:
+                        input_identity = v31_binding.get("input_identity")
+                        if not isinstance(input_identity, Mapping):
+                            raise ValueError("V31 manifest binding omits its input identity")
+                        from src.runners.task40_v10_output_checker import (
+                            _verify_v31_reference_inverse_product,
+                        )
+
+                        v31_reference_product_recheck = _verify_v31_reference_inverse_product(
+                            numerical_output,
+                            v31_worker_summary,
+                            expected_q_count=expected_q_count,
+                            expected_source_sha=str(manifest.get("source_sha", "")),
+                            expected_run_id=str(partial.get("run_id", "")),
+                            expected_input_sha256=str(
+                                input_identity.get("scientific_input_sha256", "")
+                            ),
+                        )
+                        v31_audit_status = "REFERENCE_PRODUCT_RECHECKED"
+                    except Exception as error:
+                        v31_audit_status = "FAILED_REFERENCE_PRODUCT_RECHECK"
+                        v31_reference_product_error = f"{type(error).__name__}: {error}"
+        checks["v31_partial_worker_never_claims_official_result"] = (
+            partial.get("official_result") is False
+            and (
+                not worker_summary_path.is_file()
+                or (
+                    isinstance(v31_worker_summary, Mapping)
+                    and v31_worker_summary.get("official_result") is False
+                )
+            )
+        )
+        checks["v31_reference_product_rechecked_or_truthfully_not_run"] = (
+            v31_audit_status in {
+                "NOT_RUN_WORKER_SUMMARY_ABSENT",
+                "NOT_RUN_REFERENCE_NOT_COMPLETE",
+                "REFERENCE_PRODUCT_RECHECKED",
+            }
+            and v31_reference_product_error is None
+        )
     status = str(partial.get("status", ""))
     checks["partial_status_not_full_pass"] = status != "PASS" and partial.get("official_result") is not True
     checker_passed = all(checks.values())
@@ -8309,6 +8884,9 @@ def _check_partial_result(
         "checks": checks,
         "errors": [key for key, passed in checks.items() if not passed],
         "raw_evidence_preserved": True,
+        "v31_reference_audit_status": v31_audit_status,
+        "v31_reference_product_recheck": v31_reference_product_recheck,
+        "v31_reference_product_error": v31_reference_product_error,
         **(
             {
                 "checker_source_sha": v29_context["checker_source_sha"],
@@ -8362,6 +8940,62 @@ def run_service(
     case_args, v30_contract_path = _extract_v29_path_arg(
         case_args, "--task40-v30-execution-contract"
     )
+    case_args, v31_contract_path = _extract_v29_path_arg(
+        case_args, "--task40-v31-execution-contract"
+    )
+    v31_entry_sample = (
+        clock_sample(include_boot_id=True) if v31_contract_path is not None else None
+    )
+    v31_contract: dict[str, Any] | None = None
+    v31_contract_sha256: str | None = None
+    if v31_contract_path is not None:
+        if v29_contract_path is not None or v29_selector_path is not None or v30_contract_path is not None:
+            raise ValueError("V31 execution contract cannot be combined with a V29 or V30 route")
+        from src.runners.task40_v31_contract import (
+            require_v31_execution_contract,
+            v31_source_artifact_relative,
+        )
+
+        current_source_sha = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=repo_root, text=True
+        ).strip()
+        expected_contract_path = (
+            repo_root
+            / v31_source_artifact_relative(current_source_sha)
+            / "execution_contract_v31.approved.json"
+        ).resolve()
+        if v31_contract_path.resolve() != expected_contract_path:
+            raise ValueError("V31 service requires the one registered native approved-contract path")
+        if os.environ.get("TASK40_V31_CONTRACT_PATH") and Path(
+            os.environ["TASK40_V31_CONTRACT_PATH"]
+        ).resolve() != v31_contract_path.resolve():
+            raise ValueError("V31 service flag differs from its registered contract environment path")
+        v31_contract, v31_contract_sha256 = require_v31_execution_contract(
+            v31_contract_path,
+            expected_sha256=os.environ.get("TASK40_V31_CONTRACT_SHA256"),
+            current_root=repo_root,
+        )
+        execution = v31_contract["execution"]
+
+        def resolve_v31_path(key: str) -> Path:
+            value = Path(str(execution[key]))
+            return (value if value.is_absolute() else repo_root / value).resolve()
+
+        if (
+            resolve_v31_path("runtime_prefix") != runtime_prefix.resolve()
+            or resolve_v31_path("abi_receipt_path") != abi_receipt.resolve()
+            or resolve_v31_path("jit_cache") != jit_cache.resolve()
+        ):
+            raise ValueError("V31 launcher runtime paths differ from the approved execution contract")
+        if any(
+            value == "--task40-v10-campaign-window"
+            or value.startswith("--task40-v10-campaign-window=")
+            for value in case_args
+        ):
+            raise ValueError("V31 execution contract supplies its own fixed campaign window")
+        case_args.extend(
+            ["--task40-v10-campaign-window", str(execution["campaign_window_path"])]
+        )
     if v30_contract_path is not None and (v29_contract_path is not None or v29_selector_path is not None):
         raise ValueError("V30 execution contract cannot be combined with the V29 factor-only route")
     v29_entry_sample = (
@@ -8428,12 +9062,28 @@ def run_service(
     case_args, v27_selector_path = _extract_v27_saved_q0_selector_arg(case_args)
     case_args, v28_selector_path = _extract_v28_q0_continuation_selector_arg(case_args)
     input_path, campaign_path, stop_stage, data = _parse_case_arguments(
-        case_args, v30_contract=v30_contract is not None
+        case_args,
+        v30_contract=v30_contract is not None,
+        v31_contract=v31_contract is not None,
     )
     canonical_relative, _supported = V20_INPUTS[data["solver"]["preconditioner"]]
     canonical_path = repo_root / canonical_relative
     canonical_text = canonical_path.read_text(encoding="utf-8")
     v30_input_identity = None
+    v31_input_identity = None
+    if v31_contract is not None:
+        execution = v31_contract["execution"]
+        expected_input_path = Path(str(execution["input_path"]))
+        expected_input_path = (
+            expected_input_path
+            if expected_input_path.is_absolute()
+            else repo_root / expected_input_path
+        )
+        if (
+            input_path.resolve() != expected_input_path.resolve()
+            or _sha256_file(input_path) != execution["input_sha256"]
+        ):
+            raise ValueError("V31 DAT path/hash differs from the approved execution contract")
     _validate_service_stage_input_variant(
         input_path,
         canonical_path,
@@ -8442,12 +9092,24 @@ def run_service(
         data,
         repo_root=repo_root,
         v30_contract=v30_contract is not None,
+        v31_contract=v31_contract,
     )
     if v30_contract is not None:
         from src.runners.task40_v30_contract import require_v30_input_identity
 
         v30_input_identity = require_v30_input_identity(
             canonical_path, input_path, repo_root=repo_root
+        )
+    if v31_contract is not None:
+        from src.runners.task40_v31_contract import require_v31_input_identity
+
+        selector = data["execution"]["task40_v31_q_csr_binding"]
+        v31_input_identity = require_v31_input_identity(
+            canonical_path,
+            input_path,
+            repo_root=repo_root,
+            source_sha=str(v31_contract["source_freeze"]["source_sha"]),
+            selector_sha256=str(selector["selector_sha256"]),
         )
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", unit):
         raise ValueError("invalid systemd user-service unit name")
@@ -8456,6 +9118,7 @@ def run_service(
         campaign_path,
         profile=str(data["solver"]["preconditioner"]),
         stop_stage=stop_stage,
+        v31_contract=v31_contract,
     )
     if v29_contract_path is not None and (
         campaign_registration.get("version") != "V29"
@@ -8471,6 +9134,14 @@ def run_service(
         != v30_contract["execution"]["campaign_window_sha256"]
     ):
         raise ValueError("V30 campaign window differs from the approved target-native contract")
+    if v31_contract_path is not None and (
+        campaign_registration.get("version") != "V31"
+        or Path(campaign_registration["path"]).resolve()
+        != Path(str(v31_contract["execution"]["window"]["window_path"])).resolve()
+        or campaign_registration.get("sha256")
+        != v31_contract["execution"]["window"]["window_sha256"]
+    ):
+        raise ValueError("V31 campaign window differs from its separately approved fixed-window contract")
     _validate_v24_q_only_selector(
         campaign_registration,
         stop_stage=stop_stage,
@@ -8529,6 +9200,10 @@ def run_service(
         raise ValueError("V30 execution contract cannot be combined with an older selector route")
     if campaign_registration.get("version") == "V30" and v30_contract_path is None:
         raise ValueError("V30 operations require the approved execution contract")
+    if v31_contract_path is not None and any(item is not None for item in v30_selector_conflicts):
+        raise ValueError("V31 execution contract cannot be combined with an older selector route")
+    if campaign_registration.get("version") == "V31" and v31_contract_path is None:
+        raise ValueError("V31 operations require the separately approved native execution contract")
     if campaign_registration.get("version") == "V29" and (
         v29_selector_path is None
         or v29_contract_path is None
@@ -8642,6 +9317,31 @@ def run_service(
         if v30_contract_path is not None and v30_contract is not None
         else None
     )
+    v31_binding = (
+        {
+            "contract_path": str(v31_contract_path.resolve()),
+            "contract_sha256": str(v31_contract_sha256),
+            "contract": v31_contract,
+            "execution_window_path": str(
+                Path(str(v31_contract["execution"]["window"]["window_path"])).resolve()
+            ),
+            "execution_window_sha256": str(
+                v31_contract["execution"]["window"]["window_sha256"]
+            ),
+            "run_source_sha": str(v31_contract["execution"]["run_source_sha"]),
+            "source_at_entry": str(
+                v31_contract["execution"]["window"]["source_at_entry"]
+            ),
+            "q0_donor": dict(v31_contract["preparation"]["accepted_q0_donor"]),
+            "q_csr_worklist": list(v31_contract["preparation"]["q_csr_worklist"]),
+            "final_all_q_selector_required_at": v31_contract["preparation"]["final_all_q_selector_required_at"],
+            "selector_path": str(v31_contract["execution"]["selector_path"]),
+            "selector_sha256": str(v31_contract["execution"]["selector_sha256"]),
+            "input_identity": dict(v31_input_identity or {}),
+        }
+        if v31_contract_path is not None and v31_contract is not None
+        else None
+    )
     if v29_binding is not None:
         v28_binding = {
             "selector_path": v29_binding["immutable_v28_selector_path"],
@@ -8663,7 +9363,11 @@ def run_service(
     if branch != "task40extra_0p7nm_engineering" or dirty.strip():
         raise RuntimeError("V20 user-service requires the frozen Task40 branch and clean source")
 
-    if campaign_registration.get("version") == "V30":
+    if campaign_registration.get("version") == "V31":
+        from src.runners.task40_v31_contract import v31_source_artifact_relative
+
+        artifact_root = v31_source_artifact_relative(source_sha)
+    elif campaign_registration.get("version") == "V30":
         artifact_root = V30_ARTIFACT_ROOT
     elif campaign_registration.get("version") == "V29":
         artifact_root = V29_ARTIFACT_ROOT
@@ -8716,6 +9420,23 @@ def run_service(
             stream.write(json.dumps(entry_event, sort_keys=True, separators=(",", ":")).encode() + b"\n")
             stream.flush()
             os.fsync(stream.fileno())
+    if v31_entry_sample is not None:
+        entry_event = {
+            "label": "v31_true_service_entry_before_contract_input_selector_and_donor_validation",
+            "sample": v31_entry_sample,
+            "identity": {
+                "unit": unit,
+                "contract_path": str(v31_contract_path),
+                "contract_sha256": str(v31_contract_sha256),
+                "window_sha256": str(v31_binding["execution_window_sha256"]),
+                "scope": "clock starts before V31 contract/input/selector/donor revalidation",
+            },
+        }
+        events.append(entry_event)
+        with event_log.open("ab") as stream:
+            stream.write(json.dumps(entry_event, sort_keys=True, separators=(",", ":")).encode() + b"\n")
+            stream.flush()
+            os.fsync(stream.fileno())
     record: dict[str, Any] = {
         "schema": "task40extra.review_v20_user_service_workflow.v1",
         "unit": unit,
@@ -8741,6 +9462,12 @@ def run_service(
     if v30_input_identity is not None:
         record["scientific_input_sha256"] = v30_input_identity["scientific_input_sha256"]
         record["v30_input_identity"] = dict(v30_input_identity)
+    if v31_input_identity is not None and v31_binding is not None:
+        record["scientific_input_sha256"] = v31_input_identity["scientific_input_sha256"]
+        record["v31_input_identity"] = dict(v31_input_identity)
+        record["v31_execution_contract_binding"] = {
+            key: value for key, value in v31_binding.items() if key != "contract"
+        }
     if v29_entry_sample is not None:
         record["v29_true_service_entry_clock"] = v29_entry_sample
     if q_only_binding is not None:
@@ -8779,10 +9506,13 @@ def run_service(
             "stop_stage",
             *( ["v29_contract_sha256", "v29_selector_sha256"] if v29_binding is not None else [] ),
             *( ["v30_execution_contract_binding"] if v30_binding is not None else [] ),
+            *( ["v31_execution_contract_binding"] if v31_binding is not None else [] ),
         )
     }
     if v30_input_identity is not None:
         event_identity["scientific_input_sha256"] = v30_input_identity["scientific_input_sha256"]
+    if v31_input_identity is not None:
+        event_identity["scientific_input_sha256"] = v31_input_identity["scientific_input_sha256"]
     if v29_binding is not None:
         event_identity.update(
             v29_contract_sha256=v29_binding["contract_sha256"],
@@ -8804,7 +9534,7 @@ def run_service(
             abi_receipt,
             jit_cache,
             runtime_profile="native_linux"
-            if v29_binding is not None or v30_binding is not None
+            if v29_binding is not None or v30_binding is not None or v31_binding is not None
             else None,
         )
         _append_clock_event(events, "activation_finished", event_log, event_identity)
@@ -8836,6 +9566,27 @@ def run_service(
                     ),
                     "TASK40_V30_MEMORY_SWAP_MAX_BYTES": str(
                         v30_binding["contract"]["execution"]["resources"]["memory_swap_max_bytes"]
+                    ),
+                }
+            )
+        if v31_binding is not None:
+            environment.pop("TASK40_V29_STRICT_FACTOR_ONLY", None)
+            environment.pop("TASK40_V30_STRICT_EXECUTION", None)
+            environment.update(
+                {
+                    "TASK40_V31_STRICT_EXECUTION": "1",
+                    "TASK40_V31_CONTRACT_PATH": v31_binding["contract_path"],
+                    "TASK40_V31_CONTRACT_SHA256": v31_binding["contract_sha256"],
+                    "TASK40_V31_EXECUTION_WINDOW_PATH": v31_binding["execution_window_path"],
+                    "TASK40_V31_EXECUTION_WINDOW_SHA256": v31_binding["execution_window_sha256"],
+                    "TASK40_V31_TASK_MEMORY_MAX_BYTES": str(
+                        v31_binding["contract"]["execution"]["resources"]["task_memory_max_bytes"]
+                    ),
+                    "TASK40_V31_HOST_RESERVE_BYTES": str(
+                        v31_binding["contract"]["execution"]["resources"]["host_reserve_bytes"]
+                    ),
+                    "TASK40_V31_MEMORY_SWAP_MAX_BYTES": str(
+                        v31_binding["contract"]["execution"]["resources"]["memory_swap_max_bytes"]
                     ),
                 }
             )
@@ -9000,10 +9751,16 @@ def run_service(
                 stage="v30_service_before_worker_start",
             )
             _append_clock_event(events, "v30_live_resource_gate_finished", event_log, event_identity)
+        if v31_binding is not None:
+            _append_clock_event(events, "v31_live_resource_gate_started", event_log, event_identity)
+            record["v31_live_resource_gate"] = _v31_live_resource_gate(
+                v31_binding["contract"], stage="v31_service_before_worker_start"
+            )
+            _append_clock_event(events, "v31_live_resource_gate_finished", event_log, event_identity)
 
         _append_clock_event(events, "run_case_started", event_log, event_identity)
         case_command = record["run_case_argv"]
-        if v29_binding is not None or v30_binding is not None:
+        if v29_binding is not None or v30_binding is not None or v31_binding is not None:
             run_case_process = subprocess.Popen(
                 case_command,
                 cwd=repo_root,
@@ -9068,7 +9825,21 @@ def run_service(
         packet_path = numerical_output / "v10_candidate_official_output.json"
         if packet_path.is_file():
             checker_kind = "task40_v10_independent_output_checker"
-            checker_command = _run_case_output_checker(packet_path, runtime_prefix)
+            expected_channel_count = 700
+            if campaign_registration.get("version") == "V30":
+                from src.io.physical_intermediate_profile import profile_facts
+
+                registered_count = profile_facts(
+                    str(data["solver"]["preconditioner"])
+                ).get("gates", {}).get("all_original_modes_retained")
+                if type(registered_count) is not int or registered_count < 1:
+                    raise ValueError("V30 registered profile has no frozen channel count")
+                expected_channel_count = registered_count
+            checker_command = _run_case_output_checker(
+                packet_path,
+                runtime_prefix,
+                expected_channel_count=expected_channel_count,
+            )
         else:
             checker_kind = "task40_v20_partial_receipt_checker"
             checker_output = evidence_directory / "partial_checker_result.json"
@@ -9265,6 +10036,14 @@ def main(argv: list[str] | None = None) -> int:
         default="selected_reference_q_csr",
     )
     subparsers.add_parser("prepare-v30-full-input")
+    v31_prepare_parser = subparsers.add_parser("prepare-v31-p0")
+    v31_prepare_parser.add_argument("--output-dir", type=Path)
+    v31_prepare_parser.add_argument("--execution-root", type=Path)
+    v31_approved_parser = subparsers.add_parser("prepare-v31-approved")
+    v31_approved_parser.add_argument("--pending-dir", type=Path, required=True)
+    v31_approval = v31_approved_parser.add_mutually_exclusive_group(required=True)
+    v31_approval.add_argument("--approval-receipt", type=Path)
+    v31_approval.add_argument("--reuse-approved-contract", type=Path)
     partial_parser = subparsers.add_parser("check-partial")
     partial_parser.add_argument("--input", type=Path, required=True)
     partial_parser.add_argument("--summary", type=Path, required=True)
@@ -9326,6 +10105,39 @@ def main(argv: list[str] | None = None) -> int:
         print(
             json.dumps(
                 prepare_v30_full_input(),
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return 0
+    if args.command == "prepare-v31-p0":
+        from src.runners.task40_v31_contract import prepare_v31_pending_package
+
+        print(
+            json.dumps(
+                prepare_v31_pending_package(
+                    repo_root=ROOT,
+                    output_directory=args.output_dir,
+                    execution_root=args.execution_root,
+                ),
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return 0
+    if args.command == "prepare-v31-approved":
+        from src.runners.task40_v31_contract import prepare_v31_approved_package
+
+        print(
+            json.dumps(
+                prepare_v31_approved_package(
+                    repo_root=ROOT,
+                    pending_directory=args.pending_dir,
+                    approval_receipt=args.approval_receipt,
+                    reuse_approved_contract=args.reuse_approved_contract,
+                ),
                 ensure_ascii=False,
                 sort_keys=True,
                 indent=2,

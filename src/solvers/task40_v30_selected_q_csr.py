@@ -1474,7 +1474,7 @@ def _persist_v30_numeric_pending(
     root = Path(output_directory).resolve()
     root.mkdir(parents=True, exist_ok=True)
     path = root / f"task40_v30_q{q_index}_twist{twist_index}_numeric_pending.json"
-    if path.exists():
+    if path.exists() or _integrity_sidecar_path(path).exists():
         raise FileExistsError("refusing to replace an existing V30 numeric-pending record")
     artifacts: dict[str, dict[str, Any]] = {}
     pattern_artifacts = dict(pattern_record.get("csr_artifacts", {}))
@@ -1517,10 +1517,576 @@ def _persist_v30_numeric_pending(
         "csr_artifacts": artifacts,
         "csr_content_sha256": _csr_sha256(matrix),
     }
-    _write_json(path, payload)
+    _atomic_json(path, payload)
     payload["record_path"] = str(path)
     payload["record_sha256"] = _sha256_file(path)
+    _write_integrity_sidecar(path, payload["record_sha256"])
     return payload
+
+
+def _integrity_sidecar_path(path: Path) -> Path:
+    return path.with_name(path.name + ".sha256")
+
+
+def _write_integrity_sidecar(path: Path, sha256: str) -> Path:
+    sidecar = _integrity_sidecar_path(path)
+    with tempfile.NamedTemporaryFile(
+        mode="w", encoding="ascii", dir=sidecar.parent,
+        prefix=f".{sidecar.name}.", suffix=".tmp", delete=False,
+    ) as stream:
+        temporary = Path(stream.name)
+        stream.write(f"{sha256}  {path.name}\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary, sidecar)
+    return sidecar
+
+
+def _read_integrity_bound_json(path: Path, *, label: str) -> tuple[dict[str, Any], str]:
+    sidecar = _integrity_sidecar_path(path)
+    if not path.is_file() or not sidecar.is_file():
+        raise ValueError(f"{label} lacks its atomic content-hash sidecar")
+    fields = sidecar.read_text(encoding="ascii").strip().split()
+    if len(fields) != 2 or fields[1] != path.name:
+        raise ValueError(f"{label} content-hash sidecar is malformed")
+    actual = _sha256_file(path)
+    if fields[0] != actual:
+        raise ValueError(f"{label} content hash differs from its sidecar")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"{label} must contain a JSON object")
+    return payload, actual
+
+
+def _require_run_identity(value: Mapping[str, Any], label: str) -> dict[str, str]:
+    source_sha = value.get("source_sha")
+    window_sha256 = value.get("window_sha256")
+    if (
+        not isinstance(source_sha, str)
+        or len(source_sha) != 40
+        or any(character not in "0123456789abcdef" for character in source_sha)
+        or not isinstance(window_sha256, str)
+        or len(window_sha256) != 64
+        or any(character not in "0123456789abcdef" for character in window_sha256)
+    ):
+        raise ValueError(f"{label} must contain a full source SHA and campaign-window SHA-256")
+    return {"source_sha": source_sha, "window_sha256": window_sha256}
+
+
+def make_v31_pending_import_authorization(
+    pending_record: Mapping[str, Any],
+    *,
+    pending_sha256: str,
+    consumer_execution_identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Describe one exact old numeric-pending import for a V31 execution contract."""
+    artifacts = dict(pending_record.get("csr_artifacts", {}))
+    if set(artifacts) != {"data", "indices", "indptr"}:
+        raise ValueError("V31 pending import request needs the exact three saved CSR arrays")
+    return {
+        "schema": "task40extra.review_v31_q_numeric_pending_import_authorization.v1",
+        "q_index": int(pending_record["q_index"]),
+        "twist_index": int(pending_record["twist_index"]),
+        "profile": str(pending_record["profile"]),
+        "pending_record_sha256": pending_sha256,
+        "producer_execution_identity": _require_run_identity(
+            pending_record.get("execution_identity", {}), "pending producer execution identity"
+        ),
+        "consumer_execution_identity": _require_run_identity(
+            consumer_execution_identity, "pending consumer execution identity"
+        ),
+        "operator_identity": dict(pending_record["operator_identity"]),
+        "matrix_source_identity": dict(pending_record["matrix_source_identity"]),
+        "producer_identity_sha256": hashlib.sha256(
+            json.dumps(
+                dict(pending_record["producer_identity"]),
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest(),
+        "csr_artifacts_sha256": hashlib.sha256(
+            json.dumps(artifacts, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest(),
+    }
+
+
+def _persist_v31_pending_consumer_receipt(
+    *,
+    pending_path: Path,
+    pending: Mapping[str, Any],
+    pending_sha256: str,
+    consumer_execution_identity: Mapping[str, Any],
+    authorization: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Record cross-window consumption without rewriting the producer's pending evidence."""
+    producer_execution = _require_run_identity(
+        pending.get("execution_identity", {}), "pending producer execution identity"
+    )
+    consumer_execution = _require_run_identity(
+        consumer_execution_identity, "pending consumer execution identity"
+    )
+    expected_authorization = make_v31_pending_import_authorization(
+        pending,
+        pending_sha256=pending_sha256,
+        consumer_execution_identity=consumer_execution,
+    )
+    if dict(authorization) != expected_authorization:
+        raise ValueError("cross-window pending import lacks its exact V31 contract authorization")
+    identity_seed = json.dumps(
+        {
+            "pending_record_sha256": pending_sha256,
+            "consumer_execution_identity": consumer_execution,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    receipt_id = hashlib.sha256(identity_seed).hexdigest()
+    receipt_path = pending_path.with_name(
+        f"task40_v31_q{int(pending['q_index'])}_twist{int(pending['twist_index'])}_consumer_{receipt_id}.json"
+    )
+    payload = {
+        "schema": "task40extra.review_v31_q_numeric_pending_consumer.v1",
+        "status": "CONSUMED_NUMERIC_COMPLETE_NATIVE_PENDING",
+        "q_index": int(pending["q_index"]),
+        "twist_index": int(pending["twist_index"]),
+        "profile": str(pending["profile"]),
+        "operator_identity": dict(pending["operator_identity"]),
+        "matrix_source_identity": dict(pending["matrix_source_identity"]),
+        "producer_identity": dict(pending["producer_identity"]),
+        "producer_execution_identity": producer_execution,
+        "consumer_execution_identity": consumer_execution,
+        "pending_record": {"path": str(pending_path.resolve()), "sha256": pending_sha256},
+        "csr_artifacts": dict(pending["csr_artifacts"]),
+        "authorization": expected_authorization,
+        "authorization_sha256": hashlib.sha256(
+            json.dumps(expected_authorization, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest(),
+        "original_native_status": "NATIVE_PENDING",
+        "original_record_rewritten": False,
+    }
+    if receipt_path.exists() or _integrity_sidecar_path(receipt_path).exists():
+        saved, digest = _read_integrity_bound_json(
+            receipt_path, label="V31 pending consumer receipt"
+        )
+        if saved != payload:
+            raise ValueError("existing V31 consumer receipt differs from this exact consumer identity")
+        return {
+            "path": str(receipt_path),
+            "sha256": digest,
+            "payload": saved,
+            "reopened": True,
+        }
+    _atomic_json(receipt_path, payload)
+    digest = _sha256_file(receipt_path)
+    _write_integrity_sidecar(receipt_path, digest)
+    return {"path": str(receipt_path), "sha256": digest, "payload": payload, "reopened": False}
+
+
+def _require_v31_pending_consumer_receipt(
+    numeric_stage: Mapping[str, Any],
+    *,
+    consumer_execution_identity: Mapping[str, Any],
+) -> Mapping[str, Any] | None:
+    pending = numeric_stage.get("numeric_pending")
+    if not isinstance(pending, Mapping):
+        raise ValueError("prebuilt q numeric stage omits its durable pending record")
+    producer_execution = _require_run_identity(
+        pending.get("execution_identity", {}), "pending producer execution identity"
+    )
+    consumer_execution = _require_run_identity(
+        consumer_execution_identity, "pending consumer execution identity"
+    )
+    if producer_execution == consumer_execution:
+        return None
+    reference = numeric_stage.get("consumer_receipt")
+    if not isinstance(reference, Mapping):
+        raise ValueError("cross-window prebuilt q requires its V31 consumer receipt")
+    receipt_path = Path(str(reference.get("path", ""))).resolve()
+    payload, digest = _read_integrity_bound_json(
+        receipt_path, label="V31 pending consumer receipt"
+    )
+    expected_fields = {
+        "status": "CONSUMED_NUMERIC_COMPLETE_NATIVE_PENDING",
+        "q_index": pending.get("q_index"),
+        "twist_index": pending.get("twist_index"),
+        "profile": pending.get("profile"),
+        "operator_identity": pending.get("operator_identity"),
+        "matrix_source_identity": pending.get("matrix_source_identity"),
+        "producer_identity": pending.get("producer_identity"),
+        "producer_execution_identity": producer_execution,
+        "consumer_execution_identity": consumer_execution,
+        "pending_record": {
+            "path": str(Path(str(pending.get("record_path", ""))).resolve()),
+            "sha256": pending.get("record_sha256"),
+        },
+        "csr_artifacts": pending.get("csr_artifacts"),
+        "original_native_status": "NATIVE_PENDING",
+        "original_record_rewritten": False,
+    }
+    expected_authorization = make_v31_pending_import_authorization(
+        pending,
+        pending_sha256=str(pending.get("record_sha256", "")),
+        consumer_execution_identity=consumer_execution,
+    )
+    expected_fields.update(
+        authorization=expected_authorization,
+        authorization_sha256=hashlib.sha256(
+            json.dumps(expected_authorization, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest(),
+    )
+    if (
+        reference.get("sha256") != digest
+        or reference.get("payload") != payload
+        or payload.get("schema") != "task40extra.review_v31_q_numeric_pending_consumer.v1"
+        or any(payload.get(key) != value for key, value in expected_fields.items())
+    ):
+        raise ValueError("V31 pending consumer receipt is not bound to this exact q and consumer")
+    return {"path": str(receipt_path), "sha256": digest, "payload": payload}
+
+
+def _persist_v31_pattern_checkpoint(
+    *,
+    pattern_record: Mapping[str, Any],
+    output_directory: Path,
+    profile: str,
+    q_index: int,
+    twist_index: int,
+    operator_identity: Mapping[str, Any],
+    matrix_source_identity: Mapping[str, Any],
+    execution_identity: Mapping[str, Any],
+    producer_identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Atomically certify a complete zero-data pattern before numeric fill."""
+    path = output_directory / f"task40_v31_q{q_index}_twist{twist_index}_pattern.json"
+    if path.exists() or _integrity_sidecar_path(path).exists():
+        raise FileExistsError("refusing to replace a V31 selected-q pattern checkpoint")
+    arrays = dict(pattern_record.get("csr_artifacts", {}))
+    if set(arrays) != {"data", "indices", "indptr"}:
+        raise ValueError("V31 pattern checkpoint requires all three CSR arrays")
+    if not isinstance(arrays["data"].get("sha256"), str):
+        raise ValueError("V31 pattern checkpoint lacks its initial data-array hash")
+    payload = {
+        "schema": "task40extra.review_v31_q_csr_pattern.v1",
+        "status": "PATTERN_COMPLETE_NUMERIC_EMPTY",
+        "profile": profile,
+        "q_index": q_index,
+        "twist_index": twist_index,
+        "operator_identity": dict(operator_identity),
+        "matrix_source_identity": dict(matrix_source_identity),
+        "execution_identity": dict(execution_identity),
+        "producer_identity": dict(producer_identity),
+        "initial_data_sha256": arrays["data"]["sha256"],
+        "numeric_restart_semantics": "fill_saved_selected_q_values clears data to exact zero after its allocation gate",
+        "pattern_record": dict(pattern_record),
+    }
+    _atomic_json(path, payload)
+    digest = _sha256_file(path)
+    _write_integrity_sidecar(path, digest)
+    payload["checkpoint_path"] = str(path)
+    payload["checkpoint_sha256"] = digest
+    return payload
+
+
+def _load_v31_pattern_checkpoint(
+    *,
+    path: Path,
+    profile: str,
+    q_index: int,
+    twist_index: int,
+    operator_identity: Mapping[str, Any],
+    matrix_source_identity: Mapping[str, Any],
+    execution_identity: Mapping[str, Any],
+    producer_identity: Mapping[str, Any],
+    q_map: sparse.csr_matrix,
+    allocation_gate: Callable[[str, Mapping[str, Any]], Any],
+) -> tuple[sparse.csr_matrix, dict[str, Any]]:
+    payload, digest = _read_integrity_bound_json(path, label="V31 pattern checkpoint")
+    if (
+        payload.get("schema") != "task40extra.review_v31_q_csr_pattern.v1"
+        or payload.get("status") != "PATTERN_COMPLETE_NUMERIC_EMPTY"
+        or payload.get("profile") != profile
+        or payload.get("q_index") != q_index
+        or payload.get("twist_index") != twist_index
+        or dict(payload.get("operator_identity", {})) != dict(operator_identity)
+        or dict(payload.get("matrix_source_identity", {})) != dict(matrix_source_identity)
+        or dict(payload.get("execution_identity", {})) != dict(execution_identity)
+        or dict(payload.get("producer_identity", {})) != dict(producer_identity)
+    ):
+        raise ValueError("V31 pattern checkpoint identity differs from the current saved-q request")
+    pattern_record = payload.get("pattern_record")
+    if not isinstance(pattern_record, Mapping):
+        raise ValueError("V31 pattern checkpoint omits its row-tile facts")
+    arrays = dict(pattern_record.get("csr_artifacts", {}))
+    if set(arrays) != {"data", "indices", "indptr"}:
+        raise ValueError("V31 pattern checkpoint omits a CSR backing array")
+    payload_bytes = sum(int(row.get("bytes", -1)) for row in arrays.values())
+    if payload_bytes <= 0:
+        raise ValueError("V31 pattern checkpoint has invalid backing byte counts")
+    allocation_gate(
+        f"task40_v31_q{q_index}_pattern_reopen",
+        {
+            "additional_payload_bytes": payload_bytes,
+            "workspace_bytes": 256 * 1024**2,
+            "all_large_file_hashes_after_gate": True,
+            "pattern_reopen": True,
+        },
+    )
+    if pattern_record.get("q_map_sha256") != _csr_sha256(q_map):
+        raise ValueError("V31 pattern checkpoint does not bind the current q map")
+    opened = {}
+    for name in ("data", "indices", "indptr"):
+        row = arrays[name]
+        artifact = Path(str(row.get("path", ""))).resolve()
+        if (
+            not artifact.is_relative_to(path.parent.resolve())
+            or not artifact.is_file()
+            or artifact.stat().st_size != row.get("bytes")
+        ):
+            raise ValueError(f"V31 pattern artifact {name} is missing or changed in size")
+        if name != "data" and _sha256_file(artifact) != row.get("sha256"):
+            raise ValueError(f"V31 pattern structural artifact {name} changed")
+        opened[name] = np.load(artifact, mmap_mode="r+" if name == "data" else "r", allow_pickle=False)
+    shape = tuple(map(int, pattern_record.get("block_facts", {}).get("shape", ())))
+    if (
+        len(shape) != 2
+        or shape != (q_map.shape[1], q_map.shape[1])
+        or opened["data"].dtype != np.dtype(np.complex128)
+        or opened["indices"].dtype != np.dtype(np.int32)
+        or opened["indptr"].dtype != np.dtype(np.int32)
+        or opened["indices"].shape != opened["data"].shape
+        or opened["indptr"].shape != (shape[0] + 1,)
+    ):
+        raise ValueError("V31 pattern arrays do not match the saved q map and CSR dtypes")
+    matrix = sparse.csr_matrix(
+        (opened["data"], opened["indices"], opened["indptr"]), shape=shape, copy=False
+    )
+    if not matrix.has_canonical_format or not matrix.has_sorted_indices:
+        raise ValueError("V31 reopened pattern is not canonical and sorted")
+    checkpoint = dict(payload)
+    checkpoint["checkpoint_path"] = str(path)
+    checkpoint["checkpoint_sha256"] = digest
+    return matrix, checkpoint
+
+
+def _load_v30_numeric_pending(
+    *,
+    path: Path,
+    profile: str,
+    q_index: int,
+    twist_index: int,
+    operator_identity: Mapping[str, Any],
+    matrix_source_identity: Mapping[str, Any],
+    execution_identity: Mapping[str, Any],
+    producer_identity: Mapping[str, Any],
+    allocation_gate: Callable[[str, Mapping[str, Any]], Any],
+    consumer_import_authorization: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Strictly reopen a complete pending CSR; never repeat its numeric fill."""
+    payload, digest = _read_integrity_bound_json(path, label="V30 numeric-pending record")
+    if (
+        payload.get("schema") != "task40extra.review_v30_q_csr_numeric_pending.v1"
+        or payload.get("status") != "NUMERIC_COMPLETE_NATIVE_PENDING"
+        or payload.get("profile") != profile
+        or payload.get("q_index") != q_index
+        or payload.get("twist_index") != twist_index
+        or dict(payload.get("operator_identity", {})) != dict(operator_identity)
+        or dict(payload.get("matrix_source_identity", {})) != dict(matrix_source_identity)
+        or dict(payload.get("producer_identity", {})) != dict(producer_identity)
+    ):
+        raise ValueError("V30 numeric-pending identity differs from the current saved-q request")
+    records = dict(payload.get("csr_artifacts", {}))
+    if set(records) != {"data", "indices", "indptr"}:
+        raise ValueError("V30 numeric-pending record omits a CSR array")
+    paths = {name: Path(str(row.get("path", ""))).resolve() for name, row in records.items()}
+    if any(not artifact.is_relative_to(path.parent.resolve()) or not artifact.is_file() for artifact in paths.values()):
+        raise FileNotFoundError("V30 numeric-pending CSR backing array is missing")
+    total_bytes = sum(int(row.get("bytes", -1)) for row in records.values())
+    allocation_gate(
+        f"task40_v31_q{q_index}_numeric_pending_reopen",
+        {"additional_payload_bytes": total_bytes, "workspace_bytes": 16 * 1024**2,
+         "all_large_file_hashes_after_gate": True},
+    )
+    for name, artifact in paths.items():
+        row = records[name]
+        if artifact.stat().st_size != row.get("bytes") or _sha256_file(artifact) != row.get("sha256"):
+            raise ValueError(f"V30 numeric-pending CSR artifact {name} failed its size/hash check")
+    arrays = {
+        name: np.load(path, mmap_mode="r", allow_pickle=False)
+        for name, path in paths.items()
+    }
+    shape = tuple(map(int, payload.get("shape", ())))
+    slots = payload.get("stored_structural_slots")
+    if (
+        len(shape) != 2 or shape[0] != shape[1]
+        or type(slots) is not int
+        or arrays["data"].dtype != np.dtype(np.complex128)
+        or arrays["indices"].dtype != np.dtype(np.int32)
+        or arrays["indptr"].dtype != np.dtype(np.int32)
+        or arrays["data"].shape != (slots,)
+        or arrays["indices"].shape != (slots,)
+        or arrays["indptr"].shape != (shape[0] + 1,)
+        or int(arrays["indptr"][0]) != 0
+        or int(arrays["indptr"][-1]) != slots
+    ):
+        raise ValueError("V30 numeric-pending CSR dimensions/dtypes differ from its record")
+    matrix = sparse.csr_matrix(
+        (arrays["data"], arrays["indices"], arrays["indptr"]), shape=shape, copy=False
+    )
+    from .task40_v30_qualified_q_csr import _require_csr
+
+    _require_csr(matrix, f"q={q_index} numeric-pending CSR")
+    if _csr_sha256(matrix) != payload.get("csr_content_sha256"):
+        raise ValueError("V30 numeric-pending CSR content hash differs from its record")
+    producer_execution = _require_run_identity(
+        payload.get("execution_identity", {}), "V30 pending producer execution identity"
+    )
+    consumer_execution = _require_run_identity(
+        execution_identity, "V31 pending consumer execution identity"
+    )
+    pending = dict(payload)
+    pending["record_path"] = str(path)
+    pending["record_sha256"] = digest
+    consumer_receipt = None
+    if producer_execution != consumer_execution:
+        if not isinstance(consumer_import_authorization, Mapping):
+            raise ValueError("cross-window numeric pending requires a V31 contract import authorization")
+        consumer_receipt = _persist_v31_pending_consumer_receipt(
+            pending_path=path,
+            pending=pending,
+            pending_sha256=digest,
+            consumer_execution_identity=consumer_execution,
+            authorization=consumer_import_authorization,
+        )
+    return {
+        "status": payload["status"],
+        "matrix": matrix,
+        "pattern_record": dict(payload["pattern_record"]),
+        "numeric_facts": dict(payload["numeric_fill_facts"]),
+        "numeric_pending": pending,
+        "output_directory": str(path.parent),
+        "reopened": True,
+        "consumer_receipt": consumer_receipt,
+    }
+
+
+def prepare_saved_selected_q_numeric_pending(
+    *,
+    source: Any,
+    q_map: sparse.csr_matrix,
+    q_index: int,
+    twist_index: int,
+    trace_rows: int,
+    allocation_gate: Callable[[str, Mapping[str, Any]], Any],
+    profile: str,
+    operator_identity: Mapping[str, Any],
+    matrix_source_identity: Mapping[str, Any],
+    execution_identity: Mapping[str, Any],
+    producer_identity: Mapping[str, Any],
+    output_directory: str | Path,
+    direct_hhat_evidence: Mapping[str, Any] | None = None,
+    consumer_import_authorization: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build and persist one saved-data q CSR without constructing a native owner.
+
+    This is the reusable saved-first boundary: callers can complete the numeric
+    CSR while FE/native/factor construction is still deferred.  The returned
+    matrix remains backed by the persisted V17 arrays for a later native pass.
+    """
+    if type(q_index) is not int or q_index < 0 or type(twist_index) is not int or twist_index < 0:
+        raise ValueError("saved selected-q numeric preparation needs explicit q/twist indices")
+    if not profile or not callable(allocation_gate):
+        raise ValueError("saved selected-q numeric preparation needs profile and allocation gate")
+    if not all(isinstance(value, Mapping) and value for value in (
+        operator_identity, matrix_source_identity, execution_identity, producer_identity
+    )):
+        raise ValueError("saved selected-q pending needs nonempty bound identities")
+    root = Path(output_directory).resolve()
+    pending_path = root / f"task40_v30_q{q_index}_twist{twist_index}_numeric_pending.json"
+    if pending_path.exists():
+        return _load_v30_numeric_pending(
+            path=pending_path,
+            profile=profile,
+            q_index=q_index,
+            twist_index=twist_index,
+            operator_identity=operator_identity,
+            matrix_source_identity=matrix_source_identity,
+            execution_identity=execution_identity,
+            producer_identity=producer_identity,
+            allocation_gate=allocation_gate,
+            consumer_import_authorization=consumer_import_authorization,
+        )
+    if _integrity_sidecar_path(pending_path).exists():
+        raise ValueError("orphan V30 numeric-pending hash sidecar; preserving attempt evidence")
+    pattern_path = root / f"task40_v31_q{q_index}_twist{twist_index}_pattern.json"
+    if pattern_path.exists():
+        matrix, checkpoint = _load_v31_pattern_checkpoint(
+            path=pattern_path,
+            profile=profile,
+            q_index=q_index,
+            twist_index=twist_index,
+            operator_identity=operator_identity,
+            matrix_source_identity=matrix_source_identity,
+            execution_identity=execution_identity,
+            producer_identity=producer_identity,
+            q_map=q_map,
+            allocation_gate=allocation_gate,
+        )
+        pattern_record = dict(checkpoint["pattern_record"])
+    else:
+        if _integrity_sidecar_path(pattern_path).exists():
+            raise ValueError("orphan V31 pattern hash sidecar; preserving attempt evidence")
+        matrix, _view, pattern_record = build_saved_selected_q_pattern(
+            source,
+            q_map,
+            q_index=q_index,
+            twist_index=twist_index,
+            trace_rows=trace_rows,
+            output_directory=root,
+            allocation_gate=allocation_gate,
+        )
+        _persist_v31_pattern_checkpoint(
+            pattern_record=pattern_record,
+            output_directory=root,
+            profile=profile,
+            q_index=q_index,
+            twist_index=twist_index,
+            operator_identity=operator_identity,
+            matrix_source_identity=matrix_source_identity,
+            execution_identity=execution_identity,
+            producer_identity=producer_identity,
+        )
+    matrix, numeric_facts = fill_saved_selected_q_values(
+        source,
+        matrix,
+        q_map,
+        q_index=q_index,
+        twist_index=twist_index,
+        trace_rows=trace_rows,
+        allocation_gate=allocation_gate,
+        direct_hhat=direct_hhat_evidence is not None,
+        direct_hhat_evidence=direct_hhat_evidence,
+    )
+    pending = _persist_v30_numeric_pending(
+        matrix=matrix,
+        pattern_record=pattern_record,
+        numeric_facts=numeric_facts,
+        output_directory=root,
+        profile=profile,
+        q_index=q_index,
+        twist_index=twist_index,
+        operator_identity=operator_identity,
+        matrix_source_identity=matrix_source_identity,
+        execution_identity=execution_identity,
+        producer_identity=producer_identity,
+    )
+    return {
+        "status": pending["status"],
+        "matrix": matrix,
+        "pattern_record": pattern_record,
+        "numeric_facts": numeric_facts,
+        "numeric_pending": pending,
+        "output_directory": str(root),
+    }
 
 
 def finalize_selected_q_csr(
@@ -1793,6 +2359,7 @@ def prepare_selected_q_csr_sector(
     output_directory: str | Path,
     saved_native_witness_by_q: Mapping[int, Mapping[str, Any]] | None = None,
     direct_hhat_evidence_by_q: Mapping[int, Mapping[str, Any]] | None = None,
+    precomputed_numeric_by_q: Mapping[int, Mapping[str, Any]] | None = None,
 ) -> tuple[dict[int, sparse.csr_matrix], dict[str, Any]]:
     """Produce only missing q values and persist each with an independent native gate."""
     sector_qs = tuple(int(q) for q in sector_q_indices)
@@ -1820,12 +2387,16 @@ def prepare_selected_q_csr_sector(
     direct_hhat_evidence = {
         int(q): value for q, value in (direct_hhat_evidence_by_q or {}).items()
     }
+    precomputed_numeric = {
+        int(q): value for q, value in (precomputed_numeric_by_q or {}).items()
+    }
     if (
         not set(saved_witnesses) <= set(selected)
         or any(q != 4 for q in saved_witnesses)
         or (saved_witnesses and (sector_qs != (0, 4) or twist_index != 0))
         or not set(direct_hhat_evidence) <= set(selected)
         or any(q != 4 for q in direct_hhat_evidence)
+        or not set(precomputed_numeric) <= set(selected)
     ):
         raise ValueError("V30 V26 witness/support reuse is restricted to the accepted q4/q0 twist-0 pair")
     matrices = {int(q): matrix for q, matrix in available_sector_matrices.items()}
@@ -1846,39 +2417,50 @@ def prepare_selected_q_csr_sector(
     for q_index in selected:
         q_map = q_maps_by_q[q_index]
         q_directory = output_root / f"q{q_index}_twist{twist_index}"
-        matrix, _view, pattern_record = build_saved_selected_q_pattern(
-            sources_by_q[q_index],
-            q_map,
-            q_index=q_index,
-            twist_index=twist_index,
-            trace_rows=int(trace_rows_by_q[q_index]),
-            output_directory=q_directory,
-            allocation_gate=allocation_gate,
-        )
-        matrix, numeric_facts = fill_saved_selected_q_values(
-            sources_by_q[q_index],
-            matrix,
-            q_map,
-            q_index=q_index,
-            twist_index=twist_index,
-            trace_rows=int(trace_rows_by_q[q_index]),
-            allocation_gate=allocation_gate,
-            direct_hhat=q_index in direct_hhat_evidence,
-            direct_hhat_evidence=direct_hhat_evidence.get(q_index),
-        )
-        numeric_pending_by_q[q_index] = _persist_v30_numeric_pending(
-            matrix=matrix,
-            pattern_record=pattern_record,
-            numeric_facts=numeric_facts,
-            output_directory=q_directory,
-            profile=profile,
-            q_index=q_index,
-            twist_index=twist_index,
-            operator_identity=operator_identity_by_q[q_index],
-            matrix_source_identity=matrix_source_identity_by_q[q_index],
-            execution_identity=execution_identity,
-            producer_identity=producer_identity_by_q[q_index],
-        )
+        if q_index in precomputed_numeric:
+            numeric_stage = dict(precomputed_numeric[q_index])
+            numeric_pending = dict(numeric_stage.get("numeric_pending", {}))
+            matrix = numeric_stage.get("matrix")
+            pattern_record = numeric_stage.get("pattern_record")
+            numeric_facts = numeric_stage.get("numeric_facts")
+            _require_v31_pending_consumer_receipt(
+                numeric_stage, consumer_execution_identity=execution_identity
+            )
+            if (
+                numeric_stage.get("status") != "NUMERIC_COMPLETE_NATIVE_PENDING"
+                or numeric_pending.get("status") != "NUMERIC_COMPLETE_NATIVE_PENDING"
+                or numeric_pending.get("q_index") != q_index
+                or numeric_pending.get("twist_index") != twist_index
+                or dict(numeric_pending.get("operator_identity", {}))
+                != dict(operator_identity_by_q[q_index])
+                or not sparse.isspmatrix_csr(matrix)
+                or not isinstance(pattern_record, Mapping)
+                or not isinstance(numeric_facts, Mapping)
+                or numeric_facts.get("numeric_fill_complete") is not True
+            ):
+                raise ValueError("prebuilt selected-q numeric pending differs from the live sector identity")
+            q_directory = Path(str(numeric_stage.get("output_directory", q_directory))).resolve()
+        else:
+            numeric_stage = prepare_saved_selected_q_numeric_pending(
+                source=sources_by_q[q_index],
+                q_map=q_map,
+                q_index=q_index,
+                twist_index=twist_index,
+                trace_rows=int(trace_rows_by_q[q_index]),
+                allocation_gate=allocation_gate,
+                profile=profile,
+                operator_identity=operator_identity_by_q[q_index],
+                matrix_source_identity=matrix_source_identity_by_q[q_index],
+                execution_identity=execution_identity,
+                producer_identity=producer_identity_by_q[q_index],
+                output_directory=q_directory,
+                direct_hhat_evidence=direct_hhat_evidence.get(q_index),
+            )
+            matrix = numeric_stage["matrix"]
+            pattern_record = numeric_stage["pattern_record"]
+            numeric_facts = numeric_stage["numeric_facts"]
+            numeric_pending = numeric_stage["numeric_pending"]
+        numeric_pending_by_q[q_index] = dict(numeric_pending)
         prepared[q_index] = matrix
         matrices[q_index] = matrix
         pattern_records[q_index] = pattern_record
@@ -1910,7 +2492,7 @@ def prepare_selected_q_csr_sector(
             metadata: Mapping[str, Any],
         ) -> Mapping[str, Any]:
             record = _persist_v30_native_stage(
-                output_directory=output_root / f"q{q_index}_twist{twist_index}",
+                output_directory=q_directory,
                 q_index=q_index,
                 twist_index=twist_index,
                 stage=stage,
@@ -1953,8 +2535,7 @@ def prepare_selected_q_csr_sector(
             from .task40_v25_selected_q0 import _write_json
 
             failure_path = (
-                output_root
-                / f"q{q_index}_twist{twist_index}"
+                q_directory
                 / f"task40_v30_q{q_index}_twist{twist_index}_native_failure.json"
             )
             if failure_path.exists():
@@ -1983,7 +2564,7 @@ def prepare_selected_q_csr_sector(
             pattern_record=pattern_records[q_index],
             numeric_facts=numeric_facts_by_q[q_index],
             native_result=native_result,
-            output_directory=output_root / f"q{q_index}_twist{twist_index}",
+            output_directory=q_directory,
             profile=profile,
             q_index=q_index,
             twist_index=twist_index,

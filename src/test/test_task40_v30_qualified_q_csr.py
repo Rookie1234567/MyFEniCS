@@ -16,6 +16,7 @@ from src.solvers.task40_v30_qualified_q_csr import (
     V30_Q_CSR_SELECTOR_SCHEMA,
     _array_sha256,
     _csr_sha256,
+    make_v31_q_csr_import_authorization,
 )
 
 
@@ -41,13 +42,19 @@ def _runtime_identity(matrix: sparse.csr_matrix, original_h: np.ndarray) -> dict
     }
 
 
-def _provider(root: Path, selector_path: Path, gates: list | None = None) -> QualifiedQCSRProvider:
+def _provider(
+    root: Path,
+    selector_path: Path,
+    gates: list | None = None,
+    **kwargs,
+) -> QualifiedQCSRProvider:
     return QualifiedQCSRProvider(
         selector_path,
         selector_sha256=_sha(selector_path),
         repo_root=root,
         path_resolver=lambda path: Path(path).resolve(),
         allocation_gate=lambda name, facts: gates.append((name, dict(facts))) if gates is not None else None,
+        **kwargs,
     )
 
 
@@ -164,7 +171,7 @@ def test_v30_provider_checks_actual_q_map_h_and_40_digit_source_hash(tmp_path):
             expected_original_h=changed_h,
         )
     changed_execution = dict(execution, window_sha256="e" * 64)
-    with pytest.raises(ValueError, match="execution source/window"):
+    with pytest.raises(ValueError, match="cross-window COMPLETE q import"):
         provider.load(
             5,
             1,
@@ -173,6 +180,102 @@ def test_v30_provider_checks_actual_q_map_h_and_40_digit_source_hash(tmp_path):
             expected_q_map=expected,
             expected_original_h=original_h,
         )
+
+
+def test_v31_cross_window_complete_import_requires_exact_authorization_and_writes_consumer_receipt(
+    tmp_path,
+):
+    expected, original_h, identity, producer_execution, selector_path = _v30_fixture(tmp_path)
+    selector = json.loads(selector_path.read_text(encoding="utf-8"))
+    entry = selector["q_csr_entries"][0]
+    manifest_path = Path(entry["csr_manifest"]["path"])
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    native_path = Path(entry["native_qualification"]["path"])
+    native = json.loads(native_path.read_text(encoding="utf-8"))
+    consumer_execution = {"source_sha": "e" * 40, "window_sha256": "f" * 64}
+    artifacts = {
+        name: {
+            "path": str((manifest_path.parent / row["path"]).resolve()),
+            "bytes": row["bytes"],
+            "sha256": row["sha256"],
+        }
+        for name, row in manifest["csr_artifacts"].items()
+    }
+    authorization = make_v31_q_csr_import_authorization(
+        q_index=5,
+        twist_index=1,
+        profile=selector["profile"],
+        operator_identity=identity,
+        matrix_source_identity=entry["matrix_source_identity"],
+        producer_identity=manifest.get("producer_identity", {}),
+        producer_execution_identity=producer_execution,
+        native_execution_identity=native["execution_identity"],
+        csr_manifest_sha256=entry["csr_manifest"]["sha256"],
+        native_qualification_sha256=entry["native_qualification"]["sha256"],
+        csr_artifacts=artifacts,
+        consumer_execution_identity=consumer_execution,
+    )
+    saved_manifest = manifest_path.read_bytes()
+    saved_native = native_path.read_bytes()
+    receipt_root = tmp_path / "consumer_receipts"
+    kwargs = {
+        "consumer_receipt_directory": receipt_root,
+    }
+    provider = _provider(tmp_path, selector_path, **kwargs)
+    with pytest.raises(ValueError, match="approved V31 contract authorization"):
+        provider.load(
+            5,
+            1,
+            expected_operator_identity=identity,
+            expected_execution_identity=consumer_execution,
+            expected_q_map=expected,
+            expected_original_h=original_h,
+        )
+    assert not list(receipt_root.glob("*.json")) if receipt_root.exists() else True
+
+    provider = _provider(
+        tmp_path,
+        selector_path,
+        consumer_import_authorizations={"5": authorization},
+        **kwargs,
+    )
+    actual, receipt = provider.load(
+        5,
+        1,
+        expected_operator_identity=identity,
+        expected_execution_identity=consumer_execution,
+        expected_q_map=expected,
+        expected_original_h=original_h,
+    )
+    assert np.array_equal(actual.toarray(), expected.toarray())
+    consumer = receipt["consumer_receipt"]
+    saved = json.loads(Path(consumer["path"]).read_text(encoding="utf-8"))
+    assert consumer["sha256"] == _sha(Path(consumer["path"]))
+    assert saved["producer_execution_identity"] == producer_execution
+    assert saved["native_execution_identity"] == producer_execution
+    assert saved["consumer_execution_identity"] == consumer_execution
+    assert saved["authorization"] == authorization
+    assert saved["original_manifest_and_native_pass_rewritten"] is False
+    assert manifest_path.read_bytes() == saved_manifest
+    assert native_path.read_bytes() == saved_native
+
+    wrong_authorization = dict(authorization, csr_manifest_sha256="9" * 64)
+    wrong_provider = _provider(
+        tmp_path,
+        selector_path,
+        consumer_import_authorizations={"5": wrong_authorization},
+        consumer_receipt_directory=tmp_path / "wrong_receipts",
+    )
+    with pytest.raises(ValueError, match="approved V31 contract authorization"):
+        wrong_provider.load(
+            5,
+            1,
+            expected_operator_identity=identity,
+            expected_execution_identity=consumer_execution,
+            expected_q_map=expected,
+            expected_original_h=original_h,
+        )
+    assert not list((tmp_path / "wrong_receipts").glob("*.json"))
 
 
 def _v28_readback(readback_record: dict) -> dict:

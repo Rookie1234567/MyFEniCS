@@ -1,4 +1,19 @@
-# Task40extra Review V30：入口已接通，固定计算截止停止
+# Task40extra Review V31：P0 执行包就绪，新的数值窗口待批准
+
+V31 本轮完成窗口前的实现和接线验证。新 q 矩阵、正式 q 因子和新场均 **0**；旧 q0 的资格仍按 V28/V29 原身份保留。prepare 失败后的重试复用先前的三时钟 T0 和 window 字节，approved contract、launcher 与 campaign 校验均由真实接口在临时 fixture 中验收。fixture 的假 receipt/clock 不构成用户授权或真实窗口。
+
+| P0 项目 | 状态与范围 | 资格边界 |
+|---|---|---|
+| saved-first q4 / pending 恢复 | 已接入先保存 q4 数值 CSR，再进入完整 reference；pending 重开、COMPLETE 导入和跨窗 consumer 身份有定向 fixture | 没有新 q4 CSR/native 数值结果 |
+| owner/callback | twist0 owner 交给 reference callback 并执行统一清理；q1/q5 路径覆盖真实 twist builder 输入与顺序 | fixture 覆盖接口，不代表完整 reference |
+| 分阶段准入 | reference-only、target build、target ready 分开；target 未构建时 actual 保持 null | 没有 target 资源或求解实测 |
+| window/closeout/checker | service、watchdog 启动/采样、partial/official checker 命令绑定 V31 合同；strict/V15 与 RHS 类别费用分开记录 | 当前没有可检查的 V31 numerical output 或 footer |
+| 批准准备 | 两次模拟准备失败后第三次成功沿用原 anchor/window；真实 contract、launcher 与 campaign 验收通过 | 只在 pytest 临时目录使用伪批准数据；新窗口仍 PENDING |
+| 最终定向测试 | 五个相关测试文件 67 passed in 4.43 s | 不是全仓、MPI、CI 或科学资格测试 |
+
+P0 raw logs、源文件 SHA-256、ABI 收据、独立 UTC/monotonic 成本记录见 [V31 evidence index](records/review_v31_p0_evidence_index.json)。[Response V31](../response_v31.md) 与 [handoff V31](handoff_v31.md) 记录本次交付和下一批准边界。q4、其余 q、八 q live bank、完整 reference、目标 PDE、R/T/A、原尺寸精度和 2 TB/48 h 仍为 NOT_RUN/NOT_QUALIFIED；V30 的固定窗口到期与 `NO_PARTIAL_FOOTER` 原证据未改写。
+
+# 历史：Task40extra Review V30，入口已接通，固定计算截止停止
 
 本轮先实现新的八 q 参考数据接入与因子驻留入口，然后在已批准的工作站根启动一次正式 FE/编译执行。最终触发固定时间截止，尚无新 q4 或八 q 数值资格；这不是 OOM 或目标迭代不收敛证据。旧 V28/V29 q0 结果继续有效。
 

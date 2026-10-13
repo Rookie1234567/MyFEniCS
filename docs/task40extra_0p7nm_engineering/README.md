@@ -1,4 +1,16 @@
-## Review V30 当前收口入口
+## Review V31 当前状态：P0 就绪，数值窗口待批准
+
+本轮只完成重型窗口前的合同、执行入口、重入与定向验证。新增 q 数值结果为 0；q4、八 q 因子驻留、完整 reference、目标 PDE、R/T/A 和 2 TB/48 h 仍未资格化。V31 固定窗口和 T0 仍为 PENDING；旧 V30 窗口及失败证据保持原样。
+
+| 入口 | 内容 |
+|---|---|
+| [Review V31 Response](response_v31.md) / [执行交接](outcomes/handoff_v31.md) | P0 实现、真实生成的命令模板、批准边界和下一步 |
+| [P0 evidence index](outcomes/records/review_v31_p0_evidence_index.json) | 源码/测试文件哈希、ABI、定向测试 raw log、工程成本口径 |
+| [summary](outcomes/summary.md) / [run index](outcomes/records/run_index.json) | 追加 V31 P0；V30 的数值正负结果仍作历史保留 |
+
+执行分支仍为 `task40extra_0p7nm_engineering`。记录生成时的 HEAD 是 V31 review 基线，源码冻结与正式发布由主控审核后完成；不启动 service、SSH 或新数值窗口。
+
+## Review V30 历史收口入口
 
 固定窗口已截止；[Response V30](response_v30.md)、[主控独立审计](outcomes/records/review_v30_controller_audit.json)及[真实交接](outcomes/handoff_v30.md)保留所有新旧正负结果。本轮未取得新八q/reference/target资格，旧q0仍有效，不自动重启计算。
 

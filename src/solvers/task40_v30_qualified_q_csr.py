@@ -4,6 +4,8 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
+import tempfile
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
@@ -44,6 +46,24 @@ def _read_json(path: Path) -> dict[str, Any]:
     return value
 
 
+def _atomic_json_immutable(path: Path, value: Mapping[str, Any]) -> None:
+    """Create a small receipt atomically without replacing prior consumer evidence."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", dir=path.parent,
+        prefix=f".{path.name}.", suffix=".tmp", delete=False,
+    ) as stream:
+        temporary = Path(stream.name)
+        json.dump(dict(value), stream, sort_keys=True, indent=2, allow_nan=False)
+        stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    try:
+        os.link(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def _require_sha(value: Any, label: str) -> str:
     if (
         not isinstance(value, str)
@@ -62,6 +82,96 @@ def _require_source_sha(value: Any, label: str) -> str:
     ):
         raise ValueError(f"{label} must be a lowercase 40- or 64-character source hash")
     return value
+
+
+def make_v31_q_csr_import_authorization(
+    *,
+    q_index: int,
+    twist_index: int,
+    profile: str,
+    operator_identity: Mapping[str, Any],
+    matrix_source_identity: Mapping[str, Any],
+    producer_identity: Mapping[str, Any],
+    producer_execution_identity: Mapping[str, Any],
+    native_execution_identity: Mapping[str, Any],
+    csr_manifest_sha256: str,
+    native_qualification_sha256: str,
+    csr_artifacts: Mapping[str, Any],
+    consumer_execution_identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Build the exact single-q import request that a V31 contract must approve."""
+    if set(csr_artifacts) != {"data", "indices", "indptr"}:
+        raise ValueError("V31 q import authorization needs the exact three CSR artifacts")
+    producer = {
+        "source_sha": _require_source_sha(
+            producer_execution_identity.get("source_sha"), "producer_execution_identity.source_sha"
+        ),
+        "window_sha256": _require_sha(
+            producer_execution_identity.get("window_sha256"),
+            "producer_execution_identity.window_sha256",
+        ),
+    }
+    native = {
+        "source_sha": _require_source_sha(
+            native_execution_identity.get("source_sha"), "native_execution_identity.source_sha"
+        ),
+        "window_sha256": _require_sha(
+            native_execution_identity.get("window_sha256"),
+            "native_execution_identity.window_sha256",
+        ),
+    }
+    consumer = {
+        "source_sha": _require_source_sha(
+            consumer_execution_identity.get("source_sha"), "consumer_execution_identity.source_sha"
+        ),
+        "window_sha256": _require_sha(
+            consumer_execution_identity.get("window_sha256"),
+            "consumer_execution_identity.window_sha256",
+        ),
+    }
+    if not isinstance(profile, str) or not profile:
+        raise ValueError("V31 q import authorization needs a registered profile")
+    if dict(operator_identity).keys() != set(_OPERATOR_IDENTITY_KEYS):
+        raise ValueError("V31 q import authorization needs the complete operator identity")
+    for key in _OPERATOR_IDENTITY_KEYS:
+        _require_sha(operator_identity.get(key), f"operator_identity.{key}")
+    matrix_source = {
+        "source_sha": _require_source_sha(
+            matrix_source_identity.get("source_sha"), "matrix_source_identity.source_sha"
+        ),
+        "window_sha256": _require_sha(
+            matrix_source_identity.get("window_sha256"), "matrix_source_identity.window_sha256"
+        ),
+    }
+    normalized_artifacts = {}
+    for name in ("data", "indices", "indptr"):
+        row = csr_artifacts[name]
+        if not isinstance(row, Mapping) or type(row.get("bytes")) is not int or row["bytes"] <= 0:
+            raise ValueError(f"V31 q import authorization has invalid {name} artifact facts")
+        normalized_artifacts[name] = {
+            "path": str(row["path"]),
+            "bytes": int(row["bytes"]),
+            "sha256": _require_sha(row.get("sha256"), f"csr_artifacts.{name}.sha256"),
+        }
+    return {
+        "schema": "task40extra.review_v31_q_csr_import_authorization.v1",
+        "q_index": q_index,
+        "twist_index": twist_index,
+        "profile": profile,
+        "operator_identity": dict(operator_identity),
+        "matrix_source_identity": matrix_source,
+        "producer_identity_sha256": hashlib.sha256(
+            json.dumps(dict(producer_identity), sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest(),
+        "producer_execution_identity": producer,
+        "native_execution_identity": native,
+        "consumer_execution_identity": consumer,
+        "csr_manifest_sha256": _require_sha(csr_manifest_sha256, "csr_manifest_sha256"),
+        "native_qualification_sha256": _require_sha(
+            native_qualification_sha256, "native_qualification_sha256"
+        ),
+        "csr_artifacts": normalized_artifacts,
+    }
 
 
 def _array_sha256(array: np.ndarray, dtype: np.dtype[Any], label: str) -> str:
@@ -164,6 +274,8 @@ class QualifiedQCSRProvider:
         repo_root: str | Path,
         path_resolver: Callable[[Path], Path],
         allocation_gate: Callable[[str, Mapping[str, Any]], Any],
+        consumer_receipt_directory: str | Path | None = None,
+        consumer_import_authorizations: Mapping[str, Mapping[str, Any]] | None = None,
     ) -> None:
         self.repo_root = Path(repo_root).resolve()
         self._raw_resolver = path_resolver
@@ -171,6 +283,29 @@ class QualifiedQCSRProvider:
         if not callable(path_resolver) or not callable(allocation_gate):
             raise TypeError("provider needs an approved path resolver and live allocation gate")
         self.path_resolver = lambda path: self._resolve(path)
+        self.consumer_receipt_directory = (
+            None
+            if consumer_receipt_directory is None
+            else Path(consumer_receipt_directory).resolve()
+        )
+        if (
+            self.consumer_receipt_directory is not None
+            and not self.consumer_receipt_directory.is_relative_to(self.repo_root)
+        ):
+            raise ValueError("V31 consumer receipt directory escaped the approved execution root")
+        if consumer_import_authorizations is not None and not isinstance(
+            consumer_import_authorizations, Mapping
+        ):
+            raise TypeError("V31 q consumer import authorizations must be a mapping")
+        self.consumer_import_authorizations = {
+            str(key): dict(value)
+            for key, value in dict(consumer_import_authorizations or {}).items()
+            if isinstance(value, Mapping)
+        }
+        if len(self.consumer_import_authorizations) != len(
+            dict(consumer_import_authorizations or {})
+        ):
+            raise ValueError("V31 q consumer import authorizations contain a non-object entry")
         selector = self._resolve(selector_path)
         if not selector.is_file() or _sha256_file(selector) != _require_sha(
             selector_sha256, "selector_sha256"
@@ -288,11 +423,9 @@ class QualifiedQCSRProvider:
         ):
             raise ValueError("selector identity differs from actual runtime input/operator data")
         execution = self._run_identity(expected_execution_identity, "execution_identity")
-        if (
-            self._run_identity(entry.get("execution_identity", {}), "selector.execution_identity")
-            != execution
-        ):
-            raise ValueError("selector execution source/window differs from this run")
+        producer_execution = self._run_identity(
+            entry.get("execution_identity", {}), "selector.execution_identity"
+        )
         matrix_source = self._run_identity(
             entry.get("matrix_source_identity", {}), "matrix_source_identity"
         )
@@ -309,6 +442,8 @@ class QualifiedQCSRProvider:
             raise ValueError("CSR manifest hash changed")
         manifest = _read_json(manifest_path)
         legacy_q0 = manifest.get("schema") == "task40extra.review_v28_saved_q0_csr.v1"
+        if legacy_q0 and producer_execution != execution:
+            raise ValueError("legacy q0 selector execution source/window differs from this run")
         if legacy_q0:
             if not isinstance(expected_legacy_q0_identity, Mapping):
                 raise ValueError("q0 import needs independently pinned V28 donor fingerprints")
@@ -325,6 +460,15 @@ class QualifiedQCSRProvider:
         ):
             raise ValueError("V28 q0 donor is not the independently accepted native qualification")
         qualification = _read_json(qualification_path)
+
+        native_execution = None
+        if not legacy_q0:
+            native_execution = self._run_identity(
+                qualification.get("execution_identity", {}),
+                "native_qualification.execution_identity",
+            )
+            if native_execution != producer_execution:
+                raise ValueError("stored q native PASS is not bound to its original producer execution")
 
         legacy_receipt: dict[str, Any] | None = None
         if legacy_q0:
@@ -364,7 +508,6 @@ class QualifiedQCSRProvider:
                 or qualification.get("csr_manifest_sha256") != manifest_sha
                 or dict(qualification.get("operator_identity", {})) != identity
                 or dict(qualification.get("matrix_source_identity", {})) != matrix_source
-                or dict(qualification.get("execution_identity", {})) != execution
                 or qualification.get("four_complete_csr_actions_passed") is not True
                 or qualification.get("paired_sector_leakage_passed") is not True
                 or not isinstance(max_error, (int, float))
@@ -497,6 +640,103 @@ class QualifiedQCSRProvider:
             "stored_structural_slots": int(slots),
             "payload_bytes": int(payload_bytes),
         }
+        if not legacy_q0 and producer_execution != execution:
+            if self.consumer_receipt_directory is None:
+                raise ValueError(
+                    "cross-window COMPLETE q import requires a V31 consumer receipt directory"
+                )
+            expected_authorization = make_v31_q_csr_import_authorization(
+                q_index=q_index,
+                twist_index=twist_index,
+                profile=str(self.profile),
+                operator_identity=identity,
+                matrix_source_identity=matrix_source,
+                producer_identity=dict(manifest.get("producer_identity", {})),
+                producer_execution_identity=producer_execution,
+                native_execution_identity=native_execution or {},
+                csr_manifest_sha256=manifest_sha,
+                native_qualification_sha256=qualification_sha,
+                csr_artifacts={
+                    name: {
+                        "path": str(paths[name]),
+                        "bytes": int(records[name]["bytes"]),
+                        "sha256": str(records[name]["sha256"]),
+                    }
+                    for name in ("data", "indices", "indptr")
+                },
+                consumer_execution_identity=execution,
+            )
+            supplied_authorization = self.consumer_import_authorizations.get(str(q_index))
+            if supplied_authorization != expected_authorization:
+                raise ValueError(
+                    "cross-window COMPLETE q import lacks the exact approved V31 contract authorization"
+                )
+            consumer_payload = {
+                "schema": "task40extra.review_v31_q_csr_consumer_receipt.v1",
+                "status": "CONSUMED_COMPLETE_CSR_NATIVE_PASS",
+                "q_index": q_index,
+                "twist_index": twist_index,
+                "profile": self.profile,
+                "operator_identity": identity,
+                "matrix_source_identity": matrix_source,
+                "producer_identity": dict(manifest.get("producer_identity", {})),
+                "producer_execution_identity": producer_execution,
+                "native_execution_identity": native_execution,
+                "consumer_execution_identity": execution,
+                "csr_manifest": {"path": str(manifest_path), "sha256": manifest_sha},
+                "native_qualification": {
+                    "path": str(qualification_path),
+                    "sha256": qualification_sha,
+                    "status": "PASS",
+                },
+                "authorization": expected_authorization,
+                "authorization_sha256": hashlib.sha256(
+                    json.dumps(
+                        expected_authorization,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ).encode("utf-8")
+                ).hexdigest(),
+                "csr_artifacts": {
+                    name: {
+                        "path": str(paths[name]),
+                        "bytes": int(records[name]["bytes"]),
+                        "sha256": str(records[name]["sha256"]),
+                    }
+                    for name in ("data", "indices", "indptr")
+                },
+                "original_manifest_and_native_pass_rewritten": False,
+            }
+            identity_hash = hashlib.sha256(
+                json.dumps(
+                    {
+                        "manifest_sha256": manifest_sha,
+                        "native_qualification_sha256": qualification_sha,
+                        "consumer_execution_identity": execution,
+                        "authorization_sha256": consumer_payload["authorization_sha256"],
+                    },
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            ).hexdigest()
+            consumer_path = self.consumer_receipt_directory / (
+                f"task40_v31_q{q_index}_twist{twist_index}_consumer_{identity_hash}.json"
+            )
+            try:
+                _atomic_json_immutable(consumer_path, consumer_payload)
+                reopened_consumer = False
+            except FileExistsError:
+                saved_consumer = _read_json(consumer_path)
+                if saved_consumer != consumer_payload:
+                    raise ValueError("existing V31 q consumer receipt differs from this import")
+                reopened_consumer = True
+            consumer_digest = _sha256_file(consumer_path)
+            receipt["consumer_receipt"] = {
+                "path": str(consumer_path),
+                "sha256": consumer_digest,
+                "reopened": reopened_consumer,
+                "payload": consumer_payload,
+            }
         return matrix, receipt
 
     def _verify_legacy_q0(

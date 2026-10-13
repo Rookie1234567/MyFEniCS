@@ -1314,9 +1314,15 @@ def _exact_case(resolved: Mapping[str, Any]) -> tuple[str, str]:
         "task40_v30_q_csr_binding" in execution
         or "task40_v30_factor_bank_config" in execution
     )
+    v31_requested = (
+        "task40_v31_q_csr_binding" in execution
+        or "task40_v31_factor_bank_config" in execution
+    )
+    if v30_requested and v31_requested:
+        raise ValueError("V20 stage adapter cannot mix V30 and V31 execution metadata")
     expected_factor_lifecycle = (
         TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
-        if v30_requested
+        if v30_requested or v31_requested
         else TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
     )
     try:
@@ -1339,6 +1345,16 @@ def _exact_case(resolved: Mapping[str, Any]) -> tuple[str, str]:
                 or not execution.get("task40_target_heavy_authorized")
                 or not isinstance(execution.get("task40_v30_q_csr_binding"), Mapping)
                 or not isinstance(execution.get("task40_v30_factor_bank_config"), Mapping)
+            )
+        )
+        or (
+            v31_requested
+            and (
+                case.mesh_id != "TARGET_ORIGINAL_NY8"
+                or execution.get("task40_execution_stop_stage") != "full"
+                or not execution.get("task40_target_heavy_authorized")
+                or not isinstance(execution.get("task40_v31_q_csr_binding"), Mapping)
+                or not isinstance(execution.get("task40_v31_factor_bank_config"), Mapping)
             )
         )
         or execution.get("task40_execution_stop_stage") not in case.allowed_stop_stages
@@ -1380,6 +1396,19 @@ def _preflight(
         require_authorized_contract(
             os.environ.get("TASK40_V30_CONTRACT_PATH", ""),
             expected_sha256=os.environ.get("TASK40_V30_CONTRACT_SHA256"),
+            current_root=Path(__file__).resolve().parents[2],
+        )
+        expected_profile = "native_linux"
+    elif os.environ.get("TASK40_V31_STRICT_EXECUTION") == "1":
+        from src.runners.task40_v31_contract import (
+            qualified_activation_identity,
+            require_v31_execution_contract,
+        )
+
+        activation_identity = qualified_activation_identity(os.environ)
+        require_v31_execution_contract(
+            os.environ.get("TASK40_V31_CONTRACT_PATH", ""),
+            expected_sha256=os.environ.get("TASK40_V31_CONTRACT_SHA256"),
             current_root=Path(__file__).resolve().parents[2],
         )
         expected_profile = "native_linux"
@@ -4422,6 +4451,8 @@ def run_task40_v20_stage(
     source_sha: str,
     v30_requested_factor_lifecycle_strategy: str | None = None,
     v30_effective_factor_lifecycle_strategy: str | None = None,
+    v31_requested_factor_lifecycle_strategy: str | None = None,
+    v31_effective_factor_lifecycle_strategy: str | None = None,
 ) -> dict[str, Any]:
     """Run only the explicitly selected V20 stage, failing closed at each gate."""
 
@@ -4430,6 +4461,12 @@ def run_task40_v20_stage(
         "task40_v30_q_csr_binding" in execution
         or "task40_v30_factor_bank_config" in execution
     )
+    v31_requested = isinstance(execution, Mapping) and (
+        "task40_v31_q_csr_binding" in execution
+        or "task40_v31_factor_bank_config" in execution
+    )
+    if v30_requested and v31_requested:
+        raise ValueError("V20 stage cannot mix V30 and V31 lifecycle authorizations")
     if v30_requested:
         if (
             v30_requested_factor_lifecycle_strategy != "ONE_Q_REFACTOR_V19"
@@ -4438,11 +4475,25 @@ def run_task40_v20_stage(
             != v30_effective_factor_lifecycle_strategy
         ):
             raise ValueError("V30 stage requires the dispatcher-authorized V19-to-AllQ strategy binding")
+        route_requested_strategy = v30_requested_factor_lifecycle_strategy
+        route_effective_strategy = v30_effective_factor_lifecycle_strategy
+    elif v31_requested:
+        if (
+            v31_requested_factor_lifecycle_strategy != "ONE_Q_REFACTOR_V19"
+            or v31_effective_factor_lifecycle_strategy != "ALL_Q_RESIDENT"
+            or resolved_payload.get("solver", {}).get("task40_factor_lifecycle_strategy")
+            != v31_effective_factor_lifecycle_strategy
+        ):
+            raise ValueError("V31 stage requires the dispatcher-authorized V19-to-AllQ strategy binding")
+        route_requested_strategy = v31_requested_factor_lifecycle_strategy
+        route_effective_strategy = v31_effective_factor_lifecycle_strategy
     elif (
         v30_requested_factor_lifecycle_strategy is not None
         or v30_effective_factor_lifecycle_strategy is not None
+        or v31_requested_factor_lifecycle_strategy is not None
+        or v31_effective_factor_lifecycle_strategy is not None
     ):
-        raise ValueError("V30 factor-lifecycle binding is forbidden outside a V30 route")
+        raise ValueError("V30/V31 factor-lifecycle binding is forbidden outside its route")
 
     profile, mesh_id = _exact_case(resolved_payload)
     stop_stage = str(resolved_payload["execution"]["task40_execution_stop_stage"])
@@ -4451,10 +4502,12 @@ def run_task40_v20_stage(
     preflight, modes, mode_rows = _preflight(
         resolved_payload, source_sha=source_sha, profile=profile, mesh_id=mesh_id
     )
-    if v30_requested:
-        preflight["v30_factor_lifecycle_authority"] = {
-            "requested": v30_requested_factor_lifecycle_strategy,
-            "effective": v30_effective_factor_lifecycle_strategy,
+    if v30_requested or v31_requested:
+        preflight[
+            "v31_factor_lifecycle_authority" if v31_requested else "v30_factor_lifecycle_authority"
+        ] = {
+            "requested": route_requested_strategy,
+            "effective": route_effective_strategy,
         }
     _write_json(output_directory / "v20_stage_preflight.json", preflight)
     completed = ["preflight"]
@@ -4546,48 +4599,175 @@ def run_task40_v20_stage(
             stop_stage=stop_stage,
         )
 
-    v30_q_csr_binding = resolved_payload["execution"].get("task40_v30_q_csr_binding")
-    v30_factor_config = resolved_payload["execution"].get("task40_v30_factor_bank_config")
-    if v30_q_csr_binding is not None or v30_factor_config is not None:
+    execution_bindings = resolved_payload["execution"]
+    v30_q_csr_binding = execution_bindings.get("task40_v30_q_csr_binding")
+    v30_factor_config = execution_bindings.get("task40_v30_factor_bank_config")
+    v31_q_csr_binding = execution_bindings.get("task40_v31_q_csr_binding")
+    v31_factor_config = execution_bindings.get("task40_v31_factor_bank_config")
+    v31_route = os.environ.get("TASK40_V31_STRICT_EXECUTION") == "1"
+    v30_metadata = v30_q_csr_binding is not None or v30_factor_config is not None
+    v31_metadata = v31_q_csr_binding is not None or v31_factor_config is not None
+    if v30_metadata and v31_metadata:
+        raise ValueError("Task40 service route cannot mix V30 and V31 execution bindings")
+    if v30_metadata or v31_metadata:
+        selected_q_csr_binding = v31_q_csr_binding if v31_route else v30_q_csr_binding
+        selected_factor_config = v31_factor_config if v31_route else v30_factor_config
         if (
             mesh_id != "TARGET_ORIGINAL_NY8"
             or stop_stage != "full"
             or not resolved_payload["execution"].get("task40_target_heavy_authorized")
-            or not isinstance(v30_q_csr_binding, Mapping)
-            or not isinstance(v30_factor_config, Mapping)
+            or not isinstance(selected_q_csr_binding, Mapping)
+            or not isinstance(selected_factor_config, Mapping)
         ):
-            raise ValueError("V30 service route requires the exact authorized target full-stage package")
-        if os.environ.get("TASK40_V30_STRICT_EXECUTION") != "1":
-            raise RuntimeError("V30 worker route requires the approved V30 service contract")
-        from src.runners.task40_v30_contract import require_authorized_contract
+            raise ValueError("Task40 V30/V31 service route requires the exact authorized target full-stage package")
+        repo_root = Path(__file__).resolve().parents[2]
+        if v31_route:
+            if os.environ.get("TASK40_V30_STRICT_EXECUTION") == "1":
+                raise RuntimeError("V31 worker route cannot inherit V30 strict authorization")
+            from src.runners.task40_v31_contract import (
+                V31_Q_CSR_BINDING_SCHEMA,
+                V31_FACTOR_BANK_SCHEMA,
+                V31_WORKER_BINDING_SCHEMA,
+                require_v31_execution_contract,
+                v31_source_artifact_relative,
+            )
 
-        v30_contract_path = Path(os.environ.get("TASK40_V30_CONTRACT_PATH", ""))
-        v30_contract, v30_contract_sha = require_authorized_contract(
-            v30_contract_path,
-            expected_sha256=os.environ.get("TASK40_V30_CONTRACT_SHA256"),
-            current_root=Path(__file__).resolve().parents[2],
-        )
-        if (
-            v30_contract_sha != os.environ.get("TASK40_V30_CONTRACT_SHA256")
-            or os.environ.get("TASK40_V30_EXECUTION_WINDOW_SHA256")
-            != v30_contract["execution"]["campaign_window_sha256"]
-        ):
-            raise RuntimeError("V30 worker contract/window environment differs from the validated contract")
-        from src.runners.task40_v30_contract import (
-            V30_CANONICAL_INPUT_RELATIVE,
-            require_v30_input_identity,
-        )
+            v31_contract_path = Path(os.environ.get("TASK40_V31_CONTRACT_PATH", ""))
+            v31_contract, v31_contract_sha = require_v31_execution_contract(
+                v31_contract_path,
+                expected_sha256=os.environ.get("TASK40_V31_CONTRACT_SHA256"),
+                current_root=repo_root,
+            )
+            v31_execution = v31_contract["execution"]
+            v31_window = v31_execution["window"]
+            v31_resources = v31_execution["resources"]
+            if (
+                v31_contract_sha != os.environ.get("TASK40_V31_CONTRACT_SHA256")
+                or Path(str(v31_window["window_path"])).resolve()
+                != Path(os.environ.get("TASK40_V31_EXECUTION_WINDOW_PATH", "")).resolve()
+                or v31_window["window_sha256"]
+                != os.environ.get("TASK40_V31_EXECUTION_WINDOW_SHA256")
+                or str(v31_resources["task_memory_max_bytes"])
+                != os.environ.get("TASK40_V31_TASK_MEMORY_MAX_BYTES")
+                or str(v31_resources["host_reserve_bytes"])
+                != os.environ.get("TASK40_V31_HOST_RESERVE_BYTES")
+                or str(v31_resources["memory_swap_max_bytes"])
+                != os.environ.get("TASK40_V31_MEMORY_SWAP_MAX_BYTES")
+                or not isinstance(v31_q_csr_binding, Mapping)
+                or not isinstance(v31_factor_config, Mapping)
+                or Path(str(v31_execution["selector_path"])).resolve()
+                != Path(str(v31_q_csr_binding.get("selector_path", ""))).resolve()
+                or v31_execution["selector_sha256"]
+                != v31_q_csr_binding.get("selector_sha256")
+                or v31_q_csr_binding.get("schema") != V31_Q_CSR_BINDING_SCHEMA
+                or v31_factor_config.get("schema") != V31_FACTOR_BANK_SCHEMA
+            ):
+                raise RuntimeError("V31 worker contract, selector, fixed window, or resource environment differs")
+            source_root = (
+                repo_root
+                / v31_source_artifact_relative(str(v31_execution["run_source_sha"]))
+            ).resolve()
+            expected_v31_factor_config = {
+                "schema": V31_FACTOR_BANK_SCHEMA,
+                "output_directory": (
+                    v31_source_artifact_relative(str(v31_execution["run_source_sha"]))
+                    / "factor_bank"
+                ).as_posix(),
+                "require_two_strict_rhs": True,
+                "second_rhs_formula": "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13",
+            }
+            if dict(v31_factor_config) != expected_v31_factor_config:
+                raise RuntimeError("V31 stage DAT factor-bank binding differs from its source-qualified contract")
+            v31_binding = {
+                "schema": V31_WORKER_BINDING_SCHEMA,
+                "contract_path": str(v31_contract_path.resolve()),
+                "contract_sha256": v31_contract_sha,
+                "execution_window_path": str(Path(str(v31_window["window_path"])).resolve()),
+                "execution_window_sha256": str(v31_window["window_sha256"]),
+                "source_at_entry": str(v31_window["source_at_entry"]),
+                "run_source_sha": str(v31_execution["run_source_sha"]),
+                "q_csr_selector_binding": {
+                    "schema": V31_Q_CSR_BINDING_SCHEMA,
+                    "selector_path": str(Path(str(v31_execution["selector_path"])).resolve()),
+                    "selector_sha256": str(v31_execution["selector_sha256"]),
+                },
+                "factor_bank_config": {
+                    "schema": V31_FACTOR_BANK_SCHEMA,
+                    "output_directory": str(source_root / "factor_bank"),
+                    "require_two_strict_rhs": True,
+                    "second_rhs_formula": "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13",
+                },
+                "accepted_q0_donor": dict(v31_contract["preparation"]["accepted_q0_donor"]),
+                "q_csr_worklist": list(v31_contract["preparation"]["q_csr_worklist"]),
+                "q_csr_import_authorizations": dict(
+                    resolved_payload["execution"].get(
+                        "task40_v31_q_csr_import_authorizations", {}
+                    )
+                ),
+                "target_admission_policy": dict(
+                    resolved_payload["execution"].get(
+                        "task40_v31_target_admission_policy",
+                        {
+                            "schema": "task40extra.review_v31_target_admission.v1",
+                            "phase": "REFERENCE_ONLY",
+                        },
+                    )
+                ),
+            }
+            v30_contract = None
+            v30_contract_sha = None
+            v30_input_identity = None
+        else:
+            if v31_q_csr_binding is not None or v31_factor_config is not None:
+                raise RuntimeError("V30 worker route cannot inherit V31 execution bindings")
+            if os.environ.get("TASK40_V30_STRICT_EXECUTION") != "1":
+                raise RuntimeError("V30 worker route requires the approved V30 service contract")
+            from src.runners.task40_v30_contract import require_authorized_contract
 
+            v30_contract_path = Path(os.environ.get("TASK40_V30_CONTRACT_PATH", ""))
+            v30_contract, v30_contract_sha = require_authorized_contract(
+                v30_contract_path,
+                expected_sha256=os.environ.get("TASK40_V30_CONTRACT_SHA256"),
+                current_root=repo_root,
+            )
+            if (
+                v30_contract_sha != os.environ.get("TASK40_V30_CONTRACT_SHA256")
+                or os.environ.get("TASK40_V30_EXECUTION_WINDOW_SHA256")
+                != v30_contract["execution"]["campaign_window_sha256"]
+            ):
+                raise RuntimeError("V30 worker contract/window environment differs from the validated contract")
+            v31_binding = None
         provenance = resolved_payload.get("provenance", {})
         if not isinstance(provenance, Mapping) or not provenance.get("source_path"):
-            raise ValueError("V30 stage runner lacks the staged input provenance")
-        v30_input_identity = require_v30_input_identity(
-            Path(__file__).resolve().parents[2] / V30_CANONICAL_INPUT_RELATIVE,
-            str(provenance["source_path"]),
-            repo_root=Path(__file__).resolve().parents[2],
-        )
-        if v30_input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
-            raise ValueError("V30 stage runner raw stage SHA differs from its provenance")
+            raise ValueError("V30/V31 stage runner lacks the staged input provenance")
+        if v31_route:
+            from src.runners.task40_v31_contract import require_v31_input_identity
+            from src.runners.task40_v30_contract import V30_CANONICAL_INPUT_RELATIVE
+
+            v31_input_identity = require_v31_input_identity(
+                repo_root / V30_CANONICAL_INPUT_RELATIVE,
+                str(provenance["source_path"]),
+                repo_root=repo_root,
+                source_sha=str(v31_contract["source_freeze"]["source_sha"]),
+                selector_sha256=str(v31_q_csr_binding["selector_sha256"]),
+            )
+            if v31_input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
+                raise ValueError("V31 stage runner raw stage SHA differs from its provenance")
+            stage_input_identity = v31_input_identity
+        else:
+            from src.runners.task40_v30_contract import (
+                V30_CANONICAL_INPUT_RELATIVE,
+                require_v30_input_identity,
+            )
+
+            v30_input_identity = require_v30_input_identity(
+                repo_root / V30_CANONICAL_INPUT_RELATIVE,
+                str(provenance["source_path"]),
+                repo_root=repo_root,
+            )
+            if v30_input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
+                raise ValueError("V30 stage runner raw stage SHA differs from its provenance")
+            stage_input_identity = v30_input_identity
         from src.runners.task40_v10_worker import run_task40_v10_p6_reference_worker
 
         try:
@@ -4597,74 +4777,145 @@ def run_task40_v20_stage(
                 source_sha=source_sha,
                 profile_identity=profile,
                 share_transform_bank=True,
-                v30_q_csr_binding=v30_q_csr_binding,
-                v30_factor_config=v30_factor_config,
+                v30_q_csr_binding=(v30_q_csr_binding if not v31_route else None),
+                v30_factor_config=(v30_factor_config if not v31_route else None),
                 v30_requested_factor_lifecycle_strategy=(
-                    v30_requested_factor_lifecycle_strategy
+                    route_requested_strategy
                 ),
                 v30_effective_factor_lifecycle_strategy=(
-                    v30_effective_factor_lifecycle_strategy
+                    route_effective_strategy
                 ),
+                v31_target_admission_policy=(
+                    resolved_payload["execution"].get(
+                        "task40_v31_target_admission_policy"
+                    )
+                ),
+                v31_q_csr_import_authorizations=(
+                    v31_binding["q_csr_import_authorizations"]
+                    if v31_route
+                    else None
+                ),
+                v31_q_csr_binding=(v31_q_csr_binding if v31_route else None),
+                v31_factor_config=(
+                    v31_binding["factor_bank_config"] if v31_route else None
+                ),
+                v31_execution_binding=v31_binding,
             )
             receipt = {
-                "schema": "task40extra.review_v30_worker_service_receipt.v1",
+                "schema": (
+                    "task40extra.review_v31_worker_service_receipt.v1"
+                    if v31_route
+                    else "task40extra.review_v30_worker_service_receipt.v1"
+                ),
                 "status": str(worker_result.get("status", "completed")),
                 "requested_stage": stop_stage,
                 "profile": profile,
                 "run_id": preflight["run_id"],
                 "source_sha": source_sha,
                 "input_sha256": preflight["input_sha256"],
-                "scientific_input_sha256": v30_input_identity["scientific_input_sha256"],
-                "staged_input_sha256": v30_input_identity["staged_input_sha256"],
-                "v30_input_identity": dict(v30_input_identity),
-                "q_csr_selector": dict(v30_q_csr_binding),
-                "factor_bank_schema": v30_factor_config.get("schema"),
+                "scientific_input_sha256": stage_input_identity["scientific_input_sha256"],
+                "staged_input_sha256": stage_input_identity["staged_input_sha256"],
+                **(
+                    {
+                        "v31_input_identity": dict(stage_input_identity),
+                        "v31_worker_binding": {
+                            key: value
+                            for key, value in v31_binding.items()
+                            if key not in {"accepted_q0_donor", "q_csr_import_authorizations"}
+                        },
+                        "accepted_q0_donor_identity_sha256": str(
+                            v31_binding["accepted_q0_donor"].get("identity_sha256", "")
+                        ),
+                        "q_worklist": list(v31_binding["q_csr_worklist"]),
+                        "factor_bank_schema": v31_binding["factor_bank_config"]["schema"],
+                    }
+                    if v31_route
+                    else {
+                        "v30_input_identity": dict(stage_input_identity),
+                        "q_csr_selector": dict(v30_q_csr_binding),
+                        "factor_bank_schema": v30_factor_config.get("schema"),
+                    }
+                ),
                 "factor_lifecycle_strategy": {
-                    "requested": v30_requested_factor_lifecycle_strategy,
-                    "effective": v30_effective_factor_lifecycle_strategy,
+                    "requested": route_requested_strategy,
+                    "effective": route_effective_strategy,
                 },
-                "execution_contract_path": str(v30_contract_path.resolve()),
-                "execution_contract_sha256": v30_contract_sha,
-                "execution_window_sha256": str(
-                    v30_contract["execution"]["campaign_window_sha256"]
-                ),
-                "accepted_q0_donor_identity_sha256": str(
-                    v30_contract["preparation"]["accepted_q0_donor"]["identity_sha256"]
-                ),
-                "pending_q_csr_worklist": list(
-                    v30_contract["preparation"]["q_csr_worklist"]
-                ),
-                "final_all_q_selector_required_at": str(
-                    v30_contract["preparation"]["final_all_q_selector_required_at"]
+                **(
+                    {
+                        "execution_contract_path": str(v31_contract_path.resolve()),
+                        "execution_contract_sha256": v31_contract_sha,
+                        "execution_window_sha256": v31_binding["execution_window_sha256"],
+                        "source_at_entry": v31_binding["source_at_entry"],
+                        "run_source_sha": v31_binding["run_source_sha"],
+                        "official_result": False,
+                    }
+                    if v31_route
+                    else {
+                        "execution_contract_path": str(v30_contract_path.resolve()),
+                        "execution_contract_sha256": v30_contract_sha,
+                        "execution_window_sha256": str(
+                            v30_contract["execution"]["campaign_window_sha256"]
+                        ),
+                        "accepted_q0_donor_identity_sha256": str(
+                            v30_contract["preparation"]["accepted_q0_donor"]["identity_sha256"]
+                        ),
+                        "pending_q_csr_worklist": list(
+                            v30_contract["preparation"]["q_csr_worklist"]
+                        ),
+                        "final_all_q_selector_required_at": str(
+                            v30_contract["preparation"]["final_all_q_selector_required_at"]
+                        ),
+                    }
                 ),
                 "worker_status": worker_result.get("status"),
                 "official_result": bool(worker_result.get("official_result", False)),
             }
         except BaseException as error:
             receipt = {
-                "schema": "task40extra.review_v30_worker_service_receipt.v1",
+                "schema": (
+                    "task40extra.review_v31_worker_service_receipt.v1"
+                    if v31_route
+                    else "task40extra.review_v30_worker_service_receipt.v1"
+                ),
                 "status": "failed",
                 "requested_stage": stop_stage,
                 "profile": profile,
                 "run_id": preflight["run_id"],
                 "source_sha": source_sha,
                 "input_sha256": preflight["input_sha256"],
-                "scientific_input_sha256": v30_input_identity["scientific_input_sha256"],
-                "staged_input_sha256": v30_input_identity["staged_input_sha256"],
-                "v30_input_identity": dict(v30_input_identity),
-                "q_csr_selector": dict(v30_q_csr_binding),
+                "scientific_input_sha256": stage_input_identity["scientific_input_sha256"],
+                "staged_input_sha256": stage_input_identity["staged_input_sha256"],
+                **(
+                    {"v31_input_identity": dict(stage_input_identity)}
+                    if v31_route
+                    else {
+                        "v30_input_identity": dict(stage_input_identity),
+                        "q_csr_selector": dict(v30_q_csr_binding),
+                    }
+                ),
                 "factor_lifecycle_strategy": {
-                    "requested": v30_requested_factor_lifecycle_strategy,
-                    "effective": v30_effective_factor_lifecycle_strategy,
+                    "requested": route_requested_strategy,
+                    "effective": route_effective_strategy,
                 },
                 "failure_type": type(error).__name__,
                 "failure_message": str(error),
                 "official_result": False,
             }
-            _write_json(output_directory / "v30_worker_service_receipt.json", receipt)
+            _write_json(
+                output_directory
+                / ("v31_worker_service_receipt.json" if v31_route else "v30_worker_service_receipt.json"),
+                receipt,
+            )
             raise
-        _write_json(output_directory / "v30_worker_service_receipt.json", receipt)
-        return {**dict(worker_result), "v30_service_receipt": receipt}
+        _write_json(
+            output_directory
+            / ("v31_worker_service_receipt.json" if v31_route else "v30_worker_service_receipt.json"),
+            receipt,
+        )
+        return {
+            **dict(worker_result),
+            ("v31_service_receipt" if v31_route else "v30_service_receipt"): receipt,
+        }
 
     if profile == _V22_TARGET_OPERATOR_PROFILE and stop_stage == "target_operator_probe":
         from src.solvers.task40_v22_operator_probe import (

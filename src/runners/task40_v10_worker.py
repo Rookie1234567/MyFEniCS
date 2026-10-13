@@ -16,7 +16,7 @@ import sys
 import time
 import copy
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 import numpy as np
 
@@ -37,21 +37,34 @@ def _task40_v30_q_csr_provider(
     *,
     repo_root: str | Path,
     allocation_gate: Any,
+    consumer_receipt_directory: str | Path | None = None,
+    consumer_import_authorizations: Mapping[str, Mapping[str, Any]] | None = None,
 ):
     if binding is None:
         return None
+    is_v31 = isinstance(binding, Mapping) and binding.get("schema") == (
+        "task40extra.review_v31_q_csr_worker_binding.v1"
+    )
+    expected_schema = (
+        "task40extra.review_v31_q_csr_worker_binding.v1"
+        if is_v31
+        else "task40extra.review_v30_q_csr_worker_binding.v1"
+    )
     if (
         not isinstance(binding, Mapping)
-        or binding.get("schema") != "task40extra.review_v30_q_csr_worker_binding.v1"
+        or binding.get("schema") != expected_schema
         or set(binding) != {"schema", "selector_path", "selector_sha256"}
     ):
-        raise ValueError("V30 worker needs the exact frozen q-CSR selector binding")
+        raise ValueError("Task40 worker needs the exact frozen q-CSR selector binding")
     root = Path(repo_root).resolve()
     selector = Path(str(binding["selector_path"]))
     if not selector.is_absolute():
         selector = root / selector
     selector = selector.resolve()
     artifact_roots = (
+        (
+            root / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native"
+        ).resolve(),
         (root / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl").resolve(),
         (root / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation").resolve(),
     )
@@ -67,6 +80,8 @@ def _task40_v30_q_csr_provider(
         repo_root=root,
         path_resolver=path_resolver,
         allocation_gate=allocation_gate,
+        consumer_receipt_directory=consumer_receipt_directory,
+        consumer_import_authorizations=consumer_import_authorizations,
     )
 
 
@@ -95,12 +110,13 @@ def _task40_v30_open_saved_q4_source(
     contract: Mapping[str, Any],
     repo_root: str | Path,
     profile: Any,
-    current_q0_map: Any,
-    current_q4_map: Any,
-    current_local_h: np.ndarray,
+    current_q0_map: Any | None = None,
+    current_q4_map: Any | None = None,
+    current_local_h: np.ndarray | None = None,
     allocation_gate: Any,
-) -> tuple[Any, Any, dict[str, Any]]:
-    """Open the hash-bound twist-0 V25 producer stream for a distinct q4 CSR."""
+    return_saved_inputs: bool = False,
+) -> Any:
+    """Open the accepted twist-0 donor, optionally binding its later live owner."""
     from scipy import sparse
     from src.runners.task40_v29_contract import sha256_file
     from src.runners.task40_v10_campaign import TASK40_V25_CAMPAIGN_SHA256
@@ -199,24 +215,43 @@ def _task40_v30_open_saved_q4_source(
             raise ValueError(f"V30 accepted q4 producer payload changed: {name}")
         paths[name] = path
 
+    q0_map = sparse.load_npz(paths["v25_selected_q0_map.npz"]).tocsr()
     q4_map = sparse.load_npz(paths["v25_selected_q4_map.npz"]).tocsr()
-    if _csr_sha256(q4_map) != _csr_sha256(current_q4_map):
-        raise ValueError("saved q4 map differs from this live twist-0 branch map")
     saved_h = np.load(paths["v25_selected_q0_local_H_p.npy"], mmap_mode="r", allow_pickle=False)
-    expected_h = np.asarray(current_local_h, dtype=np.complex128)
-    if saved_h.dtype != np.dtype(np.complex128) or not np.array_equal(saved_h, expected_h):
-        raise ValueError("saved twist-0 H differs from the live sector's original H")
     active_lookup = np.load(
         paths["v25_selected_q0_original_to_active_int32.npy"],
         mmap_mode="r",
         allow_pickle=False,
     )
+    live_values = (current_q0_map, current_q4_map, current_local_h)
+    if any(value is not None for value in live_values) and not all(
+        value is not None for value in live_values
+    ):
+        raise ValueError("saved q4 live binding must compare q0 map, q4 map, and original H together")
+    if current_q0_map is not None and _csr_sha256(q0_map) != _csr_sha256(current_q0_map):
+        raise ValueError("saved q0 map differs from this live twist-0 branch map")
+    if current_q4_map is not None and _csr_sha256(q4_map) != _csr_sha256(current_q4_map):
+        raise ValueError("saved q4 map differs from this live twist-0 branch map")
+    if saved_h.dtype != np.dtype(np.complex128) or saved_h.ndim != 1 or not np.isfinite(saved_h).all():
+        raise ValueError("saved twist-0 original H is not finite complex128")
+    if (
+        q0_map.shape[0] != q4_map.shape[0]
+        or q0_map.shape[1] != int(profile.trace_rows_per_q) + int(profile.q_port_counts[0])
+        or q4_map.shape[1] != int(profile.trace_rows_per_q) + int(profile.q_port_counts[4])
+        or active_lookup.dtype != np.dtype(np.int32)
+        or active_lookup.ndim != 1
+    ):
+        raise ValueError("saved twist-0 q maps or active lookup differ from the frozen profile")
+    if current_local_h is not None and not np.array_equal(
+        saved_h, np.asarray(current_local_h, dtype=np.complex128)
+    ):
+        raise ValueError("saved twist-0 H differs from the live sector's original H")
     source = SavedQ0ContributionAdapter(
         volume_stream_path=paths["v25_selected_q0_volume_classes.bin"],
         surface_stream_path=paths["v25_selected_q0_surface_functionals.bin"],
         active_lookup=active_lookup,
         local_h=saved_h,
-        q0_map=current_q0_map,
+        q0_map=q0_map,
         active_rows=int(profile.local_trace_rows),
         q0_trace_rows=int(profile.trace_rows_per_q),
         q0_port_rows=int(profile.q_port_counts[0]),
@@ -233,7 +268,583 @@ def _task40_v30_open_saved_q4_source(
         "payload_sha256": {name: payloads[name]["sha256"] for name in sorted(required_names)},
         "q4_map_sha256": _csr_sha256(q4_map),
     }
+    result = {
+        "source": source,
+        "q0_map": q0_map,
+        "q4_map": q4_map,
+        "original_h": saved_h,
+        "active_lookup": active_lookup,
+        "producer_facts": producer_facts,
+    }
+    if return_saved_inputs:
+        return result
     return source, q4_map, producer_facts
+
+
+def _task40_v31_build_reference_after_q4_pending(
+    *,
+    prepare_saved_q4: Callable[[], Mapping[str, Any]] | None,
+    build_reference: Callable[..., Any],
+    prepare_twist0_owner: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
+) -> tuple[Any, Mapping[str, Any] | None]:
+    """Persist q4, then build and hand off its local owner before global FE."""
+    pending = prepare_saved_q4() if prepare_saved_q4 is not None else None
+    if pending is not None and pending.get("status") != "NUMERIC_COMPLETE_NATIVE_PENDING":
+        raise ValueError("V31 saved-first q4 boundary requires a numeric-pending result")
+    local_owner = (
+        prepare_twist0_owner(pending)
+        if pending is not None and prepare_twist0_owner is not None
+        else None
+    )
+    if local_owner is not None:
+        return build_reference(pending, local_owner), pending
+    return build_reference(pending), pending
+
+
+def _task40_v31_apply_local_owner_cleanup_failure(
+    summary: dict[str, Any],
+    worker_result: dict[str, Any] | None,
+    cleanup_facts: Mapping[str, Any],
+) -> None:
+    """Make an unverified twist-0 release a failed worker/checker result."""
+    error = cleanup_facts.get("error", {})
+    message = str(error.get("message", "V31 twist-0 local owner cleanup failed"))
+    summary["v31_twist0_local_owner_cleanup"] = dict(cleanup_facts)
+    summary["status"] = "FAILED"
+    summary["official_result"] = False
+    summary["result_classification"] = "WORKER_CLEANUP_FAILED"
+    summary.setdefault("cleanup_errors", []).append(dict(error))
+    if worker_result is not None:
+        worker_result["passed"] = False
+        worker_result["status"] = "failed"
+        errors = list(worker_result.get("errors", ()))
+        if message not in errors:
+            errors.append(message)
+        worker_result["errors"] = errors
+        worker_result["summary"] = summary
+
+
+def _task40_v31_bind_saved_q4_to_live(
+    saved_donor: Mapping[str, Any],
+    *,
+    current_q0_map: Any,
+    current_q4_map: Any,
+    current_local_h: np.ndarray,
+    current_trace_constraints: Any,
+    current_full_rows: int,
+    allocation_gate: Callable[[str, Mapping[str, Any]], Any],
+) -> dict[str, Any]:
+    """Bind saved maps/H/lookup to the later sector owner with a bounded lookup scan."""
+    from src.solvers.task40_v30_qualified_q_csr import _csr_sha256
+
+    q0_map = saved_donor.get("q0_map")
+    q4_map = saved_donor.get("q4_map")
+    saved_h = saved_donor.get("original_h")
+    active_lookup = saved_donor.get("active_lookup")
+    trace_constraints = current_trace_constraints
+    if (
+        q0_map is None or q4_map is None or saved_h is None
+        or _csr_sha256(q0_map) != _csr_sha256(current_q0_map)
+        or _csr_sha256(q4_map) != _csr_sha256(current_q4_map)
+        or not np.array_equal(np.asarray(saved_h), np.asarray(current_local_h, dtype=np.complex128))
+    ):
+        raise ValueError("saved q4 donor differs from the later live q0/q4 map or original H")
+    original_to_active = getattr(trace_constraints, "original_to_active", None)
+    if (
+        not isinstance(active_lookup, np.ndarray)
+        or active_lookup.dtype != np.dtype(np.int32)
+        or active_lookup.ndim != 1
+        or type(current_full_rows) is not int
+        or len(active_lookup) != current_full_rows
+        or not isinstance(original_to_active, Mapping)
+    ):
+        raise ValueError("saved q4 active lookup cannot be bound to the live trace constraints")
+    allocation_gate(
+        "task40_v31_q4_saved_live_lookup_binding",
+        {
+            "additional_payload_bytes": 0,
+            "workspace_bytes": 1 * 1024**2,
+            "lookup_length": int(len(active_lookup)),
+            "mapping_entries": int(len(original_to_active)),
+            "bounded_chunk_rows": 1 << 20,
+        },
+    )
+    nonnegative_count = 0
+    for start in range(0, len(active_lookup), 1 << 20):
+        values = active_lookup[start : start + (1 << 20)]
+        if np.any(values < -1):
+            raise ValueError("saved q4 active lookup contains a value below the inactive sentinel")
+        nonnegative_count += int(np.count_nonzero(values >= 0))
+    if nonnegative_count != len(original_to_active):
+        raise ValueError("saved q4 active lookup cardinality differs from live trace constraints")
+    for original, active in original_to_active.items():
+        original = int(original)
+        if (
+            original < 0 or original >= len(active_lookup)
+            or int(active_lookup[original]) != int(active)
+        ):
+            raise ValueError("saved q4 active lookup differs from live original-to-active numbering")
+    return {
+        "saved_q0_map_sha256": _csr_sha256(q0_map),
+        "saved_q4_map_sha256": _csr_sha256(q4_map),
+        "saved_original_h_sha256": hashlib.sha256(
+            np.ascontiguousarray(np.asarray(saved_h, dtype=np.complex128)).view(np.uint8)
+        ).hexdigest(),
+        "saved_active_lookup_sha256": saved_donor.get("producer_facts", {})
+        .get("payload_sha256", {})
+        .get("v25_selected_q0_original_to_active_int32.npy"),
+        "active_lookup_entries": nonnegative_count,
+        "live_full_rows": current_full_rows,
+        "live_lookup_binding_passed": True,
+        "live_map_and_h_binding_passed": True,
+    }
+
+
+_TASK40_V31_TARGET_OWNER_COMPONENTS = ("mesh_mpc", "local_lu", "cache", "carrier")
+
+
+def _task40_v31_target_owner_inventory_total(
+    inventory: Mapping[str, Any], *, measured_only: bool, allow_unknown: bool = False
+) -> tuple[dict[str, dict[str, Any]], int]:
+    """Require an explicit, evidence-bound byte count for every target owner."""
+    if not isinstance(inventory, Mapping) or set(inventory) != set(
+        _TASK40_V31_TARGET_OWNER_COMPONENTS
+    ):
+        raise ValueError("V31 target owner inventory must close mesh_mpc/local_lu/cache/carrier")
+    normalized: dict[str, dict[str, Any]] = {}
+    total = 0
+    for component in _TASK40_V31_TARGET_OWNER_COMPONENTS:
+        row = inventory[component]
+        if not isinstance(row, Mapping):
+            raise ValueError(f"V31 target owner inventory component {component} is UNKNOWN")
+        byte_count = row.get("bytes")
+        status = row.get("status")
+        owner_id = row.get("owner_id")
+        evidence = row.get("evidence")
+        if status == "unknown" and allow_unknown:
+            if (
+                byte_count is not None
+                or not isinstance(owner_id, str)
+                or not owner_id.strip()
+                or not isinstance(evidence, str)
+                or not evidence.strip()
+            ):
+                raise ValueError(
+                    f"V31 unknown target owner {component} must retain null bytes and evidence"
+                )
+            normalized[component] = {
+                "bytes": None,
+                "status": "unknown",
+                "owner_id": owner_id,
+                "evidence": evidence,
+            }
+            continue
+        if (
+            type(byte_count) is not int
+            or byte_count < 0
+            or status not in ({"measured"} if measured_only else {"measured", "derived"})
+            or not isinstance(owner_id, str)
+            or not owner_id.strip()
+            or not isinstance(evidence, str)
+            or not evidence.strip()
+        ):
+            raise ValueError(
+                f"V31 target owner inventory component {component} lacks a closed byte/status/owner/evidence record"
+            )
+        alias_of = row.get("alias_of")
+        if byte_count == 0 and (not isinstance(alias_of, str) or not alias_of.strip()):
+            raise ValueError(
+                f"V31 zero-byte target owner {component} requires explicit alias_of evidence"
+            )
+        normalized[component] = {
+            "bytes": byte_count,
+            "status": status,
+            "owner_id": owner_id,
+            "evidence": evidence,
+            **({"alias_of": alias_of} if alias_of is not None else {}),
+        }
+        total += byte_count
+    return normalized, total
+
+
+def _task40_v31_reference_only_allq_callback(
+    facts: Mapping[str, Any], *, expected_q_count: int
+) -> dict[str, Any]:
+    """Validate the closed eight-q reference budget while target owners stay unknown."""
+    if expected_q_count != 8:
+        raise ValueError("V31 REFERENCE_ONLY admission is restricted to the frozen eight-q profile")
+    estimates = facts.get("q_symbolic_estimates_bytes")
+    if not isinstance(estimates, Mapping):
+        raise ValueError("V31 REFERENCE_ONLY lacks per-q symbolic estimates")
+    normalized_estimates: dict[int, int] = {}
+    for raw_q, raw_bytes in estimates.items():
+        try:
+            q = int(raw_q)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("V31 symbolic q estimate key is not an integer") from exc
+        if q in normalized_estimates or type(raw_bytes) is not int or raw_bytes < 0:
+            raise ValueError("V31 symbolic q estimate inventory is duplicated or invalid")
+        normalized_estimates[q] = raw_bytes
+    stated_symbolic_sum = facts.get("all_q_symbolic_estimate_sum_bytes")
+    if (
+        set(normalized_estimates) != set(range(expected_q_count))
+        or facts.get("all_q_symbolic_q_completed") is not True
+        or type(stated_symbolic_sum) is not int
+        or stated_symbolic_sum != sum(normalized_estimates.values())
+    ):
+        raise ValueError("V31 REFERENCE_ONLY requires all eight matching symbolic estimates")
+    reference_rows = facts.get("reference_full_storage_rows")
+    recovery_rows = facts.get("full_storage_rows_for_future_recovery")
+    planned_rows = facts.get("planned_target_full_storage_rows")
+    if (
+        type(reference_rows) is not int
+        or reference_rows <= 0
+        or type(recovery_rows) is not int
+        or recovery_rows != reference_rows
+        or type(planned_rows) is not int
+        or planned_rows <= 0
+        or facts.get("actual_target_full_storage_rows") is not None
+        or facts.get("actual_target_rows_match_reference") is not False
+        or facts.get("target_budget_status") != "PLANNED_ROWS_RESERVED_ACTUAL_NOT_BUILT"
+    ):
+        raise ValueError("V31 REFERENCE_ONLY must budget reference rows and keep target rows plan-only")
+    unknown_owners = facts.get("target_owner_increment_inventory")
+    if not isinstance(unknown_owners, Mapping) or set(unknown_owners) != set(
+        _TASK40_V31_TARGET_OWNER_COMPONENTS
+    ) or any(unknown_owners[name] is not None for name in _TASK40_V31_TARGET_OWNER_COMPONENTS):
+        raise ValueError("V31 REFERENCE_ONLY target owner increments must remain explicitly UNKNOWN")
+    output_inventory = facts.get("pre_release_recovery_output_inventory")
+    if (
+        not isinstance(output_inventory, Mapping)
+        or output_inventory.get("reference_full_storage_rows") != reference_rows
+        or output_inventory.get("planned_target_full_storage_rows") != planned_rows
+        or output_inventory.get("actual_target_full_storage_rows") is not None
+        or output_inventory.get("actual_target_and_reference_full_rows_match") is not False
+        or output_inventory.get("actual_target_and_reference_full_rows_match_required") is not False
+    ):
+        raise ValueError("V31 REFERENCE_ONLY recovery inventory must retain an unknown target")
+    ksp_bytes = facts.get("future_retained_krylov_and_vector_bytes")
+    inverse_payload_bytes = facts.get("future_inverse_payload_bytes")
+    inverse_workspace_bytes = facts.get("future_inverse_single_operation_workspace_bytes")
+    recovery_output_bytes = facts.get("future_full_p6_pre_release_recovery_output_bytes")
+    selected_phase_bytes = facts.get("selected_future_nonfactor_co_resident_peak_bytes")
+    if any(
+        type(value) is not int or value < 0
+        for value in (
+            ksp_bytes,
+            inverse_payload_bytes,
+            inverse_workspace_bytes,
+            recovery_output_bytes,
+            selected_phase_bytes,
+        )
+    ):
+        raise ValueError("V31 REFERENCE_ONLY future reference workspace inventory is incomplete")
+    if output_inventory.get("pre_release_peak_bytes") != recovery_output_bytes:
+        raise ValueError("V31 REFERENCE_ONLY recovery output bytes differ from its inventory")
+    expected_phase = max(
+        ksp_bytes + inverse_workspace_bytes,
+        recovery_output_bytes + inverse_workspace_bytes,
+    )
+    if (
+        selected_phase_bytes != expected_phase
+        or facts.get("future_ksp_plus_inverse_workspace_bytes")
+        != ksp_bytes + inverse_workspace_bytes
+        or facts.get("future_full_output_plus_inverse_workspace_bytes")
+        != recovery_output_bytes + inverse_workspace_bytes
+        or facts.get("future_inverse_payload_plus_selected_phase_bytes")
+        != inverse_payload_bytes + selected_phase_bytes
+    ):
+        raise ValueError("V31 REFERENCE_ONLY co-resident reference budget does not close")
+    future_components = {
+        "mumps_symbolic_estimate_sum_bytes": sum(normalized_estimates.values()),
+        "persistent_pending_transform_inverse_payload_bytes": inverse_payload_bytes,
+        "selected_maximum_co_resident_phase_bytes": selected_phase_bytes,
+    }
+    return {
+        "schema": "task40extra.review_v31_target_admission.v1",
+        "phase": "REFERENCE_ONLY",
+        "status": "REFERENCE_INVENTORY_READY",
+        "q_symbolic_estimates_bytes": {
+            str(q): normalized_estimates[q] for q in range(expected_q_count)
+        },
+        "future_reserve_components": future_components,
+        "future_reserve_bytes": sum(future_components.values()),
+        "reference_full_storage_rows": reference_rows,
+        "planned_target_full_storage_rows": planned_rows,
+        "actual_target_full_storage_rows": None,
+        "target_owner_increment_inventory": {
+            name: None for name in _TASK40_V31_TARGET_OWNER_COMPONENTS
+        },
+        "target_build_admitted": False,
+        "target_ready": False,
+    }
+
+
+def _task40_v31_target_build_admission(
+    reference_admission: Mapping[str, Any] | None,
+    target_owner_inventory: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Reserve a fully described target increment before the target mesh is built."""
+    if (
+        not isinstance(reference_admission, Mapping)
+        or reference_admission.get("phase") != "REFERENCE_ONLY"
+        or reference_admission.get("status") != "ADMITTED_REFERENCE_ONLY"
+        or reference_admission.get("target_build_admitted") is not False
+    ):
+        raise ValueError("V31 TARGET_BUILD requires a prior REFERENCE_ONLY admission")
+    if target_owner_inventory is None:
+        raise ValueError("V31 TARGET_BUILD is blocked while target owner increments are UNKNOWN")
+    normalized, total = _task40_v31_target_owner_inventory_total(
+        target_owner_inventory, measured_only=False
+    )
+    return {
+        "schema": "task40extra.review_v31_target_admission.v1",
+        "phase": "TARGET_BUILD",
+        "status": "TARGET_BUILD_INVENTORY_READY",
+        "reference_full_storage_rows": reference_admission["reference_full_storage_rows"],
+        "planned_target_full_storage_rows": reference_admission[
+            "planned_target_full_storage_rows"
+        ],
+        "actual_target_full_storage_rows": None,
+        "target_owner_increment_inventory": normalized,
+        "reserved_target_owner_increment_bytes": total,
+        "target_build_admitted": False,
+        "target_ready": False,
+    }
+
+
+def _task40_v31_reference_future_reserve(
+    reference_owner: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Recompute only still-future reference/PC work from the live owner inventories."""
+    if not isinstance(reference_owner, Mapping):
+        raise ValueError("V31 target readiness requires the live reference owner")
+    factors = reference_owner.get("factors")
+    layout = reference_owner.get("full_layout")
+    if factors is None or layout is None:
+        raise ValueError("V31 live reference owner lacks factors or full layout")
+    factor_audit = factors.audit
+    if (
+        not isinstance(factor_audit, Mapping)
+        or factor_audit.get("all_q_factors_retained_simultaneously") is not True
+        or factor_audit.get("all_q_numeric_factors_true_residual_passed") is not True
+    ):
+        raise ValueError("V31 future reserve requires all qualified numeric factors live")
+    row_counts = tuple(getattr(factors, "row_counts", ()))
+    if len(row_counts) != 8 or any(type(rows) is not int or rows <= 0 for rows in row_counts):
+        raise ValueError("V31 future reserve requires the live eight-q factor row inventory")
+    reference_rows = int(layout.full_rows)
+    if reference_rows <= 0:
+        raise ValueError("V31 future reserve requires positive reference storage rows")
+    transform_bank = getattr(factors, "transform_bank", None)
+    bank = (
+        transform_bank.future_inverse_reserve()
+        if transform_bank is not None
+        else {
+            "future_unique_inverse_payload_bytes": 0,
+            "future_single_inverse_workspace_bytes": 0,
+            "future_unique_inverse_template_count": 0,
+        }
+    )
+    legacy_borrowers = getattr(factors, "inverse_borrowers", {})
+    if not isinstance(bank, Mapping) or not isinstance(legacy_borrowers, Mapping):
+        raise ValueError("V31 future transform reserve inventory is unavailable")
+    legacy = {
+        str(label): borrower.future_legacy_inverse_reserve()
+        for label, borrower in legacy_borrowers.items()
+    }
+    inverse_payload = int(bank.get("future_unique_inverse_payload_bytes", -1)) + sum(
+        int(row.get("future_legacy_inverse_payload_bytes", -1))
+        for row in legacy.values()
+    )
+    inverse_workspace = max(
+        [int(bank.get("future_single_inverse_workspace_bytes", -1))]
+        + [
+            int(row.get("future_legacy_single_inverse_workspace_bytes", -1))
+            for row in legacy.values()
+        ]
+    )
+    bank_count = bank.get("future_unique_inverse_template_count")
+    if (
+        inverse_payload < 0
+        or inverse_workspace < 0
+        or type(bank_count) is not int
+        or bank_count < 0
+        or any(
+            int(value) < 0
+            for row in legacy.values()
+            for value in (
+                row.get("future_legacy_inverse_payload_bytes", -1),
+                row.get("future_legacy_single_inverse_workspace_bytes", -1),
+            )
+        )
+    ):
+        raise ValueError("V31 future transform reserve has unknown or negative components")
+    krylov_vector_count = 2 * (32 + 1) + 6
+    krylov_bytes = int(
+        sum(row_counts) * krylov_vector_count * np.dtype(np.complex128).itemsize
+    )
+    from src.solvers.task40_v10_p6_mumps import full_p6_pre_release_output_inventory
+
+    output_inventory = full_p6_pre_release_output_inventory(reference_rows)
+    full_output_bytes = int(output_inventory["pre_release_peak_bytes"])
+    selected_phase = max(
+        krylov_bytes + inverse_workspace,
+        full_output_bytes + inverse_workspace,
+    )
+    return {
+        "schema": "task40extra.review_v31_remaining_reference_reserve.v1",
+        "reference_full_storage_rows": reference_rows,
+        "remaining_transform_inverse_payload_bytes": inverse_payload,
+        "remaining_inverse_template_count": bank_count,
+        "future_inverse_single_operation_workspace_bytes": inverse_workspace,
+        "future_krylov_and_vector_bytes": krylov_bytes,
+        "future_full_p6_recovery_output_bytes": full_output_bytes,
+        "selected_nonfactor_co_resident_phase_bytes": selected_phase,
+        "future_co_resident_reserve_bytes": inverse_payload + selected_phase,
+        "future_full_p6_output_inventory": output_inventory,
+        "future_legacy_inverse_reserves_by_collection": legacy,
+        "symbolic_estimate_reserve_released_into_current_rss": True,
+        "accounting_basis": (
+            "current RSS contains resident numeric factors and already materialized inverses; "
+            "only live bank/legacy pending inverse payload plus the larger future KSP or "
+            "full-recovery-output phase remains reserved"
+        ),
+    }
+
+
+def _task40_v31_target_ready_admission(
+    reference_admission: Mapping[str, Any] | None,
+    target_build_admission: Mapping[str, Any] | None,
+    actual_target_owner_inventory: Mapping[str, Any] | None,
+    facts: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Require measured owners, true row/layout identity, and both resource inequalities."""
+    if (
+        not isinstance(reference_admission, Mapping)
+        or reference_admission.get("status") != "ADMITTED_REFERENCE_ONLY"
+        or not isinstance(target_build_admission, Mapping)
+        or target_build_admission.get("phase") != "TARGET_BUILD"
+        or target_build_admission.get("status") != "ADMITTED_TARGET_BUILD"
+    ):
+        raise ValueError("V31 TARGET_READY requires admitted reference and target-build stages")
+    normalized, actual_owner_bytes = _task40_v31_target_owner_inventory_total(
+        actual_target_owner_inventory, measured_only=True, allow_unknown=True
+    )
+    reference_rows = reference_admission.get("reference_full_storage_rows")
+    actual_rows = facts.get("actual_target_full_storage_rows")
+    planned_rows = facts.get("planned_target_full_storage_rows")
+    if (
+        type(actual_rows) is not int
+        or actual_rows <= 0
+        or actual_rows != reference_rows
+        or actual_rows != planned_rows
+    ):
+        raise ValueError("V31 TARGET_READY target/reference/planned storage rows do not match")
+    for field in (
+        "mode_identity_passed",
+        "map_identity_passed",
+        "layout_identity_passed",
+    ):
+        if facts.get(field) is not True:
+            raise ValueError(f"V31 TARGET_READY lacks passing {field}")
+    future_reserve = facts.get("future_reserve")
+    if not isinstance(future_reserve, Mapping):
+        raise ValueError("V31 TARGET_READY future co-resident reserve is UNKNOWN")
+    reserve_fields = (
+        "remaining_transform_inverse_payload_bytes",
+        "remaining_inverse_template_count",
+        "future_inverse_single_operation_workspace_bytes",
+        "future_krylov_and_vector_bytes",
+        "future_full_p6_recovery_output_bytes",
+        "selected_nonfactor_co_resident_phase_bytes",
+        "future_co_resident_reserve_bytes",
+    )
+    if any(
+        type(future_reserve.get(field)) is not int or future_reserve[field] < 0
+        for field in reserve_fields
+    ):
+        raise ValueError("V31 TARGET_READY future co-resident components are not fully known")
+    expected_phase = max(
+        future_reserve["future_krylov_and_vector_bytes"]
+        + future_reserve["future_inverse_single_operation_workspace_bytes"],
+        future_reserve["future_full_p6_recovery_output_bytes"]
+        + future_reserve["future_inverse_single_operation_workspace_bytes"],
+    )
+    if (
+        expected_phase <= 0
+        or future_reserve["selected_nonfactor_co_resident_phase_bytes"] != expected_phase
+        or future_reserve["future_co_resident_reserve_bytes"]
+        != future_reserve["remaining_transform_inverse_payload_bytes"] + expected_phase
+    ):
+        raise ValueError("V31 TARGET_READY future co-resident reserve does not close")
+    return {
+        "schema": "task40extra.review_v31_target_admission.v1",
+        "phase": "TARGET_READY",
+        "status": "TARGET_READY_INVENTORY_READY",
+        "reference_full_storage_rows": reference_rows,
+        "planned_target_full_storage_rows": planned_rows,
+        "actual_target_full_storage_rows": actual_rows,
+        "actual_target_owner_inventory": normalized,
+        "unmeasured_target_owner_components": [
+            name
+            for name, row in normalized.items()
+            if row["status"] == "unknown"
+        ],
+        "known_unique_payload_bytes_lower_bound": actual_owner_bytes,
+        "complete_target_owner_bytes": (
+            actual_owner_bytes
+            if all(row["status"] == "measured" for row in normalized.values())
+            else None
+        ),
+        "future_reserve": dict(future_reserve),
+        "future_co_resident_reserve_bytes": future_reserve[
+            "future_co_resident_reserve_bytes"
+        ],
+        "target_build_admitted": True,
+        "target_ready": False,
+    }
+
+
+def _task40_v31_finalize_admission_after_resource_gate(
+    candidate: Mapping[str, Any],
+    resource_admission: Mapping[str, Any] | None,
+    resource_sample: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Promote inventory readiness only after both live memory inequalities pass."""
+    phases = {
+        ("REFERENCE_ONLY", "REFERENCE_INVENTORY_READY"): "ADMITTED_REFERENCE_ONLY",
+        ("TARGET_BUILD", "TARGET_BUILD_INVENTORY_READY"): "ADMITTED_TARGET_BUILD",
+        ("TARGET_READY", "TARGET_READY_INVENTORY_READY"): "ADMITTED_TARGET_READY",
+    }
+    if not isinstance(candidate, Mapping):
+        raise ValueError("V31 admission finalization requires a validated inventory candidate")
+    phase_key = (candidate.get("phase"), candidate.get("status"))
+    final_status = phases.get(phase_key)
+    if final_status is None:
+        raise ValueError("V31 admission candidate has an invalid phase/status")
+    if (
+        not isinstance(resource_admission, Mapping)
+        or resource_admission.get("total_rss_inequality_passed") is not True
+        or resource_admission.get("incremental_headroom_inequality_passed") is not True
+        or not isinstance(resource_sample, Mapping)
+        or type(resource_sample.get("rss_bytes")) is not int
+        or resource_sample.get("rss_bytes") < 0
+        or not isinstance(resource_sample.get("memory_envelope"), Mapping)
+    ):
+        raise ValueError(
+            f"V31 {candidate.get('phase')} cannot be admitted before both resource inequalities and a sample pass"
+        )
+    return {
+        **dict(candidate),
+        "status": final_status,
+        "resource_admission": dict(resource_admission),
+        "resource_sample": dict(resource_sample),
+        "target_build_admitted": (
+            candidate.get("phase") in {"TARGET_BUILD", "TARGET_READY"}
+        ),
+        "target_ready": candidate.get("phase") == "TARGET_READY",
+    }
 
 
 def _task40_v30_trace_rows_by_q(
@@ -2425,6 +3036,64 @@ def _regular_inverse_checks_schema(
     return "task40extra.review_v11_p6_regular_inverse_checks.v1"
 
 
+def _task40_v31_reference_tier_receipt(
+    row: Mapping[str, Any], *, reference_pc_strategy: str
+) -> dict[str, Any]:
+    """Report strict and V15 admission independently for one selected FE/alpha state."""
+    from src.solvers.augmented_reference_correction import (
+        NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
+        V15_REFERENCE_PC_PASS,
+        V15_REFERENCE_PC_REJECTED,
+        select_reference_pc_candidate,
+    )
+
+    candidate = row.get("reference_pc_candidate")
+    if not isinstance(candidate, Mapping):
+        raise ValueError("V31 reference tier receipt requires the selected complete-state candidate")
+    metrics = row.get("reference_pc_metrics")
+    frozen = row.get("frozen_scale_metrics")
+    structural = row.get("reference_pc_structural_gates")
+    if not all(isinstance(value, Mapping) for value in (metrics, frozen, structural)):
+        raise ValueError("V31 strict tier receipt lacks selected-state metrics or structural gates")
+    selected_sha = row.get("selected_state_sha256", candidate.get("state_sha256"))
+    candidate_sha = candidate.get("state_sha256")
+    if reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15:
+        if (
+            not isinstance(selected_sha, str)
+            or len(selected_sha) != 64
+            or selected_sha != candidate_sha
+            or row.get("selected_v15_raw_facts", {}).get("state_sha256") != selected_sha
+        ):
+            raise ValueError("V31 strict and V15 tiers must identify the same selected FE/alpha state")
+    strict_candidate = {
+        "metrics": dict(metrics),
+        "frozen_scale_metrics": dict(frozen),
+        "structural_gates": dict(structural),
+        "state_sha256": selected_sha,
+        "state_label": row.get("reference_pc_candidate_label", candidate.get("state_label")),
+    }
+    strict = select_reference_pc_candidate([strict_candidate])
+    if reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15:
+        v15_status = row.get("reference_pc_admission")
+        if v15_status not in {V15_REFERENCE_PC_PASS, V15_REFERENCE_PC_REJECTED}:
+            raise ValueError("V31 V15 tier receipt lacks an explicit V15 admission status")
+        v15_passed: bool | None = v15_status == V15_REFERENCE_PC_PASS
+    else:
+        v15_status = "NOT_APPLICABLE"
+        v15_passed = None
+    return {
+        "strict_reference_admission": strict["admission"],
+        "strict_reference_passed": bool(strict["strict_passed"]),
+        "strict_reference_selection": strict,
+        "strict_reference_selected_state_sha256": selected_sha,
+        "v15_reference_admission": v15_status,
+        "v15_reference_passed": v15_passed,
+        "v15_reference_selected_state_sha256": (
+            selected_sha if v15_passed is not None else None
+        ),
+    }
+
+
 def _verify_regular_inverse(
     runtime: Any,
     reference: dict[str, Any],
@@ -3350,7 +4019,7 @@ def _verify_regular_inverse(
                         delta_fe, delta_port = inverse.apply_augmented(
                             fe_error,
                             port_rhs=port_error,
-                            rhs_category="startup_rhs_mat_solve_count",
+                            rhs_category="reference_correction_rhs_mat_solve_count",
                         )
                         calls_after = int(inverse.factors.calls)
                         correction_rows = [
@@ -3496,7 +4165,7 @@ def _verify_regular_inverse(
                         delta_fe, delta_port = inverse.apply_augmented(
                             fe_error,
                             port_rhs=port_error,
-                            rhs_category="startup_rhs_mat_solve_count",
+                            rhs_category="reference_correction_rhs_mat_solve_count",
                         )
                         calls_after = int(inverse.factors.calls)
                         solve_audit = inverse.last_solve_audit
@@ -3681,6 +4350,11 @@ def _verify_regular_inverse(
                         else float("inf")
                     )
                 )
+            row.update(
+                _task40_v31_reference_tier_receipt(
+                    row, reference_pc_strategy=reference_pc_strategy
+                )
+            )
             runtime_prefix = (
                 "v15" if reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15
                 else "v13" if reference_pc_strategy == STRICT_THEN_BOUNDED_INEXACT_V13
@@ -3722,6 +4396,38 @@ def _verify_regular_inverse(
             len(records) == len(case_names)
             and {str(row["name"]) for row in records} == set(case_names)
         ),
+        "strict_reference_passed": (
+            len(records) == len(case_names)
+            and {str(row["name"]) for row in records} == set(case_names)
+            and all(row.get("strict_reference_passed") is True for row in records)
+        ),
+        "strict_reference_status_by_case": {
+            str(row["name"]): {
+                "admission": row.get("strict_reference_admission"),
+                "passed": row.get("strict_reference_passed"),
+                "selected_state_sha256": row.get(
+                    "strict_reference_selected_state_sha256"
+                ),
+            }
+            for row in records
+        },
+        "v15_reference_passed": (
+            None
+            if reference_pc_strategy != NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15
+            else len(records) == len(case_names)
+            and {str(row["name"]) for row in records} == set(case_names)
+            and all(row.get("v15_reference_passed") is True for row in records)
+        ),
+        "v15_reference_status_by_case": {
+            str(row["name"]): {
+                "admission": row.get("v15_reference_admission"),
+                "passed": row.get("v15_reference_passed"),
+                "selected_state_sha256": row.get(
+                    "v15_reference_selected_state_sha256"
+                ),
+            }
+            for row in records
+        },
         "all_q_exercised_per_case": True,
         "all_four_q_exercised_per_case": profile.q_count == 4,
         "interior_rows_exercised_per_case": profile.global_interior_rows,
@@ -5066,7 +5772,9 @@ def _candidate_contract(
     *,
     profile_identity: str,
     v30_contract: Mapping[str, Any] | None = None,
+    v31_contract: Mapping[str, Any] | None = None,
     v30_effective_factor_lifecycle_strategy: str | None = None,
+    v31_effective_factor_lifecycle_strategy: str | None = None,
 ) -> dict[str, Any]:
     from src.geometry.task40_nonseparable_plan import (
         TASK40_B0_P6_CANDIDATE_RUN_ID,
@@ -5221,6 +5929,12 @@ def _candidate_contract(
         v30_contract is not None
         or v30_effective_factor_lifecycle_strategy is not None
     )
+    v31_route_requested = (
+        v31_contract is not None
+        or v31_effective_factor_lifecycle_strategy is not None
+    )
+    if v30_route_requested and v31_route_requested:
+        raise ValueError("candidate worker cannot mix V30 and V31 execution contracts")
     v30_route_passed = not v30_route_requested
     v30_identity = None
     if v30_route_requested:
@@ -5267,6 +5981,49 @@ def _candidate_contract(
             )
         assert v20_case is not None
         v30_identity = (v20_case.run_id, v20_case.solver_stage, 16.0)
+    v31_route_passed = not v31_route_requested
+    v31_identity = None
+    if v31_route_requested:
+        if v31_effective_factor_lifecycle_strategy is None:
+            raise ValueError("V31 candidate contract requires its dispatcher AllQ binding")
+        from src.runners.task40_v31_contract import require_v31_execution_contract
+
+        authorized_contract, _ = require_v31_execution_contract(
+            os.environ.get("TASK40_V31_CONTRACT_PATH", ""),
+            expected_sha256=os.environ.get("TASK40_V31_CONTRACT_SHA256"),
+            current_root=Path(__file__).resolve().parents[2],
+        )
+        if authorized_contract != v31_contract:
+            raise ValueError("V31 candidate contract differs from the validated worker binding")
+        v31_execution = authorized_contract["execution"]
+        v31_window = v31_execution["window"]
+        v31_route_passed = bool(
+            profile_identity == TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE
+            and is_v20
+            and v20_case is not None
+            and v20_case.mesh_id == "TARGET_ORIGINAL_NY8"
+            and is_v15
+            and is_v17
+            and factor_lifecycle_strategy == TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
+            and v31_effective_factor_lifecycle_strategy
+            == TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
+            and isinstance(campaign, Mapping)
+            and isinstance(shared, Mapping)
+            and Path(str(campaign.get("window_path", ""))).resolve()
+            == Path(str(v31_window.get("window_path", ""))).resolve()
+            and v31_window.get("window_sha256")
+            == campaign.get("window_sha256")
+            == shared.get("campaign_window_sha256")
+            and v31_window.get("total_seconds") == campaign_seconds
+            and v31_window.get("closeout_reserve_seconds")
+            == closeout_reserve_seconds
+        )
+        if not v31_route_passed:
+            raise ValueError(
+                "V31 candidate contract requires the authorized target Ny8 V15/V17 AllQ route"
+            )
+        assert v20_case is not None
+        v31_identity = (v20_case.run_id, v20_case.solver_stage, 16.0)
     v19_identity = (
         (v20_case.run_id, v20_case.solver_stage, 16.0)
         if v20_case is not None
@@ -5277,7 +6034,9 @@ def _candidate_contract(
         else None
     )
     expected_identity = (
-        v30_identity
+        v31_identity
+        if v31_route_requested
+        else v30_identity
         if v30_route_requested
         else v19_identity
         if is_v19
@@ -5374,6 +6133,7 @@ def _candidate_contract(
             and resolved.get("derived", {}).get("physical_intermediate_profile") == contract
         ),
         "v30_target_ny8_v15_v17_all_q_binding": v30_route_passed,
+        "v31_target_ny8_v15_v17_all_q_binding": v31_route_passed,
     }
     failed = [key for key, passed in checks.items() if not passed]
     if failed:
@@ -5410,6 +6170,7 @@ def _candidate_contract(
         "campaign_writer": "subreaper_watchdog_only",
         "worker_accounting_access": "read_only_projection",
         "factor_lifecycle_strategy": factor_lifecycle_strategy,
+        "execution_contract_version": 31 if v31_route_requested else 30 if v30_route_requested else None,
     }
 
 
@@ -5454,12 +6215,86 @@ def run_task40_v10_p6_reference_worker(
     v30_factor_config: Mapping[str, Any] | None = None,
     v30_requested_factor_lifecycle_strategy: str | None = None,
     v30_effective_factor_lifecycle_strategy: str | None = None,
+    v31_q_csr_binding: Mapping[str, Any] | None = None,
+    v31_factor_config: Mapping[str, Any] | None = None,
+    v31_q_csr_import_authorizations: Mapping[str, Any] | None = None,
+    v31_target_admission_policy: Mapping[str, Any] | None = None,
+    v31_execution_binding: Mapping[str, Any] | None = None,
+    _v31_entry_validation_only: bool = False,
 ) -> dict[str, Any]:
     """Run a frozen Task40 p6 case with one live four-q periodic reference."""
 
     v30_contract = None
     v30_contract_sha = None
     v30_input_identity = None
+    v31_input_identity = None
+    v31_contract = None
+    v31_contract_sha = None
+    v31_route_facts = None
+    if type(_v31_entry_validation_only) is not bool:
+        raise TypeError("V31 route-fixture stop must be an explicit boolean")
+    v31_strict = os.environ.get("TASK40_V31_STRICT_EXECUTION") == "1"
+    if v31_strict or v31_execution_binding is not None or _v31_entry_validation_only:
+        if not v31_strict or os.environ.get("TASK40_V30_STRICT_EXECUTION") == "1":
+            raise RuntimeError("V31 worker route requires only the separate V31 strict contract")
+        if not isinstance(v31_execution_binding, Mapping):
+            raise RuntimeError("V31 worker route lacks its dispatcher-built execution binding")
+        from src.runners.task40_v31_contract import (
+            require_v31_execution_contract,
+            validate_v31_worker_execution_binding,
+        )
+
+        repo_root = Path(__file__).resolve().parents[2]
+        v31_contract, v31_contract_sha = require_v31_execution_contract(
+            os.environ.get("TASK40_V31_CONTRACT_PATH", ""),
+            expected_sha256=os.environ.get("TASK40_V31_CONTRACT_SHA256"),
+            current_root=repo_root,
+        )
+        if (
+            v31_contract_sha != os.environ.get("TASK40_V31_CONTRACT_SHA256")
+            or not isinstance(v31_q_csr_import_authorizations, Mapping)
+        ):
+            raise RuntimeError("V31 worker authorization or import table differs from its service envelope")
+        v31_route_facts = validate_v31_worker_execution_binding(
+            dict(v31_execution_binding),
+            contract=v31_contract,
+            contract_sha256=v31_contract_sha,
+            resolved_payload=dict(resolved_payload),
+            source_sha=source_sha,
+            environment=dict(os.environ),
+            repo_root=repo_root,
+        )
+        if (
+            dict(v31_q_csr_binding or {})
+            != dict(v31_execution_binding["q_csr_selector_binding"])
+            or dict(v31_factor_config or {})
+            != dict(v31_execution_binding["factor_bank_config"])
+        ):
+            raise RuntimeError("V31 dispatcher selector/factor arguments differ from the approved worker binding")
+        if v31_target_admission_policy is None:
+            v31_target_admission_policy = dict(
+                v31_execution_binding["target_admission_policy"]
+            )
+        if _v31_entry_validation_only:
+            return {
+                "status": "V31_ROUTE_VALIDATED_NO_FE_HOOKS",
+                "official_result": False,
+                "passed": False,
+                "v31_worker_route": dict(v31_route_facts),
+                "fe_hooks_invoked": False,
+                "jit_hooks_invoked": False,
+                "numerical_hooks_invoked": False,
+            }
+    elif _v31_entry_validation_only:
+        raise RuntimeError("V31 route fixture stop cannot be used outside strict V31 mode")
+
+    route_contract = v31_contract
+    route_contract_sha = v31_contract_sha
+    factor_config = (
+        dict(v31_factor_config or v31_execution_binding["factor_bank_config"])
+        if v31_contract is not None and isinstance(v31_execution_binding, Mapping)
+        else None
+    )
     provenance = resolved_payload.get("provenance", {})
     scientific_input_sha256 = str(
         provenance.get("input_sha256", "") if isinstance(provenance, Mapping) else ""
@@ -5490,7 +6325,10 @@ def run_task40_v10_p6_reference_worker(
         _repo_root,
         _write_json,
     )
-    from src.solvers.dtn_boundary_phase_gauge import BOUNDARY_PLANE
+    from src.solvers.dtn_boundary_phase_gauge import (
+        BOUNDARY_PLANE,
+        assembly_projection_denominator,
+    )
     from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
     from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
         build_physical_rhs,
@@ -5520,9 +6358,13 @@ def run_task40_v10_p6_reference_worker(
         Q_ASSEMBLY_BOUNDED_V16,
         Q_ASSEMBLY_STRATEGIES,
         V16StagingLimitError,
+        build_task40_v10_sector_contexts,
+        build_task40_v10_p6_local_sector_owner,
         build_task40_v10_p6_reference_inverse,
+        destroy_task40_v10_p6_local_sector_owner,
         destroy_task40_v10_p6_reference_inverse,
         _destroy_task40_v10_levels,
+        _task40_v30_load_sector_q_csr_pair,
     )
     from src.geometry.task40_nonseparable_plan import (
         TASK40_V13_REFERENCE_PC_STRATEGY,
@@ -5604,12 +6446,51 @@ def run_task40_v10_p6_reference_worker(
 
         v20_case = task40_v20_case(profile=profile_identity)
 
-    if v30_q_csr_binding is not None or v30_factor_config is not None:
+    v31_route_requested = v31_contract is not None
+    v30_route_requested = v30_q_csr_binding is not None or v30_factor_config is not None
+    if v30_route_requested and v31_route_requested:
+        raise RuntimeError("Task40 worker cannot mix V30 and V31 selector routes")
+    selector_binding = (
+        v31_q_csr_binding if v31_route_requested else v30_q_csr_binding
+    )
+    if v31_route_requested:
+        if v30_q_csr_binding is not None or v30_factor_config is not None:
+            raise RuntimeError("V31 worker cannot inherit V30 selector or factor bindings")
+        repo_root = Path(__file__).resolve().parents[2]
+        selector = v31_execution_binding["q_csr_selector_binding"]
+        if (
+            not isinstance(v31_q_csr_binding, Mapping)
+            or dict(v31_q_csr_binding) != dict(selector)
+            or factor_config is None
+        ):
+            raise RuntimeError("V31 worker selector or factor-bank binding differs from its contract")
+        from src.runners.task40_v31_contract import (
+            require_v31_input_identity,
+            v31_source_artifact_relative,
+        )
+        from src.runners.task40_v30_contract import V30_CANONICAL_INPUT_RELATIVE
+
+        if not isinstance(provenance, Mapping):
+            raise ValueError("V31 worker input provenance is missing")
+        staged_input_path = provenance.get("source_path")
+        if not isinstance(staged_input_path, str) or not staged_input_path:
+            raise ValueError("V31 worker provenance omits the staged DAT path")
+        v31_input_identity = require_v31_input_identity(
+            repo_root / V30_CANONICAL_INPUT_RELATIVE,
+            staged_input_path,
+            repo_root=repo_root,
+            source_sha=str(v31_contract["source_freeze"]["source_sha"]),
+            selector_sha256=str(selector["selector_sha256"]),
+        )
+        if v31_input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
+            raise ValueError("V31 worker raw stage SHA differs from run provenance")
+        scientific_input_sha256 = v31_input_identity["scientific_input_sha256"]
+    elif v30_route_requested:
+        repo_root = Path(__file__).resolve().parents[2]
         if os.environ.get("TASK40_V30_STRICT_EXECUTION") != "1":
             raise RuntimeError("V30 worker requires the approved target-native execution contract")
         from src.runners.task40_v30_contract import require_authorized_contract
 
-        repo_root = Path(__file__).resolve().parents[2]
         v30_contract, v30_contract_sha = require_authorized_contract(
             os.environ.get("TASK40_V30_CONTRACT_PATH", ""),
             expected_sha256=os.environ.get("TASK40_V30_CONTRACT_SHA256"),
@@ -5632,6 +6513,9 @@ def run_task40_v10_p6_reference_worker(
             or not v30_contract_sha
         ):
             raise RuntimeError("V30 worker environment differs from its frozen execution contract")
+        route_contract = v30_contract
+        route_contract_sha = v30_contract_sha
+        factor_config = dict(v30_factor_config or {})
         from src.runners.task40_v30_contract import (
             V30_CANONICAL_INPUT_RELATIVE,
             require_v30_input_identity,
@@ -5648,10 +6532,22 @@ def run_task40_v10_p6_reference_worker(
             repo_root=repo_root,
         )
         if v30_input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
-            raise ValueError("V30 worker raw stage SHA differs from run provenance")
+            raise ValueError("Task40 worker raw stage SHA differs from run provenance")
         scientific_input_sha256 = v30_input_identity["scientific_input_sha256"]
 
-    v30_enabled = v30_q_csr_binding is not None or v30_factor_config is not None
+    v30_enabled = v30_route_requested or v31_route_requested
+    allq_route_enabled = v30_enabled
+    if v31_target_admission_policy is not None:
+        if (
+            not isinstance(v31_target_admission_policy, Mapping)
+            or v31_target_admission_policy.get("schema")
+            != "task40extra.review_v31_target_admission.v1"
+            or v31_target_admission_policy.get("phase") != "REFERENCE_ONLY"
+            or set(v31_target_admission_policy)
+            - {"schema", "phase", "target_owner_increment_inventory"}
+        ):
+            raise ValueError("V31 target-admission policy is not a closed REFERENCE_ONLY contract")
+        v31_target_admission_policy = dict(v31_target_admission_policy)
     effective_factor_lifecycle_strategy = _resolve_v30_worker_factor_lifecycle_strategy(
         resolved_payload,
         v30_enabled=v30_enabled,
@@ -5662,9 +6558,9 @@ def run_task40_v10_p6_reference_worker(
     if factor_lifecycle_strategy not in {ALL_Q_RESIDENT, ONE_Q_REFACTOR_V19}:
         raise ValueError(f"unsupported Task40 factor lifecycle strategy: {factor_lifecycle_strategy!r}")
     is_v19 = factor_lifecycle_strategy == ONE_Q_REFACTOR_V19
-    if v30_enabled and (
-        v30_q_csr_binding is None
-        or v30_factor_config is None
+    if allq_route_enabled and (
+        selector_binding is None
+        or factor_config is None
         or not is_v20
         or v20_case is None
         or v20_case.mesh_id != "TARGET_ORIGINAL_NY8"
@@ -5674,14 +6570,18 @@ def run_task40_v10_p6_reference_worker(
         or stop_after_stage is not None
     ):
         raise ValueError(
-            "V30 worker requires target Ny8, V15 row-tile, AllQ resident, selector and factor config"
+            "Task40 AllQ worker requires target Ny8, V15 row-tile, selector and factor config"
         )
-    if v30_enabled and (
-        v30_factor_config.get("schema")
-        != "task40extra.review_v30_all_q_factor_bank.v1"
-        or not isinstance(v30_factor_config.get("output_directory"), str)
+    expected_factor_schema = (
+        "task40extra.review_v31_all_q_factor_bank.v1"
+        if v31_contract is not None
+        else "task40extra.review_v30_all_q_factor_bank.v1"
+    )
+    if allq_route_enabled and (
+        factor_config.get("schema") != expected_factor_schema
+        or not isinstance(factor_config.get("output_directory"), str)
     ):
-        raise ValueError("V30 worker factor configuration is not a frozen AllQ packet contract")
+        raise ValueError("Task40 worker factor configuration is not a frozen AllQ packet contract")
 
     if stop_after_stage is not None:
         from src.solvers.task40_v20_registry import V20_STOP_STAGES
@@ -5714,6 +6614,15 @@ def run_task40_v10_p6_reference_worker(
     if type(share_transform_bank) is not bool:
         raise TypeError("V12 transform-bank selection must be an explicit boolean")
     periodic_profile = TASK40_P6_PERIODIC_PROFILES[profile_identity]
+    if v31_target_admission_policy is not None and not (
+        allq_route_enabled
+        and share_transform_bank
+        and is_v20
+        and profile_identity == TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE
+        and periodic_profile.q_count == 8
+        and factor_config is not None
+    ):
+        raise ValueError("V31 target admission is restricted to the shared-bank Ny8 AllQ route")
     is_v10 = profile_identity == TASK40_V10_P6_REFERENCE_PROFILE
     is_v16 = profile_identity in (TASK40_V16_P6_GX560_PROFILE, TASK40_V16_P6_E1_PROFILE)
     case_labels = {
@@ -5756,20 +6665,21 @@ def run_task40_v10_p6_reference_worker(
     )
     contract = profile_facts(profile_identity)
     runtime_contract = contract
-    if v30_contract is not None:
+    route_contract = v31_contract if v31_route_requested else v30_contract
+    if route_contract is not None:
         runtime_contract = copy.deepcopy(contract)
-        v30_execution = v30_contract["execution"]
+        route_execution = route_contract["execution"]
         runtime_resources = runtime_contract["resources"]
         runtime_resources.update(
             {
                 "process_tree_rss_cap_bytes": int(
-                    v30_execution["resources"]["task_memory_max_bytes"]
+                    route_execution["resources"]["task_memory_max_bytes"]
                 ),
-                "host_reserve_bytes": int(v30_execution["resources"]["host_reserve_bytes"]),
+                "host_reserve_bytes": int(route_execution["resources"]["host_reserve_bytes"]),
                 "memory_swap_max_bytes": 0,
-                "workflow_seconds": float(v30_execution["window"]["total_seconds"]),
+                "workflow_seconds": float(route_execution["window"]["total_seconds"]),
                 "campaign_closeout_reserve_seconds": float(
-                    v30_execution["window"]["closeout_reserve_seconds"]
+                    route_execution["window"]["closeout_reserve_seconds"]
                 ),
             }
         )
@@ -5811,6 +6721,17 @@ def run_task40_v10_p6_reference_worker(
         "official_result": False,
         "result_classification": "INCOMPLETE",
     }
+    if v31_route_requested:
+        summary["run_id"] = resolved_payload.get("run_id")
+        summary["v31_input_identity"] = dict(v31_input_identity or {})
+    if v31_target_admission_policy is not None:
+        summary["v31_target_admission_policy"] = {
+            "schema": v31_target_admission_policy["schema"],
+            "initial_phase": "REFERENCE_ONLY",
+            "target_owner_increment_inventory": v31_target_admission_policy.get(
+                "target_owner_increment_inventory"
+            ),
+        }
     if MPI.COMM_WORLD.Get_size() != 1 or np.dtype(PETSc.ScalarType) != np.dtype(np.complex128):
         raise RuntimeError("Task40 p6 reference worker requires qualified MPI1 complex128")
     if not isinstance(source_sha, str) or len(source_sha) != 40:
@@ -5827,6 +6748,7 @@ def run_task40_v10_p6_reference_worker(
     target_backend_facts: dict[str, Any] = {}
     target_identity_cache_audit: dict[str, Any] = {}
     reference = None
+    prebuilt_twist0_owner: dict[str, Any] | None = None
     rhs = None
     physical_rhs = None
     final_full_solution = None
@@ -5846,13 +6768,11 @@ def run_task40_v10_p6_reference_worker(
     qualified_q_csr_identity: dict[str, Any] | None = None
     try:
         runtime_resource_overrides = {}
-        if v30_contract is not None:
-            v30_resources = v30_contract["execution"]["resources"]
+        if route_contract is not None:
+            route_resources = route_contract["execution"]["resources"]
             runtime_resource_overrides = {
-                "fixed_process_tree_cap_bytes": int(
-                    v30_resources["task_memory_max_bytes"]
-                ),
-                "host_reserve_bytes": int(v30_resources["host_reserve_bytes"]),
+                "fixed_process_tree_cap_bytes": int(route_resources["task_memory_max_bytes"]),
+                "host_reserve_bytes": int(route_resources["host_reserve_bytes"]),
                 "task_cgroup_reserve_bytes": 0,
                 "require_cgroup_memory_details": True,
             }
@@ -5896,15 +6816,23 @@ def run_task40_v10_p6_reference_worker(
                 v30_contract_sha if v30_contract is not None else None
             ),
         )
+        if v31_contract is not None:
+            summary["v31_execution_contract_binding"] = dict(v31_route_facts or {})
         summary["campaign_authority"] = _candidate_contract(
             resolved_payload,
             contract,
             runtime,
             profile_identity=profile_identity,
             v30_contract=v30_contract,
+            v31_contract=v31_contract,
             v30_effective_factor_lifecycle_strategy=(
                 effective_factor_lifecycle_strategy
                 if v30_contract is not None
+                else None
+            ),
+            v31_effective_factor_lifecycle_strategy=(
+                effective_factor_lifecycle_strategy
+                if v31_contract is not None
                 else None
             ),
         )
@@ -5937,6 +6865,7 @@ def run_task40_v10_p6_reference_worker(
         def allocation_gate(label: str, facts: Mapping[str, Any]) -> dict[str, Any]:
             nonlocal allocation_gate_invocation_count
             allocation_gate_invocation_count += 1
+            v31_admission_candidate: Mapping[str, Any] | None = None
             if facts.get("resource_sample_only") is True and label.startswith(
                 "one_q_resource_sample_v19_"
             ):
@@ -6035,21 +6964,34 @@ def run_task40_v10_p6_reference_worker(
                 ):
                     raise ValueError("all-q persistent inverse payload and selected phase reserve disagree")
                 phase_inventory = facts.get("pre_release_recovery_output_inventory", {})
-                if (
-                    share_transform_bank
-                    and (
-                        int(facts.get("full_storage_rows_for_future_recovery", 0)) <= 0
-                        or not isinstance(phase_inventory, Mapping)
-                        or phase_inventory.get("actual_target_and_reference_full_rows_match_required") is not True
+                if share_transform_bank and v31_target_admission_policy is not None:
+                    v31_admission_candidate = _task40_v31_reference_only_allq_callback(
+                        facts, expected_q_count=periodic_profile.q_count
                     )
-                ):
-                    raise ValueError("V12 all-q gate lacks actual target/reference full-row recovery dimensions")
-                future_components = {
-                    "mumps_symbolic_estimate_sum_bytes": mumps_estimate,
-                    "persistent_pending_transform_inverse_payload_bytes": inverse_payload,
-                    "selected_maximum_co_resident_phase_bytes": selected_phase,
-                }
-                future = sum(future_components.values())
+                    future_components = dict(
+                        v31_admission_candidate["future_reserve_components"]
+                    )
+                    future = int(v31_admission_candidate["future_reserve_bytes"])
+                else:
+                    if (
+                        share_transform_bank
+                        and (
+                            int(facts.get("full_storage_rows_for_future_recovery", 0)) <= 0
+                            or not isinstance(phase_inventory, Mapping)
+                            or phase_inventory.get(
+                                "actual_target_and_reference_full_rows_match_required"
+                            ) is not True
+                        )
+                    ):
+                        raise ValueError(
+                            "V12 all-q gate lacks actual target/reference full-row recovery dimensions"
+                        )
+                    future_components = {
+                        "mumps_symbolic_estimate_sum_bytes": mumps_estimate,
+                        "persistent_pending_transform_inverse_payload_bytes": inverse_payload,
+                        "selected_maximum_co_resident_phase_bytes": selected_phase,
+                    }
+                    future = sum(future_components.values())
             elif "declared_future_co_resident_bytes" in facts:
                 phase_bytes = int(facts["declared_future_co_resident_bytes"])
                 if phase_bytes < 0:
@@ -6059,8 +7001,8 @@ def run_task40_v10_p6_reference_worker(
             headroom = 128 << 20
             live = runtime.sample(f"v10_{label}_strict_admission")
             profile_cap = int(
-                v30_contract["execution"]["resources"]["task_memory_max_bytes"]
-                if v30_contract is not None
+                route_contract["execution"]["resources"]["task_memory_max_bytes"]
+                if route_contract is not None
                 else contract["resources"]["process_tree_rss_cap_bytes"]
             )
             cap = min(profile_cap, int(live["launch_cap_bytes"]))
@@ -6179,6 +7121,17 @@ def run_task40_v10_p6_reference_worker(
                 raise V14ResourceStop(f"Task40 V12 two-boundary memory admission failed: {admission}")
             completion_sample = runtime.sample(f"v10_{label}_allocation_gate")
             admission["allocation_gate_completion_sample"] = completion_sample
+            if v31_admission_candidate is not None:
+                reference_admission = _task40_v31_finalize_admission_after_resource_gate(
+                    v31_admission_candidate,
+                    admission,
+                    completion_sample,
+                )
+                summary["v31_reference_only_admission"] = reference_admission
+                runtime.marker(
+                    "task40_v31_reference_only_admitted_before_numeric",
+                    reference_admission,
+                )
             runtime.marker("v10_strict_allocation_admission_complete", admission)
             return admission
 
@@ -6199,6 +7152,34 @@ def run_task40_v10_p6_reference_worker(
             nonlocal target_identity_cache_audit, mode_inventory_preflight, target_backend_facts
             if mode_inventory is not None and mode_inventory != v20_mode_inventory:
                 raise ValueError("V30 target builder received a different frozen mode inventory")
+            if v31_target_admission_policy is not None:
+                target_build_admission = _task40_v31_target_build_admission(
+                    summary.get("v31_reference_only_admission"),
+                    v31_target_admission_policy.get("target_owner_increment_inventory"),
+                )
+                target_build_resource_admission = allocation_gate(
+                    "task40_v31_target_build_admission",
+                    {
+                        "additional_payload_bytes": 0,
+                        "workspace_bytes": 0,
+                        "declared_future_co_resident_bytes": target_build_admission[
+                            "reserved_target_owner_increment_bytes"
+                        ],
+                        "target_admission_phase": "TARGET_BUILD",
+                        "target_owner_increment_inventory": target_build_admission[
+                            "target_owner_increment_inventory"
+                        ],
+                    },
+                )
+                target_build_admission = _task40_v31_finalize_admission_after_resource_gate(
+                    target_build_admission,
+                    target_build_resource_admission,
+                    target_build_resource_admission.get(
+                        "allocation_gate_completion_sample"
+                    ),
+                )
+                summary["v31_target_build_admission"] = target_build_admission
+                runtime.marker("task40_v31_target_build_admitted", target_build_admission)
             runtime.set_phase("assembly")
             runtime.marker(
                 "v10_candidate_target_mesh_started",
@@ -6389,6 +7370,125 @@ def run_task40_v10_p6_reference_worker(
                 factor_audit["actual_target_row_identity_check"] = row_identity
                 summary["v30_target_reference_row_identity"] = row_identity
                 runtime.marker("task40_v30_target_reference_rows_qualified", row_identity)
+            if v31_target_admission_policy is not None:
+                condensed_build_audit = target_action.condensed.build_audit
+                action_buffers = dict(target_action.buffer_inventory)
+
+                def measured_target_owner(
+                    byte_count: Any, *, owner_id: str, evidence: str
+                ) -> dict[str, Any] | None:
+                    if type(byte_count) is not int or byte_count <= 0:
+                        return None
+                    return {
+                        "bytes": byte_count,
+                        "status": "measured",
+                        "owner_id": owner_id,
+                        "evidence": evidence,
+                    }
+
+                def unknown_target_owner(*, owner_id: str, evidence: str) -> dict[str, Any]:
+                    return {
+                        "bytes": None,
+                        "status": "unknown",
+                        "owner_id": owner_id,
+                        "evidence": (
+                            evidence
+                            + "; opaque/native bytes are covered by the post-build process-tree/cgroup RSS gate"
+                        ),
+                    }
+
+                local_lu_inventory = measured_target_owner(
+                    condensed_build_audit.get("local_lu_factor_cache_bytes_local"),
+                    owner_id="target_action.condensed.local_lu",
+                    evidence="target_action.condensed.build_audit.local_lu_factor_cache_bytes_local",
+                )
+                cache_inventory = measured_target_owner(
+                    target_identity_cache_audit.get("identity_cache_bytes_local"),
+                    owner_id="target_action.condensed.identity_cache",
+                    evidence="target_action.condensed.build_audit.identity_cache_bytes_local",
+                )
+                carrier_inventory = measured_target_owner(
+                    action_buffers.get("unique_port_payload_owner_bytes"),
+                    owner_id="target_action.carrier_cell_payload",
+                    evidence="target_action.buffer_inventory.unique_port_payload_owner_bytes",
+                )
+                actual_target_owner_inventory = {
+                    "mesh_mpc": unknown_target_owner(
+                        owner_id="target_levels.mesh_data+floquet.mpc",
+                        evidence="current DOLFINx mesh/MPC native backing has no complete per-owner byte inventory",
+                    ),
+                    "local_lu": local_lu_inventory or unknown_target_owner(
+                        owner_id="target_action.condensed.local_lu",
+                        evidence="local LU/recovery backing is not completely exposed by the current build audit",
+                    ),
+                    "cache": cache_inventory or unknown_target_owner(
+                        owner_id="target_action.condensed.identity_cache",
+                        evidence="identity cache did not expose a positive measured unique-owner byte count",
+                    ),
+                    "carrier": carrier_inventory or unknown_target_owner(
+                        owner_id="target_action.carrier_cell_payload",
+                        evidence="carrier buffer inventory did not expose a positive measured unique-owner byte count",
+                    ),
+                }
+                summary["v31_target_owner_actual_inventory"] = (
+                    actual_target_owner_inventory
+                )
+                runtime.marker(
+                    "task40_v31_target_owner_actual_inventory",
+                    actual_target_owner_inventory,
+                )
+                reference_rows = (
+                    int(reference_owner["full_layout"].full_rows)
+                    if reference_owner is not None
+                    else None
+                )
+                actual_rows = int(target_action.condensed.full_rows)
+                planned_rows = int(periodic_profile.global_storage_rows)
+                checks = mode_identity.get("checks", {})
+                future_reserve = _task40_v31_reference_future_reserve(reference_owner)
+                target_ready_admission = _task40_v31_target_ready_admission(
+                    summary.get("v31_reference_only_admission"),
+                    summary.get("v31_target_build_admission"),
+                    actual_target_owner_inventory,
+                    {
+                        "actual_target_full_storage_rows": actual_rows,
+                        "planned_target_full_storage_rows": planned_rows,
+                        "mode_identity_passed": bool(checks) and all(checks.values()),
+                        "map_identity_passed": (
+                            checks.get("actual_finalized_mpc_payload_equal") is True
+                            and checks.get("actual_carrier_rows_and_values_equal") is True
+                        ),
+                        "layout_identity_passed": (
+                            reference_rows is not None
+                            and actual_rows == reference_rows == planned_rows
+                        ),
+                        "future_reserve": future_reserve,
+                    },
+                )
+                target_ready_resource_admission = allocation_gate(
+                    "task40_v31_target_ready_admission",
+                    {
+                        "additional_payload_bytes": 0,
+                        "workspace_bytes": 0,
+                        "declared_future_co_resident_bytes": target_ready_admission[
+                            "future_co_resident_reserve_bytes"
+                        ],
+                        "target_admission_phase": "TARGET_READY",
+                        "known_unique_payload_bytes_lower_bound": target_ready_admission[
+                            "known_unique_payload_bytes_lower_bound"
+                        ],
+                        "future_reserve": future_reserve,
+                    },
+                )
+                target_ready_admission = _task40_v31_finalize_admission_after_resource_gate(
+                    target_ready_admission,
+                    target_ready_resource_admission,
+                    target_ready_resource_admission.get(
+                        "allocation_gate_completion_sample"
+                    ),
+                )
+                summary["v31_target_ready_admission"] = target_ready_admission
+                runtime.marker("task40_v31_target_ready_admitted", target_ready_admission)
             target_fast_bundle = build_packed_physical_action(
                 {"levels": target_levels, "fine": target_bundle},
                 cfg,
@@ -6417,16 +7517,24 @@ def run_task40_v10_p6_reference_worker(
             }
 
 
-        if v30_contract is None:
+        if route_contract is None:
             build_target_context()
 
         qualified_q_csr_provider = _task40_v30_q_csr_provider(
-            v30_q_csr_binding,
+            selector_binding,
             repo_root=_repo_root(),
             allocation_gate=allocation_gate,
+            consumer_receipt_directory=directory / "q_csr_consumer_receipts",
+            consumer_import_authorizations=(
+                v31_q_csr_import_authorizations.get("complete", {})
+                if isinstance(v31_q_csr_import_authorizations, Mapping)
+                else None
+            ),
         )
         if qualified_q_csr_provider is not None:
-            summary["v30_q_csr_selector"] = {
+            summary[
+                "v31_q_csr_selector" if v31_route_requested else "v30_q_csr_selector"
+            ] = {
                 "selector_path": str(qualified_q_csr_provider.selector_path),
                 "selector_sha256": qualified_q_csr_provider.selector_sha256,
                 "profile": qualified_q_csr_provider.profile,
@@ -6761,20 +7869,24 @@ def run_task40_v10_p6_reference_worker(
 
         qualified_q_csr_coverage_phase = "all_q"
         qualified_q_csr_preparer = None
+        q4_saved_numeric_prebuild: Mapping[str, Any] | None = None
+        prebuilt_twist0_q_csr: tuple[Mapping[int, Any], Mapping[str, Any]] | None = None
         if qualified_q_csr_provider is not None:
-            preparation = v30_contract.get("preparation", {})
+            preparation = route_contract.get("preparation", {})
             worklist = preparation.get("q_csr_worklist") if isinstance(preparation, Mapping) else None
             if not isinstance(worklist, list) or not worklist:
-                raise ValueError("V30 contract has no approved q CSR preparation worklist")
+                raise ValueError("V30/V31 contract has no approved q CSR preparation worklist")
             approved_preparation_q = {0}
             for row in worklist:
                 if not isinstance(row, Mapping) or type(row.get("q")) is not int:
-                    raise ValueError("V30 q CSR preparation worklist is malformed")
+                    raise ValueError("V30/V31 q CSR preparation worklist is malformed")
                 approved_preparation_q.add(int(row["q"]))
             if not set(qualified_q_csr_provider.entries) <= approved_preparation_q:
-                raise ValueError("V30 selector includes a q outside the accepted donor and worklist")
+                raise ValueError("V30/V31 selector includes a q outside the accepted donor and worklist")
             qualified_q_csr_coverage_phase = "sector_preparation_subset"
             q4_source_cache: dict[str, Any] = {}
+            q4_saved_numeric_prebuild: Mapping[str, Any] | None = None
+            prebuilt_twist0_q_csr = None
 
             def prepare_v30_sector_q_csr(
                 *,
@@ -6804,36 +7916,49 @@ def run_task40_v10_p6_reference_worker(
                     q: coordinates.q_map(branch, allocation_gate=allocation_gate)
                     for branch, q in enumerate(sector_qs)
                 }
+                if v20_mode_inventory is None:
+                    raise ValueError("V30 sector callback lacks the frozen mode inventory")
+                sector_builder_inputs = _task40_v30_sector_builder_inputs(
+                    global_bundle=global_bundle,
+                    mode_inventory=v20_mode_inventory,
+                    coordinates=coordinates,
+                    profile=profile,
+                    q_maps_by_q=q_maps_by_q,
+                    sector_q_indices=sector_qs,
+                )
                 sources_by_q = {}
                 matrix_source_identity_by_q = {}
                 producer_identity_by_q = {}
                 current_h = np.asarray(local_h, dtype=np.complex128)
                 donor_facts = None
+                precomputed_numeric_by_q = {}
                 if 4 in q_indices:
                     if context.twist_index != 0 or sector_qs != (0, 4):
                         raise ValueError("V30 q4 saved donor may only serve the real twist-0 pair")
                     if not q4_source_cache:
-                        source, saved_q4_map, producer_facts = _task40_v30_open_saved_q4_source(
-                            contract=v30_contract,
-                            repo_root=_repo_root(),
-                            profile=profile,
-                            current_q0_map=q_maps_by_q[0],
-                            current_q4_map=q_maps_by_q[4],
-                            current_local_h=current_h,
-                            allocation_gate=allocation_gate,
+                        raise ValueError(
+                            "V31 q4 reached its live sector without the saved-first numeric pending"
                         )
-                        q4_source_cache.update(
-                            source=source,
-                            q4_map=saved_q4_map,
-                            producer_facts=producer_facts,
-                        )
+                    donor_binding = _task40_v31_bind_saved_q4_to_live(
+                        q4_source_cache,
+                        current_q0_map=q_maps_by_q[0],
+                        current_q4_map=q_maps_by_q[4],
+                        current_local_h=current_h,
+                        current_trace_constraints=action.condensed.trace_constraints,
+                        current_full_rows=int(action.condensed.full_rows),
+                        allocation_gate=allocation_gate,
+                    )
                     q_maps_by_q[4] = q4_source_cache["q4_map"]
                     sources_by_q[4] = q4_source_cache["source"]
                     donor_facts = q4_source_cache["producer_facts"]
-                    matrix_source_identity_by_q[4] = dict(
-                        runtime_identity["execution_identity"]
-                    )
+                    matrix_source_identity_by_q[4] = {
+                        "source_sha": donor_facts["producer_source_sha"],
+                        "window_sha256": donor_facts["producer_window_sha256"],
+                    }
                     producer_identity_by_q[4] = dict(donor_facts)
+                    if q4_saved_numeric_prebuild is None:
+                        raise ValueError("V31 q4 numeric pending is missing at native qualification")
+                    precomputed_numeric_by_q[4] = q4_saved_numeric_prebuild
                 live_source = LiveP6SelectedQContributionSource(action, current_h)
                 for q in q_indices:
                     if int(q) == 4:
@@ -6857,16 +7982,6 @@ def run_task40_v10_p6_reference_worker(
                             np.ascontiguousarray(current_h).view(np.uint8).tobytes()
                         ),
                     }
-                if v20_mode_inventory is None:
-                    raise ValueError("V30 sector callback lacks the frozen mode inventory")
-                sector_builder_inputs = _task40_v30_sector_builder_inputs(
-                    global_bundle=global_bundle,
-                    mode_inventory=v20_mode_inventory,
-                    coordinates=coordinates,
-                    profile=profile,
-                    q_maps_by_q=q_maps_by_q,
-                    sector_q_indices=sector_qs,
-                )
                 operator_identity_by_q = {
                     int(q): selected_q_operator_identity(
                         scientific_input_sha256=str(
@@ -6882,12 +7997,11 @@ def run_task40_v10_p6_reference_worker(
                 saved_native_witness_by_q = {}
                 direct_hhat_evidence_by_q = {}
                 if 4 in map(int, q_indices):
-                    direct_hhat_evidence_by_q[4] = _task40_v30_q4_direct_hhat_evidence(
-                        repo_root=_repo_root(),
-                        producer_facts=donor_facts,
-                    )
+                    direct_hhat_evidence_by_q[4] = q4_source_cache[
+                        "direct_hhat_evidence"
+                    ]
                     saved_native_witness_by_q[4] = _task40_v30_open_saved_q4_native_witness(
-                        contract=v30_contract,
+                        contract=route_contract,
                         repo_root=_repo_root(),
                         operator_identity=operator_identity_by_q[4],
                         current_execution_identity=runtime_identity["execution_identity"],
@@ -6922,50 +8036,639 @@ def run_task40_v10_p6_reference_worker(
                     producer_identity_by_q=producer_identity_by_q,
                     saved_native_witness_by_q=saved_native_witness_by_q,
                     direct_hhat_evidence_by_q=direct_hhat_evidence_by_q,
+                    precomputed_numeric_by_q=precomputed_numeric_by_q,
                     output_directory=(
-                        Path(str(v30_factor_config["output_directory"])) / "selected_q"
+                        Path(str(factor_config["output_directory"])) / "selected_q"
                     ),
                 )
                 if donor_facts is not None:
                     audit["q4_saved_producer_identity"] = donor_facts
                     audit["q4_direct_hhat_support_evidence"] = direct_hhat_evidence_by_q[4]
+                    audit["q4_saved_live_binding"] = donor_binding
                 return matrices, audit
 
             qualified_q_csr_preparer = prepare_v30_sector_q_csr
 
-        reference = build_task40_v10_p6_reference_inverse(
-            cfg,
-            axes,
-            allocation_gate=allocation_gate,
-            profile=periodic_profile,
-            event=reference_event,
-            identity_gate=identity_gate if v30_contract is None else None,
-            jit_options=SAME_MESH_JIT_OPTIONS,
-            share_transform_bank=share_transform_bank,
-            target_full_storage_rows=(
-                int(target_action.condensed.full_rows) if target_action is not None else None
+        def v31_phase_start(phase: str, **facts: Any) -> int | None:
+            if not v31_route_requested:
+                return None
+            started_ns = time.time_ns()
+            runtime.marker(
+                f"{phase}_phase_started",
+                {
+                    "schema": "task40extra.review_v31_worker_phase_event.v1",
+                    "phase": phase,
+                    "status": "STARTED",
+                    "started_utc_ns": started_ns,
+                    **facts,
+                },
+            )
+            return started_ns
+
+        def v31_phase_end(
+            phase: str,
+            started_ns: int | None,
+            *,
+            status: str,
+            **facts: Any,
+        ) -> None:
+            if started_ns is None:
+                return
+            finished_ns = time.time_ns()
+            runtime.marker(
+                f"{phase}_phase_completed",
+                {
+                    "schema": "task40extra.review_v31_worker_phase_event.v1",
+                    "phase": phase,
+                    "status": status,
+                    "started_utc_ns": started_ns,
+                    "finished_utc_ns": finished_ns,
+                    "elapsed_seconds": max(0.0, (finished_ns - started_ns) / 1.0e9),
+                    **facts,
+                },
+            )
+
+        def v31_write_product(name: str, payload: Mapping[str, Any]) -> dict[str, Any]:
+            if not v31_route_requested:
+                raise RuntimeError("V31 product receipt cannot be written outside the V31 route")
+            path = directory / name
+            _write_json(path, payload)
+            raw = path.read_bytes()
+            return {
+                "schema": "task40extra.review_v31_worker_product_receipt.v1",
+                "path": path.relative_to(directory).as_posix(),
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                "bytes": len(raw),
+            }
+
+        def prepare_saved_q4_numeric_before_reference() -> Mapping[str, Any]:
+            if (
+                route_contract is None
+                or factor_config is None
+                or not isinstance(qualified_q_csr_identity, Mapping)
+                or v20_mode_inventory is None
+                or len(v20_mode_inventory) != 3
+            ):
+                raise ValueError("V31 saved-first q4 lacks its frozen contract or mode inventory")
+            from src.solvers.task40_v30_selected_q_csr import (
+                prepare_saved_selected_q_numeric_pending,
+                selected_q_operator_identity,
+            )
+
+            donor = _task40_v30_open_saved_q4_source(
+                contract=route_contract,
+                repo_root=_repo_root(),
+                profile=periodic_profile,
+                allocation_gate=allocation_gate,
+                return_saved_inputs=True,
+            )
+            q4_map = donor["q4_map"]
+            q4_trace_rows = int(q4_map.shape[1]) - int(periodic_profile.q_port_counts[4])
+            if q4_trace_rows != int(periodic_profile.trace_rows_per_q):
+                raise ValueError("saved q4 map columns do not match its actual trace/port split")
+            operator_identity = selected_q_operator_identity(
+                scientific_input_sha256=str(
+                    qualified_q_csr_identity["scientific_input_sha256"]
+                ),
+                profile_identity=periodic_profile.identity(),
+                ordered_modes=tuple(v20_mode_inventory[0]),
+                q_map=q4_map,
+                original_h=donor["original_h"],
+            )
+            producer_facts = dict(donor["producer_facts"])
+            direct_hhat_evidence = _task40_v30_q4_direct_hhat_evidence(
+                repo_root=_repo_root(), producer_facts=producer_facts
+            )
+            donor["direct_hhat_evidence"] = direct_hhat_evidence
+            matrix_source_identity = {
+                "source_sha": producer_facts["producer_source_sha"],
+                "window_sha256": producer_facts["producer_window_sha256"],
+            }
+            numeric_stage = prepare_saved_selected_q_numeric_pending(
+                source=donor["source"],
+                q_map=q4_map,
+                q_index=4,
+                twist_index=0,
+                trace_rows=q4_trace_rows,
+                allocation_gate=allocation_gate,
+                profile=str(periodic_profile.name),
+                operator_identity=operator_identity,
+                matrix_source_identity=matrix_source_identity,
+                execution_identity=dict(qualified_q_csr_identity["execution_identity"]),
+                producer_identity=producer_facts,
+                output_directory=(
+                    Path(str(factor_config["output_directory"]))
+                    / "selected_q" / "q4_twist0"
+                ),
+                direct_hhat_evidence=direct_hhat_evidence,
+                consumer_import_authorization=(
+                    v31_q_csr_import_authorizations.get("numeric_pending", {}).get("4")
+                    if isinstance(v31_q_csr_import_authorizations, Mapping)
+                    and isinstance(v31_q_csr_import_authorizations.get("numeric_pending", {}), Mapping)
+                    else None
+                ),
+            )
+            if numeric_stage.get("status") != "NUMERIC_COMPLETE_NATIVE_PENDING":
+                raise RuntimeError("saved-first q4 did not reach durable numeric-pending")
+            q4_source_cache.update(donor)
+            pending_record = numeric_stage["numeric_pending"]
+            runtime.marker(
+                "task40_v31_q4_numeric_pending_complete",
+                {
+                    "q_index": 4,
+                    "twist_index": 0,
+                    "pending_record": pending_record.get("record_path"),
+                    "pending_sha256": pending_record.get("record_sha256"),
+                    "shape": list(numeric_stage["matrix"].shape),
+                    "stored_structural_slots": int(numeric_stage["matrix"].nnz),
+                    "reopened_existing_pending": bool(numeric_stage.get("reopened", False)),
+                    "global_reference_builder_started": False,
+                    "native_or_factor_started": False,
+                },
+            )
+            return {**numeric_stage, "saved_donor": donor}
+
+        def prepare_saved_q4_with_phase() -> Mapping[str, Any]:
+            phase = "task40_v31_q4_saved_numeric_pending"
+            started_ns = v31_phase_start(
+                phase,
+                q_index=4,
+                twist_index=0,
+                native_or_factor_started=False,
+                global_reference_builder_started=False,
+            )
+            try:
+                result = prepare_saved_q4_numeric_before_reference()
+            except BaseException as error:
+                v31_phase_end(
+                    phase,
+                    started_ns,
+                    status="FAILED",
+                    error_type=type(error).__name__,
+                    error_message=str(error),
+                )
+                raise
+            record = result.get("numeric_pending", {})
+            v31_phase_end(
+                phase,
+                started_ns,
+                status="COMPLETE",
+                q_index=4,
+                twist_index=0,
+                product_path=record.get("record_path"),
+                product_sha256=record.get("record_sha256"),
+                reopened_existing_pending=bool(result.get("reopened", False)),
+            )
+            return result
+
+        def prepare_twist0_owner_with_phase(
+            pending: Mapping[str, Any],
+        ) -> Mapping[str, Any]:
+            numeric_pending = pending.get("numeric_pending", {})
+            phase = "task40_v31_twist0_owner_prebuild"
+            started_ns = v31_phase_start(
+                phase,
+                q4_pending_path=numeric_pending.get("record_path"),
+                q4_pending_sha256=numeric_pending.get("record_sha256"),
+                global_reference_builder_started=False,
+            )
+            try:
+                owner = prepare_twist0_owner_before_global(pending)
+            except BaseException as error:
+                v31_phase_end(
+                    phase,
+                    started_ns,
+                    status="FAILED",
+                    error_type=type(error).__name__,
+                    error_message=str(error),
+                )
+                raise
+            receipt = dict(owner.get("owner_receipt", {}))
+            if v31_route_requested:
+                product = v31_write_product(
+                    "v31_twist0_owner_receipt.json",
+                    {
+                        "schema": "task40extra.review_v31_twist0_owner_product.v1",
+                        "source_sha": source_sha,
+                        "run_id": resolved_payload.get("run_id"),
+                        "input_sha256": scientific_input_sha256,
+                        "owner_receipt": receipt,
+                    },
+                )
+                receipt["owner_receipt_product"] = product
+                owner.setdefault("owner_receipt", {}).update(
+                    owner_receipt_product=product
+                )
+            v31_phase_end(
+                phase,
+                started_ns,
+                status="COMPLETE",
+                owner_receipt=receipt,
+                q4_pending_path=numeric_pending.get("record_path"),
+                q4_pending_sha256=numeric_pending.get("record_sha256"),
+            )
+            return owner
+
+        def prepare_twist0_owner_before_global(
+            pending: Mapping[str, Any],
+        ) -> Mapping[str, Any]:
+            nonlocal q4_saved_numeric_prebuild, prebuilt_twist0_owner, prebuilt_twist0_q_csr
+            if (
+                pending.get("status") != "NUMERIC_COMPLETE_NATIVE_PENDING"
+                or not isinstance(pending.get("saved_donor"), Mapping)
+                or not isinstance(v20_mode_inventory, tuple)
+                or len(v20_mode_inventory) != 3
+                or qualified_q_csr_provider is None
+                or 0 not in qualified_q_csr_provider.entries
+            ):
+                raise ValueError(
+                    "V31 twist-0 handoff requires durable q4 pending, frozen modes, and accepted q0"
+                )
+            q4_saved_numeric_prebuild = pending
+            donor = pending["saved_donor"]
+            frozen_modes, frozen_rows, frozen_mode_sha = v20_mode_inventory
+            regular_cfg = __import__("dataclasses").replace(
+                cfg,
+                air_void_box_nm=None,
+                cell_notch=None,
+                geometry_identity="task40_v10_p6_reference.regular_reference",
+            )
+            contexts = build_task40_v10_sector_contexts(
+                tuple(frozen_modes),
+                regular_cfg,
+                axes,
+                expected_q_counts=periodic_profile.q_port_counts,
+                expected_sector_counts=periodic_profile.sector_port_counts,
+            )
+            context = next(
+                (row for row in contexts if int(row.twist_index) == 0), None
+            )
+            if context is None or tuple(context.global_q_indices) != (0, 4):
+                raise ValueError("V31 frozen inventory does not identify the real twist-0 (q0,q4) pair")
+            saved_local_h = np.asarray(donor.get("original_h"), dtype=np.complex128)
+            selected_modes = np.asarray(context.original_mode_indices, dtype=np.int64)
+            if (
+                len(frozen_modes) != int(periodic_profile.mode_count)
+                or len(frozen_rows) != len(frozen_modes)
+                or selected_modes.ndim != 1
+                or len(np.unique(selected_modes)) != len(selected_modes)
+                or np.any(selected_modes < 0)
+                or np.any(selected_modes >= len(frozen_modes))
+                or saved_local_h.shape != selected_modes.shape
+                or not np.isfinite(saved_local_h).all()
+                or not np.all(saved_local_h.imag == 0.0)
+                or np.any(saved_local_h.real <= 0.0)
+            ):
+                raise ValueError(
+                    "V31 saved q4 donor does not carry finite positive twist-0 local H "
+                    "for the frozen selected mode indices"
+                )
+            global_h = np.fromiter(
+                (
+                    assembly_projection_denominator(mode, regular_cfg, BOUNDARY_PLANE)
+                    for mode in frozen_modes
+                ),
+                dtype=np.float64,
+                count=len(frozen_modes),
+            )
+            if (
+                global_h.shape != (int(periodic_profile.mode_count),)
+                or not np.isfinite(global_h).all()
+                or np.any(global_h <= 0.0)
+            ):
+                raise ValueError("V31 frozen mode table did not produce finite positive global H")
+            global_h_sha256 = hashlib.sha256(
+                np.ascontiguousarray(global_h).view(np.uint8)
+            ).hexdigest()
+            local_owner = build_task40_v10_p6_local_sector_owner(
+                cfg,
+                axes,
+                context=context,
+                global_modes=tuple(frozen_modes),
+                global_mode_rows=tuple(frozen_rows),
+                global_mode_sha256=str(frozen_mode_sha),
+                global_h=global_h,
+                profile=periodic_profile,
+                allocation_gate=allocation_gate,
+                jit_options=SAME_MESH_JIT_OPTIONS,
+                share_transform_bank=share_transform_bank,
+            )
+            prebuilt_twist0_owner = local_owner
+            local_owner.setdefault("owner_receipt", {}).update(
+                handover_status="TWIST0_LOCAL_OWNER_AWAITING_Q4_NATIVE",
+                global_reference_builder_started=False,
+            )
+            owner_local_h = np.asarray(local_owner.get("local_h"), dtype=np.float64)
+            if (
+                owner_local_h.shape != saved_local_h.shape
+                or not np.array_equal(
+                    saved_local_h,
+                    np.asarray(owner_local_h, dtype=np.complex128),
+                )
+                or local_owner.get("global_h_sha256") != global_h_sha256
+            ):
+                raise ValueError(
+                    "V31 saved local H, prepared owner local H, and frozen global H carrier identity differ"
+                )
+            local_y_span_nm = float(
+                context.local_axes["y"][-1] - context.local_axes["y"][0]
+            )
+            global_y_span_nm = float(cfg.period_y)
+            local_owner.setdefault("owner_receipt", {}).update(
+                global_h_source="frozen_mode_table_boundary_plane_projection_denominator",
+                global_h_mode_count=int(global_h.size),
+                global_h_sha256=global_h_sha256,
+                saved_local_h_count=int(saved_local_h.size),
+                saved_local_h_sha256=hashlib.sha256(
+                    np.ascontiguousarray(saved_local_h).view(np.uint8)
+                ).hexdigest(),
+                prepared_local_h_sha256=hashlib.sha256(
+                    np.ascontiguousarray(owner_local_h).view(np.uint8)
+                ).hexdigest(),
+                local_h_matches_saved_owner_exactly=True,
+                global_h_bound_to_current_carrier_identity=True,
+                local_to_global_y_span_ratio_diagnostic=(
+                    local_y_span_nm / global_y_span_nm
+                    if global_y_span_nm > 0.0
+                    else None
+                ),
+                local_y_span_nm=local_y_span_nm,
+                global_y_span_nm=global_y_span_nm,
+                y_span_ratio_is_diagnostic_only=True,
+            )
+            runtime.marker(
+                "task40_v31_twist0_local_owner_prebuilt",
+                {
+                    **dict(local_owner.get("owner_receipt", {})),
+                    "pending_record": pending.get("numeric_pending", {}).get("record_path"),
+                    "pending_sha256": pending.get("numeric_pending", {}).get("record_sha256"),
+                    "global_reference_builder_started": False,
+                    "q4_native_started": False,
+                },
+            )
+
+            q_maps_by_q = {
+                q: local_owner["coordinates"].q_map(
+                    branch, allocation_gate=allocation_gate
+                )
+                for branch, q in enumerate(context.global_q_indices)
+            }
+            donor_binding = _task40_v31_bind_saved_q4_to_live(
+                donor,
+                current_q0_map=q_maps_by_q[0],
+                current_q4_map=q_maps_by_q[4],
+                current_local_h=np.asarray(local_owner["local_h"], dtype=np.complex128),
+                current_trace_constraints=local_owner["action"].condensed.trace_constraints,
+                current_full_rows=int(local_owner["action"].condensed.full_rows),
+                allocation_gate=allocation_gate,
+            )
+            frozen_bundle_identity = {
+                "modes": tuple(frozen_modes),
+                "mode_rows": tuple(frozen_rows),
+                "mode_sha256": str(frozen_mode_sha),
+            }
+            provider_matrices, provider_audit = _task40_v30_load_sector_q_csr_pair(
+                qualified_q_csr_provider,
+                action=local_owner["action"],
+                coordinates=local_owner["coordinates"],
+                context=context,
+                local_h=np.asarray(local_owner["local_h"], dtype=np.float64),
+                profile=periodic_profile,
+                global_bundle=frozen_bundle_identity,
+                mode_inventory=local_owner["mode_inventory"],
+                runtime_identity=qualified_q_csr_identity,
+                allocation_gate=allocation_gate,
+                selected_q_indices={0},
+            )
+            if set(provider_matrices) != {0}:
+                raise ValueError("V31 twist-0 handoff did not reopen exactly the accepted q0 CSR")
+            missing_q = set(map(int, context.global_q_indices)) - set(provider_matrices)
+            if not missing_q <= {4}:
+                raise ValueError("V31 twist-0 preparation would repeat an already accepted q native route")
+            preparation_audit: Mapping[str, Any] = {}
+            prepared_matrices: Mapping[int, Any] = {}
+            if missing_q:
+                if missing_q != {4} or not callable(qualified_q_csr_preparer):
+                    raise ValueError("V31 twist-0 q4 native preparer is unavailable")
+                native_phase = "task40_v31_twist0_q4_native"
+                native_started_ns = v31_phase_start(
+                    native_phase,
+                    q_indices=[4],
+                    twist_index=0,
+                    global_reference_builder_started=False,
+                    numeric_factor_started=False,
+                )
+                try:
+                    prepared_matrices, preparation_audit = qualified_q_csr_preparer(
+                        provider=qualified_q_csr_provider,
+                        action=local_owner["action"],
+                        volume_action=local_owner["bundle"]["volume_action"],
+                        coordinates=local_owner["coordinates"],
+                        context=context,
+                        local_h=np.asarray(local_owner["local_h"], dtype=np.float64),
+                        profile=periodic_profile,
+                        global_bundle=frozen_bundle_identity,
+                        local_bundle=local_owner["bundle"],
+                        mode_inventory=local_owner["mode_inventory"],
+                        q_indices=(4,),
+                        available_sector_matrices=provider_matrices,
+                        runtime_identity=qualified_q_csr_identity,
+                        allocation_gate=allocation_gate,
+                    )
+                except BaseException as error:
+                    v31_phase_end(
+                        native_phase,
+                        native_started_ns,
+                        status="FAILED",
+                        error_type=type(error).__name__,
+                        error_message=str(error),
+                    )
+                    raise
+                v31_phase_end(
+                    native_phase,
+                    native_started_ns,
+                    status="COMPLETE",
+                    q_indices=sorted(map(int, prepared_matrices)),
+                    qualification_receipt_count=len(
+                        preparation_audit.get("qualification_receipts", ())
+                    ),
+                    selector_entry_count=len(preparation_audit.get("selector_entries", ())),
+                )
+            all_matrices = {**dict(provider_matrices), **dict(prepared_matrices)}
+            receipts = [
+                *provider_audit.get("qualification_receipts", ()),
+                *preparation_audit.get("qualification_receipts", ()),
+            ]
+            selector_entries = [
+                *provider_audit.get("selector_entries", ()),
+                *preparation_audit.get("selector_entries", ()),
+            ]
+            merged_audit = {
+                **dict(provider_audit),
+                **dict(preparation_audit),
+                "qualification_receipts": [dict(row) for row in receipts],
+                "selector_entries": [dict(row) for row in selector_entries],
+                "q_indices": sorted(all_matrices),
+                "all_complete_native_pass": (
+                    set(all_matrices) == {0, 4}
+                    and len(receipts) == 2
+                    and all(
+                        row.get("qualification_status") == "PASS"
+                        for row in selector_entries
+                    )
+                ),
+                "q4_saved_live_binding": donor_binding,
+                "native_owner_created_before_global_reference": True,
+            }
+            if merged_audit["all_complete_native_pass"] is not True:
+                raise ValueError("V31 twist-0 handoff lacks COMPLETE CSR and native PASS for q0/q4")
+            prebuilt_twist0_q_csr = (all_matrices, merged_audit)
+            local_owner["owner_receipt"].update(
+                handover_status="PREPARED_FOR_GLOBAL_REFERENCE",
+                q4_saved_live_binding=donor_binding,
+                q4_native_status="PASS",
+                q4_selector_entry=next(
+                    row for row in selector_entries if int(row.get("q_index", -1)) == 4
+                ),
+                global_reference_builder_started=False,
+            )
+            runtime.marker(
+                "task40_v31_twist0_q4_native_complete",
+                dict(local_owner["owner_receipt"]),
+            )
+            return local_owner
+
+        def build_reference_from_saved_q4(
+            pending: Mapping[str, Any] | None,
+            prepared_owner: Mapping[str, Any] | None = None,
+        ) -> Any:
+            nonlocal q4_saved_numeric_prebuild
+            q4_saved_numeric_prebuild = pending
+            if isinstance(prepared_owner, dict):
+                prepared_owner.setdefault("owner_receipt", {}).update(
+                    handover_status="REFERENCE_BUILDER_RECEIVED_OWNER",
+                    global_reference_builder_started=True,
+                )
+                runtime.marker(
+                    "task40_v31_twist0_owner_handed_to_reference",
+                    dict(prepared_owner["owner_receipt"]),
+                )
+            reference_phase = "task40_v31_global_reference_builder"
+            reference_started_ns = v31_phase_start(
+                reference_phase,
+                q4_pending_path=(
+                    pending.get("numeric_pending", {}).get("record_path")
+                    if isinstance(pending, Mapping)
+                    else None
+                ),
+                q4_pending_sha256=(
+                    pending.get("numeric_pending", {}).get("record_sha256")
+                    if isinstance(pending, Mapping)
+                    else None
+                ),
+                twist0_owner_prebuilt=prepared_owner is not None,
+            )
+            try:
+                built_reference = build_task40_v10_p6_reference_inverse(
+                    cfg,
+                    axes,
+                    allocation_gate=allocation_gate,
+                    profile=periodic_profile,
+                    event=reference_event,
+                    identity_gate=identity_gate if route_contract is None else None,
+                    jit_options=SAME_MESH_JIT_OPTIONS,
+                    share_transform_bank=share_transform_bank,
+                    target_full_storage_rows=(
+                        int(target_action.condensed.full_rows)
+                        if target_action is not None else None
+                    ),
+                    planned_target_full_storage_rows=(
+                        int(periodic_profile.global_storage_rows)
+                        if route_contract is not None
+                        or v31_target_admission_policy is not None
+                        else None
+                    ),
+                    target_admission_phase=(
+                        "REFERENCE_ONLY"
+                        if v31_target_admission_policy is not None
+                        else None
+                    ),
+                    reference_pc_strategy=reference_pc_strategy,
+                    q_assembly_strategy=q_assembly_strategy,
+                    factor_lifecycle_strategy=factor_lifecycle_strategy,
+                    operator_qualification_reuse=operator_qualification_reuse,
+                    mode_inventory=v20_mode_inventory,
+                    qualified_q_csr_provider=qualified_q_csr_provider,
+                    qualified_q_csr_identity=qualified_q_csr_identity,
+                    qualified_q_csr_coverage_phase=qualified_q_csr_coverage_phase,
+                    qualified_q_csr_preparer=qualified_q_csr_preparer,
+                    prebuilt_sector_owners=(
+                        {0: prepared_owner} if prepared_owner is not None else None
+                    ),
+                    prebuilt_sector_q_csr=(
+                        {0: prebuilt_twist0_q_csr}
+                        if prebuilt_twist0_q_csr is not None
+                        else None
+                    ),
+                    v30_factor_config=factor_config,
+                    factor_output_directory=(
+                        str(factor_config["output_directory"])
+                        if factor_config is not None
+                        else None
+                    ),
+                )
+            except BaseException as error:
+                if isinstance(prepared_owner, dict):
+                    prepared_owner.setdefault("owner_receipt", {}).update(
+                        handover_status="REFERENCE_BUILDER_FAILED",
+                        global_reference_builder_failed=True,
+                    )
+                v31_phase_end(
+                    reference_phase,
+                    reference_started_ns,
+                    status="FAILED",
+                    error_type=type(error).__name__,
+                    error_message=str(error),
+                )
+                raise
+            if isinstance(prepared_owner, dict):
+                prepared_owner.setdefault("owner_receipt", {}).update(
+                    handover_status="REFERENCE_OWNS_LOCAL_SECTOR",
+                    global_reference_builder_returned=True,
+                )
+            v31_phase_end(
+                reference_phase,
+                reference_started_ns,
+                status="COMPLETE",
+                reference_q_count=len(
+                    getattr(built_reference.get("factors"), "csr_matrices", {})
+                ),
+                reference_q_indices=sorted(
+                    map(
+                        int,
+                        getattr(built_reference.get("factors"), "csr_matrices", {}).keys(),
+                    )
+                ),
+            )
+            return built_reference
+
+        needs_saved_q4 = (
+            qualified_q_csr_provider is not None
+            and 4 not in qualified_q_csr_provider.entries
+        )
+        reference, q4_saved_numeric_prebuild = _task40_v31_build_reference_after_q4_pending(
+            prepare_saved_q4=(
+                prepare_saved_q4_with_phase if needs_saved_q4 else None
             ),
-            planned_target_full_storage_rows=(
-                int(periodic_profile.global_storage_rows) if v30_contract is not None else None
-            ),
-            reference_pc_strategy=reference_pc_strategy,
-            q_assembly_strategy=q_assembly_strategy,
-            factor_lifecycle_strategy=factor_lifecycle_strategy,
-            operator_qualification_reuse=operator_qualification_reuse,
-            mode_inventory=v20_mode_inventory,
-            qualified_q_csr_provider=qualified_q_csr_provider,
-            qualified_q_csr_identity=qualified_q_csr_identity,
-            qualified_q_csr_coverage_phase=qualified_q_csr_coverage_phase,
-            qualified_q_csr_preparer=qualified_q_csr_preparer,
-            v30_factor_config=v30_factor_config,
-            factor_output_directory=(
-                str(v30_factor_config["output_directory"])
-                if v30_factor_config is not None
-                else None
+            build_reference=build_reference_from_saved_q4,
+            prepare_twist0_owner=(
+                prepare_twist0_owner_with_phase if needs_saved_q4 else None
             ),
         )
         if qualified_q_csr_provider is not None:
-            summary["v30_all_q_selector"] = reference.get(
+            summary[
+                "v31_all_q_selector" if v31_route_requested else "v30_all_q_selector"
+            ] = reference.get(
                 "qualified_q_csr_final_selector"
             )
         if stop_after_stage is not None:
@@ -7114,7 +8817,7 @@ def run_task40_v10_p6_reference_worker(
                 "numerical_output_directory": str(output_directory),
             }
             return worker_result
-        if v30_contract is None and not mode_identity:
+        if route_contract is None and not mode_identity:
             raise RuntimeError("regular p6 physical identity callback did not run before q factors")
         mapping_identity = _mapping_identity(reference)
         ref_rhs, ref_rhs_facts = build_physical_rhs(reference["global_bundle"])
@@ -7125,7 +8828,7 @@ def run_task40_v10_p6_reference_worker(
             ref_rhs_facts,
             allocation_gate=allocation_gate,
             reference_pc_strategy=reference_pc_strategy,
-            include_mixed_fe_port_cases=v30_contract is not None,
+            include_mixed_fe_port_cases=route_contract is not None,
         )
         ref_rhs.destroy()
         ref_rhs = None
@@ -7133,8 +8836,53 @@ def run_task40_v10_p6_reference_worker(
             raise ValueError("complete regular p6 inverse checks did not pass")
         reference["regular_inverse_checks"] = regular_checks
         runtime.marker("v10_regular_reference_inverse_qualified", regular_checks)
+        if v31_route_requested:
+            early_reference_snapshot = {
+                "schema": "task40extra.review_v10_reference_audit_snapshot.v1",
+                "factor_audit_before_destroy": copy.deepcopy(reference["factors"].audit),
+                "q_matrix_audits_before_destroy": copy.deepcopy(
+                    reference.get("q_matrix_audits", {})
+                ),
+                "sector_audits_before_destroy": copy.deepcopy(
+                    reference.get("sector_audits", [])
+                ),
+                "inverse_call_count": int(reference["inverse"].calls),
+                "reference_layout": copy.deepcopy(reference["full_layout"].audit),
+                "snapshot_after_six_reference_checks": True,
+            }
+            summary["regular_inverse_checks"] = regular_checks
+            summary["reference_audit_snapshot"] = early_reference_snapshot
+            early_product = v31_write_product(
+                "v31_reference_inverse_product.json",
+                {
+                    "schema": "task40extra.review_v31_reference_inverse_product.v1",
+                    "source_sha": source_sha,
+                    "run_id": resolved_payload.get("run_id"),
+                    "scientific_input_sha256": scientific_input_sha256,
+                    "reference_audit_snapshot": early_reference_snapshot,
+                    "regular_inverse_checks": regular_checks,
+                    "all_q_selector": summary.get("v31_all_q_selector"),
+                },
+            )
+            summary["v31_reference_inverse_product"] = early_product
+            runtime.marker(
+                "task40_v31_reference_inverse_product_persisted",
+                {
+                    **early_product,
+                    "source_sha": source_sha,
+                    "run_id": resolved_payload.get("run_id"),
+                    "scientific_input_sha256": scientific_input_sha256,
+                    "strict_reference_status_by_case": regular_checks.get(
+                        "strict_reference_status_by_case"
+                    ),
+                    "v15_reference_status_by_case": regular_checks.get(
+                        "v15_reference_status_by_case"
+                    ),
+                    "snapshot_stage": "after_complete_reference_checks_before_target_build",
+                },
+            )
 
-        if v30_contract is not None:
+        if route_contract is not None:
             _task40_v30_build_target_after_reference(
                 reference_owner=reference,
                 regular_checks=regular_checks,
@@ -7533,6 +9281,39 @@ def run_task40_v10_p6_reference_worker(
         }
         pc_snapshot = pc.detach()
         summary["reference_audit_snapshot"] = reference_audit_snapshot
+        if v31_route_requested:
+            reference_product = v31_write_product(
+                "v31_reference_inverse_product.json",
+                {
+                    "schema": "task40extra.review_v31_reference_inverse_product.v1",
+                    "source_sha": source_sha,
+                    "run_id": resolved_payload.get("run_id"),
+                    "scientific_input_sha256": scientific_input_sha256,
+                    "reference_audit_snapshot": reference_audit_snapshot,
+                    "regular_inverse_checks": summary.get("regular_inverse_checks"),
+                    "all_q_selector": summary.get("v31_all_q_selector"),
+                },
+            )
+            summary["v31_reference_inverse_product"] = reference_product
+            runtime.marker(
+                "task40_v31_reference_inverse_product_persisted",
+                {
+                    **reference_product,
+                    "source_sha": source_sha,
+                    "run_id": resolved_payload.get("run_id"),
+                    "scientific_input_sha256": scientific_input_sha256,
+                    "strict_reference_status_by_case": (
+                        summary.get("regular_inverse_checks", {}).get(
+                            "strict_reference_status_by_case"
+                        )
+                    ),
+                    "v15_reference_status_by_case": (
+                        summary.get("regular_inverse_checks", {}).get(
+                            "v15_reference_status_by_case"
+                        )
+                    ),
+                },
+            )
         summary["reference_pc_audit_before_detach"] = pc_snapshot
         summary["target_backend_final_audit"] = dict(
             target_fast_bundle["physical_action"].audit
@@ -8018,6 +9799,67 @@ def run_task40_v10_p6_reference_worker(
                         worker_result["passed"] = False
                         worker_result["status"] = "failed"
                         worker_result["errors"] = [str(exc)]
+        if prebuilt_twist0_owner is not None:
+            prior_owner_receipt = dict(
+                prebuilt_twist0_owner.get("owner_receipt", {})
+            )
+            owner_was_already_released = (
+                prebuilt_twist0_owner.get("local_owner_cleanup_complete") is True
+            )
+            try:
+                cleanup = destroy_task40_v10_p6_local_sector_owner(
+                    prebuilt_twist0_owner,
+                    close_transform_bank=True,
+                )
+                if cleanup.get("status") != "RELEASED":
+                    raise RuntimeError(
+                        "V31 twist-0 owner cleanup did not confirm release: "
+                        f"{cleanup}"
+                    )
+                handover_status = prior_owner_receipt.get(
+                    "handover_status", "OWNER_NOT_HANDED_TO_REFERENCE"
+                )
+                cleanup_facts = {
+                    "schema": "task40extra.review_v31_twist0_owner_handoff_cleanup.v1",
+                    "status": "RELEASED",
+                    "handover_status": handover_status,
+                    "reference_builder_returned": bool(
+                        prior_owner_receipt.get("global_reference_builder_returned")
+                    ),
+                    "reference_object_present_during_finally": reference is not None,
+                    "owner_already_released_before_worker_finally": owner_was_already_released,
+                    "cleanup_responsibility": (
+                        "reference_owner_then_worker_finally_idempotent_verification"
+                        if handover_status == "REFERENCE_OWNS_LOCAL_SECTOR"
+                        else "worker_finally_release_or_idempotent_builder_failure_fallback"
+                    ),
+                    "worker_finally_called_cleanup": True,
+                    "cleanup_receipt": dict(cleanup),
+                }
+                summary["v31_twist0_local_owner_cleanup"] = cleanup_facts
+                if runtime is not None:
+                    runtime.marker(
+                        "task40_v31_twist0_local_owner_cleanup",
+                        cleanup_facts,
+                    )
+            except BaseException as exc:
+                cleanup_facts = {
+                    "schema": "task40extra.review_v31_twist0_owner_handoff_cleanup.v1",
+                    "status": "CLEANUP_FAILED",
+                    "handover_status": prior_owner_receipt.get(
+                        "handover_status", "OWNER_NOT_HANDED_TO_REFERENCE"
+                    ),
+                    "reference_builder_returned": bool(
+                        prior_owner_receipt.get("global_reference_builder_returned")
+                    ),
+                    "owner_already_released_before_worker_finally": owner_was_already_released,
+                    "error": {"type": type(exc).__name__, "message": str(exc)},
+                }
+                _task40_v31_apply_local_owner_cleanup_failure(
+                    summary,
+                    worker_result,
+                    cleanup_facts,
+                )
         if target_fast_bundle is not None:
             try:
                 target_fast_bundle["physical_action"].destroy()
@@ -8154,6 +9996,39 @@ def run_task40_v10_p6_reference_worker(
                                 "while_persisting_v17_ledger_failure" if is_v17 else "while_persisting_v16_ledger_failure": True,
                             }
                         )
+        if v31_route_requested and runtime is not None:
+            try:
+                summary_path = directory / "task40_v10_p6_candidate_summary.json"
+                _write_json(summary_path, summary)
+                summary_bytes = summary_path.read_bytes()
+                runtime.marker(
+                    "task40_v31_worker_summary_product_persisted",
+                    {
+                        "schema": "task40extra.review_v31_worker_summary_product.v1",
+                        "path": summary_path.relative_to(directory).as_posix(),
+                        "sha256": hashlib.sha256(summary_bytes).hexdigest(),
+                        "bytes": len(summary_bytes),
+                        "source_sha": source_sha,
+                        "run_id": resolved_payload.get("run_id"),
+                        "scientific_input_sha256": scientific_input_sha256,
+                        "status": summary.get("status"),
+                        "official_result": summary.get("official_result"),
+                        "cleanup_errors": list(summary.get("cleanup_errors", ())),
+                    },
+                )
+            except Exception as exc:
+                summary.setdefault("cleanup_errors", []).append(
+                    {
+                        "type": type(exc).__name__,
+                        "message": str(exc),
+                        "while_persisting_v31_worker_summary_product": True,
+                    }
+                )
+                if worker_result is not None:
+                    worker_result["passed"] = False
+                    worker_result.setdefault("errors", []).append(
+                        "V31 final worker-summary product receipt could not be persisted"
+                    )
         for signum, handler in handlers.items():
             signal.signal(signum, handler)
 

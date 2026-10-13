@@ -68,6 +68,12 @@ _TASK40_V30_LEGACY_ROOTS = (
     _TASK40_V30_ARTIFACT_ROOT,
     _TASK40_V30_PREPARATION_ROOT,
 )
+_TASK40_V31_TARGET_PROFILE = _TASK40_V30_TARGET_PROFILE
+_TASK40_V31_ARTIFACT_ROOT = (
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native"
+)
+_TASK40_V31_Q_CSR_BINDING_SCHEMA = "task40extra.review_v31_q_csr_worker_binding.v1"
+_TASK40_V31_FACTOR_BANK_SCHEMA = "task40extra.review_v31_all_q_factor_bank.v1"
 
 
 def _error(path: str, message: str) -> InputError:
@@ -289,6 +295,71 @@ def _validate_task40_v30_execution_fields(config: Mapping[str, Any]) -> None:
         raise _error(
             f"execution.{factor_key}.require_two_strict_rhs",
             "must be the TOML boolean true",
+        )
+
+
+def _validate_task40_v31_execution_fields(config: Mapping[str, Any]) -> None:
+    execution = config["execution"]
+    selector_key = "task40_v31_q_csr_binding"
+    factor_key = "task40_v31_factor_bank_config"
+    v31_keys = {selector_key, factor_key}
+    supplied = v31_keys.intersection(execution)
+    if not supplied:
+        return
+    if supplied != v31_keys or any(
+        key in execution
+        for key in ("task40_v30_q_csr_binding", "task40_v30_factor_bank_config")
+    ):
+        raise _error("execution", "V31 requires its separate selector and factor bindings only")
+    if (
+        config["dimension"] != 3
+        or config["method"].get("kind") != "full3d_iterative"
+        or config["solver"].get("preconditioner") != _TASK40_V31_TARGET_PROFILE
+        or execution.get("task40_execution_stop_stage") != "full"
+        or execution.get("task40_target_heavy_authorized") is not True
+    ):
+        raise _error(
+            f"execution.{selector_key}",
+            "V31 bindings require the explicitly authorized full original-size target profile",
+        )
+    selector = execution[selector_key]
+    if (
+        not isinstance(selector, Mapping)
+        or set(selector) != {"schema", "selector_path", "selector_sha256"}
+        or selector.get("schema") != _TASK40_V31_Q_CSR_BINDING_SCHEMA
+        or not isinstance(selector.get("selector_path"), str)
+        or not re.fullmatch(r"[0-9a-f]{64}", str(selector.get("selector_sha256", "")))
+    ):
+        raise _error(f"execution.{selector_key}", "V31 selector binding is incomplete or changed")
+    factor = execution[factor_key]
+    if (
+        not isinstance(factor, Mapping)
+        or set(factor)
+        != {
+            "schema",
+            "output_directory",
+            "require_two_strict_rhs",
+            "second_rhs_formula",
+        }
+        or factor.get("schema") != _TASK40_V31_FACTOR_BANK_SCHEMA
+        or not isinstance(factor.get("output_directory"), str)
+        or factor.get("require_two_strict_rhs") is not True
+        or factor.get("second_rhs_formula")
+        != "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13"
+    ):
+        raise _error(f"execution.{factor_key}", "V31 factor-bank binding is incomplete or changed")
+    selector_match = re.fullmatch(
+        rf"{re.escape(_TASK40_V31_ARTIFACT_ROOT)}/source_([0-9a-f]{{40}})/q_csr_selector_v31\.json",
+        str(selector["selector_path"]),
+    )
+    factor_match = re.fullmatch(
+        rf"{re.escape(_TASK40_V31_ARTIFACT_ROOT)}/source_([0-9a-f]{{40}})/factor_bank",
+        str(factor["output_directory"]),
+    )
+    if selector_match is None or factor_match is None or selector_match.group(1) != factor_match.group(1):
+        raise _error(
+            f"execution.{selector_key}.selector_path",
+            "V31 selector and factor-bank paths must share one source-qualified native root",
         )
 
 
@@ -531,6 +602,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
     geometry_kind = geometry["geometry_kind"]
 
     _validate_task40_v30_execution_fields(config)
+    _validate_task40_v31_execution_fields(config)
 
     if dimension == 2:
         if not kind.startswith("2d_"):

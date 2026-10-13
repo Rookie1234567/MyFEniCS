@@ -1469,6 +1469,39 @@ FIELD_SPECS: Final = (
         ),
     ),
     _f(
+        "execution.task40_v31_q_csr_binding",
+        "table",
+        "none",
+        ("full3d_iterative",),
+        "V31 source-qualified 全 q 参考逆执行中的 q CSR selector 绑定",
+        "V31 q CSR worker selector binding",
+        '{ schema = "task40extra.review_v31_q_csr_worker_binding.v1", selector_path = '
+        '"benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_<40-char-sha>/'
+        'q_csr_selector_v31.json", selector_sha256 = "<64 lowercase hex>" }',
+        default=None,
+        constraints=(
+            "exact V31 schema and keys; selector and factor bank must share one source-qualified native root; "
+            "only the explicitly approved full target profile",
+        ),
+    ),
+    _f(
+        "execution.task40_v31_factor_bank_config",
+        "table",
+        "none",
+        ("full3d_iterative",),
+        "V31 source-qualified AllQ resident factor-bank policy",
+        "V31 all-q resident factor-bank policy",
+        '{ schema = "task40extra.review_v31_all_q_factor_bank.v1", output_directory = '
+        '"benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_<40-char-sha>/'
+        'factor_bank", require_two_strict_rhs = true, second_rhs_formula = '
+        '"real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13" }',
+        default=None,
+        constraints=(
+            "exact V31 schema and fields; two strict RHS required; output directory must share the selector's "
+            "source-qualified native root",
+        ),
+    ),
+    _f(
         "execution.task40_component_resume_manifest_path",
         "path",
         "repo-relative",

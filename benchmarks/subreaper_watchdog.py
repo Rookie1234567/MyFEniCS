@@ -14,9 +14,12 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import signal
 import subprocess
+import sys
 import time
+from typing import Any
 
 from benchmarks.task034_wsl_resources import (
     cgroup_snapshot,
@@ -37,6 +40,164 @@ from src.runners.physical_v14_budget import (
 LEGACY_MEMORY_POLICY = "LEGACY_STATIC_MEMORY_ENVELOPE"
 PHYSICAL_MEMORY_PRESSURE_POLICY = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
 PHYSICAL_MEMORY_EVIDENCE_RESERVE_BYTES = 128 * 1024**2
+CAMPAIGN_CLOSEOUT_PARENT_FLUSH_RESERVE_SECONDS = 30.0
+
+
+def _validate_campaign_closeout_authorization(
+    *,
+    command: list[str],
+    campaign: Any,
+    authorization: dict[str, Any] | None,
+    worker_environment: dict[str, str] | None,
+) -> dict[str, Any]:
+    """Fail closed unless the command is the exact registered read-only checker."""
+    if not isinstance(authorization, dict):
+        raise ValueError('closeout phase requires an explicit checker authorization')
+    schema = authorization.get('schema')
+    if schema == 'task40extra.review_v31_closeout_checker_authorization.v1':
+        contract_version = 30
+        contract_key = 'v30_contract_sha256'
+    elif schema == 'task40extra.review_v31_closeout_checker_authorization.v2':
+        contract_version = 31
+        contract_key = 'v31_contract_sha256'
+    else:
+        raise ValueError('closeout checker authorization schema is not registered')
+    required = {
+        'schema', 'phase', 'purpose', 'checker_kind', 'command_sha256',
+        'input_paths', 'input_sha256s', 'expected_channel_count',
+        'campaign_window_sha256', contract_key, 'source_sha',
+        'source_branch', 'source_clean',
+    }
+    if set(authorization) != required:
+        raise ValueError('closeout checker authorization has an open or incomplete schema')
+    argv = [str(value) for value in command]
+    command_sha = hashlib.sha256(
+        json.dumps(argv, separators=(',', ':'), ensure_ascii=False).encode('utf-8')
+    ).hexdigest()
+    contract_sha = authorization.get(contract_key)
+    if (
+        authorization.get('phase') != 'closeout'
+        or authorization.get('purpose') != 'registered_read_only_required_checker'
+        or authorization.get('command_sha256') != command_sha
+        or authorization.get('campaign_window_sha256') != campaign.sha256
+        or not re.fullmatch(r'[0-9a-f]{64}', str(contract_sha or ''))
+        or not re.fullmatch(r'[0-9a-f]{40}', str(authorization.get('source_sha', '')))
+        or not isinstance(authorization.get('source_branch'), str)
+        or not authorization.get('source_branch')
+        or authorization.get('source_clean') is not True
+    ):
+        raise ValueError('closeout checker authorization differs from its command/window/source')
+    environment = dict(worker_environment or os.environ)
+    if contract_version == 30:
+        if (
+            environment.get('TASK40_V30_STRICT_EXECUTION') != '1'
+            or environment.get('TASK40_V30_CONTRACT_SHA256') != contract_sha
+        ):
+            raise ValueError('closeout checker is not bound to the V30 registered execution contract')
+        contract_path = environment.get('TASK40_V30_CONTRACT_PATH')
+        if not contract_path:
+            raise ValueError('closeout checker authorization omits the V30 contract path')
+        from src.runners.task40_v30_contract import require_authorized_contract
+
+        contract, actual_contract_sha = require_authorized_contract(
+            contract_path, expected_sha256=str(contract_sha), current_root=Path.cwd()
+        )
+        window_path = contract['execution']['campaign_window_path']
+        window_sha = contract['execution']['campaign_window_sha256']
+    else:
+        if (
+            environment.get('TASK40_V31_STRICT_EXECUTION') != '1'
+            or environment.get('TASK40_V31_CONTRACT_SHA256') != contract_sha
+        ):
+            raise ValueError('closeout checker is not bound to the V31 registered execution contract')
+        contract_path = environment.get('TASK40_V31_CONTRACT_PATH')
+        if not contract_path:
+            raise ValueError('closeout checker authorization omits the V31 contract path')
+        from src.runners.task40_v31_contract import require_v31_execution_contract
+
+        contract, actual_contract_sha = require_v31_execution_contract(
+            contract_path, expected_sha256=str(contract_sha), current_root=Path.cwd()
+        )
+        window = contract['execution']['window']
+        window_path = window['window_path']
+        window_sha = window['window_sha256']
+    if (
+        actual_contract_sha != contract_sha
+        or Path(str(window_path)).resolve() != campaign.path.resolve()
+        or window_sha != campaign.sha256
+    ):
+        raise ValueError(f'closeout checker contract points at a different V{contract_version} campaign window')
+
+    if len(argv) < 3 or Path(argv[0]).resolve() != Path(sys.executable).resolve():
+        raise ValueError('closeout checker must use the supervisor qualified interpreter')
+    checker_kind = authorization.get('checker_kind')
+    if checker_kind == 'task40_v10_independent_output_checker':
+        if (
+            len(argv) != 6
+            or argv[1:3] != ['-m', 'src.runners.task40_v10_output_checker']
+            or argv[4] != '--expected-channel-count'
+            or not argv[5].isdigit()
+            or int(argv[5]) <= 0
+            or authorization.get('expected_channel_count') != int(argv[5])
+            or Path(argv[3]).name != 'v10_candidate_official_output.json'
+        ):
+            raise ValueError('closeout command is not a supported official output checker')
+        packet_path = Path(argv[3]).resolve()
+        if not packet_path.is_relative_to(Path.cwd().resolve()):
+            raise ValueError('official output packet escaped the registered repository')
+        input_paths = [str(packet_path)]
+    elif checker_kind == 'task40_v20_partial_receipt_checker':
+        if (
+            len(argv) != 15
+            or Path(argv[1]).resolve()
+            != (Path.cwd() / 'scripts/task40_v20_service_workflow.py').resolve()
+            or argv[2] != 'check-partial'
+            or argv[3::2]
+            != ['--input', '--summary', '--manifest', '--numerical-output', '--stop-stage', '--output']
+            or argv[12] != 'full'
+        ):
+            raise ValueError('closeout command is not the registered partial receipt checker')
+        input_paths = [str(Path(argv[index]).resolve()) for index in (4, 6, 8)]
+        if any(not Path(path).is_relative_to(Path.cwd().resolve()) for path in input_paths):
+            raise ValueError('partial checker inputs escaped the registered repository')
+        if not Path(argv[10]).resolve().is_dir():
+            raise ValueError('partial checker numerical output directory is missing')
+        output_path = Path(argv[14]).resolve()
+        if not output_path.is_relative_to(Path.cwd().resolve()):
+            raise ValueError('partial checker output path escaped the registered repository')
+    else:
+        raise ValueError('numeric or arbitrary commands cannot use the closeout reserve')
+    if authorization.get('input_paths') != input_paths:
+        raise ValueError('closeout checker input paths differ from the authorized command')
+    input_sha256s = authorization.get('input_sha256s')
+    if not isinstance(input_sha256s, list) or len(input_sha256s) != len(input_paths):
+        raise ValueError('closeout checker input hashes are incomplete')
+    for raw_path, expected_sha in zip(input_paths, input_sha256s, strict=True):
+        path = Path(raw_path)
+        if (
+            not path.is_file()
+            or not re.fullmatch(r'[0-9a-f]{64}', str(expected_sha))
+            or hashlib.sha256(path.read_bytes()).hexdigest() != expected_sha
+        ):
+            raise ValueError('closeout checker input hash changed after service authorization')
+
+    source_head = subprocess.run(
+        ['git', 'rev-parse', 'HEAD'], cwd=Path.cwd(), check=True, capture_output=True, text=True
+    ).stdout.strip()
+    source_branch = subprocess.run(
+        ['git', 'branch', '--show-current'], cwd=Path.cwd(), check=True, capture_output=True, text=True
+    ).stdout.strip()
+    source_status = subprocess.run(
+        ['git', 'status', '--porcelain', '--untracked-files=normal'],
+        cwd=Path.cwd(), check=True, capture_output=True, text=True
+    ).stdout
+    if (
+        source_head != authorization['source_sha']
+        or source_branch != authorization['source_branch']
+        or source_status.strip()
+    ):
+        raise ValueError('closeout checker source changed after service authorization')
+    return dict(authorization)
 
 
 def memory_envelope(
@@ -368,6 +529,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               campaign_window_path: Path | None = None,
               campaign_window_sha256: str | None = None,
               campaign_accounting_path: Path | None = None,
+              campaign_phase: str = 'numeric',
+              campaign_phase_authorization: dict[str, Any] | None = None,
               require_job_cgroup_zero_swap: bool = False,
               require_cgroup_memory_details: bool = False,
               host_reserve_bytes: int | None = None,
@@ -433,6 +596,12 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
         raise TypeError('require_cgroup_memory_details must be a bool')
     if external_guard is not None and not callable(external_guard):
         raise TypeError('external_guard must be callable when supplied')
+    if campaign_phase not in {'numeric', 'closeout'}:
+        raise ValueError('campaign phase must be numeric or closeout')
+    if campaign_phase == 'closeout' and campaign_window_path is None:
+        raise ValueError('Task40 closeout phase requires a fixed campaign window')
+    if campaign_phase == 'numeric' and campaign_phase_authorization is not None:
+        raise ValueError('numeric phase cannot carry a closeout checker authorization')
     if active_pc_seconds is not None and (
             not 0 < float(active_pc_seconds) < float('inf') or
             phase_path is None or not timebase_guard or not hard_stop_immediate):
@@ -452,28 +621,40 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
         campaign = load_fixed_campaign_window(campaign_window_path)
         if campaign_window_sha256 != campaign.sha256:
             raise ValueError('campaign window hash differs from the run_case launch contract')
+        if campaign_phase == 'closeout':
+            campaign_phase_authorization = _validate_campaign_closeout_authorization(
+                command=command,
+                campaign=campaign,
+                authorization=campaign_phase_authorization,
+                worker_environment=worker_environment,
+            )
         if not timebase_guard or timebase_policy != 'conservative_realtime':
             raise ValueError('Task40 V10 requires the existing conservative-realtime watchdog guard')
         if time_policy != V14_TIME_POLICY_ENFORCE:
             raise ValueError('Task40 V10 campaign time must be enforced')
         campaign_account = CampaignAccount(campaign, campaign_accounting_path)
         campaign_start_record = campaign_account.record_sample(
-            label='watchdog_start'
+            label=f'watchdog_start_{campaign_phase}', phase=campaign_phase
         )
         now_utc_ns = int(campaign_start_record['sample']['utc_ns'])
-        utc_remaining = (
-            campaign.deadline_utc_ns
-            - int(campaign.closeout_seconds * 1e9)
-            - now_utc_ns
-        ) / 1e9
-        budget_remaining = (
-            campaign.cutoff_seconds
-            - float(campaign_start_record['cumulative_charged_seconds'])
+        phase_termination_reserve = (
+            float(grace_seconds) + CAMPAIGN_CLOSEOUT_PARENT_FLUSH_RESERVE_SECONDS
+            if campaign_phase == 'closeout'
+            else 0.0
         )
-        wall_seconds = min(float(wall_seconds), utc_remaining, budget_remaining)
+        budget_remaining = campaign.remaining_seconds(
+            phase=campaign_phase,
+            cumulative_charged_seconds=float(
+                campaign_start_record['cumulative_charged_seconds']
+            ),
+            now_utc_ns=now_utc_ns,
+            sub_budget_seconds=float(wall_seconds),
+            termination_reserve_seconds=phase_termination_reserve,
+        )
+        wall_seconds = min(float(wall_seconds), budget_remaining)
         if not math.isfinite(wall_seconds) or wall_seconds <= 0.0:
             raise TimebaseInconsistency(
-                'Task40 V10 campaign has no numerical time remaining before closeout'
+                f'Task40 campaign has no remaining time in {campaign_phase} phase'
             )
     job_cgroup_start = (
         cgroup_snapshot(os.getpid()) if require_job_cgroup_zero_swap else None
@@ -586,6 +767,17 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
             'campaign_seconds': campaign.total_seconds,
             'numerical_cutoff_seconds': campaign.cutoff_seconds,
             'closeout_reserve_seconds': campaign.closeout_seconds,
+            'phase': campaign_phase,
+            'phase_sub_budget_seconds': float(wall_seconds),
+            'phase_termination_reserve_seconds': (
+                phase_termination_reserve if campaign is not None else 0.0
+            ),
+            'closeout_parent_flush_reserve_seconds': (
+                CAMPAIGN_CLOSEOUT_PARENT_FLUSH_RESERVE_SECONDS
+                if campaign_phase == 'closeout'
+                else 0.0
+            ),
+            'phase_authorization': campaign_phase_authorization,
             'watchdog_start_accounting': campaign_start_record,
             'first_exact_monotonic_at_t0': 'NOT_CAPTURED',
         }
@@ -715,18 +907,22 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                         deadline_elapsed = sample['workflow_clock_interval']['budget_seconds']
                         if campaign_account is not None:
                             campaign_row = campaign_account.record_sample(
-                                label='watchdog_sample'
+                                label=f'watchdog_sample_{campaign_phase}',
+                                phase=campaign_phase,
                             )
                             sample['task40_v10_campaign_accounting'] = campaign_row
                             campaign_clock = campaign_row['sample']
-                            utc_cutoff = (
-                                campaign.deadline_utc_ns
-                                - int(campaign.closeout_seconds * 1e9)
-                            )
-                            if (
-                                campaign_row['cumulative_charged_seconds']
-                                >= campaign.cutoff_seconds
-                                or int(campaign_clock['utc_ns']) >= utc_cutoff
+                            if campaign.phase_expired(
+                                phase=campaign_phase,
+                                cumulative_charged_seconds=float(
+                                    campaign_row['cumulative_charged_seconds']
+                                ),
+                                now_utc_ns=int(campaign_clock['utc_ns']),
+                                termination_reserve_seconds=(
+                                    phase_termination_reserve
+                                    if campaign_phase == 'closeout'
+                                    else 0.0
+                                ),
                             ):
                                 deadline_elapsed = max(deadline_elapsed, wall_seconds)
                         if phase.get('clock_error'):

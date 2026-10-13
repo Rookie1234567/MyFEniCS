@@ -109,6 +109,7 @@ def run_full3d_iterative(
     if v20_case is not None:
         execution = resolved_payload.get("execution", {})
         v30_route = None
+        v31_route = None
         if (
             "task40_v30_q_csr_binding" in execution
             or "task40_v30_factor_bank_config" in execution
@@ -123,7 +124,24 @@ def run_full3d_iterative(
                 source_sha=source_sha,
                 repo_root=Path(__file__).resolve().parents[2],
             )
-        v30_requested = v30_route is not None
+        if (
+            "task40_v31_q_csr_binding" in execution
+            or "task40_v31_factor_bank_config" in execution
+        ):
+            from src.runners.task40_v31_contract import require_v31_all_q_route
+
+            source_sha = _kwargs.get("source_sha")
+            if not isinstance(source_sha, str):
+                raise ValueError("V31 dispatcher requires the actual frozen source SHA")
+            v31_route = require_v31_all_q_route(
+                dict(resolved_payload),
+                source_sha=source_sha,
+                repo_root=Path(__file__).resolve().parents[2],
+            )
+        if v30_route is not None and v31_route is not None:
+            raise ValueError("Task40 V20 dispatcher cannot mix V30 and V31 routes")
+        route = v31_route if v31_route is not None else v30_route
+        route_requested = route is not None
         if (
             resolved_payload.get("run_id") != v20_case.run_id
             or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
@@ -132,7 +150,7 @@ def run_full3d_iterative(
             or q_assembly_strategy != TASK40_Q_ASSEMBLY_ROW_TILE_V17
             or factor_lifecycle_strategy != TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
             or (
-                v30_requested
+                route_requested
                 and (
                     v20_case.mesh_id != "TARGET_ORIGINAL_NY8"
                     or stage != v20_case.solver_stage
@@ -142,8 +160,22 @@ def run_full3d_iterative(
                     or not resolved_payload.get("execution", {}).get(
                         "task40_target_heavy_authorized"
                     )
-                    or not isinstance(execution.get("task40_v30_q_csr_binding"), Mapping)
-                    or not isinstance(execution.get("task40_v30_factor_bank_config"), Mapping)
+                    or not isinstance(
+                        execution.get(
+                            "task40_v31_q_csr_binding"
+                            if v31_route is not None
+                            else "task40_v30_q_csr_binding"
+                        ),
+                        Mapping,
+                    )
+                    or not isinstance(
+                        execution.get(
+                            "task40_v31_factor_bank_config"
+                            if v31_route is not None
+                            else "task40_v30_factor_bank_config"
+                        ),
+                        Mapping,
+                    )
                 )
             )
         ):
@@ -152,16 +184,17 @@ def run_full3d_iterative(
 
         dispatch_payload = resolved_payload
         stage_kwargs: dict[str, Any] = {}
-        if v30_route is not None:
+        if route is not None:
             dispatch_payload = deepcopy(dict(resolved_payload))
-            dispatch_payload["solver"]["task40_factor_lifecycle_strategy"] = v30_route[
+            dispatch_payload["solver"]["task40_factor_lifecycle_strategy"] = route[
                 "effective_factor_lifecycle_strategy"
             ]
+            route_suffix = "v31" if v31_route is not None else "v30"
             stage_kwargs = {
-                "v30_requested_factor_lifecycle_strategy": v30_route[
+                f"{route_suffix}_requested_factor_lifecycle_strategy": route[
                     "requested_factor_lifecycle_strategy"
                 ],
-                "v30_effective_factor_lifecycle_strategy": v30_route[
+                f"{route_suffix}_effective_factor_lifecycle_strategy": route[
                     "effective_factor_lifecycle_strategy"
                 ],
             }

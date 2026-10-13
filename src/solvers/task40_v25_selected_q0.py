@@ -2816,7 +2816,6 @@ def run_task40_v25_selected_q0_consumer(
             local_modes=local_modes,
             local_h=local_h,
             context=context,
-            global_h=global_h,
             allocation_gate=allocation_gate,
         )
         q_maps = tuple(

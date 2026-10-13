@@ -1,0 +1,18 @@
+{
+  "schema": "task40extra.review_v31_frozen_inventory_erratum.v1",
+  "review_commit": "d7ffbfea952bc160742b18739369f2e3f656ee8e",
+  "recorded_utc": "2026-10-13T01:49:45.015311+00:00",
+  "frozen_inventory_path": "docs/task40extra_0p7nm_engineering/outcomes/records/v30_run_artifact_inventory.json",
+  "frozen_inventory_bytes": 3342,
+  "frozen_inventory_sha256": "033a39f2288f61ebbbf634049a830c2004bc63f9d96e75d63bb8c1d94a1f0f36",
+  "original_declared_controller_sha256": "588f5476552fa3dfdaf2e517e6ab8bcc0400b580ac97c98fbb1bac2d2cc074f",
+  "original_declared_hash_length": 63,
+  "controller_path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v30_controller_audit.json",
+  "controller_bytes": 17753,
+  "actual_controller_sha256": "588f5476552fa3dfdaf2e517e6ab8bcc0400b580ac97c98fbb1bac2cd2cc074f",
+  "actual_controller_hash_length": 64,
+  "original_records_modified": false,
+  "scope": "derived_index_typographical_correction_only",
+  "producer_fe_native_factor_replays": 0,
+  "new_heavy_window_approval": "PENDING"
+}

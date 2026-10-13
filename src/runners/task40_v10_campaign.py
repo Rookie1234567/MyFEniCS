@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import fcntl
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -455,6 +456,12 @@ TASK40_V30_CAMPAIGN_WINDOW = (
     Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation")
     / "campaign_window_v30.json"
 )
+TASK40_V31_CAMPAIGN_WINDOW = (
+    Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native")
+    / "campaign_window_v31.json"
+)
+TASK40_V31_CAMPAIGN_SECONDS = 43_200.0
+TASK40_V31_CLOSEOUT_RESERVE_SECONDS = 1_200.0
 TASK40_V30_CAMPAIGN_SHA256 = "0730454198abcee55401331d74f24a667d0d52036f67e1be817a3426a8d381a7"
 TASK40_V30_TARGET_CAMPAIGN_WINDOW = (
     Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl")
@@ -1005,13 +1012,81 @@ class FixedCampaignWindow:
     def cutoff_seconds(self) -> float:
         return self.total_seconds - self.closeout_seconds
 
-    def observe(self, *, label: str = "campaign_observation") -> dict[str, Any]:
-        record = CampaignAccount(self).record_sample(label=label)
+    def remaining_seconds(
+        self,
+        *,
+        phase: str,
+        cumulative_charged_seconds: float,
+        now_utc_ns: int,
+        sub_budget_seconds: float | None = None,
+        termination_reserve_seconds: float = 0.0,
+    ) -> float:
+        """Return the conservative remaining budget for one registered phase."""
+        if phase not in {"numeric", "closeout"}:
+            raise ValueError("campaign phase must be numeric or closeout")
+        values = (float(cumulative_charged_seconds),)
+        if any(not math.isfinite(value) or value < 0.0 for value in values):
+            raise ValueError("campaign charged time must be finite and nonnegative")
+        if type(now_utc_ns) is not int or now_utc_ns < 0:
+            raise ValueError("campaign UTC sample must be a nonnegative integer")
+        if sub_budget_seconds is not None and (
+            not math.isfinite(float(sub_budget_seconds))
+            or float(sub_budget_seconds) <= 0.0
+        ):
+            raise ValueError("campaign phase sub-budget must be finite and positive")
+        if (
+            not math.isfinite(float(termination_reserve_seconds))
+            or float(termination_reserve_seconds) < 0.0
+            or (phase == "numeric" and float(termination_reserve_seconds) != 0.0)
+        ):
+            raise ValueError("termination reserve is allowed only as a nonnegative closeout budget")
+        total_remaining = self.total_seconds - float(cumulative_charged_seconds)
+        utc_remaining = (self.deadline_utc_ns - int(now_utc_ns)) / 1e9
+        if phase == "numeric":
+            phase_remaining = min(
+                self.cutoff_seconds - float(cumulative_charged_seconds),
+                utc_remaining - self.closeout_seconds,
+            )
+        else:
+            phase_remaining = min(total_remaining, utc_remaining, self.closeout_seconds)
+        if sub_budget_seconds is not None:
+            phase_remaining = min(phase_remaining, float(sub_budget_seconds))
+        if phase == "closeout":
+            phase_remaining -= float(termination_reserve_seconds)
+        return max(0.0, float(phase_remaining))
+
+    def phase_expired(
+        self,
+        *,
+        phase: str,
+        cumulative_charged_seconds: float,
+        now_utc_ns: int,
+        termination_reserve_seconds: float = 0.0,
+    ) -> bool:
+        """Use the same charged-time and UTC boundaries at sampling as at launch."""
+        return self.remaining_seconds(
+            phase=phase,
+            cumulative_charged_seconds=cumulative_charged_seconds,
+            now_utc_ns=now_utc_ns,
+            termination_reserve_seconds=termination_reserve_seconds,
+        ) <= 0.0
+
+    def observe(
+        self,
+        *,
+        label: str = "campaign_observation",
+        phase: str = "numeric",
+        sub_budget_seconds: float | None = None,
+        termination_reserve_seconds: float = 0.0,
+    ) -> dict[str, Any]:
+        record = CampaignAccount(self).record_sample(label=label, phase=phase)
         now = record["sample"]
-        deadline_remaining = (self.deadline_utc_ns - int(now["utc_ns"])) / 1e9
-        remaining = min(
-            self.cutoff_seconds - float(record["cumulative_charged_seconds"]),
-            deadline_remaining - self.closeout_seconds,
+        remaining = self.remaining_seconds(
+            phase=phase,
+            cumulative_charged_seconds=float(record["cumulative_charged_seconds"]),
+            now_utc_ns=int(now["utc_ns"]),
+            sub_budget_seconds=sub_budget_seconds,
+            termination_reserve_seconds=termination_reserve_seconds,
         )
         adjacent = float(record["adjacent_interval"]["budget_seconds"])
         cumulative = float(record["cumulative_charged_seconds"])
@@ -1023,11 +1098,14 @@ class FixedCampaignWindow:
             "deadline_utc_ns": self.deadline_utc_ns,
             "campaign_seconds": self.total_seconds,
             "closeout_reserve_seconds": self.closeout_seconds,
+            "phase": phase,
             "bootstrap_charged_seconds": self.bootstrap_seconds,
             "adjacent_charged_seconds": adjacent,
             "cumulative_charged_seconds": cumulative,
             "charged_seconds": cumulative,
-            "remaining_numerical_seconds": max(0.0, float(remaining)),
+            "remaining_numerical_seconds": remaining if phase == "numeric" else 0.0,
+            "remaining_closeout_seconds": remaining if phase == "closeout" else 0.0,
+            "remaining_phase_seconds": remaining,
             "accounting_record": record,
             "sample": now,
         }
@@ -1082,8 +1160,11 @@ class CampaignAccount:
         sample: Mapping[str, Any] | None = None,
         *,
         label: str,
+        phase: str = "numeric",
         namespace_identity: Mapping[str, str] | None = None,
     ) -> dict[str, Any]:
+        if phase not in {"numeric", "closeout"}:
+            raise ValueError("campaign accounting phase must be numeric or closeout")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a+b") as stream:
             fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
@@ -1137,6 +1218,7 @@ class CampaignAccount:
                 "schema": "task40extra.review_v10_campaign_accounting.v1",
                 "sequence": sequence,
                 "label": str(label),
+                "phase": phase,
                 "campaign_window_sha256": self.window.sha256,
                 "t0_utc_ns": self.window.t0_utc_ns,
                 "deadline_utc_ns": self.window.deadline_utc_ns,
@@ -1168,6 +1250,9 @@ def read_campaign_state(
     path: str | Path | None = None,
     *,
     sample: Mapping[str, Any] | None = None,
+    phase: str = "numeric",
+    sub_budget_seconds: float | None = None,
+    termination_reserve_seconds: float = 0.0,
     namespace_identity: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Read worker-visible remaining time without appending to the shared ledger."""
@@ -1198,29 +1283,103 @@ def read_campaign_state(
             last_sample, current, policy=CONSERVATIVE_REALTIME
         )
         projected_cumulative = cumulative + float(adjacent["budget_seconds"])
-        deadline_remaining = (window.deadline_utc_ns - int(current["utc_ns"])) / 1e9
-        remaining = min(
-            window.cutoff_seconds - projected_cumulative,
-            deadline_remaining - window.closeout_seconds,
+        remaining = window.remaining_seconds(
+            phase=phase,
+            cumulative_charged_seconds=projected_cumulative,
+            now_utc_ns=int(current["utc_ns"]),
+            sub_budget_seconds=sub_budget_seconds,
+            termination_reserve_seconds=termination_reserve_seconds,
         )
         return {
             "path": str(account_path),
             "campaign_window_sha256": window.sha256,
             "t0_utc_ns": window.t0_utc_ns,
             "deadline_utc_ns": window.deadline_utc_ns,
+            "phase": phase,
             "accounting_record": previous,
             "sample": current,
             "adjacent_interval": adjacent,
             "projected_cumulative_charged_seconds": projected_cumulative,
-            "remaining_numerical_seconds": max(0.0, float(remaining)),
+            "remaining_numerical_seconds": remaining if phase == "numeric" else 0.0,
+            "remaining_closeout_seconds": remaining if phase == "closeout" else 0.0,
+            "remaining_phase_seconds": remaining,
             "read_only": True,
         }
+
+
+def _validate_v31_campaign_registration(
+    resolved: Path,
+    digest: str,
+    payload: Mapping[str, Any],
+    contract: Mapping[str, Any],
+) -> None:
+    from src.runners.task40_v31_contract import (
+        V31_REVIEW_COMMIT, V31_REVIEW_PATH, V31_REVIEW_SHA256, V31_STAGE_SCOPE,
+    )
+
+    execution = contract.get("execution")
+    window = execution.get("window") if isinstance(execution, Mapping) else None
+    source = contract.get("source_freeze")
+    expected_path = Path(str(window.get("window_path", ""))).resolve() if isinstance(window, Mapping) else None
+    expected_sha = window.get("window_sha256") if isinstance(window, Mapping) else None
+    entry_source = window.get("source_at_entry") if isinstance(window, Mapping) else None
+    run_source = execution.get("run_source_sha") if isinstance(execution, Mapping) else None
+    if not isinstance(entry_source, str) or not re.fullmatch(r"[0-9a-f]{40}", entry_source):
+        raise ValueError("V31 fixed window must preserve its original 40-character source_at_entry")
+    if (
+        not isinstance(source, Mapping)
+        or source.get("source_sha") != run_source
+        or not isinstance(run_source, str)
+        or not re.fullmatch(r"[0-9a-f]{40}", run_source)
+    ):
+        raise ValueError("V31 run_source_sha must bind this run's clean source freeze")
+    expected_fields = {
+        "schema": CAMPAIGN_SCHEMA,
+        "campaign": "task40extra_v31_all_q_reference_conditional_target_pilot",
+        "authority": "User-approved Review V31 execution window",
+        "active_review_sha": V31_REVIEW_COMMIT,
+        "active_review_path": V31_REVIEW_PATH,
+        "active_review_sha256": V31_REVIEW_SHA256,
+        "source_at_entry": entry_source,
+        "review_at_registration": V31_REVIEW_COMMIT,
+        "t0_utc": window.get("t0_utc") if isinstance(window, Mapping) else None,
+        "numeric_cutoff_utc": window.get("numeric_cutoff_utc") if isinstance(window, Mapping) else None,
+        "deadline_utc": window.get("deadline_utc") if isinstance(window, Mapping) else None,
+        "campaign_seconds": TASK40_V31_CAMPAIGN_SECONDS,
+        "numeric_cutoff_seconds": 42_000.0,
+        "closeout_reserve_seconds": TASK40_V31_CLOSEOUT_RESERVE_SECONDS,
+        "time_policy": CONSERVATIVE_REALTIME,
+        "stage_scope": list(V31_STAGE_SCOPE),
+        "forbidden_scope": [
+            "automatic_cap_increase", "window_refresh", "parameter_or_accuracy_scan",
+            "MUMPS_or_ABI_change", "OOC_or_BLR", "unrelated_project_mutation", "master_merge",
+        ],
+        "window_refreshed": False,
+        "old_costs_and_unknowns_preserved": True,
+        "artifact_execution_identity_separate": True,
+        "bootstrap_boottime_elapsed_seconds": None,
+    }
+    changed = [key for key, value in expected_fields.items() if payload.get(key) != value]
+    if resolved != expected_path or digest != expected_sha:
+        changed.extend(("campaign_window_path", "campaign_window_sha256"))
+    approval = contract.get("user_approval")
+    if (
+        contract.get("status") != "USER_APPROVED"
+        or not isinstance(approval, Mapping)
+        or approval.get("approved") is not True
+        or approval.get("scope") != "V31_WINDOW_43200_NUMERIC_42000_CLOSEOUT_1200"
+        or approval.get("window_sha256") != digest
+    ):
+        changed.append("user_approval")
+    if changed:
+        raise ValueError(f"registered V31 campaign identity or scope changed: {sorted(set(changed))}")
 
 
 def load_fixed_campaign_window(
     path: str | Path = TASK40_V10_CAMPAIGN_WINDOW,
     *,
     require_current_boot: bool = True,
+    v31_contract: Mapping[str, Any] | None = None,
 ) -> FixedCampaignWindow:
     resolved = Path(path).resolve()
     raw = resolved.read_bytes()
@@ -1262,6 +1421,10 @@ def load_fixed_campaign_window(
     v30_target_path = (
         Path(__file__).resolve().parents[2] / TASK40_V30_TARGET_CAMPAIGN_WINDOW
     ).resolve()
+    v31_artifact_root = (
+        Path(__file__).resolve().parents[2]
+        / Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native")
+    ).resolve()
     is_v22 = resolved == v22_path
     is_v23 = resolved == v23_path
     is_v24 = resolved == v24_path
@@ -1271,6 +1434,11 @@ def load_fixed_campaign_window(
     is_v28 = resolved == v28_path
     is_v29 = resolved == v29_path
     is_v30 = resolved in {v30_path, v30_target_path}
+    is_v31 = (
+        resolved.name == "campaign_window_v31.json"
+        and resolved.parent.parent == v31_artifact_root
+        and re.fullmatch(r"source_[0-9a-f]{40}", resolved.parent.name) is not None
+    )
     if is_v22:
         _validate_v22_campaign_registration(resolved, digest, payload)
         expected_total = TASK40_V22_CAMPAIGN_SECONDS
@@ -1307,6 +1475,20 @@ def load_fixed_campaign_window(
         _validate_v30_campaign_registration(resolved, digest, payload)
         expected_total = TASK40_V30_CAMPAIGN_SECONDS
         expected_closeout = TASK40_V30_CLOSEOUT_RESERVE_SECONDS
+    elif is_v31:
+        if v31_contract is None:
+            contract_path = os.environ.get("TASK40_V31_CONTRACT_PATH")
+            contract_sha = os.environ.get("TASK40_V31_CONTRACT_SHA256")
+            if not contract_path or not contract_sha:
+                raise ValueError("V31 campaign window requires its approved execution contract")
+            from src.runners.task40_v31_contract import require_v31_execution_contract
+
+            v31_contract, _ = require_v31_execution_contract(
+                contract_path, expected_sha256=contract_sha, current_root=Path.cwd()
+            )
+        _validate_v31_campaign_registration(resolved, digest, payload, v31_contract)
+        expected_total = TASK40_V31_CAMPAIGN_SECONDS
+        expected_closeout = TASK40_V31_CLOSEOUT_RESERVE_SECONDS
     else:
         expected_total = CAMPAIGN_SECONDS
         expected_closeout = CLOSEOUT_RESERVE_SECONDS
@@ -1333,7 +1515,7 @@ def load_fixed_campaign_window(
         raise ValueError("the initial boot identity is malformed or inconsistent")
     bootstrap_utc = float(payload.get("bootstrap_utc_elapsed_seconds", -1.0))
     bootstrap_boot_raw = payload.get("bootstrap_boottime_elapsed_seconds", -1.0)
-    if is_v30 and bootstrap_boot_raw is None:
+    if (is_v30 or is_v31) and bootstrap_boot_raw is None:
         bootstrap_boot = None
     else:
         bootstrap_boot = float(bootstrap_boot_raw)

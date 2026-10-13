@@ -23,6 +23,16 @@ def _file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _positive_registered_channel_count(raw: str) -> int:
+    try:
+        count = int(raw)
+    except (TypeError, ValueError) as exc:
+        raise argparse.ArgumentTypeError("channel count must be an integer") from exc
+    if count <= 0:
+        raise argparse.ArgumentTypeError("channel count must be positive")
+    return count
+
+
 def _verify_q_assembly_allocation_admission_ledger(
     run_directory: str | Path, summary: Mapping[str, Any], *, version: str
 ) -> dict[str, Any]:
@@ -543,6 +553,7 @@ def _verify_v19_one_q_factor_lifecycle(
     rhs_categories = {
         "pc_initial_rhs_mat_solve_count",
         "pc_augmentation_rhs_mat_solve_count",
+        "reference_correction_rhs_mat_solve_count",
         "startup_rhs_mat_solve_count",
         "other_validation_rhs_mat_solve_count",
     }
@@ -726,6 +737,361 @@ def _verify_v19_one_q_factor_lifecycle(
         "max_simultaneous_factors": factor_audit["max_simultaneous_factors"],
         "max_simultaneous_matrices": factor_audit["max_simultaneous_matrices"],
         "mat_solve_counters_disjoint_and_reconciled": True,
+        "passed": True,
+    }
+
+
+def _verify_v30_all_q_rhs_cost_categories(
+    factor_audit: Mapping[str, Any], *, expected_q_count: int, schema_version: int = 30
+) -> dict[str, Any]:
+    """Recompute disjoint AllQ business-solve timing and count identities."""
+    if type(expected_q_count) is not int or expected_q_count <= 0:
+        raise ValueError("AllQ cost checker requires a positive registered q count")
+    if type(schema_version) is not int or schema_version not in {30, 31}:
+        raise ValueError("AllQ cost checker supports only the registered V30 or V31 schema")
+    categories = {
+        "pc_initial_rhs_mat_solve_count",
+        "pc_augmentation_rhs_mat_solve_count",
+        "reference_correction_rhs_mat_solve_count",
+        "startup_rhs_mat_solve_count",
+        "other_validation_rhs_mat_solve_count",
+    }
+    q_keys = {str(q) for q in range(expected_q_count)}
+    if not isinstance(factor_audit, Mapping):
+        raise ValueError("AllQ factor audit is missing")
+    calls = factor_audit.get("rhs_business_call_count_by_category")
+    calls_by_q = factor_audit.get("rhs_business_call_count_by_category_and_q")
+    parent_by_category = factor_audit.get("rhs_business_parent_seconds_by_category")
+    parent_by_q = factor_audit.get("rhs_business_parent_seconds_by_category_and_q")
+    native_by_category = factor_audit.get("rhs_business_native_seconds_by_category")
+    vector_by_category = factor_audit.get("rhs_business_vector_seconds_by_category")
+    invoked = factor_audit.get("mat_solve_invoked_count_by_category")
+    completed = factor_audit.get("mat_solve_completed_count_by_category")
+    failed = factor_audit.get("mat_solve_failed_count_by_category")
+    rhs_completed = factor_audit.get("rhs_mat_solve_count_by_category")
+    q_parent = factor_audit.get("S_q_business_seconds_by_q")
+    if any(
+        not isinstance(value, Mapping)
+        for value in (
+            calls,
+            calls_by_q,
+            parent_by_category,
+            parent_by_q,
+            native_by_category,
+            vector_by_category,
+            invoked,
+            completed,
+            failed,
+            rhs_completed,
+            q_parent,
+        )
+    ):
+        raise ValueError("AllQ category count or timing inventory is incomplete")
+    if any(
+        set(value) != categories
+        for value in (
+            calls,
+            calls_by_q,
+            parent_by_category,
+            parent_by_q,
+            native_by_category,
+            vector_by_category,
+        )
+    ) or set(q_parent) != q_keys:
+        raise ValueError("AllQ RHS category or q timing keys differ from the registered inventory")
+    if any(
+        not isinstance(value[category], Mapping)
+        or set(value[category]) != q_keys
+        for value in (calls_by_q, parent_by_q)
+        for category in categories
+    ):
+        raise ValueError("AllQ q-by-category RHS timing inventory is incomplete")
+    for name, mapping in (
+        ("business call counts", calls),
+        ("business MatSolve invoked counts", invoked),
+        ("business MatSolve completed counts", completed),
+        ("business MatSolve failed counts", failed),
+        ("business RHS completed counts", rhs_completed),
+    ):
+        if not isinstance(mapping, Mapping) or not categories <= set(mapping):
+            raise ValueError(f"AllQ {name} omit a registered category")
+        if any(type(mapping[key]) is not int or mapping[key] < 0 for key in categories):
+            raise ValueError(f"AllQ {name} contain an invalid count")
+    for category in categories:
+        if any(
+            type(calls_by_q[category][q]) is not int or calls_by_q[category][q] < 0
+            for q in q_keys
+        ):
+            raise ValueError("AllQ per-q business call count is invalid")
+        if sum(calls_by_q[category].values()) != calls[category]:
+            raise ValueError("AllQ per-q business call counts do not reconcile")
+        if (
+            invoked[category] > calls[category]
+            or completed[category] != rhs_completed[category]
+            or failed[category] != invoked[category] - completed[category]
+        ):
+            raise ValueError("AllQ category MatSolve invocation/completion counts do not reconcile")
+        for mapping_name, mapping in (
+            ("parent", parent_by_category),
+            ("native", native_by_category),
+            ("vector", vector_by_category),
+        ):
+            value = mapping[category]
+            if not isinstance(value, (int, float)) or not np.isfinite(value) or value < 0.0:
+                raise ValueError(f"AllQ {mapping_name} RHS category time is invalid")
+        if native_by_category[category] > parent_by_category[category] + 1.0e-9:
+            raise ValueError("AllQ nested native RHS time exceeds its parent interval")
+        if vector_by_category[category] > parent_by_category[category] + 1.0e-9:
+            raise ValueError("AllQ nested PETSc vector time exceeds its parent interval")
+        if any(
+            not isinstance(parent_by_q[category][q], (int, float))
+            or not np.isfinite(parent_by_q[category][q])
+            or parent_by_q[category][q] < 0.0
+            for q in q_keys
+        ):
+            raise ValueError("AllQ per-q category parent time is invalid")
+        if not np.isclose(
+            sum(parent_by_q[category].values()),
+            parent_by_category[category],
+            rtol=1.0e-12,
+            atol=1.0e-9,
+        ):
+            raise ValueError("AllQ q-by-category parent times do not reconcile")
+    per_q_sum = {
+        q: sum(parent_by_q[category][q] for category in categories)
+        for q in q_keys
+    }
+    if any(
+        not isinstance(q_parent[q], (int, float))
+        or not np.isfinite(q_parent[q])
+        or not np.isclose(q_parent[q], per_q_sum[q], rtol=1.0e-12, atol=1.0e-9)
+        for q in q_keys
+    ):
+        raise ValueError("AllQ per-q solve parent times do not equal the disjoint category totals")
+    total = sum(parent_by_category.values())
+    if not np.isclose(
+        total,
+        float(factor_audit.get("S_q_business_parent_seconds_total", float("nan"))),
+        rtol=1.0e-12,
+        atol=1.0e-9,
+    ):
+        raise ValueError("AllQ total business solve parent time differs from its disjoint categories")
+    semantics = factor_audit.get("rhs_business_timing_semantics")
+    if (
+        not isinstance(semantics, Mapping)
+        or semantics.get("categories_are_disjoint") is not True
+        or semantics.get("timing_is_child_of_worker_pc_parent") is not True
+    ):
+        raise ValueError("AllQ timing semantics do not distinguish child solve costs from the PC parent")
+    return {
+        "schema": f"task40extra.review_v{schema_version}_all_q_rhs_cost_categories_checker.v1",
+        "expected_q_count": expected_q_count,
+        "rhs_business_call_count": sum(calls.values()),
+        "rhs_mat_solve_completed_count": sum(rhs_completed[key] for key in categories),
+        "parent_seconds_by_category": dict(parent_by_category),
+        "parent_seconds_total": total,
+        "per_q_parent_seconds_reconciled": True,
+        "nested_native_and_vector_times_bounded_by_parent": True,
+        "categories_are_disjoint_child_costs": True,
+        "passed": True,
+    }
+
+
+def _verify_v31_reference_tiers(
+    regular_inverse_checks: Mapping[str, Any], *, expected_profile: str
+) -> dict[str, Any]:
+    """Recompute strict and V15 admission for each selected complete state."""
+    from src.solvers.augmented_reference_correction import (
+        V15_REFERENCE_PC_PASS,
+        V15_REFERENCE_PC_REJECTED,
+        select_reference_pc_candidate,
+        select_v15_reference_pc_candidate,
+    )
+
+    if not isinstance(regular_inverse_checks, Mapping):
+        raise ValueError("V31 reference-tier receipt is missing")
+    if regular_inverse_checks.get("schema") != "task40extra.review_v30_reference_inverse_checks.v1":
+        raise ValueError("V31 reference-tier receipt has the wrong mixed-FE/port schema")
+    profile = regular_inverse_checks.get("profile")
+    if not isinstance(profile, Mapping) or profile.get("name") != expected_profile:
+        raise ValueError("V31 reference-tier profile identity differs from the execution contract")
+    if regular_inverse_checks.get("v15_reference_passed") is None:
+        raise ValueError("V31 reference-tier receipt omits the required V15 status")
+    rows = regular_inverse_checks.get("cases")
+    required = regular_inverse_checks.get("required_case_names")
+    observed = regular_inverse_checks.get("observed_case_names")
+    if (
+        not isinstance(rows, Sequence)
+        or isinstance(rows, (str, bytes))
+        or not isinstance(required, list)
+        or not isinstance(observed, list)
+        or not required
+        or len(required) != 6
+        or len(rows) != len(required)
+        or set(required) != set(observed)
+    ):
+        raise ValueError("V31 reference-tier receipt does not cover every registered RHS case")
+
+    strict_by_case: dict[str, dict[str, Any]] = {}
+    v15_by_case: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        if not isinstance(row, Mapping) or not isinstance(row.get("name"), str):
+            raise ValueError("V31 reference-tier case row is malformed")
+        name = str(row["name"])
+        candidate_rows = row.get("reference_pc_candidates")
+        if not isinstance(candidate_rows, Sequence) or isinstance(candidate_rows, (str, bytes)):
+            candidate = row.get("reference_pc_candidate")
+            if not isinstance(candidate, Mapping):
+                raise ValueError(f"V31 reference-tier case {name} has no complete-state candidate")
+            candidate_rows = [candidate]
+        candidates = [dict(item) for item in candidate_rows if isinstance(item, Mapping)]
+        if len(candidates) != len(candidate_rows) or not candidates:
+            raise ValueError(f"V31 reference-tier case {name} has malformed candidate rows")
+        v15 = select_v15_reference_pc_candidate(
+            candidates, profile_identity=expected_profile
+        )
+        selected_index = int(v15["selected_candidate_index"])
+        if selected_index < 0 or selected_index >= len(candidates):
+            raise ValueError(f"V31 V15 selector returned an invalid candidate index for {name}")
+        selected = candidates[selected_index]
+        selected_sha = selected.get("state_sha256")
+        if (
+            not isinstance(selected_sha, str)
+            or selected_sha != row.get("selected_state_sha256")
+            or selected_sha != row.get("strict_reference_selected_state_sha256")
+            or selected_sha != row.get("v15_reference_selected_state_sha256")
+        ):
+            raise ValueError(f"V31 strict and V15 tiers do not bind the same selected state for {name}")
+        v15_admission = v15["admission"]
+        if row.get("reference_pc_admission") != v15_admission or v15_admission not in {
+            V15_REFERENCE_PC_PASS,
+            V15_REFERENCE_PC_REJECTED,
+        }:
+            raise ValueError(f"V31 V15 admission differs from the independently recomputed state for {name}")
+        v15_passed = v15_admission == V15_REFERENCE_PC_PASS
+        if row.get("v15_reference_passed") is not v15_passed:
+            raise ValueError(f"V31 V15 pass flag differs from the recomputed state for {name}")
+
+        strict_candidate = {
+            "metrics": row.get("reference_pc_metrics"),
+            "frozen_scale_metrics": row.get("frozen_scale_metrics"),
+            "structural_gates": row.get("reference_pc_structural_gates"),
+            "state_sha256": selected_sha,
+            "state_label": selected.get("state_label"),
+        }
+        strict = select_reference_pc_candidate([strict_candidate])
+        strict_passed = bool(strict["strict_passed"])
+        if (
+            row.get("strict_reference_passed") is not strict_passed
+            or row.get("strict_reference_admission") != strict["admission"]
+        ):
+            raise ValueError(f"V31 strict admission differs from the recomputed selected state for {name}")
+        strict_by_case[name] = {
+            "admission": strict["admission"],
+            "passed": strict_passed,
+            "selected_state_sha256": selected_sha,
+        }
+        v15_by_case[name] = {
+            "admission": v15_admission,
+            "passed": v15_passed,
+            "selected_state_sha256": selected_sha,
+        }
+
+    aggregate_strict = all(row["passed"] is True for row in strict_by_case.values())
+    aggregate_v15 = all(row["passed"] is True for row in v15_by_case.values())
+    if (
+        regular_inverse_checks.get("strict_reference_passed") is not aggregate_strict
+        or regular_inverse_checks.get("v15_reference_passed") is not aggregate_v15
+        or regular_inverse_checks.get("strict_reference_status_by_case") != strict_by_case
+        or regular_inverse_checks.get("v15_reference_status_by_case") != v15_by_case
+    ):
+        raise ValueError("V31 strict/V15 aggregate state differs from independently recomputed cases")
+    return {
+        "schema": "task40extra.review_v31_reference_tier_checker.v1",
+        "expected_profile": expected_profile,
+        "case_count": len(rows),
+        "strict_reference_passed": aggregate_strict,
+        "strict_reference_status_by_case": strict_by_case,
+        "v15_reference_passed": aggregate_v15,
+        "v15_reference_status_by_case": v15_by_case,
+        "same_selected_complete_state_for_both_tiers": True,
+        "passed": True,
+    }
+
+
+def _verify_v31_reference_inverse_product(
+    run_directory: str | Path,
+    worker_summary: Mapping[str, Any],
+    *,
+    expected_q_count: int,
+    expected_source_sha: str,
+    expected_run_id: str,
+    expected_input_sha256: str,
+) -> dict[str, Any]:
+    """Bind and independently recheck the persisted V31 reference product."""
+    root = Path(run_directory).resolve()
+    receipt = worker_summary.get("v31_reference_inverse_product")
+    if not isinstance(receipt, Mapping) or receipt.get("schema") != (
+        "task40extra.review_v31_worker_product_receipt.v1"
+    ):
+        raise ValueError("V31 worker summary omits its reference inverse product receipt")
+    relative = Path(str(receipt.get("path", "")))
+    if relative.is_absolute():
+        raise ValueError("V31 reference inverse product path must be relative to its run directory")
+    product_path = (root / relative).resolve(strict=True)
+    try:
+        product_path.relative_to(root)
+    except ValueError as error:
+        raise ValueError("V31 reference inverse product escapes its run directory") from error
+    raw = product_path.read_bytes()
+    digest = hashlib.sha256(raw).hexdigest()
+    if (
+        receipt.get("sha256") != digest
+        or receipt.get("bytes") != len(raw)
+        or _file_sha256(product_path) != digest
+    ):
+        raise ValueError("V31 reference inverse product hash or byte count differs from its receipt")
+    product = json.loads(raw)
+    if (
+        product.get("schema") != "task40extra.review_v31_reference_inverse_product.v1"
+        or product.get("source_sha") != expected_source_sha
+        or worker_summary.get("source_sha") != expected_source_sha
+        or product.get("run_id") != expected_run_id
+        or product.get("scientific_input_sha256") != expected_input_sha256
+        or worker_summary.get("run_id") != expected_run_id
+        or not isinstance(worker_summary.get("v31_input_identity"), Mapping)
+        or product.get("scientific_input_sha256")
+        != worker_summary.get("v31_input_identity", {}).get("scientific_input_sha256")
+    ):
+        raise ValueError("V31 reference inverse product source/run/input identity is inconsistent")
+    snapshot = product.get("reference_audit_snapshot")
+    summary_snapshot = worker_summary.get("reference_audit_snapshot")
+    regular_checks = product.get("regular_inverse_checks")
+    summary_checks = worker_summary.get("regular_inverse_checks")
+    if (
+        not isinstance(snapshot, Mapping)
+        or snapshot != summary_snapshot
+        or not isinstance(regular_checks, Mapping)
+        or regular_checks != summary_checks
+    ):
+        raise ValueError("V31 reference product does not match the worker's persisted audit snapshot")
+    factor_audit = snapshot.get("factor_audit_before_destroy")
+    if not isinstance(factor_audit, Mapping):
+        raise ValueError("V31 reference product has no pre-destroy AllQ factor audit")
+    rhs_cost = _verify_v30_all_q_rhs_cost_categories(
+        factor_audit, expected_q_count=expected_q_count, schema_version=31
+    )
+    tiers = _verify_v31_reference_tiers(
+        regular_checks, expected_profile=str(worker_summary.get("profile", ""))
+    )
+    return {
+        "schema": "task40extra.review_v31_reference_inverse_product_checker.v1",
+        "path": str(product_path.relative_to(root)),
+        "sha256": digest,
+        "bytes": len(raw),
+        "source_run_input_identity_bound": True,
+        "rhs_cost_recheck": rhs_cost,
+        "reference_tier_recheck": tiers,
         "passed": True,
     }
 
@@ -2338,12 +2704,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--expected-channel-count",
-        type=int,
-        choices=(340, 532, 588),
+        type=_positive_registered_channel_count,
         default=532,
-        help="explicit case contract: 532 for B0, 340 for Gx560, 588 for E1",
+        help="positive channel count from the registered case/profile (default 532 for B0)",
     )
     args = parser.parse_args(argv)
+    if args.expected_channel_count < 1:
+        parser.error("--expected-channel-count must be a positive registered profile count")
     selected_checks = sum(
         (bool(args.regular_internal_witness), bool(args.v15_pc_state_packet))
     )

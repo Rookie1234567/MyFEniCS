@@ -29,6 +29,13 @@ from .task40_v10_p6_periodic_profile import (
 
 ALL_Q_RESIDENT = "ALL_Q_RESIDENT"
 ONE_Q_REFACTOR_V19 = "ONE_Q_REFACTOR_V19"
+_ALL_Q_BUSINESS_RHS_CATEGORIES = (
+    "pc_initial_rhs_mat_solve_count",
+    "pc_augmentation_rhs_mat_solve_count",
+    "reference_correction_rhs_mat_solve_count",
+    "startup_rhs_mat_solve_count",
+    "other_validation_rhs_mat_solve_count",
+)
 
 # If native destruction fails, keep the Python owners reachable until process
 # exit.  A caller must not mistake a failed destroy for released MUMPS memory.
@@ -896,6 +903,7 @@ class AllQExactMumps:
                  actual_target_full_storage_rows: int | None = None,
                  planned_target_full_storage_rows: int | None = None,
                  target_reference_rows_match: bool | None = None,
+                 target_admission_phase: str | None = None,
                  strict_factor_qualification: bool = False,
                  v30_config: Mapping[str, Any] | None = None,
                  output_directory=None):
@@ -916,12 +924,15 @@ class AllQExactMumps:
         if v30_config is not None:
             if not isinstance(v30_config, Mapping) or (
                 v30_config.get("schema")
-                != "task40extra.review_v30_all_q_factor_bank.v1"
+                not in {
+                    "task40extra.review_v30_all_q_factor_bank.v1",
+                    "task40extra.review_v31_all_q_factor_bank.v1",
+                }
                 or v30_config.get("require_two_strict_rhs") is not True
                 or v30_config.get("second_rhs_formula")
                 != "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13"
             ):
-                raise ValueError("V30 AllQ factor configuration is incomplete or changed")
+                raise ValueError("Task40 AllQ factor configuration is incomplete or changed")
             configured_directory = v30_config.get("output_directory")
             if output_directory is not None and configured_directory is not None:
                 if Path(output_directory).resolve() != Path(configured_directory).resolve():
@@ -930,6 +941,11 @@ class AllQExactMumps:
             strict_factor_qualification = True
         self.v30_config = None if v30_config is None else dict(v30_config)
         self.v30_enabled = self.v30_config is not None
+        if target_admission_phase not in (None, "REFERENCE_ONLY"):
+            raise ValueError("AllQ target admission phase must be REFERENCE_ONLY or omitted")
+        if target_admission_phase is not None and (not self.v30_enabled or profile.q_count != 8):
+            raise ValueError("V31 reference-only admission requires the qualified eight-q AllQ route")
+        self.target_admission_phase = target_admission_phase
         self.checkpoint_directory = (
             None if output_directory is None else Path(output_directory).resolve()
         )
@@ -955,6 +971,11 @@ class AllQExactMumps:
             and self.full_storage_rows is not None
             and self.actual_target_full_storage_rows == self.full_storage_rows
         )
+        if target_admission_phase is not None and (
+            self.actual_target_full_storage_rows is not None
+            or self.target_reference_rows_match
+        ):
+            raise ValueError("V31 reference-only admission must keep actual target identity unknown")
         if (
             target_reference_rows_match is not None
             and bool(target_reference_rows_match) != self.target_reference_rows_match
@@ -1004,6 +1025,7 @@ class AllQExactMumps:
         self.audit = {
             "backend": "PETSc MUMPS exact",
             "profile": profile.name,
+            "target_admission_phase": self.target_admission_phase,
             "reference_pc_strategy": self.reference_pc_strategy,
             "q_true_residual_admission_limit": self.q_solve_limit,
             "factor_probe_true_residual_limit": self.factor_probe_limit,
@@ -1051,6 +1073,46 @@ class AllQExactMumps:
             "S_q_business_petsc_vector_seconds_by_q": {
                 str(q): 0.0 for q in range(profile.q_count)
             },
+            "rhs_business_call_count_by_category": {
+                name: 0 for name in _ALL_Q_BUSINESS_RHS_CATEGORIES
+            },
+            "rhs_business_call_count_by_category_and_q": {
+                name: {str(q): 0 for q in range(profile.q_count)}
+                for name in _ALL_Q_BUSINESS_RHS_CATEGORIES
+            },
+            "mat_solve_business_invoked_count_by_category_and_q": {
+                name: {str(q): 0 for q in range(profile.q_count)}
+                for name in _ALL_Q_BUSINESS_RHS_CATEGORIES
+            },
+            "mat_solve_business_completed_count_by_category_and_q": {
+                name: {str(q): 0 for q in range(profile.q_count)}
+                for name in _ALL_Q_BUSINESS_RHS_CATEGORIES
+            },
+            "mat_solve_business_failed_count_by_category_and_q": {
+                name: {str(q): 0 for q in range(profile.q_count)}
+                for name in _ALL_Q_BUSINESS_RHS_CATEGORIES
+            },
+            "rhs_business_parent_seconds_by_category": {
+                name: 0.0 for name in _ALL_Q_BUSINESS_RHS_CATEGORIES
+            },
+            "rhs_business_parent_seconds_by_category_and_q": {
+                name: {str(q): 0.0 for q in range(profile.q_count)}
+                for name in _ALL_Q_BUSINESS_RHS_CATEGORIES
+            },
+            "rhs_business_native_seconds_by_category": {
+                name: 0.0 for name in _ALL_Q_BUSINESS_RHS_CATEGORIES
+            },
+            "rhs_business_vector_seconds_by_category": {
+                name: 0.0 for name in _ALL_Q_BUSINESS_RHS_CATEGORIES
+            },
+            "rhs_business_timing_semantics": {
+                "category_parent": "one solve call from before PETSc vector creation through vector destruction",
+                "category_native": "nested MatFactor.solve_repeated duration only",
+                "category_vector": "nested PETSc vector creation and RHS copy duration only",
+                "categories_are_disjoint": True,
+                "timing_is_child_of_worker_pc_parent": True,
+                "qualification_fresh_and_second_rhs": "separately reported in qualification_mat_solve_native_seconds_by_category and q_second_rhs_parent_seconds_by_q",
+            },
             "S_q_business_parent_seconds_total": 0.0,
             "S_q_native_solve_parent_seconds_total": 0.0,
             "all_four_factors_retained_simultaneously": False,
@@ -1066,6 +1128,49 @@ class AllQExactMumps:
             "native_memory_source": "MUMPS INFOG(19/22), raw and upper-bound decoded",
             "native_factor_entries_source": "MUMPS INFOG(9), negative million-entry encoding only",
             "factor_fill_prediction": None,
+            "rhs_mat_solve_count": 0,
+            "rhs_mat_solve_count_by_category": {
+                "pc_initial_rhs_mat_solve_count": 0,
+                "pc_augmentation_rhs_mat_solve_count": 0,
+                "reference_correction_rhs_mat_solve_count": 0,
+                "startup_rhs_mat_solve_count": 0,
+                "other_validation_rhs_mat_solve_count": 0,
+            },
+            "mat_solve_invoked_count_by_category": {
+                "pc_initial_rhs_mat_solve_count": 0,
+                "pc_augmentation_rhs_mat_solve_count": 0,
+                "reference_correction_rhs_mat_solve_count": 0,
+                "startup_rhs_mat_solve_count": 0,
+                "other_validation_rhs_mat_solve_count": 0,
+                "factor_fresh_probe_mat_solve_count": 0,
+                "factor_second_qualification_mat_solve_count": 0,
+            },
+            "mat_solve_completed_count_by_category": {
+                "pc_initial_rhs_mat_solve_count": 0,
+                "pc_augmentation_rhs_mat_solve_count": 0,
+                "reference_correction_rhs_mat_solve_count": 0,
+                "startup_rhs_mat_solve_count": 0,
+                "other_validation_rhs_mat_solve_count": 0,
+                "factor_fresh_probe_mat_solve_count": 0,
+                "factor_second_qualification_mat_solve_count": 0,
+            },
+            "mat_solve_failed_count_by_category": {
+                "pc_initial_rhs_mat_solve_count": 0,
+                "pc_augmentation_rhs_mat_solve_count": 0,
+                "reference_correction_rhs_mat_solve_count": 0,
+                "startup_rhs_mat_solve_count": 0,
+                "other_validation_rhs_mat_solve_count": 0,
+                "factor_fresh_probe_mat_solve_count": 0,
+                "factor_second_qualification_mat_solve_count": 0,
+            },
+            "qualification_mat_solve_native_seconds_by_category": {
+                "factor_fresh_probe_mat_solve_count": 0.0,
+                "factor_second_qualification_mat_solve_count": 0.0,
+            },
+            "backend_mat_solve_invoked_total": 0,
+            "backend_mat_solve_completed_total": 0,
+            "backend_mat_solve_failed_total": 0,
+            "mat_solve_total_identity_passed": True,
         }
         factory = _factor_factory_for_backend("exact")
         started = perf_counter()
@@ -1281,9 +1386,13 @@ class AllQExactMumps:
             )
             reference_full_rows = int(self.full_storage_rows or 0)
             planned_target_rows = self.planned_target_full_storage_rows
-            future_recovery_rows = max(
-                reference_full_rows,
-                0 if planned_target_rows is None else planned_target_rows,
+            future_recovery_rows = (
+                reference_full_rows
+                if self.target_admission_phase == "REFERENCE_ONLY"
+                else max(
+                    reference_full_rows,
+                    0 if planned_target_rows is None else planned_target_rows,
+                )
             )
             full_output_inventory = full_p6_pre_release_output_inventory(
                 future_recovery_rows
@@ -1317,6 +1426,17 @@ class AllQExactMumps:
                 "reference_full_storage_rows": reference_full_rows,
                 "planned_target_full_storage_rows": planned_target_rows,
                 "actual_target_full_storage_rows": self.actual_target_full_storage_rows,
+                "target_owner_increment_inventory": (
+                    {
+                        "mesh_mpc": None,
+                        "local_lu": None,
+                        "cache": None,
+                        "carrier": None,
+                    }
+                    if self.target_admission_phase == "REFERENCE_ONLY"
+                    else None
+                ),
+                "target_admission_phase": self.target_admission_phase,
                 "planned_target_rows_match_reference": (
                     planned_target_rows is not None
                     and planned_target_rows == reference_full_rows
@@ -2033,6 +2153,11 @@ class AllQExactMumps:
                 native_completed = True
             finally:
                 native_seconds = float(perf_counter() - native_started)
+                self._record_qualification_mat_solve(
+                    "factor_fresh_probe_mat_solve_count",
+                    completed=native_completed,
+                    native_seconds=native_seconds,
+                )
             return x.array.copy()
         finally:
             if x is not None:
@@ -2074,6 +2199,11 @@ class AllQExactMumps:
                 native_completed = True
             finally:
                 native_seconds = float(perf_counter() - native_started)
+                self._record_qualification_mat_solve(
+                    "factor_second_qualification_mat_solve_count",
+                    completed=native_completed,
+                    native_seconds=native_seconds,
+                )
             return x.array.copy()
         finally:
             if x is not None:
@@ -2091,7 +2221,77 @@ class AllQExactMumps:
                     native_solve_completed=native_completed,
                 )
 
-    def solve(self, q: int, rhs: np.ndarray) -> np.ndarray:
+    def _record_qualification_mat_solve(
+        self, category: str, *, completed: bool, native_seconds: float
+    ) -> None:
+        if category not in {
+            "factor_fresh_probe_mat_solve_count",
+            "factor_second_qualification_mat_solve_count",
+        }:
+            raise ValueError(f"unknown all-q qualification MatSolve category: {category!r}")
+        if not np.isfinite(native_seconds) or native_seconds < 0.0:
+            raise ValueError("qualification MatSolve timing must be finite and nonnegative")
+        self.audit["mat_solve_invoked_count_by_category"][category] += 1
+        self.audit["backend_mat_solve_invoked_total"] += 1
+        if completed:
+            self.audit["mat_solve_completed_count_by_category"][category] += 1
+            self.audit["backend_mat_solve_completed_total"] += 1
+        else:
+            self.audit["mat_solve_failed_count_by_category"][category] += 1
+            self.audit["backend_mat_solve_failed_total"] += 1
+        self.audit["qualification_mat_solve_native_seconds_by_category"][category] += float(
+            native_seconds
+        )
+        self._update_mat_solve_total_identity()
+
+    def _update_mat_solve_total_identity(self) -> None:
+        invoked = self.audit["mat_solve_invoked_count_by_category"]
+        done = self.audit["mat_solve_completed_count_by_category"]
+        failed = self.audit["mat_solve_failed_count_by_category"]
+        self.audit["mat_solve_total_identity_passed"] = bool(
+            self.audit["backend_mat_solve_invoked_total"] == sum(invoked.values())
+            and self.audit["backend_mat_solve_completed_total"] == sum(done.values())
+            and self.audit["backend_mat_solve_failed_total"] == sum(failed.values())
+            and self.audit["backend_mat_solve_invoked_total"]
+            == self.audit["backend_mat_solve_completed_total"]
+            + self.audit["backend_mat_solve_failed_total"]
+            and self.audit["rhs_mat_solve_count"]
+            == sum(self.audit["rhs_mat_solve_count_by_category"].values())
+            == self.calls
+        )
+
+    def _record_business_solve(
+        self, category: str, *, q: int, completed: bool
+    ) -> None:
+        invoked = self.audit["mat_solve_invoked_count_by_category"]
+        done = self.audit["mat_solve_completed_count_by_category"]
+        failed = self.audit["mat_solve_failed_count_by_category"]
+        if category not in invoked:
+            raise ValueError(f"unknown all-q MatSolve RHS category: {category!r}")
+        self.audit["mat_solve_business_invoked_count_by_category_and_q"][category][str(q)] += 1
+        invoked[category] += 1
+        self.audit["backend_mat_solve_invoked_total"] += 1
+        if completed:
+            self.audit["mat_solve_business_completed_count_by_category_and_q"][category][str(q)] += 1
+            done[category] += 1
+            self.audit["rhs_mat_solve_count_by_category"][category] += 1
+            self.audit["backend_mat_solve_completed_total"] += 1
+        else:
+            self.audit["mat_solve_business_failed_count_by_category_and_q"][category][str(q)] += 1
+            failed[category] += 1
+            self.audit["backend_mat_solve_failed_total"] += 1
+        self.audit["rhs_mat_solve_count"] = int(
+            sum(self.audit["rhs_mat_solve_count_by_category"].values())
+        )
+        self._update_mat_solve_total_identity()
+
+    def solve(
+        self,
+        q: int,
+        rhs: np.ndarray,
+        *,
+        category: str = "other_validation_rhs_mat_solve_count",
+    ) -> np.ndarray:
         if self.destroyed or self.cleanup_failed or set(self.factors) != set(range(self.nq)):
             raise RuntimeError("all live profile p6 q factors are required")
         if type(q) is not int or q not in range(self.nq):
@@ -2099,11 +2299,16 @@ class AllQExactMumps:
         values = np.asarray(rhs, dtype=np.complex128)
         if values.shape != (self.row_counts[q],) or not np.isfinite(values).all():
             raise ValueError("complete finite q-branch RHS required")
+        if category not in self.audit["mat_solve_invoked_count_by_category"]:
+            raise ValueError(f"unknown all-q MatSolve RHS category: {category!r}")
         PETSc = self.PETSc
         started = perf_counter()
+        self.audit["rhs_business_call_count_by_category"][category] += 1
+        self.audit["rhs_business_call_count_by_category_and_q"][category][str(q)] += 1
         b = None
         x = None
         native_seconds = 0.0
+        vector_seconds = 0.0
         native_attempted = False
         native_completed = False
         try:
@@ -2117,9 +2322,13 @@ class AllQExactMumps:
             try:
                 self.factors[q].solve_repeated(b, x)
                 native_completed = True
+            except BaseException:
+                self._record_business_solve(category, q=q, completed=False)
+                raise
             finally:
                 native_seconds = float(perf_counter() - native_started)
             self.calls += 1
+            self._record_business_solve(category, q=q, completed=True)
             solution = x.array.copy()
         finally:
             if x is not None:
@@ -2146,6 +2355,12 @@ class AllQExactMumps:
             self.audit["S_q_business_petsc_vector_seconds_by_q"][str(q)] = float(
                 self.audit["S_q_business_petsc_vector_seconds_by_q"].get(str(q), 0.0)
                 + (vector_seconds if "vector_seconds" in locals() else 0.0)
+            )
+            self.audit["rhs_business_parent_seconds_by_category"][category] += elapsed
+            self.audit["rhs_business_parent_seconds_by_category_and_q"][category][str(q)] += elapsed
+            self.audit["rhs_business_native_seconds_by_category"][category] += native_seconds
+            self.audit["rhs_business_vector_seconds_by_category"][category] += (
+                vector_seconds if "vector_seconds" in locals() else 0.0
             )
             self.audit["S_q_business_parent_seconds_total"] = float(
                 sum(self._business_solve_seconds_by_q.values())
@@ -2455,12 +2670,14 @@ class OneQRefactorV19Mumps:
             "rhs_mat_solve_count_by_category": {
                 "pc_initial_rhs_mat_solve_count": 0,
                 "pc_augmentation_rhs_mat_solve_count": 0,
+                "reference_correction_rhs_mat_solve_count": 0,
                 "startup_rhs_mat_solve_count": 0,
                 "other_validation_rhs_mat_solve_count": 0,
             },
             "mat_solve_invoked_count_by_category": {
                 "pc_initial_rhs_mat_solve_count": 0,
                 "pc_augmentation_rhs_mat_solve_count": 0,
+                "reference_correction_rhs_mat_solve_count": 0,
                 "startup_rhs_mat_solve_count": 0,
                 "other_validation_rhs_mat_solve_count": 0,
                 "factor_probe_mat_solve_count": 0,
@@ -2468,6 +2685,7 @@ class OneQRefactorV19Mumps:
             "mat_solve_completed_count_by_category": {
                 "pc_initial_rhs_mat_solve_count": 0,
                 "pc_augmentation_rhs_mat_solve_count": 0,
+                "reference_correction_rhs_mat_solve_count": 0,
                 "startup_rhs_mat_solve_count": 0,
                 "other_validation_rhs_mat_solve_count": 0,
                 "factor_probe_mat_solve_count": 0,
@@ -2475,6 +2693,7 @@ class OneQRefactorV19Mumps:
             "mat_solve_failed_count_by_category": {
                 "pc_initial_rhs_mat_solve_count": 0,
                 "pc_augmentation_rhs_mat_solve_count": 0,
+                "reference_correction_rhs_mat_solve_count": 0,
                 "startup_rhs_mat_solve_count": 0,
                 "other_validation_rhs_mat_solve_count": 0,
                 "factor_probe_mat_solve_count": 0,

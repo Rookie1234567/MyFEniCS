@@ -515,7 +515,6 @@ class TwoCellBranchCoordinates:
         local_modes: tuple[Any, ...],
         local_h: np.ndarray,
         context: Task40V10SectorContext,
-        global_h: np.ndarray,
         allocation_gate: Callable[[str, Mapping[str, Any]], None],
     ) -> None:
         if not callable(allocation_gate):
@@ -534,20 +533,9 @@ class TwoCellBranchCoordinates:
             or len(context.original_mode_indices) != self.ports
         ):
             raise ValueError("two-cell trace/port dimensions do not match the runtime inventory")
-        replication_count = int(context.global_q_indices[1] - context.global_q_indices[0])
-        if replication_count < 1:
-            raise ValueError("local q branches do not encode a positive replication count")
-        expected_h = (
-            np.asarray(global_h, dtype=np.float64)[context.original_mode_indices]
-            / float(replication_count)
-        )
         local_h = np.asarray(local_h, dtype=np.float64)
-        if (
-            not np.isfinite(local_h).all()
-            or np.any(local_h <= 0)
-            or not np.allclose(local_h, expected_h, rtol=1e-12, atol=0.0)
-        ):
-            raise ValueError("local p6 original H must equal its global mode value divided by two")
+        if not np.isfinite(local_h).all() or np.any(local_h <= 0):
+            raise ValueError("local p6 boundary carrier must provide finite positive original H")
         self.scale = 1.0 / np.sqrt(local_h)
         branches = np.asarray(context.local_branch_indices, dtype=np.int8)
         self.aliases = tuple(np.flatnonzero(branches == branch) for branch in (0, 1))
@@ -579,7 +567,7 @@ class TwoCellBranchCoordinates:
         self.audit = {
             "global_q_indices": list(context.global_q_indices),
             "alias_counts": [len(value) for value in self.aliases],
-            "original_H_scale_verified": True,
+            "local_carrier_H_scale_applied": True,
             "positive_H_coordinates": True,
         }
 
@@ -4543,6 +4531,243 @@ def _task40_v30_load_sector_q_csr_pair(
     }
 
 
+def build_task40_v10_p6_local_sector_owner(
+    cfg: Any,
+    axes: Mapping[str, tuple[float, ...]],
+    *,
+    context: Task40V10SectorContext,
+    global_modes: tuple[Any, ...],
+    global_mode_rows: tuple[Any, ...],
+    global_mode_sha256: str,
+    global_h: np.ndarray,
+    profile: Any,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None],
+    jit_options: Mapping[str, Any] | None = None,
+    transform_bank: Any | None = None,
+    share_transform_bank: bool = False,
+) -> dict[str, Any]:
+    """Build one reusable local FE/recovery owner before the global reference.
+
+    V31 uses this for twist zero after saved q4 numeric-pending is durable.  The
+    returned dictionary is the owner later handed to the full reference
+    builder; it is not a disposable probe or a second copy of the sector.
+    """
+    from dolfinx import fem
+    from mpi4py import MPI
+
+    from .dtn_boundary_phase_gauge import BOUNDARY_PLANE
+    from .fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
+    from .fullspace_same_mesh_hcurl_pmg_physical import (
+        build_same_mesh_physical_action,
+        destroy_same_mesh_physical_action,
+    )
+    from .hcurl_assembly_time_condensation import build_unconstrained_assembly_time_condensation
+    from .original_port_blocks import DiagonalOriginalPortBlock
+    from .p6_cell_condensed_action import build_p6_cell_condensed_action_from_carrier
+    from .retained_port_block_layout import RESEARCH_PORT_LAYOUT
+    from .fresh_c1_p6_component import _boundary_support
+
+    if not callable(allocation_gate):
+        raise TypeError("local p6 sector owner requires a live allocation gate")
+    if not isinstance(context, Task40V10SectorContext):
+        raise TypeError("local p6 sector owner requires a frozen sector context")
+    if len(global_modes) != len(global_mode_rows):
+        raise ValueError("local p6 sector owner mode keys and rows differ in length")
+    h = np.asarray(global_h, dtype=np.float64)
+    if (
+        h.shape != (int(profile.mode_count),)
+        or not np.isfinite(h).all()
+        or np.any(h <= 0.0)
+    ):
+        raise ValueError("local p6 sector owner requires the frozen positive global H vector")
+
+    created_transform_bank = False
+    if share_transform_bank and transform_bank is None:
+        from .y_orbit_transform_bank import YOrbitTransformBank
+
+        transform_bank = YOrbitTransformBank(
+            mapping_limit=LIMITS["mapping"], allocation_gate=allocation_gate
+        )
+        created_transform_bank = True
+    if transform_bank is not None and not share_transform_bank:
+        raise ValueError("a supplied transform bank requires explicit shared-bank ownership")
+
+    local_levels = None
+    local_bundle = None
+    action = None
+    system = None
+    try:
+        local_period_y = float(context.local_axes["y"][-1] - context.local_axes["y"][0])
+        local_cfg = __import__("dataclasses").replace(
+            cfg,
+            case_name=f"{cfg.case_name}_v10_twist{context.twist_index}",
+            period_y=local_period_y,
+            grating_width_y=local_period_y,
+            mesh_axis_cell_counts=(
+                profile.global_cell_axes[0],
+                profile.local_y_cells,
+                profile.global_cell_axes[2],
+            ),
+            mesh_axis_y_values=tuple(context.local_axes["y"]),
+            mesh_plan_id=f"{SCHEMA}.local_twist{context.twist_index}",
+            mesh_plan_sha256=None,
+            air_void_box_nm=None,
+            cell_notch=None,
+            geometry_identity=f"{SCHEMA}.regular.local_twist{context.twist_index}",
+        )
+        phase_override = (complex(cfg.floquet_phase_x), context.tau)
+        local_levels = _build_same_mesh_levels(
+            local_cfg,
+            MPI.COMM_SELF,
+            (6,),
+            include_positive_coefficients=False,
+            research_phase_override=phase_override,
+        )
+        selected = np.asarray(context.original_mode_indices, dtype=np.int64)
+        local_modes = tuple(global_modes[int(i)] for i in selected)
+        local_mode_inventory = (
+            local_modes,
+            tuple(global_mode_rows[int(i)] for i in selected),
+            str(global_mode_sha256),
+        )
+        local_bundle = build_same_mesh_physical_action(
+            local_levels,
+            local_cfg,
+            6,
+            mode_inventory=local_mode_inventory,
+            jit_options=jit_options,
+            dtn_phase_gauge=BOUNDARY_PLANE,
+            verify_dtn_quadrature=True,
+            research_phase_override=phase_override,
+        )
+        local_entities = collect_y_orbit_entities(
+            local_levels["spaces"][6],
+            local_levels["floquets"][6],
+            local_cfg,
+            context.local_axes,
+            transform_bank=transform_bank,
+        )
+        carrier = local_bundle["dtn_action"].carrier
+        local_h = np.asarray(
+            [entry.normalization_h for entry in carrier.entries], dtype=np.float64
+        )
+        if local_h.shape != (len(local_modes),):
+            raise ValueError("local p6 boundary carrier mode inventory is incomplete")
+        support_groups, support_rows, _support = _boundary_support(local_bundle)
+        compiled = fem.form(
+            local_bundle["volume_action"].bilinear_form,
+            **({"jit_options": dict(jit_options)} if jit_options is not None else {}),
+        )
+        system = build_unconstrained_assembly_time_condensation(
+            compiled,
+            local_levels["spaces"][6],
+            local_levels["mesh_data"].cell_tags,
+            mpc=local_levels["floquets"][6].mpc,
+            appended_global_rows=len(local_modes),
+            appended_support_owned_cell_groups=support_groups,
+            appended_support_group_by_row=support_rows,
+            sum_duplicate_cell_integrals=True,
+            strict_local_checks=True,
+            materialize_global_matrix=False,
+            retain_local_schur_for_matrix_free=True,
+            share_identity_cache=True,
+            preserve_exact_geometry=True,
+            allocation_gate=allocation_gate,
+        )
+        expected_inventory = (
+            profile.local_storage_rows,
+            profile.local_trace_rows,
+            profile.local_interior_rows,
+            len(local_modes),
+        )
+        actual_inventory = (
+            system.full_rows,
+            system.active_rows,
+            system.active_interior_rows,
+            system.appended_rows,
+        )
+        if actual_inventory != expected_inventory:
+            raise ValueError(f"local p6 condensation inventory mismatch: {actual_inventory}")
+        compact_h = DiagonalOriginalPortBlock.from_carrier(carrier.entries)
+        action = build_p6_cell_condensed_action_from_carrier(
+            system,
+            carrier,
+            owns_condensed=True,
+            port_coupling_mode="cached",
+            port_block_layout=RESEARCH_PORT_LAYOUT,
+            original_port_block=compact_h,
+        )
+        system = None
+        local_bundle["research_phase_override"] = phase_override
+        trace = trace_layout_coordinates(
+            local_entities,
+            action.condensed,
+            cell_phase_y=context.eta,
+            allocation_gate=allocation_gate,
+        )
+        coordinates = TwoCellBranchCoordinates(
+            trace,
+            trace_rows=action.condensed.active_rows,
+            local_modes=local_modes,
+            local_h=local_h,
+            context=context,
+            allocation_gate=allocation_gate,
+        )
+        h_sha256 = hashlib.sha256(np.ascontiguousarray(h).view(np.uint8)).hexdigest()
+        return {
+            "context": context,
+            "levels": local_levels,
+            "bundle": local_bundle,
+            "system": None,
+            "action": action,
+            "entities": local_entities,
+            "transport": None,
+            "trace": trace,
+            "coordinates": coordinates,
+            "local_modes": local_modes,
+            "mode_inventory": local_mode_inventory,
+            "local_h": local_h,
+            "global_h_sha256": h_sha256,
+            "transform_bank": transform_bank,
+            "local_cfg": local_cfg,
+            "owner_receipt": {
+                "schema": "task40extra.review_v31_twist0_local_owner.v1",
+                "status": "LIVE_LOCAL_FE_RECOVERY_OWNER",
+                "twist_index": int(context.twist_index),
+                "global_mode_sha256": str(global_mode_sha256),
+                "global_h_sha256": h_sha256,
+                "owner_identity": f"twist{context.twist_index}:local_action_recovery_entities",
+                "created_before_global_reference": True,
+                "created_transform_bank": bool(created_transform_bank),
+                "action_and_recovery_owner_retained": True,
+            },
+        }
+    except BaseException:
+        if system is not None:
+            try:
+                system.destroy()
+            except Exception:
+                pass
+        if action is not None:
+            try:
+                action.destroy()
+            except Exception:
+                pass
+        if local_bundle is not None:
+            try:
+                destroy_same_mesh_physical_action(local_bundle)
+            except Exception:
+                pass
+        _destroy_task40_v10_levels(local_levels)
+        if created_transform_bank and transform_bank is not None:
+            try:
+                if not bool(getattr(transform_bank, "_closed", False)):
+                    transform_bank.close()
+            except Exception:
+                pass
+        raise
+
+
 def build_task40_v10_p6_reference_inverse(
     cfg: Any,
     axes: Mapping[str, tuple[float, ...]],
@@ -4555,6 +4780,7 @@ def build_task40_v10_p6_reference_inverse(
     share_transform_bank: bool = False,
     target_full_storage_rows: int | None = None,
     planned_target_full_storage_rows: int | None = None,
+    target_admission_phase: str | None = None,
     reference_pc_strategy: str = STRICT_ONLY,
     q_assembly_strategy: str = Q_ASSEMBLY_LEGACY,
     factor_lifecycle_strategy: str = "ALL_Q_RESIDENT",
@@ -4567,6 +4793,10 @@ def build_task40_v10_p6_reference_inverse(
     qualified_q_csr_identity: Mapping[str, Any] | None = None,
     qualified_q_csr_coverage_phase: str = "all_q",
     qualified_q_csr_preparer: Callable[..., tuple[Mapping[int, sparse.csr_matrix], Mapping[str, Any]]] | None = None,
+    prebuilt_sector_owners: Mapping[int, Mapping[str, Any]] | None = None,
+    prebuilt_sector_q_csr: Mapping[
+        int, tuple[Mapping[int, sparse.csr_matrix], Mapping[str, Any]]
+    ] | None = None,
 ) -> dict[str, Any]:
     """Build the regular p6 inverse, or run a bounded no-factor q-assembly pair."""
     from mpi4py import MPI
@@ -4640,8 +4870,35 @@ def build_task40_v10_p6_reference_inverse(
     ):
         raise ValueError("Task40 V10 reference builder requires the qualified serial p6 profile")
 
-    transform_bank = None
-    if share_transform_bank:
+    prebuilt_owners = dict(prebuilt_sector_owners or {})
+    prebuilt_q_csr = dict(prebuilt_sector_q_csr or {})
+    if set(prebuilt_owners) - {0} or set(prebuilt_q_csr) - {0}:
+        raise ValueError("V31 may prebuild only the saved-first twist-0 sector owner")
+    if any(
+        not isinstance(value, dict)
+        or not isinstance(value.get("context"), Task40V10SectorContext)
+        for value in prebuilt_owners.values()
+    ):
+        raise TypeError("prebuilt sector owners must be mutable, context-bound live owners")
+    if any(
+        not isinstance(value, tuple)
+        or len(value) != 2
+        or not isinstance(value[0], Mapping)
+        or not isinstance(value[1], Mapping)
+        for value in prebuilt_q_csr.values()
+    ):
+        raise TypeError("prebuilt sector q CSR entries must contain matrix and audit mappings")
+    prebuilt_banks = {
+        id(value.get("transform_bank")): value.get("transform_bank")
+        for value in prebuilt_owners.values()
+        if value.get("transform_bank") is not None
+    }
+    if len(prebuilt_banks) > 1:
+        raise ValueError("prebuilt sectors do not share one transform bank")
+    transform_bank = next(iter(prebuilt_banks.values()), None)
+    if transform_bank is not None and not share_transform_bank:
+        raise ValueError("prebuilt sector carries a transform bank without shared-bank selection")
+    if share_transform_bank and transform_bank is None:
         from .y_orbit_transform_bank import YOrbitTransformBank
 
         transform_bank = YOrbitTransformBank(
@@ -4652,7 +4909,10 @@ def build_task40_v10_p6_reference_inverse(
     global_entities = None
     full_layout = None
     factors = None
-    sectors = []
+    sectors = sorted(
+        prebuilt_owners.values(),
+        key=lambda value: int(value.get("context").twist_index),
+    )
     owner = {
         "global_levels": None,
         "global_bundle": None,
@@ -4838,6 +5098,20 @@ def build_task40_v10_p6_reference_inverse(
                 "regular p6 reference carrier must retain all "
                 f"{profile.mode_count} positive original-H values"
             )
+        for twist_index, prebuilt in prebuilt_owners.items():
+            recorded_h_sha = prebuilt.get("global_h_sha256")
+            current_h_sha = hashlib.sha256(
+                np.ascontiguousarray(global_h).view(np.uint8)
+            ).hexdigest()
+            if (
+                type(twist_index) is not int
+                or twist_index != 0
+                or recorded_h_sha != current_h_sha
+                or prebuilt.get("owner_receipt", {}).get("created_before_global_reference")
+                is not True
+                or prebuilt.get("transform_bank") is not transform_bank
+            ):
+                raise ValueError("V31 prebuilt twist-0 owner does not bind the current global mode/H/bank")
         owner.update(
             global_levels=global_levels,
             global_bundle=global_bundle,
@@ -4876,66 +5150,72 @@ def build_task40_v10_p6_reference_inverse(
         q_assembly_pair_reports = []
         q_coverage: set[int] = set()
         for context in contexts:
-            local_period_y = float(context.local_axes["y"][-1] - context.local_axes["y"][0])
-            local_cfg = __import__("dataclasses").replace(
-                cfg,
-                case_name=f"{cfg.case_name}_v10_twist{context.twist_index}",
-                period_y=local_period_y,
-                grating_width_y=local_period_y,
-                mesh_axis_cell_counts=(
-                    profile.global_cell_axes[0],
-                    profile.local_y_cells,
-                    profile.global_cell_axes[2],
-                ),
-                mesh_axis_y_values=tuple(context.local_axes["y"]),
-                mesh_plan_id=f"{SCHEMA}.local_twist{context.twist_index}",
-                mesh_plan_sha256=None,
-                air_void_box_nm=None,
-                cell_notch=None,
-                geometry_identity=f"{SCHEMA}.regular.local_twist{context.twist_index}",
-            )
-            phase_override = (complex(cfg.floquet_phase_x), context.tau)
-            local_levels = _build_same_mesh_levels(
-                local_cfg,
-                MPI.COMM_SELF,
-                (6,),
-                include_positive_coefficients=False,
-                research_phase_override=phase_override,
-            )
-            pending_sector = {
-                "context": context,
-                "levels": local_levels,
-                "bundle": None,
-                "action": None,
-                "system": None,
-            }
-            sectors.append(pending_sector)
-            selected = np.asarray(context.original_mode_indices, dtype=np.int64)
-            local_modes = tuple(modes[int(i)] for i in selected)
-            global_mode_rows = tuple(global_bundle["mode_rows"])
-            mode_inventory = (
-                local_modes,
-                tuple(global_mode_rows[int(i)] for i in selected),
-                global_bundle["mode_sha256"],
-            )
-            local_bundle = build_same_mesh_physical_action(
-                local_levels,
-                local_cfg,
-                6,
-                mode_inventory=mode_inventory,
-                jit_options=jit_options,
-                dtn_phase_gauge=BOUNDARY_PLANE,
-                verify_dtn_quadrature=True,
-                research_phase_override=phase_override,
-            )
-            pending_sector["bundle"] = local_bundle
-            local_entities = collect_y_orbit_entities(
-                local_levels["spaces"][6],
-                local_levels["floquets"][6],
-                local_cfg,
-                context.local_axes,
-                transform_bank=transform_bank,
-            )
+            pending_sector = prebuilt_owners.pop(int(context.twist_index), None)
+            if pending_sector is None:
+                pending_sector = build_task40_v10_p6_local_sector_owner(
+                    cfg,
+                    axes,
+                    context=context,
+                    global_modes=modes,
+                    global_mode_rows=tuple(global_bundle["mode_rows"]),
+                    global_mode_sha256=str(global_bundle["mode_sha256"]),
+                    global_h=global_h,
+                    profile=profile,
+                    allocation_gate=allocation_gate,
+                    jit_options=jit_options,
+                    transform_bank=transform_bank,
+                    share_transform_bank=share_transform_bank,
+                )
+            else:
+                prebuilt_context = pending_sector.get("context")
+                selected = np.asarray(context.original_mode_indices, dtype=np.int64)
+                current_local_modes = tuple(modes[int(i)] for i in selected)
+                current_local_rows = tuple(
+                    global_bundle["mode_rows"][int(i)] for i in selected
+                )
+                frozen_local_inventory = pending_sector.get("mode_inventory")
+                if not isinstance(prebuilt_context, Task40V10SectorContext) or (
+                    prebuilt_context.twist_index != context.twist_index
+                    or tuple(prebuilt_context.global_q_indices)
+                    != tuple(context.global_q_indices)
+                    or complex(prebuilt_context.eta) != complex(context.eta)
+                    or complex(prebuilt_context.tau) != complex(context.tau)
+                    or dict(prebuilt_context.local_axes) != dict(context.local_axes)
+                    or not np.array_equal(
+                        prebuilt_context.original_mode_indices,
+                        context.original_mode_indices,
+                    )
+                    or not np.array_equal(
+                        prebuilt_context.local_branch_indices,
+                        context.local_branch_indices,
+                    )
+                    or pending_sector.get("owner_receipt", {}).get(
+                        "global_mode_sha256"
+                    )
+                    != str(global_bundle["mode_sha256"])
+                    or not isinstance(frozen_local_inventory, tuple)
+                    or len(frozen_local_inventory) != 3
+                    or _task40_v30_ordered_mode_key_sha256(
+                        tuple(frozen_local_inventory[0])
+                    )
+                    != _task40_v30_ordered_mode_key_sha256(current_local_modes)
+                    or tuple(frozen_local_inventory[1]) != current_local_rows
+                    or str(frozen_local_inventory[2])
+                    != str(global_bundle["mode_sha256"])
+                ):
+                    raise ValueError(
+                        "V31 prebuilt sector context differs from the frozen global sector"
+                    )
+            if not any(existing is pending_sector for existing in sectors):
+                sectors.append(pending_sector)
+            local_levels = pending_sector["levels"]
+            local_bundle = pending_sector["bundle"]
+            action = pending_sector["action"]
+            local_entities = pending_sector["entities"]
+            coordinates = pending_sector["coordinates"]
+            local_h = np.asarray(pending_sector["local_h"], dtype=np.float64)
+            local_modes = tuple(pending_sector["local_modes"])
+            mode_inventory = pending_sector["mode_inventory"]
             transport = TwoCellNativeTransport(
                 global_entities,
                 local_entities,
@@ -4943,78 +5223,25 @@ def build_task40_v10_p6_reference_inverse(
                 eta=context.eta,
                 cfg=cfg,
             )
-            carrier = local_bundle["dtn_action"].carrier
-            local_h = np.asarray(
-                [entry.normalization_h for entry in carrier.entries],
-                dtype=np.float64,
-            )
-            if local_h.shape != (len(local_modes),):
-                raise ValueError("local p6 boundary carrier mode inventory is incomplete")
-            support_groups, support_rows, _support = _boundary_support(local_bundle)
-            compiled = fem.form(
-                local_bundle["volume_action"].bilinear_form,
-                **({"jit_options": dict(jit_options)} if jit_options is not None else {}),
-            )
-            system = build_unconstrained_assembly_time_condensation(
-                compiled,
-                local_levels["spaces"][6],
-                local_levels["mesh_data"].cell_tags,
-                mpc=local_levels["floquets"][6].mpc,
-                appended_global_rows=len(local_modes),
-                appended_support_owned_cell_groups=support_groups,
-                appended_support_group_by_row=support_rows,
-                sum_duplicate_cell_integrals=True,
-                strict_local_checks=True,
-                materialize_global_matrix=False,
-                retain_local_schur_for_matrix_free=True,
-                share_identity_cache=True,
-                preserve_exact_geometry=True,
-                allocation_gate=allocation_gate,
-            )
-            pending_sector["system"] = system
-            expected_inventory = (
-                profile.local_storage_rows,
-                profile.local_trace_rows,
-                profile.local_interior_rows,
-                len(local_modes),
-            )
-            actual_inventory = (
-                system.full_rows,
-                system.active_rows,
-                system.active_interior_rows,
-                system.appended_rows,
-            )
-            if actual_inventory != expected_inventory:
-                raise ValueError(f"local p6 condensation inventory mismatch: {actual_inventory}")
-            compact_h = DiagonalOriginalPortBlock.from_carrier(carrier.entries)
-            action = build_p6_cell_condensed_action_from_carrier(
-                system,
-                carrier,
-                owns_condensed=True,
-                port_coupling_mode="cached",
-                port_block_layout=RESEARCH_PORT_LAYOUT,
-                original_port_block=compact_h,
-            )
-            system = None
-            pending_sector["system"] = None
-            pending_sector["action"] = action
-            local_bundle["research_phase_override"] = phase_override
-            trace = trace_layout_coordinates(
-                local_entities,
-                action.condensed,
-                cell_phase_y=context.eta,
-                allocation_gate=allocation_gate,
-            )
-            coordinates = TwoCellBranchCoordinates(
-                trace,
-                trace_rows=action.condensed.active_rows,
-                local_modes=local_modes,
-                local_h=local_h,
-                context=context,
-                global_h=global_h,
-                allocation_gate=allocation_gate,
-            )
-            if qualified_q_csr_provider is not None:
+            pending_sector["transport"] = transport
+            prebuilt_q_result = prebuilt_q_csr.pop(int(context.twist_index), None)
+            if prebuilt_q_result is not None:
+                sector_matrices = {
+                    int(q): matrix for q, matrix in prebuilt_q_result[0].items()
+                }
+                block_audit = dict(prebuilt_q_result[1])
+                if (
+                    set(sector_matrices) != set(map(int, context.global_q_indices))
+                    or block_audit.get("all_complete_native_pass") is not True
+                ):
+                    raise ValueError("V31 prebuilt twist-0 q CSR/native receipts are incomplete")
+                owner["qualified_q_csr_receipts"].extend(
+                    block_audit.get("qualification_receipts", ())
+                )
+                owner["qualified_q_csr_selector_entries"].extend(
+                    dict(row) for row in block_audit.get("selector_entries", ())
+                )
+            elif qualified_q_csr_provider is not None:
                 sector_matrices, block_audit = _task40_v30_load_sector_q_csr_pair(
                     qualified_q_csr_provider,
                     action=action,
@@ -5361,6 +5588,7 @@ def build_task40_v10_p6_reference_inverse(
             factor_options.update(
                 actual_target_full_storage_rows=target_full_storage_rows,
                 planned_target_full_storage_rows=planned_target_full_storage_rows,
+                target_admission_phase=target_admission_phase,
                 v30_config=v30_factor_config,
                 output_directory=factor_output_directory,
             )
@@ -5417,25 +5645,12 @@ def build_task40_v10_p6_reference_inverse(
         if factors is not None:
             factors.destroy()
         for sector in reversed(sectors):
-            system = sector.get("system")
-            if system is not None:
-                try:
-                    system.destroy()
-                except Exception:
-                    pass
-            action = sector.get("action")
-            if action is not None:
-                try:
-                    action.destroy()
-                except Exception:
-                    pass
-            bundle = sector.get("bundle")
-            if bundle:
-                try:
-                    destroy_same_mesh_physical_action(bundle)
-                except Exception:
-                    pass
-            _destroy_task40_v10_levels(sector.get("levels"))
+            try:
+                destroy_task40_v10_p6_local_sector_owner(sector)
+            except Exception:
+                # Leave the per-owner receipt available to the worker's
+                # idempotent fallback cleanup while preserving this failure.
+                pass
         if global_bundle is not None:
             try:
                 destroy_same_mesh_physical_action(global_bundle)
@@ -5450,21 +5665,129 @@ def build_task40_v10_p6_reference_inverse(
             sector.pop("entities", None)
         global_entities = None
         full_layout = None
-        if transform_bank is not None:
+        if transform_bank is not None and not bool(
+            getattr(transform_bank, "_closed", False)
+        ):
             transform_bank.close()
         raise
 
 
-def _destroy_task40_v10_levels(levels: Any) -> None:
+def _destroy_task40_v10_levels(levels: Any, *, strict: bool = False) -> None:
     if not isinstance(levels, Mapping):
         return
+    failures: list[dict[str, str]] = []
     for floquet in levels.get("floquets", {}).values():
         mpc = getattr(floquet, "mpc", None)
         if mpc is not None:
             try:
                 mpc.destroy()
-            except Exception:
-                pass
+            except BaseException as exc:
+                if strict:
+                    failures.append({"type": type(exc).__name__, "message": str(exc)})
+    if failures:
+        raise RuntimeError(f"local FE level cleanup failed: {failures}")
+
+
+def destroy_task40_v10_p6_local_sector_owner(
+    owner: dict[str, Any], *, close_transform_bank: bool = False
+) -> dict[str, Any]:
+    """Idempotently release one local sector owner during handoff failure cleanup."""
+    if not isinstance(owner, dict):
+        raise TypeError("local sector cleanup requires its mutable owner receipt")
+    if owner.get("local_owner_cleanup_complete") is True:
+        bank = owner.get("transform_bank")
+        bank_already_released = (
+            bank is None
+            or owner.get("_transform_bank_cleanup_complete") is True
+            or bool(getattr(bank, "_closed", False))
+        )
+        if not close_transform_bank or bank_already_released:
+            if close_transform_bank and bank is not None and bank_already_released:
+                owner["_transform_bank_cleanup_complete"] = True
+                owner["transform_bank"] = None
+                receipt = dict(owner.get("local_owner_cleanup_receipt", {}))
+                receipt["transform_bank_released"] = True
+                receipt["transform_bank_status"] = "RELEASED"
+                owner["local_owner_cleanup_receipt"] = receipt
+            return dict(owner.get("local_owner_cleanup_receipt", {}))
+    from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
+
+    failures: list[dict[str, str]] = []
+    for key, method_name in (("system", "destroy"), ("action", "destroy")):
+        value = owner.get(key)
+        if value is None or owner.get(f"_{key}_cleanup_complete") is True:
+            continue
+        try:
+            getattr(value, method_name)()
+            owner[f"_{key}_cleanup_complete"] = True
+            owner[key] = None
+        except BaseException as exc:
+            failures.append({"owner": key, "type": type(exc).__name__, "message": str(exc)})
+    bundle = owner.get("bundle")
+    if bundle is not None and owner.get("_bundle_cleanup_complete") is not True:
+        try:
+            destroy_same_mesh_physical_action(bundle)
+            owner["_bundle_cleanup_complete"] = True
+            owner["bundle"] = None
+        except BaseException as exc:
+            failures.append({"owner": "bundle", "type": type(exc).__name__, "message": str(exc)})
+    levels = owner.get("levels")
+    if levels is not None and owner.get("_levels_cleanup_complete") is not True:
+        try:
+            _destroy_task40_v10_levels(levels, strict=True)
+            owner["_levels_cleanup_complete"] = True
+            owner["levels"] = None
+        except BaseException as exc:
+            failures.append({"owner": "levels", "type": type(exc).__name__, "message": str(exc)})
+    bank = owner.get("transform_bank")
+    if close_transform_bank and bank is not None and owner.get("_transform_bank_cleanup_complete") is not True:
+        try:
+            if not bool(getattr(bank, "_closed", False)):
+                bank.close()
+            owner["_transform_bank_cleanup_complete"] = True
+            owner["transform_bank"] = None
+        except BaseException as exc:
+            failures.append({"owner": "transform_bank", "type": type(exc).__name__, "message": str(exc)})
+    complete = not failures and all(
+        owner.get(f"_{key}_cleanup_complete") is True
+        for key, value in (("system", owner.get("system")), ("action", owner.get("action")),
+                           ("bundle", owner.get("bundle")), ("levels", owner.get("levels")))
+        if value is not None
+    ) and (
+        not close_transform_bank
+        or owner.get("transform_bank") is None
+        or owner.get("_transform_bank_cleanup_complete") is True
+    )
+    receipt = {
+        "schema": "task40extra.review_v31_twist0_owner_cleanup.v1",
+        "status": "RELEASED" if complete else "CLEANUP_FAILED",
+        "owner_identity": owner.get("owner_receipt", {}).get("owner_identity"),
+        "handover_status": owner.get("owner_receipt", {}).get("handover_status"),
+        "local_levels_released": owner.get("levels") is None,
+        "local_bundle_released": owner.get("bundle") is None,
+        "local_action_released": owner.get("action") is None,
+        "transform_bank_released": (
+            owner.get("transform_bank") is None
+            or owner.get("_transform_bank_cleanup_complete") is True
+            or bool(getattr(owner.get("transform_bank"), "_closed", False))
+        ),
+        "transform_bank_status": (
+            "RELEASED"
+            if (
+                owner.get("transform_bank") is None
+                or owner.get("_transform_bank_cleanup_complete") is True
+                or bool(getattr(owner.get("transform_bank"), "_closed", False))
+            )
+            else "SHARED_REFERENCE_OWNER"
+        ),
+        "failures": failures,
+    }
+    owner["local_owner_cleanup_receipt"] = receipt
+    owner["local_owner_cleanup_complete"] = complete
+    owner.setdefault("owner_receipt", {})["cleanup_status"] = receipt["status"]
+    if failures:
+        raise RuntimeError(f"local p6 sector owner cleanup failed: {failures}")
+    return dict(receipt)
 
 
 def destroy_task40_v10_p6_reference_inverse(owner: dict[str, Any]) -> None:
@@ -5476,15 +5799,14 @@ def destroy_task40_v10_p6_reference_inverse(owner: dict[str, Any]) -> None:
     if factors is not None:
         factors.destroy()
     sectors = owner.pop("sectors", ())
+    sector_cleanup_errors: list[dict[str, str]] = []
     for sector in reversed(tuple(sectors)):
-        action = sector.get("action")
-        if action is not None:
-            action.destroy()
-        bundle = sector.get("bundle")
-        if bundle:
-            from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
-            destroy_same_mesh_physical_action(bundle)
-        _destroy_task40_v10_levels(sector.get("levels"))
+        try:
+            destroy_task40_v10_p6_local_sector_owner(sector)
+        except BaseException as exc:
+            sector_cleanup_errors.append(
+                {"type": type(exc).__name__, "message": str(exc)}
+            )
     global_bundle = owner.pop("global_bundle", None)
     if global_bundle:
         from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
@@ -5499,6 +5821,13 @@ def destroy_task40_v10_p6_reference_inverse(owner: dict[str, Any]) -> None:
     owner.pop("q_matrix_audits", None)
     transform_bank = owner.pop("transform_bank", None)
     owner.pop("transform_bank_receipt", None)
-    if transform_bank is not None:
+    if transform_bank is not None and not bool(
+        getattr(transform_bank, "_closed", False)
+    ):
         transform_bank.close()
     owner.clear()
+    if sector_cleanup_errors:
+        raise RuntimeError(
+            "reference local sector cleanup failed after releasing shared owners: "
+            f"{sector_cleanup_errors}"
+        )
