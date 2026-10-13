@@ -3359,15 +3359,33 @@ def _v31_missing_numerical_output_is_bound_worker_failure(
         return False
     if not isinstance(summary, Mapping) or not isinstance(manifest, Mapping):
         return False
-    campaign = manifest.get("task40_v20_campaign")
-    campaign = campaign if isinstance(campaign, Mapping) else {}
+    manifest_campaign = manifest.get("task40_v20_campaign")
+    manifest_campaign = manifest_campaign if isinstance(manifest_campaign, Mapping) else {}
+    summary_campaign = summary.get("task40_v20_campaign")
+    summary_campaign = summary_campaign if isinstance(summary_campaign, Mapping) else {}
     from src.runners.task40_v31_contract import V31_PROFILE
 
     summary_numerical_path = resolve_repo_path(
         Path(str(summary.get("numerical_output_directory", "")))
     )
+    manifest_numerical_path = resolve_repo_path(
+        Path(str(manifest.get("numerical_output_directory", "")))
+    )
     recorded_input_path = resolve_repo_path(Path(str(manifest.get("input_path", ""))))
-    recorded_window_path = resolve_repo_path(Path(str(campaign.get("window_path", ""))))
+    recorded_window_path = resolve_repo_path(
+        Path(str(manifest_campaign.get("window_path", "")))
+    )
+    summary_window_path = resolve_repo_path(
+        Path(str(summary_campaign.get("path", summary_campaign.get("window_path", ""))))
+    )
+    run_directory = summary_path.resolve().parent
+    output_directory = resolve_repo_path(Path(str(summary.get("output_directory", ""))))
+    manifest_output_directory = resolve_repo_path(
+        Path(str(manifest.get("output_directory", "")))
+    )
+    input_sha256 = _sha256_file(input_path)
+    manifest_source_sha = manifest.get("source_sha")
+    manifest_input_sha256 = manifest.get("input_sha256")
     solver = input_payload.get("solver", {}) if isinstance(input_payload, Mapping) else {}
     return bool(
         summary.get("status") == "finished"
@@ -3375,13 +3393,27 @@ def _v31_missing_numerical_output_is_bound_worker_failure(
         and summary.get("exit_status") == 4
         and expected_run_id == "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
         and summary.get("run_id") == manifest.get("run_id") == expected_run_id
-        and summary.get("source_sha") == manifest.get("source_sha") == source_sha
-        and summary.get("input_sha256") == manifest.get("input_sha256") == _sha256_file(input_path)
-        and recorded_input_path.resolve() == input_path.resolve()
-        and summary_numerical_path.resolve() == numerical_path.resolve()
+        and manifest_source_sha == source_sha
+        and manifest_input_sha256 == input_sha256
+        and ("source_sha" not in summary or summary.get("source_sha") == manifest_source_sha)
+        and (
+            "input_sha256" not in summary
+            or summary.get("input_sha256") == manifest_input_sha256
+        )
+        and summary_path.resolve().parent == manifest_path.resolve().parent == run_directory
+        and output_directory == run_directory
+        and manifest_output_directory == run_directory
+        and recorded_input_path == input_path.resolve()
+        and summary_numerical_path == numerical_path.resolve()
+        and manifest_numerical_path == numerical_path.resolve()
+        and summary_numerical_path.parent == run_directory
         and solver.get("preconditioner") == V31_PROFILE
         and recorded_window_path == window_path
-        and campaign.get("window_sha256") == campaign_sha256
+        and summary_window_path == window_path
+        and manifest_campaign.get("window_sha256") == campaign_sha256
+        and summary_campaign.get(
+            "sha256", summary_campaign.get("window_sha256")
+        ) == campaign_sha256
     )
 
 

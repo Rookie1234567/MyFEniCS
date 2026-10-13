@@ -6617,9 +6617,14 @@ def launch_specification(
                         v29_contract = None
                         v30_watchdog_resources = None
                         v30_contract = None
+                        v31_watchdog_resources = None
+                        v31_contract = None
+                        v31_launcher_binding = None
                         v30_strict = os.environ.get("TASK40_V30_STRICT_EXECUTION") == "1"
-                        if v30_strict and os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1":
-                            raise InputError("V29 and V30 strict launcher contracts cannot be combined")
+                        v31_strict = os.environ.get("TASK40_V31_STRICT_EXECUTION") == "1"
+                        v29_strict = os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1"
+                        if sum((v29_strict, v30_strict, v31_strict)) > 1:
+                            raise InputError("V29, V30, and V31 strict launcher contracts cannot be combined")
                         if os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1":
                             from src.runners.task40_v29_contract import (
                                 require_authorized_contract,
@@ -6687,8 +6692,56 @@ def launch_specification(
                                     "V30 launcher resources/window differ from the approved contract"
                                 )
                             v30_watchdog_resources = approved_resources
+                        if v31_strict:
+                            from src.runners.task40_v31_contract import (
+                                require_v31_execution_contract,
+                                v31_launcher_values,
+                            )
+
+                            repo_root = Path(__file__).resolve().parents[2]
+                            v31_contract, v31_contract_sha = require_v31_execution_contract(
+                                os.environ.get("TASK40_V31_CONTRACT_PATH", ""),
+                                expected_sha256=os.environ.get("TASK40_V31_CONTRACT_SHA256"),
+                                current_root=repo_root,
+                            )
+                            v31_launcher_binding = v31_launcher_values(
+                                os.environ["TASK40_V31_CONTRACT_PATH"],
+                                expected_sha256=os.environ["TASK40_V31_CONTRACT_SHA256"],
+                                current_root=repo_root,
+                            )
+                            approved_execution = v31_contract["execution"]
+                            approved_resources = approved_execution["resources"]
+                            approved_window = approved_execution["window"]
+                            approved_window_path = Path(
+                                str(approved_window["window_path"])
+                            ).resolve()
+                            if (
+                                campaign_window is None
+                                or approved_window_path != campaign_window.path.resolve()
+                                or approved_window["window_sha256"] != campaign_window.sha256
+                                or v31_contract_sha != os.environ.get("TASK40_V31_CONTRACT_SHA256")
+                                or approved_execution["run_source_sha"] != source
+                                or v31_launcher_binding[6] != str(campaign_window.path.resolve())
+                                or v31_launcher_binding[7] != campaign_window.sha256
+                                or os.environ.get("TASK40_V31_EXECUTION_WINDOW_PATH")
+                                != str(approved_window_path)
+                                or os.environ.get("TASK40_V31_EXECUTION_WINDOW_SHA256")
+                                != str(approved_window["window_sha256"])
+                                or os.environ.get("TASK40_V31_TASK_MEMORY_MAX_BYTES")
+                                != str(approved_resources["task_memory_max_bytes"])
+                                or os.environ.get("TASK40_V31_HOST_RESERVE_BYTES")
+                                != str(approved_resources["host_reserve_bytes"])
+                                or os.environ.get("TASK40_V31_MEMORY_SWAP_MAX_BYTES")
+                                != str(approved_resources["memory_swap_max_bytes"])
+                            ):
+                                raise InputError(
+                                    "V31 launcher resources/window/source differ from the approved contract"
+                                )
+                            v31_watchdog_resources = approved_resources
                         jit_source = (
-                            Path(str(v30_contract["execution"]["jit_cache"]))
+                            Path(v31_launcher_binding[3])
+                            if v31_watchdog_resources is not None
+                            else Path(str(v30_contract["execution"]["jit_cache"]))
                             if v30_watchdog_resources is not None
                             else Path(str(v29_contract["execution"]["jit_cache"]))
                             if v29_watchdog_resources is not None
@@ -6703,7 +6756,9 @@ def launch_specification(
                                 Path(__file__).resolve().parents[2] / jit_source
                             ).resolve()
                         jit_cache_origin = (
-                            "V30 approved target execution contract"
+                            "V31 approved target execution contract"
+                            if v31_watchdog_resources is not None
+                            else "V30 approved target execution contract"
                             if v30_watchdog_resources is not None
                             else "V29 factor-only execution; no FE/JIT compilation is in scope"
                             if v29_watchdog_resources is not None
@@ -6711,6 +6766,8 @@ def launch_specification(
                         )
                         jit_expected_compiler_events = (
                             physical_resources["qualified_jit_expected_compiler_event_count"]
+                            if v31_watchdog_resources is not None
+                            else physical_resources["qualified_jit_expected_compiler_event_count"]
                             if v30_watchdog_resources is not None
                             else 0
                             if v29_watchdog_resources is not None
@@ -6731,14 +6788,18 @@ def launch_specification(
                                 physical_resources["pss_sampling_policy"]
                             ),
                             tree_cap_bytes=int(
-                                v30_watchdog_resources["task_memory_max_bytes"]
+                                v31_watchdog_resources["task_memory_max_bytes"]
+                                if v31_watchdog_resources is not None
+                                else v30_watchdog_resources["task_memory_max_bytes"]
                                 if v30_watchdog_resources is not None
                                 else v29_watchdog_resources["task_memory_max_bytes"]
                                 if v29_watchdog_resources is not None
                                 else physical_resources["process_tree_rss_cap_bytes"]
                             ),
                             host_reserve_bytes=(
-                                int(v30_watchdog_resources["host_reserve_bytes"])
+                                int(v31_watchdog_resources["host_reserve_bytes"])
+                                if v31_watchdog_resources is not None
+                                else int(v30_watchdog_resources["host_reserve_bytes"])
                                 if v30_watchdog_resources is not None
                                 else int(v29_watchdog_resources["host_reserve_bytes"])
                                 if v29_watchdog_resources is not None
@@ -6746,7 +6807,8 @@ def launch_specification(
                             ),
                             task_cgroup_reserve_bytes=(
                                 0
-                                if v30_watchdog_resources is not None
+                                if v31_watchdog_resources is not None
+                                or v30_watchdog_resources is not None
                                 or v29_watchdog_resources is not None
                                 else None
                             ),
@@ -6754,7 +6816,8 @@ def launch_specification(
                             require_job_cgroup_zero_swap=True,
                             **(
                                 {"require_cgroup_memory_details": True}
-                                if v30_watchdog_resources is not None
+                                if v31_watchdog_resources is not None
+                                or v30_watchdog_resources is not None
                                 else {}
                             ),
                         )
@@ -6782,6 +6845,33 @@ def launch_specification(
                                 "XDG_CACHE_HOME": str(jit_source),
                             }
                         )
+                        if v31_watchdog_resources is not None:
+                            watchdog_environment.update(
+                                {
+                                    "TASK40_V31_STRICT_EXECUTION": "1",
+                                    "TASK40_V31_CONTRACT_PATH": os.environ[
+                                        "TASK40_V31_CONTRACT_PATH"
+                                    ],
+                                    "TASK40_V31_CONTRACT_SHA256": os.environ[
+                                        "TASK40_V31_CONTRACT_SHA256"
+                                    ],
+                                    "TASK40_V31_EXECUTION_WINDOW_PATH": str(
+                                        campaign_window.path.resolve()
+                                    ),
+                                    "TASK40_V31_EXECUTION_WINDOW_SHA256": str(
+                                        campaign_window.sha256
+                                    ),
+                                    "TASK40_V31_TASK_MEMORY_MAX_BYTES": str(
+                                        v31_watchdog_resources["task_memory_max_bytes"]
+                                    ),
+                                    "TASK40_V31_HOST_RESERVE_BYTES": str(
+                                        v31_watchdog_resources["host_reserve_bytes"]
+                                    ),
+                                    "TASK40_V31_MEMORY_SWAP_MAX_BYTES": str(
+                                        v31_watchdog_resources["memory_swap_max_bytes"]
+                                    ),
+                                }
+                            )
                         if v30_watchdog_resources is not None:
                             watchdog_environment.update(
                                 {

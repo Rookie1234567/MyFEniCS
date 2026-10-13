@@ -30,7 +30,7 @@ def _rooted_contract_path(root: Path, value: object, label: str) -> Path:
     supplied = Path(str(value))
     candidate = (supplied if supplied.is_absolute() else root / supplied).resolve()
     if not candidate.is_relative_to(root):
-        raise RuntimeError(f"Task40 V30 {label} escapes the approved execution root")
+        raise RuntimeError(f"Task40 approved {label} escapes the execution root")
     return candidate
 
 
@@ -39,8 +39,10 @@ def qualified_task40_v10_abi(
     profile_identity: str,
     v30_contract_path: str | Path | None = None,
     v30_contract_sha256: str | None = None,
+    v31_contract_path: str | Path | None = None,
+    v31_contract_sha256: str | None = None,
 ) -> dict[str, object]:
-    """Validate the legacy WSL receipt or the strictly authorized V30 receipt."""
+    """Validate the legacy WSL, strict V30, or strict V31 ABI receipt."""
     from src.io.physical_intermediate_profile import (
         TASK40_V10_P4_CONTROL_PROFILE,
         TASK40_V10_P6_REFERENCE_PROFILE,
@@ -69,6 +71,9 @@ def qualified_task40_v10_abi(
 
     root = Path(__file__).resolve().parents[2]
     strict_v30 = os.environ.get("TASK40_V30_STRICT_EXECUTION") == "1"
+    strict_v31 = os.environ.get("TASK40_V31_STRICT_EXECUTION") == "1"
+    if strict_v30 and strict_v31:
+        raise RuntimeError("Task40 V30 and V31 strict ABI contracts cannot be combined")
     if strict_v30:
         if profile_identity != TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE:
             raise RuntimeError(
@@ -105,9 +110,60 @@ def qualified_task40_v10_abi(
         expected_receipt_sha256 = str(execution["abi_receipt_sha256"])
         if checked_contract_sha256 != configured_contract_sha256:
             raise RuntimeError("Task40 V30 ABI gate contract hash changed during validation")
+    elif strict_v31:
+        if profile_identity != TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE:
+            raise RuntimeError(
+                "Task40 V31 native ABI receipt is restricted to the approved target Ny8 profile"
+            )
+        if v31_contract_path is None or not v31_contract_sha256:
+            raise RuntimeError("Task40 V31 ABI gate requires its approved contract binding")
+        from src.runners.task40_v30_contract import V30_ABI_RECEIPT_SHA256
+        from src.runners.task40_v31_contract import (
+            require_v31_execution_contract,
+            v31_launcher_values,
+        )
+
+        contract_path = Path(v31_contract_path)
+        contract_path = (
+            contract_path if contract_path.is_absolute() else root / contract_path
+        ).resolve()
+        configured_contract = Path(
+            os.environ.get("TASK40_V31_CONTRACT_PATH", "")
+        ).resolve()
+        configured_contract_sha256 = os.environ.get("TASK40_V31_CONTRACT_SHA256")
+        if (
+            contract_path != configured_contract
+            or v31_contract_sha256 != configured_contract_sha256
+        ):
+            raise RuntimeError("Task40 V31 ABI gate contract differs from the worker binding")
+        v31_contract, checked_contract_sha256 = require_v31_execution_contract(
+            contract_path,
+            expected_sha256=v31_contract_sha256,
+            current_root=root,
+        )
+        execution = v31_contract["execution"]
+        launcher_binding = v31_launcher_values(
+            contract_path,
+            expected_sha256=v31_contract_sha256,
+            current_root=root,
+        )
+        runtime_profile = "native_linux"
+        prefix = Path(launcher_binding[1]).resolve()
+        receipt_path = Path(launcher_binding[2]).resolve()
+        expected_receipt_sha256 = V30_ABI_RECEIPT_SHA256
+        if checked_contract_sha256 != configured_contract_sha256:
+            raise RuntimeError("Task40 V31 ABI gate contract hash changed during validation")
     else:
-        if v30_contract_path is not None or v30_contract_sha256 is not None:
-            raise RuntimeError("Task40 V30 ABI binding requires strict V30 execution mode")
+        if any(
+            value is not None
+            for value in (
+                v30_contract_path,
+                v30_contract_sha256,
+                v31_contract_path,
+                v31_contract_sha256,
+            )
+        ):
+            raise RuntimeError("Task40 ABI contract binding requires its matching strict mode")
         prefix = (root / _RUNTIME_PREFIX).resolve()
         receipt_path = (root / _ABI_RECEIPT).resolve()
         expected_receipt_sha256 = _ABI_RECEIPT_SHA256
@@ -118,11 +174,15 @@ def qualified_task40_v10_abi(
     try:
         receipt_bytes = receipt_path.read_bytes()
     except OSError as exc:
-        receipt_label = "V30 approved" if strict_v30 else "V10 qualified"
+        receipt_label = (
+            "V31 approved" if strict_v31 else "V30 approved" if strict_v30 else "V10 qualified"
+        )
         raise RuntimeError(f"Task40 {receipt_label} ABI receipt is unavailable") from exc
     receipt_sha256 = hashlib.sha256(receipt_bytes).hexdigest()
     if receipt_sha256 != expected_receipt_sha256:
-        receipt_label = "V30 approved" if strict_v30 else "V10 qualified"
+        receipt_label = (
+            "V31 approved" if strict_v31 else "V30 approved" if strict_v30 else "V10 qualified"
+        )
         raise RuntimeError(f"Task40 {receipt_label} ABI receipt hash differs from its binding")
 
     configured_receipt = os.environ.get("_MYFENICS_CLOUD_ABI_MANIFEST")
@@ -130,7 +190,7 @@ def qualified_task40_v10_abi(
     if (
         (
             os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1"
-            if not strict_v30
+            if not (strict_v30 or strict_v31)
             else os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") is not None
         )
         or os.environ.get("_MYFENICS_CLOUD_QUALIFIED_ACTIVATION") != "1"

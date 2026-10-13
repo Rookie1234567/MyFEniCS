@@ -1016,7 +1016,14 @@ def test_v31_closeout_allows_missing_numerical_output_only_for_bound_failure(
     evidence.mkdir(parents=True)
     run_directory = root / "results" / "v31-attempt"
     run_directory.mkdir(parents=True)
-    input_path = run_directory / "stage.dat"
+    source_sha = "b" * 40
+    input_path = (
+        root
+        / V31_ARTIFACT_ROOT_RELATIVE
+        / f"source_{source_sha}"
+        / "stage_inputs/full/target_original_ny8_resource_pilot_v20.dat"
+    )
+    input_path.parent.mkdir(parents=True, exist_ok=True)
     run_id = "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
     input_path.write_text(
         f'run_id = "{run_id}"\n[solver]\npreconditioner = "{V31_PROFILE}"\n',
@@ -1025,7 +1032,6 @@ def test_v31_closeout_allows_missing_numerical_output_only_for_bound_failure(
     numerical_path = run_directory / "numerical-output"
     summary_path = run_directory / "run_summary.json"
     manifest_path = run_directory / "run_manifest.json"
-    source_sha = "b" * 40
     input_sha = service._sha256_file(input_path)
     window_path = root / "campaign_window_v31.json"
     window_path.write_text("approved fixture window\n", encoding="utf-8")
@@ -1047,9 +1053,12 @@ def test_v31_closeout_allows_missing_numerical_output_only_for_bound_failure(
                 "result_classification": "WORKER_FAILED",
                 "exit_status": 4,
                 "run_id": run_id,
-                "source_sha": source_sha,
-                "input_sha256": input_sha,
+                "output_directory": str(run_directory),
                 "numerical_output_directory": str(numerical_path),
+                "task40_v20_campaign": {
+                    "path": str(window_path),
+                    "sha256": window_sha,
+                },
             }
         ),
         encoding="utf-8",
@@ -1057,10 +1066,15 @@ def test_v31_closeout_allows_missing_numerical_output_only_for_bound_failure(
     manifest_path.write_text(
         json.dumps(
             {
+                "status": "finished",
+                "result_classification": "WORKER_FAILED",
+                "exit_status": 4,
                 "run_id": run_id,
                 "source_sha": source_sha,
                 "input_sha256": input_sha,
                 "input_path": str(input_path),
+                "output_directory": str(run_directory),
+                "numerical_output_directory": str(numerical_path),
                 "task40_v20_campaign": {
                     "window_path": str(window_path),
                     "window_sha256": window_sha,
@@ -1107,6 +1121,23 @@ def test_v31_closeout_allows_missing_numerical_output_only_for_bound_failure(
         str(summary_path.resolve()),
         str(manifest_path.resolve()),
     ]
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["source_sha"] = "c" * 40
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+    with pytest.raises(ValueError, match="paths are not bound"):
+        service._task40_v31_closeout_checker_authorization(
+            command=command,
+            checker_kind="task40_v20_partial_receipt_checker",
+            runtime_prefix=runtime,
+            repo_root=root,
+            evidence_directory=evidence,
+            campaign_sha256=window_sha,
+            contract_path=root / "approved-contract.json",
+            source_state=source_state,
+            profile=V31_PROFILE,
+        )
+    summary.pop("source_sha")
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
     with pytest.raises(ValueError, match="paths are not bound"):
         service._task40_v30_closeout_checker_authorization(
             command=command,

@@ -1191,6 +1191,8 @@ def _abi_facts(
     profile_identity: str | None = None,
     v30_contract_path: str | Path | None = None,
     v30_contract_sha256: str | None = None,
+    v31_contract_path: str | Path | None = None,
+    v31_contract_sha256: str | None = None,
 ) -> dict[str, Any]:
     if profile_identity is not None:
         from .task40_v10_abi import qualified_task40_v10_abi
@@ -1199,9 +1201,19 @@ def _abi_facts(
             profile_identity=profile_identity,
             v30_contract_path=v30_contract_path,
             v30_contract_sha256=v30_contract_sha256,
+            v31_contract_path=v31_contract_path,
+            v31_contract_sha256=v31_contract_sha256,
         )
-    if v30_contract_path is not None or v30_contract_sha256 is not None:
-        raise ValueError("V30 ABI receipt binding requires an exact Task40 profile")
+    if any(
+        value is not None
+        for value in (
+            v30_contract_path,
+            v30_contract_sha256,
+            v31_contract_path,
+            v31_contract_sha256,
+        )
+    ):
+        raise ValueError("Task40 ABI receipt binding requires an exact profile")
     from .fine_reference_preflight import qualified_abi
 
     return qualified_abi()

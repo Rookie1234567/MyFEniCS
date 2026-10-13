@@ -6816,6 +6816,14 @@ def run_task40_v10_p6_reference_worker(
             v30_contract_sha256=(
                 v30_contract_sha if v30_contract is not None else None
             ),
+            v31_contract_path=(
+                os.environ.get("TASK40_V31_CONTRACT_PATH")
+                if v31_contract is not None
+                else None
+            ),
+            v31_contract_sha256=(
+                v31_contract_sha if v31_contract is not None else None
+            ),
         )
         if v31_contract is not None:
             summary["v31_execution_contract_binding"] = dict(v31_route_facts or {})

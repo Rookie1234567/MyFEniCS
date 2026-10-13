@@ -1141,6 +1141,235 @@ def test_v30_launcher_passes_approved_resources_to_watchdog_without_fe(
     assert specification.as_jsonable()["provenance"]["source_path"] == str(staged)
 
 
+def test_v31_launcher_passes_contract_resources_and_bindings_to_watchdog_without_fe(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    from benchmarks import subreaper_watchdog
+    from src.runners import task038_launcher, task40_v10_campaign, task40_v31_contract
+
+    from src.runners import task40_v30_contract
+
+    root, _v30_contract_path, _v30_payload = _contract_fixture(tmp_path, monkeypatch)
+    source_sha = "b" * 40
+    _canonical, staged, _selector, specification = _v30_full_stage_fixture(root, source_sha)
+    monkeypatch.setattr(
+        task038_launcher,
+        "__file__",
+        str(root / "src/runners/task038_launcher.py"),
+    )
+    monkeypatch.setattr(task038_launcher, "_source_sha", lambda _root: source_sha)
+    window_path = (
+        root
+        / task40_v31_contract.V31_ARTIFACT_ROOT_RELATIVE
+        / f"source_{source_sha}"
+        / "campaign_window_v31.json"
+    )
+    window_path.parent.mkdir(parents=True, exist_ok=True)
+    window_path.write_text("fixed V31 window fixture\n", encoding="utf-8")
+    window_sha = _sha(window_path)
+    resources = dict(task40_v31_contract.V31_RESOURCES)
+    contract_sha = "d" * 64
+    contract_path = window_path.parent / "execution_contract_v31.approved.json"
+    contract = {
+        "source_freeze": {"source_sha": source_sha},
+        "execution": {
+            "root": str(root.resolve()),
+            "run_source_sha": source_sha,
+            "resources": resources,
+            "window": {"window_path": str(window_path.resolve()), "window_sha256": window_sha},
+            "campaign_window_path": str(window_path.resolve()),
+            "campaign_window_sha256": window_sha,
+            "jit_cache": str((root / task40_v30_contract.V30_JIT_CACHE_RELATIVE).resolve()),
+        },
+    }
+    monkeypatch.setattr(
+        task40_v31_contract,
+        "require_v31_execution_contract",
+        lambda *_args, **_kwargs: (contract, contract_sha),
+    )
+    runtime_prefix = (root / task40_v30_contract.V30_RUNTIME_RELATIVE).resolve()
+    receipt_path = (root / task40_v30_contract.V30_ABI_RECEIPT_RELATIVE).resolve()
+    jit_path = (root / task40_v30_contract.V30_JIT_CACHE_RELATIVE).resolve()
+    monkeypatch.setattr(
+        task40_v31_contract,
+        "v31_launcher_values",
+        lambda *_args, **_kwargs: (
+            str(root.resolve()),
+            str(runtime_prefix),
+            str(receipt_path),
+            str(jit_path),
+            str(resources["task_memory_max_bytes"]),
+            contract_sha,
+            str(window_path.resolve()),
+            window_sha,
+            str(resources["host_reserve_bytes"]),
+            "0",
+        ),
+    )
+    for key, value in {
+        "TASK40_V31_STRICT_EXECUTION": "1",
+        "TASK40_V31_CONTRACT_PATH": str(contract_path),
+        "TASK40_V31_CONTRACT_SHA256": contract_sha,
+        "TASK40_V31_EXECUTION_WINDOW_PATH": str(window_path.resolve()),
+        "TASK40_V31_EXECUTION_WINDOW_SHA256": window_sha,
+        "TASK40_V31_TASK_MEMORY_MAX_BYTES": str(resources["task_memory_max_bytes"]),
+        "TASK40_V31_HOST_RESERVE_BYTES": str(resources["host_reserve_bytes"]),
+        "TASK40_V31_MEMORY_SWAP_MAX_BYTES": "0",
+    }.items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.delenv("TASK40_V30_STRICT_EXECUTION", raising=False)
+    monkeypatch.delenv("TASK40_V29_STRICT_FACTOR_ONLY", raising=False)
+
+    def observe(label):
+        return {
+            "label": label,
+            "remaining_numerical_seconds": 42_000.0,
+            "elapsed_seconds": 0.0,
+        }
+
+    campaign_window = SimpleNamespace(
+        path=window_path,
+        sha256=window_sha,
+        t0_utc_ns=1,
+        deadline_utc_ns=43_200_000_000_000,
+        total_seconds=43_200.0,
+        closeout_seconds=1_200.0,
+        observe=observe,
+    )
+    monkeypatch.setattr(
+        task40_v10_campaign,
+        "load_fixed_campaign_window",
+        lambda _path: campaign_window,
+    )
+    run_directory = tmp_path / "v31-launcher-run"
+    monkeypatch.setattr(
+        task038_launcher,
+        "_timestamp_directory",
+        lambda *_args, **_kwargs: (run_directory.mkdir(parents=True, exist_ok=True) or run_directory),
+    )
+    monkeypatch.setattr(
+        task038_launcher, "current_cgroup_path", lambda: Path("/fake/task40-v31.service")
+    )
+    monkeypatch.setattr(task038_launcher, "_is_v28_user_service_cgroup", lambda _path: True)
+    monkeypatch.setattr(
+        task038_launcher,
+        "_physical_source_gate",
+        lambda *_args, **_kwargs: {
+            "source_sha": source_sha,
+            "tracked_and_nonignored_untracked_clean": True,
+        },
+    )
+    monkeypatch.setattr(
+        task038_launcher,
+        "build_execution_plan",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            adapter_available=True, argv=("fixture-no-fe-worker",), contract_probe=False
+        ),
+    )
+    captured: dict[str, object] = {}
+
+    def fake_supervise(_argv, _directory, **kwargs):
+        captured.update(kwargs)
+        return {
+            "leader_exit_code": 0,
+            "classification": "COMPLETED",
+            "launch_envelope": {"effective_total_bytes": resources["task_memory_max_bytes"]},
+            "memory_scope": "fixture subreaper and descendants",
+            "descendants_cleared": True,
+            "process_tree_swap_gate_enforced": True,
+            "sampled_process_tree_swap_peak_bytes": 0,
+            "job_cgroup_swap_gate_enforced": True,
+            "job_cgroup_swap": {"passed": True},
+        }
+
+    monkeypatch.setattr(subreaper_watchdog, "supervise", fake_supervise)
+    result = task038_launcher.launch_specification(
+        specification, task40_v10_campaign_window=window_path
+    )
+
+    assert result["result_classification"] == "worker_exit0"
+    assert captured["tree_cap_bytes"] == resources["task_memory_max_bytes"]
+    assert captured["host_reserve_bytes"] == resources["host_reserve_bytes"]
+    assert captured["task_cgroup_reserve_bytes"] == 0
+    assert captured["require_job_cgroup_zero_swap"] is True
+    assert captured["require_cgroup_memory_details"] is True
+    worker_environment = captured["worker_environment"]
+    assert worker_environment["TASK40_V31_STRICT_EXECUTION"] == "1"
+    assert worker_environment["TASK40_V31_CONTRACT_PATH"] == str(contract_path)
+    assert worker_environment["TASK40_V31_CONTRACT_SHA256"] == contract_sha
+    assert worker_environment["TASK40_V31_EXECUTION_WINDOW_SHA256"] == window_sha
+    assert worker_environment["TASK40_V31_MEMORY_SWAP_MAX_BYTES"] == "0"
+    assert worker_environment["XDG_CACHE_HOME"] == str(jit_path)
+    assert specification.as_jsonable()["provenance"]["source_path"] == str(staged)
+
+
+def test_v31_abi_gate_and_adapter_preserve_separate_contract_binding(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    from src.io.physical_intermediate_profile import TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE
+    from src.runners import physical_p4_schur_v14, task40_v10_abi, task40_v31_contract
+
+    root, v30_contract_path, v30_payload = _contract_fixture(tmp_path, monkeypatch)
+    receipt_path, receipt_sha = _install_v30_native_abi_receipt_fixture(
+        monkeypatch, root, v30_contract_path, v30_payload
+    )
+    monkeypatch.delenv("TASK40_V30_STRICT_EXECUTION", raising=False)
+    v31_contract_path = root / "v31/execution_contract_v31.approved.json"
+    v31_contract_path.parent.mkdir(parents=True)
+    v31_contract_path.write_text("fixture V31 contract\n", encoding="utf-8")
+    contract_sha = _sha(v31_contract_path)
+    window_path = root / "v31/campaign_window_v31.json"
+    window_path.write_text("fixture V31 window\n", encoding="utf-8")
+    window_sha = _sha(window_path)
+    resources = dict(task40_v31_contract.V31_RESOURCES)
+    contract = {
+        "source_freeze": {"source_sha": "b" * 40},
+        "execution": {
+            "root": str(root.resolve()),
+            "run_source_sha": "b" * 40,
+            "resources": resources,
+            "runtime_prefix": str(v30_payload["execution"]["runtime_prefix"]),
+            "abi_receipt_path": str(v30_payload["execution"]["abi_receipt_path"]),
+            "jit_cache": str(v30_payload["execution"]["jit_cache"]),
+            "window": {"window_path": str(window_path.resolve()), "window_sha256": window_sha},
+            "campaign_window_path": str(window_path.resolve()),
+            "campaign_window_sha256": window_sha,
+        },
+    }
+    monkeypatch.setattr(
+        task40_v31_contract,
+        "require_v31_execution_contract",
+        lambda *_args, **_kwargs: (contract, contract_sha),
+    )
+    monkeypatch.setenv("TASK40_V31_STRICT_EXECUTION", "1")
+    monkeypatch.setenv("TASK40_V31_CONTRACT_PATH", str(v31_contract_path))
+    monkeypatch.setenv("TASK40_V31_CONTRACT_SHA256", contract_sha)
+
+    facts = task40_v10_abi.qualified_task40_v10_abi(
+        profile_identity=TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
+        v31_contract_path=v31_contract_path,
+        v31_contract_sha256=contract_sha,
+    )
+    assert facts["runtime_profile"] == "native_linux"
+    assert facts["receipt_path"] == str(receipt_path.resolve())
+    assert facts["receipt_sha256"] == receipt_sha
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(
+        task40_v10_abi,
+        "qualified_task40_v10_abi",
+        lambda **kwargs: captured.update(kwargs) or {"accepted": True},
+    )
+    result = physical_p4_schur_v14._abi_facts(
+        profile_identity=TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
+        v31_contract_path=v31_contract_path,
+        v31_contract_sha256=contract_sha,
+    )
+    assert result == {"accepted": True}
+    assert captured["v31_contract_path"] == v31_contract_path
+    assert captured["v31_contract_sha256"] == contract_sha
+
+
 @pytest.mark.parametrize("require_details", [False, True])
 def test_subreaper_supervise_forwards_cgroup_detail_policy_before_worker_start(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, require_details: bool
