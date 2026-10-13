@@ -3325,7 +3325,7 @@ def _v31_missing_numerical_output_is_bound_worker_failure(
     campaign_sha256: str,
     campaign_window_path: Path,
 ) -> bool:
-    """Accept absent V31 numerical output only for its exact recorded worker failure."""
+    """Bind absent V31 output to its exact worker failure or enforced cutoff."""
     root = repo_root.resolve()
     window_path = (
         campaign_window_path
@@ -3387,11 +3387,8 @@ def _v31_missing_numerical_output_is_bound_worker_failure(
     manifest_source_sha = manifest.get("source_sha")
     manifest_input_sha256 = manifest.get("input_sha256")
     solver = input_payload.get("solver", {}) if isinstance(input_payload, Mapping) else {}
-    return bool(
-        summary.get("status") == "finished"
-        and summary.get("result_classification") == "WORKER_FAILED"
-        and summary.get("exit_status") == 4
-        and expected_run_id == "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
+    identity_bound = bool(
+        expected_run_id == "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
         and summary.get("run_id") == manifest.get("run_id") == expected_run_id
         and manifest_source_sha == source_sha
         and manifest_input_sha256 == input_sha256
@@ -3414,6 +3411,110 @@ def _v31_missing_numerical_output_is_bound_worker_failure(
         and summary_campaign.get(
             "sha256", summary_campaign.get("window_sha256")
         ) == campaign_sha256
+    )
+    if not identity_bound:
+        return False
+
+    # Preserve the original V31 worker-failure acceptance rule unchanged.
+    if (
+        summary.get("status") == "finished"
+        and summary.get("result_classification") == "WORKER_FAILED"
+        and summary.get("exit_status") == 4
+    ):
+        return True
+
+    watchdog_path = run_directory / "watchdog" / "summary.json"
+    if not watchdog_path.is_relative_to(root) or not watchdog_path.is_file():
+        return False
+    try:
+        watchdog = json.loads(watchdog_path.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+    if not isinstance(watchdog, Mapping):
+        return False
+
+    watchdog_campaign = watchdog.get("task40_v10_campaign")
+    watchdog_campaign = watchdog_campaign if isinstance(watchdog_campaign, Mapping) else {}
+    watchdog_source = watchdog.get("source_state")
+    watchdog_source = watchdog_source if isinstance(watchdog_source, Mapping) else {}
+    authority = summary.get("resource_authority")
+    authority = authority if isinstance(authority, Mapping) else {}
+    time_exceeded = watchdog.get("time_exceeded")
+    time_exceeded = time_exceeded if isinstance(time_exceeded, Mapping) else {}
+    time_end = watchdog.get("time_end_observation")
+    time_end = time_end if isinstance(time_end, Mapping) else {}
+    stop_event = watchdog.get("stop_event")
+    stop_event = stop_event if isinstance(stop_event, Mapping) else {}
+    cutoff_accounting = watchdog_campaign.get("watchdog_end_accounting")
+    cutoff_accounting = cutoff_accounting if isinstance(cutoff_accounting, Mapping) else {}
+    job_swap = watchdog.get("job_cgroup_swap")
+    job_swap = job_swap if isinstance(job_swap, Mapping) else {}
+    job_swap_end = job_swap.get("end")
+    job_swap_end = job_swap_end if isinstance(job_swap_end, Mapping) else {}
+    authority_keys = (
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "time_gate_action",
+        "time_gate_evaluated",
+        "time_exceeded",
+        "stop_event",
+        "task40_v10_campaign",
+    )
+    return bool(
+        summary.get("status") == manifest.get("status") == "finished"
+        and summary.get("result_classification")
+        == manifest.get("result_classification")
+        == watchdog.get("classification")
+        == "PERFORMANCE_CONTROLLED_STOP"
+        and summary.get("exit_status")
+        == manifest.get("exit_status")
+        == watchdog.get("leader_exit_code")
+        == -9
+        and summary.get("full_workflow_time_exceeded") is True
+        and watchdog_source.get("source_sha") == source_sha
+        and watchdog_source.get("tracked_and_nonignored_untracked_clean") is True
+        and watchdog_campaign.get("window_sha256") == campaign_sha256
+        and watchdog_campaign.get("phase") == "numeric"
+        and watchdog_campaign.get("campaign_seconds") == 43200.0
+        and watchdog_campaign.get("numerical_cutoff_seconds") == 42000.0
+        and cutoff_accounting.get("label") == "watchdog_end"
+        and cutoff_accounting.get("phase") == "numeric"
+        and cutoff_accounting.get("campaign_window_sha256") == campaign_sha256
+        and cutoff_accounting.get("t0_utc_ns") == watchdog_campaign.get("t0_utc_ns")
+        and cutoff_accounting.get("deadline_utc_ns") == watchdog_campaign.get("deadline_utc_ns")
+        and cutoff_accounting.get("cutoff_seconds") == 42000.0
+        and isinstance(cutoff_accounting.get("cumulative_charged_seconds"), (int, float))
+        and cutoff_accounting.get("cumulative_charged_seconds") >= 42000.0
+        and watchdog.get("time_gate_action") == "enforce"
+        and watchdog.get("time_gate_evaluated") is True
+        and time_exceeded.get("workflow") is True
+        and time_exceeded.get("solve") is False
+        and time_exceeded.get("active_pc") is False
+        and time_end.get("time_policy") == "enforce"
+        and time_end.get("time_gate_action") == "enforce"
+        and time_end.get("time_gate_evaluated") is True
+        and time_end.get("exceeded") is True
+        and time_end.get("passed") is False
+        and isinstance(time_end.get("observed_seconds"), (int, float))
+        and isinstance(time_end.get("limit_seconds"), (int, float))
+        and time_end.get("observed_seconds") > time_end.get("limit_seconds")
+        and stop_event.get("reason") == "PERFORMANCE_CONTROLLED_STOP"
+        and stop_event.get("grace_seconds") == 30
+        and watchdog.get("descendants_cleared") is True
+        and watchdog.get("remaining_child_pids") == []
+        and watchdog.get("process_tree_all_status_readable") is True
+        and watchdog.get("process_tree_all_identity_complete") is True
+        and watchdog.get("process_tree_identity_coverage") == "complete"
+        and watchdog.get("job_cgroup_swap_gate_enforced") is True
+        and watchdog.get("job_cgroup_swap_start_bytes") == 0
+        and watchdog.get("sampled_process_tree_swap_peak_bytes") == 0
+        and job_swap.get("gate_enforced") is True
+        and job_swap.get("passed") is True
+        and job_swap.get("peak_swap_current_bytes") == 0
+        and job_swap_end.get("swap_current_bytes") == 0
+        and all(authority.get(key) == watchdog.get(key) for key in authority_keys)
     )
 
 

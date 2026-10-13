@@ -10,6 +10,7 @@ import pytest
 
 from scripts.task40_v20_service_workflow import (
     _task40_v30_closeout_checker_authorization,
+    _v31_missing_numerical_output_is_bound_worker_failure,
 )
 from benchmarks.subreaper_watchdog import _validate_campaign_closeout_authorization
 from src.io.physical_intermediate_profile import (
@@ -1640,6 +1641,125 @@ def test_v30_partial_checker_closeout_binds_all_input_paths(tmp_path):
             source_state={"branch": "task40extra_0p7nm_engineering", "source_sha": "b" * 40, "clean": True},
             profile=V30_PROFILE,
         )
+
+
+
+def test_v31_partial_checker_accepts_only_bound_campaign_cutoff_fixture(tmp_path, monkeypatch):
+    fixture_path = Path(__file__).parent / "fixtures" / "task40_v31_cutoff_watchdog.json"
+    fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+    watchdog = fixture["watchdog"]
+    source_sha = fixture["provenance"]["source_sha"]
+    campaign_sha256 = watchdog["task40_v10_campaign"]["window_sha256"]
+
+    root = tmp_path / "repo"
+    run_directory = root / "results" / "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
+    run_directory.mkdir(parents=True)
+    (root / "scripts").mkdir()
+    (root / "scripts" / "task40_v20_service_workflow.py").write_text("# fixture\n")
+    evidence = root / "artifacts" / "service_run"
+    evidence.mkdir(parents=True)
+    input_path = root / "stage_inputs" / "full" / "case.toml"
+    input_path.parent.mkdir(parents=True)
+    input_path.write_text(
+        f'run_id = "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"\n'
+        f'[solver]\npreconditioner = "{V31_PROFILE}"\n',
+        encoding="utf-8",
+    )
+    input_sha256 = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    summary_path = run_directory / "run_summary.json"
+    manifest_path = run_directory / "run_manifest.json"
+    numerical_path = run_directory / "numerical_output"
+    window_path = root / "artifacts" / "campaign_window_v31.json"
+    window_path.write_text("{}\n", encoding="utf-8")
+    watchdog_path = run_directory / "watchdog" / "summary.json"
+    watchdog_path.parent.mkdir()
+
+    # The fixed campaign-window bytes live on the approved execution host. Bind
+    # this local fixture to the raw controller-verified digest while exercising
+    # every summary/watchdog/manifest identity check with temporary paths.
+    watchdog_path.write_text(json.dumps(watchdog), encoding="utf-8")
+    original_sha256_file = __import__(
+        "scripts.task40_v20_service_workflow", fromlist=["_sha256_file"]
+    )._sha256_file
+    def fixture_sha256_file(path):
+        if Path(path).resolve() == window_path.resolve():
+            return campaign_sha256
+        return original_sha256_file(path)
+    monkeypatch.setattr(
+        "scripts.task40_v20_service_workflow._sha256_file", fixture_sha256_file
+    )
+
+    campaign = {"window_path": str(window_path), "window_sha256": campaign_sha256}
+    summary = {
+        "status": "finished",
+        "result_classification": "PERFORMANCE_CONTROLLED_STOP",
+        "exit_status": -9,
+        "full_workflow_time_exceeded": True,
+        "run_id": "task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
+        "output_directory": str(run_directory),
+        "numerical_output_directory": str(numerical_path),
+        "task40_v20_campaign": campaign,
+        "resource_authority": watchdog,
+    }
+    manifest = {
+        "status": "finished",
+        "result_classification": "PERFORMANCE_CONTROLLED_STOP",
+        "exit_status": -9,
+        "run_id": summary["run_id"],
+        "source_sha": source_sha,
+        "input_sha256": input_sha256,
+        "input_path": str(input_path),
+        "output_directory": str(run_directory),
+        "numerical_output_directory": str(numerical_path),
+        "task40_v20_campaign": campaign,
+    }
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    assert not numerical_path.exists()
+
+    authorization = _task40_v30_closeout_checker_authorization(
+        command=[
+            str(tmp_path / "runtime" / "bin" / "python"),
+            "scripts/task40_v20_service_workflow.py",
+            "check-partial",
+            "--input", str(input_path),
+            "--summary", str(summary_path),
+            "--manifest", str(manifest_path),
+            "--numerical-output", str(numerical_path),
+            "--stop-stage", "full",
+            "--output", str(evidence / "partial_checker_result.json"),
+        ],
+        checker_kind="task40_v20_partial_receipt_checker",
+        runtime_prefix=tmp_path / "runtime",
+        repo_root=root,
+        evidence_directory=evidence,
+        campaign_sha256=campaign_sha256,
+        contract_sha256="c" * 64,
+        source_state={"source_sha": source_sha, "clean": True},
+        profile=V30_PROFILE,
+        allow_missing_numerical_output_for_v31_worker_failure=True,
+        expected_campaign_window_path=window_path,
+    )
+    assert authorization["input_paths"] == [
+        str(input_path.resolve()),
+        str(summary_path.resolve()),
+        str(manifest_path.resolve()),
+    ]
+
+    watchdog["descendants_cleared"] = False
+    watchdog_path.write_text(json.dumps(watchdog), encoding="utf-8")
+    summary["resource_authority"] = watchdog
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+    assert not _v31_missing_numerical_output_is_bound_worker_failure(
+        input_path=input_path,
+        summary_path=summary_path,
+        manifest_path=manifest_path,
+        numerical_path=numerical_path,
+        repo_root=root,
+        source_sha=source_sha,
+        campaign_sha256=campaign_sha256,
+        campaign_window_path=window_path,
+    )
 
 
 def test_watchdog_rejects_numeric_command_with_closeout_phase(tmp_path):

@@ -1,0 +1,124 @@
+{
+  "provenance": {
+    "controller_readback_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_preparation/attempt6_closeout/controller_readback.json",
+    "source_sha": "54cf6d367b07355c0ab08c8c10655ecac73cfc6a",
+    "watchdog_summary_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261013T114619.891762Z/watchdog/summary.json",
+    "watchdog_summary_sha256": "242fbd1ee5adec75ebc12a45418f3e60f8cca19fd13f7dcb8d80026cc04a6aac"
+  },
+  "watchdog": {
+    "classification": "PERFORMANCE_CONTROLLED_STOP",
+    "descendants_cleared": true,
+    "first_SIGKILL": {
+      "monotonic": 1850759.470023409,
+      "scope": "whole child tree",
+      "timestamp_ns": 1791925764609156966
+    },
+    "first_SIGTERM": {
+      "monotonic": 1850729.367753631,
+      "scope": "whole child tree",
+      "timestamp_ns": 1791925734506887258
+    },
+    "global_swap_activity": {
+      "baseline": {
+        "pswpin_pages": 3139444,
+        "pswpout_pages": 5146004
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "end": {
+        "pswpin_pages": 3139444,
+        "pswpout_pages": 5146004
+      },
+      "scope": "WSL-global diagnostic, not dedicated job"
+    },
+    "global_swap_gate_enforced": false,
+    "job_cgroup_swap": {
+      "end": {
+        "dedicated_job_cgroup": true,
+        "member_count": 2,
+        "memory_current_bytes": 19788648448,
+        "memory_limit_bytes": 1649267441664,
+        "memory_peak_bytes": 24329441280,
+        "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-task40-v31-all-q-reference-54cf6d367b07.service",
+        "readable": true,
+        "swap_current_bytes": 0
+      },
+      "gate_enforced": true,
+      "passed": true,
+      "peak_swap_current_bytes": 0,
+      "sample_count": 104216,
+      "start_swap_current_bytes": 0
+    },
+    "job_cgroup_swap_gate_enforced": true,
+    "job_cgroup_swap_start_bytes": 0,
+    "leader_exit_code": -9,
+    "process_tree_all_identity_complete": true,
+    "process_tree_all_status_readable": true,
+    "process_tree_identity_coverage": "complete",
+    "process_tree_swap_gate_enforced": true,
+    "remaining_child_pids": [],
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "source_state": {
+      "actual_git_directory": "/home/fenics/Projects/laptop_share/.git",
+      "source_sha": "54cf6d367b07355c0ab08c8c10655ecac73cfc6a",
+      "tracked_and_nonignored_untracked_clean": true
+    },
+    "stop_event": {
+      "grace_seconds": 30,
+      "monotonic": 1850729.367670192,
+      "reason": "PERFORMANCE_CONTROLLED_STOP",
+      "timestamp_ns": 1791925734506829878
+    },
+    "task40_v10_campaign": {
+      "campaign_seconds": 43200.0,
+      "deadline_utc_ns": 1791926934340648489,
+      "numerical_cutoff_seconds": 42000.0,
+      "phase": "numeric",
+      "phase_sub_budget_seconds": 33754.302563797864,
+      "t0_utc_ns": 1791883734340648489,
+      "watchdog_end_accounting": {
+        "campaign_window_sha256": "57133ebfe54c109ca77af4e529df94708c29c2b4c79d301b862b01ee70cf8f56",
+        "cumulative_charged_seconds": 42032.2399471737,
+        "cutoff_seconds": 42000.0,
+        "deadline_utc_ns": 1791926934340648489,
+        "label": "watchdog_end",
+        "phase": "numeric",
+        "schema": "task40extra.review_v10_campaign_accounting.v1",
+        "sequence": 104441,
+        "t0_utc_ns": 1791883734340648489
+      },
+      "watchdog_start_accounting": {
+        "campaign_window_sha256": "57133ebfe54c109ca77af4e529df94708c29c2b4c79d301b862b01ee70cf8f56",
+        "cumulative_charged_seconds": 8245.697436202137,
+        "cutoff_seconds": 42000.0,
+        "deadline_utc_ns": 1791926934340648489,
+        "label": "watchdog_start_numeric",
+        "phase": "numeric",
+        "schema": "task40extra.review_v10_campaign_accounting.v1",
+        "sequence": 224,
+        "t0_utc_ns": 1791883734340648489
+      },
+      "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_79c3e90a4aa5f8d806f7abbb92e7c5e91ed26106/campaign_window_v31.json",
+      "window_sha256": "57133ebfe54c109ca77af4e529df94708c29c2b4c79d301b862b01ee70cf8f56"
+    },
+    "time_end_observation": {
+      "exceeded": true,
+      "inclusive": true,
+      "limit_seconds": 33754.302563797864,
+      "observed_seconds": 33786.48693375399,
+      "passed": false,
+      "time_gate_action": "enforce",
+      "time_gate_evaluated": true,
+      "time_policy": "enforce"
+    },
+    "time_exceeded": {
+      "active_pc": false,
+      "solve": false,
+      "workflow": true
+    },
+    "time_gate_action": "enforce",
+    "time_gate_evaluated": true
+  }
+}
