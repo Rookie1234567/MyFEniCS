@@ -83,7 +83,7 @@ TASK041_V13_CONSISTENT_MODAL_POLICY_ID = (
     "task041_v13_consistent_fixed_balh_modal_surrogate"
 )
 TASK041_V13_MEMORY_POLICY = "system_default_unbound"
-TASK041_V13_MPI8_RANK_CPUS = (10, 11, 14, 15, 16, 17, 18, 19)
+TASK041_V13_MPI8_RANK_CPUS = (10, 11, 14, 15, 21, 17, 18, 19)
 TASK041_V13_REQUIRED_THREAD_ENVIRONMENT = {
     name: "1"
     for name in (
@@ -925,7 +925,7 @@ def task041_fixed_h6_modal_gmres_binding(
         supplied_cpus != TASK041_V13_MPI8_RANK_CPUS
     ):
         raise ValueError(
-            "V13 requires the frozen MPI8 CPU map [10,11,14,15,16,17,18,19]"
+            "V13 requires the frozen MPI8 CPU map [10,11,14,15,21,17,18,19]"
         )
     binding = {
         "method": "fixed_h6_modal_gmres_research",
