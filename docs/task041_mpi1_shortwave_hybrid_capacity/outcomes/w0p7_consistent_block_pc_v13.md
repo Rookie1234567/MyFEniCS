@@ -1,6 +1,6 @@
 # W0.7 V13 consistent fixed BAL_H modal surrogate：实现与分阶段资格记录
 
-**状态：V13实现已完成；A/B合同测试分批通过；registered entity-closure tiny真实FE selector已serial和MPI2分别通过；30个serial清场/服务合同节点分批通过；clean-HEAD MPI8 ABI-only预资格8/8通过。首场正式W0.7 MPI8 warm已运行一次，并在`S_B`构造入口因callback漏传以`IMPLEMENTATION_FAILURE`停止；outer、最终五残差、完整场和physics/RTA未到达。** warm后的两文件接线修复由一个定向serial合同测试覆盖，尚无warm重试；本文不修改V12 raw、方程、残差或物理门。
+**状态：V13实现已完成；A/B合同测试分批通过；registered entity-closure tiny真实FE selector已serial和MPI2分别通过；30个serial清场/服务合同节点分批通过；CPU-map参数化后的MPI8 native ABI按封存map 8/8通过。首场正式warm在`S_B`构造入口因callback漏传以`IMPLEMENTATION_FAILURE`停止；唯一获准的实现错误重试又在public子进程启动前因dispatch脚手架目录冲突失败。两场均未到outer、最终五残差、完整场或physics/RTA。** CPU-map实现commit为`f30240b6aa982953a98d4c403d4b3b57db1703b2`；该提交的实现/测试字节由此前分批serial证据覆盖（5个非法map输入case + 23个合同case；包含较早5项的test351文件之后仅有一处无关fixture单行变化）。MPI8 ABI请求map为`[0,1,13,14,15,16,17,18]`。本文不修改V12 raw、数值方程、残差或物理门。
 
 ## V12基线与当前资源门
 
@@ -19,7 +19,21 @@ V12唯一Invocation `62c3763e266345e0b094a4f3ba3ae19c`的modal末次solve为32�
 | 接线修复 | workflow仅在V13 route把factory已有callback原对象传给LDU builder；V12/None路径不读取该V13属性。唯一serial selector `test_task041_w0p7_interfaces_reach_frozen_setup_boundary`通过，父wall`6.385026524076238 s`。测试复用了真实public/candidate helper，但stage factory为fake；用AST执行生产LDU调用表达式，验证callback身份转交。它没有执行真实fresh-authority函数，也不证明真实service下游或warm通过。见[pytest attempt](../../../results/task041_v13_callback_wiring_serial_final_attempt_20261013T022207Z/serial/pytest.attempt.json) |
 | 账目 | warm服务entry `task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot:task041_v13_main_warm_supervision_20261013T010533Z`的`1369.03024578 s`已在此前265条entry快照中唯一存在。新serial pytest entry唯一成为第266条，但原append脚本漏加canonical loader读取的顶层累计值；本次仅将该顶层值从`608018.1187479909`更正为`608024.503774515`，entries完全不变。更正后ledger SHA `eb0c96e93082d89ca3a64f43d5513b7097efc4e16987f5d1f17226e44fdc6e41`，见[V5更正receipt](../../../results/task041_v13_callback_wiring_v5_docs_correction_20261013T023305Z/ledger_correction_receipt.json) |
 
-这次修复说明已找到并补上callback转交遗漏，但一个serial接线测试不能替代真实warm。实现错误重试还须主控具体批准；在此之前不重跑warm。
+在该首warm历史段收口时，callback转交修复已有一个限定serial合同测试，但还没有取得warm重试批准。随后主控批准并执行了唯一实现错误重试；它在public子进程启动前因独立dispatch脚手架目录冲突退出，详见下一节。这个serial回归不替代真实warm。
+
+## 唯一实现错误重试：dispatch脚手架失败（2026-10-13）
+
+本次是已批准的唯一callback实现修正重试，且确实建立了systemd Invocation `817bc0e2a56e42feb9a8cce040c9a486`。失败不是CPU/资源门，也不是求解器或物理结果：ignored binder为了写runtime config先创建了supervision root，而生产supervisor要求自己用`mkdir(..., exist_ok=False)`独占创建该目录。两者冲突后，MainPID `554733`以1退出；ExecStopPost PID `554762`以3退出。finalizer结论为`launch_manifest_missing`，唯一service wall `0.445147259 s`。
+
+supervisor在`src/runners/task041_supervisor.py:2326`创建目录；随后才写launch manifest（约2338–2342行），再到`_run_phase`运行public child（约2453行）。本次错误发生在第一个动作，因此没有launch manifest、public child、worker/MPI rank、producer/QEP、`S_B`、outer、官方残差、恢复、physics或R/T/A数据。配置中虽指定复用producer，但该producer没有被调用。这个结论来自异常栈与生产调用顺序，不是单凭缺少rank日志作推断。
+
+| 收口项 | 实际结果 | 证据与限制 |
+|---|---|---|
+| systemd与清场 | Invocation `817bc0e2a56e42feb9a8cce040c9a486`失败；终态记录`MainPID=0`、`ControlGroup`为空、ExecStopPost退出3。postrun host collector未见活动Task041 unit/job/process、重复任务或邻任务冲突 | 最终unit-journal查询为`-- No entries --`；启动/退出由dispatch结果、service stderr及systemd属性快照记录。[systemd/host原始收据及候选脚本diff](../../../results/task041_v13_warm_dispatch_scaffold_failure_review_20261013T092853Z/README.md)。短寿命MainPID/ExecStopPost的`start_ticks`、PGID、SID没有持久化；后续PID缺席不等于同starttime身份证明 |
+| V5唯一收费 | 旧270条entry前缀不变；新增该Invocation一次`0.445147259 s`。当前271条，顶层累计`608046.3500231376 s`，SHA `f3a1cd6fe50c5e61eff95830519f1d481ca7b0c7de411becfd75236f9e6fe8d4` | [attempt ID与前缀核对](../../../results/task041_v13_warm_dispatch_scaffold_failure_review_20261013T092853Z/v5_attempt_id_exact_check.json)；由service finalizer写入，不另加ABI或preflight费用 |
+| 修复候选 | ignored副本只改两点：binder只创建OUT并要求SUP不存在；final guard检查OUT已含配置且SUP仍不存在。生产supervisor独占目录语义保持 | 候选在[review包](../../../results/task041_v13_warm_dispatch_scaffold_failure_review_20261013T092853Z/proposed/minimal.patch)，没有应用到生产或旧失败raw，也没有再次dispatch |
+
+Review V13限定的一场主warm和一场明确实现错误重试现已分别真实运行。此次重试额度已使用；再次dispatch需要新的例外授权。本次没有完成正式W0.7数值计算，也没有证明模型不可计算。
 
 ## 已实现合同
 
@@ -54,12 +68,12 @@ test350的PETSc/代数fixture验证小矩阵、列构造和solver控制合同，
 |---|---|---|
 | A | 23 selectors/45参数，跨attempt累计43 passed、2个MPI2-only serial skip | [071636Z封存的A覆盖表](../../../results/task041_v13_A_B_mpi2_review_prep_20261012T071636Z/A_serial_selector_coverage.md)及[JSON](../../../results/task041_v13_A_B_mpi2_review_prep_20261012T071636Z/A_serial_selector_coverage.json)记录当时的分批覆盖；后续B/C和源码变化按各自receipt核对，旧表不改写。不是最终19路径map一次整组通过 |
 | B | 8 selectors/14参数每rank，分批覆盖 | 28 rank-cases是14个参数在两rank的执行，不是28个独立测试定义；部分合并stdout的rank归属未持久化 |
-| C serial | registered entity-closure tiny FE完整selector通过一次 | 旧attempt CPU14，显式`membind=1` |
+| C serial | registered entity-closure tiny FE完整selector通过一次 | 历史attempt使用CPU14，显式`membind=1` |
 | C MPI2 | 同selector、`rc=0`、1 selector/2 rank-cases，父wall`153.515994687099 s` | 最新用户批准的default/unbound策略；两rank ABI和全组清理门通过，但summary行没有rank标签 |
 | V13 serial清场/服务合同 | 两attempt共30个节点通过：首段3项，修复test351 fixture关键字后的remaining 27项 | 首attempt的setup-boundary fixture失败和原raw保留；这些mock合同不是OS/MPI8清场资格。父wall`6.377355428179726 s`与`10.62438608892262 s`各唯一计账 |
 | 早期dirty-map MPI8 ABI-only | production rank qualification/native ABI 8/8通过；parent wall`2.1766278869472444 s`，不入V5 | CPU `[10,11,14,15,16,17,18,19]`，default/unbound、有效节点`[0,1]`及six-thread/native ABI checks通过；无pytest/数值worker |
 
-最终C MPI2执行当时的V5账目为262项、SHA `64fd8d5ffc3a62aa4e49a8058e81e5701aa0a1107269c35bcae50cf1d2396ec4`；该attempt唯一费用153.515994687099秒，ABI和资源门不计账。C输出78项的SHA清单为`f9bcdc0045418fd60f21b938493a5c12bb5828375fefe851b881e61f1b1ba779`。后续serial合同阶段曾使live V5增至264项、SHA `17376a6343ac65f359f059ad632e9a305ce28a60c683164f6a16539ee6e767ce`；这是历史阶段快照。MPI8 ABI-only不计入V5。当前266项及顶层累计更正见本节首场warm记录和[V5更正receipt](../../../results/task041_v13_callback_wiring_v5_docs_correction_20261013T023305Z/ledger_correction_receipt.json)。
+最终C MPI2执行当时的V5账目为262项、SHA `64fd8d5ffc3a62aa4e49a8058e81e5701aa0a1107269c35bcae50cf1d2396ec4`；该attempt唯一费用153.515994687099秒，ABI和资源门不计账。C输出78项的SHA清单为`f9bcdc0045418fd60f21b938493a5c12bb5828375fefe851b881e61f1b1ba779`。后续serial合同阶段曾使live V5增至264项、SHA `17376a6343ac65f359f059ad632e9a305ce28a60c683164f6a16539ee6e767ce`；这是历史阶段快照。MPI8 ABI-only不计入V5。callback回归收口时为历史266项快照，顶层更正receipt见[历史V5更正](../../../results/task041_v13_callback_wiring_v5_docs_correction_20261013T023305Z/ledger_correction_receipt.json)。此后唯一实现错误重试增加`0.445147259 s`，当前271项、顶层`608046.3500231376 s`，SHA `f3a1cd6fe50c5e61eff95830519f1d481ca7b0c7de411becfd75236f9e6fe8d4`；精确entry与旧270项prefix核验见[当前账目审阅包](../../../results/task041_v13_warm_dispatch_scaffold_failure_review_20261013T092853Z/v5_attempt_id_exact_check.json)。
 
 相对044347Z冻结的19路径map，C MPI2 attempt运行时包括6个批准delta：`task041_service.py`=`c7670e4030c92ff98a2302d1725736e2141f283e374bf4facac3f3aaab31985d`、test347=`2c77d6d0e058723e54182ce7affc1cc19061e7a70e05c9c8a0ad6023d72c82a1`、test349=`c298046ec4165c4c23505384cd945d4e1158a590b1b12da048f01dd238e5585a`、test350=`070db620498aae86c9373ce3a25350141084c6aa9eaaa061df37455c88d07cca`、test351=`6654c10200a67d52d4a92a905b3b6d4d9c5eacc5e6ca75c6ad038b2e31771973`、test352=`9f87a77c487fc33e715d81a6bdd6498a5765c1d960dc865af34fbf5839667bdb`；其余13项在该运行时map相对baseline一致。A/B跨阶段有更早的test350/351/352、service和test349身份，必须引用各attempt map，不可用这组六项hash替代。本文档和其他三份文档在该运行之后更新；其文档SHA变化不等于数值源码变化，也不修改旧source receipt。
 
@@ -69,7 +83,7 @@ V13 service/supervisor链现由实际helper、public route和test352 finalizer�
 
 ## 正式pilot仍需独立资格化
 
-clean HEAD `94361c2e24ca1c24b0bce9c0e3d6b368e1482a69`上的MPI8 ABI-only 8/8通过，但它只确认rank/runtime合同。正式W0.7 p6/h0.70/M400 MPI8 warm已经运行一次，并因workflow漏传callback在`S_B`构造入口发生`IMPLEMENTATION_FAILURE`；没有进入outer、原五残差、完整场或physics/RTA。warm后两文件接线修复和一次serial合同回归通过，使用fake stage factory与AST调用表达式，仍不等于真实fresh-authority或warm通过。实现错误重试尚待主控具体批准。正式pilot仍需：
+CPU-map参数化后的clean HEAD `f30240b6aa982953a98d4c403d4b3b57db1703b2`上MPI8 ABI-only按显式请求map 8/8通过；这只确认rank/runtime合同。首场warm因callback接线实现错误停止，唯一获准重试则因dispatch scaffold提前失败；两者都没有完成正式W0.7数值计算。callback修复的serial测试复用了fake stage factory并以AST执行生产调用表达式，不代表真实fresh-authority；rank-map serial也不代表MPI8。要取得正式pilot结论仍需成功进入public consumer，并通过：
 
 - 封存配置、public argv、launch/producer identity到真实consumer的路径与实际method证据；
 - M400正式模态规模下的完整S_B列构造、owner LU新增存储与实际outer工作量；
@@ -77,4 +91,4 @@ clean HEAD `94361c2e24ca1c24b0bce9c0e3d6b368e1482a69`上的MPI8 ABI-only 8/8通�
 - R/T/A、A_volume、衍射、physics和finalizer实际证据；
 - 与正式profile匹配的fresh host/资源/CPU map、MPI8 native ABI、默认内存策略和清理身份。
 
-首次warm的summary、service parent、public日志和finalizer见上节；配置/producer没有重算QEP。既有pilot候选包只作为准备历史：[warm候选包](../../../results/task041_v13_final_docs_warm_candidate_review_20261012T232650Z/README.md)。后续若获批准重试，需按新clean提交身份和fresh启动门重新核对；本轮没有启动第二场。node1至少80 GiB只属于资源准入，不表示页绑定。W5延期、W2不启动；C serial/MPI2 tiny不改写首warm失败或V12历史负结果。
+首场warm和重试的summary、service、finalizer及错误栈分别见前文和[dispatch审阅包](../../../results/task041_v13_warm_dispatch_scaffold_failure_review_20261013T092853Z/README.md)。producer复用已配置，但本次没有实际调用或重算QEP。再次dispatch不在现有Review额度内，需新的例外授权。node1至少80 GiB只属于资源准入，不表示页绑定。W5延期、W2不启动；C serial/MPI2 tiny不改写任何warm失败，也不证明完整模型数值不可计算。
