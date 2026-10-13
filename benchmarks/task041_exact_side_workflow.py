@@ -17842,6 +17842,15 @@ def _run_task041_balh_candidate_setup(
             ),
             modal_solver_policy=resolved_modal_solver_policy,
             modal_snapshot_callback=modal_snapshot_callback,
+            v13_fresh_authority_callback=(
+                factor_stage_factory.v13_fresh_authority_callback
+                if (
+                    isinstance(resolved_modal_solver_policy, Mapping)
+                    and resolved_modal_solver_policy.get("policy_id")
+                    == "task041_v13_consistent_fixed_balh_modal_surrogate"
+                )
+                else None
+            ),
             complex_qr_research=complex_qr_research,
             capture_modal_solve_trace=capture_modal_solve_trace,
         )

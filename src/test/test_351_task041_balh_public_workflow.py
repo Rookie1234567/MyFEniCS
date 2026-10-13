@@ -2299,6 +2299,9 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
     assert modal_feedback_bindings[-2:] == [None, None]
     assert len(operator_boundary_calls) == 3
     assert forbidden_side_build_calls == []
+    v12_resolved_modal_policy = fixed_h6_binding_calls[-1][1][
+        "modal_solver_policy"
+    ]
 
     v13_policy_id = "task041_v13_consistent_fixed_balh_modal_surrogate"
     with pytest.raises(CandidateOperatorBoundaryReached):
@@ -2320,7 +2323,6 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
             modal_solver_policy=v13_policy_id,
         )
     v13_helper_args, v13_helper_kwargs = candidate_setup_calls[-1]
-    del v13_helper_args
     assert v13_helper_kwargs["modal_solver_policy"] == v13_policy_id
     assert v13_helper_kwargs["modal_feedback_method"] is None
     assert v13_helper_kwargs["modal_feedback_binding"] is None
@@ -2345,6 +2347,113 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
         for call in fixed_h6_binding_calls[-2:]
     )
     assert modal_feedback_bindings[-2:] == [None, None]
+    assert len(operator_boundary_calls) == 4
+    assert forbidden_side_build_calls == []
+
+    # Reuse the real public route/factory, then execute the exact LDU call
+    # expression at the existing pre-FE boundary.
+    candidate_setup_tree = ast.parse(inspect.getsource(real_candidate_setup))
+    ldu_call = next(
+        node
+        for node in ast.walk(candidate_setup_tree)
+        if isinstance(node, ast.Assign)
+        and any(
+            isinstance(target, ast.Name) and target.id == "context"
+            for target in node.targets
+        )
+        and isinstance(node.value, ast.Call)
+        and isinstance(node.value.func, ast.Name)
+        and node.value.func.id == "create_side_balh_block_ldu_preconditioner"
+    ).value
+    ldu_call_code = compile(
+        ast.fix_missing_locations(ast.Expression(body=ldu_call)),
+        inspect.getsourcefile(real_candidate_setup),
+        "eval",
+    )
+    ldu_call_records = []
+
+    def capture_ldu_call(*args, **kwargs):
+        ldu_call_records.append((args, dict(kwargs)))
+
+    call_locals_base = {
+        "layout": v13_helper_args[1],
+        "setup": v13_helper_args[0],
+        "side_inverses": {"bottom": object(), "top": object()},
+        "sampled_column_contract": v13_helper_kwargs[
+            "sampled_column_contract"
+        ],
+        "marker_callback": v13_helper_kwargs["marker_callback"],
+        "use_anderson_modal_inner": v13_helper_kwargs.get(
+            "use_anderson_modal_inner", False
+        ),
+        "fixed_h6_modal_gmres_research": v13_helper_kwargs[
+            "fixed_h6_modal_gmres_research"
+        ],
+        "fixed_physical_balh_selected": False,
+        "expected_modal_feedback_binding": None,
+        "complex_qr_research": v13_helper_kwargs.get(
+            "complex_qr_research", False
+        ),
+        "capture_modal_solve_trace": v13_helper_kwargs.get(
+            "capture_modal_solve_trace", False
+        ),
+    }
+
+    def invoke_ldu_call(stage_factory, resolved_policy, snapshot_callback):
+        call_locals = {
+            **call_locals_base,
+            "factor_stage_factory": stage_factory,
+            "resolved_modal_solver_policy": resolved_policy,
+            "modal_snapshot_callback": snapshot_callback,
+        }
+        eval(
+            ldu_call_code,
+            {
+                "Mapping": worker.Mapping,
+                "create_side_balh_block_ldu_preconditioner": capture_ldu_call,
+            },
+            call_locals,
+        )
+        return ldu_call_records[-1][1]
+
+    v13_resolved_modal_policy = fixed_h6_binding_calls[-1][1][
+        "modal_solver_policy"
+    ]
+    ldu_kwargs = invoke_ldu_call(
+        v13_helper_kwargs["factor_stage_factory"],
+        v13_resolved_modal_policy,
+        v13_helper_kwargs["modal_snapshot_callback"],
+    )
+    assert ldu_kwargs["v13_fresh_authority_callback"] is (
+        v13_helper_kwargs["factor_stage_factory"].v13_fresh_authority_callback
+    )
+
+    class FactoryWithoutV13Callback:
+        def __call__(self, *_args, **_kwargs):
+            return None
+
+        def __getattr__(self, name):
+            if name == "v13_fresh_authority_callback":
+                raise AssertionError("non-V13 route accessed the V13 callback")
+            raise AttributeError(name)
+
+    ordinary_factory = FactoryWithoutV13Callback()
+    ldu_kwargs = invoke_ldu_call(
+        ordinary_factory,
+        v12_resolved_modal_policy,
+        policy_helper_kwargs["modal_snapshot_callback"],
+    )
+    assert ldu_kwargs["v13_fresh_authority_callback"] is None
+    ldu_kwargs = invoke_ldu_call(ordinary_factory, None, None)
+    assert ldu_kwargs["v13_fresh_authority_callback"] is None
+
+    missing_callback_kwargs = dict(v13_helper_kwargs)
+    missing_callback_kwargs["factor_stage_factory"] = lambda *_a, **_k: None
+    with pytest.raises(
+        Task041ModePrepError,
+        match="bounded modal policy is limited",
+    ):
+        real_candidate_setup(*v13_helper_args, **missing_callback_kwargs)
     assert len(operator_boundary_calls) == 4
     assert forbidden_side_build_calls == []
 
