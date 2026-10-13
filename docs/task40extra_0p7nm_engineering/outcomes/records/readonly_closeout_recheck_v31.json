@@ -1,0 +1,26 @@
+{
+  "schema": "task40extra.review_v31_readonly_closeout_recheck.v1",
+  "checker_source": "c9c7f4af19917cbd2c0e4ecd5c0b167cab6752f5",
+  "scientific_source": "54cf6d367b07355c0ab08c8c10655ecac73cfc6a",
+  "raw_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_preparation/attempt6_closeout/partial_checker_result_closeout_v31.json",
+  "raw_sha256": "0d49367462840468a53f69706c3ee1e6d834b90760884585c7ad03789bdf2ab5",
+  "raw_bytes": 800,
+  "result": {
+    "checker_passed": false,
+    "error": "no official packet or V20 partial footer exists; preserve run/watchdog raw evidence",
+    "full_pass": false,
+    "official_result": false,
+    "raw_output_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261013T114619.891762Z/numerical_output",
+    "run_summary_path": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261013T114619.891762Z/run_summary.json",
+    "run_summary_result_classification": "PERFORMANCE_CONTROLLED_STOP",
+    "schema": "task40extra.review_v20_partial_stage_checker.v1",
+    "status": "NO_PARTIAL_FOOTER"
+  },
+  "required_checker_supervision_recreated": false,
+  "supervision_limitation": "Direct read-only CLI recheck only; old service/cgroup had ended. Does not establish required supervised closeout contract PASS.",
+  "elapsed_seconds": null,
+  "elapsed_status": "executor reported about one second; exact parent timing NOT_RECORDED",
+  "returncode": 2,
+  "new_numeric_run": false,
+  "original_auto_checker_error_preserved": true
+}

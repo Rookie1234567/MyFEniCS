@@ -41,7 +41,7 @@
 
 正式 attempt6 是 `20261013T114619.891762Z`，科学源码 `54cf6d367b07355c0ab08c8c10655ecac73cfc6a`。q4 完成后开始 `task40_v31_twist0_owner_prebuild`，未留下完成事件；最后持久化 gate 标签不是完整阶段完成证据。watchdog 在数值截止发 SIGTERM，30 s 宽限后 SIGKILL，`remaining_child_pids=[]`。原分类 `PERFORMANCE_CONTROLLED_STOP` 原样保留，不改成数学 FAIL。
 
-自动 required checker 因 `V30 partial checker paths are not bound to current run evidence` 未启动，原 `partial_checker_result` 缺失。收口窄修只允许同 run/source/window、真实 enforced cutoff、退出码和任务清场/零 swap 证据绑定的缺输出情况进入**只读** checker；不造 footer，不授予科学 PASS。该修复源码 `c9c7f4af19917cbd2c0e4ecd5c0b167cab6752f5`，与运行科学源码分列。补检终态以追加的只读收据为准；原失败不覆盖。
+自动 required checker 因 `V30 partial checker paths are not bound to current run evidence` 未启动，原 `partial_checker_result` 缺失。收口窄修只允许同 run/source/window、真实 enforced cutoff、退出码和任务清场/零 swap 证据绑定的缺输出情况进入**只读** checker；不造 footer，不授予科学 PASS。该修复源码 `c9c7f4af19917cbd2c0e4ecd5c0b167cab6752f5`，与运行科学源码分列。补检已实际执行，returncode=2、NO_PARTIAL_FOOTER，checker_passed/full_pass/official_result 均为 false；原失败不覆盖。此次仅直接只读 CLI 补检，原 service/cgroup 已退出，未重新建立 required-checker supervision，因此监督收口合同仍不声称 PASS。精确父耗时未记录，执行者约 1 秒的描述不作为精确计量。见[补检原始回读](outcomes/records/readonly_closeout_recheck_v31.json)。
 
 之前五次 service/入口失败及费用保留：服务命名、selector、profile 导入、ABI/合同传递，以及缺失 V26 收据依次修复。28,800 B 的旧收据经用户明确批准原样传到指定目录并 hash 核验；没有重跑 q0 producer/native。
 

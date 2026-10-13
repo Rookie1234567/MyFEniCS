@@ -8457,6 +8457,12 @@
       },
       "scientific_pass": false
     },
-    "post_stop_readonly_checker": "PENDING_RECEIPT"
+    "post_stop_readonly_checker": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/readonly_closeout_recheck_v31.json",
+      "sha256": "4d9316792202d1a0b05c9e38c6ceca045defcd647a5c70799e886990be2ac9d2",
+      "status": "NO_PARTIAL_FOOTER",
+      "returncode": 2,
+      "required_supervision_pass": false
+    }
   }
 }
