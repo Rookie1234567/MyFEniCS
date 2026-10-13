@@ -649,7 +649,7 @@ def prepare_v31_pending_package(
     target_stage = f"{V31_ARTIFACT_ROOT_RELATIVE}/source_${{v31_source_sha}}"
     target_contract = f"{target_stage}/execution_contract_v31.approved.json"
     target_input = f"{target_stage}/stage_inputs/full/{V30_CANONICAL_INPUT_RELATIVE.name}"
-    target_unit = "task40-v31-all-q-reference-${v31_source_sha:0:12}"
+    target_unit = "myfenics-case-task40-v31-all-q-reference-${v31_source_sha:0:12}"
     target_run = f"{target_stage}/service_runs/${{v31_unit}}"
     pending_directory = (
         V31_PREPARATION_RELATIVE / "v31_pending_package" / f"source_{head}"

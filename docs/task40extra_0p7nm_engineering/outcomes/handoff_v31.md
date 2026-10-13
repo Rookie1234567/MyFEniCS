@@ -60,7 +60,7 @@ python scripts/task40_v20_service_workflow.py prepare-v31-approved \
 cd /home/fenics/Projects/laptop_share
 v31_source_sha="$(git rev-parse HEAD)"
 v31_root="benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_${v31_source_sha}"
-v31_unit="task40-v31-all-q-reference-${v31_source_sha:0:12}"
+v31_unit="myfenics-case-task40-v31-all-q-reference-${v31_source_sha:0:12}"
 bash scripts/run_case_in_user_service.sh \
   --service-unit "$v31_unit" \
   "$v31_root/stage_inputs/full/target_original_ny8_resource_pilot_v20.dat" \
@@ -79,7 +79,7 @@ source scripts/task40_fresh_c1/activate_native_complex.sh \
   native_linux
 v31_source_sha="$(git rev-parse HEAD)"
 v31_root="benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_${v31_source_sha}"
-v31_unit="task40-v31-all-q-reference-${v31_source_sha:0:12}"
+v31_unit="myfenics-case-task40-v31-all-q-reference-${v31_source_sha:0:12}"
 v31_outer="$v31_root/service_runs/$v31_unit/outer_workflow_record.json"
 v31_summary="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["run_summary_path"])' "$v31_outer")"
 v31_numerical_output="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["numerical_output_directory"])' "$v31_summary")"
@@ -99,7 +99,7 @@ source scripts/task40_fresh_c1/activate_native_complex.sh \
   native_linux
 v31_source_sha="$(git rev-parse HEAD)"
 v31_root="benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_${v31_source_sha}"
-v31_unit="task40-v31-all-q-reference-${v31_source_sha:0:12}"
+v31_unit="myfenics-case-task40-v31-all-q-reference-${v31_source_sha:0:12}"
 v31_outer="$v31_root/service_runs/$v31_unit/outer_workflow_record.json"
 v31_summary="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["run_summary_path"])' "$v31_outer")"
 v31_manifest="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["run_manifest_path"])' "$v31_outer")"

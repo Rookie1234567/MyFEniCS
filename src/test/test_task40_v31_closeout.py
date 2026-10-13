@@ -1590,6 +1590,28 @@ def test_v31_approved_prepare_failure_retry_preserves_first_t0(tmp_path, monkeyp
     assert "$v31_root/execution_contract_v31.approved.json" in commands[
         "service_after_explicit_new_window_approval"
     ]
+    v31_unit_template = (
+        "myfenics-case-task40-v31-all-q-reference-${v31_source_sha:0:12}"
+    )
+    assert f'v31_unit="{v31_unit_template}"' in commands[
+        "service_after_explicit_new_window_approval"
+    ]
+    v31_unit = v31_unit_template.replace(
+        "${v31_source_sha:0:12}",
+        approved_contract["source_freeze"]["source_sha"][:12],
+    )
+    from src.runners import task038_launcher
+
+    app_slice = Path(
+        "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice"
+    )
+    assert task038_launcher._is_v28_user_service_cgroup(
+        app_slice / f"{v31_unit}.service"
+    )
+    assert not task038_launcher._is_v28_user_service_cgroup(
+        app_slice
+        / f"task40-v31-all-q-reference-{approved_contract['source_freeze']['source_sha'][:12]}.service"
+    )
     assert "src.runners.task40_v10_output_checker" in commands[
         "official_checker_after_valid_output"
     ]
