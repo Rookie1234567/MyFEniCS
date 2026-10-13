@@ -3353,7 +3353,8 @@ def _v31_missing_numerical_output_is_bound_worker_failure(
     try:
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        expected_run_id, input_payload = _read_case(input_path)
+        _raw, input_payload = _read_case(input_path)
+        expected_run_id = input_payload.get("run_id")
     except Exception:
         return False
     if not isinstance(summary, Mapping) or not isinstance(manifest, Mapping):

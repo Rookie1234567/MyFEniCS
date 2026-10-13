@@ -6315,6 +6315,7 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V16_P6_E1_PROFILE,
         TASK40_V17_P6_E1_PROFILE,
         TASK40_V18_P6_B0_Y8_PROFILE,
+        TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
         TASK40_V20_V22_P6_PROFILES,
         profile_facts,
     )

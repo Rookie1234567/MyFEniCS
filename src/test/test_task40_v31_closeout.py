@@ -1017,13 +1017,16 @@ def test_v31_closeout_allows_missing_numerical_output_only_for_bound_failure(
     run_directory = root / "results" / "v31-attempt"
     run_directory.mkdir(parents=True)
     input_path = run_directory / "stage.dat"
-    input_path.write_text("fixture input\n", encoding="utf-8")
+    run_id = "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
+    input_path.write_text(
+        f'run_id = "{run_id}"\n[solver]\npreconditioner = "{V31_PROFILE}"\n',
+        encoding="utf-8",
+    )
     numerical_path = run_directory / "numerical-output"
     summary_path = run_directory / "run_summary.json"
     manifest_path = run_directory / "run_manifest.json"
     source_sha = "b" * 40
     input_sha = service._sha256_file(input_path)
-    run_id = "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
     window_path = root / "campaign_window_v31.json"
     window_path.write_text("approved fixture window\n", encoding="utf-8")
     window_sha = service._sha256_file(window_path)
@@ -1036,11 +1039,6 @@ def test_v31_closeout_allows_missing_numerical_output_only_for_bound_failure(
         task40_v31_contract,
         "require_v31_execution_contract",
         lambda *_args, **_kwargs: (contract, "d" * 64),
-    )
-    monkeypatch.setattr(
-        service,
-        "_read_case",
-        lambda _path: (run_id, {"solver": {"preconditioner": V31_PROFILE}}),
     )
     summary_path.write_text(
         json.dumps(
