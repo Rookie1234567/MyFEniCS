@@ -1,3 +1,20 @@
+# Task40extra Review V30：工作站入口接通，固定窗口截止收口
+
+本轮在用户批准的 `fenics-ws:/home/fenics/Projects/laptop_share` 执行。已有 q0 CSR/native 与 V29 分解结果保留；本轮增加了其余 q 数据接入、八因子驻留及先验证参考再构建目标的入口。这些入口的小检查通过，完整科学计算的对应阶段仍须实际完成后判断。
+
+| 项目 | 本轮事实 | 边界 |
+|---|---|---|
+| 最新正式科学源码 | `1e9109cb62343b13c850da03432def2109fee481` | 同一 Task40 分支，用户批准的 native complex128/int32、MPI1/数学线程1 |
+| 固定工作包 | T0 `2026-10-12T12:23:42Z`；numeric cutoff `2026-10-13T00:03:42Z`；总deadline `00:23:42Z` | 旧费用、普通错误和等待不清零；没有新开窗口 |
+| 最终正式 service | `myfenics-case-20261012T201214-356306.service`；run `20261012T201216.837020Z` | 实际 FE/编译进程已启动；`PERFORMANCE_CONTROLLED_STOP`，退出 -9；不是 OOM 或数值不收敛证据 |
+| 最终运行父钟 | `13918.291982708964 s` | 含监督；阶段细分缺失，不能当作纯 JIT、单 q 构建或因子时间 |
+| 同时内存 | sampled tree RSS `18555887616 B`；task cgroup peak `26902548480 B` | 两种口径分别列出，不互相相减归因；PSS disabled/null |
+| swap / 清场 | 任务 swap0；后代清空 | 宿主既有 swap 与本期 global pswpin +1 独立保留，不宣称整机零swap |
+| 新 q / bank / reference / target | 未取得新的完整 q4/八 q/native/bank/reference/目标解资格 | 旧 q0 资格不撤销；不能把 legacy stage label 或对象账0当完成证明 |
+| required checker | 原supervisor被数值cutoff拒绝；原失败保留；收口只读复核返回 `NO_PARTIAL_FOOTER` | 不是 checker PASS；保存数据复核不重跑 FE/producer |
+
+详细结果与原始证据入口：[Response V30](task40extra_0p7nm_engineering/response_v30.md)、[主控独立审计](task40extra_0p7nm_engineering/outcomes/records/review_v30_controller_audit.json)、[续作交接](task40extra_0p7nm_engineering/outcomes/handoff_v30.md)。原尺寸精度、八 q 实测、完整参考逆与冷流程2TB/48h仍未资格；不合并 master、不修改其他工作站项目。
+
 # Task40extra Review V28：从完整结构推进到可复用的数值 q0 矩阵
 
 分支`task40extra_0p7nm_engineering`；结果基线`4e04f2fe2b3ea22e67cbd93ee1ffebfd66b50a79`；最终科学source`c6624391d8f96e257d1efa914cb38821e2a87eb9`。完整q0 CSR/native通过，factor资源准入停止，待review；ordinary default未改、未合master。

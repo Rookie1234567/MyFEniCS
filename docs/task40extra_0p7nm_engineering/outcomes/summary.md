@@ -1,3 +1,20 @@
+# Task40extra Review V30：入口已接通，固定计算截止停止
+
+本轮先实现新的八 q 参考数据接入与因子驻留入口，然后在已批准的工作站根启动一次正式 FE/编译执行。最终触发固定时间截止，尚无新 q4 或八 q 数值资格；这不是 OOM 或目标迭代不收敛证据。旧 V28/V29 q0 结果继续有效。
+
+| 阶段 / 模型 | 实际到达与分类 | 实测 | 仍缺什么 |
+|---|---|---|---|
+| P0，新执行合同/入口 | 定向fixture与实际native ABI/dispatcher/worker入口检查通过；正式源码 `1e9109cb62343b13c850da03432def2109fee481` | task cap1649267441664B / host reserve68719476736B真实传递 | P0检查不是八q科学资格 |
+| q0旧资格 | V28完整CSR/native、V29分解与两RHS资格复用；旧factor已销毁 | 旧结果按原source/window保留 | 不能声称本次live bank复用了已销毁factor |
+| P1–P2新q | 已启动完整reference准备；未取得新的COMPLETE/native PASS | 最终service父钟13918.291982708964s；inner阶段耗时unknown | q4自己的CSR/native，其余三个twist共同生产 |
+| P3–P5 bank/reference/pilot | NOT_RUN / NOT_QUALIFIED | 没有T_bank/F_q/S_q或目标A6/RTA实测 | 八q完整资格、实际因素共驻账、完整reference恢复与条件target |
+| 终止与资源 | PERFORMANCE_CONTROLLED_STOP，worker -9；数值截止后SIGTERM+30s grace+SIGKILL | RSS tree18555887616B；task cgroup peak26902548480B；PSS null；task swap0 | 这些不是MUMPS factor库存；宿主旧swap保留且global pswpin +1 |
+| checker/清场 | 原supervisor因把numeric cutoff用于收口而失败；收口只读checker为NO_PARTIAL_FOOTER | checker复核0.202125s / return2；descendants=[] | 不改写旧FAIL、不伪造partial/footer或物理输出 |
+
+固定T0为2026-10-12T12:23:42Z，numeric cutoff为2026-10-13T00:03:42Z，总deadline为00:23:42Z；launcher停止后保守累计42033.09600802868s，后续收口费用另记。本次采用旧CSR的warm路径不是完整冷流程；准备/JIT/reference内部子项缺原子边界，保留unknown。已有完整target-volume与q0资格也不因本次接线/时间停止失效。全部早期失败、工程成本与旧窗口保留。
+
+详细入口：[Response V30](../response_v30.md)、[主控独立原始数据审计](records/review_v30_controller_audit.json)、[真实续作交接](handoff_v30.md)、[run index](records/run_index.json)。原尺寸精度、全八q、完整参考逆、目标PDE与2TB/48h冷流程分别保持未资格，不合并master。
+
 # Task40extra Review V29：q0 factor-only 完成，原尺寸 PDE 仍未资格化
 
 V29 在用户批准的固定窗口内完成一场 regular-reference q0 分解和两组测试 RHS 求解。它复用 V28 完整 q0 CSR；不是 50×25×140 nm、30,464-cell Ny=8 目标模型的新场求解。主控对两组保存向量独立重算，逐位复现保存的 RHS 和 residual，7/7 audit checks 通过。checker 的 28 项身份/payload/window 检查也通过，但 full_pass=false 且 official_result=false；元数据检查与独立残差审计分开记。

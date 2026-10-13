@@ -1,0 +1,41 @@
+{
+  "schema": "task40extra.time_resource_accounting.v30",
+  "window": {
+    "scope": "V30_ALL_Q_REFERENCE_WITH_CONDITIONAL_TARGET_PILOT",
+    "window_sha256": "15ef0f6dd4221d71e488b2c2930ad1dd05328b06b0ce78819d8402093c1e8320",
+    "source_sha": "1e9109cb62343b13c850da03432def2109fee481",
+    "T0_utc": "2026-10-12T12:23:42Z",
+    "numerical_cutoff_utc": "2026-10-13T00:03:42Z",
+    "deadline_utc": "2026-10-13T00:23:42Z",
+    "memory_cap_bytes": 1649267441664,
+    "host_reserve_bytes": 68719476736,
+    "task_swap_max_bytes": 0,
+    "runtime": "native Linux; PETSc complex128/int32; MPI=1; threads=1"
+  },
+  "campaign_cumulative_charged_seconds": 42033.09600802868,
+  "campaign_accounting_note": "连续父账已包含准备、失败尝试、审计和最终服务；不得再加服务子时长。",
+  "bootstrap_to_first_native_anchor_seconds": 1088.86801432,
+  "pre_anchor_monotonic_or_boottime": "UNKNOWN",
+  "worker_entry_budget_seconds": 13885.1193,
+  "final_service": {
+    "unit": "myfenics-case-20261012T201214-356306.service",
+    "invocation_id": "190a18a51aa345fb930efc79d87159bf",
+    "run_id": "task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
+    "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z",
+    "wrapper_seconds": 13918.291982708964,
+    "watchdog_seconds": 13918.13823400205,
+    "tree_rss_peak_bytes": 18555887616,
+    "dedicated_cgroup_peak_bytes": 26902548480,
+    "task_tree_swap_peak_bytes": 0,
+    "cgroup_swap_peak_bytes": 0,
+    "host_swap_delta_pages": 1,
+    "host_swap_note": "无法归属给任务。",
+    "PSS": null,
+    "native_factor_allocation": "UNKNOWN",
+    "stop": "PERFORMANCE_CONTROLLED_STOP; SIGTERM then 30s grace then SIGKILL; exit -9",
+    "descendants_cleared": true,
+    "pss_status": "DISABLED_BY_PROFILE"
+  },
+  "resource_scope_note": "tree RSS 与 cgroup 峰值口径不同；均不代表 INFOG/F_q/S_q 因子分配。无 OOM / memory Gate。",
+  "campaign_at_watchdog_end_seconds": 42033.093529505684
+}

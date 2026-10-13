@@ -1,0 +1,56 @@
+{
+  "schema": "task40extra.run_artifact_inventory.v30",
+  "source_sha": "1e9109cb62343b13c850da03432def2109fee481",
+  "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z",
+  "files": [
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z/run_manifest.json",
+      "bytes": 9155,
+      "sha256": "8e1a08721c2644e5204621668ab7e31b323ccab76f9039ce395439b954998c2b"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z/run_summary.json",
+      "bytes": 14150,
+      "sha256": "4c15a71d02e971991145e82b98d562d221f90c2205bf7f577d3536bfcbb21de7"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z/watchdog/summary.json",
+      "bytes": 13879,
+      "sha256": "b10c4980f0606ea90dd37d504236911d0ff72175e52de2916a6f8bd91e397fe6"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z/watchdog/resources.jsonl",
+      "bytes": 477687370,
+      "sha256": "0a02df7030a5ce640b1e499e75af5f01833fa5dc3bee609cc6af87411da90eaf"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z/workflow_phase.json",
+      "bytes": 300,
+      "sha256": "3f6a6b75ae07aea0fb8e8d5f3e946305ed514022c2b8b15a47994f4418784455"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z/v20_stage_preflight.json",
+      "bytes": 11535,
+      "sha256": "217eb34d0c29615521edad97b58bb60674077eadd735de7414328e46a925a71f"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z/v20_one_q_row_tile_p6_reference_inventory.json",
+      "bytes": 363,
+      "sha256": "ef5fcb24c811428da329482ecf07b775f7b70baa5d153e0a6b9465d3852c4102"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z/outer_workflow_record.json",
+      "bytes": 71586,
+      "sha256": "7df48f425e8fc09fe3c7d88000f4c499c7fa9a3ca337e1122ac8d784654fe03f"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl/service_runs/myfenics-case-20261012T201214-356306/v30_closeout_partial_checker_receipt.json",
+      "sha256": "52c64327ed907fa20a99884510926a72744e40fbed4d26ab8745aeba02ad9655"
+    }
+  ],
+  "controller_audit": {
+    "path": "outcomes/records/review_v30_controller_audit.json",
+    "sha256": "588f5476552fa3dfdaf2e517e6ab8bcc0400b580ac97c98fbb1bac2d2cc074f"
+  },
+  "hash_note": "Run/controller receipt hashes are indexed; no numerical recompute was done for documentation closeout."
+}

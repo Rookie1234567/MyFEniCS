@@ -1,3 +1,32 @@
+# Review V30 检查与失败记录
+
+最终科学source为 `1e9109cb62343b13c850da03432def2109fee481`。以下是已发生的最小相关测试/入口检查，按各自日志和源码作用域保留；不把不同source的历史测试相加成当前全仓PASS，也不把fixture当科学资格。最终candidate实际配置fixture为5 passed in0.54s；native ABI为实际工作站complex128/int32/MPI1，与普通本机测试环境分列。
+
+| 已存日志 | 实际终态 / SHA256 |
+|---|---|
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_contract_resource_tests_v30.log` | 1 failed, 38 passed in 14.24s; `da110282a6ba3e198edda86332bfe8b94e4bd119ba0c55c55157d3ce649c0fad` |
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_csr_integration_tests_v30.log` | 8 passed in 0.13s; `092afb193e0565b502e8c29ec6c9f2e9ed67befee919192e41fe9bd294ef0cc2` |
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_p0_private_stack_final_tests_v30.log` | 31 passed in 2.35s; `8cbb9e5be2d37f83a70268ac3fa1de04a2b6fc2d528ba8d2d1a495e2e681fb46` |
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_prepare_fix01_final_tests_v30.log` | 12 passed in 1.77s; `ee45fc6b16f4c85d0dab80ad6bd56990a8e6f55e92823ce74cb19e3d8ba108d6` |
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_prepare_identity_tests_v30.log` | 12 passed in 2.27s; `1b2e2db848207470fe9804ae7a9c7155ccebcb7fd949a75ba340852975aa7732` |
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_qualified_provider_tests_v30.log` | 4 passed in 0.15s; `ce22630fc7c34a988df630b4a92fb58d299903bc888dd68e961f12bfa2af1024` |
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_real_dispatch_and_cap_private_tests_v30.log` | 9 passed in 0.21s; `71808535af46fe626b2fea83bedf237f0912b36bb6b3a50d553c8d93e57f99a8` |
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_real_worker_prefix_tests_v30.log` | 9 passed in 0.60s; `3a62e05c7c3caf9770ade396f5ab56743ae5baebd8caf17f0d1f62bb7eaab348` |
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_schema_and_source_attempt_tests_v30.log` | 2 failed, 11 deselected in 0.26s; `91ac4a1319b20da41989edd696ba8545306f3c51e0f2ae9672bbdc8c009d6f1d` |
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_schema_and_source_attempt_tests_v30_failed01.log` | 2 failed, 11 deselected in 0.26s; `91ac4a1319b20da41989edd696ba8545306f3c51e0f2ae9672bbdc8c009d6f1d` |
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_schema_and_source_attempt_tests_v30_final.log` | 2 passed, 11 deselected in 0.18s; `9f0c5955cb4339aaf32e628ff1be51eb0888e4a295a19bd16ddc109f97f35f25` |
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_selected_q_tests_v30.log` | 6 passed in 0.42s; `943dd783f8d80033ee226551f801c6e0de929c357e188cd418776fabcfde389e` |
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_service_window_path_private_tests_v30.log` | 10 passed in 0.47s; `e0388033e47bcc351cd70413fa2dc3a658bc9749abb123dcc6bd9bcb938d6533` |
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_v30_candidate_config_private_tests.log` | 5 passed in 0.54s; `f45f868d8aa06b206a57b1222c20fe0f56111900750d0ced0adc003a189e65c2` |
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_v30_native_receipt_private_tests.log` | 7 passed, 13 deselected in 0.45s; `85067148ca5c80b226a50c18b76d1c4e9eadf9584f4b584edc31a513821c09ec` |
+| `benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_v30_native_receipt_private_tests_final.log` | 7 passed, 13 deselected in 0.68s; `d348c97b4cd3efe8e4f8c9e7d0d1ffdd5ee41a949d767c2be40294cc18fc66ee` |
+
+本次主控closeout独立检查18份小型原始文件的bytes/hash，精确核对RSS/cgroup两个峰值、task swap、global swap诊断、清场、固定cutoff与checker负结果。文档收口另做JSON读取/链接/hash及git diff --check，不重复PDE/FE或全仓pytest。Ruff缺包与全仓/MPI2/MPI4/CI均不冒称通过。
+
+原required-checker supervisor在数值截止后拒绝启动；旧错误保留。收口只读check-partial实际运行0.20212502288632095s，返回2 / NO_PARTIAL_FOOTER，official_result=false/full_pass=false；不是数值PASS。新收据hash `52c64327ed907fa20a99884510926a72744e40fbed4d26ab8745aeba02ad9655`。主控第一次只读包装读取窗口原始schema时KeyError，改用既有campaign loader后复核；没有FE/新numeric attempt，原错误和未单列计时限制写入收据。
+
+证据：[主控审计](records/review_v30_controller_audit.json)、[Response V30](../response_v30.md)。
+
 # Task40extra Review V29 定向软件验证与checker复核
 
 | 验证 | source / 命令 / 回执 | 结果 | 证据边界 |

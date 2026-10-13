@@ -1,0 +1,83 @@
+{
+  "schema": "task40extra.target_operator_probe.v30",
+  "source_sha": "1e9109cb62343b13c850da03432def2109fee481",
+  "staged_input_sha256": "2466524e5408a600450405e56a84525e2f7d9c7282e745a0accc3d3e052caa18",
+  "scientific_input_sha256": "f6726d005713b586f1bccfbf6904dd64f3f1f31dd3b069607b55e9b430d294c7",
+  "selector_sha256": "62c32f892512e7ad3850c35c21f18d6901a14abb9633b180220bfd9e04534309",
+  "execution_contract_sha256": "f00b58d717311d16fb6f70ab76992627e213837b6ee8b0ec5f364a19cfe4d295",
+  "model_sha256": "ea3bc109992cabeae2f13e6adc5d3eb779fb92a2c75dcd355426e88957680241",
+  "resolved_config_sha256": "6dbccf11e97c15ef338bb42bfb4bd366d17cfda31b94261cb52634412c6391c0",
+  "profile_expected_only": {
+    "profile": "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+    "mesh_id": "TARGET_ORIGINAL_NY8",
+    "cells": 30464,
+    "modes": 32060,
+    "q_count": 8,
+    "q_rows": [
+      777644,
+      777620,
+      777596,
+      777552,
+      777424,
+      777552,
+      777596,
+      777620
+    ],
+    "port_counts": [
+      4076,
+      4052,
+      4028,
+      3984,
+      3856,
+      3984,
+      4028,
+      4052
+    ],
+    "note": "配置 profile 预期值，不是本轮已装配或测量的矩阵。"
+  },
+  "q": [
+    {
+      "q": 0,
+      "v30_pattern_csr_native": "NOT_RUN"
+    },
+    {
+      "q": 1,
+      "v30_pattern_csr_native": "NOT_RUN"
+    },
+    {
+      "q": 2,
+      "v30_pattern_csr_native": "NOT_RUN"
+    },
+    {
+      "q": 3,
+      "v30_pattern_csr_native": "NOT_RUN"
+    },
+    {
+      "q": 4,
+      "v30_pattern_csr_native": "NOT_RUN"
+    },
+    {
+      "q": 5,
+      "v30_pattern_csr_native": "NOT_RUN"
+    },
+    {
+      "q": 6,
+      "v30_pattern_csr_native": "NOT_RUN"
+    },
+    {
+      "q": 7,
+      "v30_pattern_csr_native": "NOT_RUN"
+    }
+  ],
+  "legacy_q0": "V29 accepted qualification remains valid; V30 did not recreate q0 factor",
+  "factor_bank": "NOT_RUN",
+  "q_Fq_Sq_factor_and_MatSolve_counts": "UNKNOWN; no per-q phase/counter receipt",
+  "full_volume_action_reference_recovery_all_space_residual": "NOT_RUN",
+  "official_R_T_A_A_volume": "NOT_RUN",
+  "pilot_last_persisted_phase": "preflight",
+  "controller_audit": {
+    "path": "outcomes/records/review_v30_controller_audit.json",
+    "sha256": "588f5476552fa3dfdaf2e517e6ab8bcc0400b580ac97c98fbb1bac2cd2cc074f"
+  },
+  "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z"
+}

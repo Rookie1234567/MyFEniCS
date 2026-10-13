@@ -1,3 +1,7 @@
+## Review V30 当前收口入口
+
+固定窗口已截止；[Response V30](response_v30.md)、[主控独立审计](outcomes/records/review_v30_controller_audit.json)及[真实交接](outcomes/handoff_v30.md)保留所有新旧正负结果。本轮未取得新八q/reference/target资格，旧q0仍有效，不自动重启计算。
+
 ## Review V28 当前交付：完整 q0 CSR/native 通过，factor 资源准入停止
 
 7,616-cell regular-reference q0已完成777,644²、577,061,168-slot complex128/int32 CSR，四次native对照最大约1.91e-14≤1e-11。复用V27 pattern、FE/MPC/native/producer重建0；factor在PETSc转换前因内存准入停止。target PDE/R/T/A、最终精度与2TB/48h未资格化。

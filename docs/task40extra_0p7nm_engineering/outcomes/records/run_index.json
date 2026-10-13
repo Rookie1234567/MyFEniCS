@@ -2,7 +2,7 @@
   "schema": "task40extra.run_index.v1",
   "branch": "task40extra_0p7nm_engineering",
   "repair_base_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
-  "current_code_sha": "9a9a9d31f4aebf1564d5f09177c1d3481d64371f",
+  "current_code_sha": "1e9109cb62343b13c850da03432def2109fee481",
   "input": {
     "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat",
     "sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
@@ -2206,6 +2206,116 @@
       "label": "regular-reference q0 readback and row structure pass; CSR stopped at live resource admission",
       "classification": "CONTROLLED_STOP_CSR_RESOURCE_ADMISSION",
       "original_status_preserved": true
+    },
+    {
+      "review": "V30",
+      "kind": "formal_service_attempt",
+      "unit": "myfenics-case-20261012T180401-344369",
+      "source_sha": "f659dacb23baef5a24d9820357980072928f3d31",
+      "input_sha256": "970ab87130495d40eb9f74b595c9f5a54abec5d9f575ba62ecbe7a755dc20427",
+      "classification": "WORKFLOW_OR_CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "run_case_result_classification": null,
+      "first_failure": {
+        "kind": "run_case_failed",
+        "message": "run_case returned 2",
+        "returncode": 2
+      },
+      "workflow_error": {
+        "message": "run_case stdout contains no launcher result object",
+        "type": "ValueError"
+      },
+      "raw_outer_record": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_failure_audit/myfenics-case-20261012T180401-344369/outer_workflow_record.json",
+      "raw_outer_record_sha256": "b4f5f98f16f599b6995a6d3d08c10424bf6dd091a4ded821563a23ad21ac75e3",
+      "original_status_preserved": true
+    },
+    {
+      "review": "V30",
+      "kind": "formal_service_attempt",
+      "unit": "myfenics-case-20261012T182719-346141",
+      "source_sha": "76f8888a04f10776f480c789e9d2f0a82f946d62",
+      "input_sha256": "0706fc9499543ae753cd4aa50a9ddead08857d622f7d9d4bd6362d09d1b02e97",
+      "classification": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "run_case_result_classification": "WORKER_FAILED",
+      "first_failure": {
+        "kind": "run_case_failed",
+        "message": "run_case returned 3",
+        "returncode": 3
+      },
+      "workflow_error": null,
+      "raw_outer_record": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_failure_audit/myfenics-case-20261012T182719-346141/outer_workflow_record.json",
+      "raw_outer_record_sha256": "3b037c882269955c12bc5cbebe73a98ca6bccf7928795d87173be3ca10ad0166",
+      "original_status_preserved": true
+    },
+    {
+      "review": "V30",
+      "kind": "formal_service_attempt",
+      "unit": "myfenics-case-20261012T190848-350143",
+      "source_sha": "d9fbc908b166fcffa734fb59ddf270e50cd1fb7b",
+      "input_sha256": "d7b68caa1444a845c5f279e7e4fa72f8ef30425609921df5e0bdc67071d7c106",
+      "classification": "WORKFLOW_OR_CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "run_case_result_classification": null,
+      "first_failure": {
+        "kind": "run_case_failed",
+        "message": "run_case returned 2",
+        "returncode": 2
+      },
+      "workflow_error": {
+        "message": "run_case stdout contains no launcher result object",
+        "type": "ValueError"
+      },
+      "raw_outer_record": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_failure_audit/myfenics-case-20261012T190848-350143/outer_workflow_record.json",
+      "raw_outer_record_sha256": "263c4e3e4dd069b7c29b199b8011dc225af9771c0813362b13f4091321f280bd",
+      "original_status_preserved": true
+    },
+    {
+      "review": "V30",
+      "kind": "formal_service_attempt",
+      "unit": "myfenics-case-20261012T191843-351626",
+      "source_sha": "8ab530baf141939d34a0cf3bf2068765979a74f9",
+      "input_sha256": "2707a966a4cc151058babbf04b18aa1a4b621bb00a9f52582975d94771cc358d",
+      "classification": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "run_case_result_classification": "WORKER_FAILED",
+      "first_failure": {
+        "kind": "run_case_failed",
+        "message": "run_case returned 3",
+        "returncode": 3
+      },
+      "workflow_error": null,
+      "raw_outer_record": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_failure_audit/myfenics-case-20261012T191843-351626/outer_workflow_record.json",
+      "raw_outer_record_sha256": "c2ac448b731c716a94bd486e34a30999236ccded9202d2d2e403ca16ac1830a9",
+      "original_status_preserved": true
+    },
+    {
+      "review": "V30",
+      "kind": "formal_service_attempt",
+      "unit": "myfenics-case-20261012T195057-353069",
+      "source_sha": "14b5fb79d66f826737230efd1ac2ad523b3aa4d9",
+      "input_sha256": "3fbb7ccb42e3a332106378bc5a119c2389cafca8b2429ddfa486c93a59bfa368",
+      "classification": "CHECKER_FAILED_RAW_EVIDENCE_RETAINED",
+      "run_case_result_classification": "WORKER_FAILED",
+      "first_failure": {
+        "kind": "run_case_failed",
+        "message": "run_case returned 3",
+        "returncode": 3
+      },
+      "workflow_error": null,
+      "raw_outer_record": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_failure_audit/myfenics-case-20261012T195057-353069/outer_workflow_record.json",
+      "raw_outer_record_sha256": "d74043908a14d435e0b4924b22109f60cb5bb4fff1b9c3281e06adb509db5c12",
+      "original_status_preserved": true
+    },
+    {
+      "review": "V30",
+      "kind": "formal_service_attempt",
+      "unit": "myfenics-case-20261012T201214-356306",
+      "source_sha": "1e9109cb62343b13c850da03432def2109fee481",
+      "run_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z",
+      "classification": "PERFORMANCE_CONTROLLED_STOP",
+      "exit_status": -9,
+      "full_workflow_monotonic_seconds": 13918.291982708964,
+      "task_swap_zero": true,
+      "descendants_cleared": true,
+      "raw_controller_audit": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v30_controller_audit.json",
+      "original_status_preserved": true
     }
   ],
   "ledger": {
@@ -2277,7 +2387,7 @@
       "validation": "15 passed in 1.14 s; changed-file py_compile, shell syntax, and git diff check PASS; source frozen and remotely verified."
     }
   ],
-  "last_formal_run_source_sha": "bee9a1f0e33076e372607581f790bda3a4a0072f",
+  "last_formal_run_source_sha": "1e9109cb62343b13c850da03432def2109fee481",
   "review_v1_continuation": {
     "review": "docs/task40extra_0p7nm_engineering/review_report_v1.md",
     "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
@@ -8222,5 +8332,55 @@
       "path": "outcomes/records/v29_final_documentation_validation.json",
       "sha256": "989562c230a6f083bc7b3f65f6dbe73242d07533cceb0cbfc3181a61ca1574af"
     }
+  },
+  "review_v30_evidence_index": {
+    "review_commit": "8c05f1bf2aecd318ca3270ddfb0b787dcc3465e8",
+    "reviewed_result_base": "5823faf26e5425974645c2b1fc2b4004552b4324",
+    "formal_scientific_source": "1e9109cb62343b13c850da03432def2109fee481",
+    "response": "docs/task40extra_0p7nm_engineering/response_v30.md",
+    "controller_audit": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v30_controller_audit.json",
+    "handoff": "docs/task40extra_0p7nm_engineering/outcomes/handoff_v30.md",
+    "attempt_count_in_imported_outer_records": 6,
+    "window": {
+      "t0_utc": "2026-10-12T12:23:42.000Z",
+      "numeric_cutoff_utc": "2026-10-13T00:03:42.000Z",
+      "deadline_utc": "2026-10-13T00:23:42.000Z",
+      "refreshed": false,
+      "cumulative_charged_at_launcher_end_seconds": 42033.09600802868,
+      "closeout_cost_included_in_same_window": true
+    },
+    "latest_classification": "PERFORMANCE_CONTROLLED_STOP",
+    "q0_old_qualification_preserved": true,
+    "new_all_q_qualification": "NOT_RECORDED",
+    "full_reference_qualification": "NOT_RUN",
+    "target_pde_qualification": "NOT_RUN",
+    "cold_2TB_48h_qualification": "NOT_QUALIFIED",
+    "checker": "NO_PARTIAL_FOOTER",
+    "pss": null,
+    "task_swap_zero": true,
+    "global_host_swap_zero_qualified": false,
+    "compacts": [
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/reference_qualification_v30.json",
+        "bytes": 933,
+        "sha256": "df4dfcfaa5f70cd531bc5273f415421acb219c08d453485b9f8c5a34a09a1703"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v30.json",
+        "bytes": 2486,
+        "sha256": "6411eb00d98d88951dfff4cf0e2e69f2ddb42e6073d329659a6a85b1c80942a0"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/target_pilot_v30.json",
+        "bytes": 1743,
+        "sha256": "7ee724c54129803c717e57cfd56f8dc35d48d935f968dd40dff0a43c62ba4320"
+      },
+      {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/time_resource_accounting_v30.json",
+        "bytes": 2088,
+        "sha256": "17b830c3e9608c93c276450786c37d49c0a099e53f2f1bcd75925fbb133529a5"
+      }
+    ],
+    "controller_audit_sha256": "588f5476552fa3dfdaf2e517e6ab8bcc0400b580ac97c98fbb1bac2cd2cc074f"
   }
 }

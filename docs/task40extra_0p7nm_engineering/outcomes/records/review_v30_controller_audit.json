@@ -1,0 +1,361 @@
+{
+  "schema": "task40extra.review_v30_controller_independent_audit.v1",
+  "recorded_utc": "2026-10-13T00:14:58.668354+00:00",
+  "review_sha": "8c05f1bf2aecd318ca3270ddfb0b787dcc3465e8",
+  "reviewed_v29_base_sha": "5823faf26e5425974645c2b1fc2b4004552b4324",
+  "final_formal_scientific_source_sha": "1e9109cb62343b13c850da03432def2109fee481",
+  "formal_run_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z",
+  "unit": "myfenics-case-20261012T201214-356306",
+  "classification": "PERFORMANCE_CONTROLLED_STOP",
+  "exit_status": -9,
+  "run_case_returncode": 3,
+  "last_recorded_worker_labels": [
+    "v10_candidate_preflight",
+    "v10_candidate_target_retained_and_fast_backend_complete"
+  ],
+  "last_marker_is_not_actual_target_qualification": "source reference-first branch defers target construction; label is shared legacy bookkeeping",
+  "inner_setup_phase": "UNKNOWN_no_completed_reference_q_or_native_receipt",
+  "final_run_parent_seconds": 13918.291982708964,
+  "run_case_outer_parent_seconds": 13918.492594092,
+  "nonoverlapping_service_parent_intervals": [
+    {
+      "budget_seconds": 0.068675217917189,
+      "discrepancy_seconds": 1.0369171890012296e-06,
+      "elapsed_seconds": {
+        "boottime": 0.06867458415217698,
+        "monotonic": 0.068675217917189,
+        "utc": 0.068674181
+      },
+      "from": "v30_true_service_entry_before_contract_and_input_validation",
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "to": "user_service_parent_before_activation",
+      "tolerance_seconds": 5.0,
+      "utc_minus_monotonic_seconds": -1.0369171890012296e-06
+    },
+    {
+      "budget_seconds": 0.0011766429524868727,
+      "discrepancy_seconds": 1.1895248687270044e-07,
+      "elapsed_seconds": {
+        "boottime": 0.0011765558738261461,
+        "monotonic": 0.0011766429524868727,
+        "utc": 0.001176524
+      },
+      "from": "user_service_parent_before_activation",
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "to": "activation_started",
+      "tolerance_seconds": 5.0,
+      "utc_minus_monotonic_seconds": -1.1895248687270044e-07
+    },
+    {
+      "budget_seconds": 0.365046309,
+      "discrepancy_seconds": 2.0008721646203043e-06,
+      "elapsed_seconds": {
+        "boottime": 0.3650459120981395,
+        "monotonic": 0.3650443081278354,
+        "utc": 0.365046309
+      },
+      "from": "activation_started",
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "to": "activation_finished",
+      "tolerance_seconds": 5.0,
+      "utc_minus_monotonic_seconds": 2.0008721646203043e-06
+    },
+    {
+      "budget_seconds": 0.426925425,
+      "discrepancy_seconds": 2.179109933997392e-06,
+      "elapsed_seconds": {
+        "boottime": 0.4269250240176916,
+        "monotonic": 0.426923245890066,
+        "utc": 0.426925425
+      },
+      "from": "activation_finished",
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "to": "abi_preflight_finished",
+      "tolerance_seconds": 5.0,
+      "utc_minus_monotonic_seconds": 2.179109933997392e-06
+    },
+    {
+      "budget_seconds": 0.0022095879539847374,
+      "discrepancy_seconds": 1.8309539847375343e-06,
+      "elapsed_seconds": {
+        "boottime": 0.0022079688496887684,
+        "monotonic": 0.0022095879539847374,
+        "utc": 0.002207757
+      },
+      "from": "abi_preflight_finished",
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "to": "v30_live_resource_gate_started",
+      "tolerance_seconds": 5.0,
+      "utc_minus_monotonic_seconds": -1.8309539847375343e-06
+    },
+    {
+      "budget_seconds": 0.12556068319827318,
+      "discrepancy_seconds": 2.1571982731782846e-06,
+      "elapsed_seconds": {
+        "boottime": 0.1255590331275016,
+        "monotonic": 0.12556068319827318,
+        "utc": 0.125558526
+      },
+      "from": "v30_live_resource_gate_started",
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "to": "v30_live_resource_gate_finished",
+      "tolerance_seconds": 5.0,
+      "utc_minus_monotonic_seconds": -2.1571982731782846e-06
+    },
+    {
+      "budget_seconds": 0.001346333883702755,
+      "discrepancy_seconds": 1.2898817658424377e-07,
+      "elapsed_seconds": {
+        "boottime": 0.0013462048955261707,
+        "monotonic": 0.001346333883702755,
+        "utc": 0.001346248
+      },
+      "from": "v30_live_resource_gate_finished",
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "to": "run_case_started",
+      "tolerance_seconds": 5.0,
+      "utc_minus_monotonic_seconds": -8.588370275499843e-08
+    },
+    {
+      "budget_seconds": 13918.492594092,
+      "discrepancy_seconds": 4.504887328948826e-06,
+      "elapsed_seconds": {
+        "boottime": 13918.49259299715,
+        "monotonic": 13918.492589587113,
+        "utc": 13918.492594092
+      },
+      "from": "run_case_started",
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "to": "run_case_finished",
+      "tolerance_seconds": 139.1849259299715,
+      "utc_minus_monotonic_seconds": 4.504887328948826e-06
+    },
+    {
+      "budget_seconds": 0.004990926943719387,
+      "discrepancy_seconds": 4.236943719386835e-06,
+      "elapsed_seconds": {
+        "boottime": 0.004987804917618632,
+        "monotonic": 0.004990926943719387,
+        "utc": 0.00498669
+      },
+      "from": "run_case_finished",
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "to": "required_checker_started",
+      "tolerance_seconds": 5.0,
+      "utc_minus_monotonic_seconds": -4.236943719386835e-06
+    },
+    {
+      "budget_seconds": 0.355331213,
+      "discrepancy_seconds": 4.899008900383084e-06,
+      "elapsed_seconds": {
+        "boottime": 0.35533059388399124,
+        "monotonic": 0.3553263139910996,
+        "utc": 0.355331213
+      },
+      "from": "required_checker_started",
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "to": "user_service_parent_finished",
+      "tolerance_seconds": 5.0,
+      "utc_minus_monotonic_seconds": 4.899008900383084e-06
+    }
+  ],
+  "campaign_cumulative_charged_at_launcher_end_seconds": 42033.09600802868,
+  "t0_utc": "2026-10-12T12:23:42.000Z",
+  "numeric_cutoff_utc": "2026-10-13T00:03:42.000Z",
+  "total_deadline_utc": "2026-10-13T00:23:42.000Z",
+  "window_refreshed": false,
+  "sampled_simultaneous_tree_rss_peak_bytes": 18555887616,
+  "task_cgroup_peak_bytes": 26902548480,
+  "pss_peak_bytes": null,
+  "pss_status": "DISABLED_BY_PROFILE",
+  "task_cgroup_swap_peak_bytes": 0,
+  "task_tree_swap_peak_bytes": 0,
+  "global_swap_diagnostic": {
+    "baseline": {
+      "pswpin_pages": 3139413,
+      "pswpout_pages": 5146004
+    },
+    "delta": {
+      "pswpin_pages": 1,
+      "pswpout_pages": 0
+    },
+    "end": {
+      "pswpin_pages": 3139414,
+      "pswpout_pages": 5146004
+    },
+    "scope": "WSL-global diagnostic, not dedicated job"
+  },
+  "whole_host_swap_zero_qualification": false,
+  "task_swap_zero": true,
+  "descendants_cleared": true,
+  "remaining_child_pids": [],
+  "observed_child_identity_coverage": "complete",
+  "memory_oom_stop": false,
+  "original_required_checker_error": {
+    "message": "qualified required-checker supervisor failed (returncode=1): Traceback (most recent call last):\n  File \"/home/fenics/Projects/laptop_share/scripts/task40_v20_service_workflow.py\", line 9369, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/home/fenics/Projects/laptop_share/scripts/task40_v20_service_workflow.py\", line 9281, in main\n    return _run_required_checker_supervision_request(args.request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/fenics/Projects/laptop_share/scripts/task40_v20_service_workflow.py\", line 3556, in _run_required_checker_supervision_request\n    response = _run_required_checker_supervision(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/fenics/Projects/laptop_share/scripts/task40_v20_service_workflow.py\", line 3293, in _run_required_checker_supervision\n    watchdog_summary = supervise(\n                       ^^^^^^^^^^\n  File \"/home/fenics/Projects/laptop_share/benchmarks/subreaper_watchdog.py\", line 475, in supervise\n    raise TimebaseInconsistency(\nsrc.runners.workflow_timebase.TimebaseInconsistency: Task40 V10 campaign has no numerical time remaining before closeout\n",
+    "type": "RuntimeError"
+  },
+  "closeout_readonly_checker_status": "NO_PARTIAL_FOOTER",
+  "closeout_readonly_checker_passed": false,
+  "closeout_readonly_checker_receipt": {
+    "schema": "task40extra.review_v30_closeout_checker_reread.v1",
+    "classification": "READ_ONLY_CLOSEOUT_AUDIT_NOT_NEW_NUMERICAL_ATTEMPT",
+    "source_sha": "1e9109cb62343b13c850da03432def2109fee481",
+    "command": [
+      "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+      "scripts/task40_v20_service_workflow.py",
+      "check-partial",
+      "--input",
+      "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl/attempts/1e9109cb62343b13c850da03432def2109fee481/stage_inputs/full/target_original_ny8_resource_pilot_v20.dat",
+      "--summary",
+      "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z/run_summary.json",
+      "--manifest",
+      "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z/run_manifest.json",
+      "--numerical-output",
+      "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261012T201216.837020Z/numerical_output",
+      "--stop-stage",
+      "full",
+      "--output",
+      "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl/service_runs/myfenics-case-20261012T201214-356306/v30_closeout_partial_checker_reread.json"
+    ],
+    "started_utc": "2026-10-13T00:14:13.766397+00:00",
+    "elapsed_monotonic_seconds": 0.20212502288632095,
+    "returncode": 2,
+    "campaign_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl/campaign_window_v30.json",
+    "campaign_sha256": "15ef0f6dd4221d71e488b2c2930ad1dd05328b06b0ce78819d8402093c1e8320",
+    "deadline_utc_ns": 1791851022000000000,
+    "within_original_total_deadline": true,
+    "original_supervisor_failure_preserved": true,
+    "earlier_reread_fixture_error": {
+      "type": "KeyError",
+      "field": "deadline_utc_ns",
+      "root": "read raw schema instead of existing campaign loader",
+      "formal_worker_started": false,
+      "elapsed_accounting": "UNKNOWN_separate_parent_not_recorded"
+    },
+    "artifacts": [
+      {
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl/service_runs/myfenics-case-20261012T201214-356306/v30_closeout_partial_checker_reread.json",
+        "bytes": 800,
+        "sha256": "13089ae4ba5925110fa9b4fccc8c2199715e3ceac348af717f9899060f789861"
+      },
+      {
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl/service_runs/myfenics-case-20261012T201214-356306/v30_closeout_partial_checker_stdout.raw.txt",
+        "bytes": 780,
+        "sha256": "3628bf05083167d4486b9dee3dae0e28f5093533ce72275d98c32be8a98d4f8c"
+      },
+      {
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl/service_runs/myfenics-case-20261012T201214-356306/v30_closeout_partial_checker_stderr.raw.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  },
+  "q0_accepted_prior_csr_native_factor_qualification": "PRESERVED_V28_V29_factor_destroyed_before_V30",
+  "v30_new_live_factor_bank_qualification": "NOT_RECORDED",
+  "v30_complete_reference_inverse_qualification": "NOT_RUN",
+  "v30_target_pde_qualification": "NOT_RUN",
+  "cold_2TB_48h_qualification": "NOT_QUALIFIED",
+  "raw_audit_files": [
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/myfenics-case-20261012T201214-356306/abi_preflight_stderr.raw.txt",
+      "bytes": 213,
+      "sha256": "1fa46ee41b42a21d28e10c80176c975319249401e48a6796cf5f6e0f012cf2d7"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/myfenics-case-20261012T201214-356306/abi_preflight_stdout.raw.txt",
+      "bytes": 936,
+      "sha256": "8c3b17bb0f48ea8943a37c7263d3e1123e9c955ac4d489ab9fe9b1c13b2c4037"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/myfenics-case-20261012T201214-356306/activation_stderr.raw.txt",
+      "bytes": 213,
+      "sha256": "1fa46ee41b42a21d28e10c80176c975319249401e48a6796cf5f6e0f012cf2d7"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/myfenics-case-20261012T201214-356306/outer_clock_events.jsonl",
+      "bytes": 39688,
+      "sha256": "432e49debbd80ab712e263dce0889c2bfd4f9adb7592bc9ef0d9f7f96de682f5"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/myfenics-case-20261012T201214-356306/outer_workflow_record.json",
+      "bytes": 71586,
+      "sha256": "7df48f425e8fc09fe3c7d88000f4c499c7fa9a3ca337e1122ac8d784654fe03f"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/myfenics-case-20261012T201214-356306/required_checker_supervision_request.json",
+      "bytes": 6447,
+      "sha256": "d6125409aab1d465dee0ae0f5fbdbdcf8e6796161d3a04bc5ea8f5adf258555c"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/myfenics-case-20261012T201214-356306/required_checker_supervisor_stderr.raw.txt",
+      "bytes": 1147,
+      "sha256": "184fd229ff17e3fdb79ce2f6714b6187ea186f02a60cf7bbce9ce31bc3f08777"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/myfenics-case-20261012T201214-356306/required_checker_supervisor_stdout.raw.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/myfenics-case-20261012T201214-356306/run_case_stderr.raw.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/myfenics-case-20261012T201214-356306/run_case_stdout.raw.txt",
+      "bytes": 14255,
+      "sha256": "da33719af0aca499454fdbabbff6fec00a15390b697144f56dcc72bfe414e93b"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/myfenics-case-20261012T201214-356306/v30_closeout_partial_checker_receipt.json",
+      "bytes": 3305,
+      "sha256": "52c64327ed907fa20a99884510926a72744e40fbed4d26ab8745aeba02ad9655"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/myfenics-case-20261012T201214-356306/v30_closeout_partial_checker_reread.json",
+      "bytes": 800,
+      "sha256": "13089ae4ba5925110fa9b4fccc8c2199715e3ceac348af717f9899060f789861"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/myfenics-case-20261012T201214-356306/v30_closeout_partial_checker_stderr.raw.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/myfenics-case-20261012T201214-356306/v30_closeout_partial_checker_stdout.raw.txt",
+      "bytes": 780,
+      "sha256": "3628bf05083167d4486b9dee3dae0e28f5093533ce72275d98c32be8a98d4f8c"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/run_manifest.json",
+      "bytes": 9155,
+      "sha256": "8e1a08721c2644e5204621668ab7e31b323ccab76f9039ce395439b954998c2b"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/run_summary.json",
+      "bytes": 14150,
+      "sha256": "4c15a71d02e971991145e82b98d562d221f90c2205bf7f577d3536bfcbb21de7"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/v20_one_q_row_tile_p6_reference_inventory.json",
+      "bytes": 363,
+      "sha256": "ef5fcb24c811428da329482ecf07b775f7b70baa5d153e0a6b9465d3852c4102"
+    },
+    {
+      "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_preparation/main_final_audit/v20_one_q_row_tile_p6_reference_worker_resources.jsonl",
+      "bytes": 15040,
+      "sha256": "1574f9b8f9e575aeb1561d6b82265bb7811760c09fef5b280d75bc09899c79cf"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "task40extra.reference_qualification.v30",
+  "legacy_q0": {
+    "status": "ACCEPTED_LEGACY_V29_EVIDENCE",
+    "qualification_id": "63babb2943b7e0f613a2c531afd09f931c4ee5504a345748c52f6ef38b0e9c81",
+    "matrix_shape": [
+      777644,
+      777644
+    ],
+    "structural_slots": 577061168,
+    "csr_payload_bytes": 11544333940,
+    "strict_rhs_residuals": [
+      1.977628323114713e-14,
+      1.6069609784650353e-14
+    ],
+    "residual_gate": 1e-10,
+    "numeric_factor_count": 1,
+    "MatSolve_count": 2,
+    "qualification_scope": "V29 only; factor was released; V30 did not recreate it."
+  },
+  "v30_new_q_qualification": "NOT_RUN for q0-q7",
+  "reference_startup_and_full_action": "NOT_RUN",
+  "v30_factor_and_MatSolve_counts": "UNKNOWN",
+  "controller_audit": {
+    "path": "outcomes/records/review_v30_controller_audit.json",
+    "sha256": "588f5476552fa3dfdaf2e517e6ab8bcc0400b580ac97c98fbb1bac2cd2cc074f"
+  }
+}

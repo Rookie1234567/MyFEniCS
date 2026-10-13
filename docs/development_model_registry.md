@@ -1,3 +1,15 @@
+# Task40extra Review V30：实际运行和资格登记
+
+| 模型 / 证据 | 实际结果 | 可继承与未完成项 |
+|---|---|---|
+| 原尺寸工程pilot入口：50×25×140 nm、λ0.7 nm、Nx272/Ny8/Nz14、p6、32060 modes | 正式 source `1e9109cb62343b13c850da03432def2109fee481`，service `myfenics-case-20261012T201214-356306.service` 实际启动 FE/JIT；固定cutoff受控退出 | 不是原尺寸PDE通过；没有目标场/物理输出资格；内部最耗时阶段缺证据，保留unknown |
+| 旧 regular-reference q0 | V28 COMPLETE CSR/native 与 V29 factor/两RHS资格沿用，V29 factor此前已销毁 | 不把旧回代/内存重署为本轮实测；本轮live bank未完成资格 |
+| 本轮新增 q4/q1–q7 | 未取得新的COMPLETE/native PASS证据 | 不复制q0，0/8新全组资格不等于旧q0失效 |
+| 资源 | final运行父钟13918.291982708964s，RSS tree18555887616B，cgroup peak26902548480B，task swap0，PSS null，descendants=[] | 固定cap1649267441664B与host reserve68719476736B实际传递；RSS不代表factor库存；宿主swap记录保留 |
+| 科学验收 | 原required-checker supervision失败；保存数据check-partial复核为NO_PARTIAL_FOOTER | 原A6/物理/全参考inverse/not_run，不伪造通过 |
+
+[Response V30](task40extra_0p7nm_engineering/response_v30.md)和[主控审计](task40extra_0p7nm_engineering/outcomes/records/review_v30_controller_audit.json)包含文件路径/hash、固定窗口、父钟和失败证据。工程pilot离散精度和原尺寸2TB/48h资格均未闭合；无新精度扫描。
+
 # Task40extra Review V25 增量：完整原尺寸体积通过，完整q消费者仍待恢复
 
 单元凝聚先在每个网格单元内消去内部自由度，保留连接单元的trace；本轮首次对原尺寸全部单元验证这一体积作用和非零内部RHS恢复。它验证数值内核，不等于已求得电磁物理场。

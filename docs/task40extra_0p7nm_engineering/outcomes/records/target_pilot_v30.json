@@ -1,0 +1,29 @@
+{
+  "schema": "task40extra.target_pilot.v30",
+  "source_sha": "1e9109cb62343b13c850da03432def2109fee481",
+  "run_id": "task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
+  "unit": "myfenics-case-20261012T201214-356306.service",
+  "invocation_id": "190a18a51aa345fb930efc79d87159bf",
+  "attempt_directory": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl/service_runs/myfenics-case-20261012T201214-356306",
+  "classification": "PERFORMANCE_CONTROLLED_STOP",
+  "worker_status": "exit -9; full_workflow_complete=false; official_result=false",
+  "last_durable_phase": "preflight",
+  "runtime_observer": "saw gcc/cc1/assembler and Python FE/JIT activity; no durable receipt proves FE/MPC setup completed",
+  "marker_caution": "worker resource rows both have stage=preflight, inventory/workspace=0; custom label target_retained_and_fast_backend_complete is not proof target was built or retained.",
+  "descendants_cleared": true,
+  "R_T_A_A_volume": "NOT_RUN",
+  "required_checker": "failed after numerical cutoff with TimebaseInconsistency; original failure retained",
+  "saved_data_partial_checker": {
+    "elapsed_seconds": 0.202125,
+    "returncode": 2,
+    "result": "NO_PARTIAL_FOOTER",
+    "checker_passed": false,
+    "sha256": "52c64327ed907fa20a99884510926a72744e40fbed4d26ab8745aeba02ad9655",
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl/service_runs/myfenics-case-20261012T201214-356306/v30_closeout_partial_checker_receipt.json",
+    "scope": "read-only saved-data check; not a numeric/FE rerun"
+  },
+  "controller_audit": {
+    "path": "outcomes/records/review_v30_controller_audit.json",
+    "sha256": "588f5476552fa3dfdaf2e517e6ab8bcc0400b580ac97c98fbb1bac2cd2cc074f"
+  }
+}
