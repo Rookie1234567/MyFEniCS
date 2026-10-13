@@ -1,0 +1,27 @@
+{
+  "schema": "hp.small-doc-publication-manifest.v1",
+  "snapshot_utc": "2026-10-13T15:32:34.941042+00:00",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 634,
+      "sha256": "1453b457e2494030e6f878d20643ad92bf24d4d1643ddd309ea3d30e35a1c8e0",
+      "git_blob_sha1": "ddb11a1017af14dd967756c9c88af0fd810a5404"
+    },
+    {
+      "path": "current_hp_report_zh.md",
+      "bytes": 14365,
+      "sha256": "d751020debdf4fdb4c147469ffd4ec6225ec6bad2c2c8c88f005a4a44191b43e",
+      "git_blob_sha1": "98ecaec4636f4b73ea8c5af7fba5f51762d6cc29"
+    },
+    {
+      "path": "current_hp_summary.json",
+      "bytes": 90016,
+      "sha256": "13c889463e0453b1ef7f99e37dd51329805f1053efaee0768355cc010d88f2fc",
+      "git_blob_sha1": "4cc1406fe253dacd711cea11ba01d11ede1bc906"
+    }
+  ],
+  "manifest_self_hash": "excluded to avoid circularity",
+  "scientific_checkout_unchanged": true,
+  "large_payloads_uploaded": false
+}
