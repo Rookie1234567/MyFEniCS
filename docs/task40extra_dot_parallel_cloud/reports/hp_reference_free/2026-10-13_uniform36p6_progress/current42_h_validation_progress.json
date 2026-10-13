@@ -1,0 +1,275 @@
+{
+  "schema": "hp.current42-progress-appendix.v1",
+  "snapshot_utc": "2026-10-13T17:02:12.460453+00:00",
+  "publication_scope": "Two small append-only documents; old snapshots unchanged; local evidence is referenced by relative receipt name and SHA256, not uploaded.",
+  "source_checkout_sha": "322e62e11a80969b3a35f0cbb08b25c11c539ea6",
+  "status": "HOLD_UNDER_ORIGINAL_V5_WORKING_GUARD",
+  "measurement_chain_valid": true,
+  "v5_working_source_accepted": false,
+  "converged": false,
+  "continuous_error_bound": false,
+  "new_reference_used": false,
+  "candidate": {
+    "name": "single_x_2",
+    "cells": 42,
+    "p": 6,
+    "independent_full_FE_rows": 28224,
+    "condensed_rows": 9404,
+    "ports": 80,
+    "old_solution_id": "7e377b2385080ec39a7cb965d862c1eda53dca5b211f5794806a64a7a44bd520",
+    "candidate_solution_id": "180cfb9ae9add9f7b248b2e4c06710c09741c05dc176e02223dbb074fb038ca4"
+  },
+  "RTA": {
+    "A_balance": {
+      "absolute_delta": 7.49893390028511e-06,
+      "new": 0.019533771700714353,
+      "old": 0.019541270634614638,
+      "signed_delta": -7.49893390028511e-06
+    },
+    "A_volume_total": {
+      "absolute_delta": 7.498910034514639e-06,
+      "new": 0.019533771720027175,
+      "old": 0.01954127063006169,
+      "signed_delta": -7.498910034514639e-06
+    },
+    "R00_total": {
+      "absolute_delta": 8.160049625197119e-05,
+      "new": 0.07345408974021962,
+      "old": 0.07337248924396765,
+      "signed_delta": 8.160049625197119e-05
+    },
+    "R_total": {
+      "absolute_delta": 8.160157473884044e-05,
+      "new": 0.07345418570192788,
+      "old": 0.07337258412718904,
+      "signed_delta": 8.160157473884044e-05
+    },
+    "T_total": {
+      "absolute_delta": 7.41026408385137e-05,
+      "new": 0.9070120425973578,
+      "old": 0.9070861452381963,
+      "signed_delta": -7.41026408385137e-05
+    },
+    "energy_closure_error_port_volume": {
+      "absolute_delta": 2.3865687204249753e-11,
+      "new": 1.9312773602564448e-11,
+      "old": -4.5529136016853045e-12,
+      "signed_delta": 2.3865687204249753e-11
+    }
+  },
+  "physical_G_change": {
+    "difference_G_norm": 0.007951852647568189,
+    "difference_relative_to_old": 0.0008968773882995872,
+    "difference_relative_to_incident": 0.0011383816701949236,
+    "maximum_absolute_modal_power_change": 8.160049625197119e-05,
+    "maximum_q15_q19_relative_squared_contrast": 1.265458017810504e-15
+  },
+  "fixed72_panel": {
+    "x": {
+      "bubble_sq_before": 0.3430031570927967,
+      "bubble_sq_after": 0.27111462241772943,
+      "bubble_sq_decrease_percent": 20.958563555034107,
+      "trace_l2_before": 5.075406735255415,
+      "trace_l2_after": 4.2912367639957365,
+      "trace_decrease_percent": 15.450386780089573
+    },
+    "y": {
+      "bubble_sq_before": 1.3486901946848095e-19,
+      "bubble_sq_after": 2.9975975180858115e-19,
+      "bubble_sq_decrease_percent": -122.25990297099726,
+      "trace_l2_before": 9.450490275966325e-10,
+      "trace_l2_after": 1.4359750049062546e-09,
+      "trace_decrease_percent": -51.94714379613753
+    },
+    "z": {
+      "bubble_sq_before": 1.1097343706672475e-05,
+      "bubble_sq_after": 1.1115968099144008e-05,
+      "bubble_sq_decrease_percent": -0.16782748163720027,
+      "trace_l2_before": 0.005177971819851944,
+      "trace_l2_after": 0.005180050120710079,
+      "trace_decrease_percent": -0.040137353590207085
+    }
+  },
+  "guard_explanation": "The original per-direction v5 rule remains HOLD: z bubble and trace increase. Near-zero y percentages are not a substantive hold reason. G/RTA stability cannot retroactively change acceptance.",
+  "quadrature": {
+    "G_q15_q19": "PASS",
+    "residual_q19": "NOT_RUN_PRODUCTION_EXACT_POLYNOMIAL_RULE",
+    "rigorous_uncertainty_bound": false
+  },
+  "linear_solve": {
+    "initial_guess": "zero",
+    "fresh_global_splu_calls": 1,
+    "factor_seconds": 16.148554038998554,
+    "setup_seconds_including_factor": 18.661983376005082,
+    "solve_seconds": 0.16618262400152162,
+    "method": "FGMRES",
+    "restart": 32,
+    "iterations": 2,
+    "owner_true_relative_residual": 5.774265859402199e-12,
+    "independent_saved_CSR_relative_residual": 4.9043463298776245e-12
+  },
+  "recovery": {
+    "original_full_active_relative_residual": 5.2899639982326055e-12,
+    "global_matrix_reassembled": false,
+    "global_factor_calls": 0,
+    "local_block_rebuild_charged_to_recovery": true,
+    "live_KSP": false,
+    "original_cache_calls": 22,
+    "original_cache_binary_count": 19,
+    "original_ports": 80,
+    "original_failures_preserved": true
+  },
+  "resources": {
+    "process_AS_limit_bytes": 6442450944,
+    "tree_RSS_limit_bytes": 8589934592,
+    "limits_unchanged": true,
+    "zero_swap_and_cleanup_verified": true,
+    "memory_semantics": "Per-attempt sampled simultaneous process-tree RSS; not an additive total."
+  },
+  "supervised_stages": [
+    {
+      "attempt": "map_attempt01",
+      "status": "CHILD_EXIT_ZERO",
+      "seconds": 3.767428323000786,
+      "peak_tree_RSS_bytes": 316280832
+    },
+    {
+      "attempt": "raw_attempt01",
+      "status": "CHILD_EXIT_ZERO",
+      "seconds": 9.307436285998847,
+      "peak_tree_RSS_bytes": 330178560
+    },
+    {
+      "attempt": "sparse_attempt01",
+      "status": "CHILD_FAILED",
+      "seconds": 65.44640569700277,
+      "peak_tree_RSS_bytes": 2094653440
+    },
+    {
+      "attempt": "offline_solve_attempt01",
+      "status": "CHILD_FAILED",
+      "seconds": 19.610020600004646,
+      "peak_tree_RSS_bytes": 1167839232
+    },
+    {
+      "attempt": "offline_solve_attempt02",
+      "status": "CHILD_EXIT_ZERO",
+      "seconds": 21.118075672995474,
+      "peak_tree_RSS_bytes": 2003456000
+    },
+    {
+      "attempt": "saved_recovery_attempt01",
+      "status": "CHILD_FAILED",
+      "seconds": 30.731895154000085,
+      "peak_tree_RSS_bytes": 1042001920
+    },
+    {
+      "attempt": "saved_recovery_attempt02",
+      "status": "CHILD_EXIT_ZERO",
+      "seconds": 34.27919857099914,
+      "peak_tree_RSS_bytes": 1026420736
+    },
+    {
+      "attempt": "staged_h_G_change_attempt01",
+      "status": "CHILD_FAILED",
+      "seconds": 1.253982845999417,
+      "peak_tree_RSS_bytes": 10977280
+    },
+    {
+      "attempt": "staged_h_G_change_attempt02",
+      "status": "CHILD_FAILED",
+      "seconds": 1.7562152909958968,
+      "peak_tree_RSS_bytes": 141193216
+    },
+    {
+      "attempt": "staged_residual_x_attempt01",
+      "status": "CHILD_EXIT_ZERO",
+      "seconds": 84.58814528099902,
+      "peak_tree_RSS_bytes": 863952896
+    },
+    {
+      "attempt": "staged_residual_y_attempt01",
+      "status": "CHILD_EXIT_ZERO",
+      "seconds": 88.86944969800243,
+      "peak_tree_RSS_bytes": 872620032
+    },
+    {
+      "attempt": "staged_residual_z_attempt01",
+      "status": "CHILD_EXIT_ZERO",
+      "seconds": 87.86147699400317,
+      "peak_tree_RSS_bytes": 870879232
+    },
+    {
+      "attempt": "staged_h_G_change_smoke_attempt03",
+      "status": "CHILD_EXIT_ZERO",
+      "seconds": 2.0083230160016683,
+      "peak_tree_RSS_bytes": 132849664
+    },
+    {
+      "attempt": "staged_h_G_change_attempt03",
+      "status": "CHILD_EXIT_ZERO",
+      "seconds": 35.451722309000615,
+      "peak_tree_RSS_bytes": 262807552
+    }
+  ],
+  "ledger": {
+    "stage_count": 61,
+    "all_completed_seconds": 4439.895784189015,
+    "failed_seconds": 177.1537963180017,
+    "successful_seconds": 4262.741987871013,
+    "preparation_waiting_unmetered": null,
+    "timing_rule": "Failed and successful attempts are separate; factor is included within setup, and setup/solve within their process elapsed time. Do not add nested timers again."
+  },
+  "next_not_run": [
+    "Prospective global-worst-panel rule and further independent h trial are being prepared; no run or acceptance claimed.",
+    "Two additional independent h/p checks plus richer-panel validation remain required before convergence assessment."
+  ],
+  "verification_scope": "Publisher read small JSON receipts and result metadata, checked receipt hashes and 14 summary timings; no numerical rerun, matrix/large-array/ELF reads, source edit, or scientific worktree change.",
+  "local_evidence_receipts": [
+    {
+      "file": "phase3_single_x2_saved_recovery_terminal_review.json",
+      "bytes": 27315,
+      "sha256": "d5fa3cfa48d52d834eb1587bc0aa92a35390d7b40d5a5a1233d4b80a3f1364c8"
+    },
+    {
+      "file": "phase3_single_x2_staged_frozen72_terminal_review.json",
+      "bytes": 14923,
+      "sha256": "567f7104020581f4a6d0d6acdac7100bf561cd74c4b5f7d8eda4df5c3427aa54"
+    },
+    {
+      "file": "phase3_single_x2_staged_G_change_terminal_review.json",
+      "bytes": 6077,
+      "sha256": "29d05bfc824081815c332bc455bab572ad35bcad29712bb3b6bb2cfe4c0d2d71"
+    },
+    {
+      "file": "phase3_single_x2_v5_guard_interpretation.json",
+      "bytes": 2765,
+      "sha256": "9cf91405eb843e270dbae97b4e4929d17d0fe93239646eef5381e142d68ae815"
+    },
+    {
+      "file": "phase3_execution_ledger.json",
+      "bytes": 37213,
+      "sha256": "9d6555625cd2306750feb19df5f63fbe0c23389d2c0954433dbd709ac5eeb3a5"
+    },
+    {
+      "file": "phase3_single_x2_offline02_saved_terminal_review.json",
+      "bytes": 8670,
+      "sha256": "f1d2e3027772ff2a48171f824bd0ae312d9dc02cab52789b8f80ecaee5c96841"
+    },
+    {
+      "file": "phase3_single_x2_offline_solve_attempt02/result.json",
+      "bytes": 25304,
+      "sha256": "75b969af39a3d69a815f416155c16e9be863afb6491181744b30bc75fd10b283"
+    },
+    {
+      "file": "phase3_single_x2_saved_recovery_attempt02/result.json",
+      "bytes": 292327,
+      "sha256": "70eb8bc98524ec399065b40984113ae181c59b1d92b05ff98e2eec79d81b1a6a"
+    },
+    {
+      "file": "phase3_single_x2_staged_h_G_change_attempt03/diagnostics.json",
+      "bytes": 107432,
+      "sha256": "293e35e1ef7d142bf61a96e270f5bd48ae054e0fc64eec407955fec974ccd4c0"
+    }
+  ]
+}
