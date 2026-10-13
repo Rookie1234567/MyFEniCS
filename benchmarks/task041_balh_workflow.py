@@ -921,12 +921,6 @@ def task041_fixed_h6_modal_gmres_binding(
         raise ValueError(
             "fixed-H6 research requires an explicit frozen expected_rank_cpus map"
         )
-    if modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID and (
-        supplied_cpus != TASK041_V13_MPI8_RANK_CPUS
-    ):
-        raise ValueError(
-            "V13 requires the frozen MPI8 CPU map [10,11,14,15,17,18,19,21]"
-        )
     binding = {
         "method": "fixed_h6_modal_gmres_research",
         "model_id": model_id,

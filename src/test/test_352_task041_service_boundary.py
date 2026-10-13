@@ -1833,8 +1833,12 @@ def test_v13_finite_stop_rhs_reader_uses_its_rank_local_binding_source():
     assert observed is None
 
 
-def _v13_rank_runtime_fixture():
-    expected_cpus = list(task041_balh_workflow.TASK041_V13_MPI8_RANK_CPUS)
+def _v13_rank_runtime_fixture(expected_rank_cpus=None):
+    expected_cpus = list(
+        task041_balh_workflow.TASK041_V13_MPI8_RANK_CPUS
+        if expected_rank_cpus is None
+        else expected_rank_cpus
+    )
     binding = task041_balh_workflow.task041_fixed_h6_modal_gmres_binding(
         task041_balh_workflow.TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
         enabled=True,
@@ -2161,7 +2165,11 @@ def test_v13_initial_resource_gate_requires_aggregate_and_node1_availability():
 
 
 def test_v13_rank_runtime_recomputes_default_scope_threads_and_session():
-    binding, summary, cleanup = _v13_rank_runtime_fixture()
+    expected_cpus = tuple(range(8))
+    binding, summary, cleanup = _v13_rank_runtime_fixture(
+        expected_rank_cpus=expected_cpus
+    )
+    assert binding["expected_rank_cpus"] == list(expected_cpus)
     assert supervisor._task041_v13_rank_runtime_evidence(
         summary,
         expected_binding=binding,
@@ -2211,6 +2219,37 @@ def test_v13_rank_runtime_recomputes_default_scope_threads_and_session():
     bad_session = dict(cleanup, members=[{"pid": 2001, "sid": 1900}])
     assert supervisor._task041_v13_rank_runtime_evidence(
         summary, expected_binding=binding, owned_session_cleanup=bad_session
+    )["pass"] is False
+
+    wrong_actual_cpu = json.loads(json.dumps(summary))
+    rank_three_identity = wrong_actual_cpu["rank_numa_evidence"][0]["ranks"][3][
+        "evidence"
+    ]["rank_identity"]
+    rank_three_identity["current_cpu"] = 21
+    rank_three_identity["sched_getaffinity"] = [21]
+    rank_three_identity["cpu_topology"][0]["os_cpu"] = 21
+    assert supervisor._task041_v13_rank_runtime_evidence(
+        wrong_actual_cpu,
+        expected_binding=binding,
+        owned_session_cleanup=cleanup,
+    )["pass"] is False
+
+    summary_map_is_not_authority = json.loads(json.dumps(summary))
+    summary_map_is_not_authority["rank_numa_evidence"][0]["qualification"][
+        "expected_rank_cpus"
+    ] = list(task041_balh_workflow.TASK041_V13_MPI8_RANK_CPUS)
+    assert supervisor._task041_v13_rank_runtime_evidence(
+        summary_map_is_not_authority,
+        expected_binding=binding,
+        owned_session_cleanup=cleanup,
+    )["pass"] is False
+
+    missing_expected_map = dict(binding)
+    del missing_expected_map["expected_rank_cpus"]
+    assert supervisor._task041_v13_rank_runtime_evidence(
+        summary,
+        expected_binding=missing_expected_map,
+        owned_session_cleanup=cleanup,
     )["pass"] is False
 
 
@@ -2466,6 +2505,7 @@ def test_v13_policy_finalizer_requires_complete_actual_chain_and_consumer_eviden
     consumer_root = inner / "consumer"
     (root / "log").mkdir(parents=True)
     consumer_root.mkdir(parents=True)
+    expected_cpus = tuple(range(8))
     fixed_binding = task041_balh_workflow.task041_fixed_h6_modal_gmres_binding(
         model_id,
         enabled=True,
@@ -2477,12 +2517,12 @@ def test_v13_policy_finalizer_requires_complete_actual_chain_and_consumer_eviden
         task041_resource_policy=(
             task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
         ),
-        expected_rank_cpus=task041_balh_workflow.TASK041_V13_MPI8_RANK_CPUS,
+        expected_rank_cpus=expected_cpus,
         modal_solver_policy=policy_id,
     )
     assert isinstance(fixed_binding, dict)
     rank_binding, rank_summary, owned_session_cleanup = (
-        _v13_rank_runtime_fixture()
+        _v13_rank_runtime_fixture(expected_rank_cpus=expected_cpus)
     )
     assert rank_binding == fixed_binding
     v13_metadata = {

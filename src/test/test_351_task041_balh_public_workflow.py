@@ -654,6 +654,39 @@ def test_task041_rank_numa_rejects_invalid_expected_cpu_maps(mapping):
 
 
 @pytest.mark.parametrize(
+    ("mapping", "expected_error"),
+    [
+        (None, "explicit frozen expected_rank_cpus"),
+        (tuple(range(7)), "invalid expected rank CPU map"),
+        ((0, 1, 2, 3, 4, 5, 6, 6), "invalid expected rank CPU map"),
+        ((0, 1, 2, 3, 4, 5, 6, True), "invalid expected rank CPU map"),
+        ((0, 1, 2, 3, 4, 5, 6, -1), "invalid expected rank CPU map"),
+    ],
+    ids=("missing", "wrong_length", "duplicate", "boolean", "negative"),
+)
+def test_v13_fixed_h6_binding_requires_explicit_valid_rank_cpu_map(
+    mapping, expected_error
+):
+    with pytest.raises(ValueError, match=expected_error):
+        task041_balh_workflow.task041_fixed_h6_modal_gmres_binding(
+            TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+            enabled=True,
+            candidate=True,
+            mpi_size=8,
+            mode_count=400,
+            p4_inverse_backend="cell_condensed",
+            p4_refinement_target_tolerance=5.0e-13,
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            expected_rank_cpus=mapping,
+            modal_solver_policy=(
+                task041_balh_workflow.TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+            ),
+        )
+
+
+@pytest.mark.parametrize(
     ("mutation", "expected_error"),
     [
         ("affinity", "affinity is not CPU 13"),
@@ -3265,6 +3298,7 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
         "packet_source",
         "modal_feedback_method",
         "modal_solver_policy",
+        "expected_rank_cpus_override",
     ),
     (
         (
@@ -3272,6 +3306,7 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
             TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
             None,
             "producer_root",
+            None,
             None,
             None,
         ),
@@ -3282,12 +3317,14 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
             "legacy_descriptor",
             None,
             None,
+            None,
         ),
         (
             "5nm_p6h4_m480_mpi8_cell_condensed.dat",
             TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
             5.0e-13,
             "producer_root",
+            None,
             None,
             None,
         ),
@@ -3298,6 +3335,7 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
             "producer_root",
             None,
             None,
+            None,
         ),
         (
             "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat",
@@ -3306,12 +3344,14 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
             "fresh_producer",
             None,
             None,
+            None,
         ),
         (
             "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat",
             TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
             5.0e-13,
             "validated_producer_root",
+            None,
             None,
             None,
         ),
@@ -3322,6 +3362,7 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
             "validated_producer_root",
             "fixed_physical_balh_once",
             None,
+            None,
         ),
         (
             "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat",
@@ -3330,6 +3371,7 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
             "validated_producer_root",
             None,
             "task041_v12_bounded_inexact_modal",
+            None,
         ),
         (
             "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat",
@@ -3338,6 +3380,7 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
             "validated_producer_root",
             None,
             "task041_v12_bounded_inexact_modal_once_backup",
+            None,
         ),
         (
             "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat",
@@ -3346,6 +3389,16 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
             "validated_producer_root",
             None,
             "task041_v13_consistent_fixed_balh_modal_surrogate",
+            None,
+        ),
+        (
+            "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat",
+            TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+            5.0e-13,
+            "validated_producer_root",
+            None,
+            "task041_v13_consistent_fixed_balh_modal_surrogate",
+            tuple(range(8)),
         ),
     ),
     ids=(
@@ -3359,6 +3412,7 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
         "w0p7nm-explicit-v12-modal-policy",
         "w0p7nm-explicit-v12-once-backup-policy",
         "w0p7nm-explicit-v13-consistent-modal-policy",
+        "w0p7nm-explicit-v13-rank-map-0-7",
     ),
 )
 def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
@@ -3368,6 +3422,7 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     packet_source,
     modal_feedback_method,
     modal_solver_policy,
+    expected_rank_cpus_override,
     tmp_path: Path,
     monkeypatch,
     capsys,
@@ -3404,9 +3459,13 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         else tuple(range(1, 9))
     )
     rank_cpus = (
-        TASK041_V13_MPI8_RANK_CPUS
-        if modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID
-        else (12, 10, 17, 11, 16, 13, 15, 14)
+        tuple(expected_rank_cpus_override)
+        if expected_rank_cpus_override is not None
+        else (
+            TASK041_V13_MPI8_RANK_CPUS
+            if modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+            else (12, 10, 17, 11, 16, 13, 15, 14)
+        )
     )
     cpu_argument = ",".join(str(cpu) for cpu in rank_cpus)
     resource_policy = task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
@@ -4146,6 +4205,15 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         assert service_contract["resource_headroom_policy"] == (
             TASK041_V13_RESOURCE_HEADROOM_POLICY
         )
+        mismatched_cpu_config = copy.deepcopy(service_config)
+        mismatched_cpu_config["expected_rank_cpus"] = list(
+            reversed(rank_cpus)
+        )
+        with pytest.raises(
+            service.Task041ServiceError,
+            match="service rank CPU map does not match its public command",
+        ):
+            resolve_service_contract(config=mismatched_cpu_config)
         for key, bad_value in (
             ("memory_policy", "registered_node_binding"),
             ("membind_node", 0),
@@ -4415,7 +4483,7 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
             )
 
     mismatched_service_config = dict(service_config)
-    mismatched_service_config["expected_rank_cpus"] = list(range(8))
+    mismatched_service_config["expected_rank_cpus"] = list(reversed(rank_cpus))
     with pytest.raises(service.Task041ServiceError, match="rank CPU map"):
         service._service_contract(
             mismatched_service_config,

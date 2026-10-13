@@ -3844,7 +3844,9 @@ def _build_task041_w0p7_stage_factory(
         or any(type(cpu) is not int for cpu in expected_rank_cpus)
         or len(set(expected_rank_cpus)) != 8
     ):
-        raise Task041ModePrepError("staged factors require the frozen MPI8 CPU map")
+        raise Task041ModePrepError(
+            "staged factors require eight unique integer CPU bindings"
+        )
     if memory_policy not in (None, TASK041_V13_MEMORY_POLICY):
         raise Task041ModePrepError("unsupported W0.7 staged-factor memory policy")
     v13_default_memory = memory_policy == TASK041_V13_MEMORY_POLICY
@@ -18474,13 +18476,13 @@ def run_task041_consumer(
         TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
         TASK041_V8_SWAP_OBSERVE_CONTINUE,
         TASK041_V13_MEMORY_POLICY,
-        TASK041_V13_MPI8_RANK_CPUS,
         TASK041_V13_REQUIRED_THREAD_ENVIRONMENT,
         TASK041_V13_RESOURCE_HEADROOM_POLICY,
         task041_balh_formal_physical_volume_context_factory,
         task041_fixed_h6_modal_gmres_binding,
         task041_fixed_h6_packet_source_binding,
         task041_p4_refinement_target_binding,
+        task041_parse_expected_rank_cpus,
     )
 
     if not isinstance(a6_response_pair, bool):
@@ -18527,16 +18529,22 @@ def run_task041_consumer(
     v13_default_memory = (
         modal_solver_policy == TASK041_V13_MODAL_POLICY_ID
     )
+    requested_rank_cpus = (
+        task041_parse_expected_rank_cpus(expected_rank_cpus)
+        if v13_default_memory
+        else None
+    )
     if v13_default_memory and (
         fixed_h6_binding is None
         or fixed_h6_binding.get("memory_policy") != TASK041_V13_MEMORY_POLICY
         or "membind_node" not in fixed_h6_binding
         or fixed_h6_binding.get("membind_node") is not None
-        or tuple(fixed_h6_binding.get("expected_rank_cpus", ()))
-        != TASK041_V13_MPI8_RANK_CPUS
+        or requested_rank_cpus is None
+        or fixed_h6_binding.get("expected_rank_cpus")
+        != list(requested_rank_cpus)
     ):
         raise Task041ModePrepError(
-            "V13 resolved memory/CPU binding is not the frozen default-policy MPI8 contract"
+            "V13 resolved memory/CPU binding does not match the explicit default-policy MPI8 request"
         )
     v13_required_threads = (
         {name: "1" for name in TASK041_V13_THREAD_ENV_NAMES}

@@ -2197,8 +2197,20 @@ def run_task041_supervised_public_command(
         if v13_default_memory
         else TASK041_REQUIRED_THREADS
     )
+    fixed_binding = profile_contract.get("fixed_h6_modal_gmres_research")
+    expected_v13_rank_cpus: tuple[int, ...] | None = None
+    if v13_default_memory and isinstance(fixed_binding, Mapping):
+        from benchmarks.task041_balh_workflow import (
+            task041_parse_expected_rank_cpus,
+        )
+
+        try:
+            expected_v13_rank_cpus = task041_parse_expected_rank_cpus(
+                fixed_binding.get("expected_rank_cpus")
+            )
+        except (TypeError, ValueError):
+            expected_v13_rank_cpus = None
     if expected_modal_solver_policy is not None:
-        fixed_binding = profile_contract.get("fixed_h6_modal_gmres_research")
         policy_binding = (
             fixed_binding.get("modal_solver_policy")
             if isinstance(fixed_binding, Mapping)
@@ -2227,8 +2239,12 @@ def run_task041_supervised_public_command(
             or fixed_binding.get("memory_policy") != TASK041_V13_MEMORY_POLICY
             or "membind_node" not in fixed_binding
             or fixed_binding.get("membind_node") is not None
-            or tuple(fixed_binding.get("expected_rank_cpus", ()))
-            != TASK041_V13_MPI8_RANK_CPUS
+            or expected_v13_rank_cpus is None
+            or fixed_binding.get("expected_rank_cpus")
+            != list(expected_v13_rank_cpus)
+            or not isinstance(launch_manifest, Mapping)
+            or launch_manifest.get("fixed_h6_modal_gmres_research")
+            != dict(fixed_binding)
             or not isinstance(fixed_binding.get("resource_headroom_policy"), Mapping)
             or fixed_binding["resource_headroom_policy"].get(
                 "aggregate_memfree_reserve_bytes"
@@ -11390,13 +11406,26 @@ def _task041_v13_rank_runtime_evidence(
     )
 
     errors: list[str] = []
+    expected_rank_cpu_binding: tuple[int, ...] | None = None
+    if isinstance(expected_binding, Mapping):
+        from benchmarks.task041_balh_workflow import (
+            task041_parse_expected_rank_cpus,
+        )
+
+        try:
+            expected_rank_cpu_binding = task041_parse_expected_rank_cpus(
+                expected_binding.get("expected_rank_cpus")
+            )
+        except (TypeError, ValueError):
+            expected_rank_cpu_binding = None
     if (
         not isinstance(expected_binding, Mapping)
         or expected_binding.get("memory_policy") != TASK041_V13_MEMORY_POLICY
         or "membind_node" not in expected_binding
         or expected_binding.get("membind_node") is not None
-        or tuple(expected_binding.get("expected_rank_cpus", ()))
-        != TASK041_V13_MPI8_RANK_CPUS
+        or expected_rank_cpu_binding is None
+        or expected_binding.get("expected_rank_cpus")
+        != list(expected_rank_cpu_binding)
         or expected_binding.get("required_thread_environment")
         != TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
         or expected_binding.get("resource_headroom_policy")
@@ -11423,7 +11452,11 @@ def _task041_v13_rank_runtime_evidence(
     ):
         errors.append("owned_MPI8_session_is_not_measured_empty")
 
-    expected_cpus = list(TASK041_V13_MPI8_RANK_CPUS)
+    expected_cpus = (
+        list(expected_rank_cpu_binding)
+        if expected_rank_cpu_binding is not None
+        else []
+    )
     expected_thread_names = set(TASK041_V13_REQUIRED_THREADS)
     stages = summary.get("rank_numa_evidence")
     if not isinstance(stages, list) or not stages:

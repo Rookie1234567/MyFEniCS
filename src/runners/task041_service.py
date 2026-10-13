@@ -180,7 +180,6 @@ def _fixed_h6_service_binding(
         from benchmarks.task041_balh_workflow import (
             TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
             TASK041_V13_MEMORY_POLICY,
-            TASK041_V13_MPI8_RANK_CPUS,
             TASK041_V13_REQUIRED_THREAD_ENVIRONMENT,
             TASK041_V13_RESOURCE_HEADROOM_POLICY,
             task041_fixed_h6_modal_gmres_binding,
@@ -213,6 +212,9 @@ def _fixed_h6_service_binding(
             modal_solver_policy=configured_modal_solver_policy,
         )
         if configured_modal_solver_policy == TASK041_V13_CONSISTENT_MODAL_POLICY_ID:
+            requested_cpus = task041_parse_expected_rank_cpus(
+                configured_rank_cpus
+            )
             if (
                 config.get("memory_policy") != TASK041_V13_MEMORY_POLICY
                 or "membind_node" not in config
@@ -234,12 +236,12 @@ def _fixed_h6_service_binding(
                 != TASK041_V13_REQUIRED_THREAD_ENVIRONMENT
                 or binding.get("resource_headroom_policy")
                 != TASK041_V13_RESOURCE_HEADROOM_POLICY
+                or requested_cpus is None
+                or binding.get("expected_rank_cpus") != list(requested_cpus)
             ):
                 raise ValueError(
-                    "V13 service config/public argv must resolve system-default unbound memory"
+                    "V13 service config/public argv must resolve one request-bound rank map and system-default unbound memory"
                 )
-            if tuple(configured_cpus or ()) != TASK041_V13_MPI8_RANK_CPUS:
-                raise ValueError("V13 service config must use the frozen MPI8 CPU map")
     except (KeyError, TypeError, ValueError) as exc:
         raise Task041ServiceError(str(exc)) from exc
     incompatible_flags = (
