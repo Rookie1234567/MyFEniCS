@@ -1,0 +1,224 @@
+{
+  "schema": "hp.reference-free.as8-terminal-small-report.v1",
+  "publication_state": "FROZEN_REPORT_SNAPSHOT",
+  "frozen_utc": "2026-10-13T23:19:06.562780+00:00",
+  "evidence_as_of_utc": "2026-10-13T23:16:35.951973+00:00",
+  "previous_immutable_report_commit": "acbc68d606363f0f116e4baa3824c137dfdae308",
+  "scope": "One separately authorized requested-AS8 maximum repeat of the same108 captured A/b, plus already completed duplicate-archive cleanup. This report performs no numerical retry or deletion.",
+  "attempt": {
+    "status": "CONFIRMED_NATIVE_FACTOR_FAILURE_AUTHORIZED_AS8_MAX_ORIGINAL_RSS_AND_CLEANUP",
+    "actual_launch_started_utc_as_reported": "2026-10-13T23:12:25+00:00",
+    "requested_AS_max_bytes": 8589934592,
+    "actual_effective_AS_bytes": 7866744832,
+    "AS_installation_limiting_component": "host_available_plus_worker_RSS_minus_1GiB_host_floor_and256MiB_safety",
+    "actual_AS_dynamic_min_and_page_round_recomputed": true,
+    "ordering": "COLAMD",
+    "factor_calls": 1,
+    "apply_calls": 0,
+    "first_native_diagnostic": "Can't expand MemType 1: jcol 23148",
+    "subsequent_exception": "MemoryError from SuperLU gstrf before successful factor return or PETSc A/b/KSP binding",
+    "elapsed_seconds": 130.24836142700224,
+    "peak_sampled_tree_RSS_bytes": 4024246272,
+    "sample_count": 515,
+    "actual_factor_first_owner_boundary": {
+      "PETSc_operator_bound": false,
+      "actual_process": {
+        "VmRSS": 474140672,
+        "VmSize": 862593024,
+        "VmSwap": 0
+      },
+      "measured_memory_subtraction_bytes": 0,
+      "native_allocator_release_claimed": false,
+      "original_saved_CSR_RHS_live_owner_count": 0
+    },
+    "pre_factor_AS_admission": {
+      "actual_process": {
+        "VmRSS": 91000832,
+        "VmSize": 469749760,
+        "VmSwap": 0
+      },
+      "additional_named_bytes": 1873251000,
+      "effective_AS_bytes": 7866744832,
+      "projected_VmSize_plus_named_bytes": 2343000760
+    },
+    "same_saved_A_b_typed_identities_in_actual_PC_match_capture": true,
+    "same_jcol_diagnostic_as_previous_AS6_attempt": true,
+    "original_saved_owner_weakrefs_dead_before_factor": true,
+    "saved_operator_reloaded": false,
+    "solution_produced": false,
+    "independent_Ax_or_recovery_success": false,
+    "downstream_recovery_or_G_launched": false,
+    "owner_cleanup": {
+      "cleanup_failures": [],
+      "handle_states": {},
+      "lu_python_references_cleared": true,
+      "native_allocator_release_claimed": false,
+      "petsc_handles_zero": true
+    },
+    "watchdog_killed_process": false,
+    "authorized_AS_and_original_tree_caps_floors_zero_swap_and_cleanup_pass": true
+  },
+  "AS_installation": {
+    "requested_max_GiB": 8,
+    "requested_max_bytes": 8589934592,
+    "effective_GiB": 7.32647705078125,
+    "effective_bytes": 7866744832,
+    "observed_installed_RLIMIT_AS_soft_hard_bytes": [
+      7866744832,
+      7866744832
+    ],
+    "previous_effective_AS_bytes": 6442450944,
+    "effective_limit_increased_and_installed": true,
+    "full8GiB_limit_tested": false,
+    "limiting_host_available_bytes": 9178484736,
+    "worker_RSS_at_installation_bytes": 30437376,
+    "preserved_host_available_floor_bytes": 1073741824,
+    "preserved_safety_reserve_bytes": 268435456,
+    "host_limit_before_page_round_bytes": 7866744832,
+    "page_bytes": 4096,
+    "process_tree_RSS_limit_bytes": 8589934592,
+    "zero_swap_required": true,
+    "disk_free_floor_bytes": 4294967296,
+    "scientific_wall_limit_seconds": 600
+  },
+  "terminal": {
+    "factor_successfully_returned": false,
+    "factor_call_count_is_attempt_only": true,
+    "PETSc_A_b_KSP_bound_after_factor": false,
+    "qualified_x_exists": false,
+    "field_recovery_performed": false,
+    "child_exit_code": 1,
+    "outer_cleanup_verified": true,
+    "remaining_processes": [],
+    "normal_owner_cleanup_recorded": true,
+    "scientific_PID_count_at_freeze": 0,
+    "scientific_process_check_utc": "2026-10-13T23:19:06.562780+00:00",
+    "process_check_scope": "Runtime Python processes carrying hp_resume_20261013 scientific launch arguments",
+    "further_scientific_retries_stopped": true
+  },
+  "failure_limits": {
+    "fault_time_VmSize_known": false,
+    "failed_allocation_size_known": false,
+    "underlying_root_cause_determined": false,
+    "extra_resource_requirement_bytes": null,
+    "sampled_RSS_proves_AS_headroom": false,
+    "repeated_jcol_proves_same_root_cause": false,
+    "same_jcol_diagnostic_only": 23148,
+    "interpretation": "Native expansion failed with recorded requested AS8 maximum and actual installed 7,866,744,832-byte ceiling. Fault-time VmSize and failed-allocation size are unknown. Neither sampled RSS nor repeated jcol establishes the underlying cause or an allocation deficit.",
+    "source_investigation_is_separate_read_only_work": true
+  },
+  "completed_duplicate_archive_cleanup": {
+    "status": "PASS_NINE_RECOVERABLE_DUPLICATES_REMOVED",
+    "started_utc": "2026-10-13T23:12:08Z",
+    "finished_utc": "2026-10-13T23:12:08Z",
+    "duplicate_count": 9,
+    "pairwise_local_SHA256_match_verified_in_preflight": true,
+    "removed_logical_bytes": 1371420041,
+    "removed_allocated_bytes": 1371488256,
+    "disk_free_before_bytes": 15699271680,
+    "disk_free_after_bytes": 17070706688,
+    "observed_disk_free_increase_bytes": 1371435008,
+    "retained_official_materialized_copies_unchanged": true,
+    "all_preserved_metadata_unchanged": true,
+    "runtime_staging_offlinecache_CSR_fields_touched": false,
+    "restore_plan_points_to_retained_materialized_archives": true,
+    "unique_scientific_data_deleted": false,
+    "disk_cleanup_establishes_virtual_or_native_allocation_problem_solved": false,
+    "cleanup_executed_by_this_report_writer": false,
+    "scope": "Only nine recoverable duplicates; retained materialized copies, runtime and unique scientific data preserved.",
+    "restore_deleted_temporary_paths": "Copy the retained byte-identical local materialized files back according to the cleanup receipt if the deleted temporary paths are needed."
+  },
+  "costs": {
+    "ledger_version": 31,
+    "completed_supervised_stages": 123,
+    "stage_status_counts": {
+      "CHILD_FAILED": 22,
+      "CHILD_EXIT_ZERO": 100,
+      "CONTROLLED_STOP": 1
+    },
+    "completed_supervised_seconds": 10584.371767620956,
+    "successful_supervised_seconds": 8931.937500649969,
+    "failed_or_controlled_stop_supervised_seconds": 1652.4342669709877,
+    "new_failed_stage_seconds": 130.24836142700224,
+    "new_stage_already_in_cumulative_total": true,
+    "scope": "phase3 residual diagnostics, qualification, and actual hotspot P/Hx trials; excludes frozen phase2 and archive",
+    "coding_audit_waiting_end_to_end_hours_instrumented": false,
+    "unmetered_preparation_waiting_seconds": null,
+    "cleanup_disk_bytes_are_not_scientific_time_costs": true,
+    "prior_phase2_archive_costs_added_again": false
+  },
+  "unchanged_scientific_position": {
+    "accepted_working_cells": 96,
+    "wavelength_nm": 0.7,
+    "official_observables": {
+      "R_total": 0.07376891657224893,
+      "T_total": 0.9067258998146732,
+      "A_volume_total": 0.01950518347140809
+    },
+    "external_fine_reference_used": false,
+    "first_additional_h_check72_to96_qualified": true,
+    "second_independent_qualified_main_solution_after96_exists": false,
+    "broader_validation_incomplete": true,
+    "convergence_assessment": "The hp convergence acceptance conditions for this study have not yet been met; this is not a proof of nonconvergence.",
+    "continuous_error_bound_established": false,
+    "new108_solution_or_scientific_acceptance": false,
+    "external_fine_reference_scope": "The selection and judgment in this study did not use an external fine reference; this statement does not deny earlier independent-discretization references."
+  },
+  "sources": [
+    {
+      "file": "phase3_coverage108_offline_as8_attempt01_negative_review.json",
+      "bytes": 4991,
+      "sha256": "162f811bb3d450aae80d99bdc8a1d0215a0ece7917213a24898312c726949db8"
+    },
+    {
+      "file": "phase3_coverage108_offline_as8_attempt01/address_space_guard.json",
+      "bytes": 1052,
+      "sha256": "ff7d4e549aa328082b39689f30f7811402453baad8c3b97a49cb037b8dd30979"
+    },
+    {
+      "file": "phase3_coverage108_offline_as8_attempt01/summary.json",
+      "bytes": 1091,
+      "sha256": "2284c14fb60670a7de5fda1ba4bc3243836a343fbbb42dbf08ff9a0c1676a5ee"
+    },
+    {
+      "file": "phase3_coverage108_offline_as8_attempt01/events.jsonl",
+      "bytes": 2816,
+      "sha256": "eb54704738e6814615b2c631e7a9da4fa9ab003c24b284f438c8c95378fab75d"
+    },
+    {
+      "file": "phase3_coverage108_offline_as8_source_review.json",
+      "bytes": 2889,
+      "sha256": "2da21e8961d9d4d9be480e5f323ab1e282ad6e097f67611a6bc4152b585cbb15"
+    },
+    {
+      "file": "phase3_coverage108_offline_attempt02_negative_review.json",
+      "bytes": 4439,
+      "sha256": "e3b4c4e16b51e4530cd901a834b7534c30b60b2e1abe1b2389ac4ae039146778"
+    },
+    {
+      "file": "duplicate_archive_cleanup_20261013_2310/preflight.json",
+      "bytes": 37327,
+      "sha256": "d6a72c876ccd2793310292d8111ea589f4acaea13cfd7616cd5b8a833541b8cb"
+    },
+    {
+      "file": "duplicate_archive_cleanup_20261013_2310/cleanup_receipt.json",
+      "bytes": 16160,
+      "sha256": "a9ebcd0f41af25f749dd157370130ca61e629e089cdaa589e8021ea83270f6c8"
+    },
+    {
+      "file": "phase3_execution_ledger_v30.json",
+      "bytes": 73500,
+      "sha256": "f37dcef03627df1556647f533763219e318c30eb02ccb37c780f308f7d0b7424"
+    },
+    {
+      "file": "phase3_execution_ledger_v31.json",
+      "bytes": 74150,
+      "sha256": "7fb077c4b383ccb9ca449ab6d37ab4218fd1925bce3d8bfde84170d67bcd060e"
+    },
+    {
+      "file": "phase3_current102_followon_report/summary.json",
+      "bytes": 25364,
+      "sha256": "491c975ffe179b2fa74b84cdcbd7a533c8d9a206596e519c72cba7366629cd7f"
+    }
+  ]
+}
