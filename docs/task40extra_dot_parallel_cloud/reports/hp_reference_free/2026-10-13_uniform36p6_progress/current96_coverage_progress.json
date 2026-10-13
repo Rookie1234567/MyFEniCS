@@ -1,0 +1,567 @@
+{
+  "schema": "hp.reference-free.progress-small-report.v1",
+  "report_state": "FROZEN_REVIEWED_PROGRESS_SNAPSHOT",
+  "research_status": "ONGOING_NOT_CONVERGED",
+  "wavelength_nm": 0.7,
+  "as_of_ledger": {
+    "version": 18,
+    "updated_utc": "2026-10-13T20:57:32.863731+00:00",
+    "stage_count": 109,
+    "completed_supervised_seconds": 8983.855914921958,
+    "successful_supervised_seconds": 8429.698307674953,
+    "failed_supervised_seconds": 554.1576072470052,
+    "preparation_and_waiting_seconds": null,
+    "includes_failed_attempts": true,
+    "includes_phase2_or_archive": false
+  },
+  "comparison72_to96": {
+    "reference_free": true,
+    "external_fine_reference_used": false,
+    "common_physical_piece_count": 96,
+    "official_deltas": {
+      "A_balance": {
+        "absolute_delta": 4.485269489151733e-09,
+        "new": 0.019505183613077848,
+        "old": 0.019505188098347337,
+        "signed_delta": -4.485269489151733e-09
+      },
+      "A_volume_total": {
+        "absolute_delta": 4.5979058511946835e-09,
+        "new": 0.01950518347140809,
+        "old": 0.01950518806931394,
+        "signed_delta": -4.5979058511946835e-09
+      },
+      "R00_total": {
+        "absolute_delta": 5.179967843549349e-08,
+        "new": 0.07376882154357414,
+        "old": 0.0737687697438957,
+        "signed_delta": 5.179967843549349e-08
+      },
+      "R_total": {
+        "absolute_delta": 5.179942255684189e-08,
+        "new": 0.07376891657224893,
+        "old": 0.07376886477282638,
+        "signed_delta": 5.179942255684189e-08
+      },
+      "T_total": {
+        "absolute_delta": 4.731415303993458e-08,
+        "new": 0.9067258998146732,
+        "old": 0.9067259471288263,
+        "signed_delta": -4.731415303993458e-08
+      },
+      "energy_closure_error_port_volume": {
+        "absolute_delta": 1.1263634469571571e-10,
+        "new": -1.4166978701268818e-10,
+        "old": -2.903344231697247e-11,
+        "signed_delta": -1.1263634469571571e-10
+      }
+    },
+    "relative_G_difference_over_old": {
+      "15": 1.004652763873567e-05,
+      "19": 1.0046527638890548e-05
+    },
+    "maximum_all80_modal_power_absolute_delta": 5.179967843549349e-08,
+    "observable_absolute_threshold": 0.0001,
+    "observable_engineering_check_pass": true,
+    "extra_h_observable_check_number": 1,
+    "convergence_certificate": false,
+    "automatic_G_tolerance_imposed": false
+  },
+  "fixed144_panels": {
+    "construction_geometry_cells": 72,
+    "same_panels_for72_and96": true,
+    "is_uniform_or_complete_enrichment_of96": false,
+    "axis_semantics": "geometric test panels, not pure directional error components",
+    "x": {
+      "review_status": "COMPLETE_IN_FULL_XYZ_COMPARISON",
+      "variants": {
+        "q15_independent_reduction": {
+          "old": {
+            "bubble_sq": 0.00011132535502553377,
+            "trace_l2": 0.10256289258363317
+          },
+          "new": {
+            "bubble_sq": 6.427782371157794e-05,
+            "trace_l2": 0.07690631006058447
+          }
+        },
+        "q15_production": {
+          "old": {
+            "bubble_sq": 0.00011132535502553377,
+            "trace_l2": 0.10256289258363314
+          },
+          "new": {
+            "bubble_sq": 6.427782371157794e-05,
+            "trace_l2": 0.07690631006058436
+          }
+        },
+        "q19_independent_reduction": {
+          "old": {
+            "bubble_sq": 0.00011132535502963476,
+            "trace_l2": 0.10256289260610627
+          },
+          "new": {
+            "bubble_sq": 6.427782371393369e-05,
+            "trace_l2": 0.07690631008124804
+          }
+        },
+        "q19_production": {
+          "old": {
+            "bubble_sq": 0.00011132535502963476,
+            "trace_l2": 0.10256289260610621
+          },
+          "new": {
+            "bubble_sq": 6.427782371393369e-05,
+            "trace_l2": 0.07690631008124794
+          }
+        }
+      }
+    },
+    "y": {
+      "review_status": "COMPLETE_IN_FULL_XYZ_COMPARISON",
+      "variants": {
+        "q15_independent_reduction": {
+          "old": {
+            "bubble_sq": 4.2709823745949717e-19,
+            "trace_l2": 3.1465050661683884e-09
+          },
+          "new": {
+            "bubble_sq": 9.838668875769577e-19,
+            "trace_l2": 3.2366622101232234e-09
+          }
+        },
+        "q15_production": {
+          "old": {
+            "bubble_sq": 4.2709823745949717e-19,
+            "trace_l2": 3.146505066168389e-09
+          },
+          "new": {
+            "bubble_sq": 9.838668875769577e-19,
+            "trace_l2": 3.2366622101232234e-09
+          }
+        },
+        "q19_independent_reduction": {
+          "old": {
+            "bubble_sq": 4.2714090300620106e-19,
+            "trace_l2": 3.1530252904771853e-09
+          },
+          "new": {
+            "bubble_sq": 9.838962318825659e-19,
+            "trace_l2": 3.24174277026493e-09
+          }
+        },
+        "q19_production": {
+          "old": {
+            "bubble_sq": 4.2714090300620106e-19,
+            "trace_l2": 3.1530252904771857e-09
+          },
+          "new": {
+            "bubble_sq": 9.838962318825659e-19,
+            "trace_l2": 3.24174277026493e-09
+          }
+        }
+      },
+      "interpretation": "Both indicators increase at tiny absolute levels near the numerical floor; not all-axis improvement."
+    },
+    "z": {
+      "review_status": "COMPLETE_IN_FULL_XYZ_COMPARISON",
+      "variants": {
+        "q15_independent_reduction": {
+          "old": {
+            "bubble_sq": 6.529416789343228e-06,
+            "trace_l2": 0.0038148356347296685
+          },
+          "new": {
+            "bubble_sq": 6.529412175392949e-06,
+            "trace_l2": 0.003814826698600942
+          }
+        },
+        "q15_production": {
+          "old": {
+            "bubble_sq": 6.529416789343228e-06,
+            "trace_l2": 0.0038148356347296607
+          },
+          "new": {
+            "bubble_sq": 6.529412175392949e-06,
+            "trace_l2": 0.0038148266986009313
+          }
+        },
+        "q19_independent_reduction": {
+          "old": {
+            "bubble_sq": 6.529416789271858e-06,
+            "trace_l2": 0.003814835634834229
+          },
+          "new": {
+            "bubble_sq": 6.5294121752355975e-06,
+            "trace_l2": 0.0038148266985908123
+          }
+        },
+        "q19_production": {
+          "old": {
+            "bubble_sq": 6.529416789271858e-06,
+            "trace_l2": 0.0038148356348342224
+          },
+          "new": {
+            "bubble_sq": 6.5294121752355975e-06,
+            "trace_l2": 0.003814826698590801
+          }
+        }
+      }
+    },
+    "combined_working_decision": "EMPIRICALLY_QUALIFIED_WORKING_STEP",
+    "working_step_qualified": true,
+    "q19_complete": true,
+    "all_actual_same_panel_prerequisites_pass": true,
+    "normalized_worst_panel_metrics": {
+      "B": {
+        "new": [
+          1.3173473595532993e-06,
+          1.3173473596015796e-06
+        ],
+        "old": [
+          2.281567016834216e-06,
+          2.2815670169182647e-06
+        ],
+        "sign": "improvement"
+      },
+      "C": {
+        "new": [
+          0.011009853624748761,
+          0.011009853627706963
+        ],
+        "old": [
+          0.014682832056135332,
+          0.014682832059352573
+        ],
+        "sign": "improvement"
+      }
+    }
+  },
+  "candidate144": {
+    "capture_pass": true,
+    "fresh_native_factor_attempts": 2,
+    "native_orderings": [
+      "COLAMD",
+      "MMD_AT_PLUS_A"
+    ],
+    "native_factor_attempts_failed": true,
+    "solution_produced": false,
+    "full_recovery_performed": false,
+    "convergence_claimed": false,
+    "failure_scope": "native expansion diagnostics under original6GiB AS; exact failed allocation size and fault-time VmSize unavailable"
+  },
+  "resource_policy": {
+    "scientific_process_address_space_limit_bytes": 6442450944,
+    "process_tree_RSS_limit_bytes": 8589934592,
+    "swap_bytes_required": 0,
+    "limits_increased": false,
+    "actual_measured_VmSize_subtraction_bytes": 0,
+    "postfactor_budget_correction": {
+      "removed_nonexistent_future_graph_mask_bytes": 187393920,
+      "actual_factor_allocator_and_graph_pages_still_charged": true
+    }
+  },
+  "costs_seconds": {
+    "successful96_capture": 50.85859314700065,
+    "successful96_light_solver": 112.40468950399372,
+    "successful96_full_recovery": 55.93866419099504,
+    "successful96_three_stage_path_rounded": 219.20195,
+    "successful96_G_diagnostic": 79.20622790900234,
+    "failed96_attempt01": 110.4271998530021,
+    "failed96_attempt01_phase": "after native COLAMD factor returned, prospective postfactor AS future-allocation gate rejected; no apply and no solution",
+    "failed144_COLAMD": 125.4950202129985,
+    "failed144_MMD_AT_PLUS_A": 103.12516698600666,
+    "scope_note": "Three-stage96 total excludes mapping, native qualification, G/panel diagnostics and failed attempts. Ledger total includes completed supervised stages only; no preparation or waiting wall time.",
+    "control96_successful_stages": 9,
+    "control96_failed_stages": 1,
+    "control96_successful_seconds": 1167.5984722499852,
+    "control96_failed_seconds": 110.4271998530021,
+    "reused72_baseline_panels_and_maps_charged_again": false
+  },
+  "next108": {
+    "status": "PREPARATION_ONLY_AS_OF_SNAPSHOT",
+    "top_observed_pair_zero_based": [
+      1,
+      14
+    ],
+    "other_legal_pairs_without_independent_probe_count": 65,
+    "unprobed_pairs_are_zero_score": false,
+    "launch_requires_actual96_working_acceptance": true,
+    "complete_all_direction_ranking_claimed": false,
+    "actual96_working_acceptance_prerequisite_satisfied": true,
+    "remaining_execution_gates": "actual108 map/native binding and original fresh resource gates"
+  },
+  "limitations": [
+    "No rigorous continuous error bound or convergence claim.",
+    "One small observable change is not sufficient spatial accuracy evidence.",
+    "Existing144 panels do not independently enrich every96 cell.",
+    "No full L/U export or entry-wise factor audit.",
+    "No large-scale BAL_H solver/scalability claim.",
+    "Zero initial guess; no warm-start speedup claim.",
+    "144 capture success is not linear solve or scientific solution success."
+  ],
+  "finalization_pending": [],
+  "sources": [
+    {
+      "file": "phase3_coverage72_working_step_acceptance.json",
+      "sha256": "3eb316f492f5ed3806fc233b2cd19255b106bfc0f5fd7b7b63a9912f53ef89c8",
+      "bytes": 11165
+    },
+    {
+      "file": "phase3_coverage72_fixed144_working_comparison_review.json",
+      "sha256": "18f75554856e2c6fd1dc34c12caa063f9735ca9415a36d3aef519ffed56b27e2",
+      "bytes": 22888
+    },
+    {
+      "file": "phase3_coverage72_saved_recovery_attempt01/primary_result.json",
+      "sha256": "0977ab25ab965f4defb12b1235b3b4eddf2e426c70caab4d3cb0af5b6e34e9b7",
+      "bytes": 102951
+    },
+    {
+      "file": "phase3_coverage96_payload_map_candidate/static_plan.json",
+      "sha256": "f9691d0d2a69d53e130b3968937f5f7158fb574020c08f2ba2c888137673da0a",
+      "bytes": 100387
+    },
+    {
+      "file": "phase3_coverage96_saved_recovery_attempt01/primary_result.json",
+      "sha256": "3c5b7b95d1ed7d430f616dea1319f41e8e1d566ce8a5de44d428195482ba02c8",
+      "bytes": 104070
+    },
+    {
+      "file": "phase3_coverage96_saved_recovery_terminal_review.json",
+      "sha256": "1779c9db22076e6cb8266f5314fd6cae7b50754ab191af88fa7da81eab8b2b44",
+      "bytes": 5946
+    },
+    {
+      "file": "phase3_coverage96_saved_linear_terminal_review.json",
+      "sha256": "2cc02f35e3733a2caa885036379c9b0f4e28b718b9364712a1532ad64df29ccd",
+      "bytes": 3789
+    },
+    {
+      "file": "phase3_coverage96_G_change_terminal_review.json",
+      "sha256": "599679c9eb54f68375da3b717ad2951d44be8ff12c82750dc2d2c69e5af198d6",
+      "bytes": 5753
+    },
+    {
+      "file": "phase3_coverage96_fixed144_x_comparison_review.json",
+      "sha256": "800788f1d7ae8a98fe6500591e89fb9236a1ef6be7a266071bb71c959a60dc25",
+      "bytes": 6428
+    },
+    {
+      "file": "phase3_coverage96_offline_attempt01_negative_review.json",
+      "sha256": "03eb3d32ed5d48300be967876d1ef8b1bb7af3618622f3c8d78e0c8c6b4ffb1b",
+      "bytes": 4197
+    },
+    {
+      "file": "phase3_coverage96_offline_attempt02_source_review.json",
+      "sha256": "a6d1b83dcf50db6ce57a26e3b475e8bd9edf51fb8e3cc04d65918b9e543d0a07",
+      "bytes": 3663
+    },
+    {
+      "file": "phase3_next144x_capture_terminal_review.json",
+      "sha256": "f0057d5ed3f76668efb944349ab6be4fa5907bfda9c307fc0575df8e4a12e3f8",
+      "bytes": 5530
+    },
+    {
+      "file": "phase3_next144x_offline_attempt01_negative_review.json",
+      "sha256": "f01f92ca29731ab278cd2513a7fa0e55a019b3e4e9beaf47e92de423f6a5b8ef",
+      "bytes": 3706
+    },
+    {
+      "file": "phase3_next144x_offline_attempt02_negative_review.json",
+      "sha256": "700ea65291ab80cd083ea646cd0fbbe47c93a757b78af710c01a6a6626cdd20f",
+      "bytes": 3734
+    },
+    {
+      "file": "phase3_current96_next108_static/measured_summary.json",
+      "sha256": "4d5ae242de42b1b0c032521996acb9b20c716b76de392a9773174bc4495868b4",
+      "bytes": 12004
+    },
+    {
+      "file": "phase3_coverage72_h_control_candidate/static_plan.json",
+      "sha256": "a0ffe808213b0ef8489b298ebbc935168dd6276c65627b708195b8ab709393e5",
+      "bytes": 72547
+    },
+    {
+      "file": "phase3_coverage96_fixed144_y_comparison_review.json",
+      "sha256": "9e00ce028389e11b57016218d40f84527a17452a9baca0b79cb337d09d101d05",
+      "bytes": 6454
+    },
+    {
+      "file": "phase3_coverage96_fixed144_working_comparison_review.json",
+      "sha256": "1bdc2f214a2ce5b0132c2ada1c4ac9ac0e1df902e2cbab29507d888720ed3d83",
+      "bytes": 22932
+    },
+    {
+      "file": "phase3_coverage96_working_step_acceptance.json",
+      "sha256": "0de627fe93b8ec4989cb18a3f35c0313794dd7198c41729e5ec52092b3cd9cc1",
+      "bytes": 9187
+    },
+    {
+      "file": "phase3_execution_ledger_v18.json",
+      "sha256": "4b7918f8fbf888b1170cdeae74c79eca4c3482624f2054547befa6d761fdf67b",
+      "bytes": 65582
+    }
+  ],
+  "scientific_evidence_as_of_utc": "2026-10-13T21:04:06.402146+00:00",
+  "previous_working_source72": {
+    "cells": 72,
+    "status": "EMPIRICALLY_QUALIFIED_WORKING_STEP",
+    "basis": "prospective empirical fixed-panel rule; complete xyz, q15/q19 and independent reductions",
+    "mesh_shape": [
+      12,
+      2,
+      3
+    ],
+    "all_cells_degree": 6,
+    "independent_fe_rows_excluding_fixed_auxiliaries": 48384,
+    "physical_fe_rows_before_periodicity": 51510,
+    "condensed_trace_plus_80_ports": 16064,
+    "solution_id": "921f4d581aff963535a87822eb9e5fa68793272cfc55b28b9d3103b14560b8ee",
+    "fixed_panel_metrics": {
+      "B": {
+        "new": [
+          2.281567016834216e-06,
+          2.2815670169182647e-06
+        ],
+        "old": [
+          0.004084526780124467,
+          0.004084526780125959
+        ],
+        "sign": "improvement"
+      },
+      "C": {
+        "new": [
+          0.014682832056135332,
+          0.014682832059352573
+        ],
+        "old": [
+          0.7437245896417001,
+          0.743724589641894
+        ],
+        "sign": "improvement"
+      }
+    },
+    "converged": false,
+    "continuous_error_bound": false,
+    "degree_inventory": {
+      "6": 72
+    },
+    "h_extent_range_in_original_model_length_units": {
+      "x": {
+        "min": 0.2138888888888888,
+        "max": 0.22037037037037044
+      },
+      "y": {
+        "min": 0.6481481481481481,
+        "max": 0.6481481481481481
+      },
+      "z": {
+        "min": 0.5185185185185182,
+        "max": 6.222222222222222
+      }
+    },
+    "h_extent_source": "direct differences of realized plan box coordinates; no nm conversion"
+  },
+  "accepted_working_source96": {
+    "cells": 96,
+    "mesh_shape": [
+      16,
+      2,
+      3
+    ],
+    "all_cells_degree": 6,
+    "h_change_from72": {
+      "axis": "x",
+      "source_intervals_zero_based": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "degree_inherited": true
+    },
+    "independent_fe_rows_excluding_fixed_auxiliaries": 64512,
+    "physical_fe_rows_before_periodicity": 68526,
+    "condensed_trace_plus_80_ports": 21392,
+    "solution_id": "bfaa46668898d08979e1cd7381ce2d00d5e30709680e148d80dfcfc8eb6437d6",
+    "full_field_and_80_ports_recovered": true,
+    "working_step_accepted": true,
+    "working_acceptance_status": "EMPIRICALLY_QUALIFIED_WORKING_STEP",
+    "official_observables": {
+      "R_total": 0.07376891657224893,
+      "T_total": 0.9067258998146732,
+      "A_volume_total": 0.01950518347140809,
+      "energy_closure_error_port_volume": -1.4166978701268818e-10
+    },
+    "full_active_relative_residual": 4.443201251009694e-12,
+    "independent_true_Ax_minus_b_relative": 3.0874019175403623e-12,
+    "initial_guess_policy": "explicit_zero_no_saved_warm_vector",
+    "fresh_factor_count": 1,
+    "krylov_iterations": 2,
+    "factor_seconds": 101.68839078600286,
+    "factor_timer_scope": "pure native splu call in current lightweight solver; not comparable to older dense construction-inclusive factor timers",
+    "full_L_U_export_or_entry_audit": false,
+    "public_shape_and_permutations_checked": true,
+    "validation_scope": "finite solve inputs/outputs; actual original A actions; independent saved Ax/b; full field recovery and all80 ports",
+    "degree_inventory": {
+      "6": 96
+    },
+    "h_extent_range_in_original_model_length_units": {
+      "x": {
+        "min": 0.11018518518518516,
+        "max": 0.21388888888888902
+      },
+      "y": {
+        "min": 0.6481481481481481,
+        "max": 0.6481481481481481
+      },
+      "z": {
+        "min": 0.5185185185185182,
+        "max": 6.222222222222222
+      }
+    },
+    "h_extent_source": "direct differences of realized plan box coordinates; no nm conversion",
+    "acceptance_basis": "Original prospective v6; full SAME actual144 xyz test panels, q15/q19 production and independent reductions; recovered96 solution and all80 modal power. This is not uniform h/2 testing of every96 cell.",
+    "fixed_panel_metrics": {
+      "B": {
+        "new": [
+          1.3173473595532993e-06,
+          1.3173473596015796e-06
+        ],
+        "old": [
+          2.281567016834216e-06,
+          2.2815670169182647e-06
+        ],
+        "sign": "improvement"
+      },
+      "C": {
+        "new": [
+          0.011009853624748761,
+          0.011009853627706963
+        ],
+        "old": [
+          0.014682832056135332,
+          0.014682832059352573
+        ],
+        "sign": "improvement"
+      }
+    },
+    "converged": false,
+    "continuous_error_bound": false,
+    "historical_primary_results_modified": false
+  },
+  "next192_common_x_test": {
+    "status": "PLANNED_PREPARATION_ONLY_AS_OF_SNAPSHOT",
+    "purpose": "same192-x tests for96 and an actual108 solution to address old144 panel blindspots",
+    "x_planned": true,
+    "y_executed": false,
+    "z_executed": false,
+    "complete_all_direction_coverage_claimed": false
+  },
+  "next_scientific_work": [
+    "actual108 coverage-control solution",
+    "same192-x tests for96 and108",
+    "second independent actual main-solution stability check; stronger blindspot testing"
+  ]
+}
