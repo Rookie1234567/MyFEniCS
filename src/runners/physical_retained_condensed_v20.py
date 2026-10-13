@@ -180,7 +180,7 @@ def persist_p4_failure_packet(
         suffix += 1
     arrays: dict[str, np.ndarray] = {}
     array_facts: dict[str, dict[str, Any]] = {}
-    for name in ("g", "c", "r", "port_state"):
+    for name in ("g", "c", "r", "port_state", "port_closure_residual"):
         value = packet.get(name)
         if value is None:
             continue
@@ -231,6 +231,7 @@ class RetainedCondensedRuntime:
     coarse_degree: int = 4
     sum_factorized_work: bool = False
     profile_identity: str | None = None
+    joint_port_refinement: bool = False
     pc_physical: dict[str, Any] | None = None
     fast_a4: dict[str, Any] | None = None
     component_options: Mapping[str, Any] | None = None
@@ -813,6 +814,7 @@ class RetainedCondensedRuntime:
                 coarse_degree=coarse_degree,
                 sum_factorized_work=bool(sum_factorized_work),
                 profile_identity=profile_identity,
+                joint_port_refinement=bool(is_v7),
                 pc_physical=pc_physical,
                 fast_a4=fast_a4, component_options=options, coarse_timings=[],
             )
@@ -913,6 +915,12 @@ class RetainedCondensedRuntime:
                 self.apply_original_a4,
                 action_timing=lambda: dict(self.last_a4_timing or {}),
                 port_closure=self.port_closure,
+                joint_port_refinement=bool(self.joint_port_refinement),
+                port_coupling_correction=(
+                    self.apply_port_coupling_correction
+                    if self.joint_port_refinement
+                    else None
+                ),
                 failure_sink=failure_sink,
             )
             factor = None
@@ -1093,8 +1101,54 @@ class RetainedCondensedRuntime:
             "d_term_norm": float(np.linalg.norm(d_term)),
             "sha256": hashlib.sha256(net.tobytes()).hexdigest(),
             "formula": "H*a-D*c",
-            "rhs_policy": "zero_port_rhs",
+            "rhs_policy": (
+                "joint_augmented_correction"
+                if getattr(self, "joint_port_refinement", False)
+                else "zero_port_rhs"
+            ),
+            # The ledger removes this private numerical payload before it
+            # writes scalar decision rows.  It is retained only long enough
+            # to form the coupled correction RHS.
+            "_closure_vector": net.copy(),
         }
+
+    def apply_port_coupling_correction(
+        self,
+        closure_error: np.ndarray,
+        target: PETSc.Vec,
+    ) -> None:
+        """Write ``B H^-1 e`` for the coupled p4 correction.
+
+        ``FullspaceDtnAction.apply_modal_rhs`` applies the carrier's ``B``
+        columns to modal amplitudes without applying another ``H^-1``.  The
+        division here therefore matches the block ``[V B; -D H]`` exactly.
+        """
+
+        action = self.p4["dtn_action"]
+        entries = tuple(action.carrier.entries)
+        error = np.ascontiguousarray(
+            np.asarray(closure_error, dtype=np.complex128)
+        )
+        if error.shape != (len(entries),) or not np.isfinite(error).all():
+            raise ValueError("p4 closure error does not match the carrier layout")
+        h = np.asarray(
+            [complex(entry.normalization_h) for entry in entries],
+            dtype=np.complex128,
+        )
+        if (
+            not np.isfinite(h).all()
+            or np.any(h == 0.0)
+        ):
+            raise FloatingPointError("p4 port normalization is invalid")
+        amplitudes = np.ascontiguousarray(error / h)
+        if not np.isfinite(amplitudes).all():
+            raise FloatingPointError("H^-1 times the p4 closure error is non-finite")
+        if target.getSize() != self.p4_system.full_rows:
+            raise ValueError("B H^-1 e target has the wrong FE storage size")
+        action.apply_modal_rhs(amplitudes, target)
+        target_values = np.asarray(target.getArray(readonly=True))
+        if not np.isfinite(target_values).all():
+            raise FloatingPointError("B H^-1 e produced non-finite FE values")
 
     def apply_original_a4(self, solution: PETSc.Vec, port_state: np.ndarray) -> PETSc.Vec:
         """Apply the independent original A4 action into owned storage.

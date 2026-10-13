@@ -33,6 +33,36 @@ def _matrix(value: Any, name: str) -> np.ndarray:
         raise ValueError(f"{name} must be a finite two-dimensional complex128 array")
     return value
 
+
+def _validated_port_rhs(port_rhs: Any, appended_rows: int) -> np.ndarray:
+    """Return a finite owned port RHS with the exact appended-row layout."""
+
+    count = int(appended_rows)
+    if count < 0:
+        raise ValueError("appended port row count may not be negative")
+    if port_rhs is None:
+        return np.zeros(count, dtype=np.complex128)
+    values = np.ascontiguousarray(np.asarray(port_rhs, dtype=np.complex128))
+    if values.shape != (count,):
+        raise ValueError("port RHS has the wrong appended-row shape")
+    if not np.isfinite(values).all():
+        raise FloatingPointError("port RHS contains non-finite values")
+    return values
+
+
+def _port_rhs_for_closure_error(closure_error: Any) -> np.ndarray:
+    """Use the residual sign for the block row ``-D c + H a``.
+
+    The closure diagnostic is ``e = H a - D c``.  Since the block action is
+    ``-D c + H a``, its residual RHS is ``-e``.
+    """
+
+    error = np.ascontiguousarray(np.asarray(closure_error, dtype=np.complex128))
+    if error.ndim != 1 or not np.isfinite(error).all():
+        raise FloatingPointError("port closure error must be a finite vector")
+    return np.ascontiguousarray(-error)
+
+
 def _canonical_csr(matrix: Any) -> sparse.csr_matrix:
     csr = sparse.csr_matrix(matrix, dtype=np.complex128, copy=True)
     csr.sum_duplicates()
@@ -435,12 +465,24 @@ class P4CellCondensedInverse:
             self._xiB_by_cell[index] = np.ascontiguousarray(lu_solve(self.condensed.interior_lu_by_class[cell.class_key], Bi))
         return Bi, Di, ports
 
-    def _reduce_storage_rhs(self, rhs: PETSc.Vec) -> PETSc.Vec:
+    def _reduce_storage_rhs(
+        self, rhs: PETSc.Vec, *, port_rhs: Any = None
+    ) -> PETSc.Vec:
         system = self.condensed; active_original = system.trace_constraints.owned_active_original_dofs
+        port_values = _validated_port_rhs(port_rhs, system.appended_rows)
         reduced = system.create_augmented_vector()
         try:
             if len(active_original):
                 reduced.getArray()[:len(active_original)] = np.asarray(rhs.getValues(active_original), dtype=PETSc.ScalarType)
+            if port_values.size and np.any(port_values != 0.0):
+                port_rows = system.active_rows + np.arange(
+                    system.appended_rows, dtype=PETSc.IntType
+                )
+                reduced.setValues(
+                    port_rows,
+                    np.asarray(port_values, dtype=PETSc.ScalarType),
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
             if len(self._slave_original) and np.any(rhs.getValues(self._slave_original) != 0.0):
                 raise ValueError("native p4 RHS violates exact MPC slave-zero storage")
             for index, cell in enumerate(system.cell_recovery_maps):
@@ -475,14 +517,21 @@ class P4CellCondensedInverse:
             raise
         self.solve_count += 1; return solution
 
-    def apply(self, rhs: PETSc.Vec) -> PETSc.Vec:
+    def apply(self, rhs: PETSc.Vec, *, port_rhs: Any = None) -> PETSc.Vec:
         started = perf_counter()
+        if self.destroyed or self.condensed is None:
+            raise RuntimeError("p4 cell-condensed inverse has been destroyed")
+        port_values = _validated_port_rhs(
+            port_rhs, self.condensed.appended_rows
+        )
         audit: dict[str, Any] = {
             "schema_version": "task039extra.v18.p4-cell-condensed-inverse.v1",
             "input_is_mpc_dual_storage": True,
             "duplicate_C_H_applied": False,
             "factor_solve_call_delta": 0,
             "input_finite": None,
+            "port_rhs_finite": bool(np.isfinite(port_values).all()),
+            "port_rhs_norm": float(np.linalg.norm(port_values)),
             "solution_finite": None,
             "output_finite": None,
         }
@@ -505,7 +554,16 @@ class P4CellCondensedInverse:
             audit["input_finite"] = input_finite
             if not input_finite:
                 raise ValueError("native p4 RHS contains non-finite values")
-            if rhs.norm() == 0.0:
+            # Keep the historical PETSc norm shortcut when no explicit port
+            # RHS is supplied.  Joint corrections must inspect both actual
+            # vector payloads so a zero FE RHS with nonzero port data solves.
+            zero_rhs = (
+                rhs.norm() == 0.0
+                if port_rhs is None
+                else not np.any(rhs_values != 0.0)
+                and not np.any(port_values != 0.0)
+            )
+            if zero_rhs:
                 result = rhs.duplicate()
                 result.set(PETSc.ScalarType(0.0))
                 self.last_port_solution = np.zeros(
@@ -514,6 +572,7 @@ class P4CellCondensedInverse:
                 audit.update(
                     {
                         "status": "ZERO_RHS_DIRECT_ZERO",
+                        "zero_shortcut_reason": "both_fe_and_port_rhs_exactly_zero",
                         "slave_zero": True,
                         "solution_finite": True,
                         "output_finite": True,
@@ -522,7 +581,7 @@ class P4CellCondensedInverse:
                 )
                 return result
             section_started = perf_counter()
-            reduced_rhs = self._reduce_storage_rhs(rhs)
+            reduced_rhs = self._reduce_storage_rhs(rhs, port_rhs=port_rhs)
             audit["rhs_reduce_seconds"] = perf_counter()-section_started
             reduced_values = np.asarray(reduced_rhs.getArray(readonly=True))
             if not np.isfinite(reduced_values).all():
@@ -679,6 +738,8 @@ class P4RefinementLedger:
         tolerance: float = 1.0e-10,
         max_refinements: int = 2,
         port_closure: Callable[[PETSc.Vec, np.ndarray], Mapping[str, Any]] | None = None,
+        joint_port_refinement: bool = False,
+        port_coupling_correction: Callable[[np.ndarray, PETSc.Vec], None] | None = None,
         action_timing: Callable[[], Mapping[str, Any]] | None = None,
         failure_sink: Callable[[dict[str, Any]], None] | None = None,
     ) -> None:
@@ -707,7 +768,23 @@ class P4RefinementLedger:
         self.failure_sink = failure_sink
         if not callable(port_closure):
             raise TypeError("P4RefinementLedger requires an independent port_closure callback")
+        self.joint_port_refinement = bool(joint_port_refinement)
+        if self.joint_port_refinement and self.coarse_degree != 4:
+            raise ValueError("joint port refinement is restricted to exact p4")
+        if port_coupling_correction is not None and not callable(
+            port_coupling_correction
+        ):
+            raise TypeError("port_coupling_correction must be callable or None")
+        if (
+            self.joint_port_refinement
+            and int(inverse.condensed.appended_rows) > 0
+            and port_coupling_correction is None
+        ):
+            raise ValueError(
+                "joint port refinement requires a B H^-1 e callback"
+            )
         self.port_closure = port_closure
+        self.port_coupling_correction = port_coupling_correction
         self.logical_apply_calls = 0
         self.last_audit: dict[str, Any] = {}
         self.total_port_solution = np.zeros(
@@ -735,11 +812,32 @@ class P4RefinementLedger:
     def _port_closure_facts(
         self,
         total: PETSc.Vec,
-    ) -> dict[str, Any]:
+    ) -> tuple[dict[str, Any], np.ndarray | None]:
         """Check the accumulated carrier equation independently of A4(c)."""
 
         try:
             facts = dict(self.port_closure(total, self.total_port_solution))
+            closure_vector = facts.pop("_closure_vector", None)
+            if self.joint_port_refinement and closure_vector is not None:
+                closure_vector = np.ascontiguousarray(
+                    np.asarray(closure_vector, dtype=np.complex128)
+                )
+                if (
+                    closure_vector.shape != (self.inverse.condensed.appended_rows,)
+                    or not np.isfinite(closure_vector).all()
+                ):
+                    facts["finite"] = False
+                    facts["error"] = (
+                        "port closure vector is non-finite or has the wrong shape"
+                    )
+                    closure_vector = None
+            elif self.joint_port_refinement and self.inverse.condensed.appended_rows:
+                facts["finite"] = False
+                facts["error"] = "port closure callback omitted its residual vector"
+            else:
+                # The scalar-only historical closure API remains sufficient
+                # when the opt-in joint correction is disabled.
+                closure_vector = None
             status = str(facts.get("status", "P4_NUMERICAL_UNQUALIFIED"))
             if status == "PASS":
                 relative = float(facts.get("relative_residual", np.inf))
@@ -747,11 +845,13 @@ class P4RefinementLedger:
                 if not finite or not np.isfinite(relative) or relative > self.tolerance:
                     status = "P4_NUMERICAL_UNQUALIFIED"
             facts["status"] = status
+            if self.joint_port_refinement:
+                facts["closure_vector_available"] = closure_vector is not None
             facts.setdefault("tolerance", self.tolerance)
             if self.p4_compatibility_alias:
                 facts.update(coarse_degree=3, coarse_operator="A3",
                              p4_ledger_name_is_compatibility_alias=True)
-            return facts
+            return facts, closure_vector
         except BaseException as error:
             return {
                 "status": "P4_NUMERICAL_UNQUALIFIED",
@@ -759,10 +859,12 @@ class P4RefinementLedger:
                 "error_type": type(error).__name__,
                 "error": str(error),
                 "tolerance": self.tolerance,
+                **({"closure_vector_available": False}
+                   if self.joint_port_refinement else {}),
                 **({"coarse_degree": 3, "coarse_operator": "A3",
                     "p4_ledger_name_is_compatibility_alias": True}
                    if self.p4_compatibility_alias else {}),
-            }
+            }, None
 
     @staticmethod
     def _factor_delta(
@@ -793,6 +895,8 @@ class P4RefinementLedger:
             "matrix_identity": dict(self.inverse.matrix_identity),
             "factor_counts": self._factor_counts(),
             "port_state": self._port_facts(),
+            **({"joint_port_refinement": True}
+               if self.joint_port_refinement else {}),
             "logical_wall_seconds": float(
                 perf_counter() - getattr(self, "_logical_started", perf_counter())
             ),
@@ -805,6 +909,11 @@ class P4RefinementLedger:
             "matrix_identity": facts["matrix_identity"],
             "factor_counts": facts["factor_counts"],
             "port_state": np.asarray(self.total_port_solution).copy(),
+            "port_closure_residual": (
+                None
+                if getattr(self, "_current_port_closure_residual", None) is None
+                else np.asarray(self._current_port_closure_residual).copy()
+            ),
             "g": np.asarray(rhs.getArray(readonly=True)).copy(),
             "c": None if total is None else np.asarray(total.getArray(readonly=True)).copy(),
             "r": None if residual is None else np.asarray(residual.getArray(readonly=True)).copy(),
@@ -826,6 +935,8 @@ class P4RefinementLedger:
         timing_keys = ("rhs_reduce_seconds", "actual_factor_solve_seconds", "internal_recovery_seconds",
                        f"{operator_timing}_wall_seconds", f"{operator_timing}_volume_seconds",
                        f"{operator_timing}_dtn_seconds", "port_closure_seconds")
+        if self.joint_port_refinement:
+            timing_keys += ("port_coupling_correction_seconds",)
         timings = {key: 0.0 for key in timing_keys}
         inverse_attempts = []
 
@@ -840,6 +951,7 @@ class P4RefinementLedger:
         residual = None
         failure_recorded = False
         self.total_port_solution.fill(0.0)
+        self._current_port_closure_residual = None
         try:
             if rhs.getSize() != self.inverse.condensed.full_rows:
                 raise ValueError("p4 refinement RHS has the wrong storage size")
@@ -898,7 +1010,10 @@ class P4RefinementLedger:
                 finally:
                     applied.destroy()
                 section_started = perf_counter()
-                port_facts = self._port_closure_facts(total)
+                port_facts, closure_vector = self._port_closure_facts(total)
+                self._current_port_closure_residual = (
+                    None if closure_vector is None else closure_vector.copy()
+                )
                 closure_wall = perf_counter()-section_started
                 timings["port_closure_seconds"] += closure_wall
                 row = {
@@ -921,19 +1036,39 @@ class P4RefinementLedger:
                     ),
                     "port_closure_wall_seconds": closure_wall,
                 }
+                if self.joint_port_refinement:
+                    row["refinement_rhs_policy"] = "uneliminated_augmented_residual"
                 if self.p4_compatibility_alias:
                     row.update(coarse_degree=3, coarse_operator="A3",
                                p4_ledger_name_is_compatibility_alias=True)
                 rows.append(row)
-                if port_facts.get("status") != "PASS":
-                    error = FloatingPointError(
-                        "accumulated p4 port closure is not qualified"
+                closure_relative = float(port_facts.get("relative_residual", np.inf))
+                if not self.joint_port_refinement:
+                    # Preserve the historical p3/default contract: closure is
+                    # a scalar early gate and corrections use only FE residual.
+                    if port_facts.get("status") != "PASS":
+                        error = FloatingPointError(
+                            "accumulated p4 port closure is not qualified"
+                        )
+                        self._failure(rhs, total, residual, rows, error=error)
+                        failure_recorded = True
+                        residual.destroy()
+                        residual = None
+                        raise error
+                else:
+                    closure_finite = bool(
+                        port_facts.get("finite", False)
+                        and np.isfinite(closure_relative)
                     )
-                    self._failure(rhs, total, residual, rows, error=error)
-                    failure_recorded = True
-                    residual.destroy()
-                    residual = None
-                    raise error
+                    if not closure_finite or closure_vector is None:
+                        error = FloatingPointError(
+                            "joint p4 port closure is non-finite or unavailable"
+                        )
+                        self._failure(rhs, total, residual, rows, error=error)
+                        failure_recorded = True
+                        residual.destroy()
+                        residual = None
+                        raise error
                 if not np.isfinite(relative):
                     error = FloatingPointError("p4 refinement residual is non-finite")
                     self._failure(rhs, total, residual, rows, error=error)
@@ -941,11 +1076,19 @@ class P4RefinementLedger:
                     residual.destroy()
                     residual = None
                     raise error
-                if relative <= self.tolerance:
+                closure_pass = (
+                    port_facts.get("status") == "PASS"
+                    and closure_relative <= self.tolerance
+                )
+                if relative <= self.tolerance and (
+                    closure_pass if self.joint_port_refinement else True
+                ):
                     residual.destroy()
                     residual = None
                     self.last_audit = {
                         "status": "P4_RETURN_PASS",
+                        **({"joint_port_refinement": True}
+                           if self.joint_port_refinement else {}),
                         **({"coarse_degree": 3, "coarse_operator": "A3",
                             "p4_ledger_name_is_compatibility_alias": True}
                            if self.p4_compatibility_alias else {}),
@@ -958,21 +1101,76 @@ class P4RefinementLedger:
                     }
                     return total
                 if refinement == self.max_refinements:
-                    error = RuntimeError("p4 A4 residual exceeded the qualified limit")
+                    error = RuntimeError(
+                        "p4 coupled A4/port residual exceeded the qualified limit"
+                        if self.joint_port_refinement
+                        else "p4 A4 residual exceeded the qualified limit"
+                    )
                     self._failure(rhs, total, residual, rows, error=error)
                     failure_recorded = True
                     residual.destroy()
                     residual = None
                     raise error
                 before = self._factor_counts()
+                correction_rhs = None
+                coupling_term = None
                 try:
-                    correction = self.inverse.apply(residual)
+                    if not self.joint_port_refinement:
+                        correction = self.inverse.apply(residual)
+                    else:
+                        if closure_vector is None:
+                            raise ValueError(
+                                "joint p4 correction requires the port closure vector"
+                            )
+                        port_rhs = _port_rhs_for_closure_error(closure_vector)
+                        correction_rhs = residual.duplicate()
+                        residual.copy(correction_rhs)
+                        if np.any(closure_vector != 0.0):
+                            if self.port_coupling_correction is None:
+                                raise ValueError(
+                                    "nonzero p4 port closure requires the B H^-1 e correction"
+                                )
+                            coupling_term = residual.duplicate()
+                            coupling_term.set(PETSc.ScalarType(0.0))
+                            correction_started = perf_counter()
+                            self.port_coupling_correction(
+                                closure_vector, coupling_term
+                            )
+                            coupling_values = np.asarray(
+                                coupling_term.getArray(readonly=True),
+                                dtype=np.complex128,
+                            )
+                            if not np.isfinite(coupling_values).all():
+                                raise FloatingPointError(
+                                    "B H^-1 e produced a non-finite FE vector"
+                                )
+                            correction_rhs.axpy(
+                                PETSc.ScalarType(-1.0), coupling_term
+                            )
+                            timings["port_coupling_correction_seconds"] += (
+                                perf_counter() - correction_started
+                            )
+                        correction_values = np.asarray(
+                            correction_rhs.getArray(readonly=True),
+                            dtype=np.complex128,
+                        )
+                        if not np.isfinite(correction_values).all():
+                            raise FloatingPointError(
+                                "joint p4 FE correction RHS is non-finite"
+                            )
+                        correction = self.inverse.apply(
+                            correction_rhs, port_rhs=port_rhs
+                        )
                     inverse_record()
                 except BaseException as exc:
                     self._failure(rhs, total, residual, rows, error=exc)
                     failure_recorded = True
                     raise
                 finally:
+                    if coupling_term is not None:
+                        coupling_term.destroy()
+                    if correction_rhs is not None:
+                        correction_rhs.destroy()
                     residual.destroy()
                     residual = None
                 after = self._factor_counts()
@@ -1016,6 +1214,7 @@ class P4RefinementLedger:
                 )
             self.last_audit["timing"] = timing_facts
             self.last_audit["inverse_attempts"] = inverse_attempts
+            self._current_port_closure_residual = None
 
 
 __all__ = [
