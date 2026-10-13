@@ -4,11 +4,23 @@
 
 V12的W0.7 warm运行仍是未通过的历史负结果：模态子求解达到32步上限，原方程残差和近似预条件器接纳线均未通过。后续V13合同测试通过，不改变V12的consumer/finalizer结论，也没有把该次运行补成成功。
 
-V13实现及A/B/C合同测试现已完成分批验证。A、B各由多个已批准attempt组成；C的同一个registered entity-closure tiny真实FE selector在serial与MPI2分别通过。结果适用于各attempt所绑定的源码与环境，不是一个最终SHA上的整组一次性通过。随后又完成30个serial清场/服务合同节点，以及一次MPI8 native ABI-only预资格（8个rank检查通过）；该ABI没有启动pytest或数值worker。尚未执行W0.7 p6/h0.70/M400 MPI8正式warm、QEP、完整外场/五残差、physics或R/T/A计算。
+V13实现及A/B/C合同测试现已完成分批验证。A、B各由多个已批准attempt组成；C的同一个registered entity-closure tiny真实FE selector在serial与MPI2分别通过。结果适用于各attempt所绑定的源码与环境，不是一个最终SHA上的整组一次性通过。随后又完成30个serial清场/服务合同节点，以及clean-HEAD MPI8 native ABI-only预资格（8个rank检查通过）。其后正式W0.7 p6/h0.70/M400 MPI8 warm已运行一次，但在构造`S_B`前因workflow漏传V13 fresh-authority callback而以`IMPLEMENTATION_FAILURE`停止；没有到达outer、正式残差或R/T/A/physics门。本次复用已资格producer，未重新运行QEP；完整外场/最终五残差/physics/RTA尚未取得。
+
+### 2026-10-13：首场V13正式warm与callback接线回归
+
+| 项目 | 结果 | 证据与边界 |
+|---|---|---|
+| 正式warm | unit `task041-v13-main-warm-20261013t004546z.service`、Invocation `86a98c566c574e34969f5c8dbc58dece`；复用既有producer、未重算QEP；唯一service/finalizer wall `1369.03024578 s`。consumer分类`IMPLEMENTATION_FAILURE`：V13 fresh-authority callback没有从workflow传入LDU builder，builder在`S_B`构造入口拒绝；未进入outer，也没有official R/T/A、最终五残差或physics结论 | [supervision summary](../../results/task041_v13_main_warm_supervision_20261013T010533Z/summary.json)、[service parent](../../results/task041_v13_main_warm_supervision_20261013T010533Z/service_parent_summary.json)、[finalizer](../../results/task041_v13_main_warm_supervision_20261013T010533Z/finalizer/finalizer_summary.json)。这不是已证实的原方程或残差超限 |
+| 日志与运行实参 | 多rank traceback在combined stdout中交错，不能按相邻行逐rank配对；没有证据认定运行时源码与clean HEAD不一致。runtime argument object为`not_persisted` | [combined public stdout](../../results/task041_v13_main_warm_supervision_20261013T010533Z/log/public_command_stdout.txt)；保留原交错日志，不据此推断rank或源码差异 |
+| 资源与清场 | clean-HEAD [MPI8 ABI](../../results/task041_v13_clean_head_mpi8_abi_attempt_20261013T005504Z/native_abi.attempt.json)为8/8通过；warm fresh启动资源门通过且无resource stop。finalizer记录pre-exit成员清洁；service结束后的unit为inactive/dead、MainPID=0、ControlGroup为空 | 以warm supervision及finalizer原始记录为准；finalizer自身post-I/O采样时仍在其专属cgroup内的记录不等于退出后残留 |
+| 最小接线修复与回归 | workflow现在只对V13把factory已有的callback原对象传给LDU builder；V12/None仍不读取该V13属性。唯一serial selector通过，pytest父wall`6.385026524076238 s` | [定向attempt](../../results/task041_v13_callback_wiring_serial_final_attempt_20261013T022207Z/serial/pytest.attempt.json)、[更正receipt](../../results/task041_v13_callback_wiring_v5_docs_correction_20261013T023305Z/ledger_correction_receipt.json)。测试使用fake stage factory，并以AST执行生产调用表达式验证参数身份；不证明真实fresh-authority被执行，也不是warm重试 |
+| V5账目 | warm的`1369.03024578 s`服务entry已在此前265-entry快照中唯一存在；serial pytest entry亦已唯一追加。旧append脚本漏把后者加到canonical loader读取的顶层`charged_seconds`。现只修正顶层累计：`608018.1187479909 + 6.385026524076238 = 608024.503774515`；266条entries未改变。更正后ledger SHA `eb0c96e93082d89ca3a64f43d5513b7097efc4e16987f5d1f17226e44fdc6e41` | [V5更正receipt与前后字节快照](../../results/task041_v13_callback_wiring_v5_docs_correction_20261013T023305Z/ledger_correction_receipt.json)。原append receipt、attempt、raw保持不变；此更正receipt是累计收费完成的依据 |
+
+warm后的两文件接线修复及一次serial合同回归已完成，但这只定位并修正了callback转交缺口。实现错误重试尚未取得针对warm的具体批准；本记录不授权或安排第二场warm。
 
 用户后来明确要求取消内存节点绑定。最新C MPI2及此后测试采用操作系统默认内存策略，不强制node0或node1，也不把页分布当资格门；CPU14/18小测试映射、80/72/8 GiB cap/warning/W和384 GiB双节点合计reserve保持。node1至少80 GiB只作资源可用性检查，不表示页必须位于node1。A/B及较早C serial仍按各自attempt记录旧内存策略；不能倒改旧attempt的membind身份或历史ABI失败。
 
-C MPI2 attempt收口时V5历史快照由261项增至262项，SHA为`64fd8d5ffc3a62aa4e49a8058e81e5701aa0a1107269c35bcae50cf1d2396ec4`；该值不是当前账目。本次文档收口前的live V5为264项，SHA `17376a6343ac65f359f059ad632e9a305ce28a60c683164f6a16539ee6e767ce`。C MPI2 pytest父wall `153.515994687099 s`只记一次；ABI和资源门不收费。
+C MPI2 attempt收口时V5历史快照由261项增至262项，SHA为`64fd8d5ffc3a62aa4e49a8058e81e5701aa0a1107269c35bcae50cf1d2396ec4`；该值不是当前账目。随后30项serial合同与MPI8 ABI阶段曾记录live V5为264项、SHA `17376a6343ac65f359f059ad632e9a305ce28a60c683164f6a16539ee6e767ce`；这是历史阶段快照。当前266条entries与更正后的顶层累计值见上表。C MPI2 pytest父wall `153.515994687099 s`只记一次；ABI和资源门不收费。
 
 ## A/B/C合同测试汇总
 
@@ -25,7 +37,7 @@ C MPI2 attempt收口时V5历史快照由261项增至262项，SHA为`64fd8d5ffc3a
 | owned-session与setup边界serial合同 | 先3项清场合同通过；首attempt随后在test351 setup-boundary fixture因缺`include_blis`关键字失败，保留该失败，父wall `6.377355428179726 s`。修复仅让fixture显式接收该关键字；新attempt的27项全部通过，父wall `10.62438608892262 s`。跨两attempt为30个合同节点通过，wall各唯一入账；mock节点不构成真实OS/MPI8清场资格 | [首attempt](../../results/task041_v13_owned_session_serial_contract_attempt_20261012T195835Z/serial/pytest.attempt.json)、[首stdout](../../results/task041_v13_owned_session_serial_contract_attempt_20261012T195835Z/serial/pytest.stdout.log)、[修复后27项attempt](../../results/task041_v13_owned_session_serial_remaining_attempt_20261012T200713Z/serial/pytest.attempt.json)、[输出SHA清单](../../results/task041_v13_owned_session_serial_remaining_attempt_20261012T200713Z/OUTPUT_SHA256SUMS.json) |
 | MPI8 native ABI-only | 8/8 rank通过production rank qualification；固定CPU `[10,11,14,15,16,17,18,19]`，内存策略default/unbound，允许节点集合`[0,1]`；六线程变量、complex128、Int32与原生桥检查通过。parent wall `2.1766278869472444 s`；不计V5 | [native ABI attempt](../../results/task041_v13_mpi8_abi_rank_qualification_attempt_20261012T215842Z/native_abi.attempt.json)、[33项输出SHA清单](../../results/task041_v13_mpi8_abi_rank_qualification_attempt_20261012T215842Z/OUTPUT_SHA256SUMS.txt)、[post-shell identity rescan](../../results/task041_v13_mpi8_abi_rank_qualification_post_shell_identity_20261012T232030Z/post_shell_identity_rescan.json)。无pytest、FE、QEP或numerical worker；这是dirty 21路径map下的预资格，不是clean HEAD或warm资格 |
 
-两次serial合同attempt把V5从262项增至264项；ABI-only不增加V5。当前live ledger与本次文档更新前21路径身份见[待clean-source重绑的warm候选包](../../results/task041_v13_final_docs_warm_candidate_review_20261012T232650Z/README.md)。本阶段四份文档更新不改数值源码；正式warm仍需clean HEAD重绑与新的fresh host/resource/ABI审核。
+两次serial合同attempt当时把V5从262项增至264项；ABI-only不增加V5。随后clean-HEAD MPI8 ABI资格及正式warm各有独立证据；warm后的workflow/test接线修复仅由上述单项serial合同回归覆盖，尚无warm重试。旧的候选包身份与各历史source map继续按原receipt引用，不回写为当前配置。
 
 ### 源码身份沿革
 
