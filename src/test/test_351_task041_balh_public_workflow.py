@@ -2383,80 +2383,51 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
     assert len(operator_boundary_calls) == 4
     assert forbidden_side_build_calls == []
 
-    # Reuse the real public route/factory, then execute the exact LDU call
-    # expression at the existing pre-FE boundary.
-    candidate_setup_tree = ast.parse(inspect.getsource(real_candidate_setup))
-    ldu_call = next(
-        node
-        for node in ast.walk(candidate_setup_tree)
-        if isinstance(node, ast.Assign)
-        and any(
-            isinstance(target, ast.Name) and target.id == "context"
-            for target in node.targets
-        )
-        and isinstance(node.value, ast.Call)
-        and isinstance(node.value.func, ast.Name)
-        and node.value.func.id == "create_side_balh_block_ldu_preconditioner"
-    ).value
-    ldu_call_code = compile(
-        ast.fix_missing_locations(ast.Expression(body=ldu_call)),
-        inspect.getsourcefile(real_candidate_setup),
-        "eval",
-    )
+    # Exercise the extracted production candidate helper directly.  The
+    # builder is intercepted only at its public call boundary so this routing
+    # assertion does not depend on a complete FE side-inverse fixture.
+    from benchmarks import task041_exact_side_workflow as exact_side
+    from src.solvers import hybrid_fem_modal_block_ldu as block_ldu
+
     ldu_call_records = []
 
     def capture_ldu_call(*args, **kwargs):
         ldu_call_records.append((args, dict(kwargs)))
+        return {"captured_ldu_call": True}
 
-    call_locals_base = {
-        "layout": v13_helper_args[1],
-        "setup": v13_helper_args[0],
-        "side_inverses": {"bottom": object(), "top": object()},
-        "sampled_column_contract": v13_helper_kwargs[
-            "sampled_column_contract"
-        ],
-        "marker_callback": v13_helper_kwargs["marker_callback"],
-        "use_anderson_modal_inner": v13_helper_kwargs.get(
-            "use_anderson_modal_inner", False
-        ),
-        "fixed_h6_modal_gmres_research": v13_helper_kwargs[
-            "fixed_h6_modal_gmres_research"
-        ],
-        "fixed_physical_balh_selected": False,
-        "expected_modal_feedback_binding": None,
-        "complex_qr_research": v13_helper_kwargs.get(
-            "complex_qr_research", False
-        ),
-        "capture_modal_solve_trace": v13_helper_kwargs.get(
-            "capture_modal_solve_trace", False
-        ),
-    }
+    monkeypatch.setattr(
+        block_ldu, "create_side_balh_block_ldu_preconditioner", capture_ldu_call
+    )
 
-    def invoke_ldu_call(stage_factory, resolved_policy, snapshot_callback):
-        call_locals = {
-            **call_locals_base,
-            "factor_stage_factory": stage_factory,
-            "resolved_modal_solver_policy": resolved_policy,
-            "modal_snapshot_callback": snapshot_callback,
-        }
-        eval(
-            ldu_call_code,
-            {
-                "Mapping": worker.Mapping,
-                "create_side_balh_block_ldu_preconditioner": capture_ldu_call,
-            },
-            call_locals,
+    def invoke_candidate_helper(stage_factory, resolved_policy, snapshot_callback):
+        return exact_side._task041_create_candidate_ldu_context(
+            v13_helper_args[1],
+            v13_helper_args[0],
+            {"bottom": object(), "top": object()},
+            sampled_column_contract=v13_helper_kwargs[
+                "sampled_column_contract"
+            ],
+            marker_callback=v13_helper_kwargs["marker_callback"],
+            use_anderson_modal_inner=False,
+            fixed_h6_modal_gmres_research=True,
+            fixed_h6_modal_feedback_method=None,
+            modal_solver_policy=resolved_policy,
+            modal_snapshot_callback=snapshot_callback,
+            factor_stage_factory=stage_factory,
+            complex_qr_research=False,
+            capture_modal_solve_trace=False,
         )
-        return ldu_call_records[-1][1]
 
     v13_resolved_modal_policy = fixed_h6_binding_calls[-1][1][
         "modal_solver_policy"
     ]
-    ldu_kwargs = invoke_ldu_call(
+    v13_builder_result = invoke_candidate_helper(
         v13_helper_kwargs["factor_stage_factory"],
         v13_resolved_modal_policy,
         v13_helper_kwargs["modal_snapshot_callback"],
     )
+    assert v13_builder_result == {"captured_ldu_call": True}
+    ldu_kwargs = ldu_call_records[-1][1]
     assert ldu_kwargs["v13_fresh_authority_callback"] is (
         v13_helper_kwargs["factor_stage_factory"].v13_fresh_authority_callback
     )
@@ -2471,13 +2442,15 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
             raise AttributeError(name)
 
     ordinary_factory = FactoryWithoutV13Callback()
-    ldu_kwargs = invoke_ldu_call(
+    invoke_candidate_helper(
         ordinary_factory,
         v12_resolved_modal_policy,
         policy_helper_kwargs["modal_snapshot_callback"],
     )
+    ldu_kwargs = ldu_call_records[-1][1]
     assert ldu_kwargs["v13_fresh_authority_callback"] is None
-    ldu_kwargs = invoke_ldu_call(ordinary_factory, None, None)
+    invoke_candidate_helper(ordinary_factory, None, None)
+    ldu_kwargs = ldu_call_records[-1][1]
     assert ldu_kwargs["v13_fresh_authority_callback"] is None
 
     missing_callback_kwargs = dict(v13_helper_kwargs)

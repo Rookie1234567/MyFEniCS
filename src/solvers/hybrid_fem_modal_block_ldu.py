@@ -1321,7 +1321,10 @@ def _task041_v13_outer_workspace_pass_resource_contract_valid(
     expected_external_keys = {
         "bound_fresh_supervisor_sample",
         "tree_cgroup_and_all_mpi_ranks",
-        "node0_floor_headroom",
+        "initial_aggregate_memfree_gate",
+        "initial_node1_memfree_gate",
+        "aggregate_floor_headroom",
+        "node1_phase_headroom",
         "host_floor_headroom",
         "cgroup_ancestor_headroom",
         "case_cap_projection",
@@ -1419,13 +1422,19 @@ def _task041_v13_outer_workspace_pass_resource_contract_valid(
     cap = response.get("cap_bytes")
     applied_reserve = response.get("W_policy_reserve_bytes")
     node0_free = response.get("node0_memfree_bytes")
+    node1_free = response.get("node1_memfree_bytes")
+    aggregate_free = response.get("aggregate_memfree_bytes")
+    aggregate_reserve = response.get("aggregate_memfree_reserve_bytes")
+    aggregate_headroom = response.get("aggregate_floor_headroom_bytes")
+    node1_additional = response.get("node1_phase_additional_bytes")
+    node1_headroom = response.get("node1_headroom_after_phase_additional_bytes")
     host_available = response.get("host_available_bytes")
-    node0_after_floor = response.get("node0_headroom_after_floor_bytes")
-    host_after_floor = response.get("host_headroom_after_floor_bytes")
+    host_headroom = response.get("host_headroom_after_aggregate_reserve_bytes")
     cgroup_state = response.get("cgroup_limit_state")
     cgroup_headroom = response.get("cgroup_headroom_bytes")
     required = sum(selected_additional) + reserve
     projected = fresh + required if type(fresh) is int else None
+    initial_gate = payload.get("initial_resource_gate")
     if (
         type(fresh) is not int
         or fresh <= 0
@@ -1439,12 +1448,23 @@ def _task041_v13_outer_workspace_pass_resource_contract_valid(
         or payload.get("resource_B_bytes") != fresh
         or type(payload.get("node0_memfree_bytes")) is not int
         or payload.get("node0_memfree_bytes") != node0_free
+        or type(payload.get("node1_memfree_bytes")) is not int
+        or payload.get("node1_memfree_bytes") != node1_free
+        or type(payload.get("aggregate_memfree_bytes")) is not int
+        or payload.get("aggregate_memfree_bytes") != aggregate_free
+        or type(payload.get("aggregate_memfree_reserve_bytes")) is not int
+        or payload.get("aggregate_memfree_reserve_bytes") != aggregate_reserve
+        or type(payload.get("aggregate_floor_headroom_bytes")) is not int
+        or payload.get("aggregate_floor_headroom_bytes") != aggregate_headroom
+        or type(payload.get("node1_phase_additional_bytes")) is not int
+        or payload.get("node1_phase_additional_bytes") != node1_additional
+        or type(payload.get("node1_headroom_after_phase_additional_bytes")) is not int
+        or payload.get("node1_headroom_after_phase_additional_bytes")
+        != node1_headroom
         or type(payload.get("host_available_bytes")) is not int
         or payload.get("host_available_bytes") != host_available
-        or type(payload.get("node0_headroom_after_floor_bytes")) is not int
-        or payload.get("node0_headroom_after_floor_bytes") != node0_after_floor
-        or type(payload.get("host_headroom_after_floor_bytes")) is not int
-        or payload.get("host_headroom_after_floor_bytes") != host_after_floor
+        or type(payload.get("host_headroom_after_aggregate_reserve_bytes")) is not int
+        or payload.get("host_headroom_after_aggregate_reserve_bytes") != host_headroom
         or type(payload.get("sample_root_pid")) is not int
         or payload.get("sample_root_pid") != response.get("root_pid")
         or payload.get("rank_pids") != response.get("rank_pids")
@@ -1472,6 +1492,11 @@ def _task041_v13_outer_workspace_pass_resource_contract_valid(
         != sum(selected_additional)
         or not strict_integer_vector(payload.get("additional_bytes_by_rank"))
         or payload.get("additional_bytes_by_rank") != selected_additional
+        or not isinstance(initial_gate, Mapping)
+        or initial_gate.get("required") is not False
+        or initial_gate.get("source") != "supervisor_resource_preflight"
+        or initial_gate.get("initial_aggregate_memfree_minimum_bytes") != 464 * 2**30
+        or initial_gate.get("initial_node1_memfree_minimum_bytes") != 80 * 2**30
         or payload.get("projected_B_plus_delta_plus_W_bytes") != projected
         or response.get("phase") != phase
         or type(response.get("root_pid")) is not int
@@ -1489,16 +1514,36 @@ def _task041_v13_outer_workspace_pass_resource_contract_valid(
         or isinstance(response.get("sample_age_seconds"), bool)
         or not math.isfinite(float(response["sample_age_seconds"]))
         or not 0.0 <= float(response["sample_age_seconds"]) <= 2.0
-        or type(node0_free) is not int
-        or type(host_available) is not int
-        or node0_after_floor != node0_free - floor
-        or host_after_floor != host_available - floor
+        or any(
+            type(value) is not int
+            for value in (
+                node0_free,
+                node1_free,
+                aggregate_free,
+                aggregate_reserve,
+                aggregate_headroom,
+                node1_additional,
+                node1_headroom,
+                host_available,
+                host_headroom,
+            )
+        )
+        or aggregate_reserve != floor
+        or aggregate_free != node0_free + node1_free
+        or aggregate_headroom != aggregate_free - floor
+        or node1_additional != sum(selected_additional)
+        or node1_headroom != node1_free - node1_additional
+        or host_headroom != host_available - floor
         or response.get("projected_B_plus_delta_plus_W_bytes") != projected
         or projected is None
         or projected > cap
     ):
         return False
-    if node0_after_floor < required or host_after_floor < required:
+    if (
+        aggregate_headroom < required
+        or node1_headroom < 0
+        or host_headroom < required
+    ):
         return False
     if cgroup_state == "finite":
         if (
@@ -1555,6 +1600,7 @@ class Task041V13ConsistentModalSurrogateSystem:
         fresh_authority_callback: Callable[
             [str, Mapping[str, Any]], Mapping[str, Any]
         ] | None = None,
+        marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
         snapshot_callback: Callable[[Mapping[str, Any]], Mapping[str, Any] | None]
         | None = None,
     ) -> None:
@@ -1583,6 +1629,7 @@ class Task041V13ConsistentModalSurrogateSystem:
             }
         )
         self._fresh_authority_callback = fresh_authority_callback
+        self._marker_callback = marker_callback
         self._snapshot_callback = snapshot_callback
         self._destroyed = False
         self._solve_count = 0
@@ -1625,6 +1672,7 @@ class Task041V13ConsistentModalSurrogateSystem:
         local_error = None
         response: dict[str, Any] | None = None
         request_sha256 = None
+        request_json = None
         try:
             if self._destroyed:
                 raise RuntimeError("V13 modal surrogate is destroyed")
@@ -1638,31 +1686,116 @@ class Task041V13ConsistentModalSurrogateSystem:
             canonical = json.dumps(
                 dict(report), sort_keys=True, separators=(",", ":"), allow_nan=False
             )
+            request_json = canonical
             request_sha256 = hashlib.sha256(canonical.encode()).hexdigest()
         except Exception as exc:  # noqa: BLE001 - agree before the callback collective
             local_error = f"{type(exc).__name__}: {exc}"
-        request_rows = self.comm.allgather((local_error, request_sha256))
-        request_errors = [
-            f"rank {rank}: {error}"
-            for rank, (error, _digest) in enumerate(request_rows)
-            if error is not None
+        request_rows = self.comm.allgather(
+            {
+                "rank": int(self.comm.rank),
+                "error": local_error,
+                "request_sha256": request_sha256,
+                "request_json": request_json,
+                "marker_callback_available": callable(self._marker_callback),
+            }
+        )
+        request_errors = []
+        for rank, row in enumerate(request_rows):
+            if not isinstance(row, Mapping):
+                request_errors.append(f"rank {rank}: invalid preflight record")
+            elif row.get("error") is not None:
+                request_errors.append(f"rank {rank}: {row.get('error')}")
+        marker_presence = [
+            isinstance(row, Mapping)
+            and row.get("marker_callback_available") is True
+            for row in request_rows
         ]
+        if any(marker_presence) and not all(marker_presence):
+            request_errors.append(
+                "outer authority marker callback availability differs across ranks"
+            )
         request_digests = [
-            digest for error, digest in request_rows if error is None
+            row.get("request_sha256")
+            for row in request_rows
+            if isinstance(row, Mapping) and row.get("error") is None
         ]
-        if request_errors or len(request_digests) != int(self.comm.size):
-            raise RuntimeError(
+        if len(request_digests) != int(self.comm.size):
+            request_errors.append("request serialization missing on one or more ranks")
+        if not request_errors and len(set(request_digests)) != 1:
+            request_errors.append("outer restart report differs across ranks")
+        request_validation_error = None
+        if request_errors:
+            request_validation_error = (
                 "V13 outer restart report is unbindable: "
                 + "; ".join(request_errors)
             )
-        if len(set(request_digests)) != 1:
-            raise RuntimeError("V13 outer restart report differs across ranks")
+            marker_error = None
+            if all(marker_presence):
+                try:
+                    self._marker_callback(
+                        "v13_outer_workspace_authority",
+                        {
+                            "phase": phase,
+                            "request_sha256": request_sha256,
+                            "request_json": request_json,
+                            "request_preflight": request_rows,
+                            "request_validation_error": request_validation_error,
+                            "response": None,
+                            "rank_validation": [],
+                            "validation_error": request_validation_error,
+                        },
+                    )
+                except Exception as exc:  # noqa: BLE001 - retain request failure
+                    marker_error = f"{type(exc).__name__}: {exc}"
+            elif any(marker_presence):
+                marker_error = (
+                    "marker callback availability differs across ranks; "
+                    "collective marker was not attempted"
+                )
+            marker_errors = self.comm.allgather(marker_error)
+            marker_failures = [
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(marker_errors)
+                if error is not None
+            ]
+            if marker_failures:
+                request_validation_error += (
+                    "; request marker persistence also failed: "
+                    + "; ".join(marker_failures)
+                )
+            raise RuntimeError(request_validation_error)
         assert request_sha256 is not None
 
+        raw_response_json = None
+        raw_receipt_json = None
+        raw_capture_error = None
+        validated_response_json = None
         try:
-            raw_response = self._fresh_authority_callback(
-                phase, dict(report)
-            )
+            raw_response = self._fresh_authority_callback(phase, dict(report))
+            try:
+                raw_response_json = json.dumps(
+                    raw_response,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                )
+            except Exception as exc:  # noqa: BLE001 - keep capture failure diagnostic
+                raw_capture_error = f"response {type(exc).__name__}: {exc}"
+            if isinstance(raw_response, Mapping):
+                raw_receipt = raw_response.get("authority_receipt_payload")
+                if raw_receipt is not None:
+                    try:
+                        raw_receipt_json = json.dumps(
+                            raw_receipt,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                            allow_nan=False,
+                        )
+                    except Exception as exc:  # noqa: BLE001 - keep capture failure diagnostic
+                        receipt_error = f"receipt {type(exc).__name__}: {exc}"
+                        raw_capture_error = "; ".join(
+                            item for item in (raw_capture_error, receipt_error) if item
+                        )
             if not isinstance(raw_response, Mapping):
                 raise TypeError("V13 outer restart authority returned no record")
             response = dict(raw_response)
@@ -1702,29 +1835,107 @@ class Task041V13ConsistentModalSurrogateSystem:
                 raise ValueError(
                     "V13 outer restart pass fails recomputed fresh B/delta/W/floor evidence"
                 )
-            response_json = json.dumps(
+            validated_response_json = json.dumps(
                 response, sort_keys=True, separators=(",", ":"), allow_nan=False
             )
         except Exception as exc:  # noqa: BLE001 - collective result checked below
             local_error = f"{type(exc).__name__}: {exc}"
-            response_json = None
-        response_rows = self.comm.allgather((local_error, response_json))
+        response_rows = self.comm.allgather(
+            {
+                "validation_error": local_error,
+                "validated_response_json": validated_response_json,
+                "raw_response_json": raw_response_json,
+                "raw_receipt_json": raw_receipt_json,
+                "raw_capture_error": raw_capture_error,
+            }
+        )
         response_errors = [
+            f"rank {rank}: {row.get('validation_error')}"
+            for rank, row in enumerate(response_rows)
+            if isinstance(row, Mapping) and row.get("validation_error") is not None
+        ]
+        if any(not isinstance(row, Mapping) for row in response_rows):
+            response_errors.append("one or more ranks returned an invalid response record")
+        response_payloads = [
+            row.get("validated_response_json")
+            for row in response_rows
+            if isinstance(row, Mapping) and row.get("validation_error") is None
+        ]
+        if any(
+            isinstance(row, Mapping)
+            and row.get("validation_error") is None
+            and row.get("validated_response_json") is None
+            for row in response_rows
+        ):
+            response_errors.append("one or more ranks omitted a validated response")
+        validation_error = None
+        if response_errors or len(response_payloads) != int(self.comm.size):
+            validation_error = (
+                "V13 outer restart authority validation failed: "
+                + "; ".join(response_errors or ["response missing on one or more ranks"])
+            )
+        elif len(set(response_payloads)) != 1:
+            validation_error = "V13 outer restart authority differs across ranks"
+
+        marker_error = None
+        if callable(self._marker_callback):
+            try:
+                self._marker_callback(
+                    "v13_outer_workspace_authority",
+                    {
+                        "phase": phase,
+                        "request_sha256": request_sha256,
+                        "request": dict(report),
+                        "response": None if response is None else dict(response),
+                        "rank_validation": [
+                            {
+                                "rank": rank,
+                                "error": row.get("validation_error"),
+                                "validated_response": row.get(
+                                    "validated_response_json"
+                                ),
+                                "raw_response": row.get("raw_response_json"),
+                                "raw_receipt": row.get("raw_receipt_json"),
+                                "raw_capture_error": row.get("raw_capture_error"),
+                            }
+                            for rank, row in enumerate(response_rows)
+                        ],
+                        "validation_error": validation_error,
+                    },
+                )
+            except Exception as exc:  # noqa: BLE001 - preserve the authority failure below
+                marker_error = f"{type(exc).__name__}: {exc}"
+        marker_errors = self.comm.allgather(marker_error)
+        marker_failures = [
             f"rank {rank}: {error}"
-            for rank, (error, _payload) in enumerate(response_rows)
+            for rank, error in enumerate(marker_errors)
             if error is not None
         ]
-        response_payloads = [
-            payload for error, payload in response_rows if error is None
-        ]
-        if response_errors or len(response_payloads) != int(self.comm.size):
-            raise RuntimeError(
-                "V13 outer restart authority validation failed: "
-                + "; ".join(response_errors)
+
+        if validation_error is not None:
+            if marker_failures:
+                validation_error += (
+                    "; outer authority marker persistence also failed: "
+                    + "; ".join(marker_failures)
+                )
+            raise RuntimeError(validation_error)
+        if not isinstance(response, Mapping):
+            detail = "V13 outer restart authority response is missing"
+            if marker_failures:
+                detail += "; marker persistence also failed: " + "; ".join(
+                    marker_failures
+                )
+            raise TypeError(detail)
+        if marker_failures:
+            detail = (
+                "V13 outer authority marker persistence failed after decision "
+                f"{response.get('status')!r}"
             )
-        if len(set(response_payloads)) != 1:
-            raise RuntimeError("V13 outer restart authority differs across ranks")
-        assert response is not None
+            reasons = response.get("reasons")
+            if isinstance(reasons, list) and reasons:
+                detail += ": " + "; ".join(map(str, reasons))
+            detail += "; " + "; ".join(marker_failures)
+            raise RuntimeError(detail)
         self._outer_workspace_admissions[phase] = dict(response)
         return dict(response)
 
@@ -3903,6 +4114,7 @@ def build_task041_v13_consistent_modal_surrogate(
         top_action=top_action,
         side_operation_baseline=side_operation_baseline,
         fresh_authority_callback=fresh_authority_callback,
+        marker_callback=marker_callback,
         snapshot_callback=snapshot_callback,
     )
     system.record_side_operation_counts(side_operation_after_setup)
@@ -12052,7 +12264,7 @@ def create_side_balh_block_ldu_preconditioner(
     ):
         raise ValueError(
             "V13 requires explicit fixed-H6 research, no second feedback selector, "
-            "its sealed eight-column contract, and a fresh-authority callback"
+            "its sealed eight-column contract and fresh-authority callback"
         )
     if complex_qr_research and not use_anderson_modal_inner:
         raise ValueError(

@@ -466,6 +466,17 @@ def test_consumer_result_preserves_common_partial_failure(classification, tmp_pa
 
 def test_parent_writes_loader_identity_and_forwards_v2_limits(monkeypatch, tmp_path):
     config_path, config = _write_config(tmp_path)
+    output_root = tmp_path / "parent-output"
+    config["output_root"] = str(output_root)
+    config_path = output_root / "runtime_service_config.json"
+    service.bind_task041_output_roots(
+        output_root,
+        config["supervision_root"],
+        config_path,
+        create_output=True,
+    )
+    supervisor._write_json(config_path, config)
+    assert not os.path.lexists(config["supervision_root"])
     identity = _identity()
     monkeypatch.setattr(service, "_parent_unit_identity", lambda _unit: identity)
     monkeypatch.setattr(service, "_sparse_sample_factory", lambda: "sparse-sampler")
@@ -515,6 +526,8 @@ def test_parent_writes_loader_identity_and_forwards_v2_limits(monkeypatch, tmp_p
     assert manifest["invocation_id"] == INVOCATION_ID
     assert manifest["scope"] == "formal_consumer"
     assert manifest["representative_rhs_probe"] is None
+    assert manifest["output_root_binding"]["output_root"] == str(output_root)
+    assert manifest["output_root_binding"]["supervision_root_absent_by_lexists"] is True
     assert result["pre_exit_membership"]["pass"] is False
 
 
@@ -662,6 +675,8 @@ def test_fixed_pair_service_requires_full_config_and_canonical_v5_path(tmp_path)
             side_setup_schedule=None,
             comparison_mode=TASK041_P4_BACKEND_PAIR_MODE,
         )
+
+
     with pytest.raises(service.Task041ServiceError, match="canonical Review V5"):
         service._service_contract(
             {**config, "ledger_path": tmp_path / "wrong-ledger.json"},
@@ -822,6 +837,714 @@ def test_fixed_pair_service_requires_full_config_and_canonical_v5_path(tmp_path)
                 side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
                 comparison_mode=TASK041_P4_BACKEND_PAIR_MODE,
             )
+
+
+def test_task041_output_binding_and_real_supervised_child_manifest_order(
+    tmp_path,
+):
+    output_root = tmp_path / "attempt-out"
+    supervision_root = tmp_path / "attempt-supervision"
+    runtime_config = output_root / "runtime_service_config.json"
+    prepared = service.bind_task041_output_roots(
+        output_root,
+        supervision_root,
+        runtime_config,
+        create_output=True,
+    )
+    assert output_root.is_dir()
+    assert not os.path.lexists(supervision_root)
+    assert output_root.parent == supervision_root.parent
+    assert prepared["binding_state"] == (
+        "out_created_exclusively_sup_reserved_for_supervisor"
+    )
+    supervisor._write_json(runtime_config, {"prepared": True})
+    bound = service.bind_task041_output_roots(
+        output_root,
+        supervision_root,
+        runtime_config,
+        create_output=False,
+    )
+    assert bound["binding_state"] == (
+        "runtime_config_bound_out_present_sup_absent_before_dispatch"
+    )
+
+    child = """import json, pathlib, sys
+out = pathlib.Path(sys.argv[1])
+manifest_arg = sys.argv.index('--task041-supervision-record')
+manifest_path = pathlib.Path(sys.argv[manifest_arg + 1])
+manifest = json.loads(manifest_path.read_text())
+if not manifest_path.is_file():
+    raise SystemExit(21)
+if manifest_path.parent != pathlib.Path(manifest['supervision_root']):
+    raise SystemExit(22)
+if pathlib.Path(manifest['config_path']) != out / 'runtime_service_config.json':
+    raise SystemExit(23)
+if not pathlib.Path(manifest['config_path']).is_file():
+    raise SystemExit(24)
+if manifest['output_root_binding']['output_root'] != str(out):
+    raise SystemExit(25)
+(out / 'child_receipt.json').write_text(json.dumps({
+    'launch_manifest_visible_before_child_receipt': True,
+    'launch_manifest': str(manifest_path),
+    'config_path': manifest['config_path'],
+}))
+"""
+    model_id = TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+    profile = task041_schur_speed_v2_contract(model_id)
+    ledger = {
+        "schema": "task041.compute_wall_ledger.v2",
+        "used_compute_wall_seconds": 0.0,
+        "batch_used_compute_wall_seconds": 0.0,
+        "shared_S0_S1_S3_used_seconds": 0.0,
+        "S2_used_seconds": 0.0,
+        "S4_used_seconds": 0.0,
+    }
+
+    def sample_factory(pid):
+        pid = int(pid)
+        return {
+            "memory_authority_bytes": 4096,
+            "job_no_swap": True,
+            "process_tree": {
+                "all_status_readable": True,
+                "rss_bytes": 4096,
+                "swap_bytes": 0,
+                "pids": [pid],
+                "rss_by_pid_bytes": {str(pid): 4096},
+                "swap_by_pid_bytes": {str(pid): 0},
+                "smaps": {"pss_bytes": 2048, "uss_bytes": 1024},
+            },
+            "host_memory": {
+                "mem_available_bytes": 2**50,
+                "mem_total_bytes": 2**50,
+            },
+            "global_swap": {"used_bytes": 0, "readable": True},
+            "job_cgroup": {"dedicated_job_cgroup": False},
+        }
+
+    result = supervisor.run_task041_supervised_public_command(
+        [sys.executable, "-c", child, str(output_root)],
+        supervision_root,
+        profile_contract=profile,
+        ledger_snapshot=ledger,
+        resource_limits={
+            "warning_memory_bytes": 10**7,
+            "hard_memory_bytes": 10**8,
+            "swap_limit_bytes": 0,
+            "min_memavailable_bytes": None,
+            "min_cgroup_ancestor_headroom_bytes": None,
+        },
+        environment={name: "1" for name in supervisor.TASK041_REQUIRED_THREADS},
+        sample_factory=sample_factory,
+        repository_root=tmp_path,
+        launch_manifest={
+            "config_path": str(runtime_config),
+            "supervision_root": str(supervision_root),
+            "output_root_binding": bound,
+        },
+    )
+    assert result["status"] == "completed"
+    assert result["phase_result"]["returncode"] == 0
+    receipt = json.loads((output_root / "child_receipt.json").read_text())
+    assert receipt["launch_manifest_visible_before_child_receipt"] is True
+    existing_manifest = supervision_root / "launch_manifest.json"
+    assert existing_manifest.is_file()
+    existing_manifest_bytes = existing_manifest.read_bytes()
+
+    popen_calls = []
+
+    def unexpected_spawn(*args, **kwargs):
+        popen_calls.append((args, kwargs))
+        raise AssertionError("existing SUP must reject before child spawn")
+
+    with pytest.raises(FileExistsError):
+        supervisor.run_task041_supervised_public_command(
+            [sys.executable, "-c", child, str(output_root)],
+            supervision_root,
+            profile_contract=profile,
+            ledger_snapshot=ledger,
+            resource_limits={
+                "warning_memory_bytes": 10**7,
+                "hard_memory_bytes": 10**8,
+                "swap_limit_bytes": 0,
+                "min_memavailable_bytes": None,
+                "min_cgroup_ancestor_headroom_bytes": None,
+            },
+            environment={
+                name: "1" for name in supervisor.TASK041_REQUIRED_THREADS
+            },
+            sample_factory=sample_factory,
+            repository_root=tmp_path,
+            popen_factory=unexpected_spawn,
+            launch_manifest={
+                "config_path": str(runtime_config),
+                "supervision_root": str(supervision_root),
+                "output_root_binding": bound,
+            },
+        )
+    assert popen_calls == []
+    assert existing_manifest.read_bytes() == existing_manifest_bytes
+
+
+@pytest.mark.parametrize("existing_kind", ("directory", "dangling_symlink"))
+def test_task041_output_binding_rejects_any_existing_sup_before_out_create(
+    tmp_path, existing_kind
+):
+    output_root = tmp_path / "new-attempt-out"
+    supervision_root = tmp_path / "reserved-supervision"
+    runtime_config = output_root / "runtime_service_config.json"
+    if existing_kind == "directory":
+        supervision_root.mkdir()
+        marker = supervision_root / "launch_manifest.json"
+        marker.write_text('{"existing":true}\n')
+        original_marker = marker.read_bytes()
+    else:
+        supervision_root.symlink_to(tmp_path / "missing-supervision-target")
+    with pytest.raises(service.Task041ServiceError, match="SUP already exists"):
+        service.bind_task041_output_roots(
+            output_root,
+            supervision_root,
+            runtime_config,
+            create_output=True,
+        )
+    assert os.path.lexists(supervision_root)
+    assert not os.path.lexists(output_root)
+    if existing_kind == "directory":
+        assert marker.read_bytes() == original_marker
+
+
+def test_task041_output_binding_rejects_runtime_config_in_sup(tmp_path):
+    output_root = tmp_path / "out"
+    supervision_root = tmp_path / "sup"
+    runtime_config = supervision_root / "runtime_service_config.json"
+    with pytest.raises(service.Task041ServiceError, match="direct file inside OUT"):
+        service.bind_task041_output_roots(
+            output_root,
+            supervision_root,
+            runtime_config,
+            create_output=True,
+        )
+    assert not output_root.exists()
+    assert not os.path.lexists(supervision_root)
+
+
+def test_task041_output_binding_requires_sibling_roots_and_exclusive_out(tmp_path):
+    output_root = tmp_path / "out"
+    supervision_root = tmp_path / "nested" / "sup"
+    runtime_config = output_root / "runtime_service_config.json"
+    with pytest.raises(service.Task041ServiceError, match="distinct sibling"):
+        service.bind_task041_output_roots(
+            output_root,
+            supervision_root,
+            runtime_config,
+            create_output=True,
+        )
+    assert not os.path.lexists(output_root)
+
+    supervision_root = tmp_path / "sup"
+    output_root.mkdir()
+    sentinel = output_root / "existing.marker"
+    sentinel.write_text("preserve\n", encoding="utf-8")
+    with pytest.raises(service.Task041ServiceError, match="OUT already exists"):
+        service.bind_task041_output_roots(
+            output_root,
+            supervision_root,
+            runtime_config,
+            create_output=True,
+        )
+    assert sentinel.read_text(encoding="utf-8") == "preserve\n"
+    assert not os.path.lexists(supervision_root)
+
+
+def test_v13_candidate_helper_forwards_real_factory_callback_into_ldu_guard(
+    tmp_path, monkeypatch
+):
+    """Use the real candidate helper, LDU guards, and production factory callback.
+
+    Only the bridge object, staged-factor implementation, and modal numerical
+    builder are stubbed. The actual factory closure, candidate-to-LDU call,
+    authority callback, and both independent refusal matchers remain active.
+    """
+
+    from types import SimpleNamespace
+
+    from benchmarks import task041_exact_side_workflow as worker
+    from src.io.input_validation import (
+        TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
+        TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
+        TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES,
+    )
+    from src.runners import task041_supervisor
+    from src.solvers import hybrid_fem_modal_block_ldu as block_ldu
+    from src.solvers import petsc_lu_stage
+    from src.solvers import physical_balanced_side_inverse as side_inverse
+    from src.test.test_349_task041_balh_side_inverse import _build_fixture
+
+    class EightRankRootFixture:
+        rank = 0
+        size = 8
+
+        @staticmethod
+        def allgather(value):
+            return [value] * 8
+
+        @staticmethod
+        def bcast(value, root):
+            assert root == 0
+            return value
+
+    comm = EightRankRootFixture()
+    binding = {
+        "schema": "task041.w0p7.supervisor_memory_binding.v1",
+        "invocation_id": "factory-route-fixture",
+        "source_sha": "a" * 40,
+        "unit": "factory-route-fixture.service",
+        "launch_manifest_sha256": "b" * 64,
+        "supervisor_root_pid": 424242,
+    }
+    monitor = {
+        **binding,
+        "sample_root_pid": binding["supervisor_root_pid"],
+        "file_age_seconds": 0.1,
+        "phase": "public_command",
+        "sample_role": "phase_running",
+        "sample_row_sha256": "c" * 64,
+    }
+    raw_sample = {
+        "process_tree": {
+            "all_status_readable": True,
+            "rss_bytes": 1024,
+            "pids": [binding["supervisor_root_pid"]],
+        },
+        "job_cgroup": {
+            "dedicated_job_cgroup": True,
+            "memory_current_bytes": 1024,
+            "ancestor_hard_limit_state": "max_or_unlimited",
+            "ancestor_memory_headroom_bytes": None,
+        },
+        "host_memory": {"mem_available_bytes": 2**50},
+        "memory_authority_bytes": 1024,
+    }
+    monkeypatch.setattr(
+        worker, "_task041_latest_supervisor_memory_sample", lambda _binding: monitor
+    )
+    monkeypatch.setattr(worker, "_resource_snapshot", lambda _pid: raw_sample)
+    monkeypatch.setattr(
+        worker, "_task041_node_memfree_bytes", lambda _node: 2**50
+    )
+
+    bridge_path = tmp_path / "test-bridge.so"
+    bridge_path.write_bytes(b"metadata-only bridge fixture")
+    bridge = SimpleNamespace(
+        __file__=str(bridge_path),
+        petsc_int_sizeof=4,
+        mumps_package_version_major=5,
+        mumps_package_version_minor=6,
+        mumps_package_version_subminor=2,
+    )
+
+    class StubStagedMumpsFactory:
+        def __init__(self, *_args, **_kwargs):
+            self.live_factor_inventory = {}
+
+    monkeypatch.setattr(petsc_lu_stage, "load_lu_stage_bridge", lambda _path: bridge)
+    monkeypatch.setattr(
+        petsc_lu_stage, "StagedMumpsLUFactory", StubStagedMumpsFactory
+    )
+    limits = {
+        "hard_memory_bytes": TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
+        "process_tree_rss_cap_bytes": TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
+        "process_tree_rss_warning_bytes": TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES,
+        "min_memavailable_bytes": TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
+    }
+    stage_factory, _stage_binding = worker._build_task041_w0p7_stage_factory(
+        bridge_path,
+        supervisor_memory_binding=binding,
+        comm=comm,
+        limits=limits,
+        expected_rank_cpus=tuple(range(8)),
+        memory_policy=task041_balh_workflow.TASK041_V13_MEMORY_POLICY,
+        marker_callback=lambda *_args: None,
+        failure_evidence={},
+    )
+    production_factory_callback = stage_factory.v13_fresh_authority_callback
+
+    bottom_inverse, bottom_owned = _build_fixture(size=1)
+    top_inverse, top_owned = _build_fixture(size=1)
+    setup = SimpleNamespace(
+        bottom=bottom_owned["side_system"],
+        top=top_owned["side_system"],
+        coupling=SimpleNamespace(),
+    )
+    layout = SimpleNamespace(modal_owner=7, local_size=1)
+
+    class FixtureAction(side_inverse.FixedPhysicalBalancedActiveTraceAction):
+        @property
+        def audit(self):
+            return {"destroyed": True}
+
+    def create_fixture_action(_self):
+        return object.__new__(FixtureAction)
+
+    monkeypatch.setattr(
+        side_inverse.SideBalancedInverse,
+        "create_fixed_physical_balh_active_trace_action",
+        create_fixture_action,
+    )
+    observed = {}
+
+    class AuthorityRefusalReached(RuntimeError):
+        pass
+
+    def invoke_real_factory_callback(
+        _coupling,
+        _bottom_action,
+        _top_action,
+        *,
+        fresh_authority_callback,
+        **_kwargs,
+    ):
+        observed["callback"] = fresh_authority_callback
+        report = {"phase": "outer_restart32_workspace", "target_restart": 32}
+        response = fresh_authority_callback("outer_restart32_workspace", report)
+        observed["response"] = response
+        assert response["status"] == "refused"
+        assert not block_ldu._task041_v13_outer_workspace_pass_resource_contract_valid(
+            "outer_restart32_workspace", report, response, rank_count=8
+        )
+        assert not task041_supervisor._v13_outer_authority_pass_matches_report(
+            "outer_restart32_workspace", report, response, rank_count=8
+        )
+        raise AuthorityRefusalReached("factory callback refusal reached LDU path")
+
+    monkeypatch.setattr(
+        block_ldu,
+        "build_task041_v13_consistent_modal_surrogate",
+        invoke_real_factory_callback,
+    )
+    sample_columns = list(range(8))
+    roles = {str(column): ["registered_fixture"] for column in sample_columns}
+    callback = lambda *_args, **_kwargs: None
+    try:
+        with pytest.raises(AuthorityRefusalReached, match="reached LDU path"):
+            worker._task041_create_candidate_ldu_context(
+                layout,
+                setup,
+                {"bottom": bottom_inverse, "top": top_inverse},
+                sampled_column_contract={
+                    "columns": sample_columns,
+                    "roles": roles,
+                    "sha256": "d" * 64,
+                },
+                marker_callback=callback,
+                use_anderson_modal_inner=False,
+                fixed_h6_modal_gmres_research=True,
+                fixed_h6_modal_feedback_method=None,
+                modal_solver_policy=block_ldu.resolve_task041_modal_solver_policy(
+                    block_ldu.TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+                ),
+                modal_snapshot_callback=None,
+                factor_stage_factory=stage_factory,
+                complex_qr_research=False,
+                capture_modal_solve_trace=False,
+            )
+        assert observed["callback"] is production_factory_callback
+        assert observed["response"]["status"] == "refused"
+    finally:
+        bottom_inverse.destroy()
+        top_inverse.destroy()
+        bottom_owned["operator"].destroy()
+        top_owned["operator"].destroy()
+
+
+@pytest.mark.parametrize("failure", ("jsonable", "append", "resource_check"))
+def test_v13_outer_marker_write_failure_broadcasts_before_failing(
+    tmp_path, monkeypatch, failure
+):
+    """Exercise the rank-0 status protocol with injected serialization/I/O failure.
+
+    This is a single-process protocol fixture; it checks that the production
+    writer broadcasts its failure status, not that an MPI runtime was launched.
+    """
+
+    from benchmarks import task041_exact_side_workflow as worker
+
+    output_root = tmp_path / "markers-root"
+    if failure in {"jsonable", "resource_check"}:
+        output_root.mkdir()
+
+    class ProtocolComm:
+        rank = 0
+        size = 2
+
+        def __init__(self):
+            self.broadcasts = []
+
+        def allgather(self, value):
+            return [dict(value), {**dict(value), "rank": 1}]
+
+        def bcast(self, value, root):
+            assert root == 0
+            self.broadcasts.append(value)
+            return value
+
+    comm = ProtocolComm()
+    monkeypatch.setattr(worker, "_resource_snapshot", lambda: {"sample": 1})
+    if failure == "resource_check":
+        def reject_resource(*_args, **_kwargs):
+            raise RuntimeError("synthetic resource rejection")
+
+        monkeypatch.setattr(worker, "_check_resource", reject_resource)
+    else:
+        monkeypatch.setattr(
+            worker, "_check_resource", lambda *_args, **_kwargs: None
+        )
+    if failure == "jsonable":
+        def fail_jsonable(_value):
+            raise TypeError("synthetic marker conversion failure")
+
+        monkeypatch.setattr(worker, "_jsonable", fail_jsonable)
+
+    with pytest.raises(
+        RuntimeError, match="marker collective failed"
+    ) as collective_error:
+        worker._write_v13_outer_authority_marker_collective(
+            output_root,
+            1.0,
+            {"request": {"phase": "outer_restart32_workspace"}},
+            environment={"fixture": True},
+            comm=comm,
+            schema=task041_balh_workflow.TASK041_BALH_CANDIDATE_CONSUMER_SCHEMA,
+            limits={},
+            enforce_time_stop=False,
+        )
+
+    assert len(comm.broadcasts) == 1
+    if failure == "jsonable":
+        assert isinstance(comm.broadcasts[0]["error"], str)
+        assert comm.broadcasts[0]["ok"] is False
+        assert "synthetic marker conversion failure" in comm.broadcasts[0]["error"]
+    elif failure == "append":
+        assert isinstance(comm.broadcasts[0]["error"], str)
+        assert comm.broadcasts[0]["ok"] is False
+        assert "FileNotFoundError" in comm.broadcasts[0]["error"]
+    else:
+        assert comm.broadcasts[0]["ok"] is True
+        assert comm.broadcasts[0]["error"] is None
+        assert "synthetic resource rejection" in str(collective_error.value)
+        marker = json.loads(
+            (output_root / "markers.jsonl").read_text(encoding="utf-8")
+        )
+        assert marker["rank_resource_samples"][0]["resource"] == {"sample": 1}
+        assert "synthetic resource rejection" in marker["rank_resource_samples"][0][
+            "resource_error"
+        ]
+
+
+def test_v13_outer_marker_writer_real_mpi2_append_and_write_failure(monkeypatch):
+    """Check marker append and failed-write collectives with two MPI ranks."""
+
+    import shutil
+    import tempfile
+
+    from mpi4py import MPI
+
+    from benchmarks import task041_exact_side_workflow as worker
+
+    comm = MPI.COMM_WORLD
+    if comm.size != 2:
+        pytest.skip("the marker writer regression requires exactly MPI2")
+
+    shared = None
+    if comm.rank == 0:
+        try:
+            shared = {"root": tempfile.mkdtemp(prefix="task041-v13-marker-mpi2-")}
+        except Exception as exc:  # noqa: BLE001 - broadcast setup failure to both ranks
+            shared = {"error": f"{type(exc).__name__}: {exc}"}
+    shared = comm.bcast(shared, root=0)
+    if not isinstance(shared, dict) or "root" not in shared:
+        pytest.fail(f"rank 0 could not create shared marker fixture: {shared!r}")
+    root = Path(shared["root"])
+
+    monkeypatch.setattr(
+        worker,
+        "_resource_snapshot",
+        lambda: {"rank": int(comm.rank), "sample": 1},
+    )
+    monkeypatch.setattr(worker, "_check_resource", lambda *_args, **_kwargs: None)
+
+    success_error = None
+    try:
+        worker._write_v13_outer_authority_marker_collective(
+            root,
+            1.0,
+            {"phase": "outer_restart32_workspace", "target_restart": 32},
+            environment={"fixture": "mpi2"},
+            comm=comm,
+            schema=task041_balh_workflow.TASK041_BALH_CANDIDATE_CONSUMER_SCHEMA,
+            limits={},
+            enforce_time_stop=False,
+        )
+    except Exception as exc:  # noqa: BLE001 - compare each rank's observed failure
+        success_error = f"{type(exc).__name__}: {exc}"
+    success_errors = comm.allgather(success_error)
+
+    marker_line = None
+    if comm.rank == 0:
+        try:
+            marker_line = (root / "markers.jsonl").read_text(encoding="utf-8")
+        except Exception as exc:  # noqa: BLE001 - keep cleanup collective below
+            marker_line = f"READ_ERROR:{type(exc).__name__}:{exc}"
+    marker_line = comm.bcast(marker_line, root=0)
+
+    write_error = None
+    try:
+        worker._write_v13_outer_authority_marker_collective(
+            root / "missing-directory",
+            1.0,
+            {"phase": "outer_restart32_workspace", "target_restart": 32},
+            environment={"fixture": "mpi2"},
+            comm=comm,
+            schema=task041_balh_workflow.TASK041_BALH_CANDIDATE_CONSUMER_SCHEMA,
+            limits={},
+            enforce_time_stop=False,
+        )
+    except Exception as exc:  # noqa: BLE001 - all ranks should receive root refusal
+        write_error = f"{type(exc).__name__}: {exc}"
+    write_errors = comm.allgather(write_error)
+
+    cleanup_error = None
+    if comm.rank == 0:
+        try:
+            shutil.rmtree(root)
+        except Exception as exc:  # noqa: BLE001 - broadcast cleanup result
+            cleanup_error = f"{type(exc).__name__}: {exc}"
+    cleanup_error = comm.bcast(cleanup_error, root=0)
+
+    assert success_errors == [None, None]
+    assert isinstance(marker_line, str) and not marker_line.startswith("READ_ERROR:")
+    marker = json.loads(marker_line)
+    assert marker["schema"] == task041_balh_workflow.TASK041_BALH_CANDIDATE_CONSUMER_SCHEMA
+    assert marker["stage"] == "v13_outer_workspace_authority"
+    assert [row["resource"]["rank"] for row in marker["rank_resource_samples"]] == [0, 1]
+    assert marker["detail"]["target_restart"] == 32
+    assert len(write_errors) == 2
+    assert all(error is not None for error in write_errors)
+    assert write_errors[0] == write_errors[1]
+    assert "marker collective failed" in write_errors[0]
+    assert "FileNotFoundError" in write_errors[0]
+    assert cleanup_error is None
+
+
+@pytest.mark.parametrize(
+    "callback_failure", ("invalid_response", "exception", "invalid_request")
+)
+def test_v13_outer_authorization_marker_preserves_raw_failure_evidence(
+    callback_failure,
+):
+    from src.solvers import hybrid_fem_modal_block_ldu as block_ldu
+
+    class SelfCollective:
+        rank = 0
+        size = 1
+
+        @staticmethod
+        def allgather(value):
+            return [value]
+
+    raw_response = {
+        "schema": "incorrect.schema",
+        "status": "refused",
+        "decision": "stop",
+        "authority_receipt_payload": {"refusal_reason": "fixture evidence"},
+    }
+    marker_records = []
+
+    def authority_callback(_phase, _report):
+        if callback_failure == "exception":
+            raise ValueError("synthetic authority callback failure")
+        return raw_response
+
+    system = object.__new__(block_ldu.Task041V13ConsistentModalSurrogateSystem)
+    system._destroyed = False
+    system._fresh_authority_callback = authority_callback
+    system._marker_callback = lambda _stage, detail: marker_records.append(detail)
+    system.comm = SelfCollective()
+
+    report = (
+        {"fixture_request": float("nan")}
+        if callback_failure == "invalid_request"
+        else {"fixture_request": 1}
+    )
+    expected_error = (
+        "outer restart report is unbindable"
+        if callback_failure == "invalid_request"
+        else "authority validation failed"
+    )
+    with pytest.raises(RuntimeError, match=expected_error):
+        system.authorize_outer_workspace(
+            "outer_restart32_workspace", report
+        )
+
+    assert len(marker_records) == 1
+    detail = marker_records[0]
+    assert detail["validation_error"]
+    if callback_failure == "invalid_request":
+        assert detail["request_validation_error"]
+        assert detail["request_json"] is None
+        assert detail["response"] is None
+        assert detail["rank_validation"] == []
+        return
+    rank_row = detail["rank_validation"][0]
+    if callback_failure == "invalid_response":
+        assert json.loads(rank_row["raw_response"]) == raw_response
+        assert json.loads(rank_row["raw_receipt"]) == raw_response[
+            "authority_receipt_payload"
+        ]
+        assert "incorrect.schema" in rank_row["raw_response"]
+    else:
+        assert rank_row["raw_response"] is None
+        assert rank_row["raw_receipt"] is None
+        assert "synthetic authority callback failure" in rank_row["error"]
+
+
+def test_v13_outer_marker_callback_mismatch_fails_before_authority_collective():
+    """Optional component markers must be consistently present across ranks."""
+
+    from src.solvers import hybrid_fem_modal_block_ldu as block_ldu
+
+    class MixedMarkerCollective:
+        rank = 0
+        size = 2
+
+        def __init__(self):
+            self.calls = 0
+
+        def allgather(self, value):
+            self.calls += 1
+            if self.calls == 1:
+                return [
+                    dict(value),
+                    {**dict(value), "rank": 1, "marker_callback_available": False},
+                ]
+            return [value, value]
+
+    authority_calls = []
+    marker_calls = []
+    system = object.__new__(block_ldu.Task041V13ConsistentModalSurrogateSystem)
+    system._destroyed = False
+    system._fresh_authority_callback = (
+        lambda *_args: authority_calls.append("called")
+    )
+    system._marker_callback = lambda *_args: marker_calls.append("called")
+    system.comm = MixedMarkerCollective()
+
+    with pytest.raises(RuntimeError, match="marker callback availability differs"):
+        system.authorize_outer_workspace(
+            "outer_restart32_workspace", {"target_restart": 32}
+        )
+    assert authority_calls == []
+    assert marker_calls == []
 
 
 def test_registered_5nm_formal_target_keeps_case_resource_and_time_contract(
@@ -2254,6 +2977,8 @@ def test_v13_rank_runtime_recomputes_default_scope_threads_and_session():
 
 
 def test_v13_outer_reader_recomputes_B_delta_W_and_external_gate_set():
+    from src.solvers import hybrid_fem_modal_block_ldu as block_ldu
+
     phase = "outer_restart32_workspace"
     phase_reports = {
         "outer_PC_with_retained_workspaces": {
@@ -2405,6 +3130,26 @@ def test_v13_outer_reader_recomputes_B_delta_W_and_external_gate_set():
     }
     assert supervisor._v13_outer_authority_pass_matches_report(
         phase, report, authority, rank_count=2
+    )
+    assert block_ldu._task041_v13_outer_workspace_pass_resource_contract_valid(
+        phase, report, authority, rank_count=2
+    )
+    stale_node0_schema = json.loads(json.dumps(authority))
+    stale_node0_schema["external_resource_gates"]["node0_floor_headroom"] = True
+    del stale_node0_schema["external_resource_gates"]["aggregate_floor_headroom"]
+    assert not supervisor._v13_outer_authority_pass_matches_report(
+        phase, report, stale_node0_schema, rank_count=2
+    )
+    assert not block_ldu._task041_v13_outer_workspace_pass_resource_contract_valid(
+        phase, report, stale_node0_schema, rank_count=2
+    )
+    bad_aggregate = json.loads(json.dumps(authority))
+    bad_aggregate["aggregate_memfree_bytes"] += 1
+    assert not supervisor._v13_outer_authority_pass_matches_report(
+        phase, report, bad_aggregate, rank_count=2
+    )
+    assert not block_ldu._task041_v13_outer_workspace_pass_resource_contract_valid(
+        phase, report, bad_aggregate, rank_count=2
     )
     bad_B = dict(authority, fresh_job_authority_bytes=fresh + 1)
     assert not supervisor._v13_outer_authority_pass_matches_report(

@@ -80,6 +80,93 @@ class Task041ServiceError(RuntimeError):
     """A missing or contradictory fixed service boundary record."""
 
 
+def bind_task041_output_roots(
+    output_root: str | Path,
+    supervision_root: str | Path,
+    runtime_config_path: str | Path,
+    *,
+    create_output: bool,
+) -> dict[str, Any]:
+    """Bind one prepared OUT directory to the supervisor-owned sibling SUP.
+
+    The binder creates only OUT.  The public supervisor remains the sole owner
+    of SUP creation through its exclusive ``mkdir(exist_ok=False)`` call.
+    ``create_output=False`` is the service-parent pre-dispatch recheck.
+    """
+
+    input_paths = {
+        "output_root": Path(output_root),
+        "supervision_root": Path(supervision_root),
+        "runtime_config_path": Path(runtime_config_path),
+    }
+    if not all(path.is_absolute() for path in input_paths.values()):
+        raise Task041ServiceError("Task041 output binding paths must be absolute")
+    paths = {
+        name: Path(os.path.abspath(os.fspath(path)))
+        for name, path in input_paths.items()
+    }
+    output = paths["output_root"]
+    supervision = paths["supervision_root"]
+    runtime_config = paths["runtime_config_path"]
+    if output == supervision or output.parent != supervision.parent:
+        raise Task041ServiceError(
+            "Task041 OUT and SUP must be distinct sibling directories"
+        )
+    if runtime_config.parent != output:
+        raise Task041ServiceError(
+            "Task041 runtime config must be a direct file inside OUT"
+        )
+    if os.path.lexists(supervision):
+        raise Task041ServiceError(
+            f"Task041 SUP already exists and is reserved for the supervisor: {supervision}"
+        )
+
+    if create_output:
+        if os.path.lexists(output):
+            raise Task041ServiceError(
+                f"Task041 OUT already exists; refusing non-exclusive binding: {output}"
+            )
+        if not output.parent.is_dir():
+            raise Task041ServiceError(
+                f"Task041 OUT parent is not an existing directory: {output.parent}"
+            )
+        try:
+            output.mkdir(exist_ok=False)
+        except OSError as exc:
+            raise Task041ServiceError(
+                f"Task041 OUT exclusive creation failed: {type(exc).__name__}: {exc}"
+            ) from exc
+        state = "out_created_exclusively_sup_reserved_for_supervisor"
+    else:
+        if output.is_symlink() or not output.is_dir():
+            raise Task041ServiceError(
+                f"Task041 prepared OUT is missing or is not a real directory: {output}"
+            )
+        if runtime_config.is_symlink() or not runtime_config.is_file():
+            raise Task041ServiceError(
+                f"Task041 runtime config is missing or is not a regular OUT file: {runtime_config}"
+            )
+        state = "runtime_config_bound_out_present_sup_absent_before_dispatch"
+
+    return {
+        "schema": "task041.output_root_binding.v1",
+        "output_root": str(output),
+        "supervision_root": str(supervision),
+        "runtime_config_path": str(runtime_config),
+        "out_and_sup_are_distinct_siblings": True,
+        "runtime_config_is_direct_out_child": True,
+        "supervision_root_absent_by_lexists": True,
+        "output_creation": (
+            "exclusive_created_by_binder"
+            if create_output
+            else "verified_existing_prepared_directory"
+        ),
+        "binding_state": state,
+        "supervision_creation_owner": "run_task041_supervised_public_command",
+        "supervision_creation_contract": "mkdir_exist_ok_false",
+    }
+
+
 def _fixed_h6_service_binding(
     config: Mapping[str, Any],
     *,
@@ -1648,6 +1735,14 @@ def _sparse_sample_factory() -> Any:
 
 def run_service_parent(config_path: str | Path) -> dict[str, Any]:
     config = _read_job_config(config_path)
+    output_root_binding = None
+    if "output_root" in config:
+        output_root_binding = bind_task041_output_roots(
+            config["output_root"],
+            config["supervision_root"],
+            config_path,
+            create_output=False,
+        )
     public_command = list(config["public_command"])
     side_setup_schedule = _side_setup_schedule_binding(
         public_command, config.get("side_setup_schedule")
@@ -1794,6 +1889,8 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
         "startup_elapsed_seconds": unit_elapsed,
         "time_stop_policy": dict(contract["time_stop"]),
     }
+    if output_root_binding is not None:
+        launch["output_root_binding"] = output_root_binding
     if (
         isinstance(fixed_h6_binding, Mapping)
         and contract.get("modal_solver_policy")

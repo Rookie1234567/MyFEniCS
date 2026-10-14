@@ -2986,7 +2986,10 @@ def test_v13_solve_entry_resumes_same_ksp_with_nonzero_x_and_total_limit(
     external_keys = {
         "bound_fresh_supervisor_sample",
         "tree_cgroup_and_all_mpi_ranks",
-        "node0_floor_headroom",
+        "initial_aggregate_memfree_gate",
+        "initial_node1_memfree_gate",
+        "aggregate_floor_headroom",
+        "node1_phase_headroom",
         "host_floor_headroom",
         "cgroup_ancestor_headroom",
         "case_cap_projection",
@@ -3024,6 +3027,13 @@ def test_v13_solve_entry_resumes_same_ksp_with_nonzero_x_and_total_limit(
         )
         root_pid = rank_pids[0]
         sample_sha = "e" * 64
+        node0_free = floor + required + 1_000_000_000
+        node1_free = 80 * 2**30 + delta
+        aggregate_free = node0_free + node1_free
+        aggregate_headroom = aggregate_free - floor
+        node1_headroom = node1_free - delta
+        host_available = floor + required + 1_000_000_000
+        host_headroom = host_available - floor
         request_sha = hashlib.sha256(
             json.dumps(
                 dict(report), sort_keys=True, separators=(",", ":"), allow_nan=False
@@ -3033,10 +3043,21 @@ def test_v13_solve_entry_resumes_same_ksp_with_nonzero_x_and_total_limit(
             "phase": phase,
             "request_sha256": request_sha,
             "resource_B_bytes": fresh,
-            "node0_memfree_bytes": floor + required + 1_000_000_000,
-            "host_available_bytes": floor + required + 1_000_000_000,
-            "node0_headroom_after_floor_bytes": required + 1_000_000_000,
-            "host_headroom_after_floor_bytes": required + 1_000_000_000,
+            "node0_memfree_bytes": node0_free,
+            "node1_memfree_bytes": node1_free,
+            "aggregate_memfree_bytes": aggregate_free,
+            "aggregate_memfree_reserve_bytes": floor,
+            "aggregate_floor_headroom_bytes": aggregate_headroom,
+            "node1_phase_additional_bytes": delta,
+            "node1_headroom_after_phase_additional_bytes": node1_headroom,
+            "initial_resource_gate": {
+                "required": False,
+                "source": "supervisor_resource_preflight",
+                "initial_aggregate_memfree_minimum_bytes": 464 * 2**30,
+                "initial_node1_memfree_minimum_bytes": 80 * 2**30,
+            },
+            "host_available_bytes": host_available,
+            "host_headroom_after_aggregate_reserve_bytes": host_headroom,
             "sample_root_pid": root_pid,
             "rank_pids": rank_pids,
             "sample_row_sha256": sample_sha,
@@ -3079,13 +3100,25 @@ def test_v13_solve_entry_resumes_same_ksp_with_nonzero_x_and_total_limit(
             "W_policy_reserve_bytes": reserve,
             "floor_bytes": floor,
             "node0_memfree_bytes": payload["node0_memfree_bytes"],
+            "node1_memfree_bytes": payload["node1_memfree_bytes"],
+            "aggregate_memfree_bytes": payload["aggregate_memfree_bytes"],
+            "aggregate_memfree_reserve_bytes": payload[
+                "aggregate_memfree_reserve_bytes"
+            ],
+            "aggregate_floor_headroom_bytes": payload[
+                "aggregate_floor_headroom_bytes"
+            ],
+            "node1_phase_additional_bytes": payload[
+                "node1_phase_additional_bytes"
+            ],
+            "node1_headroom_after_phase_additional_bytes": payload[
+                "node1_headroom_after_phase_additional_bytes"
+            ],
             "host_available_bytes": payload["host_available_bytes"],
-            "node0_headroom_after_floor_bytes": payload[
-                "node0_headroom_after_floor_bytes"
+            "host_headroom_after_aggregate_reserve_bytes": payload[
+                "host_headroom_after_aggregate_reserve_bytes"
             ],
-            "host_headroom_after_floor_bytes": payload[
-                "host_headroom_after_floor_bytes"
-            ],
+            "initial_resource_gate": dict(payload["initial_resource_gate"]),
             "cgroup_limit_state": "max_or_unlimited",
             "cgroup_headroom_bytes": None,
             "selected_memory_phase": selected_phase,
@@ -3846,6 +3879,12 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
     monkeypatch.setattr(
         exact_side, "_task041_node0_memfree_bytes", lambda: 1_000_000_000_000
     )
+    node_free_by_id = {0: 1_000_000_000_000, 1: 1_000_000_000_000}
+    monkeypatch.setattr(
+        exact_side,
+        "_task041_node_memfree_bytes",
+        lambda node: node_free_by_id[int(node)],
+    )
     v13_limits = {
         "hard_memory_bytes": TASK041_BALH_W0P7NM_P6_PILOT_HARD_MEMORY_BYTES,
         "process_tree_rss_warning_bytes": TASK041_BALH_W0P7NM_P6_PILOT_WARNING_MEMORY_BYTES,
@@ -4380,9 +4419,20 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
                 outer_authority,
                 rank_count=comm.size,
             )
+            from src.runners import task041_supervisor
+
+            assert task041_supervisor._v13_outer_authority_pass_matches_report(
+                outer_phase,
+                outer_report,
+                outer_authority,
+                rank_count=comm.size,
+            )
             bad_B = copy.deepcopy(outer_authority)
             bad_B["fresh_job_authority_bytes"] += 1
             assert not block_ldu._task041_v13_outer_workspace_pass_resource_contract_valid(
+                outer_phase, outer_report, bad_B, rank_count=comm.size
+            )
+            assert not task041_supervisor._v13_outer_authority_pass_matches_report(
                 outer_phase, outer_report, bad_B, rank_count=comm.size
             )
             bad_delta = copy.deepcopy(outer_authority)
@@ -4395,6 +4445,116 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
             assert not block_ldu._task041_v13_outer_workspace_pass_resource_contract_valid(
                 outer_phase, outer_report, missing_external, rank_count=comm.size
             )
+            assert not task041_supervisor._v13_outer_authority_pass_matches_report(
+                outer_phase,
+                outer_report,
+                missing_external,
+                rank_count=comm.size,
+            )
+
+            insufficient_node1 = copy.deepcopy(outer_authority)
+            insufficient_node1["external_resource_gates"][
+                "node1_phase_headroom"
+            ] = False
+            insufficient_free = (
+                insufficient_node1["node1_phase_additional_bytes"] - 1
+            )
+            insufficient_node1["node1_memfree_bytes"] = insufficient_free
+            insufficient_node1["node1_headroom_after_phase_additional_bytes"] = -1
+            insufficient_payload = insufficient_node1[
+                "authority_receipt_payload"
+            ]
+            insufficient_payload["node1_memfree_bytes"] = insufficient_free
+            insufficient_payload[
+                "node1_headroom_after_phase_additional_bytes"
+            ] = -1
+            insufficient_node1["aggregate_memfree_bytes"] = (
+                insufficient_node1["node0_memfree_bytes"] + insufficient_free
+            )
+            insufficient_node1["aggregate_floor_headroom_bytes"] = (
+                insufficient_node1["aggregate_memfree_bytes"]
+                - insufficient_node1["floor_bytes"]
+            )
+            insufficient_payload["aggregate_memfree_bytes"] = (
+                insufficient_node1["aggregate_memfree_bytes"]
+            )
+            insufficient_payload["aggregate_floor_headroom_bytes"] = (
+                insufficient_node1["aggregate_floor_headroom_bytes"]
+            )
+            insufficient_node1["authority_receipt_sha256"] = hashlib.sha256(
+                json.dumps(
+                    insufficient_payload,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                ).encode()
+            ).hexdigest()
+            assert not block_ldu._task041_v13_outer_workspace_pass_resource_contract_valid(
+                outer_phase,
+                outer_report,
+                insufficient_node1,
+                rank_count=comm.size,
+            )
+            assert not task041_supervisor._v13_outer_authority_pass_matches_report(
+                outer_phase,
+                outer_report,
+                insufficient_node1,
+                rank_count=comm.size,
+            )
+
+            if outer_phase == "outer_restart32_workspace":
+                previous_invocation = monitor_sample["invocation_id"]
+                monitor_sample["invocation_id"] = "wrong-fixture-invocation"
+                identity_refusal = exact_side._task041_v13_fresh_authority_callback(
+                    outer_phase,
+                    outer_report,
+                    comm=comm,
+                    supervisor_memory_binding=supervisor_binding,
+                    limits=v13_limits,
+                )
+                monitor_sample["invocation_id"] = previous_invocation
+                assert identity_refusal["status"] == "refused"
+                assert identity_refusal["external_resource_gates"][
+                    "bound_fresh_supervisor_sample"
+                ] is False
+                assert not block_ldu._task041_v13_outer_workspace_pass_resource_contract_valid(
+                    outer_phase,
+                    outer_report,
+                    identity_refusal,
+                    rank_count=comm.size,
+                )
+                assert not task041_supervisor._v13_outer_authority_pass_matches_report(
+                    outer_phase,
+                    outer_report,
+                    identity_refusal,
+                    rank_count=comm.size,
+                )
+
+                node_free_by_id[1] = 0
+                resource_refusal = exact_side._task041_v13_fresh_authority_callback(
+                    outer_phase,
+                    outer_report,
+                    comm=comm,
+                    supervisor_memory_binding=supervisor_binding,
+                    limits=v13_limits,
+                )
+                node_free_by_id[1] = 1_000_000_000_000
+                assert resource_refusal["status"] == "refused"
+                assert resource_refusal["external_resource_gates"][
+                    "node1_phase_headroom"
+                ] is False
+                assert not block_ldu._task041_v13_outer_workspace_pass_resource_contract_valid(
+                    outer_phase,
+                    outer_report,
+                    resource_refusal,
+                    rank_count=comm.size,
+                )
+                assert not task041_supervisor._v13_outer_authority_pass_matches_report(
+                    outer_phase,
+                    outer_report,
+                    resource_refusal,
+                    rank_count=comm.size,
+                )
         source = layout.create_vector()
         target = layout.create_vector()
         bottom_indices = layout.map_bottom(

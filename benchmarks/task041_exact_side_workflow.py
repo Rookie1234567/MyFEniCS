@@ -5558,6 +5558,101 @@ def _write_marker(
     return marker
 
 
+def _write_v13_outer_authority_marker_collective(
+    root: Path,
+    started: float,
+    detail: Mapping[str, Any],
+    *,
+    environment: Mapping[str, Any],
+    comm: Any,
+    schema: str,
+    limits: Mapping[str, Any],
+    enforce_time_stop: bool,
+) -> dict[str, Any]:
+    """Persist one V13 outer-authority record without a rank-0 Barrier hazard.
+
+    Each rank reports its local resource-snapshot result first. Rank 0 then
+    appends the complete request/response record and broadcasts write status;
+    a rank-0 filesystem error therefore reaches every rank without leaving
+    non-root ranks blocked in the ordinary marker Barrier.
+    """
+
+    local_resource: dict[str, Any] = {
+        "rank": int(comm.rank),
+        "resource": None,
+        "resource_error": None,
+    }
+    try:
+        resource = _resource_snapshot()
+        local_resource["resource"] = resource
+        _check_resource(
+            resource,
+            started,
+            limits,
+            enforce_time_stop=enforce_time_stop,
+        )
+    except Exception as exc:  # noqa: BLE001 - record and agree before failing
+        local_resource["resource_error"] = f"{type(exc).__name__}: {exc}"
+    resource_rows = comm.allgather(local_resource)
+    resource_errors = []
+    if len(resource_rows) != int(comm.size):
+        resource_errors.append("resource sample count differs from MPI size")
+    for rank, row in enumerate(resource_rows):
+        if not isinstance(row, Mapping):
+            resource_errors.append(f"rank {rank}: invalid resource sample record")
+        elif row.get("rank") != rank:
+            resource_errors.append(f"rank {rank}: resource sample rank identity differs")
+        elif row.get("resource_error") is not None:
+            resource_errors.append(f"rank {rank}: {row.get('resource_error')}")
+        elif not isinstance(row.get("resource"), Mapping):
+            resource_errors.append(f"rank {rank}: resource snapshot is unavailable")
+
+    write_status: dict[str, Any] | None = None
+    if int(comm.rank) == 0:
+        try:
+            marker = {
+                "schema": str(schema),
+                "stage": "v13_outer_workspace_authority",
+                "wall_seconds": time.monotonic() - started,
+                "environment": _jsonable(environment),
+                "limits": _jsonable(limits),
+                "time_stop_enforced": bool(enforce_time_stop),
+                "rank_resource_samples": _jsonable(resource_rows),
+                "detail": _jsonable(detail),
+            }
+            marker_line = json.dumps(marker, sort_keys=True) + "\n"
+            with (root / "markers.jsonl").open("a", encoding="utf-8") as stream:
+                stream.write(marker_line)
+            write_status = {"ok": True, "error": None}
+        except Exception as exc:  # noqa: BLE001 - broadcast write failure
+            write_status = {
+                "ok": False,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+    write_status = comm.bcast(write_status, root=0)
+    write_error = (
+        write_status.get("error")
+        if isinstance(write_status, Mapping)
+        else "rank 0 did not broadcast marker write status"
+    )
+    if resource_errors or not isinstance(write_status, Mapping) or write_status.get("ok") is not True:
+        reasons = [*resource_errors]
+        if write_error:
+            reasons.append(f"rank 0 marker write: {write_error}")
+        raise RuntimeError(
+            "V13 outer-authority marker collective failed: "
+            + ("; ".join(reasons) or "unknown marker failure")
+        )
+    return {
+        "schema": str(schema),
+        "stage": "v13_outer_workspace_authority",
+        "wall_seconds": time.monotonic() - started,
+        "rank_resource_samples": resource_rows,
+        "detail": dict(detail),
+        "persistence": "rank0_append_bcast_status_no_barrier",
+    }
+
+
 def _producer_argv(
     packet_directory: Path,
     identity_path: Path,
@@ -9454,6 +9549,63 @@ def _complete_w0p7_pending_p4_numeric_before_admission(
     return completed
 
 
+def _task041_create_candidate_ldu_context(
+    layout: Any,
+    setup: Any,
+    side_inverses: Mapping[str, Any],
+    *,
+    sampled_column_contract: Mapping[str, Any],
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+    use_anderson_modal_inner: bool,
+    fixed_h6_modal_gmres_research: bool,
+    fixed_h6_modal_feedback_method: str | None,
+    modal_solver_policy: Mapping[str, Any] | None,
+    modal_snapshot_callback: Callable[
+        [Mapping[str, Any]], Mapping[str, Any] | None
+    ]
+    | None,
+    factor_stage_factory: Callable[..., Any] | None,
+    complex_qr_research: bool,
+    capture_modal_solve_trace: bool,
+) -> Any:
+    """Forward the candidate's sealed V13 authority callback to the real LDU builder."""
+
+    from src.solvers.hybrid_fem_modal_block_ldu import (
+        TASK041_V13_CONSISTENT_MODAL_POLICY_ID,
+        create_side_balh_block_ldu_preconditioner,
+    )
+
+    v13_fresh_authority_callback = None
+    if (
+        isinstance(modal_solver_policy, Mapping)
+        and modal_solver_policy.get("policy_id")
+        == TASK041_V13_CONSISTENT_MODAL_POLICY_ID
+    ):
+        v13_fresh_authority_callback = getattr(
+            factor_stage_factory, "v13_fresh_authority_callback", None
+        )
+    return create_side_balh_block_ldu_preconditioner(
+        layout,
+        setup.bottom,
+        setup.top,
+        setup.coupling,
+        side_inverses["bottom"],
+        side_inverses["top"],
+        sampled_columns=sampled_column_contract["columns"],
+        sampled_column_roles=sampled_column_contract["roles"],
+        sampled_column_contract_sha256=sampled_column_contract["sha256"],
+        marker_callback=marker_callback,
+        use_anderson_modal_inner=use_anderson_modal_inner,
+        fixed_h6_modal_gmres_research=fixed_h6_modal_gmres_research,
+        fixed_h6_modal_feedback_method=fixed_h6_modal_feedback_method,
+        modal_solver_policy=modal_solver_policy,
+        modal_snapshot_callback=modal_snapshot_callback,
+        v13_fresh_authority_callback=v13_fresh_authority_callback,
+        complex_qr_research=complex_qr_research,
+        capture_modal_solve_trace=capture_modal_solve_trace,
+    )
+
+
 def _run_task041_balh_candidate_setup(
     setup: Any,
     layout: Any,
@@ -9531,9 +9683,6 @@ def _run_task041_balh_candidate_setup(
     )
     from src.solvers.hybrid_fem_modal_augmented_direct import (
         internal_modal_rhs_correction,
-    )
-    from src.solvers.hybrid_fem_modal_block_ldu import (
-        create_side_balh_block_ldu_preconditioner,
     )
     from src.solvers.hybrid_fem_modal_iterative import (
         create_hybrid_assembled_block_action,
@@ -17822,21 +17971,14 @@ def _run_task041_balh_candidate_setup(
                 ),
             },
         )
-        context = create_side_balh_block_ldu_preconditioner(
+        context = _task041_create_candidate_ldu_context(
             layout,
-            setup.bottom,
-            setup.top,
-            setup.coupling,
-            side_inverses["bottom"],
-            side_inverses["top"],
-            sampled_columns=sampled_column_contract["columns"],
-            sampled_column_roles=sampled_column_contract["roles"],
-            sampled_column_contract_sha256=sampled_column_contract["sha256"],
+            setup,
+            side_inverses,
+            sampled_column_contract=sampled_column_contract,
             marker_callback=marker_callback,
             use_anderson_modal_inner=use_anderson_modal_inner,
-            fixed_h6_modal_gmres_research=(
-                fixed_h6_modal_gmres_research
-            ),
+            fixed_h6_modal_gmres_research=fixed_h6_modal_gmres_research,
             fixed_h6_modal_feedback_method=(
                 expected_modal_feedback_binding["method"]
                 if fixed_physical_balh_selected
@@ -17844,15 +17986,7 @@ def _run_task041_balh_candidate_setup(
             ),
             modal_solver_policy=resolved_modal_solver_policy,
             modal_snapshot_callback=modal_snapshot_callback,
-            v13_fresh_authority_callback=(
-                factor_stage_factory.v13_fresh_authority_callback
-                if (
-                    isinstance(resolved_modal_solver_policy, Mapping)
-                    and resolved_modal_solver_policy.get("policy_id")
-                    == "task041_v13_consistent_fixed_balh_modal_surrogate"
-                )
-                else None
-            ),
+            factor_stage_factory=factor_stage_factory,
             complex_qr_research=complex_qr_research,
             capture_modal_solve_trace=capture_modal_solve_trace,
         )
@@ -19232,8 +19366,18 @@ def run_task041_consumer(
     first_exception: dict[str, Any] | None = None
     cleanup_stage: str | None = None
     recovery_markers_started = False
+    outer_marker_persistence_failed: str | None = None
 
     def emit(stage: str, detail: Mapping[str, Any] | None = None) -> None:
+        if outer_marker_persistence_failed is not None:
+            marker_records.append(
+                {
+                    "stage": stage,
+                    "persistence": "not_attempted_after_outer_authority_marker_failure",
+                    "reason": outer_marker_persistence_failed,
+                }
+            )
+            return
         marker = _write_marker(
             root,
             started,
@@ -19250,7 +19394,25 @@ def run_task041_consumer(
 
     def callback(stage: str, detail: Mapping[str, Any]) -> None:
         nonlocal current_stage, recovery_markers_started
+        nonlocal outer_marker_persistence_failed
         current_stage = stage
+        if stage == "v13_outer_workspace_authority":
+            try:
+                marker = _write_v13_outer_authority_marker_collective(
+                    root,
+                    started,
+                    detail,
+                    environment=environment,
+                    comm=comm,
+                    schema=contract["consumer_schema"],
+                    limits=contract["limits"],
+                    enforce_time_stop=time_stop_enforced,
+                )
+            except Exception as exc:
+                outer_marker_persistence_failed = f"{type(exc).__name__}: {exc}"
+                raise
+            marker_records.append(marker)
+            return
         if stage == "recovery_physics_begin":
             recovery_markers_started = True
         if stage in {"bottom_factor_ready", "top_factor_ready"}:
