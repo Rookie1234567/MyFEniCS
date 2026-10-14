@@ -2716,15 +2716,25 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
         repo_root=root,
         v31_contract=contract,
     )
+    from scripts import run_case
+
+    assert run_case.main([str(input_path), "--validate-only"]) == 0
     if review_version == "V32":
         expected_template = contract["preparation"]["q4_numeric_pending_import"]
         assert identity_calls == [expected_template]
+        from src.io import load_and_resolve
+
+        resolved = load_and_resolve(input_path)
+        assert resolved.execution["task40_v31_q_csr_import_authorizations"] == {
+            "numeric_pending": {"4": expected_template}
+        }
         original_text = input_path.read_text(encoding="utf-8")
         tampered_text = original_text.replace(
             "REQUIRE_EXISTING_NUMERIC_PENDING", "ALLOW_REBUILD", 1
         )
         assert tampered_text != original_text
         input_path.write_text(tampered_text, encoding="utf-8")
+        assert run_case.main([str(input_path), "--validate-only"]) == 2
         _tampered_raw, tampered_data = service._read_case(input_path)
         with pytest.raises(ValueError, match="outside its registered route"):
             service._validate_service_stage_input_variant(
@@ -2748,6 +2758,7 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
         )
         assert injected_text != original_text
         input_path.write_text(injected_text, encoding="utf-8")
+        assert run_case.main([str(input_path), "--validate-only"]) == 2
         _injected_raw, injected_data = service._read_case(input_path)
         with pytest.raises(ValueError, match="outside its registered route"):
             service._validate_service_stage_input_variant(

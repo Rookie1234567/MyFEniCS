@@ -298,13 +298,63 @@ def _validate_task40_v30_execution_fields(config: Mapping[str, Any]) -> None:
         )
 
 
+def _validate_task40_v32_q4_import_authorization(
+    execution: Mapping[str, Any],
+) -> None:
+    path = "execution.task40_v31_q_csr_import_authorizations"
+    imports = execution.get("task40_v31_q_csr_import_authorizations")
+    if not isinstance(imports, Mapping) or set(imports) != {"numeric_pending"}:
+        raise _error(path, "V32 permits only the numeric_pending q4 import")
+    numeric_pending = imports["numeric_pending"]
+    if not isinstance(numeric_pending, Mapping) or set(numeric_pending) != {"4"}:
+        raise _error(path, "V32 import must bind exactly numeric_pending q4")
+    template = numeric_pending["4"]
+    if not isinstance(template, Mapping):
+        raise _error(path, "V32 q4 import template must be a table")
+
+    selector = execution.get("task40_v31_q_csr_binding")
+    selector_path = selector.get("selector_path") if isinstance(selector, Mapping) else None
+    selector_match = re.fullmatch(
+        rf"{re.escape(_TASK40_V31_ARTIFACT_ROOT)}/source_([0-9a-f]{{40}})/"
+        r"q_csr_selector_v31\.json",
+        str(selector_path),
+    )
+    pending_path_text = template.get("pending_record_path")
+    if selector_match is None or not isinstance(pending_path_text, str):
+        raise _error(path, "V32 q4 import is missing its source-qualified path identity")
+
+    from src.runners.task40_v31_contract import (
+        V32_Q4_PENDING_RECORD_RELATIVE,
+        v32_q4_pending_import_template,
+    )
+
+    pending_path = Path(pending_path_text)
+    relative_record = V32_Q4_PENDING_RECORD_RELATIVE.as_posix()
+    suffix = f"/{relative_record}"
+    if not pending_path.is_absolute() or not pending_path.as_posix().endswith(suffix):
+        raise _error(path, "V32 q4 pending path is outside its fixed source")
+    execution_root = Path(pending_path.as_posix()[:-len(suffix)])
+    expected_template = v32_q4_pending_import_template(
+        execution_root=execution_root,
+        consumer_source_sha=selector_match.group(1),
+    )
+    if dict(template) != expected_template:
+        raise _error(path, "V32 q4 import differs from its fixed source-qualified template")
+
+
 def _validate_task40_v31_execution_fields(config: Mapping[str, Any]) -> None:
     execution = config["execution"]
     selector_key = "task40_v31_q_csr_binding"
     factor_key = "task40_v31_factor_bank_config"
+    import_key = "task40_v31_q_csr_import_authorizations"
     v31_keys = {selector_key, factor_key}
     supplied = v31_keys.intersection(execution)
     if not supplied:
+        if import_key in execution:
+            raise _error(
+                f"execution.{import_key}",
+                "V32 q4 imports require the complete source-qualified V31 bindings",
+            )
         return
     if supplied != v31_keys or any(
         key in execution
@@ -361,6 +411,8 @@ def _validate_task40_v31_execution_fields(config: Mapping[str, Any]) -> None:
             f"execution.{selector_key}.selector_path",
             "V31 selector and factor-bank paths must share one source-qualified native root",
         )
+    if import_key in execution:
+        _validate_task40_v32_q4_import_authorization(execution)
 
 
 def _validate_root(document: Mapping[str, Any]) -> None:

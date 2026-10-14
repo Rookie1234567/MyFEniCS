@@ -1502,6 +1502,22 @@ FIELD_SPECS: Final = (
         ),
     ),
     _f(
+        "execution.task40_v31_q_csr_import_authorizations",
+        "table",
+        "none",
+        ("full3d_iterative",),
+        "V32 q4 数值 CSR 导入模板；只允许与完整 V31 worker 绑定共同出现",
+        "V32 q4 numeric-pending CSR import template",
+        '{ numeric_pending = { "4" = { schema = '
+        '"task40extra.review_v32_q4_numeric_pending_import.v1", '
+        'policy = "REQUIRE_EXISTING_NUMERIC_PENDING", q_index = 4, twist_index = 0 } } }',
+        default=None,
+        constraints=(
+            "V32-only exact q4 REQUIRE_EXISTING_NUMERIC_PENDING template; requires the complete "
+            "source-qualified V31 selector and factor-bank bindings; ordinary and V31 inputs reject it",
+        ),
+    ),
+    _f(
         "execution.task40_component_resume_manifest_path",
         "path",
         "repo-relative",
