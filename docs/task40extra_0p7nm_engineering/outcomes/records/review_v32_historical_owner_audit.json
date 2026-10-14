@@ -1,0 +1,97 @@
+{
+  "schema": "task40extra.review_v32.historical_owner_audit.v1",
+  "review_commit": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+  "review_sha256": "1276514cbac4bcb7e91a2dae9312b434af3163d3d4e69964f3638d9fc6b00496",
+  "audit_kind": "READ_ONLY_HISTORICAL_LOG_EXTRACTION_NO_FE_NO_ARRAY_SCAN",
+  "science_source": "54cf6d367b07355c0ab08c8c10655ecac73cfc6a",
+  "run_id": "20261013T114619.891762Z",
+  "remote_root": "/home/fenics/Projects/laptop_share",
+  "raw_audit": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_old_owner_log_audit.json",
+    "bytes": 9965,
+    "sha256": "2565c3ca3a8d2a148ad3bc2d17f64fe19891786755fb2e6406a9d9442ea30a9a"
+  },
+  "resource_log": {
+    "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261013T114619.891762Z/watchdog/resources.jsonl",
+    "bytes": 1140020964,
+    "sha256": "e6387c5391b7c92a21c4bbfbe84aceb3657631c8d091a5da682cde6f86dc6c71",
+    "samples": 104216
+  },
+  "event_log": {
+    "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261013T114619.891762Z/v20_one_q_row_tile_p6_reference_events.jsonl",
+    "sha256": "9abbd052651817a60dbb46f0245eb033207ff13eb6a05d638e2096e5f88b879c"
+  },
+  "owner_interval": {
+    "start_utc_ns": 1791909270098068598,
+    "samples": 51485,
+    "first_sample_utc_ns": 1791909270381883544,
+    "last_sample_utc_ns": 1791925766533270847,
+    "observed_compiler_processes": [],
+    "rss_sample_peak_bytes": 16563810304,
+    "task_swap_peak_bytes": 0,
+    "includes_stop_and_cleanup_samples": true,
+    "inner_phase_times": null,
+    "inner_phase_times_status": "NOT_RECORDED",
+    "hotspot": "UNKNOWN"
+  },
+  "phase_events": [
+    {
+      "event": "task40_v31_q4_saved_numeric_pending_phase_started",
+      "facts": {
+        "global_reference_builder_started": false,
+        "native_or_factor_started": false,
+        "phase": "task40_v31_q4_saved_numeric_pending",
+        "q_index": 4,
+        "schema": "task40extra.review_v31_worker_phase_event.v1",
+        "started_utc_ns": 1791891988274494371,
+        "status": "STARTED",
+        "twist_index": 0
+      },
+      "stage": "V20_TARGET_NY8_RESOURCE_PILOT",
+      "timestamp_ns": 1791891988274732725
+    },
+    {
+      "event": "task40_v31_q4_saved_numeric_pending_phase_completed",
+      "facts": {
+        "elapsed_seconds": 17281.822695894,
+        "finished_utc_ns": 1791909270097190265,
+        "phase": "task40_v31_q4_saved_numeric_pending",
+        "product_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_54cf6d367b07355c0ab08c8c10655ecac73cfc6a/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_numeric_pending.json",
+        "product_sha256": "1938828321a57ee6eaaea0def485f73daddbd13432cc6ef8823d19bcc44640ad",
+        "q_index": 4,
+        "reopened_existing_pending": false,
+        "schema": "task40extra.review_v31_worker_phase_event.v1",
+        "started_utc_ns": 1791891988274494371,
+        "status": "COMPLETE",
+        "twist_index": 0
+      },
+      "stage": "V20_TARGET_NY8_RESOURCE_PILOT",
+      "timestamp_ns": 1791909270097201725
+    },
+    {
+      "event": "task40_v31_twist0_owner_prebuild_phase_started",
+      "facts": {
+        "global_reference_builder_started": false,
+        "phase": "task40_v31_twist0_owner_prebuild",
+        "q4_pending_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_54cf6d367b07355c0ab08c8c10655ecac73cfc6a/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_numeric_pending.json",
+        "q4_pending_sha256": "1938828321a57ee6eaaea0def485f73daddbd13432cc6ef8823d19bcc44640ad",
+        "schema": "task40extra.review_v31_worker_phase_event.v1",
+        "started_utc_ns": 1791909270098068598,
+        "status": "STARTED"
+      },
+      "stage": "V20_TARGET_NY8_RESOURCE_PILOT",
+      "timestamp_ns": 1791909270098077712
+    }
+  ],
+  "worker_log": {
+    "sha256": "1fa46ee41b42a21d28e10c80176c975319249401e48a6796cf5f6e0f012cf2d7",
+    "content": "libibverbs: Warning: couldn't open config directory '/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/etc/libibverbs.d'.\n"
+  },
+  "audit_elapsed_seconds": 17.769863148918375,
+  "limitations": [
+    "Compiler samples establish observed process activity only; no precise inner FE/port/JIT/condensation stage boundaries, CPU or I/O counters were recorded. Do not attribute whole unfinished wrapper interval to compilation.",
+    "No compiler observed in sampling does not prove no compilation occurred between samples.",
+    "Last event is owner wrapper STARTED; no precise completion or internal call boundary can be reconstructed.",
+    "Readonly log extraction is P0 engineering cost, not a new numerical window."
+  ]
+}

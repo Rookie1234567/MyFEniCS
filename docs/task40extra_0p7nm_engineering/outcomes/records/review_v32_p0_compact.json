@@ -1,0 +1,58 @@
+{
+  "controller_audit": {
+    "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v32_controller_p0_audit.json",
+    "sha256": "7d96f17cf1abcf46ff300d730ff8c2dd0343f36a8a756703d5daec4e46d9474f"
+  },
+  "evidence_index": {
+    "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v32_p0_evidence_index.json",
+    "sha256": "ab7b3da7e09045c61f29b09eb82afab2c45d36900aba5a326f0c5195ea66c2c1"
+  },
+  "formal_results": {
+    "complete_reference": "NOT_RUN",
+    "live_factor_bank": "NOT_RUN",
+    "new_native": "NOT_RUN",
+    "official_rta": "NOT_RUN",
+    "old_q4": "NUMERIC_COMPLETE_NATIVE_PENDING",
+    "other_q": "NOT_RUN",
+    "target_fe_pde": "NOT_RUN"
+  },
+  "frozen_source_sha": "a4f7d53af234dbd156388a4be133a0d5aeee1c16",
+  "implemented": [
+    "fixed V32 q4 old pending path/hash and authorization pass from worker binding through staged DAT validation into the actual partial checker",
+    "saved raw B/D/H owner and cleanup lifecycle helpers covered by small fixtures",
+    "watchdog end accounting records the actual campaign phase at closeout",
+    "native qualification refuses a missing one of four required CSR actions"
+  ],
+  "next": "Controller reviews/publishes the frozen-source pending package and obtains direct user approval for the V32 window before any production service or FE.",
+  "review": "V32",
+  "review_base_sha": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+  "schema": "task40extra.review_v32_p0_compact.v1",
+  "status": "P0_IMPLEMENTATION_TESTED_WINDOW_PENDING",
+  "supervised_receipt_index": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/supervised_partial_receipts/index.json",
+    "sha256": "e3d8464f588af812dadf5894cc4e4a387cb246faa839e158fdeb37e62f0c368d"
+  },
+  "verification": {
+    "bash_syntax": "PASS",
+    "ci": "NOT_RUN",
+    "duplicate_review_runs": {
+      "controller_seconds": 6.22,
+      "count_once": true,
+      "executor_seconds": 6.24
+    },
+    "final_unique_tests": 50,
+    "git_diff_check": "PASS",
+    "ruff": "NOT_RUN_MODULE_UNAVAILABLE",
+    "supervised_checker": {
+      "negative": "NO_PARTIAL_FOOTER / return 2",
+      "positive": "PARTIAL_RECEIPT_CHECKED / return 0 / official_result=false"
+    }
+  },
+  "window": {
+    "approved": false,
+    "created": false,
+    "deadline": null,
+    "old_v30_approval_is_current": false,
+    "t0": null
+  }
+}

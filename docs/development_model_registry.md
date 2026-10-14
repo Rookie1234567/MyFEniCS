@@ -1,3 +1,7 @@
+## Task40extra V32 P0（2026-10-14）
+
+旧q4 require-existing接续、新旧根分离、保存原始端口数据与fresh恢复owner、实际受监督checker入口已实现并由50个小fixture验证；源码a4f7d53af234dbd156388a4be133a0d5aeee1c16。没有新增native/factor/目标场资格，旧q4仍NUMERIC_COMPLETE_NATIVE_PENDING。新86400/85200/1200秒窗口待批准，旧费用和unknown保留；不把P0测试当科学进展或2TB/48h达标。[回应与证据](task40extra_0p7nm_engineering/response_v32.md)。
+
 ## Task40extra V31 收口更新（2026-10-14，新加坡）
 
 新增 q4 完整数值 CSR：777424²、581086528 槽、11.624840260 GB 载荷，三数组 hash 回读一致；NUMERIC_COMPLETE_NATIVE_PENDING。保存构建父段17281.8227s，随后twist0原生owner准备到固定截止；服务worker约33786.4551s，treeRSS16.563810304GB、cgroup24.329441280GB、task swap0。独立native、全八q因子/参考/target均未完成，2TB/48h与最终精度未资格。不得与P0接口测试或旧q0 PASS混称。旧窗口/负结果/unknown不删。[回应与证据](task40extra_0p7nm_engineering/response_v31.md)。

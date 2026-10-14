@@ -1,3 +1,25 @@
+# V32 P0 定向回归与监督 checker 收口
+
+冻结源码 `a4f7d53af234dbd156388a4be133a0d5aeee1c16`，相对 Review V32 基线 `e2737b4049045a1824f5a1c49bb7bfac85e6e929`。最终命令在资格化 local WSL runtime（PETSc complex128/int32、MPI1）下运行：
+
+```bash
+source scripts/task40_fresh_c1/activate_local_wsl_complex.sh \
+  benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix \
+  benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json \
+  benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit
+python -m pytest -q \
+  src/test/test_task40_v31_closeout.py \
+  src/test/test_task40_v30_selected_q_csr.py
+```
+
+主控与执行者各运行同一集合，分别为 **50 passed in 6.22 s** 和 **50 passed in 6.24 s**。两轮是并发消息造成的重复审查，代表同一组 50 个测试，不累计为 100 个独立测试。`bash -n` 与 `git diff --check` 通过；Ruff 因模块不可用未运行，CI 未运行。
+
+监督链的两种真实小型子进程 fixture 也通过：无 footer 返回 `NO_PARTIAL_FOOTER` / checker code 2；合法 partial 返回 `PARTIAL_RECEIPT_CHECKED` / code 0，且 `official_result=false`。它们运行实际 supervisor、watchdog 与 `check-partial` CLI，使用临时合成窗口和资源注入，不是生产 service、FE 或 PDE 资格。原始 request/response、watchdog summary、checker 输出和输入身份已保存在 ignored `local_v32_preparation/supervised_partial_receipts/`；目录索引 SHA-256 为 `e3d8464f588af812dadf5894cc4e4a387cb246faa839e158fdeb37e62f0c368d`。
+
+开发中的失败尝试保留在 `local_v32_preparation/p0_supervised_partial_attempt4.log`（源树身份拒绝）、`attempt5.log`（正向 footer 语义字段不足）和 `attempt6.log`（正反两例通过）。完整源码、测试、日志和回执 hash 见 [V32 P0 evidence index](records/review_v32_p0_evidence_index.json) 与 [controller audit](records/review_v32_controller_p0_audit.json)。q4 仍是 `NUMERIC_COMPLETE_NATIVE_PENDING`；V32 窗口未批准、T0 未创建，没有正式 service、native factor 或 FE/PDE 运行。
+
+---
+
 # V31 截止收口验证
 
 P0 67 passed in 4.43s 和各普通入口 bug 定向验证按各自源码保留；最新 `test_v31_partial_checker_accepts_only_bound_campaign_cutoff_fixture` 为 **1 passed in 0.23s**，验证实际 watchdog 截止字段可进入只读收口、清场字段篡改拒绝；修复 source `c9c7f4af19917cbd2c0e4ecd5c0b167cab6752f5`。无 FE/JIT/PDE 重跑。

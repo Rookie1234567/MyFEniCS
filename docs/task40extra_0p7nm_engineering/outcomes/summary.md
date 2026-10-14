@@ -1,3 +1,17 @@
+# Task40extra Review V32：P0已接通，新的24小时窗待批准
+
+| 项目 | 当前证据 | 尚缺 |
+|---|---|---|
+| q4 continuation | 固定旧pending/hash贯通package、DAT、worker与checker，新输出独立；不fallback重建 | 正式受监督大数组导入及独立native尚未运行 |
+| native owner | 保存原始B/D/H配fresh volume/recovery，复用q map；小型作用、RHS、恢复和清理通过 | 新owner实测时间/内存及工作站全行数值资格 |
+| 监督收口 | 真实子进程链合法partial通过、缺footer保持负结果；修复closeout结束记账 | 新科学attempt的实际监督收口 |
+| 测试/源码 | 50个不同小fixture通过；冻结a4f7d53af234dbd156388a4be133a0d5aeee1c16 | 不是PDE、八q因子或最终2TB/48h资格 |
+| 窗口 | 86400/85200/1200秒提案，T0/deadline待批准 | 不刷新旧V31窗；主机/cap/数学门不变 |
+
+[Response V32](../response_v32.md) · [P0主控审计](records/review_v32_controller_p0_audit.json) · [交接命令](handoff_v32.md)。V31 q4完整数值矩阵和全部历史负结果继续有效；以下旧记录原文保留。
+
+---
+
 # Task40extra Review V31：q4 数值 CSR 完成，待独立 native
 
 | 对象 | 本轮实测与状态 | 尚缺 |

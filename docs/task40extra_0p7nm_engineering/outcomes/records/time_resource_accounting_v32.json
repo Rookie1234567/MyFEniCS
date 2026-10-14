@@ -1,0 +1,93 @@
+{
+  "abi": {
+    "integer": "int32",
+    "receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+    "scalar": "complex128",
+    "scope": "imports-only runtime receipt; no FE action"
+  },
+  "duplicate_final_suites": {
+    "reason": "parallel handoff messages caused the executor and controller to run the same frozen two-file suite",
+    "reported_passes_are_not_additive": true,
+    "same_collection": true,
+    "unique_tests_passed": 50
+  },
+  "frozen_source_sha": "a4f7d53af234dbd156388a4be133a0d5aeee1c16",
+  "historical_owner_log": {
+    "compiler_descendants_observed": false,
+    "internal_owner_subphase_hotspot": "UNKNOWN; do not attribute the unfinished interval to JIT or any single stage",
+    "owner_interval_sampled_process_tree_rss_peak_bytes": 16563810304,
+    "owner_interval_samples": 51485,
+    "owner_interval_task_swap_peak_bytes": 0,
+    "sha256": "2565c3ca3a8d2a148ad3bc2d17f64fe19891786755fb2e6406a9d9442ea30a9a",
+    "source": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_old_owner_log_audit.json"
+  },
+  "p0_parent_total_seconds": null,
+  "p0_parent_total_status": "UNKNOWN_NOT_FULLY_RECORDED; do not infer from partial tests or owner-log extraction",
+  "review": "V32",
+  "review_base_sha": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+  "schema": "task40extra.review_v32_p0_time_resource_accounting.v1",
+  "scope": "P0 engineering and test fixtures only; no production service, FE, JIT qualification, native factorization, or PDE",
+  "supervised_fixture_resource_samples": {
+    "clock_scope": "The fixture deliberately places a temporary test T0 beyond the 85,200 s numeric cutoff to exercise closeout. The 86,400/85,200/1,200 values are test-only; no production T0/window was created.",
+    "missing_footer": {
+      "descendants_cleared": true,
+      "process_tree_samples": 6,
+      "result": "NO_PARTIAL_FOOTER; checker return 2",
+      "sampled_process_tree_pss_peak_bytes": null,
+      "sampled_process_tree_rss_peak_bytes": 152027136,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "watchdog_elapsed_seconds": 1.3025700279977173
+    },
+    "receipt_index": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/supervised_partial_receipts/index.json",
+      "sha256": "e3d8464f588af812dadf5894cc4e4a387cb246faa839e158fdeb37e62f0c368d"
+    },
+    "resource_scope": "Actual short checker child process samples. Cgroup/host admission values were test-injected; these measurements are not workstation capacity or a FE/PDE gate.",
+    "valid_partial": {
+      "descendants_cleared": true,
+      "process_tree_samples": 6,
+      "result": "PARTIAL_RECEIPT_CHECKED; checker return 0; official_result=false",
+      "sampled_process_tree_pss_peak_bytes": null,
+      "sampled_process_tree_rss_peak_bytes": 153915392,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "watchdog_elapsed_seconds": 1.3173083299770951
+    }
+  },
+  "validation_attempts": [
+    {
+      "id": "supervised_fixture_attempt4",
+      "raw_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt4.log",
+      "reason": "temporary fixture source tree was dirty after canonical DAT creation; real source gate correctly stopped before checker",
+      "result": "2 failed in 0.97 s"
+    },
+    {
+      "id": "supervised_fixture_attempt5",
+      "raw_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt5.log",
+      "reason": "missing-footer passed; positive footer reached actual checker but lacked required stage/resource/cleanup semantics",
+      "result": "1 passed, 1 failed in 3.52 s"
+    },
+    {
+      "id": "supervised_fixture_attempt6",
+      "raw_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt6.log",
+      "reason": "both negative and positive supervised checker paths passed",
+      "result": "2 passed in 3.60 s"
+    },
+    {
+      "id": "executor_final_two_file_suite",
+      "raw_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_final_closeout_q4_attempt1.log",
+      "result": "50 passed in 6.24 s"
+    },
+    {
+      "id": "controller_final_review_suite",
+      "raw_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_final_p0_tests_attempt1.log",
+      "result": "50 passed in 6.22 s"
+    }
+  ],
+  "window_state": {
+    "deadline": null,
+    "new_heavy_service_started": false,
+    "production_window_created": false,
+    "t0": null,
+    "v32_approval": "PENDING_USER_APPROVAL"
+  }
+}

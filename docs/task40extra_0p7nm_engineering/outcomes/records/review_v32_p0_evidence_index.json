@@ -1,0 +1,257 @@
+{
+  "historical_limits": {
+    "formal_native_or_factor_qualification": "NOT_RUN",
+    "old_large_q4_arrays_scanned_in_p0": false,
+    "old_v30_approval_is_current": false,
+    "owner_subphase_hotspot": "UNKNOWN",
+    "q4": "NUMERIC_COMPLETE_NATIVE_PENDING"
+  },
+  "other_raw_artifacts": [
+    {
+      "bytes": 12729,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+      "sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426"
+    },
+    {
+      "bytes": 3335,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_active_scope_v32.json",
+      "sha256": "bf26607a09dcaf11c384eedef0b915b062d0dcc623427b027c38e5e961997363"
+    },
+    {
+      "bytes": 4584,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_draft_package_1.stdout.json",
+      "sha256": "f3f9bdb995250c5e48a527c5546fdf9db6ce3789511f41a92ba0f725fe4ad201"
+    },
+    {
+      "bytes": 8022,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_draft_package_1/execution_contract_v32.pending.json",
+      "sha256": "1d09c06da4b6be5f533200f2082b4f91572b1e62871dc4359cf31dd7e4e405bc"
+    },
+    {
+      "bytes": 9965,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_old_owner_log_audit.json",
+      "sha256": "2565c3ca3a8d2a148ad3bc2d17f64fe19891786755fb2e6406a9d9442ea30a9a"
+    },
+    {
+      "bytes": 16060,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/v31_q4_numeric_pending.readonly.json",
+      "sha256": "1938828321a57ee6eaaea0def485f73daddbd13432cc6ef8823d19bcc44640ad"
+    },
+    {
+      "bytes": 99,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_final_p0_tests_attempt1.log",
+      "sha256": "e99ce42d5c948e148ca16f5220cde7890691d923f531b49626b6dfb6cc4aa6f5"
+    },
+    {
+      "bytes": 99,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_final_closeout_q4_attempt1.log",
+      "sha256": "a83e075a909068df13b4d117b29fa9185a1c55f71e5d3f2ce05d697038b35ebe"
+    },
+    {
+      "bytes": 65291,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt4.log",
+      "sha256": "45779d918e939c8392b2358c4beca9c9bcb7d824c6083f931bed1a24fa14db4b"
+    },
+    {
+      "bytes": 20526,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt5.log",
+      "sha256": "01d4ac4202f07a370a45dd86d8ce07e48964d124a0fc00a5c5d6f901366d224a"
+    },
+    {
+      "bytes": 98,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt6.log",
+      "sha256": "12d2d99e6dbd90c5009ccf6ee358e1a765839613bc11f731404438673fdd4a47"
+    },
+    {
+      "bytes": 3350,
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v32_controller_p0_audit.json",
+      "sha256": "7d96f17cf1abcf46ff300d730ff8c2dd0343f36a8a756703d5daec4e46d9474f"
+    },
+    {
+      "bytes": 5007,
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v32_historical_owner_audit.json",
+      "sha256": "29eb802a13bb4ef8925df44654b4d88fe91d7e711648785a6fc292c11426d7e4"
+    },
+    {
+      "bytes": 9214,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/supervised_partial_receipts/index.json",
+      "sha256": "e3d8464f588af812dadf5894cc4e4a387cb246faa839e158fdeb37e62f0c368d"
+    }
+  ],
+  "review": {
+    "commit": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+    "sha256": "1276514cbac4bcb7e91a2dae9312b434af3163d3d4e69964f3638d9fc6b00496",
+    "version": "V32"
+  },
+  "schema": "task40extra.review_v32_p0_evidence_index.v1",
+  "source": {
+    "base": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+    "frozen_commit": "a4f7d53af234dbd156388a4be133a0d5aeee1c16",
+    "source_file_count": 13,
+    "source_files": [
+      {
+        "bytes": 66410,
+        "path": "benchmarks/subreaper_watchdog.py",
+        "sha256": "171fde615eea6f256920c7d92f14d0f41832714c2fbc078f39c6cf6906357927"
+      },
+      {
+        "bytes": 13740,
+        "path": "scripts/run_case_in_user_service.sh",
+        "sha256": "a3b1c739b237de6a2c6a41c99b76be8deab7f5addcc19c2476d95dbd15575755"
+      },
+      {
+        "bytes": 523073,
+        "path": "scripts/task40_v20_service_workflow.py",
+        "sha256": "fb46e20c9d24918aec95c41fb3ba6d1ae3c326123535f57b9d0a76b1688beee3"
+      },
+      {
+        "bytes": 75456,
+        "path": "src/runners/task40_v10_campaign.py",
+        "sha256": "3d24da8c8f8075161f90fcc0962644950ecdccbb4c21997f94a81588f9edc344"
+      },
+      {
+        "bytes": 481993,
+        "path": "src/runners/task40_v10_worker.py",
+        "sha256": "e51bb9c997cb43b6a0f9cadae94d87c6f10efca3078e3f3647e826dbd9dab39a"
+      },
+      {
+        "bytes": 261749,
+        "path": "src/runners/task40_v20_stage_runner.py",
+        "sha256": "85a2783212b3543893e311422ea3efb4f7a4e43264f8092fce52a457d9456592"
+      },
+      {
+        "bytes": 94560,
+        "path": "src/runners/task40_v31_contract.py",
+        "sha256": "7bca554d91771a6abb79b1f037818d4af82ee43706344aa75d1e51784c1874c6"
+      },
+      {
+        "bytes": 285335,
+        "path": "src/solvers/task40_v10_p6_yorbit.py",
+        "sha256": "dcc0f1afa4c228a4e3de93a6898690d61c8d9c06d149d361577a2c94701ffdaf"
+      },
+      {
+        "bytes": 222754,
+        "path": "src/solvers/task40_v25_selected_q0.py",
+        "sha256": "cbbab65b9f9c8614d7b42ff5efe48927116f15566ed5e39ec06a8c64a4a8a77f"
+      },
+      {
+        "bytes": 52839,
+        "path": "src/solvers/task40_v30_qualified_q_csr.py",
+        "sha256": "848cb7c0e8295f842668404ece86f9cc2c72cae9c31a6a6d4215d22f0cdf09c3"
+      },
+      {
+        "bytes": 135877,
+        "path": "src/solvers/task40_v30_selected_q_csr.py",
+        "sha256": "ee1c32a836ac928f6310ff371590412569dad554967243f18ae859edae9043d9"
+      },
+      {
+        "bytes": 90270,
+        "path": "src/test/test_task40_v30_selected_q_csr.py",
+        "sha256": "e4655664f876f57b22df4ad5073415715caa450c95286fa52566853dddedd412"
+      },
+      {
+        "bytes": 114914,
+        "path": "src/test/test_task40_v31_closeout.py",
+        "sha256": "5e60c50c3135882131827412d4070881fc3c2e077efcf899c4811a916f98976c"
+      }
+    ],
+    "source_freeze_owner": "controller"
+  },
+  "supervised_no_pde_fixture": {
+    "cases": {
+      "missing-footer": {
+        "checker_errors": null,
+        "checker_official_result": false,
+        "checker_passed": false,
+        "checker_status": "NO_PARTIAL_FOOTER",
+        "descendants_cleared": true,
+        "process_tree_samples": 6,
+        "sampled_process_tree_pss_peak_bytes": null,
+        "sampled_process_tree_rss_peak_bytes": 152027136,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "supervisor_return_code": 2,
+        "test_campaign_phase": "closeout",
+        "test_only_clock_fixture": true,
+        "watchdog_classification": "WORKER_FAILED",
+        "watchdog_elapsed_seconds": 1.3025700279977173
+      },
+      "valid-partial": {
+        "checker_errors": [],
+        "checker_official_result": false,
+        "checker_passed": true,
+        "checker_status": "PARTIAL_RECEIPT_CHECKED",
+        "descendants_cleared": true,
+        "process_tree_samples": 6,
+        "sampled_process_tree_pss_peak_bytes": null,
+        "sampled_process_tree_rss_peak_bytes": 153915392,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "supervisor_return_code": 0,
+        "test_campaign_phase": "closeout",
+        "test_only_clock_fixture": true,
+        "watchdog_classification": "COMPLETED",
+        "watchdog_elapsed_seconds": 1.3173083299770951
+      }
+    },
+    "qualification": "small synthetic service/supervisor/watchdog/check-partial control-chain fixture only; no production service or FE/PDE",
+    "receipt_index": {
+      "bytes": 9214,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/supervised_partial_receipts/index.json",
+      "sha256": "e3d8464f588af812dadf5894cc4e4a387cb246faa839e158fdeb37e62f0c368d"
+    }
+  },
+  "test_summary": {
+    "bash_syntax": "PASS",
+    "ci": "NOT_RUN",
+    "command": "source scripts/task40_fresh_c1/activate_local_wsl_complex.sh <qualified-runtime-prefix> <abi-receipt> <window-qualification>; python -m pytest -q src/test/test_task40_v31_closeout.py src/test/test_task40_v30_selected_q_csr.py",
+    "controller_review_seconds": 6.22,
+    "duplicate_runs_are_not_additive": true,
+    "executor_review_seconds": 6.24,
+    "git_diff_check": "PASS",
+    "logs": [
+      {
+        "bytes": 65291,
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt4.log",
+        "purpose": "supervised checker fixture initial; both failed source identity before checker",
+        "sha256": "45779d918e939c8392b2358c4beca9c9bcb7d824c6083f931bed1a24fa14db4b",
+        "tail": "FAILED src/test/test_task40_v31_closeout.py::test_v32_service_supervisor_runs_real_watchdog_and_check_partial[valid-partial]\n2 failed in 0.97s"
+      },
+      {
+        "bytes": 20526,
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt5.log",
+        "purpose": "missing-footer passed; valid footer rejected for incomplete stage receipt",
+        "sha256": "01d4ac4202f07a370a45dd86d8ce07e48964d124a0fc00a5c5d6f901366d224a",
+        "tail": "FAILED src/test/test_task40_v31_closeout.py::test_v32_service_supervisor_runs_real_watchdog_and_check_partial[valid-partial]\n1 failed, 1 passed in 3.52s"
+      },
+      {
+        "bytes": 98,
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt6.log",
+        "purpose": "two supervised checker cases passed",
+        "sha256": "12d2d99e6dbd90c5009ccf6ee358e1a765839613bc11f731404438673fdd4a47",
+        "tail": "..                                                                       [100%]\n2 passed in 3.60s"
+      },
+      {
+        "bytes": 99,
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_final_closeout_q4_attempt1.log",
+        "purpose": "executor final two-file suite",
+        "sha256": "a83e075a909068df13b4d117b29fa9185a1c55f71e5d3f2ce05d697038b35ebe",
+        "tail": "..................................................                       [100%]\n50 passed in 6.24s"
+      },
+      {
+        "bytes": 99,
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_final_p0_tests_attempt1.log",
+        "purpose": "controller final two-file review suite",
+        "sha256": "e99ce42d5c948e148ca16f5220cde7890691d923f531b49626b6dfb6cc4aa6f5",
+        "tail": "..................................................                       [100%]\n50 passed in 6.22s"
+      }
+    ],
+    "ruff": "NOT_RUN_MODULE_UNAVAILABLE",
+    "unique_tests_passed": 50
+  },
+  "window": {
+    "approval": "PENDING_USER_APPROVAL",
+    "deadline": null,
+    "formal_native_or_factor_qualification": "NOT_RUN",
+    "t0": null,
+    "window_created": false
+  }
+}

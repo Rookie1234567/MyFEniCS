@@ -2,7 +2,7 @@
   "schema": "task40extra.run_index.v1",
   "branch": "task40extra_0p7nm_engineering",
   "repair_base_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
-  "current_code_sha": "1e9109cb62343b13c850da03432def2109fee481",
+  "current_code_sha": "a4f7d53af234dbd156388a4be133a0d5aeee1c16",
   "input": {
     "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat",
     "sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
@@ -8464,5 +8464,63 @@
       "returncode": 2,
       "required_supervision_pass": false
     }
+  },
+  "current_code_sha_history": [
+    {
+      "sha": "1e9109cb62343b13c850da03432def2109fee481",
+      "superseded_by": "a4f7d53af234dbd156388a4be133a0d5aeee1c16",
+      "note": "previous top-level current_code_sha retained as historical when V32 P0 source was frozen"
+    }
+  ],
+  "review_v32_p0": {
+    "schema": "task40extra.review_v32_p0_run_index_entry.v1",
+    "status": "P0_IMPLEMENTED_TESTED_WINDOW_PENDING",
+    "review_base_head": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+    "frozen_source_sha": "a4f7d53af234dbd156388a4be133a0d5aeee1c16",
+    "response": "docs/task40extra_0p7nm_engineering/response_v32.md",
+    "handoff": "docs/task40extra_0p7nm_engineering/outcomes/handoff_v32.md",
+    "p0_evidence_index": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v32_p0_evidence_index.json",
+      "sha256": "ab7b3da7e09045c61f29b09eb82afab2c45d36900aba5a326f0c5195ea66c2c1"
+    },
+    "p0_compact": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v32_p0_compact.json",
+      "sha256": "b45cdf2895e1238eaf83b540edfb1cc90a2abd20c35369a173a11410222077ab"
+    },
+    "incremental_workflow_ledger": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v32_incremental_workflow_ledger.json",
+      "sha256": "35935d7b66613698476c60aef7b118b8339bfc2ffc5a470bc935657cbd662eac"
+    },
+    "time_resource_accounting": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/time_resource_accounting_v32.json",
+      "sha256": "1427a063a6166486078032f9c4fc42e2eb58eb7555f8d5a68798c24f6a6ff72d"
+    },
+    "controller_p0_audit": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v32_controller_p0_audit.json",
+      "sha256": "7d96f17cf1abcf46ff300d730ff8c2dd0343f36a8a756703d5daec4e46d9474f"
+    },
+    "supervised_receipt_index": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/supervised_partial_receipts/index.json",
+      "sha256": "e3d8464f588af812dadf5894cc4e4a387cb246faa839e158fdeb37e62f0c368d"
+    },
+    "final_targeted_tests": {
+      "unique_passed": 50,
+      "executor_seconds": 6.24,
+      "controller_seconds": 6.22,
+      "duplicate_same_collection_not_additive": true,
+      "bash_syntax": "PASS",
+      "git_diff_check": "PASS",
+      "ruff": "NOT_RUN_MODULE_UNAVAILABLE",
+      "ci": "NOT_RUN"
+    },
+    "old_q4_status": "NUMERIC_COMPLETE_NATIVE_PENDING",
+    "historical_owner_subphase": "UNKNOWN",
+    "new_heavy_approval": "PENDING_USER_APPROVAL",
+    "new_t0_utc": null,
+    "production_window_created": false,
+    "new_service_or_fe_started": false,
+    "historical_v30_approval_is_current": false,
+    "last_formal_run_source_sha_unchanged": "54cf6d367b07355c0ab08c8c10655ecac73cfc6a",
+    "source_freeze": "controller committed the P0 code source; documents are being closed out separately"
   }
 }

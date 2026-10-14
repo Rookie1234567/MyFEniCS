@@ -1,0 +1,65 @@
+{
+  "schema": "task40extra.review_v32.controller_p0_audit.v1",
+  "scope": "LOCAL_P0_IMPLEMENTATION_TEST_REVIEW_ONLY",
+  "review_commit": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+  "review_sha256": "1276514cbac4bcb7e91a2dae9312b434af3163d3d4e69964f3638d9fc6b00496",
+  "source_freeze_sha": "a4f7d53af234dbd156388a4be133a0d5aeee1c16",
+  "window_approval": "PENDING_USER_APPROVAL",
+  "t0": null,
+  "deadline": null,
+  "new_heavy_started": false,
+  "large_q4_arrays_scanned_in_p0": false,
+  "formal_native_or_factor_qualification": "NOT_RUN",
+  "tests": {
+    "unique_tests_passed": 50,
+    "executor_pytest_seconds": 6.24,
+    "controller_pytest_seconds": 6.22,
+    "duplicate_small_suite_reason": "Both local commands had started before asynchronous handoff was received; retain both costs, not 100 distinct tests.",
+    "bash_syntax": "PASS",
+    "git_diff_check": "PASS",
+    "ruff": "NOT_RUN_MODULE_UNAVAILABLE",
+    "CI": "NOT_RUN"
+  },
+  "reviewed_fixes": [
+    "Exact old q4 pending path/hash, readonly arrays, current consumer identity, no fallback build; COMPLETE reopen verifies all three authorized hashes",
+    "Qualified saved raw B/D/H with fresh volume/recovery owner, q maps reused once, independent native not CSR/saved-Schur oracle",
+    "V32 package/DAT/worker/checker import template and approved contract binding",
+    "Actual no-PDE required-checker supervisor/watchdog/partial CLI positive and missing-footer negative paths; closeout end accounting phase corrected",
+    "Same-window source-fix command retained; no automatic approval or window creation"
+  ],
+  "scientific_limits": [
+    "Old q4 remains NUMERIC_COMPLETE_NATIVE_PENDING",
+    "Historical owner subphase hotspot remains UNKNOWN",
+    "Small fixture correctness/control-chain pass is not workstation native/factor/target PASS",
+    "No new V32 T0 or heavy service launched; historical V30 authorization was explicitly rejected as stale"
+  ],
+  "raw_evidence": [
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_final_p0_tests_attempt1.log",
+      "bytes": 99,
+      "sha256": "e99ce42d5c948e148ca16f5220cde7890691d923f531b49626b6dfb6cc4aa6f5"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_final_closeout_q4_attempt1.log",
+      "bytes": 99,
+      "sha256": "a83e075a909068df13b4d117b29fa9185a1c55f71e5d3f2ce05d697038b35ebe"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt6.log",
+      "bytes": 98,
+      "sha256": "12d2d99e6dbd90c5009ccf6ee358e1a765839613bc11f731404438673fdd4a47"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_draft_package_1.stdout.json",
+      "bytes": 4584,
+      "sha256": "f3f9bdb995250c5e48a527c5546fdf9db6ce3789511f41a92ba0f725fe4ad201"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_old_owner_log_audit.json",
+      "bytes": 9965,
+      "sha256": "2565c3ca3a8d2a148ad3bc2d17f64fe19891786755fb2e6406a9d9442ea30a9a"
+    }
+  ],
+  "p0_total_wall_seconds": null,
+  "p0_total_wall_status": "NOT_COMPLETELY_RECORDED; tests and historical log extraction separately recorded; no zero or elapsed subtraction invented"
+}

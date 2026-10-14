@@ -1,0 +1,70 @@
+{
+  "approval": {
+    "deadline": null,
+    "historical_v30_approval_current": false,
+    "t0": null,
+    "v32_window": "PENDING_USER_APPROVAL"
+  },
+  "frozen_source_sha": "a4f7d53af234dbd156388a4be133a0d5aeee1c16",
+  "items": [
+    {
+      "boundary": "Historical owner subphase remains UNKNOWN; no compiler descendant in sampled owner interval; no large q4 arrays rescanned.",
+      "evidence": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_old_owner_log_audit.json",
+      "stage": "historical q4 source audit",
+      "status": "READ_ONLY_AUDITED"
+    },
+    {
+      "boundary": "Existing old arrays are read-only, consumer output root disjoint, exact pending record and three array hashes required; fixture import/finalization/provider reopen is not a new target native qualification.",
+      "evidence": "src/test/test_task40_v30_selected_q_csr.py::test_v32_q4_import_requires_exact_existing_pending_and_writes_receipt_to_new_root",
+      "stage": "q4 numeric-pending import route",
+      "status": "FIXTURE_TESTED"
+    },
+    {
+      "boundary": "Checker recomputes the current-contract/fixed-template identity and staged DAT identity; preflight read itself remains covered by the q4 import tests.",
+      "evidence": "src/runners/task40_v31_contract.py; src/test/test_task40_v31_closeout.py::test_v32_worker_binding_returns_fixed_q4_template",
+      "stage": "package to staged DAT to worker q4 identity",
+      "status": "FIXTURE_TESTED"
+    },
+    {
+      "boundary": "No full-size FE or numerical qualification in this P0.",
+      "evidence": "src/solvers/task40_v10_p6_yorbit.py; src/test/test_task40_v30_selected_q_csr.py",
+      "stage": "saved B/D/H owner and cleanup lifecycle",
+      "status": "SMALL_FIXTURE_TESTED"
+    },
+    {
+      "boundary": "Real subprocess supervisor, watchdog and actual check-partial CLI; missing footer returns NO_PARTIAL_FOOTER, synthetic valid partial returns PARTIAL_RECEIPT_CHECKED. No production service/FE.",
+      "evidence": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/supervised_partial_receipts/index.json",
+      "stage": "supervised required checker",
+      "status": "POSITIVE_AND_NEGATIVE_FIXTURES_PASS"
+    },
+    {
+      "boundary": "A missing fourth case raises before a PASS receipt can be produced; fixture is small algebra, not native FE science.",
+      "evidence": "src/test/test_task40_v30_selected_q_csr.py::test_native_qualification_checks_four_csr_actions_and_components",
+      "stage": "four-action native qualification guard",
+      "status": "MISSING_CASE_REJECTION_TESTED"
+    },
+    {
+      "boundary": "execution root is /home/fenics/Projects/laptop_share; created_payload_or_window=false; no approved package, T0, or service request.",
+      "evidence": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_draft_package_1.stdout.json",
+      "stage": "V32 pending package",
+      "status": "PREPARE_P0_SUCCEEDED_DRAFT_ONLY"
+    },
+    {
+      "boundary": "q4 remains NUMERIC_COMPLETE_NATIVE_PENDING; no new q native, other q, live factor bank, complete reference, target FE/PDE, KSP, field, or R/T/A.",
+      "evidence": null,
+      "stage": "formal numerical qualification",
+      "status": "NOT_RUN"
+    }
+  ],
+  "review_base_sha": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+  "schema": "task40extra.review_v32_incremental_workflow_ledger.v1",
+  "status": "P0_IMPLEMENTATION_TESTED_WINDOW_PENDING",
+  "test_collection": {
+    "command": "python -m pytest -q src/test/test_task40_v31_closeout.py src/test/test_task40_v30_selected_q_csr.py",
+    "controller_run_seconds": 6.22,
+    "duplicate": true,
+    "executor_run_seconds": 6.24,
+    "not_100_unique_tests": true,
+    "unique_passed": 50
+  }
+}
