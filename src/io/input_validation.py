@@ -303,8 +303,11 @@ def _validate_task40_v32_q4_import_authorization(
 ) -> None:
     path = "execution.task40_v31_q_csr_import_authorizations"
     imports = execution.get("task40_v31_q_csr_import_authorizations")
-    if not isinstance(imports, Mapping) or set(imports) != {"numeric_pending"}:
-        raise _error(path, "V32 permits only the numeric_pending q4 import")
+    if not isinstance(imports, Mapping) or set(imports) not in (
+        {"numeric_pending"},
+        {"complete", "numeric_pending"},
+    ):
+        raise _error(path, "V32 permits only q4 numeric_pending, optionally with q4 complete")
     numeric_pending = imports["numeric_pending"]
     if not isinstance(numeric_pending, Mapping) or set(numeric_pending) != {"4"}:
         raise _error(path, "V32 import must bind exactly numeric_pending q4")
@@ -340,6 +343,42 @@ def _validate_task40_v32_q4_import_authorization(
     )
     if dict(template) != expected_template:
         raise _error(path, "V32 q4 import differs from its fixed source-qualified template")
+
+    if "complete" in imports:
+        complete = imports["complete"]
+        if not isinstance(complete, Mapping) or set(complete) != {"4"}:
+            raise _error(path, "V32 complete import must bind exactly q4")
+        complete_template = complete["4"]
+        if not isinstance(complete_template, Mapping):
+            raise _error(path, "V32 q4 complete import template must be a table")
+        manifest = complete_template.get("csr_manifest")
+        manifest_path_text = manifest.get("path") if isinstance(manifest, Mapping) else None
+        if not isinstance(manifest_path_text, str):
+            raise _error(path, "V32 q4 complete import is missing its manifest path identity")
+
+        from src.runners.task40_v31_contract import (
+            V32_Q4_COMPLETE_MANIFEST_RELATIVE,
+            v32_q4_complete_import_template,
+        )
+
+        manifest_path = Path(manifest_path_text)
+        relative_manifest = V32_Q4_COMPLETE_MANIFEST_RELATIVE.as_posix()
+        manifest_suffix = f"/{relative_manifest}"
+        if (
+            not manifest_path.is_absolute()
+            or not manifest_path.as_posix().endswith(manifest_suffix)
+        ):
+            raise _error(path, "V32 q4 complete manifest is outside its fixed source")
+        complete_execution_root = Path(
+            manifest_path.as_posix()[:-len(manifest_suffix)]
+        )
+        if complete_execution_root.resolve() != execution_root.resolve():
+            raise _error(path, "V32 q4 complete and numeric_pending imports use different roots")
+        expected_complete_template = v32_q4_complete_import_template(
+            execution_root=complete_execution_root
+        )
+        if dict(complete_template) != expected_complete_template:
+            raise _error(path, "V32 q4 complete import differs from its pinned native template")
 
 
 def _validate_task40_v31_execution_fields(config: Mapping[str, Any]) -> None:

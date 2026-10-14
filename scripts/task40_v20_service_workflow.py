@@ -909,10 +909,15 @@ def _validate_service_stage_input_variant(
             if v31_contract.get("schema") == V32_CONTRACT_SCHEMA
             else None
         )
+        q4_complete_template = None
         if q4_import_template is not None:
-            expected_execution["task40_v31_q_csr_import_authorizations"] = {
-                "numeric_pending": {"4": q4_import_template}
-            }
+            import_authorizations = {"numeric_pending": {"4": q4_import_template}}
+            q4_complete_template = v31_contract["preparation"].get("q4_complete_import")
+            if q4_complete_template is not None:
+                import_authorizations["complete"] = {"4": q4_complete_template}
+            expected_execution["task40_v31_q_csr_import_authorizations"] = (
+                import_authorizations
+            )
         if data != expected_data:
             raise ValueError("V31 stage input changes fields outside its registered route")
         if input_path.name != canonical_path.name:
@@ -924,6 +929,7 @@ def _validate_service_stage_input_variant(
             source_sha=str(source_freeze.get("source_sha", "")),
             selector_sha256=str(contract_execution.get("selector_sha256", "")),
             q4_numeric_pending_import=q4_import_template,
+            q4_complete_import=q4_complete_template,
         )
         return
     resume_path = execution.get("task40_component_resume_manifest_path")

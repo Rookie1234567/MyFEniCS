@@ -2871,6 +2871,65 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
         "run",
         lambda command, **_kwargs: subprocess.CompletedProcess(command, 0),
     )
+    if review_version == "V32":
+        def q4_complete_template_fixture(*, execution_root):
+            execution_root = Path(execution_root)
+            return {
+                "schema": task40_v31_contract.V32_Q4_COMPLETE_IMPORT_SCHEMA,
+                "q_index": 4,
+                "twist_index": 0,
+                "profile": task40_v31_contract.V31_PROFILE,
+                "shape": [2, 2],
+                "operator_identity": {
+                    "scientific_input_sha256": "1" * 64,
+                    "profile_identity_sha256": "2" * 64,
+                    "ordered_mode_sha256": "3" * 64,
+                    "q_map_sha256": "4" * 64,
+                    "original_h_sha256": "5" * 64,
+                },
+                "matrix_source_identity": {
+                    "source_sha": "a" * 40,
+                    "window_sha256": "b" * 64,
+                },
+                "producer_identity": {"kind": "service-route-fixture"},
+                "producer_execution_identity": {
+                    "source_sha": "c" * 40,
+                    "window_sha256": "d" * 64,
+                },
+                "native_execution_identity": {
+                    "source_sha": "c" * 40,
+                    "window_sha256": "d" * 64,
+                },
+                "csr_manifest": {
+                    "path": str(
+                        execution_root
+                        / task40_v31_contract.V32_Q4_COMPLETE_MANIFEST_RELATIVE
+                    ),
+                    "sha256": "6" * 64,
+                },
+                "native_qualification": {
+                    "path": str(
+                        execution_root
+                        / task40_v31_contract.V32_Q4_COMPLETE_NATIVE_RELATIVE
+                    ),
+                    "sha256": "7" * 64,
+                    "status": "PASS",
+                },
+                "csr_artifacts": {
+                    name: {
+                        "path": str(execution_root / f"q4_{name}.npy"),
+                        "bytes": 1,
+                        "sha256": f"{index:x}" * 64,
+                    }
+                    for index, name in enumerate(("data", "indices", "indptr"), start=8)
+                },
+            }
+
+        monkeypatch.setattr(
+            task40_v31_contract,
+            "v32_q4_complete_import_template",
+            q4_complete_template_fixture,
+        )
 
     consumer_window_sha = "9" * 64
     package = pending_builder(
@@ -2942,16 +3001,18 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
     assert run_case.main([str(input_path), "--validate-only"]) == 0
     if review_version == "V32":
         expected_template = contract["preparation"]["q4_numeric_pending_import"]
+        expected_complete_template = contract["preparation"]["q4_complete_import"]
         assert identity_calls == [expected_template]
         from src.io import load_and_resolve
 
         resolved = load_and_resolve(input_path)
-        assert resolved.execution["task40_v31_q_csr_import_authorizations"] == {
+        resolved_payload = resolved.as_jsonable()
+        assert resolved_payload["execution"]["task40_v31_q_csr_import_authorizations"] == {
+            "complete": {"4": expected_complete_template},
             "numeric_pending": {"4": expected_template}
         }
         from src.runners import task038_full3d_iterative, task40_v20_stage_runner
 
-        resolved_payload = resolved.as_jsonable()
         route_contract = json.loads(json.dumps(contract))
         route_execution = route_contract["execution"]
         source_at_entry = "c" * 40
@@ -3045,7 +3106,10 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
         assert dispatcher_result["status"] == "V32_AUTHORITY_ROUTE_VALIDATED_NO_FE"
         assert dispatched["payload"]["execution"][
             "task40_v31_q_csr_import_authorizations"
-        ] == {"numeric_pending": {"4": expected_template}}
+        ] == {
+            "complete": {"4": expected_complete_template},
+            "numeric_pending": {"4": expected_template},
+        }
         assert dispatched["payload"]["solver"]["task40_factor_lifecycle_strategy"] == "ALL_Q_RESIDENT"
         assert dispatched["kwargs"]["v31_requested_factor_lifecycle_strategy"] == "ONE_Q_REFACTOR_V19"
 
