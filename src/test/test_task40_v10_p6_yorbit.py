@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import weakref
-from types import SimpleNamespace
+from pathlib import Path
+from types import CodeType, FunctionType, SimpleNamespace
 
 import numpy as np
 import pytest
 from scipy import sparse
+
+from src.solvers import task40_v10_p6_yorbit as yorbit_module
 
 from src.solvers.task40_v10_p6_yorbit import (
     Q_ASSEMBLY_LEGACY,
@@ -1759,3 +1762,78 @@ def test_v32_saved_q_map_binding_rejects_nonfinite_relative_and_max_errors():
     assert events[0]["values"]["finite"] is False
     assert events[0]["values"]["relative_to_component"] is None
     assert events[0]["values"]["maximum_absolute_error"] is None
+
+
+def test_v32_saved_port_owner_audit_surface_closure_resolves_path(monkeypatch):
+    audit_code = next(
+        code
+        for code in yorbit_module.build_task40_v10_p6_local_sector_owner.__code__.co_consts
+        if isinstance(code, CodeType) and code.co_name == "audit_surface"
+    )
+    stream_path = Path("/tmp/task40-v32-surface-stream.fixture")
+    active_lookup = np.asarray([-1, 0, 1], dtype=np.int32)
+    audit_calls = []
+
+    def allocation_gate(label, facts):
+        raise AssertionError(f"unexpected allocation gate call: {label}, {facts}")
+
+    def audit_stream(path, **kwargs):
+        audit_calls.append((path, kwargs))
+        return {"path": str(path), "numeric_internal_support_empty": True}
+
+    closure_values = {
+        "_audit_saved_surface_functional_stream": audit_stream,
+        "allocation_gate": allocation_gate,
+        "interior_rows": np.asarray([2], dtype=np.int64),
+        "local_h": np.asarray([1.0]),
+        "local_modes": (SimpleNamespace(side="top"),),
+        "saved_port_owner": {"surface_stream_path": str(stream_path)},
+        "saved_support_inventory": (
+            None,
+            None,
+            (np.asarray([], dtype=np.int64), np.asarray([], dtype=np.int64)),
+            None,
+            None,
+        ),
+        "selected": np.asarray([4], dtype=np.int64),
+        "system": SimpleNamespace(active_rows=2),
+    }
+
+    def make_cell(value):
+        def capture():
+            return value
+
+        return capture.__closure__[0]
+
+    audit_surface = FunctionType(
+        audit_code,
+        yorbit_module.__dict__,
+        "audit_surface",
+        closure=tuple(
+            make_cell(closure_values[name]) for name in audit_code.co_freevars
+        ),
+    )
+
+    # The production import must reach the stream-audit stub through this closure.
+    assert yorbit_module.Path is Path
+    result = audit_surface(active_lookup)
+
+    assert result == {"path": str(stream_path), "numeric_internal_support_empty": True}
+    assert len(audit_calls) == 1
+    called_path, called_kwargs = audit_calls[0]
+    assert called_path == stream_path
+    np.testing.assert_array_equal(called_kwargs["active_lookup"], active_lookup)
+    assert called_kwargs["active_rows"] == 2
+    np.testing.assert_array_equal(
+        called_kwargs["interior_rows"], closure_values["interior_rows"]
+    )
+    assert called_kwargs["local_modes"] == closure_values["local_modes"]
+    assert called_kwargs["selected_indices"] is closure_values["selected"]
+    assert called_kwargs["allocation_gate"] is allocation_gate
+
+    # Removing the production global reproduces the actual NameError.
+    with monkeypatch.context() as missing_path:
+        missing_path.delattr(yorbit_module, "Path", raising=False)
+        with pytest.raises(NameError, match="Path"):
+            audit_surface(active_lookup)
+    assert len(audit_calls) == 1
