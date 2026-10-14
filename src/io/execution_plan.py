@@ -169,10 +169,14 @@ def build_execution_plan(
     from .native_capacity_profile import (
         NATIVE_PROFILES,
         V7_ANISO_N0_P4_PROFILES,
+        V7_ANISO_N0_P6_DIRECT_PROFILES,
+        native_capacity_profile_identity,
         native_profile_facts,
     )
-    if specification.solver.get("preconditioner") in NATIVE_PROFILES:
-        profile_identity = specification.solver["preconditioner"]
+    profile_identity = native_capacity_profile_identity(
+        method, specification.solver
+    )
+    if profile_identity in NATIVE_PROFILES:
         profile_facts = native_profile_facts(profile_identity)
         worker_cpu = profile_facts.get("native_execution", {}).get(
             "worker_cpu", 23
@@ -186,7 +190,9 @@ def build_execution_plan(
         memory_prefix = native_memory_policy_prefix(
             specification.execution.get("native_memory_policy")
         )
-        if profile_identity in V7_ANISO_N0_P4_PROFILES:
+        if profile_identity in (
+            V7_ANISO_N0_P4_PROFILES | V7_ANISO_N0_P6_DIRECT_PROFILES
+        ):
             # Open MPI may replace the launcher affinity on the rank process.
             # Put both policies inside the mpiexec command so the actual rank
             # enters numactl first and taskset second, immediately before Python.

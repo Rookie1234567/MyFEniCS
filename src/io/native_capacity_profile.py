@@ -29,6 +29,13 @@ V5_EXPECTED_MODE_COUNTS = {
 }
 V7_ANISO_N0_P4_PROFILE = 'dual_condensed_balh_native_0p7nm_aniso_n0_p4_full_v7'
 V7_ANISO_N0_P4_PROFILES = frozenset({V7_ANISO_N0_P4_PROFILE})
+V7_ANISO_N0_P6_DIRECT_PROFILE = (
+    'dual_condensed_balh_native_0p7nm_aniso_n0_p6_direct_full_v1'
+)
+V7_ANISO_N0_P6_DIRECT_PROFILES = frozenset({V7_ANISO_N0_P6_DIRECT_PROFILE})
+V7_ANISO_N0_PROFILES = (
+    V7_ANISO_N0_P4_PROFILES | V7_ANISO_N0_P6_DIRECT_PROFILES
+)
 V7_P64_T_TRANSPOSE_COEFFICIENT_MAP_POLICY = (
     'v7_p64_T_transpose_reference_v1'
 )
@@ -106,6 +113,7 @@ NATIVE_CASES['dual_condensed_balh_native_0p7nm_n0_p3_pilot16_v6'] = (
     0.7, (0.7,), None, None, None
 )
 NATIVE_CASES[V7_ANISO_N0_P4_PROFILE] = (0.7, (0.5,), None, None, None)
+NATIVE_CASES[V7_ANISO_N0_P6_DIRECT_PROFILE] = (0.7, (0.5,), None, None, None)
 NATIVE_PROFILES = tuple(NATIVE_CASES)
 RETAINED_CONDENSED_PROFILE = 'dual_condensed_balh_native_5nm_v3'
 V5_NATIVE_PROFILES = frozenset(V5_NATIVE_CASES)
@@ -159,7 +167,14 @@ NATIVE_TIME_LIMIT_MODES = {
     'dual_condensed_balh_native_5nm_v3': 'none',
 }
 NATIVE_TIME_LIMIT_MODES.update(
-    {identity: 'none' for identity in (*V5_NATIVE_PROFILES, *V6_NATIVE_PROFILES)}
+    {
+        identity: 'none'
+        for identity in (
+            *V5_NATIVE_PROFILES,
+            *V6_NATIVE_PROFILES,
+            *V7_ANISO_N0_P6_DIRECT_PROFILES,
+        )
+    }
 )
 NATIVE_NONE_TIME_PROFILES = frozenset(
     identity for identity, mode in NATIVE_TIME_LIMIT_MODES.items() if mode == 'none'
@@ -365,6 +380,72 @@ def _apply_v7_aniso_n0_p4_facts(facts: dict) -> None:
 
 def native_profile_facts(identity):
     from .physical_balanced_profile import balanced_profile_facts
+    if identity in V7_ANISO_N0_P6_DIRECT_PROFILES:
+        # Reuse only the immutable V7 physical/material/output and resource
+        # facts.  This is a separate direct p6 route: no p4 operator or outer
+        # Krylov/PC identity is exposed by these facts.
+        facts = native_profile_facts(V7_ANISO_N0_P4_PROFILE)
+        facts.update(
+            identity=identity,
+            execution_mode='full_solve',
+            formal_runner='src.runners.p6_condensed_direct',
+            route='V7_P6_CONDENSED_DIRECT_N0',
+        )
+        facts['outer'].pop('ksp_type', None)
+        facts['outer'].pop('restart', None)
+        facts['outer'].pop('max_iterations', None)
+        facts['outer'].pop('planned_stop_iteration', None)
+        facts['outer'].update(
+            route='P6_CONDENSED_DIRECT',
+            initial_guess='not_applicable_direct_solve',
+            screen={'enabled': False, 'policy': 'not_applicable'},
+        )
+        facts['component_options'].pop('same_mesh_coefficient_map_policy', None)
+        facts['component_options']['dtn_surface_assembly_backend_by_degree'] = {
+            'p6': (
+                'q160_affine_hex_pointwise_weighted_legendre_component_pair_v1'
+            )
+        }
+        facts['backend'] = {
+            'p6': 'exact_p6_local_static_condensation_materialized_AIJ',
+            'global_matrix': 'one_exact_[S_V,Bhat;-Dhat,Hhat]_matrix',
+            'factor': 'one_MUMPS_symbolic_then_numeric_on_the_same_matrix',
+            'rhs': 'P6CellCondensedAction.reduce_rhs',
+            'recovery': 'P6CellCondensedAction.recover_storage',
+            'independent_residual': 'original_full_p6_A6_n0_action',
+            'p4_operator': 'NOT_BUILT',
+            'p4_factor': 'NOT_BUILT',
+            'outer_ksp': 'NOT_BUILT',
+            'full_dtn_status': 'FULL_DTN_NOT_VERIFIED',
+        }
+        facts.pop('coarse_operator', None)
+        facts.pop('retained_condensed_v20', None)
+        facts['condensed_route'] = {
+            'name': 'v7_p6_exact_local_condensation_direct_n0',
+            'degree': 6,
+            'rows': 9_281_372,
+            'matrix_blocks': '[S_V,Bhat;-Dhat,Hhat]',
+            'local_elimination': 'exact_existing_per_cell_interior_factorization',
+            'ports': V7_N0_ACTIVE_MODE_COUNT,
+            'matrix_lifecycle': (
+                'one_materialized_PETSc_AIJ_through_symbolic_numeric_solve'
+            ),
+            'cross_mesh_reuse': False,
+            'functional_store': False,
+        }
+        facts['campaign_authorization']['source'] = (
+            'user-authorized V7 p6 condensed direct full solve'
+        )
+        facts['campaign_authorization']['execution_mode'] = 'full_solve'
+        facts['campaign_authorization']['direct_route'] = {
+            'degree': 6,
+            'active_mode_count': V7_N0_ACTIVE_MODE_COUNT,
+            'parent_mode_count': V7_N0_PARENT_MODE_COUNT,
+            'quadrature_inventory': 'parent_q160',
+            'same_factor_lifecycle': ['symbolic', 'numeric', 'solve'],
+            'p4_and_outer_ksp': 'not_built',
+        }
+        return facts
     if identity in V6_NATIVE_PROFILES:
         facts = native_profile_facts(V6_BASE_PROFILES[identity])
         h6_only = identity == 'dual_condensed_balh_native_2nm_h6_only_v6'
@@ -772,6 +853,19 @@ def native_profile_facts(identity):
     return facts
 
 
+def native_capacity_profile_identity(method, solver):
+    """Return the explicit native profile for iterative or direct V7 routes."""
+
+    solver = solver or {}
+    if (
+        str(method) == 'full3d_direct'
+        and solver.get('native_capacity_profile')
+        in V7_ANISO_N0_P6_DIRECT_PROFILES
+    ):
+        return solver['native_capacity_profile']
+    return solver.get('preconditioner')
+
+
 def validate_same_mesh_coefficient_map_profile_binding(
     profile_identity,
     coarse_degree,
@@ -960,7 +1054,40 @@ def _validate_v7_aniso_n0_p4_case(config) -> None:
 def validate_native_case(config):
     """Validate only the campaign's frozen physical and numerical choices."""
     from .input_loader import InputError
-    identity = config['solver']['preconditioner']
+    identity = native_capacity_profile_identity(
+        config.get('method', {}).get('kind'), config['solver']
+    )
+    if identity in V7_ANISO_N0_P6_DIRECT_PROFILES:
+        if config.get('method', {}).get('kind') != 'full3d_direct':
+            raise InputError(f'{identity} is restricted to full3d_direct')
+        solver = config['solver']
+        if solver.get('linear_solver') != 'direct':
+            raise InputError(f'{identity} requires solver.linear_solver=direct')
+        if solver.get('direct_solver_profile', 'default') != 'default':
+            raise InputError(f'{identity} uses the qualified default MUMPS controls')
+        if any(
+            key in solver
+            for key in ('preconditioner', 'ksp_type', 'restart', 'max_iterations', 'coarse_degree')
+        ):
+            raise InputError(
+                f'{identity} does not accept a P4/iterative/coarse solver route'
+            )
+        from copy import deepcopy
+
+        v7_physical = deepcopy(config)
+        v7_physical['method']['kind'] = 'full3d_iterative'
+        v7_solver = v7_physical['solver']
+        v7_solver.update(
+            linear_solver='iterative',
+            ksp_type='fgmres',
+            preconditioner=V7_ANISO_N0_P4_PROFILE,
+            restart=32,
+            max_iterations=2048,
+            coarse_degree=4,
+        )
+        v7_solver.pop('native_capacity_profile', None)
+        _validate_v7_aniso_n0_p4_case(v7_physical)
+        return
     if identity in V7_ANISO_N0_P4_PROFILES:
         _validate_v7_aniso_n0_p4_case(config)
         return

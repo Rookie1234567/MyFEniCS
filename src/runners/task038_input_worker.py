@@ -72,10 +72,11 @@ def _load_and_validate_worker_payload(
         )
 
         solver_payload = resolved.get("solver")
-        profile_name = (
-            solver_payload.get("preconditioner")
-            if isinstance(solver_payload, dict)
-            else ""
+        from src.io.native_capacity_profile import native_capacity_profile_identity
+
+        profile_name = native_capacity_profile_identity(
+            resolved.get("method", {}).get("kind"),
+            solver_payload if isinstance(solver_payload, dict) else {},
         )
         observer_binding = validate_worker_binding(
             manifest_value,
@@ -185,13 +186,53 @@ def _load_and_validate_worker_payload(
 
     expected_execution_mode = "setup_only" if setup_only else "full_solve"
     if not setup_only:
-        from src.io.native_capacity_profile import V6_NATIVE_PROFILES, native_profile_facts
-        profile_name = resolved.get('solver', {}).get('preconditioner')
-        if profile_name in V6_NATIVE_PROFILES:
+        from src.io.native_capacity_profile import (
+            V6_NATIVE_PROFILES,
+            V7_ANISO_N0_P6_DIRECT_PROFILES,
+            native_capacity_profile_identity,
+            native_profile_facts,
+        )
+        profile_name = native_capacity_profile_identity(
+            resolved.get('method', {}).get('kind'), resolved.get('solver', {})
+        )
+        if profile_name in (V6_NATIVE_PROFILES | V7_ANISO_N0_P6_DIRECT_PROFILES):
             profile = native_profile_facts(profile_name)
             expected_execution_mode = profile['execution_mode']
             if manifest_value.get('component_options') != profile['component_options']:
-                errors.append('manifest V6 component options mismatch')
+                errors.append('manifest native profile component options mismatch')
+            if profile_name in V7_ANISO_N0_P6_DIRECT_PROFILES:
+                resolved_derived = resolved.get('derived')
+                resolved_profile = (
+                    resolved_derived.get('native_capacity_profile')
+                    if isinstance(resolved_derived, dict) else None
+                )
+                from src.io.resolved_config import canonical_json_bytes
+
+                if (
+                    not isinstance(resolved_profile, dict)
+                    or canonical_json_bytes(resolved_profile)
+                    != canonical_json_bytes(profile)
+                ):
+                    errors.append(
+                        'resolved direct V7 native-capacity profile facts mismatch'
+                    )
+                if manifest_value.get('native_capacity_profile_identity') != profile_name:
+                    errors.append('manifest direct V7 profile identity mismatch')
+                if manifest_value.get('native_capacity_profile') != resolved_profile:
+                    errors.append(
+                        'manifest direct V7 profile facts differ from resolved config'
+                    )
+                native_contract = manifest_value.get('native_capacity_contract')
+                if not isinstance(native_contract, dict):
+                    errors.append('manifest direct V7 native-capacity contract is missing')
+                else:
+                    expected_route = profile['campaign_authorization']['direct_route']
+                    if native_contract.get('profile') != profile_name:
+                        errors.append('manifest direct V7 resource profile mismatch')
+                    if native_contract.get('rss_hard_limit_bytes') != 1_800_000_000_000:
+                        errors.append('manifest direct V7 RSS hard limit mismatch')
+                    if native_contract.get('direct_route') != expected_route:
+                        errors.append('manifest direct V7 route contract mismatch')
     if manifest_value.get("execution_mode", "full_solve") != expected_execution_mode:
         errors.append("worker CLI and manifest execution mode mismatch")
     if setup_only:
@@ -268,10 +309,28 @@ def _dispatch_resolved_payload(
         adapter = run_2d
         label = "2D"
     elif expected_method == "full3d_direct":
-        from src.runners.task038_full3d_direct import run_full3d_direct
+        from src.io.native_capacity_profile import (
+            V7_ANISO_N0_P6_DIRECT_PROFILES,
+            native_capacity_profile_identity,
+        )
 
-        adapter = run_full3d_direct
-        label = "Full3D direct"
+        profile_name = native_capacity_profile_identity(
+            expected_method, resolved_payload.get('solver', {})
+        )
+        if profile_name in V7_ANISO_N0_P6_DIRECT_PROFILES:
+            from src.runners.p6_condensed_direct import run_p6_condensed_direct
+
+            def adapter(payload, directory):
+                return run_p6_condensed_direct(
+                    payload, directory, source_sha=expected_source_sha
+                )
+
+            label = "V7 p6 condensed direct"
+        else:
+            from src.runners.task038_full3d_direct import run_full3d_direct
+
+            adapter = run_full3d_direct
+            label = "Full3D direct"
     elif expected_method == "full3d_iterative":
         from src.runners.task038_full3d_iterative import run_full3d_iterative
 

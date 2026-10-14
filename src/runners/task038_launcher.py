@@ -148,8 +148,15 @@ def _base_manifest(
         "numerical_output_directory": str(run_directory / "numerical_output"),
         "resolved_method_adapter": adapter_identity,
     }
-    from src.io.native_capacity_profile import NATIVE_PROFILES, native_profile_facts
-    native_identity = specification.solver.get('preconditioner')
+    from src.io.native_capacity_profile import (
+        NATIVE_PROFILES,
+        V7_ANISO_N0_P6_DIRECT_PROFILES,
+        native_capacity_profile_identity,
+        native_profile_facts,
+    )
+    native_identity = native_capacity_profile_identity(
+        specification.method.get('kind'), specification.solver
+    )
     from src.io.v7_balanced_diagnostic_contract import (
         V7_DIAGNOSTIC_ENV,
         launch_contract as v7_diagnostic_launch_contract,
@@ -157,6 +164,20 @@ def _base_manifest(
     diagnostic_environment_value = os.environ.get(V7_DIAGNOSTIC_ENV)
     if native_identity in NATIVE_PROFILES:
         profile = native_profile_facts(native_identity)
+        derived = snapshot.get('derived', {})
+        if native_identity in V7_ANISO_N0_P6_DIRECT_PROFILES:
+            resolved_profile = derived.get('native_capacity_profile')
+            if not isinstance(resolved_profile, dict):
+                raise InputError(
+                    'resolved direct V7 native-capacity profile facts are missing'
+                )
+            if canonical_json_bytes(resolved_profile) != canonical_json_bytes(profile):
+                raise InputError(
+                    'resolved direct V7 native-capacity profile facts do not match '
+                    'the selected profile identity'
+                )
+            manifest['native_capacity_profile'] = resolved_profile
+            manifest['native_capacity_profile_identity'] = native_identity
         manifest['execution_mode'] = profile.get('execution_mode', 'full_solve')
         try:
             observer_contract = v7_diagnostic_launch_contract(
@@ -178,8 +199,9 @@ def _base_manifest(
             from .math_backend_identity import component_factory_identity
             manifest['configured_component_factories'] = component_factory_identity(
                 Path(__file__).resolve().parents[2])
-        derived = snapshot.get('derived', {})
         profile_snapshot = derived.get('physical_intermediate_profile', {})
+        if native_identity in V7_ANISO_N0_P6_DIRECT_PROFILES:
+            profile_snapshot = derived.get('native_capacity_profile', {})
         material = snapshot['materials']
         properties = derived.get('config_properties', {})
         campaign = profile_snapshot.get('campaign_authorization', {})
@@ -199,8 +221,8 @@ def _base_manifest(
             screen_policy = 'enabled'
         screen_contract = {
             'enabled': screen_enabled,
-            'iterations': profile['outer']['screen']['iterations'],
-            'solve_seconds': profile['outer']['screen']['solve_seconds'],
+            'iterations': profile['outer']['screen'].get('iterations'),
+            'solve_seconds': profile['outer']['screen'].get('solve_seconds'),
             'notch_policy': screen_policy,
         }
         if profile['outer']['screen'].get('progress_only'):
@@ -218,11 +240,11 @@ def _base_manifest(
             },
             'screen': screen_contract,
             'time_limit_mode': profile.get('campaign_authorization', {}).get('time_limit_mode', 'bounded'),
-            'solve_seconds': profile['resources']['solve_seconds'],
-            'workflow_seconds': profile['resources']['workflow_seconds'],
-            'restart': profile['outer']['restart'],
-            'max_iterations': profile['outer']['max_iterations'],
-            'initial_guess': profile['outer']['initial_guess'],
+            'solve_seconds': profile['resources'].get('solve_seconds'),
+            'workflow_seconds': profile['resources'].get('workflow_seconds'),
+            'restart': profile['outer'].get('restart'),
+            'max_iterations': profile['outer'].get('max_iterations'),
+            'initial_guess': profile['outer'].get('initial_guess'),
             'material_authority': material_authority,
             'resource_stop_policy': profile['resources'].get('resource_stop_policy', 'legacy'),
             'rss_hard_limit_bytes': profile['resources'].get('rss_hard_limit_bytes'),
@@ -247,6 +269,12 @@ def _base_manifest(
                     if int(snapshot['solver'].get('coarse_degree', -1)) == 3
                     else []
                 ),
+            )
+        if profile.get('condensed_route', {}).get('name') == (
+            'v7_p6_exact_local_condensation_direct_n0'
+        ):
+            manifest['native_capacity_contract']['direct_route'] = dict(
+                profile['campaign_authorization']['direct_route']
             )
         if profile.get('native_execution'):
             manifest['native_capacity_contract']['native_execution'] = profile[

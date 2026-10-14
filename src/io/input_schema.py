@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Final
 
-from .native_capacity_profile import NATIVE_PROFILES
+from .native_capacity_profile import NATIVE_PROFILES, V7_ANISO_N0_P6_DIRECT_PROFILES
 
 SCHEMA_VERSION: Final = 1
 IDENTITY_KEYS: Final = (
@@ -538,8 +538,8 @@ FIELD_SPECS: Final = (
         "discretization.mesh_axis_cell_counts",
         "integer_array",
         "cells",
-        ("full3d_iterative",),
-        "R13 V5 冻结张量网格的 x/y/z 单元数",
+        ("full3d_iterative", "full3d_direct"),
+        "R13/V7 显式全 3D profile 冻结张量网格的 x/y/z 单元数",
         "mesh_axis_cell_counts",
         "[9, 5, 22]",
         constraints=("R13 V5 only; must match the frozen mesh plan",),
@@ -934,6 +934,19 @@ FIELD_SPECS: Final = (
         allowed=("default", "mumps_ooc", "mumps_blr", "native_matched_reference"),
     ),
     _f(
+        "solver.native_capacity_profile",
+        "enum",
+        "none",
+        ("full3d_direct",),
+        "明确选择一个经过资源合同验证的 Full3D direct native 运行身份",
+        "native capacity profile identity",
+        '"dual_condensed_balh_native_0p7nm_aniso_n0_p6_direct_full_v1"',
+        allowed=tuple(sorted(V7_ANISO_N0_P6_DIRECT_PROFILES)),
+        constraints=(
+            "仅 V7 p6 direct 路线可用；不能与 iterative preconditioner 混用",
+        ),
+    ),
+    _f(
         "solver.reference_witness_path",
         "path",
         "filesystem path",
@@ -1139,7 +1152,7 @@ FIELD_SPECS: Final = (
         "execution.time_limit_mode",
         "enum",
         "none",
-        ("full3d_iterative",),
+        ("full3d_iterative", "full3d_direct"),
         "execution deadline policy; explicit none is an opt-in without a wall/solve deadline",
         "execution.time_limit_mode",
         '"bounded"',

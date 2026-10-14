@@ -299,12 +299,25 @@ def native_capacity_guard(profile, *, memory_policy='none'):
                      'neighbor_files_and_processes_modified': False,
                      'disk_free_bytes': shutil.disk_usage(root).free,
                      'inodes_available': filesystem.f_favail}
-        env_names = ('PHYSICAL_WATCHDOG_PSS_POLICY', 'OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')
+        env_names = (
+            'PHYSICAL_WATCHDOG_PSS_POLICY',
+            'OMP_NUM_THREADS',
+            'OPENBLAS_NUM_THREADS',
+            'MKL_NUM_THREADS',
+            'BLIS_NUM_THREADS',
+            'NUMEXPR_NUM_THREADS',
+        )
         previous_environment = {name: os.environ.get(name) for name in env_names}
         if profile_facts['resources'].get('pss_sampling_policy') == 'disabled_by_profile':
             os.environ['PHYSICAL_WATCHDOG_PSS_POLICY'] = 'disabled_by_profile'
             threads = str(profile_facts['native_execution']['math_threads'])
-            for name in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS'):
+            for name in (
+                'OMP_NUM_THREADS',
+                'OPENBLAS_NUM_THREADS',
+                'MKL_NUM_THREADS',
+                'BLIS_NUM_THREADS',
+                'NUMEXPR_NUM_THREADS',
+            ):
                 os.environ[name] = threads
         try:
             yield root, isolation
@@ -319,8 +332,15 @@ def native_capacity_guard(profile, *, memory_policy='none'):
 
 def launch_native_capacity(specification, *, setup_only: bool = False):
     from .task038_launcher import launch_specification
+    from src.io.native_capacity_profile import native_capacity_profile_identity
+
     memory_policy = specification.execution.get('native_memory_policy', 'none')
-    with native_capacity_guard(specification.solver['preconditioner'],
+    profile = native_capacity_profile_identity(
+        specification.method.get('kind'), specification.solver
+    )
+    if profile is None:
+        raise InputError('native capacity launch requires an explicit native profile')
+    with native_capacity_guard(profile,
                                memory_policy=memory_policy) as (_root, isolation):
         launch_kwargs = {'prelaunch_isolation': isolation}
         if setup_only:

@@ -387,8 +387,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
 
     time_limit_mode = execution.get("time_limit_mode", "bounded")
     if time_limit_mode == "none":
-        from .native_capacity_profile import NATIVE_NONE_TIME_PROFILES
-        if solver.get("preconditioner") not in NATIVE_NONE_TIME_PROFILES:
+        from .native_capacity_profile import (
+            NATIVE_NONE_TIME_PROFILES,
+            native_capacity_profile_identity,
+        )
+        if native_capacity_profile_identity(kind, solver) not in NATIVE_NONE_TIME_PROFILES:
             raise _error(
                 "execution.time_limit_mode",
                 "none is authorized only for an explicit native capacity profile",
@@ -555,6 +558,21 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             )
         if kind == "full3d_direct" and solver["linear_solver"] != "direct":
             raise _error("solver.linear_solver", "full3d_direct requires direct")
+        if kind == "full3d_direct" and solver.get("native_capacity_profile"):
+            from .native_capacity_profile import validate_native_case
+
+            validate_native_case(config)
+        elif kind == "full3d_direct":
+            if discretization.get("mesh_axis_cell_counts") is not None:
+                raise _error(
+                    "discretization.mesh_axis_cell_counts",
+                    "explicit axis counts are restricted to a reviewed full3d_direct native profile",
+                )
+            if execution.get("time_limit_mode") == "none":
+                raise _error(
+                    "execution.time_limit_mode",
+                    "none is restricted to a reviewed full3d_direct native profile",
+                )
         direct_profile = solver.get("direct_solver_profile", "default")
         witness_fields = {"reference_witness_path", "reference_witness_sha256"}
         supplied_witness_fields = witness_fields.intersection(solver)
@@ -1586,6 +1604,24 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
             ],
             "formal_physics_wavelength_nm": config["incidence"]["wavelength_nm"],
         }
+    elif config["method"]["kind"] == "full3d_direct":
+        # Bind the explicit V7 direct profile into the resolved specification.
+        # This makes the profile, component, and resource contract part of the
+        # load_and_resolve -> manifest -> worker identity chain; the runner
+        # must not reconstruct these facts from a profile name on its own.
+        from .native_capacity_profile import (
+            V7_ANISO_N0_P6_DIRECT_PROFILES,
+            native_capacity_profile_identity,
+            native_profile_facts,
+        )
+
+        identity = native_capacity_profile_identity(
+            config["method"]["kind"], config["solver"]
+        )
+        if identity in V7_ANISO_N0_P6_DIRECT_PROFILES:
+            result["native_capacity_profile"] = _jsonable(
+                native_profile_facts(identity)
+            )
     return result
 
 

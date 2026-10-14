@@ -103,8 +103,14 @@ def main(argv: list[str] | None = None) -> int:
                 result = launch_native_matched_reference(specification)
                 print(json.dumps(result, sort_keys=True, separators=(",", ":")))
                 return 0 if result["result_classification"] == "worker_exit0" else 3
-            from src.io.native_capacity_profile import NATIVE_PROFILES
-            if specification.solver.get("preconditioner") in NATIVE_PROFILES:
+            from src.io.native_capacity_profile import (
+                NATIVE_PROFILES,
+                native_capacity_profile_identity,
+            )
+            profile_identity = native_capacity_profile_identity(
+                specification.method.get("kind"), specification.solver
+            )
+            if profile_identity in NATIVE_PROFILES:
                 from src.runners.native_capacity import launch_native_capacity
                 result = launch_native_capacity(specification)
                 print(json.dumps(result, sort_keys=True))
