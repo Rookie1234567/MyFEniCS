@@ -394,6 +394,97 @@ def test_v30_q4_reuses_real_v26_witness_and_support_receipts_read_only():
     assert support["producer_identity_sha256"] == donor["producer_identity_sha256"]
 
 
+def test_v32_q4_support_evidence_maps_legacy_surface_path_to_execution_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    from src.runners import task40_v10_worker, task40_v29_contract
+
+    source_root = tmp_path / "legacy-source-root"
+    execution_root = tmp_path / "current-execution-root"
+    monkeypatch.setattr(task40_v29_contract, "SOURCE_ROOT", source_root)
+
+    stage_relative = Path("results/v26/selected_q_stage.json")
+    surface_relative = Path("results/v26/v25_selected_q0_surface_functionals.bin")
+    raw_stage_path = source_root / stage_relative
+    raw_surface_path = source_root / surface_relative
+    mapped_stage_path = execution_root / stage_relative
+    mapped_surface_path = execution_root / surface_relative
+    mapped_surface_path.parent.mkdir(parents=True)
+    surface_payload = b"approved surface stream fixture\x00"
+    mapped_surface_path.write_bytes(surface_payload)
+    surface_sha256 = hashlib.sha256(surface_payload).hexdigest()
+    producer_identity_sha256 = "a" * 64
+
+    stage = {
+        "schema": "task40extra.review_v25_selected_reference_q0_consumer.v1",
+        "status": "PASS_COMPLETE_Q0_STREAM_CSR_NOT_BUILT",
+        "complete_stream": {
+            "surface_functionals": {
+                "path": str(raw_surface_path),
+                "sha256": surface_sha256,
+                "numeric_internal_support_empty": True,
+                "internal_nonzero_entry_count": {"B": 0, "D": 0},
+                "producer_identity_sha256": producer_identity_sha256,
+            }
+        },
+        "v26_current_identity": {
+            "source_sha": "b" * 40,
+            "producer_identity_sha256": producer_identity_sha256,
+        },
+    }
+    stage_bytes = json.dumps(stage, sort_keys=True).encode("utf-8")
+    mapped_stage_path.write_bytes(stage_bytes)
+    compact_path = (
+        execution_root
+        / "docs/task40extra_0p7nm_engineering/outcomes/records/target_operator_probe_v26.json"
+    )
+    compact_path.parent.mkdir(parents=True)
+    compact_path.write_text(
+        json.dumps(
+            {
+                "raw_evidence": {
+                    "selected_q_stage": {
+                        "path": str(raw_stage_path),
+                        "sha256": hashlib.sha256(stage_bytes).hexdigest(),
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    support = task40_v10_worker._task40_v30_q4_direct_hhat_evidence(
+        repo_root=execution_root,
+        producer_facts={
+            "producer_identity_sha256": producer_identity_sha256,
+            "payload_sha256": {
+                "v25_selected_q0_surface_functionals.bin": surface_sha256
+            },
+        },
+    )
+
+    resolver = task40_v10_worker._task40_v30_artifact_path_resolver(execution_root)
+    assert support["surface_stream_path_raw"] == str(raw_surface_path)
+    assert support["surface_stream_path"] == str(mapped_surface_path.resolve())
+    assert resolver(raw_surface_path) == mapped_surface_path.resolve()
+    assert Path(support["surface_stream_path"]).is_relative_to(execution_root.resolve())
+    assert support["surface_stream_sha256"] == surface_sha256
+    assert _sha(Path(support["surface_stream_path"])) == surface_sha256
+    assert support["producer_identity_sha256"] == producer_identity_sha256
+
+    bad_producer_facts = {
+        "producer_identity_sha256": producer_identity_sha256,
+        "payload_sha256": {
+            "v25_selected_q0_surface_functionals.bin": "0" * 64
+        },
+    }
+    with pytest.raises(ValueError, match="accepted V26 twist-0 receipt"):
+        task40_v10_worker._task40_v30_q4_direct_hhat_evidence(
+            repo_root=execution_root,
+            producer_facts=bad_producer_facts,
+        )
+
+
 def _contract_fixture(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

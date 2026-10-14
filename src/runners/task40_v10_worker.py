@@ -922,6 +922,12 @@ def _task40_v30_q4_direct_hhat_evidence(
         raise ValueError("V26 twist-0 support-stage receipt is missing or changed")
     stage = json.loads(stage_path.read_text(encoding="utf-8"))
     surface = stage.get("complete_stream", {}).get("surface_functionals", {})
+    raw_surface_path = surface.get("path")
+    if not isinstance(raw_surface_path, str) or not raw_surface_path:
+        raise ValueError("V26 twist-0 surface stream path is missing")
+    mapped_surface_path = resolve_path(raw_surface_path)
+    if not mapped_surface_path.is_relative_to(root):
+        raise ValueError("V26 twist-0 surface stream escapes the approved execution root")
     counts = surface.get("internal_nonzero_entry_count", {})
     expected_surface_sha = producer_facts.get("payload_sha256", {}).get(
         "v25_selected_q0_surface_functionals.bin"
@@ -946,7 +952,8 @@ def _task40_v30_q4_direct_hhat_evidence(
         "support_receipt_path": str(stage_path),
         "support_receipt_sha256": reference["sha256"],
         "support_receipt_source_sha": stage_identity.get("source_sha"),
-        "surface_stream_path": surface.get("path"),
+        "surface_stream_path": str(mapped_surface_path),
+        "surface_stream_path_raw": raw_surface_path,
         "surface_stream_sha256": surface.get("sha256"),
         "producer_identity_sha256": producer_facts.get("producer_identity_sha256"),
     }
@@ -8455,13 +8462,27 @@ def run_task40_v10_p6_reference_worker(
             if isinstance(v31_route_facts, Mapping) and v31_route_facts.get("review_version") == "V32":
                 producer_facts = donor.get("producer_facts", {})
                 support_evidence = donor.get("direct_hhat_evidence", {})
-                surface_path = Path(str(donor.get("surface_stream_path", ""))).resolve()
+                if not isinstance(producer_facts, Mapping) or not isinstance(
+                    support_evidence, Mapping
+                ):
+                    raise ValueError(
+                        "V32 saved-port owner source differs from the accepted V26 stream identity"
+                    )
+                execution_root = Path(_repo_root()).resolve()
+                resolve_path = _task40_v30_artifact_path_resolver(execution_root)
+                surface_path = resolve_path(str(donor.get("surface_stream_path", "")))
+                support_surface_path = resolve_path(
+                    str(support_evidence.get("surface_stream_path", ""))
+                )
+                raw_support_surface_path = support_evidence.get("surface_stream_path_raw")
                 surface_hash = str(support_evidence.get("surface_stream_sha256", ""))
                 if (
-                    not isinstance(producer_facts, Mapping)
-                    or not isinstance(support_evidence, Mapping)
-                    or surface_path
-                    != Path(str(support_evidence.get("surface_stream_path", ""))).resolve()
+                    not surface_path.is_relative_to(execution_root)
+                    or not support_surface_path.is_relative_to(execution_root)
+                    or not isinstance(raw_support_surface_path, str)
+                    or not raw_support_surface_path
+                    or resolve_path(raw_support_surface_path) != support_surface_path
+                    or surface_path != support_surface_path
                     or surface_hash
                     != producer_facts.get("payload_sha256", {}).get(
                         "v25_selected_q0_surface_functionals.bin"
