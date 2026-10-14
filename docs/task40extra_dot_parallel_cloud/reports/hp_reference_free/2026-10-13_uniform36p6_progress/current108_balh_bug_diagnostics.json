@@ -1,0 +1,451 @@
+{
+  "schema": "balh108-bug-diagnostics-compact.v1",
+  "publication_status": "FINAL_NEGATIVE_DIAGNOSTIC_REPORT",
+  "repository": "Rookie1234567/MyFEniCS",
+  "branch": "task40extra_dot_parallel_cloud",
+  "publication_base_sha": "ebdc04ce8e38b30bc53295050d240ff97289345e",
+  "scope": "Read-only consolidation of existing scalar evidence; no new scientific execution or source change",
+  "scientific_source": {
+    "base_sha": "322e62e11a80969b3a35f0cbb08b25c11c539ea6",
+    "native_outer_consumer_bridge_sha256": "913c696f4c8e5b025f4c0736ed50a810a0585807e83cf524496a09e7344023ff",
+    "source_base_is_not_a_clean_overlay_claim": true
+  },
+  "model": {
+    "cells": 108,
+    "mesh_shape": [
+      18,
+      2,
+      3
+    ],
+    "fine_degree_histogram": {
+      "6": 108
+    },
+    "coarse_degree_histogram": {
+      "4": 108
+    },
+    "fine_active_trace_rows": 23976,
+    "fine_interior_rows": 48600,
+    "ports": 80,
+    "qualified_108_field": false,
+    "hp_convergence_qualified": false
+  },
+  "paused_BAL_H": {
+    "status": "USER_PRIORITY_BUG_DIAGNOSTIC_PAUSE_WITH_SAVED_ITERATE",
+    "global_iteration_limit": 10000,
+    "cumulative_charged_iterations": 6729,
+    "remaining_iteration_budget": 3271,
+    "checkpoint_reported_original_true_relative_residual": 0.020168106798117626,
+    "checkpoint_is_qualified_solution": false,
+    "fresh_independent_CSR_action_replay_at_pause": false,
+    "terminal_child_exit_known": false
+  },
+  "independent_volume_oracle": {
+    "status": "NATIVE_VOLUME_SCHUR_DIAGNOSTIC_MISMATCH",
+    "scope": "independent native V6 volume-action diagnostic only; no solve or field acceptance",
+    "DtN_applied": false,
+    "random_probes": [
+      {
+        "label": "unit_complex_seed_104729",
+        "native_trace_difference_relative": 2.621451576307861e-12,
+        "trace_relative_limit": 1e-10,
+        "diagnostic_gates_pass": true
+      },
+      {
+        "label": "unit_complex_seed_130363",
+        "native_trace_difference_relative": 2.782520367705717e-12,
+        "trace_relative_limit": 1e-10,
+        "diagnostic_gates_pass": true
+      }
+    ],
+    "checkpoint_probe": {
+      "native_trace_difference_absolute": 3.2219844312714836e-10,
+      "native_trace_difference_relative": 2.192664575515061e-08,
+      "trace_relative_limit": 1e-10,
+      "trace_cancellation_ratio": 353950.61852989276,
+      "action_linearity_relative": 5.978432824547597e-10,
+      "diagnostic_gates_pass": false,
+      "difference_over_uncancelled_total": 6.194814377656839e-14
+    },
+    "cancellation_rescaling_changes_acceptance": false,
+    "rigorous_error_bound": false,
+    "plateau_cause_established": false
+  },
+  "H6_positive_checks": {
+    "native_comparisons": 11,
+    "selected_diagonal_checks": 8,
+    "max_native_action_relative": 1.0810075481210271e-13,
+    "max_selected_diagonal_relative": 3.2715939230457116e-15,
+    "sampled_classes": 4,
+    "metadata_classes": 16,
+    "full_diagonal_certified": false,
+    "original_power10": 16.49219308201645,
+    "original_lambda_hi": 18.141412390218097,
+    "final_native_rayleigh": 17.695878974142804,
+    "last_packed_eigen_residual": 0.18014138355831827,
+    "spectral_upper_bound_certified": false,
+    "lower_spectral_bound_certified": false,
+    "status": "CONSISTENT_ON_FIXED_PROBES_ONLY",
+    "shared_MPC_wrapper_not_independently_certified": true,
+    "plateau_cause_established": false
+  },
+  "one_local_correction": {
+    "status": "COMPLETED_ONE_CORRECTION_MISMATCH_REMAINS",
+    "original_interior_defect": 9.71817518522308e-10,
+    "corrected_interior_harmonic_absolute": 6.496500262018125e-12,
+    "corrected_interior_defect_over_original_defect": 0.006684897255089972,
+    "corrected_native_trace_difference_relative": 1.1707916385076657e-08,
+    "corrected_trace_difference_over_original_difference": 0.5339583863312265,
+    "corrected_action_linearity_relative": 5.937446117055369e-10,
+    "corrected_diagnostic_gates_pass": false,
+    "new_factors": 0,
+    "original_trace_and_slave_change_exactly_zero": true,
+    "rigorous_error_bound": false,
+    "plateau_cause_established": false
+  },
+  "native_outer_attempt01": {
+    "status": "FAILED_BEFORE_NATIVE_P6_CONSTRUCTION_AND_OUTER_KSP",
+    "elapsed_seconds": 38.53634049399989,
+    "peak_tree_rss_bytes": 1544392704,
+    "additional_outer_iterations": 0,
+    "cleanup_verified": true,
+    "failure_kind": "producer/consumer metadata review identity mismatch, before native p6 construction and outer KSP"
+  },
+  "native_outer_attempt02": {
+    "consumer_metadata_repair": "revalidated against actual new consumer; no old identity bypass",
+    "raw_reuse_review_verdict": "APPROVED_P4_RAW_TENSOR_CHECKPOINT_REUSE",
+    "metadata_reader_smoke": "PASS_REAL_METADATA_CONSTRUCTOR_AND_READ_PRODUCER",
+    "negative_identity_checks_rejected": true,
+    "p4_raw_classes": 9,
+    "status": "FAILED_AT_ORIGINAL_PC_SETUP_OWNER_ROW_GATE_BEFORE_OUTER_ITERATIONS",
+    "started_utc": "2026-10-14T04:49:27Z",
+    "supervisor_status": "CHILD_FAILED",
+    "elapsed_seconds": 9353.720226093006,
+    "sampled_peak_tree_rss_bytes": 2441142272,
+    "child_exit_code": 1,
+    "cleanup_verified": true,
+    "remaining_processes": [],
+    "failure": "same-mesh owner row candidates disagree: 1.6471649611298594e-11 > 1e-11",
+    "owner_row_absolute_difference": 1.6471649611298594e-11,
+    "owner_row_absolute_limit": 1e-11,
+    "failure_probe": "first original unnormalized setup_checks PC probe",
+    "root_cause_established": false,
+    "raw_classes_built": 33,
+    "oriented_classes_built": 44,
+    "native_raw_kernel_seconds": 9261.061270038961,
+    "native_local_build_seconds": 9267.345739584998,
+    "local_schur_seconds": 5.9627723379962845,
+    "native_internal_identity_checks": [
+      {
+        "label": "x1_vector_0",
+        "support": "trace",
+        "passed": true,
+        "native_identity_relative": 1.3919328904298157e-14,
+        "internal_residual_relative": 1.5315410340337646e-19,
+        "scope": "native recovery/action internal identity; not saved/native A/b comparison or a solved field"
+      },
+      {
+        "label": "x1_vector_1",
+        "support": "port",
+        "passed": true,
+        "native_identity_relative": 1.0030949860582209e-16,
+        "internal_residual_relative": 9.113179148628963e-15,
+        "scope": "native recovery/action internal identity; not saved/native A/b comparison or a solved field"
+      },
+      {
+        "label": "x1_vector_2",
+        "support": "mixed",
+        "passed": true,
+        "native_identity_relative": 1.39266394519216e-14,
+        "internal_residual_relative": 3.3245883431249204e-18,
+        "scope": "native recovery/action internal identity; not saved/native A/b comparison or a solved field"
+      }
+    ],
+    "native_physical_rhs_built": true,
+    "native_physical_rhs_read_saved_rhs": false,
+    "saved_native_A_b_comparison_executed": false,
+    "additional_outer_iterations": 0,
+    "scientific_field_qualified": false,
+    "checkpoint_reported_relative_residual_before_setup": 0.020168106798117626,
+    "checkpoint_residual_is_new_native_solver_result": false,
+    "resource_observations": {
+      "samples": 37115,
+      "max_tree_swap_bytes": 0,
+      "max_system_swap_bytes": 0,
+      "min_host_available_bytes": 7088852992,
+      "min_disk_free_bytes": 16450584576,
+      "watchdog_stop_reason": null,
+      "wall_time_policy": "observe_only"
+    },
+    "native_p6_raw_tensor_payloads_persisted": false,
+    "local_or_global_factors_persisted": false,
+    "p6_raw_warm_recovery_available": false
+  },
+  "setup_cost_review": {
+    "status": "READ_ONLY_SOURCE_AND_METADATA_REVIEW",
+    "native_compile_flags": [
+      "-O0",
+      "-g0"
+    ],
+    "raw_class_count": 33,
+    "oriented_class_count": 44,
+    "per_class_progress_callback_supplied": false,
+    "derived_p6_raw_seconds": 9258.883743845907,
+    "derived_cost_scope": "ROUGH_DERIVED_COST_EXTRAPOLATION_NOT_MEASURED_ETA_OR_DEADLINE; excludes44 oriented local LUs, port setup, mapping, checks and solve",
+    "old_raw_classes_eligible_for_exact_native_reuse": false,
+    "platform_cause_established": false,
+    "O3_build_or_run": "NOT_AUTHORIZED_NOT_RUN",
+    "derived_p6_raw_seconds_is_historical_estimate": true
+  },
+  "costs": {
+    "units": {
+      "seconds": "supervised elapsed wall seconds",
+      "peak_tree_rss_bytes": "sampled simultaneous process-tree resident bytes, not virtual AS"
+    },
+    "terminal_stages_and_incomplete_lower_bounds": [
+      {
+        "attempt": "phase4_balh_cache_restore",
+        "kind": "byte_recovery_only",
+        "seconds": 6.801815143000567,
+        "peak_tree_rss_bytes": 31207424,
+        "child_exit_code": 0,
+        "cleanup_verified": true
+      },
+      {
+        "attempt": "phase4_balh108_saved_solve_attempt01",
+        "kind": "BAL_H_entry_failure_before_PC_setup",
+        "seconds": 3.2645058869966306,
+        "peak_tree_rss_bytes": 525180928,
+        "child_exit_code": 1,
+        "cleanup_verified": true
+      },
+      {
+        "attempt": "phase4_balh108_saved_solve_attempt02",
+        "kind": "BAL_H_saved108_normalized_retained_controlled_nonconvergence",
+        "seconds": 581.9849118379934,
+        "peak_tree_rss_bytes": 1676288000,
+        "child_exit_code": 1,
+        "cleanup_verified": true,
+        "terminal_review": "phase4_balh108_attempt02_negative_review.json"
+      },
+      {
+        "attempt": "phase4_balh108_historical_solve_attempt01",
+        "kind": "historical_BAL_H_entry_raw_checkpoint_shape_mismatch",
+        "seconds": 38.774156496001524,
+        "peak_tree_rss_bytes": 1488556032,
+        "child_exit_code": 1,
+        "cleanup_verified": true,
+        "terminal_review": "phase4_balh_historical_attempt01_negative_review.json"
+      },
+      {
+        "attempt": "phase4_balh108_historical_solve_attempt02",
+        "kind": "FAIL_UNNORMALIZED_RANDOM_PC_PROBE_ABSOLUTE_TRANSFER_ROW_GATE",
+        "seconds": 357.404456261007,
+        "peak_tree_rss_bytes": 1682731008,
+        "child_exit_code": 1,
+        "cleanup_verified": true,
+        "terminal_review": "phase4_balh_historical_attempt02_negative_review.json"
+      },
+      {
+        "attempt": "phase4_balh108_historical_solve_attempt03",
+        "kind": "INCOMPLETE_NO_TERMINAL_RECORD",
+        "seconds": null,
+        "seconds_lower_bound": 3020.33019141799,
+        "peak_tree_rss_bytes_observed": 1818488832,
+        "child_exit_code": null,
+        "cleanup_verified": null,
+        "terminal_review": "phase4_balh_historical_attempt03_incomplete_review.json"
+      },
+      {
+        "attempt": "phase4_balh108_checkpoint_resume_attempt01",
+        "kind": "USER_PRIORITY_BUG_DIAGNOSTIC_PAUSE_WITH_SAVED_ITERATE",
+        "seconds": null,
+        "seconds_lower_bound": 2865.936959640996,
+        "peak_tree_rss_bytes_observed": 1864613888,
+        "tool_exit_code": 130,
+        "child_exit_code": null,
+        "cleanup_verified": null,
+        "terminal_review": "phase4_balh_checkpoint_resume01_pause_review.json"
+      },
+      {
+        "attempt": "phase4_balh108_native_volume_oracle_attempt01",
+        "kind": "FAIL_DIAGNOSTIC_API_ADAPTER_BEFORE_FIRST_NATIVE_ACTION",
+        "seconds": 23.639999887003796,
+        "peak_tree_rss_bytes": 1556525056,
+        "child_exit_code": 1,
+        "cleanup_verified": true,
+        "terminal_review": "phase4_native_volume_oracle01_negative_review.json"
+      },
+      {
+        "attempt": "phase4_balh108_native_volume_oracle_attempt02",
+        "kind": "COMPLETE_DIAGNOSTIC_WITH_RETAINED_CHECKPOINT_FORWARD_MISMATCH",
+        "seconds": 70.1582212929934,
+        "peak_tree_rss_bytes": 1513218048,
+        "child_exit_code": 0,
+        "cleanup_verified": true,
+        "terminal_review": "phase4_native_volume_oracle02_terminal_review.json"
+      },
+      {
+        "attempt": "phase4_h6_positive_cache_restore_attempt01",
+        "kind": "EXACT_POSITIVE6_COMPILER4_BYTE_RESTORE",
+        "seconds": 6.784873374999734,
+        "peak_tree_rss_bytes": 31735808,
+        "child_exit_code": 0,
+        "cleanup_verified": true,
+        "terminal_review": "phase4_h6_positive_cache_restore_terminal_review.json"
+      },
+      {
+        "attempt": "phase4_balh108_h6_positive_oracle_attempt01",
+        "kind": "COMPLETE_FIXED_ACTION_DIAGONAL_CHECKS_NO_SPECTRAL_FALSIFICATION",
+        "seconds": 55.5740907730069,
+        "peak_tree_rss_bytes": 361771008,
+        "child_exit_code": 0,
+        "cleanup_verified": true,
+        "terminal_review": "phase4_h6_positive_oracle_terminal_review.json"
+      },
+      {
+        "attempt": "phase4_balh108_local_defect_oracle_attempt01",
+        "kind": "COMPLETED_ONE_CORRECTION_MISMATCH_REMAINS",
+        "seconds": 54.825763180997455,
+        "peak_tree_rss_bytes": 1513902080,
+        "child_exit_code": 0,
+        "cleanup_verified": true,
+        "terminal_review": "phase4_local_defect_oracle_terminal_review.json"
+      },
+      {
+        "attempt": "phase4_balh108_native_outer_attempt01",
+        "kind": "ENTRY_FAIL_OLD_P4_RAW_REVIEW_CONSUMER_IDENTITY",
+        "seconds": 38.53634049399989,
+        "peak_tree_rss_bytes": 1544392704,
+        "child_exit_code": 1,
+        "cleanup_verified": true,
+        "terminal_review": "phase4_native_outer_attempt01_negative_review.json"
+      },
+      {
+        "attempt": "phase4_balh108_native_outer_attempt02",
+        "kind": "NATIVE_SETUP_COMPLETE_SYNTHETIC_PC_ABSOLUTE_OWNER_ROW_FAIL",
+        "seconds": 9353.720226093006,
+        "peak_tree_rss_bytes": 2441142272,
+        "child_exit_code": 1,
+        "cleanup_verified": true,
+        "terminal_review": "phase4_native_outer_attempt02_negative_review.json"
+      }
+    ],
+    "known_terminal_seconds": 10591.469360721007,
+    "sum_including_incomplete_lower_bounds_seconds": 16477.736511779993,
+    "sum_is_exact": false,
+    "preparation_elapsed_separate_and_not_zero": true,
+    "preparation_total_seconds": null,
+    "prior_phase3_costs_not_added_again": true,
+    "ledger_version": 14,
+    "native_attempt02_terminal_cost_included_once": true
+  },
+  "scientific_limits": [
+    "The checkpoint forward-relative volume mismatch remains failed at the original 1e-10 threshold.",
+    "Small cancellation-scaled differences do not prove an error bound or explain the approximately 2% BAL_H plateau.",
+    "H6 fixed probes do not certify all actions, the full diagonal, or either spectral endpoint.",
+    "No qualified 108 field, new official R/T/A, hp-convergence acceptance, or continuum error bound."
+  ],
+  "sources": [
+    {
+      "file": "phase4_native_volume_oracle02_terminal_review.json",
+      "bytes": 12060,
+      "sha256": "6fb0368ba86f824788767dd87bb5242ede3f9cc2630b27d39c95474772ae4c2d"
+    },
+    {
+      "file": "phase4_h6_positive_oracle_terminal_review.json",
+      "bytes": 2539,
+      "sha256": "3bc6ae2c1fa3d51794b25215f93aec3bf2185c10d689657227c0d90ce99f080f"
+    },
+    {
+      "file": "phase4_balh108_h6_positive_oracle_math_review.json",
+      "bytes": 3009,
+      "sha256": "b541f3f8b6d98216285fb719849c33584b40267fd9e89d7e8a17ea3b8928c1c4"
+    },
+    {
+      "file": "phase4_local_defect_oracle_terminal_review.json",
+      "bytes": 4590,
+      "sha256": "e13adcca0e86ec4a8a2780ffed9653bb4dc92ed8b4acb56246691a8f55fcc99f"
+    },
+    {
+      "file": "phase4_native_outer_attempt01_negative_review.json",
+      "bytes": 1518,
+      "sha256": "47ace2e8d899adf834176cf2a1d6b889aa44e7fe8c86b24392fdd1aff0b4d13b"
+    },
+    {
+      "file": "phase4_execution_ledger_v13.json",
+      "bytes": 4875,
+      "sha256": "7f43b80d5363d473d50e1028bbb0dce78fa6f75aec43a2ff81c043710213b808"
+    },
+    {
+      "file": "phase4_current108_degree_histograms.json",
+      "bytes": 2882,
+      "sha256": "451a985d44d936b0508f47b159e041720b480b0582783186766e7efdc245c71b"
+    },
+    {
+      "file": "phase4_native108_setup_cost_source_review.json",
+      "bytes": 14424,
+      "sha256": "6f2d3fd554a70070e476bdb0596f7f51aba3fd196db1956bbd9cd7564ea35320"
+    },
+    {
+      "file": "phase4_balh_checkpoint_resume01_pause_review.json",
+      "bytes": 3241,
+      "sha256": "12030346730e26caa3310250747c0672df2265c212c6d3d5f6c48d096546f1a7"
+    },
+    {
+      "file": "phase4_balh108_native_outer_attempt02_p4_raw_independent_review.json",
+      "bytes": 13591,
+      "sha256": "ac857e03da3a860cabd7e8b5f6847a854a1c741bccc9953848e1b45c2fc0d741"
+    },
+    {
+      "file": "phase4_balh108_native_outer_attempt02_p4_reader_metadata_smoke.json",
+      "bytes": 4080,
+      "sha256": "6b3d586903143184cd0894d7020926d219a3057b6ed826bf186722cb1c301c40"
+    },
+    {
+      "file": "phase4_native_outer_attempt02_negative_review.json",
+      "bytes": 4433,
+      "sha256": "89b5f0cb51b243f935fb86edd4269c46446f84b39c9c40a0eabb93b8149cba25"
+    },
+    {
+      "file": "phase4_execution_ledger_v14.json",
+      "bytes": 5237,
+      "sha256": "0583b5a2b219ded384bd11108cc2e273213d2634724f75c0ace2a541e8d1be17"
+    },
+    {
+      "file": "phase4_balh108_native_outer_attempt02/summary.json",
+      "bytes": 2917,
+      "sha256": "29236179282b7c6ee27d68bdbacf277294657efa21379d7e644d722174098c49"
+    },
+    {
+      "file": "phase4_balh108_native_outer_attempt02/failure.json",
+      "bytes": 152,
+      "sha256": "c25801e7d60e444c187e9b3fcb8f0a99983f0ed78cfb34566bd4ffbe6b8181d6"
+    },
+    {
+      "file": "phase4_balh108_native_outer_attempt02/linear_cleanup.json",
+      "bytes": 288,
+      "sha256": "81b960552ca07635e2cf1aa666dbac924b27091cf765eab985bdc70b987b4738"
+    },
+    {
+      "file": "phase4_balh108_native_outer_attempt02/linear_exception_before_cleanup.json",
+      "bytes": 1680,
+      "sha256": "078b5b8b2d2e6b1cbc85eebd195601bcbc2d2ec3236aa8df68719eecf2f8886c"
+    },
+    {
+      "file": "phase4_balh108_native_outer_attempt02/events.000.jsonl",
+      "bytes": 1667029,
+      "sha256": "641e6d17e20bccdd86539a45638e73c2c4bf3d456b7cdfe537f810e2cb4ab378"
+    }
+  ],
+  "evidence_cutoff_utc": "2026-10-14T07:26:50Z",
+  "verification": {
+    "strict_json": true,
+    "scalar_gate_classifications_checked": true,
+    "budget_arithmetic_checked": true,
+    "ledger_terminal_subtotal_checked": true,
+    "numerical_work_rerun": false,
+    "local_canonical_checkout_modified": false,
+    "github_visual_rendering_verified": false,
+    "full_CI_claimed": false
+  }
+}
