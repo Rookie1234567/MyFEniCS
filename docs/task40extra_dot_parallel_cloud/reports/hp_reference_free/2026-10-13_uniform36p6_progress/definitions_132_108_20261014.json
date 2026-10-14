@@ -1,0 +1,712 @@
+{
+  "schema": "phase4-132-108-static-definition-audit.v1",
+  "mode": "read-only static source and saved-event audit; stdlib parsing and scalar coordinate arithmetic only",
+  "numerical_run_executed": false,
+  "source_modified": false,
+  "scope": "Current-code reproduction of historical132 versus matched paired108; original108/current diagnostic path distinguished. Not a new qualification or proof of exact original binary reproduction.",
+  "source_root": "/workspace/scratch/9c465670b46b/hp_resume_20261013/hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source",
+  "main_conclusion": "No selected damping/shift, physical model, port-inclusion, BAL_H order, coarse degree, H6 rule, restart, PC-side or orthogonalization switch found. Geometry, dimensions, derived H6 window and native identity-gate behavior differ. Do not infer causal coding defect or all-level exact-geometry equality.",
+  "comparison": [
+    {
+      "subject": "Physical frequency, material and boundary conditions",
+      "configured_common": {
+        "vacuum_wavelength_nm": 0.7,
+        "k0_per_nm": 8.975979010256552,
+        "n_air": [
+          1.0,
+          0.0
+        ],
+        "mu_r": [
+          1.0,
+          0.0
+        ],
+        "n_Si": [
+          0.9998851703688496,
+          4.3236152269189515e-06
+        ],
+        "grazing_angle_deg": 1.0,
+        "azimuth_deg": 0.0,
+        "polarization": "s",
+        "electric_amplitude": 1.0,
+        "xy_Floquet": true,
+        "vertical_boundary": "dtn_port",
+        "scattering_background": "layered",
+        "dtn_order_policy": "auto_propagating",
+        "dtn_assembly": "auxiliary",
+        "use_PML": false
+      },
+      "actual_difference": "Historical132, paired108 and paired144 geometry/materials/incidence/boundary JSON sections are exactly equal; current original108 calls expected_input(physical) and changes only mesh axes/case/run metadata.",
+      "evidence": [
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_bug_history_review_20261014/historical132_bound_input.json",
+          "lines": [
+            12,
+            105
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_midlayer144_control_preparation/baseline108/bound_input.json",
+          "field": "input"
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_midlayer144_control_preparation/bound_input.json",
+          "field": "input"
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_h6_direction_oracle_candidate/source/native_balh_builder.py",
+          "lines": [
+            136,
+            148
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/io/physical_scaled_shortwave_profile.py",
+          "lines": [
+            34,
+            78
+          ]
+        }
+      ],
+      "verification_scope": "Static source/bound-input equality, not a new physical execution."
+    },
+    {
+      "subject": "Damping, shifts and H6 mass scaling",
+      "configured_common": "Physical A6/A4 use curl coefficient 1/mu_r and mass -k0^2*epsilon. No additional artificial damping/complex frequency shift is present on the inspected construction path. Existing small positive imaginary silicon index is physical material loss. H6 B6 uses |1/mu_r| curl plus k0^2*|epsilon| mass, without DtN.",
+      "actual_difference": {
+        "same_formula": true,
+        "current108_actual_mass_min": 80.54969702324055,
+        "current108_actual_mass_max": 80.56819919256618,
+        "current108_actual_mu_min_max": [
+          1.0,
+          1.0
+        ]
+      },
+      "evidence": [
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/physical_equivalent_fast.py",
+          "lines": [
+            48,
+            68
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/fullspace_lor_native_hx_fixture.py",
+          "lines": [
+            310,
+            379
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/physical_light_setup.py",
+          "lines": [
+            103,
+            145
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_two_direction_minres_attempt01/positive_B6_contract.json",
+          "field": "coefficients"
+        }
+      ],
+      "verification_scope": "No shift identified in actual selected source path; do not claim proof across every unselected solver path. Current B6 contract explicitly says it is not a new independent full-operator/spectral proof."
+    },
+    {
+      "subject": "Port inclusion and coarse space",
+      "configured_common": "Same-mesh p6 fine/p4 coarse Nedelec spaces; C=P*F4*P^H; p4 exact MUMPS condensed interface factor; original physical DtN ports are included in both levels. No separate new enriched coarse basis is selected.",
+      "actual_difference": {
+        "historical132": {
+          "fine_retained": 27080,
+          "coarse_retained": 11552,
+          "ports": 80
+        },
+        "paired108": {
+          "fine_retained": 24056,
+          "coarse_retained": 10304,
+          "ports": 80
+        },
+        "shared_port_mode_sha256": "de0e4b79e8ec0741db4e4b08f2f2ce97e78026d18e1c6795da7d6ddd5f3d9ed8"
+      },
+      "evidence": [
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_historical132_solver_candidate/source/native_balh_builder.py",
+          "lines": [
+            159,
+            201
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_paired108_144_native_candidate/source/native_balh_builder.py",
+          "lines": [
+            165,
+            172
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/physical_interface_balanced.py",
+          "lines": [
+            354,
+            385
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_historical132_solver_attempt01/events.000.jsonl",
+          "lines": [
+            240,
+            240
+          ],
+          "field": "v18_ports_complete"
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_paired_baseline108_native_solver_attempt01/events.000.jsonl",
+          "lines": [
+            245,
+            245
+          ],
+          "field": "v18_ports_complete"
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_historical132_solver_attempt01/events.000.jsonl",
+          "lines": [
+            23,
+            23
+          ],
+          "field": "v14_common_native_aq_projection_check"
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_paired_baseline108_native_solver_attempt01/events.000.jsonl",
+          "lines": [
+            23,
+            23
+          ],
+          "field": "v14_common_native_aq_projection_check"
+        }
+      ],
+      "verification_scope": "The 80 appended rows and common mode hash are actual recorded facts. Dimensions/basis geometry change even though polynomial degrees and port inventory match."
+    },
+    {
+      "subject": "H6 polynomial, scaling and spectral window",
+      "configured_common": "Jacobi symmetric scaling D^(-1/2) B6 D^(-1/2); reference-energy actual affine metric diagonal; fixed degree 3; 10 power iterations (20 B actions) with same seed recipe; hi=1.10*power10, lo=0.10*hi; selected packed sum-factorized backend for both window and apply.",
+      "actual_difference": {
+        "historical132": {
+          "lambda_power10": 13.293908006189103,
+          "lambda_lo": 1.4623298806808016,
+          "lambda_hi": 14.623298806808014,
+          "seed_sha256": "89c84090f6b9e5b1ee9f28fb52720a276bad24c9b62288719351bd0fddaf6e91"
+        },
+        "paired108": {
+          "lambda_power10": 16.49219308201645,
+          "lambda_lo": 1.8141412390218097,
+          "lambda_hi": 18.141412390218097,
+          "seed_sha256": "c4a41a798f0d106c984625a289c6300312b575af2b43372789b8d4803d40aacb"
+        },
+        "current108_two_direction_window_identical_to_paired108": true
+      },
+      "evidence": [
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/fullspace_lor_edge_geometric_mg.py",
+          "lines": [
+            25,
+            28
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/fullspace_lor_edge_geometric_mg_global.py",
+          "lines": [
+            61,
+            150
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/physical_light_setup.py",
+          "lines": [
+            151,
+            180
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_historical132_solver_attempt01/events.000.jsonl",
+          "lines": [
+            255,
+            255
+          ],
+          "field": "h6_original_window_and_packed_action_complete"
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_paired_baseline108_native_solver_attempt01/events.000.jsonl",
+          "lines": [
+            260,
+            260
+          ],
+          "field": "h6_original_window_and_packed_action_complete"
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_two_direction_minres_attempt01/events.000.jsonl",
+          "lines": [
+            259,
+            259
+          ],
+          "field": "h6_original_window_and_packed_action_complete"
+        }
+      ],
+      "verification_scope": "Same window rule and implementation do not mean same numerical window. Seed/diagonal naturally depend on mesh/space. No full spectrum was established."
+    },
+    {
+      "subject": "Balanced projection order and coarse repair",
+      "configured_common": "u=Cq; r_c=q-Au; s=H6*r_c; t=C*A*s; z=u+s-t, equivalently C+(I-CA)H6(I-AC). C applies P^H first, F4 plus physical A4 residual repair, then P. Two logical coarse calls and one H6 per BAL_H application. Repair enabled with limit1e-10, at most2 extra solves, continue_outer_best_finite. Natural-order projection flag applies inside selected kernels; it does not reverse this algebraic order.",
+      "actual_difference": "Identical source algorithm and selected flags across historical132, paired108 and current108 builders.",
+      "evidence": [
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/physical_balanced_coupling.py",
+          "lines": [
+            137,
+            177
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/physical_interface_balanced.py",
+          "lines": [
+            126,
+            133
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/physical_interface_balanced.py",
+          "lines": [
+            354,
+            385
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_historical132_solver_candidate/source/native_balh_builder.py",
+          "lines": [
+            256,
+            290
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_paired108_144_native_candidate/source/native_balh_builder.py",
+          "lines": [
+            258,
+            292
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_h6_direction_oracle_candidate/source/native_balh_builder.py",
+          "lines": [
+            256,
+            287
+          ]
+        }
+      ],
+      "verification_scope": "This is source-level composition plus actual adapter-event counting; it is not proof that C is an exact inverse of the projected A on every input. Repair can be inexact and select a best finite state."
+    },
+    {
+      "subject": "Exact geometry scope and raw tensors",
+      "configured_common": "Fine retained local condensation uses preserve_exact_geometry=True. p4 condensed factor keeps the original rounded-width class construction (12 decimal places). Exact MUMPS backend means factor backend, not unrounded geometry.",
+      "actual_difference": {
+        "historical132": {
+          "mesh_cells": [
+            6,
+            2,
+            11
+          ],
+          "fine_exact_raw_classes": 25,
+          "p4_original_rounded_raw_classes": 6
+        },
+        "paired108": {
+          "mesh_cells": [
+            18,
+            2,
+            3
+          ],
+          "fine_exact_raw_classes": 33,
+          "p4_original_rounded_raw_classes": 9
+        },
+        "current108": "Fine qualified native raw reader33 classes; p4 preserved nine rounded raw classes."
+      },
+      "evidence": [
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_historical132_native_raw_candidate/prepare_plan_stdlib.py",
+          "lines": [
+            9,
+            18
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_historical132_solver_candidate/source/native_cached_entry.py",
+          "lines": [
+            22,
+            25
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_paired108_144_native_candidate/bindings/baseline108/command.json",
+          "lines": [
+            3022,
+            3041
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_h6_direction_oracle_candidate/p4_raw_tensor_scope.json",
+          "field": "classes.cell_widths"
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_historical132_solver_attempt01/events.000.jsonl",
+          "lines": [
+            3,
+            3
+          ],
+          "field": "native132_target_raw_inventory_admitted"
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_paired_baseline108_native_solver_attempt01/events.000.jsonl",
+          "lines": [
+            3,
+            3
+          ],
+          "field": "native_pair_target_raw_inventory_admitted"
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_two_direction_minres_attempt01/events.000.jsonl",
+          "lines": [
+            571,
+            571
+          ],
+          "field": "native108_qualified_raw_consumption_complete"
+        }
+      ],
+      "verification_scope": "Both old132 and108 use rounded p4 class geometry; therefore this is not a discovered 132-vs108 switch. Recorded raw admission explicitly does not assert fresh O0 equivalence for every new geometry class."
+    },
+    {
+      "subject": "Restart, PC side, orthogonalization and initial state",
+      "configured_common": "Matched zero-start diagnostic: FGMRES32, right PC, classical/unmodified Gram-Schmidt, no iterative refinement, unpreconditioned norm, max200, rtol=atol=0 with custom physical stop.",
+      "actual_difference": {
+        "historical132": "200 iterations; historical full-A6 threshold1e-6 met, stricter saved1e-9/native1e-11 qualification not met.",
+        "paired108_original": "8 iterations then original recovery-identity gate fails (reason-5), not a completed original-gate200 trial.",
+        "paired108_identity_observe": "Fresh zero-start200 diagnostic; only native-identity early stop observed and continued, original gate still FAIL.",
+        "current108_diagnostics": "Two-direction result is fixed checkpoint6656-direction diagnostic, not a new Maxwell outer solve. Inherited 10000/restart32 policy fields do not establish an outer run; do not compare its iteration budget to zero200."
+      },
+      "evidence": [
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_historical132_solver_attempt01/actual_restart32_ksp_configuration.txt",
+          "lines": [
+            1,
+            16
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_paired_baseline108_native_solver_attempt01/actual_restart32_ksp_configuration.txt",
+          "lines": [
+            1,
+            16
+          ]
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_historical132_solver_attempt01/historical132_regression_metrics.json"
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_paired_baseline108_native_solver_attempt01/paired_native_regression_metrics.json"
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_paired_baseline108_identity_observe_attempt01/paired_native_regression_metrics.json"
+        },
+        {
+          "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_two_direction_minres_attempt01/result.json"
+        }
+      ],
+      "verification_scope": "Actual KSP viewers verify matched numerical settings for the two zero-start solver routes. Gate behavior and starting state are separate comparison dimensions."
+    }
+  ],
+  "actual_action_evidence": [
+    {
+      "case": "historical132",
+      "packed_A6_A4_vs_native_three_probes_each": [
+        {
+          "line": 260,
+          "degree": 6,
+          "limit": 1e-10,
+          "probe": 0,
+          "relative": 1.7598528536947078e-15
+        },
+        {
+          "line": 261,
+          "degree": 6,
+          "limit": 1e-10,
+          "probe": 1,
+          "relative": 2.439765818389266e-15
+        },
+        {
+          "line": 262,
+          "degree": 6,
+          "limit": 1e-10,
+          "probe": 2,
+          "relative": 1.8675310045817905e-15
+        },
+        {
+          "line": 263,
+          "degree": 4,
+          "limit": 1e-10,
+          "probe": 0,
+          "relative": 1.6367986032050828e-15
+        },
+        {
+          "line": 264,
+          "degree": 4,
+          "limit": 1e-10,
+          "probe": 1,
+          "relative": 1.5555766497864868e-15
+        },
+        {
+          "line": 265,
+          "degree": 4,
+          "limit": 1e-10,
+          "probe": 2,
+          "relative": 1.823187654611839e-15
+        }
+      ],
+      "events": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_historical132_solver_attempt01/events.000.jsonl",
+      "native_saved_outer_probe_relative": [
+        1.2264137403117762e-14,
+        1.2582923043774038e-14
+      ],
+      "independent_rhs_relative_difference": 2.5513892287355203e-14,
+      "saved_A_b_used_for_Krylov": false,
+      "native_A4_vs_PH_A6_P_probe": {
+        "volume": {
+          "absolute": 3.8784608346043404e-09,
+          "relative": 4.058958065260529e-15
+        },
+        "dtn": {
+          "absolute": 8.039921211050967e-11,
+          "relative": 1.8637250706873392e-14
+        },
+        "passed": true,
+        "limit": 1e-10
+      }
+    },
+    {
+      "case": "paired108",
+      "packed_A6_A4_vs_native_three_probes_each": [
+        {
+          "line": 265,
+          "degree": 6,
+          "limit": 1e-10,
+          "probe": 0,
+          "relative": 3.627517820784435e-15
+        },
+        {
+          "line": 266,
+          "degree": 6,
+          "limit": 1e-10,
+          "probe": 1,
+          "relative": 4.476807632237556e-15
+        },
+        {
+          "line": 267,
+          "degree": 6,
+          "limit": 1e-10,
+          "probe": 2,
+          "relative": 4.034831299081002e-15
+        },
+        {
+          "line": 268,
+          "degree": 4,
+          "limit": 1e-10,
+          "probe": 0,
+          "relative": 3.281121564975872e-15
+        },
+        {
+          "line": 269,
+          "degree": 4,
+          "limit": 1e-10,
+          "probe": 1,
+          "relative": 3.177423793295836e-15
+        },
+        {
+          "line": 270,
+          "degree": 4,
+          "limit": 1e-10,
+          "probe": 2,
+          "relative": 3.2258885737292397e-15
+        }
+      ],
+      "events": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_paired_baseline108_native_solver_attempt01/events.000.jsonl",
+      "native_saved_outer_probe_relative": [
+        1.8973340292556108e-14,
+        1.856680144013717e-14
+      ],
+      "independent_rhs_relative_difference": 2.872230669870853e-14,
+      "saved_A_b_used_for_Krylov": false,
+      "native_A4_vs_PH_A6_P_probe": {
+        "volume": {
+          "absolute": 2.323579906009941e-08,
+          "relative": 2.207815558992688e-15
+        },
+        "dtn": {
+          "absolute": 2.5835417012042567e-10,
+          "relative": 1.1801999589082262e-14
+        },
+        "passed": true,
+        "limit": 1e-10
+      }
+    },
+    {
+      "case": "current108",
+      "packed_A6_A4_vs_native_three_probes_each": [
+        {
+          "line": 263,
+          "degree": 6,
+          "limit": 1e-10,
+          "probe": 0,
+          "relative": 3.627517820784435e-15
+        },
+        {
+          "line": 264,
+          "degree": 6,
+          "limit": 1e-10,
+          "probe": 1,
+          "relative": 4.476807632237556e-15
+        },
+        {
+          "line": 265,
+          "degree": 6,
+          "limit": 1e-10,
+          "probe": 2,
+          "relative": 4.034831299081002e-15
+        },
+        {
+          "line": 266,
+          "degree": 4,
+          "limit": 1e-10,
+          "probe": 0,
+          "relative": 3.281121564975872e-15
+        },
+        {
+          "line": 267,
+          "degree": 4,
+          "limit": 1e-10,
+          "probe": 1,
+          "relative": 3.177423793295836e-15
+        },
+        {
+          "line": 268,
+          "degree": 4,
+          "limit": 1e-10,
+          "probe": 2,
+          "relative": 3.2258885737292397e-15
+        }
+      ],
+      "events": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_two_direction_minres_attempt01/events.000.jsonl",
+      "native_A4_vs_PH_A6_P_probe": {
+        "volume": {
+          "absolute": 2.323579906009941e-08,
+          "relative": 2.207815558992688e-15
+        },
+        "dtn": {
+          "absolute": 2.5835417012042567e-10,
+          "relative": 1.1801999589082262e-14
+        },
+        "passed": true,
+        "limit": 1e-10
+      }
+    }
+  ],
+  "resolution_indicator": {
+    "definition": "vacuum k0 * exact middle-slab cell z-length / polynomial degree; k0=2*pi/lambda0",
+    "scope": "Dimensionless geometric resolution indicator only. Not material propagation phase, not incidence-direction phase, not a proven plateau mechanism or a numerical discretization-accuracy test.",
+    "cases": [
+      {
+        "case": "historical132",
+        "input": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_bug_history_review_20261014/historical132_bound_input.json",
+        "middle_slab_cell_count_z": 9,
+        "middle_slab_hz_nm": [
+          0.691358024691358,
+          0.691358024691358,
+          0.691358024691358,
+          0.691358024691358,
+          0.6913580246913584,
+          0.6913580246913575,
+          0.6913580246913584,
+          0.6913580246913575,
+          0.6913580246913584
+        ],
+        "k0_hz_over_p4": [
+          1.5514037795505151,
+          1.5514037795505151,
+          1.5514037795505151,
+          1.5514037795505151,
+          1.551403779550516,
+          1.551403779550514,
+          1.551403779550516,
+          1.551403779550514,
+          1.551403779550516
+        ],
+        "k0_hz_over_p6": [
+          1.0342691863670102,
+          1.0342691863670102,
+          1.0342691863670102,
+          1.0342691863670102,
+          1.0342691863670106,
+          1.0342691863670093,
+          1.0342691863670106,
+          1.0342691863670093,
+          1.0342691863670106
+        ]
+      },
+      {
+        "case": "baseline108",
+        "input": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_midlayer144_control_preparation/baseline108/bound_input.json",
+        "middle_slab_cell_count_z": 1,
+        "middle_slab_hz_nm": [
+          6.222222222222222
+        ],
+        "k0_hz_over_p4": [
+          13.962634015954636
+        ],
+        "k0_hz_over_p6": [
+          9.30842267730309
+        ]
+      },
+      {
+        "case": "midlayer144",
+        "input": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_midlayer144_control_preparation/bound_input.json",
+        "middle_slab_cell_count_z": 2,
+        "middle_slab_hz_nm": [
+          3.111111111111111,
+          3.111111111111111
+        ],
+        "k0_hz_over_p4": [
+          6.981317007977318,
+          6.981317007977318
+        ],
+        "k0_hz_over_p6": [
+          4.654211338651545,
+          4.654211338651545
+        ]
+      }
+    ]
+  },
+  "qualification": {
+    "historical132_current_saved_relative": 9.839627562394698e-07,
+    "historical132_historical_gate_pass": true,
+    "historical132_strict_current_qualified": false,
+    "paired108_original": {
+      "iterations": 8,
+      "native_identity_relative": 5.92151360715227e-10,
+      "native_identity_limit": 1e-10,
+      "saved_residual": 0.0824237334602406
+    },
+    "paired108_observe": {
+      "iterations": 200,
+      "saved_residual": 0.022054730574539147,
+      "native_identity_relative": 6.125518380054591e-10,
+      "native_identity_gate_status": "FAIL",
+      "strict_current_qualified": false
+    }
+  },
+  "limits": [
+    "Configured equivalence is narrower than independent actual-operator equivalence.",
+    "Saved random-probe and live native action comparisons validate those actions/probes, not a uniform norm bound on all directions.",
+    "No source edit, test rerun, FE import, matrix assembly, factorization or new numerical solver execution was performed."
+  ]
+}
