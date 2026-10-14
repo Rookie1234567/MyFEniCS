@@ -831,6 +831,7 @@ def _validate_service_stage_input_variant(
             V31_FACTOR_BANK_SCHEMA,
             V31_PROFILE,
             V31_Q_CSR_BINDING_SCHEMA,
+            V32_CONTRACT_SCHEMA,
             require_v31_input_identity,
         )
 
@@ -871,6 +872,15 @@ def _validate_service_stage_input_variant(
         expected_execution["task40_target_heavy_authorized"] = True
         expected_execution["task40_v31_q_csr_binding"] = dict(selector)
         expected_execution["task40_v31_factor_bank_config"] = dict(factor)
+        q4_import_template = (
+            v31_contract["preparation"]["q4_numeric_pending_import"]
+            if v31_contract.get("schema") == V32_CONTRACT_SCHEMA
+            else None
+        )
+        if q4_import_template is not None:
+            expected_execution["task40_v31_q_csr_import_authorizations"] = {
+                "numeric_pending": {"4": q4_import_template}
+            }
         if data != expected_data:
             raise ValueError("V31 stage input changes fields outside its registered route")
         if input_path.name != canonical_path.name:
@@ -881,6 +891,7 @@ def _validate_service_stage_input_variant(
             repo_root=repo_root,
             source_sha=str(source_freeze.get("source_sha", "")),
             selector_sha256=str(contract_execution.get("selector_sha256", "")),
+            q4_numeric_pending_import=q4_import_template,
         )
         return
     resume_path = execution.get("task40_component_resume_manifest_path")
@@ -9449,15 +9460,24 @@ def run_service(
             canonical_path, input_path, repo_root=repo_root
         )
     if v31_contract is not None:
-        from src.runners.task40_v31_contract import require_v31_input_identity
+        from src.runners.task40_v31_contract import (
+            V32_CONTRACT_SCHEMA,
+            require_v31_input_identity,
+        )
 
         selector = data["execution"]["task40_v31_q_csr_binding"]
+        q4_import_template = (
+            v31_contract["preparation"]["q4_numeric_pending_import"]
+            if v31_contract.get("schema") == V32_CONTRACT_SCHEMA
+            else None
+        )
         v31_input_identity = require_v31_input_identity(
             canonical_path,
             input_path,
             repo_root=repo_root,
             source_sha=str(v31_contract["source_freeze"]["source_sha"]),
             selector_sha256=str(selector["selector_sha256"]),
+            q4_numeric_pending_import=q4_import_template,
         )
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", unit):
         raise ValueError("invalid systemd user-service unit name")

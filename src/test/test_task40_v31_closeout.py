@@ -2500,6 +2500,139 @@ def test_v31_partial_checker_accepts_only_bound_campaign_cutoff_fixture(
     )
 
 
+@pytest.mark.parametrize("review_version", ["V31", "V32"])
+def test_service_validates_prepared_v31_and_v32_stage_inputs(
+    tmp_path, monkeypatch, review_version
+):
+    import shutil
+    import subprocess
+
+    from scripts import task40_v20_service_workflow as service
+    from src.runners import task40_v30_contract, task40_v31_contract
+
+    source_root = Path(task40_v31_contract.__file__).resolve().parents[2]
+    root = tmp_path / "repo"
+    root.mkdir()
+
+    def copy_into_fixture(relative_path):
+        source = source_root / relative_path
+        destination = root / relative_path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, destination)
+        return destination
+
+    canonical_path = copy_into_fixture(task40_v30_contract.V30_CANONICAL_INPUT_RELATIVE)
+    selector_donor_path = (
+        root
+        / task40_v30_contract.V30_ARTIFACT_ROOT_RELATIVE
+        / "q0_selector_v30_partial.json"
+    )
+    selector_donor_path.parent.mkdir(parents=True, exist_ok=True)
+    selector_donor_path.write_text('{"fixture":"v32-route-test"}\n', encoding="utf-8")
+    if review_version == "V32":
+        review_path_text = task40_v31_contract.V32_REVIEW_PATH
+        review_sha = task40_v31_contract.V32_REVIEW_SHA256
+        pending_builder = task40_v31_contract.prepare_v32_pending_package
+    else:
+        review_path_text = task40_v31_contract.V31_REVIEW_PATH
+        review_sha = task40_v31_contract.V31_REVIEW_SHA256
+        pending_builder = task40_v31_contract.prepare_v31_pending_package
+    review_path = copy_into_fixture(Path(review_path_text))
+    assert hashlib.sha256(review_path.read_bytes()).hexdigest() == review_sha
+
+    source_sha = "b" * 40
+
+    def fake_check_output(command, **_kwargs):
+        if command[:3] == ["git", "branch", "--show-current"]:
+            return f"{task40_v31_contract.V31_BRANCH}\n"
+        if command[:2] == ["git", "rev-parse"]:
+            return f"{source_sha}\n"
+        if command[:2] == ["git", "status"]:
+            return ""
+        raise AssertionError(f"unexpected preparation identity command: {command!r}")
+
+    monkeypatch.setattr(task40_v31_contract.subprocess, "check_output", fake_check_output)
+    monkeypatch.setattr(
+        task40_v31_contract.subprocess,
+        "run",
+        lambda command, **_kwargs: subprocess.CompletedProcess(command, 0),
+    )
+
+    package = pending_builder(repo_root=root, execution_root=root)
+    contract_path = Path(package["contract"]["path"])
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    input_path = Path(str(contract["execution"]["input_path"]))
+    if not input_path.is_absolute():
+        input_path = root / input_path
+    canonical_text = canonical_path.read_text(encoding="utf-8")
+    _raw, data = service._read_case(input_path)
+
+    identity_calls = []
+    original_identity_check = task40_v31_contract.require_v31_input_identity
+
+    def capture_identity_call(*args, **kwargs):
+        identity_calls.append(kwargs.get("q4_numeric_pending_import"))
+        return original_identity_check(*args, **kwargs)
+
+    monkeypatch.setattr(
+        task40_v31_contract,
+        "require_v31_input_identity",
+        capture_identity_call,
+    )
+    service._validate_service_stage_input_variant(
+        input_path,
+        canonical_path,
+        canonical_text,
+        "full",
+        data,
+        repo_root=root,
+        v31_contract=contract,
+    )
+    if review_version == "V32":
+        expected_template = contract["preparation"]["q4_numeric_pending_import"]
+        assert identity_calls == [expected_template]
+        original_text = input_path.read_text(encoding="utf-8")
+        tampered_text = original_text.replace(
+            "REQUIRE_EXISTING_NUMERIC_PENDING", "ALLOW_REBUILD", 1
+        )
+        assert tampered_text != original_text
+        input_path.write_text(tampered_text, encoding="utf-8")
+        _tampered_raw, tampered_data = service._read_case(input_path)
+        with pytest.raises(ValueError, match="outside its registered route"):
+            service._validate_service_stage_input_variant(
+                input_path,
+                canonical_path,
+                canonical_text,
+                "full",
+                tampered_data,
+                repo_root=root,
+                v31_contract=contract,
+            )
+    else:
+        assert identity_calls == [None]
+        original_text = input_path.read_text(encoding="utf-8")
+        injected_text = original_text.replace(
+            "task40_v31_factor_bank_config = {",
+            'task40_v31_q_csr_import_authorizations = { "numeric_pending" = '
+            '{ "4" = { "policy" = "REQUIRE_EXISTING_NUMERIC_PENDING" } } }\n'
+            "task40_v31_factor_bank_config = {",
+            1,
+        )
+        assert injected_text != original_text
+        input_path.write_text(injected_text, encoding="utf-8")
+        _injected_raw, injected_data = service._read_case(input_path)
+        with pytest.raises(ValueError, match="outside its registered route"):
+            service._validate_service_stage_input_variant(
+                input_path,
+                canonical_path,
+                canonical_text,
+                "full",
+                injected_data,
+                repo_root=root,
+                v31_contract=contract,
+            )
+
+
 def test_v32_pending_commands_keep_same_window_reuse_and_supervisor_under_real_service(tmp_path, monkeypatch):
     import subprocess
 
