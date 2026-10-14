@@ -1,0 +1,253 @@
+{
+  "schema": "task40extra.trace4-interior6.symbolic-report.v1",
+  "report_date_utc": "2026-10-14",
+  "title": "trace4_interior6_symbolic_20261014",
+  "scope": "SOURCE_REVIEW_AND_ACTUAL_MAP_K_COMPONENT_JOB1_ONLY",
+  "publication_content": "TWO_SMALL_REPORTS_ONLY_NO_SOURCES_OR_NUMERICAL_ARRAYS",
+  "independent_terminal_review_complete": true,
+  "space": {
+    "same_native_fine_cells": 108,
+    "fine_degree": 6,
+    "coarse_trace_degree": 4,
+    "fine_active_trace_rows": 23976,
+    "coarse_active_trace_rows": 10224,
+    "all_fine_cell_bubbles_retained": 48600,
+    "coarse_FE_field_dimension": 58824,
+    "original_ports": 80,
+    "full_coarse_with_ports": 58904,
+    "schur_dimension": 10304,
+    "field_embedding": "diag(Pt,I48600)",
+    "retained_embedding": "diag(Pt,I80)",
+    "original_p4_range_included_by_construction": true,
+    "arbitrary_interior_RHS_and_full_PC_actual_qualification": "PENDING"
+  },
+  "source_reviews": [
+    {
+      "stage": "core_v4",
+      "tests": 45,
+      "status": "CORE_V4_SOURCE_MATH_AND_STDLIB_PASS_ENTRY_AND_NUMERICAL_PENDING"
+    },
+    {
+      "stage": "entry_v1",
+      "tests": 40,
+      "status": "ENTRY_SOURCE_AND_40_STDLIB_TESTS_PASS_NUMERICAL_NOT_QUALIFIED"
+    },
+    {
+      "stage": "core_v5_entry_v2",
+      "tests": 77,
+      "status": "CORE_V5_ENTRY_V2_NARROW_SOURCE_AND_77_STDLIB_TESTS_PASS_NUMERICAL_PENDING"
+    }
+  ],
+  "attempt01": {
+    "stage": "core_v4_entry_v1",
+    "status": "CONTROLLED_GRAPH_SUPPORT_CAP_NEGATIVE_CLEAN_TERMINAL",
+    "child_exit_code": 1,
+    "elapsed_seconds": 59.907065382023575,
+    "sampled_tree_peak_RSS_bytes": 1616130048,
+    "resource_samples": 235,
+    "cleanup_verified": true,
+    "remaining_processes": [],
+    "failure": "projected support exceeds admitted ceiling before insertion",
+    "rejected_conditional_old_p4_graph_nnz_ceiling": 4996864,
+    "actual_P_P_adjoint_gates": "PASS",
+    "AIJ_K_allocation": "NOT_REACHED",
+    "JOB1": "NOT_REACHED"
+  },
+  "attempt02": {
+    "stage": "core_v5_entry_v2",
+    "status": "TRACE4_JOB1_FINISHED_STOP_BEFORE_GLOBAL_NUMERIC",
+    "terminal_review_status": "ACTUAL_MAP_GRAPH_K_COMPONENTS_AND_JOB1_PASS_CLEAN_STOP_NO_NUMERIC",
+    "child_exit_code": 0,
+    "elapsed_seconds": 113.54104172400548,
+    "sampled_tree_peak_RSS_bytes": 1845731328,
+    "resource_samples": 448,
+    "cleanup_verified": true,
+    "remaining_processes": [],
+    "map": {
+      "status": "ACTUAL_TRACE_MAP_QUALIFIED",
+      "map_sha256": "131167d5770521d4b869c054040047a7f08cbeb58b96a780b60f8976ca726695",
+      "same_map_hash_as_attempt01": true,
+      "trace_nnz": 1532520,
+      "semantic_probes": 3,
+      "semantic_max_relative": 2.7823761102479465e-16,
+      "local_rank_classes": 5,
+      "global_unit_column_probes": 0
+    },
+    "entity_support_diagnostic": {
+      "scope": "support_diagnostic_only_not_physical_injection_qualification",
+      "allowed_basis": "same_reference_entity_coarse_closure_then_actual_primal_MPC",
+      "coefficients_modified": false,
+      "active_actual_Pt": {
+        "frobenius_norm": 126.42784503423286,
+        "frobenius_squared": 15983.999999999998,
+        "nnz": 1532520,
+        "outside_abs_max": 5.328512817041033e-15,
+        "outside_frobenius_norm": 4.4411719180824423e-13,
+        "outside_frobenius_squared": 1.972400800596408e-25,
+        "outside_frobenius_squared_ratio": 1.2339844848576127e-29,
+        "outside_nnz": 1092841,
+        "rows": 23976,
+        "zero_denominator_policy": "ratio0_when_total0_then_outside0"
+      },
+      "slave_composed_before_extraction": {
+        "frobenius_norm": 54.516052681756044,
+        "frobenius_squared": 2972.0,
+        "nnz": 284750,
+        "outside_abs_max": 4.7351929265065995e-15,
+        "outside_frobenius_norm": 2.1644651307367852e-13,
+        "outside_frobenius_squared": 4.684909302175408e-26,
+        "outside_frobenius_squared_ratio": 1.576349024958078e-29,
+        "outside_nnz": 209853,
+        "rows": 4458,
+        "zero_denominator_policy": "ratio0_when_total0_then_outside0"
+      },
+      "not_evidence_of_Maxwell_plateau_causality": true
+    },
+    "graph": {
+      "dimension": 10304,
+      "nnz": 10646336,
+      "bit_payload_bytes": 13271552,
+      "duplicate_counting": "bitwise_union",
+      "legacy_old_p4_ceiling_used": false,
+      "coefficients_thresholded_or_pruned": false,
+      "CSR_sha256": "9546bcbaf88712cbca0e545c441a17faa462fa0a866cc84bb64f53be3fd84c99"
+    },
+    "action_qualification": {
+      "status": "PASS_NATIVE_COMPONENTS_AND_PROJECTED_ACTION",
+      "normalized_probes": 3,
+      "limit": 1e-10,
+      "worst_relative_errors": {
+        "native_volume_relative": 3.449282113764556e-15,
+        "native_DtN_relative": 2.9581455941150393e-16,
+        "projected_K_vs_native_S6_relative": 5.811935457343686e-16,
+        "complete_contribution_relative": 2.4218464453886655e-16
+      },
+      "finite_probes_are_not_all_RHS_or_PC_proof": true
+    },
+    "fresh_MUMPS": {
+      "stage": "JOB1_ONLY",
+      "symbolic_estimated_factor_entries": 29224384,
+      "symbolic_estimate_decimal_MB": 832,
+      "prospective_numeric_request_decimal_MB": 1675,
+      "numeric_request_formula": "ceil_MB(max(32 MiB, 2*symbolic_estimate_padded+8 MiB))",
+      "numeric_factor_calls": 0,
+      "global_solve_calls": 0,
+      "factor_handle_destroyed": true
+    },
+    "prospective_admission": {
+      "named_future_additional_bytes": 2931985088,
+      "persistent_ELF_reservation_bytes": 875348032,
+      "tree_additional_gate_bytes_including_ELF": 3807333120,
+      "projected_tree_bytes": 5824072448,
+      "pass_gate": true,
+      "original_live_VmSize_plus_named_future_bytes_checked": true,
+      "AS_check_formula": "current_VmSize+2931985088<6442450944",
+      "tree_value_is_not_AS_value": true,
+      "exact_VmSize_and_margin_saved": false,
+      "future_numeric_H3_PC_fit_or_convergence_proven": false
+    },
+    "terminal_audit": {
+      "all_resource_samples_checked": true,
+      "admission_count": 2699,
+      "all_admissions_passed": true,
+      "cache_calls": 16,
+      "compiler_attempts": 0,
+      "all_host_process_swap_and_pswpin_pswpout_zero": true,
+      "hwloc_sysfs_warning_recorded": true,
+      "UCX_sysfs_warning_recorded": true,
+      "warning_interpretation": "Exit0 and INFOG1=0; no observed fatal effect on checked scalar results, not an empty-log claim"
+    },
+    "PC_calls": 0,
+    "CG_iterations": 0,
+    "outer_KSP_created": false,
+    "outer_iterations": 0
+  },
+  "limits_unchanged": {
+    "hard_address_space_bytes": 6442450944,
+    "whole_tree_RSS_ceiling_bytes": 8589934592,
+    "host_available_minimum_bytes": 1073741824,
+    "zero_host_and_process_swap": true,
+    "hard_seconds_per_attempt": 600,
+    "disk_free_minimum_bytes": 4294967296,
+    "new_artifact_cap_bytes": 134217728,
+    "MPI": 1,
+    "threads": 1,
+    "one_scientific_child": true,
+    "OOC_enabled": false
+  },
+  "costs": {
+    "both_attempts_counted": true,
+    "measured_attempt_elapsed_seconds_sum": 173.44810710602906,
+    "max_of_sampled_tree_peak_RSS_bytes": 1845731328,
+    "preparation_review_wait_elapsed": "UNMEASURED_NOT_ZERO",
+    "fine_local_LU_occurred": true,
+    "global_numeric_factor_occurred": false
+  },
+  "next_stage": "SOURCE_PREPARATION_ONLY_FOR_NUMERIC_H3_FIXED6656_PC_DIAGNOSTIC",
+  "claim_limits": [
+    "No 108-cell or hp convergence claim; no new global numeric factor, solve, PC, CG or outer iteration.",
+    "Tiny support tails falsify the old conditional exact-support ceiling, not the old Maxwell plateau cause.",
+    "No coefficient thresholding, map replacement, physics change or resource-limit relaxation.",
+    "Finite normalized action checks do not prove arbitrary interior RHS recovery or full BAL_H correctness.",
+    "Future live-set admission is not a measured numeric-factor/PC memory fit.",
+    "Cleanup proves known-owner attempts and process-terminal absence, not explicit release of every hidden partial native handle."
+  ],
+  "evidence_root_label": "hp_resume_20261013",
+  "evidence": [
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_candidate/core_v5/core_v5_qualification.md",
+      "bytes": 3237,
+      "sha256": "1addeb037fd3196e5cdd32c836a30928b0ce29ce1fbe5a905f56e048132389d2"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_candidate/entry_v2/launch/resource_ledger.md",
+      "bytes": 8603,
+      "sha256": "758f3d0a481260de9e4a3ed6027772ef920038684c23dee353945535d4949d30"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_source_review.json",
+      "bytes": 31214,
+      "sha256": "81efbd7582e3b33d6fae3311e2fa4201f13519c9fcb26d3354e7a8293c37e911"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_entry_source_review.json",
+      "bytes": 24483,
+      "sha256": "0db4f4f7b9672e6bb025470f25776e7c3b4317acc7473053b97c7be1e6b0759f"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_v5_entry_v2_source_review.json",
+      "bytes": 20058,
+      "sha256": "9b3f8659498f71792926da2e74b44a545addd78cfc7de57d0e53694986af4003"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_symbolic_attempt01/summary.json",
+      "bytes": 1175,
+      "sha256": "a65cb79d85b67987040077effe9b6f416e1951d9dadd75bb063148f651f43509"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_symbolic_attempt01/failure.json",
+      "bytes": 357,
+      "sha256": "a173c2cdfef7c4059cfcd71ccb352bb23b74a2f2d248d11f491a6775222c59e3"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_symbolic_attempt01_terminal_review.json",
+      "bytes": 21124,
+      "sha256": "de3406ec5a91e8e7ca00c79652789ceef23ecd9f26fe18c33ceebfea361749e9"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_symbolic_attempt02/summary.json",
+      "bytes": 1178,
+      "sha256": "5b5d92c57fbb6defe49f75b9430495a9be4873562bc0329d8460521eba167e18"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_symbolic_attempt02/result.json",
+      "bytes": 213962,
+      "sha256": "b4b90eaa30ed801d12d6134d6a3ab26f6bb04f6e65f02b0e5a797cf33ab28228"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_symbolic_attempt02_terminal_review.json",
+      "bytes": 40474,
+      "sha256": "4f85c1e65c58b35b087ce5c9fda29273c35be6f87c6474444d68bf91bdd63cc6"
+    }
+  ]
+}
