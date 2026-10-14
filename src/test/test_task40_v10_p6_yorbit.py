@@ -17,6 +17,7 @@ from src.solvers.task40_v10_p6_yorbit import (
     V16StagingLimitError,
     _v16_checked_csr_layout,
     _task40_v32_bind_saved_q_map,
+    _task40_v32_saved_q_map_padding_tile,
     _assemble_v16_bitset_pattern,
     _project_accumulate_v16,
     TwoCellNativeTransport,
@@ -1487,7 +1488,9 @@ def test_v32_saved_q_map_binding_audits_then_rejects_structure_difference():
 
     with pytest.raises(ValueError, match="structure_mismatch"):
         _task40_v32_bind_saved_q_map(
-            saved, fresh, audit_callback=events.append
+            saved,
+            fresh,
+            audit_callback=events.append,
         )
 
     assert len(events) == 1
@@ -1514,6 +1517,186 @@ def test_v32_saved_q_map_binding_audits_then_rejects_values_over_tolerance():
     assert events[0]["values"]["first_difference"]["position"] == 0
 
 
+def _v32_saved_q_map_zero_padding_fixture():
+    saved = sparse.csr_matrix(
+        (
+            np.asarray([1.0 + 0.0j, 1.0e-14 + 2.0e-14j, 2.0 + 0.0j]),
+            np.asarray([0, 1, 1], dtype=np.int32),
+            np.asarray([0, 2, 3], dtype=np.int32),
+        ),
+        shape=(2, 2),
+    )
+    fresh = sparse.csr_matrix(
+        (
+            np.asarray([1.0 + 0.0j, 2.0 + 0.0j]),
+            np.asarray([0, 1], dtype=np.int32),
+            np.asarray([0, 1, 2], dtype=np.int32),
+        ),
+        shape=(2, 2),
+    )
+    return saved, fresh
+
+
+def test_v32_saved_q_map_zero_padding_preserves_sparse_action_and_original_identity():
+    saved, fresh = _v32_saved_q_map_zero_padding_fixture()
+    padded_data, first_fresh_only, _scratch_bytes = _task40_v32_saved_q_map_padding_tile(
+        saved, fresh, 0, saved.shape[0]
+    )
+    assert padded_data is not None
+    assert first_fresh_only is None
+    padded = sparse.csr_matrix(
+        (padded_data, saved.indices, saved.indptr), shape=saved.shape
+    )
+    vector = np.asarray([2.0 + 3.0j, -4.0 + 5.0j], dtype=np.complex128)
+    np.testing.assert_array_equal(padded @ vector, fresh @ vector)
+
+    gate_calls = []
+    events = []
+    accepted, audit = _task40_v32_bind_saved_q_map(
+        saved,
+        fresh,
+        audit_callback=events.append,
+        allow_saved_pattern_zero_padding=True,
+        allocation_gate=lambda label, facts: gate_calls.append((label, dict(facts))),
+    )
+
+    assert accepted is saved
+    assert audit["structure"]["equal"] is False
+    assert audit["structure"]["first_difference"] is not None
+    assert audit["padding_compatibility"]["fresh_support_subset_of_saved"] is True
+    assert audit["padding_compatibility"]["padded_explicit_zero_slot_count"] == 1
+    assert audit["padding_compatibility"]["accepted"] is True
+    assert audit["values"]["relative_to_component"] <= 1.0e-12
+    assert len(gate_calls) == 1
+    assert gate_calls[0][1]["padded_map_materialized"] is False
+    assert events[0]["saved"]["sha256"] == audit["saved"]["sha256"]
+
+
+def test_v32_saved_q_map_zero_padding_rejects_any_fresh_only_tiny_entry():
+    saved = sparse.csr_matrix(
+        (
+            np.asarray([1.0 + 0.0j]),
+            np.asarray([0], dtype=np.int32),
+            np.asarray([0, 1], dtype=np.int32),
+        ),
+        shape=(1, 2),
+    )
+    fresh = sparse.csr_matrix(
+        (
+            np.asarray([1.0 + 0.0j, 1.0e-300 + 0.0j]),
+            np.asarray([0, 1], dtype=np.int32),
+            np.asarray([0, 2], dtype=np.int32),
+        ),
+        shape=(1, 2),
+    )
+    events = []
+
+    with pytest.raises(ValueError, match="fresh_support_not_subset_of_saved"):
+        _task40_v32_bind_saved_q_map(
+            saved,
+            fresh,
+            audit_callback=events.append,
+            allow_saved_pattern_zero_padding=True,
+            allocation_gate=lambda _label, _facts: None,
+        )
+
+    padding = events[0]["padding_compatibility"]
+    assert events[0]["structure"]["equal"] is False
+    assert padding["fresh_support_subset_of_saved"] is False
+    assert padding["first_fresh_only_global_row_col"] == [0, 1]
+    assert padding["accepted"] is False
+
+
+def test_v32_saved_q_map_zero_padding_missing_large_value_fails_original_global_gate():
+    saved = sparse.csr_matrix(
+        (
+            np.asarray([1.0 + 0.0j, 1.0 + 0.0j]),
+            np.asarray([0, 1], dtype=np.int32),
+            np.asarray([0, 2], dtype=np.int32),
+        ),
+        shape=(1, 2),
+    )
+    fresh = sparse.csr_matrix(
+        (
+            np.asarray([1.0 + 0.0j]),
+            np.asarray([0], dtype=np.int32),
+            np.asarray([0, 1], dtype=np.int32),
+        ),
+        shape=(1, 2),
+    )
+    events = []
+
+    with pytest.raises(ValueError, match="mapping_relative_error_exceeds_1e-12"):
+        _task40_v32_bind_saved_q_map(
+            saved,
+            fresh,
+            audit_callback=events.append,
+            allow_saved_pattern_zero_padding=True,
+            allocation_gate=lambda _label, _facts: None,
+        )
+
+    padding = events[0]["padding_compatibility"]
+    assert padding["fresh_support_subset_of_saved"] is True
+    assert padding["padded_explicit_zero_slot_count"] == 1
+    assert padding["accepted"] is False
+    assert events[0]["values"]["relative_to_component"] == pytest.approx(1.0 / np.sqrt(2.0))
+
+
+def test_v32_saved_q_map_zero_padding_rejects_overflowed_global_norm():
+    saved = sparse.csr_matrix(
+        (
+            np.asarray([1.0e308 + 0.0j, 1.0e308 + 0.0j]),
+            np.asarray([0, 1], dtype=np.int32),
+            np.asarray([0, 2], dtype=np.int32),
+        ),
+        shape=(1, 2),
+    )
+    fresh = sparse.csr_matrix(
+        (
+            np.asarray([-1.0e308 + 0.0j]),
+            np.asarray([0], dtype=np.int32),
+            np.asarray([0, 1], dtype=np.int32),
+        ),
+        shape=(1, 2),
+    )
+    events = []
+
+    with pytest.raises(ValueError, match="nonfinite_mapping_error"):
+        _task40_v32_bind_saved_q_map(
+            saved,
+            fresh,
+            audit_callback=events.append,
+            allow_saved_pattern_zero_padding=True,
+            allocation_gate=lambda _label, _facts: None,
+        )
+
+    assert events[0]["padding_compatibility"]["accepted"] is False
+    assert events[0]["values"]["relative_to_component"] is None
+    assert events[0]["values"]["maximum_absolute_error"] is None
+
+
+def test_v32_saved_q_map_zero_padding_allocation_gate_rejects_before_padding():
+    saved, fresh = _v32_saved_q_map_zero_padding_fixture()
+    events = []
+    gate_calls = []
+
+    def reject_gate(label, facts):
+        gate_calls.append((label, dict(facts)))
+        raise RuntimeError("fixture allocation gate denied")
+
+    with pytest.raises(RuntimeError, match="fixture allocation gate denied"):
+        _task40_v32_bind_saved_q_map(
+            saved,
+            fresh,
+            audit_callback=events.append,
+            allow_saved_pattern_zero_padding=True,
+            allocation_gate=reject_gate,
+        )
+
+    assert len(gate_calls) == 1
+    assert events == []
+
+
 def test_v32_saved_q_map_binding_audits_then_rejects_nonfinite_values():
     saved = sparse.eye(2, dtype=np.complex128, format="csr")
     fresh = saved.copy()
@@ -1522,7 +1705,11 @@ def test_v32_saved_q_map_binding_audits_then_rejects_nonfinite_values():
 
     with pytest.raises(ValueError, match="nonfinite_data"):
         _task40_v32_bind_saved_q_map(
-            saved, fresh, audit_callback=events.append
+            saved,
+            fresh,
+            audit_callback=events.append,
+            allow_saved_pattern_zero_padding=True,
+            allocation_gate=lambda _label, _facts: None,
         )
 
     assert len(events) == 1
@@ -1540,7 +1727,11 @@ def test_v32_saved_q_map_binding_audits_then_rejects_out_of_range_csr_indices():
 
     with pytest.raises(ValueError, match="invalid_csr"):
         _task40_v32_bind_saved_q_map(
-            invalid, invalid.copy(), audit_callback=events.append
+            invalid,
+            invalid.copy(),
+            audit_callback=events.append,
+            allow_saved_pattern_zero_padding=True,
+            allocation_gate=lambda _label, _facts: None,
         )
 
     assert len(events) == 1

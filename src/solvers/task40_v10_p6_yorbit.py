@@ -4531,13 +4531,195 @@ def _task40_v30_load_sector_q_csr_pair(
     }
 
 
+_V32_SAVED_Q_MAP_PADDING_ROW_TILE = 1024
+
+
+def _task40_v32_saved_q_map_padding_tile(
+    saved_csr: Any,
+    fresh_csr: Any,
+    row_start: int,
+    row_stop: int,
+) -> tuple[np.ndarray | None, list[int] | None, int]:
+    """Place fresh row values on a saved CSR tile, inserting exact zeros only."""
+
+    saved_start = int(saved_csr.indptr[row_start])
+    saved_stop = int(saved_csr.indptr[row_stop])
+    padded = np.zeros(saved_stop - saved_start, dtype=np.complex128)
+    scratch_peak_bytes = int(padded.nbytes)
+
+    for row in range(row_start, row_stop):
+        saved_row_start = int(saved_csr.indptr[row])
+        saved_row_stop = int(saved_csr.indptr[row + 1])
+        fresh_row_start = int(fresh_csr.indptr[row])
+        fresh_row_stop = int(fresh_csr.indptr[row + 1])
+        if fresh_row_start == fresh_row_stop:
+            continue
+
+        saved_columns = saved_csr.indices[saved_row_start:saved_row_stop]
+        fresh_columns = fresh_csr.indices[fresh_row_start:fresh_row_stop]
+        positions = np.searchsorted(saved_columns, fresh_columns, side="left")
+        valid_count = int(np.searchsorted(positions, saved_columns.size, side="left"))
+        if valid_count:
+            matched_columns = saved_columns[positions[:valid_count]]
+            matches = np.empty(valid_count, dtype=np.bool_)
+            np.equal(matched_columns, fresh_columns[:valid_count], out=matches)
+            scratch_peak_bytes = max(
+                scratch_peak_bytes,
+                int(padded.nbytes + positions.nbytes + matched_columns.nbytes + matches.nbytes),
+            )
+            if not bool(matches.all()):
+                fresh_position = fresh_row_start + int(np.argmin(matches))
+                return None, [int(row), int(fresh_csr.indices[fresh_position])], scratch_peak_bytes
+
+        if valid_count < fresh_columns.size:
+            return (
+                None,
+                [int(row), int(fresh_columns[valid_count])],
+                max(scratch_peak_bytes, int(padded.nbytes + positions.nbytes)),
+            )
+
+        padded_row = padded[
+            saved_row_start - saved_start : saved_row_stop - saved_start
+        ]
+        padded_row[positions] = fresh_csr.data[fresh_row_start:fresh_row_stop]
+        scratch_peak_bytes = max(
+            scratch_peak_bytes, int(padded.nbytes + positions.nbytes)
+        )
+        del padded_row, positions
+        if valid_count:
+            del matched_columns, matches
+
+    return padded, None, scratch_peak_bytes
+
+
+def _task40_v32_zero_padded_q_map_metrics(
+    saved_csr: Any,
+    fresh_csr: Any,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None] | None,
+) -> dict[str, Any]:
+    tile_rows = _V32_SAVED_Q_MAP_PADDING_ROW_TILE
+    max_saved_tile_nnz = max_fresh_tile_nnz = 0
+    for start in range(0, int(saved_csr.shape[0]), tile_rows):
+        stop = min(int(saved_csr.shape[0]), start + tile_rows)
+        max_saved_tile_nnz = max(
+            max_saved_tile_nnz, int(saved_csr.indptr[stop] - saved_csr.indptr[start])
+        )
+        max_fresh_tile_nnz = max(
+            max_fresh_tile_nnz, int(fresh_csr.indptr[stop] - fresh_csr.indptr[start])
+        )
+    workspace_bytes = int(25 * max_saved_tile_nnz + 16 * max_fresh_tile_nnz + 4096)
+    result = {
+        "relative_error": None,
+        "maximum_absolute_error": None,
+        "mapping_error_finite": None,
+        "rejection_reason": None,
+        "padding": {
+            "attempted": True,
+            "fresh_support_subset_of_saved": None,
+            "padded_explicit_zero_slot_count": 0,
+            "first_fresh_only_global_row_col": None,
+            "row_tile_rows": tile_rows,
+            "allocation_gate_passed": False,
+            "workspace_upper_bound_bytes": workspace_bytes,
+            "explicit_numpy_buffer_peak_bytes": 0,
+            "relative_error_reduction": "global_frobenius_l2_over_max_global_component_l2",
+        },
+    }
+    if not callable(allocation_gate):
+        result["rejection_reason"] = "padding_allocation_gate_required"
+        return result
+    allocation_gate(
+        "task40_v32_saved_q_map_zero_padding_audit",
+        {
+            "additional_payload_bytes": workspace_bytes,
+            "workspace_bytes": workspace_bytes,
+            "row_tile_rows": tile_rows,
+            "max_saved_tile_nnz": max_saved_tile_nnz,
+            "max_fresh_tile_nnz": max_fresh_tile_nnz,
+            "padded_map_materialized": False,
+            "saved_indptr_indices_reused_read_only": True,
+        },
+    )
+    result["padding"]["allocation_gate_passed"] = True
+
+    from .task40_v25_selected_q0 import _l2
+
+    with np.errstate(over="ignore", invalid="ignore"):
+        saved_norm = float(_l2(saved_csr.data))
+        fresh_norm = float(_l2(fresh_csr.data))
+    scale = max(saved_norm, fresh_norm, np.finfo(float).tiny)
+    finite = bool(np.isfinite(saved_norm) and np.isfinite(fresh_norm))
+    difference_squared = 0.0
+    maximum_absolute_error = 0.0
+
+    if finite:
+        for start in range(0, int(saved_csr.shape[0]), tile_rows):
+            stop = min(int(saved_csr.shape[0]), start + tile_rows)
+            padded, fresh_only, tile_scratch = _task40_v32_saved_q_map_padding_tile(
+                saved_csr, fresh_csr, start, stop
+            )
+            result["padding"]["explicit_numpy_buffer_peak_bytes"] = max(
+                int(result["padding"]["explicit_numpy_buffer_peak_bytes"]), tile_scratch
+            )
+            if padded is None:
+                result["padding"].update(
+                    fresh_support_subset_of_saved=False,
+                    first_fresh_only_global_row_col=fresh_only,
+                )
+                result["rejection_reason"] = "fresh_support_not_subset_of_saved"
+                return result
+
+            row_start = int(saved_csr.indptr[start])
+            row_stop = int(saved_csr.indptr[stop])
+            saved_values = saved_csr.data[row_start:row_stop]
+            differing = np.empty(padded.size, dtype=np.bool_)
+            np.not_equal(padded, saved_values, out=differing)
+            result["padding"]["explicit_numpy_buffer_peak_bytes"] = max(
+                int(result["padding"]["explicit_numpy_buffer_peak_bytes"]),
+                int(padded.nbytes + differing.nbytes),
+            )
+            del differing
+            with np.errstate(over="ignore", invalid="ignore"):
+                np.subtract(padded, saved_values, out=padded)
+                absolute = np.empty(padded.size, dtype=np.float64)
+                np.absolute(padded, out=absolute)
+                maximum_absolute_error = max(
+                    maximum_absolute_error, float(np.max(absolute, initial=0.0))
+                )
+                chunk_squared = float(np.vdot(padded, padded).real)
+                difference_squared += chunk_squared
+            result["padding"]["explicit_numpy_buffer_peak_bytes"] = max(
+                int(result["padding"]["explicit_numpy_buffer_peak_bytes"]),
+                int(padded.nbytes + absolute.nbytes),
+            )
+            del absolute, saved_values, padded
+            if not np.isfinite(chunk_squared) or not np.isfinite(difference_squared):
+                finite = False
+                break
+
+    if finite:
+        with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+            relative_error = float(np.sqrt(difference_squared) / scale)
+        finite = bool(np.isfinite(relative_error) and np.isfinite(maximum_absolute_error))
+        result["relative_error"] = relative_error if finite else None
+        result["maximum_absolute_error"] = maximum_absolute_error if finite else None
+        result["padding"]["fresh_support_subset_of_saved"] = True
+        result["padding"]["padded_explicit_zero_slot_count"] = int(
+            saved_csr.nnz - fresh_csr.nnz
+        )
+    result["mapping_error_finite"] = finite
+    return result
+
+
 def _task40_v32_bind_saved_q_map(
     saved_map: Any,
     fresh_map: Any,
     *,
     audit_callback: Callable[[Mapping[str, Any]], None] | None = None,
+    allow_saved_pattern_zero_padding: bool = False,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> tuple[Any, dict[str, Any]]:
-    """Apply the V26 saved-map structure and relative-value contract."""
+    """Apply the V26 map contract, with an opt-in exact-zero structure adapter."""
     from .task40_v25_selected_q0 import _relative_error
     from .task40_v30_qualified_q_csr import _csr_sha256
 
@@ -4608,6 +4790,20 @@ def _task40_v32_bind_saved_q_map(
     relative_error = maximum_absolute_error = None
     mapping_error_finite = None
     first_data_difference = None
+    padding_audit: dict[str, Any] = {
+        "enabled": bool(allow_saved_pattern_zero_padding),
+        "attempted": False,
+        "accepted": None,
+        "fresh_support_subset_of_saved": None,
+        "padded_explicit_zero_slot_count": 0,
+        "first_fresh_only_global_row_col": None,
+        "row_tile_rows": None,
+        "allocation_gate_passed": None,
+        "workspace_upper_bound_bytes": 0,
+        "explicit_numpy_buffer_peak_bytes": 0,
+    }
+    padding_rejection_reason: str | None = None
+
     if structure_equal and dtype_valid and saved_canonical and fresh_canonical and saved_finite and fresh_finite:
         with np.errstate(over="ignore", invalid="ignore"):
             relative_error = float(
@@ -4623,6 +4819,25 @@ def _task40_v32_bind_saved_q_map(
         first_data_difference = _first_difference(saved_map.data, fresh_map.data)
         if not mapping_error_finite:
             relative_error = maximum_absolute_error = None
+    elif (
+        not structure_equal
+        and allow_saved_pattern_zero_padding
+        and dtype_valid
+        and saved_canonical
+        and fresh_canonical
+        and saved_finite
+        and fresh_finite
+        and saved_hash is not None
+        and fresh_hash is not None
+    ):
+        metrics = _task40_v32_zero_padded_q_map_metrics(
+            saved_map, fresh_map, allocation_gate
+        )
+        padding_audit.update(metrics["padding"])
+        relative_error = metrics["relative_error"]
+        maximum_absolute_error = metrics["maximum_absolute_error"]
+        mapping_error_finite = metrics["mapping_error_finite"]
+        padding_rejection_reason = metrics["rejection_reason"]
 
     if not saved_csr or not fresh_csr:
         rejection_reason = "not_csr"
@@ -4636,8 +4851,10 @@ def _task40_v32_bind_saved_q_map(
         rejection_reason = "nonfinite_data"
     elif saved_hash is None or fresh_hash is None:
         rejection_reason = "invalid_csr"
-    elif not structure_equal:
-        rejection_reason = "structure_mismatch"
+    elif not structure_equal and not (
+        allow_saved_pattern_zero_padding and padding_rejection_reason is None
+    ):
+        rejection_reason = padding_rejection_reason or "structure_mismatch"
     elif mapping_error_finite is False:
         rejection_reason = "nonfinite_mapping_error"
     elif relative_error is None:
@@ -4646,6 +4863,9 @@ def _task40_v32_bind_saved_q_map(
         rejection_reason = "mapping_relative_error_exceeds_1e-12"
     else:
         rejection_reason = None
+
+    if padding_audit["attempted"]:
+        padding_audit["accepted"] = rejection_reason is None
 
     audit = {
         "saved": {
@@ -4679,6 +4899,7 @@ def _task40_v32_bind_saved_q_map(
             "first_difference": first_data_difference,
             "finite": mapping_error_finite,
         },
+        "padding_compatibility": padding_audit,
         "tolerance_relative_to_component": 1.0e-12,
         "passed": rejection_reason is None,
         "rejection_reason": rejection_reason,
@@ -5154,7 +5375,11 @@ def build_task40_v10_p6_local_sector_owner(
                             )
 
                     return _task40_v32_bind_saved_q_map(
-                        saved_map, fresh_map, audit_callback=emit_audit
+                        saved_map,
+                        fresh_map,
+                        audit_callback=emit_audit,
+                        allow_saved_pattern_zero_padding=True,
+                        allocation_gate=allocation_gate,
                     )
 
                 accepted_q0, q0_audit = compare_map(0, saved_q0, q_maps_by_q[0])
