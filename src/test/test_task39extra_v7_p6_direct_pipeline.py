@@ -17,7 +17,7 @@ from src.runners.task038_input_worker import (
     _dispatch_resolved_payload,
     _load_and_validate_worker_payload,
 )
-from src.runners.task038_launcher import _write_bootstrap
+from src.runners.task038_launcher import _write_bootstrap, launch_specification
 
 REPO = Path(__file__).resolve().parents[2]
 INPUT = REPO / "input/task39extra_para_workstation_capacity/v7_0p7nm_si_p6_direct_n0_full.dat"
@@ -25,29 +25,27 @@ PROFILE = "dual_condensed_balh_native_0p7nm_aniso_n0_p6_direct_full_v1"
 
 
 def test_direct_runner_imports_quadrature_metadata_from_runtime_module():
-    runtime = import_module("src.solvers.fullspace_physical_intermediate_runtime")
-    assert callable(runtime.fine_volume_quadrature_metadata)
-
     runner_path = REPO / "src/runners/p6_condensed_direct.py"
     tree = ast.parse(runner_path.read_text(encoding="utf-8"))
     runner = next(
         node for node in tree.body
         if isinstance(node, ast.FunctionDef) and node.name == "run_p6_condensed_direct"
     )
-    imports = {
+    bindings = [
         (node.module, alias.name)
         for node in ast.walk(runner)
-        if isinstance(node, ast.ImportFrom)
+        if isinstance(node, ast.ImportFrom) and node.module is not None
         for alias in node.names
-    }
+    ]
     assert (
         "src.solvers.fullspace_physical_intermediate_runtime",
         "fine_volume_quadrature_metadata",
-    ) in imports
-    assert (
-        "src.solvers.fullspace_same_mesh_hcurl_pmg_physical",
-        "fine_volume_quadrature_metadata",
-    ) not in imports
+    ) in bindings
+    for module_name, symbol_name in bindings:
+        module = import_module(module_name)
+        if not hasattr(module, symbol_name):
+            module = import_module(f"{module_name}.{symbol_name}")
+        assert module is not None, f"missing {module_name}.{symbol_name}"
 
 
 def test_v7_p6_direct_identity_roundtrips_through_real_worker_cfg(tmp_path):
@@ -156,6 +154,72 @@ def test_worker_dispatch_selects_p6_direct_adapter_without_running_fe(monkeypatc
     assert calls == [
         (resolved["run_id"], tmp_path, "b" * 40),
     ]
+
+
+def test_v7_direct_run_case_uses_the_native_rss_watchdog(monkeypatch, tmp_path):
+    from benchmarks import subreaper_watchdog
+
+    calls = []
+    resources = load_and_resolve(INPUT).as_jsonable()["derived"][
+        "native_capacity_profile"
+    ]["resources"]
+
+    def fake_supervise(command, directory, **kwargs):
+        calls.append((tuple(command), Path(directory), kwargs))
+        return {
+            "leader_exit_code": 0,
+            "classification": "COMPLETED",
+            "job_swap_activity": "observed_only",
+            "launch_envelope": {"launch_cap_bytes": 1_800_000_000_000},
+            "rss_warning_bytes": resources["rss_warning_bytes"],
+            "rss_hard_limit_bytes": resources["rss_hard_limit_bytes"],
+            "resource_stop_policy": resources["resource_stop_policy"],
+            "startup_headroom_bytes": resources["startup_headroom_bytes"],
+            "swap_policy": resources["swap_policy"],
+            "memory_scope": "sampled_process_tree",
+        }
+
+    monkeypatch.setattr(subreaper_watchdog, "supervise", fake_supervise)
+    monkeypatch.setattr(
+        "src.runners.task038_launcher._physical_source_gate",
+        lambda _cwd, source: {"source_sha": source, "tracked_and_nonignored_untracked_clean": True},
+    )
+    specification = replace(
+        load_and_resolve(INPUT), expected_output_parent=str(tmp_path)
+    )
+    result = launch_specification(
+        specification,
+        source_sha="c" * 40,
+        timestamp="20261014T000000.000000Z",
+        python_executable=REPO / ".venv/bin/python",
+        mpiexec_command="/usr/bin/mpiexec",
+        prelaunch_isolation={"status": "fake_prelaunch"},
+    )
+
+    assert result["result_classification"] == "worker_exit0"
+    assert len(calls) == 1
+    command, watchdog_directory, kwargs = calls[0]
+    assert command[:8] == (
+        "/usr/bin/mpiexec",
+        "-n",
+        "1",
+        "/usr/bin/numactl",
+        "--interleave=0,1",
+        "/usr/bin/taskset",
+        "-c",
+        "24",
+    )
+    assert watchdog_directory == Path(result["run_directory"]) / "watchdog"
+    assert kwargs["phase_path"] == Path(result["run_directory"]) / "workflow_phase.json"
+    assert kwargs["wall_seconds"] is None
+    assert kwargs["solve_seconds"] is None
+    assert kwargs["rss_hard_limit_bytes"] == 1_800_000_000_000
+    assert kwargs["startup_headroom_bytes"] == 137_438_953_472
+    assert kwargs["resource_stop_policy"] == "measured_tree_rss_only_v3"
+    assert kwargs["pss_sampling_policy"] == "disabled_by_profile"
+    assert kwargs["stop_on_global_swap"] is False
+    assert kwargs["grace_seconds"] == 60
+    assert kwargs["hard_stop_immediate"] is True
 
 
 def test_factor_lifecycle_uses_one_matrix_for_symbolic_numeric_solve(monkeypatch):

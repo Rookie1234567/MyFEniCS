@@ -487,9 +487,20 @@ def launch_specification(
         raise InputError(
             "V7 BAL_H diagnostic observer requires the standard full-solve run_case path"
         )
-    from src.io.physical_intermediate_profile import PROFILES
-    from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, profile_facts
+    from src.io.native_capacity_profile import (
+        V7_ANISO_N0_P6_DIRECT_PROFILES,
+        native_capacity_profile_identity,
+        native_profile_facts,
+    )
     from src.io.physical_balanced_profile import BALANCED_ROUTES
+    from src.io.physical_intermediate_profile import (
+        FAST_PROFILE,
+        JOINT_PROFILE,
+        LIGHT_PROFILE,
+        PACKED_PROFILE,
+        PROFILES,
+        profile_facts,
+    )
     from src.io.physical_recursive_profile import RECURSIVE_PROFILES
     recursive = specification.solver.get('preconditioner') in RECURSIVE_PROFILES
     balanced = recursive or specification.solver.get('preconditioner') in BALANCED_ROUTES
@@ -501,12 +512,33 @@ def launch_specification(
     joint = physical_candidate and specification.solver.get('preconditioner') == JOINT_PROFILE
     light = physical_candidate and specification.solver.get('preconditioner') in (LIGHT_PROFILE, JOINT_PROFILE)
     physical_resources = profile_facts(specification.solver['preconditioner'])['resources'] if physical_candidate else {}
+    native_identity = native_capacity_profile_identity(
+        specification.method.get('kind'), specification.solver
+    )
+    v7_p6_direct = native_identity in V7_ANISO_N0_P6_DIRECT_PROFILES
+    native_resources = (
+        native_profile_facts(native_identity)['resources']
+        if v7_p6_direct
+        else {}
+    )
+    watchdog_resources = physical_resources if physical_candidate else native_resources
     if pc_profile is not None and not physical_candidate:
         raise InputError('PC timing mode requires a physical reference run')
-    workflow_limit = (2400 if packed else 1800) if pc_profile is not None else physical_resources.get('workflow_seconds', 7200)
-    solve_limit = physical_resources.get('solve_seconds', 3600)
-    physical_source = (_physical_source_gate(Path(__file__).resolve().parents[2], source)
-                       if physical_candidate else None)
+    workflow_limit = (
+        None
+        if v7_p6_direct
+        else (2400 if packed else 1800)
+        if pc_profile is not None
+        else physical_resources.get('workflow_seconds', 7200)
+    )
+    solve_limit = (
+        None if v7_p6_direct else physical_resources.get('solve_seconds', 3600)
+    )
+    physical_source = (
+        _physical_source_gate(Path(__file__).resolve().parents[2], source)
+        if physical_candidate or v7_p6_direct
+        else None
+    )
     if setup_only:
         from src.io.native_capacity_profile import setup_only_5nm_identity_errors
 
@@ -597,14 +629,14 @@ def launch_specification(
         }
     else:
         try:
-            if physical_candidate:
+            if physical_candidate or v7_p6_direct:
                 from benchmarks.subreaper_watchdog import supervise
 
                 if pc_profile is not None:
                     watchdog_wall_seconds = max(1e-9, min(
                         workflow_limit-(monotonic()-workflow_started),
                         pc_profile['deadline_monotonic']-monotonic()))
-                elif workflow_limit is None:
+                elif v7_p6_direct or workflow_limit is None:
                     watchdog_wall_seconds = None
                 else:
                     watchdog_wall_seconds = max(1e-9,
@@ -612,6 +644,52 @@ def launch_specification(
                             full_clock.update(clock_sample())['budget_seconds']
                             if balanced else monotonic()-workflow_started))
 
+                watchdog_options = {}
+                if pc_profile is not None:
+                    watchdog_options = {
+                        'grace_seconds': 60 if packed else 30,
+                        'hard_stop_immediate': True,
+                        'cooperative_performance_stop': packed,
+                        'worker_environment': {
+                            'PHYSICAL_PC_PROFILE': json.dumps(pc_profile),
+                            'XDG_CACHE_HOME': pc_profile['cache_home'],
+                        },
+                    }
+                elif light or balanced:
+                    watchdog_options = {
+                        'grace_seconds': 60,
+                        'hard_stop_immediate': True,
+                        'cooperative_performance_stop': True,
+                        'worker_environment': {'XDG_CACHE_HOME': str(cache_home.resolve())},
+                    }
+                    if balanced:
+                        watchdog_options.update(
+                            timebase_guard=True,
+                            timebase_policy='conservative_realtime',
+                        )
+                elif v7_p6_direct:
+                    watchdog_options = {
+                        'grace_seconds': 60,
+                        'hard_stop_immediate': True,
+                    }
+
+                watchdog_policy_options = {
+                    'stop_on_global_swap': bool(
+                        watchdog_resources.get(
+                            'stop_on_global_swap',
+                            recursive or watchdog_resources.get(
+                                'concurrent_neighbor_authorized', False
+                            ),
+                        )
+                    ),
+                    'resource_stop_policy': watchdog_resources.get(
+                        'resource_stop_policy', 'legacy'
+                    ),
+                    'rss_hard_limit_bytes': watchdog_resources.get('rss_hard_limit_bytes'),
+                    'rss_warning_bytes': watchdog_resources.get('rss_warning_bytes'),
+                    'startup_headroom_bytes': watchdog_resources.get('startup_headroom_bytes'),
+                    'pss_sampling_policy': watchdog_resources.get('pss_sampling_policy'),
+                }
                 authority = supervise(list(plan.argv), run_directory / 'watchdog',
                     wall_seconds=watchdog_wall_seconds,
                     solve_seconds=None if pc_profile is not None else solve_limit,
@@ -619,29 +697,9 @@ def launch_specification(
                     cache_path=Path(pc_profile['cache_home']) if pc_profile is not None else cache_home if light or balanced else
                         Path(os.environ['XDG_CACHE_HOME']) if 'XDG_CACHE_HOME' in os.environ else None,
                     source_state=physical_source,
-                    **dict(
-                        stop_on_global_swap=bool(
-                            physical_resources.get(
-                                'stop_on_global_swap',
-                                recursive or physical_resources.get('concurrent_neighbor_authorized', False),
-                            )
-                        ),
-                        resource_stop_policy=physical_resources.get(
-                            'resource_stop_policy', 'legacy'
-                        ),
-                        rss_hard_limit_bytes=physical_resources.get('rss_hard_limit_bytes'),
-                        rss_warning_bytes=physical_resources.get('rss_warning_bytes'),
-                        startup_headroom_bytes=physical_resources.get('startup_headroom_bytes'),
-                        pss_sampling_policy=physical_resources.get('pss_sampling_policy'),
-                    ),
-                    **(dict(grace_seconds=60 if packed else 30, hard_stop_immediate=True,
-                            cooperative_performance_stop=packed,
-                            worker_environment={'PHYSICAL_PC_PROFILE': json.dumps(pc_profile),
-                                                'XDG_CACHE_HOME': pc_profile['cache_home']})
-                       if pc_profile is not None else dict(grace_seconds=60, hard_stop_immediate=True,
-                            cooperative_performance_stop=True,
-                            worker_environment={'XDG_CACHE_HOME': str(cache_home.resolve())},
-                            **(dict(timebase_guard=True, timebase_policy='conservative_realtime') if balanced else {})) if light or balanced else {}))
+                    **watchdog_policy_options,
+                    **watchdog_options,
+                )
                 result = {'exit_status': authority['leader_exit_code'],
                     'result_classification': 'worker_exit0' if authority['classification'] == 'COMPLETED' else authority['classification'],
                     'resource_authority': authority}
@@ -651,7 +709,7 @@ def launch_specification(
                     source_after = {'provenance_passed': False, 'error': str(exc)}
                     result['result_classification'] = 'EVIDENCE_INCOMPLETE'
                 zero_swap = authority['job_swap_activity'] == 'zero_supported_by_zero_global_activity'
-                observe_only_swap = physical_resources.get('swap_policy') == 'observe_only'
+                observe_only_swap = watchdog_resources.get('swap_policy') == 'observe_only'
                 result['job_swap_qualification'] = (
                     'observed_only' if observe_only_swap else
                     'qualified_zero' if zero_swap else 'UNRESOLVED'
