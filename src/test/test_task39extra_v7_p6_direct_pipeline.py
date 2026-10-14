@@ -61,6 +61,10 @@ def test_v7_p6_direct_identity_roundtrips_through_real_worker_cfg(tmp_path):
     assert facts["condensed_route"]["rows"] == 9_281_372
     assert facts["backend"]["p4_operator"] == "NOT_BUILT"
     assert facts["backend"]["p4_factor"] == "NOT_BUILT"
+    assert facts["component_options"]["functional_store_policy"] == (
+        "disabled_no_functional_store_config"
+    )
+    assert facts["component_options"]["cross_mesh_fe_reuse"] is False
 
     cfg = simulation_config_3d_from_normalized(snapshot)
     assert cfg.mesh_axis_cell_counts_requested == (100, 2, 234)
@@ -131,6 +135,9 @@ def test_v7_p6_direct_identity_roundtrips_through_real_worker_cfg(tmp_path):
         assert worker_facts == facts
         worker_cfg = simulation_config_3d_from_normalized(resolved)
         assert worker_cfg.mesh_axis_cell_counts_requested == (100, 2, 234)
+        from src.runners.p6_condensed_direct import _validate_resolved_profile
+
+        assert _validate_resolved_profile(resolved) == facts
 
 
 def test_worker_dispatch_selects_p6_direct_adapter_without_running_fe(monkeypatch, tmp_path):

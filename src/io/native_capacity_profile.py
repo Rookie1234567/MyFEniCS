@@ -401,6 +401,10 @@ def native_profile_facts(identity):
             screen={'enabled': False, 'policy': 'not_applicable'},
         )
         facts['component_options'].pop('same_mesh_coefficient_map_policy', None)
+        facts['component_options'].update(
+            functional_store_policy='disabled_no_functional_store_config',
+            cross_mesh_fe_reuse=False,
+        )
         facts['component_options']['dtn_surface_assembly_backend_by_degree'] = {
             'p6': (
                 'q160_affine_hex_pointwise_weighted_legendre_component_pair_v1'
