@@ -1,0 +1,228 @@
+{
+  "schema": "same108-bug-falsification-p4-exact-control.v1",
+  "prepared_utc": "2026-10-14T11:37:51.749928+00:00",
+  "status": "COMPLETED_BOUNDED_DIAGNOSTIC_SNAPSHOT_WITH_OPEN_FINE_RAW_HYPOTHESIS",
+  "production_outer_budget_consumed": 10000,
+  "additional_long_iterations_authorized": false,
+  "qualified_physical_cells": 96,
+  "qualified108_field": false,
+  "p4_exact_adopted_as_default": false,
+  "checklist": [
+    {
+      "hypothesis": "历史 fine p6 精确几何修复再次漏接",
+      "finding": "当前入口显式开启，实际消费 exact33 registry 并逐位校验坐标，底层记录 exact_mesh_widths；没有复现旧漏参缺陷。",
+      "limit": "不能据此保证新的 raw reader、全部算子路径与历史132运行等价。"
+    },
+    {
+      "hypothesis": "粗层残差硬停把原可继续的外层误判失败",
+      "finding": "2234次 coarse calls 中，1091次真实修正成功，0次耗尽或 best-finite fallback；最大返回残差9.393865720460453e-11。",
+      "limit": "粗层返回合格不等于完整 BAL_H 有效或外层已收敛。"
+    },
+    {
+      "hypothesis": "凝聚/完整场残差的分母改变导致7772误判",
+      "finding": "实际 full-native A6 相对残差0.0024270252805113114；full/retained RHS 范数均0.68914155431206，历史 full1e-6 门也未过。",
+      "limit": "恢复 identity6.185505717742516e-10 仍超过原1e-10，单独保留。"
+    },
+    {
+      "hypothesis": "终态 monitor 的 buildSolution 把FGMRES修正加了两次",
+      "finding": "实际PETSc3.25.6小例和公共API终态分支排除了该猜想，无生产补丁。",
+      "limit": "最初仅模拟内部函数、漏公共终态保护的模型已明确撤回，不能当bug证据。"
+    },
+    {
+      "hypothesis": "p4粗层几何取整造成当前停滞方向失效",
+      "finding": "单变量 exact33 对照的最优一步没有改善；A·PC 相对变化7.267819962863142e-11。",
+      "limit": "7项严格输出一致性门未过，保留原负项，不能把全部诊断写PASS或声称已排除全轨迹影响。"
+    },
+    {
+      "hypothesis": "已测试的完整BAL_H组合或H6多项式存在公式实现错误",
+      "finding": "已有固定输入上的独立完整展开和闭式多项式对照相符。",
+      "limit": "只有有限输入覆盖；原raw identity/action未过项仍在，不能宣称所有bug已排除。"
+    },
+    {
+      "hypothesis": "历史132成功已经证明当前108完整执行路径无误",
+      "finding": "尚不成立。核心复用，但fine局部张量生产路径、外层driver、初值及绑定不同。",
+      "limit": "同108 exact几何下 historical blocked-Gram 与 native raw 的单类消元对照正在准备，尚未运行。"
+    }
+  ],
+  "p4_control": {
+    "schema": "independent.p4-exact-geometry-causal-terminal.v1",
+    "status": "COMPLETED_DIAGNOSTIC_WITH_STRICT_DIFFERENCE_FAILURES_PRESERVED",
+    "checked_utc": "2026-10-14T11:32:26.589795+00:00",
+    "scope": "Read-only small JSON and scalar log identity/resource/ratio verification; no numerical rerun or global convergence certificate",
+    "inputs": [
+      {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p4_exact_geometry_control_attempt01/summary.json",
+        "bytes": 2204,
+        "sha256": "9895dc8a64df059f5b83642bd2ed1aa10de94eb2d3a15a513a67f41a8ff31b4d"
+      },
+      {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p4_exact_geometry_control_attempt01/result.json",
+        "bytes": 451174,
+        "sha256": "86943b1bd082b45529acb2f331d9df44985b3112d5fdb50fd950554f4c76c419"
+      },
+      {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p4_exact_geometry_control_attempt01/p4_geometry_control_result.json",
+        "bytes": 263960,
+        "sha256": "ef71b57d0ce06ae2630ad9d73013425b84742303f75c1c75314800a46b6e41fb"
+      },
+      {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p4_exact_geometry_control_attempt01/same_two_coarse_rhs_comparison.json",
+        "bytes": 168277,
+        "sha256": "6af6d9e406ddaded42eddffbb67f45c0578224f7a7c93e69a5010cc19e875fb8"
+      },
+      {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p4_exact_geometry_control_attempt01/rounded_p4_release.json",
+        "bytes": 1180,
+        "sha256": "ceaea203bc56482410b00910cad5cd0991cd6d4bdb74228de1f701c70a16af2a"
+      },
+      {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p4_exact_geometry_control_attempt01/checkpoint6656_full_vs_retained_residual.json",
+        "bytes": 2299,
+        "sha256": "744724a3cbad7ab44de55091e962e8736cd19fdebd9f6ce1a7f9f51e515c12c0"
+      },
+      {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p4_exact_geometry_control_attempt01/checkpoint7772_full_vs_retained_residual.json",
+        "bytes": 2404,
+        "sha256": "e87f4ed438154d22846b49c7d86d62295ce2c44cb4e6a29305206b180551287c"
+      }
+    ],
+    "original_elapsed_seconds": 238.9143711200013,
+    "sampled_peak_tree_rss_bytes": 2350374912,
+    "outer_samples": 945,
+    "preallocation_admissions": 87,
+    "maximum_projected_tree_bytes": 5766209832,
+    "maximum_projected_address_bytes": 6125355304,
+    "cleanup_verified": true,
+    "outer_iterations": 0,
+    "original_checkpoint_raw_mismatch_preserved": true,
+    "rounded_exact_raw_class_counts": [
+      9,
+      33
+    ],
+    "exact_oriented_classes": 44,
+    "identical_actual_coarse_rhs": 2,
+    "strict_difference_gate_failed_items": [
+      "coarse_rhs1:u",
+      "coarse_rhs1:Pu",
+      "coarse_rhs1:A6Pu",
+      "coarse_rhs2:u",
+      "coarse_rhs2:Pu",
+      "complete:full_PC",
+      "complete:retained_PC"
+    ],
+    "full_PC_comparisons": {
+      "A_PC": {
+        "difference_norm": 5.0891780009391975e-11,
+        "left_hash": "9231425dc500c80989c8cbeee0c5cbb6307b5ab61fdeb15af9e4012352870b77",
+        "left_norm": 0.7002344619065648,
+        "operation_relative": 3.633909981435118e-11,
+        "operation_scale": 1.4004689238144967,
+        "original_action_limit": 1e-10,
+        "relative": 7.267819962863142e-11,
+        "right_hash": "06238eb1b70e13c7851e57deb679c86bf353fc25f196cf5317534349f76eca97",
+        "right_norm": 0.7002344619079319,
+        "within_original_action_relative_limit": true
+      },
+      "full_PC": {
+        "difference_norm": 5.2309767746413985e-09,
+        "left_hash": "7eb53d766ba39771e1ab29529523831fc90ca6b38b335b08e8437fc7cc0b680a",
+        "left_norm": 5.860415993960858,
+        "operation_relative": 4.4629739424179785e-10,
+        "operation_scale": 11.720831988114469,
+        "original_action_limit": 1e-10,
+        "relative": 8.925947884689169e-10,
+        "right_hash": "446d07e19da6a10006ef0b62053cf2ff47877c9530eae6de5d2e950b0023c5d9",
+        "right_norm": 5.86041599415361,
+        "within_original_action_relative_limit": false
+      },
+      "retained_PC": {
+        "difference_norm": 3.0007071718360474e-09,
+        "left_hash": "5063c7d4ff05527360e093a2b2dd369426a4db64239f7c9adccb1c3d12fbf633",
+        "left_norm": 3.554266540520509,
+        "operation_relative": 4.2212748222120955e-10,
+        "operation_scale": 7.108533081159525,
+        "original_action_limit": 1e-10,
+        "relative": 8.442549644283446e-10,
+        "right_hash": "549f353ad2ebba6d8fab09c25d876dc5afe2fa881dd21e54f80d241299ac5d4a",
+        "right_norm": 3.5542665406390155,
+        "within_original_action_relative_limit": false
+      }
+    },
+    "best_unit_step_rounded": 0.9999998952548249,
+    "best_unit_step_exact": 0.9999998952548256,
+    "predeclared_interpretation": {
+      "automatic_outer_iterations_or_new_variables": false,
+      "best_step_is_direction_diagnostic_only": true,
+      "conclusion": "MATERIAL_CHANGE_REQUIRES_EVIDENCE_REVIEW_NOT_AUTOMATIC_CAUSAL_PROOF",
+      "convergence_promised": false,
+      "native_A4_residual_and_finite_gates_unchanged": true,
+      "original_action_consistency_limit": 1e-10,
+      "rounding_excluded_as_dominant_cause_on_this_fixed_direction": false,
+      "unit_best_step_difference": 6.661338147750939e-16,
+      "unit_best_step_difference_limit": 1e-10
+    },
+    "checkpoint_residual_normalizations": [
+      {
+        "iterate_path": 6656,
+        "full_native_residual_norm": 0.013898680222001258,
+        "full_physical_rhs_norm": 0.68914155431206,
+        "full_native_residual_over_full_rhs": 0.02016810644349506,
+        "retained_residual_norm": 0.01389868022597743,
+        "retained_rhs_norm": 0.6891415543120594,
+        "retained_residual_over_retained_rhs": 0.020168106449264825
+      },
+      {
+        "iterate_path": 7772,
+        "full_native_residual_norm": 0.0016725639741662288,
+        "full_physical_rhs_norm": 0.68914155431206,
+        "full_native_residual_over_full_rhs": 0.0024270252805113114,
+        "retained_residual_norm": 0.0016725639770894622,
+        "retained_rhs_norm": 0.6891415543120594,
+        "retained_residual_over_retained_rhs": 0.0024270252847531618
+      }
+    ],
+    "measured_conclusion": "The exact-p4 variant did not improve this fixed actual stagnated direction. Strict equality conditions failed for some outputs; they remain failures. No causal explanation of the complete long trajectory is established.",
+    "no_default_pc_change": true,
+    "no_outer_restart_authority": true,
+    "inherited_validation_scope_note": "result.validation_scope contains historical parent-route configuration; current command/result_scope/actual zero-outer driver and600s summary define this diagnostic. No historical iteration budget was exercised."
+  },
+  "costs": {
+    "known_phase4_supervised_terminal_seconds": 14188.559224304001,
+    "including_old_incomplete_lower_bounds": 22102.551507146985,
+    "not_exact_total_wall": true,
+    "preparation_waiting_not_zero_and_not_measured_as_complete_total": true
+  },
+  "sources": [
+    {
+      "file": "phase4_p4_exact_geometry_terminal_review.json",
+      "bytes": 6578,
+      "sha256": "09a2ba31b800e3eefc8f54d2d5f6f894be4acd9bd4eb48d3458243a65daefca4"
+    },
+    {
+      "file": "phase4_p4_exact_geometry_control_attempt01/checkpoint6656_full_vs_retained_residual.json",
+      "bytes": 2299,
+      "sha256": "744724a3cbad7ab44de55091e962e8736cd19fdebd9f6ce1a7f9f51e515c12c0"
+    },
+    {
+      "file": "phase4_p4_exact_geometry_control_attempt01/checkpoint7772_full_vs_retained_residual.json",
+      "bytes": 2404,
+      "sha256": "e87f4ed438154d22846b49c7d86d62295ce2c44cb4e6a29305206b180551287c"
+    },
+    {
+      "file": "phase4_bug_history_review_20261014/historical_geometry_fix_audit.json",
+      "bytes": 15055,
+      "sha256": "c4e208b54e8054d0dbe0daf7a5b89a44d2265741f7570e5e428e0ba1d66ea10e"
+    },
+    {
+      "file": "phase4_stopping_bug_review_20261014/audit_receipt.json",
+      "bytes": 9075,
+      "sha256": "2c4614df5aea9c03c25228659ad3817d2ca49adecebbc5a616bac0173930991a"
+    },
+    {
+      "file": "phase4_execution_ledger_v28.json",
+      "bytes": 12862,
+      "sha256": "ebd6a245eb17e9168cb02d19281c7131e134050c2e6b7a6d50ec2c38f678a945"
+    }
+  ],
+  "publication_base_sha": "63df5bb74cff841c09d38ac38bf28edfd307e0e3"
+}
