@@ -403,7 +403,9 @@ def run_p6_condensed_direct(
         levels = _build_same_mesh_levels(
             cfg, MPI.COMM_WORLD, (6,), include_positive_coefficients=False
         )
-        mesh_evidence = actual_v7_anisotropic_mesh_evidence(levels, cfg)
+        mesh_evidence = actual_v7_anisotropic_mesh_evidence(
+            levels, cfg, required_space_degrees=(6,)
+        )
         if mesh_evidence.get("status") != "PASS":
             raise ValueError("actual V7 anisotropic mesh evidence did not pass")
         summary["mesh_evidence"] = mesh_evidence

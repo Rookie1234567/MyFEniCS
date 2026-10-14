@@ -176,8 +176,13 @@ def actual_v7_anisotropic_mesh_evidence(
     cfg: Any,
     *,
     entities_to_geometry_fn: Any = None,
+    required_space_degrees: tuple[int, ...] = (6, 4),
 ) -> dict[str, Any]:
-    """Check the already-built 46800-cell target and return compact actual facts."""
+    """Check the already-built 46800-cell target and the explicitly built spaces."""
+
+    required_space_degrees = tuple(int(degree) for degree in required_space_degrees)
+    if required_space_degrees not in ((6, 4), (6,)):
+        raise ValueError("V7 mesh evidence supports only the reviewed (p6,p4) or p6-only space set")
 
     mesh = levels["mesh"]
     mesh_data = levels["mesh_data"]
@@ -480,7 +485,7 @@ def actual_v7_anisotropic_mesh_evidence(
 
     spaces = levels["spaces"]
     rows = {}
-    for degree in (6, 4):
+    for degree in required_space_degrees:
         if degree not in spaces:
             raise ValueError(f"V7 actual levels do not contain the p{degree} space")
         space = spaces[degree]
@@ -566,6 +571,10 @@ def actual_v7_anisotropic_mesh_evidence(
         "boundary_facet_tag_counts": actual_facet_counts,
         "boundary_tags_match_actual_face_planes": tagged_face_planes,
         "actual_unconstrained_space_rows": rows,
+        "space_evidence_scope": {
+            "required_space_degrees": list(required_space_degrees),
+            "not_built_space_degrees": [degree for degree in (6, 4) if degree not in required_space_degrees],
+        },
         "full3d_reference_export": True,
         "full3d_reference_sample_count_y": int(cfg.full3d_reference_sample_count_y),
         "full3d_reference_plane_z_nm": [

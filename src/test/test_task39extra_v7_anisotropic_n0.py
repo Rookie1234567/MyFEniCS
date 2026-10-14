@@ -471,3 +471,24 @@ def test_v7_mesh_evidence_rejects_missing_actual_degree_rows():
         actual_v7_anisotropic_mesh_evidence(
             levels, cfg, entities_to_geometry_fn=levels["entities_to_geometry_fn"]
         )
+
+    evidence = actual_v7_anisotropic_mesh_evidence(
+        levels,
+        cfg,
+        entities_to_geometry_fn=levels["entities_to_geometry_fn"],
+        required_space_degrees=(6,),
+    )
+    assert evidence["status"] == "PASS"
+    assert set(evidence["actual_unconstrained_space_rows"]) == {"p6"}
+    assert evidence["space_evidence_scope"] == {
+        "required_space_degrees": [6],
+        "not_built_space_degrees": [4],
+    }
+
+    with pytest.raises(ValueError, match="supports only"):
+        actual_v7_anisotropic_mesh_evidence(
+            levels,
+            cfg,
+            entities_to_geometry_fn=levels["entities_to_geometry_fn"],
+            required_space_degrees=(4,),
+        )
