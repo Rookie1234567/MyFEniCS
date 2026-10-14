@@ -1,0 +1,877 @@
+{
+  "schema": "balh108-complete-PC-H6-supplement.v1",
+  "publication_status": "COMPLETED_FIXED_INPUT_DIAGNOSTICS_ORIGINAL_NATIVE_RUN_INCOMPLETE",
+  "repository": "Rookie1234567/MyFEniCS",
+  "branch": "task40extra_dot_parallel_cloud",
+  "publication_base_sha": "eb194f3c9ab8585a4ef17d8fa7cf8b0ed728f193",
+  "report_prepared_utc": "2026-10-14T09:32:00.250362+00:00",
+  "previous_report_snapshot_utc": "2026-10-14T08:48:26.479655+00:00",
+  "previous_report": "current108_balh_native_first_iterations_20261014_zh.md",
+  "scope": "Only two small reports, based on completed evidence; no scientific execution, array/binary reads, source edits, large uploads or wait for later enhanced-smoother results.",
+  "model": {
+    "cells": 108,
+    "axes_cells": [
+      18,
+      2,
+      3
+    ],
+    "fine_p": 6,
+    "coarse_p": 4,
+    "ports": 80,
+    "independent_trace_rows": 23976,
+    "interior_rows": 48600,
+    "new_qualified_field": false
+  },
+  "scientific_source_base_sha": "322e62e11a80969b3a35f0cbb08b25c11c539ea6",
+  "original_native_cached02": {
+    "status": "INCOMPLETE_NO_TERMINAL_RECORD",
+    "reviewed_utc": "2026-10-14T09:07:24.791132+00:00",
+    "tool_errors": [
+      {
+        "observed_utc": "2026-10-14T09:01:39Z",
+        "tool": "write_stdin",
+        "session_id": 74909,
+        "error": "Unified exec process failed: exec-server transport disconnected; failed to resume exec-server session: recovery timed out after 25s"
+      }
+    ],
+    "child_exit_code": null,
+    "cleanup_verified": null,
+    "original_group_terminal_verified": false,
+    "last_sample_elapsed_seconds_lower_bound": 2027.7251317839982,
+    "observed_peak_tree_RSS_bytes": 2624339968,
+    "sample_count": 8045,
+    "sampled_resource_gates_pass": true,
+    "last_curve": {
+      "checkpoint_origin_iteration": 6656,
+      "cumulative_charged_iterations": 8883,
+      "cumulative_max_it": 10000,
+      "iterate_path_iteration": 8810,
+      "iteration": 2154,
+      "prior_charged_iterations": 6729,
+      "reported_norm_representation": "historical_native",
+      "reported_residual_norm": 0.011538481709569755,
+      "segment_iteration": 2154
+    },
+    "last_completed_iteration": 2154,
+    "last_completed_PC_sequence": 2155,
+    "last_entered_PC_sequence": 2156,
+    "setup_PC_calls_excluded": 1,
+    "conservative_charged_iterations": 2155,
+    "prior_charged_iterations": 6729,
+    "cumulative_charged_iterations": 8884,
+    "cumulative_remaining_iterations": 1116,
+    "cumulative_iteration_limit": 10000,
+    "checkpoint_iteration": 2112,
+    "checkpoint": {
+      "path": "phase4_balh108_native_outer_cached_attempt02/latest_iteration_solution.npy",
+      "bytes": 385024,
+      "sha256": "268aa6b9e5d7b96c5b9fc0bf531b3c203f15b8efac5549e9f0aaa7a945f4e9cf"
+    },
+    "checkpoint_metadata": {
+      "path": "phase4_balh108_native_outer_cached_attempt02/latest_iteration_solution.json",
+      "bytes": 1090,
+      "sha256": "ff9d1933f1ba27a031fe9a4d547ee08daeea68126e4ab445fca51cebd78d9687"
+    },
+    "checkpoint_redone_iterations_already_charged": 43,
+    "qualified_solution": false,
+    "limitations": [
+      "No original exit or cleanup verdict fabricated",
+      "No-writer inference restricted to known original stdout/stderr lifecycle",
+      "No historical launch-time inode-number witness; inode birth matches launch and source never replaces logs",
+      "Elapsed cost is a lower bound; last sample is not final wall time"
+    ]
+  },
+  "checkpoint2112_independent_saved_Ax": {
+    "status": "CHECKPOINT_IDENTITY_AND_RESIDUAL_REPLAY_ONLY",
+    "reviewed_utc": "2026-10-14T09:06:22.667815+00:00",
+    "method": "stdlib row-wise CSR action with binary64 complex products and math.fsum real/imag row reductions; Euclidean norm via math.fsum of component squares",
+    "rows": 24056,
+    "actual_nnz": 17656256,
+    "relative_residual": 0.016814602744055596,
+    "absolute_residual": 0.01158764147017828,
+    "relative_limit": 1e-09,
+    "rhs_norm": 0.6891415543120586,
+    "solver_pass": false,
+    "accepted_solution": false,
+    "reported_PETSc_residual": {
+      "absolute": 0.011587641470177717,
+      "denominator_floor": 1e-30,
+      "relative": 0.01681460274405476,
+      "rhs_norm": 0.6891415543120595
+    },
+    "residual_comparison": {
+      "absolute_difference": 5.620504062164855e-16,
+      "isclose_absolute_tolerance": 1e-14,
+      "isclose_relative_tolerance": 1e-10,
+      "relative_difference": 8.36136715420821e-16,
+      "relative_matches_reported": true,
+      "reported_absolute": 0.011587641470177717,
+      "reported_relative": 0.01681460274405476,
+      "reported_rhs_norm": 0.6891415543120595,
+      "rhs_norm_difference": -8.881784197001252e-16
+    },
+    "solution_typed_hash": "2b509cbdf6347ca34e129140192e9518e866fee6d0b8c2e3d9aa68e647e7cfaa",
+    "checkpoint_whole_file_payload_typed_sha_verified": true,
+    "A_b_file_payload_typed_hashes_rechecked": true,
+    "all_input_stats_stable": true,
+    "all_inputs_and_x_finite": true,
+    "elapsed_seconds": 8.047275923992856,
+    "resource_measurements": {
+      "cpu_seconds": 8.075111,
+      "maximum_rss_bytes": 26193920
+    },
+    "scientific_imports": false,
+    "factorization_or_solve_performed": false,
+    "field_recovery_or_working_acceptance_claimed": false
+  },
+  "complete_PC_diagnostic": {
+    "schema": "complete-balh-action-oracle-terminal-review.v1",
+    "status": "TWO_FIXED_INPUT_PC_COMPOSITION_VERIFIED_WITH_OTHER_RAW_MISMATCHES_PRESERVED",
+    "directions": [
+      {
+        "coarse_identity_raw_passed": {
+          "coarse_complete_identity": false,
+          "coarse_initial_identity": false,
+          "complement_identity": false,
+          "eps_only_original_identity": false
+        },
+        "first_Arnoldi_scalar_identities_recomputed": true,
+        "full_BALH_relative": 2.297555158106036e-15,
+        "label": "paused6656_native_true_residual",
+        "native_eps_only_production_scale_relative": 1.2011737332354614e-10,
+        "native_prediction_raw_relative": 2.655649006822826e-10,
+        "native_true_relative_after_unsaved_scalar_prediction": 0.020168104336803917,
+        "original_eps_closure_relative": 1.178267345969992e-10,
+        "retained_bridge_relative": 2.421227102255885e-15,
+        "saved_native_PC_action_raw_passed": false,
+        "saved_native_PC_action_relative": 8.598751093327494e-10,
+        "saved_prediction_raw_relative": 2.5729097853932086e-10,
+        "unit_residual_prediction": 0.9999998952548232
+      },
+      {
+        "coarse_identity_raw_passed": {
+          "coarse_complete_identity": false,
+          "coarse_initial_identity": false,
+          "complement_identity": false,
+          "eps_only_original_identity": false
+        },
+        "first_Arnoldi_scalar_identities_recomputed": true,
+        "full_BALH_relative": 1.4887480910104227e-15,
+        "label": "unit_complex_random_control",
+        "native_eps_only_production_scale_relative": 1.6946670067355227e-12,
+        "native_prediction_raw_relative": 2.7990169679884087e-10,
+        "native_true_relative_after_unsaved_scalar_prediction": 0.020165599423325235,
+        "original_eps_closure_relative": 1.6977912644611078e-12,
+        "retained_bridge_relative": 1.5763721039218897e-15,
+        "saved_native_PC_action_raw_passed": false,
+        "saved_native_PC_action_relative": 7.844521672565901e-10,
+        "saved_prediction_raw_relative": 2.7525747431484553e-10,
+        "unit_residual_prediction": 0.999196653010495
+      }
+    ],
+    "interpretation": {
+      "all_diagnostics_passed_claimed": false,
+      "failures_preserved": "Saved/native preconditioned-action raw discrepancies exceed1e-10 on both directions; both saved/native prediction raw checks fail despite passing operation-scaled checks. Near-zero coarse identity raw ratios also remain false while required operation-scale gates pass.",
+      "fixed_input_PC_composition_fidelity": "Actual production packed-A6 BAL_H and independent native-A6 full expansion agree at roughly1e-15 on both specified inputs, including independent selected-state native A4 eps, full retained lifting and port finish. This narrows the full-composition/bridge error class on these inputs.",
+      "no_solution_or_field_acceptance": true,
+      "weak_true_residual_direction": "Recomputed optimal unit residual0.9999998952548249 means only about1.05e-7 relative norm reduction for this one fixed direction. It is evidence of weak one-step alignment here, not proof of a universal spectral cause or absence of bugs."
+    },
+    "limits": [
+      "Only paused6656 true native residual and one fixed seed10820261014 unit complex random PC input tested.",
+      "Does not prove arbitrary-vector composition, universal preconditioner quality, or stagnation cause.",
+      "Original saved/native checkpoint mismatch and original solution acceptance limits remain unchanged."
+    ],
+    "KSP": {
+      "actual_Krylov_basis_allocated": false,
+      "driver_solve_calls_ast": 0,
+      "fresh_view_only": true,
+      "fresh_view_orthogonalization": "classical unmodified Gram-Schmidt",
+      "fresh_view_refinement": "none",
+      "inherited3271_view_is_component_binding_not_new_iteration_authority": true,
+      "live_or_historical_KSP_claimed": false,
+      "new_solution_artifacts_found": false,
+      "outer_iterations": 0
+    },
+    "original_run": {
+      "budget_reset": false,
+      "cleanup_verified": null,
+      "cumulative_charged_iterations": 8884,
+      "diagnostic_outer_iterations": 0,
+      "lifecycle_scope": "Known original-log writer evidence and bounded visible-process check; system-wide original cleanup is not proved. The new diagnostic terminal does not upgrade this.",
+      "old_log_inode_size_mtime_match_admission": true,
+      "remaining_global_iterations": 1116,
+      "resume_authorized": false,
+      "status": "INCOMPLETE"
+    },
+    "resources": {
+      "address_space_cap_bytes": 6442450944,
+      "all_samples_readable_zero_swap": true,
+      "all_supervisor_limits_satisfied": true,
+      "child_exit_code": 0,
+      "denied_admissions": 0,
+      "diagnostic_cleanup_verified": true,
+      "elapsed_seconds": 161.53773240601004,
+      "maximum_sampled_new_artifact_bytes": 16068167,
+      "min_available_bytes": 6807142400,
+      "min_disk_free_bytes": 15820419072,
+      "remaining": [],
+      "resource_log_hash_matches_summary": true,
+      "sample_count": 638,
+      "tree_peak_rss_bytes": 2616090624
+    },
+    "source_closure_sha256": "de3087984394933a8cee63e1a8fd0b2a70cccc19674aa6f2e396be16e393362e",
+    "source_pin_count": 985,
+    "source_closure_check_scope": "Descriptor-list digest verified;7 key source files rehashed; full985-file/payload closure not re-read in this bounded terminal review."
+  },
+  "H6_fixed_degree3_diagnostic": {
+    "directions": [
+      {
+        "label": "paused6656_native_true_residual",
+        "status": "H6_CLOSED_POLYNOMIAL_COMPARISON_PASS",
+        "actual_vs_closed_polynomial": {
+          "absolute": 2.379990660483942e-19,
+          "finite": true,
+          "operation_passed": true,
+          "operation_relative": 9.236688726163279e-17,
+          "operation_scale": 0.002576670851473566,
+          "raw_passed": true,
+          "relative": 2.1598246392888586e-16,
+          "relative_limit": 1e-10
+        },
+        "Jacobi_scaled_Rayleigh": {
+          "above_hi": false,
+          "below_lo": true,
+          "denominator": 0.00040441851092610104,
+          "finite": true,
+          "formula": "g^H*S*g/(g^H*g), g=D^(-1/2)*rc, S=D^(-1/2)*B6*D^(-1/2)",
+          "imaginary": -2.1782243921704188e-16,
+          "imaginary_relative": 1.907055672371096e-16,
+          "numerator_imaginary": -8.809142651444724e-20,
+          "numerator_real": 0.0004619237277164577,
+          "positive": true,
+          "real": 1.1421923458910725,
+          "slave_zero_verified": true,
+          "spectral_enclosure_claimed": false,
+          "within_observed_window": false
+        },
+        "B6_H6_residual": {
+          "Jacobi_scaled_absolute": 0.014177847436010853,
+          "Jacobi_scaled_relative": 0.7050092024105725,
+          "inverse_success_claimed": false,
+          "inverse_success_threshold": null,
+          "residual_finite": true,
+          "scaled_equation": "D^(-1/2)*(rc-B6*actual H6(rc))",
+          "scaled_operation_scale": 0.03100294867314954,
+          "tested_equation": "B6*(actual H6(rc)) = rc",
+          "unscaled_absolute": 1.9752081173797447,
+          "unscaled_operation_scale": 6.413625304487087,
+          "unscaled_relative": 0.6588666726738749
+        },
+        "coarse_complement": {
+          "PHq_norm": 0.3112471409591915,
+          "PHrc_norm": 1.3824542781152693e-10,
+          "PHrc_relative_to_PHq": 4.4416609702979633e-10,
+          "PHrc_vs_measured_native_epsilon": {
+            "absolute": 1.38964065427492e-10,
+            "finite": true,
+            "operation_passed": false,
+            "operation_relative": 4.464749941071274e-10,
+            "operation_scale": 0.3112471409633949,
+            "raw_passed": false,
+            "relative": 1.0051982740213643,
+            "relative_limit": 1e-10
+          },
+          "approximate_coarse_complement_observation_only": true,
+          "difference_interpretation": "Galerkin map/action defect plus floating-point distribution; retain raw and operation scales",
+          "epsilon_source": "original selected F4 correction, independently applied native A4",
+          "equality_to_epsilon_required": false,
+          "native_coarse_epsilon_norm": 4.203434559662149e-12,
+          "rc_norm": 2.997887432010742
+        },
+        "unchanged_coarse_reprojection": {
+          "CA6H6rc_norm": 0.013404667724660802,
+          "H6rc_norm": 0.0011019369893231587,
+          "extra_C_call_for_this_observation": false,
+          "original_complement_identity": {
+            "absolute": 1.4103938510587358e-14,
+            "finite": true,
+            "operation_passed": true,
+            "operation_relative": 1.219123446266147e-14,
+            "operation_scale": 1.1568917449487166,
+            "raw_passed": false,
+            "relative": 0.01057614906790982,
+            "relative_limit": 1e-10
+          },
+          "projected_correction_norm": 0.013475788190492709
+        },
+        "coefficients": {
+          "center": 9.977776814619954,
+          "coefficients": [
+            0.5027770818668608,
+            -0.06051764273579475,
+            0.0020217477253089474
+          ],
+          "denominator": 1978.4862126597677,
+          "formula": "((12*c*c-3*h*h)-12*c*t+4*t*t)/(4*c*c*c-3*c*h*h)",
+          "half_width": 8.163635575598143,
+          "inverse_action_degree": 2,
+          "residual_formula": "1-t*p2(t)=T3((c-t)/h)/T3(c/h)",
+          "residual_polynomial_degree": 3
+        },
+        "window": {
+          "exact_previous_window_match": true,
+          "expected_degree": 3,
+          "expected_window": [
+            1.8141412390218097,
+            18.141412390218097
+          ],
+          "hash_encoding": "network-endian signed int32 degree, float64 lo, float64 hi",
+          "hi": 18.141412390218097,
+          "lo": 1.8141412390218097,
+          "sha256": "78d5e45e7b2ace3dba2ed71bfed4f55503b751fe430ed58a35aa56d827c8520f",
+          "spectral_enclosure_claimed": false
+        },
+        "interpretation": {
+          "H6": "fixed Jacobi-scaled degree-three Chebyshev smoother on positive B6",
+          "below_lo_is_compatible_with_smoother_low_frequency_cutoff": true,
+          "exact_B6_inverse_required": false,
+          "large_standalone_inverse_residual_is_not_itself_a_bug": true,
+          "one_direction_Rayleigh_is_not_spectral_enclosure": true,
+          "physical_A6_inverse_required": false
+        },
+        "packed_B6_qualification": {
+          "existing_action_oracle_directions": 11,
+          "existing_diagonal_oracle_samples": 8,
+          "new_independent_native_B6_proof": false,
+          "raw_classes_covered": 4,
+          "raw_classes_total": 16,
+          "status": "EXISTING_LIMITED_NATIVE_ORACLE_REUSED"
+        },
+        "observed_original_H6_call_counts": {
+          "B6_mult": 2,
+          "apply": 1
+        },
+        "new_H6_apply_calls": 0,
+        "direct_B6_mult_count": 3,
+        "outer_iterations": 0,
+        "field_accepted": false
+      },
+      {
+        "label": "unit_complex_random_control",
+        "status": "H6_CLOSED_POLYNOMIAL_COMPARISON_PASS",
+        "actual_vs_closed_polynomial": {
+          "absolute": 1.3395194629731653e-17,
+          "finite": true,
+          "operation_passed": true,
+          "operation_relative": 9.666859938213735e-17,
+          "operation_scale": 0.1385682084497735,
+          "raw_passed": true,
+          "relative": 2.439548583879319e-16,
+          "relative_limit": 1e-10
+        },
+        "Jacobi_scaled_Rayleigh": {
+          "above_hi": false,
+          "below_lo": false,
+          "denominator": 0.5438894913086042,
+          "finite": true,
+          "formula": "g^H*S*g/(g^H*g), g=D^(-1/2)*rc, S=D^(-1/2)*B6*D^(-1/2)",
+          "imaginary": -4.975585419039347e-16,
+          "imaginary_relative": 2.4885618253126903e-16,
+          "numerator_imaginary": -2.706168622523819e-16,
+          "numerator_real": 1.0874427932622432,
+          "positive": true,
+          "real": 1.999381879296553,
+          "slave_zero_verified": true,
+          "spectral_enclosure_claimed": false,
+          "within_observed_window": true
+        },
+        "B6_H6_residual": {
+          "Jacobi_scaled_absolute": 0.3738212919923991,
+          "Jacobi_scaled_relative": 0.5068841371735022,
+          "inverse_success_claimed": false,
+          "inverse_success_threshold": null,
+          "residual_finite": true,
+          "scaled_equation": "D^(-1/2)*(rc-B6*actual H6(rc))",
+          "scaled_operation_scale": 1.296597891645268,
+          "tested_equation": "B6*(actual H6(rc)) = rc",
+          "unscaled_absolute": 19.847462248318706,
+          "unscaled_operation_scale": 76.70503917267845,
+          "unscaled_relative": 0.523402357497067
+        },
+        "coarse_complement": {
+          "PHq_norm": 2440.7473688407636,
+          "PHrc_norm": 1.1899287719987718e-08,
+          "PHrc_relative_to_PHq": 4.875263975246771e-12,
+          "PHrc_vs_measured_native_epsilon": {
+            "absolute": 8.286213242102887e-09,
+            "finite": true,
+            "operation_passed": true,
+            "operation_relative": 3.3949491651032207e-12,
+            "operation_scale": 2440.7473688493214,
+            "raw_passed": false,
+            "relative": 0.6963621215902022,
+            "relative_limit": 1e-10
+          },
+          "approximate_coarse_complement_observation_only": true,
+          "difference_interpretation": "Galerkin map/action defect plus floating-point distribution; retain raw and operation scales",
+          "epsilon_source": "original selected F4 correction, independently applied native A4",
+          "equality_to_epsilon_required": false,
+          "native_coarse_epsilon_norm": 8.558068177647679e-09,
+          "rc_norm": 37.92008569321342
+        },
+        "unchanged_coarse_reprojection": {
+          "CA6H6rc_norm": 3.764267631793068,
+          "H6rc_norm": 0.05490849708117268,
+          "extra_C_call_for_this_observation": false,
+          "original_complement_identity": {
+            "absolute": 1.3947828371934284e-13,
+            "finite": true,
+            "operation_passed": true,
+            "operation_relative": 2.8533238981093e-17,
+            "operation_scale": 4888.27377122399,
+            "raw_passed": false,
+            "relative": 0.007378001335362798,
+            "relative_limit": 1e-10
+          },
+          "projected_correction_norm": 3.764709952509773
+        },
+        "coefficients": {
+          "center": 9.977776814619954,
+          "coefficients": [
+            0.5027770818668608,
+            -0.06051764273579475,
+            0.0020217477253089474
+          ],
+          "denominator": 1978.4862126597677,
+          "formula": "((12*c*c-3*h*h)-12*c*t+4*t*t)/(4*c*c*c-3*c*h*h)",
+          "half_width": 8.163635575598143,
+          "inverse_action_degree": 2,
+          "residual_formula": "1-t*p2(t)=T3((c-t)/h)/T3(c/h)",
+          "residual_polynomial_degree": 3
+        },
+        "window": {
+          "exact_previous_window_match": true,
+          "expected_degree": 3,
+          "expected_window": [
+            1.8141412390218097,
+            18.141412390218097
+          ],
+          "hash_encoding": "network-endian signed int32 degree, float64 lo, float64 hi",
+          "hi": 18.141412390218097,
+          "lo": 1.8141412390218097,
+          "sha256": "78d5e45e7b2ace3dba2ed71bfed4f55503b751fe430ed58a35aa56d827c8520f",
+          "spectral_enclosure_claimed": false
+        },
+        "interpretation": {
+          "H6": "fixed Jacobi-scaled degree-three Chebyshev smoother on positive B6",
+          "below_lo_is_compatible_with_smoother_low_frequency_cutoff": true,
+          "exact_B6_inverse_required": false,
+          "large_standalone_inverse_residual_is_not_itself_a_bug": true,
+          "one_direction_Rayleigh_is_not_spectral_enclosure": true,
+          "physical_A6_inverse_required": false
+        },
+        "packed_B6_qualification": {
+          "existing_action_oracle_directions": 11,
+          "existing_diagonal_oracle_samples": 8,
+          "new_independent_native_B6_proof": false,
+          "raw_classes_covered": 4,
+          "raw_classes_total": 16,
+          "status": "EXISTING_LIMITED_NATIVE_ORACLE_REUSED"
+        },
+        "observed_original_H6_call_counts": {
+          "B6_mult": 2,
+          "apply": 1
+        },
+        "new_H6_apply_calls": 0,
+        "direct_B6_mult_count": 3,
+        "outer_iterations": 0,
+        "field_accepted": false
+      }
+    ],
+    "terminal": {
+      "status": "CHILD_EXIT_ZERO",
+      "child_exit_code": 0,
+      "cleanup_verified": true,
+      "elapsed_seconds": 162.77553223598807,
+      "process_tree_peak_rss_bytes": 2622021632,
+      "resource_sample_count": 643,
+      "remaining": [],
+      "stop_reason": null,
+      "limits": {
+        "available_bytes": 1073741824,
+        "disk_free_bytes": 4294967296,
+        "new_artifact_cap_bytes": 536870912,
+        "rss_bytes": 8589934592,
+        "seconds": 600.0,
+        "wall_time_policy": "enforce",
+        "zero_swap": true
+      }
+    },
+    "outer_iterations": 0,
+    "all_diagnostics_passed_claimed": false,
+    "independent_terminal_review_ready": true,
+    "terminal_review": {
+      "command": {
+        "bytes": 479540,
+        "path": "phase4_h6_direction_oracle_candidate/command.json",
+        "sha256": "259d79d627cc3dd4a7a7a3372c94b01d0133e14a497daa67a38fc2f255844640"
+      },
+      "directions": [
+        {
+          "Jacobi_scaled_B6_H6_residual_relative": 0.7050092024105725,
+          "Rayleigh": 1.1421923458910725,
+          "Rayleigh_below_lo": true,
+          "actual_complete_PC_input_output_hashes_unchanged": true,
+          "closed_polynomial_relative": 2.1598246392888586e-16,
+          "degree_diagonal_window_counter_input_hashes_unchanged": true,
+          "label": "paused6656_native_true_residual",
+          "new_coarse_epsilon_operation_limit": 1e-10,
+          "new_coarse_epsilon_operation_passed": false,
+          "new_coarse_epsilon_operation_relative": 4.464749941071274e-10,
+          "new_coarse_epsilon_raw_passed": false,
+          "new_coarse_epsilon_raw_relative": 1.0051982740213643,
+          "original_eps_closure_limit": 1e-08,
+          "original_eps_closure_relative": 1.178267345969992e-10,
+          "prediction_raw_failures_preserved": true,
+          "previous_full_PC_scalar_results_identical": true,
+          "raw_and_unit_input_hashes_unchanged": true,
+          "saved_native_PC_action_raw_relative": 8.598751093327494e-10,
+          "unscaled_B6_H6_residual_relative": 0.6588666726738749
+        },
+        {
+          "Jacobi_scaled_B6_H6_residual_relative": 0.5068841371735022,
+          "Rayleigh": 1.999381879296553,
+          "Rayleigh_below_lo": false,
+          "actual_complete_PC_input_output_hashes_unchanged": true,
+          "closed_polynomial_relative": 2.439548583879319e-16,
+          "degree_diagonal_window_counter_input_hashes_unchanged": true,
+          "label": "unit_complex_random_control",
+          "new_coarse_epsilon_operation_limit": 1e-10,
+          "new_coarse_epsilon_operation_passed": true,
+          "new_coarse_epsilon_operation_relative": 3.3949491651032207e-12,
+          "new_coarse_epsilon_raw_passed": false,
+          "new_coarse_epsilon_raw_relative": 0.6963621215902022,
+          "original_eps_closure_limit": 1e-08,
+          "original_eps_closure_relative": 1.6977912644611078e-12,
+          "prediction_raw_failures_preserved": true,
+          "previous_full_PC_scalar_results_identical": true,
+          "raw_and_unit_input_hashes_unchanged": true,
+          "saved_native_PC_action_raw_relative": 7.844521672565901e-10,
+          "unscaled_B6_H6_residual_relative": 0.523402357497067
+        }
+      ],
+      "evidence": {
+        "diagnostic_prior_lifecycle.json": {
+          "bytes": 2251,
+          "path": "phase4_h6_direction_oracle_attempt01/diagnostic_prior_lifecycle.json",
+          "sha256": "096eba2d08047235f9eff8ad7ea39dc6dff41522dd15884698603b848edcd535"
+        },
+        "fixed_directions.json": {
+          "bytes": 1125,
+          "path": "phase4_h6_direction_oracle_attempt01/fixed_directions.json",
+          "sha256": "314c740d7d6699864481b9808823423390e88bb94aa06ee64270e0b470d9694d"
+        },
+        "paused6656_native_true_residual_h6_result.json": {
+          "bytes": 12509,
+          "path": "phase4_h6_direction_oracle_attempt01/paused6656_native_true_residual_h6_result.json",
+          "sha256": "2dc6927f2696937182868a175791752a880fd4922a432e36e5eb84189282bfd7"
+        },
+        "resources.jsonl": {
+          "bytes": 303077,
+          "path": "phase4_h6_direction_oracle_attempt01/resources.jsonl",
+          "sha256": "715e48ab0a2ece18e71222c98cb86c8ee7ebeddaa7941be36732d18c559de322"
+        },
+        "result.json": {
+          "bytes": 226410,
+          "path": "phase4_h6_direction_oracle_attempt01/result.json",
+          "sha256": "a25e2992eccf29b4cdf3948f1087e3e6d7840d73c192a4ae25e03cc4ce8e7b95"
+        },
+        "summary.json": {
+          "bytes": 2187,
+          "path": "phase4_h6_direction_oracle_attempt01/summary.json",
+          "sha256": "874aef6e93d328f6f96351b43a63130c402d8d38d7262d27c6f642aba75ef313"
+        },
+        "unit_complex_random_control_h6_result.json": {
+          "bytes": 12455,
+          "path": "phase4_h6_direction_oracle_attempt01/unit_complex_random_control_h6_result.json",
+          "sha256": "17f6c961517b19c26c51f4f5dc9d51b47b6c7a0c68829bf96bf4d728205e8a7b"
+        }
+      },
+      "independent_polynomial_check": {
+        "coefficients": [
+          0.502777081866861,
+          -0.06051764273579478,
+          0.002021747725308949
+        ],
+        "degree": 3,
+        "exact_fraction_coefficient_identity_verified": true,
+        "extra_direct_B6_mults_per_diagnostic": 3,
+        "formula": "H6=D^(-1/2)*p2(S)*D^(-1/2); S=D^(-1/2)*B6*D^(-1/2)",
+        "independent_reference_calls_production_recurrence_or_scaled_helper": false,
+        "inverse_action_polynomial_degree": 2,
+        "new_H6_apply_calls_in_closed_reference": 0,
+        "original_B6_mults_per_H6": 2,
+        "original_H6_calls_per_observed_expansion": 1,
+        "residual_identity": "1-t*p2(t)=T3((c-t)/h)/T3(c/h), c=(hi+lo)/2, h=(hi-lo)/2",
+        "residual_polynomial_degree": 3,
+        "window": [
+          1.8141412390218097,
+          18.141412390218097
+        ]
+      },
+      "interpretation": {
+        "Rayleigh_limit": "The true-direction quotient1.14219 is below nominal smoother cutoff1.81414; one quotient is not a spectral enclosure and this does not establish a coefficient or recurrence bug or justify changing the window.",
+        "additional_failed_comparison": "True-direction PHrc versus independent native epsilon operation-relative4.46475e-10 exceeds its1e-10 observational comparison limit. Its PASS flag remains false; both near-zero coarse raw comparisons are false. This has different scale/limit from the original complete eps closure1e-8 gate, which remains passed.",
+        "all_diagnostics_passed": false,
+        "inverse_limit": "H6 is a fixed smoother, not an exact B6 or physical A6 inverse. Residual ratios0.65887/0.52340 unscaled and0.70501/0.50688 scaled are observations, not failed inverse specifications.",
+        "limited_B6_scope": "Reuses same packed positive B6 and prior limited native qualification:11 action directions,8 diagonal samples,4/16 raw classes. No new full native B6 proof or spectral-bound proof.",
+        "old_failures": "Prior saved/native PC action and saved/native scalar-prediction raw MISMATCHes remain false; original checkpoint raw mismatch remains preserved.",
+        "solution_or_field_accepted": false,
+        "supported": "Unchanged Jacobi-scaled degree3 H6 output matches independent closed T3 polynomial on both observed original coarse-complement inputs. Prior whole-PC input/output hashes and listed scalar metrics are identical."
+      },
+      "original_H6_sources": {
+        "src/solvers/fullspace_lor_edge_geometric_mg.py": {
+          "bytes": 17448,
+          "path": "hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/fullspace_lor_edge_geometric_mg.py",
+          "sha256": "f1e4c9578d6114eab1d2e9c9191b4cf27dff2b34d9e4bd6c6e8507d3c6a751f3"
+        },
+        "src/solvers/fullspace_lor_edge_geometric_mg_global.py": {
+          "bytes": 35476,
+          "path": "hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/fullspace_lor_edge_geometric_mg_global.py",
+          "sha256": "0f244aa6195ed16e3764674e34281255de222e78e4d4825392acb507db2dbd02"
+        },
+        "src/solvers/physical_light_setup.py": {
+          "bytes": 16102,
+          "path": "hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/physical_light_setup.py",
+          "sha256": "cf78b6164d6afe9fd781fe44cc22c5cecaaad421a3bc4f666cc71ffa27c9064d"
+        }
+      },
+      "original_run": {
+        "budget_reset": false,
+        "cleanup_verified": null,
+        "cumulative_charged_iterations": 8884,
+        "diagnostic_outer_iterations": 0,
+        "remaining_iterations": 1116,
+        "resume_authorized": false,
+        "status": "INCOMPLETE"
+      },
+      "prior_complete_action_terminal_review": {
+        "bytes": 9511,
+        "path": "phase4_balh_complete_action_oracle_terminal_review.json",
+        "sha256": "be6c3dc4462e56303155e5f9f904021c5e974a0a16a3ee25de254fa95c7802db"
+      },
+      "resources": {
+        "AS_cap_bytes": 6442450944,
+        "all_samples_readable_zero_swap": true,
+        "child_exit_code": 0,
+        "denied_admissions": 0,
+        "diagnostic_cleanup_verified": true,
+        "elapsed_seconds": 162.77553223598807,
+        "max_sampled_new_artifact_bytes": 16243726,
+        "min_disk_free_bytes": 15802384384,
+        "min_host_available_bytes": 6787497984,
+        "peak_tree_RSS_bytes": 2622021632,
+        "remaining": [],
+        "sampled_all_limits_passed": true,
+        "samples": 643
+      },
+      "schema": "same108-h6-direction-terminal-review.v1",
+      "scope": "Read only existing small JSON/source and643 scalar resource records; stdlib exact scalar algebra, arithmetic and AST. No array payload, scientific import, FE/native execution, rerun or launch.",
+      "source_closure_scope": "Descriptor-list digest and selected7 core/launch plus3 original H6 source hashes verified; full source/payload closure not reread.",
+      "source_closure_sha256": "93928c36bca86de396b3ba297ba47fc0ff664b694e02cbecdb78ef15599ec1ab",
+      "source_pin_count": 987,
+      "status": "FIXED_H6_CLOSED_POLYNOMIAL_IMPLEMENTATION_VERIFIED_OTHER_MISMATCHES_PRESERVED",
+      "verified_sources": [
+        {
+          "bytes": 13355,
+          "path": "phase4_h6_direction_oracle_candidate/source/complete_action_oracle.py",
+          "sha256": "2e23626a5865cfba90c2e3b196f833637da15de9980f02901ffb5fa164735377"
+        },
+        {
+          "bytes": 24815,
+          "path": "phase4_h6_direction_oracle_candidate/source/oracle_driver.py",
+          "sha256": "17e6539ae1fc2a30869a92d8152f10fae7fb14c6539199d8becb9700d9643694"
+        },
+        {
+          "bytes": 14587,
+          "path": "phase4_h6_direction_oracle_candidate/source/h6_direction_oracle.py",
+          "sha256": "97cccac5363afae8fe4baee18b3f8db2e6601edf4e152b3389d4a57d0c4da171"
+        },
+        {
+          "bytes": 25586,
+          "path": "phase4_h6_direction_oracle_candidate/source/native_balh_builder.py",
+          "sha256": "913c696f4c8e5b025f4c0736ed50a810a0585807e83cf524496a09e7344023ff"
+        },
+        {
+          "bytes": 89246,
+          "path": "phase4_h6_direction_oracle_candidate/source/native_runner_overlay/physical_retained_outer_adapter.py",
+          "sha256": "2a3eaf50c51b76d5af0a2eb08eb795780a639e07d7c30f8ed436f880e5c061ef"
+        },
+        {
+          "bytes": 20545,
+          "path": "phase4_h6_direction_oracle_candidate/launch/launch_offline.py",
+          "sha256": "10fd3fd962fff6c6aef798eb49de1c1da1f1117467e78f861e778b89198c04a9"
+        },
+        {
+          "bytes": 5080,
+          "path": "phase4_h6_direction_oracle_candidate/launch/diagnostic_preflight.py",
+          "sha256": "6bdb17ff1d9612e80dc5ef59993f83cb0769515bab6a6b8c80a7b53986bd251d"
+        }
+      ]
+    }
+  },
+  "current_known_state": {
+    "native_outer": "INCOMPLETE_NO_TERMINAL_RECORD",
+    "original_run_success_or_cleanup_not_inferred_from_diagnostic_cleanup": true,
+    "root_cause_established": false,
+    "later_single_factor_enhanced_smoother": "SOURCE_PREPARATION_ONLY_NO_NUMERICAL_RESULT_IN_THIS_REPORT",
+    "automatic_original_resume": false,
+    "active_numerical_run_reported_at_20261014T092806Z": false
+  },
+  "unchanged_negative_evidence": [
+    "Original setup/entry failures and checkpoint volume/full-retained raw MISMATCH are preserved in earlier reports.",
+    "Complete-PC diagnostic: saved/native preconditioned-action raw relative errors8.598751093327494e-10 and7.844521672565901e-10 remain above1e-10.",
+    "Both saved/native scalar-prediction raw checks and near-zero coarse identity raw checks remain failed; operation-scaled passes do not replace them.",
+    "H6 residual direction PHrc/native epsilon observation operation_relative4.464749941071274e-10 exceeds its predeclared1e-10 observational limit; this is not the coarse solver residual itself.",
+    "H6 polynomial fidelity passes do not mean full B6 inverse, spectral enclosure, arbitrary-vector correctness or Maxwell convergence."
+  ],
+  "costs": {
+    "ledger_version": 21,
+    "known_terminal_supervised_seconds": 12487.516660683003,
+    "including_incomplete_lower_bounds_supervised_seconds": 20401.508943525987,
+    "exact_total_claimed": false,
+    "new_terminal_stages": [
+      {
+        "attempt": "phase4_balh_complete_action_oracle_attempt01",
+        "kind": "same108_complete_BALH_native_action_first_Arnoldi_diagnostic",
+        "seconds": 161.53773240601004,
+        "peak_tree_rss_bytes": 2616090624,
+        "child_exit_code": 0,
+        "cleanup_verified": true,
+        "terminal_review": "phase4_balh_complete_action_oracle_terminal_review.json",
+        "outer_iterations": 0,
+        "all_diagnostics_passed_claimed": false
+      },
+      {
+        "attempt": "phase4_h6_direction_oracle_attempt01",
+        "kind": "fixed_H6_closed_polynomial_and_coarse_complement_diagnostic",
+        "seconds": 162.77553223598807,
+        "peak_tree_rss_bytes": 2622021632,
+        "child_exit_code": 0,
+        "cleanup_verified": true,
+        "outer_iterations": 0,
+        "all_diagnostics_passed_claimed": false,
+        "terminal_review": "phase4_h6_direction_oracle_terminal_review.json"
+      }
+    ],
+    "incomplete_stages": [
+      {
+        "attempt": "phase4_balh108_historical_solve_attempt03",
+        "kind": "INCOMPLETE_NO_TERMINAL_RECORD",
+        "seconds": null,
+        "seconds_lower_bound": 3020.33019141799,
+        "peak_tree_rss_bytes_observed": 1818488832,
+        "child_exit_code": null,
+        "cleanup_verified": null,
+        "terminal_review": "phase4_balh_historical_attempt03_incomplete_review.json"
+      },
+      {
+        "attempt": "phase4_balh108_checkpoint_resume_attempt01",
+        "kind": "USER_PRIORITY_BUG_DIAGNOSTIC_PAUSE_WITH_SAVED_ITERATE",
+        "seconds": null,
+        "seconds_lower_bound": 2865.936959640996,
+        "peak_tree_rss_bytes_observed": 1864613888,
+        "tool_exit_code": 130,
+        "child_exit_code": null,
+        "cleanup_verified": null,
+        "terminal_review": "phase4_balh_checkpoint_resume01_pause_review.json"
+      },
+      {
+        "attempt": "phase4_balh108_native_outer_cached_attempt02",
+        "kind": "INCOMPLETE_NO_TERMINAL_RECORD",
+        "seconds": null,
+        "seconds_lower_bound": 2027.7251317839982,
+        "peak_tree_rss_bytes_observed": 2624339968,
+        "child_exit_code": null,
+        "cleanup_verified": null,
+        "terminal_review": "phase4_native_cached02_incomplete_review.json",
+        "completed_iterations": 2154,
+        "conservatively_charged_iterations": 2155
+      }
+    ],
+    "auxiliary_read_only_verifications": [
+      {
+        "name": "checkpoint2112_independent_stream_Ax",
+        "measured_arithmetic_loop_seconds": 8.047275923992856,
+        "outer_supervisor_stage": false,
+        "already_included_in_scientific_stage_sum": false,
+        "review": "phase4_native_cached02_checkpoint2112_ax_stream_review.json"
+      }
+    ],
+    "auxiliary_Ax_seconds_not_in_supervised_subtotal": 8.047275923992856,
+    "preparation_total_seconds": null,
+    "preparation_separate_and_nonzero": true,
+    "old_running1225_snapshot_replaced_by2027_incomplete_bound_not_added": true,
+    "kernel_build_and_setup_substages_not_readded": true,
+    "prior_phase3_not_readded": true
+  },
+  "scientific_limits": [
+    "No qualified108 field, new official R/T/A, hp/continuum convergence or original-size0.7nm2TB/48h qualification.",
+    "Only paused6656 residual and fixed seed10820261014 random input were used in both diagnostics; not latest checkpoint2112 residual.",
+    "One Rayleigh value below smoother window lower cutoff does not establish the2% plateau cause.",
+    "New fresh KSP view reports classical unmodified Gram-Schmidt and refinement none; no retrospective claim about old or interrupted KSP.",
+    "Historical actual H6 window/MUMPS options remain unknown in local compact evidence."
+  ],
+  "sources": [
+    {
+      "file": "phase4_native_cached02_incomplete_review.json",
+      "bytes": 5748,
+      "sha256": "552384520086ec48a9a7e4578a2af99773d3c4543f93bd8d7d833620fa5d66cf"
+    },
+    {
+      "file": "phase4_native_cached02_checkpoint2112_ax_stream_review.json",
+      "bytes": 8301,
+      "sha256": "8ca488cd6fac49fe395adecacaa741d1068bd5663c8dfde23d15d7141b92b425"
+    },
+    {
+      "file": "phase4_balh_complete_action_oracle_terminal_review.json",
+      "bytes": 9511,
+      "sha256": "be6c3dc4462e56303155e5f9f904021c5e974a0a16a3ee25de254fa95c7802db"
+    },
+    {
+      "file": "phase4_h6_direction_oracle_attempt01/summary.json",
+      "bytes": 2187,
+      "sha256": "874aef6e93d328f6f96351b43a63130c402d8d38d7262d27c6f642aba75ef313"
+    },
+    {
+      "file": "phase4_h6_direction_oracle_attempt01/paused6656_native_true_residual_h6_result.json",
+      "bytes": 12509,
+      "sha256": "2dc6927f2696937182868a175791752a880fd4922a432e36e5eb84189282bfd7"
+    },
+    {
+      "file": "phase4_h6_direction_oracle_attempt01/unit_complex_random_control_h6_result.json",
+      "bytes": 12455,
+      "sha256": "17f6c961517b19c26c51f4f5dc9d51b47b6c7a0c68829bf96bf4d728205e8a7b"
+    },
+    {
+      "file": "phase4_execution_ledger_v21.json",
+      "bytes": 9219,
+      "sha256": "a776d4e9ca3ba11bd1ef740012ef2d83805fb93d1f9a947414040479405abe9f"
+    },
+    {
+      "file": "phase4_h6_direction_oracle_terminal_review.json",
+      "bytes": 11362,
+      "sha256": "7a98170dcae360e17f6ac77e2e5463c9e51d8d2d3f89655848472f0374b69c54"
+    }
+  ],
+  "verification": {
+    "numerical_work_rerun_by_publisher": false,
+    "array_or_binary_payload_read_by_publisher": false,
+    "strict_JSON": true,
+    "table_structure_checked": true,
+    "budget_and_cost_arithmetic_checked": true,
+    "local_science_worktree_modified": false,
+    "github_visual_rendering_verified": false,
+    "full_CI_claimed": false
+  }
+}
