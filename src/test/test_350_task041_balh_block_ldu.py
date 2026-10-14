@@ -4818,6 +4818,314 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
             ):
                 vector.destroy()
 
+        # Capture at most two real RIGHT-FGMRES PC applications with an
+        # initially exact-zero modal RHS and nonzero side RHS.  The recorder
+        # delegates to the real callback, row recorder, and apply method; it
+        # only copies evidence before the fixture destroys its PETSc objects.
+        diagnostic_rhs = original_operator.createVecLeft()
+        diagnostic_solution = original_operator.createVecRight()
+        diagnostic_ksp = PETSc.KSP().create(comm)
+        diagnostic_records: list[dict[str, Any]] = []
+        active_diagnostic_record: dict[str, Any] | None = None
+
+        def diagnostic_jsonable(value: Any) -> Any:
+            if isinstance(value, Mapping):
+                return {
+                    str(key): diagnostic_jsonable(item)
+                    for key, item in value.items()
+                }
+            if isinstance(value, (list, tuple)):
+                return [diagnostic_jsonable(item) for item in value]
+            if isinstance(value, np.ndarray):
+                return diagnostic_jsonable(value.tolist())
+            if isinstance(value, (np.generic,)):
+                return diagnostic_jsonable(value.item())
+            if isinstance(value, complex):
+                real = float(value.real)
+                imag = float(value.imag)
+                return [
+                    real if np.isfinite(real) else str(real),
+                    imag if np.isfinite(imag) else str(imag),
+                ]
+            if isinstance(value, float) and not np.isfinite(value):
+                return str(value)
+            if value is None or isinstance(value, (str, int, float, bool)):
+                return value
+            return repr(value)
+
+        def diagnostic_exception(exc: BaseException) -> dict[str, str]:
+            return {
+                "type": type(exc).__name__,
+                "message": str(exc)[:1000],
+            }
+
+        def diagnostic_capture(
+            record: dict[str, Any], field: str, read: Any
+        ) -> None:
+            try:
+                record[field] = diagnostic_jsonable(read())
+            except Exception as capture_error:  # noqa: BLE001 - capture never changes gate
+                record.setdefault("capture_errors", []).append(
+                    diagnostic_exception(capture_error)
+                )
+
+        def diagnostic_vector_snapshot(vector: PETSc.Vec) -> dict[str, Any]:
+            first, last = (int(value) for value in vector.getOwnershipRange())
+            values = np.asarray(
+                vector.getArray(readonly=True), dtype=np.complex128
+            ).copy()
+            return {
+                "ownership_range": [first, last],
+                "local_values_real_imag": [
+                    [float(value.real), float(value.imag)] for value in values
+                ],
+            }
+
+        def diagnostic_petsc_handle(vector: PETSc.Vec) -> int | None:
+            try:
+                return int(vector.handle)
+            except Exception:  # noqa: BLE001 - PETSc handle access varies by build
+                return None
+
+        def diagnostic_side_counts() -> dict[str, Any]:
+            return {
+                "bottom": block_ldu._v13_side_operation_counts(
+                    context.bottom_action
+                ),
+                "top": block_ldu._v13_side_operation_counts(context.top_action),
+            }
+
+        diagnostic_rhs_values = np.zeros(
+            layout.global_size, dtype=np.complex128
+        )
+        diagnostic_rhs_values[bottom_indices] = side_bottom_rhs
+        diagnostic_rhs_values[top_indices] = side_top_rhs
+        _set_vector(diagnostic_rhs, diagnostic_rhs_values)
+        diagnostic_initial_rhs = _gather_vector(diagnostic_rhs)
+        diagnostic_initial_modal = diagnostic_initial_rhs[modal_indices].copy()
+        diagnostic_initial_side = diagnostic_initial_rhs[
+            np.concatenate((bottom_indices, top_indices))
+        ].copy()
+        assert np.all(diagnostic_initial_modal == 0.0)
+        assert float(np.linalg.norm(diagnostic_initial_side)) > 0.0
+
+        original_diagnostic_apply = context.apply
+        original_diagnostic_callback = context._v13_original_modal_row_callback
+        original_diagnostic_row_recorder = (
+            modal_system.record_original_modal_row
+        )
+
+        def diagnostic_callback(*args: Any, **kwargs: Any) -> Any:
+            try:
+                result = original_diagnostic_callback(*args, **kwargs)
+            except Exception as exc:
+                if active_diagnostic_record is not None:
+                    callback_error = diagnostic_exception(exc)
+                    diagnostic_capture(
+                        active_diagnostic_record,
+                        "callback_exception",
+                        lambda: callback_error,
+                    )
+                raise
+            if active_diagnostic_record is not None:
+                diagnostic_capture(
+                    active_diagnostic_record,
+                    "callback_result",
+                    lambda: {
+                        "action_values_real_imag": result[0],
+                        "rhs_values_real_imag": result[1],
+                        "side_term_real_imag": result[2],
+                        "modal_term_real_imag": result[3],
+                        "original_A_matmult_count": result[4],
+                    },
+                )
+            return result
+
+        def diagnostic_row_recorder(record: Mapping[str, Any]) -> None:
+            if active_diagnostic_record is not None:
+                diagnostic_capture(
+                    active_diagnostic_record,
+                    "original_modal_row_record",
+                    lambda: dict(record),
+                )
+                diagnostic_capture(
+                    active_diagnostic_record,
+                    "owner_schur_solve_audit_at_row",
+                    lambda: modal_system.diagnostics.get("last_solve"),
+                )
+                diagnostic_capture(
+                    active_diagnostic_record,
+                    "side_operation_counts_at_row",
+                    diagnostic_side_counts,
+                )
+            original_diagnostic_row_recorder(record)
+
+        def diagnostic_apply(
+            pc: PETSc.PC | None,
+            pc_source: PETSc.Vec,
+            pc_target: PETSc.Vec,
+        ) -> None:
+            nonlocal active_diagnostic_record
+            source_handle = diagnostic_petsc_handle(pc_source)
+            target_handle = diagnostic_petsc_handle(pc_target)
+            record: dict[str, Any] = {
+                "rank": int(comm.rank),
+                "diagnostic_apply_index": len(diagnostic_records) + 1,
+                "production_pc_apply_count_before": int(context._pc_apply_count),
+                "attempted_production_pc_apply_index": int(
+                    context._pc_apply_count + 1
+                ),
+                "source_object_id": id(pc_source),
+                "target_object_id": id(pc_target),
+                "source_target_same_object": pc_source is pc_target,
+                "source_target_same_petsc_handle": (
+                    None
+                    if source_handle is None or target_handle is None
+                    else source_handle == target_handle
+                ),
+            }
+            record["source_petsc_handle"] = source_handle
+            record["target_petsc_handle"] = target_handle
+            diagnostic_capture(
+                record,
+                "source_before",
+                lambda: diagnostic_vector_snapshot(pc_source),
+            )
+            diagnostic_capture(
+                record,
+                "target_before",
+                lambda: diagnostic_vector_snapshot(pc_target),
+            )
+            diagnostic_capture(
+                record,
+                "owner_schur_solve_audit_before",
+                lambda: modal_system.diagnostics.get("last_solve"),
+            )
+            diagnostic_capture(
+                record,
+                "side_operation_counts_before",
+                diagnostic_side_counts,
+            )
+            diagnostic_records.append(record)
+            active_diagnostic_record = record
+            try:
+                original_diagnostic_apply(pc, pc_source, pc_target)
+            except Exception as exc:
+                apply_error = diagnostic_exception(exc)
+                diagnostic_capture(
+                    record,
+                    "apply_exception",
+                    lambda: apply_error,
+                )
+                raise
+            finally:
+                diagnostic_capture(
+                    record,
+                    "source_after",
+                    lambda: diagnostic_vector_snapshot(pc_source),
+                )
+                diagnostic_capture(
+                    record,
+                    "target_after",
+                    lambda: diagnostic_vector_snapshot(pc_target),
+                )
+                diagnostic_capture(
+                    record,
+                    "production_pc_apply_count_after",
+                    lambda: int(context._pc_apply_count),
+                )
+                diagnostic_capture(
+                    record,
+                    "owner_schur_solve_audit_after",
+                    lambda: modal_system.diagnostics.get("last_solve"),
+                )
+                diagnostic_capture(
+                    record,
+                    "side_operation_counts_after",
+                    diagnostic_side_counts,
+                )
+                active_diagnostic_record = None
+
+        diagnostic_solver_exception: dict[str, str] | None = None
+        diagnostic_ksp_iterations: int | None = None
+        diagnostic_ksp_iteration_error: dict[str, str] | None = None
+        try:
+            diagnostic_ksp.setOperators(original_operator)
+            diagnostic_ksp.setType(PETSc.KSP.Type.FGMRES)
+            diagnostic_ksp.setGMRESRestart(2)
+            diagnostic_ksp.setPCSide(PETSc.PC.Side.RIGHT)
+            diagnostic_ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
+            diagnostic_ksp.setInitialGuessNonzero(False)
+            diagnostic_ksp.setTolerances(rtol=0.0, atol=0.0, max_it=2)
+            diagnostic_pc = diagnostic_ksp.getPC()
+            diagnostic_pc.setType(PETSc.PC.Type.PYTHON)
+            diagnostic_pc.setPythonContext(BorrowedV13BlockLduPc())
+            with monkeypatch.context() as diagnostic_patch:
+                diagnostic_patch.setattr(context, "apply", diagnostic_apply)
+                diagnostic_patch.setattr(
+                    context,
+                    "_v13_original_modal_row_callback",
+                    diagnostic_callback,
+                )
+                diagnostic_patch.setattr(
+                    modal_system,
+                    "record_original_modal_row",
+                    diagnostic_row_recorder,
+                )
+                diagnostic_ksp.setUp()
+                try:
+                    diagnostic_ksp.solve(
+                        diagnostic_rhs, diagnostic_solution
+                    )
+                except Exception as exc:  # noqa: BLE001 - preserve solver refusal as data
+                    diagnostic_solver_exception = diagnostic_exception(exc)
+                try:
+                    diagnostic_ksp_iterations = int(
+                        diagnostic_ksp.getIterationNumber()
+                    )
+                except Exception as exc:  # noqa: BLE001 - diagnostic query only
+                    diagnostic_ksp_iteration_error = diagnostic_exception(exc)
+        finally:
+            diagnostic_ksp.destroy()
+            diagnostic_rhs.destroy()
+            diagnostic_solution.destroy()
+
+        diagnostic_status = (
+            "two_apply_capture_not_numerical_pass"
+            if len(diagnostic_records) >= 2
+            else "incomplete_fewer_than_two_applies_not_numerical_pass"
+        )
+        diagnostic_evidence = {
+            "classification": diagnostic_status,
+            "bound": "FGMRES max_it=2; no search or retry loop",
+            "initial_modal_rhs_exact_zero": bool(
+                np.all(diagnostic_initial_modal == 0.0)
+            ),
+            "initial_side_rhs_norm": float(
+                np.linalg.norm(diagnostic_initial_side)
+            ),
+            "maximum_pc_applications": 2,
+            "captured_pc_application_count": len(diagnostic_records),
+            "solver_exception": diagnostic_solver_exception,
+            "captured_applications": diagnostic_records,
+        }
+        if diagnostic_ksp_iterations is not None:
+            diagnostic_evidence["ksp_iterations"] = diagnostic_ksp_iterations
+        if diagnostic_ksp_iteration_error is not None:
+            diagnostic_evidence["ksp_iterations_unavailable"] = (
+                diagnostic_ksp_iteration_error
+            )
+        print(
+            "TASK041_V14_MODAL_ROW_DIAGNOSTIC="
+            + json.dumps(
+                diagnostic_jsonable(diagnostic_evidence),
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ),
+            flush=True,
+        )
+
         # A wrong modal-block sign and a wrong side channel are both rejected
         # by the independently assembled original-global-A row after a full PC.
         if comm.rank == layout.modal_owner:
