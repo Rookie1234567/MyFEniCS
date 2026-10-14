@@ -3457,6 +3457,18 @@
       ]
     }
   ],
+  "corrections": [
+    {
+      "basis": "Two hexahedra share4edges*4=16 edge DOFs plus2*4*(4-1)=24 face-interior DOFs;600-40=560",
+      "candidate_actual_dimension_not_yet_measured": true,
+      "corrected": 560,
+      "field": "next_proposal.local_dimension_static.h_two_p4_internal_conforming",
+      "measured_results_changed": false,
+      "old": 576,
+      "old_publication_commit": "0badfd7673e4c10ea52c63f53adce0e3efd69f7d",
+      "utc": "2026-10-14T18:57:00Z"
+    }
+  ],
   "cost": {
     "B_actions": 0,
     "CG_steps": 0,
@@ -3668,7 +3680,7 @@
       1
     ],
     "local_dimension_static": {
-      "h_two_p4_internal_conforming": 576,
+      "h_two_p4_internal_conforming": 560,
       "original_p6_control": 882,
       "p5": 540
     },
