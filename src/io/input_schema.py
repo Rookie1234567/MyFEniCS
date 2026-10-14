@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Final
 
-from .native_capacity_profile import NATIVE_PROFILES, V7_ANISO_N0_P6_DIRECT_PROFILES
+from .native_capacity_profile import NATIVE_PROFILES, P6_CONDENSED_DIRECT_PROFILES
 
 SCHEMA_VERSION: Final = 1
 IDENTITY_KEYS: Final = (
@@ -548,7 +548,7 @@ FIELD_SPECS: Final = (
         "discretization.mesh_axis_x_values",
         "float_array",
         "nm",
-        ("full3d_iterative",),
+        ("full3d_iterative", "full3d_direct"),
         "R13 V5 冻结 mesh 的显式 x 轴坐标",
         "mesh_axis_x_values",
         "[0.0, ... , 50.0]",
@@ -558,7 +558,7 @@ FIELD_SPECS: Final = (
         "discretization.mesh_axis_y_values",
         "float_array",
         "nm",
-        ("full3d_iterative",),
+        ("full3d_iterative", "full3d_direct"),
         "R13 V5 冻结 mesh 的显式 y 轴坐标",
         "mesh_axis_y_values",
         "[0.0, ... , 25.0]",
@@ -568,7 +568,7 @@ FIELD_SPECS: Final = (
         "discretization.mesh_axis_z_values",
         "float_array",
         "nm",
-        ("full3d_iterative",),
+        ("full3d_iterative", "full3d_direct"),
         "R13 V5 冻结 mesh 的显式 z 轴坐标",
         "mesh_axis_z_values",
         "[-10.0, ... , 130.0]",
@@ -578,7 +578,7 @@ FIELD_SPECS: Final = (
         "discretization.mesh_plan_id",
         "string",
         "none",
-        ("full3d_iterative",),
+        ("full3d_iterative", "full3d_direct"),
         "显式几何/mesh plan 身份",
         "mesh_plan_id",
         '"task039extra.v21.frozen-geometry-mesh-plan.v1"',
@@ -588,7 +588,7 @@ FIELD_SPECS: Final = (
         "discretization.mesh_axis_z_profile",
         "string",
         "none",
-        ("full3d_iterative",),
+        ("full3d_iterative", "full3d_direct"),
         "R13 V5 冻结 z 轴计划标签",
         "mesh_axis_z_profile",
         '"v21_frozen_geometry_mesh_plan"',
@@ -598,7 +598,7 @@ FIELD_SPECS: Final = (
         "discretization.mesh_plan_sha256",
         "string",
         "sha256",
-        ("full3d_iterative",),
+        ("full3d_iterative", "full3d_direct"),
         "冻结 mesh plan 文件摘要",
         "mesh_plan_sha256",
         '"b5bab6..."',
@@ -941,9 +941,9 @@ FIELD_SPECS: Final = (
         "明确选择一个经过资源合同验证的 Full3D direct native 运行身份",
         "native capacity profile identity",
         '"dual_condensed_balh_native_0p7nm_aniso_n0_p6_direct_full_v1"',
-        allowed=tuple(sorted(V7_ANISO_N0_P6_DIRECT_PROFILES)),
+        allowed=tuple(sorted(P6_CONDENSED_DIRECT_PROFILES)),
         constraints=(
-            "仅 V7 p6 direct 路线可用；不能与 iterative preconditioner 混用",
+            "仅经审阅的 p6 condensed direct 路线可用；不能与 iterative preconditioner 混用",
         ),
     ),
     _f(

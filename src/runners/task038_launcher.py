@@ -150,7 +150,7 @@ def _base_manifest(
     }
     from src.io.native_capacity_profile import (
         NATIVE_PROFILES,
-        V7_ANISO_N0_P6_DIRECT_PROFILES,
+        P6_CONDENSED_DIRECT_PROFILES,
         native_capacity_profile_identity,
         native_profile_facts,
     )
@@ -165,15 +165,15 @@ def _base_manifest(
     if native_identity in NATIVE_PROFILES:
         profile = native_profile_facts(native_identity)
         derived = snapshot.get('derived', {})
-        if native_identity in V7_ANISO_N0_P6_DIRECT_PROFILES:
+        if native_identity in P6_CONDENSED_DIRECT_PROFILES:
             resolved_profile = derived.get('native_capacity_profile')
             if not isinstance(resolved_profile, dict):
                 raise InputError(
-                    'resolved direct V7 native-capacity profile facts are missing'
+                    'resolved p6-direct native-capacity profile facts are missing'
                 )
             if canonical_json_bytes(resolved_profile) != canonical_json_bytes(profile):
                 raise InputError(
-                    'resolved direct V7 native-capacity profile facts do not match '
+                    'resolved p6-direct native-capacity profile facts do not match '
                     'the selected profile identity'
                 )
             manifest['native_capacity_profile'] = resolved_profile
@@ -200,7 +200,7 @@ def _base_manifest(
             manifest['configured_component_factories'] = component_factory_identity(
                 Path(__file__).resolve().parents[2])
         profile_snapshot = derived.get('physical_intermediate_profile', {})
-        if native_identity in V7_ANISO_N0_P6_DIRECT_PROFILES:
+        if native_identity in P6_CONDENSED_DIRECT_PROFILES:
             profile_snapshot = derived.get('native_capacity_profile', {})
         material = snapshot['materials']
         properties = derived.get('config_properties', {})
@@ -488,7 +488,7 @@ def launch_specification(
             "V7 BAL_H diagnostic observer requires the standard full-solve run_case path"
         )
     from src.io.native_capacity_profile import (
-        V7_ANISO_N0_P6_DIRECT_PROFILES,
+        P6_CONDENSED_DIRECT_PROFILES,
         native_capacity_profile_identity,
         native_profile_facts,
     )
@@ -515,10 +515,10 @@ def launch_specification(
     native_identity = native_capacity_profile_identity(
         specification.method.get('kind'), specification.solver
     )
-    v7_p6_direct = native_identity in V7_ANISO_N0_P6_DIRECT_PROFILES
+    p6_condensed_direct = native_identity in P6_CONDENSED_DIRECT_PROFILES
     native_resources = (
         native_profile_facts(native_identity)['resources']
-        if v7_p6_direct
+        if p6_condensed_direct
         else {}
     )
     watchdog_resources = physical_resources if physical_candidate else native_resources
@@ -526,17 +526,17 @@ def launch_specification(
         raise InputError('PC timing mode requires a physical reference run')
     workflow_limit = (
         None
-        if v7_p6_direct
+        if p6_condensed_direct
         else (2400 if packed else 1800)
         if pc_profile is not None
         else physical_resources.get('workflow_seconds', 7200)
     )
     solve_limit = (
-        None if v7_p6_direct else physical_resources.get('solve_seconds', 3600)
+        None if p6_condensed_direct else physical_resources.get('solve_seconds', 3600)
     )
     physical_source = (
         _physical_source_gate(Path(__file__).resolve().parents[2], source)
-        if physical_candidate or v7_p6_direct
+        if physical_candidate or p6_condensed_direct
         else None
     )
     if setup_only:
@@ -629,14 +629,14 @@ def launch_specification(
         }
     else:
         try:
-            if physical_candidate or v7_p6_direct:
+            if physical_candidate or p6_condensed_direct:
                 from benchmarks.subreaper_watchdog import supervise
 
                 if pc_profile is not None:
                     watchdog_wall_seconds = max(1e-9, min(
                         workflow_limit-(monotonic()-workflow_started),
                         pc_profile['deadline_monotonic']-monotonic()))
-                elif v7_p6_direct or workflow_limit is None:
+                elif p6_condensed_direct or workflow_limit is None:
                     watchdog_wall_seconds = None
                 else:
                     watchdog_wall_seconds = max(1e-9,
@@ -667,7 +667,7 @@ def launch_specification(
                             timebase_guard=True,
                             timebase_policy='conservative_realtime',
                         )
-                elif v7_p6_direct:
+                elif p6_condensed_direct:
                     watchdog_options = {
                         'grace_seconds': 60,
                         'hard_stop_immediate': True,

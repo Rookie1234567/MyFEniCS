@@ -563,10 +563,18 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
 
             validate_native_case(config)
         elif kind == "full3d_direct":
-            if discretization.get("mesh_axis_cell_counts") is not None:
+            direct_axis_fields = {
+                key for key in (
+                    "mesh_axis_cell_counts", "mesh_axis_x_values",
+                    "mesh_axis_y_values", "mesh_axis_z_values",
+                    "mesh_plan_id", "mesh_plan_sha256",
+                ) if discretization.get(key) is not None
+            }
+            if direct_axis_fields:
                 raise _error(
                     "discretization.mesh_axis_cell_counts",
-                    "explicit axis counts are restricted to a reviewed full3d_direct native profile",
+                    "explicit axes are restricted to a reviewed full3d_direct native profile: "
+                    + ", ".join(sorted(direct_axis_fields)),
                 )
             if execution.get("time_limit_mode") == "none":
                 raise _error(
@@ -1610,7 +1618,7 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         # load_and_resolve -> manifest -> worker identity chain; the runner
         # must not reconstruct these facts from a profile name on its own.
         from .native_capacity_profile import (
-            V7_ANISO_N0_P6_DIRECT_PROFILES,
+            P6_CONDENSED_DIRECT_PROFILES,
             native_capacity_profile_identity,
             native_profile_facts,
         )
@@ -1618,10 +1626,17 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         identity = native_capacity_profile_identity(
             config["method"]["kind"], config["solver"]
         )
-        if identity in V7_ANISO_N0_P6_DIRECT_PROFILES:
+        if identity in P6_CONDENSED_DIRECT_PROFILES:
             result["native_capacity_profile"] = _jsonable(
                 native_profile_facts(identity)
             )
+            if cfg.mesh_axis_cell_counts_requested is not None:
+                # Explicit frozen axes define the resolved cell counts; do not
+                # leave the legacy target-size estimate in `mesh_cells`.
+                result["mesh_cells"] = [
+                    int(value) for value in cfg.mesh_axis_cell_counts_requested
+                ]
+                result["mesh_cells_source"] = "explicit_frozen_axis_plan"
     return result
 
 

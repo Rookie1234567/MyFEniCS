@@ -187,20 +187,20 @@ def _load_and_validate_worker_payload(
     expected_execution_mode = "setup_only" if setup_only else "full_solve"
     if not setup_only:
         from src.io.native_capacity_profile import (
+            P6_CONDENSED_DIRECT_PROFILES,
             V6_NATIVE_PROFILES,
-            V7_ANISO_N0_P6_DIRECT_PROFILES,
             native_capacity_profile_identity,
             native_profile_facts,
         )
         profile_name = native_capacity_profile_identity(
             resolved.get('method', {}).get('kind'), resolved.get('solver', {})
         )
-        if profile_name in (V6_NATIVE_PROFILES | V7_ANISO_N0_P6_DIRECT_PROFILES):
+        if profile_name in (V6_NATIVE_PROFILES | P6_CONDENSED_DIRECT_PROFILES):
             profile = native_profile_facts(profile_name)
             expected_execution_mode = profile['execution_mode']
             if manifest_value.get('component_options') != profile['component_options']:
                 errors.append('manifest native profile component options mismatch')
-            if profile_name in V7_ANISO_N0_P6_DIRECT_PROFILES:
+            if profile_name in P6_CONDENSED_DIRECT_PROFILES:
                 resolved_derived = resolved.get('derived')
                 resolved_profile = (
                     resolved_derived.get('native_capacity_profile')
@@ -310,14 +310,14 @@ def _dispatch_resolved_payload(
         label = "2D"
     elif expected_method == "full3d_direct":
         from src.io.native_capacity_profile import (
-            V7_ANISO_N0_P6_DIRECT_PROFILES,
+            P6_CONDENSED_DIRECT_PROFILES,
             native_capacity_profile_identity,
         )
 
         profile_name = native_capacity_profile_identity(
             expected_method, resolved_payload.get('solver', {})
         )
-        if profile_name in V7_ANISO_N0_P6_DIRECT_PROFILES:
+        if profile_name in P6_CONDENSED_DIRECT_PROFILES:
             from src.runners.p6_condensed_direct import run_p6_condensed_direct
 
             def adapter(payload, directory):
@@ -325,7 +325,7 @@ def _dispatch_resolved_payload(
                     payload, directory, source_sha=expected_source_sha
                 )
 
-            label = "V7 p6 condensed direct"
+            label = "p6 condensed direct"
         else:
             from src.runners.task038_full3d_direct import run_full3d_direct
 

@@ -1,0 +1,94 @@
+# Review V6 explicit 5nm_full: same frozen physical model; exact p4 where constructed.
+schema_version = 1
+model_id = "euv_grazing1_phi0"
+run_id = "v6_interleave_5nm_p6_direct_full600_y2"
+comparison_group = "task39extra_v6_f5_p6_direct_y2"
+dimension = 3
+
+[geometry]
+geometry_kind = "rectangular_block_grating"
+period_x_nm = 50.0
+period_y_nm = 25.0
+z_min_nm = -10.0
+z_max_nm = 130.0
+interface_z_nm = 0.0
+air_height_nm = 130.0
+substrate_thickness_nm = 10.0
+grating_width_x_nm = 17.0
+grating_width_y_nm = 25.0
+grating_height_nm = 120.0
+
+[materials]
+n_air = [1.0, 0.0]
+mu_r = [1.0, 0.0]
+substrate_name = "Si / silicon"
+n_substrate = [0.99396854453, 0.00435380777]
+grating_name = "Si / silicon"
+n_grating = [0.99396854453, 0.00435380777]
+
+[incidence]
+wavelength_nm = 5.0
+grazing_angle_deg = 1.0
+azimuth_deg = 0.0
+polarization = "s"
+electric_amplitude = 1.0
+
+[discretization]
+nedelec_degree = 6
+visualization_degree = 6
+mesh_target_nm = 4.0
+mesh_axis_cell_counts = [15, 2, 36]
+mesh_axis_x_values = [0.0, 3.3, 6.6, 9.899999999999999, 13.2, 16.5, 19.9, 23.3, 26.7, 30.1, 33.5, 36.8, 40.1, 43.4, 46.7, 50.0]
+mesh_axis_y_values = [0.0, 12.5, 25.0]
+mesh_axis_z_values = [-10.0, -6.666666666666666, -3.333333333333333, 0.0, 4.0, 8.0, 12.0, 16.0, 20.0, 24.0, 28.0, 32.0, 36.0, 40.0, 44.0, 48.0, 52.0, 56.0, 60.0, 64.0, 68.0, 72.0, 76.0, 80.0, 84.0, 88.0, 92.0, 96.0, 100.0, 104.0, 108.0, 112.0, 116.0, 120.0, 123.33333333333333, 126.66666666666667, 130.0]
+mesh_plan_id = "task39extra.v6.f5.p6-direct.axes.same-xz-y2.v1"
+mesh_plan_sha256 = "961764dcda6fe762ded9ac7dffcfa7c43115060c226db5cf8836f88dba91ed6b"
+mesh_cell_type = "hexahedron"
+mesh_spacing_mode = "boundary_fitted"
+assembly_backend = "standard_full"
+floquet_constraint_mode = "auto"
+
+[boundary]
+use_floquet_x = true
+use_floquet_y = true
+vertical_boundary = "dtn_port"
+scattering_background = "layered"
+dtn_order_policy = "auto_propagating"
+dtn_assembly = "auxiliary"
+use_pml = false
+
+[method]
+kind = "full3d_direct"
+
+[solver]
+linear_solver = "direct"
+native_capacity_profile = "task39extra_v6_f5_p6_condensed_direct_full600_v1"
+direct_solver_profile = "default"
+
+[execution]
+mpi_size = 1
+time_limit_mode = "none"
+warning_memory_gib = 1089.6474123001099
+terminate_memory_gib = 1676.3806343078613
+memory_limit_gb = 1676.3806343078613
+require_zero_swap = false
+native_memory_policy = "interleave_nodes0_1"
+
+[output]
+results_root = "results"
+unique_output = true
+export_fields = true
+export_diffraction_orders = true
+export_canonical_vectors = true
+export_modal_amplitudes = true
+export_reference_planes = true
+reference_plane_z_nm = [10.0, 30.0, 60.0, 90.0, 110.0]
+sample_count_x = 40
+sample_count_y = 20
+diffraction_sample_count_x = 24
+diffraction_sample_count_y = 24
+top_probe_z_nm = 127.5
+bottom_probe_z_nm = -7.5
+probe_fraction = 0.75
+diffraction_order_max_m = 7
+diffraction_order_max_n = 2

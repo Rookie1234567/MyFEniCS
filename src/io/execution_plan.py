@@ -168,8 +168,8 @@ def build_execution_plan(
         argv.append("--setup-only")
     from .native_capacity_profile import (
         NATIVE_PROFILES,
+        P6_CONDENSED_DIRECT_PROFILES,
         V7_ANISO_N0_P4_PROFILES,
-        V7_ANISO_N0_P6_DIRECT_PROFILES,
         native_capacity_profile_identity,
         native_profile_facts,
     )
@@ -191,7 +191,7 @@ def build_execution_plan(
             specification.execution.get("native_memory_policy")
         )
         if profile_identity in (
-            V7_ANISO_N0_P4_PROFILES | V7_ANISO_N0_P6_DIRECT_PROFILES
+            V7_ANISO_N0_P4_PROFILES | P6_CONDENSED_DIRECT_PROFILES
         ):
             # Open MPI may replace the launcher affinity on the rank process.
             # Put both policies inside the mpiexec command so the actual rank

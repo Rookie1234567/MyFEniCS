@@ -425,24 +425,37 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
     explicit_x_values = cfg.mesh_axis_x_values_requested
     explicit_y_values = cfg.mesh_axis_y_values_requested
     frozen_axes = None
+    frozen_plan_family = None
     if has_frozen_plan:
-        from src.geometry.task39extra_v5_r13_mesh_plan import (
-            validate_frozen_r13_axes,
-        )
-
+        plan_identity = {
+            "mesh_plan_id": cfg.mesh_plan_id,
+            "mesh_plan_sha256": cfg.mesh_plan_sha256,
+            "mesh_axis_cell_counts": explicit_counts,
+            "mesh_axis_x_values": explicit_x_values,
+            "mesh_axis_y_values": explicit_y_values,
+            "mesh_axis_z_values": explicit_z_values,
+        }
         try:
-            frozen_axes = validate_frozen_r13_axes(
-                {
-                    "mesh_plan_id": cfg.mesh_plan_id,
-                    "mesh_plan_sha256": cfg.mesh_plan_sha256,
-                    "mesh_axis_cell_counts": explicit_counts,
-                    "mesh_axis_x_values": explicit_x_values,
-                    "mesh_axis_y_values": explicit_y_values,
-                    "mesh_axis_z_values": explicit_z_values,
-                }
+            from src.geometry.task39extra_v6_f5_mesh_plan import (
+                F5_AXIS_PLAN_IDS,
+                validate_frozen_f5_axes,
             )
+
+            if cfg.mesh_plan_id in F5_AXIS_PLAN_IDS:
+                frozen_axes = validate_frozen_f5_axes(plan_identity)
+                frozen_plan_family = "v6_f5_p6_direct"
         except ValueError as exc:
-            raise ValueError(f"invalid R13 frozen mesh input: {exc}") from exc
+            raise ValueError(f"invalid F5 frozen mesh input: {exc}") from exc
+        if frozen_axes is None:
+            from src.geometry.task39extra_v5_r13_mesh_plan import (
+                validate_frozen_r13_axes,
+            )
+
+            try:
+                frozen_axes = validate_frozen_r13_axes(plan_identity)
+                frozen_plan_family = "v21_r13"
+            except ValueError as exc:
+                raise ValueError(f"invalid frozen mesh input: {exc}") from exc
         expected_spans = {
             "x": (cfg.x_min, cfg.x_max),
             "y": (cfg.y_min, cfg.y_max),
@@ -519,7 +532,7 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
                 axis_name: np.asarray(frozen_axes[axis_name], dtype=np.float64)
                 for axis_name in ("x", "y", "z")
             }
-            mode = "v21_r13_frozen_axes"
+            mode = f"{frozen_plan_family}_frozen_axes"
         elif explicit_z_values is not None:
             if len(explicit_z_values) != explicit_counts[2] + 1:
                 raise ValueError(
