@@ -292,12 +292,14 @@ def run_p6_condensed_direct(
         build_n0_mode_inventory,
     )
     from src.solvers.fullspace_physical_intermediate import apply_owned
+    from src.solvers.fullspace_physical_intermediate_runtime import (
+        fine_volume_quadrature_metadata,
+    )
     from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
     from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
         build_physical_rhs,
         build_same_mesh_physical_action,
         destroy_same_mesh_physical_action,
-        fine_volume_quadrature_metadata,
         recover_p0_outputs,
     )
     from src.solvers.fullspace_v17_p3_oracle import _MumpsFactor

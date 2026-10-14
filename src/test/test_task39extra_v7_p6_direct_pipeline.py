@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import ast
 import sys
 from dataclasses import replace
+from importlib import import_module
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import ModuleType
@@ -20,6 +22,32 @@ from src.runners.task038_launcher import _write_bootstrap
 REPO = Path(__file__).resolve().parents[2]
 INPUT = REPO / "input/task39extra_para_workstation_capacity/v7_0p7nm_si_p6_direct_n0_full.dat"
 PROFILE = "dual_condensed_balh_native_0p7nm_aniso_n0_p6_direct_full_v1"
+
+
+def test_direct_runner_imports_quadrature_metadata_from_runtime_module():
+    runtime = import_module("src.solvers.fullspace_physical_intermediate_runtime")
+    assert callable(runtime.fine_volume_quadrature_metadata)
+
+    runner_path = REPO / "src/runners/p6_condensed_direct.py"
+    tree = ast.parse(runner_path.read_text(encoding="utf-8"))
+    runner = next(
+        node for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "run_p6_condensed_direct"
+    )
+    imports = {
+        (node.module, alias.name)
+        for node in ast.walk(runner)
+        if isinstance(node, ast.ImportFrom)
+        for alias in node.names
+    }
+    assert (
+        "src.solvers.fullspace_physical_intermediate_runtime",
+        "fine_volume_quadrature_metadata",
+    ) in imports
+    assert (
+        "src.solvers.fullspace_same_mesh_hcurl_pmg_physical",
+        "fine_volume_quadrature_metadata",
+    ) not in imports
 
 
 def test_v7_p6_direct_identity_roundtrips_through_real_worker_cfg(tmp_path):
