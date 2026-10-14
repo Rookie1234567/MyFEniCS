@@ -368,17 +368,47 @@ def _resolve_service_campaign(
     v28_path = (repo_root / TASK40_V28_CAMPAIGN_WINDOW).resolve()
     v29_path = (repo_root / TASK40_V29_CAMPAIGN_WINDOW).resolve()
     v30_path = (repo_root / TASK40_V30_TARGET_CAMPAIGN_WINDOW).resolve()
+    v31_review_version = "V31"
     if v31_contract is None:
         v31_path = (repo_root / TASK40_V31_CAMPAIGN_WINDOW).resolve()
     else:
-        from src.runners.task40_v31_contract import v31_source_artifact_relative
+        from src.runners.task40_v31_contract import (
+            V31_CONTRACT_SCHEMA,
+            V31_REVIEW_COMMIT,
+            V31_REVIEW_PATH,
+            V31_REVIEW_SHA256,
+            V32_CONTRACT_SCHEMA,
+            V32_REVIEW_COMMIT,
+            V32_REVIEW_PATH,
+            V32_REVIEW_SHA256,
+            v31_source_artifact_relative,
+        )
 
-        v31_window = v31_contract.get("execution", {}).get("window", {})
+        review = v31_contract.get("review")
+        if (
+            v31_contract.get("schema") == V32_CONTRACT_SCHEMA
+            and review
+            == {"path": V32_REVIEW_PATH, "commit": V32_REVIEW_COMMIT, "sha256": V32_REVIEW_SHA256}
+        ):
+            v31_review_version = "V32"
+        elif (
+            v31_contract.get("schema") == V31_CONTRACT_SCHEMA
+            and review
+            == {"path": V31_REVIEW_PATH, "commit": V31_REVIEW_COMMIT, "sha256": V31_REVIEW_SHA256}
+        ):
+            v31_review_version = "V31"
+        else:
+            raise ValueError("service campaign route requires the exact approved V31 or V32 contract")
+        execution = v31_contract.get("execution")
+        v31_window = execution.get("window") if isinstance(execution, Mapping) else None
+        if not isinstance(v31_window, Mapping):
+            raise ValueError("service campaign contract omits its registered fixed window")
         v31_entry_source = str(v31_window.get("source_at_entry", ""))
+        window_filename = f"campaign_window_{v31_review_version.lower()}.json"
         v31_path = (
             repo_root
             / v31_source_artifact_relative(v31_entry_source)
-            / "campaign_window_v31.json"
+            / window_filename
         ).resolve()
     if supplied == v22_path:
         if profile != V22_TARGET_PROFILE:
@@ -585,18 +615,20 @@ def _resolve_service_campaign(
             window.sha256,
             window.payload,
             v31_contract,
+            review_version=v31_review_version,
         )
-        from src.runners.task40_v31_contract import V31_STAGE_SCOPE
+        from src.runners.task40_v31_contract import V31_STAGE_SCOPE, V32_STAGE_SCOPE
 
-        stage_scope = list(V31_STAGE_SCOPE)
+        stage_scope = list(V32_STAGE_SCOPE if v31_review_version == "V32" else V31_STAGE_SCOPE)
         campaign_version = "V31"
     else:
-        raise ValueError("service campaign window is not a registered V19 or V22–V31 path")
+        raise ValueError("service campaign window is not a registered V19 or V22–V32 path")
     return {
         "path": window.path,
         "sha256": window.sha256,
         "stage_scope": stage_scope,
         "version": campaign_version,
+        "review_version": v31_review_version if campaign_version == "V31" else campaign_version,
     }
 
 
@@ -9304,10 +9336,12 @@ def run_service(
     )
     v31_contract: dict[str, Any] | None = None
     v31_contract_sha256: str | None = None
+    v31_review_version: str | None = None
     if v31_contract_path is not None:
         if v29_contract_path is not None or v29_selector_path is not None or v30_contract_path is not None:
             raise ValueError("V31 execution contract cannot be combined with a V29 or V30 route")
         from src.runners.task40_v31_contract import (
+            V32_CONTRACT_SCHEMA,
             require_v31_execution_contract,
             v31_source_artifact_relative,
         )
@@ -9333,6 +9367,9 @@ def run_service(
             v31_contract_path,
             expected_sha256=os.environ.get("TASK40_V31_CONTRACT_SHA256"),
             current_root=repo_root,
+        )
+        v31_review_version = (
+            "V32" if v31_contract.get("schema") == V32_CONTRACT_SCHEMA else "V31"
         )
         execution = v31_contract["execution"]
 
@@ -9504,6 +9541,7 @@ def run_service(
         raise ValueError("V30 campaign window differs from the approved target-native contract")
     if v31_contract_path is not None and (
         campaign_registration.get("version") != "V31"
+        or campaign_registration.get("review_version") != v31_review_version
         or Path(campaign_registration["path"]).resolve()
         != Path(str(v31_contract["execution"]["window"]["window_path"])).resolve()
         or campaign_registration.get("sha256")
@@ -9690,6 +9728,7 @@ def run_service(
             "contract_path": str(v31_contract_path.resolve()),
             "contract_sha256": str(v31_contract_sha256),
             "contract": v31_contract,
+            "review_version": v31_review_version,
             "execution_window_path": str(
                 Path(str(v31_contract["execution"]["window"]["window_path"])).resolve()
             ),
@@ -9705,6 +9744,16 @@ def run_service(
             "final_all_q_selector_required_at": v31_contract["preparation"]["final_all_q_selector_required_at"],
             "selector_path": str(v31_contract["execution"]["selector_path"]),
             "selector_sha256": str(v31_contract["execution"]["selector_sha256"]),
+            "q4_numeric_pending_import_template": (
+                dict(v31_contract["preparation"]["q4_numeric_pending_import"])
+                if v31_review_version == "V32"
+                else None
+            ),
+            "q4_numeric_pending_import_authorization": (
+                dict(v31_contract["execution"]["q_csr_import_authorizations"]["numeric_pending"]["4"])
+                if v31_review_version == "V32"
+                else None
+            ),
             "input_identity": dict(v31_input_identity or {}),
         }
         if v31_contract_path is not None and v31_contract is not None
@@ -9797,6 +9846,7 @@ def run_service(
                 "contract_path": str(v31_contract_path),
                 "contract_sha256": str(v31_contract_sha256),
                 "window_sha256": str(v31_binding["execution_window_sha256"]),
+                "review_version": str(v31_review_version),
                 "scope": "clock starts before V31 contract/input/selector/donor revalidation",
             },
         }
@@ -9818,6 +9868,7 @@ def run_service(
         "physical_model_sha256": None,
         "stop_stage": stop_stage,
         "campaign_version": campaign_registration["version"],
+        "campaign_review_version": campaign_registration.get("review_version"),
         "campaign_window_path": str(fixed_campaign),
         "campaign_window_sha256": campaign_sha256,
         "campaign_stage_scope": campaign_registration["stage_scope"],

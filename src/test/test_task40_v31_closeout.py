@@ -797,6 +797,134 @@ def test_v31_same_window_new_source_contract_launcher_worker_and_campaign_route(
         )
 
 
+def test_v32_service_campaign_resolves_original_entry_window_with_current_contract(
+    tmp_path, monkeypatch
+):
+    from scripts import task40_v20_service_workflow as workflow
+    from src.runners import task40_v10_campaign as campaign
+    from src.runners import task40_v31_contract
+
+    run_source = "b" * 40
+    source_at_entry = "a" * 40
+    window_path = (
+        tmp_path
+        / task40_v31_contract.v31_source_artifact_relative(source_at_entry)
+        / "campaign_window_v32.json"
+    )
+    window_path.parent.mkdir(parents=True)
+
+    t0 = dt.datetime(2026, 10, 13, tzinfo=dt.timezone.utc)
+    t0_ns = int(t0.timestamp()) * 1_000_000_000
+    cutoff = t0 + dt.timedelta(seconds=task40_v31_contract.V32_NUMERIC_SECONDS)
+    deadline = t0 + dt.timedelta(seconds=task40_v31_contract.V32_TOTAL_SECONDS)
+    t0_text = t0.strftime("%Y-%m-%dT%H:%M:%SZ")
+    cutoff_text = cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")
+    deadline_text = deadline.strftime("%Y-%m-%dT%H:%M:%SZ")
+    boot_id = "12345678-1234-1234-1234-123456789abc"
+    payload = {
+        "schema": CAMPAIGN_SCHEMA,
+        "campaign": "task40extra_v32_all_q_reference_conditional_target_pilot",
+        "authority": "User-approved Review V32 execution window",
+        "active_review_sha": task40_v31_contract.V32_REVIEW_COMMIT,
+        "active_review_path": task40_v31_contract.V32_REVIEW_PATH,
+        "active_review_sha256": task40_v31_contract.V32_REVIEW_SHA256,
+        "source_at_entry": source_at_entry,
+        "review_at_registration": task40_v31_contract.V32_REVIEW_COMMIT,
+        "t0_utc": t0_text,
+        "numeric_cutoff_utc": cutoff_text,
+        "deadline_utc": deadline_text,
+        "campaign_seconds": task40_v31_contract.V32_TOTAL_SECONDS,
+        "numeric_cutoff_seconds": float(task40_v31_contract.V32_NUMERIC_SECONDS),
+        "closeout_reserve_seconds": task40_v31_contract.V32_CLOSEOUT_SECONDS,
+        "time_policy": CONSERVATIVE_REALTIME,
+        "stage_scope": list(task40_v31_contract.V32_STAGE_SCOPE),
+        "forbidden_scope": [
+            "automatic_cap_increase", "window_refresh", "parameter_or_accuracy_scan",
+            "MUMPS_or_ABI_change", "OOC_or_BLR", "unrelated_project_mutation", "master_merge",
+        ],
+        "window_refreshed": False,
+        "old_costs_and_unknowns_preserved": True,
+        "artifact_execution_identity_separate": True,
+        "bootstrap_boottime_elapsed_seconds": None,
+        "first_full_three_clock_sample": {
+            "monotonic": 100.0,
+            "boottime": 100.0,
+            "utc_ns": t0_ns,
+            "boot_id": boot_id,
+        },
+        "initial_boot_id": boot_id,
+        "bootstrap_utc_elapsed_seconds": 0.0,
+        "bootstrap_time_treatment": "test fixture; immutable T0 and preserved prior costs",
+    }
+    window_path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+    window_sha = hashlib.sha256(window_path.read_bytes()).hexdigest()
+    contract = {
+        "schema": task40_v31_contract.V32_CONTRACT_SCHEMA,
+        "status": "USER_APPROVED",
+        "service_start_allowed": True,
+        "review": {
+            "path": task40_v31_contract.V32_REVIEW_PATH,
+            "commit": task40_v31_contract.V32_REVIEW_COMMIT,
+            "sha256": task40_v31_contract.V32_REVIEW_SHA256,
+        },
+        "source_freeze": {"source_sha": run_source},
+        "user_approval": {
+            "approved": True,
+            "scope": task40_v31_contract.V32_APPROVAL_SCOPE,
+            "window_sha256": window_sha,
+        },
+        "execution": {
+            "window": {
+                "window_path": str(window_path),
+                "window_sha256": window_sha,
+                "source_at_entry": source_at_entry,
+                "total_seconds": task40_v31_contract.V32_TOTAL_SECONDS,
+                "numeric_seconds": task40_v31_contract.V32_NUMERIC_SECONDS,
+                "closeout_seconds": task40_v31_contract.V32_CLOSEOUT_SECONDS,
+                "t0_utc": t0_text,
+                "numeric_cutoff_utc": cutoff_text,
+                "deadline_utc": deadline_text,
+            },
+            "run_source_sha": run_source,
+        },
+    }
+    monkeypatch.setattr(
+        campaign,
+        "__file__",
+        str(tmp_path / "src/runners/task40_v10_campaign.py"),
+    )
+    monkeypatch.setattr(
+        campaign,
+        "clock_sample",
+        lambda **_kwargs: {
+            "monotonic": 101.0,
+            "boottime": 101.0,
+            "utc_ns": t0_ns + 1_000_000_000,
+            "boot_id": boot_id,
+        },
+    )
+
+    route = workflow._resolve_service_campaign(
+        tmp_path,
+        window_path,
+        profile=V31_PROFILE,
+        stop_stage="full",
+        v31_contract=contract,
+    )
+
+    assert source_at_entry != run_source
+    assert route["version"] == "V31"  # internal compatibility route
+    assert route["review_version"] == "V32"
+    assert route["stage_scope"] == list(task40_v31_contract.V32_STAGE_SCOPE)
+    assert Path(route["path"]).resolve() == window_path.resolve()
+    assert route["sha256"] == window_sha
+    assert not (
+        tmp_path
+        / task40_v31_contract.v31_source_artifact_relative(run_source)
+        / "campaign_window_v32.json"
+    ).exists()
+
+
 def test_v32_worker_binding_returns_fixed_q4_template(tmp_path, monkeypatch):
     from src.runners import task40_v31_contract
     from src.solvers import task40_v30_selected_q_csr
