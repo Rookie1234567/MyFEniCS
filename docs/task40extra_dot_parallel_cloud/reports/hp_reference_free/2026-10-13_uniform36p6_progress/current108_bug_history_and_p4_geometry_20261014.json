@@ -10,8 +10,8 @@
   "checklist": [
     {
       "hypothesis": "历史 fine p6 精确几何修复再次漏接",
-      "finding": "当前入口显式开启，实际消费 exact33 registry 并逐位校验坐标，底层记录 exact_mesh_widths；没有复现旧漏参缺陷。",
-      "limit": "不能据此保证新的 raw reader、全部算子路径与历史132运行等价。"
+      "finding": "独立native入口显式True、exact33；原hp capture确漏开关，默认False/rounded9。新capture候选已显式修复且保留旧源码/矩阵。",
+      "limit": "native exact路径本身仍未收敛；真实hp漏接不等于已证平台原因。"
     },
     {
       "hypothesis": "粗层残差硬停把原可继续的外层误判失败",
@@ -486,15 +486,44 @@
     }
   },
   "next_regression": {
-    "authorized": false,
-    "status": "WAITING_USER_DECISION",
+    "authorized": true,
+    "status": "COMPLETED_HISTORICAL132_CRITERION_REPRODUCED_CURRENT_STRICT_QUALIFICATION_FAIL",
     "mesh": "historical6x2x11",
-    "same_zero_start": true,
-    "proposed_fixed_steps": 200,
-    "additional108_steps": 0,
-    "current7772_local_mapping_branch": "paused without implementation or numerical execution",
-    "new_raw_class_count": "static enumeration pending; actual FE class inventory not yet produced",
-    "old108_all33_native_raw_producer_seconds": 1236.7927910029975,
-    "time_limit_of_new_trial": "not yet launched or promised"
+    "zero_start": true,
+    "actual_steps": 200,
+    "original_historical_full_native_relative": 9.956235975611913e-07,
+    "current_full_native_relative": 9.839376351666184e-07,
+    "historical_threshold": 1e-06,
+    "current_strict_qualified": false,
+    "additional108_continuation_steps": 0,
+    "published_report_commit": "1a186d91ffc9f3f5057c646499c8420d173e10d4",
+    "authorization_utc": "2026-10-14T12:01:00Z"
+  },
+  "correction_20261014_1348": {
+    "original_report_time_preserved": "2026-10-14T11:55:13.366851+00:00",
+    "scope": "native True/exact33 does not cover old hp capture defaultFalse/rounded9",
+    "hp_capture_omission_confirmed": true,
+    "fixed_new_capture_candidate": true,
+    "old_capture_evidence_unchanged": true,
+    "platform_cause_established": false,
+    "historical_wording": {
+      "hypothesis": "历史 fine p6 精确几何修复再次漏接",
+      "finding": "当前入口显式开启，实际消费 exact33 registry 并逐位校验坐标，底层记录 exact_mesh_widths；没有复现旧漏参缺陷。",
+      "limit": "不能据此保证新的 raw reader、全部算子路径与历史132运行等价。"
+    },
+    "historical_regression_plan": {
+      "authorized": false,
+      "status": "WAITING_USER_DECISION",
+      "mesh": "historical6x2x11",
+      "same_zero_start": true,
+      "proposed_fixed_steps": 200,
+      "additional108_steps": 0,
+      "current7772_local_mapping_branch": "paused without implementation or numerical execution",
+      "new_raw_class_count": "static enumeration pending; actual FE class inventory not yet produced",
+      "old108_all33_native_raw_producer_seconds": 1236.7927910029975,
+      "time_limit_of_new_trial": "not yet launched or promised"
+    },
+    "historical132_report": "historical132_regression_20261014_zh.md",
+    "subsequent_paired_diagnostics": "paired_identity_diagnostic_20261014_zh.md"
   }
 }
