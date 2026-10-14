@@ -6495,6 +6495,8 @@ def run_task40_v10_p6_reference_worker(
         ):
             raise RuntimeError("V31 worker selector or factor-bank binding differs from its contract")
         from src.runners.task40_v31_contract import (
+            V31_CONTRACT_SCHEMA,
+            V32_CONTRACT_SCHEMA,
             require_v31_input_identity,
             v31_source_artifact_relative,
         )
@@ -6505,12 +6507,27 @@ def run_task40_v10_p6_reference_worker(
         staged_input_path = provenance.get("source_path")
         if not isinstance(staged_input_path, str) or not staged_input_path:
             raise ValueError("V31 worker provenance omits the staged DAT path")
+        preparation = v31_contract.get("preparation", {})
+        if v31_contract.get("schema") == V32_CONTRACT_SCHEMA:
+            q4_numeric_pending_import = (
+                preparation.get("q4_numeric_pending_import")
+                if isinstance(preparation, Mapping)
+                else None
+            )
+            if not isinstance(q4_numeric_pending_import, Mapping):
+                raise RuntimeError("V32 worker contract omits its fixed q4 import template")
+            q4_numeric_pending_import = dict(q4_numeric_pending_import)
+        elif v31_contract.get("schema") == V31_CONTRACT_SCHEMA:
+            q4_numeric_pending_import = None
+        else:
+            raise RuntimeError("V31 worker has an unknown approved contract schema")
         v31_input_identity = require_v31_input_identity(
             repo_root / V30_CANONICAL_INPUT_RELATIVE,
             staged_input_path,
             repo_root=repo_root,
             source_sha=str(v31_contract["source_freeze"]["source_sha"]),
             selector_sha256=str(selector["selector_sha256"]),
+            q4_numeric_pending_import=q4_numeric_pending_import,
         )
         if v31_input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
             raise ValueError("V31 worker raw stage SHA differs from run provenance")

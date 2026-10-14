@@ -1824,6 +1824,30 @@ def require_v31_all_q_route(
         expected_sha256=env.get("TASK40_V31_CONTRACT_SHA256"),
         current_root=root,
     )
+    preparation = contract.get("preparation", {})
+    if contract.get("schema") == V32_CONTRACT_SCHEMA:
+        q4_numeric_pending_import = (
+            preparation.get("q4_numeric_pending_import")
+            if isinstance(preparation, Mapping)
+            else None
+        )
+        if not isinstance(q4_numeric_pending_import, Mapping):
+            raise V31ContractError("V32 AllQ route contract omits its fixed q4 import template")
+        q4_numeric_pending_import = dict(q4_numeric_pending_import)
+    elif contract.get("schema") == V31_CONTRACT_SCHEMA:
+        q4_numeric_pending_import = None
+    else:
+        raise V31ContractError("V31 AllQ route has an unknown approved contract schema")
+    expected_payload_imports = (
+        {"numeric_pending": {"4": q4_numeric_pending_import}}
+        if q4_numeric_pending_import is not None
+        else None
+    )
+    if (
+        execution_payload.get("task40_v31_q_csr_import_authorizations")
+        != expected_payload_imports
+    ):
+        raise V31ContractError("V31/V32 AllQ q4 import differs from its frozen execution contract")
     execution = contract["execution"]
     window = execution["window"]
     resources = execution["resources"]
@@ -1919,6 +1943,7 @@ def require_v31_all_q_route(
         repo_root=root,
         source_sha=run_source_sha,
         selector_sha256=str(execution.get("selector_sha256", "")),
+        q4_numeric_pending_import=q4_numeric_pending_import,
     )
     if input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
         raise V31ContractError("V31 AllQ route staged input hash differs from run provenance")

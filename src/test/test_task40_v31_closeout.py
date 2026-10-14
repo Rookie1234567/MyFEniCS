@@ -1031,6 +1031,7 @@ def test_v31_all_q_dispatcher_keeps_its_contract_and_v30_route_disjoint(tmp_path
     input_sha = "2" * 64
     window_sha = "a" * 64
     contract = {
+        "schema": "task40extra.review_v31_execution_contract.v1",
         "execution": {
             "root": str(tmp_path.resolve()),
             "run_source_sha": run_source,
@@ -1123,6 +1124,16 @@ def test_v31_all_q_dispatcher_keeps_its_contract_and_v30_route_disjoint(tmp_path
         payload["execution"]["task40_v31_q_csr_binding"]
     )
     with pytest.raises(ValueError, match="only its complete V31 execution bindings"):
+        require_v31_all_q_route(
+            payload,
+            source_sha=run_source,
+            repo_root=tmp_path,
+            environment=environment,
+        )
+
+    payload["execution"].pop("task40_v30_q_csr_binding")
+    payload["execution"]["task40_v31_q_csr_import_authorizations"] = {}
+    with pytest.raises(ValueError, match="q4 import differs from its frozen execution contract"):
         require_v31_all_q_route(
             payload,
             source_sha=run_source,
@@ -2728,6 +2739,106 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
         assert resolved.execution["task40_v31_q_csr_import_authorizations"] == {
             "numeric_pending": {"4": expected_template}
         }
+        from src.runners import task038_full3d_iterative, task40_v20_stage_runner
+
+        resolved_payload = resolved.as_jsonable()
+        route_contract = json.loads(json.dumps(contract))
+        route_execution = route_contract["execution"]
+        source_at_entry = "c" * 40
+        window_path = (
+            root
+            / task40_v31_contract.V31_ARTIFACT_ROOT_RELATIVE
+            / f"source_{source_at_entry}/campaign_window_v32.json"
+        )
+        window_sha = "9" * 64
+        route_execution["window"].update(
+            {
+                "window_path": str(window_path),
+                "window_sha256": window_sha,
+                "source_at_entry": source_at_entry,
+            }
+        )
+        route_execution["campaign_window_path"] = str(window_path)
+        route_execution["campaign_window_sha256"] = window_sha
+        route_contract_path = (
+            root
+            / task40_v31_contract.V31_ARTIFACT_ROOT_RELATIVE
+            / f"source_{source_sha}/execution_contract_v32.approved.json"
+        )
+        route_contract_path.parent.mkdir(parents=True, exist_ok=True)
+        route_contract_raw = (json.dumps(route_contract, sort_keys=True) + "\n").encode()
+        route_contract_path.write_bytes(route_contract_raw)
+        route_contract_sha = hashlib.sha256(route_contract_raw).hexdigest()
+        route_environment = {
+            "TASK40_V31_STRICT_EXECUTION": "1",
+            "TASK40_V31_CONTRACT_PATH": str(route_contract_path),
+            "TASK40_V31_CONTRACT_SHA256": route_contract_sha,
+            "TASK40_V31_EXECUTION_WINDOW_PATH": str(window_path.resolve()),
+            "TASK40_V31_EXECUTION_WINDOW_SHA256": window_sha,
+            "TASK40_V31_TASK_MEMORY_MAX_BYTES": str(
+                route_execution["resources"]["task_memory_max_bytes"]
+            ),
+            "TASK40_V31_HOST_RESERVE_BYTES": str(
+                route_execution["resources"]["host_reserve_bytes"]
+            ),
+            "TASK40_V31_MEMORY_SWAP_MAX_BYTES": str(
+                route_execution["resources"]["memory_swap_max_bytes"]
+            ),
+        }
+
+        def load_route_contract(path, expected_sha256=None, current_root=None):
+            assert Path(path).resolve() == route_contract_path.resolve()
+            assert expected_sha256 == route_contract_sha
+            assert Path(current_root).resolve() == root.resolve()
+            return route_contract, route_contract_sha
+
+        monkeypatch.setattr(
+            task40_v31_contract,
+            "require_v31_execution_contract",
+            load_route_contract,
+        )
+        route = task40_v31_contract.require_v31_all_q_route(
+            resolved_payload,
+            source_sha=source_sha,
+            repo_root=root,
+            environment=route_environment,
+        )
+        assert route["contract"]["schema"] == task40_v31_contract.V32_CONTRACT_SCHEMA
+        assert route["contract_sha256"] == route_contract_sha
+        assert route["input_identity"]["staged_input_sha256"] == resolved.input_sha256
+
+        for name, value in route_environment.items():
+            monkeypatch.setenv(name, value)
+        monkeypatch.setattr(
+            task038_full3d_iterative,
+            "__file__",
+            str(root / "src/runners/task038_full3d_iterative.py"),
+        )
+        dispatched = {}
+
+        def capture_stage(payload, directory, **kwargs):
+            dispatched["payload"] = payload
+            dispatched["directory"] = Path(directory)
+            dispatched["kwargs"] = kwargs
+            return {"status": "V32_AUTHORITY_ROUTE_VALIDATED_NO_FE"}
+
+        monkeypatch.setattr(
+            task40_v20_stage_runner,
+            "run_task40_v20_stage",
+            capture_stage,
+        )
+        dispatcher_result = task038_full3d_iterative.run_full3d_iterative(
+            resolved_payload,
+            root / "dispatcher-output",
+            source_sha=source_sha,
+        )
+        assert dispatcher_result["status"] == "V32_AUTHORITY_ROUTE_VALIDATED_NO_FE"
+        assert dispatched["payload"]["execution"][
+            "task40_v31_q_csr_import_authorizations"
+        ] == {"numeric_pending": {"4": expected_template}}
+        assert dispatched["payload"]["solver"]["task40_factor_lifecycle_strategy"] == "ALL_Q_RESIDENT"
+        assert dispatched["kwargs"]["v31_requested_factor_lifecycle_strategy"] == "ONE_Q_REFACTOR_V19"
+
         original_text = input_path.read_text(encoding="utf-8")
         tampered_text = original_text.replace(
             "REQUIRE_EXISTING_NUMERIC_PENDING", "ALLOW_REBUILD", 1
