@@ -1,8 +1,16 @@
 # W0.7 V13 consistent fixed BAL_H modal surrogate：实现与分阶段资格记录
 
-**最新状态：V14本批首场已运行一次真实 W0.7 M400/MPI8 main warm。此前 callback 接线与 SUP 目录职责问题均已在本场真实链中越过；fresh aggregate authority通过，S_B 800/800列、owner LU和same-B合同通过。外层只到iteration 1；iteration 1之后某次PC输出的原modal-row relative=1.039223e+00超过原1e-10门而停止。失败行absolute值未持久化，尚不能确认实现缺陷。没有最终五残差、recovery、E/H或official RTA。本批两场大型构造已用1场，第2场未用但当前不满足启动条件。**
+**当前状态：V15注册 tiny 真实 FE 的 240 步预算已用尽，但原 A 残差门未通过。240/240 次 V15 modal-row 检查通过，attempt 序号连续8–247，最大独立重算 `eta_inf=7.753508102198664e-14`；RIGHT FGMRES reason=`-3`、240/240，独立原 A relative=`3.189718552739508e-7`，高于原 `5e-9` 门约63.794倍。因此只能判为本预算内未收敛，不能称为V15行门失败、脚手架错误、停滞或已证实PC缺陷。240步报告的PETSc rnorm按30步间隔持续下降，但不是逐步独立真残差。test347毁后快照断言未执行；V15新一场正式M400及五项最终残差/recovery/EH/official RTA/physics均`not_run`；V14真实M400已完成S_B 800/800列及owner LU，随后原modal-row PC门失败，根因仍`UNCONFIRMED`。剩余1/2大型额度保留此前条件式授权但未满足tiny完整收敛和生产内存合同前提，当前不启动。**
 
-## V14本批首场正式warm终态与技术边界（2026-10-14）
+| V15记录 | 结果与边界 |
+|---|---|
+| 240步真实FE | [completion JSON](../../../results/task041_v15_tiny_fe_fgmres240_serial_attempt_20261014T125426Z/serial/pytest_basetemp/test_task041_v13_real_fe_conde0/v15-modal-evidence/tiny_fgmres_completion.json)、[轻量machine record](records/task041_v15_tiny_fe_fgmres240_terminal_20261014.json)、[Response V17](../response_v17.md)。原A分子=`0.29822161297582517`，RHS范数=`934946.4789603328`，输入RHS未变。PC attempt/success/记录各240；240条本次行门全部通过，但这不是完整方程收敛。 |
+| KSP曲线与设置 | 真实A尺寸2172×2172；FGMRES、RIGHT、restart请求/源码setter为30、max_it=240、rtol=`5e-9`、atol=0、零初猜。PETSc rnorm在30/60/90/120/150/180/210/240步为144.8159/30.86116/13.89476/5.71560/2.76555/1.20295/0.606899/0.298222，持续下降；restart getter unsupported，不能写成实测getter值。 |
+| 技术裁决边界 | 60步旧尝试是独立失败样本，relative=`3.300847332920077e-5`；本次60步报告值与其终点相同不合并曲线。V14首场M400 outer PC失败原因仍`UNCONFIRMED`。下阶段只待ChatGPT裁决是否另批同tiny、更高的有限预算，以及是否先审restart30与固定B/S_B的外层收敛效率；本轮不改PC/门限、不启动M400。 |
+
+下方V14内容为历史快照，保留原始分类和证据，不代表当前终态。
+
+## 历史：V14本批首场正式warm终态与技术边界（2026-10-14）
 
 | 项目 | V14实测 | 边界 |
 |---|---|---|

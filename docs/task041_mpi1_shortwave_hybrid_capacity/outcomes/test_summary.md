@@ -1,6 +1,26 @@
 # Test and evidence summary
 
-## 当前V14本批首场：W0.7 M400/MPI8 main warm终态与tiny modal-row诊断（2026-10-14）
+## 当前V15：modal-row合同与tiny真实FE 240步终态（2026-10-14）
+
+V15测试有两个不同层次：公式/PC行检查回答一次预条件器作用是否满足组成项后向误差；真实FE的原A残差回答当前向量是否解了原方程。前者本次全部通过，后者在240步后仍超限，所以不能把公式或合成小例的通过写成真实FE通过。
+
+| 测试段 | 通过范围/结果 | attempt/source/hash及边界 |
+|---|---|---|
+| 复数Decimal公式与固定B接线 | `test_v15_original_modal_row_metrics_match_decimal_complex_oracle`、`test_v13_factory_passes_the_same_fixed_b_actions_to_modal_and_ldu`两个节点通过；同批第三个selector因读取前次apply记录而失败，整体为`1 failed, 2 passed` | [084528Z pytest attempt](../../../results/task041_v15_modal_row_serial_s1_retry_attempt_20261014T084528Z/serial/pytest.attempt.json)，SHA `1a33915fbce215039e5a2f83b3fbfb6e4e06fec8ea32d24cf5280ff3178ba2c8`；[source map](../../../results/task041_v15_modal_row_serial_s1_retry_attempt_20261014T084528Z/serial/source_hashes_before_after.json)，SHA `b263939b587577a8bda6a803dcb28aab11e746606124763e3313c95853871032`；test350运行SHA `2b0fb30cdfc10f3dc324dea6f19453cad0935959c30577d3b972e19e0eb343a8`。第三项保留原失败，后续单独重跑 |
+| test350合成tiny builder/owner LU | `test_v13_unmocked_builder_owner_lu_and_original_modal_row_math`单项通过；RIGHT FGMRES reason 2、10次迭代，独立原A `Ax-f` relative `2.895212452829667e-10` | [095200Z pytest attempt](../../../results/task041_v15_modal_row_serial_memavailable_attempt_20261014T095200Z/serial/pytest.attempt.json)，SHA `778a5594e18662fc470126d3451b59b7ba5b1e04d37e451fc5139907bbb9f391`；[source map](../../../results/task041_v15_modal_row_serial_memavailable_attempt_20261014T095200Z/serial/source_hashes_before_after.json)，SHA `4c98c85efedb324bbae6a8110017d86434b963f46cc18f79906579647f52665b`；test350运行SHA `128a836efe9dcece317fd1d89790acb985e6becb48c50caee71a1c2b69a3891f`。它是合成小矩阵，不是test347真实FE |
+| MPI2 writer与真实builder | `test_v15_modal_snapshot_writer_real_mpi2_preserves_primary_and_broadcasts_write_failure`及builder关联节点通过；第三个`test_v15_real_tiny_builder_pc_owner_writer_failure_mpi2`首轮因fixture owner/non-owner flag不对称失败，fixture修正后以单selector复跑通过 | 首轮[110225Z attempt](../../../results/task041_v15_modal_row_mpi2_memavailable_node1_observation_attempt_20261014T110225Z/mpi2/pytest.attempt.json)，SHA `cfe233f6b9314be19dc449a9173092918f37f8b82df6ca2f7a4eac2d6f404bb6`；修正后[112820Z attempt](../../../results/task041_v15_real_tiny_builder_owner_writer_failure_mpi2_attempt_20261014T112820Z/mpi2/pytest.attempt.json)，SHA `01d1715adc1af74ed10d3ee475380bceac90a583e5a76b6bfca2f20c739714c7`。是跨attempt的selector覆盖，不是一个all-green批次；合并stdout不提供可逐rank归属的摘要 |
+| test347真实FE，60步 | reason `-3`、60/60；原A relative `3.300847332920077e-5` | [122009Z completion](../../../results/task041_v15_tiny_fe_serial_v15_row_schema_record_attempt_20261014T122009Z/serial/pytest_basetemp/test_task041_v13_real_fe_conde0/v15-modal-evidence/tiny_fgmres_completion.json)，SHA `20479fb31d40227a0d81ef8f2c2c8f7e334f482ad2007f07ae23a3234cd9fdfb`；source map SHA `1112809b0eb987e0306cc2fff501e19ba72893fb79c59979253f58a2db8c6f20`。这是独立失败样本，不与240步曲线合并 |
+| test347真实FE，本次240步 | reason `-3`、240/240；原A relative `3.189718552739508e-7 > 5e-9`；所有240条V15行门及同次owner记录通过 | [completion](../../../results/task041_v15_tiny_fe_fgmres240_serial_attempt_20261014T125426Z/serial/pytest_basetemp/test_task041_v13_real_fe_conde0/v15-modal-evidence/tiny_fgmres_completion.json)，SHA `2060db8bc2dac804be91f717215ae55ed49725c0535af1e9725b825155fb7741`；[pytest attempt](../../../results/task041_v15_tiny_fe_fgmres240_serial_attempt_20261014T125426Z/serial/pytest.attempt.json)，SHA `8d483950f9d8e9f4e629b40e5c4ab85547727121fb1081e15c408536c816e2d5`；source map SHA `6de36431ff40ab856a676c649cc7908f0f5a766f974e8d79205582929f7befd3`。这是预算内未收敛的数值负结果；reason断言失败后销毁后快照断言未执行 |
+
+V15 row `eta_terms_inf`按每一modal行的原A分子差与原投影/约束/RHS组成项计算，240条记录attempt序号8–247连续；独立重算最大值`7.753508102198664e-14`，最大记录差`2.0194839173657902e-28`，小于`1e-10`。PETSc monitor报告的rnorm在30至240步持续下降，但只是PETSc报告范数，不能当成每步独立真残差，也不足以称本次已收敛。requested restart为30，getter unsupported；有效convergence-test返回None/unsupported，不猜测它的内部实现。
+
+本次实际资源与串行ABI准入通过，CPU11、default/unbound、六线程值为1；fresh test runner的MemAvailable口径已用，但正式warm producer/authority/consumer链的内存合同统一尚未实施。resource authority peak字段`973332480 B`不是全主机RSS。唯一pytest父wall`471.35805576085113 s`记入V5；V5旧286项前缀不变，现287项、`636119.0079768548 s`、SHA `54f0c0d524d1a584478dae6bb0f695e2c2a68be683fc82ba6a591c32c50a62d1`。完整身份与真实host清场见[轻量V15 record](records/task041_v15_tiny_fe_fgmres240_terminal_20261014.json)及[独立post-run核查](../../../results/task041_v15_tiny_fe_fgmres240_postrun_review_20261014T132641Z/independent_postrun_review.json)。
+
+V15新一场正式M400 warm、完整五残差、recovery、E/H、official R/T/A、A_volume、衍射与physics仍`not_run`；V14真实M400已完成S_B 800/800列及owner LU，随后原modal-row PC门失败，根因仍`UNCONFIRMED`。剩余1/2大型构造额度保留此前条件式授权，未被撤销；但tiny完整收敛与生产内存合同前提未满足，当前不启动。待ChatGPT裁决的问题仅为是否另批同tiny更高有限预算，以及是否先审restart30与固定B/S_B效率。
+
+## 历史段：V14本批首场 W0.7 M400/MPI8 main warm终态与tiny modal-row诊断（2026-10-14）
+
+以下为V14收口时的历史快照；V15真实FE终态见上节，旧V14结论、raw及账目不回写。
 
 | 范围 | 结果 | 证据边界 |
 |---|---|---|

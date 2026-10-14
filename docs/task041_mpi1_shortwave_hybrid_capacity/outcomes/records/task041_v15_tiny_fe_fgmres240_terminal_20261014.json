@@ -1,0 +1,261 @@
+{
+  "schema": "task041.v15.tiny_fe_fgmres240_terminal.v1",
+  "recorded_date": "2026-10-14",
+  "classification": "tiny_real_fe_fgmres_budget_exhausted_original_A_residual_failed",
+  "adjudication": {
+    "numerical_result": "The registered tiny real-FE solve did not meet the original-system residual gate within the authorized 240-iteration budget.",
+    "not_established": [
+      "stagnation",
+      "PC implementation defect",
+      "M400 failure root cause",
+      "mathematical non-solvability"
+    ],
+    "resource_refusal": false,
+    "destroyed_snapshot_assertions_reached": false,
+    "large_construction_authorized_by_this_record": false
+  },
+  "execution_identity": {
+    "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
+    "head": "3d80e1876c29836dd292a33a283e45f079646b88",
+    "source_manifest_path": "results/task041_v15_tiny_fe_fgmres240_serial_attempt_20261014T125426Z/serial/source_hashes_before_after.json",
+    "source_manifest_sha256": "6de36431ff40ab856a676c649cc7908f0f5a766f974e8d79205582929f7befd3",
+    "source_manifest_paths": 22,
+    "test347_sha256_at_run": "30d15257d1b65871d6e77827f0ca05ca36754f4812887ec17888c332c952b067",
+    "source_manifest_match_before_after": true,
+    "post_run_document_changes": [
+      "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md",
+      "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md",
+      "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/w0p7_consistent_block_pc_v13.md"
+    ],
+    "post_run_document_change_note": "The as-run source manifest is immutable. These three documentation paths were updated after the run; the other 19 entries remain the runtime identity, including 17 implementation/test paths and the two pre-run historical response documents (response_v14.md and response_v15.md)."
+  },
+  "test": {
+    "prepared_root": "results/task041_v15_tiny_fe_fgmres240_serial_prepared_20261014T130735Z",
+    "prepared_root_sha256s_sha256": "754f014cb75ca4c43c8a8e4a0a4120ce0d36ba9df4016faa8fcc994888ff98a4",
+    "prepared_root_selfseal_sha256": "c7841fbb4630b5f0a1eec2fc89adf93cbb8b12036f10b0ce12873577547b4c00",
+    "out": "results/task041_v15_tiny_fe_fgmres240_serial_attempt_20261014T125426Z",
+    "selector": "src/test/test_347_task041_balh_physical_operator.py::test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu",
+    "pytest_returncode": 1,
+    "test_source_sha256": "30d15257d1b65871d6e77827f0ca05ca36754f4812887ec17888c332c952b067",
+    "stdout_sha256": "9b93ffe62fb6d8f761ab1e9db6dd4290cdb2f0cfdf561e4f787c06dc0b6e7b6e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cpu": 11,
+    "memory_policy": "system_default_unbound",
+    "thread_environment_all_one": true,
+    "fresh_host_resource_and_serial_abi_passed": true
+  },
+  "v15_modal_row_gate": {
+    "contract_id": "task041.v15.original_modal_row.terms_backward.v1",
+    "limit": 1e-10,
+    "attempted_delta": 240,
+    "successful_delta": 240,
+    "records": 240,
+    "attempt_index_first_last": [
+      8,
+      247
+    ],
+    "records_contiguous_and_bound_to_current_attempt": true,
+    "all_row_gates_passed": true,
+    "all_same_attempt_owner_solves_passed": true,
+    "all_stored_d_exactly_w_minus_r": true,
+    "eta_terms_inf_max_recomputed": 7.753508102198664e-14,
+    "eta_terms_inf_max_recorded": 7.753508102198684e-14,
+    "eta_terms_inf_max_recalculation_difference": 2.0194839173657902e-28,
+    "formula_description": "max_i |w_modal-r_modal| / (|t_bottom|+|t_top|+|t_constraint|+|r_modal|), componentwise",
+    "not_the_original_system_convergence_gate": true
+  },
+  "ksp": {
+    "type_readback": "fgmres",
+    "pc_type_readback": "python",
+    "pc_context_same_ldu_object": true,
+    "pc_side_readback": 1,
+    "restart_requested_and_setter_source": 30,
+    "restart_getter_status": "unsupported",
+    "rtol_readback": 5e-09,
+    "atol_readback": 0.0,
+    "divtol_readback": 10000.0,
+    "max_it_readback": 240,
+    "initial_guess_nonzero_readback": false,
+    "norm_type_readback": 2,
+    "effective_convergence_test_readback": {
+      "returned_type": "NoneType",
+      "status": "unsupported"
+    },
+    "PETSC_OPTIONS": "not_set",
+    "reason": -3,
+    "iterations": 240,
+    "max_iterations": 240,
+    "monitor_norm_semantics": "PETSc reported KSP rnorm; not an independent true residual",
+    "monitor_milestones": [
+      {
+        "iteration": 30,
+        "petsc_reported_rnorm": 144.815907362576
+      },
+      {
+        "iteration": 60,
+        "petsc_reported_rnorm": 30.861155914992317
+      },
+      {
+        "iteration": 90,
+        "petsc_reported_rnorm": 13.894763408089599
+      },
+      {
+        "iteration": 120,
+        "petsc_reported_rnorm": 5.715598864517896
+      },
+      {
+        "iteration": 150,
+        "petsc_reported_rnorm": 2.765549972539941
+      },
+      {
+        "iteration": 180,
+        "petsc_reported_rnorm": 1.2029505076458455
+      },
+      {
+        "iteration": 210,
+        "petsc_reported_rnorm": 0.6068989572946049
+      },
+      {
+        "iteration": 240,
+        "petsc_reported_rnorm": 0.29822161291849425
+      }
+    ],
+    "monitor_curve_interpretation": "decreasing through the budget; no stagnation conclusion"
+  },
+  "original_A_residual": {
+    "global_shape": [
+      2172,
+      2172
+    ],
+    "rhs_norm": 934946.4789603328,
+    "numerator_norm": 0.29822161297582517,
+    "relative": 3.189718552739508e-07,
+    "limit": 5e-09,
+    "passed": false,
+    "rhs_unchanged": true,
+    "monitor_final_minus_true_numerator_abs_difference": 5.733091779092092e-11
+  },
+  "prior_60_step_real_fe_attempt": {
+    "out": "results/task041_v15_tiny_fe_serial_v15_row_schema_record_attempt_20261014T122009Z",
+    "pytest_attempt_sha256": "f66e68b7b3e6973b2675f27eaf0f27e9d50eb595ff81520c867a7e4e707dae10",
+    "completion_json_sha256": "20479fb31d40227a0d81ef8f2c2c8f7e334f482ad2007f07ae23a3234cd9fdfb",
+    "source_map_sha256": "1112809b0eb987e0306cc2fff501e19ba72893fb79c59979253f58a2db8c6f20",
+    "test347_sha256": "0b7ada886e387dff2e6154a61e9de073809146d168ece94ef1bdba6f90e5e965",
+    "reason": -3,
+    "iterations": 60,
+    "max_iterations": 60,
+    "original_A_relative_residual": 3.300847332920077e-05,
+    "separate_attempt_not_merged_with_240_step_curve": true
+  },
+  "previous_passed_test_scope": [
+    {
+      "attempt": "results/task041_v15_modal_row_serial_s1_retry_attempt_20261014T084528Z",
+      "attempt_json_sha256": "1a33915fbce215039e5a2f83b3fbfb6e4e06fec8ea32d24cf5280ff3178ba2c8",
+      "source_map_sha256": "b263939b587577a8bda6a803dcb28aab11e746606124763e3313c95853871032",
+      "source_path": "src/test/test_350_task041_balh_block_ldu.py",
+      "source_sha256": "2b0fb30cdfc10f3dc324dea6f19453cad0935959c30577d3b972e19e0eb343a8",
+      "passed_selectors": [
+        "test_v15_original_modal_row_metrics_match_decimal_complex_oracle",
+        "test_v13_factory_passes_the_same_fixed_b_actions_to_modal_and_ldu"
+      ],
+      "attempt_result": "1 failed, 2 passed; the third selector failed on stale attempt-record timing and was separately rerun after correction",
+      "source_map_path": "results/task041_v15_modal_row_serial_s1_retry_attempt_20261014T084528Z/serial/source_hashes_before_after.json"
+    },
+    {
+      "attempt": "results/task041_v15_modal_row_serial_memavailable_attempt_20261014T095200Z",
+      "attempt_json_sha256": "778a5594e18662fc470126d3451b59b7ba5b1e04d37e451fc5139907bbb9f391",
+      "source_map_sha256": "4c98c85efedb324bbae6a8110017d86434b963f46cc18f79906579647f52665b",
+      "selector": "test_v13_unmocked_builder_owner_lu_and_original_modal_row_math",
+      "result": "passed; synthetic small-matrix RIGHT FGMRES reason=2, 10 iterations, independent original-A relative residual 2.895212452829667e-10",
+      "source_path": "src/test/test_350_task041_balh_block_ldu.py",
+      "source_sha256": "128a836efe9dcece317fd1d89790acb985e6becb48c50caee71a1c2b69a3891f",
+      "source_map_path": "results/task041_v15_modal_row_serial_memavailable_attempt_20261014T095200Z/serial/source_hashes_before_after.json"
+    }
+  ],
+  "mpi2_writer_scope": {
+    "initial_attempt": "results/task041_v15_modal_row_mpi2_memavailable_node1_observation_attempt_20261014T110225Z",
+    "initial_attempt_json_sha256": "cfe233f6b9314be19dc449a9173092918f37f8b82df6ca2f7a4eac2d6f404bb6",
+    "initial_source_map_sha256": "4c98c85efedb324bbae6a8110017d86434b963f46cc18f79906579647f52665b",
+    "initial_scope": "two earlier writer/builder selector nodes passed; owner-writer node failed because the fixture asserted owner/non-owner flags asymmetrically",
+    "corrected_single_selector_attempt": "results/task041_v15_real_tiny_builder_owner_writer_failure_mpi2_attempt_20261014T112820Z",
+    "corrected_attempt_json_sha256": "01d1715adc1af74ed10d3ee475380bceac90a583e5a76b6bfca2f20c739714c7",
+    "corrected_source_map_sha256": "a1fdbb7164e89753e75767495cffdd2c640a903f38c9ca25d98a9255162f2231",
+    "corrected_selector": "test_v15_real_tiny_builder_pc_owner_writer_failure_mpi2",
+    "corrected_result": "1 passed; selector-level coverage spans separate attempts, not one all-green invocation",
+    "merged_stdout_rank_attribution": "not_persisted"
+  },
+  "resource_and_accounting": {
+    "resource_gate_passed": true,
+    "peak_process_tree_or_cgroup_authority_bytes": 973332480,
+    "peak_scope_note": "runner authority field; not whole-host RSS",
+    "pytest_parent_monotonic_wall_seconds_once": 471.35805576085113,
+    "v5_ledger_path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json",
+    "v5_before": {
+      "entries": 286,
+      "charged_seconds": 635647.649921094,
+      "sha256": "19b501e8a2d405abcaa899b9a9a2bdb13b037cc4b3546a04ed43d8f086e443be"
+    },
+    "v5_after": {
+      "entries": 287,
+      "charged_seconds": 636119.0079768548,
+      "sha256": "54f0c0d524d1a584478dae6bb0f695e2c2a68be683fc82ba6a591c32c50a62d1"
+    },
+    "unique_entry_id": "results/task041_v15_tiny_fe_fgmres240_serial_attempt_20261014T125426Z:serial:pytest",
+    "entry_count_in_old_286_prefix": 0,
+    "entry_count_in_live_ledger": 1,
+    "old_286_entry_prefix_preserved": true,
+    "v5_before_snapshot_path": "results/task041_v15_tiny_fe_fgmres240_serial_attempt_20261014T125426Z/v5_ledger_before_append.json",
+    "v5_before_snapshot_sha256": "19b501e8a2d405abcaa899b9a9a2bdb13b037cc4b3546a04ed43d8f086e443be",
+    "v5_append_receipt_path": "results/task041_v15_tiny_fe_fgmres240_serial_attempt_20261014T125426Z/v5_append_receipt.json",
+    "v5_append_receipt_sha256": "11a825d63ceaa489150653dc7ff2e7a6d09fda67cb41b1f02dc133126ef350cb",
+    "v5_after_snapshot_path": "results/task041_v15_tiny_fe_fgmres240_serial_attempt_20261014T125426Z/v5_ledger_after_append.json",
+    "v5_after_snapshot_sha256": "54f0c0d524d1a584478dae6bb0f695e2c2a68be683fc82ba6a591c32c50a62d1",
+    "abi_preflight_charged": false
+  },
+  "cleanup": {
+    "runner_owned_group_empty": true,
+    "owned_process_group": 824952,
+    "native_abi_cleanup_passed": true,
+    "external_host_postcheck_passed": true,
+    "external_host_rescan_path": "results/task041_v15_tiny_fe_fgmres240_postrun_review_20261014T132641Z/host_session_rescan.txt",
+    "external_host_rescan_sha256": "ad4514aabea0494b8cc71b3c16477d62502dea4fe5a687130f9ecd57f2a3ebe8",
+    "remaining_members": []
+  },
+  "limitations_and_next_questions": {
+    "old_60_step_and_new_240_step_curve_merged": false,
+    "V15_new_M400_five_residuals_recovery_EH_RTA_diffraction_physics": "not_run; distinct V14 real M400 completed S_B 800/800 columns and owner LU, then failed the original modal-row PC gate; its cause remains UNCONFIRMED",
+    "production_MemAvailable_unification": "not_implemented",
+    "remaining_large_construction_quota": "1 of 2 remains unused under the prior conditional authority, which is not revoked; tiny full convergence and production memory-contract prerequisites are unmet, so do not start M400 now",
+    "questions_for_ChatGPT": [
+      "Should a future review authorize a larger bounded iteration budget on the same tiny case with A, B, S_B, RHS, restart, PC and tolerances fixed?",
+      "Should restart-30 and fixed-B/S_B outer convergence efficiency be reviewed before any further numerical run?"
+    ]
+  },
+  "evidence": {
+    "completion_json": {
+      "path": "results/task041_v15_tiny_fe_fgmres240_serial_attempt_20261014T125426Z/serial/pytest_basetemp/test_task041_v13_real_fe_conde0/v15-modal-evidence/tiny_fgmres_completion.json",
+      "sha256": "2060db8bc2dac804be91f717215ae55ed49725c0535af1e9725b825155fb7741"
+    },
+    "pytest_attempt": {
+      "path": "results/task041_v15_tiny_fe_fgmres240_serial_attempt_20261014T125426Z/serial/pytest.attempt.json",
+      "sha256": "8d483950f9d8e9f4e629b40e5c4ab85547727121fb1081e15c408536c816e2d5"
+    },
+    "source_map": {
+      "path": "results/task041_v15_tiny_fe_fgmres240_serial_attempt_20261014T125426Z/serial/source_hashes_before_after.json",
+      "sha256": "6de36431ff40ab856a676c649cc7908f0f5a766f974e8d79205582929f7befd3"
+    },
+    "independent_postrun_review": {
+      "path": "results/task041_v15_tiny_fe_fgmres240_postrun_review_20261014T132641Z/independent_postrun_review.json",
+      "sha256": "378fd08215cc3fefaeadc448c5651b544c2fd85ef3733f8530d67e815fcd3967"
+    },
+    "postrun_review_selfseal": {
+      "path": "results/task041_v15_tiny_fe_fgmres240_postrun_review_20261014T132641Z/SHA256SUMS.sha256",
+      "sha256": "e174f93eba2a1dff0bc7768fa08625d85a0567af73c758b95795e80622a4d61c",
+      "sealed_sha256s_sha256": "89771e4cd0fde93c8af9449f189db722dae80d1c36439d4fa73205b99f79b7ac"
+    },
+    "v5_live_after": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json",
+      "sha256": "54f0c0d524d1a584478dae6bb0f695e2c2a68be683fc82ba6a591c32c50a62d1"
+    }
+  }
+}

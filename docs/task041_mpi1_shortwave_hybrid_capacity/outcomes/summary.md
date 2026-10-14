@@ -1,6 +1,28 @@
 # Task041 outcomes summary
 
-## 当前阶段：V14本批首场 W0.7 main warm终态与modal-row门诊断（2026-10-14）
+## 当前阶段：V15 tiny真实FE的240步诊断终态（2026-10-14）
+
+通俗地说，V15把预条件器内部模态行误差改为按组成项尺度逐行核对；这能判断PC这一步是否按其定义工作，但不能代替原方程最终验收。本次注册tiny FE沿同一A、B、S_B和RIGHT FGMRES路径运行，240次PC apply的V15行门全部通过，原A完整残差门却未通过。因此当前结论是“在获批240步预算内未收敛”，不是资源失败、fixture问题、行门失败，也没有证据称为停滞或PC实现缺陷。
+
+| 项目 | 实测/状态 | 解释与证据边界 |
+|---|---:|---|
+| 实际case与KSP | test347注册tiny FE，原A为2172×2172；FGMRES，restart请求30，`max_it=240`，`rtol=5e-9`、`atol=0`、零初猜；reason `-3`、240/240 | restart30来自配置setter/source；PETSc getter不支持。有效convergence-test读回为`NoneType/unsupported`，不推断其实现 |
+| 完整原A残差 | `‖Ax-f‖₂=0.29822161297582517`，`‖f‖₂=934946.4789603328`，relative=`3.189718552739508e-7` | 原系统门`5e-9`，超约63.794倍；RHS未改变。完整方程未通过 |
+| 新modal-row逐行后向误差 | 240/240记录连续（PC attempt 8–247），attempted/successful/recorded各240；全部owner同次记录与行门通过；独立重算最大eta=`7.753508102198664e-14` | V15 contract `task041.v15.original_modal_row.terms_backward.v1`，阈值`1e-10`。该内部门通过不等于原A最终残差通过 |
+| PETSc rnorm | 第30/60/90/120/150/180/210/240步为144.8159/30.86116/13.89476/5.71560/2.76555/1.20295/0.606899/0.298222 | 曲线持续下降；这些是PETSc报告范数，不是每步独立真残差。不能由此定性停滞 |
+| 旧60步真实FE | 独立attempt reason=`-3`、60/60，`Ax-f` relative=`3.300847332920077e-5` | 保留为独立样本；240步第60步与旧终点的rnorm数值相同不把两次运行合并 |
+| 销毁后快照断言 | 未执行 | 测试先在KSP reason负值断言失败；completion数值在此之前已写入，不能称销毁后断言通过 |
+| 内存与时间 | runner authority peak=`973332480 B`；pytest父CLOCK_MONOTONIC wall=`471.35805576085113 s` | authority峰不是全主机RSS；ABI与preflight未收费。本轮资源门通过，未因资源拒绝 |
+| V5账目 | 旧286项前缀保留；287项，`636119.0079768548 s`，SHA `54f0c0d524d1a584478dae6bb0f695e2c2a68be683fc82ba6a591c32c50a62d1` | 本attempt唯一增加471.35805576085113 s；研发累计账不同于warm/QEP/数值场时长，不重复计ABI或preflight |
+| V15新一场正式M400资格 | M400 warm、最终五残差、recovery、EH、official R/T/A、A_volume、衍射与physics均`not_run` | V14真实M400已完成S_B 800/800列及owner LU，随后原modal-row PC门失败，根因仍`UNCONFIRMED`。余1/2大型额度的既有条件授权未被撤销；tiny完整收敛与生产内存合同前提未满足，当前不启动。生产warm的MemAvailable统一也尚未实施 |
+
+先前公式oracle、固定B接线、test350合成tiny及MPI2 writer/真实builder路径有通过证据，但分别来自不同source map和attempt；MPI2三个目标selector的覆盖跨两个attempt完成，第一attempt的fixture失败仍保留。它们不能替代本次test347真实FE外层收敛。分段结果与source-map身份见[test summary](test_summary.md)和[Response V17](../response_v17.md)；详细terminal JSON见[轻量V15记录](records/task041_v15_tiny_fe_fgmres240_terminal_20261014.json)。
+
+当前待ChatGPT裁决的不是现有run的分类，而是未来是否另批同tiny、同PC/restart/容差的更大有限预算，以及是否先分析restart30与固定B/S_B的外层收敛效率。本轮不再求解、不扩展预算、不启动M400。
+
+## 历史阶段：V14本批首场 W0.7 main warm终态与modal-row门诊断（2026-10-14）
+
+以下表格是V15测试前的V14终态快照；其旧Invocation与负结果保持原样，不代表当前V15结论。
 
 通俗地说，本场已真正进入计算：两项旧启动问题均已越过，aggregate资源核验通过，构造了全部800列S_B并建立owner LU。S_B是把两侧模态联系起来的小系统，使用贯穿各LDU项的同一固定近似作用B构造；这让预条件器内部一致，但B不是原方程算子D的准确逆。随后外层只完成到iteration 1；iteration 1之后某次预条件器（PC）输出的原始modal行检查触发1.039223相对误差，超过原有1e-10合同而停止。它不是最终解残差，失败行绝对量未保存，因此当前不能判定为已证实的M400实现缺陷或资源失败。
 
