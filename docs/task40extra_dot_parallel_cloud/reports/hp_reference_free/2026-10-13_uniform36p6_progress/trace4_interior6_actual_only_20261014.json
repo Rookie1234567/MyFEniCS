@@ -1,0 +1,565 @@
+{
+  "schema": "task40extra.trace4-interior6.actual-input-only-report.v1",
+  "title": "trace4_interior6_actual_only_20261014",
+  "report_date_utc": "2026-10-14",
+  "publication_state": "FINAL_INDEPENDENT_TERMINAL_AND_V71_LEDGER_BOUND",
+  "scope": "two_g0_field_probes_and_same6656_g0_coarse_calls_only",
+  "stage_status": "ACTUAL_INPUT_ONLY_DIAGNOSTIC_FINISHED_ZERO_OUTER",
+  "source_review": {
+    "status": "SOURCE_DELTA_PASS_FINAL_FROZEN_BINDING_NO_NEW_SOURCE_BLOCKER",
+    "stdlib_tests": 84,
+    "command_sha256": "36fa15f74b8030ff60fc3ff17fbfc31506d90fd083c632cfbb5a20ce5e7717d6",
+    "no_general_port_RHS_qualification": true
+  },
+  "space": {
+    "same_native_fine_cells": 108,
+    "fine_degree": 6,
+    "coarse_trace_degree": 4,
+    "all_fine_bubbles": 48600,
+    "coarse_FE_field_dimension": 58824,
+    "original_ports": 80,
+    "Schur_dimension": 10304,
+    "P_and_physics_unchanged": true
+  },
+  "terminal": {
+    "child_exit_code": 0,
+    "elapsed_seconds": 362.9625463630073,
+    "sampled_peak_tree_RSS_bytes": 3204517888,
+    "resource_samples": 1439,
+    "cleanup_verified": true,
+    "remaining_processes": [],
+    "independent_terminal_status": "ACTUAL_INPUT_G0_SCOPED_COMPARISONS_PASS_WITH_PRESERVED_PRESSURE_AND_RAW_FAILURES_CLEAN_TERMINAL",
+    "independent_review_sha256": "212ce4b58428b38844fbf64e3ae6ddd6db3fddcf346615d84ac866a0032f20da",
+    "all38_source_pins_reverified": true
+  },
+  "bounded_actual_counts": {
+    "fresh_symbolic": 1,
+    "fresh_numeric": 1,
+    "factor_solves": 18,
+    "logical_coarse_calls": 8,
+    "native_full_A6": 33,
+    "wrapper_component_counts": {
+      "independent_DtN": 12,
+      "independent_volume": 12,
+      "native_full_A6": 12
+    },
+    "H3_apply": 3,
+    "H3_setup_power_matrix_mult_count": 20,
+    "CG_iterations": 0,
+    "outer_iterations": 0,
+    "outer_KSP_created": false,
+    "explicit_reference_PC_comparisons": 0,
+    "actual_original_first_Arnoldi_hook_PC_calls": 1
+  },
+  "coarse_g0_calls": [
+    {
+      "logical_call": 1,
+      "full_corrections": 0,
+      "factor_solves": 1,
+      "final_QH_relative": 2.0075311355985064e-13,
+      "final_original_port_relative": 4.981899313712429e-13,
+      "original_port_rhs_norm": 0.0,
+      "status": "PASS_ORIGINAL_FIXED_DENOMINATOR_GATE"
+    },
+    {
+      "logical_call": 2,
+      "full_corrections": 1,
+      "factor_solves": 4,
+      "final_QH_relative": 6.061535615934218e-11,
+      "final_original_port_relative": 1.7074966542681403e-16,
+      "original_port_rhs_norm": 0.0,
+      "status": "PASS_ORIGINAL_FIXED_DENOMINATOR_GATE"
+    },
+    {
+      "logical_call": 3,
+      "full_corrections": 1,
+      "factor_solves": 4,
+      "final_QH_relative": 6.061535615934218e-11,
+      "final_original_port_relative": 1.7074966542681403e-16,
+      "original_port_rhs_norm": 0.0,
+      "status": "PASS_ORIGINAL_FIXED_DENOMINATOR_GATE"
+    },
+    {
+      "logical_call": 4,
+      "full_corrections": 0,
+      "factor_solves": 1,
+      "final_QH_relative": 7.098283326800176e-13,
+      "final_original_port_relative": 1.9938047826728694e-12,
+      "original_port_rhs_norm": 0.0,
+      "status": "PASS_ORIGINAL_FIXED_DENOMINATOR_GATE"
+    },
+    {
+      "logical_call": 5,
+      "full_corrections": 1,
+      "factor_solves": 3,
+      "final_QH_relative": 7.83179254187148e-11,
+      "final_original_port_relative": 9.726868341482486e-14,
+      "original_port_rhs_norm": 0.0,
+      "status": "PASS_ORIGINAL_FIXED_DENOMINATOR_GATE"
+    },
+    {
+      "logical_call": 6,
+      "full_corrections": 0,
+      "factor_solves": 1,
+      "final_QH_relative": 2.4799387321326977e-14,
+      "final_original_port_relative": 9.51716447015091e-14,
+      "original_port_rhs_norm": 0.0,
+      "status": "PASS_ORIGINAL_FIXED_DENOMINATOR_GATE"
+    },
+    {
+      "logical_call": 7,
+      "full_corrections": 1,
+      "factor_solves": 3,
+      "final_QH_relative": 7.83179254187148e-11,
+      "final_original_port_relative": 9.726868341482486e-14,
+      "original_port_rhs_norm": 0.0,
+      "status": "PASS_ORIGINAL_FIXED_DENOMINATOR_GATE"
+    },
+    {
+      "logical_call": 8,
+      "full_corrections": 0,
+      "factor_solves": 1,
+      "final_QH_relative": 2.4799387321326977e-14,
+      "final_original_port_relative": 9.51716447015091e-14,
+      "original_port_rhs_norm": 0.0,
+      "status": "PASS_ORIGINAL_FIXED_DENOMINATOR_GATE"
+    }
+  ],
+  "arbitrary_field_probes": [
+    {
+      "all80ports_preserved": true,
+      "auxiliary_port_rhs_scope": "zero_only",
+      "interior_rhs_norm": 1.0,
+      "limit": 1e-10,
+      "native_QH_A6_augmented_residual_relative": 2.0075311355985018e-13,
+      "nonzero_port_arbitrary_RHS_qualified": false,
+      "original_port_closure_relative": 4.981899313712429e-13,
+      "port_rhs_norm": 0.0,
+      "port_solution_norm": 6.78233446323351e-05,
+      "probe": 0,
+      "reduced_native_residuals": [
+        1.0029745365584048e-13
+      ],
+      "source_norm": 1.0
+    },
+    {
+      "all80ports_preserved": true,
+      "auxiliary_port_rhs_scope": "zero_only",
+      "interior_rhs_norm": 0.8149493550626877,
+      "limit": 1e-10,
+      "native_QH_A6_augmented_residual_relative": 6.061535632364496e-11,
+      "nonzero_port_arbitrary_RHS_qualified": false,
+      "original_port_closure_relative": 1.7074966542681403e-16,
+      "port_rhs_norm": 0.0,
+      "port_solution_norm": 1.254905971657067,
+      "probe": 1,
+      "reduced_native_residuals": [
+        1.4198348165838251e-10,
+        5.059937502301175e-13
+      ],
+      "source_norm": 1.0
+    }
+  ],
+  "balance_random_probe": {
+    "actual_audit": "PASS",
+    "identity": "eps1-eps2",
+    "audit": {
+      "actual_defect_norm": 6.541688005097489e-11,
+      "closure_limit": 1e-08,
+      "closure_norm": 5.836457522222789e-11,
+      "closure_relative": 7.861224817561227e-13,
+      "defect_scaled": 8.811111859995124e-13,
+      "operation_scale": 74.24361543744048
+    }
+  },
+  "same6656_actual_input": {
+    "raw_hash": "7a0f317f14c13dfa3235d34cb2586ceeecbdd3a43addd6555ebfb66af84daca2",
+    "unit_hash": "3cd6bb01aba4adbcdb87a9b678796cc7a6ba45cd0296d6d3a05b9961147abfce",
+    "raw_norm": 0.013898680225977397,
+    "unit_retained_norm": 1.000000000000002,
+    "same_old_p4_raw_hash": true,
+    "same_old_p4_unit_hash": true,
+    "same_old_p4_PETSc_raw_norm": true,
+    "split": {
+      "BHp_inverse_retained_port_norm": 3.989079082375188e-12,
+      "Hp_inverse_retained_port_norm": 1.849935669578071e-13,
+      "coarse_auxiliary_port_rhs_norm": 0.0,
+      "input_unchanged": true,
+      "measurement_only_additional_B_action_calls": 1,
+      "measurement_only_additional_Hp_solve_calls": 1,
+      "nonzero_port_arbitrary_RHS_qualified": false,
+      "original_lifted_full_rhs_norm": 1.0000000000000049,
+      "retained_port_eliminated_once_in_original_lift": true,
+      "retained_port_norm": 5.778000052683001e-13,
+      "retained_trace_norm": 1.000000000000002
+    },
+    "input_unchanged": true
+  },
+  "same6656_retained_comparison": {
+    "new_best_single_direction_residual_ratio": 0.9999875004448556,
+    "old_p4_H3_best_single_direction_residual_ratio": 0.9999998952548249,
+    "new_first_Arnoldi": {
+      "finite": true,
+      "h11": {
+        "imaginary": -0.0030514403876542844,
+        "real": -0.0009080649163419312
+      },
+      "hnext": 0.6367429941777709,
+      "operator_output_norm": 0.6367509532814248,
+      "right_preconditioned": true
+    },
+    "old_first_Arnoldi": {
+      "finite": true,
+      "h11": {
+        "imaginary": -0.00019448359453060234,
+        "real": 0.00025474531457905705
+      },
+      "hnext": 0.7002343885603832,
+      "operator_output_norm": 0.7002344619065648,
+      "right_preconditioned": true
+    },
+    "new_retained_PC_norm": 3.5480192574498535,
+    "old_retained_PC_norm": 3.554266540520509,
+    "single_direction_diagnostic_only_no_outer_run": true
+  },
+  "same6656_full_native_separate": {
+    "A6PC_over_source_norm": 0.6367509532802941,
+    "complex_alignment": {
+      "imaginary": -0.004792203885135912,
+      "real": -0.00142609118401998
+    },
+    "full_PC_typed_hash": "7f5705e40c05135f097cac1e27477fda652b9c136b8a3e6f133b7470403de2bb",
+    "full_source_typed_hash": "81bc248ad62f3429ade7510df79caeaa4f11a6cd634041a2dc6bd49a6df5de9b",
+    "image_norm": 0.6367509532802972,
+    "interior_degree": 6,
+    "native_A6PC_typed_hash": "705d449d51e4bc988bb0741bddb325e82dd3eca63a18551d3e9777d5f2b2c054",
+    "optimal_alpha": {
+      "imaginary": 0.0075260254585381384,
+      "real": -0.0022396372972404897
+    },
+    "optimal_single_direction_relative": 0.9999875004448089,
+    "source_H_A6PC": {
+      "imaginary": -0.0030514403921738506,
+      "real": -0.0009080649208893544
+    },
+    "source_norm": 1.0000000000000049,
+    "space": "full_native_p6",
+    "trace_degree": 4
+  },
+  "full_reference_diagnostic_metrics": {
+    "old_coarse_complement_relative": 2.9978874320107307,
+    "new_coarse_complement_relative": 1.1849131298691549,
+    "old_smoother_surviving_complement_relative": 12.229182177440041,
+    "new_smoother_surviving_complement_relative": 2.652855829366698,
+    "old_actual_full_A6PC_not_independently_stored": true,
+    "no_cross_norm_actual_full_old_new_comparison_claimed": true
+  },
+  "limited_comparisons": {
+    "status": "PC_EXPANSION_BRIDGE_CLOSURE_COMPARISONS_PASS",
+    "scope": "PC expansion, retained lift/bridge/ports, and specified coarse closure identities only",
+    "complete_full_BAL_H": {
+      "absolute": 0.0,
+      "finite": true,
+      "limit": 1e-10,
+      "operation_passed": true,
+      "operation_relative": 0.0,
+      "operation_scale": 5.852078808146386,
+      "raw_passed": true,
+      "relative": 0.0
+    },
+    "full_dual_lift": {
+      "absolute": 0.0,
+      "finite": true,
+      "limit": 1e-10,
+      "operation_passed": true,
+      "operation_relative": 0.0,
+      "operation_scale": 2.0000000000000098,
+      "raw_passed": true,
+      "relative": 0.0
+    },
+    "retained_bridge": {
+      "absolute": 0.0,
+      "finite": true,
+      "limit": 1e-10,
+      "operation_passed": true,
+      "operation_relative": 0.0,
+      "operation_scale": 7.096038514899707,
+      "raw_passed": true,
+      "relative": 0.0
+    },
+    "original_port_completion": {
+      "absolute": 0.0,
+      "finite": true,
+      "limit": 1e-10,
+      "operation_passed": true,
+      "operation_relative": 0.0,
+      "operation_scale": 7.096038514899707,
+      "raw_passed": true,
+      "relative": 0.0
+    },
+    "actual_BAL_H_ledger": {
+      "actual_defect_norm": 2.6525680008019376e-11,
+      "closure_limit": 1e-08,
+      "closure_norm": 2.6854116677483615e-11,
+      "closure_relative": 8.806663592155179e-12,
+      "defect_scaled": 8.698954547242721e-12,
+      "operation_scale": 3.0492951611555585
+    }
+  },
+  "failures_and_exclusions_preserved": {
+    "all_diagnostics_passed_claimed": false,
+    "prior_fixed_attempt01_and02_failures_retained": true,
+    "prior_nonzero_unit_port_final_QH_relative": 7.869231993711079e-09,
+    "prior_nonzero_unit_port_limit": 1e-10,
+    "nonzero_port_arbitrary_RHS_qualified": false,
+    "third_unit_port_pressure_failure_retained": true,
+    "checkpoint_action_probe": {
+      "action_cancellation_ratio": 36669.15767723963,
+      "action_difference_absolute": 4.955256455651521e-09,
+      "action_difference_relative": 7.194752879915044e-09,
+      "complex_vector": true,
+      "component_scale_is_not_native_local_error_bound": true,
+      "component_scaled_difference": 1.9620720342809493e-13,
+      "finite": true,
+      "label": "actual_paused_checkpoint",
+      "mapped_saved_action_norm": 0.6887319882083334,
+      "mapping_pass": true,
+      "native_action_norm": 0.6887319882069464,
+      "native_dual_difference_over_native_rhs_norm": 7.1904769414146585e-09,
+      "normalization": "none_actual_mapped_paused_checkpoint_scale",
+      "normalized_norm": 28.44096465041476,
+      "raw_norm": 28.44096465041476,
+      "raw_relative_limit": 1e-10,
+      "raw_relative_pass": false,
+      "residual_native_roundtrip": 9.759013682774894e-19,
+      "residual_saved_roundtrip": 1.3412683932209161e-22,
+      "saved_CSR_uncancelled_component_scale": 25255.22187297012,
+      "saved_dual_difference_over_original_rhs_norm": 7.1904769414132184e-09,
+      "status": "DIAGNOSTIC_CHECKPOINT_RAW_MISMATCH",
+      "unknown_native_roundtrip": 0.0,
+      "unknown_saved_roundtrip": 4.962000559679061e-28,
+      "vector_size": 24056
+    },
+    "saved_vs_native_checkpoint_residual": {
+      "absolute": 4.955256445533892e-09,
+      "finite": true,
+      "limit": 1e-10,
+      "operation_passed": false,
+      "operation_relative": 1.7826355891748933e-07,
+      "operation_scale": 0.027797360692363774,
+      "raw_passed": false,
+      "relative": 3.5652711475150975e-07
+    },
+    "saved_native_PC_action": {
+      "absolute": 6.012334803512397e-10,
+      "finite": true,
+      "limit": 1e-10,
+      "operation_passed": false,
+      "operation_relative": 4.721103888894146e-10,
+      "operation_scale": 1.2735019065468403,
+      "raw_passed": false,
+      "relative": 9.442207777669592e-10
+    },
+    "native_prediction_error": {
+      "absolute": 3.764039488165434e-12,
+      "finite": true,
+      "limit": 1e-10,
+      "operation_passed": true,
+      "operation_relative": 5.25015623345739e-12,
+      "operation_scale": 0.7169385673093955,
+      "raw_passed": false,
+      "relative": 2.7082330670013e-10
+    },
+    "saved_prediction_error": {
+      "absolute": 3.811897837918524e-12,
+      "finite": true,
+      "limit": 1e-10,
+      "operation_passed": true,
+      "operation_relative": 2.7388919713586134e-12,
+      "operation_scale": 1.3917664069195295,
+      "raw_passed": false,
+      "relative": 2.7426671867684214e-10
+    },
+    "field_accepted": false,
+    "solution_accepted": false,
+    "gate_flags": {
+      "field_accepted": false,
+      "native_prediction_raw_passed": false,
+      "saved_native_PC_action_raw_passed": false,
+      "saved_prediction_raw_passed": false,
+      "these_are_not_overridden_by_PC_comparison_status": true
+    },
+    "coarse_closure_raw_values": {
+      "coarse_complete_identity": {
+        "absolute": 2.6854116677483615e-11,
+        "finite": true,
+        "operation_passed": true,
+        "operation_relative": 8.80666359208469e-12,
+        "operation_scale": 3.049295161179965,
+        "raw_passed": false,
+        "relative": 1.0123818378780467,
+        "relative_limit": 1e-10
+      },
+      "coarse_initial_identity": {
+        "absolute": 7.329743364902708e-17,
+        "finite": true,
+        "operation_passed": true,
+        "operation_relative": 2.403750039752258e-17,
+        "operation_scale": 3.049295161179965,
+        "raw_passed": false,
+        "relative": 3.0069224031635163e-06,
+        "relative_limit": 1e-10
+      },
+      "complement_identity": {
+        "absolute": 8.56804709611512e-15,
+        "finite": true,
+        "operation_passed": true,
+        "operation_relative": 2.809845109516916e-15,
+        "operation_scale": 3.049295161179965,
+        "raw_passed": false,
+        "relative": 0.28230218084969383,
+        "relative_limit": 1e-10
+      },
+      "eps_only_original_identity": {
+        "absolute": 2.6854116677483615e-11,
+        "finite": true,
+        "operation_passed": true,
+        "operation_relative": 8.80666359208469e-12,
+        "operation_scale": 3.049295161179965,
+        "production_scale_passed": true,
+        "production_scale_relative": 8.806663592155179e-12,
+        "raw_passed": false,
+        "relative": 1.0123818378780467,
+        "relative_limit": 1e-08
+      }
+    },
+    "coarse_closure_authority": "Original operation-scaled eps1-eps2/closure gates passed; raw ratios against nearly zero defects are reported and are not claimed passed."
+  },
+  "diagnostic_candidate_not_accepted": {
+    "native_true_relative": 0.020167854356936972,
+    "saved_true_relative": 0.02016785470620893,
+    "original_checkpoint_unchanged": true,
+    "new_iterate_not_saved": true,
+    "numerical_acceptance": false
+  },
+  "original_resource_limits": {
+    "hard_AS_bytes": 6442450944,
+    "tree_RSS_ceiling_bytes": 8589934592,
+    "host_available_minimum_bytes": 1073741824,
+    "zero_swap": true,
+    "hard_seconds": 600,
+    "disk_free_minimum_bytes": 4294967296,
+    "total_new_output_cap_bytes": 134217728,
+    "MPI": 1,
+    "threads": 1,
+    "single_scientific_child": true
+  },
+  "passive_input_split": {
+    "additional_Hp_solve": 1,
+    "additional_B_action": 1,
+    "scratch_bytes": 2535744,
+    "existing_128MiB_plus32MiB_diagnostic_reserve_kept": true,
+    "measurement_did_not_feed_solution_or_gates": true
+  },
+  "costs": {
+    "this_stage_elapsed_seconds": 362.9625463630073,
+    "symbolic_seconds_included_in_stage": 0.21213931700913236,
+    "numeric_seconds_included_in_stage": 5.014026388991624,
+    "factor_seconds_not_added_again": true,
+    "previous_two_fixed_attempts_elapsed_seconds": 339.35957459299243,
+    "trace4_five_attempts_elapsed_seconds": 875.7702280620282,
+    "ledger_name": "phase4_execution_ledger_v71.json",
+    "project_known_terminal_seconds": 21085.225217485116,
+    "project_sum_lower_bound_including_interrupted_seconds": 28999.2175003281,
+    "project_sum_is_not_exact_total_wallclock": true,
+    "preparation_review_wait": "UNMEASURED_NOT_ZERO",
+    "auxiliary_read_only_verification_costs_separately_listed": true,
+    "sampled_peaks_not_summed": true
+  },
+  "claim_limits": [
+    "Restricted executed g0 calls only; no universal coarse inverse qualification.",
+    "Prior unit-port pressure FAIL remains; actual tiny retained port is not erased.",
+    "Single-direction improvement remains extremely weak; no claim the old plateau is fixed.",
+    "No all-diagnostics PASS, physical field acceptance, 108 convergence or hp convergence.",
+    "No new outer step or numerical continuation authorized; next scope is static trace-space hypotheses only."
+  ],
+  "evidence_root_label": "hp_resume_20261013",
+  "evidence": [
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_fixed_control_v3_actual_only_source_review.json",
+      "bytes": 30724,
+      "sha256": "979fcb0176f022d45505321301703e40d149a28214c3fcafdee4f8d3410c8da3"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_actual_only_attempt01/summary.json",
+      "bytes": 1218,
+      "sha256": "e931ede1c088b8cc615e9c64628014d91a9631b3bdf947bb597a5040a79df955"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_actual_only_attempt01/result.json",
+      "bytes": 330641,
+      "sha256": "860caa25f55557ef2d481208381cc8b88f2930dae8d0464b6338fff73156b3a1"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_fixed_attempt01_terminal_review.json",
+      "bytes": 27687,
+      "sha256": "964e19329423e1afa6f6c4469706ca3a9b8f49aefd18fc756b8e4eaa9126ab23"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_fixed_attempt02_terminal_review.json",
+      "bytes": 46750,
+      "sha256": "18072bd040eb4e7831e66d5ede0197120a915e1ce3125c8b3ec809c29f4f3b2e"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_balh_complete_action_oracle_attempt01/paused6656_native_true_residual_result.json",
+      "bytes": 11282,
+      "sha256": "a4fa942f242a68c89aef3fe53924536198dcb79ca2bb3d5da772e7c1d7a8be90"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_execution_ledger_v71.json",
+      "bytes": 46268,
+      "sha256": "274032cf123c60fb09c001d5d185c5c96c75603412f699249852cb4bce3774fa"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_actual_only_attempt01_terminal_review.json",
+      "bytes": 53776,
+      "sha256": "212ce4b58428b38844fbf64e3ae6ddd6db3fddcf346615d84ac866a0032f20da"
+    }
+  ],
+  "inherited_operator_identity": {
+    "K_hash": "9546bcbaf88712cbca0e545c441a17faa462fa0a866cc84bb64f53be3fd84c99",
+    "K_nnz": 10646336,
+    "Pt_hash": "131167d5770521d4b869c054040047a7f08cbeb58b96a780b60f8976ca726695",
+    "cache_restored": true,
+    "compiler_attempts": 0,
+    "exact16_cache_recipe_producer_verified": true,
+    "native_projection_qualification": "PASS_NATIVE_COMPONENTS_AND_PROJECTED_ACTION",
+    "no_extra_core_mathematical_reanalysis": true,
+    "oriented_LU_classes": 44,
+    "raw_classes": 33,
+    "single_fine_bank": true
+  },
+  "terminal_resource_audit": {
+    "all_samples_checked": 1439,
+    "all_admissions_checked": 2718,
+    "all_original_caps_passed": true,
+    "zero_process_host_swap_and_pswpin_pswpout": true,
+    "pre_numeric_VmSize": 3049799680,
+    "named_numeric_future_bytes": 2965539520,
+    "AS_headroom_after_named_bytes": 427111744,
+    "post_numeric_VmSize_snapshot": 4089159680,
+    "final_before_cleanup_VmSize_snapshot": 4089311232,
+    "tree_additional_bytes_including_ELF": 3840887552,
+    "projected_tree_bytes": 6452427520,
+    "no_peak_VmSize_claim": true,
+    "regular_artifact_bytes": 5672579
+  },
+  "terminal_cleanup": {
+    "all17_known_owner_callbacks_returned_normally": true,
+    "factor_destroy_JOBminus2_observed": true,
+    "supervisor_cleanup_verified": true,
+    "remaining_processes": [],
+    "hidden_partial_native_handle_cleanup_not_claimed": true,
+    "hwloc_sysfs_warning_preserved": true
+  }
+}
