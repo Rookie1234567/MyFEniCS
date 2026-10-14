@@ -1,0 +1,1842 @@
+{
+  "acceptance": {
+    "hp_converged": false,
+    "latest_qualified_physical_field_cells": 96,
+    "original108_step_charge": 10000,
+    "qualified_physical_108": false
+  },
+  "cells": [
+    {
+      "actual_parent_geometry": {
+        "J": [
+          [
+            0.10694444444444443,
+            4.845028458294598e-18,
+            4.655293078109635e-18
+          ],
+          [
+            3.122502256758253e-17,
+            0.648148148148148,
+            1.3173056395698879e-17
+          ],
+          [
+            1.3357370765021415e-16,
+            1.3227266504323154e-16,
+            6.2222222222222205
+          ]
+        ],
+        "box": [
+          0.3208333333333333,
+          0.6481481481481481,
+          0.0,
+          0.42777777777777776,
+          1.2962962962962963,
+          6.222222222222222
+        ],
+        "cell": 16,
+        "index": [
+          2,
+          1,
+          1
+        ],
+        "material_tag": 1,
+        "native_vertices": [
+          [
+            0.3208333333333333,
+            0.6481481481481481,
+            0.0
+          ],
+          [
+            0.42777777777777776,
+            0.6481481481481481,
+            0.0
+          ],
+          [
+            0.3208333333333333,
+            1.2962962962962963,
+            0.0
+          ],
+          [
+            0.42777777777777776,
+            1.2962962962962963,
+            0.0
+          ],
+          [
+            0.3208333333333333,
+            0.6481481481481481,
+            6.222222222222222
+          ],
+          [
+            0.42777777777777776,
+            0.6481481481481481,
+            6.222222222222222
+          ],
+          [
+            0.3208333333333333,
+            1.2962962962962963,
+            6.222222222222222
+          ],
+          [
+            0.42777777777777776,
+            1.2962962962962963,
+            6.222222222222222
+          ]
+        ],
+        "origin": [
+          0.32083333333333347,
+          0.6481481481481478,
+          5.3250251723024986e-15
+        ],
+        "stratum": "tag1_narrow",
+        "volume": 0.43129858253315007,
+        "widths": [
+          0.10694444444444445,
+          0.6481481481481481,
+          6.222222222222222
+        ]
+      },
+      "cases": {
+        "baseline_p4": {
+          "Gram": {
+            "gram_norm_fro": 26373.47427267833,
+            "hermitian_defect_fro": 0.0,
+            "observed_condition_2": 96259412.04143983,
+            "observed_lambda_max": 14096.776601499041,
+            "observed_lambda_min": 0.00014644569608871449,
+            "positive_definite": true,
+            "rank_truncation_used": false
+          },
+          "actual_candidate_geometry": {
+            "children": [
+              {
+                "J": [
+                  [
+                    0.10694444444444445,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.6481481481481481,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.0,
+                    6.222222222222222
+                  ]
+                ],
+                "box": [
+                  0.3208333333333333,
+                  0.6481481481481481,
+                  0.0,
+                  0.42777777777777776,
+                  1.2962962962962963,
+                  6.222222222222222
+                ],
+                "cell": 0,
+                "origin": [
+                  0.3208333333333333,
+                  0.6481481481481481,
+                  0.0
+                ]
+              }
+            ],
+            "parent_box": [
+              0.3208333333333333,
+              0.6481481481481481,
+              0.0,
+              0.42777777777777776,
+              1.2962962962962963,
+              6.222222222222222
+            ],
+            "physical_z_midplane": null,
+            "split_axis": null
+          },
+          "case": "baseline_p4",
+          "case_wall_scope": "admission, native mesh/maps, two projection passes, candidate cleanup",
+          "case_wall_seconds": 5.693149212980643,
+          "continuity": {
+            "all_column_tangential_jump_relative": 0.0,
+            "broken_trace_constraint_rank": 0,
+            "internal_faces": 0,
+            "outer_boundary": "uniformly unconstrained"
+          },
+          "degree": 4,
+          "dimensions": {
+            "actual_constraint_codimension": 0,
+            "actual_global_dofs": 300,
+            "actual_independent_dimension": 300,
+            "broken_local_dofs": 300,
+            "expansion_rank_diagnostics": {
+              "changes_basis": false,
+              "largest": 1.0,
+              "largest_discarded": null,
+              "rank": 300,
+              "rank_truncation_used": false,
+              "relative_threshold": 1e-11,
+              "smallest_retained": 1.0
+            }
+          },
+          "mapping_gate_maxima": {
+            "actual_value_relative": 3.3691684251648824e-14,
+            "analytic_curl_relative": 9.30709103471953e-14,
+            "analytic_value_relative": 5.068584419819774e-15,
+            "candidate_value_relative": 9.203505635416954e-15
+          },
+          "split_axis": null,
+          "targets": {
+            "exact_p4_control": {
+              "error": {
+                "curl_G": 2.903323815399257e-29,
+                "curl_L2_squared": 2.339155714796086e-27,
+                "mass_L2_squared": 9.81773746372247e-29,
+                "total_G": 1.2721061279121728e-28
+              },
+              "explicit_Gram_residual_relative": 5.473153074988765e-15,
+              "galerkin_orthogonality_relative": 9.742361721038743e-15,
+              "observed_residual_energy_estimate_squared": 2.4243749745498143e-24,
+              "quadratic_identity_absolute_error": 1.2721061279121728e-28,
+              "relative_G_norm": 2.8841573098385666e-14,
+              "relative_energy": 8.318363387895237e-28,
+              "target": {
+                "curl_G": 0.018147376892965014,
+                "curl_L2_squared": 1.462101476334978,
+                "mass_L2_squared": 0.1347800763321878,
+                "total_G": 0.15292745322515283
+              }
+            },
+            "saved_s": {
+              "error": {
+                "curl_G": 1.5784012477019868e-06,
+                "curl_L2_squared": 0.00012716894613064867,
+                "mass_L2_squared": 7.400980671567542e-07,
+                "total_G": 2.3184993148587412e-06
+              },
+              "explicit_Gram_residual_relative": 8.271811904546756e-14,
+              "galerkin_orthogonality_relative": 1.0247705587466744e-13,
+              "observed_residual_energy_estimate_squared": 1.1850721020349282e-29,
+              "quadratic_identity_absolute_error": 3.3881317890172014e-21,
+              "relative_G_norm": 0.9785087264245559,
+              "relative_energy": 0.9574793276890063,
+              "target": {
+                "curl_G": 1.6292892789994047e-06,
+                "curl_L2_squared": 0.00013126890317273658,
+                "mass_L2_squared": 7.921722061845346e-07,
+                "total_G": 2.4214614851839395e-06
+              }
+            }
+          }
+        },
+        "hz_p4": {
+          "Gram": {
+            "gram_norm_fro": 18817.5375554918,
+            "hermitian_defect_fro": 0.0,
+            "observed_condition_2": 24950459.186268423,
+            "observed_lambda_max": 7163.087879355481,
+            "observed_lambda_min": 0.00028709242687195567,
+            "positive_definite": true,
+            "rank_truncation_used": false
+          },
+          "actual_candidate_geometry": {
+            "children": [
+              {
+                "J": [
+                  [
+                    0.10694444444444445,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.6481481481481481,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.0,
+                    3.111111111111111
+                  ]
+                ],
+                "box": [
+                  0.3208333333333333,
+                  0.6481481481481481,
+                  0.0,
+                  0.42777777777777776,
+                  1.2962962962962963,
+                  3.111111111111111
+                ],
+                "cell": 0,
+                "origin": [
+                  0.3208333333333333,
+                  0.6481481481481481,
+                  0.0
+                ]
+              },
+              {
+                "J": [
+                  [
+                    0.10694444444444445,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.6481481481481481,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.0,
+                    3.111111111111111
+                  ]
+                ],
+                "box": [
+                  0.3208333333333333,
+                  0.6481481481481481,
+                  3.111111111111111,
+                  0.42777777777777776,
+                  1.2962962962962963,
+                  6.222222222222222
+                ],
+                "cell": 1,
+                "origin": [
+                  0.3208333333333333,
+                  0.6481481481481481,
+                  3.111111111111111
+                ]
+              }
+            ],
+            "parent_box": [
+              0.3208333333333333,
+              0.6481481481481481,
+              0.0,
+              0.42777777777777776,
+              1.2962962962962963,
+              6.222222222222222
+            ],
+            "physical_z_midplane": 3.111111111111111,
+            "split_axis": 2
+          },
+          "case": "hz_p4",
+          "case_wall_scope": "admission, native mesh/maps, two projection passes, candidate cleanup",
+          "case_wall_seconds": 6.056675020023249,
+          "continuity": {
+            "actual_shared_global_rows": 40,
+            "all_column_tangential_jump_relative": 5.809002589741847e-15,
+            "broken_trace_constraint_rank": 40,
+            "internal_faces": 1,
+            "outer_boundary": "uniformly unconstrained",
+            "trace_rank_diagnostics": {
+              "changes_basis": false,
+              "largest": 4.140506950567803,
+              "largest_discarded": 8.785958572898854e-15,
+              "rank": 40,
+              "rank_truncation_used": false,
+              "relative_threshold": 1e-11,
+              "smallest_retained": 0.27973960294914585
+            }
+          },
+          "degree": 4,
+          "dimensions": {
+            "actual_constraint_codimension": 40,
+            "actual_global_dofs": 560,
+            "actual_independent_dimension": 560,
+            "broken_local_dofs": 600,
+            "expansion_rank_diagnostics": {
+              "changes_basis": false,
+              "largest": 1.4142135623730951,
+              "largest_discarded": null,
+              "rank": 560,
+              "rank_truncation_used": false,
+              "relative_threshold": 1e-11,
+              "smallest_retained": 1.0
+            }
+          },
+          "mapping_gate_maxima": {
+            "actual_value_relative": 3.3691684251648824e-14,
+            "analytic_curl_relative": 9.30709103471953e-14,
+            "analytic_value_relative": 5.068584419819774e-15,
+            "candidate_value_relative": 9.205144985863989e-15
+          },
+          "split_axis": 2,
+          "targets": {
+            "exact_p4_control": {
+              "error": {
+                "curl_G": 2.4907725072103516e-29,
+                "curl_L2_squared": 2.006770555042911e-27,
+                "mass_L2_squared": 8.67991381878145e-29,
+                "total_G": 1.1170686325991801e-28
+              },
+              "explicit_Gram_residual_relative": 9.269245804781232e-15,
+              "galerkin_orthogonality_relative": 1.1203592842209327e-14,
+              "observed_residual_energy_estimate_squared": 1.7756804645001497e-24,
+              "quadratic_identity_absolute_error": 2.498001805405485e-16,
+              "relative_G_norm": 2.7026960096928587e-14,
+              "relative_energy": 7.3045657208097e-28,
+              "target": {
+                "curl_G": 0.018147376892965014,
+                "curl_L2_squared": 1.462101476334978,
+                "mass_L2_squared": 0.1347800763321878,
+                "total_G": 0.15292745322515283
+              }
+            },
+            "saved_s": {
+              "error": {
+                "curl_G": 1.209471410448724e-07,
+                "curl_L2_squared": 9.744493351474677e-06,
+                "mass_L2_squared": 1.7294620475813654e-07,
+                "total_G": 2.9389334580300894e-07
+              },
+              "explicit_Gram_residual_relative": 2.1642006777706278e-14,
+              "galerkin_orthogonality_relative": 3.3651348121684354e-14,
+              "observed_residual_energy_estimate_squared": 9.186202894689857e-30,
+              "quadratic_identity_absolute_error": 7.247425654944607e-20,
+              "relative_G_norm": 0.34838230935733144,
+              "relative_energy": 0.12137023347314738,
+              "target": {
+                "curl_G": 1.6292892789994047e-06,
+                "curl_L2_squared": 0.00013126890317273658,
+                "mass_L2_squared": 7.921722061845346e-07,
+                "total_G": 2.4214614851839395e-06
+              }
+            }
+          }
+        }
+      },
+      "cell": 16,
+      "historical_baseline": {
+        "energy_G": 2.4214614851839217e-06,
+        "tail_p4_G": 2.3184993148587188e-06
+      },
+      "hz_versus_own_p4": {
+        "G_norm_error_ratio": 0.35603393199191063,
+        "G_norm_error_reduction_fraction": 0.6439660680080894,
+        "squared_G_error_ratio": 0.12676016072962046,
+        "squared_G_error_reduction_absolute": 2.0246059690557322e-06,
+        "squared_G_error_reduction_fraction": 0.8732398392703795
+      },
+      "index": [
+        2,
+        1,
+        1
+      ],
+      "material_tag": 1,
+      "new_this_batch": true,
+      "stratum": "tag1_narrow"
+    },
+    {
+      "actual_parent_geometry": {
+        "J": [
+          [
+            0.21388888888888885,
+            9.690056916589196e-18,
+            9.31058615621927e-18
+          ],
+          [
+            3.122502256758253e-17,
+            0.648148148148148,
+            1.3173056395698879e-17
+          ],
+          [
+            1.3357370765021415e-16,
+            1.3227266504323154e-16,
+            6.2222222222222205
+          ]
+        ],
+        "box": [
+          0.6416666666666666,
+          0.6481481481481481,
+          0.0,
+          0.8555555555555555,
+          1.2962962962962963,
+          6.222222222222222
+        ],
+        "cell": 28,
+        "index": [
+          4,
+          1,
+          1
+        ],
+        "material_tag": 1,
+        "native_vertices": [
+          [
+            0.6416666666666666,
+            0.6481481481481481,
+            0.0
+          ],
+          [
+            0.8555555555555555,
+            0.6481481481481481,
+            0.0
+          ],
+          [
+            0.6416666666666666,
+            1.2962962962962963,
+            0.0
+          ],
+          [
+            0.8555555555555555,
+            1.2962962962962963,
+            0.0
+          ],
+          [
+            0.6416666666666666,
+            0.6481481481481481,
+            6.222222222222222
+          ],
+          [
+            0.8555555555555555,
+            0.6481481481481481,
+            6.222222222222222
+          ],
+          [
+            0.6416666666666666,
+            1.2962962962962963,
+            6.222222222222222
+          ],
+          [
+            0.8555555555555555,
+            1.2962962962962963,
+            6.222222222222222
+          ]
+        ],
+        "origin": [
+          0.6416666666666669,
+          0.6481481481481478,
+          5.3250251723024986e-15
+        ],
+        "stratum": "tag1_wide",
+        "volume": 0.8625971650663006,
+        "widths": [
+          0.2138888888888889,
+          0.6481481481481481,
+          6.222222222222222
+        ]
+      },
+      "cases": {
+        "baseline_p4": {
+          "Gram": {
+            "gram_norm_fro": 13278.378291420251,
+            "hermitian_defect_fro": 0.0,
+            "observed_condition_2": 33056250.491986975,
+            "observed_lambda_max": 7084.344945287603,
+            "observed_lambda_min": 0.00021431181213383196,
+            "positive_definite": true,
+            "rank_truncation_used": false
+          },
+          "actual_candidate_geometry": {
+            "children": [
+              {
+                "J": [
+                  [
+                    0.2138888888888889,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.6481481481481481,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.0,
+                    6.222222222222222
+                  ]
+                ],
+                "box": [
+                  0.6416666666666666,
+                  0.6481481481481481,
+                  0.0,
+                  0.8555555555555555,
+                  1.2962962962962963,
+                  6.222222222222222
+                ],
+                "cell": 0,
+                "origin": [
+                  0.6416666666666666,
+                  0.6481481481481481,
+                  0.0
+                ]
+              }
+            ],
+            "parent_box": [
+              0.6416666666666666,
+              0.6481481481481481,
+              0.0,
+              0.8555555555555555,
+              1.2962962962962963,
+              6.222222222222222
+            ],
+            "physical_z_midplane": null,
+            "split_axis": null
+          },
+          "case": "baseline_p4",
+          "case_wall_scope": "admission, native mesh/maps, two projection passes, candidate cleanup",
+          "case_wall_seconds": 5.954224243003409,
+          "continuity": {
+            "all_column_tangential_jump_relative": 0.0,
+            "broken_trace_constraint_rank": 0,
+            "internal_faces": 0,
+            "outer_boundary": "uniformly unconstrained"
+          },
+          "degree": 4,
+          "dimensions": {
+            "actual_constraint_codimension": 0,
+            "actual_global_dofs": 300,
+            "actual_independent_dimension": 300,
+            "broken_local_dofs": 300,
+            "expansion_rank_diagnostics": {
+              "changes_basis": false,
+              "largest": 1.0,
+              "largest_discarded": null,
+              "rank": 300,
+              "rank_truncation_used": false,
+              "relative_threshold": 1e-11,
+              "smallest_retained": 1.0
+            }
+          },
+          "mapping_gate_maxima": {
+            "actual_value_relative": 3.861538096625541e-14,
+            "analytic_curl_relative": 4.910668544501356e-14,
+            "analytic_value_relative": 4.8159328092679864e-15,
+            "candidate_value_relative": 9.398258619478671e-15
+          },
+          "split_axis": null,
+          "targets": {
+            "exact_p4_control": {
+              "error": {
+                "curl_G": 1.9850206248100487e-29,
+                "curl_L2_squared": 1.5992953710104817e-27,
+                "mass_L2_squared": 3.5587946156729153e-29,
+                "total_G": 5.543815240482964e-29
+              },
+              "explicit_Gram_residual_relative": 4.277272727233559e-15,
+              "galerkin_orthogonality_relative": 6.183028578671641e-15,
+              "observed_residual_energy_estimate_squared": 1.0212926296395036e-24,
+              "quadratic_identity_absolute_error": 2.775557561562337e-16,
+              "relative_G_norm": 1.3462093133577193e-14,
+              "relative_energy": 1.8122795153710622e-28,
+              "target": {
+                "curl_G": 0.03630646498787657,
+                "curl_L2_squared": 2.9251465031211694,
+                "mass_L2_squared": 0.2695964155259979,
+                "total_G": 0.3059028805138745
+              }
+            },
+            "saved_s": {
+              "error": {
+                "curl_G": 1.2723012642955296e-06,
+                "curl_L2_squared": 0.00010250702169471602,
+                "mass_L2_squared": 1.4670904172910288e-06,
+                "total_G": 2.7393916815865586e-06
+              },
+              "explicit_Gram_residual_relative": 4.069636398708799e-14,
+              "galerkin_orthogonality_relative": 4.687234229161768e-14,
+              "observed_residual_energy_estimate_squared": 5.904237897254756e-30,
+              "quadratic_identity_absolute_error": 8.470329472543003e-22,
+              "relative_G_norm": 0.9734991551942325,
+              "relative_energy": 0.9477006051638843,
+              "target": {
+                "curl_G": 1.304255704168673e-06,
+                "curl_L2_squared": 0.00010508153337150233,
+                "mass_L2_squared": 1.5863108594274743e-06,
+                "total_G": 2.8905665635961476e-06
+              }
+            }
+          }
+        },
+        "hz_p4": {
+          "Gram": {
+            "gram_norm_fro": 9477.694157882615,
+            "hermitian_defect_fro": 0.0,
+            "observed_condition_2": 8617190.512889529,
+            "observed_lambda_max": 3601.011290244837,
+            "observed_lambda_min": 0.00041788693018431837,
+            "positive_definite": true,
+            "rank_truncation_used": false
+          },
+          "actual_candidate_geometry": {
+            "children": [
+              {
+                "J": [
+                  [
+                    0.2138888888888889,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.6481481481481481,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.0,
+                    3.111111111111111
+                  ]
+                ],
+                "box": [
+                  0.6416666666666666,
+                  0.6481481481481481,
+                  0.0,
+                  0.8555555555555555,
+                  1.2962962962962963,
+                  3.111111111111111
+                ],
+                "cell": 0,
+                "origin": [
+                  0.6416666666666666,
+                  0.6481481481481481,
+                  0.0
+                ]
+              },
+              {
+                "J": [
+                  [
+                    0.2138888888888889,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.6481481481481481,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.0,
+                    3.111111111111111
+                  ]
+                ],
+                "box": [
+                  0.6416666666666666,
+                  0.6481481481481481,
+                  3.111111111111111,
+                  0.8555555555555555,
+                  1.2962962962962963,
+                  6.222222222222222
+                ],
+                "cell": 1,
+                "origin": [
+                  0.6416666666666666,
+                  0.6481481481481481,
+                  3.111111111111111
+                ]
+              }
+            ],
+            "parent_box": [
+              0.6416666666666666,
+              0.6481481481481481,
+              0.0,
+              0.8555555555555555,
+              1.2962962962962963,
+              6.222222222222222
+            ],
+            "physical_z_midplane": 3.111111111111111,
+            "split_axis": 2
+          },
+          "case": "hz_p4",
+          "case_wall_scope": "admission, native mesh/maps, two projection passes, candidate cleanup",
+          "case_wall_seconds": 5.963072598999133,
+          "continuity": {
+            "actual_shared_global_rows": 40,
+            "all_column_tangential_jump_relative": 5.830831570397245e-15,
+            "broken_trace_constraint_rank": 40,
+            "internal_faces": 1,
+            "outer_boundary": "uniformly unconstrained",
+            "trace_rank_diagnostics": {
+              "changes_basis": false,
+              "largest": 4.140506950567803,
+              "largest_discarded": 8.785958572898854e-15,
+              "rank": 40,
+              "rank_truncation_used": false,
+              "relative_threshold": 1e-11,
+              "smallest_retained": 0.27973960294914585
+            }
+          },
+          "degree": 4,
+          "dimensions": {
+            "actual_constraint_codimension": 40,
+            "actual_global_dofs": 560,
+            "actual_independent_dimension": 560,
+            "broken_local_dofs": 600,
+            "expansion_rank_diagnostics": {
+              "changes_basis": false,
+              "largest": 1.4142135623730951,
+              "largest_discarded": null,
+              "rank": 560,
+              "rank_truncation_used": false,
+              "relative_threshold": 1e-11,
+              "smallest_retained": 1.0
+            }
+          },
+          "mapping_gate_maxima": {
+            "actual_value_relative": 3.861538096625541e-14,
+            "analytic_curl_relative": 4.910668544501356e-14,
+            "analytic_value_relative": 4.8159328092679864e-15,
+            "candidate_value_relative": 9.51974447965834e-15
+          },
+          "split_axis": 2,
+          "targets": {
+            "exact_p4_control": {
+              "error": {
+                "curl_G": 1.3205738601882322e-29,
+                "curl_L2_squared": 1.0639625781614154e-27,
+                "mass_L2_squared": 3.8897761028431584e-29,
+                "total_G": 5.210349963031391e-29
+              },
+              "explicit_Gram_residual_relative": 5.0170624638682345e-15,
+              "galerkin_orthogonality_relative": 7.982778909525925e-15,
+              "observed_residual_energy_estimate_squared": 3.6203931393955403e-25,
+              "quadratic_identity_absolute_error": 5.551115123126303e-16,
+              "relative_G_norm": 1.3050936121306654e-14,
+              "relative_energy": 1.7032693364242678e-28,
+              "target": {
+                "curl_G": 0.03630646498787657,
+                "curl_L2_squared": 2.9251465031211694,
+                "mass_L2_squared": 0.2695964155259979,
+                "total_G": 0.3059028805138745
+              }
+            },
+            "saved_s": {
+              "error": {
+                "curl_G": 5.271014061964419e-07,
+                "curl_L2_squared": 4.246761108911667e-05,
+                "mass_L2_squared": 1.1811609839861355e-06,
+                "total_G": 1.7082623901825775e-06
+              },
+              "explicit_Gram_residual_relative": 2.1230184216136307e-14,
+              "galerkin_orthogonality_relative": 2.8766789216676826e-14,
+              "observed_residual_energy_estimate_squared": 3.3103277558701026e-30,
+              "quadratic_identity_absolute_error": 5.929230630780102e-21,
+              "relative_G_norm": 0.7687511922712807,
+              "relative_energy": 0.5909783956185157,
+              "target": {
+                "curl_G": 1.304255704168673e-06,
+                "curl_L2_squared": 0.00010508153337150233,
+                "mass_L2_squared": 1.5863108594274743e-06,
+                "total_G": 2.8905665635961476e-06
+              }
+            }
+          }
+        }
+      },
+      "cell": 28,
+      "historical_baseline": {
+        "energy_G": 2.890566563596124e-06,
+        "tail_p4_G": 2.7393916815865315e-06
+      },
+      "hz_versus_own_p4": {
+        "G_norm_error_ratio": 0.7896783352810405,
+        "G_norm_error_reduction_fraction": 0.21032166471895952,
+        "squared_G_error_ratio": 0.6235918732122353,
+        "squared_G_error_reduction_absolute": 1.0311292914039812e-06,
+        "squared_G_error_reduction_fraction": 0.3764081267877647
+      },
+      "index": [
+        4,
+        1,
+        1
+      ],
+      "material_tag": 1,
+      "new_this_batch": true,
+      "stratum": "tag1_wide"
+    },
+    {
+      "actual_parent_geometry": {
+        "J": [
+          [
+            0.11018518518518514,
+            5.481997234629832e-18,
+            5.5091022889419694e-18
+          ],
+          [
+            3.122502256758253e-17,
+            0.648148148148148,
+            1.3173056395698879e-17
+          ],
+          [
+            1.3357370765021415e-16,
+            1.3227266504323154e-16,
+            6.2222222222222205
+          ]
+        ],
+        "box": [
+          1.1861111111111111,
+          0.6481481481481481,
+          0.0,
+          1.2962962962962963,
+          1.2962962962962963,
+          6.222222222222222
+        ],
+        "cell": 52,
+        "index": [
+          8,
+          1,
+          1
+        ],
+        "material_tag": 3,
+        "native_vertices": [
+          [
+            1.1861111111111111,
+            0.6481481481481481,
+            0.0
+          ],
+          [
+            1.2962962962962963,
+            0.6481481481481481,
+            0.0
+          ],
+          [
+            1.1861111111111111,
+            1.2962962962962963,
+            0.0
+          ],
+          [
+            1.2962962962962963,
+            1.2962962962962963,
+            0.0
+          ],
+          [
+            1.1861111111111111,
+            0.6481481481481481,
+            6.222222222222222
+          ],
+          [
+            1.2962962962962963,
+            0.6481481481481481,
+            6.222222222222222
+          ],
+          [
+            1.1861111111111111,
+            1.2962962962962963,
+            6.222222222222222
+          ],
+          [
+            1.2962962962962963,
+            1.2962962962962963,
+            6.222222222222222
+          ]
+        ],
+        "origin": [
+          1.1861111111111111,
+          0.6481481481481478,
+          5.3250251723024986e-15
+        ],
+        "stratum": "tag3_narrow",
+        "volume": 0.44436823654930596,
+        "widths": [
+          0.11018518518518516,
+          0.6481481481481481,
+          6.222222222222222
+        ]
+      },
+      "cases": {
+        "baseline_p4": {
+          "Gram": {
+            "gram_norm_fro": 25601.372279675805,
+            "hermitian_defect_fro": 0.0,
+            "observed_condition_2": 91521851.30375275,
+            "observed_lambda_max": 13683.58404607293,
+            "observed_lambda_min": 0.00014951166143545712,
+            "positive_definite": true,
+            "rank_truncation_used": false
+          },
+          "actual_candidate_geometry": {
+            "children": [
+              {
+                "J": [
+                  [
+                    0.11018518518518516,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.6481481481481481,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.0,
+                    6.222222222222222
+                  ]
+                ],
+                "box": [
+                  1.1861111111111111,
+                  0.6481481481481481,
+                  0.0,
+                  1.2962962962962963,
+                  1.2962962962962963,
+                  6.222222222222222
+                ],
+                "cell": 0,
+                "origin": [
+                  1.1861111111111111,
+                  0.6481481481481481,
+                  0.0
+                ]
+              }
+            ],
+            "parent_box": [
+              1.1861111111111111,
+              0.6481481481481481,
+              0.0,
+              1.2962962962962963,
+              1.2962962962962963,
+              6.222222222222222
+            ],
+            "physical_z_midplane": null,
+            "split_axis": null
+          },
+          "case": "baseline_p4",
+          "case_wall_scope": "admission, native mesh/maps, two projection passes, candidate cleanup",
+          "case_wall_seconds": 6.0519718150026165,
+          "continuity": {
+            "all_column_tangential_jump_relative": 0.0,
+            "broken_trace_constraint_rank": 0,
+            "internal_faces": 0,
+            "outer_boundary": "uniformly unconstrained"
+          },
+          "degree": 4,
+          "dimensions": {
+            "actual_constraint_codimension": 0,
+            "actual_global_dofs": 300,
+            "actual_independent_dimension": 300,
+            "broken_local_dofs": 300,
+            "expansion_rank_diagnostics": {
+              "changes_basis": false,
+              "largest": 1.0,
+              "largest_discarded": null,
+              "rank": 300,
+              "rank_truncation_used": false,
+              "relative_threshold": 1e-11,
+              "smallest_retained": 1.0
+            }
+          },
+          "mapping_gate_maxima": {
+            "actual_value_relative": 3.675169970080347e-14,
+            "analytic_curl_relative": 9.818769836084582e-14,
+            "analytic_value_relative": 6.484816086370463e-15,
+            "candidate_value_relative": 2.3305538367250193e-14
+          },
+          "split_axis": null,
+          "targets": {
+            "exact_p4_control": {
+              "error": {
+                "curl_G": 3.6405242230031287e-29,
+                "curl_L2_squared": 2.933104807642783e-27,
+                "mass_L2_squared": 6.671096157236074e-29,
+                "total_G": 1.0311620380239202e-28
+              },
+              "explicit_Gram_residual_relative": 5.854558948015763e-15,
+              "galerkin_orthogonality_relative": 1.136101651198842e-14,
+              "observed_residual_energy_estimate_squared": 2.7176920410500896e-24,
+              "quadratic_identity_absolute_error": 3.608224830030728e-16,
+              "relative_G_norm": 2.5499163085261268e-14,
+              "relative_energy": 6.502073180487509e-28,
+              "target": {
+                "curl_G": 0.018813739914396208,
+                "curl_L2_squared": 1.5157891449802068,
+                "mass_L2_squared": 0.13977599129908827,
+                "total_G": 0.15858973121348446
+              }
+            },
+            "saved_s": {
+              "error": {
+                "curl_G": 1.276413245933487e-07,
+                "curl_L2_squared": 1.0283831665039915e-05,
+                "mass_L2_squared": 7.920823463971072e-08,
+                "total_G": 2.0684955923305944e-07
+              },
+              "explicit_Gram_residual_relative": 2.2447254348894753e-13,
+              "galerkin_orthogonality_relative": 2.9329666898384894e-13,
+              "observed_residual_energy_estimate_squared": 6.826578753974317e-31,
+              "quadratic_identity_absolute_error": 5.293955920339377e-23,
+              "relative_G_norm": 0.9800100879588911,
+              "relative_energy": 0.9604197725011936,
+              "target": {
+                "curl_G": 1.3189983603192578e-07,
+                "curl_L2_squared": 1.0626932262887015e-05,
+                "mass_L2_squared": 8.347427969912281e-08,
+                "total_G": 2.153741157310486e-07
+              }
+            }
+          }
+        },
+        "hz_p4": {
+          "Gram": {
+            "gram_norm_fro": 18266.775245042,
+            "hermitian_defect_fro": 0.0,
+            "observed_condition_2": 23727276.57901794,
+            "observed_lambda_max": 6953.175887783803,
+            "observed_lambda_min": 0.00029304567950004447,
+            "positive_definite": true,
+            "rank_truncation_used": false
+          },
+          "actual_candidate_geometry": {
+            "children": [
+              {
+                "J": [
+                  [
+                    0.11018518518518516,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.6481481481481481,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.0,
+                    3.111111111111111
+                  ]
+                ],
+                "box": [
+                  1.1861111111111111,
+                  0.6481481481481481,
+                  0.0,
+                  1.2962962962962963,
+                  1.2962962962962963,
+                  3.111111111111111
+                ],
+                "cell": 0,
+                "origin": [
+                  1.1861111111111111,
+                  0.6481481481481481,
+                  0.0
+                ]
+              },
+              {
+                "J": [
+                  [
+                    0.11018518518518516,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.6481481481481481,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    0.0,
+                    3.111111111111111
+                  ]
+                ],
+                "box": [
+                  1.1861111111111111,
+                  0.6481481481481481,
+                  3.111111111111111,
+                  1.2962962962962963,
+                  1.2962962962962963,
+                  6.222222222222222
+                ],
+                "cell": 1,
+                "origin": [
+                  1.1861111111111111,
+                  0.6481481481481481,
+                  3.111111111111111
+                ]
+              }
+            ],
+            "parent_box": [
+              1.1861111111111111,
+              0.6481481481481481,
+              0.0,
+              1.2962962962962963,
+              1.2962962962962963,
+              6.222222222222222
+            ],
+            "physical_z_midplane": 3.111111111111111,
+            "split_axis": 2
+          },
+          "case": "hz_p4",
+          "case_wall_scope": "admission, native mesh/maps, two projection passes, candidate cleanup",
+          "case_wall_seconds": 6.159275449987035,
+          "continuity": {
+            "actual_shared_global_rows": 40,
+            "all_column_tangential_jump_relative": 5.8579583167229296e-15,
+            "broken_trace_constraint_rank": 40,
+            "internal_faces": 1,
+            "outer_boundary": "uniformly unconstrained",
+            "trace_rank_diagnostics": {
+              "changes_basis": false,
+              "largest": 4.140506950567791,
+              "largest_discarded": 6.7816283381966916e-15,
+              "rank": 40,
+              "rank_truncation_used": false,
+              "relative_threshold": 1e-11,
+              "smallest_retained": 0.27973960294914785
+            }
+          },
+          "degree": 4,
+          "dimensions": {
+            "actual_constraint_codimension": 40,
+            "actual_global_dofs": 560,
+            "actual_independent_dimension": 560,
+            "broken_local_dofs": 600,
+            "expansion_rank_diagnostics": {
+              "changes_basis": false,
+              "largest": 1.4142135623730951,
+              "largest_discarded": null,
+              "rank": 560,
+              "rank_truncation_used": false,
+              "relative_threshold": 1e-11,
+              "smallest_retained": 1.0
+            }
+          },
+          "mapping_gate_maxima": {
+            "actual_value_relative": 3.675169970080347e-14,
+            "analytic_curl_relative": 9.818769836084582e-14,
+            "analytic_value_relative": 6.484816086370463e-15,
+            "candidate_value_relative": 2.343330135042655e-14
+          },
+          "split_axis": 2,
+          "targets": {
+            "exact_p4_control": {
+              "error": {
+                "curl_G": 3.3347123361905895e-29,
+                "curl_L2_squared": 2.6867176775211114e-27,
+                "mass_L2_squared": 1.9528703152737973e-28,
+                "total_G": 2.286341548892856e-28
+              },
+              "explicit_Gram_residual_relative": 7.369341442761668e-15,
+              "galerkin_orthogonality_relative": 1.2914615248901738e-14,
+              "observed_residual_energy_estimate_squared": 1.0998745255323088e-24,
+              "quadratic_identity_absolute_error": 1.2212453270874436e-15,
+              "relative_G_norm": 3.796933779002858e-14,
+              "relative_energy": 1.4416706122132922e-27,
+              "target": {
+                "curl_G": 0.018813739914396208,
+                "curl_L2_squared": 1.5157891449802068,
+                "mass_L2_squared": 0.13977599129908827,
+                "total_G": 0.15858973121348446
+              }
+            },
+            "saved_s": {
+              "error": {
+                "curl_G": 9.976599304239958e-09,
+                "curl_L2_squared": 8.037966400084221e-07,
+                "mass_L2_squared": 1.2578563819426715e-08,
+                "total_G": 2.2555163123666673e-08
+              },
+              "explicit_Gram_residual_relative": 2.910768067297919e-14,
+              "galerkin_orthogonality_relative": 3.742878693812867e-14,
+              "observed_residual_energy_estimate_squared": 1.7938163732981297e-30,
+              "quadratic_identity_absolute_error": 7.279189390466644e-23,
+              "relative_G_norm": 0.32361320340333494,
+              "relative_energy": 0.10472550541696823,
+              "target": {
+                "curl_G": 1.3189983603192578e-07,
+                "curl_L2_squared": 1.0626932262887015e-05,
+                "mass_L2_squared": 8.347427969912281e-08,
+                "total_G": 2.153741157310486e-07
+              }
+            }
+          }
+        }
+      },
+      "cell": 52,
+      "historical_baseline": {
+        "energy_G": 2.1537411573104714e-07,
+        "tail_p4_G": 2.0684955923305748e-07
+      },
+      "hz_versus_own_p4": {
+        "G_norm_error_ratio": 0.33021415532297016,
+        "G_norm_error_reduction_fraction": 0.6697858446770298,
+        "squared_G_error_ratio": 0.10904138837566266,
+        "squared_G_error_reduction_absolute": 1.8429439610939277e-07,
+        "squared_G_error_reduction_fraction": 0.8909586116243373
+      },
+      "index": [
+        8,
+        1,
+        1
+      ],
+      "material_tag": 3,
+      "new_this_batch": true,
+      "stratum": "tag3_narrow"
+    },
+    {
+      "cases": {
+        "baseline_p4": {
+          "Gram": {
+            "gram_norm_fro": 26373.47427267836,
+            "hermitian_defect_fro": 0.0,
+            "observed_condition_2": 96259412.06305096,
+            "observed_lambda_max": 14096.776601499065,
+            "observed_lambda_min": 0.00014644569605583633,
+            "positive_definite": true,
+            "rank_truncation_used": false
+          },
+          "case": "baseline_p4",
+          "case_wall_scope": "admission, native mesh/maps, two projection passes, candidate cleanup; total batch wall is independent",
+          "case_wall_seconds": 6.0675800589961,
+          "continuity": {
+            "all_column_tangential_jump_relative": 0.0,
+            "broken_trace_constraint_rank": 0,
+            "internal_faces": 0,
+            "outer_boundary": "uniformly unconstrained"
+          },
+          "degree": 4,
+          "dimensions": {
+            "actual_constraint_codimension": 0,
+            "actual_global_dofs": 300,
+            "actual_independent_dimension": 300,
+            "broken_local_dofs": 300,
+            "expansion_rank_diagnostics": {
+              "changes_basis": false,
+              "largest": 1.0,
+              "largest_discarded": null,
+              "rank": 300,
+              "rank_truncation_used": false,
+              "relative_threshold": 1e-11,
+              "smallest_retained": 1.0
+            }
+          },
+          "mapping_gate_maxima": {
+            "actual_value_relative": 9.700013731901958e-14,
+            "analytic_curl_relative": 2.0080414051191751e-13,
+            "analytic_value_relative": 1.1306071942344466e-14,
+            "candidate_value_relative": 4.788259222457665e-14
+          },
+          "split_axis": null,
+          "targets": {
+            "exact_p4_control": {
+              "error": {
+                "curl_G": 1.435782002363305e-28,
+                "curl_L2_squared": 1.156783703635083e-26,
+                "mass_L2_squared": 1.9099896137031672e-28,
+                "total_G": 3.345771616066472e-28
+              },
+              "explicit_Gram_residual_relative": 9.152741993719232e-14,
+              "galerkin_orthogonality_relative": 1.353150214421467e-13,
+              "observed_residual_energy_estimate_squared": 3.1459780296597806e-24,
+              "quadratic_identity_absolute_error": 2.0816681711755143e-16,
+              "relative_G_norm": 5.508481462577335e-14,
+              "relative_energy": 3.0343368023558137e-27,
+              "target": {
+                "curl_G": 0.003888262064176465,
+                "curl_L2_squared": 0.313270272499468,
+                "mass_L2_squared": 0.10637542433572697,
+                "total_G": 0.11026368639990343
+              }
+            },
+            "saved_s": {
+              "error": {
+                "curl_G": 1.0950380033828773e-06,
+                "curl_L2_squared": 8.822523997998162e-05,
+                "mass_L2_squared": 4.7131519187572316e-07,
+                "total_G": 1.5663531952586005e-06
+              },
+              "explicit_Gram_residual_relative": 5.790178890044815e-14,
+              "galerkin_orthogonality_relative": 7.625852220228656e-14,
+              "observed_residual_energy_estimate_squared": 5.289370558564509e-30,
+              "quadratic_identity_absolute_error": 1.4823076576950256e-21,
+              "relative_G_norm": 0.9789830517470454,
+              "relative_energy": 0.9584078156079581,
+              "target": {
+                "curl_G": 1.1262865851247077e-06,
+                "curl_L2_squared": 9.074288193824259e-05,
+                "mass_L2_squared": 5.080419019244066e-07,
+                "total_G": 1.6343284870491142e-06
+              }
+            }
+          }
+        },
+        "hz_p4": {
+          "Gram": {
+            "gram_norm_fro": 18817.537555491825,
+            "hermitian_defect_fro": 0.0,
+            "observed_condition_2": 24950459.182378657,
+            "observed_lambda_max": 7163.087879355485,
+            "observed_lambda_min": 0.0002870924269167134,
+            "positive_definite": true,
+            "rank_truncation_used": false
+          },
+          "case": "hz_p4",
+          "case_wall_scope": "admission, native mesh/maps, two projection passes, candidate cleanup; total batch wall is independent",
+          "case_wall_seconds": 6.177139931009151,
+          "continuity": {
+            "actual_shared_global_rows": 40,
+            "all_column_tangential_jump_relative": 6.094745779986438e-15,
+            "broken_trace_constraint_rank": 40,
+            "internal_faces": 1,
+            "outer_boundary": "uniformly unconstrained",
+            "trace_rank_diagnostics": {
+              "changes_basis": false,
+              "largest": 4.140506950567801,
+              "largest_discarded": 6.045067103831246e-15,
+              "rank": 40,
+              "rank_truncation_used": false,
+              "relative_threshold": 1e-11,
+              "smallest_retained": 0.27973960294914596
+            }
+          },
+          "degree": 4,
+          "dimensions": {
+            "actual_constraint_codimension": 40,
+            "actual_global_dofs": 560,
+            "actual_independent_dimension": 560,
+            "broken_local_dofs": 600,
+            "expansion_rank_diagnostics": {
+              "changes_basis": false,
+              "largest": 1.4142135623730951,
+              "largest_discarded": null,
+              "rank": 560,
+              "rank_truncation_used": false,
+              "relative_threshold": 1e-11,
+              "smallest_retained": 1.0
+            }
+          },
+          "mapping_gate_maxima": {
+            "actual_value_relative": 9.700013731901958e-14,
+            "analytic_curl_relative": 2.0080414051191751e-13,
+            "analytic_value_relative": 1.1306071942344466e-14,
+            "candidate_value_relative": 4.329922386351474e-14
+          },
+          "split_axis": 2,
+          "targets": {
+            "exact_p4_control": {
+              "error": {
+                "curl_G": 2.096558872024416e-28,
+                "curl_L2_squared": 1.68915972820205e-26,
+                "mass_L2_squared": 3.453999835125442e-28,
+                "total_G": 5.550558707149857e-28
+              },
+              "explicit_Gram_residual_relative": 7.448164988748768e-14,
+              "galerkin_orthogonality_relative": 9.700833250947173e-14,
+              "observed_residual_energy_estimate_squared": 7.942805215477434e-25,
+              "quadratic_identity_absolute_error": 5.412337245042088e-16,
+              "relative_G_norm": 7.094995040954294e-14,
+              "relative_energy": 5.033895463116603e-27,
+              "target": {
+                "curl_G": 0.003888262064176465,
+                "curl_L2_squared": 0.313270272499468,
+                "mass_L2_squared": 0.10637542433572697,
+                "total_G": 0.11026368639990343
+              }
+            },
+            "saved_s": {
+              "error": {
+                "curl_G": 1.0699925654248309e-07,
+                "curl_L2_squared": 8.620737414571269e-06,
+                "mass_L2_squared": 1.4966072378454593e-07,
+                "total_G": 2.5665998032702905e-07
+              },
+              "explicit_Gram_residual_relative": 2.7503241695700888e-14,
+              "galerkin_orthogonality_relative": 3.492601383575427e-14,
+              "observed_residual_energy_estimate_squared": 1.0580262800088794e-29,
+              "quadratic_identity_absolute_error": 4.9763185651190145e-21,
+              "relative_G_norm": 0.3962866142140058,
+              "relative_energy": 0.15704308060520028,
+              "target": {
+                "curl_G": 1.1262865851247077e-06,
+                "curl_L2_squared": 9.074288193824259e-05,
+                "mass_L2_squared": 5.080419019244066e-07,
+                "total_G": 1.6343284870491142e-06
+              }
+            }
+          }
+        }
+      },
+      "cell": 91,
+      "hz_versus_own_p4": {
+        "G_norm_error_ratio": 0.404794151958823,
+        "G_norm_error_reduction_fraction": 0.595205848041177,
+        "squared_G_error_ratio": 0.16385830546006272,
+        "squared_G_error_reduction_absolute": 1.3096932149315716e-06,
+        "squared_G_error_reduction_fraction": 0.8361416945399373
+      },
+      "index": [
+        15,
+        0,
+        1
+      ],
+      "material_tag": 1,
+      "new_this_batch": false,
+      "physical_z_evidence": {
+        "coordinate_status": "These absolute bounds/midplane are derived from the frozen producer input axes and index, not a separately persisted actual child-coordinate receipt.",
+        "input_derived_parent_box": [
+          2.1648148148148145,
+          0.0,
+          0.0,
+          2.271759259259259,
+          0.6481481481481481,
+          6.222222222222222
+        ],
+        "input_derived_z_midplane": 3.111111111111111,
+        "not_saved": [
+          "actual child vertices",
+          "actual child bounding boxes",
+          "separate physical midplane receipt",
+          "per-piece mass/curl integrals; only final sums and per-piece mapping controls persisted"
+        ],
+        "saved_actual_receipts": [
+          "split_axis=2",
+          "native parent index [15,0,1], widths, volume, map/geometry hashes",
+          "eight per-piece actual-field and candidate Function.eval plus analytic value/curl qualification scalars",
+          "560 independent global DOFs; 600 broken DOFs; 40 shared rows, trace rank, and codimension; all-column jump 6.094745779986438e-15"
+        ],
+        "source_bound_runtime_checks": [
+          "hz case is degree4 axis2; axes only insert physical z midpoint",
+          "structured mesh builds (x,y,z) points from x_values,y_values,z_values",
+          "actual child xyz determine positive affine tensor-map Jacobian and physical min/max box",
+          "every common physical octant midpoint must have exactly one actual child owner in both passes",
+          "physical z-midplane with x/y tangents supplies all-column trace and broken-trace rank tests",
+          "eight common pieces compare transformed fields to native Function.eval and analytic physical curl"
+        ]
+      },
+      "source_report": "https://github.com/Rookie1234567/MyFEniCS/blob/1141d60b5f85252690095654a70c653caceac416/docs/task40extra_dot_parallel_cloud/reports/hp_reference_free/2026-10-13_uniform36p6_progress/saved_s_cell91_20261014_zh.md",
+      "stratum": "tag1_narrow",
+      "widths": [
+        0.10694444444444429,
+        0.6481481481481481,
+        6.222222222222222
+      ]
+    }
+  ],
+  "cells_order": [
+    16,
+    28,
+    52,
+    91
+  ],
+  "cost": {
+    "AS_hard_soft_bytes": 6442450944,
+    "B_actions": 0,
+    "CG_steps": 0,
+    "Maxwell_steps": 0,
+    "admissions": 110,
+    "case_times_are_subsets_not_additional_cost": true,
+    "child_exit_code": 0,
+    "cleanup_verified": true,
+    "global_factors": 0,
+    "local_factors": 6,
+    "output_bytes": 488555,
+    "output_bytes_scope": "All retained files under this numerical attempt directory at report construction; excludes publication and independent-review files",
+    "phase4_exact_total_unknown": true,
+    "phase4_known_terminal_seconds": 20209.454989423088,
+    "phase4_seconds_lower_bound": 28123.447272266072,
+    "preparation_and_review": "Separate and not fully stopwatched; not zero and not included in the numerical wall",
+    "prior_cell91_times_reused_not_new_charge": true,
+    "remaining_setup_supervision_evidence_seconds": 3.119236411032034,
+    "sampled_peak_tree_RSS_bytes": 371113984,
+    "samples": 152,
+    "sum_case_seconds": 35.878368339996086,
+    "supervised_seconds": 38.99760475102812,
+    "supervisor_limits": {
+      "available_bytes": 1073741824,
+      "disk_free_bytes": 4294967296,
+      "new_artifact_cap_bytes": 67108864,
+      "rss_bytes": 8589934592,
+      "seconds": 120.0,
+      "wall_time_policy": "enforce",
+      "zero_swap": true
+    }
+  },
+  "created_utc": "2026-10-14T19:27:53.461265+00:00",
+  "evidence": {
+    "command": {
+      "bytes": 378172,
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_saved_s_representatives_candidate/command.json",
+      "sha256": "25a03218230357e2c72764fc6ae8ba90b90ce9b0b7410f0133fa1c85499157f8"
+    },
+    "ledger": {
+      "bytes": 38763,
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_execution_ledger_v61.json",
+      "sha256": "6539ef513cb65601933328d012f0cda0fae7f3b28a47724caec4131574962dbc"
+    },
+    "prior_cell91_report": {
+      "bytes": 37996,
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/publication_saved_s_cell91_20261014/saved_s_cell91_20261014.json",
+      "sha256": "0598d3ea1e236b158001a5d6bbebea5ab9f6bb89916431855f5bd6099290a7a5"
+    },
+    "result": {
+      "bytes": 77142,
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_saved_s_representatives_attempt01/result.json",
+      "sha256": "9e6968fec0e9e09d077c7ccee506ca798c43e4409ad63f60262a115c226c0f2b"
+    },
+    "selected_geometry": {
+      "bytes": 5772,
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_saved_s_representatives_attempt01/selected_geometry.json",
+      "sha256": "07450ba89e45f66edc36f484c40b9d7f7d3b9d9e3f2593e339458cbfb23d3393"
+    },
+    "source_review": {
+      "bytes": 17400,
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_saved_s_representatives_source_review.json",
+      "sha256": "d22c74ee65652fc091541f2b2b13e0efe7cb30fb6d93a774aee55314be02ced2"
+    },
+    "summary": {
+      "bytes": 2193,
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_saved_s_representatives_attempt01/summary.json",
+      "sha256": "073194ab010a37e9980705460fe919047f0ab6a51fe40dcfb5115649ef5c2756"
+    }
+  },
+  "finding_zh": "预先固定的三例均降低局部拟合尾能量，但tag1较宽cell28的改善明显较弱；不能据此把cell91的z二分效果推广为全中层或全域规则。",
+  "limitations": [
+    "Geometry-stratified local generalizability diagnostic; 4 of 36 middle cells including prior cell91.",
+    "Saved auxiliary s approximately solves B s=rc; it is not a Maxwell solution or physical error.",
+    "Only p4 and hz_p4 are compared; no all-candidate or full-domain scan.",
+    "No causality, convergence, global benefit, BAL_H fix, or automatic h/p decision follows.",
+    "Floating-point eigenvalue/rank diagnostics and resource reservations are not certified bounds.",
+    "Four of36 middle-cell examples are neither a random sample nor a whole-domain proof. Material tag and nominal width stratification does not establish causality.",
+    "P4 has300 actual independent DOFs; hz has560. This comparison is not equal-dimensional or equal-cost optimality.",
+    "Actual new parent/child coordinates do not retroactively supply missing actual child-coordinate receipts for old cell91.",
+    "No new p5/hx/hy scan, global factor, CG or Maxwell iteration was performed.",
+    "Next BAL_H implementation assessment remains a static pending assessment; no automatic z refinement or further numerical task is implied."
+  ],
+  "metric": {
+    "G_norm_ratio": "sqrt(G(s-v)/G(s))",
+    "curl_weight": 0.012411844996186378,
+    "formula": "G = mass_L2_squared + k0^-2 curl_L2_squared; no material B or gradient term",
+    "k0": 8.975979010256552,
+    "k0_definition": "2*pi/0.7",
+    "normalization": "Each cell uses its own unchanged target s energy for p4 and hz; no cross-cell denominator pooling",
+    "not_full_gradient_norm": true,
+    "not_material_B_energy": true,
+    "squared_G_ratio": "G(s-v)/G(s), where G(v)=integral(|v|^2+k0^-2|curl v|^2)"
+  },
+  "original_s_provenance": {
+    "original_outer_iterations": 0,
+    "producer_independent_B_relative_residual": 9.83524847911587e-07,
+    "resumed_CG": false,
+    "saved_s_meaning": "s approximately solves B s = rc; auxiliary primal response"
+  },
+  "prior_p6_self_control": {
+    "applies_as_new_self_test_to_selected_cells": false,
+    "cell": 91,
+    "evidence": {
+      "anisotropy": 58.181818181818265,
+      "cell": 91,
+      "explicit_Gram_residual": 3.132465432935665e-13,
+      "index": [
+        15,
+        0,
+        1
+      ],
+      "relative_energy": 7.786455164491644e-26
+    },
+    "previous_result": {
+      "bytes": 148290,
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_saved_s_representation_attempt01/result.json",
+      "sha256": "5a20f21f131a706b17d1488b2424c92f58b5a1860cc59cfa660f75ccaace3e6d"
+    },
+    "recomputed_this_batch": false,
+    "reused_previous_source_qualification": true,
+    "terminal_review": {
+      "bytes": 12057,
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_saved_s_representation_terminal_review.json",
+      "sha256": "b8277bb64471edd623bdbfab631bd0df90ea45bc8063cb61c072e48c7227aaf9"
+    }
+  },
+  "prior_reports": {
+    "prior_all108": "https://github.com/Rookie1234567/MyFEniCS/blob/89e133e11803897073a736577ff50ad79dbf9d29/docs/task40extra_dot_parallel_cloud/reports/hp_reference_free/2026-10-13_uniform36p6_progress/saved_s_representation_20261014_zh.md",
+    "prior_cell91": "https://github.com/Rookie1234567/MyFEniCS/blob/1141d60b5f85252690095654a70c653caceac416/docs/task40extra_dot_parallel_cloud/reports/hp_reference_free/2026-10-13_uniform36p6_progress/saved_s_cell91_20261014_zh.md"
+  },
+  "quadrature": {
+    "common_octants": 8,
+    "degree": 15,
+    "exactness_scope": "Affine tensor maps; p<=6 products each-axis degree<=12, within q15.",
+    "fixed_common_partition_per_cell": true,
+    "points_per_common_octant": 512,
+    "raised_rule_executed": false
+  },
+  "schema": "task40extra.saved-s-fixed-representatives-report.v1",
+  "scope": {
+    "B_actions": 0,
+    "CG_steps": 0,
+    "Maxwell_steps": 0,
+    "accepted_field": false,
+    "automatic_hp_choice": false,
+    "cross_mesh_prolongations": 0,
+    "global_coarse_factors": 0,
+    "internal_h_faces": "native shared DOFs; all-column tangential jump and actual trace rank gates",
+    "middle_cells": 36,
+    "new_local_Gram_factors": 6,
+    "original_geometry_catalog_cells": 108,
+    "outer_boundary": "uniformly unconstrained",
+    "projected_original_cells": 3,
+    "total_middle_cells_covered_including_prior": 4
+  },
+  "selection": {
+    "exact_geometry_cache_merged": false,
+    "middle_cells": 36,
+    "narrow_label_scope": "Within each material only; tag1 narrow and tag3 narrow are different actual widths and different strata.",
+    "new_projected_cells": 3,
+    "nominal_width_rule": "Per-material actual min/max, 64*binary64_epsilon*max(1,abs(min),abs(max)); sampling only.",
+    "prior_control": {
+      "cell": 91,
+      "index": [
+        15,
+        0,
+        1
+      ],
+      "stratum": "tag1_narrow"
+    },
+    "rule": "All 36 middle cells; material tag x nominal x width; y index 1; lower median ordered x index.",
+    "selected": [
+      {
+        "cell": 16,
+        "index": [
+          2,
+          1,
+          1
+        ],
+        "material_tag": 1,
+        "stratum": "tag1_narrow",
+        "volume": 0.43129858253315007,
+        "widths": [
+          0.10694444444444445,
+          0.6481481481481481,
+          6.222222222222222
+        ]
+      },
+      {
+        "cell": 28,
+        "index": [
+          4,
+          1,
+          1
+        ],
+        "material_tag": 1,
+        "stratum": "tag1_wide",
+        "volume": 0.8625971650663006,
+        "widths": [
+          0.2138888888888889,
+          0.6481481481481481,
+          6.222222222222222
+        ]
+      },
+      {
+        "cell": 52,
+        "index": [
+          8,
+          1,
+          1
+        ],
+        "material_tag": 3,
+        "stratum": "tag3_narrow",
+        "volume": 0.44436823654930596,
+        "widths": [
+          0.11018518518518516,
+          0.6481481481481481,
+          6.222222222222222
+        ]
+      }
+    ],
+    "selection_uses_energy_or_tail": false,
+    "strata": [
+      {
+        "actual_x_width_max": 0.10694444444444473,
+        "actual_x_width_min": 0.10694444444444429,
+        "cells": [
+          7,
+          10,
+          13,
+          16,
+          91,
+          94,
+          97,
+          100
+        ],
+        "count": 8,
+        "name": "tag1_narrow",
+        "selected_cell": 16,
+        "y1_ordered_x_indices": [
+          1,
+          2,
+          15,
+          16
+        ]
+      },
+      {
+        "actual_x_width_max": 0.21388888888888902,
+        "actual_x_width_min": 0.2138888888888888,
+        "cells": [
+          3,
+          5,
+          19,
+          22,
+          25,
+          28,
+          79,
+          82,
+          85,
+          88,
+          102,
+          104
+        ],
+        "count": 12,
+        "name": "tag1_wide",
+        "selected_cell": 28,
+        "y1_ordered_x_indices": [
+          0,
+          3,
+          4,
+          13,
+          14,
+          17
+        ]
+      },
+      {
+        "actual_x_width_max": 0.11018518518518527,
+        "actual_x_width_min": 0.11018518518518516,
+        "cells": [
+          31,
+          34,
+          37,
+          40,
+          43,
+          46,
+          49,
+          52,
+          55,
+          58,
+          61,
+          64,
+          67,
+          70,
+          73,
+          76
+        ],
+        "count": 16,
+        "name": "tag3_narrow",
+        "selected_cell": 52,
+        "y1_ordered_x_indices": [
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ]
+      }
+    ],
+    "total_middle_cells_covered_including_prior": 4
+  },
+  "target_meaning": "Same frozen auxiliary s from direction6656, approximately B^-1 rc with producer relative B residual 9.83524847911587e-7; not a Maxwell solution or physical error.",
+  "verdict": "PASS_THREE_REPRESENTATIVES_LOCAL_DIAGNOSTIC_ONLY",
+  "verification": {
+    "actual_parent_and_child_geometry_persisted_for_new_cells": true,
+    "check_count": 3537,
+    "failures": [],
+    "new_analytic_p4_controls": 6,
+    "new_p6_identity_controls": 0,
+    "per_piece_mass_curl_integrals_persisted": false,
+    "source_pin_count": 961,
+    "terminal_review": {
+      "bytes": 17417,
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_saved_s_representatives_terminal_review.json",
+      "sha256": "a10a633dcfec64ca43569e6504b35cfb0d3bb201dcebb76191a93c8bd91deb66"
+    }
+  }
+}
