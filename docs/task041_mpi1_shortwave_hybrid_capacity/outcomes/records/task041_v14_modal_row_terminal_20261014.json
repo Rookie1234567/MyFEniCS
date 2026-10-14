@@ -1,0 +1,525 @@
+{
+  "schema": "task041.v14.modal_row_terminal.v1",
+  "recorded_utc_date": "2026-10-14",
+  "classification": "IMPLEMENTATION_FAILURE",
+  "classification_interpretation": "runtime classification; implementation defect not independently established",
+  "execution": {
+    "unit": "task041-v14-main-warm-20261014t004907z.service",
+    "invocation_id": "686efe6ec9324b5bbe75a796a758d545",
+    "source_head": "f969d413bde02339b673a9636f42582a1879f657",
+    "rank_map": [
+      0,
+      1,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18
+    ],
+    "mpi_size": 8,
+    "memory_policy": "system_default_unbound",
+    "producer": "reused",
+    "qep_in_this_invocation": "not_run"
+  },
+  "stage_evidence": {
+    "fresh_aggregate_authority": {
+      "passed": true,
+      "outer_request_sha256": "15c01ca21badb1676dc5df8543a2aeb9d079717e3bcbd108bfb00666641a6858",
+      "rank_validation_errors": 0,
+      "external_gate_count": 10,
+      "external_gates_all_true": true,
+      "B_plus_delta_plus_W_bytes": 55613354496,
+      "cap_bytes": 85899345920
+    },
+    "construction": {
+      "S_B_columns_completed": 800,
+      "S_B_columns_total": 800,
+      "owner_LU_ready": true,
+      "same_B_objects_for_LDU_and_modal_Schur": true,
+      "modal_KSP_solve_count": 0,
+      "v13_modal_KSP_solve_count": 0,
+      "bottom_top_side_apply_and_iteration_deltas": 0,
+      "nested_KSP_objects_created": 2,
+      "nested_KSP_object_count_is_not_call_count": true,
+      "owner_LU_terminal_total_solve_count": "not_persisted",
+      "count_snapshot_marker": "modal_schur_ready",
+      "count_scope_note": "The zero modal/side counts are from this saved readiness snapshot only; failure-time cumulative counts are not_persisted.",
+      "owner_ready_audit": {
+        "owner_rank": 7,
+        "original_schur_rhs_residual": [
+          1.9662845717117538e-13,
+          1.9662845717117538e-13
+        ],
+        "limit": 1e-10,
+        "inputs_unchanged": [
+          true,
+          true
+        ],
+        "factorizations": 1,
+        "repeat_lu_solves": 2,
+        "residual_checks": 2,
+        "failure_call_owner_residual": "not_persisted"
+      }
+    },
+    "outer_iteration_1": {
+      "decision": "ITERATING",
+      "global_true_relative_residual": 0.8561826616833743,
+      "top_true_relative_residual": 0.8560583887032607,
+      "bottom_true_relative_residual": 0.8662175033712339,
+      "modal_true_relative_residual": 7.603007007147926e-14,
+      "pc_apply_count": 1
+    },
+    "next_PC_original_modal_row_gate": {
+      "decision": "rejected",
+      "reported_relative": 1.039223,
+      "limit": 1e-10,
+      "absolute_rhs_norm": "not_persisted",
+      "absolute_residual_norm": "not_persisted",
+      "scale_and_terms": "not_persisted",
+      "rhs_exact_zero": "not_persisted",
+      "row_index_and_apply_ordinal": "not_persisted",
+      "source_target_alias": "not_persisted",
+      "position": "after_iteration_1_on_some_PC_apply",
+      "apply_ordinal": "not_persisted",
+      "failure_owner_solve_residual": "not_persisted"
+    }
+  },
+  "tiny_diagnostic": {
+    "selector": "src/test/test_350_task041_balh_block_ldu.py::test_v13_unmocked_builder_owner_lu_and_original_modal_row_math",
+    "pytest_result": "1 passed; diagnostic capture success only, not numerical gate pass",
+    "pytest_parent_wall_seconds": 4.235037796199322,
+    "test350_sha256": "6fa7d5e59661a0efc39298f57d65c4c01abd2b9d7e6878e7590fbe065fba201d",
+    "apply_rows": [
+      {
+        "apply_index": 1,
+        "rhs_exact_zero": true,
+        "rhs_norm": 0.0,
+        "residual_norm": 7.668949390247103e-16,
+        "scale": 0.9404675265097218,
+        "relative_backward_error": 8.15440105487558e-16,
+        "row_gate": "passed",
+        "owner_schur_residual_norm": 4.872072101741997e-16,
+        "owner_schur_relative_error": 5.896945514369229e-16
+      },
+      {
+        "apply_index": 2,
+        "rhs_exact_zero": false,
+        "rhs_norm": 2.646487008256017e-15,
+        "residual_norm": 5.299281747526413e-16,
+        "scale": 2.646487008256017e-15,
+        "relative_backward_error": 0.20023834354730255,
+        "row_gate": "rejected",
+        "owner_schur_residual_norm": 2.539848593650518e-16,
+        "owner_schur_relative_error": 2.9671536616724195e-16
+      }
+    ],
+    "contract": "nonzero RHS uses relative residual; exact zero uses uncollapsed term-scale backward error; 1e-10 unchanged"
+  },
+  "timing_seconds": {
+    "old_mode_prep_wall": 1460.4700798629783,
+    "consumer_wall": 12806.358500467148,
+    "public_nested_phase_wall": 12809.970051602926,
+    "service_parent_wall": 12810.20820791,
+    "service_finalizer_wall_charged_once": 12811.423691891,
+    "old_mode_prep_plus_this_warm_partial_sum": 14271.893771753977,
+    "sum_is_not_complete_successful_cold_runtime": true,
+    "tiny_pytest_parent_wall_charged_separately": 4.235037796199322
+  },
+  "memory_bytes": {
+    "service_process_tree_authority_peak": 46615474176,
+    "runroot_workflow_process_tree_peak": 46563233792,
+    "dedicated_job_cgroup_peak": 43826028544,
+    "service_process_tree_PSS_peak": 43518625792,
+    "service_process_tree_USS_peak": 43091066880,
+    "job_swap_authority_peak": 0,
+    "hard_cap": 85899345920,
+    "warning": 77309411328,
+    "aggregate_reserve": 412316860416
+  },
+  "qualification": {
+    "v14_large_constructions_used": 1,
+    "v14_large_constructions_max": 2,
+    "second_construction_used": false,
+    "second_construction_approved": false,
+    "M600_not_run": true,
+    "h_0p525_not_run": true,
+    "official_five_residuals_not_obtained": true,
+    "recovery_EH_RTA_physics_not_run": true,
+    "target_50x25nm_2TB_48h_qualified": false,
+    "next_action": "ChatGPT technical ruling on preserved nonzero modal-row criterion and failure-row evidence capture; no production change authorized"
+  },
+  "ledger": {
+    "path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json",
+    "entries": 278,
+    "charged_seconds": 634900.2474392491,
+    "sha256": "dbf7d2211ec476dd11d7fd622dbf6d014c4d0df9da9f58f63157258a52917b94",
+    "warm_invocation_occurrences": 1,
+    "old_276_entry_prefix_preserved": true
+  },
+  "evidence": {
+    "supervision_summary": {
+      "path": "results/task041_v14_main_warm_supervision_20261014T004907Z/summary.json",
+      "sha256": "51895ed0929079328befb769e4e68e80cf6da58942284ab2a2080867d8d95615"
+    },
+    "service_parent_summary": {
+      "path": "results/task041_v14_main_warm_supervision_20261014T004907Z/service_parent_summary.json",
+      "sha256": "b3380d32956faab101b970a67698c1c79243f04730b380db10a833d36512030f"
+    },
+    "launch_manifest": {
+      "path": "results/task041_v14_main_warm_supervision_20261014T004907Z/launch_manifest.json",
+      "sha256": "64e457b5a15ee85fcb191a1ab74a5ca168044343aaa145604455f20f8af61c0a"
+    },
+    "finalizer_summary": {
+      "path": "results/task041_v14_main_warm_supervision_20261014T004907Z/finalizer/finalizer_summary.json",
+      "sha256": "87ed88097c13bfa2d0abf38afeb41d625d8e7891c473edd0dea58e1cec78eba7"
+    },
+    "public_run_summary": {
+      "path": "results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261014T011327.081762Z/run_summary.json",
+      "sha256": "4048f42143ce5af24cca538bec0431f83ce30ffa62dafe63fc8b3b59c3d6192b"
+    },
+    "workflow_summary": {
+      "path": "results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261014T011327.081762Z/workflow_summary.json",
+      "sha256": "c930d8db72bfa84b86a4bfab2a76ba3ac0ad34272c02b96d6188ad02fc13b4f0"
+    },
+    "consumer_summary": {
+      "path": "results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261014T011327.081762Z/consumer/consumer_summary.json",
+      "sha256": "393f17fccd9674b0920eb0ec74e23e9c459ddd0c408a56b6520e015440f5ef75"
+    },
+    "failure_diagnosis": {
+      "path": "results/task041_v14_modal_row_failure_closeout_20261014T050244Z/diagnosis_zh.md",
+      "sha256": "7d068f00c9c5c212028aa3f05e956762883c95064732ab3e0c4f591941ed6c3d"
+    },
+    "progress_extract": {
+      "path": "results/task041_v14_modal_row_failure_closeout_20261014T050244Z/progress_extract.json",
+      "sha256": "4c86b5364e85e02e4f8da55938c9c619bbd093f4e057d71138e999e36fd74e83"
+    },
+    "failure_field_audit": {
+      "path": "results/task041_v14_modal_row_failure_closeout_20261014T050244Z/failure_field_audit.json",
+      "sha256": "e04e1b37dd82dbece95e89d05433942b5223942555e2c3883c8310cef8acd4d5"
+    },
+    "tiny_capture": {
+      "path": "results/task041_v14_modal_row_fgmres_serial_diag_attempt_20261014T052616Z/TASK041_V14_MODAL_ROW_DIAGNOSTIC.json",
+      "sha256": "1f5a2690a02a6209a23535e69de225a86e2d2ebb817c6227724d6e48089ec3a7"
+    },
+    "tiny_readout": {
+      "path": "results/task041_v14_modal_row_fgmres_serial_diag_attempt_20261014T052616Z/diagnostic_readout.json",
+      "sha256": "89fe738e02541efe8bcb5e0a6e6fdb959bd24911e936f3ae1a05e1269af7ce83"
+    },
+    "tiny_pytest_attempt": {
+      "path": "results/task041_v14_modal_row_fgmres_serial_diag_attempt_20261014T052616Z/serial/pytest.attempt.json",
+      "sha256": "16d105a12316bce9cc456628042a07b72ec46e30f5f33e6c805584230c1f4167"
+    },
+    "V5_live": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json",
+      "sha256": "dbf7d2211ec476dd11d7fd622dbf6d014c4d0df9da9f58f63157258a52917b94"
+    }
+  },
+  "history_before_v14": {
+    "invocation_id": "cb734e0d54734b53817d157d5fe8c706",
+    "source_head": "6aa6a7c20d1d1edf85e1248e58577debd031feaf",
+    "result": "800/800 S_B columns and owner LU completed; then outer fresh-authority entry failed",
+    "first_runtime_false_predicate": "not_persisted",
+    "not_the_SUP_conflict": true,
+    "earlier_SUP_precreation_invocation": "817bc0e2a56e42feb9a8cce040c9a486",
+    "v5_start_after_this_invocation": {
+      "entries": 272,
+      "charged_seconds": 622067.4459419006,
+      "sha256": "accf760c3c25d4e89daa49da3f109ced59d6086a83971f527d61ac63a1700e8f"
+    },
+    "raw_hashes": {
+      "run_manifest": "2bb05d80d58fd8e08ef6225e94e7f9c40a615a0ebc224e25d59dc1bbf159a564",
+      "run_summary": "a69fb0d467c5623e0749d7e7f4ee8a4e50e8d6040f3f5e1c9f63a24aae041fe",
+      "consumer_summary": "0d0e331c288b02ed2372aca70dcf03e84ac8d3e6b976782e59d89fde5f6e9b95"
+    }
+  },
+  "timing_marker_intervals": {
+    "clock": "consumer marker CLOCK_MONOTONIC relative axis",
+    "non_overlapping_intervals": [
+      {
+        "start_marker": "preflight_begin",
+        "start_seconds": 0.04166358313523233,
+        "end_marker": "modal_schur_build_begin",
+        "end_seconds": 1296.7927640841808,
+        "duration_seconds": 1296.7511005010456,
+        "scope": "setup and P4 work until S_B build; markers do not permit a narrower setup-only split"
+      },
+      {
+        "start_marker": "system_setup_stage=before_build",
+        "start_seconds": 1296.9594484099653,
+        "end_marker": "after_all_columns",
+        "end_seconds": 12652.642669782974,
+        "duration_seconds": 11355.683221373009,
+        "scope": "800-column construction window"
+      },
+      {
+        "start_marker": "after_all_columns",
+        "start_seconds": 12652.642669782974,
+        "end_marker": "v13_modal_schur_ready",
+        "end_seconds": 12748.079925443977,
+        "duration_seconds": 95.437255661003,
+        "scope": "post-column validation, owner LU, readiness checks"
+      },
+      {
+        "start_marker": "v13_modal_schur_ready",
+        "start_seconds": 12748.079925443977,
+        "end_marker": "outer_solve_begin",
+        "end_seconds": 12748.682461705059,
+        "duration_seconds": 0.602536261082,
+        "scope": "ready to outer solve"
+      },
+      {
+        "start_marker": "outer_solve_begin",
+        "start_seconds": 12748.682461705059,
+        "end_marker": "final_cleanup_complete",
+        "end_seconds": 12806.358062949032,
+        "duration_seconds": 57.675601243973,
+        "scope": "iteration 1, failure and cleanup"
+      }
+    ],
+    "separate_clock_scopes": {
+      "consumer_wall_seconds": 12806.358500467148,
+      "public_nested_phase_wall_seconds": 12809.970051602926,
+      "service_parent_wall_seconds": 12810.20820791,
+      "finalizer_post_io_phase_wall_seconds": 0.9407885889522731,
+      "unit_wall_charged_once_seconds": 12811.423691891,
+      "may_be_added": false,
+      "note": "These timers have different or nested scopes; do not add them or infer an unrecorded cleanup-to-unit tail."
+    },
+    "marker_artifact": {
+      "path": "results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261014T011327.081762Z/consumer/markers.jsonl",
+      "sha256": "65eff65b9a6e1cb78ffadfac3ebd8f8047e354a6d4c62e7cca0e8fc032657d73"
+    }
+  },
+  "regression_evidence": {
+    "implementation_head": "f969d413bde02339b673a9636f42582a1879f657",
+    "implementation_scope": [
+      "LDU outer authority validator migrated to the current aggregate/node1 schema while preserving cap, W, source, invocation, rank, freshness and cgroup checks",
+      "Actual outer request/report/response/payload and validation errors are retained; rank-0 marker write status is broadcast so write failures do not strand peers",
+      "Workflow passes the real factory callback; service shares OUT/SUP binding and keeps supervisor-exclusive SUP creation and manifest-before-child order"
+    ],
+    "serial": {
+      "effective_passes": 24,
+      "split": [
+        9,
+        7,
+        8
+      ],
+      "failed_attempts_preserved": true,
+      "attempts": [
+        {
+          "attempt_path": "results/task041_v14_outer_authority_serial_realhost_attempt_20261014T001106Z/serial/pytest.attempt.json",
+          "attempt_sha256": "04d047d99bf80efec6ac508f521b10d1842742d8fa8d78f5673dca603a09b3cf",
+          "stdout_sha256": "0ba0323279101fdb097067b0d906d45f598685fb6c8eac74e68579b78b95b52a",
+          "source_map_sha256": "edfab602c7e3f01ca3eecd3b698343465fb17a04ec353d0bc3872a7d6afe54dd",
+          "effective_pass_cases": 9,
+          "source_map_path": "results/task041_v14_outer_authority_serial_realhost_attempt_20261014T001106Z/serial/source_hashes_before_after.json"
+        },
+        {
+          "attempt_path": "results/task041_v14_outer_authority_serial_remainder_attempt_20261014T001733Z/serial/pytest.attempt.json",
+          "attempt_sha256": "2cba8f85a03e1e0c27e4451ff85bcf52c2c735849f59c9dec9ab16d242cf123e",
+          "stdout_sha256": "af01590114fc226b05fb018b3ee2244f9e4b2aa146478660fcf927173dfa5af2",
+          "source_map_sha256": "fac414fccc581be6639454b36a9d22009d1032cf7a3e32d69ba42d6295e40535",
+          "effective_pass_cases": 7,
+          "source_map_path": "results/task041_v14_outer_authority_serial_remainder_attempt_20261014T001733Z/serial/source_hashes_before_after.json"
+        },
+        {
+          "attempt_path": "results/task041_v14_outer_authority_serial_tail_attempt_20261014T002226Z/serial/pytest.attempt.json",
+          "attempt_sha256": "eae90e3edaba3ba89fd4741e6dbdaa83ec38502dd59a21130c1b5a3142cc5fee",
+          "stdout_sha256": "4f40d09bcceacaa99a672fec9215a2029f4a1b4a02e5621a0e573e94ffc1fed9",
+          "source_map_sha256": "67022abaaa52b123de5f748a0cd14d456ae5bf29965cddeae56f11ac0d11f6b5",
+          "effective_pass_cases": 8,
+          "source_map_path": "results/task041_v14_outer_authority_serial_tail_attempt_20261014T002226Z/serial/source_hashes_before_after.json"
+        }
+      ],
+      "p0": {
+        "selector": "src/test/test_352_task041_service_boundary.py::test_task041_output_binding_and_real_supervised_child_manifest_order",
+        "coverage": "Actual output-root helper, production run_task041_supervised_public_command and supervisor spawn a small OS child; child confirms launch manifest exists before writing its receipt; pre-existing SUP is refused before spawn.",
+        "attempts": [
+          "results/task041_v14_outer_authority_serial_realhost_attempt_20261014T001106Z/serial/pytest.attempt.json",
+          "results/task041_v14_outer_authority_serial_tail_attempt_20261014T002226Z/serial/pytest.attempt.json"
+        ],
+        "not_full_numerical_worker": true
+      },
+      "p1": {
+        "selector": "src/test/test_352_task041_service_boundary.py::test_v13_candidate_helper_forwards_real_factory_callback_into_ldu_guard",
+        "coverage": "Serial tail only: actual candidate helper to real factory callback to LDU guard; pass/refuse paths and wrong identity refusal. This is not the earlier fake stage factory plus AST-only call-expression test, and it was not an MPI2 selector.",
+        "source_map_sha256": "67022abaaa52b123de5f748a0cd14d456ae5bf29965cddeae56f11ac0d11f6b5",
+        "serial_attempt_path": "results/task041_v14_outer_authority_serial_tail_attempt_20261014T002226Z/serial/pytest.attempt.json",
+        "serial_attempt_sha256": "eae90e3edaba3ba89fd4741e6dbdaa83ec38502dd59a21130c1b5a3142cc5fee",
+        "serial_source_map_path": "results/task041_v14_outer_authority_serial_tail_attempt_20261014T002226Z/serial/source_hashes_before_after.json",
+        "mpi2_scope_note": "The candidate-helper selector was not in the MPI2 argv; MPI2 ran only the two selectors listed under mpi2."
+      }
+    },
+    "mpi2": {
+      "selectors": [
+        "src/test/test_352_task041_service_boundary.py::test_v13_outer_marker_writer_real_mpi2_append_and_write_failure",
+        "src/test/test_350_task041_balh_block_ldu.py::test_v13_unmocked_builder_owner_lu_and_original_modal_row_math"
+      ],
+      "rank_cases": 4,
+      "attempt_path": "results/task041_v14_outer_authority_mpi2_attempt_20261014T002623Z/mpi2/pytest.attempt.json",
+      "attempt_sha256": "7ed5980892520e128b1ca2a7d4a3649ec525ef81cfedf437908db4a4d6d54507",
+      "stdout_sha256": "654e50271124dc34c07ddfa922206e705f4b9f9373c3b57b45cf34e9085f0fed",
+      "source_map_sha256": "67022abaaa52b123de5f748a0cd14d456ae5bf29965cddeae56f11ac0d11f6b5",
+      "combined_stdout_rank_mapping": "not_persisted",
+      "source_map_path": "results/task041_v14_outer_authority_mpi2_attempt_20261014T002623Z/mpi2/source_hashes_before_after.json",
+      "actual_argv_path": "results/task041_v14_outer_authority_mpi2_attempt_20261014T002623Z/mpi2/pytest.argv.json",
+      "actual_argv_sha256": "d771f650305b38c33ec0ccc9a6dfaec7b91ec386ab5237b8fe3ba74f1cc9e93a"
+    },
+    "mpi8_abi": {
+      "ranks_passed": 8,
+      "ranks_total": 8,
+      "attempt_path": "results/task041_v14_mpi8_abi_attempt_20261014T004907Z/native_abi.attempt.json",
+      "attempt_sha256": "d57ce5e4f489c200f2fb415dd50d8725132d943e381a108b0417a2c8bbac0d2f",
+      "output_sums_sha256": "7859b318184f7e2821409d697a959cf502a0745390170a8430cf0d0dbad2cc92",
+      "source_head": "f969d413bde02339b673a9636f42582a1879f657",
+      "numerical_worker_started": false,
+      "output_sums_path": "results/task041_v14_mpi8_abi_attempt_20261014T004907Z/OUTPUT_SHA256SUMS.txt",
+      "source_identity_path": "results/task041_v14_mpi8_abi_attempt_20261014T004907Z/native_abi.attempt.json"
+    },
+    "older_fakefactory_ast_test_boundary": "The earlier callback test used a fake stage factory and AST execution of the call expression; it did not execute the real fresh-authority callback. This round's P1 does.",
+    "tests_are_not_m400_numerical_pass": true
+  },
+  "conditional_target_budget_50x25nm": {
+    "status": "object-level conditional budget only; target not run",
+    "do_not_extrapolate_total_rss_or_claim_2TB_48h": true,
+    "objects": [
+      {
+        "object": "P4 condensed matrix/factor",
+        "budget_method": "Measure rows, matrix NNZ, symbolic/numeric fill and workspace separately; array payload from actual NNZ and dtype; account for overlapping lifetimes.",
+        "measured_M400": {
+          "matrix_rows": 64966,
+          "active_trace_rows": 64320,
+          "appended_port_rows": 646,
+          "historical_stage_peak_bytes_not_this_run": 53541888000,
+          "bottom_condensed_matrix_nnz": 27929686,
+          "top_condensed_matrix_nnz": 39242250,
+          "bottom_matrix_nnz_source": "consumer/factor_inventory.json failure_evidence.staged_factor_budget_gate.bottom_factor_calibration.nnz; rank_count=8 and rank_local_nnz are the source condensed-matrix NNZ records summed once",
+          "bottom_matrix_nnz_raw_path": "results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261014T011327.081762Z/consumer/factor_inventory.json",
+          "bottom_matrix_nnz_raw_sha256": "ce2f1eaed120d1f6abf5f8b440c3e1f1c6d4b6da2a628b14ea53f174e1c39262",
+          "producer_code_sources": [
+            "src/solvers/petsc_lu_stage.py::_source_matrix_inventory",
+            "benchmarks/task041_exact_side_workflow.py::_task041_w0p7_bottom_factor_calibration",
+            "benchmarks/task041_exact_side_workflow.py::_TASK041_W0P7_PORD_NNZ_BY_STAGE"
+          ],
+          "mumps_lu_factor_fill_nnz": "not_persisted",
+          "top_matrix_nnz_raw_path": "results/task041_v13_main_warm_exception_readonly_diagnosis_correction_20261013T160237Z/original_package_snapshot/progress_markers.json",
+          "top_matrix_nnz_raw_sha256": "83d4ade694310e58962575780e006194da1fc8af060d78de39a64310e48f4443",
+          "top_matrix_nnz_raw_field": "events[*].payload.matrix_identity.nnz for task041.w0p7.p4.top",
+          "producer_code_sha256": {
+            "src/solvers/petsc_lu_stage.py": "2a03bd4936b481367d67e0d204b98572f6649e13a27fc9323994113772aaee5c",
+            "benchmarks/task041_exact_side_workflow.py": "207be5949022d5d5606d81c0a9e7a48697602fc21139b21466836bf7fa486d78"
+          }
+        },
+        "target_missing": [
+          "rows",
+          "matrix_nnz",
+          "factor_fill",
+          "symbolic/numeric_workspace",
+          "overlap_lifetimes"
+        ]
+      },
+      {
+        "object": "QEP/TOAR/basis",
+        "budget_method": "For a cold solve, count linearization, nev/ncv/mpd, shift factor, TOAR vectors and retained modes by lifetime.",
+        "measured_M400": {
+          "qep_this_invocation": "not_run",
+          "reused_producer_mode_prep_wall_seconds": 1460.4700798629783,
+          "positive_negative_max_rank_solve_seconds": [
+            316.8529016729444,
+            317.0268020199146
+          ]
+        },
+        "target_missing": [
+          "dimensions",
+          "shift_fill",
+          "basis_workspace",
+          "packet_peak"
+        ]
+      },
+      {
+        "object": "trace/DtN",
+        "budget_method": "trace DOFs times channels times complex element size, plus projections, ghost data, communication and cached copies; deduplicate shared objects.",
+        "measured_M400": {
+          "full_rows": 68852,
+          "slave_rows": 4532,
+          "active_rows": 64320,
+          "external_modes": 646,
+          "external_modes_meaning": "P4 external port channel count; distinct from internal M400 modes=400 and S_B order 2M=800",
+          "external_modes_source_path": "results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261014T011327.081762Z/consumer/consumer_summary.json",
+          "external_modes_source_sha256": "393f17fccd9674b0920eb0ec74e23e9c459ddd0c408a56b6520e015440f5ef75"
+        },
+        "target_missing": [
+          "trace_dimensions",
+          "directional_channels",
+          "rank_copies"
+        ]
+      },
+      {
+        "object": "S_B and owner LU",
+        "budget_method": "order=2M; complex128 payload per matrix or LU array=16(2M)^2 bytes; add pivot/workspace; dense factorization work O((2M)^3).",
+        "measured_M400": {
+          "order": 800,
+          "matrix_payload_bytes": 10240000,
+          "lu_payload_bytes": 10240000,
+          "pivot_bytes": 3200,
+          "derived_owner_peak_bytes": 40963200,
+          "storage_budget_bytes": 268435456,
+          "columns_completed": 800,
+          "column_window_seconds": 11355.683221373009,
+          "owner_factorizations": 1,
+          "repeat_lu_solves": 2,
+          "residual_checks": 2
+        },
+        "target_missing": [
+          "M",
+          "owner_layout",
+          "MPI_temporaries",
+          "lifetime_overlap"
+        ]
+      },
+      {
+        "object": "full-column construction",
+        "budget_method": "approximately 2M times cost(B); count action, copy and independent validation separately per column.",
+        "measured_M400": {
+          "columns": 800,
+          "window_seconds": 11355.683221373009
+        },
+        "target_missing": [
+          "M",
+          "local_FE_action_cost",
+          "copy_cost",
+          "rank_balance",
+          "stage_overlap"
+        ]
+      },
+      {
+        "object": "outer FGMRES",
+        "budget_method": "for restart=m, vector storage approx 16*N_global*(2m+1) bytes plus Hessenberg, ghost and PETSc work buffers; preserve the conditional 32-to-64 policy.",
+        "measured_M400": {
+          "iterations_reached": 1,
+          "full_restart_window": false
+        },
+        "target_missing": [
+          "N_global",
+          "effective_restart_window",
+          "vector_factor_overlap"
+        ]
+      },
+      {
+        "object": "recovery/E-H/postprocess",
+        "budget_method": "at least 16*N_live_field complex field bytes plus projection, traction, spectral channels, output and temporary vectors; sum only overlapping live objects.",
+        "measured_M400": {
+          "recovery_reached": false,
+          "full_EH_reached": false,
+          "official_RTA_reached": false
+        },
+        "target_missing": [
+          "N_live_field",
+          "postprocess_buffers",
+          "field_factor_overlap"
+        ]
+      }
+    ]
+  }
+}

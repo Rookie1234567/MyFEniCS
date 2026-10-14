@@ -1,5 +1,18 @@
 # 项目开发进度：Task000–Task041
 
+## 2026-10-14：Task041 V14 本批首场 W0.7/M400/MPI8 warm 与回归收口
+
+当前唯一Invocation `686efe6ec9324b5bbe75a796a758d545`在clean HEAD `f969d413bde02339b673a9636f42582a1879f657`运行。真实aggregate/node1 authority通过、S_B 800/800列完成并完成owner LU；outer仅到iteration 1，iteration 1之后某次PC apply的原modal-row relative为`1.039223e+00 > 1e-10`，准确apply序号及失败行绝对项未持久化。IMPLEMENTATION_FAILURE是运行分类，根因未证实；没有最终五残差、恢复、EH、official RTA或physics。
+
+| 阶段 | 证据 | 边界 |
+|---|---|---|
+| 启动/authority回归 | 24 serial cases分三次`9+7+8`通过；MPI2为两个独立selector/4 rank-cases；fresh MPI8 ABI 8/8通过 | P1 candidate helper→真实factory callback→LDU guard由serial tail覆盖；MPI2实际节点另为marker-writer与unmocked-builder。详见[selector、argv与attempt/source入口](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)；不等于正式数值通过 |
+| 本场数值停点 | consumer marker wall：setup至S_B起点1296.751100501 s；800列窗11355.683221373 s；列后owner/检查到ready 95.437255661 s；ready到outer 0.602536261 s；outer至cleanup 57.675601244 s | 均为同一consumer `CLOCK_MONOTONIC` marker轴非重叠段；finalizer post-IO 0.940788589 s、unit wall12811.423691891 s为独立scope，不与上列相加 |
+| V14之前的V13例外Invocation | `cb734e0d54734b53817d157d5fe8c706`已完成800列与owner LU，之后outer fresh-authority失败；V14 V5起点272项/622067.4459419006 s/SHA `accf760c3c25d4e89daa49da3f109ced59d6086a83971f527d61ac63a1700e8f` | 首个runtime false子谓词not_persisted；不是SUP冲突。更早Invocation `817bc0e2a56e42feb9a8cce040c9a486`才是SUP预创建冲突 |
+| tiny诊断 / 当前账目 | exact-zero apply通过；nonzero near-zero RHS `2.646487008256017e-15`、absolute residual `5.299281747526413e-16`、relative `0.20023834354730255`被原门拒绝。owner相对误差为`5.896945514369229e-16`和`2.9671536616724195e-16`。V5 278项、634900.2474392491 s | pytest 1 passed是诊断捕获成功，不是数值门通过；M400失败行absolute值仍缺。50×25对象级预算、wall scope和未资格项见Response V16，不作RSS线性外推 |
+
+证据：[Response V16](task041_mpi1_shortwave_hybrid_capacity/response_v16.md)、[Task041汇总](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)、[测试摘要](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)、[轻量record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v14_modal_row_terminal_20261014.json)。两场大型构造中本批首场已运行，第二场未用且未获准；M600、h细化、50×25 nm、2 TB及48 h均未资格化。
+
 ## 2026-10-10：W0.7 reduced fixed physical BAL_H warm retry终态
 
 最新Invocation `45a94a21808643a0b446c357c39fa48c`（source `598596b029ce9d952e3587837b3b217320909182`）复用producer、QEP=0，运行10×5 nm/p6/h0.70/M400/MPI8。两侧P4 numeric/admission与固定物理BAL_H反馈的8次线性样本通过；两侧因子已算好，但连接它们的模态子求解未把残差压到要求。固定物理BAL_H反馈方法的第一次modal solve中，GMRES达到`max_it=8`且未收敛（KSP reason -3），显式relative residual `0.01916530113811127` 超过`rtol=0.001`。未触发独立S_H MatMult调用预算拒绝（8/9，上限9/10，`budget_exhausted=false`）。失败发生于outer PC内的modal solve，不是P4或资源问题。原`failure_stage=top_construction_cleanup`保留为raw标签；失败RHS与迭代向量未保存。
@@ -3081,3 +3094,17 @@ Review V12允许fixed-H6模态内层最多32步，并在满足可信返回和固
 consumer原始分类为`IMPLEMENTATION_FAILURE`，public结果为`task041_public_command_nonzero` rc3，finalizer为`failed/service_boundary_failure`，`controlled_stop.active=false`。Finalizer为7/12项通过、5项失败。`modal_solver_policy_matches_request=false`是finalizer只读取的public `summary.json`没有nested candidate/full-formal实际solver字段；该文件顶层请求策略相符，而单独consumer记录显示同一policy及一次实际备选路线。此项是检查输入证据不足，不是观察到方法不一致。pre-exit成员检查当时因额外成员失败；post-IO当时也有两个成员。后来只读host检查为MainPID0、ControlGroup空、已记录PID不在进程表，当前清场与当时finalizer两项成员检查分别记录。
 
 唯一service-unit wall为`52356.221030979 s`，V5现234项、该Invocation恰一条，ledger SHA `f307eab7c908eed21627c29360e5424a8d545c4b46b0b43c26f61b50ae466775`。workflow进程树RSS峰`53504184320 B`与专属job-cgroup history峰`51665588224 B`分列；两者低于80 GiB hard cap。W5按用户决定延期，W2未启动；目标`50×25 nm`、2 TB和48 h未完成或资格化。source/raw路径、finalizer false键、各scope峰值和vector hashes见[terminal compact](../results/task041_v12_w0p7_bounded_modal_backup_policy_only_run_20261010T085320Z/terminal_compact_v12.json)，SHA `77a5ab816d9d48103f8a31c6e9e2c8a50fef2a70e1606beac3919185169b04f5`。
+
+
+## 2026-10-14：Task041 Review V14 W0.7 M400/MPI8 main warm终态
+
+| 阶段 | 当前记录 | 结论 |
+|---|---|---|
+| 运行身份 | Invocation 686efe6ec9324b5bbe75a796a758d545；unit task041-v14-main-warm-20261014t004907z.service；source HEAD f969d413bde02339b673a9636f42582a1879f657；复用旧producer，QEP=0 | callback和SUP目录创建问题在真实运行中已越过，不覆盖两次旧启动失败记录 |
+| fresh资源/构造 | aggregate authority通过；S_B 800/800列、owner LU ready、same-B门通过；`modal_schur_ready`快照中的modal KSP与两侧side solver计数为0 | 这是该ready快照的计数，不代表失败时累计调用；失败PC调用计数未持久化。worker和主要构造已实际发生；outer仅到iteration1 |
+| 数值停点 | iteration1仍ITERATING；iteration1之后某次PC apply的输出modal-row relative=1.039223e+00 > 1e-10；具体apply序号及失败行absolute RHS/residual/scale未保存 | 分类IMPLEMENTATION_FAILURE仍按raw保留，但实现根因没有证实。没有最终五残差、recovery、E/H、official RTA或physics |
+| tiny诊断 | test350两次真实PC/owner LU/RIGHT FGMRES apply：精确零支路通过，非零近零RHS relative=0.20023834354730255按现合同拒绝；pytest 1 passed表示capture成功 | 不证明M400实现缺陷，不授权epsilon、换分母或放宽门 |
+| 资源与账目 | service wall 12,811.423691891 s唯一记账；process-tree authority峰46,615,474,176 B、job cgroup峰43,826,028,544 B；V5 278项/634,900.2474392491 s/SHA dbf7d2211ec476dd11d7fd622dbf6d014c4d0df9da9f58f63157258a52917b94 | 资源门未触发；研发ledger累计不是本模型wall |
+| 下阶段 | V14两场大型构造中已运行1场；第二场未用 | 先等待ChatGPT对门判据和失败行证据保存的技术裁决；M600/h细化、50×25 nm、2 TB和48 h not_run/未资格化 |
+
+证据索引见[Task041 Response V16](task041_mpi1_shortwave_hybrid_capacity/response_v16.md)、[Task041 summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)、[Task041 test summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)、[V14 lightweight record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v14_modal_row_terminal_20261014.json)。

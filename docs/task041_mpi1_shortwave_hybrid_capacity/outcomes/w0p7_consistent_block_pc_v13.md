@@ -1,6 +1,28 @@
 # W0.7 V13 consistent fixed BAL_H modal surrogate：实现与分阶段资格记录
 
-**状态：V13实现已完成；A/B合同测试分批通过；registered entity-closure tiny真实FE selector已serial和MPI2分别通过；30个serial清场/服务合同节点分批通过；CPU-map参数化后的MPI8 native ABI按封存map 8/8通过。首场正式warm在`S_B`构造入口因callback漏传以`IMPLEMENTATION_FAILURE`停止；唯一获准的实现错误重试又在public子进程启动前因dispatch脚手架目录冲突失败。两场均未到outer、最终五残差、完整场或physics/RTA。** CPU-map实现commit为`f30240b6aa982953a98d4c403d4b3b57db1703b2`；该提交的实现/测试字节由此前分批serial证据覆盖（5个非法map输入case + 23个合同case；包含较早5项的test351文件之后仅有一处无关fixture单行变化）。MPI8 ABI请求map为`[0,1,13,14,15,16,17,18]`。本文不修改V12 raw、数值方程、残差或物理门。
+**最新状态：V14本批首场已运行一次真实 W0.7 M400/MPI8 main warm。此前 callback 接线与 SUP 目录职责问题均已在本场真实链中越过；fresh aggregate authority通过，S_B 800/800列、owner LU和same-B合同通过。外层只到iteration 1；iteration 1之后某次PC输出的原modal-row relative=1.039223e+00超过原1e-10门而停止。失败行absolute值未持久化，尚不能确认实现缺陷。没有最终五残差、recovery、E/H或official RTA。本批两场大型构造已用1场，第2场未用但当前不满足启动条件。**
+
+## V14本批首场正式warm终态与技术边界（2026-10-14）
+
+| 项目 | V14实测 | 边界 |
+|---|---|---|
+| source与运行 | unit task041-v14-main-warm-20261014t004907z.service；Invocation 686efe6ec9324b5bbe75a796a758d545；source HEAD f969d413bde02339b673a9636f42582a1879f657；MPI8 map [0,1,13,14,15,16,17,18]；default/unbound；producer reused、QEP未重算 | 本场真实调用链越过此前callback/SUP两个启动错误；旧失败raw保持 |
+| fresh authority | 初始aggregate MemFree 863,557,566,464 B，node1 539,427,512,320 B；outer workspace八rank有效、10 external gates全真；B+delta+W=55,613,354,496 B < cap 85,899,345,920 B | 资源/authority实际通过，不是容量拒绝 |
+| 固定B与构造 | S_B 800/800列、owner LU ready；same_B_objects_for_all_LDU_terms_and_modal_Schur=true；owner rank7 Schur RHS residual `[1.9662845717117538e-13,1.9662845717117538e-13]`通过；factorization 1次、repeat LU solve 2次、residual check 2次 | modal/side solver 0计数只来自`modal_schur_ready`快照；失败时调用计数和失败次owner残差未保存。nested KSP对象数不能代替调用数 |
+| outer数值 | iteration 1 global/top/bottom/modal true relative为0.8561826616833743 / 0.8560583887032607 / 0.8662175033712339 / 7.603007007147926e-14；仍ITERATING。随后PC输出原modal-row relative=1.039223e+00 > 1e-10 | iteration 1 residual不是最终解；失败apply行的rhs/residual/scale/terms/zero标记/apply序号未保存；destroy后snapshot异常是次生诊断错误 |
+| 结果与后续 | consumer运行分类IMPLEMENTATION_FAILURE，服务唯一wall 12,811.423691891 s；没有最终五残差、recovery、E/H、R/T/A、A_volume、衍射或physics | 第2场大型构造、M600、h细化不自动启动；50×25 nm、2 TB与48 h未资格化 |
+| V5 | 旧276 entry前缀不变，当前278条，charged_seconds 634,900.2474392491 s，SHA dbf7d2211ec476dd11d7fd622dbf6d014c4d0df9da9f58f63157258a52917b94 | warm按Invocation唯一记账；tiny pytest父wall4.235037796199322 s另计；ledger累计不是模型wall |
+
+V14的test350 tiny真实PC/owner-LU/RIGHT FGMRES诊断捕获两次apply：精确零RHS使用组成项scale并通过；第二次RHS为2.646487008256017e-15，严格走非零相对分支，relative为0.20023834354730255并被原1e-10门拒绝。pytest 1 passed表示捕获测试成功，不表示PC数值门通过。tiny near-zero敏感性不能回推M400失败的绝对量或根因。非零分母、精确零判定和阈值没有修改，也未获准修改。
+
+| 时间/内存口径 | 实测 |
+|---|---:|
+| 旧producer mode-prep wall | 1,460.4700798629783 s；QEP正/负向max-rank solve 316.8529016729444 / 317.0268020199146 s |
+| 本次consumer / public phase / service parent / V5唯一service wall | 12,806.358500467148 / 12,809.970051602926 / 12,810.20820791 / 12,811.423691891 s；为不同嵌套scope，不相加 |
+| 服务process-tree authority峰 / 专属cgroup memory.peak | 46,615,474,176 / 43,826,028,544 B；均低于80 GiB hard、72 GiB warning，job swap为0 |
+| producer mode-prep + 本次失败warm小计 | 14,271.893771753977 s；不是完整cold成功耗时，未发生的后续检查仍未知 |
+
+细节见[Response V16](../response_v16.md)、[V14轻量记录](records/task041_v14_modal_row_terminal_20261014.json)、[失败字段诊断](../../../results/task041_v14_modal_row_failure_closeout_20261014T050244Z/diagnosis_zh.md)和[tiny捕获JSON](../../../results/task041_v14_modal_row_fgmres_serial_diag_attempt_20261014T052616Z/TASK041_V14_MODAL_ROW_DIAGNOSTIC.json)。下一步等待ChatGPT技术裁决现行门与失败行证据保存；未批准前不改生产数学或启动第二场大型构造。
 
 ## V12基线与当前资源门
 

@@ -1,5 +1,16 @@
 # 开发阶段研究对象与计算结果总账
 
+## Task041 Review V14：W0.7 V13 fixed-B 模态预条件器本批首场M400终态（2026-10-14）
+
+| 模型/阶段 | 实测结果 | 资格边界与证据 |
+|---|---|---|
+| W0.7 reduced p6/h0.70/M400/MPI8，Invocation `686efe6ec9324b5bbe75a796a758d545` | 复用producer、QEP=0；fresh aggregate authority通过；S_B 800/800列、owner LU ready；iteration 1之后某次PC原modal-row relative=`1.039223e+00 > 1e-10` | 这是PC输出行门，不是最终原方程全局残差；失败行绝对RHS/residual/scale与apply序号not_persisted，未证实M400实现缺陷。没有最终五残差、recovery、E/H、official RTA或physics |
+| 本轮P0/P1与MPI合同回归 | 分批serial最终24 cases（9+7+8）、MPI2两个独立selector/4 rank-cases、fresh MPI8 ABI 8/8 | P0真实supervisor/light child；P1 candidate helper→真实factory callback由serial覆盖；MPI2 selector另为marker-writer与unmocked-builder。精确attempt/argv/source map见[test summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)；fakefactory+AST历史测试不冒充本轮实际链 |
+| Tiny真实PC诊断 | 第2次非零RHS `2.646487008256017e-15`、residual `5.299281747526413e-16`、relative `0.20023834354730255`拒绝；owner relative两次=`5.896945514369229e-16/2.9671536616724195e-16`通过 | pytest 1 passed只表示捕获成功；原非零1e-10门不变，不能外推M400首因 |
+| 时间/资源/账目 | 800列同一consumer marker窗`11355.683221373009 s`；unit wall `12811.423691891 s`唯一计账；process-tree峰`46615474176 B`、cgroup峰`43826028544 B`；V5 278项/`634900.2474392491 s` | 阶段marker、unit、finalizer分别计时，不重叠相加；资源门未触发。50×25 nm对象预算缺目标P4/QEP/trace/Krylov/recovery参数，不作线性总RSS或48h结论 |
+
+本批之前的V13例外Invocation `cb734e0d54734b53817d157d5fe8c706`已完成800列及owner LU，随后outer fresh-authority失败；它不是SUP目录冲突。V14起点V5为272项/`622067.4459419006 s`/SHA `accf760c3c25d4e89daa49da3f109ced59d6086a83971f527d61ac63a1700e8f`。SUP预建冲突属于更早Invocation `817bc0e2a56e42feb9a8cce040c9a486`。cb734首个false子谓词not_persisted，不能确认资源不足。详细入口见[Task041 Response V16](task041_mpi1_shortwave_hybrid_capacity/response_v16.md)、[summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)、[test summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)、[V14轻量记录](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v14_modal_row_terminal_20261014.json)。
+
 ## Task041 Review V11：W0.7 fixed physical BAL_H warm retry终态（2026-10-10）
 
 | 模型/阶段 | 实测结果 | 资格边界与证据 |
@@ -1923,3 +1934,16 @@ incident-specific orphan sampler 与大型 raw artifact 仍不合入。
 | 资源与计账 | tree RSS `53504184320 B`；job-cgroup history `51665588224 B`；唯一service wall `52356.221030979 s`；V5 234项，本Invocation一条 | cap `85899345920 B`未触发；W5依用户决定延期，W2未启动，不资格化50×25 nm/2 TB/48 h |
 
 详细原始source path/hash、finalizer各键、consumer residual、snapshot index/NPZ身份与唯一ledger entry见[Task041 V12 terminal compact](../results/task041_v12_w0p7_bounded_modal_backup_policy_only_run_20261010T085320Z/terminal_compact_v12.json)，SHA `77a5ab816d9d48103f8a31c6e9e2c8a50fef2a70e1606beac3919185169b04f5`。本场consumer终态为`IMPLEMENTATION_FAILURE`、public rc3、finalizer `failed/service_boundary_failure`；没有数值资格，不启动第二场或W2。W5仍按用户决定延期。
+
+
+## Task041 Review V14：首场摘要（完整收口见本页顶部）
+
+| 模型/阶段 | 结果 | 登记边界 |
+|---|---|---|
+| W0.7 reduced，10×5 nm，p6/h0.70，M400，MPI8；Invocation 686efe6ec9324b5bbe75a796a758d545 | 复用已资格producer/QEP=0；真实fresh aggregate authority通过；S_B 800/800列、owner LU和same-B检查通过；iteration 1之后某次PC apply的输出原modal-row relative=1.039223e+00 >1e-10，具体序号unknown | 门失败行绝对量未持久化，无法确认根因；不改写为已证实实现bug、资源失败或最终原方程残差失败 |
+| 当前残差/物理资格 | iteration1 global/top/bottom/modal true relative = 0.8561826616833743 / 0.8560583887032607 / 0.8662175033712339 / 7.603007007147926e-14；之后停止 | 没有最终五残差、recovery、完整E/H、R/T/A、A_volume、衍射或physics，registered full pilot尚未通过 |
+| tiny诊断证据 | 真实小型PC/owner-LU/RIGHT FGMRES捕获两次apply；精确零支路通过；非零RHS 2.646487008256017e-15时relative=0.20023834354730255被原门拒绝 | test pytest 1 passed是诊断捕获成功，不是数值门通过；不得外推M400根因或修改非零分母/epsilon语义 |
+| 资源/时间 | service wall 12,811.423691891 s；process-tree峰46,615,474,176 B；专属job cgroup峰43,826,028,544 B；当前V5 278项/634,900.2474392491 s | 运行资源门未触发；V5是跨任务工程总账；50×25 nm、2 TB、48 h未资格化 |
+| 研究资格 | 两场大型构造额度用第1场，第2场未用；M600与h细化未运行 | 须由ChatGPT技术审阅现行modal-row合同和失败行观测缺口；没有第二场自动授权 |
+
+详细证据见[Task041 V14记录](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v14_modal_row_terminal_20261014.json)与[Response V16](task041_mpi1_shortwave_hybrid_capacity/response_v16.md)。

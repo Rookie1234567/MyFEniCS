@@ -1,10 +1,47 @@
 # Task041 outcomes summary
 
-## 当前阶段：rank-map资格、两次warm终态与dispatch脚手架纠正（2026-10-13）
+## 当前阶段：V14本批首场 W0.7 main warm终态与modal-row门诊断（2026-10-14）
 
-通俗地说，V13让固定BAL_H近似作用一致地用于LDU预条件器。此前A/B合同、C小型注册FE、serial service合同、MPI8环境检查已分批通过。随后CPU map从代码固定列表改为显式请求绑定；5个非法map输入合同与另外23个serial合同case通过，clean HEAD上的MPI8 ABI也按请求map 8/8通过。这些证据证明配置与rank环境合同，不证明完整数值求解。
+通俗地说，本场已真正进入计算：两项旧启动问题均已越过，aggregate资源核验通过，构造了全部800列S_B并建立owner LU。S_B是把两侧模态联系起来的小系统，使用贯穿各LDU项的同一固定近似作用B构造；这让预条件器内部一致，但B不是原方程算子D的准确逆。随后外层只完成到iteration 1；iteration 1之后某次预条件器（PC）输出的原始modal行检查触发1.039223相对误差，超过原有1e-10合同而停止。它不是最终解残差，失败行绝对量未保存，因此当前不能判定为已证实的M400实现缺陷或资源失败。
 
-首场正式W0.7 warm真实运行，在构造`S_B`时因workflow漏传fresh-authority callback而以`IMPLEMENTATION_FAILURE`停止。唯一获准的实现错误重试也真实启动了systemd Invocation，但准备脚本预先创建了production supervisor必须独占创建的目录，导致public子进程启动前`FileExistsError`；finalizer记录`launch_manifest_missing`。因此重试没有运行worker/MPI、producer/QEP或求解，未到outer、官方残差、恢复、physics/RTA。当前V5为271条entry，顶层`charged_seconds=608046.3500231376`，SHA `f3a1cd6fe50c5e61eff95830519f1d481ca7b0c7de411becfd75236f9e6fe8d4`；其中新Invocation唯一计入`0.445147259 s`，旧270条前缀保持不变。
+| 阶段 | 当前V14实测 | 结果边界 |
+|---|---|---|
+| 运行与旧接线问题 | unit task041-v14-main-warm-20261014t004907z.service；Invocation 686efe6ec9324b5bbe75a796a758d545；源码HEAD f969d413bde02339b673a9636f42582a1879f657；producer packet复用，QEP未重算 | 真实workflow callback进入LDU；SUP由production supervisor独占创建，真实launch manifest和public worker均出现。V13首场callback漏传与更早的SUP预创建冲突均保留为历史负结果，但不再是本场停点 |
+| fresh资源authority | 初始aggregate MemFree 863,557,566,464 B；reserve 412,316,860,416 B；node1 539,427,512,320 B；outer request八rank无错误、十个外部gate全真；B+delta+W 55,613,354,496 B < cap 85,899,345,920 B | 本场authority通过，未因CPU/内存/cgroup资源门停机；request SHA 15c01ca21badb1676dc5df8543a2aeb9d079717e3bcbd108bfb00666641a6858 |
+| 构造与调用计数 | S_B 800/800列、owner LU ready；owner rank7原Schur RHS residual `[1.9662845717117538e-13,1.9662845717117538e-13] <=1e-10`，输入未变，factorization 1次、repeat LU solve 2次、residual check 2次 | modal KSP=0、side-inverse增量=0来自`modal_schur_ready`已存快照，不能代表失败调用的全场计数；失败PC计数及失败次owner残差未持久化。nested KSP对象数不等于调用数 |
+| 外层停止点 | iteration 1仍为ITERATING；global/top/bottom/modal true-relative residual为0.8561826616833743 / 0.8560583887032607 / 0.8662175033712339 / 7.603007007147926e-14。iteration 1之后某次PC输出原modal-row relative=1.039223e+00 > 1.0e-10 | 没有外层收敛、最终五项真残差、恢复、完整E/H、official R/T/A、A_volume、衍射或physics；失败行absolute RHS/residual/scale与行号not_persisted |
+| tiny诊断 | test350有界真实PC/owner-LU/RIGHT FGMRES诊断抓到两次apply；精确零行relative backward error 8.15440105487558e-16通过；非零RHS 2.646487008256017e-15、residual 5.299281747526413e-16、relative 0.20023834354730255被原1e-10门拒绝；owner relative分别为`5.896945514369229e-16`与`2.9671536616724195e-16` | pytest 1 passed表示捕获测试完成，不表示PC gate通过。tiny near-zero敏感性不能证明M400失败原因。失败后的borrowed-inverse读取发生在destroy之后，缺失字段不能回填 |
+| 资源、wall与账目 | 服务authority process-tree峰46,615,474,176 B；专属cgroup峰43,826,028,544 B；当前V5 278项、charged_seconds 634,900.2474392491，SHA dbf7d2211ec476dd11d7fd622dbf6d014c4d0df9da9f58f63157258a52917b94 | 均低于80 GiB hard/72 GiB warning；V5含跨阶段研发账，不是本场运行时长。本Invocation service wall 12,811.423691891 s唯一计费，tiny pytest父wall 4.235037796199322 s另计 |
+| 后续资格 | V14两场大型构造中的第1场已运行；第2场尚未运行 | 当前真实数值门拒绝后须先经技术审阅；M600、h=0.525、50×25 nm、2 TB与48 h均not_run/未资格化 |
+
+V14之前还有历史Invocation `cb734e0d54734b53817d157d5fe8c706`（source HEAD `6aa6a7c20d1d1edf85e1248e58577debd031feaf`）：它实际完成800列与owner LU，后在outer fresh-authority入口失败；不是SUP冲突，首个runtime false子谓词未持久化。SUP预创建冲突是更早Invocation `817bc0e2a56e42feb9a8cce040c9a486`。V14起点V5为272项、`622067.4459419006 s`、SHA `accf760c3c25d4e89daa49da3f109ced59d6086a83971f527d61ac63a1700e8f`。cb734 run manifest/summary/consumer SHA分别为`2bb05d80d58fd8e08ef6225e94e7f9c40a615a0ebc224e25d59dc1bbf159a564` / `a69fb0d467c5623e0749d7e7f4ee8a4e50e8d6040f3f5e1c9f63a24aae041fe` / `0d0e331c288b02ed2372aca70dcf03e84ac8d3e6b976782e59d89fde5f6e9b95`。V14 P0/P1回归与source边界见[test summary](test_summary.md)：最终有效serial 24 cases（9+7+8，失败attempt保留），MPI2两个selector/4 rank-cases，fresh MPI8 ABI 8/8。P0实际执行生产输出根helper→supervisor→轻量OS child并验证manifest-before-spawn/SUP拒绝；P1实际执行candidate→factory callback→LDU guard pass/refuse。此前fakefactory+AST callback测试仅是历史窄路由证据。serial attempt source map SHA依次为`edfab602c7e3f01ca3eecd3b698343465fb17a04ec353d0bc3872a7d6afe54dd`、`fac414fccc581be6639454b36a9d22009d1032cf7a3e32d69ba42d6295e40535`、`67022abaaa52b123de5f748a0cd14d456ae5bf29965cddeae56f11ac0d11f6b5`；MPI2 attempt SHA `7ed5980892520e128b1ca2a7d4a3649ec525ef81cfedf437908db4a4d6d54507`；MPI8 ABI attempt SHA `d57ce5e4f489c200f2fb415dd50d8725132d943e381a108b0417a2c8bbac0d2f`，source HEAD f969d413。f969d413还修复LDU aggregate/node1 schema、outer marker完整回执与rank0写入失败广播、以及共享OUT/SUP绑定，并不只是callback转交。
+
+| Consumer marker阶段（同一CLOCK_MONOTONIC相对轴） | endpoint与差值 | 解释 |
+|---|---|---|
+| preflight_begin→modal_schur_build_begin | 0.041663583135→1296.792764084 s；Δ=1296.751100501 s | setup至S_B开始，包含前置P4，无法再按marker拆纯setup |
+| before_build→after_all_columns | 1296.959448410→12652.642669783 s；Δ=11355.683221373 s | 800列构造窗 |
+| after_all_columns→v13_modal_schur_ready | 12652.642669783→12748.079925444 s；Δ=95.437255661 s | 独立验证、owner LU与ready检查 |
+| ready→outer_solve_begin | 12748.079925444→12748.682461705 s；Δ=0.602536261 s | 同consumer marker轴 |
+| outer_solve_begin→final_cleanup_complete | 12748.682461705→12806.358062949 s；Δ=57.675601244 s | iteration 1、失败与清理 |
+| finalizer post-IO / unit wall | 0.940788589 s / 12811.423691891 s | 不同timer起点；不可与consumer marker、public或service parent嵌套时间相加，缺少共同cleanup终点差值 |
+
+50×25 nm仅有对象级条件预算，没有目标数据，见下表；不据此线性推断总RSS、2 TB或48 h可行：
+
+| 对象 | 条件预算 | M400已有校准 | 目标缺项 |
+|---|---|---|---|
+| P4 rows/矩阵NNZ/fill | 实际condensed rows、输入矩阵NNZ、MUMPS symbolic/numeric fill与workspace分列 | rows 64,966；bottom输入矩阵NNZ 27,929,686、top输入矩阵NNZ 39,242,250；它们不是LU factor-fill计数，独立MUMPS factor-fill=`not_persisted`。bottom字段来自[本场factor inventory](../../../results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261014T011327.081762Z/consumer/factor_inventory.json)的`bottom_factor_calibration.nnz`，producer字段取自输入凝聚矩阵source inventory；top值为注册输入矩阵NNZ，见[原progress marker](../../../results/task041_v13_main_warm_exception_readonly_diagnosis_correction_20261013T160237Z/original_package_snapshot/progress_markers.json) SHA `83d4ade694310e58962575780e006194da1fc8af060d78de39a64310e48f4443`。历史stage peak 53,541,888,000 B不是本次峰值 | 目标rows/矩阵NNZ/fill、workspace和并存时段未测 |
+| QEP/TOAR/basis | 依线性化、`nev/ncv/mpd`、shift factor与basis计数 | 本场复用producer、QEP未运行；旧mode-prep wall 1460.470080 s | 目标shift fill、basis与冷QEP对象峰未知 |
+| trace/DtN | trace自由度×通道×16 B，加投影、ghost和副本 | M400 full/slave/active rows 68,852/4,532/64,320；raw [`physical_action.external_mode_count=646`](../../../results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261014T011327.081762Z/consumer/consumer_summary.json)（SHA `393f17fccd9674b0920eb0ec74e23e9c459ddd0c408a56b6520e015440f5ef75`）表示P4外部port通道数，不同于内部M400模式数400及`S_B`的`2M=800`阶数 | 目标trace和rank副本未知 |
+| S_B与LU | 阶数2M，complex128 payload各`16(2M)^2` B，另加pivot/workspace；factorization约O((2M)^3) | M400 800²矩阵与LU各10,240,000 B；pivot 3,200 B；derived owner peak 40,963,200 B；本场800列窗11,355.683221 s | 目标M与临时空间并存未知，payload不是RSS |
+| FGMRES与恢复 | restart m向量约`16*N_global*(2m+1)` B；恢复场至少`16*N_live_field` B并加投影/traction/输出 | 本场仅iteration1，recovery/完整E-H未运行 | target N、restart窗口、场/因子重叠未测 |
+
+V5旧276项前缀保持，当前278项SHA如上。旧producer mode-prep wall为1,460.4700798629783 s；与本场service wall合计14,271.893771753977 s只是已测阶段的小计，不是成功cold总时长。阶段采样口径、tiny原值、失败字段缺失和原始artifact hash见[Response V16](../response_v16.md)、[轻量machine record](records/task041_v14_modal_row_terminal_20261014.json)及[V14诊断](../../../results/task041_v14_modal_row_failure_closeout_20261014T050244Z/diagnosis_zh.md)。下方V13段现在明确作为历史快照，旧失败与旧账目均不回写。
+
+## 历史快照：V13 rank-map资格、两次warm终态与dispatch脚手架纠正（2026-10-13）
+
+以下内容保留V13阶段的历史状态，不代表当前V14终态。通俗地说，V13让固定BAL_H近似作用一致地用于LDU预条件器。此前A/B合同、C小型注册FE、serial service合同、MPI8环境检查已分批通过。随后CPU map从代码固定列表改为显式请求绑定；5个非法map输入合同与另外23个serial合同case通过，clean HEAD上的MPI8 ABI也按请求map 8/8通过。这些证据证明配置与rank环境合同，不证明完整数值求解。
+
+首场正式W0.7 warm真实运行，在构造`S_B`时因workflow漏传fresh-authority callback而以`IMPLEMENTATION_FAILURE`停止。唯一获准的实现错误重试也真实启动了systemd Invocation，但准备脚本预先创建了production supervisor必须独占创建的目录，导致public子进程启动前`FileExistsError`；finalizer记录`launch_manifest_missing`。因此重试没有运行worker/MPI、producer/QEP或求解，未到outer、官方残差、恢复、physics/RTA。该历史阶段V5为271条entry，顶层`charged_seconds=608046.3500231376`，SHA `f3a1cd6fe50c5e61eff95830519f1d481ca7b0c7de411becfd75236f9e6fe8d4`；其中新Invocation唯一计入`0.445147259 s`，旧270条前缀保持不变。
 
 | 组 | 冻结范围与结果 | 环境和证据边界 | 入口 |
 |---|---|---|---|
@@ -15,7 +52,7 @@
 | callback接线定向回归 | workflow仅对V13传递factory已有callback对象；修复后唯一serial selector`1 passed`，pytest父wall`6.385026524076238 s` | test351使用fake stage factory，并用AST执行生产调用表达式，覆盖callback对象转交及V12/None不读新属性；不证明真实fresh-authority执行，也不是warm重试 | [pytest attempt](../../../results/task041_v13_callback_wiring_serial_final_attempt_20261013T022207Z/serial/pytest.attempt.json)、[V5更正receipt](../../../results/task041_v13_callback_wiring_v5_docs_correction_20261013T023305Z/ledger_correction_receipt.json) |
 | 请求rank-map合同与MPI8 ABI | CPU-map实现提交`f30240b6aa982953a98d4c403d4b3b57db1703b2`；5个非法输入case与后续23个case通过。MPI8 ABI在封存map`[0,1,13,14,15,16,17,18]`上8/8通过 | 前5个非法map输入case在064700Z以CPU14运行；后23个合同case在后续attempt以CPU2运行。两者都是serial，不是MPI8运行；测试按可信请求map核对，不从summary自报值重定义期望。MPI8记录才是rank实际CPU资格；不含FE或正式数值worker | [5项map校验](../../../results/task041_v13_rankmap_contract_serial_attempt_20261013T064700Z/serial/pytest.attempt.json)、[23项serial](../../../results/task041_v13_cpu2_rankmap_remaining_serial_attempt_20261013T075237Z/serial/pytest.attempt.json)、[8-rank ABI](../../../results/task041_v13_rankmap_mpi8_abi_attempt_20261013T081140Z/native_abi.attempt.json) |
 | 唯一实现错误重试 | unit `task041-v13-main-warm-retry-rankmap-20261013t081140z.service`，Invocation `817bc0e2a56e42feb9a8cce040c9a486`；service wall `0.445147259 s`，MainPID退出1、ExecStopPost退出3 | binder预建supervision目录；production supervisor随后以独占`mkdir(..., exist_ok=False)`失败，发生在launch manifest和public子进程之前。不是数值门失败，也没有producer实际执行 | [dispatch失败审阅包](../../../results/task041_v13_warm_dispatch_scaffold_failure_review_20261013T092853Z/README.md)、[finalizer](../../../results/task041_v13_main_warm_retry_rankmap_supervision_20261013T081140Z/finalizer/finalizer_summary.json)、[错误栈](../../../results/task041_v13_main_warm_retry_rankmap_attempt_20261013T081140Z/service_stderr.log) |
-| V5当前账目 | 旧270-entry前缀不变；本次Invocation entry唯一新增`0.445147259 s`。当前271条，顶层`charged_seconds=608046.3500231376`，SHA `f3a1cd6fe50c5e61eff95830519f1d481ca7b0c7de411becfd75236f9e6fe8d4` | service finalizer是唯一收费者；不重复追加，也不把资源/ABI另行记费 | [V5唯一ID与前缀检查](../../../results/task041_v13_warm_dispatch_scaffold_failure_review_20261013T092853Z/v5_attempt_id_exact_check.json)、[live ledger](../../../results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json) |
+| V5当时账目 | 旧270-entry前缀不变；本次Invocation entry唯一新增`0.445147259 s`。当时271条，顶层`charged_seconds=608046.3500231376`，SHA `f3a1cd6fe50c5e61eff95830519f1d481ca7b0c7de411becfd75236f9e6fe8d4` | service finalizer是唯一收费者；不重复追加，也不把资源/ABI另行记费 | [V5唯一ID与前缀检查](../../../results/task041_v13_warm_dispatch_scaffold_failure_review_20261013T092853Z/v5_attempt_id_exact_check.json)、[live ledger](../../../results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json) |
 
 最新C MPI2 attempt通过新的resource双样本门和default-policy两rank native ABI；CPU分别为14/18，complex128、Int32、精确桥、六线程和允许内存节点集合检查通过。cgroup分支未启用cpuset控制器，ABI记录了沿继承链读取祖先`cpuset.mems.effective`的来源；两rank策略均为default，页节点分布不作为门。当前小测试资源合同仍为hard/warning/W=`80/72/8 GiB`、node0+node1合计reserve `384 GiB`，node1至少`80 GiB`只代表资源可用性，不代表页面绑定。CPU资源门曾有一次拒绝，之后等到所选CPU满足既有门才重走新OUT；该拒绝不是数值失败。旧`numa_maps`探针找不到mapping也不能证明页面落错节点。历史失败和错误收据均保留。
 
