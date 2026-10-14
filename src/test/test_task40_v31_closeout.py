@@ -2979,7 +2979,12 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
     original_identity_check = task40_v31_contract.require_v31_input_identity
 
     def capture_identity_call(*args, **kwargs):
-        identity_calls.append(kwargs.get("q4_numeric_pending_import"))
+        identity_calls.append(
+            (
+                kwargs.get("q4_numeric_pending_import"),
+                kwargs.get("q4_complete_import"),
+            )
+        )
         return original_identity_check(*args, **kwargs)
 
     monkeypatch.setattr(
@@ -3002,7 +3007,74 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
     if review_version == "V32":
         expected_template = contract["preparation"]["q4_numeric_pending_import"]
         expected_complete_template = contract["preparation"]["q4_complete_import"]
-        assert identity_calls == [expected_template]
+        expected_identity_call = (expected_template, expected_complete_template)
+        assert identity_calls == [expected_identity_call]
+
+        # Exercise the real startup function through both identity checks. Stop
+        # at campaign routing, before activation or any child process starts.
+        approved_contract = json.loads(json.dumps(contract))
+        approved_contract["status"] = "USER_APPROVED"
+        approved_contract["service_start_allowed"] = True
+        service_window_path = root / "fixture_campaign_window_v32.json"
+        service_window_sha = "d" * 64
+        approved_contract["execution"]["campaign_window_path"] = str(service_window_path)
+        approved_contract["execution"]["campaign_window_sha256"] = service_window_sha
+        approved_contract["execution"]["window"].update(
+            {
+                "window_path": str(service_window_path),
+                "window_sha256": service_window_sha,
+                "source_at_entry": "c" * 40,
+            }
+        )
+        service_contract_path = (
+            root
+            / task40_v31_contract.v31_source_artifact_relative(source_sha)
+            / "execution_contract_v32.approved.json"
+        )
+        service_contract_path.parent.mkdir(parents=True, exist_ok=True)
+        service_contract_path.write_text("fixture approved contract\n", encoding="utf-8")
+        service_contract_sha = "f" * 64
+
+        class ReachedCampaignRouting(Exception):
+            pass
+
+        def stop_at_campaign_routing(*_args, **kwargs):
+            assert kwargs["v31_contract"]["preparation"]["q4_complete_import"] == (
+                expected_complete_template
+            )
+            raise ReachedCampaignRouting
+
+        with monkeypatch.context() as startup_patch:
+            startup_patch.setattr(
+                task40_v31_contract,
+                "require_v31_execution_contract",
+                lambda *_args, **_kwargs: (approved_contract, service_contract_sha),
+            )
+            startup_patch.setattr(
+                service,
+                "_resolve_service_campaign",
+                stop_at_campaign_routing,
+            )
+            startup_patch.setenv(
+                "TASK40_V31_CONTRACT_PATH", str(service_contract_path)
+            )
+            startup_patch.setenv(
+                "TASK40_V31_CONTRACT_SHA256", service_contract_sha
+            )
+            with pytest.raises(ReachedCampaignRouting):
+                service.run_service(
+                    unit="task40-v32-identity-fixture.service",
+                    runtime_prefix=(root / task40_v30_contract.V30_RUNTIME_RELATIVE).resolve(),
+                    abi_receipt=(root / task40_v30_contract.V30_ABI_RECEIPT_RELATIVE).resolve(),
+                    jit_cache=(root / task40_v30_contract.V30_JIT_CACHE_RELATIVE).resolve(),
+                    case_args=[
+                        "--task40-v32-execution-contract",
+                        str(service_contract_path),
+                        str(input_path),
+                    ],
+                    repo_root=root,
+                )
+        assert identity_calls[1:] == [expected_identity_call, expected_identity_call]
         from src.io import load_and_resolve
 
         resolved = load_and_resolve(input_path)
@@ -3132,7 +3204,7 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
                 v31_contract=contract,
             )
     else:
-        assert identity_calls == [None]
+        assert identity_calls == [(None, None)]
         original_text = input_path.read_text(encoding="utf-8")
         injected_text = original_text.replace(
             "task40_v31_factor_bank_config = {",

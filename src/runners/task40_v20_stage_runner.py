@@ -4787,6 +4787,11 @@ def run_task40_v20_stage(
                     if v32_route
                     else None
                 ),
+                q4_complete_import=(
+                    v31_contract.get("preparation", {}).get("q4_complete_import")
+                    if v32_route
+                    else None
+                ),
             )
             if v31_input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
                 raise ValueError("V31 stage runner raw stage SHA differs from its provenance")

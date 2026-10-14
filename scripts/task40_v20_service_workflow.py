@@ -8159,6 +8159,7 @@ def _check_partial_result(
                 V30_CANONICAL_INPUT_RELATIVE,
             )
             from src.runners.task40_v31_contract import (
+                bind_v32_q4_complete_import,
                 bind_v32_q4_pending_import,
                 require_v31_execution_contract,
                 require_v31_input_identity,
@@ -8176,6 +8177,7 @@ def _check_partial_result(
             if _sha256_file(selector_path) != selector_sha:
                 raise ValueError("V31 selector bytes differ from the recorded selector SHA")
             q4_import_template = None
+            q4_complete_import_template = None
             if v31_binding.get("review_version") == "V32":
                 contract_path_text = os.environ.get("TASK40_V31_CONTRACT_PATH", "")
                 contract_sha256 = os.environ.get("TASK40_V31_CONTRACT_SHA256", "")
@@ -8200,6 +8202,26 @@ def _check_partial_result(
                         "window_sha256": window_sha256,
                     },
                 )
+                expected_complete_template = contract.get("preparation", {}).get(
+                    "q4_complete_import"
+                )
+                expected_complete_authorization = None
+                expected_import_authorizations = {
+                    "numeric_pending": {"4": expected_authorization}
+                }
+                if isinstance(expected_complete_template, Mapping):
+                    expected_complete_template = dict(expected_complete_template)
+                    expected_complete_authorization = bind_v32_q4_complete_import(
+                        expected_complete_template,
+                        consumer_execution_identity={
+                            "source_sha": source_sha,
+                            "window_sha256": window_sha256,
+                        },
+                    )
+                    expected_import_authorizations = {
+                        "complete": {"4": expected_complete_authorization},
+                        "numeric_pending": {"4": expected_authorization},
+                    }
                 execution = contract.get("execution", {})
                 if (
                     v31_binding.get("contract_path") != str(contract_path)
@@ -8208,15 +8230,22 @@ def _check_partial_result(
                     or v31_binding.get("execution_window_sha256") != window_sha256
                     or v31_binding.get("q4_numeric_pending_import_template") != expected_template
                     or v31_binding.get("q4_numeric_pending_import_authorization") != expected_authorization
+                    or v31_binding.get("q4_complete_import_template")
+                    != expected_complete_template
+                    or v31_binding.get("q4_complete_import_authorization")
+                    != expected_complete_authorization
                     or contract.get("preparation", {}).get("q4_numeric_pending_import") != expected_template
                     or execution.get("q_csr_import_authorizations")
-                    != {"numeric_pending": {"4": expected_authorization}}
+                    != expected_import_authorizations
                 ):
                     raise ValueError("V32 q4 import binding differs from the current approved contract or fixed old source")
                 q4_import_template = expected_template
+                q4_complete_import_template = expected_complete_template
             elif (
                 v31_binding.get("q4_numeric_pending_import_template") is not None
                 or v31_binding.get("q4_numeric_pending_import_authorization") is not None
+                or v31_binding.get("q4_complete_import_template") is not None
+                or v31_binding.get("q4_complete_import_authorization") is not None
             ):
                 raise ValueError("V31 worker manifest carries an unregistered V32 q4 import")
             v31_input_identity = require_v31_input_identity(
@@ -8226,6 +8255,7 @@ def _check_partial_result(
                 source_sha=str(manifest.get("source_sha", "")),
                 selector_sha256=selector_sha,
                 q4_numeric_pending_import=q4_import_template,
+                q4_complete_import=q4_complete_import_template,
             )
         except Exception as error:
             v31_input_identity_error = f"{type(error).__name__}: {error}"
@@ -9514,6 +9544,11 @@ def run_service(
             if v31_contract.get("schema") == V32_CONTRACT_SCHEMA
             else None
         )
+        q4_complete_import_template = (
+            v31_contract["preparation"].get("q4_complete_import")
+            if v31_contract.get("schema") == V32_CONTRACT_SCHEMA
+            else None
+        )
         v31_input_identity = require_v31_input_identity(
             canonical_path,
             input_path,
@@ -9521,6 +9556,7 @@ def run_service(
             source_sha=str(v31_contract["source_freeze"]["source_sha"]),
             selector_sha256=str(selector["selector_sha256"]),
             q4_numeric_pending_import=q4_import_template,
+            q4_complete_import=q4_complete_import_template,
         )
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", unit):
         raise ValueError("invalid systemd user-service unit name")
@@ -9729,6 +9765,35 @@ def run_service(
         if v30_contract_path is not None and v30_contract is not None
         else None
     )
+    v31_q4_complete_import_template = None
+    v31_q4_complete_import_authorization = None
+    if v31_contract is not None and v31_review_version == "V32":
+        preparation = v31_contract.get("preparation", {})
+        complete_template = (
+            preparation.get("q4_complete_import")
+            if isinstance(preparation, Mapping)
+            else None
+        )
+        execution_imports = v31_contract.get("execution", {}).get(
+            "q_csr_import_authorizations", {}
+        )
+        complete_authorizations = (
+            execution_imports.get("complete")
+            if isinstance(execution_imports, Mapping)
+            else None
+        )
+        complete_authorization = (
+            complete_authorizations.get("4")
+            if isinstance(complete_authorizations, Mapping)
+            else None
+        )
+        if complete_template is not None or complete_authorization is not None:
+            if not isinstance(complete_template, Mapping) or not isinstance(
+                complete_authorization, Mapping
+            ):
+                raise ValueError("V32 q4 complete template and authorization must be supplied together")
+            v31_q4_complete_import_template = dict(complete_template)
+            v31_q4_complete_import_authorization = dict(complete_authorization)
     v31_binding = (
         {
             "contract_path": str(v31_contract_path.resolve()),
@@ -9758,6 +9823,16 @@ def run_service(
             "q4_numeric_pending_import_authorization": (
                 dict(v31_contract["execution"]["q_csr_import_authorizations"]["numeric_pending"]["4"])
                 if v31_review_version == "V32"
+                else None
+            ),
+            "q4_complete_import_template": (
+                dict(v31_q4_complete_import_template)
+                if v31_q4_complete_import_template is not None
+                else None
+            ),
+            "q4_complete_import_authorization": (
+                dict(v31_q4_complete_import_authorization)
+                if v31_q4_complete_import_authorization is not None
                 else None
             ),
             "input_identity": dict(v31_input_identity or {}),
