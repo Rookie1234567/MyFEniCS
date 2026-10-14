@@ -1,0 +1,384 @@
+{
+  "schema": "task40extra.trace4-interior6.saved-image-128-report.v1",
+  "title": "trace4_interior6_saved_image_20261014",
+  "report_date_utc": "2026-10-14",
+  "publication_state": "FINAL_SCIENTIFIC_TERMINAL_AND_V72_LEDGER_BOUND",
+  "scientific_status": "INCONCLUSIVE",
+  "runtime_status": "PASS_RUNTIME_RESOURCE_SCOPE_ONLY_SCIENCE_INCONCLUSIVE",
+  "stage_status": "BOUNDED_SAVED_IMAGE_DIAGNOSTIC_FINISHED_ZERO_OUTER",
+  "source_review": {
+    "status": "SOURCE_PASS_FINAL_REBOUND_PACKAGE_NO_NEW_SOURCE_BLOCKER",
+    "tests": 78,
+    "exact_command_sha256": "636680a46b1ff102dec03be15f15ae0c6e4b7cfd417630e007df92e0e14abb50"
+  },
+  "question_and_operator": {
+    "scope": "single_fixed_native_direction_free_port_retained_image",
+    "forward": "L_n=J A_saved R E",
+    "adjoint": "L_n^H=E^H R^H A_saved^H J^H",
+    "E": "diag(actual_unpruned_Pt,I80)",
+    "E_shape": [
+      24056,
+      10304
+    ],
+    "R": "diag(Qb,I80)",
+    "J": "diag(Qb^H,Hp)",
+    "objective_norm": "original native retained Euclidean norm",
+    "all80_port_coefficients_free_in_image_search": true,
+    "normal_matrix_or_explicit_global_image_matrix_constructed": false,
+    "original_port_gate_separate_and_required": true
+  },
+  "target_identity": {
+    "label": "paused6656_native_true_residual",
+    "target_source": "original_native_rhs_minus_native_S6_at_original_mapped_checkpoint",
+    "original_PETSc_raw_norm": 0.013898680225977397,
+    "raw_hash": "7a0f317f14c13dfa3235d34cb2586ceeecbdd3a43addd6555ebfb66af84daca2",
+    "unit_hash": "3cd6bb01aba4adbcdb87a9b678796cc7a6ba45cd0296d6d3a05b9961147abfce",
+    "saved_derived_target_substituted": false,
+    "raw_physical_vector_modified": false,
+    "retained_port_norm": 5.778000052683001e-13,
+    "retained_trace_norm": 1.000000000000002
+  },
+  "actual_adjoint_checks": [
+    {
+      "absolute": 7.105427357601002e-14,
+      "left_imaginary": -74.46750903422401,
+      "left_real": -37.37642825523283,
+      "limit": 1e-10,
+      "native_port_probe_norm": 0.05605888580853113,
+      "operation_relative": 9.024160271822173e-18,
+      "passed": true,
+      "probe": 0,
+      "reduced_port_probe_norm": 0.09201256151188046,
+      "relative": 8.527763731093769e-16,
+      "right_imaginary": -74.46750903422395,
+      "right_real": -37.376428255232874,
+      "scope": "linear_action_adjoint_only_not_nonzero_port_solve_qualification"
+    },
+    {
+      "absolute": 9.240897845457147e-14,
+      "left_imaginary": 2.322728264868802,
+      "left_real": 34.893997085416544,
+      "limit": 1e-10,
+      "native_port_probe_norm": 0.058843549700466076,
+      "operation_relative": 1.7274292121025932e-17,
+      "passed": true,
+      "probe": 1,
+      "reduced_port_probe_norm": 0.09098545252453279,
+      "relative": 2.642429498654506e-15,
+      "right_imaginary": 2.322728264868805,
+      "right_real": 34.89399708541645,
+      "scope": "linear_action_adjoint_only_not_nonzero_port_solve_qualification"
+    },
+    {
+      "absolute": 1.923987993140705e-14,
+      "left_imaginary": 6.28385190841098,
+      "left_real": -3.7393790073158817,
+      "limit": 1e-10,
+      "native_port_probe_norm": 0.056753068561862643,
+      "operation_relative": 2.6886645120632434e-18,
+      "passed": true,
+      "probe": 2,
+      "reduced_port_probe_norm": 0.09005515146237275,
+      "relative": 2.6311661905475665e-15,
+      "right_imaginary": 6.283851908410973,
+      "right_real": -3.7393790073158635,
+      "scope": "linear_action_adjoint_only_not_nonzero_port_solve_qualification"
+    }
+  ],
+  "LSMR": {
+    "LH_calls": 129,
+    "L_calls": 128,
+    "condA": 10.658730376891038,
+    "istop": 7,
+    "iteration_cap_reached": true,
+    "itn": 128,
+    "normA": 320475.8043008204,
+    "normar": 63.50193872767764,
+    "normr": 0.8537943314895722,
+    "normx": 0.0010661890352508905
+  },
+  "selected_candidate": {
+    "eta_native": 0.8537943314895308,
+    "eta_saved_in_same_native_norm": 0.8537943314895684,
+    "native_original_q_denominator": 1.000000000000002,
+    "native_residual_norms": {
+      "ports": 0.00011385328904239144,
+      "total": 0.8537943314895324,
+      "trace": 0.8537943238983767
+    },
+    "mapped_saved_residual_native_norms": {
+      "ports": 0.00011385328904239144,
+      "total": 0.8537943314895701,
+      "trace": 0.8537943238984144
+    },
+    "selected_native_vs_saved_image_delta": 1.2312449764699958e-12,
+    "native_vs_saved_image_norms": {
+      "ports": 3.013390414881031e-19,
+      "total": 1.2312449764699983e-12,
+      "trace": 1.2312449764699613e-12
+    },
+    "recomputed_normal_residual_norm": 63.50193872767886,
+    "recomputed_normal_relative_to_original_q": 63.501938727678734,
+    "saved_coordinate_residual_relative_separate_not_objective": 0.8537943271875853,
+    "saved_coordinate_q_denominator": 1.0000000000000027,
+    "y_norm": 0.0010661890352508905,
+    "y_trace_coefficient_norm": 0.0010661861543184111,
+    "y_port_coefficient_norm": 2.4785538004177096e-06
+  },
+  "original_port_gate": {
+    "Du_norm": 0.0001136193214380345,
+    "Halpha_norm": 7.573218913540739e-06,
+    "absolute": 0.00011385328904239144,
+    "consistency_with_native_port_residual_absolute": 4.919973769929219e-21,
+    "limit": 1e-10,
+    "operation_relative": 0.9394413894559671,
+    "operation_scale": 0.00012119254092937524,
+    "passed": false,
+    "q_port_norm": 5.778000052683001e-13,
+    "status": "FAIL"
+  },
+  "claim_flags": {
+    "image_threshold": 0.02,
+    "global_minimum_certified": false,
+    "no_lower_bound_certificate": true,
+    "impossibility_claimed": false,
+    "legal_PC_improvement_claimed": false,
+    "legal_port_image_upper_bound": false,
+    "verified_free_port_existence_upper_bound": false,
+    "solution_accepted": false,
+    "arbitrary_nonzero_port_RHS_qualified": false,
+    "pressure_probe_qualified": false
+  },
+  "actual_work": {
+    "LSMR_iteration_cap": 128,
+    "LSMR_iterations": 128,
+    "L_total": 132,
+    "LH_total": 133,
+    "L_hard_cap": 136,
+    "LH_hard_cap": 136,
+    "adjoint_pairs": 3,
+    "native_input_S6_actions": 4,
+    "selected_native_S6_actions": 1,
+    "selected_homogeneous_local_recovery": 1,
+    "selected_original_D_action": 1,
+    "global_K_created": false,
+    "JOB1": 0,
+    "global_numeric": 0,
+    "global_factor_solve": 0,
+    "H3": 0,
+    "BAL_H": 0,
+    "CG_iterations": 0,
+    "outer_iterations": 0,
+    "outer_KSP_created": false,
+    "fine_local_LU_bank_built": true,
+    "raw_classes": 33,
+    "oriented_local_LU_classes": 44,
+    "no_continuation_of_LSMR_authorized": true
+  },
+  "runtime_terminal": {
+    "child_exit_code": 0,
+    "elapsed_seconds": 71.98961069100187,
+    "sampled_peak_tree_RSS_bytes": 2405855232,
+    "resource_samples": 283,
+    "admissions": 63,
+    "named_tree_admissions_independently_recomputed": true,
+    "maximum_projected_tree_bytes": 4341713700,
+    "minimum_host_available_bytes": 6983024640,
+    "minimum_disk_free_bytes": 13042679808,
+    "maximum_recorded_VmSize_snapshot": 3117539328,
+    "maximum_recorded_VmRSS_snapshot": 2394791936,
+    "recorded_snapshots_not_continuous_peaks": true,
+    "AS6_source_gates_and_effective_limit_verified": true,
+    "cleanup_verified": true,
+    "remaining_processes": [],
+    "regular_output_bytes": 3355175,
+    "all11_known_owners_returned_normally": true,
+    "zero_host_process_swap_and_pswpin_pswpout": true,
+    "warnings_preserved": "hwloc sysfs topology warning and UCX sysfs network-discovery error were recorded; no global numerical failure inferred from these messages.",
+    "joint_named_CSC_LS_plus_original_reserves_bytes": 1074641636,
+    "tree_additional_bytes_including_ELF": 1949989668
+  },
+  "original_limits_unchanged": {
+    "hard_AS_bytes": 6442450944,
+    "tree_RSS_ceiling_bytes": 8589934592,
+    "minimum_host_available_bytes": 1073741824,
+    "zero_swap": true,
+    "hard_seconds": 600,
+    "minimum_disk_free_bytes": 4294967296,
+    "total_output_cap_bytes": 134217728,
+    "MPI": 1,
+    "threads": 1,
+    "one_scientific_child": true
+  },
+  "four_local_vectors": {
+    "local_only": true,
+    "uploaded": false,
+    "accepted_solution": false,
+    "total_file_bytes": 1320064,
+    "max_file_bytes": 385024,
+    "files_metadata_only": {
+      "coarse_y": {
+        "bytes": 164992,
+        "dtype": "complex128",
+        "shape": [
+          10304
+        ],
+        "sha256": "fb8bce05e9a7b9888f97498c79779abf4b2f26194f1ac75d166d8c96120ab8d2",
+        "typed_sha256": "880591fb5a503cdfba04b07644cff276ab0be5349d644903627780c074431c8b"
+      },
+      "native_image": {
+        "bytes": 385024,
+        "dtype": "complex128",
+        "shape": [
+          24056
+        ],
+        "sha256": "3ccf4633fd671b77c527aebd5b1c42024b61cb369d8b8a458e39e02ca6bc26ae",
+        "typed_sha256": "ae30f6f80f8a1a52cb0661b9fb48193fc92fd6533900443c9632360bcfe70e08"
+      },
+      "native_residual": {
+        "bytes": 385024,
+        "dtype": "complex128",
+        "shape": [
+          24056
+        ],
+        "sha256": "04199243a029948b5d99239153669d5e21b7992efb7388691decbe5803527e5a",
+        "typed_sha256": "61b523673fb736350260e4e3416f5a7e0b2446ae93882d894b6fa7c44f613a87"
+      },
+      "q_native": {
+        "bytes": 385024,
+        "dtype": "complex128",
+        "shape": [
+          24056
+        ],
+        "sha256": "2d1b787b35aea8a3b59c1b134a6453c67646618572672496563016aeb4368bed",
+        "typed_sha256": "3cd6bb01aba4adbcdb87a9b678796cc7a6ba45cd0296d6d3a05b9961147abfce"
+      }
+    },
+    "publisher_did_not_read_NPY_payloads": true,
+    "independent_review": {
+      "method": "NPY1.0 magic/header length/ast literal header checked, exact<c16 C-layout and shape, payload length, rawSHA and original typedSHA recipe reproduced, all real/imag values finite. Python complex componentwise native_image-q-native_residual exactly zero; fsum-based norms reproduce total/trace/port/q/y values.",
+      "all_headers_hashes_typed_hashes_and_finite_values_checked": true,
+      "componentwise_max_error": 0.0,
+      "native_image_minus_q_equals_native_residual_exactly": true,
+      "recomputed_norms": {
+        "eta_native": 0.8537943314895303,
+        "native_image": 0.43305275898501255,
+        "native_residual": 0.8537943314895324,
+        "native_residual_ports": 0.00011385328904239144,
+        "native_residual_trace": 0.8537943238983767,
+        "q": 1.0000000000000024,
+        "q_ports": 5.778000052683001e-13,
+        "q_trace": 1.0000000000000024,
+        "y": 0.0010661890352508905,
+        "y_ports": 2.4785538004177096e-06,
+        "y_trace": 0.0010661861543184111
+      },
+      "native_S6_recomputed": false,
+      "large_saved_CSR_payload_read": false,
+      "scope_limitation": "This verifies saved evidence consistency, not a second application of S6(Ey). Native selected action is supported by the actual approved pinned callback/source/events and its one-action count; no independent FE/native recomputation is claimed."
+    }
+  },
+  "preserved_previous_failures": {
+    "nonzero_port_pressure_FAIL_retained": true,
+    "nonzero_port_arbitrary_RHS_qualified": false,
+    "saved_native_raw_failures_overridden": false,
+    "saved_vs_native_checkpoint_residual": {
+      "absolute": 4.955256445533892e-09,
+      "finite": true,
+      "limit": 1e-10,
+      "operation_passed": false,
+      "operation_relative": 1.7826355891748933e-07,
+      "operation_scale": 0.027797360692363774,
+      "raw_passed": false,
+      "relative": 3.5652711475150975e-07
+    },
+    "prior_actual_excluded_raw_failures": {
+      "field_accepted": false,
+      "native_prediction_raw_passed": false,
+      "saved_native_PC_action_raw_passed": false,
+      "saved_prediction_raw_passed": false,
+      "these_are_not_overridden_by_PC_comparison_status": true
+    },
+    "all_diagnostics_passed_claimed": false,
+    "field_accepted": false,
+    "solution_accepted": false
+  },
+  "costs": {
+    "current_stage_seconds": 71.98961069100187,
+    "previous_five_trace4_attempts_seconds": 875.7702280620282,
+    "six_trace4_attempts_seconds": 947.7598387530301,
+    "preparation_review_wait": "UNMEASURED_NOT_ZERO",
+    "project_ledger": "phase4_execution_ledger_v72.json",
+    "project_known_terminal_seconds": 21157.21482817612,
+    "project_lower_bound_including_interrupted_seconds": 29071.207111019103,
+    "project_sum_not_exact_total_wallclock": true,
+    "independent_scalar_vector_review_timing": "UNMEASURED_SEPARATE_NOT_ZERO",
+    "no_double_counting_of_subphase_seconds": true,
+    "memory_peaks_not_summed": true
+  },
+  "stop_and_next_scope": "Publish capped INCONCLUSIVE result and original port FAIL; do not continue least squares or start outer/scientific work.",
+  "not_proven": [
+    "global least-squares minimum",
+    "unattainability or missing-trace-mode certificate",
+    "causal explanation of earlier Maxwell plateau",
+    "legal PC improvement",
+    "general coarse inverse",
+    "accepted physical field or solution",
+    "108-cell or hp convergence"
+  ],
+  "evidence_root_label": "hp_resume_20261013",
+  "evidence": [
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_saved_image_reachability_source_review.json",
+      "bytes": 38398,
+      "sha256": "e6c263c10e7bc95a139b05b50f318283e358975f391f148fd848061ee7fc26ce"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_saved_image_runtime_review.json",
+      "bytes": 5427,
+      "sha256": "cb09f441b42ccbc1e184d34943715140e429d210a0753616e2db0d2effedfbde"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_saved_image_attempt01/summary.json",
+      "bytes": 1215,
+      "sha256": "ddd911adfd2cce37f0f1874bd7d1073623fbab3a2528eb72d64006216422d48c"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_saved_image_attempt01/result.json",
+      "bytes": 224789,
+      "sha256": "082d87291e38ccc99cf2311d836ba18ed3fb4c21475451c2845ae1df39d8ab70"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_actual_only_attempt01_terminal_review.json",
+      "bytes": 53776,
+      "sha256": "212ce4b58428b38844fbf64e3ae6ddd6db3fddcf346615d84ac866a0032f20da"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_fixed_attempt02_terminal_review.json",
+      "bytes": 46750,
+      "sha256": "18072bd040eb4e7831e66d5ede0197120a915e1ce3125c8b3ec809c29f4f3b2e"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_saved_image_attempt01_terminal_review.json",
+      "bytes": 32242,
+      "sha256": "b40285f8aa7d1fa48c9be2f07c50136889005f71eeef73c3f6bb326680da35fb"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_execution_ledger_v72.json",
+      "bytes": 48679,
+      "sha256": "0287d8c99cef5531fe0600253a9b55a5d5ad51f518d8eaa8bef54da9ecdc3f83"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_independent_review/saved_image_attempt01_small_vector_checks.json",
+      "bytes": 2236,
+      "sha256": "b8e96c68c8db42fc3ce4695131596532e42ec6e8d0291eaf1d2808dedce15b6f"
+    }
+  ],
+  "independent_terminal_review": {
+    "status": "BOUNDED_IMAGE_DIAGNOSTIC_INCONCLUSIVE_AT128_PORT_GATE_FAILED_CLEAN_TERMINAL",
+    "sha256": "b40285f8aa7d1fa48c9be2f07c50136889005f71eeef73c3f6bb326680da35fb",
+    "all44_final_source_pins_reverified": true,
+    "source_events_and_counts_consistent": true,
+    "normal_action_independently_recomputed_by_reviewer": false
+  }
+}
