@@ -1,7 +1,7 @@
 {
   "schema": "same108-bug-falsification-p4-exact-control.v1",
-  "prepared_utc": "2026-10-14T11:37:51.749928+00:00",
-  "status": "COMPLETED_BOUNDED_DIAGNOSTIC_SNAPSHOT_WITH_OPEN_FINE_RAW_HYPOTHESIS",
+  "prepared_utc": "2026-10-14T11:55:13.366851+00:00",
+  "status": "BOUNDED_BUG_AUDIT_COMPLETED_CAUSE_NOT_FOUND_HISTORICAL132_REGRESSION_AUTHORIZATION_PENDING",
   "production_outer_budget_consumed": 10000,
   "additional_long_iterations_authorized": false,
   "qualified_physical_cells": 96,
@@ -41,7 +41,7 @@
     {
       "hypothesis": "历史132成功已经证明当前108完整执行路径无误",
       "finding": "尚不成立。核心复用，但fine局部张量生产路径、外层driver、初值及绑定不同。",
-      "limit": "同108 exact几何下 historical blocked-Gram 与 native raw 的单类消元对照正在准备，尚未运行。"
+      "limit": "同108长中层Si exact单类已完整比较；raw/Schur整体差很小，但逐项及最弱方向严格条件仍有负项，未定位全局致因。"
     }
   ],
   "p4_control": {
@@ -187,8 +187,8 @@
     "inherited_validation_scope_note": "result.validation_scope contains historical parent-route configuration; current command/result_scope/actual zero-outer driver and600s summary define this diagnostic. No historical iteration budget was exercised."
   },
   "costs": {
-    "known_phase4_supervised_terminal_seconds": 14188.559224304001,
-    "including_old_incomplete_lower_bounds": 22102.551507146985,
+    "known_phase4_supervised_terminal_seconds": 14194.849698134014,
+    "including_old_incomplete_lower_bounds": 22108.841980977,
     "not_exact_total_wall": true,
     "preparation_waiting_not_zero_and_not_measured_as_complete_total": true
   },
@@ -222,7 +222,279 @@
       "file": "phase4_execution_ledger_v28.json",
       "bytes": 12862,
       "sha256": "ebd6a245eb17e9168cb02d19281c7131e134050c2e6b7a6d50ec2c38f678a945"
+    },
+    {
+      "file": "phase4_exact_cell_terminal_review.json",
+      "bytes": 5175,
+      "sha256": "544e7b48fc0faaea3eb9a45abf69bef08fcae95d1c078ccc1559bba4004d3c9f"
+    },
+    {
+      "file": "phase4_exact_p6_blocked_gram_cell_attempt02/result.json",
+      "bytes": 34940,
+      "sha256": "8fe065c98dd69baa991c09fb721e9b0d5914db0850cadd16fa02a0ec220f66a9"
+    },
+    {
+      "file": "phase4_bug_history_review_20261014/historical132_current108_scope.json",
+      "bytes": 17657,
+      "sha256": "5f12df9fbc4cb507a5caa704eceb4bf95b8812fb74160829a781d2c4f88a6944"
+    },
+    {
+      "file": "phase4_execution_ledger_v30.json",
+      "bytes": 13962,
+      "sha256": "c1665baf407afb82ff413e0c345c0217fa490f10adf6345bdc0bf69773638c91"
     }
   ],
-  "publication_base_sha": "63df5bb74cff841c09d38ac38bf28edfd307e0e3"
+  "publication_base_sha": "60c03bcc1885ff15b1d13c2eca498185c6855d33",
+  "one_exact_cell_diagnostic": {
+    "schema": "independent.one-exact-p6-cell-saved-terminal.v1",
+    "status": "COMPLETED_DIAGNOSTIC_STRICT_NEGATIVES_PRESERVED_NOT_GLOBAL_BUG_EXCLUSION",
+    "scope": "All31 saved output arrays plus original native input whole/hash/header/finite; independent stdlib norms for saved matrices/actions/recoveries. No new operator/FE/solve.",
+    "inputs": [
+      {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_exact_p6_blocked_gram_cell_attempt02/result.json",
+        "bytes": 34940,
+        "sha256": "8fe065c98dd69baa991c09fb721e9b0d5914db0850cadd16fa02a0ec220f66a9"
+      },
+      {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_exact_p6_blocked_gram_cell_attempt02/summary.json",
+        "bytes": 2080,
+        "sha256": "5ddcd9edd73624674ad5d4e5fef2f5511cf696e31d32fefa9a59cfcda01dc423"
+      }
+    ],
+    "saved_arrays": 31,
+    "independently_recomputed": {
+      "complete_raw": {
+        "reference_norm": 23958138.949223462,
+        "difference_norm": 3.824767929846485e-08,
+        "relative": 1.5964378276428915e-15,
+        "max_scaled_entry": 2.406884469507986e-09
+      },
+      "oriented": {
+        "reference_norm": 23958138.949223462,
+        "difference_norm": 3.8247679298463044e-08,
+        "relative": 1.5964378276428161e-15,
+        "max_scaled_entry": 2.406884469507986e-09
+      },
+      "interior_from_trace": {
+        "reference_norm": 83.82208880628593,
+        "difference_norm": 1.246392741916762e-10,
+        "relative": 1.4869502295477196e-12,
+        "max_scaled_entry": 4.182419604236363e-11
+      },
+      "trace_from_interior_rhs": {
+        "reference_norm": 83.82208880628593,
+        "difference_norm": 1.0483802202467598e-11,
+        "relative": 1.2507207052183842e-13,
+        "max_scaled_entry": 1.4339085521214893e-12
+      },
+      "schur": {
+        "reference_norm": 206311.47389151694,
+        "difference_norm": 4.6929393986984685e-09,
+        "relative": 2.2746865747108754e-14,
+        "max_scaled_entry": 1.921298329145075e-10
+      },
+      "fixed_unit_complex:homogeneous:recovery": {
+        "reference_norm": 4.4878611989870985,
+        "difference_norm": 5.804640589426352e-12,
+        "relative": 1.2934091167383805e-12,
+        "max_scaled_entry": 2.427072034893135e-12
+      },
+      "fixed_unit_complex:nonzero_rhs:recovery": {
+        "reference_norm": 4.51426373733254,
+        "difference_norm": 5.801835418360934e-12,
+        "relative": 1.2852229634658464e-12,
+        "max_scaled_entry": 2.4231617096720994e-12
+      },
+      "fixed_unit_complex:schur_action": {
+        "reference_norm": 16139.76002321314,
+        "difference_norm": 2.4337515834363936e-10,
+        "relative": 1.507923029794762e-14,
+        "max_scaled_entry": 3.2565525176313448e-12
+      },
+      "native_weakest_schur_unit:homogeneous:recovery": {
+        "reference_norm": 1.0523628041625566,
+        "difference_norm": 7.314192211232614e-14,
+        "relative": 6.95025725187338e-14,
+        "max_scaled_entry": 4.923839551960633e-14
+      },
+      "native_weakest_schur_unit:nonzero_rhs:recovery": {
+        "reference_norm": 1.1833932220217003,
+        "difference_norm": 7.340213817965209e-14,
+        "relative": 6.202683673838559e-14,
+        "max_scaled_entry": 4.738147527278949e-14
+      },
+      "native_weakest_schur_unit:schur_action": {
+        "reference_norm": 0.002604630937861908,
+        "difference_norm": 7.776157674835406e-13,
+        "relative": 2.985512289590903e-10,
+        "max_scaled_entry": 2.6134656215711105e-13
+      }
+    },
+    "outer_iterations": 0,
+    "original_supervisor_seconds": 3.2703252250066726,
+    "sampled_tree_peak_rss_bytes": 310091776,
+    "largest_saved_internal_snapshot_rss_bytes": 327249920,
+    "sampled_peak_is_not_absolute_peak": true,
+    "resource_samples": 10,
+    "cleanup_verified": true,
+    "strict_matrix_all_pass": false,
+    "strict_direction_all_pass": false,
+    "actual7772_local_direction_covered": false,
+    "observed_relative_amplification": {
+      "A_ii": 1.0174277093252067,
+      "A_it": 0.8813765395148206,
+      "interior_from_trace": 931.4175621503092,
+      "schur": 14.24851337974966,
+      "trace_from_interior_rhs": 78.34446688506584
+    },
+    "local_scale": {
+      "blocked": {
+        "condition_1_estimate": 52181811.11543985,
+        "gecon_info": 0,
+        "harmonic_operation_scaled": 1.9493129004773297e-18,
+        "harmonic_residual_norm": 3.6534362179715177e-09,
+        "harmonic_strict_rhs_relative": 6.017115726923801e-16,
+        "lu_pivots_valid": true,
+        "schur_subtraction_ratio": 18.227451834474156
+      },
+      "native": {
+        "condition_1_estimate": 52181811.11543941,
+        "gecon_info": 0,
+        "harmonic_operation_scaled": 2.030896017915729e-18,
+        "harmonic_residual_norm": 3.806340718809459e-09,
+        "harmonic_strict_rhs_relative": 6.268945517241105e-16,
+        "lu_pivots_valid": true,
+        "schur_subtraction_ratio": 18.227451834474156
+      }
+    },
+    "original_failed_attempt": {
+      "path": "phase4_exact_p6_blocked_gram_cell_attempt01",
+      "seconds": 3.0201486050063977,
+      "status": "BASIX_COMPLEX_ORIENTATION_ENTRY_FAILURE_PRESERVED",
+      "crossed_edit_note": "Post-launch author edit preserved and exact launched source reconstructed by hash; A1 outputs unchanged. A2 uses a separate frozen candidate."
+    },
+    "verification_elapsed_seconds": 2.448217749988544
+  },
+  "one_exact_cell_strict_comparisons": {
+    "A_ii": {
+      "bitwise_equal": false,
+      "denominator": "relative: norm(reference); entries: max(1, abs(reference_ij))",
+      "difference_norm": 3.619993867699542e-08,
+      "entries": 202500,
+      "max_absolute": 1.0477378964424282e-08,
+      "max_scaled_entry": 2.406884469507986e-09,
+      "reference_norm": 22287033.386370815,
+      "relative": 1.6242600820588693e-15,
+      "strict_limit": 1e-10,
+      "strict_pass": false
+    },
+    "A_it": {
+      "bitwise_equal": false,
+      "denominator": "relative: norm(reference); entries: max(1, abs(reference_ij))",
+      "difference_norm": 8.543319762208105e-09,
+      "entries": 194400,
+      "max_absolute": 1.8044374883174896e-09,
+      "max_scaled_entry": 1.5893375263165146e-10,
+      "reference_norm": 6071739.9893508535,
+      "relative": 1.4070628480784953e-15,
+      "strict_limit": 1e-10,
+      "strict_pass": false
+    },
+    "A_ti": {
+      "bitwise_equal": false,
+      "denominator": "relative: norm(reference); entries: max(1, abs(reference_ij))",
+      "difference_norm": 8.557661529464626e-09,
+      "entries": 194400,
+      "max_absolute": 1.74622982740403e-09,
+      "max_scaled_entry": 1.466752375691216e-10,
+      "reference_norm": 6071739.989350995,
+      "relative": 1.409424900353704e-15,
+      "strict_limit": 1e-10,
+      "strict_pass": false
+    },
+    "A_tt": {
+      "bitwise_equal": false,
+      "denominator": "relative: norm(reference); entries: max(1, abs(reference_ij))",
+      "difference_norm": 2.4955015703504265e-09,
+      "entries": 186624,
+      "max_absolute": 5.820766091346741e-10,
+      "max_scaled_entry": 5.94137491454894e-11,
+      "reference_norm": 1883749.3858017437,
+      "relative": 1.324752426814098e-15,
+      "strict_limit": 1e-10,
+      "strict_pass": true
+    },
+    "complete_raw": {
+      "bitwise_equal": false,
+      "denominator": "relative: norm(reference); entries: max(1, abs(reference_ij))",
+      "difference_norm": 3.824767929846436e-08,
+      "entries": 777924,
+      "max_absolute": 1.0477378964424282e-08,
+      "max_scaled_entry": 2.406884469507986e-09,
+      "reference_norm": 23958138.949222375,
+      "relative": 1.5964378276429435e-15,
+      "strict_limit": 1e-10,
+      "strict_pass": false
+    },
+    "interior_from_trace": {
+      "bitwise_equal": false,
+      "denominator": "relative: norm(reference); entries: max(1, abs(reference_ij))",
+      "difference_norm": 1.2463927419167595e-10,
+      "entries": 194400,
+      "max_absolute": 4.1824196042363625e-11,
+      "max_scaled_entry": 4.1824196042363625e-11,
+      "reference_norm": 83.82208880628541,
+      "relative": 1.4869502295477259e-12,
+      "strict_limit": 1e-10,
+      "strict_pass": true
+    },
+    "oriented": {
+      "bitwise_equal": false,
+      "denominator": "relative: norm(reference); entries: max(1, abs(reference_ij))",
+      "difference_norm": 3.8247679298462494e-08,
+      "entries": 777924,
+      "max_absolute": 1.0477378964424282e-08,
+      "max_scaled_entry": 2.406884469507986e-09,
+      "reference_norm": 23958138.94922242,
+      "relative": 1.5964378276428627e-15,
+      "strict_limit": 1e-10,
+      "strict_pass": false
+    },
+    "schur": {
+      "bitwise_equal": false,
+      "denominator": "relative: norm(reference); entries: max(1, abs(reference_ij))",
+      "difference_norm": 4.692939398698482e-09,
+      "entries": 186624,
+      "max_absolute": 1.4842953532945494e-09,
+      "max_scaled_entry": 1.9212983291450748e-10,
+      "reference_norm": 206311.47389151563,
+      "relative": 2.2746865747108962e-14,
+      "strict_limit": 1e-10,
+      "strict_pass": false
+    },
+    "trace_from_interior_rhs": {
+      "bitwise_equal": false,
+      "denominator": "relative: norm(reference); entries: max(1, abs(reference_ij))",
+      "difference_norm": 1.0483802202467586e-11,
+      "entries": 194400,
+      "max_absolute": 1.687761042937984e-12,
+      "max_scaled_entry": 1.4339085521214893e-12,
+      "reference_norm": 83.82208880628542,
+      "relative": 1.2507207052183905e-13,
+      "strict_limit": 1e-10,
+      "strict_pass": true
+    }
+  },
+  "next_regression": {
+    "authorized": false,
+    "status": "WAITING_USER_DECISION",
+    "mesh": "historical6x2x11",
+    "same_zero_start": true,
+    "proposed_fixed_steps": 200,
+    "additional108_steps": 0,
+    "current7772_local_mapping_branch": "paused without implementation or numerical execution",
+    "new_raw_class_count": "static enumeration pending; actual FE class inventory not yet produced",
+    "old108_all33_native_raw_producer_seconds": 1236.7927910029975,
+    "time_limit_of_new_trial": "not yet launched or promised"
+  }
 }
