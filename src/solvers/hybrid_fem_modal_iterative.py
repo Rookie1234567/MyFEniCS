@@ -7,6 +7,8 @@ this production context never forms a monolithic AIJ matrix.
 
 from __future__ import annotations
 
+import hashlib
+
 import numpy as np
 from petsc4py import PETSc
 
@@ -85,6 +87,9 @@ class HybridBlockOperator:
         self._bottom_projection_target = coupling.bottom.projection.createVecLeft()
         self._top_projection_target = coupling.top.projection.createVecLeft()
         self._destroyed = False
+        self._matmult_call_count = 0
+        self._v13_modal_row_capture_request: dict[str, int] | None = None
+        self._v13_modal_row_capture_result: dict[str, object] | None = None
         bottom_inventory = getattr(bottom_system, "inventory", {})
         top_inventory = getattr(top_system, "inventory", {})
         bottom_a_materialized = bool(
@@ -186,12 +191,104 @@ class HybridBlockOperator:
     def _modal_source(self, vector: PETSc.Vec, values: np.ndarray) -> None:
         _set_owned_values(vector, np.asarray(values, dtype=np.complex128))
 
+    @staticmethod
+    def _local_array_sha256(values: np.ndarray) -> str:
+        array = np.asarray(values)
+        if not array.flags.c_contiguous:
+            raise ValueError("V13 original-A captured array must be contiguous")
+        digest = hashlib.sha256()
+        view = memoryview(array).cast("B")
+        for start in range(0, len(view), 1 << 20):
+            digest.update(view[start : start + (1 << 20)])
+        return digest.hexdigest()
+
+    def arm_v13_modal_row_capture(
+        self,
+        token: int,
+        *,
+        matrix_handle: int,
+        pc_source_handle: int,
+        pc_target_handle: int,
+        operator_input_handle: int,
+        operator_output_handle: int,
+    ) -> None:
+        """Arm one identified original-A MatMult; ordinary calls are not cached."""
+
+        if self._destroyed:
+            raise RuntimeError("original Hybrid operator has been destroyed")
+        if self._v13_modal_row_capture_request is not None or (
+            self._v13_modal_row_capture_result is not None
+        ):
+            raise RuntimeError("a V13 modal-row capture is already armed or unread")
+        if type(token) is not int or token <= 0:
+            raise ValueError("V13 modal-row capture token must be a positive integer")
+        self._v13_modal_row_capture_request = {
+            "token": token,
+            "matrix_handle": matrix_handle,
+            "pc_source_handle": pc_source_handle,
+            "pc_target_handle": pc_target_handle,
+            "operator_input_handle": operator_input_handle,
+            "operator_output_handle": operator_output_handle,
+        }
+
+    def consume_v13_modal_row_capture(self, token: int) -> dict[str, object]:
+        capture = self._v13_modal_row_capture_result
+        if capture is None or capture.get("token") != token:
+            raise RuntimeError("V13 original-A capture is missing or stale")
+        self._v13_modal_row_capture_result = None
+        return {
+            key: value.copy() if isinstance(value, np.ndarray) else value
+            for key, value in capture.items()
+        }
+
+    def clear_v13_modal_row_capture(self, token: int) -> None:
+        request = self._v13_modal_row_capture_request
+        if request is not None and request.get("token") == token:
+            self._v13_modal_row_capture_request = None
+        capture = self._v13_modal_row_capture_result
+        if capture is not None and capture.get("token") == token:
+            self._v13_modal_row_capture_result = None
+
     def mult(
         self,
         _matrix: PETSc.Mat,
         source: PETSc.Vec,
         target: PETSc.Vec,
     ) -> None:
+        self._matmult_call_count += 1
+        capture_request = self._v13_modal_row_capture_request
+        # Consume the arm before touching borrowed/PETSc state so exceptions
+        # cannot leave a request available to a later ordinary MatMult.
+        self._v13_modal_row_capture_request = None
+        capture_call_id = self._matmult_call_count
+        source_handle = int(source.handle)
+        target_handle = int(target.handle)
+        matrix_handle = int(_matrix.handle)
+        if capture_request is not None:
+            expected = (
+                capture_request["matrix_handle"],
+                capture_request["operator_input_handle"],
+                capture_request["operator_output_handle"],
+            )
+            observed = (matrix_handle, source_handle, target_handle)
+            if expected != observed:
+                raise RuntimeError(
+                    "V13 original-A capture identity mismatch: "
+                    f"expected={expected}, observed={observed}"
+                )
+            if (
+                capture_request["pc_source_handle"]
+                == capture_request["pc_target_handle"]
+                or source_handle == target_handle
+            ):
+                raise ValueError("V13 original-A capture vectors alias")
+        input_before_sha = (
+            self._local_array_sha256(
+                np.asarray(source.getArray(readonly=True))
+            )
+            if capture_request is not None
+            else None
+        )
         source_values = np.asarray(source.getArray(readonly=True))
         bottom_local = source_values[self.layout.local_bottom_slice]
         top_local = source_values[self.layout.local_top_slice]
@@ -232,12 +329,19 @@ class HybridBlockOperator:
         )
         self.coupling.top.projection.mult(self._top_source, self._top_projection_target)
         modal_result = self.modal_constraint @ modal
-        modal_result[:mode_count] += _gather_owned_small(
-            self._bottom_projection_target, mode_count
-        )
-        modal_result[mode_count:] += _gather_owned_small(
-            self._top_projection_target, mode_count
-        )
+        t_constraint = modal_result.copy() if capture_request is not None else None
+        t_bottom = _gather_owned_small(self._bottom_projection_target, mode_count)
+        t_bottom_capture = None
+        if capture_request is not None:
+            t_bottom_capture = np.zeros_like(modal_result)
+            t_bottom_capture[:mode_count] = t_bottom
+        modal_result[:mode_count] += t_bottom
+        t_top = _gather_owned_small(self._top_projection_target, mode_count)
+        t_top_capture = None
+        if capture_request is not None:
+            t_top_capture = np.zeros_like(modal_result)
+            t_top_capture[mode_count:] = t_top
+        modal_result[mode_count:] += t_top
         target_local = target.getArray()
         target_local[self.layout.local_bottom_slice] = self._bottom_target.getArray(
             readonly=True
@@ -247,6 +351,50 @@ class HybridBlockOperator:
         )
         if self.layout.comm.rank == self.layout.modal_owner:
             target_local[self.layout.local_modal_slice] = modal_result
+        if capture_request is not None:
+            local_w_modal = (
+                np.asarray(
+                    target_local[self.layout.local_modal_slice],
+                    dtype=np.complex128,
+                ).copy()
+                if self.layout.comm.rank == self.layout.modal_owner
+                else None
+            )
+            output_matches_components = (
+                local_w_modal is not None
+                and np.array_equal(local_w_modal, modal_result)
+            ) if self.layout.comm.rank == self.layout.modal_owner else True
+            if not output_matches_components:
+                raise RuntimeError(
+                    "V13 captured components differ from the original-A output row"
+                )
+            input_after_sha = self._local_array_sha256(
+                np.asarray(source.getArray(readonly=True))
+            )
+            self._v13_modal_row_capture_result = {
+                "token": capture_request["token"],
+                "matrix_handle": matrix_handle,
+                "context_identity": id(self),
+                "matmult_call_id": capture_call_id,
+                "pc_source_handle": capture_request["pc_source_handle"],
+                "pc_target_handle": capture_request["pc_target_handle"],
+                "operator_input_handle": source_handle,
+                "operator_output_handle": target_handle,
+                "operator_input_range": tuple(
+                    int(value) for value in source.getOwnershipRange()
+                ),
+                "operator_output_range": tuple(
+                    int(value) for value in target.getOwnershipRange()
+                ),
+                "operator_input_sha256_before": input_before_sha,
+                "operator_input_sha256_after": input_after_sha,
+                "operator_input_unchanged": input_before_sha == input_after_sha,
+                "w_modal": local_w_modal,
+                "t_bottom": t_bottom_capture,
+                "t_top": t_top_capture,
+                "t_constraint": t_constraint.copy(),
+                "output_matches_components": output_matches_components,
+            }
 
     def destroy(self, _matrix: PETSc.Mat | None = None) -> None:
         if self._destroyed:

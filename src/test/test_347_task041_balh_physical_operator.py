@@ -800,7 +800,7 @@ def h1e_real_side_systems():
 
 
 def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
-    h1e_real_side_systems,
+    h1e_real_side_systems, tmp_path
 ) -> None:
     """Exercise V13 on real condensed P6 sides with analytic, non-QEP modes.
 
@@ -814,7 +814,51 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
     """
     comm = MPI.COMM_WORLD
     import os
+    import sys
+    import time
     from pathlib import Path
+
+    from benchmarks import task041_exact_side_workflow as exact_side
+
+    evidence_root_text = (
+        str(Path(tmp_path) / "v15-modal-evidence")
+        if comm.rank == 0
+        else None
+    )
+    evidence_root = Path(comm.bcast(evidence_root_text, root=0))
+    test_source_sha = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    fixture_binding = {
+        "selector": (
+            "test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu"
+        ),
+        "fixture": "registered tiny real condensed FE sides; synthetic analytic modes",
+        "degree": 6,
+        "mesh_cell_counts": [2, 2, 2],
+        "mode_count_per_direction": 6,
+        "authority_scope": "fixture_control_only_not_a_resource_qualification",
+    }
+    packet_manifest_sha256 = hashlib.sha256(
+        json.dumps(fixture_binding, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+    def modal_snapshot_callback(payload):
+        kind = payload.get("snapshot_kind")
+        if kind == "v15_capture_failure_rank":
+            return exact_side._write_task041_v13_capture_failure_rank(
+                evidence_root, payload, rank=int(comm.rank)
+            )
+        if kind == "v15_terminal_rank_vectors":
+            return exact_side._write_task041_v13_terminal_rank_vectors(
+                evidence_root, payload, rank=int(comm.rank)
+            )
+        return exact_side._write_task041_v13_modal_evidence_snapshot(
+            evidence_root,
+            payload,
+            source_sha=test_source_sha,
+            identity={**fixture_binding, "source_file_sha256": test_source_sha},
+            packet_manifest_sha256=packet_manifest_sha256,
+            consumer_binding=fixture_binding,
+        )
 
     capture_opt_in = os.environ.get("TASK041_V13_CAPTURE_FIRST_TOP_Q_ROW", "")
     if capture_opt_in not in {"", "1"}:
@@ -1088,6 +1132,7 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
             v13_fresh_authority_callback=(
                 fixture_control_only_not_resource_qualification
             ),
+            modal_snapshot_callback=modal_snapshot_callback,
         )
         post_builder_side = {
             side: {
@@ -1181,6 +1226,21 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
         near_zero.scale(PETSc.ScalarType(1.0e-12))
         inputs.extend((combined, scaled, repeated_x, zero, near_zero))
 
+        v15_row_contract_id = "task041.v15.original_modal_row.terms_backward.v1"
+
+        def assert_v15_row_gate_passed(row_gate: dict[str, object]) -> None:
+            metrics = row_gate["metrics"]
+            assert row_gate["status"] == "passed"
+            assert row_gate["schema"] == v15_row_contract_id
+            assert row_gate["contract_id"] == v15_row_contract_id
+            assert metrics["contract_id"] == v15_row_contract_id
+            assert metrics["tolerance"] == 1.0e-10
+            assert metrics["status"] == "passed"
+            eta_terms_inf = metrics["eta_terms_inf"]
+            assert isinstance(eta_terms_inf, (int, float))
+            assert np.isfinite(float(eta_terms_inf))
+            assert float(eta_terms_inf) <= 1.0e-10
+
         def apply_full_pc(name: str, source: PETSc.Vec) -> PETSc.Vec:
             before = np.asarray(source.getArray(readonly=True)).copy()
             target = layout.create_vector()
@@ -1193,11 +1253,7 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
                     row_gate = ldu.action_modal_schur_system.diagnostics[
                         "last_original_modal_row"
                     ]
-                    assert row_gate["status"] == "passed"
-                    assert row_gate["scope"] == (
-                        "original_global_modal_row_after_full_PC_output"
-                    )
-                    assert row_gate["tolerance"] == 1.0e-10
+                    assert_v15_row_gate_passed(row_gate)
                 except BaseException as error:
                     try:
                         capture_state["source_unchanged_on_failure"] = bool(
@@ -1229,9 +1285,7 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
                 row_gate = ldu.action_modal_schur_system.diagnostics[
                     "last_original_modal_row"
                 ]
-                assert row_gate["status"] == "passed"
-                assert row_gate["scope"] == "original_global_modal_row_after_full_PC_output"
-                assert row_gate["tolerance"] == 1.0e-10
+                assert_v15_row_gate_passed(row_gate)
             outputs[name] = target
             return target
 
@@ -1816,35 +1870,831 @@ def test_task041_v13_real_fe_condensed_sides_build_same_fixed_b_ldu(
         final_modal_audit = ldu.action_modal_schur_system.diagnostics
         assert final_modal_audit["modal_ksp_handle_count"] == 0
         assert final_modal_audit["modal_ksp_solve_count"] == 0
+
+        # Exercise the real original MatPython A and the real V13 LDU as a
+        # right-preconditioned FGMRES solve.  This is a tiny registered FE
+        # fixture, not the M400 warm route or a host resource qualification.
+        exact_solution = layout.create_vector()
+        rhs = layout.create_vector()
+        solution = layout.create_vector()
+        true_residual = layout.create_vector()
+        inputs.extend((exact_solution, rhs))
+        outputs["tiny_fgmres_solution"] = solution
+        outputs["tiny_fgmres_true_residual"] = true_residual
+        first, last = (int(value) for value in exact_solution.getOwnershipRange())
+        global_rows = np.arange(first, last, dtype=np.float64)
+        exact_solution.getArray()[:] = np.asarray(
+            0.8
+            + 0.003 * global_rows
+            + 1j * (0.2 - 0.007 * global_rows),
+            dtype=PETSc.ScalarType,
+        )
+        exact_solution.assemble()
+        original_operator.mult(exact_solution, rhs)
+        rhs_before = np.asarray(rhs.getArray(readonly=True)).copy()
+        ksp = PETSc.KSP().create(comm)
+        try:
+            ksp.setOperators(original_operator)
+            ksp.setType(PETSc.KSP.Type.FGMRES)
+            ksp.setPCSide(PETSc.PC.Side.RIGHT)
+            pc = ksp.getPC()
+            pc.setType(PETSc.PC.Type.PYTHON)
+            pc.setPythonContext(ldu)
+            max_iterations = min(240, max(4, int(layout.global_size)))
+            ksp.setTolerances(rtol=5.0e-9, atol=0.0, max_it=max_iterations)
+            restart = min(30, max_iterations)
+            ksp.setGMRESRestart(restart)
+
+            def finite_json_number(value: float) -> float | dict[str, object]:
+                number = float(value)
+                if np.isfinite(number):
+                    return number
+                label = "NaN" if np.isnan(number) else ("+Inf" if number > 0 else "-Inf")
+                return {"value": None, "nonfinite": label}
+
+            def exception_message(error: BaseException) -> str:
+                try:
+                    return str(error)[:320]
+                except BaseException as render_error:  # noqa: BLE001 - evidence is secondary
+                    return f"<message unavailable: {type(render_error).__name__}>"
+
+            def json_safe(value: object) -> object:
+                if isinstance(value, np.generic):
+                    value = value.item()
+                if value is None or isinstance(value, (str, bool, int)):
+                    return value
+                if isinstance(value, float):
+                    return finite_json_number(value)
+                if isinstance(value, (tuple, list)):
+                    return [json_safe(item) for item in value]
+                if isinstance(value, dict):
+                    return {
+                        str(key): json_safe(item)
+                        for key, item in value.items()
+                    }
+                return {
+                    "status": "unsupported",
+                    "python_type": type(value).__name__,
+                }
+
+            def read_ksp_value(owner, getter_name: str) -> dict[str, object]:
+                getter = getattr(owner, getter_name, None)
+                if not callable(getter):
+                    return {"status": "unsupported", "getter": getter_name}
+                try:
+                    value = getter()
+                except Exception as getter_error:  # noqa: BLE001 - diagnostic read only
+                    return {
+                        "status": "read_failed",
+                        "getter": getter_name,
+                        "error_type": type(getter_error).__name__,
+                        "error_message": str(getter_error)[:240],
+                    }
+                serialized_value = json_safe(value)
+                result = {"status": "read", "value": serialized_value}
+                if (
+                    isinstance(serialized_value, dict)
+                    and serialized_value.get("status") == "unsupported"
+                ):
+                    result["value_display"] = str(value)
+                return result
+
+            tolerances = read_ksp_value(ksp, "getTolerances")
+            if tolerances.get("status") == "read":
+                tolerance_values = tolerances.get("value")
+                if isinstance(tolerance_values, list) and len(tolerance_values) == 4:
+                    tolerances["named_values"] = dict(
+                        zip(
+                            ("rtol", "atol", "divtol", "max_it"),
+                            tolerance_values,
+                            strict=True,
+                        )
+                    )
+                else:
+                    tolerances["status"] = "unsupported_shape"
+            convergence_getter = getattr(ksp, "getConvergenceTest", None)
+            if not callable(convergence_getter):
+                convergence_test = {
+                    "status": "unsupported",
+                    "reason": "petsc4py exposes no read-only convergence-test getter",
+                }
+            else:
+                try:
+                    convergence_value = convergence_getter()
+                    if isinstance(convergence_value, tuple):
+                        convergence_value = convergence_value[0]
+                    if callable(convergence_value):
+                        convergence_test = {
+                            "status": "read",
+                            "callable_module": getattr(
+                                convergence_value, "__module__", None
+                            ),
+                            "callable_name": getattr(
+                                convergence_value,
+                                "__qualname__",
+                                getattr(convergence_value, "__name__", None),
+                            ),
+                            "source": "petsc4py KSP.getConvergenceTest",
+                        }
+                    else:
+                        convergence_test = {
+                            "status": "unsupported",
+                            "returned_type": type(convergence_value).__name__,
+                        }
+                except Exception as getter_error:  # noqa: BLE001 - diagnostic read only
+                    convergence_test = {
+                        "status": "read_failed",
+                        "error_type": type(getter_error).__name__,
+                        "error_message": str(getter_error)[:240],
+                    }
+            relevant_option_names = (
+                "ksp_type",
+                "ksp_pc_side",
+                "ksp_rtol",
+                "ksp_atol",
+                "ksp_divtol",
+                "ksp_max_it",
+                "ksp_gmres_restart",
+                "ksp_initial_guess_nonzero",
+                "ksp_norm_type",
+            )
+            try:
+                options_getter = getattr(PETSc.Options(), "getAll", None)
+                if not callable(options_getter):
+                    relevant_options: dict[str, object] = {
+                        "status": "unsupported"
+                    }
+                else:
+                    all_options = options_getter()
+                    relevant_options = {
+                        "status": "read",
+                        "keys": {
+                            name: json_safe(all_options[name])
+                            if name in all_options
+                            else {"status": "not_set_in_options_db"}
+                            for name in relevant_option_names
+                        },
+                    }
+            except Exception as options_error:  # noqa: BLE001 - diagnostic read only
+                relevant_options = {
+                    "status": "read_failed",
+                    "error_type": type(options_error).__name__,
+                    "error_message": str(options_error)[:240],
+                }
+            thread_environment = {
+                name: os.environ.get(name, "not_set")
+                for name in (
+                    "OMP_NUM_THREADS",
+                    "OPENBLAS_NUM_THREADS",
+                    "MKL_NUM_THREADS",
+                    "BLIS_NUM_THREADS",
+                    "NUMEXPR_NUM_THREADS",
+                    "VECLIB_MAXIMUM_THREADS",
+                )
+            }
+            thread_environment["PETSC_OPTIONS"] = (
+                "present_not_exported"
+                if os.environ.get("PETSC_OPTIONS")
+                else "not_set"
+            )
+            ksp_configuration = {
+                "requested": {
+                    "type": "fgmres",
+                    "pc_side": "right",
+                    "rtol": 5.0e-9,
+                    "atol": 0.0,
+                    "max_it": max_iterations,
+                    "restart": restart,
+                    "initial_guess_nonzero": "existing_default_unchanged",
+                    "norm_type": "existing_default_unchanged",
+                },
+                "readback": {
+                    "type": read_ksp_value(ksp, "getType"),
+                    "pc_side": read_ksp_value(ksp, "getPCSide"),
+                    "pc_type": read_ksp_value(pc, "getType"),
+                    "pc_context": {
+                        "python_type": type(pc.getPythonContext()).__name__,
+                        "same_ldu_object": pc.getPythonContext() is ldu,
+                    },
+                    "tolerances": tolerances,
+                    "restart": read_ksp_value(ksp, "getGMRESRestart"),
+                    "initial_guess_nonzero": read_ksp_value(
+                        ksp, "getInitialGuessNonzero"
+                    ),
+                    "norm_type": read_ksp_value(ksp, "getNormType"),
+                    "convergence_test": convergence_test,
+                },
+                "relevant_petsc_options": relevant_options,
+                "limited_environment": thread_environment,
+            }
+
+            ksp_monitor_samples: list[dict[str, object]] = []
+            ksp_monitor_errors: list[dict[str, str]] = []
+            solve_started_monotonic = time.monotonic()
+
+            def capture_ksp_monitor(
+                _current_ksp, iteration: int, reported_rnorm: float
+            ) -> None:
+                try:
+                    iteration_number = int(iteration)
+                    ksp_monitor_samples.append(
+                        {
+                            "iteration": iteration_number,
+                            "petsc_reported_rnorm": finite_json_number(
+                                float(reported_rnorm)
+                            ),
+                            "seconds_since_solve_start": finite_json_number(
+                                time.monotonic() - solve_started_monotonic
+                            ),
+                            "restart_window_index": (
+                                None
+                                if iteration_number == 0
+                                else (iteration_number - 1) // restart
+                            ),
+                            "window": (
+                                "initial"
+                                if iteration_number == 0
+                                else "first_60"
+                                if iteration_number <= 60
+                                else "after_60"
+                            ),
+                            "run_scope": "this_new_max_it_240_diagnostic",
+                            "norm_semantics": "PETSc KSP reported norm; not an independent true residual",
+                        }
+                    )
+                except Exception as monitor_error:  # noqa: BLE001 - never alter the KSP path
+                    ksp_monitor_errors.append(
+                        {
+                            "error_type": type(monitor_error).__name__,
+                            "error_message": str(monitor_error)[:240],
+                        }
+                    )
+
+            ksp.setMonitor(capture_ksp_monitor)
+            pc_attempts_before = int(ldu._pc_apply_attempt_count)
+            pc_successes_before = int(ldu._pc_apply_count)
+            pc_apply_history: list[dict[str, object]] = []
+            original_ldu_apply = ldu.apply
+            missing_instance_apply = object()
+            prior_instance_apply = vars(ldu).get(
+                "apply", missing_instance_apply
+            )
+
+            def encode_complex_array(value: np.ndarray) -> dict[str, object]:
+                array = np.asarray(value, dtype=np.complex128)
+                return {
+                    "dtype": "complex128",
+                    "shape": list(array.shape),
+                    "values_re_im": [
+                        [
+                            finite_json_number(float(item.real)),
+                            finite_json_number(float(item.imag)),
+                        ]
+                        for item in array.reshape(-1)
+                    ],
+                }
+
+            def capture_pc_apply_result(
+                attempt_ordinal: int,
+                attempt_before: int,
+                successful_before: int,
+                status: str,
+                primary_error: BaseException | None = None,
+            ) -> None:
+                row: dict[str, object] = {
+                    "instrumentation_apply_ordinal": attempt_ordinal,
+                    "production_attempt_count_before": attempt_before,
+                    "production_success_count_before": successful_before,
+                    "delegate_status": status,
+                    "row_capture_status": "not_available",
+                }
+                if primary_error is not None:
+                    row["primary_apply_error"] = {
+                        "type": type(primary_error).__name__,
+                        "message": exception_message(primary_error),
+                    }
+                try:
+                    system = ldu.action_modal_schur_system
+                    production_attempt_after = int(ldu._pc_apply_attempt_count)
+                    production_success_after = int(ldu._pc_apply_count)
+                    expected_attempt = attempt_before + 1
+                    row["production_attempt_count_after"] = production_attempt_after
+                    row["production_success_count_after"] = production_success_after
+                    row["expected_attempt_index"] = expected_attempt
+                    row["attempt_count_matches_one_apply"] = (
+                        production_attempt_after == expected_attempt
+                    )
+                    row["successful_count_delta"] = (
+                        production_success_after - successful_before
+                    )
+                    frozen = system.frozen_original_modal_row()
+                    frozen_record = (
+                        None
+                        if not isinstance(frozen, dict)
+                        else frozen.get("record")
+                    )
+                    if not isinstance(frozen_record, dict):
+                        row["row_capture_status"] = "no_frozen_row"
+                        row["latest_attempt_record"] = json_safe(
+                            getattr(system, "_last_pc_apply_attempt", None)
+                        )
+                        row["latest_success_record"] = json_safe(
+                            getattr(system, "_last_pc_apply_success", None)
+                        )
+                    else:
+                        current_index = frozen_record.get("attempt_index")
+                        row["row_record_attempt_index"] = current_index
+                        if current_index != expected_attempt:
+                            row["row_capture_status"] = "stale_or_mismatched_attempt"
+                            row["latest_attempt_record"] = json_safe(
+                                getattr(system, "_last_pc_apply_attempt", None)
+                            )
+                            row["latest_success_record"] = json_safe(
+                                getattr(system, "_last_pc_apply_success", None)
+                            )
+                        else:
+                            row["row_capture_status"] = "captured_current_attempt"
+                            row["row_gate"] = {
+                                key: json_safe(frozen_record.get(key))
+                                for key in (
+                                    "schema",
+                                    "contract_id",
+                                    "status",
+                                    "classification",
+                                    "attempt_index",
+                                    "outer_iteration",
+                                    "modal_layout_keys",
+                                    "operator_identity",
+                                    "same_attempt_owner_solve",
+                                    "owner_lu_solve_record",
+                                    "owner_lu_solve_count_before",
+                                    "owner_lu_solve_count_after",
+                                    "solve_count_before",
+                                    "solve_count_after",
+                                    "B_P4_counters_before",
+                                    "B_P4_counters_after_by_rank",
+                                    "B_P4_counter_delta_by_rank",
+                                    "metrics",
+                                    "capture_identity",
+                                    "attempt_binding_by_rank",
+                                    "snapshot_receipts_by_slot",
+                                    "writer_errors",
+                                )
+                            }
+                            row["snapshot_receipt"] = json_safe(
+                                frozen.get("snapshot_receipt")
+                            )
+                            arrays = frozen.get("arrays")
+                            if not isinstance(arrays, dict):
+                                row["row_capture_status"] = "current_row_arrays_missing"
+                            else:
+                                row["modal_components"] = {
+                                    name: encode_complex_array(arrays[name])
+                                    for name in (
+                                        "r_modal",
+                                        "w_modal",
+                                        "t_bottom",
+                                        "t_top",
+                                        "t_constraint",
+                                        "d",
+                                    )
+                                    if name in arrays
+                                }
+                                required_arrays = {
+                                    "r_modal",
+                                    "w_modal",
+                                    "t_bottom",
+                                    "t_top",
+                                    "t_constraint",
+                                    "d",
+                                }
+                                if not required_arrays.issubset(arrays):
+                                    row["row_capture_status"] = "current_row_components_incomplete"
+                    if not row["attempt_count_matches_one_apply"]:
+                        row["row_capture_status"] = "production_attempt_count_mismatch"
+                except BaseException as capture_error:  # noqa: BLE001 - capture is secondary to the actual apply
+                    row["row_capture_status"] = "capture_error"
+                    row["capture_error"] = {
+                        "type": type(capture_error).__name__,
+                        "message": exception_message(capture_error),
+                    }
+                    if primary_error is not None:
+                        try:
+                            primary_error.add_note(
+                                "secondary tiny PC-apply capture error: "
+                                + exception_message(capture_error)[:240]
+                            )
+                        except BaseException:  # noqa: BLE001, S110
+                            pass
+                pc_apply_history.append(row)
+
+            def capture_ldu_apply(_pc, source, target) -> None:
+                attempt_ordinal = len(pc_apply_history) + 1
+                attempt_before = int(ldu._pc_apply_attempt_count)
+                successful_before = int(ldu._pc_apply_count)
+                try:
+                    original_ldu_apply(_pc, source, target)
+                except BaseException as apply_error:
+                    capture_pc_apply_result(
+                        attempt_ordinal,
+                        attempt_before,
+                        successful_before,
+                        "raised",
+                        apply_error,
+                    )
+                    raise
+                else:
+                    capture_pc_apply_result(
+                        attempt_ordinal,
+                        attempt_before,
+                        successful_before,
+                        "returned",
+                    )
+
+            ldu.apply = capture_ldu_apply
+            apply_restore_primary: BaseException | None = None
+            try:
+                ksp.solve(rhs, solution)
+            except BaseException as apply_error:
+                apply_restore_primary = apply_error
+                raise
+            finally:
+                try:
+                    if prior_instance_apply is missing_instance_apply:
+                        delattr(ldu, "apply")
+                    else:
+                        ldu.apply = prior_instance_apply
+                except BaseException as restore_error:
+                    if apply_restore_primary is None:
+                        raise
+                    try:
+                        apply_restore_primary.add_note(
+                            "secondary LDU apply instrumentation restore error: "
+                            + exception_message(restore_error)
+                        )
+                    except BaseException:  # noqa: BLE001, S110
+                        pass
+            converged_reason = int(ksp.getConvergedReason())
+            iteration_count = int(ksp.getIterationNumber())
+            original_operator.mult(solution, true_residual)
+            true_residual.axpy(PETSc.ScalarType(-1.0), rhs)
+            rhs_norm = float(rhs.norm())
+            true_residual_norm = float(true_residual.norm())
+            true_relative_residual = (
+                true_residual_norm / rhs_norm
+                if rhs_norm != 0.0
+                else float("inf")
+            )
+            rhs_unchanged = np.array_equal(
+                np.asarray(rhs.getArray(readonly=True)), rhs_before
+            )
+            pc_attempts_after = int(ldu._pc_apply_attempt_count)
+            pc_successes_after = int(ldu._pc_apply_count)
+
+            try:
+                proc_fields = Path("/proc/self/stat").read_text().rsplit(")", 1)[
+                    1
+                ].split()
+                actual_cpu = int(proc_fields[36])
+                allowed_cpus = sorted(int(cpu) for cpu in os.sched_getaffinity(0))
+                original_context = original_operator.getPythonContext()
+                local_completion = {
+                    "capture_status": "captured",
+                    "rank": int(comm.rank),
+                    "mpi_size": int(comm.size),
+                    "actual_cpu": actual_cpu,
+                    "allowed_cpus": allowed_cpus,
+                    "fixture_binding": fixture_binding,
+                    "test_source_sha256": test_source_sha,
+                    "original_A": {
+                        "petsc_mat_type": type(original_operator).__name__,
+                        "petsc_mat_handle": int(original_operator.handle),
+                        "python_context_type": type(original_context).__name__,
+                        "python_context_id": id(original_context),
+                        "python_context_matmult_call_count": int(
+                            original_context._matmult_call_count
+                        ),
+                        "global_shape": [
+                            int(value) for value in original_operator.getSize()
+                        ],
+                        "ldu_bound_operator_identity": (
+                            ldu._v13_original_operator_identity
+                        ),
+                    },
+                    "ksp": {
+                        "configuration": ksp_configuration,
+                        "iteration_budget": {
+                            "max_it_expression": "min(240, max(4, global_size))",
+                            "restart_expression": "min(30, max_it)",
+                            "early_convergence_stops_normally": True,
+                            "further_budget_or_restart_changes_authorized": False,
+                        },
+                        "converged_reason": converged_reason,
+                        "iterations": iteration_count,
+                        "max_iterations": max_iterations,
+                        "restart": restart,
+                        "monitor_norm_semantics": (
+                            "PETSc reported rnorm; not an independent true residual"
+                        ),
+                        "monitor_samples_first_60": [
+                            row
+                            for row in ksp_monitor_samples
+                            if row.get("window") in {"initial", "first_60"}
+                        ],
+                        "monitor_samples_after_60": [
+                            row
+                            for row in ksp_monitor_samples
+                            if row.get("window") == "after_60"
+                        ],
+                        "monitor_capture_errors": ksp_monitor_errors,
+                        "historical_60_step_run_curve": "not_reconstructed_or_reused",
+                    },
+                    "pc_apply_timeline": {
+                        "rank": int(comm.rank),
+                        "instrumentation_ordinal_is_independent_of_ksp_iteration": True,
+                        "no_one_to_one_iteration_mapping_claimed": True,
+                        "attempted_before": pc_attempts_before,
+                        "attempted_after": pc_attempts_after,
+                        "successful_before": pc_successes_before,
+                        "successful_after": pc_successes_after,
+                        "records": pc_apply_history,
+                    },
+                    "pc_apply_counts": {
+                        "attempted_before": pc_attempts_before,
+                        "attempted_after": pc_attempts_after,
+                        "attempted_during_solve": (
+                            pc_attempts_after - pc_attempts_before
+                        ),
+                        "successful_before": pc_successes_before,
+                        "successful_after": pc_successes_after,
+                        "successful_during_solve": (
+                            pc_successes_after - pc_successes_before
+                        ),
+                    },
+                    "rhs_norm": finite_json_number(rhs_norm),
+                    "ax_minus_f_numerator_norm": finite_json_number(
+                        true_residual_norm
+                    ),
+                    "ax_minus_f_relative": finite_json_number(
+                        true_relative_residual
+                    ),
+                    "ax_minus_f_tolerance": 5.0e-9,
+                    "rhs_unchanged": bool(rhs_unchanged),
+                    "checks": {
+                        "positive_ksp_reason": converged_reason > 0,
+                        "at_least_two_iterations": iteration_count >= 2,
+                        "successful_pc_applies_cover_iterations": (
+                            pc_successes_after >= iteration_count
+                        ),
+                        "finite_ax_minus_f_relative": bool(
+                            np.isfinite(true_relative_residual)
+                        ),
+                        "ax_minus_f_within_tolerance": bool(
+                            np.isfinite(true_relative_residual)
+                            and true_relative_residual <= 5.0e-9
+                        ),
+                        "rhs_unchanged": bool(rhs_unchanged),
+                    },
+                }
+            except BaseException as capture_error:  # noqa: BLE001 - synchronize capture failures
+                local_completion = {
+                    "capture_status": "failed",
+                    "rank": int(comm.rank),
+                    "error_type": type(capture_error).__name__,
+                    "error_message": str(capture_error)[:400],
+                }
+            completion_rows = comm.allgather(local_completion)
+            completion_payload = {
+                "schema": "task041.v15.tiny_fe_fgmres_completion.v2",
+                "diagnostic_status": "captured_before_numeric_assertions_not_a_solver_pass",
+                "status": "captured_before_numeric_assertions",
+                "selector": fixture_binding["selector"],
+                "fixture_binding": fixture_binding,
+                "test_source_sha256": test_source_sha,
+                "modal_owner": int(ldu.action_modal_schur_system.modal_owner),
+                "mpi_size": int(comm.size),
+                "rank_records": completion_rows,
+            }
+            completion_path = evidence_root / "tiny_fgmres_completion.json"
+            completion_status = None
+            completion_owner = int(ldu.action_modal_schur_system.modal_owner)
+            if comm.rank == completion_owner:
+                try:
+                    completion_path.parent.mkdir(parents=True, exist_ok=True)
+                    temporary_path = completion_path.with_name(
+                        f".{completion_path.name}.{os.getpid()}.tmp"
+                    )
+                    if completion_path.exists() or temporary_path.exists():
+                        raise FileExistsError(str(completion_path))
+                    with temporary_path.open("x", encoding="utf-8") as stream:
+                        stream.write(
+                            json.dumps(
+                                completion_payload,
+                                sort_keys=True,
+                                indent=2,
+                                allow_nan=False,
+                            )
+                            + "\n"
+                        )
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    os.replace(temporary_path, completion_path)
+                    completion_status = {
+                        "status": "written",
+                        "path": str(completion_path),
+                        "sha256": hashlib.sha256(
+                            completion_path.read_bytes()
+                        ).hexdigest(),
+                    }
+                except BaseException as write_error:  # noqa: BLE001 - broadcast secondary write failure
+                    completion_status = {
+                        "status": "failed",
+                        "error_type": type(write_error).__name__,
+                        "error_message": str(write_error)[:400],
+                    }
+            completion_status = comm.bcast(completion_status, root=completion_owner)
+            try:
+                assert converged_reason > 0
+                assert iteration_count >= 2
+                assert pc_successes_after >= iteration_count
+                assert np.isfinite(true_relative_residual)
+                assert true_relative_residual <= 5.0e-9
+                assert rhs_unchanged
+            except BaseException as numeric_error:  # retain numerical failure as primary
+                if completion_status.get("status") != "written":
+                    numeric_error.add_note(
+                        "secondary tiny FGMRES evidence write failure: "
+                        + str(completion_status)
+                    )
+                raise
+            assert all(
+                row.get("capture_status") == "captured"
+                for row in completion_rows
+            ), completion_rows
+            assert completion_status["status"] == "written", completion_status
+            assert ksp_monitor_samples, "KSP monitor produced no iteration samples"
+            assert not ksp_monitor_errors, ksp_monitor_errors
+            assert all(
+                isinstance(row.get("pc_apply_timeline"), dict)
+                and all(
+                    apply_row.get("row_capture_status")
+                    == "captured_current_attempt"
+                    for apply_row in row["pc_apply_timeline"].get("records", [])
+                )
+                for row in completion_rows
+            ), completion_rows
+        except BaseException as solve_or_assertion_error:
+            ksp_destroy_primary = solve_or_assertion_error
+            raise
+        else:
+            ksp_destroy_primary = None
+        finally:
+            try:
+                ksp.destroy()
+            except BaseException as destroy_error:
+                if ksp_destroy_primary is None:
+                    raise
+                try:
+                    ksp_destroy_primary.add_note(
+                        "secondary KSP destroy error: "
+                        + exception_message(destroy_error)
+                    )
+                except BaseException:  # noqa: BLE001, S110
+                    pass
+
+        modal_system_after_solve = ldu.action_modal_schur_system
+        ldu.destroy()
+        assert modal_system_after_solve._destroyed is True
+        frozen_row = modal_system_after_solve.frozen_original_modal_row()
+        assert isinstance(frozen_row, dict)
+        assert frozen_row["record"]["status"] == "passed"
+        assert frozen_row["record"]["classification"] == "numeric_gate_pass"
+        assert frozen_row["arrays"] is not None
+        assert "d" in frozen_row["arrays"]
+        assert np.isfinite(frozen_row["arrays"]["d"]).all()
+        snapshot_validation = None
+        if comm.rank == modal_system_after_solve.modal_owner:
+            try:
+                evidence_index_path = (
+                    evidence_root
+                    / "numerical_output"
+                    / "v13_modal_row_evidence"
+                    / "index.json"
+                )
+                evidence_index = json.loads(
+                    evidence_index_path.read_text(encoding="utf-8")
+                )
+                required_slots = {
+                    "v15_s_b_ready",
+                    "v15_first_success_control",
+                }
+                if not required_slots.issubset(
+                    evidence_index.get("records", {})
+                ):
+                    raise AssertionError(
+                        "required post-destroy evidence slots are absent"
+                    )
+                for slot in required_slots:
+                    record = evidence_index["records"][slot]
+                    artifact_path = evidence_root / record["path"]
+                    if hashlib.sha256(artifact_path.read_bytes()).hexdigest() != (
+                        record["sha256"]
+                    ):
+                        raise AssertionError(
+                            f"post-destroy snapshot hash mismatch: {slot}"
+                        )
+                    with np.load(artifact_path, allow_pickle=False) as artifact:
+                        if not artifact.files or not all(
+                            np.isfinite(artifact[name]).all()
+                            for name in artifact.files
+                        ):
+                            raise AssertionError(
+                                f"post-destroy snapshot is invalid: {slot}"
+                            )
+                snapshot_validation = {"status": "passed"}
+            except Exception as exc:  # noqa: BLE001 - broadcast owner read failure before asserting
+                snapshot_validation = {
+                    "status": "failed",
+                    "error": f"{type(exc).__name__}: {str(exc)[:400]}",
+                }
+        snapshot_validation = comm.bcast(
+            snapshot_validation, root=modal_system_after_solve.modal_owner
+        )
+        assert snapshot_validation["status"] == "passed", snapshot_validation
     finally:
-        if ldu is not None:
-            ldu.destroy()
-        if original_operator is not None:
-            original_operator.destroy()
-        if original_action_context is not None:
-            original_action_context.destroy()
-        if ldu is not None:
-            # Destruction of the LDU/action wrappers must not own the factors.
-            for inverse in inverses.values():
-                diagnostics = inverse.diagnostics
-                assert diagnostics["p4_factor_live"] == 1
-                assert diagnostics["nested_iterative_ksp_count"] == 1
-        if coupling is not None:
-            coupling.destroy()
-        for side, inverse in inverses.items():
+        primary_error = sys.exc_info()[1]
+        cleanup_errors: list[BaseException] = []
+
+        def cleanup_step(label: str, action) -> None:
+            try:
+                action()
+            except BaseException as cleanup_error:  # noqa: BLE001 - preserve the first failure
+                try:
+                    cleanup_message = str(cleanup_error)[:320]
+                except BaseException as render_error:  # noqa: BLE001 - cleanup reporting is secondary
+                    cleanup_message = (
+                        f"<message unavailable: {type(render_error).__name__}>"
+                    )
+                note = f"secondary tiny-FE cleanup error at {label}: " + (
+                    f"{type(cleanup_error).__name__}: {cleanup_message}"
+                )
+                if primary_error is not None:
+                    try:
+                        primary_error.add_note(note)
+                    except BaseException:  # noqa: BLE001, S110
+                        pass
+                elif cleanup_errors:
+                    try:
+                        cleanup_errors[0].add_note(note)
+                    except BaseException:  # noqa: BLE001, S110
+                        pass
+                else:
+                    cleanup_errors.append(cleanup_error)
+
+        def assert_factor_lifecycle(inverse) -> None:
+            diagnostics = inverse.diagnostics
+            assert diagnostics["p4_factor_live"] == 1
+            assert diagnostics["nested_iterative_ksp_count"] == 1
+
+        def restore_side_factor_apply(side: str, inverse) -> None:
             factor = inverse._p4_factor
             original = p4_apply_originals.get(side)
             if factor is not None and original is not None:
                 original_factor, original_apply = original
                 assert factor is original_factor
                 factor.apply = original_apply
-            inverse.destroy()
-        for vector in outputs.values():
-            vector.destroy()
-        for vector in inputs:
-            vector.destroy()
-        for vector in mode_vectors:
-            vector.destroy()
+
+        if ldu is not None:
+            cleanup_step("LDU destroy", ldu.destroy)
+        if original_operator is not None:
+            cleanup_step("original operator destroy", original_operator.destroy)
+        if original_action_context is not None:
+            cleanup_step("original action context destroy", original_action_context.destroy)
+        if ldu is not None:
+            # Destruction of the LDU/action wrappers must not own the factors.
+            for inverse in inverses.values():
+                cleanup_step(
+                    "side factor lifecycle assertion",
+                    lambda inverse=inverse: assert_factor_lifecycle(inverse),
+                )
+        if coupling is not None:
+            cleanup_step("coupling destroy", coupling.destroy)
+        for side, inverse in inverses.items():
+            cleanup_step(
+                f"{side} P4 apply restore",
+                lambda side=side, inverse=inverse: restore_side_factor_apply(
+                    side, inverse
+                ),
+            )
+            cleanup_step(f"{side} inverse destroy", inverse.destroy)
+        for index, vector in enumerate(outputs.values()):
+            cleanup_step(f"output vector {index} destroy", vector.destroy)
+        for index, vector in enumerate(inputs):
+            cleanup_step(f"input vector {index} destroy", vector.destroy)
+        for index, vector in enumerate(mode_vectors):
+            cleanup_step(f"mode vector {index} destroy", vector.destroy)
+        if primary_error is None and cleanup_errors:
+            raise cleanup_errors[0]
 
 
 def test_task041_h1e_real_fe_side_inverse_is_sequential_and_owned(

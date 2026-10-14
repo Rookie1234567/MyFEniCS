@@ -1436,6 +1436,194 @@ def test_v13_outer_marker_writer_real_mpi2_append_and_write_failure(monkeypatch)
     assert cleanup_error is None
 
 
+def test_v15_modal_snapshot_writer_real_mpi2_preserves_primary_and_broadcasts_write_failure(
+    monkeypatch,
+):
+    """Use the real MPI2 owner writer and retain the primary row-gate refusal."""
+
+    import shutil
+    import tempfile
+
+    import numpy as np
+    from mpi4py import MPI
+
+    from benchmarks import task041_exact_side_workflow as worker
+    from src.solvers import hybrid_fem_modal_block_ldu as block_ldu
+
+    comm = MPI.COMM_WORLD
+    if comm.size != 2:
+        pytest.skip("the V15 evidence writer regression requires exactly MPI2")
+    modal_owner = 1
+    shared = None
+    if comm.rank == 0:
+        try:
+            shared = {"root": tempfile.mkdtemp(prefix="task041-v15-snapshot-mpi2-")}
+        except Exception as exc:  # noqa: BLE001 - broadcast fixture setup failure
+            shared = {"error": f"{type(exc).__name__}: {exc}"}
+    shared = comm.bcast(shared, root=0)
+    if not isinstance(shared, dict) or "root" not in shared:
+        pytest.fail(f"rank 0 could not create shared V15 fixture: {shared!r}")
+    root = Path(shared["root"])
+    source_sha = "a" * 64
+    packet_sha = hashlib.sha256(b"v15-real-mpi2-snapshot-fixture").hexdigest()
+    identity = {"test": "V15 real MPI2 writer protocol", "source_sha": source_sha}
+    consumer_binding = {"fixture_scope": "writer protocol only; no FE solve"}
+
+    def writer(payload):
+        return worker._write_task041_v13_modal_evidence_snapshot(
+            root,
+            payload,
+            source_sha=source_sha,
+            identity=identity,
+            packet_manifest_sha256=packet_sha,
+            consumer_binding=consumer_binding,
+        )
+
+    def system_for(snapshot_callback):
+        system = object.__new__(block_ldu.Task041V13ConsistentModalSurrogateSystem)
+        system.comm = comm
+        system.rank = int(comm.rank)
+        system.modal_owner = modal_owner
+        system._snapshot_callback = snapshot_callback
+        system._original_modal_row_snapshot_slots = set()
+        system._last_original_modal_row = None
+        system._last_original_modal_row_arrays = None
+        system._last_original_modal_row_snapshot_receipt = None
+        return system
+
+    system = system_for(writer)
+    primary_record = {
+        "status": "rejected",
+        "classification": "numeric_gate_reject",
+        "attempt_index": 7,
+        "reason": "eta_terms_inf_exceeded_1e-10",
+        "nonfinite_nan": float("nan"),
+        "nonfinite_positive_infinity": float("inf"),
+    }
+    system.record_original_modal_row(
+        primary_record,
+        {"d": np.asarray([complex(float("nan"), float("inf"))])},
+    )
+    success_receipt = system.persist_v13_evidence_snapshot(
+        {
+            "snapshot_kind": "v15_terminal_numeric_reject",
+            "attempt_index": 7,
+            "record": primary_record,
+            "arrays": {
+                "d": np.asarray([complex(float("nan"), float("inf"))]),
+                "w_modal": np.asarray([1.0 + 0.0j]),
+            },
+        }
+    )
+    success_rows = comm.allgather(success_receipt)
+    assert success_rows == [success_rows[0], success_rows[0]]
+    assert success_receipt["status"] == "written"
+
+    success_artifact_check = None
+    if comm.rank == modal_owner:
+        try:
+            index_path = root / "numerical_output" / "v13_modal_row_evidence" / "index.json"
+            index = json.loads(index_path.read_text(encoding="utf-8"))
+            artifact_record = index["records"]["v15_terminal_numeric_reject"]
+            if artifact_record["metadata"]["record"]["nonfinite_nan"] != {
+                "value": None,
+                "nonfinite": "NaN",
+            }:
+                raise AssertionError("NaN JSON marker differs")
+            if artifact_record["metadata"]["record"][
+                "nonfinite_positive_infinity"
+            ] != {"value": None, "nonfinite": "+Inf"}:
+                raise AssertionError("infinity JSON marker differs")
+            artifact_path = root / artifact_record["path"]
+            if hashlib.sha256(artifact_path.read_bytes()).hexdigest() != (
+                artifact_record["sha256"]
+            ):
+                raise AssertionError("owner snapshot hash mismatch")
+            with np.load(artifact_path, allow_pickle=False) as artifact:
+                if not np.isnan(artifact["d"].real[0]) or not np.isinf(
+                    artifact["d"].imag[0]
+                ):
+                    raise AssertionError("NPZ did not retain raw non-finite values")
+            success_artifact_check = {
+                "status": "readable_with_raw_nonfinite_values"
+            }
+        except Exception as exc:  # noqa: BLE001 - broadcast owner reader failure before assertion
+            success_artifact_check = {
+                "status": "failed",
+                "error": f"{type(exc).__name__}: {str(exc)[:400]}",
+            }
+    success_artifact_check = comm.bcast(success_artifact_check, root=modal_owner)
+    assert success_artifact_check["status"] == "readable_with_raw_nonfinite_values", (
+        success_artifact_check
+    )
+
+    original_path_open = Path.open
+
+    def fail_owner_npz_open(path, *args, **kwargs):
+        if (
+            comm.rank == modal_owner
+            and path.name == ".v15_evidence_failure.npz.tmp"
+        ):
+            raise OSError("injected owner snapshot write failure")
+        return original_path_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", fail_owner_npz_open)
+    failed_system = system_for(writer)
+    failed_primary = {
+        "status": "rejected",
+        "classification": "numeric_gate_reject",
+        "attempt_index": 8,
+        "reason": "original row gate remains primary",
+    }
+    failed_system.record_original_modal_row(failed_primary)
+    failure_receipt = failed_system.persist_v13_evidence_snapshot(
+        {
+            "snapshot_kind": "v15_evidence_failure",
+            "attempt_index": 8,
+            "record": {"snapshot_write_is_secondary": True},
+            "arrays": {"d": np.asarray([0.0 + 0.0j])},
+        }
+    )
+    failure_rows = comm.allgather(failure_receipt)
+    assert failure_rows == [failure_rows[0], failure_rows[0]]
+    assert failure_receipt["status"] == "failed"
+    assert "injected owner snapshot write failure" in str(
+        failure_receipt["error"]
+    )
+    frozen_failure = failed_system.frozen_original_modal_row()
+    assert frozen_failure["record"] == failed_primary
+    assert frozen_failure["arrays"] is None
+
+    cleanup_error = None
+    if comm.rank == 0:
+        try:
+            shutil.rmtree(root)
+        except Exception as exc:  # noqa: BLE001 - report cleanup status collectively
+            cleanup_error = f"{type(exc).__name__}: {exc}"
+    cleanup_error = comm.bcast(cleanup_error, root=0)
+    assert cleanup_error is None
+
+
+def test_v15_real_tiny_builder_pc_owner_writer_failure_mpi2(
+    monkeypatch, tmp_path
+):
+    """Reuse test350's real tiny V13 builder and PC, not a hand-made system."""
+
+    from mpi4py import MPI
+
+    if MPI.COMM_WORLD.size != 2:
+        pytest.skip("the real tiny builder writer-failure path requires MPI2")
+    from src.test.test_350_task041_balh_block_ldu import (
+        _exercise_v13_unmocked_builder_owner_lu_and_original_modal_row_math,
+    )
+
+    _exercise_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
+        monkeypatch,
+        tmp_path,
+        inject_owner_writer_failure=True,
+    )
+
+
 @pytest.mark.parametrize(
     "callback_failure", ("invalid_response", "exception", "invalid_request")
 )

@@ -9,7 +9,9 @@ import inspect
 import json
 import linecache
 import os
+import sys
 from collections.abc import Mapping
+from decimal import Decimal, localcontext
 from types import SimpleNamespace
 from typing import Any
 
@@ -24,7 +26,10 @@ from src.solvers.hybrid_fem_modal_augmented_direct import (
     internal_modal_constraint_matrix,
     internal_modal_rhs_correction,
 )
-from src.solvers.hybrid_fem_modal_iterative import create_hybrid_assembled_block_action
+from src.solvers.hybrid_fem_modal_iterative import (
+    HybridBlockOperator,
+    create_hybrid_assembled_block_action,
+)
 from src.solvers.physical_balanced_h6 import H6_DEGREE, FixedH6
 from src.solvers.physical_balanced_physical_operator import (
     P4PhysicalResidualGateError,
@@ -65,6 +70,172 @@ def _relative_or_absolute(actual: np.ndarray, expected: np.ndarray) -> float:
     difference = float(np.linalg.norm(np.asarray(actual) - np.asarray(expected)))
     denominator = float(np.linalg.norm(np.asarray(expected)))
     return difference / denominator if denominator > 0.0 else difference
+
+
+def _decimal_complex_pair(value: complex) -> tuple[Decimal, Decimal]:
+    item = complex(value)
+    return Decimal.from_float(item.real), Decimal.from_float(item.imag)
+
+
+def _decimal_complex_matvec(
+    matrix: np.ndarray, vector: np.ndarray
+) -> list[tuple[Decimal, Decimal]]:
+    """Independent exact-decimal complex multiply/add on binary64 inputs."""
+
+    values = np.asarray(matrix, dtype=np.complex128)
+    rhs = np.asarray(vector, dtype=np.complex128)
+    if values.ndim != 2 or rhs.ndim != 1 or values.shape[1] != rhs.size:
+        raise ValueError("Decimal matrix oracle received an incompatible shape")
+    output: list[tuple[Decimal, Decimal]] = []
+    with localcontext() as decimal_context:
+        decimal_context.prec = 180
+        for row in values:
+            real_sum = Decimal(0)
+            imag_sum = Decimal(0)
+            for coefficient, value in zip(row, rhs, strict=True):
+                coeff_real, coeff_imag = _decimal_complex_pair(coefficient)
+                value_real, value_imag = _decimal_complex_pair(value)
+                real_sum += coeff_real * value_real - coeff_imag * value_imag
+                imag_sum += coeff_real * value_imag + coeff_imag * value_real
+            output.append((real_sum, imag_sum))
+    return output
+
+
+def _decimal_complex_sum(
+    left: tuple[Decimal, Decimal], right: tuple[Decimal, Decimal]
+) -> tuple[Decimal, Decimal]:
+    with localcontext() as context:
+        context.prec = 180
+        return left[0] + right[0], left[1] + right[1]
+
+
+def _decimal_complex_difference(
+    left: tuple[Decimal, Decimal], right: tuple[Decimal, Decimal]
+) -> tuple[Decimal, Decimal]:
+    with localcontext() as context:
+        context.prec = 180
+        return left[0] - right[0], left[1] - right[1]
+
+
+def _decimal_complex_modulus(value: tuple[Decimal, Decimal]) -> Decimal:
+    with localcontext() as context:
+        context.prec = 180
+        return (value[0] * value[0] + value[1] * value[1]).sqrt()
+
+
+def _decimal_sum(values: Any) -> Decimal:
+    with localcontext() as context:
+        context.prec = 180
+        return sum(values, Decimal(0))
+
+
+def _validate_v15_capture_timeline(
+    events: Any,
+    checks: Any,
+    *,
+    diagnostic_apply_index: int,
+    attempted_production_pc_apply_index: int,
+    expected_attempt_index: int,
+    prior_attempt_index: int | None,
+    expected_action_identity: Any,
+) -> dict[str, Any]:
+    """Validate one callback followed by every same-attempt row commit/check pair."""
+
+    errors: list[str] = []
+    if not isinstance(events, list) or not events:
+        return {
+            "status": "rejected",
+            "pair_count": 0,
+            "errors": ["capture timeline is absent or empty"],
+        }
+    if not isinstance(checks, list):
+        return {
+            "status": "rejected",
+            "pair_count": 0,
+            "errors": ["same-attempt d checks are not a list"],
+        }
+
+    callback_events = [
+        event
+        for event in events
+        if isinstance(event, Mapping)
+        and event.get("event") == "callback_returned_arrays_copied"
+    ]
+    if len(callback_events) != 1 or events[0] is not callback_events[0]:
+        errors.append("exactly one callback capture must be the first event")
+    callback = callback_events[0] if callback_events else {}
+    if callback.get("diagnostic_apply_index") != diagnostic_apply_index:
+        errors.append("callback diagnostic apply identity differs")
+    if (
+        callback.get("attempted_production_pc_apply_index")
+        != attempted_production_pc_apply_index
+    ):
+        errors.append("callback production apply identity differs")
+    if callback.get("attempt_index") != expected_attempt_index:
+        errors.append("callback belongs to a different attempt")
+    callback_action = callback.get("action_identity")
+    if not isinstance(callback_action, Mapping):
+        errors.append("callback action identity is absent")
+    if callback_action != expected_action_identity:
+        errors.append("callback action identity differs from the committed row")
+    if prior_attempt_index == expected_attempt_index:
+        errors.append("prior committed row belongs to the current attempt")
+
+    remaining = events[1:] if events and events[0] is callback else events
+    if len(remaining) < 2 or len(remaining) % 2 != 0:
+        errors.append("row commits must be followed by at least one d check")
+    pair_count = len(remaining) // 2
+    if len(checks) != pair_count or pair_count < 1:
+        errors.append("the check list does not match the committed row count")
+
+    for pair_index in range(pair_count):
+        commit = remaining[2 * pair_index]
+        check_event = remaining[2 * pair_index + 1]
+        check = checks[pair_index] if pair_index < len(checks) else {}
+        if not isinstance(commit, Mapping) or commit.get("event") != "production_row_record_committed":
+            errors.append(f"pair {pair_index}: production row commit is out of order")
+            continue
+        if not isinstance(check_event, Mapping) or check_event.get("event") != "same_attempt_d_checked_after_record_commit":
+            errors.append(f"pair {pair_index}: d check is not immediately after commit")
+            continue
+        for label, item in (("commit", commit), ("check", check_event), ("result", check)):
+            if not isinstance(item, Mapping):
+                errors.append(f"pair {pair_index}: {label} record is missing")
+                continue
+            if item.get("diagnostic_apply_index") != diagnostic_apply_index:
+                errors.append(f"pair {pair_index}: {label} diagnostic apply differs")
+            if (
+                item.get("attempted_production_pc_apply_index")
+                != attempted_production_pc_apply_index
+            ):
+                errors.append(f"pair {pair_index}: {label} production apply differs")
+            if item.get("attempt_index") != expected_attempt_index:
+                errors.append(f"pair {pair_index}: {label} attempt differs")
+        for label, item in (("commit", commit), ("check", check_event), ("result", check)):
+            if isinstance(item, Mapping) and item.get("action_identity") != callback_action:
+                errors.append(f"pair {pair_index}: {label} action identity differs")
+        if not isinstance(check, Mapping):
+            continue
+        if check.get("status") != "passed":
+            errors.append(f"pair {pair_index}: same-attempt d check failed")
+        if check.get("binary64_d_equals_w_minus_r") is not True:
+            errors.append(f"pair {pair_index}: d is not the current binary64 w-r")
+        if check.get("prior_attempt_was_not_used") is not True:
+            errors.append(f"pair {pair_index}: prior attempt was reused")
+        if check.get("compared_only_after_production_record_delegate") is not True:
+            errors.append(f"pair {pair_index}: d check preceded production commit")
+
+    return {
+        "status": "passed" if not errors else "rejected",
+        "diagnostic_apply_index": diagnostic_apply_index,
+        "attempted_production_pc_apply_index": attempted_production_pc_apply_index,
+        "expected_attempt_index": expected_attempt_index,
+        "prior_attempt_index": prior_attempt_index,
+        "callback_count": len(callback_events),
+        "pair_count": pair_count,
+        "check_count": len(checks),
+        "errors": errors,
+    }
 
 
 def _sample_contract() -> tuple[list[int], dict[str, list[str]], str]:
@@ -2512,77 +2683,10 @@ def test_v13_factory_passes_the_same_fixed_b_actions_to_modal_and_ldu(
         assert bottom_b.audit["apply_count"] == 0
         assert top_b.audit["apply_count"] == 0
 
-        # The independent original-A modal-row check must scale an exact-zero
-        # row by its uncancelled side and modal terms, not by their cancelled
-        # sum.  The same factory-created context is used for the near-zero RHS
-        # case, where the scale must remain ||r_modal|| without a unit floor.
-        layout = fixture["layout"]
-        side_index = int(
-            layout.map_bottom(np.asarray([0], dtype=PETSc.IntType))[0]
-        )
-        modal_index = int(
-            layout.map_modal(np.asarray([0], dtype=PETSc.IntType))[0]
-        )
-        cancelling_term = 2.0**-20
-        original_dense = np.zeros(
-            (layout.global_size, layout.global_size), dtype=np.complex128
-        )
-        original_dense[modal_index, side_index] = cancelling_term
-        original_dense[modal_index, modal_index] = -cancelling_term
-        row_source = layout.create_vector()
-        row_target = layout.create_vector()
-        original_operator = _matrix_from_dense(
-            row_source, row_target, original_dense
-        )
-        context.bind_v13_original_global_operator(original_operator)
-
-        target_values = np.zeros(layout.global_size, dtype=np.complex128)
-        target_values[side_index] = 1.0
-        target_values[modal_index] = 1.0
-        _set_vector(row_target, target_values)
-        _set_vector(row_source, np.zeros(layout.global_size, dtype=np.complex128))
-        context._check_v13_original_modal_row(row_source, row_target)
-        exact_zero_row = context.action_modal_schur_system.diagnostics[
-            "last_original_modal_row"
-        ]
-        assert exact_zero_row["rhs_exact_zero"] is True
-        assert exact_zero_row["original_A_modal_row_matmult_count"] == 2
-        assert exact_zero_row["original_A_modal_side_term_norm"] == pytest.approx(
-            cancelling_term
-        )
-        assert exact_zero_row[
-            "original_A_modal_constraint_term_norm"
-        ] == pytest.approx(cancelling_term)
-        assert exact_zero_row["scale"] == pytest.approx(2.0 * cancelling_term)
-        assert exact_zero_row["residual_norm"] == 0.0
-        assert exact_zero_row["relative_backward_error"] == 0.0
-
-        near_zero_action = 2.0**-40
-        near_zero_fraction = 2.0**-34
-        if MPI.COMM_WORLD.rank == layout.modal_owner:
-            original_operator.setValue(
-                modal_index,
-                modal_index,
-                PETSc.ScalarType(-cancelling_term + near_zero_action),
-            )
-        original_operator.assemble()
-        near_zero_rhs = near_zero_action * (1.0 - near_zero_fraction)
-        near_zero_source = np.zeros(layout.global_size, dtype=np.complex128)
-        near_zero_source[modal_index] = near_zero_rhs
-        _set_vector(row_source, near_zero_source)
-        context._check_v13_original_modal_row(row_source, row_target)
-        near_zero_row = context.action_modal_schur_system.diagnostics[
-            "last_original_modal_row"
-        ]
-        assert near_zero_row["rhs_exact_zero"] is False
-        assert near_zero_row["original_A_modal_row_matmult_count"] == 1
-        assert near_zero_row["original_A_modal_side_term_norm"] is None
-        assert near_zero_row["original_A_modal_constraint_term_norm"] is None
-        assert near_zero_row["scale"] == pytest.approx(abs(near_zero_rhs))
-        assert 0.0 < near_zero_row["scale"] < 1.0e-10
-        assert near_zero_row["relative_backward_error"] == pytest.approx(
-            near_zero_fraction, rel=1.0e-5
-        )
+        # Keep this selector's fixed-B action identity/ownership assertions.
+        # Exact-zero and near-zero same-system original-A capture now live in
+        # test_v13_unmocked_builder_owner_lu_and_original_modal_row_math;
+        # test347 continues to cover the registered tiny real-FE route.
     finally:
         if context is not None and not context._destroyed:
             context.destroy()
@@ -2595,6 +2699,437 @@ def test_v13_factory_passes_the_same_fixed_b_actions_to_modal_and_ldu(
             if action is not None and not action.audit["destroyed"]:
                 action.destroy()
         _destroy_side_block_fixture(fixture)
+
+
+def test_v15_original_modal_row_metrics_match_decimal_complex_oracle():
+    """Independently check row scaling, exact-zero semantics, and raw d=w-r."""
+
+    def decimal_complex(value: complex) -> tuple[Decimal, Decimal]:
+        return _decimal_complex_pair(value)
+
+    def decimal_abs(value: complex) -> Decimal:
+        real, imag = decimal_complex(value)
+        return (real * real + imag * imag).sqrt()
+
+    # Row 0 establishes a 1e100 scale.  Row 1 is 180 orders smaller but has a
+    # representable cancellation residual; the rowwise gate must retain it.
+    r = np.asarray([0.0j, 1.0e-80 - 2.0e-80j, 0.0j], dtype=np.complex128)
+    tb = np.asarray([1.0e100 + 0.0j, 0.0j, 2.0 + 0.0j], dtype=np.complex128)
+    tt = np.asarray([-1.0e100 + 0.0j, 0.0j, -2.0 + 0.0j], dtype=np.complex128)
+    tiny_w = complex(
+        np.nextafter(1.0e-80, np.inf),
+        np.nextafter(-2.0e-80, np.inf),
+    )
+    tc = np.asarray([0.0j, tiny_w, 0.0j], dtype=np.complex128)
+    w = np.asarray([0.0j, tiny_w, 0.0j], dtype=np.complex128)
+    metrics, residual = block_ldu._v13_original_modal_row_metrics(
+        r, w, tb, tt, tc
+    )
+    expected_raw = np.subtract(w, r)
+    np.testing.assert_array_equal(residual, expected_raw)
+    assert (
+        metrics["contract_id"]
+        == "task041.v15.original_modal_row.terms_backward.v1"
+    )
+    assert metrics["rhs_exact_zero"] is False
+    assert metrics["legacy_rhs_relative_status"] == "passed"
+    assert metrics["eta_terms_inf"] < 1.0e-10
+    assert metrics["decomposition_passed"] is True
+    assert metrics["row_relative_error"][1] > 1.0e-17
+
+    with localcontext() as context:
+        context.prec = 120
+        oracle_rows = []
+        for index in range(r.size):
+            numerator = decimal_abs(complex(expected_raw[index]))
+            denominator = sum(
+                (
+                    decimal_abs(complex(array[index]))
+                    for array in (tb, tt, tc, r)
+                ),
+                Decimal(0),
+            )
+            oracle_rows.append(
+                Decimal(0) if denominator == 0 else numerator / denominator
+            )
+        oracle_max = max(oracle_rows)
+        assert float(oracle_rows[1]) == pytest.approx(
+            float(metrics["row_relative_error"][1]), rel=2.0e-15
+        )
+        assert float(oracle_max) == pytest.approx(
+            float(metrics["eta_terms_inf"]), rel=2.0e-15
+        )
+
+    # Overall complex scaling must preserve each row's ratio without using a
+    # largest-row scale.  The non-real phase and 2**+-200 cases cover a broad
+    # representable range while retaining the deliberately weak row.
+    phase = np.complex128(0.6 + 0.8j)
+    scaled_eta = []
+    scale_tb = np.asarray(
+        [3.0 - 1.0j, 2.0**-78 + 1j * (2.0**-79)], dtype=np.complex128
+    )
+    scale_tt = np.asarray(
+        [-2.0 + 0.5j, -(2.0**-79) + 1j * (2.0**-80)],
+        dtype=np.complex128,
+    )
+    scale_tc = np.asarray(
+        [0.25 + 0.125j, 2.0**-77 - 1j * (2.0**-80)],
+        dtype=np.complex128,
+    )
+    assert scale_tb[1].imag == 2.0**-79
+    assert scale_tt[1].real == -(2.0**-79)
+    assert scale_tt[1].imag == 2.0**-80
+    assert scale_tc[1].real == 2.0**-77
+    assert scale_tc[1].imag == -(2.0**-80)
+    scale_r = scale_tc.copy()
+    scale_r += scale_tb
+    scale_r += scale_tt
+    scale_w = scale_r.copy()
+    scale_w += np.asarray(
+        [1.0e-12 - 2.0e-12j, 2.0**-115 + 1j * (2.0**-116)],
+        dtype=np.complex128,
+    )
+    weak_row_scale = sum(
+        abs(complex(values[1]))
+        for values in (scale_tb, scale_tt, scale_tc, scale_r)
+    )
+    weak_row_relative_residual = abs(complex(scale_w[1] - scale_r[1])) / (
+        weak_row_scale
+    )
+    assert 1.0e-23 < weak_row_scale < 3.0e-23
+    assert 1.0e-12 < weak_row_relative_residual < 1.0e-10
+    for exponent in (-200, -40, 0, 40, 200):
+        scale = np.ldexp(1.0, exponent) * phase
+        scaled_arrays = tuple(
+            np.asarray(value * scale, dtype=np.complex128)
+            for value in (scale_r, scale_w, scale_tb, scale_tt, scale_tc)
+        )
+        scaled_metrics, scaled_d = block_ldu._v13_original_modal_row_metrics(
+            *scaled_arrays
+        )
+        assert scaled_metrics["status"] == "passed"
+        with localcontext() as context:
+            context.prec = 180
+            scaled_oracle_rows = []
+            for index in range(scale_r.size):
+                numerator = decimal_abs(complex(scaled_d[index]))
+                denominator = sum(
+                    (
+                        decimal_abs(complex(array[index]))
+                        for array in scaled_arrays[2:] + (scaled_arrays[0],)
+                    ),
+                    Decimal(0),
+                )
+                scaled_oracle_rows.append(
+                    Decimal(0)
+                    if denominator == 0
+                    else numerator / denominator
+                )
+            scaled_expected = max(scaled_oracle_rows)
+            assert float(scaled_expected) == pytest.approx(
+                scaled_metrics["eta_terms_inf"], rel=5.0e-14, abs=1.0e-300
+            )
+            assert float(scaled_oracle_rows[1]) == pytest.approx(
+                scaled_metrics["row_relative_error"][1],
+                rel=5.0e-14,
+                abs=1.0e-300,
+            )
+            assert scaled_metrics["row_relative_error"][1] > 0.0
+        scaled_eta.append(float(scaled_metrics["eta_terms_inf"]))
+    assert all(np.isfinite(value) for value in scaled_eta)
+
+    # Apply distinct complex scales to the two rows of this same case.  The
+    # weak row remains independently represented and decides the rowwise gate.
+    row_scales = np.asarray(
+        [phase * np.ldexp(1.0, 40), np.conjugate(phase) * np.ldexp(1.0, -40)],
+        dtype=np.complex128,
+    )
+    row_scaled_arrays = tuple(
+        np.asarray(values * row_scales, dtype=np.complex128)
+        for values in (scale_r, scale_w, scale_tb, scale_tt, scale_tc)
+    )
+    row_scaled_metrics, row_scaled_residual = (
+        block_ldu._v13_original_modal_row_metrics(*row_scaled_arrays)
+    )
+    assert row_scaled_metrics["status"] == "passed"
+    with localcontext() as context:
+        context.prec = 180
+        rowwise_oracle = []
+        for index in range(row_scaled_arrays[0].size):
+            numerator = decimal_abs(complex(row_scaled_residual[index]))
+            denominator = sum(
+                (
+                    decimal_abs(complex(values[index]))
+                    for values in (
+                        row_scaled_arrays[2],
+                        row_scaled_arrays[3],
+                        row_scaled_arrays[4],
+                        row_scaled_arrays[0],
+                    )
+                ),
+                Decimal(0),
+            )
+            rowwise_oracle.append(
+                Decimal(0) if denominator == 0 else numerator / denominator
+            )
+        for index, oracle_error in enumerate(rowwise_oracle):
+            assert float(oracle_error) == pytest.approx(
+                row_scaled_metrics["row_relative_error"][index],
+                rel=5.0e-14,
+                abs=1.0e-300,
+            )
+            assert (oracle_error <= Decimal.from_float(1.0e-10)) == bool(
+                row_scaled_metrics["row_relative_error"][index] <= 1.0e-10
+            )
+        assert rowwise_oracle[1] > rowwise_oracle[0]
+
+        # Pollute only the weak row by a representable amount well above the
+        # same row's scale; the unchanged gate must reject that row.
+        polluted_w = row_scaled_arrays[1].copy()
+        weak_row_scale = sum(
+            (
+                decimal_abs(complex(values[1]))
+                for values in (
+                    row_scaled_arrays[2],
+                    row_scaled_arrays[3],
+                    row_scaled_arrays[4],
+                    row_scaled_arrays[0],
+                )
+            ),
+            Decimal(0),
+        )
+        weak_pollution = float(weak_row_scale / Decimal(4))
+        polluted_w[1] += weak_pollution * (0.6 + 0.8j)
+        polluted_arrays = (
+            row_scaled_arrays[0],
+            polluted_w,
+            *row_scaled_arrays[2:],
+        )
+        polluted_metrics, polluted_residual = (
+            block_ldu._v13_original_modal_row_metrics(*polluted_arrays)
+        )
+        polluted_oracle_numerator = decimal_abs(complex(polluted_residual[1]))
+        polluted_oracle = polluted_oracle_numerator / weak_row_scale
+        assert float(polluted_oracle) == pytest.approx(
+            polluted_metrics["row_relative_error"][1], rel=5.0e-14
+        )
+        assert polluted_oracle > Decimal.from_float(1.0e-10)
+        assert polluted_metrics["status"] == "rejected"
+        assert polluted_metrics["row_relative_error"][1] > 1.0e-10
+
+    # Different supports make ||sum_i |x_i|||_2 distinct from
+    # sum_i ||x_i||_2.  The v1 eta_terms_2 contract uses the latter.
+    terms_2_rhs = np.asarray([0.0j, 0.0j, 5.0 + 0.0j])
+    terms_2_bottom = np.asarray([3.0 + 0.0j, 0.0j, 0.0j])
+    terms_2_top = np.asarray([0.0j, 4.0 + 0.0j, 0.0j])
+    terms_2_constraint = np.asarray([0.0j, 0.0j, 12.0 + 0.0j])
+    terms_2_output = terms_2_rhs + np.asarray(
+        [0.25 + 0.0j, 0.5 + 0.0j, 0.75 + 0.0j]
+    )
+    terms_2_metrics, terms_2_residual = block_ldu._v13_original_modal_row_metrics(
+        terms_2_rhs,
+        terms_2_output,
+        terms_2_bottom,
+        terms_2_top,
+        terms_2_constraint,
+    )
+    np.testing.assert_array_equal(
+        terms_2_residual, np.subtract(terms_2_output, terms_2_rhs)
+    )
+    with localcontext() as context:
+        context.prec = 120
+
+        def decimal_l2(values: np.ndarray) -> Decimal:
+            return sum(
+                (
+                    decimal_abs(complex(value)) ** 2
+                    for value in values
+                ),
+                Decimal(0),
+            ).sqrt()
+
+        expected_terms_2 = decimal_l2(terms_2_residual) / sum(
+            (
+                decimal_l2(values)
+                for values in (
+                    terms_2_bottom,
+                    terms_2_top,
+                    terms_2_constraint,
+                    terms_2_rhs,
+                )
+            ),
+            Decimal(0),
+        )
+        wrong_rowwise_norm = (
+            sum(
+                (
+                    _decimal_sum(
+                        (
+                            decimal_abs(complex(array[index]))
+                            for array in (
+                                terms_2_bottom,
+                                terms_2_top,
+                                terms_2_constraint,
+                                terms_2_rhs,
+                            )
+                        ),
+                    )
+                    ** 2
+                    for index in range(terms_2_rhs.size)
+                ),
+                Decimal(0),
+            ).sqrt()
+        )
+        wrong_terms_2 = decimal_l2(terms_2_residual) / wrong_rowwise_norm
+        assert float(expected_terms_2) == pytest.approx(
+            terms_2_metrics["eta_terms_2"], rel=2.0e-15
+        )
+        assert abs(float(expected_terms_2) - float(wrong_terms_2)) > 1.0e-4
+    assert terms_2_metrics["eta_terms_2_denominator_formula"] == (
+        "||t_bottom||_2 + ||t_top||_2 + ||t_constraint||_2 + ||r_modal||_2"
+    )
+
+    # Deliberate floating-point order sensitivity is an observation, not an
+    # extra exact-equality gate: the independent Decimal sum identifies the
+    # exact value while the componentwise tolerance remains authoritative.
+    order_constraint = np.asarray([1.0e16 + 0.0j])
+    order_bottom = np.asarray([1.0 + 0.0j])
+    order_top = np.asarray([-1.0e16 + 0.0j])
+    production_order = order_constraint.copy()
+    production_order += order_bottom
+    production_order += order_top
+    alternate_order = order_constraint.copy()
+    alternate_order += order_top
+    alternate_order += order_bottom
+    assert production_order[0] == 0.0
+    assert alternate_order[0] == 1.0
+    exact_sum = _decimal_complex_sum(
+        _decimal_complex_sum(
+            _decimal_complex_pair(order_constraint[0]),
+            _decimal_complex_pair(order_bottom[0]),
+        ),
+        _decimal_complex_pair(order_top[0]),
+    )
+    assert exact_sum == (Decimal(1), Decimal(0))
+    order_metrics, _ = block_ldu._v13_original_modal_row_metrics(
+        np.asarray([0.0j]),
+        production_order,
+        order_bottom,
+        order_top,
+        order_constraint,
+    )
+    assert order_metrics["decomposition_exact"] is True
+    assert order_metrics["decomposition_passed"] is True
+
+    exact_zero_metrics, exact_zero_d = block_ldu._v13_original_modal_row_metrics(
+        np.zeros(1, dtype=np.complex128),
+        np.asarray([2.0**-52 + 0.0j]),
+        np.asarray([1.0 + 0.0j]),
+        np.zeros(1, dtype=np.complex128),
+        np.asarray([-1.0 + 2.0**-52 + 0.0j]),
+    )
+    assert exact_zero_d[0] == pytest.approx(2.0**-52)
+    assert exact_zero_metrics["rhs_exact_zero"] is True
+    assert exact_zero_metrics["legacy_rhs_relative_status"] == "not_defined"
+    assert exact_zero_metrics["status"] == "passed"
+    assert exact_zero_metrics["decomposition_passed"] is True
+
+    tiny_rhs = np.asarray([1.0e-300 + 0.0j], dtype=np.complex128)
+    tiny_w = np.asarray([np.nextafter(1.0e-300, np.inf) + 0.0j])
+    tiny_constraint = tiny_w.copy()
+    tiny_metrics, tiny_d = block_ldu._v13_original_modal_row_metrics(
+        tiny_rhs,
+        tiny_w,
+        np.zeros(1, dtype=np.complex128),
+        np.zeros(1, dtype=np.complex128),
+        tiny_constraint,
+    )
+    assert tiny_metrics["rhs_exact_zero"] is False
+    assert tiny_metrics["legacy_rhs_relative_status"] == "passed"
+    assert tiny_d[0] != 0.0
+    assert tiny_metrics["decomposition_passed"] is True
+
+    cancellation_bottom = np.asarray([1.0e6 + 0.0j])
+    cancellation_constraint = np.asarray([1.0e-7 + 0.0j])
+    cancellation_top = np.asarray([-1.0e6 + 0.0j])
+    cancellation_w = cancellation_constraint.copy()
+    cancellation_w += cancellation_bottom
+    cancellation_w += cancellation_top
+    cancellation_rhs = cancellation_w * (1.0 + 1.0e-4)
+    cancellation_metrics, _ = block_ldu._v13_original_modal_row_metrics(
+        cancellation_rhs,
+        cancellation_w,
+        cancellation_bottom,
+        cancellation_top,
+        cancellation_constraint,
+    )
+    assert cancellation_metrics["status"] == "passed"
+    assert cancellation_metrics["legacy_rhs_relative_status"] == "rejected"
+    assert cancellation_metrics["legacy_rhs_relative_error"] > 1.0e-10
+    assert cancellation_metrics["decomposition_passed"] is True
+
+    decomposition_inside_metrics, _ = block_ldu._v13_original_modal_row_metrics(
+        np.asarray([1.0e16 + 0.0j]),
+        np.asarray([1.0e16 + 0.0j]),
+        np.asarray([1.0e16 + 0.0j]),
+        np.asarray([1.0e6 + 0.0j]),
+        np.asarray([0.0j]),
+    )
+    assert decomposition_inside_metrics["status"] == "passed"
+    assert decomposition_inside_metrics["decomposition_exact"] is False
+    assert decomposition_inside_metrics["decomposition_passed"] is True
+    assert decomposition_inside_metrics["decomposition_eta_terms_inf"] <= 1.0e-10
+    assert decomposition_inside_metrics["decomposition_max_abs_difference"] == pytest.approx(
+        1.0e6
+    )
+
+    decomposition_outside_metrics, _ = block_ldu._v13_original_modal_row_metrics(
+        np.asarray([1.0e16 + 0.0j]),
+        np.asarray([1.0e16 + 0.0j]),
+        np.asarray([1.0e16 + 0.0j]),
+        np.asarray([4.0e6 + 0.0j]),
+        np.asarray([0.0j]),
+    )
+    assert decomposition_outside_metrics["status"] == "passed"
+    assert decomposition_outside_metrics["decomposition_exact"] is False
+    assert decomposition_outside_metrics["decomposition_passed"] is False
+    assert decomposition_outside_metrics["decomposition_eta_terms_inf"] > 1.0e-10
+    assert decomposition_outside_metrics[
+        "decomposition_max_abs_difference"
+    ] == pytest.approx(4.0e6)
+
+    nonfinite = np.asarray([complex(float("nan"), float("inf"))])
+    nonfinite_metrics, nonfinite_d = block_ldu._v13_original_modal_row_metrics(
+        np.zeros(1, dtype=np.complex128),
+        nonfinite,
+        np.zeros(1, dtype=np.complex128),
+        np.zeros(1, dtype=np.complex128),
+        np.zeros(1, dtype=np.complex128),
+    )
+    assert nonfinite_metrics["status"] == "rejected"
+    assert nonfinite_metrics["reason"] == "non_finite_component"
+    assert np.isnan(nonfinite_d.real[0]) or np.isinf(nonfinite_d.imag[0])
+
+    overflow_metrics, overflow_d = block_ldu._v13_original_modal_row_metrics(
+        np.asarray([-1.0e308 + 0.0j]),
+        np.asarray([1.0e308 + 0.0j]),
+        np.asarray([1.0e308 + 0.0j]),
+        np.zeros(1, dtype=np.complex128),
+        np.zeros(1, dtype=np.complex128),
+    )
+    assert overflow_metrics["status"] == "rejected"
+    assert overflow_metrics["reason"] == "unrepresentable_binary64_residual"
+    assert np.isinf(overflow_d.real[0])
+
+    shape_metrics, _ = block_ldu._v13_original_modal_row_metrics(
+        np.zeros(2, dtype=np.complex128),
+        np.zeros(1, dtype=np.complex128),
+        np.zeros(2, dtype=np.complex128),
+        np.zeros(2, dtype=np.complex128),
+        np.zeros(2, dtype=np.complex128),
+    )
+    assert shape_metrics["status"] == "rejected"
+    assert shape_metrics["reason"] == "shape_mismatch"
 
 
 @pytest.mark.skipif(
@@ -3521,8 +4056,11 @@ def test_v13_solve_entry_resumes_same_ksp_with_nonzero_x_and_total_limit(
             matrix.destroy()
 
 
-def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
+def _exercise_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
     monkeypatch,
+    tmp_path,
+    *,
+    inject_owner_writer_failure: bool = False,
 ) -> None:
     """Run the tiny V13 build, owner LU, full PC, and independent A modal row."""
 
@@ -3542,6 +4080,7 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
     side_actions = []
     system = context = None
     original_operator = source = target = None
+    original_operator_contexts: list[HybridBlockOperator] = []
     outer_workspace_rhs = outer_workspace_solution = None
 
     def dense_matrix(
@@ -3917,6 +4456,52 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
     def marker(name, detail):
         markers.append((name, dict(detail)))
 
+    from pathlib import Path
+
+    evidence_root_path = (
+        str(Path(tmp_path) / "v15-modal-evidence")
+        if comm.rank == 0
+        else None
+    )
+    evidence_root = Path(comm.bcast(evidence_root_path, root=0))
+    owner_writer_failure_armed = False
+    packet_manifest_sha256 = hashlib.sha256(
+        b"test350 synthetic packet identity; not a registered FE packet"
+    ).hexdigest()
+
+    def write_modal_snapshot(payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        nonlocal owner_writer_failure_armed
+        kind = payload.get("snapshot_kind")
+        if (
+            inject_owner_writer_failure
+            and comm.size == 2
+            and comm.rank == comm.size - 1
+            and owner_writer_failure_armed
+            and kind == "v15_terminal_numeric_reject"
+        ):
+            owner_writer_failure_armed = False
+            raise OSError("injected real tiny owner snapshot failure")
+        if kind == "v15_capture_failure_rank":
+            return exact_side._write_task041_v13_capture_failure_rank(
+                evidence_root, payload, rank=int(comm.rank)
+            )
+        if kind == "v15_terminal_rank_vectors":
+            return exact_side._write_task041_v13_terminal_rank_vectors(
+                evidence_root, payload, rank=int(comm.rank)
+            )
+        return exact_side._write_task041_v13_modal_evidence_snapshot(
+            evidence_root,
+            payload,
+            source_sha=supervisor_binding["source_sha"],
+            identity={
+                "test": "test350 synthetic original-A MatPython capture",
+                "invocation_id": supervisor_binding["invocation_id"],
+                "rank": int(comm.rank),
+            },
+            packet_manifest_sha256=packet_manifest_sha256,
+            consumer_binding={"scope": "synthetic_contract_only_not_FE"},
+        )
+
     bottom_D = _gather_matrix(bottom_operator)
     top_D = _gather_matrix(top_operator)
     bottom_B_dense = _gather_matrix(bottom_B)
@@ -3964,34 +4549,27 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
     )
 
     def original_operator_for(layout: HybridAugmentedLayout) -> PETSc.Mat:
-        """Assemble full original [D G; L C] on the actual augmented layout."""
+        """Use the production MatPython original-A context on tiny matrices."""
 
-        dense = np.zeros((layout.global_size, layout.global_size), dtype=np.complex128)
-        bottom_indices = layout.map_bottom(
-            np.arange(side_size, dtype=PETSc.IntType)
+        bottom_system = SimpleNamespace(
+            A=bottom_operator,
+            global_size=side_size,
+            local_mesh=SimpleNamespace(mesh=SimpleNamespace(comm=comm)),
         )
-        top_indices = layout.map_top(np.arange(side_size, dtype=PETSc.IntType))
-        modal_indices = layout.map_modal(
-            np.arange(internal_count, dtype=PETSc.IntType)
+        top_system = SimpleNamespace(
+            A=top_operator,
+            global_size=side_size,
+            local_mesh=SimpleNamespace(mesh=SimpleNamespace(comm=comm)),
         )
-        dense[np.ix_(bottom_indices, bottom_indices)] = bottom_D
-        dense[np.ix_(top_indices, top_indices)] = top_D
-        dense[np.ix_(bottom_indices, modal_indices)] = original_G_bottom
-        dense[np.ix_(top_indices, modal_indices)] = original_G_top
-        dense[np.ix_(modal_indices[:modal_per_side], bottom_indices)] = (
-            bottom_projection_dense
+        coupling.internal_unknown_count = internal_count
+        context = HybridBlockOperator(bottom_system, top_system, coupling)
+        original_operator_contexts.append(context)
+        matrix = PETSc.Mat().createPython(
+            ((layout.local_size, layout.global_size),) * 2,
+            context=context,
+            comm=comm,
         )
-        dense[np.ix_(modal_indices[modal_per_side:], top_indices)] = (
-            top_projection_dense
-        )
-        dense[np.ix_(modal_indices, modal_indices)] = original_C
-        row_template = layout.create_vector()
-        column_template = layout.create_vector()
-        try:
-            matrix = _matrix_from_dense(row_template, column_template, dense)
-        finally:
-            row_template.destroy()
-            column_template.destroy()
+        matrix.setUp()
         owned_matrices.append(matrix)
         return matrix
 
@@ -4060,6 +4638,7 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
             original_augmented_local_size=layout.local_size,
             fresh_authority_callback=authority,
             marker_callback=marker,
+            snapshot_callback=write_modal_snapshot,
         )
         assert (system.lu is not None) == (comm.rank == comm.size - 1)
         assert (system.pivots is not None) == (comm.rank == comm.size - 1)
@@ -4557,6 +5136,31 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
                 )
         source = layout.create_vector()
         target = layout.create_vector()
+        original_a_context = original_operator.getPythonContext()
+        capture_token = 987654321
+        capture_exception = None
+        try:
+            original_a_context.arm_v13_modal_row_capture(
+                capture_token,
+                matrix_handle=-1,
+                pc_source_handle=int(source.handle),
+                pc_target_handle=int(target.handle),
+                operator_input_handle=int(source.handle),
+                operator_output_handle=int(target.handle),
+            )
+            original_operator.mult(source, target)
+        except Exception as exc:  # noqa: BLE001 - assert one-shot cleanup on capture failure
+            capture_exception = exc
+        finally:
+            original_a_context.clear_v13_modal_row_capture(capture_token)
+        capture_failure_rows = comm.allgather(
+            None
+            if capture_exception is None
+            else f"{type(capture_exception).__name__}: {capture_exception}"
+        )
+        assert all(row is not None for row in capture_failure_rows)
+        assert original_a_context._v13_modal_row_capture_request is None
+        assert original_a_context._v13_modal_row_capture_result is None
         bottom_indices = layout.map_bottom(
             np.arange(side_size, dtype=PETSc.IntType)
         )
@@ -4584,11 +5188,37 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
         source_before = _gather_vector(source)
         context.apply(None, source, target)
         np.testing.assert_array_equal(_gather_vector(source), source_before)
+        assert original_a_context._v13_modal_row_capture_request is None
+        assert original_a_context._v13_modal_row_capture_result is None
+        ordinary_call_count = original_a_context._matmult_call_count
         assert_full_original_action(layout, original_operator, target)
+        assert original_a_context._matmult_call_count == ordinary_call_count + 1
+        assert original_a_context._v13_modal_row_capture_request is None
+        assert original_a_context._v13_modal_row_capture_result is None
         modal_system = context.action_modal_schur_system
         row_record = modal_system.diagnostics["last_original_modal_row"]
         assert row_record["status"] == "passed"
-        assert row_record["original_A_modal_row_matmult_count"] == 1
+        assert row_record["metrics"]["eta_terms_inf"] <= 1.0e-10
+        assert row_record["same_attempt_owner_solve"] is True
+        assert row_record["owner_lu_solve_record"]["status"] == "passed"
+        assert row_record["owner_lu_solve_record"]["input_unchanged"] is True
+        assert row_record["B_P4_counter_delta_by_rank"] is not None
+        assert len(row_record["B_P4_counter_delta_by_rank"]) == comm.size
+        for rank_delta in row_record["B_P4_counter_delta_by_rank"]:
+            for side in ("bottom", "top"):
+                side_delta = rank_delta["p4_and_B_by_side"][side]
+                assert side_delta["action_apply_count"] == 2
+                assert side_delta["p4_factor_count"] == 0
+        assert row_record["capture_identity"]["attempt_index"] == 1
+        first_call_ids = row_record["capture_identity"]["matmult_call_id_by_rank"]
+        assert len(first_call_ids) == comm.size
+        assert len(set(first_call_ids)) == 1
+        assert all(type(call_id) is int and call_id > 0 for call_id in first_call_ids)
+        first_arrays = modal_system.frozen_original_modal_row()["arrays"]
+        assert first_arrays is not None
+        assert first_arrays["d"].shape == (internal_count,)
+        assert first_arrays["t_bottom"].shape == (internal_count,)
+        assert first_arrays["t_top"].shape == (internal_count,)
         expected_build_and_first_pc_calls = internal_count + 7 + 2
         assert bottom_action.audit["apply_count"] == expected_build_and_first_pc_calls
         assert top_action.audit["apply_count"] == expected_build_and_first_pc_calls
@@ -4722,15 +5352,21 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
         source_before = _gather_vector(source)
         context.apply(None, source, target)
         zero_record = modal_system.diagnostics["last_original_modal_row"]
-        assert zero_record["rhs_exact_zero"] is True
-        assert zero_record["original_A_modal_row_matmult_count"] == 2
-        assert zero_record["original_A_modal_side_term_norm"] > 0.0
-        assert zero_record["original_A_modal_constraint_term_norm"] > 0.0
-        assert zero_record["scale"] == pytest.approx(
-            zero_record["original_A_modal_side_term_norm"]
-            + zero_record["original_A_modal_constraint_term_norm"]
+        assert zero_record["metrics"]["rhs_exact_zero"] is True
+        assert zero_record["metrics"]["legacy_rhs_relative_status"] == "not_defined"
+        zero_arrays = modal_system.frozen_original_modal_row()["arrays"]
+        assert zero_arrays is not None
+        assert np.array_equal(zero_arrays["r_modal"], np.zeros(internal_count))
+        side_norm = np.linalg.norm(
+            zero_arrays["t_bottom"] + zero_arrays["t_top"]
         )
-        assert zero_record["relative_backward_error"] <= 1.0e-10
+        constraint_norm = np.linalg.norm(zero_arrays["t_constraint"])
+        assert side_norm > 0.0
+        assert constraint_norm > 0.0
+        assert zero_record["metrics"]["legacy_exact_zero_terms_relative"] == pytest.approx(
+            np.linalg.norm(zero_arrays["d"]) / (side_norm + constraint_norm)
+        )
+        assert zero_record["metrics"]["eta_terms_inf"] <= 1.0e-10
         np.testing.assert_array_equal(_gather_vector(source), source_before)
         assert_full_original_action(layout, original_operator, target)
 
@@ -4741,11 +5377,15 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
         near_source_before = _gather_vector(source)
         context.apply(None, source, target)
         near_record = modal_system.diagnostics["last_original_modal_row"]
-        assert near_record["rhs_exact_zero"] is False
-        assert near_record["original_A_modal_row_matmult_count"] == 1
-        assert near_record["scale"] == pytest.approx(np.linalg.norm(near_rhs))
-        assert 0.0 < near_record["scale"] < 1.0e-10
-        assert near_record["relative_backward_error"] <= 1.0e-10
+        assert near_record["metrics"]["rhs_exact_zero"] is False
+        assert near_record["metrics"]["eta_terms_inf"] <= 1.0e-10
+        near_arrays = modal_system.frozen_original_modal_row()["arrays"]
+        assert near_arrays is not None
+        np.testing.assert_array_equal(near_arrays["r_modal"], near_rhs)
+        assert 0.0 < np.linalg.norm(near_arrays["r_modal"]) < 1.0e-10
+        assert near_record["capture_identity"]["attempt_index"] == near_record[
+            "attempt_index"
+        ]
         np.testing.assert_array_equal(_gather_vector(source), near_source_before)
         assert_full_original_action(layout, original_operator, target)
 
@@ -4827,6 +5467,7 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
         diagnostic_ksp = PETSc.KSP().create(comm)
         diagnostic_records: list[dict[str, Any]] = []
         active_diagnostic_record: dict[str, Any] | None = None
+        diagnostic_apply_count = 0
 
         def diagnostic_jsonable(value: Any) -> Any:
             if isinstance(value, Mapping):
@@ -4869,6 +5510,91 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
                     diagnostic_exception(capture_error)
                 )
 
+        def write_diagnostic_mini_record(
+            record: Mapping[str, Any],
+        ) -> dict[str, Any]:
+            """Owner-write one completed PC-apply record and broadcast its receipt."""
+
+            rank_rows = comm.gather(diagnostic_jsonable(record), root=0)
+            owner_result = None
+            if comm.rank == 0:
+                try:
+                    if not isinstance(rank_rows, list) or len(rank_rows) != comm.size:
+                        raise RuntimeError("mini-record gather omitted a rank")
+                    if [row.get("rank") for row in rank_rows] != list(range(comm.size)):
+                        raise RuntimeError("mini-record ranks are incomplete or unordered")
+                    path = evidence_root / "TASK041_V15_MODAL_ROW_PC_APPLY_MINI_RECORDS.json"
+                    document = (
+                        json.loads(path.read_text(encoding="utf-8"))
+                        if path.is_file()
+                        else {
+                            "schema": "task041.v15.test350_pc_apply_mini_records.v1",
+                            "rank_count": int(comm.size),
+                            "captures": [],
+                        }
+                    )
+                    if (
+                        not isinstance(document, dict)
+                        or document.get("schema")
+                        != "task041.v15.test350_pc_apply_mini_records.v1"
+                        or document.get("rank_count") != comm.size
+                        or not isinstance(document.get("captures"), list)
+                    ):
+                        raise ValueError("existing mini-record document has invalid identity")
+                    apply_index = int(record["diagnostic_apply_index"])
+                    if any(
+                        item.get("diagnostic_apply_index") == apply_index
+                        for item in document["captures"]
+                    ):
+                        raise FileExistsError(
+                            f"mini-record apply index {apply_index} already exists"
+                        )
+                    document["captures"].append(
+                        {
+                            "diagnostic_apply_index": apply_index,
+                            "rank_rows": rank_rows,
+                        }
+                    )
+                    temporary = path.with_name(path.name + ".tmp")
+                    if temporary.exists():
+                        raise FileExistsError(f"mini-record temporary path exists: {temporary}")
+                    encoded = (
+                        json.dumps(
+                            document,
+                            sort_keys=True,
+                            indent=2,
+                            allow_nan=False,
+                        )
+                        + "\n"
+                    ).encode("utf-8")
+                    with temporary.open("xb") as stream:
+                        stream.write(encoded)
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    os.replace(temporary, path)
+                    owner_result = {
+                        "status": "written",
+                        "path": str(path),
+                        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                        "diagnostic_apply_index": apply_index,
+                        "rank_rows": len(rank_rows),
+                    }
+                except Exception as exc:  # noqa: BLE001 - caller preserves any PC failure
+                    owner_result = {
+                        "status": "failed",
+                        "error": diagnostic_exception(exc),
+                    }
+            result = comm.bcast(owner_result, root=0)
+            if not isinstance(result, Mapping):
+                return {
+                    "status": "failed",
+                    "error": {
+                        "type": "ProtocolError",
+                        "message": "mini-record write receipt was not broadcast",
+                    },
+                }
+            return dict(result)
+
         def diagnostic_vector_snapshot(vector: PETSc.Vec) -> dict[str, Any]:
             first, last = (int(value) for value in vector.getOwnershipRange())
             values = np.asarray(
@@ -4895,6 +5621,229 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
                 "top": block_ldu._v13_side_operation_counts(context.top_action),
             }
 
+        def diagnostic_decimal_matrix_oracle(
+            pc_source: PETSc.Vec,
+            pc_target: PETSc.Vec,
+            capture: Mapping[str, Any],
+        ) -> dict[str, Any]:
+            """Recompute the real tiny original-A row from matrix inputs."""
+
+            source_values = _gather_vector(pc_source)
+            target_values = _gather_vector(pc_target)
+            modal_values = target_values[modal_indices]
+            bottom_values = target_values[bottom_indices]
+            top_values = target_values[top_indices]
+            exact_constraint = _decimal_complex_matvec(
+                original_C, modal_values
+            )
+            exact_bottom_product = _decimal_complex_matvec(
+                bottom_projection_dense, bottom_values
+            )
+            exact_top_product = _decimal_complex_matvec(
+                top_projection_dense, top_values
+            )
+            exact_bottom = [
+                *exact_bottom_product,
+                *((Decimal(0), Decimal(0)) for _ in range(modal_per_side)),
+            ]
+            exact_top = [
+                *((Decimal(0), Decimal(0)) for _ in range(modal_per_side)),
+                *exact_top_product,
+            ]
+            exact_r = [
+                _decimal_complex_pair(value)
+                for value in source_values[modal_indices]
+            ]
+            exact_w = [
+                _decimal_complex_sum(
+                    _decimal_complex_sum(constraint, bottom), top
+                )
+                for constraint, bottom, top in zip(
+                    exact_constraint, exact_bottom, exact_top, strict=True
+                )
+            ]
+            exact_d = [
+                _decimal_complex_difference(output, rhs)
+                for output, rhs in zip(exact_w, exact_r, strict=True)
+            ]
+            actual_by_name = {
+                name: np.asarray(capture[name], dtype=np.complex128)
+                for name in (
+                    "r_modal",
+                    "w_modal",
+                    "t_bottom",
+                    "t_top",
+                    "t_constraint",
+                )
+            }
+            exact_by_name = {
+                "r_modal": exact_r,
+                "w_modal": exact_w,
+                "t_bottom": exact_bottom,
+                "t_top": exact_top,
+                "t_constraint": exact_constraint,
+            }
+            product_bounds = {
+                "t_constraint": [
+                    sum(
+                        (
+                            _decimal_complex_modulus(
+                                _decimal_complex_pair(coefficient)
+                            )
+                            * _decimal_complex_modulus(
+                                _decimal_complex_pair(value)
+                            )
+                            for coefficient, value in zip(
+                                row, modal_values, strict=True
+                            )
+                        ),
+                        Decimal(0),
+                    )
+                    for row in original_C
+                ],
+                "t_bottom": [
+                    *[
+                        _decimal_sum(
+                            (
+                                _decimal_complex_modulus(
+                                    _decimal_complex_pair(coefficient)
+                                )
+                                * _decimal_complex_modulus(
+                                    _decimal_complex_pair(value)
+                                )
+                                for coefficient, value in zip(
+                                    row, bottom_values, strict=True
+                                )
+                            ),
+                        )
+                        for row in bottom_projection_dense
+                    ],
+                    *((Decimal(0)) for _ in range(modal_per_side)),
+                ],
+                "t_top": [
+                    *((Decimal(0)) for _ in range(modal_per_side)),
+                    *[
+                        _decimal_sum(
+                            (
+                                _decimal_complex_modulus(
+                                    _decimal_complex_pair(coefficient)
+                                )
+                                * _decimal_complex_modulus(
+                                    _decimal_complex_pair(value)
+                                )
+                                for coefficient, value in zip(
+                                    row, top_values, strict=True
+                                )
+                            ),
+                        )
+                        for row in top_projection_dense
+                    ],
+                ],
+            }
+            epsilon = Decimal.from_float(np.finfo(np.float64).eps)
+            actual_w = actual_by_name["w_modal"]
+            actual_r = actual_by_name["r_modal"]
+            component_rows: dict[str, Any] = {}
+            for name, exact_rows in exact_by_name.items():
+                actual_rows = actual_by_name[name]
+                if actual_rows.shape != (internal_count,):
+                    component_rows[name] = {"status": "shape_mismatch"}
+                    continue
+                errors = [
+                    _decimal_complex_modulus(
+                        _decimal_complex_difference(
+                            _decimal_complex_pair(actual), expected
+                        )
+                    )
+                    for actual, expected in zip(
+                        actual_rows, exact_rows, strict=True
+                    )
+                ]
+                if name == "r_modal":
+                    bounds = [Decimal(0)] * internal_count
+                elif name == "w_modal":
+                    bounds = [
+                        _decimal_sum(
+                            (
+                                product_bounds["t_constraint"][index],
+                                product_bounds["t_bottom"][index],
+                                product_bounds["t_top"][index],
+                            )
+                        )
+                        for index in range(internal_count)
+                    ]
+                else:
+                    bounds = product_bounds[name]
+                allowed = [Decimal(512) * epsilon * bound for bound in bounds]
+                component_rows[name] = {
+                    "status": (
+                        "passed"
+                        if all(error <= limit for error, limit in zip(errors, allowed, strict=True))
+                        else "failed"
+                    ),
+                    "max_abs_error_decimal": str(max(errors, default=Decimal(0))),
+                    "max_roundoff_bound_decimal": str(
+                        max(allowed, default=Decimal(0))
+                    ),
+                }
+            with localcontext() as decimal_context:
+                decimal_context.prec = 180
+                d_error = max(
+                    (
+                        _decimal_complex_modulus(
+                            _decimal_complex_difference(
+                                _decimal_complex_pair(actual), expected
+                            )
+                        )
+                        for actual, expected in zip(
+                            np.subtract(
+                                actual_by_name["w_modal"],
+                                actual_by_name["r_modal"],
+                            ),
+                            exact_d,
+                            strict=True,
+                        )
+                    ),
+                    default=Decimal(0),
+                )
+                d_bounds = [
+                    _decimal_sum(
+                        (
+                            product_bounds["t_constraint"][index],
+                            product_bounds["t_bottom"][index],
+                            product_bounds["t_top"][index],
+                            _decimal_complex_modulus(
+                                _decimal_complex_pair(w_value)
+                            ),
+                            _decimal_complex_modulus(
+                                _decimal_complex_pair(r_value)
+                            ),
+                        )
+                    )
+                    for index, (w_value, r_value) in enumerate(
+                        zip(actual_w, actual_r, strict=True)
+                    )
+                ]
+                d_bound = max(
+                    d_bounds,
+                    default=Decimal(0),
+                )
+            d_allowed = Decimal(512) * epsilon * d_bound
+            return {
+                "arithmetic": "Decimal.from_float matrix products and ordered sums",
+                "input_identity": capture.get("capture_identity"),
+                "source_modal_rhs_zero": bool(np.all(actual_r == 0.0)),
+                "components": component_rows,
+                "d_exact_decimal_max_abs_error": str(d_error),
+                "d_roundoff_bound_decimal": str(d_allowed),
+                "d_roundoff_bound_formula": (
+                    "512*eps*max_i(sum_j(|C_ij||a_j| + "
+                    "|Gbottom_ij||xbottom_j| + |Gtop_ij||xtop_j|) "
+                    "+ |r_i| + |w_i|)"
+                ),
+                "d_within_roundoff_bound": bool(d_error <= d_allowed),
+            }
+
         diagnostic_rhs_values = np.zeros(
             layout.global_size, dtype=np.complex128
         )
@@ -4914,8 +5863,55 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
         original_diagnostic_row_recorder = (
             modal_system.record_original_modal_row
         )
+        active_diagnostic_capture: Mapping[str, Any] | None = None
+
+        def diagnostic_action_identity(
+            capture_identity: Any,
+            binding_record: Mapping[str, Any] | None = None,
+        ) -> dict[str, Any]:
+            binding = (
+                binding_record
+                if isinstance(binding_record, Mapping)
+                else active_diagnostic_record
+            )
+            return diagnostic_jsonable(
+                {
+                    "capture_identity": capture_identity,
+                    "diagnostic_apply_index": (
+                        None
+                        if not isinstance(binding, Mapping)
+                        else binding.get("diagnostic_apply_index")
+                    ),
+                    "attempted_production_pc_apply_index": (
+                        None
+                        if not isinstance(binding, Mapping)
+                        else binding.get("attempted_production_pc_apply_index")
+                    ),
+                    "source_object_id": (
+                        None
+                        if not isinstance(binding, Mapping)
+                        else binding.get("source_object_id")
+                    ),
+                    "target_object_id": (
+                        None
+                        if not isinstance(binding, Mapping)
+                        else binding.get("target_object_id")
+                    ),
+                    "source_petsc_handle": (
+                        None
+                        if not isinstance(binding, Mapping)
+                        else binding.get("source_petsc_handle")
+                    ),
+                    "target_petsc_handle": (
+                        None
+                        if not isinstance(binding, Mapping)
+                        else binding.get("target_petsc_handle")
+                    ),
+                }
+            )
 
         def diagnostic_callback(*args: Any, **kwargs: Any) -> Any:
+            nonlocal active_diagnostic_capture
             try:
                 result = original_diagnostic_callback(*args, **kwargs)
             except Exception as exc:
@@ -4928,25 +5924,133 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
                     )
                 raise
             if active_diagnostic_record is not None:
+                try:
+                    owned_capture = dict(result)
+                    for name in (
+                        "r_modal",
+                        "w_modal",
+                        "t_bottom",
+                        "t_top",
+                        "t_constraint",
+                    ):
+                        owned_capture[name] = np.asarray(
+                            result[name], dtype=np.complex128
+                        ).copy()
+                    active_diagnostic_capture = owned_capture
+                    callback_action_identity = diagnostic_action_identity(
+                        owned_capture.get("capture_identity")
+                    )
+                    active_diagnostic_record[
+                        "callback_action_identity"
+                    ] = callback_action_identity
+                    active_diagnostic_record["callback_capture_attempt_index"] = (
+                        owned_capture.get("capture_identity", {}).get("attempt_index")
+                    )
+                    active_diagnostic_record.setdefault(
+                        "capture_timeline", []
+                    ).append(
+                        {
+                            "event": "callback_returned_arrays_copied",
+                            "diagnostic_apply_index": active_diagnostic_record.get(
+                                "diagnostic_apply_index"
+                            ),
+                            "attempted_production_pc_apply_index": (
+                                active_diagnostic_record.get(
+                                    "attempted_production_pc_apply_index"
+                                )
+                            ),
+                            "attempt_index": (
+                                callback_action_identity.get("capture_identity", {}).get(
+                                    "attempt_index"
+                                )
+                                if isinstance(
+                                    callback_action_identity.get("capture_identity"),
+                                    Mapping,
+                                )
+                                else None
+                            ),
+                            "action_identity": callback_action_identity,
+                        }
+                    )
+                except Exception as exc:  # noqa: BLE001 - observer must not alter the production gate
+                    active_diagnostic_capture = None
+                    copy_error = diagnostic_exception(exc)
+                    diagnostic_capture(
+                        active_diagnostic_record,
+                        "callback_owned_copy_error",
+                        lambda: copy_error,
+                    )
                 diagnostic_capture(
                     active_diagnostic_record,
                     "callback_result",
                     lambda: {
-                        "action_values_real_imag": result[0],
-                        "rhs_values_real_imag": result[1],
-                        "side_term_real_imag": result[2],
-                        "modal_term_real_imag": result[3],
-                        "original_A_matmult_count": result[4],
+                        "capture_identity": result.get("capture_identity"),
+                        "arrays_real_imag": {
+                            name: result.get(name)
+                            for name in (
+                                "r_modal",
+                                "w_modal",
+                                "t_bottom",
+                                "t_top",
+                                "t_constraint",
+                            )
+                        },
+                        "capture_timeline": list(
+                            active_diagnostic_record.get("capture_timeline", [])
+                        ),
                     },
                 )
+                if active_diagnostic_capture is not None:
+                    diagnostic_capture(
+                        active_diagnostic_record,
+                        "decimal_original_A_oracle",
+                        lambda: diagnostic_decimal_matrix_oracle(
+                            args[0], args[1], active_diagnostic_capture
+                        ),
+                    )
             return result
 
-        def diagnostic_row_recorder(record: Mapping[str, Any]) -> None:
+        def diagnostic_row_recorder(
+            record: Mapping[str, Any], arrays: Mapping[str, np.ndarray] | None = None
+        ) -> None:
+            frozen_before_commit = modal_system.frozen_original_modal_row()
+            frozen_record_before_commit = (
+                None
+                if not isinstance(frozen_before_commit, Mapping)
+                else frozen_before_commit.get("record")
+            )
+            frozen_arrays_before_commit = (
+                None
+                if not isinstance(frozen_before_commit, Mapping)
+                else frozen_before_commit.get("arrays")
+            )
+            previous_frozen_attempt_before_commit = (
+                frozen_record_before_commit.get("attempt_index")
+                if isinstance(frozen_record_before_commit, Mapping)
+                else None
+            )
+            if arrays is not None:
+                commit_arrays: Mapping[str, np.ndarray] | None = arrays
+                commit_arrays_source = "record_arrays_argument"
+            elif (
+                previous_frozen_attempt_before_commit == record.get("attempt_index")
+                and isinstance(frozen_arrays_before_commit, Mapping)
+            ):
+                commit_arrays = frozen_arrays_before_commit
+                commit_arrays_source = "prior_frozen_arrays_same_attempt"
+            else:
+                commit_arrays = None
+                commit_arrays_source = "unavailable"
             if active_diagnostic_record is not None:
                 diagnostic_capture(
                     active_diagnostic_record,
                     "original_modal_row_record",
                     lambda: dict(record),
+                )
+                diagnostic_capture(
+                    active_diagnostic_record,
+                    "original_modal_row_arrays_real_imag",
+                    lambda: {} if arrays is None else dict(arrays),
                 )
                 diagnostic_capture(
                     active_diagnostic_record,
@@ -4958,19 +6062,199 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
                     "side_operation_counts_at_row",
                     diagnostic_side_counts,
                 )
-            original_diagnostic_row_recorder(record)
+            original_diagnostic_row_recorder(record, arrays)
+            if active_diagnostic_record is not None:
+                capture = active_diagnostic_capture
+                current_attempt = record.get("attempt_index")
+                capture_identity = (
+                    None
+                    if not isinstance(capture, Mapping)
+                    else capture.get("capture_identity")
+                )
+                callback_attempt = (
+                    capture_identity.get("attempt_index")
+                    if isinstance(capture_identity, Mapping)
+                    else None
+                )
+                frozen = modal_system.frozen_original_modal_row()
+                frozen_record = (
+                    None
+                    if not isinstance(frozen, Mapping)
+                    else frozen.get("record")
+                )
+                frozen_arrays = (
+                    None
+                    if not isinstance(frozen, Mapping)
+                    else frozen.get("arrays")
+                )
+                frozen_attempt = (
+                    frozen_record.get("attempt_index")
+                    if isinstance(frozen_record, Mapping)
+                    else None
+                )
+                row_action_identity = diagnostic_action_identity(
+                    record.get("capture_identity")
+                )
+                frozen_action_identity = diagnostic_action_identity(
+                    None
+                    if not isinstance(frozen_record, Mapping)
+                    else frozen_record.get("capture_identity")
+                )
+                active_diagnostic_record.setdefault(
+                    "capture_timeline", []
+                ).append(
+                    {
+                        "event": "production_row_record_committed",
+                        "diagnostic_apply_index": active_diagnostic_record.get(
+                            "diagnostic_apply_index"
+                        ),
+                        "attempted_production_pc_apply_index": (
+                            active_diagnostic_record.get(
+                                "attempted_production_pc_apply_index"
+                            )
+                        ),
+                        "attempt_index": current_attempt,
+                        "action_identity": row_action_identity,
+                        "frozen_record_attempt_index_after_delegate": frozen_attempt,
+                    }
+                )
+                previous_attempt = active_diagnostic_record.get(
+                    "prior_committed_row_attempt_index_before_apply"
+                )
+                capture_arrays = (
+                    {}
+                    if not isinstance(capture, Mapping)
+                    else capture
+                )
+                actual_arrays = {} if commit_arrays is None else commit_arrays
+                stored_d = (
+                    frozen_arrays.get("d")
+                    if isinstance(frozen_arrays, Mapping)
+                    else None
+                )
+                actual_d = actual_arrays.get("d")
+                current_w = capture_arrays.get("w_modal")
+                current_r = capture_arrays.get("r_modal")
+                try:
+                    can_compare = all(
+                        isinstance(value, np.ndarray)
+                        for value in (actual_d, current_w, current_r)
+                    )
+                    current_expected_d = (
+                        np.subtract(current_w, current_r)
+                        if can_compare
+                        else None
+                    )
+                    binary64_matches = bool(
+                        can_compare
+                        and np.array_equal(actual_d, current_expected_d)
+                    )
+                    frozen_arrays_match = (
+                        None
+                        if stored_d is None
+                        else bool(np.array_equal(stored_d, actual_d))
+                    )
+                except Exception as compare_error:  # noqa: BLE001 - diagnostic result only
+                    can_compare = False
+                    binary64_matches = False
+                    frozen_arrays_match = False
+                    compare_error_record = diagnostic_exception(compare_error)
+                else:
+                    compare_error_record = None
+                callback_action_identity = active_diagnostic_record.get(
+                    "callback_action_identity"
+                )
+                identity_matches = bool(
+                    isinstance(capture_identity, Mapping)
+                    and isinstance(record.get("capture_identity"), Mapping)
+                    and isinstance(frozen_record, Mapping)
+                    and callback_attempt == current_attempt == frozen_attempt
+                    and record.get("capture_identity", {}).get("attempt_index")
+                    == callback_attempt
+                    and frozen_record.get("capture_identity", {}).get("attempt_index")
+                    == callback_attempt
+                    and row_action_identity == callback_action_identity
+                    and frozen_action_identity == callback_action_identity
+                )
+                prior_attempt_not_reused = (
+                    previous_attempt is None or previous_attempt != callback_attempt
+                )
+                check = {
+                    "status": (
+                        "passed"
+                        if can_compare
+                        and binary64_matches
+                        and frozen_arrays_match is not False
+                        and identity_matches
+                        and prior_attempt_not_reused
+                        else "failed"
+                    ),
+                    "diagnostic_apply_index": active_diagnostic_record.get(
+                        "diagnostic_apply_index"
+                    ),
+                    "attempted_production_pc_apply_index": (
+                        active_diagnostic_record.get(
+                            "attempted_production_pc_apply_index"
+                        )
+                    ),
+                    "callback_attempt_index": callback_attempt,
+                    "row_record_attempt_index": current_attempt,
+                    "attempt_index": current_attempt,
+                    "frozen_record_attempt_index_after_delegate": frozen_attempt,
+                    "prior_committed_row_attempt_index_before_apply": previous_attempt,
+                    "prior_attempt_was_not_used": prior_attempt_not_reused,
+                    "callback_row_frozen_identity_matches": identity_matches,
+                    "binary64_d_equals_w_minus_r": binary64_matches,
+                    "frozen_d_matches_checked_d": frozen_arrays_match,
+                    "d_source": commit_arrays_source,
+                    "same_attempt_d_source_index": current_attempt,
+                    "action_identity": callback_action_identity,
+                    "compared_only_after_production_record_delegate": True,
+                }
+                if compare_error_record is not None:
+                    check["comparison_error"] = compare_error_record
+                active_diagnostic_record.setdefault(
+                    "same_attempt_binary64_d_checks", []
+                ).append(check)
+                active_diagnostic_record.setdefault(
+                    "capture_timeline", []
+                ).append(
+                    {
+                        "event": "same_attempt_d_checked_after_record_commit",
+                        "diagnostic_apply_index": active_diagnostic_record.get(
+                            "diagnostic_apply_index"
+                        ),
+                        "attempted_production_pc_apply_index": (
+                            active_diagnostic_record.get(
+                                "attempted_production_pc_apply_index"
+                            )
+                        ),
+                        "attempt_index": current_attempt,
+                        "action_identity": callback_action_identity,
+                        "status": check["status"],
+                    }
+                )
 
         def diagnostic_apply(
             pc: PETSc.PC | None,
             pc_source: PETSc.Vec,
             pc_target: PETSc.Vec,
         ) -> None:
-            nonlocal active_diagnostic_record
+            nonlocal active_diagnostic_capture, active_diagnostic_record
+            nonlocal diagnostic_apply_count
+            diagnostic_apply_count += 1
+            capture_this_attempt = diagnostic_apply_count <= 2
             source_handle = diagnostic_petsc_handle(pc_source)
             target_handle = diagnostic_petsc_handle(pc_target)
+            prior_frozen = modal_system.frozen_original_modal_row()
+            prior_record = (
+                None
+                if not isinstance(prior_frozen, Mapping)
+                else prior_frozen.get("record")
+            )
             record: dict[str, Any] = {
                 "rank": int(comm.rank),
-                "diagnostic_apply_index": len(diagnostic_records) + 1,
+                "diagnostic_apply_index": diagnostic_apply_count,
                 "production_pc_apply_count_before": int(context._pc_apply_count),
                 "attempted_production_pc_apply_index": int(
                     context._pc_apply_count + 1
@@ -4983,31 +6267,47 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
                     if source_handle is None or target_handle is None
                     else source_handle == target_handle
                 ),
+                "prior_committed_row_attempt_index_before_apply": (
+                    prior_record.get("attempt_index")
+                    if isinstance(prior_record, Mapping)
+                    else None
+                ),
+                "capture_timeline": [],
+                "same_attempt_binary64_d_checks": [],
             }
+            source_modal_local = np.asarray(
+                pc_source.getArray(readonly=True), dtype=np.complex128
+            )[layout.local_modal_slice]
+            record["pc_source_modal_local_size"] = int(source_modal_local.size)
+            record["pc_source_modal_exact_zero"] = bool(
+                np.all(source_modal_local == 0.0)
+            )
             record["source_petsc_handle"] = source_handle
             record["target_petsc_handle"] = target_handle
-            diagnostic_capture(
-                record,
-                "source_before",
-                lambda: diagnostic_vector_snapshot(pc_source),
-            )
-            diagnostic_capture(
-                record,
-                "target_before",
-                lambda: diagnostic_vector_snapshot(pc_target),
-            )
-            diagnostic_capture(
-                record,
-                "owner_schur_solve_audit_before",
-                lambda: modal_system.diagnostics.get("last_solve"),
-            )
-            diagnostic_capture(
-                record,
-                "side_operation_counts_before",
-                diagnostic_side_counts,
-            )
-            diagnostic_records.append(record)
-            active_diagnostic_record = record
+            if capture_this_attempt:
+                diagnostic_capture(
+                    record,
+                    "source_before",
+                    lambda: diagnostic_vector_snapshot(pc_source),
+                )
+                diagnostic_capture(
+                    record,
+                    "target_before",
+                    lambda: diagnostic_vector_snapshot(pc_target),
+                )
+                diagnostic_capture(
+                    record,
+                    "owner_schur_solve_audit_before",
+                    lambda: modal_system.diagnostics.get("last_solve"),
+                )
+                diagnostic_capture(
+                    record,
+                    "side_operation_counts_before",
+                    diagnostic_side_counts,
+                )
+                diagnostic_records.append(record)
+            active_diagnostic_capture = None
+            active_diagnostic_record = record if capture_this_attempt else None
             try:
                 original_diagnostic_apply(pc, pc_source, pc_target)
             except Exception as exc:
@@ -5019,44 +6319,78 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
                 )
                 raise
             finally:
-                diagnostic_capture(
-                    record,
-                    "source_after",
-                    lambda: diagnostic_vector_snapshot(pc_source),
-                )
-                diagnostic_capture(
-                    record,
-                    "target_after",
-                    lambda: diagnostic_vector_snapshot(pc_target),
-                )
-                diagnostic_capture(
-                    record,
-                    "production_pc_apply_count_after",
-                    lambda: int(context._pc_apply_count),
-                )
-                diagnostic_capture(
-                    record,
-                    "owner_schur_solve_audit_after",
-                    lambda: modal_system.diagnostics.get("last_solve"),
-                )
-                diagnostic_capture(
-                    record,
-                    "side_operation_counts_after",
-                    diagnostic_side_counts,
-                )
+                if capture_this_attempt:
+                    diagnostic_capture(
+                        record,
+                        "source_after",
+                        lambda: diagnostic_vector_snapshot(pc_source),
+                    )
+                    diagnostic_capture(
+                        record,
+                        "target_after",
+                        lambda: diagnostic_vector_snapshot(pc_target),
+                    )
+                    diagnostic_capture(
+                        record,
+                        "production_pc_apply_count_after",
+                        lambda: int(context._pc_apply_count),
+                    )
+                    diagnostic_capture(
+                        record,
+                        "owner_schur_solve_audit_after",
+                        lambda: modal_system.diagnostics.get("last_solve"),
+                    )
+                    diagnostic_capture(
+                        record,
+                        "side_operation_counts_after",
+                        diagnostic_side_counts,
+                    )
+                    if record.get("original_modal_row_record") is not None:
+                        try:
+                            receipt = write_diagnostic_mini_record(record)
+                            record["mini_snapshot_receipt"] = diagnostic_jsonable(
+                                receipt
+                            )
+                            if receipt.get("status") != "written":
+                                record.setdefault("capture_errors", []).append(
+                                    {
+                                        "type": "MiniRecordWriteFailed",
+                                        "message": str(receipt.get("error"))[:1000],
+                                        "secondary": True,
+                                    }
+                                )
+                        except BaseException as exc:  # noqa: BLE001 - keep apply failure primary
+                            record.setdefault("capture_errors", []).append(
+                                {
+                                    "type": type(exc).__name__,
+                                    "message": str(exc)[:1000],
+                                    "secondary": True,
+                                }
+                            )
                 active_diagnostic_record = None
 
-        diagnostic_solver_exception: dict[str, str] | None = None
+        diagnostic_ksp_reason: int | None = None
         diagnostic_ksp_iterations: int | None = None
-        diagnostic_ksp_iteration_error: dict[str, str] | None = None
+        diagnostic_rhs_norm: float | None = None
+        diagnostic_ax_minus_f_numerator: float | None = None
+        diagnostic_true_relative_residual: float | None = None
+        diagnostic_primary_exception: dict[str, str] | None = None
+        diagnostic_write_result: dict[str, Any] | None = None
+        diagnostic_evidence_written = False
+        diagnostic_rhs_before = diagnostic_initial_rhs.copy()
+        diagnostic_residual = diagnostic_rhs.duplicate()
         try:
             diagnostic_ksp.setOperators(original_operator)
             diagnostic_ksp.setType(PETSc.KSP.Type.FGMRES)
-            diagnostic_ksp.setGMRESRestart(2)
+            diagnostic_ksp.setGMRESRestart(layout.global_size)
             diagnostic_ksp.setPCSide(PETSc.PC.Side.RIGHT)
             diagnostic_ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
             diagnostic_ksp.setInitialGuessNonzero(False)
-            diagnostic_ksp.setTolerances(rtol=0.0, atol=0.0, max_it=2)
+            diagnostic_ksp.setTolerances(
+                rtol=5.0e-9,
+                atol=0.0,
+                max_it=2 * layout.global_size,
+            )
             diagnostic_pc = diagnostic_ksp.getPC()
             diagnostic_pc.setType(PETSc.PC.Type.PYTHON)
             diagnostic_pc.setPythonContext(BorrowedV13BlockLduPc())
@@ -5074,101 +6408,490 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
                 )
                 diagnostic_ksp.setUp()
                 try:
-                    diagnostic_ksp.solve(
-                        diagnostic_rhs, diagnostic_solution
+                    diagnostic_ksp.solve(diagnostic_rhs, diagnostic_solution)
+                except BaseException as exc:
+                    diagnostic_primary_exception = diagnostic_exception(exc)
+                    raise
+            diagnostic_ksp_reason = int(diagnostic_ksp.getConvergedReason())
+            diagnostic_ksp_iterations = int(diagnostic_ksp.getIterationNumber())
+            original_operator.mult(diagnostic_solution, diagnostic_residual)
+            diagnostic_residual.axpy(
+                PETSc.ScalarType(-1.0), diagnostic_rhs
+            )
+            diagnostic_rhs_norm = float(diagnostic_rhs.norm())
+            diagnostic_ax_minus_f_numerator = float(diagnostic_residual.norm())
+            diagnostic_true_relative_residual = (
+                diagnostic_ax_minus_f_numerator / diagnostic_rhs_norm
+                if diagnostic_rhs_norm > 0.0
+                else None
+            )
+            diagnostic_rhs_after = _gather_vector(diagnostic_rhs)
+            for record in diagnostic_records:
+                row = record.get("original_modal_row_record")
+                record["capture_timeline_validation"] = (
+                    _validate_v15_capture_timeline(
+                        record.get("capture_timeline"),
+                        record.get("same_attempt_binary64_d_checks"),
+                        diagnostic_apply_index=int(
+                            record.get("diagnostic_apply_index", -1)
+                        ),
+                        attempted_production_pc_apply_index=int(
+                            record.get("attempted_production_pc_apply_index", -1)
+                        ),
+                        expected_attempt_index=(
+                            int(row.get("attempt_index", -1))
+                            if isinstance(row, Mapping)
+                            else -1
+                        ),
+                        prior_attempt_index=record.get(
+                            "prior_committed_row_attempt_index_before_apply"
+                        ),
+                        expected_action_identity=(
+                            diagnostic_action_identity(
+                                row.get("capture_identity"), record
+                            )
+                            if isinstance(row, Mapping)
+                            else None
+                        ),
                     )
-                except Exception as exc:  # noqa: BLE001 - preserve solver refusal as data
-                    diagnostic_solver_exception = diagnostic_exception(exc)
+                )
+
+            diagnostic_evidence = {
+                "schema": "task041.v15.zero_modal_rhs_right_fgmres_capture.v1",
+                "classification": (
+                    "solve_exception_before_ax_minus_f"
+                    if diagnostic_primary_exception is not None
+                    else "right_fgmres_diagnostic_captured_before_assertions"
+                ),
+                "bound": "one fixed tiny RHS solve; max_it=2*layout.global_size",
+                "source_sha256": supervisor_binding["source_sha"],
+                "invocation_id": supervisor_binding["invocation_id"],
+                "modal_layout": {
+                    "modal_owner": int(layout.modal_owner),
+                    "modal_count": int(layout.modal_count),
+                    "global_size": int(layout.global_size),
+                    "modal_indices": [int(value) for value in modal_indices],
+                },
+                "initial_modal_rhs_exact_zero": bool(
+                    np.all(diagnostic_initial_modal == 0.0)
+                ),
+                "initial_side_rhs_norm": float(
+                    np.linalg.norm(diagnostic_initial_side)
+                ),
+                "captured_first_applications_only": 2,
+                "total_pc_application_count": diagnostic_apply_count,
+                "captured_pc_application_count": len(diagnostic_records),
+                "ksp_reason": diagnostic_ksp_reason,
+                "ksp_iterations": diagnostic_ksp_iterations,
+                "ax_minus_f_numerator_norm": diagnostic_ax_minus_f_numerator,
+                "rhs_denominator_norm": diagnostic_rhs_norm,
+                "ax_minus_f_relative_residual": diagnostic_true_relative_residual,
+                "rhs_unchanged_after_solve": bool(
+                    np.array_equal(diagnostic_rhs_after, diagnostic_rhs_before)
+                ),
+                "primary_solve_exception": diagnostic_primary_exception,
+                "captured_applications": diagnostic_records,
+            }
+            all_rank_diagnostics = comm.gather(
+                diagnostic_jsonable(diagnostic_evidence), root=0
+            )
+            diagnostic_write_result = None
+            if comm.rank == 0:
                 try:
-                    diagnostic_ksp_iterations = int(
-                        diagnostic_ksp.getIterationNumber()
+                    diagnostic_json_path = (
+                        evidence_root
+                        / "TASK041_V15_MODAL_ROW_ZERO_RHS_RIGHT_FGMRES.json"
                     )
-                except Exception as exc:  # noqa: BLE001 - diagnostic query only
-                    diagnostic_ksp_iteration_error = diagnostic_exception(exc)
+                    diagnostic_json_path.write_text(
+                        json.dumps(
+                            {
+                                "schema": "task041.v15.zero_modal_rhs_right_fgmres_capture.v1",
+                                "rank_rows": all_rank_diagnostics,
+                            },
+                            sort_keys=True,
+                            indent=2,
+                            allow_nan=False,
+                        )
+                        + "\n",
+                        encoding="utf-8",
+                    )
+                    diagnostic_write_result = {
+                        "status": "written",
+                        "path": str(diagnostic_json_path),
+                        "sha256": hashlib.sha256(
+                            diagnostic_json_path.read_bytes()
+                        ).hexdigest(),
+                    }
+                    diagnostic_evidence_written = True
+                except Exception as exc:  # noqa: BLE001 - the numerical/timeline result remains primary
+                    diagnostic_write_result = {
+                        "status": "failed",
+                        "error": diagnostic_exception(exc),
+                    }
+            diagnostic_write_result = comm.bcast(
+                diagnostic_write_result, root=0
+            )
+            diagnostic_evidence_written = bool(
+                isinstance(diagnostic_write_result, Mapping)
+                and diagnostic_write_result.get("status") == "written"
+            )
+
+            # Numeric and same-attempt identity results have been persisted before
+            # assertions; writer errors are checked only after those primary gates.
+            assert diagnostic_ksp_reason is not None and diagnostic_ksp_reason > 0
+            assert diagnostic_ksp_iterations is not None
+            assert diagnostic_ksp_iterations >= 2
+            assert diagnostic_apply_count >= 2
+            assert len(diagnostic_records) == 2
+            assert diagnostic_records[0]["pc_source_modal_exact_zero"] is True
+            assert diagnostic_records[0]["pc_source_modal_local_size"] == (
+                internal_count if comm.rank == layout.modal_owner else 0
+            )
+            assert diagnostic_rhs_norm is not None and diagnostic_rhs_norm > 0.0
+            assert diagnostic_ax_minus_f_numerator is not None
+            assert diagnostic_true_relative_residual is not None
+            assert np.isfinite(diagnostic_ax_minus_f_numerator)
+            assert np.isfinite(diagnostic_true_relative_residual)
+            assert diagnostic_true_relative_residual <= 5.0e-9
+            np.testing.assert_array_equal(diagnostic_rhs_after, diagnostic_rhs_before)
+            for record in diagnostic_records:
+                row = record.get("original_modal_row_record")
+                assert isinstance(row, Mapping)
+                assert row.get("status") == "passed"
+                assert row.get("capture_identity", {}).get("attempt_index") == (
+                    row.get("attempt_index")
+                )
+                assert row.get("same_attempt_owner_solve") is True
+                assert row.get("owner_lu_solve_record", {}).get("status") == "passed"
+                assert len(row.get("attempt_binding_by_rank", [])) == comm.size
+                assert row.get("successful_pc_apply_count_before") == (
+                    record["production_pc_apply_count_before"]
+                )
+                capture_identity = row["capture_identity"]
+                assert len(capture_identity["matmult_call_id_by_rank"]) == comm.size
+                assert len(set(capture_identity["matmult_call_id_by_rank"])) == 1
+                assert capture_identity["pc_source_unchanged_by_rank"] == [
+                    True
+                ] * comm.size
+                assert capture_identity[
+                    "pc_target_unchanged_by_original_A_by_rank"
+                ] == [True] * comm.size
+                assert row["outer_iteration"] == {
+                    "status": "not_available_inside_pc_apply",
+                    "value": None,
+                }
+                norms = row["metrics"].get("absolute_l2_norms")
+                log_norms = row["metrics"].get("absolute_l2_log_norms")
+                assert isinstance(norms, Mapping)
+                assert isinstance(log_norms, Mapping)
+                assert set(norms) == {
+                    "r_modal",
+                    "w_modal",
+                    "d_w_minus_r",
+                    "t_bottom",
+                    "t_top",
+                    "t_constraint",
+                }
+                assert all(
+                    value is None
+                    or (isinstance(value, (int, float)) and np.isfinite(value))
+                    for value in norms.values()
+                )
+                oracle = record.get("decimal_original_A_oracle")
+                assert isinstance(oracle, Mapping)
+                assert oracle.get("d_within_roundoff_bound") is True
+                assert all(
+                    row.get("status") == "passed"
+                    for row in oracle["components"].values()
+                )
+                assert record.get("capture_timeline_validation", {}).get(
+                    "status"
+                ) == "passed"
+                assert all(
+                    item.get("status") == "passed"
+                    and item.get("binary64_d_equals_w_minus_r") is True
+                    and item.get("prior_attempt_was_not_used") is True
+                    and item.get(
+                        "compared_only_after_production_record_delegate"
+                    ) is True
+                    for item in record.get("same_attempt_binary64_d_checks", [])
+                )
+            assert all(
+                record["production_pc_apply_count_after"]
+                == record["production_pc_apply_count_before"] + 1
+                for record in diagnostic_records
+            )
+            # Capture/snapshot writer failures are secondary to numeric and
+            # timeline failures and therefore asserted only now.
+            assert diagnostic_write_result is not None
+            assert diagnostic_write_result.get("status") == "written"
+            for record in diagnostic_records:
+                assert record.get("capture_errors", []) == []
+                assert record.get("mini_snapshot_receipt", {}).get(
+                    "status"
+                ) == "written"
         finally:
-            diagnostic_ksp.destroy()
-            diagnostic_rhs.destroy()
-            diagnostic_solution.destroy()
+            cleanup_primary = sys.exc_info()[1]
+            diagnostic_status_capture_errors: list[dict[str, str]] = []
+            if not diagnostic_evidence_written:
+                try:
+                    if diagnostic_ksp_reason is None:
+                        try:
+                            diagnostic_ksp_reason = int(
+                                diagnostic_ksp.getConvergedReason()
+                            )
+                        except BaseException as status_error:  # noqa: BLE001 - secondary evidence only
+                            diagnostic_status_capture_errors.append(
+                                diagnostic_exception(status_error)
+                            )
+                    if diagnostic_ksp_iterations is None:
+                        try:
+                            diagnostic_ksp_iterations = int(
+                                diagnostic_ksp.getIterationNumber()
+                            )
+                        except BaseException as status_error:  # noqa: BLE001 - secondary evidence only
+                            diagnostic_status_capture_errors.append(
+                                diagnostic_exception(status_error)
+                            )
+                    partial = {
+                        "schema": "task041.v15.zero_modal_rhs_right_fgmres_rank_partial.v1",
+                        "classification": "finally_capture_before_assertions_or_after_exception",
+                        "source_sha256": supervisor_binding["source_sha"],
+                        "invocation_id": supervisor_binding["invocation_id"],
+                        "rank": int(comm.rank),
+                        "ksp_reason": diagnostic_ksp_reason,
+                        "ksp_iterations": diagnostic_ksp_iterations,
+                        "ax_minus_f_numerator_norm": diagnostic_ax_minus_f_numerator,
+                        "rhs_denominator_norm": diagnostic_rhs_norm,
+                        "ax_minus_f_relative_residual": diagnostic_true_relative_residual,
+                        "primary_solve_exception": diagnostic_primary_exception,
+                        "status_capture_errors": diagnostic_status_capture_errors,
+                        "captured_applications": diagnostic_records,
+                    }
+                    partial_path = evidence_root / (
+                        "TASK041_V15_MODAL_ROW_ZERO_RHS_RIGHT_FGMRES_"
+                        f"rank-{comm.rank}.json"
+                    )
+                    temporary_path = partial_path.with_name(
+                        partial_path.name + ".tmp"
+                    )
+                    with temporary_path.open("xb") as stream:
+                        stream.write(
+                            (
+                                json.dumps(
+                                    diagnostic_jsonable(partial),
+                                    sort_keys=True,
+                                    indent=2,
+                                    allow_nan=False,
+                                )
+                                + "\n"
+                            ).encode("utf-8")
+                        )
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    os.replace(temporary_path, partial_path)
+                except BaseException as writer_error:  # noqa: BLE001 - cleanup/writer never masks primary
+                    if diagnostic_records:
+                        diagnostic_records[0].setdefault(
+                            "capture_errors", []
+                        ).append(
+                            {
+                                "type": type(writer_error).__name__,
+                                "message": str(writer_error)[:1000],
+                                "secondary": True,
+                            }
+                        )
+            cleanup_errors: list[BaseException] = []
+            for owned_object in (
+                diagnostic_ksp,
+                diagnostic_residual,
+                diagnostic_rhs,
+                diagnostic_solution,
+            ):
+                try:
+                    owned_object.destroy()
+                except BaseException as cleanup_error:  # noqa: BLE001 - preserve primary solve/assertion
+                    cleanup_errors.append(cleanup_error)
+            if cleanup_errors:
+                first_cleanup_error = cleanup_errors[0]
+                if cleanup_primary is not None:
+                    cleanup_primary.add_note(
+                        "diagnostic PETSc cleanup error preserved as secondary: "
+                        f"{type(first_cleanup_error).__name__}: "
+                        f"{str(first_cleanup_error)[:500]}"
+                    )
+                else:
+                    raise first_cleanup_error
 
-        diagnostic_status = (
-            "two_apply_capture_not_numerical_pass"
-            if len(diagnostic_records) >= 2
-            else "incomplete_fewer_than_two_applies_not_numerical_pass"
-        )
-        diagnostic_evidence = {
-            "classification": diagnostic_status,
-            "bound": "FGMRES max_it=2; no search or retry loop",
-            "initial_modal_rhs_exact_zero": bool(
-                np.all(diagnostic_initial_modal == 0.0)
-            ),
-            "initial_side_rhs_norm": float(
-                np.linalg.norm(diagnostic_initial_side)
-            ),
-            "maximum_pc_applications": 2,
-            "captured_pc_application_count": len(diagnostic_records),
-            "solver_exception": diagnostic_solver_exception,
-            "captured_applications": diagnostic_records,
-        }
-        if diagnostic_ksp_iterations is not None:
-            diagnostic_evidence["ksp_iterations"] = diagnostic_ksp_iterations
-        if diagnostic_ksp_iteration_error is not None:
-            diagnostic_evidence["ksp_iterations_unavailable"] = (
-                diagnostic_ksp_iteration_error
-            )
-        print(
-            "TASK041_V14_MODAL_ROW_DIAGNOSTIC="
-            + json.dumps(
-                diagnostic_jsonable(diagnostic_evidence),
-                sort_keys=True,
-                separators=(",", ":"),
-                allow_nan=False,
-            ),
-            flush=True,
-        )
+        def assert_collective_gate_reject(label: str) -> list[str]:
+            local_error = None
+            matmult_count_before = original_a_context._matmult_call_count
+            try:
+                context.apply(None, source, target)
+            except FloatingPointError as exc:
+                local_error = {
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                }
+            except Exception as exc:  # noqa: BLE001 - report wrong failure class collectively
+                local_error = {
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                }
+            rank_errors = comm.allgather(local_error)
+            assert all(isinstance(item, Mapping) for item in rank_errors), label
+            assert len({item["message"] for item in rank_errors}) == 1, label
+            assert all(item["type"] == "FloatingPointError" for item in rank_errors), label
+            assert "original global modal-row" in rank_errors[0]["message"], label
+            assert original_a_context._matmult_call_count == matmult_count_before + 1, label
+            return [str(item["message"]) for item in rank_errors]
 
-        # A wrong modal-block sign and a wrong side channel are both rejected
-        # by the independently assembled original-global-A row after a full PC.
-        if comm.rank == layout.modal_owner:
-            original_operator.setValue(
-                int(modal_indices[0]),
-                int(modal_indices[0]),
-                PETSc.ScalarType(-original_C[0, 0]),
-            )
-        original_operator.assemble()
-        with pytest.raises(FloatingPointError, match="original global modal-row"):
-            context.apply(None, source, target)
+        # Corrupt the real MatPython context's copied C input on every rank.
+        # HybridBlockOperator has no Mat.setValues callback; the actual
+        # original-A MatMult and its armed capture/check remain in the path.
+        original_a_context = original_operator.getPythonContext()
+        original_constraint = original_a_context.modal_constraint
+        saved_constraint_entry = complex(original_constraint[0, 0])
+        set_source(
+            np.asarray([0.2 - 0.15j] + [0.0j] * (internal_count - 1))
+        )
+        try:
+            original_constraint[0, 0] = -saved_constraint_entry
+            if inject_owner_writer_failure:
+                owner_writer_failure_armed = True
+            wrong_sign_errors = assert_collective_gate_reject("wrong-sign C input")
+        finally:
+            original_constraint[0, 0] = saved_constraint_entry
         wrong_sign_record = modal_system.diagnostics["last_original_modal_row"]
         assert wrong_sign_record["status"] == "rejected"
-        assert wrong_sign_record["relative_backward_error"] > 1.0e-10
-
-        if comm.rank == layout.modal_owner:
-            original_operator.setValue(
-                int(modal_indices[0]),
-                int(modal_indices[0]),
-                PETSc.ScalarType(original_C[0, 0]),
+        assert wrong_sign_record["metrics"]["eta_terms_inf"] > 1.0e-10
+        if inject_owner_writer_failure:
+            writer_failure_armed_by_rank = comm.allgather(
+                owner_writer_failure_armed
             )
-        original_operator.assemble()
-        context.apply(None, source, target)
-        assert modal_system.diagnostics["last_original_modal_row"]["status"] == "passed"
-        if comm.rank == layout.modal_owner:
-            original_operator.setValue(
-                int(modal_indices[0]),
-                int(bottom_indices[0]),
-                PETSc.ScalarType(0.0),
+            expected_writer_failure_armed_by_rank = [
+                rank != modal_system.modal_owner for rank in range(comm.size)
+            ]
+            assert all(type(value) is bool for value in writer_failure_armed_by_rank)
+            assert writer_failure_armed_by_rank == expected_writer_failure_armed_by_rank
+            assert all(error == wrong_sign_errors[0] for error in wrong_sign_errors)
+            assert "secondary evidence writer error(s)" in wrong_sign_errors[0]
+            assert "injected real tiny owner snapshot failure" in wrong_sign_errors[0]
+            assert wrong_sign_record["writer_errors"]
+            failure_system = modal_system
+            frozen_before_destroy = failure_system.frozen_original_modal_row()
+            context.destroy()
+            context = None
+            frozen_after_destroy = failure_system.frozen_original_modal_row()
+            assert failure_system._destroyed is True
+            assert frozen_before_destroy["record"] == frozen_after_destroy["record"]
+            assert frozen_after_destroy["record"]["status"] == "rejected"
+            assert frozen_after_destroy["record"]["attempt_index"] == (
+                wrong_sign_record["attempt_index"]
             )
-            original_operator.setValue(
-                int(modal_indices[0]),
-                int(top_indices[0]),
-                PETSc.ScalarType(bottom_projection_dense[0, 0] + 0.37j),
+            assert frozen_after_destroy["arrays"] is not None
+            np.testing.assert_array_equal(
+                frozen_after_destroy["arrays"]["d"],
+                frozen_before_destroy["arrays"]["d"],
             )
-        original_operator.assemble()
-        with pytest.raises(FloatingPointError, match="original global modal-row"):
+            assert frozen_after_destroy["record"]["writer_errors"]
+        else:
             context.apply(None, source, target)
-        wrong_channel_record = modal_system.diagnostics["last_original_modal_row"]
-        assert wrong_channel_record["status"] == "rejected"
-        assert wrong_channel_record["relative_backward_error"] > 1.0e-10
+            assert modal_system.diagnostics["last_original_modal_row"]["status"] == (
+                "passed"
+            )
 
-        context.destroy()
+            # A channel swap changes the actual fixture projection inputs
+            # consumed by the same production MatMult, then restores them.
+            bottom_projection_input = coupling.bottom.projection
+            top_projection_input = coupling.top.projection
+            set_source(np.zeros(internal_count, dtype=np.complex128))
+            try:
+                coupling.bottom.projection = top_projection_input
+                coupling.top.projection = bottom_projection_input
+                wrong_channel_errors = assert_collective_gate_reject(
+                    "swapped bottom/top projection inputs"
+                )
+            finally:
+                coupling.bottom.projection = bottom_projection_input
+                coupling.top.projection = top_projection_input
+            wrong_channel_record = modal_system.diagnostics[
+                "last_original_modal_row"
+            ]
+            assert wrong_channel_record["status"] == "rejected"
+            assert wrong_channel_record["metrics"]["eta_terms_inf"] > 1.0e-10
+            assert len(set(wrong_channel_errors)) == 1
+            context.apply(None, source, target)
+            assert modal_system.diagnostics["last_original_modal_row"]["status"] == (
+                "passed"
+            )
+
+            # Omission and contamination mutate an existing fixture projection
+            # entry collectively.  No MatPython setValue/setValues surrogate
+            # is involved; each case restores the exact coefficient.
+            nonzero_projection_entries = np.argwhere(
+                np.abs(bottom_projection_dense) > 0.0
+            )
+            selected_projection_entry = next(
+                (int(row), int(column))
+                for row, column in nonzero_projection_entries
+                if abs(side_bottom_rhs[int(column)]) > 0.0
+            )
+            projection_row, projection_column = selected_projection_entry
+            original_projection_value = complex(
+                bottom_projection_dense[projection_row, projection_column]
+            )
+            projection_row_start, projection_row_end = (
+                int(value)
+                for value in bottom_projection.getOwnershipRange()
+            )
+
+            def set_bottom_projection_entry(value: complex) -> None:
+                if projection_row_start <= projection_row < projection_row_end:
+                    bottom_projection.setValue(
+                        projection_row,
+                        projection_column,
+                        PETSc.ScalarType(value),
+                    )
+                bottom_projection.assemble()
+
+            set_source(np.zeros(internal_count, dtype=np.complex128))
+            try:
+                set_bottom_projection_entry(0.0)
+                omission_errors = assert_collective_gate_reject(
+                    "omitted bottom projection coefficient"
+                )
+            finally:
+                set_bottom_projection_entry(original_projection_value)
+            omission_record = modal_system.diagnostics["last_original_modal_row"]
+            assert omission_record["status"] == "rejected"
+            assert omission_record["metrics"]["eta_terms_inf"] > 1.0e-10
+            assert len(set(omission_errors)) == 1
+            context.apply(None, source, target)
+            assert modal_system.diagnostics["last_original_modal_row"]["status"] == (
+                "passed"
+            )
+
+            try:
+                set_bottom_projection_entry(original_projection_value + 0.37j)
+                contamination_errors = assert_collective_gate_reject(
+                    "contaminated bottom projection coefficient"
+                )
+            finally:
+                set_bottom_projection_entry(original_projection_value)
+            contamination_record = modal_system.diagnostics[
+                "last_original_modal_row"
+            ]
+            assert contamination_record["status"] == "rejected"
+            assert contamination_record["metrics"]["eta_terms_inf"] > 1.0e-10
+            assert len(set(contamination_errors)) == 1
+            context.apply(None, source, target)
+            assert modal_system.diagnostics["last_original_modal_row"]["status"] == (
+                "passed"
+            )
+
+        if context is not None:
+            context.destroy()
         context = None
         assert bottom_action.audit["destroyed"] is True
         assert top_action.audit["destroyed"] is True
@@ -5360,6 +7083,17 @@ def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
         # coarse matrices only after their borrowers are gone.
         for matrix in owned_matrices:
             matrix.destroy()
+        for original_context in original_operator_contexts:
+            if not original_context._destroyed:
+                original_context.destroy()
+
+
+def test_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
+    monkeypatch, tmp_path
+) -> None:
+    _exercise_v13_unmocked_builder_owner_lu_and_original_modal_row_math(
+        monkeypatch, tmp_path
+    )
 
 
 def test_fixed_physical_action_is_rejected_by_unselected_or_mixed_modal_method() -> None:

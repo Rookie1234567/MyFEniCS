@@ -5476,6 +5476,211 @@ def _write_task041_modal_inner_snapshot(
     }
 
 
+def _task041_v15_json_safe(value: Any) -> Any:
+    """Represent non-finite diagnostics explicitly without losing NPZ values."""
+
+    if isinstance(value, Mapping):
+        return {str(key): _task041_v15_json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_task041_v15_json_safe(item) for item in value]
+    if isinstance(value, np.ndarray):
+        return _task041_v15_json_safe(value.tolist())
+    if isinstance(value, np.generic):
+        return _task041_v15_json_safe(value.item())
+    if isinstance(value, complex):
+        return {
+            "real": _task041_v15_json_safe(float(value.real)),
+            "imag": _task041_v15_json_safe(float(value.imag)),
+        }
+    if isinstance(value, float) and not math.isfinite(value):
+        label = "NaN" if math.isnan(value) else ("+Inf" if value > 0 else "-Inf")
+        return {"value": None, "nonfinite": label}
+    if isinstance(value, Path):
+        return str(value)
+    return value
+
+
+def _task041_v15_write_json(path: Path, payload: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.tmp")
+    temporary.write_text(
+        json.dumps(_task041_v15_json_safe(payload), sort_keys=True, indent=2, allow_nan=False)
+        + "\n",
+        encoding="utf-8",
+    )
+    os.replace(temporary, path)
+
+
+def _task041_v15_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        while chunk := stream.read(1 << 20):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _write_task041_v13_modal_evidence_snapshot(
+    run_root: Path,
+    payload: Mapping[str, Any],
+    *,
+    source_sha: str,
+    identity: Mapping[str, Any],
+    packet_manifest_sha256: str,
+    consumer_binding: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Persist one bounded owner snapshot for the V15 original-row audit."""
+
+    kind = payload.get("snapshot_kind")
+    allowed = {
+        "v15_s_b_ready",
+        "v15_first_success_control",
+        "v15_first_legacy_fail_new_pass",
+        "v15_terminal_numeric_reject",
+        "v15_evidence_failure",
+        "v15_terminal_rank_vectors_index",
+    }
+    if kind not in allowed:
+        raise ValueError("unsupported V15 modal evidence snapshot kind")
+    directory = run_root / "numerical_output" / "v13_modal_row_evidence"
+    directory.mkdir(parents=True, exist_ok=True)
+    index_path = directory / "index.json"
+    if index_path.exists():
+        index = json.loads(index_path.read_text(encoding="utf-8"))
+        if not isinstance(index, dict) or index.get("schema") != (
+            "task041.v13.modal_row_evidence_index.v1"
+        ):
+            raise ValueError("V15 modal evidence index schema is invalid")
+    else:
+        index = {
+            "schema": "task041.v13.modal_row_evidence_index.v1",
+            "source_sha": source_sha,
+            "identity": _task041_v15_json_safe(dict(identity)),
+            "packet_manifest_sha256": packet_manifest_sha256,
+            "consumer_binding": _task041_v15_json_safe(consumer_binding),
+            "slot_contract": {
+                "v15_s_b_ready": "one current owner S_B matrix before first outer apply",
+                "v15_first_success_control": "first successful new row gate",
+                "v15_first_legacy_fail_new_pass": "first new-pass/legacy-fail row",
+                "v15_terminal_numeric_reject": "first terminal new row-gate rejection",
+                "v15_evidence_failure": "numeric row passed but mandatory provenance did not",
+                "v15_terminal_rank_vectors_index": "rank-local streamed terminal PC vectors",
+            },
+            "records": {},
+        }
+    if (
+        index.get("source_sha") != source_sha
+        or index.get("identity") != _task041_v15_json_safe(dict(identity))
+        or index.get("packet_manifest_sha256") != packet_manifest_sha256
+        or index.get("consumer_binding") != _task041_v15_json_safe(consumer_binding)
+        or not isinstance(index.get("records"), dict)
+        or kind in index["records"]
+        or len(index["records"]) >= len(allowed)
+    ):
+        raise ValueError("V15 modal evidence index identity/slot is already bound")
+
+    raw_arrays = payload.get("arrays")
+    if kind == "v15_terminal_rank_vectors_index":
+        arrays: dict[str, np.ndarray] = {}
+        rank_receipts = payload.get("rank_receipts")
+        if not isinstance(rank_receipts, list) or not rank_receipts:
+            raise ValueError("terminal rank-vector index needs all rank receipts")
+    else:
+        if not isinstance(raw_arrays, Mapping) or not raw_arrays:
+            raise ValueError("V15 modal evidence snapshot has no arrays")
+        arrays = {
+            str(name): np.asarray(value)
+            for name, value in raw_arrays.items()
+        }
+        if any(array.dtype.kind not in "fc" for array in arrays.values()):
+            raise TypeError("V15 modal evidence arrays must be floating or complex")
+        rank_receipts = None
+
+    filename = f"{kind}.npz"
+    final_path = directory / filename
+    temporary_path = directory / f".{filename}.tmp"
+    if final_path.exists() or temporary_path.exists():
+        raise FileExistsError(f"V15 modal evidence snapshot already exists: {final_path}")
+    with temporary_path.open("wb") as stream:
+        np.savez_compressed(stream, **arrays)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary_path, final_path)
+    record = {
+        "path": str(final_path.relative_to(run_root)),
+        "sha256": _task041_v15_sha256(final_path),
+        "array_shapes": {name: list(array.shape) for name, array in arrays.items()},
+        "array_dtypes": {name: str(array.dtype) for name, array in arrays.items()},
+        "metadata": _task041_v15_json_safe(
+            {key: value for key, value in payload.items() if key != "arrays"}
+        ),
+    }
+    if rank_receipts is not None:
+        record["rank_receipts"] = _task041_v15_json_safe(rank_receipts)
+    index["records"][kind] = record
+    _task041_v15_write_json(index_path, index)
+    return {
+        "status": "written",
+        "path": record["path"],
+        "sha256": record["sha256"],
+        "index_path": str(index_path.relative_to(run_root)),
+        "index_sha256": _task041_v15_sha256(index_path),
+    }
+
+
+def _write_task041_v13_terminal_rank_vectors(
+    run_root: Path,
+    payload: Mapping[str, Any],
+    *,
+    rank: int,
+) -> dict[str, Any]:
+    """Stream one rank's owned source/target arrays without gathering vectors."""
+
+    arrays = {
+        "source": np.asarray(payload.get("source")),
+        "target": np.asarray(payload.get("target")),
+    }
+    if any(array.dtype.kind not in "fc" or array.ndim != 1 for array in arrays.values()):
+        raise ValueError("terminal owned PC vectors must be one-dimensional numeric arrays")
+    directory = run_root / "numerical_output" / "v13_modal_row_evidence" / "terminal_vectors"
+    directory.mkdir(parents=True, exist_ok=True)
+    receipts: dict[str, Any] = {}
+    for name, array in arrays.items():
+        filename = f"{name}-rank-{rank:04d}.npy"
+        path = directory / filename
+        temporary = directory / f".{filename}.tmp"
+        if path.exists() or temporary.exists():
+            raise FileExistsError(f"terminal owned vector already exists: {path}")
+        with temporary.open("wb") as stream:
+            # np.save streams this rank-local view; it does not gather or retain
+            # other ranks' vectors.
+            np.save(stream, array, allow_pickle=False)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        receipts[name] = {
+            "path": str(path.relative_to(run_root)),
+            "sha256": _task041_v15_sha256(path),
+            "shape": list(array.shape),
+            "dtype": str(array.dtype),
+            "nbytes": int(array.nbytes),
+        }
+    return {"rank": int(rank), "status": "written", "vectors": receipts}
+
+
+def _write_task041_v13_capture_failure_rank(
+    run_root: Path,
+    payload: Mapping[str, Any],
+    *,
+    rank: int,
+) -> dict[str, Any]:
+    """Keep rank-local capture failures without requiring a new MPI collective."""
+
+    directory = run_root / "numerical_output" / "v13_modal_row_evidence" / "capture_failures"
+    path = directory / f"rank-{rank:04d}-attempt-{int(payload.get('attempt_index', 0)):08d}.json"
+    _task041_v15_write_json(path, payload)
+    return {"rank": int(rank), "path": str(path.relative_to(run_root)), "sha256": _task041_v15_sha256(path)}
+
+
 def _write_rank_pid_affinity(
     root: Path,
     *,
@@ -19812,6 +20017,28 @@ def run_task041_consumer(
             def modal_snapshot_callback(
                 payload: Mapping[str, Any],
             ) -> Mapping[str, Any]:
+                snapshot_kind = payload.get("snapshot_kind")
+                if snapshot_kind == "v15_terminal_rank_vectors":
+                    return _write_task041_v13_terminal_rank_vectors(
+                        root,
+                        payload,
+                        rank=int(comm.rank),
+                    )
+                if snapshot_kind == "v15_capture_failure_rank":
+                    return _write_task041_v13_capture_failure_rank(
+                        root,
+                        payload,
+                        rank=int(comm.rank),
+                    )
+                if str(snapshot_kind).startswith("v15_"):
+                    return _write_task041_v13_modal_evidence_snapshot(
+                        root,
+                        payload,
+                        source_sha=source_sha,
+                        identity=recomputed_identity,
+                        packet_manifest_sha256=packet_manifest_sha256,
+                        consumer_binding=consumer_binding,
+                    )
                 return _write_task041_modal_inner_snapshot(
                     root,
                     payload,
@@ -20362,6 +20589,14 @@ def run_task041_consumer(
                 *, preserve_primary_exception: bool = False
             ) -> dict[str, Any] | None:
                 nonlocal modal_trace_capture, modal_trace_capture_attempted
+                if (
+                    modal_solver_policy
+                    == "task041_v13_consistent_fixed_balh_modal_surrogate"
+                ):
+                    # V15 row evidence is frozen by the PC itself.  Do not
+                    # query a released V13 context for a secondary trace.
+                    modal_trace_capture_attempted = True
+                    return None
                 if not capture_modal_solve_trace or modal_trace_capture_attempted:
                     return modal_trace_capture
                 modal_trace_capture_attempted = True
@@ -20402,6 +20637,11 @@ def run_task041_consumer(
 
             def capture_modal_inner_snapshot() -> dict[str, Any] | None:
                 nonlocal modal_inner_snapshot_error
+                if (
+                    modal_solver_policy
+                    == "task041_v13_consistent_fixed_balh_modal_surrogate"
+                ):
+                    return None
                 if not (
                     use_anderson_modal_inner
                     or fixed_h6_modal_gmres_research
@@ -20682,62 +20922,66 @@ def run_task041_consumer(
                     modal_solver_policy
                     == "task041_v13_consistent_fixed_balh_modal_surrogate"
                 ):
+                    frozen_row = None
+                    if candidate_context is not None:
+                        try:
+                            modal_system = getattr(
+                                candidate_context, "action_modal_schur_system", None
+                            )
+                            frozen_reader = getattr(
+                                modal_system, "frozen_original_modal_row", None
+                            )
+                            if callable(frozen_reader):
+                                frozen_row = frozen_reader()
+                        except Exception as evidence_error:  # noqa: BLE001 - frozen record only
+                            frozen_row = {
+                                "record": None,
+                                "arrays": None,
+                                "read_error": {
+                                    "type": type(evidence_error).__name__,
+                                    "message": str(evidence_error)[:240],
+                                },
+                            }
                     v13_failure_record: dict[str, Any] = {
                         "schema": "task041.v13.modal_policy_failure_evidence.v1",
                         "requested_policy_id": modal_solver_policy,
-                        "actual_solver_inventory_key": None,
-                        "actual_solver_inventory": None,
-                        "candidate_inventory": None,
-                        "evidence_status": "candidate_context_unavailable",
+                        "frozen_original_modal_row": _task041_v15_json_safe(frozen_row),
+                        "evidence_status": (
+                            "frozen_original_modal_row_available"
+                            if isinstance(frozen_row, Mapping)
+                            and isinstance(frozen_row.get("record"), Mapping)
+                            else "frozen_original_modal_row_unavailable"
+                        ),
                     }
-                    if candidate_context is not None:
-                        try:
-                            context_inventory = candidate_context.inventory
-                            v13_actual = (
-                                context_inventory.get(
-                                    "task041_v13_consistent_modal_surrogate"
-                                )
-                                if isinstance(context_inventory, Mapping)
-                                else None
-                            )
-                            if isinstance(context_inventory, Mapping):
-                                v13_failure_record.update(
-                                    {
-                                        "actual_solver_inventory_key": (
-                                            "task041_v13_consistent_modal_surrogate"
-                                            if isinstance(v13_actual, Mapping)
-                                            else None
-                                        ),
-                                        "actual_solver_inventory": (
-                                            _jsonable(dict(v13_actual))
-                                            if isinstance(v13_actual, Mapping)
-                                            else None
-                                        ),
-                                        "candidate_inventory": _jsonable(
-                                            dict(context_inventory)
-                                        ),
-                                        "evidence_status": (
-                                            "actual_v13_solver_observed"
-                                            if isinstance(v13_actual, Mapping)
-                                            else "actual_v13_solver_missing"
-                                        ),
-                                    }
-                                )
-                        except Exception as evidence_error:  # noqa: BLE001 - keep the primary solver failure
-                            v13_failure_record["evidence_status"] = (
-                                "actual_evidence_read_failed"
-                            )
-                            v13_failure_record["evidence_error"] = {
-                                "type": type(evidence_error).__name__,
-                                "message": str(evidence_error)[:240],
-                            }
                     candidate_failure_evidence[
                         "v13_modal_solver_policy"
                     ] = v13_failure_record
                 if first_failure_stage is None:
                     first_failure_stage = current_stage
                     candidate_context = kwargs.get("context")
-                    if modal_solver_policy is not None and candidate_context is not None:
+                    if (
+                        modal_solver_policy
+                        == "task041_v13_consistent_fixed_balh_modal_surrogate"
+                    ):
+                        frozen_record = (
+                            candidate_failure_evidence.get(
+                                "v13_modal_solver_policy", {}
+                            ).get("frozen_original_modal_row", {})
+                        )
+                        frozen_record = (
+                            frozen_record.get("record")
+                            if isinstance(frozen_record, Mapping)
+                            else None
+                        )
+                        if isinstance(frozen_record, Mapping):
+                            if frozen_record.get("classification") == "numeric_gate_reject":
+                                first_failure_stage = "v13_original_modal_row_gate"
+                            elif frozen_record.get("status") in {
+                                "capture_failed",
+                                "evidence_failed",
+                            }:
+                                first_failure_stage = "v13_original_modal_row_evidence"
+                    elif modal_solver_policy is not None and candidate_context is not None:
                         try:
                             inventory = candidate_context.inventory
                             solver_candidates = (

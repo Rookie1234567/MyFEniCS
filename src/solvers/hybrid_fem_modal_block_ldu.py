@@ -67,6 +67,480 @@ _MODAL_SOLVE_TRACE_HISTORY_LIMIT = 4
 _MODAL_SOLVE_TRACE_JSON_LIMIT_BYTES = 640 * 1024
 
 
+def _v13_complex_magnitudes(values: np.ndarray) -> np.ndarray:
+    """Return complex moduli using hypot, avoiding square/sum overflow."""
+
+    array = np.asarray(values, dtype=np.complex128)
+    return np.hypot(array.real, array.imag)
+
+
+def _v13_log_l2_from_magnitudes(values: np.ndarray) -> float:
+    magnitudes = np.asarray(values, dtype=np.float64)
+    if magnitudes.size == 0:
+        return float("-inf")
+    if not np.isfinite(magnitudes).all():
+        return float("inf")
+    maximum = float(np.max(magnitudes))
+    if maximum == 0.0:
+        return float("-inf")
+    scaled = magnitudes / maximum
+    return math.log(maximum) + 0.5 * math.log(
+        math.fsum(float(value) * float(value) for value in scaled)
+    )
+
+
+def _v13_log_l2_from_logs(log_magnitudes: Sequence[float]) -> float:
+    finite = [float(value) for value in log_magnitudes if value != float("-inf")]
+    if not finite:
+        return float("-inf")
+    if any(not math.isfinite(value) for value in finite):
+        return float("inf")
+    maximum = max(finite)
+    return maximum + 0.5 * math.log(
+        math.fsum(math.exp(2.0 * (value - maximum)) for value in finite)
+    )
+
+
+def _v13_log_sum(log_values: Sequence[float]) -> float:
+    finite = [float(value) for value in log_values if value != float("-inf")]
+    if not finite:
+        return float("-inf")
+    if any(not math.isfinite(value) for value in finite):
+        return float("inf")
+    maximum = max(finite)
+    return maximum + math.log(
+        math.fsum(math.exp(value - maximum) for value in finite)
+    )
+
+
+def _v13_float_norm_from_log(log_norm: float) -> float | None:
+    """Return an absolute norm when representable; retain the log otherwise."""
+
+    value = float(log_norm)
+    if value == float("-inf"):
+        return 0.0
+    if not math.isfinite(value):
+        return None
+    if value > math.log(np.finfo(np.float64).max):
+        return None
+    if value < math.log(float(np.nextafter(0.0, 1.0))):
+        return None
+    return math.exp(value)
+
+
+def _v13_ratio_from_logs(numerator_log: float, denominator_log: float) -> float:
+    if numerator_log == float("-inf"):
+        return 0.0
+    if denominator_log == float("-inf"):
+        return float("inf")
+    if not math.isfinite(numerator_log) or not math.isfinite(denominator_log):
+        return float("inf")
+    difference = numerator_log - denominator_log
+    if difference > math.log(np.finfo(np.float64).max):
+        return float("inf")
+    if difference < math.log(float(np.nextafter(0.0, 1.0))):
+        return 0.0
+    return math.exp(difference)
+
+
+_V15_ORIGINAL_MODAL_ROW_CONTRACT = "task041.v15.original_modal_row.terms_backward.v1"
+_V13_ORIGINAL_MODAL_ROW_LEGACY_SCHEMA = "task041.v13.original_modal_row_capture.v1"
+
+
+def _v13_original_modal_row_metrics(
+    r_modal: np.ndarray,
+    w_modal: np.ndarray,
+    t_bottom: np.ndarray,
+    t_top: np.ndarray,
+    t_constraint: np.ndarray,
+    *,
+    tolerance: float = 1.0e-10,
+) -> tuple[dict[str, Any], np.ndarray]:
+    """Evaluate the V15 componentwise modal-row backward error.
+
+    The stored residual is computed first as the actual binary64 complex
+    subtraction ``w_modal - r_modal``.  Each row is then scaled independently
+    only for evaluating its ratio; the captured residual itself is never
+    replaced by a scaled surrogate.
+    """
+
+    names = ("r_modal", "w_modal", "t_bottom", "t_top", "t_constraint")
+    arrays = {
+        name: np.asarray(value, dtype=np.complex128)
+        for name, value in zip(
+            names,
+            (r_modal, w_modal, t_bottom, t_top, t_constraint),
+            strict=True,
+        )
+    }
+    shape = arrays["r_modal"].shape
+    shape_ok = (
+        len(shape) == 1
+        and shape[0] > 0
+        and all(value.shape == shape for value in arrays.values())
+    )
+    if not shape_ok:
+        return (
+            {
+                "contract_id": _V15_ORIGINAL_MODAL_ROW_CONTRACT,
+                "legacy_schema": _V13_ORIGINAL_MODAL_ROW_LEGACY_SCHEMA,
+                "status": "rejected",
+                "valid": False,
+                "reason": "shape_mismatch",
+                "shape_by_field": {name: list(value.shape) for name, value in arrays.items()},
+                "tolerance": float(tolerance),
+            },
+            np.empty((0,), dtype=np.complex128),
+        )
+
+    with np.errstate(over="ignore", invalid="ignore", under="ignore"):
+        residual = np.subtract(arrays["w_modal"], arrays["r_modal"])
+    finite_inputs = all(np.isfinite(value).all() for value in arrays.values())
+    residual_representable = bool(np.isfinite(residual).all())
+    exact_zero_rhs = bool(np.all(arrays["r_modal"] == 0.0))
+    base: dict[str, Any] = {
+        "contract_id": _V15_ORIGINAL_MODAL_ROW_CONTRACT,
+        "legacy_schema": _V13_ORIGINAL_MODAL_ROW_LEGACY_SCHEMA,
+        "equation": "w_modal - r_modal = t_bottom + t_top + t_constraint - r_modal",
+        "tolerance": float(tolerance),
+        "rhs_exact_zero": exact_zero_rhs,
+        "finite_inputs": bool(finite_inputs),
+        "residual_representable": residual_representable,
+        "residual": residual.copy(),
+        "absolute_l2_norms": None,
+        "absolute_l2_log_norms": None,
+        "absolute_l2_norms_scope": (
+            "unavailable until all captured binary64 components are finite"
+        ),
+    }
+    if not finite_inputs or not residual_representable:
+        base.update(
+            {
+                "status": "rejected",
+                "valid": False,
+                "reason": (
+                    "non_finite_component"
+                    if not finite_inputs
+                    else "unrepresentable_binary64_residual"
+                ),
+                "eta_terms_inf": None,
+                "eta_terms_2": None,
+                "eta_terms_2_denominator_log_norms": None,
+                "legacy_rhs_relative_error": None,
+                "legacy_rhs_relative_status": (
+                    "not_defined" if exact_zero_rhs else "unavailable"
+                ),
+                "decomposition_eta_terms_inf": None,
+                "decomposition_passed": False,
+                "decomposition_metrics_valid": False,
+                "decomposition_exact": None,
+            }
+        )
+        return base, residual.copy()
+
+    magnitudes = {
+        name: _v13_complex_magnitudes(value)
+        for name, value in arrays.items()
+    }
+    residual_magnitudes = _v13_complex_magnitudes(residual)
+    if not all(np.isfinite(value).all() for value in magnitudes.values()) or not np.isfinite(
+        residual_magnitudes
+    ).all():
+        base.update(
+            {
+                "status": "rejected",
+                "valid": False,
+                "reason": "non_finite_complex_modulus",
+                "eta_terms_inf": None,
+                "eta_terms_2": None,
+                "eta_terms_2_denominator_log_norms": None,
+                "legacy_rhs_relative_error": None,
+                "legacy_rhs_relative_status": (
+                    "not_defined" if exact_zero_rhs else "unavailable"
+                ),
+                "decomposition_eta_terms_inf": None,
+                "decomposition_passed": False,
+                "decomposition_metrics_valid": False,
+                "decomposition_exact": None,
+            }
+        )
+        return base, residual.copy()
+
+    row_scale = np.maximum.reduce(
+        [
+            residual_magnitudes,
+            magnitudes["t_bottom"],
+            magnitudes["t_top"],
+            magnitudes["t_constraint"],
+            magnitudes["r_modal"],
+        ]
+    )
+    denominator_scaled = np.zeros(shape, dtype=np.float64)
+    row_relative = np.zeros(shape, dtype=np.float64)
+    row_relative_log = np.full(shape, float("-inf"), dtype=np.float64)
+    row_denominator_log = np.full(shape, float("-inf"), dtype=np.float64)
+    invalid_rows: list[int] = []
+    for index, scale in enumerate(row_scale):
+        scale_value = float(scale)
+        numerator = float(residual_magnitudes[index])
+        if scale_value == 0.0:
+            if numerator != 0.0:
+                invalid_rows.append(index)
+                row_relative[index] = float("inf")
+            else:
+                row_relative[index] = 0.0
+            continue
+        scaled_sum = math.fsum(
+            float(magnitudes[name][index] / scale_value)
+            for name in ("t_bottom", "t_top", "t_constraint", "r_modal")
+        )
+        denominator_scaled[index] = scaled_sum
+        if scaled_sum == 0.0:
+            if numerator != 0.0:
+                invalid_rows.append(index)
+                row_relative[index] = float("inf")
+            else:
+                row_relative[index] = 0.0
+            continue
+        row_denominator_log[index] = math.log(scale_value) + math.log(scaled_sum)
+        if numerator > 0.0:
+            row_relative_log[index] = (
+                math.log(numerator) - row_denominator_log[index]
+            )
+        row_relative[index] = _v13_ratio_from_logs(
+            float(row_relative_log[index]), 0.0
+        )
+
+    maximum_row = (
+        int(np.argmax(row_relative)) if row_relative.size else None
+    )
+    eta_terms_inf = (
+        float(row_relative[maximum_row]) if maximum_row is not None else 0.0
+    )
+
+    residual_log_norm = _v13_log_l2_from_magnitudes(residual_magnitudes)
+    absolute_l2_log_norms = {
+        "r_modal": _v13_log_l2_from_magnitudes(magnitudes["r_modal"]),
+        "w_modal": _v13_log_l2_from_magnitudes(magnitudes["w_modal"]),
+        "d_w_minus_r": residual_log_norm,
+        "t_bottom": _v13_log_l2_from_magnitudes(magnitudes["t_bottom"]),
+        "t_top": _v13_log_l2_from_magnitudes(magnitudes["t_top"]),
+        "t_constraint": _v13_log_l2_from_magnitudes(
+            magnitudes["t_constraint"]
+        ),
+    }
+    absolute_l2_norms = {
+        name: _v13_float_norm_from_log(log_norm)
+        for name, log_norm in absolute_l2_log_norms.items()
+    }
+    # The contract denominator is the sum of each component vector's L2 norm.
+    # This is intentionally not the L2 norm of the rowwise component magnitudes
+    # added together; the Decimal oracle test distinguishes the two.
+    eta_terms_2_denominator_log_norms = {
+        name: _v13_log_l2_from_magnitudes(magnitudes[name])
+        for name in ("t_bottom", "t_top", "t_constraint", "r_modal")
+    }
+    eta_terms_2_denominator_log = _v13_log_sum(
+        list(eta_terms_2_denominator_log_norms.values())
+    )
+    eta_terms_2 = _v13_ratio_from_logs(
+        residual_log_norm, eta_terms_2_denominator_log
+    )
+    rhs_log_norm = _v13_log_l2_from_magnitudes(magnitudes["r_modal"])
+    legacy_rhs_relative_error = (
+        None
+        if exact_zero_rhs
+        else _v13_ratio_from_logs(residual_log_norm, rhs_log_norm)
+    )
+    legacy_side_norm_log = _v13_log_l2_from_logs(
+        [
+            _v13_log_l2_from_magnitudes(magnitudes[name])
+            for name in ("t_bottom", "t_top")
+        ]
+    )
+    legacy_zero_terms_norm_log = _v13_log_sum(
+        [
+            legacy_side_norm_log,
+            _v13_log_l2_from_magnitudes(magnitudes["t_constraint"]),
+        ]
+    )
+    legacy_rhs_relative_status = (
+        "not_defined"
+        if exact_zero_rhs
+        else (
+            "passed"
+            if legacy_rhs_relative_error is not None
+            and legacy_rhs_relative_error <= tolerance
+            else "rejected"
+        )
+    )
+    with np.errstate(over="ignore", invalid="ignore", under="ignore"):
+        decomposition = arrays["t_constraint"].copy()
+        decomposition += arrays["t_bottom"]
+        decomposition += arrays["t_top"]
+        decomposition_difference = np.subtract(arrays["w_modal"], decomposition)
+    decomposition_magnitudes = _v13_complex_magnitudes(decomposition_difference)
+    decomposition_finite = bool(
+        np.isfinite(decomposition_difference).all()
+        and np.isfinite(decomposition_magnitudes).all()
+    )
+    decomposition_exact = bool(
+        decomposition_finite
+        and np.array_equal(
+            decomposition_difference, np.zeros_like(decomposition_difference)
+        )
+    )
+    decomposition_row_relative = np.zeros(shape, dtype=np.float64)
+    decomposition_row_relative_log = np.full(shape, float("-inf"), dtype=np.float64)
+    decomposition_invalid_rows: list[int] = []
+    if decomposition_finite:
+        for index, difference_magnitude in enumerate(decomposition_magnitudes):
+            denominator_log = float(row_denominator_log[index])
+            numerator = float(difference_magnitude)
+            if denominator_log == float("-inf"):
+                if numerator != 0.0:
+                    decomposition_invalid_rows.append(index)
+                    decomposition_row_relative[index] = float("inf")
+                else:
+                    decomposition_row_relative[index] = 0.0
+                continue
+            if numerator > 0.0:
+                decomposition_row_relative_log[index] = (
+                    math.log(numerator) - denominator_log
+                )
+            decomposition_row_relative[index] = _v13_ratio_from_logs(
+                float(decomposition_row_relative_log[index]), 0.0
+            )
+    decomposition_eta_terms_inf = (
+        float(np.max(decomposition_row_relative))
+        if decomposition_row_relative.size and decomposition_finite
+        else None
+    )
+    decomposition_metrics_valid = bool(
+        decomposition_finite
+        and not decomposition_invalid_rows
+        and decomposition_eta_terms_inf is not None
+        and math.isfinite(decomposition_eta_terms_inf)
+    )
+    decomposition_passed = bool(
+        decomposition_metrics_valid
+        and decomposition_eta_terms_inf is not None
+        and decomposition_eta_terms_inf <= tolerance
+    )
+    decomposition_max = (
+        float(np.max(decomposition_magnitudes))
+        if decomposition_difference.size and decomposition_finite
+        else (0.0 if decomposition_finite else None)
+    )
+    valid = bool(
+        finite_inputs
+        and residual_representable
+        and not invalid_rows
+        and np.isfinite(eta_terms_inf)
+        and np.isfinite(eta_terms_2)
+    )
+    passed = bool(valid and eta_terms_inf <= tolerance)
+    denominator_at_max = None
+    if maximum_row is not None and row_scale[maximum_row] > 0.0:
+        denominator_at_max = {
+            "scale": float(row_scale[maximum_row]),
+            "scaled_sum": float(denominator_scaled[maximum_row]),
+            "reconstructs_as": "scale * scaled_sum",
+        }
+    base.update(
+        {
+            "status": "passed" if passed else "rejected",
+            "valid": valid,
+            "reason": (
+                None
+                if valid
+                else (
+                    "zero_denominator_with_nonzero_residual"
+                    if invalid_rows
+                    else "non_finite_metric_or_decomposition"
+                )
+            ),
+            "eta_terms_inf": eta_terms_inf,
+            "eta_terms_2": eta_terms_2,
+            "absolute_l2_norms": absolute_l2_norms,
+            "absolute_l2_log_norms": absolute_l2_log_norms,
+            "absolute_l2_norms_scope": (
+                "binary64 captured arrays; null absolute value means outside "
+                "binary64 range; stable natural-log norm remains available"
+            ),
+            "legacy_rhs_relative_error": legacy_rhs_relative_error,
+            "legacy_rhs_relative_status": legacy_rhs_relative_status,
+            "eta_terms_2_denominator_formula": (
+                "||t_bottom||_2 + ||t_top||_2 + ||t_constraint||_2 + ||r_modal||_2"
+            ),
+            "eta_terms_2_denominator_log_norms": eta_terms_2_denominator_log_norms,
+            "eta_terms_2_denominator_log": eta_terms_2_denominator_log,
+            "legacy_exact_zero_terms_relative": (
+                _v13_ratio_from_logs(
+                    residual_log_norm,
+                    legacy_zero_terms_norm_log,
+                )
+                if exact_zero_rhs and legacy_zero_terms_norm_log != float("-inf")
+                else None
+            ),
+            "max_row_index": maximum_row,
+            "max_row_relative_error": eta_terms_inf,
+            "max_row_numerator": (
+                None
+                if maximum_row is None
+                else float(residual_magnitudes[maximum_row])
+            ),
+            "max_row_denominator": denominator_at_max,
+            "row_scale": row_scale.copy(),
+            "row_denominator_scaled": denominator_scaled.copy(),
+            "row_relative_error": row_relative.copy(),
+            "row_relative_log_error": row_relative_log.copy(),
+            "zero_denominator_rows": invalid_rows,
+            "decomposition_error": decomposition_difference.copy(),
+            "decomposition_row_relative_error": decomposition_row_relative.copy(),
+            "decomposition_row_relative_log_error": decomposition_row_relative_log.copy(),
+            "decomposition_zero_denominator_rows": decomposition_invalid_rows,
+            "decomposition_eta_terms_inf": decomposition_eta_terms_inf,
+            "decomposition_passed": decomposition_passed,
+            "decomposition_metrics_valid": decomposition_metrics_valid,
+            "decomposition_max_abs_difference": decomposition_max,
+            "decomposition_exact": decomposition_exact,
+            "decomposition_exact_is_observation_only": True,
+            "decomposition_finite": decomposition_finite,
+            "decomposition_gate_tolerance": float(tolerance),
+            "decomposition_gate_applies_to": "decomposition_eta_terms_inf",
+            "decomposition_operation_order": "((t_constraint + t_bottom) + t_top)",
+            "tolerance_applied_to": "eta_terms_inf",
+        }
+    )
+    return base, residual.copy()
+
+
+class _V13OriginalCaptureFailure(RuntimeError):
+    """An original-A capture failure tagged with its collective safety point."""
+
+    def __init__(self, message: str, *, safe_to_collective: bool):
+        super().__init__(message)
+        self.safe_to_collective = bool(safe_to_collective)
+
+
+def _v13_json_safe(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {str(key): _v13_json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_v13_json_safe(item) for item in value]
+    if isinstance(value, np.ndarray):
+        return {"shape": list(value.shape), "dtype": str(value.dtype)}
+    if isinstance(value, np.generic):
+        return _v13_json_safe(value.item())
+    if isinstance(value, complex):
+        return {"real": _v13_json_safe(float(value.real)), "imag": _v13_json_safe(float(value.imag))}
+    if isinstance(value, float) and not math.isfinite(value):
+        label = "NaN" if math.isnan(value) else ("+Inf" if value > 0 else "-Inf")
+        return {"value": None, "nonfinite": label}
+    return value
+
+
 def _task041_v12_capacity_gate_has_byte_refusal(gate: Any) -> bool:
     """Accept only a fresh, complete, numerically evidenced W0.7 refusal."""
 
@@ -989,6 +1463,25 @@ def _action_apply_count(action: Any) -> int | None:
     return None
 
 
+def _v13_local_petsc_vec_hash(vector: PETSc.Vec) -> dict[str, Any]:
+    values = np.asarray(vector.getArray(readonly=True))
+    if not values.flags.c_contiguous:
+        raise ValueError("V13 evidence Vec array is not contiguous")
+    digest = hashlib.sha256()
+    view = memoryview(values).cast("B")
+    chunk_bytes = 1 << 20
+    for start in range(0, len(view), chunk_bytes):
+        digest.update(view[start : start + chunk_bytes])
+    return {
+        "handle": int(vector.handle),
+        "global_size": int(vector.getSize()),
+        "local_size": int(vector.getLocalSize()),
+        "ownership_range": [int(value) for value in vector.getOwnershipRange()],
+        "dtype": str(values.dtype),
+        "local_sha256": digest.hexdigest(),
+    }
+
+
 def _action_operator(action: Any) -> PETSc.Mat:
     operator = getattr(action, "operator", None)
     if operator is None:
@@ -1636,6 +2129,12 @@ class Task041V13ConsistentModalSurrogateSystem:
         self._owner_lu_solve_count = 0
         self._last_solve: dict[str, Any] | None = None
         self._last_original_modal_row: dict[str, Any] | None = None
+        self._last_original_modal_row_arrays: dict[str, np.ndarray] | None = None
+        self._last_original_modal_row_snapshot_receipt: dict[str, Any] | None = None
+        self._last_pc_apply_attempt: dict[str, Any] | None = None
+        self._last_pc_apply_success: dict[str, Any] | None = None
+        self._last_s_b_ready_snapshot: dict[str, Any] | None = None
+        self._original_modal_row_snapshot_slots: set[str] = set()
         self._side_operation_after = (
             None
             if self.side_operation_baseline is None
@@ -2096,10 +2595,102 @@ class Task041V13ConsistentModalSurrogateSystem:
             )
         return solution.copy()
 
-    def record_original_modal_row(self, record: Mapping[str, Any]) -> None:
-        if self._destroyed:
-            raise RuntimeError("V13 modal surrogate has been destroyed")
-        self._last_original_modal_row = dict(record)
+    def record_pc_apply_attempt(self, record: Mapping[str, Any]) -> None:
+        self._last_pc_apply_attempt = _v13_json_safe(dict(record))
+
+    def record_pc_apply_success(self, record: Mapping[str, Any]) -> None:
+        self._last_pc_apply_success = _v13_json_safe(dict(record))
+
+    def record_original_modal_row(
+        self,
+        record: Mapping[str, Any],
+        arrays: Mapping[str, np.ndarray] | None = None,
+    ) -> None:
+        """Freeze row scalars and owned arrays before any cleanup begins."""
+
+        self._last_original_modal_row = _v13_json_safe(dict(record))
+        self._last_original_modal_row_arrays = (
+            None
+            if arrays is None
+            else {
+                str(name): np.asarray(value).copy()
+                for name, value in arrays.items()
+            }
+        )
+
+    def persist_v13_evidence_snapshot(
+        self, payload: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        """Owner writes a bounded V13 snapshot; all ranks receive the same result."""
+
+        owner_result = None
+        if self.rank == self.modal_owner:
+            try:
+                if not callable(self._snapshot_callback):
+                    raise TypeError("V13 snapshot callback is not configured")
+                slot = payload.get("snapshot_kind")
+                if not isinstance(slot, str) or slot in self._original_modal_row_snapshot_slots:
+                    raise RuntimeError(f"V15 snapshot slot is unavailable: {slot!r}")
+                written = self._snapshot_callback(payload)
+                if not isinstance(written, Mapping):
+                    raise TypeError("V13 snapshot callback returned no receipt")
+                owner_result = {"error": None, "receipt": dict(written)}
+            except Exception as exc:  # noqa: BLE001 - report writer failure without replacing a row failure
+                owner_result = {
+                    "error": {
+                        "type": type(exc).__name__,
+                        "message": str(exc)[:240],
+                    },
+                    "receipt": None,
+                }
+        result = self.comm.bcast(owner_result, root=self.modal_owner)
+        if not isinstance(result, Mapping):
+            return {
+                "status": "failed",
+                "error": {"type": "ProtocolError", "message": "invalid snapshot broadcast"},
+                "receipt": None,
+            }
+        if result.get("error") is not None:
+            return {
+                "status": "failed",
+                "error": dict(result["error"]),
+                "receipt": None,
+            }
+        receipt = result.get("receipt")
+        if isinstance(receipt, Mapping):
+            slot = payload.get("snapshot_kind")
+            if isinstance(slot, str):
+                self._original_modal_row_snapshot_slots.add(slot)
+        return {
+            "status": "written" if isinstance(receipt, Mapping) else "failed",
+            "error": None if isinstance(receipt, Mapping) else {
+                "type": "ProtocolError",
+                "message": "snapshot receipt is missing",
+            },
+            "receipt": None if not isinstance(receipt, Mapping) else dict(receipt),
+        }
+
+    def frozen_original_modal_row(self) -> dict[str, Any] | None:
+        """Read only the pre-destroy scalar and array copies, never live getters."""
+
+        if self._last_original_modal_row is None:
+            return None
+        return {
+            "record": dict(self._last_original_modal_row),
+            "arrays": (
+                None
+                if self._last_original_modal_row_arrays is None
+                else {
+                    name: value.copy()
+                    for name, value in self._last_original_modal_row_arrays.items()
+                }
+            ),
+            "snapshot_receipt": (
+                None
+                if self._last_original_modal_row_snapshot_receipt is None
+                else dict(self._last_original_modal_row_snapshot_receipt)
+            ),
+        }
 
     def record_side_operation_counts(
         self, counts: Mapping[str, Mapping[str, int]]
@@ -2249,6 +2840,16 @@ class Task041V13ConsistentModalSurrogateSystem:
             "actual_action_work": self._actual_action_work_diagnostics(),
             "owner_lu_solve_count": self._owner_lu_solve_count,
             "solve_count": self._solve_count,
+            "last_pc_apply_attempt": (
+                None
+                if self._last_pc_apply_attempt is None
+                else dict(self._last_pc_apply_attempt)
+            ),
+            "last_pc_apply_success": (
+                None
+                if self._last_pc_apply_success is None
+                else dict(self._last_pc_apply_success)
+            ),
             "last_solve": (
                 None if self._last_solve is None else dict(self._last_solve)
             ),
@@ -2256,6 +2857,11 @@ class Task041V13ConsistentModalSurrogateSystem:
                 None
                 if self._last_original_modal_row is None
                 else dict(self._last_original_modal_row)
+            ),
+            "last_original_modal_row_snapshot_receipt": (
+                None
+                if self._last_original_modal_row_snapshot_receipt is None
+                else dict(self._last_original_modal_row_snapshot_receipt)
             ),
             "borrowed_action_identity": {
                 "bottom_id": id(self.bottom_action),
@@ -10396,8 +11002,6 @@ class HybridBlockLduPreconditioner:
         self._destroyed = False
         self._v13_original_operator = None
         self._v13_original_operator_action = None
-        self._v13_original_operator_side_only = None
-        self._v13_original_operator_modal_only = None
         self._v13_original_modal_row_callback = None
         self.mode_count = int(coupling.mode_count_per_direction)
         self._bottom_rhs = bottom_system.A.createVecRight()
@@ -10424,8 +11028,10 @@ class HybridBlockLduPreconditioner:
         self._top_negative_target = coupling.top.negative_traction.createVecLeft()
         self._modal_rhs = np.empty(2 * self.mode_count, dtype=np.complex128)
         self._modal_solution = np.empty_like(self._modal_rhs)
+        self._pc_apply_attempt_count = 0
         self._pc_apply_count = 0
         self._pc_apply_seconds = 0.0
+        self._current_pc_apply_evidence: dict[str, Any] | None = None
         self._check_layouts()
 
     @property
@@ -10512,6 +11118,7 @@ class HybridBlockLduPreconditioner:
             "bottom_action_apply_count": int(bottom.get("apply_count", 0)),
             "top_action_apply_count": int(top.get("apply_count", 0)),
             "pc_apply_count": int(self._pc_apply_count),
+            "pc_apply_attempt_count": int(self._pc_apply_attempt_count),
             "pc_apply_seconds": float(self._pc_apply_seconds),
             "borrowed_side_actions": True,
             "modal_block_name": (
@@ -10934,16 +11541,7 @@ class HybridBlockLduPreconditioner:
 
     def set_v13_original_modal_row_callback(
         self,
-        callback: Callable[
-            [PETSc.Vec, PETSc.Vec],
-            tuple[
-                np.ndarray,
-                np.ndarray,
-                np.ndarray | None,
-                np.ndarray | None,
-                int,
-            ],
-        ],
+        callback: Callable[[PETSc.Vec, PETSc.Vec, int], Mapping[str, Any]],
         *,
         operator_identity: str,
     ) -> None:
@@ -10990,26 +11588,29 @@ class HybridBlockLduPreconditioner:
                 + "; ".join(failures)
             )
         original_action = operator.createVecLeft()
-        side_only = operator.createVecRight()
-        modal_only = operator.createVecRight()
         expected_range = (
             int(self.layout.combined_offsets[comm.rank]),
             int(self.layout.combined_offsets[comm.rank] + self.layout.local_size),
         )
         vector_errors = []
-        for label, vector in (
-            ("original action", original_action),
-            ("side-only input", side_only),
-            ("modal-only input", modal_only),
+        actual_range = tuple(int(value) for value in original_action.getOwnershipRange())
+        if (
+            int(original_action.getSize()) != self.layout.global_size
+            or actual_range != expected_range
         ):
-            actual_range = tuple(int(value) for value in vector.getOwnershipRange())
-            if (
-                int(vector.getSize()) != self.layout.global_size
-                or actual_range != expected_range
-            ):
+            vector_errors.append(
+                f"original action layout {actual_range}/{original_action.getSize()} "
+                f"does not match {expected_range}/{self.layout.global_size}"
+            )
+        original_context = operator.getPythonContext()
+        for method_name in (
+            "arm_v13_modal_row_capture",
+            "consume_v13_modal_row_capture",
+            "clear_v13_modal_row_capture",
+        ):
+            if not callable(getattr(original_context, method_name, None)):
                 vector_errors.append(
-                    f"{label} layout {actual_range}/{vector.getSize()} "
-                    f"does not match {expected_range}/{self.layout.global_size}"
+                    f"original A MatPython context lacks {method_name}"
                 )
         layout_errors = comm.allgather(vector_errors)
         layout_failures = [
@@ -11018,115 +11619,474 @@ class HybridBlockLduPreconditioner:
             for error in errors
         ]
         if layout_failures:
-            for vector in (original_action, side_only, modal_only):
-                vector.destroy()
+            original_action.destroy()
             raise ValueError(
-                "V13 original operator vector layout rejected; "
+                "V13 original operator capture binding rejected; "
                 + "; ".join(layout_failures)
             )
         self._v13_original_operator = operator
         self._v13_original_operator_action = original_action
-        self._v13_original_operator_side_only = side_only
-        self._v13_original_operator_modal_only = modal_only
         operator_identity = str(int(operator.handle))
+        context_identity = id(original_context)
+        local_sizes_by_rank = [
+            int(self.layout.bottom_local_sizes[rank])
+            + int(self.layout.top_local_sizes[rank])
+            + (int(self.layout.modal_count) if rank == self.layout.modal_owner else 0)
+            for rank in range(comm.size)
+        ]
+        layout_identity = {
+            "global_size": int(self.layout.global_size),
+            "local_size_by_rank": local_sizes_by_rank,
+            "modal_global_indices": [
+                int(value)
+                for value in self.layout.map_modal(
+                    np.arange(self.layout.modal_count, dtype=PETSc.IntType)
+                )
+            ],
+            "combined_offsets": [int(value) for value in self.layout.combined_offsets],
+            "modal_owner": int(self.layout.modal_owner),
+            "modal_count": int(self.layout.modal_count),
+            "local_modal_range_by_rank": [
+                [
+                    int(self.layout.bottom_local_sizes[rank])
+                    + int(self.layout.top_local_sizes[rank]),
+                    int(self.layout.bottom_local_sizes[rank])
+                    + int(self.layout.top_local_sizes[rank])
+                    + (int(self.layout.modal_count) if rank == self.layout.modal_owner else 0),
+                ]
+                for rank in range(comm.size)
+            ],
+        }
+        layout_identity_sha256 = hashlib.sha256(
+            json.dumps(
+                layout_identity, sort_keys=True, separators=(",", ":")
+            ).encode("utf-8")
+        ).hexdigest()
 
         def original_modal_row(
-            source: PETSc.Vec, target: PETSc.Vec
-        ) -> tuple[
-            np.ndarray,
-            np.ndarray,
-            np.ndarray | None,
-            np.ndarray | None,
-            int,
-        ]:
-            local_values = None
-            if comm.rank == self.layout.modal_owner:
-                source_local = np.asarray(
-                    source.getArray(readonly=True), dtype=np.complex128
+            source: PETSc.Vec, target: PETSc.Vec, attempt_index: int
+        ) -> Mapping[str, Any]:
+            arm_error = None
+            source_before = target_before = None
+            try:
+                source_before = _v13_local_petsc_vec_hash(source)
+                target_before = _v13_local_petsc_vec_hash(target)
+                if source is target or int(source.handle) == int(target.handle):
+                    raise ValueError("V13 PC source and output Vecs alias")
+                original_context.arm_v13_modal_row_capture(
+                    int(attempt_index),
+                    matrix_handle=int(operator.handle),
+                    pc_source_handle=int(source.handle),
+                    pc_target_handle=int(target.handle),
+                    operator_input_handle=int(target.handle),
+                    operator_output_handle=int(original_action.handle),
                 )
-                rhs_values = source_local[self.layout.local_modal_slice].copy()
-                local_values = rhs_values
-            rhs_values = np.asarray(
-                comm.bcast(local_values, root=self.layout.modal_owner),
+            except Exception as exc:  # noqa: BLE001 - fail collectively before original-A MatMult
+                arm_error = f"{type(exc).__name__}: {str(exc)[:240]}"
+            arm_errors = comm.allgather(arm_error)
+            arm_failures = [
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(arm_errors)
+                if error is not None
+            ]
+            if arm_failures:
+                original_context.clear_v13_modal_row_capture(int(attempt_index))
+                raise _V13OriginalCaptureFailure(
+                    "V13 original-A capture could not be armed; "
+                    + "; ".join(arm_failures),
+                    safe_to_collective=True,
+                )
+            local_capture = None
+            try:
+                operator.mult(target, original_action)
+            except Exception as exc:
+                original_context.clear_v13_modal_row_capture(int(attempt_index))
+                raise _V13OriginalCaptureFailure(
+                    "V13 original-A MatMult failed before a safe capture collective: "
+                    f"{type(exc).__name__}: {str(exc)[:240]}",
+                    safe_to_collective=False,
+                ) from exc
+            local_error = None
+            try:
+                local_capture = original_context.consume_v13_modal_row_capture(
+                    int(attempt_index)
+                )
+            except Exception as exc:  # noqa: BLE001 - MatMult returned; this is the post-call safe point
+                local_error = f"{type(exc).__name__}: {str(exc)[:240]}"
+            finally:
+                original_context.clear_v13_modal_row_capture(int(attempt_index))
+            capture_signature = None
+            if local_capture is not None:
+                try:
+                    capture_signature = {
+                        key: hashlib.sha256(
+                            np.ascontiguousarray(local_capture[key]).view(np.uint8)
+                        ).hexdigest()
+                        for key in ("t_bottom", "t_top", "t_constraint")
+                    }
+                except Exception as exc:  # noqa: BLE001 - synchronize extraction after MatMult
+                    local_error = f"{type(exc).__name__}: {str(exc)[:240]}"
+            source_after = target_after = None
+            post_call_error = None
+            try:
+                source_after = _v13_local_petsc_vec_hash(source)
+                target_after = _v13_local_petsc_vec_hash(target)
+            except Exception as exc:  # noqa: BLE001 - report at the safe post-MatMult point
+                post_call_error = f"{type(exc).__name__}: {str(exc)[:240]}"
+            if local_error is None:
+                local_error = post_call_error
+            local_after = {
+                "error": local_error,
+                "capture_signature": capture_signature,
+                "token": None if local_capture is None else local_capture.get("token"),
+                "matmult_call_id": (
+                    None if local_capture is None else local_capture.get("matmult_call_id")
+                ),
+                "pc_source_handle": (
+                    None if local_capture is None else local_capture.get("pc_source_handle")
+                ),
+                "pc_target_handle": (
+                    None if local_capture is None else local_capture.get("pc_target_handle")
+                ),
+                "operator_input_handle": (
+                    None if local_capture is None else local_capture.get("operator_input_handle")
+                ),
+                "operator_output_handle": (
+                    None if local_capture is None else local_capture.get("operator_output_handle")
+                ),
+                "pc_source_range": [int(value) for value in source.getOwnershipRange()],
+                "pc_target_range": [int(value) for value in target.getOwnershipRange()],
+                "operator_input_range": (
+                    None if local_capture is None else local_capture.get("operator_input_range")
+                ),
+                "operator_output_range": (
+                    None if local_capture is None else local_capture.get("operator_output_range")
+                ),
+                "operator_input_unchanged": (
+                    None if local_capture is None else local_capture.get("operator_input_unchanged")
+                ),
+                "operator_input_sha256_before": (
+                    None if local_capture is None else local_capture.get("operator_input_sha256_before")
+                ),
+                "operator_input_sha256_after": (
+                    None if local_capture is None else local_capture.get("operator_input_sha256_after")
+                ),
+                "operator_context_identity": int(context_identity),
+                "pc_source_before": source_before,
+                "pc_source_after": source_after,
+                "pc_target_before": target_before,
+                "pc_target_after": target_after,
+            }
+            rows = comm.allgather(local_after)
+            errors = [
+                f"rank {rank}: {row['error']}"
+                for rank, row in enumerate(rows)
+                if row.get("error") is not None
+            ]
+            signatures = [row.get("capture_signature") for row in rows]
+            if (
+                errors
+                or any(row.get("token") != attempt_index for row in rows)
+                or any(row.get("matmult_call_id") is None for row in rows)
+                or len({row.get("matmult_call_id") for row in rows}) != 1
+                or any(signature != signatures[0] for signature in signatures[1:])
+            ):
+                raise _V13OriginalCaptureFailure(
+                    "V13 same-call original-A capture rejected: "
+                    + (
+                        "; ".join(errors)
+                        if errors
+                        else "rank capture identity/components differ"
+                    ),
+                    safe_to_collective=True,
+                )
+            owner_capture = local_capture if comm.rank == self.layout.modal_owner else None
+            owner_capture = comm.bcast(owner_capture, root=self.layout.modal_owner)
+            if not isinstance(owner_capture, Mapping):
+                raise _V13OriginalCaptureFailure(
+                    "V13 modal owner returned no same-call capture",
+                    safe_to_collective=True,
+                )
+            r_modal = None
+            r_modal_error = None
+            try:
+                if comm.rank == self.layout.modal_owner:
+                    source_local = np.asarray(
+                        source.getArray(readonly=True), dtype=np.complex128
+                    )
+                    r_modal = source_local[self.layout.local_modal_slice].copy()
+            except Exception as exc:  # noqa: BLE001 - do not enter owner bcast on partial extraction
+                r_modal_error = f"{type(exc).__name__}: {str(exc)[:240]}"
+            r_modal_errors = comm.allgather(r_modal_error)
+            r_modal_failures = [
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(r_modal_errors)
+                if error is not None
+            ]
+            if r_modal_failures:
+                raise _V13OriginalCaptureFailure(
+                    "V13 PC RHS modal-row extraction failed: "
+                    + "; ".join(r_modal_failures),
+                    safe_to_collective=True,
+                )
+            r_modal = np.asarray(
+                comm.bcast(r_modal, root=self.layout.modal_owner),
                 dtype=np.complex128,
             )
-            if bool(np.all(rhs_values == 0.0)):
-                target_local = np.asarray(
-                    target.getArray(readonly=True), dtype=np.complex128
-                )
-                side_values = self._v13_original_operator_side_only.getArray()
-                modal_values = self._v13_original_operator_modal_only.getArray()
-                side_values[:] = target_local
-                side_values[self.layout.local_modal_slice] = 0.0
-                modal_values[:] = 0.0
-                modal_values[self.layout.local_modal_slice] = target_local[
-                    self.layout.local_modal_slice
-                ]
-                self._v13_original_operator_side_only.assemble()
-                self._v13_original_operator_modal_only.assemble()
-                operator.mult(
-                    self._v13_original_operator_side_only, original_action
-                )
-                side_local = np.asarray(
-                    original_action.getArray(readonly=True), dtype=np.complex128
-                )
-                side_term = (
-                    side_local[self.layout.local_modal_slice].copy()
-                    if comm.rank == self.layout.modal_owner
-                    else None
-                )
-                operator.mult(
-                    self._v13_original_operator_modal_only, original_action
-                )
-                modal_local = np.asarray(
-                    original_action.getArray(readonly=True), dtype=np.complex128
-                )
-                modal_term = (
-                    modal_local[self.layout.local_modal_slice].copy()
-                    if comm.rank == self.layout.modal_owner
-                    else None
-                )
-                side_term, modal_term = comm.bcast(
-                    (side_term, modal_term), root=self.layout.modal_owner
-                )
-                side_term = np.asarray(side_term, dtype=np.complex128)
-                modal_term = np.asarray(modal_term, dtype=np.complex128)
-                return (
-                    side_term + modal_term,
-                    rhs_values,
-                    side_term,
-                    modal_term,
-                    2,
-                )
-
-            operator.mult(target, original_action)
-            action_local = np.asarray(
-                original_action.getArray(readonly=True), dtype=np.complex128
-            )
-            action_values = (
-                action_local[self.layout.local_modal_slice].copy()
-                if comm.rank == self.layout.modal_owner
-                else None
-            )
-            action_values = np.asarray(
-                comm.bcast(action_values, root=self.layout.modal_owner),
-                dtype=np.complex128,
-            )
-            return (
-                np.asarray(action_values, dtype=np.complex128),
-                rhs_values,
-                None,
-                None,
-                1,
-            )
+            return {
+                "r_modal": r_modal,
+                "w_modal": np.asarray(owner_capture["w_modal"], dtype=np.complex128).copy(),
+                "t_bottom": np.asarray(owner_capture["t_bottom"], dtype=np.complex128).copy(),
+                "t_top": np.asarray(owner_capture["t_top"], dtype=np.complex128).copy(),
+                "t_constraint": np.asarray(
+                    owner_capture["t_constraint"], dtype=np.complex128
+                ).copy(),
+                "capture_identity": {
+                    "attempt_index": int(attempt_index),
+                    "matmult_call_id_by_rank": [
+                        int(row["matmult_call_id"]) for row in rows
+                    ],
+                    "operator_handle": int(operator.handle),
+                    "operator_context_identity_by_rank": [
+                        row.get("operator_context_identity") for row in rows
+                    ],
+                    "pc_source_handle_by_rank": [
+                        int(row["pc_source_handle"])
+                        if isinstance(row.get("pc_source_handle"), int)
+                        else None
+                        for row in rows
+                    ],
+                    "pc_target_handle_by_rank": [
+                        int(row["pc_target_handle"])
+                        if isinstance(row.get("pc_target_handle"), int)
+                        else None
+                        for row in rows
+                    ],
+                    "operator_input_handle_by_rank": [
+                        row.get("operator_input_handle") for row in rows
+                    ],
+                    "operator_output_handle_by_rank": [
+                        row.get("operator_output_handle") for row in rows
+                    ],
+                    "pc_source_range_by_rank": [row.get("pc_source_range") for row in rows],
+                    "pc_target_range_by_rank": [row.get("pc_target_range") for row in rows],
+                    "pc_source_before_by_rank": [row.get("pc_source_before") for row in rows],
+                    "pc_source_after_by_rank": [row.get("pc_source_after") for row in rows],
+                    "pc_target_before_by_rank": [row.get("pc_target_before") for row in rows],
+                    "pc_target_after_by_rank": [row.get("pc_target_after") for row in rows],
+                    "pc_source_unchanged_by_rank": [
+                        row.get("pc_source_before", {}).get("local_sha256")
+                        == row.get("pc_source_after", {}).get("local_sha256")
+                        for row in rows
+                    ],
+                    "pc_target_unchanged_by_original_A_by_rank": [
+                        row.get("pc_target_before", {}).get("local_sha256")
+                        == row.get("pc_target_after", {}).get("local_sha256")
+                        for row in rows
+                    ],
+                    "pc_source_target_alias_by_rank": [
+                        row.get("pc_source_before", {}).get("handle")
+                        == row.get("pc_target_before", {}).get("handle")
+                        for row in rows
+                    ],
+                    "operator_input_output_alias": (
+                        int(target.handle) == int(original_action.handle)
+                    ),
+                    "layout_sha256": layout_identity_sha256,
+                    "layout": layout_identity,
+                    "operator_input_range_by_rank": [
+                        list(row.get("operator_input_range", ())) for row in rows
+                    ],
+                    "operator_output_range_by_rank": [
+                        list(row.get("operator_output_range", ())) for row in rows
+                    ],
+                    "operator_input_unchanged_by_rank": [
+                        row.get("operator_input_unchanged") is True for row in rows
+                    ],
+                    "operator_input_sha256_before_by_rank": [
+                        row.get("operator_input_sha256_before") for row in rows
+                    ],
+                    "operator_input_sha256_after_by_rank": [
+                        row.get("operator_input_sha256_after") for row in rows
+                    ],
+                    "output_matches_components": owner_capture.get(
+                        "output_matches_components"
+                    ) is True,
+                },
+            }
 
         self.set_v13_original_modal_row_callback(
             original_modal_row,
             operator_identity=f"PETSc.Mat.handle:{operator_identity}",
         )
 
+        system = self.action_modal_schur_system
+        if callable(system._snapshot_callback):
+            def make_owner_snapshot() -> Mapping[str, Any] | None:
+                if comm.rank != self.layout.modal_owner:
+                    return None
+                schur = system.modal_schur
+                if not isinstance(schur, np.ndarray):
+                    raise TypeError("V13 owner S_B is unavailable at original-A binding")
+                schur_copy = np.asarray(schur, dtype=np.complex128).copy()
+                constraint_digest = hashlib.sha256(
+                    np.ascontiguousarray(system.modal_constraint).view(np.uint8)
+                ).hexdigest()
+                schur_digest = hashlib.sha256(
+                    np.ascontiguousarray(schur_copy).view(np.uint8)
+                ).hexdigest()
+                action_metadata = {}
+                for side, action in (("bottom", self.bottom_action), ("top", self.top_action)):
+                    inverse = getattr(action, "_side_inverse", None)
+                    inverse_diagnostics = getattr(inverse, "diagnostics", {})
+                    q_work = getattr(action, "audit", {}).get(
+                        "fixed_q_actual_work_cumulative"
+                    )
+                    action_metadata[side] = {
+                        "type": type(action).__name__,
+                        "object_identity": id(action),
+                        "operator_handle": (
+                            int(_action_operator(action).handle)
+                            if hasattr(action, "operator") or hasattr(action, "A")
+                            else None
+                        ),
+                        "apply_count": _action_apply_count(action),
+                        "borrowed_inverse_apply_count": (
+                            inverse_diagnostics.get("apply_count")
+                            if isinstance(inverse_diagnostics, Mapping)
+                            else None
+                        ),
+                        "p4_factor_count": (
+                            inverse_diagnostics.get("p4_factor_count")
+                            if isinstance(inverse_diagnostics, Mapping)
+                            else None
+                        ),
+                        "fixed_q_counter_snapshot": _v13_action_work_snapshot(action),
+                        "fixed_q_actual_work_cumulative": q_work,
+                    }
+                payload = {
+                    "snapshot_kind": "v15_s_b_ready",
+                    "arrays": {
+                        "s_b": schur_copy,
+                        "C": np.asarray(system.modal_constraint, dtype=np.complex128).copy(),
+                    },
+                    "metadata": {
+                        "formula": "S_B=C-LBG",
+                        "status": "owner_matrix_ready_and_lu_factored",
+                        "source": "current V13 builder output; no historical cache reuse",
+                        "original_A": {
+                            "handle": int(operator.handle),
+                            "context_identity": int(context_identity),
+                            "context_type": type(original_context).__name__,
+                            "global_shape": [int(value) for value in operator.getSize()],
+                            "layout_sha256": layout_identity_sha256,
+                        },
+                        "B_actions": action_metadata,
+                        "modal": {
+                            "owner_rank": int(system.modal_owner),
+                            "mode_count_per_direction": int(self.mode_count),
+                            "internal_mode_count": int(system.modal_count),
+                            "dtype": str(schur_copy.dtype),
+                            "shape": list(schur_copy.shape),
+                            "s_b_sha256": schur_digest,
+                            "constraint_sha256": constraint_digest,
+                            "sample_contract": dict(system.build_audit.get("sample_contract", {})),
+                            "owner_lu_factor_count": int(system.lu is not None),
+                            "owner_lu_build_residuals": list(
+                                system.build_audit.get("owner_original_schur_rhs_residuals", [])
+                            ),
+                            "owner_lu_build_residual_tolerance": system.build_audit.get(
+                                "owner_original_schur_rhs_residual_tolerance"
+                            ),
+                        },
+                        "component_binding": {
+                            "source_and_producer_identity": "attached_by_workflow_snapshot_index",
+                            "mesh_mpc_mode_and_packet_identity": "attached_by_workflow_consumer_binding",
+                            "side_operator_and_constraint_hashes": {
+                                "constraint_sha256": constraint_digest,
+                                "S_B_sha256": schur_digest,
+                            },
+                        },
+                    },
+                }
+                return payload
+
+            snapshot_error = None
+            owner_payload = None
+            if comm.rank == self.layout.modal_owner:
+                try:
+                    owner_payload = make_owner_snapshot()
+                except Exception as exc:  # noqa: BLE001 - synchronize before writer broadcast
+                    snapshot_error = f"{type(exc).__name__}: {str(exc)[:240]}"
+            errors = comm.allgather(snapshot_error)
+            failures = [f"rank {rank}: {error}" for rank, error in enumerate(errors) if error]
+            if failures:
+                raise RuntimeError("V13 S_B snapshot preparation failed: " + "; ".join(failures))
+            receipt = system.persist_v13_evidence_snapshot(
+                owner_payload if comm.rank == self.layout.modal_owner else {"snapshot_kind": "v15_s_b_ready"}
+            )
+            system._last_s_b_ready_snapshot = dict(receipt)
+            if receipt.get("status") != "written":
+                raise RuntimeError(
+                    "V13 S_B ready evidence persistence failed: "
+                    + str(receipt.get("error"))
+                )
+        else:
+            system._last_s_b_ready_snapshot = {
+                "status": "failed",
+                "error": {
+                    "type": "MissingWriter",
+                    "message": "V15 S_B-ready evidence writer is required",
+                },
+            }
+            raise TypeError(
+                "V13 original-A binding requires the V15 S_B-ready evidence writer"
+            )
+
+    def _v13_pc_counter_snapshot(self) -> dict[str, Any]:
+        system = self.action_modal_schur_system
+        if not isinstance(system, Task041V13ConsistentModalSurrogateSystem):
+            return {}
+        sides = {}
+        for side, action in (("bottom", self.bottom_action), ("top", self.top_action)):
+            try:
+                inverse = getattr(action, "_side_inverse", None)
+                inverse_diagnostics = getattr(inverse, "diagnostics", {})
+                sides[side] = {
+                    "action_apply_count": _action_apply_count(action),
+                    "action_work": _v13_action_work_snapshot(action),
+                    "side_operation_counts": _v13_side_operation_counts(action),
+                    "p4_factor_count": (
+                        inverse_diagnostics.get("p4_factor_count")
+                        if isinstance(inverse_diagnostics, Mapping)
+                        else None
+                    ),
+                }
+            except Exception as exc:  # noqa: BLE001 - preserve unavailable counter evidence
+                sides[side] = {
+                    "status": "unavailable",
+                    "error": f"{type(exc).__name__}: {str(exc)[:160]}",
+                }
+        return {
+            "owner_lu_solve_count": int(system._owner_lu_solve_count),
+            "solve_count": int(system._solve_count),
+            "pc_success_count": int(self._pc_apply_count),
+            "p4_and_B_by_side": sides,
+            "fixed_h6_pc_side_apply_counts": (
+                None
+                if self._fixed_h6_pc_side_apply_counts is None
+                else {
+                    side: dict(values)
+                    for side, values in self._fixed_h6_pc_side_apply_counts.items()
+                }
+            ),
+        }
+
     def _check_v13_original_modal_row(
-        self, source: PETSc.Vec, target: PETSc.Vec
+        self,
+        source: PETSc.Vec,
+        target: PETSc.Vec,
+        attempt_index: int,
     ) -> None:
         system = self.action_modal_schur_system
         if not isinstance(system, Task041V13ConsistentModalSurrogateSystem):
@@ -11136,134 +12096,736 @@ class HybridBlockLduPreconditioner:
             raise RuntimeError(  # noqa: TRY004 - the V13 action is missing from object state
                 "V13 full-PC output has no independently bound original-A modal-row action"
             )
-        local_error = None
-        action_values = rhs_values = side_term = modal_term = None
-        original_matmult_count = None
-        try:
-            (
-                action_values,
-                rhs_values,
-                side_term,
-                modal_term,
-                original_matmult_count,
-            ) = callback(source, target)
-            action_values = np.asarray(action_values, dtype=np.complex128)
-            rhs_values = np.asarray(rhs_values, dtype=np.complex128)
-            expected_shape = (self.layout.modal_count,)
-            if (
-                action_values.shape != expected_shape
-                or rhs_values.shape != expected_shape
-                or not np.all(np.isfinite(action_values))
-                or not np.all(np.isfinite(rhs_values))
-            ):
-                raise ValueError("original-A modal row callback returned invalid values")
-            if bool(np.all(rhs_values == 0.0)):
-                side_term = np.asarray(side_term, dtype=np.complex128)
-                modal_term = np.asarray(modal_term, dtype=np.complex128)
-                if (
-                    side_term.shape != expected_shape
-                    or modal_term.shape != expected_shape
-                    or not np.all(np.isfinite(side_term))
-                    or not np.all(np.isfinite(modal_term))
-                    or int(original_matmult_count) != 2
-                ):
-                    raise ValueError(
-                        "exact-zero original modal row lacks its two uncancelled terms"
+
+        def persist_rank_local_capture_failure(record: Mapping[str, Any]) -> dict[str, Any] | None:
+            writer = system._snapshot_callback
+            if not callable(writer):
+                return None
+            try:
+                return dict(
+                    writer(
+                        {
+                            "snapshot_kind": "v15_capture_failure_rank",
+                            "rank": int(self.layout.comm.rank),
+                            "attempt_index": int(attempt_index),
+                            "record": dict(record),
+                        }
                     )
-            elif (
-                side_term is not None
-                or modal_term is not None
-                or int(original_matmult_count) != 1
-            ):
-                raise ValueError(
-                    "nonzero original modal row must use one full-operator action"
                 )
-        except Exception as exc:  # noqa: BLE001 - synchronize modal-row evaluation failures
-            local_error = f"{type(exc).__name__}: {exc}"
-        callback_errors = self.layout.comm.allgather(local_error)
-        failures = [
-            f"rank {rank}: {error}"
-            for rank, error in enumerate(callback_errors)
-            if error is not None
-        ]
-        if failures:
-            raise FloatingPointError(
-                "V13 original-A modal row evaluation failed; " + "; ".join(failures)
-            )
-        assert action_values is not None and rhs_values is not None
-        residual = np.asarray(action_values - rhs_values, dtype=np.complex128)
-        rhs_norm = float(np.linalg.norm(rhs_values))
-        action_norm = float(np.linalg.norm(action_values))
-        residual_norm = float(np.linalg.norm(residual))
-        zero_rhs = bool(np.all(rhs_values == 0.0))
-        side_term_norm = (
-            float(np.linalg.norm(side_term)) if zero_rhs else None
-        )
-        modal_term_norm = (
-            float(np.linalg.norm(modal_term)) if zero_rhs else None
-        )
-        # For an exact-zero modal RHS, scale by the uncancelled terms
-        # L z_side and C a.  Scaling by their sum would reduce the denominator
-        # to the roundoff-sized residual and reject a valid cancellation.
-        scale = (
-            side_term_norm + modal_term_norm if zero_rhs else rhs_norm
-        )
-        relative = (
-            residual_norm / scale
-            if scale > 0.0
-            else (0.0 if residual_norm == 0.0 else float("inf"))
-        )
-        finite = bool(
-            np.all(np.isfinite(action_values))
-            and np.all(np.isfinite(rhs_values))
-            and np.all(np.isfinite(residual))
-            and np.isfinite(relative)
-        )
-        local_record = {
-            "equation": "extract_modal_rows(A_original @ pc_output) - r_modal",
-            "status": "passed" if finite and relative <= 1.0e-10 else "rejected",
-            "operator_identity": self._v13_original_operator_identity,
-            "rhs_norm": rhs_norm,
-            "rhs_exact_zero": zero_rhs,
-            "original_A_modal_action_norm": action_norm,
-            "original_A_modal_side_term_norm": side_term_norm,
-            "original_A_modal_constraint_term_norm": modal_term_norm,
-            "original_A_modal_row_matmult_count": int(original_matmult_count),
-            "scale": scale,
-            "residual_norm": residual_norm,
-            "relative_backward_error": relative,
-            "tolerance": 1.0e-10,
-            "finite": finite,
-        }
+            except Exception as exc:  # noqa: BLE001 - keep capture failure primary
+                return {
+                    "status": "failed",
+                    "error": {"type": type(exc).__name__, "message": str(exc)[:240]},
+                }
+
+        capture: Mapping[str, Any] | None = None
+        capture_failure: BaseException | None = None
         comm = self.layout.comm
-        records = comm.allgather(local_record)
-        passed = bool(
-            len(records) == comm.size
-            and all(
-                isinstance(record, Mapping)
-                and record.get("status") == "passed"
-                for record in records
+        try:
+            capture = callback(source, target, int(attempt_index))
+            if not isinstance(capture, Mapping):
+                raise TypeError("original-A capture callback returned no mapping")
+        except BaseException as exc:  # noqa: BLE001 - preserve evidence before PC cleanup
+            capture_failure = exc
+
+        if capture_failure is not None:
+            safe = bool(
+                isinstance(capture_failure, _V13OriginalCaptureFailure)
+                and capture_failure.safe_to_collective
             )
+            error_text = f"{type(capture_failure).__name__}: {str(capture_failure)[:320]}"
+            row = {
+                "status": "capture_failed",
+                "failure_kind": "same_call_original_A_capture",
+                "attempt_index": int(attempt_index),
+                "operator_identity": self._v13_original_operator_identity,
+                "safe_to_collective": safe,
+                "error": error_text,
+                "attempt": dict(self._current_pc_apply_evidence or {}),
+            }
+            if safe:
+                errors = comm.allgather(error_text)
+                row["rank_errors"] = [str(value) for value in errors]
+            system.record_original_modal_row(row)
+            write_receipt = persist_rank_local_capture_failure(row)
+            if isinstance(write_receipt, Mapping):
+                row["rank_local_write_receipt"] = dict(write_receipt)
+                system.record_original_modal_row(row)
+            system.record_pc_apply_attempt({**row, "status": "capture_failed"})
+            raise FloatingPointError(
+                "V13 original-A modal row capture failed before the row gate: "
+                + error_text
+            ) from capture_failure
+
+        assert capture is not None
+        fields = ("r_modal", "w_modal", "t_bottom", "t_top", "t_constraint")
+        arrays: dict[str, np.ndarray] = {}
+        array_errors: list[str] = []
+        for name in fields:
+            try:
+                value = capture.get(name)
+                if value is None:
+                    raise ValueError("field is absent")
+                arrays[name] = np.asarray(value, dtype=np.complex128).copy()
+            except Exception as exc:  # noqa: BLE001 - keep individually credible terms
+                array_errors.append(f"{name}: {type(exc).__name__}: {str(exc)[:160]}")
+        metrics, residual = _v13_original_modal_row_metrics(
+            *(arrays.get(name, np.empty(0, dtype=np.complex128)) for name in fields),
+            tolerance=1.0e-10,
         )
-        normalized = dict(local_record)
-        normalized.update(
+        metric_inputs_available = bool(
+            not array_errors and metrics.get("reason") != "shape_mismatch"
+        )
+        identity = capture.get("capture_identity")
+        identity_errors: list[str] = []
+        expected_modal_shape = (int(self.layout.modal_count),)
+        for name in fields:
+            if name in arrays and arrays[name].shape != expected_modal_shape:
+                identity_errors.append(
+                    f"{name} shape {arrays[name].shape} differs from "
+                    f"the bound modal layout {expected_modal_shape}"
+                )
+        if not metric_inputs_available:
+            identity_errors.append(
+                "original modal-row metrics are unavailable from the captured array shapes"
+            )
+        if not isinstance(identity, Mapping):
+            identity_errors.append("same-call capture identity is missing")
+            identity = {}
+        if identity.get("attempt_index") != attempt_index:
+            identity_errors.append("capture attempt id differs from current PC attempt")
+        if identity.get("operator_handle") != int(
+            self._v13_original_operator.handle
+            if self._v13_original_operator is not None
+            else -1
+        ):
+            identity_errors.append("captured Mat handle differs from the bound original A")
+        bound_context = (
+            None
+            if self._v13_original_operator is None
+            else self._v13_original_operator.getPythonContext()
+        )
+        context_ids = identity.get("operator_context_identity_by_rank")
+        if (
+            not isinstance(context_ids, list)
+            or len(context_ids) != comm.size
+            or context_ids[comm.rank] != id(bound_context)
+        ):
+            identity_errors.append("captured MatPython context differs from the bound original A")
+        if identity.get("output_matches_components") is not True:
+            identity_errors.append("original-A output does not match captured component path")
+        if metrics.get("decomposition_metrics_valid") is not True:
+            identity_errors.append(
+                "captured component decomposition error is unavailable, non-finite, "
+                "or nonzero with a zero denominator"
+            )
+        elif metrics.get("decomposition_passed") is not True:
+            identity_errors.append(
+                "captured modal component decomposition exceeds the rowwise 1e-10 check"
+            )
+        if identity.get("pc_source_unchanged_by_rank") != [True] * comm.size:
+            identity_errors.append("PC source changed during original-A row capture")
+        if identity.get("pc_target_unchanged_by_original_A_by_rank") != [True] * comm.size:
+            identity_errors.append("PC target changed during original-A MatMult")
+        if identity.get("pc_source_target_alias_by_rank") != [False] * comm.size:
+            identity_errors.append("PC source and target alias or alias evidence is missing")
+        if identity.get("operator_input_unchanged_by_rank") != [True] * comm.size:
+            identity_errors.append("original-A input changed during the captured MatMult")
+        if identity.get("operator_input_output_alias") is not False:
+            identity_errors.append("original-A input/output alias or alias evidence is invalid")
+        call_ids = identity.get("matmult_call_id_by_rank")
+        if (
+            not isinstance(call_ids, list)
+            or len(call_ids) != comm.size
+            or any(type(value) is not int or value <= 0 for value in call_ids)
+        ):
+            identity_errors.append("original-A MatMult call ids are incomplete")
+        entry = self._current_pc_apply_evidence or {}
+        if entry.get("capture_prehash_error"):
+            identity_errors.append(str(entry["capture_prehash_error"]))
+        if entry.get("counter_snapshot_error"):
+            identity_errors.append(str(entry["counter_snapshot_error"]))
+        if not isinstance(entry.get("counters_before"), Mapping):
+            identity_errors.append("pre-attempt B/P4 counter snapshot is missing")
+        attempt_rows = comm.allgather(_v13_json_safe(dict(entry)))
+        if any(row.get("attempt_index") != attempt_index for row in attempt_rows):
+            identity_errors.append("PC attempt ordinal differs across ranks")
+        if len({row.get("solve_count_before") for row in attempt_rows}) != 1:
+            identity_errors.append("pre-attempt owner solve ordinal differs across ranks")
+        if len({row.get("successful_pc_apply_count_before") for row in attempt_rows}) != 1:
+            identity_errors.append("pre-attempt successful PC count differs across ranks")
+        pc_source_handles = identity.get("pc_source_handle_by_rank")
+        pc_target_handles = identity.get("pc_target_handle_by_rank")
+        if not isinstance(pc_source_handles, list) or len(pc_source_handles) != comm.size:
+            identity_errors.append("PC source handle identity is incomplete")
+        elif any(
+            pc_source_handles[rank] != attempt_rows[rank].get("source_handle")
+            for rank in range(comm.size)
+        ):
+            identity_errors.append("captured PC source handle differs from the current attempt")
+        if not isinstance(pc_target_handles, list) or len(pc_target_handles) != comm.size:
+            identity_errors.append("PC target handle identity is incomplete")
+        elif any(
+            pc_target_handles[rank] != attempt_rows[rank].get("target_handle")
+            for rank in range(comm.size)
+        ):
+            identity_errors.append("captured PC target handle differs from the current attempt")
+        pc_source_after = identity.get("pc_source_after_by_rank")
+        if not isinstance(pc_source_after, list) or len(pc_source_after) != comm.size:
+            identity_errors.append("PC source after-hash identity is incomplete")
+        else:
+            for rank, attempt_row in enumerate(attempt_rows):
+                before_hash = attempt_row.get("source_hash_before")
+                after_hash = pc_source_after[rank]
+                if (
+                    not isinstance(before_hash, Mapping)
+                    or not isinstance(after_hash, Mapping)
+                    or before_hash.get("local_sha256") != after_hash.get("local_sha256")
+                ):
+                    identity_errors.append(
+                        f"rank {rank}: PC source changed during the current attempt"
+                    )
+        operator_input_handles = identity.get("operator_input_handle_by_rank")
+        if not isinstance(operator_input_handles, list) or len(operator_input_handles) != comm.size:
+            identity_errors.append("original-A input handle identity is incomplete")
+        elif any(
+            operator_input_handles[rank] != attempt_rows[rank].get("target_handle")
+            for rank in range(comm.size)
+        ):
+            identity_errors.append("original-A input is not the current PC target Vec")
+        operator_output_handles = identity.get("operator_output_handle_by_rank")
+        if not isinstance(operator_output_handles, list) or len(operator_output_handles) != comm.size:
+            identity_errors.append("original-A output handle identity is incomplete")
+        elif any(
+            type(value) is not int for value in operator_output_handles
+        ):
+            identity_errors.append("original-A output handle identity is invalid")
+        source_ranges = identity.get("pc_source_range_by_rank")
+        target_ranges = identity.get("pc_target_range_by_rank")
+        for range_name, range_rows, attempt_key in (
+            ("source", source_ranges, "source_range"),
+            ("target", target_ranges, "target_range"),
+        ):
+            if not isinstance(range_rows, list) or len(range_rows) != comm.size:
+                identity_errors.append(f"PC {range_name} ownership ranges are incomplete")
+            elif any(
+                range_rows[rank] != attempt_rows[rank].get(attempt_key)
+                for rank in range(comm.size)
+            ):
+                identity_errors.append(f"PC {range_name} ownership range changed during capture")
+        operator_input_ranges = identity.get("operator_input_range_by_rank")
+        if (
+            not isinstance(operator_input_ranges, list)
+            or len(operator_input_ranges) != comm.size
+            or operator_input_ranges != target_ranges
+        ):
+            identity_errors.append("original-A input range differs from the current PC target")
+        operator_output_ranges = identity.get("operator_output_range_by_rank")
+        expected_local_sizes = [
+            int(self.layout.bottom_local_sizes[rank])
+            + int(self.layout.top_local_sizes[rank])
+            + (
+                int(self.layout.modal_count)
+                if rank == self.layout.modal_owner
+                else 0
+            )
+            for rank in range(comm.size)
+        ]
+        expected_operator_ranges = [
+            [
+                int(self.layout.combined_offsets[rank]),
+                int(self.layout.combined_offsets[rank] + expected_local_sizes[rank]),
+            ]
+            for rank in range(comm.size)
+        ]
+        if operator_output_ranges != expected_operator_ranges:
+            identity_errors.append("original-A output ranges differ from the bound layout")
+        valid_pc_target_handles = (
+            isinstance(pc_target_handles, list)
+            and len(pc_target_handles) == comm.size
+        )
+        if (
+            not isinstance(operator_output_handles, list)
+            or len(operator_output_handles) != comm.size
+            or any(type(value) is not int for value in operator_output_handles)
+            or not valid_pc_target_handles
+            or any(
+                operator_output_handles[rank] == pc_target_handles[rank]
+                for rank in range(comm.size)
+            )
+        ):
+            identity_errors.append("original-A output aliases or lacks a per-rank handle")
+
+        local_failure = {
+            "metrics": {
+                key: value
+                for key, value in metrics.items()
+                if not isinstance(value, np.ndarray)
+            },
+            "identity_errors": identity_errors,
+            "array_errors": array_errors,
+        }
+        synchronized = comm.allgather(local_failure)
+        collective_identity_errors = [
+            f"rank {rank}: {error}"
+            for rank, item in enumerate(synchronized)
+            for error in [*item.get("identity_errors", []), *item.get("array_errors", [])]
+        ]
+        metric_rows = [item.get("metrics", {}) for item in synchronized]
+        metrics_agree = all(
+            row.get("eta_terms_inf") == metric_rows[0].get("eta_terms_inf")
+            and row.get("status") == metric_rows[0].get("status")
+            for row in metric_rows[1:]
+        )
+        if not metrics_agree:
+            collective_identity_errors.append("replicated modal-row metric differs by rank")
+
+        solve_before = entry.get("solve_count_before")
+        solve_after = int(system._solve_count)
+        owner_count_before = entry.get("owner_lu_solve_count_before")
+        owner_count_after = int(system._owner_lu_solve_count)
+        owner_solve_record = (
+            None if system._last_solve is None else dict(system._last_solve)
+        )
+        owner_before_by_rank = [row.get("owner_lu_solve_count_before") for row in attempt_rows]
+        owner_after_by_rank = comm.allgather(owner_count_after)
+        expected_owner_count = None
+        if (
+            len(owner_before_by_rank) == comm.size
+            and type(owner_before_by_rank[self.layout.modal_owner]) is int
+        ):
+            expected_owner_count = owner_before_by_rank[self.layout.modal_owner] + 1
+        expected_owner_counts_by_rank = [
+            int(owner_before_by_rank[rank]) + (1 if rank == self.layout.modal_owner else 0)
+            if type(owner_before_by_rank[rank]) is int
+            else None
+            for rank in range(comm.size)
+        ]
+        same_attempt_solve = bool(
+            type(solve_before) is int
+            and solve_after == solve_before + 1
+            and isinstance(owner_solve_record, Mapping)
+            and owner_solve_record.get("owner_rank") == self.layout.modal_owner
+            and owner_solve_record.get("owner_lu_solve_count") == expected_owner_count
+            and owner_after_by_rank == expected_owner_counts_by_rank
+            and owner_solve_record.get("status") == "passed"
+            and owner_solve_record.get("input_unchanged") is True
+            and owner_solve_record.get("trusted_iterate") is True
+            and isinstance(
+                owner_solve_record.get("relative_backward_error"), (int, float)
+            )
+            and math.isfinite(
+                float(owner_solve_record.get("relative_backward_error", float("inf")))
+            )
+            and float(owner_solve_record.get("relative_backward_error", float("inf")))
+            <= 1.0e-10
+        )
+        if not same_attempt_solve:
+            solve_evidence_error = "owner LU solve record/count is not bound to this PC attempt"
+            identity_errors.append(solve_evidence_error)
+            collective_identity_errors.append(solve_evidence_error)
+        counters_after = self._v13_pc_counter_snapshot()
+        counters_after_by_rank = comm.allgather(counters_after)
+        counter_delta_by_rank = [
+            _v13_numeric_counter_delta(
+                attempt_rows[rank].get("counters_before"),
+                counters_after_by_rank[rank],
+            )
+            for rank in range(comm.size)
+        ]
+        counter_evidence_errors = []
+        for rank in range(comm.size):
+            before = attempt_rows[rank].get("counters_before")
+            after = counters_after_by_rank[rank]
+            if not isinstance(before, Mapping) or not isinstance(after, Mapping):
+                counter_evidence_errors.append(
+                    f"rank {rank}: same-attempt B/P4 counter snapshot is unavailable"
+                )
+                continue
+            for side in ("bottom", "top"):
+                before_side = before.get("p4_and_B_by_side", {}).get(side)
+                after_side = after.get("p4_and_B_by_side", {}).get(side)
+                if not isinstance(before_side, Mapping) or not isinstance(
+                    after_side, Mapping
+                ):
+                    counter_evidence_errors.append(
+                        f"rank {rank} {side}: B/P4 counter detail is unavailable"
+                    )
+                    continue
+                before_apply = before_side.get("action_apply_count")
+                after_apply = after_side.get("action_apply_count")
+                before_p4 = before_side.get("p4_factor_count")
+                after_p4 = after_side.get("p4_factor_count")
+                if (
+                    type(before_apply) is not int
+                    or type(after_apply) is not int
+                    or after_apply - before_apply != 2
+                ):
+                    counter_evidence_errors.append(
+                        f"rank {rank} {side}: fixed B apply delta is not two"
+                    )
+                if (
+                    type(before_p4) is not int
+                    or type(after_p4) is not int
+                    or after_p4 != before_p4
+                ):
+                    counter_evidence_errors.append(
+                        f"rank {rank} {side}: P4 factor count changed or is missing"
+                    )
+        identity_errors.extend(counter_evidence_errors)
+        collective_identity_errors.extend(counter_evidence_errors)
+        eta_inf = metrics.get("eta_terms_inf")
+        metrics_pass = bool(
+            metric_inputs_available
+            and metrics.get("valid") is True
+            and isinstance(eta_inf, (int, float))
+            and math.isfinite(float(eta_inf))
+            and float(eta_inf) <= 1.0e-10
+        )
+        metrics_rejected = bool(metric_inputs_available and not metrics_pass)
+        mandatory_evidence_failure = bool(
+            collective_identity_errors or not same_attempt_solve
+        )
+        row_classification = (
+            "numeric_gate_reject"
+            if metrics_rejected
+            else "evidence_failure"
+            if not metrics_pass
+            else "mandatory_evidence_failure_after_numeric_pass"
+            if mandatory_evidence_failure
+            else "numeric_gate_pass"
+        )
+        row_record = {
+            "schema": _V15_ORIGINAL_MODAL_ROW_CONTRACT,
+            "contract_id": _V15_ORIGINAL_MODAL_ROW_CONTRACT,
+            "legacy_schema": _V13_ORIGINAL_MODAL_ROW_LEGACY_SCHEMA,
+            "status": (
+                "rejected"
+                if metrics_rejected
+                else "passed"
+                if metrics_pass and not mandatory_evidence_failure
+                else "evidence_failed"
+            ),
+            "classification": row_classification,
+            "metric_inputs_available": metric_inputs_available,
+            "equation": "d=w_modal-r_modal; w_modal=t_constraint+t_bottom+t_top in original A call order",
+            "operator_identity": self._v13_original_operator_identity,
+            "provenance_binding": {
+                "source_sha256": "v15_modal_evidence_index.source_sha",
+                "invocation_id": "v15_modal_evidence_index.identity.invocation_id",
+                "outer_iteration": "not_available_inside_pc_apply",
+            },
+            "outer_iteration": {
+                "status": "not_available_inside_pc_apply",
+                "value": None,
+            },
+            "modal_layout_keys": {
+                "modal_owner": int(self.layout.modal_owner),
+                "modal_count": int(self.layout.modal_count),
+                "modal_global_indices": list(
+                    identity.get("layout", {}).get("modal_global_indices", [])
+                ),
+                "layout_sha256": identity.get("layout_sha256"),
+            },
+            "attempt_index": int(attempt_index),
+            "successful_pc_apply_count_before": int(self._pc_apply_count),
+            "attempted_pc_apply_count": int(self._pc_apply_attempt_count),
+            "attempt_binding_by_rank": attempt_rows,
+            "capture_identity": dict(identity),
+            "same_attempt_owner_solve": same_attempt_solve,
+            "owner_lu_solve_record": owner_solve_record,
+            "owner_lu_solve_count_before": owner_count_before,
+            "owner_lu_solve_count_after": owner_count_after,
+            "solve_count_before": solve_before,
+            "solve_count_after": solve_after,
+            "B_P4_counters_before": entry.get("counters_before"),
+            "B_P4_counters_after": counters_after,
+            "B_P4_counters_after_by_rank": counters_after_by_rank,
+            "B_P4_counter_delta": _v13_numeric_counter_delta(
+                entry.get("counters_before"), counters_after
+            ),
+            "B_P4_counter_delta_by_rank": counter_delta_by_rank,
+            "identity_or_evidence_errors": collective_identity_errors,
+            "capture_array_errors": array_errors,
+            "metrics": {
+                key: value
+                for key, value in metrics.items()
+                if not isinstance(value, np.ndarray) and key != "residual"
+            },
+        }
+        arrays.update(
             {
-                "collective_pass": passed,
-                "rank_count": int(comm.size),
-                "scope": "original_global_modal_row_after_full_PC_output",
+                "d": residual.copy(),
+                "a": np.asarray(self._modal_solution, dtype=np.complex128).copy(),
+                "g": np.asarray(self._modal_rhs, dtype=np.complex128).copy(),
             }
         )
-        system.record_original_modal_row(normalized)
-        if not passed:
+        for name in (
+            "row_scale",
+            "row_denominator_scaled",
+            "row_relative_error",
+            "row_relative_log_error",
+            "decomposition_error",
+            "decomposition_row_relative_error",
+            "decomposition_row_relative_log_error",
+        ):
+            value = metrics.get(name)
+            if isinstance(value, np.ndarray):
+                arrays[name] = value.copy()
+        system.record_original_modal_row(row_record, arrays)
+        system.record_pc_apply_attempt(row_record)
+
+        # The numeric row gate has priority. Writer/evidence errors are retained
+        # as secondary details and can never convert a rejection into a pass.
+        writer_errors: list[str] = []
+        if metrics_rejected:
+            slot_kinds = ["v15_terminal_numeric_reject"]
+        elif collective_identity_errors or not same_attempt_solve:
+            slot_kinds = ["v15_evidence_failure"]
+        else:
+            slot_kinds = ["v15_first_success_control"]
+            if metrics.get("legacy_rhs_relative_status") == "rejected":
+                slot_kinds.append("v15_first_legacy_fail_new_pass")
+        snapshot_receipts: dict[str, Any] = {}
+        for current_slot in slot_kinds:
+            if current_slot in system._original_modal_row_snapshot_slots:
+                continue
+            snapshot_payload = {
+                "snapshot_kind": current_slot,
+                "attempt_index": int(attempt_index),
+                "record": row_record,
+                "arrays": arrays,
+            }
+            receipt = system.persist_v13_evidence_snapshot(snapshot_payload)
+            snapshot_receipts[current_slot] = receipt
+            if receipt.get("status") != "written":
+                writer_errors.append(
+                    f"{current_slot}: {receipt.get('error')}"
+                )
+            else:
+                system._last_original_modal_row_snapshot_receipt = dict(receipt)
+        row_record["writer_errors"] = list(writer_errors)
+        row_record["snapshot_receipts_by_slot"] = snapshot_receipts
+        if (
+            not metrics_rejected
+            and writer_errors
+            and "v15_evidence_failure" not in system._original_modal_row_snapshot_slots
+        ):
+            evidence_payload = {
+                "snapshot_kind": "v15_evidence_failure",
+                "attempt_index": int(attempt_index),
+                "record": {
+                    **row_record,
+                    "status": "evidence_failed",
+                    "classification": "mandatory_evidence_failure_after_numeric_pass",
+                },
+                "arrays": arrays,
+            }
+            evidence_receipt = system.persist_v13_evidence_snapshot(evidence_payload)
+            row_record["snapshot_receipts_by_slot"]["v15_evidence_failure"] = evidence_receipt
+            if evidence_receipt.get("status") != "written":
+                writer_errors.append(f"v15_evidence_failure: {evidence_receipt.get('error')}")
+            else:
+                system._last_original_modal_row_snapshot_receipt = dict(evidence_receipt)
+            row_record["writer_errors"] = list(writer_errors)
+        if metrics_rejected:
+            local_rank_receipt = None
+            rank_write_error = None
+            writer = system._snapshot_callback
+            if callable(writer):
+                try:
+                    local_rank_receipt = dict(
+                        writer(
+                            {
+                                "snapshot_kind": "v15_terminal_rank_vectors",
+                                "attempt_index": int(attempt_index),
+                                "rank": int(comm.rank),
+                                "record": row_record,
+                                "source": np.asarray(source.getArray(readonly=True)),
+                                "target": np.asarray(target.getArray(readonly=True)),
+                            }
+                        )
+                    )
+                except Exception as exc:  # noqa: BLE001 - keep numerical refusal primary
+                    rank_write_error = {"type": type(exc).__name__, "message": str(exc)[:240]}
+            else:
+                rank_write_error = {"type": "WriterMissing", "message": "snapshot callback not configured"}
+            rank_receipts = comm.allgather(
+                {"receipt": local_rank_receipt, "error": rank_write_error}
+            )
+            rank_write_errors = [
+                f"rank {rank}: {item['error']}"
+                for rank, item in enumerate(rank_receipts)
+                if item.get("error") is not None
+            ]
+            if not rank_write_errors:
+                vector_index = system.persist_v13_evidence_snapshot(
+                    {
+                        "snapshot_kind": "v15_terminal_rank_vectors_index",
+                        "attempt_index": int(attempt_index),
+                        "rank_receipts": [item["receipt"] for item in rank_receipts],
+                        "record": row_record,
+                    }
+                )
+                if vector_index.get("status") != "written":
+                    rank_write_errors.append(str(vector_index.get("error")))
+                else:
+                    row_record["terminal_rank_vector_index"] = vector_index
+            writer_errors.extend(rank_write_errors)
+            row_record["writer_errors"] = list(writer_errors)
+        system.record_original_modal_row(row_record, arrays)
+        if metrics_rejected:
+            relative_text = (
+                "unavailable"
+                if eta_inf is None
+                else f"{float(eta_inf):.6e}"
+            )
+            suffix = (
+                ""
+                if not writer_errors
+                else "; secondary evidence writer error(s): " + "; ".join(writer_errors)
+            )
             raise FloatingPointError(
                 "V13 original global modal-row residual gate rejected: "
-                f"relative={relative:.6e}, limit=1.000000e-10"
+                f"eta_terms_inf={relative_text}, limit=1.000000e-10{suffix}"
+            )
+        if collective_identity_errors or writer_errors or not same_attempt_solve:
+            row_record["status"] = "evidence_failed"
+            row_record["classification"] = "mandatory_evidence_failure_after_numeric_pass"
+            system.record_original_modal_row(row_record, arrays)
+            raise RuntimeError(
+                "V13 original modal-row numeric gate passed but mandatory attempt evidence failed: "
+                + "; ".join(collective_identity_errors + writer_errors)
             )
 
     def apply(self, _pc: PETSc.PC | None, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        try:
+            self._apply_unwrapped(_pc, source, target)
+        except BaseException as exc:
+            self._record_v13_apply_exception(exc)
+            raise
+
+    def _record_v13_apply_exception(self, original_error: BaseException) -> None:
+        try:
+            system = self.action_modal_schur_system
+            if not isinstance(system, Task041V13ConsistentModalSurrogateSystem):
+                return
+            attempt_index = int(self._pc_apply_attempt_count)
+            try:
+                error_message = str(original_error)[:320]
+            except BaseException as render_error:  # noqa: BLE001 - never replace the primary
+                error_message = f"<message unavailable: {type(render_error).__name__}>"
+            current = system._last_original_modal_row
+            row = dict(current) if isinstance(current, Mapping) else {}
+            same_attempt = row.get("attempt_index") == attempt_index
+            if same_attempt and row.get("status") != "passed":
+                # A terminal numeric/evidence/capture failure is the primary
+                # result.  The wrapper exception is only its propagation path.
+                system.record_pc_apply_attempt(row)
+                return
+            if same_attempt:
+                row["post_row_apply_exception"] = {
+                    "type": type(original_error).__name__,
+                    "message": error_message,
+                }
+                system.record_original_modal_row(
+                    row, system._last_original_modal_row_arrays
+                )
+            else:
+                row = {
+                    "schema": "task041.v15.pc_apply_attempt_failure.v1",
+                    "status": "pc_apply_failed_before_original_row_gate",
+                    "attempt_index": attempt_index,
+                    "attempt": dict(self._current_pc_apply_evidence or {}),
+                    "failure": {
+                        "type": type(original_error).__name__,
+                        "message": error_message,
+                    },
+                }
+                system.record_original_modal_row(row)
+            system.record_pc_apply_attempt(row)
+            writer = system._snapshot_callback
+            if callable(writer):
+                try:
+                    receipt = writer(
+                        {
+                            "snapshot_kind": "v15_capture_failure_rank",
+                            "rank": int(self.layout.comm.rank),
+                            "attempt_index": attempt_index,
+                            "record": row,
+                        }
+                    )
+                    row["rank_local_failure_receipt"] = (
+                        dict(receipt) if isinstance(receipt, Mapping) else None
+                    )
+                except BaseException as writer_error:  # noqa: BLE001 - secondary only
+                    try:
+                        writer_message = str(writer_error)[:240]
+                    except BaseException as render_error:  # noqa: BLE001
+                        writer_message = (
+                            f"<message unavailable: {type(render_error).__name__}>"
+                        )
+                    row["secondary_writer_error"] = {
+                        "type": type(writer_error).__name__,
+                        "message": writer_message,
+                    }
+                system.record_original_modal_row(
+                    row, system._last_original_modal_row_arrays
+                )
+                system.record_pc_apply_attempt(row)
+        except BaseException as evidence_error:  # noqa: BLE001 - primary exception wins
+            try:
+                original_error.add_note(
+                    "V15 attempt evidence preservation failed without replacing the "
+                    f"primary error: {type(evidence_error).__name__}"
+                )
+            except BaseException:  # noqa: BLE001, S110 - preserve the primary exception
+                pass
+
+    def _apply_unwrapped(
+        self, _pc: PETSc.PC | None, source: PETSc.Vec, target: PETSc.Vec
+    ) -> None:
         if self._destroyed:
             raise RuntimeError("Block-LDU preconditioner has been destroyed")
         started = time.perf_counter()
+        self._pc_apply_attempt_count += 1
+        attempt_index = self._pc_apply_attempt_count
+        if isinstance(
+            self.action_modal_schur_system,
+            Task041V13ConsistentModalSurrogateSystem,
+        ):
+            record: dict[str, Any] = {
+                "attempt_index": int(attempt_index),
+                "successful_pc_apply_count_before": int(self._pc_apply_count),
+                "source_handle": int(source.handle),
+                "target_handle": int(target.handle),
+                "source_target_alias": (
+                    source is target or int(source.handle) == int(target.handle)
+                ),
+                "source_range": [int(value) for value in source.getOwnershipRange()],
+                "target_range": [int(value) for value in target.getOwnershipRange()],
+                "owner_lu_solve_count_before": int(
+                    self.action_modal_schur_system._owner_lu_solve_count
+                ),
+                "solve_count_before": int(self.action_modal_schur_system._solve_count),
+                "capture_prehash_error": None,
+            }
+            try:
+                record["source_hash_before"] = _v13_local_petsc_vec_hash(source)
+                record["target_hash_before"] = _v13_local_petsc_vec_hash(target)
+            except Exception as exc:  # noqa: BLE001 - record missing evidence without changing PC arithmetic
+                record["capture_prehash_error"] = (
+                    f"{type(exc).__name__}: {str(exc)[:240]}"
+                )
+            try:
+                record["counters_before"] = self._v13_pc_counter_snapshot()
+            except Exception as exc:  # noqa: BLE001 - counter diagnostics cannot veto a numerical attempt
+                record["counters_before"] = None
+                record["counter_snapshot_error"] = (
+                    f"{type(exc).__name__}: {str(exc)[:240]}"
+                )
+            self._current_pc_apply_evidence = record
+            self.action_modal_schur_system.record_pc_apply_attempt(record)
         modal = self._source_parts(source)
         self.bottom_action.apply(self._bottom_rhs, self._bottom_first)
         if self._fixed_h6_pc_side_apply_counts is not None:
@@ -11334,9 +12896,38 @@ class HybridBlockLduPreconditioner:
         )
         if self.layout.comm.rank == self.layout.modal_owner:
             target_local[self.layout.local_modal_slice] = self._modal_solution
-        self._check_v13_original_modal_row(source, target)
+        self._check_v13_original_modal_row(source, target, attempt_index)
         self._pc_apply_count += 1
         self._pc_apply_seconds += time.perf_counter() - started
+        self._current_pc_apply_evidence = None
+        if isinstance(
+            self.action_modal_schur_system,
+            Task041V13ConsistentModalSurrogateSystem,
+        ):
+            row = self.action_modal_schur_system._last_original_modal_row
+            if (
+                isinstance(row, Mapping)
+                and row.get("attempt_index") == attempt_index
+                and row.get("status") == "passed"
+            ):
+                metrics = row.get("metrics", {})
+                self.action_modal_schur_system.record_pc_apply_success(
+                    {
+                        "attempt_index": int(attempt_index),
+                        "status": "passed",
+                        "successful_pc_apply_count": int(self._pc_apply_count),
+                        "eta_terms_inf": metrics.get("eta_terms_inf"),
+                        "eta_terms_2": metrics.get("eta_terms_2"),
+                        "legacy_rhs_relative_error": metrics.get(
+                            "legacy_rhs_relative_error"
+                        ),
+                        "same_attempt_owner_solve": True,
+                        "attempt_binding": dict(
+                            self.action_modal_schur_system._last_pc_apply_attempt
+                            or {}
+                        ),
+                    }
+                )
 
     def release_deferred_action_modal_schur(self) -> None:
         if self._action_modal_schur_released:
@@ -11388,14 +12979,6 @@ class HybridBlockLduPreconditioner:
         if self._v13_original_operator_action is not None:
             self._v13_original_operator_action.destroy()
             self._v13_original_operator_action = None
-        for name in (
-            "_v13_original_operator_side_only",
-            "_v13_original_operator_modal_only",
-        ):
-            vector = getattr(self, name)
-            if vector is not None:
-                vector.destroy()
-                setattr(self, name, None)
         self._v13_original_operator = None
         self._v13_original_modal_row_callback = None
         self._destroyed = True
