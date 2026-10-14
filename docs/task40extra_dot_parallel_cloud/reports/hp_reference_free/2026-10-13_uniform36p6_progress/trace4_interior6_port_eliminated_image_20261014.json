@@ -1,0 +1,443 @@
+{
+  "schema": "task40extra.trace4-interior6.port-eliminated-image-128-report.v1",
+  "title": "trace4_interior6_port_eliminated_image_20261014",
+  "report_date_utc": "2026-10-14",
+  "publication_state": "FINAL_TERMINAL_RUNTIME_V73_BOUND",
+  "scientific_status": "INCONCLUSIVE",
+  "stage_status": "BOUNDED_NATIVE_PORT_ELIMINATED_IMAGE_FINISHED_ZERO_OUTER",
+  "source_review": {
+    "status": "PASS_SOURCE_AND_EXACT_BINDING_ONLY",
+    "pure_tests": 89,
+    "source_pins": 46,
+    "exact_command_sha256": "aee4c03b41f5bc4e2928af5ae1016eea08b7b448473c65d0bc040eef8c34bf4b",
+    "pure_tests_do_not_establish_scientific_result": true
+  },
+  "question": "At fixed same6656 native residual, test a trace4/interior6 image with original ports strictly eliminated, within the frozen128-iteration budget.",
+  "mathematics": {
+    "E0": "E0*y=[P*y; Hhat^-1*Dhat*P*y]",
+    "F": "field_selector*J*As*R",
+    "Hhat": "Hp + sum_cells(Di*XiB), distinct from original Hp",
+    "P": "actual unpruned oriented/MPC Pt, 23976x10224, original map hash required",
+    "adjoint": "M0.H*w=P.H*(Qbasis.H*a + Dhat.H*Hhat^(-H)*c), where [a;c]=As.H*[Qbasis*w;0]",
+    "affine_sign": "particular is subtracted exactly once from target; preserved nonzero q_p",
+    "coordinate_maps": "R=diag(Qbasis,I80), J=diag(Qbasis.H,Hp); original historical Q/T/Hp unchanged",
+    "homogeneous_recovery": "u_i=R_it*t-XiB*alpha; original existing owner recovery unchanged",
+    "native_block": "[[S_V,Bhat],[-Dhat,Hhat]]",
+    "no_D_equals_BH_assumption": true,
+    "no_Hermitian_assumption": true,
+    "no_double_coupling": "saved As already supplies augmented upper coupling; no extra DtN/B*H^-1*D action",
+    "normalization": "original fixed ||q_f|| for field residual; original ||q|| for total; ||b|| and affine norm separately reported",
+    "objective": "min_z ||F*E0*diag(scale)*z-(q_f-F*v0)||_2",
+    "original_target": {
+      "old_LSMR_restart": false,
+      "raw_sha256": "7a0f317f14c13dfa3235d34cb2586ceeecbdd3a43addd6555ebfb66af84daca2",
+      "saved_rhs_substituted": false,
+      "source": "same6656 original native rhs minus native S6 checkpoint, rebuilt by unchanged four input actions",
+      "unit_sha256": "3cd6bb01aba4adbcdb87a9b678796cc7a6ba45cd0296d6d3a05b9961147abfce"
+    },
+    "physical_coefficients": "y=diag(scale)*z; final [t;alpha]=[P*y;Hhat^-1*(Dhat*P*y+q_p)]",
+    "port_constraint": "q_p+Dhat*t-Hhat*alpha=0",
+    "right_scaling": {
+      "Gram": false,
+      "chunk_entries": 65536,
+      "clipping": false,
+      "damping": 0.0,
+      "formula": "1/sqrt(sum(abs(P_ij)^2))",
+      "operator_probes": false,
+      "pruning": false,
+      "range_and_field_objective_preserved": true,
+      "source": "existing canonical CSR Pt columns",
+      "unscaled_minimum_coefficient_norm_preserved": false,
+      "zero_or_nonfinite": "fail closed"
+    },
+    "scaling_adjoint": "positive real scale multiplies the unscaled M.H result; same scale multiplies input before forward",
+    "stationarity": "both unscaled M.H residual and scaled parameter normal residual reported; LSMR normar is scaled metric",
+    "v0": "[0;Hhat^-1*q_p]",
+    "unscaled_operator": "M0=F E0",
+    "scaled_operator": "M=M0 diag(scale)",
+    "scaled_adjoint": "M.H*w=diag(scale)*M0.H*w; scale is real positive",
+    "coefficient_notation": "physical coarse trace y in source equals c in this Chinese report; both equal scale*z"
+  },
+  "map_identity": {
+    "Pt_shape": [
+      23976,
+      10224
+    ],
+    "Pt_sha256": "131167d5770521d4b869c054040047a7f08cbeb58b96a780b60f8976ca726695",
+    "pruning": false,
+    "fine_bubbles": 48600,
+    "ports": 80,
+    "coarse_trace_parameters": 10224,
+    "fine_cells": 108,
+    "fine_degree": 6
+  },
+  "target_identity": {
+    "label": "paused6656_native_true_residual",
+    "target_source": "original_native_rhs_minus_native_S6_at_original_mapped_checkpoint",
+    "original_PETSc_raw_norm": 0.013898680225977397,
+    "raw_hash": "7a0f317f14c13dfa3235d34cb2586ceeecbdd3a43addd6555ebfb66af84daca2",
+    "unit_hash": "3cd6bb01aba4adbcdb87a9b678796cc7a6ba45cd0296d6d3a05b9961147abfce",
+    "retained_port_norm": 5.778000052683001e-13,
+    "retained_trace_norm": 1.000000000000002,
+    "saved_derived_target_substituted": false,
+    "raw_physical_vector_modified": false
+  },
+  "actual_adjoint_checks": {
+    "Dhat": {
+      "count": 3,
+      "max_relative": 7.295803224673932e-16,
+      "scalar_pair_differences_recomputed": true
+    },
+    "Hhat_inverse": {
+      "count": 3,
+      "max_relative": 1.626867962211695e-16,
+      "scalar_pair_differences_recomputed": true
+    },
+    "scaled_M": {
+      "count": 3,
+      "max_relative": 4.99547500025556e-15,
+      "scalar_pair_differences_recomputed": true
+    }
+  },
+  "small80_solve_gate": {
+    "limit": 1e-10,
+    "max_operation_relative": {
+      "hermitian": 7.963417176029109e-19,
+      "normal": 4.654354737526933e-18
+    },
+    "max_rhs_relative": {
+      "hermitian": 1.671284912025608e-16,
+      "normal": 1.2977299322469054e-16
+    },
+    "same_LU_normal_and_conjugate_transpose": true
+  },
+  "LSMR": {
+    "MH_calls": 129,
+    "M_calls": 128,
+    "condA": 7.797841251084291,
+    "istop": 7,
+    "iteration_cap_reached": true,
+    "itn": 128,
+    "normA": 320693.1437552574,
+    "normar": 59.005958395391524,
+    "normar_metric": "right_scaled_parameter_normal_residual",
+    "normr": 0.895070799966005,
+    "normx": 0.0008445636384994916
+  },
+  "right_scaling": {
+    "chunk_entries": 65536,
+    "clipping": false,
+    "column_norm_max": 2.23606797749979,
+    "column_norm_min": 0.9999999999999972,
+    "kind": "inverse_positive_Pt_column_2_norm",
+    "objective_preserved": true,
+    "operator_column_normalization": false,
+    "pruning": false,
+    "scale_max": 1.0000000000000029,
+    "scale_min": 0.4472135954999579,
+    "unscaled_minimum_coefficient_norm_preserved": false
+  },
+  "selected_candidate": {
+    "eta_native_field": 0.8950707999659866,
+    "eta_native_total": 0.8950707999659866,
+    "eta_saved_in_native_field_norm": 0.8950707999660044,
+    "q_field_original_denominator": 1.000000000000002,
+    "q_original_denominator": 1.000000000000002,
+    "b_norm": 1.0000000000000044,
+    "affine_field_norm": 3.9890790823751864e-12,
+    "delta_field": 8.342847804293221e-13,
+    "native_residual_norms": {
+      "ports": 6.806550954530763e-21,
+      "total": 0.8950707999659884,
+      "trace": 0.8950707999659884
+    },
+    "native_vs_saved_image_norms": {
+      "ports": 2.5860780832970633e-19,
+      "total": 8.342847804293638e-13,
+      "trace": 8.342847804293238e-13
+    },
+    "recomputed_scaled_parameter_normal_residual_norm": 59.005958395391,
+    "recomputed_unscaled_normal_residual_norm": 90.0517603061968,
+    "scaled_normal_relative_to_original_q_field": 59.00595839539088,
+    "unscaled_normal_relative_to_original_q_field": 90.05176030619661,
+    "scaled_parameter_norm": 0.0008445636384994916,
+    "y_norm": 0.000736988160313862,
+    "alpha_norm": 4.461868546417249e-05
+  },
+  "original_port_gate": {
+    "Du_norm": 9.728152432021144e-05,
+    "Halpha_norm": 9.728152435563323e-05,
+    "absolute": 4.4271843897310474e-21,
+    "consistency_with_native_port_residual_absolute": 5.429600607463516e-21,
+    "limit": 1e-10,
+    "operation_relative": 2.27544973555564e-17,
+    "operation_scale": 0.00019456304925364467,
+    "passed": true,
+    "q_port_norm": 5.778000052683001e-13,
+    "status": "PASS"
+  },
+  "claim_flags": {
+    "image_threshold": 0.02,
+    "global_minimum_certified": false,
+    "no_lower_bound_certificate": true,
+    "impossibility_claimed": false,
+    "legal_PC_improvement_claimed": false,
+    "legal_port_image_upper_bound": false,
+    "verified_native_port_constrained_existence_upper_bound": false,
+    "arbitrary_nonzero_port_RHS_qualified": false,
+    "pressure_probe_qualified": false,
+    "solution_accepted": false
+  },
+  "actual_work": {
+    "counts": {
+      "Dhat": 135,
+      "DhatH": 136,
+      "F": 133,
+      "FH": 133,
+      "HhatH_solve": 136,
+      "Hhat_solve": 136,
+      "M": 131,
+      "MH": 133,
+      "homogeneous_local_recovery": 1,
+      "original_D": 1,
+      "port80_numeric_factor": 1,
+      "selected_native_S6": 1
+    },
+    "hard_caps": {
+      "Dhat": 136,
+      "DhatH": 136,
+      "HhatH_solve": 136,
+      "Hhat_solve": 136,
+      "LSMR_iterations": 128,
+      "actual_complex_pairs_per_operator": 3,
+      "saved_adjoint": 136,
+      "saved_forward": 136
+    },
+    "native_input_S6_actions": 4,
+    "selected_native_S6_actions": 1,
+    "global_K_created": false,
+    "JOB1": 0,
+    "global_numeric": 0,
+    "global_factor_solve": 0,
+    "H3": 0,
+    "BAL_H": 0,
+    "CG_iterations": 0,
+    "outer_iterations": 0,
+    "outer_KSP_created": false,
+    "port80_numeric_factor": 1,
+    "fine_local_LU_bank_present": true,
+    "no_continuation_authorized": true
+  },
+  "runtime_terminal": {
+    "status": "PASS_RUNTIME_RESOURCE_SCOPE_ONLY_SCIENCE_INCONCLUSIVE",
+    "elapsed_seconds": 74.77656138801831,
+    "peak_tree_rss_bytes": 2408468480,
+    "resource_samples": 294,
+    "admissions": 63,
+    "named_tree_admissions_independently_recomputed": true,
+    "maximum_projected_tree_bytes": 4361104164,
+    "minimum_host_available_bytes": 6980517888,
+    "minimum_disk_free_bytes": 13037912064,
+    "maximum_recorded_VmSize": 3117477888,
+    "maximum_recorded_VmRSS": 2397319168,
+    "AS6_source_gates_and_effective_limit_verified": true,
+    "regular_output_bytes": 3368616,
+    "cache_calls": 16,
+    "raw_class_hits": 33,
+    "factor_scope": "one new local80 Hhat LU; no globalK numeric factor; original native cell interior factors reconstructed as before"
+  },
+  "cleanup": {
+    "child_exit_code": 0,
+    "supervisor_cleanup_verified": true,
+    "remaining": [],
+    "known11_returned_normally": true,
+    "hidden_partial_native_handle_explicit_cleanup_not_claimed": true
+  },
+  "original_limits_unchanged": {
+    "hard_AS_bytes": 6442450944,
+    "tree_RSS_ceiling_bytes": 8589934592,
+    "minimum_host_available_bytes": 1073741824,
+    "zero_swap": true,
+    "hard_seconds": 600,
+    "minimum_disk_free_bytes": 4294967296,
+    "total_output_cap_bytes": 134217728,
+    "MPI": 1,
+    "threads": 1,
+    "one_scientific_child": true
+  },
+  "reservation": {
+    "joint_CSC_LS_allocator_diagnostic_bytes": 1091418852,
+    "increment_from_free_port_bytes": 16777216,
+    "AS_check": "current VmSize plus named extras against6GiB",
+    "tree_check_separate_from_AS": true,
+    "recorded_snapshots_not_continuous_peaks": true,
+    "allocator_release_credit": false
+  },
+  "local_four_vectors": {
+    "local_only": true,
+    "uploaded": false,
+    "accepted_solution": false,
+    "total_file_bytes": 1318784,
+    "max_file_bytes": 385024,
+    "publisher_read_NPY_payloads": false,
+    "coarse_y_semantics": "physical unscaled coarse trace c=scale*z;10224 entries; not LSMR z; no free80 port coefficients",
+    "files_metadata_only": {
+      "coarse_y": {
+        "bytes": 163712,
+        "shape": [
+          10224
+        ],
+        "dtype": "complex128",
+        "sha256": "0ae9264e8a9b1da83b26d3c302a27a81537c3188b972f69c92a7865a76bf9129",
+        "typed_sha256": "1069af7861451991775e1e729dabaa0a9470cf7d81bcadcd66da8a1f378a5796"
+      },
+      "native_image": {
+        "bytes": 385024,
+        "shape": [
+          24056
+        ],
+        "dtype": "complex128",
+        "sha256": "980c045d637797c7449a3159dae25634a84c00d07aace41d9af597e5253855db",
+        "typed_sha256": "74c9251ae6fd84eaad66854615d8019e6be477a929d957c9f755ff60c8cabea7"
+      },
+      "native_residual": {
+        "bytes": 385024,
+        "shape": [
+          24056
+        ],
+        "dtype": "complex128",
+        "sha256": "1a90b0e4cfa666ddb076c73bdd0bd6e17eabc8650e2a6ce13defb6f89e37f375",
+        "typed_sha256": "8395681f3c2a97171e2650f12cb43d41c5e4da807702a3d649b15ff6abc1c1f6"
+      },
+      "q_native": {
+        "bytes": 385024,
+        "shape": [
+          24056
+        ],
+        "dtype": "complex128",
+        "sha256": "2d1b787b35aea8a3b59c1b134a6453c67646618572672496563016aeb4368bed",
+        "typed_sha256": "3cd6bb01aba4adbcdb87a9b678796cc7a6ba45cd0296d6d3a05b9961147abfce"
+      }
+    },
+    "independent_review": {
+      "method": "stdlib NPY1.0 header via ast.literal_eval and <dd struct unpack; exact file+typed hashes, finite components, fsum norms; no scientific imports",
+      "componentwise_max_error": 0.0,
+      "native_S6_recomputed": false,
+      "native_image_minus_q_equals_native_residual_exactly": true,
+      "recomputed_norms": {
+        "eta_native_field": 0.8950707999659855,
+        "eta_native_total": 0.8950707999659855,
+        "image_field": 0.360147875229525,
+        "image_ports": 5.778000053651214e-13,
+        "image_total": 0.360147875229525,
+        "q_field": 1.0000000000000024,
+        "q_ports": 5.778000052683001e-13,
+        "q_total": 1.0000000000000024,
+        "residual_field": 0.8950707999659877,
+        "residual_ports": 6.806550954530763e-21,
+        "residual_total": 0.8950707999659877,
+        "y": 0.0007369881603138618
+      },
+      "scientific_imports": false
+    }
+  },
+  "independent_terminal_review": {
+    "verdict": "VALID_BOUNDED_DIAGNOSTIC_INCONCLUSIVE_AT128_NATIVE_PORT_GATE_PASSED",
+    "all46_source_pins_rechecked": true,
+    "normal_actions_independently_recomputed": false,
+    "large_CSR_or_Pt_payload_read": false,
+    "limitations": [
+      "The four files independently establish artifact hashes, finite values, residual identity and norms; they do not constitute an independent recomputation of native S6(E0y+v0).",
+      "Hhat solve maxima, actual operator adjoints and fresh normal action are verified as bound runtime scalar receipts; original operators and factors were not replayed.",
+      "Original large saved CSR integrity is supported by pinned stage control flow and its actual integrity admission, not by reviewer re-reading353MB arrays.",
+      "Parent owns complete resource/cost accounting; this report checks terminal limits/summary and leaves detailed guard arithmetic to its separate runtime review."
+    ]
+  },
+  "previous_free_port_comparison": {
+    "native_retained_residual_at128": 0.8537943314895308,
+    "original_port_gate_relative": 0.9394413894559671,
+    "original_port_status": "FAIL",
+    "status": "INCONCLUSIVE",
+    "scope": "Side-by-side capped candidates only. New experiment changes port constraint and Pt-column right scaling together; retained versus field objective. No isolated causal comparison or comparison of global minima."
+  },
+  "preserved_failures": {
+    "pressure_g1_qualification_FAIL_retained": true,
+    "checkpoint_raw_mismatch_preserved": true,
+    "saved_native_checkpoint_residual": {
+      "absolute": 4.955256445533892e-09,
+      "finite": true,
+      "limit": 1e-10,
+      "operation_passed": false,
+      "operation_relative": 1.7826355891748933e-07,
+      "operation_scale": 0.027797360692363774,
+      "raw_passed": false,
+      "relative": 3.5652711475150975e-07
+    },
+    "prior_actual_raw_failures": {
+      "field_accepted": false,
+      "native_prediction_raw_passed": false,
+      "saved_native_PC_action_raw_passed": false,
+      "saved_prediction_raw_passed": false,
+      "these_are_not_overridden_by_PC_comparison_status": true
+    },
+    "saved_native_raw_failures_overridden": false,
+    "all_diagnostics_passed_claimed": false,
+    "field_accepted": false,
+    "solution_accepted": false
+  },
+  "costs": {
+    "current_stage_seconds": 74.77656138801831,
+    "prior_six_trace4_attempts_seconds": 947.75983875303,
+    "seven_trace4_attempts_seconds": 1022.5364001410483,
+    "project_ledger": "phase4_execution_ledger_v73.json",
+    "project_known_terminal_seconds": 21231.991389564137,
+    "project_lower_bound_including_interrupted_seconds": 29145.98367240712,
+    "not_exact_project_wallclock": true,
+    "preparation_review_wait": "UNMEASURED_NOT_ZERO",
+    "subphase_seconds_not_added_again": true,
+    "memory_peaks_not_summed": true
+  },
+  "stop_scope": "Publish128-cap INCONCLUSIVE with original port PASS. No further LS, numerical experiment, or outer iteration is authorized by this report.",
+  "not_proven": [
+    "global minimum or lower bound",
+    "unattainability",
+    "trace deficiency as cause of Maxwell plateau",
+    "PC improvement",
+    "general nonzero-port coarse inverse qualification",
+    "accepted physical solution",
+    "108-cell or hp convergence"
+  ],
+  "evidence_root_label": "hp_resume_20261013",
+  "evidence": [
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_port_eliminated_image_source_review.json",
+      "bytes": 23104,
+      "sha256": "649f4abed20df47193e9bb1cc8dfcc42333ac9d033f97c4adb789b9abac9ea11"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_port_eliminated_image_attempt01/summary.json",
+      "bytes": 1224,
+      "sha256": "c4d1a114c9d4bc25d31c2bf306c3edc8486b8d3a53d59ce33d941c4e53cd9bf6"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_port_eliminated_image_attempt01/result.json",
+      "bytes": 229231,
+      "sha256": "4795a480e5fa5ab77d596e1a64a5f23ec05c1bebfc005e11f3d60a8eb10728e5"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_port_eliminated_image_attempt01_terminal_review.json",
+      "bytes": 31145,
+      "sha256": "8904a925ff43c83b92e2f7ba01e185771be8542377f31710744995d2890e543a"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_trace4_interior6_port_eliminated_image_runtime_review.json",
+      "bytes": 5794,
+      "sha256": "a1e6c0c51101cdd0a759538f80e08a809854a7c69dd7045c60f2c3d5eef2545f"
+    },
+    {
+      "path_relative_to_evidence_root": "phase4_execution_ledger_v73.json",
+      "bytes": 51578,
+      "sha256": "f957545b9e59dcc8c83305028abe01650eab6ade09647266a3a27b6dbca752c6"
+    }
+  ]
+}
