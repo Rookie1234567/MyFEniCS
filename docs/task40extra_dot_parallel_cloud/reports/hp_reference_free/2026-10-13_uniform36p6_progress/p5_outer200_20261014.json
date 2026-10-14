@@ -1,0 +1,254 @@
+{
+  "schema": "phase4.p5-coarse-outer200-causal-report.v1",
+  "created_utc": "2026-10-14T15:52:49.829566+00:00",
+  "status": "200_STEP_CAP_FINAL_TRUE_RESIDUAL_FAIL_PLATFORM_REDUCED_NOT_REMOVED",
+  "fixed": {
+    "fine_cells": 108,
+    "fine_degree": 6,
+    "coarse_degree": 5,
+    "initial_checkpoint_origin": 6656,
+    "restart": 32,
+    "H6_degree": 3,
+    "orthogonalization": "classical_Gram_Schmidt_no_refinement",
+    "physical_model_unchanged": true,
+    "native_A_and_saved_A_unchanged": true
+  },
+  "current_qualified_physical_field_cells": 96,
+  "hp_spatial_convergence_established": false,
+  "iteration_accounting": {
+    "this_diagnostic": 200,
+    "this_diagnostic_max": 200,
+    "old108_10000_unchanged": true,
+    "automatic_continuation": false
+  },
+  "comparison_rows": [
+    {
+      "local_steps": 64,
+      "p4_saved": 0.02011484924413727,
+      "p4_native": 0.020114848902987346,
+      "p5_saved": 0.01029591892407898,
+      "p5_native": 0.010295918887247131,
+      "p5_over_p4_native": 0.5118566357074668
+    },
+    {
+      "local_steps": 128,
+      "p4_saved": 0.020070102135122884,
+      "p4_native": 0.020070101796872672,
+      "p5_saved": 0.010243153408522554,
+      "p5_native": 0.010243153365002275,
+      "p5_over_p4_native": 0.5103687798234469
+    },
+    {
+      "local_steps": 192,
+      "p4_saved": 0.020027404374277698,
+      "p4_native": 0.02002740403819845,
+      "p5_saved": 0.010228572115453857,
+      "p5_native": 0.010228572069067113,
+      "p5_over_p4_native": 0.510728801873576
+    },
+    {
+      "local_steps": 200,
+      "p4_saved": null,
+      "p4_native": null,
+      "p5_saved": 0.010228400096282076,
+      "p5_native": 0.010228400051184385,
+      "p5_over_p4_native": null
+    }
+  ],
+  "baseline_caveat": "Historical p4 attempt is INCOMPLETE at its later transport termination; listed completed saved checkpoints are qualified records. No independently true p4 local200 checkpoint exists; do not interpolate or invent it.",
+  "final_native": {
+    "absolute": 0.007048815509398762,
+    "denominator_floor": 1e-30,
+    "relative": 0.010228400051184385,
+    "rhs_norm": 0.68914155431206
+  },
+  "final_saved": {
+    "absolute": 0.007048815540477449,
+    "denominator_floor": 1e-30,
+    "relative": 0.010228400096282076,
+    "rhs_norm": 0.6891415543120595
+  },
+  "independent_saved_Ax": {
+    "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p5_outer200_saved_ax_stream_review.json",
+    "bytes": 8294,
+    "sha256": "3acba3d3fed1535e3fce233204a72a70aa83a1431ae5ef126a1413c3233856a9"
+  },
+  "independent_saved_Ax_relative": 0.010228400096250125,
+  "reason": -3,
+  "reason_semantics": "KSP_DIVERGED_ITS: iteration cap reached, not proof of numerical blowup",
+  "final_acceptance": false,
+  "original_gates": {
+    "saved_relative_limit": 1e-09,
+    "native_relative_limit": 1e-11,
+    "positive_KSP_reason_required": true
+  },
+  "failure": {
+    "all_inner_cleanup_guaranteed": false,
+    "exception_chain": [
+      {
+        "message": "original saved1e-9 and independent native1e-11 true-residual gates",
+        "notes": [],
+        "type": "ValueError"
+      }
+    ],
+    "first_error_preservation_guaranteed": false,
+    "outer_max_iterations": 200,
+    "status": "P5_OUTER200_STOPPED_OR_FAILED_ORIGINAL_GATE_PRESERVED"
+  },
+  "configuration": {
+    "PETSc_version": [
+      3,
+      25,
+      6
+    ],
+    "actual_PC_side": "right",
+    "actual_max_iterations": 200,
+    "actual_nonzero_initial_guess": true,
+    "actual_norm_type": "unpreconditioned",
+    "bytes": 651,
+    "inspected_object_handle": 94311243410304,
+    "iterative_refinement": "never",
+    "original_default_CGS_and_refinement_preserved": true,
+    "orthogonalization": "classical_unmodified_Gram_Schmidt",
+    "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p5_coarse_candidate/outer200_attempt01/actual_restart32_ksp_configuration.txt",
+    "restart": 32,
+    "selected_lines": [
+      "restart=32, using classical (unmodified) Gram-Schmidt orthogonalization with no iterative refinement",
+      "maximum iterations=200, nonzero initial guess",
+      "right preconditioning",
+      "using UNPRECONDITIONED norm type for convergence test"
+    ],
+    "setFromOptions_called": false,
+    "sha256": "da7a1926a72c47df03f56c24b7b0d95f76e9a8fefac70d383e2edf04f43890d4",
+    "source_derived_Krylov_envelope": {
+      "bytes": 32370336,
+      "hessenberg_and_rotation_workspace_bytes": 39072,
+      "measured_peak": false,
+      "mutually_exclusive_ilu_reserve_bytes": 0,
+      "reason": "fixed right FGMRES32; original BAL_H separately admitted",
+      "restart": 32,
+      "rows": 24056,
+      "source_derived_full_cycle_native_vector_count": 70,
+      "vector_slot_bytes": 384896,
+      "vector_slots_conservative": 84
+    },
+    "status": "PASS_ACTUAL_CONFIGURED_KSP_VIEW_BEFORE_SOLVE"
+  },
+  "same_direction_identity": {
+    "matched_fixed02": true,
+    "original_physical_rhs_unchanged": true,
+    "raw_hash": "7a0f317f14c13dfa3235d34cb2586ceeecbdd3a43addd6555ebfb66af84daca2",
+    "raw_norm": 0.013898680225977397,
+    "unit_hash": "3cd6bb01aba4adbcdb87a9b678796cc7a6ba45cd0296d6d3a05b9961147abfce"
+  },
+  "coarse": {
+    "logical_calls": 402,
+    "setup_probe_calls": 2,
+    "outer_calls": 400,
+    "total_native_PC_calls": 201,
+    "outer_PC_calls": 200,
+    "max_returned_relative": 9.957373266104893e-11,
+    "maximum_raw_relative": 7.462869918741191e-10,
+    "extra_mat_solves": 100,
+    "total_mat_solves": 502,
+    "timing_sum_coarse_repair_seconds": 144.72453935522935,
+    "timing_is_nested_in_setup_or_KSP_not_additive": true,
+    "original_coarse_return_relative_limit": 1e-10,
+    "all_returned_below_original_limit": true,
+    "raw_above_original_limit": 100
+  },
+  "resources": {
+    "baseline": {
+      "available": 9149591552,
+      "disk_free": 13192736768,
+      "pswpin": 0,
+      "pswpout": 0,
+      "swap_used": 0,
+      "total": 10451464192
+    },
+    "child_exit_code": 1,
+    "cleanup_verified": true,
+    "command": [
+      "/workspace/scratch/9c465670b46b/task40extra_cloud/p8_balh_experiment/runtime/bin/python",
+      "-I",
+      "-B",
+      "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p5_coarse_candidate/outer200_control/outer_entry.py",
+      "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p5_coarse_candidate/outer200_control/outer200_attempt01.command.json",
+      "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p5_coarse_candidate/outer200_attempt01"
+    ],
+    "elapsed_seconds": 366.33783498301636,
+    "limits": {
+      "available_bytes": 1073741824,
+      "disk_free_bytes": 4294967296,
+      "new_artifact_cap_bytes": 536870912,
+      "rss_bytes": 8589934592,
+      "seconds": 600.0,
+      "zero_swap": true
+    },
+    "numerical_result_authority": false,
+    "process_tree_peak_rss_bytes": 3124211712,
+    "remaining": [],
+    "resource_sample_count": 1451,
+    "schema": "cloud-numeric-supervisor.v1",
+    "status": "CHILD_FAILED",
+    "stop_reason": null
+  },
+  "cost": {
+    "BAL_H_build_seconds": 113.06372200799524,
+    "KSP_setup_seconds": 0.0002458220114931464,
+    "KSP_solve_seconds": 247.7589220709924,
+    "all_inside_supervisor_wall": true,
+    "exclusive_complete_PC_wall_not_separately_preserved_in_terminal": true,
+    "independent_stream_Ax_seconds": 7.937611732020741,
+    "p5_all_supervised_stages_seconds": 973.2570469300263,
+    "phase4_known_terminal_seconds": 18974.67862536905,
+    "phase4_total_seconds_lower_bound": 26888.670908212036,
+    "not_exact_including_old_incomplete": true,
+    "engineering_preparation_and_waiting_separate_not_zero": true
+  },
+  "evidence": {
+    "command": {
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p5_coarse_candidate/outer200_control/outer200_attempt01.command.json",
+      "bytes": 970079,
+      "sha256": "ba821ef8f0549932b7743e71db71812fda5b6dae6d217a3a5cf73b19a0d49643"
+    },
+    "summary": {
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p5_coarse_candidate/outer200_attempt01/summary.json",
+      "bytes": 1178,
+      "sha256": "6528adbe2869a1bd2ed1a4854c168814925f532c3f49fc8de031492d4bbbf361"
+    },
+    "terminal": {
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p5_coarse_candidate/outer200_attempt01/linear_terminal_before_gate.json",
+      "bytes": 212533,
+      "sha256": "71fa0f1dab02e5a6d8134f37fe58d92ceaed146265a4ef293ae4377d778e47d9"
+    },
+    "checkpoint": {
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p5_coarse_candidate/outer200_attempt01/latest_iteration_solution.json",
+      "bytes": 1084,
+      "sha256": "ffca9cea9e134cc967b3106a441de03db291e813d08769a7ab2a70d56e4f5f20"
+    },
+    "source_review": {
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p5_outer200_source_review.json",
+      "bytes": 9739,
+      "sha256": "a18528ebbd94f520cbca24a6a844469acd3d6f63f7c247b7444e670985707618"
+    },
+    "ledger": {
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_execution_ledger_v53.json",
+      "bytes": 32909,
+      "sha256": "297e15680180ae2309a8a93520bec13f5994c10c1b02f84bdd0be767607d8ea5"
+    }
+  },
+  "metadata_caveat": "Inherited monitor wall_time_stop_policy=observe_only label is stale. Actual original supervisor has enforced600s. A postacceptance exception handler can set solve_returned_normally=false even though KSP actually returned; authoritative pre-gate terminal records real200/reason-3 and solve time.",
+  "interpretation": [
+    "p5 captured a useful component missed by p4 on this residual, but did not remove remaining platform.",
+    "0.8158 one-direction optimal reduction was not a sustainable per-iteration contraction rate.",
+    "No causal BAL_H coding defect has yet been established; original hp exactgeometry omission and checker representation gaps are separately preserved real implementation findings.",
+    "Current evidence motivates a direct test of actual Arnoldi orthogonality/residual gap rather than an unconditional claim of another bug."
+  ],
+  "next_authorized_scope": "One instrumented original p4/M/A32-step cycle from6656, same originalCGS, with actual V/Z snapshots and perstep true-vs-recursive residual; source preparation only at this report timestamp.",
+  "independent_terminal_review": {
+    "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_p5_outer200_independent_terminal_review.json",
+    "bytes": 22643,
+    "sha256": "c2303ee9d85df5f653aedc5ed79a59fd677ab2e67c4aafa18656876fff4d03b4"
+  }
+}
