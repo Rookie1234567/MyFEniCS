@@ -208,6 +208,10 @@ def test_v32_twist0_handoff_accepts_provider_q4_and_requires_real_q0_q4_receipts
     )
     assert set(all_matrices) == {0, 4}
     assert audit["all_complete_native_pass"] is True
+    assert [
+        entry for entry in audit["selector_entries"]
+        if int(entry.get("q_index", -1)) == 4
+    ] == [q4_entry]
 
     with pytest.raises(ValueError, match="lacks COMPLETE CSR and native PASS"):
         _task40_v31_merge_twist0_q_csr_audit(

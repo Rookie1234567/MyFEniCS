@@ -8787,7 +8787,7 @@ def run_task40_v10_p6_reference_worker(
                 q4_saved_live_binding=donor_binding,
                 q4_native_status="PASS",
                 q4_selector_entry=next(
-                    row for row in selector_entries if int(row.get("q_index", -1)) == 4
+                    row for row in merged_audit["selector_entries"] if int(row.get("q_index", -1)) == 4
                 ),
                 global_reference_builder_started=False,
             )
