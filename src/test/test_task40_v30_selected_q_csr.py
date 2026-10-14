@@ -532,6 +532,7 @@ def test_v32_q4_import_requires_exact_existing_pending_and_writes_receipt_to_new
     assert manifest["status"] == "COMPLETE_CSR"
     assert qualification["status"] == "PASS"
     assert manifest["numeric_pending_import"]["old_arrays_modified"] is False
+    manifest_path = Path(selector_entry["csr_manifest"]["path"])
     from src.solvers.task40_v30_qualified_q_csr import (
         QualifiedQCSRProvider,
         V30_Q_CSR_SELECTOR_SCHEMA,
@@ -569,6 +570,75 @@ def test_v32_q4_import_requires_exact_existing_pending_and_writes_receipt_to_new
     assert np.array_equal(reopened @ inputs["case2_full"], csr_outputs["case2_full"])
     assert provider_receipt["numeric_pending_import"]["old_arrays_modified"] is False
     assert provider_receipt["numeric_pending_import"]["read_only_import_root"] == str(old_root)
+
+    # The next source consumes the existing COMPLETE CSR under its own
+    # authorization while the manifest keeps the original numeric-import facts.
+    from src.solvers.task40_v30_qualified_q_csr import (
+        make_v31_q_csr_import_authorization,
+    )
+
+    next_consumer = {"source_sha": "9" * 40, "window_sha256": "8" * 64}
+    next_numeric_root = (
+        tmp_path / "next_source" / "factor_bank" / "selected_q" / "q4_twist0"
+    )
+    next_numeric_authorization = make_v32_q4_numeric_pending_import_authorization(
+        pending_record_path=pending["record_path"],
+        pending_record_sha256=pending["record_sha256"],
+        csr_artifacts_sha256={
+            name: str(row["sha256"]) for name, row in pending["csr_artifacts"].items()
+        },
+        producer_execution_identity=producer_identity,
+        matrix_source_identity=matrix_source_identity,
+        consumer_execution_identity=next_consumer,
+        consumer_output_root=next_numeric_root,
+    )
+    complete_artifacts = {
+        name: {
+            "path": str(Path(row["path"]).resolve()),
+            "bytes": int(row["bytes"]),
+            "sha256": str(row["sha256"]),
+        }
+        for name, row in manifest["csr_artifacts"].items()
+    }
+    complete_authorization = make_v31_q_csr_import_authorization(
+        q_index=4,
+        twist_index=0,
+        profile=profile,
+        operator_identity=operator_identity,
+        matrix_source_identity=manifest["matrix_source_identity"],
+        producer_identity=manifest["producer_identity"],
+        producer_execution_identity=manifest["execution_identity"],
+        native_execution_identity=qualification["execution_identity"],
+        csr_manifest_sha256=selector_entry["manifest_sha256"],
+        native_qualification_sha256=selector_entry["native_qualification_sha256"],
+        csr_artifacts=complete_artifacts,
+        consumer_execution_identity=next_consumer,
+    )
+    historical_manifest_bytes = manifest_path.read_bytes()
+    historical_authorization = manifest["numeric_pending_import"]["authorization"]
+    next_provider = QualifiedQCSRProvider(
+        selector_path,
+        selector_sha256=selector_sha256,
+        repo_root=tmp_path,
+        path_resolver=lambda raw: Path(raw).resolve(),
+        allocation_gate=lambda *_args: None,
+        consumer_receipt_directory=tmp_path / "next_consumer_receipts",
+        consumer_import_authorizations={"4": complete_authorization},
+        numeric_pending_import_authorizations={"4": next_numeric_authorization},
+    )
+    next_matrix, next_receipt = next_provider.load(
+        4,
+        0,
+        expected_operator_identity=operator_identity,
+        expected_execution_identity=next_consumer,
+        expected_q_map=q4_map,
+        expected_original_h=original_h,
+    )
+    assert np.array_equal(next_matrix.toarray(), matrix.toarray())
+    assert next_receipt["numeric_pending_import"]["authorization"] == historical_authorization
+    assert next_receipt["consumer_receipt"]["payload"]["authorization"] == complete_authorization
+    assert next_receipt["consumer_receipt"]["payload"]["consumer_execution_identity"] == next_consumer
+    assert manifest_path.read_bytes() == historical_manifest_bytes
 
 
 def test_v32_q4_import_rejects_consumer_output_nested_inside_read_only_import_root(tmp_path):

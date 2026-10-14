@@ -460,31 +460,65 @@ class QualifiedQCSRProvider:
         )
         manifest_numeric_import = manifest.get("numeric_pending_import")
         if numeric_import_authorization is not None:
-            if q_index != 4 or not isinstance(manifest_numeric_import, Mapping):
+            if q_index != 4:
                 raise ValueError("V32 numeric-pending import authorization is restricted to q4")
             from src.solvers.task40_v30_selected_q_csr import (
                 preflight_v32_q4_numeric_pending_import,
             )
 
+            if dict(numeric_import_authorization.get("consumer_execution_identity", {})) != execution:
+                raise ValueError("V32 q4 numeric-pending import authorization differs from this consumer")
             preflight_v32_q4_numeric_pending_import(
                 numeric_import_authorization,
                 profile=str(self.profile),
                 execution_identity=execution,
-                output_directory=manifest_path.parent,
+                output_directory=str(
+                    numeric_import_authorization.get("consumer_output_root", "")
+                ),
             )
+        if manifest_numeric_import is not None:
+            if q_index != 4 or not isinstance(manifest_numeric_import, Mapping):
+                raise ValueError("only q4 may carry a historical V32 numeric-pending import")
+            historical_authorization = manifest_numeric_import.get("authorization")
+            if not isinstance(historical_authorization, Mapping):
+                raise ValueError("q4 manifest historical numeric-pending authorization is missing")
+            historical_execution = historical_authorization.get(
+                "consumer_execution_identity"
+            )
+            historical_output_root = historical_authorization.get("consumer_output_root")
+            if (
+                not isinstance(historical_execution, Mapping)
+                or not isinstance(historical_output_root, str)
+                or not historical_output_root
+                or Path(historical_output_root).resolve() != manifest_path.parent.resolve()
+            ):
+                raise ValueError("q4 historical numeric-pending identity is incomplete")
+            from src.solvers.task40_v30_selected_q_csr import (
+                preflight_v32_q4_numeric_pending_import,
+            )
+
+            historical = preflight_v32_q4_numeric_pending_import(
+                historical_authorization,
+                profile=str(self.profile),
+                execution_identity=historical_execution,
+                output_directory=historical_output_root,
+            )
+            manifest_artifacts = manifest.get("csr_artifacts")
+            if not isinstance(manifest_artifacts, Mapping):
+                raise ValueError("q4 historical numeric-pending manifest omits its CSR array inventory")
             import_execution = manifest_numeric_import.get(
                 "numeric_pending_import_execution"
             )
             if (
-                manifest_numeric_import.get("authorization") != numeric_import_authorization
+                manifest_numeric_import.get("authorization") != historical_authorization
                 or manifest_numeric_import.get("pending_record_path")
-                != numeric_import_authorization.get("pending_record_path")
+                != historical_authorization.get("pending_record_path")
                 or manifest_numeric_import.get("pending_record_sha256")
-                != numeric_import_authorization.get("pending_record_sha256")
+                != historical_authorization.get("pending_record_sha256")
                 or manifest_numeric_import.get("read_only_import_root")
-                != numeric_import_authorization.get("import_root")
+                != historical_authorization.get("import_root")
                 or manifest_numeric_import.get("consumer_completion_output_root")
-                != str(manifest_path.parent.resolve())
+                != historical_authorization.get("consumer_output_root")
                 or manifest_numeric_import.get("old_arrays_modified") is not False
                 or manifest_numeric_import.get("publication_rehashed_large_arrays") is not True
                 or not isinstance(import_execution, Mapping)
@@ -510,10 +544,18 @@ class QualifiedQCSRProvider:
                         "numeric_fill_invocations",
                     )
                 )
+                or historical["array_sha256"]
+                != historical_authorization.get("csr_artifacts_sha256")
+                or any(
+                    not isinstance(manifest_artifacts.get(name), Mapping)
+                    or manifest_artifacts[name].get("sha256")
+                    != historical["array_sha256"].get(name)
+                    for name in ("data", "indices", "indptr")
+                )
             ):
-                raise ValueError("V32 COMPLETE manifest import receipt differs from the approved q4 authorization")
-        elif manifest_numeric_import is not None:
-            raise ValueError("q CSR manifest declares an unapproved V32 numeric-pending import")
+                raise ValueError("V32 COMPLETE manifest historical numeric-pending receipt is inconsistent")
+        elif numeric_import_authorization is not None:
+            raise ValueError("V32 q4 COMPLETE manifest omits its numeric-pending provenance")
         legacy_q0 = manifest.get("schema") == "task40extra.review_v28_saved_q0_csr.v1"
         if legacy_q0 and producer_execution != execution:
             raise ValueError("legacy q0 selector execution source/window differs from this run")

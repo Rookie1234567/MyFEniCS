@@ -2847,6 +2847,7 @@ def prepare_selected_q_csr_sector(
 
     selector_entries = []
     native_facts = {}
+    qualification_receipts = []
     for q_index in selected:
         branch = sector_qs.index(q_index)
         peer_q_index = sector_qs[1 - branch]
@@ -2938,7 +2939,7 @@ def prepare_selected_q_csr_sector(
                 },
             )
             raise
-        _manifest, qualification, entry = finalize_selected_q_csr(
+        manifest, qualification, entry = finalize_selected_q_csr(
             matrix=prepared[q_index],
             pattern_record=pattern_records[q_index],
             numeric_facts=numeric_facts_by_q[q_index],
@@ -2963,6 +2964,22 @@ def prepare_selected_q_csr_sector(
         if qualification.get("status") != "PASS" or entry.get("manifest_status") != "COMPLETE_CSR":
             raise RuntimeError("V30 selected q did not persist COMPLETE CSR and native PASS")
         selector_entries.append(entry)
+        qualification_receipts.append(
+            {
+                "q_index": q_index,
+                "twist_index": twist_index,
+                "manifest_status": manifest.get("status"),
+                "qualification_status": qualification.get("status"),
+                "qualification_kind": "V30_NATIVE_PASS",
+                "csr_manifest_path": entry["csr_manifest"]["path"],
+                "csr_manifest_sha256": entry["manifest_sha256"],
+                "native_qualification_path": entry["native_qualification"]["path"],
+                "native_qualification_sha256": entry["native_qualification_sha256"],
+                "maximum_relative_error": float(
+                    qualification["maximum_relative_error"]
+                ),
+            }
+        )
         native_facts[str(q_index)] = {
             "status": qualification["status"],
             "four_complete_csr_actions_passed": qualification[
@@ -2982,6 +2999,7 @@ def prepare_selected_q_csr_sector(
         "numeric_facts_by_q": numeric_facts_by_q,
         "numeric_pending_by_q": numeric_pending_by_q,
         "native_facts_by_q": native_facts,
+        "qualification_receipts": qualification_receipts,
         "selector_entries": selector_entries,
         "all_complete_native_pass": len(selector_entries) == len(selected)
         and all(row.get("qualification_status") == "PASS" for row in selector_entries),

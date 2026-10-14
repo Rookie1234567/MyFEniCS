@@ -999,6 +999,9 @@ def test_v32_service_campaign_resolves_original_entry_window_with_current_contra
 def test_v32_worker_binding_returns_fixed_q4_template(tmp_path, monkeypatch):
     from src.runners import task40_v31_contract
     from src.solvers import task40_v30_selected_q_csr
+    from src.solvers.task40_v30_qualified_q_csr import (
+        make_v31_q_csr_import_authorization,
+    )
 
     contract, binding, payload, environment, contract_sha = _v31_worker_fixture(tmp_path)
     run_source = contract["source_freeze"]["source_sha"]
@@ -1019,7 +1022,61 @@ def test_v32_worker_binding_returns_fixed_q4_template(tmp_path, monkeypatch):
         template,
         consumer_execution_identity={"source_sha": run_source, "window_sha256": window_sha},
     )
-    imports = {"numeric_pending": {"4": authorization}}
+    complete_template = {
+        "schema": task40_v31_contract.V32_Q4_COMPLETE_IMPORT_SCHEMA,
+        "q_index": 4,
+        "twist_index": 0,
+        "profile": V31_PROFILE,
+        "shape": [2, 2],
+        "operator_identity": {
+            "scientific_input_sha256": "1" * 64,
+            "profile_identity_sha256": "2" * 64,
+            "ordered_mode_sha256": "3" * 64,
+            "q_map_sha256": "4" * 64,
+            "original_h_sha256": "5" * 64,
+        },
+        "matrix_source_identity": {
+            "source_sha": "a" * 40,
+            "window_sha256": "b" * 64,
+        },
+        "producer_identity": {"kind": "small-q4-fixture"},
+        "producer_execution_identity": {
+            "source_sha": "c" * 40,
+            "window_sha256": "d" * 64,
+        },
+        "native_execution_identity": {
+            "source_sha": "c" * 40,
+            "window_sha256": "d" * 64,
+        },
+        "csr_manifest": {"path": str(tmp_path / "q4_manifest.json"), "sha256": "6" * 64},
+        "native_qualification": {
+            "path": str(tmp_path / "q4_native.json"),
+            "sha256": "7" * 64,
+            "status": "PASS",
+        },
+        "csr_artifacts": {
+            name: {"path": str(tmp_path / f"q4_{name}.npy"), "bytes": 1, "sha256": f"{index:x}" * 64}
+            for index, name in enumerate(("data", "indices", "indptr"), start=8)
+        },
+    }
+    complete_authorization = make_v31_q_csr_import_authorization(
+        q_index=4,
+        twist_index=0,
+        profile=V31_PROFILE,
+        operator_identity=complete_template["operator_identity"],
+        matrix_source_identity=complete_template["matrix_source_identity"],
+        producer_identity=complete_template["producer_identity"],
+        producer_execution_identity=complete_template["producer_execution_identity"],
+        native_execution_identity=complete_template["native_execution_identity"],
+        csr_manifest_sha256=complete_template["csr_manifest"]["sha256"],
+        native_qualification_sha256=complete_template["native_qualification"]["sha256"],
+        csr_artifacts=complete_template["csr_artifacts"],
+        consumer_execution_identity={"source_sha": run_source, "window_sha256": window_sha},
+    )
+    imports = {
+        "complete": {"4": complete_authorization},
+        "numeric_pending": {"4": authorization},
+    }
     contract["schema"] = task40_v31_contract.V32_CONTRACT_SCHEMA
     contract["review"] = {
         "path": task40_v31_contract.V32_REVIEW_PATH,
@@ -1027,6 +1084,7 @@ def test_v32_worker_binding_returns_fixed_q4_template(tmp_path, monkeypatch):
         "sha256": task40_v31_contract.V32_REVIEW_SHA256,
     }
     contract["preparation"]["q4_numeric_pending_import"] = template
+    contract["preparation"]["q4_complete_import"] = complete_template
     contract["execution"]["window"].update(
         {
             "window_path": str(window_path),
@@ -1046,6 +1104,7 @@ def test_v32_worker_binding_returns_fixed_q4_template(tmp_path, monkeypatch):
     binding["execution_window_sha256"] = window_sha
     binding["q_csr_import_authorizations"] = imports
     payload["execution"]["task40_v31_q_csr_import_authorizations"] = {
+        "complete": {"4": complete_template},
         "numeric_pending": {"4": template}
     }
     environment["TASK40_V31_EXECUTION_WINDOW_PATH"] = str(window_path)
@@ -1057,6 +1116,44 @@ def test_v32_worker_binding_returns_fixed_q4_template(tmp_path, monkeypatch):
         "preflight_v32_q4_numeric_pending_import",
         lambda auth, **kwargs: preflight_calls.append((dict(auth), kwargs)),
     )
+    monkeypatch.setattr(
+        task40_v31_contract,
+        "v32_q4_complete_import_template",
+        lambda **_kwargs: complete_template,
+    )
+
+    # Model the original approved window's pre-COMPLETE route with a tracked
+    # fixture. Its imported authorization remains numeric-pending only; the
+    # new same-window package adds a separate COMPLETE authorization.
+    old_contract = {
+        "execution": {"q_csr_import_authorizations": {"numeric_pending": {"4": authorization}}},
+        "preparation": {"q4_numeric_pending_import": template},
+    }
+    old_imports = old_contract["execution"]["q_csr_import_authorizations"]
+    assert set(old_imports) == {"numeric_pending"}
+    assert old_contract["preparation"]["q4_numeric_pending_import"] == template
+
+    repository_root = Path(__file__).resolve().parents[2]
+    from src.runners.task40_v30_contract import (
+        V30_CANONICAL_INPUT_RELATIVE,
+    )
+    staged_text = task40_v31_contract._render_v31_stage_input(
+        (repository_root / V30_CANONICAL_INPUT_RELATIVE).read_text(encoding="utf-8"),
+        selector_relative_path="source-fixture/q_csr_selector_v31.json",
+        selector_sha256="e" * 64,
+        factor_relative_path="source-fixture/factor_bank",
+        q4_numeric_pending_import=template,
+        q4_complete_import=complete_template,
+    )
+    import tomllib
+
+    staged_route = tomllib.loads(staged_text)["execution"][
+        "task40_v31_q_csr_import_authorizations"
+    ]
+    assert staged_route == {
+        "complete": {"4": complete_template},
+        "numeric_pending": {"4": template},
+    }
     worker = task40_v31_contract.validate_v31_worker_execution_binding(
         binding,
         contract=contract,
@@ -1070,6 +1167,8 @@ def test_v32_worker_binding_returns_fixed_q4_template(tmp_path, monkeypatch):
     assert worker["review_version"] == "V32"
     assert worker["q4_numeric_pending_import_template"] == template
     assert worker["q4_numeric_pending_import_authorization"] == authorization
+    assert worker["q4_complete_import_template"] == complete_template
+    assert worker["q4_complete_import_authorization"] == complete_authorization
     assert preflight_calls == [
         (
             authorization,

@@ -4655,13 +4655,20 @@ def run_task40_v20_stage(
                 v32_template = v31_contract.get("preparation", {}).get(
                     "q4_numeric_pending_import"
                 )
+                v32_complete_template = v31_contract.get("preparation", {}).get(
+                    "q4_complete_import"
+                )
                 v31_q_csr_import_authorizations = v31_execution.get(
                     "q_csr_import_authorizations"
                 )
                 if (
                     not isinstance(v32_template, Mapping)
+                    or not isinstance(v32_complete_template, Mapping)
                     or staged_q_csr_import_authorizations
-                    != {"numeric_pending": {"4": dict(v32_template)}}
+                    != {
+                        "complete": {"4": dict(v32_complete_template)},
+                        "numeric_pending": {"4": dict(v32_template)},
+                    }
                     or not isinstance(v31_q_csr_import_authorizations, Mapping)
                 ):
                     raise RuntimeError(

@@ -305,6 +305,71 @@ def _task40_v31_build_reference_after_q4_pending(
     return build_reference(pending), pending
 
 
+def _task40_v31_merge_twist0_q_csr_audit(
+    provider_matrices: Mapping[int, Any],
+    provider_audit: Mapping[str, Any],
+    prepared_matrices: Mapping[int, Any],
+    preparation_audit: Mapping[str, Any],
+    *,
+    donor_binding: Mapping[str, Any],
+) -> tuple[dict[int, Any], dict[str, Any]]:
+    """Require one verified q0 and q4 receipt before the twist-0 owner handoff."""
+    if set(provider_matrices).intersection(prepared_matrices):
+        raise ValueError("V31 twist-0 q CSR was both imported and freshly prepared")
+    all_matrices = {**dict(provider_matrices), **dict(prepared_matrices)}
+    receipts = [
+        *provider_audit.get("qualification_receipts", ()),
+        *preparation_audit.get("qualification_receipts", ()),
+    ]
+    selector_entries = [
+        *provider_audit.get("selector_entries", ()),
+        *preparation_audit.get("selector_entries", ()),
+    ]
+    receipt_by_q = {
+        int(row.get("q_index", -1)): row for row in receipts if isinstance(row, Mapping)
+    }
+    receipt_q_indices = sorted(receipt_by_q)
+    selector_q_indices = sorted(
+        int(row.get("q_index", -1))
+        for row in selector_entries
+        if isinstance(row, Mapping)
+    )
+    q0 = receipt_by_q.get(0, {})
+    q4 = receipt_by_q.get(4, {})
+    q0_legacy_pass = (
+        q0.get("qualification_kind")
+        == "LEGACY_QUALIFICATION_IMPORTED_OPERATOR_BINDINGS_DERIVED"
+        and q0.get("qualification_status") == "PASS_COMPLETE_Q0_CSR_NATIVE_READBACK"
+        and isinstance(q0.get("legacy_q0_import"), Mapping)
+    )
+    q4_native_pass = (
+        q4.get("qualification_kind") == "V30_NATIVE_PASS"
+        and q4.get("qualification_status") == "PASS"
+    )
+    complete = (
+        set(all_matrices) == {0, 4}
+        and len(receipts) == 2
+        and receipt_q_indices == [0, 4]
+        and selector_q_indices == [0, 4]
+        and all(row.get("qualification_status") == "PASS" for row in selector_entries)
+        and q0_legacy_pass
+        and q4_native_pass
+    )
+    merged = {
+        **dict(provider_audit),
+        **dict(preparation_audit),
+        "qualification_receipts": [dict(row) for row in receipts],
+        "selector_entries": [dict(row) for row in selector_entries],
+        "q_indices": sorted(all_matrices),
+        "all_complete_native_pass": complete,
+        "q4_saved_live_binding": dict(donor_binding),
+        "native_owner_created_before_global_reference": True,
+    }
+    if not complete:
+        raise ValueError("V31 twist-0 handoff lacks COMPLETE CSR and native PASS for q0/q4")
+    return all_matrices, merged
+
+
 def _task40_v31_apply_local_owner_cleanup_failure(
     summary: dict[str, Any],
     worker_result: dict[str, Any] | None,
@@ -8621,6 +8686,13 @@ def run_task40_v10_p6_reference_worker(
                 "mode_rows": tuple(frozen_rows),
                 "mode_sha256": str(frozen_mode_sha),
             }
+            provider_q_indices = {0}
+            if (
+                isinstance(v31_route_facts, Mapping)
+                and v31_route_facts.get("review_version") == "V32"
+                and 4 in qualified_q_csr_provider.entries
+            ):
+                provider_q_indices.add(4)
             provider_matrices, provider_audit = _task40_v30_load_sector_q_csr_pair(
                 qualified_q_csr_provider,
                 action=local_owner["action"],
@@ -8632,11 +8704,11 @@ def run_task40_v10_p6_reference_worker(
                 mode_inventory=local_owner["mode_inventory"],
                 runtime_identity=qualified_q_csr_identity,
                 allocation_gate=allocation_gate,
-                selected_q_indices={0},
+                selected_q_indices=provider_q_indices,
                 prebuilt_q_maps_by_q=prebuilt_q_maps_by_q,
             )
-            if set(provider_matrices) != {0}:
-                raise ValueError("V31 twist-0 handoff did not reopen exactly the accepted q0 CSR")
+            if set(provider_matrices) != provider_q_indices:
+                raise ValueError("V31 twist-0 handoff did not reopen exactly its authorized provider q set")
             missing_q = set(map(int, context.global_q_indices)) - set(provider_matrices)
             if not missing_q <= {4}:
                 raise ValueError("V31 twist-0 preparation would repeat an already accepted q native route")
@@ -8690,34 +8762,13 @@ def run_task40_v10_p6_reference_worker(
                     ),
                     selector_entry_count=len(preparation_audit.get("selector_entries", ())),
                 )
-            all_matrices = {**dict(provider_matrices), **dict(prepared_matrices)}
-            receipts = [
-                *provider_audit.get("qualification_receipts", ()),
-                *preparation_audit.get("qualification_receipts", ()),
-            ]
-            selector_entries = [
-                *provider_audit.get("selector_entries", ()),
-                *preparation_audit.get("selector_entries", ()),
-            ]
-            merged_audit = {
-                **dict(provider_audit),
-                **dict(preparation_audit),
-                "qualification_receipts": [dict(row) for row in receipts],
-                "selector_entries": [dict(row) for row in selector_entries],
-                "q_indices": sorted(all_matrices),
-                "all_complete_native_pass": (
-                    set(all_matrices) == {0, 4}
-                    and len(receipts) == 2
-                    and all(
-                        row.get("qualification_status") == "PASS"
-                        for row in selector_entries
-                    )
-                ),
-                "q4_saved_live_binding": donor_binding,
-                "native_owner_created_before_global_reference": True,
-            }
-            if merged_audit["all_complete_native_pass"] is not True:
-                raise ValueError("V31 twist-0 handoff lacks COMPLETE CSR and native PASS for q0/q4")
+            all_matrices, merged_audit = _task40_v31_merge_twist0_q_csr_audit(
+                provider_matrices,
+                provider_audit,
+                prepared_matrices,
+                preparation_audit,
+                donor_binding=donor_binding,
+            )
             prebuilt_twist0_q_csr = (all_matrices, merged_audit)
             local_owner["owner_receipt"].update(
                 handover_status="PREPARED_FOR_GLOBAL_REFERENCE",
@@ -8850,7 +8901,7 @@ def run_task40_v10_p6_reference_worker(
 
         needs_saved_q4 = (
             qualified_q_csr_provider is not None
-            and 4 not in qualified_q_csr_provider.entries
+            and 0 in qualified_q_csr_provider.entries
         )
         reference, q4_saved_numeric_prebuild = _task40_v31_build_reference_after_q4_pending(
             prepare_saved_q4=(

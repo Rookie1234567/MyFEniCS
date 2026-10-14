@@ -99,6 +99,25 @@ V32_Q4_MATRIX_SOURCE_IDENTITY = {
     "source_sha": "9d0f4dbfc730dd620b709d048e33e9da6c77520c",
     "window_sha256": "a8ee7ab9970ece892d85f9313180438e88561f0bfc63b68acdb11f536400def7",
 }
+V32_Q4_COMPLETE_IMPORT_SCHEMA = "task40extra.review_v32_q4_complete_import_template.v1"
+V32_Q4_COMPLETE_EXECUTION_IDENTITY = {
+    "source_sha": "767323bbee161a6163fec01d27c96723f52b5f97",
+    "window_sha256": "ec92e117479ef7e41854a4dab647c8c1bc963ef2705fb6ec390926f252294bf6",
+}
+V32_Q4_COMPLETE_MANIFEST_RELATIVE = (
+    V31_ARTIFACT_ROOT_RELATIVE
+    / "source_767323bbee161a6163fec01d27c96723f52b5f97"
+    / "factor_bank" / "selected_q" / "q4_twist0"
+    / "task40_v30_q4_twist0_csr_manifest.json"
+)
+V32_Q4_COMPLETE_MANIFEST_SHA256 = "c7c5a627c9685849d4bca109b030b6dd853f6b64ff3d719048b89278bddf8868"
+V32_Q4_COMPLETE_NATIVE_RELATIVE = (
+    V31_ARTIFACT_ROOT_RELATIVE
+    / "source_767323bbee161a6163fec01d27c96723f52b5f97"
+    / "factor_bank" / "selected_q" / "q4_twist0"
+    / "task40_v30_q4_twist0_native_qualification.json"
+)
+V32_Q4_COMPLETE_NATIVE_SHA256 = "9d4ccd8f1b4b8b0119d4b62fc1c2fea3849e8cf80a6e4442bfd8016248778892"
 V32_STAGE_SCOPE = (
     "P0_import_owner_events_supervised_checker_and_freeze",
     "P1_old_q4_numeric_pending_import",
@@ -166,6 +185,224 @@ def bind_v32_q4_pending_import(
     )
 
 
+def v32_q4_complete_import_template(*, execution_root: str | Path) -> dict[str, Any]:
+    """Bind the already-complete q4 CSR/native evidence without reading its large arrays."""
+    root = Path(execution_root).resolve()
+    manifest_path = (root / V32_Q4_COMPLETE_MANIFEST_RELATIVE).resolve()
+    native_path = (root / V32_Q4_COMPLETE_NATIVE_RELATIVE).resolve()
+    try:
+        if (
+            not manifest_path.is_relative_to(root)
+            or not native_path.is_relative_to(root)
+            or not manifest_path.is_file()
+            or not native_path.is_file()
+            or hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+            != V32_Q4_COMPLETE_MANIFEST_SHA256
+            or hashlib.sha256(native_path.read_bytes()).hexdigest()
+            != V32_Q4_COMPLETE_NATIVE_SHA256
+        ):
+            raise V31ContractError("pinned V32 q4 COMPLETE/native evidence is missing or changed")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        native = json.loads(native_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise V31ContractError("pinned V32 q4 COMPLETE/native evidence cannot be read") from error
+    operator = manifest.get("operator_identity")
+    producer = manifest.get("producer_identity")
+    producer_execution = manifest.get("execution_identity")
+    matrix_source = manifest.get("matrix_source_identity")
+    native_execution = native.get("execution_identity")
+    artifacts = manifest.get("csr_artifacts")
+    if (
+        manifest.get("schema") != "task40extra.review_v30_q_csr.v1"
+        or manifest.get("status") != "COMPLETE_CSR"
+        or manifest.get("q_index") != 4
+        or manifest.get("twist_index") != 0
+        or manifest.get("profile") != V31_PROFILE
+        or manifest.get("execution_identity") != V32_Q4_COMPLETE_EXECUTION_IDENTITY
+        or manifest.get("matrix_source_identity") != V32_Q4_MATRIX_SOURCE_IDENTITY
+        or not isinstance(operator, Mapping)
+        or not isinstance(producer, Mapping)
+        or not isinstance(artifacts, Mapping)
+        or set(artifacts) != {"data", "indices", "indptr"}
+        or native.get("schema") != "task40extra.review_v30_q_csr_native_qualification.v1"
+        or native.get("status") != "PASS"
+        or native.get("q_index") != 4
+        or native.get("twist_index") != 0
+        or native.get("csr_manifest_sha256") != V32_Q4_COMPLETE_MANIFEST_SHA256
+        or native.get("execution_identity") != producer_execution
+        or native.get("execution_identity") != V32_Q4_COMPLETE_EXECUTION_IDENTITY
+        or native.get("operator_identity") != operator
+        or native.get("matrix_source_identity") != matrix_source
+        or native.get("four_complete_csr_actions_passed") is not True
+        or native.get("paired_sector_leakage_passed") is not True
+        or not isinstance(native.get("maximum_relative_error"), (int, float))
+        or not 0 <= float(native["maximum_relative_error"]) <= 1.0e-11
+    ):
+        raise V31ContractError("pinned V32 q4 manifest/native PASS identities differ")
+    normalized_artifacts: dict[str, dict[str, Any]] = {}
+    for name in ("data", "indices", "indptr"):
+        row = artifacts.get(name)
+        if (
+            not isinstance(row, Mapping)
+            or not isinstance(row.get("path"), str)
+            or not Path(row["path"]).is_absolute()
+            or type(row.get("bytes")) is not int
+            or row["bytes"] <= 0
+            or not re.fullmatch(r"[0-9a-f]{64}", str(row.get("sha256", "")))
+        ):
+            raise V31ContractError(f"pinned V32 q4 {name} artifact identity is incomplete")
+        path = Path(row["path"]).resolve()
+        if not path.is_relative_to(root):
+            raise V31ContractError(f"pinned V32 q4 {name} artifact escaped the execution root")
+        normalized_artifacts[name] = {
+            "path": str(path),
+            "bytes": int(row["bytes"]),
+            "sha256": str(row["sha256"]),
+        }
+
+    # The complete manifest contains the exact authorization for its historical
+    # pending-to-767323b import. Validate that origin against its own consumer
+    # identity; the current COMPLETE-CSR consumer authorization is separate.
+    historical = manifest.get("numeric_pending_import")
+    historical_authorization = (
+        historical.get("authorization") if isinstance(historical, Mapping) else None
+    )
+    if not isinstance(historical_authorization, Mapping):
+        raise V31ContractError("pinned V32 q4 manifest omits its historical numeric-pending authorization")
+    expected_historical = bind_v32_q4_pending_import(
+        v32_q4_pending_import_template(
+            execution_root=root,
+            consumer_source_sha=V32_Q4_COMPLETE_EXECUTION_IDENTITY["source_sha"],
+        ),
+        consumer_execution_identity=V32_Q4_COMPLETE_EXECUTION_IDENTITY,
+    )
+    if dict(historical_authorization) != expected_historical:
+        raise V31ContractError("pinned V32 q4 historical numeric-pending authorization changed")
+    from src.solvers.task40_v30_selected_q_csr import preflight_v32_q4_numeric_pending_import
+
+    historical_preflight = preflight_v32_q4_numeric_pending_import(
+        expected_historical,
+        profile=V31_PROFILE,
+        execution_identity=V32_Q4_COMPLETE_EXECUTION_IDENTITY,
+        output_directory=expected_historical["consumer_output_root"],
+    )
+    import_execution = historical.get("numeric_pending_import_execution")
+    if (
+        historical.get("pending_record_path") != expected_historical["pending_record_path"]
+        or historical.get("pending_record_sha256") != expected_historical["pending_record_sha256"]
+        or historical.get("read_only_import_root") != expected_historical["import_root"]
+        or historical.get("consumer_completion_output_root")
+        != expected_historical["consumer_output_root"]
+        or historical.get("old_arrays_modified") is not False
+        or historical.get("publication_rehashed_large_arrays") is not True
+        or not isinstance(import_execution, Mapping)
+        or import_execution.get("schema") != "task40extra.review_v32_q4_import_execution.v1"
+        or import_execution.get("read_only") is not True
+        or import_execution.get("reopened_existing_pending") is not True
+        or import_execution.get("large_array_hashes_checked") is not True
+        or any(
+            import_execution.get(key) != 0
+            for key in ("producer_invocations", "route_build_invocations", "pattern_build_invocations", "numeric_fill_invocations")
+        )
+        or historical_preflight["array_sha256"] != V32_Q4_ARRAY_SHA256
+        or any(
+            normalized_artifacts[name]["sha256"] != V32_Q4_ARRAY_SHA256[name]
+            for name in ("data", "indices", "indptr")
+        )
+    ):
+        raise V31ContractError("pinned V32 q4 numeric-pending history differs from its original import receipt")
+
+    return {
+        "schema": V32_Q4_COMPLETE_IMPORT_SCHEMA,
+        "q_index": 4,
+        "twist_index": 0,
+        "profile": V31_PROFILE,
+        "shape": list(manifest.get("shape", [])),
+        "operator_identity": dict(operator),
+        "matrix_source_identity": dict(matrix_source),
+        "producer_identity": dict(producer),
+        "producer_execution_identity": dict(producer_execution),
+        "native_execution_identity": dict(native_execution),
+        "csr_manifest": {
+            "path": str(manifest_path),
+            "sha256": V32_Q4_COMPLETE_MANIFEST_SHA256,
+        },
+        "native_qualification": {
+            "path": str(native_path),
+            "sha256": V32_Q4_COMPLETE_NATIVE_SHA256,
+            "status": "PASS",
+        },
+        "csr_artifacts": normalized_artifacts,
+    }
+
+
+def bind_v32_q4_complete_import(
+    template: Mapping[str, Any], *, consumer_execution_identity: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Bind the pinned q4 COMPLETE/native evidence to this run's source and window."""
+    if (
+        not isinstance(template, Mapping)
+        or template.get("schema") != V32_Q4_COMPLETE_IMPORT_SCHEMA
+        or template.get("q_index") != 4
+        or template.get("twist_index") != 0
+    ):
+        raise V31ContractError("V32 q4 COMPLETE import template is missing or has another schema")
+    from src.solvers.task40_v30_qualified_q_csr import make_v31_q_csr_import_authorization
+
+    return make_v31_q_csr_import_authorization(
+        q_index=4,
+        twist_index=0,
+        profile=str(template["profile"]),
+        operator_identity=dict(template["operator_identity"]),
+        matrix_source_identity=dict(template["matrix_source_identity"]),
+        producer_identity=dict(template["producer_identity"]),
+        producer_execution_identity=dict(template["producer_execution_identity"]),
+        native_execution_identity=dict(template["native_execution_identity"]),
+        csr_manifest_sha256=str(template["csr_manifest"]["sha256"]),
+        native_qualification_sha256=str(template["native_qualification"]["sha256"]),
+        csr_artifacts=dict(template["csr_artifacts"]),
+        consumer_execution_identity=dict(consumer_execution_identity),
+    )
+
+
+def _append_v32_q4_complete_selector_entry(
+    selector_bytes: bytes, template: Mapping[str, Any]
+) -> bytes:
+    try:
+        selector = json.loads(selector_bytes)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise V31ContractError("accepted V30 q0 selector is not valid UTF-8 JSON") from error
+    rows = selector.get("q_csr_entries") if isinstance(selector, Mapping) else None
+    if (
+        not isinstance(selector, dict)
+        or selector.get("schema") != "task40extra.review_v30_qualified_q_csr_selector.v1"
+        or selector.get("profile") != V31_PROFILE
+        or not isinstance(rows, list)
+        or len(rows) != 1
+        or not isinstance(rows[0], dict)
+        or rows[0].get("q_index") != 0
+        or any(isinstance(row, Mapping) and row.get("q_index") == 4 for row in rows)
+    ):
+        raise V31ContractError("V32 q4 selector append requires exactly the accepted q0-only selector")
+    entry = {
+        "q_index": 4,
+        "twist_index": 0,
+        "shape": list(template["shape"]),
+        "operator_identity": dict(template["operator_identity"]),
+        "matrix_source_identity": dict(template["matrix_source_identity"]),
+        "execution_identity": dict(template["producer_execution_identity"]),
+        "csr_manifest": dict(template["csr_manifest"]),
+        "native_qualification": dict(template["native_qualification"]),
+        "manifest_status": "COMPLETE_CSR",
+        "qualification_status": "PASS",
+        "qualification_kind": "V30_NATIVE_PASS",
+        "manifest_sha256": str(template["csr_manifest"]["sha256"]),
+        "native_qualification_sha256": str(template["native_qualification"]["sha256"]),
+    }
+    selector["q_csr_entries"] = [*rows, entry]
+    return _canonical_bytes(selector)
+
+
 def require_v31_input_identity(
     canonical_input_path: str | Path,
     staged_input_path: str | Path,
@@ -174,6 +411,7 @@ def require_v31_input_identity(
     source_sha: str,
     selector_sha256: str,
     q4_numeric_pending_import: Mapping[str, Any] | None = None,
+    q4_complete_import: Mapping[str, Any] | None = None,
 ) -> dict[str, str]:
     """Bind a V31-derived stage DAT to the canonical science and its source root."""
     from src.runners.task40_v30_contract import (
@@ -215,13 +453,18 @@ def require_v31_input_identity(
         "task40_v31_q_csr_binding",
         "task40_v31_factor_bank_config",
     }
-    if q4_numeric_pending_import is not None:
+    if q4_numeric_pending_import is not None or q4_complete_import is not None:
         expected_overrides.add("task40_v31_q_csr_import_authorizations")
     if not expected_overrides <= set(actual_execution):
         raise V31ContractError("V31 staged DAT omits its complete target-operation binding")
     selector = actual_execution.get("task40_v31_q_csr_binding")
     factor = actual_execution.get("task40_v31_factor_bank_config")
     imports = actual_execution.get("task40_v31_q_csr_import_authorizations")
+    expected_imports = {}
+    if q4_complete_import is not None:
+        expected_imports["complete"] = {"4": dict(q4_complete_import)}
+    if q4_numeric_pending_import is not None:
+        expected_imports["numeric_pending"] = {"4": dict(q4_numeric_pending_import)}
     if (
         actual_execution.get("task40_target_heavy_authorized") is not True
         or selector
@@ -238,11 +481,11 @@ def require_v31_input_identity(
             "second_rhs_formula": "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13",
         }
         or (
-            q4_numeric_pending_import is not None
-            and imports != {"numeric_pending": {"4": dict(q4_numeric_pending_import)}}
+            expected_imports
+            and imports != expected_imports
         )
         or (
-            q4_numeric_pending_import is None
+            not expected_imports
             and "task40_v31_q_csr_import_authorizations" in actual_execution
         )
     ):
@@ -453,11 +696,15 @@ def validate_v31_worker_execution_binding(
             raise V31ContractError("V31 q-CSR import authorization section must be an object")
     if v32_route:
         template = preparation.get("q4_numeric_pending_import")
+        complete_template = preparation.get("q4_complete_import")
         contract_imports = execution.get("q_csr_import_authorizations")
         staged_imports = payload_execution.get("task40_v31_q_csr_import_authorizations")
         expected_template = v32_q4_pending_import_template(
             execution_root=root,
             consumer_source_sha=str(execution.get("run_source_sha", "")),
+        )
+        expected_complete_template = v32_q4_complete_import_template(
+            execution_root=root
         )
         consumer_identity = {
             "source_sha": str(execution.get("run_source_sha", "")),
@@ -467,14 +714,28 @@ def validate_v31_worker_execution_binding(
             expected_template,
             consumer_execution_identity=consumer_identity,
         )
+        expected_complete_authorization = bind_v32_q4_complete_import(
+            expected_complete_template,
+            consumer_execution_identity=consumer_identity,
+        )
+        expected_contract_imports = {
+            "complete": {"4": expected_complete_authorization},
+            "numeric_pending": {"4": expected_authorization},
+        }
+        expected_staged_imports = {
+            "complete": {"4": expected_complete_template},
+            "numeric_pending": {"4": expected_template},
+        }
         if (
             not isinstance(template, Mapping)
+            or not isinstance(complete_template, Mapping)
             or dict(template) != expected_template
-            or imports != {"numeric_pending": {"4": expected_authorization}}
-            or contract_imports != imports
-            or staged_imports != {"numeric_pending": {"4": dict(template)}}
+            or dict(complete_template) != expected_complete_template
+            or imports != expected_contract_imports
+            or contract_imports != expected_contract_imports
+            or staged_imports != expected_staged_imports
         ):
-            raise V31ContractError("V32 worker import route differs from its contract, staged DAT, or fixed q4 source")
+            raise V31ContractError("V32 worker import route differs from its contract, staged DAT, or fixed q4 evidence")
         from src.solvers.task40_v30_selected_q_csr import preflight_v32_q4_numeric_pending_import
 
         preflight_v32_q4_numeric_pending_import(
@@ -512,6 +773,12 @@ def validate_v31_worker_execution_binding(
         ),
         "q4_numeric_pending_import_authorization": (
             dict(imports["numeric_pending"]["4"]) if v32_route else None
+        ),
+        "q4_complete_import_template": (
+            dict(expected_complete_template) if v32_route else None
+        ),
+        "q4_complete_import_authorization": (
+            dict(imports["complete"]["4"]) if v32_route else None
         ),
         "target_admission_phase": str(admission["phase"]),
         "official_result": False,
@@ -712,6 +979,7 @@ def _render_v31_stage_input(
     selector_sha256: str,
     factor_relative_path: str,
     q4_numeric_pending_import: Mapping[str, Any] | None = None,
+    q4_complete_import: Mapping[str, Any] | None = None,
 ) -> str:
     from scripts.task40_v20_service_workflow import render_stage_input
 
@@ -732,7 +1000,7 @@ def _render_v31_stage_input(
             "second_rhs_formula = \"real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13\" "
             "}",
     ]
-    if q4_numeric_pending_import is not None:
+    if q4_numeric_pending_import is not None or q4_complete_import is not None:
         def toml_inline(value: Any) -> str:
             if isinstance(value, Mapping):
                 return "{ " + ", ".join(
@@ -745,11 +1013,18 @@ def _render_v31_stage_input(
                 return str(value)
             if isinstance(value, str):
                 return json.dumps(value)
+            if isinstance(value, (list, tuple)):
+                return "[ " + ", ".join(toml_inline(item) for item in value) + " ]"
             raise V31ContractError("V32 q4 import DAT binding contains a non-TOML value")
 
+        import_template: dict[str, Any] = {}
+        if q4_complete_import is not None:
+            import_template["complete"] = {"4": dict(q4_complete_import)}
+        if q4_numeric_pending_import is not None:
+            import_template["numeric_pending"] = {"4": dict(q4_numeric_pending_import)}
         route_lines_list.append(
             "task40_v31_q_csr_import_authorizations = "
-            + toml_inline({"numeric_pending": {"4": dict(q4_numeric_pending_import)}})
+            + toml_inline(import_template)
         )
     route_lines = "\n".join(route_lines_list)
     rendered, replaced = re.subn(
@@ -769,9 +1044,9 @@ def _render_v31_stage_input(
         or execution.get("task40_v31_q_csr_binding", {}).get("selector_path")
         != selector_relative_path
         or (
-            q4_numeric_pending_import is not None
+            (q4_numeric_pending_import is not None or q4_complete_import is not None)
             and execution.get("task40_v31_q_csr_import_authorizations")
-            != {"numeric_pending": {"4": dict(q4_numeric_pending_import)}}
+            != import_template
         )
     ):
         raise V31ContractError("rendered V31 stage input does not carry the exact full-stage route")
@@ -844,6 +1119,7 @@ def _prepare_review_pending_package(
         stage_scope = V31_STAGE_SCOPE
         approval_scope = V31_APPROVAL_SCOPE
         q4_import_template = None
+        q4_complete_template = None
     elif review_version == "V32":
         review_path_text = V32_REVIEW_PATH
         review_commit = V32_REVIEW_COMMIT
@@ -866,11 +1142,16 @@ def _prepare_review_pending_package(
         stage_scope = V32_STAGE_SCOPE
         approval_scope = V32_APPROVAL_SCOPE
         q4_import_template = None
+        q4_complete_template = None
     else:
         raise V31ContractError("pending package review version must be exactly V31 or V32")
 
     root = Path(repo_root).resolve()
     target_root = Path(execution_root or V31_WORKSTATION_ROOT).resolve()
+    if review_version == "V32":
+        q4_complete_template = v32_q4_complete_import_template(
+            execution_root=target_root
+        )
     branch = subprocess.check_output(
         ["git", "branch", "--show-current"], cwd=root, text=True
     ).strip()
@@ -978,6 +1259,7 @@ def _prepare_review_pending_package(
             consumer_source_sha=head,
         )
         selector["q4_numeric_pending_import"] = dict(q4_import_template)
+        selector["q4_complete_import"] = dict(q4_complete_template)
     selector_relative = source_root_relative / "q_csr_selector_v31.json"
     staged_input = (
         source_root_relative / "stage_inputs" / "full" / V30_CANONICAL_INPUT_RELATIVE.name
@@ -1004,6 +1286,10 @@ def _prepare_review_pending_package(
                 source_sha=head,
                 window_sha256=consumer_window_sha256,
             )
+        if q4_complete_template is not None:
+            selector_bytes = _append_v32_q4_complete_selector_entry(
+                selector_bytes, q4_complete_template
+            )
         selector_sha256 = _write_bytes_once(root / selector_relative, selector_bytes)
         staged_text = _render_v31_stage_input(
             canonical_bytes.decode("utf-8"),
@@ -1011,6 +1297,7 @@ def _prepare_review_pending_package(
             selector_sha256=selector_sha256,
             factor_relative_path=factor_directory.as_posix(),
             q4_numeric_pending_import=q4_import_template,
+            q4_complete_import=q4_complete_template,
         )
         staged_input_sha256 = _write_bytes_once(
             root / staged_input,
@@ -1023,6 +1310,7 @@ def _prepare_review_pending_package(
             source_sha=head,
             selector_sha256=selector_sha256,
             q4_numeric_pending_import=q4_import_template,
+            q4_complete_import=q4_complete_template,
         )
         selector.update(
             {
@@ -1052,6 +1340,11 @@ def _prepare_review_pending_package(
                 if q4_import_template is not None
                 else {}
             ),
+            **(
+                {"q4_complete_import": dict(q4_complete_template)}
+                if q4_complete_template is not None
+                else {}
+            ),
         },
         "execution": {
             "root": str(target_root),
@@ -1069,7 +1362,20 @@ def _prepare_review_pending_package(
             "selector_path": str(selector_relative),
             "selector_sha256": selector_sha256,
             **(
-                {"q_csr_import_authorizations": {"numeric_pending": {"4": dict(q4_import_template)}}}
+                {
+                    "q_csr_import_authorizations": {
+                        **(
+                            {"complete": {"4": dict(q4_complete_template)}}
+                            if q4_complete_template is not None
+                            else {}
+                        ),
+                        **(
+                            {"numeric_pending": {"4": dict(q4_import_template)}}
+                            if q4_import_template is not None
+                            else {}
+                        ),
+                    }
+                }
                 if q4_import_template is not None
                 else {}
             ),
@@ -1602,6 +1908,11 @@ def _prepare_review_approved_package(
             if review_version == "V32"
             else None
         ),
+        q4_complete_import=(
+            pending_contract.get("preparation", {}).get("q4_complete_import")
+            if review_version == "V32"
+            else None
+        ),
     )
     if (
         hashlib.sha256(selector_path.read_bytes()).hexdigest() != execution.get("selector_sha256")
@@ -1630,8 +1941,20 @@ def _prepare_review_approved_package(
             execution_root=root,
             consumer_source_sha=run_source_sha,
         )
+        q4_complete_template = v32_q4_complete_import_template(
+            execution_root=root
+        )
+        complete_authorization = bind_v32_q4_complete_import(
+            q4_complete_template,
+            consumer_execution_identity={
+                "source_sha": run_source_sha,
+                "window_sha256": window_sha256,
+            },
+        )
         contract["preparation"]["q4_numeric_pending_import"] = dict(q4_template)
+        contract["preparation"]["q4_complete_import"] = dict(q4_complete_template)
         contract["execution"]["q_csr_import_authorizations"] = {
+            "complete": {"4": complete_authorization},
             "numeric_pending": {
                 "4": bind_v32_q4_pending_import(
                     q4_template,
@@ -1808,6 +2131,7 @@ def require_v31_execution_contract(
     if review_version == "V32":
         preparation = payload.get("preparation")
         template = preparation.get("q4_numeric_pending_import") if isinstance(preparation, dict) else None
+        complete_template = preparation.get("q4_complete_import") if isinstance(preparation, dict) else None
         execution_imports = execution.get("q_csr_import_authorizations")
         if not isinstance(template, Mapping):
             raise V31ContractError("V32 approved contract omits the exact q4 pending import template")
@@ -1823,12 +2147,29 @@ def require_v31_execution_contract(
             expected_template,
             consumer_execution_identity=consumer_identity,
         )
-        if (
-            dict(template) != expected_template
-            or not isinstance(execution_imports, Mapping)
-            or dict(execution_imports) != {"numeric_pending": {"4": expected_authorization}}
-        ):
-            raise V31ContractError("V32 q4 import contract differs from its fixed pending/source/window identity")
+        if dict(template) != expected_template or not isinstance(execution_imports, Mapping):
+            raise V31ContractError("V32 q4 pending import differs from its fixed source/window identity")
+        if isinstance(complete_template, Mapping):
+            expected_complete_template = v32_q4_complete_import_template(
+                execution_root=execution_root
+            )
+            expected_complete_authorization = bind_v32_q4_complete_import(
+                expected_complete_template,
+                consumer_execution_identity=consumer_identity,
+            )
+            expected_imports = {
+                "complete": {"4": expected_complete_authorization},
+                "numeric_pending": {"4": expected_authorization},
+            }
+            if (
+                dict(complete_template) != expected_complete_template
+                or dict(execution_imports) != expected_imports
+            ):
+                raise V31ContractError("V32 q4 complete/pending imports differ from fixed evidence/source/window identity")
+        elif dict(execution_imports) != {"numeric_pending": {"4": expected_authorization}}:
+            # Read-only compatibility for the previously approved same-window
+            # contract. Worker binding still requires the new COMPLETE import.
+            raise V31ContractError("legacy V32 q4 pending import differs from its approved source/window")
         from src.solvers.task40_v30_selected_q_csr import preflight_v32_q4_numeric_pending_import
 
         preflight_v32_q4_numeric_pending_import(
@@ -1902,6 +2243,7 @@ def require_v31_execution_contract(
                 source_sha=source_sha,
                 selector_sha256=str(execution["selector_sha256"]),
                 q4_numeric_pending_import=template,
+                q4_complete_import=payload["preparation"].get("q4_complete_import"),
             )
             if input_identity["staged_input_sha256"] != execution["input_sha256"]:
                 raise V31ContractError("V32 staged DAT import template differs from the approved contract")
@@ -2003,18 +2345,28 @@ def require_v31_all_q_route(
             if isinstance(preparation, Mapping)
             else None
         )
-        if not isinstance(q4_numeric_pending_import, Mapping):
-            raise V31ContractError("V32 AllQ route contract omits its fixed q4 import template")
+        q4_complete_import = (
+            preparation.get("q4_complete_import")
+            if isinstance(preparation, Mapping)
+            else None
+        )
+        if not isinstance(q4_numeric_pending_import, Mapping) or not isinstance(
+            q4_complete_import, Mapping
+        ):
+            raise V31ContractError("V32 AllQ route contract omits its fixed q4 import templates")
         q4_numeric_pending_import = dict(q4_numeric_pending_import)
+        q4_complete_import = dict(q4_complete_import)
     elif contract.get("schema") == V31_CONTRACT_SCHEMA:
         q4_numeric_pending_import = None
+        q4_complete_import = None
     else:
         raise V31ContractError("V31 AllQ route has an unknown approved contract schema")
-    expected_payload_imports = (
-        {"numeric_pending": {"4": q4_numeric_pending_import}}
-        if q4_numeric_pending_import is not None
-        else None
-    )
+    expected_payload_imports = None
+    if q4_numeric_pending_import is not None:
+        expected_payload_imports = {
+            "complete": {"4": q4_complete_import},
+            "numeric_pending": {"4": q4_numeric_pending_import},
+        }
     if (
         execution_payload.get("task40_v31_q_csr_import_authorizations")
         != expected_payload_imports
@@ -2116,6 +2468,7 @@ def require_v31_all_q_route(
         source_sha=run_source_sha,
         selector_sha256=str(execution.get("selector_sha256", "")),
         q4_numeric_pending_import=q4_numeric_pending_import,
+        q4_complete_import=q4_complete_import,
     )
     if input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
         raise V31ContractError("V31 AllQ route staged input hash differs from run provenance")

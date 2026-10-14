@@ -160,6 +160,68 @@ def test_v30_sector_adapter_binds_actual_twist_maps_h_modes_and_q0_lookup():
     ]
 
 
+def test_v32_twist0_handoff_accepts_provider_q4_and_requires_real_q0_q4_receipts():
+    from src.runners.task40_v10_worker import _task40_v31_merge_twist0_q_csr_audit
+
+    matrices = {
+        0: sparse.eye(2, dtype=np.complex128, format="csr"),
+        4: sparse.eye(3, dtype=np.complex128, format="csr"),
+    }
+    q0_receipt = {
+        "q_index": 0,
+        "qualification_kind": "LEGACY_QUALIFICATION_IMPORTED_OPERATOR_BINDINGS_DERIVED",
+        "qualification_status": "PASS_COMPLETE_Q0_CSR_NATIVE_READBACK",
+        "legacy_q0_import": {"status": "PASS"},
+    }
+    q4_receipt = {
+        "q_index": 4,
+        "qualification_kind": "V30_NATIVE_PASS",
+        "qualification_status": "PASS",
+    }
+    q0_entry = {"q_index": 0, "qualification_status": "PASS"}
+    q4_entry = {"q_index": 4, "qualification_status": "PASS"}
+    donor_binding = {"status": "PASS_LIVE_MAP_H_LOOKUP_BOUND"}
+
+    # V32 reopens both immutable matrices through the provider; the old q0
+    # native status is intentionally kept in its accepted legacy form.
+    all_matrices, audit = _task40_v31_merge_twist0_q_csr_audit(
+        matrices,
+        {
+            "qualification_receipts": [q0_receipt, q4_receipt],
+            "selector_entries": [q0_entry, q4_entry],
+        },
+        {},
+        {},
+        donor_binding=donor_binding,
+    )
+    assert set(all_matrices) == {0, 4}
+    assert audit["all_complete_native_pass"] is True
+    assert audit["qualification_receipts"] == [q0_receipt, q4_receipt]
+
+    # A fresh q4 preparer contributes its real receipt beside provider q0.
+    all_matrices, audit = _task40_v31_merge_twist0_q_csr_audit(
+        {0: matrices[0]},
+        {"qualification_receipts": [q0_receipt], "selector_entries": [q0_entry]},
+        {4: matrices[4]},
+        {"qualification_receipts": [q4_receipt], "selector_entries": [q4_entry]},
+        donor_binding=donor_binding,
+    )
+    assert set(all_matrices) == {0, 4}
+    assert audit["all_complete_native_pass"] is True
+
+    with pytest.raises(ValueError, match="lacks COMPLETE CSR and native PASS"):
+        _task40_v31_merge_twist0_q_csr_audit(
+            matrices,
+            {
+                "qualification_receipts": [q0_receipt],
+                "selector_entries": [q0_entry, q4_entry],
+            },
+            {},
+            {},
+            donor_binding=donor_binding,
+        )
+
+
 def _v30_service_payload(tmp_path):
     from src.geometry.task40_nonseparable_plan import (
         TASK40_COMPARISON_GROUP,
