@@ -1,0 +1,324 @@
+{
+  "schema": "public.historical132.native-regression-summary.v1",
+  "as_of_utc": "2026-10-14T12:50:49.149737+00:00",
+  "conclusion": "Historical132 case reproduced the original200-step1e-6 algebraic/recovery criterion. Current stricterqualification remains failed.108 stagnation root cause and hp spatial convergence remain unresolved.",
+  "comparison": {
+    "old_steps": 200,
+    "old_full_A6_relative": 9.956235975611913e-07,
+    "current_steps": 200,
+    "current_full_A6_relative": 9.839376351666184e-07,
+    "current_historical_custom_reason": 2,
+    "historical_all_gates_pass": true,
+    "current_strict_qualified": false,
+    "132_is_independent_regression_not_108_budget_reset": true
+  },
+  "model": {
+    "wavelength_nm": 0.7,
+    "same_physical_model": true,
+    "grid": [
+      6,
+      2,
+      11
+    ],
+    "cells": 132,
+    "fine_p": 6,
+    "coarse_p": 4,
+    "fine_full_storage": 92850,
+    "fine_independent_FE": 86400,
+    "fine_condensed_plus80": 27080,
+    "coarse_full_storage": 28620,
+    "coarse_independent_FE": 25728,
+    "coarse_condensed_plus80": 11552,
+    "fine_exact_geometry": true,
+    "coarse_legacy_rounded_geometry": true
+  },
+  "initial_and_solver": {
+    "x0": "exactzero",
+    "restart": 32,
+    "H6_degree": 3,
+    "PC": "BAL_H doublecondensed nativep6/p4",
+    "norm": "unpreconditioned",
+    "PC_side": "right",
+    "orthogonalization": "classical GramSchmidt,no iterative refinement",
+    "historical_rtol": 0,
+    "historical_atol": 0,
+    "max_iterations": 200,
+    "old108_charged_iterations_still": 10000
+  },
+  "residuals": {
+    "full_native": {
+      "relative": 9.839376351666184e-07,
+      "absolute": 1.0647791726283816e-06,
+      "effective_rhs_norm": 1.0821612412946005,
+      "producer_original_native_action_recovery_evidence_not_independent_reassembly_here": true
+    },
+    "independent_saved": {
+      "review": {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_historical132_saved_ax_stream_review.json",
+        "bytes": 8309,
+        "sha256": "8e03a259409df96442f1f2e727436a14b68bc5a5874a5f6b2d81139d0cee80c6"
+      },
+      "relative": 9.839627616368442e-07,
+      "absolute": 1.0648063635205893e-06,
+      "rhs_norm": 1.0821612412945993,
+      "saved_solution": {
+        "bytes": 433408,
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_historical132_solver_attempt01/latest_iteration_solution.npy",
+        "sha256": "1a24500227c0cd87e1547a4509865514efda4571faf68796e32a4525283a7623"
+      },
+      "typed_solution_sha256": "a4e919428c55e139a51ffe2904428976cd918d9f74c3233493b51c4167116491",
+      "arithmetic_seconds": 9.47058636599104,
+      "original_gate_pass": false
+    },
+    "physical_identity_gates": {
+      "port_closure_relative": 9.764702580565177e-17,
+      "internal_residual_relative": 1.3186319953223157e-17,
+      "native_identity_relative": 2.8561163561396104e-11,
+      "schur_port_identity_relative": 9.105715937258262e-30
+    },
+    "strict_current_qualified": false
+  },
+  "observed_curve": {
+    "0": 1.0,
+    "8": 0.36179004827638517,
+    "16": 0.06511985039536491,
+    "24": 0.02767439686355651,
+    "32": 0.007992279144822744,
+    "40": 0.007549308147381077,
+    "48": 0.005632195624677923,
+    "56": 0.001897125132586624,
+    "64": 0.0008823704423413156,
+    "72": 0.000778107661588879,
+    "80": 0.0005729293976926269,
+    "88": 0.0003045236933624284,
+    "96": 0.00013834831746610402,
+    "104": 0.00013125972523032268,
+    "112": 8.964265266923718e-05,
+    "120": 6.046125742665591e-05,
+    "128": 2.6478503308457706e-05,
+    "136": 2.347711692680748e-05,
+    "144": 1.5285047034686177e-05,
+    "152": 9.700311985169538e-06,
+    "160": 5.553511437852397e-06,
+    "168": 4.989562396065429e-06,
+    "176": 3.4392188165769837e-06,
+    "184": 2.1143746032652995e-06,
+    "192": 1.1387478881644524e-06,
+    "200": 9.839376351666184e-07
+  },
+  "H6_actual_heuristic_window_not_certified_spectral_bound": {
+    "h6_degree": 3,
+    "lambda_lo": 1.4623298806808016,
+    "lambda_hi": 14.623298806808014,
+    "lambda_power10": 13.293908006189103
+  },
+  "resource_limits": {
+    "supervised_seconds": 525.9530840890075,
+    "sampled_peak_tree_rss_bytes": 2668949504,
+    "AS_bytes": 6442450944,
+    "tree_cap_bytes": 8589934592,
+    "outer_samples": 2085,
+    "inner_admissions": 304,
+    "zero_swap": true,
+    "cleanup_verified": true
+  },
+  "cost_components": {
+    "BAL_H_build_seconds": 101.93832730400027,
+    "KSP_setup_seconds": 0.00037395500112324953,
+    "KSP_solve_seconds": 410.2853890520055,
+    "PC_apply_calls": 200,
+    "PC_apply_seconds_included_in_KSP": 171.0561977069301,
+    "terminal_full_native_evaluation_seconds": 7.143295064975973
+  },
+  "stages": [
+    {
+      "attempt": "phase4_historical132_actual_map_attempt01",
+      "kind": "AUTHORIZED_HISTORICAL132_FINE_EXACT_COARSE_ROUNDED_ACTUAL_MAPS_NO_ASSEMBLY",
+      "seconds": 8.045168987999205,
+      "peak_tree_rss_bytes": 653225984,
+      "child_exit_code": 0,
+      "cleanup_verified": true,
+      "outer_iterations": 0,
+      "terminal_review": "phase4_historical132_map_terminal_review.json"
+    },
+    {
+      "attempt": "phase4_historical132_native_raw_attempt01",
+      "kind": "PARTIAL_ATOMIC_RAW_INVENTORY_CLEAN_CONTINUATION_REQUIRED",
+      "seconds": 529.2491513699933,
+      "peak_tree_rss_bytes": 129781760,
+      "child_exit_code": 0,
+      "cleanup_verified": true,
+      "outer_iterations": 0,
+      "completed_classes": 14
+    },
+    {
+      "attempt": "phase4_historical132_native_raw_attempt02",
+      "kind": "COMPLETE_ATOMIC31_RAW_INVENTORY_14_REUSED_17_NEW",
+      "seconds": 442.46811420700396,
+      "peak_tree_rss_bytes": 128700416,
+      "child_exit_code": 0,
+      "cleanup_verified": true,
+      "outer_iterations": 0,
+      "terminal_review": "phase4_historical132_native_raw_terminal_review.json"
+    },
+    {
+      "attempt": "phase4_historical132_two_raw_comparison_attempt01",
+      "kind": "TWO_ACTUAL132_NATIVE_BLOCKED_GRAM_RAW_ACTIONS_PASS",
+      "seconds": 3.26721821501269,
+      "peak_tree_rss_bytes": 228687872,
+      "child_exit_code": 0,
+      "cleanup_verified": true,
+      "outer_iterations": 0,
+      "terminal_review": "phase4_historical132_raw_comparison_terminal_review.json"
+    },
+    {
+      "attempt": "phase4_historical132_capture_attempt01",
+      "kind": "ACTUAL132_EXACT_FINE_SAVED_A_B_CAPTURE_NO_SOLVE",
+      "seconds": 72.77516824399936,
+      "peak_tree_rss_bytes": 2762575872,
+      "child_exit_code": 0,
+      "cleanup_verified": true,
+      "outer_iterations": 0,
+      "terminal_review": "phase4_historical132_capture_terminal_review.json"
+    },
+    {
+      "attempt": "phase4_historical132_solver_attempt01",
+      "kind": "HISTORICAL132_200STEP_REGRESSION_PASS_CURRENT_STRICT_GATE_FAIL_PRESERVED",
+      "seconds": 525.9530840890075,
+      "peak_tree_rss_bytes": 2668949504,
+      "child_exit_code": 1,
+      "cleanup_verified": true,
+      "outer_iterations": 200,
+      "independent_regression": true,
+      "previous108_budget_reused": false,
+      "terminal_review": "phase4_historical132_complete_terminal_review.json"
+    }
+  ],
+  "new132_supervised_total_seconds": 1581.757905113016,
+  "new132_independent_Ax_seconds_separate": 9.47058636599104,
+  "phase4_known_terminal_seconds": 15776.60760324703,
+  "phase4_with_interrupted_lower_bounds_seconds": 23690.599886090014,
+  "phase4_exact_total_unknown": true,
+  "preparation_waits_not_zero_or_included_in_supervised_sum": true,
+  "raw_inputs": {
+    "fine_exact_classes": 25,
+    "coarse_rounded_classes": 6,
+    "new_raw_payload_bytes": 319809600,
+    "atomic_and_readback_complete": true,
+    "same_compiled_kernel_reused": true,
+    "new_classes_O0_equivalence_not_claimed": true,
+    "two_representative_blocked_Gram_comparisons": {
+      "status": "PASS_TWO_REPRESENTATIVE132_NATIVE_BLOCKED_GRAM_INPUT_ACTIONS_ONLY",
+      "result_sha256": "c33e12b6977ae9378bc7bac8abdb015a55149e89aeadf19fdcf482475ab33e87",
+      "results": [
+        {
+          "class_id": "b7dfe40cbcc9750838b7067a7edef1107bf1981e2dec407bd16dc8571629dc07",
+          "material_tag": 1,
+          "raw_relative": 1.6042420326542937e-15,
+          "raw_max_scaled_entry": 6.24496010459552e-11,
+          "action_relative": [
+            9.853598514687763e-16,
+            1.4577114091473503e-15,
+            1.846202373946328e-15
+          ]
+        },
+        {
+          "class_id": "bbf795b688fae1e16b24706a76feb4228819a83f616cc0df8b90d08a03dd9a31",
+          "material_tag": 3,
+          "raw_relative": 1.953437707183822e-15,
+          "raw_max_scaled_entry": 8.695622000232107e-11,
+          "action_relative": [
+            1.1230286338165918e-15,
+            1.5855809855220132e-15,
+            2.1428653996508416e-15
+          ]
+        }
+      ],
+      "elapsed_seconds": 3.26721821501269,
+      "sampled_peak_tree_rss_bytes": 228687872,
+      "scope": "Two actual input raw matrices and six unit actions; no full-space solver equivalence proof; no new O0 claim.",
+      "cleanup_verified": true
+    }
+  },
+  "hp_exact_geometry_correction": {
+    "schema": "hp-fine-exact-geometry-integration-correction.v1",
+    "date_utc": "2026-10-14T12:24:41.568442+00:00",
+    "finding": "Legacy canonical-coordinate default False is deliberate; hp assembly omitted the physical fine-exact opt-in carried by the native physical entry. No evidence found that the physical-A6 divergence was intentionally designed.",
+    "old_capture_graph": {
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase3_coverage108_capture_attempt01/assembly_component/capture/union_graph.json",
+      "bytes": 735484,
+      "sha256": "e72945aa055d881ee92cd7c78bf446242750f31cd62869732214e37e931db9ed"
+    },
+    "old_raw_count": 9,
+    "old_raw_first": {
+      "active_kernel_ids": [
+        1
+      ],
+      "canonical_coordinates_sha256": "d4cc29866497798167ebf4c03a886add15e950c4e35810b903c1e55d058acd1e",
+      "cell_widths": [
+        0.106944444444,
+        0.648148148148,
+        0.518518518519
+      ],
+      "consumer_rank_count": 1,
+      "dimension": 882,
+      "material_tag": 1,
+      "owner_rank": 0,
+      "policy": "actual_space",
+      "tensor_bytes": 12446784
+    },
+    "current_native_fine_preserve_exact_geometry": true,
+    "current_native_raw_classes": 33,
+    "source_refs": [
+      {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/hcurl_assembly_time_condensation.py",
+        "bytes": 105250,
+        "sha256": "7798038830bd6793aab5f8fc88484aa8f464644d92b3fedb7dd073228e9d7749"
+      },
+      {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/dtn_port_3d.py",
+        "bytes": 203199,
+        "sha256": "b6e6aed527663a3b52a017dddd1e403f28647eb21a09b0e0951010380adf554f"
+      },
+      {
+        "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/hp_all_volumes_restore_01/worker/hp_adaptive_pilot_20261012/resume_322e62e1/second_cycle_warm_next_v1/component_source/src/solvers/hcurl_variable_p_assembly.py",
+        "bytes": 77135,
+        "sha256": "ca9343816d88648afd002aa5520cc97b79cbfa175b420f344fb491f7c844fb7a"
+      }
+    ],
+    "new132_regression_test": {
+      "path": "/workspace/scratch/9c465670b46b/hp_resume_20261013/phase4_historical132_capture_candidate/exact_fine_geometry_regression.json",
+      "bytes": 488,
+      "sha256": "e430cf7dda0b6de447246e15db3d6de355a935589584c1ef05fc9832ee1983d6"
+    },
+    "old_inputs_unchanged": true,
+    "platform_root_cause_established": false,
+    "reason_not_causal_proof": "Independent native108 outer also stagnated; direct full-native7772 relative residual0.0024270252805113114 exceeds historical1e-6. Geometry mismatch is a real integration issue, not an established platform cause.",
+    "prior_statement_scope_correction": "Previous current-fine-exact statement is valid only for independent native path, not original hp saved capture."
+  },
+  "next_control": {
+    "status": "AUTHORIZED_PREPARATION_ONLY_NOT_EXECUTED",
+    "baseline": "independent native108 zero start,200max",
+    "candidate": "same108 x/y, bisectmiddlez only to144 cells,zero start,200max",
+    "same_wrapper_and_originalPC_required": true,
+    "old_A3_not_strict_baseline": "It used transformedsavedA rather than independently assemblednativeA; oldhp capture also roundedfinegeometry.",
+    "not_pure_aspect_causal_claim": "Changingz also changesfine/coarse spaces,dimensionandoperator spectrum.",
+    "limits_unchanged": true,
+    "further_automatic_expansion_authorized": false
+  },
+  "scientific_numeric_process_running_after_terminal": false,
+  "no_qualified108_or_new_spatial_convergence_claim": true,
+  "evidence": {
+    "terminal_review": {
+      "filename": "phase4_historical132_complete_terminal_review.json",
+      "sha256": "80b643f3cbf6ea8257da94260a68b925c1d1d4ea256586213ea0c9ee1def9d60"
+    },
+    "source_command": {
+      "filename": "phase4_historical132_solver_candidate/command.json",
+      "sha256": "d9553eee62be73930666c8f206700b411919f2c80540f963d9cd68aa9067e441"
+    },
+    "prior_historical_compact_record": "docs/task40extra_dot_parallel_cloud/outcomes/records/scaled_shortwave_physical_coarse_20261010.json"
+  },
+  "large_payloads_uploaded": false,
+  "code_uploaded": false
+}
