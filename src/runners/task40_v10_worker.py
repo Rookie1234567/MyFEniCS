@@ -876,6 +876,29 @@ def _task40_v30_resolve_sector_q_maps(
     return q_maps
 
 
+def _task40_v32_owner_bound_q_maps(
+    route_facts: Any, local_owner: Mapping[str, Any]
+) -> Mapping[int, Any] | None:
+    """Return only the V32 maps whose saved-pattern audits passed in the owner."""
+
+    if not isinstance(route_facts, Mapping) or route_facts.get("review_version") != "V32":
+        return None
+    q_maps = local_owner.get("q_maps_by_q")
+    binding = local_owner.get("owner_receipt", {}).get("saved_q0_q4_map_binding")
+    if (
+        not isinstance(q_maps, Mapping)
+        or set(q_maps) != {0, 4}
+        or not isinstance(binding, Mapping)
+        or any(
+            not isinstance(binding.get(name), Mapping)
+            or binding[name].get("passed") is not True
+            for name in ("q0", "q4")
+        )
+    ):
+        raise ValueError("V32 owner maps lack a passing saved q0/q4 binding audit")
+    return q_maps
+
+
 def _task40_v30_trace_rows_by_q(
     coordinates: Any,
     profile: Any,
@@ -8572,12 +8595,11 @@ def run_task40_v10_p6_reference_worker(
                 },
             )
 
-            if isinstance(v31_route_facts, Mapping) and v31_route_facts.get("review_version") == "V32":
-                q_maps_by_q = local_owner.get("q_maps_by_q")
-                if not isinstance(q_maps_by_q, Mapping) or set(q_maps_by_q) != {0, 4}:
-                    raise ValueError(
-                        "V32 saved local owner did not return its fresh q0/q4 maps"
-                    )
+            prebuilt_q_maps_by_q = _task40_v32_owner_bound_q_maps(
+                v31_route_facts, local_owner
+            )
+            if prebuilt_q_maps_by_q is not None:
+                q_maps_by_q = prebuilt_q_maps_by_q
             else:
                 q_maps_by_q = {
                     q: local_owner["coordinates"].q_map(
@@ -8611,6 +8633,7 @@ def run_task40_v10_p6_reference_worker(
                 runtime_identity=qualified_q_csr_identity,
                 allocation_gate=allocation_gate,
                 selected_q_indices={0},
+                prebuilt_q_maps_by_q=prebuilt_q_maps_by_q,
             )
             if set(provider_matrices) != {0}:
                 raise ValueError("V31 twist-0 handoff did not reopen exactly the accepted q0 CSR")

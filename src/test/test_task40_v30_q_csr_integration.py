@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from pathlib import Path
 
 import numpy as np
+import pytest
 from scipy import sparse
 
 from src.solvers.task40_v10_p6_yorbit import (
@@ -52,6 +53,28 @@ def test_selected_twist_assembly_builds_only_the_requested_global_q():
     assert audit["unselected_q_csr_rebuilt"] is False
     assert audit["fourier_diagonalization_gate"] == "DEFERRED_TO_NATIVE_QUALIFICATION"
     assert action.iterations == 1
+
+
+def test_v32_worker_handoff_requires_both_saved_map_audits():
+    from src.runners.task40_v10_worker import _task40_v32_owner_bound_q_maps
+
+    q_maps = {0: object(), 4: object()}
+    owner = {
+        "q_maps_by_q": q_maps,
+        "owner_receipt": {
+            "saved_q0_q4_map_binding": {
+                "q0": {"passed": True},
+                "q4": {"passed": True},
+            }
+        },
+    }
+
+    assert _task40_v32_owner_bound_q_maps({"review_version": "V31"}, owner) is None
+    assert _task40_v32_owner_bound_q_maps({"review_version": "V32"}, owner) is q_maps
+
+    owner["owner_receipt"]["saved_q0_q4_map_binding"]["q4"]["passed"] = False
+    with pytest.raises(ValueError, match="passing saved q0/q4 binding audit"):
+        _task40_v32_owner_bound_q_maps({"review_version": "V32"}, owner)
 
 
 def test_v30_sector_adapter_binds_actual_twist_maps_h_modes_and_q0_lookup():

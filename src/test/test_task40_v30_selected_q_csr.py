@@ -1714,8 +1714,37 @@ def test_local_owner_cleanup_does_not_claim_release_when_mpc_destroy_fails():
     assert receipt["local_levels_released"] is False
     assert "MpcFailure" in receipt["failures"][0]["message"]
     assert owner["levels"] is levels
+    assert levels["floquets"][6].mpc is not None
     assert owner["local_owner_cleanup_complete"] is False
     assert calls == {"action": 1, "bundle": 1, "mpc": 1, "bank": 1}
+
+
+def test_level_cleanup_releases_current_dolfinx_mpc_by_reference():
+    import gc
+    import weakref
+
+    import pytest
+
+    dolfinx_mpc = pytest.importorskip("dolfinx_mpc")
+    from src.solvers.task40_v10_p6_yorbit import _destroy_task40_v10_levels
+
+    assert not callable(getattr(dolfinx_mpc.MultiPointConstraint, "destroy", None))
+
+    class CurrentAbiMpc:
+        pass
+
+    mpc = CurrentAbiMpc()
+    mpc_reference = weakref.ref(mpc)
+    floquet = SimpleNamespace(mpc=mpc)
+    levels = {"floquets": {6: floquet}}
+
+    _destroy_task40_v10_levels(levels, strict=True)
+    assert floquet.mpc is None
+    del mpc
+    gc.collect()
+    assert mpc_reference() is None
+
+    _destroy_task40_v10_levels(levels, strict=True)
 
 
 def test_v31_cleanup_failure_invalidates_worker_and_checker_result():

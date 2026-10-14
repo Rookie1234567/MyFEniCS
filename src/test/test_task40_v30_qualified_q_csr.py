@@ -182,6 +182,96 @@ def test_v30_provider_checks_actual_q_map_h_and_40_digit_source_hash(tmp_path):
         )
 
 
+def test_v30_sector_loader_reuses_owner_bound_map_and_provider_rejects_wrong_map(
+    tmp_path, monkeypatch
+):
+    from types import SimpleNamespace
+
+    from src.solvers import task40_v10_p6_yorbit as yorbit
+
+    expected, original_h, identity, execution, selector_path = _v30_fixture(tmp_path)
+    provider = _provider(tmp_path, selector_path)
+    monkeypatch.setattr(
+        yorbit,
+        "_task40_v30_profile_identity_sha256",
+        lambda _profile: identity["profile_identity_sha256"],
+    )
+    monkeypatch.setattr(
+        yorbit,
+        "_task40_v30_ordered_mode_key_sha256",
+        lambda _modes: identity["ordered_mode_sha256"],
+    )
+
+    class Coordinates:
+        calls = 0
+
+        def q_map(self, branch, *, allocation_gate):
+            self.calls += 1
+            raise AssertionError(f"unexpected fresh q_map construction for branch {branch}")
+
+    class Profile:
+        name = "task40extra_v20_target_original_ny8"
+
+        def identity(self):
+            return {"name": self.name}
+
+    mode = SimpleNamespace(side="top", m=0, n=0, polarization="s")
+    mode_sha = "4" * 64
+    action = SimpleNamespace(
+        condensed=SimpleNamespace(
+            full_rows=3,
+            trace_constraints=SimpleNamespace(original_to_active={0: 0}),
+        )
+    )
+    context = SimpleNamespace(twist_index=1, global_q_indices=(1, 5))
+    runtime_identity = {
+        "scientific_input_sha256": identity["scientific_input_sha256"],
+        "ordered_mode_key_sha256": identity["ordered_mode_sha256"],
+        "execution_identity": execution,
+        "legacy_q0_identity": {"mode_manifest_sha256": mode_sha},
+    }
+    q_maps_by_q = {1: sparse.csr_matrix((3, 3), dtype=np.complex128), 5: expected}
+    coordinates = Coordinates()
+
+    matrices, audit = yorbit._task40_v30_load_sector_q_csr_pair(
+        provider,
+        action=action,
+        coordinates=coordinates,
+        context=context,
+        local_h=original_h,
+        profile=Profile(),
+        global_bundle={"mode_sha256": mode_sha, "modes": (mode,)},
+        mode_inventory=((mode,), ({"mode_index": 0},), mode_sha),
+        runtime_identity=runtime_identity,
+        allocation_gate=lambda *_args: None,
+        selected_q_indices={5},
+        prebuilt_q_maps_by_q=q_maps_by_q,
+    )
+
+    assert coordinates.calls == 0
+    assert set(matrices) == {5}
+    assert matrices[5].shape == expected.shape
+    assert audit["qualification_receipts"][0]["qualification_status"] == "PASS"
+
+    wrong_q_map = expected.copy()
+    wrong_q_map.data[0] += 1.0
+    with pytest.raises(ValueError, match="actual runtime input/operator data"):
+        yorbit._task40_v30_load_sector_q_csr_pair(
+            provider,
+            action=action,
+            coordinates=coordinates,
+            context=context,
+            local_h=original_h,
+            profile=Profile(),
+            global_bundle={"mode_sha256": mode_sha, "modes": (mode,)},
+            mode_inventory=((mode,), ({"mode_index": 0},), mode_sha),
+            runtime_identity=runtime_identity,
+            allocation_gate=lambda *_args: None,
+            selected_q_indices={5},
+            prebuilt_q_maps_by_q={1: q_maps_by_q[1], 5: wrong_q_map},
+        )
+
+
 def test_v31_cross_window_complete_import_requires_exact_authorization_and_writes_consumer_receipt(
     tmp_path,
 ):

@@ -4430,6 +4430,7 @@ def _task40_v30_load_sector_q_csr_pair(
     runtime_identity: Mapping[str, Any],
     allocation_gate: Callable,
     selected_q_indices: set[int] | None = None,
+    prebuilt_q_maps_by_q: Mapping[int, Any] | None = None,
 ) -> tuple[dict[int, sparse.csr_matrix], dict[str, Any]]:
     import time
 
@@ -4465,11 +4466,30 @@ def _task40_v30_load_sector_q_csr_pair(
     selected_q_indices = sector_q_indices if selected_q_indices is None else set(selected_q_indices)
     if not selected_q_indices <= sector_q_indices:
         raise ValueError("V30 sector selector requested q values outside the actual twist")
+    prebuilt_q_maps = None
+    if prebuilt_q_maps_by_q is not None:
+        if not isinstance(prebuilt_q_maps_by_q, Mapping):
+            raise TypeError("prebuilt sector q maps must be a q-index mapping")
+        try:
+            prebuilt_q_maps = {
+                int(q_index): q_map for q_index, q_map in prebuilt_q_maps_by_q.items()
+            }
+        except (TypeError, ValueError) as error:
+            raise ValueError("prebuilt sector q maps have an invalid q index") from error
+        if (
+            len(prebuilt_q_maps) != len(prebuilt_q_maps_by_q)
+            or set(prebuilt_q_maps) != sector_q_indices
+        ):
+            raise ValueError("prebuilt q maps do not match the live sector context")
     for branch, raw_q in enumerate(context.global_q_indices):
         q_index = int(raw_q)
         if q_index not in selected_q_indices:
             continue
-        q_map = coordinates.q_map(branch, allocation_gate=allocation_gate)
+        q_map = (
+            prebuilt_q_maps[q_index]
+            if prebuilt_q_maps is not None
+            else coordinates.q_map(branch, allocation_gate=allocation_gate)
+        )
         operator_identity = {
             "scientific_input_sha256": str(runtime_identity["scientific_input_sha256"]),
             "profile_identity_sha256": profile_sha,
@@ -6455,14 +6475,24 @@ def build_task40_v10_p6_reference_inverse(
 
 
 def _destroy_task40_v10_levels(levels: Any, *, strict: bool = False) -> None:
+    """Release level-owned MPC wrappers; unlike PETSc objects they have no destroy API."""
+
     if not isinstance(levels, Mapping):
         return
     failures: list[dict[str, str]] = []
     for floquet in levels.get("floquets", {}).values():
         mpc = getattr(floquet, "mpc", None)
         if mpc is not None:
+            destroy = getattr(mpc, "destroy", None)
+            if callable(destroy):
+                try:
+                    destroy()
+                except BaseException as exc:
+                    if strict:
+                        failures.append({"type": type(exc).__name__, "message": str(exc)})
+                    continue
             try:
-                mpc.destroy()
+                floquet.mpc = None
             except BaseException as exc:
                 if strict:
                     failures.append({"type": type(exc).__name__, "message": str(exc)})
