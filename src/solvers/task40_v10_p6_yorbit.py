@@ -4531,6 +4531,165 @@ def _task40_v30_load_sector_q_csr_pair(
     }
 
 
+def _task40_v32_bind_saved_q_map(
+    saved_map: Any,
+    fresh_map: Any,
+    *,
+    audit_callback: Callable[[Mapping[str, Any]], None] | None = None,
+) -> tuple[Any, dict[str, Any]]:
+    """Apply the V26 saved-map structure and relative-value contract."""
+    from .task40_v25_selected_q0 import _relative_error
+    from .task40_v30_qualified_q_csr import _csr_sha256
+
+    def _is_csr(matrix: Any) -> bool:
+        return bool(sparse.issparse(matrix) and getattr(matrix, "format", None) == "csr")
+
+    def _finite(matrix: Any) -> bool:
+        try:
+            return bool(np.isfinite(matrix.data).all())
+        except (AttributeError, TypeError, ValueError):
+            return False
+
+    def _hash(matrix: Any) -> str | None:
+        try:
+            return _csr_sha256(matrix)
+        except (IndexError, OverflowError, TypeError, ValueError):
+            return None
+
+    def _first_difference(left: np.ndarray, right: np.ndarray) -> dict[str, Any] | None:
+        if left.shape != right.shape:
+            return {"saved_length": int(left.size), "fresh_length": int(right.size)}
+        mismatch = np.flatnonzero(left != right)
+        if not mismatch.size:
+            return None
+        index = int(mismatch[0])
+        saved_value, fresh_value = left.reshape(-1)[index].item(), right.reshape(-1)[index].item()
+        if isinstance(saved_value, complex):
+            saved_value, fresh_value = [saved_value.real, saved_value.imag], [
+                fresh_value.real, fresh_value.imag
+            ]
+        else:
+            saved_value, fresh_value = int(saved_value), int(fresh_value)
+        return {"position": index, "saved_value": saved_value, "fresh_value": fresh_value}
+
+    saved_csr, fresh_csr = _is_csr(saved_map), _is_csr(fresh_map)
+    shape_equal = bool(saved_csr and fresh_csr and saved_map.shape == fresh_map.shape)
+    saved_canonical = bool(saved_csr and saved_map.has_canonical_format)
+    fresh_canonical = bool(fresh_csr and fresh_map.has_canonical_format)
+    saved_finite = bool(saved_csr and _finite(saved_map))
+    fresh_finite = bool(fresh_csr and _finite(fresh_map))
+    dtype_valid = bool(
+        shape_equal
+        and saved_map.dtype == fresh_map.dtype == np.dtype(np.complex128)
+        and saved_map.indices.dtype == fresh_map.indices.dtype == np.dtype(np.int32)
+        and saved_map.indptr.dtype == fresh_map.indptr.dtype == np.dtype(np.int32)
+    )
+    indptr_equal = bool(shape_equal and np.array_equal(saved_map.indptr, fresh_map.indptr))
+    indices_equal = bool(shape_equal and np.array_equal(saved_map.indices, fresh_map.indices))
+    structure_equal = bool(shape_equal and indptr_equal and indices_equal)
+    first_structure_difference = None
+    if not shape_equal and saved_csr and fresh_csr:
+        first_structure_difference = {
+            "array": "shape",
+            "saved_value": list(saved_map.shape),
+            "fresh_value": list(fresh_map.shape),
+        }
+    elif shape_equal and not indptr_equal:
+        first_structure_difference = _first_difference(saved_map.indptr, fresh_map.indptr)
+        if first_structure_difference is not None:
+            first_structure_difference["array"] = "indptr"
+    elif shape_equal and not indices_equal:
+        first_structure_difference = _first_difference(saved_map.indices, fresh_map.indices)
+        if first_structure_difference is not None:
+            first_structure_difference["array"] = "indices"
+
+    saved_hash = _hash(saved_map) if saved_csr else None
+    fresh_hash = _hash(fresh_map) if fresh_csr else None
+    relative_error = maximum_absolute_error = None
+    mapping_error_finite = None
+    first_data_difference = None
+    if structure_equal and dtype_valid and saved_canonical and fresh_canonical and saved_finite and fresh_finite:
+        with np.errstate(over="ignore", invalid="ignore"):
+            relative_error = float(
+                _relative_error(saved_map.data, fresh_map.data)["relative_to_component"]
+            )
+            difference = saved_map.data - fresh_map.data
+            maximum_absolute_error = (
+                float(np.max(np.abs(difference), initial=0.0)) if difference.size else 0.0
+            )
+        mapping_error_finite = bool(
+            np.isfinite(relative_error) and np.isfinite(maximum_absolute_error)
+        )
+        first_data_difference = _first_difference(saved_map.data, fresh_map.data)
+        if not mapping_error_finite:
+            relative_error = maximum_absolute_error = None
+
+    if not saved_csr or not fresh_csr:
+        rejection_reason = "not_csr"
+    elif not shape_equal:
+        rejection_reason = "shape_mismatch"
+    elif not dtype_valid:
+        rejection_reason = "dtype_mismatch"
+    elif not saved_canonical or not fresh_canonical:
+        rejection_reason = "noncanonical_structure"
+    elif not saved_finite or not fresh_finite:
+        rejection_reason = "nonfinite_data"
+    elif saved_hash is None or fresh_hash is None:
+        rejection_reason = "invalid_csr"
+    elif not structure_equal:
+        rejection_reason = "structure_mismatch"
+    elif mapping_error_finite is False:
+        rejection_reason = "nonfinite_mapping_error"
+    elif relative_error is None:
+        rejection_reason = "value_comparison_unavailable"
+    elif relative_error > 1.0e-12:
+        rejection_reason = "mapping_relative_error_exceeds_1e-12"
+    else:
+        rejection_reason = None
+
+    audit = {
+        "saved": {
+            "sha256": saved_hash,
+            "shape": list(saved_map.shape) if saved_csr else None,
+            "data_dtype": str(saved_map.dtype) if saved_csr else None,
+            "indices_dtype": str(saved_map.indices.dtype) if saved_csr else None,
+            "indptr_dtype": str(saved_map.indptr.dtype) if saved_csr else None,
+            "canonical": saved_canonical,
+            "finite": saved_finite,
+        },
+        "fresh": {
+            "sha256": fresh_hash,
+            "shape": list(fresh_map.shape) if fresh_csr else None,
+            "data_dtype": str(fresh_map.dtype) if fresh_csr else None,
+            "indices_dtype": str(fresh_map.indices.dtype) if fresh_csr else None,
+            "indptr_dtype": str(fresh_map.indptr.dtype) if fresh_csr else None,
+            "canonical": fresh_canonical,
+            "finite": fresh_finite,
+        },
+        "structure": {
+            "shape_equal": shape_equal,
+            "indptr_equal": indptr_equal,
+            "indices_equal": indices_equal,
+            "equal": structure_equal,
+            "first_difference": first_structure_difference,
+        },
+        "values": {
+            "relative_to_component": relative_error,
+            "maximum_absolute_error": maximum_absolute_error,
+            "first_difference": first_data_difference,
+            "finite": mapping_error_finite,
+        },
+        "tolerance_relative_to_component": 1.0e-12,
+        "passed": rejection_reason is None,
+        "rejection_reason": rejection_reason,
+    }
+    if audit_callback is not None:
+        audit_callback(audit)
+    if rejection_reason is not None:
+        raise ValueError(f"saved V26 q map binding rejected: {rejection_reason}")
+    return saved_map, audit
+
+
 def build_task40_v10_p6_local_sector_owner(
     cfg: Any,
     axes: Mapping[str, tuple[float, ...]],
@@ -4975,25 +5134,43 @@ def build_task40_v10_p6_local_sector_owner(
             system = None
             local_bundle["research_phase_override"] = phase_override
         else:
-            from .task40_v30_qualified_q_csr import _csr_sha256
-
-            def bind_saved_maps() -> dict[str, str]:
+            def bind_saved_maps() -> dict[str, Any]:
                 saved_q0 = saved_port_owner.get("q0_map")
                 saved_q4 = saved_port_owner.get("q4_map")
-                if saved_q0 is None or saved_q4 is None:
-                    raise ValueError("saved V26 owner has no original q0/q4 maps")
-                if _csr_sha256(saved_q0) != _csr_sha256(q_maps_by_q[0]):
-                    raise ValueError("fresh twist-0 q0 map differs from the accepted saved producer")
-                if _csr_sha256(saved_q4) != _csr_sha256(q_maps_by_q[4]):
-                    raise ValueError("fresh twist-0 q4 map differs from the accepted saved producer")
+
+                def compare_map(q_index: int, saved_map: Any, fresh_map: Any):
+                    def emit_audit(audit: Mapping[str, Any]) -> None:
+                        if stage_callback is not None:
+                            stage_callback(
+                                {
+                                    "phase": "saved_q0_q4_map_binding_audit",
+                                    "status": "AUDIT",
+                                    "owner_id": owner_id,
+                                    "q_index": int(q_index),
+                                    "q_indices": [int(q_index)],
+                                    "twist_index": int(context.twist_index),
+                                    **dict(audit),
+                                }
+                            )
+
+                    return _task40_v32_bind_saved_q_map(
+                        saved_map, fresh_map, audit_callback=emit_audit
+                    )
+
+                accepted_q0, q0_audit = compare_map(0, saved_q0, q_maps_by_q[0])
+                accepted_q4, q4_audit = compare_map(4, saved_q4, q_maps_by_q[4])
                 if not np.array_equal(
                     np.asarray(saved_port_owner.get("original_h"), dtype=np.complex128),
                     local_h.astype(np.complex128),
                 ):
                     raise ValueError("fresh twist-0 local H differs from the accepted saved producer")
+                if not isinstance(q_maps_by_q, dict):
+                    raise TypeError("fresh twist-0 q maps are not a mutable mapping")
+                q_maps_by_q[0] = accepted_q0
+                q_maps_by_q[4] = accepted_q4
                 return {
-                    "q0_map_sha256": _csr_sha256(q_maps_by_q[0]),
-                    "q4_map_sha256": _csr_sha256(q_maps_by_q[4]),
+                    "q0": q0_audit,
+                    "q4": q4_audit,
                     "local_h_sha256": hashlib.sha256(
                         np.ascontiguousarray(local_h, dtype=np.complex128).view(np.uint8)
                     ).hexdigest(),

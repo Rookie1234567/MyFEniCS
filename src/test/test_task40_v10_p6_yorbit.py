@@ -16,6 +16,7 @@ from src.solvers.task40_v10_p6_yorbit import (
     Q_ASSEMBLY_ROW_TILE_V17,
     V16StagingLimitError,
     _v16_checked_csr_layout,
+    _task40_v32_bind_saved_q_map,
     _assemble_v16_bitset_pattern,
     _project_accumulate_v16,
     TwoCellNativeTransport,
@@ -1455,3 +1456,115 @@ def test_complete_ny8_operator_oracle_covers_empty_q4_and_all_fe_port_blocks(
             candidate_q_matrices=candidate_q,
             expected_q_port_counts=(1, 1, 1, 1, 0, 1, 1, 1),
         )
+
+
+def test_v32_saved_q_map_binding_accepts_roundoff_and_returns_saved_identity():
+    saved = sparse.csr_matrix(
+        np.asarray([[1.0 + 0.0j, 0.25 - 0.1j], [0.0, 2.0 + 0.0j]], dtype=np.complex128)
+    )
+    fresh = saved.copy()
+    fresh.data[1] += 1.0e-13
+    events = []
+
+    accepted, audit = _task40_v32_bind_saved_q_map(
+        saved, fresh, audit_callback=events.append
+    )
+
+    assert accepted is saved
+    assert audit["passed"] is True
+    assert audit["saved"]["sha256"] != audit["fresh"]["sha256"]
+    assert audit["structure"]["equal"] is True
+    assert audit["values"]["relative_to_component"] <= 1.0e-12
+    assert audit["values"]["maximum_absolute_error"] == pytest.approx(1.0e-13)
+    assert audit["values"]["first_difference"]["position"] == 1
+    assert events[0]["passed"] is True
+
+
+def test_v32_saved_q_map_binding_audits_then_rejects_structure_difference():
+    saved = sparse.csr_matrix(np.eye(2, dtype=np.complex128))
+    fresh = sparse.csr_matrix(np.asarray([[1.0, 0.0], [0.0, 0.0]], dtype=np.complex128))
+    events = []
+
+    with pytest.raises(ValueError, match="structure_mismatch"):
+        _task40_v32_bind_saved_q_map(
+            saved, fresh, audit_callback=events.append
+        )
+
+    assert len(events) == 1
+    assert events[0]["passed"] is False
+    assert events[0]["rejection_reason"] == "structure_mismatch"
+    assert events[0]["structure"]["first_difference"] is not None
+
+
+def test_v32_saved_q_map_binding_audits_then_rejects_values_over_tolerance():
+    saved = sparse.eye(3, dtype=np.complex128, format="csr")
+    fresh = saved.copy()
+    fresh.data[0] += 1.0e-8
+    events = []
+
+    with pytest.raises(ValueError, match="mapping_relative_error_exceeds_1e-12"):
+        _task40_v32_bind_saved_q_map(
+            saved, fresh, audit_callback=events.append
+        )
+
+    assert len(events) == 1
+    assert events[0]["passed"] is False
+    assert events[0]["values"]["relative_to_component"] > 1.0e-12
+    assert events[0]["values"]["maximum_absolute_error"] == pytest.approx(1.0e-8)
+    assert events[0]["values"]["first_difference"]["position"] == 0
+
+
+def test_v32_saved_q_map_binding_audits_then_rejects_nonfinite_values():
+    saved = sparse.eye(2, dtype=np.complex128, format="csr")
+    fresh = saved.copy()
+    fresh.data[0] = np.nan + 0.0j
+    events = []
+
+    with pytest.raises(ValueError, match="nonfinite_data"):
+        _task40_v32_bind_saved_q_map(
+            saved, fresh, audit_callback=events.append
+        )
+
+    assert len(events) == 1
+    assert events[0]["passed"] is False
+    assert events[0]["fresh"]["finite"] is False
+    assert events[0]["fresh"]["sha256"] is None
+
+
+def test_v32_saved_q_map_binding_audits_then_rejects_out_of_range_csr_indices():
+    values = np.asarray([1.0 + 0.0j], dtype=np.complex128)
+    indices = np.asarray([2], dtype=np.int32)
+    indptr = np.asarray([0, 1, 1], dtype=np.int32)
+    invalid = sparse.csr_matrix((values, indices, indptr), shape=(2, 2))
+    events = []
+
+    with pytest.raises(ValueError, match="invalid_csr"):
+        _task40_v32_bind_saved_q_map(
+            invalid, invalid.copy(), audit_callback=events.append
+        )
+
+    assert len(events) == 1
+    assert events[0]["passed"] is False
+    assert events[0]["rejection_reason"] == "invalid_csr"
+    assert events[0]["structure"]["equal"] is True
+    assert events[0]["saved"]["sha256"] is None
+    assert events[0]["fresh"]["sha256"] is None
+
+
+def test_v32_saved_q_map_binding_rejects_nonfinite_relative_and_max_errors():
+    values = np.asarray([1.0e308 + 0.0j], dtype=np.complex128)
+    indices = np.asarray([0], dtype=np.int32)
+    indptr = np.asarray([0, 1], dtype=np.int32)
+    saved = sparse.csr_matrix((values, indices, indptr), shape=(1, 1))
+    fresh = saved.copy()
+    fresh.data[0] = -1.0e308 + 0.0j
+    events = []
+
+    with pytest.raises(ValueError, match="nonfinite_mapping_error"):
+        _task40_v32_bind_saved_q_map(saved, fresh, audit_callback=events.append)
+
+    assert len(events) == 1
+    assert events[0]["passed"] is False
+    assert events[0]["values"]["finite"] is False
+    assert events[0]["values"]["relative_to_component"] is None
+    assert events[0]["values"]["maximum_absolute_error"] is None
