@@ -320,8 +320,81 @@ def test_v32_q4_import_requires_exact_existing_pending_and_writes_receipt_to_new
         output_directory=consumer_root,
         numeric_pending_import_authorization=authorization,
     )
+    import resource
+
+    def measured_import(elapsed_seconds, peak_rss_kib):
+        clock = iter((100.0, 100.0 + elapsed_seconds))
+        with monkeypatch.context() as measurement_patch:
+            measurement_patch.setattr(
+                selected_q.time, "perf_counter", lambda: next(clock)
+            )
+            measurement_patch.setattr(
+                resource,
+                "getrusage",
+                lambda _who: SimpleNamespace(ru_maxrss=peak_rss_kib),
+            )
+            return prepare_saved_selected_q_numeric_pending(**import_kwargs)
+
     try:
-        imported = prepare_saved_selected_q_numeric_pending(**import_kwargs)
+        imported = measured_import(0.25, 100)
+        first_receipt = imported["consumer_receipt"]
+        first_receipt_path = Path(first_receipt["path"])
+        first_receipt_sha256 = hashlib.sha256(first_receipt_path.read_bytes()).hexdigest()
+        assert first_receipt["reopened"] is False
+        assert (
+            first_receipt["payload"]["numeric_pending_import_execution"]["elapsed_seconds"]
+            == 0.25
+        )
+        assert first_receipt["payload"]["numeric_pending_import_execution"][
+            "process_lifetime_peak_rss_bytes_at_import_completion"
+        ] == 100 * 1024
+
+        imported_with_new_measurements = measured_import(0.5, 200)
+        second_receipt = imported_with_new_measurements["consumer_receipt"]
+        second_receipt_path = Path(second_receipt["path"])
+        second_receipt_sha256 = hashlib.sha256(second_receipt_path.read_bytes()).hexdigest()
+        assert second_receipt["reopened"] is False
+        assert second_receipt_path != first_receipt_path
+        assert (
+            second_receipt["payload"]["numeric_pending_import_execution"]["elapsed_seconds"]
+            == 0.5
+        )
+        assert second_receipt["payload"]["numeric_pending_import_execution"][
+            "process_lifetime_peak_rss_bytes_at_import_completion"
+        ] == 200 * 1024
+        assert hashlib.sha256(first_receipt_path.read_bytes()).hexdigest() == first_receipt_sha256
+
+        imported = measured_import(0.5, 200)
+        reopened_receipt = imported["consumer_receipt"]
+        assert reopened_receipt["reopened"] is True
+        assert reopened_receipt["path"] == second_receipt["path"]
+        assert reopened_receipt["sha256"] == second_receipt["sha256"]
+        assert reopened_receipt["payload"] == second_receipt["payload"]
+        assert hashlib.sha256(second_receipt_path.read_bytes()).hexdigest() == second_receipt_sha256
+
+        wrong_consumer = dict(import_kwargs)
+        wrong_consumer["execution_identity"] = {
+            "source_sha": "9" * 40,
+            "window_sha256": consumer_identity["window_sha256"],
+        }
+        with pytest.raises(ValueError, match="consumer identity/policy"):
+            prepare_saved_selected_q_numeric_pending(**wrong_consumer)
+
+        wrong_pending_authorization = dict(authorization)
+        wrong_pending_authorization["pending_record_sha256"] = "0" * 64
+        wrong_pending = dict(import_kwargs)
+        wrong_pending["numeric_pending_import_authorization"] = wrong_pending_authorization
+        with pytest.raises(ValueError, match="record hash differs"):
+            prepare_saved_selected_q_numeric_pending(**wrong_pending)
+
+        wrong_array_authorization = dict(authorization)
+        wrong_array_hashes = dict(authorization["csr_artifacts_sha256"])
+        wrong_array_hashes["indices"] = "0" * 64
+        wrong_array_authorization["csr_artifacts_sha256"] = wrong_array_hashes
+        wrong_array = dict(import_kwargs)
+        wrong_array["numeric_pending_import_authorization"] = wrong_array_authorization
+        with pytest.raises(ValueError, match="declaration escapes"):
+            prepare_saved_selected_q_numeric_pending(**wrong_array)
     finally:
         for path, mode in old_modes.items():
             path.chmod(mode)
@@ -333,6 +406,7 @@ def test_v32_q4_import_requires_exact_existing_pending_and_writes_receipt_to_new
     assert imported["numeric_pending"]["record_sha256"] == pending["record_sha256"]
     assert imported["output_directory"] == str(consumer_root.resolve())
     assert imported["consumer_receipt"]["path"].startswith(str(consumer_root.resolve()))
+    assert len(list(consumer_root.glob("task40_v32_q4_twist0_consumer_*.json"))) == 2
     receipt = imported["consumer_receipt"]
     assert Path(receipt["path"]).is_file()
     assert receipt["payload"]["original_record_rewritten"] is False

@@ -1782,13 +1782,25 @@ def _persist_v31_pending_consumer_receipt(
         raise ValueError("V32 pending consumer receipt needs its exact numeric-import authorization")
     if (receipt_version == "v32") != (numeric_pending_import_execution is not None):
         raise ValueError("V32 pending consumer receipt needs measured import execution facts")
+    identity_fields = {
+        "pending_record_sha256": pending_sha256,
+        "consumer_execution_identity": consumer_execution,
+    }
+    if receipt_version == "v32":
+        measured_import_facts = dict(numeric_pending_import_execution or {})
+        measured_import_facts_sha256 = hashlib.sha256(
+            json.dumps(
+                measured_import_facts,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+        ).hexdigest()
+        identity_fields["numeric_pending_import_execution_sha256"] = (
+            measured_import_facts_sha256
+        )
     identity_seed = json.dumps(
-        {
-            "pending_record_sha256": pending_sha256,
-            "consumer_execution_identity": consumer_execution,
-        },
-        sort_keys=True,
-        separators=(",", ":"),
+        identity_fields, sort_keys=True, separators=(",", ":")
     ).encode("utf-8")
     receipt_id = hashlib.sha256(identity_seed).hexdigest()
     receipt_root = Path(consumer_output_directory or pending_path.parent).resolve()
@@ -1827,7 +1839,9 @@ def _persist_v31_pending_consumer_receipt(
             receipt_path, label=f"{receipt_version.upper()} pending consumer receipt"
         )
         if saved != payload:
-            raise ValueError("existing V31 consumer receipt differs from this exact consumer identity")
+            raise ValueError(
+                f"existing {receipt_version.upper()} consumer receipt differs from this exact consumer identity"
+            )
         return {
             "path": str(receipt_path),
             "sha256": digest,
