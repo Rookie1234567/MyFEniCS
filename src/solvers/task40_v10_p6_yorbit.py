@@ -4545,6 +4545,8 @@ def build_task40_v10_p6_local_sector_owner(
     jit_options: Mapping[str, Any] | None = None,
     transform_bank: Any | None = None,
     share_transform_bank: bool = False,
+    saved_port_owner: Mapping[str, Any] | None = None,
+    stage_callback: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Build one reusable local FE/recovery owner before the global reference.
 
@@ -4558,14 +4560,21 @@ def build_task40_v10_p6_local_sector_owner(
     from .dtn_boundary_phase_gauge import BOUNDARY_PLANE
     from .fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
     from .fullspace_same_mesh_hcurl_pmg_physical import (
+        _build_split_volume_action,
         build_same_mesh_physical_action,
         destroy_same_mesh_physical_action,
     )
+    from .fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
     from .hcurl_assembly_time_condensation import build_unconstrained_assembly_time_condensation
     from .original_port_blocks import DiagonalOriginalPortBlock
     from .p6_cell_condensed_action import build_p6_cell_condensed_action_from_carrier
     from .retained_port_block_layout import RESEARCH_PORT_LAYOUT
     from .fresh_c1_p6_component import _boundary_support
+    from .task40_v25_selected_q0 import (
+        _audit_saved_surface_functional_stream,
+        _q0_reference_surface_inventory,
+        build_saved_surface_native_owner,
+    )
 
     if not callable(allocation_gate):
         raise TypeError("local p6 sector owner requires a live allocation gate")
@@ -4591,11 +4600,106 @@ def build_task40_v10_p6_local_sector_owner(
         created_transform_bank = True
     if transform_bank is not None and not share_transform_bank:
         raise ValueError("a supplied transform bank requires explicit shared-bank ownership")
+    if saved_port_owner is not None and (
+        context.twist_index != 0
+        or tuple(map(int, context.global_q_indices)) != (0, 4)
+        or not isinstance(saved_port_owner, Mapping)
+        or not callable(stage_callback)
+    ):
+        raise ValueError("saved-port owner is restricted to a fully observed twist-0 q0/q4 continuation")
 
     local_levels = None
     local_bundle = None
+    volume_action = None
     action = None
     system = None
+    import time as _time
+
+    owner_id = f"twist{context.twist_index}:saved_port_local_owner"
+    boot_id_path = "/proc/sys/kernel/random/boot_id"
+    try:
+        boot_id = open(boot_id_path, encoding="ascii").read().strip()
+    except OSError:
+        boot_id = None
+
+    def owner_stage(
+        phase: str,
+        operation: Callable[[], Any],
+        *,
+        start_facts: Mapping[str, Any] | None = None,
+        complete_facts: Callable[[Any], Mapping[str, Any]] | None = None,
+    ) -> Any:
+        if saved_port_owner is None or stage_callback is None:
+            return operation()
+        started_utc_ns = _time.time_ns()
+        started_monotonic_ns = _time.perf_counter_ns()
+        started_boottime_ns = (
+            _time.clock_gettime_ns(_time.CLOCK_BOOTTIME)
+            if hasattr(_time, "CLOCK_BOOTTIME")
+            else None
+        )
+        common = {
+            "phase": phase,
+            "owner_id": owner_id,
+            "q_indices": [0, 4],
+            "twist_index": int(context.twist_index),
+            "boot_id": boot_id,
+            **dict(start_facts or {}),
+        }
+        stage_callback({
+            **common,
+            "status": "STARTED",
+            "started_utc_ns": started_utc_ns,
+            "started_monotonic_ns": started_monotonic_ns,
+            "started_boottime_ns": started_boottime_ns,
+        })
+        try:
+            result = operation()
+        except BaseException as error:
+            finished_utc_ns = _time.time_ns()
+            finished_monotonic_ns = _time.perf_counter_ns()
+            stage_callback({
+                **common,
+                "status": "FAILED",
+                "started_utc_ns": started_utc_ns,
+                "started_monotonic_ns": started_monotonic_ns,
+                "started_boottime_ns": started_boottime_ns,
+                "finished_utc_ns": finished_utc_ns,
+                "finished_monotonic_ns": finished_monotonic_ns,
+                "finished_boottime_ns": (
+                    _time.clock_gettime_ns(_time.CLOCK_BOOTTIME)
+                    if hasattr(_time, "CLOCK_BOOTTIME")
+                    else None
+                ),
+                "elapsed_seconds": max(
+                    0.0, (finished_monotonic_ns - started_monotonic_ns) / 1.0e9
+                ),
+                "error_type": type(error).__name__,
+                "error_message": str(error),
+            })
+            raise
+        finished_utc_ns = _time.time_ns()
+        finished_monotonic_ns = _time.perf_counter_ns()
+        stage_callback({
+            **common,
+            "status": "COMPLETE",
+            "started_utc_ns": started_utc_ns,
+            "started_monotonic_ns": started_monotonic_ns,
+            "started_boottime_ns": started_boottime_ns,
+            "finished_utc_ns": finished_utc_ns,
+            "finished_monotonic_ns": finished_monotonic_ns,
+            "finished_boottime_ns": (
+                _time.clock_gettime_ns(_time.CLOCK_BOOTTIME)
+                if hasattr(_time, "CLOCK_BOOTTIME")
+                else None
+            ),
+            "elapsed_seconds": max(
+                0.0, (finished_monotonic_ns - started_monotonic_ns) / 1.0e9
+            ),
+            **dict(complete_facts(result) if complete_facts is not None else {}),
+        })
+        return result
+
     try:
         local_period_y = float(context.local_axes["y"][-1] - context.local_axes["y"][0])
         local_cfg = __import__("dataclasses").replace(
@@ -4616,12 +4720,22 @@ def build_task40_v10_p6_local_sector_owner(
             geometry_identity=f"{SCHEMA}.regular.local_twist{context.twist_index}",
         )
         phase_override = (complex(cfg.floquet_phase_x), context.tau)
-        local_levels = _build_same_mesh_levels(
-            local_cfg,
-            MPI.COMM_SELF,
-            (6,),
-            include_positive_coefficients=False,
-            research_phase_override=phase_override,
+        local_levels = owner_stage(
+            "local_mesh_fe_mpc",
+            lambda: _build_same_mesh_levels(
+                local_cfg,
+                MPI.COMM_SELF,
+                (6,),
+                include_positive_coefficients=False,
+                research_phase_override=phase_override,
+            ),
+            start_facts={"mesh_plan_id": local_cfg.mesh_plan_id},
+            complete_facts=lambda levels: {
+                "local_cell_count": int(levels["mesh"].topology.index_map(3).size_local),
+                "local_mode_count": int(len(context.original_mode_indices)),
+                "mpc_slave_count": int(len(levels["floquets"][6].mpc.slaves)),
+                "mpc_master_count": int(len(levels["floquets"][6].mpc.masters.array)),
+            },
         )
         selected = np.asarray(context.original_mode_indices, dtype=np.int64)
         local_modes = tuple(global_modes[int(i)] for i in selected)
@@ -4630,49 +4744,159 @@ def build_task40_v10_p6_local_sector_owner(
             tuple(global_mode_rows[int(i)] for i in selected),
             str(global_mode_sha256),
         )
-        local_bundle = build_same_mesh_physical_action(
-            local_levels,
-            local_cfg,
-            6,
-            mode_inventory=local_mode_inventory,
-            jit_options=jit_options,
-            dtn_phase_gauge=BOUNDARY_PLANE,
-            verify_dtn_quadrature=True,
-            research_phase_override=phase_override,
+        saved_support_inventory = None
+        if saved_port_owner is None:
+            local_bundle = build_same_mesh_physical_action(
+                local_levels,
+                local_cfg,
+                6,
+                mode_inventory=local_mode_inventory,
+                jit_options=jit_options,
+                dtn_phase_gauge=BOUNDARY_PLANE,
+                verify_dtn_quadrature=True,
+                research_phase_override=phase_override,
+            )
+            carrier = local_bundle["dtn_action"].carrier
+            local_h = np.asarray(
+                [entry.normalization_h for entry in carrier.entries], dtype=np.float64
+            )
+            if local_h.shape != (len(local_modes),):
+                raise ValueError("local p6 boundary carrier mode inventory is incomplete")
+            support_groups, support_rows, _support = _boundary_support(local_bundle)
+            volume_action = local_bundle["volume_action"]
+        else:
+            if tuple(map(int, context.global_q_indices)) != (0, 4):
+                raise ValueError("saved V26 surface stream only binds the actual twist-0 q0/q4 pair")
+            saved_h = np.asarray(saved_port_owner.get("original_h"), dtype=np.complex128)
+            from .dtn_boundary_phase_gauge import assembly_projection_denominator
+
+            actual_local_h = np.fromiter(
+                (
+                    assembly_projection_denominator(mode, local_cfg, BOUNDARY_PLANE)
+                    for mode in local_modes
+                ),
+                dtype=np.float64,
+                count=len(local_modes),
+            )
+            if (
+                actual_local_h.shape != (len(local_modes),)
+                or saved_h.shape != actual_local_h.shape
+                or np.any(np.imag(saved_h) != 0.0)
+                or not np.isfinite(saved_h).all()
+                or np.any(saved_h.real <= 0.0)
+                or not np.isfinite(actual_local_h).all()
+                or np.any(actual_local_h <= 0.0)
+            ):
+                raise ValueError("saved V26 local H or fresh local boundary-plane denominator is invalid")
+            local_h_projection_relative_error = float(
+                np.linalg.norm(saved_h.real - actual_local_h)
+                / max(float(np.linalg.norm(saved_h.real)), np.finfo(float).tiny)
+            )
+            if local_h_projection_relative_error > 1.0e-12:
+                raise ValueError("saved V26 local H differs from the fresh local boundary-plane projection")
+            period_ratio_h = h[selected] * (
+                float(profile.local_y_cells) / float(profile.global_cell_axes[1])
+            )
+            period_ratio_h_relative = float(
+                np.linalg.norm(period_ratio_h - actual_local_h)
+                / max(float(np.linalg.norm(actual_local_h)), np.finfo(float).tiny)
+            )
+            local_h = np.ascontiguousarray(saved_h.real, dtype=np.float64)
+            saved_support_inventory = owner_stage(
+                "fresh_boundary_support_inventory",
+                lambda: _q0_reference_surface_inventory(
+                    local_levels["mesh_data"],
+                    local_levels["spaces"][6],
+                    local_cfg,
+                ),
+                start_facts={"local_mode_count": int(len(local_modes))},
+                complete_facts=lambda result: {
+                    "boundary_cell_count": int(
+                        sum(len(group) for group in result[1])
+                    ),
+                    "boundary_mode_count": int(len(local_modes)),
+                    "cell_dofmap_sha256": str(result[4]["cell_dofmap_sha256"]),
+                },
+            )
+            _mapping_rows, support_groups, allowed_rows_by_side, _permutation, native_inventory = saved_support_inventory
+            support_rows = tuple(
+                {"bottom": 0, "top": 1}[str(mode.side)] for mode in local_modes
+            )
+            volume_action = owner_stage(
+                "volume_form_jit",
+                lambda: _build_split_volume_action(
+                    local_levels["mesh_data"],
+                    local_cfg,
+                    local_levels["spaces"][6],
+                    local_levels["floquets"][6],
+                    jit_options=dict(jit_options or SAME_MESH_JIT_OPTIONS),
+                ),
+                start_facts={"form_source": "fresh split volume FE form", "jit_options": dict(jit_options or SAME_MESH_JIT_OPTIONS)},
+                complete_facts=lambda volume: {
+                    "form_cache_key": str(getattr(volume, "cache_key", "unknown")),
+                    "volume_action_schema": dict(getattr(volume, "audit", {})).get("schema"),
+                },
+            )
+        local_entities = owner_stage(
+            "native_entities",
+            lambda: collect_y_orbit_entities(
+                local_levels["spaces"][6],
+                local_levels["floquets"][6],
+                local_cfg,
+                context.local_axes,
+                transform_bank=transform_bank,
+            ),
+            start_facts={"local_mode_count": int(len(local_modes))},
+            complete_facts=lambda entities: {
+                "full_rows": int(entities.full_rows),
+                "independent_rows": int(len(entities.independent)),
+            },
         )
-        local_entities = collect_y_orbit_entities(
-            local_levels["spaces"][6],
-            local_levels["floquets"][6],
-            local_cfg,
-            context.local_axes,
-            transform_bank=transform_bank,
+        compiled = owner_stage(
+            "volume_form_compilation",
+            lambda: fem.form(
+                volume_action.bilinear_form,
+                **({"jit_options": dict(jit_options or SAME_MESH_JIT_OPTIONS)}),
+            ),
+            start_facts={"volume_action": "fresh split volume FE action"},
+            complete_facts=lambda _compiled: {
+                "volume_form_compiled": True,
+                "volume_action_apply_count": dict(getattr(volume_action, "audit", {})).get("apply_count"),
+            },
         )
-        carrier = local_bundle["dtn_action"].carrier
-        local_h = np.asarray(
-            [entry.normalization_h for entry in carrier.entries], dtype=np.float64
-        )
-        if local_h.shape != (len(local_modes),):
-            raise ValueError("local p6 boundary carrier mode inventory is incomplete")
-        support_groups, support_rows, _support = _boundary_support(local_bundle)
-        compiled = fem.form(
-            local_bundle["volume_action"].bilinear_form,
-            **({"jit_options": dict(jit_options)} if jit_options is not None else {}),
-        )
-        system = build_unconstrained_assembly_time_condensation(
-            compiled,
-            local_levels["spaces"][6],
-            local_levels["mesh_data"].cell_tags,
-            mpc=local_levels["floquets"][6].mpc,
-            appended_global_rows=len(local_modes),
-            appended_support_owned_cell_groups=support_groups,
-            appended_support_group_by_row=support_rows,
-            sum_duplicate_cell_integrals=True,
-            strict_local_checks=True,
-            materialize_global_matrix=False,
-            retain_local_schur_for_matrix_free=True,
-            share_identity_cache=True,
-            preserve_exact_geometry=True,
-            allocation_gate=allocation_gate,
+        system = owner_stage(
+            "local_condensation_recovery",
+            lambda: build_unconstrained_assembly_time_condensation(
+                compiled,
+                local_levels["spaces"][6],
+                local_levels["mesh_data"].cell_tags,
+                mpc=local_levels["floquets"][6].mpc,
+                appended_global_rows=len(local_modes),
+                appended_support_owned_cell_groups=support_groups,
+                appended_support_group_by_row=support_rows,
+                sum_duplicate_cell_integrals=True,
+                strict_local_checks=True,
+                materialize_global_matrix=False,
+                retain_local_schur_for_matrix_free=True,
+                share_identity_cache=True,
+                preserve_exact_geometry=True,
+                allocation_gate=allocation_gate,
+            ),
+            start_facts={
+                "fresh_local_fe_rows": int(profile.local_storage_rows),
+                "appended_mode_rows": int(len(local_modes)),
+                "saved_port_stream_sha256": (
+                    saved_port_owner.get("surface_stream_sha256")
+                    if saved_port_owner is not None
+                    else None
+                ),
+            },
+            complete_facts=lambda condensed: {
+                "full_rows": int(condensed.full_rows),
+                "active_rows": int(condensed.active_rows),
+                "active_interior_rows": int(condensed.active_interior_rows),
+                "cell_recovery_map_count": int(len(condensed.cell_recovery_maps)),
+            },
         )
         expected_inventory = (
             profile.local_storage_rows,
@@ -4688,31 +4912,167 @@ def build_task40_v10_p6_local_sector_owner(
         )
         if actual_inventory != expected_inventory:
             raise ValueError(f"local p6 condensation inventory mismatch: {actual_inventory}")
-        compact_h = DiagonalOriginalPortBlock.from_carrier(carrier.entries)
-        action = build_p6_cell_condensed_action_from_carrier(
-            system,
-            carrier,
-            owns_condensed=True,
-            port_coupling_mode="cached",
-            port_block_layout=RESEARCH_PORT_LAYOUT,
-            original_port_block=compact_h,
+        trace = owner_stage(
+            "trace_entities_and_mpc_recovery_map",
+            lambda: trace_layout_coordinates(
+                local_entities,
+                system,
+                cell_phase_y=context.eta,
+                allocation_gate=allocation_gate,
+            ),
+            start_facts={"active_rows": int(system.active_rows)},
+            complete_facts=lambda value: {
+                "trace_width": int(value["trace_width"]),
+                "trace_rows": int(system.active_rows),
+                "entity_independent_rows": int(len(local_entities.independent)),
+            },
         )
-        system = None
-        local_bundle["research_phase_override"] = phase_override
-        trace = trace_layout_coordinates(
-            local_entities,
-            action.condensed,
-            cell_phase_y=context.eta,
-            allocation_gate=allocation_gate,
+        coordinates = owner_stage(
+            "fresh_q0_q4_coordinates",
+            lambda: TwoCellBranchCoordinates(
+                trace,
+                trace_rows=system.active_rows,
+                local_modes=local_modes,
+                local_h=local_h,
+                context=context,
+                allocation_gate=allocation_gate,
+            ),
+            start_facts={"selected_mode_count": int(len(local_modes))},
+            complete_facts=lambda value: {
+                "full_rows": int(value.rows),
+                "trace_rows": int(value.trace_rows),
+                "selected_mode_count": int(len(local_modes)),
+            },
         )
-        coordinates = TwoCellBranchCoordinates(
-            trace,
-            trace_rows=action.condensed.active_rows,
-            local_modes=local_modes,
-            local_h=local_h,
-            context=context,
-            allocation_gate=allocation_gate,
-        )
+        q_maps_by_q = None
+        if saved_port_owner is not None:
+            q_maps_by_q = owner_stage(
+                "fresh_q0_q4_maps",
+                lambda: {
+                    q: coordinates.q_map(branch, allocation_gate=allocation_gate)
+                    for branch, q in enumerate(context.global_q_indices)
+                },
+                start_facts={
+                    "coordinate_rows": int(coordinates.rows),
+                    "selected_mode_count": int(len(local_modes)),
+                },
+                complete_facts=lambda maps: {
+                    "q0_shape": [int(value) for value in maps[0].shape],
+                    "q4_shape": [int(value) for value in maps[4].shape],
+                },
+            )
+        saved_surface_owner = None
+        if saved_port_owner is None:
+            compact_h = DiagonalOriginalPortBlock.from_carrier(carrier.entries)
+            action = build_p6_cell_condensed_action_from_carrier(
+                system,
+                carrier,
+                owns_condensed=True,
+                port_coupling_mode="cached",
+                port_block_layout=RESEARCH_PORT_LAYOUT,
+                original_port_block=compact_h,
+            )
+            system = None
+            local_bundle["research_phase_override"] = phase_override
+        else:
+            from .task40_v30_qualified_q_csr import _csr_sha256
+
+            def bind_saved_maps() -> dict[str, str]:
+                saved_q0 = saved_port_owner.get("q0_map")
+                saved_q4 = saved_port_owner.get("q4_map")
+                if saved_q0 is None or saved_q4 is None:
+                    raise ValueError("saved V26 owner has no original q0/q4 maps")
+                if _csr_sha256(saved_q0) != _csr_sha256(q_maps_by_q[0]):
+                    raise ValueError("fresh twist-0 q0 map differs from the accepted saved producer")
+                if _csr_sha256(saved_q4) != _csr_sha256(q_maps_by_q[4]):
+                    raise ValueError("fresh twist-0 q4 map differs from the accepted saved producer")
+                if not np.array_equal(
+                    np.asarray(saved_port_owner.get("original_h"), dtype=np.complex128),
+                    local_h.astype(np.complex128),
+                ):
+                    raise ValueError("fresh twist-0 local H differs from the accepted saved producer")
+                return {
+                    "q0_map_sha256": _csr_sha256(q_maps_by_q[0]),
+                    "q4_map_sha256": _csr_sha256(q_maps_by_q[4]),
+                    "local_h_sha256": hashlib.sha256(
+                        np.ascontiguousarray(local_h, dtype=np.complex128).view(np.uint8)
+                    ).hexdigest(),
+                    "local_h_fresh_projection_relative_error": local_h_projection_relative_error,
+                    "period_ratio_h_relative_diagnostic": period_ratio_h_relative,
+                    "period_ratio_h_is_diagnostic_only": True,
+                }
+
+            saved_map_binding = owner_stage(
+                "saved_q0_q4_map_and_h_binding",
+                bind_saved_maps,
+                start_facts={"producer_identity_sha256": saved_port_owner.get("producer_identity_sha256")},
+                complete_facts=lambda result: result,
+            )
+            interior_parts = [
+                np.asarray(cell.interior_original_dofs, dtype=np.int64).reshape(-1)
+                for cell in system.cell_recovery_maps
+                if len(cell.interior_original_dofs)
+            ]
+            interior_rows = (
+                np.concatenate(interior_parts)
+                if interior_parts
+                else np.empty(0, dtype=np.int64)
+            )
+            interior_rows.sort()
+            if interior_rows.size > 1 and np.any(interior_rows[1:] == interior_rows[:-1]):
+                raise ValueError("fresh local FE recovery has duplicate interior row ownership")
+
+            def audit_surface(active_lookup: np.ndarray) -> Mapping[str, Any]:
+                return _audit_saved_surface_functional_stream(
+                    Path(str(saved_port_owner["surface_stream_path"])),
+                    selected_indices=selected,
+                    local_modes=local_modes,
+                    local_h=local_h,
+                    allowed_rows_by_side=saved_support_inventory[2],
+                    interior_rows=interior_rows,
+                    active_lookup=active_lookup,
+                    active_rows=int(system.active_rows),
+                    allocation_gate=allocation_gate,
+                )
+
+            saved_surface_owner = owner_stage(
+                "saved_port_native_owner_adapter",
+                lambda: build_saved_surface_native_owner(
+                    condensed=system,
+                    volume_action=volume_action,
+                    surface_stream_path=saved_port_owner["surface_stream_path"],
+                    surface_stream_sha256=str(saved_port_owner["surface_stream_sha256"]),
+                    selected_indices=selected,
+                    local_modes=local_modes,
+                    local_h=local_h,
+                    full_mode_rows=global_mode_rows,
+                    active_lookup_path=saved_port_owner["active_lookup_path"],
+                    interior_rows=interior_rows,
+                    numeric_internal_support_evidence=saved_port_owner[
+                        "direct_hhat_evidence"
+                    ],
+                    surface_support_audit=audit_surface,
+                    producer_identity_sha256=str(
+                        saved_port_owner["producer_identity_sha256"]
+                    ),
+                    global_mode_sha256=str(global_mode_sha256),
+                    allocation_gate=allocation_gate,
+                    stage_callback=stage_callback,
+                    owns_condensed=True,
+                ),
+                start_facts={
+                    "fresh_volume_action": True,
+                    "surface_integrator_rerun": False,
+                    "producer_identity_sha256": saved_port_owner.get("producer_identity_sha256"),
+                    "saved_map_binding": saved_map_binding,
+                },
+                complete_facts=lambda value: dict(value["owner_receipt"]),
+            )
+            action = saved_surface_owner["action"]
+            local_bundle = saved_surface_owner["bundle"]
+            local_bundle["research_phase_override"] = phase_override
+            system = None
+            volume_action = None
         h_sha256 = hashlib.sha256(np.ascontiguousarray(h).view(np.uint8)).hexdigest()
         return {
             "context": context,
@@ -4724,6 +5084,7 @@ def build_task40_v10_p6_local_sector_owner(
             "transport": None,
             "trace": trace,
             "coordinates": coordinates,
+            "q_maps_by_q": q_maps_by_q,
             "local_modes": local_modes,
             "mode_inventory": local_mode_inventory,
             "local_h": local_h,
@@ -4740,7 +5101,20 @@ def build_task40_v10_p6_local_sector_owner(
                 "created_before_global_reference": True,
                 "created_transform_bank": bool(created_transform_bank),
                 "action_and_recovery_owner_retained": True,
+                "saved_surface_native_owner": (
+                    dict(saved_surface_owner["owner_receipt"])
+                    if saved_surface_owner is not None
+                    else None
+                ),
+                "saved_q0_q4_map_binding": (
+                    dict(saved_map_binding) if saved_port_owner is not None else None
+                ),
             },
+            "saved_port_provider_sweep_counter": (
+                saved_surface_owner["provider_sweep_counter"]
+                if saved_surface_owner is not None
+                else None
+            ),
         }
     except BaseException:
         if system is not None:
@@ -4756,6 +5130,11 @@ def build_task40_v10_p6_local_sector_owner(
         if local_bundle is not None:
             try:
                 destroy_same_mesh_physical_action(local_bundle)
+            except Exception:
+                pass
+        elif volume_action is not None:
+            try:
+                volume_action.destroy()
             except Exception:
                 pass
         _destroy_task40_v10_levels(local_levels)
@@ -5748,6 +6127,15 @@ def destroy_task40_v10_p6_local_sector_owner(
             owner["transform_bank"] = None
         except BaseException as exc:
             failures.append({"owner": "transform_bank", "type": type(exc).__name__, "message": str(exc)})
+    q_maps = owner.get("q_maps_by_q")
+    if owner.get("_q_maps_cleanup_complete") is not True:
+        try:
+            if isinstance(q_maps, dict):
+                q_maps.clear()
+            owner["q_maps_by_q"] = None
+            owner["_q_maps_cleanup_complete"] = True
+        except BaseException as exc:
+            failures.append({"owner": "q_maps_by_q", "type": type(exc).__name__, "message": str(exc)})
     complete = not failures and all(
         owner.get(f"_{key}_cleanup_complete") is True
         for key, value in (("system", owner.get("system")), ("action", owner.get("action")),
@@ -5757,7 +6145,7 @@ def destroy_task40_v10_p6_local_sector_owner(
         not close_transform_bank
         or owner.get("transform_bank") is None
         or owner.get("_transform_bank_cleanup_complete") is True
-    )
+    ) and owner.get("_q_maps_cleanup_complete") is True
     receipt = {
         "schema": "task40extra.review_v31_twist0_owner_cleanup.v1",
         "status": "RELEASED" if complete else "CLEANUP_FAILED",
@@ -5766,6 +6154,8 @@ def destroy_task40_v10_p6_local_sector_owner(
         "local_levels_released": owner.get("levels") is None,
         "local_bundle_released": owner.get("bundle") is None,
         "local_action_released": owner.get("action") is None,
+        "q_maps_released": owner.get("q_maps_by_q") is None
+        and owner.get("_q_maps_cleanup_complete") is True,
         "transform_bank_released": (
             owner.get("transform_bank") is None
             or owner.get("_transform_bank_cleanup_complete") is True

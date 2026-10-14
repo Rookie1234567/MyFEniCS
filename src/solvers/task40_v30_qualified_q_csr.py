@@ -276,6 +276,7 @@ class QualifiedQCSRProvider:
         allocation_gate: Callable[[str, Mapping[str, Any]], Any],
         consumer_receipt_directory: str | Path | None = None,
         consumer_import_authorizations: Mapping[str, Mapping[str, Any]] | None = None,
+        numeric_pending_import_authorizations: Mapping[str, Mapping[str, Any]] | None = None,
     ) -> None:
         self.repo_root = Path(repo_root).resolve()
         self._raw_resolver = path_resolver
@@ -306,6 +307,19 @@ class QualifiedQCSRProvider:
             dict(consumer_import_authorizations or {})
         ):
             raise ValueError("V31 q consumer import authorizations contain a non-object entry")
+        if numeric_pending_import_authorizations is not None and not isinstance(
+            numeric_pending_import_authorizations, Mapping
+        ):
+            raise TypeError("V32 numeric-pending import authorizations must be a mapping")
+        self.numeric_pending_import_authorizations = {
+            str(key): dict(value)
+            for key, value in dict(numeric_pending_import_authorizations or {}).items()
+            if isinstance(value, Mapping)
+        }
+        if len(self.numeric_pending_import_authorizations) != len(
+            dict(numeric_pending_import_authorizations or {})
+        ):
+            raise ValueError("V32 numeric-pending import authorizations contain a non-object entry")
         selector = self._resolve(selector_path)
         if not selector.is_file() or _sha256_file(selector) != _require_sha(
             selector_sha256, "selector_sha256"
@@ -441,6 +455,65 @@ class QualifiedQCSRProvider:
         if _sha256_file(manifest_path) != manifest_sha:
             raise ValueError("CSR manifest hash changed")
         manifest = _read_json(manifest_path)
+        numeric_import_authorization = self.numeric_pending_import_authorizations.get(
+            str(q_index)
+        )
+        manifest_numeric_import = manifest.get("numeric_pending_import")
+        if numeric_import_authorization is not None:
+            if q_index != 4 or not isinstance(manifest_numeric_import, Mapping):
+                raise ValueError("V32 numeric-pending import authorization is restricted to q4")
+            from src.solvers.task40_v30_selected_q_csr import (
+                preflight_v32_q4_numeric_pending_import,
+            )
+
+            preflight_v32_q4_numeric_pending_import(
+                numeric_import_authorization,
+                profile=str(self.profile),
+                execution_identity=execution,
+                output_directory=manifest_path.parent,
+            )
+            import_execution = manifest_numeric_import.get(
+                "numeric_pending_import_execution"
+            )
+            if (
+                manifest_numeric_import.get("authorization") != numeric_import_authorization
+                or manifest_numeric_import.get("pending_record_path")
+                != numeric_import_authorization.get("pending_record_path")
+                or manifest_numeric_import.get("pending_record_sha256")
+                != numeric_import_authorization.get("pending_record_sha256")
+                or manifest_numeric_import.get("read_only_import_root")
+                != numeric_import_authorization.get("import_root")
+                or manifest_numeric_import.get("consumer_completion_output_root")
+                != str(manifest_path.parent.resolve())
+                or manifest_numeric_import.get("old_arrays_modified") is not False
+                or manifest_numeric_import.get("publication_rehashed_large_arrays") is not True
+                or not isinstance(import_execution, Mapping)
+                or import_execution.get("schema")
+                != "task40extra.review_v32_q4_import_execution.v1"
+                or import_execution.get("read_only") is not True
+                or import_execution.get("reopened_existing_pending") is not True
+                or import_execution.get("large_array_hashes_checked") is not True
+                or type(import_execution.get("elapsed_seconds")) not in (int, float)
+                or import_execution.get("elapsed_seconds", -1) < 0
+                or not isinstance(
+                    import_execution.get("process_lifetime_peak_rss_bytes_at_import_completion"),
+                    (int, type(None)),
+                )
+                or import_execution.get("peak_rss_scope")
+                != "process lifetime ru_maxrss sampled at import completion; not an import-interval peak"
+                or any(
+                    import_execution.get(key) != 0
+                    for key in (
+                        "producer_invocations",
+                        "route_build_invocations",
+                        "pattern_build_invocations",
+                        "numeric_fill_invocations",
+                    )
+                )
+            ):
+                raise ValueError("V32 COMPLETE manifest import receipt differs from the approved q4 authorization")
+        elif manifest_numeric_import is not None:
+            raise ValueError("q CSR manifest declares an unapproved V32 numeric-pending import")
         legacy_q0 = manifest.get("schema") == "task40extra.review_v28_saved_q0_csr.v1"
         if legacy_q0 and producer_execution != execution:
             raise ValueError("legacy q0 selector execution source/window differs from this run")
@@ -546,6 +619,16 @@ class QualifiedQCSRProvider:
             if path.stat().st_size != record["bytes"]:
                 raise ValueError(f"CSR {name} size changed")
             _require_sha(record.get("sha256"), f"{name}.sha256")
+            if numeric_import_authorization is not None:
+                import_root = Path(
+                    str(numeric_import_authorization["import_root"])
+                ).resolve()
+                if (
+                    path.parent != import_root
+                    or record.get("sha256")
+                    != numeric_import_authorization["csr_artifacts_sha256"].get(name)
+                ):
+                    raise ValueError("V32 q4 COMPLETE CSR escaped or changed from its read-only imported arrays")
             paths[name], records[name] = path, record
         payload_bytes = sum(record["bytes"] for record in records.values())
         self.allocation_gate(
@@ -582,8 +665,17 @@ class QualifiedQCSRProvider:
             _require_csr(matrix, "V28 q0 COMPLETE_CSR")
         else:
             for name, path in paths.items():
-                if _sha256_file(path) != records[name]["sha256"]:
+                actual_sha256 = _sha256_file(path)
+                if actual_sha256 != records[name]["sha256"]:
                     raise ValueError(f"CSR {name} hash changed")
+                if (
+                    numeric_import_authorization is not None
+                    and actual_sha256
+                    != numeric_import_authorization["csr_artifacts_sha256"].get(name)
+                ):
+                    raise ValueError(
+                        f"V32 q4 COMPLETE CSR {name} content hash differs from its read-only import authorization"
+                    )
             if (
                 manifest.get("csr_index_dtype") != np.dtype(np.int32).str
                 or manifest.get("csr_data_dtype") != np.dtype(np.complex128).str
@@ -639,6 +731,11 @@ class QualifiedQCSRProvider:
             "shape": list(shape),
             "stored_structural_slots": int(slots),
             "payload_bytes": int(payload_bytes),
+            "numeric_pending_import": (
+                dict(manifest_numeric_import)
+                if isinstance(manifest_numeric_import, Mapping)
+                else None
+            ),
         }
         if not legacy_q0 and producer_execution != execution:
             if self.consumer_receipt_directory is None:

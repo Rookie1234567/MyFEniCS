@@ -470,6 +470,11 @@ def _v31_worker_fixture(root: Path) -> tuple[dict, dict, dict, dict, str]:
         "schema": "task40extra.review_v31_execution_contract.v1",
         "status": "USER_APPROVED",
         "service_start_allowed": True,
+        "review": {
+            "path": V31_REVIEW_PATH,
+            "commit": V31_REVIEW_COMMIT,
+            "sha256": V31_REVIEW_SHA256,
+        },
         "source_freeze": {"source_sha": run_source, "branch": "task40extra_0p7nm_engineering", "clean": True},
         "preparation": {"accepted_q0_donor": donor, "q_csr_worklist": worklist},
         "execution": {
@@ -792,6 +797,92 @@ def test_v31_same_window_new_source_contract_launcher_worker_and_campaign_route(
         )
 
 
+def test_v32_worker_binding_returns_fixed_q4_template(tmp_path, monkeypatch):
+    from src.runners import task40_v31_contract
+    from src.solvers import task40_v30_selected_q_csr
+
+    contract, binding, payload, environment, contract_sha = _v31_worker_fixture(tmp_path)
+    run_source = contract["source_freeze"]["source_sha"]
+    source_at_entry = contract["execution"]["window"]["source_at_entry"]
+    source_root = tmp_path / V31_ARTIFACT_ROOT_RELATIVE / f"source_{run_source}"
+    window_path = (
+        tmp_path
+        / V31_ARTIFACT_ROOT_RELATIVE
+        / f"source_{source_at_entry}"
+        / "campaign_window_v32.json"
+    ).resolve()
+    template = task40_v31_contract.v32_q4_pending_import_template(
+        execution_root=tmp_path,
+        consumer_source_sha=run_source,
+    )
+    window_sha = "9" * 64
+    authorization = task40_v31_contract.bind_v32_q4_pending_import(
+        template,
+        consumer_execution_identity={"source_sha": run_source, "window_sha256": window_sha},
+    )
+    imports = {"numeric_pending": {"4": authorization}}
+    contract["schema"] = task40_v31_contract.V32_CONTRACT_SCHEMA
+    contract["review"] = {
+        "path": task40_v31_contract.V32_REVIEW_PATH,
+        "commit": task40_v31_contract.V32_REVIEW_COMMIT,
+        "sha256": task40_v31_contract.V32_REVIEW_SHA256,
+    }
+    contract["preparation"]["q4_numeric_pending_import"] = template
+    contract["execution"]["window"].update(
+        {
+            "window_path": str(window_path),
+            "window_sha256": window_sha,
+            "total_seconds": task40_v31_contract.V32_TOTAL_SECONDS,
+            "numeric_seconds": task40_v31_contract.V32_NUMERIC_SECONDS,
+            "closeout_seconds": task40_v31_contract.V32_CLOSEOUT_SECONDS,
+        }
+    )
+    contract["execution"]["campaign_window_path"] = str(window_path)
+    contract["execution"]["campaign_window_sha256"] = window_sha
+    contract["execution"]["q_csr_import_authorizations"] = imports
+    contract_path = source_root / "execution_contract_v32.approved.json"
+    binding["contract_path"] = str(contract_path.resolve())
+    binding["contract_sha256"] = contract_sha
+    binding["execution_window_path"] = str(window_path)
+    binding["execution_window_sha256"] = window_sha
+    binding["q_csr_import_authorizations"] = imports
+    payload["execution"]["task40_v31_q_csr_import_authorizations"] = {
+        "numeric_pending": {"4": template}
+    }
+    environment["TASK40_V31_EXECUTION_WINDOW_PATH"] = str(window_path)
+    environment["TASK40_V31_EXECUTION_WINDOW_SHA256"] = window_sha
+
+    preflight_calls = []
+    monkeypatch.setattr(
+        task40_v30_selected_q_csr,
+        "preflight_v32_q4_numeric_pending_import",
+        lambda auth, **kwargs: preflight_calls.append((dict(auth), kwargs)),
+    )
+    worker = task40_v31_contract.validate_v31_worker_execution_binding(
+        binding,
+        contract=contract,
+        contract_sha256=contract_sha,
+        resolved_payload=payload,
+        source_sha=run_source,
+        environment=environment,
+        repo_root=tmp_path,
+    )
+
+    assert worker["review_version"] == "V32"
+    assert worker["q4_numeric_pending_import_template"] == template
+    assert worker["q4_numeric_pending_import_authorization"] == authorization
+    assert preflight_calls == [
+        (
+            authorization,
+            {
+                "profile": V31_PROFILE,
+                "execution_identity": {"source_sha": run_source, "window_sha256": window_sha},
+                "output_directory": template["consumer_output_root"],
+            },
+        )
+    ]
+
+
 def test_v31_all_q_dispatcher_keeps_its_contract_and_v30_route_disjoint(tmp_path, monkeypatch):
     from src.geometry.task40_nonseparable_plan import (
         TASK40_COMPARISON_GROUP,
@@ -1038,7 +1129,18 @@ def test_v31_closeout_allows_missing_numerical_output_only_for_bound_failure(
     manifest_path = run_directory / "run_manifest.json"
     input_sha = service._sha256_file(input_path)
     window_path = root / "campaign_window_v31.json"
-    window_path.write_text("approved fixture window\n", encoding="utf-8")
+    window_path.write_text(
+        json.dumps(
+            {
+                "campaign_seconds": task40_v31_contract.V31_TOTAL_SECONDS,
+                "numeric_cutoff_seconds": task40_v31_contract.V31_NUMERIC_SECONDS,
+                "closeout_reserve_seconds": task40_v31_contract.V31_CLOSEOUT_SECONDS,
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     window_sha = service._sha256_file(window_path)
     contract = {
         "execution": {
@@ -1471,6 +1573,514 @@ def test_v31_closeout_supervisor_starts_samples_and_clears_fake_checker(
     assert summary["descendants_cleared"] is True
 
 
+@pytest.mark.parametrize(
+    "partial_footer",
+    (False, True),
+    ids=("missing-footer", "valid-partial"),
+)
+def test_v32_service_supervisor_runs_real_watchdog_and_check_partial(
+    tmp_path, monkeypatch, partial_footer
+):
+    import subprocess
+
+    from scripts import task40_v20_service_workflow as service
+    from src.runners import task40_v10_campaign, task40_v31_contract
+    from src.runners.workflow_timebase import clock_sample
+
+    source_repo = Path(service.__file__).resolve().parents[1]
+    from src.runners.task40_v30_contract import V30_CANONICAL_INPUT_RELATIVE
+
+    repo_root = tmp_path / "fixture_repo"
+    repo_root.mkdir()
+    (repo_root / ".gitignore").write_text(
+        "results/\nbenchmarks/artifacts/\n"
+        f"{V30_CANONICAL_INPUT_RELATIVE.as_posix()}\n",
+        encoding="utf-8",
+    )
+    scripts_dir = repo_root / "scripts"
+    scripts_dir.mkdir()
+    wrapper = scripts_dir / "task40_v20_service_workflow.py"
+    wrapper.write_text(
+        "import sys\n"
+        f"sys.path.insert(0, {str(source_repo)!r})\n"
+        "from scripts.task40_v20_service_workflow import main\n"
+        "raise SystemExit(main())\n",
+        encoding="utf-8",
+    )
+
+    def git(*args):
+        subprocess.run(["git", *args], cwd=repo_root, check=True, capture_output=True)
+
+    git("init", "--quiet", "--initial-branch=task40extra_0p7nm_engineering")
+    git("config", "user.name", "Task40 fixture")
+    git("config", "user.email", "task40-fixture@example.invalid")
+    git("add", ".gitignore", "scripts/task40_v20_service_workflow.py")
+    git("commit", "--quiet", "-m", "test fixture")
+    source_sha = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=repo_root, text=True
+    ).strip()
+    assert subprocess.check_output(
+        ["git", "status", "--porcelain"], cwd=repo_root, text=True
+    ) == ""
+
+    source_root = repo_root / V31_ARTIFACT_ROOT_RELATIVE / f"source_{source_sha}"
+    entry_root = repo_root / V31_ARTIFACT_ROOT_RELATIVE / f"source_{'c' * 40}"
+    contract_path = source_root / "execution_contract_v32.approved.json"
+    window_path = entry_root / "campaign_window_v32.json"
+    canonical_path = repo_root / V30_CANONICAL_INPUT_RELATIVE
+    canonical_path.parent.mkdir(parents=True, exist_ok=True)
+    canonical_source = source_repo / V30_CANONICAL_INPUT_RELATIVE
+    canonical_path.write_bytes(canonical_source.read_bytes())
+    input_path = source_root / "stage_inputs" / "full" / V30_CANONICAL_INPUT_RELATIVE.name
+    input_path.parent.mkdir(parents=True, exist_ok=True)
+    selector_path = source_root / "q_csr_selector_v31.json"
+    selector_path.write_text(json.dumps({"schema": "test.v32.selector.v1"}) + "\n", encoding="utf-8")
+    selector_sha = hashlib.sha256(selector_path.read_bytes()).hexdigest()
+    q4_template = task40_v31_contract.v32_q4_pending_import_template(
+        execution_root=repo_root,
+        consumer_source_sha=source_sha,
+    )
+    staged_text = task40_v31_contract._render_v31_stage_input(
+        canonical_path.read_text(encoding="utf-8"),
+        selector_relative_path=(
+            task40_v31_contract.v31_source_artifact_relative(source_sha)
+            / "q_csr_selector_v31.json"
+        ).as_posix(),
+        selector_sha256=selector_sha,
+        factor_relative_path=(
+            task40_v31_contract.v31_source_artifact_relative(source_sha)
+            / "factor_bank"
+        ).as_posix(),
+        q4_numeric_pending_import=q4_template,
+    )
+    input_path.write_text(staged_text, encoding="utf-8")
+
+    anchor = clock_sample(include_boot_id=True)
+    elapsed_before_fixture = float(task40_v31_contract.V32_NUMERIC_SECONDS) + 5.0
+    anchor["utc_ns"] = int(anchor["utc_ns"]) - int(elapsed_before_fixture * 1e9)
+    anchor["monotonic"] = float(anchor["monotonic"]) - elapsed_before_fixture
+    anchor["boottime"] = float(anchor["boottime"]) - elapsed_before_fixture
+
+    def utc_iso(timestamp_ns):
+        seconds, nanos = divmod(int(timestamp_ns), 1_000_000_000)
+        stamp = dt.datetime.fromtimestamp(seconds, tz=dt.timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%S"
+        )
+        return f"{stamp}.{nanos:09d}Z"
+
+    t0_ns = int(anchor["utc_ns"])
+    window_payload = {
+        "schema": CAMPAIGN_SCHEMA,
+        "campaign": task40_v31_contract.V32_REGISTRATION_SCHEMA,
+        "authority": "test-only V32 supervised no-footer fixture",
+        "active_review_sha": task40_v31_contract.V32_REVIEW_COMMIT,
+        "active_review_path": task40_v31_contract.V32_REVIEW_PATH,
+        "active_review_sha256": task40_v31_contract.V32_REVIEW_SHA256,
+        "source_at_entry": "c" * 40,
+        "review_at_registration": task40_v31_contract.V32_REVIEW_COMMIT,
+        "t0_utc": utc_iso(t0_ns),
+        "numeric_cutoff_utc": utc_iso(t0_ns + 85_200_000_000_000),
+        "deadline_utc": utc_iso(t0_ns + 86_400_000_000_000),
+        "campaign_seconds": task40_v31_contract.V32_TOTAL_SECONDS,
+        "numeric_cutoff_seconds": task40_v31_contract.V32_NUMERIC_SECONDS,
+        "closeout_reserve_seconds": task40_v31_contract.V32_CLOSEOUT_SECONDS,
+        "time_policy": task40_v10_campaign.CONSERVATIVE_REALTIME,
+        "stage_scope": list(task40_v31_contract.V32_STAGE_SCOPE),
+        "forbidden_scope": ["window_refresh", "resource_increase", "unrelated_mutation"],
+        "window_refreshed": False,
+        "old_costs_and_unknowns_preserved": True,
+        "artifact_execution_identity_separate": True,
+        "bootstrap_boottime_elapsed_seconds": None,
+        "bootstrap_utc_elapsed_seconds": 0.0,
+        "bootstrap_time_treatment": "test fixture T0 equals initial sample",
+        "initial_boot_id": anchor["boot_id"],
+        "first_full_three_clock_sample": dict(anchor),
+    }
+    window_bytes = (json.dumps(window_payload, sort_keys=True) + "\n").encode()
+    window_path.parent.mkdir(parents=True, exist_ok=True)
+    window_path.write_bytes(window_bytes)
+    window_sha = hashlib.sha256(window_bytes).hexdigest()
+    q4_authorization = task40_v31_contract.bind_v32_q4_pending_import(
+        q4_template,
+        consumer_execution_identity={
+            "source_sha": source_sha,
+            "window_sha256": window_sha,
+        },
+    )
+    input_identity = task40_v31_contract.require_v31_input_identity(
+        canonical_path,
+        input_path,
+        repo_root=repo_root,
+        source_sha=source_sha,
+        selector_sha256=selector_sha,
+        q4_numeric_pending_import=q4_template,
+    )
+    campaign_accounting = window_path.with_name("campaign_accounting_v10.jsonl")
+    campaign_accounting.write_text("", encoding="utf-8")
+
+    contract = {
+        "schema": task40_v31_contract.V32_CONTRACT_SCHEMA,
+        "status": "USER_APPROVED",
+        "review": {
+            "path": task40_v31_contract.V32_REVIEW_PATH,
+            "commit": task40_v31_contract.V32_REVIEW_COMMIT,
+            "sha256": task40_v31_contract.V32_REVIEW_SHA256,
+        },
+        "source_freeze": {
+            "required": True,
+            "source_sha": source_sha,
+            "branch": task40_v31_contract.V31_BRANCH,
+            "clean": True,
+        },
+        "preparation": {"q4_numeric_pending_import": q4_template},
+        "execution": {
+            "root": str(repo_root),
+            "profile": V31_PROFILE,
+            "resources": dict(V31_RESOURCES),
+            "jit_cache": str(repo_root / "benchmarks/artifacts/test_jit_cache"),
+            "window": {
+                "window_path": str(window_path),
+                "window_sha256": window_sha,
+                "total_seconds": task40_v31_contract.V32_TOTAL_SECONDS,
+                "numeric_seconds": task40_v31_contract.V32_NUMERIC_SECONDS,
+                "closeout_seconds": task40_v31_contract.V32_CLOSEOUT_SECONDS,
+                "source_at_entry": "c" * 40,
+            },
+            "campaign_window_path": str(window_path),
+            "campaign_window_sha256": window_sha,
+            "run_source_sha": source_sha,
+            "input_path": str(input_path),
+            "selector_path": str(source_root / "q_csr_selector_v31.json"),
+            "q_csr_import_authorizations": {
+                "numeric_pending": {"4": q4_authorization}
+            },
+        },
+    }
+    contract_path.parent.mkdir(parents=True, exist_ok=True)
+    contract_path.write_text(json.dumps(contract, sort_keys=True), encoding="utf-8")
+    contract_sha = hashlib.sha256(contract_path.read_bytes()).hexdigest()
+
+    bootstrap_dir = tmp_path / "bootstrap"
+    bootstrap_dir.mkdir()
+    (bootstrap_dir / "sitecustomize.py").write_text(
+        """
+import hashlib
+import json
+import os
+from pathlib import Path
+from src.runners import task40_v10_campaign, task40_v31_contract
+from scripts import task40_v20_service_workflow as service
+from src.solvers import task40_v22_operator_probe
+from benchmarks import subreaper_watchdog
+
+root = Path(os.environ["TASK40_TEST_REPO_ROOT"]).resolve()
+contract_path = Path(os.environ["TASK40_TEST_V31_CONTRACT_PATH"]).resolve()
+contract_sha = os.environ["TASK40_TEST_V31_CONTRACT_SHA256"]
+
+def require_fixture_contract(path, expected_sha256=None, current_root=None):
+    path = Path(path).resolve()
+    raw = path.read_bytes()
+    digest = hashlib.sha256(raw).hexdigest()
+    if path != contract_path or digest != contract_sha or (expected_sha256 and digest != expected_sha256):
+        raise ValueError("test fixture contract identity changed")
+    return json.loads(raw), digest
+
+task40_v31_contract.require_v31_execution_contract = require_fixture_contract
+service.ROOT = root
+task40_v10_campaign.__file__ = str(root / "src/runners/task40_v10_campaign.py")
+task40_v10_campaign._validate_v31_campaign_registration = lambda *_args, **_kwargs: None
+task40_v22_operator_probe._resource_admission = lambda *_args, **_kwargs: {
+    "current_process_cgroup": {
+        "dedicated_job_cgroup": True,
+        "memory_limit_bytes": 1649267441664,
+        "memory_current_bytes": 1024,
+        "swap_current_bytes": 0,
+    },
+    "host_effective_available_bytes": 68719476736,
+}
+subreaper_watchdog.cgroup_snapshot = lambda *_args, **_kwargs: {
+    "dedicated_job_cgroup": True,
+    "readable": True,
+    "memory_limit_bytes": 1649267441664,
+    "memory_current_bytes": 1024,
+    "swap_current_bytes": 0,
+}
+subreaper_watchdog.memory_envelope = lambda *_args, **_kwargs: {
+    "launch_cap_bytes": 1 << 40,
+    "effective_available_bytes": 1 << 40,
+    "effective_available_after_reserves_bytes": 1 << 40,
+    "reserve_bytes": 0,
+    "reserve_domains_separated": True,
+}
+""",
+        encoding="utf-8",
+    )
+
+    original_require = task40_v31_contract.require_v31_execution_contract
+
+    def require_parent_fixture_contract(path, expected_sha256=None, current_root=None):
+        raw = Path(path).resolve().read_bytes()
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != contract_sha or (expected_sha256 and digest != expected_sha256):
+            raise ValueError("test fixture contract identity changed")
+        return json.loads(raw), digest
+
+    monkeypatch.setattr(
+        task40_v31_contract,
+        "require_v31_execution_contract",
+        require_parent_fixture_contract,
+    )
+    monkeypatch.setattr(
+        task40_v10_campaign,
+        "__file__",
+        str(repo_root / "src/runners/task40_v10_campaign.py"),
+    )
+    monkeypatch.setattr(
+        task40_v10_campaign,
+        "_validate_v31_campaign_registration",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        service,
+        "_v31_live_resource_gate",
+        lambda *_args, **_kwargs: {"passed": True, "fixture": "host resource sample injected"},
+    )
+
+    run_id = "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
+    run_directory = repo_root / "results" / run_id
+    numerical_output = run_directory / "numerical_output"
+    numerical_output.mkdir(parents=True)
+    summary_path = run_directory / "run_summary.json"
+    manifest_path = run_directory / "run_manifest.json"
+    campaign_identity = {
+        "window_path": str(window_path),
+        "window_sha256": window_sha,
+        "accounting_path": str(campaign_accounting),
+    }
+    summary_path.write_text(
+        json.dumps(
+            {
+                "run_id": run_id,
+                "status": "finished",
+                "result_classification": (
+                    "RESOURCE_CONTROLLED_STOP" if partial_footer else "TEST_FIXTURE_NO_FOOTER"
+                ),
+                "output_directory": str(run_directory),
+                "numerical_output_directory": str(numerical_output),
+                "task40_v20_campaign": campaign_identity,
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "run_id": run_id,
+                "source_sha": source_sha,
+                "input_path": str(input_path),
+                "input_sha256": hashlib.sha256(input_path.read_bytes()).hexdigest(),
+                "physical_model_sha256": "d" * 64,
+                "mesh_id": "TARGET_ORIGINAL_NY8",
+                "output_directory": str(run_directory),
+                "numerical_output_directory": str(numerical_output),
+                "scientific_input_sha256": input_identity["scientific_input_sha256"],
+                "v31_input_identity": input_identity,
+                "v31_execution_contract_binding": {
+                    "review_version": "V32",
+                    "contract_path": str(contract_path),
+                    "contract_sha256": contract_sha,
+                    "run_source_sha": source_sha,
+                    "execution_window_sha256": window_sha,
+                    "selector_path": str(selector_path.resolve()),
+                    "selector_sha256": selector_sha,
+                    "input_identity": input_identity,
+                    "q4_numeric_pending_import_template": q4_template,
+                    "q4_numeric_pending_import_authorization": q4_authorization,
+                },
+                "solver": {"preconditioner": V31_PROFILE},
+                "task40_v20_campaign": campaign_identity,
+            }
+        ),
+        encoding="utf-8",
+    )
+    if partial_footer:
+        (numerical_output / "v20_partial_result.json").write_text(
+            json.dumps(
+                {
+                    "schema": "task40extra.review_v20_partial_result.v2",
+                    "status": "controlled_stop",
+                    "outcome": "RESOURCE_CONTROLLED_STOP",
+                    "run_id": run_id,
+                    "source_sha": source_sha,
+                    "input_sha256": hashlib.sha256(input_path.read_bytes()).hexdigest(),
+                    "physical_model_sha256": "d" * 64,
+                    "requested_stop_stage": "full",
+                    "attempted_stages": ["preflight", "full"],
+                    "completed_stages": ["preflight"],
+                    "official_result": False,
+                    "resource_gate": {
+                        "stage": "full",
+                        "passed": False,
+                        "fixture_only": True,
+                    },
+                    "q_coverage": {
+                        "status": "UNKNOWN",
+                        "expected_q_count": 8,
+                        "built_q_count": 0,
+                    },
+                    "cleanup": {
+                        "status": "PASS",
+                        "native_owners_released": True,
+                        "process_descendants_cleared": True,
+                        "temporary_stage_objects_released": True,
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        (numerical_output / "task40_v10_p6_candidate_summary.json").write_text(
+            json.dumps({"status": "CONTROLLED_STOP", "official_result": False}),
+            encoding="utf-8",
+        )
+
+    runtime_prefix = Path(sys.prefix).resolve()
+    evidence = repo_root / "benchmarks/artifacts/test_supervision"
+    evidence.mkdir(parents=True)
+    checker_output = evidence / "partial_checker_result.json"
+    command = [
+        str(runtime_prefix / "bin/python"),
+        "scripts/task40_v20_service_workflow.py",
+        "check-partial",
+        "--input", str(input_path),
+        "--summary", str(summary_path),
+        "--manifest", str(manifest_path),
+        "--numerical-output", str(numerical_output),
+        "--stop-stage", "full",
+        "--output", str(checker_output),
+    ]
+    marker_environment = {
+        "_MYFENICS_CLOUD_QUALIFIED_ACTIVATION": "1",
+        "_MYFENICS_CLOUD_RUNTIME_PROFILE": "native_linux",
+        "_MYFENICS_CLOUD_QUALIFICATION_SCOPE": "imports_only_C1_FE_JIT_NOT_RUN",
+        "_MYFENICS_CLOUD_ABI_MANIFEST_SHA256": "e" * 64,
+        "TASK40_V31_STRICT_EXECUTION": "1",
+        "TASK40_V31_CONTRACT_PATH": str(contract_path),
+        "TASK40_V31_CONTRACT_SHA256": contract_sha,
+        "TASK40_V31_EXECUTION_WINDOW_PATH": str(window_path),
+        "TASK40_V31_EXECUTION_WINDOW_SHA256": window_sha,
+        "TASK40_V31_TASK_MEMORY_MAX_BYTES": str(V31_RESOURCES["task_memory_max_bytes"]),
+        "TASK40_V31_HOST_RESERVE_BYTES": str(V31_RESOURCES["host_reserve_bytes"]),
+        "TASK40_V31_MEMORY_SWAP_MAX_BYTES": "0",
+        "TASK40_TEST_REPO_ROOT": str(repo_root),
+        "TASK40_TEST_V31_CONTRACT_PATH": str(contract_path),
+        "TASK40_TEST_V31_CONTRACT_SHA256": contract_sha,
+        "PYTHONPATH": os.pathsep.join(
+            (str(bootstrap_dir), str(source_repo), os.environ.get("PYTHONPATH", ""))
+        ),
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+    }
+    assert subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=normal"],
+        cwd=repo_root,
+        text=True,
+    ) == ""
+    environment = dict(os.environ)
+    environment.update(marker_environment)
+    source_state = {
+        "branch": task40_v31_contract.V31_BRANCH,
+        "source_sha": source_sha,
+        "clean": True,
+    }
+    events = []
+    event_log = evidence / "outer_events.jsonl"
+    event_identity = {"fixture": "V32 real service-supervisor path; no FE/PDE"}
+    result = service._supervise_required_checker(
+        command=command,
+        checker_kind="task40_v20_partial_receipt_checker",
+        evidence_directory=evidence,
+        runtime_prefix=runtime_prefix,
+        environment=environment,
+        repo_root=repo_root,
+        campaign_window=window_path,
+        campaign_sha256=window_sha,
+        campaign_accounting=campaign_accounting,
+        source_state=source_state,
+        profile=V31_PROFILE,
+        events=events,
+        event_log=event_log,
+        event_identity=event_identity,
+    )
+
+    checker_code, checker_payload, details = result
+    assert checker_code == (0 if partial_footer else 2)
+    assert checker_payload is not None
+    assert checker_payload["status"] == (
+        "PARTIAL_RECEIPT_CHECKED" if partial_footer else "NO_PARTIAL_FOOTER"
+    )
+    assert checker_payload["official_result"] is False
+    if partial_footer:
+        assert checker_payload["checker_passed"] is True, checker_payload["errors"]
+        assert checker_payload["v31_reference_audit_status"] == "NOT_RUN_REFERENCE_NOT_COMPLETE"
+    assert checker_output.is_file()
+    assert json.loads(checker_output.read_text(encoding="utf-8"))["status"] == checker_payload["status"]
+    assert details["qualified_supervisor"]["returncode"] == 0
+    assert Path(details["watchdog_summary_path"]).is_file()
+    watchdog_summary = json.loads(Path(details["watchdog_summary_path"]).read_text(encoding="utf-8"))
+    assert watchdog_summary["descendants_cleared"] is True
+    campaign_summary = watchdog_summary["task40_v10_campaign"]
+    assert campaign_summary["campaign_seconds"] == task40_v31_contract.V32_TOTAL_SECONDS
+    assert campaign_summary["numerical_cutoff_seconds"] == task40_v31_contract.V32_NUMERIC_SECONDS
+    assert campaign_summary["closeout_reserve_seconds"] == task40_v31_contract.V32_CLOSEOUT_SECONDS
+    assert campaign_summary["phase"] == "closeout"
+    assert 0.0 < campaign_summary["phase_sub_budget_seconds"] <= task40_v31_contract.V32_CLOSEOUT_SECONDS
+    closeout_sample = campaign_summary["watchdog_end_accounting"]
+    assert closeout_sample["phase"] == "closeout"
+    assert (
+        task40_v31_contract.V32_NUMERIC_SECONDS
+        <= closeout_sample["cumulative_charged_seconds"]
+        < task40_v31_contract.V32_TOTAL_SECONDS
+    )
+    assert (numerical_output / "v20_partial_result.json").exists() is partial_footer
+    assert original_require is not None
+
+    import shutil
+
+    receipt_label = "valid-partial" if partial_footer else "missing-footer"
+    receipt_root = (
+        source_repo
+        / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation"
+        / "supervised_partial_receipts"
+        / receipt_label
+    )
+    receipt_root.mkdir(parents=True, exist_ok=True)
+    preserved = {
+        "checker_result.json": checker_output,
+        "supervision_request.json": evidence / "required_checker_supervision_request.json",
+        "supervision_response.json": evidence / "required_checker_supervision_response.json",
+        "supervisor_stdout.raw.txt": evidence / "required_checker_supervisor_stdout.raw.txt",
+        "supervisor_stderr.raw.txt": evidence / "required_checker_supervisor_stderr.raw.txt",
+        "outer_events.jsonl": event_log,
+        "watchdog_summary.json": Path(details["watchdog_summary_path"]),
+        "run_summary.json": summary_path,
+        "run_manifest.json": manifest_path,
+        "execution_contract_v32.approved.json": contract_path,
+        "campaign_window_v32.json": window_path,
+        "staged_input.dat": input_path,
+        "q_csr_selector_v31.json": selector_path,
+    }
+    if partial_footer:
+        preserved["v20_partial_result.json"] = numerical_output / "v20_partial_result.json"
+        preserved["task40_v10_p6_candidate_summary.json"] = (
+            numerical_output / "task40_v10_p6_candidate_summary.json"
+        )
+    for name, source in preserved.items():
+        assert source.is_file(), source
+        shutil.copyfile(source, receipt_root / name)
+
+
 def test_campaign_phase_budgets_preserve_numeric_cutoff_and_allow_closeout(tmp_path):
     window = _window(tmp_path)
     cutoff_ns = window.t0_utc_ns + 42_000_000_000_000
@@ -1529,6 +2139,74 @@ def test_campaign_phase_budgets_preserve_numeric_cutoff_and_allow_closeout(tmp_p
             cumulative_charged_seconds=0.0,
             now_utc_ns=window.t0_utc_ns,
         )
+
+
+def test_v32_campaign_phase_budget_enters_closeout_at_85200_and_expires_at_86400(tmp_path):
+    from src.runners.task40_v10_campaign import FixedCampaignWindow
+    from src.runners.task40_v31_contract import (
+        V32_CLOSEOUT_SECONDS,
+        V32_NUMERIC_SECONDS,
+        V32_TOTAL_SECONDS,
+    )
+
+    t0_ns = 1_800_000_000_000_000_000
+    window = FixedCampaignWindow(
+        path=tmp_path / "campaign_window_v32.json",
+        sha256="a" * 64,
+        payload={"review": "V32 fixture; budget arithmetic only"},
+        anchor={
+            "monotonic": 100.0,
+            "boottime": 100.0,
+            "utc_ns": t0_ns,
+            "boot_id": "test-boot",
+        },
+        t0_utc_ns=t0_ns,
+        deadline_utc_ns=t0_ns + V32_TOTAL_SECONDS * 1_000_000_000,
+        total_seconds=float(V32_TOTAL_SECONDS),
+        bootstrap_seconds=0.0,
+        closeout_seconds=float(V32_CLOSEOUT_SECONDS),
+    )
+    cutoff_ns = t0_ns + V32_NUMERIC_SECONDS * 1_000_000_000
+
+    assert window.cutoff_seconds == V32_NUMERIC_SECONDS
+    assert window.remaining_seconds(
+        phase="numeric",
+        cumulative_charged_seconds=float(V32_NUMERIC_SECONDS),
+        now_utc_ns=cutoff_ns,
+    ) == 0.0
+    assert window.remaining_seconds(
+        phase="closeout",
+        cumulative_charged_seconds=float(V32_NUMERIC_SECONDS),
+        now_utc_ns=cutoff_ns,
+    ) == float(V32_CLOSEOUT_SECONDS)
+    assert window.phase_expired(
+        phase="numeric",
+        cumulative_charged_seconds=float(V32_NUMERIC_SECONDS),
+        now_utc_ns=cutoff_ns,
+    ) is True
+    assert window.phase_expired(
+        phase="closeout",
+        cumulative_charged_seconds=float(V32_NUMERIC_SECONDS),
+        now_utc_ns=cutoff_ns,
+    ) is False
+    after_cutoff_ns = cutoff_ns + 5_000_000_000
+    assert window.remaining_seconds(
+        phase="closeout",
+        cumulative_charged_seconds=float(V32_NUMERIC_SECONDS) + 5.0,
+        now_utc_ns=after_cutoff_ns,
+        termination_reserve_seconds=60.0,
+    ) == float(V32_CLOSEOUT_SECONDS) - 65.0
+    deadline_ns = t0_ns + V32_TOTAL_SECONDS * 1_000_000_000
+    assert window.remaining_seconds(
+        phase="closeout",
+        cumulative_charged_seconds=float(V32_TOTAL_SECONDS),
+        now_utc_ns=deadline_ns,
+    ) == 0.0
+    assert window.phase_expired(
+        phase="closeout",
+        cumulative_charged_seconds=float(V32_TOTAL_SECONDS),
+        now_utc_ns=deadline_ns,
+    ) is True
 
 
 def test_v30_closeout_authorization_binds_exact_registered_checker_and_inputs(tmp_path):
@@ -1644,12 +2322,21 @@ def test_v30_partial_checker_closeout_binds_all_input_paths(tmp_path):
 
 
 
-def test_v31_partial_checker_accepts_only_bound_campaign_cutoff_fixture(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    ("leader_exit_code", "kill_sent", "expected_bound"),
+    [(-9, True, True), (-15, False, True), (0, False, True), (1, False, False)],
+)
+def test_v31_partial_checker_accepts_only_bound_campaign_cutoff_fixture(
+    tmp_path, monkeypatch, leader_exit_code, kill_sent, expected_bound
+):
     fixture_path = Path(__file__).parent / "fixtures" / "task40_v31_cutoff_watchdog.json"
     fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
     watchdog = fixture["watchdog"]
+    watchdog["leader_exit_code"] = leader_exit_code
+    if not kill_sent:
+        watchdog.pop("first_SIGKILL", None)
     source_sha = fixture["provenance"]["source_sha"]
-    campaign_sha256 = watchdog["task40_v10_campaign"]["window_sha256"]
+    watchdog_campaign = watchdog["task40_v10_campaign"]
 
     root = tmp_path / "repo"
     run_directory = root / "results" / "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
@@ -1670,30 +2357,31 @@ def test_v31_partial_checker_accepts_only_bound_campaign_cutoff_fixture(tmp_path
     manifest_path = run_directory / "run_manifest.json"
     numerical_path = run_directory / "numerical_output"
     window_path = root / "artifacts" / "campaign_window_v31.json"
-    window_path.write_text("{}\n", encoding="utf-8")
+    window_payload = {
+        "campaign_seconds": watchdog_campaign["campaign_seconds"],
+        "numeric_cutoff_seconds": watchdog_campaign["numerical_cutoff_seconds"],
+        "closeout_reserve_seconds": (
+            watchdog_campaign["campaign_seconds"]
+            - watchdog_campaign["numerical_cutoff_seconds"]
+        ),
+    }
+    window_bytes = (json.dumps(window_payload, sort_keys=True) + "\n").encode("utf-8")
+    window_path.write_bytes(window_bytes)
+    campaign_sha256 = hashlib.sha256(window_bytes).hexdigest()
+    watchdog_campaign["window_sha256"] = campaign_sha256
+    watchdog_campaign["watchdog_end_accounting"]["campaign_window_sha256"] = campaign_sha256
     watchdog_path = run_directory / "watchdog" / "summary.json"
     watchdog_path.parent.mkdir()
 
-    # The fixed campaign-window bytes live on the approved execution host. Bind
-    # this local fixture to the raw controller-verified digest while exercising
-    # every summary/watchdog/manifest identity check with temporary paths.
+    # Bind the temporary window bytes and their exact digest through the
+    # summary, manifest, watchdog, and accounting tail.
     watchdog_path.write_text(json.dumps(watchdog), encoding="utf-8")
-    original_sha256_file = __import__(
-        "scripts.task40_v20_service_workflow", fromlist=["_sha256_file"]
-    )._sha256_file
-    def fixture_sha256_file(path):
-        if Path(path).resolve() == window_path.resolve():
-            return campaign_sha256
-        return original_sha256_file(path)
-    monkeypatch.setattr(
-        "scripts.task40_v20_service_workflow._sha256_file", fixture_sha256_file
-    )
 
     campaign = {"window_path": str(window_path), "window_sha256": campaign_sha256}
     summary = {
         "status": "finished",
         "result_classification": "PERFORMANCE_CONTROLLED_STOP",
-        "exit_status": -9,
+        "exit_status": leader_exit_code,
         "full_workflow_time_exceeded": True,
         "run_id": "task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
         "output_directory": str(run_directory),
@@ -1704,7 +2392,7 @@ def test_v31_partial_checker_accepts_only_bound_campaign_cutoff_fixture(tmp_path
     manifest = {
         "status": "finished",
         "result_classification": "PERFORMANCE_CONTROLLED_STOP",
-        "exit_status": -9,
+        "exit_status": leader_exit_code,
         "run_id": summary["run_id"],
         "source_sha": source_sha,
         "input_sha256": input_sha256,
@@ -1717,34 +2405,84 @@ def test_v31_partial_checker_accepts_only_bound_campaign_cutoff_fixture(tmp_path
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
     assert not numerical_path.exists()
 
-    authorization = _task40_v30_closeout_checker_authorization(
-        command=[
-            str(tmp_path / "runtime" / "bin" / "python"),
-            "scripts/task40_v20_service_workflow.py",
-            "check-partial",
-            "--input", str(input_path),
-            "--summary", str(summary_path),
-            "--manifest", str(manifest_path),
-            "--numerical-output", str(numerical_path),
-            "--stop-stage", "full",
-            "--output", str(evidence / "partial_checker_result.json"),
-        ],
-        checker_kind="task40_v20_partial_receipt_checker",
-        runtime_prefix=tmp_path / "runtime",
+    is_bound = _v31_missing_numerical_output_is_bound_worker_failure(
+        input_path=input_path,
+        summary_path=summary_path,
+        manifest_path=manifest_path,
+        numerical_path=numerical_path,
         repo_root=root,
-        evidence_directory=evidence,
+        source_sha=source_sha,
         campaign_sha256=campaign_sha256,
-        contract_sha256="c" * 64,
-        source_state={"source_sha": source_sha, "clean": True},
-        profile=V30_PROFILE,
-        allow_missing_numerical_output_for_v31_worker_failure=True,
-        expected_campaign_window_path=window_path,
+        campaign_window_path=window_path,
     )
-    assert authorization["input_paths"] == [
-        str(input_path.resolve()),
-        str(summary_path.resolve()),
-        str(manifest_path.resolve()),
+    assert is_bound is expected_bound
+
+    checker_command = [
+        str(tmp_path / "runtime" / "bin" / "python"),
+        "scripts/task40_v20_service_workflow.py",
+        "check-partial",
+        "--input", str(input_path),
+        "--summary", str(summary_path),
+        "--manifest", str(manifest_path),
+        "--numerical-output", str(numerical_path),
+        "--stop-stage", "full",
+        "--output", str(evidence / "partial_checker_result.json"),
     ]
+    if expected_bound:
+        authorization = _task40_v30_closeout_checker_authorization(
+            command=checker_command,
+            checker_kind="task40_v20_partial_receipt_checker",
+            runtime_prefix=tmp_path / "runtime",
+            repo_root=root,
+            evidence_directory=evidence,
+            campaign_sha256=campaign_sha256,
+            contract_sha256="c" * 64,
+            source_state={"source_sha": source_sha, "clean": True},
+            profile=V30_PROFILE,
+            allow_missing_numerical_output_for_v31_worker_failure=True,
+            expected_campaign_window_path=window_path,
+        )
+        assert authorization["input_paths"] == [
+            str(input_path.resolve()),
+            str(summary_path.resolve()),
+            str(manifest_path.resolve()),
+        ]
+        bad_signal_watchdog = dict(watchdog)
+        bad_signal_watchdog["first_SIGTERM"] = {
+            **dict(watchdog["first_SIGTERM"]),
+            "monotonic": watchdog["stop_event"]["monotonic"] - 1.0,
+        }
+        watchdog_path.write_text(json.dumps(bad_signal_watchdog), encoding="utf-8")
+        summary["resource_authority"] = bad_signal_watchdog
+        summary_path.write_text(json.dumps(summary), encoding="utf-8")
+        assert not _v31_missing_numerical_output_is_bound_worker_failure(
+            input_path=input_path,
+            summary_path=summary_path,
+            manifest_path=manifest_path,
+            numerical_path=numerical_path,
+            repo_root=root,
+            source_sha=source_sha,
+            campaign_sha256=campaign_sha256,
+            campaign_window_path=window_path,
+        )
+        watchdog_path.write_text(json.dumps(watchdog), encoding="utf-8")
+        summary["resource_authority"] = watchdog
+        summary_path.write_text(json.dumps(summary), encoding="utf-8")
+    else:
+        with pytest.raises(ValueError, match="paths are not bound"):
+            _task40_v30_closeout_checker_authorization(
+                command=checker_command,
+                checker_kind="task40_v20_partial_receipt_checker",
+                runtime_prefix=tmp_path / "runtime",
+                repo_root=root,
+                evidence_directory=evidence,
+                campaign_sha256=campaign_sha256,
+                contract_sha256="c" * 64,
+                source_state={"source_sha": source_sha, "clean": True},
+                profile=V30_PROFILE,
+                allow_missing_numerical_output_for_v31_worker_failure=True,
+                expected_campaign_window_path=window_path,
+            )
 
     watchdog["descendants_cleared"] = False
     watchdog_path.write_text(json.dumps(watchdog), encoding="utf-8")
@@ -1760,6 +2498,52 @@ def test_v31_partial_checker_accepts_only_bound_campaign_cutoff_fixture(tmp_path
         campaign_sha256=campaign_sha256,
         campaign_window_path=window_path,
     )
+
+
+def test_v32_pending_commands_keep_same_window_reuse_and_supervisor_under_real_service(tmp_path, monkeypatch):
+    import subprocess
+
+    from src.runners import task40_v31_contract
+
+    root = tmp_path / "repo"
+    root.mkdir()
+    review_path = root / task40_v31_contract.V32_REVIEW_PATH
+    review_path.parent.mkdir(parents=True)
+    actual_review = Path(task40_v31_contract.__file__).resolve().parents[2] / task40_v31_contract.V32_REVIEW_PATH
+    review_path.write_bytes(actual_review.read_bytes())
+    assert hashlib.sha256(review_path.read_bytes()).hexdigest() == task40_v31_contract.V32_REVIEW_SHA256
+
+    def fake_check_output(command, **_kwargs):
+        if command[:3] == ["git", "branch", "--show-current"]:
+            return f"{task40_v31_contract.V31_BRANCH}\n"
+        if command[:2] == ["git", "rev-parse"]:
+            return "a" * 40 + "\n"
+        if command[:2] == ["git", "status"]:
+            return " M src/test/fixture.py\n"
+        raise AssertionError(f"unexpected package identity command: {command!r}")
+
+    monkeypatch.setattr(task40_v31_contract.subprocess, "check_output", fake_check_output)
+    monkeypatch.setattr(
+        task40_v31_contract.subprocess,
+        "run",
+        lambda command, **_kwargs: subprocess.CompletedProcess(command, 0),
+    )
+    package = task40_v31_contract.prepare_v32_pending_package(
+        repo_root=root,
+        execution_root=root,
+    )
+    commands = package["commands"]
+    same_window = commands["prepare_same_window_after_source_fix"]
+    assert "prepare-v32-approved" in same_window
+    assert '--reuse-approved-contract "$V32_EXISTING_APPROVED_CONTRACT"' in same_window
+    assert "prepare-v31-approved" not in same_window
+    assert "V31_EXISTING_APPROVED_CONTRACT" not in same_window
+    service_command = commands["single_supervised_service_after_approved_package"]
+    assert "scripts/run_case_in_user_service.sh" in service_command
+    assert "--task40-v32-execution-contract" in service_command
+    assert "required_checker_and_cleanup" not in commands
+    assert "supervision request" in package["service_handoff"]
+    assert "check-partial command as supervised completion" in package["service_handoff"]
 
 
 def test_watchdog_rejects_numeric_command_with_closeout_phase(tmp_path):

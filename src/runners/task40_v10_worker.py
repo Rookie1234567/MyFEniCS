@@ -39,6 +39,7 @@ def _task40_v30_q_csr_provider(
     allocation_gate: Any,
     consumer_receipt_directory: str | Path | None = None,
     consumer_import_authorizations: Mapping[str, Mapping[str, Any]] | None = None,
+    numeric_pending_import_authorizations: Mapping[str, Mapping[str, Any]] | None = None,
 ):
     if binding is None:
         return None
@@ -82,6 +83,7 @@ def _task40_v30_q_csr_provider(
         allocation_gate=allocation_gate,
         consumer_receipt_directory=consumer_receipt_directory,
         consumer_import_authorizations=consumer_import_authorizations,
+        numeric_pending_import_authorizations=numeric_pending_import_authorizations,
     )
 
 
@@ -274,6 +276,8 @@ def _task40_v30_open_saved_q4_source(
         "q4_map": q4_map,
         "original_h": saved_h,
         "active_lookup": active_lookup,
+        "active_lookup_path": paths["v25_selected_q0_original_to_active_int32.npy"],
+        "surface_stream_path": paths["v25_selected_q0_surface_functionals.bin"],
         "producer_facts": producer_facts,
     }
     if return_saved_inputs:
@@ -845,6 +849,31 @@ def _task40_v31_finalize_admission_after_resource_gate(
         ),
         "target_ready": candidate.get("phase") == "TARGET_READY",
     }
+
+
+def _task40_v30_resolve_sector_q_maps(
+    coordinates: Any,
+    sector_q_indices: tuple[int, int],
+    *,
+    allocation_gate: Callable[[str, Mapping[str, Any]], Any],
+    prebuilt_q_maps_by_q: Mapping[int, Any] | None = None,
+) -> dict[int, Any]:
+    """Reuse owner-built sector maps, constructing maps only for legacy callers."""
+
+    q_indices = tuple(int(q) for q in sector_q_indices)
+    if len(q_indices) != 2 or len(set(q_indices)) != 2:
+        raise ValueError("V30 sector maps require two distinct registered q indices")
+    if prebuilt_q_maps_by_q is None:
+        return {
+            q: coordinates.q_map(branch, allocation_gate=allocation_gate)
+            for branch, q in enumerate(q_indices)
+        }
+    if not isinstance(prebuilt_q_maps_by_q, Mapping):
+        raise TypeError("prebuilt sector q maps must be a q-index mapping")
+    q_maps = dict(prebuilt_q_maps_by_q)
+    if set(q_maps) != set(q_indices):
+        raise ValueError("prebuilt q maps do not match the live sector context")
+    return q_maps
 
 
 def _task40_v30_trace_rows_by_q(
@@ -7539,6 +7568,13 @@ def run_task40_v10_p6_reference_worker(
                 if isinstance(v31_q_csr_import_authorizations, Mapping)
                 else None
             ),
+            numeric_pending_import_authorizations=(
+                v31_q_csr_import_authorizations.get("numeric_pending", {})
+                if v31_route_facts is not None
+                and v31_route_facts.get("review_version") == "V32"
+                and isinstance(v31_q_csr_import_authorizations, Mapping)
+                else None
+            ),
         )
         if qualified_q_csr_provider is not None:
             summary[
@@ -7913,6 +7949,7 @@ def run_task40_v10_p6_reference_worker(
                 available_sector_matrices,
                 runtime_identity,
                 allocation_gate,
+                prebuilt_q_maps_by_q=None,
             ):
                 from src.solvers.task40_v30_selected_q_csr import (
                     LiveP6SelectedQContributionSource,
@@ -7921,10 +7958,12 @@ def run_task40_v10_p6_reference_worker(
                 )
 
                 sector_qs = tuple(map(int, context.global_q_indices))
-                q_maps_by_q = {
-                    q: coordinates.q_map(branch, allocation_gate=allocation_gate)
-                    for branch, q in enumerate(sector_qs)
-                }
+                q_maps_by_q = _task40_v30_resolve_sector_q_maps(
+                    coordinates,
+                    sector_qs,
+                    allocation_gate=allocation_gate,
+                    prebuilt_q_maps_by_q=prebuilt_q_maps_by_q,
+                )
                 if v20_mode_inventory is None:
                     raise ValueError("V30 sector callback lacks the frozen mode inventory")
                 sector_builder_inputs = _task40_v30_sector_builder_inputs(
@@ -8097,6 +8136,26 @@ def run_task40_v10_p6_reference_worker(
                 },
             )
 
+        def v32_owner_stage_event(event: Mapping[str, Any]) -> None:
+            if not isinstance(v31_route_facts, Mapping) or v31_route_facts.get("review_version") != "V32":
+                return
+            phase = str(event.get("phase", "unknown"))
+            status = str(event.get("status", "unknown")).lower()
+            runtime.marker(
+                f"task40_v32_owner_{phase}_{status}",
+                {
+                    "schema": "task40extra.review_v32_owner_phase_event.v1",
+                    "attempt_id": directory.name,
+                    "run_id": getattr(runtime, "run_id", None),
+                    "execution_identity": dict(
+                        qualified_q_csr_identity.get("execution_identity", {})
+                        if isinstance(qualified_q_csr_identity, Mapping)
+                        else {}
+                    ),
+                    **dict(event),
+                },
+            )
+
         def v31_write_product(name: str, payload: Mapping[str, Any]) -> dict[str, Any]:
             if not v31_route_requested:
                 raise RuntimeError("V31 product receipt cannot be written outside the V31 route")
@@ -8121,8 +8180,31 @@ def run_task40_v10_p6_reference_worker(
                 raise ValueError("V31 saved-first q4 lacks its frozen contract or mode inventory")
             from src.solvers.task40_v30_selected_q_csr import (
                 prepare_saved_selected_q_numeric_pending,
+                preflight_v32_q4_numeric_pending_import,
                 selected_q_operator_identity,
             )
+
+            v32_q4_import = None
+            import_output_root = (
+                Path(str(factor_config["output_directory"]))
+                / "selected_q" / "q4_twist0"
+            ).resolve()
+            if isinstance(v31_route_facts, Mapping) and v31_route_facts.get("review_version") == "V32":
+                v32_q4_import = v31_route_facts.get(
+                    "q4_numeric_pending_import_authorization"
+                )
+                if not isinstance(v32_q4_import, Mapping):
+                    raise ValueError(
+                        "V32 q4 require-existing authorization is missing before opening the saved donor"
+                    )
+                preflight_v32_q4_numeric_pending_import(
+                    v32_q4_import,
+                    profile=str(periodic_profile.name),
+                    execution_identity=dict(
+                        qualified_q_csr_identity["execution_identity"]
+                    ),
+                    output_directory=import_output_root,
+                )
 
             donor = _task40_v30_open_saved_q4_source(
                 contract=route_contract,
@@ -8165,17 +8247,16 @@ def run_task40_v10_p6_reference_worker(
                 matrix_source_identity=matrix_source_identity,
                 execution_identity=dict(qualified_q_csr_identity["execution_identity"]),
                 producer_identity=producer_facts,
-                output_directory=(
-                    Path(str(factor_config["output_directory"]))
-                    / "selected_q" / "q4_twist0"
-                ),
+                output_directory=import_output_root,
                 direct_hhat_evidence=direct_hhat_evidence,
                 consumer_import_authorization=(
                     v31_q_csr_import_authorizations.get("numeric_pending", {}).get("4")
-                    if isinstance(v31_q_csr_import_authorizations, Mapping)
+                    if v32_q4_import is None
+                    and isinstance(v31_q_csr_import_authorizations, Mapping)
                     and isinstance(v31_q_csr_import_authorizations.get("numeric_pending", {}), Mapping)
                     else None
                 ),
+                numeric_pending_import_authorization=v32_q4_import,
             )
             if numeric_stage.get("status") != "NUMERIC_COMPLETE_NATIVE_PENDING":
                 raise RuntimeError("saved-first q4 did not reach durable numeric-pending")
@@ -8193,6 +8274,9 @@ def run_task40_v10_p6_reference_worker(
                     "reopened_existing_pending": bool(numeric_stage.get("reopened", False)),
                     "global_reference_builder_started": False,
                     "native_or_factor_started": False,
+                    "numeric_pending_import_execution": numeric_stage.get(
+                        "numeric_pending_import_execution"
+                    ),
                 },
             )
             return {**numeric_stage, "saved_donor": donor}
@@ -8349,6 +8433,38 @@ def run_task40_v10_p6_reference_worker(
             global_h_sha256 = hashlib.sha256(
                 np.ascontiguousarray(global_h).view(np.uint8)
             ).hexdigest()
+            saved_port_owner = None
+            saved_stage_callback = None
+            if isinstance(v31_route_facts, Mapping) and v31_route_facts.get("review_version") == "V32":
+                producer_facts = donor.get("producer_facts", {})
+                support_evidence = donor.get("direct_hhat_evidence", {})
+                surface_path = Path(str(donor.get("surface_stream_path", ""))).resolve()
+                surface_hash = str(support_evidence.get("surface_stream_sha256", ""))
+                if (
+                    not isinstance(producer_facts, Mapping)
+                    or not isinstance(support_evidence, Mapping)
+                    or surface_path
+                    != Path(str(support_evidence.get("surface_stream_path", ""))).resolve()
+                    or surface_hash
+                    != producer_facts.get("payload_sha256", {}).get(
+                        "v25_selected_q0_surface_functionals.bin"
+                    )
+                    or not isinstance(producer_facts.get("producer_identity_sha256"), str)
+                ):
+                    raise ValueError("V32 saved-port owner source differs from the accepted V26 stream identity")
+                saved_port_owner = {
+                    "surface_stream_path": str(surface_path),
+                    "surface_stream_sha256": surface_hash,
+                    "active_lookup_path": str(donor["active_lookup_path"]),
+                    "q0_map": donor["q0_map"],
+                    "q4_map": donor["q4_map"],
+                    "original_h": donor["original_h"],
+                    "direct_hhat_evidence": dict(support_evidence),
+                    "producer_identity_sha256": str(
+                        producer_facts["producer_identity_sha256"]
+                    ),
+                }
+                saved_stage_callback = v32_owner_stage_event
             local_owner = build_task40_v10_p6_local_sector_owner(
                 cfg,
                 axes,
@@ -8361,6 +8477,8 @@ def run_task40_v10_p6_reference_worker(
                 allocation_gate=allocation_gate,
                 jit_options=SAME_MESH_JIT_OPTIONS,
                 share_transform_bank=share_transform_bank,
+                saved_port_owner=saved_port_owner,
+                stage_callback=saved_stage_callback,
             )
             prebuilt_twist0_owner = local_owner
             local_owner.setdefault("owner_receipt", {}).update(
@@ -8416,12 +8534,19 @@ def run_task40_v10_p6_reference_worker(
                 },
             )
 
-            q_maps_by_q = {
-                q: local_owner["coordinates"].q_map(
-                    branch, allocation_gate=allocation_gate
-                )
-                for branch, q in enumerate(context.global_q_indices)
-            }
+            if isinstance(v31_route_facts, Mapping) and v31_route_facts.get("review_version") == "V32":
+                q_maps_by_q = local_owner.get("q_maps_by_q")
+                if not isinstance(q_maps_by_q, Mapping) or set(q_maps_by_q) != {0, 4}:
+                    raise ValueError(
+                        "V32 saved local owner did not return its fresh q0/q4 maps"
+                    )
+            else:
+                q_maps_by_q = {
+                    q: local_owner["coordinates"].q_map(
+                        branch, allocation_gate=allocation_gate
+                    )
+                    for branch, q in enumerate(context.global_q_indices)
+                }
             donor_binding = _task40_v31_bind_saved_q4_to_live(
                 donor,
                 current_q0_map=q_maps_by_q[0],
@@ -8483,6 +8608,7 @@ def run_task40_v10_p6_reference_worker(
                         available_sector_matrices=provider_matrices,
                         runtime_identity=qualified_q_csr_identity,
                         allocation_gate=allocation_gate,
+                        prebuilt_q_maps_by_q=q_maps_by_q,
                     )
                 except BaseException as error:
                     v31_phase_end(

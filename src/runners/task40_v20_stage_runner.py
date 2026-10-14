@@ -4641,6 +4641,35 @@ def run_task40_v20_stage(
             v31_execution = v31_contract["execution"]
             v31_window = v31_execution["window"]
             v31_resources = v31_execution["resources"]
+            staged_q_csr_import_authorizations = dict(
+                resolved_payload["execution"].get(
+                    "task40_v31_q_csr_import_authorizations", {}
+                )
+            )
+            v32_route = (
+                isinstance(v31_contract.get("review"), Mapping)
+                and v31_contract["review"].get("path")
+                == "docs/task40extra_0p7nm_engineering/review_report_v32.md"
+            )
+            if v32_route:
+                v32_template = v31_contract.get("preparation", {}).get(
+                    "q4_numeric_pending_import"
+                )
+                v31_q_csr_import_authorizations = v31_execution.get(
+                    "q_csr_import_authorizations"
+                )
+                if (
+                    not isinstance(v32_template, Mapping)
+                    or staged_q_csr_import_authorizations
+                    != {"numeric_pending": {"4": dict(v32_template)}}
+                    or not isinstance(v31_q_csr_import_authorizations, Mapping)
+                ):
+                    raise RuntimeError(
+                        "V32 staged DAT import template differs from the approved q4 contract"
+                    )
+                v31_q_csr_import_authorizations = dict(v31_q_csr_import_authorizations)
+            else:
+                v31_q_csr_import_authorizations = staged_q_csr_import_authorizations
             if (
                 v31_contract_sha != os.environ.get("TASK40_V31_CONTRACT_SHA256")
                 or Path(str(v31_window["window_path"])).resolve()
@@ -4699,11 +4728,7 @@ def run_task40_v20_stage(
                 },
                 "accepted_q0_donor": dict(v31_contract["preparation"]["accepted_q0_donor"]),
                 "q_csr_worklist": list(v31_contract["preparation"]["q_csr_worklist"]),
-                "q_csr_import_authorizations": dict(
-                    resolved_payload["execution"].get(
-                        "task40_v31_q_csr_import_authorizations", {}
-                    )
-                ),
+                "q_csr_import_authorizations": v31_q_csr_import_authorizations,
                 "target_admission_policy": dict(
                     resolved_payload["execution"].get(
                         "task40_v31_target_admission_policy",
@@ -4750,6 +4775,11 @@ def run_task40_v20_stage(
                 repo_root=repo_root,
                 source_sha=str(v31_contract["source_freeze"]["source_sha"]),
                 selector_sha256=str(v31_q_csr_binding["selector_sha256"]),
+                q4_numeric_pending_import=(
+                    v31_contract.get("preparation", {}).get("q4_numeric_pending_import")
+                    if v32_route
+                    else None
+                ),
             )
             if v31_input_identity["staged_input_sha256"] != provenance.get("input_sha256"):
                 raise ValueError("V31 stage runner raw stage SHA differs from its provenance")

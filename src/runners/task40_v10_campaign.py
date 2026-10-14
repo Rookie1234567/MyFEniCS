@@ -462,6 +462,8 @@ TASK40_V31_CAMPAIGN_WINDOW = (
 )
 TASK40_V31_CAMPAIGN_SECONDS = 43_200.0
 TASK40_V31_CLOSEOUT_RESERVE_SECONDS = 1_200.0
+TASK40_V32_CAMPAIGN_SECONDS = 86_400.0
+TASK40_V32_CLOSEOUT_RESERVE_SECONDS = 1_200.0
 TASK40_V30_CAMPAIGN_SHA256 = "0730454198abcee55401331d74f24a667d0d52036f67e1be817a3426a8d381a7"
 TASK40_V30_TARGET_CAMPAIGN_WINDOW = (
     Path("benchmarks/artifacts/task40extra_0p7nm_engineering/local_v30_wsl")
@@ -1312,10 +1314,31 @@ def _validate_v31_campaign_registration(
     digest: str,
     payload: Mapping[str, Any],
     contract: Mapping[str, Any],
+    *,
+    review_version: str = "V31",
 ) -> None:
     from src.runners.task40_v31_contract import (
-        V31_REVIEW_COMMIT, V31_REVIEW_PATH, V31_REVIEW_SHA256, V31_STAGE_SCOPE,
+        V31_APPROVAL_SCOPE, V31_NUMERIC_SECONDS, V31_REVIEW_COMMIT, V31_REVIEW_PATH,
+        V31_REVIEW_SHA256, V31_STAGE_SCOPE, V32_APPROVAL_SCOPE, V32_NUMERIC_SECONDS,
+        V32_REVIEW_COMMIT, V32_REVIEW_PATH, V32_REVIEW_SHA256, V32_STAGE_SCOPE,
     )
+
+    if review_version == "V31":
+        review_commit, review_path, review_sha = V31_REVIEW_COMMIT, V31_REVIEW_PATH, V31_REVIEW_SHA256
+        campaign = "task40extra_v31_all_q_reference_conditional_target_pilot"
+        total_seconds = TASK40_V31_CAMPAIGN_SECONDS
+        numeric_seconds = V31_NUMERIC_SECONDS
+        closeout_seconds = TASK40_V31_CLOSEOUT_RESERVE_SECONDS
+        stage_scope, approval_scope = V31_STAGE_SCOPE, V31_APPROVAL_SCOPE
+    elif review_version == "V32":
+        review_commit, review_path, review_sha = V32_REVIEW_COMMIT, V32_REVIEW_PATH, V32_REVIEW_SHA256
+        campaign = "task40extra_v32_all_q_reference_conditional_target_pilot"
+        total_seconds = TASK40_V32_CAMPAIGN_SECONDS
+        numeric_seconds = V32_NUMERIC_SECONDS
+        closeout_seconds = TASK40_V32_CLOSEOUT_RESERVE_SECONDS
+        stage_scope, approval_scope = V32_STAGE_SCOPE, V32_APPROVAL_SCOPE
+    else:
+        raise ValueError("review version must be V31 or V32")
 
     execution = contract.get("execution")
     window = execution.get("window") if isinstance(execution, Mapping) else None
@@ -1335,21 +1358,21 @@ def _validate_v31_campaign_registration(
         raise ValueError("V31 run_source_sha must bind this run's clean source freeze")
     expected_fields = {
         "schema": CAMPAIGN_SCHEMA,
-        "campaign": "task40extra_v31_all_q_reference_conditional_target_pilot",
-        "authority": "User-approved Review V31 execution window",
-        "active_review_sha": V31_REVIEW_COMMIT,
-        "active_review_path": V31_REVIEW_PATH,
-        "active_review_sha256": V31_REVIEW_SHA256,
+        "campaign": campaign,
+        "authority": f"User-approved Review {review_version} execution window",
+        "active_review_sha": review_commit,
+        "active_review_path": review_path,
+        "active_review_sha256": review_sha,
         "source_at_entry": entry_source,
-        "review_at_registration": V31_REVIEW_COMMIT,
+        "review_at_registration": review_commit,
         "t0_utc": window.get("t0_utc") if isinstance(window, Mapping) else None,
         "numeric_cutoff_utc": window.get("numeric_cutoff_utc") if isinstance(window, Mapping) else None,
         "deadline_utc": window.get("deadline_utc") if isinstance(window, Mapping) else None,
-        "campaign_seconds": TASK40_V31_CAMPAIGN_SECONDS,
-        "numeric_cutoff_seconds": 42_000.0,
-        "closeout_reserve_seconds": TASK40_V31_CLOSEOUT_RESERVE_SECONDS,
+        "campaign_seconds": total_seconds,
+        "numeric_cutoff_seconds": float(numeric_seconds),
+        "closeout_reserve_seconds": closeout_seconds,
         "time_policy": CONSERVATIVE_REALTIME,
-        "stage_scope": list(V31_STAGE_SCOPE),
+        "stage_scope": list(stage_scope),
         "forbidden_scope": [
             "automatic_cap_increase", "window_refresh", "parameter_or_accuracy_scan",
             "MUMPS_or_ABI_change", "OOC_or_BLR", "unrelated_project_mutation", "master_merge",
@@ -1367,12 +1390,14 @@ def _validate_v31_campaign_registration(
         contract.get("status") != "USER_APPROVED"
         or not isinstance(approval, Mapping)
         or approval.get("approved") is not True
-        or approval.get("scope") != "V31_WINDOW_43200_NUMERIC_42000_CLOSEOUT_1200"
+        or approval.get("scope") != approval_scope
         or approval.get("window_sha256") != digest
     ):
         changed.append("user_approval")
     if changed:
-        raise ValueError(f"registered V31 campaign identity or scope changed: {sorted(set(changed))}")
+        raise ValueError(
+            f"registered {review_version} campaign identity or scope changed: {sorted(set(changed))}"
+        )
 
 
 def load_fixed_campaign_window(
@@ -1439,6 +1464,11 @@ def load_fixed_campaign_window(
         and resolved.parent.parent == v31_artifact_root
         and re.fullmatch(r"source_[0-9a-f]{40}", resolved.parent.name) is not None
     )
+    is_v32 = (
+        resolved.name == "campaign_window_v32.json"
+        and resolved.parent.parent == v31_artifact_root
+        and re.fullmatch(r"source_[0-9a-f]{40}", resolved.parent.name) is not None
+    )
     if is_v22:
         _validate_v22_campaign_registration(resolved, digest, payload)
         expected_total = TASK40_V22_CAMPAIGN_SECONDS
@@ -1475,20 +1505,31 @@ def load_fixed_campaign_window(
         _validate_v30_campaign_registration(resolved, digest, payload)
         expected_total = TASK40_V30_CAMPAIGN_SECONDS
         expected_closeout = TASK40_V30_CLOSEOUT_RESERVE_SECONDS
-    elif is_v31:
+    elif is_v31 or is_v32:
+        review_version = "V32" if is_v32 else "V31"
         if v31_contract is None:
             contract_path = os.environ.get("TASK40_V31_CONTRACT_PATH")
             contract_sha = os.environ.get("TASK40_V31_CONTRACT_SHA256")
             if not contract_path or not contract_sha:
-                raise ValueError("V31 campaign window requires its approved execution contract")
+                raise ValueError(f"{review_version} campaign window requires its approved execution contract")
             from src.runners.task40_v31_contract import require_v31_execution_contract
 
             v31_contract, _ = require_v31_execution_contract(
                 contract_path, expected_sha256=contract_sha, current_root=Path.cwd()
             )
-        _validate_v31_campaign_registration(resolved, digest, payload, v31_contract)
-        expected_total = TASK40_V31_CAMPAIGN_SECONDS
-        expected_closeout = TASK40_V31_CLOSEOUT_RESERVE_SECONDS
+        _validate_v31_campaign_registration(
+            resolved,
+            digest,
+            payload,
+            v31_contract,
+            review_version=review_version,
+        )
+        if is_v32:
+            expected_total = TASK40_V32_CAMPAIGN_SECONDS
+            expected_closeout = TASK40_V32_CLOSEOUT_RESERVE_SECONDS
+        else:
+            expected_total = TASK40_V31_CAMPAIGN_SECONDS
+            expected_closeout = TASK40_V31_CLOSEOUT_RESERVE_SECONDS
     else:
         expected_total = CAMPAIGN_SECONDS
         expected_closeout = CLOSEOUT_RESERVE_SECONDS
@@ -1515,7 +1556,7 @@ def load_fixed_campaign_window(
         raise ValueError("the initial boot identity is malformed or inconsistent")
     bootstrap_utc = float(payload.get("bootstrap_utc_elapsed_seconds", -1.0))
     bootstrap_boot_raw = payload.get("bootstrap_boottime_elapsed_seconds", -1.0)
-    if (is_v30 or is_v31) and bootstrap_boot_raw is None:
+    if (is_v30 or is_v31 or is_v32) and bootstrap_boot_raw is None:
         bootstrap_boot = None
     else:
         bootstrap_boot = float(bootstrap_boot_raw)

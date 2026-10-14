@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import struct
 import time
 from types import SimpleNamespace
@@ -817,6 +818,478 @@ def _make_saved_v26_surface_provider(
         )
 
     return provider
+
+
+class _SavedSurfaceDtnAction:
+    """Apply the accepted surface B/D stream without retaining a carrier prefix."""
+
+    def __init__(
+        self,
+        entry_factory: Callable[[], Any],
+        *,
+        full_rows: int,
+        local_h: np.ndarray,
+        stream_sha256: str,
+        sweep_counter: dict[str, int],
+    ) -> None:
+        if not callable(entry_factory) or full_rows <= 0:
+            raise ValueError("saved surface DtN action requires a stream factory and full row count")
+        self._entry_factory = entry_factory
+        self.full_rows = int(full_rows)
+        self.local_h = np.asarray(local_h, dtype=np.float64)
+        if (
+            self.local_h.ndim != 1
+            or self.local_h.size == 0
+            or not np.isfinite(self.local_h).all()
+            or np.any(self.local_h <= 0.0)
+        ):
+            raise ValueError("saved surface DtN action requires finite positive local H values")
+        self._mode_count = int(len(self.local_h))
+        self.stream_sha256 = str(stream_sha256)
+        self.sweep_counter = sweep_counter
+        self._provider_sweep_count_at_destroy: int | None = None
+        self.apply_count = 0
+        self.modal_rhs_count = 0
+        self.recovery_count = 0
+        self._destroyed = False
+
+    def _values(self, vector: Any, *, writable: bool) -> np.ndarray:
+        if self._destroyed:
+            raise RuntimeError("saved surface DtN action has been destroyed")
+        values = np.asarray(
+            vector.getArray() if writable else vector.getArray(readonly=True),
+            dtype=np.complex128,
+        )
+        if vector.getSize() != self.full_rows or values.shape != (self.full_rows,):
+            raise ValueError("saved surface DtN vector differs from the fresh full FE row domain")
+        return values
+
+    def _entries(self):
+        yield from self._entry_factory()
+
+    def apply(self, source: Any, target: Any) -> None:
+        source_values = self._values(source, writable=False)
+        target_values = self._values(target, writable=True)
+        target_values.fill(0.0)
+        count = 0
+        for count, entry in enumerate(self._entries(), start=1):
+            modal = np.dot(entry.projection_values, source_values[entry.projection_rows])
+            target_values[entry.coupling_rows] += (
+                modal / float(entry.normalization_h) * entry.coupling_values
+            )
+        if count != len(self.local_h):
+            raise ValueError("saved surface DtN stream omitted a mode during physical apply")
+        self.apply_count += 1
+
+    def apply_modal_rhs(self, mode_amplitudes: Any, target: Any) -> None:
+        target_values = self._values(target, writable=True)
+        amplitudes = np.asarray(tuple(mode_amplitudes), dtype=np.complex128)
+        if amplitudes.shape != self.local_h.shape or not np.isfinite(amplitudes).all():
+            raise ValueError("saved surface modal RHS differs from its bound complete mode inventory")
+        target_values.fill(0.0)
+        count = 0
+        for count, entry in enumerate(self._entries(), start=1):
+            target_values[entry.coupling_rows] += amplitudes[count - 1] * entry.coupling_values
+        if count != len(self.local_h):
+            raise ValueError("saved surface stream omitted a mode during modal RHS application")
+        self.modal_rhs_count += 1
+
+    def compose_physical_rhs(self, base: Any, mode_amplitudes: Any, target: Any) -> None:
+        base_values = self._values(base, writable=False)
+        target_values = self._values(target, writable=True)
+        amplitudes = np.asarray(tuple(mode_amplitudes), dtype=np.complex128)
+        if amplitudes.shape != self.local_h.shape or not np.isfinite(amplitudes).all():
+            raise ValueError("saved surface physical RHS differs from its bound mode inventory")
+        target_values[:] = base_values
+        count = 0
+        for count, entry in enumerate(self._entries(), start=1):
+            target_values[entry.coupling_rows] += amplitudes[count - 1] * entry.coupling_values
+        if count != len(self.local_h):
+            raise ValueError("saved surface stream omitted a mode during physical RHS composition")
+
+    def recover_auxiliary(self, source: Any) -> np.ndarray:
+        source_values = self._values(source, writable=False)
+        recovered = np.empty(len(self.local_h), dtype=np.complex128)
+        count = 0
+        for count, entry in enumerate(self._entries(), start=1):
+            modal = np.dot(entry.projection_values, source_values[entry.projection_rows])
+            recovered[count - 1] = modal / float(entry.normalization_h)
+        if count != len(self.local_h):
+            raise ValueError("saved surface stream omitted a mode during auxiliary recovery")
+        self.recovery_count += 1
+        return recovered
+
+    @property
+    def audit(self) -> Mapping[str, Any]:
+        return {
+            "schema": "task40extra.review_v32_saved_surface_dtn_action.v1",
+            "mode_count": self._mode_count,
+            "full_fe_rows": self.full_rows,
+            "surface_stream_sha256": self.stream_sha256,
+            "surface_payloads_retained_in_memory": False,
+            "provider_sweep_count": int(
+                self._provider_sweep_count_at_destroy
+                if self._provider_sweep_count_at_destroy is not None
+                else self.sweep_counter.get("provider_sweep_count", 0)
+            ),
+            "apply_count": self.apply_count,
+            "modal_rhs_count": self.modal_rhs_count,
+            "recovery_count": self.recovery_count,
+            "destroyed": self._destroyed,
+        }
+
+    def destroy(self) -> None:
+        self._provider_sweep_count_at_destroy = int(
+            self.sweep_counter.get("provider_sweep_count", 0)
+        )
+        self._destroyed = True
+        self._entry_factory = None
+        self.sweep_counter.clear()
+        self.local_h = np.empty(0, dtype=np.float64)
+
+
+def build_saved_surface_native_owner(
+    *,
+    condensed: Any,
+    volume_action: Any,
+    surface_stream_path: str | Path,
+    surface_stream_sha256: str,
+    selected_indices: np.ndarray,
+    local_modes: tuple[Any, ...],
+    local_h: np.ndarray,
+    full_mode_rows: tuple[Mapping[str, Any], ...],
+    active_lookup_path: str | Path,
+    interior_rows: np.ndarray,
+    numeric_internal_support_evidence: Mapping[str, Any],
+    surface_support_audit: Callable[[np.ndarray], Mapping[str, Any]],
+    producer_identity_sha256: str,
+    global_mode_sha256: str,
+    allocation_gate: Callable[[str, Mapping[str, Any]], Any],
+    reader_telemetry: dict[str, Any] | None = None,
+    stage_callback: Callable[[Mapping[str, Any]], None] | None = None,
+    owns_condensed: bool = False,
+) -> dict[str, Any]:
+    """Adapt accepted B/D/H files to fresh FE recovery and matrix-free port actions."""
+    from .fullspace_physical_action import FullspacePhysicalAction
+    from .original_port_blocks import DiagonalOriginalPortBlock
+    from .p6_cell_condensed_action import (
+        P6GlobalDirectCarrierProvider,
+        build_p6_cell_condensed_action_from_generated,
+    )
+
+    path = Path(surface_stream_path).resolve()
+    lookup_path = Path(active_lookup_path).resolve()
+    indices = np.asarray(selected_indices, dtype=np.int64)
+    h_values = np.asarray(local_h, dtype=np.float64)
+    interiors = np.asarray(interior_rows)
+    if (
+        not path.is_file()
+        or not re.fullmatch(r"[0-9a-f]{64}", str(surface_stream_sha256))
+        or not re.fullmatch(r"[0-9a-f]{64}", str(producer_identity_sha256))
+        or not re.fullmatch(r"[0-9a-f]{64}", str(global_mode_sha256))
+        or indices.ndim != 1
+        or indices.size == 0
+        or len(np.unique(indices)) != len(indices)
+        or len(local_modes) != len(indices)
+        or len(h_values) != len(indices)
+        or not full_mode_rows
+        or not lookup_path.is_file()
+        or not callable(allocation_gate)
+        or not callable(surface_support_audit)
+        or type(owns_condensed) is not bool
+        or any(int(index) < 0 or int(index) >= len(full_mode_rows) for index in indices)
+        or interiors.ndim != 1
+        or interiors.dtype.kind not in "iu"
+        or (interiors.size > 1 and np.any(interiors[1:] <= interiors[:-1]))
+        or numeric_internal_support_evidence.get("numeric_internal_support_empty") is not True
+        or numeric_internal_support_evidence.get("internal_B_nnz") != 0
+        or numeric_internal_support_evidence.get("internal_D_nnz") != 0
+    ):
+        raise ValueError("saved surface owner lacks exact stream, row, H, or empty internal B/D binding")
+    if not np.isfinite(h_values).all() or np.any(h_values <= 0.0):
+        raise ValueError("saved surface owner local H values must be finite and positive")
+
+    def stage_call(name: str, operation: Callable[[], Any], **facts: Any) -> Any:
+        started_utc_ns = time.time_ns()
+        started_monotonic_ns = time.perf_counter_ns()
+        started_boottime_ns = (
+            time.clock_gettime_ns(time.CLOCK_BOOTTIME)
+            if hasattr(time, "CLOCK_BOOTTIME")
+            else None
+        )
+        if stage_callback is not None:
+            stage_callback({
+                "phase": name, "status": "STARTED",
+                "started_utc_ns": started_utc_ns,
+                "started_monotonic_ns": started_monotonic_ns,
+                "started_boottime_ns": started_boottime_ns,
+                **facts,
+            })
+        try:
+            result = operation()
+        except BaseException as error:
+            if stage_callback is not None:
+                finished_utc_ns = time.time_ns()
+                finished_monotonic_ns = time.perf_counter_ns()
+                stage_callback({
+                    "phase": name, "status": "FAILED",
+                    "started_utc_ns": started_utc_ns,
+                    "started_monotonic_ns": started_monotonic_ns,
+                    "started_boottime_ns": started_boottime_ns,
+                    "finished_utc_ns": finished_utc_ns,
+                    "finished_monotonic_ns": finished_monotonic_ns,
+                    "finished_boottime_ns": (
+                        time.clock_gettime_ns(time.CLOCK_BOOTTIME)
+                        if hasattr(time, "CLOCK_BOOTTIME") else None
+                    ),
+                    "elapsed_seconds": max(
+                        0.0, (finished_monotonic_ns - started_monotonic_ns) / 1.0e9
+                    ),
+                    "error_type": type(error).__name__,
+                    "error_message": str(error),
+                    **facts,
+                })
+            raise
+        if stage_callback is not None:
+            finished_utc_ns = time.time_ns()
+            finished_monotonic_ns = time.perf_counter_ns()
+            stage_callback({
+                "phase": name, "status": "COMPLETE",
+                "started_utc_ns": started_utc_ns,
+                "started_monotonic_ns": started_monotonic_ns,
+                "started_boottime_ns": started_boottime_ns,
+                "finished_utc_ns": finished_utc_ns,
+                "finished_monotonic_ns": finished_monotonic_ns,
+                "finished_boottime_ns": (
+                    time.clock_gettime_ns(time.CLOCK_BOOTTIME)
+                    if hasattr(time, "CLOCK_BOOTTIME") else None
+                ),
+                "elapsed_seconds": max(
+                    0.0, (finished_monotonic_ns - started_monotonic_ns) / 1.0e9
+                ),
+                **facts,
+            })
+        return result
+
+    lookup, active_rows = stage_call(
+        "fresh_saved_lookup_binding",
+        lambda: _load_saved_v26_active_lookup(
+            lookup_path,
+            condensed_system=condensed,
+            expected_full_rows=int(condensed.full_rows),
+            allocation_gate=allocation_gate,
+        ),
+        saved_lookup_path=str(lookup_path),
+        fresh_full_rows=int(condensed.full_rows),
+    )
+    if active_rows != int(condensed.active_rows):
+        raise ValueError("fresh condensed trace rows differ from the saved surface lookup binding")
+    support_facts = stage_call(
+        "saved_surface_support_audit",
+        lambda: surface_support_audit(lookup),
+        selected_mode_count=int(len(indices)),
+        surface_stream_path=str(path),
+        surface_stream_sha256=str(surface_stream_sha256),
+    )
+    if (
+        not isinstance(support_facts, Mapping)
+        or support_facts.get("path") != str(path)
+        or support_facts.get("sha256") != str(surface_stream_sha256)
+        or support_facts.get("numeric_internal_support_empty") is not True
+        or support_facts.get("internal_nonzero_entry_count") != {"B": 0, "D": 0}
+        or support_facts.get("mode_count") != len(indices)
+    ):
+        raise ValueError("fresh FE/MPC surface support audit differs from the accepted saved stream")
+    counters = {"provider_sweep_count": 0}
+    base_entry_factory = _make_saved_v26_surface_provider(
+        path=path,
+        selected_indices=indices,
+        local_modes=local_modes,
+        local_h=h_values,
+        mode_rows=full_mode_rows,
+        interior_rows=interiors.astype(np.int64, copy=False),
+        active_lookup=lookup,
+        active_rows=active_rows,
+        counters=counters,
+        reader_telemetry=reader_telemetry,
+    )
+
+    def entry_factory():
+        import time as _time
+
+        started_utc_ns = _time.time_ns()
+        started_monotonic_ns = _time.perf_counter_ns()
+        started_boottime_ns = (
+            _time.clock_gettime_ns(_time.CLOCK_BOOTTIME)
+            if hasattr(_time, "CLOCK_BOOTTIME")
+            else None
+        )
+        records_read = 0
+        if stage_callback is not None:
+            stage_callback(
+                {
+                    "phase": "saved_port_provider_sweep",
+                    "status": "STARTED",
+                    "started_utc_ns": started_utc_ns,
+                    "started_monotonic_ns": started_monotonic_ns,
+                    "started_boottime_ns": started_boottime_ns,
+                    "q_indices": [0, 4],
+                    "twist_index": 0,
+                    "selected_mode_count": int(len(indices)),
+                    "surface_stream_sha256": str(surface_stream_sha256),
+                }
+            )
+        try:
+            for entry in base_entry_factory():
+                records_read += 1
+                yield entry
+        except BaseException as error:
+            if stage_callback is not None:
+                finished_utc_ns = _time.time_ns()
+                stage_callback(
+                    {
+                        "phase": "saved_port_provider_sweep",
+                        "status": "FAILED",
+                        "started_utc_ns": started_utc_ns,
+                        "started_monotonic_ns": started_monotonic_ns,
+                        "started_boottime_ns": started_boottime_ns,
+                        "finished_utc_ns": finished_utc_ns,
+                        "finished_monotonic_ns": _time.perf_counter_ns(),
+                        "finished_boottime_ns": (
+                            _time.clock_gettime_ns(_time.CLOCK_BOOTTIME)
+                            if hasattr(_time, "CLOCK_BOOTTIME")
+                            else None
+                        ),
+                        "elapsed_seconds": max(
+                            0.0,
+                            (_time.perf_counter_ns() - started_monotonic_ns) / 1.0e9,
+                        ),
+                        "mode_records_read": records_read,
+                        "error_type": type(error).__name__,
+                        "error_message": str(error),
+                    }
+                )
+            raise
+        else:
+            finished_utc_ns = _time.time_ns()
+            finished_monotonic_ns = _time.perf_counter_ns()
+            stage_callback and stage_callback(
+                {
+                    "phase": "saved_port_provider_sweep",
+                    "status": "COMPLETE",
+                    "started_utc_ns": started_utc_ns,
+                    "started_monotonic_ns": started_monotonic_ns,
+                    "started_boottime_ns": started_boottime_ns,
+                    "finished_utc_ns": finished_utc_ns,
+                    "finished_monotonic_ns": finished_monotonic_ns,
+                    "finished_boottime_ns": (
+                        _time.clock_gettime_ns(_time.CLOCK_BOOTTIME)
+                        if hasattr(_time, "CLOCK_BOOTTIME")
+                        else None
+                    ),
+                    "elapsed_seconds": max(
+                        0.0,
+                        (finished_monotonic_ns - started_monotonic_ns) / 1.0e9,
+                    ),
+                    "mode_records_read": records_read,
+                    "expected_mode_count": int(len(indices)),
+                }
+            )
+    mode_keys = tuple(
+        _mode_key(int(index), mode)
+        for index, mode in zip(indices, local_modes, strict=True)
+    )
+    original_hp = DiagonalOriginalPortBlock(
+        np.asarray(h_values, dtype=np.complex128), mode_keys
+    )
+    def make_direct_owner():
+        provider = P6GlobalDirectCarrierProvider(
+            entry_factory,
+            condensed=condensed,
+            mode_count=len(local_modes),
+            interior_rows_are_managed=False,
+            interior_rows=interiors,
+            source_label="accepted_v26_saved_surface_functional_stream",
+        )
+        provider.bind_original_port_block(original_hp)
+        built_action = build_p6_cell_condensed_action_from_generated(
+            condensed,
+            original_hp,
+            {},
+            global_direct_provider=provider,
+            owns_condensed=owns_condensed,
+        )
+        return provider, built_action
+
+    direct_provider, direct_action = stage_call(
+        "saved_port_provider_action_binding",
+        make_direct_owner,
+        selected_mode_count=int(len(indices)),
+        surface_stream_sha256=str(surface_stream_sha256),
+        direct_hhat_empty_internal_support=True,
+    )
+    saved_dtn_action = None
+    physical_action = None
+    try:
+        saved_dtn_action = _SavedSurfaceDtnAction(
+            entry_factory,
+            full_rows=int(condensed.full_rows),
+            local_h=h_values,
+            stream_sha256=str(surface_stream_sha256),
+            sweep_counter=counters,
+        )
+        physical_action = FullspacePhysicalAction(
+            volume_action, saved_dtn_action, owns_dtn=True
+        )
+    except BaseException:
+        if physical_action is not None:
+            physical_action.destroy()
+        elif saved_dtn_action is not None:
+            saved_dtn_action.destroy()
+        if direct_action is not None:
+            direct_action.destroy()
+        raise
+    bundle = {
+        "schema": "task40extra.review_v32_saved_surface_native_bundle.v1",
+        "action": physical_action,
+        "physical_action": physical_action,
+        "volume_action": volume_action,
+        "dtn_action": saved_dtn_action,
+        "modes": local_modes,
+        "mode_rows": tuple(full_mode_rows[int(index)] for index in indices),
+        "mode_sha256": str(global_mode_sha256),
+    }
+    return {
+        "action": direct_action,
+        "bundle": bundle,
+        "direct_provider": direct_provider,
+        "saved_dtn_action": saved_dtn_action,
+        "provider_sweep_counter": counters,
+        "active_lookup": lookup,
+        "surface_support_audit": dict(support_facts),
+        "owner_receipt": {
+            "schema": "task40extra.review_v32_saved_surface_native_owner.v1",
+            "status": "FRESH_FE_RECOVERY_WITH_SAVED_PORT_ACTIONS",
+            "surface_stream_path": str(path),
+            "surface_stream_sha256": str(surface_stream_sha256),
+            "producer_identity_sha256": str(producer_identity_sha256),
+            "global_mode_sha256": str(global_mode_sha256),
+            "selected_mode_count": int(len(indices)),
+            "selected_mode_indices_sha256": hashlib.sha256(
+                np.ascontiguousarray(indices, dtype="<i8").view(np.uint8)
+            ).hexdigest(),
+            "fresh_lookup_checked": True,
+            "fresh_lookup_full_rows": int(condensed.full_rows),
+            "fresh_lookup_active_rows": int(active_rows),
+            "surface_support_audit": dict(support_facts),
+            "saved_q0_q4_maps_and_H_checked_by_owner": True,
+            "internal_B_D_support_empty": True,
+            "production_surface_integrator_rerun": False,
+            "saved_surface_payloads_retained_in_memory": False,
+            "same_condensed_owner_borrowed_by_native_action": True,
+            "native_owner_action_uses_exact_condensed_object": True,
+        },
+    }
 
 
 def _audit_saved_surface_functional_stream(

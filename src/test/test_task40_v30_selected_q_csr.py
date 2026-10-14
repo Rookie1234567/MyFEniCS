@@ -16,6 +16,7 @@ from src.solvers.task40_v30_selected_q_csr import (
     finalize_selected_q_csr,
     fill_saved_selected_q_values,
     make_v31_pending_import_authorization,
+    make_v32_q4_numeric_pending_import_authorization,
     prepare_saved_selected_q_numeric_pending,
     qualify_selected_q_native,
     require_direct_hhat_evidence,
@@ -240,6 +241,345 @@ def test_saved_q4_numeric_pending_reopens_without_repeating_pattern_or_fill(tmp_
         prepare_saved_selected_q_numeric_pending(**changed_source)
 
 
+def test_v32_q4_import_requires_exact_existing_pending_and_writes_receipt_to_new_root(
+    tmp_path, monkeypatch
+):
+    from src.solvers import task40_v30_selected_q_csr as selected_q
+
+    base = np.asarray(
+        [[4 + 0.1j, 0.2, 0.1j, 0], [0.2, 5 - 0.1j, 0, 0.2j],
+         [0.1j, 0, 1, 0.3], [0, 0.2j, 0.3, 2]], dtype=np.complex128
+    )
+    q4_map = sparse.csr_matrix(
+        np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 0, 1j]], dtype=np.complex128)
+    )
+    producer_identity = {"source_sha": "c" * 40, "window_sha256": "d" * 64}
+    matrix_source_identity = {"source_sha": "a" * 40, "window_sha256": "b" * 64}
+    profile = "v32-q4-import-fixture"
+    profile_identity = {"name": profile, "trace_rows": 2}
+    ordered_modes = (SimpleNamespace(side="bottom", m=0, n=0, polarization="s"),)
+    scientific_input_sha256 = "7" * 64
+    original_h = np.asarray([2.0, 3.0], dtype=np.complex128)
+    operator_identity = selected_q_operator_identity(
+        scientific_input_sha256=scientific_input_sha256,
+        profile_identity=profile_identity,
+        ordered_modes=ordered_modes,
+        q_map=q4_map,
+        original_h=original_h,
+    )
+    producer = _ToySavedContributions(base)
+    producer_kwargs = dict(
+        source=producer, q_map=q4_map, q_index=4, twist_index=0,
+        trace_rows=2, allocation_gate=lambda *_args: None, profile=profile,
+        operator_identity=operator_identity, matrix_source_identity=matrix_source_identity,
+        execution_identity=producer_identity, producer_identity={"kind": "saved_fixture"},
+        output_directory=tmp_path / "old_read_only" / "q4_twist0",
+        direct_hhat_evidence={"numeric_internal_support_empty": True,
+                              "internal_B_nnz": 0, "internal_D_nnz": 0},
+    )
+    first = prepare_saved_selected_q_numeric_pending(**producer_kwargs)
+    pending = first["numeric_pending"]
+    consumer_identity = {"source_sha": "e" * 40, "window_sha256": "f" * 64}
+    consumer_root = tmp_path / "new_source" / "factor_bank" / "selected_q" / "q4_twist0"
+    authorization = make_v32_q4_numeric_pending_import_authorization(
+        pending_record_path=pending["record_path"],
+        pending_record_sha256=pending["record_sha256"],
+        csr_artifacts_sha256={
+            name: str(row["sha256"]) for name, row in pending["csr_artifacts"].items()
+        },
+        producer_execution_identity=producer_identity,
+        matrix_source_identity=matrix_source_identity,
+        consumer_execution_identity=consumer_identity,
+        consumer_output_root=consumer_root,
+    )
+
+    def forbidden_repeat(*_args, **_kwargs):
+        raise AssertionError("REQUIRE_EXISTING_NUMERIC_PENDING must never call a producer/filler")
+
+    monkeypatch.setattr(selected_q, "build_saved_selected_q_pattern", forbidden_repeat)
+    monkeypatch.setattr(selected_q, "fill_saved_selected_q_values", forbidden_repeat)
+    pending_path = Path(pending["record_path"])
+    old_root = pending_path.parent.resolve()
+    imported_files = [pending_path, pending_path.with_name(pending_path.name + ".sha256")]
+    imported_files.extend(Path(row["path"]) for row in pending["csr_artifacts"].values())
+    before_hashes = {path: hashlib.sha256(path.read_bytes()).hexdigest() for path in imported_files}
+    old_modes = {path: path.stat().st_mode & 0o777 for path in imported_files}
+    for path in imported_files:
+        path.chmod(0o444)
+    atomic_json = selected_q._atomic_json
+
+    def guard_old_root_writes(path, payload):
+        assert not Path(path).resolve().is_relative_to(old_root)
+        return atomic_json(path, payload)
+
+    monkeypatch.setattr(selected_q, "_atomic_json", guard_old_root_writes)
+    import_kwargs = dict(producer_kwargs)
+    import_kwargs.update(
+        source=None,
+        execution_identity=consumer_identity,
+        output_directory=consumer_root,
+        numeric_pending_import_authorization=authorization,
+    )
+    try:
+        imported = prepare_saved_selected_q_numeric_pending(**import_kwargs)
+    finally:
+        for path, mode in old_modes.items():
+            path.chmod(mode)
+    after_hashes = {path: hashlib.sha256(path.read_bytes()).hexdigest() for path in imported_files}
+
+    assert before_hashes == after_hashes
+    assert imported["reopened"] is True
+    assert imported["numeric_pending"]["record_path"] == pending["record_path"]
+    assert imported["numeric_pending"]["record_sha256"] == pending["record_sha256"]
+    assert imported["output_directory"] == str(consumer_root.resolve())
+    assert imported["consumer_receipt"]["path"].startswith(str(consumer_root.resolve()))
+    receipt = imported["consumer_receipt"]
+    assert Path(receipt["path"]).is_file()
+    assert receipt["payload"]["original_record_rewritten"] is False
+    assert receipt["payload"]["producer_execution_identity"] == producer_identity
+    assert receipt["payload"]["consumer_execution_identity"] == consumer_identity
+    import_facts = receipt["payload"]["numeric_pending_import_execution"]
+    assert import_facts == imported["numeric_pending_import_execution"]
+    assert import_facts["read_only"] is True
+    assert import_facts["reopened_existing_pending"] is True
+    assert import_facts["large_array_hashes_checked"] is True
+    assert all(
+        import_facts[key] == 0
+        for key in (
+            "producer_invocations",
+            "route_build_invocations",
+            "pattern_build_invocations",
+            "numeric_fill_invocations",
+        )
+    )
+    assert import_facts["elapsed_seconds"] >= 0
+    assert "not an import-interval peak" in import_facts["peak_rss_scope"]
+    assert selected_q._require_v31_pending_consumer_receipt(
+        imported, consumer_execution_identity=consumer_identity
+    )["payload"] == receipt["payload"]
+    assert not list(Path(pending["record_path"]).parent.glob("*consumer_*.json"))
+
+    matrix = imported["matrix"]
+    full1 = np.asarray([1.0 + 0.2j, 2.0 - 0.3j, 3.0 + 0.4j], dtype=np.complex128)
+    inputs = {
+        "case1_full": full1,
+        "case1_trace_only": np.asarray([full1[0], full1[1], 0.0], dtype=np.complex128),
+        "case1_port_only": np.asarray([0.0, 0.0, full1[2]], dtype=np.complex128),
+        "case2_full": np.asarray([0.4 + 0.7j, 0.9 - 0.5j, 1.7 + 0.1j], dtype=np.complex128),
+    }
+    csr_outputs = {name: np.asarray(matrix @ value) for name, value in inputs.items()}
+    # Independent toy algebra from the saved 4x4 source and trace/port map.
+    # This exercises serialization/reopen only; it is not an FE or scientific native pass.
+    trace_map = q4_map[:2, :2].toarray()
+    port_map = q4_map[2:, 2:].toarray()
+    native_matrices = {
+        "volume": np.zeros((3, 3), dtype=np.complex128),
+        "-D": np.zeros((3, 3), dtype=np.complex128),
+        "C": np.zeros((3, 3), dtype=np.complex128),
+        "Hhat": np.zeros((3, 3), dtype=np.complex128),
+    }
+    native_matrices["volume"][:2, :2] = trace_map.conj().T @ base[:2, :2] @ trace_map
+    native_matrices["C"][:2, 2:] = trace_map.conj().T @ base[:2, 2:] @ port_map
+    native_matrices["-D"][2:, :2] = port_map.conj().T @ base[2:, :2] @ trace_map
+    native_matrices["Hhat"][2:, 2:] = port_map.conj().T @ (
+        base[2:, 2:] + np.diag(producer.local_h)
+    ) @ port_map
+    component_outputs = {
+        name: {case: np.asarray(component @ vector) for case, vector in inputs.items()}
+        for name, component in native_matrices.items()
+    }
+    native_outputs = {
+        case: sum(
+            (component_outputs[name][case] for name in ("volume", "-D", "C", "Hhat")),
+            np.zeros(3, dtype=np.complex128),
+        )
+        for case in inputs
+    }
+    native_components = {
+        "volume": component_outputs["volume"]["case1_full"],
+        "minus_D": component_outputs["-D"]["case1_full"],
+        "C": component_outputs["C"]["case1_full"],
+        "Hhat": component_outputs["Hhat"]["case1_full"],
+    }
+    native_result = {
+        **qualify_selected_q_native(
+            matrix=matrix,
+            inputs=inputs,
+            csr_outputs=csr_outputs,
+            native_outputs=native_outputs,
+            native_components_case1=native_components,
+            paired_leakage={"q_to_peer": {"relative": 0.0}, "peer_to_q": {"relative": 0.0}},
+            trace_rows=2,
+        ),
+        "inputs": inputs,
+        "csr_outputs": csr_outputs,
+        "native_outputs": native_outputs,
+        "native_components_case1": native_components,
+        "paired_peer_input": np.asarray([1.0 + 0.2j, 0.5 + 0.4j], dtype=np.complex128),
+        "paired_peer_native_diagonal": np.asarray([0.8 + 0.1j, 0.6 + 0.3j], dtype=np.complex128),
+        "paired_peer_native_cross": np.zeros(3, dtype=np.complex128),
+        "paired_selected_native_cross": np.zeros(2, dtype=np.complex128),
+        "paired_peer_case2_cross": np.zeros(2, dtype=np.complex128),
+        "native_input_seeds": {"case1_full": 1, "case2_full": 2},
+    }
+    finalize_kwargs = dict(
+        matrix=matrix,
+        pattern_record=imported["pattern_record"],
+        numeric_facts=imported["numeric_facts"],
+        native_result=native_result,
+        output_directory=consumer_root,
+        profile=profile,
+        q_index=4,
+        twist_index=0,
+        q_map=q4_map,
+        original_h=original_h,
+        profile_identity=profile_identity,
+        ordered_modes=ordered_modes,
+        scientific_input_sha256=scientific_input_sha256,
+        operator_identity=operator_identity,
+        matrix_source_identity=matrix_source_identity,
+        execution_identity=consumer_identity,
+        producer_identity=producer_kwargs["producer_identity"],
+        numeric_pending_import_authorization=authorization,
+    )
+    data_path = Path(imported["numeric_pending"]["csr_artifacts"]["data"]["path"])
+    saved_data_bytes = data_path.read_bytes()
+    try:
+        tampered = np.load(data_path, mmap_mode="r+", allow_pickle=False)
+        tampered[0] += 1.0
+        tampered.flush()
+        del tampered
+        with pytest.raises(IOError, match="content hash differs from its authorization"):
+            finalize_selected_q_csr(**finalize_kwargs)
+    finally:
+        data_path.write_bytes(saved_data_bytes)
+
+    manifest, qualification, selector_entry = finalize_selected_q_csr(**finalize_kwargs)
+    assert manifest["status"] == "COMPLETE_CSR"
+    assert qualification["status"] == "PASS"
+    assert manifest["numeric_pending_import"]["old_arrays_modified"] is False
+    from src.solvers.task40_v30_qualified_q_csr import (
+        QualifiedQCSRProvider,
+        V30_Q_CSR_SELECTOR_SCHEMA,
+    )
+
+    selector_path = consumer_root / "v32_q4_selector.json"
+    selector_path.write_text(
+        json.dumps(
+            {
+                "schema": V30_Q_CSR_SELECTOR_SCHEMA,
+                "profile": profile,
+                "q_csr_entries": [selector_entry],
+            },
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    selector_sha256 = hashlib.sha256(selector_path.read_bytes()).hexdigest()
+    provider = QualifiedQCSRProvider(
+        selector_path,
+        selector_sha256=selector_sha256,
+        repo_root=tmp_path,
+        path_resolver=lambda raw: Path(raw).resolve(),
+        allocation_gate=lambda *_args: None,
+        numeric_pending_import_authorizations={"4": authorization},
+    )
+    reopened, provider_receipt = provider.load(
+        4,
+        0,
+        expected_operator_identity=operator_identity,
+        expected_execution_identity=consumer_identity,
+        expected_q_map=q4_map,
+        expected_original_h=original_h,
+    )
+    assert np.array_equal(reopened @ inputs["case2_full"], csr_outputs["case2_full"])
+    assert provider_receipt["numeric_pending_import"]["old_arrays_modified"] is False
+    assert provider_receipt["numeric_pending_import"]["read_only_import_root"] == str(old_root)
+
+
+def test_v32_q4_import_rejects_consumer_output_nested_inside_read_only_import_root(tmp_path):
+    from src.solvers.task40_v30_selected_q_csr import preflight_v32_q4_numeric_pending_import
+
+    old_root = tmp_path / "old_import"
+    pending_path = old_root / "task40_v30_q4_twist0_numeric_pending.json"
+    output_root = old_root / "nested_consumer"
+    authorization = make_v32_q4_numeric_pending_import_authorization(
+        pending_record_path=pending_path,
+        pending_record_sha256="1" * 64,
+        csr_artifacts_sha256={name: "2" * 64 for name in ("data", "indices", "indptr")},
+        producer_execution_identity={"source_sha": "a" * 40, "window_sha256": "b" * 64},
+        matrix_source_identity={"source_sha": "c" * 40, "window_sha256": "d" * 64},
+        consumer_execution_identity={"source_sha": "e" * 40, "window_sha256": "f" * 64},
+        consumer_output_root=output_root,
+    )
+    with pytest.raises(ValueError, match="authorized locations"):
+        preflight_v32_q4_numeric_pending_import(
+            authorization,
+            profile="fixture",
+            execution_identity=authorization["consumer_execution_identity"],
+            output_directory=output_root,
+        )
+
+
+@pytest.mark.parametrize("tamper", ("missing_record", "wrong_record_sha"))
+def test_v32_q4_import_blocks_missing_or_wrong_hash_before_any_fallback(tmp_path, monkeypatch, tamper):
+    from src.solvers import task40_v30_selected_q_csr as selected_q
+
+    base = np.eye(4, dtype=np.complex128)
+    q4_map = sparse.eye(4, 3, dtype=np.complex128, format="csr")
+    producer_identity = {"source_sha": "c" * 40, "window_sha256": "d" * 64}
+    matrix_source_identity = {"source_sha": "a" * 40, "window_sha256": "b" * 64}
+    kwargs = dict(
+        source=_ToySavedContributions(base), q_map=q4_map, q_index=4, twist_index=0,
+        trace_rows=2, allocation_gate=lambda *_args: None, profile="v32-q4-fail-closed-fixture",
+        operator_identity={"fixture_operator": "q4"},
+        matrix_source_identity=matrix_source_identity, execution_identity=producer_identity,
+        producer_identity={"kind": "saved_fixture"}, output_directory=tmp_path / "old" / "q4_twist0",
+        direct_hhat_evidence={"numeric_internal_support_empty": True,
+                              "internal_B_nnz": 0, "internal_D_nnz": 0},
+    )
+    first = prepare_saved_selected_q_numeric_pending(**kwargs)
+    pending = first["numeric_pending"]
+    consumer_identity = {"source_sha": "e" * 40, "window_sha256": "f" * 64}
+    consumer_root = tmp_path / "new" / "q4_twist0"
+    authorization = make_v32_q4_numeric_pending_import_authorization(
+        pending_record_path=pending["record_path"],
+        pending_record_sha256=pending["record_sha256"],
+        csr_artifacts_sha256={name: row["sha256"] for name, row in pending["csr_artifacts"].items()},
+        producer_execution_identity=producer_identity,
+        matrix_source_identity=matrix_source_identity,
+        consumer_execution_identity=consumer_identity,
+        consumer_output_root=consumer_root,
+    )
+    if tamper == "missing_record":
+        missing_root = tmp_path / "missing_import_root"
+        authorization["pending_record_path"] = str(
+            missing_root / "task40_v30_q4_twist0_numeric_pending.json"
+        )
+        authorization["import_root"] = str(missing_root)
+    else:
+        authorization["pending_record_sha256"] = "0" * 64
+    allocation_calls = []
+
+    def forbidden_repeat(*_args, **_kwargs):
+        raise AssertionError("an invalid existing import must not route through pattern/fill")
+
+    monkeypatch.setattr(selected_q, "build_saved_selected_q_pattern", forbidden_repeat)
+    monkeypatch.setattr(selected_q, "fill_saved_selected_q_values", forbidden_repeat)
+    import_kwargs = dict(kwargs)
+    import_kwargs.update(
+        source=None,
+        execution_identity=consumer_identity,
+        output_directory=consumer_root,
+        allocation_gate=lambda *args: allocation_calls.append(args),
+        numeric_pending_import_authorization=authorization,
+    )
+    with pytest.raises(ValueError):
+        prepare_saved_selected_q_numeric_pending(**import_kwargs)
+    assert allocation_calls == []
+    assert not consumer_root.exists()
+
+
 def test_partial_saved_q_numeric_data_restarts_from_zero_after_gate(tmp_path, monkeypatch):
     from src.solvers import task40_v30_selected_q_csr as selected_q
 
@@ -334,6 +674,48 @@ def test_worker_reference_boundary_runs_saved_q4_pending_before_builder(tmp_path
     )
     assert reference["builder_entered_after_pending"] is True
     assert pending["numeric_pending"]["status"] == "NUMERIC_COMPLETE_NATIVE_PENDING"
+
+
+def test_twist_sector_native_preparation_reuses_owner_q_maps_without_rebuilding():
+    from src.runners.task40_v10_worker import _task40_v30_resolve_sector_q_maps
+
+    class Coordinates:
+        def __init__(self):
+            self.calls = []
+
+        def q_map(self, branch, *, allocation_gate):
+            self.calls.append((branch, allocation_gate))
+            return f"built-{branch}"
+
+    coordinates = Coordinates()
+    allocation_gate = object()
+    q0_map = object()
+    q4_map = object()
+    reused = _task40_v30_resolve_sector_q_maps(
+        coordinates,
+        (0, 4),
+        allocation_gate=allocation_gate,
+        prebuilt_q_maps_by_q={0: q0_map, 4: q4_map},
+    )
+    assert reused[0] is q0_map
+    assert reused[4] is q4_map
+    assert coordinates.calls == []
+
+    rebuilt = _task40_v30_resolve_sector_q_maps(
+        coordinates,
+        (1, 5),
+        allocation_gate=allocation_gate,
+    )
+    assert rebuilt == {1: "built-0", 5: "built-1"}
+    assert coordinates.calls == [(0, allocation_gate), (1, allocation_gate)]
+    with pytest.raises(ValueError, match="do not match"):
+        _task40_v30_resolve_sector_q_maps(
+            coordinates,
+            (0, 4),
+            allocation_gate=allocation_gate,
+            prebuilt_q_maps_by_q={0: q0_map},
+        )
+    assert coordinates.calls == [(0, allocation_gate), (1, allocation_gate)]
 
 
 @pytest.mark.parametrize("fail_q4_preparer", (False, True))
@@ -928,6 +1310,7 @@ def test_reference_destroy_owns_prebuilt_twist0_and_worker_cleanup_is_idempotent
         "action": SimpleNamespace(destroy=counted("owner_action")),
         "bundle": {"action": SimpleNamespace(destroy=counted("bundle_action"))},
         "levels": {"floquets": {}},
+        "q_maps_by_q": {0: object(), 4: object()},
         "transform_bank": bank,
         "owner_receipt": {
             "owner_identity": "twist0:local_action_recovery_entities",
@@ -954,8 +1337,241 @@ def test_reference_destroy_owns_prebuilt_twist0_and_worker_cleanup_is_idempotent
     assert receipt["status"] == "RELEASED"
     assert receipt["transform_bank_released"] is True
     assert receipt["transform_bank_status"] == "RELEASED"
+    assert receipt["q_maps_released"] is True
+    assert sector["q_maps_by_q"] is None
     assert sector["transform_bank"] is None
     assert calls == {"owner_action": 1, "bundle_action": 1, "bank": 1}
+
+
+def test_saved_surface_native_owner_builds_and_releases_real_complex_action(tmp_path):
+    """Exercise the production saved-stream adapter with a tiny no-FE algebra fixture."""
+    import struct
+
+    from mpi4py import MPI
+    from petsc4py import PETSc
+
+    from src.solvers.hcurl_assembly_time_condensation import (
+        AssemblyTimeCondensedSystem,
+        TraceConstraintMap,
+    )
+
+    stream_path = tmp_path / "saved_surface.bin"
+    lookup_path = tmp_path / "active_lookup.npy"
+    selected = np.asarray([0, 1], dtype=np.int64)
+    h_values = np.asarray([2.5, 4.0], dtype=np.float64)
+    mode_records = (
+        {
+            "b_rows": np.asarray([0], dtype="<i4"),
+            "b_values": np.asarray([2.0 + 1.0j], dtype="<c16"),
+            "d_rows": np.asarray([1], dtype="<i4"),
+            "d_values": np.asarray([0.5 - 0.25j], dtype="<c16"),
+        },
+        {
+            "b_rows": np.asarray([1], dtype="<i4"),
+            "b_values": np.asarray([-0.75 + 0.4j], dtype="<c16"),
+            "d_rows": np.asarray([0], dtype="<i4"),
+            "d_values": np.asarray([1.2 + 0.3j], dtype="<c16"),
+        },
+    )
+    with stream_path.open("wb") as stream:
+        for index, (h_value, record) in enumerate(zip(h_values, mode_records, strict=True)):
+            stream.write(
+                task40_v25_selected_q0._SURFACE_STREAM_HEADER.pack(
+                    index,
+                    len(record["b_rows"]),
+                    len(record["d_rows"]),
+                    float(h_value),
+                )
+            )
+            for name in ("b_rows", "b_values", "d_rows", "d_values"):
+                stream.write(record[name].tobytes())
+    stream_sha256 = hashlib.sha256(stream_path.read_bytes()).hexdigest()
+    np.save(lookup_path, np.asarray([0, 1], dtype=np.int32), allow_pickle=False)
+
+    constraints = TraceConstraintMap(
+        owned_active_original_dofs=np.asarray([0, 1], dtype=PETSc.IntType),
+        original_to_active={0: 0, 1: 1},
+        expansion_by_original={},
+        full_trace_rows=2,
+        active_rows=2,
+        slave_rows=0,
+        owned_active_range=(0, 2),
+        build_audit={},
+    )
+    condensed = AssemblyTimeCondensedSystem(
+        matrix=None,
+        owned_trace_original_dofs=np.asarray([0, 1], dtype=PETSc.IntType),
+        original_to_trace={0: 0, 1: 1},
+        trace_constraints=constraints,
+        cell_recovery_maps=(),
+        interior_from_trace_by_class={},
+        interior_lu_by_class={},
+        interior_rhs_projection_by_class={},
+        interior_solution_embedding_by_class={},
+        trace_from_interior_rhs_by_class={},
+        interior_residual_projection_by_class={},
+        full_rows=2,
+        trace_rows=2,
+        active_rows=2,
+        appended_rows=2,
+        interior_rows=0,
+        active_interior_rows=0,
+        build_audit={},
+        comm=MPI.COMM_SELF,
+        owned_active_rows=2,
+        owned_appended_rows=2,
+        retained_local_schur_by_class={},
+    )
+    original_destroy = condensed.destroy
+    destroy_count = {"condensed": 0}
+
+    def counted_condensed_destroy():
+        destroy_count["condensed"] += 1
+        original_destroy()
+
+    condensed.destroy = counted_condensed_destroy
+
+    class VolumeAction:
+        audit = {"fixture": "volume-only-no-fe"}
+
+        def __init__(self):
+            self.destroy_count = 0
+
+        def destroy(self):
+            self.destroy_count += 1
+
+    volume_action = VolumeAction()
+    modes = (
+        SimpleNamespace(side="top", m=0, n=0, polarization="s"),
+        SimpleNamespace(side="bottom", m=1, n=-1, polarization="p"),
+    )
+    full_mode_rows = ({"identity": "mode-0"}, {"identity": "mode-1"})
+    support_seen = []
+    stage_events = []
+
+    def support_audit(lookup):
+        support_seen.append(np.asarray(lookup).copy())
+        return {
+            "path": str(stream_path.resolve()),
+            "sha256": stream_sha256,
+            "numeric_internal_support_empty": True,
+            "internal_nonzero_entry_count": {"B": 0, "D": 0},
+            "mode_count": 2,
+        }
+
+    owner = task40_v25_selected_q0.build_saved_surface_native_owner(
+        condensed=condensed,
+        volume_action=volume_action,
+        surface_stream_path=stream_path,
+        surface_stream_sha256=stream_sha256,
+        selected_indices=selected,
+        local_modes=modes,
+        local_h=h_values,
+        full_mode_rows=full_mode_rows,
+        active_lookup_path=lookup_path,
+        interior_rows=np.empty(0, dtype=np.int64),
+        numeric_internal_support_evidence={
+            "numeric_internal_support_empty": True,
+            "internal_B_nnz": 0,
+            "internal_D_nnz": 0,
+        },
+        surface_support_audit=support_audit,
+        producer_identity_sha256="a" * 64,
+        global_mode_sha256="b" * 64,
+        allocation_gate=lambda *_args, **_kwargs: None,
+        stage_callback=stage_events.append,
+        owns_condensed=True,
+    )
+
+    action = owner["action"]
+    assert action.condensed is condensed
+    assert action.owns_condensed is True
+    assert action.audit["global_direct_provider_enabled"] is True
+    assert owner["owner_receipt"]["native_owner_action_uses_exact_condensed_object"] is True
+    np.testing.assert_array_equal(support_seen[0], np.asarray([0, 1], dtype=np.int32))
+
+    source = np.asarray(
+        [1.1 - 0.7j, -0.4 + 0.9j, 0.3 + 0.5j, -1.0 + 0.2j],
+        dtype=np.complex128,
+    )
+    expected = np.asarray(
+        [
+            mode_records[0]["b_values"][0] * source[2],
+            mode_records[1]["b_values"][0] * source[3],
+            -mode_records[0]["d_values"][0] * source[1] + h_values[0] * source[2],
+            -mode_records[1]["d_values"][0] * source[0] + h_values[1] * source[3],
+        ],
+        dtype=np.complex128,
+    )
+    np.testing.assert_allclose(action.apply(source), expected, rtol=0.0, atol=1e-14)
+
+    class Vector:
+        def __init__(self, values):
+            self.values = np.asarray(values, dtype=np.complex128).copy()
+
+        def getArray(self, readonly=False):
+            return self.values
+
+        def getSize(self):
+            return len(self.values)
+
+    saved_dtn = owner["saved_dtn_action"]
+    dtn_result = Vector(np.zeros(2, dtype=np.complex128))
+    saved_dtn.apply(Vector(source[:2]), dtn_result)
+    expected_dtn = np.asarray(
+        [
+            mode_records[0]["b_values"][0]
+            * np.dot(mode_records[0]["d_values"], source[[1]])
+            / h_values[0],
+            mode_records[1]["b_values"][0]
+            * np.dot(mode_records[1]["d_values"], source[[0]])
+            / h_values[1],
+        ],
+        dtype=np.complex128,
+    )
+    np.testing.assert_allclose(dtn_result.values, expected_dtn, rtol=0.0, atol=1e-14)
+    np.testing.assert_allclose(
+        saved_dtn.recover_auxiliary(Vector(source[:2])),
+        np.asarray(
+            [
+                np.dot(mode_records[0]["d_values"], source[[1]]) / h_values[0],
+                np.dot(mode_records[1]["d_values"], source[[0]]) / h_values[1],
+            ],
+            dtype=np.complex128,
+        ),
+        rtol=0.0,
+        atol=1e-14,
+    )
+    modal_rhs = Vector(np.zeros(2, dtype=np.complex128))
+    saved_dtn.apply_modal_rhs(source[2:], modal_rhs)
+    np.testing.assert_allclose(
+        modal_rhs.values,
+        np.asarray(
+            [
+                mode_records[0]["b_values"][0] * source[2],
+                mode_records[1]["b_values"][0] * source[3],
+            ]
+        ),
+        rtol=0.0,
+        atol=1e-14,
+    )
+    assert any(
+        event.get("phase") == "saved_port_provider_action_binding"
+        and event.get("status") == "COMPLETE"
+        for event in stage_events
+    )
+
+    provider_sweeps_before_cleanup = int(
+        owner["provider_sweep_counter"]["provider_sweep_count"]
+    )
+    owner["bundle"]["action"].destroy()
+    action.destroy()
+    assert volume_action.destroy_count == 1
+    assert saved_dtn._destroyed is True
+    assert saved_dtn.audit["mode_count"] == 2
+    assert saved_dtn.audit["provider_sweep_count"] == provider_sweeps_before_cleanup
+    assert destroy_count == {"condensed": 1}
+    assert condensed._destroyed is True
 
 
 def test_reference_builder_failure_releases_prebuilt_twist0_owner_once(monkeypatch):
@@ -1169,6 +1785,19 @@ def test_native_qualification_checks_four_csr_actions_and_components() -> None:
     assert receipt["status"] == "PASS"
     assert receipt["csr_action_count"] == 4
     assert receipt["maximum_relative_error"] == 0.0
+
+    incomplete_inputs = dict(inputs)
+    incomplete_inputs.pop("case2_full")
+    with pytest.raises(ValueError, match="omits one of its four complete actions"):
+        qualify_selected_q_native(
+            matrix=matrix,
+            inputs=incomplete_inputs,
+            csr_outputs=outputs,
+            native_outputs=outputs,
+            native_components_case1={},
+            paired_leakage={},
+            trace_rows=2,
+        )
 
     changed = dict(outputs)
     changed["case2_full"] = outputs["case2_full"].copy()

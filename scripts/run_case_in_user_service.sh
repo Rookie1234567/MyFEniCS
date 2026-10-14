@@ -90,6 +90,16 @@ for ((index = 0; index < ${#args[@]}; index++)); do
             v31_contract="${arg#*=}"
             ((v31_contract_count += 1))
             ;;
+        --task40-v32-execution-contract)
+            ((index + 1 < ${#args[@]})) || { echo "V32 contract flag needs a path" >&2; exit 2; }
+            v31_contract="${args[index + 1]}"
+            ((v31_contract_count += 1))
+            ((index += 1))
+            ;;
+        --task40-v32-execution-contract=*)
+            v31_contract="${arg#*=}"
+            ((v31_contract_count += 1))
+            ;;
     esac
 done
 v29_campaign=0

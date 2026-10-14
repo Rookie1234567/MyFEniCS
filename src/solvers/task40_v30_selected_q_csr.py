@@ -10,7 +10,9 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import tempfile
+import time
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -1610,6 +1612,144 @@ def make_v31_pending_import_authorization(
     }
 
 
+V32_Q4_PENDING_IMPORT_SCHEMA = "task40extra.review_v32_q4_numeric_pending_import.v1"
+
+
+def make_v32_q4_numeric_pending_import_authorization(
+    *,
+    pending_record_path: str | Path,
+    pending_record_sha256: str,
+    csr_artifacts_sha256: Mapping[str, str],
+    producer_execution_identity: Mapping[str, Any],
+    matrix_source_identity: Mapping[str, Any],
+    consumer_execution_identity: Mapping[str, Any],
+    consumer_output_root: str | Path,
+) -> dict[str, Any]:
+    """Bind the one approved V32 q4 read-only import and its separate output root."""
+    path = Path(pending_record_path)
+    if not path.is_absolute():
+        raise ValueError("V32 q4 pending record path must be absolute")
+    path = path.resolve()
+    output_root = Path(consumer_output_root).resolve()
+    hashes = dict(csr_artifacts_sha256)
+    if (
+        not path.is_absolute()
+        or not re.fullmatch(r"[0-9a-f]{64}", pending_record_sha256)
+        or set(hashes) != {"data", "indices", "indptr"}
+        or any(not re.fullmatch(r"[0-9a-f]{64}", str(value)) for value in hashes.values())
+        or output_root == path.parent
+        or not isinstance(producer_execution_identity, Mapping)
+        or not isinstance(matrix_source_identity, Mapping)
+        or not isinstance(consumer_execution_identity, Mapping)
+    ):
+        raise ValueError("V32 q4 import authorization needs exact record/array hashes and a separate output root")
+    return {
+        "schema": V32_Q4_PENDING_IMPORT_SCHEMA,
+        "policy": "REQUIRE_EXISTING_NUMERIC_PENDING",
+        "q_index": 4,
+        "twist_index": 0,
+        "pending_record_path": str(path),
+        "pending_record_sha256": pending_record_sha256,
+        "import_root": str(path.parent),
+        "csr_artifacts_sha256": hashes,
+        "producer_execution_identity": dict(producer_execution_identity),
+        "matrix_source_identity": dict(matrix_source_identity),
+        "consumer_execution_identity": dict(consumer_execution_identity),
+        "consumer_output_root": str(output_root),
+        "read_only": True,
+    }
+
+
+def preflight_v32_q4_numeric_pending_import(
+    authorization: Mapping[str, Any],
+    *,
+    profile: str,
+    execution_identity: Mapping[str, Any],
+    output_directory: str | Path,
+) -> dict[str, Any]:
+    """Validate the small q4 record and declared backing-file metadata, without hashing arrays."""
+    required = {
+        "schema", "policy", "q_index", "twist_index", "pending_record_path",
+        "pending_record_sha256", "import_root", "csr_artifacts_sha256",
+        "producer_execution_identity", "matrix_source_identity",
+        "consumer_execution_identity", "consumer_output_root", "read_only",
+    }
+    if not isinstance(authorization, Mapping) or set(authorization) != required:
+        raise ValueError("V32 q4 import authorization has an open or incomplete schema")
+    if (
+        authorization.get("schema") != V32_Q4_PENDING_IMPORT_SCHEMA
+        or authorization.get("policy") != "REQUIRE_EXISTING_NUMERIC_PENDING"
+        or authorization.get("q_index") != 4
+        or authorization.get("twist_index") != 0
+        or authorization.get("read_only") is not True
+        or dict(authorization.get("consumer_execution_identity", {})) != dict(execution_identity)
+    ):
+        raise ValueError("V32 q4 import authorization differs from the approved consumer identity/policy")
+    path = Path(str(authorization.get("pending_record_path", "")))
+    import_root = Path(str(authorization.get("import_root", "")))
+    output_root = Path(str(authorization.get("consumer_output_root", "")))
+    if not path.is_absolute() or not import_root.is_absolute() or not output_root.is_absolute():
+        raise ValueError("V32 q4 import paths must be absolute and source-qualified")
+    path = path.resolve()
+    import_root = import_root.resolve()
+    output_root = output_root.resolve()
+    if (
+        path.parent != import_root
+        or path.name != "task40_v30_q4_twist0_numeric_pending.json"
+        or output_root != Path(output_directory).resolve()
+        or output_root.is_relative_to(import_root)
+    ):
+        raise ValueError("V32 q4 import record/output roots differ from their exact authorized locations")
+    expected_pending_sha256 = str(authorization.get("pending_record_sha256", ""))
+    if not re.fullmatch(r"[0-9a-f]{64}", expected_pending_sha256):
+        raise ValueError("V32 q4 import record authorization needs a full SHA-256")
+    pending, digest = _read_integrity_bound_json(path, label="V32 q4 numeric-pending import")
+    if digest != expected_pending_sha256:
+        raise ValueError("V32 q4 numeric-pending record hash differs from the approved import")
+    declared_hashes = authorization.get("csr_artifacts_sha256")
+    records = pending.get("csr_artifacts")
+    if (
+        pending.get("schema") != "task40extra.review_v30_q_csr_numeric_pending.v1"
+        or pending.get("status") != "NUMERIC_COMPLETE_NATIVE_PENDING"
+        or pending.get("q_index") != 4
+        or pending.get("twist_index") != 0
+        or pending.get("profile") != profile
+        or dict(pending.get("execution_identity", {}))
+        != dict(authorization.get("producer_execution_identity", {}))
+        or dict(pending.get("matrix_source_identity", {}))
+        != dict(authorization.get("matrix_source_identity", {}))
+        or not isinstance(records, Mapping)
+        or set(records) != {"data", "indices", "indptr"}
+        or any(not isinstance(row, Mapping) for row in records.values())
+        or not isinstance(declared_hashes, Mapping)
+        or set(declared_hashes) != {"data", "indices", "indptr"}
+    ):
+        raise ValueError("V32 q4 pending record identity or array inventory differs from its authorization")
+    for name, row in records.items():
+        artifact = Path(str(row.get("path", ""))).resolve()
+        if (
+            artifact.parent != import_root
+            or row.get("sha256") != declared_hashes.get(name)
+            or type(row.get("bytes")) is not int
+            or row["bytes"] < 0
+        ):
+            raise ValueError(f"V32 q4 pending {name} declaration escapes its authorized read-only root")
+        try:
+            if artifact.stat().st_size != row["bytes"]:
+                raise ValueError(f"V32 q4 pending {name} size differs from its small record")
+        except FileNotFoundError as error:
+            raise FileNotFoundError(f"V32 q4 pending backing array {name} is missing") from error
+    return {
+        "path": str(path),
+        "pending": pending,
+        "pending_sha256": digest,
+        "import_root": str(import_root),
+        "consumer_output_root": str(output_root),
+        "array_sha256": dict(declared_hashes),
+        "large_array_hashes_checked": False,
+    }
+
+
 def _persist_v31_pending_consumer_receipt(
     *,
     pending_path: Path,
@@ -1617,6 +1757,10 @@ def _persist_v31_pending_consumer_receipt(
     pending_sha256: str,
     consumer_execution_identity: Mapping[str, Any],
     authorization: Mapping[str, Any],
+    consumer_output_directory: str | Path | None = None,
+    receipt_version: str = "v31",
+    numeric_pending_import_authorization: Mapping[str, Any] | None = None,
+    numeric_pending_import_execution: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Record cross-window consumption without rewriting the producer's pending evidence."""
     producer_execution = _require_run_identity(
@@ -1632,6 +1776,12 @@ def _persist_v31_pending_consumer_receipt(
     )
     if dict(authorization) != expected_authorization:
         raise ValueError("cross-window pending import lacks its exact V31 contract authorization")
+    if receipt_version not in {"v31", "v32"}:
+        raise ValueError("pending consumer receipt version must be V31 or V32")
+    if (receipt_version == "v32") != (numeric_pending_import_authorization is not None):
+        raise ValueError("V32 pending consumer receipt needs its exact numeric-import authorization")
+    if (receipt_version == "v32") != (numeric_pending_import_execution is not None):
+        raise ValueError("V32 pending consumer receipt needs measured import execution facts")
     identity_seed = json.dumps(
         {
             "pending_record_sha256": pending_sha256,
@@ -1641,11 +1791,12 @@ def _persist_v31_pending_consumer_receipt(
         separators=(",", ":"),
     ).encode("utf-8")
     receipt_id = hashlib.sha256(identity_seed).hexdigest()
-    receipt_path = pending_path.with_name(
-        f"task40_v31_q{int(pending['q_index'])}_twist{int(pending['twist_index'])}_consumer_{receipt_id}.json"
+    receipt_root = Path(consumer_output_directory or pending_path.parent).resolve()
+    receipt_path = receipt_root / (
+        f"task40_{receipt_version}_q{int(pending['q_index'])}_twist{int(pending['twist_index'])}_consumer_{receipt_id}.json"
     )
     payload = {
-        "schema": "task40extra.review_v31_q_numeric_pending_consumer.v1",
+        "schema": f"task40extra.review_{receipt_version}_q_numeric_pending_consumer.v1",
         "status": "CONSUMED_NUMERIC_COMPLETE_NATIVE_PENDING",
         "q_index": int(pending["q_index"]),
         "twist_index": int(pending["twist_index"]),
@@ -1664,9 +1815,16 @@ def _persist_v31_pending_consumer_receipt(
         "original_native_status": "NATIVE_PENDING",
         "original_record_rewritten": False,
     }
+    if numeric_pending_import_authorization is not None:
+        payload["numeric_pending_import_authorization"] = dict(
+            numeric_pending_import_authorization
+        )
+        payload["numeric_pending_import_execution"] = dict(
+            numeric_pending_import_execution or {}
+        )
     if receipt_path.exists() or _integrity_sidecar_path(receipt_path).exists():
         saved, digest = _read_integrity_bound_json(
-            receipt_path, label="V31 pending consumer receipt"
+            receipt_path, label=f"{receipt_version.upper()} pending consumer receipt"
         )
         if saved != payload:
             raise ValueError("existing V31 consumer receipt differs from this exact consumer identity")
@@ -1734,13 +1892,26 @@ def _require_v31_pending_consumer_receipt(
             json.dumps(expected_authorization, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest(),
     )
+    receipt_version = (
+        "v32" if isinstance(numeric_stage.get("numeric_pending_import_authorization"), Mapping)
+        else "v31"
+    )
+    if receipt_version == "v32":
+        expected_fields["numeric_pending_import_authorization"] = dict(
+            numeric_stage["numeric_pending_import_authorization"]
+        )
+        import_execution = numeric_stage.get("numeric_pending_import_execution")
+        if not isinstance(import_execution, Mapping):
+            raise ValueError("V32 numeric-pending stage omits its measured import execution receipt")
+        expected_fields["numeric_pending_import_execution"] = dict(import_execution)
     if (
         reference.get("sha256") != digest
         or reference.get("payload") != payload
-        or payload.get("schema") != "task40extra.review_v31_q_numeric_pending_consumer.v1"
+        or payload.get("schema")
+        != f"task40extra.review_{receipt_version}_q_numeric_pending_consumer.v1"
         or any(payload.get(key) != value for key, value in expected_fields.items())
     ):
-        raise ValueError("V31 pending consumer receipt is not bound to this exact q and consumer")
+        raise ValueError(f"{receipt_version.upper()} pending consumer receipt is not bound to this exact q and consumer")
     return {"path": str(receipt_path), "sha256": digest, "payload": payload}
 
 
@@ -1880,9 +2051,18 @@ def _load_v30_numeric_pending(
     producer_identity: Mapping[str, Any],
     allocation_gate: Callable[[str, Mapping[str, Any]], Any],
     consumer_import_authorization: Mapping[str, Any] | None = None,
+    expected_pending_sha256: str | None = None,
+    expected_csr_artifacts_sha256: Mapping[str, str] | None = None,
+    import_root: str | Path | None = None,
+    consumer_output_directory: str | Path | None = None,
+    consumer_receipt_version: str = "v31",
+    numeric_pending_import_authorization: Mapping[str, Any] | None = None,
+    defer_v32_consumer_receipt: bool = False,
 ) -> dict[str, Any]:
     """Strictly reopen a complete pending CSR; never repeat its numeric fill."""
     payload, digest = _read_integrity_bound_json(path, label="V30 numeric-pending record")
+    if expected_pending_sha256 is not None and digest != expected_pending_sha256:
+        raise ValueError("V30 numeric-pending record differs from the exact authorized import hash")
     if (
         payload.get("schema") != "task40extra.review_v30_q_csr_numeric_pending.v1"
         or payload.get("status") != "NUMERIC_COMPLETE_NATIVE_PENDING"
@@ -1894,10 +2074,36 @@ def _load_v30_numeric_pending(
         or dict(payload.get("producer_identity", {})) != dict(producer_identity)
     ):
         raise ValueError("V30 numeric-pending identity differs from the current saved-q request")
+    producer_execution = _require_run_identity(
+        payload.get("execution_identity", {}), "V30 pending producer execution identity"
+    )
+    consumer_execution = _require_run_identity(
+        execution_identity, "V31 pending consumer execution identity"
+    )
+    expected_consumer_authorization = None
+    if producer_execution != consumer_execution:
+        if not isinstance(consumer_import_authorization, Mapping):
+            raise ValueError("cross-window numeric pending requires a V31 contract import authorization")
+        expected_consumer_authorization = make_v31_pending_import_authorization(
+            payload,
+            pending_sha256=digest,
+            consumer_execution_identity=consumer_execution,
+        )
+        if dict(consumer_import_authorization) != expected_consumer_authorization:
+            raise ValueError("cross-window pending import lacks its exact V31 contract authorization")
     records = dict(payload.get("csr_artifacts", {}))
     if set(records) != {"data", "indices", "indptr"}:
         raise ValueError("V30 numeric-pending record omits a CSR array")
     paths = {name: Path(str(row.get("path", ""))).resolve() for name, row in records.items()}
+    if expected_csr_artifacts_sha256 is not None and {
+        name: str(row.get("sha256", "")) for name, row in records.items()
+    } != dict(expected_csr_artifacts_sha256):
+        raise ValueError("V30 numeric-pending array identities differ from the exact authorized import")
+    if import_root is not None and (
+        path.resolve().parent != Path(import_root).resolve()
+        or any(artifact.parent != Path(import_root).resolve() for artifact in paths.values())
+    ):
+        raise ValueError("V30 numeric-pending import escaped its explicit read-only root")
     if any(not artifact.is_relative_to(path.parent.resolve()) or not artifact.is_file() for artifact in paths.values()):
         raise FileNotFoundError("V30 numeric-pending CSR backing array is missing")
     total_bytes = sum(int(row.get("bytes", -1)) for row in records.values())
@@ -1937,33 +2143,36 @@ def _load_v30_numeric_pending(
     _require_csr(matrix, f"q={q_index} numeric-pending CSR")
     if _csr_sha256(matrix) != payload.get("csr_content_sha256"):
         raise ValueError("V30 numeric-pending CSR content hash differs from its record")
-    producer_execution = _require_run_identity(
-        payload.get("execution_identity", {}), "V30 pending producer execution identity"
-    )
-    consumer_execution = _require_run_identity(
-        execution_identity, "V31 pending consumer execution identity"
-    )
     pending = dict(payload)
     pending["record_path"] = str(path)
     pending["record_sha256"] = digest
     consumer_receipt = None
-    if producer_execution != consumer_execution:
-        if not isinstance(consumer_import_authorization, Mapping):
-            raise ValueError("cross-window numeric pending requires a V31 contract import authorization")
+    if producer_execution != consumer_execution and not defer_v32_consumer_receipt:
         consumer_receipt = _persist_v31_pending_consumer_receipt(
             pending_path=path,
             pending=pending,
             pending_sha256=digest,
             consumer_execution_identity=consumer_execution,
-            authorization=consumer_import_authorization,
+            authorization=expected_consumer_authorization,
+            consumer_output_directory=consumer_output_directory,
+            receipt_version=consumer_receipt_version,
+            numeric_pending_import_authorization=numeric_pending_import_authorization,
         )
+    elif defer_v32_consumer_receipt and (
+        consumer_receipt_version != "v32"
+        or numeric_pending_import_authorization is None
+        or producer_execution == consumer_execution
+    ):
+        raise ValueError("only a cross-window V32 import may defer its receipt until measured facts exist")
     return {
         "status": payload["status"],
         "matrix": matrix,
         "pattern_record": dict(payload["pattern_record"]),
         "numeric_facts": dict(payload["numeric_fill_facts"]),
         "numeric_pending": pending,
-        "output_directory": str(path.parent),
+        "output_directory": str(Path(consumer_output_directory).resolve())
+        if consumer_output_directory is not None
+        else str(path.parent),
         "reopened": True,
         "consumer_receipt": consumer_receipt,
     }
@@ -1985,6 +2194,7 @@ def prepare_saved_selected_q_numeric_pending(
     output_directory: str | Path,
     direct_hhat_evidence: Mapping[str, Any] | None = None,
     consumer_import_authorization: Mapping[str, Any] | None = None,
+    numeric_pending_import_authorization: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build and persist one saved-data q CSR without constructing a native owner.
 
@@ -2001,6 +2211,93 @@ def prepare_saved_selected_q_numeric_pending(
     )):
         raise ValueError("saved selected-q pending needs nonempty bound identities")
     root = Path(output_directory).resolve()
+    if numeric_pending_import_authorization is not None:
+        if consumer_import_authorization is not None:
+            raise ValueError("V32 q4 import must use one explicit authorization, not mixed V31/V32 records")
+        import_started = time.perf_counter()
+        preflight = preflight_v32_q4_numeric_pending_import(
+            numeric_pending_import_authorization,
+            profile=profile,
+            execution_identity=execution_identity,
+            output_directory=root,
+        )
+        pending = preflight["pending"]
+        legacy_authorization = make_v31_pending_import_authorization(
+            pending,
+            pending_sha256=str(preflight["pending_sha256"]),
+            consumer_execution_identity=execution_identity,
+        )
+        imported = _load_v30_numeric_pending(
+            path=Path(preflight["path"]),
+            profile=profile,
+            q_index=q_index,
+            twist_index=twist_index,
+            operator_identity=operator_identity,
+            matrix_source_identity=matrix_source_identity,
+            execution_identity=execution_identity,
+            producer_identity=producer_identity,
+            allocation_gate=allocation_gate,
+            consumer_import_authorization=legacy_authorization,
+            expected_pending_sha256=str(preflight["pending_sha256"]),
+            expected_csr_artifacts_sha256=preflight["array_sha256"],
+            import_root=preflight["import_root"],
+            consumer_output_directory=preflight["consumer_output_root"],
+            consumer_receipt_version="v32",
+            numeric_pending_import_authorization=numeric_pending_import_authorization,
+            defer_v32_consumer_receipt=True,
+        )
+        try:
+            import resource
+
+            process_peak_rss_bytes = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) * 1024
+        except (ImportError, OSError, ValueError):
+            process_peak_rss_bytes = None
+        imported["numeric_pending_import_execution"] = {
+            "schema": "task40extra.review_v32_q4_import_execution.v1",
+            "policy": "REQUIRE_EXISTING_NUMERIC_PENDING",
+            "read_only": True,
+            "reopened_existing_pending": bool(imported.get("reopened")),
+            "producer_invocations": 0,
+            "route_build_invocations": 0,
+            "pattern_build_invocations": 0,
+            "numeric_fill_invocations": 0,
+            "large_array_hashes_checked": True,
+            "elapsed_seconds": max(0.0, time.perf_counter() - import_started),
+            "process_lifetime_peak_rss_bytes_at_import_completion": process_peak_rss_bytes,
+            "peak_rss_scope": (
+                "process lifetime ru_maxrss sampled at import completion; not an import-interval peak"
+            ),
+            "counter_basis": (
+                "The require-existing branch returns directly from the read-only loader before local producer, "
+                "route, pattern, or fill call sites; the focused fixture replaces each forbidden call with a failure."
+            ),
+        }
+        imported["consumer_receipt"] = _persist_v31_pending_consumer_receipt(
+            pending_path=Path(str(imported["numeric_pending"]["record_path"])),
+            pending=imported["numeric_pending"],
+            pending_sha256=str(imported["numeric_pending"]["record_sha256"]),
+            consumer_execution_identity=execution_identity,
+            authorization=legacy_authorization,
+            consumer_output_directory=preflight["consumer_output_root"],
+            receipt_version="v32",
+            numeric_pending_import_authorization=numeric_pending_import_authorization,
+            numeric_pending_import_execution=imported["numeric_pending_import_execution"],
+        )
+        pattern_record = dict(imported["pattern_record"])
+        pattern_record["numeric_pending_csr_artifacts"] = dict(
+            imported["numeric_pending"].get("csr_artifacts", {})
+        )
+        pattern_record["numeric_pending_import_authorization"] = dict(
+            numeric_pending_import_authorization
+        )
+        pattern_record["numeric_pending_import_execution"] = dict(
+            imported["numeric_pending_import_execution"]
+        )
+        imported["pattern_record"] = pattern_record
+        imported["numeric_pending_import_authorization"] = dict(
+            numeric_pending_import_authorization
+        )
+        return imported
     pending_path = root / f"task40_v30_q{q_index}_twist{twist_index}_numeric_pending.json"
     if pending_path.exists():
         return _load_v30_numeric_pending(
@@ -2108,6 +2405,7 @@ def finalize_selected_q_csr(
     matrix_source_identity: Mapping[str, Any],
     execution_identity: Mapping[str, Any],
     producer_identity: Mapping[str, Any],
+    numeric_pending_import_authorization: Mapping[str, Any] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     """Freeze a COMPLETE selected-q CSR and its separate independent native PASS."""
     from .task40_v30_qualified_q_csr import (
@@ -2177,15 +2475,57 @@ def finalize_selected_q_csr(
     csr_artifacts = {}
     pattern_artifacts = {}
     source_csr_artifacts = dict(pattern_record.get("csr_artifacts", {}))
+    imported_csr_artifacts = dict(
+        pattern_record.get("numeric_pending_csr_artifacts", source_csr_artifacts)
+    )
+    import_execution_facts = pattern_record.get("numeric_pending_import_execution")
+    import_root: Path | None = None
+    if numeric_pending_import_authorization is not None:
+        authorization = dict(numeric_pending_import_authorization)
+        import_root = Path(str(authorization.get("import_root", ""))).resolve()
+        preflight_v32_q4_numeric_pending_import(
+            authorization,
+            profile=profile,
+            execution_identity=execution,
+            output_directory=root,
+        )
+        if (
+            dict(pattern_record.get("numeric_pending_import_authorization", {}))
+            != authorization
+            or root != Path(str(authorization.get("consumer_output_root", ""))).resolve()
+            or root.is_relative_to(import_root)
+            or not isinstance(import_execution_facts, Mapping)
+        ):
+            raise ValueError("V32 COMPLETE output is not bound to its separate read-only q4 import")
+    elif "numeric_pending_import_authorization" in pattern_record:
+        raise ValueError("V32 imported q4 pattern cannot be finalized without its explicit authorization")
     csr_backing_identity: dict[str, Any] = {}
-    for key, row in dict(pattern_record.get("csr_artifacts", {})).items():
+    for key, pattern_row in source_csr_artifacts.items():
+        row = imported_csr_artifacts.get(key)
+        if not isinstance(row, Mapping):
+            raise ValueError(f"selected-q numeric CSR artifact {key} is missing")
         artifact = Path(str(row.get("path", ""))).resolve()
         if not artifact.is_file():
             raise FileNotFoundError(f"selected-q CSR array missing: {artifact.name}")
+        if numeric_pending_import_authorization is not None:
+            expected_sha = numeric_pending_import_authorization["csr_artifacts_sha256"].get(key)
+            if (
+                artifact.parent != import_root
+                or row.get("sha256") != expected_sha
+            ):
+                raise IOError("V32 read-only imported q4 CSR declaration differs from its authorization")
         file_sha256 = _sha256_file(artifact)
         if row.get("bytes") != artifact.stat().st_size:
             raise IOError(f"selected-q CSR array size changed after V17 pattern construction: {artifact.name}")
-        if key != "data" and row.get("sha256") != file_sha256:
+        if (
+            numeric_pending_import_authorization is not None
+            and file_sha256
+            != numeric_pending_import_authorization["csr_artifacts_sha256"].get(key)
+        ):
+            raise IOError(
+                f"V32 read-only imported q4 CSR {key} content hash differs from its authorization"
+            )
+        if key != "data" and pattern_row.get("sha256") != file_sha256:
             raise IOError(f"selected-q V17 structural array changed after pattern construction: {artifact.name}")
         matrix_array_path = _array_memmap_path(getattr(matrix, str(key)))
         if matrix_array_path is None:
@@ -2204,13 +2544,15 @@ def finalize_selected_q_csr(
             "path": str(artifact),
             "bytes": int(artifact.stat().st_size),
             "sha256": file_sha256,
-            "pattern_sha256": row.get("sha256"),
-            "numeric_fill_changed_data": bool(key == "data" and row.get("sha256") != file_sha256),
+            "pattern_sha256": pattern_row.get("sha256"),
+            "numeric_fill_changed_data": bool(
+                key == "data" and pattern_row.get("sha256") != file_sha256
+            ),
         }
         pattern_artifacts[str(key)] = {
-            "path": str(artifact),
-            "bytes": int(row.get("bytes", 0)),
-            "sha256": row.get("sha256"),
+            "path": str(Path(str(pattern_row.get("path", ""))).resolve()),
+            "bytes": int(pattern_row.get("bytes", 0)),
+            "sha256": pattern_row.get("sha256"),
         }
     if set(csr_artifacts) != {"data", "indices", "indptr"}:
         raise ValueError("selected-q V17 pattern is missing a persisted CSR array")
@@ -2259,6 +2601,29 @@ def finalize_selected_q_csr(
         ),
         "pattern_record": dict(pattern_record),
         "numeric_fill_facts": dict(numeric_facts),
+        "numeric_fill_facts_origin": (
+            "historical q4 numeric producer receipt; does not describe V32 consumer work"
+            if numeric_pending_import_authorization is not None
+            else "current numeric preparation"
+        ),
+        "numeric_pending_import": (
+            {
+                "authorization": dict(numeric_pending_import_authorization),
+                "pending_record_path": str(
+                    numeric_pending_import_authorization["pending_record_path"]
+                ),
+                "pending_record_sha256": str(
+                    numeric_pending_import_authorization["pending_record_sha256"]
+                ),
+                "read_only_import_root": str(import_root),
+                "consumer_completion_output_root": str(root),
+                "old_arrays_modified": False,
+                "publication_rehashed_large_arrays": True,
+                "numeric_pending_import_execution": dict(import_execution_facts),
+            }
+            if numeric_pending_import_authorization is not None
+            else None
+        ),
         "producer_identity": dict(producer_identity),
         "csr_content_sha256": _csr_sha256(matrix),
     }
@@ -2577,6 +2942,9 @@ def prepare_selected_q_csr_sector(
             matrix_source_identity=matrix_source_identity_by_q[q_index],
             execution_identity=execution_identity,
             producer_identity=producer_identity_by_q[q_index],
+            numeric_pending_import_authorization=pattern_records[q_index].get(
+                "numeric_pending_import_authorization"
+            ),
         )
         if qualification.get("status") != "PASS" or entry.get("manifest_status") != "COMPLETE_CSR":
             raise RuntimeError("V30 selected q did not persist COMPLETE CSR and native PASS")

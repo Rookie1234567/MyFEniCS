@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -3353,9 +3354,23 @@ def _v31_missing_numerical_output_is_bound_worker_failure(
     try:
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        window_payload = json.loads(window_path.read_text(encoding="utf-8"))
         _raw, input_payload = _read_case(input_path)
         expected_run_id = input_payload.get("run_id")
     except Exception:
+        return False
+    try:
+        expected_campaign_seconds = float(window_payload["campaign_seconds"])
+        expected_numeric_seconds = float(window_payload["numeric_cutoff_seconds"])
+        expected_closeout_seconds = float(window_payload["closeout_reserve_seconds"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    if (
+        expected_campaign_seconds <= 0.0
+        or expected_numeric_seconds <= 0.0
+        or expected_closeout_seconds <= 0.0
+        or expected_numeric_seconds + expected_closeout_seconds != expected_campaign_seconds
+    ):
         return False
     if not isinstance(summary, Mapping) or not isinstance(manifest, Mapping):
         return False
@@ -3445,8 +3460,54 @@ def _v31_missing_numerical_output_is_bound_worker_failure(
     time_end = time_end if isinstance(time_end, Mapping) else {}
     stop_event = watchdog.get("stop_event")
     stop_event = stop_event if isinstance(stop_event, Mapping) else {}
+    first_sigterm = watchdog.get("first_SIGTERM")
+    first_sigkill = watchdog.get("first_SIGKILL")
+    leader_exit_code = watchdog.get("leader_exit_code")
+
+    def valid_tree_signal(value: Any) -> bool:
+        return bool(
+            isinstance(value, Mapping)
+            and value.get("scope") == "whole child tree"
+            and type(value.get("timestamp_ns")) is int
+            and value.get("timestamp_ns") > 0
+            and type(value.get("monotonic")) in (int, float)
+            and math.isfinite(float(value.get("monotonic")))
+            and value.get("monotonic") >= 0.0
+        )
+
+    stop_monotonic = stop_event.get("monotonic")
+    stop_timestamp_ns = stop_event.get("timestamp_ns")
+    stop_record_bound = bool(
+        stop_event.get("reason") == "PERFORMANCE_CONTROLLED_STOP"
+        and stop_event.get("grace_seconds") == 30
+        and type(stop_timestamp_ns) is int
+        and stop_timestamp_ns > 0
+        and type(stop_monotonic) in (int, float)
+        and math.isfinite(float(stop_monotonic))
+        and stop_monotonic >= 0.0
+    )
+    term_after_stop = bool(
+        stop_record_bound
+        and valid_tree_signal(first_sigterm)
+        and first_sigterm["monotonic"] >= stop_monotonic
+        and first_sigterm["timestamp_ns"] >= stop_timestamp_ns
+    )
+    if type(leader_exit_code) is not int:
+        signal_outcome_bound = False
+    elif leader_exit_code == -9:
+        signal_outcome_bound = bool(
+            term_after_stop
+            and valid_tree_signal(first_sigkill)
+            and first_sigkill["monotonic"] >= first_sigterm["monotonic"]
+            and first_sigkill["timestamp_ns"] >= first_sigterm["timestamp_ns"]
+        )
+    elif leader_exit_code in (0, -15):
+        signal_outcome_bound = term_after_stop and first_sigkill is None
+    else:
+        signal_outcome_bound = False
     cutoff_accounting = watchdog_campaign.get("watchdog_end_accounting")
     cutoff_accounting = cutoff_accounting if isinstance(cutoff_accounting, Mapping) else {}
+    phase_sub_budget_seconds = watchdog_campaign.get("phase_sub_budget_seconds")
     job_swap = watchdog.get("job_cgroup_swap")
     job_swap = job_swap if isinstance(job_swap, Mapping) else {}
     job_swap_end = job_swap.get("end")
@@ -3468,25 +3529,25 @@ def _v31_missing_numerical_output_is_bound_worker_failure(
         == manifest.get("result_classification")
         == watchdog.get("classification")
         == "PERFORMANCE_CONTROLLED_STOP"
+        and signal_outcome_bound
         and summary.get("exit_status")
         == manifest.get("exit_status")
-        == watchdog.get("leader_exit_code")
-        == -9
+        == leader_exit_code
         and summary.get("full_workflow_time_exceeded") is True
         and watchdog_source.get("source_sha") == source_sha
         and watchdog_source.get("tracked_and_nonignored_untracked_clean") is True
         and watchdog_campaign.get("window_sha256") == campaign_sha256
         and watchdog_campaign.get("phase") == "numeric"
-        and watchdog_campaign.get("campaign_seconds") == 43200.0
-        and watchdog_campaign.get("numerical_cutoff_seconds") == 42000.0
+        and watchdog_campaign.get("campaign_seconds") == expected_campaign_seconds
+        and watchdog_campaign.get("numerical_cutoff_seconds") == expected_numeric_seconds
         and cutoff_accounting.get("label") == "watchdog_end"
         and cutoff_accounting.get("phase") == "numeric"
         and cutoff_accounting.get("campaign_window_sha256") == campaign_sha256
         and cutoff_accounting.get("t0_utc_ns") == watchdog_campaign.get("t0_utc_ns")
         and cutoff_accounting.get("deadline_utc_ns") == watchdog_campaign.get("deadline_utc_ns")
-        and cutoff_accounting.get("cutoff_seconds") == 42000.0
+        and cutoff_accounting.get("cutoff_seconds") == expected_numeric_seconds
         and isinstance(cutoff_accounting.get("cumulative_charged_seconds"), (int, float))
-        and cutoff_accounting.get("cumulative_charged_seconds") >= 42000.0
+        and cutoff_accounting.get("cumulative_charged_seconds") >= expected_numeric_seconds
         and watchdog.get("time_gate_action") == "enforce"
         and watchdog.get("time_gate_evaluated") is True
         and time_exceeded.get("workflow") is True
@@ -3499,6 +3560,9 @@ def _v31_missing_numerical_output_is_bound_worker_failure(
         and time_end.get("passed") is False
         and isinstance(time_end.get("observed_seconds"), (int, float))
         and isinstance(time_end.get("limit_seconds"), (int, float))
+        and type(phase_sub_budget_seconds) in (int, float)
+        and 0.0 < float(phase_sub_budget_seconds) <= expected_numeric_seconds
+        and float(time_end.get("limit_seconds")) == float(phase_sub_budget_seconds)
         and time_end.get("observed_seconds") > time_end.get("limit_seconds")
         and stop_event.get("reason") == "PERFORMANCE_CONTROLLED_STOP"
         and stop_event.get("grace_seconds") == 30
@@ -8045,7 +8109,12 @@ def _check_partial_result(
             from src.runners.task40_v30_contract import (
                 V30_CANONICAL_INPUT_RELATIVE,
             )
-            from src.runners.task40_v31_contract import require_v31_input_identity
+            from src.runners.task40_v31_contract import (
+                bind_v32_q4_pending_import,
+                require_v31_execution_contract,
+                require_v31_input_identity,
+                v32_q4_pending_import_template,
+            )
 
             selector_sha = v31_binding.get("selector_sha256")
             selector_value = v31_binding.get("selector_path")
@@ -8057,12 +8126,57 @@ def _check_partial_result(
             selector_path = selector_path.resolve(strict=True)
             if _sha256_file(selector_path) != selector_sha:
                 raise ValueError("V31 selector bytes differ from the recorded selector SHA")
+            q4_import_template = None
+            if v31_binding.get("review_version") == "V32":
+                contract_path_text = os.environ.get("TASK40_V31_CONTRACT_PATH", "")
+                contract_sha256 = os.environ.get("TASK40_V31_CONTRACT_SHA256", "")
+                if not contract_path_text or not contract_sha256:
+                    raise ValueError("V32 partial checker requires the current approved execution contract")
+                contract_path = Path(contract_path_text).resolve(strict=True)
+                contract, contract_sha = require_v31_execution_contract(
+                    contract_path,
+                    expected_sha256=contract_sha256,
+                    current_root=ROOT,
+                )
+                source_sha = str(manifest.get("source_sha", ""))
+                window_sha256 = str(contract.get("execution", {}).get("window", {}).get("window_sha256", ""))
+                expected_template = v32_q4_pending_import_template(
+                    execution_root=ROOT,
+                    consumer_source_sha=source_sha,
+                )
+                expected_authorization = bind_v32_q4_pending_import(
+                    expected_template,
+                    consumer_execution_identity={
+                        "source_sha": source_sha,
+                        "window_sha256": window_sha256,
+                    },
+                )
+                execution = contract.get("execution", {})
+                if (
+                    v31_binding.get("contract_path") != str(contract_path)
+                    or v31_binding.get("contract_sha256") != contract_sha
+                    or v31_binding.get("run_source_sha") != source_sha
+                    or v31_binding.get("execution_window_sha256") != window_sha256
+                    or v31_binding.get("q4_numeric_pending_import_template") != expected_template
+                    or v31_binding.get("q4_numeric_pending_import_authorization") != expected_authorization
+                    or contract.get("preparation", {}).get("q4_numeric_pending_import") != expected_template
+                    or execution.get("q_csr_import_authorizations")
+                    != {"numeric_pending": {"4": expected_authorization}}
+                ):
+                    raise ValueError("V32 q4 import binding differs from the current approved contract or fixed old source")
+                q4_import_template = expected_template
+            elif (
+                v31_binding.get("q4_numeric_pending_import_template") is not None
+                or v31_binding.get("q4_numeric_pending_import_authorization") is not None
+            ):
+                raise ValueError("V31 worker manifest carries an unregistered V32 q4 import")
             v31_input_identity = require_v31_input_identity(
                 ROOT / V30_CANONICAL_INPUT_RELATIVE,
                 input_path,
                 repo_root=ROOT,
                 source_sha=str(manifest.get("source_sha", "")),
                 selector_sha256=selector_sha,
+                q4_numeric_pending_import=q4_import_template,
             )
         except Exception as error:
             v31_input_identity_error = f"{type(error).__name__}: {error}"
@@ -9167,6 +9281,13 @@ def run_service(
     case_args, v31_contract_path = _extract_v29_path_arg(
         case_args, "--task40-v31-execution-contract"
     )
+    case_args, v32_contract_path = _extract_v29_path_arg(
+        case_args, "--task40-v32-execution-contract"
+    )
+    if v31_contract_path is not None and v32_contract_path is not None:
+        raise ValueError("supply only one Task40 V31/V32 execution contract")
+    if v32_contract_path is not None:
+        v31_contract_path = v32_contract_path
     v31_entry_sample = (
         clock_sample(include_boot_id=True) if v31_contract_path is not None else None
     )
@@ -9183,13 +9304,16 @@ def run_service(
         current_source_sha = subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=repo_root, text=True
         ).strip()
+        if v31_contract_path.name not in {
+            "execution_contract_v31.approved.json",
+            "execution_contract_v32.approved.json",
+        }:
+            raise ValueError("Task40 approved contract filename is not registered")
         expected_contract_path = (
-            repo_root
-            / v31_source_artifact_relative(current_source_sha)
-            / "execution_contract_v31.approved.json"
+            repo_root / v31_source_artifact_relative(current_source_sha) / v31_contract_path.name
         ).resolve()
         if v31_contract_path.resolve() != expected_contract_path:
-            raise ValueError("V31 service requires the one registered native approved-contract path")
+            raise ValueError("Task40 service requires the one registered native approved-contract path")
         if os.environ.get("TASK40_V31_CONTRACT_PATH") and Path(
             os.environ["TASK40_V31_CONTRACT_PATH"]
         ).resolve() != v31_contract_path.resolve():
@@ -10263,11 +10387,19 @@ def main(argv: list[str] | None = None) -> int:
     v31_prepare_parser = subparsers.add_parser("prepare-v31-p0")
     v31_prepare_parser.add_argument("--output-dir", type=Path)
     v31_prepare_parser.add_argument("--execution-root", type=Path)
+    v32_prepare_parser = subparsers.add_parser("prepare-v32-p0")
+    v32_prepare_parser.add_argument("--output-dir", type=Path)
+    v32_prepare_parser.add_argument("--execution-root", type=Path)
     v31_approved_parser = subparsers.add_parser("prepare-v31-approved")
     v31_approved_parser.add_argument("--pending-dir", type=Path, required=True)
     v31_approval = v31_approved_parser.add_mutually_exclusive_group(required=True)
     v31_approval.add_argument("--approval-receipt", type=Path)
     v31_approval.add_argument("--reuse-approved-contract", type=Path)
+    v32_approved_parser = subparsers.add_parser("prepare-v32-approved")
+    v32_approved_parser.add_argument("--pending-dir", type=Path, required=True)
+    v32_approval = v32_approved_parser.add_mutually_exclusive_group(required=True)
+    v32_approval.add_argument("--approval-receipt", type=Path)
+    v32_approval.add_argument("--reuse-approved-contract", type=Path)
     partial_parser = subparsers.add_parser("check-partial")
     partial_parser.add_argument("--input", type=Path, required=True)
     partial_parser.add_argument("--summary", type=Path, required=True)
@@ -10351,12 +10483,45 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 0
+    if args.command == "prepare-v32-p0":
+        from src.runners.task40_v31_contract import prepare_v32_pending_package
+
+        print(
+            json.dumps(
+                prepare_v32_pending_package(
+                    repo_root=ROOT,
+                    output_directory=args.output_dir,
+                    execution_root=args.execution_root,
+                ),
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return 0
     if args.command == "prepare-v31-approved":
         from src.runners.task40_v31_contract import prepare_v31_approved_package
 
         print(
             json.dumps(
                 prepare_v31_approved_package(
+                    repo_root=ROOT,
+                    pending_directory=args.pending_dir,
+                    approval_receipt=args.approval_receipt,
+                    reuse_approved_contract=args.reuse_approved_contract,
+                ),
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return 0
+    if args.command == "prepare-v32-approved":
+        from src.runners.task40_v31_contract import prepare_v32_approved_package
+
+        print(
+            json.dumps(
+                prepare_v32_approved_package(
                     repo_root=ROOT,
                     pending_directory=args.pending_dir,
                     approval_receipt=args.approval_receipt,

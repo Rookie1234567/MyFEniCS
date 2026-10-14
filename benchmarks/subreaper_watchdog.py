@@ -1236,7 +1236,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 summary['workflow_clock_interval'] = clock_budget.update(summary['clock_end'])
                 if campaign_account is not None:
                     campaign_end = campaign_account.record_sample(
-                        label='watchdog_end'
+                        label='watchdog_end', phase=campaign_phase
                     )
                     summary['task40_v10_campaign']['watchdog_end_accounting'] = campaign_end
                 if (time_policy == V14_TIME_POLICY_ENFORCE
