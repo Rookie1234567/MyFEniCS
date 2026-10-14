@@ -553,6 +553,158 @@ def _write_bytes_once(path: Path, payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _bind_q0_selector_consumer_execution(
+    selector_bytes: bytes,
+    *,
+    repo_root: str | Path,
+    source_sha: str,
+    window_sha256: str,
+) -> bytes:
+    """Complete the old q0 sidecar from pinned V28 facts and bind its new consumer run."""
+    if not isinstance(source_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", source_sha):
+        raise V31ContractError("q0 selector consumer source SHA must be a full lowercase commit SHA")
+    if not isinstance(window_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", window_sha256):
+        raise V31ContractError("q0 selector consumer window SHA must be a full lowercase SHA-256")
+    from src.runners.task40_v30_contract import V30_Q0_DONOR
+    from src.solvers.task40_v30_qualified_q_csr import (
+        V30_Q0_LEGACY_IMPORT_SCHEMA,
+        V30_Q_CSR_SELECTOR_SCHEMA,
+    )
+
+    root = Path(repo_root).resolve()
+    manifest_path = (root / V30_Q0_DONOR["manifest_relative_path"]).resolve()
+    native_path = (root / V30_Q0_DONOR["native_qualification_relative_path"]).resolve()
+    manifest_sha256 = str(V30_Q0_DONOR["manifest_sha256"])
+    native_sha256 = str(V30_Q0_DONOR["native_qualification_sha256"])
+    try:
+        if (
+            not manifest_path.is_file()
+            or hashlib.sha256(manifest_path.read_bytes()).hexdigest() != manifest_sha256
+            or not native_path.is_file()
+            or hashlib.sha256(native_path.read_bytes()).hexdigest() != native_sha256
+        ):
+            raise V31ContractError("pinned V28 q0 manifest/native qualification is missing or changed")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        native = json.loads(native_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise V31ContractError("pinned V28 q0 manifest/native qualification cannot be read") from error
+    fill = manifest.get("numeric_fill_identity")
+    fill_identity = fill.get("execution_identity") if isinstance(fill, Mapping) else None
+    native_identity = native.get("source_identity")
+    original_native_record = manifest.get("native_qualification")
+    original_pattern_record = native.get("original_pattern_manifest")
+    if (
+        manifest.get("status") != "COMPLETE_CSR"
+        or manifest.get("donor_identity_sha256") != V30_Q0_DONOR["identity_sha256"]
+        or not isinstance(fill_identity, Mapping)
+        or not isinstance(native_identity, Mapping)
+        or not isinstance(original_native_record, Mapping)
+        or not isinstance(original_pattern_record, Mapping)
+        or native.get("status") != V30_Q0_DONOR["native_qualification_status"]
+        or native.get("donor_identity_sha256") != manifest.get("donor_identity_sha256")
+        or native.get("campaign_window_sha256") != fill_identity.get("campaign_window_sha256")
+        or original_native_record.get("sha256") != native_sha256
+        or original_native_record.get("status") != native.get("status")
+        or not isinstance(original_native_record.get("path"), str)
+        or not original_native_record.get("path")
+        or not isinstance(original_pattern_record.get("path"), str)
+        or not original_pattern_record.get("path")
+        or not re.fullmatch(r"[0-9a-f]{64}", str(original_pattern_record.get("sha256", "")))
+    ):
+        raise V31ContractError("pinned V28 fill, manifest, or native PASS identity is incomplete")
+    original_identity_fields = (
+        "source_sha",
+        "input_sha256",
+        "physical_model_sha256",
+        "run_id",
+        "campaign_window_sha256",
+        "mode_manifest_sha256",
+        "ordered_mode_key_sha256",
+    )
+    if any(fill_identity.get(key) != native_identity.get(key) for key in original_identity_fields):
+        raise V31ContractError("pinned V28 fill and native PASS identities differ")
+    completed_legacy_identity = {
+        "input_sha256": str(fill_identity["input_sha256"]),
+        "physical_model_sha256": str(fill_identity["physical_model_sha256"]),
+        "run_id": str(fill_identity["run_id"]),
+        "campaign_window_sha256": str(fill_identity["campaign_window_sha256"]),
+        "mode_manifest_sha256": str(fill_identity["mode_manifest_sha256"]),
+        "ordered_mode_key_sha256": str(fill_identity["ordered_mode_key_sha256"]),
+        "donor_identity_sha256": str(manifest["donor_identity_sha256"]),
+        "manifest_sha256": manifest_sha256,
+        "native_qualification_sha256": native_sha256,
+    }
+    for key in (
+        "input_sha256",
+        "physical_model_sha256",
+        "campaign_window_sha256",
+        "mode_manifest_sha256",
+        "ordered_mode_key_sha256",
+        "donor_identity_sha256",
+        "manifest_sha256",
+        "native_qualification_sha256",
+    ):
+        if not re.fullmatch(r"[0-9a-f]{64}", completed_legacy_identity[key]):
+            raise V31ContractError(f"pinned V28 legacy identity has invalid {key}")
+    if not completed_legacy_identity["run_id"]:
+        raise V31ContractError("pinned V28 legacy identity omits its original run id")
+
+    try:
+        selector = json.loads(selector_bytes)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise V31ContractError("accepted V30 q0 selector is not valid UTF-8 JSON") from error
+    rows = selector.get("q_csr_entries") if isinstance(selector, Mapping) else None
+    if (
+        not isinstance(selector, dict)
+        or selector.get("schema") != V30_Q_CSR_SELECTOR_SCHEMA
+        or selector.get("profile") != V31_PROFILE
+        or not isinstance(rows, list)
+        or len(rows) != 1
+        or not isinstance(rows[0], dict)
+        or type(rows[0].get("q_index")) is not int
+        or rows[0].get("q_index") != 0
+        or rows[0].get("twist_index") != 0
+        or not isinstance(rows[0].get("execution_identity"), Mapping)
+        or not isinstance(rows[0].get("matrix_source_identity"), Mapping)
+        or not isinstance(rows[0].get("legacy_q0_import"), Mapping)
+        or not isinstance(rows[0].get("csr_manifest"), Mapping)
+        or not isinstance(rows[0].get("native_qualification"), Mapping)
+    ):
+        raise V31ContractError("accepted V30 selector must contain exactly its registered legacy q0 entry")
+    entry = rows[0]
+    legacy_import = entry["legacy_q0_import"]
+    existing_legacy_identity = legacy_import.get("v28_identity")
+    existing_pattern = legacy_import.get("original_pattern_manifest")
+    expected_matrix_source = {
+        "source_sha": str(fill_identity["source_sha"]),
+        "window_sha256": str(fill_identity["campaign_window_sha256"]),
+    }
+    if (
+        legacy_import.get("schema") != V30_Q0_LEGACY_IMPORT_SCHEMA
+        or not isinstance(existing_legacy_identity, Mapping)
+        or any(
+            key not in completed_legacy_identity
+            or completed_legacy_identity[key] != value
+            for key, value in existing_legacy_identity.items()
+        )
+        or not isinstance(existing_pattern, Mapping)
+        or existing_pattern.get("sha256") != original_pattern_record.get("sha256")
+        or dict(entry["matrix_source_identity"]) != expected_matrix_source
+        or entry["csr_manifest"].get("sha256") != manifest_sha256
+        or entry["native_qualification"].get("sha256") != native_sha256
+        or entry["native_qualification"].get("status") != original_native_record.get("status")
+    ):
+        raise V31ContractError("old q0 selector does not match the pinned V28 legacy source identity")
+    entry["native_qualification"] = dict(original_native_record)
+    legacy_import["v28_identity"] = completed_legacy_identity
+    legacy_import["original_pattern_manifest"] = dict(original_pattern_record)
+    entry["execution_identity"] = {
+        "source_sha": source_sha,
+        "window_sha256": window_sha256,
+    }
+    return _canonical_bytes(selector)
+
+
 def _render_v31_stage_input(
     canonical_text: str,
     *,
@@ -630,11 +782,13 @@ def prepare_v31_pending_package(
     *, repo_root: str | Path,
     output_directory: str | Path | None = None,
     execution_root: str | Path | None = None,
+    consumer_window_sha256: str | None = None,
 ) -> dict[str, Any]:
     return _prepare_review_pending_package(
         repo_root=repo_root,
         output_directory=output_directory,
         execution_root=execution_root,
+        consumer_window_sha256=consumer_window_sha256,
         review_version="V31",
     )
 
@@ -643,11 +797,13 @@ def prepare_v32_pending_package(
     *, repo_root: str | Path,
     output_directory: str | Path | None = None,
     execution_root: str | Path | None = None,
+    consumer_window_sha256: str | None = None,
 ) -> dict[str, Any]:
     return _prepare_review_pending_package(
         repo_root=repo_root,
         output_directory=output_directory,
         execution_root=execution_root,
+        consumer_window_sha256=consumer_window_sha256,
         review_version="V32",
     )
 
@@ -657,6 +813,7 @@ def _prepare_review_pending_package(
     repo_root: str | Path,
     output_directory: str | Path | None,
     execution_root: str | Path | None,
+    consumer_window_sha256: str | None,
     review_version: str,
 ) -> dict[str, Any]:
     """Write immutable PENDING registration/selector/contract and source-bound commands.
@@ -741,6 +898,13 @@ def _prepare_review_pending_package(
         "branch": branch,
         "clean": not bool(status.strip()),
     }
+    if consumer_window_sha256 is not None and (
+        not frozen_source["clean"]
+        or not re.fullmatch(r"[0-9a-f]{64}", consumer_window_sha256)
+    ):
+        raise V31ContractError(
+            f"{review_version} consumer selector window binding requires a clean source and full SHA-256"
+        )
     output = (
         Path(output_directory).resolve()
         if output_directory is not None
@@ -833,6 +997,13 @@ def _prepare_review_pending_package(
         if hashlib.sha256(canonical_bytes).hexdigest() != V30_CANONICAL_INPUT_SHA256:
             raise V31ContractError("canonical V20 DAT differs from the accepted scientific input identity")
         selector_bytes = selector_donor_path.read_bytes()
+        if consumer_window_sha256 is not None:
+            selector_bytes = _bind_q0_selector_consumer_execution(
+                selector_bytes,
+                repo_root=root,
+                source_sha=head,
+                window_sha256=consumer_window_sha256,
+            )
         selector_sha256 = _write_bytes_once(root / selector_relative, selector_bytes)
         staged_text = _render_v31_stage_input(
             canonical_bytes.decode("utf-8"),
@@ -1381,6 +1552,7 @@ def _prepare_review_approved_package(
         repo_root=root,
         output_directory=pending_directory,
         execution_root=root,
+        consumer_window_sha256=window_sha256,
     )
     if pending.get("canonical_dat_bytes_reused") is not True:
         raise V31ContractError(f"{review_version} approved preparation requires the clean source-qualified DAT and selector")

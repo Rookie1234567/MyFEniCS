@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 import sys
 
 import pytest
@@ -62,6 +63,76 @@ V31_REFERENCE_CASES = (
     "mixed_generic_fe_and_all_mode_port_rhs",
     "mixed_interior_fe_and_all_mode_port_rhs",
 )
+
+
+def _old_v30_q0_selector_fixture(root: Path, source_root: Path) -> tuple[dict, dict, dict]:
+    from src.runners.task40_v30_contract import V30_Q0_DONOR
+    from src.solvers.task40_v30_qualified_q_csr import (
+        V30_Q0_LEGACY_IMPORT_SCHEMA,
+        V30_Q_CSR_SELECTOR_SCHEMA,
+    )
+
+    manifest_relative = Path(V30_Q0_DONOR["manifest_relative_path"])
+    native_relative = Path(V30_Q0_DONOR["native_qualification_relative_path"])
+    for relative in (manifest_relative, native_relative):
+        source = source_root / relative
+        destination = root / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, destination)
+    manifest = json.loads((root / manifest_relative).read_text(encoding="utf-8"))
+    native = json.loads((root / native_relative).read_text(encoding="utf-8"))
+    fill_identity = manifest["numeric_fill_identity"]["execution_identity"]
+    pattern_record = native["original_pattern_manifest"]
+    pattern_path = Path(pattern_record["path"])
+    if pattern_path.is_absolute():
+        pattern_relative = pattern_path.relative_to(source_root).as_posix()
+    else:
+        pattern_relative = pattern_path.as_posix()
+    old_legacy_identity = {
+        "input_sha256": fill_identity["input_sha256"],
+        "physical_model_sha256": fill_identity["physical_model_sha256"],
+        "mode_manifest_sha256": fill_identity["mode_manifest_sha256"],
+        "manifest_sha256": V30_Q0_DONOR["manifest_sha256"],
+        "native_qualification_sha256": V30_Q0_DONOR["native_qualification_sha256"],
+    }
+    selector = {
+        "schema": V30_Q_CSR_SELECTOR_SCHEMA,
+        "profile": V31_PROFILE,
+        "q_csr_entries": [
+            {
+                "q_index": 0,
+                "twist_index": 0,
+                "shape": manifest["shape"],
+                "operator_identity": {"fixture": "preserved"},
+                "matrix_source_identity": {
+                    "source_sha": fill_identity["source_sha"],
+                    "window_sha256": fill_identity["campaign_window_sha256"],
+                },
+                "execution_identity": {
+                    "source_sha": "e" * 40,
+                    "window_sha256": "f" * 64,
+                },
+                "csr_manifest": {
+                    "path": manifest_relative.as_posix(),
+                    "sha256": V30_Q0_DONOR["manifest_sha256"],
+                },
+                "native_qualification": {
+                    "path": native_relative.as_posix(),
+                    "sha256": V30_Q0_DONOR["native_qualification_sha256"],
+                    "status": V30_Q0_DONOR["native_qualification_status"],
+                },
+                "legacy_q0_import": {
+                    "schema": V30_Q0_LEGACY_IMPORT_SCHEMA,
+                    "v28_identity": old_legacy_identity,
+                    "original_pattern_manifest": {
+                        "path": pattern_relative,
+                        "sha256": pattern_record["sha256"],
+                    },
+                },
+            }
+        ],
+    }
+    return selector, manifest, native
 
 
 def _v31_reference_tier_fixture() -> dict:
@@ -2667,7 +2738,12 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
         / "q0_selector_v30_partial.json"
     )
     selector_donor_path.parent.mkdir(parents=True, exist_ok=True)
-    selector_donor_path.write_text('{"fixture":"v32-route-test"}\n', encoding="utf-8")
+    donor_selector, pinned_manifest, pinned_native = _old_v30_q0_selector_fixture(
+        root, source_root
+    )
+    selector_donor_path.write_text(
+        json.dumps(donor_selector, sort_keys=True) + "\n", encoding="utf-8"
+    )
     if review_version == "V32":
         review_path_text = task40_v31_contract.V32_REVIEW_PATH
         review_sha = task40_v31_contract.V32_REVIEW_SHA256
@@ -2697,9 +2773,44 @@ def test_service_validates_prepared_v31_and_v32_stage_inputs(
         lambda command, **_kwargs: subprocess.CompletedProcess(command, 0),
     )
 
-    package = pending_builder(repo_root=root, execution_root=root)
+    consumer_window_sha = "9" * 64
+    package = pending_builder(
+        repo_root=root,
+        execution_root=root,
+        consumer_window_sha256=consumer_window_sha,
+    )
     contract_path = Path(package["contract"]["path"])
     contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    selector_path = Path(str(contract["execution"]["selector_path"]))
+    if not selector_path.is_absolute():
+        selector_path = root / selector_path
+    selector = json.loads(selector_path.read_text(encoding="utf-8"))
+    q0_entry = selector["q_csr_entries"][0]
+    fill_identity = pinned_manifest["numeric_fill_identity"]["execution_identity"]
+    from src.runners.task40_v30_contract import V30_Q0_DONOR
+
+    assert q0_entry["operator_identity"] == donor_selector["q_csr_entries"][0]["operator_identity"]
+    assert q0_entry["matrix_source_identity"] == donor_selector["q_csr_entries"][0]["matrix_source_identity"]
+    assert q0_entry["execution_identity"] == {
+        "source_sha": source_sha,
+        "window_sha256": consumer_window_sha,
+    }
+    assert q0_entry["native_qualification"] == pinned_manifest["native_qualification"]
+    assert q0_entry["legacy_q0_import"]["original_pattern_manifest"] == pinned_native[
+        "original_pattern_manifest"
+    ]
+    assert q0_entry["legacy_q0_import"]["v28_identity"] == {
+        "input_sha256": fill_identity["input_sha256"],
+        "physical_model_sha256": fill_identity["physical_model_sha256"],
+        "run_id": fill_identity["run_id"],
+        "campaign_window_sha256": fill_identity["campaign_window_sha256"],
+        "mode_manifest_sha256": fill_identity["mode_manifest_sha256"],
+        "ordered_mode_key_sha256": fill_identity["ordered_mode_key_sha256"],
+        "donor_identity_sha256": pinned_manifest["donor_identity_sha256"],
+        "manifest_sha256": V30_Q0_DONOR["manifest_sha256"],
+        "native_qualification_sha256": V30_Q0_DONOR["native_qualification_sha256"],
+    }
+    assert hashlib.sha256(selector_path.read_bytes()).hexdigest() == contract["execution"]["selector_sha256"]
     input_path = Path(str(contract["execution"]["input_path"]))
     if not input_path.is_absolute():
         input_path = root / input_path
@@ -3138,9 +3249,11 @@ def test_v31_approved_prepare_failure_retry_preserves_first_t0(tmp_path, monkeyp
     canonical_path.write_bytes((repository_root / V30_CANONICAL_INPUT_RELATIVE).read_bytes())
     selector_donor = root / V30_ARTIFACT_ROOT_RELATIVE / "q0_selector_v30_partial.json"
     selector_donor.parent.mkdir(parents=True, exist_ok=True)
+    original_selector, pinned_manifest, pinned_native = _old_v30_q0_selector_fixture(
+        root, repository_root
+    )
     selector_donor.write_text(
-        json.dumps({"schema": "fixture.v30_q0_selector.v1", "q": 0}) + "\n",
-        encoding="utf-8",
+        json.dumps(original_selector, sort_keys=True) + "\n", encoding="utf-8"
     )
     monkeypatch.setattr(
         contract_mod, "prepare_v31_pending_package", real_prepare_pending
@@ -3153,6 +3266,11 @@ def test_v31_approved_prepare_failure_retry_preserves_first_t0(tmp_path, monkeyp
 
     assert len(samples) == 1
     assert len(pending_attempts) == 2
+    assert all(
+        attempt["consumer_window_sha256"]
+        == hashlib.sha256(window_path.read_bytes()).hexdigest()
+        for attempt in pending_attempts
+    )
     assert approved_package["status"] == "USER_APPROVED_WINDOW_RESUMED_PREPARATION"
     assert approved_package["new_window_created"] is False
     assert approved_package["t0_refreshed"] is False
@@ -3166,6 +3284,36 @@ def test_v31_approved_prepare_failure_retry_preserves_first_t0(tmp_path, monkeyp
         current_root=root,
     )
     assert approved_sha == approved_package["contract"]["sha256"]
+    approved_selector_path = Path(approved_contract["execution"]["selector_path"])
+    if not approved_selector_path.is_absolute():
+        approved_selector_path = root / approved_selector_path
+    approved_selector = json.loads(approved_selector_path.read_text(encoding="utf-8"))
+    approved_entry = approved_selector["q_csr_entries"][0]
+    fill_identity = pinned_manifest["numeric_fill_identity"]["execution_identity"]
+    from src.runners.task40_v30_contract import V30_Q0_DONOR
+
+    assert approved_entry["operator_identity"] == original_selector["q_csr_entries"][0]["operator_identity"]
+    assert approved_entry["matrix_source_identity"] == original_selector["q_csr_entries"][0]["matrix_source_identity"]
+    assert approved_entry["execution_identity"] == {
+        "source_sha": source_sha,
+        "window_sha256": hashlib.sha256(window_path.read_bytes()).hexdigest(),
+    }
+    assert approved_entry["native_qualification"] == pinned_manifest["native_qualification"]
+    assert approved_entry["legacy_q0_import"]["original_pattern_manifest"] == pinned_native[
+        "original_pattern_manifest"
+    ]
+    assert approved_entry["legacy_q0_import"]["v28_identity"] == {
+        "input_sha256": fill_identity["input_sha256"],
+        "physical_model_sha256": fill_identity["physical_model_sha256"],
+        "run_id": fill_identity["run_id"],
+        "campaign_window_sha256": fill_identity["campaign_window_sha256"],
+        "mode_manifest_sha256": fill_identity["mode_manifest_sha256"],
+        "ordered_mode_key_sha256": fill_identity["ordered_mode_key_sha256"],
+        "donor_identity_sha256": pinned_manifest["donor_identity_sha256"],
+        "manifest_sha256": V30_Q0_DONOR["manifest_sha256"],
+        "native_qualification_sha256": V30_Q0_DONOR["native_qualification_sha256"],
+    }
+    assert hashlib.sha256(approved_selector_path.read_bytes()).hexdigest() == approved_contract["execution"]["selector_sha256"]
     launcher_values = contract_mod.v31_launcher_values(
         approved_contract_path,
         expected_sha256=approved_sha,
