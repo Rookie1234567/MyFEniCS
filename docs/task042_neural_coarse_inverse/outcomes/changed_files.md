@@ -1,3 +1,7 @@
+## V79变更边界
+
+新增保存场消费者scope/小接线、两个dat与合成回归；原PUBLIC_BASIX积分增加显式分项回调，差分分子增加一次遍历批列，原默认不改。科学消费因CPU门未运行，保留research-only，不授production/default或merge资格。
+
 ## V78改动范围
 
 新增薄Jacobi复用scope/study与3dat；controlled runner显式iteration_policy，历史默认不变。统一launcher/监督namespace及小KSP测试；未修改原作用、材料、FE、PC数学或旧证据。研究路径仍opt-in，不建议合并失败求解能力。

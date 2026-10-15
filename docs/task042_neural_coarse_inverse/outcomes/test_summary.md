@@ -1,3 +1,7 @@
+## V79测试与实际未执行项
+
+初始5项合成测试通过，最终数值focused因两次CPU准入拒绝而NOT_RUN；不将它标PASS。最终compile/Ruff/两dat元数据validate通过，无PDE/KSP/numeric；一次文档检查及冻结stderr见[证据](records/known_error_budget_v79.json)。GitHub视觉NOT_VERIFIED，未full pytest/CI。
+
 ## V78定点验证
 
 最终4项targeted、2个小合成KSP、compile/Ruff、3dat通过；连续回调和128步停止/继续均验证，无真实PDE调度测试。15项文档检查与最终字节复验见[记录](records/decisions_tests_v78.json)，GitHub视觉NOT_VERIFIED。旧测试原文保留。

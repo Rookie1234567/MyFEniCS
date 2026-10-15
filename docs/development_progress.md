@@ -1,3 +1,13 @@
+## V79：保存场误差消费者受CPU门阻塞
+
+| 同0.7nm/25576tet/p5/828；实际状态 | 完成与未完成 | 证据 |
+|---|---|---|
+| 两次正式CPU准入均eligible=0 | 小接线/静态验证及只读资产契约完成；真实E/H/curl误差、分项、χ/γ均NOT_RUN；无新PC/PDE/KSP/numeric | [回应](task042_neural_coarse_inverse/response_v79.md) · [完整结果](task042_neural_coarse_inverse/outcomes/known_error_budget_v79.md) |
+
+0.284属于旧闭合物理残差，不等于本轮场误差。INSUFFICIENT_CAUSAL_EVIDENCE：不自动立新PC；待有效资源与窗口先完成原保存数据消费者。历史科学失败与费用保持，未授连续精度、原尺寸或NN20。
+
+---
+
 ## V78：一次未丢搜索基的廉价Jacobi对照
 
 | 同0.7nm NOTCH/p5/828；measured | 结果与边界 | 证据 |

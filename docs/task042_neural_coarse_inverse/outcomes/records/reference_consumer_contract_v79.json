@@ -1,0 +1,551 @@
+{
+  "schema": "task042.readonly_same_discrete_reference.v79",
+  "status": "SAVED_METADATA_IDENTITY_MATCH; V79_ARRAY_CONSUMPTION_NOT_RUN_CPU",
+  "physical_sha256": "df26b8cf28e1115bdb2eb9ac9b79e698596133305310d26c1d664f94e2c5be44",
+  "mesh_sha256": "c470274ab6c64cee0b8eef09dbcdadadfac4c6ca229d7fc2b6e608ded62f540c",
+  "mode_sha256": "bf05010061b89678fb14b493e5baff737108f3f36cce6f4c88fe6ef182ab153d",
+  "full_FE": 1943745,
+  "ports": 828,
+  "retained_rows": 1177293,
+  "degree": 5,
+  "cells": 25576,
+  "carrier": [
+    8.94046081729244,
+    0.7821889682108057,
+    0.0
+  ],
+  "same_manifest_members": [
+    "kappa",
+    "masters",
+    "slaves",
+    "P_data",
+    "P_indices",
+    "P_indptr",
+    "geometry_x",
+    "geometry_dofmap",
+    "cell_centers",
+    "cell_tags",
+    "regular_tags",
+    "original_parent_cell",
+    "rhs"
+  ],
+  "reference_result": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v70/task042_v70_assembly_time_p5_solve_20261010T171235413041Z/result.json",
+    "sha256": "a4b132b23553bc2cab139ed955cc7f5dd741856fc1155d258a6075ca40729a58"
+  },
+  "reference_coefficients": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v70/task042_v70_assembly_time_p5_solve_20261010T171235413041Z/solution.npz",
+    "sha256": "b118066c12549c62d97b13f4905f44649f7d775af79d49655251e0b74c63a4d3",
+    "members": {
+      "x": {
+        "shape": [
+          1944573
+        ],
+        "dtype": "complex128",
+        "sha256": "e5bc21cb68652e25f84ce695992d8b3dd5a1fe09e04319a9dc076178d6bfe103"
+      },
+      "u_independent": {
+        "shape": [
+          1943745
+        ],
+        "dtype": "complex128",
+        "sha256": "07628efd9123df7061a448cad35d30d9d4a1d435fa1bbc5c84d17d67f0b85a4c"
+      },
+      "u_native": {
+        "shape": [
+          1979985
+        ],
+        "dtype": "complex128",
+        "sha256": "aac3c69a2314967334fb9fb225f81e6967aeb3da38e81629c2333eb53a616ad6"
+      },
+      "port": {
+        "shape": [
+          828
+        ],
+        "dtype": "complex128",
+        "sha256": "1cf05832dcf2ae163da79db71fca57adf5b1ecc8f6d1a6c3f25198b8a8cac82e"
+      },
+      "rhs": {
+        "shape": [
+          1944573
+        ],
+        "dtype": "complex128",
+        "sha256": "a96b58bf66f8b889e5812670989cc41ae15dd745e4751374f41fe5c610172389"
+      },
+      "residual": {
+        "shape": [
+          1944573
+        ],
+        "dtype": "complex128",
+        "sha256": "aa21cf1ed5d16e279af38cc802885d7d908e7b8b98de97c8e8ffc0bf2da002d9"
+      },
+      "kappa": {
+        "shape": [
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+      },
+      "masters": {
+        "shape": [
+          1943745
+        ],
+        "dtype": "int64",
+        "sha256": "4c4afa59ec6fa1076ae8b809ce33faa9aa7afc596bf764dace03ce01499998b6"
+      },
+      "slaves": {
+        "shape": [
+          36240
+        ],
+        "dtype": "int32",
+        "sha256": "8534bc805d07c070b36d799a4846eb374f5b0523088de022f765b0b698f72af9"
+      },
+      "P_data": {
+        "shape": [
+          1994465
+        ],
+        "dtype": "complex128",
+        "sha256": "0ccfcfc33063eeb4a026b3b289cf1ab5ea4ba440b96236db3abc7facb9e84077"
+      },
+      "P_indices": {
+        "shape": [
+          1994465
+        ],
+        "dtype": "int32",
+        "sha256": "161f8f42986cf50c2525a1a862352488014fc3a8c5cd1518f4c5a10ff65b7378"
+      },
+      "P_indptr": {
+        "shape": [
+          1979986
+        ],
+        "dtype": "int32",
+        "sha256": "67edf3c21b49aa2bf5f79dde662f9e6ce3592af2f3d08e4522b2120074949618"
+      },
+      "geometry_x": {
+        "shape": [
+          5168,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "a1141b5cfb0b81242f9cd06769e97637e76254c2463b3c25bafcc751c4fa0a7a"
+      },
+      "geometry_dofmap": {
+        "shape": [
+          25576,
+          4
+        ],
+        "dtype": "int32",
+        "sha256": "53a287c3f9d69775ed1a346ac1019bda1ffbf3d25387d15dd3a873d9f47b0316"
+      },
+      "cell_centers": {
+        "shape": [
+          25576,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "b924a6b83a358f5990bcb6682704640e741bbb82d8c33551eba0fcba0f07a50f"
+      },
+      "cell_tags": {
+        "shape": [
+          25576
+        ],
+        "dtype": "int32",
+        "sha256": "8b26a15d2ee2b01601122e69d55c0a824dd92a34247164c0d3b4d56947fbbf81"
+      },
+      "regular_tags": {
+        "shape": [
+          25576
+        ],
+        "dtype": "int32",
+        "sha256": "8fd01f0da93d54006443497cb8d494ff90f08105264073f3449dc16dba5a87a4"
+      },
+      "original_parent_cell": {
+        "shape": [
+          25576
+        ],
+        "dtype": "int64",
+        "sha256": "57e9a93373660b69e9da776f60baa2d2d0910e49bd316499b1e67e2a87d5d887"
+      }
+    }
+  },
+  "reference_original": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v70/task042_v70_assembly_time_p5_solve_20261010T171235413041Z/independent_original.npz",
+    "sha256": "f91ce5fce5c3420d008c7020af30c30fc8852b750bdc33564e697aa3964fa2f9",
+    "members": {
+      "residual": {
+        "shape": [
+          1944573
+        ],
+        "dtype": "complex128",
+        "sha256": "87c55c98e99814a192853b05a424a0ea4aedabddb1b6fc6e14e018461b7b3459"
+      },
+      "rhs": {
+        "shape": [
+          1944573
+        ],
+        "dtype": "complex128",
+        "sha256": "695a4ae5d629e3bb8f22f9116962b6d7ac0cbce589368df64ba64d57e2f0cb7b"
+      },
+      "action": {
+        "shape": [
+          1944573
+        ],
+        "dtype": "complex128",
+        "sha256": "bd8aa0f80d6066a2189c73929c2a1ca6dc4a1e1f9a3f32bb4174a3918c3ce9a2"
+      },
+      "x": {
+        "shape": [
+          1944573
+        ],
+        "dtype": "complex128",
+        "sha256": "e5bc21cb68652e25f84ce695992d8b3dd5a1fe09e04319a9dc076178d6bfe103"
+      }
+    }
+  },
+  "reference_source": "0490af3085f32940787f0a02f0d801578ab87b73",
+  "candidate_result": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v78/task042_v78_jacobi_uninterrupted_20261012T085248426320Z/result.json",
+    "sha256": "287cea45cd11debb1a8b01997f09ecb1cdca5c5736e18629dda6bbb5f7c7b37a"
+  },
+  "candidate_coefficients": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v78/task042_v78_jacobi_uninterrupted_20261012T085248426320Z/solution.npz",
+    "sha256": "1a50e24f6896bc3961c606c937b49cfecafa36fb3768a68ed9ae96cc9b4d4e91",
+    "members": {
+      "x": {
+        "shape": [
+          1944573
+        ],
+        "dtype": "complex128",
+        "sha256": "56d5b86667e2420039f99f8b80af760489c7e63f7c4fb250313dd625f75ca0b3"
+      },
+      "u_independent": {
+        "shape": [
+          1943745
+        ],
+        "dtype": "complex128",
+        "sha256": "39495b3a97aba101e334d8beefb75df3b9cc528cb97e6186663d4217dbad58fb"
+      },
+      "u_native": {
+        "shape": [
+          1979985
+        ],
+        "dtype": "complex128",
+        "sha256": "3f310a5adda0bf04ca725be0b71432b65bbef3e6b3779c1d329314d123e48aec"
+      },
+      "port": {
+        "shape": [
+          828
+        ],
+        "dtype": "complex128",
+        "sha256": "98edd29c77b965f3beb5ae9e518281bcba4cbd7faf31103f3760f14171d144db"
+      },
+      "rhs": {
+        "shape": [
+          1944573
+        ],
+        "dtype": "complex128",
+        "sha256": "a96b58bf66f8b889e5812670989cc41ae15dd745e4751374f41fe5c610172389"
+      },
+      "kappa": {
+        "shape": [
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+      },
+      "masters": {
+        "shape": [
+          1943745
+        ],
+        "dtype": "int64",
+        "sha256": "4c4afa59ec6fa1076ae8b809ce33faa9aa7afc596bf764dace03ce01499998b6"
+      },
+      "slaves": {
+        "shape": [
+          36240
+        ],
+        "dtype": "int32",
+        "sha256": "8534bc805d07c070b36d799a4846eb374f5b0523088de022f765b0b698f72af9"
+      },
+      "P_data": {
+        "shape": [
+          1994465
+        ],
+        "dtype": "complex128",
+        "sha256": "0ccfcfc33063eeb4a026b3b289cf1ab5ea4ba440b96236db3abc7facb9e84077"
+      },
+      "P_indices": {
+        "shape": [
+          1994465
+        ],
+        "dtype": "int32",
+        "sha256": "161f8f42986cf50c2525a1a862352488014fc3a8c5cd1518f4c5a10ff65b7378"
+      },
+      "P_indptr": {
+        "shape": [
+          1979986
+        ],
+        "dtype": "int32",
+        "sha256": "67edf3c21b49aa2bf5f79dde662f9e6ce3592af2f3d08e4522b2120074949618"
+      },
+      "geometry_x": {
+        "shape": [
+          5168,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "a1141b5cfb0b81242f9cd06769e97637e76254c2463b3c25bafcc751c4fa0a7a"
+      },
+      "geometry_dofmap": {
+        "shape": [
+          25576,
+          4
+        ],
+        "dtype": "int32",
+        "sha256": "53a287c3f9d69775ed1a346ac1019bda1ffbf3d25387d15dd3a873d9f47b0316"
+      },
+      "cell_centers": {
+        "shape": [
+          25576,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "b924a6b83a358f5990bcb6682704640e741bbb82d8c33551eba0fcba0f07a50f"
+      },
+      "cell_tags": {
+        "shape": [
+          25576
+        ],
+        "dtype": "int32",
+        "sha256": "8b26a15d2ee2b01601122e69d55c0a824dd92a34247164c0d3b4d56947fbbf81"
+      },
+      "regular_tags": {
+        "shape": [
+          25576
+        ],
+        "dtype": "int32",
+        "sha256": "8fd01f0da93d54006443497cb8d494ff90f08105264073f3449dc16dba5a87a4"
+      },
+      "original_parent_cell": {
+        "shape": [
+          25576
+        ],
+        "dtype": "int64",
+        "sha256": "57e9a93373660b69e9da776f60baa2d2d0910e49bd316499b1e67e2a87d5d887"
+      }
+    }
+  },
+  "candidate_original": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v78/task042_v78_jacobi_uninterrupted_20261012T085248426320Z/independent_original.npz",
+    "sha256": "70fdbcb079663a43ad071282ca483497fac4069e2f106871a75db0dfaaac917f",
+    "members": {
+      "residual": {
+        "shape": [
+          1944573
+        ],
+        "dtype": "complex128",
+        "sha256": "9d1c7f2b2a041acaaee30ddeff613243d4a7e86519b294f9cf5d74f6babb6d6d"
+      },
+      "rhs": {
+        "shape": [
+          1944573
+        ],
+        "dtype": "complex128",
+        "sha256": "695a4ae5d629e3bb8f22f9116962b6d7ac0cbce589368df64ba64d57e2f0cb7b"
+      },
+      "action": {
+        "shape": [
+          1944573
+        ],
+        "dtype": "complex128",
+        "sha256": "61db185070d29d82ae8e8f702c545d82f3df210323d6999d5d3c160a99b17e6b"
+      },
+      "x": {
+        "shape": [
+          1944573
+        ],
+        "dtype": "complex128",
+        "sha256": "56d5b86667e2420039f99f8b80af760489c7e63f7c4fb250313dd625f75ca0b3"
+      }
+    }
+  },
+  "candidate_source": "a08d40f9845f481fa79abf6f8d7a48c99b956bcd",
+  "reference_original_residual": {
+    "true": 3.356231671091557e-10,
+    "native": 3.356231671091557e-10,
+    "augmented": 3.356231710357295e-10,
+    "port": 5.87622187274508e-16
+  },
+  "reference_formal_gate_recalculated": true,
+  "reference_direct_1e10_gate_recalculated": false,
+  "candidate_retained_scales": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v78/task042_v78_jacobi_uninterrupted_20261012T085248426320Z/retained_returned.npz",
+    "sha256": "089b986f85c025b6d692a4e1319156cf2deb40cc8713f2626c75c69503f7062f",
+    "members": {
+      "scaled_retained": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "f479f169b89e137865276533751caf168ddebca312287c162bb58564127059e4"
+      },
+      "trace_port": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "bba476d16c08f478ba6078ae5fa5f8386435d104e5318d687971ff36ce12cd4c"
+      },
+      "rhs": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "178dc0c55cf2deb504c214a526db461e0b0624a957457a7b9c35efda14b099ee"
+      },
+      "scaled_rhs": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "4c5d6b918f358863b9a324dd2de2f1635f7422c8c06f91e850b5d34030c7fc80"
+      },
+      "left": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "1587eab07700a6579dca059fe6b86fb3cf26ca6bd9766f639718a4edffa09404"
+      },
+      "right": {
+        "shape": [
+          1177293
+        ],
+        "dtype": "complex128",
+        "sha256": "01d0f4639777f76d9cd1b46a2567ecc9a4962f7d8747d5ad8b081aad8a5caf62"
+      }
+    }
+  },
+  "complete_q47_q63_boundary": {
+    "q47": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v70/task042_v70_assembly_time_p5_prepare_20261010T142344843423Z/triangle_q47.npz",
+      "sha256": "a46be0dcb50977bee0fe35c05f57a1d0363dc3889b4e067590b6e85b09e25200",
+      "members": {
+        "offsets": {
+          "shape": [
+            829
+          ],
+          "dtype": "int64",
+          "sha256": "ef9f063fb9cb8d1abe24c6a9346016370985ef6cbe281e9f805e3acb5cb5b9dd"
+        },
+        "rows": {
+          "shape": [
+            12453120
+          ],
+          "dtype": "int64",
+          "sha256": "bd3fd9c2a9c8e6fbbbd1b8352e5c53074330ba71726842f81d856c027688e56f"
+        },
+        "C": {
+          "shape": [
+            12453120
+          ],
+          "dtype": "complex128",
+          "sha256": "fb680431cf9de5fe11da91e268eb22146bb8cc31519e40a2c0cad338e601cb6b"
+        },
+        "D": {
+          "shape": [
+            12453120
+          ],
+          "dtype": "complex128",
+          "sha256": "c8158990695b43d85d81cb5e198d6abed48a5ac51fa8a2c5965e6b727bd13c8c"
+        },
+        "H": {
+          "shape": [
+            828
+          ],
+          "dtype": "float64",
+          "sha256": "fc8bf271da287cb70f0728bd59eef9dee008b9b716fd0f236ad1a362dc5a0f7b"
+        },
+        "incident_traction": {
+          "shape": [
+            1979985
+          ],
+          "dtype": "complex128",
+          "sha256": "fd03f4e60d7a016c9f0b1d20fc1499582e9eb746351713e20e14524a67c0d802"
+        }
+      }
+    },
+    "q63": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v70/task042_v70_assembly_time_p5_prepare_20261010T142344843423Z/triangle_q63.npz",
+      "sha256": "5904c47218da098a3586cc570371a5362291a9b99ae53007cf53d3723bcd4ad2",
+      "members": {
+        "offsets": {
+          "shape": [
+            829
+          ],
+          "dtype": "int64",
+          "sha256": "ef9f063fb9cb8d1abe24c6a9346016370985ef6cbe281e9f805e3acb5cb5b9dd"
+        },
+        "rows": {
+          "shape": [
+            12453120
+          ],
+          "dtype": "int64",
+          "sha256": "bd3fd9c2a9c8e6fbbbd1b8352e5c53074330ba71726842f81d856c027688e56f"
+        },
+        "C": {
+          "shape": [
+            12453120
+          ],
+          "dtype": "complex128",
+          "sha256": "f943014b2d27e6cf880df986b0ba2624372d54c5fcb131e971c1f680d511e282"
+        },
+        "D": {
+          "shape": [
+            12453120
+          ],
+          "dtype": "complex128",
+          "sha256": "7e66c83d31458ed3c61cac44b360bed94a6a3b771211924def88cada75094355"
+        },
+        "H": {
+          "shape": [
+            828
+          ],
+          "dtype": "float64",
+          "sha256": "fc8bf271da287cb70f0728bd59eef9dee008b9b716fd0f236ad1a362dc5a0f7b"
+        },
+        "incident_traction": {
+          "shape": [
+            1979985
+          ],
+          "dtype": "complex128",
+          "sha256": "11876c70da12413772296f08aab84c82b51b43a54e7f358f635dadfc3055699c"
+        }
+      }
+    }
+  },
+  "consumer_entry": "src.solvers.known_error_budget",
+  "original_entry": "src.solvers.tetra_coefficient_action.CoefficientFullAction",
+  "field_numerator_entry": "src.solvers.tetra_polynomial_difference.numerator",
+  "coefficient_error": "u_reference-u_candidate, followed by exact native P; zero RHS for any retained difference recovery",
+  "closed_equation": "q=rE-C H^-1 rp; Abar=K+C H^-1 D; q is independent of auxiliary a",
+  "required_identity_gate": "actual arrays+basis+MPC+numbering+RHS+carrier+mode keys/reference plane; metadata matching does not substitute for live consumption",
+  "V79_scientific_arrays_decompressed": false,
+  "V79_actual_basis_rebuilt": false,
+  "V79_live_consumer_qualified": false,
+  "no_cross_mesh_or_hex_substitution": true,
+  "no_initialization_or_PC_reference_leak_authorized": true,
+  "reference_is_public_same_discrete_not_continuum_truth": true,
+  "old_spatial_accuracy_FAIL_unchanged": true,
+  "target_2TB48h": false,
+  "NN20": false,
+  "cold_cost": {
+    "reference_necessary_build_plus_prepared_solve_seconds": 22313.37408842519,
+    "reference_prepared_start_solve_seconds": 12666.547604534077,
+    "packet_only_fresh_prefix_seconds": null,
+    "jacobi128_failed_attempt_seconds": 875.79529662407,
+    "jacobi128_KSP_seconds": 534.8595234630629,
+    "matched_success_speed_ratio": null
+  },
+  "no_command_to_neighbour": true
+}
