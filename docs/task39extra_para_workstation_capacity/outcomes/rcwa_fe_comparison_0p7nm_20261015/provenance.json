@@ -1,0 +1,144 @@
+{
+  "created_utc": "2026-10-15T01:42:56.536128+00:00",
+  "scope": "READ_ONLY_EXISTING_RESULTS_COMPARISON_NO_NEW_PDE",
+  "branch": "task39extra_para_workstation_capacity",
+  "report_base_head": "d0dd7f090c674268c3d21903961e9abf46b4c020",
+  "fe_run_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v7_interleave_0p7nm_aniso_p6_direct_q160_n0_full__full3d_direct__mpi1__Mna/20261014T062635.999684Z",
+  "fe_source_sha": "9a3c4a3fd9a41702fff4069280cb9507cefb163d",
+  "fe_status": "P6_CONDENSED_DIRECT_N0_COMPLETED_AUTHORITY_LIMITED",
+  "fe_operator_scope": "n0_filtered_dtn_not_full_dtn",
+  "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+  "rcwa_authority": "user_supplied_report_not_independently_reproduced",
+  "rcwa_original_project_and_calibration_files_read": false,
+  "rcwa_table_precision": "parsed displayed decimal values; not binary full-precision originals",
+  "fe_channel_count": 572,
+  "compared_orders": 143,
+  "unique_expected_keys_pass": true,
+  "sums": {
+    "FE": {
+      "R": 0.08592253473181985,
+      "T": 0.6522079390017288
+    },
+    "RCWA_printed_rows": {
+      "R": 0.07027873907634412,
+      "T": 0.6688302117146526
+    }
+  },
+  "totals_comparison": [
+    {
+      "quantity": "R",
+      "FE": 0.08592253473181985,
+      "RCWA_report": 0.0702787390763,
+      "FE_minus_RCWA": 0.01564379565551985,
+      "percentage_point_difference": 1.564379565551985,
+      "relative_difference_to_RCWA": 0.2225964190754154
+    },
+    {
+      "quantity": "T",
+      "FE": 0.6522079390017288,
+      "RCWA_report": 0.668830211715,
+      "FE_minus_RCWA": -0.016622272713271213,
+      "percentage_point_difference": -1.6622272713271213,
+      "relative_difference_to_RCWA": -0.024852753990655924
+    },
+    {
+      "quantity": "A_balance",
+      "FE": 0.2618695262664513,
+      "RCWA_report": 0.260891049209,
+      "FE_minus_RCWA": 0.000978477057451299,
+      "percentage_point_difference": 0.09784770574512991,
+      "relative_difference_to_RCWA": 0.0037505198450386097
+    },
+    {
+      "quantity": "A_grating",
+      "FE": 0.19957296235714786,
+      "RCWA_report": 0.198206774561,
+      "FE_minus_RCWA": 0.0013661877961478608,
+      "percentage_point_difference": 0.13661877961478608,
+      "relative_difference_to_RCWA": 0.006892740165787843
+    },
+    {
+      "quantity": "A_substrate10",
+      "FE": 0.0622965639792195,
+      "RCWA_report": 0.0626842739612,
+      "FE_minus_RCWA": -0.00038770998198048995,
+      "percentage_point_difference": -0.038770998198048995,
+      "relative_difference_to_RCWA": -0.006185123596078863
+    },
+    {
+      "quantity": "A_volume",
+      "FE": 0.26186952633636734,
+      "RCWA_report": 0.260891048523,
+      "FE_minus_RCWA": 0.000978477813367351,
+      "percentage_point_difference": 0.0978477813367351,
+      "relative_difference_to_RCWA": 0.0037505227523400024
+    }
+  ],
+  "fe_sum_minus_reported": {
+    "R": 0.0,
+    "T": 0.0
+  },
+  "rcwa_printed_rows_minus_reported_total": {
+    "R": 4.411748744104216e-14,
+    "T": -3.473887844052115e-13
+  },
+  "source_files": {
+    "/home/fenics/.codex/attachments/74797043-3e9f-4bda-8d70-d8a20421273f/已粘贴的文本.txt": {
+      "bytes": 23032,
+      "sha256": "383fce8c471e5c8fc382951b5b241b6f556bd767c26267919a341d6e4277baab"
+    },
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v7_interleave_0p7nm_aniso_p6_direct_q160_n0_full__full3d_direct__mpi1__Mna/20261014T062635.999684Z/input_original.dat": {
+      "bytes": 2272,
+      "sha256": "395fa90fdfee1f28539bdd395d6c219323145e5a043e2576809f954488dcc175"
+    },
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v7_interleave_0p7nm_aniso_p6_direct_q160_n0_full__full3d_direct__mpi1__Mna/20261014T062635.999684Z/p6_condensed_direct_summary.json": {
+      "bytes": 53314,
+      "sha256": "992a2b2c6e9306ac7a540edc707e53ad2a3d7da0a47d7f6a50c28ad0924d1671"
+    },
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v7_interleave_0p7nm_aniso_p6_direct_q160_n0_full__full3d_direct__mpi1__Mna/20261014T062635.999684Z/numerical_output/dtn_port_diffraction_orders_3d.csv": {
+      "bytes": 362573,
+      "sha256": "8a0691b866a924d532e3600286494ab469ca92db1a678053b897f35ac7536826"
+    }
+  },
+  "package_files_except_this_provenance": {
+    "README.md": {
+      "bytes": 30177,
+      "sha256": "8e0a026b8dd3cf0ebc860a188858a0d0d18955559cfc6cbaf633df74421bd425"
+    },
+    "fe_channels_572.csv": {
+      "bytes": 362573,
+      "sha256": "8a0691b866a924d532e3600286494ab469ca92db1a678053b897f35ac7536826"
+    },
+    "fe_direct_summary.json": {
+      "bytes": 53314,
+      "sha256": "992a2b2c6e9306ac7a540edc707e53ad2a3d7da0a47d7f6a50c28ad0924d1671"
+    },
+    "fe_input_original.dat": {
+      "bytes": 2272,
+      "sha256": "395fa90fdfee1f28539bdd395d6c219323145e5a043e2576809f954488dcc175"
+    },
+    "orders_comparison_143.csv": {
+      "bytes": 19374,
+      "sha256": "2f632da0318aa267448a4b0b8834b6aeb8593ceda9c51c119f25fe86028874b5"
+    },
+    "rcwa_user_report.txt": {
+      "bytes": 23032,
+      "sha256": "383fce8c471e5c8fc382951b5b241b6f556bd767c26267919a341d6e4277baab"
+    },
+    "totals_comparison.csv": {
+      "bytes": 734,
+      "sha256": "a4a0f114b5100ef493672a2d70f4804b145c704886ea845c5795d736d4ded493"
+    }
+  },
+  "validation": {
+    "json_parse": "PASS",
+    "file_hash_bindings": "PASS",
+    "compared_rows": 143,
+    "delta_recomputed": "PASS",
+    "relative_links": "PASS",
+    "markdown_table_column_consistency": "PASS",
+    "markdown_table_count": 6,
+    "github_remote_render": "NOT_YET_CHECKED",
+    "new_pde_or_factorization": false
+  }
+}
