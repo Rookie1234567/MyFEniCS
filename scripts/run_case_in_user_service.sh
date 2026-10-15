@@ -100,6 +100,16 @@ for ((index = 0; index < ${#args[@]}; index++)); do
             v31_contract="${arg#*=}"
             ((v31_contract_count += 1))
             ;;
+        --task40-v33-execution-contract)
+            ((index + 1 < ${#args[@]})) || { echo "V33 contract flag needs a path" >&2; exit 2; }
+            v31_contract="${args[index + 1]}"
+            ((v31_contract_count += 1))
+            ((index += 1))
+            ;;
+        --task40-v33-execution-contract=*)
+            v31_contract="${arg#*=}"
+            ((v31_contract_count += 1))
+            ;;
     esac
 done
 v29_campaign=0
@@ -150,7 +160,7 @@ fi
 v31_campaign=0
 if (( v31_contract_count != 0 )); then
     if (( v31_contract_count != 1 || v29_campaign || v30_campaign )); then
-        echo "V31 requires exactly one execution contract and cannot be combined with V29 or V30" >&2
+        echo "V31/V32/V33 requires exactly one execution contract and cannot be combined with V29 or V30" >&2
         exit 2
     fi
     [[ "$v31_contract" == /* ]] || v31_contract="$repo_root/$v31_contract"

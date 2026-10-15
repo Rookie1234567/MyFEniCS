@@ -1328,6 +1328,88 @@ def test_user_service_wrapper_routes_v20_to_clocked_workflow_without_starting_se
     assert "target_original_ny8_resource_pilot_v20.dat" in argv_text
 
 
+def test_v33_user_service_wrapper_uses_v31_native_dispatch_and_resource_cap(tmp_path):
+    import os
+    import subprocess
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_python3 = fake_bin / "python3"
+    fake_python3.write_text(
+        "#!/usr/bin/env bash\nprintf '%s\\n' \"$TASK40_FAKE_LAUNCHER_VALUES\"\n",
+        encoding="utf-8",
+    )
+    fake_python3.chmod(0o755)
+    fake_systemd_run = fake_bin / "systemd-run"
+    fake_systemd_run.write_text(
+        "#!/usr/bin/env bash\nprintf '%s\\0' \"$@\" > \"$CAPTURE_SYSTEMD_ARGV\"\n",
+        encoding="utf-8",
+    )
+    fake_systemd_run.chmod(0o755)
+
+    source_sha = "68adca7742e098b8527562bcd2aaad710ac69e97"
+    contract_path = (
+        ROOT
+        / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/"
+        / "v33_pending_package"
+        / f"source_{source_sha}"
+        / "execution_contract_v33.approved.json"
+    )
+    launcher_values = [
+        str(ROOT),
+        "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+        "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/abi_receipt_v29_attempt2.json",
+        "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/jit_cache",
+        "1649267441664",
+        "b" * 64,
+        "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/"
+        f"v33_pending_package/source_{source_sha}/campaign_window_v33.json",
+        "c" * 64,
+        "68719476736",
+        "0",
+    ]
+    for index, contract_arguments in enumerate(
+        (
+            ["--task40-v33-execution-contract", str(contract_path)],
+            [f"--task40-v33-execution-contract={contract_path}"],
+        )
+    ):
+        capture = tmp_path / f"systemd_run_argv_{index}.bin"
+        environment = dict(os.environ)
+        environment["PATH"] = f"{fake_bin}:{environment['PATH']}"
+        environment["CAPTURE_SYSTEMD_ARGV"] = str(capture)
+        environment["TASK40_FAKE_LAUNCHER_VALUES"] = "\n".join(launcher_values)
+        result = subprocess.run(
+            [
+                "bash",
+                str(ROOT / "scripts/run_case_in_user_service.sh"),
+                str(INPUT_ROOT / "target_original_ny8_resource_pilot_v20.dat"),
+                "--service-unit",
+                f"v33-wrapper-fixture-{index}",
+                *contract_arguments,
+            ],
+            cwd=ROOT,
+            env=environment,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, result.stderr
+        argv = capture.read_bytes().decode().split("\0")[:-1]
+        assert "--property=MemoryMax=1649267441664" in argv
+        assert "--property=MemorySwapMax=0" in argv
+        script = argv[argv.index("/usr/bin/bash") + 2]
+        assert "activate_native_complex.sh" in script
+        assert "native_linux" in script
+        assert "src.runners.task40_v31_contract --launcher-values --contract" in script
+        assert 'exec "${v31_values[1]}/bin/python"' in script
+        assert "scripts/task40_v20_service_workflow.py run-service" in script
+        assert "--abi-receipt" in script and "--jit-cache" in script
+        assert "python -S" not in script
+        assert "exec python scripts/run_case.py" not in script
+        assert str(contract_path) in argv
+
+
 def test_v22_user_service_wrapper_routes_operator_probe_to_clocked_workflow(
     tmp_path,
 ):
