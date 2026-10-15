@@ -1,16 +1,17 @@
-# 324-cell 恢复检查器调查：内部自消与装配路径差异，完整解仍未资格化
+# 324-cell 恢复检查器调查：同 raw 的 Schur 传递仍失败，完整解未资格化
 
 日期：2026-10-15。模型：18×2×9＝324 cells，z 分层 2/5/2，完整 p6、ordinary p4，BAL_H，FGMRES restart=32、正交化 refine_always。此报告只归档本轮已保存证据；不替代原始失败记录，也不改变任何验收阈值。
 
 ## 1. 当前结论
 
-本轮证据已推进到全部 324 cells、共享 trace 与 80 个原始端口模式的保存 x8 回放，可分清三件事：
+本轮证据已推进到全部 324 cells、共享 trace 与 80 个原始端口模式的保存 x8 回放。新增同 raw 对照确认：不能将全部异常归因于 split/raw 两条装配路线差异。当前可分清四件事：
 
 1. **局部 checker 的自消盲点已实测。** 两个真实 cell 的旧内部公式给零，独立 raw 块给非零；不依赖 LU/H 的 helper 能检测制造错误和真实 cell 扰动。
 2. **原始和 global raw 两个 identity 门仍 FAIL。** 原值 2.4309679506887283e-10；完整 raw 四块重建后为 1.88449868884189e-10，均大于不变的 1e-10。
 3. **与 native 相同算子家族的 split 路径能重现保存作用。** 分别执行 curl/mass kernel，再独立完成全局 scatter、复 MPC 拉回与原端口组合，所得完整残差与保存 native 的相对差为 1.9173085240314842e-14。此项是独立装配一致性，非跨算子家族真值、Schur 恢复资格或求解收敛。
+4. **同一 raw 到原保存 Schur 的 trace 传递仍 FAIL。** 65 个定向类的 LU/H/F/S 均匹配原四项 hash，原场和保存 r_s 未替换，trace 传递相对差仍为 6.565891347696912e-10 > 1e-10。internal 与 port 各自通过不能抵消此失败。
 
-新增对照量出了 combined-rank2 raw 与 split-rank1 native 两条路径之间的差异，并表明几何差异不是唯一解释；尚未独立拆清张量形成和收缩算术各占多少。**生产修改仍只是提案，未实施；没有 accepted field、官方 R/T/A 或空间收敛结论。** 原始 x8 真实残差约 0.0463，诊断续段累计耐久 72 步的残差约 0.02184，均未改变。
+既有对照量出了 combined-rank2 raw 与 split-rank1 native 两条路径之间的差异，并表明几何差异不是唯一解释；新的同 raw 负证据说明同路线恢复/Schur 传递也必须独立排查，尚未证明任何单一原因解释全部失败。**生产修改仍只是提案，未实施；没有 accepted field、官方 R/T/A 或空间收敛结论。** 原始 x8 真实残差约 0.0463，诊断续段累计耐久 72 步的残差约 0.02184，均未改变。
 
 ## 2. 两段求解：科学结论与成本分别记账
 
@@ -111,9 +112,29 @@ split-volume 与 combined raw-volume 的向量差为 2.6560669860016805e-10，�
 
 这里复用了 native 家族原始 kernel，独立的是装配和残差组合过程。因此该结果不能授予原 raw/Schur/recovery identity、连续误差或最终场资格。旧 2.43097e-10 和 raw 1.88450e-10 两个 FAIL 同时保留；未接入 live RetainedOuterAdapter/solver，未进行新的迭代求解。生产路径修复及其资格验证仍待完成。
 
-特别要注意：同家族 split 装配一致性对任意给定场都可能成立，并不说明该场已解出方程。最终 native residual 能拦住大的方程误差，也不能单独保证 Schur/F 传递正确。当前实际门保持 native 全场 1e-6、port 1e-8、internal/identity/Schur-port 各 1e-10；saved 跨来源 1e-9 检查尚未执行。拟议增加“同 rank2 raw 的 e_FE 与保存 Schur/F 传递”对照；截至本报告证据冻结时，仅获准准备受限保存场回放，尚未执行。它是风险控制候选，不是已实施生产修复或已通过的验证。
+特别要注意：同家族 split 装配一致性对任意给定场都可能成立，并不说明该场已解出方程。最终 native residual 能拦住大的方程误差，也不能单独保证 Schur/F 传递正确。当前实际门保持 native 全场 1e-6、port 1e-8、internal/identity/Schur-port 各 1e-10；saved 跨来源 1e-9 检查尚未执行。此前拟议的“同 rank2 raw 的 e_FE 与保存 Schur/F 传递”对照现已完成受限保存场回放，trace 门失败，见下节。这是新增诊断负结果，不是生产修复或资格通过。
 
 独立终审核对了 109 个资源采样、9 个准入门、12 份保存数组的 layout/hash/norm，以及 7 条保存向量公式的逐字节关系；raw03 的 6 个既有向量保持不变。按行分量来自运行时分区，独审只核对范数平方闭合；遗漏 MPC 的控制值来自运行时，未导出的 unrestricted 向量没有再次独立重算。
+
+### 6.4 新增同 raw → 原保存 Schur 对照：trace 门仍 FAIL
+
+此对照不再拿 combined raw 与 native split 互比，而是在同一 raw 路线上，检查完整内部余量经过原 F 传递后能否重现原来保存的 Schur 残差。逐类重建 65 份原始 LU/H/F/S，**每类在使用前都与原四项 payload hash 完全一致**；44 个 raw 类和 324 cells 全覆盖，原场与原保存 r_s 不变，不另造更有利的 r_s。四项身份合同包含原 LU 数组 hash，不额外声称存在独立 pivot hash。
+
+trace 检查计算保存 r_s,t 与“raw_e,t 加逐 cell 共轭 MPC 拉回的 F·raw_e,i”之差；port 检查保留原 B/D/Hp 和非零内部 B/D 项（各 4908 个非零条目）。trace 尺度在运行前已声明为保存 r_s,t、f_t、拉回后 raw 体积 trace、B·alpha trace 这四个范数，加逐 cell F·raw_e,i 散射项范数之和。它是单独的传递门，不能替换旧 native identity 的分母或覆盖旧 FAIL。
+
+| 同 raw 传递检查（measured） | 绝对范数 | 事前定义的操作尺度 | 相对值 / 限值 | 结果 |
+|---|---:|---:|---|---|
+| trace 传递差 | 1.0318252087243511e-9 | 1.5714929688659558 | 6.565891347696912e-10 / 1e-10 | FAIL |
+| port 传递差 | 1.1198348455945077e-27 | 11.52187425135603 | 9.719207319613928e-29 / 1e-10 | 此项 PASS |
+| raw 四块 internal 余量 | 2.378929984709598e-10 | 1738561.7200576295 | 1.3683322008440068e-16 / 1e-10 | 此项 PASS，非全局 identity PASS |
+
+独立保存向量复核重算 trace 绝对差为 1.0318252087243505e-9、相对值为 6.565891347696908e-10，结论相同；两条 trace/port 保存公式逐字节一致，8 份向量 hash/norm 与原场/r_s 身份核对通过。分母求和及保存 Schur 范数经独立复核，未保存的 raw/B/D/Hp 作用范数及逐 cell 尺度项仍属运行时观测，不冒称再次执行原始作用。
+
+本次按四块分别收缩/分组得到的 internal 范数 **2.378929984709598e-10**，与前次 whole882 直接作用中的 **2.4321210504256346e-10** 不是同一算术记录，不能相互替换。internal 的大操作尺度与 trace 或原 identity 尺度也不同，不应仅因 1.368e-16 很小就推断整体恢复正确。
+
+监督 21.134923851001076 s，采样进程树峰值 479621120 B，81 个资源采样与 71 个准入门全核对，exit0、无残留进程。65 次 fresh 局部因子合计 6.790045437199296 s，总传递计算 11.785484534979332 s，均包含于监督墙钟，不能再相加；0 个全局因子、0 次 FGMRES，未保存局部因子，未改生产源或控制流。首类 S 由测试循环别名额外保留 2985984 B 至函数返回，仍在原 128 MiB 局部预留内，未据此领取释放或驻留 credit。
+
+这项负证据与原 native identity FAIL 同时存在：split 装配的一致性不能证明 Schur/F 传递正确，也不能解释或消除全部异常。当前继续做局部误差分解，生产变更和新 FGMRES 尚未发生，完整场验收仍关闭。
 
 ## 7. 资源与资格边界
 
@@ -137,12 +158,13 @@ split-volume 与 combined raw-volume 的向量差为 2.6560669860016805e-10，�
 | global raw candidate02 | 12.57078115499462 | 408920064 | raw 与原 surface/carrier 工作已完成，complex 元数据 JSON 序列化失败；阶段根据 traceback/控制流判定，失败 surface JSON 未写出 |
 | global raw candidate03 | 12.317749255016679 | 433082368 | 仅修元数据编码后完整产出；exit0，科学 identity 仍 FAIL |
 | global split candidate01 | 28.16528852900956 | 520204288 | 648 split calls、324 raw cell actions、80 modes；exit0，仅装配一致性通过 |
+| same raw → Schur candidate01 | 21.134923851001076 | 479621120 | 65 个原 hash 匹配的局部因子；exit0，trace 传递 FAIL，未改生产 |
 
 所有尝试均保存原失败和已执行工作，监督确认无残留进程，不据此推断逐 native handle 析构或 allocator 已回收。global raw 三次合计 236 个资源采样和 17 个准入门经独立审计；数值结果与过程退出分别判断。
 
-费用账已更新到 v115，完整保留上述失败和成功阶段。账中 127 个阶段的已知终态时间字段为 28259.113600316996 s，继承的累计下界字段为 36394.54681369 s；这两个字段范围不同，不能相加，也不是精确端到端耗时。准备时间单列且非零，不能因最终成功而冲销旧费用。相邻 JSON 仅记录小型摘要与账本 SHA256，不上传账本或其重型数据。
+费用账已更新到 v116，完整保留上述失败和成功阶段。账中 128 个阶段的已知终态时间字段为 28280.248524167997 s，继承的累计下界字段为 36415.681737541 s；这两个字段范围不同，不能相加，也不是精确端到端耗时。准备时间单列且非零，不能因最终成功而冲销旧费用。相邻 JSON 仅记录小型摘要与账本 SHA256，不上传账本或其重型数据。
 
-下一步应判断 raw/Schur 与 native split 两条路线如何在不改变原始数学定义和门限的前提下形成可信的统一检查，并补齐生产接口、trace-only/port-only/mixed 与完整 RHS 回归。当前工作为保存场诊断，不能以此重标旧解或自动续跑。不得用 native residual 反推被检查量、替换 identity 分母或放宽阈值。
+下一步应优先分解同 raw trace 传递的局部误差，同时保留 raw/native 路线差的独立记录；生产接口、trace-only/port-only/mixed 与完整 RHS 回归仍未验收。当前工作为保存场诊断，不能以此重标旧解或自动续跑。不得用 native residual 反推被检查量、替换 identity 分母或放宽阈值。
 
 ## 8. 证据与发布边界
 
@@ -160,6 +182,9 @@ split-volume 与 combined raw-volume 的向量差为 2.6560669860016805e-10，�
 - phase4_step8_global_raw_source_terminal_review.json
 - phase4_step8_global_split_replay_candidate01/attempt01/{summary,result}.json
 - phase4_step8_global_split_source_terminal_review.json
-- phase4_execution_ledger_v115.json（仅绑定摘要与哈希，不上传原账）
+- phase4_execution_ledger_v115.json、phase4_execution_ledger_v116.json（仅绑定摘要与哈希，不上传原账）
+- phase4_step8_same_raw_schur_source_terminal_review.json
+- phase4_step8_same_raw_schur_saved_vector_review.json
+- phase4_step8_same_raw_schur_candidate01/attempt01/{summary,result}.json
 
 本次仅 connector 发布中文报告和小 JSON，范围限 docs/task40extra_dot_parallel_cloud。未发布实现代码、矩阵、因子、完整场、数组或大归档；此次发布不附带额外计算。源码审计基线为 322e62e11a80969b3a35f0cbb08b25c11c539ea6；报告提交的远端 HEAD 与该计算来源身份必须区分。
