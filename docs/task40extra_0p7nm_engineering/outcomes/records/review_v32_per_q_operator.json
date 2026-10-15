@@ -1,0 +1,281 @@
+{
+  "review": "V32",
+  "scientific_source_sha": "9ba8f0aa2750d020533321860d653dbbc44b885f",
+  "review_commit": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+  "run_id": "20261014T121113.504617Z",
+  "window_sha256": "ec92e117479ef7e41854a4dab647c8c1bc963ef2705fb6ec390926f252294bf6",
+  "t0_utc": "2026-10-14T02:08:33.255938807Z",
+  "numeric_cutoff_utc": "2026-10-15T01:48:33.255938807Z",
+  "deadline_utc": "2026-10-15T02:08:33.255938807Z",
+  "reported_at_utc": "2026-10-15T02:01:48.098000+00:00",
+  "q0": "ACCEPTED_PREVIOUS_COMPLETE_CSR_NATIVE",
+  "q4_status": "COMPLETE_CSR_NATIVE_PASS",
+  "q4_native_source": "767323bbee161a6163fec01d27c96723f52b5f97",
+  "q4_shape": [
+    777424,
+    777424
+  ],
+  "q4_stored_slots": 581086528,
+  "q4_csr_payload_bytes": 11624840260,
+  "q4_native_maximum_relative_error": 2.6835748652861403e-14,
+  "q4_native_limit": 1e-11,
+  "q4_manifest_sha256": "c7c5a627c9685849d4bca109b030b6dd853f6b64ff3d719048b89278bddf8868",
+  "q4_native_qualification": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/q4_complete_767323bb/task40_v30_q4_twist0_native_qualification.json",
+    "bytes": 12073,
+    "sha256": "9d4ccd8f1b4b8b0119d4b62fc1c2fea3849e8cf80a6e4442bfd8016248778892"
+  },
+  "q4_native_qualification_sha256": "9d4ccd8f1b4b8b0119d4b62fc1c2fea3849e8cf80a6e4442bfd8016248778892",
+  "q4_native_raw_receipt": {
+    "csr_action_count": 4,
+    "csr_manifest_sha256": "c7c5a627c9685849d4bca109b030b6dd853f6b64ff3d719048b89278bddf8868",
+    "execution_identity": {
+      "source_sha": "767323bbee161a6163fec01d27c96723f52b5f97",
+      "window_sha256": "ec92e117479ef7e41854a4dab647c8c1bc963ef2705fb6ec390926f252294bf6"
+    },
+    "four_complete_csr_actions_passed": true,
+    "matrix_source_identity": {
+      "source_sha": "9d0f4dbfc730dd620b709d048e33e9da6c77520c",
+      "window_sha256": "a8ee7ab9970ece892d85f9313180438e88561f0bfc63b68acdb11f536400def7"
+    },
+    "maximum_relative_error": 2.6835748652861403e-14,
+    "native_array_artifacts": {
+      "component_case1_C": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/component_case1_C.npy",
+        "sha256": "6140311cce6d01dad8e1aa6426eee6514d60b6d75c92777cf7310ed17887b861",
+        "shape": [
+          777424
+        ]
+      },
+      "component_case1_Hhat": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/component_case1_Hhat.npy",
+        "sha256": "26649bd6139786d7d9619b7507eecffd0efb21fbb5fa2c67614604044180b6a8",
+        "shape": [
+          777424
+        ]
+      },
+      "component_case1_minus_D": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/component_case1_minus_D.npy",
+        "sha256": "af12209d277db231e38d526c1b4e8979bfebf13693c819685bd55796af2959fa",
+        "shape": [
+          777424
+        ]
+      },
+      "component_case1_volume": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/component_case1_volume.npy",
+        "sha256": "8917c6e992a41e47a1b9fd37d740296dd1a9e219a0b4e9f56bf9814f282c47d9",
+        "shape": [
+          777424
+        ]
+      },
+      "csr_case1_full": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/csr_case1_full.npy",
+        "sha256": "a0e0d59c8224442bfc8d2d5f9c1dc0798abea735f6d6aa8d438bdf8e5614e032",
+        "shape": [
+          777424
+        ]
+      },
+      "csr_case1_port_only": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/csr_case1_port_only.npy",
+        "sha256": "2e977705cdd05f7035616316bf1c65d15a2aa854eb8beafe95b126be8461043d",
+        "shape": [
+          777424
+        ]
+      },
+      "csr_case1_trace_only": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/csr_case1_trace_only.npy",
+        "sha256": "b007df9e961c14946c10ac09d599165b88f5470d7f31d6bc3cc5f88d3df35da5",
+        "shape": [
+          777424
+        ]
+      },
+      "csr_case2_full": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/csr_case2_full.npy",
+        "sha256": "907e5617baa37e79170af425c8cb1b050f9817149eff397cd2ab30dff2569460",
+        "shape": [
+          777424
+        ]
+      },
+      "input_case1_full": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/input_case1_full.npy",
+        "sha256": "c5ca190b885f6437f406feef9313109aaec64cfd907fe081bb4eb31611e7b7ec",
+        "shape": [
+          777424
+        ]
+      },
+      "input_case1_port_only": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/input_case1_port_only.npy",
+        "sha256": "f04d4de7316f8ecaddb76613829ac4564d8861b828552d19ddbc83845fc04c14",
+        "shape": [
+          777424
+        ]
+      },
+      "input_case1_trace_only": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/input_case1_trace_only.npy",
+        "sha256": "d0f4da0b73dcff78b0398105fede80711ffa60ed4f9afa617032505f83f4712f",
+        "shape": [
+          777424
+        ]
+      },
+      "input_case2_full": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/input_case2_full.npy",
+        "sha256": "a71cbf28bcc02ce4a54444054d94bd65886116271f10e71ecf83c4590ba3e9e3",
+        "shape": [
+          777424
+        ]
+      },
+      "native_case1_full": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/native_case1_full.npy",
+        "sha256": "0fb86c45907da2e3b36bd7a45b2a0a1c27691d6539b00755edd493c6785823ce",
+        "shape": [
+          777424
+        ]
+      },
+      "native_case1_port_only": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/native_case1_port_only.npy",
+        "sha256": "9c4e18bca12b6f41b6d1e3061d4116774af960734c9956955eef93038268bfe4",
+        "shape": [
+          777424
+        ]
+      },
+      "native_case1_trace_only": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/native_case1_trace_only.npy",
+        "sha256": "fe3eac157b54ddb586c1d0a26ee4bfb6c9300d4c367dfdd0dd6cca9e18c8234a",
+        "shape": [
+          777424
+        ]
+      },
+      "native_case2_full": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/native_case2_full.npy",
+        "sha256": "ee3c832d474d31a48433307d68fdc832ef28cc089dd8663e5d35c6bf12f5b021",
+        "shape": [
+          777424
+        ]
+      },
+      "paired_peer_case2_cross": {
+        "bytes": 12442432,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/paired_peer_case2_cross.npy",
+        "sha256": "990292aeaaf4c0bcd63df8285cb4d4362acf8b2c5d8f93833bee0a503fa70346",
+        "shape": [
+          777644
+        ]
+      },
+      "paired_peer_input": {
+        "bytes": 12442432,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/paired_peer_input.npy",
+        "sha256": "b78d8a55cd7956b8ed7aa037ebd95e86b6ae4efdf3ff7c5c8e2ce841b3406340",
+        "shape": [
+          777644
+        ]
+      },
+      "paired_peer_native_cross": {
+        "bytes": 12438912,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/paired_peer_native_cross.npy",
+        "sha256": "8769291b2c3193231e3ec0d7c215e93c3d17981d02736c31f403479e2faedd69",
+        "shape": [
+          777424
+        ]
+      },
+      "paired_peer_native_diagonal": {
+        "bytes": 12442432,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/paired_peer_native_diagonal.npy",
+        "sha256": "90575cd842fca817f0d6dd80ea9a059d6e04bec2f8d31c3569127fa8246eefc2",
+        "shape": [
+          777644
+        ]
+      },
+      "paired_selected_native_cross": {
+        "bytes": 12442432,
+        "dtype": "<c16",
+        "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_767323bbee161a6163fec01d27c96723f52b5f97/factor_bank/selected_q/q4_twist0/task40_v30_q4_twist0_native_arrays/paired_selected_native_cross.npy",
+        "sha256": "002dd813cedde3b89a73dfca6f21ea0603a81f914d15845c4d1b55d14e2c661a",
+        "shape": [
+          777644
+        ]
+      }
+    },
+    "native_component_reassembly_relative": 2.304769489707805e-14,
+    "native_input_seeds": {
+      "case1_full": null,
+      "case2_full": 301105,
+      "paired_peer_full": "reused_v26_native_case1"
+    },
+    "operator_identity": {
+      "ordered_mode_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+      "original_h_sha256": "50271e2f584cd5e1da0abcb0c64a3e936fea57dd76df2b60c8edaf87e8d813d8",
+      "profile_identity_sha256": "5bf9bf0b68ca9d885373642333ef77b778b8f60f288a77cba0b6c3d434752e56",
+      "q_map_sha256": "318853f330128711b413b6d7eacd6b917a2e72ab95ce206b7bd31944ec3b4a69",
+      "scientific_input_sha256": "f6726d005713b586f1bccfbf6904dd64f3f1f31dd3b069607b55e9b430d294c7"
+    },
+    "paired_sector_leakage": {
+      "peer_to_q": {
+        "input_q": 0,
+        "output_q": 4,
+        "peer_csr_native_relative": 1.9116580127740788e-14,
+        "relative": 2.646436357798361e-16,
+        "scale": "peer q native diagonal action norm"
+      },
+      "q_to_peer": {
+        "input_q": 4,
+        "output_q": 0,
+        "relative": 2.5936531846871953e-16,
+        "scale": "selected q native diagonal action norm"
+      }
+    },
+    "paired_sector_leakage_passed": true,
+    "q_index": 4,
+    "relative_error_limit": 1e-11,
+    "relative_errors": {
+      "case1_full": 1.8928634958004937e-14,
+      "case1_port_only": 2.1857045161505725e-15,
+      "case1_trace_only": 2.1884263938316564e-14,
+      "case2_full": 2.6835748652861403e-14
+    },
+    "schema": "task40extra.review_v30_q_csr_native_qualification.v1",
+    "status": "PASS",
+    "trace_plus_port_reassembly_relative": 2.304769489707805e-14,
+    "twist_index": 0
+  },
+  "current_attempt_q4_rebuilt": false,
+  "q1_q5_q2_q6_q3_q7": "NO_NEW_COMPLETED_ARTIFACT",
+  "all_q_numeric_bank": "NOT_RUN",
+  "full_reference_qualification": "NOT_RUN",
+  "target_pilot": "NOT_RUN",
+  "final_precision_2TB_48h": "NOT_QUALIFIED"
+}

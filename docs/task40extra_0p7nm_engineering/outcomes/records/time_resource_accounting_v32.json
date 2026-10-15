@@ -1,93 +1,313 @@
 {
-  "abi": {
-    "integer": "int32",
-    "receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
-    "scalar": "complex128",
-    "scope": "imports-only runtime receipt; no FE action"
-  },
-  "duplicate_final_suites": {
-    "reason": "parallel handoff messages caused the executor and controller to run the same frozen two-file suite",
-    "reported_passes_are_not_additive": true,
-    "same_collection": true,
-    "unique_tests_passed": 50
-  },
-  "frozen_source_sha": "a4f7d53af234dbd156388a4be133a0d5aeee1c16",
-  "historical_owner_log": {
-    "compiler_descendants_observed": false,
-    "internal_owner_subphase_hotspot": "UNKNOWN; do not attribute the unfinished interval to JIT or any single stage",
-    "owner_interval_sampled_process_tree_rss_peak_bytes": 16563810304,
-    "owner_interval_samples": 51485,
-    "owner_interval_task_swap_peak_bytes": 0,
-    "sha256": "2565c3ca3a8d2a148ad3bc2d17f64fe19891786755fb2e6406a9d9442ea30a9a",
-    "source": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_old_owner_log_audit.json"
-  },
-  "p0_parent_total_seconds": null,
-  "p0_parent_total_status": "UNKNOWN_NOT_FULLY_RECORDED; do not infer from partial tests or owner-log extraction",
-  "review": "V32",
-  "review_base_sha": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
-  "schema": "task40extra.review_v32_p0_time_resource_accounting.v1",
-  "scope": "P0 engineering and test fixtures only; no production service, FE, JIT qualification, native factorization, or PDE",
-  "supervised_fixture_resource_samples": {
-    "clock_scope": "The fixture deliberately places a temporary test T0 beyond the 85,200 s numeric cutoff to exercise closeout. The 86,400/85,200/1,200 values are test-only; no production T0/window was created.",
-    "missing_footer": {
-      "descendants_cleared": true,
-      "process_tree_samples": 6,
-      "result": "NO_PARTIAL_FOOTER; checker return 2",
-      "sampled_process_tree_pss_peak_bytes": null,
-      "sampled_process_tree_rss_peak_bytes": 152027136,
-      "sampled_process_tree_swap_peak_bytes": 0,
-      "watchdog_elapsed_seconds": 1.3025700279977173
+  "schema": "task40extra.review_v32_time_resource_accounting.v2",
+  "historical_p0": {
+    "abi": {
+      "integer": "int32",
+      "receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+      "scalar": "complex128",
+      "scope": "imports-only runtime receipt; no FE action"
     },
-    "receipt_index": {
-      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/supervised_partial_receipts/index.json",
-      "sha256": "e3d8464f588af812dadf5894cc4e4a387cb246faa839e158fdeb37e62f0c368d"
+    "duplicate_final_suites": {
+      "reason": "parallel handoff messages caused the executor and controller to run the same frozen two-file suite",
+      "reported_passes_are_not_additive": true,
+      "same_collection": true,
+      "unique_tests_passed": 50
     },
-    "resource_scope": "Actual short checker child process samples. Cgroup/host admission values were test-injected; these measurements are not workstation capacity or a FE/PDE gate.",
-    "valid_partial": {
-      "descendants_cleared": true,
-      "process_tree_samples": 6,
-      "result": "PARTIAL_RECEIPT_CHECKED; checker return 0; official_result=false",
-      "sampled_process_tree_pss_peak_bytes": null,
-      "sampled_process_tree_rss_peak_bytes": 153915392,
-      "sampled_process_tree_swap_peak_bytes": 0,
-      "watchdog_elapsed_seconds": 1.3173083299770951
+    "frozen_source_sha": "a4f7d53af234dbd156388a4be133a0d5aeee1c16",
+    "historical_owner_log": {
+      "compiler_descendants_observed": false,
+      "internal_owner_subphase_hotspot": "UNKNOWN; do not attribute the unfinished interval to JIT or any single stage",
+      "owner_interval_sampled_process_tree_rss_peak_bytes": 16563810304,
+      "owner_interval_samples": 51485,
+      "owner_interval_task_swap_peak_bytes": 0,
+      "sha256": "2565c3ca3a8d2a148ad3bc2d17f64fe19891786755fb2e6406a9d9442ea30a9a",
+      "source": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_old_owner_log_audit.json"
+    },
+    "p0_parent_total_seconds": null,
+    "p0_parent_total_status": "UNKNOWN_NOT_FULLY_RECORDED; do not infer from partial tests or owner-log extraction",
+    "review": "V32",
+    "review_base_sha": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+    "schema": "task40extra.review_v32_p0_time_resource_accounting.v1",
+    "scope": "P0 engineering and test fixtures only; no production service, FE, JIT qualification, native factorization, or PDE",
+    "supervised_fixture_resource_samples": {
+      "clock_scope": "The fixture deliberately places a temporary test T0 beyond the 85,200 s numeric cutoff to exercise closeout. The 86,400/85,200/1,200 values are test-only; no production T0/window was created.",
+      "missing_footer": {
+        "descendants_cleared": true,
+        "process_tree_samples": 6,
+        "result": "NO_PARTIAL_FOOTER; checker return 2",
+        "sampled_process_tree_pss_peak_bytes": null,
+        "sampled_process_tree_rss_peak_bytes": 152027136,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "watchdog_elapsed_seconds": 1.3025700279977173
+      },
+      "receipt_index": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/supervised_partial_receipts/index.json",
+        "sha256": "e3d8464f588af812dadf5894cc4e4a387cb246faa839e158fdeb37e62f0c368d"
+      },
+      "resource_scope": "Actual short checker child process samples. Cgroup/host admission values were test-injected; these measurements are not workstation capacity or a FE/PDE gate.",
+      "valid_partial": {
+        "descendants_cleared": true,
+        "process_tree_samples": 6,
+        "result": "PARTIAL_RECEIPT_CHECKED; checker return 0; official_result=false",
+        "sampled_process_tree_pss_peak_bytes": null,
+        "sampled_process_tree_rss_peak_bytes": 153915392,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "watchdog_elapsed_seconds": 1.3173083299770951
+      }
+    },
+    "validation_attempts": [
+      {
+        "id": "supervised_fixture_attempt4",
+        "raw_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt4.log",
+        "reason": "temporary fixture source tree was dirty after canonical DAT creation; real source gate correctly stopped before checker",
+        "result": "2 failed in 0.97 s"
+      },
+      {
+        "id": "supervised_fixture_attempt5",
+        "raw_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt5.log",
+        "reason": "missing-footer passed; positive footer reached actual checker but lacked required stage/resource/cleanup semantics",
+        "result": "1 passed, 1 failed in 3.52 s"
+      },
+      {
+        "id": "supervised_fixture_attempt6",
+        "raw_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt6.log",
+        "reason": "both negative and positive supervised checker paths passed",
+        "result": "2 passed in 3.60 s"
+      },
+      {
+        "id": "executor_final_two_file_suite",
+        "raw_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_final_closeout_q4_attempt1.log",
+        "result": "50 passed in 6.24 s"
+      },
+      {
+        "id": "controller_final_review_suite",
+        "raw_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_final_p0_tests_attempt1.log",
+        "result": "50 passed in 6.22 s"
+      }
+    ],
+    "window_state": {
+      "deadline": null,
+      "new_heavy_service_started": false,
+      "production_window_created": false,
+      "t0": null,
+      "v32_approval": "PENDING_USER_APPROVAL"
     }
   },
-  "validation_attempts": [
-    {
-      "id": "supervised_fixture_attempt4",
-      "raw_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt4.log",
-      "reason": "temporary fixture source tree was dirty after canonical DAT creation; real source gate correctly stopped before checker",
-      "result": "2 failed in 0.97 s"
+  "current_terminal": {
+    "review": "V32",
+    "scientific_source_sha": "9ba8f0aa2750d020533321860d653dbbc44b885f",
+    "review_commit": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+    "run_id": "20261014T121113.504617Z",
+    "window_sha256": "ec92e117479ef7e41854a4dab647c8c1bc963ef2705fb6ec390926f252294bf6",
+    "t0_utc": "2026-10-14T02:08:33.255938807Z",
+    "numeric_cutoff_utc": "2026-10-15T01:48:33.255938807Z",
+    "deadline_utc": "2026-10-15T02:08:33.255938807Z",
+    "reported_at_utc": "2026-10-15T02:01:48.098000+00:00",
+    "service_total_nonoverlapping_parent_seconds": 49077.043639834614,
+    "run_case_parent_seconds": 49072.819632831,
+    "run_summary_workflow_seconds": 49072.372616211884,
+    "watchdog_seconds": 49072.0596102688,
+    "required_checker_parent_seconds": 2.896090161986649,
+    "nonoverlapping_parent_intervals": [
+      {
+        "budget_seconds": 0.3176860630046576,
+        "discrepancy_seconds": 2.5460030883550644e-06,
+        "elapsed_seconds": {
+          "boottime": 0.3176860630046576,
+          "monotonic": 0.31768351700156927,
+          "utc": 0.317684962
+        },
+        "from": "v31_true_service_entry_before_contract_input_selector_and_donor_validation",
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "to": "user_service_parent_before_activation",
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": 1.4449984307440822e-06
+      },
+      {
+        "budget_seconds": 0.0009744968265295029,
+        "discrepancy_seconds": 3.6747660487890244e-06,
+        "elapsed_seconds": {
+          "boottime": 0.0009708220604807138,
+          "monotonic": 0.0009744968265295029,
+          "utc": 0.000971053
+        },
+        "from": "user_service_parent_before_activation",
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "to": "activation_started",
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": -3.4438265295028267e-06
+      },
+      {
+        "budget_seconds": 0.398919037,
+        "discrepancy_seconds": 2.5380092705251656e-06,
+        "elapsed_seconds": {
+          "boottime": 0.39891899283975363,
+          "monotonic": 0.39891649899072945,
+          "utc": 0.398919037
+        },
+        "from": "activation_started",
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "to": "activation_finished",
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": 2.5380092705251656e-06
+      },
+      {
+        "budget_seconds": 0.50642241,
+        "discrepancy_seconds": 1.8928925281658238e-06,
+        "elapsed_seconds": {
+          "boottime": 0.5064220800995827,
+          "monotonic": 0.5064205171074718,
+          "utc": 0.50642241
+        },
+        "from": "activation_finished",
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "to": "abi_preflight_finished",
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": 1.8928925281658238e-06
+      },
+      {
+        "budget_seconds": 0.0025130969006568193,
+        "discrepancy_seconds": 2.3849006568193304e-06,
+        "elapsed_seconds": {
+          "boottime": 0.0025109669659286737,
+          "monotonic": 0.0025130969006568193,
+          "utc": 0.002510712
+        },
+        "from": "abi_preflight_finished",
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "to": "v31_live_resource_gate_started",
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": -2.3849006568193304e-06
+      },
+      {
+        "budget_seconds": 0.08978446200489998,
+        "discrepancy_seconds": 6.630048999811677e-07,
+        "elapsed_seconds": {
+          "boottime": 0.08978446200489998,
+          "monotonic": 0.08978422405198216,
+          "utc": 0.089783799
+        },
+        "from": "v31_live_resource_gate_started",
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "to": "v31_live_resource_gate_finished",
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": -4.25051982166913e-07
+      },
+      {
+        "budget_seconds": 0.0013150209560990334,
+        "discrepancy_seconds": 9.320210665464401e-07,
+        "elapsed_seconds": {
+          "boottime": 0.001314088935032487,
+          "monotonic": 0.0013150209560990334,
+          "utc": 0.001314166
+        },
+        "from": "v31_live_resource_gate_finished",
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "to": "run_case_started",
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": -8.549560990332803e-07
+      },
+      {
+        "budget_seconds": 49072.819632831,
+        "discrepancy_seconds": 1.0331830708310008e-05,
+        "elapsed_seconds": {
+          "boottime": 49072.81963052717,
+          "monotonic": 49072.81962249917,
+          "utc": 49072.819632831
+        },
+        "from": "run_case_started",
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "to": "run_case_finished",
+        "tolerance_seconds": 490.7281963052717,
+        "utc_minus_monotonic_seconds": 1.0331830708310008e-05
+      },
+      {
+        "budget_seconds": 0.00868820189498365,
+        "discrepancy_seconds": 8.748894983649086e-06,
+        "elapsed_seconds": {
+          "boottime": 0.008681276813149452,
+          "monotonic": 0.00868820189498365,
+          "utc": 0.008679453
+        },
+        "from": "run_case_finished",
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "to": "required_checker_started",
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": -8.748894983649086e-06
+      },
+      {
+        "budget_seconds": 2.896090161986649,
+        "discrepancy_seconds": 6.51925802230835e-07,
+        "elapsed_seconds": {
+          "boottime": 2.896089510060847,
+          "monotonic": 2.896090161986649,
+          "utc": 2.896090031
+        },
+        "from": "required_checker_started",
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "to": "required_checker_finished",
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": -1.3098664908284263e-07
+      },
+      {
+        "budget_seconds": 0.0016140530351549387,
+        "discrepancy_seconds": 5.909241735935211e-07,
+        "elapsed_seconds": {
+          "boottime": 0.0016140530351549387,
+          "monotonic": 0.0016134621109813452,
+          "utc": 0.001613726
+        },
+        "from": "required_checker_finished",
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "to": "user_service_parent_finished",
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": 2.638890186548292e-07
+      }
+    ],
+    "tree_rss_peak_bytes": 50996031488,
+    "cgroup_peak_bytes": 33537933312,
+    "pss_peak_bytes": null,
+    "pss_status": "DISABLED_BY_PROFILE",
+    "task_swap_peak_bytes": 0,
+    "host_swap_delta_pages": {
+      "pswpin_pages": 82,
+      "pswpout_pages": 0
     },
-    {
-      "id": "supervised_fixture_attempt5",
-      "raw_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt5.log",
-      "reason": "missing-footer passed; positive footer reached actual checker but lacked required stage/resource/cleanup semantics",
-      "result": "1 passed, 1 failed in 3.52 s"
+    "host_swap_attribution": "host-global diagnostic, not task usage; raw label WSL-global is legacy metadata on native fenics-ws",
+    "first_SIGTERM": {
+      "monotonic": 1953908.285394897,
+      "scope": "whole child tree",
+      "timestamp_ns": 1792028913424528548
     },
-    {
-      "id": "supervised_fixture_attempt6",
-      "raw_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_supervised_partial_attempt6.log",
-      "reason": "both negative and positive supervised checker paths passed",
-      "result": "2 passed in 3.60 s"
+    "first_SIGKILL": {
+      "monotonic": 1953938.289233608,
+      "scope": "whole child tree",
+      "timestamp_ns": 1792028943428367143
     },
-    {
-      "id": "executor_final_two_file_suite",
-      "raw_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/p0_final_closeout_q4_attempt1.log",
-      "result": "50 passed in 6.24 s"
+    "final_watchdog_charged_seconds": 85232.60271290301,
+    "campaign_closeout_read": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/campaign_closeout_state.json",
+      "bytes": 2685,
+      "sha256": "068090e3bba44bbcb6f8c196d29b3adbd270dc96bb48a1a943c6c80803bcfefd"
     },
-    {
-      "id": "controller_final_review_suite",
-      "raw_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_final_p0_tests_attempt1.log",
-      "result": "50 passed in 6.22 s"
+    "parent_child_times_not_additive": true,
+    "cold_algorithm_total_seconds": null,
+    "cold_algorithm_total_status": "UNKNOWN; campaign development failures and warm continuation are not cold solve cost",
+    "source": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/outer_workflow_record.json",
+      "bytes": 248700,
+      "sha256": "1f36590306de1037ebbe02baa42749871af0f7d4d2758d66ff5e9b387e7e97fe"
     }
-  ],
-  "window_state": {
-    "deadline": null,
-    "new_heavy_service_started": false,
-    "production_window_created": false,
-    "t0": null,
-    "v32_approval": "PENDING_USER_APPROVAL"
   }
 }

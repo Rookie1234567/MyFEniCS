@@ -1,70 +1,250 @@
 {
-  "approval": {
-    "deadline": null,
-    "historical_v30_approval_current": false,
-    "t0": null,
-    "v32_window": "PENDING_USER_APPROVAL"
+  "schema": "task40extra.review_v32_workflow_ledger.v2",
+  "historical_p0": {
+    "approval": {
+      "deadline": null,
+      "historical_v30_approval_current": false,
+      "t0": null,
+      "v32_window": "PENDING_USER_APPROVAL"
+    },
+    "frozen_source_sha": "a4f7d53af234dbd156388a4be133a0d5aeee1c16",
+    "items": [
+      {
+        "boundary": "Historical owner subphase remains UNKNOWN; no compiler descendant in sampled owner interval; no large q4 arrays rescanned.",
+        "evidence": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_old_owner_log_audit.json",
+        "stage": "historical q4 source audit",
+        "status": "READ_ONLY_AUDITED"
+      },
+      {
+        "boundary": "Existing old arrays are read-only, consumer output root disjoint, exact pending record and three array hashes required; fixture import/finalization/provider reopen is not a new target native qualification.",
+        "evidence": "src/test/test_task40_v30_selected_q_csr.py::test_v32_q4_import_requires_exact_existing_pending_and_writes_receipt_to_new_root",
+        "stage": "q4 numeric-pending import route",
+        "status": "FIXTURE_TESTED"
+      },
+      {
+        "boundary": "Checker recomputes the current-contract/fixed-template identity and staged DAT identity; preflight read itself remains covered by the q4 import tests.",
+        "evidence": "src/runners/task40_v31_contract.py; src/test/test_task40_v31_closeout.py::test_v32_worker_binding_returns_fixed_q4_template",
+        "stage": "package to staged DAT to worker q4 identity",
+        "status": "FIXTURE_TESTED"
+      },
+      {
+        "boundary": "No full-size FE or numerical qualification in this P0.",
+        "evidence": "src/solvers/task40_v10_p6_yorbit.py; src/test/test_task40_v30_selected_q_csr.py",
+        "stage": "saved B/D/H owner and cleanup lifecycle",
+        "status": "SMALL_FIXTURE_TESTED"
+      },
+      {
+        "boundary": "Real subprocess supervisor, watchdog and actual check-partial CLI; missing footer returns NO_PARTIAL_FOOTER, synthetic valid partial returns PARTIAL_RECEIPT_CHECKED. No production service/FE.",
+        "evidence": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/supervised_partial_receipts/index.json",
+        "stage": "supervised required checker",
+        "status": "POSITIVE_AND_NEGATIVE_FIXTURES_PASS"
+      },
+      {
+        "boundary": "A missing fourth case raises before a PASS receipt can be produced; fixture is small algebra, not native FE science.",
+        "evidence": "src/test/test_task40_v30_selected_q_csr.py::test_native_qualification_checks_four_csr_actions_and_components",
+        "stage": "four-action native qualification guard",
+        "status": "MISSING_CASE_REJECTION_TESTED"
+      },
+      {
+        "boundary": "execution root is /home/fenics/Projects/laptop_share; created_payload_or_window=false; no approved package, T0, or service request.",
+        "evidence": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_draft_package_1.stdout.json",
+        "stage": "V32 pending package",
+        "status": "PREPARE_P0_SUCCEEDED_DRAFT_ONLY"
+      },
+      {
+        "boundary": "q4 remains NUMERIC_COMPLETE_NATIVE_PENDING; no new q native, other q, live factor bank, complete reference, target FE/PDE, KSP, field, or R/T/A.",
+        "evidence": null,
+        "stage": "formal numerical qualification",
+        "status": "NOT_RUN"
+      }
+    ],
+    "review_base_sha": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+    "schema": "task40extra.review_v32_incremental_workflow_ledger.v1",
+    "status": "P0_IMPLEMENTATION_TESTED_WINDOW_PENDING",
+    "test_collection": {
+      "command": "python -m pytest -q src/test/test_task40_v31_closeout.py src/test/test_task40_v30_selected_q_csr.py",
+      "controller_run_seconds": 6.22,
+      "duplicate": true,
+      "executor_run_seconds": 6.24,
+      "not_100_unique_tests": true,
+      "unique_passed": 50
+    }
   },
-  "frozen_source_sha": "a4f7d53af234dbd156388a4be133a0d5aeee1c16",
-  "items": [
+  "current_terminal": {
+    "review": "V32",
+    "scientific_source_sha": "9ba8f0aa2750d020533321860d653dbbc44b885f",
+    "review_commit": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+    "run_id": "20261014T121113.504617Z",
+    "window_sha256": "ec92e117479ef7e41854a4dab647c8c1bc963ef2705fb6ec390926f252294bf6",
+    "t0_utc": "2026-10-14T02:08:33.255938807Z",
+    "numeric_cutoff_utc": "2026-10-15T01:48:33.255938807Z",
+    "deadline_utc": "2026-10-15T02:08:33.255938807Z",
+    "reported_at_utc": "2026-10-15T02:01:48.098000+00:00",
+    "classification": "PERFORMANCE_CONTROLLED_STOP",
+    "run_case_exit": -9,
+    "service_exit": 2,
+    "required_checker_status": "NO_PARTIAL_FOOTER",
+    "checker_passed": false,
+    "official_result": false,
+    "full_pass": false,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "source": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/run_summary.json",
+      "bytes": 13658,
+      "sha256": "b9096abae785cc17e6c33ddf495af22352529f5899e63df0d4ed50f43887e0c7"
+    },
+    "checker": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/partial_checker_result.json",
+      "bytes": 800,
+      "sha256": "fdb802fdff0f826f934b70f581cceafcdd9120353847c4cdce54bc127d02c03e"
+    },
+    "supervision_response": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/required_checker_supervision_response.json",
+      "bytes": 10606,
+      "sha256": "ad4f4cc9ad4126961e436b3b0e057c50f9caf8c939735ea88be2efd6b5387a9d"
+    },
+    "controller_cleanup_readback": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/controller_terminal_readback.json",
+      "bytes": 11736,
+      "sha256": "da1d5a945e4a81e8028b902c7942d6305b19989f69fa2ee2226d5a3b5a635850"
+    }
+  },
+  "available_attempts_deduplicated_by_run_directory": [
     {
-      "boundary": "Historical owner subphase remains UNKNOWN; no compiler descendant in sampled owner interval; no large q4 arrays rescanned.",
-      "evidence": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_old_owner_log_audit.json",
-      "stage": "historical q4 source audit",
-      "status": "READ_ONLY_AUDITED"
+      "run_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T041818.983645Z",
+      "classification": "WORKER_FAILED",
+      "exit_status": 4,
+      "workflow_seconds": 2320.5235744169913,
+      "source": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/launch_attempt_cf93c841/run_summary.json",
+        "bytes": 13292,
+        "sha256": "c90546cc57303f9eaef3e4fea08179e51d7cd933294f78f696bf2787eb690fd9"
+      }
     },
     {
-      "boundary": "Existing old arrays are read-only, consumer output root disjoint, exact pending record and three array hashes required; fixture import/finalization/provider reopen is not a new target native qualification.",
-      "evidence": "src/test/test_task40_v30_selected_q_csr.py::test_v32_q4_import_requires_exact_existing_pending_and_writes_receipt_to_new_root",
-      "stage": "q4 numeric-pending import route",
-      "status": "FIXTURE_TESTED"
+      "run_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T112418.667760Z",
+      "classification": "WORKER_FAILED",
+      "exit_status": 4,
+      "workflow_seconds": 2370.2887334800325,
+      "source": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/launch_attempt_6db14d51/run_summary.json",
+        "bytes": 13290,
+        "sha256": "9693c8e79457bd39c59579fa5b314cddc084178d8f1f702c6e21d29d4b25cfaa"
+      }
     },
     {
-      "boundary": "Checker recomputes the current-contract/fixed-template identity and staged DAT identity; preflight read itself remains covered by the q4 import tests.",
-      "evidence": "src/runners/task40_v31_contract.py; src/test/test_task40_v31_closeout.py::test_v32_worker_binding_returns_fixed_q4_template",
-      "stage": "package to staged DAT to worker q4 identity",
-      "status": "FIXTURE_TESTED"
+      "run_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T082058.913694Z",
+      "classification": "WORKER_FAILED",
+      "exit_status": 4,
+      "workflow_seconds": 2013.40540765482,
+      "source": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/launch_attempt_46774558/run_summary.json",
+        "bytes": 13299,
+        "sha256": "bc8636adb9dd4656f4260ec90f093146d5daed15a2a848dbbcd04fc178f20d02"
+      }
     },
     {
-      "boundary": "No full-size FE or numerical qualification in this P0.",
-      "evidence": "src/solvers/task40_v10_p6_yorbit.py; src/test/test_task40_v30_selected_q_csr.py",
-      "stage": "saved B/D/H owner and cleanup lifecycle",
-      "status": "SMALL_FIXTURE_TESTED"
+      "run_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T072438.463162Z",
+      "classification": "WORKER_FAILED",
+      "exit_status": 4,
+      "workflow_seconds": 2037.433266561944,
+      "source": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/launch_attempt_c8c83492/run_summary.json",
+        "bytes": 13277,
+        "sha256": "5e335b83585bca1cefb4f9b02371fe9c4d0e8283d7decdd7addc7ac51ff7373a"
+      }
     },
     {
-      "boundary": "Real subprocess supervisor, watchdog and actual check-partial CLI; missing footer returns NO_PARTIAL_FOOTER, synthetic valid partial returns PARTIAL_RECEIPT_CHECKED. No production service/FE.",
-      "evidence": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/supervised_partial_receipts/index.json",
-      "stage": "supervised required checker",
-      "status": "POSITIVE_AND_NEGATIVE_FIXTURES_PASS"
+      "run_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T091059.046355Z",
+      "classification": "WORKER_FAILED",
+      "exit_status": 4,
+      "workflow_seconds": 110.5032938849181,
+      "source": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/launch_attempt_46774558_artifact_repair/run_summary.json",
+        "bytes": 13317,
+        "sha256": "f9de646b59a99ccddcd507f6ab2285d445482076517f6482674309840fba9888"
+      }
     },
     {
-      "boundary": "A missing fourth case raises before a PASS receipt can be produced; fixture is small algebra, not native FE science.",
-      "evidence": "src/test/test_task40_v30_selected_q_csr.py::test_native_qualification_checks_four_csr_actions_and_components",
-      "stage": "four-action native qualification guard",
-      "status": "MISSING_CASE_REJECTION_TESTED"
+      "run_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T030813.870995Z",
+      "classification": "WORKER_FAILED",
+      "exit_status": 4,
+      "workflow_seconds": 2491.5965885929763,
+      "source": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/launch_attempt_553fd4a2/run_summary.json",
+        "bytes": 13855,
+        "sha256": "77d8de1659be8696fcea549b73662178f8c013946b9bbf2034cc62c102e85376"
+      }
     },
     {
-      "boundary": "execution root is /home/fenics/Projects/laptop_share; created_payload_or_window=false; no approved package, T0, or service request.",
-      "evidence": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/controller_draft_package_1.stdout.json",
-      "stage": "V32 pending package",
-      "status": "PREPARE_P0_SUCCEEDED_DRAFT_ONLY"
+      "run_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T063133.878895Z",
+      "classification": "WORKER_FAILED",
+      "exit_status": 4,
+      "workflow_seconds": 2028.2326777679846,
+      "source": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/launch_attempt_95b38be1/run_summary.json",
+        "bytes": 13271,
+        "sha256": "96c50eeb990437030dc7c1aa2e48910f6c5c4e72c987f585a06c2582654923c5"
+      }
     },
     {
-      "boundary": "q4 remains NUMERIC_COMPLETE_NATIVE_PENDING; no new q native, other q, live factor bank, complete reference, target FE/PDE, KSP, field, or R/T/A.",
-      "evidence": null,
-      "stage": "formal numerical qualification",
-      "status": "NOT_RUN"
+      "run_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T092649.255594Z",
+      "classification": "WORKER_FAILED",
+      "exit_status": 4,
+      "workflow_seconds": 3220.6329942389857,
+      "source": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/launch_attempt_767323bb/run_summary.json",
+        "bytes": 13292,
+        "sha256": "43a09cc598d2cc667d761da3eee39504a6b3229b94bfb1f01426ece880c565d6"
+      }
+    },
+    {
+      "run_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T054414.948095Z",
+      "classification": "WORKER_FAILED",
+      "exit_status": 4,
+      "workflow_seconds": 1921.5289929949213,
+      "source": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/launch_attempt_9115925d/run_summary.json",
+        "bytes": 13286,
+        "sha256": "82153d361be1602ab91af3418b9e13588465d7ba0f9c813efe04df069db9ecda"
+      }
+    },
+    {
+      "run_directory": "/tmp/pytest-of-shenjh/pytest-743/test_v32_service_supervisor_ru0/fixture_repo/results/task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
+      "classification": "TEST_FIXTURE_NO_FOOTER",
+      "exit_status": null,
+      "workflow_seconds": null,
+      "source": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/supervised_partial_receipts/missing-footer/run_summary.json",
+        "bytes": 1095,
+        "sha256": "c429f46b485f1fdb74c866073957a8f588f9c67694b62e26f5a810093d4694eb"
+      }
+    },
+    {
+      "run_directory": "/tmp/pytest-of-shenjh/pytest-719/test_v32_service_supervisor_ru1/fixture_repo/results/task40extra_0p7nm_target_original_ny8_resource_pilot_v20",
+      "classification": "RESOURCE_CONTROLLED_STOP",
+      "exit_status": null,
+      "workflow_seconds": null,
+      "source": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/supervised_partial_receipts/valid-partial/run_summary.json",
+        "bytes": 1097,
+        "sha256": "f9f854a0bf496fe688ee488cd9acc59a3464fede6481308779d1bfcd1a6a9643"
+      }
+    },
+    {
+      "run_directory": "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z",
+      "classification": "PERFORMANCE_CONTROLLED_STOP",
+      "exit_status": -9,
+      "workflow_seconds": 49072.372616211884,
+      "source": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/run_summary.json",
+        "bytes": 13658,
+        "sha256": "b9096abae785cc17e6c33ddf495af22352529f5899e63df0d4ed50f43887e0c7"
+      }
     }
   ],
-  "review_base_sha": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
-  "schema": "task40extra.review_v32_incremental_workflow_ledger.v1",
-  "status": "P0_IMPLEMENTATION_TESTED_WINDOW_PENDING",
-  "test_collection": {
-    "command": "python -m pytest -q src/test/test_task40_v31_closeout.py src/test/test_task40_v30_selected_q_csr.py",
-    "controller_run_seconds": 6.22,
-    "duplicate": true,
-    "executor_run_seconds": 6.24,
-    "not_100_unique_tests": true,
-    "unique_passed": 50
-  }
+  "all_attempts_complete": false,
+  "missing_preparation_costs": "UNKNOWN; saved records retained, no zero replacement",
+  "policy": "same V32 window; no new numerical run after cutoff"
 }

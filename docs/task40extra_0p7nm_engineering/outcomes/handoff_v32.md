@@ -1,3 +1,19 @@
+# V32 终态交接（2026-10-15，新加坡）
+
+
+当前 run 为 20261014T121113.504617Z，service 为 myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750.service，source 为 9ba8f0aa2750d020533321860d653dbbc44b885f，window SHA-256 为 ec92e117479ef7e41854a4dab647c8c1bc963ef2705fb6ec390926f252294bf6。数值截止 2026-10-15T01:48:33.255938807Z 已触发 PERFORMANCE_CONTROLLED_STOP；TERM 后 30 秒 KILL，worker exit -9，后代清场完成。该状态来自固定时间门，不是数值或内存失败；窗口不延长，本轮不重启。
+
+q4 既有 COMPLETE/native PASS 收据保留：777424×777424、581086528 结构槽、四个完整 CSR action 通过，最大相对误差 2.6835748652861403e-14（限值 1e-11）。这不是当前 run 的全局参考或目标场 pass。global_reference_builder 未完成；没有其他 q 新 COMPLETE/native、完整 reference、原尺寸 FE 场或 official R/T/A。自动受监督 checker 的真实结果为 NO_PARTIAL_FOOTER，checker_passed/full_pass/official_result 均 false；不合成 worker footer。
+
+时间与资源口径：run_case 父段 49072.819633 s，required checker 父段 2.896090 s，加上入口/activation/ABI等后的全部不重叠父段合计 49077.043640 s；watchdog 49072.059610 s 是嵌套子段。进程树 simultaneous RSS 峰 50996031488 B，专用 job cgroup 峰 33537933312 B，task swap 峰 0 B。宿主 global swapin 增量 82 页、swapout 0 页，只是宿主诊断，不能归到任务。campaign accounting 在 2026-10-15T01:58:26Z 的快照显示最后已落账 85235.547721 s、只读投影累计 85793.12263780605 s，剩余 closeout 606.877362 s；以 campaign state 的 current projected 字段为权威，不刷新 T0。
+
+下一断点是 src/solvers/task40_v10_p6_yorbit.py::build_task40_v10_p6_reference_inverse。若获下一轮授权，应只在 _build_same_mesh_levels、build_same_mesh_physical_action(..., verify_dtn_quadrature=True)、q provider/sector builder 这些真实调用边界补阶段证据。现有日志仅能确认 global_reference_builder 外层未结束，不能识别具体热点。
+
+原始证据和 hashes 见 benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/；文件集合和结果边界见 docs/task40extra_0p7nm_engineering/response_v32.md 与 outcomes/records/review_v32_terminal_closeout.json。所有旧 attempt、费用、UNKNOWN 和受控停止记录均保留。执行者未改数值源码、未启动运行、未 commit/push；由主控审核并集中发布。
+
+
+> 以下是已结束的P0/批准前历史命令与边界，不能直接重启已截止窗口；当前状态以上文为准。
+
 # V32 P0 交接：新运行窗尚未批准
 
 实现源码：`a4f7d53af234dbd156388a4be133a0d5aeee1c16`。完整结果HEAD以主控最后推送/回读为准。当前只有本机P0实现和小fixture，没有新重型attempt、T0或deadline。

@@ -1,3 +1,5 @@
+> 最新V32终态：[response_v32.md](response_v32.md)：q4独立native通过，后续全局reference builder固定截止；全八q与target未完成。
+
 > 最新执行结论：见 [response_v31](response_v31.md)。q4 完整数值矩阵已保存并 hash 回读一致，状态为 NUMERIC_COMPLETE_NATIVE_PENDING；固定窗口已到数值截止，后续 native/bank/target 未完成。以下历史 P0 状态保留，不代表目前仍未获批。
 
 ## Review V31 当前状态：P0 就绪，数值窗口待批准

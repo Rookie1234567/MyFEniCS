@@ -2,7 +2,7 @@
   "schema": "task40extra.run_index.v1",
   "branch": "task40extra_0p7nm_engineering",
   "repair_base_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
-  "current_code_sha": "a4f7d53af234dbd156388a4be133a0d5aeee1c16",
+  "current_code_sha": "9ba8f0aa2750d020533321860d653dbbc44b885f",
   "input": {
     "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat",
     "sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
@@ -2401,7 +2401,7 @@
       "validation": "15 passed in 1.14 s; changed-file py_compile, shell syntax, and git diff check PASS; source frozen and remotely verified."
     }
   ],
-  "last_formal_run_source_sha": "54cf6d367b07355c0ab08c8c10655ecac73cfc6a",
+  "last_formal_run_source_sha": "9ba8f0aa2750d020533321860d653dbbc44b885f",
   "review_v1_continuation": {
     "review": "docs/task40extra_0p7nm_engineering/review_report_v1.md",
     "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
@@ -8470,6 +8470,10 @@
       "sha": "1e9109cb62343b13c850da03432def2109fee481",
       "superseded_by": "a4f7d53af234dbd156388a4be133a0d5aeee1c16",
       "note": "previous top-level current_code_sha retained as historical when V32 P0 source was frozen"
+    },
+    {
+      "sha": "a4f7d53af234dbd156388a4be133a0d5aeee1c16",
+      "reason": "before V32 terminal closeout; retained"
     }
   ],
   "review_v32_p0": {
@@ -8522,5 +8526,13 @@
     "historical_v30_approval_is_current": false,
     "last_formal_run_source_sha_unchanged": "54cf6d367b07355c0ab08c8c10655ecac73cfc6a",
     "source_freeze": "controller committed the P0 code source; documents are being closed out separately"
+  },
+  "review_v32_closeout": {
+    "status": "Q4_NATIVE_PASS_REMAINING_REFERENCE_TIME_CUTOFF",
+    "source_sha": "9ba8f0aa2750d020533321860d653dbbc44b885f",
+    "run_id": "20261014T121113.504617Z",
+    "response": "docs/task40extra_0p7nm_engineering/response_v32.md",
+    "terminal_record": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v32_terminal_closeout.json",
+    "operator_record": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v32_per_q_operator.json"
   }
 }

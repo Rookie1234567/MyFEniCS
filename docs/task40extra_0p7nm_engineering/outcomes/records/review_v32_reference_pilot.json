@@ -1,0 +1,19 @@
+{
+  "review": "V32",
+  "scientific_source_sha": "9ba8f0aa2750d020533321860d653dbbc44b885f",
+  "review_commit": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+  "run_id": "20261014T121113.504617Z",
+  "window_sha256": "ec92e117479ef7e41854a4dab647c8c1bc963ef2705fb6ec390926f252294bf6",
+  "t0_utc": "2026-10-14T02:08:33.255938807Z",
+  "numeric_cutoff_utc": "2026-10-15T01:48:33.255938807Z",
+  "deadline_utc": "2026-10-15T02:08:33.255938807Z",
+  "reported_at_utc": "2026-10-15T02:01:48.098000+00:00",
+  "all_q_bank": "NOT_RUN",
+  "strict_reference": "NOT_RUN",
+  "V15_reference_pc": "NOT_RUN",
+  "target_original_A6": "NOT_RUN",
+  "target_official_fields": "NOT_RUN",
+  "reason": "TIME_CUTOFF_IN_GLOBAL_REFERENCE_BUILDER",
+  "q4_independent_success_preserved": true,
+  "handoff_requires_next_authorized_window": true
+}

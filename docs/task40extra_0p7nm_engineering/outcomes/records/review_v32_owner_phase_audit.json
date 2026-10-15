@@ -1,0 +1,29 @@
+{
+  "review": "V32",
+  "scientific_source_sha": "9ba8f0aa2750d020533321860d653dbbc44b885f",
+  "review_commit": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+  "run_id": "20261014T121113.504617Z",
+  "window_sha256": "ec92e117479ef7e41854a4dab647c8c1bc963ef2705fb6ec390926f252294bf6",
+  "t0_utc": "2026-10-14T02:08:33.255938807Z",
+  "numeric_cutoff_utc": "2026-10-15T01:48:33.255938807Z",
+  "deadline_utc": "2026-10-15T02:08:33.255938807Z",
+  "reported_at_utc": "2026-10-15T02:01:48.098000+00:00",
+  "twist0_owner_parent_seconds": 2064.048938861,
+  "q4_reuse_and_handoff": "COMPLETED",
+  "global_reference_builder_started_utc_ns": 1791982050392185702,
+  "last_stage_event": "task40_v31_global_reference_builder_phase_started",
+  "builder_until_SIGTERM_seconds": 46863.032342846,
+  "builder_complete": false,
+  "internal_subphase_attribution": "UNKNOWN; no internal completion event; do not attribute whole span to JIT/CSR/surface",
+  "next_specific_boundaries": [
+    "build_task40_v10_p6_reference_inverse -> _build_same_mesh_levels",
+    "build_same_mesh_physical_action(verify_dtn_quadrature=True)",
+    "then qualified_q_csr_provider and sector preparation"
+  ],
+  "next_boundaries_are_static_code_not_measured_hotspots": true,
+  "source_events": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/v20_one_q_row_tile_p6_reference_events.jsonl",
+    "bytes": 471029,
+    "sha256": "f53c728c8fe89f1bcc584b13643a2c0e5a6e12ab5c47dcec66dce36a0a449f0c"
+  }
+}

@@ -1,0 +1,351 @@
+{
+  "schema": "task40extra.review_v32_closeout_evidence_index.v1",
+  "scientific_source_sha": "9ba8f0aa2750d020533321860d653dbbc44b885f",
+  "result_base_sha": "e2737b4049045a1824f5a1c49bb7bfac85e6e929",
+  "source_input_abi": {
+    "source_sha": "9ba8f0aa2750d020533321860d653dbbc44b885f",
+    "input_sha256": "93f7ba194c63c09af6b88caa64be01e06d3b0f5eb10cddd50e6cb1a453b7a583",
+    "scientific_input_sha256": "f6726d005713b586f1bccfbf6904dd64f3f1f31dd3b069607b55e9b430d294c7",
+    "abi_receipt_sha256": "1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d",
+    "campaign_window_sha256": "ec92e117479ef7e41854a4dab647c8c1bc963ef2705fb6ec390926f252294bf6"
+  },
+  "actual_run_case_command": [
+    "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+    "scripts/run_case.py",
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/stage_inputs/full/target_original_ny8_resource_pilot_v20.dat",
+    "--task40-v10-campaign-window",
+    "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_f74bffca192aebc19c72e96066115cb62990fc8e/campaign_window_v32.json"
+  ],
+  "actual_supervised_checker_command": [
+    "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+    "scripts/task40_v20_service_workflow.py",
+    "check-partial",
+    "--input",
+    "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/stage_inputs/full/target_original_ny8_resource_pilot_v20.dat",
+    "--summary",
+    "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/run_summary.json",
+    "--manifest",
+    "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/run_manifest.json",
+    "--numerical-output",
+    "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/numerical_output",
+    "--stop-stage",
+    "full",
+    "--output",
+    "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/partial_checker_result.json"
+  ],
+  "actual_supervised_checker": {
+    "campaign_accounting_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_f74bffca192aebc19c72e96066115cb62990fc8e/campaign_accounting_v10.jsonl",
+    "campaign_closeout_reserve_seconds": 1200,
+    "campaign_phase": "closeout",
+    "campaign_window_sha256": "ec92e117479ef7e41854a4dab647c8c1bc963ef2705fb6ec390926f252294bf6",
+    "closeout_authorization": {
+      "campaign_window_sha256": "ec92e117479ef7e41854a4dab647c8c1bc963ef2705fb6ec390926f252294bf6",
+      "checker_kind": "task40_v20_partial_receipt_checker",
+      "command_sha256": "9df5f871f95da109864b7bb9ac0c61a383dee3d1c234b53e5372125b37c5eea3",
+      "expected_channel_count": 32060,
+      "input_paths": [
+        "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/stage_inputs/full/target_original_ny8_resource_pilot_v20.dat",
+        "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/run_summary.json",
+        "/home/fenics/Projects/laptop_share/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/run_manifest.json"
+      ],
+      "input_sha256s": [
+        "93f7ba194c63c09af6b88caa64be01e06d3b0f5eb10cddd50e6cb1a453b7a583",
+        "b9096abae785cc17e6c33ddf495af22352529f5899e63df0d4ed50f43887e0c7",
+        "6e6422d39a580f9335c06d2f396902659e1e7afc3e90f8b201d370746314fc6f"
+      ],
+      "phase": "closeout",
+      "purpose": "registered_read_only_required_checker",
+      "schema": "task40extra.review_v31_closeout_checker_authorization.v2",
+      "source_branch": "task40extra_0p7nm_engineering",
+      "source_clean": true,
+      "source_sha": "9ba8f0aa2750d020533321860d653dbbc44b885f",
+      "v31_contract_sha256": "f3541be5d8434e76634661de06c4f6fbab99aea8a6fb72003e4ab13d10e80071"
+    },
+    "host_reserve_bytes": 68719476736,
+    "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+    "process_tree_cleanup_required": true,
+    "process_tree_root_pid": 814868,
+    "process_tree_rss_cap_bytes": 1649267441664,
+    "process_tree_scope_includes_user_service_parent": true,
+    "profile_workflow_limit_seconds": 1200.0,
+    "pss_sampling_policy": "disabled_by_profile",
+    "service_cgroup_membership": "/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750.service",
+    "zero_swap_required": true
+  },
+  "raw_readback_index": {
+    "schema": "task40extra.v32.controller_terminal_readback.v1",
+    "observed_utc": "2026-10-15T01:52:05.561111Z",
+    "source_sha": "9ba8f0aa2750d020533321860d653dbbc44b885f",
+    "run_id": "20261014T121113.504617Z",
+    "old_pids_all_absent": [
+      814868,
+      815004,
+      815071,
+      815072,
+      815073
+    ],
+    "q4_complete_manifest_sha256": "c7c5a627c9685849d4bca109b030b6dd853f6b64ff3d719048b89278bddf8868",
+    "q4_native_qualification_sha256": "9d4ccd8f1b4b8b0119d4b62fc1c2fea3849e8cf80a6e4442bfd8016248778892",
+    "current_factor_bank_files": "only q4 consumer receipt and .sha256; no new q CSR or factors",
+    "remote_probe_command_scope": "read-only own approved project and five historical PIDs",
+    "full_csr_rehash_repeated": false,
+    "transferred_small_raw": [
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/abi_preflight_stderr.raw.txt",
+        "bytes": 213,
+        "sha256": "1fa46ee41b42a21d28e10c80176c975319249401e48a6796cf5f6e0f012cf2d7"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/abi_preflight_stdout.raw.txt",
+        "bytes": 936,
+        "sha256": "8c3b17bb0f48ea8943a37c7263d3e1123e9c955ac4d489ab9fe9b1c13b2c4037"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/activation_stderr.raw.txt",
+        "bytes": 213,
+        "sha256": "1fa46ee41b42a21d28e10c80176c975319249401e48a6796cf5f6e0f012cf2d7"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/outer_clock_events.jsonl",
+        "bytes": 158492,
+        "sha256": "bc11deee7913ffd1df51bb7c49e34db650e706653a05e02323ff18e86e7efdfa"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/outer_workflow_record.json",
+        "bytes": 248700,
+        "sha256": "1f36590306de1037ebbe02baa42749871af0f7d4d2758d66ff5e9b387e7e97fe"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/partial_checker_result.json",
+        "bytes": 800,
+        "sha256": "fdb802fdff0f826f934b70f581cceafcdd9120353847c4cdce54bc127d02c03e"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/required_checker_output.raw.txt",
+        "bytes": 780,
+        "sha256": "88cd0b5a68d914d657c1268066c8ff26ae61f6371a878db3bb35cb31bb6aef3f"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/required_checker_supervision_request.json",
+        "bytes": 8460,
+        "sha256": "62a12f334e676d4bc0a4a2c288ea414861f2716776b05b787501a487586ada33"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/required_checker_supervision_response.json",
+        "bytes": 10606,
+        "sha256": "ad4f4cc9ad4126961e436b3b0e057c50f9caf8c939735ea88be2efd6b5387a9d"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/required_checker_supervisor_stderr.raw.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/required_checker_supervisor_stdout.raw.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/required_checker_watchdog/resources.jsonl",
+        "bytes": 36098,
+        "sha256": "95cae5c413d389e0a6a84be5422a05a564da46a51a758ffea442ea9d29b99799"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/required_checker_watchdog/summary.json",
+        "bytes": 11849,
+        "sha256": "00f4fea3b7c1eaa113d425ff436f2a671a17aa7c9466540dad5bbc14f7b1d9ff"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/required_checker_watchdog/worker.log",
+        "bytes": 780,
+        "sha256": "88cd0b5a68d914d657c1268066c8ff26ae61f6371a878db3bb35cb31bb6aef3f"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/required_checker_watchdog_summary.json",
+        "bytes": 11849,
+        "sha256": "17f52d046409476613c69cfdf21ca709c7f802d0f4e5d7bf2ca668ee94e3ac82"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/run_case_stderr.raw.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_9ba8f0aa2750d020533321860d653dbbc44b885f/service_runs/myfenics-case-task40-v32-all-q-reference-9ba8f0aa2750/run_case_stdout.raw.txt",
+        "bytes": 13763,
+        "sha256": "2054533e80c7d77d8b78ad7f47ec6505adbcb16ed31dc0db541322f90b7aa8f7"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/q_csr_consumer_receipts/task40_v31_q4_twist0_consumer_19a8db8fc5f09d62940d2cb478ee48f4057ce0409f1e9da49c23c5c1191966d1.json",
+        "bytes": 7854,
+        "sha256": "1a2ea9032ea74a0f3c690f9c2a8fb9a652a96c63759c351ee4c8fe084de87c6f"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/run_manifest.json",
+        "bytes": 9438,
+        "sha256": "6e6422d39a580f9335c06d2f396902659e1e7afc3e90f8b201d370746314fc6f"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/run_summary.json",
+        "bytes": 13658,
+        "sha256": "b9096abae785cc17e6c33ddf495af22352529f5899e63df0d4ed50f43887e0c7"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/v20_one_q_row_tile_p6_reference_events.jsonl",
+        "bytes": 471029,
+        "sha256": "f53c728c8fe89f1bcc584b13643a2c0e5a6e12ab5c47dcec66dce36a0a449f0c"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/v20_one_q_row_tile_p6_reference_inventory.json",
+        "bytes": 363,
+        "sha256": "efdb4a3f8fb07def65470b74485203b2e5c734f08a0a4cad2f4b3fe24df2f5ec"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/v31_twist0_owner_receipt.json",
+        "bytes": 8337,
+        "sha256": "386003161cb7422c2453bac9704975436df4991203fd91c71f91ee5308cc22d2"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/watchdog/summary.json",
+        "bytes": 12458,
+        "sha256": "f2df0d44838bb3baf3a1e91aac24253d953cf32b0f6d51c954082b253e06ccc0"
+      },
+      {
+        "local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v32_preparation/terminal_9ba8f0aa/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_target_original_ny8_resource_pilot_v20__full3d_iterative__mpi1__Mna/20261014T121113.504617Z/watchdog/worker.log",
+        "bytes": 213,
+        "sha256": "1fa46ee41b42a21d28e10c80176c975319249401e48a6796cf5f6e0f012cf2d7"
+      }
+    ]
+  },
+  "campaign_readonly_snapshot": {
+    "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v31_native/source_f74bffca192aebc19c72e96066115cb62990fc8e/campaign_accounting_v10.jsonl",
+    "campaign_window_sha256": "ec92e117479ef7e41854a4dab647c8c1bc963ef2705fb6ec390926f252294bf6",
+    "t0_utc_ns": 1791943713255938807,
+    "deadline_utc_ns": 1792030113255938807,
+    "phase": "closeout",
+    "accounting_record": {
+      "adjacent_interval": {
+        "budget_seconds": 0.0622686599381268,
+        "discrepancy_seconds": 1.0093812680134207e-07,
+        "elapsed_seconds": {
+          "boottime": 0.062268600799143314,
+          "monotonic": 0.0622686599381268,
+          "utc": 0.062268559
+        },
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "tolerance_seconds": 5.0,
+        "utc_minus_monotonic_seconds": -1.0093812680134207e-07
+      },
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "bootstrap_charged_seconds": 0.0,
+      "campaign_window_sha256": "ec92e117479ef7e41854a4dab647c8c1bc963ef2705fb6ec390926f252294bf6",
+      "cumulative_charged_seconds": 85235.54772132506,
+      "cutoff_seconds": 85200.0,
+      "deadline_utc_ns": 1792030113255938807,
+      "label": "watchdog_end",
+      "phase": "closeout",
+      "previous_sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 1953943.582366028,
+        "monotonic": 1953943.582365185,
+        "utc_ns": 1792028948721499720
+      },
+      "sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 1953943.644634629,
+        "monotonic": 1953943.644633845,
+        "utc_ns": 1792028948783768279
+      },
+      "schema": "task40extra.review_v10_campaign_accounting.v1",
+      "sequence": 204816,
+      "t0_utc_ns": 1791943713255938807,
+      "time_namespace_identity": {
+        "time": "time:[4026531834]",
+        "time_for_children": "time:[4026531834]"
+      }
+    },
+    "sample": {
+      "monotonic": 1954501.219549517,
+      "boottime": 1954501.21955099,
+      "utc_ns": 1792029506358684760,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+    },
+    "adjacent_interval": {
+      "elapsed_seconds": {
+        "monotonic": 557.5749156719539,
+        "boottime": 557.5749163611326,
+        "utc": 557.574916481
+      },
+      "budget_seconds": 557.574916481,
+      "discrepancy_seconds": 8.090460141829681e-07,
+      "tolerance_seconds": 5.575749163611326,
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": 8.090460141829681e-07
+    },
+    "projected_cumulative_charged_seconds": 85793.12263780605,
+    "remaining_numerical_seconds": 0.0,
+    "remaining_closeout_seconds": 606.8773621939472,
+    "remaining_phase_seconds": 606.8773621939472,
+    "read_only": true
+  },
+  "tracked_evidence": [
+    {
+      "path": "docs/task40extra_0p7nm_engineering/response_v32.md",
+      "bytes": 8811,
+      "sha256": "d9948f03563eaea783cdd35fe2e1c39292c035f7b9c6932fb107ca89c8349a18"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/handoff_v32.md",
+      "bytes": 7112,
+      "sha256": "e180362d9fd91dfbe47653f875e97e9a1f8179054ba7607b705799867a92c93b"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v32_terminal_closeout.json",
+      "bytes": 2353,
+      "sha256": "2f6c82d9e3afcbd2e07e02050dd5037ce457551829d5d8853171bb4f76a30a09"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v32_per_q_operator.json",
+      "bytes": 14184,
+      "sha256": "ec47c2b3b59d9477b24c4f1f783e6439b7b90ee87eb22d4249e1d7463f66a1d6"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v32_owner_phase_audit.json",
+      "bytes": 1657,
+      "sha256": "3ac14f4783892c4f71fe2c4214de5473419b1d36280167a6da004e3ff60be065"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v32_reference_pilot.json",
+      "bytes": 812,
+      "sha256": "57b9740ade292f2a53f02dfa2c5693524738d748cbde8dd8dd2e3d2edc053ab0"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/time_resource_accounting_v32.json",
+      "bytes": 13383,
+      "sha256": "9e6c8d7fb9fce4868f89707d99143d625cf4e5b95947bd5433d74d190defb095"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v32_incremental_workflow_ledger.json",
+      "bytes": 14044,
+      "sha256": "276f7edfc42a6b3b952a040df795e55e14ba0183a24d0eebee63b7d8de8fa83d"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/run_index.json",
+      "bytes": 500424,
+      "sha256": "99a81b655fab40bba2c2801072d6d34944b2a2fdec9e99a135019a8c36b8a3f1"
+    }
+  ],
+  "finalization_scope": "documentation and existing raw data only; no PDE or numerical tests rerun",
+  "closeout_validation": {
+    "json_parse": "PASS",
+    "indexed_file_sha256_readback": "PASS",
+    "q4_raw_metric_consistency": "PASS",
+    "changes_docs_only": "PASS",
+    "diff_check": "PASS after removing extra final blank line",
+    "new_numerical_runs": 0,
+    "full_repository_tests": "NOT_RUN_NOT_NEEDED_DOCS_ONLY",
+    "ci": "NOT_RUN"
+  }
+}

@@ -1,3 +1,7 @@
+## V32 终态与收口检查（2026-10-15）
+
+本次收口不改数值源码，不重跑全仓测试或PDE。既有定向测试和失败保留在后续历史章节。实际q4四作用最大误差2.6835748652861403e-14；总服务required checker受监督运行，return2/NO_PARTIAL_FOOTER，非科学PASS。主控定向校验：所有本次JSON可解析、索引所列文件hash回读一致、q4误差与原始收据一致、改动仅限docs；git diff --check通过。未重跑数学或全仓测试。
+
 # V32 P0 定向回归与监督 checker 收口
 
 冻结源码 `a4f7d53af234dbd156388a4be133a0d5aeee1c16`，相对 Review V32 基线 `e2737b4049045a1824f5a1c49bb7bfac85e6e929`。最终命令在资格化 local WSL runtime（PETSc complex128/int32、MPI1）下运行：

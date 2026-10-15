@@ -1,3 +1,19 @@
+## Task40extra V32 终态（2026-10-15，新加坡）
+
+本轮把保存的 q4 矩阵与独立原生有限元作用对照，补齐了可复用的数值资格：777424×777424、581086528 槽，最大误差 **2.6835748652861403e-14 ≤ 1e-11**。这不是全参考逆或目标场通过。
+
+| 阶段 | 真实结果与范围 |
+|---|---|
+| q4 COMPLETE/native | PASS；源767323bb，后续9ba8f0aa只读复用；旧失败保留 |
+| 其余六q/八因子/完整参考/target | 未完成/未运行；全局reference builder在固定截止停止 |
+| 本次service父钟 | 49077.043639834614 s（13.63 h），含必要checker；不是全campaign或冷流程 |
+| 内存/交换 | tree RSS峰50996031488 B；cgroup峰33537933312 B；任务swap0，PSS未采样 |
+| 收口 | required checker真实受监督执行，NO_PARTIAL_FOOTER；后代已清场 |
+
+最后约46863.03秒只记录global builder开始，内部热点UNKNOWN；不得归因某个算子。主控不再启动数值。下一步复用q0/q4，先针对现有builder真实调用边界定位，再推进其余q；需新授权窗口。原尺寸精度、全冷流程2TB/48h仍未资格。
+
+[V32 回应与证据](task40extra_0p7nm_engineering/response_v32.md)。以下为历史记录，原P0待批状态不代表当前状态。
+
 ## Task40extra V32 P0（2026-10-14）
 
 旧q4 require-existing接续、新旧根分离、保存原始端口数据与fresh恢复owner、实际受监督checker入口已实现并由50个小fixture验证；源码a4f7d53af234dbd156388a4be133a0d5aeee1c16。没有新增native/factor/目标场资格，旧q4仍NUMERIC_COMPLETE_NATIVE_PENDING。新86400/85200/1200秒窗口待批准，旧费用和unknown保留；不把P0测试当科学进展或2TB/48h达标。[回应与证据](task40extra_0p7nm_engineering/response_v32.md)。
