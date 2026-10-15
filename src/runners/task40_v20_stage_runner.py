@@ -4628,6 +4628,8 @@ def run_task40_v20_stage(
                 V31_Q_CSR_BINDING_SCHEMA,
                 V31_FACTOR_BANK_SCHEMA,
                 V31_WORKER_BINDING_SCHEMA,
+                V32_REVIEW_PATH,
+                V33_REVIEW_PATH,
                 require_v31_execution_contract,
                 v31_source_artifact_relative,
             )
@@ -4646,12 +4648,12 @@ def run_task40_v20_stage(
                     "task40_v31_q_csr_import_authorizations", {}
                 )
             )
-            v32_route = (
-                isinstance(v31_contract.get("review"), Mapping)
-                and v31_contract["review"].get("path")
-                == "docs/task40extra_0p7nm_engineering/review_report_v32.md"
+            review = v31_contract.get("review")
+            v32_q4_import_route = (
+                isinstance(review, Mapping)
+                and review.get("path") in {V32_REVIEW_PATH, V33_REVIEW_PATH}
             )
-            if v32_route:
+            if v32_q4_import_route:
                 v32_template = v31_contract.get("preparation", {}).get(
                     "q4_numeric_pending_import"
                 )
@@ -4784,12 +4786,12 @@ def run_task40_v20_stage(
                 selector_sha256=str(v31_q_csr_binding["selector_sha256"]),
                 q4_numeric_pending_import=(
                     v31_contract.get("preparation", {}).get("q4_numeric_pending_import")
-                    if v32_route
+                    if v32_q4_import_route
                     else None
                 ),
                 q4_complete_import=(
                     v31_contract.get("preparation", {}).get("q4_complete_import")
-                    if v32_route
+                    if v32_q4_import_route
                     else None
                 ),
             )

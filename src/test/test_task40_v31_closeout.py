@@ -1424,6 +1424,153 @@ def test_v31_dispatcher_passes_normalized_selector_to_validation_only_worker(
     assert result["jit_hooks_invoked"] is False
 
 
+def test_v33_stage_runner_passes_both_q4_imports_to_input_identity(
+    tmp_path, monkeypatch
+):
+    from src.runners import task40_v10_worker, task40_v20_stage_runner
+    from src.runners import task40_v31_contract
+
+    contract, _binding, payload, environment, contract_sha = _v31_worker_fixture(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    run_source = contract["execution"]["run_source_sha"]
+    source_root = tmp_path / V31_ARTIFACT_ROOT_RELATIVE / f"source_{run_source}"
+    selector_path = source_root / "q_csr_selector_v31.json"
+    pending_import = {"schema": "fixture.q4.pending.v1", "q_index": 4}
+    complete_import = {"schema": "fixture.q4.complete.v1", "q_index": 4}
+    import_authorizations = {
+        "complete": {"4": {"fixture": "complete-authorization"}},
+        "numeric_pending": {"4": {"fixture": "pending-authorization"}},
+    }
+    contract.update(
+        {
+            "schema": task40_v31_contract.V32_CONTRACT_SCHEMA,
+            "review": {
+                "path": task40_v31_contract.V33_REVIEW_PATH,
+                "commit": task40_v31_contract.V33_REVIEW_COMMIT,
+                "sha256": task40_v31_contract.V33_REVIEW_SHA256,
+            },
+        }
+    )
+    contract["preparation"].update(
+        {
+            "q4_numeric_pending_import": pending_import,
+            "q4_complete_import": complete_import,
+        }
+    )
+    contract["execution"]["q_csr_import_authorizations"] = import_authorizations
+    payload["solver"].update(
+        task40_reference_pc_strategy="V15_REFERENCE_PC_STRATEGY",
+        task40_q_assembly_strategy="Q_ASSEMBLY_ROW_TILE_V17",
+        task40_factor_lifecycle_strategy="ALL_Q_RESIDENT",
+    )
+    payload["execution"].update(
+        task40_v31_q_csr_binding={
+            "schema": V31_Q_CSR_BINDING_SCHEMA,
+            "selector_path": selector_path.relative_to(tmp_path).as_posix(),
+            "selector_sha256": "1" * 64,
+        },
+        task40_v31_factor_bank_config={
+            "schema": V31_FACTOR_BANK_SCHEMA,
+            "output_directory": (
+                V31_ARTIFACT_ROOT_RELATIVE / f"source_{run_source}" / "factor_bank"
+            ).as_posix(),
+            "require_two_strict_rhs": True,
+            "second_rhs_formula": "real=2+(index mod 17)/17; imag=1.5+(index mod 13)/13",
+        },
+        task40_v31_q_csr_import_authorizations={
+            "complete": {"4": complete_import},
+            "numeric_pending": {"4": pending_import},
+        },
+    )
+    contract_path = (
+        tmp_path
+        / V31_ARTIFACT_ROOT_RELATIVE
+        / f"source_{run_source}/execution_contract_v33.approved.json"
+    )
+    environment["TASK40_V31_CONTRACT_PATH"] = str(contract_path)
+    environment["TASK40_V31_CONTRACT_SHA256"] = contract_sha
+    for name, value in environment.items():
+        monkeypatch.setenv(name, value)
+
+    validation_order = []
+    identity_calls = []
+
+    def require_contract(path, *, expected_sha256, current_root):
+        validation_order.append("contract")
+        assert Path(path).resolve() == contract_path.resolve()
+        assert expected_sha256 == contract_sha
+        assert Path(current_root).resolve() == tmp_path.resolve()
+        assert contract["review"]["path"] == task40_v31_contract.V33_REVIEW_PATH
+        return contract, contract_sha
+
+    def require_input_identity(*args, **kwargs):
+        validation_order.append("input_identity")
+        identity_calls.append((args, kwargs))
+        return {
+            "staged_input_sha256": "2" * 64,
+            "scientific_input_sha256": "3" * 64,
+        }
+
+    monkeypatch.setattr(
+        task40_v31_contract, "require_v31_execution_contract", require_contract
+    )
+    monkeypatch.setattr(
+        task40_v31_contract, "require_v31_input_identity", require_input_identity
+    )
+    monkeypatch.setattr(
+        task40_v31_contract,
+        "validate_v31_worker_execution_binding",
+        lambda *_args, **_kwargs: {"fixture_binding_validated": True},
+    )
+    monkeypatch.setattr(
+        task40_v20_stage_runner, "__file__", str(tmp_path / "src/runners/stage.py")
+    )
+    monkeypatch.setattr(
+        task40_v10_worker, "__file__", str(tmp_path / "src/runners/worker.py")
+    )
+    monkeypatch.setattr(
+        task40_v20_stage_runner,
+        "_exact_case",
+        lambda _payload: (V31_PROFILE, "TARGET_ORIGINAL_NY8"),
+    )
+    monkeypatch.setattr(
+        task40_v20_stage_runner,
+        "_preflight",
+        lambda *_args, **_kwargs: (
+            {"run_id": payload["run_id"], "input_sha256": "2" * 64},
+            [],
+            [],
+        ),
+    )
+    worker_call = {}
+
+    def capture_worker(*_args, **kwargs):
+        worker_call.update(kwargs)
+        return {
+            "status": "V33_STAGE_INPUT_BOUND_NO_FE",
+            "official_result": False,
+            "fe_hooks_invoked": False,
+        }
+
+    monkeypatch.setattr(
+        task40_v10_worker, "run_task40_v10_p6_reference_worker", capture_worker
+    )
+    result = task40_v20_stage_runner.run_task40_v20_stage(
+        payload,
+        tmp_path / "stage-output",
+        source_sha=run_source,
+        v31_requested_factor_lifecycle_strategy="ONE_Q_REFACTOR_V19",
+        v31_effective_factor_lifecycle_strategy="ALL_Q_RESIDENT",
+    )
+
+    assert result["status"] == "V33_STAGE_INPUT_BOUND_NO_FE"
+    assert validation_order == ["contract", "input_identity"]
+    assert len(identity_calls) == 1
+    assert identity_calls[0][1]["q4_numeric_pending_import"] == pending_import
+    assert identity_calls[0][1]["q4_complete_import"] == complete_import
+    assert worker_call["v31_q_csr_import_authorizations"] == import_authorizations
+
+
 def test_v31_closeout_allows_missing_numerical_output_only_for_bound_failure(
     tmp_path, monkeypatch
 ):
