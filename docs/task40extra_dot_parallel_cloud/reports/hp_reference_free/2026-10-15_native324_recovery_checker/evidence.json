@@ -1,7 +1,7 @@
 {
-  "schema": "native324.recovery-checker-investigation.compact.v1",
+  "schema": "native324.recovery-checker-investigation.compact.v2",
   "date_utc": "2026-10-15",
-  "status": "LOCAL_CHECKER_REGRESSION_VERIFIED_GLOBAL_IDENTITY_AND_SOLUTION_UNQUALIFIED",
+  "status": "GLOBAL_SPLIT_ASSEMBLY_VERIFIED_ORIGINAL_AND_RAW_IDENTITY_FAILS_PRESERVED",
   "model": {
     "cells": 324,
     "nx": 18,
@@ -22,7 +22,12 @@
     "original_failure_preserved": true,
     "accepted_field": false,
     "physical_RTA_qualified": false,
-    "spatial_convergence_qualified": false
+    "spatial_convergence_qualified": false,
+    "port_closure_relative_limit": 1e-08,
+    "internal_residual_relative_limit": 1e-10,
+    "schur_port_identity_relative_limit": 1e-10,
+    "saved_cross_source_relative_limit": 1e-09,
+    "saved_cross_source_check_performed": false
   },
   "first_solver": {
     "status": "VERIFIED_CLEAN_RESOURCE_PASS_SCIENTIFIC_RECOVERY_IDENTITY_FAIL_UNQUALIFIED_FIELD_SAVED",
@@ -240,7 +245,9 @@
     "complete_BAL_H_convergence_cause_established": false,
     "pure_roundoff_explanation_established": false,
     "two_offpath_API_defects_are_current_cause": false,
-    "production_qualification": false
+    "production_qualification": false,
+    "same_native_family_split_assembly_consistency_observed": true,
+    "cross_route_raw_identity_passed": false
   },
   "publication": {
     "repository": "Rookie1234567/MyFEniCS",
@@ -252,7 +259,8 @@
     "full_CI_claimed": false,
     "GitHub_rendered_view_verified": false,
     "science_imports_or_runs_by_report_builder": false,
-    "base_remote_HEAD": "da3318b87cab8607a8c678455935024419001bba"
+    "base_remote_HEAD": "7d3ab4ebf719b18391c32423eb85b7f34a3fda97",
+    "previous_report_commit": "7d3ab4ebf719b18391c32423eb85b7f34a3fda97"
   },
   "source_evidence": {
     "native_solver_attempt01_terminal_review.json": {
@@ -298,6 +306,280 @@
     "phase4_step8_internal_checker_source_terminal_review.json": {
       "bytes": 19380,
       "sha256": "fade905b58410d3f095efcb2f0e930505484e0e43e7a75f4dcc2326eb11a619c"
+    },
+    "phase4_step8_split_kernel_source_terminal_review.json": {
+      "bytes": 22697,
+      "sha256": "e9140ef5525ff2e62e2788f0c036bfec2f2b9a405baa738b6bcdb54004535b37"
+    },
+    "phase4_step8_global_raw_source_terminal_review.json": {
+      "bytes": 18411,
+      "sha256": "64bbb592f01a9aaab7d3b1b42549607e714dba6327555f9f5ef529361d586bcf"
+    },
+    "phase4_step8_global_split_replay_candidate01/attempt01/summary.json": {
+      "bytes": 1050,
+      "sha256": "9eb3ea3b3ff02f5b9c6b32eab18b4ff58a231f3597f370339414a601c23a1f63"
+    },
+    "phase4_step8_global_split_replay_candidate01/attempt01/result.json": {
+      "bytes": 11759,
+      "sha256": "73eb17f07b22ff67a9f358dd5f2e2c3e2f0af3a0cf872b8ccf836da6383f1a3b"
+    },
+    "phase4_step8_global_split_source_terminal_review.json": {
+      "bytes": 12931,
+      "sha256": "31d2eec06d785aec474bb5f6fc0326e284f3199652e0f23da9a29e34fb4511ad"
+    },
+    "phase4_execution_ledger_v115.json": {
+      "bytes": 145743,
+      "sha256": "83c7f399270bc3fc61ebac91304292d1d5602726c908c46dd15ca0eb20a1da1d"
     }
+  },
+  "two_cell_split_kernel": {
+    "status": "PASS_TWO_CELL_LOCAL_NATIVE_SPLIT_REPRODUCTION_AND_BOUNDED_DIAGNOSTIC_ONLY_GLOBAL_IDENTITY_FAIL_PRESERVED",
+    "first_attempt_failure": {
+      "status": "CHILD_FAILED",
+      "supervisor_seconds": 1.7574325010064058,
+      "sampled_tree_peak_RSS_bytes": 117923840,
+      "kernel_calls": 0,
+      "reason": "First curl extension loaded, then CFFI getattr used a C-only alias absent from _cffi_globals. No run_one, mesh reconstruction, raw tensor read, or kernel call was reached.",
+      "cleanup_verified": true
+    },
+    "second_attempt": {
+      "status": "CHILD_EXIT_ZERO",
+      "supervisor_seconds": 6.537583021010505,
+      "sampled_tree_peak_RSS_bytes": 462667776,
+      "kernel_calls": 8,
+      "cleanup_verified": true
+    },
+    "cases": {
+      "164": {
+        "native_residual_bitwise_reproduced": true,
+        "split_residual_norm": 3.061290494933839e-11,
+        "native_minus_actual_split": 0.0,
+        "actual_minus_canonical_geometry_split": 7.230315837169761e-13,
+        "canonical_split_minus_combined_raw_wide": 2.0544752055933004e-11,
+        "native_minus_combined_raw_wide": 2.058170613669388e-11
+      },
+      "8": {
+        "native_residual_bitwise_reproduced": true,
+        "split_residual_norm": 1.536984445137231e-11,
+        "native_minus_actual_split": 0.0,
+        "actual_minus_canonical_geometry_split": 0.0,
+        "canonical_split_minus_combined_raw_wide": 1.031587430953019e-11,
+        "native_minus_combined_raw_wide": 1.031587430953019e-11
+      }
+    },
+    "geometry_is_only_cause": false,
+    "tensor_construction_and_contraction_causes_separately_isolated": false,
+    "scientific_solution_qualified": false
+  },
+  "global_raw_saved_x8": {
+    "status": "RESOURCE_AND_SAVED_REPLAY_INTERFACE_VERIFIED_BOTH_ORIGINAL_AND_RAW_IDENTITY_GATES_FAIL",
+    "original_gate": {
+      "operation_scale": 1.4094288749647617,
+      "pass_": false,
+      "relative": 2.4309679506887283e-10,
+      "tolerance": 1e-10
+    },
+    "raw_gate": {
+      "native_output_scale_source": "saved native_effective_rhs minus saved native_residual; subtraction reconstruction, no new native action",
+      "operation_scale": 1.4094288749647177,
+      "operation_scale_terms": {
+        "B_hp_inverse_ep": 2.896349991848501e-14,
+        "augmented_fe_residual": 0.03188372541658703,
+        "native_effective_rhs": 0.6891415543120594,
+        "native_output": 0.6884035952360423
+      },
+      "pass_": false,
+      "relative": 1.88449868884189e-10,
+      "tolerance": 1e-10
+    },
+    "diagnostics": {
+      "B_hp_ep_vs_legacy_subtraction_reconstruction": 3.3582975261864067e-19,
+      "identity_difference_by_rows": {
+        "active_trace": 1.306239486609056e-10,
+        "interior": 2.3126672058464763e-10,
+        "slaves": 0.0
+      },
+      "independent_internal_residual_norm": 2.4321210504256346e-10,
+      "legacy_B_diagnostic_is_subtraction_only": true,
+      "new_and_old_identity_operation_scale_difference": -4.39648317751562e-14,
+      "raw_augmented_vs_legacy": 2.473240450623067e-10,
+      "raw_derived_vs_legacy": 2.473240450623067e-10
+    },
+    "coverage": {
+      "raw_tensor_files": 44,
+      "orientations": 65,
+      "cells": 324,
+      "all_four_blocks_and_882_local_rows": true,
+      "modes": 80,
+      "saved_field_and_RHS_unchanged": true
+    },
+    "independently_verified": {
+      "all44raw65oriented324cells_covered_exactly_once": true,
+      "all_three_admissions": 17,
+      "all_three_attempt_resource_rows": 236,
+      "four_actual_caller_recipes_and_returned_SO_descriptors_match": true,
+      "full80mode_manifest_reencoded_hash_match": true,
+      "manufactured_controls_pass_all_three": true,
+      "saved_vector_formulas_bitwise_verified": true,
+      "three_attempt_frozen_inputs_identical": true,
+      "three_attempt_raw_volume_typed_hash_identical": true
+    },
+    "attempts": {
+      "1": {
+        "status": "CHILD_FAILED",
+        "elapsed_seconds": 36.70586303700111,
+        "peak_tree_RSS_bytes": 409399296,
+        "child_exit_code": 1,
+        "cleanup_verified": true,
+        "resource_sample_count": 143,
+        "admission_count": 5,
+        "failure": {
+          "error": "actual typed O0/g0 complex128 compiler options differ",
+          "type": "CacheAdmissionFailure"
+        },
+        "negative_stage": "All44 raw files,65 oriented tensors and324 full-row local actions completed. First surface caller gate rejected missing explicit O0/g0 options; no surface module or surface kernel was reached."
+      },
+      "2": {
+        "status": "CHILD_FAILED",
+        "elapsed_seconds": 12.57078115499462,
+        "peak_tree_RSS_bytes": 408920064,
+        "child_exit_code": 1,
+        "cleanup_verified": true,
+        "resource_sample_count": 47,
+        "admission_count": 5,
+        "failure": {
+          "error": "Object of type complex is not JSON serializable",
+          "type": "TypeError"
+        },
+        "negative_stage": "All raw work and4 original surface form cache returns plus80-mode carrier/B products completed; serialization of complex mode evidence failed before final checker and NPZ. This stage is inferred from the exact traceback/control path; the failed surface JSON was not written."
+      },
+      "3": {
+        "status": "CHILD_EXIT_ZERO",
+        "elapsed_seconds": 12.317749255016679,
+        "peak_tree_RSS_bytes": 433082368,
+        "child_exit_code": 0,
+        "cleanup_verified": true,
+        "resource_sample_count": 46,
+        "admission_count": 7
+      }
+    },
+    "live_solver_hook_integrated": false,
+    "full_original_identity_qualified": false,
+    "new_native_A_action_used_for_denominator": false,
+    "production_numerical_source_modified": false
+  },
+  "global_split_saved_x8": {
+    "status": "COMPLETED_SAVED_X8_NATIVE_SPLIT_ASSEMBLY_REPLAY_WITH_CROSS_ROUTE_GATES_PRESERVED",
+    "final_independent_review": "RESOURCE_AND_SAVED_SPLIT_ASSEMBLY_VERIFIED_ORIGINAL_AND_RAW_IDENTITY_FAILS_PRESERVED",
+    "actual_call_counts": {
+      "FGMRES_iterations": 0,
+      "Hp_solves": 0,
+      "local_or_global_factorizations": 0,
+      "mode_count": 80,
+      "oriented_tensors": 65,
+      "raw_file_reads": 44,
+      "raw_full_cell_actions": 324,
+      "split_rank1_kernel_calls": 648,
+      "surface_compiled_form_loads": 4
+    },
+    "assembly_consistency": {
+      "assembly_consistent_within_diagnostic_threshold": true,
+      "bitwise_equal": false,
+      "controls": {
+        "correct_identity_norm": 2.7023099960048763e-14,
+        "missing_MPC_pullback_identity_norm": 519.0844755159277,
+        "wrong_B_alpha_sign_identity_norm": 0.8669880395436156,
+        "wrong_mass_sign_identity_norm": 1278.1506004627797
+      },
+      "difference_by_rows": {
+        "active_trace": 2.7023099960048772e-14,
+        "interior": 4.372524718613955e-27,
+        "slaves": 0.0
+      },
+      "difference_norm": 2.7023099960048763e-14,
+      "independent_of_native_operator_family": false,
+      "operation_scale": 1.4094288749745847,
+      "operation_scale_terms": {
+        "B_hp_inverse_ep": 2.896349991848501e-14,
+        "augmented_fe_residual": 0.03188372542645401,
+        "native_effective_rhs": 0.6891415543120594,
+        "native_output": 0.6884035952360423
+      },
+      "qualifies_Schur_raw_recovery": false,
+      "relative": 1.9173085240314842e-14,
+      "split_vs_raw_volume": 2.6560669860016805e-10,
+      "tolerance_diagnostic_only": 1e-10
+    },
+    "original_gate": {
+      "operation_scale": 1.4094288749647617,
+      "pass_": false,
+      "relative": 2.4309679506887283e-10,
+      "tolerance": 1e-10
+    },
+    "raw_gate": {
+      "native_output_scale_source": "saved native_effective_rhs minus saved native_residual; subtraction reconstruction, no new native action",
+      "operation_scale": 1.4094288749647177,
+      "operation_scale_terms": {
+        "B_hp_inverse_ep": 2.896349991848501e-14,
+        "augmented_fe_residual": 0.03188372541658703,
+        "native_effective_rhs": 0.6891415543120594,
+        "native_output": 0.6884035952360423
+      },
+      "pass_": false,
+      "relative": 1.88449868884189e-10,
+      "tolerance": 1e-10
+    },
+    "supervisor_seconds": 28.16528852900956,
+    "sampled_process_tree_peak_RSS_bytes": 520204288,
+    "resource_sample_count": 109,
+    "cleanup_verified": true,
+    "exit_code": 0,
+    "native_operator_family_independent": false,
+    "saved_field_only": true,
+    "Schur_raw_recovery_qualified": false,
+    "convergence_qualified": false,
+    "production_integration_implemented": false,
+    "command_sha256": "5602fa6181862d57074a14d051e1b24a3529d57242084b29433233ddda00ee4a",
+    "resource_reservation_bytes": 3861384424,
+    "verification": {
+      "actual648_calls_partitioned_over2roles3tags324cells": true,
+      "all109_resource_samples": true,
+      "all12_saved_array_layout_hash_and_norms_verified": true,
+      "all7_saved_vector_formulas_bitwise_verified": true,
+      "all9_admissions": true,
+      "all_raw_and_surface_metadata_unchanged": true,
+      "raw03_six_saved_vectors_bitwise_unchanged": true,
+      "two_rank1_export_identities_pinned": true,
+      "all_admissions_checked": 9,
+      "all_resource_samples_checked": 109,
+      "saved_arrays_layout_hash_norm_verified": 12,
+      "saved_vector_formulas_bitwise_verified": 7,
+      "row_partitions_independently_recomputed": false,
+      "omitted_MPC_control_vector_independently_recomputed": false
+    }
+  },
+  "cost_ledger_update": {
+    "status": "BOUND_V115",
+    "file": "phase4_execution_ledger_v115.json",
+    "bytes": 145743,
+    "sha256": "83c7f399270bc3fc61ebac91304292d1d5602726c908c46dd15ca0eb20a1da1d",
+    "stage_count": 127,
+    "sum_known_terminal_seconds": 28259.113600316996,
+    "sum_seconds_lower_bound": 36394.54681369,
+    "sum_is_not_exact": true,
+    "preparation_elapsed_is_separate_and_not_zero": true,
+    "aggregate_fields_are_not_additive": true,
+    "failed_attempts_preserved": true,
+    "full_ledger_uploaded": false
+  },
+  "production_proposal": {
+    "status": "BOUNDED_REPLAY_PREPARATION_AUTHORIZED_NOT_RUN_NO_PRODUCTION_INTEGRATION",
+    "same_family_assembly_consistency_can_hold_for_arbitrary_field": true,
+    "native_residual_alone_guarantees_Schur_F_correctness": false,
+    "candidate": "same-rank2 raw e_FE versus saved Schur/F transfer check",
+    "candidate_run": false,
+    "candidate_approved": true,
+    "existing_thresholds_changed": false,
+    "approval_scope": "bounded saved-field replay preparation; no production change or PASS"
   }
 }
