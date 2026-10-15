@@ -38,7 +38,8 @@ OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE = (
 )
 E_FOURIER_DIAGNOSTIC_NOTE = (
     "Diagnostic only: E-only Fourier powers assume a single outgoing direction and can overcount "
-    "when finite-PML reflections or non-transverse FE components are present."
+    "when finite-PML reflections or non-transverse FE components are present. Fitted amplitudes "
+    "are referenced to their sampled probe plane."
 )
 SAMPLED_NET_FLUX_DIAGNOSTIC_NOTE = (
     "Diagnostic only: sampled net flux uses H reconstructed from the finite-element curl on probe samples. "
@@ -174,11 +175,11 @@ def _e_fourier_order_powers(
 
         top_basis = polarization_basis_3d(order.alpha, order.gamma, order.beta_top, cfg.n_air, 1, cfg)
         bottom_basis = polarization_basis_3d(order.alpha, order.gamma, order.beta_bottom, cfg.substrate_index, -1, cfg)
-        top_amp, top_res = _project_e_amplitudes(top_coeff * np.exp(-1j * order.beta_top * top_z), top_basis)
-        bottom_amp, bottom_res = _project_e_amplitudes(
-            bottom_coeff * np.exp(1j * order.beta_bottom * bottom_z),
-            bottom_basis,
-        )
+        # Fit the local sampled-plane coefficient directly.  Back-propagating
+        # evanescent orders to z=0 can overflow even when their probe samples
+        # and local modal basis are finite.
+        top_amp, top_res = _project_e_amplitudes(top_coeff, top_basis)
+        bottom_amp, bottom_res = _project_e_amplitudes(bottom_coeff, bottom_basis)
         top_residuals.append(top_res)
         bottom_residuals.append(bottom_res)
         top_by_name = {name: vec for name, vec in top_basis}
@@ -831,6 +832,7 @@ def compute_diffraction_orders_3d(
         "diffraction_eh_fourier_note": OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE,
         "diffraction_eh_fourier_amplitude_reference": "corresponding_sampled_probe_plane",
         "diffraction_e_fourier_note": E_FOURIER_DIAGNOSTIC_NOTE,
+        "diffraction_e_fourier_amplitude_reference": "corresponding_sampled_probe_plane",
         "R_total_diagnostic_eh_fourier": official_R_total,
         "T_total_diagnostic_eh_fourier": official_T_total,
         "R_plus_T_diagnostic_eh_fourier": official_R_plus_T,

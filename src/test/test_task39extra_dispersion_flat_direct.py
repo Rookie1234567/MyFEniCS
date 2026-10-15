@@ -34,6 +34,7 @@ from src.runners.p6_condensed_direct import (
     _dispersion_flat_mesh_evidence,
     _dispersion_flat_port_mpc_witness,
     _validate_resolved_profile,
+    _write_direct_flat_reference_outputs,
 )
 from src.runners.task038_input_worker import _load_and_validate_worker_payload
 from src.runners.task038_launcher import _write_bootstrap, launch_specification
@@ -46,6 +47,50 @@ def _resolved(nx: int) -> dict:
     return load_and_resolve(
         INPUTS / f"dispersion_0p7nm_flat_p6_q160_nx{nx}_direct_v1.dat"
     ).as_jsonable()
+
+
+def test_direct_flat_reference_dispatch_passes_writer_contract(monkeypatch, tmp_path):
+    import src.postprocessing.flat_layer_reference_3d as flat_reference
+
+    cfg = object()
+    comm = object()
+    facts = {
+        "port_metrics": {"R_total": 0.2},
+        "diffraction_metrics": {"R_total": 0.19},
+        "volume_metrics": {"A_volume_total": 0.6},
+    }
+    expected = object()
+    calls = []
+
+    def fake_writer(output_dir, actual_cfg, actual_comm, *, port_metrics, probe_metrics, volume_metrics):
+        calls.append(
+            (
+                output_dir,
+                actual_cfg,
+                actual_comm,
+                port_metrics,
+                probe_metrics,
+                volume_metrics,
+            )
+        )
+        return expected
+
+    monkeypatch.setattr(
+        flat_reference, "write_flat_layer_reference_outputs", fake_writer
+    )
+    result = _write_direct_flat_reference_outputs(tmp_path, cfg, comm, facts)
+
+    assert result is expected
+    assert calls == [
+        (
+            tmp_path,
+            cfg,
+            comm,
+            facts["port_metrics"],
+            facts["diffraction_metrics"],
+            facts["volume_metrics"],
+        )
+    ]
 
 
 @pytest.mark.parametrize("nx", (2, 4, 8))

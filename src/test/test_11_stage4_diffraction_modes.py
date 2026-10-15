@@ -402,6 +402,27 @@ class Stage4DiffractionModeTests(unittest.TestCase):
         top_h = np.zeros_like(top_e)
         bottom_e = np.zeros((len(bottom_points), 3), dtype=np.complex128)
         bottom_h = np.zeros_like(bottom_e)
+        with np.errstate(over="raise", invalid="raise"):
+            e_rows, e_metrics = _e_fourier_order_powers(
+                cfg,
+                orders,
+                top_points,
+                top_e,
+                bottom_points,
+                bottom_e,
+                _incident_power(cfg),
+            )
+        self.assertEqual(len(e_rows), 882)
+        self.assertTrue(all(np.isfinite(value) for value in e_metrics.values()))
+        self.assertTrue(
+            all(
+                np.isfinite(value.real) and np.isfinite(value.imag)
+                if isinstance(value, complex)
+                else np.isfinite(value)
+                for row in e_rows.values()
+                for value in row.values()
+            )
+        )
         rows, metrics = _eh_fourier_order_powers(
             cfg,
             orders,

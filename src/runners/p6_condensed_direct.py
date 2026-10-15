@@ -71,6 +71,28 @@ def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
     temporary.replace(path)
 
 
+def _write_direct_flat_reference_outputs(
+    output_dir: Path,
+    cfg: Any,
+    comm: Any,
+    output_facts: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Write flat-layer references from the direct route's recovered outputs."""
+
+    from src.postprocessing.flat_layer_reference_3d import (
+        write_flat_layer_reference_outputs,
+    )
+
+    return write_flat_layer_reference_outputs(
+        output_dir,
+        cfg,
+        comm,
+        port_metrics=output_facts["port_metrics"],
+        probe_metrics=output_facts["diffraction_metrics"],
+        volume_metrics=output_facts["volume_metrics"],
+    )
+
+
 def _validate_resolved_profile(payload: Mapping[str, Any]) -> dict[str, Any]:
     from src.io.native_capacity_profile import (
         DISPERSION_FLAT_P6_PROFILES,
@@ -1797,12 +1819,13 @@ def run_p6_condensed_direct(
             active_port_outputs_only=output_policy["active_port_outputs_only"],
         )
         if route["family"] == "dispersion_flat":
-            from src.postprocessing.flat_layer_reference_3d import (
-                write_flat_layer_reference_outputs,
-            )
-
             output_facts["flat_layer_reference_outputs"] = (
-                write_flat_layer_reference_outputs(cfg, numerical_output)
+                _write_direct_flat_reference_outputs(
+                    numerical_output,
+                    cfg,
+                    MPI.COMM_WORLD,
+                    output_facts,
+                )
             )
         auxiliary = np.asarray(output_facts.pop("auxiliary"), dtype=np.complex128)
         if auxiliary.shape != (route["active_count"],) or not np.isfinite(auxiliary).all():
