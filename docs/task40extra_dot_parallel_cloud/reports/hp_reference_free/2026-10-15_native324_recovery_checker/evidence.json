@@ -1,7 +1,7 @@
 {
  "schema": "native324.recovery-checker-investigation.compact.v4",
  "date_utc": "2026-10-15",
- "status": "TRACE_DECOMPOSITION_AND_BOUNDED_LOCAL_H_REFINEMENT_REVIEWED_ORIGINAL_GLOBAL_FAIL_PRESERVED",
+ "status": "GLOBAL_ONE_H_CANDIDATE_SAME_RAW_TRANSFER_PASS_BOTH_NATIVE_IDENTITIES_FAIL_REVIEWED",
  "model": {
   "cells": 324,
   "nx": 18,
@@ -249,7 +249,10 @@
   "same_native_family_split_assembly_consistency_observed": true,
   "cross_route_raw_identity_passed": false,
   "all_failure_explained_by_split_raw_route_difference": false,
-  "same_raw_schur_trace_transfer_passed": false
+  "same_raw_schur_trace_transfer_passed": false,
+  "candidate_same_raw_trace_transfer_passed": true,
+  "candidate_total_native_identity_passed": false,
+  "original_saved_same_raw_trace_still_FAIL": true
  },
  "publication": {
   "repository": "Rookie1234567/MyFEniCS",
@@ -261,8 +264,8 @@
   "full_CI_claimed": false,
   "GitHub_rendered_view_verified": false,
   "science_imports_or_runs_by_report_builder": false,
-  "base_remote_HEAD": "cbd149b8d707fbc64a68c648d23f00ff2c239b61",
-  "previous_report_commit": "cbd149b8d707fbc64a68c648d23f00ff2c239b61"
+  "base_remote_HEAD": "2c310bf39e6dd36470de5124d59662a0f8002372",
+  "previous_report_commit": "2c310bf39e6dd36470de5124d59662a0f8002372"
  },
  "source_evidence": {
   "native_solver_attempt01_terminal_review.json": {
@@ -388,6 +391,30 @@
   "phase4_execution_ledger_v118.json": {
    "bytes": 152187,
    "sha256": "80ba7dda3056b41ce18c7b4bbe502c9b818e3229b9e06c36a6b3c539d4426b4c"
+  },
+  "phase4_step8_global_refinement_candidate01/attempt01/summary.json": {
+   "bytes": 1047,
+   "sha256": "197c4a18d23f732248e624970eeccbf78c291ebb9de288be6315fb7699db36ce"
+  },
+  "phase4_step8_global_refinement_candidate01/attempt01/result.json": {
+   "bytes": 136539,
+   "sha256": "a5e71fdc75e83cde915b114a46ff185a68e9690d7a93720b4db891a560a2f844"
+  },
+  "phase4_step8_global_refinement_candidate01/attempt01/candidate_metrics.json": {
+   "bytes": 119662,
+   "sha256": "c4f216d61b034575b20b4d9f2ea47f4f08b2f5dc3948636db22ec585ea95dbc0"
+  },
+  "phase4_step8_global_refinement_saved_vector_review.json": {
+   "bytes": 9197,
+   "sha256": "a95b604ee9535ecd7c5d44689f39f4c582efb847d08558ba1cdfba7ad50de99f"
+  },
+  "phase4_step8_global_refinement_source_terminal_review.json": {
+   "bytes": 36199,
+   "sha256": "5e12be3d10e1d9c3677566de361dc570c3bc3a7509791d96ad77120c2998a706"
+  },
+  "phase4_execution_ledger_v119.json": {
+   "bytes": 155764,
+   "sha256": "03c92c6938d1688c93edba8d604bf133caf1a2eb9096b02ebd788ef90d71e209"
   }
  },
  "two_cell_split_kernel": {
@@ -617,13 +644,13 @@
   }
  },
  "cost_ledger_update": {
-  "status": "BOUND_V118",
-  "file": "phase4_execution_ledger_v118.json",
-  "bytes": 152187,
-  "sha256": "80ba7dda3056b41ce18c7b4bbe502c9b818e3229b9e06c36a6b3c539d4426b4c",
-  "stage_count": 130,
-  "sum_known_terminal_seconds": 28317.239070823955,
-  "sum_seconds_lower_bound": 36452.67228419696,
+  "status": "BOUND_V119",
+  "file": "phase4_execution_ledger_v119.json",
+  "bytes": 155764,
+  "sha256": "03c92c6938d1688c93edba8d604bf133caf1a2eb9096b02ebd788ef90d71e209",
+  "stage_count": 131,
+  "sum_known_terminal_seconds": 28418.439919136945,
+  "sum_seconds_lower_bound": 36553.87313250995,
   "sum_is_not_exact": true,
   "preparation_elapsed_is_separate_and_not_zero": true,
   "aggregate_fields_are_not_additive": true,
@@ -631,7 +658,7 @@
   "full_ledger_uploaded": false
  },
  "production_proposal": {
-  "status": "BOUNDED_SAVED_REPLAY_COMPLETED_TRACE_FAIL_NO_PRODUCTION_INTEGRATION",
+  "status": "NEW_CANDIDATE_CONTRACT_MINIMAL_INTEGRATION_AND_FAULT_TEST_CODE_PREPARATION_ONLY",
   "same_family_assembly_consistency_can_hold_for_arbitrary_field": true,
   "native_residual_alone_guarantees_Schur_F_correctness": false,
   "candidate": "same-rank2 raw e_FE versus saved Schur/F transfer check",
@@ -640,7 +667,12 @@
   "existing_thresholds_changed": false,
   "approval_scope": "bounded saved-field replay only; no production change or PASS",
   "candidate_passed": false,
-  "production_changes_implemented": false
+  "production_changes_implemented": false,
+  "original_saved_replay_status": "BOUNDED_SAVED_REPLAY_COMPLETED_TRACE_FAIL_NO_PRODUCTION_INTEGRATION",
+  "historical_candidate_fields_scope": "candidate/candidate_passed above describe the original saved-field same-raw replay, not the new H-corrected candidate",
+  "new_contract_and_fault_regression_implemented": false,
+  "bounded_new_production_run_started": false,
+  "awaiting_permission": false
  },
  "same_raw_to_saved_schur": {
   "status": "RESOURCES_AND_FOUR_PAYLOAD_IDENTITIES_VERIFIED_SAVED_SCHUR_TRACE_TRANSFER_FAIL_PRESERVED",
@@ -1177,5 +1209,250 @@
    "Supervisor process cleanup verified; no individual native allocator/handle memory credit."
   ],
   "fixed_H_steps_scope": "2 fixed H corrections per real cell, not total solve-call count"
+ },
+ "global_one_H_refinement": {
+  "status": "COMPLETED_65_CLASS_ONE_H_STEP_FIXED_TRACE_CANDIDATE_REPLAY",
+  "final_review_status": "RESOURCES_AND_SAVED_CANDIDATE_VERIFIED_SAME_RAW_TRANSFER_PASS_BOTH_NATIVE_IDENTITIES_FAIL",
+  "scope": "original field and saved Schur residual preserved as baseline; one corrected candidate H/S per class, fixed retained trace/alpha, actual fresh native split action; no global owner/coarse factor/FGMRES",
+  "supervisor_seconds": 101.20084831299027,
+  "sampled_process_tree_peak_RSS_bytes": 554049536,
+  "resource_sample_count": 399,
+  "cleanup_verified": true,
+  "exit_code": 0,
+  "fresh_local_factorizations": 65,
+  "global_factorizations": 0,
+  "FGMRES_iterations": 0,
+  "original_saved_field_preserved": true,
+  "original_saved_schur_preserved": true,
+  "original_identity_FAIL_preserved": true,
+  "production_changed": false,
+  "production_qualification": false,
+  "native_solution_qualified": false,
+  "declared_scale_contract": {
+   "candidate_rs_independently_formed": true,
+   "maximum_fresh_local_classes": 65,
+   "maximum_resource_admissions": 80,
+   "port": "norm(candidate_rs_p)+norm(q)+norm(Dx)+norm(Hp_alpha)+sum_cell_norm(Di_solve_Aii_raw_ei)",
+   "saved_rs_replaced": false,
+   "tolerance": 1e-10,
+   "trace": "norm(candidate_rs_t)+norm(f_t)+norm(RH_Vraw_E_trace)+norm(Balpha_trace)+sum_cell_norm(EcH_Fc_raw_ei)"
+  },
+  "metrics": {
+   "F_corrections": 0,
+   "H_corrections_per_class": 1,
+   "Hhat_unchanged_hash": "441d1e8bf19a1949b3642c899975b474ea0c7acf6261b2fa75e31e614bd0f7a6",
+   "actual_interior_B_nonzero_entries": 4908,
+   "actual_interior_D_nonzero_entries": 4908,
+   "baseline_recovery_all324_bitwise": true,
+   "baseline_saved_rs_bitwise": true,
+   "candidate_independent_raw_native_identity": {
+    "absolute": 2.6004452843547176e-10,
+    "operation_scale": 1.4094288749110297,
+    "pass_": false,
+    "relative": 1.8450347730522201e-10,
+    "tolerance": 1e-10
+   },
+   "candidate_legacy_native_identity": {
+    "absolute": 2.5379739828423074e-10,
+    "operation_scale": 1.4094288749103134,
+    "pass_": false,
+    "relative": 1.8007109319395822e-10,
+    "tolerance": 1e-10
+   },
+   "candidate_rs_change": 1.0291635642660437e-09,
+   "field_change": 1.2305873310710414e-11,
+   "field_slave_exact_zero": true,
+   "field_trace_unchanged": true,
+   "fresh_factor_seconds": 6.906223045021761,
+   "independent_raw_internal": {
+    "absolute": 6.144211423578287e-11,
+    "operation_scale": 1738561.7200576295,
+    "pass_": true,
+    "relative": 3.5340772505761946e-17,
+    "tolerance": 1e-10
+   },
+   "legacy_factored_internal": {
+    "absolute": 5.402941716336866e-12,
+    "operation_scale": 1738561.7200576297,
+    "pass_": true,
+    "relative": 3.107707741406943e-18,
+    "tolerance": 1e-10
+   },
+   "legacy_schur_port": {
+    "absolute": 2.619044854659622e-28,
+    "operation_scale": 11.521874251356026,
+    "pass_": true,
+    "relative": 2.2731066122782783e-29,
+    "tolerance": 1e-10
+   },
+   "native_DtN_vs_p6_BHpDx": {
+    "absolute": 2.6291971445396862e-14,
+    "native_identity": {
+     "dtype": "complex128",
+     "sha256": "94e629c6eff507dc9d569f01cbf2915862050c0de6dee47a7130d072275cac15",
+     "shape": [
+      225678
+     ]
+    },
+    "p6_identity": {
+     "dtype": "complex128",
+     "sha256": "7c961c9e5b67efd3b206f29ae65b94c10ecc3b3074386a432975cc204f9d06bf",
+     "shape": [
+      225678
+     ]
+    },
+    "source": "literal original FullspaceDtnAction._modal_batch/apply order, MPI1 Allreduce"
+   },
+   "native_action_source": "648 original actual-geometry split kernel calls on newly recovered field plus independent original carrier modal-batch DtN; no saved-native subtraction to manufacture new action",
+   "new_minus_saved_native_residual": 1.0570709630087083e-09,
+   "new_native_residual_norm": 0.03188372537503172,
+   "new_native_residual_relative": 0.0462658581180174,
+   "old_formula_semantics_replayed": true,
+   "old_production_callback_invoked": false,
+   "original_port_dense80_solve_calls": 2,
+   "original_saved_rs_not_replaced": true,
+   "port_block_retained_bytes": 837216,
+   "post_full_H_residuals": 0,
+   "qualification": "formula replay experiment only; no original production callback or global solve",
+   "same_raw_port": {
+    "absolute": 1.1124518952626983e-28,
+    "operation_scale": 11.52187425135603,
+    "pass_": true,
+    "relative": 9.655129634241338e-30,
+    "tolerance": 1e-10
+   },
+   "same_raw_port_scale_terms": {
+    "D_x": 5.760937125678012,
+    "Hp_alpha": 5.760937125678014,
+    "candidate_schur_port": 2.6964808519136865e-15,
+    "port_rhs": 0.0,
+    "sum_cell_Di_solve_ei": 6.6126086113036435e-28
+   },
+   "same_raw_trace": {
+    "absolute": 5.729565658233944e-11,
+    "operation_scale": 1.5714929599277765,
+    "pass_": true,
+    "relative": 3.645937846579514e-11,
+    "tolerance": 1e-10
+   },
+   "same_raw_trace_scale_terms": {
+    "B_alpha_trace": 0.4334940197718079,
+    "candidate_schur_trace": 0.03188372536465522,
+    "raw_volume_trace": 0.4169736598767387,
+    "rhs_trace": 0.6891415543120594,
+    "sum_cell_scattered_F_ei": 6.025152403595397e-10
+   },
+   "total_seconds": 76.15383112998097,
+   "wide_matrix_products": 65,
+   "wide_refinement_seconds": 52.76374207116896
+  },
+  "all_cell_record_count": 324,
+  "all324_records_uploaded": false,
+  "full_arrays_uploaded": false,
+  "full_source_results_uploaded": false,
+  "saved_vector_review": {
+   "status": "ALL13_VECTOR_IDENTITIES_VERIFIED_SAME_RAW_TRANSFER_PASS_BOTH_NATIVE_IDENTITIES_FAIL",
+   "vector_identity_count": 13,
+   "fully_recomputed_formula_count": 2,
+   "gates": {
+    "candidate_independent_raw_native_identity": {
+     "independently_recomputed_numerator": 2.6004452843547134e-10,
+     "pass_": false,
+     "relative": 1.845034773052217e-10,
+     "scale": 1.4094288749110297,
+     "scale_source": "runtime reported operation scale",
+     "threshold": 1e-10
+    },
+    "candidate_legacy_native_identity": {
+     "independently_recomputed_numerator": 2.537973982842304e-10,
+     "pass_": false,
+     "relative": 1.8007109319395797e-10,
+     "scale": 1.4094288749103134,
+     "scale_source": "runtime reported operation scale",
+     "threshold": 1e-10
+    },
+    "independent_raw_internal": {
+     "independently_recomputed_numerator": 6.144211423578314e-11,
+     "pass_": true,
+     "relative": 3.5340772505762106e-17,
+     "scale": 1738561.7200576295,
+     "scale_source": "runtime reported operation scale",
+     "threshold": 1e-10
+    },
+    "legacy_factored_internal": {
+     "independently_recomputed_numerator": 5.402941716336867e-12,
+     "pass_": true,
+     "relative": 3.1077077414069433e-18,
+     "scale": 1738561.7200576297,
+     "scale_source": "runtime reported operation scale",
+     "threshold": 1e-10
+    },
+    "same_raw_port": {
+     "independently_recomputed_numerator": 1.1124518952626983e-28,
+     "pass_": true,
+     "relative": 9.655129634241338e-30,
+     "scale": 11.52187425135603,
+     "scale_source": "sum of runtime named terms",
+     "threshold": 1e-10
+    },
+    "same_raw_trace": {
+     "independently_recomputed_numerator": 5.729565658233944e-11,
+     "pass_": true,
+     "relative": 3.645937846579514e-11,
+     "scale": 1.5714929599277765,
+     "scale_source": "sum of runtime named terms",
+     "threshold": 1e-10
+    }
+   },
+   "new_native_true_residual": {
+    "norm": 0.03188372537503191,
+    "relative": 0.046265858118017686,
+    "rhs_norm": 0.6891415543120591
+   },
+   "independent_change_norms": {
+    "candidate_rs_change": 1.0291635642660454e-09,
+    "field_change": 1.2305873310710423e-11,
+    "new_minus_saved_native_residual": 1.0570709630087122e-09
+   },
+   "limitations": [
+    "Only two native-minus-derived formulas are fully checkable from exported operands. Same-raw trace/port correction vectors and raw B/volume operands were not exported; their denominator sums and difference-vector norms were checked, not their actions reconstructed.",
+    "Actual native output and BHp^-1ep vectors were not exported; denominator consistency uses saved subtraction reconstructions, not independent native/B action.",
+    "Native DtN and p6 BDx vectors were not exported; their2.62919714454e-14 separation is runtime metadata.",
+    "Row-index arrays not decoded: unchanged trace and zero-slave storage are runtime source gates, not independently re-indexed here.",
+    "Runtime baseline all324 recovery and saved-r_s SHA equality gates passed; reconstructed baseline vectors were not separately exported.",
+    "Same-raw trace PASS does not qualify native identity: legacy/native1.80071093e-10 and raw/native1.84503477e-10 remain above1e-10.",
+    "No original production callback integration or FGMRES convergence established."
+   ]
+  },
+  "admission_count": 73,
+  "resource_reservation_bytes": 3861384424,
+  "max_prospective_AS_bytes": 5272308968,
+  "independent_review_checks": {
+   "all13_saved_payloads_finite_hashes_norms": true,
+   "all324_runtime_baseline_recovery_gates": true,
+   "all399_resource_rows": true,
+   "all65_F_LU_hashes_unchanged": true,
+   "all65_baseline_four_hash_dictionaries": true,
+   "all65_candidate_H_S_hashes_different": true,
+   "all73_admission_arithmetic": true,
+   "cleanup_empty": true,
+   "exact44raw65classes324cells": true,
+   "new_field_rs_native_distinct": true,
+   "original_four_surface_cache_and80mode_evidence_unchanged": true,
+   "runtime_full_baseline_rs_hash_gate": true,
+   "same_raw_gate_numerators_and_denominator_sums": true,
+   "split648call_order_matches_original_replay": true,
+   "two_saved_native_minus_derived_formulas_bitwise": true
+  },
+  "review_time_ordering": {
+   "execution_order": "Output already existed by 09:55:47 UTC. Final source/command closure and this terminal report occurred after execution began; no pre-launch final approval is claimed.",
+   "final_source_command_closure_message_utc": "2026-10-15T09:56:41Z",
+   "preliminary_memory_verdict_utc": "2026-10-15T09:55:20Z"
+  },
+  "Dhat_rebuilt_with_candidate_H": true,
+  "original_LU_numeric_payload_hashed_separate_pivot_hash_not_claimed": true,
+  "post_correction_full_H_matrix_residual_count": 0,
+  "individual_allocator_or_dlclose_release_credit": false,
+  "new_H_S_Dhat_must_not_inherit_original_hashes": true
  }
 }
