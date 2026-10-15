@@ -1,3 +1,18 @@
+# Task39extra_para 2026-10-15：色散方向离线收口与原光栅 D 候选
+
+V0/V1/V2 的离线整理完成后，Hx 色散机制得到参考单元和均匀平层两类证据支持，但原光栅的 x/z 网格仍未验证。V0 的数值摘要通过而外层 provenance 仍为 `EVIDENCE_INCOMPLETE`：运行期间 HEAD 只发生了经核实的 docs-only 变化，原记录和通用 provenance gate 均保持不变。V1 使用真实 Basix N1E 与 FFCx 体积分规则；V2 在相同 flat 几何上完成 Nx2/4/8 的 p6 直接场对照，包含逐模式复振幅及不做相位拟合的同坐标 E/H 样本。
+
+| 阶段 | 新证据 | 仍有限/未验证 |
+|---|---|---|
+| V0 5 nm full600 | direct worker A6=`9.5941e-11`、能量差=`-1.5528e-12`；8个文档路径变化，src/input树OID不变 | 外层 `EVIDENCE_INCOMPLETE` 保留，不改原manifest/summary |
+| V1 色散符号 | p6、q15、512体积分点；hx=.5→.25 nm 时 delta 从`7.94e-6`降到`2.58e-9` | hx=.125 nm接近舍入底；实际生产MPC/端口方向未测 |
+| V2 平层 | p6、540个传播模式；Nx4→Nx8复E/H相对差`6.50e-5/7.31e-5`；Nx8 R/T/A=`.11349081/.81054145/.07596774` | 这是flat校准，有限端口未含evanescent，不是光栅/full-DtN资格 |
+| 下一单场D | 已冻结独立轴计划/profile/input：200×2×118=47,200 cells；p6 direct MUMPS、572 N0端口、父q160 | D同时改x与z，结论仅为`CROSS_CHANGED_GRID_DIAGNOSTIC`；硬RSS 1.8e12 B，LU内存仍须现场实测 |
+
+详细数据、逐级衍射、资源分类与哈希见[色散方向验证回应](task39extra_para_workstation_capacity/response_dispersion_validation_20261015.md)和[离线结果目录](task39extra_para_workstation_capacity/outcomes/dispersion_directional_validation_20261015/)。D结果将在唯一获批场结束后追加；B/C及p7/p8全场不在范围。
+
+---
+
 # Task39extra V6最新结果：递归粗逆未资格化，V5双模型成功基线保留
 
 G1/G2已完成，旧新C真实负结果保留；用户补充授权继续有依据的p4/p2诊断，G5与response_v8尚未最终收口。该授权超出V6原停止分流，不改变物理、精度或安全线；不复跑G1/G2。

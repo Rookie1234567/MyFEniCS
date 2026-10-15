@@ -1,5 +1,24 @@
 # 原生迁移与容量任务：执行结果总账
 
+## 2026-10-15：色散方向网格离线收口与原光栅 D 候选授权
+
+本轮 V0/V1/V2 离线证据已整理；flat 的三个 direct solve 和此前 full600/N0 run 均保留原始终态，不重写旧 summary。V1 实际 Basix/FFCx 参考单元结果显示 p6 hx=0.5→0.25 nm 的归一化传播偏差 delta=(lambda-kx²)/k0² 从 7.93795e-6 降至 2.57600e-9；hx=0.125 nm 的 6.54e-13 已接近本计算条件下的舍入量级。V2 平面 direct 校准中 Nx2 差异明显，Nx4→Nx8 的 R/T/A、全模式复振幅和同坐标复 E/H 已接近。它们支持 Hx，但不是原光栅精度资格；实际 production MPC 方向、原光栅新 x/z 网格及完整 evanescent DtN 仍有限或未验证。
+
+| 对照 | 网格与 measured | 限定 |
+|---|---|---|
+| V0 full600 direct | direct summary passed=true、原 A6 9.5941e-11、能量闭合 -1.55e-12；外层 summary 原样保留 EVIDENCE_INCOMPLETE | run 在 source d0dd7f09 启动；随后 docs-only HEAD 到 37a76ecc。V0 证据证明8个变化路径仅为文档，src/input tree OID 未变；不放宽通用 provenance gate |
+| V1 实际色散符号 | Basix N1E、FFCx 实际 p6 体积分 q15（512参考点），p6 hx=.5/.25/.125；p7/p8 仅 .5 有界组件；surface parent q160 | canonical reference cell；实际 production MPC/方向和原光栅端口 NOT_RUN。保留 delta 与 lambda/kx²-1 两种不同相对量 |
+| V2 flat Nx2 | 936 cells；R/T/A=.12236204/.80111535/.07652260；A_volume .07652260；A6 3.72e-9 | 540 auto-propagating 模式；evanescent 不在此端口 operator |
+| V2 flat Nx4 | 1872 cells；R/T/A=.11349326/.81053879/.07596795；A_volume .07596795；A6 1.18e-9 | 同坐标对比 Nx8 的复 E/H 相对 L2 为 6.50e-5/7.31e-5；模态 top/bottom outgoing amplitude 相对 L2 为 1.95e-4/9.65e-5 |
+| V2 flat Nx8 | 3744 cells；R/T/A=.11349081/.81054145/.07596774；A_volume .07596774；A6 4.20e-9 | 512 GiB 是本小校准场专有授权；实际树 RSS 峰 65,999,884,288 B，不能移作原光栅资源门 |
+| Swap 分类 | Nx4 watchdog 小证据的树与全局 swap 均为0，但原 task038_launcher 只认旧状态字符串，故原 outer EVIDENCE_INCOMPLETE 保留。已加兼容分类和 focused 回归 | Nx2/Nx8 全局 pswpin 分别 +2/+10 页，任务树 VmSwap峰0，但全局 page-in 无法归因本任务，不能称任务 zero-swap 资格 |
+
+复场逐点坐标在三场间相同，比较含全体540个输出 mode 的复 outgoing amplitude、R/T逐级数据、空气侧320个复 E/H 采样值与界面切向 E/H；未做全局相位拟合。完整表、V0/V1 身份、矩阵 stored NNZ、MUMPS 原始 INFOG/RINFOG、资源字段及文件哈希见[色散方向验证收口](dispersion_directional_validation_20261015/summary.md)、[flat标定JSON](dispersion_directional_validation_20261015/flat_calibration.json)、[逐级CSV](dispersion_directional_validation_20261015/flat_modal_orders.csv)和[资源/分类说明](dispersion_directional_validation_20261015/resource_and_scope.json)。
+
+用户随后授权仅执行原 0.7 nm 光栅候选 D：p6 凝聚 direct MUMPS、200×2×118=47,200 cells、x加密至 .25 nm 并 z 改为9/100/9层；保留572 N0端口和父q160。它同时改 x 与 z，结果只能标 CROSS_CHANGED_GRID_DIAGNOSTIC，不能拆成单变量收敛证据。资源硬线维持 1.8e12 B，不沿用 flat Nx8 的512 GiB门；在实际 trace/port/CSR与 symbolic 证据完成前不得以 cell 比例保证LU容量。B=93,600、C、p7/p8全场均未授权。
+
+## Review V7：切换至 46800-cell 准确 p4 完整求解（2026-10-12，启动前）
+
 ## Review V7：切换至 46800-cell 准确 p4 完整求解（2026-10-12，启动前）
 
 | 项目 | 已确认事实 / 当前状态 | 边界 |

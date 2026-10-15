@@ -434,6 +434,7 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
             "mesh_axis_x_values": explicit_x_values,
             "mesh_axis_y_values": explicit_y_values,
             "mesh_axis_z_values": explicit_z_values,
+            "mesh_axis_z_profile": explicit_z_profile,
         }
         try:
             from src.geometry.task39extra_v6_f5_mesh_plan import (
@@ -463,6 +464,20 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
                         f"invalid dispersion flat frozen mesh input: {exc}"
                     ) from exc
         if frozen_axes is None:
+            from src.geometry.v7_d_aniso_n0_p6_axis_plan import (
+                D_AXIS_PLAN_IDS,
+                validate_frozen_d_axes,
+            )
+
+            if cfg.mesh_plan_id in D_AXIS_PLAN_IDS:
+                try:
+                    frozen_axes = validate_frozen_d_axes(plan_identity)
+                    frozen_plan_family = "v7_candidate_d"
+                except ValueError as exc:
+                    raise ValueError(
+                        f"invalid V7 candidate-D frozen mesh input: {exc}"
+                    ) from exc
+        if frozen_axes is None:
             from src.geometry.task39extra_v5_r13_mesh_plan import (
                 validate_frozen_r13_axes,
             )
@@ -480,7 +495,7 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
         for axis_name, (start, stop) in expected_spans.items():
             if frozen_axes[axis_name][0] != start or frozen_axes[axis_name][-1] != stop:
                 raise ValueError(
-                    f"R13 frozen {axis_name} axis endpoints differ from geometry"
+                    f"frozen {frozen_plan_family} {axis_name} axis endpoints differ from geometry"
                 )
     elif explicit_x_values is not None or explicit_y_values is not None:
         raise ValueError("explicit x/y axes require the frozen R13 mesh identity")

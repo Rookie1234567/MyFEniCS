@@ -1715,3 +1715,9 @@ canonical共享实体传递仅由显式V6_P3 profile启用：每个局部p3→p6
 | V7 0.7 nm p6/准确p4、572通道、full_solve | U1 独立 profile/input/mesh QA/输出与 checker 适配完成；纯/接口 58/58 通过，新 PDE `NOT_RUN` | FGMRES32/zero/max2048，无16步计划停；RSS硬线1.95e12 B；FULL_DTN_NOT_VERIFIED / AUTHORITY_LIMITED，48小时目标未建立 |
 
 原始身份与停止信号见 [V7 priority switch](task39extra_para_workstation_capacity/outcomes/records/v7_priority_switch.json)，新模型范围及后续实测见 [V7 outcome](task39extra_para_workstation_capacity/outcomes/urgent_anisotropic_0p7nm_v7.md)。
+
+## 3.50 Task39extra_para：0.7 nm 色散方向离线验证与候选 D（2026-10-15）
+
+V0/V1/V2 的小型证据整理支持 p6 的 x 向数值色散解释，但没有把平层校准或参考单元计算写成原光栅资格。V0 full600 direct 数值检查为 A6 相对残差`9.5941e-11`、能量差`-1.5528e-12`，外层`EVIDENCE_INCOMPLETE`仍原样保留；source/input树未变的 docs-only 身份核对见[V0补充记录](task39extra_para_workstation_capacity/outcomes/dispersion_directional_validation_20261015/v0_source_identity_reconciliation.json)。V1 实际 Basix N1E/FFCx q15 参考单元中，hx=.5→.25 nm 的无量纲传播偏差 delta 由`7.94e-6`降至`2.58e-9`；V2 flat Nx4→Nx8 的复E/H相对L2差为`6.50e-5/7.31e-5`，并逐项保存540个传播模式的原始复幅值。
+
+用户已仅授权候选D一场：p6凝聚直接MUMPS，200×2×118=47200个六面体，x=.25 nm、z分段9/100/9；同材料、入射和572个N0通道，父清单q160。它同时改变x/z，故只能称`CROSS_CHANGED_GRID_DIAGNOSTIC`，不单独证明x/z收敛。硬RSS仍1.8e12 B；实际trace/port/CSR、MUMPS symbolic信息与整树RSS必须分别记录，symbolic预测不是容量保证。D的run及正式物理/资源结论待唯一现场执行，见[候选D/离线响应](task39extra_para_workstation_capacity/response_dispersion_validation_20261015.md)。

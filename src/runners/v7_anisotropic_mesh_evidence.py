@@ -177,8 +177,30 @@ def actual_v7_anisotropic_mesh_evidence(
     *,
     entities_to_geometry_fn: Any = None,
     required_space_degrees: tuple[int, ...] = (6, 4),
+    axis_contract: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Check the already-built 46800-cell target and the explicitly built spaces."""
+    """Check an already-built V7 tensor mesh and its explicitly built spaces.
+
+    ``axis_contract`` is for a separately named, frozen diagnostic grid.
+    Omitting it preserves the original 46800-cell V7 contract.
+    """
+
+    if axis_contract is None:
+        axis_contract = {
+            "name": "V7 original 100x2x234 grid",
+            "schema": V7_MESH_EVIDENCE_SCHEMA,
+            "global_cells": V7_EXPECTED_GLOBAL_CELLS,
+            "axis_counts": V7_EXPECTED_AXIS_COUNTS,
+            "segment_counts": {
+                "x": (33, 34, 33),
+                "y": (2,),
+                "z": (17, 200, 17),
+            },
+            "axes_nm": None,
+        }
+    required_global_cells = int(axis_contract["global_cells"])
+    expected_axis_counts = tuple(int(value) for value in axis_contract["axis_counts"])
+    segment_counts = axis_contract["segment_counts"]
 
     required_space_degrees = tuple(int(degree) for degree in required_space_degrees)
     if required_space_degrees not in ((6, 4), (6,)):
@@ -194,13 +216,13 @@ def actual_v7_anisotropic_mesh_evidence(
     _require(comm_size == 1, "V7 mesh evidence requires MPI1")
     _require(topology.cell_name() == "hexahedron", "V7 target must use hexahedra")
     _require(
-        local_cells == global_cells == V7_EXPECTED_GLOBAL_CELLS,
-        "actual global cell count is not the reviewed 46800-cell target",
+        local_cells == global_cells == required_global_cells,
+        f"actual global cell count is not {axis_contract['name']}",
     )
     _require(
         tuple(int(value) for value in getattr(cfg, "mesh_axis_cell_counts_requested", ()))
-        == V7_EXPECTED_AXIS_COUNTS,
-        "runtime config does not request the V7 [100, 2, 234] axis counts",
+        == expected_axis_counts,
+        f"runtime config does not request {axis_contract['name']} axis counts",
     )
     _require(
         cfg.geometry_kind == "rectangular_block_grating"
@@ -275,18 +297,29 @@ def actual_v7_anisotropic_mesh_evidence(
     axes = tuple(np.unique(coordinates[:, axis]) for axis in range(3))
     x_axis, y_axis, z_axis = axes
     axis_counts = tuple(len(axis) - 1 for axis in axes)
-    _require(axis_counts == V7_EXPECTED_AXIS_COUNTS,
-             f"actual axis cell counts {axis_counts} differ from [100, 2, 234]")
+    _require(
+        axis_counts == expected_axis_counts,
+        f"actual axis cell counts {axis_counts} differ from {expected_axis_counts}",
+    )
+    expected_axes = axis_contract.get("axes_nm")
+    if expected_axes is not None:
+        for axis_name, actual_axis in zip(("x", "y", "z"), axes, strict=True):
+            if not np.array_equal(
+                actual_axis, np.asarray(expected_axes[axis_name], dtype=np.float64)
+            ):
+                raise ValueError(
+                    f"actual {axis_name} coordinates differ from the frozen mesh plan"
+                )
     if any(np.any(np.diff(axis) <= 0.0) for axis in axes):
         raise ValueError("actual V7 axes must be strictly increasing")
     x_breaks = (float(cfg.x_min), float(cfg.grating_x_min),
                 float(cfg.grating_x_max), float(cfg.x_max))
     z_breaks = (float(cfg.domain_z_min), float(cfg.interface_z),
                 float(cfg.grating_z_max), float(cfg.domain_z_max))
-    x_segments = _segment_axis_facts(x_axis, x_breaks, (33, 34, 33), "x")
+    x_segments = _segment_axis_facts(x_axis, x_breaks, segment_counts["x"], "x")
     y_segments = _segment_axis_facts(y_axis, (float(cfg.y_min), float(cfg.y_max)),
-                                     (2,), "y")
-    z_segments = _segment_axis_facts(z_axis, z_breaks, (17, 200, 17), "z")
+                                     segment_counts["y"], "y")
+    z_segments = _segment_axis_facts(z_axis, z_breaks, segment_counts["z"], "z")
 
     cell_tags = mesh_data.cell_tags
     tag_indices = np.asarray(cell_tags.indices)
@@ -325,7 +358,7 @@ def actual_v7_anisotropic_mesh_evidence(
 
     nx, ny, nz = axis_counts
     tag_grid = np.full((nx, ny, nz), -1, dtype=np.int32)
-    seen_cells = np.zeros(V7_EXPECTED_GLOBAL_CELLS, dtype=np.bool_)
+    seen_cells = np.zeros(required_global_cells, dtype=np.bool_)
     bounds_hash = hashlib.sha256()
     jacobian_min = float("inf")
     jacobian_max = 0.0
@@ -515,7 +548,7 @@ def actual_v7_anisotropic_mesh_evidence(
         }
 
     return {
-        "schema": V7_MESH_EVIDENCE_SCHEMA,
+        "schema": str(axis_contract["schema"]),
         "status": "PASS",
         "actual_global_cell_count": global_cells,
         "actual_local_owned_cell_count": local_cells,
@@ -551,7 +584,7 @@ def actual_v7_anisotropic_mesh_evidence(
             "minimum": jacobian_min,
             "maximum": jacobian_max,
             "maximum_hex_corner_mapping_error_nm": maximum_corner_error,
-            "sampled_or_all_cells": "all_46800_owned_cells",
+            "sampled_or_all_cells": f"all_{global_cells}_owned_cells",
         },
         "periodic_faces": {
             "x": periodic_x,
@@ -583,3 +616,58 @@ def actual_v7_anisotropic_mesh_evidence(
         "scope": "actual target mesh/material/spaces only; not a solver or convergence result",
         "mesh_or_fe_data_modified": False,
     }
+
+
+def actual_v7_candidate_d_mesh_evidence(
+    levels: Any,
+    cfg: Any,
+    *,
+    entities_to_geometry_fn: Any = None,
+) -> dict[str, Any]:
+    """Validate candidate D's actual 47,200-cell x+z changed grid."""
+
+    from src.geometry.v7_d_aniso_n0_p6_axis_plan import (
+        D_AXIS_COUNTS,
+        D_AXIS_PLAN_ID,
+        D_X_SEGMENT_COUNTS,
+        D_Y_SEGMENT_COUNTS,
+        D_Z_SEGMENT_COUNTS,
+        d_axis_plan,
+        validate_frozen_d_axes,
+    )
+
+    axis_values = validate_frozen_d_axes(
+        {
+            "mesh_plan_id": cfg.mesh_plan_id,
+            "mesh_plan_sha256": cfg.mesh_plan_sha256,
+            "mesh_axis_cell_counts": cfg.mesh_axis_cell_counts_requested,
+            "mesh_axis_x_values": cfg.mesh_axis_x_values_requested,
+            "mesh_axis_y_values": cfg.mesh_axis_y_values_requested,
+            "mesh_axis_z_values": cfg.mesh_axis_z_values_requested,
+            "mesh_axis_z_profile": cfg.mesh_axis_z_profile,
+        }
+    )
+    plan = d_axis_plan()
+    evidence = actual_v7_anisotropic_mesh_evidence(
+        levels,
+        cfg,
+        entities_to_geometry_fn=entities_to_geometry_fn,
+        required_space_degrees=(6,),
+        axis_contract={
+            "name": "V7 candidate D 200x2x118 grid",
+            "schema": "task39extra.v7.candidate-d-mesh-evidence.v1",
+            "global_cells": int(np.prod(D_AXIS_COUNTS)),
+            "axis_counts": D_AXIS_COUNTS,
+            "segment_counts": {
+                "x": D_X_SEGMENT_COUNTS,
+                "y": D_Y_SEGMENT_COUNTS,
+                "z": D_Z_SEGMENT_COUNTS,
+            },
+            "axes_nm": axis_values,
+        },
+    )
+    evidence["diagnostic_scope"] = "CROSS_CHANGED_GRID_DIAGNOSTIC"
+    evidence["mesh_plan_id"] = D_AXIS_PLAN_ID
+    evidence["mesh_plan_sha256"] = plan["plan_sha256"]
+    evidence["mesh_plan_axis_sha256_le_f64"] = plan["axis_sha256_le_f64"]
+    return evidence

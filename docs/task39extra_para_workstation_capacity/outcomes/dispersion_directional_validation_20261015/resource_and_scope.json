@@ -1,0 +1,163 @@
+{
+  "flat_runs": {
+    "2": {
+      "direct_solver_passed": true,
+      "operator_authority": "all_auto_propagating_orders_flat_1nm_period",
+      "outer_result_classification_preserved": "EVIDENCE_INCOMPLETE",
+      "resource_authority": {
+        "global_swap_activity": {
+          "baseline": {
+            "pswpin_pages": 3140333,
+            "pswpout_pages": 5285888
+          },
+          "delta": {
+            "pswpin_pages": 2,
+            "pswpout_pages": 0
+          },
+          "end": {
+            "pswpin_pages": 3140335,
+            "pswpout_pages": 5285888
+          },
+          "scope": "WSL-global diagnostic, not dedicated job"
+        },
+        "global_swap_delta_policy": "observe_only",
+        "job_swap_activity": "UNRESOLVED_global_activity_cannot_be_attributed",
+        "rss_hard_limit_bytes": 34359738368,
+        "sampled_process_tree_rss_peak_bytes": 14885482496,
+        "sampled_process_tree_swap_peak_bytes": 0
+      },
+      "run_id": "dispersion_0p7nm_flat_p6_q160_nx2_direct_v1",
+      "source_sha": "313aa4fa73b9eb6abf01bda6e85cabefce6349f2",
+      "swap_classification_reconciliation": {
+        "global_pswpin_delta_pages": 2,
+        "global_pswpout_delta_pages": 0,
+        "interpretation": "tree samples show zero task swap, but nonzero WSL-global page-in cannot be attributed to this run",
+        "measured_zero_swap_supported_by_available_fields": false,
+        "outer_evidence_incomplete_due_to_old_classifier_contract": false,
+        "outer_job_swap_qualification_preserved": "UNRESOLVED",
+        "outer_result_classification_preserved": "EVIDENCE_INCOMPLETE",
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "scope": "global WSL swap counters are diagnostic and do not attribute global activity to the task",
+        "watchdog_job_swap_activity": "UNRESOLVED_global_activity_cannot_be_attributed"
+      }
+    },
+    "4": {
+      "direct_solver_passed": true,
+      "operator_authority": "all_auto_propagating_orders_flat_1nm_period",
+      "outer_result_classification_preserved": "EVIDENCE_INCOMPLETE",
+      "resource_authority": {
+        "global_swap_activity": {
+          "baseline": {
+            "pswpin_pages": 3140335,
+            "pswpout_pages": 5285888
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          },
+          "end": {
+            "pswpin_pages": 3140335,
+            "pswpout_pages": 5285888
+          },
+          "scope": "WSL-global diagnostic, not dedicated job"
+        },
+        "global_swap_delta_policy": "observe_only",
+        "job_swap_activity": "no_task_or_global_swap_observed",
+        "rss_hard_limit_bytes": 34359738368,
+        "sampled_process_tree_rss_peak_bytes": 30157877248,
+        "sampled_process_tree_swap_peak_bytes": 0
+      },
+      "run_id": "dispersion_0p7nm_flat_p6_q160_nx4_direct_v1",
+      "source_sha": "313aa4fa73b9eb6abf01bda6e85cabefce6349f2",
+      "swap_classification_reconciliation": {
+        "global_pswpin_delta_pages": 0,
+        "global_pswpout_delta_pages": 0,
+        "interpretation": "tree and global counters support zero; original outer classification remains unchanged",
+        "measured_zero_swap_supported_by_available_fields": true,
+        "outer_evidence_incomplete_due_to_old_classifier_contract": true,
+        "outer_job_swap_qualification_preserved": "UNRESOLVED",
+        "outer_result_classification_preserved": "EVIDENCE_INCOMPLETE",
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "scope": "global WSL swap counters are diagnostic and do not attribute global activity to the task",
+        "watchdog_job_swap_activity": "no_task_or_global_swap_observed"
+      }
+    },
+    "8": {
+      "direct_solver_passed": true,
+      "operator_authority": "all_auto_propagating_orders_flat_1nm_period",
+      "outer_result_classification_preserved": "EVIDENCE_INCOMPLETE",
+      "resource_authority": {
+        "global_swap_activity": {
+          "baseline": {
+            "pswpin_pages": 3140335,
+            "pswpout_pages": 5285888
+          },
+          "delta": {
+            "pswpin_pages": 10,
+            "pswpout_pages": 0
+          },
+          "end": {
+            "pswpin_pages": 3140345,
+            "pswpout_pages": 5285888
+          },
+          "scope": "WSL-global diagnostic, not dedicated job"
+        },
+        "global_swap_delta_policy": "observe_only",
+        "job_swap_activity": "UNRESOLVED_global_activity_cannot_be_attributed",
+        "rss_hard_limit_bytes": 549755813888,
+        "sampled_process_tree_rss_peak_bytes": 65999884288,
+        "sampled_process_tree_swap_peak_bytes": 0
+      },
+      "run_id": "dispersion_0p7nm_flat_p6_q160_nx8_direct_v2",
+      "source_sha": "b99c03f35f78d071651f12abcd49b3d5981a1689",
+      "swap_classification_reconciliation": {
+        "global_pswpin_delta_pages": 10,
+        "global_pswpout_delta_pages": 0,
+        "interpretation": "tree samples show zero task swap, but nonzero WSL-global page-in cannot be attributed to this run",
+        "measured_zero_swap_supported_by_available_fields": false,
+        "outer_evidence_incomplete_due_to_old_classifier_contract": false,
+        "outer_job_swap_qualification_preserved": "UNRESOLVED",
+        "outer_result_classification_preserved": "EVIDENCE_INCOMPLETE",
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "scope": "global WSL swap counters are diagnostic and do not attribute global activity to the task",
+        "watchdog_job_swap_activity": "UNRESOLVED_global_activity_cannot_be_attributed"
+      }
+    }
+  },
+  "read_scope": {
+    "not_read": [
+      "resource streams",
+      "large field/VTU files",
+      "matrix/factor/checkpoint",
+      "historical NPZ/full-field artifacts"
+    ],
+    "read": [
+      "three small terminal summaries",
+      "three resolved configs",
+      "three direct summaries",
+      "three watchdog summaries",
+      "three port/volume outputs",
+      "three 33-34 KiB field sample archives",
+      "existing V0/V1 small records"
+    ]
+  },
+  "schema": "task39extra.dispersion_validation_resource_scope.v1",
+  "source_classification_fix": {
+    "accepts_legacy_watchdog_state": "zero_supported_by_zero_global_activity",
+    "accepts_measured_tree_zero_state_only_when": [
+      "job_swap_activity == no_task_or_global_swap_observed",
+      "global pswpin_pages == 0",
+      "global pswpout_pages == 0",
+      "sampled_process_tree_swap_peak_bytes == 0"
+    ],
+    "attribution_of_global_pagein_to_task": false,
+    "code": "src/runners/task038_launcher.py::_zero_swap_is_qualified",
+    "focused_test": "src/test/test_task39extra_dispersion_flat_direct.py::test_zero_swap_classifier_accepts_both_watchdog_contracts_fail_closed",
+    "focused_test_file_sha256": "dc7e7a63acfb061d49294580ccc80569c8a461a6d49835f43e71ed1e764a8936",
+    "historical_run_summaries_rewritten": false,
+    "source_file_sha256": "9560e7ea4dcb5f1a090519f9363e8a90ffc5563a2937f28a475499bcfa93ba8a"
+  },
+  "status": "OFFLINE_SMALL_METADATA_RECONCILIATION",
+  "v0_outer_classification": "NUMERICAL_PASS_SOURCE_HEAD_CHANGED_DOCS_ONLY",
+  "v0_run_summary_preserved": true
+}

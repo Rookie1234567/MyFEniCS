@@ -1,0 +1,95 @@
+# User-authorized V7 candidate D: p6 direct, x+z changed diagnostic grid.
+schema_version = 1
+model_id = "euv_grazing1_phi0"
+run_id = "v7_interleave_0p7nm_aniso_p6_direct_d_cross_changed_q160_n0_full"
+comparison_group = "task39extra_v7_0p7nm_aniso_p6_direct_candidate_d"
+dimension = 3
+
+[geometry]
+geometry_kind = "rectangular_block_grating"
+period_x_nm = 50.0
+period_y_nm = 25.0
+z_min_nm = -10.0
+z_max_nm = 130.0
+interface_z_nm = 0.0
+air_height_nm = 130.0
+substrate_thickness_nm = 10.0
+grating_width_x_nm = 17.0
+grating_width_y_nm = 25.0
+grating_height_nm = 120.0
+
+[materials]
+n_air = [1.0, 0.0]
+mu_r = [1.0, 0.0]
+substrate_name = "Si / silicon"
+n_substrate = [0.9998851259969171, 0.000004325285938225562]
+grating_name = "Si / silicon"
+n_grating = [0.9998851259969171, 0.000004325285938225562]
+
+[incidence]
+wavelength_nm = 0.7
+grazing_angle_deg = 1.0
+azimuth_deg = 0.0
+polarization = "s"
+electric_amplitude = 1.0
+
+[discretization]
+nedelec_degree = 6
+visualization_degree = 6
+mesh_target_nm = 0.25
+mesh_axis_cell_counts = [200, 2, 118]
+mesh_axis_x_values = [0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5, 3.75, 4.0, 4.25, 4.5, 4.75, 5.0, 5.25, 5.5, 5.75, 6.0, 6.25, 6.5, 6.75, 7.0, 7.25, 7.5, 7.75, 8.0, 8.25, 8.5, 8.75, 9.0, 9.25, 9.5, 9.75, 10.0, 10.25, 10.5, 10.75, 11.0, 11.25, 11.5, 11.75, 12.0, 12.25, 12.5, 12.75, 13.0, 13.25, 13.5, 13.75, 14.0, 14.25, 14.5, 14.75, 15.0, 15.25, 15.5, 15.75, 16.0, 16.25, 16.5, 16.75, 17.0, 17.25, 17.5, 17.75, 18.0, 18.25, 18.5, 18.75, 19.0, 19.25, 19.5, 19.75, 20.0, 20.25, 20.5, 20.75, 21.0, 21.25, 21.5, 21.75, 22.0, 22.25, 22.5, 22.75, 23.0, 23.25, 23.5, 23.75, 24.0, 24.25, 24.5, 24.75, 25.0, 25.25, 25.5, 25.75, 26.0, 26.25, 26.5, 26.75, 27.0, 27.25, 27.5, 27.75, 28.0, 28.25, 28.5, 28.75, 29.0, 29.25, 29.5, 29.75, 30.0, 30.25, 30.5, 30.75, 31.0, 31.25, 31.5, 31.75, 32.0, 32.25, 32.5, 32.75, 33.0, 33.25, 33.5, 33.75, 34.0, 34.25, 34.5, 34.75, 35.0, 35.25, 35.5, 35.75, 36.0, 36.25, 36.5, 36.75, 37.0, 37.25, 37.5, 37.75, 38.0, 38.25, 38.5, 38.75, 39.0, 39.25, 39.5, 39.75, 40.0, 40.25, 40.5, 40.75, 41.0, 41.25, 41.5, 41.75, 42.0, 42.25, 42.5, 42.75, 43.0, 43.25, 43.5, 43.75, 44.0, 44.25, 44.5, 44.75, 45.0, 45.25, 45.5, 45.75, 46.0, 46.25, 46.5, 46.75, 47.0, 47.25, 47.5, 47.75, 48.0, 48.25, 48.5, 48.75, 49.0, 49.25, 49.5, 49.75, 50.0]
+mesh_axis_y_values = [0.0, 12.5, 25.0]
+mesh_axis_z_values = [-10.0, -8.88888888888889, -7.777777777777778, -6.666666666666666, -5.555555555555555, -4.444444444444445, -3.333333333333333, -2.2222222222222214, -1.1111111111111107, 0.0, 1.2, 2.4, 3.5999999999999996, 4.8, 6.0, 7.199999999999999, 8.4, 9.6, 10.799999999999999, 12.0, 13.2, 14.399999999999999, 15.6, 16.8, 18.0, 19.2, 20.4, 21.599999999999998, 22.8, 24.0, 25.2, 26.4, 27.599999999999998, 28.799999999999997, 30.0, 31.2, 32.4, 33.6, 34.8, 36.0, 37.199999999999996, 38.4, 39.6, 40.8, 42.0, 43.199999999999996, 44.4, 45.6, 46.8, 48.0, 49.199999999999996, 50.4, 51.6, 52.8, 54.0, 55.199999999999996, 56.4, 57.599999999999994, 58.8, 60.0, 61.199999999999996, 62.4, 63.599999999999994, 64.8, 66.0, 67.2, 68.39999999999999, 69.6, 70.8, 72.0, 73.2, 74.39999999999999, 75.6, 76.8, 78.0, 79.2, 80.39999999999999, 81.6, 82.8, 84.0, 85.2, 86.39999999999999, 87.6, 88.8, 90.0, 91.2, 92.39999999999999, 93.6, 94.8, 96.0, 97.2, 98.39999999999999, 99.6, 100.8, 102.0, 103.2, 104.39999999999999, 105.6, 106.8, 108.0, 109.2, 110.39999999999999, 111.6, 112.8, 114.0, 115.19999999999999, 116.39999999999999, 117.6, 118.8, 120.0, 121.11111111111111, 122.22222222222223, 123.33333333333333, 124.44444444444444, 125.55555555555556, 126.66666666666667, 127.77777777777777, 128.88888888888889, 130.0]
+mesh_axis_z_profile = "v7_d_z_9_100_9_nm_v1"
+mesh_plan_id = "task39extra.v7.aniso_n0.p6.direct.grid_d.axes.v1"
+mesh_plan_sha256 = "b853ecfd7cd54f41c14c04e4cc75173dd7ce3d8fc1d894e0c61ed62e057a0d46"
+mesh_cell_type = "hexahedron"
+mesh_spacing_mode = "boundary_fitted"
+assembly_backend = "standard_full"
+floquet_constraint_mode = "auto"
+
+[boundary]
+use_floquet_x = true
+use_floquet_y = true
+vertical_boundary = "dtn_port"
+scattering_background = "layered"
+dtn_order_policy = "auto_propagating"
+dtn_assembly = "auxiliary"
+use_pml = false
+
+[method]
+kind = "full3d_direct"
+
+[solver]
+linear_solver = "direct"
+direct_solver_profile = "default"
+native_capacity_profile = "dual_condensed_balh_native_0p7nm_aniso_n0_p6_direct_grid_d_v1"
+
+[execution]
+mpi_size = 1
+time_limit_mode = "none"
+warning_memory_gib = 1089.6474123001099
+terminate_memory_gib = 1676.3806343078613
+memory_limit_gb = 1676.3806343078613
+require_zero_swap = false
+native_memory_policy = "interleave_nodes0_1"
+
+[output]
+results_root = "results"
+unique_output = true
+export_fields = true
+export_diffraction_orders = true
+export_canonical_vectors = true
+export_modal_amplitudes = true
+export_reference_planes = true
+reference_plane_z_nm = [10.0, 30.0, 60.0, 90.0, 110.0]
+sample_count_x = 40
+sample_count_y = 20
+diffraction_sample_count_x = 24
+diffraction_sample_count_y = 24
+top_probe_z_nm = 127.5
+bottom_probe_z_nm = -7.5
+probe_fraction = 0.75
+diffraction_order_max_m = 142
+diffraction_order_max_n = 0

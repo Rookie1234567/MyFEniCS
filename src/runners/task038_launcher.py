@@ -101,6 +101,29 @@ def _write_text_hash(path: Path, value: str) -> None:
     path.write_text(value + "\n", encoding="ascii")
 
 
+def _zero_swap_is_qualified(authority: dict[str, Any]) -> bool:
+    """Return whether watchdog facts support a qualified zero-swap claim.
+
+    Older watchdog contracts used ``zero_supported_by_zero_global_activity``.
+    The measured-tree RSS contract has a more specific no-activity state; only
+    accept it when both global counters and the sampled process-tree swap peak
+    are explicitly zero. Unknown counters remain fail-closed.
+    """
+    activity = authority.get("job_swap_activity")
+    if activity == "zero_supported_by_zero_global_activity":
+        return True
+    if activity != "no_task_or_global_swap_observed":
+        return False
+    global_activity = authority.get("global_swap_activity")
+    delta = global_activity.get("delta") if isinstance(global_activity, dict) else None
+    if not isinstance(delta, dict):
+        return False
+    if any(type(delta.get(key)) is not int or delta[key] != 0
+           for key in ("pswpin_pages", "pswpout_pages")):
+        return False
+    return authority.get("sampled_process_tree_swap_peak_bytes") == 0
+
+
 def _timestamp_directory(
     specification: RunSpecification, timestamp: str | None
 ) -> Path:
@@ -706,7 +729,7 @@ def launch_specification(
                 except (InputError, OSError, subprocess.CalledProcessError) as exc:
                     source_after = {'provenance_passed': False, 'error': str(exc)}
                     result['result_classification'] = 'EVIDENCE_INCOMPLETE'
-                zero_swap = authority['job_swap_activity'] == 'zero_supported_by_zero_global_activity'
+                zero_swap = _zero_swap_is_qualified(authority)
                 observe_only_swap = watchdog_resources.get('swap_policy') == 'observe_only'
                 result['job_swap_qualification'] = (
                     'observed_only' if observe_only_swap else

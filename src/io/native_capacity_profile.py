@@ -32,7 +32,12 @@ V7_ANISO_N0_P4_PROFILES = frozenset({V7_ANISO_N0_P4_PROFILE})
 V7_ANISO_N0_P6_DIRECT_PROFILE = (
     'dual_condensed_balh_native_0p7nm_aniso_n0_p6_direct_full_v1'
 )
-V7_ANISO_N0_P6_DIRECT_PROFILES = frozenset({V7_ANISO_N0_P6_DIRECT_PROFILE})
+V7_D_ANISO_N0_P6_DIRECT_PROFILE = (
+    'dual_condensed_balh_native_0p7nm_aniso_n0_p6_direct_grid_d_v1'
+)
+V7_ANISO_N0_P6_DIRECT_PROFILES = frozenset(
+    {V7_ANISO_N0_P6_DIRECT_PROFILE, V7_D_ANISO_N0_P6_DIRECT_PROFILE}
+)
 V6_F5_P6_DIRECT_FULL600_PROFILE = (
     'task39extra_v6_f5_p6_condensed_direct_full600_v1'
 )
@@ -137,6 +142,7 @@ NATIVE_CASES['dual_condensed_balh_native_0p7nm_n0_p3_pilot16_v6'] = (
 )
 NATIVE_CASES[V7_ANISO_N0_P4_PROFILE] = (0.7, (0.5,), None, None, None)
 NATIVE_CASES[V7_ANISO_N0_P6_DIRECT_PROFILE] = (0.7, (0.5,), None, None, None)
+NATIVE_CASES[V7_D_ANISO_N0_P6_DIRECT_PROFILE] = (0.7, (0.25,), None, None, None)
 NATIVE_CASES[DISPERSION_FLAT_P6_PROFILE] = (
     0.7, (0.5, 0.25, 0.125), None, None, None
 )
@@ -845,8 +851,67 @@ def native_profile_facts(identity):
             identity=identity,
             execution_mode='full_solve',
             formal_runner='src.runners.p6_condensed_direct',
-            route='V7_P6_CONDENSED_DIRECT_N0',
+            route=(
+                'V7_P6_CONDENSED_DIRECT_N0_GRID_D'
+                if identity == V7_D_ANISO_N0_P6_DIRECT_PROFILE
+                else 'V7_P6_CONDENSED_DIRECT_N0'
+            ),
         )
+        if identity == V7_D_ANISO_N0_P6_DIRECT_PROFILE:
+            from src.geometry.v7_d_aniso_n0_p6_axis_plan import d_axis_plan
+
+            plan = d_axis_plan()
+            facts['allowed_mesh_targets_nm'] = [0.25]
+            facts['component_options'].update(
+                mesh_plan_id=plan['plan_id'],
+                mesh_plan_sha256=plan['plan_sha256'],
+                mesh_axis_cell_counts=plan['axis_cell_counts'],
+                mesh_axis_sha256_le_f64=plan['axis_sha256_le_f64'],
+                mesh_axis_segment_cell_counts=plan['segment_cell_counts'],
+                grid_comparison_scope='CROSS_CHANGED_GRID_DIAGNOSTIC',
+                no_cross_mesh_fe_reuse=True,
+            )
+            facts['component_options']['parent_mode_selection'] = dict(
+                facts['component_options']['dtn_mode_selection']
+            )
+            facts['component_options']['volume_quadrature'] = {
+                'degree': 15,
+                'rule': 'default',
+                'points_per_hexahedron': 512,
+                'points_weights_sha256': (
+                    'e3cf565f440b60b083a065f4655124926e98b047edea40d869cdfa5c66df9175'
+                ),
+            }
+            facts['component_options']['surface_quadrature'] = {
+                'degree': 160,
+                'rule': 'default',
+                'authority': 'full_32060_parent_inventory',
+            }
+            facts['condensed_route'].update(
+                name='v7_d_p6_exact_local_condensation_direct_n0',
+                mesh_plan_id=plan['plan_id'],
+                mesh_plan_sha256=plan['plan_sha256'],
+                mesh_axis_cell_counts=plan['axis_cell_counts'],
+                grid_comparison_scope='CROSS_CHANGED_GRID_DIAGNOSTIC',
+                mumps_out_of_core='forbidden_icntl23_must_read_back_zero',
+            )
+            facts['condensed_route'].pop('rows', None)
+            facts['condensed_route']['rows_source'] = (
+                'actual D mesh and MPC dof maps recorded before matrix assembly'
+            )
+            facts['campaign_authorization']['source'] = (
+                'user-authorized single V7 candidate-D full grating diagnostic'
+            )
+            facts['campaign_authorization']['candidate_grid'] = {
+                'scope': 'CROSS_CHANGED_GRID_DIAGNOSTIC',
+                'mesh_plan_id': plan['plan_id'],
+                'mesh_plan_sha256': plan['plan_sha256'],
+                'axis_cell_counts': plan['axis_cell_counts'],
+                'cell_count': 47_200,
+                'x_segment_cell_counts': [66, 68, 66],
+                'y_segment_cell_counts': [2],
+                'z_segment_cell_counts': [9, 100, 9],
+            }
         facts['outer'].pop('ksp_type', None)
         facts['outer'].pop('restart', None)
         facts['outer'].pop('max_iterations', None)
@@ -893,8 +958,26 @@ def native_profile_facts(identity):
             'cross_mesh_reuse': False,
             'functional_store': False,
         }
+        if identity == V7_D_ANISO_N0_P6_DIRECT_PROFILE:
+            from src.geometry.v7_d_aniso_n0_p6_axis_plan import d_axis_plan
+
+            plan = d_axis_plan()
+            facts['condensed_route'].pop('rows', None)
+            facts['condensed_route'].update(
+                name='v7_d_p6_exact_local_condensation_direct_n0',
+                rows_source=(
+                    'actual D mesh and MPC dof maps recorded before matrix assembly'
+                ),
+                mesh_plan_id=plan['plan_id'],
+                mesh_plan_sha256=plan['plan_sha256'],
+                mesh_axis_cell_counts=plan['axis_cell_counts'],
+                grid_comparison_scope='CROSS_CHANGED_GRID_DIAGNOSTIC',
+                mumps_out_of_core='forbidden_icntl23_must_read_back_zero',
+            )
         facts['campaign_authorization']['source'] = (
-            'user-authorized V7 p6 condensed direct full solve'
+            'user-authorized single V7 candidate-D full grating diagnostic'
+            if identity == V7_D_ANISO_N0_P6_DIRECT_PROFILE
+            else 'user-authorized V7 p6 condensed direct full solve'
         )
         facts['campaign_authorization']['execution_mode'] = 'full_solve'
         facts['campaign_authorization']['direct_route'] = {
@@ -902,6 +985,8 @@ def native_profile_facts(identity):
             'active_mode_count': V7_N0_ACTIVE_MODE_COUNT,
             'parent_mode_count': V7_N0_PARENT_MODE_COUNT,
             'quadrature_inventory': 'parent_q160',
+            'surface_quadrature_degree': 160,
+            'volume_quadrature_degree': 15,
             'same_factor_lifecycle': ['symbolic', 'numeric', 'solve'],
             'p4_and_outer_ksp': 'not_built',
         }
@@ -1626,6 +1711,81 @@ def _validate_v7_aniso_n0_p4_case(config) -> None:
         )
 
 
+def _validate_v7_d_p6_direct_case(config) -> None:
+    """Validate candidate D as the one frozen x+z changed-grid direct route."""
+
+    from copy import deepcopy
+
+    from .input_loader import InputError
+    from src.geometry.v7_d_aniso_n0_p6_axis_plan import (
+        D_AXIS_COUNTS,
+        D_AXIS_PLAN_ID,
+        D_Z_PROFILE,
+        validate_frozen_d_axes,
+    )
+
+    identity = V7_D_ANISO_N0_P6_DIRECT_PROFILE
+    solver = config.get('solver', {})
+    if config.get('method', {}).get('kind') != 'full3d_direct':
+        raise InputError(f'{identity} is restricted to full3d_direct')
+    if solver.get('native_capacity_profile') != identity:
+        raise InputError(f'{identity} is not selected as the native direct profile')
+    if solver.get('linear_solver') != 'direct':
+        raise InputError(f'{identity} requires solver.linear_solver=direct')
+    if solver.get('direct_solver_profile', 'default') != 'default':
+        raise InputError(f'{identity} uses the qualified default MUMPS controls')
+    forbidden_solver_fields = {
+        'preconditioner', 'ksp_type', 'restart', 'max_iterations', 'coarse_degree'
+    }.intersection(solver)
+    if forbidden_solver_fields:
+        raise InputError(
+            f'{identity} forbids P4/iterative solver fields: '
+            + ', '.join(sorted(forbidden_solver_fields))
+        )
+
+    discretization = config.get('discretization', {})
+    if tuple(discretization.get('mesh_axis_cell_counts') or ()) != D_AXIS_COUNTS:
+        raise InputError(f'{identity} fixes mesh_axis_cell_counts={D_AXIS_COUNTS}')
+    if discretization.get('mesh_plan_id') != D_AXIS_PLAN_ID:
+        raise InputError(f'{identity} requires its frozen candidate-D mesh plan')
+    if discretization.get('mesh_axis_z_profile') != D_Z_PROFILE:
+        raise InputError(f'{identity} has the wrong z segment profile identity')
+    if discretization.get('mesh_target_nm') != 0.25:
+        raise InputError(f'{identity} fixes the nominal x target to 0.25 nm')
+    try:
+        validate_frozen_d_axes(discretization)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise InputError(f'{identity} has invalid frozen axes: {exc}') from exc
+
+    # Reuse the previously checked immutable V7 material, incidence, boundary,
+    # output and resource requirements, while removing only the old grid and
+    # solver identities from this validation copy.  The live D config remains
+    # untouched and is bound to its own direct profile and mesh plan above.
+    baseline = deepcopy(config)
+    baseline['method']['kind'] = 'full3d_iterative'
+    baseline_solver = baseline['solver']
+    baseline_solver.pop('native_capacity_profile', None)
+    baseline_solver.update(
+        linear_solver='iterative',
+        ksp_type='fgmres',
+        preconditioner=V7_ANISO_N0_P4_PROFILE,
+        restart=32,
+        max_iterations=2048,
+        coarse_degree=4,
+    )
+    baseline_discretization = baseline['discretization']
+    baseline_discretization.update(
+        mesh_target_nm=0.5,
+        mesh_axis_cell_counts=[100, 2, 234],
+    )
+    for key in (
+        'mesh_axis_x_values', 'mesh_axis_y_values', 'mesh_axis_z_values',
+        'mesh_axis_z_profile', 'mesh_plan_id', 'mesh_plan_sha256',
+    ):
+        baseline_discretization.pop(key, None)
+    _validate_v7_aniso_n0_p4_case(baseline)
+
+
 def _validate_dispersion_flat_p6_case(config, identity: str) -> None:
     """Fail closed on approved same-material flat P6 direct cases."""
 
@@ -1786,6 +1946,9 @@ def validate_native_case(config):
         _validate_v6_f5_p6_direct_case(config, identity)
         return
     if identity in V7_ANISO_N0_P6_DIRECT_PROFILES:
+        if identity == V7_D_ANISO_N0_P6_DIRECT_PROFILE:
+            _validate_v7_d_p6_direct_case(config)
+            return
         if config.get('method', {}).get('kind') != 'full3d_direct':
             raise InputError(f'{identity} is restricted to full3d_direct')
         solver = config['solver']

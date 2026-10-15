@@ -40,7 +40,11 @@ from src.runners.p6_condensed_direct import (
     _write_direct_flat_reference_outputs,
 )
 from src.runners.task038_input_worker import _load_and_validate_worker_payload
-from src.runners.task038_launcher import _write_bootstrap, launch_specification
+from src.runners.task038_launcher import (
+    _write_bootstrap,
+    _zero_swap_is_qualified,
+    launch_specification,
+)
 
 REPO = Path(__file__).resolve().parents[2]
 INPUTS = REPO / "input/task39extra_para_workstation_capacity"
@@ -208,6 +212,41 @@ def test_flat_profile_is_isolated_from_v7_iterative_and_n0_contracts():
     assert facts["resources"]["resource_stop_policy"] == "measured_tree_rss_only_v3"
     assert facts["campaign_authorization"]["resource_policy"]["zero_swap"] is True
     assert facts["campaign_authorization"]["direct_route"]["p4_and_outer_ksp"] == "not_built"
+
+
+def test_zero_swap_classifier_accepts_both_watchdog_contracts_fail_closed():
+    legacy = {"job_swap_activity": "zero_supported_by_zero_global_activity"}
+    assert _zero_swap_is_qualified(legacy)
+
+    measured_tree_zero = {
+        "job_swap_activity": "no_task_or_global_swap_observed",
+        "global_swap_activity": {
+            "delta": {"pswpin_pages": 0, "pswpout_pages": 0}
+        },
+        "sampled_process_tree_swap_peak_bytes": 0,
+    }
+    assert _zero_swap_is_qualified(measured_tree_zero)
+
+    for delta, tree_swap in (
+        ({"pswpin_pages": 2, "pswpout_pages": 0}, 0),
+        ({"pswpin_pages": 0, "pswpout_pages": 1}, 0),
+        ({"pswpin_pages": 0, "pswpout_pages": 0}, 4096),
+        ({"pswpin_pages": None, "pswpout_pages": 0}, 0),
+    ):
+        facts = {
+            **measured_tree_zero,
+            "global_swap_activity": {"delta": delta},
+            "sampled_process_tree_swap_peak_bytes": tree_swap,
+        }
+        assert not _zero_swap_is_qualified(facts)
+
+    assert not _zero_swap_is_qualified({
+        "job_swap_activity": "UNRESOLVED_global_activity_cannot_be_attributed",
+        "global_swap_activity": {
+            "delta": {"pswpin_pages": 10, "pswpout_pages": 0}
+        },
+        "sampled_process_tree_swap_peak_bytes": 0,
+    })
 
 
 @pytest.mark.parametrize(

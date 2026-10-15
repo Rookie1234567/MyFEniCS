@@ -141,8 +141,22 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         DISPERSION_FLAT_P6_PROFILES,
         V6_F5_P6_DIRECT_FULL600_PROFILE,
         V6_F5_P6_DIRECT_N0_PROFILE,
+        V7_D_ANISO_N0_P6_DIRECT_PROFILE,
         V7_ANISO_N0_P6_DIRECT_PROFILE,
     )
+
+    if profile_identity == V7_D_ANISO_N0_P6_DIRECT_PROFILE:
+        route = _direct_run_contract(V7_ANISO_N0_P6_DIRECT_PROFILE)
+        route.update(
+            profile_identity=profile_identity,
+            summary_prefix="v7_candidate_d_p6_condensed_direct_n0",
+            diagnostic_scope="CROSS_CHANGED_GRID_DIAGNOSTIC",
+            mesh_evidence_profile="candidate_d_200x2x118",
+            expected_full_p6_rows=None,
+            expected_active_rows=None,
+            require_mumps_icntl23_zero=True,
+        )
+        return route
 
     if profile_identity == V7_ANISO_N0_P6_DIRECT_PROFILE:
         return {
@@ -156,7 +170,11 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "active_sha256": ACTIVE_MODE_SHA256,
             "residual_key": "original_A6_n0_relative",
             "residual_scope": "A6_n0",
+            "surface_quadrature_degree": 160,
             "summary_prefix": "p6_condensed_direct_n0",
+            "expected_full_p6_rows": FULL_P6_ROWS,
+            "expected_active_rows": ACTIVE_ROWS,
+            "diagnostic_scope": "ORIGINAL_V7_100x2x234_GRID",
         }
     if profile_identity in DISPERSION_FLAT_P6_PROFILES:
         return {
@@ -1147,6 +1165,8 @@ def run_p6_condensed_direct(
             active_mode_count_expected=route["active_count"],
             active_mode_sha256_expected=route["active_sha256"],
         )
+        if route.get("diagnostic_scope") == "CROSS_CHANGED_GRID_DIAGNOSTIC":
+            summary["grid_comparison_scope"] = route["diagnostic_scope"]
         profile_rss_cap = int(profile_facts["resources"]["rss_hard_limit_bytes"])
         summary["rss_hard_limit_bytes"] = profile_rss_cap
         inherited_store = sorted(
@@ -1212,12 +1232,16 @@ def run_p6_condensed_direct(
         )
         if route["family"] == "v7_aniso_n0":
             from src.runners.v7_anisotropic_mesh_evidence import (
+                actual_v7_candidate_d_mesh_evidence,
                 actual_v7_anisotropic_mesh_evidence,
             )
 
-            mesh_evidence = actual_v7_anisotropic_mesh_evidence(
-                levels, cfg, required_space_degrees=(6,)
-            )
+            if route.get("mesh_evidence_profile") == "candidate_d_200x2x118":
+                mesh_evidence = actual_v7_candidate_d_mesh_evidence(levels, cfg)
+            else:
+                mesh_evidence = actual_v7_anisotropic_mesh_evidence(
+                    levels, cfg, required_space_degrees=(6,)
+                )
         elif route["family"] == "dispersion_flat":
             mesh_evidence = _dispersion_flat_mesh_evidence(levels, cfg)
         else:
@@ -1515,7 +1539,11 @@ def run_p6_condensed_direct(
             levels["spaces"][6].dofmap.index_map.size_global
             * levels["spaces"][6].dofmap.index_map_bs
         )
-        if route["family"] == "v7_aniso_n0" and full_p6_rows != FULL_P6_ROWS:
+        if (
+            route["family"] == "v7_aniso_n0"
+            and route.get("expected_full_p6_rows") is not None
+            and full_p6_rows != int(route["expected_full_p6_rows"])
+        ):
             raise ValueError("live V7 p6 dof count differs from the frozen identity")
         condensed = build_unconstrained_assembly_time_condensation(
             compiled_form,
@@ -1543,7 +1571,7 @@ def run_p6_condensed_direct(
             appended_rows=route["active_count"],
             matrix_size=condensed.matrix.getSize(),
             expected_active_rows=(
-                ACTIVE_ROWS if route["family"] == "v7_aniso_n0" else None
+                route.get("expected_active_rows")
             ),
         )
         port_terms = assemble_condensed_ports(
@@ -1637,6 +1665,12 @@ def run_p6_condensed_direct(
 
         factor = _MumpsFactor(matrix)
         factor_settings = factor.symbolic_memory_settings()
+        if route.get("require_mumps_icntl23_zero"):
+            icntl = factor_settings.get("icntl", {})
+            if type(icntl.get("23")) is not int or icntl.get("23") != 0:
+                raise RuntimeError(
+                    "candidate D requires MUMPS ICNTL(23)=0; out-of-core is forbidden"
+                )
         summary["factor"] = {
             "backend": "PETSc_MUMPS",
             "preferred_ordering": factor.preferred_ordering,
