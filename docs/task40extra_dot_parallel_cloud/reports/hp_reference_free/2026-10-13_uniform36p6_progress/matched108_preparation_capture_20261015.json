@@ -1,0 +1,204 @@
+{
+  "schema": "matched108-preparation-capture-stage-report.v1",
+  "date_utc": "2026-10-15",
+  "target_repository": "Rookie1234567/MyFEniCS",
+  "target_branch": "task40extra_dot_parallel_cloud",
+  "publication_base_commit": "499b5eb67c69afdb598cee5a540b80f396ea7772",
+  "scope": "Actual maps, complete raw registry and assembly capture only; no new solve in this reporting stage.",
+  "state": "PASS_MAP_RAW_AND_CAPTURE_PREPARATION_ONLY_NO_NEW_SOLVE",
+  "model": {
+    "cells": 108,
+    "nx": 6,
+    "ny": 2,
+    "nz": 9,
+    "old108_nx": 18,
+    "old108_ny": 2,
+    "old108_nz": 3,
+    "both_x_and_z_changed": true,
+    "physical_wavelength_nm": 0.7,
+    "physical_model_unchanged": true,
+    "fine_degree": 6,
+    "coarse_degree": 4,
+    "fixed_auxiliary_rows": 80
+  },
+  "dimensions": {
+    "fine_independent_FE_dofs": 70848,
+    "coarse_independent_FE_dofs": 21120,
+    "fine_trace_rows": 22248,
+    "coarse_trace_rows": 9456,
+    "fine_trace_plus_auxiliary_rows": 22328,
+    "coarse_trace_plus_auxiliary_rows": 9536,
+    "fine_exact_raw_classes": 25,
+    "fine_exact_oriented_classes": 36,
+    "coarse_rounded_raw_classes": 6,
+    "coarse_rounded_oriented_classes": 12
+  },
+  "raw": {
+    "total_classes": 31,
+    "old_exact_context_seeds_preserved": 14,
+    "new_classes": 17,
+    "new_fine_classes": 15,
+    "new_coarse_classes": 2,
+    "finite_typed_same_qualified_compiled_C_provenance": true,
+    "per_new_input_O0_equivalence_claimed": false,
+    "solver_qualified": false
+  },
+  "stages": {
+    "map": {
+      "supervised_wall_seconds": 7.036920143000316,
+      "sampled_tree_peak_RSS_bytes": 562855936,
+      "resource_samples": 25,
+      "child_exit_code": 0,
+      "cleanup_verified": true
+    },
+    "raw01": {
+      "supervised_wall_seconds": 462.1071994639933,
+      "sampled_tree_peak_RSS_bytes": 119328768,
+      "resource_samples": 1835,
+      "child_exit_code": 0,
+      "cleanup_verified": true
+    },
+    "raw02": {
+      "supervised_wall_seconds": 130.5065573460015,
+      "sampled_tree_peak_RSS_bytes": 121913344,
+      "resource_samples": 516,
+      "child_exit_code": 0,
+      "cleanup_verified": true
+    },
+    "capture": {
+      "supervised_wall_seconds": 63.95255951897707,
+      "sampled_tree_peak_RSS_bytes": 2479579136,
+      "resource_samples": 251,
+      "child_exit_code": 0,
+      "cleanup_verified": true
+    }
+  },
+  "costs": {
+    "four_stage_supervised_wall_seconds": 663.6032364719722,
+    "raw01_new_kernel_seconds": 455.95260111097014,
+    "raw02_new_kernel_seconds": 123.50044081796659,
+    "all17_new_kernel_seconds": 579.4530419289367,
+    "capture_internal_runtime_seconds": 62.597173666988965,
+    "kernel_and_internal_runtime_nested_in_supervised_wall": true,
+    "engineering_preparation_and_review_seconds": null,
+    "engineering_cost_is_zero": false,
+    "historical_failures_in_four_stage_total": false,
+    "full_end_to_end_wall_seconds": null,
+    "complete_project_total_claimed": false,
+    "ledger_v90_excludes_capture": true
+  },
+  "capture": {
+    "rows": 22328,
+    "nnz": 17304176,
+    "structural_union_nnz_upper": 20776096,
+    "CSR_and_rhs_file_bytes": 347289474,
+    "compiler_prefix_calls": 13,
+    "compiler_unique_binaries": 12,
+    "native_raw_cache_hits": 25,
+    "new_kernel_calls": 0,
+    "cold_or_JIT_fallback": false,
+    "KSP_created": false,
+    "PC_created": false,
+    "global_factorization_performed": false,
+    "solve_called": false,
+    "full_FE_residual_performed": false,
+    "field_recovery_performed": false,
+    "final_PETSc_handle_count": 0,
+    "local_factor_and_recovery_references_cleared": true,
+    "allocator_release_claimed": false,
+    "intermediate_borrowed_owner_cleanup_pending_field_preserved": true,
+    "independent_terminal_review_pass": true,
+    "total_regular_artifact_bytes": 348939164,
+    "file_raw_and_typed_hashes_and_NPY_headers_independently_checked": true,
+    "finite_and_all_stored_entry_union_inclusion_from_reviewed_producer": true,
+    "reviewer_recomputed_finite_or_union_inclusion": false,
+    "resource_admissions_verified": 33,
+    "fresh_AS_admissions_verified": 5
+  },
+  "resource": {
+    "hard_AS_bytes": 6442450944,
+    "hard_tree_RSS_bytes": 8589934592,
+    "zero_swap_required": true,
+    "old_all108_additive_named_plus_ELF_safety_bytes": 6909487720,
+    "old_forecast_failure_meant_sufficient_bound_failed_not_actual_impossibility": true,
+    "actual_exact_class_reforecast_named_plus_ELF_safety_bytes": 5796605032,
+    "actual_exact_classes_match_successful132_counts": true,
+    "phase_fresh_source_gates_preserved": true,
+    "all_original_hard_limits_preserved": true,
+    "assembly_fresh_VmSize_bytes": 1081966592,
+    "assembly_future_named_bytes": 3101231648,
+    "full_ELF_bytes": 413421600,
+    "safety_bytes": 268435456,
+    "assembly_projected_AS_bytes": 4865055296,
+    "export_fresh_VmSize_bytes": 2619641856,
+    "export_future_named_bytes": 2013516328,
+    "export_projected_AS_bytes": 5315015240,
+    "map_largest_internal_RSS_snapshot_bytes": 563773440,
+    "sampled_RSS_not_complete_continuous_peak": true
+  },
+  "qualification": {
+    "accepted_field": false,
+    "engineering_converged": false,
+    "new_method_success": false,
+    "official_RTA": false,
+    "full_PDE_admission": false,
+    "next_solver_source_preparation_only": true,
+    "next_initial_guess": "zero",
+    "next_restart": 32,
+    "next_refinement": "always",
+    "next_max_iterations": 200,
+    "old132_and_old108_zero_refinement": "never",
+    "strict_one_variable_comparison_with_old_runs": false
+  },
+  "publication_scope": "Only this compact scalar JSON and its Chinese Markdown report. No code, scientific arrays, matrices, factors or archives.",
+  "verification": {
+    "JSON_parsed": true,
+    "report_only_payload": true,
+    "scientific_arrays_reread_by_publisher": false,
+    "GitHub_rendered_view_verified": false,
+    "canonical_worktree_validation_claimed": false,
+    "CI_pass_claimed": false
+  },
+  "evidence": {
+    "phase4_matched108_map_terminal_review.json": {
+      "bytes": 8605,
+      "sha256": "5c0be940e7b083a4b656166ef151725f25f8d11dea7f272c5643005646bf85ef"
+    },
+    "phase4_matched108_native_raw_attempt01_terminal_review.json": {
+      "bytes": 33768,
+      "sha256": "b4d95cf9779b28760bfcfc75239a7867abd6f355a14d01490fb4f26f8db7311a"
+    },
+    "phase4_matched108_native_raw_complete_terminal_review.json": {
+      "bytes": 10613,
+      "sha256": "0d0928078b0a7ad3a53c197194c05d2f508b2df228f53da66eac14a103e7fc10"
+    },
+    "phase4_matched108_actual_owner_resource_reforecast.json": {
+      "bytes": 46426,
+      "sha256": "81aa4f632ad2738278a0a40c02f1770414ed030e7420adb32cab70125d775517"
+    },
+    "phase4_matched108_capture_attempt01/result.json": {
+      "bytes": 80630,
+      "sha256": "70ef367e9c9def19d611a48c4db2e4a252de003018e3286f583aaa8268e7337d"
+    },
+    "phase4_matched108_capture_attempt01/summary.json": {
+      "bytes": 1047,
+      "sha256": "5e643c0cbd2367a649a0fa42782141811256b59e5a67055619c33df0c2de00b8"
+    },
+    "phase4_matched108_native_raw_attempt01/manifest.json": {
+      "bytes": 217045,
+      "sha256": "dfeb264f0e5b9eba94b824f9bd3534329fc66425735e92ea9636debb0348df65"
+    },
+    "phase4_matched108_native_raw_attempt02/manifest.json": {
+      "bytes": 243204,
+      "sha256": "f277e631ec321223e926bd7db09c2cd1b40222b8af89cf862919837b56e0c99d"
+    },
+    "phase4_execution_ledger_v90.json": {
+      "bytes": 99836,
+      "sha256": "4637e5474e6ac3c9271979e13561d1bcfa1c762e92625afcacf84ffd22c83be6"
+    },
+    "phase4_matched108_capture_terminal_review.json": {
+      "bytes": 28916,
+      "sha256": "9e6f449d1f7e3ab3348577ff523c4b2bd45e4ecb23b1da0aaf766b48aa693606"
+    }
+  }
+}
