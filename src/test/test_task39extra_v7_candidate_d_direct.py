@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+import src.runners.v7_anisotropic_mesh_evidence as v7_mesh_evidence
 from src.geometry.mesh_builder_3d import stage4_axis_plan
 from src.geometry.v7_d_aniso_n0_p6_axis_plan import (
     D_AXIS_COUNTS,
@@ -205,3 +206,30 @@ def test_d_profile_facts_keep_hard_rss_and_actual_symbolic_readback_contract():
         "one_materialized_PETSc_AIJ_through_symbolic_numeric_solve"
     )
     assert facts["condensed_route"]["rows_source"].startswith("actual D mesh")
+
+
+def test_d_mesh_evidence_exposes_axis_counts_expected_by_direct_runner(monkeypatch):
+    plan = d_axis_plan()
+    axes = plan["axes_nm"]
+    cfg = type("Cfg", (), {
+        "mesh_plan_id": plan["plan_id"],
+        "mesh_plan_sha256": plan["plan_sha256"],
+        "mesh_axis_cell_counts_requested": D_AXIS_COUNTS,
+        "mesh_axis_x_values_requested": axes["x"],
+        "mesh_axis_y_values_requested": axes["y"],
+        "mesh_axis_z_values_requested": axes["z"],
+        "mesh_axis_z_profile": D_Z_PROFILE,
+    })()
+    monkeypatch.setattr(
+        v7_mesh_evidence,
+        "actual_v7_anisotropic_mesh_evidence",
+        lambda *_args, **_kwargs: {
+            "status": "PASS",
+            "actual_axis_cell_counts": list(D_AXIS_COUNTS),
+        },
+    )
+
+    evidence = v7_mesh_evidence.actual_v7_candidate_d_mesh_evidence({}, cfg)
+
+    assert evidence["actual_axis_cell_counts"] == [200, 2, 118]
+    assert evidence["axis_cell_counts"] == [200, 2, 118]

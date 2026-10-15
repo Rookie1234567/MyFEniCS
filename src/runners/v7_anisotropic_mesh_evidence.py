@@ -670,4 +670,9 @@ def actual_v7_candidate_d_mesh_evidence(
     evidence["mesh_plan_id"] = D_AXIS_PLAN_ID
     evidence["mesh_plan_sha256"] = plan["plan_sha256"]
     evidence["mesh_plan_axis_sha256_le_f64"] = plan["axis_sha256_le_f64"]
+    # p6_condensed_direct consumes this common key when it computes the
+    # boundary-cell count.  The shared V7 evidence helper names the measured
+    # field actual_axis_cell_counts; retain that and expose the route-neutral
+    # alias explicitly for the D-specific direct runner.
+    evidence["axis_cell_counts"] = list(evidence["actual_axis_cell_counts"])
     return evidence
