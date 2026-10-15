@@ -315,6 +315,321 @@
       "all_observed_serial_formal_and_light_tree_peak_bytes": 621559808,
       "overall_peak_scope": "max of serial sampled simultaneous own-tree peaks; browser light and numerical stages distinguished; not whole-host/cgroup exact peak",
       "unretained_nonformal_activity_breakdown": "NOT_RETAINED; all calendar time remains charged to single window"
+    },
+    {
+      "post_collection_resource_refusals": [
+        {
+          "binding": {
+            "path": "tmp/task42extra/v47/docs_01/admission_failure_receipt.json",
+            "sha256": "d008e8fe3c920098dd89fad83b75a9f15642792f3df650a155066a712aa0f831",
+            "bytes": 531
+          },
+          "receipt": {
+            "classification": "RESOURCE_ADMISSION_REJECTED_BEFORE_WORKER",
+            "reason": "No audited unoccupied physical core; bounded fresh samples exhausted after required PSI",
+            "worker_created": false,
+            "descendants_cleared": true,
+            "mandatory_PSI_observed_seconds": 60.002046648878604,
+            "actual_total_seconds": "NOT_RETAINED_INCLUDED_IN_SINGLE_MONOTONIC_WINDOW",
+            "sampled_tree_RSS_peak_bytes": "NOT_RETAINED_NO_WATCHDOG_CREATED",
+            "source_unchanged": true,
+            "numerical_rerun": false,
+            "recorded_monotonic": 1971327.869027459
+          }
+        },
+        {
+          "binding": {
+            "path": "tmp/task42extra/v47/markdown_final_01/admission_failure_receipt.json",
+            "sha256": "0eea54d2acf83452d44dcda47c28fdd928aea172c5aff315f16c115072531fda",
+            "bytes": 530
+          },
+          "receipt": {
+            "classification": "RESOURCE_ADMISSION_REJECTED_BEFORE_WORKER",
+            "reason": "No audited unoccupied physical core; bounded fresh samples exhausted after required PSI",
+            "worker_created": false,
+            "descendants_cleared": true,
+            "mandatory_PSI_observed_seconds": 60.00195796811022,
+            "actual_total_seconds": "NOT_RETAINED_INCLUDED_IN_SINGLE_MONOTONIC_WINDOW",
+            "sampled_tree_RSS_peak_bytes": "NOT_RETAINED_NO_WATCHDOG_CREATED",
+            "source_unchanged": true,
+            "numerical_rerun": false,
+            "recorded_monotonic": 1971603.798143441
+          }
+        }
+      ],
+      "label": "C3_numeric_package_published_clean",
+      "recorded_UTC": "2026-10-15T06:46:43.929350+00:00",
+      "monotonic": 1971798.637054053,
+      "conservative_elapsed_s": 4214.262308871839,
+      "remaining_s": 24585.73769112816,
+      "original_window_not_reopened": true,
+      "deadline_not_exceeded": true,
+      "observed_HEAD": "5e914fcb6fe3b57fd5502e26b90967bc1c7fc90b",
+      "branch": "task42extra_feinn_5nm",
+      "source_sha": "ce8f1f5e89cbdb848488b671305188a39c824046",
+      "observed_tracking_ref": "refs/remotes/origin/task42extra_feinn_5nm",
+      "observed_tracking_SHA": "5e914fcb6fe3b57fd5502e26b90967bc1c7fc90b",
+      "ahead": 0,
+      "behind": 0,
+      "worktree_clean": true,
+      "tracked_or_nonignored_untracked_status": [],
+      "default_upstream_fetch_mapping": "COMMON_REMOTE_CONFIG_OMITS_TASK42EXTRA; explicit tracking ref and ephemeral mapping used; shared config unchanged",
+      "canonical_common_git_dir": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+      "canonical_worktree_registration": "worktree /home/fenics/Projects/NN-Lab-V2\nHEAD 5e914fcb6fe3b57fd5502e26b90967bc1c7fc90b\nbranch refs/heads/task42extra_feinn_5nm",
+      "cleanup": {
+        "own_active_tree": [],
+        "numerical_lock": "FREE",
+        "formal_stages": [
+          {
+            "stage": "v47_joint_compare_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v47_joint_step_probe_attempt1",
+            "classification": "RESOURCE_ADMISSION_REJECTED_BEFORE_TERMINAL",
+            "cleared": true
+          },
+          {
+            "stage": "v47_joint_step_probe_attempt2",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v47_joint_tangent_checks_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          }
+        ]
+      },
+      "new_bounded_light_since_result_collection": [
+        {
+          "name": "collect_01",
+          "binding": {
+            "path": "tmp/task42extra/v47/collect_01/summary.json",
+            "sha256": "5c550eaf8008076cb30a3a663d8c8c5ad2bfd5b438161de1b790095b43c29195",
+            "bytes": 1982
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 86216704,
+          "swap_bytes": 0,
+          "supervised_s": 2.0576846711337566,
+          "mandatory_PSI_s": 60.001905067125335
+        },
+        {
+          "name": "delivery_numeric_01",
+          "binding": {
+            "path": "tmp/task42extra/v47/delivery_numeric_01/summary.json",
+            "sha256": "27cb69b2b566036d87724fa539b621670fb11a8fd41d3f1dc4642dd52cf1ba4c",
+            "bytes": 1983
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 132526080,
+          "swap_bytes": 0,
+          "supervised_s": 2.8711580641102046,
+          "mandatory_PSI_s": 60.001890192972496
+        },
+        {
+          "name": "docs_02",
+          "binding": {
+            "path": "tmp/task42extra/v47/docs_02/summary.json",
+            "sha256": "1595bed9a3d9123ee76311ca5ef529eed59061b6660fba313dbd35f4e5618c78",
+            "bytes": 1982
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 88932352,
+          "swap_bytes": 0,
+          "supervised_s": 2.7698105019517243,
+          "mandatory_PSI_s": 60.00188627792522
+        },
+        {
+          "name": "markdown_final_02",
+          "binding": {
+            "path": "tmp/task42extra/v47/markdown_final_02/summary.json",
+            "sha256": "b494b1796f85d3e9f88ae0d9861020015bb18a5e7a435fc17f256506797d9041",
+            "bytes": 1982
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 100065280,
+          "swap_bytes": 0,
+          "supervised_s": 2.162261540070176,
+          "mandatory_PSI_s": 60.00186664890498
+        }
+      ],
+      "new_light_supervised_sum_s": 9.860914777265862,
+      "new_light_PSI_sum_s": 240.00754818692803,
+      "sum_not_double_charged_to_monotonic_window": true,
+      "OOC_bytes": 0,
+      "numerical_recomputation_for_document_or_render": 0,
+      "all_observed_serial_formal_and_light_tree_peak_bytes": 621559808,
+      "overall_peak_scope": "max of serial sampled simultaneous own-tree peaks; browser light and numerical stages distinguished; not whole-host/cgroup exact peak",
+      "unretained_nonformal_activity_breakdown": "NOT_RETAINED; all calendar time remains charged to single window"
+    },
+    {
+      "post_collection_resource_refusals": [
+        {
+          "binding": {
+            "path": "tmp/task42extra/v47/docs_01/admission_failure_receipt.json",
+            "sha256": "d008e8fe3c920098dd89fad83b75a9f15642792f3df650a155066a712aa0f831",
+            "bytes": 531
+          },
+          "receipt": {
+            "classification": "RESOURCE_ADMISSION_REJECTED_BEFORE_WORKER",
+            "reason": "No audited unoccupied physical core; bounded fresh samples exhausted after required PSI",
+            "worker_created": false,
+            "descendants_cleared": true,
+            "mandatory_PSI_observed_seconds": 60.002046648878604,
+            "actual_total_seconds": "NOT_RETAINED_INCLUDED_IN_SINGLE_MONOTONIC_WINDOW",
+            "sampled_tree_RSS_peak_bytes": "NOT_RETAINED_NO_WATCHDOG_CREATED",
+            "source_unchanged": true,
+            "numerical_rerun": false,
+            "recorded_monotonic": 1971327.869027459
+          }
+        },
+        {
+          "binding": {
+            "path": "tmp/task42extra/v47/markdown_final_01/admission_failure_receipt.json",
+            "sha256": "0eea54d2acf83452d44dcda47c28fdd928aea172c5aff315f16c115072531fda",
+            "bytes": 530
+          },
+          "receipt": {
+            "classification": "RESOURCE_ADMISSION_REJECTED_BEFORE_WORKER",
+            "reason": "No audited unoccupied physical core; bounded fresh samples exhausted after required PSI",
+            "worker_created": false,
+            "descendants_cleared": true,
+            "mandatory_PSI_observed_seconds": 60.00195796811022,
+            "actual_total_seconds": "NOT_RETAINED_INCLUDED_IN_SINGLE_MONOTONIC_WINDOW",
+            "sampled_tree_RSS_peak_bytes": "NOT_RETAINED_NO_WATCHDOG_CREATED",
+            "source_unchanged": true,
+            "numerical_rerun": false,
+            "recorded_monotonic": 1971603.798143441
+          }
+        }
+      ],
+      "label": "final_visual_metadata_before_commit",
+      "recorded_UTC": "2026-10-15T06:48:58.061513+00:00",
+      "monotonic": 1971932.776049161,
+      "conservative_elapsed_s": 4348.401303980034,
+      "remaining_s": 24451.598696019966,
+      "original_window_not_reopened": true,
+      "deadline_not_exceeded": true,
+      "observed_HEAD": "5e914fcb6fe3b57fd5502e26b90967bc1c7fc90b",
+      "branch": "task42extra_feinn_5nm",
+      "source_sha": "ce8f1f5e89cbdb848488b671305188a39c824046",
+      "observed_tracking_ref": "refs/remotes/origin/task42extra_feinn_5nm",
+      "observed_tracking_SHA": "5e914fcb6fe3b57fd5502e26b90967bc1c7fc90b",
+      "ahead": 0,
+      "behind": 0,
+      "worktree_clean": false,
+      "tracked_or_nonignored_untracked_status": [
+        "M docs/task042extra_feinn_5nm/outcomes/records/markdown_check_v47.json",
+        " M docs/task042extra_feinn_5nm/outcomes/records/publication_tail_v47.json",
+        " M docs/task042extra_feinn_5nm/outcomes/records/render_check_v47.json"
+      ],
+      "default_upstream_fetch_mapping": "COMMON_REMOTE_CONFIG_OMITS_TASK42EXTRA; explicit tracking ref and ephemeral mapping used; shared config unchanged",
+      "canonical_common_git_dir": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+      "canonical_worktree_registration": "worktree /home/fenics/Projects/NN-Lab-V2\nHEAD 5e914fcb6fe3b57fd5502e26b90967bc1c7fc90b\nbranch refs/heads/task42extra_feinn_5nm",
+      "cleanup": {
+        "own_active_tree": [],
+        "numerical_lock": "FREE",
+        "formal_stages": [
+          {
+            "stage": "v47_joint_compare_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v47_joint_step_probe_attempt1",
+            "classification": "RESOURCE_ADMISSION_REJECTED_BEFORE_TERMINAL",
+            "cleared": true
+          },
+          {
+            "stage": "v47_joint_step_probe_attempt2",
+            "classification": "COMPLETED",
+            "cleared": true
+          },
+          {
+            "stage": "v47_joint_tangent_checks_attempt1",
+            "classification": "COMPLETED",
+            "cleared": true
+          }
+        ]
+      },
+      "new_bounded_light_since_result_collection": [
+        {
+          "name": "collect_01",
+          "binding": {
+            "path": "tmp/task42extra/v47/collect_01/summary.json",
+            "sha256": "5c550eaf8008076cb30a3a663d8c8c5ad2bfd5b438161de1b790095b43c29195",
+            "bytes": 1982
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 86216704,
+          "swap_bytes": 0,
+          "supervised_s": 2.0576846711337566,
+          "mandatory_PSI_s": 60.001905067125335
+        },
+        {
+          "name": "delivery_numeric_01",
+          "binding": {
+            "path": "tmp/task42extra/v47/delivery_numeric_01/summary.json",
+            "sha256": "27cb69b2b566036d87724fa539b621670fb11a8fd41d3f1dc4642dd52cf1ba4c",
+            "bytes": 1983
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 132526080,
+          "swap_bytes": 0,
+          "supervised_s": 2.8711580641102046,
+          "mandatory_PSI_s": 60.001890192972496
+        },
+        {
+          "name": "docs_02",
+          "binding": {
+            "path": "tmp/task42extra/v47/docs_02/summary.json",
+            "sha256": "1595bed9a3d9123ee76311ca5ef529eed59061b6660fba313dbd35f4e5618c78",
+            "bytes": 1982
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 88932352,
+          "swap_bytes": 0,
+          "supervised_s": 2.7698105019517243,
+          "mandatory_PSI_s": 60.00188627792522
+        },
+        {
+          "name": "markdown_final_02",
+          "binding": {
+            "path": "tmp/task42extra/v47/markdown_final_02/summary.json",
+            "sha256": "b494b1796f85d3e9f88ae0d9861020015bb18a5e7a435fc17f256506797d9041",
+            "bytes": 1982
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 100065280,
+          "swap_bytes": 0,
+          "supervised_s": 2.162261540070176,
+          "mandatory_PSI_s": 60.00186664890498
+        },
+        {
+          "name": "render_01",
+          "binding": {
+            "path": "tmp/task42extra/v47/render_01/summary.json",
+            "sha256": "0917e4ded0548624527020fdd5b478f4fb07a19461053bafb26d0681c12121e2",
+            "bytes": 2168
+          },
+          "classification": "COMPLETED",
+          "own_tree_peak_bytes": 1091117056,
+          "swap_bytes": 0,
+          "supervised_s": 9.49450422404334,
+          "mandatory_PSI_s": 60.00212622107938
+        }
+      ],
+      "new_light_supervised_sum_s": 19.3554190013092,
+      "new_light_PSI_sum_s": 300.0096744080074,
+      "sum_not_double_charged_to_monotonic_window": true,
+      "OOC_bytes": 0,
+      "numerical_recomputation_for_document_or_render": 0,
+      "all_observed_serial_formal_and_light_tree_peak_bytes": 1091117056,
+      "overall_peak_scope": "max of serial sampled simultaneous own-tree peaks; browser light and numerical stages distinguished; not whole-host/cgroup exact peak",
+      "unretained_nonformal_activity_breakdown": "NOT_RETAINED; all calendar time remains charged to single window"
     }
   ],
   "production_merge": false,

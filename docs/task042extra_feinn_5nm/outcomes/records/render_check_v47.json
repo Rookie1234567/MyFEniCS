@@ -1,5 +1,41 @@
 {
-  "schema": "task42extra.v47.render_check_v47",
-  "status": "NOT_VERIFIED_PENDING_PUBLICATION",
-  "scope": "explicit bootstrap; no visual or final publication claim"
+  "schema": "task42extra.v47.render.v1",
+  "status": "RESPONSE_VIEWPORT_PASS_OTHER_PAGES_NOT_VERIFIED",
+  "prior_receipt_sha256": "61ea8e0d8650e054c5894b48422150ff470b9bf9b9a36d1ab0e7e69ce4bc6bbf",
+  "publication": {
+    "published_commit": "5e914fcb6fe3b57fd5502e26b90967bc1c7fc90b",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5e914fcb6fe3b57fd5502e26b90967bc1c7fc90b/docs/task042extra_feinn_5nm/response_v47.md",
+    "published_blob_sha256": "421d22b01ccceb703cb8f957433fd09c3e9e8d5fe523dd97680a9df467495146",
+    "scope": "one selected 1440x5200 response viewport; all unseen content, topic math and other pages NOT_VERIFIED",
+    "status": "SCREENSHOT_SAVED_VISUAL_PENDING",
+    "numerical_recomputation": 0,
+    "returncode": 0,
+    "elapsed_s": 7.235891398973763,
+    "screenshot": "tmp/task42extra/v47/render_views/response.png",
+    "screenshot_sha256": "bb5ef90498845bb5c0cdc101204939c83cd0c4b0da5ff06b8771f813177ade04"
+  },
+  "actual_image_inspected": true,
+  "visible_checks": [
+    "GitHub commit/file breadcrumb matches C3 response_v47.md",
+    "Title, decision and all original gates table visible and aligned",
+    "Three trial rows and pred/ared/rho table visible",
+    "Full response body through final evidence links visible without replacement characters or clipping"
+  ],
+  "selected_viewport_pixels": [
+    1440,
+    5200
+  ],
+  "scope": "Published response body only; no link navigation or other page inspection",
+  "topic_math_and_other_pages": "NOT_VERIFIED",
+  "full_site_visual_PASS": false,
+  "numeric_publication_precedes_browser": true,
+  "numerical_recomputation": 0,
+  "browser_summary": {
+    "path": "tmp/task42extra/v47/render_01/summary.json",
+    "sha256": "0917e4ded0548624527020fdd5b478f4fb07a19461053bafb26d0681c12121e2",
+    "sampled_simultaneous_tree_RSS_peak_bytes": 1091117056,
+    "own_swap_bytes": 0,
+    "descendants_cleared": true
+  },
+  "screenshot_committed": false
 }
